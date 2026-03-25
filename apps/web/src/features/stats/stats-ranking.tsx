@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { Search, Crown, Trophy, Medal } from "lucide-react";
+import { Search, Crown, Trophy, Medal, Users } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -22,6 +22,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
+import { Card } from "@lootlog/ui/components/card";
 import { Input } from "@lootlog/ui/components/input";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -148,184 +149,198 @@ export const StatsRanking: React.FC = () => {
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="p-4 pb-4 bg-background border-b">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-xl font-bold">
-              {t("kills.fullRanking.title")}
-            </h1>
-            <p className="text-muted-foreground">
-              {t("kills.fullRanking.description")}
-            </p>
-          </div>
+    <div className="flex flex-col h-full min-h-0 bg-background/50">
+      <ScrollArea className="flex-1 min-h-0">
+        <div className="px-3 py-3 flex flex-col gap-4">
+          <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="rounded-xl bg-primary/10 p-2.5 shadow-inner shadow-primary/10">
+                  <Users className="size-4 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <h2 className="text-base font-semibold leading-tight">
+                    {t("kills.fullRanking.title")}
+                  </h2>
+                  <p className="text-xs text-muted-foreground leading-tight">
+                    {t("kills.fullRanking.description")}
+                  </p>
+                </div>
+              </div>
 
-          <div className="flex items-center gap-2 md:hidden">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder={t("kills.fullRanking.searchPlaceholder")}
-                onChange={handleSearchChange}
-                className="pl-8 w-full"
-              />
-            </div>
-            <StatsRankingFiltersMobile
-              world={settings.world}
-              minLvl={settings.minLvl}
-              maxLvl={settings.maxLvl}
-              onWorldChange={handleWorldChange}
-              onMinLvlChange={handleMinLvlChange}
-              onMaxLvlChange={handleMaxLvlChange}
-            />
-          </div>
+              <div className="flex items-center gap-2 md:hidden">
+                <div className="relative flex-1">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder={t("kills.fullRanking.searchPlaceholder")}
+                    onChange={handleSearchChange}
+                    className="pl-8 w-full"
+                  />
+                </div>
+                <StatsRankingFiltersMobile
+                  world={settings.world}
+                  minLvl={settings.minLvl}
+                  maxLvl={settings.maxLvl}
+                  onWorldChange={handleWorldChange}
+                  onMinLvlChange={handleMinLvlChange}
+                  onMaxLvlChange={handleMaxLvlChange}
+                />
+              </div>
 
-          <div className="hidden md:flex items-center gap-2">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder={t("kills.fullRanking.searchPlaceholder")}
-                onChange={handleSearchChange}
-                className="pl-8 w-[200px]"
-              />
+              <div className="hidden md:flex items-center gap-2">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder={t("kills.fullRanking.searchPlaceholder")}
+                    onChange={handleSearchChange}
+                    className="pl-8 w-[200px]"
+                  />
+                </div>
+                <LevelFilters
+                  minLvl={settings.minLvl}
+                  maxLvl={settings.maxLvl}
+                  onMinLvlChange={handleMinLvlChange}
+                  onMaxLvlChange={handleMaxLvlChange}
+                />
+                <WorldSwitcher
+                  value={settings.world}
+                  onValueChange={handleWorldChange}
+                  showAllOption
+                  width="w-[160px]"
+                />
+              </div>
             </div>
-            <LevelFilters
-              minLvl={settings.minLvl}
-              maxLvl={settings.maxLvl}
-              onMinLvlChange={handleMinLvlChange}
-              onMaxLvlChange={handleMaxLvlChange}
-            />
-            <WorldSwitcher
-              value={settings.world}
-              onValueChange={handleWorldChange}
-              showAllOption
-              width="w-[160px]"
-            />
-          </div>
+          </Card>
+
+          <Card className="flex-1 min-h-0 flex flex-col border-border bg-card/40 p-0 backdrop-blur-sm overflow-hidden gap-0">
+            <ScrollArea className="relative flex-1 min-h-0 w-full">
+              {isLoading ? (
+                <div className="flex items-center justify-center h-64">
+                  <Spinner className="h-8 w-8" />
+                </div>
+              ) : !data || paginatedData.length === 0 ? (
+                <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">
+                  <p className="text-muted-foreground">
+                    {t("kills.memberRanking.noData")}
+                  </p>
+                </div>
+              ) : (
+                <Table className="border-b">
+                  <TableHeader className="bg-background sticky top-0 z-10">
+                    <TableRow className="border-b-1! border-border">
+                      <TableHead className="whitespace-nowrap w-12 text-center">
+                        #
+                      </TableHead>
+                      <TableHead className="whitespace-nowrap">
+                        {t("kills.memberRanking.member")}
+                      </TableHead>
+                      <TableHead className="whitespace-nowrap text-center">
+                        {t("kills.memberRanking.totalKills")}
+                      </TableHead>
+                      {activeNpcTypes.map((type) => (
+                        <TableHead
+                          key={type}
+                          className="whitespace-nowrap text-center"
+                        >
+                          {t(`npcType.${type}`)}
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedData.map((member, index) => {
+                      const rank = cursor + index + 1;
+                      const icon = getRankIcon(rank);
+                      return (
+                        <TableRow
+                          key={member.memberId}
+                          className="bg-background/30 border-b border-border h-14 cursor-pointer hover:bg-muted/50 transition-colors"
+                          onClick={() => handleRowClick(member.memberId)}
+                        >
+                          <TableCell className="whitespace-nowrap">
+                            <div className="flex items-center justify-center w-8">
+                              {icon ?? (
+                                <span className="text-sm font-medium text-muted-foreground">
+                                  {rank}
+                                </span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-6 w-6">
+                                <AvatarImage
+                                  src={getDiscordAvatarUrl(
+                                    member.memberUserId,
+                                    member.memberAvatar,
+                                    32,
+                                  )}
+                                />
+                                <AvatarFallback className="text-xs">
+                                  {member.memberName[0]}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="font-medium">
+                                {member.memberName}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            <div className="text-center font-semibold tabular-nums">
+                              {member.totalParticipations.toLocaleString()}
+                            </div>
+                          </TableCell>
+                          {activeNpcTypes.map((type) => (
+                            <TableCell key={type} className="whitespace-nowrap">
+                              <div className="text-center tabular-nums">
+                                {(
+                                  member.participationsByType[type] ?? 0
+                                ).toLocaleString()}
+                              </div>
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              )}
+            </ScrollArea>
+
+            <div className="h-14 shrink-0 border-t border-border py-4 flex items-center justify-between px-4">
+              <div className="text-sm text-muted-foreground whitespace-nowrap">
+                {t("kills.ranking.total", { count: total })}
+              </div>
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={handlePreviousPage}
+                      className={
+                        !hasPrev
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                    />
+                  </PaginationItem>
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={handleNextPage}
+                      className={
+                        !hasNext
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          </Card>
         </div>
-      </div>
-
-      <ScrollArea className="relative flex-1 min-h-0 w-full">
-        {isLoading ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-            <Spinner className="size-8" />
-            <p className="text-sm text-muted-foreground">
-              {t("kills.ranking.loading")}
-            </p>
-          </div>
-        ) : !data || paginatedData.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">
-            <p className="text-muted-foreground">
-              {t("kills.memberRanking.noData")}
-            </p>
-          </div>
-        ) : (
-          <Table className="border-b">
-            <TableHeader className="bg-background sticky top-0 z-10">
-              <TableRow className="border-b-1! border-border">
-                <TableHead className="whitespace-nowrap w-12 text-center">
-                  #
-                </TableHead>
-                <TableHead className="whitespace-nowrap">
-                  {t("kills.memberRanking.member")}
-                </TableHead>
-                <TableHead className="whitespace-nowrap text-center">
-                  {t("kills.memberRanking.totalKills")}
-                </TableHead>
-                {activeNpcTypes.map((type) => (
-                  <TableHead
-                    key={type}
-                    className="whitespace-nowrap text-center"
-                  >
-                    {t(`npcType.${type}`)}
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedData.map((member, index) => {
-                const rank = cursor + index + 1;
-                const icon = getRankIcon(rank);
-                return (
-                  <TableRow
-                    key={member.memberId}
-                    className="bg-background/30 border-b border-border h-14 cursor-pointer hover:bg-muted/50 transition-colors"
-                    onClick={() => handleRowClick(member.memberId)}
-                  >
-                    <TableCell className="whitespace-nowrap">
-                      <div className="flex items-center justify-center w-8">
-                        {icon ?? (
-                          <span className="text-sm font-medium text-muted-foreground">
-                            {rank}
-                          </span>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-6 w-6">
-                          <AvatarImage
-                            src={getDiscordAvatarUrl(
-                              member.memberUserId,
-                              member.memberAvatar,
-                              32,
-                            )}
-                          />
-                          <AvatarFallback className="text-xs">
-                            {member.memberName[0]}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="font-medium">{member.memberName}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      <div className="text-center font-semibold tabular-nums">
-                        {member.totalParticipations.toLocaleString()}
-                      </div>
-                    </TableCell>
-                    {activeNpcTypes.map((type) => (
-                      <TableCell key={type} className="whitespace-nowrap">
-                        <div className="text-center tabular-nums">
-                          {(
-                            member.participationsByType[type] ?? 0
-                          ).toLocaleString()}
-                        </div>
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        )}
       </ScrollArea>
-
-      <div className="h-14 shrink-0 bg-background border-t py-4 flex items-center justify-between px-4">
-        <div className="text-sm text-muted-foreground whitespace-nowrap">
-          {t("kills.ranking.total", { count: total })}
-        </div>
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                onClick={handlePreviousPage}
-                className={
-                  !hasPrev ? "pointer-events-none opacity-50" : "cursor-pointer"
-                }
-              />
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationNext
-                onClick={handleNextPage}
-                className={
-                  !hasNext ? "pointer-events-none opacity-50" : "cursor-pointer"
-                }
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      </div>
     </div>
   );
 };

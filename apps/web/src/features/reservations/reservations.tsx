@@ -79,7 +79,7 @@ export const Reservations: React.FC = () => {
 
   return (
     <div className="w-full flex flex-col h-full overflow-hidden">
-      <div className="bg-background w-full flex items-center border-b h-14">
+      <div className="bg-card/60 backdrop-blur-sm w-full flex items-center border-b h-14">
         <div className="flex-1 min-w-0 px-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

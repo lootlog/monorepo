@@ -1,9 +1,8 @@
-import { Button } from "@lootlog/ui/components/button";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useTheme } from "@/hooks/context/use-theme";
 import { FrozenButton } from "@/components/effects/rukia-frost";
-import { CatButton } from "@/components/effects/cat-button";
+import { cn } from "@lootlog/ui/lib/utils";
 
 interface NavElement {
   id: string;
@@ -27,7 +26,6 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
   const { pathname } = useLocation();
   const { theme } = useTheme();
   const isRukiaTheme = theme === "rukia";
-  const isCatTheme = theme.startsWith("cat-");
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -61,53 +59,53 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
   }, []);
 
   return (
-    <div className={`border-b box-border bg-background ${className}`}>
-      <div
-        ref={scrollRef}
-        className="p-2 flex gap-2 overflow-x-auto md:overflow-visible [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden scroll-smooth"
-        role="navigation"
-        aria-label={ariaLabel}
-      >
-        {items.map((item) => {
-          const url = `${basePath}${item.href}`;
-          const active = pathname === url;
-          const isHovered = hoveredId === item.id;
+    <div
+      ref={scrollRef}
+      className={cn(
+        "px-3 pt-3 pb-0 flex gap-2 overflow-x-auto md:overflow-visible [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden scroll-smooth",
+        className,
+      )}
+      role="navigation"
+      aria-label={ariaLabel}
+    >
+      {items.map((item) => {
+        const url = `${basePath}${item.href}`;
+        const active = pathname === url;
+        const isHovered = hoveredId === item.id;
 
-          const buttonContent = (
-            <Button
-              className="flex-shrink-0 min-w-max"
-              size="sm"
-              variant={active ? "default" : "ghost"}
-            >
-              {item.label}
-            </Button>
-          );
+        const tabContent = (
+          <span
+            className={cn(
+              "inline-flex items-center px-6 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap",
+              active
+                ? "bg-primary/15 text-primary"
+                : "bg-muted/30 text-muted-foreground hover:text-foreground hover:bg-muted/50",
+            )}
+          >
+            {item.label}
+          </span>
+        );
 
-          return (
-            <Link
-              key={item.id}
-              to={url}
-              aria-current={active ? "page" : undefined}
-              className="flex-shrink-0"
-              ref={active ? activeTabRef : undefined}
-              onMouseEnter={() => setHoveredId(item.id)}
-              onMouseLeave={() => setHoveredId(null)}
-            >
-              {isRukiaTheme ? (
-                <FrozenButton isHovered={isHovered} isActive={active}>
-                  {buttonContent}
-                </FrozenButton>
-              ) : isCatTheme ? (
-                <CatButton isHovered={isHovered} isActive={active}>
-                  {buttonContent}
-                </CatButton>
-              ) : (
-                buttonContent
-              )}
-            </Link>
-          );
-        })}
-      </div>
+        return (
+          <Link
+            key={item.id}
+            to={url}
+            aria-current={active ? "page" : undefined}
+            className="flex-shrink-0"
+            ref={active ? activeTabRef : undefined}
+            onMouseEnter={() => setHoveredId(item.id)}
+            onMouseLeave={() => setHoveredId(null)}
+          >
+            {isRukiaTheme ? (
+              <FrozenButton isHovered={isHovered} isActive={active}>
+                {tabContent}
+              </FrozenButton>
+            ) : (
+              tabContent
+            )}
+          </Link>
+        );
+      })}
     </div>
   );
 };

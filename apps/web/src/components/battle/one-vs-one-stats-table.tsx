@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ChartArea, EyeOff, Eye } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
+import { Card } from "@lootlog/ui/components/card";
 import {
   Table,
   TableBody,
@@ -419,14 +420,14 @@ export function OneVsOneStatsTable({ battle }: OneVsOneStatsTableProps) {
 
   if (!user || !opponent) {
     return (
-      <div className="w-full border-b p-8 text-center text-muted-foreground">
+      <Card className="border-border bg-card/40 backdrop-blur-sm p-8 w-full text-center text-muted-foreground">
         Nie znaleziono danych walki 1v1
-      </div>
+      </Card>
     );
   }
 
   return (
-    <div className="w-full border-b">
+    <Card className="border-border bg-card/40 backdrop-blur-sm overflow-hidden gap-0 p-0 w-full">
       <div className="sticky top-0 z-20 bg-background border-b w-full">
         <div className="p-4">
           <div className="flex items-center justify-between flex-wrap gap-4">
@@ -534,6 +535,6 @@ export function OneVsOneStatsTable({ battle }: OneVsOneStatsTableProps) {
           </TableBody>
         </Table>
       </div>
-    </div>
+    </Card>
   );
 }

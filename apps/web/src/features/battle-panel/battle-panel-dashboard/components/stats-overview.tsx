@@ -1,10 +1,9 @@
 import { Swords, Trophy, Award, ChevronRight } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
-import { Label } from "@lootlog/ui/components/label";
 import { useBattleCharacters } from "@/hooks/api/battle-log/use-battle-characters";
 import { useBattleAnalytics } from "@/hooks/api/battle-log/use-battle-analytics";
 import { Spinner } from "@lootlog/ui/components/spinner";
-import { Separator } from "@lootlog/ui/components/separator";
+import { Card } from "@lootlog/ui/components/card";
 import CountUp from "@lootlog/ui/components/count-up";
 import { ROUTES } from "@/config/routes";
 import { Link } from "@tanstack/react-router";
@@ -138,14 +137,21 @@ export function StatsOverview() {
   }
 
   return (
-    <div className="flex flex-col">
-      <div className="p-4 bg-background">
+    <div className="flex flex-col gap-4">
+      <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
         <div className="flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <h2 className="font-semibold">Przegląd statystyk</h2>
-            <p className="text-muted-foreground text-sm">
-              Statystyki walk dla wybranego okresu
-            </p>
+          <div className="flex items-center gap-3">
+            <div className="rounded-xl bg-primary/10 p-2.5 shadow-inner shadow-primary/10">
+              <Swords className="size-4 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-base font-semibold leading-tight">
+                Przegląd statystyk
+              </h2>
+              <p className="text-xs text-muted-foreground leading-tight">
+                Statystyki walk dla wybranego okresu
+              </p>
+            </div>
           </div>
 
           <Button variant="outline" size="sm" asChild>
@@ -155,104 +161,101 @@ export function StatsOverview() {
             </Link>
           </Button>
         </div>
-      </div>
-      <Separator />
-      <div className="px-4 pb-4 space-y-4">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex flex-col md:flex-row md:items-end gap-3 w-full md:w-auto flex-wrap">
-            <div className="space-y-1 w-full md:w-auto">
-              <Label className="text-xs invisible">Postać</Label>
-              <CharacterSelector
-                characterId={currentCharacterId}
-                onCharacterChange={setCurrentCharacterId}
-                allowAllCharacters
-                className="w-full md:w-[250px] h-10"
-              />
-            </div>
 
-            <div className="space-y-1 w-full md:w-auto">
-              <Label className="text-xs invisible">Okres</Label>
-              <PeriodSelector
-                value={selectedPeriod}
-                onValueChange={handlePeriodChange}
-                excludePeriods={["all"]}
-                width="w-full md:w-[220px]"
-              />
-            </div>
+        <div className="flex flex-col md:flex-row md:items-end gap-3 flex-wrap">
+          <div className="w-full md:w-auto">
+            <CharacterSelector
+              characterId={currentCharacterId}
+              onCharacterChange={setCurrentCharacterId}
+              allowAllCharacters
+              className="w-full md:w-[250px] h-10"
+            />
+          </div>
 
-            <div className="flex items-end gap-3">
-              <LevelRangeFilter
-                minLevel={minLevel}
-                maxLevel={maxLevel}
-                onMinLevelChange={(value) => {
-                  const currentId =
-                    useBattleFiltersStore.getState().currentCharacterId;
-                  useBattleFiltersStore
-                    .getState()
-                    .updateFilters(currentId, { minLevel: value ?? 1 });
-                }}
-                onMaxLevelChange={(value) => {
-                  const currentId =
-                    useBattleFiltersStore.getState().currentCharacterId;
-                  useBattleFiltersStore
-                    .getState()
-                    .updateFilters(currentId, { maxLevel: value ?? 500 });
-                }}
-                inputClassName="w-full md:w-[80px]"
-                containerClassName="flex-1 md:flex-none"
-              />
-            </div>
+          <div className="w-full md:w-auto">
+            <PeriodSelector
+              value={selectedPeriod}
+              onValueChange={handlePeriodChange}
+              excludePeriods={["all"]}
+              width="w-full md:w-[220px]"
+            />
+          </div>
+
+          <div className="flex items-end gap-3">
+            <LevelRangeFilter
+              minLevel={minLevel}
+              maxLevel={maxLevel}
+              onMinLevelChange={(value) => {
+                const currentId =
+                  useBattleFiltersStore.getState().currentCharacterId;
+                useBattleFiltersStore
+                  .getState()
+                  .updateFilters(currentId, { minLevel: value ?? 1 });
+              }}
+              onMaxLevelChange={(value) => {
+                const currentId =
+                  useBattleFiltersStore.getState().currentCharacterId;
+                useBattleFiltersStore
+                  .getState()
+                  .updateFilters(currentId, { maxLevel: value ?? 500 });
+              }}
+              inputClassName="w-full md:w-[80px]"
+              containerClassName="flex-1 md:flex-none"
+            />
           </div>
         </div>
-        <Separator />
-        {isLoadingAnalytics ? (
-          <div className="flex items-center justify-center p-8">
-            <Spinner />
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {stats.map((stat, index) => {
-              const Icon = stat.icon;
-              const color = stat.gradientType
-                ? getGradientColor(stat.value, stat.gradientType)
-                : undefined;
-              return (
-                <div key={index} className="relative overflow-hidden">
-                  <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <div className="text-sm font-medium text-muted-foreground">
-                      {stat.title}
-                    </div>
-                    <Icon className="h-4 w-4 text-muted-foreground" />
+      </Card>
+
+      {isLoadingAnalytics ? (
+        <div className="flex items-center justify-center h-64">
+          <Spinner />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {stats.map((stat, index) => {
+            const Icon = stat.icon;
+            const color = stat.gradientType
+              ? getGradientColor(stat.value, stat.gradientType)
+              : undefined;
+            return (
+              <Card
+                key={index}
+                className="border-border bg-card/40 p-4 backdrop-blur-sm gap-2"
+              >
+                <div className="flex flex-row items-center justify-between">
+                  <div className="text-sm font-medium text-muted-foreground">
+                    {stat.title}
                   </div>
-                  <div>
-                    <div
-                      className="text-2xl font-bold"
-                      style={color ? { color } : undefined}
-                    >
-                      <CountUp
-                        to={
-                          stat.decimals
-                            ? Number(stat.value.toFixed(stat.decimals))
-                            : stat.value
-                        }
-                        separator={stat.useSeparator ? " " : ""}
-                        className="inline"
-                        duration={0.8}
-                      />
-                      {stat.suffix && (
-                        <span className="ml-0.5">{stat.suffix}</span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>{stat.description}</span>
-                    </div>
+                  <Icon className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div>
+                  <div
+                    className="text-2xl font-bold"
+                    style={color ? { color } : undefined}
+                  >
+                    <CountUp
+                      to={
+                        stat.decimals
+                          ? Number(stat.value.toFixed(stat.decimals))
+                          : stat.value
+                      }
+                      separator={stat.useSeparator ? " " : ""}
+                      className="inline"
+                      duration={0.8}
+                    />
+                    {stat.suffix && (
+                      <span className="ml-0.5">{stat.suffix}</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>{stat.description}</span>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

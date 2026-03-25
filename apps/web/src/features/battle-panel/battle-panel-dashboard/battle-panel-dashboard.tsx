@@ -3,7 +3,7 @@ import { RecentBattles } from "@/features/battle-panel/battle-panel-dashboard/co
 import { StatsOverview } from "@/features/battle-panel/battle-panel-dashboard/components/stats-overview";
 import { useBattleAnalytics } from "@/hooks/api/battle-log/use-battle-analytics";
 
-import { Separator } from "@lootlog/ui/components/separator";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
   Empty,
   EmptyHeader,
@@ -44,15 +44,11 @@ export const BattlePanelDashboard = () => {
   }
 
   return (
-    <div>
-      <StatsOverview />
-      {/* <Separator /> */}
-      {/* <div className="grid grid-cols-2 gap-4">
-        <BattlesChart />
-        <BattlesChart />
-      </div> */}
-      <Separator />
-      <RecentBattles />
-    </div>
+    <ScrollArea className="h-full bg-background/50">
+      <div className="px-3 py-3 flex flex-col gap-4">
+        <StatsOverview />
+        <RecentBattles />
+      </div>
+    </ScrollArea>
   );
 };
