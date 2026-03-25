@@ -140,7 +140,6 @@ export const ActivityLogsList = () => {
       className="h-24 flex-1 relative"
       ref={scrollElementRef}
     >
-      <div className="h-3" />
       <div
         className="p-3 pt-0"
         style={{
@@ -158,7 +157,7 @@ export const ActivityLogsList = () => {
               key={virtualItem.key}
               data-index={virtualItem.index}
               ref={virtualizer.measureElement}
-              className="pb-3"
+              className="py-3"
               style={{
                 position: "absolute",
                 top: 0,
