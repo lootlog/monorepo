@@ -158,7 +158,6 @@ export const LootsList: FC = () => {
         className="h-24 flex-1 relative"
         ref={scrollElementRef}
       >
-        <div className="h-3" />
         {isLoading ? (
           <div
             className={

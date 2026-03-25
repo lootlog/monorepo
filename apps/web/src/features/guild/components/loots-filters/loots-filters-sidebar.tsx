@@ -1,5 +1,6 @@
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Button } from "@lootlog/ui/components/button";
+import { Card } from "@lootlog/ui/components/card";
 import { Separator } from "@lootlog/ui/components/separator";
 import { Label } from "@lootlog/ui/components/label";
 import { Input } from "@lootlog/ui/components/input";
@@ -261,389 +262,394 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
 
       <div
         className={cn(
-          "w-[320px] bg-sidebar flex flex-col h-full shrink-0",
+          "w-[320px] h-full flex flex-col shrink-0 bg-background/50 py-3 pr-3",
           className,
         )}
       >
-        <div className="flex-1 overflow-hidden">
-          <ScrollArea className="h-full">
-            <div className="p-4 space-y-4">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm font-semibold">
-                    {t("loots.filtersPanel.quickFilters.title")}
-                  </Label>
-                  {canSaveCurrentFilter && (
-                    <Button
-                      onClick={() => setIsDialogOpen(true)}
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 px-2 text-xs"
-                    >
-                      <Plus className="h-3 w-3 mr-1" />
-                      {t("loots.filtersPanel.quickFilters.saveButton")}
-                    </Button>
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {allQuickFilters.map((filter) => (
-                    <Badge
-                      key={filter.id}
-                      className="cursor-pointer hover:bg-primary/80 transition-colors group"
-                      onClick={() => applyFilter(filter.filters)}
-                    >
-                      {"category" in filter && (
-                        <span className="text-xs opacity-80">
-                          {filter.category}:
+        <Card className="flex-1 flex flex-col min-h-0 bg-filters-sidebar border-border backdrop-blur-sm p-0">
+          <div className="flex-1 overflow-hidden">
+            <ScrollArea className="h-full">
+              <div className="p-4 space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-semibold">
+                      {t("loots.filtersPanel.quickFilters.title")}
+                    </Label>
+                    {canSaveCurrentFilter && (
+                      <Button
+                        onClick={() => setIsDialogOpen(true)}
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        {t("loots.filtersPanel.quickFilters.saveButton")}
+                      </Button>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {allQuickFilters.map((filter) => (
+                      <Badge
+                        key={filter.id}
+                        className="cursor-pointer hover:bg-primary/80 transition-colors group"
+                        onClick={() => applyFilter(filter.filters)}
+                      >
+                        {"category" in filter && (
+                          <span className="text-xs opacity-80">
+                            {filter.category}:
+                          </span>
+                        )}
+                        <span className={"category" in filter ? "ml-1" : ""}>
+                          {filter.label}
                         </span>
-                      )}
-                      <span className={"category" in filter ? "ml-1" : ""}>
-                        {filter.label}
-                      </span>
-                      {!("isDefault" in filter && filter.isDefault) && (
-                        <button
-                          className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemoveCustomFilter(filter.id);
-                          }}
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      )}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-
-              <Separator />
-
-              <Accordion
-                type="multiple"
-                defaultValue={["npc", "item", "player"]}
-                className="space-y-4"
-              >
-                <AccordionItem value="npc" className="space-y-3">
-                  <AccordionTrigger>
-                    {t("loots.filtersPanel.npcSection.title")}
-                  </AccordionTrigger>
-                  <AccordionContent className="space-y-3">
-                    <div>
-                      <Label className="text-xs text-muted-foreground mb-2 block">
-                        {t("loots.filtersPanel.npcSection.npcTypesLabel")}
-                      </Label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {npcTypeOptions.map((npcType) => (
-                          <div
-                            key={npcType.value}
-                            className="flex items-center gap-2"
-                          >
-                            <Checkbox
-                              id={`npcType-${npcType.value}`}
-                              checked={filters.npcTypes?.includes(
-                                npcType.value,
-                              )}
-                              onCheckedChange={(checked) => {
-                                const currentTypes = filters.npcTypes ?? [];
-                                const newTypes = checked
-                                  ? [...currentTypes, npcType.value]
-                                  : currentTypes.filter(
-                                      (t) => t !== npcType.value,
-                                    );
-                                updateFilters({ npcTypes: newTypes });
-                              }}
-                            />
-                            <Label
-                              htmlFor={`npcType-${npcType.value}`}
-                              className="text-sm cursor-pointer"
-                            >
-                              {npcType.label}
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label className="text-xs text-muted-foreground mb-2 block">
-                        {t("loots.filtersPanel.npcSection.npcsLabel")}
-                      </Label>
-                      <FilterCombobox
-                        name="npcs"
-                        placeholder={t(
-                          "loots.filtersPanel.npcSection.npcsPlaceholder",
-                        )}
-                        options={npcsOptions}
-                        defaultValue={filters.npcs}
-                        onSelect={(_, values) =>
-                          updateFilters({ npcs: values })
-                        }
-                        controlledSearch
-                        onSearchChange={setDebouncedNpcsSearchValue}
-                        searchValue={debouncedNpcsSearchValue}
-                        loading={npcsDataLoading}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <Label className="text-xs text-muted-foreground mb-2 block">
-                          {t("loots.filtersPanel.common.minLevel")}
-                        </Label>
-                        <Input
-                          type="number"
-                          placeholder="0"
-                          value={filters.npcLevelMin ?? ""}
-                          onChange={(e) =>
-                            updateFilters({ npcLevelMin: e.target.value })
-                          }
-                          min={0}
-                          max={500}
-                          className="h-8"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-xs text-muted-foreground mb-2 block">
-                          {t("loots.filtersPanel.common.maxLevel")}
-                        </Label>
-                        <Input
-                          type="number"
-                          placeholder="500"
-                          value={filters.npcLevelMax ?? ""}
-                          onChange={(e) =>
-                            updateFilters({ npcLevelMax: e.target.value })
-                          }
-                          min={0}
-                          max={500}
-                          className="h-8"
-                        />
-                      </div>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-
-                <Separator />
-
-                <AccordionItem value="item" className="space-y-3">
-                  <AccordionTrigger>
-                    {t("loots.filtersPanel.itemSection.title")}
-                  </AccordionTrigger>
-                  <AccordionContent className="space-y-3">
-                    <div>
-                      <Label className="text-xs text-muted-foreground mb-2 block">
-                        {t("loots.filtersPanel.itemSection.raritiesLabel")}
-                      </Label>
-                      <div className="flex flex-col gap-2">
-                        {rarityOptions.map((rarity) => (
-                          <div
-                            key={rarity.value}
-                            className="flex items-center gap-2"
-                          >
-                            <Checkbox
-                              id={`rarity-${rarity.value}`}
-                              checked={filters.rarities?.includes(rarity.value)}
-                              onCheckedChange={(checked) => {
-                                const currentRarities = filters.rarities ?? [];
-                                const newRarities = checked
-                                  ? [...currentRarities, rarity.value]
-                                  : currentRarities.filter(
-                                      (r) => r !== rarity.value,
-                                    );
-                                updateFilters({ rarities: newRarities });
-                              }}
-                            />
-                            <Label
-                              htmlFor={`rarity-${rarity.value}`}
-                              className="text-sm cursor-pointer"
-                            >
-                              {rarity.label}
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label className="text-xs text-muted-foreground mb-2 block">
-                        {t("loots.filtersPanel.itemSection.itemsLabel")}
-                      </Label>
-                      <FilterCombobox
-                        name="itemNames"
-                        placeholder={t(
-                          "loots.filtersPanel.itemSection.itemsPlaceholder",
-                        )}
-                        options={itemsOptions}
-                        defaultValue={filters.itemNames}
-                        onSelect={(_, values) =>
-                          updateFilters({ itemNames: values })
-                        }
-                        controlledSearch
-                        onSearchChange={setDebouncedItemsSearchValue}
-                        searchValue={debouncedItemsSearchValue}
-                        loading={itemsDataLoading}
-                      />
-                    </div>
-
-                    {hidItem && filters.hid && (
-                      <div>
-                        <Label className="text-xs text-muted-foreground mb-2 block">
-                          {t(
-                            "loots.filtersPanel.itemSection.filteredItemLabel",
-                          )}
-                        </Label>
-                        <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
-                          <ItemImage
-                            icon={hidItem.icon}
-                            rarity={hidItem.rarity}
-                          />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">
-                              {hidItem.name}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {t("loots.filtersPanel.common.levelValue", {
-                                level: hidItem.lvl,
-                              })}
-                            </p>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 shrink-0"
-                            onClick={() => updateFilters({ hid: "" })}
+                        {!("isDefault" in filter && filter.isDefault) && (
+                          <button
+                            className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveCustomFilter(filter.id);
+                            }}
                           >
                             <X className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <Label className="text-xs text-muted-foreground mb-2 block">
-                          {t("loots.filtersPanel.common.minLevel")}
-                        </Label>
-                        <Input
-                          type="number"
-                          placeholder="0"
-                          value={filters.itemLevelMin ?? ""}
-                          onChange={(e) =>
-                            updateFilters({ itemLevelMin: e.target.value })
-                          }
-                          min={0}
-                          max={500}
-                          className="h-8"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-xs text-muted-foreground mb-2 block">
-                          {t("loots.filtersPanel.common.maxLevel")}
-                        </Label>
-                        <Input
-                          type="number"
-                          placeholder="500"
-                          value={filters.itemLevelMax ?? ""}
-                          onChange={(e) =>
-                            updateFilters({ itemLevelMax: e.target.value })
-                          }
-                          min={0}
-                          max={500}
-                          className="h-8"
-                        />
-                      </div>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
+                          </button>
+                        )}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
 
                 <Separator />
 
-                <AccordionItem value="player" className="space-y-3">
-                  <AccordionTrigger>
-                    {t("loots.filtersPanel.playerSection.title")}
-                  </AccordionTrigger>
-                  <AccordionContent className="space-y-3">
-                    <div>
-                      <Label className="text-xs text-muted-foreground mb-2 block">
-                        {t("loots.filtersPanel.playerSection.playersLabel")}
-                      </Label>
-                      <FilterCombobox
-                        name="players"
-                        placeholder={t(
-                          "loots.filtersPanel.playerSection.playersPlaceholder",
-                        )}
-                        options={playersOptions}
-                        defaultValue={filters.players}
-                        onSelect={(_, values) =>
-                          updateFilters({ players: values })
-                        }
-                        controlledSearch
-                        onSearchChange={setDebouncedPlayersSearchValue}
-                        searchValue={debouncedPlayersSearchValue}
-                        loading={playersDataLoading}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <Label className="text-xs text-muted-foreground mb-2 block">
-                          {t("loots.filtersPanel.common.minLevel")}
-                        </Label>
-                        <Input
-                          type="number"
-                          placeholder="0"
-                          value={filters.playerLevelMin ?? ""}
-                          onChange={(e) =>
-                            updateFilters({ playerLevelMin: e.target.value })
-                          }
-                          min={0}
-                          max={500}
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-xs text-muted-foreground mb-2 block">
-                          {t("loots.filtersPanel.common.maxLevel")}
-                        </Label>
-                        <Input
-                          type="number"
-                          placeholder="500"
-                          value={filters.playerLevelMax ?? ""}
-                          onChange={(e) =>
-                            updateFilters({ playerLevelMax: e.target.value })
-                          }
-                          min={0}
-                          max={500}
-                        />
-                      </div>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            </div>
-          </ScrollArea>
-        </div>
-
-        <AnimatePresence>
-          {hasActiveFilters && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 56, opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="border-t px-4 bg-sidebar overflow-hidden"
-            >
-              <div className="h-14 flex items-center w-full">
-                <Button
-                  onClick={clearFilters}
-                  variant="outline"
-                  className="w-full"
-                  size="sm"
+                <Accordion
+                  type="multiple"
+                  defaultValue={["npc", "item", "player"]}
+                  className="space-y-4"
                 >
-                  <X className="h-4 w-4 mr-2" />
-                  {t("loots.filtersPanel.quickFilters.clearButton")}
-                </Button>
+                  <AccordionItem value="npc" className="space-y-3">
+                    <AccordionTrigger>
+                      {t("loots.filtersPanel.npcSection.title")}
+                    </AccordionTrigger>
+                    <AccordionContent className="space-y-3">
+                      <div>
+                        <Label className="text-xs text-muted-foreground mb-2 block">
+                          {t("loots.filtersPanel.npcSection.npcTypesLabel")}
+                        </Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {npcTypeOptions.map((npcType) => (
+                            <div
+                              key={npcType.value}
+                              className="flex items-center gap-2"
+                            >
+                              <Checkbox
+                                id={`npcType-${npcType.value}`}
+                                checked={filters.npcTypes?.includes(
+                                  npcType.value,
+                                )}
+                                onCheckedChange={(checked) => {
+                                  const currentTypes = filters.npcTypes ?? [];
+                                  const newTypes = checked
+                                    ? [...currentTypes, npcType.value]
+                                    : currentTypes.filter(
+                                        (t) => t !== npcType.value,
+                                      );
+                                  updateFilters({ npcTypes: newTypes });
+                                }}
+                              />
+                              <Label
+                                htmlFor={`npcType-${npcType.value}`}
+                                className="text-sm cursor-pointer"
+                              >
+                                {npcType.label}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs text-muted-foreground mb-2 block">
+                          {t("loots.filtersPanel.npcSection.npcsLabel")}
+                        </Label>
+                        <FilterCombobox
+                          name="npcs"
+                          placeholder={t(
+                            "loots.filtersPanel.npcSection.npcsPlaceholder",
+                          )}
+                          options={npcsOptions}
+                          defaultValue={filters.npcs}
+                          onSelect={(_, values) =>
+                            updateFilters({ npcs: values })
+                          }
+                          controlledSearch
+                          onSearchChange={setDebouncedNpcsSearchValue}
+                          searchValue={debouncedNpcsSearchValue}
+                          loading={npcsDataLoading}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <Label className="text-xs text-muted-foreground mb-2 block">
+                            {t("loots.filtersPanel.common.minLevel")}
+                          </Label>
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            value={filters.npcLevelMin ?? ""}
+                            onChange={(e) =>
+                              updateFilters({ npcLevelMin: e.target.value })
+                            }
+                            min={0}
+                            max={500}
+                            className="h-8"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs text-muted-foreground mb-2 block">
+                            {t("loots.filtersPanel.common.maxLevel")}
+                          </Label>
+                          <Input
+                            type="number"
+                            placeholder="500"
+                            value={filters.npcLevelMax ?? ""}
+                            onChange={(e) =>
+                              updateFilters({ npcLevelMax: e.target.value })
+                            }
+                            min={0}
+                            max={500}
+                            className="h-8"
+                          />
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <Separator />
+
+                  <AccordionItem value="item" className="space-y-3">
+                    <AccordionTrigger>
+                      {t("loots.filtersPanel.itemSection.title")}
+                    </AccordionTrigger>
+                    <AccordionContent className="space-y-3">
+                      <div>
+                        <Label className="text-xs text-muted-foreground mb-2 block">
+                          {t("loots.filtersPanel.itemSection.raritiesLabel")}
+                        </Label>
+                        <div className="flex flex-col gap-2">
+                          {rarityOptions.map((rarity) => (
+                            <div
+                              key={rarity.value}
+                              className="flex items-center gap-2"
+                            >
+                              <Checkbox
+                                id={`rarity-${rarity.value}`}
+                                checked={filters.rarities?.includes(
+                                  rarity.value,
+                                )}
+                                onCheckedChange={(checked) => {
+                                  const currentRarities =
+                                    filters.rarities ?? [];
+                                  const newRarities = checked
+                                    ? [...currentRarities, rarity.value]
+                                    : currentRarities.filter(
+                                        (r) => r !== rarity.value,
+                                      );
+                                  updateFilters({ rarities: newRarities });
+                                }}
+                              />
+                              <Label
+                                htmlFor={`rarity-${rarity.value}`}
+                                className="text-sm cursor-pointer"
+                              >
+                                {rarity.label}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs text-muted-foreground mb-2 block">
+                          {t("loots.filtersPanel.itemSection.itemsLabel")}
+                        </Label>
+                        <FilterCombobox
+                          name="itemNames"
+                          placeholder={t(
+                            "loots.filtersPanel.itemSection.itemsPlaceholder",
+                          )}
+                          options={itemsOptions}
+                          defaultValue={filters.itemNames}
+                          onSelect={(_, values) =>
+                            updateFilters({ itemNames: values })
+                          }
+                          controlledSearch
+                          onSearchChange={setDebouncedItemsSearchValue}
+                          searchValue={debouncedItemsSearchValue}
+                          loading={itemsDataLoading}
+                        />
+                      </div>
+
+                      {hidItem && filters.hid && (
+                        <div>
+                          <Label className="text-xs text-muted-foreground mb-2 block">
+                            {t(
+                              "loots.filtersPanel.itemSection.filteredItemLabel",
+                            )}
+                          </Label>
+                          <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
+                            <ItemImage
+                              icon={hidItem.icon}
+                              rarity={hidItem.rarity}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">
+                                {hidItem.name}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {t("loots.filtersPanel.common.levelValue", {
+                                  level: hidItem.lvl,
+                                })}
+                              </p>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 shrink-0"
+                              onClick={() => updateFilters({ hid: "" })}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <Label className="text-xs text-muted-foreground mb-2 block">
+                            {t("loots.filtersPanel.common.minLevel")}
+                          </Label>
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            value={filters.itemLevelMin ?? ""}
+                            onChange={(e) =>
+                              updateFilters({ itemLevelMin: e.target.value })
+                            }
+                            min={0}
+                            max={500}
+                            className="h-8"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs text-muted-foreground mb-2 block">
+                            {t("loots.filtersPanel.common.maxLevel")}
+                          </Label>
+                          <Input
+                            type="number"
+                            placeholder="500"
+                            value={filters.itemLevelMax ?? ""}
+                            onChange={(e) =>
+                              updateFilters({ itemLevelMax: e.target.value })
+                            }
+                            min={0}
+                            max={500}
+                            className="h-8"
+                          />
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <Separator />
+
+                  <AccordionItem value="player" className="space-y-3">
+                    <AccordionTrigger>
+                      {t("loots.filtersPanel.playerSection.title")}
+                    </AccordionTrigger>
+                    <AccordionContent className="space-y-3">
+                      <div>
+                        <Label className="text-xs text-muted-foreground mb-2 block">
+                          {t("loots.filtersPanel.playerSection.playersLabel")}
+                        </Label>
+                        <FilterCombobox
+                          name="players"
+                          placeholder={t(
+                            "loots.filtersPanel.playerSection.playersPlaceholder",
+                          )}
+                          options={playersOptions}
+                          defaultValue={filters.players}
+                          onSelect={(_, values) =>
+                            updateFilters({ players: values })
+                          }
+                          controlledSearch
+                          onSearchChange={setDebouncedPlayersSearchValue}
+                          searchValue={debouncedPlayersSearchValue}
+                          loading={playersDataLoading}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <Label className="text-xs text-muted-foreground mb-2 block">
+                            {t("loots.filtersPanel.common.minLevel")}
+                          </Label>
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            value={filters.playerLevelMin ?? ""}
+                            onChange={(e) =>
+                              updateFilters({ playerLevelMin: e.target.value })
+                            }
+                            min={0}
+                            max={500}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs text-muted-foreground mb-2 block">
+                            {t("loots.filtersPanel.common.maxLevel")}
+                          </Label>
+                          <Input
+                            type="number"
+                            placeholder="500"
+                            value={filters.playerLevelMax ?? ""}
+                            onChange={(e) =>
+                              updateFilters({ playerLevelMax: e.target.value })
+                            }
+                            min={0}
+                            max={500}
+                          />
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </ScrollArea>
+          </div>
+
+          <AnimatePresence>
+            {hasActiveFilters && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 56, opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="border-t border-border px-4 overflow-hidden"
+              >
+                <div className="h-14 flex items-center w-full">
+                  <Button
+                    onClick={clearFilters}
+                    variant="outline"
+                    className="w-full"
+                    size="sm"
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    {t("loots.filtersPanel.quickFilters.clearButton")}
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </Card>
       </div>
     </>
   );

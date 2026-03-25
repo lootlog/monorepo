@@ -91,7 +91,7 @@ authController.get("/@me/scopes", async (c) => {
     );
   }
 
-  return c.json(token.scopes || []);
+  return c.json(token.scopes ?? []);
 });
 
 authController.post("/idp-token", async (c) => {
@@ -134,7 +134,7 @@ authController.post("/idp-token", async (c) => {
     expiresIn: expiresAt
       ? Math.floor((expiresAt.getTime() - Date.now()) / 1000)
       : 0,
-    scopes: token.scopes || [],
+    scopes: token.scopes ?? [],
   });
 });
 

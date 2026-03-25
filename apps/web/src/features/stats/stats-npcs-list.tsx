@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { Search } from "lucide-react";
+import { Search, Swords } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@lootlog/ui/components/select";
+import { Card } from "@lootlog/ui/components/card";
 import { Input } from "@lootlog/ui/components/input";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -118,194 +119,219 @@ export const StatsNpcsList: React.FC = () => {
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="p-4 pb-4 bg-background border-b">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-xl font-bold">{t("kills.npcsList.title")}</h1>
-            <p className="text-muted-foreground">
-              {t("kills.npcsList.description")}
-            </p>
-          </div>
+    <div className="flex flex-col h-full min-h-0 bg-background/50">
+      <ScrollArea className="flex-1 min-h-0">
+        <div className="px-3 py-3 flex flex-col gap-4">
+          <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="rounded-xl bg-primary/10 p-2.5 shadow-inner shadow-primary/10">
+                  <Swords className="size-4 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <h2 className="text-base font-semibold leading-tight">
+                    {t("kills.npcsList.title")}
+                  </h2>
+                  <p className="text-xs text-muted-foreground leading-tight">
+                    {t("kills.npcsList.description")}
+                  </p>
+                </div>
+              </div>
 
-          <div className="flex items-center gap-2 md:hidden">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder={t("kills.npcsList.searchPlaceholder")}
-                value={search}
-                onChange={handleSearchChange}
-                className="pl-8 w-full"
-              />
-            </div>
-            <NpcStatsFiltersMobile
-              world={settings.world}
-              npcType={settings.npcType}
-              minLvl={settings.minLvl}
-              maxLvl={settings.maxLvl}
-              onWorldChange={handleWorldChange}
-              onNpcTypeChange={handleNpcTypeChange}
-              onMinLvlChange={handleMinLvlChange}
-              onMaxLvlChange={handleMaxLvlChange}
-            />
-          </div>
+              <div className="flex items-center gap-2 md:hidden">
+                <div className="relative flex-1">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder={t("kills.npcsList.searchPlaceholder")}
+                    value={search}
+                    onChange={handleSearchChange}
+                    className="pl-8 w-full"
+                  />
+                </div>
+                <NpcStatsFiltersMobile
+                  world={settings.world}
+                  npcType={settings.npcType}
+                  minLvl={settings.minLvl}
+                  maxLvl={settings.maxLvl}
+                  onWorldChange={handleWorldChange}
+                  onNpcTypeChange={handleNpcTypeChange}
+                  onMinLvlChange={handleMinLvlChange}
+                  onMaxLvlChange={handleMaxLvlChange}
+                />
+              </div>
 
-          <div className="hidden md:flex items-center gap-2">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder={t("kills.npcsList.searchPlaceholder")}
-                value={search}
-                onChange={handleSearchChange}
-                className="pl-8 w-[200px]"
-              />
-            </div>
-            <LevelFilters
-              minLvl={settings.minLvl}
-              maxLvl={settings.maxLvl}
-              onMinLvlChange={handleMinLvlChange}
-              onMaxLvlChange={handleMaxLvlChange}
-            />
-            <WorldSwitcher
-              value={settings.world}
-              onValueChange={handleWorldChange}
-              showAllOption
-              width="w-[160px]"
-            />
-            <Select
-              value={settings.npcType ?? "ALL"}
-              onValueChange={handleNpcTypeChange}
-            >
-              <SelectTrigger className="w-[140px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">
-                  {t("kills.filters.allTypes")}
-                </SelectItem>
-                {TRACKABLE_NPC_TYPES.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {t(`npcType.${type}`)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </div>
-
-      <ScrollArea className="relative flex-1 min-h-0 w-full">
-        {isLoading ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-            <Spinner className="size-8" />
-            <p className="text-sm text-muted-foreground">
-              {t("kills.ranking.loading")}
-            </p>
-          </div>
-        ) : !data || paginatedData.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">
-            <p className="text-muted-foreground">{t("kills.topNpcs.noData")}</p>
-          </div>
-        ) : (
-          <Table className="border-b">
-            <TableHeader className="bg-background sticky top-0 z-10">
-              <TableRow className="border-b-1! border-border">
-                <TableHead className="whitespace-nowrap w-12">#</TableHead>
-                <TableHead className="whitespace-nowrap">
-                  {t("kills.recentKills.npc")}
-                </TableHead>
-                <TableHead className="whitespace-nowrap">
-                  {t("kills.recentKills.type")}
-                </TableHead>
-                <TableHead className="whitespace-nowrap">
-                  {t("kills.npcKillers.killCount")}
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedData.map((npc, index) => (
-                <TableRow
-                  key={npc.npcId}
-                  className="bg-background/30 border-b border-border h-14 hover:bg-muted/30 transition-colors cursor-pointer"
-                  onClick={() => handleRowClick(npc)}
+              <div className="hidden md:flex items-center gap-2">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder={t("kills.npcsList.searchPlaceholder")}
+                    value={search}
+                    onChange={handleSearchChange}
+                    className="pl-8 w-[200px]"
+                  />
+                </div>
+                <LevelFilters
+                  minLvl={settings.minLvl}
+                  maxLvl={settings.maxLvl}
+                  onMinLvlChange={handleMinLvlChange}
+                  onMaxLvlChange={handleMaxLvlChange}
+                />
+                <WorldSwitcher
+                  value={settings.world}
+                  onValueChange={handleWorldChange}
+                  showAllOption
+                  width="w-[160px]"
+                />
+                <Select
+                  value={settings.npcType ?? "ALL"}
+                  onValueChange={handleNpcTypeChange}
                 >
-                  <TableCell className="whitespace-nowrap">
-                    <span className="text-muted-foreground font-medium">
-                      {cursor + index + 1}
-                    </span>
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap">
-                    <div className="flex items-center gap-3">
-                      {npc.npcIcon && (
-                        <div className="w-8 flex-shrink-0">
-                          <NpcTile
-                            npc={{
-                              id: npc.npcId,
-                              name: npc.npcName,
-                              lvl: npc.npcLvl,
-                              icon: npc.npcIcon,
-                            }}
-                          />
-                        </div>
-                      )}
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium leading-tight">
-                          {npc.npcName}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {npc.npcLvl}
-                          {npc.npcProf}
-                        </span>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap">
-                    <span className="text-sm text-muted-foreground">
-                      {t(`npcType.${npc.npcType}`)}
-                    </span>
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap">
-                    <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-muted/50 w-fit">
-                      <span className="text-xs text-muted-foreground">x</span>
-                      <span className="text-sm font-semibold tabular-nums">
-                        {npc.uniqueKills.toLocaleString()}
-                      </span>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </ScrollArea>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">
+                      {t("kills.filters.allTypes")}
+                    </SelectItem>
+                    {TRACKABLE_NPC_TYPES.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {t(`npcType.${type}`)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </Card>
 
-      <div className="h-14 shrink-0 bg-background border-t py-4 flex items-center justify-between px-4">
-        <div className="text-sm text-muted-foreground whitespace-nowrap">
-          {t("kills.ranking.total", { count: total })}
+          <Card className="flex-1 min-h-0 flex flex-col border-border bg-card/40 p-0 backdrop-blur-sm overflow-hidden gap-0">
+            <ScrollArea className="relative flex-1 min-h-0 w-full">
+              {isLoading ? (
+                <div className="flex items-center justify-center h-64">
+                  <div className="flex flex-col items-center gap-3">
+                    <Spinner className="size-8" />
+                    <p className="text-sm text-muted-foreground">
+                      {t("kills.ranking.loading")}
+                    </p>
+                  </div>
+                </div>
+              ) : !data || paginatedData.length === 0 ? (
+                <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">
+                  <p className="text-muted-foreground">
+                    {t("kills.topNpcs.noData")}
+                  </p>
+                </div>
+              ) : (
+                <Table className="border-b">
+                  <TableHeader className="bg-background sticky top-0 z-10">
+                    <TableRow className="border-b-1! border-border">
+                      <TableHead className="whitespace-nowrap w-12">
+                        #
+                      </TableHead>
+                      <TableHead className="whitespace-nowrap">
+                        {t("kills.recentKills.npc")}
+                      </TableHead>
+                      <TableHead className="whitespace-nowrap">
+                        {t("kills.recentKills.type")}
+                      </TableHead>
+                      <TableHead className="whitespace-nowrap">
+                        {t("kills.npcKillers.killCount")}
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedData.map((npc, index) => (
+                      <TableRow
+                        key={npc.npcId}
+                        className="bg-background/30 border-b border-border h-14 hover:bg-muted/30 transition-colors cursor-pointer"
+                        onClick={() => handleRowClick(npc)}
+                      >
+                        <TableCell className="whitespace-nowrap">
+                          <span className="text-muted-foreground font-medium">
+                            {cursor + index + 1}
+                          </span>
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          <div className="flex items-center gap-3">
+                            {npc.npcIcon && (
+                              <div className="w-8 flex-shrink-0">
+                                <NpcTile
+                                  npc={{
+                                    id: npc.npcId,
+                                    name: npc.npcName,
+                                    lvl: npc.npcLvl,
+                                    icon: npc.npcIcon,
+                                  }}
+                                />
+                              </div>
+                            )}
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium leading-tight">
+                                {npc.npcName}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {npc.npcLvl}
+                                {npc.npcProf}
+                              </span>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          <span className="text-sm text-muted-foreground">
+                            {t(`npcType.${npc.npcType}`)}
+                          </span>
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-muted/50 w-fit">
+                            <span className="text-xs text-muted-foreground">
+                              x
+                            </span>
+                            <span className="text-sm font-semibold tabular-nums">
+                              {npc.uniqueKills.toLocaleString()}
+                            </span>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </ScrollArea>
+
+            <div className="h-14 shrink-0 border-t border-border py-4 flex items-center justify-between px-4">
+              <div className="text-sm text-muted-foreground whitespace-nowrap">
+                {t("kills.ranking.total", { count: total })}
+              </div>
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={handlePreviousPage}
+                      className={
+                        !hasPrev
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                    />
+                  </PaginationItem>
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={handleNextPage}
+                      className={
+                        !hasNext
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          </Card>
         </div>
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                onClick={handlePreviousPage}
-                className={
-                  !hasPrev ? "pointer-events-none opacity-50" : "cursor-pointer"
-                }
-              />
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationNext
-                onClick={handleNextPage}
-                className={
-                  !hasNext ? "pointer-events-none opacity-50" : "cursor-pointer"
-                }
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      </div>
+      </ScrollArea>
     </div>
   );
 };

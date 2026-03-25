@@ -124,6 +124,44 @@ export class LootStatsService {
     return parts.join(":");
   }
 
+  private buildFilterConditions(
+    dateFrom: Date | null,
+    world?: string,
+    npcTypes?: NpcType[],
+    excludeColossus?: boolean,
+  ) {
+    const dateCondition = dateFrom ? `AND l."createdAt" >= $2` : "";
+    const worldCondition = world ? `AND l.world = $${dateFrom ? 3 : 2}` : "";
+    const npcTypeCondition = npcTypes?.length
+      ? `AND ns.type = ANY($${(dateFrom ? 3 : 2) + (world ? 1 : 0)}::text[])`
+      : "";
+    const excludeColossusCondition = excludeColossus
+      ? `AND ns.type != 'COLOSSUS'`
+      : "";
+    const needsNpcFilter = !!(npcTypes?.length || excludeColossus);
+
+    return {
+      dateCondition,
+      worldCondition,
+      npcTypeCondition,
+      excludeColossusCondition,
+      needsNpcFilter,
+    };
+  }
+
+  private buildFilterParams(
+    guildId: string,
+    dateFrom: Date | null,
+    world?: string,
+    npcTypes?: NpcType[],
+  ): (string | Date | string[])[] {
+    const params: (string | Date | string[])[] = [guildId];
+    if (dateFrom) params.push(dateFrom);
+    if (world) params.push(world);
+    if (npcTypes?.length) params.push(npcTypes);
+    return params;
+  }
+
   private getDateFromPeriod(period: Period): Date | null {
     if (period === "all") return null;
 
@@ -149,20 +187,14 @@ export class LootStatsService {
     npcTypes?: NpcType[],
     excludeColossus?: boolean,
   ): Promise<LootStatsOverview> {
-    const needsNpcFilter = npcTypes?.length || excludeColossus;
-    const dateCondition = dateFrom ? `AND l."createdAt" >= $2` : "";
-    const worldCondition = world ? `AND l.world = $${dateFrom ? 3 : 2}` : "";
-    const npcTypeCondition = npcTypes?.length
-      ? `AND ns.type = ANY($${(dateFrom ? 3 : 2) + (world ? 1 : 0)}::text[])`
-      : "";
-    const excludeColossusCondition = excludeColossus
-      ? `AND ns.type != 'COLOSSUS'`
-      : "";
-
-    const params: (string | Date | string[])[] = [guildId];
-    if (dateFrom) params.push(dateFrom);
-    if (world) params.push(world);
-    if (npcTypes?.length) params.push(npcTypes);
+    const {
+      dateCondition,
+      worldCondition,
+      npcTypeCondition,
+      excludeColossusCondition,
+      needsNpcFilter,
+    } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
+    const params = this.buildFilterParams(guildId, dateFrom, world, npcTypes);
 
     const result = await this.prisma.$queryRawUnsafe<
       Array<{
@@ -236,20 +268,14 @@ export class LootStatsService {
     npcTypes?: NpcType[],
     excludeColossus?: boolean,
   ): Promise<Partial<Record<ItemRarity, RarityStats>>> {
-    const needsNpcFilter = npcTypes?.length || excludeColossus;
-    const dateCondition = dateFrom ? `AND l."createdAt" >= $2` : "";
-    const worldCondition = world ? `AND l.world = $${dateFrom ? 3 : 2}` : "";
-    const npcTypeCondition = npcTypes?.length
-      ? `AND ns.type = ANY($${(dateFrom ? 3 : 2) + (world ? 1 : 0)}::text[])`
-      : "";
-    const excludeColossusCondition = excludeColossus
-      ? `AND ns.type != 'COLOSSUS'`
-      : "";
-
-    const params: (string | Date | string[])[] = [guildId];
-    if (dateFrom) params.push(dateFrom);
-    if (world) params.push(world);
-    if (npcTypes?.length) params.push(npcTypes);
+    const {
+      dateCondition,
+      worldCondition,
+      npcTypeCondition,
+      excludeColossusCondition,
+      needsNpcFilter,
+    } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
+    const params = this.buildFilterParams(guildId, dateFrom, world, npcTypes);
 
     const result = await this.prisma.$queryRawUnsafe<
       Array<{
@@ -321,21 +347,15 @@ export class LootStatsService {
     npcTypes?: NpcType[],
     excludeColossus?: boolean,
   ): Promise<TimelinePoint[]> {
-    const needsNpcFilter = npcTypes?.length || excludeColossus;
+    const {
+      dateCondition,
+      worldCondition,
+      npcTypeCondition,
+      excludeColossusCondition,
+      needsNpcFilter,
+    } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
     const truncUnit = this.getTimelineTruncUnit(period);
-    const dateCondition = dateFrom ? `AND l."createdAt" >= $2` : "";
-    const worldCondition = world ? `AND l.world = $${dateFrom ? 3 : 2}` : "";
-    const npcTypeCondition = npcTypes?.length
-      ? `AND ns.type = ANY($${(dateFrom ? 3 : 2) + (world ? 1 : 0)}::text[])`
-      : "";
-    const excludeColossusCondition = excludeColossus
-      ? `AND ns.type != 'COLOSSUS'`
-      : "";
-
-    const params: (string | Date | string[])[] = [guildId];
-    if (dateFrom) params.push(dateFrom);
-    if (world) params.push(world);
-    if (npcTypes?.length) params.push(npcTypes);
+    const params = this.buildFilterParams(guildId, dateFrom, world, npcTypes);
 
     const result = await this.prisma.$queryRawUnsafe<
       Array<{
@@ -439,19 +459,14 @@ export class LootStatsService {
     excludeColossus?: boolean,
     limit = 10,
   ): Promise<TopNpc[]> {
-    const dateCondition = dateFrom ? `AND l."createdAt" >= $2` : "";
-    const worldCondition = world ? `AND l.world = $${dateFrom ? 3 : 2}` : "";
-    const npcTypeCondition = npcTypes?.length
-      ? `AND ns.type = ANY($${(dateFrom ? 3 : 2) + (world ? 1 : 0)}::text[])`
-      : "";
-    const excludeColossusCondition = excludeColossus
-      ? `AND ns.type != 'COLOSSUS'`
-      : "";
-
-    const params: (string | Date | string[] | number)[] = [guildId];
-    if (dateFrom) params.push(dateFrom);
-    if (world) params.push(world);
-    if (npcTypes?.length) params.push(npcTypes);
+    const {
+      dateCondition,
+      worldCondition,
+      npcTypeCondition,
+      excludeColossusCondition,
+    } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
+    const params: (string | Date | string[] | number)[] =
+      this.buildFilterParams(guildId, dateFrom, world, npcTypes);
     const limitParamIndex = params.length + 1;
     params.push(limit);
 
@@ -545,23 +560,17 @@ export class LootStatsService {
     excludeColossus?: boolean,
     limit = 10,
   ): Promise<TopContributor[]> {
-    const dateCondition = dateFrom ? `AND l."createdAt" >= $2` : "";
-    const worldCondition = world ? `AND l.world = $${dateFrom ? 3 : 2}` : "";
-    const npcTypeCondition = npcTypes?.length
-      ? `AND ns.type = ANY($${(dateFrom ? 3 : 2) + (world ? 1 : 0)}::text[])`
-      : "";
-    const excludeColossusCondition = excludeColossus
-      ? `AND ns.type != 'COLOSSUS'`
-      : "";
-
-    const params: (string | Date | string[] | number)[] = [guildId];
-    if (dateFrom) params.push(dateFrom);
-    if (world) params.push(world);
-    if (npcTypes?.length) params.push(npcTypes);
+    const {
+      dateCondition,
+      worldCondition,
+      npcTypeCondition,
+      excludeColossusCondition,
+      needsNpcFilter,
+    } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
+    const params: (string | Date | string[] | number)[] =
+      this.buildFilterParams(guildId, dateFrom, world, npcTypes);
     const limitParamIndex = params.length + 1;
     params.push(limit);
-
-    const needsNpcFilter = npcTypes?.length || excludeColossus;
 
     const result = await this.prisma.$queryRawUnsafe<
       Array<{
@@ -661,19 +670,14 @@ export class LootStatsService {
     excludeColossus?: boolean,
     limit = 10,
   ): Promise<TopItem[]> {
-    const dateCondition = dateFrom ? `AND l."createdAt" >= $2` : "";
-    const worldCondition = world ? `AND l.world = $${dateFrom ? 3 : 2}` : "";
-    const npcTypeCondition = npcTypes?.length
-      ? `AND ns.type = ANY($${(dateFrom ? 3 : 2) + (world ? 1 : 0)}::text[])`
-      : "";
-    const excludeColossusCondition = excludeColossus
-      ? `AND ns.type != 'COLOSSUS'`
-      : "";
-
-    const params: (string | Date | string[] | number)[] = [guildId];
-    if (dateFrom) params.push(dateFrom);
-    if (world) params.push(world);
-    if (npcTypes?.length) params.push(npcTypes);
+    const {
+      dateCondition,
+      worldCondition,
+      npcTypeCondition,
+      excludeColossusCondition,
+    } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
+    const params: (string | Date | string[] | number)[] =
+      this.buildFilterParams(guildId, dateFrom, world, npcTypes);
     const limitParamIndex = params.length + 1;
     params.push(limit);
 

@@ -38,9 +38,8 @@ export const StatisticsFiltersDesktop = ({
   onMatchmakingChange,
 }: StatisticsFiltersDesktopProps) => {
   return (
-    <div className="flex flex-col sm:flex-row gap-2 mb-6 flex-wrap items-end">
-      <div className="space-y-1">
-        <Label className="text-xs invisible">Postać</Label>
+    <div className="flex flex-col sm:flex-row gap-2 flex-wrap items-end">
+      <div>
         <CharacterSelector
           characterId={characterId}
           onCharacterChange={onCharacterChange}
@@ -50,8 +49,7 @@ export const StatisticsFiltersDesktop = ({
         />
       </div>
 
-      <div className="space-y-1">
-        <Label className="text-xs invisible">Okres</Label>
+      <div>
         <PeriodSelector
           value={period}
           onValueChange={onPeriodChange}
