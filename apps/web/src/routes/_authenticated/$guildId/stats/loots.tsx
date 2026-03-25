@@ -5,7 +5,7 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 const LootStatsPage: React.FC = () => {
   return (
     <ScrollArea className="h-full">
-      <div className="w-full p-3">
+      <div className="w-full">
         <LootStats />
       </div>
     </ScrollArea>

@@ -1,9 +1,4 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@lootlog/ui/components/card";
+import { Card } from "@lootlog/ui/components/card";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import {
   ChartContainer,
@@ -75,44 +70,34 @@ export const LootTimelineChart: React.FC<LootTimelineChartProps> = ({
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">
-            {t("loots.stats.timeline.title")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-[250px] w-full" />
-        </CardContent>
+      <Card className="bg-card/40 backdrop-blur-sm border-border p-3 gap-3">
+        <h2 className="text-base font-semibold">
+          {t("loots.stats.timeline.title")}
+        </h2>
+        <Skeleton className="h-[250px] w-full" />
       </Card>
     );
   }
 
   if (!data?.length) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">
-            {t("loots.stats.timeline.title")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex h-[250px] items-center justify-center text-muted-foreground">
-            {t("loots.stats.timeline.noData")}
-          </div>
-        </CardContent>
+      <Card className="bg-card/40 backdrop-blur-sm border-border p-3 gap-3">
+        <h2 className="text-base font-semibold">
+          {t("loots.stats.timeline.title")}
+        </h2>
+        <div className="flex h-[250px] items-center justify-center text-muted-foreground">
+          {t("loots.stats.timeline.noData")}
+        </div>
       </Card>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">
-          {t("loots.stats.timeline.title")}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+    <Card className="bg-card/40 backdrop-blur-sm border-border p-3 gap-3">
+      <h2 className="text-base font-semibold">
+        {t("loots.stats.timeline.title")}
+      </h2>
+      <div>
         <ChartContainer config={chartConfig} className="h-[250px] w-full">
           <AreaChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -167,7 +152,7 @@ export const LootTimelineChart: React.FC<LootTimelineChartProps> = ({
             />
           </AreaChart>
         </ChartContainer>
-      </CardContent>
+      </div>
     </Card>
   );
 };
