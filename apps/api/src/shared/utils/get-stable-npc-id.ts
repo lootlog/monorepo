@@ -1,4 +1,7 @@
 import { NpcType } from "prisma/generated/client";
+import { simpleStringHash } from "./simple-string-hash";
+
+const MAX_NPC_NAME_LENGTH = 256;
 
 /**
  * For COLOSSUS type monsters, generates a stable ID from the name
@@ -11,22 +14,8 @@ export const getStableNpcId = (
   npcType: NpcType,
 ): number => {
   if (npcType === NpcType.COLOSSUS) {
-    // Generate a deterministic hash from the name
-    // Use a simple string hash that produces a stable negative number
-    // (negative to avoid collision with real NPC IDs)
-    // Normalize and bound the name length to avoid unbounded iteration
-    const safeName = String(npcName ?? "");
-    const MAX_NPC_NAME_LENGTH = 256;
-    const length = Math.min(safeName.length, MAX_NPC_NAME_LENGTH);
-
-    let hash = 0;
-    for (let i = 0; i < length; i++) {
-      const char = safeName.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash; // Convert to 32-bit integer
-    }
-    // Ensure it's negative and distinct from real IDs
-    return -Math.abs(hash || 1);
+    const safeName = String(npcName ?? "").substring(0, MAX_NPC_NAME_LENGTH);
+    return -Math.abs(simpleStringHash(safeName) || 1);
   }
   return Math.abs(npcId);
 };
