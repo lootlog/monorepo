@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { stringify } from "qs";
+import { stringifyQueryParams } from "@/lib/stringify-query-params";
 import type { NpcType } from "./use-guild-kill-stats";
 
 export type Period =
@@ -125,14 +125,7 @@ export const useLootStats = (filters: LootStatsFilters = {}) => {
     excludeColossus: filters.excludeColossus ? "true" : undefined,
   };
 
-  const queryString = stringify(queryParams, {
-    filter: (_, value) => {
-      if (value === "" || value === undefined || value === null) {
-        return;
-      }
-      return value;
-    },
-  });
+  const queryString = stringifyQueryParams(queryParams);
 
   return useQuery({
     queryKey: ["loot-stats", guildId, queryString],
