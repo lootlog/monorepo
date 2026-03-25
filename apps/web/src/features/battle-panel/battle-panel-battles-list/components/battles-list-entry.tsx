@@ -292,8 +292,8 @@ export const BattlesListEntry: FC<BattlesListEntryProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5">
-          <div className="flex items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+          <div className="flex flex-wrap items-center gap-1.5 min-w-0">
             {leftTeam.map((w) => (
               <div key={w.id} className="flex items-center gap-1">
                 <PlayerTile player={w} className="scale-75" />
@@ -314,7 +314,7 @@ export const BattlesListEntry: FC<BattlesListEntryProps> = ({
 
           <Swords className="size-3 text-muted-foreground shrink-0 mx-0.5" />
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5 min-w-0">
             {rightTeam.map((w) => (
               <div key={w.id} className="flex items-center gap-1">
                 <PlayerTile player={w} className="scale-75" />
