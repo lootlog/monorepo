@@ -4,7 +4,8 @@ import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
-import { AlertCircle, Loader2, Settings } from "lucide-react";
+import { AlertCircle, Settings } from "lucide-react";
+import { Spinner } from "@lootlog/ui/components/spinner";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
 import { Input } from "@lootlog/ui/components/input";
@@ -124,7 +125,7 @@ export const EventEditSettingsPage = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="size-8 animate-spin text-primary" />
+        <Spinner className="size-8 text-primary" />
       </div>
     );
   }

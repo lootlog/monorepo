@@ -12,7 +12,7 @@
   "saving": "Zapisywanie...",
   "unsavedChanges": "Masz niezapisane zmiany",
   "breadcrumbs": {
-    "guild": "Gildia",
+    "lootsList": "Lista łupów",
     "timers": "Timery",
     "reservations": "Rezerwacje",
     "activityLogs": "Logi aktywności",
@@ -32,10 +32,14 @@
     "roleFallback": "Rola #{{id}}",
     "members": "Członkowie"
   },
+  "greeting": "Cześć, {{name}}!",
   "activityLogs": {
     "loadError": "Nie udało się załadować aktywności.",
     "empty": "Nie znaleziono żadnych aktywności.",
+    "emptyCat": "Kot śpi... brak aktywności 😴",
     "loadingMore": "Ładowanie kolejnych aktywności...",
-    "end": "To już wszystkie aktywności"
+    "loadingMoreCat": "Kotek szuka dalej... 🐾",
+    "end": "To już wszystkie aktywności",
+    "endCat": "Miau, to już wszystko! 😺"
   }
 }

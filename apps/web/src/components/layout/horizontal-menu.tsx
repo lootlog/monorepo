@@ -3,6 +3,7 @@ import { Link, useLocation } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useTheme } from "@/hooks/context/use-theme";
 import { FrozenButton } from "@/components/effects/rukia-frost";
+import { CatButton } from "@/components/effects/cat-button";
 
 interface NavElement {
   id: string;
@@ -26,6 +27,7 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
   const { pathname } = useLocation();
   const { theme } = useTheme();
   const isRukiaTheme = theme === "rukia";
+  const isCatTheme = theme.startsWith("cat-");
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -95,6 +97,10 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
                 <FrozenButton isHovered={isHovered} isActive={active}>
                   {buttonContent}
                 </FrozenButton>
+              ) : isCatTheme ? (
+                <CatButton isHovered={isHovered} isActive={active}>
+                  {buttonContent}
+                </CatButton>
               ) : (
                 buttonContent
               )}

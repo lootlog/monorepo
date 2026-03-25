@@ -70,7 +70,7 @@
     "@changesets/cli": "^2.30.0",
     "@lootlog/typescript-config": "workspace:*",
     "husky": "^9.1.7",
-    "knip": "^5.88.1",
+    "knip": "^6.0.2",
     "lint-staged": "^16.4.0",
     "oxfmt": "^0.41.0",
     "oxlint": "^1.56.0",

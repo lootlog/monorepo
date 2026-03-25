@@ -2,7 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { Input } from "@lootlog/ui/components/input";
 import { useGameMaps, type GameMap } from "@/hooks/api/use-game-maps";
 import { cn } from "@lootlog/ui/lib/utils";
-import { MapPin, Loader2 } from "lucide-react";
+import { MapPin } from "lucide-react";
+import { Spinner } from "@lootlog/ui/components/spinner";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface MapInputProps {
@@ -109,7 +110,7 @@ export const MapInput = ({
         />
         <div className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground">
           {isLoading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
+            <Spinner className="w-4 h-4" />
           ) : (
             <MapPin className="w-4 h-4" />
           )}

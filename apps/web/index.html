@@ -15,7 +15,10 @@
         const root = document.documentElement;
 
         root.classList.add(colorMode);
-        if (theme !== "default") {
+        if (theme === "cat-random") {
+          const variants = ["cat-pink", "cat-purple", "cat-blue"];
+          root.classList.add(variants[Math.floor(Math.random() * 3)]);
+        } else if (theme !== "default") {
           root.classList.add(theme);
         }
       })();

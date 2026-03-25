@@ -71,9 +71,7 @@ export const GuildLayout: FC = () => {
 
     if (path === guildBase) {
       return {
-        breadcrumbs: [
-          { label: guild?.name || t("common.breadcrumbs.guild"), path: null },
-        ],
+        breadcrumbs: [{ label: t("common.breadcrumbs.lootsList"), path: null }],
         showBack: false,
       };
     }

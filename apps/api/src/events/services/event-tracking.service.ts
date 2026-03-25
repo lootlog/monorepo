@@ -15,6 +15,7 @@ import { EventEmitterService } from "./event-emitter.service";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { RoutingKey } from "src/enum/routing-key.enum";
 import { buildActiveEventWhere } from "../utils/event-activity.util";
+import { getSyntheticNpcId } from "../utils/get-synthetic-npc-id";
 
 @Injectable()
 export class EventTrackingService implements OnModuleInit {
@@ -561,7 +562,7 @@ export class EventTrackingService implements OnModuleInit {
     const timerKeys = eventMaps.map((map) => ({
       guildId,
       world: map.heroNpc.event.world,
-      npcId: map.heroNpc.npcId ?? this.getSyntheticNpcId(map.heroNpc.id),
+      npcId: map.heroNpc.npcId ?? getSyntheticNpcId(map.heroNpc.id),
     }));
 
     const activeTimers = await this.prisma.timer.findMany({
@@ -582,7 +583,7 @@ export class EventTrackingService implements OnModuleInit {
 
     const activeMaps = eventMaps.filter((map) => {
       const effectiveNpcId =
-        map.heroNpc.npcId ?? this.getSyntheticNpcId(map.heroNpc.id);
+        map.heroNpc.npcId ?? getSyntheticNpcId(map.heroNpc.id);
       const timerKey = `${guildId}:${map.heroNpc.event.world}:${effectiveNpcId}`;
       return activeTimerSet.has(timerKey);
     });
@@ -881,14 +882,5 @@ export class EventTrackingService implements OnModuleInit {
       presencePercentage,
       memberStats,
     };
-  }
-
-  private getSyntheticNpcId(heroId: string): number {
-    let hash = 0;
-    for (let i = 0; i < heroId.length; i++) {
-      hash = (hash << 5) - hash + heroId.charCodeAt(i);
-      hash |= 0;
-    }
-    return -Math.abs(hash || 1);
   }
 }

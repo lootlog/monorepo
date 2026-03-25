@@ -20,7 +20,7 @@ import { ItemImage, NpcSearchTile, PlayerSearchTile } from "@/components/tiles";
 import { cn } from "@lootlog/ui/lib/utils";
 import { NPC_TYPE_NAMES, ITEM_RARITY_NAMES } from "@/constants/npc";
 import { motion, Reorder } from "framer-motion";
-import { Loader2 } from "lucide-react";
+import { Spinner } from "@lootlog/ui/components/spinner";
 import { useTheme } from "@/hooks/context/use-theme";
 import { FrozenButton } from "@/components/effects/rukia-frost";
 
@@ -137,7 +137,7 @@ export const LootSearchCommand = ({
             transition={{ duration: 0.15 }}
             className="flex flex-col items-center justify-center py-12 text-muted-foreground"
           >
-            <Loader2 className="mb-2 h-6 w-6 animate-spin" />
+            <Spinner className="mb-2 h-6 w-6" />
             <span className="text-sm">Wyszukiwanie...</span>
           </motion.div>
         )}
