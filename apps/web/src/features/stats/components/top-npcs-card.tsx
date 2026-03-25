@@ -1,14 +1,10 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { useLocalStorage } from "usehooks-ts";
-import { ArrowRight, Crown, Medal, Skull, Trophy } from "lucide-react";
+import { ChevronRight, Crown, Medal, Skull, Trophy } from "lucide-react";
+import { Button } from "@lootlog/ui/components/button";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@lootlog/ui/components/card";
+import { Card } from "@lootlog/ui/components/card";
 import {
   Select,
   SelectContent,
@@ -66,31 +62,27 @@ export const TopNpcsCard: React.FC<TopNpcsCardProps> = ({
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Skull className="h-5 w-5" />
-              <Skeleton className="h-5 w-40" />
-            </CardTitle>
-            <Skeleton className="h-8 w-[120px]" />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3 p-2">
-                <Skeleton className="h-6 w-6 rounded-full" />
-                <Skeleton className="h-10 w-10 rounded-lg" />
-                <div className="flex-1 space-y-1">
-                  <Skeleton className="h-4 w-32" />
-                  <Skeleton className="h-3 w-16" />
-                </div>
-                <Skeleton className="h-5 w-12" />
+      <Card className="bg-card/40 backdrop-blur-sm border-border p-3 gap-3 flex flex-col h-full">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold flex items-center gap-2">
+            <Skull className="h-5 w-5" />
+            <Skeleton className="h-5 w-40" />
+          </h2>
+          <Skeleton className="h-8 w-[120px]" />
+        </div>
+        <div className="space-y-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3 p-2">
+              <Skeleton className="h-6 w-6 rounded-full" />
+              <Skeleton className="h-10 w-10 rounded-lg" />
+              <div className="flex-1 space-y-1">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-16" />
               </div>
-            ))}
-          </div>
-        </CardContent>
+              <Skeleton className="h-5 w-12" />
+            </div>
+          ))}
+        </div>
       </Card>
     );
   }
@@ -102,31 +94,29 @@ export const TopNpcsCard: React.FC<TopNpcsCardProps> = ({
   }
 
   return (
-    <Card className="py-5 flex flex-col h-full">
-      <CardHeader>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Skull className="h-5 w-5" />
-            {t("kills.topNpcs.title")}
-          </CardTitle>
-          <Select
-            value={selectedNpcType}
-            onValueChange={(value) => setSelectedNpcType(value as NpcType)}
-          >
-            <SelectTrigger className="w-[120px] h-8">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {TRACKABLE_NPC_TYPES.map((type) => (
-                <SelectItem key={type} value={type}>
-                  {t(`npcType.${type}`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </CardHeader>
-      <CardContent className="flex flex-col flex-1">
+    <Card className="bg-card/40 backdrop-blur-sm border-border p-3 gap-3 flex flex-col h-full">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-base font-semibold flex items-center gap-2">
+          <Skull className="h-5 w-5" />
+          {t("kills.topNpcs.title")}
+        </h2>
+        <Select
+          value={selectedNpcType}
+          onValueChange={(value) => setSelectedNpcType(value as NpcType)}
+        >
+          <SelectTrigger className="w-[120px] h-8">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {TRACKABLE_NPC_TYPES.map((type) => (
+              <SelectItem key={type} value={type}>
+                {t(`npcType.${type}`)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="flex flex-col flex-1">
         {topNpcs.length === 0 ? (
           <div className="flex-1 flex items-center justify-center">
             <p className="text-sm text-muted-foreground text-center">
@@ -188,12 +178,14 @@ export const TopNpcsCard: React.FC<TopNpcsCardProps> = ({
         <Link
           to="/$guildId/stats/npcs"
           params={{ guildId }}
-          className="flex items-center justify-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors pt-4 mt-auto"
+          className="block mt-3"
         >
-          {t("kills.topNpcs.viewAll")}
-          <ArrowRight className="h-4 w-4" />
+          <Button variant="outline" className="w-full" size="sm">
+            {t("kills.topNpcs.viewAll")}
+            <ChevronRight className="w-4 h-4 ml-2" />
+          </Button>
         </Link>
-      </CardContent>
+      </div>
     </Card>
   );
 };
