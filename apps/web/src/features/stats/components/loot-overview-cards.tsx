@@ -56,7 +56,7 @@ export const LootOverviewCards: React.FC<LootOverviewCardsProps> = ({
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {OVERVIEW_KEYS.map((key) => (
           <Card key={key}>
             <CardContent className="p-4">
@@ -75,7 +75,7 @@ export const LootOverviewCards: React.FC<LootOverviewCardsProps> = ({
   }
 
   return (
-    <div className="grid grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       {OVERVIEW_KEYS.map((key) => {
         const config = OVERVIEW_CONFIG[key];
         const value = data?.[config.key] ?? 0;

@@ -139,7 +139,7 @@ const MembersSettingsContent = () => {
 
       <div className="h-full flex flex-col min-h-0 overflow-hidden">
         <MembersSettingsHeader />
-        <Card className="mx-3 mt-3 shrink-0 border-border bg-card/40 p-3 backdrop-blur-sm flex gap-2 items-center">
+        <Card className="mx-3 mt-3 mb-3 shrink-0 border-border bg-card/40 p-3 backdrop-blur-sm flex gap-3 items-center flex-row">
           <SearchInput
             onChange={(e) => setSearchValue(e.target.value)}
             placeholder="Szukaj członka..."

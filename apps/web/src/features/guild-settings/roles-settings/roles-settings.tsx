@@ -63,7 +63,7 @@ const RolesSettingsContent = () => {
     <SelectorPanel<GuildRole>
       header=<RolesSettingsHeader />
       searchBar={
-        <Card className="mx-3 mt-3 shrink-0 border-border bg-card/40 p-3 backdrop-blur-sm">
+        <Card className="mx-3 mt-3 mb-3 shrink-0 border-border bg-card/40 p-3 backdrop-blur-sm">
           <SearchInput
             onChange={(e) => setSearchValue(e.target.value)}
             placeholder="Szukaj roli..."
