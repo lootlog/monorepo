@@ -61,12 +61,7 @@ export class AuthService {
 
       return response.data;
     } catch (error) {
-      if (
-        error instanceof AuthServiceUnavailableError ||
-        error instanceof AccountNotFoundError ||
-        error instanceof TokenExpiredError ||
-        error instanceof AuthBadRequestError
-      ) {
+      if (this.isKnownAuthError(error)) {
         throw error;
       }
 
@@ -160,12 +155,7 @@ export class AuthService {
 
       return tokenResponse;
     } catch (error) {
-      if (
-        error instanceof TokenExpiredError ||
-        error instanceof AccountNotFoundError ||
-        error instanceof AuthServiceUnavailableError ||
-        error instanceof AuthBadRequestError
-      ) {
+      if (this.isKnownAuthError(error)) {
         throw error;
       }
 
@@ -188,7 +178,18 @@ export class AuthService {
     await this.redisService.del(cacheKey);
   }
 
-  private isAccountNotFoundError(error: unknown): boolean {
+  private isKnownAuthError(error: unknown): boolean {
+    return (
+      error instanceof AuthServiceUnavailableError ||
+      error instanceof AccountNotFoundError ||
+      error instanceof TokenExpiredError ||
+      error instanceof AuthBadRequestError
+    );
+  }
+
+  private getErrorResponse(
+    error: unknown,
+  ): { status?: number; data?: unknown } | null {
     if (
       typeof error === "object" &&
       error !== null &&
@@ -196,52 +197,39 @@ export class AuthService {
       typeof error.response === "object" &&
       error.response !== null
     ) {
-      const response = error.response as { status?: number; data?: unknown };
+      return error.response as { status?: number; data?: unknown };
+    }
 
-      if (response.status === 400 && response.data) {
-        const data = response.data as { error?: string };
-        return data.error === "ACCOUNT_NOT_FOUND";
-      }
+    return null;
+  }
+
+  private isAccountNotFoundError(error: unknown): boolean {
+    const response = this.getErrorResponse(error);
+
+    if (response?.status === 400 && response.data) {
+      const data = response.data as { error?: string };
+      return data.error === "ACCOUNT_NOT_FOUND";
     }
 
     return false;
   }
 
   private isClientError(error: unknown): boolean {
-    if (
-      typeof error === "object" &&
-      error !== null &&
-      "response" in error &&
-      typeof error.response === "object" &&
-      error.response !== null
-    ) {
-      const response = error.response as { status?: number };
-      return (
-        response.status !== undefined &&
-        response.status >= 400 &&
-        response.status < 500
-      );
-    }
+    const response = this.getErrorResponse(error);
 
-    return false;
+    return (
+      response?.status !== undefined &&
+      response.status >= 400 &&
+      response.status < 500
+    );
   }
 
   private isTokenError(error: unknown): boolean {
-    if (
-      typeof error === "object" &&
-      error !== null &&
-      "response" in error &&
-      typeof error.response === "object" &&
-      error.response !== null
-    ) {
-      const response = error.response as { status?: number; data?: unknown };
+    const response = this.getErrorResponse(error);
 
-      if (response.data) {
-        const data = response.data as { error?: string };
-        return (
-          data.error === "TOKEN_NOT_FOUND" || data.error === "TOKEN_EXPIRED"
-        );
-      }
+    if (response?.data) {
+      const data = response.data as { error?: string };
+      return data.error === "TOKEN_NOT_FOUND" || data.error === "TOKEN_EXPIRED";
     }
 
     return false;
