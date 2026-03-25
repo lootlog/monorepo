@@ -75,10 +75,6 @@ export class ChatService {
       throw error;
     }
 
-    if (elements.length === 0) {
-      return [];
-    }
-
     return elements.reduce<any[]>((acc, element) => {
       try {
         acc.push(JSON.parse(element));
