@@ -31,7 +31,6 @@ import { Button } from "@lootlog/ui/components/button";
 import { Label } from "@lootlog/ui/components/label";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Separator } from "@lootlog/ui/components/separator";
-import { SectionHeader } from "@/components/layout/section-header";
 import { useHeadToHead } from "@/hooks/api/battle-log/use-head-to-head";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { Award, ArrowRight, Filter, Swords } from "lucide-react";
