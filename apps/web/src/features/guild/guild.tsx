@@ -13,6 +13,8 @@ import {
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { useLocalStorage } from "usehooks-ts";
 import { LootDetailsDialog } from "@/features/guild/components/loots-list/loot-details-dialog";
+import { Button } from "@lootlog/ui/components/button";
+import { Filter } from "lucide-react";
 
 const FILTERS_OPEN_KEY = "loots-filters-open";
 
@@ -49,21 +51,23 @@ export const Guild: React.FC = () => {
               <DrawerTitle>Filtry łupów</DrawerTitle>
             </DrawerHeader>
             <div className="flex-1 overflow-hidden">
-              <LootsFiltersSidebar className="w-full border-l-0 h-full" />
+              <LootsFiltersSidebar className="w-full border-l-0 h-full p-0" />
             </div>
           </DrawerContent>
         </Drawer>
       )}
 
-      <div className="w-full flex flex-col h-full overflow-hidden">
-        <LootFiltersHeader
-          onToggleFilters={handleOpenSidebar}
-          isFiltersOpen={filtersOpenForHeader}
-          hasActiveFilters={hasActiveFilters}
-        />
+      <div className="w-full flex flex-col h-full overflow-hidden bg-background/50">
+        <div className="px-3 pt-3 pb-0">
+          <LootFiltersHeader
+            onToggleFilters={handleOpenSidebar}
+            isFiltersOpen={filtersOpenForHeader}
+            hasActiveFilters={hasActiveFilters}
+          />
+        </div>
 
         <div className="flex-1 flex overflow-hidden">
-          <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-background/20">
+          <div className="flex-1 flex flex-col min-w-0 overflow-hidden py-3">
             <LootsList />
           </div>
 
@@ -75,7 +79,7 @@ export const Guild: React.FC = () => {
                   animate={{ width: 320, opacity: 1 }}
                   exit={{ width: 0, opacity: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="overflow-hidden h-full border-l border-border"
+                  className="overflow-hidden h-full"
                 >
                   <LootsFiltersSidebar />
                 </motion.div>
@@ -84,6 +88,17 @@ export const Guild: React.FC = () => {
           )}
         </div>
       </div>
+
+      {isMobile && (
+        <Button
+          onClick={handleOpenSidebar}
+          size="icon"
+          className="fixed bottom-4 right-4 h-14 w-14 rounded-full shadow-lg z-20"
+        >
+          <Filter className="h-5 w-5" />
+        </Button>
+      )}
+
       <LootDetailsDialog />
     </>
   );
