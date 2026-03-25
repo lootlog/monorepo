@@ -11,6 +11,7 @@ import {
 } from "@/hooks/api/reservations/use-reservations-cards";
 import { Input } from "@lootlog/ui/components/input";
 import { Button } from "@lootlog/ui/components/button";
+import { Card } from "@lootlog/ui/components/card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
   Tooltip,
@@ -78,87 +79,85 @@ export const Reservations: React.FC = () => {
     .sort((a, b) => b.lvl - a.lvl);
 
   return (
-    <div className="w-full flex flex-col h-full overflow-hidden">
-      <div className="bg-card/60 backdrop-blur-sm w-full flex items-center border-b h-14">
-        <div className="flex-1 min-w-0 px-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              value={searchValue}
-              onChange={(event) => setSearchValue(event.target.value)}
-              placeholder="Szukaj expowiska..."
-              className="pl-9 w-full"
-            />
-          </div>
-        </div>
+    <div className="flex h-full min-h-0 flex-col bg-background/50">
+      <ScrollArea className="flex-1 min-h-0">
+        <div className="px-3 py-3 flex flex-col gap-4">
+          <Card className="gap-3 border-border bg-card/60 p-4 backdrop-blur-sm">
+            <div className="flex items-center gap-3">
+              <div className="relative flex-1 min-w-0">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={searchValue}
+                  onChange={(event) => setSearchValue(event.target.value)}
+                  placeholder="Szukaj expowiska..."
+                  className="pl-9 w-full"
+                />
+              </div>
 
-        <div className="flex items-center gap-1 pr-3">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                onClick={() => setViewMode("list")}
-                variant={viewMode === "list" ? "default" : "ghost"}
-                size="icon"
-                className="h-8 w-8"
-              >
-                <List className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              <p>Widok listy</p>
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                onClick={() => setViewMode("grid")}
-                variant={viewMode === "grid" ? "default" : "ghost"}
-                size="icon"
-                className="h-8 w-8"
-              >
-                <Grid2X2 className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              <p>Widok siatki</p>
-            </TooltipContent>
-          </Tooltip>
-        </div>
-      </div>
-
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-background/20">
-        <ScrollArea className="h-full">
-          <div className="p-3">
-            <div
-              className={
-                viewMode === "grid"
-                  ? "grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
-                  : "flex flex-col gap-3"
-              }
-            >
-              {sortedCards.map(
-                ({ name, idx, slug, item, reservationsForCard }) => (
-                  <ReservationCard
-                    key={`${name}-${idx}`}
-                    name={name}
-                    title={name}
-                    size={reservationsForCard.length.toString()}
-                    images={item.images}
-                    reservations={reservationsForCard}
-                    members={members}
-                    viewMode={viewMode}
-                    onClick={() => {
-                      navigate({
-                        to: `/${guild.vanityUrl ?? guild.id}/reservations/${slug}`,
-                      });
-                    }}
-                  />
-                ),
-              )}
+              <div className="flex items-center gap-1">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={() => setViewMode("list")}
+                      variant={viewMode === "list" ? "default" : "ghost"}
+                      size="icon"
+                      className="h-8 w-8"
+                    >
+                      <List className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p>Widok listy</p>
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={() => setViewMode("grid")}
+                      variant={viewMode === "grid" ? "default" : "ghost"}
+                      size="icon"
+                      className="h-8 w-8"
+                    >
+                      <Grid2X2 className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p>Widok siatki</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
             </div>
+          </Card>
+
+          <div
+            className={
+              viewMode === "grid"
+                ? "grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+                : "flex flex-col gap-3"
+            }
+          >
+            {sortedCards.map(
+              ({ name, idx, slug, item, reservationsForCard }) => (
+                <ReservationCard
+                  key={`${name}-${idx}`}
+                  name={name}
+                  title={name}
+                  size={reservationsForCard.length.toString()}
+                  images={item.images}
+                  reservations={reservationsForCard}
+                  members={members}
+                  viewMode={viewMode}
+                  onClick={() => {
+                    navigate({
+                      to: `/${guild.vanityUrl ?? guild.id}/reservations/${slug}`,
+                    });
+                  }}
+                />
+              ),
+            )}
           </div>
-        </ScrollArea>
-      </div>
+        </div>
+      </ScrollArea>
     </div>
   );
 };
