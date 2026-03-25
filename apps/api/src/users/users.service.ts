@@ -6,8 +6,6 @@ import type { UpdateUserPreferencesDto } from "src/users/dto/update-user-prefere
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getUserById() {}
-
   async getUserPreferences(userId: string) {
     const userSettings = await this.prisma.userSettings.findUnique({
       where: { userId },
