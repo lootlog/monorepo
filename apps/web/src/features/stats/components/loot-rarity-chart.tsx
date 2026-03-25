@@ -1,9 +1,4 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@lootlog/ui/components/card";
+import { Card } from "@lootlog/ui/components/card";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import {
   ChartContainer,
@@ -69,44 +64,34 @@ export const LootRarityChart: React.FC<LootRarityChartProps> = ({
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">
-            {t("loots.stats.rarity.title")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="mx-auto h-[200px] w-[200px] rounded-full" />
-        </CardContent>
+      <Card className="bg-card/40 backdrop-blur-sm border-border p-3 gap-3">
+        <h2 className="text-base font-semibold">
+          {t("loots.stats.rarity.title")}
+        </h2>
+        <Skeleton className="mx-auto h-[200px] w-[200px] rounded-full" />
       </Card>
     );
   }
 
   if (!hasData) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">
-            {t("loots.stats.rarity.title")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex h-[200px] items-center justify-center text-muted-foreground">
-            {t("loots.stats.rarity.noData")}
-          </div>
-        </CardContent>
+      <Card className="bg-card/40 backdrop-blur-sm border-border p-3 gap-3">
+        <h2 className="text-base font-semibold">
+          {t("loots.stats.rarity.title")}
+        </h2>
+        <div className="flex h-[200px] items-center justify-center text-muted-foreground">
+          {t("loots.stats.rarity.noData")}
+        </div>
       </Card>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">
-          {t("loots.stats.rarity.title")}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+    <Card className="bg-card/40 backdrop-blur-sm border-border p-3 gap-3">
+      <h2 className="text-base font-semibold">
+        {t("loots.stats.rarity.title")}
+      </h2>
+      <div>
         <ChartContainer config={chartConfig} className="mx-auto h-[250px]">
           <PieChart>
             <ChartTooltip
@@ -155,7 +140,7 @@ export const LootRarityChart: React.FC<LootRarityChartProps> = ({
             />
           </PieChart>
         </ChartContainer>
-      </CardContent>
+      </div>
     </Card>
   );
 };

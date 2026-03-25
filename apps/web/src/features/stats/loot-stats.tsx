@@ -53,7 +53,7 @@ export const LootStats: React.FC = () => {
 
   return (
     <>
-      <ScrollArea className="h-full bg-background/50">
+      <ScrollArea className="h-full bg-background/50 px-3 pb-3">
         <div className="flex flex-col gap-4">
           <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

@@ -52,12 +52,12 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
   const imageHasDomain = timer.npc.icon?.startsWith("https://"); // @TODO: temporary fix for icons with full URL
 
   return (
-    <div className="group flex items-center gap-2.5 rounded-lg border border-border/50 bg-card/40 px-3 py-2 hover:bg-card/60 hover:border-primary/50 transition-all cursor-pointer">
+    <div className="group flex items-center gap-3 rounded-lg border border-border/50 bg-card/40 px-3 py-2.5 hover:bg-card/60 hover:border-primary/50 transition-all cursor-pointer">
       {timer.npc.icon && (
-        <div className="size-7 shrink-0 flex items-center justify-center">
+        <div className="size-8 shrink-0 flex items-center justify-center">
           {/* eslint-disable-next-line eslint-plugin-next/no-img-element */}
           <img
-            className="rounded max-h-7 max-w-7"
+            className="rounded max-h-8 max-w-8"
             src={`${imageHasDomain ? "" : MARGONEM_CDN_NPCS_URL}${timer.npc.icon}`}
             alt={timer.npc.name}
           />
@@ -67,16 +67,16 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
         <span className="text-sm font-medium truncate block">
           {timer.npc.name}
         </span>
-        <span className="text-muted-foreground text-[10px] truncate block">
+        <span className="text-muted-foreground text-xs truncate block">
           {timer.member.name}
         </span>
       </div>
-      <div className="flex items-center gap-2.5 shrink-0">
+      <div className="flex items-center gap-3 shrink-0">
         {!isMinSpawnTime && (
           <Tooltip>
             <TooltipTrigger>
-              <span className="text-[11px] flex items-center gap-1 tabular-nums text-muted-foreground">
-                <ClockArrowDown size="12px" />
+              <span className="text-xs flex items-center gap-1 tabular-nums text-muted-foreground">
+                <ClockArrowDown size="14px" />
                 {parseMsToTime(minTimeLeft)}
               </span>
             </TooltipTrigger>
@@ -92,14 +92,14 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
           <TooltipTrigger>
             <span
               className={cn(
-                "text-[11px] flex items-center gap-1 tabular-nums font-medium",
+                "text-xs flex items-center gap-1 tabular-nums font-medium",
                 {
                   "text-orange-400": isMinSpawnTime,
                   "text-red-500": hasPassedRedThreshold,
                 },
               )}
             >
-              <ClockArrowUp size="12px" />
+              <ClockArrowUp size="14px" />
               {parseMsToTime(timeLeft)}
             </span>
           </TooltipTrigger>
