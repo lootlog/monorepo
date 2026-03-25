@@ -20,6 +20,9 @@ import {
   useBattleFiltersStore,
   type Period,
 } from "@/store/battle-filters.store";
+import { Card } from "@lootlog/ui/components/card";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { BarChart3 } from "lucide-react";
 
 export function BattlePanelStatistics() {
   const { data: characters, isLoading: isLoadingCharacters } =
@@ -168,33 +171,43 @@ export function BattlePanelStatistics() {
   }
 
   return (
-    <div>
-      <div className="p-4 pb-4 md:pb-0 bg-background">
-        <h1 className="text-xl font-bold">Statystyki walk</h1>
-        <p className="text-muted-foreground">
-          Szczegółowa analiza i statystyki z historii twoich walk
-        </p>
-      </div>
+    <ScrollArea className="h-full bg-background/50">
+      <div className="px-3 py-3 flex flex-col gap-4">
+        <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <div className="rounded-xl bg-primary/10 p-2.5 shadow-inner shadow-primary/10">
+                <BarChart3 className="size-4 text-primary" />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-base font-semibold leading-tight">
+                  Statystyki walk
+                </h2>
+                <p className="text-xs text-muted-foreground leading-tight">
+                  Szczegółowa analiza i statystyki z historii twoich walk
+                </p>
+              </div>
+            </div>
+            <StatisticsFilters
+              characterId={currentCharacterId}
+              period={period}
+              minLevel={minLevel}
+              maxLevel={maxLevel}
+              ph={ph}
+              matchmaking={matchmaking}
+              onCharacterChange={handleCharacterChange}
+              onPeriodChange={handlePeriodChange}
+              onMinLevelChange={handleMinLevelChange}
+              onMaxLevelChange={handleMaxLevelChange}
+              onPhChange={handlePhChange}
+              onMatchmakingChange={handleMatchmakingChange}
+            />
+          </div>
+        </Card>
 
-      <StatisticsFilters
-        characterId={currentCharacterId}
-        period={period}
-        minLevel={minLevel}
-        maxLevel={maxLevel}
-        ph={ph}
-        matchmaking={matchmaking}
-        onCharacterChange={handleCharacterChange}
-        onPeriodChange={handlePeriodChange}
-        onMinLevelChange={handleMinLevelChange}
-        onMaxLevelChange={handleMaxLevelChange}
-        onPhChange={handlePhChange}
-        onMatchmakingChange={handleMatchmakingChange}
-      />
-
-      <div className="p-4 space-y-6">
         {matchmaking ? (
           <>
-            <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
               <CurrentStreakCard
                 data={
                   streakData ?? {
@@ -221,7 +234,7 @@ export function BattlePanelStatistics() {
               />
             </div>
 
-            <div className="grid grid-cols-1 2xl:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 2xl:grid-cols-2 gap-4">
               <ProfessionWinRateChart
                 data={professionData ?? []}
                 isLoading={isProfessionLoading}
@@ -234,7 +247,7 @@ export function BattlePanelStatistics() {
           </>
         ) : (
           <>
-            <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
               <CurrentStreakCard
                 data={
                   streakData ?? {
@@ -261,7 +274,7 @@ export function BattlePanelStatistics() {
               />
             </div>
 
-            <div className="grid grid-cols-1 2xl:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 2xl:grid-cols-2 gap-4">
               <ProfessionWinRateChart
                 data={professionData ?? []}
                 isLoading={isProfessionLoading}
@@ -274,6 +287,6 @@ export function BattlePanelStatistics() {
           </>
         )}
       </div>
-    </div>
+    </ScrollArea>
   );
 }

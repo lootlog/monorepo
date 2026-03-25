@@ -1,3 +1,4 @@
+import { Card } from "@lootlog/ui/components/card";
 import { ExpandableDataTable } from "./expandable-data-table";
 import { getBattleStatsTableColumns } from "./battle-stats-table-columns-full";
 import { OneVsOneStatsTable } from "./one-vs-one-stats-table";
@@ -123,7 +124,7 @@ export function BattleStatsTable({ battle, className }: BattleStatsTableProps) {
   }
 
   return (
-    <div className="w-full border-b">
+    <Card className="border-border bg-card/40 backdrop-blur-sm overflow-hidden gap-0 p-0 w-full">
       <div className="sticky top-0 z-9 bg-background border-b">
         <div className="p-4">
           <div className="flex items-center justify-between">
@@ -158,6 +159,6 @@ export function BattleStatsTable({ battle, className }: BattleStatsTableProps) {
         />
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
-    </div>
+    </Card>
   );
 }

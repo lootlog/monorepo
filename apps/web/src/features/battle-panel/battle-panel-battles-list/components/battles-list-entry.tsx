@@ -2,6 +2,7 @@ import type { Battle } from "@/hooks/api/battle-log/use-battles";
 import { TeamDisplay } from "@/features/battle-panel/battle-panel-battles-list/components/battle-team-display";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
 import { Badge } from "@lootlog/ui/components/badge";
+import { Card } from "@lootlog/ui/components/card";
 import { cn } from "@lootlog/ui/lib/utils";
 import { Sword } from "lucide-react";
 import type { FC } from "react";
@@ -86,12 +87,13 @@ export const BattlesListEntry: FC<BattlesListEntryProps> = ({
       to={ROUTES.user.battlePanel.battle(battle.id) as string}
       className="block"
     >
-      <div
+      <Card
         className={cn(
-          "text-white relative border-b transition-all duration-300",
+          "p-0 overflow-hidden border-border backdrop-blur-sm transition-all duration-300",
           {
-            "bg-green-400/10 hover:bg-green-400/15": isWon || battle.hasFlee,
-            "bg-red-400/10 hover:bg-red-400/15": isLost,
+            "bg-green-400/10 hover:bg-green-400/15 border-green-500/30":
+              isWon || battle.hasFlee,
+            "bg-red-400/10 hover:bg-red-400/15 border-red-500/30": isLost,
           },
         )}
       >
@@ -184,7 +186,7 @@ export const BattlesListEntry: FC<BattlesListEntryProps> = ({
             privateTooltip: "Walka jest prywatna - tylko Ty możesz ją zobaczyć",
           }}
         />
-      </div>
+      </Card>
     </Link>
   );
 };

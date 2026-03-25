@@ -1,4 +1,5 @@
 import type { FC } from "react";
+import { Card } from "@lootlog/ui/components/card";
 import { BattleOverviewHeader } from "./battle-overview-header";
 import { BattleTeamSection } from "./battle-team-section";
 import { AnimatedTrophy } from "./animated-trophy";
@@ -67,7 +68,7 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
   };
 
   return (
-    <div className="w-full">
+    <Card className="border-border bg-card/40 backdrop-blur-sm overflow-hidden gap-0 p-0 w-full">
       <BattleOverviewHeader
         isPublic={battle.public}
         isPending={isSharePending}
@@ -123,6 +124,6 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
         </div>
         <BattleMetadata battle={battle} labels={mergedLabels.metadata} />
       </div>
-    </div>
+    </Card>
   );
 };

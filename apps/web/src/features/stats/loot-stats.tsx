@@ -1,9 +1,11 @@
-import { Globe } from "lucide-react";
+import { Globe, Gift } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { PeriodSelector } from "@/components/filters/period-selector";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Label } from "@lootlog/ui/components/label";
+import { Card } from "@lootlog/ui/components/card";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useLootStats, type Period } from "./hooks/use-loot-stats";
 import { useLootStatsSettings } from "./hooks/use-loot-stats-settings";
 import { LootOverviewCards } from "./components/loot-overview-cards";
@@ -25,7 +27,7 @@ export const LootStats: React.FC = () => {
 
   if (!settings.world) {
     return (
-      <div className="flex flex-col items-center justify-center h-[400px] gap-4">
+      <div className="flex flex-col items-center justify-center h-[400px] gap-4 bg-background/50">
         <Globe className="h-12 w-12 text-muted-foreground" />
         <p className="text-muted-foreground">
           {t("loots.stats.selectWorldRequired")}
@@ -36,51 +38,70 @@ export const LootStats: React.FC = () => {
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex justify-end gap-2 items-center">
-        <PeriodSelector
-          value={settings.period}
-          onValueChange={(value) => setPeriod(value as Period)}
-          width="w-[180px]"
-          className="h-9"
-        />
-        <WorldSwitcher
-          value={settings.world}
-          onValueChange={setWorld}
-          width="w-[140px]"
-        />
-        <div className="flex items-center gap-2">
-          <Checkbox
-            id="exclude-colossus"
-            checked={settings.excludeColossus}
-            onCheckedChange={(checked) => setExcludeColossus(!!checked)}
+    <ScrollArea className="h-full bg-background/50">
+      <div className="px-3 py-3 flex flex-col gap-4">
+        <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <div className="rounded-xl bg-emerald-500/10 p-2.5 shadow-inner shadow-emerald-500/10">
+                <Gift className="size-4 text-emerald-500" />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-base font-semibold leading-tight">
+                  {t("common.stats.loots")}
+                </h2>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <PeriodSelector
+                value={settings.period}
+                onValueChange={(value) => setPeriod(value as Period)}
+                width="w-[180px]"
+                className="h-9"
+              />
+              <WorldSwitcher
+                value={settings.world}
+                onValueChange={setWorld}
+                width="w-[140px]"
+              />
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="exclude-colossus"
+                  checked={settings.excludeColossus}
+                  onCheckedChange={(checked) => setExcludeColossus(!!checked)}
+                />
+                <Label
+                  htmlFor="exclude-colossus"
+                  className="cursor-pointer text-sm"
+                >
+                  {t("loots.stats.excludeColossus")}
+                </Label>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        <LootOverviewCards data={data?.overview} isLoading={isLoading} />
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <LootTopContributors
+            data={data?.topContributors}
+            isLoading={isLoading}
           />
-          <Label htmlFor="exclude-colossus" className="cursor-pointer text-sm">
-            {t("loots.stats.excludeColossus")}
-          </Label>
+          <LootRarityChart data={data?.byRarity} isLoading={isLoading} />
         </div>
-      </div>
 
-      <LootOverviewCards data={data?.overview} isLoading={isLoading} />
-
-      <div className="grid gap-3 md:grid-cols-2">
-        <LootTopContributors
-          data={data?.topContributors}
+        <LootTimelineChart
+          data={data?.timeline}
+          period={settings.period}
           isLoading={isLoading}
         />
-        <LootRarityChart data={data?.byRarity} isLoading={isLoading} />
-      </div>
 
-      <LootTimelineChart
-        data={data?.timeline}
-        period={settings.period}
-        isLoading={isLoading}
-      />
-
-      <div className="grid gap-3 md:grid-cols-2">
-        <LootTopNpcsChart data={data?.topNpcs} isLoading={isLoading} />
-        <LootTopItems data={data?.topItems} isLoading={isLoading} />
+        <div className="grid gap-4 md:grid-cols-2">
+          <LootTopNpcsChart data={data?.topNpcs} isLoading={isLoading} />
+          <LootTopItems data={data?.topItems} isLoading={isLoading} />
+        </div>
       </div>
-    </div>
+    </ScrollArea>
   );
 };

@@ -26,8 +26,10 @@ import {
   PaginationPrevious,
 } from "@lootlog/ui/components/pagination";
 import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
+import { Card } from "@lootlog/ui/components/card";
 import { useHeadToHead } from "@/hooks/api/battle-log/use-head-to-head";
 import { Spinner } from "@lootlog/ui/components/spinner";
+import { Swords } from "lucide-react";
 import type { Warrior } from "@/hooks/api/battle-log/use-search-warriors";
 import { HeadToHeadFilters } from "./head-to-head-filters";
 import { headToHeadColumns } from "./head-to-head-columns";
@@ -173,114 +175,140 @@ export function HeadToHeadFullPage() {
   });
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="p-4 pb-0 bg-background">
-        <h1 className="text-xl font-bold">Pełny bilans bezpośrednich starć</h1>
-        <p className="text-muted-foreground">
-          Kompletna historia walk z konkretnymi przeciwnikami
-        </p>
-      </div>
+    <div className="flex flex-col h-full min-h-0 bg-background/50">
+      <ScrollArea className="flex-1 min-h-0">
+        <div className="px-3 py-3 flex flex-col gap-4">
+          <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="rounded-xl bg-primary/10 p-2.5 shadow-inner shadow-primary/10">
+                  <Swords className="size-4 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <h2 className="text-base font-semibold leading-tight">
+                    Pełny bilans bezpośrednich starć
+                  </h2>
+                  <p className="text-xs text-muted-foreground leading-tight">
+                    Kompletna historia walk z konkretnymi przeciwnikami
+                  </p>
+                </div>
+              </div>
+            </div>
 
-      <HeadToHeadFilters
-        characterId={currentCharacterId}
-        period={period}
-        minLevel={minLevel}
-        maxLevel={maxLevel}
-        ph={ph}
-        matchmaking={matchmaking}
-        selectedWarriors={selectedWarriors}
-        onCharacterChange={handleCharacterChange}
-        onPeriodChange={handlePeriodChange}
-        onMinLevelChange={handleMinLevelChange}
-        onMaxLevelChange={handleMaxLevelChange}
-        onPhChange={handlePhChange}
-        onMatchmakingChange={handleMatchmakingChange}
-        onWarriorToggle={handleWarriorToggle}
-      />
+            <HeadToHeadFilters
+              characterId={currentCharacterId}
+              period={period}
+              minLevel={minLevel}
+              maxLevel={maxLevel}
+              ph={ph}
+              matchmaking={matchmaking}
+              selectedWarriors={selectedWarriors}
+              onCharacterChange={handleCharacterChange}
+              onPeriodChange={handlePeriodChange}
+              onMinLevelChange={handleMinLevelChange}
+              onMaxLevelChange={handleMaxLevelChange}
+              onPhChange={handlePhChange}
+              onMatchmakingChange={handleMatchmakingChange}
+              onWarriorToggle={handleWarriorToggle}
+            />
+          </Card>
 
-      <ScrollArea className={cn("max-w-full flex-1 w-full")}>
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">
-            <Spinner className="size-8" />
-            <p className="text-sm text-muted-foreground">Ładowanie danych...</p>
-          </div>
-        ) : !data || data.records.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">
-            <p className="text-muted-foreground">Brak danych do wyświetlenia</p>
-          </div>
-        ) : (
-          <Table className="border-b">
-            <TableHeader className="bg-background">
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow
-                  key={headerGroup.id}
-                  className="border-b-1! border-border"
-                >
-                  {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id} className="whitespace-nowrap">
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  className="bg-background/30 border-b border-border"
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="whitespace-nowrap">
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
+          <Card className="flex-1 min-h-0 flex flex-col border-border bg-card/40 p-0 backdrop-blur-sm overflow-hidden gap-0">
+            <ScrollArea className={cn("max-w-full flex-1 w-full")}>
+              {isLoading ? (
+                <div className="flex items-center justify-center h-64">
+                  <Spinner className="size-8" />
+                </div>
+              ) : !data || data.records.length === 0 ? (
+                <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">
+                  <p className="text-muted-foreground">
+                    Brak danych do wyświetlenia
+                  </p>
+                </div>
+              ) : (
+                <Table className="border-b">
+                  <TableHeader className="bg-background">
+                    {table.getHeaderGroups().map((headerGroup) => (
+                      <TableRow
+                        key={headerGroup.id}
+                        className="border-b-1! border-border"
+                      >
+                        {headerGroup.headers.map((header) => (
+                          <TableHead
+                            key={header.id}
+                            className="whitespace-nowrap"
+                          >
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext(),
+                                )}
+                          </TableHead>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableHeader>
+                  <TableBody>
+                    {table.getRowModel().rows.map((row) => (
+                      <TableRow
+                        key={row.id}
+                        className="bg-background/30 border-b border-border"
+                      >
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell
+                            key={cell.id}
+                            className="whitespace-nowrap"
+                          >
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext(),
+                            )}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
 
-      <div className="h-14 shrink-0 bg-background border-t py-4 flex items-center justify-between px-4">
-        <div className="text-sm text-muted-foreground whitespace-nowrap">
-          Łącznie:&nbsp;
-          {data?.pagination?.total && <span>{data.pagination.total}</span>}
+            <div className="h-14 shrink-0 border-t border-border py-4 flex items-center justify-between px-4">
+              <div className="text-sm text-muted-foreground whitespace-nowrap">
+                Łącznie:&nbsp;
+                {data?.pagination?.total && (
+                  <span>{data.pagination.total}</span>
+                )}
+              </div>
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={handlePreviousPage}
+                      className={
+                        !data?.pagination?.hasPrev
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                    />
+                  </PaginationItem>
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={handleNextPage}
+                      className={
+                        !data?.pagination?.hasNext
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          </Card>
         </div>
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                onClick={handlePreviousPage}
-                className={
-                  !data?.pagination?.hasPrev
-                    ? "pointer-events-none opacity-50"
-                    : "cursor-pointer"
-                }
-              />
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationNext
-                onClick={handleNextPage}
-                className={
-                  !data?.pagination?.hasNext
-                    ? "pointer-events-none opacity-50"
-                    : "cursor-pointer"
-                }
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      </div>
+      </ScrollArea>
     </div>
   );
 }
