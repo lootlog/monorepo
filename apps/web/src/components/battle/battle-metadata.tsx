@@ -20,10 +20,12 @@ import type { FC } from "react";
 import { formatSeconds } from "@/utils/date/format-seconds";
 import type { Battle } from "@/hooks/api/battle-log/use-battles";
 import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
+import { cn } from "@lootlog/ui/lib/utils";
 
 export type BattleMetadataProps = {
   battle: Battle;
   align?: "left" | "center";
+  className?: string;
   labels?: {
     startTime: string;
     duration: string;
@@ -38,6 +40,7 @@ export type BattleMetadataProps = {
 export const BattleMetadata: FC<BattleMetadataProps> = ({
   battle,
   align = "center",
+  className,
   labels = {
     startTime: "Battle start date and time",
     duration: "Battle duration",
@@ -56,7 +59,11 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
   return (
     <TooltipProvider>
       <div
-        className={`flex flex-row flex-wrap gap-4 p-4 text-xs text-muted-foreground w-full ${align === "center" ? "justify-center" : "justify-start"}`}
+        className={cn(
+          "flex flex-row flex-wrap gap-4 p-4 text-xs text-muted-foreground w-full",
+          align === "center" ? "justify-center" : "justify-start",
+          className,
+        )}
       >
         <Tooltip>
           <TooltipTrigger asChild>

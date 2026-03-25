@@ -339,7 +339,7 @@ export const EventDetail = () => {
 
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 py-3 flex flex-col gap-4">
-          <Card className="gap-4 border-border bg-card/40 p-4 backdrop-blur-sm">
+          <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div className="min-w-0 flex-1">
                 <div className="flex items-start gap-3">

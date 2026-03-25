@@ -19,7 +19,7 @@ export const NpcSearchTile: FC<NpcSearchTileProps> = ({
   const src = isFullUrl(icon) ? icon : `${MARGONEM_CDN_NPCS_URL}${icon}`;
 
   return (
-    <div>
+    <div className="flex h-10 w-8 items-center justify-center">
       <img
         className={cn(
           "relative cursor-pointer rounded-lg max-h-10 max-w-8",
