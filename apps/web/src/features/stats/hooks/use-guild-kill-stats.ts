@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { stringify } from "qs";
+import { stringifyQueryParams } from "@/lib/stringify-query-params";
 
 export type NpcType =
   | "COMMON"
@@ -55,14 +55,7 @@ export const useGuildKillStats = (filters: GuildKillStatsFilters = {}) => {
     world: filters.world || undefined,
   };
 
-  const queryString = stringify(queryParams, {
-    filter: (_, value) => {
-      if (value === "" || value === undefined || value === null) {
-        return;
-      }
-      return value;
-    },
-  });
+  const queryString = stringifyQueryParams(queryParams);
 
   return useQuery({
     queryKey: ["guild-kill-stats", guildId, queryString],

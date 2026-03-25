@@ -4,6 +4,7 @@ import { Map } from "lucide-react";
 import { KillMapTimelineCard } from "./kill-map-timeline-card";
 import { useKillTimeline } from "../../hooks/queries/use-kill-timeline";
 import type { TFunction } from "i18next";
+import { Spinner } from "@lootlog/ui/components/spinner";
 
 interface KillMapsTimelineSectionProps {
   eventId: string;
@@ -35,7 +36,7 @@ export const KillMapsTimelineSection = ({
     return (
       <Card className="gap-3 border-border bg-card/40 p-3 backdrop-blur-sm">
         <div className="flex items-center justify-center py-6">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+          <Spinner className="h-6 w-6" />
         </div>
       </Card>
     );

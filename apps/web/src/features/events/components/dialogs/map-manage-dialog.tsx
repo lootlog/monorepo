@@ -33,11 +33,11 @@ import {
   MapPin,
   Search,
   FileText,
-  Loader2,
   Plus,
   FolderPlus,
   Settings,
 } from "lucide-react";
+import { Spinner } from "@lootlog/ui/components/spinner";
 import { useGameMaps, type GameMap } from "@/hooks/api/use-game-maps";
 import {
   useMapTemplates,
@@ -332,7 +332,7 @@ export const MapManageDialog = ({
                   disabled={createLocation.isPending || !newLocationName.trim()}
                 >
                   {createLocation.isPending ? (
-                    <Loader2 className="size-3 animate-spin" />
+                    <Spinner className="size-3" />
                   ) : (
                     <FolderPlus className="size-3" />
                   )}
@@ -568,7 +568,7 @@ export const MapManageDialog = ({
               <ScrollArea className="h-[180px] rounded-lg border relative">
                 {addMap.isPending && (
                   <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] z-10 flex items-center justify-center">
-                    <Loader2 className="size-5 animate-spin text-primary" />
+                    <Spinner className="size-5 text-primary" />
                   </div>
                 )}
                 {filteredGameMaps.length > 0 ? (

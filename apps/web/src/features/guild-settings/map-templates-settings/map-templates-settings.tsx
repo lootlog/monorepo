@@ -16,6 +16,7 @@ import { useDeleteMapTemplate } from "./hooks/use-map-template-mutations";
 import { MapTemplatesHeader } from "./map-templates-header";
 import { MapTemplateCreateDialog } from "./map-template-create-dialog";
 import { MapTemplateEditDialog } from "./map-template-edit-dialog";
+import { Spinner } from "@lootlog/ui/components/spinner";
 
 export const MapTemplatesSettings = () => {
   const { t } = useTranslation();
@@ -60,7 +61,7 @@ export const MapTemplatesSettings = () => {
         <div className="p-3 flex flex-col gap-3">
           {isLoading ? (
             <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+              <Spinner className="h-8 w-8" />
             </div>
           ) : templates?.length === 0 ? (
             <Card className="flex flex-col items-center justify-center h-64 gap-4 bg-card/40 backdrop-blur-sm">

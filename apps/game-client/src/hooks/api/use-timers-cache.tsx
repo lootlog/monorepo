@@ -6,6 +6,9 @@ const timersKey = (world: string) => ["guild-timers", world] as const;
 
 type TimerIdentity = Pick<Timer, "world" | "npcId" | "guildId">;
 
+const isSameTimer = (a: TimerIdentity, b: TimerIdentity): boolean =>
+  a.npcId === b.npcId && a.guildId === b.guildId && a.world === b.world;
+
 export const useTimersCache = () => {
   const queryClient = useQueryClient();
 
@@ -16,12 +19,7 @@ export const useTimersCache = () => {
       queryClient.setQueryData<Timer[]>(timersKey(timer.world), (old = []) => {
         const updated = [...old];
 
-        const index = updated.findIndex(
-          (t) =>
-            t.npcId === timer.npcId &&
-            t.guildId === timer.guildId &&
-            t.world === timer.world,
-        );
+        const index = updated.findIndex((t) => isSameTimer(t, timer));
 
         const next = { ...timer, isPending: false };
 
@@ -42,14 +40,7 @@ export const useTimersCache = () => {
       if (!timer.world) return;
 
       queryClient.setQueryData<Timer[]>(timersKey(timer.world), (old = []) =>
-        old.filter(
-          (t) =>
-            !(
-              t.npcId === timer.npcId &&
-              t.world === timer.world &&
-              t.guildId === timer.guildId
-            ),
-        ),
+        old.filter((t) => !isSameTimer(t, timer)),
       );
     },
     [queryClient],

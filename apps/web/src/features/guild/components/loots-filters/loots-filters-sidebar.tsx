@@ -261,7 +261,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
 
       <div
         className={cn(
-          "w-[320px] bg-background flex flex-col h-full shrink-0",
+          "w-[320px] bg-sidebar flex flex-col h-full shrink-0",
           className,
         )}
       >
