@@ -2,7 +2,7 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Spinner } from "@lootlog/ui/components/spinner";
 import { motion } from "framer-motion";
 
 import { useCreateReservation } from "@/hooks/api/reservations/use-create-reservation";
@@ -96,7 +96,7 @@ export const ReservationQuickAddPopover: React.FC<
           Anuluj
         </Button>
         <Button size="sm" onClick={handleCreate} disabled={isCreating}>
-          {isCreating && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
+          {isCreating && <Spinner className="mr-2 h-3 w-3" />}
           Zapisz
         </Button>
       </div>

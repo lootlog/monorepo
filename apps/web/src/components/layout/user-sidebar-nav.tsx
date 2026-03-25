@@ -1,6 +1,8 @@
+import { useTranslation } from "react-i18next";
 import { useSession } from "@/hooks/auth/use-session";
+import { useTheme } from "@/hooks/context/use-theme";
 import { LayoutDashboard, Settings, Swords } from "lucide-react";
-import { SidebarNav, type MenuItem } from "./sidebar-nav";
+import { SidebarNav, type MenuItem } from "./sidebar-nav/index";
 import { ROUTE_SEGMENTS } from "@/config/routes";
 
 const menuItems: MenuItem[] = [
@@ -34,10 +36,15 @@ const menuItems: MenuItem[] = [
 
 export const UserSidebarNav = () => {
   const { data: session } = useSession();
+  const { theme } = useTheme();
+  const { t } = useTranslation();
+
+  const isCatTheme = theme.startsWith("cat-");
+  const greeting = isCatTheme ? "🐱" : "👋";
 
   const header = (
     <span className="ml-3 w-full text-nowrap text-ellipsis overflow-hidden">
-      Cześć, {session?.user?.name}! 👋
+      {t("common.greeting", { name: session?.user?.name })} {greeting}
     </span>
   );
 

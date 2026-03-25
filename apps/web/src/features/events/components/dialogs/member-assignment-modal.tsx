@@ -11,7 +11,8 @@ import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Search, X, Users, UserPlus, Loader2 } from "lucide-react";
+import { Search, X, Users, UserPlus } from "lucide-react";
+import { Spinner } from "@lootlog/ui/components/spinner";
 import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
 import { cn } from "@lootlog/ui/lib/utils";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
@@ -145,12 +146,12 @@ export const MemberAssignmentModal = ({
               <ScrollArea className="h-[220px] rounded-lg border relative">
                 {isActionLoading && (
                   <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] z-10 flex items-center justify-center">
-                    <Loader2 className="size-5 animate-spin text-primary" />
+                    <Spinner className="size-5 text-primary" />
                   </div>
                 )}
                 {isLoading ? (
                   <div className="flex flex-col items-center justify-center h-full py-8">
-                    <Loader2 className="size-6 animate-spin text-primary mb-2" />
+                    <Spinner className="size-6 text-primary mb-2" />
                     <p className="text-xs text-muted-foreground">
                       {t("common.loading")}
                     </p>

@@ -1,6 +1,7 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
-import { CheckIcon, XCircle, ChevronDown, XIcon, Loader2 } from "lucide-react";
+import { CheckIcon, XCircle, ChevronDown, XIcon } from "lucide-react";
+import { Spinner } from "@lootlog/ui/components/spinner";
 import {
   Popover,
   PopoverContent,
@@ -355,7 +356,7 @@ export const MultiSelect = React.forwardRef<
                 <CommandGroup>
                   {loading && (
                     <div className="py-6 px-6 text-center text-sm flex items-center justify-center">
-                      <Loader2 className="animate-spin" />
+                      <Spinner />
                     </div>
                   )}
                   {options.map((option) => {

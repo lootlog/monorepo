@@ -9,14 +9,26 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@lootlog/ui/components/dropdown-menu";
-import { Loader2, LogOut, Settings, User2 } from "lucide-react";
+import { LogOut, Settings, User2 } from "lucide-react";
+import { Spinner } from "@lootlog/ui/components/spinner";
 import { authClient } from "@/lib/auth-client";
 import { useUser } from "@/hooks/api/user/use-user";
+import { useGuildMember } from "@/hooks/api/members/use-guild-member";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { useNavigate } from "@tanstack/react-router";
 
 export const UserMenu = () => {
   const { user, isPending } = useUser();
+  const guildId = useGuildId();
+  const { data: member } = useGuildMember();
   const navigate = useNavigate();
+
+  const displayName = guildId && member ? member.name : user?.name;
+  const displayImage =
+    guildId && member
+      ? getDiscordAvatarUrl(member.userId, member.avatar)
+      : (user?.image ?? undefined);
 
   const handleLogout = async () => {
     await authClient.signOut();
@@ -24,12 +36,12 @@ export const UserMenu = () => {
   };
 
   return (
-    <div className="flex border-t w-full h-14 items-center px-3 justify-between bg-background">
+    <div className="flex border-t w-full h-14 items-center px-3 justify-between bg-sidebar">
       {isPending && (
-        <Avatar className="cursor-pointer size-8 rounded-lg">
+        <Avatar className="cursor-pointer size-8 rounded-full">
           <AvatarImage src={undefined} />
           <AvatarFallback>
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Spinner className="h-4 w-4" />
           </AvatarFallback>
         </Avatar>
       )}
@@ -38,8 +50,8 @@ export const UserMenu = () => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <div className="flex flex-row gap-4 items-center">
-                <Avatar className="cursor-pointer size-8 rounded-lg">
-                  <AvatarImage src={user?.image ?? undefined} />
+                <Avatar className="cursor-pointer size-8 rounded-full">
+                  <AvatarImage src={displayImage} />
                   <AvatarFallback>
                     <User2 className="h-4 w-4" />
                   </AvatarFallback>
@@ -59,7 +71,7 @@ export const UserMenu = () => {
             </DropdownMenuContent>
           </DropdownMenu>
           <div className="h-full flex items-center">
-            <span className="text-sm font-semibold">{user.name}</span>
+            <span className="text-sm font-semibold">{displayName}</span>
           </div>
         </div>
       )}

@@ -16,7 +16,8 @@ import { Label } from "@lootlog/ui/components/label";
 import { DateTimePicker } from "@lootlog/ui/components/date-time-picker";
 import { useCreateEvent } from "../../hooks/mutations/use-create-event";
 import { toast } from "sonner";
-import { Trophy, Loader2, Settings, BookOpenText } from "lucide-react";
+import { Trophy, Settings, BookOpenText } from "lucide-react";
+import { Spinner } from "@lootlog/ui/components/spinner";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
@@ -353,7 +354,7 @@ export const EventCreateDialog = ({
             >
               {isPending ? (
                 <>
-                  <Loader2 className="size-3.5 mr-1.5 animate-spin" />
+                  <Spinner className="size-3.5 mr-1.5" />
                   {t("events.createDialog.creating")}
                 </>
               ) : (

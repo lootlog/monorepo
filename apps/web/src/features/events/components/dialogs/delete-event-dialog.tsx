@@ -12,7 +12,7 @@ import {
 } from "@lootlog/ui/components/alert-dialog";
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
-import { Loader2 } from "lucide-react";
+import { Spinner } from "@lootlog/ui/components/spinner";
 
 interface DeleteEventDialogProps {
   open: boolean;
@@ -116,7 +116,7 @@ const DeleteEventDialogContent = ({
               void handleConfirm();
             }}
           >
-            {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            {isPending && <Spinner className="w-4 h-4 mr-2" />}
             {t("events.delete")}
           </AlertDialogAction>
         </AlertDialogFooter>

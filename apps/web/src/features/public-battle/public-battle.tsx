@@ -7,6 +7,7 @@ import {
   BattleOverviewCard,
   BattleStatsTable,
 } from "@/components/battle";
+import { Spinner } from "@lootlog/ui/components/spinner";
 
 const CDN_BASE_URL = "https://micc.garmory-cdn.cloud/obrazki/postacie";
 
@@ -28,7 +29,7 @@ export const PublicBattle = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+          <Spinner className="h-12 w-12 mx-auto" />
           <p className="text-muted-foreground">Ładowanie walki...</p>
         </div>
       </div>
