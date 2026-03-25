@@ -22,12 +22,12 @@ export const StatsLayout: React.FC = () => {
   ];
 
   return (
-    <div className="w-full h-full flex flex-col min-h-0">
+    <div className="w-full h-full flex flex-col min-h-0 bg-background/50">
       <HorizontalMenu
         items={NAV_ELEMENTS}
         basePath={`/${guildId}`}
         ariaLabel={t("common.breadcrumbs.stats")}
-        className="shrink-0"
+        className="shrink-0 pb-3"
       />
       <div className="flex-1 min-h-0 overflow-hidden">
         <Outlet />

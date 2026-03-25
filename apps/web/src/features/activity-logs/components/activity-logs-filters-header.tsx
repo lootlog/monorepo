@@ -1,6 +1,6 @@
 import { Button } from "@lootlog/ui/components/button";
 import { AnimatePresence, motion } from "framer-motion";
-import { Filter } from "lucide-react";
+import { Activity, Filter } from "lucide-react";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import {
@@ -33,9 +33,14 @@ export const ActivityLogsFiltersHeader = ({
 
   return (
     <>
-      <div className="bg-background w-full flex items-center border-b h-14">
+      <div className="bg-card/60 backdrop-blur-sm w-full flex items-center border-b h-14">
         <div className="flex-1 min-w-0 px-3">
-          <h2 className="text-lg font-semibold">Logi aktywności</h2>
+          <div className="flex items-center gap-3">
+            <div className="rounded-xl bg-primary/10 p-2 shadow-inner shadow-primary/10">
+              <Activity className="size-4 text-primary" />
+            </div>
+            <h2 className="text-base font-semibold">Logi aktywności</h2>
+          </div>
         </div>
 
         {!isMobile && (

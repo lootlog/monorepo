@@ -21,7 +21,9 @@ import {
 import { BattlesListFilters, type BattleFilters } from "./battles-list-filters";
 import { Swords } from "lucide-react";
 import { cn } from "@lootlog/ui/lib/utils";
+import { Card } from "@lootlog/ui/components/card";
 import { Spinner } from "@lootlog/ui/components/spinner";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useEffect, useRef } from "react";
 
 type BattlesListProps = {
@@ -125,7 +127,10 @@ export const BattlesList = ({
   };
 
   return (
-    <div ref={containerRef} className="flex flex-col h-full">
+    <div
+      ref={containerRef}
+      className="flex-1 min-h-0 flex flex-col overflow-hidden h-full"
+    >
       {showFilters && onFiltersChange && (
         <BattlesListFilters
           filters={currentFilters}
@@ -134,50 +139,53 @@ export const BattlesList = ({
         />
       )}
 
-      <div
-        className={cn("flex-1", {
-          "flex items-center justify-center min-h-[70vh]":
-            isLoading || battlesResponse?.battles.length === 0,
-        })}
-      >
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center gap-3 p-8">
-            <Spinner className="size-8" />
-            <p className="text-sm text-muted-foreground">Ładowanie walk...</p>
-          </div>
-        ) : battlesResponse?.battles.length === 0 ? (
-          <Empty className="border-0">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <Swords />
-              </EmptyMedia>
-              <EmptyTitle>Brak walk</EmptyTitle>
-              <EmptyDescription>
-                Nie znaleziono żadnych walk spełniających kryteria wyszukiwania
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          battlesResponse?.battles.map((battle) => (
-            <BattlesListEntry
-              key={battle.id}
-              battle={battle}
-              onResultClick={handleResultClick}
-              onWorldClick={handleWorldClick}
-              onPhClick={handlePhClick}
-              onMatchmakingClick={handleMatchmakingClick}
-            />
-          ))
-        )}
-      </div>
+      <ScrollArea className="flex-1 min-h-0">
+        <div
+          className={cn("flex-1", {
+            "flex items-center justify-center min-h-[70vh]":
+              isLoading || battlesResponse?.battles.length === 0,
+          })}
+        >
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center gap-3 p-8">
+              <Spinner className="size-8" />
+              <p className="text-sm text-muted-foreground">Ładowanie walk...</p>
+            </div>
+          ) : battlesResponse?.battles.length === 0 ? (
+            <Empty className="border-0">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Swords />
+                </EmptyMedia>
+                <EmptyTitle>Brak walk</EmptyTitle>
+                <EmptyDescription>
+                  Nie znaleziono żadnych walk spełniających kryteria
+                  wyszukiwania
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <div className="space-y-3">
+              {battlesResponse?.battles.map((battle) => (
+                <BattlesListEntry
+                  key={battle.id}
+                  battle={battle}
+                  onResultClick={handleResultClick}
+                  onWorldClick={handleWorldClick}
+                  onPhClick={handlePhClick}
+                  onMatchmakingClick={handleMatchmakingClick}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </ScrollArea>
 
-      {showPagination &&
-        battlesResponse?.pagination &&
-        (battlesResponse.pagination.hasNext ||
-          battlesResponse.pagination.hasPrev) && (
-          <div className="sticky h-14 bottom-0 bg-background border-t flex items-center justify-center px-4 relative py-4">
+      {showPagination && (
+        <div className="sticky bottom-0 px-3 pb-3 pt-1">
+          <Card className="flex items-center justify-center px-4 py-3 bg-card/60 backdrop-blur-sm border-border relative">
             <div className="absolute left-4 text-sm text-muted-foreground max-w-[30%]">
-              {battlesResponse.pagination.total && (
+              {battlesResponse?.pagination?.total && (
                 <span>Łącznie walk: {battlesResponse.pagination.total}</span>
               )}
             </div>
@@ -187,7 +195,7 @@ export const BattlesList = ({
                   <PaginationPrevious
                     onClick={handlePreviousPage}
                     className={
-                      !battlesResponse.pagination.hasPrev
+                      !battlesResponse?.pagination?.hasPrev
                         ? "pointer-events-none opacity-50"
                         : "cursor-pointer"
                     }
@@ -198,7 +206,7 @@ export const BattlesList = ({
                   <PaginationNext
                     onClick={handleNextPage}
                     className={
-                      !battlesResponse.pagination.hasNext
+                      !battlesResponse?.pagination?.hasNext
                         ? "pointer-events-none opacity-50"
                         : "cursor-pointer"
                     }
@@ -206,8 +214,9 @@ export const BattlesList = ({
                 </PaginationItem>
               </PaginationContent>
             </Pagination>
-          </div>
-        )}
+          </Card>
+        </div>
+      )}
     </div>
   );
 };

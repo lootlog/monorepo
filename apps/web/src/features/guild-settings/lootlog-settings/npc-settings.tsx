@@ -5,6 +5,7 @@ import {
 } from "@/hooks/api/guilds/use-guild-lootlog-settings";
 import { useState } from "react";
 import { Settings2 } from "lucide-react";
+import { Card } from "@lootlog/ui/components/card";
 import { NpcSettingsPanelContent } from "@/features/guild-settings/lootlog-settings/components/npc-settings-panel-content";
 import {
   SelectorPanel,
@@ -16,13 +17,13 @@ import { NpcListItem } from "@/features/guild-settings/lootlog-settings/componen
 import { NpcType } from "@/hooks/api/game-data/use-npcs";
 
 const NpcSettingsHeader = () => (
-  <div className="bg-background w-full flex items-center border-b px-3 shrink-0 py-4">
+  <Card className="mx-3 mt-3 gap-4 border-border bg-card/60 p-4 backdrop-blur-sm shrink-0">
     <div className="flex items-center gap-3 flex-1 min-w-0">
-      <div className="p-2 rounded-lg bg-primary/10">
+      <div className="p-2.5 rounded-xl bg-primary/10 shadow-inner shadow-primary/10">
         <Settings2 className="size-4 text-primary" />
       </div>
       <div>
-        <h2 className="text-sm font-semibold leading-tight">
+        <h2 className="text-base font-semibold leading-tight">
           Ustawienia potworów i NPC
         </h2>
         <p className="text-xs text-muted-foreground leading-tight">
@@ -30,7 +31,7 @@ const NpcSettingsHeader = () => (
         </p>
       </div>
     </div>
-  </div>
+  </Card>
 );
 
 const NpcSettingsContent = () => {
@@ -51,13 +52,13 @@ const NpcSettingsContent = () => {
     <SelectorPanel<LootlogConfigNpc>
       header=<NpcSettingsHeader />
       searchBar={
-        <div className="px-3 py-2 border-b shrink-0 bg-background">
+        <Card className="mx-3 mt-3 mb-3 shrink-0 border-border bg-card/40 p-3 backdrop-blur-sm">
           <SearchInput
             onChange={(e) => setSearchValue(e.target.value)}
             placeholder="Szukaj potwora..."
             className="bg-input/30 h-9"
           />
-        </div>
+        </Card>
       }
       listContent={
         <>

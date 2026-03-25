@@ -145,7 +145,7 @@ export const EventEditSettingsPage = () => {
   return (
     <ScrollArea className="h-full bg-background/50">
       <div className="flex flex-col gap-3 px-3 py-3">
-        <Card className="gap-4 border-border bg-card/40 p-3 backdrop-blur-sm">
+        <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
           <div className="flex items-center gap-3 min-w-0">
             <div className="rounded-xl bg-primary/10 p-2 shadow-inner shadow-primary/10">
               <Settings className="size-4 text-primary" />

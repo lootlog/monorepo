@@ -9,9 +9,13 @@ import { BattleOverviewCard } from "@/components/battle";
 
 export type BattleOverviewProps = {
   battle: Battle;
+  showHeader?: boolean;
 };
 
-export const BattleOverview: FC<BattleOverviewProps> = ({ battle }) => {
+export const BattleOverview: FC<BattleOverviewProps> = ({
+  battle,
+  showHeader = true,
+}) => {
   const { handleShare, handleCopyLink, handleUnshare, isPending } =
     useBattleSharing();
   const { mutate: deleteBattle } = useDeleteBattle();
@@ -55,6 +59,7 @@ export const BattleOverview: FC<BattleOverviewProps> = ({ battle }) => {
       onDelete={handleDeleteClick}
       isSharePending={isPending}
       cdnBaseUrl={MARGONEM_CDN_CHARACTERS_URL}
+      showHeader={showHeader}
       labels={{
         header: {
           title: "Przegląd walki",

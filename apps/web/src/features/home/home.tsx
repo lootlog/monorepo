@@ -1,3 +1,4 @@
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { PlayerKillStatsCard } from "./components/player-kill-stats-card";
 import { TopKilledNpcsCard } from "./components/top-killed-npcs-card";
 import { HomeFiltersBar } from "./components/home-filters";
@@ -7,14 +8,14 @@ export const Home: React.FC = () => {
   const { filters, updateFilters } = useHomeFilters();
 
   return (
-    <div className="w-full h-full p-3">
-      <div className="space-y-3">
+    <ScrollArea className="h-full bg-background/50">
+      <div className="px-3 py-3 flex flex-col gap-4">
         <HomeFiltersBar
           filters={filters}
           onWorldChange={(world) => updateFilters({ world })}
         />
 
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2">
           <PlayerKillStatsCard world={filters.world} />
           <TopKilledNpcsCard
             world={filters.world}
@@ -23,6 +24,6 @@ export const Home: React.FC = () => {
           />
         </div>
       </div>
-    </div>
+    </ScrollArea>
   );
 };
