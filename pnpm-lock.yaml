@@ -535,8 +535,8 @@ importers:
         specifier: ^7.2.0
         version: 7.2.0
       drizzle-kit:
-        specifier: 1.0.0-beta.17-67b1795
-        version: 1.0.0-beta.17-67b1795
+        specifier: 1.0.0-beta.19-d95b7a4
+        version: 1.0.0-beta.19-d95b7a4
       jest:
         specifier: ^30.3.0
         version: 30.3.0(@types/node@25.5.0)(ts-node@10.9.2(@types/node@25.5.0)(typescript@5.9.3))
@@ -7921,8 +7921,8 @@ packages:
     resolution: {integrity: sha512-IO8C/dzEb6O3F9/twg6ZLXz164a2fhTnEWb95H23Dm4OuN+92NmEAlTrupP9VW6Jm3sO26tQlqyvyi4CsnY9GA==}
     engines: {node: '>=12'}
 
-  drizzle-kit@1.0.0-beta.17-67b1795:
-    resolution: {integrity: sha512-YW2ngYybhjgErkEd0+JLfu2+2wHUJ5HfTSEt7Q0yU60vwNn7XEKSojPnESwx5FtqdpG7SQHYea23vlDcjd8T1g==}
+  drizzle-kit@1.0.0-beta.19-d95b7a4:
+    resolution: {integrity: sha512-M0sqc+42TYBod6kEZ3AsW6+JWe3+76gR1aDFbHH5DmuLKEwewmbzlhBG6qnvV6YA1cIIbkuam3dC7r6PREOCXw==}
     hasBin: true
 
   drizzle-orm@1.0.0-beta.17-67b1795:
@@ -8695,6 +8695,9 @@ packages:
 
   get-tsconfig@4.13.6:
     resolution: {integrity: sha512-shZT/QMiSHc/YBLxxOkMtgSid5HFoauqCE3/exfsEcwg1WkeqjG+V40yBbBrsD+jW2HDXcs28xOfcbm2jI8Ddw==}
+
+  get-tsconfig@4.13.7:
+    resolution: {integrity: sha512-7tN6rFgBlMgpBML5j8typ92BKFi2sFQvIdpAqLA2beia5avZDrMs0FLZiM5etShWq5irVyGcGMEA1jcDaK7A/Q==}
 
   giget@2.0.0:
     resolution: {integrity: sha512-L5bGsVkxJbJgdnwyuheIunkGatUF/zssUoxxjACCseZYAVbaqdh9Tsmmlkl8vYan09H7sbvKt4pS8GqKLBrEzA==}
@@ -19065,11 +19068,12 @@ snapshots:
 
   dotenv@17.3.1: {}
 
-  drizzle-kit@1.0.0-beta.17-67b1795:
+  drizzle-kit@1.0.0-beta.19-d95b7a4:
     dependencies:
       '@drizzle-team/brocli': 0.11.0
       '@js-temporal/polyfill': 0.5.1
       esbuild: 0.27.4
+      get-tsconfig: 4.13.7
       jiti: 2.6.1
 
   drizzle-orm@1.0.0-beta.17-67b1795(@electric-sql/pglite@0.3.15)(@opentelemetry/api@1.9.0)(@sinclair/typebox@0.34.48)(@types/mssql@9.1.9(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(valibot@1.2.0(typescript@5.9.3))(zod@4.3.6):
@@ -19894,6 +19898,10 @@ snapshots:
   get-stream@6.0.1: {}
 
   get-tsconfig@4.13.6:
+    dependencies:
+      resolve-pkg-maps: 1.0.0
+
+  get-tsconfig@4.13.7:
     dependencies:
       resolve-pkg-maps: 1.0.0
 
