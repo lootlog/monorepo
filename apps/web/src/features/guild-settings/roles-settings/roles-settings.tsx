@@ -5,6 +5,7 @@ import {
 } from "@/hooks/api/guilds/use-guild-roles";
 import { useState } from "react";
 import { Shield } from "lucide-react";
+import { Card } from "@lootlog/ui/components/card";
 import { Permission } from "@lootlog/types";
 import { RolePanelContent } from "@/features/guild-settings/roles-settings/components/roles-panel";
 import { RoleListItem } from "@/features/guild-settings/roles-settings/components/role-list-item";
@@ -15,19 +16,21 @@ import {
 } from "@/components/selector-panel";
 
 const RolesSettingsHeader = () => (
-  <div className="bg-background w-full flex items-center border-b px-3 shrink-0 py-4">
+  <Card className="mx-3 mt-3 gap-4 border-border bg-card/60 p-4 backdrop-blur-sm shrink-0">
     <div className="flex items-center gap-3 flex-1 min-w-0">
-      <div className="p-2 rounded-lg bg-primary/10">
+      <div className="p-2.5 rounded-xl bg-primary/10 shadow-inner shadow-primary/10">
         <Shield className="size-4 text-primary" />
       </div>
       <div>
-        <h2 className="text-sm font-semibold leading-tight">Ustawienia ról</h2>
+        <h2 className="text-base font-semibold leading-tight">
+          Ustawienia ról
+        </h2>
         <p className="text-xs text-muted-foreground leading-tight">
           Zarządzaj uprawnieniami dla ról Discord
         </p>
       </div>
     </div>
-  </div>
+  </Card>
 );
 
 const RolesSettingsContent = () => {
@@ -60,13 +63,13 @@ const RolesSettingsContent = () => {
     <SelectorPanel<GuildRole>
       header=<RolesSettingsHeader />
       searchBar={
-        <div className="px-3 py-2 border-b shrink-0 bg-background">
+        <Card className="mx-3 mt-3 mb-3 shrink-0 border-border bg-card/40 p-3 backdrop-blur-sm">
           <SearchInput
             onChange={(e) => setSearchValue(e.target.value)}
             placeholder="Szukaj roli..."
             className="h-9"
           />
-        </div>
+        </Card>
       }
       listContent={
         <>

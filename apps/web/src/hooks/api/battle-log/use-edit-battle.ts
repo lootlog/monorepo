@@ -22,6 +22,9 @@ export const useEditBattle = () => {
       queryClient.invalidateQueries({
         queryKey: ["battles", battle.data.id],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["battles", "@me"],
+      });
     },
   });
 };

@@ -35,7 +35,7 @@ export const SettingsLayout: React.FC = () => {
   const guildId = useGuildId();
 
   return (
-    <div className="w-full h-full flex flex-col min-h-0">
+    <div className="w-full h-full flex flex-col min-h-0 bg-background/50">
       <HorizontalMenu
         items={NAV_ELEMENTS}
         basePath={`/${guildId}`}

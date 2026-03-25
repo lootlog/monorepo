@@ -32,7 +32,7 @@ export function StatisticsFilters({
   onMatchmakingChange,
 }: StatisticsFiltersProps) {
   return (
-    <div className="sticky top-0 z-10 bg-background border-b px-4 py-4 md:py-0">
+    <div className="sticky top-0 z-10">
       <div className="md:hidden">
         <StatisticsFiltersMobile
           characterId={characterId}

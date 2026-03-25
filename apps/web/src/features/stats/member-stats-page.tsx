@@ -187,240 +187,261 @@ export const MemberStatsPage: React.FC = () => {
   );
 
   return (
-    <div className="h-full flex flex-col lg:flex-row gap-3 p-3">
-      <div className="flex-1 min-w-0 flex flex-col gap-3 order-2 lg:order-1">
-        <Card className="border-border bg-card/40 p-4 backdrop-blur-sm shrink-0">
-          <div className="flex items-center gap-2 lg:hidden">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder={t("kills.memberStats.searchPlaceholder")}
-                value={search}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                className="pl-9 w-full"
-              />
-            </div>
-            <NpcStatsFiltersMobile
-              world={settings.world}
-              npcType={settings.npcType}
-              minLvl={settings.minLvl}
-              maxLvl={settings.maxLvl}
-              onWorldChange={handleWorldChange}
-              onNpcTypeChange={handleNpcTypeChange}
-              onMinLvlChange={handleMinLvlChange}
-              onMaxLvlChange={handleMaxLvlChange}
-            />
-          </div>
+    <div className="flex flex-col h-full min-h-0 bg-background/50">
+      <ScrollArea className="flex-1 min-h-0">
+        <div className="px-3 py-3 flex flex-col gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="lg:col-span-2 space-y-4">
+              <Card className="border-border bg-card/60 p-4 backdrop-blur-sm shrink-0">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="rounded-xl bg-primary/10 p-2.5 shadow-inner">
+                    <Users className="h-5 w-5 text-primary" />
+                  </div>
+                  <h2 className="text-base font-semibold">
+                    {member.memberName}
+                  </h2>
+                </div>
 
-          <div className="hidden lg:flex items-center gap-2 flex-wrap">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder={t("kills.memberStats.searchPlaceholder")}
-                value={search}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                className="pl-9 w-[200px]"
-              />
-            </div>
-            <LevelFilters
-              minLvl={settings.minLvl}
-              maxLvl={settings.maxLvl}
-              onMinLvlChange={handleMinLvlChange}
-              onMaxLvlChange={handleMaxLvlChange}
-              inputClassName="w-[100px]"
-            />
-            <WorldSwitcher
-              value={settings.world}
-              onValueChange={handleWorldChange}
-              showAllOption
-              width="w-[160px]"
-            />
-            <Select
-              value={settings.npcType ?? "ALL"}
-              onValueChange={handleNpcTypeChange}
-            >
-              <SelectTrigger className="w-[140px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">
-                  {t("kills.filters.allTypes")}
-                </SelectItem>
-                {TRACKABLE_NPC_TYPES.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {t(`npcType.${type}`)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </Card>
+                <div className="flex items-center gap-2 lg:hidden">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder={t("kills.memberStats.searchPlaceholder")}
+                      value={search}
+                      onChange={(e) => handleSearchChange(e.target.value)}
+                      className="pl-9 w-full"
+                    />
+                  </div>
+                  <NpcStatsFiltersMobile
+                    world={settings.world}
+                    npcType={settings.npcType}
+                    minLvl={settings.minLvl}
+                    maxLvl={settings.maxLvl}
+                    onWorldChange={handleWorldChange}
+                    onNpcTypeChange={handleNpcTypeChange}
+                    onMinLvlChange={handleMinLvlChange}
+                    onMaxLvlChange={handleMaxLvlChange}
+                  />
+                </div>
 
-        <Card className="flex-1 min-h-0 flex flex-col border-border bg-card/40 p-0 backdrop-blur-sm overflow-hidden gap-0">
-          <ScrollArea className="relative flex-1 min-h-0 w-full">
-            {isLoading ? (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                <Spinner className="size-8" />
-              </div>
-            ) : npcs.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">
-                <Users className="h-12 w-12 text-muted-foreground/50" />
-                <p className="text-muted-foreground">
-                  {t("kills.memberStats.noData")}
-                </p>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader className="bg-background sticky top-0 z-10">
-                  <TableRow className="border-b-1! border-border h-12">
-                    <TableHead className="w-16 text-center">
-                      {t("kills.memberRanking.position")}
-                    </TableHead>
-                    <TableHead>{t("kills.memberStats.npc")}</TableHead>
-                    <TableHead className="text-right">
-                      {t("kills.memberStats.killCount")}
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {npcs.map((npc, index) => {
-                    const globalIndex = cursor + index;
-                    return (
-                      <TableRow
-                        key={npc.npcId}
-                        className={cn(
-                          "border-b border-border h-14 cursor-pointer hover:bg-muted/50 transition-colors",
-                          globalIndex === 0 && "bg-yellow-500/5",
-                        )}
-                      >
-                        <TableCell className="text-center">
-                          <div className="flex items-center justify-center">
-                            {getRankIcon(globalIndex) ?? (
-                              <span className="text-sm font-medium text-muted-foreground">
-                                {globalIndex + 1}
-                              </span>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Link
-                            to="/$guildId/stats/npcs/$npcId"
-                            params={{ guildId, npcId: npc.npcId.toString() }}
-                            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
-                          >
-                            {npc.npcIcon && (
-                              <div className="w-8 flex-shrink-0">
-                                <NpcTile
-                                  npc={{
-                                    id: npc.npcId,
-                                    name: npc.npcName,
-                                    lvl: npc.npcLvl,
-                                    icon: npc.npcIcon,
+                <div className="hidden lg:flex items-center gap-2 flex-wrap">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder={t("kills.memberStats.searchPlaceholder")}
+                      value={search}
+                      onChange={(e) => handleSearchChange(e.target.value)}
+                      className="pl-9 w-[200px]"
+                    />
+                  </div>
+                  <LevelFilters
+                    minLvl={settings.minLvl}
+                    maxLvl={settings.maxLvl}
+                    onMinLvlChange={handleMinLvlChange}
+                    onMaxLvlChange={handleMaxLvlChange}
+                    inputClassName="w-[100px]"
+                  />
+                  <WorldSwitcher
+                    value={settings.world}
+                    onValueChange={handleWorldChange}
+                    showAllOption
+                    width="w-[160px]"
+                  />
+                  <Select
+                    value={settings.npcType ?? "ALL"}
+                    onValueChange={handleNpcTypeChange}
+                  >
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">
+                        {t("kills.filters.allTypes")}
+                      </SelectItem>
+                      {TRACKABLE_NPC_TYPES.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {t(`npcType.${type}`)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </Card>
+
+              <Card className="flex-1 min-h-0 flex flex-col border-border bg-card/40 p-0 backdrop-blur-sm overflow-hidden gap-0">
+                <ScrollArea className="relative flex-1 min-h-0 w-full">
+                  {isLoading ? (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                      <Spinner className="size-8" />
+                    </div>
+                  ) : npcs.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">
+                      <Users className="h-12 w-12 text-muted-foreground/50" />
+                      <p className="text-muted-foreground">
+                        {t("kills.memberStats.noData")}
+                      </p>
+                    </div>
+                  ) : (
+                    <Table>
+                      <TableHeader className="bg-background sticky top-0 z-10">
+                        <TableRow className="border-b-1! border-border h-12">
+                          <TableHead className="w-16 text-center">
+                            {t("kills.memberRanking.position")}
+                          </TableHead>
+                          <TableHead>{t("kills.memberStats.npc")}</TableHead>
+                          <TableHead className="text-right">
+                            {t("kills.memberStats.killCount")}
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {npcs.map((npc, index) => {
+                          const globalIndex = cursor + index;
+                          return (
+                            <TableRow
+                              key={npc.npcId}
+                              className={cn(
+                                "border-b border-border h-14 cursor-pointer hover:bg-muted/50 transition-colors",
+                                globalIndex === 0 && "bg-yellow-500/5",
+                              )}
+                            >
+                              <TableCell className="text-center">
+                                <div className="flex items-center justify-center">
+                                  {getRankIcon(globalIndex) ?? (
+                                    <span className="text-sm font-medium text-muted-foreground">
+                                      {globalIndex + 1}
+                                    </span>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Link
+                                  to="/$guildId/stats/npcs/$npcId"
+                                  params={{
+                                    guildId,
+                                    npcId: npc.npcId.toString(),
                                   }}
-                                />
-                              </div>
-                            )}
-                            <div className="flex flex-col">
-                              <span className="font-medium">{npc.npcName}</span>
-                              <span className="text-xs text-muted-foreground">
-                                {npc.npcLvl}
-                                {npc.npcProf} • {t(`npcType.${npc.npcType}`)}
-                              </span>
-                            </div>
-                          </Link>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <span className="font-semibold tabular-nums">
-                            {npc.totalKills.toLocaleString()}
-                          </span>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            )}
-          </ScrollArea>
+                                  className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+                                >
+                                  {npc.npcIcon && (
+                                    <div className="w-8 flex-shrink-0">
+                                      <NpcTile
+                                        npc={{
+                                          id: npc.npcId,
+                                          name: npc.npcName,
+                                          lvl: npc.npcLvl,
+                                          icon: npc.npcIcon,
+                                        }}
+                                      />
+                                    </div>
+                                  )}
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">
+                                      {npc.npcName}
+                                    </span>
+                                    <span className="text-xs text-muted-foreground">
+                                      {npc.npcLvl}
+                                      {npc.npcProf} •{" "}
+                                      {t(`npcType.${npc.npcType}`)}
+                                    </span>
+                                  </div>
+                                </Link>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <span className="font-semibold tabular-nums">
+                                  {npc.totalKills.toLocaleString()}
+                                </span>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  )}
+                </ScrollArea>
 
-          {(hasPrev || npcs.length > 0) && (
-            <div className="h-14 shrink-0 border-t border-border py-4 flex items-center justify-between px-4">
-              <div className="text-sm text-muted-foreground whitespace-nowrap">
-                {t("kills.ranking.total", { count: total })}
-              </div>
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      onClick={handlePreviousPage}
-                      className={
-                        !hasPrev
-                          ? "pointer-events-none opacity-50"
-                          : "cursor-pointer"
-                      }
-                    />
-                  </PaginationItem>
-                  <PaginationItem>
-                    <PaginationNext
-                      onClick={handleNextPage}
-                      className={
-                        !hasNext
-                          ? "pointer-events-none opacity-50"
-                          : "cursor-pointer"
-                      }
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
-          )}
-        </Card>
-      </div>
-
-      <div className="w-full lg:w-72 shrink-0 order-1 lg:order-2">
-        <Card className="border-border bg-card/40 p-4 backdrop-blur-sm">
-          <div className="flex lg:flex-col items-center gap-3">
-            <Avatar className="h-12 w-12 lg:h-20 lg:w-20 shrink-0 border-2 border-background shadow-lg">
-              <AvatarImage
-                src={getDiscordAvatarUrl(
-                  member.memberUserId,
-                  member.memberAvatar,
-                  128,
+                {(hasPrev || npcs.length > 0) && (
+                  <div className="h-14 shrink-0 border-t border-border py-4 flex items-center justify-between px-4">
+                    <div className="text-sm text-muted-foreground whitespace-nowrap">
+                      {t("kills.ranking.total", { count: total })}
+                    </div>
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious
+                            onClick={handlePreviousPage}
+                            className={
+                              !hasPrev
+                                ? "pointer-events-none opacity-50"
+                                : "cursor-pointer"
+                            }
+                          />
+                        </PaginationItem>
+                        <PaginationItem>
+                          <PaginationNext
+                            onClick={handleNextPage}
+                            className={
+                              !hasNext
+                                ? "pointer-events-none opacity-50"
+                                : "cursor-pointer"
+                            }
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
                 )}
-              />
-              <AvatarFallback className="text-lg lg:text-2xl">
-                {member.memberName[0]}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col min-w-0 lg:items-center">
-              <h1
-                className="text-lg lg:text-xl font-bold truncate"
-                style={{ color: memberColor }}
-              >
-                {member.memberName}
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                {t("kills.memberStats.totalParticipations", {
-                  count: overview?.totalParticipations ?? 0,
-                })}
-              </p>
+              </Card>
+            </div>
+
+            <div className="space-y-4">
+              <Card className="border-border bg-card/40 p-4 backdrop-blur-sm">
+                <div className="flex lg:flex-col items-center gap-3">
+                  <Avatar className="h-12 w-12 lg:h-20 lg:w-20 shrink-0 border-2 border-background shadow-lg">
+                    <AvatarImage
+                      src={getDiscordAvatarUrl(
+                        member.memberUserId,
+                        member.memberAvatar,
+                        128,
+                      )}
+                    />
+                    <AvatarFallback className="text-lg lg:text-2xl">
+                      {member.memberName[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col min-w-0 lg:items-center">
+                    <h1
+                      className="text-lg lg:text-xl font-bold truncate"
+                      style={{ color: memberColor }}
+                    >
+                      {member.memberName}
+                    </h1>
+                    <p className="text-sm text-muted-foreground">
+                      {t("kills.memberStats.totalParticipations", {
+                        count: overview?.totalParticipations ?? 0,
+                      })}
+                    </p>
+                  </div>
+                </div>
+                {activeTypes.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-3 lg:justify-center">
+                    {activeTypes.map((type) => (
+                      <Badge
+                        key={type}
+                        variant="secondary"
+                        className="text-xs whitespace-nowrap px-2 py-0.5"
+                      >
+                        {t(`npcType.${type}`)}:{" "}
+                        {overview?.participationsByType[type] ?? 0}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </Card>
             </div>
           </div>
-          {activeTypes.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mt-3 lg:justify-center">
-              {activeTypes.map((type) => (
-                <Badge
-                  key={type}
-                  variant="secondary"
-                  className="text-xs whitespace-nowrap px-2 py-0.5"
-                >
-                  {t(`npcType.${type}`)}:{" "}
-                  {overview?.participationsByType[type] ?? 0}
-                </Badge>
-              ))}
-            </div>
-          )}
-        </Card>
-      </div>
+        </div>
+      </ScrollArea>
     </div>
   );
 };

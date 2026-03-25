@@ -14,6 +14,8 @@ import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { useLocalStorage } from "usehooks-ts";
 import { useActivityWorldSuggestions } from "@/hooks/api/activity-logs/use-activity-world-suggestions";
 import { useGuild } from "@/hooks/api/guilds/use-guild";
+import { Button } from "@lootlog/ui/components/button";
+import { Filter } from "lucide-react";
 
 const FILTERS_OPEN_KEY = "activity-logs-filters-open";
 
@@ -66,24 +68,26 @@ export const ActivityLogs: FC = () => {
               <DrawerTitle>Filtry aktywności</DrawerTitle>
             </DrawerHeader>
             <div className="flex-1 overflow-hidden">
-              <ActivityLogsFiltersSidebar className="w-full border-l-0 h-full" />
+              <ActivityLogsFiltersSidebar className="w-full border-l-0 h-full p-0" />
             </div>
           </DrawerContent>
         </Drawer>
       )}
 
-      <div className="w-full flex flex-col h-full overflow-hidden">
-        <ActivityLogsFiltersHeader
-          onToggleFilters={handleOpenSidebar}
-          isFiltersOpen={filtersOpenForHeader}
-          hasActiveFilters={hasActiveFilters}
-          worldOptions={worldOptions}
-          selectedWorld={filters.world ?? ""}
-          onWorldChange={handleWorldChange}
-        />
+      <div className="w-full flex flex-col h-full overflow-hidden bg-background/50">
+        <div className="px-3 pt-3 pb-0">
+          <ActivityLogsFiltersHeader
+            onToggleFilters={handleOpenSidebar}
+            isFiltersOpen={filtersOpenForHeader}
+            hasActiveFilters={hasActiveFilters}
+            worldOptions={worldOptions}
+            selectedWorld={filters.world ?? ""}
+            onWorldChange={handleWorldChange}
+          />
+        </div>
 
         <div className="flex-1 flex overflow-hidden">
-          <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-background/20">
+          <div className="flex-1 flex flex-col min-w-0 overflow-hidden pb-3">
             <ActivityLogsList />
           </div>
 
@@ -95,7 +99,7 @@ export const ActivityLogs: FC = () => {
                   animate={{ width: 320, opacity: 1 }}
                   exit={{ width: 0, opacity: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="overflow-hidden h-full border-l border-border"
+                  className="overflow-hidden h-full"
                 >
                   <ActivityLogsFiltersSidebar />
                 </motion.div>
@@ -104,6 +108,16 @@ export const ActivityLogs: FC = () => {
           )}
         </div>
       </div>
+
+      {isMobile && (
+        <Button
+          onClick={handleOpenSidebar}
+          size="icon"
+          className="fixed bottom-4 right-4 h-14 w-14 rounded-full shadow-lg z-20"
+        >
+          <Filter className="h-5 w-5" />
+        </Button>
+      )}
     </>
   );
 };

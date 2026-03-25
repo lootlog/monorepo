@@ -25,6 +25,8 @@ import {
 } from "@lootlog/ui/components/pagination";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { Card } from "@lootlog/ui/components/card";
+import { Skull } from "lucide-react";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
   KillsFilters,
@@ -195,109 +197,138 @@ export const KillsPage: React.FC = () => {
   const hasPrev = cursor > 0;
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="p-4 pb-0 bg-background">
-        <h1 className="text-xl font-bold">{t("kills.ranking.title")}</h1>
-        <p className="text-muted-foreground">
-          {t("kills.ranking.description")}
-        </p>
-      </div>
+    <div className="flex flex-col h-full min-h-0 bg-background/50">
+      <ScrollArea className="flex-1 min-h-0">
+        <div className="px-3 py-3 flex flex-col gap-4">
+          <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="rounded-xl bg-red-500/10 p-2.5 shadow-inner shadow-red-500/10">
+                  <Skull className="size-4 text-red-500" />
+                </div>
+                <div className="min-w-0">
+                  <h2 className="text-base font-semibold leading-tight">
+                    {t("kills.ranking.title")}
+                  </h2>
+                  <p className="text-xs text-muted-foreground leading-tight">
+                    {t("kills.ranking.description")}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <KillsFilters
+              filters={{
+                ...filters,
+                search: searchInput,
+                minLvl: minLvlInput ? Number(minLvlInput) : undefined,
+                maxLvl: maxLvlInput ? Number(maxLvlInput) : undefined,
+              }}
+              onWorldChange={handleWorldChange}
+              onNpcTypeChange={handleNpcTypeChange}
+              onSearchChange={handleSearchChange}
+              onMinLvlChange={handleMinLvlChange}
+              onMaxLvlChange={handleMaxLvlChange}
+            />
+          </Card>
 
-      <KillsFilters
-        filters={{
-          ...filters,
-          search: searchInput,
-          minLvl: minLvlInput ? Number(minLvlInput) : undefined,
-          maxLvl: maxLvlInput ? Number(maxLvlInput) : undefined,
-        }}
-        onWorldChange={handleWorldChange}
-        onNpcTypeChange={handleNpcTypeChange}
-        onSearchChange={handleSearchChange}
-        onMinLvlChange={handleMinLvlChange}
-        onMaxLvlChange={handleMaxLvlChange}
-      />
-
-      <ScrollArea className="relative flex-1 min-h-0 w-full">
-        {isLoading ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-            <Spinner className="size-8" />
-            <p className="text-sm text-muted-foreground">
-              {t("kills.ranking.loading")}
-            </p>
-          </div>
-        ) : !data || data.npcs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">
-            <p className="text-muted-foreground">{t("kills.ranking.noData")}</p>
-          </div>
-        ) : (
-          <Table className="border-b">
-            <TableHeader className="bg-background sticky top-0 z-10">
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow
-                  key={headerGroup.id}
-                  className="border-b-1! border-border"
-                >
-                  {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id} className="whitespace-nowrap">
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  className="bg-background/30 border-b border-border h-14"
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="whitespace-nowrap">
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </ScrollArea>
-
-      <div className="h-14 shrink-0 bg-background border-t py-4 flex items-center justify-between px-4">
-        <div className="text-sm text-muted-foreground whitespace-nowrap">
-          {t("kills.ranking.total", { count: data?.pagination?.total ?? 0 })}
+          <Card className="flex-1 min-h-0 flex flex-col border-border bg-card/40 p-0 backdrop-blur-sm overflow-hidden gap-0">
+            <ScrollArea className="relative flex-1 min-h-0 w-full">
+              {isLoading ? (
+                <div className="flex items-center justify-center h-64">
+                  <div className="flex flex-col items-center justify-center gap-3">
+                    <Spinner className="size-8" />
+                    <p className="text-sm text-muted-foreground">
+                      {t("kills.ranking.loading")}
+                    </p>
+                  </div>
+                </div>
+              ) : !data || data.npcs.length === 0 ? (
+                <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">
+                  <p className="text-muted-foreground">
+                    {t("kills.ranking.noData")}
+                  </p>
+                </div>
+              ) : (
+                <Table className="border-b">
+                  <TableHeader className="bg-background sticky top-0 z-10">
+                    {table.getHeaderGroups().map((headerGroup) => (
+                      <TableRow
+                        key={headerGroup.id}
+                        className="border-b-1! border-border"
+                      >
+                        {headerGroup.headers.map((header) => (
+                          <TableHead
+                            key={header.id}
+                            className="whitespace-nowrap"
+                          >
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext(),
+                                )}
+                          </TableHead>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableHeader>
+                  <TableBody>
+                    {table.getRowModel().rows.map((row) => (
+                      <TableRow
+                        key={row.id}
+                        className="bg-background/30 border-b border-border h-14"
+                      >
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell
+                            key={cell.id}
+                            className="whitespace-nowrap"
+                          >
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext(),
+                            )}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </ScrollArea>
+            <div className="h-14 shrink-0 border-t border-border py-4 flex items-center justify-between px-4">
+              <div className="text-sm text-muted-foreground whitespace-nowrap">
+                {t("kills.ranking.total", {
+                  count: data?.pagination?.total ?? 0,
+                })}
+              </div>
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={handlePreviousPage}
+                      className={
+                        !hasPrev
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                    />
+                  </PaginationItem>
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={handleNextPage}
+                      className={
+                        !data?.pagination?.hasNext
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          </Card>
         </div>
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                onClick={handlePreviousPage}
-                className={
-                  !hasPrev ? "pointer-events-none opacity-50" : "cursor-pointer"
-                }
-              />
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationNext
-                onClick={handleNextPage}
-                className={
-                  !data?.pagination?.hasNext
-                    ? "pointer-events-none opacity-50"
-                    : "cursor-pointer"
-                }
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      </div>
+      </ScrollArea>
     </div>
   );
 };

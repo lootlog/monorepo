@@ -84,10 +84,10 @@ export const Events = () => {
   return (
     <ScrollArea className="h-full bg-background/50">
       <div className="flex flex-col gap-4 px-3 py-3">
-        <Card className="gap-4 border-border bg-card/40 p-3 backdrop-blur-sm">
+        <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3 flex-1 min-w-0">
-              <div className="rounded-xl bg-primary/10 p-2 shadow-inner shadow-primary/10">
+              <div className="rounded-xl bg-primary/10 p-2.5 shadow-inner shadow-primary/10">
                 <Trophy className="size-4 text-primary" />
               </div>
               <div className="min-w-0">

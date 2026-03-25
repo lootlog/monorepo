@@ -35,6 +35,10 @@ This is a pnpm monorepo managed with Turborepo. It contains multiple apps (`apps
 
 - When deduplicating code, do not preserve old files as re-export wrappers. Update all imports and delete the old files.
 
+## Design Guidelines
+
+- When working on `apps/web`, follow the design system defined in [`apps/web/design-guideline.md`](apps/web/design-guideline.md). All pages must use the unified layout patterns, design tokens, and component styling described there.
+
 ## Additional Notes
 
 - Don't try to run the app, assume it's already running.

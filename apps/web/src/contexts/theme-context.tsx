@@ -61,13 +61,13 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
 
   const [localTheme, setLocalTheme] = useState<Theme>(() => {
     const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) as Theme;
-    return savedTheme || "default";
+    return savedTheme ?? "default";
   });
   const [localColorMode, setLocalColorMode] = useState<ColorMode>(() => {
     const savedColorMode = localStorage.getItem(
       COLOR_MODE_STORAGE_KEY,
     ) as ColorMode;
-    return savedColorMode || "dark";
+    return savedColorMode ?? "dark";
   });
   const [hasThemeOverride, setHasThemeOverride] = useState(false);
   const [hasColorModeOverride, setHasColorModeOverride] = useState(false);

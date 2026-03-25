@@ -13,6 +13,7 @@ interface LevelRangeFilterProps {
   maxLevelPlaceholder?: string;
   inputClassName?: string;
   containerClassName?: string;
+  separator?: React.ReactNode;
 }
 
 export function LevelRangeFilter({
@@ -25,6 +26,7 @@ export function LevelRangeFilter({
   maxLevelPlaceholder = "Max. poziom",
   inputClassName,
   containerClassName,
+  separator,
 }: LevelRangeFilterProps) {
   return (
     <LevelRangeFilterFields
@@ -38,6 +40,7 @@ export function LevelRangeFilter({
       maxLevelPlaceholder={maxLevelPlaceholder}
       inputClassName={inputClassName}
       containerClassName={containerClassName}
+      separator={separator}
     />
   );
 }
@@ -52,6 +55,7 @@ function LevelRangeFilterFields({
   maxLevelPlaceholder,
   inputClassName,
   containerClassName,
+  separator,
 }: LevelRangeFilterProps) {
   const [localMinLevel, setLocalMinLevel] = useState<number | undefined>(
     minLevel,
@@ -106,6 +110,8 @@ function LevelRangeFilterFields({
           className={cn("w-[80px] h-10", inputClassName)}
         />
       </div>
+
+      {separator}
 
       <div className={containerClassName}>
         <Input

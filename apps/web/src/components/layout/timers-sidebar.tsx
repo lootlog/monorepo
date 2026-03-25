@@ -1,4 +1,4 @@
-import { Timers } from "@/features/guild/components/timers/timers";
+import { Timers } from "@/features/timers/timers";
 import { Sheet, SheetContent } from "@lootlog/ui/components/sheet";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
