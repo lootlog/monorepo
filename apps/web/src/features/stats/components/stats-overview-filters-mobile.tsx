@@ -49,8 +49,11 @@ export const StatsOverviewFiltersMobile = ({
   return (
     <Drawer shouldScaleBackground={false}>
       <DrawerTrigger asChild>
-        <Button variant="outline" size="icon" className="shrink-0">
-          <Filter className="h-4 w-4" />
+        <Button
+          size="icon"
+          className="fixed bottom-4 right-4 h-14 w-14 rounded-full shadow-lg z-20"
+        >
+          <Filter className="h-5 w-5" />
         </Button>
       </DrawerTrigger>
       <DrawerContent className="p-4">

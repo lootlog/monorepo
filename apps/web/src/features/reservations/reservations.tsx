@@ -20,6 +20,7 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { useReservationsViewMode } from "@/hooks/use-reservations-view-mode";
 import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
+import { ReservationCardSkeleton } from "./reservation-card-skeleton";
 
 export const Reservations: React.FC = () => {
   const { data: guild } = useGuild({});
@@ -49,34 +50,34 @@ export const Reservations: React.FC = () => {
     );
   }, [reservationsCards, normalizedSearch]);
 
-  if (!guild || !reservations || !reservationsCards) {
-    return null;
-  }
+  const isLoading = !guild || !reservations || !reservationsCards;
 
-  const sortedCards = filteredCards
-    .flatMap(([name, items]) =>
-      items.map((item, idx) => {
-        const slug = reservationSlug(name);
-        const normalizedKey =
-          slug in reservations
-            ? slug
-            : name in reservations
-              ? name
-              : name.toLowerCase();
-        const reservationsForCard =
-          reservations[normalizedKey] ?? reservations[slug] ?? [];
+  const sortedCards = isLoading
+    ? []
+    : filteredCards
+        .flatMap(([name, items]) =>
+          items.map((item, idx) => {
+            const slug = reservationSlug(name);
+            const normalizedKey =
+              slug in reservations
+                ? slug
+                : name in reservations
+                  ? name
+                  : name.toLowerCase();
+            const reservationsForCard =
+              reservations[normalizedKey] ?? reservations[slug] ?? [];
 
-        return {
-          name,
-          idx,
-          slug,
-          item,
-          reservationsForCard,
-          lvl: item.lvl || 0,
-        };
-      }),
-    )
-    .sort((a, b) => b.lvl - a.lvl);
+            return {
+              name,
+              idx,
+              slug,
+              item,
+              reservationsForCard,
+              lvl: item.lvl || 0,
+            };
+          }),
+        )
+        .sort((a, b) => b.lvl - a.lvl);
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background/50">
@@ -91,6 +92,7 @@ export const Reservations: React.FC = () => {
                   onChange={(event) => setSearchValue(event.target.value)}
                   placeholder="Szukaj expowiska..."
                   className="pl-9 w-full"
+                  disabled={isLoading}
                 />
               </div>
 
@@ -129,33 +131,47 @@ export const Reservations: React.FC = () => {
             </div>
           </Card>
 
-          <div
-            className={
-              viewMode === "grid"
-                ? "grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
-                : "flex flex-col gap-3"
-            }
-          >
-            {sortedCards.map(
-              ({ name, idx, slug, item, reservationsForCard }) => (
-                <ReservationCard
-                  key={`${name}-${idx}`}
-                  name={name}
-                  title={name}
-                  size={reservationsForCard.length.toString()}
-                  images={item.images}
-                  reservations={reservationsForCard}
-                  members={members}
-                  viewMode={viewMode}
-                  onClick={() => {
-                    navigate({
-                      to: `/${guild.vanityUrl ?? guild.id}/reservations/${slug}`,
-                    });
-                  }}
-                />
-              ),
-            )}
-          </div>
+          {isLoading ? (
+            <div
+              className={
+                viewMode === "grid"
+                  ? "grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+                  : "flex flex-col gap-3"
+              }
+            >
+              {Array.from({ length: 8 }).map((_, i) => (
+                <ReservationCardSkeleton key={i} viewMode={viewMode} />
+              ))}
+            </div>
+          ) : (
+            <div
+              className={
+                viewMode === "grid"
+                  ? "grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+                  : "flex flex-col gap-3"
+              }
+            >
+              {sortedCards.map(
+                ({ name, idx, slug, item, reservationsForCard }) => (
+                  <ReservationCard
+                    key={`${name}-${idx}`}
+                    name={name}
+                    title={name}
+                    size={reservationsForCard.length.toString()}
+                    images={item.images}
+                    reservations={reservationsForCard}
+                    members={members}
+                    viewMode={viewMode}
+                    onClick={() => {
+                      navigate({
+                        to: `/${guild!.vanityUrl ?? guild!.id}/reservations/${slug}`,
+                      });
+                    }}
+                  />
+                ),
+              )}
+            </div>
+          )}
         </div>
       </ScrollArea>
     </div>
