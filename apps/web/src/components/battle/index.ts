@@ -13,6 +13,8 @@ export { BattleMetadata } from "./battle-metadata";
 
 // Battle Stats Table Components
 export { BattleStatsTable } from "./battle-stats-table";
+export { OneVsOneStatsTable } from "./one-vs-one-stats-table";
+export { StatsCustomizationModal } from "./stats-customization/stats-customization-modal";
 export { getBattleStatsTableColumns } from "./battle-stats-table-columns-full";
 export { ExpandableDataTable } from "./expandable-data-table";
 export { DamageBreakdown } from "./damage-breakdown";

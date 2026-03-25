@@ -11,9 +11,18 @@ import type { Battle, Warrior } from "@/hooks/api/battle-log/use-battles";
 interface BattleStatsTableProps {
   battle: Battle;
   className?: string;
+  showHeader?: boolean;
+  hideZeros?: boolean;
+  onHideZerosChange?: (value: boolean) => void;
 }
 
-export function BattleStatsTable({ battle, className }: BattleStatsTableProps) {
+export function BattleStatsTable({
+  battle,
+  className,
+  showHeader = true,
+  hideZeros,
+  onHideZerosChange,
+}: BattleStatsTableProps) {
   const [expandedRows, setExpandedRows] = useState<
     Map<
       string,
@@ -120,21 +129,30 @@ export function BattleStatsTable({ battle, className }: BattleStatsTableProps) {
   }, [battle, expandedRows]);
 
   if (battle.type === "1v1") {
-    return <OneVsOneStatsTable battle={battle} />;
+    return (
+      <OneVsOneStatsTable
+        battle={battle}
+        showHeader={showHeader}
+        hideZeros={hideZeros}
+        onHideZerosChange={onHideZerosChange}
+      />
+    );
   }
 
   return (
     <Card className="border-border bg-card/40 backdrop-blur-sm overflow-hidden gap-0 p-0 w-full">
-      <div className="sticky top-0 z-9 bg-background border-b">
-        <div className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 font-semibold">
-              <ChartArea className="h-5 w-5" />
-              Statystyki walki
+      {showHeader && (
+        <div className="sticky top-0 z-9 bg-background border-b">
+          <div className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 font-semibold">
+                <ChartArea className="h-5 w-5" />
+                Statystyki walki
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
       <ScrollArea
         className={cn(
           "max-w-[100dvw] sm:max-w-[calc(100dvw-20rem)]",

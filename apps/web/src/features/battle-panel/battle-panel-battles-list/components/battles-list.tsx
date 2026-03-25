@@ -21,6 +21,7 @@ import {
 import { BattlesListFilters, type BattleFilters } from "./battles-list-filters";
 import { Swords } from "lucide-react";
 import { cn } from "@lootlog/ui/lib/utils";
+import { Card } from "@lootlog/ui/components/card";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useEffect, useRef } from "react";
@@ -164,7 +165,7 @@ export const BattlesList = ({
               </EmptyHeader>
             </Empty>
           ) : (
-            <div className="p-3 space-y-3">
+            <div className="space-y-3">
               {battlesResponse?.battles.map((battle) => (
                 <BattlesListEntry
                   key={battle.id}
@@ -180,13 +181,11 @@ export const BattlesList = ({
         </div>
       </ScrollArea>
 
-      {showPagination &&
-        battlesResponse?.pagination &&
-        (battlesResponse.pagination.hasNext ||
-          battlesResponse.pagination.hasPrev) && (
-          <div className="sticky h-14 bottom-0 bg-background border-t flex items-center justify-center px-4 relative py-4">
+      {showPagination && (
+        <div className="sticky bottom-0 px-3 pb-3 pt-1">
+          <Card className="flex items-center justify-center px-4 py-3 bg-card/60 backdrop-blur-sm border-border relative">
             <div className="absolute left-4 text-sm text-muted-foreground max-w-[30%]">
-              {battlesResponse.pagination.total && (
+              {battlesResponse?.pagination?.total && (
                 <span>Łącznie walk: {battlesResponse.pagination.total}</span>
               )}
             </div>
@@ -196,7 +195,7 @@ export const BattlesList = ({
                   <PaginationPrevious
                     onClick={handlePreviousPage}
                     className={
-                      !battlesResponse.pagination.hasPrev
+                      !battlesResponse?.pagination?.hasPrev
                         ? "pointer-events-none opacity-50"
                         : "cursor-pointer"
                     }
@@ -207,7 +206,7 @@ export const BattlesList = ({
                   <PaginationNext
                     onClick={handleNextPage}
                     className={
-                      !battlesResponse.pagination.hasNext
+                      !battlesResponse?.pagination?.hasNext
                         ? "pointer-events-none opacity-50"
                         : "cursor-pointer"
                     }
@@ -215,8 +214,9 @@ export const BattlesList = ({
                 </PaginationItem>
               </PaginationContent>
             </Pagination>
-          </div>
-        )}
+          </Card>
+        </div>
+      )}
     </div>
   );
 };

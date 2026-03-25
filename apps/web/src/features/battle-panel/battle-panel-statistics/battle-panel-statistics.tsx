@@ -20,8 +20,9 @@ import {
   useBattleFiltersStore,
   type Period,
 } from "@/store/battle-filters.store";
-import { Card } from "@lootlog/ui/components/card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { Card } from "@lootlog/ui/components/card";
+import { SectionHeader } from "@/components/layout/section-header";
 import { BarChart3 } from "lucide-react";
 
 export function BattlePanelStatistics() {
@@ -173,36 +174,26 @@ export function BattlePanelStatistics() {
   return (
     <ScrollArea className="h-full bg-background/50">
       <div className="px-3 py-3 flex flex-col gap-4">
-        <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-              <div className="rounded-xl bg-primary/10 p-2.5 shadow-inner shadow-primary/10">
-                <BarChart3 className="size-4 text-primary" />
-              </div>
-              <div className="min-w-0">
-                <h2 className="text-base font-semibold leading-tight">
-                  Statystyki walk
-                </h2>
-                <p className="text-xs text-muted-foreground leading-tight">
-                  Szczegółowa analiza i statystyki z historii twoich walk
-                </p>
-              </div>
-            </div>
-            <StatisticsFilters
-              characterId={currentCharacterId}
-              period={period}
-              minLevel={minLevel}
-              maxLevel={maxLevel}
-              ph={ph}
-              matchmaking={matchmaking}
-              onCharacterChange={handleCharacterChange}
-              onPeriodChange={handlePeriodChange}
-              onMinLevelChange={handleMinLevelChange}
-              onMaxLevelChange={handleMaxLevelChange}
-              onPhChange={handlePhChange}
-              onMatchmakingChange={handleMatchmakingChange}
-            />
-          </div>
+        <SectionHeader
+          icon={BarChart3}
+          title="Statystyki walk"
+          subtitle="Szczegółowa analiza i statystyki z historii twoich walk"
+        />
+        <Card className="gap-3 border-border bg-card/60 p-3 backdrop-blur-sm">
+          <StatisticsFilters
+            characterId={currentCharacterId}
+            period={period}
+            minLevel={minLevel}
+            maxLevel={maxLevel}
+            ph={ph}
+            matchmaking={matchmaking}
+            onCharacterChange={handleCharacterChange}
+            onPeriodChange={handlePeriodChange}
+            onMinLevelChange={handleMinLevelChange}
+            onMaxLevelChange={handleMaxLevelChange}
+            onPhChange={handlePhChange}
+            onMatchmakingChange={handleMatchmakingChange}
+          />
         </Card>
 
         {matchmaking ? (

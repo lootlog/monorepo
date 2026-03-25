@@ -16,6 +16,9 @@ import { StatsCustomizationModal } from "./stats-customization";
 
 interface OneVsOneStatsTableProps {
   battle: Battle;
+  showHeader?: boolean;
+  hideZeros?: boolean;
+  onHideZerosChange?: (value: boolean) => void;
 }
 
 interface StatDefinition {
@@ -30,7 +33,7 @@ interface StatCategory {
   stats: StatDefinition[];
 }
 
-const STAT_CATEGORIES: StatCategory[] = [
+export const STAT_CATEGORIES: StatCategory[] = [
   {
     name: "Statystyki tur",
     stats: [
@@ -345,8 +348,15 @@ const formatValue = (
   return String(value ?? 0);
 };
 
-export function OneVsOneStatsTable({ battle }: OneVsOneStatsTableProps) {
-  const [hideZeros, setHideZeros] = useState(true);
+export function OneVsOneStatsTable({
+  battle,
+  showHeader = true,
+  hideZeros: controlledHideZeros,
+  onHideZerosChange,
+}: OneVsOneStatsTableProps) {
+  const [internalHideZeros, setInternalHideZeros] = useState(true);
+  const hideZeros = controlledHideZeros ?? internalHideZeros;
+  const setHideZeros = onHideZerosChange ?? setInternalHideZeros;
 
   const {
     config,
@@ -428,49 +438,51 @@ export function OneVsOneStatsTable({ battle }: OneVsOneStatsTableProps) {
 
   return (
     <Card className="border-border bg-card/40 backdrop-blur-sm overflow-hidden gap-0 p-0 w-full">
-      <div className="sticky top-0 z-20 bg-background border-b w-full">
-        <div className="p-4">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-2 font-semibold">
-              <ChartArea className="h-5 w-5" />
-              Statystyki walki 1v1
-            </div>
-            <div className="flex items-center gap-2">
-              <StatsCustomizationModal
-                config={config}
-                defaultCategories={STAT_CATEGORIES}
-                onUpdateCategoryOrder={updateCategoryOrder}
-                onToggleCategoryVisibility={toggleCategoryVisibility}
-                onUpdateCategoryName={updateCategoryName}
-                onUpdateStatOrder={updateStatOrder}
-                onAddStatToCategory={addStatToCategory}
-                onRemoveStatFromCategory={removeStatFromCategory}
-                onAddCategory={addCategory}
-                onRemoveCategory={removeCategory}
-                onResetToDefaults={resetToDefaults}
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setHideZeros(!hideZeros)}
-                className="gap-2"
-              >
-                {hideZeros ? (
-                  <>
-                    <Eye className="h-4 w-4" />
-                    Pokaż wszystkie
-                  </>
-                ) : (
-                  <>
-                    <EyeOff className="h-4 w-4" />
-                    Ukryj zerowe wartości
-                  </>
-                )}
-              </Button>
+      {showHeader && (
+        <div className="sticky top-0 z-20 bg-background border-b w-full">
+          <div className="p-4">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-2 font-semibold">
+                <ChartArea className="h-5 w-5" />
+                Statystyki walki 1v1
+              </div>
+              <div className="flex items-center gap-2">
+                <StatsCustomizationModal
+                  config={config}
+                  defaultCategories={STAT_CATEGORIES}
+                  onUpdateCategoryOrder={updateCategoryOrder}
+                  onToggleCategoryVisibility={toggleCategoryVisibility}
+                  onUpdateCategoryName={updateCategoryName}
+                  onUpdateStatOrder={updateStatOrder}
+                  onAddStatToCategory={addStatToCategory}
+                  onRemoveStatFromCategory={removeStatFromCategory}
+                  onAddCategory={addCategory}
+                  onRemoveCategory={removeCategory}
+                  onResetToDefaults={resetToDefaults}
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setHideZeros(!hideZeros)}
+                  className="gap-2"
+                >
+                  {hideZeros ? (
+                    <>
+                      <Eye className="h-4 w-4" />
+                      Pokaż wszystkie
+                    </>
+                  ) : (
+                    <>
+                      <EyeOff className="h-4 w-4" />
+                      Ukryj zerowe wartości
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
       <div className="w-full overflow-x-auto max-w-screen">
         <Table
           style={{
