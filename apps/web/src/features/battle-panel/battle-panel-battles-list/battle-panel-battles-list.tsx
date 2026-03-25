@@ -1,5 +1,5 @@
 import { BattlesList } from "@/features/battle-panel/battle-panel-battles-list/components/battles-list";
-import { BattlesFiltersSidebar } from "@/features/battle-panel/battle-panel-battles-list/components/battles-filters-sidebar";
+import { FiltersSidebar } from "@/features/battle-panel/battle-panel-battles-list/components/filters-sidebar";
 import { useQueryStates } from "nuqs";
 import type { BattleFilters } from "./components/battles-list-filters";
 import { useBattles } from "@/hooks/api/battle-log/use-battles";
@@ -11,13 +11,16 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { useLocalStorage } from "usehooks-ts";
 import { Button } from "@lootlog/ui/components/button";
-import { Filter, Swords } from "lucide-react";
+import { Card } from "@lootlog/ui/components/card";
+import { Filter } from "lucide-react";
 import {
   Drawer,
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
 } from "@lootlog/ui/components/drawer";
+import { WarriorSearchFilter } from "@/components/filters";
+import type { Warrior } from "@/hooks/api/battle-log/use-search-warriors";
 
 const FILTERS_OPEN_KEY = "battles-filters-open";
 
@@ -30,6 +33,7 @@ export const BattlePanelBattlesList = () => {
     true,
   );
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+  const [selectedWarriors, setSelectedWarriors] = useState<Warrior[]>([]);
 
   const currentCharacterId = useBattleFiltersStore(
     (state) => state.currentCharacterId,
@@ -105,6 +109,21 @@ export const BattlePanelBattlesList = () => {
     });
   };
 
+  const handleWarriorToggle = (warrior: Warrior) => {
+    const isSelected = selectedWarriors.some((w) => w.name === warrior.name);
+    const newSelectedWarriors = isSelected
+      ? selectedWarriors.filter((w) => w.name !== warrior.name)
+      : [...selectedWarriors, warrior];
+
+    setSelectedWarriors(newSelectedWarriors);
+
+    const warriorNames = newSelectedWarriors.map((w) => w.name);
+    handleFiltersChange({
+      ...filters,
+      search: warriorNames.length > 0 ? warriorNames.join(",") : undefined,
+    });
+  };
+
   const handleToggleFilters = () => {
     if (isMobile) {
       setIsMobileFiltersOpen((prev) => !prev);
@@ -126,57 +145,42 @@ export const BattlePanelBattlesList = () => {
               <DrawerTitle>Filtry walk</DrawerTitle>
             </DrawerHeader>
             <div className="flex-1 overflow-hidden">
-              <BattlesFiltersSidebar
+              <FiltersSidebar
                 filters={filters}
                 onFiltersChange={handleFiltersChange}
                 characters={characters}
-                className="w-full border-l-0 h-full"
+                className="w-full border-l-0 h-full p-0"
               />
             </div>
           </DrawerContent>
         </Drawer>
       )}
 
-      <div className="w-full flex flex-col h-full overflow-hidden">
-        <div className="bg-card/60 backdrop-blur-sm w-full flex items-center border-b h-14">
-          <div className="flex-1 min-w-0 px-3">
+      <div className="w-full flex flex-col h-full overflow-hidden bg-background/50">
+        <div className="px-3 pt-3 pb-0">
+          <Card className="gap-3 border-border bg-card/60 p-4 backdrop-blur-sm">
             <div className="flex items-center gap-3">
-              <div className="rounded-xl bg-primary/10 p-2 shadow-inner shadow-primary/10">
-                <Swords className="size-4 text-primary" />
-              </div>
-              <h2 className="text-base font-semibold">Historia walk</h2>
+              <WarriorSearchFilter
+                selectedWarriors={selectedWarriors}
+                onWarriorToggle={handleWarriorToggle}
+                className="flex-1"
+              />
+              {!isMobile && (
+                <Button
+                  onClick={handleToggleFilters}
+                  variant={isFiltersOpen ? "default" : "outline"}
+                  size="icon"
+                  className="relative shrink-0"
+                >
+                  <Filter className="h-4 w-4" />
+                </Button>
+              )}
             </div>
-          </div>
-
-          {!isMobile && (
-            <div className="flex items-center gap-2 pr-3">
-              <Button
-                onClick={handleToggleFilters}
-                variant={isFiltersOpen ? "default" : "outline"}
-                size="icon"
-                className="relative shrink-0"
-              >
-                <Filter className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
-
-          {isMobile && (
-            <div className="pr-3">
-              <Button
-                onClick={handleToggleFilters}
-                variant="outline"
-                size="icon"
-                className="relative shrink-0"
-              >
-                <Filter className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
+          </Card>
         </div>
 
         <div className="flex-1 flex overflow-hidden">
-          <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-background/20">
+          <div className="flex-1 flex flex-col min-w-0 overflow-hidden p-3">
             <BattlesList
               battlesResponse={battlesResponse}
               characters={characters}
@@ -209,9 +213,9 @@ export const BattlePanelBattlesList = () => {
                   animate={{ width: 320, opacity: 1 }}
                   exit={{ width: 0, opacity: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="overflow-hidden h-full border-l border-border"
+                  className="overflow-hidden h-full"
                 >
-                  <BattlesFiltersSidebar
+                  <FiltersSidebar
                     filters={filters}
                     onFiltersChange={handleFiltersChange}
                     characters={characters}
@@ -222,6 +226,16 @@ export const BattlePanelBattlesList = () => {
           )}
         </div>
       </div>
+
+      {isMobile && (
+        <Button
+          onClick={() => setIsMobileFiltersOpen(true)}
+          size="icon"
+          className="fixed bottom-4 right-4 h-14 w-14 rounded-full shadow-lg z-20"
+        >
+          <Filter className="h-5 w-5" />
+        </Button>
+      )}
     </>
   );
 };

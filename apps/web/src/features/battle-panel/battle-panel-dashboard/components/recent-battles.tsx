@@ -1,7 +1,7 @@
 import { BattlesList } from "@/features/battle-panel/battle-panel-battles-list/components/battles-list";
 import { Button } from "@lootlog/ui/components/button";
-import { Card } from "@lootlog/ui/components/card";
-import { ChevronRight } from "lucide-react";
+import { SectionHeader } from "@/components/layout/section-header";
+import { ChevronRight, Swords } from "lucide-react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useBattles } from "@/hooks/api/battle-log/use-battles";
 import { useBattleCharacters } from "@/hooks/api/battle-log/use-battle-characters";
@@ -37,24 +37,21 @@ export const RecentBattles = () => {
   };
 
   return (
-    <Card className="border-border bg-card/40 backdrop-blur-sm overflow-hidden gap-0 p-0">
-      <div className="p-4">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <h2 className="font-semibold">Ostatnie walki</h2>
-            <p className="text-muted-foreground text-sm">
-              Twoje ostatnie walki dla wszystkich postaci
-            </p>
-          </div>
-
+    <>
+      <SectionHeader
+        icon={Swords}
+        title="Ostatnie walki"
+        subtitle="Twoje ostatnie walki dla wszystkich postaci"
+        actions={
           <Button variant="outline" size="sm" asChild>
             <Link to={ROUTES.user.battlePanel.battles}>
               Zobacz wszystkie
               <ChevronRight className="h-4 w-4 ml-2" />
             </Link>
           </Button>
-        </div>
-      </div>
+        }
+      />
+
       <BattlesList
         battlesResponse={battlesResponse}
         characters={characters}
@@ -63,6 +60,6 @@ export const RecentBattles = () => {
         isLoading={isLoading}
         onFiltersChange={handleFiltersChange}
       />
-    </Card>
+    </>
   );
 };
