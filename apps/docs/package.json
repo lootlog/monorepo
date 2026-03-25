@@ -14,9 +14,9 @@
   "dependencies": {
     "@lootlog/ui": "workspace:*",
     "@types/mdx": "^2.0.13",
-    "fumadocs-core": "^16.7.4",
+    "fumadocs-core": "^16.7.6",
     "fumadocs-mdx": "^14.2.11",
-    "fumadocs-ui": "^16.7.4",
+    "fumadocs-ui": "^16.7.6",
     "next": "^16.2.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
