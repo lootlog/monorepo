@@ -25,11 +25,11 @@ export class ActivitiesQueryService {
       where.guildId = query.guildId;
     }
 
-    if (query.type && query.type.length > 0) {
+    if (query.type?.length) {
       where.type = { in: query.type };
     }
 
-    if (query.source && query.source.length > 0) {
+    if (query.source?.length) {
       where.source = { in: query.source };
     }
 
@@ -103,7 +103,7 @@ export class ActivitiesQueryService {
     search?: string,
     limit = 10,
   ): Promise<string[]> {
-    const limitValue = Math.min(Math.max(limit ?? 10, 1), 50);
+    const limitValue = Math.min(Math.max(limit, 1), 50);
     const trimmedSearch = search?.trim();
 
     const where: Prisma.ActivityActorSnapshotWhereInput = {
@@ -152,7 +152,7 @@ export class ActivitiesQueryService {
     search?: string,
     limit = 20,
   ): Promise<string[]> {
-    const limitValue = Math.min(Math.max(limit ?? 20, 1), 50);
+    const limitValue = Math.min(Math.max(limit, 1), 50);
     const trimmedSearch = search?.trim();
 
     const where: Prisma.ActivityWhereInput = {
@@ -191,7 +191,7 @@ export class ActivitiesQueryService {
     search?: string,
     limit = 10,
   ): Promise<string[]> {
-    const limitValue = Math.min(Math.max(limit ?? 10, 1), 50);
+    const limitValue = Math.min(Math.max(limit, 1), 50);
     const trimmedSearch = search?.trim();
 
     const where: Prisma.ActivityActorSnapshotWhereInput = {
