@@ -13,13 +13,16 @@
     }
   },
   "scripts": {
-    "build": "pkgroll"
+    "build": "pkgroll",
+    "bench": "vitest bench --run"
   },
   "dependencies": {
     "@msgpack/msgpack": "^3.1.3"
   },
   "devDependencies": {
+    "@codspeed/vitest-plugin": "^5.2.0",
     "@lootlog/typescript-config": "workspace:*",
-    "pkgroll": "^2.27.0"
+    "pkgroll": "^2.27.0",
+    "vitest": "^4.1.0"
   }
 }
