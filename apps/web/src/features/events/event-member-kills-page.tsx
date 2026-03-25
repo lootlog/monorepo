@@ -3,14 +3,8 @@ import { useTranslation } from "react-i18next";
 import { Link, useParams } from "@tanstack/react-router";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { differenceInSeconds } from "date-fns";
-import {
-  AlertCircle,
-  BarChart3,
-  Clock,
-  Loader2,
-  Skull,
-  Swords,
-} from "lucide-react";
+import { AlertCircle, BarChart3, Clock, Skull, Swords } from "lucide-react";
+import { Spinner } from "@lootlog/ui/components/spinner";
 import { cn } from "@lootlog/ui/lib/utils";
 import {
   Avatar,
@@ -665,7 +659,7 @@ const MemberKillsListSection = ({
 
         {isLoading ? (
           <div className="flex flex-1 items-center justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
+            <Spinner className="h-8 w-8" />
           </div>
         ) : hasError ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-2 text-muted-foreground">
@@ -707,7 +701,7 @@ const MemberKillsListSection = ({
                     {isLoaderRow ? (
                       hasNextPage ? (
                         <div className="relative flex h-14 items-center justify-center gap-2.5 rounded-xl border border-border/50 bg-card/30 backdrop-blur-md">
-                          <Loader2 className="h-4.5 w-4.5 animate-spin text-primary" />
+                          <Spinner className="h-4.5 w-4.5 text-primary" />
                           <span className="text-xs font-medium text-muted-foreground">
                             {t("events.kills.loading")}
                           </span>
@@ -825,7 +819,7 @@ const EventMemberKillsPageContent = ({
   if (eventLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
+        <Spinner className="h-8 w-8" />
       </div>
     );
   }

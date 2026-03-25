@@ -1,17 +1,21 @@
 import * as React from "react";
 
 import { cn } from "@lootlog/ui/lib/utils";
+import { CatPawOverlay } from "@lootlog/ui/components/cat-paw-overlay";
 
-function Card({ className, ...props }: React.ComponentProps<"div">) {
+function Card({ className, children, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card"
       className={cn(
-        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm",
+        "bg-card/40 text-card-foreground relative flex flex-col gap-6 overflow-hidden rounded-xl border py-6 shadow-sm",
         className,
       )}
       {...props}
-    />
+    >
+      <CatPawOverlay />
+      {children}
+    </div>
   );
 }
 

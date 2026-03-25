@@ -24,7 +24,16 @@ type Theme =
   | "realmadrid"
   | "realmadrid-3rd"
   | "barcelona"
-  | "rukia";
+  | "rukia"
+  | "cat-pink"
+  | "cat-purple"
+  | "cat-blue"
+  | "cat-random";
+
+const CAT_VARIANTS = ["cat-pink", "cat-purple", "cat-blue"] as const;
+
+const getRandomCatVariant = (): (typeof CAT_VARIANTS)[number] =>
+  CAT_VARIANTS[Math.floor(Math.random() * CAT_VARIANTS.length)] ?? "cat-pink";
 type ColorMode = "light" | "dark";
 
 interface ThemeContextType {
@@ -100,10 +109,16 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
       "realmadrid-3rd",
       "barcelona",
       "rukia",
+      "cat-pink",
+      "cat-purple",
+      "cat-blue",
     );
 
     root.classList.add(colorMode);
-    if (theme !== "default") {
+    if (theme === "cat-random") {
+      const existing = CAT_VARIANTS.find((v) => root.classList.contains(v));
+      root.classList.add(existing ?? getRandomCatVariant());
+    } else if (theme !== "default") {
       root.classList.add(theme);
     }
   }, [theme, colorMode]);

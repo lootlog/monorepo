@@ -7,7 +7,10 @@ export const useAuthScopes = () => {
   const query = useQuery({
     queryKey: ["auth-scopes"],
     queryFn: () => client.get<string[]>(`/auth/@me/scopes`),
-    select: (response) => response.data,
+    select: (response) => {
+      const data = response.data;
+      return Array.isArray(data) ? data : [];
+    },
   });
 
   return query;
