@@ -22,7 +22,8 @@ import {
 } from "@lootlog/ui/components/form";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Pencil, X, MapPin, Search, Loader2 } from "lucide-react";
+import { Pencil, X, MapPin, Search } from "lucide-react";
+import { Spinner } from "@lootlog/ui/components/spinner";
 import { toast } from "sonner";
 import { useUpdateMapTemplate } from "./hooks/use-map-template-mutations";
 import { useGameMaps, type GameMap } from "@/hooks/api/use-game-maps";
@@ -311,7 +312,7 @@ export const MapTemplateEditDialog = ({
               >
                 {isPending ? (
                   <>
-                    <Loader2 className="size-3.5 mr-1.5 animate-spin" />
+                    <Spinner className="size-3.5 mr-1.5" />
                     {t("settings.mapTemplates.editDialog.saving")}
                   </>
                 ) : (

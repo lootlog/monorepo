@@ -9,7 +9,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@lootlog/ui/components/alert-dialog";
-import { Loader2 } from "lucide-react";
+import { Spinner } from "@lootlog/ui/components/spinner";
 
 interface ResumeEventDialogProps {
   open: boolean;
@@ -53,7 +53,7 @@ export const ResumeEventDialog = ({
             }}
             disabled={isPending}
           >
-            {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            {isPending && <Spinner className="w-4 h-4 mr-2" />}
             {t("events.resume")}
           </AlertDialogAction>
         </AlertDialogFooter>

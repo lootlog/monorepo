@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AlertTriangle, Clock, Loader2, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Clock, ShieldCheck } from "lucide-react";
+import { Spinner } from "@lootlog/ui/components/spinner";
 import { formatDistanceToNowStrict } from "date-fns";
 import { pl } from "date-fns/locale";
 import { toast } from "sonner";
@@ -125,7 +126,7 @@ const EventParticipationConfirmationDialogContent = ({
 
         {isLoading ? (
           <div className="flex items-center justify-center py-6 text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" />
+            <Spinner className="size-4" />
           </div>
         ) : (
           <>
@@ -181,7 +182,7 @@ const EventParticipationConfirmationDialogContent = ({
                               onClick={() => handleConfirm(item.killId)}
                             >
                               {confirmingKillId === item.killId ? (
-                                <Loader2 className="size-3.5 animate-spin" />
+                                <Spinner className="size-3.5" />
                               ) : (
                                 t("events.confirmation.confirm", "Potwierdź")
                               )}

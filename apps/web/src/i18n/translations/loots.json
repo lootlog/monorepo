@@ -89,11 +89,17 @@
   },
   "list": {
     "noWorldSelected": "Brak wybranego świata, wybierz go z listy na górze.",
+    "noWorldSelectedCat": "Miau! Wybierz świat, żeby zobaczyć łupy 🐱",
     "empty": "Nie znaleziono żadnych lootów.",
+    "emptyCat": "Kot przeszukał wszystko... nic nie znalazł 😿",
     "loadingMore": "Ładowanie kolejnych lootów...",
+    "loadingMoreCat": "Kotek poluje na kolejne łupy...",
     "end": "To już wszystkie looty",
+    "endCat": "Miau, to już wszystkie łupy! 😺",
     "unassignedItems": "Przedmioty bez podziału",
-    "obtainedBy": "Zdobyto przez:"
+    "obtainedBy": "Zdobyto przez:",
+    "stackCount": "+{{count}} więcej",
+    "details": "Szczegóły"
   },
   "details": {
     "copySuccess": "ID skopiowane",

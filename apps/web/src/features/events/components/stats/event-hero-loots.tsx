@@ -20,6 +20,7 @@ import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { cn } from "@/utils/cn";
 import { ItemRarity, type Loot } from "@/hooks/api/loots/use-loots";
 import { EventScrollableTabsList } from "../shared/event-scrollable-tabs-list";
+import { Spinner } from "@lootlog/ui/components/spinner";
 
 interface EventHeroLootsProps {
   guildId: string;
@@ -126,7 +127,7 @@ export const EventHeroLoots = ({
           </div>
         </div>
         <div className="flex items-center justify-center h-32">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+          <Spinner className="h-6 w-6" />
         </div>
       </Card>
     );

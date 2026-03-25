@@ -3,7 +3,8 @@ import { Link, useParams } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { AlertCircle, BookOpenText, Loader2 } from "lucide-react";
+import { AlertCircle, BookOpenText } from "lucide-react";
+import { Spinner } from "@lootlog/ui/components/spinner";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
@@ -75,7 +76,7 @@ export const EventEditRulebookPage = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="size-8 animate-spin text-primary" />
+        <Spinner className="size-8 text-primary" />
       </div>
     );
   }
