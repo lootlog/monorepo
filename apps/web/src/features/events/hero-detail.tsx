@@ -360,7 +360,7 @@ export const HeroDetail = () => {
                     {event.name}
                   </p>
                   <h2 className="text-base font-semibold leading-tight break-words">
-                    {hero.npcName}
+                    {hero.npcName} {hero.npcLvl ? `(${hero.npcLvl})` : ""}
                   </h2>
                   <div className="mt-1 flex flex-wrap items-center gap-2">
                     <HeroTimerCountdown timer={heroTimer} />
