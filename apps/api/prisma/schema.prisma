@@ -480,6 +480,19 @@ model UserGuildTimerSettings {
   @@index([guildId])
 }
 
+model UserGuildEventSettings {
+  id           Int      @id @default(autoincrement())
+  userId       String
+  guildId      String
+  pinnedEvents String[] @default([])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, guildId])
+  @@index([userId])
+  @@index([guildId])
+}
+
 model UserSoundSettings {
   id                  Int      @id @default(autoincrement())
   userId              String   @unique

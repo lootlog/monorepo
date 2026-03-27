@@ -33,6 +33,8 @@ import { EventQueueDiagnosticsService } from "./services/event-queue-diagnostics
 import { EventRespawnService } from "./services/event-respawn.service";
 import { EventSummaryService } from "./services/event-summary.service";
 import { EventWrappedService } from "./services/event-wrapped.service";
+import { EventSettingsService } from "./services/event-settings.service";
+import { EventsSettingsController } from "./events-settings.controller";
 
 @Module({
   imports: [
@@ -65,6 +67,7 @@ import { EventWrappedService } from "./services/event-wrapped.service";
     EventRespawnService,
     EventSummaryService,
     EventWrappedService,
+    EventSettingsService,
 
     EventsQueueHandler,
     RespawnWindowProcessor,
@@ -75,6 +78,7 @@ import { EventWrappedService } from "./services/event-wrapped.service";
     EventsAssignmentController,
     EventsRankingController,
     EventsMonitoringController,
+    EventsSettingsController,
   ],
   exports: [EventsService],
 })

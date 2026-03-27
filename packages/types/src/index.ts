@@ -5,3 +5,4 @@ export * from "./common/permissions.types.js";
 export * from "./common/npc-type.types.js";
 export * from "./common/discord-auth-scopes.js";
 export * from "./common/discord.js";
+export * from "./common/event-settings.types.js";

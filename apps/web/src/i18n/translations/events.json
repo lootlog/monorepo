@@ -11,6 +11,8 @@
     "scoring": "Ustawienia punktów"
   },
   "delete": "Usuń Event",
+  "pinEvent": "Przypnij event",
+  "unpinEvent": "Odepnij event",
   "upcoming": "Nadchodzący",
   "active": "Aktywny",
   "inactive": "Nieaktywny",
@@ -70,7 +72,8 @@
     "success": "Event utworzony pomyślnie",
     "error": "Błąd podczas tworzenia eventu",
     "cancel": "Anuluj",
-    "creating": "Tworzenie..."
+    "creating": "Tworzenie...",
+    "create": "Utwórz"
   },
   "rulebook": {
     "label": "Regulamin eventu",
@@ -269,6 +272,7 @@
     "close": "Zamknij"
   },
   "sidebarBanner": {
+    "pinnedEvent": "Przypięty event",
     "activeEvent": "Aktywny event",
     "showMore": "+{{count}} więcej",
     "collapse": "Zwiń"
