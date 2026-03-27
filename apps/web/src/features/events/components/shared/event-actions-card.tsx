@@ -1,9 +1,19 @@
 import { useTranslation } from "react-i18next";
-import { Clock, Pencil, RotateCcw, Settings2, Trash2 } from "lucide-react";
+import {
+  Clock,
+  Pencil,
+  RotateCcw,
+  Settings2,
+  Star,
+  Trash2,
+} from "lucide-react";
 import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
+import { useToggleEventPin } from "@/features/events/hooks/mutations/use-toggle-event-pin";
 
 interface EventActionsCardProps {
+  eventId: string;
+  guildId: string;
   canManage: boolean;
   canDeleteEvent: boolean;
   isActive: boolean;
@@ -15,6 +25,8 @@ interface EventActionsCardProps {
 }
 
 export const EventActionsCard = ({
+  eventId,
+  guildId,
   canManage,
   canDeleteEvent,
   isActive,
@@ -25,6 +37,8 @@ export const EventActionsCard = ({
   onDelete,
 }: EventActionsCardProps) => {
   const { t } = useTranslation();
+  const { togglePin, isPinned } = useToggleEventPin(guildId);
+  const pinned = isPinned(eventId);
 
   return (
     <Card className="gap-3 border-border bg-card/40 p-3 backdrop-blur-sm">
@@ -42,14 +56,24 @@ export const EventActionsCard = ({
         </div>
       </div>
 
-      {canManage && (
-        <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2">
+        <Button
+          size="sm"
+          variant={pinned ? "default" : "outline"}
+          onClick={() => togglePin(eventId)}
+        >
+          <Star
+            className={`size-3.5 ${pinned ? "fill-yellow-500 text-yellow-500" : ""}`}
+          />
+          {pinned ? t("events.unpinEvent") : t("events.pinEvent")}
+        </Button>
+        {canManage && (
           <Button size="sm" variant="outline" onClick={onEdit}>
             <Pencil className="size-3.5" />
             {t("events.editButton")}
           </Button>
-        </div>
-      )}
+        )}
+      </div>
 
       {canManage && (
         <div className="flex flex-wrap gap-2 border-t border-border/50 pt-3">

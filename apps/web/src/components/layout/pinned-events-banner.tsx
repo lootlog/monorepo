@@ -6,13 +6,13 @@ import { useTranslation } from "react-i18next";
 import type { Event } from "@/features/events/hooks";
 import { EventTimersList } from "./event-timers-list";
 
-interface ActiveEventsBannerProps {
+interface PinnedEventsBannerProps {
   events: Event[];
   guildId: string;
   onNavigate?: () => void;
 }
 
-export const ActiveEventsBanner: FC<ActiveEventsBannerProps> = ({
+export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
   events,
   guildId,
   onNavigate,
@@ -79,7 +79,7 @@ export const ActiveEventsBanner: FC<ActiveEventsBannerProps> = ({
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">
-                  {t("events.sidebarBanner.activeEvent")}
+                  {t("events.sidebarBanner.pinnedEvent")}
                 </p>
                 <p className="text-sm font-semibold truncate">
                   {featuredEvent.name}

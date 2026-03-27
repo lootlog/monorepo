@@ -13,6 +13,7 @@ import {
   Globe,
   ShieldX,
   Trash2,
+  Star,
 } from "lucide-react";
 import { Badge } from "@lootlog/ui/components/badge";
 import { format } from "date-fns";
@@ -25,6 +26,7 @@ import {
   useEvents,
 } from "@/features/events/hooks/queries/use-events";
 import { useDeleteEvent } from "@/features/events/hooks/mutations/use-delete-event";
+import { useToggleEventPin } from "@/features/events/hooks/mutations/use-toggle-event-pin";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { EventCreateDialog } from "./components/dialogs/event-create-dialog";
 import { DeleteEventDialog } from "./components/dialogs/delete-event-dialog";
@@ -39,6 +41,7 @@ export const Events = () => {
   const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
   const { data: permissions } = useGuildPermissions();
   const deleteEvent = useDeleteEvent(guildId ?? "");
+  const { togglePin, isPinned } = useToggleEventPin(guildId ?? "");
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -217,20 +220,45 @@ export const Events = () => {
                           </div>
                         </div>
                       </div>
-                      {canDeleteEvent && (
+                      <div className="flex items-center gap-1">
                         <Button
-                          variant="destructive"
+                          variant="ghost"
                           size="icon"
                           className="h-7 w-7"
+                          title={
+                            isPinned(event.id)
+                              ? t("events.unpinEvent")
+                              : t("events.pinEvent")
+                          }
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            setEventToDelete(event);
+                            togglePin(event.id);
                           }}
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Star
+                            className={`w-3.5 h-3.5 ${
+                              isPinned(event.id)
+                                ? "fill-yellow-500 text-yellow-500"
+                                : "text-muted-foreground"
+                            }`}
+                          />
                         </Button>
-                      )}
+                        {canDeleteEvent && (
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setEventToDelete(event);
+                            }}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </Card>
                 </Link>

@@ -17,3 +17,4 @@ export * from "./use-hero-active-gaps";
 export * from "./use-hero-respawn-config";
 export * from "./use-hero-presence-stats";
 export * from "./use-ranking-edit-history";
+export * from "./use-event-settings";

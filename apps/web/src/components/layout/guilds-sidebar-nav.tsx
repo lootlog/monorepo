@@ -24,9 +24,9 @@ import { SidebarNav, type MenuItem } from "./sidebar-nav/index";
 import { useMemberRefresh } from "@/hooks/api/members/use-member-refresh";
 import { ROUTE_SEGMENTS } from "@/config/routes";
 import { Permission } from "@lootlog/types";
-import { useEvents } from "@/features/events/hooks";
+import { useEvents, useEventSettings } from "@/features/events/hooks";
 import { isEventActiveAtTimestamp } from "@/features/events/utils";
-import { ActiveEventsBanner } from "./active-events-banner";
+import { PinnedEventsBanner } from "./pinned-events-banner";
 import { useTheme } from "@/hooks/context/use-theme";
 import { cn } from "@lootlog/ui/lib/utils";
 import { getPermissionRefreshInfo } from "@/utils/get-permission-refresh-info";
@@ -51,12 +51,17 @@ export const GuildsSidebarNav: FC = () => {
     activeOnly: true,
     enabled: Boolean(canViewEvents),
   });
+  const { data: eventSettings } = useEventSettings(guildId ?? "");
   const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
-  const currentlyActiveEvents = (activeEvents ?? []).filter((event) =>
+  const filteredActiveEvents = (activeEvents ?? []).filter((event) =>
     isEventActiveAtTimestamp(event, currentTimestamp),
   );
-  const hasActiveEvents = currentlyActiveEvents.length > 0;
-  const activeEventCount = currentlyActiveEvents.length;
+  const pinnedEvents = eventSettings?.pinnedEvents ?? [];
+  const pinnedActiveEvents = pinnedEvents
+    .map((id) => filteredActiveEvents.find((e) => e.id === id))
+    .filter((e) => e !== undefined);
+  const hasActiveEvents = filteredActiveEvents.length > 0;
+  const activeEventCount = filteredActiveEvents.length;
 
   const menuItems: MenuItem[] = [
     {
@@ -223,8 +228,8 @@ export const GuildsSidebarNav: FC = () => {
       header={header}
       beforeItems={
         canViewEvents ? (
-          <ActiveEventsBanner
-            events={activeEvents ?? []}
+          <PinnedEventsBanner
+            events={pinnedActiveEvents}
             guildId={guildId ?? ""}
             onNavigate={handleItemClick}
           />

@@ -414,6 +414,8 @@ export const EventDetail = () => {
 
           <div className="lg:hidden">
             <EventActionsCard
+              eventId={eventId ?? ""}
+              guildId={guildId ?? ""}
               canManage={canManage ?? false}
               canDeleteEvent={canDeleteEvent ?? false}
               isActive={isEventActive}
@@ -496,6 +498,8 @@ export const EventDetail = () => {
             <div className="space-y-4">
               <div className="hidden lg:block">
                 <EventActionsCard
+                  eventId={eventId ?? ""}
+                  guildId={guildId ?? ""}
                   canManage={canManage ?? false}
                   canDeleteEvent={canDeleteEvent ?? false}
                   isActive={isEventActive}
