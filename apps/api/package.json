@@ -70,7 +70,7 @@
     "@types/redlock": "^4.0.8",
     "@types/supertest": "^7.2.0",
     "jest": "^30.3.0",
-    "prisma": "7.5.0",
+    "prisma": "7.6.0",
     "supertest": "^7.2.2",
     "testcontainers": "^11.13.0",
     "ts-jest": "^29.4.6",
