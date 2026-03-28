@@ -238,7 +238,9 @@ describe("LootsController", () => {
         [mockRole],
         params,
       );
-      const expectedResult = plainToInstance(LootEntity, mockLoots);
+      const expectedResult = plainToInstance(LootEntity, mockLoots, {
+        excludeExtraneousValues: true,
+      });
       expect(result).toEqual(expectedResult);
     });
 
@@ -293,7 +295,9 @@ describe("LootsController", () => {
         lootId,
         guildId: mockGuild.id,
       });
-      const expectedResult = plainToInstance(LootCommentEntity, mockComments);
+      const expectedResult = plainToInstance(LootCommentEntity, mockComments, {
+        excludeExtraneousValues: true,
+      });
       expect(result).toEqual(expectedResult);
     });
   });
@@ -328,7 +332,9 @@ describe("LootsController", () => {
         body,
         guildId: mockGuild.id,
       });
-      const expectedResult = plainToInstance(LootCommentEntity, mockComment);
+      const expectedResult = plainToInstance(LootCommentEntity, mockComment, {
+        excludeExtraneousValues: true,
+      });
       expect(result).toEqual(expectedResult);
     });
   });
