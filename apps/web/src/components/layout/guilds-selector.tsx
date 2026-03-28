@@ -5,6 +5,7 @@ import { UserNavItem } from "@/components/layout/user-nav-item";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Separator } from "@lootlog/ui/components/separator";
 import { useGuilds } from "@/hooks/api/guilds/use-guilds";
+import { useGuildId } from "@/hooks/context/use-guild-id";
 import { Reorder } from "framer-motion";
 import { useState, useEffect, useCallback, useMemo, type FC } from "react";
 import { useUser } from "@/hooks/api/user/use-user";
@@ -13,6 +14,7 @@ import { useUpdateUserPreferences } from "@/hooks/api/user/use-update-user-prefe
 export const GuildsSelector: FC = () => {
   const { data: guilds } = useGuilds();
   const { user } = useUser();
+  const currentGuildId = useGuildId();
   const [localGuilds, setLocalGuilds] = useState<typeof guilds>();
   const [isDragging, setIsDragging] = useState(false);
   const [pendingOrder, setPendingOrder] = useState<string[] | null>(null);
@@ -104,7 +106,11 @@ export const GuildsSelector: FC = () => {
               dragListener
               dragControls={undefined}
             >
-              <GuildNavItem guild={guild} isDragging={isDragging} />
+              <GuildNavItem
+                guild={guild}
+                isDragging={isDragging}
+                currentGuildId={currentGuildId}
+              />
             </Reorder.Item>
           ))}
         </Reorder.Group>

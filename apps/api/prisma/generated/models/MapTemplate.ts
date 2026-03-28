@@ -154,7 +154,7 @@ export type MapTemplateGroupByOutputType = {
   _max: MapTemplateMaxAggregateOutputType | null
 }
 
-type GetMapTemplateGroupByPayload<T extends MapTemplateGroupByArgs> = Prisma.PrismaPromise<
+export type GetMapTemplateGroupByPayload<T extends MapTemplateGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<MapTemplateGroupByOutputType, T['by']> &
       {

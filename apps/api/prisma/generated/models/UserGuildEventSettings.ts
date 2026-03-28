@@ -195,7 +195,7 @@ export type UserGuildEventSettingsGroupByOutputType = {
   _max: UserGuildEventSettingsMaxAggregateOutputType | null
 }
 
-type GetUserGuildEventSettingsGroupByPayload<T extends UserGuildEventSettingsGroupByArgs> = Prisma.PrismaPromise<
+export type GetUserGuildEventSettingsGroupByPayload<T extends UserGuildEventSettingsGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<UserGuildEventSettingsGroupByOutputType, T['by']> &
       {

@@ -205,7 +205,7 @@ export type UserCharactersLootlogSettingsGroupByOutputType = {
   _max: UserCharactersLootlogSettingsMaxAggregateOutputType | null
 }
 
-type GetUserCharactersLootlogSettingsGroupByPayload<T extends UserCharactersLootlogSettingsGroupByArgs> = Prisma.PrismaPromise<
+export type GetUserCharactersLootlogSettingsGroupByPayload<T extends UserCharactersLootlogSettingsGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<UserCharactersLootlogSettingsGroupByOutputType, T['by']> &
       {

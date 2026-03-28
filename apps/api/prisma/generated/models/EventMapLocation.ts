@@ -199,7 +199,7 @@ export type EventMapLocationGroupByOutputType = {
   _max: EventMapLocationMaxAggregateOutputType | null
 }
 
-type GetEventMapLocationGroupByPayload<T extends EventMapLocationGroupByArgs> = Prisma.PrismaPromise<
+export type GetEventMapLocationGroupByPayload<T extends EventMapLocationGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<EventMapLocationGroupByOutputType, T['by']> &
       {

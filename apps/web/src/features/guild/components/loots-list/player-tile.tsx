@@ -8,6 +8,7 @@ import {
   MARGONEM_PROFILE_URL,
 } from "@/constants/margonem";
 import { cn } from "@lootlog/ui/lib/utils";
+import { useSharedTooltip } from "@/components/shared-tooltip/shared-tooltip-provider";
 
 import type { FC } from "react";
 import type { Player } from "@/hooks/api/game-data/use-guild-players";
@@ -22,6 +23,20 @@ type PlayerTileProps = {
   world?: string;
 };
 
+const PlayerTooltipContent: FC<{
+  name?: string;
+  lvl?: number;
+  prof?: string;
+}> = ({ name, lvl, prof }) => (
+  <p className="text-foreground font-semibold">
+    {name}{" "}
+    <span className="text-muted-foreground font-normal">
+      ({lvl}
+      {prof?.charAt(0).toLowerCase()})
+    </span>
+  </p>
+);
+
 export const PlayerTile: FC<PlayerTileProps> = ({
   player: { lvl, prof, name, icon },
   idx,
@@ -31,11 +46,12 @@ export const PlayerTile: FC<PlayerTileProps> = ({
   characterId,
   world,
 }) => {
-  const content = (
+  const sharedTooltip = useSharedTooltip();
+
+  const tileContent = (
     <div className={cn("relative scale-90 origin-top", className)}>
       <div
         className={cn(
-          // Simplified transition - only bg color, not all properties
           "w-[32px] h-[48px] relative cursor-pointer rounded-lg bg-muted/30 transition-colors duration-200 hover:bg-muted/50",
         )}
         style={{
@@ -56,6 +72,43 @@ export const PlayerTile: FC<PlayerTileProps> = ({
     </div>
   );
 
+  const handleMouseEnter = (e: React.MouseEvent<HTMLElement>) => {
+    sharedTooltip?.showTooltip(
+      <PlayerTooltipContent name={name} lvl={lvl} prof={prof} />,
+      e.currentTarget.getBoundingClientRect(),
+      {
+        contentClassName: "bg-popover/95 backdrop-blur-md border-border/50",
+        triggerElement: e.currentTarget,
+      },
+    );
+  };
+
+  const handleMouseLeave = () => {
+    sharedTooltip?.hideTooltip();
+  };
+
+  if (sharedTooltip) {
+    const wrapper =
+      accountId && characterId && world ? (
+        <a
+          href={`${MARGONEM_PROFILE_URL},${accountId}#char_${characterId},${world}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
+          {tileContent}
+        </a>
+      ) : (
+        <span onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+          {tileContent}
+        </span>
+      );
+
+    return wrapper;
+  }
+
   return (
     <Tooltip delayDuration={100}>
       <TooltipTrigger asChild>
@@ -66,20 +119,14 @@ export const PlayerTile: FC<PlayerTileProps> = ({
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
           >
-            {content}
+            {tileContent}
           </a>
         ) : (
-          content
+          tileContent
         )}
       </TooltipTrigger>
       <TooltipContent className="bg-popover/95 backdrop-blur-md border-border/50">
-        <p className="text-foreground font-semibold">
-          {name}{" "}
-          <span className="text-muted-foreground font-normal">
-            ({lvl}
-            {prof?.charAt(0).toLowerCase()})
-          </span>
-        </p>
+        <PlayerTooltipContent name={name} lvl={lvl} prof={prof} />
       </TooltipContent>
     </Tooltip>
   );

@@ -213,7 +213,7 @@ export type EventMapCoverageGapGroupByOutputType = {
   _max: EventMapCoverageGapMaxAggregateOutputType | null
 }
 
-type GetEventMapCoverageGapGroupByPayload<T extends EventMapCoverageGapGroupByArgs> = Prisma.PrismaPromise<
+export type GetEventMapCoverageGapGroupByPayload<T extends EventMapCoverageGapGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<EventMapCoverageGapGroupByOutputType, T['by']> &
       {
