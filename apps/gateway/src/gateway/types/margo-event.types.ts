@@ -45,4 +45,5 @@ export interface EventMapStatusUpdatePayload {
   guildId: string;
   eventId: string;
   mapId: string;
+  reason?: string;
 }

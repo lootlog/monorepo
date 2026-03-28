@@ -3,7 +3,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { GatewayEvent } from "@/config/gateway";
 import { useGateway } from "@/hooks/utils/use-gateway";
 import { invalidateKillQueries } from "../mutations/invalidate-kill-queries";
-import { invalidateMapQueries } from "../mutations/invalidate-map-queries";
+import {
+  invalidateMapQueries,
+  invalidateGapQueries,
+} from "../mutations/invalidate-map-queries";
 import { invalidateRespawnQueries } from "../mutations/invalidate-respawn-queries";
 
 interface UseEventSocketOptions {
@@ -18,6 +21,7 @@ type EventPayload = {
 
 type EventMapStatusUpdatePayload = EventPayload & {
   mapId: string;
+  reason?: string;
 };
 
 type EventRespawnWindowPayload = EventPayload & {
@@ -43,12 +47,21 @@ export const useEventSocket = (options?: UseEventSocketOptions) => {
         return;
       }
 
-      invalidateMapQueries(
-        queryClient,
-        payload.guildId,
-        payload.eventId,
-        payload.mapId,
-      );
+      if (payload.reason === "presence") {
+        invalidateGapQueries(
+          queryClient,
+          payload.guildId,
+          payload.eventId,
+          payload.mapId,
+        );
+      } else {
+        invalidateMapQueries(
+          queryClient,
+          payload.guildId,
+          payload.eventId,
+          payload.mapId,
+        );
+      }
     },
   );
   const handleHeroKilled = useEffectEvent((payload: EventPayload) => {
