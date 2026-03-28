@@ -136,7 +136,7 @@ describe("MemberSyncInterceptor", () => {
       expect(redisService.set).toHaveBeenCalledWith(
         "member:sync:throttle:discord-123",
         "1",
-        150,
+        600,
       );
       expect(membersService.queueMemberRefresh).toHaveBeenCalledWith({
         discordId: "discord-123",
