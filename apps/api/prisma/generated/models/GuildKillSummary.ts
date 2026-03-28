@@ -249,7 +249,7 @@ export type GuildKillSummaryGroupByOutputType = {
   _max: GuildKillSummaryMaxAggregateOutputType | null
 }
 
-type GetGuildKillSummaryGroupByPayload<T extends GuildKillSummaryGroupByArgs> = Prisma.PrismaPromise<
+export type GetGuildKillSummaryGroupByPayload<T extends GuildKillSummaryGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<GuildKillSummaryGroupByOutputType, T['by']> &
       {

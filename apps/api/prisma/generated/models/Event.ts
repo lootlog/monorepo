@@ -270,7 +270,7 @@ export type EventGroupByOutputType = {
   _max: EventMaxAggregateOutputType | null
 }
 
-type GetEventGroupByPayload<T extends EventGroupByArgs> = Prisma.PrismaPromise<
+export type GetEventGroupByPayload<T extends EventGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<EventGroupByOutputType, T['by']> &
       {

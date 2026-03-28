@@ -228,7 +228,7 @@ export type PlayerSnapshotGroupByOutputType = {
   _max: PlayerSnapshotMaxAggregateOutputType | null
 }
 
-type GetPlayerSnapshotGroupByPayload<T extends PlayerSnapshotGroupByArgs> = Prisma.PrismaPromise<
+export type GetPlayerSnapshotGroupByPayload<T extends PlayerSnapshotGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<PlayerSnapshotGroupByOutputType, T['by']> &
       {

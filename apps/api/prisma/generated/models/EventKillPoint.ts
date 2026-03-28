@@ -289,7 +289,7 @@ export type EventKillPointGroupByOutputType = {
   _max: EventKillPointMaxAggregateOutputType | null
 }
 
-type GetEventKillPointGroupByPayload<T extends EventKillPointGroupByArgs> = Prisma.PrismaPromise<
+export type GetEventKillPointGroupByPayload<T extends EventKillPointGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<EventKillPointGroupByOutputType, T['by']> &
       {
