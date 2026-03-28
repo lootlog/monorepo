@@ -43,7 +43,9 @@ export class TimerSettingsController {
   })
   async getGlobalSettings(@UserId() userId: string) {
     const settings = await this.timerSettingsService.getGlobalSettings(userId);
-    return plainToInstance(TimerSettingsEntity, settings);
+    return plainToInstance(TimerSettingsEntity, settings, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Patch()
@@ -64,7 +66,9 @@ export class TimerSettingsController {
       userId,
       dto,
     );
-    return plainToInstance(TimerSettingsEntity, settings);
+    return plainToInstance(TimerSettingsEntity, settings, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Get("guilds/:guildId")
@@ -90,7 +94,9 @@ export class TimerSettingsController {
       userId,
       guildId,
     );
-    return plainToInstance(GuildTimerSettingsEntity, settings);
+    return plainToInstance(GuildTimerSettingsEntity, settings, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Patch("guilds/:guildId")
@@ -118,7 +124,9 @@ export class TimerSettingsController {
       guildId,
       dto,
     );
-    return plainToInstance(GuildTimerSettingsEntity, settings);
+    return plainToInstance(GuildTimerSettingsEntity, settings, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Post("migrate")

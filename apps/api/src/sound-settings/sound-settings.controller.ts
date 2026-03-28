@@ -31,7 +31,9 @@ export class SoundSettingsController {
   })
   async getSettings(@UserId() userId: string) {
     const settings = await this.soundSettingsService.getSettings(userId);
-    return plainToInstance(SoundSettingsEntity, settings);
+    return plainToInstance(SoundSettingsEntity, settings, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Patch()
@@ -52,6 +54,8 @@ export class SoundSettingsController {
       userId,
       dto,
     );
-    return plainToInstance(SoundSettingsEntity, settings);
+    return plainToInstance(SoundSettingsEntity, settings, {
+      excludeExtraneousValues: true,
+    });
   }
 }

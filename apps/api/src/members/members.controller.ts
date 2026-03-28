@@ -57,7 +57,9 @@ export class MembersController {
       userId,
       standalone: true,
     });
-    return plainToInstance(MemberEntity, member);
+    return plainToInstance(MemberEntity, member, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Post("@me/refresh")
@@ -84,7 +86,9 @@ export class MembersController {
       refresh: true,
       standalone: true,
     });
-    return plainToInstance(MemberEntity, member);
+    return plainToInstance(MemberEntity, member, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Permissions(Permission.ADMIN, Permission.OWNER)
@@ -119,7 +123,9 @@ export class MembersController {
       discordId,
       guildId: guild.id,
     });
-    return plainToInstance(MemberEntity, member);
+    return plainToInstance(MemberEntity, member, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Permissions(Permission.ADMIN, Permission.OWNER)
@@ -153,7 +159,9 @@ export class MembersController {
       discordId,
       guildId: guild.id,
     });
-    return plainToInstance(MemberEntity, member);
+    return plainToInstance(MemberEntity, member, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Permissions(Permission.LOOTLOG_ACCESS)
@@ -188,7 +196,9 @@ export class MembersController {
       guild.id,
       includeInactiveBool,
     );
-    return plainToInstance(MemberEntity, members);
+    return plainToInstance(MemberEntity, members, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Permissions(Permission.ADMIN, Permission.OWNER)
@@ -216,7 +226,9 @@ export class MembersController {
       guild.id,
       discordId,
     );
-    return plainToInstance(MemberRefreshJobEntity, job);
+    return plainToInstance(MemberRefreshJobEntity, job, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Permissions(Permission.ADMIN, Permission.OWNER)
@@ -239,7 +251,11 @@ export class MembersController {
   @ApiResponse({ status: 404, description: "No refresh jobs found" })
   async getLatestRefreshJob(@GuildData() guild: Guild) {
     const job = await this.membersService.getLatestRefreshJob(guild.id);
-    return job ? plainToInstance(MemberRefreshJobEntity, job) : null;
+    return job
+      ? plainToInstance(MemberRefreshJobEntity, job, {
+          excludeExtraneousValues: true,
+        })
+      : null;
   }
 
   @Permissions(Permission.ADMIN, Permission.OWNER)
@@ -265,6 +281,8 @@ export class MembersController {
     const job = await this.membersService.getRefreshJobStatus(
       Number.parseInt(jobId, 10),
     );
-    return plainToInstance(MemberRefreshJobEntity, job);
+    return plainToInstance(MemberRefreshJobEntity, job, {
+      excludeExtraneousValues: true,
+    });
   }
 }
