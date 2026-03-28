@@ -15,7 +15,6 @@ import type { CreateNotificationDto } from "src/notifications/dto/create-notific
 import type { CreatePartyGatheringDto } from "src/notifications/dto/create-party-gathering.dto";
 import type { CreateVolunteerDto } from "src/notifications/dto/create-volunteer.dto";
 import { Error } from "src/notifications/enum/error.enum";
-import { omit } from "lodash";
 import { v4 as uuid } from "uuid";
 import { RoutingKey } from "src/enum/routing-key.enum";
 import { RedisService } from "@lootlog/nest-shared";
@@ -112,8 +111,9 @@ export class NotificationsService {
       });
       throw new ForbiddenException();
     }
+    const { guildIds: _guildIds, ...restData } = data;
     const basePayload = {
-      ...omit(data, ["guildIds"]),
+      ...restData,
       discordId,
       notificationId,
       createdAt,

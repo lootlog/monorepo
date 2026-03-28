@@ -43,7 +43,9 @@ export class EventsSettingsController {
       userId,
       guildId,
     );
-    return plainToInstance(EventSettingsEntity, settings);
+    return plainToInstance(EventSettingsEntity, settings, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Patch("guilds/:guildId/event-settings")
@@ -71,6 +73,8 @@ export class EventsSettingsController {
       guildId,
       dto,
     );
-    return plainToInstance(EventSettingsEntity, settings);
+    return plainToInstance(EventSettingsEntity, settings, {
+      excludeExtraneousValues: true,
+    });
   }
 }

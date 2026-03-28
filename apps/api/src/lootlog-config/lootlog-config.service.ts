@@ -26,7 +26,9 @@ export class LootlogConfigService {
     });
 
     return lootlogConfig
-      ? plainToInstance(LootlogConfigEntity, lootlogConfig)
+      ? plainToInstance(LootlogConfigEntity, lootlogConfig, {
+          excludeExtraneousValues: true,
+        })
       : null;
   }
 
@@ -121,6 +123,8 @@ export class LootlogConfigService {
       data,
     });
 
-    return plainToInstance(LootlogConfigNpcEntity, npcConfig);
+    return plainToInstance(LootlogConfigNpcEntity, npcConfig, {
+      excludeExtraneousValues: true,
+    });
   }
 }

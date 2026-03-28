@@ -71,7 +71,9 @@ export class KillsController {
     @DiscordId() discordId: string,
   ) {
     const result = await this.killsService.createKill(discordId, data);
-    return plainToInstance(CreateKillResponseEntity, result);
+    return plainToInstance(CreateKillResponseEntity, result, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Permissions(Permission.LOOTLOG_ACCESS)
@@ -104,7 +106,9 @@ export class KillsController {
       roles,
       query,
     );
-    return plainToInstance(GuildKillStatsEntity, stats);
+    return plainToInstance(GuildKillStatsEntity, stats, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Get("/users/@me/stats/kills")
@@ -123,7 +127,9 @@ export class KillsController {
     @Query() query: GetUserKillStatsDto,
   ) {
     const stats = await this.killsService.getUserKillStats(discordId, query);
-    return plainToInstance(UserKillStatsEntity, stats);
+    return plainToInstance(UserKillStatsEntity, stats, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Get("/users/@me/kills/npcs")
@@ -142,7 +148,9 @@ export class KillsController {
     @Query() query: GetUserNpcKillsDto,
   ) {
     const result = await this.killsService.getUserNpcKills(discordId, query);
-    return plainToInstance(UserNpcKillsEntity, result);
+    return plainToInstance(UserNpcKillsEntity, result, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Permissions(Permission.LOOTLOG_ACCESS)
@@ -184,7 +192,9 @@ export class KillsController {
       minLvl ? Number.parseInt(minLvl, 10) : undefined,
       maxLvl ? Number.parseInt(maxLvl, 10) : undefined,
     );
-    return plainToInstance(GuildTopNpcsEntity, result);
+    return plainToInstance(GuildTopNpcsEntity, result, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Permissions(Permission.LOOTLOG_ACCESS)
@@ -218,7 +228,9 @@ export class KillsController {
       [NpcType.TITAN, NpcType.HERO, NpcType.EVENT_HERO],
       limit ?? 5,
     );
-    return plainToInstance(GuildTopKillersByTypeEntity, result);
+    return plainToInstance(GuildTopKillersByTypeEntity, result, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Permissions(Permission.LOOTLOG_ACCESS)
@@ -264,7 +276,9 @@ export class KillsController {
       return { npc: null, killers: [] };
     }
 
-    return plainToInstance(NpcKillersResponseEntity, result);
+    return plainToInstance(NpcKillersResponseEntity, result, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Permissions(Permission.LOOTLOG_ACCESS)
@@ -309,6 +323,8 @@ export class KillsController {
       return { member: null, overview: null, npcs: [], pagination: null };
     }
 
-    return plainToInstance(MemberKillsResponseEntity, result);
+    return plainToInstance(MemberKillsResponseEntity, result, {
+      excludeExtraneousValues: true,
+    });
   }
 }

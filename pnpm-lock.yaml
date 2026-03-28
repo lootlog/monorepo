@@ -312,9 +312,6 @@ importers:
       joi:
         specifier: ^18.0.2
         version: 18.0.2
-      lodash:
-        specifier: ^4.17.23
-        version: 4.17.23
       nest-winston:
         specifier: ^1.10.2
         version: 1.10.2(@nestjs/common@11.1.17(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(winston@3.19.0)

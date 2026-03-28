@@ -63,7 +63,9 @@ export class TimersController {
     const timers = await this.timersService.getAllTimers(discordId, {
       world,
     });
-    return plainToInstance(TimerEntity, timers);
+    return plainToInstance(TimerEntity, timers, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Permissions(Permission.LOOTLOG_TIMERS_READ)
@@ -102,7 +104,9 @@ export class TimersController {
       permissions,
       roles,
     );
-    return plainToInstance(TimerEntity, timers);
+    return plainToInstance(TimerEntity, timers, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Permissions(Permission.LOOTLOG_TIMERS_READ)
@@ -176,7 +180,9 @@ export class TimersController {
       npcId,
       data,
     );
-    return plainToInstance(TimerEntity, timer);
+    return plainToInstance(TimerEntity, timer, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Permissions(Permission.LOOTLOG_MANAGE)
@@ -265,6 +271,8 @@ export class TimersController {
       guildId,
       data,
     );
-    return plainToInstance(TimerEntity, timer);
+    return plainToInstance(TimerEntity, timer, {
+      excludeExtraneousValues: true,
+    });
   }
 }

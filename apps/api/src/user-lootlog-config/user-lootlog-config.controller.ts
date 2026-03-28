@@ -51,7 +51,9 @@ export class UserLootlogConfigController {
       (acc, [characterId, config]) => {
         return {
           ...acc,
-          [characterId]: plainToInstance(UserLootlogConfigEntity, config),
+          [characterId]: plainToInstance(UserLootlogConfigEntity, config, {
+            excludeExtraneousValues: true,
+          }),
         };
       },
       {},
@@ -87,6 +89,8 @@ export class UserLootlogConfigController {
         data,
       );
 
-    return plainToInstance(UserLootlogConfigEntity, config);
+    return plainToInstance(UserLootlogConfigEntity, config, {
+      excludeExtraneousValues: true,
+    });
   }
 }
