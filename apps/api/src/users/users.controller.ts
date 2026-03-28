@@ -1,4 +1,11 @@
-import { Body, Controller, Get, Patch, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Patch,
+  UseGuards,
+} from "@nestjs/common";
 import { UserId } from "@lootlog/nest-shared";
 import {
   ApiTags,
@@ -18,6 +25,21 @@ import { UserPreferencesEntity } from "src/shared/entities/user-preferences.enti
 @Controller("users")
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  @Delete("/@me")
+  @ApiOperation({
+    summary: "Delete user account",
+    description: "Permanently delete user account and associated data",
+  })
+  @ApiResponse({ status: 200, description: "Account deleted" })
+  @ApiResponse({
+    status: 503,
+    description: "Account deletion is temporarily unavailable",
+  })
+  async deleteAccount(@UserId() userId: string) {
+    await this.usersService.deleteAccount(userId);
+    return { status: "OK" };
+  }
 
   @Get("/@me/preferences")
   @ApiOperation({

@@ -2,6 +2,7 @@ import {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
+  DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
@@ -134,7 +135,6 @@ export class R2Service {
     try {
       const key = `battles/${battleId}.json`;
 
-      const { DeleteObjectCommand } = await import("@aws-sdk/client-s3");
       const command = new DeleteObjectCommand({
         Bucket: this.config.bucketName,
         Key: key,
@@ -149,6 +149,40 @@ export class R2Service {
       this.logger.error(`Failed to delete battle data for ${battleId}:`, error);
       throw error;
     }
+  }
+
+  async deleteBattleDataBatch(battleIds: string[]): Promise<void> {
+    if (battleIds.length === 0) return;
+
+    const results = await Promise.allSettled(
+      battleIds.map(async (battleId) => {
+        const key = `battles/${battleId}.json`;
+        const command = new DeleteObjectCommand({
+          Bucket: this.config.bucketName,
+          Key: key,
+        });
+        await this.client.send(command);
+      }),
+    );
+
+    const failed = results.filter((r) => r.status === "rejected");
+    if (failed.length > 0) {
+      this.logger.warn(
+        `Failed to delete ${failed.length}/${battleIds.length} R2 objects`,
+      );
+    }
+
+    const redis = this.redisService.getClient();
+    const pipeline = redis.pipeline();
+    for (const battleId of battleIds) {
+      pipeline.del(`${this.CACHE_PREFIX}:${battleId}`);
+      pipeline.zrem(this.LRU_KEY, battleId);
+    }
+    await pipeline.exec();
+
+    this.logger.log(
+      `Batch deleted ${battleIds.length - failed.length}/${battleIds.length} battle files from R2`,
+    );
   }
 
   private async cacheData(battleId: string, data: string): Promise<void> {
