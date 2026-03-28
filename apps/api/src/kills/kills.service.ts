@@ -105,12 +105,17 @@ export class KillsService {
       return { updated: 0 };
     }
 
-    // 4. Process each guild
+    // 4. Batch-fetch members for all target guilds (single query)
+    const guildIdArray = Array.from(targetGuildIds);
+    const members = await this.prisma.member.findMany({
+      where: { userId: discordId, guildId: { in: guildIdArray } },
+    });
+    const membersByGuild = new Map(members.map((m) => [m.guildId, m]));
+
+    // 5. Process each guild
     const results = await Promise.all(
-      Array.from(targetGuildIds).map(async (guildId) => {
-        const member = await this.prisma.member.findUnique({
-          where: { memberId: { userId: discordId, guildId } },
-        });
+      guildIdArray.map(async (guildId) => {
+        const member = membersByGuild.get(guildId);
 
         if (!member) {
           this.logger.log({
