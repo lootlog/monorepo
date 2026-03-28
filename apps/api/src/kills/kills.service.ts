@@ -398,10 +398,6 @@ export class KillsService {
       });
     }
 
-    if (andConditions.length === 0) {
-      return null;
-    }
-
     return {
       AND: andConditions,
     };
