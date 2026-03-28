@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@lootlog/ui/components/badge";
 import { cn } from "@lootlog/ui/lib/utils";
@@ -35,6 +36,24 @@ const getWindowStatusConfig = (
   }
 };
 
+function formatNegativeElapsed(maxSpawnTime: string): string {
+  const elapsed = Math.floor(
+    (Date.now() - new Date(maxSpawnTime).getTime()) / 1000,
+  );
+  if (elapsed < 0) return "";
+
+  const hours = Math.floor(elapsed / 3600);
+  const minutes = Math.floor((elapsed % 3600) / 60);
+  const seconds = elapsed % 60;
+
+  const pad = (n: number) => String(n).padStart(2, "0");
+
+  if (hours > 0) {
+    return `-${hours}:${pad(minutes)}:${pad(seconds)}`;
+  }
+  return `-${minutes}:${pad(seconds)}`;
+}
+
 interface HeroWindowStatusBadgeProps {
   eventId: string;
   heroNpcId?: number | null;
@@ -55,11 +74,25 @@ export const HeroWindowStatusBadge = ({
     heroName,
   });
 
+  const isOverdue = respawnConfig.windowStatus === "OVERDUE";
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    if (!isOverdue) return;
+
+    const interval = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(interval);
+  }, [isOverdue]);
+
   if (respawnConfig.windowStatus === "NONE") {
     return null;
   }
 
   const config = getWindowStatusConfig(respawnConfig.windowStatus, t);
+  const overdueTime =
+    isOverdue && respawnConfig.maxSpawnTime
+      ? formatNegativeElapsed(respawnConfig.maxSpawnTime)
+      : null;
 
   return (
     <Badge
@@ -71,6 +104,7 @@ export const HeroWindowStatusBadge = ({
       )}
     >
       {config.label}
+      {overdueTime && <span className="ml-1 font-mono">{overdueTime}</span>}
     </Badge>
   );
 };

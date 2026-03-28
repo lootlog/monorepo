@@ -141,7 +141,6 @@ export class EventKillService {
     const npcIds = heroesWithId.map((hero) => hero.npcId as number);
     const npcNames = heroesWithoutId.map((hero) => hero.npcName);
 
-    const now = new Date();
     const combined: Array<{
       npcId: number;
       world: string;
@@ -157,7 +156,6 @@ export class EventKillService {
           guildId,
           world,
           npcId: { in: npcIds },
-          maxSpawnTime: { gt: now },
         },
         select: {
           npcId: true,
@@ -195,7 +193,6 @@ export class EventKillService {
         FROM "Timer" t
         WHERE t."guildId" = ${guildId}
           AND t."world" = ${world}
-          AND t."maxSpawnTime" > ${now}
           AND t."npc"->>'name' = ANY(${npcNames}::text[])
       `;
 
