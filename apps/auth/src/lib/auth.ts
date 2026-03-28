@@ -42,6 +42,9 @@ export const auth = betterAuth({
         input: false,
       },
     },
+    deleteUser: {
+      enabled: true,
+    },
   },
   secret: APP_CONFIG.authSecret,
   session: {
