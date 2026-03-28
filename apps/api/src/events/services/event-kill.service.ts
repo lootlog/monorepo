@@ -858,6 +858,9 @@ export class EventKillService {
             wasPresent: presenceStats.wasPresent,
           });
 
+        const memberLeftBeforeKill =
+          !memberPresentAtKill && memberLeaveTime !== null;
+
         killPointsData.push({
           killId: heroKill.id,
           memberId,
@@ -870,8 +873,10 @@ export class EventKillService {
           wasPresent: presenceStats.wasPresent,
           bonusBreakdown: appliedBonuses as Prisma.InputJsonValue,
           mapPresenceData,
-          confirmationDeadlineAt,
-          confirmedAt: autoConfirmedAt,
+          confirmationDeadlineAt: memberLeftBeforeKill
+            ? null
+            : confirmationDeadlineAt,
+          confirmedAt: memberLeftBeforeKill ? killedAt : autoConfirmedAt,
         });
       }
 
