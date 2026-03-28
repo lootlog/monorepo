@@ -192,6 +192,7 @@ model Member {
 
   @@unique(name: "memberId", [userId, guildId])
   @@index([id, guildId])
+  @@index([userId, guildId, active, lastDiscordSyncAt])
 }
 
 model Timer {
@@ -367,6 +368,7 @@ model LootComment {
   member Member @relation(fields: [memberId], references: [id])
 
   @@index([lootId])
+  @@index([lootId, guildId])
 }
 
 model LootlogConfigNpc {

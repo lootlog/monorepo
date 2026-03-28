@@ -13,7 +13,7 @@ import type {
   TopItem,
 } from "../dto/loot-stats.dto";
 
-const CACHE_TTL_SECONDS = 900; // 15 minutes
+const CACHE_TTL_SECONDS = 3600; // 60 minutes
 
 @Injectable()
 export class LootStatsService {
