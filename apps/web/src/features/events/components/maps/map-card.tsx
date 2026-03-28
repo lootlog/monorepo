@@ -21,7 +21,10 @@ import { useLocalCoverageTimer } from "../../hooks/utils/use-local-coverage-time
 import { useAssignmentCountdown } from "../../hooks/utils/use-assignment-countdown";
 import type { EventMap } from "../../hooks/queries/use-events";
 import type { PlayerPresence } from "../../hooks/socket/use-event-presence";
-import type { WindowStatus } from "../../hooks/queries/use-hero-respawn-config";
+import {
+  isWindowActive,
+  type WindowStatus,
+} from "../../hooks/use-window-status";
 import type { CoverageGap } from "../../hooks/queries/use-map-coverage-timer";
 
 export type MapStatus =
@@ -165,7 +168,9 @@ export const MapCard = ({
   const { isEnabled: isAssignmentEnabled, formattedTime: countdownTime } =
     useAssignmentCountdown(assignmentDisabled, assignmentEnabledAt);
 
-  const effectiveStyle = windowStatus === "OPEN" ? style : WINDOW_CLOSED_STYLE;
+  const effectiveStyle = isWindowActive(windowStatus)
+    ? style
+    : WINDOW_CLOSED_STYLE;
 
   const hasPlayersToShow = playersOnMap.length > 0;
   const manageActionLabel = t("events.maps.manageShort");
@@ -181,7 +186,7 @@ export const MapCard = ({
         "rounded-lg border p-3 transition-colors",
         effectiveStyle.bg,
         effectiveStyle.border,
-        windowStatus !== "OPEN" && "hover:border-primary",
+        !isWindowActive(windowStatus) && "hover:border-primary",
       )}
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -231,9 +236,9 @@ export const MapCard = ({
                           key={member.id}
                           className={cn(
                             "flex h-5 w-5 items-center justify-center overflow-hidden rounded-full border-2 bg-muted",
-                            windowStatus === "OPEN" && isOnMap && !isAfk
+                            isWindowActive(windowStatus) && isOnMap && !isAfk
                               ? "border-green-500"
-                              : windowStatus === "OPEN" && isAfk
+                              : isWindowActive(windowStatus) && isAfk
                                 ? "border-orange-500"
                                 : "border-background",
                           )}
@@ -273,7 +278,7 @@ export const MapCard = ({
           </div>
         </div>
 
-        {windowStatus === "OPEN" && gapType && formattedDuration && (
+        {isWindowActive(windowStatus) && gapType && formattedDuration && (
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="flex shrink-0 cursor-help items-center gap-1">
