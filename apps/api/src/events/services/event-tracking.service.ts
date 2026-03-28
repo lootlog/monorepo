@@ -675,6 +675,7 @@ export class EventTrackingService implements OnModuleInit {
         guildId,
         map.heroNpc.eventId,
         map.id,
+        "presence",
       );
     }
   }
