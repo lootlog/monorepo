@@ -6,7 +6,7 @@ import {
   Patch,
   UseGuards,
 } from "@nestjs/common";
-import { UserId } from "@lootlog/nest-shared";
+import { DiscordId, UserId } from "@lootlog/nest-shared";
 import {
   ApiTags,
   ApiBearerAuth,
@@ -36,8 +36,11 @@ export class UsersController {
     status: 503,
     description: "Account deletion is temporarily unavailable",
   })
-  async deleteAccount(@UserId() userId: string) {
-    await this.usersService.deleteAccount(userId);
+  async deleteAccount(
+    @UserId() authUserId: string,
+    @DiscordId() discordId: string,
+  ) {
+    await this.usersService.deleteAccount({ authUserId, discordId });
     return { status: "OK" };
   }
 
