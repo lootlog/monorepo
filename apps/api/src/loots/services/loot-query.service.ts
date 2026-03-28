@@ -115,29 +115,13 @@ export class LootQueryService {
           include: { npcSnapshot: true },
           orderBy: { id: "asc" },
         },
+        _count: {
+          select: { comments: { where: { guildId: guild.id } } },
+        },
       },
     });
 
     if (!lootsWithRelations.length) return [];
-
-    const lootIds = lootsWithRelations.map((l) => l.id);
-
-    const commentsCounts = await this.prisma.lootComment.groupBy({
-      by: ["lootId"],
-      where: {
-        lootId: { in: lootIds },
-        guildId: guild.id,
-      },
-      _count: { _all: true },
-    });
-
-    const commentsCountByLootId = commentsCounts.reduce(
-      (acc, group) => {
-        acc[group.lootId] = group._count._all;
-        return acc;
-      },
-      {} as Record<number, number>,
-    );
 
     const results: LootQueryResult[] = lootsWithRelations.map((loot) => ({
       id: loot.id,
@@ -148,13 +132,13 @@ export class LootQueryService {
       lootShare: loot.lootShare,
       createdAt: loot.createdAt,
       updatedAt: loot.updatedAt,
-      items: this.mapItems(loot.lootItems),
-      players: loot.lootPlayers.map((entry) =>
-        this.mapPlayerFromSnapshot(entry),
+      items: this.mapItems(loot.lootItems as unknown as LootItemWithSnapshot[]),
+      players: (loot.lootPlayers as unknown as LootPlayerWithSnapshot[]).map(
+        (entry) => this.mapPlayerFromSnapshot(entry),
       ),
-      npcs: this.mapNpcs(loot.lootNpcs),
+      npcs: this.mapNpcs(loot.lootNpcs as unknown as LootNpcWithSnapshot[]),
       submissions: loot.lootSubmissions,
-      commentsCount: commentsCountByLootId[loot.id] ?? 0,
+      commentsCount: loot._count.comments,
     }));
 
     return results;
