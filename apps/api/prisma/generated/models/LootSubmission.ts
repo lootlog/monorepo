@@ -207,7 +207,7 @@ export type LootSubmissionGroupByOutputType = {
   _max: LootSubmissionMaxAggregateOutputType | null
 }
 
-type GetLootSubmissionGroupByPayload<T extends LootSubmissionGroupByArgs> = Prisma.PrismaPromise<
+export type GetLootSubmissionGroupByPayload<T extends LootSubmissionGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<LootSubmissionGroupByOutputType, T['by']> &
       {

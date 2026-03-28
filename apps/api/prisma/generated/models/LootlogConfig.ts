@@ -144,7 +144,7 @@ export type LootlogConfigGroupByOutputType = {
   _max: LootlogConfigMaxAggregateOutputType | null
 }
 
-type GetLootlogConfigGroupByPayload<T extends LootlogConfigGroupByArgs> = Prisma.PrismaPromise<
+export type GetLootlogConfigGroupByPayload<T extends LootlogConfigGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<LootlogConfigGroupByOutputType, T['by']> &
       {

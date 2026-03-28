@@ -199,7 +199,7 @@ export type EventPresenceLogGroupByOutputType = {
   _max: EventPresenceLogMaxAggregateOutputType | null
 }
 
-type GetEventPresenceLogGroupByPayload<T extends EventPresenceLogGroupByArgs> = Prisma.PrismaPromise<
+export type GetEventPresenceLogGroupByPayload<T extends EventPresenceLogGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<EventPresenceLogGroupByOutputType, T['by']> &
       {

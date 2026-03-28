@@ -263,7 +263,7 @@ export type TimerGroupByOutputType = {
   _max: TimerMaxAggregateOutputType | null
 }
 
-type GetTimerGroupByPayload<T extends TimerGroupByArgs> = Prisma.PrismaPromise<
+export type GetTimerGroupByPayload<T extends TimerGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<TimerGroupByOutputType, T['by']> &
       {

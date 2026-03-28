@@ -198,7 +198,7 @@ export type UserGuildTimerSettingsGroupByOutputType = {
   _max: UserGuildTimerSettingsMaxAggregateOutputType | null
 }
 
-type GetUserGuildTimerSettingsGroupByPayload<T extends UserGuildTimerSettingsGroupByArgs> = Prisma.PrismaPromise<
+export type GetUserGuildTimerSettingsGroupByPayload<T extends UserGuildTimerSettingsGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<UserGuildTimerSettingsGroupByOutputType, T['by']> &
       {
