@@ -1,4 +1,5 @@
 import {
+  forwardRef,
   Inject,
   Injectable,
   ServiceUnavailableException,
@@ -12,7 +13,15 @@ import { PrismaService } from "src/db/prisma.service";
 import { AuthService } from "src/auth/auth.service";
 import { ConfigKey } from "src/config/config-key.enum";
 import type { BattlelogConfig } from "src/config/battlelog.config";
+import { MembersService } from "src/members/members.service";
+import { RedisService } from "@lootlog/nest-shared";
+import { getUserLootlogConfigCachePattern } from "src/shared/constants/cache.constant";
 import type { UpdateUserPreferencesDto } from "src/users/dto/update-user-preferences.dto";
+
+type DeleteAccountParams = {
+  authUserId: string;
+  discordId: string;
+};
 
 @Injectable()
 export class UsersService {
@@ -22,6 +31,9 @@ export class UsersService {
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: WinstonLogger,
     private readonly prisma: PrismaService,
     private readonly authService: AuthService,
+    @Inject(forwardRef(() => MembersService))
+    private readonly membersService: MembersService,
+    private readonly redisService: RedisService,
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
   ) {
@@ -47,36 +59,68 @@ export class UsersService {
     return settings;
   }
 
-  async deleteAccount(userId: string) {
-    await this.triggerBattlelogCleanup(userId);
+  async deleteAccount({ authUserId, discordId }: DeleteAccountParams) {
+    await this.triggerBattlelogCleanup(authUserId);
 
-    const members = await this.prisma.member.findMany({
-      where: { userId },
-      select: { id: true },
+    const deletedMembers = await this.prisma.$transaction(async (tx) => {
+      const members = await tx.member.findMany({
+        where: { userId: discordId },
+        select: {
+          id: true,
+          guildId: true,
+          globalUserId: true,
+          userId: true,
+        },
+      });
+
+      const memberIds = members.map((member) => member.id);
+
+      if (memberIds.length > 0) {
+        await tx.npcKillStats.deleteMany({
+          where: { memberId: { in: memberIds } },
+        });
+      }
+
+      await tx.userKillStats.deleteMany({ where: { userId: discordId } });
+      await tx.userCharactersLootlogSettings.deleteMany({
+        where: { userId: discordId },
+      });
+      await tx.userSettings.deleteMany({ where: { userId: authUserId } });
+      await tx.userTimerSettings.deleteMany({ where: { userId: authUserId } });
+      await tx.userSoundSettings.deleteMany({ where: { userId: authUserId } });
+      await tx.userGuildTimerSettings.deleteMany({
+        where: { userId: authUserId },
+      });
+      await tx.userGuildEventSettings.deleteMany({
+        where: { userId: authUserId },
+      });
+
+      for (const member of members) {
+        await tx.member.update({
+          where: { id: member.id },
+          data: {
+            active: false,
+            lastDiscordAttemptAt: new Date(),
+            lastDiscordStatus: "ACCOUNT_DELETED",
+            roles: { set: [] },
+          },
+        });
+      }
+
+      return members.map((member) => ({
+        discordId: member.userId,
+        guildId: member.guildId,
+        globalUserId: member.globalUserId,
+      }));
     });
 
-    const memberIds = members.map((m) => m.id);
-
-    await this.prisma.$transaction([
-      this.prisma.npcKillStats.deleteMany({
-        where: { memberId: { in: memberIds } },
-      }),
-      this.prisma.userKillStats.deleteMany({ where: { userId } }),
-      this.prisma.userSettings.deleteMany({ where: { userId } }),
-      this.prisma.userTimerSettings.deleteMany({ where: { userId } }),
-      this.prisma.userSoundSettings.deleteMany({ where: { userId } }),
-      this.prisma.userCharactersLootlogSettings.deleteMany({
-        where: { userId },
-      }),
-      this.prisma.userGuildTimerSettings.deleteMany({ where: { userId } }),
-      this.prisma.userGuildEventSettings.deleteMany({ where: { userId } }),
-      this.prisma.member.updateMany({
-        where: { userId },
-        data: { active: false },
-      }),
+    await Promise.all([
+      this.authService.invalidateIdpTokenCache(authUserId),
+      this.membersService.notifyMembersRemoved(deletedMembers),
+      this.redisService.deleteByPattern(
+        getUserLootlogConfigCachePattern(discordId),
+      ),
     ]);
-
-    await this.authService.invalidateIdpTokenCache(userId);
   }
 
   private async triggerBattlelogCleanup(userId: string): Promise<void> {
