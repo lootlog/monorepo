@@ -31,7 +31,11 @@ import {
   useSelfAssignMember,
   useSelfUnassignMember,
 } from "./hooks/mutations/use-assign-member";
-import { useWindowStatus, type WindowStatus } from "./hooks/use-window-status";
+import {
+  useWindowStatus,
+  isWindowActive,
+  type WindowStatus,
+} from "./hooks/use-window-status";
 import {
   useCloseRespawnWindow,
   useOpenRespawnWindow,
@@ -67,6 +71,11 @@ const getWindowStatusConfig = (
       return {
         label: t("events.respawn.status.waiting"),
         className: "bg-amber-500/10 text-amber-500 border-amber-500/20",
+      };
+    case "OVERDUE":
+      return {
+        label: t("events.respawn.status.overdue"),
+        className: "bg-orange-500/10 text-orange-500 border-orange-500/20",
       };
     case "NONE":
     default:
@@ -196,12 +205,11 @@ export const HeroDetail = () => {
   const allMaps = [...allMapsFromLocations, ...(hero.maps ?? [])];
 
   const totalMapsCount = allMaps.length;
-  const coveredMapsCount =
-    windowStatus === "OPEN"
-      ? allMaps.filter(
-          (map) => getMapStatus(map, presenceData) === "ASSIGNED_PRESENT",
-        ).length
-      : 0;
+  const coveredMapsCount = isWindowActive(windowStatus)
+    ? allMaps.filter(
+        (map) => getMapStatus(map, presenceData) === "ASSIGNED_PRESENT",
+      ).length
+    : 0;
   const allAssignedMembers = allMaps.flatMap((m) => m.assignedMembers);
   const uniqueMembers = Array.from(
     new Map(allAssignedMembers.map((m) => [m.id, m])).values(),
@@ -431,7 +439,7 @@ export const HeroDetail = () => {
                     <MapPin className="w-4 h-4" />
                     {t("events.maps.title")}
                     <span className="font-normal">
-                      {windowStatus === "OPEN" ? (
+                      {isWindowActive(windowStatus) ? (
                         <span
                           className={cn(
                             coveredMapsCount === totalMapsCount

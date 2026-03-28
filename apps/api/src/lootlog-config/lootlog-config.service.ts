@@ -69,7 +69,7 @@ export class LootlogConfigService {
       })),
     };
 
-    const config = this.prisma.lootlogConfig.create({
+    const config = await this.prisma.lootlogConfig.create({
       data: {
         id: guildId,
         npcs: {
@@ -88,7 +88,7 @@ export class LootlogConfigService {
   }
 
   async updateLootlogConfig(guildId: string, { npcs }: UpdateLootlogConfigDto) {
-    const config = this.prisma.lootlogConfig.update({
+    const config = await this.prisma.lootlogConfig.update({
       where: {
         id: guildId,
       },
@@ -115,7 +115,7 @@ export class LootlogConfigService {
     npcId: string,
     data: UpdateLootlogConfigNpcDto,
   ) {
-    const npcConfig = this.prisma.lootlogConfigNpc.update({
+    const npcConfig = await this.prisma.lootlogConfigNpc.update({
       where: {
         lootlogConfigId: guildId,
         id: +npcId,

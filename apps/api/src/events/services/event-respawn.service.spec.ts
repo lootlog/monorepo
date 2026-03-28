@@ -657,7 +657,7 @@ describe("EventRespawnService", () => {
       expect(result.maxSpawnTime).toBeNull();
     });
 
-    it("should return NONE status when timer expired", async () => {
+    it("should return OVERDUE status when timer expired", async () => {
       const now = new Date();
       const timer = {
         minSpawnTime: new Date(now.getTime() - 120000),
@@ -673,7 +673,8 @@ describe("EventRespawnService", () => {
         heroId,
       );
 
-      expect(result.windowStatus).toBe("NONE");
+      expect(result.windowStatus).toBe("OVERDUE");
+      expect(result.hasTimer).toBe(true);
     });
 
     it("should throw NotFoundException when hero not found", async () => {
