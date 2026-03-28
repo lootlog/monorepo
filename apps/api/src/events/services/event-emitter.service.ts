@@ -13,6 +13,7 @@ export class EventEmitterService {
     guildId: string,
     eventId: string,
     mapId: string,
+    reason?: string,
   ): Promise<void> {
     try {
       await this.amqpConnection.publish(
@@ -22,6 +23,7 @@ export class EventEmitterService {
           guildId,
           eventId,
           mapId,
+          reason,
         },
       );
     } catch (error) {

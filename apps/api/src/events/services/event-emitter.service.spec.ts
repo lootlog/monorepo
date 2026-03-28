@@ -48,6 +48,24 @@ describe("EventEmitterService", () => {
           guildId,
           eventId,
           mapId,
+          reason: undefined,
+        },
+      );
+    });
+
+    it("should publish map status update with reason", async () => {
+      mockAmqpConnection.publish.mockResolvedValue(undefined);
+
+      await service.emitMapStatusUpdate(guildId, eventId, mapId, "presence");
+
+      expect(mockAmqpConnection.publish).toHaveBeenCalledWith(
+        DEFAULT_EXCHANGE_NAME,
+        RoutingKey.EVENT_MAP_STATUS_UPDATE,
+        {
+          guildId,
+          eventId,
+          mapId,
+          reason: "presence",
         },
       );
     });

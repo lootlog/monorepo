@@ -19,7 +19,21 @@ interface HeroTimerDisplayProps {
 }
 
 const getHeroTimerTimeLeft = (timer: EventTimer) =>
-  Math.max(0, new Date(timer.maxSpawnTime).getTime() - Date.now());
+  new Date(timer.maxSpawnTime).getTime() - Date.now();
+
+function formatNegativeElapsed(ms: number): string {
+  const totalSeconds = Math.floor(ms / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  const pad = (n: number) => String(n).padStart(2, "0");
+
+  if (hours > 0) {
+    return `-${hours}:${pad(minutes)}:${pad(seconds)}`;
+  }
+  return `-${minutes}:${pad(seconds)}`;
+}
 
 export const HeroTimerDisplay = ({
   timer,
@@ -65,19 +79,18 @@ const HeroTimerDisplayContent = ({
     const maxSpawnTime = new Date(timer.maxSpawnTime).getTime();
 
     const interval = setInterval(() => {
-      const time = maxSpawnTime - Date.now();
-      if (time <= 0) {
-        clearInterval(interval);
-        setTimeLeft(0);
-        return;
-      }
-      setTimeLeft(time);
+      setTimeLeft(maxSpawnTime - Date.now());
     }, 1000);
 
     return () => clearInterval(interval);
   }, [timer.maxSpawnTime]);
 
-  const isClose = timeLeft < 60000;
+  const isOverdue = timeLeft <= 0;
+  const isClose = !isOverdue && timeLeft < 60000;
+
+  const displayTime = isOverdue
+    ? formatNegativeElapsed(Math.abs(timeLeft))
+    : parseMsToTime(timeLeft);
 
   return (
     <Tooltip>
@@ -85,12 +98,16 @@ const HeroTimerDisplayContent = ({
         <span
           className={cn(
             "inline-flex items-center gap-1 text-[11px] font-medium whitespace-nowrap",
-            isClose ? "text-orange-400" : "text-green-400",
+            isOverdue
+              ? "text-orange-500"
+              : isClose
+                ? "text-orange-400"
+                : "text-green-400",
             className,
           )}
         >
           <Clock className="w-3 h-3" />
-          {parseMsToTime(timeLeft)}
+          {displayTime}
         </span>
       </TooltipTrigger>
       <TooltipContent>
