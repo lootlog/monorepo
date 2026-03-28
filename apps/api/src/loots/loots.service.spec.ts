@@ -859,13 +859,11 @@ describe("LootsService", () => {
           lootItems: [],
           lootPlayers: [],
           lootNpcs: [],
+          _count: { comments: 0 },
         },
       ];
 
       prismaService.loot.findMany.mockResolvedValue(mockLootsWithRelations);
-      prismaService.lootComment.groupBy.mockResolvedValue([
-        { lootId: 1, _count: { _all: 0 } },
-      ]);
 
       const result = await service.fetchLootsByGuildId(
         mockGuild,

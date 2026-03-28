@@ -16,7 +16,7 @@ import { MEMBER_REFRESH_PRIORITY } from "src/members/constants/member-refresh-qu
 
 @Injectable()
 export class MemberSyncInterceptor implements NestInterceptor {
-  private readonly SYNC_THROTTLE_TTL = 150;
+  private readonly SYNC_THROTTLE_TTL = 600;
 
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,

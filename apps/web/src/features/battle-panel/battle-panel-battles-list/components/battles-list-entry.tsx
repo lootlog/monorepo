@@ -1,14 +1,34 @@
 import type { Battle } from "@/hooks/api/battle-log/use-battles";
-import { TeamDisplay } from "@/features/battle-panel/battle-panel-battles-list/components/battle-team-display";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
 import { Badge } from "@lootlog/ui/components/badge";
+import { Button } from "@lootlog/ui/components/button";
 import { cn } from "@lootlog/ui/lib/utils";
-import { Sword } from "lucide-react";
+import { BattleMetadata } from "@/components/battle/battle-metadata";
+import { Copy, Lock, Share2, Swords, Trash2 } from "lucide-react";
 import type { FC } from "react";
 import { Link } from "@tanstack/react-router";
-import { BattleMetadata } from "@/components/battle/battle-metadata";
 import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@lootlog/ui/components/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@lootlog/ui/components/tooltip";
 import { ROUTES } from "@/config/routes";
+import { PlayerTile } from "@/features/guild/components/loots-list/player-tile";
+import { useBattleSharing } from "@/features/battle-panel/battle-panel-single-battle/hooks/use-battle-sharing";
+import { useDeleteBattle } from "@/hooks/api/battle-log/use-delete-battle";
+import { toast } from "sonner";
 
 export type BattlesListEntryProps = {
   battle: Battle;
@@ -25,6 +45,10 @@ export const BattlesListEntry: FC<BattlesListEntryProps> = ({
   onPhClick,
   onMatchmakingClick,
 }) => {
+  const { handleShare, handleCopyLink, handleUnshare, isPending } =
+    useBattleSharing();
+  const { mutate: deleteBattle } = useDeleteBattle();
+
   const attackingTeam = battle.warriors.filter((w) => w.team === 1);
   const defendingTeam = battle.warriors.filter((w) => w.team === 2);
 
@@ -39,13 +63,16 @@ export const BattlesListEntry: FC<BattlesListEntryProps> = ({
   const leftTeam = userTeam?.team === 1 ? attackingTeam : defendingTeam;
   const rightTeam = userTeam?.team === 1 ? defendingTeam : attackingTeam;
 
+  const isWon = !battle.hasFlee && battle.winningTeam === userTeam?.team;
+  const isLost = !battle.hasFlee && battle.winningTeam !== userTeam?.team;
+
   const handleResultClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (onResultClick) {
       if (battle.hasFlee) {
         onResultClick("flee");
-      } else if (battle.winningTeam === userTeam?.team) {
+      } else if (isWon) {
         onResultClick("won");
       } else {
         onResultClick("lost");
@@ -56,123 +83,257 @@ export const BattlesListEntry: FC<BattlesListEntryProps> = ({
   const handleWorldClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (onWorldClick) {
-      onWorldClick(battle.world);
-    }
+    onWorldClick?.(battle.world);
   };
 
   const handlePhClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (onPhClick) {
-      onPhClick();
-    }
+    onPhClick?.();
   };
 
   const handleMatchmakingClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (onMatchmakingClick) {
-      onMatchmakingClick();
-    }
+    onMatchmakingClick?.();
   };
 
-  const isWon = !battle.hasFlee && battle.winningTeam === userTeam?.team;
-  const isLost = !battle.hasFlee && battle.winningTeam !== userTeam?.team;
+  const handleShareClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleShare(battle.id);
+  };
+
+  const handleCopyClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleCopyLink(battle.id);
+  };
+
+  const handleUnshareClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleUnshare(battle.id);
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    deleteBattle(
+      { battleId: battle.id },
+      {
+        onSuccess: () => {
+          toast.success("Walka została usunięta.", { duration: 3000 });
+        },
+        onError: () => {
+          toast.error("Wystąpił błąd podczas usuwania walki.", {
+            duration: 3000,
+          });
+        },
+      },
+    );
+  };
 
   return (
     <Link
-      key={battle.id}
       to={ROUTES.user.battlePanel.battle(battle.id) as string}
       className="block"
     >
       <div
         className={cn(
-          "text-white relative border-b transition-all duration-300",
+          "flex flex-col gap-3 rounded-xl border border-border/50 px-3 py-3 transition-colors",
           {
-            "bg-green-400/10 hover:bg-green-400/15": isWon || battle.hasFlee,
-            "bg-red-400/10 hover:bg-red-400/15": isLost,
+            "bg-green-400/10 hover:bg-green-400/15 border-green-500/30":
+              isWon || battle.hasFlee,
+            "bg-red-400/10 hover:bg-red-400/15 border-red-500/30": isLost,
           },
         )}
       >
-        <div className="p-4 pb-4">
-          <div className="flex items-start justify-between gap-2 mb-4 flex-wrap">
-            <div className="flex items-center gap-2 flex-wrap min-w-0">
-              <Badge
-                onClick={handleResultClick}
-                className={cn("cursor-pointer whitespace-nowrap", {
-                  "bg-green-500/10 text-green-500 hover:bg-green-500/20 border border-green-500":
-                    isWon,
-                  "bg-destructive/10 text-destructive hover:bg-destructive/20 border border-destructive":
-                    isLost,
-                  "bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20 border border-yellow-500":
-                    battle.hasFlee,
-                })}
-              >
-                {battle.hasFlee
-                  ? "Ucieczka"
-                  : battle.winningTeam === userTeam?.team
-                    ? "Zwycięstwo"
-                    : "Porażka"}
-              </Badge>
-              <Badge
-                onClick={handleWorldClick}
-                variant="outline"
-                className="text-xs cursor-pointer border-foreground/50 whitespace-nowrap"
-              >
-                {capitalizeFirstLetter(battle.world)}
-              </Badge>
-              {warrior?.ph !== 0 && warrior?.ph !== undefined && (
-                <Badge
-                  onClick={handlePhClick}
-                  variant="outline"
-                  className="text-xs cursor-pointer border-foreground/50 whitespace-nowrap"
-                >
-                  Punkty Honoru
-                </Badge>
-              )}
-              {battle.matchmaking && (
-                <Badge
-                  onClick={handleMatchmakingClick}
-                  variant="outline"
-                  className="text-xs cursor-pointer border-purple-500/50 bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 whitespace-nowrap"
-                >
-                  Otchłań
-                </Badge>
-              )}
-            </div>
-            <div className="text-sm text-muted-foreground whitespace-nowrap shrink-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge
+            onClick={handleResultClick}
+            className={cn("cursor-pointer whitespace-nowrap text-xs shrink-0", {
+              "bg-green-500/10 text-green-500 hover:bg-green-500/20 border border-green-500":
+                isWon,
+              "bg-destructive/10 text-destructive hover:bg-destructive/20 border border-destructive":
+                isLost,
+              "bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20 border border-yellow-500":
+                battle.hasFlee,
+            })}
+          >
+            {battle.hasFlee ? "Ucieczka" : isWon ? "Wygrana" : "Przegrana"}
+          </Badge>
+          <Badge
+            onClick={handleWorldClick}
+            variant="outline"
+            className="text-xs cursor-pointer border-foreground/50 whitespace-nowrap"
+          >
+            {capitalizeFirstLetter(battle.world)}
+          </Badge>
+          {warrior?.ph !== 0 && warrior?.ph !== undefined && (
+            <Badge
+              onClick={handlePhClick}
+              variant="outline"
+              className="text-xs cursor-pointer border-foreground/50 whitespace-nowrap"
+            >
+              Punkty Honoru
+            </Badge>
+          )}
+          {battle.matchmaking && (
+            <Badge
+              onClick={handleMatchmakingClick}
+              variant="outline"
+              className="text-xs cursor-pointer border-purple-500/50 bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 whitespace-nowrap"
+            >
+              Otchłań
+            </Badge>
+          )}
+          <div
+            className="ml-auto flex items-center gap-1 shrink-0"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+          >
+            <span className="text-xs text-muted-foreground mr-1">
               {getRelativeTime(battle.createdAt)}
-            </div>
+            </span>
+            {battle.public ? (
+              <>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={handleCopyClick}
+                      disabled={isPending}
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Skopiuj link</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={handleUnshareClick}
+                      disabled={isPending}
+                    >
+                      <Lock className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Ukryj</TooltipContent>
+                </Tooltip>
+              </>
+            ) : (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={handleShareClick}
+                    disabled={isPending}
+                  >
+                    <Share2 className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Udostępnij</TooltipContent>
+              </Tooltip>
+            )}
+            <AlertDialog>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive hover:text-destructive"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </AlertDialogTrigger>
+                </TooltipTrigger>
+                <TooltipContent>Usuń</TooltipContent>
+              </Tooltip>
+              <AlertDialogContent
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+              >
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    Czy na pewno chcesz usunąć tę walkę?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Ta akcja jest nieodwracalna. Walka zostanie całkowicie
+                    usunięta z systemu i nie będzie można jej przywrócić. Nie
+                    będzie również brana podczas obliczania statystyk.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Anuluj</AlertDialogCancel>
+                  <AlertDialogAction asChild>
+                    <Button variant="destructive" onClick={handleDeleteClick}>
+                      Usuń walkę
+                    </Button>
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="flex flex-wrap items-center gap-1.5 rounded-lg bg-muted/20 px-2 py-1.5 flex-1 min-w-0">
+            {leftTeam.map((w) => (
+              <div key={w.id} className="flex items-center gap-1">
+                <PlayerTile player={w} className="scale-75" />
+                <span
+                  className={cn("text-xs font-medium", {
+                    "text-green-500": w.originalId === battle.characterId,
+                  })}
+                >
+                  {w.name}{" "}
+                  <span className="text-muted-foreground font-normal">
+                    ({w.lvl}
+                    {w.prof})
+                  </span>
+                </span>
+              </div>
+            ))}
           </div>
 
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-medium text-green-500">
-                  <Sword className="h-4 w-4" />
-                  Twoja drużyna
-                </div>
-                <TeamDisplay team={leftTeam} characterId={battle.characterId} />
-              </div>
+          <Swords className="size-5 text-muted-foreground shrink-0" />
 
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-medium text-destructive">
-                  <Sword className="h-4 w-4" />
-                  Przeciwnicy
-                </div>
-                <TeamDisplay
-                  team={rightTeam}
-                  characterId={battle.characterId}
-                />
+          <div className="flex flex-wrap items-center gap-1.5 rounded-lg bg-muted/20 px-2 py-1.5 flex-1 min-w-0">
+            {rightTeam.map((w) => (
+              <div key={w.id} className="flex items-center gap-1">
+                <PlayerTile player={w} className="scale-75" />
+                <span className="text-xs font-medium">
+                  {w.name}{" "}
+                  <span className="text-muted-foreground font-normal">
+                    ({w.lvl}
+                    {w.prof})
+                  </span>
+                </span>
               </div>
-            </div>
+            ))}
           </div>
         </div>
 
         <BattleMetadata
           battle={battle}
           align="left"
+          className="p-0 gap-3"
           labels={{
             startTime: "Data i godzina rozpoczęcia walki",
             duration: "Czas trwania walki",

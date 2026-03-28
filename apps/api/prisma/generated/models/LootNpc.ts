@@ -186,7 +186,7 @@ export type LootNpcGroupByOutputType = {
   _max: LootNpcMaxAggregateOutputType | null
 }
 
-type GetLootNpcGroupByPayload<T extends LootNpcGroupByArgs> = Prisma.PrismaPromise<
+export type GetLootNpcGroupByPayload<T extends LootNpcGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<LootNpcGroupByOutputType, T['by']> &
       {

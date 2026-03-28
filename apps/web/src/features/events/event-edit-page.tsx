@@ -28,7 +28,7 @@ export const EventEditPage = () => {
   ];
 
   return (
-    <div className="w-full h-full flex flex-col min-h-0">
+    <div className="w-full h-full flex flex-col min-h-0 bg-background/50">
       <HorizontalMenu
         items={navItems}
         basePath={basePath}

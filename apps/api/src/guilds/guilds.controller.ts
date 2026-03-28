@@ -58,7 +58,9 @@ export class GuildsController {
       userId,
       source,
     );
-    return plainToInstance(GuildEntity, guilds);
+    return plainToInstance(GuildEntity, guilds, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Get("/@me/permissions")
@@ -97,7 +99,9 @@ export class GuildsController {
   @ApiResponse({ status: 200, description: "Guild information" })
   async getGuildById(@GuildData() guild: Guild) {
     const guildData = await this.guildsService.getGuildById(guild.id);
-    return plainToInstance(GuildEntity, guildData);
+    return plainToInstance(GuildEntity, guildData, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Permissions(Permission.OWNER, Permission.ADMIN)
@@ -111,7 +115,9 @@ export class GuildsController {
       guild.id,
       data,
     );
-    return plainToInstance(GuildEntity, updatedGuild);
+    return plainToInstance(GuildEntity, updatedGuild, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Permissions(Permission.LOOTLOG_ACCESS)
@@ -119,7 +125,9 @@ export class GuildsController {
   @Get(":guildId/config")
   async getGuildConfig(@GuildData() guild: Guild) {
     const guildData = await this.guildsService.getGuildById(guild.id);
-    return plainToInstance(GuildEntity, guildData);
+    return plainToInstance(GuildEntity, guildData, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Permissions(Permission.LOOTLOG_ACCESS)

@@ -267,7 +267,7 @@ export type NpcKillStatsGroupByOutputType = {
   _max: NpcKillStatsMaxAggregateOutputType | null
 }
 
-type GetNpcKillStatsGroupByPayload<T extends NpcKillStatsGroupByArgs> = Prisma.PrismaPromise<
+export type GetNpcKillStatsGroupByPayload<T extends NpcKillStatsGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<NpcKillStatsGroupByOutputType, T['by']> &
       {

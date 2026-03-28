@@ -22,7 +22,7 @@ import {
   type APIGuild,
   type APIGuildMember,
 } from "discord-api-types/v10";
-import Redlock from "redlock";
+import Redlock, { ExecutionError } from "redlock";
 import { RedisService } from "@lootlog/nest-shared";
 import { DiscordRateLimiterService } from "./discord-rate-limiter.service";
 import { RedlockService } from "src/lib/redlock/redlock.service";
@@ -240,12 +240,7 @@ export class DiscordService implements OnModuleInit {
 
       return guilds;
     } catch (error: unknown) {
-      if (
-        typeof error === "object" &&
-        error !== null &&
-        "name" in error &&
-        error.name === "ExecutionError"
-      ) {
+      if (error instanceof ExecutionError) {
         this.logger.log({
           level: "error",
           message: `Lock acquisition failed for getUserGuilds`,
@@ -405,12 +400,7 @@ export class DiscordService implements OnModuleInit {
 
       return member;
     } catch (error: unknown) {
-      if (
-        typeof error === "object" &&
-        error !== null &&
-        "name" in error &&
-        error.name === "ExecutionError"
-      ) {
+      if (error instanceof ExecutionError) {
         this.logger.log({
           level: "error",
           message: `Lock acquisition failed for getGuildMember`,

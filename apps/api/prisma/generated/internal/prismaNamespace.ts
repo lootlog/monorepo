@@ -80,12 +80,12 @@ export type PrismaVersion = {
 }
 
 /**
- * Prisma Client JS version: 7.5.0
- * Query Engine version: 280c870be64f457428992c43c1f6d557fab6e29e
+ * Prisma Client JS version: 7.6.0
+ * Query Engine version: 75cbdc1eb7150937890ad5465d861175c6624711
  */
 export const prismaVersion: PrismaVersion = {
-  client: "7.5.0",
-  engine: "280c870be64f457428992c43c1f6d557fab6e29e"
+  client: "7.6.0",
+  engine: "75cbdc1eb7150937890ad5465d861175c6624711"
 }
 
 /**
@@ -405,6 +405,7 @@ export const ModelName = {
   MemberRefreshJob: 'MemberRefreshJob',
   UserTimerSettings: 'UserTimerSettings',
   UserGuildTimerSettings: 'UserGuildTimerSettings',
+  UserGuildEventSettings: 'UserGuildEventSettings',
   UserSoundSettings: 'UserSoundSettings',
   Event: 'Event',
   EventMapLocation: 'EventMapLocation',
@@ -437,7 +438,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "guild" | "role" | "member" | "timer" | "loot" | "itemSnapshot" | "lootItem" | "playerSnapshot" | "lootPlayer" | "npcSnapshot" | "lootNpc" | "lootSubmission" | "lootComment" | "lootlogConfigNpc" | "lootlogConfig" | "reservation" | "userCharactersLootlogSettings" | "userSettings" | "memberRefreshJob" | "userTimerSettings" | "userGuildTimerSettings" | "userSoundSettings" | "event" | "eventMapLocation" | "eventMap" | "eventMapCoverageGap" | "eventMapAssignmentHistory" | "eventHeroNpc" | "eventPresenceLog" | "eventHeroKill" | "eventKillPoint" | "eventRanking" | "eventPointsEditHistory" | "eventRespawnWindowSummary" | "mapTemplate" | "npcKillStats" | "userKillStats" | "guildKillSummary"
+    modelProps: "guild" | "role" | "member" | "timer" | "loot" | "itemSnapshot" | "lootItem" | "playerSnapshot" | "lootPlayer" | "npcSnapshot" | "lootNpc" | "lootSubmission" | "lootComment" | "lootlogConfigNpc" | "lootlogConfig" | "reservation" | "userCharactersLootlogSettings" | "userSettings" | "memberRefreshJob" | "userTimerSettings" | "userGuildTimerSettings" | "userGuildEventSettings" | "userSoundSettings" | "event" | "eventMapLocation" | "eventMap" | "eventMapCoverageGap" | "eventMapAssignmentHistory" | "eventHeroNpc" | "eventPresenceLog" | "eventHeroKill" | "eventKillPoint" | "eventRanking" | "eventPointsEditHistory" | "eventRespawnWindowSummary" | "mapTemplate" | "npcKillStats" | "userKillStats" | "guildKillSummary"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1992,6 +1993,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.UserGuildTimerSettingsCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.UserGuildTimerSettingsCountAggregateOutputType> | number
+        }
+      }
+    }
+    UserGuildEventSettings: {
+      payload: Prisma.$UserGuildEventSettingsPayload<ExtArgs>
+      fields: Prisma.UserGuildEventSettingsFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.UserGuildEventSettingsFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGuildEventSettingsPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.UserGuildEventSettingsFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGuildEventSettingsPayload>
+        }
+        findFirst: {
+          args: Prisma.UserGuildEventSettingsFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGuildEventSettingsPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.UserGuildEventSettingsFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGuildEventSettingsPayload>
+        }
+        findMany: {
+          args: Prisma.UserGuildEventSettingsFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGuildEventSettingsPayload>[]
+        }
+        create: {
+          args: Prisma.UserGuildEventSettingsCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGuildEventSettingsPayload>
+        }
+        createMany: {
+          args: Prisma.UserGuildEventSettingsCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.UserGuildEventSettingsCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGuildEventSettingsPayload>[]
+        }
+        delete: {
+          args: Prisma.UserGuildEventSettingsDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGuildEventSettingsPayload>
+        }
+        update: {
+          args: Prisma.UserGuildEventSettingsUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGuildEventSettingsPayload>
+        }
+        deleteMany: {
+          args: Prisma.UserGuildEventSettingsDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.UserGuildEventSettingsUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.UserGuildEventSettingsUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGuildEventSettingsPayload>[]
+        }
+        upsert: {
+          args: Prisma.UserGuildEventSettingsUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGuildEventSettingsPayload>
+        }
+        aggregate: {
+          args: Prisma.UserGuildEventSettingsAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateUserGuildEventSettings>
+        }
+        groupBy: {
+          args: Prisma.UserGuildEventSettingsGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserGuildEventSettingsGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.UserGuildEventSettingsCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserGuildEventSettingsCountAggregateOutputType> | number
         }
       }
     }
@@ -3593,6 +3668,18 @@ export const UserGuildTimerSettingsScalarFieldEnum = {
 export type UserGuildTimerSettingsScalarFieldEnum = (typeof UserGuildTimerSettingsScalarFieldEnum)[keyof typeof UserGuildTimerSettingsScalarFieldEnum]
 
 
+export const UserGuildEventSettingsScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  guildId: 'guildId',
+  pinnedEvents: 'pinnedEvents',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserGuildEventSettingsScalarFieldEnum = (typeof UserGuildEventSettingsScalarFieldEnum)[keyof typeof UserGuildEventSettingsScalarFieldEnum]
+
+
 export const UserSoundSettingsScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -4249,6 +4336,7 @@ export type GlobalOmitConfig = {
   memberRefreshJob?: Prisma.MemberRefreshJobOmit
   userTimerSettings?: Prisma.UserTimerSettingsOmit
   userGuildTimerSettings?: Prisma.UserGuildTimerSettingsOmit
+  userGuildEventSettings?: Prisma.UserGuildEventSettingsOmit
   userSoundSettings?: Prisma.UserSoundSettingsOmit
   event?: Prisma.EventOmit
   eventMapLocation?: Prisma.EventMapLocationOmit

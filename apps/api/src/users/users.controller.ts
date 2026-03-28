@@ -27,7 +27,9 @@ export class UsersController {
   @ApiResponse({ status: 200, description: "User preferences" })
   async getUserPreferences(@UserId() userId: string) {
     const preferences = await this.usersService.getUserPreferences(userId);
-    return plainToInstance(UserPreferencesEntity, preferences);
+    return plainToInstance(UserPreferencesEntity, preferences, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Patch("/@me/preferences")
@@ -44,6 +46,8 @@ export class UsersController {
       userId,
       preferences,
     );
-    return plainToInstance(UserPreferencesEntity, updatedPreferences);
+    return plainToInstance(UserPreferencesEntity, updatedPreferences, {
+      excludeExtraneousValues: true,
+    });
   }
 }

@@ -243,7 +243,7 @@ export type NpcSnapshotGroupByOutputType = {
   _max: NpcSnapshotMaxAggregateOutputType | null
 }
 
-type GetNpcSnapshotGroupByPayload<T extends NpcSnapshotGroupByArgs> = Prisma.PrismaPromise<
+export type GetNpcSnapshotGroupByPayload<T extends NpcSnapshotGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<NpcSnapshotGroupByOutputType, T['by']> &
       {

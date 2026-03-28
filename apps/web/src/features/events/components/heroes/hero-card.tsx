@@ -58,6 +58,8 @@ export const HeroCard = ({
     (hero.locations?.reduce((sum, loc) => sum + loc.maps.length, 0) ?? 0) +
     (hero.maps?.length ?? 0);
 
+  console.log(hero);
+
   return (
     <div className="relative group">
       <Link
@@ -85,7 +87,7 @@ export const HeroCard = ({
               )}
               <div className="min-w-0">
                 <p className="text-sm font-medium break-words">
-                  {hero.npcName}
+                  {hero.npcName} {hero.npcLvl ? `(${hero.npcLvl})` : ""}
                 </p>
                 <p className="text-xs leading-relaxed text-muted-foreground">
                   ID: {hero.npcId} •{" "}

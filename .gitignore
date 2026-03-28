@@ -63,3 +63,7 @@ prompts/**
 .agents/skills/context7/.env
 .claude/skills/context7/.env
 apps/api/scripts/**
+
+# Profiles & Performance
+apps/api/profiles/
+perf/

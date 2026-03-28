@@ -72,6 +72,7 @@ export const ModelName = {
   MemberRefreshJob: 'MemberRefreshJob',
   UserTimerSettings: 'UserTimerSettings',
   UserGuildTimerSettings: 'UserGuildTimerSettings',
+  UserGuildEventSettings: 'UserGuildEventSettings',
   UserSoundSettings: 'UserSoundSettings',
   Event: 'Event',
   EventMapLocation: 'EventMapLocation',
@@ -406,6 +407,18 @@ export const UserGuildTimerSettingsScalarFieldEnum = {
 } as const
 
 export type UserGuildTimerSettingsScalarFieldEnum = (typeof UserGuildTimerSettingsScalarFieldEnum)[keyof typeof UserGuildTimerSettingsScalarFieldEnum]
+
+
+export const UserGuildEventSettingsScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  guildId: 'guildId',
+  pinnedEvents: 'pinnedEvents',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserGuildEventSettingsScalarFieldEnum = (typeof UserGuildEventSettingsScalarFieldEnum)[keyof typeof UserGuildEventSettingsScalarFieldEnum]
 
 
 export const UserSoundSettingsScalarFieldEnum = {

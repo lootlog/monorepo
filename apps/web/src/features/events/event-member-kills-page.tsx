@@ -211,8 +211,8 @@ const StatPill = ({
         : "border-border/70 bg-muted/50 text-muted-foreground";
   const sizeClass =
     size === "compact"
-      ? "gap-0.5 rounded-md px-1.5 py-0.75 text-[9px]"
-      : "gap-1 rounded-md px-2 py-1 text-[10px]";
+      ? "gap-1 rounded-md px-1.5 py-0.5 text-[11px]"
+      : "gap-1 rounded-md px-2 py-1 text-xs";
 
   return (
     <div
@@ -234,7 +234,7 @@ const StatsMetricCard = ({
   valueClassName?: string;
 }) => (
   <div className="rounded-lg border border-border/70 bg-card/50 px-2.5 py-2">
-    <p className="text-[10px] text-muted-foreground">{label}</p>
+    <p className="text-xs text-muted-foreground">{label}</p>
     <p className={`text-sm font-semibold ${valueClassName ?? ""}`}>{value}</p>
   </div>
 );
@@ -368,7 +368,7 @@ const MemberKillCard = ({
               <p className="truncate text-sm font-semibold">
                 {kill.heroNpc.npcName}
               </p>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 {formatDateTime(new Date(kill.killedAt))}
               </p>
             </div>
@@ -377,15 +377,15 @@ const MemberKillCard = ({
           <div className="shrink-0 text-right">
             <p className="text-[15px] leading-none font-bold text-primary">
               {formatPoints(totalPoints)}
-              <span className="ml-1 text-[10px] font-medium">pkt</span>
+              <span className="ml-1 text-xs font-medium">pkt</span>
             </p>
             {respawnDuration && (
-              <p className="mt-0.5 flex items-center justify-end gap-1 text-[10px] text-muted-foreground">
+              <p className="mt-0.5 flex items-center justify-end gap-1 text-xs text-muted-foreground">
                 <Clock className="h-3 w-3" />
                 {respawnDuration}
               </p>
             )}
-            <p className="mt-0.5 text-[10px] text-muted-foreground">
+            <p className="mt-0.5 text-xs text-muted-foreground">
               {t("events.kills.trackingDurationTime")}: {trackingDurationTime}
             </p>
           </div>
@@ -421,7 +421,7 @@ const MemberKillCard = ({
               ))}
             </div>
           ) : (
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               {t("events.kills.pointBreakdownUnavailable")}
             </p>
           )}
@@ -649,84 +649,75 @@ const MemberKillsListSection = ({
         </Card>
       )}
 
-      <Card className="flex min-h-0 flex-1 flex-col gap-2.5 border-border bg-card/40 p-2.5 backdrop-blur-sm">
-        <div className="flex items-center gap-1.5">
-          <Skull className="h-4 w-4 text-red-500" />
-          <h2 className="text-sm font-semibold">
-            {t("events.kills.memberHistoryTitle")}
-          </h2>
+      {isLoading ? (
+        <div className="flex flex-1 items-center justify-center">
+          <Spinner className="h-8 w-8" />
         </div>
+      ) : hasError ? (
+        <div className="flex flex-1 flex-col items-center justify-center gap-2 text-muted-foreground">
+          <AlertCircle className="h-6 w-6 text-destructive" />
+          <p className="text-xs">{t("events.error")}</p>
+        </div>
+      ) : totalKills === 0 ? (
+        <div className="flex flex-1 flex-col items-center justify-center text-muted-foreground">
+          <Skull className="mb-2 h-6 w-6 opacity-50" />
+          <p className="text-xs">{t("events.kills.noKills")}</p>
+        </div>
+      ) : (
+        <ScrollArea ref={scrollElementRef} className="min-h-0 flex-1">
+          <div
+            style={{
+              height: `${listVirtualizer.getTotalSize()}px`,
+              width: "100%",
+              position: "relative",
+            }}
+          >
+            {virtualItems.map((virtualItem) => {
+              const isLoaderRow = virtualItem.index >= totalKills;
+              const kill = allKills[virtualItem.index];
 
-        {isLoading ? (
-          <div className="flex flex-1 items-center justify-center">
-            <Spinner className="h-8 w-8" />
+              return (
+                <div
+                  key={virtualItem.key}
+                  data-index={virtualItem.index}
+                  ref={listVirtualizer.measureElement}
+                  className="pb-2.5"
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    transform: `translateY(${virtualItem.start}px)`,
+                  }}
+                >
+                  {isLoaderRow ? (
+                    hasNextPage ? (
+                      <div className="relative flex h-14 items-center justify-center gap-2.5 rounded-xl border border-border/50 bg-card/30 backdrop-blur-md">
+                        <Spinner className="h-4.5 w-4.5 text-primary" />
+                        <span className="text-xs font-medium text-muted-foreground">
+                          {t("events.kills.loading")}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex h-14 items-center justify-center rounded-xl border border-border/50 bg-card/30 backdrop-blur-md">
+                        <span className="text-xs text-muted-foreground">
+                          {t("events.kills.endOfList")}
+                        </span>
+                      </div>
+                    )
+                  ) : kill ? (
+                    <MemberKillCard
+                      kill={kill}
+                      guildId={guildId}
+                      eventId={eventId}
+                    />
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
-        ) : hasError ? (
-          <div className="flex flex-1 flex-col items-center justify-center gap-2 text-muted-foreground">
-            <AlertCircle className="h-6 w-6 text-destructive" />
-            <p className="text-xs">{t("events.error")}</p>
-          </div>
-        ) : totalKills === 0 ? (
-          <div className="flex flex-1 flex-col items-center justify-center text-muted-foreground">
-            <Skull className="mb-2 h-6 w-6 opacity-50" />
-            <p className="text-xs">{t("events.kills.noKills")}</p>
-          </div>
-        ) : (
-          <ScrollArea ref={scrollElementRef} className="min-h-0 flex-1">
-            <div
-              style={{
-                height: `${listVirtualizer.getTotalSize()}px`,
-                width: "100%",
-                position: "relative",
-              }}
-            >
-              {virtualItems.map((virtualItem) => {
-                const isLoaderRow = virtualItem.index >= totalKills;
-                const kill = allKills[virtualItem.index];
-
-                return (
-                  <div
-                    key={virtualItem.key}
-                    data-index={virtualItem.index}
-                    ref={listVirtualizer.measureElement}
-                    className="pb-2.5"
-                    style={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      width: "100%",
-                      transform: `translateY(${virtualItem.start}px)`,
-                    }}
-                  >
-                    {isLoaderRow ? (
-                      hasNextPage ? (
-                        <div className="relative flex h-14 items-center justify-center gap-2.5 rounded-xl border border-border/50 bg-card/30 backdrop-blur-md">
-                          <Spinner className="h-4.5 w-4.5 text-primary" />
-                          <span className="text-xs font-medium text-muted-foreground">
-                            {t("events.kills.loading")}
-                          </span>
-                        </div>
-                      ) : (
-                        <div className="flex h-14 items-center justify-center rounded-xl border border-border/50 bg-card/30 backdrop-blur-md">
-                          <span className="text-xs text-muted-foreground">
-                            {t("events.kills.endOfList")}
-                          </span>
-                        </div>
-                      )
-                    ) : kill ? (
-                      <MemberKillCard
-                        kill={kill}
-                        guildId={guildId}
-                        eventId={eventId}
-                      />
-                    ) : null}
-                  </div>
-                );
-              })}
-            </div>
-          </ScrollArea>
-        )}
-      </Card>
+        </ScrollArea>
+      )}
     </section>
   );
 };

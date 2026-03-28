@@ -105,12 +105,17 @@ export class KillsService {
       return { updated: 0 };
     }
 
-    // 4. Process each guild
+    // 4. Batch-fetch members for all target guilds (single query)
+    const guildIdArray = Array.from(targetGuildIds);
+    const members = await this.prisma.member.findMany({
+      where: { userId: discordId, guildId: { in: guildIdArray } },
+    });
+    const membersByGuild = new Map(members.map((m) => [m.guildId, m]));
+
+    // 5. Process each guild
     const results = await Promise.all(
-      Array.from(targetGuildIds).map(async (guildId) => {
-        const member = await this.prisma.member.findUnique({
-          where: { memberId: { userId: discordId, guildId } },
-        });
+      guildIdArray.map(async (guildId) => {
+        const member = membersByGuild.get(guildId);
 
         if (!member) {
           this.logger.log({
@@ -221,9 +226,7 @@ export class KillsService {
     query: GetGuildKillStatsDto,
   ) {
     const npcTypes = query.npcTypes;
-    const filteredRoles = roles.filter((role) =>
-      role.permissions.includes(Permission.LOOTLOG_LOOTS_READ),
-    );
+    const filteredRoles = this.filterReadableRoles(roles);
     const administrativeUser = isAdministrativeUser(permissions);
 
     const visibilityCondition = this.buildVisibilityCondition(
@@ -329,6 +332,12 @@ export class KillsService {
     };
   }
 
+  private filterReadableRoles(roles: Role[]): Role[] {
+    return roles.filter((role) =>
+      role.permissions.includes(Permission.LOOTLOG_LOOTS_READ),
+    );
+  }
+
   private buildVisibilityCondition(
     roles: Role[],
     administrativeUser: boolean,
@@ -387,10 +396,6 @@ export class KillsService {
           notIn: [NpcType.HERO, NpcType.EVENT_HERO],
         },
       });
-    }
-
-    if (andConditions.length === 0) {
-      return null;
     }
 
     return {
@@ -571,9 +576,7 @@ export class KillsService {
     minLvl?: number,
     maxLvl?: number,
   ) {
-    const filteredRoles = roles.filter((role) =>
-      role.permissions.includes(Permission.LOOTLOG_LOOTS_READ),
-    );
+    const filteredRoles = this.filterReadableRoles(roles);
     const administrativeUser = isAdministrativeUser(permissions);
 
     const visibilityCondition = this.buildVisibilityCondition(
@@ -655,9 +658,7 @@ export class KillsService {
     npcTypes: NpcType[],
     limit: number = 5,
   ) {
-    const filteredRoles = roles.filter((role) =>
-      role.permissions.includes(Permission.LOOTLOG_LOOTS_READ),
-    );
+    const filteredRoles = this.filterReadableRoles(roles);
     const administrativeUser = isAdministrativeUser(permissions);
 
     const visibilityCondition = this.buildVisibilityCondition(
@@ -732,9 +733,7 @@ export class KillsService {
     limit: number = 50,
     world?: string,
   ) {
-    const filteredRoles = roles.filter((role) =>
-      role.permissions.includes(Permission.LOOTLOG_LOOTS_READ),
-    );
+    const filteredRoles = this.filterReadableRoles(roles);
     const administrativeUser = isAdministrativeUser(permissions);
 
     const visibilityCondition = this.buildVisibilityCondition(
@@ -851,9 +850,7 @@ export class KillsService {
     roles: Role[],
     query: GetMemberKillsDto,
   ) {
-    const filteredRoles = roles.filter((role) =>
-      role.permissions.includes(Permission.LOOTLOG_LOOTS_READ),
-    );
+    const filteredRoles = this.filterReadableRoles(roles);
     const administrativeUser = isAdministrativeUser(permissions);
 
     const visibilityCondition = this.buildVisibilityCondition(

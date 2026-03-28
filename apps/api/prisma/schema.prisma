@@ -192,6 +192,7 @@ model Member {
 
   @@unique(name: "memberId", [userId, guildId])
   @@index([id, guildId])
+  @@index([userId, guildId, active, lastDiscordSyncAt])
 }
 
 model Timer {
@@ -367,6 +368,7 @@ model LootComment {
   member Member @relation(fields: [memberId], references: [id])
 
   @@index([lootId])
+  @@index([lootId, guildId])
 }
 
 model LootlogConfigNpc {
@@ -472,6 +474,19 @@ model UserGuildTimerSettings {
   guildId      String
   hiddenTimers String[] @default([])
   pinnedTimers String[] @default([])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, guildId])
+  @@index([userId])
+  @@index([guildId])
+}
+
+model UserGuildEventSettings {
+  id           Int      @id @default(autoincrement())
+  userId       String
+  guildId      String
+  pinnedEvents String[] @default([])
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
