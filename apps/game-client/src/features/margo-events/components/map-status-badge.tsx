@@ -1,4 +1,4 @@
-import { type MapStatus } from "../types";
+import type { MapStatus } from "../types";
 
 interface MapStatusBadgeProps {
   status: MapStatus;

@@ -9,7 +9,10 @@ import type {
   EventMapLocation,
 } from "../../hooks/queries/use-events";
 import type { PlayerPresence } from "../../hooks/socket/use-event-presence";
-import type { WindowStatus } from "../../hooks/queries/use-hero-respawn-config";
+import {
+  isWindowActive,
+  type WindowStatus,
+} from "../../hooks/use-window-status";
 import type { CoverageGap } from "../../hooks/queries/use-map-coverage-timer";
 import { MapCard, getMapStatus, STATUS_STYLES } from "./map-card";
 
@@ -67,12 +70,11 @@ const LocationSection = ({
 
   if (maps.length === 0) return null;
 
-  const coveredCount =
-    windowStatus === "OPEN"
-      ? maps.filter(
-          (map) => getMapStatus(map, presenceData) === "ASSIGNED_PRESENT",
-        ).length
-      : 0;
+  const coveredCount = isWindowActive(windowStatus)
+    ? maps.filter(
+        (map) => getMapStatus(map, presenceData) === "ASSIGNED_PRESENT",
+      ).length
+    : 0;
 
   return (
     <div
@@ -99,7 +101,7 @@ const LocationSection = ({
         )}
         <span className="truncate">{title}</span>
         <span className="ml-auto text-xs text-muted-foreground shrink-0">
-          {windowStatus === "OPEN" ? (
+          {isWindowActive(windowStatus) ? (
             <span
               className={cn(
                 coveredCount === maps.length

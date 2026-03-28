@@ -483,6 +483,7 @@
     "status": {
       "open": "Okno otwarte",
       "waiting": "Oczekiwanie",
+      "overdue": "Poszukiwanie",
       "none": "Brak okna"
     }
   },

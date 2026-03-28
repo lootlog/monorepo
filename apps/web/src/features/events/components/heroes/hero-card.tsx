@@ -58,8 +58,6 @@ export const HeroCard = ({
     (hero.locations?.reduce((sum, loc) => sum + loc.maps.length, 0) ?? 0) +
     (hero.maps?.length ?? 0);
 
-  console.log(hero);
-
   return (
     <div className="relative group">
       <Link
