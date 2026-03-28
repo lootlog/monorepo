@@ -280,7 +280,7 @@ export type EventRespawnWindowSummaryGroupByOutputType = {
   _max: EventRespawnWindowSummaryMaxAggregateOutputType | null
 }
 
-type GetEventRespawnWindowSummaryGroupByPayload<T extends EventRespawnWindowSummaryGroupByArgs> = Prisma.PrismaPromise<
+export type GetEventRespawnWindowSummaryGroupByPayload<T extends EventRespawnWindowSummaryGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<EventRespawnWindowSummaryGroupByOutputType, T['by']> &
       {

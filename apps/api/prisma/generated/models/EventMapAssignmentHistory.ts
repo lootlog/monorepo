@@ -199,7 +199,7 @@ export type EventMapAssignmentHistoryGroupByOutputType = {
   _max: EventMapAssignmentHistoryMaxAggregateOutputType | null
 }
 
-type GetEventMapAssignmentHistoryGroupByPayload<T extends EventMapAssignmentHistoryGroupByArgs> = Prisma.PrismaPromise<
+export type GetEventMapAssignmentHistoryGroupByPayload<T extends EventMapAssignmentHistoryGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<EventMapAssignmentHistoryGroupByOutputType, T['by']> &
       {

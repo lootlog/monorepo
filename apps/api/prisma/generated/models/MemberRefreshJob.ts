@@ -239,7 +239,7 @@ export type MemberRefreshJobGroupByOutputType = {
   _max: MemberRefreshJobMaxAggregateOutputType | null
 }
 
-type GetMemberRefreshJobGroupByPayload<T extends MemberRefreshJobGroupByArgs> = Prisma.PrismaPromise<
+export type GetMemberRefreshJobGroupByPayload<T extends MemberRefreshJobGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<MemberRefreshJobGroupByOutputType, T['by']> &
       {

@@ -179,7 +179,7 @@ export type GuildGroupByOutputType = {
   _max: GuildMaxAggregateOutputType | null
 }
 
-type GetGuildGroupByPayload<T extends GuildGroupByArgs> = Prisma.PrismaPromise<
+export type GetGuildGroupByPayload<T extends GuildGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<GuildGroupByOutputType, T['by']> &
       {
