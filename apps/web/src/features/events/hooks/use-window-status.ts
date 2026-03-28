@@ -1,6 +1,10 @@
 import { useState, useEffect } from "react";
 
-export type WindowStatus = "OPEN" | "WAITING" | "NONE";
+export type WindowStatus = "OPEN" | "WAITING" | "OVERDUE" | "NONE";
+
+export function isWindowActive(status: WindowStatus): boolean {
+  return status === "OPEN" || status === "OVERDUE";
+}
 
 export function useWindowStatus(
   minSpawnTime: string | null,
@@ -19,7 +23,7 @@ export function useWindowStatus(
 
     const recalc = () => {
       const now = Date.now();
-      if (now >= max) setStatus("NONE");
+      if (now >= max) setStatus("OVERDUE");
       else if (now >= min) setStatus("OPEN");
       else setStatus("WAITING");
     };

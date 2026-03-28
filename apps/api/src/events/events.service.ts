@@ -642,7 +642,7 @@ export class EventsService {
     heroId: string,
   ): Promise<{
     hasTimer: boolean;
-    windowStatus: "OPEN" | "WAITING" | "NONE";
+    windowStatus: "OPEN" | "WAITING" | "OVERDUE" | "NONE";
     minSpawnTime: Date | null;
     maxSpawnTime: Date | null;
   }> {

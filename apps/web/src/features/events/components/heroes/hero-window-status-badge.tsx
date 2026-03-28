@@ -21,6 +21,11 @@ const getWindowStatusConfig = (
         label: t("events.respawn.status.waiting", "Oczekiwanie"),
         className: "bg-amber-500/10 text-amber-500 border-amber-500/20",
       };
+    case "OVERDUE":
+      return {
+        label: t("events.respawn.status.overdue", "Poszukiwanie"),
+        className: "bg-orange-500/10 text-orange-500 border-orange-500/20",
+      };
     case "NONE":
     default:
       return {
