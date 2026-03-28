@@ -31,7 +31,11 @@ import {
   useSelfAssignMember,
   useSelfUnassignMember,
 } from "./hooks/mutations/use-assign-member";
-import { useWindowStatus, type WindowStatus } from "./hooks/use-window-status";
+import {
+  useWindowStatus,
+  isWindowActive,
+  type WindowStatus,
+} from "./hooks/use-window-status";
 import {
   useCloseRespawnWindow,
   useOpenRespawnWindow,
@@ -67,6 +71,11 @@ const getWindowStatusConfig = (
       return {
         label: t("events.respawn.status.waiting"),
         className: "bg-amber-500/10 text-amber-500 border-amber-500/20",
+      };
+    case "OVERDUE":
+      return {
+        label: t("events.respawn.status.overdue"),
+        className: "bg-orange-500/10 text-orange-500 border-orange-500/20",
       };
     case "NONE":
     default:
@@ -196,12 +205,11 @@ export const HeroDetail = () => {
   const allMaps = [...allMapsFromLocations, ...(hero.maps ?? [])];
 
   const totalMapsCount = allMaps.length;
-  const coveredMapsCount =
-    windowStatus === "OPEN"
-      ? allMaps.filter(
-          (map) => getMapStatus(map, presenceData) === "ASSIGNED_PRESENT",
-        ).length
-      : 0;
+  const coveredMapsCount = isWindowActive(windowStatus)
+    ? allMaps.filter(
+        (map) => getMapStatus(map, presenceData) === "ASSIGNED_PRESENT",
+      ).length
+    : 0;
   const allAssignedMembers = allMaps.flatMap((m) => m.assignedMembers);
   const uniqueMembers = Array.from(
     new Map(allAssignedMembers.map((m) => [m.id, m])).values(),
@@ -339,7 +347,7 @@ export const HeroDetail = () => {
 
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 py-3 flex flex-col gap-4">
-          <Card className="gap-4 border-border bg-card/40 p-3 backdrop-blur-sm">
+          <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div className="flex min-w-0 flex-1 items-center gap-3">
                 {hero.npcIcon ? (
@@ -360,7 +368,7 @@ export const HeroDetail = () => {
                     {event.name}
                   </p>
                   <h2 className="text-base font-semibold leading-tight break-words">
-                    {hero.npcName}
+                    {hero.npcName} {hero.npcLvl ? `(${hero.npcLvl})` : ""}
                   </h2>
                   <div className="mt-1 flex flex-wrap items-center gap-2">
                     <HeroTimerCountdown timer={heroTimer} />
@@ -431,7 +439,7 @@ export const HeroDetail = () => {
                     <MapPin className="w-4 h-4" />
                     {t("events.maps.title")}
                     <span className="font-normal">
-                      {windowStatus === "OPEN" ? (
+                      {isWindowActive(windowStatus) ? (
                         <span
                           className={cn(
                             coveredMapsCount === totalMapsCount

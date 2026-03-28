@@ -29,6 +29,7 @@ describe("KillsService", () => {
     };
     member: {
       findUnique: jest.Mock;
+      findMany: jest.Mock;
     };
   };
   let redisService: {
@@ -87,6 +88,7 @@ describe("KillsService", () => {
       },
       member: {
         findUnique: jest.fn(),
+        findMany: jest.fn().mockResolvedValue([]),
       },
     };
 
@@ -193,15 +195,16 @@ describe("KillsService", () => {
         collectLootWhitelistGuildIds: ["guild1", "guild2"],
         addTimersWhitelistGuildIds: [],
       });
-      prismaService.member.findUnique
-        .mockResolvedValueOnce({ id: 1 })
-        .mockResolvedValueOnce({ id: 2 });
+      prismaService.member.findMany.mockResolvedValue([
+        { id: 1, guildId: "guild1" },
+        { id: 2, guildId: "guild2" },
+      ]);
       prismaService.npcKillStats.upsert.mockResolvedValue({});
       prismaService.guildKillSummary.upsert.mockResolvedValue({});
 
       const result = await service.createKill(discordId, mockCreateKillDto);
 
-      expect(prismaService.member.findUnique).toHaveBeenCalledTimes(2);
+      expect(prismaService.member.findMany).toHaveBeenCalledTimes(1);
       expect(prismaService.npcKillStats.upsert).toHaveBeenCalledTimes(2);
       expect(prismaService.guildKillSummary.upsert).toHaveBeenCalledTimes(2);
       expect(result).toEqual({ updated: 2 });
@@ -212,9 +215,9 @@ describe("KillsService", () => {
         collectLootWhitelistGuildIds: ["guild1", "guild2"],
         addTimersWhitelistGuildIds: [],
       });
-      prismaService.member.findUnique
-        .mockResolvedValueOnce({ id: 1 })
-        .mockResolvedValueOnce(null);
+      prismaService.member.findMany.mockResolvedValue([
+        { id: 1, guildId: "guild1" },
+      ]);
       prismaService.npcKillStats.upsert.mockResolvedValue({});
       prismaService.guildKillSummary.upsert.mockResolvedValue({});
 
@@ -229,13 +232,17 @@ describe("KillsService", () => {
         collectLootWhitelistGuildIds: ["guild1", "guild2"],
         addTimersWhitelistGuildIds: ["guild1", "guild3"],
       });
-      prismaService.member.findUnique.mockResolvedValue({ id: 1 });
+      prismaService.member.findMany.mockResolvedValue([
+        { id: 1, guildId: "guild1" },
+        { id: 1, guildId: "guild2" },
+        { id: 1, guildId: "guild3" },
+      ]);
       prismaService.npcKillStats.upsert.mockResolvedValue({});
       prismaService.guildKillSummary.upsert.mockResolvedValue({});
 
       await service.createKill(discordId, mockCreateKillDto);
 
-      expect(prismaService.member.findUnique).toHaveBeenCalledTimes(3);
+      expect(prismaService.member.findMany).toHaveBeenCalledTimes(1);
     });
 
     it("should handle UserKillStats upsert errors gracefully", async () => {
@@ -257,7 +264,9 @@ describe("KillsService", () => {
         collectLootWhitelistGuildIds: ["guild1"],
         addTimersWhitelistGuildIds: [],
       });
-      prismaService.member.findUnique.mockResolvedValue({ id: 1 });
+      prismaService.member.findMany.mockResolvedValue([
+        { id: 1, guildId: "guild1" },
+      ]);
       prismaService.npcKillStats.upsert.mockRejectedValue(
         new Error("DB error"),
       );
@@ -291,7 +300,9 @@ describe("KillsService", () => {
         collectLootWhitelistGuildIds: ["guild1"],
         addTimersWhitelistGuildIds: [],
       });
-      prismaService.member.findUnique.mockResolvedValue({ id: 1 });
+      prismaService.member.findMany.mockResolvedValue([
+        { id: 1, guildId: "guild1" },
+      ]);
       prismaService.npcKillStats.upsert.mockResolvedValue({});
       // First setNX call (user dedup) returns true, second (guild dedup) returns false
       redisService.setNX

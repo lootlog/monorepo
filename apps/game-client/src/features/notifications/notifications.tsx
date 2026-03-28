@@ -24,7 +24,7 @@ export const Notifications = () => {
   if (filteredNotifications.length === 0) return null;
 
   return (
-    <AnimatedWindow isOpen={true} windowKey="notifications">
+    <AnimatedWindow isOpen windowKey="notifications">
       <DraggableWindow
         id="notifications"
         title="Powiadomienia"

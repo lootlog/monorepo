@@ -210,7 +210,7 @@ export type EventHeroNpcGroupByOutputType = {
   _max: EventHeroNpcMaxAggregateOutputType | null
 }
 
-type GetEventHeroNpcGroupByPayload<T extends EventHeroNpcGroupByArgs> = Prisma.PrismaPromise<
+export type GetEventHeroNpcGroupByPayload<T extends EventHeroNpcGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<EventHeroNpcGroupByOutputType, T['by']> &
       {

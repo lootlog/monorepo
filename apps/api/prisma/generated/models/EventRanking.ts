@@ -254,7 +254,7 @@ export type EventRankingGroupByOutputType = {
   _max: EventRankingMaxAggregateOutputType | null
 }
 
-type GetEventRankingGroupByPayload<T extends EventRankingGroupByArgs> = Prisma.PrismaPromise<
+export type GetEventRankingGroupByPayload<T extends EventRankingGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<EventRankingGroupByOutputType, T['by']> &
       {

@@ -1,15 +1,10 @@
-import { Permission } from "@lootlog/types";
+import { NpcTypeEnum, Permission } from "@lootlog/types";
 import type { UserGuildData, GuildRole } from "src/guilds/types/guild.types";
 import { isAdministrativeUserFromRoles } from "src/guilds/utils/is-administrative-user";
 import { Platform } from "src/gateway/enums/platform.enum";
 
 export type FeatureName = "chat" | "timers" | "notifications";
 export type TierName = "base" | "titans" | "heroes";
-
-// NPC type string values from database
-const NPC_TYPE_TITAN = "TITAN";
-const NPC_TYPE_HERO = "HERO";
-const NPC_TYPE_EVENT_HERO = "EVENT_HERO";
 
 // Features excluded for web app (they don't need chat/notifications)
 const WEB_EXCLUDED_FEATURES: FeatureName[] = ["chat", "notifications"];
@@ -125,8 +120,8 @@ function hasPermission(roles: GuildRole[], permission: Permission): boolean {
 
 export function getNpcTier(npc?: { type?: string }): TierName {
   if (!npc?.type) return "base";
-  if (npc.type === NPC_TYPE_TITAN) return "titans";
-  if (npc.type === NPC_TYPE_HERO || npc.type === NPC_TYPE_EVENT_HERO)
+  if (npc.type === NpcTypeEnum.TITAN) return "titans";
+  if (npc.type === NpcTypeEnum.HERO || npc.type === NpcTypeEnum.EVENT_HERO)
     return "heroes";
   return "base";
 }

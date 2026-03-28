@@ -1,5 +1,4 @@
 import type { Guild } from "@/hooks/api/guilds/use-guild";
-import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useTheme } from "@/hooks/context/use-theme";
 import { cn } from "@/utils/cn";
 import {
@@ -19,16 +18,18 @@ import { FrozenCircle } from "@/components/effects/rukia-frost";
 export type GuildNavItemProps = {
   guild: Guild;
   isDragging?: boolean;
+  currentGuildId?: string;
 };
 
 const GuildNavItemComponent: FC<GuildNavItemProps> = ({
   guild,
   isDragging = false,
+  currentGuildId,
 }) => {
-  const guildId = useGuildId();
   const { theme } = useTheme();
   const isRukiaTheme = theme === "rukia";
-  const isActive = guildId === guild.id || guildId === guild.vanityUrl;
+  const isActive =
+    currentGuildId === guild.id || currentGuildId === guild.vanityUrl;
 
   const handleClick = (e: React.MouseEvent) => {
     if (isDragging) {

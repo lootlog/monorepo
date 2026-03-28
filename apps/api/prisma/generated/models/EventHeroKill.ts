@@ -206,7 +206,7 @@ export type EventHeroKillGroupByOutputType = {
   _max: EventHeroKillMaxAggregateOutputType | null
 }
 
-type GetEventHeroKillGroupByPayload<T extends EventHeroKillGroupByArgs> = Prisma.PrismaPromise<
+export type GetEventHeroKillGroupByPayload<T extends EventHeroKillGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<EventHeroKillGroupByOutputType, T['by']> &
       {

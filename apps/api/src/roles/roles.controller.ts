@@ -43,7 +43,9 @@ export class RolesController {
   })
   async getGuildRoles(@GuildData() guild: Guild) {
     const roles = await this.rolesService.getRolesByGuildId(guild.id);
-    return plainToInstance(RoleEntity, roles);
+    return plainToInstance(RoleEntity, roles, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Permissions(Permission.ADMIN)
@@ -77,6 +79,6 @@ export class RolesController {
       roleId,
       data,
     );
-    return plainToInstance(RoleEntity, role);
+    return plainToInstance(RoleEntity, role, { excludeExtraneousValues: true });
   }
 }

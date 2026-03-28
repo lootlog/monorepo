@@ -21,9 +21,11 @@ import { useLocalCoverageTimer } from "../../hooks/utils/use-local-coverage-time
 import { useAssignmentCountdown } from "../../hooks/utils/use-assignment-countdown";
 import type { EventMap } from "../../hooks/queries/use-events";
 import type { PlayerPresence } from "../../hooks/socket/use-event-presence";
-import type { WindowStatus } from "../../hooks/queries/use-hero-respawn-config";
+import {
+  isWindowActive,
+  type WindowStatus,
+} from "../../hooks/use-window-status";
 import type { CoverageGap } from "../../hooks/queries/use-map-coverage-timer";
-import { MemberName } from "../shared/member-name";
 
 export type MapStatus =
   | "ASSIGNED_PRESENT"
@@ -152,7 +154,6 @@ export const MapCard = ({
   const memberCount = assignedMembers.length;
   const isAssignedToMe = assignedMembers.some((m) => m.id === currentMemberId);
   const displayedAssignedMembers = assignedMembers.slice(0, 3);
-  const hiddenMembersCount = memberCount - displayedAssignedMembers.length;
   const playersOnMap = getPlayersOnMap(map.mapName, presenceData);
 
   const initialStartedAt = activeGap?.startedAt
@@ -167,7 +168,9 @@ export const MapCard = ({
   const { isEnabled: isAssignmentEnabled, formattedTime: countdownTime } =
     useAssignmentCountdown(assignmentDisabled, assignmentEnabledAt);
 
-  const effectiveStyle = windowStatus === "OPEN" ? style : WINDOW_CLOSED_STYLE;
+  const effectiveStyle = isWindowActive(windowStatus)
+    ? style
+    : WINDOW_CLOSED_STYLE;
 
   const hasPlayersToShow = playersOnMap.length > 0;
   const manageActionLabel = t("events.maps.manageShort");
@@ -183,14 +186,14 @@ export const MapCard = ({
         "rounded-lg border p-3 transition-colors",
         effectiveStyle.bg,
         effectiveStyle.border,
-        windowStatus !== "OPEN" && "hover:border-primary",
+        !isWindowActive(windowStatus) && "hover:border-primary",
       )}
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 flex-1">
           <div
             className={cn(
-              "flex min-w-0 items-center justify-between gap-2",
+              "flex min-w-0 items-center gap-2",
               hasPlayersToShow && "cursor-pointer",
             )}
             onClick={
@@ -215,102 +218,97 @@ export const MapCard = ({
                   )}
                 />
               )}
-            </div>
 
-            {windowStatus === "OPEN" && gapType && formattedDuration && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex shrink-0 cursor-help items-center gap-1">
-                    <Clock
-                      className={cn(
-                        "h-3 w-3",
-                        gapType === "UNASSIGNED"
-                          ? "text-destructive"
-                          : "text-yellow-500",
-                      )}
-                    />
-                    <span
-                      className={cn(
-                        "text-xs font-mono",
-                        gapType === "UNASSIGNED"
-                          ? "text-destructive"
-                          : "text-yellow-500",
-                      )}
-                    >
-                      {formattedDuration}
-                    </span>
+              {memberCount > 0 && (
+                <div className="flex shrink-0 items-center gap-1.5 ml-1">
+                  <div className="flex -space-x-1.5 shrink-0">
+                    {displayedAssignedMembers.map((member) => {
+                      const memberPlayers =
+                        presenceData?.get(member.userId) || [];
+                      const playerOnThisMap = memberPlayers.find(
+                        (p) => p.mapName === map.mapName,
+                      );
+                      const isOnMap = !!playerOnThisMap;
+                      const isAfk = playerOnThisMap?.isAfk ?? false;
+
+                      return (
+                        <div
+                          key={member.id}
+                          className={cn(
+                            "flex h-5 w-5 items-center justify-center overflow-hidden rounded-full border-2 bg-muted",
+                            isWindowActive(windowStatus) && isOnMap && !isAfk
+                              ? "border-green-500"
+                              : isWindowActive(windowStatus) && isAfk
+                                ? "border-orange-500"
+                                : "border-background",
+                          )}
+                        >
+                          <img
+                            src={getDiscordAvatarUrl(
+                              member.userId,
+                              member.avatar,
+                              32,
+                            )}
+                            alt={member.name}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                      );
+                    })}
+                    {memberCount > 3 && (
+                      <div className="flex h-5 w-5 items-center justify-center rounded-full border border-background bg-primary/20 text-[10px] font-medium text-primary">
+                        +{memberCount - 3}
+                      </div>
+                    )}
                   </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {gapType === "UNASSIGNED"
-                    ? t("events.maps.gap.unassignedTooltip")
-                    : t("events.maps.gap.uncoveredTooltip")}
-                </TooltipContent>
-              </Tooltip>
-            )}
+                  <span
+                    className="min-w-0 truncate text-xs text-muted-foreground"
+                    title={assignedMembers
+                      .map((member) => member.name)
+                      .join(", ")}
+                  >
+                    {displayedAssignedMembers
+                      .map((member) => member.name)
+                      .join(", ")}
+                    {memberCount > 3 ? ` +${memberCount - 3}` : ""}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
-
-          {memberCount > 0 && (
-            <div className="mt-2 flex min-w-0 flex-wrap items-center gap-1.5">
-              <div className="flex -space-x-1.5 shrink-0">
-                {displayedAssignedMembers.map((member) => {
-                  const memberPlayers = presenceData?.get(member.userId) || [];
-                  const playerOnThisMap = memberPlayers.find(
-                    (p) => p.mapName === map.mapName,
-                  );
-                  const isOnMap = !!playerOnThisMap;
-                  const isAfk = playerOnThisMap?.isAfk ?? false;
-
-                  return (
-                    <div
-                      key={member.id}
-                      className={cn(
-                        "flex h-5 w-5 items-center justify-center overflow-hidden rounded-full border-2 bg-muted",
-                        windowStatus === "OPEN" && isOnMap && !isAfk
-                          ? "border-green-500"
-                          : windowStatus === "OPEN" && isAfk
-                            ? "border-orange-500"
-                            : "border-background",
-                      )}
-                      title={`${member.name}${isAfk ? " (AFK)" : isOnMap ? " (Online)" : ""}`}
-                    >
-                      <img
-                        src={getDiscordAvatarUrl(
-                          member.userId,
-                          member.avatar,
-                          32,
-                        )}
-                        alt={member.name}
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                  );
-                })}
-                {memberCount > 3 && (
-                  <div className="flex h-5 w-5 items-center justify-center rounded-full border border-background bg-primary/20 text-[10px] font-medium text-primary">
-                    +{memberCount - 3}
-                  </div>
-                )}
-              </div>
-
-              {memberCount === 1 && assignedMembers[0] ? (
-                <MemberName member={assignedMembers[0]} className="text-xs" />
-              ) : memberCount > 1 ? (
-                <span
-                  className="min-w-0 truncate text-xs text-muted-foreground"
-                  title={assignedMembers
-                    .map((member) => member.name)
-                    .join(", ")}
-                >
-                  {displayedAssignedMembers
-                    .map((member) => member.name)
-                    .join(", ")}
-                  {hiddenMembersCount > 0 ? ` +${hiddenMembersCount}` : ""}
-                </span>
-              ) : null}
-            </div>
-          )}
         </div>
+
+        {isWindowActive(windowStatus) && gapType && formattedDuration && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex shrink-0 cursor-help items-center gap-1">
+                <Clock
+                  className={cn(
+                    "h-3 w-3",
+                    gapType === "UNASSIGNED"
+                      ? "text-destructive"
+                      : "text-yellow-500",
+                  )}
+                />
+                <span
+                  className={cn(
+                    "text-xs font-mono",
+                    gapType === "UNASSIGNED"
+                      ? "text-destructive"
+                      : "text-yellow-500",
+                  )}
+                >
+                  {formattedDuration}
+                </span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              {gapType === "UNASSIGNED"
+                ? t("events.maps.gap.unassignedTooltip")
+                : t("events.maps.gap.uncoveredTooltip")}
+            </TooltipContent>
+          </Tooltip>
+        )}
 
         <div
           className={cn(

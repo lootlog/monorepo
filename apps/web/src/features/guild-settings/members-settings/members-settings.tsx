@@ -12,6 +12,7 @@ import { useGuild } from "@/hooks/api/guilds/use-guild";
 import { RefreshStatusProvider } from "@/features/guild-settings/members-settings/contexts/refresh-status-context";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Users } from "lucide-react";
+import { Card } from "@lootlog/ui/components/card";
 import { Permission } from "@lootlog/types";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
@@ -27,13 +28,13 @@ import {
 import { MemberListItem } from "@/features/guild-settings/members-settings/components/member-list-item";
 
 const MembersSettingsHeader = () => (
-  <div className="bg-background w-full flex items-center border-b px-3 shrink-0 py-4">
+  <Card className="mx-3 mt-3 gap-4 border-border bg-card/60 p-4 backdrop-blur-sm shrink-0">
     <div className="flex items-center gap-3 flex-1 min-w-0">
-      <div className="p-2 rounded-lg bg-primary/10">
+      <div className="p-2.5 rounded-xl bg-primary/10 shadow-inner shadow-primary/10">
         <Users className="size-4 text-primary" />
       </div>
       <div>
-        <h2 className="text-sm font-semibold leading-tight">
+        <h2 className="text-base font-semibold leading-tight">
           Ustawienia członków
         </h2>
         <p className="text-xs text-muted-foreground leading-tight">
@@ -42,7 +43,7 @@ const MembersSettingsHeader = () => (
       </div>
     </div>
     <RefreshMembersButton />
-  </div>
+  </Card>
 );
 
 const MembersSettingsContent = () => {
@@ -138,7 +139,7 @@ const MembersSettingsContent = () => {
 
       <div className="h-full flex flex-col min-h-0 overflow-hidden">
         <MembersSettingsHeader />
-        <div className="px-3 py-2 border-b shrink-0 bg-background flex gap-2 items-center">
+        <Card className="mx-3 mt-3 mb-3 shrink-0 border-border bg-card/40 p-3 backdrop-blur-sm flex gap-3 items-center flex-row">
           <SearchInput
             onChange={(e) => setSearchValue(e.target.value)}
             placeholder="Szukaj członka..."
@@ -156,7 +157,7 @@ const MembersSettingsContent = () => {
             />
             Nieaktywni
           </Label>
-        </div>
+        </Card>
 
         <div className="flex-1 flex min-h-0 overflow-hidden bg-background/50">
           <div

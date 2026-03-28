@@ -1,13 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { useLocalStorage } from "usehooks-ts";
-import { ArrowRight, Crown, Users } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@lootlog/ui/components/card";
+import { ChevronRight, Crown, Users } from "lucide-react";
+import { Button } from "@lootlog/ui/components/button";
+import { Card } from "@lootlog/ui/components/card";
 import {
   Select,
   SelectContent,
@@ -169,23 +165,19 @@ export const MemberRankingPodiumCard: React.FC<
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              <Skeleton className="h-5 w-40" />
-            </CardTitle>
-            <Skeleton className="h-8 w-[120px]" />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-end justify-center gap-2">
-            <Skeleton className="h-24 w-24" />
-            <Skeleton className="h-32 w-24" />
-            <Skeleton className="h-20 w-24" />
-          </div>
-        </CardContent>
+      <Card className="bg-card/40 backdrop-blur-sm border-border p-3 gap-3 flex flex-col">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            <Skeleton className="h-5 w-40" />
+          </h2>
+          <Skeleton className="h-8 w-[120px]" />
+        </div>
+        <div className="flex items-end justify-center gap-2">
+          <Skeleton className="h-24 w-24" />
+          <Skeleton className="h-32 w-24" />
+          <Skeleton className="h-20 w-24" />
+        </div>
       </Card>
     );
   }
@@ -201,31 +193,29 @@ export const MemberRankingPodiumCard: React.FC<
       .slice(0, 3) ?? [];
 
   return (
-    <Card className="flex flex-col py-5">
-      <CardHeader>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            {t("kills.memberRanking.title")}
-          </CardTitle>
-          <Select
-            value={selectedNpcType}
-            onValueChange={(value) => setSelectedNpcType(value as NpcType)}
-          >
-            <SelectTrigger className="w-[120px] h-8">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {TRACKABLE_NPC_TYPES.map((type) => (
-                <SelectItem key={type} value={type}>
-                  {t(`npcType.${type}`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </CardHeader>
-      <CardContent className="flex flex-1 flex-col">
+    <Card className="bg-card/40 backdrop-blur-sm border-border p-3 gap-3 flex flex-col">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-base font-semibold flex items-center gap-2">
+          <Users className="h-5 w-5" />
+          {t("kills.memberRanking.title")}
+        </h2>
+        <Select
+          value={selectedNpcType}
+          onValueChange={(value) => setSelectedNpcType(value as NpcType)}
+        >
+          <SelectTrigger className="w-[120px] h-8">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {TRACKABLE_NPC_TYPES.map((type) => (
+              <SelectItem key={type} value={type}>
+                {t(`npcType.${type}`)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="flex flex-1 flex-col">
         <div className="flex-1 flex items-center justify-center">
           {sortedByType.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">
@@ -270,13 +260,15 @@ export const MemberRankingPodiumCard: React.FC<
           <Link
             to="/$guildId/stats/ranking"
             params={{ guildId }}
-            className="flex items-center justify-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mt-auto pt-4"
+            className="block mt-3"
           >
-            {t("kills.memberRanking.viewAll")}
-            <ArrowRight className="h-4 w-4" />
+            <Button variant="outline" className="w-full" size="sm">
+              {t("kills.memberRanking.viewAll")}
+              <ChevronRight className="w-4 h-4 ml-2" />
+            </Button>
           </Link>
         )}
-      </CardContent>
+      </div>
     </Card>
   );
 };

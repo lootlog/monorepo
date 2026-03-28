@@ -215,7 +215,9 @@ export class LootsController {
         createdAtMax,
       },
     );
-    return plainToInstance(LootEntity, loots);
+    return plainToInstance(LootEntity, loots, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Permissions(Permission.LOOTLOG_LOOTS_READ)
@@ -459,7 +461,7 @@ export class LootsController {
     if (!loot) {
       return null;
     }
-    return plainToInstance(LootEntity, loot);
+    return plainToInstance(LootEntity, loot, { excludeExtraneousValues: true });
   }
 
   @Post("/loots")
@@ -509,7 +511,9 @@ export class LootsController {
       lootId,
       guildId: guild.id,
     });
-    return plainToInstance(LootCommentEntity, comments);
+    return plainToInstance(LootCommentEntity, comments, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Permissions(Permission.LOOTLOG_LOOTS_WRITE)
@@ -543,7 +547,9 @@ export class LootsController {
       body,
       guildId: guild.id,
     });
-    return plainToInstance(LootCommentEntity, comment);
+    return plainToInstance(LootCommentEntity, comment, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Permissions(Permission.ADMIN, Permission.LOOTLOG_MANAGE)

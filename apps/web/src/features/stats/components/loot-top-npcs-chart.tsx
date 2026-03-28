@@ -1,9 +1,4 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@lootlog/ui/components/card";
+import { Card } from "@lootlog/ui/components/card";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import {
   ChartContainer,
@@ -57,44 +52,38 @@ export const LootTopNpcsChart: React.FC<LootTopNpcsChartProps> = ({
 
   if (isLoading) {
     return (
-      <Card className="flex flex-col">
-        <CardHeader>
-          <CardTitle className="text-base">
-            {t("loots.stats.topNpcs.title")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex-1">
+      <Card className="bg-card/40 backdrop-blur-sm border-border p-3 gap-3 flex flex-col">
+        <h2 className="text-base font-semibold">
+          {t("loots.stats.topNpcs.title")}
+        </h2>
+        <div className="flex-1">
           <Skeleton className="h-full min-h-[250px] w-full" />
-        </CardContent>
+        </div>
       </Card>
     );
   }
 
   if (!data?.length) {
     return (
-      <Card className="flex flex-col">
-        <CardHeader>
-          <CardTitle className="text-base">
-            {t("loots.stats.topNpcs.title")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex-1">
+      <Card className="bg-card/40 backdrop-blur-sm border-border p-3 gap-3 flex flex-col">
+        <h2 className="text-base font-semibold">
+          {t("loots.stats.topNpcs.title")}
+        </h2>
+        <div className="flex-1">
           <div className="flex h-full min-h-[250px] items-center justify-center text-muted-foreground">
             {t("loots.stats.topNpcs.noData")}
           </div>
-        </CardContent>
+        </div>
       </Card>
     );
   }
 
   return (
-    <Card className="flex flex-col">
-      <CardHeader>
-        <CardTitle className="text-base">
-          {t("loots.stats.topNpcs.title")}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="flex-1">
+    <Card className="bg-card/40 backdrop-blur-sm border-border p-3 gap-3 flex flex-col">
+      <h2 className="text-base font-semibold">
+        {t("loots.stats.topNpcs.title")}
+      </h2>
+      <div className="flex-1">
         <ChartContainer
           config={chartConfig}
           className="h-full min-h-[280px] w-full"
@@ -140,7 +129,7 @@ export const LootTopNpcsChart: React.FC<LootTopNpcsChartProps> = ({
             />
           </BarChart>
         </ChartContainer>
-      </CardContent>
+      </div>
     </Card>
   );
 };

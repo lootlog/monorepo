@@ -217,7 +217,7 @@ export type EventPointsEditHistoryGroupByOutputType = {
   _max: EventPointsEditHistoryMaxAggregateOutputType | null
 }
 
-type GetEventPointsEditHistoryGroupByPayload<T extends EventPointsEditHistoryGroupByArgs> = Prisma.PrismaPromise<
+export type GetEventPointsEditHistoryGroupByPayload<T extends EventPointsEditHistoryGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<EventPointsEditHistoryGroupByOutputType, T['by']> &
       {

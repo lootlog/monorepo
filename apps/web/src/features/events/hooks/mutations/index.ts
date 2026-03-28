@@ -4,3 +4,5 @@ export * from "./use-delete-event";
 export * from "./use-assign-member";
 export * from "./use-respawn-window";
 export * from "./use-update-points";
+export * from "./use-update-event-settings";
+export * from "./use-toggle-event-pin";

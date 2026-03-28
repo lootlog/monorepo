@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
+import { Card } from "@lootlog/ui/components/card";
 import { FileText, Plus } from "lucide-react";
 
 type MapTemplatesHeaderProps = {
@@ -10,13 +11,13 @@ export const MapTemplatesHeader = ({ onAddClick }: MapTemplatesHeaderProps) => {
   const { t } = useTranslation();
 
   return (
-    <div className="bg-background w-full flex items-center border-b px-3 shrink-0 py-4">
+    <Card className="mx-3 mt-3 gap-4 border-border bg-card/60 p-4 backdrop-blur-sm shrink-0">
       <div className="flex items-center gap-3 flex-1 min-w-0">
-        <div className="p-2 rounded-lg bg-primary/10">
+        <div className="p-2.5 rounded-xl bg-primary/10 shadow-inner shadow-primary/10">
           <FileText className="size-4 text-primary" />
         </div>
         <div>
-          <h2 className="text-sm font-semibold leading-tight">
+          <h2 className="text-base font-semibold leading-tight">
             {t("settings.mapTemplates.title")}
           </h2>
           <p className="text-xs text-muted-foreground leading-tight">
@@ -28,6 +29,6 @@ export const MapTemplatesHeader = ({ onAddClick }: MapTemplatesHeaderProps) => {
         <Plus className="w-4 h-4 mr-2" />
         {t("settings.mapTemplates.newTemplate")}
       </Button>
-    </div>
+    </Card>
   );
 };

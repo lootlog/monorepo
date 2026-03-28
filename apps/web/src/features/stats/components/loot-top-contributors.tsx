@@ -1,11 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Crown, Package } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@lootlog/ui/components/card";
+import { Card } from "@lootlog/ui/components/card";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import {
   Avatar,
@@ -137,20 +132,16 @@ export const LootTopContributors: React.FC<LootTopContributorsProps> = ({
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5" />
-            <Skeleton className="h-5 w-40" />
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-end justify-center gap-2">
-            <Skeleton className="h-24 w-24" />
-            <Skeleton className="h-32 w-24" />
-            <Skeleton className="h-20 w-24" />
-          </div>
-        </CardContent>
+      <Card className="bg-card/40 backdrop-blur-sm border-border p-3 gap-3 flex flex-col">
+        <h2 className="text-base font-semibold flex items-center gap-2">
+          <Package className="h-5 w-5" />
+          <Skeleton className="h-5 w-40" />
+        </h2>
+        <div className="flex items-end justify-center gap-2">
+          <Skeleton className="h-24 w-24" />
+          <Skeleton className="h-32 w-24" />
+          <Skeleton className="h-20 w-24" />
+        </div>
       </Card>
     );
   }
@@ -158,14 +149,12 @@ export const LootTopContributors: React.FC<LootTopContributorsProps> = ({
   const topThree = data?.slice(0, 3) ?? [];
 
   return (
-    <Card className="flex flex-col py-5">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Package className="h-5 w-5" />
-          {t("loots.stats.topContributors.title")}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-1 flex-col">
+    <Card className="bg-card/40 backdrop-blur-sm border-border p-3 gap-3 flex flex-col">
+      <h2 className="text-base font-semibold flex items-center gap-2">
+        <Package className="h-5 w-5" />
+        {t("loots.stats.topContributors.title")}
+      </h2>
+      <div className="flex flex-1 flex-col">
         <div className="flex-1 flex items-center justify-center">
           {topThree.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">
@@ -197,7 +186,7 @@ export const LootTopContributors: React.FC<LootTopContributorsProps> = ({
             </div>
           )}
         </div>
-      </CardContent>
+      </div>
     </Card>
   );
 };

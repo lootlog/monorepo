@@ -1,4 +1,5 @@
 import type { FC } from "react";
+import { Card } from "@lootlog/ui/components/card";
 import { BattleOverviewHeader } from "./battle-overview-header";
 import { BattleTeamSection } from "./battle-team-section";
 import { AnimatedTrophy } from "./animated-trophy";
@@ -17,6 +18,7 @@ export type BattleOverviewCardProps = {
   showActions?: boolean;
   cdnBaseUrl: string;
   labels?: Partial<BattleLabels>;
+  showHeader?: boolean;
 };
 
 export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
@@ -30,6 +32,7 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
   showActions = true,
   cdnBaseUrl,
   labels = DEFAULT_BATTLE_LABELS,
+  showHeader = true,
 }) => {
   const mergedLabels = {
     header: { ...DEFAULT_BATTLE_LABELS.header, ...labels.header },
@@ -67,18 +70,20 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
   };
 
   return (
-    <div className="w-full">
-      <BattleOverviewHeader
-        isPublic={battle.public}
-        isPending={isSharePending}
-        onShareClick={handleShareClick}
-        onCopyClick={handleCopyClick}
-        onUnshareClick={handleUnshareClick}
-        onDeleteClick={handleDeleteClick}
-        showActions={showActions}
-        labels={mergedLabels.header}
-      />
-      <div className="bg-gradient-to-r from-green-400/10 via-transparent to-red-400/10 text-white relative border-b">
+    <Card className="border-border bg-card/40 backdrop-blur-sm overflow-hidden gap-0 p-0 w-full">
+      {showHeader && (
+        <BattleOverviewHeader
+          isPublic={battle.public}
+          isPending={isSharePending}
+          onShareClick={handleShareClick}
+          onCopyClick={handleCopyClick}
+          onUnshareClick={handleUnshareClick}
+          onDeleteClick={handleDeleteClick}
+          showActions={showActions}
+          labels={mergedLabels.header}
+        />
+      )}
+      <div className="bg-gradient-to-r from-green-400/10 via-transparent to-red-400/10 text-white relative">
         <div className="p-4 pt-12 pb-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <BattleTeamSection
@@ -123,6 +128,6 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
         </div>
         <BattleMetadata battle={battle} labels={mergedLabels.metadata} />
       </div>
-    </div>
+    </Card>
   );
 };

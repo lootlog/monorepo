@@ -145,6 +145,11 @@ export type UserTimerSettings = Prisma.UserTimerSettingsModel
  */
 export type UserGuildTimerSettings = Prisma.UserGuildTimerSettingsModel
 /**
+ * Model UserGuildEventSettings
+ * 
+ */
+export type UserGuildEventSettings = Prisma.UserGuildEventSettingsModel
+/**
  * Model UserSoundSettings
  * 
  */

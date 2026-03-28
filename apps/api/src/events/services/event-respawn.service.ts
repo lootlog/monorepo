@@ -366,7 +366,7 @@ export class EventRespawnService {
     heroId: string,
   ): Promise<{
     hasTimer: boolean;
-    windowStatus: "OPEN" | "WAITING" | "NONE";
+    windowStatus: "OPEN" | "WAITING" | "OVERDUE" | "NONE";
     minSpawnTime: Date | null;
     maxSpawnTime: Date | null;
   }> {
@@ -393,7 +393,7 @@ export class EventRespawnService {
       },
     });
 
-    let windowStatus: "OPEN" | "WAITING" | "NONE" = "NONE";
+    let windowStatus: "OPEN" | "WAITING" | "OVERDUE" | "NONE" = "NONE";
     let hasActiveTimer = false;
 
     if (timer) {
@@ -405,6 +405,9 @@ export class EventRespawnService {
         hasActiveTimer = true;
       } else if (now < minTime) {
         windowStatus = "WAITING";
+      } else if (now >= maxTime) {
+        windowStatus = "OVERDUE";
+        hasActiveTimer = true;
       }
     }
 

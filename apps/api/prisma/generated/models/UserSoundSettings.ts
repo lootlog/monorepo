@@ -238,7 +238,7 @@ export type UserSoundSettingsGroupByOutputType = {
   _max: UserSoundSettingsMaxAggregateOutputType | null
 }
 
-type GetUserSoundSettingsGroupByPayload<T extends UserSoundSettingsGroupByArgs> = Prisma.PrismaPromise<
+export type GetUserSoundSettingsGroupByPayload<T extends UserSoundSettingsGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<UserSoundSettingsGroupByOutputType, T['by']> &
       {

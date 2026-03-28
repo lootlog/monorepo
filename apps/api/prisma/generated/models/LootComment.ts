@@ -214,7 +214,7 @@ export type LootCommentGroupByOutputType = {
   _max: LootCommentMaxAggregateOutputType | null
 }
 
-type GetLootCommentGroupByPayload<T extends LootCommentGroupByArgs> = Prisma.PrismaPromise<
+export type GetLootCommentGroupByPayload<T extends LootCommentGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<LootCommentGroupByOutputType, T['by']> &
       {

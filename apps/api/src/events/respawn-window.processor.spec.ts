@@ -1,3 +1,4 @@
+import { getQueueToken } from "@nestjs/bullmq";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Job } from "bullmq";
@@ -6,6 +7,9 @@ import {
   type AutoCloseRespawnWindowJobData,
 } from "./respawn-window.processor";
 import { EventsService } from "./events.service";
+import { PrismaService } from "src/db/prisma.service";
+import { RESPAWN_WINDOW_QUEUE } from "./constants/respawn-queue.constant";
+import { AUTO_CLOSE_MAX_EXTENSIONS } from "./utils/respawn-auto-close-job";
 
 describe("RespawnWindowProcessor", () => {
   let processor: RespawnWindowProcessor;
@@ -17,6 +21,16 @@ describe("RespawnWindowProcessor", () => {
 
   const mockLogger = {
     log: jest.fn(),
+  };
+
+  const mockPrisma = {
+    event: { findFirst: jest.fn() },
+    eventHeroNpc: { findFirst: jest.fn() },
+    timer: { findUnique: jest.fn() },
+  };
+
+  const mockQueue = {
+    add: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -32,6 +46,14 @@ describe("RespawnWindowProcessor", () => {
         {
           provide: WINSTON_MODULE_PROVIDER,
           useValue: mockLogger,
+        },
+        {
+          provide: PrismaService,
+          useValue: mockPrisma,
+        },
+        {
+          provide: getQueueToken(RESPAWN_WINDOW_QUEUE),
+          useValue: mockQueue,
         },
       ],
     }).compile();
@@ -62,9 +84,10 @@ describe("RespawnWindowProcessor", () => {
         attemptsMade: 0,
       }) as Job<AutoCloseRespawnWindowJobData>;
 
-    it("should call closeRespawnWindow with correct parameters", async () => {
+    it("should call closeRespawnWindow with correct parameters when no active event", async () => {
       const job = createMockJob(jobData);
       mockEventsService.closeRespawnWindow.mockResolvedValue(undefined);
+      mockPrisma.event.findFirst.mockResolvedValue(null);
 
       await processor.process(job);
 
@@ -79,27 +102,161 @@ describe("RespawnWindowProcessor", () => {
       );
     });
 
-    it("should log start and success messages", async () => {
+    it("should defer auto-close when event is active and timer exists", async () => {
+      const now = new Date();
       const job = createMockJob(jobData);
+      mockPrisma.event.findFirst.mockResolvedValue({
+        startsAt: new Date(now.getTime() - 3600_000),
+        endsAt: new Date(now.getTime() + 86400_000),
+        createdAt: new Date(now.getTime() - 7200_000),
+      });
+      mockPrisma.eventHeroNpc.findFirst.mockResolvedValue({
+        npcId: 123,
+      });
+      mockPrisma.timer.findUnique.mockResolvedValue({ npcId: 123 });
+
+      await processor.process(job);
+
+      expect(mockEventsService.closeRespawnWindow).not.toHaveBeenCalled();
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          ...jobData,
+          autoCloseAttempt: 1,
+        }),
+        expect.objectContaining({
+          delay: expect.any(Number),
+          removeOnComplete: true,
+          removeOnFail: true,
+        }),
+      );
+    });
+
+    it("should close when max extensions reached even if event is active", async () => {
+      const now = new Date();
+      const job = createMockJob({
+        ...jobData,
+        autoCloseAttempt: AUTO_CLOSE_MAX_EXTENSIONS,
+      });
+      mockPrisma.event.findFirst.mockResolvedValue({
+        startsAt: new Date(now.getTime() - 3600_000),
+        endsAt: null,
+        createdAt: new Date(now.getTime() - 7200_000),
+      });
       mockEventsService.closeRespawnWindow.mockResolvedValue(undefined);
 
       await processor.process(job);
 
-      expect(logger.log).toHaveBeenCalledTimes(2);
-      expect(logger.log).toHaveBeenNthCalledWith(1, {
-        level: "info",
-        message: expect.stringContaining("Auto-closing respawn window"),
+      expect(mockEventsService.closeRespawnWindow).toHaveBeenCalled();
+      expect(mockQueue.add).not.toHaveBeenCalled();
+    });
+
+    it("should close when event has ended", async () => {
+      const now = new Date();
+      const job = createMockJob(jobData);
+      mockPrisma.event.findFirst.mockResolvedValue({
+        startsAt: new Date(now.getTime() - 86400_000),
+        endsAt: new Date(now.getTime() - 3600_000),
+        createdAt: new Date(now.getTime() - 172800_000),
       });
-      expect(logger.log).toHaveBeenNthCalledWith(2, {
-        level: "info",
-        message: expect.stringContaining("Successfully auto-closed"),
+      mockEventsService.closeRespawnWindow.mockResolvedValue(undefined);
+
+      await processor.process(job);
+
+      expect(mockEventsService.closeRespawnWindow).toHaveBeenCalled();
+      expect(mockQueue.add).not.toHaveBeenCalled();
+    });
+
+    it("should close when timer no longer exists", async () => {
+      const now = new Date();
+      const job = createMockJob(jobData);
+      mockPrisma.event.findFirst.mockResolvedValue({
+        startsAt: new Date(now.getTime() - 3600_000),
+        endsAt: null,
+        createdAt: new Date(now.getTime() - 7200_000),
       });
+      mockPrisma.eventHeroNpc.findFirst.mockResolvedValue({
+        npcId: 123,
+      });
+      mockPrisma.timer.findUnique.mockResolvedValue(null);
+      mockEventsService.closeRespawnWindow.mockResolvedValue(undefined);
+
+      await processor.process(job);
+
+      expect(mockEventsService.closeRespawnWindow).toHaveBeenCalled();
+      expect(mockQueue.add).not.toHaveBeenCalled();
+    });
+
+    it("should close when hero not found", async () => {
+      const now = new Date();
+      const job = createMockJob(jobData);
+      mockPrisma.event.findFirst.mockResolvedValue({
+        startsAt: new Date(now.getTime() - 3600_000),
+        endsAt: null,
+        createdAt: new Date(now.getTime() - 7200_000),
+      });
+      mockPrisma.eventHeroNpc.findFirst.mockResolvedValue(null);
+      mockEventsService.closeRespawnWindow.mockResolvedValue(undefined);
+
+      await processor.process(job);
+
+      expect(mockEventsService.closeRespawnWindow).toHaveBeenCalled();
+      expect(mockQueue.add).not.toHaveBeenCalled();
+    });
+
+    it("should increment autoCloseAttempt on each reschedule", async () => {
+      const now = new Date();
+      const job = createMockJob({
+        ...jobData,
+        autoCloseAttempt: 5,
+      });
+      mockPrisma.event.findFirst.mockResolvedValue({
+        startsAt: new Date(now.getTime() - 3600_000),
+        endsAt: new Date(now.getTime() + 86400_000),
+        createdAt: new Date(now.getTime() - 7200_000),
+      });
+      mockPrisma.eventHeroNpc.findFirst.mockResolvedValue({
+        npcId: 123,
+      });
+      mockPrisma.timer.findUnique.mockResolvedValue({ npcId: 123 });
+
+      await processor.process(job);
+
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          autoCloseAttempt: 6,
+        }),
+        expect.any(Object),
+      );
+    });
+
+    it("should log start and success messages on normal close", async () => {
+      const job = createMockJob(jobData);
+      mockEventsService.closeRespawnWindow.mockResolvedValue(undefined);
+      mockPrisma.event.findFirst.mockResolvedValue(null);
+
+      await processor.process(job);
+
+      expect(logger.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          level: "info",
+          message: expect.stringContaining("Auto-closing respawn window"),
+        }),
+      );
+      expect(logger.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          level: "info",
+          message: expect.stringContaining("Successfully auto-closed"),
+        }),
+      );
     });
 
     it("should log error and rethrow when closeRespawnWindow fails", async () => {
       const job = createMockJob(jobData);
       const error = new Error("Database connection failed");
       mockEventsService.closeRespawnWindow.mockRejectedValue(error);
+      mockPrisma.event.findFirst.mockResolvedValue(null);
 
       await expect(processor.process(job)).rejects.toThrow(
         "Database connection failed",
@@ -118,6 +275,7 @@ describe("RespawnWindowProcessor", () => {
       mockEventsService.closeRespawnWindow.mockRejectedValue(
         "String error message",
       );
+      mockPrisma.event.findFirst.mockResolvedValue(null);
 
       await expect(processor.process(job)).rejects.toBe("String error message");
 
@@ -132,10 +290,13 @@ describe("RespawnWindowProcessor", () => {
     it("should include heroId and npcId in start log message", async () => {
       const job = createMockJob(jobData);
       mockEventsService.closeRespawnWindow.mockResolvedValue(undefined);
+      mockPrisma.event.findFirst.mockResolvedValue(null);
 
       await processor.process(job);
 
-      const startLog = logger.log.mock.calls[0][0];
+      const startLog = logger.log.mock.calls.find((call: unknown[]) =>
+        (call[0] as { message: string }).message?.includes("Auto-closing"),
+      )?.[0];
       expect(startLog.message).toContain("hero-1");
       expect(startLog.message).toContain("123");
       expect(startLog.message).toContain("event-1");
