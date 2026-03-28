@@ -27,7 +27,7 @@
     "battlelog:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1014.0",
+    "@aws-sdk/client-s3": "^3.1019.0",
     "@axiomhq/winston": "^1.5.0",
     "@lootlog/battle-processor": "workspace:*",
     "@lootlog/instrumentation": "workspace:*",
@@ -44,9 +44,9 @@
     "class-validator": "^0.15.1",
     "dotenv": "^17.3.1",
     "drizzle-orm": "1.0.0-beta.19",
-    "fastify": "^5.8.2",
+    "fastify": "^5.8.4",
     "ioredis": "^5.10.1",
-    "joi": "^18.0.2",
+    "joi": "^18.1.1",
     "nest-winston": "^1.10.2",
     "pg": "^8.20.0",
     "reflect-metadata": "^0.2.2",
