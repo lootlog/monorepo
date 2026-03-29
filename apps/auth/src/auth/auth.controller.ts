@@ -11,6 +11,18 @@ const authController = new Hono<{
   };
 }>();
 
+const normalizeScopes = (scopes: unknown): string[] => {
+  if (Array.isArray(scopes)) {
+    return scopes.filter((scope): scope is string => typeof scope === "string");
+  }
+
+  if (typeof scopes === "string") {
+    return scopes.split(/\s+/).filter(Boolean);
+  }
+
+  return [];
+};
+
 authController.get("/verify", async (c) => {
   if (
     c.req.raw.headers.has("X-Auth-Discord-Id") ||
@@ -91,7 +103,7 @@ authController.get("/@me/scopes", async (c) => {
     );
   }
 
-  return c.json(token.scopes ?? []);
+  return c.json(normalizeScopes(token.scopes));
 });
 
 authController.post("/idp-token", async (c) => {
@@ -134,7 +146,7 @@ authController.post("/idp-token", async (c) => {
     expiresIn: expiresAt
       ? Math.floor((expiresAt.getTime() - Date.now()) / 1000)
       : 0,
-    scopes: token.scopes ?? [],
+    scopes: normalizeScopes(token.scopes),
   });
 });
 
