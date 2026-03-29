@@ -22,16 +22,22 @@ import {
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { TRACKABLE_NPC_TYPES } from "../constants";
 import type { NpcType } from "../hooks/use-guild-kill-stats";
+import {
+  TimeBucketSelect,
+  type TimeBucket,
+} from "./time-bucket-select";
 
 type NpcStatsFiltersMobileProps = {
   world: string | null;
   npcType?: NpcType | "ALL";
   minLvl: string;
   maxLvl: string;
+  timeBucket: TimeBucket;
   onWorldChange: (value: string | null) => void;
   onNpcTypeChange: (value: string) => void;
   onMinLvlChange: (value: string) => void;
   onMaxLvlChange: (value: string) => void;
+  onTimeBucketChange: (value: TimeBucket) => void;
 };
 
 const createNumericLevelChangeHandler =
@@ -49,10 +55,12 @@ export const NpcStatsFiltersMobile = ({
   npcType,
   minLvl,
   maxLvl,
+  timeBucket,
   onWorldChange,
   onNpcTypeChange,
   onMinLvlChange,
   onMaxLvlChange,
+  onTimeBucketChange,
 }: NpcStatsFiltersMobileProps) => {
   const { t } = useTranslation();
 
@@ -68,6 +76,15 @@ export const NpcStatsFiltersMobile = ({
           <DrawerTitle>{t("kills.filters.title")}</DrawerTitle>
         </DrawerHeader>
         <div className="space-y-4 overflow-y-auto">
+          <div className="space-y-2">
+            <Label>{t("kills.filters.timeBucket")}</Label>
+            <TimeBucketSelect
+              value={timeBucket}
+              onValueChange={onTimeBucketChange}
+              className="w-full"
+            />
+          </div>
+
           <div className="space-y-2">
             <Label>{t("kills.filters.world")}</Label>
             <WorldSwitcher

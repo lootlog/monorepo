@@ -12,23 +12,31 @@ import {
   DrawerTrigger,
 } from "@lootlog/ui/components/drawer";
 import { WorldSwitcher } from "@/components/common/world-switcher";
+import {
+  TimeBucketSelect,
+  type TimeBucket,
+} from "./time-bucket-select";
 
 type StatsOverviewFiltersMobileProps = {
   world: string | null;
   minLvl: string;
   maxLvl: string;
+  timeBucket: TimeBucket;
   onWorldChange: (value: string | null) => void;
   onMinLvlChange: (value: string) => void;
   onMaxLvlChange: (value: string) => void;
+  onTimeBucketChange: (value: TimeBucket) => void;
 };
 
 export const StatsOverviewFiltersMobile = ({
   world,
   minLvl,
   maxLvl,
+  timeBucket,
   onWorldChange,
   onMinLvlChange,
   onMaxLvlChange,
+  onTimeBucketChange,
 }: StatsOverviewFiltersMobileProps) => {
   const { t } = useTranslation();
 
@@ -61,6 +69,15 @@ export const StatsOverviewFiltersMobile = ({
           <DrawerTitle>{t("kills.filters.title")}</DrawerTitle>
         </DrawerHeader>
         <div className="space-y-4 overflow-y-auto">
+          <div className="space-y-2">
+            <Label>{t("kills.filters.timeBucket")}</Label>
+            <TimeBucketSelect
+              value={timeBucket}
+              onValueChange={onTimeBucketChange}
+              className="w-full"
+            />
+          </div>
+
           <div className="space-y-2">
             <Label>{t("kills.filters.world")}</Label>
             <WorldSwitcher

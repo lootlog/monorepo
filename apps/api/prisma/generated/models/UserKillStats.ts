@@ -49,6 +49,7 @@ export type UserKillStatsMinAggregateOutputType = {
   npcProf: string | null
   npcIcon: string | null
   totalKills: number | null
+  killedAtDate: Date | null
   lastKilledAt: Date | null
   updatedAt: Date | null
 }
@@ -64,6 +65,7 @@ export type UserKillStatsMaxAggregateOutputType = {
   npcProf: string | null
   npcIcon: string | null
   totalKills: number | null
+  killedAtDate: Date | null
   lastKilledAt: Date | null
   updatedAt: Date | null
 }
@@ -79,6 +81,7 @@ export type UserKillStatsCountAggregateOutputType = {
   npcProf: number
   npcIcon: number
   totalKills: number
+  killedAtDate: number
   lastKilledAt: number
   updatedAt: number
   _all: number
@@ -108,6 +111,7 @@ export type UserKillStatsMinAggregateInputType = {
   npcProf?: true
   npcIcon?: true
   totalKills?: true
+  killedAtDate?: true
   lastKilledAt?: true
   updatedAt?: true
 }
@@ -123,6 +127,7 @@ export type UserKillStatsMaxAggregateInputType = {
   npcProf?: true
   npcIcon?: true
   totalKills?: true
+  killedAtDate?: true
   lastKilledAt?: true
   updatedAt?: true
 }
@@ -138,6 +143,7 @@ export type UserKillStatsCountAggregateInputType = {
   npcProf?: true
   npcIcon?: true
   totalKills?: true
+  killedAtDate?: true
   lastKilledAt?: true
   updatedAt?: true
   _all?: true
@@ -240,6 +246,7 @@ export type UserKillStatsGroupByOutputType = {
   npcProf: string | null
   npcIcon: string | null
   totalKills: number
+  killedAtDate: Date
   lastKilledAt: Date
   updatedAt: Date
   _count: UserKillStatsCountAggregateOutputType | null
@@ -278,6 +285,7 @@ export type UserKillStatsWhereInput = {
   npcProf?: Prisma.StringNullableFilter<"UserKillStats"> | string | null
   npcIcon?: Prisma.StringNullableFilter<"UserKillStats"> | string | null
   totalKills?: Prisma.IntFilter<"UserKillStats"> | number
+  killedAtDate?: Prisma.DateTimeFilter<"UserKillStats"> | Date | string
   lastKilledAt?: Prisma.DateTimeFilter<"UserKillStats"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"UserKillStats"> | Date | string
 }
@@ -293,13 +301,14 @@ export type UserKillStatsOrderByWithRelationInput = {
   npcProf?: Prisma.SortOrderInput | Prisma.SortOrder
   npcIcon?: Prisma.SortOrderInput | Prisma.SortOrder
   totalKills?: Prisma.SortOrder
+  killedAtDate?: Prisma.SortOrder
   lastKilledAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type UserKillStatsWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  userId_world_npcId?: Prisma.UserKillStatsUserIdWorldNpcIdCompoundUniqueInput
+  userId_world_npcId_killedAtDate?: Prisma.UserKillStatsUserIdWorldNpcIdKilledAtDateCompoundUniqueInput
   AND?: Prisma.UserKillStatsWhereInput | Prisma.UserKillStatsWhereInput[]
   OR?: Prisma.UserKillStatsWhereInput[]
   NOT?: Prisma.UserKillStatsWhereInput | Prisma.UserKillStatsWhereInput[]
@@ -312,9 +321,10 @@ export type UserKillStatsWhereUniqueInput = Prisma.AtLeast<{
   npcProf?: Prisma.StringNullableFilter<"UserKillStats"> | string | null
   npcIcon?: Prisma.StringNullableFilter<"UserKillStats"> | string | null
   totalKills?: Prisma.IntFilter<"UserKillStats"> | number
+  killedAtDate?: Prisma.DateTimeFilter<"UserKillStats"> | Date | string
   lastKilledAt?: Prisma.DateTimeFilter<"UserKillStats"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"UserKillStats"> | Date | string
-}, "id" | "userId_world_npcId">
+}, "id" | "userId_world_npcId_killedAtDate">
 
 export type UserKillStatsOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -327,6 +337,7 @@ export type UserKillStatsOrderByWithAggregationInput = {
   npcProf?: Prisma.SortOrderInput | Prisma.SortOrder
   npcIcon?: Prisma.SortOrderInput | Prisma.SortOrder
   totalKills?: Prisma.SortOrder
+  killedAtDate?: Prisma.SortOrder
   lastKilledAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserKillStatsCountOrderByAggregateInput
@@ -350,6 +361,7 @@ export type UserKillStatsScalarWhereWithAggregatesInput = {
   npcProf?: Prisma.StringNullableWithAggregatesFilter<"UserKillStats"> | string | null
   npcIcon?: Prisma.StringNullableWithAggregatesFilter<"UserKillStats"> | string | null
   totalKills?: Prisma.IntWithAggregatesFilter<"UserKillStats"> | number
+  killedAtDate?: Prisma.DateTimeWithAggregatesFilter<"UserKillStats"> | Date | string
   lastKilledAt?: Prisma.DateTimeWithAggregatesFilter<"UserKillStats"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"UserKillStats"> | Date | string
 }
@@ -365,6 +377,7 @@ export type UserKillStatsCreateInput = {
   npcProf?: string | null
   npcIcon?: string | null
   totalKills?: number
+  killedAtDate: Date | string
   lastKilledAt?: Date | string
   updatedAt?: Date | string
 }
@@ -380,6 +393,7 @@ export type UserKillStatsUncheckedCreateInput = {
   npcProf?: string | null
   npcIcon?: string | null
   totalKills?: number
+  killedAtDate: Date | string
   lastKilledAt?: Date | string
   updatedAt?: Date | string
 }
@@ -395,6 +409,7 @@ export type UserKillStatsUpdateInput = {
   npcProf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   npcIcon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalKills?: Prisma.IntFieldUpdateOperationsInput | number
+  killedAtDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastKilledAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -410,6 +425,7 @@ export type UserKillStatsUncheckedUpdateInput = {
   npcProf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   npcIcon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalKills?: Prisma.IntFieldUpdateOperationsInput | number
+  killedAtDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastKilledAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -425,6 +441,7 @@ export type UserKillStatsCreateManyInput = {
   npcProf?: string | null
   npcIcon?: string | null
   totalKills?: number
+  killedAtDate: Date | string
   lastKilledAt?: Date | string
   updatedAt?: Date | string
 }
@@ -440,6 +457,7 @@ export type UserKillStatsUpdateManyMutationInput = {
   npcProf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   npcIcon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalKills?: Prisma.IntFieldUpdateOperationsInput | number
+  killedAtDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastKilledAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -455,14 +473,16 @@ export type UserKillStatsUncheckedUpdateManyInput = {
   npcProf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   npcIcon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalKills?: Prisma.IntFieldUpdateOperationsInput | number
+  killedAtDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastKilledAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
-export type UserKillStatsUserIdWorldNpcIdCompoundUniqueInput = {
+export type UserKillStatsUserIdWorldNpcIdKilledAtDateCompoundUniqueInput = {
   userId: string
   world: string
   npcId: number
+  killedAtDate: Date | string
 }
 
 export type UserKillStatsCountOrderByAggregateInput = {
@@ -476,6 +496,7 @@ export type UserKillStatsCountOrderByAggregateInput = {
   npcProf?: Prisma.SortOrder
   npcIcon?: Prisma.SortOrder
   totalKills?: Prisma.SortOrder
+  killedAtDate?: Prisma.SortOrder
   lastKilledAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -497,6 +518,7 @@ export type UserKillStatsMaxOrderByAggregateInput = {
   npcProf?: Prisma.SortOrder
   npcIcon?: Prisma.SortOrder
   totalKills?: Prisma.SortOrder
+  killedAtDate?: Prisma.SortOrder
   lastKilledAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -512,6 +534,7 @@ export type UserKillStatsMinOrderByAggregateInput = {
   npcProf?: Prisma.SortOrder
   npcIcon?: Prisma.SortOrder
   totalKills?: Prisma.SortOrder
+  killedAtDate?: Prisma.SortOrder
   lastKilledAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -535,6 +558,7 @@ export type UserKillStatsSelect<ExtArgs extends runtime.Types.Extensions.Interna
   npcProf?: boolean
   npcIcon?: boolean
   totalKills?: boolean
+  killedAtDate?: boolean
   lastKilledAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["userKillStats"]>
@@ -550,6 +574,7 @@ export type UserKillStatsSelectCreateManyAndReturn<ExtArgs extends runtime.Types
   npcProf?: boolean
   npcIcon?: boolean
   totalKills?: boolean
+  killedAtDate?: boolean
   lastKilledAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["userKillStats"]>
@@ -565,6 +590,7 @@ export type UserKillStatsSelectUpdateManyAndReturn<ExtArgs extends runtime.Types
   npcProf?: boolean
   npcIcon?: boolean
   totalKills?: boolean
+  killedAtDate?: boolean
   lastKilledAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["userKillStats"]>
@@ -580,11 +606,12 @@ export type UserKillStatsSelectScalar = {
   npcProf?: boolean
   npcIcon?: boolean
   totalKills?: boolean
+  killedAtDate?: boolean
   lastKilledAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserKillStatsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "world" | "npcId" | "npcName" | "npcType" | "npcLvl" | "npcProf" | "npcIcon" | "totalKills" | "lastKilledAt" | "updatedAt", ExtArgs["result"]["userKillStats"]>
+export type UserKillStatsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "world" | "npcId" | "npcName" | "npcType" | "npcLvl" | "npcProf" | "npcIcon" | "totalKills" | "killedAtDate" | "lastKilledAt" | "updatedAt", ExtArgs["result"]["userKillStats"]>
 
 export type $UserKillStatsPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "UserKillStats"
@@ -600,6 +627,7 @@ export type $UserKillStatsPayload<ExtArgs extends runtime.Types.Extensions.Inter
     npcProf: string | null
     npcIcon: string | null
     totalKills: number
+    killedAtDate: Date
     lastKilledAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["userKillStats"]>
@@ -1035,6 +1063,7 @@ export interface UserKillStatsFieldRefs {
   readonly npcProf: Prisma.FieldRef<"UserKillStats", 'String'>
   readonly npcIcon: Prisma.FieldRef<"UserKillStats", 'String'>
   readonly totalKills: Prisma.FieldRef<"UserKillStats", 'Int'>
+  readonly killedAtDate: Prisma.FieldRef<"UserKillStats", 'DateTime'>
   readonly lastKilledAt: Prisma.FieldRef<"UserKillStats", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"UserKillStats", 'DateTime'>
 }

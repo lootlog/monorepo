@@ -10,8 +10,18 @@ import {
   Min,
 } from "class-validator";
 import { NpcType } from "prisma/generated/client";
+import type { TimeBucket } from "../utils/time-bucket";
 
 export class GetUserNpcKillsDto {
+  @ApiPropertyOptional({
+    example: "all",
+    description: "Time bucket filter",
+    enum: ["24h", "3d", "7d", "30d", "all"],
+  })
+  @IsOptional()
+  @IsIn(["24h", "3d", "7d", "30d", "all"])
+  timeBucket?: TimeBucket;
+
   @ApiPropertyOptional({
     example: "HERO,TITAN",
     description: "Comma-separated NPC types to filter by",

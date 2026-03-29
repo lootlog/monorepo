@@ -16,15 +16,22 @@ export type GuildTopKillersResponse = {
   EVENT_HERO?: TopKiller[];
 };
 
-export const useGuildTopKillers = (limit: number = 5) => {
+export const useGuildTopKillers = (
+  limit: number = 5,
+  timeBucket?: string,
+) => {
   const guildId = useGuildId();
   const { client } = useApiClient();
 
+  const params = new URLSearchParams();
+  params.set("limit", String(limit));
+  if (timeBucket) params.set("timeBucket", timeBucket);
+
   return useQuery({
-    queryKey: ["guild-top-killers", guildId, limit],
+    queryKey: ["guild-top-killers", guildId, limit, timeBucket],
     queryFn: async () => {
       const response = await client.get<GuildTopKillersResponse>(
-        `/guilds/${guildId}/stats/kills/top-killers?limit=${limit}`,
+        `/guilds/${guildId}/stats/kills/top-killers?${params.toString()}`,
       );
       return response.data;
     },

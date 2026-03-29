@@ -48,6 +48,7 @@ export type PlayerKillStatsFilters = {
   world?: string;
   npcTypes?: NpcType[];
   topNpcsLimit?: number;
+  timeBucket?: string;
 };
 
 export const usePlayerKillStats = (filters: PlayerKillStatsFilters = {}) => {
@@ -57,6 +58,7 @@ export const usePlayerKillStats = (filters: PlayerKillStatsFilters = {}) => {
     world: filters.world || undefined,
     npcType: filters.npcTypes?.join(",") || undefined,
     topNpcsLimit: filters.topNpcsLimit || undefined,
+    timeBucket: filters.timeBucket || undefined,
   };
 
   const queryString = stringifyQueryParams(queryParams);

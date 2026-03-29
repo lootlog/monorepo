@@ -2,6 +2,7 @@ import { ApiPropertyOptional } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
 import {
   IsEnum,
+  IsIn,
   IsNumber,
   IsOptional,
   IsString,
@@ -9,8 +10,18 @@ import {
   Min,
 } from "class-validator";
 import { NpcType } from "prisma/generated/client";
+import type { TimeBucket } from "../utils/time-bucket";
 
 export class GetMemberKillsDto {
+  @ApiPropertyOptional({
+    example: "all",
+    description: "Time bucket filter",
+    enum: ["24h", "3d", "7d", "30d", "all"],
+  })
+  @IsOptional()
+  @IsIn(["24h", "3d", "7d", "30d", "all"])
+  timeBucket?: TimeBucket;
+
   @ApiPropertyOptional({ example: 100, description: "Minimum NPC level" })
   @IsOptional()
   @Transform(({ value }) => (value ? Number.parseInt(value, 10) : undefined))

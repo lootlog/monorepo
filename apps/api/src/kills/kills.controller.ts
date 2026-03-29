@@ -43,6 +43,7 @@ import { GetNpcKillersDto } from "./dto/get-npc-killers.dto";
 import { GetMemberKillsDto } from "./dto/get-member-kills.dto";
 import { NpcType } from "prisma/generated/client";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
+import type { TimeBucket } from "./utils/time-bucket";
 
 @ApiTags("kills")
 @ApiBearerAuth()
@@ -180,6 +181,7 @@ export class KillsController {
     @Query("search") search?: string,
     @Query("minLvl") minLvl?: string,
     @Query("maxLvl") maxLvl?: string,
+    @Query("timeBucket") timeBucket?: TimeBucket,
   ) {
     const result = await this.killsService.getGuildTopNpcs(
       guildData.id,
@@ -191,6 +193,7 @@ export class KillsController {
       search,
       minLvl ? Number.parseInt(minLvl, 10) : undefined,
       maxLvl ? Number.parseInt(maxLvl, 10) : undefined,
+      timeBucket,
     );
     return plainToInstance(GuildTopNpcsEntity, result, {
       excludeExtraneousValues: true,
@@ -220,6 +223,7 @@ export class KillsController {
     @MemberRoles() roles: Role[],
     @GuildData() guildData: Guild,
     @Query("limit") limit?: number,
+    @Query("timeBucket") timeBucket?: TimeBucket,
   ) {
     const result = await this.killsService.getGuildTopKillersByType(
       guildData.id,
@@ -227,6 +231,7 @@ export class KillsController {
       roles,
       [NpcType.TITAN, NpcType.HERO, NpcType.EVENT_HERO],
       limit ?? 5,
+      timeBucket,
     );
     return plainToInstance(GuildTopKillersByTypeEntity, result, {
       excludeExtraneousValues: true,
@@ -270,6 +275,7 @@ export class KillsController {
       Number.parseInt(npcId, 10),
       query.limit ?? 50,
       query.world,
+      query.timeBucket,
     );
 
     if (!result) {

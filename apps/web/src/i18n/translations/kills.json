@@ -17,6 +17,12 @@
     "minLevel": "Min. poziom",
     "maxLevel": "Max. poziom",
     "allTypes": "Wszystkie typy",
+    "timeBucket": "Okres",
+    "timeBucket24h": "24h",
+    "timeBucket3d": "3 dni",
+    "timeBucket7d": "7 dni",
+    "timeBucket30d": "30 dni",
+    "timeBucketAll": "Wszystko",
     "apply": "Zastosuj",
     "reset": "Resetuj",
     "close": "Zamknij"

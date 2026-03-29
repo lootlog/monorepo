@@ -42,6 +42,7 @@ export type GuildKillStatsFilters = {
   minLvl?: number;
   maxLvl?: number;
   world?: string;
+  timeBucket?: string;
 };
 
 export const useGuildKillStats = (filters: GuildKillStatsFilters = {}) => {
@@ -53,6 +54,7 @@ export const useGuildKillStats = (filters: GuildKillStatsFilters = {}) => {
     minLvl: filters.minLvl || undefined,
     maxLvl: filters.maxLvl || undefined,
     world: filters.world || undefined,
+    timeBucket: filters.timeBucket || undefined,
   };
 
   const queryString = stringifyQueryParams(queryParams);

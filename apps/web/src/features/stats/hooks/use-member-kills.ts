@@ -48,6 +48,7 @@ export type MemberKillsFilters = {
   cursor?: number;
   minLvl?: number;
   maxLvl?: number;
+  timeBucket?: string;
 };
 
 export const useMemberKills = (
@@ -65,6 +66,7 @@ export const useMemberKills = (
     cursor: filters.cursor || undefined,
     minLvl: filters.minLvl || undefined,
     maxLvl: filters.maxLvl || undefined,
+    timeBucket: filters.timeBucket || undefined,
   };
 
   const queryString = stringifyQueryParams(queryParams);

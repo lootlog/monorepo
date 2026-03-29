@@ -24,13 +24,15 @@ const capitalizeFirst = (str: string) =>
 
 type PlayerKillStatsCardProps = {
   world?: string;
+  timeBucket?: string;
 };
 
 export const PlayerKillStatsCard: React.FC<PlayerKillStatsCardProps> = ({
   world,
+  timeBucket,
 }) => {
   const { t } = useTranslation();
-  const { data, isLoading } = usePlayerKillStats({ world });
+  const { data, isLoading } = usePlayerKillStats({ world, timeBucket });
 
   if (isLoading) {
     return (

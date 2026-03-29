@@ -648,6 +648,7 @@ export const NpcKillStatsScalarFieldEnum = {
   npcProf: 'npcProf',
   npcIcon: 'npcIcon',
   memberKills: 'memberKills',
+  killedAtDate: 'killedAtDate',
   lastKilledAt: 'lastKilledAt',
   updatedAt: 'updatedAt'
 } as const
@@ -666,6 +667,7 @@ export const UserKillStatsScalarFieldEnum = {
   npcProf: 'npcProf',
   npcIcon: 'npcIcon',
   totalKills: 'totalKills',
+  killedAtDate: 'killedAtDate',
   lastKilledAt: 'lastKilledAt',
   updatedAt: 'updatedAt'
 } as const
@@ -684,6 +686,7 @@ export const GuildKillSummaryScalarFieldEnum = {
   npcProf: 'npcProf',
   npcIcon: 'npcIcon',
   uniqueKills: 'uniqueKills',
+  killedAtDate: 'killedAtDate',
   lastKilledAt: 'lastKilledAt',
   updatedAt: 'updatedAt'
 } as const

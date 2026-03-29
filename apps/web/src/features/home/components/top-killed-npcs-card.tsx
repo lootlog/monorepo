@@ -39,18 +39,21 @@ const getRankIcon = (index: number) => {
 type TopKilledNpcsCardProps = {
   world?: string;
   npcType: NpcType;
+  timeBucket?: string;
   onNpcTypeChange: (type: NpcType) => void;
 };
 
 export const TopKilledNpcsCard: React.FC<TopKilledNpcsCardProps> = ({
   world,
   npcType,
+  timeBucket,
   onNpcTypeChange,
 }) => {
   const { t } = useTranslation();
   const { data, isLoading } = usePlayerKillStats({
     world,
     npcTypes: [npcType],
+    timeBucket,
   });
 
   if (isLoading) {

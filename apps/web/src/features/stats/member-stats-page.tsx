@@ -45,6 +45,7 @@ import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { TRACKABLE_NPC_TYPES } from "./constants";
 import { LevelFilters } from "./components/level-filters";
+import { TimeBucketSelect } from "./components/time-bucket-select";
 import { NpcStatsFiltersMobile } from "./components/npc-stats-filters-mobile";
 import type { NpcType } from "./hooks/use-guild-kill-stats";
 
@@ -91,6 +92,7 @@ export const MemberStatsPage: React.FC = () => {
     setMinLvl,
     setMaxLvl,
     setNpcType,
+    setTimeBucket,
   } = useStatsSettings("member");
   const { data, isLoading } = useMemberKills(Number.parseInt(memberId, 10), {
     world: settings.world ?? undefined,
@@ -103,6 +105,7 @@ export const MemberStatsPage: React.FC = () => {
     cursor,
     minLvl: debouncedMinLvl,
     maxLvl: debouncedMaxLvl,
+    timeBucket: settings.timeBucket,
   });
   const { data: guildMembers } = useGuildMembers(true);
 
@@ -250,10 +253,12 @@ export const MemberStatsPage: React.FC = () => {
                 npcType={settings.npcType}
                 minLvl={settings.minLvl}
                 maxLvl={settings.maxLvl}
+                timeBucket={settings.timeBucket ?? "all"}
                 onWorldChange={handleWorldChange}
                 onNpcTypeChange={handleNpcTypeChange}
                 onMinLvlChange={handleMinLvlChange}
                 onMaxLvlChange={handleMaxLvlChange}
+                onTimeBucketChange={setTimeBucket}
               />
             </div>
             <div className="hidden lg:flex items-center gap-2 flex-wrap">
@@ -266,6 +271,10 @@ export const MemberStatsPage: React.FC = () => {
                   className="pl-9 w-[200px]"
                 />
               </div>
+              <TimeBucketSelect
+                value={settings.timeBucket ?? "all"}
+                onValueChange={setTimeBucket}
+              />
               <LevelFilters
                 minLvl={settings.minLvl}
                 maxLvl={settings.maxLvl}

@@ -13,13 +13,18 @@ export const Home: React.FC = () => {
         <HomeFiltersBar
           filters={filters}
           onWorldChange={(world) => updateFilters({ world })}
+          onTimeBucketChange={(timeBucket) => updateFilters({ timeBucket })}
         />
 
         <div className="grid gap-4 md:grid-cols-2">
-          <PlayerKillStatsCard world={filters.world} />
+          <PlayerKillStatsCard
+            world={filters.world}
+            timeBucket={filters.timeBucket}
+          />
           <TopKilledNpcsCard
             world={filters.world}
             npcType={filters.npcType}
+            timeBucket={filters.timeBucket}
             onNpcTypeChange={(npcType) => updateFilters({ npcType })}
           />
         </div>

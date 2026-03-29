@@ -34,6 +34,7 @@ import { useNpcKillers } from "./hooks/use-npc-killers";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
+import { TimeBucketSelect } from "./components/time-bucket-select";
 import { NpcKillersFiltersMobile } from "./components/npc-killers-filters-mobile";
 import type { GuildMember } from "@/hooks/api/members/use-guild-member.tsx";
 
@@ -85,9 +86,11 @@ export const NpcKillersPage: React.FC = () => {
 
   const [cursor, setCursor] = useState(0);
   const [search, setSearch] = useState("");
-  const { settings, setWorld } = useStatsSettings("npc-killers");
+  const { settings, setWorld, setTimeBucket } =
+    useStatsSettings("npc-killers");
   const { data, isLoading } = useNpcKillers(Number.parseInt(npcId, 10), {
     world: settings.world ?? undefined,
+    timeBucket: settings.timeBucket,
   });
   const { data: guildMembers } = useGuildMembers(true);
 
@@ -202,11 +205,17 @@ export const NpcKillersPage: React.FC = () => {
                 </div>
                 <NpcKillersFiltersMobile
                   world={settings.world}
+                  timeBucket={settings.timeBucket ?? "all"}
                   onWorldChange={handleWorldChange}
+                  onTimeBucketChange={setTimeBucket}
                 />
               </div>
 
               <div className="hidden md:flex items-center gap-2">
+                <TimeBucketSelect
+                  value={settings.timeBucket ?? "all"}
+                  onValueChange={setTimeBucket}
+                />
                 <WorldSwitcher
                   value={settings.world}
                   onValueChange={handleWorldChange}

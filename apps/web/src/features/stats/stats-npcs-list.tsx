@@ -35,6 +35,7 @@ import { useGuildTopNpcs, type TopNpc } from "./hooks/use-guild-top-npcs";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { TRACKABLE_NPC_TYPES } from "./constants";
 import { LevelFilters } from "./components/level-filters";
+import { TimeBucketSelect } from "./components/time-bucket-select";
 import { NpcStatsFiltersMobile } from "./components/npc-stats-filters-mobile";
 import type { NpcType } from "./hooks/use-guild-kill-stats";
 
@@ -55,6 +56,7 @@ export const StatsNpcsList: React.FC = () => {
     setMinLvl,
     setMaxLvl,
     setNpcType,
+    setTimeBucket,
   } = useStatsSettings("npcs-list");
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
@@ -66,6 +68,7 @@ export const StatsNpcsList: React.FC = () => {
     search: debouncedSearch || undefined,
     minLvl: debouncedMinLvl,
     maxLvl: debouncedMaxLvl,
+    timeBucket: settings.timeBucket,
   });
 
   const topNpcs = data?.topNpcs ?? [];
@@ -154,10 +157,12 @@ export const StatsNpcsList: React.FC = () => {
                   npcType={settings.npcType}
                   minLvl={settings.minLvl}
                   maxLvl={settings.maxLvl}
+                  timeBucket={settings.timeBucket ?? "all"}
                   onWorldChange={handleWorldChange}
                   onNpcTypeChange={handleNpcTypeChange}
                   onMinLvlChange={handleMinLvlChange}
                   onMaxLvlChange={handleMaxLvlChange}
+                  onTimeBucketChange={setTimeBucket}
                 />
               </div>
 
@@ -172,6 +177,10 @@ export const StatsNpcsList: React.FC = () => {
                     className="pl-8 w-[200px]"
                   />
                 </div>
+                <TimeBucketSelect
+                  value={settings.timeBucket ?? "all"}
+                  onValueChange={setTimeBucket}
+                />
                 <LevelFilters
                   minLvl={settings.minLvl}
                   maxLvl={settings.maxLvl}

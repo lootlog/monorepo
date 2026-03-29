@@ -38,12 +38,14 @@ type TopNpcsCardProps = {
   world?: string;
   minLvl?: number;
   maxLvl?: number;
+  timeBucket?: string;
 };
 
 export const TopNpcsCard: React.FC<TopNpcsCardProps> = ({
   world,
   minLvl,
   maxLvl,
+  timeBucket,
 }) => {
   const { t } = useTranslation();
   const guildId = useGuildId();
@@ -58,6 +60,7 @@ export const TopNpcsCard: React.FC<TopNpcsCardProps> = ({
     world,
     minLvl,
     maxLvl,
+    timeBucket,
   });
 
   if (isLoading) {

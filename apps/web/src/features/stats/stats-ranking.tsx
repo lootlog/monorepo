@@ -31,6 +31,7 @@ import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { useGuildKillStats, type NpcType } from "./hooks/use-guild-kill-stats";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { LevelFilters } from "./components/level-filters";
+import { TimeBucketSelect } from "./components/time-bucket-select";
 import { StatsRankingFiltersMobile } from "./components/stats-ranking-filters-mobile";
 
 const ITEMS_PER_PAGE = 20;
@@ -72,6 +73,7 @@ export const StatsRanking: React.FC = () => {
     setWorld,
     setMinLvl,
     setMaxLvl,
+    setTimeBucket,
   } = useStatsSettings("ranking");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -79,6 +81,7 @@ export const StatsRanking: React.FC = () => {
     world: settings.world ?? undefined,
     minLvl: debouncedMinLvl,
     maxLvl: debouncedMaxLvl,
+    timeBucket: settings.timeBucket,
   });
 
   const handleWorldChange = (value: string | null) => {
@@ -182,9 +185,11 @@ export const StatsRanking: React.FC = () => {
                   world={settings.world}
                   minLvl={settings.minLvl}
                   maxLvl={settings.maxLvl}
+                  timeBucket={settings.timeBucket ?? "all"}
                   onWorldChange={handleWorldChange}
                   onMinLvlChange={handleMinLvlChange}
                   onMaxLvlChange={handleMaxLvlChange}
+                  onTimeBucketChange={setTimeBucket}
                 />
               </div>
 
@@ -198,6 +203,10 @@ export const StatsRanking: React.FC = () => {
                     className="pl-8 w-[200px]"
                   />
                 </div>
+                <TimeBucketSelect
+                  value={settings.timeBucket ?? "all"}
+                  onValueChange={setTimeBucket}
+                />
                 <LevelFilters
                   minLvl={settings.minLvl}
                   maxLvl={settings.maxLvl}

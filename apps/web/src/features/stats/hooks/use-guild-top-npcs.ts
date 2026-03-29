@@ -24,15 +24,17 @@ export type GuildTopNpcsParams = {
   search?: string;
   minLvl?: number;
   maxLvl?: number;
+  timeBucket?: string;
 };
 
 export const useGuildTopNpcs = (params: GuildTopNpcsParams = {}) => {
-  const { limit = 10, npcType, world, search, minLvl, maxLvl } = params;
+  const { limit = 10, npcType, world, search, minLvl, maxLvl, timeBucket } =
+    params;
   const guildId = useGuildId();
   const { client } = useApiClient();
 
   const queryParams = stringify(
-    { limit, npcType, world, search, minLvl, maxLvl },
+    { limit, npcType, world, search, minLvl, maxLvl, timeBucket },
     { skipNulls: true, addQueryPrefix: true },
   );
 
@@ -46,6 +48,7 @@ export const useGuildTopNpcs = (params: GuildTopNpcsParams = {}) => {
       search,
       minLvl,
       maxLvl,
+      timeBucket,
     ],
     queryFn: async () => {
       const response = await client.get<GuildTopNpcsResponse>(

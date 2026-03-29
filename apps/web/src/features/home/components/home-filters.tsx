@@ -9,15 +9,21 @@ import {
 } from "@lootlog/ui/components/select";
 import type { HomeFilters } from "../hooks/use-home-filters";
 import { usePlayerKillStats } from "../hooks/use-player-kill-stats";
+import {
+  TimeBucketSelect,
+  type TimeBucket,
+} from "../../stats/components/time-bucket-select";
 
 type HomeFiltersProps = {
   filters: HomeFilters;
   onWorldChange: (world: string | undefined) => void;
+  onTimeBucketChange: (timeBucket: TimeBucket) => void;
 };
 
 export const HomeFiltersBar: React.FC<HomeFiltersProps> = ({
   filters,
   onWorldChange,
+  onTimeBucketChange,
 }) => {
   const { t } = useTranslation();
   const { data } = usePlayerKillStats();
@@ -32,6 +38,10 @@ export const HomeFiltersBar: React.FC<HomeFiltersProps> = ({
 
   return (
     <div className="flex items-center justify-end gap-3">
+      <TimeBucketSelect
+        value={filters.timeBucket ?? "all"}
+        onValueChange={onTimeBucketChange}
+      />
       <Select value={filters.world ?? "all"} onValueChange={handleWorldChange}>
         <SelectTrigger className="w-[180px]">
           <div className="flex items-center gap-2">

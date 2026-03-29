@@ -1,9 +1,26 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
-import { IsEnum, IsNumber, IsOptional, IsString, Min } from "class-validator";
+import {
+  IsEnum,
+  IsIn,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+} from "class-validator";
 import { NpcType } from "prisma/generated/client";
+import type { TimeBucket } from "../utils/time-bucket";
 
 export class GetGuildKillStatsDto {
+  @ApiPropertyOptional({
+    example: "all",
+    description: "Time bucket filter",
+    enum: ["24h", "3d", "7d", "30d", "all"],
+  })
+  @IsOptional()
+  @IsIn(["24h", "3d", "7d", "30d", "all"])
+  timeBucket?: TimeBucket;
+
   @ApiPropertyOptional({
     example: "HERO,TITAN",
     description: "Comma-separated NPC types to filter by",
@@ -46,6 +63,15 @@ export class GetGuildKillStatsDto {
 }
 
 export class GetUserKillStatsDto {
+  @ApiPropertyOptional({
+    example: "all",
+    description: "Time bucket filter",
+    enum: ["24h", "3d", "7d", "30d", "all"],
+  })
+  @IsOptional()
+  @IsIn(["24h", "3d", "7d", "30d", "all"])
+  timeBucket?: TimeBucket;
+
   @ApiPropertyOptional({
     example: "HERO,TITAN",
     description: "Comma-separated NPC types to filter by",

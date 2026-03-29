@@ -11,6 +11,7 @@ import { NpcTypeStatsCards } from "./components/kill-stats-overview";
 import { MemberRankingPodiumCard } from "./components/member-ranking-podium-card";
 import { TopNpcsCard } from "./components/top-npcs-card";
 import { LevelFilters } from "./components/level-filters";
+import { TimeBucketSelect } from "./components/time-bucket-select";
 import { StatsOverviewFiltersMobile } from "./components/stats-overview-filters-mobile";
 
 export const KillStats: React.FC = () => {
@@ -23,11 +24,13 @@ export const KillStats: React.FC = () => {
     setWorld,
     setMinLvl,
     setMaxLvl,
+    setTimeBucket,
   } = useStatsSettings("overview");
   const { data, isLoading } = useGuildKillStats({
     world: settings.world ?? undefined,
     minLvl: debouncedMinLvl,
     maxLvl: debouncedMaxLvl,
+    timeBucket: settings.timeBucket,
   });
   const isMobile = useIsMobile();
 
@@ -48,6 +51,10 @@ export const KillStats: React.FC = () => {
                 </div>
               </div>
               <div className="hidden md:flex justify-end gap-2">
+                <TimeBucketSelect
+                  value={settings.timeBucket ?? "all"}
+                  onValueChange={setTimeBucket}
+                />
                 <LevelFilters
                   minLvl={settings.minLvl}
                   maxLvl={settings.maxLvl}
@@ -76,6 +83,7 @@ export const KillStats: React.FC = () => {
               world={settings.world ?? undefined}
               minLvl={debouncedMinLvl}
               maxLvl={debouncedMaxLvl}
+              timeBucket={settings.timeBucket}
             />
           </div>
         </div>
@@ -85,9 +93,11 @@ export const KillStats: React.FC = () => {
           world={settings.world}
           minLvl={settings.minLvl}
           maxLvl={settings.maxLvl}
+          timeBucket={settings.timeBucket ?? "all"}
           onWorldChange={setWorld}
           onMinLvlChange={setMinLvl}
           onMaxLvlChange={setMaxLvl}
+          onTimeBucketChange={setTimeBucket}
         />
       )}
     </>

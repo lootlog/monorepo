@@ -30,23 +30,24 @@ export type NpcKillersResponse = {
 export type NpcKillersParams = {
   limit?: number;
   world?: string;
+  timeBucket?: string;
 };
 
 export const useNpcKillers = (
   npcId: number | undefined,
   params: NpcKillersParams = {},
 ) => {
-  const { limit = 50, world } = params;
+  const { limit = 50, world, timeBucket } = params;
   const guildId = useGuildId();
   const { client } = useApiClient();
 
   const queryParams = stringify(
-    { limit, world },
+    { limit, world, timeBucket },
     { skipNulls: true, addQueryPrefix: true },
   );
 
   return useQuery({
-    queryKey: ["npc-killers", guildId, npcId, limit, world],
+    queryKey: ["npc-killers", guildId, npcId, limit, world, timeBucket],
     queryFn: async () => {
       const response = await client.get<NpcKillersResponse>(
         `/guilds/${guildId}/stats/kills/npcs/${npcId}/killers${queryParams}`,

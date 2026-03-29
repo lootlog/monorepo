@@ -19,6 +19,8 @@ import {
   buildGuildKillDedupKey,
   buildUserKillDedupKey,
 } from "./utils/kill-dedup-key";
+import { buildDateCondition, getTodayDate } from "./utils/time-bucket";
+import type { TimeBucket } from "./utils/time-bucket";
 
 const KILL_DEDUP_TTL_SECONDS = 30;
 
@@ -34,6 +36,7 @@ export class KillsService {
   async createKill(discordId: string, data: CreateKillDto) {
     const npcType = getNpcTypeByWt(NpcType, data.npc.wt, data.npc.prof);
     const npcId = getStableNpcId(data.npc.id, data.npc.name, npcType);
+    const today = getTodayDate();
 
     // 1. User deduplication (30s window) - same user killing same NPC
     const userDedupKey = buildUserKillDedupKey(discordId, {
@@ -54,16 +57,18 @@ export class KillsService {
     try {
       await this.prisma.userKillStats.upsert({
         where: {
-          userId_world_npcId: {
+          userId_world_npcId_killedAtDate: {
             userId: discordId,
             world: data.world,
             npcId,
+            killedAtDate: today,
           },
         },
         create: {
           userId: discordId,
           world: data.world,
           npcId,
+          killedAtDate: today,
           npcName: data.npc.name,
           npcType,
           npcLvl: data.npc.lvl,
@@ -129,11 +134,12 @@ export class KillsService {
           // 4a. Always increment member participation (memberKills)
           await this.prisma.npcKillStats.upsert({
             where: {
-              guildId_memberId_world_npcId: {
+              guildId_memberId_world_npcId_killedAtDate: {
                 guildId,
                 memberId: member.id,
                 world: data.world,
                 npcId,
+                killedAtDate: today,
               },
             },
             create: {
@@ -142,6 +148,7 @@ export class KillsService {
               userId: discordId,
               world: data.world,
               npcId,
+              killedAtDate: today,
               npcName: data.npc.name,
               npcType,
               npcLvl: data.npc.lvl,
@@ -174,16 +181,18 @@ export class KillsService {
             // First guild member to report this kill - increment unique kills
             await this.prisma.guildKillSummary.upsert({
               where: {
-                guildId_world_npcId: {
+                guildId_world_npcId_killedAtDate: {
                   guildId,
                   world: data.world,
                   npcId,
+                  killedAtDate: today,
                 },
               },
               create: {
                 guildId,
                 world: data.world,
                 npcId,
+                killedAtDate: today,
                 npcName: data.npc.name,
                 npcType,
                 npcLvl: data.npc.lvl,
@@ -234,6 +243,8 @@ export class KillsService {
       administrativeUser,
     );
 
+    const dateCondition = buildDateCondition(query.timeBucket);
+
     const npcLvlCondition =
       query.minLvl !== undefined || query.maxLvl !== undefined
         ? {
@@ -251,6 +262,7 @@ export class KillsService {
         ...(npcTypes && { npcType: { in: npcTypes } }),
         ...(query.world && { world: query.world }),
         ...npcLvlCondition,
+        ...dateCondition,
         ...visibilityCondition,
       },
       include: {
@@ -265,6 +277,7 @@ export class KillsService {
         ...(npcTypes && { npcType: { in: npcTypes } }),
         ...(query.world && { world: query.world }),
         ...npcLvlCondition,
+        ...dateCondition,
         ...visibilityCondition,
       },
     });
@@ -407,6 +420,7 @@ export class KillsService {
     const npcTypes = query.npcType
       ? [query.npcType, ...(query.npcTypes ?? [])]
       : query.npcTypes;
+    const dateCondition = buildDateCondition(query.timeBucket);
 
     // Query from UserKillStats - now aggregated per user (no character distinction)
     const stats = await this.prisma.userKillStats.findMany({
@@ -414,6 +428,7 @@ export class KillsService {
         userId: discordId,
         ...(query.world && { world: query.world }),
         ...(npcTypes && npcTypes.length > 0 && { npcType: { in: npcTypes } }),
+        ...dateCondition,
       },
     });
 
@@ -480,6 +495,7 @@ export class KillsService {
     const npcTypes = query.npcTypes;
     const limit = query.limit ?? 20;
     const cursor = query.cursor ?? 0;
+    const dateCondition = buildDateCondition(query.timeBucket);
 
     const whereCondition = {
       userId: discordId,
@@ -494,6 +510,7 @@ export class KillsService {
           ...(query.maxLvl !== undefined && { lte: query.maxLvl }),
         },
       }),
+      ...dateCondition,
     };
 
     const stats = await this.prisma.userKillStats.findMany({
@@ -575,6 +592,7 @@ export class KillsService {
     search?: string,
     minLvl?: number,
     maxLvl?: number,
+    timeBucket?: TimeBucket,
   ) {
     const filteredRoles = this.filterReadableRoles(roles);
     const administrativeUser = isAdministrativeUser(permissions);
@@ -583,6 +601,8 @@ export class KillsService {
       filteredRoles,
       administrativeUser,
     );
+
+    const dateCondition = buildDateCondition(timeBucket);
 
     const npcLvlCondition =
       minLvl !== undefined || maxLvl !== undefined
@@ -604,6 +624,7 @@ export class KillsService {
           npcName: { contains: search, mode: "insensitive" as const },
         }),
         ...npcLvlCondition,
+        ...dateCondition,
         ...visibilityCondition,
       },
     });
@@ -657,6 +678,7 @@ export class KillsService {
     roles: Role[],
     npcTypes: NpcType[],
     limit: number = 5,
+    timeBucket?: TimeBucket,
   ) {
     const filteredRoles = this.filterReadableRoles(roles);
     const administrativeUser = isAdministrativeUser(permissions);
@@ -666,10 +688,13 @@ export class KillsService {
       administrativeUser,
     );
 
+    const dateCondition = buildDateCondition(timeBucket);
+
     const stats = await this.prisma.npcKillStats.findMany({
       where: {
         guildId,
         npcType: { in: npcTypes },
+        ...dateCondition,
         ...visibilityCondition,
       },
       include: {
@@ -732,6 +757,7 @@ export class KillsService {
     npcId: number,
     limit: number = 50,
     world?: string,
+    timeBucket?: TimeBucket,
   ) {
     const filteredRoles = this.filterReadableRoles(roles);
     const administrativeUser = isAdministrativeUser(permissions);
@@ -741,12 +767,15 @@ export class KillsService {
       administrativeUser,
     );
 
+    const dateCondition = buildDateCondition(timeBucket);
+
     // Get member participation stats
     const stats = await this.prisma.npcKillStats.findMany({
       where: {
         guildId,
         npcId,
         ...(world && { world }),
+        ...dateCondition,
         ...visibilityCondition,
       },
       include: {
@@ -754,18 +783,24 @@ export class KillsService {
       },
     });
 
-    // Get unique kills from summary
-    const summary = await this.prisma.guildKillSummary.findFirst({
+    // Get unique kills from summary (multiple rows possible with daily buckets)
+    const summaries = await this.prisma.guildKillSummary.findMany({
       where: {
         guildId,
         npcId,
         ...(world && { world }),
+        ...dateCondition,
         ...visibilityCondition,
       },
     });
 
-    if (stats.length === 0 && !summary) {
+    if (stats.length === 0 && summaries.length === 0) {
       return null;
+    }
+
+    let totalUniqueKills = 0;
+    for (const s of summaries) {
+      totalUniqueKills += s.uniqueKills;
     }
 
     const memberMap = new Map<
@@ -818,14 +853,15 @@ export class KillsService {
     }
 
     // Fallback to summary if no member stats
-    if (!npcInfo && summary) {
+    if (!npcInfo && summaries.length > 0) {
+      const s = summaries[0];
       npcInfo = {
-        npcId: summary.npcId,
-        npcName: summary.npcName,
-        npcType: summary.npcType,
-        npcLvl: summary.npcLvl,
-        npcProf: summary.npcProf,
-        npcIcon: summary.npcIcon,
+        npcId: s.npcId,
+        npcName: s.npcName,
+        npcType: s.npcType,
+        npcLvl: s.npcLvl,
+        npcProf: s.npcProf,
+        npcIcon: s.npcIcon,
       };
     }
 
@@ -836,7 +872,7 @@ export class KillsService {
     return {
       npc: {
         ...npcInfo!,
-        uniqueGuildKills: summary?.uniqueKills ?? 0,
+        uniqueGuildKills: totalUniqueKills,
         totalMemberParticipations,
       },
       killers,
@@ -884,6 +920,8 @@ export class KillsService {
           }
         : {};
 
+    const dateCondition = buildDateCondition(query.timeBucket);
+
     // Get all kill stats for this member with visibility conditions
     const stats = await this.prisma.npcKillStats.findMany({
       where: {
@@ -895,6 +933,7 @@ export class KillsService {
           npcName: { contains: query.search, mode: "insensitive" as const },
         }),
         ...npcLvlCondition,
+        ...dateCondition,
         ...visibilityCondition,
       },
     });

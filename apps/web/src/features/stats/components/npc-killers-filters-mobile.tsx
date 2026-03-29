@@ -11,15 +11,23 @@ import {
   DrawerTrigger,
 } from "@lootlog/ui/components/drawer";
 import { WorldSwitcher } from "@/components/common/world-switcher";
+import {
+  TimeBucketSelect,
+  type TimeBucket,
+} from "./time-bucket-select";
 
 type NpcKillersFiltersMobileProps = {
   world: string | null;
+  timeBucket: TimeBucket;
   onWorldChange: (value: string | null) => void;
+  onTimeBucketChange: (value: TimeBucket) => void;
 };
 
 export const NpcKillersFiltersMobile = ({
   world,
+  timeBucket,
   onWorldChange,
+  onTimeBucketChange,
 }: NpcKillersFiltersMobileProps) => {
   const { t } = useTranslation();
 
@@ -35,6 +43,15 @@ export const NpcKillersFiltersMobile = ({
           <DrawerTitle>{t("kills.filters.title")}</DrawerTitle>
         </DrawerHeader>
         <div className="space-y-4 overflow-y-auto">
+          <div className="space-y-2">
+            <Label>{t("kills.filters.timeBucket")}</Label>
+            <TimeBucketSelect
+              value={timeBucket}
+              onValueChange={onTimeBucketChange}
+              className="w-full"
+            />
+          </div>
+
           <div className="space-y-2">
             <Label>{t("kills.filters.world")}</Label>
             <WorldSwitcher

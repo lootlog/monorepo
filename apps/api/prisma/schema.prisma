@@ -795,15 +795,17 @@ model NpcKillStats {
   npcProf      String?
   npcIcon      String?
   memberKills  Int      @default(0)
+  killedAtDate DateTime @db.Date
   lastKilledAt DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   guild  Guild  @relation(fields: [guildId], references: [id])
   member Member @relation(fields: [memberId], references: [id])
 
-  @@unique([guildId, memberId, world, npcId])
+  @@unique([guildId, memberId, world, npcId, killedAtDate])
   @@index([guildId])
   @@index([guildId, npcType])
+  @@index([guildId, killedAtDate])
   @@index([memberId])
 }
 
@@ -819,12 +821,14 @@ model UserKillStats {
   npcProf      String?
   npcIcon      String?
   totalKills   Int      @default(0)
+  killedAtDate DateTime @db.Date
   lastKilledAt DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  @@unique([userId, world, npcId])
+  @@unique([userId, world, npcId, killedAtDate])
   @@index([userId])
   @@index([userId, npcType])
+  @@index([userId, killedAtDate])
 }
 
 // Kill tracking - aggregated unique kills per NPC per guild (deduplicated)
@@ -839,12 +843,14 @@ model GuildKillSummary {
   npcProf      String?
   npcIcon      String?
   uniqueKills  Int      @default(0)
+  killedAtDate DateTime @db.Date
   lastKilledAt DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   guild Guild @relation(fields: [guildId], references: [id])
 
-  @@unique([guildId, world, npcId])
+  @@unique([guildId, world, npcId, killedAtDate])
   @@index([guildId])
   @@index([guildId, npcType])
+  @@index([guildId, killedAtDate])
 }

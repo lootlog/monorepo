@@ -2,6 +2,7 @@ import { useLocalStorage } from "usehooks-ts";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useDebounce } from "@/hooks/use-debounce";
 import type { NpcType } from "./use-guild-kill-stats";
+import type { TimeBucket } from "../components/time-bucket-select";
 
 type StatsSettingsPage =
   | "overview"
@@ -15,6 +16,7 @@ export type StatsSettings = {
   minLvl: string;
   maxLvl: string;
   npcType?: NpcType | "ALL";
+  timeBucket?: TimeBucket;
 };
 
 const DEFAULT_SETTINGS: StatsSettings = {
@@ -22,6 +24,7 @@ const DEFAULT_SETTINGS: StatsSettings = {
   minLvl: "",
   maxLvl: "",
   npcType: "ALL",
+  timeBucket: "all",
 };
 
 export const useStatsSettings = (page: StatsSettingsPage) => {
@@ -65,6 +68,13 @@ export const useStatsSettings = (page: StatsSettingsPage) => {
     });
   };
 
+  const setTimeBucket = (timeBucket: TimeBucket) => {
+    setSettings((prev) => {
+      if (prev.timeBucket === timeBucket) return prev;
+      return { ...prev, timeBucket };
+    });
+  };
+
   const parsedMinLvl = debouncedMinLvl
     ? Number.parseInt(debouncedMinLvl, 10)
     : undefined;
@@ -80,5 +90,6 @@ export const useStatsSettings = (page: StatsSettingsPage) => {
     setMinLvl,
     setMaxLvl,
     setNpcType,
+    setTimeBucket,
   };
 };
