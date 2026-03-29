@@ -1,7 +1,8 @@
 import { Module, type MiddlewareConsumer } from "@nestjs/common";
-import { LoggerMiddleware } from "@lootlog/nest-shared";
+import { LoggerMiddleware, type RedisConfig } from "@lootlog/nest-shared";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { WinstonModule, type WinstonModuleOptions } from "nest-winston";
+import { BullModule } from "@nestjs/bullmq";
 import { APP_CONFIG } from "src/config/app.config";
 import { ConfigKey } from "src/config/config-key.enum";
 import { HealthzModule } from "src/healthz/healthz.module";
@@ -20,6 +21,23 @@ import { BattlesModule } from "./battles/battles.module";
       inject: [ConfigService],
     }),
     ConfigModule.forRoot(APP_CONFIG),
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        const redisConfig = configService.get<RedisConfig>(ConfigKey.REDIS)!;
+        return {
+          connection: {
+            host: redisConfig.host,
+            port: redisConfig.port,
+            password: redisConfig.password,
+            username: redisConfig.username,
+            maxRetriesPerRequest: null,
+            enableReadyCheck: false,
+          },
+          prefix: "{bull}",
+        };
+      },
+    }),
     DrizzleModule,
     R2Module,
     RedisModule,

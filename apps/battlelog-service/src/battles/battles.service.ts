@@ -287,6 +287,42 @@ export class BattlesService implements IBattlesService {
     return battle;
   }
 
+  async deleteUserBattles(userId: string): Promise<{ deletedCount: number }> {
+    const userBattles = await this.drizzle.db
+      .select({ id: battles.id })
+      .from(battles)
+      .where(eq(battles.userId, userId));
+
+    const battleIds = userBattles.map((b) => b.id);
+
+    if (battleIds.length === 0) {
+      await this.drizzle.db
+        .delete(userCharacters)
+        .where(eq(userCharacters.userId, userId));
+
+      return { deletedCount: 0 };
+    }
+
+    await this.drizzle.db.delete(battles).where(eq(battles.userId, userId));
+
+    await this.drizzle.db
+      .delete(userCharacters)
+      .where(eq(userCharacters.userId, userId));
+
+    try {
+      await this.r2Service.deleteBattleDataBatch(battleIds);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to delete R2 data for user ${userId}: ${battleIds.length} battles`,
+        error,
+      );
+    }
+
+    this.logger.log(`Deleted ${battleIds.length} battles for user ${userId}`);
+
+    return { deletedCount: battleIds.length };
+  }
+
   async deleteBattle(battleId: string): Promise<DeleteBattleResult> {
     const deleted = await this.drizzle.db
       .delete(battles)

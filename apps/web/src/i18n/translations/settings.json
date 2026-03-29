@@ -1,4 +1,5 @@
 {
+  "navigationLabel": "Ustawienia",
   "mapTemplates": {
     "title": "Szablony map",
     "description": "Zarządzaj szablonami list mapek",
@@ -42,6 +43,24 @@
       "updateError": "Błąd podczas aktualizacji szablonu",
       "deleted": "Szablon usunięty",
       "deleteError": "Błąd podczas usuwania szablonu"
+    }
+  },
+  "account": {
+    "title": "Konto",
+    "description": "Ustawienia konta i sesji",
+    "session": {
+      "title": "Sesja",
+      "description": "Wyloguj się z bieżącej sesji na tym urządzeniu",
+      "logout": "Wyloguj się"
+    },
+    "dangerZone": {
+      "title": "Usuwanie konta",
+      "description": "Trwale usuwa Twoje dane — ustawienia, statystyki killi i zapisane walki. Looty, timery i dane klanu pozostaną nienaruszone, bo są częścią wspólnej historii klanu.",
+      "deleteAccount": "Usuń konto",
+      "deleteConfirmTitle": "Na pewno chcesz usunąć konto?",
+      "deleteConfirmDescription": "To nieodwracalne. Twoje ustawienia, statystyki killi i walki zostaną trwale usunięte. Dane klanu (looty, timery) nie zostaną ruszone — są powiązane z klanem, nie z Twoim kontem.",
+      "deleteConfirmLabel": "Wpisz \"{{name}}\" żeby potwierdzić",
+      "deleteConfirmButton": "Tak, usuń moje konto"
     }
   },
   "appearance": {
