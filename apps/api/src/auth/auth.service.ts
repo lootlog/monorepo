@@ -61,12 +61,7 @@ export class AuthService {
 
       return response.data;
     } catch (error) {
-      if (
-        error instanceof AuthServiceUnavailableError ||
-        error instanceof AccountNotFoundError ||
-        error instanceof TokenExpiredError ||
-        error instanceof AuthBadRequestError
-      ) {
+      if (this.isKnownAuthError(error)) {
         throw error;
       }
 
@@ -160,12 +155,7 @@ export class AuthService {
 
       return tokenResponse;
     } catch (error) {
-      if (
-        error instanceof TokenExpiredError ||
-        error instanceof AccountNotFoundError ||
-        error instanceof AuthServiceUnavailableError ||
-        error instanceof AuthBadRequestError
-      ) {
+      if (this.isKnownAuthError(error)) {
         throw error;
       }
 
@@ -186,6 +176,15 @@ export class AuthService {
   async invalidateIdpTokenCache(userId: string): Promise<void> {
     const cacheKey = getAuthTokenCacheKey(userId);
     await this.redisService.del(cacheKey);
+  }
+
+  private isKnownAuthError(error: unknown): boolean {
+    return (
+      error instanceof AuthServiceUnavailableError ||
+      error instanceof AccountNotFoundError ||
+      error instanceof TokenExpiredError ||
+      error instanceof AuthBadRequestError
+    );
   }
 
   private getErrorResponse(

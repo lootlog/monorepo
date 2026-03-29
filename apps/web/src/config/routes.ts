@@ -23,6 +23,7 @@ const ROUTES = {
     settings: {
       base: `${USER_BASE}/settings`,
       appearance: `${USER_BASE}/settings/appearance`,
+      account: `${USER_BASE}/settings/account`,
     },
   },
 
@@ -68,6 +69,7 @@ const ROUTE_SEGMENTS = {
     stats: "/stats",
     settings: "/settings",
     appearance: "/appearance",
+    account: "/account",
   },
   guild: {
     timers: "/timers",

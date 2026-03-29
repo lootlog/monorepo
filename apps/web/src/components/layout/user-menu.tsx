@@ -17,12 +17,16 @@ import { useGuildMember } from "@/hooks/api/members/use-guild-member";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { useNavigate } from "@tanstack/react-router";
+import { ROUTES } from "@/config/routes";
+import { persister } from "@/lib/query-client";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const UserMenu = () => {
   const { user, isPending } = useUser();
   const guildId = useGuildId();
   const { data: member } = useGuildMember();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const displayName = guildId && member ? member.name : user?.name;
   const displayImage =
@@ -32,7 +36,13 @@ export const UserMenu = () => {
 
   const handleLogout = async () => {
     await authClient.signOut();
-    navigate({ to: "/@me" });
+    queryClient.clear();
+    await persister.removeClient();
+    window.location.replace("/");
+  };
+
+  const handleOpenAccountSettings = () => {
+    navigate({ to: ROUTES.user.settings.account });
   };
 
   return (
@@ -75,7 +85,7 @@ export const UserMenu = () => {
           </div>
         </div>
       )}
-      <div>
+      <div onClick={handleOpenAccountSettings}>
         <Settings className="cursor-pointer" size="24" />
       </div>
     </div>

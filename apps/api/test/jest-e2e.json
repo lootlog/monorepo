@@ -20,7 +20,8 @@
   "transformIgnorePatterns": ["node_modules/(?!(uuid|bullmq)/)"],
   "moduleNameMapper": {
     "^src/(.*)$": "<rootDir>/../src/$1",
-    "^generated/client$": "<rootDir>/../generated/client"
+    "^generated/client$": "<rootDir>/../prisma/generated/client.ts",
+    "^prisma/generated/client$": "<rootDir>/../prisma/generated/client.ts"
   },
   "testTimeout": 60000,
   "maxWorkers": 1,

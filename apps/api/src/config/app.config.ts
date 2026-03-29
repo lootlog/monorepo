@@ -1,6 +1,7 @@
 import type { ConfigModuleOptions } from "@nestjs/config";
 import * as Joi from "joi";
 import authConfig from "src/config/auth.config";
+import battlelogConfig from "src/config/battlelog.config";
 import rabbitmqConfig from "src/config/rabbitmq.config";
 import { redisConfig } from "@lootlog/nest-shared";
 import serviceConfig from "src/config/service.config";
@@ -10,7 +11,14 @@ import { RuntimeEnvironment } from "src/types/runtime.types";
 export const APP_CONFIG: ConfigModuleOptions = {
   envFilePath: `.env`,
   isGlobal: true,
-  load: [serviceConfig, rabbitmqConfig, winstonConfig, redisConfig, authConfig],
+  load: [
+    serviceConfig,
+    rabbitmqConfig,
+    winstonConfig,
+    redisConfig,
+    authConfig,
+    battlelogConfig,
+  ],
   cache: true,
   validationSchema: Joi.object({
     ENV: Joi.string()
@@ -32,6 +40,9 @@ export const APP_CONFIG: ConfigModuleOptions = {
     REDIS_PASSWORD: Joi.string().allow("").required(),
     REDIS_USERNAME: Joi.string().allow("").required(),
     AUTH_SERVICE_URL: Joi.string().required(),
+    BATTLELOG_SERVICE_URL: Joi.string().default(
+      "http://battlelog-service:4000",
+    ),
     RESERVATIONS_CARDS_URL: Joi.string().uri().required(),
     OTEL_EXPORTER_OTLP_ENDPOINT: Joi.string().uri().allow(""),
     OTEL_EXPORTER_OTLP_HEADERS: Joi.string().allow(""),
