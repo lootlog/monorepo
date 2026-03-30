@@ -863,11 +863,13 @@ export class EventPointsService {
     heroNpcId: string,
     memberId: number,
     since?: Date,
+    until?: Date,
   ): Promise<Omit<MemberPresenceStats, "memberId">> {
     const [stats] = await this.getMembersPresenceStats(
       heroNpcId,
       [memberId],
       since,
+      until,
     );
 
     return (
@@ -884,6 +886,7 @@ export class EventPointsService {
     heroNpcId: string,
     memberIds: number[],
     since?: Date,
+    until?: Date,
   ): Promise<MemberPresenceStats[]> {
     if (memberIds.length === 0) {
       return [];
@@ -916,7 +919,7 @@ export class EventPointsService {
       orderBy: [{ memberId: "asc" }, { startedAt: "asc" }],
     });
 
-    const now = new Date();
+    const windowEnd = until ?? new Date();
     const aggregatedStatsByMemberId = new Map<number, PresenceLogAggregation>(
       memberIds.map((memberId) => [
         memberId,
@@ -936,7 +939,9 @@ export class EventPointsService {
 
       const effectiveStart =
         since && log.startedAt < since ? since : log.startedAt;
-      const endTime = log.endedAt || now;
+      const endTime = log.endedAt
+        ? new Date(Math.min(log.endedAt.getTime(), windowEnd.getTime()))
+        : windowEnd;
       const duration = endTime.getTime() - effectiveStart.getTime();
 
       if (duration > 0) {
@@ -974,6 +979,7 @@ export class EventPointsService {
     mapIds: string[],
     memberId: number,
     since?: Date,
+    until?: Date,
   ): Promise<
     Array<{
       mapId: string;
@@ -994,7 +1000,7 @@ export class EventPointsService {
       orderBy: { startedAt: "asc" },
     });
 
-    const now = new Date();
+    const windowEnd = until ?? new Date();
     const mapStats = new Map<
       string,
       { presenceTimeMs: number; afkTimeMs: number }
@@ -1010,7 +1016,9 @@ export class EventPointsService {
 
       const effectiveStart =
         since && log.startedAt < since ? since : log.startedAt;
-      const endTime = log.endedAt || now;
+      const endTime = log.endedAt
+        ? new Date(Math.min(log.endedAt.getTime(), windowEnd.getTime()))
+        : windowEnd;
       const duration = endTime.getTime() - effectiveStart.getTime();
 
       if (duration > 0) {
@@ -1033,6 +1041,7 @@ export class EventPointsService {
     mapIds: string[],
     memberIds: number[],
     since?: Date,
+    until?: Date,
   ): Promise<
     Array<{
       memberId: number;
@@ -1054,7 +1063,7 @@ export class EventPointsService {
       orderBy: { startedAt: "asc" },
     });
 
-    const now = new Date();
+    const windowEnd = until ?? new Date();
     const memberMapStats = new Map<
       string,
       {
@@ -1081,7 +1090,9 @@ export class EventPointsService {
 
       const effectiveStart =
         since && log.startedAt < since ? since : log.startedAt;
-      const endTime = log.endedAt || now;
+      const endTime = log.endedAt
+        ? new Date(Math.min(log.endedAt.getTime(), windowEnd.getTime()))
+        : windowEnd;
       const duration = endTime.getTime() - effectiveStart.getTime();
 
       if (duration > 0) {

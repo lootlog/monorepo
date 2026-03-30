@@ -16,6 +16,8 @@ import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { RoutingKey } from "src/enum/routing-key.enum";
 import { buildActiveEventWhere } from "../utils/event-activity.util";
 import { getSyntheticNpcId } from "../utils/get-synthetic-npc-id";
+import { buildTimerKey } from "src/timers/utils/timer-key";
+import { TimersService } from "src/timers/timers.service";
 
 @Injectable()
 export class EventTrackingService implements OnModuleInit {
@@ -29,6 +31,7 @@ export class EventTrackingService implements OnModuleInit {
     private readonly amqpConnection: AmqpConnection,
     private readonly redis: RedisService,
     private readonly redlockService: RedlockService,
+    private readonly timersService: TimersService,
   ) {}
 
   async onModuleInit() {
@@ -65,6 +68,7 @@ export class EventTrackingService implements OnModuleInit {
           include: {
             event: {
               select: {
+                world: true,
                 mapAssignmentCap: true,
               },
             },
@@ -77,17 +81,8 @@ export class EventTrackingService implements OnModuleInit {
       throw new NotFoundException("Map not found");
     }
 
-    const cap = map.heroNpc.event.mapAssignmentCap;
-    if (cap && cap > 0 && map.assignedMembers.length >= cap) {
-      throw new BadRequestException(
-        `Map assignment limit reached (${cap} members max)`,
-      );
-    }
-
-    const wasUnassigned = map.assignedMembers.length === 0;
-
     const isAlreadyAssigned = map.assignedMembers.some(
-      (m) => m.id === memberId,
+      (member) => member.id === memberId,
     );
     if (isAlreadyAssigned) {
       this.logger.debug({
@@ -100,6 +95,30 @@ export class EventTrackingService implements OnModuleInit {
         include: { assignedMembers: true },
       });
     }
+
+    const effectiveNpcId =
+      map.heroNpc.npcId ?? getSyntheticNpcId(map.heroNpcId);
+    const timer = await this.timersService.getEventRespawnTimer({
+      guildId,
+      world: map.heroNpc.event.world,
+      npcId: effectiveNpcId,
+      npcName: map.heroNpc.npcName,
+    });
+
+    if (timer && new Date() >= new Date(timer.maxSpawnTime)) {
+      throw new BadRequestException(
+        "Cannot assign members after the respawn window is overdue",
+      );
+    }
+
+    const cap = map.heroNpc.event.mapAssignmentCap;
+    if (cap && cap > 0 && map.assignedMembers.length >= cap) {
+      throw new BadRequestException(
+        `Map assignment limit reached (${cap} members max)`,
+      );
+    }
+
+    const wasUnassigned = map.assignedMembers.length === 0;
 
     const updated = await this.prisma.eventMap.update({
       where: { id: mapId },
@@ -559,32 +578,22 @@ export class EventTrackingService implements OnModuleInit {
 
     const now = referenceTime;
 
-    const timerKeys = eventMaps.map((map) => ({
+    const timerLookups = eventMaps.map((map) => ({
       guildId,
       world: map.heroNpc.event.world,
       npcId: map.heroNpc.npcId ?? getSyntheticNpcId(map.heroNpc.id),
+      npcName: map.heroNpc.npcName,
     }));
 
-    const activeTimers = await this.prisma.timer.findMany({
-      where: {
-        OR: timerKeys,
-        maxSpawnTime: { gt: now },
-      },
-      select: {
-        guildId: true,
-        world: true,
-        npcId: true,
-      },
-    });
-
-    const activeTimerSet = new Set(
-      activeTimers.map((t) => `${t.guildId}:${t.world}:${t.npcId}`),
+    const activeTimerSet = await this.timersService.getActiveTimerKeys(
+      timerLookups,
+      now,
     );
 
     const activeMaps = eventMaps.filter((map) => {
       const effectiveNpcId =
         map.heroNpc.npcId ?? getSyntheticNpcId(map.heroNpc.id);
-      const timerKey = `${guildId}:${map.heroNpc.event.world}:${effectiveNpcId}`;
+      const timerKey = `${guildId}:${map.heroNpc.event.world}:${buildTimerKey(effectiveNpcId, map.heroNpc.npcName)}`;
       return activeTimerSet.has(timerKey);
     });
 

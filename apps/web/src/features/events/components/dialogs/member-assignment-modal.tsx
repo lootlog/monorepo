@@ -11,12 +11,11 @@ import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Search, X, Users, UserPlus } from "lucide-react";
+import { Search, X, Users, UserPlus, AlertTriangle } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
 import { cn } from "@lootlog/ui/lib/utils";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
-
 interface MemberAssignmentModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -31,6 +30,7 @@ interface MemberAssignmentModalProps {
   onUnassign: (memberId: number) => void;
   isLoading?: boolean;
   disabled?: boolean;
+  disabledMessage?: string | null;
 }
 
 export const MemberAssignmentModal = ({
@@ -42,6 +42,7 @@ export const MemberAssignmentModal = ({
   onUnassign,
   isLoading: isActionLoading,
   disabled,
+  disabledMessage,
 }: MemberAssignmentModalProps) => {
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
@@ -130,6 +131,14 @@ export const MemberAssignmentModal = ({
             </div>
 
             <div className="space-y-2">
+              {disabled && disabledMessage && (
+                <div className="flex items-start gap-2 rounded-lg border border-orange-500/20 bg-orange-500/10 p-3">
+                  <AlertTriangle className="mt-0.5 size-4 shrink-0 text-orange-500" />
+                  <p className="text-xs text-muted-foreground">
+                    {disabledMessage}
+                  </p>
+                </div>
+              )}
               <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 {t("events.maps.addMember")}
               </Label>

@@ -8,7 +8,7 @@ vi.mock("@/hooks/api/use-delete-timer", () => ({
 }));
 
 vi.mock("@/hooks/api/use-reset-timer", () => ({
-  useResetTimer: () => ({ mutate: vi.fn() }),
+  useResetTimer: () => ({ mutateAsync: vi.fn().mockResolvedValue(undefined) }),
 }));
 
 vi.mock("@/store/timers.store", () => ({
@@ -36,6 +36,7 @@ describe("useTimerActions", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    window.message = vi.fn();
   });
 
   it("should return isPinned as false when timer is not pinned", () => {

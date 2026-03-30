@@ -35,6 +35,7 @@ import { EventSummaryService } from "./services/event-summary.service";
 import { EventWrappedService } from "./services/event-wrapped.service";
 import { EventSettingsService } from "./services/event-settings.service";
 import { EventsSettingsController } from "./events-settings.controller";
+import { TimersModule } from "src/timers/timers.module";
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { EventsSettingsController } from "./events-settings.controller";
     PrismaModule,
     RedisModule,
     RedlockModule,
+    TimersModule,
   ],
   providers: [
     EventsService,

@@ -10,6 +10,7 @@ import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared";
 import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant";
 import type { Event, EventHeroNpc } from "prisma/generated/client";
+import { TimersService } from "src/timers/timers.service";
 
 describe("EventKillService", () => {
   let service: EventKillService;
@@ -153,6 +154,10 @@ describe("EventKillService", () => {
     setNX: jest.fn().mockResolvedValue(true),
   };
 
+  const mockTimersService = {
+    getTimersForEventHeroFilters: jest.fn(),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
     mockPrismaService.eventRespawnWindowSummary.findMany.mockResolvedValue([]);
@@ -170,6 +175,7 @@ describe("EventKillService", () => {
         { provide: EventPointsService, useValue: mockPointsService },
         { provide: EventTrackingService, useValue: mockTrackingService },
         { provide: EventSummaryService, useValue: mockSummaryService },
+        { provide: TimersService, useValue: mockTimersService },
       ],
     }).compile();
 
@@ -198,12 +204,26 @@ describe("EventKillService", () => {
         ],
       };
       const mockTimers = [
-        { guildId, world, npcId: 123, member: { id: 1 } },
-        { guildId, world, npcId: 456, member: { id: 2 } },
+        {
+          guildId,
+          world,
+          npcId: 123,
+          npc: { name: "Hero 1", icon: null },
+          member: { id: 1 },
+        },
+        {
+          guildId,
+          world,
+          npcId: 456,
+          npc: { name: "Hero 2", icon: null },
+          member: { id: 2 },
+        },
       ];
 
       mockPrismaService.event.findFirst.mockResolvedValue(mockEvent);
-      mockPrismaService.timer.findMany.mockResolvedValue(mockTimers);
+      mockTimersService.getTimersForEventHeroFilters.mockResolvedValue(
+        mockTimers,
+      );
 
       const result = await service.getEventHeroTimers(guildId, eventId, world);
 
@@ -237,14 +257,19 @@ describe("EventKillService", () => {
       };
 
       mockPrismaService.event.findFirst.mockResolvedValue(mockEvent);
-      mockPrismaService.$queryRaw.mockResolvedValue([
-        { npcId: -12345, createdById: 1, guildId, world },
+      mockTimersService.getTimersForEventHeroFilters.mockResolvedValue([
+        {
+          npcId: -12345,
+          createdById: 1,
+          guildId,
+          world,
+          npc: { name: "Named Hero", icon: null },
+        },
       ]);
-      mockPrismaService.member.findMany.mockResolvedValue([{ id: 1 }]);
 
       await service.getEventHeroTimers(guildId, eventId, world);
 
-      expect(mockPrismaService.$queryRaw).toHaveBeenCalled();
+      expect(mockTimersService.getTimersForEventHeroFilters).toHaveBeenCalled();
     });
   });
 
@@ -757,6 +782,7 @@ describe("EventKillService", () => {
         mockEventHero.id,
         [1, 2],
         windowOpenedAt,
+        timerDataInWindow.previousMaxSpawnTime,
       );
       expect(mockPointsService.updateRankingAfterKill).toHaveBeenCalled();
     });
@@ -2733,7 +2759,12 @@ describe("EventKillService", () => {
       );
       expect(
         mockPointsService.getMembersPresenceStatsPerMap,
-      ).toHaveBeenCalledWith(["map-1"], [1], windowOpenedAt);
+      ).toHaveBeenCalledWith(
+        ["map-1"],
+        [1],
+        windowOpenedAt,
+        new Date("2026-02-20T05:27:46.133Z"),
+      );
     });
 
     it("should throw NotFoundException when kill not found", async () => {

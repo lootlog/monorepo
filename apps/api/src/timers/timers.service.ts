@@ -39,9 +39,13 @@ import { RedisService } from "@lootlog/nest-shared";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import Redlock, { ExecutionError } from "redlock";
-import { EventsService } from "src/events/events.service";
 import { getSyntheticNpcId } from "src/events/utils/get-synthetic-npc-id";
 import { RedlockService } from "src/lib/redlock/redlock.service";
+import {
+  buildTimerKey,
+  isLegacyNpcIdIdentifier,
+} from "src/timers/utils/timer-key";
+import { EventTimerHooksService } from "src/events/services/event-timer-hooks.service";
 
 function parseNpc(npc: unknown): { lvl: number; type: NpcType } | null {
   if (!npc) return null;
@@ -67,6 +71,25 @@ interface NpcData {
   margonemType: string;
 }
 
+interface EventRespawnTimerInput {
+  guildId: string;
+  world: string;
+  npcId: number;
+  npcName: string;
+  npcIcon: string | null;
+  minSpawnTime: Date;
+  maxSpawnTime: Date;
+  createdById: number;
+  isUsingSyntheticId: boolean;
+}
+
+interface EventTimerLookupInput {
+  guildId: string;
+  world: string;
+  npcId: number;
+  npcName: string;
+}
+
 @Injectable()
 export class TimersService implements OnModuleInit {
   private redlock: Redlock;
@@ -78,7 +101,7 @@ export class TimersService implements OnModuleInit {
     private readonly amqpConnection: AmqpConnection,
     private readonly guildsService: GuildsService,
     private readonly redis: RedisService,
-    private readonly eventsService: EventsService,
+    private readonly eventTimerHooks: EventTimerHooksService,
     private readonly redlockService: RedlockService,
   ) {}
 
@@ -88,17 +111,17 @@ export class TimersService implements OnModuleInit {
     });
   }
 
-  private getLockKey(world: string, npcId: number, guildId: string): string {
-    return `timer:lock:${guildId}:${world}:${npcId}`;
+  private getLockKey(world: string, timerKey: string, guildId: string): string {
+    return `timer:lock:${guildId}:${world}:${timerKey}`;
   }
 
   private getDedupKey(
     userId: string,
-    npcId: number,
+    timerKey: string,
     world: string,
     guildId: string,
   ): string {
-    return `timer:dedup:${userId}:${npcId}:${world}:${guildId}`;
+    return `timer:dedup:${userId}:${timerKey}:${world}:${guildId}`;
   }
 
   private getTimersCacheKey(guildId: string, world?: string): string {
@@ -141,49 +164,69 @@ export class TimersService implements OnModuleInit {
   private async findPreviousTimerForKillContext(
     guildId: string,
     world: string,
+    timerKey: string,
     npcId: number,
     npcName: string,
     npcData: NpcData,
   ): Promise<{
     previousTimer: Timer | null;
     migratedSyntheticNpcId: number | null;
+    migratedSyntheticTimerKey: string | null;
   }> {
     const previousTimer = await this.prisma.timer.findUnique({
-      where: { timerId: { guildId, world, npcId } },
+      where: { timerId: { guildId, world, timerKey } },
     });
     if (previousTimer) {
-      return { previousTimer, migratedSyntheticNpcId: null };
+      return {
+        previousTimer,
+        migratedSyntheticNpcId: null,
+        migratedSyntheticTimerKey: null,
+      };
     }
 
     try {
-      const heroMatch = await this.eventsService.findActiveEventHeroByNpc(
+      const heroMatch = await this.eventTimerHooks.findActiveEventHeroByNpc(
         guildId,
         world,
         npcId,
         npcName,
       );
       if (!heroMatch || heroMatch.eventHero.npcId !== null) {
-        return { previousTimer: null, migratedSyntheticNpcId: null };
+        return {
+          previousTimer: null,
+          migratedSyntheticNpcId: null,
+          migratedSyntheticTimerKey: null,
+        };
       }
 
       const syntheticNpcId = getSyntheticNpcId(heroMatch.eventHero.id);
       if (syntheticNpcId === npcId) {
-        return { previousTimer: null, migratedSyntheticNpcId: null };
+        return {
+          previousTimer: null,
+          migratedSyntheticNpcId: null,
+          migratedSyntheticTimerKey: null,
+        };
       }
 
+      const syntheticTimerKey = buildTimerKey(syntheticNpcId, npcName);
       const syntheticTimer = await this.prisma.timer.findUnique({
-        where: { timerId: { guildId, world, npcId: syntheticNpcId } },
+        where: { timerId: { guildId, world, timerKey: syntheticTimerKey } },
       });
       if (!syntheticTimer) {
-        return { previousTimer: null, migratedSyntheticNpcId: null };
+        return {
+          previousTimer: null,
+          migratedSyntheticNpcId: null,
+          migratedSyntheticTimerKey: null,
+        };
       }
 
       const migratedTimer = await this.prisma.timer.upsert({
-        where: { timerId: { guildId, world, npcId } },
+        where: { timerId: { guildId, world, timerKey } },
         create: {
           createdById: syntheticTimer.createdById,
           guildId,
           npcId,
+          timerKey,
           world,
           minSpawnTime: syntheticTimer.minSpawnTime,
           maxSpawnTime: syntheticTimer.maxSpawnTime,
@@ -199,7 +242,9 @@ export class TimersService implements OnModuleInit {
 
       try {
         await this.prisma.timer.delete({
-          where: { timerId: { guildId, world, npcId: syntheticNpcId } },
+          where: {
+            timerId: { guildId, world, timerKey: syntheticTimer.timerKey },
+          },
         });
       } catch (error) {
         if (
@@ -224,6 +269,7 @@ export class TimersService implements OnModuleInit {
       return {
         previousTimer: migratedTimer,
         migratedSyntheticNpcId: syntheticNpcId,
+        migratedSyntheticTimerKey: syntheticTimer.timerKey,
       };
     } catch (error) {
       this.logger.warn({
@@ -235,19 +281,23 @@ export class TimersService implements OnModuleInit {
         npcName,
         error: error instanceof Error ? error.message : error,
       });
-      return { previousTimer: null, migratedSyntheticNpcId: null };
+      return {
+        previousTimer: null,
+        migratedSyntheticNpcId: null,
+        migratedSyntheticTimerKey: null,
+      };
     }
   }
 
   private async findTimerAfterLockFailure(
     guildId: string,
     world: string,
-    npcId: number,
+    timerKey: string,
   ) {
     const maxAttempts = 10;
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       const timer = await this.prisma.timer.findUnique({
-        where: { timerId: { guildId, world, npcId } },
+        where: { timerId: { guildId, world, timerKey } },
         include: { member: true },
       });
       if (timer) {
@@ -262,6 +312,317 @@ export class TimersService implements OnModuleInit {
     return null;
   }
 
+  private async findTimerByIdentifier(
+    guildId: string,
+    world: string,
+    identifier: string,
+  ) {
+    if (isLegacyNpcIdIdentifier(identifier)) {
+      const timers = await this.prisma.timer.findMany({
+        where: {
+          guildId,
+          world,
+          npcId: Number.parseInt(identifier, 10),
+        },
+        include: { member: true },
+      });
+
+      if (timers.length === 1) {
+        return timers[0];
+      }
+
+      if (timers.length > 1) {
+        throw new BadRequestException({
+          message: ErrorKey.AMBIGUOUS_TIMER_IDENTIFIER,
+        });
+      }
+
+      return null;
+    }
+
+    return this.prisma.timer.findUnique({
+      where: { timerId: { guildId, world, timerKey: identifier } },
+      include: { member: true },
+    });
+  }
+
+  async getTimerByIdentifier(
+    guildId: string,
+    world: string,
+    identifier: string,
+  ) {
+    return this.findTimerByIdentifier(guildId, world, identifier);
+  }
+
+  async getEventRespawnTimer({
+    guildId,
+    world,
+    npcId,
+    npcName,
+  }: EventTimerLookupInput) {
+    return this.prisma.timer.findUnique({
+      where: {
+        timerId: {
+          guildId,
+          world,
+          timerKey: buildTimerKey(npcId, npcName),
+        },
+      },
+      include: { member: true },
+    });
+  }
+
+  async openEventRespawnTimer({
+    guildId,
+    world,
+    npcId,
+    npcName,
+    npcIcon,
+    minSpawnTime,
+    maxSpawnTime,
+    createdById,
+    isUsingSyntheticId,
+  }: EventRespawnTimerInput) {
+    const timerKey = buildTimerKey(npcId, npcName);
+    const lockKey = this.getLockKey(world, timerKey, guildId);
+    let lock: Awaited<ReturnType<typeof this.redlock.acquire>> | null = null;
+
+    try {
+      lock = await this.redlock.acquire([lockKey], this.lockTtl);
+
+      const windowOpenedAt = new Date();
+      const timer = await this.prisma.timer.upsert({
+        where: {
+          timerId: {
+            guildId,
+            world,
+            timerKey,
+          },
+        },
+        create: {
+          guildId,
+          createdById,
+          world,
+          npcId,
+          timerKey,
+          minSpawnTime,
+          maxSpawnTime,
+          latestRespBaseSeconds: Math.round(
+            (maxSpawnTime.getTime() - minSpawnTime.getTime()) / 2000,
+          ),
+          latestRespawnRandomness: DEFAULT_RESPAWN_RANDOMNESS,
+          wasReset: false,
+          npc: {
+            id: npcId,
+            name: npcName,
+            prof: "",
+            location: "",
+            wt: "",
+            lvl: 0,
+            type: "hero",
+            icon: npcIcon ?? "",
+            margonemType: isUsingSyntheticId
+              ? String(TIMER_TYPES.CUSTOM_MANUAL)
+              : "0",
+          },
+          windowOpenedAt,
+        },
+        update: {
+          minSpawnTime,
+          maxSpawnTime,
+          wasReset: false,
+          npc: {
+            id: npcId,
+            name: npcName,
+            prof: "",
+            location: "",
+            wt: "",
+            lvl: 0,
+            type: "hero",
+            icon: npcIcon ?? "",
+            margonemType: isUsingSyntheticId
+              ? String(TIMER_TYPES.CUSTOM_MANUAL)
+              : "0",
+          },
+          windowOpenedAt,
+        },
+        include: { member: true },
+      });
+
+      await this.invalidateTimersCache(guildId);
+      this.emitUpdateTimer(timer);
+      return timer;
+    } catch (error) {
+      if (error instanceof ExecutionError) {
+        const existingTimer = await this.findTimerAfterLockFailure(
+          guildId,
+          world,
+          timerKey,
+        );
+        if (existingTimer) {
+          return existingTimer;
+        }
+
+        throw new ConflictException({ message: ErrorKey.TIMER_RACE_CONDITION });
+      }
+      throw error;
+    } finally {
+      await lock?.release();
+    }
+  }
+
+  async closeEventRespawnTimer({
+    guildId,
+    world,
+    npcId,
+    npcName,
+  }: EventTimerLookupInput) {
+    const timerKey = buildTimerKey(npcId, npcName);
+    const lockKey = this.getLockKey(world, timerKey, guildId);
+    let lock: Awaited<ReturnType<typeof this.redlock.acquire>> | null = null;
+
+    try {
+      lock = await this.redlock.acquire([lockKey], this.lockTtl);
+
+      const timer = await this.prisma.timer.findUnique({
+        where: { timerId: { guildId, world, timerKey } },
+        include: { member: true },
+      });
+
+      if (!timer) {
+        return null;
+      }
+
+      await this.prisma.timer.delete({
+        where: { timerId: { guildId, world, timerKey } },
+      });
+
+      await this.invalidateTimersCache(guildId);
+      this.emitDeleteTimer({
+        guildId,
+        world,
+        npcId,
+        timerKey,
+      });
+
+      return timer;
+    } catch (error) {
+      if (error instanceof ExecutionError) {
+        throw new ConflictException({ message: ErrorKey.TIMER_RACE_CONDITION });
+      }
+      throw error;
+    } finally {
+      await lock?.release();
+    }
+  }
+
+  async getActiveTimerKeys(timerLookups: EventTimerLookupInput[], _now: Date) {
+    if (timerLookups.length === 0) {
+      return new Set<string>();
+    }
+
+    const activeTimers = await this.prisma.timer.findMany({
+      where: {
+        OR: timerLookups.map((timerLookup) => ({
+          guildId: timerLookup.guildId,
+          world: timerLookup.world,
+          timerKey: buildTimerKey(timerLookup.npcId, timerLookup.npcName),
+        })),
+      },
+      select: {
+        guildId: true,
+        world: true,
+        timerKey: true,
+      },
+    });
+
+    return new Set(
+      activeTimers.map(
+        (timer) => `${timer.guildId}:${timer.world}:${timer.timerKey}`,
+      ),
+    );
+  }
+
+  async getTimersForEventHeroFilters(
+    guildId: string,
+    world: string,
+    heroes: Array<{ npcId: number | null; npcName: string }>,
+  ) {
+    if (heroes.length === 0) {
+      return [];
+    }
+
+    const timerKeys = heroes
+      .filter((hero) => hero.npcId !== null)
+      .map((hero) => buildTimerKey(hero.npcId as number, hero.npcName));
+    const npcNames = heroes
+      .filter((hero) => hero.npcId === null)
+      .map((hero) => hero.npcName);
+
+    const timersByKey =
+      timerKeys.length > 0
+        ? await this.prisma.timer.findMany({
+            where: {
+              guildId,
+              world,
+              timerKey: { in: timerKeys },
+            },
+            select: {
+              npcId: true,
+              timerKey: true,
+              world: true,
+              minSpawnTime: true,
+              maxSpawnTime: true,
+              npc: true,
+            },
+          })
+        : [];
+
+    const timersByName =
+      npcNames.length > 0
+        ? await this.prisma.$queryRaw<
+            Array<{
+              npcId: number;
+              timerKey: string;
+              world: string;
+              minSpawnTime: Date;
+              maxSpawnTime: Date;
+              npc: unknown;
+            }>
+          >`
+            SELECT
+              t."npcId",
+              t."timerKey",
+              t."world",
+              t."minSpawnTime",
+              t."maxSpawnTime",
+              t."npc"
+            FROM "Timer" t
+            WHERE t."guildId" = ${guildId}
+              AND t."world" = ${world}
+              AND t."npc"->>'name' = ANY(${npcNames}::text[])
+          `
+        : [];
+
+    const timers = [...timersByKey, ...timersByName];
+    const uniqueTimers = new Map<string, (typeof timers)[number]>();
+    for (const timer of timers) {
+      uniqueTimers.set(timer.timerKey, timer);
+    }
+
+    return Array.from(uniqueTimers.values());
+  }
+
+  async getWorldsByGuildId(guildId: string) {
+    const worlds = await this.prisma.timer.findMany({
+      where: { guildId },
+      select: { world: true },
+      distinct: ["world"],
+    });
+
+    return worlds.map((worldEntry) => worldEntry.world);
+  }
+
   async createTimerForGuild(
     discordId: string,
     userId: string,
@@ -272,13 +633,9 @@ export class TimersService implements OnModuleInit {
     if (data.npc.wt < TIMER_LIMITS.MIN_NPC_WT_FOR_TIMERS) {
       throw new BadRequestException({ message: ErrorKey.WT_TOO_LOW });
     }
+    const timerKey = buildTimerKey(data.npc.id, data.npc.name);
 
-    const dedupKey = this.getDedupKey(
-      discordId,
-      data.npc.id,
-      data.world,
-      guildId,
-    );
+    const dedupKey = this.getDedupKey(discordId, timerKey, data.world, guildId);
 
     const cached = await this.redis.get(dedupKey);
     if (cached) {
@@ -290,7 +647,7 @@ export class TimersService implements OnModuleInit {
     }
 
     const dedupLockKey = `${dedupKey}:lock`;
-    const lockKey = this.getLockKey(data.world, data.npc.id, guildId);
+    const lockKey = this.getLockKey(data.world, timerKey, guildId);
     let dedupLock: Awaited<ReturnType<typeof this.redlock.acquire>> | null =
       null;
     let mainLock: Awaited<ReturnType<typeof this.redlock.acquire>> | null =
@@ -315,14 +672,18 @@ export class TimersService implements OnModuleInit {
         now,
       );
       const npcData = this.buildNpcData(data.npc);
-      const { previousTimer, migratedSyntheticNpcId } =
-        await this.findPreviousTimerForKillContext(
-          guildId,
-          data.world,
-          data.npc.id,
-          data.npc.name,
-          npcData,
-        );
+      const {
+        previousTimer,
+        migratedSyntheticNpcId,
+        migratedSyntheticTimerKey,
+      } = await this.findPreviousTimerForKillContext(
+        guildId,
+        data.world,
+        timerKey,
+        data.npc.id,
+        data.npc.name,
+        npcData,
+      );
       const respawnRandomness =
         data.respawnRandomness ?? DEFAULT_RESPAWN_RANDOMNESS;
 
@@ -334,7 +695,7 @@ export class TimersService implements OnModuleInit {
       ) {
         const existingTimer = await this.prisma.timer.findUnique({
           where: {
-            timerId: { guildId, world: data.world, npcId: data.npc.id },
+            timerId: { guildId, world: data.world, timerKey },
           },
           include: { member: true },
         });
@@ -363,6 +724,7 @@ export class TimersService implements OnModuleInit {
         minSpawnTime,
         world: data.world,
         npcId: data.npc.id,
+        timerKey,
         latestRespBaseSeconds: data.respBaseSeconds,
         latestRespawnRandomness: respawnRandomness,
         wasReset: false,
@@ -372,7 +734,7 @@ export class TimersService implements OnModuleInit {
       };
 
       const newTimer = await this.prisma.timer.upsert({
-        where: { timerId: { guildId, world: data.world, npcId: data.npc.id } },
+        where: { timerId: { guildId, world: data.world, timerKey } },
         create: { ...timerData, guild: { connect: { id: guildId } } },
         update: timerData,
         include: { member: true },
@@ -388,12 +750,13 @@ export class TimersService implements OnModuleInit {
           guildId,
           world: data.world,
           npcId: migratedSyntheticNpcId,
+          timerKey: migratedSyntheticTimerKey ?? undefined,
         });
       }
 
       this.emitUpdateTimer(newTimer);
 
-      await this.eventsService
+      await this.eventTimerHooks
         .enqueueEventHeroKillCheck({
           guildId,
           world: data.world,
@@ -427,7 +790,7 @@ export class TimersService implements OnModuleInit {
         const existingTimer = await this.findTimerAfterLockFailure(
           guildId,
           data.world,
-          data.npc.id,
+          timerKey,
         );
         if (existingTimer) {
           this.logger.log({
@@ -493,12 +856,14 @@ export class TimersService implements OnModuleInit {
     }
 
     const npcId = generateUniqueIntId();
+    const timerKey = buildTimerKey(npcId, data.name);
 
     const newTimer = await this.prisma.timer.create({
       data: {
         maxSpawnTime,
         minSpawnTime,
         npcId,
+        timerKey,
         world: data.world,
         latestRespBaseSeconds,
         latestRespawnRandomness,
@@ -624,19 +989,58 @@ export class TimersService implements OnModuleInit {
   async resetTimer(
     discordId: string,
     guildId: string,
-    npcId: string,
+    timerIdentifier: string,
     data: ResetTimerDto,
   ) {
     const now = new Date();
-    const npcIdNum = Number.parseInt(npcId, 10);
-    const lockKey = this.getLockKey(data.world, npcIdNum, guildId);
+    const resolvedTimer = await this.findTimerByIdentifier(
+      guildId,
+      data.world,
+      timerIdentifier,
+    );
+
+    if (!resolvedTimer) {
+      throw new BadRequestException({ message: ErrorKey.TIMER_NOT_FOUND });
+    }
+
+    const resolvedTimerNpc =
+      resolvedTimer.npc &&
+      typeof resolvedTimer.npc === "object" &&
+      !Array.isArray(resolvedTimer.npc)
+        ? resolvedTimer.npc
+        : null;
+
+    const eventHero = await this.eventTimerHooks.findActiveEventHeroByNpc(
+      guildId,
+      data.world,
+      resolvedTimer.npcId,
+      typeof resolvedTimerNpc?.name === "string" ? resolvedTimerNpc.name : "",
+    );
+
+    if (eventHero) {
+      throw new BadRequestException({
+        message: ErrorKey.EVENT_TIMER_CANNOT_BE_RESET,
+      });
+    }
+
+    const lockKey = this.getLockKey(
+      data.world,
+      resolvedTimer.timerKey,
+      guildId,
+    );
     let lock: Awaited<ReturnType<typeof this.redlock.acquire>> | null = null;
 
     try {
       lock = await this.redlock.acquire([lockKey], this.lockTtl);
 
       const timer = await this.prisma.timer.findUnique({
-        where: { timerId: { guildId, world: data.world, npcId: npcIdNum } },
+        where: {
+          timerId: {
+            guildId,
+            world: data.world,
+            timerKey: resolvedTimer.timerKey,
+          },
+        },
       });
 
       if (!timer) {
@@ -650,7 +1054,13 @@ export class TimersService implements OnModuleInit {
       );
 
       const updatedTimer = await this.prisma.timer.update({
-        where: { timerId: { guildId, world: data.world, npcId: npcIdNum } },
+        where: {
+          timerId: {
+            guildId,
+            world: data.world,
+            timerKey: resolvedTimer.timerKey,
+          },
+        },
         data: {
           minSpawnTime,
           maxSpawnTime,
@@ -669,7 +1079,7 @@ export class TimersService implements OnModuleInit {
           level: "error",
           message: `Lock acquisition failed for resetTimer`,
           guildId,
-          npcId: npcIdNum,
+          npcId: resolvedTimer.npcId,
           world: data.world,
         });
         throw new ConflictException({ message: ErrorKey.TIMER_RACE_CONDITION });
@@ -680,16 +1090,51 @@ export class TimersService implements OnModuleInit {
     }
   }
 
-  async deleteTimer(guildId: string, npcId: string, world: string) {
-    const npcIdNum = Number.parseInt(npcId, 10);
+  async deleteTimer(guildId: string, timerIdentifier: string, world: string) {
+    const resolvedTimer = await this.findTimerByIdentifier(
+      guildId,
+      world,
+      timerIdentifier,
+    );
+
+    if (!resolvedTimer) {
+      throw new BadRequestException({ message: ErrorKey.TIMER_NOT_FOUND });
+    }
+
+    const resolvedTimerNpc =
+      resolvedTimer.npc &&
+      typeof resolvedTimer.npc === "object" &&
+      !Array.isArray(resolvedTimer.npc)
+        ? resolvedTimer.npc
+        : null;
+
+    const eventHero = await this.eventTimerHooks.findActiveEventHeroByNpc(
+      guildId,
+      world,
+      resolvedTimer.npcId,
+      typeof resolvedTimerNpc?.name === "string" ? resolvedTimerNpc.name : "",
+    );
+
+    if (eventHero) {
+      throw new BadRequestException({
+        message: ErrorKey.EVENT_TIMER_MUST_USE_EVENT_CLOSE,
+      });
+    }
 
     try {
       await this.prisma.timer.delete({
-        where: { timerId: { guildId, world, npcId: npcIdNum } },
+        where: {
+          timerId: { guildId, world, timerKey: resolvedTimer.timerKey },
+        },
       });
 
       await this.invalidateTimersCache(guildId);
-      this.emitDeleteTimer({ npcId: npcIdNum, world, guildId });
+      this.emitDeleteTimer({
+        npcId: resolvedTimer.npcId,
+        timerKey: resolvedTimer.timerKey,
+        world,
+        guildId,
+      });
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -726,9 +1171,10 @@ export class TimersService implements OnModuleInit {
     const limitNum = Number(limit) || 10;
     const manualTimerType = String(TIMER_TYPES.CUSTOM_MANUAL);
     const timers = await this.prisma.$queryRaw<Timer[]>`
-      SELECT DISTINCT ON (t."npcId")
+      SELECT DISTINCT ON (t."timerKey")
         t."npc",
         t."npcId",
+        t."timerKey",
         t."latestRespBaseSeconds",
         t."latestRespawnRandomness"
       FROM "Timer" t
@@ -736,7 +1182,7 @@ export class TimersService implements OnModuleInit {
         AND t."world" = ${world}
         AND t."npc"->>'name' ILIKE ${"%" + search + "%"}
         AND COALESCE(t."npc"->>'margonemType', '0') != ${manualTimerType}
-      ORDER BY t."npcId", t."updatedAt" DESC
+      ORDER BY t."timerKey", t."updatedAt" DESC
       LIMIT ${limitNum}
     `;
 
@@ -747,6 +1193,7 @@ export class TimersService implements OnModuleInit {
 
         return {
           npcId: timer.npcId,
+          timerKey: timer.timerKey,
           name: (timer.npc as { name?: string })?.name ?? "",
           lvl: npc.lvl,
           type: npc.type,

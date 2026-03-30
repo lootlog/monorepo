@@ -1,3 +1,4 @@
+import axios from "axios";
 import { useDeleteTimer } from "@/hooks/api/use-delete-timer";
 import { useResetTimer } from "@/hooks/api/use-reset-timer";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
@@ -19,8 +20,28 @@ export const useTimerActions = (
     pinnedTimers,
     setTimerColor,
   } = useTimersStore();
-  const { mutate: resetTimer } = useResetTimer();
+  const { mutateAsync: resetTimer } = useResetTimer();
   const { mutate: deleteTimer } = useDeleteTimer();
+  const getResetTimerErrorMessage = (error: unknown) => {
+    if (
+      axios.isAxiosError<{ message?: string }>(error) &&
+      error.response?.data?.message === "EVENT_TIMER_CANNOT_BE_RESET"
+    ) {
+      return "Nie można zresetować okna eventowego z poziomu timerów.";
+    }
+
+    return `Nie udało się zresetować timera ${timer.npc.name}.`;
+  };
+  const getDeleteTimerErrorMessage = (error: unknown) => {
+    if (
+      axios.isAxiosError<{ message?: string }>(error) &&
+      error.response?.data?.message === "EVENT_TIMER_MUST_USE_EVENT_CLOSE"
+    ) {
+      return "Nie można usunąć okna eventowego z poziomu timerów.";
+    }
+
+    return `Nie udało się usunąć timera ${timer.npc.name}.`;
+  };
 
   const isPinned = pinnedTimers[settingsKey]?.includes(timer.npc.name);
 
@@ -86,35 +107,52 @@ export const useTimerActions = (
     setTimerColor(timer.npc.name, color);
   };
 
-  const handleRestartTimer = () => {
+  const handleRestartTimer = async () => {
     if (!world) return;
 
-    if (timersGrouping && timer.mergedGuildIds) {
-      timer.mergedGuildIds.forEach(({ guildId, npcId }) => {
-        resetTimer({
+    try {
+      if (timersGrouping && timer.mergedGuildIds) {
+        await Promise.all(
+          timer.mergedGuildIds.map(({ guildId, npcId }) =>
+            resetTimer({
+              world,
+              npcId,
+              guildId,
+            }),
+          ),
+        );
+      } else {
+        await resetTimer({
           world,
-          npcId,
-          guildId,
+          npcId: timer.npc.id,
+          guildId: timer.guildId,
         });
-      });
-      return;
-    }
+      }
 
-    resetTimer({
-      world,
-      npcId: timer.npc.id,
-      guildId: timer.guildId,
-    });
+      window.message?.(`Zresetowano timer ${timer.npc.name}.`);
+    } catch (error) {
+      window.message?.(getResetTimerErrorMessage(error));
+    }
   };
 
   const handleDeleteTimer = (guildId: string, npcId: number) => {
     if (!world) return;
 
-    deleteTimer({
-      world,
-      npcId,
-      guildId,
-    });
+    deleteTimer(
+      {
+        world,
+        npcId,
+        guildId,
+      },
+      {
+        onSuccess: () => {
+          window.message?.(`Usunięto timer ${timer.npc.name}.`);
+        },
+        onError: (error) => {
+          window.message?.(getDeleteTimerErrorMessage(error));
+        },
+      },
+    );
   };
 
   return {

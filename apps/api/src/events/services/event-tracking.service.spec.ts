@@ -7,6 +7,7 @@ import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared";
 import { RedlockService } from "src/lib/redlock/redlock.service";
 import { CoverageGapType } from "prisma/generated/client";
+import { TimersService } from "src/timers/timers.service";
 
 describe("EventTrackingService", () => {
   let service: EventTrackingService;
@@ -72,6 +73,11 @@ describe("EventTrackingService", () => {
     acquire: jest.fn(),
   };
 
+  const mockTimersService = {
+    getActiveTimerKeys: jest.fn(),
+    getEventRespawnTimer: jest.fn(),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -86,6 +92,7 @@ describe("EventTrackingService", () => {
           provide: RedlockService,
           useValue: { createInstance: jest.fn().mockReturnValue(mockRedlock) },
         },
+        { provide: TimersService, useValue: mockTimersService },
       ],
     }).compile();
 
@@ -112,14 +119,19 @@ describe("EventTrackingService", () => {
       id: mapId,
       mapName: "Test Map",
       heroNpcId: "hero-1",
-      assignedMembers: [],
       heroNpc: {
-        event: { mapAssignmentCap: null },
+        npcId: 123,
+        npcName: "Test Hero",
+        event: { mapAssignmentCap: null, world: "tempest" },
       },
+      assignedMembers: [],
     };
 
     it("should assign member to map successfully", async () => {
       mockPrismaService.eventMap.findFirst.mockResolvedValue(mockMap);
+      mockTimersService.getEventRespawnTimer.mockResolvedValue({
+        maxSpawnTime: new Date(Date.now() + 60_000),
+      });
       mockPrismaService.eventMapAssignmentHistory.findFirst.mockResolvedValue(
         null,
       );
@@ -172,10 +184,14 @@ describe("EventTrackingService", () => {
         ...mockMap,
         assignedMembers: [{ id: 2 }, { id: 3 }],
         heroNpc: {
-          event: { mapAssignmentCap: 2 },
+          ...mockMap.heroNpc,
+          event: { mapAssignmentCap: 2, world: "tempest" },
         },
       };
       mockPrismaService.eventMap.findFirst.mockResolvedValue(mapAtCap);
+      mockTimersService.getEventRespawnTimer.mockResolvedValue({
+        maxSpawnTime: new Date(Date.now() + 60_000),
+      });
 
       await expect(
         service.assignMemberToMap(guildId, eventId, mapId, memberId),
@@ -184,6 +200,9 @@ describe("EventTrackingService", () => {
 
     it("should not create duplicate assignment history", async () => {
       mockPrismaService.eventMap.findFirst.mockResolvedValue(mockMap);
+      mockTimersService.getEventRespawnTimer.mockResolvedValue({
+        maxSpawnTime: new Date(Date.now() + 60_000),
+      });
       mockPrismaService.eventMap.update.mockResolvedValue({
         ...mockMap,
         assignedMembers: [{ id: memberId }],
@@ -207,6 +226,9 @@ describe("EventTrackingService", () => {
     it("should close UNASSIGNED gap when first member is assigned", async () => {
       const emptyMap = { ...mockMap, assignedMembers: [] };
       mockPrismaService.eventMap.findFirst.mockResolvedValue(emptyMap);
+      mockTimersService.getEventRespawnTimer.mockResolvedValue({
+        maxSpawnTime: new Date(Date.now() + 60_000),
+      });
       mockPrismaService.eventMap.update.mockResolvedValue({
         ...emptyMap,
         assignedMembers: [{ id: memberId }],
@@ -237,6 +259,19 @@ describe("EventTrackingService", () => {
           }),
         }),
       );
+    });
+
+    it("should throw BadRequestException when assigning after max spawn time", async () => {
+      mockPrismaService.eventMap.findFirst.mockResolvedValue(mockMap);
+      mockTimersService.getEventRespawnTimer.mockResolvedValue({
+        maxSpawnTime: new Date(Date.now() - 60_000),
+      });
+
+      await expect(
+        service.assignMemberToMap(guildId, eventId, mapId, memberId),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(mockPrismaService.eventMap.update).not.toHaveBeenCalled();
     });
   });
 
@@ -342,7 +377,7 @@ describe("EventTrackingService", () => {
     it("should acquire lock before processing presence change", async () => {
       mockPrismaService.member.findFirst.mockResolvedValue(null);
       mockPrismaService.eventMap.findMany.mockResolvedValue([]);
-      mockPrismaService.timer.findMany.mockResolvedValue([]);
+      mockTimersService.getActiveTimerKeys.mockResolvedValue(new Set());
 
       await service.handlePlayerPresenceChange(
         guildId,
@@ -389,20 +424,16 @@ describe("EventTrackingService", () => {
         heroNpc: {
           id: "hero-1",
           npcId: 123,
+          npcName: "Test Hero",
           event: { world: "tempest" },
         },
       };
 
       mockPrismaService.member.findFirst.mockResolvedValue(mockMember);
       mockPrismaService.eventMap.findMany.mockResolvedValue([mockEventMap]);
-      mockPrismaService.timer.findMany.mockResolvedValue([
-        {
-          guildId,
-          world: "tempest",
-          npcId: 123,
-          maxSpawnTime: new Date(Date.now() + 60000),
-        },
-      ]);
+      mockTimersService.getActiveTimerKeys.mockResolvedValue(
+        new Set([`${guildId}:tempest:123:test hero`]),
+      );
       mockPrismaService.eventPresenceLog.findMany.mockResolvedValue([]);
       mockPrismaService.eventMapCoverageGap.findFirst.mockResolvedValue({
         id: "gap-1",
@@ -437,6 +468,7 @@ describe("EventTrackingService", () => {
         heroNpc: {
           id: "hero-1",
           npcId: 123,
+          npcName: "Test Hero",
           event: { world: "tempest" },
         },
       };
@@ -450,14 +482,9 @@ describe("EventTrackingService", () => {
 
       mockPrismaService.member.findFirst.mockResolvedValue(mockMember);
       mockPrismaService.eventMap.findMany.mockResolvedValue([mockEventMap]);
-      mockPrismaService.timer.findMany.mockResolvedValue([
-        {
-          guildId,
-          world: "tempest",
-          npcId: 123,
-          maxSpawnTime: new Date(Date.now() + 60000),
-        },
-      ]);
+      mockTimersService.getActiveTimerKeys.mockResolvedValue(
+        new Set([`${guildId}:tempest:123:test hero`]),
+      );
       mockPrismaService.eventMapCoverageGap.findFirst.mockResolvedValue(
         openGap,
       );
@@ -489,6 +516,7 @@ describe("EventTrackingService", () => {
         heroNpc: {
           id: "hero-1",
           npcId: 123,
+          npcName: "Test Hero",
           event: { world: "tempest" },
         },
       };
@@ -496,7 +524,7 @@ describe("EventTrackingService", () => {
       mockPrismaService.member.findFirst.mockResolvedValue(null);
       mockPrismaService.eventMap.findMany.mockResolvedValue([mockEventMap]);
       // No active timers
-      mockPrismaService.timer.findMany.mockResolvedValue([]);
+      mockTimersService.getActiveTimerKeys.mockResolvedValue(new Set());
 
       await service.handlePlayerPresenceChange(
         guildId,
@@ -517,20 +545,30 @@ describe("EventTrackingService", () => {
           mapName,
           heroNpcId: "hero-1",
           assignedMembers: [],
-          heroNpc: { id: "hero-1", npcId: 123, event: { world: "tempest" } },
+          heroNpc: {
+            id: "hero-1",
+            npcId: 123,
+            npcName: "Hero 1",
+            event: { world: "tempest" },
+          },
         },
         {
           id: "map-2",
           mapName,
           heroNpcId: "hero-2",
           assignedMembers: [],
-          heroNpc: { id: "hero-2", npcId: 456, event: { world: "tempest" } },
+          heroNpc: {
+            id: "hero-2",
+            npcId: 456,
+            npcName: "Hero 2",
+            event: { world: "tempest" },
+          },
         },
       ];
 
       mockPrismaService.member.findFirst.mockResolvedValue(null);
       mockPrismaService.eventMap.findMany.mockResolvedValue(mockEventMaps);
-      mockPrismaService.timer.findMany.mockResolvedValue([]);
+      mockTimersService.getActiveTimerKeys.mockResolvedValue(new Set());
 
       await service.handlePlayerPresenceChange(
         guildId,
@@ -540,8 +578,7 @@ describe("EventTrackingService", () => {
         false,
       );
 
-      // Should call findMany once for batch query, not findUnique per map
-      expect(mockPrismaService.timer.findMany).toHaveBeenCalledTimes(1);
+      expect(mockTimersService.getActiveTimerKeys).toHaveBeenCalledTimes(1);
       expect(mockPrismaService.timer.findUnique).not.toHaveBeenCalled();
     });
   });
