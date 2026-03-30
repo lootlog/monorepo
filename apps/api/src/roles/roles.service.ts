@@ -69,13 +69,28 @@ export class RolesService {
     const permissions = this.getAdminPermissions(data.admin);
 
     try {
+      const existingRole = await this.prisma.role.findUnique({
+        where: { id: data.id, guildId: data.guildId },
+        select: { permissions: true },
+      });
+
+      const updateData: Prisma.RoleUpdateInput = {
+        name: data.name,
+        color: data.color,
+        position: data.position,
+      };
+
+      const roleIsAdministrative = existingRole
+        ? PermissionResolver.isAdministrative(existingRole.permissions)
+        : false;
+
+      if (existingRole && roleIsAdministrative !== data.admin) {
+        updateData.permissions = permissions;
+      }
+
       await this.prisma.role.upsert({
         where: { id: data.id },
-        update: {
-          name: data.name,
-          color: data.color,
-          position: data.position,
-        },
+        update: updateData,
         create: {
           id: data.id,
           guildId: data.guildId,
