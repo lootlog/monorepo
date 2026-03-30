@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   NotFoundException,
   Param,
@@ -11,7 +12,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { ApiTags, ApiBearerAuth, ApiOperation } from "@nestjs/swagger";
-import { AuthGuard } from "src/shared/guards/auth.guard";
+import { AuthGuard, DiscordId } from "@lootlog/nest-shared";
 import { TargetsService } from "./targets.service";
 import { CreateTargetDto } from "./dto/create-target.dto";
 import { UpdateTargetDto } from "./dto/update-target.dto";
@@ -40,21 +41,33 @@ export class TargetsController {
 
   @Patch(":id")
   @ApiOperation({ summary: "Update a notification target" })
-  async update(@Param("id") id: string, @Body() dto: UpdateTargetDto) {
-    const target = await this.targetsService.update(id, dto);
-    if (!target) {
+  async update(
+    @DiscordId() discordId: string,
+    @Param("id") id: string,
+    @Body() dto: UpdateTargetDto,
+  ) {
+    const existing = await this.targetsService.findById(id);
+    if (!existing) {
       throw new NotFoundException("Target not found");
     }
-    return target;
+    if (existing.ownerType === "user" && existing.ownerId !== discordId) {
+      throw new ForbiddenException();
+    }
+
+    return this.targetsService.update(id, dto);
   }
 
   @Delete(":id")
   @ApiOperation({ summary: "Delete a notification target" })
-  async delete(@Param("id") id: string) {
-    const deleted = await this.targetsService.delete(id);
-    if (!deleted) {
+  async delete(@DiscordId() discordId: string, @Param("id") id: string) {
+    const existing = await this.targetsService.findById(id);
+    if (!existing) {
       throw new NotFoundException("Target not found");
     }
-    return deleted;
+    if (existing.ownerType === "user" && existing.ownerId !== discordId) {
+      throw new ForbiddenException();
+    }
+
+    return this.targetsService.delete(id);
   }
 }

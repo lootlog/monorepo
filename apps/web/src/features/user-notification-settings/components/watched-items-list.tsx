@@ -10,13 +10,9 @@ import {
 } from "@/hooks/api/notifications/use-watched-items";
 import { AddWatchedItemDialog } from "./add-watched-item-dialog";
 
-interface WatchedItemsListProps {
-  userId: string;
-}
-
-export const WatchedItemsList = ({ userId }: WatchedItemsListProps) => {
+export const WatchedItemsList = () => {
   const { t } = useTranslation();
-  const { data: items, isPending } = useWatchedItems(userId);
+  const { data: items, isPending } = useWatchedItems();
   const deleteItem = useDeleteWatchedItem();
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -98,7 +94,6 @@ export const WatchedItemsList = ({ userId }: WatchedItemsListProps) => {
       <AddWatchedItemDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        userId={userId}
       />
     </Card>
   );

@@ -32,9 +32,9 @@ export const UserNotificationSettings = () => {
           </div>
         </Card>
 
-        <TargetsList ownerType="user" ownerId={user.id} />
-        <RulesList ownerType="user" ownerId={user.id} />
-        <WatchedItemsList userId={user.id} />
+        <TargetsList ownerType="user" ownerId={user.discordId} />
+        <RulesList ownerType="user" ownerId={user.discordId} />
+        <WatchedItemsList />
       </div>
     </ScrollArea>
   );

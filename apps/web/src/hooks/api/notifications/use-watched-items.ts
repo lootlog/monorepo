@@ -2,18 +2,15 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNotificationsClient } from "./use-notifications-client";
 import type { WatchedItem } from "./types";
 
-export const useWatchedItems = (userId: string) => {
+export const useWatchedItems = () => {
   const { client } = useNotificationsClient();
 
   return useQuery<WatchedItem[]>({
-    queryKey: ["watched-items", userId],
+    queryKey: ["watched-items"],
     queryFn: async () => {
-      const { data } = await client.get("/watched-items", {
-        params: { userId },
-      });
+      const { data } = await client.get("/watched-items");
       return data;
     },
-    enabled: !!userId,
   });
 };
 

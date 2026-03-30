@@ -6,12 +6,10 @@ import {
   NotFoundException,
   Param,
   Post,
-  Query,
-  Req,
   UseGuards,
 } from "@nestjs/common";
 import { ApiTags, ApiBearerAuth, ApiOperation } from "@nestjs/swagger";
-import { AuthGuard } from "src/shared/guards/auth.guard";
+import { AuthGuard, DiscordId } from "@lootlog/nest-shared";
 import { WatchedItemsService } from "./watched-items.service";
 import { CreateWatchedItemDto } from "./dto/create-watched-item.dto";
 
@@ -24,20 +22,20 @@ export class WatchedItemsController {
 
   @Post()
   @ApiOperation({ summary: "Add a watched item" })
-  create(@Req() req: any, @Body() dto: CreateWatchedItemDto) {
-    return this.watchedItemsService.create(req.userId, dto);
+  create(@DiscordId() discordId: string, @Body() dto: CreateWatchedItemDto) {
+    return this.watchedItemsService.create(discordId, dto);
   }
 
   @Get()
   @ApiOperation({ summary: "List watched items for a user" })
-  findByUser(@Query("userId") userId: string) {
-    return this.watchedItemsService.findByUser(userId);
+  findByUser(@DiscordId() discordId: string) {
+    return this.watchedItemsService.findByUser(discordId);
   }
 
   @Delete(":id")
   @ApiOperation({ summary: "Remove a watched item" })
-  async delete(@Req() req: any, @Param("id") id: string) {
-    const deleted = await this.watchedItemsService.delete(id, req.userId);
+  async delete(@DiscordId() discordId: string, @Param("id") id: string) {
+    const deleted = await this.watchedItemsService.delete(id, discordId);
     if (!deleted) {
       throw new NotFoundException("Watched item not found");
     }

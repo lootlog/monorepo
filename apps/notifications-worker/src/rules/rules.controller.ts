@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   NotFoundException,
   Param,
@@ -11,7 +12,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { ApiTags, ApiBearerAuth, ApiOperation } from "@nestjs/swagger";
-import { AuthGuard } from "src/shared/guards/auth.guard";
+import { AuthGuard, DiscordId } from "@lootlog/nest-shared";
 import { RulesService } from "./rules.service";
 import { CreateRuleDto } from "./dto/create-rule.dto";
 import { UpdateRuleDto } from "./dto/update-rule.dto";
@@ -50,21 +51,33 @@ export class RulesController {
 
   @Patch(":id")
   @ApiOperation({ summary: "Update a notification rule" })
-  async update(@Param("id") id: string, @Body() dto: UpdateRuleDto) {
-    const rule = await this.rulesService.update(id, dto);
-    if (!rule) {
+  async update(
+    @DiscordId() discordId: string,
+    @Param("id") id: string,
+    @Body() dto: UpdateRuleDto,
+  ) {
+    const existing = await this.rulesService.findById(id);
+    if (!existing) {
       throw new NotFoundException("Rule not found");
     }
-    return rule;
+    if (existing.ownerType === "user" && existing.ownerId !== discordId) {
+      throw new ForbiddenException();
+    }
+
+    return this.rulesService.update(id, dto);
   }
 
   @Delete(":id")
   @ApiOperation({ summary: "Delete a notification rule" })
-  async delete(@Param("id") id: string) {
-    const deleted = await this.rulesService.delete(id);
-    if (!deleted) {
+  async delete(@DiscordId() discordId: string, @Param("id") id: string) {
+    const existing = await this.rulesService.findById(id);
+    if (!existing) {
       throw new NotFoundException("Rule not found");
     }
-    return deleted;
+    if (existing.ownerType === "user" && existing.ownerId !== discordId) {
+      throw new ForbiddenException();
+    }
+
+    return this.rulesService.delete(id);
   }
 }

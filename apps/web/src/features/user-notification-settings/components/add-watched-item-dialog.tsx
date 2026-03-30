@@ -13,21 +13,24 @@ import { Label } from "@lootlog/ui/components/label";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { useCreateWatchedItem } from "@/hooks/api/notifications/use-watched-items";
 import { useNotificationTargets } from "@/hooks/api/notifications/use-notification-targets";
+import { useUser } from "@/hooks/api/user/use-user";
 
 interface AddWatchedItemDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  userId: string;
 }
 
 export const AddWatchedItemDialog = ({
   open,
   onOpenChange,
-  userId,
 }: AddWatchedItemDialogProps) => {
   const { t } = useTranslation();
+  const { user } = useUser();
   const createItem = useCreateWatchedItem();
-  const { data: targets } = useNotificationTargets("user", userId);
+  const { data: targets } = useNotificationTargets(
+    "user",
+    user?.discordId ?? "",
+  );
 
   const [itemId, setItemId] = useState("");
   const [itemName, setItemName] = useState("");
