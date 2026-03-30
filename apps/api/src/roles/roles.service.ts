@@ -52,6 +52,7 @@ export class RolesService {
           name,
           color,
           position,
+          isAdmin: admin,
           permissions: this.getAdminPermissions(admin),
         })),
       });
@@ -74,9 +75,7 @@ export class RolesService {
       });
 
       const isAdminStatusChanging =
-        existingRole !== null &&
-        PermissionResolver.isAdministrative(existingRole.permissions) !==
-          data.admin;
+        existingRole !== null && existingRole.isAdmin !== data.admin;
 
       await this.prisma.role.upsert({
         where: { id: data.id },
@@ -84,6 +83,7 @@ export class RolesService {
           name: data.name,
           color: data.color,
           position: data.position,
+          isAdmin: data.admin,
           ...(isAdminStatusChanging && { permissions }),
         },
         create: {
@@ -92,6 +92,7 @@ export class RolesService {
           name: data.name,
           color: data.color,
           position: data.position,
+          isAdmin: data.admin,
           permissions,
         },
       });

@@ -128,6 +128,7 @@ export const RoleScalarFieldEnum = {
   name: 'name',
   color: 'color',
   position: 'position',
+  isAdmin: 'isAdmin',
   permissions: 'permissions',
   lvlRangeFrom: 'lvlRangeFrom',
   lvlRangeTo: 'lvlRangeTo',

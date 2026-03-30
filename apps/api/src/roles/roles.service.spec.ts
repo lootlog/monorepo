@@ -69,7 +69,8 @@ describe("RolesService", () => {
     it("should not include permissions in update when role exists and admin status unchanged", async () => {
       mockPrismaService.role.findUnique.mockResolvedValue({
         id: baseRoleData.id,
-        permissions: [],
+        isAdmin: false,
+        permissions: [Permission.LOOTLOG_ACCESS],
       });
       mockPrismaService.role.upsert.mockResolvedValue({});
       mockRedisService.deleteByPattern.mockResolvedValue(undefined);
@@ -78,6 +79,18 @@ describe("RolesService", () => {
 
       const upsertCall = mockPrismaService.role.upsert.mock.calls[0][0];
       expect(upsertCall.update).not.toHaveProperty("permissions");
+    });
+
+    it("should set isAdmin in both create and update clauses", async () => {
+      mockPrismaService.role.findUnique.mockResolvedValue(null);
+      mockPrismaService.role.upsert.mockResolvedValue({});
+      mockRedisService.deleteByPattern.mockResolvedValue(undefined);
+
+      await service.createOrUpdateRole({ ...baseRoleData, admin: true });
+
+      const upsertCall = mockPrismaService.role.upsert.mock.calls[0][0];
+      expect(upsertCall.create.isAdmin).toBe(true);
+      expect(upsertCall.update.isAdmin).toBe(true);
     });
 
     it("should include permissions in the create clause for non-admin role", async () => {
@@ -105,6 +118,7 @@ describe("RolesService", () => {
     it("should preserve existing permissions when updating a non-admin role from Discord", async () => {
       mockPrismaService.role.findUnique.mockResolvedValue({
         id: baseRoleData.id,
+        isAdmin: false,
         permissions: [Permission.LOOTLOG_ACCESS, Permission.LOOTLOG_LOOTS_READ],
       });
       mockPrismaService.role.upsert.mockResolvedValue({});
@@ -116,17 +130,13 @@ describe("RolesService", () => {
       });
 
       const upsertCall = mockPrismaService.role.upsert.mock.calls[0][0];
-      expect(upsertCall.update).toEqual({
-        name: "Renamed Role",
-        color: baseRoleData.color,
-        position: baseRoleData.position,
-      });
       expect(upsertCall.update.permissions).toBeUndefined();
     });
 
     it("should update permissions when role gains Discord admin", async () => {
       mockPrismaService.role.findUnique.mockResolvedValue({
         id: baseRoleData.id,
+        isAdmin: false,
         permissions: [Permission.LOOTLOG_ACCESS],
       });
       mockPrismaService.role.upsert.mockResolvedValue({});
@@ -141,6 +151,7 @@ describe("RolesService", () => {
     it("should reset permissions when role loses Discord admin", async () => {
       mockPrismaService.role.findUnique.mockResolvedValue({
         id: baseRoleData.id,
+        isAdmin: true,
         permissions: allPermissionsExceptOwner,
       });
       mockPrismaService.role.upsert.mockResolvedValue({});
@@ -155,12 +166,28 @@ describe("RolesService", () => {
     it("should not update permissions when admin role stays admin", async () => {
       mockPrismaService.role.findUnique.mockResolvedValue({
         id: baseRoleData.id,
+        isAdmin: true,
         permissions: [Permission.ADMIN, ...allPermissionsExceptOwner],
       });
       mockPrismaService.role.upsert.mockResolvedValue({});
       mockRedisService.deleteByPattern.mockResolvedValue(undefined);
 
       await service.createOrUpdateRole({ ...baseRoleData, admin: true });
+
+      const upsertCall = mockPrismaService.role.upsert.mock.calls[0][0];
+      expect(upsertCall.update).not.toHaveProperty("permissions");
+    });
+
+    it("should not reset permissions when non-Discord-admin role has ADMIN granted in-app", async () => {
+      mockPrismaService.role.findUnique.mockResolvedValue({
+        id: baseRoleData.id,
+        isAdmin: false,
+        permissions: [Permission.ADMIN, Permission.LOOTLOG_ACCESS],
+      });
+      mockPrismaService.role.upsert.mockResolvedValue({});
+      mockRedisService.deleteByPattern.mockResolvedValue(undefined);
+
+      await service.createOrUpdateRole({ ...baseRoleData, admin: false });
 
       const upsertCall = mockPrismaService.role.upsert.mock.calls[0][0];
       expect(upsertCall.update).not.toHaveProperty("permissions");

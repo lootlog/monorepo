@@ -62,6 +62,7 @@ describe("KillsService", () => {
     name: "Test Role",
     color: 16711680,
     position: 1,
+    isAdmin: false,
     permissions: [Permission.LOOTLOG_LOOTS_READ],
     lvlRangeFrom: 0,
     lvlRangeTo: 500,
