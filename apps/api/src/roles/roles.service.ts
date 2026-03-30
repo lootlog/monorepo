@@ -69,12 +69,22 @@ export class RolesService {
     const permissions = this.getAdminPermissions(data.admin);
 
     try {
+      const existingRole = await this.prisma.role.findUnique({
+        where: { id: data.id },
+      });
+
+      const isAdminStatusChanging =
+        existingRole !== null &&
+        PermissionResolver.isAdministrative(existingRole.permissions) !==
+          data.admin;
+
       await this.prisma.role.upsert({
         where: { id: data.id },
         update: {
           name: data.name,
           color: data.color,
           position: data.position,
+          ...(isAdminStatusChanging && { permissions }),
         },
         create: {
           id: data.id,
