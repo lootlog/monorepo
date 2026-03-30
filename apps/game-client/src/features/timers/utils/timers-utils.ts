@@ -6,7 +6,11 @@ export type TimerWithTimeLeft = Timer & {
   maxTimeLeft: number;
   minTimeLeft: number;
   members?: GuildMember[];
-  mergedGuildIds?: Array<{ guildId: string; npcId: number }>;
+  mergedGuildIds?: Array<{
+    guildId: string;
+    npcId: number;
+    timerKey?: string;
+  }>;
 };
 
 const MANUAL_TIMER_MARGONEM_TYPE = 999;
@@ -15,7 +19,7 @@ const getTimerKey = (timer: Timer): string => {
   if (timer.npc.margonemType === MANUAL_TIMER_MARGONEM_TYPE) {
     return `manual_${timer.npc.name}_${timer.world}_${timer.npc.margonemType}`;
   }
-  return `npc_${timer.npcId}`;
+  return `timer_${timer.timerKey}`;
 };
 
 const getTimerMembers = (timer: Timer): GuildMember[] => {
@@ -23,7 +27,11 @@ const getTimerMembers = (timer: Timer): GuildMember[] => {
 };
 
 const getMergedGuildEntry = (timer: Timer) => {
-  return { guildId: timer.guildId, npcId: timer.npcId };
+  return {
+    guildId: timer.guildId,
+    npcId: timer.npcId,
+    timerKey: timer.timerKey,
+  };
 };
 
 const createMergedTimer = (timer: Timer): TimerWithTimeLeft => {

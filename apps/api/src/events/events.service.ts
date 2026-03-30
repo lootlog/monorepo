@@ -645,6 +645,7 @@ export class EventsService {
     windowStatus: "OPEN" | "WAITING" | "OVERDUE" | "NONE";
     minSpawnTime: Date | null;
     maxSpawnTime: Date | null;
+    overdueMs: number | null;
   }> {
     return this.respawnService.getHeroRespawnConfig(guildId, eventId, heroId);
   }

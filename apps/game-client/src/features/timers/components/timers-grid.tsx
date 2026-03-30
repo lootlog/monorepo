@@ -26,7 +26,7 @@ export const TimersGrid: FC<TimersGridProps> = ({
         const isHidden = hiddenTimers.includes(timer.npc.name);
         return (
           <SingleTimer
-            key={`${timer.npcId}-${timer.guildId}`}
+            key={`${timer.timerKey}-${timer.guildId}`}
             timer={timer}
             maxTimeLeft={timer.maxTimeLeft}
             minTimeLeft={timer.minTimeLeft}

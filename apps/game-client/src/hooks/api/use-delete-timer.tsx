@@ -2,7 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 
 export type UseDeleteTimerOptions = {
-  npcId: number;
+  timerKey: string;
   guildId: string;
   world?: string;
 };
@@ -12,8 +12,8 @@ export const useDeleteTimer = () => {
 
   const mutation = useMutation({
     mutationKey: ["delete-timer"],
-    mutationFn: ({ guildId, npcId, world }: UseDeleteTimerOptions) =>
-      client.delete(`/guilds/${guildId}/timers/${npcId}?world=${world}`),
+    mutationFn: ({ guildId, timerKey, world }: UseDeleteTimerOptions) =>
+      client.delete(`/guilds/${guildId}/timers/${timerKey}?world=${world}`),
     onSuccess: () => {
       console.log("onSuccess");
     },

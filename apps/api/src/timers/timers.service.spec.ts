@@ -9,9 +9,11 @@ import { validateAndCalculateSpawnTimes } from "src/timers/utils/validate-spawn-
 import { TIMER_LIMITS } from "src/timers/constants/timer-limits";
 import { RedisService } from "@lootlog/nest-shared";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import { EventsService } from "src/events/events.service";
 import { RedlockService } from "src/lib/redlock/redlock.service";
 import { getSyntheticNpcId } from "src/events/utils/get-synthetic-npc-id";
+import { buildTimerKey } from "src/timers/utils/timer-key";
+import { EventTimerHooksService } from "src/events/services/event-timer-hooks.service";
+import { ErrorKey } from "src/timers/enum/error-key.enum";
 
 describe("TimersService", () => {
   let service: TimersService;
@@ -46,7 +48,7 @@ describe("TimersService", () => {
     deleteByPattern: jest.fn(),
   };
 
-  const mockEventsService = {
+  const mockEventTimerHooksService = {
     enqueueEventHeroKillCheck: jest.fn().mockResolvedValue(undefined),
     findActiveEventHeroByNpc: jest.fn().mockResolvedValue(null),
   };
@@ -97,8 +99,8 @@ describe("TimersService", () => {
           useValue: mockRedisService,
         },
         {
-          provide: EventsService,
-          useValue: mockEventsService,
+          provide: EventTimerHooksService,
+          useValue: mockEventTimerHooksService,
         },
         {
           provide: RedlockService,
@@ -147,6 +149,7 @@ describe("TimersService", () => {
       guildId: "guild1",
       world: "test-world",
       npcId: 123,
+      timerKey: buildTimerKey(123, mockDto.npc.name),
       minSpawnTime: new Date(),
       maxSpawnTime: new Date(),
       latestRespBaseSeconds: 3600,
@@ -178,7 +181,7 @@ describe("TimersService", () => {
             timerId: {
               guildId: "guild1",
               world: "test-world",
-              npcId: 123,
+              timerKey: buildTimerKey(123, mockDto.npc.name),
             },
           },
         }),
@@ -367,7 +370,7 @@ describe("TimersService", () => {
       });
       expect(mockPrismaService.timer.upsert).not.toHaveBeenCalled();
       expect(
-        mockEventsService.enqueueEventHeroKillCheck,
+        mockEventTimerHooksService.enqueueEventHeroKillCheck,
       ).not.toHaveBeenCalled();
     });
 
@@ -429,6 +432,7 @@ describe("TimersService", () => {
         guildId: "guild1",
         world: "test-world",
         npcId: syntheticNpcId,
+        timerKey: buildTimerKey(syntheticNpcId, mockDto.npc.name),
         minSpawnTime: new Date("2026-02-18T09:27:52.727Z"),
         maxSpawnTime: new Date("2026-02-18T11:30:00.000Z"),
         latestRespBaseSeconds: 3600,
@@ -449,7 +453,7 @@ describe("TimersService", () => {
         .mockResolvedValueOnce({ ...syntheticTimer, npcId: mockDto.npc.id })
         .mockResolvedValueOnce(mockTimer);
       mockPrismaService.timer.delete.mockResolvedValue(syntheticTimer);
-      mockEventsService.findActiveEventHeroByNpc.mockResolvedValue({
+      mockEventTimerHooksService.findActiveEventHeroByNpc.mockResolvedValue({
         eventHero: { id: "hero-1", npcId: null },
         event: { id: "event-1" },
       });
@@ -466,12 +470,14 @@ describe("TimersService", () => {
           timerId: {
             guildId: "guild1",
             world: "test-world",
-            npcId: syntheticNpcId,
+            timerKey: buildTimerKey(syntheticNpcId, mockDto.npc.name),
           },
         },
       });
 
-      expect(mockEventsService.enqueueEventHeroKillCheck).toHaveBeenCalledWith(
+      expect(
+        mockEventTimerHooksService.enqueueEventHeroKillCheck,
+      ).toHaveBeenCalledWith(
         expect.objectContaining({
           timerData: expect.objectContaining({
             previousMinSpawnTime: syntheticTimer.minSpawnTime,
@@ -484,7 +490,10 @@ describe("TimersService", () => {
       expect(mockAmqpConnection.publish).toHaveBeenCalledWith(
         expect.any(String),
         expect.stringContaining("timers.delete"),
-        expect.objectContaining({ npcId: syntheticNpcId }),
+        expect.objectContaining({
+          npcId: syntheticNpcId,
+          timerKey: buildTimerKey(syntheticNpcId, mockDto.npc.name),
+        }),
       );
     });
 
@@ -496,12 +505,16 @@ describe("TimersService", () => {
 
       mockRedisService.get.mockResolvedValue(null);
       mockRedisService.set.mockResolvedValue(undefined);
-      mockEventsService.findActiveEventHeroByNpc.mockResolvedValue(null);
+      mockEventTimerHooksService.findActiveEventHeroByNpc.mockResolvedValue(
+        null,
+      );
 
       mockPrismaService.timer.findUnique.mockImplementation(
         async (args: any) => {
-          const queriedNpcId = args?.where?.timerId?.npcId;
-          if (queriedNpcId !== mockDto.npc.id) {
+          const queriedTimerKey = args?.where?.timerId?.timerKey;
+          if (
+            queriedTimerKey !== buildTimerKey(mockDto.npc.id, mockDto.npc.name)
+          ) {
             return null;
           }
           return createdTimer;
@@ -516,7 +529,10 @@ describe("TimersService", () => {
 
       mockRedlock.acquire.mockImplementation(async (keys: string[]) => {
         const key = keys[0];
-        if (key === "timer:lock:guild1:test-world:123") {
+        if (
+          key ===
+          `timer:lock:guild1:test-world:${buildTimerKey(mockDto.npc.id, mockDto.npc.name)}`
+        ) {
           if (mainLockHeld) {
             throw new ExecutionError("Lock failed");
           }
@@ -547,6 +563,60 @@ describe("TimersService", () => {
         true,
       );
       expect(mockPrismaService.timer.upsert).toHaveBeenCalledTimes(1);
+    });
+
+    it("should create separate timers for the same npcId when normalized names differ", async () => {
+      const secondDto = {
+        ...mockDto,
+        npc: {
+          ...mockDto.npc,
+          name: "Other Boss",
+        },
+      };
+      const secondTimer = {
+        ...mockTimer,
+        timerKey: buildTimerKey(secondDto.npc.id, secondDto.npc.name),
+        npc: secondDto.npc,
+      };
+
+      mockRedisService.get.mockResolvedValue(null);
+      mockRedisService.set.mockResolvedValue(undefined);
+      mockPrismaService.timer.findUnique.mockResolvedValue(null);
+      mockPrismaService.timer.upsert
+        .mockResolvedValueOnce(mockTimer)
+        .mockResolvedValueOnce(secondTimer);
+
+      const firstResult = await service.createTimerForGuild(
+        "discord123",
+        userId,
+        "guild1",
+        mockDto,
+      );
+      const secondResult = await service.createTimerForGuild(
+        "discord123",
+        userId,
+        "guild1",
+        secondDto,
+      );
+
+      expect((firstResult as { timerKey: string }).timerKey).toBe(
+        buildTimerKey(123, mockDto.npc.name),
+      );
+      expect((secondResult as { timerKey: string }).timerKey).toBe(
+        buildTimerKey(123, secondDto.npc.name),
+      );
+      expect(mockPrismaService.timer.upsert).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          where: {
+            timerId: {
+              guildId: "guild1",
+              world: "test-world",
+              timerKey: buildTimerKey(123, secondDto.npc.name),
+            },
+          },
+        }),
+      );
     });
   });
 
@@ -692,6 +762,7 @@ describe("TimersService", () => {
       guildId: "guild1",
       world: "test-world",
       npcId: 123,
+      timerKey: buildTimerKey(123, mockDto.npc.name),
       minSpawnTime: new Date(),
       maxSpawnTime: new Date(),
       latestRespBaseSeconds: 3600,
@@ -726,11 +797,21 @@ describe("TimersService", () => {
 
     it("should invalidate cache when timer is reset", async () => {
       mockRedisService.deleteByPattern.mockResolvedValue(1);
+      mockEventTimerHooksService.findActiveEventHeroByNpc.mockResolvedValue(
+        null,
+      );
       mockPrismaService.timer.findUnique.mockResolvedValue({
         ...mockTimer,
         latestRespBaseSeconds: 3600,
         latestRespawnRandomness: 10,
       });
+      mockPrismaService.timer.findMany.mockResolvedValue([
+        {
+          ...mockTimer,
+          latestRespBaseSeconds: 3600,
+          latestRespawnRandomness: 10,
+        },
+      ]);
       mockPrismaService.timer.update.mockResolvedValue(mockTimer);
 
       await service.resetTimer("discord123", "guild1", "123", {
@@ -742,8 +823,32 @@ describe("TimersService", () => {
       );
     });
 
+    it("should block resetting event timers through generic reset flow", async () => {
+      mockPrismaService.timer.findMany.mockResolvedValue([mockTimer]);
+      mockEventTimerHooksService.findActiveEventHeroByNpc.mockResolvedValue({
+        eventHero: { id: "hero-1", npcId: mockTimer.npcId },
+        event: { id: "event-1" },
+      });
+
+      await expect(
+        service.resetTimer("discord123", "guild1", "123", {
+          world: "test-world",
+        }),
+      ).rejects.toMatchObject({
+        response: { message: ErrorKey.EVENT_TIMER_CANNOT_BE_RESET },
+      });
+
+      expect(mockRedlock.acquire).not.toHaveBeenCalled();
+      expect(mockPrismaService.timer.update).not.toHaveBeenCalled();
+      expect(mockRedisService.deleteByPattern).not.toHaveBeenCalled();
+    });
+
     it("should invalidate cache when timer is deleted", async () => {
       mockRedisService.deleteByPattern.mockResolvedValue(1);
+      mockEventTimerHooksService.findActiveEventHeroByNpc.mockResolvedValue(
+        null,
+      );
+      mockPrismaService.timer.findMany.mockResolvedValue([mockTimer]);
       mockPrismaService.timer.delete.mockResolvedValue(mockTimer);
 
       await service.deleteTimer("guild1", "123", "test-world");
@@ -752,12 +857,30 @@ describe("TimersService", () => {
         "timer:list:guild1:*",
       );
     });
+
+    it("should block deleting event timers through generic delete flow", async () => {
+      mockPrismaService.timer.findMany.mockResolvedValue([mockTimer]);
+      mockEventTimerHooksService.findActiveEventHeroByNpc.mockResolvedValue({
+        eventHero: { id: "hero-1", npcId: mockTimer.npcId },
+        event: { id: "event-1" },
+      });
+
+      await expect(
+        service.deleteTimer("guild1", "123", "test-world"),
+      ).rejects.toMatchObject({
+        response: { message: ErrorKey.EVENT_TIMER_MUST_USE_EVENT_CLOSE },
+      });
+
+      expect(mockPrismaService.timer.delete).not.toHaveBeenCalled();
+      expect(mockRedisService.deleteByPattern).not.toHaveBeenCalled();
+    });
   });
 
   describe("searchNpcsWithTimerData", () => {
     const mockTimersQueryResult = [
       {
         npcId: 123,
+        timerKey: buildTimerKey(123, "Test Boss"),
         npc: {
           name: "Test Boss",
           lvl: 100,
@@ -772,6 +895,7 @@ describe("TimersService", () => {
       },
       {
         npcId: 124,
+        timerKey: buildTimerKey(124, "Test Elite"),
         npc: {
           name: "Test Elite",
           lvl: 150,
@@ -802,6 +926,7 @@ describe("TimersService", () => {
       expect(result).toHaveLength(2);
       expect(result[0]).toEqual({
         npcId: 123,
+        timerKey: buildTimerKey(123, "Test Boss"),
         name: "Test Boss",
         lvl: 100,
         type: "ELITE",

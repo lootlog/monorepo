@@ -3,7 +3,7 @@ import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 
 export type UseResetTimerOptions = {
   world: string;
-  npcId: number;
+  timerKey: string;
   guildId: string;
 };
 
@@ -12,8 +12,8 @@ export const useResetTimer = () => {
 
   const mutation = useMutation({
     mutationKey: ["reset-timer"],
-    mutationFn: ({ guildId, npcId, ...rest }: UseResetTimerOptions) =>
-      client.patch(`/guilds/${guildId}/timers/${npcId}/reset`, rest),
+    mutationFn: ({ guildId, timerKey, ...rest }: UseResetTimerOptions) =>
+      client.patch(`/guilds/${guildId}/timers/${timerKey}/reset`, rest),
     onSuccess: () => {
       console.log("onSuccess");
     },

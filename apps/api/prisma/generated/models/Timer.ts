@@ -44,6 +44,7 @@ export type TimerMinAggregateOutputType = {
   createdById: number | null
   guildId: string | null
   npcId: number | null
+  timerKey: string | null
   world: string | null
   minSpawnTime: Date | null
   maxSpawnTime: Date | null
@@ -60,6 +61,7 @@ export type TimerMaxAggregateOutputType = {
   createdById: number | null
   guildId: string | null
   npcId: number | null
+  timerKey: string | null
   world: string | null
   minSpawnTime: Date | null
   maxSpawnTime: Date | null
@@ -76,6 +78,7 @@ export type TimerCountAggregateOutputType = {
   createdById: number
   guildId: number
   npcId: number
+  timerKey: number
   world: number
   minSpawnTime: number
   maxSpawnTime: number
@@ -109,6 +112,7 @@ export type TimerMinAggregateInputType = {
   createdById?: true
   guildId?: true
   npcId?: true
+  timerKey?: true
   world?: true
   minSpawnTime?: true
   maxSpawnTime?: true
@@ -125,6 +129,7 @@ export type TimerMaxAggregateInputType = {
   createdById?: true
   guildId?: true
   npcId?: true
+  timerKey?: true
   world?: true
   minSpawnTime?: true
   maxSpawnTime?: true
@@ -141,6 +146,7 @@ export type TimerCountAggregateInputType = {
   createdById?: true
   guildId?: true
   npcId?: true
+  timerKey?: true
   world?: true
   minSpawnTime?: true
   maxSpawnTime?: true
@@ -245,6 +251,7 @@ export type TimerGroupByOutputType = {
   createdById: number
   guildId: string
   npcId: number
+  timerKey: string
   world: string
   minSpawnTime: Date
   maxSpawnTime: Date
@@ -285,6 +292,7 @@ export type TimerWhereInput = {
   createdById?: Prisma.IntFilter<"Timer"> | number
   guildId?: Prisma.StringFilter<"Timer"> | string
   npcId?: Prisma.IntFilter<"Timer"> | number
+  timerKey?: Prisma.StringFilter<"Timer"> | string
   world?: Prisma.StringFilter<"Timer"> | string
   minSpawnTime?: Prisma.DateTimeFilter<"Timer"> | Date | string
   maxSpawnTime?: Prisma.DateTimeFilter<"Timer"> | Date | string
@@ -304,6 +312,7 @@ export type TimerOrderByWithRelationInput = {
   createdById?: Prisma.SortOrder
   guildId?: Prisma.SortOrder
   npcId?: Prisma.SortOrder
+  timerKey?: Prisma.SortOrder
   world?: Prisma.SortOrder
   minSpawnTime?: Prisma.SortOrder
   maxSpawnTime?: Prisma.SortOrder
@@ -327,6 +336,7 @@ export type TimerWhereUniqueInput = Prisma.AtLeast<{
   createdById?: Prisma.IntFilter<"Timer"> | number
   guildId?: Prisma.StringFilter<"Timer"> | string
   npcId?: Prisma.IntFilter<"Timer"> | number
+  timerKey?: Prisma.StringFilter<"Timer"> | string
   world?: Prisma.StringFilter<"Timer"> | string
   minSpawnTime?: Prisma.DateTimeFilter<"Timer"> | Date | string
   maxSpawnTime?: Prisma.DateTimeFilter<"Timer"> | Date | string
@@ -346,6 +356,7 @@ export type TimerOrderByWithAggregationInput = {
   createdById?: Prisma.SortOrder
   guildId?: Prisma.SortOrder
   npcId?: Prisma.SortOrder
+  timerKey?: Prisma.SortOrder
   world?: Prisma.SortOrder
   minSpawnTime?: Prisma.SortOrder
   maxSpawnTime?: Prisma.SortOrder
@@ -371,6 +382,7 @@ export type TimerScalarWhereWithAggregatesInput = {
   createdById?: Prisma.IntWithAggregatesFilter<"Timer"> | number
   guildId?: Prisma.StringWithAggregatesFilter<"Timer"> | string
   npcId?: Prisma.IntWithAggregatesFilter<"Timer"> | number
+  timerKey?: Prisma.StringWithAggregatesFilter<"Timer"> | string
   world?: Prisma.StringWithAggregatesFilter<"Timer"> | string
   minSpawnTime?: Prisma.DateTimeWithAggregatesFilter<"Timer"> | Date | string
   maxSpawnTime?: Prisma.DateTimeWithAggregatesFilter<"Timer"> | Date | string
@@ -386,6 +398,7 @@ export type TimerScalarWhereWithAggregatesInput = {
 
 export type TimerCreateInput = {
   npcId: number
+  timerKey: string
   world: string
   minSpawnTime: Date | string
   maxSpawnTime: Date | string
@@ -405,6 +418,7 @@ export type TimerUncheckedCreateInput = {
   createdById: number
   guildId: string
   npcId: number
+  timerKey: string
   world: string
   minSpawnTime: Date | string
   maxSpawnTime: Date | string
@@ -420,6 +434,7 @@ export type TimerUncheckedCreateInput = {
 
 export type TimerUpdateInput = {
   npcId?: Prisma.IntFieldUpdateOperationsInput | number
+  timerKey?: Prisma.StringFieldUpdateOperationsInput | string
   world?: Prisma.StringFieldUpdateOperationsInput | string
   minSpawnTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   maxSpawnTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -439,6 +454,7 @@ export type TimerUncheckedUpdateInput = {
   createdById?: Prisma.IntFieldUpdateOperationsInput | number
   guildId?: Prisma.StringFieldUpdateOperationsInput | string
   npcId?: Prisma.IntFieldUpdateOperationsInput | number
+  timerKey?: Prisma.StringFieldUpdateOperationsInput | string
   world?: Prisma.StringFieldUpdateOperationsInput | string
   minSpawnTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   maxSpawnTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -456,6 +472,7 @@ export type TimerCreateManyInput = {
   createdById: number
   guildId: string
   npcId: number
+  timerKey: string
   world: string
   minSpawnTime: Date | string
   maxSpawnTime: Date | string
@@ -471,6 +488,7 @@ export type TimerCreateManyInput = {
 
 export type TimerUpdateManyMutationInput = {
   npcId?: Prisma.IntFieldUpdateOperationsInput | number
+  timerKey?: Prisma.StringFieldUpdateOperationsInput | string
   world?: Prisma.StringFieldUpdateOperationsInput | string
   minSpawnTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   maxSpawnTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -488,6 +506,7 @@ export type TimerUncheckedUpdateManyInput = {
   createdById?: Prisma.IntFieldUpdateOperationsInput | number
   guildId?: Prisma.StringFieldUpdateOperationsInput | string
   npcId?: Prisma.IntFieldUpdateOperationsInput | number
+  timerKey?: Prisma.StringFieldUpdateOperationsInput | string
   world?: Prisma.StringFieldUpdateOperationsInput | string
   minSpawnTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   maxSpawnTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -514,13 +533,14 @@ export type TimerOrderByRelationAggregateInput = {
 export type TimerTimerIdCompoundUniqueInput = {
   guildId: string
   world: string
-  npcId: number
+  timerKey: string
 }
 
 export type TimerCountOrderByAggregateInput = {
   createdById?: Prisma.SortOrder
   guildId?: Prisma.SortOrder
   npcId?: Prisma.SortOrder
+  timerKey?: Prisma.SortOrder
   world?: Prisma.SortOrder
   minSpawnTime?: Prisma.SortOrder
   maxSpawnTime?: Prisma.SortOrder
@@ -545,6 +565,7 @@ export type TimerMaxOrderByAggregateInput = {
   createdById?: Prisma.SortOrder
   guildId?: Prisma.SortOrder
   npcId?: Prisma.SortOrder
+  timerKey?: Prisma.SortOrder
   world?: Prisma.SortOrder
   minSpawnTime?: Prisma.SortOrder
   maxSpawnTime?: Prisma.SortOrder
@@ -561,6 +582,7 @@ export type TimerMinOrderByAggregateInput = {
   createdById?: Prisma.SortOrder
   guildId?: Prisma.SortOrder
   npcId?: Prisma.SortOrder
+  timerKey?: Prisma.SortOrder
   world?: Prisma.SortOrder
   minSpawnTime?: Prisma.SortOrder
   maxSpawnTime?: Prisma.SortOrder
@@ -666,6 +688,7 @@ export type TimerUncheckedUpdateManyWithoutMemberNestedInput = {
 
 export type TimerCreateWithoutGuildInput = {
   npcId: number
+  timerKey: string
   world: string
   minSpawnTime: Date | string
   maxSpawnTime: Date | string
@@ -683,6 +706,7 @@ export type TimerCreateWithoutGuildInput = {
 export type TimerUncheckedCreateWithoutGuildInput = {
   createdById: number
   npcId: number
+  timerKey: string
   world: string
   minSpawnTime: Date | string
   maxSpawnTime: Date | string
@@ -729,6 +753,7 @@ export type TimerScalarWhereInput = {
   createdById?: Prisma.IntFilter<"Timer"> | number
   guildId?: Prisma.StringFilter<"Timer"> | string
   npcId?: Prisma.IntFilter<"Timer"> | number
+  timerKey?: Prisma.StringFilter<"Timer"> | string
   world?: Prisma.StringFilter<"Timer"> | string
   minSpawnTime?: Prisma.DateTimeFilter<"Timer"> | Date | string
   maxSpawnTime?: Prisma.DateTimeFilter<"Timer"> | Date | string
@@ -744,6 +769,7 @@ export type TimerScalarWhereInput = {
 
 export type TimerCreateWithoutMemberInput = {
   npcId: number
+  timerKey: string
   world: string
   minSpawnTime: Date | string
   maxSpawnTime: Date | string
@@ -761,6 +787,7 @@ export type TimerCreateWithoutMemberInput = {
 export type TimerUncheckedCreateWithoutMemberInput = {
   guildId: string
   npcId: number
+  timerKey: string
   world: string
   minSpawnTime: Date | string
   maxSpawnTime: Date | string
@@ -803,6 +830,7 @@ export type TimerUpdateManyWithWhereWithoutMemberInput = {
 export type TimerCreateManyGuildInput = {
   createdById: number
   npcId: number
+  timerKey: string
   world: string
   minSpawnTime: Date | string
   maxSpawnTime: Date | string
@@ -818,6 +846,7 @@ export type TimerCreateManyGuildInput = {
 
 export type TimerUpdateWithoutGuildInput = {
   npcId?: Prisma.IntFieldUpdateOperationsInput | number
+  timerKey?: Prisma.StringFieldUpdateOperationsInput | string
   world?: Prisma.StringFieldUpdateOperationsInput | string
   minSpawnTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   maxSpawnTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -835,6 +864,7 @@ export type TimerUpdateWithoutGuildInput = {
 export type TimerUncheckedUpdateWithoutGuildInput = {
   createdById?: Prisma.IntFieldUpdateOperationsInput | number
   npcId?: Prisma.IntFieldUpdateOperationsInput | number
+  timerKey?: Prisma.StringFieldUpdateOperationsInput | string
   world?: Prisma.StringFieldUpdateOperationsInput | string
   minSpawnTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   maxSpawnTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -851,6 +881,7 @@ export type TimerUncheckedUpdateWithoutGuildInput = {
 export type TimerUncheckedUpdateManyWithoutGuildInput = {
   createdById?: Prisma.IntFieldUpdateOperationsInput | number
   npcId?: Prisma.IntFieldUpdateOperationsInput | number
+  timerKey?: Prisma.StringFieldUpdateOperationsInput | string
   world?: Prisma.StringFieldUpdateOperationsInput | string
   minSpawnTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   maxSpawnTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -867,6 +898,7 @@ export type TimerUncheckedUpdateManyWithoutGuildInput = {
 export type TimerCreateManyMemberInput = {
   guildId: string
   npcId: number
+  timerKey: string
   world: string
   minSpawnTime: Date | string
   maxSpawnTime: Date | string
@@ -882,6 +914,7 @@ export type TimerCreateManyMemberInput = {
 
 export type TimerUpdateWithoutMemberInput = {
   npcId?: Prisma.IntFieldUpdateOperationsInput | number
+  timerKey?: Prisma.StringFieldUpdateOperationsInput | string
   world?: Prisma.StringFieldUpdateOperationsInput | string
   minSpawnTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   maxSpawnTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -899,6 +932,7 @@ export type TimerUpdateWithoutMemberInput = {
 export type TimerUncheckedUpdateWithoutMemberInput = {
   guildId?: Prisma.StringFieldUpdateOperationsInput | string
   npcId?: Prisma.IntFieldUpdateOperationsInput | number
+  timerKey?: Prisma.StringFieldUpdateOperationsInput | string
   world?: Prisma.StringFieldUpdateOperationsInput | string
   minSpawnTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   maxSpawnTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -915,6 +949,7 @@ export type TimerUncheckedUpdateWithoutMemberInput = {
 export type TimerUncheckedUpdateManyWithoutMemberInput = {
   guildId?: Prisma.StringFieldUpdateOperationsInput | string
   npcId?: Prisma.IntFieldUpdateOperationsInput | number
+  timerKey?: Prisma.StringFieldUpdateOperationsInput | string
   world?: Prisma.StringFieldUpdateOperationsInput | string
   minSpawnTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   maxSpawnTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -934,6 +969,7 @@ export type TimerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   createdById?: boolean
   guildId?: boolean
   npcId?: boolean
+  timerKey?: boolean
   world?: boolean
   minSpawnTime?: boolean
   maxSpawnTime?: boolean
@@ -953,6 +989,7 @@ export type TimerSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   createdById?: boolean
   guildId?: boolean
   npcId?: boolean
+  timerKey?: boolean
   world?: boolean
   minSpawnTime?: boolean
   maxSpawnTime?: boolean
@@ -972,6 +1009,7 @@ export type TimerSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   createdById?: boolean
   guildId?: boolean
   npcId?: boolean
+  timerKey?: boolean
   world?: boolean
   minSpawnTime?: boolean
   maxSpawnTime?: boolean
@@ -991,6 +1029,7 @@ export type TimerSelectScalar = {
   createdById?: boolean
   guildId?: boolean
   npcId?: boolean
+  timerKey?: boolean
   world?: boolean
   minSpawnTime?: boolean
   maxSpawnTime?: boolean
@@ -1004,7 +1043,7 @@ export type TimerSelectScalar = {
   updatedAt?: boolean
 }
 
-export type TimerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"createdById" | "guildId" | "npcId" | "world" | "minSpawnTime" | "maxSpawnTime" | "latestRespBaseSeconds" | "latestRespawnRandomness" | "tempId" | "wasReset" | "npc" | "windowOpenedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["timer"]>
+export type TimerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"createdById" | "guildId" | "npcId" | "timerKey" | "world" | "minSpawnTime" | "maxSpawnTime" | "latestRespBaseSeconds" | "latestRespawnRandomness" | "tempId" | "wasReset" | "npc" | "windowOpenedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["timer"]>
 export type TimerInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   member?: boolean | Prisma.MemberDefaultArgs<ExtArgs>
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
@@ -1028,6 +1067,7 @@ export type $TimerPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     createdById: number
     guildId: string
     npcId: number
+    timerKey: string
     world: string
     minSpawnTime: Date
     maxSpawnTime: Date
@@ -1467,6 +1507,7 @@ export interface TimerFieldRefs {
   readonly createdById: Prisma.FieldRef<"Timer", 'Int'>
   readonly guildId: Prisma.FieldRef<"Timer", 'String'>
   readonly npcId: Prisma.FieldRef<"Timer", 'Int'>
+  readonly timerKey: Prisma.FieldRef<"Timer", 'String'>
   readonly world: Prisma.FieldRef<"Timer", 'String'>
   readonly minSpawnTime: Prisma.FieldRef<"Timer", 'DateTime'>
   readonly maxSpawnTime: Prisma.FieldRef<"Timer", 'DateTime'>
