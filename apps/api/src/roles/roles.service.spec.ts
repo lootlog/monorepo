@@ -62,17 +62,45 @@ describe("RolesService", () => {
       admin: false,
     };
 
-    it("should not include permissions in the update clause", async () => {
+    it("should not change permissions for existing non-admin role update", async () => {
+      mockPrismaService.role.findUnique.mockResolvedValue({
+        permissions: [Permission.LOOTLOG_ACCESS],
+      });
       mockPrismaService.role.upsert.mockResolvedValue({});
       mockRedisService.deleteByPattern.mockResolvedValue(undefined);
 
       await service.createOrUpdateRole(baseRoleData);
 
       const upsertCall = mockPrismaService.role.upsert.mock.calls[0][0];
-      expect(upsertCall.update).not.toHaveProperty("permissions");
+      expect(upsertCall.update.permissions).toBeUndefined();
+    });
+
+    it("should not change permissions for existing admin role update when admin flag stays true", async () => {
+      mockPrismaService.role.findUnique.mockResolvedValue({
+        permissions: Object.values(Permission).filter(
+          (p) => p !== Permission.OWNER,
+        ),
+      });
+      mockPrismaService.role.upsert.mockResolvedValue({});
+      mockRedisService.deleteByPattern.mockResolvedValue(undefined);
+
+      await service.createOrUpdateRole({
+        ...baseRoleData,
+        admin: true,
+        color: 0x00ff00,
+      });
+
+      const upsertCall = mockPrismaService.role.upsert.mock.calls[0][0];
+      expect(upsertCall.update).toEqual({
+        name: baseRoleData.name,
+        color: 0x00ff00,
+        position: baseRoleData.position,
+      });
+      expect(upsertCall.update.permissions).toBeUndefined();
     });
 
     it("should include permissions in the create clause for non-admin role", async () => {
+      mockPrismaService.role.findUnique.mockResolvedValue(null);
       mockPrismaService.role.upsert.mockResolvedValue({});
       mockRedisService.deleteByPattern.mockResolvedValue(undefined);
 
@@ -83,6 +111,7 @@ describe("RolesService", () => {
     });
 
     it("should include all permissions except OWNER in the create clause for admin role", async () => {
+      mockPrismaService.role.findUnique.mockResolvedValue(null);
       mockPrismaService.role.upsert.mockResolvedValue({});
       mockRedisService.deleteByPattern.mockResolvedValue(undefined);
 
@@ -95,7 +124,28 @@ describe("RolesService", () => {
       expect(upsertCall.create.permissions).toEqual(expectedPermissions);
     });
 
-    it("should preserve existing permissions when updating a role from Discord", async () => {
+    it("should include all permissions except OWNER when role gains admin on Discord", async () => {
+      mockPrismaService.role.findUnique.mockResolvedValue({
+        permissions: [Permission.LOOTLOG_ACCESS],
+      });
+      mockPrismaService.role.upsert.mockResolvedValue({});
+      mockRedisService.deleteByPattern.mockResolvedValue(undefined);
+
+      await service.createOrUpdateRole({ ...baseRoleData, admin: true });
+
+      const upsertCall = mockPrismaService.role.upsert.mock.calls[0][0];
+      const expectedPermissions = Object.values(Permission).filter(
+        (p) => p !== Permission.OWNER,
+      );
+      expect(upsertCall.update.permissions).toEqual(expectedPermissions);
+    });
+
+    it("should update role fields and clear permissions when role loses admin on Discord", async () => {
+      mockPrismaService.role.findUnique.mockResolvedValue({
+        permissions: Object.values(Permission).filter(
+          (p) => p !== Permission.OWNER,
+        ),
+      });
       mockPrismaService.role.upsert.mockResolvedValue({});
       mockRedisService.deleteByPattern.mockResolvedValue(undefined);
 
@@ -109,11 +159,27 @@ describe("RolesService", () => {
         name: "Renamed Role",
         color: baseRoleData.color,
         position: baseRoleData.position,
+        permissions: [],
       });
-      expect(upsertCall.update.permissions).toBeUndefined();
+    });
+
+    it("should look up the existing role before deciding whether to sync permissions", async () => {
+      mockPrismaService.role.findUnique.mockResolvedValue({
+        permissions: [Permission.LOOTLOG_ACCESS],
+      });
+      mockPrismaService.role.upsert.mockResolvedValue({});
+      mockRedisService.deleteByPattern.mockResolvedValue(undefined);
+
+      await service.createOrUpdateRole(baseRoleData);
+
+      expect(mockPrismaService.role.findUnique).toHaveBeenCalledWith({
+        where: { id: baseRoleData.id, guildId: baseRoleData.guildId },
+        select: { permissions: true },
+      });
     });
 
     it("should invalidate permissions cache after upsert", async () => {
+      mockPrismaService.role.findUnique.mockResolvedValue(null);
       mockPrismaService.role.upsert.mockResolvedValue({});
       mockRedisService.deleteByPattern.mockResolvedValue(undefined);
 
@@ -123,6 +189,7 @@ describe("RolesService", () => {
     });
 
     it("should log error and not clear cache when upsert fails", async () => {
+      mockPrismaService.role.findUnique.mockResolvedValue(null);
       mockPrismaService.role.upsert.mockRejectedValue(new Error("DB error"));
 
       await service.createOrUpdateRole(baseRoleData);
