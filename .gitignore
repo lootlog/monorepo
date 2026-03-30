@@ -67,3 +67,6 @@ apps/api/scripts/**
 # Profiles & Performance
 apps/api/profiles/
 perf/
+
+playground/**
+playground
