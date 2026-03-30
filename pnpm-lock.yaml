@@ -492,8 +492,8 @@ importers:
         specifier: ^17.3.1
         version: 17.3.1
       drizzle-orm:
-        specifier: 1.0.0-beta.19
-        version: 1.0.0-beta.19(@electric-sql/pglite@0.4.1)(@opentelemetry/api@1.9.1)(@sinclair/typebox@0.34.48)(@types/mssql@9.1.9(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(valibot@1.2.0(typescript@5.9.3))(zod@4.3.6)
+        specifier: 1.0.0-beta.20
+        version: 1.0.0-beta.20(@electric-sql/pglite@0.4.1)(@opentelemetry/api@1.9.1)(@sinclair/typebox@0.34.48)(@types/mssql@9.1.9(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(valibot@1.2.0(typescript@5.9.3))(zod@4.3.6)
       fastify:
         specifier: ^5.8.4
         version: 5.8.4
@@ -8087,8 +8087,8 @@ packages:
     resolution: {integrity: sha512-LO9cz8iipjyOROaBLmVAhu1WT4JGd8QKSc0XYhnO0FGXP5FappHII52lHcxfj2j+vVuDCTjoqeTTvW1N9NJYZQ==}
     hasBin: true
 
-  drizzle-orm@1.0.0-beta.19:
-    resolution: {integrity: sha512-wL8FoHl9NRVYdrescFWyAVY5rNuEmbY4KDqO6Qo4RTVt1rYMbz7btq5Mhg91GN3x+qeUbQ83l9QkHYd4QmVTvg==}
+  drizzle-orm@1.0.0-beta.20:
+    resolution: {integrity: sha512-7qiuw+Z6yGr+ywt3PS5dP6UCfdymIuFT/ni6GnPGzLhkBIolNBTo4ByMBWTxJ7dW/Ya6d73GtkeuKfcVcriVHA==}
     peerDependencies:
       '@aws-sdk/client-rds-data': '>=3'
       '@cloudflare/workers-types': '>=4'
@@ -16616,7 +16616,7 @@ snapshots:
     dependencies:
       cluster-key-slot: 1.1.2
 
-  '@reduxjs/toolkit@2.11.2(react-redux@9.2.0(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)':
+  '@reduxjs/toolkit@2.11.2(react-redux@9.2.0(@types/react@19.2.14)(react@19.2.4)(redux@5.0.1))(react@19.2.4)':
     dependencies:
       '@standard-schema/spec': 1.1.0
       '@standard-schema/utils': 0.3.0
@@ -19315,7 +19315,7 @@ snapshots:
       get-tsconfig: 4.13.7
       jiti: 2.6.1
 
-  drizzle-orm@1.0.0-beta.19(@electric-sql/pglite@0.4.1)(@opentelemetry/api@1.9.1)(@sinclair/typebox@0.34.48)(@types/mssql@9.1.9(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(valibot@1.2.0(typescript@5.9.3))(zod@4.3.6):
+  drizzle-orm@1.0.0-beta.20(@electric-sql/pglite@0.4.1)(@opentelemetry/api@1.9.1)(@sinclair/typebox@0.34.48)(@types/mssql@9.1.9(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(valibot@1.2.0(typescript@5.9.3))(zod@4.3.6):
     dependencies:
       '@types/mssql': 9.1.9(@azure/core-client@1.10.1)
       mssql: 11.0.1(@azure/core-client@1.10.1)
@@ -22743,7 +22743,7 @@ snapshots:
 
   recharts@3.8.1(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react-is@18.3.1)(react@19.2.4)(redux@5.0.1):
     dependencies:
-      '@reduxjs/toolkit': 2.11.2(react-redux@9.2.0(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)
+      '@reduxjs/toolkit': 2.11.2(react-redux@9.2.0(@types/react@19.2.14)(react@19.2.4)(redux@5.0.1))(react@19.2.4)
       clsx: 2.1.1
       decimal.js-light: 2.5.1
       es-toolkit: 1.45.1
