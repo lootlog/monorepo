@@ -29,7 +29,7 @@ describe("KillsController", () => {
     name: "Test Role",
     color: 16711680,
     position: 1,
-    isAdmin: false,
+    isDiscordAdmin: false,
     permissions: [Permission.LOOTLOG_LOOTS_READ],
     lvlRangeFrom: 1,
     lvlRangeTo: 500,

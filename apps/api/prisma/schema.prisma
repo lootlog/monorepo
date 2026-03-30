@@ -149,7 +149,7 @@ model Role {
   name         String
   color        Int?
   position     Int?
-  isAdmin      Boolean      @default(false)
+  isDiscordAdmin Boolean     @default(false)
   permissions  Permission[] @default([])
   lvlRangeFrom Int?         @default(0)
   lvlRangeTo   Int?         @default(500)

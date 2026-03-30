@@ -1,2 +1,2 @@
 -- AlterTable
-ALTER TABLE "Role" ADD COLUMN "isAdmin" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "Role" ADD COLUMN "isDiscordAdmin" BOOLEAN NOT NULL DEFAULT false;

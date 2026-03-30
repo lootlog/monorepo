@@ -46,7 +46,7 @@ export type RoleMinAggregateOutputType = {
   name: string | null
   color: number | null
   position: number | null
-  isAdmin: boolean | null
+  isDiscordAdmin: boolean | null
   lvlRangeFrom: number | null
   lvlRangeTo: number | null
   createdAt: Date | null
@@ -59,7 +59,7 @@ export type RoleMaxAggregateOutputType = {
   name: string | null
   color: number | null
   position: number | null
-  isAdmin: boolean | null
+  isDiscordAdmin: boolean | null
   lvlRangeFrom: number | null
   lvlRangeTo: number | null
   createdAt: Date | null
@@ -72,7 +72,7 @@ export type RoleCountAggregateOutputType = {
   name: number
   color: number
   position: number
-  isAdmin: number
+  isDiscordAdmin: number
   permissions: number
   lvlRangeFrom: number
   lvlRangeTo: number
@@ -102,7 +102,7 @@ export type RoleMinAggregateInputType = {
   name?: true
   color?: true
   position?: true
-  isAdmin?: true
+  isDiscordAdmin?: true
   lvlRangeFrom?: true
   lvlRangeTo?: true
   createdAt?: true
@@ -115,7 +115,7 @@ export type RoleMaxAggregateInputType = {
   name?: true
   color?: true
   position?: true
-  isAdmin?: true
+  isDiscordAdmin?: true
   lvlRangeFrom?: true
   lvlRangeTo?: true
   createdAt?: true
@@ -128,7 +128,7 @@ export type RoleCountAggregateInputType = {
   name?: true
   color?: true
   position?: true
-  isAdmin?: true
+  isDiscordAdmin?: true
   permissions?: true
   lvlRangeFrom?: true
   lvlRangeTo?: true
@@ -229,7 +229,7 @@ export type RoleGroupByOutputType = {
   name: string
   color: number | null
   position: number | null
-  isAdmin: boolean
+  isDiscordAdmin: boolean
   permissions: $Enums.Permission[]
   lvlRangeFrom: number | null
   lvlRangeTo: number | null
@@ -266,7 +266,7 @@ export type RoleWhereInput = {
   name?: Prisma.StringFilter<"Role"> | string
   color?: Prisma.IntNullableFilter<"Role"> | number | null
   position?: Prisma.IntNullableFilter<"Role"> | number | null
-  isAdmin?: Prisma.BoolFilter<"Role"> | boolean
+  isDiscordAdmin?: Prisma.BoolFilter<"Role"> | boolean
   permissions?: Prisma.EnumPermissionNullableListFilter<"Role">
   lvlRangeFrom?: Prisma.IntNullableFilter<"Role"> | number | null
   lvlRangeTo?: Prisma.IntNullableFilter<"Role"> | number | null
@@ -282,7 +282,7 @@ export type RoleOrderByWithRelationInput = {
   name?: Prisma.SortOrder
   color?: Prisma.SortOrderInput | Prisma.SortOrder
   position?: Prisma.SortOrderInput | Prisma.SortOrder
-  isAdmin?: Prisma.SortOrder
+  isDiscordAdmin?: Prisma.SortOrder
   permissions?: Prisma.SortOrder
   lvlRangeFrom?: Prisma.SortOrderInput | Prisma.SortOrder
   lvlRangeTo?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -302,7 +302,7 @@ export type RoleWhereUniqueInput = Prisma.AtLeast<{
   name?: Prisma.StringFilter<"Role"> | string
   color?: Prisma.IntNullableFilter<"Role"> | number | null
   position?: Prisma.IntNullableFilter<"Role"> | number | null
-  isAdmin?: Prisma.BoolFilter<"Role"> | boolean
+  isDiscordAdmin?: Prisma.BoolFilter<"Role"> | boolean
   permissions?: Prisma.EnumPermissionNullableListFilter<"Role">
   lvlRangeFrom?: Prisma.IntNullableFilter<"Role"> | number | null
   lvlRangeTo?: Prisma.IntNullableFilter<"Role"> | number | null
@@ -318,7 +318,7 @@ export type RoleOrderByWithAggregationInput = {
   name?: Prisma.SortOrder
   color?: Prisma.SortOrderInput | Prisma.SortOrder
   position?: Prisma.SortOrderInput | Prisma.SortOrder
-  isAdmin?: Prisma.SortOrder
+  isDiscordAdmin?: Prisma.SortOrder
   permissions?: Prisma.SortOrder
   lvlRangeFrom?: Prisma.SortOrderInput | Prisma.SortOrder
   lvlRangeTo?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -340,7 +340,7 @@ export type RoleScalarWhereWithAggregatesInput = {
   name?: Prisma.StringWithAggregatesFilter<"Role"> | string
   color?: Prisma.IntNullableWithAggregatesFilter<"Role"> | number | null
   position?: Prisma.IntNullableWithAggregatesFilter<"Role"> | number | null
-  isAdmin?: Prisma.BoolWithAggregatesFilter<"Role"> | boolean
+  isDiscordAdmin?: Prisma.BoolWithAggregatesFilter<"Role"> | boolean
   permissions?: Prisma.EnumPermissionNullableListFilter<"Role">
   lvlRangeFrom?: Prisma.IntNullableWithAggregatesFilter<"Role"> | number | null
   lvlRangeTo?: Prisma.IntNullableWithAggregatesFilter<"Role"> | number | null
@@ -353,7 +353,7 @@ export type RoleCreateInput = {
   name: string
   color?: number | null
   position?: number | null
-  isAdmin?: boolean
+  isDiscordAdmin?: boolean
   permissions?: Prisma.RoleCreatepermissionsInput | $Enums.Permission[]
   lvlRangeFrom?: number | null
   lvlRangeTo?: number | null
@@ -369,7 +369,7 @@ export type RoleUncheckedCreateInput = {
   name: string
   color?: number | null
   position?: number | null
-  isAdmin?: boolean
+  isDiscordAdmin?: boolean
   permissions?: Prisma.RoleCreatepermissionsInput | $Enums.Permission[]
   lvlRangeFrom?: number | null
   lvlRangeTo?: number | null
@@ -383,7 +383,7 @@ export type RoleUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   color?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   position?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  isAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isDiscordAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   permissions?: Prisma.RoleUpdatepermissionsInput | $Enums.Permission[]
   lvlRangeFrom?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   lvlRangeTo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -399,7 +399,7 @@ export type RoleUncheckedUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   color?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   position?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  isAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isDiscordAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   permissions?: Prisma.RoleUpdatepermissionsInput | $Enums.Permission[]
   lvlRangeFrom?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   lvlRangeTo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -414,7 +414,7 @@ export type RoleCreateManyInput = {
   name: string
   color?: number | null
   position?: number | null
-  isAdmin?: boolean
+  isDiscordAdmin?: boolean
   permissions?: Prisma.RoleCreatepermissionsInput | $Enums.Permission[]
   lvlRangeFrom?: number | null
   lvlRangeTo?: number | null
@@ -427,7 +427,7 @@ export type RoleUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   color?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   position?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  isAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isDiscordAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   permissions?: Prisma.RoleUpdatepermissionsInput | $Enums.Permission[]
   lvlRangeFrom?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   lvlRangeTo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -441,7 +441,7 @@ export type RoleUncheckedUpdateManyInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   color?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   position?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  isAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isDiscordAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   permissions?: Prisma.RoleUpdatepermissionsInput | $Enums.Permission[]
   lvlRangeFrom?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   lvlRangeTo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -478,7 +478,7 @@ export type RoleCountOrderByAggregateInput = {
   name?: Prisma.SortOrder
   color?: Prisma.SortOrder
   position?: Prisma.SortOrder
-  isAdmin?: Prisma.SortOrder
+  isDiscordAdmin?: Prisma.SortOrder
   permissions?: Prisma.SortOrder
   lvlRangeFrom?: Prisma.SortOrder
   lvlRangeTo?: Prisma.SortOrder
@@ -499,7 +499,7 @@ export type RoleMaxOrderByAggregateInput = {
   name?: Prisma.SortOrder
   color?: Prisma.SortOrder
   position?: Prisma.SortOrder
-  isAdmin?: Prisma.SortOrder
+  isDiscordAdmin?: Prisma.SortOrder
   lvlRangeFrom?: Prisma.SortOrder
   lvlRangeTo?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -512,7 +512,7 @@ export type RoleMinOrderByAggregateInput = {
   name?: Prisma.SortOrder
   color?: Prisma.SortOrder
   position?: Prisma.SortOrder
-  isAdmin?: Prisma.SortOrder
+  isDiscordAdmin?: Prisma.SortOrder
   lvlRangeFrom?: Prisma.SortOrder
   lvlRangeTo?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -628,7 +628,7 @@ export type RoleCreateWithoutGuildInput = {
   name: string
   color?: number | null
   position?: number | null
-  isAdmin?: boolean
+  isDiscordAdmin?: boolean
   permissions?: Prisma.RoleCreatepermissionsInput | $Enums.Permission[]
   lvlRangeFrom?: number | null
   lvlRangeTo?: number | null
@@ -642,7 +642,7 @@ export type RoleUncheckedCreateWithoutGuildInput = {
   name: string
   color?: number | null
   position?: number | null
-  isAdmin?: boolean
+  isDiscordAdmin?: boolean
   permissions?: Prisma.RoleCreatepermissionsInput | $Enums.Permission[]
   lvlRangeFrom?: number | null
   lvlRangeTo?: number | null
@@ -686,7 +686,7 @@ export type RoleScalarWhereInput = {
   name?: Prisma.StringFilter<"Role"> | string
   color?: Prisma.IntNullableFilter<"Role"> | number | null
   position?: Prisma.IntNullableFilter<"Role"> | number | null
-  isAdmin?: Prisma.BoolFilter<"Role"> | boolean
+  isDiscordAdmin?: Prisma.BoolFilter<"Role"> | boolean
   permissions?: Prisma.EnumPermissionNullableListFilter<"Role">
   lvlRangeFrom?: Prisma.IntNullableFilter<"Role"> | number | null
   lvlRangeTo?: Prisma.IntNullableFilter<"Role"> | number | null
@@ -699,7 +699,7 @@ export type RoleCreateWithoutMembersInput = {
   name: string
   color?: number | null
   position?: number | null
-  isAdmin?: boolean
+  isDiscordAdmin?: boolean
   permissions?: Prisma.RoleCreatepermissionsInput | $Enums.Permission[]
   lvlRangeFrom?: number | null
   lvlRangeTo?: number | null
@@ -714,7 +714,7 @@ export type RoleUncheckedCreateWithoutMembersInput = {
   name: string
   color?: number | null
   position?: number | null
-  isAdmin?: boolean
+  isDiscordAdmin?: boolean
   permissions?: Prisma.RoleCreatepermissionsInput | $Enums.Permission[]
   lvlRangeFrom?: number | null
   lvlRangeTo?: number | null
@@ -748,7 +748,7 @@ export type RoleCreateManyGuildInput = {
   name: string
   color?: number | null
   position?: number | null
-  isAdmin?: boolean
+  isDiscordAdmin?: boolean
   permissions?: Prisma.RoleCreatepermissionsInput | $Enums.Permission[]
   lvlRangeFrom?: number | null
   lvlRangeTo?: number | null
@@ -761,7 +761,7 @@ export type RoleUpdateWithoutGuildInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   color?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   position?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  isAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isDiscordAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   permissions?: Prisma.RoleUpdatepermissionsInput | $Enums.Permission[]
   lvlRangeFrom?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   lvlRangeTo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -775,7 +775,7 @@ export type RoleUncheckedUpdateWithoutGuildInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   color?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   position?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  isAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isDiscordAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   permissions?: Prisma.RoleUpdatepermissionsInput | $Enums.Permission[]
   lvlRangeFrom?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   lvlRangeTo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -789,7 +789,7 @@ export type RoleUncheckedUpdateManyWithoutGuildInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   color?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   position?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  isAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isDiscordAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   permissions?: Prisma.RoleUpdatepermissionsInput | $Enums.Permission[]
   lvlRangeFrom?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   lvlRangeTo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -802,7 +802,7 @@ export type RoleUpdateWithoutMembersInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   color?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   position?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  isAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isDiscordAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   permissions?: Prisma.RoleUpdatepermissionsInput | $Enums.Permission[]
   lvlRangeFrom?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   lvlRangeTo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -817,7 +817,7 @@ export type RoleUncheckedUpdateWithoutMembersInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   color?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   position?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  isAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isDiscordAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   permissions?: Prisma.RoleUpdatepermissionsInput | $Enums.Permission[]
   lvlRangeFrom?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   lvlRangeTo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -831,7 +831,7 @@ export type RoleUncheckedUpdateManyWithoutMembersInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   color?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   position?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  isAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isDiscordAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   permissions?: Prisma.RoleUpdatepermissionsInput | $Enums.Permission[]
   lvlRangeFrom?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   lvlRangeTo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -876,7 +876,7 @@ export type RoleSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   name?: boolean
   color?: boolean
   position?: boolean
-  isAdmin?: boolean
+  isDiscordAdmin?: boolean
   permissions?: boolean
   lvlRangeFrom?: boolean
   lvlRangeTo?: boolean
@@ -893,7 +893,7 @@ export type RoleSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   name?: boolean
   color?: boolean
   position?: boolean
-  isAdmin?: boolean
+  isDiscordAdmin?: boolean
   permissions?: boolean
   lvlRangeFrom?: boolean
   lvlRangeTo?: boolean
@@ -908,7 +908,7 @@ export type RoleSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   name?: boolean
   color?: boolean
   position?: boolean
-  isAdmin?: boolean
+  isDiscordAdmin?: boolean
   permissions?: boolean
   lvlRangeFrom?: boolean
   lvlRangeTo?: boolean
@@ -923,7 +923,7 @@ export type RoleSelectScalar = {
   name?: boolean
   color?: boolean
   position?: boolean
-  isAdmin?: boolean
+  isDiscordAdmin?: boolean
   permissions?: boolean
   lvlRangeFrom?: boolean
   lvlRangeTo?: boolean
@@ -931,7 +931,7 @@ export type RoleSelectScalar = {
   updatedAt?: boolean
 }
 
-export type RoleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "name" | "color" | "position" | "isAdmin" | "permissions" | "lvlRangeFrom" | "lvlRangeTo" | "createdAt" | "updatedAt", ExtArgs["result"]["role"]>
+export type RoleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "name" | "color" | "position" | "isDiscordAdmin" | "permissions" | "lvlRangeFrom" | "lvlRangeTo" | "createdAt" | "updatedAt", ExtArgs["result"]["role"]>
 export type RoleInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
   members?: boolean | Prisma.Role$membersArgs<ExtArgs>
@@ -956,7 +956,7 @@ export type $RolePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     name: string
     color: number | null
     position: number | null
-    isAdmin: boolean
+    isDiscordAdmin: boolean
     permissions: $Enums.Permission[]
     lvlRangeFrom: number | null
     lvlRangeTo: number | null
@@ -1392,7 +1392,7 @@ export interface RoleFieldRefs {
   readonly name: Prisma.FieldRef<"Role", 'String'>
   readonly color: Prisma.FieldRef<"Role", 'Int'>
   readonly position: Prisma.FieldRef<"Role", 'Int'>
-  readonly isAdmin: Prisma.FieldRef<"Role", 'Boolean'>
+  readonly isDiscordAdmin: Prisma.FieldRef<"Role", 'Boolean'>
   readonly permissions: Prisma.FieldRef<"Role", 'Permission[]'>
   readonly lvlRangeFrom: Prisma.FieldRef<"Role", 'Int'>
   readonly lvlRangeTo: Prisma.FieldRef<"Role", 'Int'>
