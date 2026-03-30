@@ -49,6 +49,7 @@ import { RecentKillsPreview } from "./components/kills/recent-kills-preview";
 import { HeroCard } from "./components/heroes/hero-card";
 import { DeleteEventDialog } from "./components/dialogs/delete-event-dialog";
 import { EventActionsCard } from "./components/shared/event-actions-card";
+import { findEventHeroTimer } from "./utils/find-event-hero-timer";
 import {
   normalizeScoringMode,
   normalizeScoringRules,
@@ -461,9 +462,10 @@ export const EventDetail = () => {
                     <HeroCard
                       key={hero.id}
                       hero={hero}
-                      timer={heroTimers?.find(
-                        (t) => hero.npcId !== null && t.npcId === hero.npcId,
-                      )}
+                      timer={findEventHeroTimer(heroTimers, {
+                        heroNpcId: hero.npcId,
+                        heroName: hero.npcName,
+                      })}
                       stats={heroStats?.find(
                         (s) => hero.npcId !== null && s.npcId === hero.npcId,
                       )}

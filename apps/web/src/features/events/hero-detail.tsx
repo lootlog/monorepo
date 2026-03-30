@@ -56,6 +56,7 @@ import { cn } from "@lootlog/ui/lib/utils";
 import { useGuild } from "@/hooks/api/guilds/use-guild";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { Spinner } from "@lootlog/ui/components/spinner";
+import { findEventHeroTimer } from "./utils/find-event-hero-timer";
 
 const getWindowStatusConfig = (
   status: WindowStatus,
@@ -151,9 +152,10 @@ export const HeroDetail = () => {
         maps: heroMapsData?.maps ?? [],
       }
     : undefined;
-  const heroTimer = timers?.find(
-    (t) => t.npcId === hero?.npcId || t.npc?.name === hero?.npcName,
-  );
+  const heroTimer = findEventHeroTimer(timers, {
+    heroNpcId: hero?.npcId,
+    heroName: hero?.npcName,
+  });
 
   const windowStatus = useWindowStatus(
     heroTimer?.minSpawnTime ?? null,
