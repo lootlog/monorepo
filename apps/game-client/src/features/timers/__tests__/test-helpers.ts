@@ -13,10 +13,19 @@ export const createMockTimer = (overrides: Partial<Timer> = {}): Timer => {
     wt: 1,
     margonemType: 1,
   };
+  const resolvedNpc = {
+    ...defaultNpc,
+    ...overrides.npc,
+  };
+  const resolvedNpcId = overrides.npcId ?? resolvedNpc.id;
+  const resolvedTimerKey =
+    overrides.timerKey ??
+    `${resolvedNpcId}:${resolvedNpc.name.trim().toLowerCase().replace(/\s+/g, "-")}`;
 
   return {
     id: "1",
-    npcId: 1,
+    npcId: resolvedNpcId,
+    timerKey: resolvedTimerKey,
     guildId: "guild1",
     world: "world1",
     minSpawnTime: new Date("2024-01-01T10:00:00Z"),
@@ -24,10 +33,7 @@ export const createMockTimer = (overrides: Partial<Timer> = {}): Timer => {
     updatedAt: new Date("2024-01-01T08:00:00Z"),
     wasReset: false,
     isPending: false,
-    npc: {
-      ...defaultNpc,
-      ...overrides.npc,
-    },
+    npc: resolvedNpc,
     member: undefined,
     ...overrides,
   } as Timer;

@@ -151,13 +151,17 @@ export class TimersController {
 
   @Permissions(Permission.LOOTLOG_TIMERS_RESET)
   @UseGuards(PermissionsGuard)
-  @Patch("/guilds/:guildId/timers/:npcId/reset")
+  @Patch("/guilds/:guildId/timers/:timerIdentifier/reset")
   @ApiOperation({
     summary: "Reset timer",
     description: "Reset a timer for a specific NPC in a guild",
   })
   @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
-  @ApiParam({ name: "npcId", description: "NPC ID", example: "12345" })
+  @ApiParam({
+    name: "timerIdentifier",
+    description: "Timer key or legacy NPC ID when unambiguous",
+    example: "12345:test boss",
+  })
   @ApiResponse({
     status: 200,
     description: "Timer reset successfully",
@@ -171,13 +175,13 @@ export class TimersController {
   async resetTimer(
     @DiscordId() discordId: string,
     @Param("guildId") guildId: string,
-    @Param("npcId") npcId: string,
+    @Param("timerIdentifier") timerIdentifier: string,
     @Body() data: ResetTimerDto,
   ) {
     const timer = await this.timersService.resetTimer(
       discordId,
       guildId,
-      npcId,
+      timerIdentifier,
       data,
     );
     return plainToInstance(TimerEntity, timer, {
@@ -187,13 +191,17 @@ export class TimersController {
 
   @Permissions(Permission.LOOTLOG_MANAGE)
   @UseGuards(PermissionsGuard)
-  @Delete("/guilds/:guildId/timers/:npcId")
+  @Delete("/guilds/:guildId/timers/:timerIdentifier")
   @ApiOperation({
     summary: "Delete timer",
     description: "Delete a timer for a specific NPC in a guild",
   })
   @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
-  @ApiParam({ name: "npcId", description: "NPC ID", example: "12345" })
+  @ApiParam({
+    name: "timerIdentifier",
+    description: "Timer key or legacy NPC ID when unambiguous",
+    example: "12345:test boss",
+  })
   @ApiQuery({ name: "world", description: "World name", required: false })
   @ApiResponse({
     status: 200,
@@ -207,9 +215,9 @@ export class TimersController {
   async deleteTimer(
     @Query("world") world: string,
     @Param("guildId") guildId: string,
-    @Param("npcId") npcId: string,
+    @Param("timerIdentifier") timerIdentifier: string,
   ) {
-    return this.timersService.deleteTimer(guildId, npcId, world);
+    return this.timersService.deleteTimer(guildId, timerIdentifier, world);
   }
 
   @Permissions(Permission.LOOTLOG_TIMERS_WRITE)

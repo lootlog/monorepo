@@ -1,8 +1,8 @@
-import { useMemo } from "react";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
 import { useEventHeroTimers } from "./use-event-hero-timers";
 import { useWindowStatus, type WindowStatus } from "../use-window-status";
+import { findEventHeroTimer } from "../../utils/find-event-hero-timer";
 
 export type { WindowStatus };
 
@@ -11,6 +11,7 @@ export interface RespawnConfig {
   windowStatus: WindowStatus;
   minSpawnTime: string | null;
   maxSpawnTime: string | null;
+  overdueMs: number | null;
 }
 
 interface UseHeroRespawnConfigOptions {
@@ -33,20 +34,7 @@ export const useHeroRespawnConfig = ({
     world: world ?? "",
   });
 
-  const timer = useMemo(() => {
-    if (!timers) return undefined;
-
-    if (heroNpcId) {
-      const byId = timers.find((t) => t.npcId === heroNpcId);
-      if (byId) return byId;
-    }
-
-    if (heroName) {
-      return timers.find((t) => t.npc?.name === heroName);
-    }
-
-    return undefined;
-  }, [timers, heroNpcId, heroName]);
+  const timer = findEventHeroTimer(timers, { heroNpcId, heroName });
 
   const windowStatus = useWindowStatus(
     timer?.minSpawnTime ?? null,
@@ -58,5 +46,9 @@ export const useHeroRespawnConfig = ({
     windowStatus,
     minSpawnTime: timer?.minSpawnTime ?? null,
     maxSpawnTime: timer?.maxSpawnTime ?? null,
+    overdueMs:
+      windowStatus === "OVERDUE" && timer?.maxSpawnTime
+        ? Math.max(0, Date.now() - new Date(timer.maxSpawnTime).getTime())
+        : null,
   };
 };

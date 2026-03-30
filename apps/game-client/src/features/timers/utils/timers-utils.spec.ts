@@ -264,11 +264,11 @@ describe("timers-utils", () => {
       expect(result[0].npc.name).toBe("Manual Boss");
       expect(result[0].npc.margonemType).toBe(999);
       expect(result[0].mergedGuildIds).toEqual([
-        { guildId: "guild1", npcId: 1 },
-        { guildId: "guild2", npcId: 2 },
-        { guildId: "guild3", npcId: 3 },
-        { guildId: "guild4", npcId: 4 },
-        { guildId: "guild5", npcId: 5 },
+        { guildId: "guild1", npcId: 1, timerKey: "1:manual-boss" },
+        { guildId: "guild2", npcId: 2, timerKey: "2:manual-boss" },
+        { guildId: "guild3", npcId: 3, timerKey: "3:manual-boss" },
+        { guildId: "guild4", npcId: 4, timerKey: "4:manual-boss" },
+        { guildId: "guild5", npcId: 5, timerKey: "5:manual-boss" },
       ]);
     });
 
@@ -321,8 +321,8 @@ describe("timers-utils", () => {
       expect(result[0].mergedGuildIds).toBeDefined();
       expect(result[0].mergedGuildIds?.length).toBe(2);
       expect(result[0].mergedGuildIds).toEqual([
-        { guildId: "guild1", npcId: 1 },
-        { guildId: "guild2", npcId: 1 },
+        { guildId: "guild1", npcId: 1, timerKey: "1:dragon-boss" },
+        { guildId: "guild2", npcId: 1, timerKey: "1:dragon-boss" },
       ]);
     });
 

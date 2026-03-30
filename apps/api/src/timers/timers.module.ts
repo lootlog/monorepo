@@ -16,7 +16,7 @@ import { UserLootlogConfigModule } from "src/user-lootlog-config/user-lootlog-co
 import { PrismaModule } from "src/db/prisma.module";
 import { RedisModule } from "src/lib/redis/redis.module";
 import { RedlockModule } from "src/lib/redlock/redlock.module";
-import { EventsModule } from "src/events/events.module";
+import { EventTimerHooksModule } from "src/events/event-timer-hooks.module";
 
 @Module({
   imports: [
@@ -33,7 +33,7 @@ import { EventsModule } from "src/events/events.module";
     PrismaModule,
     RedisModule,
     RedlockModule,
-    EventsModule,
+    EventTimerHooksModule,
   ],
   providers: [TimersService, TimersCleanupService],
   controllers: [TimersController],

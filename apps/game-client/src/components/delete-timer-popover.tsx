@@ -14,7 +14,7 @@ import { Permission } from "@lootlog/types";
 
 type DeleteTimerPopoverProps = {
   timer: TimerWithTimeLeft;
-  onDeleteTimer: (guildId: string, npcId: number) => void;
+  onDeleteTimer: (guildId: string, timerKey: string) => void;
 };
 
 const REQUIRED_DELETE_PERMISSIONS = [
@@ -60,12 +60,12 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
         const entry = guildEntries.find((e) => e.guildId === guildId);
         return {
           guildId,
-          npcId: entry?.npcId ?? 0,
+          timerKey: entry?.timerKey ?? "",
           permissions,
           canDelete,
         };
       })
-      .filter((g) => g.canDelete && g.npcId !== 0);
+      .filter((g) => g.canDelete && g.timerKey !== "");
   }, [uniqueGuildIds, permissionsQueries, guildEntries]);
 
   if (guildsWithPermissions.length === 0) {
@@ -76,7 +76,7 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
     const guild = guildsWithPermissions[0];
     return (
       <ContextMenuItem
-        onClick={() => onDeleteTimer(guild.guildId, guild.npcId)}
+        onClick={() => onDeleteTimer(guild.guildId, guild.timerKey)}
       >
         Usuń timer
       </ContextMenuItem>
@@ -127,7 +127,7 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
                   "ll:text-white",
                 )}
                 onClick={() => {
-                  onDeleteTimer(guild.guildId, guild.npcId);
+                  onDeleteTimer(guild.guildId, guild.timerKey);
                   setOpen(false);
                 }}
               >

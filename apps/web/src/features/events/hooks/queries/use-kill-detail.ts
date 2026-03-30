@@ -40,6 +40,7 @@ export interface KillDetail {
   isManualClose: boolean;
   respawnDurationSeconds: number | null;
   windowDurationSeconds: number | null;
+  resolvedAfterMaxSpawnTimeMs: number | null;
   heroNpc: KillDetailHeroNpc;
   timerCreatedBy: KillDetailMember | null;
   points: KillDetailParticipant[];

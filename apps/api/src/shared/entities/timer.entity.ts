@@ -11,6 +11,13 @@ export class TimerEntity {
   npcId: number;
 
   @Expose()
+  @ApiProperty({
+    example: "12345:boss name",
+    description: "Stable timer key for disambiguating timers",
+  })
+  timerKey: string;
+
+  @Expose()
   @ApiProperty({ example: "Zorza", description: "World name" })
   world: string;
 

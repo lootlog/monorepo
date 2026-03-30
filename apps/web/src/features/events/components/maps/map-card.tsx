@@ -125,6 +125,7 @@ interface MapCardProps {
   presenceData?: Map<string, PlayerPresence[]>;
   assignmentDisabled: boolean;
   assignmentEnabledAt?: Date | null;
+  assignmentDisabledMessage?: string | null;
   onSelfAssignClick?: (mapId: string) => void;
   onSelfUnassignClick?: (mapId: string) => void;
   onManageClick?: (mapId: string) => void;
@@ -141,6 +142,7 @@ export const MapCard = ({
   presenceData,
   assignmentDisabled,
   assignmentEnabledAt,
+  assignmentDisabledMessage,
   onSelfAssignClick,
   onSelfUnassignClick,
   onManageClick,
@@ -336,11 +338,13 @@ export const MapCard = ({
               </TooltipTrigger>
               <TooltipContent>
                 {!isAssignmentEnabled
-                  ? countdownTime
-                    ? t("events.maps.assignmentDisabledWithTime", {
-                        time: countdownTime,
-                      })
-                    : t("events.maps.assignmentDisabled")
+                  ? assignmentDisabledMessage
+                    ? assignmentDisabledMessage
+                    : countdownTime
+                      ? t("events.maps.assignmentDisabledWithTime", {
+                          time: countdownTime,
+                        })
+                      : t("events.maps.assignmentDisabled")
                   : manageActionLabel}
               </TooltipContent>
             </Tooltip>
@@ -381,11 +385,13 @@ export const MapCard = ({
               </TooltipTrigger>
               <TooltipContent>
                 {!isAssignmentEnabled
-                  ? countdownTime
-                    ? t("events.maps.assignmentDisabledWithTime", {
-                        time: countdownTime,
-                      })
-                    : t("events.maps.assignmentDisabled")
+                  ? assignmentDisabledMessage
+                    ? assignmentDisabledMessage
+                    : countdownTime
+                      ? t("events.maps.assignmentDisabledWithTime", {
+                          time: countdownTime,
+                        })
+                      : t("events.maps.assignmentDisabled")
                   : t("events.maps.assignSelf")}
               </TooltipContent>
             </Tooltip>

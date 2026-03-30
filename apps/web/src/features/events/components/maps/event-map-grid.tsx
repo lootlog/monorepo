@@ -26,6 +26,7 @@ interface EventMapGridProps {
   presenceData?: Map<string, PlayerPresence[]>;
   assignmentDisabled?: boolean;
   assignmentEnabledAt?: Date | null;
+  assignmentDisabledMessage?: string | null;
   windowStatus?: WindowStatus;
   activeGapsMap?: Map<string, CoverageGap>;
   vertical?: boolean;
@@ -39,6 +40,7 @@ interface LocationSectionProps {
   presenceData?: Map<string, PlayerPresence[]>;
   assignmentDisabled: boolean;
   assignmentEnabledAt?: Date | null;
+  assignmentDisabledMessage?: string | null;
   windowStatus: WindowStatus;
   activeGapsMap?: Map<string, CoverageGap>;
   vertical: boolean;
@@ -57,6 +59,7 @@ const LocationSection = ({
   presenceData,
   assignmentDisabled,
   assignmentEnabledAt,
+  assignmentDisabledMessage,
   windowStatus,
   activeGapsMap,
   vertical,
@@ -142,6 +145,7 @@ const LocationSection = ({
                 presenceData={presenceData}
                 assignmentDisabled={assignmentDisabled}
                 assignmentEnabledAt={assignmentEnabledAt}
+                assignmentDisabledMessage={assignmentDisabledMessage}
                 onSelfAssignClick={onSelfAssignClick}
                 onSelfUnassignClick={onSelfUnassignClick}
                 onManageClick={onManageClick}
@@ -166,6 +170,7 @@ export const EventMapGrid = ({
   presenceData,
   assignmentDisabled = false,
   assignmentEnabledAt,
+  assignmentDisabledMessage,
   windowStatus = "OPEN",
   activeGapsMap,
   vertical = false,
@@ -214,6 +219,7 @@ export const EventMapGrid = ({
               presenceData={presenceData}
               assignmentDisabled={assignmentDisabled}
               assignmentEnabledAt={assignmentEnabledAt}
+              assignmentDisabledMessage={assignmentDisabledMessage}
               onSelfAssignClick={onSelfAssignClick}
               onSelfUnassignClick={onSelfUnassignClick}
               onManageClick={onManageClick}
@@ -238,6 +244,7 @@ export const EventMapGrid = ({
           presenceData={presenceData}
           assignmentDisabled={assignmentDisabled}
           assignmentEnabledAt={assignmentEnabledAt}
+          assignmentDisabledMessage={assignmentDisabledMessage}
           windowStatus={windowStatus}
           activeGapsMap={activeGapsMap}
           vertical={vertical}

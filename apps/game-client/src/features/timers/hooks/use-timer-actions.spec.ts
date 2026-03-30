@@ -8,7 +8,7 @@ vi.mock("@/hooks/api/use-delete-timer", () => ({
 }));
 
 vi.mock("@/hooks/api/use-reset-timer", () => ({
-  useResetTimer: () => ({ mutate: vi.fn() }),
+  useResetTimer: () => ({ mutateAsync: vi.fn().mockResolvedValue(undefined) }),
 }));
 
 vi.mock("@/store/timers.store", () => ({
@@ -36,6 +36,7 @@ describe("useTimerActions", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    window.message = vi.fn();
   });
 
   it("should return isPinned as false when timer is not pinned", () => {
@@ -82,7 +83,7 @@ describe("useTimerActions", () => {
     expect(() => {
       act(() => {
         result.current.handleRestartTimer();
-        result.current.handleDeleteTimer("guild1", 1);
+        result.current.handleDeleteTimer("guild1", "timer-key-1");
       });
     }).not.toThrow();
   });
@@ -112,15 +113,15 @@ describe("useTimerActions", () => {
     }).not.toThrow();
   });
 
-  it("should handle delete with guildId and npcId parameters", () => {
+  it("should handle delete with guildId and timerKey parameters", () => {
     const { result } = renderHook(() =>
       useTimerActions(mockTimer, settingsKey, world, mockGuilds),
     );
 
     expect(() => {
       act(() => {
-        result.current.handleDeleteTimer("guild1", 1);
-        result.current.handleDeleteTimer("guild2", 2);
+        result.current.handleDeleteTimer("guild1", "timer-key-1");
+        result.current.handleDeleteTimer("guild2", "timer-key-2");
       });
     }).not.toThrow();
   });
@@ -164,9 +165,9 @@ describe("useTimerActions", () => {
   it("should reset timer for all merged guild ids when mergedGuildIds is present", () => {
     const mockTimerWithMergedIds = createMockTimerWithTimeLeft({
       mergedGuildIds: [
-        { guildId: "guild1", npcId: 1 },
-        { guildId: "guild2", npcId: 2 },
-        { guildId: "guild3", npcId: 3 },
+        { guildId: "guild1", npcId: 1, timerKey: "timer-key-1" },
+        { guildId: "guild2", npcId: 2, timerKey: "timer-key-2" },
+        { guildId: "guild3", npcId: 3, timerKey: "timer-key-3" },
       ],
     });
 
@@ -190,8 +191,8 @@ describe("useTimerActions", () => {
   it("should use mergedGuildIds over guilds array when both are available", () => {
     const mockTimerWithMergedIds = createMockTimerWithTimeLeft({
       mergedGuildIds: [
-        { guildId: "guild1", npcId: 1 },
-        { guildId: "guild2", npcId: 2 },
+        { guildId: "guild1", npcId: 1, timerKey: "timer-key-1" },
+        { guildId: "guild2", npcId: 2, timerKey: "timer-key-2" },
       ],
     });
 

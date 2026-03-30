@@ -14,6 +14,7 @@ export type Timer = {
   maxSpawnTime: Date;
   npc: Npc;
   npcId: number;
+  timerKey: string;
   member: GuildMember;
   members?: GuildMember[];
   world: string;
