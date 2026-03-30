@@ -11,6 +11,7 @@ export interface RespawnConfig {
   windowStatus: WindowStatus;
   minSpawnTime: string | null;
   maxSpawnTime: string | null;
+  overdueMs: number | null;
 }
 
 interface UseHeroRespawnConfigOptions {
@@ -58,5 +59,9 @@ export const useHeroRespawnConfig = ({
     windowStatus,
     minSpawnTime: timer?.minSpawnTime ?? null,
     maxSpawnTime: timer?.maxSpawnTime ?? null,
+    overdueMs:
+      windowStatus === "OVERDUE" && timer?.maxSpawnTime
+        ? Math.max(0, Date.now() - new Date(timer.maxSpawnTime).getTime())
+        : null,
   };
 };

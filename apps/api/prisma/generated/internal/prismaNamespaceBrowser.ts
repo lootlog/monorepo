@@ -162,6 +162,7 @@ export const TimerScalarFieldEnum = {
   createdById: 'createdById',
   guildId: 'guildId',
   npcId: 'npcId',
+  timerKey: 'timerKey',
   world: 'world',
   minSpawnTime: 'minSpawnTime',
   maxSpawnTime: 'maxSpawnTime',

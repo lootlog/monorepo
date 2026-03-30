@@ -329,6 +329,7 @@
     "alreadyAssigned": "Przypisany",
     "assignmentDisabled": "Zapisywanie jeszcze niedostępne",
     "assignmentDisabledWithTime": "Zapisywanie możliwe za {{time}}",
+    "assignmentDisabledOverdue": "Nie można dodać nowych przypisań po maksymalnym czasie respawnu.",
     "unassignSelf": "Wypisz się",
     "assignSelf": "Przypisz się",
     "gap": {
@@ -504,6 +505,9 @@
     "respawnWindowTimeDescription": "Czas od minimalnego do maksymalnego respawnu",
     "respawnFasterBy": "{{duration}} szybciej niż max",
     "respawnComparedToMax": "{{percentage}}% maksymalnego czasu",
+    "overdueTitle": "Po czasie",
+    "overdueDescription": "Heros został rozliczony po maksymalnym czasie respawnu, ale punktacja została zatrzymana na max respie.",
+    "overdueBy": "{{duration}} po max respie",
     "respawnMinLabel": "Min. respawn",
     "respawnMaxLabel": "Max. respawn",
     "killTimeLabel": "Moment zabicia",

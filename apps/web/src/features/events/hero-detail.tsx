@@ -172,6 +172,10 @@ export const HeroDetail = () => {
     if (!hero) return { allowed: false, enabledAt: null };
     if (!heroTimer) return { allowed: false, enabledAt: null };
 
+    if (windowStatus === "OVERDUE") {
+      return { allowed: false, enabledAt: null };
+    }
+
     const minSpawn = new Date(heroTimer.minSpawnTime);
     const now = new Date();
     const timeoutMinutes = event?.assignmentTimeoutMinutes ?? 5;
@@ -185,6 +189,10 @@ export const HeroDetail = () => {
 
   const { allowed: assignmentAllowed, enabledAt: assignmentEnabledAt } =
     getAssignmentStatus();
+  const assignmentDisabledMessage =
+    windowStatus === "OVERDUE"
+      ? t("events.maps.assignmentDisabledOverdue")
+      : null;
 
   if (error || !event || !hero) {
     return (
@@ -219,6 +227,10 @@ export const HeroDetail = () => {
     if (!eventId) return;
 
     try {
+      if (!assignmentAllowed) {
+        toast.error(assignmentDisabledMessage ?? t("events.maps.assignError"));
+        return;
+      }
       await selfAssignMember.mutateAsync({
         eventId,
         mapId,
@@ -252,6 +264,10 @@ export const HeroDetail = () => {
     if (!selectedMapId || !guildId || !eventId) return;
 
     try {
+      if (!assignmentAllowed) {
+        toast.error(assignmentDisabledMessage ?? t("events.maps.assignError"));
+        return;
+      }
       await assignMember.mutateAsync({
         eventId,
         mapId: selectedMapId,
@@ -492,6 +508,7 @@ export const HeroDetail = () => {
                   presenceData={presenceData}
                   assignmentDisabled={!assignmentAllowed}
                   assignmentEnabledAt={assignmentEnabledAt}
+                  assignmentDisabledMessage={assignmentDisabledMessage}
                   windowStatus={windowStatus}
                   activeGapsMap={activeGapsMap}
                   vertical
@@ -544,6 +561,7 @@ export const HeroDetail = () => {
           onAssign={handleAssignFromModal}
           onUnassign={handleUnassignFromModal}
           disabled={!assignmentAllowed}
+          disabledMessage={assignmentDisabledMessage}
         />
       )}
       <CloseRespawnWindowDialog

@@ -21,4 +21,5 @@ export interface HeroRespawnConfig {
   windowStatus: "OPEN" | "WAITING" | "OVERDUE" | "NONE";
   minSpawnTime: Date | null;
   maxSpawnTime: Date | null;
+  overdueMs: number | null;
 }

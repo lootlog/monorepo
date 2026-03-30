@@ -3,21 +3,7 @@ import { useParams, Link } from "@tanstack/react-router";
 import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@lootlog/ui/components/tooltip";
-import {
-  Skull,
-  AlertCircle,
-  Clock,
-  Users,
-  Package,
-  Frown,
-  Calculator,
-  Hand,
-} from "lucide-react";
+import { Skull, AlertCircle, Frown, Hand, Package } from "lucide-react";
 import { format, differenceInSeconds } from "date-fns";
 import { pl } from "date-fns/locale";
 import { Permission } from "@lootlog/types";
@@ -34,6 +20,7 @@ import { useSession } from "@/hooks/auth/use-session";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { getAppliedRuleIdsForParticipant } from "./utils/scoring-applied-rules";
 import { formatDurationHuman } from "./utils/format-duration";
+import { KillDetailStatsCard } from "./components/kills/kill-detail-stats-card";
 
 const formatRespawnWindow = (minSpawn: string, maxSpawn: string): string => {
   const minDate = new Date(minSpawn);
@@ -232,146 +219,15 @@ export const KillDetail = () => {
             </div>
 
             <div className="space-y-4">
-              <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2">
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded-md bg-green-500/10">
-                      <Users className="w-4 h-4 text-green-500" />
-                    </div>
-                    <div>
-                      <p className="text-lg font-bold">{participants.length}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {t("events.killDetail.participantCount")}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded-md bg-blue-500/10">
-                      <Package className="w-4 h-4 text-blue-500" />
-                    </div>
-                    <div>
-                      <p className="text-lg font-bold">{loots.length}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {t("events.killDetail.lootCount")}
-                      </p>
-                    </div>
-                  </div>
-                  {respawnDurationText && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="flex items-center gap-2 cursor-help">
-                          <div className="p-1.5 rounded-md bg-orange-500/10">
-                            <Clock className="w-4 h-4 text-orange-500" />
-                          </div>
-                          <div>
-                            <p className="text-lg font-bold">
-                              {respawnDurationText}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {t("events.killDetail.respawnTime")}
-                            </p>
-                          </div>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <div className="space-y-1 text-sm">
-                          <p className="font-medium">
-                            {t("events.killDetail.respawnTimeDescription")}
-                          </p>
-                          <p>
-                            {t("events.killDetail.respawnMinLabel")}:{" "}
-                            {format(
-                              new Date(kill.minSpawnTimeAtKill),
-                              "d MMMM yyyy, HH:mm:ss",
-                              { locale: pl },
-                            )}
-                          </p>
-                          <p>
-                            {t("events.killDetail.killTimeLabel")}:{" "}
-                            {format(
-                              new Date(kill.killedAt),
-                              "d MMMM yyyy, HH:mm:ss",
-                              { locale: pl },
-                            )}
-                          </p>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
-                  {windowDurationText && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="flex items-center gap-2 cursor-help">
-                          <div className="p-1.5 rounded-md bg-orange-500/10">
-                            <Clock className="w-4 h-4 text-orange-500" />
-                          </div>
-                          <div>
-                            <p className="text-lg font-bold">
-                              {windowDurationText}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {t("events.killDetail.respawnWindowTime")}
-                            </p>
-                            {fasterThanMaxText && (
-                              <p className="text-[11px] text-muted-foreground">
-                                {t("events.killDetail.respawnFasterBy", {
-                                  duration: fasterThanMaxText,
-                                })}
-                              </p>
-                            )}
-                            {typeof respawnComparedToMaxPercentage ===
-                              "number" && (
-                              <p className="text-[11px] text-muted-foreground">
-                                {t("events.killDetail.respawnComparedToMax", {
-                                  percentage: respawnComparedToMaxPercentage,
-                                })}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <div className="space-y-1 text-sm">
-                          <p className="font-medium">
-                            {t(
-                              "events.killDetail.respawnWindowTimeDescription",
-                            )}
-                          </p>
-                          <p>
-                            {t("events.killDetail.respawnMinLabel")}:{" "}
-                            {format(
-                              new Date(kill.minSpawnTimeAtKill),
-                              "d MMMM yyyy, HH:mm:ss",
-                              { locale: pl },
-                            )}
-                          </p>
-                          <p>
-                            {t("events.killDetail.respawnMaxLabel")}:{" "}
-                            {format(
-                              new Date(kill.maxSpawnTimeAtKill),
-                              "d MMMM yyyy, HH:mm:ss",
-                              { locale: pl },
-                            )}
-                          </p>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded-md bg-primary/10">
-                      <Calculator className="w-4 h-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-lg font-bold">
-                        {t("events.header.autoPointsOn")}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {t("events.scoring.title")}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </Card>
+              <KillDetailStatsCard
+                kill={kill}
+                participantsCount={participants.length}
+                lootCount={loots.length}
+                respawnDurationText={respawnDurationText}
+                windowDurationText={windowDurationText}
+                fasterThanMaxText={fasterThanMaxText}
+                respawnComparedToMaxPercentage={respawnComparedToMaxPercentage}
+              />
 
               <MultipliersCard
                 eventConfig={eventConfig}

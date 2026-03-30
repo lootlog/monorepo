@@ -199,6 +199,7 @@ model Timer {
   createdById             Int
   guildId                 String
   npcId                   Int
+  timerKey                String
   world                   String
   minSpawnTime            DateTime
   maxSpawnTime            DateTime
@@ -214,7 +215,8 @@ model Timer {
   member Member @relation(fields: [createdById], references: [id])
   guild  Guild  @relation(fields: [guildId], references: [id])
 
-  @@id(name: "timerId", [guildId, world, npcId])
+  @@id(name: "timerId", [guildId, world, timerKey])
+  @@index([guildId, world, timerKey])
   @@index([npcId, guildId])
   @@index([guildId, maxSpawnTime])
   @@index([world, guildId])
