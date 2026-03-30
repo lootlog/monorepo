@@ -35,6 +35,7 @@ export function createMockMember(
 
 export interface CreateMockTimerOptions {
   npcId?: number;
+  timerKey?: string;
   guildId?: string;
   world?: string;
   minSpawnTime?: Date;
@@ -49,6 +50,7 @@ export interface CreateMockTimerOptions {
 export function createMockTimer(options: CreateMockTimerOptions = {}): Timer {
   const {
     npcId = timerIdCounter++,
+    timerKey,
     guildId = "guild-1",
     world = "Aether",
     minSpawnTime = new Date(Date.now() + 3000000),
@@ -59,15 +61,20 @@ export function createMockTimer(options: CreateMockTimerOptions = {}): Timer {
     wasReset = false,
     updatedAt = new Date(),
   } = options;
+  const resolvedNpc = createMockNpc({ id: npcId, ...npc });
+  const resolvedTimerKey =
+    timerKey ??
+    `${npcId}:${resolvedNpc.name.trim().toLowerCase().replace(/\s+/g, " ")}`;
 
   return {
     npcId,
+    timerKey: resolvedTimerKey,
     guildId,
     world,
     minSpawnTime,
     maxSpawnTime,
     member,
-    npc: createMockNpc({ id: npcId, ...npc }),
+    npc: resolvedNpc,
     isPending,
     wasReset,
     updatedAt,

@@ -113,18 +113,22 @@ export const useTimerActions = (
     try {
       if (timersGrouping && timer.mergedGuildIds) {
         await Promise.all(
-          timer.mergedGuildIds.map(({ guildId, npcId }) =>
-            resetTimer({
-              world,
-              npcId,
-              guildId,
-            }),
+          timer.mergedGuildIds.flatMap(({ guildId, timerKey }) =>
+            timerKey
+              ? [
+                  resetTimer({
+                    world,
+                    timerKey,
+                    guildId,
+                  }),
+                ]
+              : [],
           ),
         );
       } else {
         await resetTimer({
           world,
-          npcId: timer.npc.id,
+          timerKey: timer.timerKey,
           guildId: timer.guildId,
         });
       }
@@ -135,13 +139,13 @@ export const useTimerActions = (
     }
   };
 
-  const handleDeleteTimer = (guildId: string, npcId: number) => {
+  const handleDeleteTimer = (guildId: string, timerKey: string) => {
     if (!world) return;
 
     deleteTimer(
       {
         world,
-        npcId,
+        timerKey,
         guildId,
       },
       {

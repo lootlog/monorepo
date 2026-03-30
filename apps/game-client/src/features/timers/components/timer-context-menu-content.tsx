@@ -48,7 +48,7 @@ type TimerContextMenuContentProps = {
   onShow: () => void;
   onShowAll: () => void;
   onReset: () => void;
-  onDelete: (guildId: string, npcId: number) => void;
+  onDelete: (guildId: string, timerKey: string) => void;
 };
 
 export const TimerContextMenuContent: FC<TimerContextMenuContentProps> = ({
@@ -136,7 +136,9 @@ export const TimerContextMenuContent: FC<TimerContextMenuContentProps> = ({
         <DeleteTimerPopover timer={timer} onDeleteTimer={onDelete} />
       ) : (
         canDelete && (
-          <ContextMenuItem onClick={() => onDelete(timer.guildId, timer.npcId)}>
+          <ContextMenuItem
+            onClick={() => onDelete(timer.guildId, timer.timerKey)}
+          >
             <Trash2 className="ll:h-4 ll:w-4 ll:mr-2" />
             Usuń timer
           </ContextMenuItem>
