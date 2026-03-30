@@ -15,6 +15,7 @@ import { Swords, Plus, Pencil, Info } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { useEventMutations } from "../../hooks/mutations/use-event-mutations";
 import { toast } from "sonner";
+import { getApiErrorMessage } from "../../utils/get-api-error-message";
 
 interface HeroManageDialogProps {
   open: boolean;
@@ -43,6 +44,7 @@ export const HeroManageDialog = ({
   const { t } = useTranslation();
   const { addHero, updateHero } = useEventMutations(guildId, eventId);
   const isEditing = !!hero;
+  const isHeroNameLocked = isEditing && hero?.npcId !== null;
   const isPending = addHero.isPending || updateHero.isPending;
 
   const { register, handleSubmit, reset } = useForm<FormData>({
@@ -87,8 +89,12 @@ export const HeroManageDialog = ({
         toast.success(t("events.heroes.added"));
       }
       onOpenChange(false);
-    } catch {
-      toast.error(t("common.error"));
+    } catch (error) {
+      toast.error(
+        getApiErrorMessage(error) === "EVENT_HERO_NAME_LOCKED"
+          ? t("events.heroes.nameLockedError")
+          : t("common.error"),
+      );
     }
   };
 
@@ -136,10 +142,20 @@ export const HeroManageDialog = ({
               <Input
                 placeholder={t("events.createDialog.heroNamePlaceholder")}
                 {...register("npcName", { required: true })}
+                disabled={isHeroNameLocked}
                 className="h-9 text-sm"
               />
             </div>
           </div>
+
+          {isHeroNameLocked && (
+            <div className="flex items-start gap-2 py-2.5 px-3 rounded-lg border border-dashed bg-muted/20">
+              <Info className="size-4 text-muted-foreground shrink-0 mt-0.5" />
+              <div className="text-xs text-muted-foreground space-y-1">
+                <p>{t("events.heroes.nameLockedHint")}</p>
+              </div>
+            </div>
+          )}
 
           {!isEditing && (
             <div className="flex items-start gap-2 py-2.5 px-3 rounded-lg border border-dashed bg-muted/20">

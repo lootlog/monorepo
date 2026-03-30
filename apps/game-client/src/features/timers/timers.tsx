@@ -77,7 +77,7 @@ export const Timers = () => {
     : Array.from(
         new Map(
           rawTimers.map((timer) => {
-            const compositeKey = `${timer.guildId}_${timer.world}_${timer.npcId}`;
+            const compositeKey = `${timer.guildId}_${timer.world}_${timer.timerKey}`;
             return [compositeKey, timer];
           }),
         ).values(),

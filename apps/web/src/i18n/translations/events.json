@@ -363,6 +363,8 @@
     "addDescription": "Dodaj nowego herosa do eventu",
     "mapsHint": "Mapy dla herosa dodasz po jego utworzeniu.",
     "idHint": "Jeśli nie znasz ID lub jest niedostępne - zostanie ustawione automatycznie po pierwszym zbiciu herosa (wymaga poprawnej nazwy).",
+    "nameLockedHint": "Po ustawieniu realnego ID nazwa herosa jest blokowana, żeby nie rozłączyć go z aktywnym timerem eventowym.",
+    "nameLockedError": "Nie można zmienić nazwy herosa po ustawieniu jego ID.",
     "added": "Dodano herosa",
     "updated": "Zaktualizowano herosa",
     "deleted": "Usunięto herosa",

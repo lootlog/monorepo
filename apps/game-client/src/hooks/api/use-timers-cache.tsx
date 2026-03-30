@@ -4,10 +4,10 @@ import type { Timer } from "@/hooks/api/use-timers";
 
 const timersKey = (world: string) => ["guild-timers", world] as const;
 
-type TimerIdentity = Pick<Timer, "world" | "npcId" | "guildId">;
+type TimerIdentity = Pick<Timer, "world" | "timerKey" | "guildId">;
 
 const isSameTimer = (a: TimerIdentity, b: TimerIdentity): boolean =>
-  a.npcId === b.npcId && a.guildId === b.guildId && a.world === b.world;
+  a.timerKey === b.timerKey && a.guildId === b.guildId && a.world === b.world;
 
 export const useTimersCache = () => {
   const queryClient = useQueryClient();
