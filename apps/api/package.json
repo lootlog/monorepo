@@ -47,7 +47,7 @@
     "bullmq": "^5.71.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
-    "discord-api-types": "0.38.42",
+    "discord-api-types": "0.38.43",
     "dotenv": "^17.3.1",
     "fastify": "^5.8.4",
     "ioredis": "^5.10.1",
