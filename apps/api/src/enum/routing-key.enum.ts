@@ -63,6 +63,8 @@ export enum RoutingKey {
   SEARCH_PLAYERS_INDEX = "search.players.index",
   SEARCH_ITEMS_INDEX = "search.items.index",
 
+  LOOTS_CREATED = "loots.created",
+
   ACTIVITY_LOG_CREATE = "activity.log.create",
 
   EVENT_MAP_STATUS_UPDATE = "event.map-status.update",

@@ -1,6 +1,9 @@
 import { Module } from "@nestjs/common";
 import { BotService } from "./bot.service";
 import { BotDiscordEventsHandler } from "src/bot/bot-discord-events.handler";
+import { NotificationDeliveryHandler } from "src/bot/notification-delivery.handler";
+import { ChannelsController } from "src/bot/channels.controller";
+import { BotStatusController } from "src/bot/bot-status.controller";
 import {
   RabbitMQModule,
   type RabbitMQConfig,
@@ -16,7 +19,7 @@ import { ConfigKey } from "src/config/config-key.enum";
         configService.get<RabbitMQConfig>(ConfigKey.RABBITMQ),
     }),
   ],
-  controllers: [],
-  providers: [BotService, BotDiscordEventsHandler],
+  controllers: [ChannelsController, BotStatusController],
+  providers: [BotService, BotDiscordEventsHandler, NotificationDeliveryHandler],
 })
 export class BotModule {}

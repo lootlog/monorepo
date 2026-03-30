@@ -1,0 +1,23 @@
+name: Deploy Notifications Worker to prod
+permissions:
+  contents: write
+  security-events: write
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-notifications-worker-prod
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/deploy-service.yml
+    with:
+      service: notifications-worker
+      environment: prod
+      enable_notifications: false
+    secrets:
+      DOCKER_REGISTRY_USERNAME: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
+      DOCKER_REGISTRY_PASSWORD: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
+      INFRA_REPO_PUSH_TOKEN: ${{ secrets.INFRA_REPO_PUSH_TOKEN }}

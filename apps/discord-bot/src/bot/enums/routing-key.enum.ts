@@ -19,4 +19,7 @@ export enum RoutingKey {
   GUILDS_MEMBERS_REMOVE_ROLE = "guilds.members.remove.role",
 
   GUILDS_TIMER_UPDATE = "guilds.timer.update",
+
+  NOTIFICATIONS_DISCORD_SEND = "notifications.discord.send",
+  NOTIFICATIONS_DELIVERY_RESULT = "notifications.delivery.result",
 }

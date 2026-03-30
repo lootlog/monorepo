@@ -5,12 +5,13 @@ import {
   SEARCH_API_URL,
   AUTH_API_URL,
   ACTIVITY_API_URL,
+  NOTIFICATIONS_API_URL,
 } from "@/config/api";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
 
-type ApiName = "default" | "battlelog" | "search" | "auth" | "activity";
+type ApiName = "default" | "battlelog" | "search" | "auth" | "activity" | "notifications";
 
 const BASE_URLS: Record<ApiName, string | undefined> = {
   default: API_URL,
@@ -18,6 +19,7 @@ const BASE_URLS: Record<ApiName, string | undefined> = {
   search: SEARCH_API_URL,
   auth: AUTH_API_URL,
   activity: ACTIVITY_API_URL,
+  notifications: NOTIFICATIONS_API_URL,
 };
 
 const clients = new Map<ApiName, AxiosInstance>();
@@ -103,3 +105,5 @@ export const battlelogApiClient = getApiClient("battlelog");
 export const authApiClient = getApiClient("auth");
 
 export const activityApiClient = getApiClient("activity");
+
+export const notificationsApiClient = getApiClient("notifications");

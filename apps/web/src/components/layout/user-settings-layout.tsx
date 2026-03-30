@@ -16,6 +16,11 @@ export const UserSettingsLayout: React.FC = () => {
       label: t("settings.account.title"),
       href: `${ROUTE_SEGMENTS.user.settings}${ROUTE_SEGMENTS.user.account}`,
     },
+    {
+      id: "notifications",
+      label: t("settings.notifications.title"),
+      href: `${ROUTE_SEGMENTS.user.settings}${ROUTE_SEGMENTS.user.notifications}`,
+    },
   ];
 
   return (

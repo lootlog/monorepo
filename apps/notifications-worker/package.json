@@ -1,0 +1,85 @@
+{
+  "name": "@lootlog/notifications-worker",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Notification scheduling and delivery worker",
+  "license": "MIT",
+  "scripts": {
+    "build": "nest build",
+    "format": "oxfmt src test",
+    "start": "node --import ./dist/instrumentation.js dist/main.js",
+    "dev": "nest start --watch",
+    "start:debug": "nest start --debug --watch",
+    "start:prod": "node --import ./dist/instrumentation.js dist/main.js",
+    "lint": "oxlint src",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "notifications:push": "drizzle-kit push",
+    "notifications:generate": "drizzle-kit generate",
+    "notifications:migrate": "drizzle-kit migrate",
+    "notifications:migrate:dev": "drizzle-kit push --force",
+    "notifications:pull": "drizzle-kit pull",
+    "notifications:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@axiomhq/winston": "^1.5.0",
+    "@golevelup/nestjs-rabbitmq": "^9.0.0",
+    "@lootlog/instrumentation": "workspace:*",
+    "@lootlog/nest-shared": "workspace:*",
+    "@lootlog/types": "workspace:*",
+    "@nestjs/bullmq": "^11.0.4",
+    "@nestjs/common": "^11.1.17",
+    "@nestjs/config": "^4.0.3",
+    "@nestjs/core": "^11.1.17",
+    "@nestjs/platform-fastify": "^11.1.17",
+    "@nestjs/swagger": "^11.2.6",
+    "@paralleldrive/cuid2": "^2.3.1",
+    "bullmq": "^5.71.1",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
+    "dotenv": "^17.3.1",
+    "drizzle-orm": "1.0.0-beta.19",
+    "fastify": "^5.8.4",
+    "ioredis": "^5.10.1",
+    "joi": "^18.1.1",
+    "nest-winston": "^1.10.2",
+    "pg": "^8.20.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "winston": "^3.19.0"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.16",
+    "@nestjs/testing": "^11.1.17",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^25.5.0",
+    "@types/pg": "^8.20.0",
+    "drizzle-kit": "1.0.0-beta.19",
+    "jest": "^30.3.0",
+    "ts-jest": "^29.4.6",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "jest": {
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
+    "coverageDirectory": "../coverage",
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "moduleNameMapper": {
+      "^src/(.*)$": "<rootDir>/$1"
+    },
+    "rootDir": "src",
+    "testEnvironment": "node",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    }
+  }
+}

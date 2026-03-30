@@ -24,6 +24,7 @@ const ROUTES = {
       base: `${USER_BASE}/settings`,
       appearance: `${USER_BASE}/settings/appearance`,
       account: `${USER_BASE}/settings/account`,
+      notifications: `${USER_BASE}/settings/notifications`,
     },
   },
 
@@ -53,6 +54,7 @@ const ROUTES = {
       members: (guildId: string) => `/${guildId}/settings/members`,
       appearance: (guildId: string) => `/${guildId}/settings/appearance`,
       servers: (guildId: string) => `/${guildId}/settings/servers`,
+      notifications: (guildId: string) => `/${guildId}/settings/notifications`,
     },
   },
 
@@ -70,6 +72,7 @@ const ROUTE_SEGMENTS = {
     settings: "/settings",
     appearance: "/appearance",
     account: "/account",
+    notifications: "/notifications",
   },
   guild: {
     timers: "/timers",
@@ -86,6 +89,7 @@ const ROUTE_SEGMENTS = {
     servers: "/servers",
     activityLogs: "/activity-logs",
     mapTemplates: "/map-templates",
+    notifications: "/notifications",
   },
 } as const;
 

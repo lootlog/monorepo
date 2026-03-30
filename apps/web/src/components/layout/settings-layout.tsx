@@ -29,6 +29,16 @@ const NAV_ELEMENTS = [
     label: "Członkowie",
     href: `${ROUTE_SEGMENTS.guild.settings}${ROUTE_SEGMENTS.guild.members}`,
   },
+  {
+    id: "notifications",
+    label: "Powiadomienia",
+    href: `${ROUTE_SEGMENTS.guild.settings}/notifications`,
+  },
+  {
+    id: "info",
+    label: "Informacje",
+    href: `${ROUTE_SEGMENTS.guild.settings}/info`,
+  },
 ];
 
 export const SettingsLayout: React.FC = () => {

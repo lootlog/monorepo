@@ -92,6 +92,26 @@ services:
         reservations:
           memory: 256M
 
+  notifications-db:
+    image: postgres:17-alpine
+    container_name: "notifications-db"
+    restart: always
+    shm_size: 256mb
+    volumes:
+      - notifications-db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${NOTIFICATIONS_DB_NAME}
+      POSTGRES_USER: ${NOTIFICATIONS_DB_USER}
+      POSTGRES_PASSWORD: ${NOTIFICATIONS_DB_PASSWORD}
+    ports:
+      - "5436:5432"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
   meilisearch:
     image: "getmeili/meilisearch:v1.10.0"
     environment:
@@ -144,3 +164,4 @@ volumes:
   redis:
   battle-log-db:
   activity-log-db:
+  notifications-db:

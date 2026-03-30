@@ -7,6 +7,7 @@ import {
 } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
+import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import type { CreateLootDto } from "src/loots/dto/create-loot.dto";
 import type { FetchLootsParamsDto } from "src/loots/dto/fetch-loots-params.dto";
 import { getNpcTypeByWt } from "@lootlog/types";
@@ -33,6 +34,8 @@ import { LootCommentService } from "./services/loot-comment.service";
 import { RedisService } from "@lootlog/nest-shared";
 import Redlock, { ExecutionError } from "redlock";
 import { RedlockService } from "src/lib/redlock/redlock.service";
+import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
+import { RoutingKey } from "src/enum/routing-key.enum";
 
 @Injectable()
 export class LootsService implements OnModuleInit {
@@ -54,6 +57,7 @@ export class LootsService implements OnModuleInit {
     private readonly redisService: RedisService,
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     private readonly redlockService: RedlockService,
+    private readonly amqpConnection: AmqpConnection,
   ) {}
 
   async onModuleInit() {
@@ -243,6 +247,8 @@ export class LootsService implements OnModuleInit {
       }));
       this.itemsService.bulkIndexItems(indexItems);
 
+      this.emitLootCreated(loot.id, body.world, items, npcs, filteredGuildIds);
+
       return { id: loot.id };
     } catch (error: unknown) {
       if (error instanceof ExecutionError) {
@@ -257,6 +263,43 @@ export class LootsService implements OnModuleInit {
       throw error;
     } finally {
       await lock?.release();
+    }
+  }
+
+  private emitLootCreated(
+    lootId: number,
+    world: string,
+    items: Array<{ id: number; name: string; icon?: string; rarity?: string }>,
+    npcs: Array<{ id: number; name: string; type?: string | null }>,
+    guildIds: string[],
+  ) {
+    try {
+      this.amqpConnection.publish(
+        DEFAULT_EXCHANGE_NAME,
+        RoutingKey.LOOTS_CREATED,
+        {
+          lootId,
+          world,
+          items: items.map((i) => ({
+            id: i.id,
+            name: i.name,
+            rarity: i.rarity,
+          })),
+          npcs: npcs.map((n) => ({
+            id: n.id,
+            name: n.name,
+            type: n.type,
+          })),
+          guildIds,
+        },
+      );
+    } catch (error) {
+      this.logger.log({
+        level: "error",
+        message: "Failed to emit loots.created event",
+        error,
+        lootId,
+      });
     }
   }
 

@@ -148,6 +148,19 @@
     "activity:studio": {
       "cache": false,
       "interactive": false
+    },
+    "notifications:migrate": {
+      "cache": false
+    },
+    "notifications:migrate:dev": {
+      "cache": false
+    },
+    "notifications:generate": {
+      "cache": false
+    },
+    "notifications:studio": {
+      "cache": false,
+      "interactive": false
     }
   }
 }

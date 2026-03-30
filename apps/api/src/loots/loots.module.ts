@@ -1,4 +1,10 @@
 import { Module } from "@nestjs/common";
+import {
+  RabbitMQModule,
+  type RabbitMQConfig,
+} from "@golevelup/nestjs-rabbitmq";
+import { ConfigService } from "@nestjs/config";
+import { ConfigKey } from "src/config/config-key.enum";
 import { LootsController } from "./loots.controller";
 import { LootsService } from "./loots.service";
 import { MembersModule } from "src/members/members.module";
@@ -29,6 +35,11 @@ import { LootStatsService } from "./services/loot-stats.service";
     PrismaModule,
     RedisModule,
     RedlockModule,
+    RabbitMQModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) =>
+        configService.get<RabbitMQConfig>(ConfigKey.RABBITMQ),
+    }),
   ],
   controllers: [LootsController],
   providers: [

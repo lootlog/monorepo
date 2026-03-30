@@ -40,6 +40,7 @@ RUN pnpm deploy --filter=@lootlog/api --prod /prod/api && \
     pnpm deploy --filter=@lootlog/gateway --prod /prod/gateway && \
     pnpm deploy --filter=@lootlog/battlelog-service --prod /prod/battlelog-service && \
     pnpm deploy --filter=@lootlog/activity --prod /prod/activity && \
+    pnpm deploy --filter=@lootlog/notifications-worker --prod /prod/notifications-worker && \
     pnpm deploy --filter=@lootlog/developer --prod /prod/developer
 
 FROM base AS auth
@@ -159,6 +160,23 @@ LABEL org.opencontainers.image.vendor="Lootlog"
 
 COPY --from=build --chown=nodejs:nodejs --chmod=755 /prod/activity /prod/activity
 WORKDIR /prod/activity
+
+USER nodejs
+
+EXPOSE 4000
+
+ENTRYPOINT ["dumb-init", "--"]
+
+CMD ["pnpm", "start"]
+
+FROM base AS notifications-worker
+
+LABEL org.opencontainers.image.title="Lootlog Notifications Worker"
+LABEL org.opencontainers.image.description="Notification scheduling and delivery worker"
+LABEL org.opencontainers.image.vendor="Lootlog"
+
+COPY --from=build --chown=nodejs:nodejs --chmod=755 /prod/notifications-worker /prod/notifications-worker
+WORKDIR /prod/notifications-worker
 
 USER nodejs
 
