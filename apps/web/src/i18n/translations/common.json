@@ -30,7 +30,10 @@
     "settings": "Ustawienia",
     "roles": "Role",
     "roleFallback": "Rola #{{id}}",
-    "members": "Członkowie"
+    "members": "Członkowie",
+    "notifications": "Powiadomienia",
+    "info": "Informacje",
+    "npcs": "Ustawienia potworów i NPC"
   },
   "greeting": "Cześć, {{name}}!",
   "activityLogs": {

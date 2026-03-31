@@ -538,7 +538,22 @@ function getNavigationInfo({
         label: t("common.breadcrumbs.settings"),
         path: guildSettings,
       };
-      breadcrumbs.push({ label: "NPCs", path: null });
+      breadcrumbs.push({ label: t("common.breadcrumbs.npcs"), path: null });
+    } else if (path === `${guildSettings}/notifications`) {
+      breadcrumbs[1] = {
+        label: t("common.breadcrumbs.settings"),
+        path: guildSettings,
+      };
+      breadcrumbs.push({
+        label: t("common.breadcrumbs.notifications"),
+        path: null,
+      });
+    } else if (path === `${guildSettings}/info`) {
+      breadcrumbs[1] = {
+        label: t("common.breadcrumbs.settings"),
+        path: guildSettings,
+      };
+      breadcrumbs.push({ label: t("common.breadcrumbs.info"), path: null });
     }
 
     return {

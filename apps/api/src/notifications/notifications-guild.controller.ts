@@ -1,0 +1,109 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  UseGuards,
+} from "@nestjs/common";
+import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
+import { Permission, type Guild } from "prisma/generated/client";
+import { ChannelsService } from "src/channels/channels.service";
+import type { CreateNotificationRuleDto } from "src/notifications/dto/create-notification-rule.dto";
+import type { CreateNotificationTargetDto } from "src/notifications/dto/create-notification-target.dto";
+import type { UpdateNotificationRuleDto } from "src/notifications/dto/update-notification-rule.dto";
+import type { UpdateNotificationTargetDto } from "src/notifications/dto/update-notification-target.dto";
+import { NotificationsService } from "src/notifications/notifications.service";
+import { GuildData } from "src/shared/decorators/guild-data.decorator";
+import { AuthGuard } from "src/shared/guards/auth.guard";
+import { Permissions } from "src/shared/permissions/permissions.decorator";
+import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
+
+@ApiTags("notifications")
+@ApiBearerAuth()
+@UseGuards(AuthGuard, PermissionsGuard)
+@Permissions(Permission.OWNER, Permission.ADMIN)
+@Controller("guilds/:guildId/notifications")
+export class NotificationsGuildController {
+  constructor(
+    private readonly notificationsService: NotificationsService,
+    private readonly channelsService: ChannelsService,
+  ) {}
+
+  @Get("targets")
+  async getGuildTargets(@GuildData() guild: Guild) {
+    return this.notificationsService.listGuildTargets(guild.id);
+  }
+
+  @Get("targets/available")
+  async getAvailableGuildTargets(@GuildData() guild: Guild) {
+    return this.channelsService.getSelectableGuildChannels(guild.id);
+  }
+
+  @Post("targets")
+  async createGuildTarget(
+    @GuildData() guild: Guild,
+    @Body() data: CreateNotificationTargetDto,
+  ) {
+    return this.notificationsService.createGuildTarget(guild.id, data);
+  }
+
+  @Patch("targets/:targetId")
+  async updateGuildTarget(
+    @GuildData() guild: Guild,
+    @Param("targetId", ParseIntPipe) targetId: number,
+    @Body() data: UpdateNotificationTargetDto,
+  ) {
+    return this.notificationsService.updateGuildTarget(
+      guild.id,
+      targetId,
+      data,
+    );
+  }
+
+  @Delete("targets/:targetId")
+  async deleteGuildTarget(
+    @GuildData() guild: Guild,
+    @Param("targetId", ParseIntPipe) targetId: number,
+  ) {
+    return this.notificationsService.deleteGuildTarget(guild.id, targetId);
+  }
+
+  @Get("rules")
+  async getGuildRules(@GuildData() guild: Guild) {
+    return this.notificationsService.listGuildRules(guild.id);
+  }
+
+  @Post("rules")
+  async createGuildRule(
+    @GuildData() guild: Guild,
+    @Body() data: CreateNotificationRuleDto,
+  ) {
+    return this.notificationsService.createGuildRule(guild.id, data);
+  }
+
+  @Patch("rules/:ruleId")
+  async updateGuildRule(
+    @GuildData() guild: Guild,
+    @Param("ruleId", ParseIntPipe) ruleId: number,
+    @Body() data: UpdateNotificationRuleDto,
+  ) {
+    return this.notificationsService.updateGuildRule(guild.id, ruleId, data);
+  }
+
+  @Delete("rules/:ruleId")
+  async deleteGuildRule(
+    @GuildData() guild: Guild,
+    @Param("ruleId", ParseIntPipe) ruleId: number,
+  ) {
+    return this.notificationsService.deleteGuildRule(guild.id, ruleId);
+  }
+
+  @Get("jobs")
+  async getGuildJobs(@GuildData() guild: Guild) {
+    return this.notificationsService.listGuildJobs(guild.id);
+  }
+}

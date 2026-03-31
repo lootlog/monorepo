@@ -7,11 +7,16 @@ import {
   HttpException,
   HttpStatus,
 } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import type { APIGuild } from "discord-api-types/v10";
+import { DiscordGuildSyncStatus } from "@lootlog/types";
 
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
+import { ChannelsService } from "src/channels/channels.service";
+import type { DiscordBotConfig } from "src/config/discord-bot.config";
+import { ConfigKey } from "src/config/config-key.enum";
 import { type Guild, Permission } from "prisma/generated/client";
 import { PrismaService } from "src/db/prisma.service";
 import type { CreateGuildDto } from "src/guilds/dto/create-guild.dto";
@@ -42,22 +47,37 @@ interface GuildRefreshCandidate {
   hasDiscordAdmin: boolean;
 }
 
+type GetGuildDiscordSyncStateOptions = {
+  forceRefresh?: boolean;
+  refreshIfStale?: boolean;
+};
+
 @Injectable()
 export class GuildsService {
+  private readonly staleAfterMs: number;
+
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     @Inject(forwardRef(() => MembersService))
     private readonly membersService: MembersService,
+    private readonly channelsService: ChannelsService,
     private readonly rolesService: RolesService,
     @Inject(forwardRef(() => LootlogConfigService))
     private lootlogConfigService: LootlogConfigService,
     private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
     private readonly discordService: DiscordService,
     @Inject(forwardRef(() => UsersService))
     private readonly usersService: UsersService,
     private readonly redisService: RedisService,
     private readonly amqpConnection: AmqpConnection,
-  ) {}
+  ) {
+    const discordBotConfig = this.configService.get<DiscordBotConfig>(
+      ConfigKey.DISCORD_BOT,
+    );
+    this.staleAfterMs =
+      (discordBotConfig?.channelSnapshotStaleSeconds ?? 300) * 1000;
+  }
 
   async getUserGuilds(discordId: string, userId: string, source?: string) {
     const userPreferences = await this.usersService.getUserPreferences(userId);
@@ -230,6 +250,74 @@ export class GuildsService {
     await Promise.all(cacheOperations);
 
     return guild;
+  }
+
+  async getGuildDiscordSyncStatus(
+    guildId: string,
+    options: GetGuildDiscordSyncStateOptions = {},
+  ) {
+    const { forceRefresh = false, refreshIfStale = false } = options;
+    const cachedSyncState = await this.loadGuildDiscordSyncState(guildId);
+
+    if (!cachedSyncState) {
+      return this.refreshGuildDiscordSync(guildId);
+    }
+
+    const isStale = this.shouldRefreshGuildDiscordSync(cachedSyncState, true);
+
+    if (forceRefresh || (refreshIfStale && isStale)) {
+      try {
+        return await this.refreshGuildDiscordSync(guildId);
+      } catch (error) {
+        const latestSyncState = await this.loadGuildDiscordSyncState(guildId);
+
+        if (latestSyncState) {
+          return latestSyncState;
+        }
+
+        if (cachedSyncState) {
+          return this.createStaleGuildDiscordSyncState(
+            cachedSyncState,
+            this.getDiscordSyncErrorMessage(error),
+          );
+        }
+
+        throw error;
+      }
+    }
+
+    if (isStale) {
+      return this.createStaleGuildDiscordSyncState(cachedSyncState);
+    }
+
+    return cachedSyncState;
+  }
+
+  async refreshGuildDiscordSync(guildId: string) {
+    const { syncState } =
+      await this.channelsService.refreshGuildDiscordChannels(guildId);
+
+    if (!syncState) {
+      throw new NotFoundException("Discord sync state not found");
+    }
+
+    return syncState;
+  }
+
+  async hasRequiredGuildPermissions(guildId: string) {
+    try {
+      const syncState = await this.getGuildDiscordSyncStatus(guildId, {
+        refreshIfStale: false,
+      });
+
+      return syncState.hasRequiredPermissions;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        return false;
+      }
+
+      throw error;
+    }
   }
 
   async getGuildsForRequiredPermissions(
@@ -915,6 +1003,8 @@ export class GuildsService {
       throw error;
     }
 
+    await this.channelsService.markGuildSyncStale(data.guildId);
+
     this.logger.log({
       level: "info",
       message: `createGuild completed for ${data.guildId}`,
@@ -1008,5 +1098,75 @@ export class GuildsService {
       });
       throw error;
     }
+  }
+
+  private async loadGuildDiscordSyncState(guildId: string) {
+    return this.prisma.discordGuildSyncState.findUnique({
+      where: { guildId },
+    });
+  }
+
+  private shouldRefreshGuildDiscordSync(
+    syncState: { updatedAt: Date; status: string } | null,
+    refreshIfStale: boolean,
+  ) {
+    if (!refreshIfStale) {
+      return false;
+    }
+
+    if (!syncState) {
+      return true;
+    }
+
+    if (syncState.status === DiscordGuildSyncStatus.SYNCING) {
+      return false;
+    }
+
+    if (syncState.status === DiscordGuildSyncStatus.STALE) {
+      return true;
+    }
+
+    return Date.now() - syncState.updatedAt.getTime() > this.staleAfterMs;
+  }
+
+  private getDiscordSyncErrorMessage(error: unknown) {
+    if (error instanceof Error) {
+      return error.message;
+    }
+
+    return "Unknown Discord sync error";
+  }
+
+  private createStaleGuildDiscordSyncState(
+    syncState: {
+      guildId: string;
+      status: string;
+      hasRequiredPermissions: boolean;
+      requiredPermissions: string[];
+      grantedPermissions: string[];
+      missingPermissions: string[];
+      channelCount: number;
+      selectableChannelCount: number;
+      lastAttemptAt: Date | null;
+      lastSuccessAt: Date | null;
+      lastError: string | null;
+      createdAt: Date;
+      updatedAt: Date;
+    },
+    lastError?: string,
+  ) {
+    if (
+      syncState.status === DiscordGuildSyncStatus.NOT_FOUND ||
+      syncState.status === DiscordGuildSyncStatus.FAILED
+    ) {
+      return syncState;
+    }
+
+    return {
+      ...syncState,
+      status: DiscordGuildSyncStatus.STALE,
+      lastError:
+        lastError ?? syncState.lastError ?? "Discord sync status is stale",
+    };
   }
 }

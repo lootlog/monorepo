@@ -25,6 +25,9 @@ model Guild {
   mapTemplates      MapTemplate[]
   npcKillStats      NpcKillStats[]
   guildKillSummary  GuildKillSummary[]
+  notificationRules NotificationRule[]
+  discordChannelSnapshots DiscordGuildChannelSnapshot[]
+  discordSyncState  DiscordGuildSyncState?
 
   @@index([vanityUrl])
 }
@@ -141,6 +144,48 @@ enum RefreshJobStatus {
   PROCESSING
   COMPLETED
   FAILED
+}
+
+enum NotificationOwnerType {
+  GUILD
+  USER
+}
+
+enum NotificationProvider {
+  DISCORD
+}
+
+enum NotificationTargetType {
+  CHANNEL
+  DM
+}
+
+enum NotificationTriggerType {
+  TIMER_BEFORE_SPAWN
+  NPC_SPAWNED
+  WATCHED_ITEM_DROPPED
+}
+
+enum NotificationJobKind {
+  SCHEDULED
+  INSTANT
+}
+
+enum NotificationJobStatus {
+  PENDING
+  PROCESSING
+  SENT
+  FAILED
+  BLOCKED
+  CANCELED
+}
+
+enum DiscordGuildSyncStatus {
+  SYNCED
+  SYNCING
+  FAILED
+  STALE
+  NOT_FOUND
 }
 
 model Role {
@@ -432,6 +477,156 @@ model UserSettings {
   updatedAt   DateTime @updatedAt
 
   @@index([userId])
+}
+
+model NotificationTarget {
+  id                Int             @id @default(autoincrement())
+  ownerType         NotificationOwnerType
+  ownerId           String
+  provider          NotificationProvider
+  targetType        NotificationTargetType
+  externalId        String
+  displayName       String?
+  guildName         String?
+  metadata          Json?
+  active            Boolean         @default(true)
+  canSend           Boolean         @default(true)
+  lastSyncedAt      DateTime?
+  lastDeliveryAt    DateTime?
+  lastDeliveryError String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  rules NotificationRuleTarget[]
+  jobs  NotificationJob[]
+
+  @@unique([ownerType, ownerId, provider, targetType, externalId])
+  @@index([ownerType, ownerId, active])
+}
+
+model NotificationRule {
+  id                  Int              @id @default(autoincrement())
+  ownerType           NotificationOwnerType
+  ownerId             String
+  triggerType         NotificationTriggerType
+  guildId             String?
+  world               String?
+  name                String?
+  filters             Json?
+  leadTimeMinutes     Int?
+  enabled             Boolean          @default(true)
+  dedupeWindowSeconds Int              @default(0)
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  guild              Guild?                  @relation(fields: [guildId], references: [id])
+  targets            NotificationRuleTarget[]
+  jobs               NotificationJob[]
+  watchedItems  WatchedItem[]
+
+  @@index([ownerType, ownerId, enabled])
+  @@index([guildId, world, triggerType, enabled])
+}
+
+model NotificationRuleTarget {
+  ruleId     Int
+  targetId   Int
+  createdAt  DateTime @default(now())
+
+  rule   NotificationRule   @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  target NotificationTarget @relation(fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@id([ruleId, targetId])
+  @@index([targetId])
+}
+
+model NotificationJob {
+  id               String         @id
+  ruleId           Int
+  targetId         Int
+  ownerType        NotificationOwnerType
+  ownerId          String
+  jobKind          NotificationJobKind
+  scheduledFor     DateTime
+  status           NotificationJobStatus @default(PENDING)
+  idempotencyKey   String         @unique
+  sourceEntityType String?
+  sourceEntityId   String?
+  sourceEventId    String?
+  payloadSnapshot  Json
+  attemptCount     Int            @default(0)
+  lastError        String?
+  blockedReason    String?
+  providerMessageId String?
+  processedAt      DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  rule   NotificationRule   @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  target NotificationTarget @relation(fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@index([ruleId, status])
+  @@index([targetId, status])
+  @@index([ownerType, ownerId, status, scheduledFor])
+  @@index([status, scheduledFor])
+}
+
+model WatchedItem {
+  id          Int      @id @default(autoincrement())
+  userId      String
+  itemId      Int
+  enabled     Boolean  @default(true)
+  notificationRuleId Int?     @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  notificationRule NotificationRule? @relation(fields: [notificationRuleId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, itemId])
+  @@index([userId, enabled])
+}
+
+model DiscordGuildChannelSnapshot {
+  id           Int      @id @default(autoincrement())
+  guildId      String
+  channelId    String
+  name         String
+  channelType  String
+  parentId     String?
+  position     Int
+  active       Boolean  @default(true)
+  canView      Boolean  @default(true)
+  canSend      Boolean  @default(true)
+  hasRequiredPermissions Boolean @default(false)
+  requiredPermissions    String[] @default([])
+  grantedPermissions     String[] @default([])
+  missingPermissions     String[] @default([])
+  lastSyncedAt DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@unique([guildId, channelId])
+  @@index([guildId, active, canSend])
+}
+
+model DiscordGuildSyncState {
+  guildId                String                  @id
+  status                 DiscordGuildSyncStatus  @default(STALE)
+  hasRequiredPermissions Boolean                 @default(false)
+  requiredPermissions    String[]                @default([])
+  grantedPermissions     String[]                @default([])
+  missingPermissions     String[]                @default([])
+  channelCount           Int                     @default(0)
+  selectableChannelCount Int                     @default(0)
+  lastAttemptAt          DateTime?
+  lastSuccessAt          DateTime?
+  lastError              String?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
 }
 
 model MemberRefreshJob {

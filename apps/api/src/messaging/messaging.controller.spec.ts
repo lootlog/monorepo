@@ -1,30 +1,30 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { NotificationsController } from "./notifications.controller";
-import { NotificationsService } from "./notifications.service";
+import { MessagingController } from "./messaging.controller";
+import { MessagingService } from "./messaging.service";
 
 jest.mock("uuid", () => ({
   v4: () => "mock-uuid",
 }));
 
-describe("NotificationsController", () => {
-  let controller: NotificationsController;
+describe("MessagingController", () => {
+  let controller: MessagingController;
 
-  const mockNotificationsService = {
+  const mockMessagingService = {
     cancelPartyGathering: jest.fn(),
   };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [NotificationsController],
+      controllers: [MessagingController],
       providers: [
         {
-          provide: NotificationsService,
-          useValue: mockNotificationsService,
+          provide: MessagingService,
+          useValue: mockMessagingService,
         },
       ],
     }).compile();
 
-    controller = module.get<NotificationsController>(NotificationsController);
+    controller = module.get<MessagingController>(MessagingController);
     jest.clearAllMocks();
   });
 
@@ -33,7 +33,7 @@ describe("NotificationsController", () => {
     const notificationId = "notif-abc";
 
     it("should return 200 with guildIds on success", async () => {
-      mockNotificationsService.cancelPartyGathering.mockResolvedValue({
+      mockMessagingService.cancelPartyGathering.mockResolvedValue({
         status: "success",
         guildIds: ["guild-1"],
       });
@@ -57,7 +57,7 @@ describe("NotificationsController", () => {
     });
 
     it("should return 204 with empty body for expired notification", async () => {
-      mockNotificationsService.cancelPartyGathering.mockResolvedValue({
+      mockMessagingService.cancelPartyGathering.mockResolvedValue({
         status: "expired",
       });
 

@@ -1,5 +1,4 @@
 import { Module } from "@nestjs/common";
-import { BotService } from "./bot.service";
 import { BotDiscordEventsHandler } from "src/bot/bot-discord-events.handler";
 import {
   RabbitMQModule,
@@ -7,6 +6,10 @@ import {
 } from "@golevelup/nestjs-rabbitmq";
 import { ConfigService } from "@nestjs/config";
 import { ConfigKey } from "src/config/config-key.enum";
+import { BotInternalController } from "src/bot/bot-internal.controller";
+import { BotNotificationsConsumer } from "src/bot/bot-notifications.consumer";
+import { DiscordDeliveryService } from "src/bot/discord-delivery.service";
+import { DiscordSyncService } from "src/bot/discord-sync.service";
 
 @Module({
   imports: [
@@ -16,7 +19,12 @@ import { ConfigKey } from "src/config/config-key.enum";
         configService.get<RabbitMQConfig>(ConfigKey.RABBITMQ),
     }),
   ],
-  controllers: [],
-  providers: [BotService, BotDiscordEventsHandler],
+  controllers: [BotInternalController],
+  providers: [
+    DiscordSyncService,
+    DiscordDeliveryService,
+    BotDiscordEventsHandler,
+    BotNotificationsConsumer,
+  ],
 })
 export class BotModule {}

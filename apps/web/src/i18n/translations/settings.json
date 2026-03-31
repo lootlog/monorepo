@@ -1,5 +1,199 @@
 {
   "navigationLabel": "Ustawienia",
+  "guildNavigation": {
+    "general": "Ogólne",
+    "roles": "Role",
+    "npcs": "Ustawienia potworów i NPC",
+    "mapTemplates": "Szablony map",
+    "members": "Członkowie",
+    "notifications": "Powiadomienia",
+    "info": "Informacje"
+  },
+  "notifications": {
+    "title": "Powiadomienia",
+    "description": "Zarządzaj kanałami docelowymi, regułami wysyłki i historią dostarczania powiadomień.",
+    "actions": {
+      "addTarget": "Dodaj target",
+      "addRule": "Dodaj regułę",
+      "edit": "Edytuj",
+      "delete": "Usuń",
+      "cancel": "Anuluj",
+      "save": "Zapisz",
+      "create": "Utwórz",
+      "createTarget": "Utwórz target"
+    },
+    "sections": {
+      "targets": "Targety",
+      "targetsDescription": "Kanały Discorda używane do wysyłki powiadomień.",
+      "rules": "Reguły",
+      "rulesDescription": "Automatyzacje określające kiedy i gdzie wysyłać powiadomienia.",
+      "jobs": "Scheduled joby",
+      "jobsDescription": "Pending joby i ostatnia historia dostarczeń."
+    },
+    "permissionsBlocked": {
+      "title": "Brak wymaganych uprawnień bota",
+      "description": "Dopóki bot nie dostanie nowych uprawnień, tworzenie targetów, reguł i scheduled jobów jest zablokowane.",
+      "reinstall": "Zainstaluj bota ponownie"
+    },
+    "triggers": {
+      "timerBeforeSpawn": "Przypomnienie przed spawnem",
+      "npcSpawned": "Spawn potwora",
+      "watchedItemDropped": "Drop obserwowanego itemu"
+    },
+    "jobStatuses": {
+      "pending": "Oczekuje",
+      "processing": "Wysyłanie",
+      "sent": "Wysłane",
+      "failed": "Błąd",
+      "blocked": "Zablokowane",
+      "canceled": "Anulowane"
+    },
+    "states": {
+      "active": "Aktywny",
+      "inactive": "Nieaktywny",
+      "enabled": "Włączona",
+      "disabled": "Wyłączona",
+      "canSend": "Może wysyłać",
+      "cannotSend": "Brak wysyłki"
+    },
+    "leadTime": "{{minutes}} min przed spawnem",
+    "targetCount_one": "{{count}} target",
+    "targetCount_few": "{{count}} targety",
+    "targetCount_many": "{{count}} targetów",
+    "targetUsageCount_one": "Używany w {{count}} regule",
+    "targetUsageCount_few": "Używany w {{count}} regułach",
+    "targetUsageCount_many": "Używany w {{count}} regułach",
+    "npcCount_one": "{{count}} NPC",
+    "npcCount_few": "{{count}} NPC",
+    "npcCount_many": "{{count}} NPC",
+    "targetLabels": "Targety: {{targets}}",
+    "allWorlds": "Wszystkie światy",
+    "allNpcs": "Wszystkie NPC",
+    "jobs": {
+      "pending": "Pending",
+      "history": "Historia",
+      "targetLabel": "Target: {{target}}"
+    },
+    "empty": {
+      "targets": "Brak skonfigurowanych targetów.",
+      "rules": "Brak skonfigurowanych reguł.",
+      "pendingJobs": "Brak pending jobów.",
+      "historyJobs": "Brak historii jobów.",
+      "availableChannels": "Wszystkie dostępne kanały są już dodane jako targety.",
+      "npcs": "Brak pasujących NPC.",
+      "targetsSelect": "Brak dostępnych targetów."
+    },
+    "loading": {
+      "availableChannels": "Pobieranie kanałów Discorda..."
+    },
+    "validation": {
+      "channelRequired": "Wybierz kanał Discorda",
+      "displayNameRequired": "Nazwa wyświetlana jest wymagana",
+      "leadTimeRequired": "Podaj liczbę minut",
+      "leadTimePositive": "Liczba minut musi być dodatnią liczbą całkowitą",
+      "targetRequired": "Wybierz przynajmniej jeden target"
+    },
+    "fields": {
+      "channel": "Kanał Discorda",
+      "displayName": "Nazwa wyświetlana",
+      "active": "Aktywność targetu",
+      "activeDescription": "Nieaktywny target nie będzie używany przez reguły.",
+      "trigger": "Typ reguły",
+      "name": "Nazwa reguły",
+      "world": "Świat",
+      "npcs": "Filtr NPC",
+      "leadTimeMinutes": "Wyprzedzenie",
+      "targets": "Targety",
+      "enabled": "Aktywność reguły",
+      "enabledDescription": "Wyłączona reguła nie będzie planować nowych powiadomień."
+    },
+    "placeholders": {
+      "channel": "Wybierz kanał",
+      "displayName": "np. Herosi",
+      "name": "np. Przypomnienie o herosach",
+      "npcs": "Wszystkie NPC",
+      "searchNpcs": "Szukaj NPC po nazwie lub ID",
+      "leadTimeMinutes": "np. 5",
+      "targets": "Wybierz targety",
+      "searchTargets": "Szukaj targetów"
+    },
+    "targetDialog": {
+      "createTitle": "Dodaj target",
+      "createDescription": "Wybierz kanał Discorda i opcjonalnie ustaw własną nazwę wyświetlaną.",
+      "editTitle": "Edytuj target",
+      "editDescription": "Zmień nazwę wyświetlaną targetu albo wyłącz jego użycie."
+    },
+    "ruleDialog": {
+      "createTitle": "Dodaj regułę",
+      "createDescription": "Skonfiguruj kiedy bot ma wysyłać przypomnienia przed spawnem.",
+      "editTitle": "Edytuj regułę",
+      "editDescription": "Zmień warunki uruchamiania i targety dla tej reguły.",
+      "triggerDescription": "Ten widok obsługuje tylko przypomnienia planowane przed spawnem.",
+      "targetsDescription": "Wybierz jeden lub więcej zapisanych targetów. Możesz też dodać nowy bez opuszczania formularza."
+    },
+    "quickTargetDialog": {
+      "title": "Szybkie dodanie targetu",
+      "description": "Dodaj nowy kanał Discorda i od razu przypnij go do tej reguły."
+    },
+    "deleteTargetDialog": {
+      "title": "Usunąć target?",
+      "description": "Target {{name}} zniknie ze wszystkich reguł i zaplanowanych wysyłek."
+    },
+    "deleteRuleDialog": {
+      "title": "Usunąć regułę?",
+      "description": "Reguła {{name}} przestanie planować i wysyłać powiadomienia."
+    },
+    "toasts": {
+      "targetCreated": "Target został utworzony",
+      "targetUpdated": "Target został zaktualizowany",
+      "targetDeleted": "Target został usunięty",
+      "targetCreateError": "Nie udało się utworzyć targetu",
+      "targetUpdateError": "Nie udało się zaktualizować targetu",
+      "targetDeleteError": "Nie udało się usunąć targetu",
+      "ruleCreated": "Reguła została utworzona",
+      "ruleUpdated": "Reguła została zaktualizowana",
+      "ruleDeleted": "Reguła została usunięta",
+      "ruleCreateError": "Nie udało się utworzyć reguły",
+      "ruleUpdateError": "Nie udało się zaktualizować reguły",
+      "ruleDeleteError": "Nie udało się usunąć reguły"
+    }
+  },
+  "guildInfo": {
+    "title": "Informacje",
+    "description": "Sprawdź status synchronizacji Discorda, kanałów i uprawnień bota.",
+    "refresh": "Odśwież status",
+    "refreshing": "Odświeżanie...",
+    "syncStatus": "Status synchronizacji Discorda",
+    "syncStatusDescription": "Ten widok pokazuje aktualny stan połączenia bota z serwerem i kanałami.",
+    "channelCounts": "{{selectable}} z {{total}} kanałów jest dostępnych do wyboru",
+    "fields": {
+      "status": "Status",
+      "channels": "Kanały",
+      "permissions": "Uprawnienia",
+      "lastAttempt": "Ostatnia próba synchronizacji",
+      "lastSuccess": "Ostatni udany sync",
+      "lastError": "Ostatni błąd"
+    },
+    "permissions": {
+      "ok": "Kompletne",
+      "missing": "Brakujące"
+    },
+    "permissionSection": {
+      "title": "Wymagane uprawnienia",
+      "description": "Bot potrzebuje tych uprawnień, żeby synchronizować kanały i wysyłać powiadomienia."
+    },
+    "reinstall": {
+      "title": "Bot wymaga reinstallu",
+      "description": "Discord nie przyznał jeszcze wszystkich wymaganych uprawnień. Przeinstaluj bota na serwerze, żeby odblokować konfigurację powiadomień.",
+      "button": "Przeinstaluj bota",
+      "notNeeded": "Bot ma komplet wymaganych uprawnień. Reinstall nie jest potrzebny."
+    },
+    "activity": {
+      "title": "Aktywność synchronizacji"
+    },
+    "notAvailable": "Brak danych",
+    "noErrors": "Brak błędów"
+  },
   "mapTemplates": {
     "title": "Szablony map",
     "description": "Zarządzaj szablonami list mapek",

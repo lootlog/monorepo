@@ -122,6 +122,8 @@ interface MultiSelectProps
   onSearchChange?: (value: string) => void;
   searchValue?: string;
   loading?: boolean;
+  searchPlaceholder?: string;
+  emptyMessage?: string;
 }
 
 export const MultiSelect = React.forwardRef<
@@ -145,6 +147,8 @@ export const MultiSelect = React.forwardRef<
       onSearchChange,
       searchValue,
       loading = false,
+      searchPlaceholder = "Szukaj...",
+      emptyMessage = "Brak wyników.",
       //   asChild = false,
       className,
       ...props
@@ -325,13 +329,13 @@ export const MultiSelect = React.forwardRef<
           <Command className="bg-background">
             {commandSearch && (
               <CommandInput
-                placeholder="Szukaj..."
+                placeholder={searchPlaceholder}
                 onKeyDown={handleInputKeyDown}
               />
             )}
             {controlledSearch && (
               <CommandInputRaw
-                placeholder="Szukaj..."
+                placeholder={searchPlaceholder}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   onSearchChange?.(e.target.value)
                 }
@@ -351,7 +355,7 @@ export const MultiSelect = React.forwardRef<
             >
               <CommandList className="max-h-none overflow-visible">
                 <CommandEmpty className="py-2 px-3 text-sm">
-                  Brak wyników.
+                  {emptyMessage}
                 </CommandEmpty>
                 <CommandGroup>
                   {loading && (

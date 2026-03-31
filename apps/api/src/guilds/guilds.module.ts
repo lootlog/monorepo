@@ -15,6 +15,7 @@ import { UsersModule } from "src/users/users.module";
 import { LootlogConfigModule } from "src/lootlog-config/lootlog-config.module";
 import { RetryService } from "src/rabbitmq/retry.service";
 import { DiscordModule } from "src/discord/discord.module";
+import { ChannelsModule } from "src/channels/channels.module";
 import { RedisModule } from "src/lib/redis/redis.module";
 import { PrismaModule } from "src/db/prisma.module";
 import { MemberSyncInterceptor } from "src/shared/interceptors/member-sync.interceptor";
@@ -32,6 +33,7 @@ import { MemberSyncInterceptor } from "src/shared/interceptors/member-sync.inter
     }),
     RedisModule,
     DiscordModule,
+    ChannelsModule,
     PrismaModule,
   ],
   controllers: [GuildsController, GuildsInternalController],
