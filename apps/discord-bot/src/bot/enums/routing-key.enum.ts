@@ -19,4 +19,11 @@ export enum RoutingKey {
   GUILDS_MEMBERS_REMOVE_ROLE = "guilds.members.remove.role",
 
   GUILDS_TIMER_UPDATE = "guilds.timer.update",
+  NOTIFICATIONS_DISCORD_SEND = "notifications.discord.send",
+  NOTIFICATIONS_DELIVERY_RESULT = "notifications.delivery.result",
+  DISCORD_GUILD_CHANNELS_SYNCED = "discord.guild.channels.synced",
+  DISCORD_GUILD_CHANNELS_SYNC_FAILED = "discord.guild.channels.sync.failed",
+  DISCORD_GUILD_CHANNEL_UPSERTED = "discord.guild.channel.upserted",
+  DISCORD_GUILD_CHANNEL_DELETED = "discord.guild.channel.deleted",
+  DISCORD_GUILD_SYNC_STATE_UPDATED = "discord.guild.sync-state.updated",
 }

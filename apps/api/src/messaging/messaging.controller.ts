@@ -15,18 +15,18 @@ import {
   ApiOperation,
   ApiResponse,
 } from "@nestjs/swagger";
-import { CreateNotificationDto } from "src/notifications/dto/create-notification.dto";
-import { CreatePartyGatheringDto } from "src/notifications/dto/create-party-gathering.dto";
-import { CreateVolunteerDto } from "src/notifications/dto/create-volunteer.dto";
-import { NotificationsService } from "src/notifications/notifications.service";
+import { CreateNotificationDto } from "src/messaging/dto/create-notification.dto";
+import { CreatePartyGatheringDto } from "src/messaging/dto/create-party-gathering.dto";
+import { CreateVolunteerDto } from "src/messaging/dto/create-volunteer.dto";
+import { MessagingService } from "src/messaging/messaging.service";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 
-@ApiTags("notifications")
+@ApiTags("messaging")
 @ApiBearerAuth()
 @UseGuards(AuthGuard)
-@Controller("notifications")
-export class NotificationsController {
-  constructor(private readonly notificationsService: NotificationsService) {}
+@Controller("messaging")
+export class MessagingController {
+  constructor(private readonly messagingService: MessagingService) {}
 
   @Post()
   @ApiOperation({
@@ -41,7 +41,7 @@ export class NotificationsController {
     @DiscordId() discordId: string,
     @Body() data: CreateNotificationDto,
   ) {
-    return this.notificationsService.sendNotification(discordId, data);
+    return this.messagingService.sendNotification(discordId, data);
   }
 
   @Post(":notificationId/volunteer")
@@ -58,7 +58,7 @@ export class NotificationsController {
     @Param("notificationId") notificationId: string,
     @Body() data: CreateVolunteerDto,
   ) {
-    return this.notificationsService.volunteer(discordId, notificationId, data);
+    return this.messagingService.volunteer(discordId, notificationId, data);
   }
 
   @Post("party-gathering")
@@ -74,7 +74,7 @@ export class NotificationsController {
     @DiscordId() discordId: string,
     @Body() data: CreatePartyGatheringDto,
   ) {
-    return this.notificationsService.sendPartyGathering(discordId, data);
+    return this.messagingService.sendPartyGathering(discordId, data);
   }
 
   @Delete("party-gathering")
@@ -88,7 +88,7 @@ export class NotificationsController {
     description: "Party gathering notification cancelled successfully",
   })
   async cancelPartyGatheringByUser(@DiscordId() discordId: string) {
-    return this.notificationsService.cancelPartyGatheringByUser(discordId);
+    return this.messagingService.cancelPartyGatheringByUser(discordId);
   }
 
   @Delete("party-gathering/:notificationId")
@@ -113,7 +113,7 @@ export class NotificationsController {
     @Param("notificationId") notificationId: string,
     @Res() reply: FastifyReply,
   ) {
-    const result = await this.notificationsService.cancelPartyGathering(
+    const result = await this.messagingService.cancelPartyGathering(
       discordId,
       notificationId,
     );

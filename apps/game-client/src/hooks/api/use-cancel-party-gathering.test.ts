@@ -70,7 +70,7 @@ describe("useCancelPartyGathering", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(mockDelete).toHaveBeenCalledWith(
-      "/notifications/party-gathering/notif-123",
+      "/messaging/party-gathering/notif-123",
     );
     expect(mockPatch).toHaveBeenCalledWith(
       "/guilds/guild-1/chat-messages/msg-1",

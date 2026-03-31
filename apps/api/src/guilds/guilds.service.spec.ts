@@ -2,6 +2,8 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import { GuildsService } from "./guilds.service";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { PrismaService } from "src/db/prisma.service";
+import { ChannelsService } from "src/channels/channels.service";
+import { ConfigService } from "@nestjs/config";
 import { MembersService } from "src/members/members.service";
 import { RolesService } from "src/roles/roles.service";
 import { LootlogConfigService } from "src/lootlog-config/lootlog-config.service";
@@ -9,6 +11,7 @@ import { DiscordService } from "src/discord/discord.service";
 import { UsersService } from "src/users/users.service";
 import { RedisService } from "@lootlog/nest-shared";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
+import { DiscordGuildSyncStatus } from "@lootlog/types";
 import { type Guild, Permission } from "prisma/generated/client";
 
 describe("GuildsService", () => {
@@ -27,6 +30,9 @@ describe("GuildsService", () => {
       findUnique: jest.fn(),
       update: jest.fn(),
       upsert: jest.fn(),
+    },
+    discordGuildSyncState: {
+      findUnique: jest.fn(),
     },
     member: {
       findMany: jest.fn(),
@@ -69,6 +75,11 @@ describe("GuildsService", () => {
     deleteRolesByGuildId: jest.fn(),
   };
 
+  const mockChannelsService = {
+    markGuildSyncStale: jest.fn(),
+    refreshGuildDiscordChannels: jest.fn(),
+  };
+
   const mockLootlogConfigService = {
     createLootlogConfig: jest.fn(),
   };
@@ -93,6 +104,12 @@ describe("GuildsService", () => {
     publish: jest.fn(),
   };
 
+  const mockConfigService = {
+    get: jest.fn().mockReturnValue({
+      channelSnapshotStaleSeconds: 300,
+    }),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -106,8 +123,16 @@ describe("GuildsService", () => {
           useValue: mockPrismaService,
         },
         {
+          provide: ConfigService,
+          useValue: mockConfigService,
+        },
+        {
           provide: MembersService,
           useValue: mockMembersService,
+        },
+        {
+          provide: ChannelsService,
+          useValue: mockChannelsService,
         },
         {
           provide: RolesService,
@@ -154,6 +179,7 @@ describe("GuildsService", () => {
       queued: true,
       nextRefreshAt: null,
     });
+    mockChannelsService.markGuildSyncStale.mockResolvedValue(undefined);
     mockMembersService.notifyMembersRemoved.mockResolvedValue(undefined);
     mockPrismaService.member.findMany.mockResolvedValue([]);
   });
@@ -176,6 +202,59 @@ describe("GuildsService", () => {
 
   it("should be defined", () => {
     expect(service).toBeDefined();
+  });
+
+  it("marks discord sync as stale after creating a guild", async () => {
+    mockPrismaService.guild.upsert.mockResolvedValue(
+      createGuild({ id: "guild-sync" }),
+    );
+    mockPrismaService.guild.findUnique.mockResolvedValue(
+      createGuild({ id: "guild-sync" }),
+    );
+    mockRolesService.bulkCreateRoles.mockResolvedValue(undefined);
+    mockLootlogConfigService.createLootlogConfig.mockResolvedValue(undefined);
+
+    await service.createGuild({
+      guildId: "guild-sync",
+      name: "Guild Sync",
+      icon: null,
+      ownerId: "owner-sync",
+      roles: [],
+    });
+
+    expect(mockChannelsService.markGuildSyncStale).toHaveBeenCalledWith(
+      "guild-sync",
+    );
+  });
+
+  it("bootstraps discord sync status when the cached state is missing", async () => {
+    const syncState = {
+      guildId: "guild-sync",
+      status: DiscordGuildSyncStatus.NOT_FOUND,
+      hasRequiredPermissions: false,
+      requiredPermissions: ["ViewChannel", "SendMessages"],
+      grantedPermissions: [],
+      missingPermissions: ["ViewChannel", "SendMessages"],
+      channelCount: 0,
+      selectableChannelCount: 0,
+      lastAttemptAt: "2026-03-31T12:00:00.000Z",
+      lastSuccessAt: null,
+      lastError: "Guild not found by Discord bot",
+      updatedAt: "2026-03-31T12:00:00.000Z",
+    };
+
+    mockPrismaService.discordGuildSyncState.findUnique.mockResolvedValue(null);
+    mockChannelsService.refreshGuildDiscordChannels.mockResolvedValue({
+      channels: [],
+      syncState,
+    });
+
+    await expect(
+      service.getGuildDiscordSyncStatus("guild-sync"),
+    ).resolves.toEqual(syncState);
+    expect(
+      mockChannelsService.refreshGuildDiscordChannels,
+    ).toHaveBeenCalledWith("guild-sync");
   });
 
   describe("getCandidateGuildsForUser", () => {

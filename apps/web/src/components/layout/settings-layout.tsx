@@ -1,45 +1,57 @@
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { Outlet } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { HorizontalMenu } from "@/components/layout/horizontal-menu";
 import { ROUTE_SEGMENTS } from "@/config/routes";
 
-const NAV_ELEMENTS = [
-  {
-    id: "general",
-    label: "Ogólne",
-    href: ROUTE_SEGMENTS.guild.settings,
-  },
-  {
-    id: "roles",
-    label: "Role",
-    href: `${ROUTE_SEGMENTS.guild.settings}${ROUTE_SEGMENTS.guild.roles}`,
-  },
-  {
-    id: "lootlog",
-    label: "Ustawienia potworów i NPC",
-    href: `${ROUTE_SEGMENTS.guild.settings}${ROUTE_SEGMENTS.guild.npcs}`,
-  },
-  {
-    id: "map-templates",
-    label: "Szablony map",
-    href: `${ROUTE_SEGMENTS.guild.settings}/map-templates`,
-  },
-  {
-    id: "members",
-    label: "Członkowie",
-    href: `${ROUTE_SEGMENTS.guild.settings}${ROUTE_SEGMENTS.guild.members}`,
-  },
-];
-
 export const SettingsLayout: React.FC = () => {
   const guildId = useGuildId();
+  const { t } = useTranslation();
+
+  const navElements = [
+    {
+      id: "general",
+      label: t("settings.guildNavigation.general"),
+      href: ROUTE_SEGMENTS.guild.settings,
+    },
+    {
+      id: "roles",
+      label: t("settings.guildNavigation.roles"),
+      href: `${ROUTE_SEGMENTS.guild.settings}${ROUTE_SEGMENTS.guild.roles}`,
+    },
+    {
+      id: "lootlog",
+      label: t("settings.guildNavigation.npcs"),
+      href: `${ROUTE_SEGMENTS.guild.settings}${ROUTE_SEGMENTS.guild.npcs}`,
+    },
+    {
+      id: "map-templates",
+      label: t("settings.guildNavigation.mapTemplates"),
+      href: `${ROUTE_SEGMENTS.guild.settings}${ROUTE_SEGMENTS.guild.mapTemplates}`,
+    },
+    {
+      id: "members",
+      label: t("settings.guildNavigation.members"),
+      href: `${ROUTE_SEGMENTS.guild.settings}${ROUTE_SEGMENTS.guild.members}`,
+    },
+    {
+      id: "notifications",
+      label: t("settings.guildNavigation.notifications"),
+      href: `${ROUTE_SEGMENTS.guild.settings}${ROUTE_SEGMENTS.guild.notifications}`,
+    },
+    {
+      id: "info",
+      label: t("settings.guildNavigation.info"),
+      href: `${ROUTE_SEGMENTS.guild.settings}${ROUTE_SEGMENTS.guild.info}`,
+    },
+  ];
 
   return (
     <div className="w-full h-full flex flex-col min-h-0 bg-background/50">
       <HorizontalMenu
-        items={NAV_ELEMENTS}
+        items={navElements}
         basePath={`/${guildId}`}
-        ariaLabel="Ustawienia"
+        ariaLabel={t("settings.navigationLabel")}
         className="shrink-0"
       />
       <div className="flex-1 min-h-0 overflow-hidden">

@@ -1,0 +1,74 @@
+import { HttpService } from "@nestjs/axios";
+import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import type {
+  DiscordGuildChannelSnapshot,
+  DiscordGuildSyncState,
+} from "@lootlog/types";
+import { firstValueFrom } from "rxjs";
+import { ConfigKey } from "src/config/config-key.enum";
+import type { DiscordBotConfig } from "src/config/discord-bot.config";
+
+@Injectable()
+export class DiscordBotClientService {
+  private readonly serviceUrl: string;
+
+  constructor(
+    private readonly httpService: HttpService,
+    private readonly configService: ConfigService,
+  ) {
+    const discordBotConfig = this.configService.get<DiscordBotConfig>(
+      ConfigKey.DISCORD_BOT,
+    );
+    this.serviceUrl = discordBotConfig?.serviceUrl || "http://discord-bot:4000";
+  }
+
+  async getGuildChannels(
+    guildId: string,
+  ): Promise<{
+    channels: DiscordGuildChannelSnapshot[];
+    syncState: DiscordGuildSyncState;
+  }> {
+    const response = await firstValueFrom(
+      this.httpService.get<{
+        channels: DiscordGuildChannelSnapshot[];
+        syncState: DiscordGuildSyncState;
+      }>(`${this.serviceUrl}/internal/guilds/${guildId}/channels`, {
+        timeout: 5000,
+      }),
+    );
+
+    return response.data;
+  }
+
+  async refreshGuildChannels(
+    guildId: string,
+  ): Promise<{
+    channels: DiscordGuildChannelSnapshot[];
+    syncState: DiscordGuildSyncState;
+  }> {
+    const response = await firstValueFrom(
+      this.httpService.post<{
+        channels: DiscordGuildChannelSnapshot[];
+        syncState: DiscordGuildSyncState;
+      }>(
+        `${this.serviceUrl}/internal/guilds/${guildId}/channels/refresh`,
+        {},
+        { timeout: 10000 },
+      ),
+    );
+
+    return response.data;
+  }
+
+  async getGuildSyncStatus(guildId: string): Promise<DiscordGuildSyncState> {
+    const response = await firstValueFrom(
+      this.httpService.get<DiscordGuildSyncState>(
+        `${this.serviceUrl}/internal/guilds/${guildId}/sync-status`,
+        { timeout: 5000 },
+      ),
+    );
+
+    return response.data;
+  }
+}

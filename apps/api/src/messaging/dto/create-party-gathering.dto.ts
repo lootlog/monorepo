@@ -11,7 +11,7 @@ import {
   ValidateNested,
 } from "class-validator";
 import { Type } from "class-transformer";
-import { CharacterDto } from "src/notifications/dto/shared-character.dto";
+import { CharacterDto } from "src/messaging/dto/shared-character.dto";
 
 export class CreatePartyGatheringDto {
   @IsArray()

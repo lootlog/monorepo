@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Patch,
+  Post,
   Query,
   UseGuards,
   UseInterceptors,
@@ -142,5 +143,19 @@ export class GuildsController {
   @Get(":guildId/permissions")
   async getGuildPermissions(@MemberPermissions() permissions: Permission[]) {
     return permissions;
+  }
+
+  @Permissions(Permission.OWNER, Permission.ADMIN)
+  @UseGuards(PermissionsGuard)
+  @Get(":guildId/discord-sync")
+  async getGuildDiscordSyncStatus(@GuildData() guild: Guild) {
+    return this.guildsService.getGuildDiscordSyncStatus(guild.id);
+  }
+
+  @Permissions(Permission.OWNER, Permission.ADMIN)
+  @UseGuards(PermissionsGuard)
+  @Post(":guildId/discord-sync/refresh")
+  async refreshGuildDiscordSync(@GuildData() guild: Guild) {
+    return this.guildsService.refreshGuildDiscordSync(guild.id);
   }
 }

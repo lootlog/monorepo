@@ -147,6 +147,69 @@ export const RefreshJobStatus = {
 export type RefreshJobStatus = (typeof RefreshJobStatus)[keyof typeof RefreshJobStatus]
 
 
+export const NotificationOwnerType = {
+  GUILD: 'GUILD',
+  USER: 'USER'
+} as const
+
+export type NotificationOwnerType = (typeof NotificationOwnerType)[keyof typeof NotificationOwnerType]
+
+
+export const NotificationProvider = {
+  DISCORD: 'DISCORD'
+} as const
+
+export type NotificationProvider = (typeof NotificationProvider)[keyof typeof NotificationProvider]
+
+
+export const NotificationTargetType = {
+  CHANNEL: 'CHANNEL',
+  DM: 'DM'
+} as const
+
+export type NotificationTargetType = (typeof NotificationTargetType)[keyof typeof NotificationTargetType]
+
+
+export const NotificationTriggerType = {
+  TIMER_BEFORE_SPAWN: 'TIMER_BEFORE_SPAWN',
+  NPC_SPAWNED: 'NPC_SPAWNED',
+  WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED'
+} as const
+
+export type NotificationTriggerType = (typeof NotificationTriggerType)[keyof typeof NotificationTriggerType]
+
+
+export const NotificationJobKind = {
+  SCHEDULED: 'SCHEDULED',
+  INSTANT: 'INSTANT'
+} as const
+
+export type NotificationJobKind = (typeof NotificationJobKind)[keyof typeof NotificationJobKind]
+
+
+export const NotificationJobStatus = {
+  PENDING: 'PENDING',
+  PROCESSING: 'PROCESSING',
+  SENT: 'SENT',
+  FAILED: 'FAILED',
+  BLOCKED: 'BLOCKED',
+  CANCELED: 'CANCELED'
+} as const
+
+export type NotificationJobStatus = (typeof NotificationJobStatus)[keyof typeof NotificationJobStatus]
+
+
+export const DiscordGuildSyncStatus = {
+  SYNCED: 'SYNCED',
+  SYNCING: 'SYNCING',
+  FAILED: 'FAILED',
+  STALE: 'STALE',
+  NOT_FOUND: 'NOT_FOUND'
+} as const
+
+export type DiscordGuildSyncStatus = (typeof DiscordGuildSyncStatus)[keyof typeof DiscordGuildSyncStatus]
+
+
 export const CoverageGapType = {
   UNASSIGNED: 'UNASSIGNED',
   UNCOVERED: 'UNCOVERED'
