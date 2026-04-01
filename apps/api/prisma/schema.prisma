@@ -13,6 +13,7 @@ model Guild {
   icon              String?
   ownerId           String
   vanityUrl         String?            @unique
+  notificationRuleLimit Int            @default(20)
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   roles             Role[]
@@ -164,11 +165,30 @@ enum NotificationTriggerType {
   TIMER_BEFORE_SPAWN
   NPC_SPAWNED
   WATCHED_ITEM_DROPPED
+  SCHEDULED_MESSAGE
+}
+
+enum NotificationScheduleStrategy {
+  SPAWN_WINDOW_RELATIVE
+  FIXED_DATETIME
+}
+
+enum NotificationScheduleAnchor {
+  MIN_SPAWN
+  MAX_SPAWN
+}
+
+enum NotificationScheduleIntervalType {
+  ONCE
+  HOURLY
+  DAILY
+  WEEKLY
 }
 
 enum NotificationJobKind {
   SCHEDULED
   INSTANT
+  TEST
 }
 
 enum NotificationJobStatus {
@@ -513,7 +533,16 @@ model NotificationRule {
   world               String?
   name                String?
   filters             Json?
-  leadTimeMinutes     Int?
+  contentTemplate     String?
+  scheduleStrategy    NotificationScheduleStrategy?
+  scheduleAnchor      NotificationScheduleAnchor?
+  scheduleOffsetMinutes Int?
+  scheduledAt         DateTime?
+  scheduleIntervalType NotificationScheduleIntervalType?
+  scheduleIntervalValue Int?
+  scheduleWeekday     Int?
+  scheduleTimeOfDay   String?
+  scheduledUntil      DateTime?
   enabled             Boolean          @default(true)
   dedupeWindowSeconds Int              @default(0)
   createdAt           DateTime         @default(now())

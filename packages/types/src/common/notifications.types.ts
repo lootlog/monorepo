@@ -16,11 +16,30 @@ export enum NotificationTriggerType {
   TIMER_BEFORE_SPAWN = "TIMER_BEFORE_SPAWN",
   NPC_SPAWNED = "NPC_SPAWNED",
   WATCHED_ITEM_DROPPED = "WATCHED_ITEM_DROPPED",
+  SCHEDULED_MESSAGE = "SCHEDULED_MESSAGE",
+}
+
+export enum NotificationScheduleStrategy {
+  SPAWN_WINDOW_RELATIVE = "SPAWN_WINDOW_RELATIVE",
+  FIXED_DATETIME = "FIXED_DATETIME",
+}
+
+export enum NotificationScheduleAnchor {
+  MIN_SPAWN = "MIN_SPAWN",
+  MAX_SPAWN = "MAX_SPAWN",
+}
+
+export enum NotificationScheduleIntervalType {
+  ONCE = "ONCE",
+  HOURLY = "HOURLY",
+  DAILY = "DAILY",
+  WEEKLY = "WEEKLY",
 }
 
 export enum NotificationJobKind {
   SCHEDULED = "SCHEDULED",
   INSTANT = "INSTANT",
+  TEST = "TEST",
 }
 
 export enum NotificationJobStatus {
@@ -117,15 +136,24 @@ export interface DiscordNotificationSendTarget {
   targetType: NotificationTargetType;
 }
 
+export interface DiscordNotificationAllowedMentions {
+  parse?: Array<"roles" | "users" | "everyone">;
+  roles?: string[];
+  users?: string[];
+  repliedUser?: boolean;
+}
+
 export interface DiscordNotificationSendCommand {
   notificationJobId: string;
   provider: NotificationProvider.DISCORD;
   ownerType: NotificationOwnerType;
   ownerId: string;
   guildId?: string | null;
+  content?: string;
   title: string;
   message: string;
   metadata?: Record<string, unknown>;
+  allowedMentions?: DiscordNotificationAllowedMentions;
   target: DiscordNotificationSendTarget;
 }
 

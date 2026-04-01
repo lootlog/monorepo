@@ -52,6 +52,12 @@ const ROUTES = {
       npcs: (guildId: string) => `/${guildId}/settings/npcs`,
       members: (guildId: string) => `/${guildId}/settings/members`,
       notifications: (guildId: string) => `/${guildId}/settings/notifications`,
+      notificationCreate: (guildId: string) =>
+        `/${guildId}/settings/notifications/create`,
+      notificationRule: (guildId: string, ruleId: string) =>
+        `/${guildId}/settings/notifications/${ruleId}`,
+      notificationHistory: (guildId: string) =>
+        `/${guildId}/settings/notifications/history`,
       info: (guildId: string) => `/${guildId}/settings/info`,
       appearance: (guildId: string) => `/${guildId}/settings/appearance`,
       servers: (guildId: string) => `/${guildId}/settings/servers`,

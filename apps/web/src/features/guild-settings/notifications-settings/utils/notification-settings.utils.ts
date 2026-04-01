@@ -1,11 +1,38 @@
+import type { BadgeProps } from "@lootlog/ui/components/badge";
 import type {
   GuildNotificationRule,
   GuildNotificationTarget,
 } from "@/hooks/api/guilds/use-guild-notifications";
-import { NotificationTriggerType } from "@lootlog/types";
+import {
+  NotificationScheduleAnchor,
+  NotificationTriggerType,
+} from "@lootlog/types";
+
+export const getJobStatusBadgeProps = (
+  status: string,
+): { variant: BadgeProps["variant"]; className?: string } => {
+  switch (status) {
+    case "SENT":
+      return {
+        variant: "outline",
+        className: "bg-emerald-500/15 text-emerald-500 border-emerald-500/20",
+      };
+    case "FAILED":
+    case "CANCELED":
+      return { variant: "destructive" };
+    case "BLOCKED":
+      return {
+        variant: "outline",
+        className: "bg-amber-500/15 text-amber-500 border-amber-500/20",
+      };
+    default:
+      return { variant: "outline" };
+  }
+};
 
 export const SUPPORTED_GUILD_NOTIFICATION_TRIGGER_TYPES = [
   NotificationTriggerType.TIMER_BEFORE_SPAWN,
+  NotificationTriggerType.SCHEDULED_MESSAGE,
 ] as const;
 
 export const getNotificationTriggerTranslationKey = (
@@ -18,6 +45,8 @@ export const getNotificationTriggerTranslationKey = (
       return "settings.notifications.triggers.npcSpawned";
     case NotificationTriggerType.WATCHED_ITEM_DROPPED:
       return "settings.notifications.triggers.watchedItemDropped";
+    case NotificationTriggerType.SCHEDULED_MESSAGE:
+      return "settings.notifications.triggers.scheduledMessage";
   }
 };
 
@@ -98,3 +127,47 @@ export const mergeGuildNotificationTargets = (
     ),
   );
 };
+
+export const getGuildNotificationRuleScheduleTranslationKey = (
+  rule: Pick<
+    GuildNotificationRule,
+    "scheduleAnchor" | "scheduleOffsetMinutes"
+  >,
+) => {
+  if (
+    rule.scheduleAnchor === NotificationScheduleAnchor.MAX_SPAWN &&
+    rule.scheduleOffsetMinutes === 0
+  ) {
+    return "settings.notifications.schedule.maxSpawnExact";
+  }
+
+  if (rule.scheduleAnchor === NotificationScheduleAnchor.MAX_SPAWN) {
+    return "settings.notifications.schedule.maxSpawnBefore";
+  }
+
+  if (rule.scheduleOffsetMinutes === 0) {
+    return "settings.notifications.schedule.minSpawnExact";
+  }
+
+  return "settings.notifications.schedule.minSpawnBefore";
+};
+
+export const getDefaultGuildNotificationRuleContentTemplate = (
+  t: (key: string) => string,
+) =>
+  [
+    "## {{npcName}}",
+    "",
+    t("settings.notifications.templates.default.world"),
+    t("settings.notifications.templates.default.spawnWindow"),
+    t("settings.notifications.templates.default.scheduledFor"),
+  ].join("\n");
+
+export const getDefaultScheduledMessageContentTemplate = (
+  t: (key: string) => string,
+) =>
+  [
+    "## {{ruleName}}",
+    "",
+    t("settings.notifications.templates.scheduledMessage.scheduledFor"),
+  ].join("\n");

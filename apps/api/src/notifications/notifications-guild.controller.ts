@@ -12,10 +12,10 @@ import {
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { Permission, type Guild } from "prisma/generated/client";
 import { ChannelsService } from "src/channels/channels.service";
-import type { CreateNotificationRuleDto } from "src/notifications/dto/create-notification-rule.dto";
-import type { CreateNotificationTargetDto } from "src/notifications/dto/create-notification-target.dto";
-import type { UpdateNotificationRuleDto } from "src/notifications/dto/update-notification-rule.dto";
-import type { UpdateNotificationTargetDto } from "src/notifications/dto/update-notification-target.dto";
+import { CreateNotificationRuleDto } from "src/notifications/dto/create-notification-rule.dto";
+import { CreateNotificationTargetDto } from "src/notifications/dto/create-notification-target.dto";
+import { UpdateNotificationRuleDto } from "src/notifications/dto/update-notification-rule.dto";
+import { UpdateNotificationTargetDto } from "src/notifications/dto/update-notification-target.dto";
 import { NotificationsService } from "src/notifications/notifications.service";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { AuthGuard } from "src/shared/guards/auth.guard";
@@ -102,8 +102,32 @@ export class NotificationsGuildController {
     return this.notificationsService.deleteGuildRule(guild.id, ruleId);
   }
 
+  @Post("rules/:ruleId/rebuild-jobs")
+  async rebuildGuildRuleJobs(
+    @GuildData() guild: Guild,
+    @Param("ruleId", ParseIntPipe) ruleId: number,
+  ) {
+    return this.notificationsService.rebuildGuildRuleJobs(guild.id, ruleId);
+  }
+
+  @Post("rules/:ruleId/test")
+  async triggerGuildRuleTest(
+    @GuildData() guild: Guild,
+    @Param("ruleId", ParseIntPipe) ruleId: number,
+  ) {
+    return this.notificationsService.triggerGuildRuleTest(guild.id, ruleId);
+  }
+
   @Get("jobs")
   async getGuildJobs(@GuildData() guild: Guild) {
     return this.notificationsService.listGuildJobs(guild.id);
+  }
+
+  @Delete("jobs/:jobId")
+  async cancelGuildJob(
+    @GuildData() guild: Guild,
+    @Param("jobId") jobId: string,
+  ) {
+    return this.notificationsService.cancelGuildJob(guild.id, jobId);
   }
 }

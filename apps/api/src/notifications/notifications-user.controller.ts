@@ -11,11 +11,11 @@ import {
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { DiscordId, UserId } from "@lootlog/nest-shared";
-import type { CreateNotificationRuleDto } from "src/notifications/dto/create-notification-rule.dto";
-import type { CreateNotificationTargetDto } from "src/notifications/dto/create-notification-target.dto";
-import type { CreateWatchedItemDto } from "src/notifications/dto/create-watched-item.dto";
-import type { UpdateNotificationRuleDto } from "src/notifications/dto/update-notification-rule.dto";
-import type { UpdateNotificationTargetDto } from "src/notifications/dto/update-notification-target.dto";
+import { CreateNotificationRuleDto } from "src/notifications/dto/create-notification-rule.dto";
+import { CreateNotificationTargetDto } from "src/notifications/dto/create-notification-target.dto";
+import { CreateWatchedItemDto } from "src/notifications/dto/create-watched-item.dto";
+import { UpdateNotificationRuleDto } from "src/notifications/dto/update-notification-rule.dto";
+import { UpdateNotificationTargetDto } from "src/notifications/dto/update-notification-target.dto";
 import { NotificationsService } from "src/notifications/notifications.service";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 

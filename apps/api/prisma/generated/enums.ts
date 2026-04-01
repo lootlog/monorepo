@@ -173,15 +173,43 @@ export type NotificationTargetType = (typeof NotificationTargetType)[keyof typeo
 export const NotificationTriggerType = {
   TIMER_BEFORE_SPAWN: 'TIMER_BEFORE_SPAWN',
   NPC_SPAWNED: 'NPC_SPAWNED',
-  WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED'
+  WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
+  SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE'
 } as const
 
 export type NotificationTriggerType = (typeof NotificationTriggerType)[keyof typeof NotificationTriggerType]
 
 
+export const NotificationScheduleStrategy = {
+  SPAWN_WINDOW_RELATIVE: 'SPAWN_WINDOW_RELATIVE',
+  FIXED_DATETIME: 'FIXED_DATETIME'
+} as const
+
+export type NotificationScheduleStrategy = (typeof NotificationScheduleStrategy)[keyof typeof NotificationScheduleStrategy]
+
+
+export const NotificationScheduleAnchor = {
+  MIN_SPAWN: 'MIN_SPAWN',
+  MAX_SPAWN: 'MAX_SPAWN'
+} as const
+
+export type NotificationScheduleAnchor = (typeof NotificationScheduleAnchor)[keyof typeof NotificationScheduleAnchor]
+
+
+export const NotificationScheduleIntervalType = {
+  ONCE: 'ONCE',
+  HOURLY: 'HOURLY',
+  DAILY: 'DAILY',
+  WEEKLY: 'WEEKLY'
+} as const
+
+export type NotificationScheduleIntervalType = (typeof NotificationScheduleIntervalType)[keyof typeof NotificationScheduleIntervalType]
+
+
 export const NotificationJobKind = {
   SCHEDULED: 'SCHEDULED',
-  INSTANT: 'INSTANT'
+  INSTANT: 'INSTANT',
+  TEST: 'TEST'
 } as const
 
 export type NotificationJobKind = (typeof NotificationJobKind)[keyof typeof NotificationJobKind]

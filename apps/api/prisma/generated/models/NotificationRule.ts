@@ -28,13 +28,17 @@ export type AggregateNotificationRule = {
 
 export type NotificationRuleAvgAggregateOutputType = {
   id: number | null
-  leadTimeMinutes: number | null
+  scheduleOffsetMinutes: number | null
+  scheduleIntervalValue: number | null
+  scheduleWeekday: number | null
   dedupeWindowSeconds: number | null
 }
 
 export type NotificationRuleSumAggregateOutputType = {
   id: number | null
-  leadTimeMinutes: number | null
+  scheduleOffsetMinutes: number | null
+  scheduleIntervalValue: number | null
+  scheduleWeekday: number | null
   dedupeWindowSeconds: number | null
 }
 
@@ -46,7 +50,16 @@ export type NotificationRuleMinAggregateOutputType = {
   guildId: string | null
   world: string | null
   name: string | null
-  leadTimeMinutes: number | null
+  contentTemplate: string | null
+  scheduleStrategy: $Enums.NotificationScheduleStrategy | null
+  scheduleAnchor: $Enums.NotificationScheduleAnchor | null
+  scheduleOffsetMinutes: number | null
+  scheduledAt: Date | null
+  scheduleIntervalType: $Enums.NotificationScheduleIntervalType | null
+  scheduleIntervalValue: number | null
+  scheduleWeekday: number | null
+  scheduleTimeOfDay: string | null
+  scheduledUntil: Date | null
   enabled: boolean | null
   dedupeWindowSeconds: number | null
   createdAt: Date | null
@@ -61,7 +74,16 @@ export type NotificationRuleMaxAggregateOutputType = {
   guildId: string | null
   world: string | null
   name: string | null
-  leadTimeMinutes: number | null
+  contentTemplate: string | null
+  scheduleStrategy: $Enums.NotificationScheduleStrategy | null
+  scheduleAnchor: $Enums.NotificationScheduleAnchor | null
+  scheduleOffsetMinutes: number | null
+  scheduledAt: Date | null
+  scheduleIntervalType: $Enums.NotificationScheduleIntervalType | null
+  scheduleIntervalValue: number | null
+  scheduleWeekday: number | null
+  scheduleTimeOfDay: string | null
+  scheduledUntil: Date | null
   enabled: boolean | null
   dedupeWindowSeconds: number | null
   createdAt: Date | null
@@ -77,7 +99,16 @@ export type NotificationRuleCountAggregateOutputType = {
   world: number
   name: number
   filters: number
-  leadTimeMinutes: number
+  contentTemplate: number
+  scheduleStrategy: number
+  scheduleAnchor: number
+  scheduleOffsetMinutes: number
+  scheduledAt: number
+  scheduleIntervalType: number
+  scheduleIntervalValue: number
+  scheduleWeekday: number
+  scheduleTimeOfDay: number
+  scheduledUntil: number
   enabled: number
   dedupeWindowSeconds: number
   createdAt: number
@@ -88,13 +119,17 @@ export type NotificationRuleCountAggregateOutputType = {
 
 export type NotificationRuleAvgAggregateInputType = {
   id?: true
-  leadTimeMinutes?: true
+  scheduleOffsetMinutes?: true
+  scheduleIntervalValue?: true
+  scheduleWeekday?: true
   dedupeWindowSeconds?: true
 }
 
 export type NotificationRuleSumAggregateInputType = {
   id?: true
-  leadTimeMinutes?: true
+  scheduleOffsetMinutes?: true
+  scheduleIntervalValue?: true
+  scheduleWeekday?: true
   dedupeWindowSeconds?: true
 }
 
@@ -106,7 +141,16 @@ export type NotificationRuleMinAggregateInputType = {
   guildId?: true
   world?: true
   name?: true
-  leadTimeMinutes?: true
+  contentTemplate?: true
+  scheduleStrategy?: true
+  scheduleAnchor?: true
+  scheduleOffsetMinutes?: true
+  scheduledAt?: true
+  scheduleIntervalType?: true
+  scheduleIntervalValue?: true
+  scheduleWeekday?: true
+  scheduleTimeOfDay?: true
+  scheduledUntil?: true
   enabled?: true
   dedupeWindowSeconds?: true
   createdAt?: true
@@ -121,7 +165,16 @@ export type NotificationRuleMaxAggregateInputType = {
   guildId?: true
   world?: true
   name?: true
-  leadTimeMinutes?: true
+  contentTemplate?: true
+  scheduleStrategy?: true
+  scheduleAnchor?: true
+  scheduleOffsetMinutes?: true
+  scheduledAt?: true
+  scheduleIntervalType?: true
+  scheduleIntervalValue?: true
+  scheduleWeekday?: true
+  scheduleTimeOfDay?: true
+  scheduledUntil?: true
   enabled?: true
   dedupeWindowSeconds?: true
   createdAt?: true
@@ -137,7 +190,16 @@ export type NotificationRuleCountAggregateInputType = {
   world?: true
   name?: true
   filters?: true
-  leadTimeMinutes?: true
+  contentTemplate?: true
+  scheduleStrategy?: true
+  scheduleAnchor?: true
+  scheduleOffsetMinutes?: true
+  scheduledAt?: true
+  scheduleIntervalType?: true
+  scheduleIntervalValue?: true
+  scheduleWeekday?: true
+  scheduleTimeOfDay?: true
+  scheduledUntil?: true
   enabled?: true
   dedupeWindowSeconds?: true
   createdAt?: true
@@ -240,7 +302,16 @@ export type NotificationRuleGroupByOutputType = {
   world: string | null
   name: string | null
   filters: runtime.JsonValue | null
-  leadTimeMinutes: number | null
+  contentTemplate: string | null
+  scheduleStrategy: $Enums.NotificationScheduleStrategy | null
+  scheduleAnchor: $Enums.NotificationScheduleAnchor | null
+  scheduleOffsetMinutes: number | null
+  scheduledAt: Date | null
+  scheduleIntervalType: $Enums.NotificationScheduleIntervalType | null
+  scheduleIntervalValue: number | null
+  scheduleWeekday: number | null
+  scheduleTimeOfDay: string | null
+  scheduledUntil: Date | null
   enabled: boolean
   dedupeWindowSeconds: number
   createdAt: Date
@@ -279,7 +350,16 @@ export type NotificationRuleWhereInput = {
   world?: Prisma.StringNullableFilter<"NotificationRule"> | string | null
   name?: Prisma.StringNullableFilter<"NotificationRule"> | string | null
   filters?: Prisma.JsonNullableFilter<"NotificationRule">
-  leadTimeMinutes?: Prisma.IntNullableFilter<"NotificationRule"> | number | null
+  contentTemplate?: Prisma.StringNullableFilter<"NotificationRule"> | string | null
+  scheduleStrategy?: Prisma.EnumNotificationScheduleStrategyNullableFilter<"NotificationRule"> | $Enums.NotificationScheduleStrategy | null
+  scheduleAnchor?: Prisma.EnumNotificationScheduleAnchorNullableFilter<"NotificationRule"> | $Enums.NotificationScheduleAnchor | null
+  scheduleOffsetMinutes?: Prisma.IntNullableFilter<"NotificationRule"> | number | null
+  scheduledAt?: Prisma.DateTimeNullableFilter<"NotificationRule"> | Date | string | null
+  scheduleIntervalType?: Prisma.EnumNotificationScheduleIntervalTypeNullableFilter<"NotificationRule"> | $Enums.NotificationScheduleIntervalType | null
+  scheduleIntervalValue?: Prisma.IntNullableFilter<"NotificationRule"> | number | null
+  scheduleWeekday?: Prisma.IntNullableFilter<"NotificationRule"> | number | null
+  scheduleTimeOfDay?: Prisma.StringNullableFilter<"NotificationRule"> | string | null
+  scheduledUntil?: Prisma.DateTimeNullableFilter<"NotificationRule"> | Date | string | null
   enabled?: Prisma.BoolFilter<"NotificationRule"> | boolean
   dedupeWindowSeconds?: Prisma.IntFilter<"NotificationRule"> | number
   createdAt?: Prisma.DateTimeFilter<"NotificationRule"> | Date | string
@@ -299,7 +379,16 @@ export type NotificationRuleOrderByWithRelationInput = {
   world?: Prisma.SortOrderInput | Prisma.SortOrder
   name?: Prisma.SortOrderInput | Prisma.SortOrder
   filters?: Prisma.SortOrderInput | Prisma.SortOrder
-  leadTimeMinutes?: Prisma.SortOrderInput | Prisma.SortOrder
+  contentTemplate?: Prisma.SortOrderInput | Prisma.SortOrder
+  scheduleStrategy?: Prisma.SortOrderInput | Prisma.SortOrder
+  scheduleAnchor?: Prisma.SortOrderInput | Prisma.SortOrder
+  scheduleOffsetMinutes?: Prisma.SortOrderInput | Prisma.SortOrder
+  scheduledAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  scheduleIntervalType?: Prisma.SortOrderInput | Prisma.SortOrder
+  scheduleIntervalValue?: Prisma.SortOrderInput | Prisma.SortOrder
+  scheduleWeekday?: Prisma.SortOrderInput | Prisma.SortOrder
+  scheduleTimeOfDay?: Prisma.SortOrderInput | Prisma.SortOrder
+  scheduledUntil?: Prisma.SortOrderInput | Prisma.SortOrder
   enabled?: Prisma.SortOrder
   dedupeWindowSeconds?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -322,7 +411,16 @@ export type NotificationRuleWhereUniqueInput = Prisma.AtLeast<{
   world?: Prisma.StringNullableFilter<"NotificationRule"> | string | null
   name?: Prisma.StringNullableFilter<"NotificationRule"> | string | null
   filters?: Prisma.JsonNullableFilter<"NotificationRule">
-  leadTimeMinutes?: Prisma.IntNullableFilter<"NotificationRule"> | number | null
+  contentTemplate?: Prisma.StringNullableFilter<"NotificationRule"> | string | null
+  scheduleStrategy?: Prisma.EnumNotificationScheduleStrategyNullableFilter<"NotificationRule"> | $Enums.NotificationScheduleStrategy | null
+  scheduleAnchor?: Prisma.EnumNotificationScheduleAnchorNullableFilter<"NotificationRule"> | $Enums.NotificationScheduleAnchor | null
+  scheduleOffsetMinutes?: Prisma.IntNullableFilter<"NotificationRule"> | number | null
+  scheduledAt?: Prisma.DateTimeNullableFilter<"NotificationRule"> | Date | string | null
+  scheduleIntervalType?: Prisma.EnumNotificationScheduleIntervalTypeNullableFilter<"NotificationRule"> | $Enums.NotificationScheduleIntervalType | null
+  scheduleIntervalValue?: Prisma.IntNullableFilter<"NotificationRule"> | number | null
+  scheduleWeekday?: Prisma.IntNullableFilter<"NotificationRule"> | number | null
+  scheduleTimeOfDay?: Prisma.StringNullableFilter<"NotificationRule"> | string | null
+  scheduledUntil?: Prisma.DateTimeNullableFilter<"NotificationRule"> | Date | string | null
   enabled?: Prisma.BoolFilter<"NotificationRule"> | boolean
   dedupeWindowSeconds?: Prisma.IntFilter<"NotificationRule"> | number
   createdAt?: Prisma.DateTimeFilter<"NotificationRule"> | Date | string
@@ -342,7 +440,16 @@ export type NotificationRuleOrderByWithAggregationInput = {
   world?: Prisma.SortOrderInput | Prisma.SortOrder
   name?: Prisma.SortOrderInput | Prisma.SortOrder
   filters?: Prisma.SortOrderInput | Prisma.SortOrder
-  leadTimeMinutes?: Prisma.SortOrderInput | Prisma.SortOrder
+  contentTemplate?: Prisma.SortOrderInput | Prisma.SortOrder
+  scheduleStrategy?: Prisma.SortOrderInput | Prisma.SortOrder
+  scheduleAnchor?: Prisma.SortOrderInput | Prisma.SortOrder
+  scheduleOffsetMinutes?: Prisma.SortOrderInput | Prisma.SortOrder
+  scheduledAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  scheduleIntervalType?: Prisma.SortOrderInput | Prisma.SortOrder
+  scheduleIntervalValue?: Prisma.SortOrderInput | Prisma.SortOrder
+  scheduleWeekday?: Prisma.SortOrderInput | Prisma.SortOrder
+  scheduleTimeOfDay?: Prisma.SortOrderInput | Prisma.SortOrder
+  scheduledUntil?: Prisma.SortOrderInput | Prisma.SortOrder
   enabled?: Prisma.SortOrder
   dedupeWindowSeconds?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -366,7 +473,16 @@ export type NotificationRuleScalarWhereWithAggregatesInput = {
   world?: Prisma.StringNullableWithAggregatesFilter<"NotificationRule"> | string | null
   name?: Prisma.StringNullableWithAggregatesFilter<"NotificationRule"> | string | null
   filters?: Prisma.JsonNullableWithAggregatesFilter<"NotificationRule">
-  leadTimeMinutes?: Prisma.IntNullableWithAggregatesFilter<"NotificationRule"> | number | null
+  contentTemplate?: Prisma.StringNullableWithAggregatesFilter<"NotificationRule"> | string | null
+  scheduleStrategy?: Prisma.EnumNotificationScheduleStrategyNullableWithAggregatesFilter<"NotificationRule"> | $Enums.NotificationScheduleStrategy | null
+  scheduleAnchor?: Prisma.EnumNotificationScheduleAnchorNullableWithAggregatesFilter<"NotificationRule"> | $Enums.NotificationScheduleAnchor | null
+  scheduleOffsetMinutes?: Prisma.IntNullableWithAggregatesFilter<"NotificationRule"> | number | null
+  scheduledAt?: Prisma.DateTimeNullableWithAggregatesFilter<"NotificationRule"> | Date | string | null
+  scheduleIntervalType?: Prisma.EnumNotificationScheduleIntervalTypeNullableWithAggregatesFilter<"NotificationRule"> | $Enums.NotificationScheduleIntervalType | null
+  scheduleIntervalValue?: Prisma.IntNullableWithAggregatesFilter<"NotificationRule"> | number | null
+  scheduleWeekday?: Prisma.IntNullableWithAggregatesFilter<"NotificationRule"> | number | null
+  scheduleTimeOfDay?: Prisma.StringNullableWithAggregatesFilter<"NotificationRule"> | string | null
+  scheduledUntil?: Prisma.DateTimeNullableWithAggregatesFilter<"NotificationRule"> | Date | string | null
   enabled?: Prisma.BoolWithAggregatesFilter<"NotificationRule"> | boolean
   dedupeWindowSeconds?: Prisma.IntWithAggregatesFilter<"NotificationRule"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"NotificationRule"> | Date | string
@@ -380,7 +496,16 @@ export type NotificationRuleCreateInput = {
   world?: string | null
   name?: string | null
   filters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  leadTimeMinutes?: number | null
+  contentTemplate?: string | null
+  scheduleStrategy?: $Enums.NotificationScheduleStrategy | null
+  scheduleAnchor?: $Enums.NotificationScheduleAnchor | null
+  scheduleOffsetMinutes?: number | null
+  scheduledAt?: Date | string | null
+  scheduleIntervalType?: $Enums.NotificationScheduleIntervalType | null
+  scheduleIntervalValue?: number | null
+  scheduleWeekday?: number | null
+  scheduleTimeOfDay?: string | null
+  scheduledUntil?: Date | string | null
   enabled?: boolean
   dedupeWindowSeconds?: number
   createdAt?: Date | string
@@ -400,7 +525,16 @@ export type NotificationRuleUncheckedCreateInput = {
   world?: string | null
   name?: string | null
   filters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  leadTimeMinutes?: number | null
+  contentTemplate?: string | null
+  scheduleStrategy?: $Enums.NotificationScheduleStrategy | null
+  scheduleAnchor?: $Enums.NotificationScheduleAnchor | null
+  scheduleOffsetMinutes?: number | null
+  scheduledAt?: Date | string | null
+  scheduleIntervalType?: $Enums.NotificationScheduleIntervalType | null
+  scheduleIntervalValue?: number | null
+  scheduleWeekday?: number | null
+  scheduleTimeOfDay?: string | null
+  scheduledUntil?: Date | string | null
   enabled?: boolean
   dedupeWindowSeconds?: number
   createdAt?: Date | string
@@ -417,7 +551,16 @@ export type NotificationRuleUpdateInput = {
   world?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   filters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  leadTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  contentTemplate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scheduleStrategy?: Prisma.NullableEnumNotificationScheduleStrategyFieldUpdateOperationsInput | $Enums.NotificationScheduleStrategy | null
+  scheduleAnchor?: Prisma.NullableEnumNotificationScheduleAnchorFieldUpdateOperationsInput | $Enums.NotificationScheduleAnchor | null
+  scheduleOffsetMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  scheduleIntervalType?: Prisma.NullableEnumNotificationScheduleIntervalTypeFieldUpdateOperationsInput | $Enums.NotificationScheduleIntervalType | null
+  scheduleIntervalValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduleWeekday?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduleTimeOfDay?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scheduledUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   dedupeWindowSeconds?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -437,7 +580,16 @@ export type NotificationRuleUncheckedUpdateInput = {
   world?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   filters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  leadTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  contentTemplate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scheduleStrategy?: Prisma.NullableEnumNotificationScheduleStrategyFieldUpdateOperationsInput | $Enums.NotificationScheduleStrategy | null
+  scheduleAnchor?: Prisma.NullableEnumNotificationScheduleAnchorFieldUpdateOperationsInput | $Enums.NotificationScheduleAnchor | null
+  scheduleOffsetMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  scheduleIntervalType?: Prisma.NullableEnumNotificationScheduleIntervalTypeFieldUpdateOperationsInput | $Enums.NotificationScheduleIntervalType | null
+  scheduleIntervalValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduleWeekday?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduleTimeOfDay?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scheduledUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   dedupeWindowSeconds?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -456,7 +608,16 @@ export type NotificationRuleCreateManyInput = {
   world?: string | null
   name?: string | null
   filters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  leadTimeMinutes?: number | null
+  contentTemplate?: string | null
+  scheduleStrategy?: $Enums.NotificationScheduleStrategy | null
+  scheduleAnchor?: $Enums.NotificationScheduleAnchor | null
+  scheduleOffsetMinutes?: number | null
+  scheduledAt?: Date | string | null
+  scheduleIntervalType?: $Enums.NotificationScheduleIntervalType | null
+  scheduleIntervalValue?: number | null
+  scheduleWeekday?: number | null
+  scheduleTimeOfDay?: string | null
+  scheduledUntil?: Date | string | null
   enabled?: boolean
   dedupeWindowSeconds?: number
   createdAt?: Date | string
@@ -470,7 +631,16 @@ export type NotificationRuleUpdateManyMutationInput = {
   world?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   filters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  leadTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  contentTemplate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scheduleStrategy?: Prisma.NullableEnumNotificationScheduleStrategyFieldUpdateOperationsInput | $Enums.NotificationScheduleStrategy | null
+  scheduleAnchor?: Prisma.NullableEnumNotificationScheduleAnchorFieldUpdateOperationsInput | $Enums.NotificationScheduleAnchor | null
+  scheduleOffsetMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  scheduleIntervalType?: Prisma.NullableEnumNotificationScheduleIntervalTypeFieldUpdateOperationsInput | $Enums.NotificationScheduleIntervalType | null
+  scheduleIntervalValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduleWeekday?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduleTimeOfDay?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scheduledUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   dedupeWindowSeconds?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -486,7 +656,16 @@ export type NotificationRuleUncheckedUpdateManyInput = {
   world?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   filters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  leadTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  contentTemplate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scheduleStrategy?: Prisma.NullableEnumNotificationScheduleStrategyFieldUpdateOperationsInput | $Enums.NotificationScheduleStrategy | null
+  scheduleAnchor?: Prisma.NullableEnumNotificationScheduleAnchorFieldUpdateOperationsInput | $Enums.NotificationScheduleAnchor | null
+  scheduleOffsetMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  scheduleIntervalType?: Prisma.NullableEnumNotificationScheduleIntervalTypeFieldUpdateOperationsInput | $Enums.NotificationScheduleIntervalType | null
+  scheduleIntervalValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduleWeekday?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduleTimeOfDay?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scheduledUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   dedupeWindowSeconds?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -512,7 +691,16 @@ export type NotificationRuleCountOrderByAggregateInput = {
   world?: Prisma.SortOrder
   name?: Prisma.SortOrder
   filters?: Prisma.SortOrder
-  leadTimeMinutes?: Prisma.SortOrder
+  contentTemplate?: Prisma.SortOrder
+  scheduleStrategy?: Prisma.SortOrder
+  scheduleAnchor?: Prisma.SortOrder
+  scheduleOffsetMinutes?: Prisma.SortOrder
+  scheduledAt?: Prisma.SortOrder
+  scheduleIntervalType?: Prisma.SortOrder
+  scheduleIntervalValue?: Prisma.SortOrder
+  scheduleWeekday?: Prisma.SortOrder
+  scheduleTimeOfDay?: Prisma.SortOrder
+  scheduledUntil?: Prisma.SortOrder
   enabled?: Prisma.SortOrder
   dedupeWindowSeconds?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -521,7 +709,9 @@ export type NotificationRuleCountOrderByAggregateInput = {
 
 export type NotificationRuleAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  leadTimeMinutes?: Prisma.SortOrder
+  scheduleOffsetMinutes?: Prisma.SortOrder
+  scheduleIntervalValue?: Prisma.SortOrder
+  scheduleWeekday?: Prisma.SortOrder
   dedupeWindowSeconds?: Prisma.SortOrder
 }
 
@@ -533,7 +723,16 @@ export type NotificationRuleMaxOrderByAggregateInput = {
   guildId?: Prisma.SortOrder
   world?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  leadTimeMinutes?: Prisma.SortOrder
+  contentTemplate?: Prisma.SortOrder
+  scheduleStrategy?: Prisma.SortOrder
+  scheduleAnchor?: Prisma.SortOrder
+  scheduleOffsetMinutes?: Prisma.SortOrder
+  scheduledAt?: Prisma.SortOrder
+  scheduleIntervalType?: Prisma.SortOrder
+  scheduleIntervalValue?: Prisma.SortOrder
+  scheduleWeekday?: Prisma.SortOrder
+  scheduleTimeOfDay?: Prisma.SortOrder
+  scheduledUntil?: Prisma.SortOrder
   enabled?: Prisma.SortOrder
   dedupeWindowSeconds?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -548,7 +747,16 @@ export type NotificationRuleMinOrderByAggregateInput = {
   guildId?: Prisma.SortOrder
   world?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  leadTimeMinutes?: Prisma.SortOrder
+  contentTemplate?: Prisma.SortOrder
+  scheduleStrategy?: Prisma.SortOrder
+  scheduleAnchor?: Prisma.SortOrder
+  scheduleOffsetMinutes?: Prisma.SortOrder
+  scheduledAt?: Prisma.SortOrder
+  scheduleIntervalType?: Prisma.SortOrder
+  scheduleIntervalValue?: Prisma.SortOrder
+  scheduleWeekday?: Prisma.SortOrder
+  scheduleTimeOfDay?: Prisma.SortOrder
+  scheduledUntil?: Prisma.SortOrder
   enabled?: Prisma.SortOrder
   dedupeWindowSeconds?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -557,7 +765,9 @@ export type NotificationRuleMinOrderByAggregateInput = {
 
 export type NotificationRuleSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  leadTimeMinutes?: Prisma.SortOrder
+  scheduleOffsetMinutes?: Prisma.SortOrder
+  scheduleIntervalValue?: Prisma.SortOrder
+  scheduleWeekday?: Prisma.SortOrder
   dedupeWindowSeconds?: Prisma.SortOrder
 }
 
@@ -617,6 +827,18 @@ export type EnumNotificationTriggerTypeFieldUpdateOperationsInput = {
   set?: $Enums.NotificationTriggerType
 }
 
+export type NullableEnumNotificationScheduleStrategyFieldUpdateOperationsInput = {
+  set?: $Enums.NotificationScheduleStrategy | null
+}
+
+export type NullableEnumNotificationScheduleAnchorFieldUpdateOperationsInput = {
+  set?: $Enums.NotificationScheduleAnchor | null
+}
+
+export type NullableEnumNotificationScheduleIntervalTypeFieldUpdateOperationsInput = {
+  set?: $Enums.NotificationScheduleIntervalType | null
+}
+
 export type NotificationRuleCreateNestedOneWithoutTargetsInput = {
   create?: Prisma.XOR<Prisma.NotificationRuleCreateWithoutTargetsInput, Prisma.NotificationRuleUncheckedCreateWithoutTargetsInput>
   connectOrCreate?: Prisma.NotificationRuleCreateOrConnectWithoutTargetsInput
@@ -668,7 +890,16 @@ export type NotificationRuleCreateWithoutGuildInput = {
   world?: string | null
   name?: string | null
   filters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  leadTimeMinutes?: number | null
+  contentTemplate?: string | null
+  scheduleStrategy?: $Enums.NotificationScheduleStrategy | null
+  scheduleAnchor?: $Enums.NotificationScheduleAnchor | null
+  scheduleOffsetMinutes?: number | null
+  scheduledAt?: Date | string | null
+  scheduleIntervalType?: $Enums.NotificationScheduleIntervalType | null
+  scheduleIntervalValue?: number | null
+  scheduleWeekday?: number | null
+  scheduleTimeOfDay?: string | null
+  scheduledUntil?: Date | string | null
   enabled?: boolean
   dedupeWindowSeconds?: number
   createdAt?: Date | string
@@ -686,7 +917,16 @@ export type NotificationRuleUncheckedCreateWithoutGuildInput = {
   world?: string | null
   name?: string | null
   filters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  leadTimeMinutes?: number | null
+  contentTemplate?: string | null
+  scheduleStrategy?: $Enums.NotificationScheduleStrategy | null
+  scheduleAnchor?: $Enums.NotificationScheduleAnchor | null
+  scheduleOffsetMinutes?: number | null
+  scheduledAt?: Date | string | null
+  scheduleIntervalType?: $Enums.NotificationScheduleIntervalType | null
+  scheduleIntervalValue?: number | null
+  scheduleWeekday?: number | null
+  scheduleTimeOfDay?: string | null
+  scheduledUntil?: Date | string | null
   enabled?: boolean
   dedupeWindowSeconds?: number
   createdAt?: Date | string
@@ -734,7 +974,16 @@ export type NotificationRuleScalarWhereInput = {
   world?: Prisma.StringNullableFilter<"NotificationRule"> | string | null
   name?: Prisma.StringNullableFilter<"NotificationRule"> | string | null
   filters?: Prisma.JsonNullableFilter<"NotificationRule">
-  leadTimeMinutes?: Prisma.IntNullableFilter<"NotificationRule"> | number | null
+  contentTemplate?: Prisma.StringNullableFilter<"NotificationRule"> | string | null
+  scheduleStrategy?: Prisma.EnumNotificationScheduleStrategyNullableFilter<"NotificationRule"> | $Enums.NotificationScheduleStrategy | null
+  scheduleAnchor?: Prisma.EnumNotificationScheduleAnchorNullableFilter<"NotificationRule"> | $Enums.NotificationScheduleAnchor | null
+  scheduleOffsetMinutes?: Prisma.IntNullableFilter<"NotificationRule"> | number | null
+  scheduledAt?: Prisma.DateTimeNullableFilter<"NotificationRule"> | Date | string | null
+  scheduleIntervalType?: Prisma.EnumNotificationScheduleIntervalTypeNullableFilter<"NotificationRule"> | $Enums.NotificationScheduleIntervalType | null
+  scheduleIntervalValue?: Prisma.IntNullableFilter<"NotificationRule"> | number | null
+  scheduleWeekday?: Prisma.IntNullableFilter<"NotificationRule"> | number | null
+  scheduleTimeOfDay?: Prisma.StringNullableFilter<"NotificationRule"> | string | null
+  scheduledUntil?: Prisma.DateTimeNullableFilter<"NotificationRule"> | Date | string | null
   enabled?: Prisma.BoolFilter<"NotificationRule"> | boolean
   dedupeWindowSeconds?: Prisma.IntFilter<"NotificationRule"> | number
   createdAt?: Prisma.DateTimeFilter<"NotificationRule"> | Date | string
@@ -748,7 +997,16 @@ export type NotificationRuleCreateWithoutTargetsInput = {
   world?: string | null
   name?: string | null
   filters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  leadTimeMinutes?: number | null
+  contentTemplate?: string | null
+  scheduleStrategy?: $Enums.NotificationScheduleStrategy | null
+  scheduleAnchor?: $Enums.NotificationScheduleAnchor | null
+  scheduleOffsetMinutes?: number | null
+  scheduledAt?: Date | string | null
+  scheduleIntervalType?: $Enums.NotificationScheduleIntervalType | null
+  scheduleIntervalValue?: number | null
+  scheduleWeekday?: number | null
+  scheduleTimeOfDay?: string | null
+  scheduledUntil?: Date | string | null
   enabled?: boolean
   dedupeWindowSeconds?: number
   createdAt?: Date | string
@@ -767,7 +1025,16 @@ export type NotificationRuleUncheckedCreateWithoutTargetsInput = {
   world?: string | null
   name?: string | null
   filters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  leadTimeMinutes?: number | null
+  contentTemplate?: string | null
+  scheduleStrategy?: $Enums.NotificationScheduleStrategy | null
+  scheduleAnchor?: $Enums.NotificationScheduleAnchor | null
+  scheduleOffsetMinutes?: number | null
+  scheduledAt?: Date | string | null
+  scheduleIntervalType?: $Enums.NotificationScheduleIntervalType | null
+  scheduleIntervalValue?: number | null
+  scheduleWeekday?: number | null
+  scheduleTimeOfDay?: string | null
+  scheduledUntil?: Date | string | null
   enabled?: boolean
   dedupeWindowSeconds?: number
   createdAt?: Date | string
@@ -799,7 +1066,16 @@ export type NotificationRuleUpdateWithoutTargetsInput = {
   world?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   filters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  leadTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  contentTemplate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scheduleStrategy?: Prisma.NullableEnumNotificationScheduleStrategyFieldUpdateOperationsInput | $Enums.NotificationScheduleStrategy | null
+  scheduleAnchor?: Prisma.NullableEnumNotificationScheduleAnchorFieldUpdateOperationsInput | $Enums.NotificationScheduleAnchor | null
+  scheduleOffsetMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  scheduleIntervalType?: Prisma.NullableEnumNotificationScheduleIntervalTypeFieldUpdateOperationsInput | $Enums.NotificationScheduleIntervalType | null
+  scheduleIntervalValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduleWeekday?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduleTimeOfDay?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scheduledUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   dedupeWindowSeconds?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -818,7 +1094,16 @@ export type NotificationRuleUncheckedUpdateWithoutTargetsInput = {
   world?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   filters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  leadTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  contentTemplate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scheduleStrategy?: Prisma.NullableEnumNotificationScheduleStrategyFieldUpdateOperationsInput | $Enums.NotificationScheduleStrategy | null
+  scheduleAnchor?: Prisma.NullableEnumNotificationScheduleAnchorFieldUpdateOperationsInput | $Enums.NotificationScheduleAnchor | null
+  scheduleOffsetMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  scheduleIntervalType?: Prisma.NullableEnumNotificationScheduleIntervalTypeFieldUpdateOperationsInput | $Enums.NotificationScheduleIntervalType | null
+  scheduleIntervalValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduleWeekday?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduleTimeOfDay?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scheduledUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   dedupeWindowSeconds?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -834,7 +1119,16 @@ export type NotificationRuleCreateWithoutJobsInput = {
   world?: string | null
   name?: string | null
   filters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  leadTimeMinutes?: number | null
+  contentTemplate?: string | null
+  scheduleStrategy?: $Enums.NotificationScheduleStrategy | null
+  scheduleAnchor?: $Enums.NotificationScheduleAnchor | null
+  scheduleOffsetMinutes?: number | null
+  scheduledAt?: Date | string | null
+  scheduleIntervalType?: $Enums.NotificationScheduleIntervalType | null
+  scheduleIntervalValue?: number | null
+  scheduleWeekday?: number | null
+  scheduleTimeOfDay?: string | null
+  scheduledUntil?: Date | string | null
   enabled?: boolean
   dedupeWindowSeconds?: number
   createdAt?: Date | string
@@ -853,7 +1147,16 @@ export type NotificationRuleUncheckedCreateWithoutJobsInput = {
   world?: string | null
   name?: string | null
   filters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  leadTimeMinutes?: number | null
+  contentTemplate?: string | null
+  scheduleStrategy?: $Enums.NotificationScheduleStrategy | null
+  scheduleAnchor?: $Enums.NotificationScheduleAnchor | null
+  scheduleOffsetMinutes?: number | null
+  scheduledAt?: Date | string | null
+  scheduleIntervalType?: $Enums.NotificationScheduleIntervalType | null
+  scheduleIntervalValue?: number | null
+  scheduleWeekday?: number | null
+  scheduleTimeOfDay?: string | null
+  scheduledUntil?: Date | string | null
   enabled?: boolean
   dedupeWindowSeconds?: number
   createdAt?: Date | string
@@ -885,7 +1188,16 @@ export type NotificationRuleUpdateWithoutJobsInput = {
   world?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   filters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  leadTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  contentTemplate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scheduleStrategy?: Prisma.NullableEnumNotificationScheduleStrategyFieldUpdateOperationsInput | $Enums.NotificationScheduleStrategy | null
+  scheduleAnchor?: Prisma.NullableEnumNotificationScheduleAnchorFieldUpdateOperationsInput | $Enums.NotificationScheduleAnchor | null
+  scheduleOffsetMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  scheduleIntervalType?: Prisma.NullableEnumNotificationScheduleIntervalTypeFieldUpdateOperationsInput | $Enums.NotificationScheduleIntervalType | null
+  scheduleIntervalValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduleWeekday?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduleTimeOfDay?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scheduledUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   dedupeWindowSeconds?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -904,7 +1216,16 @@ export type NotificationRuleUncheckedUpdateWithoutJobsInput = {
   world?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   filters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  leadTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  contentTemplate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scheduleStrategy?: Prisma.NullableEnumNotificationScheduleStrategyFieldUpdateOperationsInput | $Enums.NotificationScheduleStrategy | null
+  scheduleAnchor?: Prisma.NullableEnumNotificationScheduleAnchorFieldUpdateOperationsInput | $Enums.NotificationScheduleAnchor | null
+  scheduleOffsetMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  scheduleIntervalType?: Prisma.NullableEnumNotificationScheduleIntervalTypeFieldUpdateOperationsInput | $Enums.NotificationScheduleIntervalType | null
+  scheduleIntervalValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduleWeekday?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduleTimeOfDay?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scheduledUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   dedupeWindowSeconds?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -920,7 +1241,16 @@ export type NotificationRuleCreateWithoutWatchedItemsInput = {
   world?: string | null
   name?: string | null
   filters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  leadTimeMinutes?: number | null
+  contentTemplate?: string | null
+  scheduleStrategy?: $Enums.NotificationScheduleStrategy | null
+  scheduleAnchor?: $Enums.NotificationScheduleAnchor | null
+  scheduleOffsetMinutes?: number | null
+  scheduledAt?: Date | string | null
+  scheduleIntervalType?: $Enums.NotificationScheduleIntervalType | null
+  scheduleIntervalValue?: number | null
+  scheduleWeekday?: number | null
+  scheduleTimeOfDay?: string | null
+  scheduledUntil?: Date | string | null
   enabled?: boolean
   dedupeWindowSeconds?: number
   createdAt?: Date | string
@@ -939,7 +1269,16 @@ export type NotificationRuleUncheckedCreateWithoutWatchedItemsInput = {
   world?: string | null
   name?: string | null
   filters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  leadTimeMinutes?: number | null
+  contentTemplate?: string | null
+  scheduleStrategy?: $Enums.NotificationScheduleStrategy | null
+  scheduleAnchor?: $Enums.NotificationScheduleAnchor | null
+  scheduleOffsetMinutes?: number | null
+  scheduledAt?: Date | string | null
+  scheduleIntervalType?: $Enums.NotificationScheduleIntervalType | null
+  scheduleIntervalValue?: number | null
+  scheduleWeekday?: number | null
+  scheduleTimeOfDay?: string | null
+  scheduledUntil?: Date | string | null
   enabled?: boolean
   dedupeWindowSeconds?: number
   createdAt?: Date | string
@@ -971,7 +1310,16 @@ export type NotificationRuleUpdateWithoutWatchedItemsInput = {
   world?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   filters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  leadTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  contentTemplate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scheduleStrategy?: Prisma.NullableEnumNotificationScheduleStrategyFieldUpdateOperationsInput | $Enums.NotificationScheduleStrategy | null
+  scheduleAnchor?: Prisma.NullableEnumNotificationScheduleAnchorFieldUpdateOperationsInput | $Enums.NotificationScheduleAnchor | null
+  scheduleOffsetMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  scheduleIntervalType?: Prisma.NullableEnumNotificationScheduleIntervalTypeFieldUpdateOperationsInput | $Enums.NotificationScheduleIntervalType | null
+  scheduleIntervalValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduleWeekday?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduleTimeOfDay?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scheduledUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   dedupeWindowSeconds?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -990,7 +1338,16 @@ export type NotificationRuleUncheckedUpdateWithoutWatchedItemsInput = {
   world?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   filters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  leadTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  contentTemplate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scheduleStrategy?: Prisma.NullableEnumNotificationScheduleStrategyFieldUpdateOperationsInput | $Enums.NotificationScheduleStrategy | null
+  scheduleAnchor?: Prisma.NullableEnumNotificationScheduleAnchorFieldUpdateOperationsInput | $Enums.NotificationScheduleAnchor | null
+  scheduleOffsetMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  scheduleIntervalType?: Prisma.NullableEnumNotificationScheduleIntervalTypeFieldUpdateOperationsInput | $Enums.NotificationScheduleIntervalType | null
+  scheduleIntervalValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduleWeekday?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduleTimeOfDay?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scheduledUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   dedupeWindowSeconds?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1007,7 +1364,16 @@ export type NotificationRuleCreateManyGuildInput = {
   world?: string | null
   name?: string | null
   filters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  leadTimeMinutes?: number | null
+  contentTemplate?: string | null
+  scheduleStrategy?: $Enums.NotificationScheduleStrategy | null
+  scheduleAnchor?: $Enums.NotificationScheduleAnchor | null
+  scheduleOffsetMinutes?: number | null
+  scheduledAt?: Date | string | null
+  scheduleIntervalType?: $Enums.NotificationScheduleIntervalType | null
+  scheduleIntervalValue?: number | null
+  scheduleWeekday?: number | null
+  scheduleTimeOfDay?: string | null
+  scheduledUntil?: Date | string | null
   enabled?: boolean
   dedupeWindowSeconds?: number
   createdAt?: Date | string
@@ -1021,7 +1387,16 @@ export type NotificationRuleUpdateWithoutGuildInput = {
   world?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   filters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  leadTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  contentTemplate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scheduleStrategy?: Prisma.NullableEnumNotificationScheduleStrategyFieldUpdateOperationsInput | $Enums.NotificationScheduleStrategy | null
+  scheduleAnchor?: Prisma.NullableEnumNotificationScheduleAnchorFieldUpdateOperationsInput | $Enums.NotificationScheduleAnchor | null
+  scheduleOffsetMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  scheduleIntervalType?: Prisma.NullableEnumNotificationScheduleIntervalTypeFieldUpdateOperationsInput | $Enums.NotificationScheduleIntervalType | null
+  scheduleIntervalValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduleWeekday?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduleTimeOfDay?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scheduledUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   dedupeWindowSeconds?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1039,7 +1414,16 @@ export type NotificationRuleUncheckedUpdateWithoutGuildInput = {
   world?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   filters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  leadTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  contentTemplate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scheduleStrategy?: Prisma.NullableEnumNotificationScheduleStrategyFieldUpdateOperationsInput | $Enums.NotificationScheduleStrategy | null
+  scheduleAnchor?: Prisma.NullableEnumNotificationScheduleAnchorFieldUpdateOperationsInput | $Enums.NotificationScheduleAnchor | null
+  scheduleOffsetMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  scheduleIntervalType?: Prisma.NullableEnumNotificationScheduleIntervalTypeFieldUpdateOperationsInput | $Enums.NotificationScheduleIntervalType | null
+  scheduleIntervalValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduleWeekday?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduleTimeOfDay?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scheduledUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   dedupeWindowSeconds?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1057,7 +1441,16 @@ export type NotificationRuleUncheckedUpdateManyWithoutGuildInput = {
   world?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   filters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  leadTimeMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  contentTemplate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scheduleStrategy?: Prisma.NullableEnumNotificationScheduleStrategyFieldUpdateOperationsInput | $Enums.NotificationScheduleStrategy | null
+  scheduleAnchor?: Prisma.NullableEnumNotificationScheduleAnchorFieldUpdateOperationsInput | $Enums.NotificationScheduleAnchor | null
+  scheduleOffsetMinutes?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  scheduleIntervalType?: Prisma.NullableEnumNotificationScheduleIntervalTypeFieldUpdateOperationsInput | $Enums.NotificationScheduleIntervalType | null
+  scheduleIntervalValue?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduleWeekday?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scheduleTimeOfDay?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scheduledUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   dedupeWindowSeconds?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1122,7 +1515,16 @@ export type NotificationRuleSelect<ExtArgs extends runtime.Types.Extensions.Inte
   world?: boolean
   name?: boolean
   filters?: boolean
-  leadTimeMinutes?: boolean
+  contentTemplate?: boolean
+  scheduleStrategy?: boolean
+  scheduleAnchor?: boolean
+  scheduleOffsetMinutes?: boolean
+  scheduledAt?: boolean
+  scheduleIntervalType?: boolean
+  scheduleIntervalValue?: boolean
+  scheduleWeekday?: boolean
+  scheduleTimeOfDay?: boolean
+  scheduledUntil?: boolean
   enabled?: boolean
   dedupeWindowSeconds?: boolean
   createdAt?: boolean
@@ -1143,7 +1545,16 @@ export type NotificationRuleSelectCreateManyAndReturn<ExtArgs extends runtime.Ty
   world?: boolean
   name?: boolean
   filters?: boolean
-  leadTimeMinutes?: boolean
+  contentTemplate?: boolean
+  scheduleStrategy?: boolean
+  scheduleAnchor?: boolean
+  scheduleOffsetMinutes?: boolean
+  scheduledAt?: boolean
+  scheduleIntervalType?: boolean
+  scheduleIntervalValue?: boolean
+  scheduleWeekday?: boolean
+  scheduleTimeOfDay?: boolean
+  scheduledUntil?: boolean
   enabled?: boolean
   dedupeWindowSeconds?: boolean
   createdAt?: boolean
@@ -1160,7 +1571,16 @@ export type NotificationRuleSelectUpdateManyAndReturn<ExtArgs extends runtime.Ty
   world?: boolean
   name?: boolean
   filters?: boolean
-  leadTimeMinutes?: boolean
+  contentTemplate?: boolean
+  scheduleStrategy?: boolean
+  scheduleAnchor?: boolean
+  scheduleOffsetMinutes?: boolean
+  scheduledAt?: boolean
+  scheduleIntervalType?: boolean
+  scheduleIntervalValue?: boolean
+  scheduleWeekday?: boolean
+  scheduleTimeOfDay?: boolean
+  scheduledUntil?: boolean
   enabled?: boolean
   dedupeWindowSeconds?: boolean
   createdAt?: boolean
@@ -1177,14 +1597,23 @@ export type NotificationRuleSelectScalar = {
   world?: boolean
   name?: boolean
   filters?: boolean
-  leadTimeMinutes?: boolean
+  contentTemplate?: boolean
+  scheduleStrategy?: boolean
+  scheduleAnchor?: boolean
+  scheduleOffsetMinutes?: boolean
+  scheduledAt?: boolean
+  scheduleIntervalType?: boolean
+  scheduleIntervalValue?: boolean
+  scheduleWeekday?: boolean
+  scheduleTimeOfDay?: boolean
+  scheduledUntil?: boolean
   enabled?: boolean
   dedupeWindowSeconds?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type NotificationRuleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "ownerType" | "ownerId" | "triggerType" | "guildId" | "world" | "name" | "filters" | "leadTimeMinutes" | "enabled" | "dedupeWindowSeconds" | "createdAt" | "updatedAt", ExtArgs["result"]["notificationRule"]>
+export type NotificationRuleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "ownerType" | "ownerId" | "triggerType" | "guildId" | "world" | "name" | "filters" | "contentTemplate" | "scheduleStrategy" | "scheduleAnchor" | "scheduleOffsetMinutes" | "scheduledAt" | "scheduleIntervalType" | "scheduleIntervalValue" | "scheduleWeekday" | "scheduleTimeOfDay" | "scheduledUntil" | "enabled" | "dedupeWindowSeconds" | "createdAt" | "updatedAt", ExtArgs["result"]["notificationRule"]>
 export type NotificationRuleInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   guild?: boolean | Prisma.NotificationRule$guildArgs<ExtArgs>
   targets?: boolean | Prisma.NotificationRule$targetsArgs<ExtArgs>
@@ -1216,7 +1645,16 @@ export type $NotificationRulePayload<ExtArgs extends runtime.Types.Extensions.In
     world: string | null
     name: string | null
     filters: runtime.JsonValue | null
-    leadTimeMinutes: number | null
+    contentTemplate: string | null
+    scheduleStrategy: $Enums.NotificationScheduleStrategy | null
+    scheduleAnchor: $Enums.NotificationScheduleAnchor | null
+    scheduleOffsetMinutes: number | null
+    scheduledAt: Date | null
+    scheduleIntervalType: $Enums.NotificationScheduleIntervalType | null
+    scheduleIntervalValue: number | null
+    scheduleWeekday: number | null
+    scheduleTimeOfDay: string | null
+    scheduledUntil: Date | null
     enabled: boolean
     dedupeWindowSeconds: number
     createdAt: Date
@@ -1656,7 +2094,16 @@ export interface NotificationRuleFieldRefs {
   readonly world: Prisma.FieldRef<"NotificationRule", 'String'>
   readonly name: Prisma.FieldRef<"NotificationRule", 'String'>
   readonly filters: Prisma.FieldRef<"NotificationRule", 'Json'>
-  readonly leadTimeMinutes: Prisma.FieldRef<"NotificationRule", 'Int'>
+  readonly contentTemplate: Prisma.FieldRef<"NotificationRule", 'String'>
+  readonly scheduleStrategy: Prisma.FieldRef<"NotificationRule", 'NotificationScheduleStrategy'>
+  readonly scheduleAnchor: Prisma.FieldRef<"NotificationRule", 'NotificationScheduleAnchor'>
+  readonly scheduleOffsetMinutes: Prisma.FieldRef<"NotificationRule", 'Int'>
+  readonly scheduledAt: Prisma.FieldRef<"NotificationRule", 'DateTime'>
+  readonly scheduleIntervalType: Prisma.FieldRef<"NotificationRule", 'NotificationScheduleIntervalType'>
+  readonly scheduleIntervalValue: Prisma.FieldRef<"NotificationRule", 'Int'>
+  readonly scheduleWeekday: Prisma.FieldRef<"NotificationRule", 'Int'>
+  readonly scheduleTimeOfDay: Prisma.FieldRef<"NotificationRule", 'String'>
+  readonly scheduledUntil: Prisma.FieldRef<"NotificationRule", 'DateTime'>
   readonly enabled: Prisma.FieldRef<"NotificationRule", 'Boolean'>
   readonly dedupeWindowSeconds: Prisma.FieldRef<"NotificationRule", 'Int'>
   readonly createdAt: Prisma.FieldRef<"NotificationRule", 'DateTime'>

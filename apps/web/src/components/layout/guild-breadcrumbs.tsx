@@ -548,6 +548,45 @@ function getNavigationInfo({
         label: t("common.breadcrumbs.notifications"),
         path: null,
       });
+    } else if (path === `${guildSettings}/notifications/create`) {
+      breadcrumbs[1] = {
+        label: t("common.breadcrumbs.settings"),
+        path: guildSettings,
+      };
+      breadcrumbs.push({
+        label: t("common.breadcrumbs.notifications"),
+        path: `${guildSettings}/notifications`,
+      });
+      breadcrumbs.push({
+        label: t("common.breadcrumbs.notificationCreate"),
+        path: null,
+      });
+    } else if (path === `${guildSettings}/notifications/history`) {
+      breadcrumbs[1] = {
+        label: t("common.breadcrumbs.settings"),
+        path: guildSettings,
+      };
+      breadcrumbs.push({
+        label: t("common.breadcrumbs.notifications"),
+        path: `${guildSettings}/notifications`,
+      });
+      breadcrumbs.push({
+        label: t("common.breadcrumbs.notificationHistory"),
+        path: null,
+      });
+    } else if (path.startsWith(`${guildSettings}/notifications/`)) {
+      breadcrumbs[1] = {
+        label: t("common.breadcrumbs.settings"),
+        path: guildSettings,
+      };
+      breadcrumbs.push({
+        label: t("common.breadcrumbs.notifications"),
+        path: `${guildSettings}/notifications`,
+      });
+      breadcrumbs.push({
+        label: t("common.breadcrumbs.notificationEdit"),
+        path: null,
+      });
     } else if (path === `${guildSettings}/info`) {
       breadcrumbs[1] = {
         label: t("common.breadcrumbs.settings"),
@@ -559,7 +598,13 @@ function getNavigationInfo({
     return {
       breadcrumbs,
       showBack: true,
-      backPath: path === guildSettings ? guildBase : guildSettings,
+      backPath: path === guildSettings
+        ? guildBase
+        : path.startsWith(`${guildSettings}/notifications/`)
+          ? `${guildSettings}/notifications`
+          : path.startsWith(`${guildSettingsRoles}/`)
+            ? guildSettingsRoles
+            : guildSettings,
     };
   }
 

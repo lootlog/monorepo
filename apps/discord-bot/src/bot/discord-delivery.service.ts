@@ -55,9 +55,7 @@ export class DiscordDeliveryService {
     const user = await this.client.users.fetch(command.target.externalId);
     const directMessageChannel = await user.createDM();
 
-    return directMessageChannel.send({
-      content: this.buildNotificationContent(command),
-    });
+    return directMessageChannel.send(this.buildMessageOptions(command));
   }
 
   private async sendGuildChannelMessage(
@@ -74,17 +72,29 @@ export class DiscordDeliveryService {
       throw new Error("Discord channel is not text-based");
     }
 
-    return channel.send({
-      content: this.buildNotificationContent(command),
-    });
+    return channel.send(this.buildMessageOptions(command));
   }
 
   private buildNotificationContent(command: DiscordNotificationSendCommand) {
+    if (typeof command.content === "string" && command.content.trim().length > 0) {
+      return command.content;
+    }
+
     if (command.title.trim().length === 0) {
       return command.message;
     }
 
     return `**${command.title}**\n${command.message}`;
+  }
+
+  private buildMessageOptions(command: DiscordNotificationSendCommand) {
+    return {
+      content: this.buildNotificationContent(command),
+      allowedMentions:
+        command.target.targetType === NotificationTargetType.DM
+          ? undefined
+          : command.allowedMentions,
+    };
   }
 
   private async publishDeliveryResult(
