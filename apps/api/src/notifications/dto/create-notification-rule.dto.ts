@@ -1,29 +1,48 @@
-import { NotificationTriggerType } from "@lootlog/types";
+import {
+  NotificationScheduleAnchor,
+  NotificationScheduleIntervalType,
+  NotificationScheduleStrategy,
+  NotificationTriggerType,
+} from "@lootlog/types";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
+  ArrayMaxSize,
   IsArray,
   IsBoolean,
+  IsDateString,
   IsEnum,
   IsInt,
+  IsNotEmpty,
   IsOptional,
   IsString,
+  Matches,
+  Max,
   Min,
+  ValidateIf,
 } from "class-validator";
+import { HasAtLeastOneNpc } from "./has-at-least-one-npc.validator";
 
+@HasAtLeastOneNpc()
 export class CreateNotificationRuleDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   name?: string | null;
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  contentTemplate?: string | null;
+
   @ApiProperty({ enum: NotificationTriggerType })
   @IsEnum(NotificationTriggerType)
   triggerType: NotificationTriggerType;
 
   @ApiPropertyOptional()
-  @IsOptional()
+  @ValidateIf((obj) => obj.triggerType !== NotificationTriggerType.SCHEDULED_MESSAGE)
   @IsString()
-  world?: string | null;
+  @IsNotEmpty({ message: "Notification rule must specify a world" })
+  world?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -33,6 +52,7 @@ export class CreateNotificationRuleDto {
   @ApiPropertyOptional({ type: [Number] })
   @IsOptional()
   @IsArray()
+  @ArrayMaxSize(5)
   @IsInt({ each: true })
   npcIds?: number[];
 
@@ -47,14 +67,60 @@ export class CreateNotificationRuleDto {
   @IsInt({ each: true })
   itemIds?: number[];
 
+  @ApiPropertyOptional({ enum: NotificationScheduleStrategy })
+  @IsOptional()
+  @IsEnum(NotificationScheduleStrategy)
+  scheduleStrategy?: NotificationScheduleStrategy;
+
+  @ApiPropertyOptional({ enum: NotificationScheduleAnchor })
+  @IsOptional()
+  @IsEnum(NotificationScheduleAnchor)
+  scheduleAnchor?: NotificationScheduleAnchor;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsInt()
   @Min(0)
-  leadTimeMinutes?: number;
+  scheduleOffsetMinutes?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsDateString()
+  scheduledAt?: string;
+
+  @ApiPropertyOptional({ enum: NotificationScheduleIntervalType })
+  @IsOptional()
+  @IsEnum(NotificationScheduleIntervalType)
+  scheduleIntervalType?: NotificationScheduleIntervalType;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(24)
+  scheduleIntervalValue?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(6)
+  scheduleWeekday?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d{2}:\d{2}$/, { message: "Time must be in HH:mm format" })
+  scheduleTimeOfDay?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsDateString()
+  scheduledUntil?: string;
 
   @ApiProperty({ type: [Number] })
   @IsArray()
+  @ArrayMaxSize(3)
   @IsInt({ each: true })
   targetIds: number[];
 

@@ -3898,6 +3898,7 @@ export const GuildScalarFieldEnum = {
   icon: 'icon',
   ownerId: 'ownerId',
   vanityUrl: 'vanityUrl',
+  notificationRuleLimit: 'notificationRuleLimit',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   active: 'active'
@@ -4175,7 +4176,16 @@ export const NotificationRuleScalarFieldEnum = {
   world: 'world',
   name: 'name',
   filters: 'filters',
-  leadTimeMinutes: 'leadTimeMinutes',
+  contentTemplate: 'contentTemplate',
+  scheduleStrategy: 'scheduleStrategy',
+  scheduleAnchor: 'scheduleAnchor',
+  scheduleOffsetMinutes: 'scheduleOffsetMinutes',
+  scheduledAt: 'scheduledAt',
+  scheduleIntervalType: 'scheduleIntervalType',
+  scheduleIntervalValue: 'scheduleIntervalValue',
+  scheduleWeekday: 'scheduleWeekday',
+  scheduleTimeOfDay: 'scheduleTimeOfDay',
+  scheduledUntil: 'scheduledUntil',
   enabled: 'enabled',
   dedupeWindowSeconds: 'dedupeWindowSeconds',
   createdAt: 'createdAt',
@@ -4676,6 +4686,20 @@ export type ListStringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaMod
 
 
 /**
+ * Reference to a field of type 'Int'
+ */
+export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+    
+
+
+/**
+ * Reference to a field of type 'Int[]'
+ */
+export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+/**
  * Reference to a field of type 'DateTime'
  */
 export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
@@ -4693,20 +4717,6 @@ export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaM
  * Reference to a field of type 'Boolean'
  */
 export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
-    
-
-
-/**
- * Reference to a field of type 'Int'
- */
-export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
-    
-
-
-/**
- * Reference to a field of type 'Int[]'
- */
-export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
     
 
 
@@ -4861,6 +4871,48 @@ export type EnumNotificationTriggerTypeFieldRefInput<$PrismaModel> = FieldRefInp
  * Reference to a field of type 'NotificationTriggerType[]'
  */
 export type ListEnumNotificationTriggerTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationTriggerType[]'>
+    
+
+
+/**
+ * Reference to a field of type 'NotificationScheduleStrategy'
+ */
+export type EnumNotificationScheduleStrategyFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationScheduleStrategy'>
+    
+
+
+/**
+ * Reference to a field of type 'NotificationScheduleStrategy[]'
+ */
+export type ListEnumNotificationScheduleStrategyFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationScheduleStrategy[]'>
+    
+
+
+/**
+ * Reference to a field of type 'NotificationScheduleAnchor'
+ */
+export type EnumNotificationScheduleAnchorFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationScheduleAnchor'>
+    
+
+
+/**
+ * Reference to a field of type 'NotificationScheduleAnchor[]'
+ */
+export type ListEnumNotificationScheduleAnchorFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationScheduleAnchor[]'>
+    
+
+
+/**
+ * Reference to a field of type 'NotificationScheduleIntervalType'
+ */
+export type EnumNotificationScheduleIntervalTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationScheduleIntervalType'>
+    
+
+
+/**
+ * Reference to a field of type 'NotificationScheduleIntervalType[]'
+ */
+export type ListEnumNotificationScheduleIntervalTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationScheduleIntervalType[]'>
     
 
 

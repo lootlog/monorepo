@@ -4,6 +4,10 @@ import type {
   DiscordGuildChannelSnapshot,
   DiscordGuildSyncState,
   NotificationFilters,
+  NotificationJobKind,
+  NotificationScheduleAnchor,
+  NotificationScheduleIntervalType,
+  NotificationScheduleStrategy,
   NotificationJobStatus,
   NotificationTargetType,
   NotificationTriggerType,
@@ -30,12 +34,28 @@ export type GuildNotificationTarget = {
 export type GuildNotificationRule = {
   id: number;
   name: string | null;
+  contentTemplate: string | null;
   triggerType: NotificationTriggerType;
   world: string | null;
-  leadTimeMinutes: number | null;
+  scheduleStrategy: NotificationScheduleStrategy | null;
+  scheduleAnchor: NotificationScheduleAnchor | null;
+  scheduleOffsetMinutes: number | null;
+  scheduledAt: string | null;
+  scheduleIntervalType: NotificationScheduleIntervalType | null;
+  scheduleIntervalValue: number | null;
+  scheduleWeekday: number | null;
+  scheduleTimeOfDay: string | null;
+  scheduledUntil: string | null;
   enabled: boolean;
   updatedAt: string;
   filters: NotificationFilters | null;
+  testTrigger: {
+    limit: number;
+    used: number;
+    remaining: number;
+    windowSeconds: number;
+    nextAvailableAt: string | null;
+  };
   targets: Array<{
     target: GuildNotificationTarget;
   }>;
@@ -43,16 +63,28 @@ export type GuildNotificationRule = {
 
 export type GuildNotificationJob = {
   id: string;
+  jobKind: NotificationJobKind;
   scheduledFor: string;
   status: NotificationJobStatus;
   lastError: string | null;
   blockedReason: string | null;
   processedAt: string | null;
+  createdAt: string;
   updatedAt: string;
+  attemptCount: number;
+  providerMessageId: string | null;
+  sourceEntityType: string | null;
+  sourceEntityId: string | null;
+  payloadSnapshot: Record<string, unknown> | null;
   rule: {
     id: number;
     name: string | null;
     triggerType: NotificationTriggerType;
+    world: string | null;
+    enabled: boolean;
+    scheduleStrategy: NotificationScheduleStrategy | null;
+    scheduleAnchor: NotificationScheduleAnchor | null;
+    scheduleOffsetMinutes: number | null;
   };
   target: GuildNotificationTarget;
 };
@@ -60,10 +92,22 @@ export type GuildNotificationJob = {
 export type GuildNotificationsResponse = {
   targets: GuildNotificationTarget[];
   rules: GuildNotificationRule[];
+  limits: {
+    ruleLimit: number;
+    ruleCount: number;
+    maxNpcsPerRule: number;
+    testTriggerLimit: number;
+    testTriggerWindowSeconds: number;
+  };
   jobs: {
     pending: GuildNotificationJob[];
     history: GuildNotificationJob[];
   };
+};
+
+export type GuildNotificationRulesResponse = {
+  items: GuildNotificationRule[];
+  limits: GuildNotificationsResponse["limits"];
 };
 
 export type GuildAvailableNotificationTargetsResponse = {
@@ -88,11 +132,20 @@ export type DeleteGuildNotificationTargetData = {
 
 export type CreateGuildNotificationRuleData = {
   name?: string | null;
+  contentTemplate?: string | null;
   triggerType: NotificationTriggerType;
   world?: string | null;
   npcId?: number;
   npcIds?: number[];
-  leadTimeMinutes?: number;
+  scheduleStrategy?: NotificationScheduleStrategy;
+  scheduleAnchor?: NotificationScheduleAnchor;
+  scheduleOffsetMinutes?: number;
+  scheduledAt?: string;
+  scheduleIntervalType?: NotificationScheduleIntervalType;
+  scheduleIntervalValue?: number;
+  scheduleWeekday?: number;
+  scheduleTimeOfDay?: string;
+  scheduledUntil?: string;
   targetIds: number[];
   enabled?: boolean;
 };
@@ -100,11 +153,20 @@ export type CreateGuildNotificationRuleData = {
 export type UpdateGuildNotificationRuleData = {
   ruleId: number;
   name?: string | null;
+  contentTemplate?: string | null;
   triggerType?: NotificationTriggerType;
   world?: string | null;
   npcId?: number;
   npcIds?: number[];
-  leadTimeMinutes?: number;
+  scheduleStrategy?: NotificationScheduleStrategy;
+  scheduleAnchor?: NotificationScheduleAnchor;
+  scheduleOffsetMinutes?: number;
+  scheduledAt?: string;
+  scheduleIntervalType?: NotificationScheduleIntervalType;
+  scheduleIntervalValue?: number;
+  scheduleWeekday?: number;
+  scheduleTimeOfDay?: string;
+  scheduledUntil?: string;
   targetIds?: number[];
   enabled?: boolean;
 };
@@ -113,8 +175,27 @@ export type DeleteGuildNotificationRuleData = {
   ruleId: number;
 };
 
+export type CancelGuildNotificationJobData = {
+  jobId: string;
+};
+
+export type RebuildGuildNotificationRuleJobsData = {
+  ruleId: number;
+};
+
+export type TriggerGuildNotificationRuleTestData = {
+  ruleId: number;
+};
+
+type UseGuildNotificationJobsOptions = {
+  pollPendingJobs?: boolean;
+};
+
 const createGuildNotificationsQueryKey = (guildId: string) =>
   ["guild-notifications", guildId] as const;
+
+const createGuildNotificationJobsQueryKey = (guildId: string) =>
+  ["guild-notification-jobs", guildId] as const;
 
 const createGuildAvailableNotificationTargetsQueryKey = (guildId: string) =>
   ["guild-notification-available-targets", guildId] as const;
@@ -128,6 +209,9 @@ const invalidateGuildNotificationQueries = async (
       queryKey: createGuildNotificationsQueryKey(guildId),
     }),
     queryClient.invalidateQueries({
+      queryKey: createGuildNotificationJobsQueryKey(guildId),
+    }),
+    queryClient.invalidateQueries({
       queryKey: createGuildAvailableNotificationTargetsQueryKey(guildId),
     }),
   ]);
@@ -137,23 +221,33 @@ export const guildNotificationsQueryOptions = (guildId: string) =>
   queryOptions({
     queryKey: createGuildNotificationsQueryKey(guildId),
     queryFn: async () => {
-      const [targetsResponse, rulesResponse, jobsResponse] = await Promise.all([
+      const [targetsResponse, rulesResponse] = await Promise.all([
         apiClient.get<GuildNotificationTarget[]>(
           `/guilds/${guildId}/notifications/targets`,
         ),
-        apiClient.get<GuildNotificationRule[]>(
+        apiClient.get<GuildNotificationRulesResponse>(
           `/guilds/${guildId}/notifications/rules`,
-        ),
-        apiClient.get<GuildNotificationsResponse["jobs"]>(
-          `/guilds/${guildId}/notifications/jobs`,
         ),
       ]);
 
       return {
         targets: targetsResponse.data,
-        rules: rulesResponse.data,
-        jobs: jobsResponse.data,
-      } satisfies GuildNotificationsResponse;
+        rules: rulesResponse.data.items,
+        limits: rulesResponse.data.limits,
+      };
+    },
+    enabled: guildId.length > 0,
+  });
+
+export const guildNotificationJobsQueryOptions = (guildId: string) =>
+  queryOptions({
+    queryKey: createGuildNotificationJobsQueryKey(guildId),
+    queryFn: async () => {
+      const response = await apiClient.get<GuildNotificationsResponse["jobs"]>(
+        `/guilds/${guildId}/notifications/jobs`,
+      );
+
+      return response.data;
     },
     enabled: guildId.length > 0,
   });
@@ -178,8 +272,29 @@ export const guildAvailableNotificationTargetsQueryOptions = (
 export const useGuildNotifications = () => {
   const guildId = useGuildId();
 
+  return useQuery(guildNotificationsQueryOptions(guildId ?? ""));
+};
+
+export const useGuildNotificationJobs = (
+  options: UseGuildNotificationJobsOptions = {},
+) => {
+  const guildId = useGuildId();
+
   return useQuery({
-    ...guildNotificationsQueryOptions(guildId ?? ""),
+    ...guildNotificationJobsQueryOptions(guildId ?? ""),
+    refetchInterval: (query) => {
+      if (!options.pollPendingJobs) {
+        return false;
+      }
+
+      const data = query.state.data;
+
+      if (!data || data.pending.length === 0) {
+        return false;
+      }
+
+      return 5000;
+    },
   });
 };
 
@@ -307,6 +422,60 @@ export const useDeleteGuildNotificationRule = () => {
     mutationFn: async ({ ruleId }: DeleteGuildNotificationRuleData) => {
       const response = await apiClient.delete(
         `/guilds/${guildId}/notifications/rules/${ruleId}`,
+      );
+
+      return response.data;
+    },
+    onSuccess: async () => {
+      await invalidateGuildNotificationQueries(guildId ?? "", queryClient);
+    },
+  });
+};
+
+export const useCancelGuildNotificationJob = () => {
+  const guildId = useGuildId();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ jobId }: CancelGuildNotificationJobData) => {
+      const response = await apiClient.delete(
+        `/guilds/${guildId}/notifications/jobs/${jobId}`,
+      );
+
+      return response.data;
+    },
+    onSuccess: async () => {
+      await invalidateGuildNotificationQueries(guildId ?? "", queryClient);
+    },
+  });
+};
+
+export const useRebuildGuildNotificationRuleJobs = () => {
+  const guildId = useGuildId();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ ruleId }: RebuildGuildNotificationRuleJobsData) => {
+      const response = await apiClient.post(
+        `/guilds/${guildId}/notifications/rules/${ruleId}/rebuild-jobs`,
+      );
+
+      return response.data;
+    },
+    onSuccess: async () => {
+      await invalidateGuildNotificationQueries(guildId ?? "", queryClient);
+    },
+  });
+};
+
+export const useTriggerGuildNotificationRuleTest = () => {
+  const guildId = useGuildId();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ ruleId }: TriggerGuildNotificationRuleTestData) => {
+      const response = await apiClient.post(
+        `/guilds/${guildId}/notifications/rules/${ruleId}/test`,
       );
 
       return response.data;

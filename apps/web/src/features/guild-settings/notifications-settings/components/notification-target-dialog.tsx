@@ -260,21 +260,32 @@ export const NotificationTargetDialog = ({
                 control={form.control}
                 name="active"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-xl border border-border/70 bg-background/30 px-3 py-3">
-                    <div>
-                      <FormLabel className="text-sm font-medium">
-                        {t("settings.notifications.fields.active")}
-                      </FormLabel>
-                      <p className="text-xs text-muted-foreground">
-                        {t("settings.notifications.fields.activeDescription")}
-                      </p>
+                  <FormItem className="flex flex-col gap-2">
+                    <div className="flex flex-row items-center justify-between rounded-xl border border-border/70 bg-background/30 px-3 py-3">
+                      <div>
+                        <FormLabel className="text-sm font-medium">
+                          {t("settings.notifications.fields.active")}
+                        </FormLabel>
+                        <p className="text-xs text-muted-foreground">
+                          {t(
+                            "settings.notifications.fields.activeDescription",
+                          )}
+                        </p>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
                     </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
+                    {!field.value && target?.active ? (
+                      <p className="text-xs text-amber-500">
+                        {t(
+                          "settings.notifications.fields.activeDeactivateWarning",
+                        )}
+                      </p>
+                    ) : null}
                   </FormItem>
                 )}
               />

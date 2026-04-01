@@ -149,6 +149,63 @@ describe("DiscordDeliveryService", () => {
     );
   });
 
+  it("passes custom content and allowed mentions to guild channels", async () => {
+    const send = jest.fn().mockResolvedValue({
+      id: "discord-message-mentions",
+    });
+    mockClient.channels.fetch.mockResolvedValue({
+      type: ChannelType.GuildText,
+      isTextBased: () => true,
+      isSendable: () => true,
+      send,
+    });
+
+    const command = createCommand(NotificationTargetType.CHANNEL);
+    command.content = "<@&123> @everyone Boss pojawi sie za chwile";
+    command.allowedMentions = {
+      parse: ["everyone"],
+      roles: ["123"],
+      repliedUser: false,
+    };
+
+    await service.sendNotification(command);
+
+    expect(send).toHaveBeenCalledWith({
+      content: "<@&123> @everyone Boss pojawi sie za chwile",
+      allowedMentions: {
+        parse: ["everyone"],
+        roles: ["123"],
+        repliedUser: false,
+      },
+    });
+  });
+
+  it("does not pass allowed mentions to direct messages", async () => {
+    const send = jest.fn().mockResolvedValue({
+      id: "discord-message-dm-mentions",
+    });
+    const createDM = jest.fn().mockResolvedValue({
+      send,
+    });
+    mockClient.users.fetch.mockResolvedValue({
+      createDM,
+    });
+
+    const command = createCommand(NotificationTargetType.DM);
+    command.content = "<@&123> @here Test";
+    command.allowedMentions = {
+      parse: ["everyone"],
+      roles: ["123"],
+    };
+
+    await service.sendNotification(command);
+
+    expect(send).toHaveBeenCalledWith({
+      content: "<@&123> @here Test",
+      allowedMentions: undefined,
+    });
+  });
+
   it("publishes a retryable failure for invalid guild channels", async () => {
     mockClient.channels.fetch.mockResolvedValue({
       type: ChannelType.DM,

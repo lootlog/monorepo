@@ -62,7 +62,7 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
     <div
       ref={scrollRef}
       className={cn(
-        "px-3 pt-3 pb-0 flex gap-2 overflow-x-auto md:overflow-visible [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden scroll-smooth",
+        "px-3 py-3 flex gap-2 overflow-x-auto md:overflow-visible [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden scroll-smooth",
         className,
       )}
       role="navigation"
@@ -70,7 +70,7 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
     >
       {items.map((item) => {
         const url = `${basePath}${item.href}`;
-        const active = pathname === url;
+        const active = pathname === url || pathname.startsWith(`${url}/`);
         const isHovered = hoveredId === item.id;
 
         const tabContent = (

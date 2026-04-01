@@ -1,8 +1,11 @@
-import { createLazyFileRoute } from "@tanstack/react-router";
-import { NotificationsSettings } from "@/features/guild-settings/notifications-settings/notifications-settings";
+import { Outlet, createLazyFileRoute } from "@tanstack/react-router";
 
 export const Route = createLazyFileRoute(
   "/_authenticated/$guildId/settings/notifications",
 )({
-  component: NotificationsSettings,
+  component: () => (
+    <div className="flex h-full min-h-0 flex-col">
+      <Outlet />
+    </div>
+  ),
 });

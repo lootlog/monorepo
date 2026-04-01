@@ -1,90 +1,93 @@
 import { useState } from "react";
-import { BellRing, ShieldAlert } from "lucide-react";
+import { BellRing, Info, ShieldAlert } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@lootlog/ui/components/tooltip";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Spinner } from "@lootlog/ui/components/spinner";
-import { NotificationRuleCard } from "./components/notification-rule-card";
-import { NotificationRuleDialog } from "./components/notification-rule-dialog";
-import { NotificationTargetCard } from "./components/notification-target-card";
+import { NotificationsActionsCard } from "./components/notifications-actions-card";
+import { NotificationsPendingJobsCard } from "./components/notifications-jobs-card";
+import { NotificationsRecentHistoryCard } from "./components/notifications-recent-history-card";
+import { NotificationsRulesCard } from "./components/notifications-rules-card";
+import { NotificationsTargetsCard } from "./components/notifications-targets-card";
 import { NotificationTargetDialog } from "./components/notification-target-dialog";
-import { NotificationsJobsCard } from "./components/notifications-jobs-card";
+import { NotificationsInfoDialog } from "./components/notifications-info-dialog";
 import { hasConfirmedGuildDiscordPermissions } from "@/features/guild-settings/utils/has-confirmed-guild-discord-permissions";
 import { useGuildDiscordSync } from "@/hooks/api/guilds/use-guild-discord-sync";
 import {
   useGuildNotifications,
-  type GuildNotificationRule,
+  useGuildNotificationJobs,
   type GuildNotificationTarget,
 } from "@/hooks/api/guilds/use-guild-notifications";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { buildDiscordBotInstallUrl } from "@/utils/build-discord-bot-install-url";
-import {
-  getGuildNotificationTargetUsageCount,
-  isSupportedGuildNotificationTrigger,
-} from "./utils/notification-settings.utils";
+import { isSupportedGuildNotificationTrigger } from "./utils/notification-settings.utils";
 
 export const NotificationsSettings = () => {
   const { t } = useTranslation();
   const guildId = useGuildId();
   const { data: syncState } = useGuildDiscordSync();
   const { data, isLoading } = useGuildNotifications();
+  const { data: jobsData } = useGuildNotificationJobs({
+    pollPendingJobs: true,
+  });
+  const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
   const [isCreateTargetDialogOpen, setIsCreateTargetDialogOpen] =
     useState(false);
   const [editedTarget, setEditedTarget] = useState<
     GuildNotificationTarget | undefined
   >();
-  const [isCreateRuleDialogOpen, setIsCreateRuleDialogOpen] = useState(false);
-  const [editedRule, setEditedRule] = useState<
-    GuildNotificationRule | undefined
-  >();
-
   const missingPermissions = syncState?.missingPermissions ?? [];
   const hasRequiredPermissions = hasConfirmedGuildDiscordPermissions(syncState);
   const installUrl = guildId ? buildDiscordBotInstallUrl(guildId) : "#";
   const targets = data?.targets ?? [];
+  const notificationLimits = data?.limits;
   const visibleRules =
     data?.rules.filter((rule) =>
       isSupportedGuildNotificationTrigger(rule.triggerType),
     ) ?? [];
+  const isRuleLimitReached =
+    notificationLimits !== undefined &&
+    notificationLimits.ruleCount >= notificationLimits.ruleLimit;
 
   return (
     <>
       <div className="flex h-full min-h-0 flex-col bg-background/50">
-        <ScrollArea className="flex-1 min-h-0">
-          <div className="flex flex-col gap-4 px-3 py-3">
+        <ScrollArea className="min-h-0 flex-1">
+          <div className="flex flex-col gap-4 px-3 pb-3">
             <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                <div className="flex min-w-0 items-center gap-3">
-                  <div className="rounded-xl bg-blue-500/10 p-2.5 shadow-inner shadow-blue-500/10">
-                    <BellRing className="size-4 text-blue-500" />
-                  </div>
-                  <div>
-                    <h2 className="text-base font-semibold leading-tight">
-                      {t("settings.notifications.title")}
-                    </h2>
-                    <p className="text-xs leading-tight text-muted-foreground">
-                      {t("settings.notifications.description")}
-                    </p>
-                  </div>
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="rounded-xl bg-blue-500/10 p-2.5 shadow-inner shadow-blue-500/10">
+                  <BellRing className="size-4 text-blue-500" />
                 </div>
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <Button
-                    size="sm"
-                    disabled={!hasRequiredPermissions}
-                    onClick={() => setIsCreateTargetDialogOpen(true)}
-                  >
-                    {t("settings.notifications.actions.addTarget")}
-                  </Button>
-                  <Button
-                    size="sm"
-                    disabled={!hasRequiredPermissions}
-                    onClick={() => setIsCreateRuleDialogOpen(true)}
-                  >
-                    {t("settings.notifications.actions.addRule")}
-                  </Button>
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-base font-semibold leading-tight">
+                    {t("settings.notifications.title")}
+                  </h2>
+                  <p className="text-xs leading-tight text-muted-foreground">
+                    {t("settings.notifications.description")}
+                  </p>
                 </div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => setIsInfoDialogOpen(true)}
+                    >
+                      <Info className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {t("settings.notifications.info.title")}
+                  </TooltipContent>
+                </Tooltip>
               </div>
             </Card>
 
@@ -128,78 +131,63 @@ export const NotificationsSettings = () => {
               </div>
             ) : (
               <>
-                <Card className="gap-3 border-border bg-card/40 p-4 backdrop-blur-sm">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <h3 className="text-base font-semibold">
-                        {t("settings.notifications.sections.targets")}
-                      </h3>
-                      <p className="text-xs text-muted-foreground">
-                        {t(
-                          "settings.notifications.sections.targetsDescription",
-                        )}
-                      </p>
-                    </div>
-                    <Badge variant="outline">{targets.length}</Badge>
-                  </div>
-                  {targets.length > 0 ? (
-                    <div className="flex flex-col gap-3">
-                      {targets.map((target) => (
-                        <NotificationTargetCard
-                          key={target.id}
-                          target={target}
-                          usageCount={getGuildNotificationTargetUsageCount(
-                            target.id,
-                            visibleRules,
-                          )}
-                          actionsDisabled={!hasRequiredPermissions}
-                          onEdit={setEditedTarget}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="rounded-xl border border-dashed border-border/80 bg-background/20 p-6 text-sm text-muted-foreground">
-                      {t("settings.notifications.empty.targets")}
-                    </div>
-                  )}
-                </Card>
+                <div className="lg:hidden">
+                  <NotificationsActionsCard
+                    hasRequiredPermissions={hasRequiredPermissions}
+                    isRuleLimitReached={isRuleLimitReached}
+                    limits={notificationLimits}
+                    onAddTarget={() => setIsCreateTargetDialogOpen(true)}
+                  />
+                </div>
 
-                <Card className="gap-3 border-border bg-card/40 p-4 backdrop-blur-sm">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <h3 className="text-base font-semibold">
-                        {t("settings.notifications.sections.rules")}
-                      </h3>
-                      <p className="text-xs text-muted-foreground">
-                        {t("settings.notifications.sections.rulesDescription")}
-                      </p>
-                    </div>
-                    <Badge variant="outline">{visibleRules.length}</Badge>
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                  <div className="space-y-4 lg:col-span-2">
+                    <NotificationsTargetsCard
+                      targets={targets}
+                      rules={visibleRules}
+                      actionsDisabled={!hasRequiredPermissions}
+                      onEditTarget={setEditedTarget}
+                    />
+                    <NotificationsRulesCard
+                      rules={visibleRules}
+                      limits={notificationLimits}
+                      actionsDisabled={!hasRequiredPermissions}
+                    />
                   </div>
-                  {visibleRules.length > 0 ? (
-                    <div className="flex flex-col gap-3">
-                      {visibleRules.map((rule) => (
-                        <NotificationRuleCard
-                          key={rule.id}
-                          rule={rule}
-                          actionsDisabled={!hasRequiredPermissions}
-                          onEdit={setEditedRule}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="rounded-xl border border-dashed border-border/80 bg-background/20 p-6 text-sm text-muted-foreground">
-                      {t("settings.notifications.empty.rules")}
-                    </div>
-                  )}
-                </Card>
 
-                {data ? <NotificationsJobsCard jobs={data.jobs} /> : null}
+                  <div className="space-y-4">
+                    <div className="hidden lg:block">
+                      <NotificationsActionsCard
+                        hasRequiredPermissions={hasRequiredPermissions}
+                        isRuleLimitReached={isRuleLimitReached}
+                        limits={notificationLimits}
+                        onAddTarget={() => setIsCreateTargetDialogOpen(true)}
+                      />
+                    </div>
+
+                    {jobsData ? (
+                      <NotificationsPendingJobsCard
+                        pendingJobs={jobsData.pending}
+                      />
+                    ) : null}
+
+                    {jobsData ? (
+                      <NotificationsRecentHistoryCard
+                        historyJobs={jobsData.history}
+                      />
+                    ) : null}
+                  </div>
+                </div>
               </>
             )}
           </div>
         </ScrollArea>
       </div>
+
+      <NotificationsInfoDialog
+        open={isInfoDialogOpen}
+        onOpenChange={setIsInfoDialogOpen}
+      />
 
       <NotificationTargetDialog
         open={isCreateTargetDialogOpen}
@@ -216,23 +204,6 @@ export const NotificationsSettings = () => {
         onOpenChange={(nextOpen) => {
           if (!nextOpen) {
             setEditedTarget(undefined);
-          }
-        }}
-      />
-
-      <NotificationRuleDialog
-        open={isCreateRuleDialogOpen}
-        targets={targets}
-        onOpenChange={setIsCreateRuleDialogOpen}
-      />
-
-      <NotificationRuleDialog
-        open={editedRule !== undefined}
-        rule={editedRule}
-        targets={targets}
-        onOpenChange={(nextOpen) => {
-          if (!nextOpen) {
-            setEditedRule(undefined);
           }
         }}
       />
