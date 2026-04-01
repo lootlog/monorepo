@@ -119,6 +119,11 @@ export class UpdateNotificationRuleDto {
   @IsDateString()
   scheduledUntil?: string;
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  scheduleTimezone?: string;
+
   @ApiPropertyOptional({ type: [Number] })
   @IsOptional()
   @IsArray()
@@ -130,10 +135,4 @@ export class UpdateNotificationRuleDto {
   @IsOptional()
   @IsBoolean()
   enabled?: boolean;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  dedupeWindowSeconds?: number;
 }

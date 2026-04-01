@@ -36,6 +36,7 @@ import {
   getGuildNotificationTargetLabel,
   getNotificationTriggerTranslationKey,
 } from "../utils/notification-settings.utils";
+import { formatNotificationDateInTimeZone } from "../utils/notification-schedule-time.utils";
 
 type NotificationRuleCardProps = {
   rule: GuildNotificationRule;
@@ -124,27 +125,29 @@ export const NotificationRuleCard = ({
                 : t("settings.notifications.states.disabled")}
             </Badge>
             {rule.world ? <Badge variant="outline">{rule.world}</Badge> : null}
-            {rule.triggerType ===
-              NotificationTriggerType.SCHEDULED_MESSAGE &&
+            {rule.triggerType === NotificationTriggerType.SCHEDULED_MESSAGE &&
             rule.scheduleIntervalType &&
-            rule.scheduleIntervalType !== NotificationScheduleIntervalType.ONCE ? (
+            rule.scheduleIntervalType !==
+              NotificationScheduleIntervalType.ONCE ? (
               <Badge variant="outline">
-                {rule.scheduleIntervalType === NotificationScheduleIntervalType.HOURLY
+                {rule.scheduleIntervalType ===
+                NotificationScheduleIntervalType.HOURLY
                   ? `${t("settings.notifications.intervalTypes.hourly").replace("X", String(rule.scheduleIntervalValue ?? 1))}`
-                  : rule.scheduleIntervalType === NotificationScheduleIntervalType.DAILY
+                  : rule.scheduleIntervalType ===
+                      NotificationScheduleIntervalType.DAILY
                     ? `${t("settings.notifications.intervalTypes.daily")} ${rule.scheduleTimeOfDay ?? ""}`
-                    : rule.scheduleIntervalType === NotificationScheduleIntervalType.WEEKLY
+                    : rule.scheduleIntervalType ===
+                        NotificationScheduleIntervalType.WEEKLY
                       ? `${t(`settings.notifications.weekdays.${rule.scheduleWeekday ?? 0}`)} ${rule.scheduleTimeOfDay ?? ""}`
                       : ""}
               </Badge>
             ) : null}
-            {rule.triggerType ===
-              NotificationTriggerType.SCHEDULED_MESSAGE &&
+            {rule.triggerType === NotificationTriggerType.SCHEDULED_MESSAGE &&
             rule.scheduledAt ? (
               <Badge variant="outline">
-                {format(
-                  new Date(rule.scheduledAt),
-                  "dd.MM.yyyy HH:mm",
+                {formatNotificationDateInTimeZone(
+                  rule.scheduledAt,
+                  rule.scheduleTimezone ?? "Europe/Warsaw",
                 )}
               </Badge>
             ) : null}
@@ -161,8 +164,7 @@ export const NotificationRuleCard = ({
                 count: targetLabels.length,
               })}
             </Badge>
-            {rule.triggerType !==
-            NotificationTriggerType.SCHEDULED_MESSAGE ? (
+            {rule.triggerType !== NotificationTriggerType.SCHEDULED_MESSAGE ? (
               <Badge variant="outline">
                 {npcCount > 0
                   ? t("settings.notifications.npcCount", { count: npcCount })
@@ -295,9 +297,7 @@ export const NotificationRuleCard = ({
                   confirmButtonLabel={t(
                     "settings.notifications.actions.delete",
                   )}
-                  cancelButtonLabel={t(
-                    "settings.notifications.actions.cancel",
-                  )}
+                  cancelButtonLabel={t("settings.notifications.actions.cancel")}
                   trigger={
                     <Button type="button" size="icon" variant="destructive">
                       <Trash2 className="h-4 w-4" />

@@ -3,21 +3,18 @@ import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
-import type { GuildNotificationsResponse } from "@/hooks/api/guilds/use-guild-notifications";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { ROUTES } from "@/config/routes";
 
 type NotificationsActionsCardProps = {
   hasRequiredPermissions: boolean;
   isRuleLimitReached: boolean;
-  limits: GuildNotificationsResponse["limits"] | undefined;
   onAddTarget: () => void;
 };
 
 export const NotificationsActionsCard = ({
   hasRequiredPermissions,
   isRuleLimitReached,
-  limits,
   onAddTarget,
 }: NotificationsActionsCardProps) => {
   const { t } = useTranslation();

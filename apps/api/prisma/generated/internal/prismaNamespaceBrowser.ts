@@ -409,6 +409,7 @@ export const NotificationRuleScalarFieldEnum = {
   scheduleWeekday: 'scheduleWeekday',
   scheduleTimeOfDay: 'scheduleTimeOfDay',
   scheduledUntil: 'scheduledUntil',
+  scheduleTimezone: 'scheduleTimezone',
   enabled: 'enabled',
   dedupeWindowSeconds: 'dedupeWindowSeconds',
   createdAt: 'createdAt',

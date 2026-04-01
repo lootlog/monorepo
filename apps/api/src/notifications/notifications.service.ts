@@ -32,6 +32,7 @@ import { PrismaService } from "src/db/prisma.service";
 import { RoutingKey } from "src/enum/routing-key.enum";
 import { GuildsService } from "src/guilds/guilds.service";
 import { NOTIFICATIONS_DISPATCH_QUEUE } from "src/notifications/constants/notifications-dispatch-queue.constant";
+import { GUILD_NOTIFICATION_TIMEZONE } from "src/notifications/constants/notification-schedule-timezone.constant";
 import {
   NOTIFICATIONS_HISTORY_RESPONSE_LIMIT,
   NOTIFICATIONS_HISTORY_RETENTION_LIMIT,
@@ -42,6 +43,11 @@ import type { CreateWatchedItemDto } from "src/notifications/dto/create-watched-
 import type { UpdateNotificationRuleDto } from "src/notifications/dto/update-notification-rule.dto";
 import type { UpdateNotificationTargetDto } from "src/notifications/dto/update-notification-target.dto";
 import type { NotificationDispatchJobData } from "src/notifications/notifications-dispatch.processor";
+import {
+  calculateFirstOccurrenceInTimeZone,
+  calculateNextOccurrenceInTimeZone,
+  isValidTimeZone,
+} from "src/notifications/utils/notification-schedule-time.util";
 
 type OwnerContext = {
   ownerType: DbNotificationOwnerType;
@@ -265,7 +271,8 @@ export class NotificationsService {
     await this.ensureGuildNotificationPermissions(guildId);
     await this.ensureGuildRuleLimitNotExceeded(guildId);
     const isScheduledMessage =
-      (data.triggerType as string) === DbNotificationTriggerType.SCHEDULED_MESSAGE;
+      (data.triggerType as string) ===
+      DbNotificationTriggerType.SCHEDULED_MESSAGE;
 
     if (!isScheduledMessage) {
       this.validateRuleNpcSelection(data);
@@ -291,9 +298,12 @@ export class NotificationsService {
           triggerType: data.triggerType as DbNotificationTriggerType,
           data,
         }),
-        ...this.resolveScheduledMessageFields(isScheduledMessage ? data : null),
+        ...this.resolveScheduledMessageFields({
+          ownerType: DbNotificationOwnerType.GUILD,
+          data: isScheduledMessage ? data : null,
+        }),
         enabled: data.enabled ?? true,
-        dedupeWindowSeconds: data.dedupeWindowSeconds ?? 0,
+        dedupeWindowSeconds: 0,
         targets: {
           createMany: {
             data: targetIds.map((targetId) => ({ targetId })),
@@ -318,10 +328,6 @@ export class NotificationsService {
     const hasContentTemplate = Object.prototype.hasOwnProperty.call(
       data,
       "contentTemplate",
-    );
-    const hasScheduledAt = Object.prototype.hasOwnProperty.call(
-      data,
-      "scheduledAt",
     );
     const existingRule = await this.ensureRule({
       ownerType: DbNotificationOwnerType.GUILD,
@@ -373,13 +379,23 @@ export class NotificationsService {
             data,
             existingRule,
           }),
-          ...this.resolveScheduledMessageFields(
-            isScheduledMessage ? data : null,
-            isScheduledMessage ? existingRule : undefined,
-          ),
+          ...this.resolveScheduledMessageFields({
+            ownerType: DbNotificationOwnerType.GUILD,
+            data: isScheduledMessage ? data : null,
+            existingRule: isScheduledMessage
+              ? {
+                  scheduledAt: existingRule.scheduledAt,
+                  scheduleIntervalType: existingRule.scheduleIntervalType,
+                  scheduleIntervalValue: existingRule.scheduleIntervalValue,
+                  scheduleWeekday: existingRule.scheduleWeekday,
+                  scheduleTimeOfDay: existingRule.scheduleTimeOfDay,
+                  scheduledUntil: existingRule.scheduledUntil,
+                  scheduleTimezone: existingRule.scheduleTimezone,
+                }
+              : undefined,
+          }),
           enabled: data.enabled ?? existingRule.enabled,
-          dedupeWindowSeconds:
-            data.dedupeWindowSeconds ?? existingRule.dedupeWindowSeconds,
+          dedupeWindowSeconds: existingRule.dedupeWindowSeconds,
         },
       });
 
@@ -546,6 +562,12 @@ export class NotificationsService {
       );
     }
 
+    if (data.externalId && data.externalId !== discordId) {
+      throw new BadRequestException(
+        "User DM notification targets must use the authenticated Discord account",
+      );
+    }
+
     const target = await this.prisma.notificationTarget.upsert({
       where: {
         ownerType_ownerId_provider_targetType_externalId: {
@@ -553,7 +575,7 @@ export class NotificationsService {
           ownerId: userId,
           provider: DbNotificationProvider.DISCORD,
           targetType: DbNotificationTargetType.DM,
-          externalId: data.externalId ?? discordId,
+          externalId: discordId,
         },
       },
       create: {
@@ -561,7 +583,7 @@ export class NotificationsService {
         ownerId: userId,
         provider: DbNotificationProvider.DISCORD,
         targetType: DbNotificationTargetType.DM,
-        externalId: data.externalId ?? discordId,
+        externalId: discordId,
         displayName: data.displayName ?? "Discord DM",
         active: true,
         canSend: true,
@@ -623,7 +645,14 @@ export class NotificationsService {
   }
 
   async createUserRule(userId: string, data: CreateNotificationRuleDto) {
-    this.validateRuleNpcSelection(data);
+    const isScheduledMessage =
+      (data.triggerType as DbNotificationTriggerType) ===
+      DbNotificationTriggerType.SCHEDULED_MESSAGE;
+
+    if (!isScheduledMessage) {
+      this.validateRuleNpcSelection(data);
+    }
+
     const targetIds = await this.validateTargetIds({
       ownerType: DbNotificationOwnerType.USER,
       ownerId: userId,
@@ -636,16 +665,20 @@ export class NotificationsService {
         ownerId: userId,
         triggerType: data.triggerType as DbNotificationTriggerType,
         guildId: null,
-        world: data.world ?? null,
+        world: isScheduledMessage ? null : (data.world ?? null),
         name: data.name ?? null,
-        filters: this.buildFilters(data),
+        filters: isScheduledMessage ? Prisma.DbNull : this.buildFilters(data),
         contentTemplate: this.normalizeContentTemplate(data.contentTemplate),
         ...this.resolveScheduleConfig({
           triggerType: data.triggerType as DbNotificationTriggerType,
           data,
         }),
+        ...this.resolveScheduledMessageFields({
+          ownerType: DbNotificationOwnerType.USER,
+          data: isScheduledMessage ? data : null,
+        }),
         enabled: data.enabled ?? true,
-        dedupeWindowSeconds: data.dedupeWindowSeconds ?? 0,
+        dedupeWindowSeconds: 0,
         targets: {
           createMany: {
             data: targetIds.map((targetId) => ({ targetId })),
@@ -662,7 +695,6 @@ export class NotificationsService {
     ruleId: number,
     data: UpdateNotificationRuleDto,
   ) {
-    this.validateRuleNpcSelection(data);
     const hasName = Object.prototype.hasOwnProperty.call(data, "name");
     const hasWorld = Object.prototype.hasOwnProperty.call(data, "world");
     const hasContentTemplate = Object.prototype.hasOwnProperty.call(
@@ -677,6 +709,12 @@ export class NotificationsService {
     const nextTriggerType =
       (data.triggerType as DbNotificationTriggerType | undefined) ??
       existingRule.triggerType;
+    const isScheduledMessage =
+      nextTriggerType === DbNotificationTriggerType.SCHEDULED_MESSAGE;
+
+    if (!isScheduledMessage) {
+      this.validateRuleNpcSelection(data);
+    }
 
     const targetIds = data.targetIds
       ? await this.validateTargetIds({
@@ -691,16 +729,21 @@ export class NotificationsService {
         where: { id: ruleId },
         data: {
           triggerType: nextTriggerType,
-          world: hasWorld ? (data.world ?? null) : existingRule.world,
+          world: isScheduledMessage
+            ? null
+            : hasWorld
+              ? (data.world ?? null)
+              : existingRule.world,
           name: hasName ? (data.name ?? null) : existingRule.name,
           contentTemplate: hasContentTemplate
             ? this.normalizeContentTemplate(data.contentTemplate)
             : existingRule.contentTemplate,
-          filters:
-            data.npcId !== undefined ||
-            data.npcIds !== undefined ||
-            data.itemId !== undefined ||
-            data.itemIds !== undefined
+          filters: isScheduledMessage
+            ? Prisma.DbNull
+            : data.npcId !== undefined ||
+                data.npcIds !== undefined ||
+                data.itemId !== undefined ||
+                data.itemIds !== undefined
               ? this.buildFilters(data)
               : existingRule.filters,
           ...this.resolveScheduleConfig({
@@ -708,9 +751,23 @@ export class NotificationsService {
             data,
             existingRule,
           }),
+          ...this.resolveScheduledMessageFields({
+            ownerType: DbNotificationOwnerType.USER,
+            data: isScheduledMessage ? data : null,
+            existingRule: isScheduledMessage
+              ? {
+                  scheduledAt: existingRule.scheduledAt,
+                  scheduleIntervalType: existingRule.scheduleIntervalType,
+                  scheduleIntervalValue: existingRule.scheduleIntervalValue,
+                  scheduleWeekday: existingRule.scheduleWeekday,
+                  scheduleTimeOfDay: existingRule.scheduleTimeOfDay,
+                  scheduledUntil: existingRule.scheduledUntil,
+                  scheduleTimezone: existingRule.scheduleTimezone,
+                }
+              : undefined,
+          }),
           enabled: data.enabled ?? existingRule.enabled,
-          dedupeWindowSeconds:
-            data.dedupeWindowSeconds ?? existingRule.dedupeWindowSeconds,
+          dedupeWindowSeconds: existingRule.dedupeWindowSeconds,
         },
       });
 
@@ -928,25 +985,41 @@ export class NotificationsService {
   }
 
   async handleLootCreated(event: LootCreatedEvent) {
-    const notificationRules = await this.prisma.notificationRule.findMany({
+    const watchedItems = await this.prisma.watchedItem.findMany({
       where: {
-        ownerType: DbNotificationOwnerType.USER,
         enabled: true,
-        triggerType: DbNotificationTriggerType.WATCHED_ITEM_DROPPED,
-        targets: {
-          some: {},
+        itemId: {
+          in: event.itemIds,
+        },
+        notificationRule: {
+          is: {
+            enabled: true,
+            triggerType: DbNotificationTriggerType.WATCHED_ITEM_DROPPED,
+            targets: {
+              some: {},
+            },
+          },
         },
       },
       include: {
-        targets: {
+        notificationRule: {
           include: {
-            target: true,
+            targets: {
+              include: {
+                target: true,
+              },
+            },
           },
         },
       },
     });
 
-    for (const notificationRule of notificationRules) {
+    for (const watchedItem of watchedItems) {
+      const notificationRule = watchedItem.notificationRule;
+      if (!notificationRule) {
+        continue;
+      }
+
       if (!this.matchesLootRule(notificationRule.filters, event)) {
         continue;
       }
@@ -1087,6 +1160,14 @@ export class NotificationsService {
       return;
     }
 
+    if (
+      (FINAL_JOB_STATUSES as readonly DbNotificationJobStatus[]).includes(
+        notificationJob.status,
+      )
+    ) {
+      return;
+    }
+
     if (event.success) {
       await this.prisma.$transaction(async (tx) => {
         await tx.notificationJob.update({
@@ -1114,10 +1195,7 @@ export class NotificationsService {
       });
 
       if (notificationJob.sourceEntityType === "scheduled-message") {
-        await this.scheduleNextRecurringJob(
-          notificationJob.ruleId,
-          notificationJob.targetId,
-        );
+        await this.scheduleNextRecurringJob(notificationJob.ruleId);
       }
 
       return;
@@ -1170,6 +1248,10 @@ export class NotificationsService {
       ownerType: notificationJob.ownerType,
       ownerId: notificationJob.ownerId,
     });
+
+    if (notificationJob.sourceEntityType === "scheduled-message") {
+      await this.scheduleNextRecurringJob(notificationJob.ruleId);
+    }
   }
 
   async handleGuildChannelDeleted(event: DiscordGuildChannelDeletedEvent) {
@@ -1441,6 +1523,7 @@ export class NotificationsService {
       name: string | null;
       triggerType: DbNotificationTriggerType;
       contentTemplate?: string | null;
+      scheduleTimezone?: string | null;
     };
     target: {
       targetType: DbNotificationTargetType;
@@ -1457,6 +1540,8 @@ export class NotificationsService {
         DEFAULT_SCHEDULED_MESSAGE_TEMPLATE,
       notificationRuleName: params.notificationRule.name,
       scheduledFor: params.scheduledFor,
+      timeZone:
+        params.notificationRule.scheduleTimezone ?? GUILD_NOTIFICATION_TIMEZONE,
     });
 
     return {
@@ -1481,13 +1566,16 @@ export class NotificationsService {
     template: string;
     notificationRuleName: string | null;
     scheduledFor: Date;
+    timeZone: string;
   }) {
     const placeholderValues = {
-      ruleName:
-        params.notificationRuleName?.trim().length
-          ? params.notificationRuleName.trim()
-          : "Zaplanowana wiadomosc",
-      scheduledFor: this.formatNotificationDate(params.scheduledFor),
+      ruleName: params.notificationRuleName?.trim().length
+        ? params.notificationRuleName.trim()
+        : "Zaplanowana wiadomosc",
+      scheduledFor: this.formatNotificationDate(
+        params.scheduledFor,
+        params.timeZone,
+      ),
     } satisfies Record<string, string>;
 
     return params.template.replaceAll(
@@ -1496,7 +1584,8 @@ export class NotificationsService {
     );
   }
 
-  private resolveScheduledMessageFields(
+  private resolveScheduledMessageFields(params: {
+    ownerType: DbNotificationOwnerType;
     data: Pick<
       CreateNotificationRuleDto | UpdateNotificationRuleDto,
       | "scheduledAt"
@@ -1505,7 +1594,8 @@ export class NotificationsService {
       | "scheduleWeekday"
       | "scheduleTimeOfDay"
       | "scheduledUntil"
-    > | null,
+      | "scheduleTimezone"
+    > | null;
     existingRule?: {
       scheduledAt: Date | null;
       scheduleIntervalType: DbNotificationScheduleIntervalType | null;
@@ -1513,8 +1603,11 @@ export class NotificationsService {
       scheduleWeekday: number | null;
       scheduleTimeOfDay: string | null;
       scheduledUntil: Date | null;
-    },
-  ) {
+      scheduleTimezone: string | null;
+    };
+  }) {
+    const { data, existingRule, ownerType } = params;
+
     if (!data) {
       return {
         scheduledAt: null,
@@ -1523,11 +1616,14 @@ export class NotificationsService {
         scheduleWeekday: null,
         scheduleTimeOfDay: null,
         scheduledUntil: null,
+        scheduleTimezone: null,
       };
     }
 
     const intervalType =
-      (data.scheduleIntervalType as DbNotificationScheduleIntervalType | undefined) ??
+      (data.scheduleIntervalType as
+        | DbNotificationScheduleIntervalType
+        | undefined) ??
       existingRule?.scheduleIntervalType ??
       DbNotificationScheduleIntervalType.ONCE;
     const intervalValue =
@@ -1543,7 +1639,23 @@ export class NotificationsService {
       ? data.scheduledUntil
         ? new Date(data.scheduledUntil)
         : null
-      : existingRule?.scheduledUntil ?? null;
+      : (existingRule?.scheduledUntil ?? null);
+    const scheduleTimezone = this.resolveNotificationScheduleTimeZone({
+      ownerType,
+      providedTimeZone: data.scheduleTimezone,
+      existingTimeZone: existingRule?.scheduleTimezone ?? null,
+    });
+
+    if (
+      ownerType === DbNotificationOwnerType.USER &&
+      (intervalType === DbNotificationScheduleIntervalType.DAILY ||
+        intervalType === DbNotificationScheduleIntervalType.WEEKLY) &&
+      !scheduleTimezone
+    ) {
+      throw new BadRequestException(
+        "Recurring user scheduled messages require scheduleTimezone",
+      );
+    }
 
     let scheduledAt: Date | null = null;
 
@@ -1557,13 +1669,15 @@ export class NotificationsService {
       !scheduledAt &&
       (intervalType === DbNotificationScheduleIntervalType.DAILY ||
         intervalType === DbNotificationScheduleIntervalType.WEEKLY) &&
-      timeOfDay
+      timeOfDay &&
+      scheduleTimezone
     ) {
-      scheduledAt = this.calculateFirstOccurrence(
+      scheduledAt = calculateFirstOccurrenceInTimeZone({
         intervalType,
         timeOfDay,
         weekday,
-      );
+        timeZone: scheduleTimezone,
+      });
     }
 
     return {
@@ -1573,32 +1687,48 @@ export class NotificationsService {
       scheduleWeekday: weekday,
       scheduleTimeOfDay: timeOfDay,
       scheduledUntil,
+      scheduleTimezone,
     };
+  }
+
+  private resolveNotificationScheduleTimeZone(params: {
+    ownerType: DbNotificationOwnerType;
+    providedTimeZone?: string | null;
+    existingTimeZone?: string | null;
+  }) {
+    const normalizedTimeZone = params.providedTimeZone?.trim() ?? "";
+
+    if (normalizedTimeZone.length > 0) {
+      if (!isValidTimeZone(normalizedTimeZone)) {
+        throw new BadRequestException("Invalid notification schedule timezone");
+      }
+
+      return normalizedTimeZone;
+    }
+
+    if (params.existingTimeZone) {
+      return params.existingTimeZone;
+    }
+
+    if (params.ownerType === DbNotificationOwnerType.GUILD) {
+      return GUILD_NOTIFICATION_TIMEZONE;
+    }
+
+    return null;
   }
 
   private calculateFirstOccurrence(
     intervalType: DbNotificationScheduleIntervalType,
     timeOfDay: string,
     weekday: number | null,
+    timeZone: string,
   ): Date {
-    const [hours, minutes] = timeOfDay.split(":").map(Number);
-    const now = new Date();
-    const candidate = new Date(now);
-    candidate.setHours(hours!, minutes!, 0, 0);
-
-    if (intervalType === DbNotificationScheduleIntervalType.WEEKLY && weekday !== null) {
-      const currentDay = candidate.getDay();
-      let daysUntil = weekday - currentDay;
-      if (daysUntil < 0) daysUntil += 7;
-      if (daysUntil === 0 && candidate.getTime() <= now.getTime()) daysUntil = 7;
-      candidate.setDate(candidate.getDate() + daysUntil);
-    } else {
-      if (candidate.getTime() <= now.getTime()) {
-        candidate.setDate(candidate.getDate() + 1);
-      }
-    }
-
-    return candidate;
+    return calculateFirstOccurrenceInTimeZone({
+      intervalType,
+      timeOfDay,
+      weekday,
+      timeZone,
+    });
   }
 
   private calculateNextOccurrence(params: {
@@ -1607,47 +1737,17 @@ export class NotificationsService {
     intervalValue: number | null;
     weekday: number | null;
     timeOfDay: string | null;
+    timeZone: string;
   }): Date | null {
-    const { currentScheduledAt, intervalType, intervalValue, weekday, timeOfDay } = params;
-
-    switch (intervalType) {
-      case DbNotificationScheduleIntervalType.HOURLY: {
-        if (!intervalValue || intervalValue < 1) return null;
-        const next = new Date(currentScheduledAt);
-        next.setHours(next.getHours() + intervalValue);
-        return next;
-      }
-      case DbNotificationScheduleIntervalType.DAILY: {
-        if (!timeOfDay) return null;
-        const [hours, minutes] = timeOfDay.split(":").map(Number);
-        const next = new Date(currentScheduledAt);
-        next.setDate(next.getDate() + 1);
-        next.setHours(hours!, minutes!, 0, 0);
-        return next;
-      }
-      case DbNotificationScheduleIntervalType.WEEKLY: {
-        if (!timeOfDay || weekday === null) return null;
-        const [hours, minutes] = timeOfDay.split(":").map(Number);
-        const next = new Date(currentScheduledAt);
-        next.setDate(next.getDate() + 7);
-        next.setHours(hours!, minutes!, 0, 0);
-        return next;
-      }
-      default:
-        return null;
-    }
+    return calculateNextOccurrenceInTimeZone(params);
   }
 
-  private async scheduleNextRecurringJob(
-    ruleId: number,
-    completedJobTargetId: number,
-  ) {
+  private async scheduleNextRecurringJob(ruleId: number) {
     const notificationRule = await this.prisma.notificationRule.findUnique({
       where: { id: ruleId },
       include: {
         targets: {
           include: { target: true },
-          where: { targetId: completedJobTargetId },
         },
       },
     });
@@ -1657,7 +1757,29 @@ export class NotificationsService {
       !notificationRule.enabled ||
       !notificationRule.scheduledAt ||
       !notificationRule.scheduleIntervalType ||
-      notificationRule.scheduleIntervalType === DbNotificationScheduleIntervalType.ONCE
+      notificationRule.scheduleIntervalType ===
+        DbNotificationScheduleIntervalType.ONCE
+    ) {
+      return;
+    }
+
+    const currentCycleJobs = await this.prisma.notificationJob.findMany({
+      where: {
+        ruleId,
+        scheduledFor: notificationRule.scheduledAt,
+        sourceEntityType: "scheduled-message",
+      },
+      select: { status: true },
+    });
+
+    if (
+      currentCycleJobs.length > 0 &&
+      currentCycleJobs.some(
+        (job) =>
+          !(FINAL_JOB_STATUSES as readonly DbNotificationJobStatus[]).includes(
+            job.status,
+          ),
+      )
     ) {
       return;
     }
@@ -1668,6 +1790,11 @@ export class NotificationsService {
       intervalValue: notificationRule.scheduleIntervalValue,
       weekday: notificationRule.scheduleWeekday,
       timeOfDay: notificationRule.scheduleTimeOfDay,
+      timeZone:
+        notificationRule.scheduleTimezone ??
+        (notificationRule.ownerType === DbNotificationOwnerType.GUILD
+          ? GUILD_NOTIFICATION_TIMEZONE
+          : "UTC"),
     });
 
     if (!nextScheduledAt) {
@@ -1681,13 +1808,12 @@ export class NotificationsService {
       return;
     }
 
-    await this.prisma.notificationRule.update({
-      where: { id: ruleId },
+    const updated = await this.prisma.notificationRule.updateMany({
+      where: { id: ruleId, scheduledAt: notificationRule.scheduledAt },
       data: { scheduledAt: nextScheduledAt },
     });
 
-    const relation = notificationRule.targets[0];
-    if (!relation || !relation.target.active || !relation.target.canSend) {
+    if (updated.count === 0) {
       return;
     }
 
@@ -1698,30 +1824,36 @@ export class NotificationsService {
             notificationRule.ownerId,
           );
 
-    const notificationJob = await this.createNotificationJob({
-      notificationRule,
-      target: relation.target,
-      jobKind: DbNotificationJobKind.SCHEDULED,
-      scheduledFor: nextScheduledAt,
-      sourceEntityType: "scheduled-message",
-      sourceEntityId: String(notificationRule.id),
-      payloadSnapshot: this.buildScheduledMessagePayload({
+    for (const relation of notificationRule.targets) {
+      if (!relation.target.active || !relation.target.canSend) {
+        continue;
+      }
+
+      const notificationJob = await this.createNotificationJob({
         notificationRule,
         target: relation.target,
+        jobKind: DbNotificationJobKind.SCHEDULED,
         scheduledFor: nextScheduledAt,
-      }),
-      forceBlocked:
-        !hasRequiredPermissions ||
-        !relation.target.canSend ||
-        !relation.target.active,
-    });
+        sourceEntityType: "scheduled-message",
+        sourceEntityId: String(notificationRule.id),
+        payloadSnapshot: this.buildScheduledMessagePayload({
+          notificationRule,
+          target: relation.target,
+          scheduledFor: nextScheduledAt,
+        }),
+        forceBlocked:
+          !hasRequiredPermissions ||
+          !relation.target.canSend ||
+          !relation.target.active,
+      });
 
-    if (
-      notificationJob &&
-      notificationJob.status === DbNotificationJobStatus.PENDING
-    ) {
-      const delay = Math.max(0, nextScheduledAt.getTime() - Date.now());
-      await this.enqueueNotificationJob(notificationJob.id, delay);
+      if (
+        notificationJob &&
+        notificationJob.status === DbNotificationJobStatus.PENDING
+      ) {
+        const delay = Math.max(0, nextScheduledAt.getTime() - Date.now());
+        await this.enqueueNotificationJob(notificationJob.id, delay);
+      }
     }
   }
 
@@ -2257,11 +2389,15 @@ export class NotificationsService {
     }
 
     const scheduleStrategy =
-      (params.data.scheduleStrategy as DbNotificationScheduleStrategy | undefined) ??
+      (params.data.scheduleStrategy as
+        | DbNotificationScheduleStrategy
+        | undefined) ??
       params.existingRule?.scheduleStrategy ??
       null;
     const scheduleAnchor =
-      (params.data.scheduleAnchor as DbNotificationScheduleAnchor | undefined) ??
+      (params.data.scheduleAnchor as
+        | DbNotificationScheduleAnchor
+        | undefined) ??
       params.existingRule?.scheduleAnchor ??
       null;
     const scheduleOffsetMinutes =
@@ -2269,7 +2405,9 @@ export class NotificationsService {
       params.existingRule?.scheduleOffsetMinutes ??
       null;
 
-    if (scheduleStrategy !== DbNotificationScheduleStrategy.SPAWN_WINDOW_RELATIVE) {
+    if (
+      scheduleStrategy !== DbNotificationScheduleStrategy.SPAWN_WINDOW_RELATIVE
+    ) {
       throw new BadRequestException(
         "Timer notifications require SPAWN_WINDOW_RELATIVE schedule strategy",
       );
@@ -2448,10 +2586,9 @@ export class NotificationsService {
     scheduledFor: Date;
   }) {
     const placeholderValues = {
-      ruleName:
-        params.notificationRuleName?.trim().length
-          ? params.notificationRuleName.trim()
-          : "Powiadomienie o spawnie",
+      ruleName: params.notificationRuleName?.trim().length
+        ? params.notificationRuleName.trim()
+        : "Powiadomienie o spawnie",
       npcName: params.npcName ?? `NPC #${params.npcId}`,
       npcId: String(params.npcId),
       world: params.world,
@@ -2539,13 +2676,14 @@ export class NotificationsService {
     };
   }
 
-  private formatNotificationDate(date: Date) {
+  private formatNotificationDate(date: Date, timeZone?: string) {
     return new Intl.DateTimeFormat("pl-PL", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
+      ...(timeZone ? { timeZone } : {}),
     }).format(date);
   }
 
@@ -2664,7 +2802,9 @@ export class NotificationsService {
     const offsetMinutes = notificationRule.scheduleOffsetMinutes ?? 0;
     const minSpawnTime =
       anchor === DbNotificationScheduleAnchor.MAX_SPAWN
-        ? new Date(scheduledFor.getTime() + Math.max(0, offsetMinutes - 20) * 60_000)
+        ? new Date(
+            scheduledFor.getTime() + Math.max(0, offsetMinutes - 20) * 60_000,
+          )
         : new Date(scheduledFor.getTime() + offsetMinutes * 60_000);
     const maxSpawnTime =
       anchor === DbNotificationScheduleAnchor.MAX_SPAWN
@@ -2830,13 +2970,26 @@ export class NotificationsService {
       select: {
         ruleId: true,
         createdAt: true,
+        sourceEventId: true,
       },
       orderBy: [{ createdAt: "asc" }],
     });
 
     const jobsByRuleId = new Map<number, Date[]>();
+    const seenEventKeysByRuleId = new Map<number, Set<string>>();
 
     for (const job of testJobs) {
+      const eventKey =
+        job.sourceEventId ?? `legacy:${job.createdAt.toISOString()}`;
+      const seenEventKeys = seenEventKeysByRuleId.get(job.ruleId) ?? new Set();
+
+      if (seenEventKeys.has(eventKey)) {
+        continue;
+      }
+
+      seenEventKeys.add(eventKey);
+      seenEventKeysByRuleId.set(job.ruleId, seenEventKeys);
+
       const currentJobs = jobsByRuleId.get(job.ruleId) ?? [];
       currentJobs.push(job.createdAt);
       jobsByRuleId.set(job.ruleId, currentJobs);

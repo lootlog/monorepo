@@ -46,6 +46,7 @@ export type GuildNotificationRule = {
   scheduleWeekday: number | null;
   scheduleTimeOfDay: string | null;
   scheduledUntil: string | null;
+  scheduleTimezone: string | null;
   enabled: boolean;
   updatedAt: string;
   filters: NotificationFilters | null;
@@ -146,6 +147,7 @@ export type CreateGuildNotificationRuleData = {
   scheduleWeekday?: number;
   scheduleTimeOfDay?: string;
   scheduledUntil?: string;
+  scheduleTimezone?: string;
   targetIds: number[];
   enabled?: boolean;
 };
@@ -167,6 +169,7 @@ export type UpdateGuildNotificationRuleData = {
   scheduleWeekday?: number;
   scheduleTimeOfDay?: string;
   scheduledUntil?: string;
+  scheduleTimezone?: string;
   targetIds?: number[];
   enabled?: boolean;
 };

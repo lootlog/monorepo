@@ -574,7 +574,6 @@ export class DiscordSyncService {
   private getPermissionState(
     permissions: Readonly<PermissionsBitField> | null | undefined,
   ) {
-    console.log(permissions);
     const grantedPermissions = REQUIRED_NOTIFICATION_PERMISSIONS.filter(
       (permission) => permissions?.has(permission.flag) ?? false,
     ).map((permission) => permission.name);
