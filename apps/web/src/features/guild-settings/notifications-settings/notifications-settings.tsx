@@ -135,7 +135,6 @@ export const NotificationsSettings = () => {
                   <NotificationsActionsCard
                     hasRequiredPermissions={hasRequiredPermissions}
                     isRuleLimitReached={isRuleLimitReached}
-                    limits={notificationLimits}
                     onAddTarget={() => setIsCreateTargetDialogOpen(true)}
                   />
                 </div>
@@ -160,7 +159,6 @@ export const NotificationsSettings = () => {
                       <NotificationsActionsCard
                         hasRequiredPermissions={hasRequiredPermissions}
                         isRuleLimitReached={isRuleLimitReached}
-                        limits={notificationLimits}
                         onAddTarget={() => setIsCreateTargetDialogOpen(true)}
                       />
                     </div>

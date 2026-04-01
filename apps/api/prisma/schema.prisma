@@ -543,6 +543,7 @@ model NotificationRule {
   scheduleWeekday     Int?
   scheduleTimeOfDay   String?
   scheduledUntil      DateTime?
+  scheduleTimezone    String?
   enabled             Boolean          @default(true)
   dedupeWindowSeconds Int              @default(0)
   createdAt           DateTime         @default(now())
@@ -613,6 +614,7 @@ model WatchedItem {
 
   @@unique([userId, itemId])
   @@index([userId, enabled])
+  @@index([itemId, enabled])
 }
 
 model DiscordGuildChannelSnapshot {

@@ -39,7 +39,9 @@ export class CreateNotificationRuleDto {
   triggerType: NotificationTriggerType;
 
   @ApiPropertyOptional()
-  @ValidateIf((obj) => obj.triggerType !== NotificationTriggerType.SCHEDULED_MESSAGE)
+  @ValidateIf(
+    (obj) => obj.triggerType !== NotificationTriggerType.SCHEDULED_MESSAGE,
+  )
   @IsString()
   @IsNotEmpty({ message: "Notification rule must specify a world" })
   world?: string;
@@ -118,6 +120,11 @@ export class CreateNotificationRuleDto {
   @IsDateString()
   scheduledUntil?: string;
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  scheduleTimezone?: string;
+
   @ApiProperty({ type: [Number] })
   @IsArray()
   @ArrayMaxSize(3)
@@ -128,10 +135,4 @@ export class CreateNotificationRuleDto {
   @IsOptional()
   @IsBoolean()
   enabled?: boolean;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  dedupeWindowSeconds?: number;
 }

@@ -1,7 +1,7 @@
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { getQueueToken } from "@nestjs/bullmq";
 import { Test, type TestingModule } from "@nestjs/testing";
-import { DiscordGuildSyncStatus } from "@lootlog/types";
+import { DiscordGuildSyncStatus, NotificationTargetType } from "@lootlog/types";
 import { Prisma } from "prisma/generated/client";
 import { PrismaService } from "src/db/prisma.service";
 import { GuildsService } from "src/guilds/guilds.service";
@@ -21,12 +21,19 @@ describe("NotificationsService", () => {
       count: jest.fn(),
       findFirst: jest.fn(),
     },
+    notificationRuleTarget: {
+      createMany: jest.fn(),
+    },
     timer: {
+      findMany: jest.fn(),
+    },
+    watchedItem: {
       findMany: jest.fn(),
     },
     notificationTarget: {
       findMany: jest.fn(),
       deleteMany: jest.fn(),
+      upsert: jest.fn(),
     },
     notificationJob: {
       create: jest.fn(),
@@ -71,8 +78,19 @@ describe("NotificationsService", () => {
       { id: 11 },
       { id: 22 },
     ]);
+    mockPrisma.notificationTarget.upsert.mockResolvedValue({
+      id: 11,
+      externalId: "discord-user-1",
+      targetType: "DM",
+      active: true,
+      canSend: true,
+    });
     mockPrisma.guild.findUnique.mockResolvedValue({
       notificationRuleLimit: 20,
+    });
+    mockPrisma.watchedItem.findMany.mockResolvedValue([]);
+    mockPrisma.notificationRuleTarget.createMany.mockResolvedValue({
+      count: 0,
     });
     mockPrisma.notificationRule.count.mockResolvedValue(0);
     mockPrisma.timer.findMany.mockResolvedValue([]);
@@ -232,7 +250,9 @@ describe("NotificationsService", () => {
 
   it("cancels a single guild job and removes it from the queue", async () => {
     mockQueue.getJob.mockResolvedValueOnce(removedJobs[0]);
-    mockPrisma.notificationJob.findMany.mockResolvedValueOnce([{ id: "job-1" }]);
+    mockPrisma.notificationJob.findMany.mockResolvedValueOnce([
+      { id: "job-1" },
+    ]);
 
     await service.cancelGuildJob("guild-1", "job-1");
 
@@ -269,7 +289,10 @@ describe("NotificationsService", () => {
 
   it("rebuilds guild rule jobs after confirming rule ownership", async () => {
     const rebuildJobsForRuleSpy = jest
-      .spyOn(service as unknown as { rebuildJobsForRule: () => Promise<void> }, "rebuildJobsForRule")
+      .spyOn(
+        service as unknown as { rebuildJobsForRule: () => Promise<void> },
+        "rebuildJobsForRule",
+      )
       .mockImplementation(async () => undefined);
 
     await service.rebuildGuildRuleJobs("guild-1", 77);
@@ -282,6 +305,23 @@ describe("NotificationsService", () => {
       },
     });
     expect(rebuildJobsForRuleSpy).toHaveBeenCalledWith(77);
+  });
+
+  it("rejects creating user dm targets for another discord account", async () => {
+    await expect(
+      service.createUserTarget("user-1", "discord-user-1", {
+        targetType: NotificationTargetType.DM,
+        externalId: "discord-user-2",
+        displayName: "Discord DM",
+      }),
+    ).rejects.toMatchObject({
+      response: {
+        message:
+          "User DM notification targets must use the authenticated Discord account",
+      },
+    });
+
+    expect(mockPrisma.notificationTarget.upsert).not.toHaveBeenCalled();
   });
 
   it("blocks test trigger when the rule has already used the test limit in the sliding window", async () => {
@@ -319,11 +359,104 @@ describe("NotificationsService", () => {
       })),
     );
 
-    await expect(service.triggerGuildRuleTest("guild-1", 77)).rejects.toMatchObject({
+    await expect(
+      service.triggerGuildRuleTest("guild-1", 77),
+    ).rejects.toMatchObject({
       response: {
         message: "Test trigger limit reached for this rule",
       },
     });
+  });
+
+  it("counts test trigger usage once per trigger event across multiple targets", async () => {
+    const currentTime = Date.now();
+    mockPrisma.notificationJob.findMany.mockReset();
+    mockPrisma.notificationRule.findFirst.mockResolvedValueOnce({
+      id: 77,
+      ownerType: "GUILD",
+      ownerId: "guild-1",
+      enabled: true,
+      name: "Rule",
+      contentTemplate: null,
+      world: "berufs",
+      filters: {},
+      triggerType: "TIMER_BEFORE_SPAWN",
+      scheduleStrategy: "SPAWN_WINDOW_RELATIVE",
+      scheduleAnchor: "MIN_SPAWN",
+      scheduleOffsetMinutes: 0,
+      targets: [
+        {
+          target: {
+            id: 11,
+            externalId: "channel-1",
+            targetType: "CHANNEL",
+            active: true,
+            canSend: true,
+          },
+        },
+        {
+          target: {
+            id: 22,
+            externalId: "channel-2",
+            targetType: "CHANNEL",
+            active: true,
+            canSend: true,
+          },
+        },
+      ],
+    });
+    mockPrisma.notificationJob.findMany.mockResolvedValueOnce(
+      Array.from({ length: 9 }, (_, index) => {
+        const createdAt = new Date(currentTime - index * 60_000);
+        const sourceEventId = `test:77:event-${index}`;
+
+        return [
+          {
+            ruleId: 77,
+            createdAt,
+            sourceEventId,
+          },
+          {
+            ruleId: 77,
+            createdAt,
+            sourceEventId,
+          },
+        ];
+      }).flat(),
+    );
+    mockPrisma.notificationJob.create
+      .mockResolvedValueOnce({
+        id: "job-created-1",
+        status: "PENDING",
+      })
+      .mockResolvedValueOnce({
+        id: "job-created-2",
+        status: "PENDING",
+      });
+
+    await expect(service.triggerGuildRuleTest("guild-1", 77)).resolves.toEqual({
+      success: true,
+    });
+
+    expect(mockPrisma.notificationJob.create).toHaveBeenCalledTimes(2);
+    expect(mockQueue.add).toHaveBeenNthCalledWith(
+      1,
+      "job-created-1",
+      { notificationJobId: "job-created-1" },
+      expect.objectContaining({
+        delay: 0,
+        jobId: "job-created-1",
+      }),
+    );
+    expect(mockQueue.add).toHaveBeenNthCalledWith(
+      2,
+      "job-created-2",
+      { notificationJobId: "job-created-2" },
+      expect.objectContaining({
+        delay: 0,
+        jobId: "job-created-2",
+      }),
+    );
   });
 
   it("creates immediate test jobs for every active sendable target", async () => {
@@ -376,15 +509,95 @@ describe("NotificationsService", () => {
     );
   });
 
+  it("loads watched-item notification rules by dropped item ids", async () => {
+    mockPrisma.watchedItem.findMany.mockResolvedValueOnce([
+      {
+        notificationRuleId: 91,
+        notificationRule: {
+          id: 91,
+          ownerType: "USER",
+          ownerId: "user-1",
+          guildId: null,
+          triggerType: "WATCHED_ITEM_DROPPED",
+          filters: {
+            itemIds: [123],
+          },
+          targets: [
+            {
+              target: {
+                id: 51,
+                externalId: "dm-user-1",
+                targetType: "DM",
+                active: true,
+                canSend: true,
+              },
+            },
+          ],
+        },
+      },
+    ]);
+
+    await service.handleLootCreated({
+      lootId: 999,
+      world: "berufs",
+      itemIds: [123, 456],
+      itemNames: ["Legendarny Miecz"],
+      guildIds: [],
+    });
+
+    expect(mockPrisma.watchedItem.findMany).toHaveBeenCalledWith({
+      where: {
+        enabled: true,
+        itemId: {
+          in: [123, 456],
+        },
+        notificationRule: {
+          is: {
+            enabled: true,
+            triggerType: "WATCHED_ITEM_DROPPED",
+            targets: {
+              some: {},
+            },
+          },
+        },
+      },
+      include: {
+        notificationRule: {
+          include: {
+            targets: {
+              include: {
+                target: true,
+              },
+            },
+          },
+        },
+      },
+    });
+    expect(mockPrisma.notificationJob.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        ruleId: 91,
+        targetId: 51,
+        jobKind: "INSTANT",
+        sourceEntityType: "loot",
+        sourceEntityId: "999",
+        sourceEventId: "loot:999",
+      }),
+    });
+  });
+
   it("recreates a canceled job when idempotency key already exists", async () => {
-    const uniqueConstraintError = new Error("P2002") as Error & { code: string };
+    const uniqueConstraintError = new Error("P2002") as Error & {
+      code: string;
+    };
     uniqueConstraintError.code = "P2002";
     Object.setPrototypeOf(
       uniqueConstraintError,
       Prisma.PrismaClientKnownRequestError.prototype,
     );
 
-    mockPrisma.notificationJob.create.mockRejectedValueOnce(uniqueConstraintError);
+    mockPrisma.notificationJob.create.mockRejectedValueOnce(
+      uniqueConstraintError,
+    );
     mockPrisma.notificationJob.findUnique.mockResolvedValueOnce({
       id: "job-canceled",
       status: "CANCELED",

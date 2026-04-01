@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import ReactMarkdown, { defaultUrlTransform } from "react-markdown";
@@ -56,6 +55,11 @@ import {
   mergeGuildNotificationTargets,
 } from "./utils/notification-settings.utils";
 import {
+  formatDateTimeLocalInputValue,
+  GUILD_NOTIFICATION_TIMEZONE,
+  parseDateTimeLocalInputToIsoString,
+} from "./utils/notification-schedule-time.utils";
+import {
   NotificationTemplateEditor,
   createPreviewTemplateValues,
   renderTemplatePreview,
@@ -81,7 +85,7 @@ const replaceRoleMentions = (text: string, roles: GuildRole[]) => {
     .replace(/<@&(\d+)>/g, (_match, roleId: string) => {
       const role = roleById.get(roleId);
       const name = role ? `@${role.name}` : `@${roleId}`;
-      const color = role ? getRoleHexColor(role) ?? "" : "";
+      const color = role ? (getRoleHexColor(role) ?? "") : "";
       return `[${name}](${ROLE_LINK_PREFIX}${color})`;
     })
     .replace(/@(everyone|here)/g, (_match, keyword: string) => {
@@ -144,9 +148,7 @@ const ruleFormSchema = (
       enabled: z.boolean(),
     })
     .superRefine((data, ctx) => {
-      if (
-        data.triggerType === NotificationTriggerType.TIMER_BEFORE_SPAWN
-      ) {
+      if (data.triggerType === NotificationTriggerType.TIMER_BEFORE_SPAWN) {
         if (!data.world || data.world === ALL_WORLDS_VALUE) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
@@ -188,10 +190,7 @@ const ruleFormSchema = (
             ),
             path: ["scheduleOffsetMinutes"],
           });
-        } else if (
-          !Number.isInteger(Number(offset)) ||
-          Number(offset) < 0
-        ) {
+        } else if (!Number.isInteger(Number(offset)) || Number(offset) < 0) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: t(
@@ -202,12 +201,9 @@ const ruleFormSchema = (
         }
       }
 
-      if (
-        data.triggerType === NotificationTriggerType.SCHEDULED_MESSAGE
-      ) {
+      if (data.triggerType === NotificationTriggerType.SCHEDULED_MESSAGE) {
         const interval =
-          data.scheduleIntervalType ??
-          NotificationScheduleIntervalType.ONCE;
+          data.scheduleIntervalType ?? NotificationScheduleIntervalType.ONCE;
 
         if (
           interval === NotificationScheduleIntervalType.ONCE ||
@@ -221,20 +217,35 @@ const ruleFormSchema = (
               ),
               path: ["scheduledAt"],
             });
-          } else if (new Date(data.scheduledAt).getTime() <= Date.now()) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: t(
-                "settings.notifications.validation.scheduledAtFuture",
-              ),
-              path: ["scheduledAt"],
-            });
+          } else {
+            const scheduledAtIsoString = parseDateTimeLocalInputToIsoString(
+              data.scheduledAt,
+              GUILD_NOTIFICATION_TIMEZONE,
+            );
+
+            if (
+              !scheduledAtIsoString ||
+              new Date(scheduledAtIsoString).getTime() <= Date.now()
+            ) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: t(
+                  "settings.notifications.validation.scheduledAtFuture",
+                ),
+                path: ["scheduledAt"],
+              });
+            }
           }
         }
 
         if (interval === NotificationScheduleIntervalType.HOURLY) {
           const val = Number(data.scheduleIntervalValue);
-          if (!data.scheduleIntervalValue || !Number.isInteger(val) || val < 1 || val > 24) {
+          if (
+            !data.scheduleIntervalValue ||
+            !Number.isInteger(val) ||
+            val < 1 ||
+            val > 24
+          ) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
               message: t(
@@ -249,24 +260,26 @@ const ruleFormSchema = (
           interval === NotificationScheduleIntervalType.DAILY ||
           interval === NotificationScheduleIntervalType.WEEKLY
         ) {
-          if (!data.scheduleTimeOfDay || !/^\d{2}:\d{2}$/.test(data.scheduleTimeOfDay)) {
+          if (
+            !data.scheduleTimeOfDay ||
+            !/^\d{2}:\d{2}$/.test(data.scheduleTimeOfDay)
+          ) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
-              message: t(
-                "settings.notifications.validation.timeOfDayRequired",
-              ),
+              message: t("settings.notifications.validation.timeOfDayRequired"),
               path: ["scheduleTimeOfDay"],
             });
           }
         }
 
         if (interval === NotificationScheduleIntervalType.WEEKLY) {
-          if (data.scheduleWeekday === undefined || data.scheduleWeekday === "") {
+          if (
+            data.scheduleWeekday === undefined ||
+            data.scheduleWeekday === ""
+          ) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
-              message: t(
-                "settings.notifications.validation.weekdayRequired",
-              ),
+              message: t("settings.notifications.validation.weekdayRequired"),
               path: ["scheduleWeekday"],
             });
           }
@@ -346,7 +359,10 @@ export const NotificationRuleFormPage = () => {
           ? String(rule.scheduleOffsetMinutes)
           : "0",
       scheduledAt: rule?.scheduledAt
-        ? rule.scheduledAt.slice(0, 16)
+        ? formatDateTimeLocalInputValue(
+            rule.scheduledAt,
+            rule.scheduleTimezone ?? GUILD_NOTIFICATION_TIMEZONE,
+          )
         : "",
       scheduleIntervalType:
         rule?.scheduleIntervalType ?? NotificationScheduleIntervalType.ONCE,
@@ -357,12 +373,14 @@ export const NotificationRuleFormPage = () => {
           : "",
       scheduleTimeOfDay: rule?.scheduleTimeOfDay ?? "",
       scheduleWeekday:
-        rule?.scheduleWeekday !== null &&
-        rule?.scheduleWeekday !== undefined
+        rule?.scheduleWeekday !== null && rule?.scheduleWeekday !== undefined
           ? String(rule.scheduleWeekday)
           : "",
       scheduledUntil: rule?.scheduledUntil
-        ? rule.scheduledUntil.slice(0, 16)
+        ? formatDateTimeLocalInputValue(
+            rule.scheduledUntil,
+            rule.scheduleTimezone ?? GUILD_NOTIFICATION_TIMEZONE,
+          )
         : "",
       targetIds: rule ? getGuildNotificationRuleTargetIds(rule) : [],
       enabled: rule?.enabled ?? true,
@@ -397,7 +415,7 @@ export const NotificationRuleFormPage = () => {
     isScheduledMessage &&
     watchedIntervalType === NotificationScheduleIntervalType.HOURLY;
   const selectedWorld = form.watch("world");
-  const selectedNpcIds = form.watch("npcIds");
+  const selectedNpcIds = form.watch("npcIds") ?? [];
   const normalizedWorld =
     selectedWorld !== ALL_WORLDS_VALUE ? selectedWorld : undefined;
   const selectedNpcQuery = useNpcs({
@@ -476,9 +494,10 @@ export const NotificationRuleFormPage = () => {
       values.triggerType === NotificationTriggerType.SCHEDULED_MESSAGE
         ? {
             ...basePayload,
-            scheduledAt: values.scheduledAt
-              ? new Date(values.scheduledAt).toISOString()
-              : undefined,
+            scheduledAt: parseDateTimeLocalInputToIsoString(
+              values.scheduledAt,
+              GUILD_NOTIFICATION_TIMEZONE,
+            ),
             scheduleIntervalType:
               values.scheduleIntervalType ??
               NotificationScheduleIntervalType.ONCE,
@@ -486,12 +505,15 @@ export const NotificationRuleFormPage = () => {
               ? Number(values.scheduleIntervalValue)
               : undefined,
             scheduleTimeOfDay: values.scheduleTimeOfDay || undefined,
-            scheduleWeekday: values.scheduleWeekday !== ""
-              ? Number(values.scheduleWeekday)
-              : undefined,
-            scheduledUntil: values.scheduledUntil
-              ? new Date(values.scheduledUntil).toISOString()
-              : undefined,
+            scheduleWeekday:
+              values.scheduleWeekday !== ""
+                ? Number(values.scheduleWeekday)
+                : undefined,
+            scheduledUntil: parseDateTimeLocalInputToIsoString(
+              values.scheduledUntil,
+              GUILD_NOTIFICATION_TIMEZONE,
+            ),
+            scheduleTimezone: GUILD_NOTIFICATION_TIMEZONE,
           }
         : (() => {
             const numericNpcIds = (values.npcIds ?? []).map((npcId) =>
@@ -564,8 +586,7 @@ export const NotificationRuleFormPage = () => {
                             value={field.value}
                             onValueChange={(value) => {
                               field.onChange(value);
-                              const nextType =
-                                value as NotificationTriggerType;
+                              const nextType = value as NotificationTriggerType;
                               form.setValue(
                                 "contentTemplate",
                                 getDefaultContentTemplate(nextType),
@@ -733,7 +754,9 @@ export const NotificationRuleFormPage = () => {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                                {t("settings.notifications.fields.scheduleIntervalType")}
+                                {t(
+                                  "settings.notifications.fields.scheduleIntervalType",
+                                )}
                               </FormLabel>
                               <Select
                                 value={field.value}
@@ -745,17 +768,41 @@ export const NotificationRuleFormPage = () => {
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value={NotificationScheduleIntervalType.ONCE}>
-                                    {t("settings.notifications.intervalTypes.once")}
+                                  <SelectItem
+                                    value={
+                                      NotificationScheduleIntervalType.ONCE
+                                    }
+                                  >
+                                    {t(
+                                      "settings.notifications.intervalTypes.once",
+                                    )}
                                   </SelectItem>
-                                  <SelectItem value={NotificationScheduleIntervalType.HOURLY}>
-                                    {t("settings.notifications.intervalTypes.hourly")}
+                                  <SelectItem
+                                    value={
+                                      NotificationScheduleIntervalType.HOURLY
+                                    }
+                                  >
+                                    {t(
+                                      "settings.notifications.intervalTypes.hourly",
+                                    )}
                                   </SelectItem>
-                                  <SelectItem value={NotificationScheduleIntervalType.DAILY}>
-                                    {t("settings.notifications.intervalTypes.daily")}
+                                  <SelectItem
+                                    value={
+                                      NotificationScheduleIntervalType.DAILY
+                                    }
+                                  >
+                                    {t(
+                                      "settings.notifications.intervalTypes.daily",
+                                    )}
                                   </SelectItem>
-                                  <SelectItem value={NotificationScheduleIntervalType.WEEKLY}>
-                                    {t("settings.notifications.intervalTypes.weekly")}
+                                  <SelectItem
+                                    value={
+                                      NotificationScheduleIntervalType.WEEKLY
+                                    }
+                                  >
+                                    {t(
+                                      "settings.notifications.intervalTypes.weekly",
+                                    )}
                                   </SelectItem>
                                 </SelectContent>
                               </Select>
@@ -771,7 +818,9 @@ export const NotificationRuleFormPage = () => {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                                  {t("settings.notifications.fields.scheduleIntervalValue")}
+                                  {t(
+                                    "settings.notifications.fields.scheduleIntervalValue",
+                                  )}
                                 </FormLabel>
                                 <FormControl>
                                   <Input
@@ -796,7 +845,9 @@ export const NotificationRuleFormPage = () => {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                                  {t("settings.notifications.fields.scheduleWeekday")}
+                                  {t(
+                                    "settings.notifications.fields.scheduleWeekday",
+                                  )}
                                 </FormLabel>
                                 <Select
                                   value={field.value}
@@ -810,7 +861,9 @@ export const NotificationRuleFormPage = () => {
                                   <SelectContent>
                                     {[0, 1, 2, 3, 4, 5, 6].map((day) => (
                                       <SelectItem key={day} value={String(day)}>
-                                        {t(`settings.notifications.weekdays.${day}`)}
+                                        {t(
+                                          `settings.notifications.weekdays.${day}`,
+                                        )}
                                       </SelectItem>
                                     ))}
                                   </SelectContent>
@@ -828,13 +881,17 @@ export const NotificationRuleFormPage = () => {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                                  {t("settings.notifications.fields.scheduleTimeOfDay")}
+                                  {t(
+                                    "settings.notifications.fields.scheduleTimeOfDay",
+                                  )}
                                 </FormLabel>
                                 <FormControl>
                                   <Input
                                     {...field}
                                     type="time"
-                                    placeholder={t("settings.notifications.placeholders.scheduleTimeOfDay")}
+                                    placeholder={t(
+                                      "settings.notifications.placeholders.scheduleTimeOfDay",
+                                    )}
                                   />
                                 </FormControl>
                                 <FormMessage />
@@ -850,13 +907,18 @@ export const NotificationRuleFormPage = () => {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                                  {t("settings.notifications.fields.scheduledAt")}
+                                  {t(
+                                    "settings.notifications.fields.scheduledAt",
+                                  )}
                                 </FormLabel>
                                 <FormControl>
                                   <Input
                                     {...field}
                                     type="datetime-local"
-                                    min={new Date().toISOString().slice(0, 16)}
+                                    min={formatDateTimeLocalInputValue(
+                                      new Date().toISOString(),
+                                      GUILD_NOTIFICATION_TIMEZONE,
+                                    )}
                                   />
                                 </FormControl>
                                 <FormMessage />
@@ -872,13 +934,17 @@ export const NotificationRuleFormPage = () => {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                                  {t("settings.notifications.fields.scheduledUntil")}
+                                  {t(
+                                    "settings.notifications.fields.scheduledUntil",
+                                  )}
                                 </FormLabel>
                                 <FormControl>
                                   <Input
                                     {...field}
                                     type="datetime-local"
-                                    placeholder={t("settings.notifications.placeholders.scheduledUntil")}
+                                    placeholder={t(
+                                      "settings.notifications.placeholders.scheduledUntil",
+                                    )}
                                   />
                                 </FormControl>
                                 <FormMessage />
@@ -914,75 +980,75 @@ export const NotificationRuleFormPage = () => {
                     />
 
                     {!isScheduledMessage ? (
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <FormField
-                        control={form.control}
-                        name="scheduleAnchor"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                              {t(
-                                "settings.notifications.fields.scheduleAnchor",
-                              )}
-                            </FormLabel>
-                            <Select
-                              value={field.value}
-                              onValueChange={field.onChange}
-                            >
-                              <FormControl>
-                                <SelectTrigger className="w-full">
-                                  <SelectValue />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem
-                                  value={NotificationScheduleAnchor.MIN_SPAWN}
-                                >
-                                  {t(
-                                    "settings.notifications.scheduleAnchors.minSpawn",
-                                  )}
-                                </SelectItem>
-                                <SelectItem
-                                  value={NotificationScheduleAnchor.MAX_SPAWN}
-                                >
-                                  {t(
-                                    "settings.notifications.scheduleAnchors.maxSpawn",
-                                  )}
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="scheduleOffsetMinutes"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                              {t(
-                                "settings.notifications.fields.scheduleOffsetMinutes",
-                              )}
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                type="number"
-                                inputMode="numeric"
-                                min="0"
-                                step="1"
-                                placeholder={t(
-                                  "settings.notifications.placeholders.scheduleOffsetMinutes",
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <FormField
+                          control={form.control}
+                          name="scheduleAnchor"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                                {t(
+                                  "settings.notifications.fields.scheduleAnchor",
                                 )}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                              </FormLabel>
+                              <Select
+                                value={field.value}
+                                onValueChange={field.onChange}
+                              >
+                                <FormControl>
+                                  <SelectTrigger className="w-full">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem
+                                    value={NotificationScheduleAnchor.MIN_SPAWN}
+                                  >
+                                    {t(
+                                      "settings.notifications.scheduleAnchors.minSpawn",
+                                    )}
+                                  </SelectItem>
+                                  <SelectItem
+                                    value={NotificationScheduleAnchor.MAX_SPAWN}
+                                  >
+                                    {t(
+                                      "settings.notifications.scheduleAnchors.maxSpawn",
+                                    )}
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="scheduleOffsetMinutes"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                                {t(
+                                  "settings.notifications.fields.scheduleOffsetMinutes",
+                                )}
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  type="number"
+                                  inputMode="numeric"
+                                  min="0"
+                                  step="1"
+                                  placeholder={t(
+                                    "settings.notifications.placeholders.scheduleOffsetMinutes",
+                                  )}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                     ) : null}
 
                     <FormField
