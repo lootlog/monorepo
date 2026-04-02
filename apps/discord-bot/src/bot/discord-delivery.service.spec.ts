@@ -206,7 +206,7 @@ describe("DiscordDeliveryService", () => {
     });
   });
 
-  it("publishes a retryable failure for invalid guild channels", async () => {
+  it("publishes a non-retryable failure for invalid guild channels", async () => {
     mockClient.channels.fetch.mockResolvedValue({
       type: ChannelType.DM,
       isTextBased: () => true,
@@ -223,7 +223,7 @@ describe("DiscordDeliveryService", () => {
       expect.objectContaining({
         notificationJobId: "job-123",
         success: false,
-        retryable: true,
+        retryable: false,
         errorCode: "Error",
         errorMessage: "Discord channel is not text-based",
       }),

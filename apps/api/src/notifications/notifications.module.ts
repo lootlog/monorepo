@@ -10,10 +10,14 @@ import { ConfigKey } from "src/config/config-key.enum";
 import { PrismaModule } from "src/db/prisma.module";
 import { GuildsModule } from "src/guilds/guilds.module";
 import { NOTIFICATIONS_DISPATCH_QUEUE } from "src/notifications/constants/notifications-dispatch-queue.constant";
+import { NotificationContentService } from "src/notifications/notification-content.service";
+import { NotificationJobService } from "src/notifications/notification-job.service";
+import { NotificationMatchingService } from "src/notifications/notification-matching.service";
+import { NotificationRuleService } from "src/notifications/notification-rule.service";
+import { NotificationTargetService } from "src/notifications/notification-target.service";
 import { NotificationsDispatchProcessor } from "src/notifications/notifications-dispatch.processor";
 import { NotificationsEventsHandler } from "src/notifications/notifications-events.handler";
 import { NotificationsGuildController } from "src/notifications/notifications-guild.controller";
-import { NotificationsService } from "src/notifications/notifications.service";
 import { NotificationsUserController } from "src/notifications/notifications-user.controller";
 
 @Module({
@@ -32,10 +36,18 @@ import { NotificationsUserController } from "src/notifications/notifications-use
   ],
   controllers: [NotificationsGuildController, NotificationsUserController],
   providers: [
-    NotificationsService,
+    NotificationContentService,
+    NotificationJobService,
+    NotificationMatchingService,
+    NotificationRuleService,
+    NotificationTargetService,
     NotificationsEventsHandler,
     NotificationsDispatchProcessor,
   ],
-  exports: [NotificationsService],
+  exports: [
+    NotificationTargetService,
+    NotificationRuleService,
+    NotificationJobService,
+  ],
 })
 export class NotificationsModule {}
