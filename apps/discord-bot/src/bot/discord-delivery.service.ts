@@ -76,15 +76,20 @@ export class DiscordDeliveryService {
   }
 
   private buildNotificationContent(command: DiscordNotificationSendCommand) {
-    if (typeof command.content === "string" && command.content.trim().length > 0) {
-      return command.content;
+    let content: string;
+
+    if (
+      typeof command.content === "string" &&
+      command.content.trim().length > 0
+    ) {
+      content = command.content;
+    } else if (command.title.trim().length === 0) {
+      content = command.message;
+    } else {
+      content = `**${command.title}**\n${command.message}`;
     }
 
-    if (command.title.trim().length === 0) {
-      return command.message;
-    }
-
-    return `**${command.title}**\n${command.message}`;
+    return this.truncateToDiscordLimit(content);
   }
 
   private buildMessageOptions(command: DiscordNotificationSendCommand) {
@@ -107,12 +112,32 @@ export class DiscordDeliveryService {
     );
   }
 
-  private isRetryableDiscordError(error: unknown) {
-    if (!(error instanceof DiscordAPIError)) {
-      return true;
+  private truncateToDiscordLimit(content: string) {
+    const DISCORD_MESSAGE_LIMIT = 2000;
+
+    if (content.length <= DISCORD_MESSAGE_LIMIT) {
+      return content;
     }
 
-    return !NON_RETRYABLE_DISCORD_ERROR_CODES.has(Number(error.code));
+    return `${content.slice(0, DISCORD_MESSAGE_LIMIT - 1)}…`;
+  }
+
+  private isRetryableDiscordError(error: unknown) {
+    if (error instanceof DiscordAPIError) {
+      return !NON_RETRYABLE_DISCORD_ERROR_CODES.has(Number(error.code));
+    }
+
+    if (error instanceof Error) {
+      return (
+        error.name === "AbortError" ||
+        error.message.includes("ETIMEDOUT") ||
+        error.message.includes("ECONNRESET") ||
+        error.message.includes("ECONNREFUSED") ||
+        error.message.includes("fetch failed")
+      );
+    }
+
+    return false;
   }
 
   private getDiscordErrorCode(error: unknown) {

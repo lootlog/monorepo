@@ -7,10 +7,18 @@ import { PrismaService } from "src/db/prisma.service";
 import { GuildsService } from "src/guilds/guilds.service";
 import { NOTIFICATIONS_DISPATCH_QUEUE } from "src/notifications/constants/notifications-dispatch-queue.constant";
 import { ChannelsService } from "src/channels/channels.service";
-import { NotificationsService } from "./notifications.service";
+import { NotificationContentService } from "./notification-content.service";
+import { NotificationJobService } from "./notification-job.service";
+import { NotificationMatchingService } from "./notification-matching.service";
+import { NotificationRuleService } from "./notification-rule.service";
+import { NotificationTargetService } from "./notification-target.service";
+import { NotificationsEventsHandler } from "./notifications-events.handler";
 
-describe("NotificationsService", () => {
-  let service: NotificationsService;
+describe("Notification Services", () => {
+  let targetService: NotificationTargetService;
+  let ruleService: NotificationRuleService;
+  let jobService: NotificationJobService;
+  let eventsHandler: NotificationsEventsHandler;
 
   const mockPrisma = {
     $transaction: jest.fn(),
@@ -23,8 +31,10 @@ describe("NotificationsService", () => {
     notificationRule: {
       count: jest.fn(),
       findFirst: jest.fn(),
+      findMany: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      delete: jest.fn(),
     },
     notificationRuleTarget: {
       createMany: jest.fn(),
@@ -137,6 +147,7 @@ describe("NotificationsService", () => {
       ownerType: "GUILD",
       ownerId: "guild-1",
     });
+    mockPrisma.notificationRule.findMany.mockResolvedValue([]);
     mockPrisma.notificationJob.findFirst.mockResolvedValue({
       id: "job-1",
       ownerType: "GUILD",
@@ -159,10 +170,12 @@ describe("NotificationsService", () => {
         watchedItem: {
           update: mockPrisma.watchedItem.update,
           upsert: mockPrisma.watchedItem.upsert,
+          delete: jest.fn(),
         },
         notificationRule: {
           create: mockPrisma.notificationRule.create,
           update: mockPrisma.notificationRule.update,
+          delete: mockPrisma.notificationRule.delete,
         },
         notificationRuleTarget: {
           createMany: mockPrisma.notificationRuleTarget.createMany,
@@ -185,7 +198,12 @@ describe("NotificationsService", () => {
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        NotificationsService,
+        NotificationContentService,
+        NotificationJobService,
+        NotificationMatchingService,
+        NotificationRuleService,
+        NotificationTargetService,
+        NotificationsEventsHandler,
         {
           provide: PrismaService,
           useValue: mockPrisma,
@@ -209,27 +227,20 @@ describe("NotificationsService", () => {
       ],
     }).compile();
 
-    service = module.get<NotificationsService>(NotificationsService);
+    targetService = module.get<NotificationTargetService>(
+      NotificationTargetService,
+    );
+    ruleService = module.get<NotificationRuleService>(NotificationRuleService);
+    jobService = module.get<NotificationJobService>(NotificationJobService);
+    eventsHandler = module.get<NotificationsEventsHandler>(
+      NotificationsEventsHandler,
+    );
   });
 
   it("removes guild notification targets and cancels their queued jobs after channel deletion", async () => {
-    await service.handleGuildChannelDeleted({
+    await targetService.handleGuildChannelDeleted({
       guildId: "guild-1",
       channelId: "channel-1",
-      syncState: {
-        guildId: "guild-1",
-        status: DiscordGuildSyncStatus.SYNCED,
-        hasRequiredPermissions: true,
-        requiredPermissions: [],
-        grantedPermissions: [],
-        missingPermissions: [],
-        channelCount: 0,
-        selectableChannelCount: 0,
-        lastAttemptAt: "2026-03-31T12:00:00.000Z",
-        lastSuccessAt: "2026-03-31T12:00:00.000Z",
-        lastError: null,
-        updatedAt: "2026-03-31T12:00:00.000Z",
-      },
     });
 
     expect(mockQueue.getJob).toHaveBeenNthCalledWith(1, "job-1");
@@ -286,7 +297,7 @@ describe("NotificationsService", () => {
       },
     });
 
-    await service.dispatchNotificationJob("job-disabled");
+    await jobService.dispatchNotificationJob("job-disabled");
 
     expect(mockPrisma.notificationJob.update).toHaveBeenCalledWith({
       where: { id: "job-disabled" },
@@ -307,7 +318,7 @@ describe("NotificationsService", () => {
       { id: "job-1" },
     ]);
 
-    await service.cancelGuildJob("guild-1", "job-1");
+    await jobService.cancelGuildJob("guild-1", "job-1");
 
     expect(mockPrisma.notificationJob.findFirst).toHaveBeenCalledWith({
       where: {
@@ -342,13 +353,10 @@ describe("NotificationsService", () => {
 
   it("rebuilds guild rule jobs after confirming rule ownership", async () => {
     const rebuildJobsForRuleSpy = jest
-      .spyOn(
-        service as unknown as { rebuildJobsForRule: () => Promise<void> },
-        "rebuildJobsForRule",
-      )
+      .spyOn(jobService, "rebuildJobsForRule")
       .mockImplementation(async () => undefined);
 
-    await service.rebuildGuildRuleJobs("guild-1", 77);
+    await ruleService.rebuildGuildRuleJobs("guild-1", 77);
 
     expect(mockPrisma.notificationRule.findFirst).toHaveBeenCalledWith({
       where: {
@@ -362,7 +370,7 @@ describe("NotificationsService", () => {
 
   it("rejects creating user dm targets for another discord account", async () => {
     await expect(
-      service.createUserTarget("user-1", "discord-user-1", {
+      targetService.createUserTarget("user-1", "discord-user-1", {
         targetType: NotificationTargetType.DM,
         externalId: "discord-user-2",
         displayName: "Discord DM",
@@ -381,7 +389,7 @@ describe("NotificationsService", () => {
     mockPrisma.notificationTarget.findMany.mockResolvedValueOnce([]);
 
     await expect(
-      service.createWatchedItem("user-1", "discord-user-1", {
+      ruleService.createWatchedItem("user-1", "discord-user-1", {
         itemId: 123,
         itemName: "Legendarny Miecz",
         itemIcon: "legendary-sword.png",
@@ -445,7 +453,7 @@ describe("NotificationsService", () => {
       });
 
     await expect(
-      service.quickAddWatchedItem("user-1", "discord-user-1", {
+      ruleService.quickAddWatchedItem("user-1", "discord-user-1", {
         itemId: 123,
         itemName: "Legendarny Miecz",
         itemIcon: "legendary-sword.png",
@@ -520,7 +528,7 @@ describe("NotificationsService", () => {
       });
 
     await expect(
-      service.quickAddWatchedItem("user-1", "discord-user-1", {
+      ruleService.quickAddWatchedItem("user-1", "discord-user-1", {
         itemId: 123,
         itemName: "Legendarny Miecz",
         itemIcon: "legendary-sword.png",
@@ -552,7 +560,7 @@ describe("NotificationsService", () => {
     mockPrisma.notificationTarget.findMany.mockResolvedValueOnce([]);
 
     await expect(
-      service.quickAddWatchedItem("user-1", "discord-user-1", {
+      ruleService.quickAddWatchedItem("user-1", "discord-user-1", {
         itemId: 123,
         itemName: "Legendarny Miecz",
         itemIcon: "legendary-sword.png",
@@ -568,7 +576,7 @@ describe("NotificationsService", () => {
 
   it("rejects quick add for a guild outside the authenticated user scope", async () => {
     await expect(
-      service.quickAddWatchedItem("user-1", "discord-user-1", {
+      ruleService.quickAddWatchedItem("user-1", "discord-user-1", {
         itemId: 123,
         itemName: "Legendarny Miecz",
         itemIcon: "legendary-sword.png",
@@ -618,7 +626,7 @@ describe("NotificationsService", () => {
     );
 
     await expect(
-      service.triggerGuildRuleTest("guild-1", 77),
+      ruleService.triggerGuildRuleTest("guild-1", 77),
     ).rejects.toMatchObject({
       response: {
         message: "Test trigger limit reached for this rule",
@@ -692,7 +700,9 @@ describe("NotificationsService", () => {
         status: "PENDING",
       });
 
-    await expect(service.triggerGuildRuleTest("guild-1", 77)).resolves.toEqual({
+    await expect(
+      ruleService.triggerGuildRuleTest("guild-1", 77),
+    ).resolves.toEqual({
       success: true,
     });
 
@@ -746,7 +756,7 @@ describe("NotificationsService", () => {
     });
     mockPrisma.notificationJob.findMany.mockResolvedValueOnce([]);
 
-    await service.triggerGuildRuleTest("guild-1", 77);
+    await ruleService.triggerGuildRuleTest("guild-1", 77);
 
     expect(mockPrisma.notificationJob.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
@@ -804,7 +814,7 @@ describe("NotificationsService", () => {
       },
     ]);
 
-    await service.handleLootCreated({
+    await eventsHandler.handleLootCreated({
       lootId: 999,
       world: "berufs",
       itemIds: [123, 456],
@@ -901,7 +911,7 @@ describe("NotificationsService", () => {
       },
     ]);
 
-    await service.handleLootCreated({
+    await eventsHandler.handleLootCreated({
       lootId: 1001,
       world: "berufs",
       itemIds: [123],
@@ -930,47 +940,22 @@ describe("NotificationsService", () => {
       status: "CANCELED",
     });
 
-    const createdJob = await (
-      service as unknown as {
-        createNotificationJob: (options: {
-          notificationRule: {
-            id: number;
-            ownerType: "GUILD";
-            ownerId: string;
-            guildId: string | null;
-            triggerType: "TIMER_BEFORE_SPAWN";
-          };
-          target: {
-            id: number;
-            externalId: string;
-            targetType: "CHANNEL";
-            active: boolean;
-            canSend: boolean;
-          };
-          jobKind: "SCHEDULED";
-          scheduledFor: Date;
-          sourceEntityType: string;
-          sourceEntityId: string;
-          payloadSnapshot: Record<string, unknown>;
-          forceBlocked?: boolean;
-        }) => Promise<{ id: string; status: string }>;
-      }
-    ).createNotificationJob({
+    const createdJob = await jobService.createNotificationJob({
       notificationRule: {
         id: 77,
-        ownerType: "GUILD",
+        ownerType: "GUILD" as const,
         ownerId: "guild-1",
         guildId: "guild-1",
-        triggerType: "TIMER_BEFORE_SPAWN",
+        triggerType: "TIMER_BEFORE_SPAWN" as const,
       },
       target: {
         id: 11,
         externalId: "channel-1",
-        targetType: "CHANNEL",
+        targetType: "CHANNEL" as const,
         active: true,
         canSend: true,
       },
-      jobKind: "SCHEDULED",
+      jobKind: "SCHEDULED" as const,
       scheduledFor: new Date("2026-03-31T18:00:00.000Z"),
       sourceEntityType: "timer",
       sourceEntityId: "guild-1:berufs:timer-1",

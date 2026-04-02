@@ -423,6 +423,11 @@
     "guildCount_many": "{{count}} gildii",
     "missingGuild": "Brak dostępu: {{guildId}}",
     "staleGuildWarning": "Ta obserwacja zawiera gildie, do których nie masz już dostępu w aktualnej sesji.",
+    "itemSelector": {
+      "selectedLabel": "{{name}} (#{{id}})",
+      "itemId": "#{{id}}",
+      "itemLevel": "Lvl {{level}}"
+    },
     "deleteWatchDialog": {
       "title": "Usunąć obserwowany item?",
       "description": "Ta operacja usunie obserwację dla itemu {{itemName}} i zatrzyma przyszłe powiadomienia."

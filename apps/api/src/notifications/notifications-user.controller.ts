@@ -17,7 +17,9 @@ import { CreateWatchedItemQuickAddDto } from "src/notifications/dto/create-watch
 import { CreateWatchedItemDto } from "src/notifications/dto/create-watched-item.dto";
 import { UpdateNotificationRuleDto } from "src/notifications/dto/update-notification-rule.dto";
 import { UpdateNotificationTargetDto } from "src/notifications/dto/update-notification-target.dto";
-import { NotificationsService } from "src/notifications/notifications.service";
+import { NotificationJobService } from "src/notifications/notification-job.service";
+import { NotificationRuleService } from "src/notifications/notification-rule.service";
+import { NotificationTargetService } from "src/notifications/notification-target.service";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 
 @ApiTags("notifications")
@@ -25,11 +27,15 @@ import { AuthGuard } from "src/shared/guards/auth.guard";
 @UseGuards(AuthGuard)
 @Controller("users/@me/notifications")
 export class NotificationsUserController {
-  constructor(private readonly notificationsService: NotificationsService) {}
+  constructor(
+    private readonly targetService: NotificationTargetService,
+    private readonly ruleService: NotificationRuleService,
+    private readonly jobService: NotificationJobService,
+  ) {}
 
   @Get("targets")
   async getUserTargets(@UserId() userId: string) {
-    return this.notificationsService.listUserTargets(userId);
+    return this.targetService.listUserTargets(userId);
   }
 
   @Post("targets")
@@ -38,7 +44,7 @@ export class NotificationsUserController {
     @DiscordId() discordId: string,
     @Body() data: CreateNotificationTargetDto,
   ) {
-    return this.notificationsService.createUserTarget(userId, discordId, data);
+    return this.targetService.createUserTarget(userId, discordId, data);
   }
 
   @Patch("targets/:targetId")
@@ -47,7 +53,7 @@ export class NotificationsUserController {
     @Param("targetId", ParseIntPipe) targetId: number,
     @Body() data: UpdateNotificationTargetDto,
   ) {
-    return this.notificationsService.updateUserTarget(userId, targetId, data);
+    return this.targetService.updateUserTarget(userId, targetId, data);
   }
 
   @Delete("targets/:targetId")
@@ -55,12 +61,12 @@ export class NotificationsUserController {
     @UserId() userId: string,
     @Param("targetId", ParseIntPipe) targetId: number,
   ) {
-    return this.notificationsService.deleteUserTarget(userId, targetId);
+    return this.targetService.deleteUserTarget(userId, targetId);
   }
 
   @Get("rules")
   async getUserRules(@UserId() userId: string) {
-    return this.notificationsService.listUserRules(userId);
+    return this.ruleService.listUserRules(userId);
   }
 
   @Post("rules")
@@ -68,7 +74,7 @@ export class NotificationsUserController {
     @UserId() userId: string,
     @Body() data: CreateNotificationRuleDto,
   ) {
-    return this.notificationsService.createUserRule(userId, data);
+    return this.ruleService.createUserRule(userId, data);
   }
 
   @Patch("rules/:ruleId")
@@ -77,7 +83,7 @@ export class NotificationsUserController {
     @Param("ruleId", ParseIntPipe) ruleId: number,
     @Body() data: UpdateNotificationRuleDto,
   ) {
-    return this.notificationsService.updateUserRule(userId, ruleId, data);
+    return this.ruleService.updateUserRule(userId, ruleId, data);
   }
 
   @Delete("rules/:ruleId")
@@ -85,17 +91,17 @@ export class NotificationsUserController {
     @UserId() userId: string,
     @Param("ruleId", ParseIntPipe) ruleId: number,
   ) {
-    return this.notificationsService.deleteUserRule(userId, ruleId);
+    return this.ruleService.deleteUserRule(userId, ruleId);
   }
 
   @Get("jobs")
   async getUserJobs(@UserId() userId: string) {
-    return this.notificationsService.listUserJobs(userId);
+    return this.jobService.listUserJobs(userId);
   }
 
   @Get("watched-items")
   async getWatchedItems(@UserId() userId: string) {
-    return this.notificationsService.listWatchedItems(userId);
+    return this.ruleService.listWatchedItems(userId);
   }
 
   @Post("watched-items")
@@ -104,7 +110,7 @@ export class NotificationsUserController {
     @DiscordId() discordId: string,
     @Body() data: CreateWatchedItemDto,
   ) {
-    return this.notificationsService.createWatchedItem(userId, discordId, data);
+    return this.ruleService.createWatchedItem(userId, discordId, data);
   }
 
   @Post("watched-items/quick-add")
@@ -113,11 +119,7 @@ export class NotificationsUserController {
     @DiscordId() discordId: string,
     @Body() data: CreateWatchedItemQuickAddDto,
   ) {
-    return this.notificationsService.quickAddWatchedItem(
-      userId,
-      discordId,
-      data,
-    );
+    return this.ruleService.quickAddWatchedItem(userId, discordId, data);
   }
 
   @Delete("watched-items/:watchedItemId")
@@ -125,6 +127,6 @@ export class NotificationsUserController {
     @UserId() userId: string,
     @Param("watchedItemId", ParseIntPipe) watchedItemId: number,
   ) {
-    return this.notificationsService.deleteWatchedItem(userId, watchedItemId);
+    return this.ruleService.deleteWatchedItem(userId, watchedItemId);
   }
 }
