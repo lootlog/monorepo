@@ -335,6 +335,99 @@
       "jobCancelError": "Nie udało się anulować oczekującej wysyłki"
     }
   },
+  "userNotifications": {
+    "title": "Powiadomienia",
+    "description": "Obserwuj itemy dla wybranego świata i swoich gildii, a dropy dostaniesz na Discord DM.",
+    "dm": {
+      "title": "Discord DM",
+      "description": "Obserwowane itemy wysyłamy wyłącznie na Twoją prywatną wiadomość na Discordzie.",
+      "active": "Aktywny",
+      "inactive": "Nieaktywny",
+      "enable": "Włącz DM",
+      "disable": "Wyłącz DM",
+      "requiredHint": "Aktywny target DM jest wymagany, zanim zapiszesz obserwowany item.",
+      "targetLabel": "Kanał docelowy: {{name}}"
+    },
+    "watchForm": {
+      "title": "Dodaj obserwowany item",
+      "description": "Wybierz gildie, świat i item. Powiadomienie przyjdzie tylko dla dopasowanych lootów.",
+      "footer": "Jedna obserwacja działa dla jednego świata i wielu gildii."
+    },
+    "watchList": {
+      "title": "Obserwowane itemy",
+      "description": "Lista aktywnych obserwacji przypiętych do Twojego Discord DM."
+    },
+    "scopeInfo": {
+      "title": "Zakres i bezpieczeństwo",
+      "description": "Notif działa tylko wtedy, gdy loot pochodzi z wybranego świata i przynajmniej jednej z wybranych gildii, a Ty nadal masz w niej aktywne członkostwo."
+    },
+    "actions": {
+      "addWatch": "Dodaj obserwację"
+    },
+    "quickAdd": {
+      "add": "Dodaj do obserwowanych",
+      "watched": "Ten item jest już obserwowany dla tej gildii i świata.",
+      "dmRequired": "Najpierw skonfiguruj Discord DM dla obserwowanych itemów.",
+      "loading": "Ładowanie obserwacji...",
+      "loadError": "Nie udało się załadować obserwacji.",
+      "scopeUnavailable": "Nie udało się ustalić gildii dla tej obserwacji.",
+      "openNotifications": "Przejdź do powiadomień",
+      "configureDm": "Skonfiguruj Discord DM",
+      "indicatorLabel": "Item jest już obserwowany",
+      "toasts": {
+        "added": "{{itemName}} został dodany do obserwowanych.",
+        "error": "Nie udało się dodać itemu do obserwowanych."
+      }
+    },
+    "fields": {
+      "guilds": "Gildie",
+      "item": "Item"
+    },
+    "placeholders": {
+      "guilds": "Wybierz gildie",
+      "searchGuilds": "Szukaj gildii",
+      "world": "Wybierz świat",
+      "item": "Wybierz item",
+      "searchItems": "Szukaj itemu po nazwie lub ID"
+    },
+    "empty": {
+      "guilds": "Brak dostępnych gildii.",
+      "items": "Brak pasujących itemów.",
+      "watchedItems": "Nie masz jeszcze żadnych obserwowanych itemów."
+    },
+    "loading": {
+      "worlds": "Pobieranie światów...",
+      "items": "Pobieranie itemów..."
+    },
+    "validation": {
+      "dmRequired": "Najpierw włącz Discord DM dla powiadomień.",
+      "guildRequired": "Wybierz przynajmniej jedną gildię.",
+      "itemRequired": "Wybierz item do obserwowania.",
+      "worldRequired": "Najpierw wybierz świat."
+    },
+    "toasts": {
+      "dmEnabled": "Discord DM został włączony.",
+      "dmEnableError": "Nie udało się włączyć Discord DM.",
+      "dmDisabled": "Discord DM został wyłączony.",
+      "dmDisableError": "Nie udało się wyłączyć Discord DM.",
+      "watchCreated": "Obserwowany item został dodany.",
+      "watchCreateError": "Nie udało się dodać obserwowanego itemu.",
+      "watchDeleted": "Obserwowany item został usunięty.",
+      "watchDeleteError": "Nie udało się usunąć obserwowanego itemu."
+    },
+    "watchCount_one": "{{count}} obserwacja",
+    "watchCount_few": "{{count}} obserwacje",
+    "watchCount_many": "{{count}} obserwacji",
+    "guildCount_one": "{{count}} gildia",
+    "guildCount_few": "{{count}} gildie",
+    "guildCount_many": "{{count}} gildii",
+    "missingGuild": "Brak dostępu: {{guildId}}",
+    "staleGuildWarning": "Ta obserwacja zawiera gildie, do których nie masz już dostępu w aktualnej sesji.",
+    "deleteWatchDialog": {
+      "title": "Usunąć obserwowany item?",
+      "description": "Ta operacja usunie obserwację dla itemu {{itemName}} i zatrzyma przyszłe powiadomienia."
+    }
+  },
   "guildInfo": {
     "title": "Informacje",
     "description": "Sprawdź status synchronizacji Discorda, kanałów i uprawnień bota.",

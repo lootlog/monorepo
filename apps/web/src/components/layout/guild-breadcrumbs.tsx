@@ -196,6 +196,7 @@ function getNavigationInfo({
   const guildTimers = ROUTES.guild.timers(guildId);
   const guildReservations = ROUTES.guild.reservations.base(guildId);
   const guildStats = ROUTES.guild.stats(guildId);
+  const guildNotifications = ROUTES.guild.notifications.base(guildId);
   const guildSettings = ROUTES.guild.settings.base(guildId);
   const guildSettingsRoles = ROUTES.guild.settings.roles(guildId);
   const guildSettingsMembers = ROUTES.guild.settings.members(guildId);
@@ -539,49 +540,33 @@ function getNavigationInfo({
         path: guildSettings,
       };
       breadcrumbs.push({ label: t("common.breadcrumbs.npcs"), path: null });
-    } else if (path === `${guildSettings}/notifications`) {
-      breadcrumbs[1] = {
-        label: t("common.breadcrumbs.settings"),
-        path: guildSettings,
-      };
+    } else if (path === guildNotifications) {
       breadcrumbs.push({
         label: t("common.breadcrumbs.notifications"),
         path: null,
       });
-    } else if (path === `${guildSettings}/notifications/create`) {
-      breadcrumbs[1] = {
-        label: t("common.breadcrumbs.settings"),
-        path: guildSettings,
-      };
+    } else if (path === `${guildNotifications}/create`) {
       breadcrumbs.push({
         label: t("common.breadcrumbs.notifications"),
-        path: `${guildSettings}/notifications`,
+        path: guildNotifications,
       });
       breadcrumbs.push({
         label: t("common.breadcrumbs.notificationCreate"),
         path: null,
       });
-    } else if (path === `${guildSettings}/notifications/history`) {
-      breadcrumbs[1] = {
-        label: t("common.breadcrumbs.settings"),
-        path: guildSettings,
-      };
+    } else if (path === `${guildNotifications}/history`) {
       breadcrumbs.push({
         label: t("common.breadcrumbs.notifications"),
-        path: `${guildSettings}/notifications`,
+        path: guildNotifications,
       });
       breadcrumbs.push({
         label: t("common.breadcrumbs.notificationHistory"),
         path: null,
       });
-    } else if (path.startsWith(`${guildSettings}/notifications/`)) {
-      breadcrumbs[1] = {
-        label: t("common.breadcrumbs.settings"),
-        path: guildSettings,
-      };
+    } else if (path.startsWith(`${guildNotifications}/`)) {
       breadcrumbs.push({
         label: t("common.breadcrumbs.notifications"),
-        path: `${guildSettings}/notifications`,
+        path: guildNotifications,
       });
       breadcrumbs.push({
         label: t("common.breadcrumbs.notificationEdit"),
@@ -598,13 +583,16 @@ function getNavigationInfo({
     return {
       breadcrumbs,
       showBack: true,
-      backPath: path === guildSettings
-        ? guildBase
-        : path.startsWith(`${guildSettings}/notifications/`)
-          ? `${guildSettings}/notifications`
-          : path.startsWith(`${guildSettingsRoles}/`)
-            ? guildSettingsRoles
-            : guildSettings,
+      backPath:
+        path === guildSettings
+          ? guildBase
+          : path.startsWith(`${guildNotifications}/`)
+            ? guildNotifications
+            : path.startsWith(`${guildSettingsRoles}/`)
+              ? guildSettingsRoles
+              : path === guildNotifications
+                ? guildBase
+                : guildSettings,
     };
   }
 

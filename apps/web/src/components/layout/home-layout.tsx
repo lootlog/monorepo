@@ -12,11 +12,13 @@ import { ArrowLeft, ChevronRight } from "lucide-react";
 import { ROUTES } from "@/config/routes";
 import { useTheme } from "@/hooks/context/use-theme";
 import { FrozenButton } from "@/components/effects/rukia-frost";
+import { useTranslation } from "react-i18next";
 
 export const HomeLayout: FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const isRukiaTheme = theme === "rukia";
   const [hoveredButton, setHoveredButton] = useState<string | null>(null);
 
@@ -121,6 +123,15 @@ export const HomeLayout: FC = () => {
     if (path.startsWith(ROUTES.user.settings.base)) {
       return {
         breadcrumbs: [{ label: "Ustawienia", path: null }],
+        showBack: false,
+      };
+    }
+
+    if (path.startsWith(ROUTES.user.notifications.base)) {
+      return {
+        breadcrumbs: [
+          { label: t("common.breadcrumbs.notifications"), path: null },
+        ],
         showBack: false,
       };
     }

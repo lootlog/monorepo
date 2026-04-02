@@ -262,7 +262,7 @@ export const NotificationRuleCard = ({
                 asChild
               >
                 <Link
-                  to={ROUTES.guild.settings.notificationRule(
+                  to={ROUTES.guild.notifications.rule(
                     guildId ?? "",
                     String(rule.id),
                   )}

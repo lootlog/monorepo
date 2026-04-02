@@ -17,9 +17,14 @@ describe("NotificationsService", () => {
     guild: {
       findUnique: jest.fn(),
     },
+    member: {
+      findMany: jest.fn(),
+    },
     notificationRule: {
       count: jest.fn(),
       findFirst: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
     },
     notificationRuleTarget: {
       createMany: jest.fn(),
@@ -29,6 +34,9 @@ describe("NotificationsService", () => {
     },
     watchedItem: {
       findMany: jest.fn(),
+      findUnique: jest.fn(),
+      update: jest.fn(),
+      upsert: jest.fn(),
     },
     notificationTarget: {
       findMany: jest.fn(),
@@ -63,6 +71,7 @@ describe("NotificationsService", () => {
   const mockGuildsService = {
     hasRequiredGuildPermissions: jest.fn(),
     getGuildDiscordSyncStatus: jest.fn(),
+    getUserGuilds: jest.fn(),
   };
   const mockAmqpConnection = {
     publish: jest.fn(),
@@ -88,11 +97,40 @@ describe("NotificationsService", () => {
     mockPrisma.guild.findUnique.mockResolvedValue({
       notificationRuleLimit: 20,
     });
+    mockPrisma.member.findMany.mockResolvedValue([]);
     mockPrisma.watchedItem.findMany.mockResolvedValue([]);
+    mockPrisma.watchedItem.findUnique.mockResolvedValue(null);
+    mockPrisma.watchedItem.update.mockResolvedValue(undefined);
+    mockPrisma.watchedItem.upsert.mockResolvedValue({
+      id: 1,
+      userId: "user-1",
+      itemId: 123,
+      itemName: "Legendarny Miecz",
+      itemIcon: "legendary-sword.png",
+      world: "berufs",
+      enabled: true,
+      notificationRuleId: 91,
+      notificationRule: {
+        id: 91,
+        ownerType: "USER",
+        ownerId: "user-1",
+        world: "berufs",
+        enabled: true,
+        filters: {
+          itemId: 123,
+          guildIds: ["guild-1"],
+        },
+        targets: [],
+      },
+    });
     mockPrisma.notificationRuleTarget.createMany.mockResolvedValue({
       count: 0,
     });
     mockPrisma.notificationRule.count.mockResolvedValue(0);
+    mockPrisma.notificationRule.create.mockResolvedValue({
+      id: 91,
+    });
+    mockPrisma.notificationRule.update.mockResolvedValue(undefined);
     mockPrisma.timer.findMany.mockResolvedValue([]);
     mockPrisma.notificationRule.findFirst.mockResolvedValue({
       id: 77,
@@ -118,6 +156,17 @@ describe("NotificationsService", () => {
     mockPrisma.notificationTarget.deleteMany.mockResolvedValue({ count: 2 });
     mockPrisma.$transaction.mockImplementation(async (callback) =>
       callback({
+        watchedItem: {
+          update: mockPrisma.watchedItem.update,
+          upsert: mockPrisma.watchedItem.upsert,
+        },
+        notificationRule: {
+          create: mockPrisma.notificationRule.create,
+          update: mockPrisma.notificationRule.update,
+        },
+        notificationRuleTarget: {
+          createMany: mockPrisma.notificationRuleTarget.createMany,
+        },
         notificationJob: {
           update: mockPrisma.notificationJob.update,
           create: mockPrisma.notificationJob.create,
@@ -129,6 +178,10 @@ describe("NotificationsService", () => {
       hasRequiredPermissions: true,
       missingPermissions: [],
     });
+    mockGuildsService.getUserGuilds.mockResolvedValue([
+      { id: "guild-1", name: "Guild 1" },
+      { id: "guild-2", name: "Guild 2" },
+    ]);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -324,6 +377,211 @@ describe("NotificationsService", () => {
     expect(mockPrisma.notificationTarget.upsert).not.toHaveBeenCalled();
   });
 
+  it("requires an active dm target before creating a watched item", async () => {
+    mockPrisma.notificationTarget.findMany.mockResolvedValueOnce([]);
+
+    await expect(
+      service.createWatchedItem("user-1", "discord-user-1", {
+        itemId: 123,
+        itemName: "Legendarny Miecz",
+        itemIcon: "legendary-sword.png",
+        world: "berufs",
+        guildIds: ["guild-1"],
+      }),
+    ).rejects.toMatchObject({
+      response: {
+        message: "Active Discord DM notification target is required",
+      },
+    });
+
+    expect(mockPrisma.notificationRule.create).not.toHaveBeenCalled();
+    expect(mockPrisma.watchedItem.upsert).not.toHaveBeenCalled();
+  });
+
+  it("quick add merges the current guild into an existing watched item scope", async () => {
+    mockPrisma.watchedItem.findUnique
+      .mockResolvedValueOnce({
+        id: 1,
+        userId: "user-1",
+        itemId: 123,
+        itemName: "Legendarny Miecz",
+        itemIcon: "legendary-sword.png",
+        world: "berufs",
+        enabled: true,
+        notificationRuleId: 91,
+        notificationRule: {
+          id: 91,
+          ownerType: "USER",
+          ownerId: "user-1",
+          world: "berufs",
+          enabled: true,
+          filters: {
+            itemId: 123,
+            guildIds: ["guild-1"],
+          },
+        },
+      })
+      .mockResolvedValueOnce({
+        id: 1,
+        userId: "user-1",
+        itemId: 123,
+        itemName: "Legendarny Miecz",
+        itemIcon: "legendary-sword.png",
+        world: "berufs",
+        enabled: true,
+        notificationRuleId: 91,
+        notificationRule: {
+          id: 91,
+          ownerType: "USER",
+          ownerId: "user-1",
+          world: "berufs",
+          enabled: true,
+          filters: {
+            itemId: 123,
+            guildIds: ["guild-1", "guild-2"],
+          },
+          targets: [],
+        },
+      });
+
+    await expect(
+      service.quickAddWatchedItem("user-1", "discord-user-1", {
+        itemId: 123,
+        itemName: "Legendarny Miecz",
+        itemIcon: "legendary-sword.png",
+        world: "berufs",
+        guildId: "guild-2",
+      }),
+    ).resolves.toMatchObject({
+      notificationRule: {
+        filters: {
+          guildIds: ["guild-1", "guild-2"],
+        },
+      },
+    });
+
+    expect(mockPrisma.notificationRule.update).toHaveBeenCalledWith({
+      where: { id: 91 },
+      data: {
+        enabled: true,
+        world: "berufs",
+        filters: {
+          itemId: 123,
+          guildIds: ["guild-1", "guild-2"],
+        },
+      },
+    });
+  });
+
+  it("quick add stays idempotent when the current guild is already watched", async () => {
+    mockPrisma.watchedItem.findUnique
+      .mockResolvedValueOnce({
+        id: 1,
+        userId: "user-1",
+        itemId: 123,
+        itemName: "Legendarny Miecz",
+        itemIcon: "legendary-sword.png",
+        world: "berufs",
+        enabled: true,
+        notificationRuleId: 91,
+        notificationRule: {
+          id: 91,
+          ownerType: "USER",
+          ownerId: "user-1",
+          world: "berufs",
+          enabled: true,
+          filters: {
+            itemId: 123,
+            guildIds: ["guild-1"],
+          },
+        },
+      })
+      .mockResolvedValueOnce({
+        id: 1,
+        userId: "user-1",
+        itemId: 123,
+        itemName: "Legendarny Miecz",
+        itemIcon: "legendary-sword.png",
+        world: "berufs",
+        enabled: true,
+        notificationRuleId: 91,
+        notificationRule: {
+          id: 91,
+          ownerType: "USER",
+          ownerId: "user-1",
+          world: "berufs",
+          enabled: true,
+          filters: {
+            itemId: 123,
+            guildIds: ["guild-1"],
+          },
+          targets: [],
+        },
+      });
+
+    await expect(
+      service.quickAddWatchedItem("user-1", "discord-user-1", {
+        itemId: 123,
+        itemName: "Legendarny Miecz",
+        itemIcon: "legendary-sword.png",
+        world: "berufs",
+        guildId: "guild-1",
+      }),
+    ).resolves.toMatchObject({
+      notificationRule: {
+        filters: {
+          guildIds: ["guild-1"],
+        },
+      },
+    });
+
+    expect(mockPrisma.notificationRule.update).toHaveBeenCalledWith({
+      where: { id: 91 },
+      data: {
+        enabled: true,
+        world: "berufs",
+        filters: {
+          itemId: 123,
+          guildIds: ["guild-1"],
+        },
+      },
+    });
+  });
+
+  it("requires an active dm target before quick adding a watched item", async () => {
+    mockPrisma.notificationTarget.findMany.mockResolvedValueOnce([]);
+
+    await expect(
+      service.quickAddWatchedItem("user-1", "discord-user-1", {
+        itemId: 123,
+        itemName: "Legendarny Miecz",
+        itemIcon: "legendary-sword.png",
+        world: "berufs",
+        guildId: "guild-1",
+      }),
+    ).rejects.toMatchObject({
+      response: {
+        message: "Active Discord DM notification target is required",
+      },
+    });
+  });
+
+  it("rejects quick add for a guild outside the authenticated user scope", async () => {
+    await expect(
+      service.quickAddWatchedItem("user-1", "discord-user-1", {
+        itemId: 123,
+        itemName: "Legendarny Miecz",
+        itemIcon: "legendary-sword.png",
+        world: "berufs",
+        guildId: "guild-999",
+      }),
+    ).rejects.toMatchObject({
+      response: {
+        message: "Selected guilds are not available for the authenticated user",
+      },
+    });
+  });
+
   it("blocks test trigger when the rule has already used the test limit in the sliding window", async () => {
     const currentTime = Date.now();
     mockPrisma.notificationJob.findMany.mockReset();
@@ -510,17 +768,26 @@ describe("NotificationsService", () => {
   });
 
   it("loads watched-item notification rules by dropped item ids", async () => {
+    mockPrisma.member.findMany.mockResolvedValueOnce([
+      {
+        guildId: "guild-1",
+        globalUserId: "user-1",
+      },
+    ]);
     mockPrisma.watchedItem.findMany.mockResolvedValueOnce([
       {
         notificationRuleId: 91,
+        world: "berufs",
         notificationRule: {
           id: 91,
           ownerType: "USER",
           ownerId: "user-1",
           guildId: null,
+          world: "berufs",
           triggerType: "WATCHED_ITEM_DROPPED",
           filters: {
             itemIds: [123],
+            guildIds: ["guild-1"],
           },
           targets: [
             {
@@ -542,7 +809,7 @@ describe("NotificationsService", () => {
       world: "berufs",
       itemIds: [123, 456],
       itemNames: ["Legendarny Miecz"],
-      guildIds: [],
+      guildIds: ["guild-1"],
     });
 
     expect(mockPrisma.watchedItem.findMany).toHaveBeenCalledWith({
@@ -551,10 +818,12 @@ describe("NotificationsService", () => {
         itemId: {
           in: [123, 456],
         },
+        world: "berufs",
         notificationRule: {
           is: {
             enabled: true,
             triggerType: "WATCHED_ITEM_DROPPED",
+            world: "berufs",
             targets: {
               some: {},
             },
@@ -573,6 +842,21 @@ describe("NotificationsService", () => {
         },
       },
     });
+    expect(mockPrisma.member.findMany).toHaveBeenCalledWith({
+      where: {
+        globalUserId: {
+          in: ["user-1"],
+        },
+        guildId: {
+          in: ["guild-1"],
+        },
+        active: true,
+      },
+      select: {
+        globalUserId: true,
+        guildId: true,
+      },
+    });
     expect(mockPrisma.notificationJob.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         ruleId: 91,
@@ -583,6 +867,49 @@ describe("NotificationsService", () => {
         sourceEventId: "loot:999",
       }),
     });
+  });
+
+  it("skips watched-item notifications when the owner no longer has access to matching guilds", async () => {
+    mockPrisma.member.findMany.mockResolvedValueOnce([]);
+    mockPrisma.watchedItem.findMany.mockResolvedValueOnce([
+      {
+        notificationRuleId: 91,
+        world: "berufs",
+        notificationRule: {
+          id: 91,
+          ownerType: "USER",
+          ownerId: "user-1",
+          guildId: null,
+          world: "berufs",
+          triggerType: "WATCHED_ITEM_DROPPED",
+          filters: {
+            itemId: 123,
+            guildIds: ["guild-1"],
+          },
+          targets: [
+            {
+              target: {
+                id: 51,
+                externalId: "dm-user-1",
+                targetType: "DM",
+                active: true,
+                canSend: true,
+              },
+            },
+          ],
+        },
+      },
+    ]);
+
+    await service.handleLootCreated({
+      lootId: 1001,
+      world: "berufs",
+      itemIds: [123],
+      itemNames: ["Legendarny Miecz"],
+      guildIds: ["guild-1"],
+    });
+
+    expect(mockPrisma.notificationJob.create).not.toHaveBeenCalled();
   });
 
   it("recreates a canceled job when idempotency key already exists", async () => {

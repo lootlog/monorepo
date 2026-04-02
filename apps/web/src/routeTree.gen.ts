@@ -18,12 +18,14 @@ import { Route as AuthenticatedGuildIdRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAtmeIndexRouteImport } from './routes/_authenticated/@me/index'
 import { Route as AuthenticatedGuildIdIndexRouteImport } from './routes/_authenticated/$guildId/index'
 import { Route as AuthenticatedAtmeSettingsRouteImport } from './routes/_authenticated/@me/settings'
+import { Route as AuthenticatedAtmeNotificationsRouteImport } from './routes/_authenticated/@me/notifications'
 import { Route as AuthenticatedAtmeKillsRouteImport } from './routes/_authenticated/@me/kills'
 import { Route as AuthenticatedAtmeBattlePanelRouteImport } from './routes/_authenticated/@me/battle-panel'
 import { Route as AuthenticatedGuildIdTimersRouteImport } from './routes/_authenticated/$guildId/timers'
 import { Route as AuthenticatedGuildIdStatsRouteImport } from './routes/_authenticated/$guildId/stats'
 import { Route as AuthenticatedGuildIdSettingsRouteImport } from './routes/_authenticated/$guildId/settings'
 import { Route as AuthenticatedGuildIdReservationsRouteImport } from './routes/_authenticated/$guildId/reservations'
+import { Route as AuthenticatedGuildIdNotificationsRouteImport } from './routes/_authenticated/$guildId/notifications'
 import { Route as AuthenticatedGuildIdEventsRouteImport } from './routes/_authenticated/$guildId/events'
 import { Route as AuthenticatedGuildIdActivityLogsRouteImport } from './routes/_authenticated/$guildId/activity-logs'
 import { Route as AuthenticatedAtmeSettingsIndexRouteImport } from './routes/_authenticated/@me/settings/index'
@@ -31,6 +33,7 @@ import { Route as AuthenticatedAtmeBattlePanelIndexRouteImport } from './routes/
 import { Route as AuthenticatedGuildIdStatsIndexRouteImport } from './routes/_authenticated/$guildId/stats/index'
 import { Route as AuthenticatedGuildIdSettingsIndexRouteImport } from './routes/_authenticated/$guildId/settings/index'
 import { Route as AuthenticatedGuildIdReservationsIndexRouteImport } from './routes/_authenticated/$guildId/reservations/index'
+import { Route as AuthenticatedGuildIdNotificationsIndexRouteImport } from './routes/_authenticated/$guildId/notifications/index'
 import { Route as AuthenticatedAtmeSettingsAppearanceRouteImport } from './routes/_authenticated/@me/settings/appearance'
 import { Route as AuthenticatedAtmeSettingsAccountRouteImport } from './routes/_authenticated/@me/settings/account'
 import { Route as AuthenticatedAtmeBattlePanelStatsRouteImport } from './routes/_authenticated/@me/battle-panel/stats'
@@ -41,14 +44,15 @@ import { Route as AuthenticatedGuildIdStatsLootsRouteImport } from './routes/_au
 import { Route as AuthenticatedGuildIdStatsKillsRouteImport } from './routes/_authenticated/$guildId/stats/kills'
 import { Route as AuthenticatedGuildIdSettingsRolesRouteImport } from './routes/_authenticated/$guildId/settings/roles'
 import { Route as AuthenticatedGuildIdSettingsNpcsRouteImport } from './routes/_authenticated/$guildId/settings/npcs'
-import { Route as AuthenticatedGuildIdSettingsNotificationsRouteImport } from './routes/_authenticated/$guildId/settings/notifications'
 import { Route as AuthenticatedGuildIdSettingsMembersRouteImport } from './routes/_authenticated/$guildId/settings/members'
 import { Route as AuthenticatedGuildIdSettingsMapTemplatesRouteImport } from './routes/_authenticated/$guildId/settings/map-templates'
 import { Route as AuthenticatedGuildIdSettingsInfoRouteImport } from './routes/_authenticated/$guildId/settings/info'
 import { Route as AuthenticatedGuildIdReservationsReservationIdRouteImport } from './routes/_authenticated/$guildId/reservations/$reservationId'
+import { Route as AuthenticatedGuildIdNotificationsHistoryRouteImport } from './routes/_authenticated/$guildId/notifications/history'
+import { Route as AuthenticatedGuildIdNotificationsCreateRouteImport } from './routes/_authenticated/$guildId/notifications/create'
+import { Route as AuthenticatedGuildIdNotificationsRuleIdRouteImport } from './routes/_authenticated/$guildId/notifications/$ruleId'
 import { Route as AuthenticatedGuildIdEventsEventIdRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_'
 import { Route as AuthenticatedGuildIdStatsNpcsIndexRouteImport } from './routes/_authenticated/$guildId/stats/npcs.index'
-import { Route as AuthenticatedGuildIdSettingsNotificationsIndexRouteImport } from './routes/_authenticated/$guildId/settings/notifications/index'
 import { Route as AuthenticatedGuildIdEventsEventIdIndexRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_/index'
 import { Route as AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRouteImport } from './routes/_authenticated/@me/battle-panel/statistics_.matchmaking-h2h'
 import { Route as AuthenticatedAtmeBattlePanelStatisticsH2hRouteImport } from './routes/_authenticated/@me/battle-panel/statistics_.h2h'
@@ -56,9 +60,6 @@ import { Route as AuthenticatedAtmeBattlePanelBattlesBattleIdRouteImport } from 
 import { Route as AuthenticatedGuildIdStatsNpcsNpcIdRouteImport } from './routes/_authenticated/$guildId/stats/npcs.$npcId'
 import { Route as AuthenticatedGuildIdStatsMembersMemberIdRouteImport } from './routes/_authenticated/$guildId/stats/members.$memberId'
 import { Route as AuthenticatedGuildIdSettingsRolesRoleIdRouteImport } from './routes/_authenticated/$guildId/settings/roles.$roleId'
-import { Route as AuthenticatedGuildIdSettingsNotificationsHistoryRouteImport } from './routes/_authenticated/$guildId/settings/notifications/history'
-import { Route as AuthenticatedGuildIdSettingsNotificationsCreateRouteImport } from './routes/_authenticated/$guildId/settings/notifications/create'
-import { Route as AuthenticatedGuildIdSettingsNotificationsRuleIdRouteImport } from './routes/_authenticated/$guildId/settings/notifications/$ruleId'
 import { Route as AuthenticatedGuildIdEventsEventIdRankingRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.ranking'
 import { Route as AuthenticatedGuildIdEventsEventIdKillsRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.kills'
 import { Route as AuthenticatedGuildIdEventsEventIdEditRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.edit'
@@ -128,6 +129,16 @@ const AuthenticatedAtmeSettingsRoute =
   } as any).lazy(() =>
     import('./routes/_authenticated/@me/settings.lazy').then((d) => d.Route),
   )
+const AuthenticatedAtmeNotificationsRoute =
+  AuthenticatedAtmeNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedAtmeRoute,
+  } as any).lazy(() =>
+    import('./routes/_authenticated/@me/notifications.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedAtmeKillsRoute = AuthenticatedAtmeKillsRouteImport.update({
   id: '/kills',
   path: '/kills',
@@ -178,6 +189,16 @@ const AuthenticatedGuildIdReservationsRoute =
     getParentRoute: () => AuthenticatedGuildIdRoute,
   } as any).lazy(() =>
     import('./routes/_authenticated/$guildId/reservations.lazy').then(
+      (d) => d.Route,
+    ),
+  )
+const AuthenticatedGuildIdNotificationsRoute =
+  AuthenticatedGuildIdNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedGuildIdRoute,
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/notifications.lazy').then(
       (d) => d.Route,
     ),
   )
@@ -238,6 +259,16 @@ const AuthenticatedGuildIdReservationsIndexRoute =
     getParentRoute: () => AuthenticatedGuildIdReservationsRoute,
   } as any).lazy(() =>
     import('./routes/_authenticated/$guildId/reservations/index.lazy').then(
+      (d) => d.Route,
+    ),
+  )
+const AuthenticatedGuildIdNotificationsIndexRoute =
+  AuthenticatedGuildIdNotificationsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedGuildIdNotificationsRoute,
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/notifications/index.lazy').then(
       (d) => d.Route,
     ),
   )
@@ -341,16 +372,6 @@ const AuthenticatedGuildIdSettingsNpcsRoute =
       (d) => d.Route,
     ),
   )
-const AuthenticatedGuildIdSettingsNotificationsRoute =
-  AuthenticatedGuildIdSettingsNotificationsRouteImport.update({
-    id: '/notifications',
-    path: '/notifications',
-    getParentRoute: () => AuthenticatedGuildIdSettingsRoute,
-  } as any).lazy(() =>
-    import('./routes/_authenticated/$guildId/settings/notifications.lazy').then(
-      (d) => d.Route,
-    ),
-  )
 const AuthenticatedGuildIdSettingsMembersRoute =
   AuthenticatedGuildIdSettingsMembersRouteImport.update({
     id: '/members',
@@ -391,6 +412,36 @@ const AuthenticatedGuildIdReservationsReservationIdRoute =
       (d) => d.Route,
     ),
   )
+const AuthenticatedGuildIdNotificationsHistoryRoute =
+  AuthenticatedGuildIdNotificationsHistoryRouteImport.update({
+    id: '/history',
+    path: '/history',
+    getParentRoute: () => AuthenticatedGuildIdNotificationsRoute,
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/notifications/history.lazy').then(
+      (d) => d.Route,
+    ),
+  )
+const AuthenticatedGuildIdNotificationsCreateRoute =
+  AuthenticatedGuildIdNotificationsCreateRouteImport.update({
+    id: '/create',
+    path: '/create',
+    getParentRoute: () => AuthenticatedGuildIdNotificationsRoute,
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/notifications/create.lazy').then(
+      (d) => d.Route,
+    ),
+  )
+const AuthenticatedGuildIdNotificationsRuleIdRoute =
+  AuthenticatedGuildIdNotificationsRuleIdRouteImport.update({
+    id: '/$ruleId',
+    path: '/$ruleId',
+    getParentRoute: () => AuthenticatedGuildIdNotificationsRoute,
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/notifications/$ruleId.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdEventsEventIdRoute =
   AuthenticatedGuildIdEventsEventIdRouteImport.update({
     id: '/events_/$eventId_',
@@ -408,16 +459,6 @@ const AuthenticatedGuildIdStatsNpcsIndexRoute =
     getParentRoute: () => AuthenticatedGuildIdStatsRoute,
   } as any).lazy(() =>
     import('./routes/_authenticated/$guildId/stats/npcs.index.lazy').then(
-      (d) => d.Route,
-    ),
-  )
-const AuthenticatedGuildIdSettingsNotificationsIndexRoute =
-  AuthenticatedGuildIdSettingsNotificationsIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedGuildIdSettingsNotificationsRoute,
-  } as any).lazy(() =>
-    import('./routes/_authenticated/$guildId/settings/notifications/index.lazy').then(
       (d) => d.Route,
     ),
   )
@@ -488,36 +529,6 @@ const AuthenticatedGuildIdSettingsRolesRoleIdRoute =
     getParentRoute: () => AuthenticatedGuildIdSettingsRolesRoute,
   } as any).lazy(() =>
     import('./routes/_authenticated/$guildId/settings/roles.$roleId.lazy').then(
-      (d) => d.Route,
-    ),
-  )
-const AuthenticatedGuildIdSettingsNotificationsHistoryRoute =
-  AuthenticatedGuildIdSettingsNotificationsHistoryRouteImport.update({
-    id: '/history',
-    path: '/history',
-    getParentRoute: () => AuthenticatedGuildIdSettingsNotificationsRoute,
-  } as any).lazy(() =>
-    import('./routes/_authenticated/$guildId/settings/notifications/history.lazy').then(
-      (d) => d.Route,
-    ),
-  )
-const AuthenticatedGuildIdSettingsNotificationsCreateRoute =
-  AuthenticatedGuildIdSettingsNotificationsCreateRouteImport.update({
-    id: '/create',
-    path: '/create',
-    getParentRoute: () => AuthenticatedGuildIdSettingsNotificationsRoute,
-  } as any).lazy(() =>
-    import('./routes/_authenticated/$guildId/settings/notifications/create.lazy').then(
-      (d) => d.Route,
-    ),
-  )
-const AuthenticatedGuildIdSettingsNotificationsRuleIdRoute =
-  AuthenticatedGuildIdSettingsNotificationsRuleIdRouteImport.update({
-    id: '/$ruleId',
-    path: '/$ruleId',
-    getParentRoute: () => AuthenticatedGuildIdSettingsNotificationsRoute,
-  } as any).lazy(() =>
-    import('./routes/_authenticated/$guildId/settings/notifications/$ruleId.lazy').then(
       (d) => d.Route,
     ),
   )
@@ -649,21 +660,25 @@ export interface FileRoutesByFullPath {
   '/battles/$id': typeof BattlesIdRoute
   '/$guildId/activity-logs': typeof AuthenticatedGuildIdActivityLogsRoute
   '/$guildId/events': typeof AuthenticatedGuildIdEventsRoute
+  '/$guildId/notifications': typeof AuthenticatedGuildIdNotificationsRouteWithChildren
   '/$guildId/reservations': typeof AuthenticatedGuildIdReservationsRouteWithChildren
   '/$guildId/settings': typeof AuthenticatedGuildIdSettingsRouteWithChildren
   '/$guildId/stats': typeof AuthenticatedGuildIdStatsRouteWithChildren
   '/$guildId/timers': typeof AuthenticatedGuildIdTimersRoute
   '/@me/battle-panel': typeof AuthenticatedAtmeBattlePanelRouteWithChildren
   '/@me/kills': typeof AuthenticatedAtmeKillsRoute
+  '/@me/notifications': typeof AuthenticatedAtmeNotificationsRoute
   '/@me/settings': typeof AuthenticatedAtmeSettingsRouteWithChildren
   '/$guildId/': typeof AuthenticatedGuildIdIndexRoute
   '/@me/': typeof AuthenticatedAtmeIndexRoute
   '/$guildId/events/$eventId': typeof AuthenticatedGuildIdEventsEventIdRouteWithChildren
+  '/$guildId/notifications/$ruleId': typeof AuthenticatedGuildIdNotificationsRuleIdRoute
+  '/$guildId/notifications/create': typeof AuthenticatedGuildIdNotificationsCreateRoute
+  '/$guildId/notifications/history': typeof AuthenticatedGuildIdNotificationsHistoryRoute
   '/$guildId/reservations/$reservationId': typeof AuthenticatedGuildIdReservationsReservationIdRoute
   '/$guildId/settings/info': typeof AuthenticatedGuildIdSettingsInfoRoute
   '/$guildId/settings/map-templates': typeof AuthenticatedGuildIdSettingsMapTemplatesRoute
   '/$guildId/settings/members': typeof AuthenticatedGuildIdSettingsMembersRoute
-  '/$guildId/settings/notifications': typeof AuthenticatedGuildIdSettingsNotificationsRouteWithChildren
   '/$guildId/settings/npcs': typeof AuthenticatedGuildIdSettingsNpcsRoute
   '/$guildId/settings/roles': typeof AuthenticatedGuildIdSettingsRolesRouteWithChildren
   '/$guildId/stats/kills': typeof AuthenticatedGuildIdStatsKillsRoute
@@ -674,6 +689,7 @@ export interface FileRoutesByFullPath {
   '/@me/battle-panel/stats': typeof AuthenticatedAtmeBattlePanelStatsRoute
   '/@me/settings/account': typeof AuthenticatedAtmeSettingsAccountRoute
   '/@me/settings/appearance': typeof AuthenticatedAtmeSettingsAppearanceRoute
+  '/$guildId/notifications/': typeof AuthenticatedGuildIdNotificationsIndexRoute
   '/$guildId/reservations/': typeof AuthenticatedGuildIdReservationsIndexRoute
   '/$guildId/settings/': typeof AuthenticatedGuildIdSettingsIndexRoute
   '/$guildId/stats/': typeof AuthenticatedGuildIdStatsIndexRoute
@@ -682,9 +698,6 @@ export interface FileRoutesByFullPath {
   '/$guildId/events/$eventId/edit': typeof AuthenticatedGuildIdEventsEventIdEditRouteWithChildren
   '/$guildId/events/$eventId/kills': typeof AuthenticatedGuildIdEventsEventIdKillsRoute
   '/$guildId/events/$eventId/ranking': typeof AuthenticatedGuildIdEventsEventIdRankingRoute
-  '/$guildId/settings/notifications/$ruleId': typeof AuthenticatedGuildIdSettingsNotificationsRuleIdRoute
-  '/$guildId/settings/notifications/create': typeof AuthenticatedGuildIdSettingsNotificationsCreateRoute
-  '/$guildId/settings/notifications/history': typeof AuthenticatedGuildIdSettingsNotificationsHistoryRoute
   '/$guildId/settings/roles/$roleId': typeof AuthenticatedGuildIdSettingsRolesRoleIdRoute
   '/$guildId/stats/members/$memberId': typeof AuthenticatedGuildIdStatsMembersMemberIdRoute
   '/$guildId/stats/npcs/$npcId': typeof AuthenticatedGuildIdStatsNpcsNpcIdRoute
@@ -692,7 +705,6 @@ export interface FileRoutesByFullPath {
   '/@me/battle-panel/statistics/h2h': typeof AuthenticatedAtmeBattlePanelStatisticsH2hRoute
   '/@me/battle-panel/statistics/matchmaking-h2h': typeof AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRoute
   '/$guildId/events/$eventId/': typeof AuthenticatedGuildIdEventsEventIdIndexRoute
-  '/$guildId/settings/notifications/': typeof AuthenticatedGuildIdSettingsNotificationsIndexRoute
   '/$guildId/stats/npcs/': typeof AuthenticatedGuildIdStatsNpcsIndexRoute
   '/$guildId/events/$eventId/edit/rulebook': typeof AuthenticatedGuildIdEventsEventIdEditRulebookRoute
   '/$guildId/events/$eventId/edit/scoring': typeof AuthenticatedGuildIdEventsEventIdEditScoringRoute
@@ -713,8 +725,12 @@ export interface FileRoutesByTo {
   '/$guildId/events': typeof AuthenticatedGuildIdEventsRoute
   '/$guildId/timers': typeof AuthenticatedGuildIdTimersRoute
   '/@me/kills': typeof AuthenticatedAtmeKillsRoute
+  '/@me/notifications': typeof AuthenticatedAtmeNotificationsRoute
   '/$guildId': typeof AuthenticatedGuildIdIndexRoute
   '/@me': typeof AuthenticatedAtmeIndexRoute
+  '/$guildId/notifications/$ruleId': typeof AuthenticatedGuildIdNotificationsRuleIdRoute
+  '/$guildId/notifications/create': typeof AuthenticatedGuildIdNotificationsCreateRoute
+  '/$guildId/notifications/history': typeof AuthenticatedGuildIdNotificationsHistoryRoute
   '/$guildId/reservations/$reservationId': typeof AuthenticatedGuildIdReservationsReservationIdRoute
   '/$guildId/settings/info': typeof AuthenticatedGuildIdSettingsInfoRoute
   '/$guildId/settings/map-templates': typeof AuthenticatedGuildIdSettingsMapTemplatesRoute
@@ -729,6 +745,7 @@ export interface FileRoutesByTo {
   '/@me/battle-panel/stats': typeof AuthenticatedAtmeBattlePanelStatsRoute
   '/@me/settings/account': typeof AuthenticatedAtmeSettingsAccountRoute
   '/@me/settings/appearance': typeof AuthenticatedAtmeSettingsAppearanceRoute
+  '/$guildId/notifications': typeof AuthenticatedGuildIdNotificationsIndexRoute
   '/$guildId/reservations': typeof AuthenticatedGuildIdReservationsIndexRoute
   '/$guildId/settings': typeof AuthenticatedGuildIdSettingsIndexRoute
   '/$guildId/stats': typeof AuthenticatedGuildIdStatsIndexRoute
@@ -736,9 +753,6 @@ export interface FileRoutesByTo {
   '/@me/settings': typeof AuthenticatedAtmeSettingsIndexRoute
   '/$guildId/events/$eventId/kills': typeof AuthenticatedGuildIdEventsEventIdKillsRoute
   '/$guildId/events/$eventId/ranking': typeof AuthenticatedGuildIdEventsEventIdRankingRoute
-  '/$guildId/settings/notifications/$ruleId': typeof AuthenticatedGuildIdSettingsNotificationsRuleIdRoute
-  '/$guildId/settings/notifications/create': typeof AuthenticatedGuildIdSettingsNotificationsCreateRoute
-  '/$guildId/settings/notifications/history': typeof AuthenticatedGuildIdSettingsNotificationsHistoryRoute
   '/$guildId/settings/roles/$roleId': typeof AuthenticatedGuildIdSettingsRolesRoleIdRoute
   '/$guildId/stats/members/$memberId': typeof AuthenticatedGuildIdStatsMembersMemberIdRoute
   '/$guildId/stats/npcs/$npcId': typeof AuthenticatedGuildIdStatsNpcsNpcIdRoute
@@ -746,7 +760,6 @@ export interface FileRoutesByTo {
   '/@me/battle-panel/statistics/h2h': typeof AuthenticatedAtmeBattlePanelStatisticsH2hRoute
   '/@me/battle-panel/statistics/matchmaking-h2h': typeof AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRoute
   '/$guildId/events/$eventId': typeof AuthenticatedGuildIdEventsEventIdIndexRoute
-  '/$guildId/settings/notifications': typeof AuthenticatedGuildIdSettingsNotificationsIndexRoute
   '/$guildId/stats/npcs': typeof AuthenticatedGuildIdStatsNpcsIndexRoute
   '/$guildId/events/$eventId/edit/rulebook': typeof AuthenticatedGuildIdEventsEventIdEditRulebookRoute
   '/$guildId/events/$eventId/edit/scoring': typeof AuthenticatedGuildIdEventsEventIdEditScoringRoute
@@ -768,21 +781,25 @@ export interface FileRoutesById {
   '/battles/$id': typeof BattlesIdRoute
   '/_authenticated/$guildId/activity-logs': typeof AuthenticatedGuildIdActivityLogsRoute
   '/_authenticated/$guildId/events': typeof AuthenticatedGuildIdEventsRoute
+  '/_authenticated/$guildId/notifications': typeof AuthenticatedGuildIdNotificationsRouteWithChildren
   '/_authenticated/$guildId/reservations': typeof AuthenticatedGuildIdReservationsRouteWithChildren
   '/_authenticated/$guildId/settings': typeof AuthenticatedGuildIdSettingsRouteWithChildren
   '/_authenticated/$guildId/stats': typeof AuthenticatedGuildIdStatsRouteWithChildren
   '/_authenticated/$guildId/timers': typeof AuthenticatedGuildIdTimersRoute
   '/_authenticated/@me/battle-panel': typeof AuthenticatedAtmeBattlePanelRouteWithChildren
   '/_authenticated/@me/kills': typeof AuthenticatedAtmeKillsRoute
+  '/_authenticated/@me/notifications': typeof AuthenticatedAtmeNotificationsRoute
   '/_authenticated/@me/settings': typeof AuthenticatedAtmeSettingsRouteWithChildren
   '/_authenticated/$guildId/': typeof AuthenticatedGuildIdIndexRoute
   '/_authenticated/@me/': typeof AuthenticatedAtmeIndexRoute
   '/_authenticated/$guildId/events_/$eventId_': typeof AuthenticatedGuildIdEventsEventIdRouteWithChildren
+  '/_authenticated/$guildId/notifications/$ruleId': typeof AuthenticatedGuildIdNotificationsRuleIdRoute
+  '/_authenticated/$guildId/notifications/create': typeof AuthenticatedGuildIdNotificationsCreateRoute
+  '/_authenticated/$guildId/notifications/history': typeof AuthenticatedGuildIdNotificationsHistoryRoute
   '/_authenticated/$guildId/reservations/$reservationId': typeof AuthenticatedGuildIdReservationsReservationIdRoute
   '/_authenticated/$guildId/settings/info': typeof AuthenticatedGuildIdSettingsInfoRoute
   '/_authenticated/$guildId/settings/map-templates': typeof AuthenticatedGuildIdSettingsMapTemplatesRoute
   '/_authenticated/$guildId/settings/members': typeof AuthenticatedGuildIdSettingsMembersRoute
-  '/_authenticated/$guildId/settings/notifications': typeof AuthenticatedGuildIdSettingsNotificationsRouteWithChildren
   '/_authenticated/$guildId/settings/npcs': typeof AuthenticatedGuildIdSettingsNpcsRoute
   '/_authenticated/$guildId/settings/roles': typeof AuthenticatedGuildIdSettingsRolesRouteWithChildren
   '/_authenticated/$guildId/stats/kills': typeof AuthenticatedGuildIdStatsKillsRoute
@@ -793,6 +810,7 @@ export interface FileRoutesById {
   '/_authenticated/@me/battle-panel/stats': typeof AuthenticatedAtmeBattlePanelStatsRoute
   '/_authenticated/@me/settings/account': typeof AuthenticatedAtmeSettingsAccountRoute
   '/_authenticated/@me/settings/appearance': typeof AuthenticatedAtmeSettingsAppearanceRoute
+  '/_authenticated/$guildId/notifications/': typeof AuthenticatedGuildIdNotificationsIndexRoute
   '/_authenticated/$guildId/reservations/': typeof AuthenticatedGuildIdReservationsIndexRoute
   '/_authenticated/$guildId/settings/': typeof AuthenticatedGuildIdSettingsIndexRoute
   '/_authenticated/$guildId/stats/': typeof AuthenticatedGuildIdStatsIndexRoute
@@ -801,9 +819,6 @@ export interface FileRoutesById {
   '/_authenticated/$guildId/events_/$eventId_/edit': typeof AuthenticatedGuildIdEventsEventIdEditRouteWithChildren
   '/_authenticated/$guildId/events_/$eventId_/kills': typeof AuthenticatedGuildIdEventsEventIdKillsRoute
   '/_authenticated/$guildId/events_/$eventId_/ranking': typeof AuthenticatedGuildIdEventsEventIdRankingRoute
-  '/_authenticated/$guildId/settings/notifications/$ruleId': typeof AuthenticatedGuildIdSettingsNotificationsRuleIdRoute
-  '/_authenticated/$guildId/settings/notifications/create': typeof AuthenticatedGuildIdSettingsNotificationsCreateRoute
-  '/_authenticated/$guildId/settings/notifications/history': typeof AuthenticatedGuildIdSettingsNotificationsHistoryRoute
   '/_authenticated/$guildId/settings/roles/$roleId': typeof AuthenticatedGuildIdSettingsRolesRoleIdRoute
   '/_authenticated/$guildId/stats/members/$memberId': typeof AuthenticatedGuildIdStatsMembersMemberIdRoute
   '/_authenticated/$guildId/stats/npcs/$npcId': typeof AuthenticatedGuildIdStatsNpcsNpcIdRoute
@@ -811,7 +826,6 @@ export interface FileRoutesById {
   '/_authenticated/@me/battle-panel/statistics_/h2h': typeof AuthenticatedAtmeBattlePanelStatisticsH2hRoute
   '/_authenticated/@me/battle-panel/statistics_/matchmaking-h2h': typeof AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRoute
   '/_authenticated/$guildId/events_/$eventId_/': typeof AuthenticatedGuildIdEventsEventIdIndexRoute
-  '/_authenticated/$guildId/settings/notifications/': typeof AuthenticatedGuildIdSettingsNotificationsIndexRoute
   '/_authenticated/$guildId/stats/npcs/': typeof AuthenticatedGuildIdStatsNpcsIndexRoute
   '/_authenticated/$guildId/events_/$eventId_/edit/rulebook': typeof AuthenticatedGuildIdEventsEventIdEditRulebookRoute
   '/_authenticated/$guildId/events_/$eventId_/edit/scoring': typeof AuthenticatedGuildIdEventsEventIdEditScoringRoute
@@ -834,21 +848,25 @@ export interface FileRouteTypes {
     | '/battles/$id'
     | '/$guildId/activity-logs'
     | '/$guildId/events'
+    | '/$guildId/notifications'
     | '/$guildId/reservations'
     | '/$guildId/settings'
     | '/$guildId/stats'
     | '/$guildId/timers'
     | '/@me/battle-panel'
     | '/@me/kills'
+    | '/@me/notifications'
     | '/@me/settings'
     | '/$guildId/'
     | '/@me/'
     | '/$guildId/events/$eventId'
+    | '/$guildId/notifications/$ruleId'
+    | '/$guildId/notifications/create'
+    | '/$guildId/notifications/history'
     | '/$guildId/reservations/$reservationId'
     | '/$guildId/settings/info'
     | '/$guildId/settings/map-templates'
     | '/$guildId/settings/members'
-    | '/$guildId/settings/notifications'
     | '/$guildId/settings/npcs'
     | '/$guildId/settings/roles'
     | '/$guildId/stats/kills'
@@ -859,6 +877,7 @@ export interface FileRouteTypes {
     | '/@me/battle-panel/stats'
     | '/@me/settings/account'
     | '/@me/settings/appearance'
+    | '/$guildId/notifications/'
     | '/$guildId/reservations/'
     | '/$guildId/settings/'
     | '/$guildId/stats/'
@@ -867,9 +886,6 @@ export interface FileRouteTypes {
     | '/$guildId/events/$eventId/edit'
     | '/$guildId/events/$eventId/kills'
     | '/$guildId/events/$eventId/ranking'
-    | '/$guildId/settings/notifications/$ruleId'
-    | '/$guildId/settings/notifications/create'
-    | '/$guildId/settings/notifications/history'
     | '/$guildId/settings/roles/$roleId'
     | '/$guildId/stats/members/$memberId'
     | '/$guildId/stats/npcs/$npcId'
@@ -877,7 +893,6 @@ export interface FileRouteTypes {
     | '/@me/battle-panel/statistics/h2h'
     | '/@me/battle-panel/statistics/matchmaking-h2h'
     | '/$guildId/events/$eventId/'
-    | '/$guildId/settings/notifications/'
     | '/$guildId/stats/npcs/'
     | '/$guildId/events/$eventId/edit/rulebook'
     | '/$guildId/events/$eventId/edit/scoring'
@@ -898,8 +913,12 @@ export interface FileRouteTypes {
     | '/$guildId/events'
     | '/$guildId/timers'
     | '/@me/kills'
+    | '/@me/notifications'
     | '/$guildId'
     | '/@me'
+    | '/$guildId/notifications/$ruleId'
+    | '/$guildId/notifications/create'
+    | '/$guildId/notifications/history'
     | '/$guildId/reservations/$reservationId'
     | '/$guildId/settings/info'
     | '/$guildId/settings/map-templates'
@@ -914,6 +933,7 @@ export interface FileRouteTypes {
     | '/@me/battle-panel/stats'
     | '/@me/settings/account'
     | '/@me/settings/appearance'
+    | '/$guildId/notifications'
     | '/$guildId/reservations'
     | '/$guildId/settings'
     | '/$guildId/stats'
@@ -921,9 +941,6 @@ export interface FileRouteTypes {
     | '/@me/settings'
     | '/$guildId/events/$eventId/kills'
     | '/$guildId/events/$eventId/ranking'
-    | '/$guildId/settings/notifications/$ruleId'
-    | '/$guildId/settings/notifications/create'
-    | '/$guildId/settings/notifications/history'
     | '/$guildId/settings/roles/$roleId'
     | '/$guildId/stats/members/$memberId'
     | '/$guildId/stats/npcs/$npcId'
@@ -931,7 +948,6 @@ export interface FileRouteTypes {
     | '/@me/battle-panel/statistics/h2h'
     | '/@me/battle-panel/statistics/matchmaking-h2h'
     | '/$guildId/events/$eventId'
-    | '/$guildId/settings/notifications'
     | '/$guildId/stats/npcs'
     | '/$guildId/events/$eventId/edit/rulebook'
     | '/$guildId/events/$eventId/edit/scoring'
@@ -952,21 +968,25 @@ export interface FileRouteTypes {
     | '/battles/$id'
     | '/_authenticated/$guildId/activity-logs'
     | '/_authenticated/$guildId/events'
+    | '/_authenticated/$guildId/notifications'
     | '/_authenticated/$guildId/reservations'
     | '/_authenticated/$guildId/settings'
     | '/_authenticated/$guildId/stats'
     | '/_authenticated/$guildId/timers'
     | '/_authenticated/@me/battle-panel'
     | '/_authenticated/@me/kills'
+    | '/_authenticated/@me/notifications'
     | '/_authenticated/@me/settings'
     | '/_authenticated/$guildId/'
     | '/_authenticated/@me/'
     | '/_authenticated/$guildId/events_/$eventId_'
+    | '/_authenticated/$guildId/notifications/$ruleId'
+    | '/_authenticated/$guildId/notifications/create'
+    | '/_authenticated/$guildId/notifications/history'
     | '/_authenticated/$guildId/reservations/$reservationId'
     | '/_authenticated/$guildId/settings/info'
     | '/_authenticated/$guildId/settings/map-templates'
     | '/_authenticated/$guildId/settings/members'
-    | '/_authenticated/$guildId/settings/notifications'
     | '/_authenticated/$guildId/settings/npcs'
     | '/_authenticated/$guildId/settings/roles'
     | '/_authenticated/$guildId/stats/kills'
@@ -977,6 +997,7 @@ export interface FileRouteTypes {
     | '/_authenticated/@me/battle-panel/stats'
     | '/_authenticated/@me/settings/account'
     | '/_authenticated/@me/settings/appearance'
+    | '/_authenticated/$guildId/notifications/'
     | '/_authenticated/$guildId/reservations/'
     | '/_authenticated/$guildId/settings/'
     | '/_authenticated/$guildId/stats/'
@@ -985,9 +1006,6 @@ export interface FileRouteTypes {
     | '/_authenticated/$guildId/events_/$eventId_/edit'
     | '/_authenticated/$guildId/events_/$eventId_/kills'
     | '/_authenticated/$guildId/events_/$eventId_/ranking'
-    | '/_authenticated/$guildId/settings/notifications/$ruleId'
-    | '/_authenticated/$guildId/settings/notifications/create'
-    | '/_authenticated/$guildId/settings/notifications/history'
     | '/_authenticated/$guildId/settings/roles/$roleId'
     | '/_authenticated/$guildId/stats/members/$memberId'
     | '/_authenticated/$guildId/stats/npcs/$npcId'
@@ -995,7 +1013,6 @@ export interface FileRouteTypes {
     | '/_authenticated/@me/battle-panel/statistics_/h2h'
     | '/_authenticated/@me/battle-panel/statistics_/matchmaking-h2h'
     | '/_authenticated/$guildId/events_/$eventId_/'
-    | '/_authenticated/$guildId/settings/notifications/'
     | '/_authenticated/$guildId/stats/npcs/'
     | '/_authenticated/$guildId/events_/$eventId_/edit/rulebook'
     | '/_authenticated/$guildId/events_/$eventId_/edit/scoring'
@@ -1080,6 +1097,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAtmeSettingsRouteImport
       parentRoute: typeof AuthenticatedAtmeRoute
     }
+    '/_authenticated/@me/notifications': {
+      id: '/_authenticated/@me/notifications'
+      path: '/notifications'
+      fullPath: '/@me/notifications'
+      preLoaderRoute: typeof AuthenticatedAtmeNotificationsRouteImport
+      parentRoute: typeof AuthenticatedAtmeRoute
+    }
     '/_authenticated/@me/kills': {
       id: '/_authenticated/@me/kills'
       path: '/kills'
@@ -1120,6 +1144,13 @@ declare module '@tanstack/react-router' {
       path: '/reservations'
       fullPath: '/$guildId/reservations'
       preLoaderRoute: typeof AuthenticatedGuildIdReservationsRouteImport
+      parentRoute: typeof AuthenticatedGuildIdRoute
+    }
+    '/_authenticated/$guildId/notifications': {
+      id: '/_authenticated/$guildId/notifications'
+      path: '/notifications'
+      fullPath: '/$guildId/notifications'
+      preLoaderRoute: typeof AuthenticatedGuildIdNotificationsRouteImport
       parentRoute: typeof AuthenticatedGuildIdRoute
     }
     '/_authenticated/$guildId/events': {
@@ -1170,6 +1201,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/$guildId/reservations/'
       preLoaderRoute: typeof AuthenticatedGuildIdReservationsIndexRouteImport
       parentRoute: typeof AuthenticatedGuildIdReservationsRoute
+    }
+    '/_authenticated/$guildId/notifications/': {
+      id: '/_authenticated/$guildId/notifications/'
+      path: '/'
+      fullPath: '/$guildId/notifications/'
+      preLoaderRoute: typeof AuthenticatedGuildIdNotificationsIndexRouteImport
+      parentRoute: typeof AuthenticatedGuildIdNotificationsRoute
     }
     '/_authenticated/@me/settings/appearance': {
       id: '/_authenticated/@me/settings/appearance'
@@ -1241,13 +1279,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGuildIdSettingsNpcsRouteImport
       parentRoute: typeof AuthenticatedGuildIdSettingsRoute
     }
-    '/_authenticated/$guildId/settings/notifications': {
-      id: '/_authenticated/$guildId/settings/notifications'
-      path: '/notifications'
-      fullPath: '/$guildId/settings/notifications'
-      preLoaderRoute: typeof AuthenticatedGuildIdSettingsNotificationsRouteImport
-      parentRoute: typeof AuthenticatedGuildIdSettingsRoute
-    }
     '/_authenticated/$guildId/settings/members': {
       id: '/_authenticated/$guildId/settings/members'
       path: '/members'
@@ -1276,6 +1307,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGuildIdReservationsReservationIdRouteImport
       parentRoute: typeof AuthenticatedGuildIdReservationsRoute
     }
+    '/_authenticated/$guildId/notifications/history': {
+      id: '/_authenticated/$guildId/notifications/history'
+      path: '/history'
+      fullPath: '/$guildId/notifications/history'
+      preLoaderRoute: typeof AuthenticatedGuildIdNotificationsHistoryRouteImport
+      parentRoute: typeof AuthenticatedGuildIdNotificationsRoute
+    }
+    '/_authenticated/$guildId/notifications/create': {
+      id: '/_authenticated/$guildId/notifications/create'
+      path: '/create'
+      fullPath: '/$guildId/notifications/create'
+      preLoaderRoute: typeof AuthenticatedGuildIdNotificationsCreateRouteImport
+      parentRoute: typeof AuthenticatedGuildIdNotificationsRoute
+    }
+    '/_authenticated/$guildId/notifications/$ruleId': {
+      id: '/_authenticated/$guildId/notifications/$ruleId'
+      path: '/$ruleId'
+      fullPath: '/$guildId/notifications/$ruleId'
+      preLoaderRoute: typeof AuthenticatedGuildIdNotificationsRuleIdRouteImport
+      parentRoute: typeof AuthenticatedGuildIdNotificationsRoute
+    }
     '/_authenticated/$guildId/events_/$eventId_': {
       id: '/_authenticated/$guildId/events_/$eventId_'
       path: '/events/$eventId'
@@ -1289,13 +1341,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/$guildId/stats/npcs/'
       preLoaderRoute: typeof AuthenticatedGuildIdStatsNpcsIndexRouteImport
       parentRoute: typeof AuthenticatedGuildIdStatsRoute
-    }
-    '/_authenticated/$guildId/settings/notifications/': {
-      id: '/_authenticated/$guildId/settings/notifications/'
-      path: '/'
-      fullPath: '/$guildId/settings/notifications/'
-      preLoaderRoute: typeof AuthenticatedGuildIdSettingsNotificationsIndexRouteImport
-      parentRoute: typeof AuthenticatedGuildIdSettingsNotificationsRoute
     }
     '/_authenticated/$guildId/events_/$eventId_/': {
       id: '/_authenticated/$guildId/events_/$eventId_/'
@@ -1345,27 +1390,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/$guildId/settings/roles/$roleId'
       preLoaderRoute: typeof AuthenticatedGuildIdSettingsRolesRoleIdRouteImport
       parentRoute: typeof AuthenticatedGuildIdSettingsRolesRoute
-    }
-    '/_authenticated/$guildId/settings/notifications/history': {
-      id: '/_authenticated/$guildId/settings/notifications/history'
-      path: '/history'
-      fullPath: '/$guildId/settings/notifications/history'
-      preLoaderRoute: typeof AuthenticatedGuildIdSettingsNotificationsHistoryRouteImport
-      parentRoute: typeof AuthenticatedGuildIdSettingsNotificationsRoute
-    }
-    '/_authenticated/$guildId/settings/notifications/create': {
-      id: '/_authenticated/$guildId/settings/notifications/create'
-      path: '/create'
-      fullPath: '/$guildId/settings/notifications/create'
-      preLoaderRoute: typeof AuthenticatedGuildIdSettingsNotificationsCreateRouteImport
-      parentRoute: typeof AuthenticatedGuildIdSettingsNotificationsRoute
-    }
-    '/_authenticated/$guildId/settings/notifications/$ruleId': {
-      id: '/_authenticated/$guildId/settings/notifications/$ruleId'
-      path: '/$ruleId'
-      fullPath: '/$guildId/settings/notifications/$ruleId'
-      preLoaderRoute: typeof AuthenticatedGuildIdSettingsNotificationsRuleIdRouteImport
-      parentRoute: typeof AuthenticatedGuildIdSettingsNotificationsRoute
     }
     '/_authenticated/$guildId/events_/$eventId_/ranking': {
       id: '/_authenticated/$guildId/events_/$eventId_/ranking'
@@ -1454,6 +1478,30 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedGuildIdNotificationsRouteChildren {
+  AuthenticatedGuildIdNotificationsRuleIdRoute: typeof AuthenticatedGuildIdNotificationsRuleIdRoute
+  AuthenticatedGuildIdNotificationsCreateRoute: typeof AuthenticatedGuildIdNotificationsCreateRoute
+  AuthenticatedGuildIdNotificationsHistoryRoute: typeof AuthenticatedGuildIdNotificationsHistoryRoute
+  AuthenticatedGuildIdNotificationsIndexRoute: typeof AuthenticatedGuildIdNotificationsIndexRoute
+}
+
+const AuthenticatedGuildIdNotificationsRouteChildren: AuthenticatedGuildIdNotificationsRouteChildren =
+  {
+    AuthenticatedGuildIdNotificationsRuleIdRoute:
+      AuthenticatedGuildIdNotificationsRuleIdRoute,
+    AuthenticatedGuildIdNotificationsCreateRoute:
+      AuthenticatedGuildIdNotificationsCreateRoute,
+    AuthenticatedGuildIdNotificationsHistoryRoute:
+      AuthenticatedGuildIdNotificationsHistoryRoute,
+    AuthenticatedGuildIdNotificationsIndexRoute:
+      AuthenticatedGuildIdNotificationsIndexRoute,
+  }
+
+const AuthenticatedGuildIdNotificationsRouteWithChildren =
+  AuthenticatedGuildIdNotificationsRoute._addFileChildren(
+    AuthenticatedGuildIdNotificationsRouteChildren,
+  )
+
 interface AuthenticatedGuildIdReservationsRouteChildren {
   AuthenticatedGuildIdReservationsReservationIdRoute: typeof AuthenticatedGuildIdReservationsReservationIdRoute
   AuthenticatedGuildIdReservationsIndexRoute: typeof AuthenticatedGuildIdReservationsIndexRoute
@@ -1470,30 +1518,6 @@ const AuthenticatedGuildIdReservationsRouteChildren: AuthenticatedGuildIdReserva
 const AuthenticatedGuildIdReservationsRouteWithChildren =
   AuthenticatedGuildIdReservationsRoute._addFileChildren(
     AuthenticatedGuildIdReservationsRouteChildren,
-  )
-
-interface AuthenticatedGuildIdSettingsNotificationsRouteChildren {
-  AuthenticatedGuildIdSettingsNotificationsRuleIdRoute: typeof AuthenticatedGuildIdSettingsNotificationsRuleIdRoute
-  AuthenticatedGuildIdSettingsNotificationsCreateRoute: typeof AuthenticatedGuildIdSettingsNotificationsCreateRoute
-  AuthenticatedGuildIdSettingsNotificationsHistoryRoute: typeof AuthenticatedGuildIdSettingsNotificationsHistoryRoute
-  AuthenticatedGuildIdSettingsNotificationsIndexRoute: typeof AuthenticatedGuildIdSettingsNotificationsIndexRoute
-}
-
-const AuthenticatedGuildIdSettingsNotificationsRouteChildren: AuthenticatedGuildIdSettingsNotificationsRouteChildren =
-  {
-    AuthenticatedGuildIdSettingsNotificationsRuleIdRoute:
-      AuthenticatedGuildIdSettingsNotificationsRuleIdRoute,
-    AuthenticatedGuildIdSettingsNotificationsCreateRoute:
-      AuthenticatedGuildIdSettingsNotificationsCreateRoute,
-    AuthenticatedGuildIdSettingsNotificationsHistoryRoute:
-      AuthenticatedGuildIdSettingsNotificationsHistoryRoute,
-    AuthenticatedGuildIdSettingsNotificationsIndexRoute:
-      AuthenticatedGuildIdSettingsNotificationsIndexRoute,
-  }
-
-const AuthenticatedGuildIdSettingsNotificationsRouteWithChildren =
-  AuthenticatedGuildIdSettingsNotificationsRoute._addFileChildren(
-    AuthenticatedGuildIdSettingsNotificationsRouteChildren,
   )
 
 interface AuthenticatedGuildIdSettingsRolesRouteChildren {
@@ -1515,7 +1539,6 @@ interface AuthenticatedGuildIdSettingsRouteChildren {
   AuthenticatedGuildIdSettingsInfoRoute: typeof AuthenticatedGuildIdSettingsInfoRoute
   AuthenticatedGuildIdSettingsMapTemplatesRoute: typeof AuthenticatedGuildIdSettingsMapTemplatesRoute
   AuthenticatedGuildIdSettingsMembersRoute: typeof AuthenticatedGuildIdSettingsMembersRoute
-  AuthenticatedGuildIdSettingsNotificationsRoute: typeof AuthenticatedGuildIdSettingsNotificationsRouteWithChildren
   AuthenticatedGuildIdSettingsNpcsRoute: typeof AuthenticatedGuildIdSettingsNpcsRoute
   AuthenticatedGuildIdSettingsRolesRoute: typeof AuthenticatedGuildIdSettingsRolesRouteWithChildren
   AuthenticatedGuildIdSettingsIndexRoute: typeof AuthenticatedGuildIdSettingsIndexRoute
@@ -1529,8 +1552,6 @@ const AuthenticatedGuildIdSettingsRouteChildren: AuthenticatedGuildIdSettingsRou
       AuthenticatedGuildIdSettingsMapTemplatesRoute,
     AuthenticatedGuildIdSettingsMembersRoute:
       AuthenticatedGuildIdSettingsMembersRoute,
-    AuthenticatedGuildIdSettingsNotificationsRoute:
-      AuthenticatedGuildIdSettingsNotificationsRouteWithChildren,
     AuthenticatedGuildIdSettingsNpcsRoute:
       AuthenticatedGuildIdSettingsNpcsRoute,
     AuthenticatedGuildIdSettingsRolesRoute:
@@ -1637,6 +1658,7 @@ const AuthenticatedGuildIdEventsEventIdRouteWithChildren =
 interface AuthenticatedGuildIdRouteChildren {
   AuthenticatedGuildIdActivityLogsRoute: typeof AuthenticatedGuildIdActivityLogsRoute
   AuthenticatedGuildIdEventsRoute: typeof AuthenticatedGuildIdEventsRoute
+  AuthenticatedGuildIdNotificationsRoute: typeof AuthenticatedGuildIdNotificationsRouteWithChildren
   AuthenticatedGuildIdReservationsRoute: typeof AuthenticatedGuildIdReservationsRouteWithChildren
   AuthenticatedGuildIdSettingsRoute: typeof AuthenticatedGuildIdSettingsRouteWithChildren
   AuthenticatedGuildIdStatsRoute: typeof AuthenticatedGuildIdStatsRouteWithChildren
@@ -1648,6 +1670,8 @@ interface AuthenticatedGuildIdRouteChildren {
 const AuthenticatedGuildIdRouteChildren: AuthenticatedGuildIdRouteChildren = {
   AuthenticatedGuildIdActivityLogsRoute: AuthenticatedGuildIdActivityLogsRoute,
   AuthenticatedGuildIdEventsRoute: AuthenticatedGuildIdEventsRoute,
+  AuthenticatedGuildIdNotificationsRoute:
+    AuthenticatedGuildIdNotificationsRouteWithChildren,
   AuthenticatedGuildIdReservationsRoute:
     AuthenticatedGuildIdReservationsRouteWithChildren,
   AuthenticatedGuildIdSettingsRoute:
@@ -1721,6 +1745,7 @@ const AuthenticatedAtmeSettingsRouteWithChildren =
 interface AuthenticatedAtmeRouteChildren {
   AuthenticatedAtmeBattlePanelRoute: typeof AuthenticatedAtmeBattlePanelRouteWithChildren
   AuthenticatedAtmeKillsRoute: typeof AuthenticatedAtmeKillsRoute
+  AuthenticatedAtmeNotificationsRoute: typeof AuthenticatedAtmeNotificationsRoute
   AuthenticatedAtmeSettingsRoute: typeof AuthenticatedAtmeSettingsRouteWithChildren
   AuthenticatedAtmeIndexRoute: typeof AuthenticatedAtmeIndexRoute
 }
@@ -1729,6 +1754,7 @@ const AuthenticatedAtmeRouteChildren: AuthenticatedAtmeRouteChildren = {
   AuthenticatedAtmeBattlePanelRoute:
     AuthenticatedAtmeBattlePanelRouteWithChildren,
   AuthenticatedAtmeKillsRoute: AuthenticatedAtmeKillsRoute,
+  AuthenticatedAtmeNotificationsRoute: AuthenticatedAtmeNotificationsRoute,
   AuthenticatedAtmeSettingsRoute: AuthenticatedAtmeSettingsRouteWithChildren,
   AuthenticatedAtmeIndexRoute: AuthenticatedAtmeIndexRoute,
 }

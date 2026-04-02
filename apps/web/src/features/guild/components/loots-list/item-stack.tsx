@@ -1,5 +1,6 @@
-import { ItemTile } from "@/components/tiles";
+import { WatchableItemTile } from "@/components/tiles";
 import { ItemImage } from "@/components/tiles/item-image";
+import type { WatchedItemScope } from "@/features/user-notifications/types/watched-item-scope";
 import { ItemRarity, type Item } from "@/hooks/api/loots/use-loots";
 import { cn } from "@lootlog/ui/lib/utils";
 import { AnimatePresence } from "framer-motion";
@@ -24,9 +25,10 @@ const sortByRarity = (items: Item[]): Item[] =>
 
 type Props = {
   items: Item[];
+  watchContext: WatchedItemScope;
 };
 
-export const ItemStack: FC<Props> = ({ items }) => {
+export const ItemStack: FC<Props> = ({ items, watchContext }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
   const stackRef = useRef<HTMLDivElement>(null);
@@ -49,7 +51,7 @@ export const ItemStack: FC<Props> = ({ items }) => {
 
   if (items.length === 1) {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return <ItemTile item={items[0]!} />;
+    return <WatchableItemTile item={items[0]!} watchContext={watchContext} />;
   }
 
   const sorted = sortByRarity(items);
@@ -86,7 +88,11 @@ export const ItemStack: FC<Props> = ({ items }) => {
 
       <AnimatePresence>
         {isExpanded && anchorRect && (
-          <ItemStackExpanded items={sorted} anchorRect={anchorRect} />
+          <ItemStackExpanded
+            items={sorted}
+            anchorRect={anchorRect}
+            watchContext={watchContext}
+          />
         )}
       </AnimatePresence>
     </div>

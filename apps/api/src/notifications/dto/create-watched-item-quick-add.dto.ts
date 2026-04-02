@@ -1,13 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
-import {
-  ArrayNotEmpty,
-  IsArray,
-  IsInt,
-  IsNotEmpty,
-  IsString,
-} from "class-validator";
+import { IsInt, IsNotEmpty, IsString } from "class-validator";
 
-export class CreateWatchedItemDto {
+export class CreateWatchedItemQuickAddDto {
   @ApiProperty()
   @IsInt()
   itemId: number;
@@ -27,9 +21,8 @@ export class CreateWatchedItemDto {
   @IsNotEmpty()
   world: string;
 
-  @ApiProperty({ type: [String] })
-  @IsArray()
-  @ArrayNotEmpty()
-  @IsString({ each: true })
-  guildIds: string[];
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  guildId: string;
 }

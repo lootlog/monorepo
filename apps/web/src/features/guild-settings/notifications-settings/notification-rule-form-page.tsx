@@ -461,7 +461,7 @@ export const NotificationRuleFormPage = () => {
 
   const navigateBack = () => {
     if (guildId) {
-      navigate({ to: ROUTES.guild.settings.notifications(guildId) });
+      navigate({ to: ROUTES.guild.notifications.base(guildId) });
     }
   };
 
