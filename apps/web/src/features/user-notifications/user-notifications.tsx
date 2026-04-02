@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useQueries } from "@tanstack/react-query";
 import {
   BellRing,
+  FlaskConical,
   MessageCircleMore,
   Package,
   ShieldAlert,
@@ -29,6 +30,7 @@ import { useGuilds } from "@/hooks/api/guilds/use-guilds";
 import {
   useCreateUserNotificationTarget,
   useCreateWatchedItem,
+  useTriggerUserNotificationTargetTest,
   useUpdateUserNotificationTarget,
   useUserNotifications,
 } from "@/hooks/api/user/use-user-notifications";
@@ -43,6 +45,7 @@ export const UserNotifications = () => {
   const { data: guilds = [] } = useGuilds();
   const createUserTarget = useCreateUserNotificationTarget();
   const updateUserTarget = useUpdateUserNotificationTarget();
+  const triggerUserTargetTest = useTriggerUserNotificationTargetTest();
   const createWatchedItem = useCreateWatchedItem();
   const [selectedGuildIds, setSelectedGuildIds] = useState<string[]>([]);
   const [selectedWorld, setSelectedWorld] = useState("");
@@ -50,9 +53,12 @@ export const UserNotifications = () => {
   const [selectedItem, setSelectedItem] = useState<GameItem | null>(null);
   const dmTarget =
     data?.targets.find((target) => target.targetType === "DM") ?? null;
+  const hasDmTarget = dmTarget !== null;
   const hasActiveDm = Boolean(dmTarget?.active && dmTarget.canSend);
   const isDmActionPending =
-    createUserTarget.isPending || updateUserTarget.isPending;
+    createUserTarget.isPending ||
+    updateUserTarget.isPending ||
+    triggerUserTargetTest.isPending;
   const guildOptions = guilds.map((guild) => ({
     value: guild.id,
     label: guild.name,
@@ -114,25 +120,6 @@ export const UserNotifications = () => {
     }
   };
 
-  const handleDisableDm = async () => {
-    if (!dmTarget) {
-      return;
-    }
-
-    try {
-      await updateUserTarget.mutateAsync({
-        targetId: dmTarget.id,
-        active: false,
-      });
-      toast.success(t("settings.userNotifications.toasts.dmDisabled"));
-    } catch (error) {
-      toast.error(
-        getApiErrorMessage(error) ??
-          t("settings.userNotifications.toasts.dmDisableError"),
-      );
-    }
-  };
-
   const handleCreateWatchedItem = async () => {
     if (!hasActiveDm) {
       toast.error(t("settings.userNotifications.validation.dmRequired"));
@@ -169,6 +156,24 @@ export const UserNotifications = () => {
       toast.error(
         getApiErrorMessage(error) ??
           t("settings.userNotifications.toasts.watchCreateError"),
+      );
+    }
+  };
+
+  const handleTriggerDmTest = async () => {
+    if (!dmTarget || !hasActiveDm) {
+      return;
+    }
+
+    try {
+      await triggerUserTargetTest.mutateAsync({
+        targetId: dmTarget.id,
+      });
+      toast.success(t("settings.userNotifications.toasts.dmTestTriggered"));
+    } catch (error) {
+      toast.error(
+        getApiErrorMessage(error) ??
+          t("settings.userNotifications.toasts.dmTestTriggerError"),
       );
     }
   };
@@ -213,10 +218,10 @@ export const UserNotifications = () => {
                   <h3 className="text-base font-semibold">
                     {t("settings.userNotifications.dm.title")}
                   </h3>
-                  <Badge variant={hasActiveDm ? "default" : "outline"}>
+                  <Badge variant={hasActiveDm ? "default" : "secondary"}>
                     {hasActiveDm
                       ? t("settings.userNotifications.dm.active")
-                      : t("settings.userNotifications.dm.inactive")}
+                      : t("settings.userNotifications.dm.actionRequired")}
                   </Badge>
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
@@ -232,28 +237,36 @@ export const UserNotifications = () => {
                 {!hasActiveDm ? (
                   <p className="mt-3 flex items-center gap-1.5 text-xs text-amber-500">
                     <ShieldAlert className="size-3.5 shrink-0" />
-                    {t("settings.userNotifications.dm.requiredHint")}
+                    {hasDmTarget && !dmTarget.canSend
+                      ? t("settings.userNotifications.dm.cannotSendHint")
+                      : hasDmTarget
+                        ? t("settings.userNotifications.dm.reactivateHint")
+                        : t("settings.userNotifications.dm.requiredHint")}
                   </p>
                 ) : null}
               </div>
-              {hasActiveDm ? (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={isDmActionPending}
-                  onClick={handleDisableDm}
-                >
-                  {t("settings.userNotifications.dm.disable")}
-                </Button>
-              ) : (
-                <Button
-                  size="sm"
-                  disabled={isDmActionPending}
-                  onClick={handleEnableDm}
-                >
-                  {t("settings.userNotifications.dm.enable")}
-                </Button>
-              )}
+              <div className="flex gap-2">
+                {hasActiveDm ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={isDmActionPending}
+                    onClick={handleTriggerDmTest}
+                  >
+                    <FlaskConical className="size-4" />
+                    {t("settings.userNotifications.dm.test")}
+                  </Button>
+                ) : null}
+                {!hasActiveDm ? (
+                  <Button
+                    size="sm"
+                    disabled={isDmActionPending}
+                    onClick={handleEnableDm}
+                  >
+                    {t("settings.userNotifications.dm.configure")}
+                  </Button>
+                ) : null}
+              </div>
             </div>
           </Card>
 

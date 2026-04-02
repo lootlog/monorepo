@@ -1,7 +1,7 @@
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { getQueueToken } from "@nestjs/bullmq";
 import { Test, type TestingModule } from "@nestjs/testing";
-import { DiscordGuildSyncStatus, NotificationTargetType } from "@lootlog/types";
+import { NotificationTargetType } from "@lootlog/types";
 import { Prisma } from "prisma/generated/client";
 import { PrismaService } from "src/db/prisma.service";
 import { GuildsService } from "src/guilds/guilds.service";
@@ -52,6 +52,8 @@ describe("Notification Services", () => {
       findMany: jest.fn(),
       deleteMany: jest.fn(),
       upsert: jest.fn(),
+      findFirst: jest.fn(),
+      update: jest.fn(),
     },
     notificationJob: {
       create: jest.fn(),
@@ -103,6 +105,23 @@ describe("Notification Services", () => {
       targetType: "DM",
       active: true,
       canSend: true,
+    });
+    mockPrisma.notificationTarget.findFirst.mockResolvedValue({
+      id: 11,
+      ownerType: "USER",
+      ownerId: "user-1",
+      targetType: "DM",
+      active: true,
+      canSend: true,
+    });
+    mockPrisma.notificationTarget.update.mockResolvedValue({
+      id: 11,
+      ownerType: "USER",
+      ownerId: "user-1",
+      targetType: "DM",
+      active: true,
+      canSend: true,
+      displayName: "Discord DM",
     });
     mockPrisma.guild.findUnique.mockResolvedValue({
       notificationRuleLimit: 20,
@@ -383,6 +402,85 @@ describe("Notification Services", () => {
     });
 
     expect(mockPrisma.notificationTarget.upsert).not.toHaveBeenCalled();
+  });
+
+  it("rejects deactivating user dm targets", async () => {
+    await expect(
+      targetService.updateUserTarget("user-1", 11, {
+        active: false,
+      }),
+    ).rejects.toMatchObject({
+      response: {
+        message: "User Discord DM notification targets cannot be deactivated",
+      },
+    });
+
+    expect(mockPrisma.notificationTarget.update).not.toHaveBeenCalled();
+  });
+
+  it("creates an immediate test job for an active user dm target", async () => {
+    mockPrisma.notificationRule.findFirst.mockResolvedValueOnce(null);
+    mockPrisma.notificationRule.create.mockResolvedValueOnce({
+      id: 191,
+      ownerType: "USER",
+      ownerId: "user-1",
+      guildId: null,
+      triggerType: "SCHEDULED_MESSAGE",
+    });
+
+    await expect(targetService.triggerUserTargetTest("user-1", 11)).resolves.toEqual(
+      {
+        success: true,
+      },
+    );
+
+    expect(mockPrisma.notificationRule.create).toHaveBeenCalledWith({
+      data: {
+        ownerType: "USER",
+        ownerId: "user-1",
+        triggerType: "SCHEDULED_MESSAGE",
+        guildId: null,
+        world: null,
+        name: "__system:user-dm-test__",
+        filters: Prisma.DbNull,
+        contentTemplate: null,
+        scheduleStrategy: "FIXED_DATETIME",
+        scheduleAnchor: null,
+        scheduleOffsetMinutes: null,
+        scheduledAt: null,
+        scheduleIntervalType: "ONCE",
+        scheduleIntervalValue: null,
+        scheduleWeekday: null,
+        scheduleTimeOfDay: null,
+        scheduledUntil: null,
+        scheduleTimezone: null,
+        enabled: false,
+        dedupeWindowSeconds: 0,
+      },
+    });
+    expect(mockPrisma.notificationRuleTarget.createMany).toHaveBeenCalledWith({
+      data: [{ ruleId: 191, targetId: 11 }],
+      skipDuplicates: true,
+    });
+    expect(mockPrisma.notificationJob.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        ruleId: 191,
+        targetId: 11,
+        ownerType: "USER",
+        ownerId: "user-1",
+        jobKind: "TEST",
+        sourceEntityType: "user-dm-test",
+        sourceEntityId: "11",
+      }),
+    });
+    expect(mockQueue.add).toHaveBeenCalledWith(
+      "job-created",
+      { notificationJobId: "job-created" },
+      expect.objectContaining({
+        delay: 0,
+        jobId: "job-created",
+      }),
+    );
   });
 
   it("requires an active dm target before creating a watched item", async () => {
