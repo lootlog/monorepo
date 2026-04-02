@@ -341,11 +341,13 @@
     "dm": {
       "title": "Discord DM",
       "description": "Obserwowane itemy wysyłamy wyłącznie na Twoją prywatną wiadomość na Discordzie.",
-      "active": "Aktywny",
-      "inactive": "Nieaktywny",
-      "enable": "Włącz DM",
-      "disable": "Wyłącz DM",
-      "requiredHint": "Aktywny target DM jest wymagany, zanim zapiszesz obserwowany item.",
+      "active": "Gotowe",
+      "actionRequired": "Wymaga konfiguracji",
+      "configure": "Skonfiguruj DM",
+      "test": "Wyślij test",
+      "requiredHint": "Aktywny Discord DM jest wymagany do obserwowanych itemów.",
+      "reactivateHint": "Discord DM jest obecnie wyłączony. Aktywuj go ponownie, aby odbierać powiadomienia o obserwowanych itemach.",
+      "cannotSendHint": "Nie możemy teraz wysyłać wiadomości na ten Discord DM. Sprawdź ustawienia prywatności albo połączenie konta.",
       "targetLabel": "Kanał docelowy: {{name}}"
     },
     "watchForm": {
@@ -400,7 +402,7 @@
       "items": "Pobieranie itemów..."
     },
     "validation": {
-      "dmRequired": "Najpierw włącz Discord DM dla powiadomień.",
+      "dmRequired": "Najpierw skonfiguruj Discord DM dla obserwowanych itemów.",
       "guildRequired": "Wybierz przynajmniej jedną gildię.",
       "itemRequired": "Wybierz item do obserwowania.",
       "worldRequired": "Najpierw wybierz świat."
@@ -408,8 +410,8 @@
     "toasts": {
       "dmEnabled": "Discord DM został włączony.",
       "dmEnableError": "Nie udało się włączyć Discord DM.",
-      "dmDisabled": "Discord DM został wyłączony.",
-      "dmDisableError": "Nie udało się wyłączyć Discord DM.",
+      "dmTestTriggered": "Wysłaliśmy testowe powiadomienie na Discord DM.",
+      "dmTestTriggerError": "Nie udało się wysłać testowego powiadomienia na Discord DM.",
       "watchCreated": "Obserwowany item został dodany.",
       "watchCreateError": "Nie udało się dodać obserwowanego itemu.",
       "watchDeleted": "Obserwowany item został usunięty.",

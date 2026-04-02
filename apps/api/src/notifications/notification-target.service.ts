@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   forwardRef,
   Inject,
   Injectable,
@@ -7,15 +8,24 @@ import {
 } from "@nestjs/common";
 import type { DiscordGuildChannelSnapshot } from "@lootlog/types";
 import {
+  NotificationJobKind as DbNotificationJobKind,
   NotificationOwnerType as DbNotificationOwnerType,
   NotificationProvider as DbNotificationProvider,
+  NotificationScheduleIntervalType as DbNotificationScheduleIntervalType,
+  NotificationScheduleStrategy as DbNotificationScheduleStrategy,
   NotificationTargetType as DbNotificationTargetType,
+  NotificationTriggerType as DbNotificationTriggerType,
+  Prisma,
 } from "prisma/generated/client";
 import { ChannelsService } from "src/channels/channels.service";
 import { PrismaService } from "src/db/prisma.service";
 import { NotificationJobService } from "src/notifications/notification-job.service";
 import type { CreateNotificationTargetDto } from "src/notifications/dto/create-notification-target.dto";
 import type { UpdateNotificationTargetDto } from "src/notifications/dto/update-notification-target.dto";
+
+const USER_DM_TEST_RULE_NAME = "__system:user-dm-test__";
+const USER_DM_TEST_MESSAGE =
+  "To jest test Twojego Discord DM dla obserwowanych itemów.";
 
 @Injectable()
 export class NotificationTargetService {
@@ -190,6 +200,12 @@ export class NotificationTargetService {
     data: UpdateNotificationTargetDto,
   ) {
     await this.ensureUserTarget(userId, targetId);
+    if (data.active === false) {
+      throw new BadRequestException(
+        "User Discord DM notification targets cannot be deactivated",
+      );
+    }
+
     const hasDisplayName = Object.prototype.hasOwnProperty.call(
       data,
       "displayName",
@@ -202,6 +218,60 @@ export class NotificationTargetService {
         active: data.active,
       },
     });
+  }
+
+  async triggerUserTargetTest(userId: string, targetId: number) {
+    const target = await this.ensureUserTarget(userId, targetId);
+
+    if (target.targetType !== DbNotificationTargetType.DM) {
+      throw new BadRequestException(
+        "User notification test target must be a Discord DM",
+      );
+    }
+
+    if (!target.active || !target.canSend) {
+      throw new ConflictException(
+        "User Discord DM target must be active and able to send",
+      );
+    }
+
+    const testRule = await this.getOrCreateUserDmTestRule(userId, target.id);
+    const scheduledFor = new Date();
+    const notificationJob = await this.jobService.createNotificationJob({
+      notificationRule: {
+        id: testRule.id,
+        ownerType: testRule.ownerType,
+        ownerId: testRule.ownerId,
+        guildId: testRule.guildId,
+        triggerType: testRule.triggerType,
+      },
+      target: {
+        id: target.id,
+        externalId: target.externalId,
+        targetType: target.targetType,
+        active: target.active,
+        canSend: target.canSend,
+      },
+      jobKind: DbNotificationJobKind.TEST,
+      scheduledFor,
+      sourceEntityType: "user-dm-test",
+      sourceEntityId: String(target.id),
+      payloadSnapshot: {
+        title: "Powiadomienie testowe",
+        message: USER_DM_TEST_MESSAGE,
+        content: USER_DM_TEST_MESSAGE,
+        source: "user-dm-test",
+        testTriggeredAt: scheduledFor.toISOString(),
+      } satisfies Prisma.InputJsonObject,
+    });
+
+    if (!notificationJob) {
+      throw new ConflictException("No test job was created for this target");
+    }
+
+    await this.jobService.enqueueNotificationJob(notificationJob.id, 0);
+
+    return { success: true };
   }
 
   async deleteUserTarget(userId: string, targetId: number) {
@@ -317,6 +387,51 @@ export class NotificationTargetService {
     }
 
     return target;
+  }
+
+  private async getOrCreateUserDmTestRule(userId: string, targetId: number) {
+    let notificationRule = await this.prisma.notificationRule.findFirst({
+      where: {
+        ownerType: DbNotificationOwnerType.USER,
+        ownerId: userId,
+        triggerType: DbNotificationTriggerType.SCHEDULED_MESSAGE,
+        name: USER_DM_TEST_RULE_NAME,
+      },
+    });
+
+    if (!notificationRule) {
+      notificationRule = await this.prisma.notificationRule.create({
+        data: {
+          ownerType: DbNotificationOwnerType.USER,
+          ownerId: userId,
+          triggerType: DbNotificationTriggerType.SCHEDULED_MESSAGE,
+          guildId: null,
+          world: null,
+          name: USER_DM_TEST_RULE_NAME,
+          filters: Prisma.DbNull,
+          contentTemplate: null,
+          scheduleStrategy: DbNotificationScheduleStrategy.FIXED_DATETIME,
+          scheduleAnchor: null,
+          scheduleOffsetMinutes: null,
+          scheduledAt: null,
+          scheduleIntervalType: DbNotificationScheduleIntervalType.ONCE,
+          scheduleIntervalValue: null,
+          scheduleWeekday: null,
+          scheduleTimeOfDay: null,
+          scheduledUntil: null,
+          scheduleTimezone: null,
+          enabled: false,
+          dedupeWindowSeconds: 0,
+        },
+      });
+    }
+
+    await this.prisma.notificationRuleTarget.createMany({
+      data: [{ ruleId: notificationRule.id, targetId }],
+      skipDuplicates: true,
+    });
+
+    return notificationRule;
   }
 
   createGuildChannelTargetMetadata(

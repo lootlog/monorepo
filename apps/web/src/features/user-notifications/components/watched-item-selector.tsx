@@ -50,7 +50,7 @@ export const WatchedItemSelector = ({
   onSearchChange,
   onSelect,
 }: WatchedItemSelectorProps) => {
-  const { t } = useTranslation("settings");
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const resultsListId = useId();
 
@@ -77,7 +77,7 @@ export const WatchedItemSelector = ({
   };
 
   const displayLabel = selectedItem
-    ? t("userNotifications.itemSelector.selectedLabel", {
+    ? t("settings.userNotifications.itemSelector.selectedLabel", {
         name: selectedItem.name,
         id: selectedItem.id,
       })
@@ -177,13 +177,13 @@ export const WatchedItemSelector = ({
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{item.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {t("userNotifications.itemSelector.itemId", {
+                      {t("settings.userNotifications.itemSelector.itemId", {
                         id: item.id,
                       })}
                     </p>
                   </div>
                   <span className="text-xs text-muted-foreground">
-                    {t("userNotifications.itemSelector.itemLevel", {
+                    {t("settings.userNotifications.itemSelector.itemLevel", {
                       level: item.lvl,
                     })}
                   </span>

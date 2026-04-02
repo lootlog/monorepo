@@ -68,6 +68,10 @@ export type DeleteWatchedItemData = {
   watchedItemId: number;
 };
 
+export type TriggerUserNotificationTargetTestData = {
+  targetId: number;
+};
+
 export type QuickAddWatchedItemData = {
   itemId: number;
   itemName: string;
@@ -177,6 +181,23 @@ export const useDeleteWatchedItem = () => {
     mutationFn: async (data: DeleteWatchedItemData) => {
       const response = await apiClient.delete<{ success: true }>(
         `/users/@me/notifications/watched-items/${data.watchedItemId}`,
+      );
+
+      return response.data;
+    },
+    onSuccess: async () => {
+      await invalidateUserNotificationQueries(queryClient);
+    },
+  });
+};
+
+export const useTriggerUserNotificationTargetTest = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: TriggerUserNotificationTargetTestData) => {
+      const response = await apiClient.post<{ success: true }>(
+        `/users/@me/notifications/targets/${data.targetId}/test`,
       );
 
       return response.data;

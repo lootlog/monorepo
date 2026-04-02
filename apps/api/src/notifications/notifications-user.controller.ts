@@ -56,6 +56,14 @@ export class NotificationsUserController {
     return this.targetService.updateUserTarget(userId, targetId, data);
   }
 
+  @Post("targets/:targetId/test")
+  async triggerUserTargetTest(
+    @UserId() userId: string,
+    @Param("targetId", ParseIntPipe) targetId: number,
+  ) {
+    return this.targetService.triggerUserTargetTest(userId, targetId);
+  }
+
   @Delete("targets/:targetId")
   async deleteUserTarget(
     @UserId() userId: string,
