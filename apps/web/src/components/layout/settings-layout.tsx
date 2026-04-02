@@ -35,11 +35,6 @@ export const SettingsLayout: React.FC = () => {
       href: `${ROUTE_SEGMENTS.guild.settings}${ROUTE_SEGMENTS.guild.members}`,
     },
     {
-      id: "notifications",
-      label: t("settings.guildNavigation.notifications"),
-      href: `${ROUTE_SEGMENTS.guild.settings}${ROUTE_SEGMENTS.guild.notifications}`,
-    },
-    {
       id: "info",
       label: t("settings.guildNavigation.info"),
       href: `${ROUTE_SEGMENTS.guild.settings}${ROUTE_SEGMENTS.guild.info}`,

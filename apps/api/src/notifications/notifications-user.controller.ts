@@ -13,6 +13,7 @@ import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { DiscordId, UserId } from "@lootlog/nest-shared";
 import { CreateNotificationRuleDto } from "src/notifications/dto/create-notification-rule.dto";
 import { CreateNotificationTargetDto } from "src/notifications/dto/create-notification-target.dto";
+import { CreateWatchedItemQuickAddDto } from "src/notifications/dto/create-watched-item-quick-add.dto";
 import { CreateWatchedItemDto } from "src/notifications/dto/create-watched-item.dto";
 import { UpdateNotificationRuleDto } from "src/notifications/dto/update-notification-rule.dto";
 import { UpdateNotificationTargetDto } from "src/notifications/dto/update-notification-target.dto";
@@ -100,9 +101,23 @@ export class NotificationsUserController {
   @Post("watched-items")
   async createWatchedItem(
     @UserId() userId: string,
+    @DiscordId() discordId: string,
     @Body() data: CreateWatchedItemDto,
   ) {
-    return this.notificationsService.createWatchedItem(userId, data);
+    return this.notificationsService.createWatchedItem(userId, discordId, data);
+  }
+
+  @Post("watched-items/quick-add")
+  async quickAddWatchedItem(
+    @UserId() userId: string,
+    @DiscordId() discordId: string,
+    @Body() data: CreateWatchedItemQuickAddDto,
+  ) {
+    return this.notificationsService.quickAddWatchedItem(
+      userId,
+      discordId,
+      data,
+    );
   }
 
   @Delete("watched-items/:watchedItemId")

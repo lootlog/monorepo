@@ -12,7 +12,7 @@ import {
 import type { FC } from "react";
 import { Trans, useTranslation } from "react-i18next";
 
-type ItemTileProps = {
+export type ItemTileProps = {
   item: Item;
   color?: string;
   shareIndex?: number;

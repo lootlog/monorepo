@@ -39,6 +39,7 @@ import {
 } from "src/notifications/constants/notifications-history.constant";
 import type { CreateNotificationRuleDto } from "src/notifications/dto/create-notification-rule.dto";
 import type { CreateNotificationTargetDto } from "src/notifications/dto/create-notification-target.dto";
+import type { CreateWatchedItemQuickAddDto } from "src/notifications/dto/create-watched-item-quick-add.dto";
 import type { CreateWatchedItemDto } from "src/notifications/dto/create-watched-item.dto";
 import type { UpdateNotificationRuleDto } from "src/notifications/dto/update-notification-rule.dto";
 import type { UpdateNotificationTargetDto } from "src/notifications/dto/update-notification-target.dto";
@@ -821,12 +822,22 @@ export class NotificationsService {
     });
   }
 
-  async createWatchedItem(userId: string, data: CreateWatchedItemDto) {
+  async createWatchedItem(
+    userId: string,
+    discordId: string,
+    data: CreateWatchedItemDto,
+  ) {
+    const normalizedGuildIds = await this.validateWatchedItemGuildIds({
+      userId,
+      discordId,
+      guildIds: data.guildIds,
+    });
     const existingWatchedItem = await this.prisma.watchedItem.findUnique({
       where: {
-        userId_itemId: {
+        userId_itemId_world: {
           userId,
           itemId: data.itemId,
+          world: data.world,
         },
       },
       include: {
@@ -835,18 +846,31 @@ export class NotificationsService {
     });
 
     const targetIds = await this.getActiveUserTargetIds(userId);
+    if (targetIds.length === 0) {
+      throw new ConflictException(
+        "Active Discord DM notification target is required",
+      );
+    }
 
     if (existingWatchedItem?.notificationRuleId) {
       await this.prisma.$transaction(async (tx) => {
         await tx.watchedItem.update({
           where: { id: existingWatchedItem.id },
-          data: { enabled: true },
+          data: {
+            enabled: true,
+            itemName: data.itemName,
+            itemIcon: data.itemIcon,
+          },
         });
         await tx.notificationRule.update({
           where: { id: existingWatchedItem.notificationRuleId },
           data: {
             enabled: true,
-            filters: { itemId: data.itemId },
+            world: data.world,
+            filters: {
+              itemId: data.itemId,
+              guildIds: normalizedGuildIds,
+            },
           },
         });
         if (targetIds.length > 0) {
@@ -860,19 +884,10 @@ export class NotificationsService {
         }
       });
 
-      return this.prisma.watchedItem.findUnique({
-        where: { id: existingWatchedItem.id },
-        include: {
-          notificationRule: {
-            include: {
-              targets: {
-                include: {
-                  target: true,
-                },
-              },
-            },
-          },
-        },
+      return this.getWatchedItemByScope({
+        userId,
+        itemId: data.itemId,
+        world: data.world,
       });
     }
 
@@ -882,7 +897,11 @@ export class NotificationsService {
           ownerType: DbNotificationOwnerType.USER,
           ownerId: userId,
           triggerType: DbNotificationTriggerType.WATCHED_ITEM_DROPPED,
-          filters: { itemId: data.itemId },
+          world: data.world,
+          filters: {
+            itemId: data.itemId,
+            guildIds: normalizedGuildIds,
+          },
           enabled: true,
           dedupeWindowSeconds: 0,
           targets:
@@ -898,18 +917,157 @@ export class NotificationsService {
 
       return tx.watchedItem.upsert({
         where: {
-          userId_itemId: {
+          userId_itemId_world: {
             userId,
             itemId: data.itemId,
+            world: data.world,
           },
         },
         create: {
           userId,
           itemId: data.itemId,
+          itemName: data.itemName,
+          itemIcon: data.itemIcon,
+          world: data.world,
           notificationRuleId: notificationRule.id,
         },
         update: {
           enabled: true,
+          itemName: data.itemName,
+          itemIcon: data.itemIcon,
+          notificationRuleId: notificationRule.id,
+        },
+        include: {
+          notificationRule: {
+            include: {
+              targets: {
+                include: {
+                  target: true,
+                },
+              },
+            },
+          },
+        },
+      });
+    });
+  }
+
+  async quickAddWatchedItem(
+    userId: string,
+    discordId: string,
+    data: CreateWatchedItemQuickAddDto,
+  ) {
+    const [guildId] = await this.validateWatchedItemGuildIds({
+      userId,
+      discordId,
+      guildIds: [data.guildId],
+    });
+    const targetIds = await this.getActiveUserTargetIds(userId);
+
+    if (targetIds.length === 0) {
+      throw new ConflictException(
+        "Active Discord DM notification target is required",
+      );
+    }
+
+    const existingWatchedItem = await this.prisma.watchedItem.findUnique({
+      where: {
+        userId_itemId_world: {
+          userId,
+          itemId: data.itemId,
+          world: data.world,
+        },
+      },
+      include: {
+        notificationRule: true,
+      },
+    });
+
+    if (existingWatchedItem?.notificationRuleId) {
+      const existingFilters = this.parseFilters(
+        existingWatchedItem.notificationRule?.filters ?? {},
+      );
+      const mergedGuildIds = [
+        ...new Set([...(existingFilters.guildIds ?? []), guildId]),
+      ].sort();
+
+      await this.prisma.$transaction(async (tx) => {
+        await tx.watchedItem.update({
+          where: { id: existingWatchedItem.id },
+          data: {
+            enabled: true,
+            itemName: data.itemName,
+            itemIcon: data.itemIcon,
+          },
+        });
+        await tx.notificationRule.update({
+          where: { id: existingWatchedItem.notificationRuleId },
+          data: {
+            enabled: true,
+            world: data.world,
+            filters: {
+              itemId: data.itemId,
+              guildIds: mergedGuildIds,
+            },
+          },
+        });
+        await tx.notificationRuleTarget.createMany({
+          data: targetIds.map((targetId) => ({
+            ruleId: existingWatchedItem.notificationRuleId!,
+            targetId,
+          })),
+          skipDuplicates: true,
+        });
+      });
+
+      return this.getWatchedItemByScope({
+        userId,
+        itemId: data.itemId,
+        world: data.world,
+      });
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const notificationRule = await tx.notificationRule.create({
+        data: {
+          ownerType: DbNotificationOwnerType.USER,
+          ownerId: userId,
+          triggerType: DbNotificationTriggerType.WATCHED_ITEM_DROPPED,
+          world: data.world,
+          filters: {
+            itemId: data.itemId,
+            guildIds: [guildId],
+          },
+          enabled: true,
+          dedupeWindowSeconds: 0,
+          targets: {
+            createMany: {
+              data: targetIds.map((targetId) => ({ targetId })),
+            },
+          },
+        },
+      });
+
+      return tx.watchedItem.upsert({
+        where: {
+          userId_itemId_world: {
+            userId,
+            itemId: data.itemId,
+            world: data.world,
+          },
+        },
+        create: {
+          userId,
+          itemId: data.itemId,
+          itemName: data.itemName,
+          itemIcon: data.itemIcon,
+          world: data.world,
+          notificationRuleId: notificationRule.id,
+        },
+        update: {
+          enabled: true,
+          itemName: data.itemName,
+          itemIcon: data.itemIcon,
           notificationRuleId: notificationRule.id,
         },
         include: {
@@ -991,10 +1149,12 @@ export class NotificationsService {
         itemId: {
           in: event.itemIds,
         },
+        world: event.world,
         notificationRule: {
           is: {
             enabled: true,
             triggerType: DbNotificationTriggerType.WATCHED_ITEM_DROPPED,
+            world: event.world,
             targets: {
               some: {},
             },
@@ -1013,6 +1173,13 @@ export class NotificationsService {
         },
       },
     });
+    const activeGuildIdsByOwnerId =
+      await this.getActiveMembershipGuildIdsByOwner(
+        watchedItems
+          .map((watchedItem) => watchedItem.notificationRule?.ownerId)
+          .filter((ownerId): ownerId is string => typeof ownerId === "string"),
+        event.guildIds,
+      );
 
     for (const watchedItem of watchedItems) {
       const notificationRule = watchedItem.notificationRule;
@@ -1021,6 +1188,21 @@ export class NotificationsService {
       }
 
       if (!this.matchesLootRule(notificationRule.filters, event)) {
+        continue;
+      }
+      const matchedGuildIds = this.getMatchingLootGuildIds(
+        notificationRule.filters,
+        event.guildIds,
+      );
+      if (matchedGuildIds.length === 0) {
+        continue;
+      }
+      const activeOwnerGuildIds =
+        activeGuildIdsByOwnerId.get(notificationRule.ownerId) ?? new Set();
+      const authorizedGuildIds = matchedGuildIds.filter((guildId) =>
+        activeOwnerGuildIds.has(guildId),
+      );
+      if (authorizedGuildIds.length === 0) {
         continue;
       }
 
@@ -1043,7 +1225,7 @@ export class NotificationsService {
             world: event.world,
             itemIds: event.itemIds,
             itemNames: event.itemNames,
-            guildIds: event.guildIds,
+            guildIds: authorizedGuildIds,
           },
         });
 
@@ -2220,9 +2402,15 @@ export class NotificationsService {
     data: Pick<
       CreateNotificationRuleDto | UpdateNotificationRuleDto,
       "npcId" | "npcIds" | "itemId" | "itemIds"
-    >,
+    > & {
+      guildIds?: string[];
+    },
   ): Prisma.InputJsonObject {
     const filters: Record<string, Prisma.InputJsonValue> = {};
+
+    if (data.guildIds !== undefined) {
+      filters.guildIds = data.guildIds;
+    }
 
     if (data.npcId !== undefined) {
       filters.npcId = data.npcId;
@@ -2304,8 +2492,8 @@ export class NotificationsService {
     }
 
     if (
-      filters.guildId &&
-      !event.guildIds.some((guildId) => guildId === filters.guildId)
+      filters.guildIds?.length &&
+      !filters.guildIds.some((guildId) => event.guildIds.includes(guildId))
     ) {
       return false;
     }
@@ -2323,6 +2511,119 @@ export class NotificationsService {
     }
 
     return filtersValue as unknown as NotificationFilters;
+  }
+
+  private async validateWatchedItemGuildIds(params: {
+    userId: string;
+    discordId: string;
+    guildIds: string[];
+  }) {
+    const normalizedGuildIds = [...new Set(params.guildIds)].sort();
+
+    if (normalizedGuildIds.length === 0) {
+      throw new BadRequestException("At least one guild is required");
+    }
+
+    const availableGuildIds = new Set(
+      (
+        await this.guildsService.getUserGuilds(params.discordId, params.userId)
+      ).map((guild) => guild.id),
+    );
+    const invalidGuildIds = normalizedGuildIds.filter(
+      (guildId) => !availableGuildIds.has(guildId),
+    );
+
+    if (invalidGuildIds.length > 0) {
+      throw new BadRequestException(
+        "Selected guilds are not available for the authenticated user",
+      );
+    }
+
+    return normalizedGuildIds;
+  }
+
+  private getWatchedItemByScope(params: {
+    userId: string;
+    itemId: number;
+    world: string;
+  }) {
+    return this.prisma.watchedItem.findUnique({
+      where: {
+        userId_itemId_world: {
+          userId: params.userId,
+          itemId: params.itemId,
+          world: params.world,
+        },
+      },
+      include: {
+        notificationRule: {
+          include: {
+            targets: {
+              include: {
+                target: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  private getMatchingLootGuildIds(
+    filtersValue: Prisma.JsonValue,
+    eventGuildIds: string[],
+  ) {
+    const filters = this.parseFilters(filtersValue);
+
+    if (filters.guildIds?.length) {
+      return eventGuildIds.filter((guildId) =>
+        filters.guildIds!.includes(guildId),
+      );
+    }
+
+    return [];
+  }
+
+  private async getActiveMembershipGuildIdsByOwner(
+    ownerIds: string[],
+    guildIds: string[],
+  ) {
+    const uniqueOwnerIds = [...new Set(ownerIds)];
+    const uniqueGuildIds = [...new Set(guildIds)];
+    const activeGuildIdsByOwnerId = new Map<string, Set<string>>();
+
+    if (uniqueOwnerIds.length === 0 || uniqueGuildIds.length === 0) {
+      return activeGuildIdsByOwnerId;
+    }
+
+    const memberships = await this.prisma.member.findMany({
+      where: {
+        globalUserId: {
+          in: uniqueOwnerIds,
+        },
+        guildId: {
+          in: uniqueGuildIds,
+        },
+        active: true,
+      },
+      select: {
+        globalUserId: true,
+        guildId: true,
+      },
+    });
+
+    for (const membership of memberships) {
+      if (!membership.globalUserId) {
+        continue;
+      }
+
+      const ownerGuildIds =
+        activeGuildIdsByOwnerId.get(membership.globalUserId) ?? new Set();
+      ownerGuildIds.add(membership.guildId);
+      activeGuildIdsByOwnerId.set(membership.globalUserId, ownerGuildIds);
+    }
+
+    return activeGuildIdsByOwnerId;
   }
 
   private getTimerSourceEntityId(

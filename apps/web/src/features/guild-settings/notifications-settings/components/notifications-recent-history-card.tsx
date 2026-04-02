@@ -102,7 +102,7 @@ export const NotificationsRecentHistoryCard = ({
             </button>
           ))}
           <Button size="sm" variant="outline" className="w-full" asChild>
-            <Link to={ROUTES.guild.settings.notificationHistory(guildId ?? "")}>
+            <Link to={ROUTES.guild.notifications.history(guildId ?? "")}>
               {t("settings.notifications.actions.showAllHistory", {
                 count: historyJobs.length,
               })}

@@ -605,6 +605,9 @@ model WatchedItem {
   id          Int      @id @default(autoincrement())
   userId      String
   itemId      Int
+  itemName    String
+  itemIcon    String
+  world       String
   enabled     Boolean  @default(true)
   notificationRuleId Int?     @unique
   createdAt   DateTime @default(now())
@@ -612,9 +615,9 @@ model WatchedItem {
 
   notificationRule NotificationRule? @relation(fields: [notificationRuleId], references: [id], onDelete: SetNull)
 
-  @@unique([userId, itemId])
+  @@unique([userId, itemId, world])
   @@index([userId, enabled])
-  @@index([itemId, enabled])
+  @@index([itemId, world, enabled])
 }
 
 model DiscordGuildChannelSnapshot {

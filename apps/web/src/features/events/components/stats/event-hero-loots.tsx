@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { useEventLoots } from "../../hooks/queries/use-event-loots";
 import type { EventHeroNpc } from "../../hooks/queries/use-events";
-import { ItemTile } from "@/components/tiles";
+import { WatchableItemTile } from "@/components/tiles";
 import { LootNpcs } from "@/features/guild/components/loots-list/loot-npcs";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { cn } from "@/utils/cn";
@@ -39,6 +39,10 @@ const LootItemsRow = ({ loot }: { loot: Loot }) => {
     (item) => item.rarity === ItemRarity.LEGENDARY,
   );
   const date = timestampToDate(loot.createdAt);
+  const watchContext = {
+    guildId: loot.guildId,
+    world: loot.world,
+  };
 
   return (
     <div
@@ -55,7 +59,11 @@ const LootItemsRow = ({ loot }: { loot: Loot }) => {
 
       <div className="flex flex-row flex-wrap gap-1 py-2 border-t border-border/30">
         {loot.items.map((item, idx) => (
-          <ItemTile key={`${item.hid}-${idx}`} item={item} />
+          <WatchableItemTile
+            key={`${item.hid}-${idx}`}
+            item={item}
+            watchContext={watchContext}
+          />
         ))}
       </div>
 

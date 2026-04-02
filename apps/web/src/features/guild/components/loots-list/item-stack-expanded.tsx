@@ -1,4 +1,5 @@
-import { ItemTile } from "@/components/tiles";
+import { WatchableItemTile } from "@/components/tiles";
+import type { WatchedItemScope } from "@/features/user-notifications/types/watched-item-scope";
 import type { Item } from "@/hooks/api/loots/use-loots";
 import { motion } from "framer-motion";
 import { createPortal } from "react-dom";
@@ -7,9 +8,14 @@ import type { FC } from "react";
 type Props = {
   items: Item[];
   anchorRect: DOMRect;
+  watchContext: WatchedItemScope;
 };
 
-export const ItemStackExpanded: FC<Props> = ({ items, anchorRect }) =>
+export const ItemStackExpanded: FC<Props> = ({
+  items,
+  anchorRect,
+  watchContext,
+}) =>
   createPortal(
     <motion.div
       initial={{ opacity: 0, scale: 0.85, y: -8 }}
@@ -25,7 +31,11 @@ export const ItemStackExpanded: FC<Props> = ({ items, anchorRect }) =>
       onPointerDown={(e) => e.stopPropagation()}
     >
       {items.map((item, idx) => (
-        <ItemTile key={`${item.hid}-${idx}`} item={item} />
+        <WatchableItemTile
+          key={`${item.hid}-${idx}`}
+          item={item}
+          watchContext={watchContext}
+        />
       ))}
     </motion.div>,
     document.body,

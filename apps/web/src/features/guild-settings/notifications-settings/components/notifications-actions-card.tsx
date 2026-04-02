@@ -40,7 +40,7 @@ export const NotificationsActionsCard = ({
         </Button>
         {hasRequiredPermissions && !isRuleLimitReached ? (
           <Button size="sm" asChild>
-            <Link to={ROUTES.guild.settings.notificationCreate(guildId ?? "")}>
+            <Link to={ROUTES.guild.notifications.create(guildId ?? "")}>
               {t("settings.notifications.actions.addRule")}
             </Link>
           </Button>
