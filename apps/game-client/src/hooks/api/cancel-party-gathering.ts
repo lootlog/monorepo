@@ -13,7 +13,7 @@ type CancelPartyGatheringOptions = {
   chatMessageIds: Record<string, string>;
 };
 
-const PARTY_GATHERING_ENDPOINT = "/notifications/party-gathering";
+const PARTY_GATHERING_ENDPOINT = "/messaging/party-gathering";
 
 const getPartyGatheringCancellationPath = (
   notificationId: string | undefined,

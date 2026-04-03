@@ -20,6 +20,8 @@ import { UserLootlogConfigModule } from "./user-lootlog-config/user-lootlog-conf
 import { ConfigKey } from "src/config/config-key.enum";
 import { ChatModule } from "src/chat/chat.module";
 import { RedisModule } from "src/lib/redis/redis.module";
+import { ChannelsModule } from "src/channels/channels.module";
+import { MessagingModule } from "src/messaging/messaging.module";
 import { NotificationsModule } from "src/notifications/notifications.module";
 import { DiscordModule } from "./discord/discord.module";
 import { AuthModule } from "./auth/auth.module";
@@ -71,6 +73,8 @@ import { KillsModule } from "src/kills/kills.module";
     ChatModule,
     ReservationsModule,
     RedisModule,
+    ChannelsModule,
+    MessagingModule,
     NotificationsModule,
     DiscordModule,
     AuthModule,

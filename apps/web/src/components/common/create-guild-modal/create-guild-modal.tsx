@@ -10,8 +10,8 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { SearchInput } from "@/components/ui/search-input";
 import { useState, type FC } from "react";
 import { getGuildIconById } from "@/utils/get-guild-icon-by-id";
+import { buildDiscordBotInstallUrl } from "@/utils/build-discord-bot-install-url";
 import { useDebounceValue } from "usehooks-ts";
-import { DISCORD_BOT_PERMISSIONS, DISCORD_CLIENT_ID } from "@/config/discord";
 import {
   Avatar,
   AvatarFallback,
@@ -31,17 +31,7 @@ export const CreateGuildModal: FC = () => {
   );
 
   const handleAddToGuild = (guildId: string) => {
-    const searchParams = new URLSearchParams();
-    searchParams.set("client_id", DISCORD_CLIENT_ID);
-    searchParams.set("permissions", DISCORD_BOT_PERMISSIONS);
-    searchParams.set("scope", "bot");
-    searchParams.set("response_type", "code");
-    searchParams.set("guild_id", guildId);
-    searchParams.set("redirect_uri", `${window.location.origin}/init`);
-
-    window.location.assign(
-      `https://discord.com/api/oauth2/authorize?${searchParams.toString()}`,
-    );
+    window.location.assign(buildDiscordBotInstallUrl(guildId));
   };
 
   const handleModalClose = () => {

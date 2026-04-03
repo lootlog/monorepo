@@ -30,27 +30,39 @@ export type UseGuildNpcsOptions = {
   search?: string;
   selectedNpcs?: string;
   world?: string;
+  enabled?: boolean;
 };
 
 export const useNpcs = ({
   search,
   selectedNpcs,
   world,
+  enabled = true,
 }: UseGuildNpcsOptions) => {
   const { client } = useApiClient();
+  const normalizedSearch = search?.trim() ?? "";
+  const normalizedSelectedNpcs = selectedNpcs?.trim() ?? "";
 
   const queryParams = {
-    search: search || selectedNpcs || "",
+    search: normalizedSearch || normalizedSelectedNpcs,
     ...(world ? { world } : {}),
   };
 
   const query = useQuery({
-    queryKey: ["guild-npcs", search],
+    queryKey: [
+      "guild-npcs",
+      normalizedSearch,
+      normalizedSelectedNpcs,
+      world ?? "",
+    ],
     queryFn: () =>
       client.get<Npc[]>(
         `${SEARCH_API_URL}/npcs?${new URLSearchParams(queryParams).toString()}`,
       ),
     select: (response) => response.data,
+    enabled:
+      enabled &&
+      (normalizedSearch.length > 0 || normalizedSelectedNpcs.length > 0),
   });
 
   return query;

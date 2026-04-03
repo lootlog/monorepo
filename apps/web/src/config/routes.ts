@@ -25,6 +25,9 @@ const ROUTES = {
       appearance: `${USER_BASE}/settings/appearance`,
       account: `${USER_BASE}/settings/account`,
     },
+    notifications: {
+      base: `${USER_BASE}/notifications`,
+    },
   },
 
   guild: {
@@ -44,6 +47,13 @@ const ROUTES = {
     },
     activityLogs: (guildId: string) => `/${guildId}/activity-logs`,
     events: (guildId: string) => `/${guildId}/events`,
+    notifications: {
+      base: (guildId: string) => `/${guildId}/notifications`,
+      create: (guildId: string) => `/${guildId}/notifications/create`,
+      rule: (guildId: string, ruleId: string) =>
+        `/${guildId}/notifications/${ruleId}`,
+      history: (guildId: string) => `/${guildId}/notifications/history`,
+    },
     settings: {
       base: (guildId: string) => `/${guildId}/settings`,
       roles: (guildId: string) => `/${guildId}/settings/roles`,
@@ -51,6 +61,7 @@ const ROUTES = {
         `/${guildId}/settings/roles/${roleId}`,
       npcs: (guildId: string) => `/${guildId}/settings/npcs`,
       members: (guildId: string) => `/${guildId}/settings/members`,
+      info: (guildId: string) => `/${guildId}/settings/info`,
       appearance: (guildId: string) => `/${guildId}/settings/appearance`,
       servers: (guildId: string) => `/${guildId}/settings/servers`,
     },
@@ -68,6 +79,7 @@ const ROUTE_SEGMENTS = {
     battles: "/battles",
     stats: "/stats",
     settings: "/settings",
+    notifications: "/notifications",
     appearance: "/appearance",
     account: "/account",
   },
@@ -78,10 +90,12 @@ const ROUTE_SEGMENTS = {
     statsKills: "/stats/kills",
     statsLoots: "/stats/loots",
     events: "/events",
+    notifications: "/notifications",
     settings: "/settings",
     roles: "/roles",
     npcs: "/npcs",
     members: "/members",
+    info: "/info",
     appearance: "/appearance",
     servers: "/servers",
     activityLogs: "/activity-logs",

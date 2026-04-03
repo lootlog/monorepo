@@ -402,6 +402,13 @@ export const ModelName = {
   Reservation: 'Reservation',
   UserCharactersLootlogSettings: 'UserCharactersLootlogSettings',
   UserSettings: 'UserSettings',
+  NotificationTarget: 'NotificationTarget',
+  NotificationRule: 'NotificationRule',
+  NotificationRuleTarget: 'NotificationRuleTarget',
+  NotificationJob: 'NotificationJob',
+  WatchedItem: 'WatchedItem',
+  DiscordGuildChannelSnapshot: 'DiscordGuildChannelSnapshot',
+  DiscordGuildSyncState: 'DiscordGuildSyncState',
   MemberRefreshJob: 'MemberRefreshJob',
   UserTimerSettings: 'UserTimerSettings',
   UserGuildTimerSettings: 'UserGuildTimerSettings',
@@ -438,7 +445,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "guild" | "role" | "member" | "timer" | "loot" | "itemSnapshot" | "lootItem" | "playerSnapshot" | "lootPlayer" | "npcSnapshot" | "lootNpc" | "lootSubmission" | "lootComment" | "lootlogConfigNpc" | "lootlogConfig" | "reservation" | "userCharactersLootlogSettings" | "userSettings" | "memberRefreshJob" | "userTimerSettings" | "userGuildTimerSettings" | "userGuildEventSettings" | "userSoundSettings" | "event" | "eventMapLocation" | "eventMap" | "eventMapCoverageGap" | "eventMapAssignmentHistory" | "eventHeroNpc" | "eventPresenceLog" | "eventHeroKill" | "eventKillPoint" | "eventRanking" | "eventPointsEditHistory" | "eventRespawnWindowSummary" | "mapTemplate" | "npcKillStats" | "userKillStats" | "guildKillSummary"
+    modelProps: "guild" | "role" | "member" | "timer" | "loot" | "itemSnapshot" | "lootItem" | "playerSnapshot" | "lootPlayer" | "npcSnapshot" | "lootNpc" | "lootSubmission" | "lootComment" | "lootlogConfigNpc" | "lootlogConfig" | "reservation" | "userCharactersLootlogSettings" | "userSettings" | "notificationTarget" | "notificationRule" | "notificationRuleTarget" | "notificationJob" | "watchedItem" | "discordGuildChannelSnapshot" | "discordGuildSyncState" | "memberRefreshJob" | "userTimerSettings" | "userGuildTimerSettings" | "userGuildEventSettings" | "userSoundSettings" | "event" | "eventMapLocation" | "eventMap" | "eventMapCoverageGap" | "eventMapAssignmentHistory" | "eventHeroNpc" | "eventPresenceLog" | "eventHeroKill" | "eventKillPoint" | "eventRanking" | "eventPointsEditHistory" | "eventRespawnWindowSummary" | "mapTemplate" | "npcKillStats" | "userKillStats" | "guildKillSummary"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1771,6 +1778,524 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.UserSettingsCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.UserSettingsCountAggregateOutputType> | number
+        }
+      }
+    }
+    NotificationTarget: {
+      payload: Prisma.$NotificationTargetPayload<ExtArgs>
+      fields: Prisma.NotificationTargetFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.NotificationTargetFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationTargetPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.NotificationTargetFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationTargetPayload>
+        }
+        findFirst: {
+          args: Prisma.NotificationTargetFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationTargetPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.NotificationTargetFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationTargetPayload>
+        }
+        findMany: {
+          args: Prisma.NotificationTargetFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationTargetPayload>[]
+        }
+        create: {
+          args: Prisma.NotificationTargetCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationTargetPayload>
+        }
+        createMany: {
+          args: Prisma.NotificationTargetCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.NotificationTargetCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationTargetPayload>[]
+        }
+        delete: {
+          args: Prisma.NotificationTargetDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationTargetPayload>
+        }
+        update: {
+          args: Prisma.NotificationTargetUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationTargetPayload>
+        }
+        deleteMany: {
+          args: Prisma.NotificationTargetDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.NotificationTargetUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.NotificationTargetUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationTargetPayload>[]
+        }
+        upsert: {
+          args: Prisma.NotificationTargetUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationTargetPayload>
+        }
+        aggregate: {
+          args: Prisma.NotificationTargetAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateNotificationTarget>
+        }
+        groupBy: {
+          args: Prisma.NotificationTargetGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.NotificationTargetGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.NotificationTargetCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.NotificationTargetCountAggregateOutputType> | number
+        }
+      }
+    }
+    NotificationRule: {
+      payload: Prisma.$NotificationRulePayload<ExtArgs>
+      fields: Prisma.NotificationRuleFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.NotificationRuleFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationRulePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.NotificationRuleFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationRulePayload>
+        }
+        findFirst: {
+          args: Prisma.NotificationRuleFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationRulePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.NotificationRuleFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationRulePayload>
+        }
+        findMany: {
+          args: Prisma.NotificationRuleFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationRulePayload>[]
+        }
+        create: {
+          args: Prisma.NotificationRuleCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationRulePayload>
+        }
+        createMany: {
+          args: Prisma.NotificationRuleCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.NotificationRuleCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationRulePayload>[]
+        }
+        delete: {
+          args: Prisma.NotificationRuleDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationRulePayload>
+        }
+        update: {
+          args: Prisma.NotificationRuleUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationRulePayload>
+        }
+        deleteMany: {
+          args: Prisma.NotificationRuleDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.NotificationRuleUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.NotificationRuleUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationRulePayload>[]
+        }
+        upsert: {
+          args: Prisma.NotificationRuleUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationRulePayload>
+        }
+        aggregate: {
+          args: Prisma.NotificationRuleAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateNotificationRule>
+        }
+        groupBy: {
+          args: Prisma.NotificationRuleGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.NotificationRuleGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.NotificationRuleCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.NotificationRuleCountAggregateOutputType> | number
+        }
+      }
+    }
+    NotificationRuleTarget: {
+      payload: Prisma.$NotificationRuleTargetPayload<ExtArgs>
+      fields: Prisma.NotificationRuleTargetFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.NotificationRuleTargetFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationRuleTargetPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.NotificationRuleTargetFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationRuleTargetPayload>
+        }
+        findFirst: {
+          args: Prisma.NotificationRuleTargetFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationRuleTargetPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.NotificationRuleTargetFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationRuleTargetPayload>
+        }
+        findMany: {
+          args: Prisma.NotificationRuleTargetFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationRuleTargetPayload>[]
+        }
+        create: {
+          args: Prisma.NotificationRuleTargetCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationRuleTargetPayload>
+        }
+        createMany: {
+          args: Prisma.NotificationRuleTargetCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.NotificationRuleTargetCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationRuleTargetPayload>[]
+        }
+        delete: {
+          args: Prisma.NotificationRuleTargetDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationRuleTargetPayload>
+        }
+        update: {
+          args: Prisma.NotificationRuleTargetUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationRuleTargetPayload>
+        }
+        deleteMany: {
+          args: Prisma.NotificationRuleTargetDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.NotificationRuleTargetUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.NotificationRuleTargetUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationRuleTargetPayload>[]
+        }
+        upsert: {
+          args: Prisma.NotificationRuleTargetUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationRuleTargetPayload>
+        }
+        aggregate: {
+          args: Prisma.NotificationRuleTargetAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateNotificationRuleTarget>
+        }
+        groupBy: {
+          args: Prisma.NotificationRuleTargetGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.NotificationRuleTargetGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.NotificationRuleTargetCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.NotificationRuleTargetCountAggregateOutputType> | number
+        }
+      }
+    }
+    NotificationJob: {
+      payload: Prisma.$NotificationJobPayload<ExtArgs>
+      fields: Prisma.NotificationJobFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.NotificationJobFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationJobPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.NotificationJobFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationJobPayload>
+        }
+        findFirst: {
+          args: Prisma.NotificationJobFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationJobPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.NotificationJobFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationJobPayload>
+        }
+        findMany: {
+          args: Prisma.NotificationJobFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationJobPayload>[]
+        }
+        create: {
+          args: Prisma.NotificationJobCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationJobPayload>
+        }
+        createMany: {
+          args: Prisma.NotificationJobCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.NotificationJobCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationJobPayload>[]
+        }
+        delete: {
+          args: Prisma.NotificationJobDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationJobPayload>
+        }
+        update: {
+          args: Prisma.NotificationJobUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationJobPayload>
+        }
+        deleteMany: {
+          args: Prisma.NotificationJobDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.NotificationJobUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.NotificationJobUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationJobPayload>[]
+        }
+        upsert: {
+          args: Prisma.NotificationJobUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationJobPayload>
+        }
+        aggregate: {
+          args: Prisma.NotificationJobAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateNotificationJob>
+        }
+        groupBy: {
+          args: Prisma.NotificationJobGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.NotificationJobGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.NotificationJobCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.NotificationJobCountAggregateOutputType> | number
+        }
+      }
+    }
+    WatchedItem: {
+      payload: Prisma.$WatchedItemPayload<ExtArgs>
+      fields: Prisma.WatchedItemFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.WatchedItemFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchedItemPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.WatchedItemFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchedItemPayload>
+        }
+        findFirst: {
+          args: Prisma.WatchedItemFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchedItemPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.WatchedItemFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchedItemPayload>
+        }
+        findMany: {
+          args: Prisma.WatchedItemFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchedItemPayload>[]
+        }
+        create: {
+          args: Prisma.WatchedItemCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchedItemPayload>
+        }
+        createMany: {
+          args: Prisma.WatchedItemCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.WatchedItemCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchedItemPayload>[]
+        }
+        delete: {
+          args: Prisma.WatchedItemDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchedItemPayload>
+        }
+        update: {
+          args: Prisma.WatchedItemUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchedItemPayload>
+        }
+        deleteMany: {
+          args: Prisma.WatchedItemDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.WatchedItemUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.WatchedItemUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchedItemPayload>[]
+        }
+        upsert: {
+          args: Prisma.WatchedItemUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchedItemPayload>
+        }
+        aggregate: {
+          args: Prisma.WatchedItemAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateWatchedItem>
+        }
+        groupBy: {
+          args: Prisma.WatchedItemGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WatchedItemGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.WatchedItemCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WatchedItemCountAggregateOutputType> | number
+        }
+      }
+    }
+    DiscordGuildChannelSnapshot: {
+      payload: Prisma.$DiscordGuildChannelSnapshotPayload<ExtArgs>
+      fields: Prisma.DiscordGuildChannelSnapshotFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.DiscordGuildChannelSnapshotFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DiscordGuildChannelSnapshotPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.DiscordGuildChannelSnapshotFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DiscordGuildChannelSnapshotPayload>
+        }
+        findFirst: {
+          args: Prisma.DiscordGuildChannelSnapshotFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DiscordGuildChannelSnapshotPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.DiscordGuildChannelSnapshotFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DiscordGuildChannelSnapshotPayload>
+        }
+        findMany: {
+          args: Prisma.DiscordGuildChannelSnapshotFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DiscordGuildChannelSnapshotPayload>[]
+        }
+        create: {
+          args: Prisma.DiscordGuildChannelSnapshotCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DiscordGuildChannelSnapshotPayload>
+        }
+        createMany: {
+          args: Prisma.DiscordGuildChannelSnapshotCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.DiscordGuildChannelSnapshotCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DiscordGuildChannelSnapshotPayload>[]
+        }
+        delete: {
+          args: Prisma.DiscordGuildChannelSnapshotDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DiscordGuildChannelSnapshotPayload>
+        }
+        update: {
+          args: Prisma.DiscordGuildChannelSnapshotUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DiscordGuildChannelSnapshotPayload>
+        }
+        deleteMany: {
+          args: Prisma.DiscordGuildChannelSnapshotDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.DiscordGuildChannelSnapshotUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.DiscordGuildChannelSnapshotUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DiscordGuildChannelSnapshotPayload>[]
+        }
+        upsert: {
+          args: Prisma.DiscordGuildChannelSnapshotUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DiscordGuildChannelSnapshotPayload>
+        }
+        aggregate: {
+          args: Prisma.DiscordGuildChannelSnapshotAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateDiscordGuildChannelSnapshot>
+        }
+        groupBy: {
+          args: Prisma.DiscordGuildChannelSnapshotGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DiscordGuildChannelSnapshotGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.DiscordGuildChannelSnapshotCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DiscordGuildChannelSnapshotCountAggregateOutputType> | number
+        }
+      }
+    }
+    DiscordGuildSyncState: {
+      payload: Prisma.$DiscordGuildSyncStatePayload<ExtArgs>
+      fields: Prisma.DiscordGuildSyncStateFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.DiscordGuildSyncStateFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DiscordGuildSyncStatePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.DiscordGuildSyncStateFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DiscordGuildSyncStatePayload>
+        }
+        findFirst: {
+          args: Prisma.DiscordGuildSyncStateFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DiscordGuildSyncStatePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.DiscordGuildSyncStateFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DiscordGuildSyncStatePayload>
+        }
+        findMany: {
+          args: Prisma.DiscordGuildSyncStateFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DiscordGuildSyncStatePayload>[]
+        }
+        create: {
+          args: Prisma.DiscordGuildSyncStateCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DiscordGuildSyncStatePayload>
+        }
+        createMany: {
+          args: Prisma.DiscordGuildSyncStateCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.DiscordGuildSyncStateCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DiscordGuildSyncStatePayload>[]
+        }
+        delete: {
+          args: Prisma.DiscordGuildSyncStateDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DiscordGuildSyncStatePayload>
+        }
+        update: {
+          args: Prisma.DiscordGuildSyncStateUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DiscordGuildSyncStatePayload>
+        }
+        deleteMany: {
+          args: Prisma.DiscordGuildSyncStateDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.DiscordGuildSyncStateUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.DiscordGuildSyncStateUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DiscordGuildSyncStatePayload>[]
+        }
+        upsert: {
+          args: Prisma.DiscordGuildSyncStateUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DiscordGuildSyncStatePayload>
+        }
+        aggregate: {
+          args: Prisma.DiscordGuildSyncStateAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateDiscordGuildSyncState>
+        }
+        groupBy: {
+          args: Prisma.DiscordGuildSyncStateGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DiscordGuildSyncStateGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.DiscordGuildSyncStateCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DiscordGuildSyncStateCountAggregateOutputType> | number
         }
       }
     }
@@ -3373,6 +3898,7 @@ export const GuildScalarFieldEnum = {
   icon: 'icon',
   ownerId: 'ownerId',
   vanityUrl: 'vanityUrl',
+  notificationRuleLimit: 'notificationRuleLimit',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   active: 'active'
@@ -3617,6 +4143,149 @@ export const UserSettingsScalarFieldEnum = {
 } as const
 
 export type UserSettingsScalarFieldEnum = (typeof UserSettingsScalarFieldEnum)[keyof typeof UserSettingsScalarFieldEnum]
+
+
+export const NotificationTargetScalarFieldEnum = {
+  id: 'id',
+  ownerType: 'ownerType',
+  ownerId: 'ownerId',
+  provider: 'provider',
+  targetType: 'targetType',
+  externalId: 'externalId',
+  displayName: 'displayName',
+  guildName: 'guildName',
+  metadata: 'metadata',
+  active: 'active',
+  canSend: 'canSend',
+  lastSyncedAt: 'lastSyncedAt',
+  lastDeliveryAt: 'lastDeliveryAt',
+  lastDeliveryError: 'lastDeliveryError',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type NotificationTargetScalarFieldEnum = (typeof NotificationTargetScalarFieldEnum)[keyof typeof NotificationTargetScalarFieldEnum]
+
+
+export const NotificationRuleScalarFieldEnum = {
+  id: 'id',
+  ownerType: 'ownerType',
+  ownerId: 'ownerId',
+  triggerType: 'triggerType',
+  guildId: 'guildId',
+  world: 'world',
+  name: 'name',
+  filters: 'filters',
+  contentTemplate: 'contentTemplate',
+  scheduleStrategy: 'scheduleStrategy',
+  scheduleAnchor: 'scheduleAnchor',
+  scheduleOffsetMinutes: 'scheduleOffsetMinutes',
+  scheduledAt: 'scheduledAt',
+  scheduleIntervalType: 'scheduleIntervalType',
+  scheduleIntervalValue: 'scheduleIntervalValue',
+  scheduleWeekday: 'scheduleWeekday',
+  scheduleTimeOfDay: 'scheduleTimeOfDay',
+  scheduledUntil: 'scheduledUntil',
+  scheduleTimezone: 'scheduleTimezone',
+  enabled: 'enabled',
+  dedupeWindowSeconds: 'dedupeWindowSeconds',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type NotificationRuleScalarFieldEnum = (typeof NotificationRuleScalarFieldEnum)[keyof typeof NotificationRuleScalarFieldEnum]
+
+
+export const NotificationRuleTargetScalarFieldEnum = {
+  ruleId: 'ruleId',
+  targetId: 'targetId',
+  createdAt: 'createdAt'
+} as const
+
+export type NotificationRuleTargetScalarFieldEnum = (typeof NotificationRuleTargetScalarFieldEnum)[keyof typeof NotificationRuleTargetScalarFieldEnum]
+
+
+export const NotificationJobScalarFieldEnum = {
+  id: 'id',
+  ruleId: 'ruleId',
+  targetId: 'targetId',
+  ownerType: 'ownerType',
+  ownerId: 'ownerId',
+  jobKind: 'jobKind',
+  scheduledFor: 'scheduledFor',
+  status: 'status',
+  idempotencyKey: 'idempotencyKey',
+  sourceEntityType: 'sourceEntityType',
+  sourceEntityId: 'sourceEntityId',
+  sourceEventId: 'sourceEventId',
+  payloadSnapshot: 'payloadSnapshot',
+  attemptCount: 'attemptCount',
+  lastError: 'lastError',
+  blockedReason: 'blockedReason',
+  providerMessageId: 'providerMessageId',
+  processedAt: 'processedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type NotificationJobScalarFieldEnum = (typeof NotificationJobScalarFieldEnum)[keyof typeof NotificationJobScalarFieldEnum]
+
+
+export const WatchedItemScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  itemId: 'itemId',
+  itemName: 'itemName',
+  world: 'world',
+  enabled: 'enabled',
+  notificationRuleId: 'notificationRuleId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WatchedItemScalarFieldEnum = (typeof WatchedItemScalarFieldEnum)[keyof typeof WatchedItemScalarFieldEnum]
+
+
+export const DiscordGuildChannelSnapshotScalarFieldEnum = {
+  id: 'id',
+  guildId: 'guildId',
+  channelId: 'channelId',
+  name: 'name',
+  channelType: 'channelType',
+  parentId: 'parentId',
+  position: 'position',
+  active: 'active',
+  canView: 'canView',
+  canSend: 'canSend',
+  hasRequiredPermissions: 'hasRequiredPermissions',
+  requiredPermissions: 'requiredPermissions',
+  grantedPermissions: 'grantedPermissions',
+  missingPermissions: 'missingPermissions',
+  lastSyncedAt: 'lastSyncedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type DiscordGuildChannelSnapshotScalarFieldEnum = (typeof DiscordGuildChannelSnapshotScalarFieldEnum)[keyof typeof DiscordGuildChannelSnapshotScalarFieldEnum]
+
+
+export const DiscordGuildSyncStateScalarFieldEnum = {
+  guildId: 'guildId',
+  status: 'status',
+  hasRequiredPermissions: 'hasRequiredPermissions',
+  requiredPermissions: 'requiredPermissions',
+  grantedPermissions: 'grantedPermissions',
+  missingPermissions: 'missingPermissions',
+  channelCount: 'channelCount',
+  selectableChannelCount: 'selectableChannelCount',
+  lastAttemptAt: 'lastAttemptAt',
+  lastSuccessAt: 'lastSuccessAt',
+  lastError: 'lastError',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type DiscordGuildSyncStateScalarFieldEnum = (typeof DiscordGuildSyncStateScalarFieldEnum)[keyof typeof DiscordGuildSyncStateScalarFieldEnum]
 
 
 export const MemberRefreshJobScalarFieldEnum = {
@@ -4020,6 +4689,20 @@ export type ListStringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaMod
 
 
 /**
+ * Reference to a field of type 'Int'
+ */
+export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+    
+
+
+/**
+ * Reference to a field of type 'Int[]'
+ */
+export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+/**
  * Reference to a field of type 'DateTime'
  */
 export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
@@ -4037,20 +4720,6 @@ export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaM
  * Reference to a field of type 'Boolean'
  */
 export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
-    
-
-
-/**
- * Reference to a field of type 'Int'
- */
-export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
-    
-
-
-/**
- * Reference to a field of type 'Int[]'
- */
-export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
     
 
 
@@ -4149,6 +4818,146 @@ export type EnumNpcTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaMo
  * Reference to a field of type 'NpcType[]'
  */
 export type ListEnumNpcTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NpcType[]'>
+    
+
+
+/**
+ * Reference to a field of type 'NotificationOwnerType'
+ */
+export type EnumNotificationOwnerTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationOwnerType'>
+    
+
+
+/**
+ * Reference to a field of type 'NotificationOwnerType[]'
+ */
+export type ListEnumNotificationOwnerTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationOwnerType[]'>
+    
+
+
+/**
+ * Reference to a field of type 'NotificationProvider'
+ */
+export type EnumNotificationProviderFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationProvider'>
+    
+
+
+/**
+ * Reference to a field of type 'NotificationProvider[]'
+ */
+export type ListEnumNotificationProviderFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationProvider[]'>
+    
+
+
+/**
+ * Reference to a field of type 'NotificationTargetType'
+ */
+export type EnumNotificationTargetTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationTargetType'>
+    
+
+
+/**
+ * Reference to a field of type 'NotificationTargetType[]'
+ */
+export type ListEnumNotificationTargetTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationTargetType[]'>
+    
+
+
+/**
+ * Reference to a field of type 'NotificationTriggerType'
+ */
+export type EnumNotificationTriggerTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationTriggerType'>
+    
+
+
+/**
+ * Reference to a field of type 'NotificationTriggerType[]'
+ */
+export type ListEnumNotificationTriggerTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationTriggerType[]'>
+    
+
+
+/**
+ * Reference to a field of type 'NotificationScheduleStrategy'
+ */
+export type EnumNotificationScheduleStrategyFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationScheduleStrategy'>
+    
+
+
+/**
+ * Reference to a field of type 'NotificationScheduleStrategy[]'
+ */
+export type ListEnumNotificationScheduleStrategyFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationScheduleStrategy[]'>
+    
+
+
+/**
+ * Reference to a field of type 'NotificationScheduleAnchor'
+ */
+export type EnumNotificationScheduleAnchorFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationScheduleAnchor'>
+    
+
+
+/**
+ * Reference to a field of type 'NotificationScheduleAnchor[]'
+ */
+export type ListEnumNotificationScheduleAnchorFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationScheduleAnchor[]'>
+    
+
+
+/**
+ * Reference to a field of type 'NotificationScheduleIntervalType'
+ */
+export type EnumNotificationScheduleIntervalTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationScheduleIntervalType'>
+    
+
+
+/**
+ * Reference to a field of type 'NotificationScheduleIntervalType[]'
+ */
+export type ListEnumNotificationScheduleIntervalTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationScheduleIntervalType[]'>
+    
+
+
+/**
+ * Reference to a field of type 'NotificationJobKind'
+ */
+export type EnumNotificationJobKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationJobKind'>
+    
+
+
+/**
+ * Reference to a field of type 'NotificationJobKind[]'
+ */
+export type ListEnumNotificationJobKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationJobKind[]'>
+    
+
+
+/**
+ * Reference to a field of type 'NotificationJobStatus'
+ */
+export type EnumNotificationJobStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationJobStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'NotificationJobStatus[]'
+ */
+export type ListEnumNotificationJobStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationJobStatus[]'>
+    
+
+
+/**
+ * Reference to a field of type 'DiscordGuildSyncStatus'
+ */
+export type EnumDiscordGuildSyncStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DiscordGuildSyncStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'DiscordGuildSyncStatus[]'
+ */
+export type ListEnumDiscordGuildSyncStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DiscordGuildSyncStatus[]'>
     
 
 
@@ -4334,6 +5143,13 @@ export type GlobalOmitConfig = {
   reservation?: Prisma.ReservationOmit
   userCharactersLootlogSettings?: Prisma.UserCharactersLootlogSettingsOmit
   userSettings?: Prisma.UserSettingsOmit
+  notificationTarget?: Prisma.NotificationTargetOmit
+  notificationRule?: Prisma.NotificationRuleOmit
+  notificationRuleTarget?: Prisma.NotificationRuleTargetOmit
+  notificationJob?: Prisma.NotificationJobOmit
+  watchedItem?: Prisma.WatchedItemOmit
+  discordGuildChannelSnapshot?: Prisma.DiscordGuildChannelSnapshotOmit
+  discordGuildSyncState?: Prisma.DiscordGuildSyncStateOmit
   memberRefreshJob?: Prisma.MemberRefreshJobOmit
   userTimerSettings?: Prisma.UserTimerSettingsOmit
   userGuildTimerSettings?: Prisma.UserGuildTimerSettingsOmit

@@ -1,3 +1,4 @@
+import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import {
   BadRequestException,
   ForbiddenException,
@@ -33,6 +34,8 @@ import { LootCommentService } from "./services/loot-comment.service";
 import { RedisService } from "@lootlog/nest-shared";
 import Redlock, { ExecutionError } from "redlock";
 import { RedlockService } from "src/lib/redlock/redlock.service";
+import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
+import { RoutingKey } from "src/enum/routing-key.enum";
 
 @Injectable()
 export class LootsService implements OnModuleInit {
@@ -40,6 +43,7 @@ export class LootsService implements OnModuleInit {
   private readonly lockTtl = 10000;
 
   constructor(
+    private readonly amqpConnection: AmqpConnection,
     private readonly playersService: PlayersService,
     private readonly npcsService: NpcsService,
     private readonly itemsService: ItemsService,
@@ -242,6 +246,20 @@ export class LootsService implements OnModuleInit {
         world: body.world,
       }));
       this.itemsService.bulkIndexItems(indexItems);
+
+      await this.amqpConnection.publish(
+        DEFAULT_EXCHANGE_NAME,
+        RoutingKey.NOTIFICATIONS_LOOT_CREATED,
+        {
+          lootId: loot.id,
+          world: body.world,
+          guildIds: submissionData.map((submission) => submission.guildId),
+          itemIds: items.map((item) => item.id),
+          itemNames: items.map((item) => item.name),
+          npcType: highestWtNpcType,
+          npcLvl: npcData.highest.lvl ?? null,
+        },
+      );
 
       return { id: loot.id };
     } catch (error: unknown) {

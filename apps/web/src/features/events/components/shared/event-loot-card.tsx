@@ -1,7 +1,7 @@
 import { MapPin, Calendar, Users, Package } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { LootNpcs } from "@/features/guild/components/loots-list/loot-npcs";
-import { ItemTile } from "@/components/tiles";
+import { WatchableItemTile } from "@/components/tiles";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { ItemRarity, type Loot, type Item } from "@/hooks/api/loots/use-loots";
 import { PlayerWithItems } from "./player-with-items";
@@ -67,6 +67,9 @@ export const EventLootCard = ({ loot }: EventLootCardProps) => {
   const date = timestampToDate(loot.createdAt);
   const { itemsByPlayer, unassignedItems, hasLegendaryItem, sortedPlayers } =
     useLootData(loot);
+  const watchContext = {
+    world: loot.world,
+  };
 
   return (
     <div
@@ -87,6 +90,7 @@ export const EventLootCard = ({ loot }: EventLootCardProps) => {
             key={player.id}
             player={player}
             items={itemsByPlayer[player.id] ?? []}
+            watchContext={watchContext}
           />
         ))}
         {sortedPlayers.length > 4 && (
@@ -98,9 +102,10 @@ export const EventLootCard = ({ loot }: EventLootCardProps) => {
           <div className="flex flex-col gap-1 border-l border-border/30 pl-2">
             <div className="flex flex-row flex-wrap gap-1">
               {unassignedItems.slice(0, 4).map((item, itemIdx) => (
-                <ItemTile
+                <WatchableItemTile
                   key={`unassigned-${item.hid}-${itemIdx}`}
                   item={item}
+                  watchContext={watchContext}
                 />
               ))}
               {unassignedItems.length > 4 && (
