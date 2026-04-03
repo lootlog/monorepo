@@ -39,7 +39,7 @@ export const NotificationsRulesCard = ({
           </p>
         </div>
         {limits ? (
-          <Badge variant="outline">
+          <Badge variant="secondary">
             {t("settings.notifications.ruleLimitUsage", {
               count: limits.ruleCount,
               limit: limits.ruleLimit,

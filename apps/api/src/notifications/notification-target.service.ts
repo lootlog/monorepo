@@ -22,10 +22,11 @@ import { PrismaService } from "src/db/prisma.service";
 import { NotificationJobService } from "src/notifications/notification-job.service";
 import type { CreateNotificationTargetDto } from "src/notifications/dto/create-notification-target.dto";
 import type { UpdateNotificationTargetDto } from "src/notifications/dto/update-notification-target.dto";
-
-const USER_DM_TEST_RULE_NAME = "__system:user-dm-test__";
-const USER_DM_TEST_MESSAGE =
-  "To jest test Twojego Discord DM dla obserwowanych itemów.";
+import { Error } from "src/notifications/enum/error.enum";
+import {
+  USER_DM_TEST_MESSAGE,
+  USER_DM_TEST_RULE_NAME,
+} from "src/notifications/contants/user-dm.constant";
 
 @Injectable()
 export class NotificationTargetService {
@@ -48,13 +49,13 @@ export class NotificationTargetService {
 
   async createGuildTarget(guildId: string, data: CreateNotificationTargetDto) {
     if (data.targetType !== DbNotificationTargetType.CHANNEL) {
-      throw new BadRequestException(
-        "Guild notification targets must be channels",
-      );
+      throw new BadRequestException(Error.GUILD_TARGETS_MUST_BE_CHANNELS);
     }
 
     if (!data.externalId) {
-      throw new BadRequestException("Guild channel target requires externalId");
+      throw new BadRequestException(
+        Error.GUILD_CHANNEL_TARGET_REQUIRES_EXTERNAL_ID,
+      );
     }
 
     const { channels } =
@@ -65,7 +66,7 @@ export class NotificationTargetService {
 
     if (!selectedChannel) {
       throw new BadRequestException(
-        "Selected Discord channel is not available",
+        Error.SELECTED_DISCORD_CHANNEL_NOT_AVAILABLE,
       );
     }
 
@@ -151,14 +152,12 @@ export class NotificationTargetService {
     data: CreateNotificationTargetDto,
   ) {
     if (data.targetType !== DbNotificationTargetType.DM) {
-      throw new BadRequestException(
-        "User notification targets must be Discord DMs",
-      );
+      throw new BadRequestException(Error.USER_TARGETS_MUST_BE_DISCORD_DMS);
     }
 
     if (data.externalId && data.externalId !== discordId) {
       throw new BadRequestException(
-        "User DM notification targets must use the authenticated Discord account",
+        Error.USER_DM_TARGET_MUST_USE_AUTHENTICATED_DISCORD_ACCOUNT,
       );
     }
 
@@ -200,11 +199,6 @@ export class NotificationTargetService {
     data: UpdateNotificationTargetDto,
   ) {
     await this.ensureUserTarget(userId, targetId);
-    if (data.active === false) {
-      throw new BadRequestException(
-        "User Discord DM notification targets cannot be deactivated",
-      );
-    }
 
     const hasDisplayName = Object.prototype.hasOwnProperty.call(
       data,
@@ -224,14 +218,12 @@ export class NotificationTargetService {
     const target = await this.ensureUserTarget(userId, targetId);
 
     if (target.targetType !== DbNotificationTargetType.DM) {
-      throw new BadRequestException(
-        "User notification test target must be a Discord DM",
-      );
+      throw new BadRequestException(Error.USER_TEST_TARGET_MUST_BE_DISCORD_DM);
     }
 
     if (!target.active || !target.canSend) {
       throw new ConflictException(
-        "User Discord DM target must be active and able to send",
+        Error.USER_DISCORD_DM_TARGET_MUST_BE_ACTIVE_AND_CAN_SEND,
       );
     }
 
@@ -266,7 +258,7 @@ export class NotificationTargetService {
     });
 
     if (!notificationJob) {
-      throw new ConflictException("No test job was created for this target");
+      throw new ConflictException(Error.NO_TEST_JOB_CREATED_FOR_TARGET);
     }
 
     await this.jobService.enqueueNotificationJob(notificationJob.id, 0);
@@ -287,7 +279,7 @@ export class NotificationTargetService {
     targetIds: number[];
   }) {
     if (params.targetIds.length === 0) {
-      throw new BadRequestException("At least one target is required");
+      throw new BadRequestException(Error.AT_LEAST_ONE_TARGET_REQUIRED);
     }
 
     const targets = await this.prisma.notificationTarget.findMany({
@@ -301,9 +293,7 @@ export class NotificationTargetService {
     });
 
     if (targets.length !== params.targetIds.length) {
-      throw new BadRequestException(
-        "One or more notification targets are invalid",
-      );
+      throw new BadRequestException(Error.INVALID_NOTIFICATION_TARGETS);
     }
 
     return params.targetIds;
@@ -367,7 +357,7 @@ export class NotificationTargetService {
     });
 
     if (!target) {
-      throw new NotFoundException("Notification target not found");
+      throw new NotFoundException(Error.NOTIFICATION_TARGET_NOT_FOUND);
     }
 
     return target;
@@ -383,7 +373,7 @@ export class NotificationTargetService {
     });
 
     if (!target) {
-      throw new NotFoundException("Notification target not found");
+      throw new NotFoundException(Error.NOTIFICATION_TARGET_NOT_FOUND);
     }
 
     return target;

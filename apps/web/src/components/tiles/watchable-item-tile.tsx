@@ -1,8 +1,9 @@
 import { type ItemTileProps, ItemTile } from "@/components/tiles/item-tile";
 import { ROUTES } from "@/config/routes";
-import { getApiErrorMessage } from "@/features/events/utils/get-api-error-message";
+import { USER_WATCHED_ITEMS_LIMIT } from "@/features/user-notifications/constants/user-watched-items-limit";
 import { useGuildWatchedItems } from "@/features/user-notifications/hooks/use-guild-watched-items";
 import type { WatchedItemScope } from "@/features/user-notifications/types/watched-item-scope";
+import { getUserNotificationsErrorMessage } from "@/features/user-notifications/utils/get-user-notifications-error-message";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   ContextMenu,
@@ -34,7 +35,9 @@ export const WatchableItemTile = ({
     state,
     hasActiveDm,
     isQuickAddPending,
+    watchedItemsCount,
     quickAddWatchedItem,
+    hasWatchedItem,
     isItemWatchedInScope,
   } = useGuildWatchedItems();
   const effectiveGuildId = watchContext.guildId || currentGuildId || "";
@@ -46,6 +49,12 @@ export const WatchableItemTile = ({
     state === "ready" &&
     effectiveGuildId.length > 0 &&
     isItemWatchedInScope(item.id, effectiveWatchContext);
+  const wouldCreateNewWatchedItem =
+    state === "ready" && !hasWatchedItem(item.id, watchContext.world);
+  const isWatchedItemLimitReached =
+    state === "ready" &&
+    watchedItemsCount >= USER_WATCHED_ITEMS_LIMIT &&
+    wouldCreateNewWatchedItem;
 
   const openNotifications = () => {
     void navigate({ to: ROUTES.user.notifications.base });
@@ -56,6 +65,26 @@ export const WatchableItemTile = ({
       toast.error(t("settings.userNotifications.quickAdd.scopeUnavailable"));
       return;
     }
+
+    if (isWatchedItemLimitReached) {
+      toast.error(
+        t("settings.userNotifications.validation.watchLimitReached", {
+          limit: USER_WATCHED_ITEMS_LIMIT,
+        }),
+      );
+      return;
+    }
+
+    const nextWatchedItemsCount = wouldCreateNewWatchedItem
+      ? Math.min(watchedItemsCount + 1, USER_WATCHED_ITEMS_LIMIT)
+      : watchedItemsCount;
+    const loadingToastId = toast.loading(
+      t("settings.userNotifications.quickAdd.toasts.adding", {
+        itemName: item.name,
+        count: nextWatchedItemsCount,
+        limit: USER_WATCHED_ITEMS_LIMIT,
+      }),
+    );
 
     try {
       await quickAddWatchedItem({
@@ -68,12 +97,16 @@ export const WatchableItemTile = ({
       toast.success(
         t("settings.userNotifications.quickAdd.toasts.added", {
           itemName: item.name,
+          count: nextWatchedItemsCount,
+          limit: USER_WATCHED_ITEMS_LIMIT,
         }),
+        { id: loadingToastId },
       );
     } catch (error) {
       toast.error(
-        getApiErrorMessage(error) ??
+        getUserNotificationsErrorMessage(error, t) ??
           t("settings.userNotifications.quickAdd.toasts.error"),
+        { id: loadingToastId },
       );
     }
   };
@@ -140,15 +173,29 @@ export const WatchableItemTile = ({
           </>
         ) : null}
         {state === "ready" && hasActiveDm && !isWatchedInScope ? (
-          <ContextMenuItem
-            className="gap-2"
-            onSelect={() => {
-              void handleQuickAdd();
-            }}
-          >
-            <Plus className="h-4 w-4 text-muted-foreground" />
-            {t("settings.userNotifications.quickAdd.add")}
-          </ContextMenuItem>
+          isWatchedItemLimitReached ? (
+            <>
+              <ContextMenuItem disabled>
+                {t("settings.userNotifications.quickAdd.limitReached", {
+                  limit: USER_WATCHED_ITEMS_LIMIT,
+                })}
+              </ContextMenuItem>
+              <ContextMenuSeparator />
+              <ContextMenuItem onSelect={openNotifications}>
+                {t("settings.userNotifications.quickAdd.openNotifications")}
+              </ContextMenuItem>
+            </>
+          ) : (
+            <ContextMenuItem
+              className="gap-2"
+              onSelect={() => {
+                void handleQuickAdd();
+              }}
+            >
+              <Plus className="h-4 w-4 text-muted-foreground" />
+              {t("settings.userNotifications.quickAdd.add")}
+            </ContextMenuItem>
+          )
         ) : null}
       </ContextMenuContent>
     </ContextMenu>

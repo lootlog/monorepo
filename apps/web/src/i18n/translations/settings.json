@@ -32,8 +32,12 @@
       },
       "limits": {
         "title": "Limity",
-        "description": "Każda gildia ma limit reguł i testów. Możesz filtrować maksymalnie 5 NPC na regułę."
+        "description": "Każdy lootlog ma limit reguł i testów. Możesz filtrować maksymalnie 5 NPC na regułę."
       }
+    },
+    "notificationsHistory": {
+      "title": "Historia powiadomień",
+      "description": "Przeglądaj historię wysłanych i nieudanych powiadomień, sprawdzaj szczegóły dostarczenia i powody ewentualnych błędów."
     },
     "actions": {
       "addTarget": "Dodaj kanał docelowy",
@@ -94,13 +98,13 @@
     },
     "schedule": {
       "minSpawnExact": "W momencie najwcześniejszego spawnu",
-      "minSpawnBefore": "{{minutes}} min przed najwcześniejszym spawnem",
-      "maxSpawnExact": "W momencie najpóźniejszego spawnu",
-      "maxSpawnBefore": "{{minutes}} min przed najpóźniejszym spawnem"
+      "minSpawnBefore": "{{minutes}} min przed minimalnym czasem spawnu",
+      "maxSpawnExact": "W momencie maksymalnego czasu spawnu",
+      "maxSpawnBefore": "{{minutes}} min przed maksymalnym czasem spawnu"
     },
     "scheduleAnchors": {
-      "minSpawn": "Najwcześniejszy spawn",
-      "maxSpawn": "Najpóźniejszy spawn"
+      "minSpawn": "Minimalny czas spawnu",
+      "maxSpawn": "Maksymalny czas spawnu"
     },
     "intervalTypes": {
       "once": "Jednorazowo",
@@ -337,63 +341,84 @@
   },
   "userNotifications": {
     "title": "Powiadomienia",
-    "description": "Obserwuj itemy dla wybranego świata i swoich gildii, a dropy dostaniesz na Discord DM.",
+    "description": "Obserwuj itemy dla wybranego świata i swoich lootlogów, a dropy dostaniesz jako prywatną wiadomość na Discordzie.",
     "dm": {
-      "title": "Discord DM",
-      "description": "Obserwowane itemy wysyłamy wyłącznie na Twoją prywatną wiadomość na Discordzie.",
-      "active": "Gotowe",
+      "title": "Prywatna wiadomość",
+      "description": "Powiadomienia o obserwowanych itemach wysyłamy bezpośrednio na Twojego Discorda.",
+      "active": "Aktywne",
       "actionRequired": "Wymaga konfiguracji",
-      "configure": "Skonfiguruj DM",
-      "test": "Wyślij test",
-      "requiredHint": "Aktywny Discord DM jest wymagany do obserwowanych itemów.",
-      "reactivateHint": "Discord DM jest obecnie wyłączony. Aktywuj go ponownie, aby odbierać powiadomienia o obserwowanych itemach.",
-      "cannotSendHint": "Nie możemy teraz wysyłać wiadomości na ten Discord DM. Sprawdź ustawienia prywatności albo połączenie konta.",
-      "targetLabel": "Kanał docelowy: {{name}}"
+      "configure": "Włącz powiadomienia",
+      "test": "Testuj powiadomienie",
+      "deactivate": "Deaktywuj",
+      "deactivateHint": "Wstrzymuje wszystkie powiadomienia. Obserwowane itemy pozostaną zapisane — możesz je włączyć ponownie w dowolnym momencie.",
+      "requiredHint": "Włącz powiadomienia, aby otrzymywać informacje o obserwowanych itemach.",
+      "reactivateHint": "Powiadomienia są obecnie wyłączone. Aktywuj je ponownie, aby odbierać informacje o obserwowanych itemach.",
+      "cannotSendHint": "Nie udało się dostarczyć wiadomości. Sprawdź ustawienia prywatności na Discordzie lub połączenie konta.",
+      "targetLabel": "Odbiorca: {{name}}"
     },
     "watchForm": {
       "title": "Dodaj obserwowany item",
-      "description": "Wybierz gildie, świat i item. Powiadomienie przyjdzie tylko dla dopasowanych lootów.",
-      "footer": "Jedna obserwacja działa dla jednego świata i wielu gildii."
+      "description": "Wybierz lootlogi, świat i item. Powiadomienie przyjdzie tylko dla dopasowanych lootów.",
+      "footer": "Jedna obserwacja działa dla jednego świata i wielu lootlogów.",
+      "limitStatus": "Masz {{count}} z {{limit}} obserwowanych itemów."
     },
     "watchList": {
       "title": "Obserwowane itemy",
-      "description": "Lista aktywnych obserwacji przypiętych do Twojego Discord DM."
+      "description": "Lista aktywnych obserwacji przypiętych do Twojego konta."
     },
-    "scopeInfo": {
-      "title": "Zakres i bezpieczeństwo",
-      "description": "Notif działa tylko wtedy, gdy loot pochodzi z wybranego świata i przynajmniej jednej z wybranych gildii, a Ty nadal masz w niej aktywne członkostwo."
+    "infoDialog": {
+      "title": "Jak działa obserwowanie itemów?",
+      "howItWorks": {
+        "title": "Jak to działa",
+        "description": "Wybierz item, świat i lootlogi. Gdy wybrany item dropnie na danym świecie w jednym z wybranych lootlogów, natychmiast otrzymasz powiadomienie jako prywatną wiadomość na Discordzie."
+      },
+      "limits": {
+        "title": "Limity",
+        "description": "Możesz obserwować maksymalnie {{limit}} itemów. Jedna obserwacja to jeden item na jednym świecie — ten sam item na różnych światach to osobne obserwacje. Każda obserwacja może obejmować wiele lootlogów."
+      },
+      "scope": {
+        "title": "Zakres i bezpieczeństwo",
+        "description": "Powiadomienie zostanie wysłane tylko wtedy, gdy loot pochodzi z wybranego świata i przynajmniej jednego z wybranych lootlogów, a Ty nadal masz na nim aktywne członkostwo."
+      },
+      "quickAdd": {
+        "title": "Szybkie dodawanie",
+        "description": "Itemy możesz dodawać również bezpośrednio z listy lootów klikając ikonę oka. Jeśli item jest już obserwowany na danym świecie, lootlog zostanie dołączony do istniejącej obserwacji."
+      }
     },
     "actions": {
-      "addWatch": "Dodaj obserwację"
+      "addWatch": "Dodaj przedmiot",
+      "addingWatch": "Dodawanie..."
     },
     "quickAdd": {
       "add": "Dodaj do obserwowanych",
-      "watched": "Ten item jest już obserwowany dla tej gildii i świata.",
-      "dmRequired": "Najpierw skonfiguruj Discord DM dla obserwowanych itemów.",
+      "watched": "Ten item jest już obserwowany dla tego lootloga i świata.",
+      "dmRequired": "Najpierw włącz powiadomienia w ustawieniach.",
+      "limitReached": "Osiągnięto limit {{limit}} obserwowanych itemów.",
       "loading": "Ładowanie obserwacji...",
       "loadError": "Nie udało się załadować obserwacji.",
-      "scopeUnavailable": "Nie udało się ustalić gildii dla tej obserwacji.",
+      "scopeUnavailable": "Nie udało się ustalić lootlogów dla tej obserwacji.",
       "openNotifications": "Przejdź do powiadomień",
-      "configureDm": "Skonfiguruj Discord DM",
+      "configureDm": "Włącz powiadomienia",
       "indicatorLabel": "Item jest już obserwowany",
       "toasts": {
-        "added": "{{itemName}} został dodany do obserwowanych.",
+        "adding": "Dodawanie {{itemName}} do obserwowanych ({{count}} / {{limit}})...",
+        "added": "{{itemName}} został dodany do obserwowanych ({{count}} / {{limit}}).",
         "error": "Nie udało się dodać itemu do obserwowanych."
       }
     },
     "fields": {
-      "guilds": "Gildie",
+      "guilds": "Lootlogi",
       "item": "Item"
     },
     "placeholders": {
-      "guilds": "Wybierz gildie",
-      "searchGuilds": "Szukaj gildii",
+      "guilds": "Wybierz lootlogi",
+      "searchGuilds": "Szukaj lootlogów",
       "world": "Wybierz świat",
       "item": "Wybierz item",
       "searchItems": "Szukaj itemu po nazwie lub ID"
     },
     "empty": {
-      "guilds": "Brak dostępnych gildii.",
+      "guilds": "Brak dostępnych lootlogów.",
       "items": "Brak pasujących itemów.",
       "watchedItems": "Nie masz jeszcze żadnych obserwowanych itemów."
     },
@@ -401,18 +426,34 @@
       "worlds": "Pobieranie światów...",
       "items": "Pobieranie itemów..."
     },
+    "manualEntry": {
+      "checkbox": "Mój przedmiot nie pojawia się w wyszukiwarce",
+      "hint": "Nazwa musi być dokładnie taka sama jak w grze. ID znajdziesz w pasku adresu na margoworld.pl — np. dla margoworld.pl/item/view/34772/klejnot-wielkich-jezior ID to 34772.",
+      "itemId": "ID przedmiotu",
+      "itemName": "Nazwa przedmiotu",
+      "itemIdPlaceholder": "np. 34772",
+      "itemNamePlaceholder": "np. Klejnot Wielkich Jezior"
+    },
     "validation": {
-      "dmRequired": "Najpierw skonfiguruj Discord DM dla obserwowanych itemów.",
-      "guildRequired": "Wybierz przynajmniej jedną gildię.",
+      "dmRequired": "Najpierw włącz powiadomienia w ustawieniach.",
+      "guildRequired": "Wybierz przynajmniej jeden lootlog.",
+      "guildSelectionUnavailable": "Nie możesz dodać obserwacji dla wybranych lootlogów.",
       "itemRequired": "Wybierz item do obserwowania.",
-      "worldRequired": "Najpierw wybierz świat."
+      "manualItemIdRequired": "Podaj ID przedmiotu.",
+      "manualItemNameRequired": "Podaj nazwę przedmiotu.",
+      "manualItemIdInvalid": "ID przedmiotu musi być liczbą.",
+      "worldRequired": "Najpierw wybierz świat.",
+      "watchLimitReached": "Osiągnąłeś limit {{limit}} obserwowanych itemów. Usuń jedną obserwację, aby dodać kolejną."
     },
     "toasts": {
-      "dmEnabled": "Discord DM został włączony.",
-      "dmEnableError": "Nie udało się włączyć Discord DM.",
-      "dmTestTriggered": "Wysłaliśmy testowe powiadomienie na Discord DM.",
-      "dmTestTriggerError": "Nie udało się wysłać testowego powiadomienia na Discord DM.",
-      "watchCreated": "Obserwowany item został dodany.",
+      "dmEnabled": "Powiadomienia zostały włączone.",
+      "dmDisabled": "Powiadomienia zostały wyłączone.",
+      "dmEnableError": "Nie udało się włączyć powiadomień.",
+      "dmDisableError": "Nie udało się wyłączyć powiadomień.",
+      "dmTestTriggered": "Testowe powiadomienie zostało wysłane.",
+      "dmTestTriggerError": "Nie udało się wysłać testowego powiadomienia.",
+      "watchCreating": "Dodawanie obserwowanego itemu ({{count}} / {{limit}})...",
+      "watchCreated": "Obserwowany item został dodany ({{count}} / {{limit}}).",
       "watchCreateError": "Nie udało się dodać obserwowanego itemu.",
       "watchDeleted": "Obserwowany item został usunięty.",
       "watchDeleteError": "Nie udało się usunąć obserwowanego itemu."
@@ -420,11 +461,12 @@
     "watchCount_one": "{{count}} obserwacja",
     "watchCount_few": "{{count}} obserwacje",
     "watchCount_many": "{{count}} obserwacji",
-    "guildCount_one": "{{count}} gildia",
-    "guildCount_few": "{{count}} gildie",
-    "guildCount_many": "{{count}} gildii",
+    "watchLimitStatus": "{{count}} / {{limit}}",
+    "guildCount_one": "{{count}} lootlog",
+    "guildCount_few": "{{count}} lootlogi",
+    "guildCount_many": "{{count}} lootlogów",
     "missingGuild": "Brak dostępu: {{guildId}}",
-    "staleGuildWarning": "Ta obserwacja zawiera gildie, do których nie masz już dostępu w aktualnej sesji.",
+    "staleGuildWarning": "Ta obserwacja zawiera lootlogi, do których nie masz już dostępu w aktualnej sesji.",
     "itemSelector": {
       "selectedLabel": "{{name}} (#{{id}})",
       "itemId": "#{{id}}",

@@ -1,20 +1,21 @@
-import {
-  type QuickAddWatchedItemData,
-  type UserWatchedItem,
-  useQuickAddWatchedItem,
-  useUserNotifications,
-} from "@/hooks/api/user/use-user-notifications";
+import type { QuickAddWatchedItemData } from "@/hooks/api/user/use-quick-add-watched-item";
+import { useQuickAddWatchedItem } from "@/hooks/api/user/use-quick-add-watched-item";
+import type { UserWatchedItem } from "@/hooks/api/user/use-user-notifications";
+import { useUserNotifications } from "@/hooks/api/user/use-user-notifications";
 import { createContext } from "react";
 import type { PropsWithChildren } from "react";
+import { USER_WATCHED_ITEMS_LIMIT } from "@/features/user-notifications/constants/user-watched-items-limit";
 import type { WatchedItemScope } from "@/features/user-notifications/types/watched-item-scope";
 
 type GuildWatchedItemsContextValue = {
   state: "loading" | "error" | "ready";
   hasActiveDm: boolean;
   isQuickAddPending: boolean;
+  watchedItemsCount: number;
   quickAddWatchedItem: (
     data: QuickAddWatchedItemData,
   ) => Promise<UserWatchedItem>;
+  hasWatchedItem: (itemId: number, world: string) => boolean;
   isItemWatchedInScope: (itemId: number, scope: WatchedItemScope) => boolean;
 };
 
@@ -48,7 +49,13 @@ export const GuildWatchedItemsProvider = ({ children }: PropsWithChildren) => {
         state,
         hasActiveDm,
         isQuickAddPending: quickAddWatchedItemMutation.isPending,
+        watchedItemsCount: watchedItems.length,
         quickAddWatchedItem: quickAddWatchedItemMutation.mutateAsync,
+        hasWatchedItem: (itemId, world) =>
+          watchedItems.some(
+            (watchedItem) =>
+              watchedItem.itemId === itemId && watchedItem.world === world,
+          ),
         isItemWatchedInScope: (itemId, scope) =>
           watchedItems.some(
             (watchedItem) =>

@@ -65,7 +65,7 @@ export const NotificationsPendingJobsCard = ({
             {t("settings.notifications.sections.jobsDescription")}
           </p>
         </div>
-        <Badge variant="outline" className="ml-auto">
+        <Badge variant="secondary" className="ml-auto">
           {pendingJobs.length}
         </Badge>
       </div>
@@ -74,82 +74,82 @@ export const NotificationsPendingJobsCard = ({
         <ScrollArea className="max-h-[52rem]">
           <div className="flex flex-col gap-3">
             {pendingJobs.map((job) => (
-            <div
-              key={job.id}
-              className="rounded-xl border border-border/70 bg-background/30 p-3"
-            >
-              <div className="flex flex-col gap-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-sm font-medium">
-                    {job.rule.name ??
-                      t(
-                        getNotificationTriggerTranslationKey(
-                          job.rule.triggerType,
-                        ),
-                      )}
-                  </p>
-                  <Badge variant="outline">
-                    {
-                      jobStatusLabels[
-                        job.status as keyof typeof jobStatusLabels
-                      ]
-                    }
-                  </Badge>
-                  <Badge variant="outline">
-                    {jobKindLabels[job.jobKind as keyof typeof jobKindLabels]}
-                  </Badge>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {t("settings.notifications.jobs.targetLabel", {
-                    target: getGuildNotificationTargetLabel(job.target),
-                  })}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {t("settings.notifications.jobs.scheduledFor", {
-                    date: format(
-                      new Date(job.scheduledFor),
-                      "dd.MM.yyyy HH:mm:ss",
-                    ),
-                  })}
-                </p>
-                <NotificationJobCountdown scheduledFor={job.scheduledFor} />
-                {job.blockedReason ? (
-                  <p className="text-xs text-amber-500">
-                    {job.blockedReason}
-                  </p>
-                ) : null}
-                <div className="pt-1">
-                  <ConfirmDeleteDialog
-                    disabled={cancelGuildJob.isPending}
-                    onConfirm={() => handleCancelJob(job.id)}
-                    title={t("settings.notifications.cancelJobDialog.title")}
-                    description={t(
-                      "settings.notifications.cancelJobDialog.description",
-                      {
-                        name:
-                          job.rule.name ??
-                          t(
-                            getNotificationTriggerTranslationKey(
-                              job.rule.triggerType,
-                            ),
+              <div
+                key={job.id}
+                className="rounded-xl border border-border/70 bg-background/30 p-3"
+              >
+                <div className="flex flex-col gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-sm font-medium">
+                      {job.rule.name ??
+                        t(
+                          getNotificationTriggerTranslationKey(
+                            job.rule.triggerType,
                           ),
-                      },
-                    )}
-                    confirmButtonLabel={t(
-                      "settings.notifications.actions.cancelPending",
-                    )}
-                    cancelButtonLabel={t(
-                      "settings.notifications.actions.cancel",
-                    )}
-                    trigger={
-                      <Button type="button" size="sm" variant="outline">
-                        {t("settings.notifications.actions.cancelPending")}
-                      </Button>
-                    }
-                  />
+                        )}
+                    </p>
+                    <Badge variant="outline">
+                      {
+                        jobStatusLabels[
+                          job.status as keyof typeof jobStatusLabels
+                        ]
+                      }
+                    </Badge>
+                    <Badge variant="outline">
+                      {jobKindLabels[job.jobKind as keyof typeof jobKindLabels]}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {t("settings.notifications.jobs.targetLabel", {
+                      target: getGuildNotificationTargetLabel(job.target),
+                    })}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {t("settings.notifications.jobs.scheduledFor", {
+                      date: format(
+                        new Date(job.scheduledFor),
+                        "dd.MM.yyyy HH:mm:ss",
+                      ),
+                    })}
+                  </p>
+                  <NotificationJobCountdown scheduledFor={job.scheduledFor} />
+                  {job.blockedReason ? (
+                    <p className="text-xs text-amber-500">
+                      {job.blockedReason}
+                    </p>
+                  ) : null}
+                  <div className="pt-1">
+                    <ConfirmDeleteDialog
+                      disabled={cancelGuildJob.isPending}
+                      onConfirm={() => handleCancelJob(job.id)}
+                      title={t("settings.notifications.cancelJobDialog.title")}
+                      description={t(
+                        "settings.notifications.cancelJobDialog.description",
+                        {
+                          name:
+                            job.rule.name ??
+                            t(
+                              getNotificationTriggerTranslationKey(
+                                job.rule.triggerType,
+                              ),
+                            ),
+                        },
+                      )}
+                      confirmButtonLabel={t(
+                        "settings.notifications.actions.cancelPending",
+                      )}
+                      cancelButtonLabel={t(
+                        "settings.notifications.actions.cancel",
+                      )}
+                      trigger={
+                        <Button type="button" size="sm" variant="outline">
+                          {t("settings.notifications.actions.cancelPending")}
+                        </Button>
+                      }
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
             ))}
           </div>
         </ScrollArea>

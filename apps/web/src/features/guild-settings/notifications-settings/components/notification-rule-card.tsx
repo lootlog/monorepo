@@ -119,17 +119,19 @@ export const NotificationRuleCard = ({
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Badge variant={rule.enabled ? "default" : "outline"}>
+            <Badge variant={rule.enabled ? "default" : "secondary"}>
               {rule.enabled
                 ? t("settings.notifications.states.enabled")
                 : t("settings.notifications.states.disabled")}
             </Badge>
-            {rule.world ? <Badge variant="outline">{rule.world}</Badge> : null}
+            {rule.world ? (
+              <Badge variant="secondary">{rule.world}</Badge>
+            ) : null}
             {rule.triggerType === NotificationTriggerType.SCHEDULED_MESSAGE &&
             rule.scheduleIntervalType &&
             rule.scheduleIntervalType !==
               NotificationScheduleIntervalType.ONCE ? (
-              <Badge variant="outline">
+              <Badge variant="secondary">
                 {rule.scheduleIntervalType ===
                 NotificationScheduleIntervalType.HOURLY
                   ? `${t("settings.notifications.intervalTypes.hourly").replace("X", String(rule.scheduleIntervalValue ?? 1))}`
@@ -144,7 +146,7 @@ export const NotificationRuleCard = ({
             ) : null}
             {rule.triggerType === NotificationTriggerType.SCHEDULED_MESSAGE &&
             rule.scheduledAt ? (
-              <Badge variant="outline">
+              <Badge variant="secondary">
                 {formatNotificationDateInTimeZone(
                   rule.scheduledAt,
                   rule.scheduleTimezone ?? "Europe/Warsaw",
@@ -153,19 +155,19 @@ export const NotificationRuleCard = ({
             ) : null}
             {rule.scheduleAnchor !== null &&
             rule.scheduleOffsetMinutes !== null ? (
-              <Badge variant="outline">
+              <Badge variant="secondary">
                 {t(getGuildNotificationRuleScheduleTranslationKey(rule), {
                   minutes: rule.scheduleOffsetMinutes,
                 })}
               </Badge>
             ) : null}
-            <Badge variant="outline">
+            <Badge variant="secondary">
               {t("settings.notifications.targetCount", {
                 count: targetLabels.length,
               })}
             </Badge>
             {rule.triggerType !== NotificationTriggerType.SCHEDULED_MESSAGE ? (
-              <Badge variant="outline">
+              <Badge variant="secondary">
                 {npcCount > 0
                   ? t("settings.notifications.npcCount", { count: npcCount })
                   : t("settings.notifications.allNpcs")}

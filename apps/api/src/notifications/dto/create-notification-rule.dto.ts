@@ -20,6 +20,7 @@ import {
   Min,
   ValidateIf,
 } from "class-validator";
+import { Error } from "src/notifications/enum/error.enum";
 import { HasAtLeastOneNpc } from "./has-at-least-one-npc.validator";
 
 @HasAtLeastOneNpc()
@@ -43,7 +44,7 @@ export class CreateNotificationRuleDto {
     (obj) => obj.triggerType !== NotificationTriggerType.SCHEDULED_MESSAGE,
   )
   @IsString()
-  @IsNotEmpty({ message: "Notification rule must specify a world" })
+  @IsNotEmpty({ message: Error.NOTIFICATION_RULE_WORLD_REQUIRED })
   world?: string;
 
   @ApiPropertyOptional()
@@ -112,7 +113,7 @@ export class CreateNotificationRuleDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  @Matches(/^\d{2}:\d{2}$/, { message: "Time must be in HH:mm format" })
+  @Matches(/^\d{2}:\d{2}$/, { message: Error.TIME_MUST_BE_HH_MM_FORMAT })
   scheduleTimeOfDay?: string;
 
   @ApiPropertyOptional()

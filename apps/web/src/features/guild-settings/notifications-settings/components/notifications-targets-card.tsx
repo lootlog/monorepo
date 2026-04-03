@@ -38,7 +38,7 @@ export const NotificationsTargetsCard = ({
             {t("settings.notifications.sections.targetsDescription")}
           </p>
         </div>
-        <Badge variant="outline">{targets.length}</Badge>
+        <Badge variant="secondary">{targets.length}</Badge>
       </div>
       {targets.length > 0 ? (
         <div className="flex flex-col gap-3">
