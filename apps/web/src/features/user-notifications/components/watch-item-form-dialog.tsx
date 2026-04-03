@@ -171,12 +171,11 @@ export const WatchFormDialog = ({
 
     let itemId: number;
     let itemName: string;
-    let itemIcon: string;
+    let itemIcon: string | undefined;
 
     if (values.manualEntry) {
       itemId = Number(values.manualItemId.trim());
       itemName = values.manualItemName.trim();
-      itemIcon = "";
     } else {
       if (!values.item) return;
       itemId = values.item.id;

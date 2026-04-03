@@ -17,6 +17,8 @@ export type UserNotificationTarget = {
 };
 
 export type UserWatchedItemSnapshot = {
+  name: string;
+  icon: string;
   rarity: string | null;
   lvl: number | null;
   type: string | null;
@@ -27,7 +29,7 @@ export type UserWatchedItem = {
   id: number;
   itemId: number;
   itemName: string;
-  itemIcon: string;
+  itemIcon: string | null;
   itemSnapshot: UserWatchedItemSnapshot | null;
   world: string;
   enabled: boolean;

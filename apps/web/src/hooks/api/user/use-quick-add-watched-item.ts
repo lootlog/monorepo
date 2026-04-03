@@ -6,7 +6,7 @@ import { apiClient } from "@/lib/api-client/api-client";
 export type QuickAddWatchedItemData = {
   itemId: number;
   itemName: string;
-  itemIcon: string;
+  itemIcon?: string;
   world: string;
   guildId: string;
 };

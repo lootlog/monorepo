@@ -582,6 +582,8 @@ export class NotificationRuleService {
         ...item,
         itemSnapshot: snapshot
           ? {
+              name: snapshot.name,
+              icon: snapshot.icon,
               rarity: snapshot.rarity,
               lvl: snapshot.lvl,
               type: snapshot.itemType,
@@ -627,7 +629,7 @@ export class NotificationRuleService {
           data: {
             enabled: true,
             itemName: data.itemName,
-            itemIcon: data.itemIcon,
+            itemIcon: data.itemIcon ?? null,
           },
         });
         await tx.notificationRule.update({
@@ -699,14 +701,14 @@ export class NotificationRuleService {
           userId,
           itemId: data.itemId,
           itemName: data.itemName,
-          itemIcon: data.itemIcon,
+          itemIcon: data.itemIcon ?? null,
           world: data.world,
           notificationRuleId: notificationRule.id,
         },
         update: {
           enabled: true,
           itemName: data.itemName,
-          itemIcon: data.itemIcon,
+          itemIcon: data.itemIcon ?? null,
           notificationRuleId: notificationRule.id,
         },
         include: {
@@ -767,7 +769,7 @@ export class NotificationRuleService {
           data: {
             enabled: true,
             itemName: data.itemName,
-            itemIcon: data.itemIcon,
+            itemIcon: data.itemIcon ?? null,
           },
         });
         await tx.notificationRule.update({
@@ -834,14 +836,14 @@ export class NotificationRuleService {
           userId,
           itemId: data.itemId,
           itemName: data.itemName,
-          itemIcon: data.itemIcon,
+          itemIcon: data.itemIcon ?? null,
           world: data.world,
           notificationRuleId: notificationRule.id,
         },
         update: {
           enabled: true,
           itemName: data.itemName,
-          itemIcon: data.itemIcon,
+          itemIcon: data.itemIcon ?? null,
           notificationRuleId: notificationRule.id,
         },
         include: {
