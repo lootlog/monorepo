@@ -34,107 +34,106 @@ export class NotificationsUserController {
   ) {}
 
   @Get("targets")
-  async getUserTargets(@UserId() userId: string) {
-    return this.targetService.listUserTargets(userId);
+  async getUserTargets(@DiscordId() discordId: string) {
+    return this.targetService.listUserTargets(discordId);
   }
 
   @Post("targets")
   async createUserTarget(
-    @UserId() userId: string,
     @DiscordId() discordId: string,
     @Body() data: CreateNotificationTargetDto,
   ) {
-    return this.targetService.createUserTarget(userId, discordId, data);
+    return this.targetService.createUserTarget(discordId, data);
   }
 
   @Patch("targets/:targetId")
   async updateUserTarget(
-    @UserId() userId: string,
+    @DiscordId() discordId: string,
     @Param("targetId", ParseIntPipe) targetId: number,
     @Body() data: UpdateNotificationTargetDto,
   ) {
-    return this.targetService.updateUserTarget(userId, targetId, data);
+    return this.targetService.updateUserTarget(discordId, targetId, data);
   }
 
   @Post("targets/:targetId/test")
   async triggerUserTargetTest(
-    @UserId() userId: string,
+    @DiscordId() discordId: string,
     @Param("targetId", ParseIntPipe) targetId: number,
   ) {
-    return this.targetService.triggerUserTargetTest(userId, targetId);
+    return this.targetService.triggerUserTargetTest(discordId, targetId);
   }
 
   @Delete("targets/:targetId")
   async deleteUserTarget(
-    @UserId() userId: string,
+    @DiscordId() discordId: string,
     @Param("targetId", ParseIntPipe) targetId: number,
   ) {
-    return this.targetService.deleteUserTarget(userId, targetId);
+    return this.targetService.deleteUserTarget(discordId, targetId);
   }
 
   @Get("rules")
-  async getUserRules(@UserId() userId: string) {
-    return this.ruleService.listUserRules(userId);
+  async getUserRules(@DiscordId() discordId: string) {
+    return this.ruleService.listUserRules(discordId);
   }
 
   @Post("rules")
   async createUserRule(
-    @UserId() userId: string,
+    @DiscordId() discordId: string,
     @Body() data: CreateNotificationRuleDto,
   ) {
-    return this.ruleService.createUserRule(userId, data);
+    return this.ruleService.createUserRule(discordId, data);
   }
 
   @Patch("rules/:ruleId")
   async updateUserRule(
-    @UserId() userId: string,
+    @DiscordId() discordId: string,
     @Param("ruleId", ParseIntPipe) ruleId: number,
     @Body() data: UpdateNotificationRuleDto,
   ) {
-    return this.ruleService.updateUserRule(userId, ruleId, data);
+    return this.ruleService.updateUserRule(discordId, ruleId, data);
   }
 
   @Delete("rules/:ruleId")
   async deleteUserRule(
-    @UserId() userId: string,
+    @DiscordId() discordId: string,
     @Param("ruleId", ParseIntPipe) ruleId: number,
   ) {
-    return this.ruleService.deleteUserRule(userId, ruleId);
+    return this.ruleService.deleteUserRule(discordId, ruleId);
   }
 
   @Get("jobs")
-  async getUserJobs(@UserId() userId: string) {
-    return this.jobService.listUserJobs(userId);
+  async getUserJobs(@DiscordId() discordId: string) {
+    return this.jobService.listUserJobs(discordId);
   }
 
   @Get("watched-items")
-  async getWatchedItems(@UserId() userId: string) {
-    return this.ruleService.listWatchedItems(userId);
+  async getWatchedItems(@DiscordId() discordId: string) {
+    return this.ruleService.listWatchedItems(discordId);
   }
 
   @Post("watched-items")
   async createWatchedItem(
-    @UserId() userId: string,
     @DiscordId() discordId: string,
+    @UserId() userId: string,
     @Body() data: CreateWatchedItemDto,
   ) {
-    return this.ruleService.createWatchedItem(userId, discordId, data);
+    return this.ruleService.createWatchedItem(discordId, userId, data);
   }
 
   @Post("watched-items/quick-add")
   async quickAddWatchedItem(
-    @UserId() userId: string,
     @DiscordId() discordId: string,
+    @UserId() userId: string,
     @Body() data: CreateWatchedItemQuickAddDto,
   ) {
-    return this.ruleService.quickAddWatchedItem(userId, discordId, data);
+    return this.ruleService.quickAddWatchedItem(discordId, userId, data);
   }
 
   @Delete("watched-items/:watchedItemId")
   async deleteWatchedItem(
-    @UserId() userId: string,
+    @DiscordId() discordId: string,
     @Param("watchedItemId", ParseIntPipe) watchedItemId: number,
   ) {
-    return this.ruleService.deleteWatchedItem(userId, watchedItemId);
+    return this.ruleService.deleteWatchedItem(discordId, watchedItemId);
   }
 }

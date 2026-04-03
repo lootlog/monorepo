@@ -366,11 +366,11 @@ export class NotificationRuleService {
 
   // ── User Rules ───────────────────────────────────────────────────────
 
-  async listUserRules(userId: string) {
+  async listUserRules(discordId: string) {
     return this.prisma.notificationRule.findMany({
       where: {
         ownerType: DbNotificationOwnerType.USER,
-        ownerId: userId,
+        ownerId: discordId,
       },
       include: {
         targets: {
@@ -383,8 +383,8 @@ export class NotificationRuleService {
     });
   }
 
-  async createUserRule(userId: string, data: CreateNotificationRuleDto) {
-    await this.ensureUserRuleLimitNotExceeded(userId);
+  async createUserRule(discordId: string, data: CreateNotificationRuleDto) {
+    await this.ensureUserRuleLimitNotExceeded(discordId);
 
     const isScheduledMessage =
       (data.triggerType as DbNotificationTriggerType) ===
@@ -396,14 +396,14 @@ export class NotificationRuleService {
 
     const targetIds = await this.targetService.validateTargetIds({
       ownerType: DbNotificationOwnerType.USER,
-      ownerId: userId,
+      ownerId: discordId,
       targetIds: data.targetIds,
     });
 
     const notificationRule = await this.prisma.notificationRule.create({
       data: {
         ownerType: DbNotificationOwnerType.USER,
-        ownerId: userId,
+        ownerId: discordId,
         triggerType: data.triggerType as DbNotificationTriggerType,
         guildId: null,
         world: isScheduledMessage ? null : (data.world ?? null),
@@ -432,7 +432,7 @@ export class NotificationRuleService {
   }
 
   async updateUserRule(
-    userId: string,
+    discordId: string,
     ruleId: number,
     data: UpdateNotificationRuleDto,
   ) {
@@ -444,7 +444,7 @@ export class NotificationRuleService {
     );
     const existingRule = await this.ensureRule({
       ownerType: DbNotificationOwnerType.USER,
-      ownerId: userId,
+      ownerId: discordId,
       ruleId,
     });
     const nextTriggerType =
@@ -460,7 +460,7 @@ export class NotificationRuleService {
     const targetIds = data.targetIds
       ? await this.targetService.validateTargetIds({
           ownerType: DbNotificationOwnerType.USER,
-          ownerId: userId,
+          ownerId: discordId,
           targetIds: data.targetIds,
         })
       : null;
@@ -526,10 +526,10 @@ export class NotificationRuleService {
     return this.jobService.getRuleById(ruleId);
   }
 
-  async deleteUserRule(userId: string, ruleId: number) {
+  async deleteUserRule(discordId: string, ruleId: number) {
     await this.ensureRule({
       ownerType: DbNotificationOwnerType.USER,
-      ownerId: userId,
+      ownerId: discordId,
       ruleId,
     });
     await this.jobService.cancelPendingJobs({ ruleId });
@@ -539,9 +539,9 @@ export class NotificationRuleService {
 
   // ── Watched Items ────────────────────────────────────────────────────
 
-  async listWatchedItems(userId: string) {
+  async listWatchedItems(discordId: string) {
     const watchedItems = await this.prisma.watchedItem.findMany({
-      where: { userId },
+      where: { userId: discordId },
       include: {
         notificationRule: {
           include: {
@@ -595,19 +595,19 @@ export class NotificationRuleService {
   }
 
   async createWatchedItem(
-    userId: string,
     discordId: string,
+    userId: string,
     data: CreateWatchedItemDto,
   ) {
     const normalizedGuildIds = await this.validateWatchedItemGuildIds({
-      userId,
       discordId,
+      userId,
       guildIds: data.guildIds,
     });
     const existingWatchedItem = await this.prisma.watchedItem.findUnique({
       where: {
         userId_itemId_world: {
-          userId,
+          userId: discordId,
           itemId: data.itemId,
           world: data.world,
         },
@@ -617,7 +617,8 @@ export class NotificationRuleService {
       },
     });
 
-    const targetIds = await this.targetService.getActiveUserTargetIds(userId);
+    const targetIds =
+      await this.targetService.getActiveUserTargetIds(discordId);
     if (targetIds.length === 0) {
       throw new ConflictException(Error.ACTIVE_DISCORD_DM_TARGET_REQUIRED);
     }
@@ -655,21 +656,21 @@ export class NotificationRuleService {
       });
 
       return this.getWatchedItemByScope({
-        userId,
+        discordId,
         itemId: data.itemId,
         world: data.world,
       });
     }
 
     if (!existingWatchedItem) {
-      await this.ensureWatchedItemLimitNotExceeded(userId);
+      await this.ensureWatchedItemLimitNotExceeded(discordId);
     }
 
     return this.prisma.$transaction(async (tx) => {
       const notificationRule = await tx.notificationRule.create({
         data: {
           ownerType: DbNotificationOwnerType.USER,
-          ownerId: userId,
+          ownerId: discordId,
           triggerType: DbNotificationTriggerType.WATCHED_ITEM_DROPPED,
           world: data.world,
           filters: {
@@ -692,13 +693,13 @@ export class NotificationRuleService {
       return tx.watchedItem.upsert({
         where: {
           userId_itemId_world: {
-            userId,
+            userId: discordId,
             itemId: data.itemId,
             world: data.world,
           },
         },
         create: {
-          userId,
+          userId: discordId,
           itemId: data.itemId,
           itemName: data.itemName,
           itemIcon: data.itemIcon ?? null,
@@ -727,16 +728,17 @@ export class NotificationRuleService {
   }
 
   async quickAddWatchedItem(
-    userId: string,
     discordId: string,
+    userId: string,
     data: CreateWatchedItemQuickAddDto,
   ) {
     const [guildId] = await this.validateWatchedItemGuildIds({
-      userId,
       discordId,
+      userId,
       guildIds: [data.guildId],
     });
-    const targetIds = await this.targetService.getActiveUserTargetIds(userId);
+    const targetIds =
+      await this.targetService.getActiveUserTargetIds(discordId);
 
     if (targetIds.length === 0) {
       throw new ConflictException(Error.ACTIVE_DISCORD_DM_TARGET_REQUIRED);
@@ -745,7 +747,7 @@ export class NotificationRuleService {
     const existingWatchedItem = await this.prisma.watchedItem.findUnique({
       where: {
         userId_itemId_world: {
-          userId,
+          userId: discordId,
           itemId: data.itemId,
           world: data.world,
         },
@@ -793,21 +795,21 @@ export class NotificationRuleService {
       });
 
       return this.getWatchedItemByScope({
-        userId,
+        discordId,
         itemId: data.itemId,
         world: data.world,
       });
     }
 
     if (!existingWatchedItem) {
-      await this.ensureWatchedItemLimitNotExceeded(userId);
+      await this.ensureWatchedItemLimitNotExceeded(discordId);
     }
 
     return this.prisma.$transaction(async (tx) => {
       const notificationRule = await tx.notificationRule.create({
         data: {
           ownerType: DbNotificationOwnerType.USER,
-          ownerId: userId,
+          ownerId: discordId,
           triggerType: DbNotificationTriggerType.WATCHED_ITEM_DROPPED,
           world: data.world,
           filters: {
@@ -827,13 +829,13 @@ export class NotificationRuleService {
       return tx.watchedItem.upsert({
         where: {
           userId_itemId_world: {
-            userId,
+            userId: discordId,
             itemId: data.itemId,
             world: data.world,
           },
         },
         create: {
-          userId,
+          userId: discordId,
           itemId: data.itemId,
           itemName: data.itemName,
           itemIcon: data.itemIcon ?? null,
@@ -861,11 +863,11 @@ export class NotificationRuleService {
     });
   }
 
-  async deleteWatchedItem(userId: string, watchedItemId: number) {
+  async deleteWatchedItem(discordId: string, watchedItemId: number) {
     const watchedItem = await this.prisma.watchedItem.findFirst({
       where: {
         id: watchedItemId,
-        userId,
+        userId: discordId,
       },
     });
 
@@ -939,11 +941,11 @@ export class NotificationRuleService {
     }
   }
 
-  private async ensureUserRuleLimitNotExceeded(userId: string) {
+  private async ensureUserRuleLimitNotExceeded(discordId: string) {
     const currentRuleCount = await this.prisma.notificationRule.count({
       where: {
         ownerType: DbNotificationOwnerType.USER,
-        ownerId: userId,
+        ownerId: discordId,
       },
     });
 
@@ -956,10 +958,10 @@ export class NotificationRuleService {
     }
   }
 
-  private async ensureWatchedItemLimitNotExceeded(userId: string) {
+  private async ensureWatchedItemLimitNotExceeded(discordId: string) {
     const currentWatchedItemCount = await this.prisma.watchedItem.count({
       where: {
-        userId,
+        userId: discordId,
       },
     });
 
@@ -1301,14 +1303,14 @@ export class NotificationRuleService {
   }
 
   private getWatchedItemByScope(params: {
-    userId: string;
+    discordId: string;
     itemId: number;
     world: string;
   }) {
     return this.prisma.watchedItem.findUnique({
       where: {
         userId_itemId_world: {
-          userId: params.userId,
+          userId: params.discordId,
           itemId: params.itemId,
           world: params.world,
         },

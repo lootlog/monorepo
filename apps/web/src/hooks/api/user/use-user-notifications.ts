@@ -6,6 +6,14 @@ import { queryOptions, useQuery } from "@tanstack/react-query";
 import type { QueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client/api-client";
 
+export type UserNotificationTargetTestTrigger = {
+  limit: number;
+  used: number;
+  remaining: number;
+  windowSeconds: number;
+  nextAvailableAt: string | null;
+};
+
 export type UserNotificationTarget = {
   id: number;
   externalId: string;
@@ -14,6 +22,7 @@ export type UserNotificationTarget = {
   active: boolean;
   canSend: boolean;
   updatedAt: string;
+  testTrigger: UserNotificationTargetTestTrigger;
 };
 
 export type UserWatchedItemSnapshot = {

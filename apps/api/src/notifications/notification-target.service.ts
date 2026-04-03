@@ -28,6 +28,9 @@ import {
   USER_DM_TEST_RULE_NAME,
 } from "src/notifications/contants/user-dm.constant";
 
+const USER_DM_TEST_TRIGGER_LIMIT = 5;
+const USER_DM_TEST_TRIGGER_WINDOW_MS = 15 * 60_000;
+
 @Injectable()
 export class NotificationTargetService {
   constructor(
@@ -136,21 +139,32 @@ export class NotificationTargetService {
     return { success: true };
   }
 
-  async listUserTargets(userId: string) {
-    return this.prisma.notificationTarget.findMany({
+  async listUserTargets(discordId: string) {
+    const targets = await this.prisma.notificationTarget.findMany({
       where: {
         ownerType: DbNotificationOwnerType.USER,
-        ownerId: userId,
+        ownerId: discordId,
       },
       orderBy: [{ active: "desc" }, { updatedAt: "desc" }],
     });
+
+    const targetIds = targets.map((t) => t.id);
+    const testTriggerUsageMap =
+      await this.getUserDmTestTriggerUsageForTargets(targetIds);
+
+    return targets.map((target) => ({
+      ...target,
+      testTrigger: testTriggerUsageMap.get(target.id) ?? {
+        limit: USER_DM_TEST_TRIGGER_LIMIT,
+        used: 0,
+        remaining: USER_DM_TEST_TRIGGER_LIMIT,
+        windowSeconds: Math.floor(USER_DM_TEST_TRIGGER_WINDOW_MS / 1000),
+        nextAvailableAt: null,
+      },
+    }));
   }
 
-  async createUserTarget(
-    userId: string,
-    discordId: string,
-    data: CreateNotificationTargetDto,
-  ) {
+  async createUserTarget(discordId: string, data: CreateNotificationTargetDto) {
     if (data.targetType !== DbNotificationTargetType.DM) {
       throw new BadRequestException(Error.USER_TARGETS_MUST_BE_DISCORD_DMS);
     }
@@ -165,7 +179,7 @@ export class NotificationTargetService {
       where: {
         ownerType_ownerId_provider_targetType_externalId: {
           ownerType: DbNotificationOwnerType.USER,
-          ownerId: userId,
+          ownerId: discordId,
           provider: DbNotificationProvider.DISCORD,
           targetType: DbNotificationTargetType.DM,
           externalId: discordId,
@@ -173,7 +187,7 @@ export class NotificationTargetService {
       },
       create: {
         ownerType: DbNotificationOwnerType.USER,
-        ownerId: userId,
+        ownerId: discordId,
         provider: DbNotificationProvider.DISCORD,
         targetType: DbNotificationTargetType.DM,
         externalId: discordId,
@@ -188,17 +202,17 @@ export class NotificationTargetService {
       },
     });
 
-    await this.attachUserTargetToWatchedItemRules(userId, target.id);
+    await this.attachUserTargetToWatchedItemRules(discordId, target.id);
 
     return target;
   }
 
   async updateUserTarget(
-    userId: string,
+    discordId: string,
     targetId: number,
     data: UpdateNotificationTargetDto,
   ) {
-    await this.ensureUserTarget(userId, targetId);
+    await this.ensureUserTarget(discordId, targetId);
 
     const hasDisplayName = Object.prototype.hasOwnProperty.call(
       data,
@@ -214,8 +228,8 @@ export class NotificationTargetService {
     });
   }
 
-  async triggerUserTargetTest(userId: string, targetId: number) {
-    const target = await this.ensureUserTarget(userId, targetId);
+  async triggerUserTargetTest(discordId: string, targetId: number) {
+    const target = await this.ensureUserTarget(discordId, targetId);
 
     if (target.targetType !== DbNotificationTargetType.DM) {
       throw new BadRequestException(Error.USER_TEST_TARGET_MUST_BE_DISCORD_DM);
@@ -227,7 +241,18 @@ export class NotificationTargetService {
       );
     }
 
-    const testRule = await this.getOrCreateUserDmTestRule(userId, target.id);
+    const testTriggerUsage = await this.getUserDmTestTriggerUsage(targetId);
+
+    if (testTriggerUsage.remaining <= 0) {
+      throw new ConflictException({
+        message: Error.USER_DM_TEST_TRIGGER_LIMIT_REACHED,
+        limit: testTriggerUsage.limit,
+        windowSeconds: testTriggerUsage.windowSeconds,
+        nextAvailableAt: testTriggerUsage.nextAvailableAt,
+      });
+    }
+
+    const testRule = await this.getOrCreateUserDmTestRule(discordId, target.id);
     const scheduledFor = new Date();
     const notificationJob = await this.jobService.createNotificationJob({
       notificationRule: {
@@ -266,8 +291,8 @@ export class NotificationTargetService {
     return { success: true };
   }
 
-  async deleteUserTarget(userId: string, targetId: number) {
-    await this.ensureUserTarget(userId, targetId);
+  async deleteUserTarget(discordId: string, targetId: number) {
+    await this.ensureUserTarget(discordId, targetId);
     await this.jobService.cancelPendingJobs({ targetId });
     await this.prisma.notificationTarget.delete({ where: { id: targetId } });
     return { success: true };
@@ -299,11 +324,11 @@ export class NotificationTargetService {
     return params.targetIds;
   }
 
-  async getActiveUserTargetIds(userId: string) {
+  async getActiveUserTargetIds(discordId: string) {
     const targets = await this.prisma.notificationTarget.findMany({
       where: {
         ownerType: DbNotificationOwnerType.USER,
-        ownerId: userId,
+        ownerId: discordId,
         active: true,
         canSend: true,
       },
@@ -363,12 +388,12 @@ export class NotificationTargetService {
     return target;
   }
 
-  private async ensureUserTarget(userId: string, targetId: number) {
+  private async ensureUserTarget(discordId: string, targetId: number) {
     const target = await this.prisma.notificationTarget.findFirst({
       where: {
         id: targetId,
         ownerType: DbNotificationOwnerType.USER,
-        ownerId: userId,
+        ownerId: discordId,
       },
     });
 
@@ -379,11 +404,11 @@ export class NotificationTargetService {
     return target;
   }
 
-  private async getOrCreateUserDmTestRule(userId: string, targetId: number) {
+  private async getOrCreateUserDmTestRule(discordId: string, targetId: number) {
     let notificationRule = await this.prisma.notificationRule.findFirst({
       where: {
         ownerType: DbNotificationOwnerType.USER,
-        ownerId: userId,
+        ownerId: discordId,
         triggerType: DbNotificationTriggerType.SCHEDULED_MESSAGE,
         name: USER_DM_TEST_RULE_NAME,
       },
@@ -393,7 +418,7 @@ export class NotificationTargetService {
       notificationRule = await this.prisma.notificationRule.create({
         data: {
           ownerType: DbNotificationOwnerType.USER,
-          ownerId: userId,
+          ownerId: discordId,
           triggerType: DbNotificationTriggerType.SCHEDULED_MESSAGE,
           guildId: null,
           world: null,
@@ -444,12 +469,12 @@ export class NotificationTargetService {
   }
 
   private async attachUserTargetToWatchedItemRules(
-    userId: string,
+    discordId: string,
     targetId: number,
   ) {
     const watchedRules = await this.prisma.watchedItem.findMany({
       where: {
-        userId,
+        userId: discordId,
         notificationRuleId: {
           not: null,
         },
@@ -470,5 +495,83 @@ export class NotificationTargetService {
         .map((ruleId) => ({ ruleId, targetId })),
       skipDuplicates: true,
     });
+  }
+
+  private async getUserDmTestTriggerUsage(targetId: number) {
+    const usageMap = await this.getUserDmTestTriggerUsageForTargets([targetId]);
+
+    return (
+      usageMap.get(targetId) ?? {
+        limit: USER_DM_TEST_TRIGGER_LIMIT,
+        used: 0,
+        remaining: USER_DM_TEST_TRIGGER_LIMIT,
+        windowSeconds: Math.floor(USER_DM_TEST_TRIGGER_WINDOW_MS / 1000),
+        nextAvailableAt: null,
+      }
+    );
+  }
+
+  private async getUserDmTestTriggerUsageForTargets(targetIds: number[]) {
+    const usageByTargetId = new Map<
+      number,
+      {
+        limit: number;
+        used: number;
+        remaining: number;
+        windowSeconds: number;
+        nextAvailableAt: string | null;
+      }
+    >();
+
+    if (targetIds.length === 0) {
+      return usageByTargetId;
+    }
+
+    const threshold = new Date(Date.now() - USER_DM_TEST_TRIGGER_WINDOW_MS);
+
+    const testJobs = await this.prisma.notificationJob.findMany({
+      where: {
+        targetId: { in: targetIds },
+        jobKind: DbNotificationJobKind.TEST,
+        createdAt: { gte: threshold },
+      },
+      select: {
+        targetId: true,
+        createdAt: true,
+      },
+      orderBy: [{ createdAt: "asc" }],
+    });
+
+    const jobsByTargetId = new Map<number, Date[]>();
+
+    for (const job of testJobs) {
+      if (!job.targetId) {
+        continue;
+      }
+
+      const current = jobsByTargetId.get(job.targetId) ?? [];
+      current.push(job.createdAt);
+      jobsByTargetId.set(job.targetId, current);
+    }
+
+    for (const targetId of targetIds) {
+      const usage = jobsByTargetId.get(targetId) ?? [];
+      const nextAvailableAt =
+        usage.length >= USER_DM_TEST_TRIGGER_LIMIT
+          ? new Date(
+              usage[0]!.getTime() + USER_DM_TEST_TRIGGER_WINDOW_MS,
+            ).toISOString()
+          : null;
+
+      usageByTargetId.set(targetId, {
+        limit: USER_DM_TEST_TRIGGER_LIMIT,
+        used: usage.length,
+        remaining: Math.max(0, USER_DM_TEST_TRIGGER_LIMIT - usage.length),
+        windowSeconds: Math.floor(USER_DM_TEST_TRIGGER_WINDOW_MS / 1000),
+        nextAvailableAt,
+      });
+    }
+
+    return usageByTargetId;
   }
 }
