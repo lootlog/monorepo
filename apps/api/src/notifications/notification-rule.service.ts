@@ -21,6 +21,7 @@ import { NotificationContentService } from "src/notifications/notification-conte
 import { NotificationJobService } from "src/notifications/notification-job.service";
 import { NotificationMatchingService } from "src/notifications/notification-matching.service";
 import { NotificationTargetService } from "src/notifications/notification-target.service";
+import { Error } from "src/notifications/enum/error.enum";
 import type { CreateNotificationRuleDto } from "src/notifications/dto/create-notification-rule.dto";
 import type { CreateWatchedItemQuickAddDto } from "src/notifications/dto/create-watched-item-quick-add.dto";
 import type { CreateWatchedItemDto } from "src/notifications/dto/create-watched-item.dto";
@@ -34,6 +35,7 @@ const GUILD_NOTIFICATION_TEST_TRIGGER_LIMIT = 10;
 const GUILD_NOTIFICATION_TEST_TRIGGER_WINDOW_MS = 15 * 60_000;
 const GUILD_NOTIFICATION_MAX_NPCS_PER_RULE = 5;
 const USER_NOTIFICATION_RULE_LIMIT = 50;
+const USER_WATCHED_ITEM_LIMIT = 20;
 
 @Injectable()
 export class NotificationRuleService {
@@ -289,11 +291,13 @@ export class NotificationRuleService {
     });
 
     if (!notificationRule) {
-      throw new NotFoundException("Notification rule not found");
+      throw new NotFoundException(Error.NOTIFICATION_RULE_NOT_FOUND);
     }
 
     if (!notificationRule.enabled) {
-      throw new ConflictException("Only enabled rules can be test triggered");
+      throw new ConflictException(
+        Error.ONLY_ENABLED_RULES_CAN_BE_TEST_TRIGGERED,
+      );
     }
 
     const activeTargets = notificationRule.targets
@@ -302,7 +306,7 @@ export class NotificationRuleService {
 
     if (activeTargets.length === 0) {
       throw new ConflictException(
-        "Notification rule requires at least one active target that can send",
+        Error.NOTIFICATION_RULE_REQUIRES_ACTIVE_SENDABLE_TARGET,
       );
     }
 
@@ -312,7 +316,7 @@ export class NotificationRuleService {
 
     if (testTriggerUsage.remaining <= 0) {
       throw new ConflictException({
-        message: "Test trigger limit reached for this rule",
+        message: Error.TEST_TRIGGER_LIMIT_REACHED_FOR_RULE,
         limit: testTriggerUsage.limit,
         windowSeconds: testTriggerUsage.windowSeconds,
         nextAvailableAt: testTriggerUsage.nextAvailableAt,
@@ -354,7 +358,7 @@ export class NotificationRuleService {
     }
 
     if (createdJobsCount === 0) {
-      throw new ConflictException("No test jobs were created for this rule");
+      throw new ConflictException(Error.NO_TEST_JOBS_CREATED_FOR_RULE);
     }
 
     return { success: true };
@@ -536,7 +540,7 @@ export class NotificationRuleService {
   // ── Watched Items ────────────────────────────────────────────────────
 
   async listWatchedItems(userId: string) {
-    return this.prisma.watchedItem.findMany({
+    const watchedItems = await this.prisma.watchedItem.findMany({
       where: { userId },
       include: {
         notificationRule: {
@@ -550,6 +554,41 @@ export class NotificationRuleService {
         },
       },
       orderBy: { updatedAt: "desc" },
+    });
+
+    const itemIds = [...new Set(watchedItems.map((item) => item.itemId))];
+
+    const snapshots = await this.prisma.itemSnapshot.findMany({
+      where: { itemId: { in: itemIds } },
+      orderBy: { createdAt: "desc" },
+      distinct: ["itemId"],
+      select: {
+        itemId: true,
+        name: true,
+        icon: true,
+        rarity: true,
+        lvl: true,
+        itemType: true,
+        statRaw: true,
+      },
+    });
+
+    const snapshotByItemId = new Map(snapshots.map((s) => [s.itemId, s]));
+
+    return watchedItems.map((item) => {
+      const snapshot = snapshotByItemId.get(item.itemId);
+
+      return {
+        ...item,
+        itemSnapshot: snapshot
+          ? {
+              rarity: snapshot.rarity,
+              lvl: snapshot.lvl,
+              type: snapshot.itemType,
+              stat: snapshot.statRaw,
+            }
+          : null,
+      };
     });
   }
 
@@ -578,9 +617,7 @@ export class NotificationRuleService {
 
     const targetIds = await this.targetService.getActiveUserTargetIds(userId);
     if (targetIds.length === 0) {
-      throw new ConflictException(
-        "Active Discord DM notification target is required",
-      );
+      throw new ConflictException(Error.ACTIVE_DISCORD_DM_TARGET_REQUIRED);
     }
 
     if (existingWatchedItem?.notificationRuleId) {
@@ -620,6 +657,10 @@ export class NotificationRuleService {
         itemId: data.itemId,
         world: data.world,
       });
+    }
+
+    if (!existingWatchedItem) {
+      await this.ensureWatchedItemLimitNotExceeded(userId);
     }
 
     return this.prisma.$transaction(async (tx) => {
@@ -696,9 +737,7 @@ export class NotificationRuleService {
     const targetIds = await this.targetService.getActiveUserTargetIds(userId);
 
     if (targetIds.length === 0) {
-      throw new ConflictException(
-        "Active Discord DM notification target is required",
-      );
+      throw new ConflictException(Error.ACTIVE_DISCORD_DM_TARGET_REQUIRED);
     }
 
     const existingWatchedItem = await this.prisma.watchedItem.findUnique({
@@ -756,6 +795,10 @@ export class NotificationRuleService {
         itemId: data.itemId,
         world: data.world,
       });
+    }
+
+    if (!existingWatchedItem) {
+      await this.ensureWatchedItemLimitNotExceeded(userId);
     }
 
     return this.prisma.$transaction(async (tx) => {
@@ -825,7 +868,7 @@ export class NotificationRuleService {
     });
 
     if (!watchedItem) {
-      throw new NotFoundException("Watched item not found");
+      throw new NotFoundException(Error.WATCHED_ITEM_NOT_FOUND);
     }
 
     if (watchedItem.notificationRuleId) {
@@ -859,7 +902,7 @@ export class NotificationRuleService {
 
     if (!syncState.hasRequiredPermissions) {
       throw new ConflictException({
-        message: "Discord bot is missing required permissions",
+        message: Error.DISCORD_BOT_MISSING_REQUIRED_PERMISSIONS,
         missingPermissions: syncState.missingPermissions,
         syncState,
       });
@@ -875,7 +918,7 @@ export class NotificationRuleService {
     });
 
     if (!guild) {
-      throw new NotFoundException("Guild not found");
+      throw new NotFoundException(Error.GUILD_NOT_FOUND);
     }
 
     const currentRuleCount = await this.prisma.notificationRule.count({
@@ -887,7 +930,7 @@ export class NotificationRuleService {
 
     if (currentRuleCount >= guild.notificationRuleLimit) {
       throw new ConflictException({
-        message: "Notification rule limit reached for this guild",
+        message: Error.GUILD_NOTIFICATION_RULE_LIMIT_REACHED,
         ruleLimit: guild.notificationRuleLimit,
         ruleCount: currentRuleCount,
       });
@@ -904,9 +947,25 @@ export class NotificationRuleService {
 
     if (currentRuleCount >= USER_NOTIFICATION_RULE_LIMIT) {
       throw new ConflictException({
-        message: "Notification rule limit reached",
+        message: Error.USER_NOTIFICATION_RULE_LIMIT_REACHED,
         ruleLimit: USER_NOTIFICATION_RULE_LIMIT,
         ruleCount: currentRuleCount,
+      });
+    }
+  }
+
+  private async ensureWatchedItemLimitNotExceeded(userId: string) {
+    const currentWatchedItemCount = await this.prisma.watchedItem.count({
+      where: {
+        userId,
+      },
+    });
+
+    if (currentWatchedItemCount >= USER_WATCHED_ITEM_LIMIT) {
+      throw new ConflictException({
+        message: Error.USER_WATCHED_ITEM_LIMIT_REACHED,
+        watchedItemLimit: USER_WATCHED_ITEM_LIMIT,
+        watchedItemCount: currentWatchedItemCount,
       });
     }
   }
@@ -925,7 +984,7 @@ export class NotificationRuleService {
     });
 
     if (!notificationRule) {
-      throw new NotFoundException("Notification rule not found");
+      throw new NotFoundException(Error.NOTIFICATION_RULE_NOT_FOUND);
     }
 
     return notificationRule;
@@ -950,9 +1009,10 @@ export class NotificationRuleService {
     }
 
     if (uniqueNpcIds.size > GUILD_NOTIFICATION_MAX_NPCS_PER_RULE) {
-      throw new BadRequestException(
-        `Notification rule can target up to ${GUILD_NOTIFICATION_MAX_NPCS_PER_RULE} NPCs`,
-      );
+      throw new BadRequestException({
+        message: Error.NOTIFICATION_RULE_MAX_NPCS_EXCEEDED,
+        maxNpcsPerRule: GUILD_NOTIFICATION_MAX_NPCS_PER_RULE,
+      });
     }
   }
 
@@ -1048,7 +1108,7 @@ export class NotificationRuleService {
       scheduleStrategy !== DbNotificationScheduleStrategy.SPAWN_WINDOW_RELATIVE
     ) {
       throw new BadRequestException(
-        "Timer notifications require SPAWN_WINDOW_RELATIVE schedule strategy",
+        Error.TIMER_NOTIFICATION_REQUIRES_SPAWN_WINDOW_RELATIVE_STRATEGY,
       );
     }
 
@@ -1057,13 +1117,13 @@ export class NotificationRuleService {
       scheduleAnchor !== DbNotificationScheduleAnchor.MAX_SPAWN
     ) {
       throw new BadRequestException(
-        "Timer notifications require a valid schedule anchor",
+        Error.TIMER_NOTIFICATION_REQUIRES_VALID_SCHEDULE_ANCHOR,
       );
     }
 
     if (scheduleOffsetMinutes === null || scheduleOffsetMinutes < 0) {
       throw new BadRequestException(
-        "Timer notifications require a non-negative schedule offset",
+        Error.TIMER_NOTIFICATION_REQUIRES_NON_NEGATIVE_SCHEDULE_OFFSET,
       );
     }
 
@@ -1143,7 +1203,7 @@ export class NotificationRuleService {
       !scheduleTimezone
     ) {
       throw new BadRequestException(
-        "Recurring user scheduled messages require scheduleTimezone",
+        Error.RECURRING_USER_SCHEDULED_MESSAGES_REQUIRE_TIMEZONE,
       );
     }
 
@@ -1190,7 +1250,9 @@ export class NotificationRuleService {
 
     if (normalizedTimeZone.length > 0) {
       if (!isValidTimeZone(normalizedTimeZone)) {
-        throw new BadRequestException("Invalid notification schedule timezone");
+        throw new BadRequestException(
+          Error.INVALID_NOTIFICATION_SCHEDULE_TIMEZONE,
+        );
       }
 
       return normalizedTimeZone;
@@ -1215,7 +1277,7 @@ export class NotificationRuleService {
     const normalizedGuildIds = [...new Set(params.guildIds)].sort();
 
     if (normalizedGuildIds.length === 0) {
-      throw new BadRequestException("At least one guild is required");
+      throw new BadRequestException(Error.AT_LEAST_ONE_GUILD_REQUIRED);
     }
 
     const availableGuildIds = new Set(
@@ -1229,7 +1291,7 @@ export class NotificationRuleService {
 
     if (invalidGuildIds.length > 0) {
       throw new BadRequestException(
-        "Selected guilds are not available for the authenticated user",
+        Error.SELECTED_GUILDS_NOT_AVAILABLE_FOR_AUTHENTICATED_USER,
       );
     }
 

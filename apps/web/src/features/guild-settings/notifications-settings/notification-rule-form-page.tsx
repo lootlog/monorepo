@@ -565,7 +565,7 @@ export const NotificationRuleFormPage = () => {
   return (
     <div className="flex h-full min-h-0 flex-col bg-background/50">
       <ScrollArea className="flex-1 min-h-0">
-        <div className="flex flex-col gap-4 px-3 pb-3">
+        <div className="flex flex-col gap-4 px-3 py-3">
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             <div className="lg:col-span-2">
               <Card className="gap-3 border-border bg-card/40 p-4 backdrop-blur-sm">

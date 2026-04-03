@@ -59,17 +59,17 @@ export const NotificationTargetCard = ({
             </span>
           </p>
           <div className="flex flex-wrap gap-2">
-            <Badge variant={target.active ? "default" : "outline"}>
+            <Badge variant={target.active ? "default" : "secondary"}>
               {target.active
                 ? t("settings.notifications.states.active")
                 : t("settings.notifications.states.inactive")}
             </Badge>
-            <Badge variant={target.canSend ? "default" : "outline"}>
+            <Badge variant={target.canSend ? "default" : "secondary"}>
               {target.canSend
                 ? t("settings.notifications.states.canSend")
                 : t("settings.notifications.states.cannotSend")}
             </Badge>
-            <Badge variant="outline">
+            <Badge variant="secondary">
               {t("settings.notifications.targetUsageCount", {
                 count: usageCount,
               })}
@@ -109,9 +109,7 @@ export const NotificationTargetCard = ({
                   confirmButtonLabel={t(
                     "settings.notifications.actions.delete",
                   )}
-                  cancelButtonLabel={t(
-                    "settings.notifications.actions.cancel",
-                  )}
+                  cancelButtonLabel={t("settings.notifications.actions.cancel")}
                   trigger={
                     <Button type="button" size="icon" variant="destructive">
                       <Trash2 className="h-4 w-4" />

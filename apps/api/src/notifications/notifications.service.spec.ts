@@ -6,6 +6,7 @@ import { Prisma } from "prisma/generated/client";
 import { PrismaService } from "src/db/prisma.service";
 import { GuildsService } from "src/guilds/guilds.service";
 import { NOTIFICATIONS_DISPATCH_QUEUE } from "src/notifications/constants/notifications-dispatch-queue.constant";
+import { Error as NotificationError } from "src/notifications/enum/error.enum";
 import { ChannelsService } from "src/channels/channels.service";
 import { NotificationContentService } from "./notification-content.service";
 import { NotificationJobService } from "./notification-job.service";
@@ -43,6 +44,7 @@ describe("Notification Services", () => {
       findMany: jest.fn(),
     },
     watchedItem: {
+      count: jest.fn(),
       findMany: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),
@@ -114,19 +116,22 @@ describe("Notification Services", () => {
       active: true,
       canSend: true,
     });
-    mockPrisma.notificationTarget.update.mockResolvedValue({
-      id: 11,
-      ownerType: "USER",
-      ownerId: "user-1",
-      targetType: "DM",
-      active: true,
-      canSend: true,
-      displayName: "Discord DM",
-    });
+    mockPrisma.notificationTarget.update.mockImplementation(
+      async ({ data }) => ({
+        id: 11,
+        ownerType: "USER",
+        ownerId: "user-1",
+        targetType: "DM",
+        active: data.active ?? true,
+        canSend: true,
+        displayName: "Discord DM",
+      }),
+    );
     mockPrisma.guild.findUnique.mockResolvedValue({
       notificationRuleLimit: 20,
     });
     mockPrisma.member.findMany.mockResolvedValue([]);
+    mockPrisma.watchedItem.count.mockResolvedValue(0);
     mockPrisma.watchedItem.findMany.mockResolvedValue([]);
     mockPrisma.watchedItem.findUnique.mockResolvedValue(null);
     mockPrisma.watchedItem.update.mockResolvedValue(undefined);
@@ -397,25 +402,34 @@ describe("Notification Services", () => {
     ).rejects.toMatchObject({
       response: {
         message:
-          "User DM notification targets must use the authenticated Discord account",
+          NotificationError.USER_DM_TARGET_MUST_USE_AUTHENTICATED_DISCORD_ACCOUNT,
       },
     });
 
     expect(mockPrisma.notificationTarget.upsert).not.toHaveBeenCalled();
   });
 
-  it("rejects deactivating user dm targets", async () => {
+  it("deactivates user dm targets", async () => {
     await expect(
       targetService.updateUserTarget("user-1", 11, {
         active: false,
       }),
-    ).rejects.toMatchObject({
-      response: {
-        message: "User Discord DM notification targets cannot be deactivated",
-      },
+    ).resolves.toMatchObject({
+      id: 11,
+      ownerType: "USER",
+      ownerId: "user-1",
+      targetType: "DM",
+      active: false,
+      canSend: true,
+      displayName: "Discord DM",
     });
 
-    expect(mockPrisma.notificationTarget.update).not.toHaveBeenCalled();
+    expect(mockPrisma.notificationTarget.update).toHaveBeenCalledWith({
+      where: { id: 11 },
+      data: {
+        active: false,
+      },
+    });
   });
 
   it("creates an immediate test job for an active user dm target", async () => {
@@ -428,11 +442,11 @@ describe("Notification Services", () => {
       triggerType: "SCHEDULED_MESSAGE",
     });
 
-    await expect(targetService.triggerUserTargetTest("user-1", 11)).resolves.toEqual(
-      {
-        success: true,
-      },
-    );
+    await expect(
+      targetService.triggerUserTargetTest("user-1", 11),
+    ).resolves.toEqual({
+      success: true,
+    });
 
     expect(mockPrisma.notificationRule.create).toHaveBeenCalledWith({
       data: {
@@ -496,7 +510,28 @@ describe("Notification Services", () => {
       }),
     ).rejects.toMatchObject({
       response: {
-        message: "Active Discord DM notification target is required",
+        message: NotificationError.ACTIVE_DISCORD_DM_TARGET_REQUIRED,
+      },
+    });
+
+    expect(mockPrisma.notificationRule.create).not.toHaveBeenCalled();
+    expect(mockPrisma.watchedItem.upsert).not.toHaveBeenCalled();
+  });
+
+  it("rejects creating a new watched item when the watched item limit is reached", async () => {
+    mockPrisma.watchedItem.count.mockResolvedValueOnce(20);
+
+    await expect(
+      ruleService.createWatchedItem("user-1", "discord-user-1", {
+        itemId: 123,
+        itemName: "Legendarny Miecz",
+        itemIcon: "legendary-sword.png",
+        world: "berufs",
+        guildIds: ["guild-1"],
+      }),
+    ).rejects.toMatchObject({
+      response: {
+        message: NotificationError.USER_WATCHED_ITEM_LIMIT_REACHED,
       },
     });
 
@@ -667,9 +702,30 @@ describe("Notification Services", () => {
       }),
     ).rejects.toMatchObject({
       response: {
-        message: "Active Discord DM notification target is required",
+        message: NotificationError.ACTIVE_DISCORD_DM_TARGET_REQUIRED,
       },
     });
+  });
+
+  it("rejects quick add when it would create a new watched item above the limit", async () => {
+    mockPrisma.watchedItem.count.mockResolvedValueOnce(20);
+
+    await expect(
+      ruleService.quickAddWatchedItem("user-1", "discord-user-1", {
+        itemId: 123,
+        itemName: "Legendarny Miecz",
+        itemIcon: "legendary-sword.png",
+        world: "berufs",
+        guildId: "guild-1",
+      }),
+    ).rejects.toMatchObject({
+      response: {
+        message: NotificationError.USER_WATCHED_ITEM_LIMIT_REACHED,
+      },
+    });
+
+    expect(mockPrisma.notificationRule.create).not.toHaveBeenCalled();
+    expect(mockPrisma.watchedItem.upsert).not.toHaveBeenCalled();
   });
 
   it("rejects quick add for a guild outside the authenticated user scope", async () => {
@@ -683,7 +739,8 @@ describe("Notification Services", () => {
       }),
     ).rejects.toMatchObject({
       response: {
-        message: "Selected guilds are not available for the authenticated user",
+        message:
+          NotificationError.SELECTED_GUILDS_NOT_AVAILABLE_FOR_AUTHENTICATED_USER,
       },
     });
   });
@@ -727,7 +784,7 @@ describe("Notification Services", () => {
       ruleService.triggerGuildRuleTest("guild-1", 77),
     ).rejects.toMatchObject({
       response: {
-        message: "Test trigger limit reached for this rule",
+        message: NotificationError.TEST_TRIGGER_LIMIT_REACHED_FOR_RULE,
       },
     });
   });

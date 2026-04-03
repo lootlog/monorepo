@@ -1,13 +1,13 @@
-import { useWorlds } from "@/hooks/api/game-data/use-worlds";
-import { useGuildContext } from "@/hooks/context/use-guild-context";
-import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useEffect, useMemo } from "react";
+import { useContext, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocalStorage } from "usehooks-ts";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import { cn } from "@lootlog/ui/lib/utils";
-import { useTheme } from "@/hooks/context/use-theme";
 import { FrostOverlay } from "@/components/effects/rukia-frost";
+import { GuildContext } from "@/contexts/guild.context";
+import { useWorlds } from "@/hooks/api/game-data/use-worlds";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useTheme } from "@/hooks/context/use-theme";
 
 const ALL_WORLDS_SENTINEL = "__ALL__";
 
@@ -18,6 +18,7 @@ type WorldSwitcherProps = {
   showAllOption?: boolean;
   width?: string;
   triggerClassName?: string;
+  worlds?: string[];
 };
 
 export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
@@ -27,10 +28,14 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
   showAllOption = false,
   width,
   triggerClassName,
+  worlds: externalWorlds,
 }) => {
   const { t } = useTranslation();
-  const { data: worlds } = useWorlds();
-  const { setWorld: setContextWorld, world: contextWorld } = useGuildContext();
+  const { data: fetchedWorlds } = useWorlds();
+  const worlds = externalWorlds ?? fetchedWorlds;
+  const guildContext = useContext(GuildContext);
+  const contextWorld = guildContext?.world ?? "";
+  const setContextWorld = guildContext?.setWorld;
   const guildId = useGuildId();
   const storageKey = `lootlog:guild:${guildId ?? "global"}:world-order`;
   const [worldOrder, setWorldOrder] = useLocalStorage<string[]>(storageKey, []);
@@ -74,7 +79,7 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
     if (isControlled) {
       onValueChange?.(actualWorld);
     } else {
-      setContextWorld(actualWorld ?? "");
+      setContextWorld?.(actualWorld ?? "");
     }
 
     if (actualWorld) {
@@ -84,15 +89,6 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
       ]);
     }
   };
-
-  useEffect(() => {
-    if (currentWorld && worlds?.includes(currentWorld)) {
-      setWorldOrder((prev) => [
-        currentWorld,
-        ...prev.filter((w) => w !== currentWorld),
-      ]);
-    }
-  }, [currentWorld, worlds, setWorldOrder]);
 
   const displayValue =
     currentWorld ?? (showAllOption ? ALL_WORLDS_SENTINEL : undefined);

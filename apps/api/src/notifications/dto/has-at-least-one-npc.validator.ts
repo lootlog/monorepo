@@ -3,6 +3,7 @@ import {
   type ValidationOptions,
   type ValidationArguments,
 } from "class-validator";
+import { Error } from "src/notifications/enum/error.enum";
 
 export function HasAtLeastOneNpc(validationOptions?: ValidationOptions) {
   return function (target: object) {
@@ -11,7 +12,7 @@ export function HasAtLeastOneNpc(validationOptions?: ValidationOptions) {
       target: target.constructor,
       propertyName: "npcIds",
       options: {
-        message: "Notification rule must target at least one NPC",
+        message: Error.NOTIFICATION_RULE_MUST_TARGET_AT_LEAST_ONE_NPC,
         ...validationOptions,
       },
       validator: {

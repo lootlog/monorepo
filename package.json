@@ -28,7 +28,7 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev --concurrency 13",
-    "dev:core": "turbo dev --filter=@lootlog/api --filter=@lootlog/auth --filter=@lootlog/gateway --filter=@lootlog/web --filter=@lootlog/game-client --filter=@lootlog/search --concurrency 13",
+    "dev:core": "turbo dev --filter=@lootlog/api --filter=@lootlog/auth --filter=@lootlog/gateway --filter=@lootlog/web --filter=@lootlog/game-client --filter=@lootlog/search --filter=@lootlog/discord-bot --concurrency 13",
     "start": "turbo start",
     "lint": "turbo lint",
     "doctor": "turbo run doctor",

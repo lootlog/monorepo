@@ -2,6 +2,7 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@lootlog/ui/components/badge";
+import { Card } from "@lootlog/ui/components/card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import {
@@ -13,6 +14,8 @@ import {
   getNotificationTriggerTranslationKey,
 } from "./utils/notification-settings.utils";
 import { NotificationJobDetailDialog } from "./components/notification-job-detail-dialog";
+import { History } from "lucide-react";
+import { PageHeader } from "@/components/common/page-header";
 
 export const NotificationsHistoryPage = () => {
   const { t } = useTranslation();
@@ -36,11 +39,22 @@ export const NotificationsHistoryPage = () => {
   } as const;
 
   const historyJobs = data?.history ?? [];
+  const openJobDetails = (job: GuildNotificationJob) => {
+    setSelectedJob(job);
+  };
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background/50">
       <ScrollArea className="min-h-0 flex-1">
-        <div className="flex flex-col gap-4 px-3 pb-3">
+        <div className="flex flex-col gap-4 px-3 py-3">
+          <PageHeader
+            icon={History}
+            title={t("settings.notifications.notificationsHistory.title")}
+            description={t(
+              "settings.notifications.notificationsHistory.description",
+            )}
+          />
+
           {isLoading ? (
             <div className="flex h-64 items-center justify-center">
               <Spinner className="h-8 w-8" />
@@ -48,11 +62,19 @@ export const NotificationsHistoryPage = () => {
           ) : historyJobs.length > 0 ? (
             <div className="flex flex-col gap-3">
               {historyJobs.map((job) => (
-                <button
+                <Card
                   key={job.id}
-                  type="button"
-                  className="rounded-xl border border-border/70 bg-background/30 p-3 text-left transition-colors hover:bg-background/50"
-                  onClick={() => setSelectedJob(job)}
+                  variant="interactive"
+                  role="button"
+                  tabIndex={0}
+                  className="gap-2 border-border/70 bg-background/30 p-3 text-left backdrop-blur-sm hover:bg-background/50"
+                  onClick={() => openJobDetails(job)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      openJobDetails(job);
+                    }
+                  }}
                 >
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center justify-between gap-2">
@@ -72,7 +94,7 @@ export const NotificationsHistoryPage = () => {
                             ]
                           }
                         </Badge>
-                        <Badge variant="outline">
+                        <Badge variant="secondary">
                           {
                             jobKindLabels[
                               job.jobKind as keyof typeof jobKindLabels
@@ -90,7 +112,7 @@ export const NotificationsHistoryPage = () => {
                       </p>
                     ) : null}
                   </div>
-                </button>
+                </Card>
               ))}
             </div>
           ) : (

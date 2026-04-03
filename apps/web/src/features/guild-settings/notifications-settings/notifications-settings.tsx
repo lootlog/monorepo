@@ -11,6 +11,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Spinner } from "@lootlog/ui/components/spinner";
+import { PageHeader } from "@/components/common/page-header";
 import { NotificationsActionsCard } from "./components/notifications-actions-card";
 import { NotificationsPendingJobsCard } from "./components/notifications-jobs-card";
 import { NotificationsRecentHistoryCard } from "./components/notifications-recent-history-card";
@@ -60,20 +61,12 @@ export const NotificationsSettings = () => {
     <>
       <div className="flex h-full min-h-0 flex-col bg-background/50">
         <ScrollArea className="min-h-0 flex-1">
-          <div className="flex flex-col gap-4 px-3 pb-3">
-            <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="rounded-xl bg-blue-500/10 p-2.5 shadow-inner shadow-blue-500/10">
-                  <BellRing className="size-4 text-blue-500" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h2 className="text-base font-semibold leading-tight">
-                    {t("settings.notifications.title")}
-                  </h2>
-                  <p className="text-xs leading-tight text-muted-foreground">
-                    {t("settings.notifications.description")}
-                  </p>
-                </div>
+          <div className="flex flex-col gap-3 px-3 py-3">
+            <PageHeader
+              icon={BellRing}
+              title={t("settings.notifications.title")}
+              description={t("settings.notifications.description")}
+              actions={
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
@@ -88,8 +81,8 @@ export const NotificationsSettings = () => {
                     {t("settings.notifications.info.title")}
                   </TooltipContent>
                 </Tooltip>
-              </div>
-            </Card>
+              }
+            />
 
             {!hasRequiredPermissions ? (
               <Card className="gap-3 border-border bg-card/40 p-4 backdrop-blur-sm">
@@ -108,7 +101,7 @@ export const NotificationsSettings = () => {
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {missingPermissions.map((permission) => (
-                        <Badge key={permission} variant="outline">
+                        <Badge key={permission} variant="secondary">
                           {permission}
                         </Badge>
                       ))}
@@ -139,7 +132,7 @@ export const NotificationsSettings = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
                   <div className="space-y-4 lg:col-span-2">
                     <NotificationsTargetsCard
                       targets={targets}

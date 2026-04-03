@@ -32,6 +32,7 @@ import {
 } from "src/notifications/constants/notifications-history.constant";
 import { NotificationContentService } from "src/notifications/notification-content.service";
 import { NotificationMatchingService } from "src/notifications/notification-matching.service";
+import { Error } from "src/notifications/enum/error.enum";
 import type { NotificationDispatchJobData } from "src/notifications/notifications-dispatch.processor";
 import { calculateNextOccurrenceInTimeZone } from "src/notifications/utils/notification-schedule-time.util";
 
@@ -959,7 +960,7 @@ export class NotificationJobService {
     });
 
     if (!notificationJob) {
-      throw new NotFoundException("Notification job not found");
+      throw new NotFoundException(Error.NOTIFICATION_JOB_NOT_FOUND);
     }
 
     if (
@@ -968,7 +969,7 @@ export class NotificationJobService {
       notificationJob.status !== DbNotificationJobStatus.PROCESSING
     ) {
       throw new BadRequestException(
-        "Only pending notification jobs can be canceled",
+        Error.ONLY_PENDING_NOTIFICATION_JOBS_CAN_BE_CANCELED,
       );
     }
 

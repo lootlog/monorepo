@@ -44,6 +44,9 @@ export const NotificationsRecentHistoryCard = ({
     INSTANT: t("settings.notifications.jobKinds.instant"),
     TEST: t("settings.notifications.jobKinds.test"),
   } as const;
+  const openJobDetails = (job: GuildNotificationJob) => {
+    setSelectedJob(job);
+  };
 
   return (
     <Card className="gap-3 border-border bg-card/40 p-4 backdrop-blur-sm">
@@ -63,11 +66,19 @@ export const NotificationsRecentHistoryCard = ({
       {recentJobs.length > 0 ? (
         <div className="flex flex-col gap-3">
           {recentJobs.map((job) => (
-            <button
+            <Card
               key={job.id}
-              type="button"
-              className="rounded-xl border border-border/70 bg-background/30 p-3 text-left transition-colors hover:bg-background/50"
-              onClick={() => setSelectedJob(job)}
+              variant="interactive"
+              role="button"
+              tabIndex={0}
+              className="gap-1 border-border/70 bg-background/30 p-3 text-left backdrop-blur-sm hover:bg-background/50"
+              onClick={() => openJobDetails(job)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  openJobDetails(job);
+                }
+              }}
             >
               <div className="flex flex-col gap-1">
                 <div className="flex items-center justify-between gap-2">
@@ -87,7 +98,7 @@ export const NotificationsRecentHistoryCard = ({
                         ]
                       }
                     </Badge>
-                    <Badge variant="outline">
+                    <Badge variant="secondary">
                       {jobKindLabels[job.jobKind as keyof typeof jobKindLabels]}
                     </Badge>
                   </div>
@@ -99,7 +110,7 @@ export const NotificationsRecentHistoryCard = ({
                   <p className="text-xs text-destructive">{job.lastError}</p>
                 ) : null}
               </div>
-            </button>
+            </Card>
           ))}
           <Button size="sm" variant="outline" className="w-full" asChild>
             <Link to={ROUTES.guild.notifications.history(guildId ?? "")}>

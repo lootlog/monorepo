@@ -4,12 +4,10 @@ import { toast } from "sonner";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
-import { ItemImage } from "@/components/tiles";
-import { getApiErrorMessage } from "@/features/events/utils/get-api-error-message";
-import {
-  type UserWatchedItem,
-  useDeleteWatchedItem,
-} from "@/hooks/api/user/use-user-notifications";
+import { ItemImage, ItemTile } from "@/components/tiles";
+import { getUserNotificationsErrorMessage } from "@/features/user-notifications/utils/get-user-notifications-error-message";
+import { useDeleteWatchedItem } from "@/hooks/api/user/use-delete-watched-item";
+import type { UserWatchedItem } from "@/hooks/api/user/use-user-notifications";
 import { ItemRarity } from "@/hooks/api/loots/use-loots";
 
 type WatchedItemCardProps = {
@@ -32,10 +30,35 @@ export const WatchedItemCard = ({
       toast.success(t("settings.userNotifications.toasts.watchDeleted"));
     } catch (error) {
       toast.error(
-        getApiErrorMessage(error) ??
+        getUserNotificationsErrorMessage(error, t) ??
           t("settings.userNotifications.toasts.watchDeleteError"),
       );
     }
+  };
+
+  const snapshot = watchedItem.itemSnapshot;
+  const rarity = (snapshot?.rarity as ItemRarity | null) ?? ItemRarity.COMMON;
+
+  const renderItemVisual = () => {
+    if (snapshot) {
+      return (
+        <ItemTile
+          item={{
+            id: watchedItem.itemId,
+            hid: "",
+            name: watchedItem.itemName,
+            icon: watchedItem.itemIcon,
+            rarity,
+            lvl: snapshot.lvl ?? 0,
+            type: snapshot.type ?? "",
+            stat: snapshot.stat,
+            prof: [],
+          }}
+        />
+      );
+    }
+
+    return <ItemImage icon={watchedItem.itemIcon} rarity={rarity} />;
   };
 
   return (
@@ -43,7 +66,7 @@ export const WatchedItemCard = ({
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 space-y-3">
           <div className="flex min-w-0 items-center gap-3">
-            <ItemImage icon={watchedItem.itemIcon} rarity={ItemRarity.COMMON} />
+            {renderItemVisual()}
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold">
                 {watchedItem.itemName}
@@ -52,18 +75,6 @@ export const WatchedItemCard = ({
                 #{watchedItem.itemId} • {watchedItem.world}
               </p>
             </div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Badge variant={watchedItem.enabled ? "default" : "outline"}>
-              {watchedItem.enabled
-                ? t("settings.notifications.states.enabled")
-                : t("settings.notifications.states.disabled")}
-            </Badge>
-            <Badge variant="outline">
-              {t("settings.userNotifications.guildCount", {
-                count: guildLabels.length + missingGuildIds.length,
-              })}
-            </Badge>
           </div>
           <div className="flex flex-wrap gap-2">
             {guildLabels.map((label) => (
