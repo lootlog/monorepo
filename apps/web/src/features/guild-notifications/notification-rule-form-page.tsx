@@ -100,6 +100,7 @@ export const NotificationRuleFormPage = () => {
   const [extraTargets, setExtraTargets] = useState<GuildNotificationTarget[]>(
     [],
   );
+  const [formResetKey, setFormResetKey] = useState(0);
   const [isCreateTargetDialogOpen, setIsCreateTargetDialogOpen] =
     useState(false);
   const form = useForm<RuleFormValues>({
@@ -175,6 +176,7 @@ export const NotificationRuleFormPage = () => {
     });
     setNpcSearch("");
     setExtraTargets([]);
+    setFormResetKey((prev) => prev + 1);
   }, [form, rule, t]);
 
   const mergedTargets = mergeGuildNotificationTargets(targets, extraTargets);
@@ -803,7 +805,7 @@ export const NotificationRuleFormPage = () => {
                           </FormLabel>
                           <FormControl>
                             <NotificationTemplateEditor
-                              key={`${rule?.id ?? "create"}-${watchedTriggerType}`}
+                              key={`${rule?.id ?? "create"}-${watchedTriggerType}-${formResetKey}`}
                               value={field.value ?? ""}
                               onChange={field.onChange}
                               roles={guildRoles}
