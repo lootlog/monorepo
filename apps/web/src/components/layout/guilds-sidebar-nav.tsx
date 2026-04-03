@@ -4,6 +4,7 @@ import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   BarChart4,
+  BellRing,
   CalendarClock,
   ClipboardList,
   Clock,
@@ -30,6 +31,7 @@ import { PinnedEventsBanner } from "./pinned-events-banner";
 import { useTheme } from "@/hooks/context/use-theme";
 import { cn } from "@lootlog/ui/lib/utils";
 import { getPermissionRefreshInfo } from "@/utils/get-permission-refresh-info";
+import { useTranslation } from "react-i18next";
 
 export const GuildsSidebarNav: FC = () => {
   const guildId = useGuildId();
@@ -39,6 +41,7 @@ export const GuildsSidebarNav: FC = () => {
   const { setOpenMobile } = useSidebar();
   const { mutate: refreshMember } = useMemberRefresh();
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const isRukiaTheme = theme === "rukia";
 
   const canViewEvents =
@@ -132,6 +135,16 @@ export const GuildsSidebarNav: FC = () => {
       label: "Logi aktywności",
       icon: <Logs className="mr-1 h-4 w-4" />,
       path: ROUTE_SEGMENTS.guild.activityLogs,
+      available: true,
+      enabled: Boolean(
+        permissions?.includes(Permission.ADMIN) ||
+        permissions?.includes(Permission.OWNER),
+      ),
+    },
+    {
+      label: t("common.breadcrumbs.notifications"),
+      icon: <BellRing className="mr-1 h-4 w-4" />,
+      path: ROUTE_SEGMENTS.guild.notifications,
       available: true,
       enabled: Boolean(
         permissions?.includes(Permission.ADMIN) ||

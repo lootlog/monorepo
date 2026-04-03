@@ -1,0 +1,3 @@
+export const NON_RETRYABLE_DISCORD_ERROR_CODES = new Set([
+  10_003, 10_013, 50_001, 50_007, 50_013,
+]);

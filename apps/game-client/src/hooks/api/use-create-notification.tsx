@@ -21,7 +21,7 @@ export const useCreateNotification = () => {
   const mutation = useMutation({
     mutationKey: ["create-notification"],
     mutationFn: (options: UseCreateNotificationOptions) =>
-      client.post<CreateNotificationResponse>("/notifications", options),
+      client.post<CreateNotificationResponse>("/messaging", options),
   });
 
   return mutation;

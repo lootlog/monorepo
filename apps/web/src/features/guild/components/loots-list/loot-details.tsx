@@ -10,7 +10,7 @@ import {
 } from "@lootlog/ui/components/collapsible";
 import { toast } from "sonner";
 import { formatItemHid } from "@/lib/utils/hid-detection";
-import { ItemTile } from "@/components/tiles";
+import { WatchableItemTile } from "@/components/tiles";
 import { useTranslation } from "react-i18next";
 
 export type LootDetailsProps = {
@@ -21,6 +21,9 @@ export type LootDetailsProps = {
 export const LootDetails: FC<LootDetailsProps> = ({ loot, ownerMap }) => {
   const [open, setOpen] = useState(false);
   const { t } = useTranslation();
+  const watchContext = {
+    world: loot.world,
+  };
 
   const handleCopyId = (id: string) => {
     navigator.clipboard
@@ -54,7 +57,7 @@ export const LootDetails: FC<LootDetailsProps> = ({ loot, ownerMap }) => {
         key={item.hid}
         className="flex gap-4 items-start w-full border-b border-border/50 p-4 bg-card/20 hover:bg-card/40 transition-colors"
       >
-        <ItemTile item={item} />
+        <WatchableItemTile item={item} watchContext={watchContext} />
         <div className="flex flex-col flex-1">
           <span className="text-sm font-medium text-foreground">
             {item.name}

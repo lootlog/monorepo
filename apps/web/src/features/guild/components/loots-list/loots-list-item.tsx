@@ -2,6 +2,7 @@ import { ItemRarity, type Loot, type Item } from "@/hooks/api/loots/use-loots";
 import { PlayerTile } from "@/features/guild/components/loots-list/player-tile";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { LOOT_SHARE_COLOR_PALETTE } from "@/features/guild/constants/loot-share-color-palette";
+import type { WatchedItemScope } from "@/features/user-notifications/types/watched-item-scope";
 import { Card } from "@lootlog/ui/components/card";
 import { LootNpcs } from "@/features/guild/components/loots-list/loot-npcs";
 import {
@@ -15,7 +16,7 @@ import {
 } from "lucide-react";
 import { cn } from "@lootlog/ui/lib/utils";
 import { ItemStack } from "@/features/guild/components/loots-list/item-stack";
-import { ItemTile } from "@/components/tiles";
+import { WatchableItemTile } from "@/components/tiles";
 import { useTheme } from "@/hooks/context/use-theme";
 import { useSelectedLoot } from "@/hooks/use-selected-loot";
 import { useRef } from "react";
@@ -152,17 +153,25 @@ const LootHeader = ({
 const PlayerWithItems = ({
   player,
   items,
+  watchContext,
 }: {
   player: Loot["players"][number];
   items: Item[];
+  watchContext: WatchedItemScope;
 }) => (
   <div className="flex flex-col items-center gap-0.5">
     <PlayerTile player={player} />
-    <ItemStack items={items} />
+    <ItemStack items={items} watchContext={watchContext} />
   </div>
 );
 
-const UnassignedItems = ({ items }: { items: Item[] }) => {
+const UnassignedItems = ({
+  items,
+  watchContext,
+}: {
+  items: Item[];
+  watchContext: WatchedItemScope;
+}) => {
   const { t } = useTranslation();
 
   if (items.length === 0) return null;
@@ -174,7 +183,11 @@ const UnassignedItems = ({ items }: { items: Item[] }) => {
       </span>
       <div className="flex flex-row flex-wrap gap-1">
         {items.map((item, itemIdx) => (
-          <ItemTile key={`unassigned-${item.hid}-${itemIdx}`} item={item} />
+          <WatchableItemTile
+            key={`unassigned-${item.hid}-${itemIdx}`}
+            item={item}
+            watchContext={watchContext}
+          />
         ))}
       </div>
     </div>
@@ -185,10 +198,12 @@ const LootContent = ({
   sortedPlayers,
   itemsByPlayer,
   unassignedItems,
+  watchContext,
 }: {
   sortedPlayers: Loot["players"];
   itemsByPlayer: ItemsByPlayer;
   unassignedItems: Item[];
+  watchContext: WatchedItemScope;
 }) => (
   <div className="flex flex-row justify-between gap-4 py-2 border-t border-border/30 -mx-4 px-4 flex-1">
     <div className="flex flex-row items-start gap-2 flex-wrap">
@@ -197,10 +212,11 @@ const LootContent = ({
           key={player.id}
           player={player}
           items={itemsByPlayer[player.id] || []}
+          watchContext={watchContext}
         />
       ))}
     </div>
-    <UnassignedItems items={unassignedItems} />
+    <UnassignedItems items={unassignedItems} watchContext={watchContext} />
   </div>
 );
 
@@ -249,6 +265,9 @@ export const LootsListItem = ({ loot }: Props) => {
 
   const { itemsByPlayer, unassignedItems, hasLegendaryItem, sortedPlayers } =
     useLootData(loot);
+  const watchContext = {
+    world: loot.world,
+  };
 
   return (
     <div
@@ -276,6 +295,7 @@ export const LootsListItem = ({ loot }: Props) => {
           sortedPlayers={sortedPlayers}
           itemsByPlayer={itemsByPlayer}
           unassignedItems={unassignedItems}
+          watchContext={watchContext}
         />
         <LootFooter
           location={loot.location}

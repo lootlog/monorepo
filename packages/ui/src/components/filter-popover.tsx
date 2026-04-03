@@ -113,6 +113,7 @@ export function FilterPopover<T extends string = string>({
       <PopoverContent
         className={cn("p-0", width, contentClassName)}
         align={align}
+        onWheel={(e) => e.stopPropagation()}
       >
         <Command shouldFilter={shouldFilter}>
           {showSearch && <CommandInput placeholder={searchPlaceholder} />}

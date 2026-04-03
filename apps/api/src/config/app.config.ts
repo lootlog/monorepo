@@ -2,6 +2,7 @@ import type { ConfigModuleOptions } from "@nestjs/config";
 import * as Joi from "joi";
 import authConfig from "src/config/auth.config";
 import battlelogConfig from "src/config/battlelog.config";
+import discordBotConfig from "src/config/discord-bot.config";
 import rabbitmqConfig from "src/config/rabbitmq.config";
 import { redisConfig } from "@lootlog/nest-shared";
 import serviceConfig from "src/config/service.config";
@@ -18,6 +19,7 @@ export const APP_CONFIG: ConfigModuleOptions = {
     redisConfig,
     authConfig,
     battlelogConfig,
+    discordBotConfig,
   ],
   cache: true,
   validationSchema: Joi.object({
@@ -43,6 +45,7 @@ export const APP_CONFIG: ConfigModuleOptions = {
     BATTLELOG_SERVICE_URL: Joi.string().default(
       "http://battlelog-service:4000",
     ),
+    DISCORD_BOT_SERVICE_URL: Joi.string().default("http://discord-bot:4000"),
     RESERVATIONS_CARDS_URL: Joi.string().uri().required(),
     OTEL_EXPORTER_OTLP_ENDPOINT: Joi.string().uri().allow(""),
     OTEL_EXPORTER_OTLP_HEADERS: Joi.string().allow(""),
