@@ -63,10 +63,10 @@
   },
   "devDependencies": {
     "@rolldown/plugin-babel": "^0.2.2",
-    "@tanstack/router-plugin": "^1.167.2",
+    "@tanstack/router-plugin": "^1.167.12",
     "@testing-library/jest-dom": "^6.9.1",
     "@types/lodash": "^4.17.24",
-    "@types/node": "^25.5.0",
+    "@types/node": "^25.5.2",
     "@types/qs": "^6.15.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
@@ -75,7 +75,7 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "jsdom": "^29.0.1",
     "typescript": "~5.9.3",
-    "vite": "^8.0.1",
-    "vitest": "^4.1.0"
+    "vite": "^8.0.3",
+    "vitest": "^4.1.2"
   }
 }
