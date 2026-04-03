@@ -106,6 +106,15 @@ export const getGuildNotificationTargetUsageCount = (
     return usageCount;
   }, 0);
 
+export const getGuildNotificationOrphanedRuleCount = (
+  targetId: number,
+  rules: GuildNotificationRule[],
+) =>
+  rules.filter(
+    (rule) =>
+      rule.targets.length === 1 && rule.targets[0]?.target.id === targetId,
+  ).length;
+
 export const mergeGuildNotificationTargets = (
   baseTargets: GuildNotificationTarget[],
   extraTargets: GuildNotificationTarget[],

@@ -136,8 +136,7 @@ export class NotificationTargetService {
 
   async deleteGuildTarget(guildId: string, targetId: number) {
     await this.ensureGuildTarget(guildId, targetId);
-    await this.jobService.cancelPendingJobs({ targetId });
-    await this.prisma.notificationTarget.delete({ where: { id: targetId } });
+    await this.deleteTargetAndOrphanedRules(targetId);
     return { success: true };
   }
 
@@ -295,8 +294,7 @@ export class NotificationTargetService {
 
   async deleteUserTarget(discordId: string, targetId: number) {
     await this.ensureUserTarget(discordId, targetId);
-    await this.jobService.cancelPendingJobs({ targetId });
-    await this.prisma.notificationTarget.delete({ where: { id: targetId } });
+    await this.deleteTargetAndOrphanedRules(targetId);
     return { success: true };
   }
 
@@ -359,19 +357,9 @@ export class NotificationTargetService {
       return;
     }
 
-    await Promise.all(
-      targets.map((target) =>
-        this.jobService.cancelPendingJobs({ targetId: target.id }),
-      ),
-    );
-
-    await this.prisma.notificationTarget.deleteMany({
-      where: {
-        id: {
-          in: targets.map((target) => target.id),
-        },
-      },
-    });
+    for (const target of targets) {
+      await this.deleteTargetAndOrphanedRules(target.id);
+    }
   }
 
   private async ensureGuildTarget(guildId: string, targetId: number) {
@@ -404,6 +392,40 @@ export class NotificationTargetService {
     }
 
     return target;
+  }
+
+  private async deleteTargetAndOrphanedRules(targetId: number) {
+    const singleTargetRuleIds = await this.prisma.notificationRuleTarget
+      .findMany({
+        where: { targetId },
+        select: {
+          ruleId: true,
+          rule: {
+            select: {
+              _count: { select: { targets: true } },
+            },
+          },
+        },
+      })
+      .then((entries) =>
+        entries
+          .filter((entry) => entry.rule._count.targets === 1)
+          .map((entry) => entry.ruleId),
+      );
+
+    await this.jobService.cancelPendingJobs({ targetId });
+
+    for (const ruleId of singleTargetRuleIds) {
+      await this.jobService.cancelPendingJobs({ ruleId });
+    }
+
+    await this.prisma.notificationTarget.delete({ where: { id: targetId } });
+
+    if (singleTargetRuleIds.length > 0) {
+      await this.prisma.notificationRule.deleteMany({
+        where: { id: { in: singleTargetRuleIds } },
+      });
+    }
   }
 
   private async getOrCreateUserDmTestRule(discordId: string, targetId: number) {

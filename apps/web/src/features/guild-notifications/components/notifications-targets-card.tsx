@@ -7,7 +7,10 @@ import type {
   GuildNotificationRule,
   GuildNotificationTarget,
 } from "@/hooks/api/guilds/use-guild-notifications";
-import { getGuildNotificationTargetUsageCount } from "../utils/notification-settings.utils";
+import {
+  getGuildNotificationTargetUsageCount,
+  getGuildNotificationOrphanedRuleCount,
+} from "../utils/notification-settings.utils";
 
 type NotificationsTargetsCardProps = {
   targets: GuildNotificationTarget[];
@@ -47,6 +50,10 @@ export const NotificationsTargetsCard = ({
               key={target.id}
               target={target}
               usageCount={getGuildNotificationTargetUsageCount(
+                target.id,
+                rules,
+              )}
+              orphanedRuleCount={getGuildNotificationOrphanedRuleCount(
                 target.id,
                 rules,
               )}
