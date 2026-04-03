@@ -23,9 +23,7 @@ export class DiscordBotClientService {
     this.serviceUrl = discordBotConfig?.serviceUrl || "http://discord-bot:4000";
   }
 
-  async getGuildChannels(
-    guildId: string,
-  ): Promise<{
+  async getGuildChannels(guildId: string): Promise<{
     channels: DiscordGuildChannelSnapshot[];
     syncState: DiscordGuildSyncState;
   }> {
@@ -41,9 +39,7 @@ export class DiscordBotClientService {
     return response.data;
   }
 
-  async refreshGuildChannels(
-    guildId: string,
-  ): Promise<{
+  async refreshGuildChannels(guildId: string): Promise<{
     channels: DiscordGuildChannelSnapshot[];
     syncState: DiscordGuildSyncState;
   }> {

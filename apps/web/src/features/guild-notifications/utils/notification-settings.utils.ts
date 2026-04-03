@@ -149,22 +149,8 @@ export const getGuildNotificationRuleScheduleTranslationKey = (
   return "settings.notifications.schedule.minSpawnBefore";
 };
 
-export const getDefaultGuildNotificationRuleContentTemplate = (
-  t: (key: string) => string,
-) =>
-  [
-    "## {{npcName}}",
-    "",
-    t("settings.notifications.templates.default.world"),
-    t("settings.notifications.templates.default.spawnWindow"),
-    t("settings.notifications.templates.default.scheduledFor"),
-  ].join("\n");
+export const getDefaultGuildNotificationRuleContentTemplate = () =>
+  "**{{npcName}}** respi od {{minSpawnTime}} do {{maxSpawnTime}}";
 
-export const getDefaultScheduledMessageContentTemplate = (
-  t: (key: string) => string,
-) =>
-  [
-    "## {{ruleName}}",
-    "",
-    t("settings.notifications.templates.scheduledMessage.scheduledFor"),
-  ].join("\n");
+export const getDefaultScheduledMessageContentTemplate = () =>
+  "## {{ruleName}}\n\n{{scheduledFor}}";

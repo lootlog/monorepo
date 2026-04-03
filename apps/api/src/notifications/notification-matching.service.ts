@@ -16,6 +16,7 @@ type LootCreatedEvent = {
 
 type MemberRoleInfo = {
   guildId: string;
+  isGuildOwner: boolean;
   roles: {
     permissions: Permission[];
     lvlRangeFrom: number | null;
@@ -155,6 +156,11 @@ export class NotificationMatchingService {
       select: {
         userId: true,
         guildId: true,
+        guild: {
+          select: {
+            ownerId: true,
+          },
+        },
         roles: {
           select: {
             permissions: true,
@@ -169,6 +175,7 @@ export class NotificationMatchingService {
       const existing = result.get(membership.userId) ?? [];
       existing.push({
         guildId: membership.guildId,
+        isGuildOwner: membership.guild.ownerId === membership.userId,
         roles: membership.roles,
       });
       result.set(membership.userId, existing);
@@ -181,7 +188,12 @@ export class NotificationMatchingService {
     roles: MemberRoleInfo["roles"],
     npcType: NpcType | null | undefined,
     npcLvl: number | null | undefined,
+    isGuildOwner?: boolean,
   ): boolean {
+    if (isGuildOwner) {
+      return true;
+    }
+
     const allPermissions = roles.flatMap((r) => r.permissions);
 
     if (isAdministrativeUser(allPermissions)) {

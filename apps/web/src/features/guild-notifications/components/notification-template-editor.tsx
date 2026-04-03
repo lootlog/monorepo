@@ -346,14 +346,13 @@ export const NotificationTemplateEditor = ({
     {
       key: "simple",
       label: t("settings.notifications.templateEditor.presets.simple"),
-      value:
-        "**{{npcName}}** spawns between {{minSpawnTime}} – {{maxSpawnTime}}",
+      value: "**{{npcName}}** respi od {{minSpawnTime}} do {{maxSpawnTime}}",
     },
     {
       key: "detailed",
       label: t("settings.notifications.templateEditor.presets.detailed"),
       value:
-        "**{{ruleName}}**\n🐉 **{{npcName}}** (ID: {{npcId}})\n🌍 {{world}}\n⏰ {{minSpawnTime}} – {{maxSpawnTime}}\n📨 Scheduled: {{scheduledFor}}",
+        "**{{ruleName}}**\n🐉 **{{npcName}}** (ID: {{npcId}})\n🌍 {{world}}\n⏰ {{minSpawnTime}} – {{maxSpawnTime}}",
     },
     {
       key: "minimal",
