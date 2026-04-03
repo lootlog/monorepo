@@ -224,14 +224,14 @@ export const NotificationRuleFormPage = () => {
   for (const npc of selectedNpcQuery.data ?? []) {
     npcOptionsMap.set(String(npc.id), {
       value: String(npc.id),
-      label: `${npc.name} (#${npc.id})`,
+      label: `${npc.name} ${t(`npcType.${npc.type}`)} (#${npc.id})`,
     });
   }
 
   for (const npc of searchedNpcQuery.data ?? []) {
     npcOptionsMap.set(String(npc.id), {
       value: String(npc.id),
-      label: `${npc.name} (#${npc.id})`,
+      label: `${npc.name} ${t(`npcType.${npc.type}`)} (#${npc.id})`,
     });
   }
 
