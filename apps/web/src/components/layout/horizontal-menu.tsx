@@ -58,6 +58,14 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
     return () => container.removeEventListener("wheel", onWheel);
   }, []);
 
+  const activeUrl = items.reduce<string | null>((best, item) => {
+    const url = `${basePath}${item.href}`;
+    if (pathname === url || pathname.startsWith(`${url}/`)) {
+      if (!best || url.length > best.length) return url;
+    }
+    return best;
+  }, null);
+
   return (
     <div
       ref={scrollRef}
@@ -70,7 +78,7 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
     >
       {items.map((item) => {
         const url = `${basePath}${item.href}`;
-        const active = pathname === url || pathname.startsWith(`${url}/`);
+        const active = url === activeUrl;
         const isHovered = hoveredId === item.id;
 
         const tabContent = (

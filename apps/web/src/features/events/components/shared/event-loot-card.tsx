@@ -68,7 +68,6 @@ export const EventLootCard = ({ loot }: EventLootCardProps) => {
   const { itemsByPlayer, unassignedItems, hasLegendaryItem, sortedPlayers } =
     useLootData(loot);
   const watchContext = {
-    guildId: loot.guildId,
     world: loot.world,
   };
 

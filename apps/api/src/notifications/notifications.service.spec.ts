@@ -924,7 +924,7 @@ describe("Notification Services", () => {
     mockPrisma.member.findMany.mockResolvedValueOnce([
       {
         guildId: "guild-1",
-        globalUserId: "user-1",
+        userId: "user-1",
       },
     ]);
     mockPrisma.watchedItem.findMany.mockResolvedValueOnce([
@@ -997,7 +997,7 @@ describe("Notification Services", () => {
     });
     expect(mockPrisma.member.findMany).toHaveBeenCalledWith({
       where: {
-        globalUserId: {
+        userId: {
           in: ["user-1"],
         },
         guildId: {
@@ -1006,7 +1006,7 @@ describe("Notification Services", () => {
         active: true,
       },
       select: {
-        globalUserId: true,
+        userId: true,
         guildId: true,
       },
     });

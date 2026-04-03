@@ -1,4 +1,4 @@
 export type WatchedItemScope = {
-  guildId: string;
+  guildId?: string;
   world: string;
 };

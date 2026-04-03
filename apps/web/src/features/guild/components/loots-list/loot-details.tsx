@@ -22,7 +22,6 @@ export const LootDetails: FC<LootDetailsProps> = ({ loot, ownerMap }) => {
   const [open, setOpen] = useState(false);
   const { t } = useTranslation();
   const watchContext = {
-    guildId: loot.guildId,
     world: loot.world,
   };
 

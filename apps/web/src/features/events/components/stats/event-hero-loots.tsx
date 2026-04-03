@@ -40,7 +40,6 @@ const LootItemsRow = ({ loot }: { loot: Loot }) => {
   );
   const date = timestampToDate(loot.createdAt);
   const watchContext = {
-    guildId: loot.guildId,
     world: loot.world,
   };
 

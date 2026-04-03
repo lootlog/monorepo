@@ -37,7 +37,6 @@ export type Item = {
 
 export type Loot = {
   id: number;
-  guildId: string;
   world: string;
   source: LootSource;
   location: string;

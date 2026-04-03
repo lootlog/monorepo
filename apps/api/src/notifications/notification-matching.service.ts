@@ -1,7 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import type { NotificationFilters } from "@lootlog/types";
-import { Prisma } from "prisma/generated/client";
+import { NpcType, Permission, Prisma } from "prisma/generated/client";
 import { PrismaService } from "src/db/prisma.service";
+import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
 
 type LootCreatedEvent = {
   lootId: number;
@@ -9,6 +10,17 @@ type LootCreatedEvent = {
   guildIds: string[];
   itemIds: number[];
   itemNames: string[];
+  npcType?: NpcType | null;
+  npcLvl?: number | null;
+};
+
+type MemberRoleInfo = {
+  guildId: string;
+  roles: {
+    permissions: Permission[];
+    lvlRangeFrom: number | null;
+    lvlRangeTo: number | null;
+  }[];
 };
 
 @Injectable()
@@ -98,7 +110,7 @@ export class NotificationMatchingService {
 
     const memberships = await this.prisma.member.findMany({
       where: {
-        globalUserId: {
+        userId: {
           in: uniqueOwnerIds,
         },
         guildId: {
@@ -107,22 +119,111 @@ export class NotificationMatchingService {
         active: true,
       },
       select: {
-        globalUserId: true,
+        userId: true,
         guildId: true,
       },
     });
 
     for (const membership of memberships) {
-      if (!membership.globalUserId) {
-        continue;
-      }
-
       const ownerGuildIds =
-        activeGuildIdsByOwnerId.get(membership.globalUserId) ?? new Set();
+        activeGuildIdsByOwnerId.get(membership.userId) ?? new Set();
       ownerGuildIds.add(membership.guildId);
-      activeGuildIdsByOwnerId.set(membership.globalUserId, ownerGuildIds);
+      activeGuildIdsByOwnerId.set(membership.userId, ownerGuildIds);
     }
 
     return activeGuildIdsByOwnerId;
+  }
+
+  async getActiveMembershipsWithRoles(
+    ownerIds: string[],
+    guildIds: string[],
+  ): Promise<Map<string, MemberRoleInfo[]>> {
+    const uniqueOwnerIds = [...new Set(ownerIds)];
+    const uniqueGuildIds = [...new Set(guildIds)];
+    const result = new Map<string, MemberRoleInfo[]>();
+
+    if (uniqueOwnerIds.length === 0 || uniqueGuildIds.length === 0) {
+      return result;
+    }
+
+    const memberships = await this.prisma.member.findMany({
+      where: {
+        userId: { in: uniqueOwnerIds },
+        guildId: { in: uniqueGuildIds },
+        active: true,
+      },
+      select: {
+        userId: true,
+        guildId: true,
+        roles: {
+          select: {
+            permissions: true,
+            lvlRangeFrom: true,
+            lvlRangeTo: true,
+          },
+        },
+      },
+    });
+
+    for (const membership of memberships) {
+      const existing = result.get(membership.userId) ?? [];
+      existing.push({
+        guildId: membership.guildId,
+        roles: membership.roles,
+      });
+      result.set(membership.userId, existing);
+    }
+
+    return result;
+  }
+
+  canRolesViewNpc(
+    roles: MemberRoleInfo["roles"],
+    npcType: NpcType | null | undefined,
+    npcLvl: number | null | undefined,
+  ): boolean {
+    const allPermissions = roles.flatMap((r) => r.permissions);
+
+    if (isAdministrativeUser(allPermissions)) {
+      return true;
+    }
+
+    const readableRoles = roles.filter((role) =>
+      role.permissions.includes(Permission.LOOTLOG_LOOTS_READ),
+    );
+
+    if (readableRoles.length === 0) {
+      return false;
+    }
+
+    return readableRoles.some((role) => {
+      const lvlFrom = role.lvlRangeFrom ?? 0;
+      const lvlTo = role.lvlRangeTo ?? 500;
+
+      const lvlOk =
+        npcLvl == null
+          ? lvlFrom <= 0 || lvlTo >= 0
+          : npcLvl >= lvlFrom && npcLvl <= lvlTo;
+
+      if (!lvlOk) {
+        return false;
+      }
+
+      if (
+        !role.permissions.includes(Permission.LOOTLOG_LOOTS_TITANS_READ) &&
+        npcType === NpcType.TITAN
+      ) {
+        return false;
+      }
+
+      if (
+        !role.permissions.includes(Permission.LOOTLOG_LOOTS_HEROES_READ) &&
+        (npcType === NpcType.HERO || npcType === NpcType.EVENT_HERO)
+      ) {
+        return false;
+      }
+
+      return true;
+    });
   }
 }
