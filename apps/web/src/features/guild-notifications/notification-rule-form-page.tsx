@@ -321,7 +321,7 @@ export const NotificationRuleFormPage = () => {
       triggerType: NotificationTriggerType.TIMER_BEFORE_SPAWN,
       world: ALL_WORLDS_VALUE,
       npcIds: [],
-      contentTemplate: getDefaultGuildNotificationRuleContentTemplate(t),
+      contentTemplate: getDefaultGuildNotificationRuleContentTemplate(),
       scheduleAnchor: NotificationScheduleAnchor.MIN_SPAWN,
       scheduleOffsetMinutes: "0",
       scheduledAt: "",
@@ -337,8 +337,8 @@ export const NotificationRuleFormPage = () => {
 
   const getDefaultContentTemplate = (triggerType: NotificationTriggerType) =>
     triggerType === NotificationTriggerType.SCHEDULED_MESSAGE
-      ? getDefaultScheduledMessageContentTemplate(t)
-      : getDefaultGuildNotificationRuleContentTemplate(t);
+      ? getDefaultScheduledMessageContentTemplate()
+      : getDefaultGuildNotificationRuleContentTemplate();
 
   useEffect(() => {
     const triggerType =
@@ -585,6 +585,7 @@ export const NotificationRuleFormPage = () => {
                           <Select
                             value={field.value}
                             onValueChange={(value) => {
+                              if (!value) return;
                               field.onChange(value);
                               const nextType = value as NotificationTriggerType;
                               form.setValue(
@@ -604,7 +605,15 @@ export const NotificationRuleFormPage = () => {
                           >
                             <FormControl>
                               <SelectTrigger className="w-full">
-                                <SelectValue />
+                                <SelectValue>
+                                  {field.value
+                                    ? t(
+                                        getNotificationTriggerTranslationKey(
+                                          field.value,
+                                        ),
+                                      )
+                                    : null}
+                                </SelectValue>
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
@@ -679,11 +688,18 @@ export const NotificationRuleFormPage = () => {
                               </FormLabel>
                               <Select
                                 value={field.value}
-                                onValueChange={field.onChange}
+                                onValueChange={(value) => {
+                                  if (!value) return;
+                                  field.onChange(value);
+                                }}
                               >
                                 <FormControl>
                                   <SelectTrigger className="w-full">
-                                    <SelectValue />
+                                    <SelectValue>
+                                      {field.value === ALL_WORLDS_VALUE
+                                        ? t("settings.notifications.allWorlds")
+                                        : field.value}
+                                    </SelectValue>
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
@@ -760,7 +776,10 @@ export const NotificationRuleFormPage = () => {
                               </FormLabel>
                               <Select
                                 value={field.value}
-                                onValueChange={field.onChange}
+                                onValueChange={(value) => {
+                                  if (!value) return;
+                                  field.onChange(value);
+                                }}
                               >
                                 <FormControl>
                                   <SelectTrigger className="w-full">
@@ -851,7 +870,10 @@ export const NotificationRuleFormPage = () => {
                                 </FormLabel>
                                 <Select
                                   value={field.value}
-                                  onValueChange={field.onChange}
+                                  onValueChange={(value) => {
+                                    if (!value) return;
+                                    field.onChange(value);
+                                  }}
                                 >
                                   <FormControl>
                                     <SelectTrigger className="w-full">
@@ -993,7 +1015,10 @@ export const NotificationRuleFormPage = () => {
                               </FormLabel>
                               <Select
                                 value={field.value}
-                                onValueChange={field.onChange}
+                                onValueChange={(value) => {
+                                  if (!value) return;
+                                  field.onChange(value);
+                                }}
                               >
                                 <FormControl>
                                   <SelectTrigger className="w-full">

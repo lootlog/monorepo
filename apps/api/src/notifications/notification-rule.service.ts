@@ -34,6 +34,14 @@ import {
 const GUILD_NOTIFICATION_TEST_TRIGGER_LIMIT = 10;
 const GUILD_NOTIFICATION_TEST_TRIGGER_WINDOW_MS = 15 * 60_000;
 const GUILD_NOTIFICATION_MAX_NPCS_PER_RULE = 5;
+
+type TestTriggerUsage = {
+  limit: number;
+  used: number;
+  remaining: number;
+  windowSeconds: number;
+  nextAvailableAt: string | null;
+};
 const USER_NOTIFICATION_RULE_LIMIT = 50;
 const USER_WATCHED_ITEM_LIMIT = 20;
 
@@ -72,23 +80,26 @@ export class NotificationRuleService {
       }),
     ]);
 
-    const testTriggerUsage = await this.getGuildRuleTestTriggerUsage(
-      rules.map((rule) => rule.id),
-    );
+    const allTargetIds = [
+      ...new Set(
+        rules.flatMap((rule) =>
+          rule.targets.map((relation) => relation.target.id),
+        ),
+      ),
+    ];
+    const targetUsage = await this.getTargetTestTriggerUsage(allTargetIds);
 
     return {
-      items: rules.map((rule) => ({
-        ...rule,
-        testTrigger: testTriggerUsage.get(rule.id) ?? {
-          limit: GUILD_NOTIFICATION_TEST_TRIGGER_LIMIT,
-          used: 0,
-          remaining: GUILD_NOTIFICATION_TEST_TRIGGER_LIMIT,
-          windowSeconds: Math.floor(
-            GUILD_NOTIFICATION_TEST_TRIGGER_WINDOW_MS / 1000,
-          ),
-          nextAvailableAt: null,
-        },
-      })),
+      items: rules.map((rule) => {
+        const ruleTargetIds = rule.targets.map(
+          (relation) => relation.target.id,
+        );
+        const testTrigger = this.computeRuleTestTriggerFromTargets(
+          ruleTargetIds,
+          targetUsage,
+        );
+        return { ...rule, testTrigger };
+      }),
       limits: {
         ruleLimit: guildSettings?.notificationRuleLimit ?? 20,
         ruleCount: rules.length,
@@ -310,16 +321,24 @@ export class NotificationRuleService {
       );
     }
 
-    const testTriggerUsage = await this.getRuleTestTriggerUsage(
-      notificationRule.id,
+    const targetUsage = await this.getTargetTestTriggerUsage(
+      activeTargets.map((t) => t.id),
     );
 
-    if (testTriggerUsage.remaining <= 0) {
+    const sendableTargets = activeTargets.filter((target) => {
+      const usage = targetUsage.get(target.id);
+      return !usage || usage.remaining > 0;
+    });
+
+    if (sendableTargets.length === 0) {
+      const worstUsage = this.getWorstTargetUsage(targetUsage);
       throw new ConflictException({
         message: Error.TEST_TRIGGER_LIMIT_REACHED_FOR_RULE,
-        limit: testTriggerUsage.limit,
-        windowSeconds: testTriggerUsage.windowSeconds,
-        nextAvailableAt: testTriggerUsage.nextAvailableAt,
+        limit: worstUsage?.limit ?? GUILD_NOTIFICATION_TEST_TRIGGER_LIMIT,
+        windowSeconds:
+          worstUsage?.windowSeconds ??
+          Math.floor(GUILD_NOTIFICATION_TEST_TRIGGER_WINDOW_MS / 1000),
+        nextAvailableAt: worstUsage?.nextAvailableAt ?? null,
       });
     }
 
@@ -327,7 +346,7 @@ export class NotificationRuleService {
     const testEventId = `test:${notificationRule.id}:${randomUUID()}`;
     let createdJobsCount = 0;
 
-    for (const target of activeTargets) {
+    for (const target of sendableTargets) {
       const testPayload =
         await this.contentService.buildTestNotificationPayload({
           notificationRule,
@@ -1344,20 +1363,11 @@ export class NotificationRuleService {
     });
   }
 
-  private async getGuildRuleTestTriggerUsage(ruleIds: number[]) {
-    const usageByRuleId = new Map<
-      number,
-      {
-        limit: number;
-        used: number;
-        remaining: number;
-        windowSeconds: number;
-        nextAvailableAt: string | null;
-      }
-    >();
+  private async getTargetTestTriggerUsage(targetIds: number[]) {
+    const usageByTargetId = new Map<number, TestTriggerUsage>();
 
-    if (ruleIds.length === 0) {
-      return usageByRuleId;
+    if (targetIds.length === 0) {
+      return usageByTargetId;
     }
 
     const threshold = new Date(
@@ -1365,40 +1375,31 @@ export class NotificationRuleService {
     );
     const testJobs = await this.prisma.notificationJob.findMany({
       where: {
-        ruleId: { in: ruleIds },
+        targetId: { in: targetIds },
         jobKind: DbNotificationJobKind.TEST,
         createdAt: { gte: threshold },
       },
       select: {
-        ruleId: true,
+        targetId: true,
         createdAt: true,
-        sourceEventId: true,
       },
       orderBy: [{ createdAt: "asc" }],
     });
 
-    const jobsByRuleId = new Map<number, Date[]>();
-    const seenEventKeysByRuleId = new Map<number, Set<string>>();
+    const jobsByTargetId = new Map<number, Date[]>();
 
     for (const job of testJobs) {
-      const eventKey =
-        job.sourceEventId ?? `legacy:${job.createdAt.toISOString()}`;
-      const seenEventKeys = seenEventKeysByRuleId.get(job.ruleId) ?? new Set();
-
-      if (seenEventKeys.has(eventKey)) {
+      if (!job.targetId) {
         continue;
       }
 
-      seenEventKeys.add(eventKey);
-      seenEventKeysByRuleId.set(job.ruleId, seenEventKeys);
-
-      const currentJobs = jobsByRuleId.get(job.ruleId) ?? [];
-      currentJobs.push(job.createdAt);
-      jobsByRuleId.set(job.ruleId, currentJobs);
+      const current = jobsByTargetId.get(job.targetId) ?? [];
+      current.push(job.createdAt);
+      jobsByTargetId.set(job.targetId, current);
     }
 
-    for (const ruleId of ruleIds) {
-      const usage = jobsByRuleId.get(ruleId) ?? [];
+    for (const targetId of targetIds) {
+      const usage = jobsByTargetId.get(targetId) ?? [];
       const nextAvailableAt =
         usage.length >= GUILD_NOTIFICATION_TEST_TRIGGER_LIMIT
           ? new Date(
@@ -1406,7 +1407,7 @@ export class NotificationRuleService {
             ).toISOString()
           : null;
 
-      usageByRuleId.set(ruleId, {
+      usageByTargetId.set(targetId, {
         limit: GUILD_NOTIFICATION_TEST_TRIGGER_LIMIT,
         used: usage.length,
         remaining: Math.max(
@@ -1420,22 +1421,47 @@ export class NotificationRuleService {
       });
     }
 
-    return usageByRuleId;
+    return usageByTargetId;
   }
 
-  private async getRuleTestTriggerUsage(ruleId: number) {
-    const usageByRuleId = await this.getGuildRuleTestTriggerUsage([ruleId]);
+  private computeRuleTestTriggerFromTargets(
+    targetIds: number[],
+    targetUsage: Map<number, TestTriggerUsage>,
+  ) {
+    const defaultUsage = {
+      limit: GUILD_NOTIFICATION_TEST_TRIGGER_LIMIT,
+      used: 0,
+      remaining: GUILD_NOTIFICATION_TEST_TRIGGER_LIMIT,
+      windowSeconds: Math.floor(
+        GUILD_NOTIFICATION_TEST_TRIGGER_WINDOW_MS / 1000,
+      ),
+      nextAvailableAt: null,
+    };
 
-    return (
-      usageByRuleId.get(ruleId) ?? {
-        limit: GUILD_NOTIFICATION_TEST_TRIGGER_LIMIT,
-        used: 0,
-        remaining: GUILD_NOTIFICATION_TEST_TRIGGER_LIMIT,
-        windowSeconds: Math.floor(
-          GUILD_NOTIFICATION_TEST_TRIGGER_WINDOW_MS / 1000,
-        ),
-        nextAvailableAt: null,
+    if (targetIds.length === 0) {
+      return defaultUsage;
+    }
+
+    return this.getWorstTargetUsage(targetUsage, targetIds) ?? defaultUsage;
+  }
+
+  private getWorstTargetUsage(
+    targetUsage: Map<number, TestTriggerUsage>,
+    targetIds?: number[],
+  ) {
+    const ids = targetIds ?? [...targetUsage.keys()];
+    let worst: TestTriggerUsage | null = null;
+
+    for (const id of ids) {
+      const usage = targetUsage.get(id);
+      if (!usage) {
+        continue;
       }
-    );
+      if (!worst || usage.remaining < worst.remaining) {
+        worst = usage;
+      }
+    }
+
+    return worst;
   }
 }

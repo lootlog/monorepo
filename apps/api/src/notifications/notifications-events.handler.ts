@@ -16,6 +16,7 @@ import { RoutingKey } from "src/enum/routing-key.enum";
 import { NotificationJobService } from "src/notifications/notification-job.service";
 import { NotificationMatchingService } from "src/notifications/notification-matching.service";
 import { NotificationTargetService } from "src/notifications/notification-target.service";
+import { GuildsService } from "src/guilds/guilds.service";
 
 @Injectable()
 export class NotificationsEventsHandler {
@@ -26,6 +27,7 @@ export class NotificationsEventsHandler {
     private readonly jobService: NotificationJobService,
     private readonly matchingService: NotificationMatchingService,
     private readonly targetService: NotificationTargetService,
+    private readonly guildsService: GuildsService,
   ) {}
 
   @RabbitSubscribe({
@@ -138,6 +140,11 @@ export class NotificationsEventsHandler {
       },
     });
 
+    const guilds = await this.guildsService.getMultipleGuildsByIds(
+      event.guildIds,
+    );
+    const guildNamesMap = new Map(guilds.map((g) => [g.id, g.name]));
+
     const hasNpcData = event.npcType != null || event.npcLvl != null;
 
     const membershipsByOwner = hasNpcData
@@ -200,6 +207,7 @@ export class NotificationsEventsHandler {
             membership.roles,
             event.npcType,
             event.npcLvl,
+            membership.isGuildOwner,
           );
         });
       } else {
@@ -219,6 +227,15 @@ export class NotificationsEventsHandler {
           continue;
         }
 
+        const watchedItemName = watchedItem.itemName;
+        const guildNames = visibleGuildIds
+          .map((id) => guildNamesMap.get(id))
+          .filter(Boolean)
+          .join(", ");
+
+        const title = "Obserwowany item wypadł!";
+        const message = `Na świecie ${event.world} na lootlogu ${guildNames} wypadł obserwowany przedmiot: ${watchedItemName}`;
+
         const notificationJob = await this.jobService.createNotificationJob({
           notificationRule,
           target: relation.target,
@@ -228,11 +245,11 @@ export class NotificationsEventsHandler {
           sourceEntityId: String(event.lootId),
           sourceEventId: `loot:${event.lootId}`,
           payloadSnapshot: {
-            title: "Obserwowany item dropnął",
-            message: `Na świecie ${event.world} wypadły obserwowane przedmioty: ${event.itemNames.join(", ")}`,
+            title,
+            message,
             world: event.world,
-            itemIds: event.itemIds,
-            itemNames: event.itemNames,
+            itemId: watchedItem.itemId,
+            itemName: watchedItemName,
             guildIds: visibleGuildIds,
           },
         });
