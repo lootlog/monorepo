@@ -4,7 +4,7 @@ import {
   formatNotificationDateInTimeZone,
   GUILD_NOTIFICATION_TIMEZONE,
   parseDateTimeLocalInputToIsoString,
-} from "@/features/guild-settings/notifications-settings/utils/notification-schedule-time.utils";
+} from "@/features/guild-notifications/utils/notification-schedule-time.utils";
 
 describe("notificationScheduleTimeUtils", () => {
   it("round-trips summer datetimes for the guild timezone", () => {

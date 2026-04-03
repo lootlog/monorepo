@@ -129,10 +129,7 @@ export const mergeGuildNotificationTargets = (
 };
 
 export const getGuildNotificationRuleScheduleTranslationKey = (
-  rule: Pick<
-    GuildNotificationRule,
-    "scheduleAnchor" | "scheduleOffsetMinutes"
-  >,
+  rule: Pick<GuildNotificationRule, "scheduleAnchor" | "scheduleOffsetMinutes">,
 ) => {
   if (
     rule.scheduleAnchor === NotificationScheduleAnchor.MAX_SPAWN &&

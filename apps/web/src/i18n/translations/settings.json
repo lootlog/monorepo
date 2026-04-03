@@ -391,6 +391,7 @@
     },
     "quickAdd": {
       "add": "Dodaj do obserwowanych",
+      "remove": "Przestań obserwować",
       "watched": "Ten item jest już obserwowany dla tego lootloga i świata.",
       "dmRequired": "Najpierw włącz powiadomienia w ustawieniach.",
       "limitReached": "Osiągnięto limit {{limit}} obserwowanych itemów.",
@@ -403,7 +404,10 @@
       "toasts": {
         "adding": "Dodawanie {{itemName}} do obserwowanych ({{count}} / {{limit}})...",
         "added": "{{itemName}} został dodany do obserwowanych ({{count}} / {{limit}}).",
-        "error": "Nie udało się dodać itemu do obserwowanych."
+        "error": "Nie udało się dodać itemu do obserwowanych.",
+        "removing": "Usuwanie {{itemName}} z obserwowanych...",
+        "removed": "{{itemName}} został usunięty z obserwowanych.",
+        "removeError": "Nie udało się usunąć itemu z obserwowanych."
       }
     },
     "fields": {

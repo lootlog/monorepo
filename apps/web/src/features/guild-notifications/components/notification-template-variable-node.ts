@@ -54,11 +54,7 @@ export class NotificationTemplateVariableNode extends TextNode {
     return element;
   }
 
-  updateDOM(
-    prevNode: this,
-    dom: HTMLElement,
-    config: EditorConfig,
-  ) {
+  updateDOM(prevNode: this, dom: HTMLElement, config: EditorConfig) {
     const hasUpdated = super.updateDOM(prevNode, dom, config);
 
     if (prevNode.__templateKey !== this.__templateKey) {
@@ -77,9 +73,7 @@ export class NotificationTemplateVariableNode extends TextNode {
     };
   }
 
-  updateFromJSON(
-    serializedNode: SerializedNotificationTemplateVariableNode,
-  ) {
+  updateFromJSON(serializedNode: SerializedNotificationTemplateVariableNode) {
     return super
       .updateFromJSON(serializedNode)
       .setTextContent(`{{${serializedNode.templateKey}}}`)
@@ -103,7 +97,8 @@ export class NotificationTemplateVariableNode extends TextNode {
   }
 
   private applyVariableStyles(element: HTMLElement) {
-    element.style.backgroundColor = "color-mix(in oklab, var(--primary) 12%, transparent)";
+    element.style.backgroundColor =
+      "color-mix(in oklab, var(--primary) 12%, transparent)";
     element.style.borderRadius = "2px";
     element.style.color = "var(--primary)";
   }

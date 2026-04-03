@@ -267,9 +267,7 @@ export const NotificationTargetDialog = ({
                           {t("settings.notifications.fields.active")}
                         </FormLabel>
                         <p className="text-xs text-muted-foreground">
-                          {t(
-                            "settings.notifications.fields.activeDescription",
-                          )}
+                          {t("settings.notifications.fields.activeDescription")}
                         </p>
                       </div>
                       <FormControl>

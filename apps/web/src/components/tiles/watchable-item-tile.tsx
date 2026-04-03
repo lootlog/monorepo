@@ -12,8 +12,9 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from "@lootlog/ui/components/context-menu";
+import { useDeleteWatchedItem } from "@/hooks/api/user/use-delete-watched-item";
 import { useNavigate } from "@tanstack/react-router";
-import { Bell, LoaderCircle, Plus } from "lucide-react";
+import { Bell, BellOff, LoaderCircle, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
@@ -39,7 +40,9 @@ export const WatchableItemTile = ({
     quickAddWatchedItem,
     hasWatchedItem,
     isItemWatchedInScope,
+    getWatchedItemId,
   } = useGuildWatchedItems();
+  const deleteWatchedItem = useDeleteWatchedItem();
   const effectiveGuildId = watchContext.guildId || currentGuildId || "";
   const effectiveWatchContext = {
     guildId: effectiveGuildId,
@@ -56,8 +59,37 @@ export const WatchableItemTile = ({
     watchedItemsCount >= USER_WATCHED_ITEMS_LIMIT &&
     wouldCreateNewWatchedItem;
 
+  const isRemovePending = deleteWatchedItem.isPending;
+
   const openNotifications = () => {
     void navigate({ to: ROUTES.user.notifications.base });
+  };
+
+  const handleRemove = async () => {
+    const watchedItemId = getWatchedItemId(item.id, effectiveWatchContext);
+    if (!watchedItemId) return;
+
+    const loadingToastId = toast.loading(
+      t("settings.userNotifications.quickAdd.toasts.removing", {
+        itemName: item.name,
+      }),
+    );
+
+    try {
+      await deleteWatchedItem.mutateAsync({ watchedItemId });
+      toast.success(
+        t("settings.userNotifications.quickAdd.toasts.removed", {
+          itemName: item.name,
+        }),
+        { id: loadingToastId },
+      );
+    } catch (error) {
+      toast.error(
+        getUserNotificationsErrorMessage(error, t) ??
+          t("settings.userNotifications.quickAdd.toasts.removeError"),
+        { id: loadingToastId },
+      );
+    }
   };
 
   const handleQuickAdd = async () => {
@@ -133,7 +165,7 @@ export const WatchableItemTile = ({
         </span>
       </ContextMenuTrigger>
       <ContextMenuContent className="min-w-[15rem]">
-        {state === "loading" || isQuickAddPending ? (
+        {state === "loading" || isQuickAddPending || isRemovePending ? (
           <ContextMenuItem disabled className="gap-2">
             <LoaderCircle className="h-4 w-4 animate-spin text-muted-foreground" />
             {t("settings.userNotifications.quickAdd.loading")}
@@ -163,8 +195,14 @@ export const WatchableItemTile = ({
         ) : null}
         {state === "ready" && hasActiveDm && isWatchedInScope ? (
           <>
-            <ContextMenuItem disabled>
-              {t("settings.userNotifications.quickAdd.watched")}
+            <ContextMenuItem
+              className="gap-2"
+              onSelect={() => {
+                void handleRemove();
+              }}
+            >
+              <BellOff className="h-4 w-4 text-muted-foreground" />
+              {t("settings.userNotifications.quickAdd.remove")}
             </ContextMenuItem>
             <ContextMenuSeparator />
             <ContextMenuItem onSelect={openNotifications}>
