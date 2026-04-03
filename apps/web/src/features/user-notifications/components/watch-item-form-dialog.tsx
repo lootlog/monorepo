@@ -171,7 +171,6 @@ export const WatchFormDialog = ({
 
     let itemId: number;
     let itemName: string;
-    let itemIcon: string | undefined;
 
     if (values.manualEntry) {
       itemId = Number(values.manualItemId.trim());
@@ -180,7 +179,6 @@ export const WatchFormDialog = ({
       if (!values.item) return;
       itemId = values.item.id;
       itemName = values.item.name;
-      itemIcon = values.item.icon;
     }
 
     const hasMatchingWatchedItem = watchedItems.some(
@@ -214,7 +212,6 @@ export const WatchFormDialog = ({
       await createWatchedItem.mutateAsync({
         itemId,
         itemName,
-        itemIcon,
         world: values.world,
         guildIds: values.guildIds,
       });

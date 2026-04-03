@@ -459,7 +459,6 @@ export const WatchedItemScalarFieldEnum = {
   userId: 'userId',
   itemId: 'itemId',
   itemName: 'itemName',
-  itemIcon: 'itemIcon',
   world: 'world',
   enabled: 'enabled',
   notificationRuleId: 'notificationRuleId',

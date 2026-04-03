@@ -122,7 +122,6 @@ export const WatchableItemTile = ({
       await quickAddWatchedItem({
         itemId: item.id,
         itemName: item.name,
-        itemIcon: item.icon,
         world: watchContext.world,
         guildId: effectiveGuildId,
       });

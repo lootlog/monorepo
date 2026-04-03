@@ -39,7 +39,7 @@ export const WatchedItemCard = ({
   const snapshot = watchedItem.itemSnapshot;
   const rarity = (snapshot?.rarity as ItemRarity | null) ?? ItemRarity.COMMON;
   const displayName = snapshot?.name ?? watchedItem.itemName;
-  const displayIcon = snapshot?.icon ?? watchedItem.itemIcon;
+  const displayIcon = snapshot?.icon ?? null;
 
   const renderItemVisual = () => {
     if (snapshot && displayIcon) {

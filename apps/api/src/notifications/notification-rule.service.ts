@@ -630,7 +630,6 @@ export class NotificationRuleService {
           data: {
             enabled: true,
             itemName: data.itemName,
-            itemIcon: data.itemIcon ?? null,
           },
         });
         await tx.notificationRule.update({
@@ -702,14 +701,12 @@ export class NotificationRuleService {
           userId: discordId,
           itemId: data.itemId,
           itemName: data.itemName,
-          itemIcon: data.itemIcon ?? null,
           world: data.world,
           notificationRuleId: notificationRule.id,
         },
         update: {
           enabled: true,
           itemName: data.itemName,
-          itemIcon: data.itemIcon ?? null,
           notificationRuleId: notificationRule.id,
         },
         include: {
@@ -771,7 +768,6 @@ export class NotificationRuleService {
           data: {
             enabled: true,
             itemName: data.itemName,
-            itemIcon: data.itemIcon ?? null,
           },
         });
         await tx.notificationRule.update({
@@ -838,14 +834,12 @@ export class NotificationRuleService {
           userId: discordId,
           itemId: data.itemId,
           itemName: data.itemName,
-          itemIcon: data.itemIcon ?? null,
           world: data.world,
           notificationRuleId: notificationRule.id,
         },
         update: {
           enabled: true,
           itemName: data.itemName,
-          itemIcon: data.itemIcon ?? null,
           notificationRuleId: notificationRule.id,
         },
         include: {

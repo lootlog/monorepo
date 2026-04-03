@@ -140,7 +140,6 @@ describe("Notification Services", () => {
       userId: "user-1",
       itemId: 123,
       itemName: "Legendarny Miecz",
-      itemIcon: "legendary-sword.png",
       world: "berufs",
       enabled: true,
       notificationRuleId: 91,
@@ -504,7 +503,6 @@ describe("Notification Services", () => {
       ruleService.createWatchedItem("discord-user-1", "user-1", {
         itemId: 123,
         itemName: "Legendarny Miecz",
-        itemIcon: "legendary-sword.png",
         world: "berufs",
         guildIds: ["guild-1"],
       }),
@@ -525,7 +523,6 @@ describe("Notification Services", () => {
       ruleService.createWatchedItem("discord-user-1", "user-1", {
         itemId: 123,
         itemName: "Legendarny Miecz",
-        itemIcon: "legendary-sword.png",
         world: "berufs",
         guildIds: ["guild-1"],
       }),
@@ -546,7 +543,6 @@ describe("Notification Services", () => {
         userId: "user-1",
         itemId: 123,
         itemName: "Legendarny Miecz",
-        itemIcon: "legendary-sword.png",
         world: "berufs",
         enabled: true,
         notificationRuleId: 91,
@@ -567,7 +563,6 @@ describe("Notification Services", () => {
         userId: "user-1",
         itemId: 123,
         itemName: "Legendarny Miecz",
-        itemIcon: "legendary-sword.png",
         world: "berufs",
         enabled: true,
         notificationRuleId: 91,
@@ -589,7 +584,6 @@ describe("Notification Services", () => {
       ruleService.quickAddWatchedItem("discord-user-1", "user-1", {
         itemId: 123,
         itemName: "Legendarny Miecz",
-        itemIcon: "legendary-sword.png",
         world: "berufs",
         guildId: "guild-2",
       }),
@@ -621,7 +615,6 @@ describe("Notification Services", () => {
         userId: "user-1",
         itemId: 123,
         itemName: "Legendarny Miecz",
-        itemIcon: "legendary-sword.png",
         world: "berufs",
         enabled: true,
         notificationRuleId: 91,
@@ -642,7 +635,6 @@ describe("Notification Services", () => {
         userId: "user-1",
         itemId: 123,
         itemName: "Legendarny Miecz",
-        itemIcon: "legendary-sword.png",
         world: "berufs",
         enabled: true,
         notificationRuleId: 91,
@@ -664,7 +656,6 @@ describe("Notification Services", () => {
       ruleService.quickAddWatchedItem("discord-user-1", "user-1", {
         itemId: 123,
         itemName: "Legendarny Miecz",
-        itemIcon: "legendary-sword.png",
         world: "berufs",
         guildId: "guild-1",
       }),
@@ -696,7 +687,6 @@ describe("Notification Services", () => {
       ruleService.quickAddWatchedItem("discord-user-1", "user-1", {
         itemId: 123,
         itemName: "Legendarny Miecz",
-        itemIcon: "legendary-sword.png",
         world: "berufs",
         guildId: "guild-1",
       }),
@@ -714,7 +704,6 @@ describe("Notification Services", () => {
       ruleService.quickAddWatchedItem("discord-user-1", "user-1", {
         itemId: 123,
         itemName: "Legendarny Miecz",
-        itemIcon: "legendary-sword.png",
         world: "berufs",
         guildId: "guild-1",
       }),
@@ -733,7 +722,6 @@ describe("Notification Services", () => {
       ruleService.quickAddWatchedItem("discord-user-1", "user-1", {
         itemId: 123,
         itemName: "Legendarny Miecz",
-        itemIcon: "legendary-sword.png",
         world: "berufs",
         guildId: "guild-999",
       }),
