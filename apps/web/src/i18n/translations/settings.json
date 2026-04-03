@@ -312,7 +312,10 @@
     },
     "deleteTargetDialog": {
       "title": "Usunąć kanał docelowy?",
-      "description": "Kanał {{name}} zostanie usunięty ze wszystkich reguł i zaplanowanych wysyłek."
+      "description": "Kanał {{name}} zostanie usunięty ze wszystkich reguł i zaplanowanych wysyłek.",
+      "descriptionWithOrphanedRules_one": "Kanał {{name}} zostanie usunięty ze wszystkich reguł i zaplanowanych wysyłek. {{count}} reguła, dla której jest to jedyny kanał, również zostanie usunięta.",
+      "descriptionWithOrphanedRules_few": "Kanał {{name}} zostanie usunięty ze wszystkich reguł i zaplanowanych wysyłek. {{count}} reguły, dla których jest to jedyny kanał, również zostaną usunięte.",
+      "descriptionWithOrphanedRules_many": "Kanał {{name}} zostanie usunięty ze wszystkich reguł i zaplanowanych wysyłek. {{count}} reguł, dla których jest to jedyny kanał, również zostanie usuniętych."
     },
     "deleteRuleDialog": {
       "title": "Usunąć regułę?",

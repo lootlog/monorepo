@@ -38,9 +38,11 @@ describe("Notification Services", () => {
       create: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
+      deleteMany: jest.fn(),
     },
     notificationRuleTarget: {
       createMany: jest.fn(),
+      findMany: jest.fn(),
     },
     timer: {
       findMany: jest.fn(),
@@ -54,6 +56,7 @@ describe("Notification Services", () => {
     },
     notificationTarget: {
       findMany: jest.fn(),
+      delete: jest.fn(),
       deleteMany: jest.fn(),
       upsert: jest.fn(),
       findFirst: jest.fn(),
@@ -190,7 +193,11 @@ describe("Notification Services", () => {
     mockPrisma.notificationJob.findUnique.mockResolvedValue(null);
     mockPrisma.notificationJob.update.mockResolvedValue(undefined);
     mockPrisma.notificationJob.updateMany.mockResolvedValue({ count: 1 });
+    mockPrisma.notificationTarget.delete.mockResolvedValue(undefined);
     mockPrisma.notificationTarget.deleteMany.mockResolvedValue({ count: 2 });
+    mockPrisma.notificationRuleTarget.findMany.mockResolvedValue([]);
+    mockPrisma.notificationRule.deleteMany.mockResolvedValue({ count: 0 });
+    mockPrisma.notificationRule.delete.mockResolvedValue(undefined);
     mockPrisma.$transaction.mockImplementation(async (callback) =>
       callback({
         watchedItem: {
@@ -269,50 +276,34 @@ describe("Notification Services", () => {
     watchedItemService = module.get<WatchedItemService>(WatchedItemService);
   });
 
-  it("removes guild notification targets and cancels their queued jobs after channel deletion", async () => {
+  it("removes guild notification targets, orphaned rules, and cancels their queued jobs after channel deletion", async () => {
+    mockPrisma.notificationJob.findMany.mockReset();
+    mockQueue.getJob.mockReset();
+    mockPrisma.notificationRuleTarget.findMany
+      .mockResolvedValueOnce([{ ruleId: 77, rule: { _count: { targets: 1 } } }])
+      .mockResolvedValueOnce([]);
+    mockPrisma.notificationJob.findMany
+      .mockResolvedValueOnce([{ id: "job-1" }])
+      .mockResolvedValueOnce([{ id: "job-r77" }])
+      .mockResolvedValueOnce([{ id: "job-2" }]);
+    mockQueue.getJob
+      .mockResolvedValueOnce(removedJobs[0])
+      .mockResolvedValueOnce({ remove: jest.fn() })
+      .mockResolvedValueOnce(removedJobs[1]);
+
     await targetService.handleGuildChannelDeleted({
       guildId: "guild-1",
       channelId: "channel-1",
     });
 
-    expect(mockQueue.getJob).toHaveBeenNthCalledWith(1, "job-1");
-    expect(mockQueue.getJob).toHaveBeenNthCalledWith(2, "job-2");
-    expect(removedJobs[0].remove).toHaveBeenCalled();
-    expect(removedJobs[1].remove).toHaveBeenCalled();
-    expect(mockPrisma.notificationJob.updateMany).toHaveBeenNthCalledWith(1, {
-      where: {
-        id: {
-          in: ["job-1"],
-        },
-        status: {
-          in: ["PENDING", "BLOCKED"],
-        },
-      },
-      data: {
-        status: "CANCELED",
-        processedAt: expect.any(Date),
-      },
+    expect(mockPrisma.notificationTarget.delete).toHaveBeenCalledWith({
+      where: { id: 11 },
     });
-    expect(mockPrisma.notificationJob.updateMany).toHaveBeenNthCalledWith(2, {
-      where: {
-        id: {
-          in: ["job-2"],
-        },
-        status: {
-          in: ["PENDING", "BLOCKED"],
-        },
-      },
-      data: {
-        status: "CANCELED",
-        processedAt: expect.any(Date),
-      },
+    expect(mockPrisma.notificationTarget.delete).toHaveBeenCalledWith({
+      where: { id: 22 },
     });
-    expect(mockPrisma.notificationTarget.deleteMany).toHaveBeenCalledWith({
-      where: {
-        id: {
-          in: [11, 22],
-        },
-      },
+    expect(mockPrisma.notificationRule.deleteMany).toHaveBeenCalledWith({
+      where: { id: { in: [77] } },
     });
   });
 

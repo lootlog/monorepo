@@ -19,6 +19,7 @@ import { getGuildNotificationTargetLabel } from "../utils/notification-settings.
 type NotificationTargetCardProps = {
   target: GuildNotificationTarget;
   usageCount: number;
+  orphanedRuleCount: number;
   actionsDisabled: boolean;
   onEdit: (target: GuildNotificationTarget) => void;
 };
@@ -26,6 +27,7 @@ type NotificationTargetCardProps = {
 export const NotificationTargetCard = ({
   target,
   usageCount,
+  orphanedRuleCount,
   actionsDisabled,
   onEdit,
 }: NotificationTargetCardProps) => {
@@ -101,12 +103,22 @@ export const NotificationTargetCard = ({
                   disabled={isActionDisabled}
                   onConfirm={handleDelete}
                   title={t("settings.notifications.deleteTargetDialog.title")}
-                  description={t(
-                    "settings.notifications.deleteTargetDialog.description",
-                    {
-                      name: getGuildNotificationTargetLabel(target),
-                    },
-                  )}
+                  description={
+                    orphanedRuleCount > 0
+                      ? t(
+                          "settings.notifications.deleteTargetDialog.descriptionWithOrphanedRules",
+                          {
+                            name: getGuildNotificationTargetLabel(target),
+                            count: orphanedRuleCount,
+                          },
+                        )
+                      : t(
+                          "settings.notifications.deleteTargetDialog.description",
+                          {
+                            name: getGuildNotificationTargetLabel(target),
+                          },
+                        )
+                  }
                   confirmButtonLabel={t(
                     "settings.notifications.actions.delete",
                   )}
