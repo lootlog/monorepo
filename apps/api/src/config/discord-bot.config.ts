@@ -6,7 +6,7 @@ export interface DiscordBotConfig {
   channelSnapshotStaleSeconds: number;
 }
 
-const DEFAULT_DISCORD_CHANNEL_SNAPSHOT_STALE_SECONDS = 300;
+const DEFAULT_DISCORD_CHANNEL_SNAPSHOT_STALE_SECONDS = 900;
 
 export default registerAs(ConfigKey.DISCORD_BOT, (): DiscordBotConfig => {
   const { DISCORD_BOT_SERVICE_URL } = process.env;

@@ -38,16 +38,18 @@ export const WatchedItemCard = ({
 
   const snapshot = watchedItem.itemSnapshot;
   const rarity = (snapshot?.rarity as ItemRarity | null) ?? ItemRarity.COMMON;
+  const displayName = snapshot?.name ?? watchedItem.itemName;
+  const displayIcon = snapshot?.icon ?? watchedItem.itemIcon;
 
   const renderItemVisual = () => {
-    if (snapshot) {
+    if (snapshot && displayIcon) {
       return (
         <ItemTile
           item={{
             id: watchedItem.itemId,
             hid: "",
-            name: watchedItem.itemName,
-            icon: watchedItem.itemIcon,
+            name: displayName,
+            icon: displayIcon,
             rarity,
             lvl: snapshot.lvl ?? 0,
             type: snapshot.type ?? "",
@@ -58,7 +60,13 @@ export const WatchedItemCard = ({
       );
     }
 
-    return <ItemImage icon={watchedItem.itemIcon} rarity={rarity} />;
+    if (displayIcon) {
+      return <ItemImage icon={displayIcon} rarity={rarity} />;
+    }
+
+    return (
+      <div className="size-[32px] rounded-md border-2 border-border/50 bg-muted/30" />
+    );
   };
 
   return (
@@ -68,9 +76,7 @@ export const WatchedItemCard = ({
           <div className="flex min-w-0 items-center gap-3">
             {renderItemVisual()}
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold">
-                {watchedItem.itemName}
-              </p>
+              <p className="truncate text-sm font-semibold">{displayName}</p>
               <p className="text-xs text-muted-foreground">
                 #{watchedItem.itemId} • {watchedItem.world}
               </p>

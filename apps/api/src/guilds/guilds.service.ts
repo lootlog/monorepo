@@ -75,8 +75,7 @@ export class GuildsService {
     const discordBotConfig = this.configService.get<DiscordBotConfig>(
       ConfigKey.DISCORD_BOT,
     );
-    this.staleAfterMs =
-      (discordBotConfig?.channelSnapshotStaleSeconds ?? 300) * 1000;
+    this.staleAfterMs = discordBotConfig.channelSnapshotStaleSeconds;
   }
 
   async getUserGuilds(discordId: string, userId: string, source?: string) {
@@ -293,7 +292,22 @@ export class GuildsService {
     return cachedSyncState;
   }
 
+  private static readonly REFRESH_COOLDOWN_MS = 5 * 60 * 1000;
+
   async refreshGuildDiscordSync(guildId: string) {
+    const existingSyncState = await this.loadGuildDiscordSyncState(guildId);
+
+    if (existingSyncState) {
+      const elapsed = Date.now() - existingSyncState.updatedAt.getTime();
+
+      if (elapsed < GuildsService.REFRESH_COOLDOWN_MS) {
+        throw new HttpException(
+          "Discord sync can only be refreshed once every 5 minutes",
+          HttpStatus.TOO_MANY_REQUESTS,
+        );
+      }
+    }
+
     const { syncState } =
       await this.channelsService.refreshGuildDiscordChannels(guildId);
 

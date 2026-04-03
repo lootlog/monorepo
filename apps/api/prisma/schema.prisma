@@ -606,7 +606,7 @@ model WatchedItem {
   userId      String
   itemId      Int
   itemName    String
-  itemIcon    String
+  itemIcon    String?
   world       String
   enabled     Boolean  @default(true)
   notificationRuleId Int?     @unique
