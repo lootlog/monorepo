@@ -266,7 +266,6 @@ export const LootsListItem = ({ loot }: Props) => {
   const { itemsByPlayer, unassignedItems, hasLegendaryItem, sortedPlayers } =
     useLootData(loot);
   const watchContext = {
-    guildId: loot.guildId,
     world: loot.world,
   };
 

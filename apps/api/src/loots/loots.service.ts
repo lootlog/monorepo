@@ -256,6 +256,8 @@ export class LootsService implements OnModuleInit {
           guildIds: submissionData.map((submission) => submission.guildId),
           itemIds: items.map((item) => item.id),
           itemNames: items.map((item) => item.name),
+          npcType: highestWtNpcType,
+          npcLvl: npcData.highest.lvl ?? null,
         },
       );
 

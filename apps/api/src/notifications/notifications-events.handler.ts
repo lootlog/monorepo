@@ -5,6 +5,7 @@ import type {
   DiscordNotificationDeliveryResultEvent,
 } from "@lootlog/types";
 import {
+  type NpcType,
   NotificationJobKind as DbNotificationJobKind,
   NotificationOwnerType as DbNotificationOwnerType,
   NotificationTriggerType as DbNotificationTriggerType,
@@ -103,6 +104,8 @@ export class NotificationsEventsHandler {
     guildIds: string[];
     itemIds: number[];
     itemNames: string[];
+    npcType?: NpcType | null;
+    npcLvl?: number | null;
   }) {
     const watchedItems = await this.prisma.watchedItem.findMany({
       where: {
@@ -135,13 +138,29 @@ export class NotificationsEventsHandler {
       },
     });
 
-    const activeGuildIdsByOwnerId =
-      await this.matchingService.getActiveMembershipGuildIdsByOwner(
-        watchedItems
-          .map((watchedItem) => watchedItem.notificationRule?.ownerId)
-          .filter((ownerId): ownerId is string => typeof ownerId === "string"),
-        event.guildIds,
-      );
+    const hasNpcData = event.npcType != null || event.npcLvl != null;
+
+    const membershipsByOwner = hasNpcData
+      ? await this.matchingService.getActiveMembershipsWithRoles(
+          watchedItems
+            .map((watchedItem) => watchedItem.notificationRule?.ownerId)
+            .filter(
+              (ownerId): ownerId is string => typeof ownerId === "string",
+            ),
+          event.guildIds,
+        )
+      : null;
+
+    const activeGuildIdsByOwnerId = membershipsByOwner
+      ? null
+      : await this.matchingService.getActiveMembershipGuildIdsByOwner(
+          watchedItems
+            .map((watchedItem) => watchedItem.notificationRule?.ownerId)
+            .filter(
+              (ownerId): ownerId is string => typeof ownerId === "string",
+            ),
+          event.guildIds,
+        );
 
     for (const watchedItem of watchedItems) {
       const notificationRule = watchedItem.notificationRule;
@@ -161,12 +180,37 @@ export class NotificationsEventsHandler {
       if (matchedGuildIds.length === 0) {
         continue;
       }
-      const activeOwnerGuildIds =
-        activeGuildIdsByOwnerId.get(notificationRule.ownerId) ?? new Set();
-      const authorizedGuildIds = matchedGuildIds.filter((guildId) =>
-        activeOwnerGuildIds.has(guildId),
-      );
-      if (authorizedGuildIds.length === 0) {
+
+      let visibleGuildIds: string[];
+
+      if (membershipsByOwner) {
+        const ownerMemberships =
+          membershipsByOwner.get(notificationRule.ownerId) ?? [];
+        const authorizedGuildIds = matchedGuildIds.filter((guildId) =>
+          ownerMemberships.some((m) => m.guildId === guildId),
+        );
+        visibleGuildIds = authorizedGuildIds.filter((guildId) => {
+          const membership = ownerMemberships.find(
+            (m) => m.guildId === guildId,
+          );
+          if (!membership) {
+            return false;
+          }
+          return this.matchingService.canRolesViewNpc(
+            membership.roles,
+            event.npcType,
+            event.npcLvl,
+          );
+        });
+      } else {
+        const activeOwnerGuildIds =
+          activeGuildIdsByOwnerId!.get(notificationRule.ownerId) ?? new Set();
+        visibleGuildIds = matchedGuildIds.filter((guildId) =>
+          activeOwnerGuildIds.has(guildId),
+        );
+      }
+
+      if (visibleGuildIds.length === 0) {
         continue;
       }
 
@@ -189,7 +233,7 @@ export class NotificationsEventsHandler {
             world: event.world,
             itemIds: event.itemIds,
             itemNames: event.itemNames,
-            guildIds: authorizedGuildIds,
+            guildIds: visibleGuildIds,
           },
         });
 

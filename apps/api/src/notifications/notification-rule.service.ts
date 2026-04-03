@@ -556,12 +556,24 @@ export class NotificationRuleService {
       orderBy: { updatedAt: "desc" },
     });
 
-    const itemIds = [...new Set(watchedItems.map((item) => item.itemId))];
+    const pairs = [
+      ...new Map(
+        watchedItems.map((item) => [
+          `${item.itemId}:${item.itemName}`,
+          { itemId: item.itemId, itemName: item.itemName },
+        ]),
+      ).values(),
+    ];
 
     const snapshots = await this.prisma.itemSnapshot.findMany({
-      where: { itemId: { in: itemIds } },
+      where: {
+        OR: pairs.map(({ itemId, itemName }) => ({
+          itemId,
+          name: itemName,
+        })),
+      },
       orderBy: { createdAt: "desc" },
-      distinct: ["itemId"],
+      distinct: ["itemId", "name"],
       select: {
         itemId: true,
         name: true,
@@ -573,10 +585,12 @@ export class NotificationRuleService {
       },
     });
 
-    const snapshotByItemId = new Map(snapshots.map((s) => [s.itemId, s]));
+    const snapshotByKey = new Map(
+      snapshots.map((s) => [`${s.itemId}:${s.name}`, s]),
+    );
 
     return watchedItems.map((item) => {
-      const snapshot = snapshotByItemId.get(item.itemId);
+      const snapshot = snapshotByKey.get(`${item.itemId}:${item.itemName}`);
 
       return {
         ...item,
@@ -1272,28 +1286,35 @@ export class NotificationRuleService {
     discordId: string;
     guildIds: string[];
   }) {
-    const normalizedGuildIds = [...new Set(params.guildIds)].sort();
+    const uniqueInputIds = [...new Set(params.guildIds)];
 
-    if (normalizedGuildIds.length === 0) {
+    if (uniqueInputIds.length === 0) {
       throw new BadRequestException(Error.AT_LEAST_ONE_GUILD_REQUIRED);
     }
 
-    const availableGuildIds = new Set(
-      (
-        await this.guildsService.getUserGuilds(params.discordId, params.userId)
-      ).map((guild) => guild.id),
-    );
-    const invalidGuildIds = normalizedGuildIds.filter(
-      (guildId) => !availableGuildIds.has(guildId),
+    const userGuilds = await this.guildsService.getUserGuilds(
+      params.discordId,
+      params.userId,
+      "game",
     );
 
-    if (invalidGuildIds.length > 0) {
+    const resolvedGuildIds = uniqueInputIds.map((input) => {
+      const guild = userGuilds.find(
+        (g) => g.id === input || g.vanityUrl === input,
+      );
+      if (!guild) {
+        return null;
+      }
+      return guild.id;
+    });
+
+    if (resolvedGuildIds.some((id) => id === null)) {
       throw new BadRequestException(
         Error.SELECTED_GUILDS_NOT_AVAILABLE_FOR_AUTHENTICATED_USER,
       );
     }
 
-    return normalizedGuildIds;
+    return [...new Set(resolvedGuildIds as string[])].sort();
   }
 
   private getWatchedItemByScope(params: {
