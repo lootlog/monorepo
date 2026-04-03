@@ -2,10 +2,9 @@ import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import ReactMarkdown, { defaultUrlTransform } from "react-markdown";
+import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
-import * as z from "zod";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { getApiErrorMessage } from "@/features/events/utils/get-api-error-message";
@@ -60,6 +59,16 @@ import {
   parseDateTimeLocalInputToIsoString,
 } from "./utils/notification-schedule-time.utils";
 import {
+  ruleFormSchema,
+  ALL_WORLDS_VALUE,
+  type RuleFormValues,
+} from "./utils/notification-rule-form.schema";
+import {
+  replaceRoleMentions,
+  previewUrlTransform,
+  previewMarkdownComponents,
+} from "./utils/notification-rule-form-preview.utils";
+import {
   NotificationTemplateEditor,
   createPreviewTemplateValues,
   renderTemplatePreview,
@@ -67,227 +76,6 @@ import {
 import { NotificationTargetDialog } from "./components/notification-target-dialog";
 import { ROUTES } from "@/config/routes";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import type { GuildRole } from "@/hooks/api/guilds/use-guild-roles";
-import type { Components } from "react-markdown";
-
-const ALL_WORLDS_VALUE = "__all_worlds__";
-const ROLE_LINK_PREFIX = "role:";
-
-const getRoleHexColor = (role: GuildRole) =>
-  role.color === 0
-    ? null
-    : `#${role.color.toString(16).padStart(6, "0").toUpperCase()}`;
-
-const replaceRoleMentions = (text: string, roles: GuildRole[]) => {
-  const roleById = new Map(roles.map((role) => [role.id, role] as const));
-
-  return text
-    .replace(/<@&(\d+)>/g, (_match, roleId: string) => {
-      const role = roleById.get(roleId);
-      const name = role ? `@${role.name}` : `@${roleId}`;
-      const color = role ? (getRoleHexColor(role) ?? "") : "";
-      return `[${name}](${ROLE_LINK_PREFIX}${color})`;
-    })
-    .replace(/@(everyone|here)/g, (_match, keyword: string) => {
-      return `[@${keyword}](${ROLE_LINK_PREFIX})`;
-    });
-};
-
-const previewUrlTransform = (url: string) =>
-  url.startsWith(ROLE_LINK_PREFIX) ? url : defaultUrlTransform(url);
-
-const previewMarkdownComponents: Components = {
-  a: ({ href, children }) => {
-    if (href?.startsWith(ROLE_LINK_PREFIX)) {
-      const color = href.slice(ROLE_LINK_PREFIX.length) || null;
-      return (
-        <span
-          style={{
-            backgroundColor: color
-              ? `${color}22`
-              : "color-mix(in oklab, var(--primary) 12%, transparent)",
-            borderRadius: "2px",
-            color: color ?? "var(--primary)",
-          }}
-        >
-          {children}
-        </span>
-      );
-    }
-    return <a href={href}>{children}</a>;
-  },
-};
-
-const ruleFormSchema = (
-  t: (key: string, options?: Record<string, unknown>) => string,
-  maxNpcCount: number,
-) =>
-  z
-    .object({
-      name: z.string(),
-      triggerType: z.nativeEnum(NotificationTriggerType),
-      world: z.string().optional(),
-      npcIds: z.array(z.string()).optional(),
-      contentTemplate: z
-        .string()
-        .trim()
-        .min(1, t("settings.notifications.validation.templateRequired")),
-      scheduleAnchor: z.nativeEnum(NotificationScheduleAnchor).optional(),
-      scheduleOffsetMinutes: z.string().optional(),
-      scheduledAt: z.string().optional(),
-      scheduleIntervalType: z
-        .nativeEnum(NotificationScheduleIntervalType)
-        .optional(),
-      scheduleIntervalValue: z.string().optional(),
-      scheduleTimeOfDay: z.string().optional(),
-      scheduleWeekday: z.string().optional(),
-      scheduledUntil: z.string().optional(),
-      targetIds: z
-        .array(z.string())
-        .min(1, t("settings.notifications.validation.targetRequired")),
-      enabled: z.boolean(),
-    })
-    .superRefine((data, ctx) => {
-      if (data.triggerType === NotificationTriggerType.TIMER_BEFORE_SPAWN) {
-        if (!data.world || data.world === ALL_WORLDS_VALUE) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: t("settings.notifications.validation.worldRequired"),
-            path: ["world"],
-          });
-        }
-        if (!data.npcIds || data.npcIds.length === 0) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: t("settings.notifications.validation.npcRequired"),
-            path: ["npcIds"],
-          });
-        }
-        if (data.npcIds && data.npcIds.length > maxNpcCount) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: t("settings.notifications.validation.maxNpcCount", {
-              count: maxNpcCount,
-            }),
-            path: ["npcIds"],
-          });
-        }
-        if (!data.scheduleAnchor) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: t(
-              "settings.notifications.validation.scheduleOffsetRequired",
-            ),
-            path: ["scheduleAnchor"],
-          });
-        }
-        const offset = data.scheduleOffsetMinutes?.trim();
-        if (!offset || offset.length === 0) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: t(
-              "settings.notifications.validation.scheduleOffsetRequired",
-            ),
-            path: ["scheduleOffsetMinutes"],
-          });
-        } else if (!Number.isInteger(Number(offset)) || Number(offset) < 0) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: t(
-              "settings.notifications.validation.scheduleOffsetNonNegative",
-            ),
-            path: ["scheduleOffsetMinutes"],
-          });
-        }
-      }
-
-      if (data.triggerType === NotificationTriggerType.SCHEDULED_MESSAGE) {
-        const interval =
-          data.scheduleIntervalType ?? NotificationScheduleIntervalType.ONCE;
-
-        if (
-          interval === NotificationScheduleIntervalType.ONCE ||
-          interval === NotificationScheduleIntervalType.HOURLY
-        ) {
-          if (!data.scheduledAt) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: t(
-                "settings.notifications.validation.scheduledAtRequired",
-              ),
-              path: ["scheduledAt"],
-            });
-          } else {
-            const scheduledAtIsoString = parseDateTimeLocalInputToIsoString(
-              data.scheduledAt,
-              GUILD_NOTIFICATION_TIMEZONE,
-            );
-
-            if (
-              !scheduledAtIsoString ||
-              new Date(scheduledAtIsoString).getTime() <= Date.now()
-            ) {
-              ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: t(
-                  "settings.notifications.validation.scheduledAtFuture",
-                ),
-                path: ["scheduledAt"],
-              });
-            }
-          }
-        }
-
-        if (interval === NotificationScheduleIntervalType.HOURLY) {
-          const val = Number(data.scheduleIntervalValue);
-          if (
-            !data.scheduleIntervalValue ||
-            !Number.isInteger(val) ||
-            val < 1 ||
-            val > 24
-          ) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: t(
-                "settings.notifications.validation.intervalValueRange",
-              ),
-              path: ["scheduleIntervalValue"],
-            });
-          }
-        }
-
-        if (
-          interval === NotificationScheduleIntervalType.DAILY ||
-          interval === NotificationScheduleIntervalType.WEEKLY
-        ) {
-          if (
-            !data.scheduleTimeOfDay ||
-            !/^\d{2}:\d{2}$/.test(data.scheduleTimeOfDay)
-          ) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: t("settings.notifications.validation.timeOfDayRequired"),
-              path: ["scheduleTimeOfDay"],
-            });
-          }
-        }
-
-        if (interval === NotificationScheduleIntervalType.WEEKLY) {
-          if (
-            data.scheduleWeekday === undefined ||
-            data.scheduleWeekday === ""
-          ) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: t("settings.notifications.validation.weekdayRequired"),
-              path: ["scheduleWeekday"],
-            });
-          }
-        }
-      }
-    });
-
-type RuleFormValues = z.infer<ReturnType<typeof ruleFormSchema>>;
 
 export const NotificationRuleFormPage = () => {
   const { t } = useTranslation();
@@ -297,7 +85,7 @@ export const NotificationRuleFormPage = () => {
   const ruleId = (params as { ruleId?: string }).ruleId;
   const isCreateMode = ruleId === undefined;
 
-  const { data } = useGuildNotifications();
+  const { data, isLoading, isError } = useGuildNotifications();
   const targets = data?.targets ?? [];
   const maxNpcCount = data?.limits?.maxNpcsPerRule ?? 5;
   const rule = isCreateMode
@@ -561,6 +349,34 @@ export const NotificationRuleFormPage = () => {
       );
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <Spinner />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <p className="text-sm text-muted-foreground">
+          {t("settings.notifications.errors.loadFailed")}
+        </p>
+      </div>
+    );
+  }
+
+  if (!isCreateMode && !rule) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <p className="text-sm text-muted-foreground">
+          {t("settings.notifications.errors.ruleNotFound")}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background/50">

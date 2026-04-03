@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsInt, IsNotEmpty, IsString } from "class-validator";
+import { IsInt, IsNotEmpty, IsString, MaxLength } from "class-validator";
 
 export class CreateWatchedItemQuickAddDto {
   @ApiProperty()
@@ -9,15 +9,18 @@ export class CreateWatchedItemQuickAddDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
+  @MaxLength(255)
   itemName: string;
 
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
+  @MaxLength(50)
   world: string;
 
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
+  @MaxLength(50)
   guildId: string;
 }

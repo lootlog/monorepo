@@ -213,7 +213,7 @@ export class NotificationMatchingService {
       const lvlTo = role.lvlRangeTo ?? 500;
 
       const lvlOk =
-        npcLvl == null
+        npcLvl === null || npcLvl === undefined
           ? lvlFrom <= 0 || lvlTo >= 0
           : npcLvl >= lvlFrom && npcLvl <= lvlTo;
 

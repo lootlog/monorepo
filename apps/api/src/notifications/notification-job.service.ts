@@ -4,6 +4,7 @@ import { InjectQueue } from "@nestjs/bullmq";
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from "@nestjs/common";
 import type { DiscordNotificationDeliveryResultEvent } from "@lootlog/types";
@@ -61,6 +62,8 @@ const FINAL_JOB_STATUSES = [
 
 @Injectable()
 export class NotificationJobService {
+  private readonly logger = new Logger(NotificationJobService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly guildsService: GuildsService,
@@ -108,7 +111,6 @@ export class NotificationJobService {
           in: [
             DbNotificationJobStatus.PENDING,
             DbNotificationJobStatus.BLOCKED,
-            DbNotificationJobStatus.PROCESSING,
           ],
         },
       },
@@ -130,6 +132,12 @@ export class NotificationJobService {
       where: {
         id: {
           in: jobs.map((job) => job.id),
+        },
+        status: {
+          in: [
+            DbNotificationJobStatus.PENDING,
+            DbNotificationJobStatus.BLOCKED,
+          ],
         },
       },
       data: {
@@ -278,13 +286,6 @@ export class NotificationJobService {
       return;
     }
 
-    if (
-      notificationJob.status !== DbNotificationJobStatus.PENDING &&
-      notificationJob.status !== DbNotificationJobStatus.BLOCKED
-    ) {
-      return;
-    }
-
     const targetBlockedReason = this.getNotificationTargetBlockedReason(
       notificationJob.target,
     );
@@ -318,8 +319,16 @@ export class NotificationJobService {
       return;
     }
 
-    await this.prisma.notificationJob.update({
-      where: { id: notificationJob.id },
+    const updateResult = await this.prisma.notificationJob.updateMany({
+      where: {
+        id: notificationJob.id,
+        status: {
+          in: [
+            DbNotificationJobStatus.PENDING,
+            DbNotificationJobStatus.BLOCKED,
+          ],
+        },
+      },
       data: {
         status: DbNotificationJobStatus.PROCESSING,
         blockedReason: null,
@@ -329,39 +338,73 @@ export class NotificationJobService {
       },
     });
 
+    if (updateResult.count === 0) {
+      return;
+    }
+
     const payload = notificationJob.payloadSnapshot as
       | Prisma.JsonObject
       | null
       | undefined;
 
-    await this.amqpConnection.publish(
-      DEFAULT_EXCHANGE_NAME,
-      RoutingKey.NOTIFICATIONS_DISCORD_SEND,
-      {
-        notificationJobId: notificationJob.id,
-        provider: DbNotificationProvider.DISCORD,
-        ownerType: notificationJob.ownerType,
-        ownerId: notificationJob.ownerId,
-        guildId: notificationJob.rule.guildId,
-        content:
-          typeof payload?.content === "string" ? payload.content : undefined,
-        title:
-          typeof payload?.title === "string" ? payload.title : "Powiadomienie",
-        message:
-          typeof payload?.message === "string"
-            ? payload.message
-            : "Masz nowe powiadomienie",
-        allowedMentions: this.contentService.parseAllowedMentions(
-          payload?.allowedMentions,
-        ),
-        metadata: payload && typeof payload === "object" ? payload : undefined,
-        target: {
-          targetId: String(notificationJob.target.id),
-          externalId: notificationJob.target.externalId,
-          targetType: notificationJob.target.targetType,
+    try {
+      await this.amqpConnection.publish(
+        DEFAULT_EXCHANGE_NAME,
+        RoutingKey.NOTIFICATIONS_DISCORD_SEND,
+        {
+          notificationJobId: notificationJob.id,
+          provider: DbNotificationProvider.DISCORD,
+          ownerType: notificationJob.ownerType,
+          ownerId: notificationJob.ownerId,
+          guildId: notificationJob.rule.guildId,
+          content:
+            typeof payload?.content === "string" ? payload.content : undefined,
+          title:
+            typeof payload?.title === "string"
+              ? payload.title
+              : "Powiadomienie",
+          message:
+            typeof payload?.message === "string"
+              ? payload.message
+              : "Masz nowe powiadomienie",
+          allowedMentions: this.contentService.parseAllowedMentions(
+            payload?.allowedMentions,
+          ),
+          metadata:
+            payload && typeof payload === "object" ? payload : undefined,
+          target: {
+            targetId: String(notificationJob.target.id),
+            externalId: notificationJob.target.externalId,
+            targetType: notificationJob.target.targetType,
+          },
         },
-      },
-    );
+      );
+    } catch (caughtError) {
+      const errorMessage =
+        caughtError &&
+        typeof caughtError === "object" &&
+        "message" in caughtError
+          ? String(caughtError.message)
+          : String(caughtError);
+
+      this.logger.error(
+        `AMQP publish failed for job ${notificationJob.id}: ${errorMessage}`,
+      );
+
+      await this.prisma.notificationJob.update({
+        where: { id: notificationJob.id },
+        data: {
+          status: DbNotificationJobStatus.PENDING,
+          lastError: `AMQP publish failed: ${errorMessage}`,
+        },
+      });
+
+      const retryDelay = Math.min(
+        60_000,
+        notificationJob.attemptCount * 15_000,
+      );
+      await this.enqueueNotificationJob(notificationJob.id, retryDelay);
+    }
   }
 
   async handleDeliveryResult(event: DiscordNotificationDeliveryResultEvent) {
@@ -415,7 +458,7 @@ export class NotificationJobService {
     }
 
     const nextAttemptCount = notificationJob.attemptCount;
-    const shouldRetry = event.retryable && nextAttemptCount < 3;
+    const shouldRetry = event.retryable && nextAttemptCount <= 3;
 
     await this.prisma.$transaction(async (tx) => {
       await tx.notificationTarget.update({

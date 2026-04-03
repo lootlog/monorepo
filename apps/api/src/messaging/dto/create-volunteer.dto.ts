@@ -15,6 +15,7 @@ export class CreateVolunteerDto {
 
   @IsNotEmpty()
   @IsString()
+  @MaxLength(20)
   targetDiscordId: string;
 
   @ValidateNested()

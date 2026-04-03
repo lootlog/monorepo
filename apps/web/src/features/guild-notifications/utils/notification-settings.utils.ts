@@ -149,8 +149,22 @@ export const getGuildNotificationRuleScheduleTranslationKey = (
   return "settings.notifications.schedule.minSpawnBefore";
 };
 
-export const getDefaultGuildNotificationRuleContentTemplate = () =>
+export const TIMER_PRESET_SIMPLE =
   "**{{npcName}}** respi od {{minSpawnTime}} do {{maxSpawnTime}}";
+export const TIMER_PRESET_DETAILED =
+  "**{{ruleName}}**\n🐉 **{{npcName}}** (ID: {{npcId}})\n🌍 {{world}}\n⏰ {{minSpawnTime}} – {{maxSpawnTime}}";
+export const TIMER_PRESET_MINIMAL = "{{npcName}} — {{minSpawnTime}}";
+export const SCHEDULED_PRESET_SIMPLE = "## {{ruleName}}\n\n{{scheduledFor}}";
+export const SCHEDULED_PRESET_MINIMAL = "{{ruleName}}";
+
+export const getDefaultGuildNotificationRuleContentTemplate = () =>
+  TIMER_PRESET_SIMPLE;
 
 export const getDefaultScheduledMessageContentTemplate = () =>
-  "## {{ruleName}}\n\n{{scheduledFor}}";
+  SCHEDULED_PRESET_SIMPLE;
+
+export const getJobStatusLabel = (status: string, t: (key: string) => string) =>
+  t(`settings.notifications.jobStatuses.${status.toLowerCase()}`);
+
+export const getJobKindLabel = (kind: string, t: (key: string) => string) =>
+  t(`settings.notifications.jobKinds.${kind.toLowerCase()}`);

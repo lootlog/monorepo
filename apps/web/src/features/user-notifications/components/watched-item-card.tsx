@@ -118,6 +118,7 @@ export const WatchedItemCard = ({
               type="button"
               size="icon"
               variant="destructive"
+              aria-label={t("settings.notifications.actions.delete")}
               disabled={deleteWatchedItem.isPending}
             >
               {deleteWatchedItem.isPending ? (

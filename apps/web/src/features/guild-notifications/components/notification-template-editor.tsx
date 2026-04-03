@@ -20,6 +20,13 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useTranslation } from "react-i18next";
 import { NotificationTriggerType } from "@lootlog/types";
+import {
+  TIMER_PRESET_SIMPLE,
+  TIMER_PRESET_DETAILED,
+  TIMER_PRESET_MINIMAL,
+  SCHEDULED_PRESET_SIMPLE,
+  SCHEDULED_PRESET_MINIMAL,
+} from "../utils/notification-settings.utils";
 import type { GuildRole } from "@/hooks/api/guilds/use-guild-roles";
 import { Button } from "@lootlog/ui/components/button";
 import {
@@ -346,18 +353,17 @@ export const NotificationTemplateEditor = ({
     {
       key: "simple",
       label: t("settings.notifications.templateEditor.presets.simple"),
-      value: "**{{npcName}}** respi od {{minSpawnTime}} do {{maxSpawnTime}}",
+      value: TIMER_PRESET_SIMPLE,
     },
     {
       key: "detailed",
       label: t("settings.notifications.templateEditor.presets.detailed"),
-      value:
-        "**{{ruleName}}**\n🐉 **{{npcName}}** (ID: {{npcId}})\n🌍 {{world}}\n⏰ {{minSpawnTime}} – {{maxSpawnTime}}",
+      value: TIMER_PRESET_DETAILED,
     },
     {
       key: "minimal",
       label: t("settings.notifications.templateEditor.presets.minimal"),
-      value: "{{npcName}} — {{minSpawnTime}}",
+      value: TIMER_PRESET_MINIMAL,
     },
   ];
 
@@ -365,12 +371,12 @@ export const NotificationTemplateEditor = ({
     {
       key: "simple",
       label: t("settings.notifications.templateEditor.presets.simple"),
-      value: "## {{ruleName}}\n\n{{scheduledFor}}",
+      value: SCHEDULED_PRESET_SIMPLE,
     },
     {
       key: "minimal",
       label: t("settings.notifications.templateEditor.presets.minimal"),
-      value: "{{ruleName}}",
+      value: SCHEDULED_PRESET_MINIMAL,
     },
   ];
 

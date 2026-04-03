@@ -14,6 +14,8 @@ import {
 import { getApiErrorMessage } from "@/features/events/utils/get-api-error-message";
 import {
   getGuildNotificationTargetLabel,
+  getJobKindLabel,
+  getJobStatusLabel,
   getNotificationTriggerTranslationKey,
 } from "../utils/notification-settings.utils";
 import { NotificationJobCountdown } from "./notification-job-countdown";
@@ -27,17 +29,6 @@ export const NotificationsPendingJobsCard = ({
 }: NotificationsPendingJobsCardProps) => {
   const { t } = useTranslation();
   const cancelGuildJob = useCancelGuildNotificationJob();
-
-  const jobStatusLabels = {
-    PENDING: t("settings.notifications.jobStatuses.pending"),
-    PROCESSING: t("settings.notifications.jobStatuses.processing"),
-    BLOCKED: t("settings.notifications.jobStatuses.blocked"),
-  } as const;
-  const jobKindLabels = {
-    SCHEDULED: t("settings.notifications.jobKinds.scheduled"),
-    INSTANT: t("settings.notifications.jobKinds.instant"),
-    TEST: t("settings.notifications.jobKinds.test"),
-  } as const;
 
   const handleCancelJob = async (jobId: string) => {
     try {
@@ -89,14 +80,10 @@ export const NotificationsPendingJobsCard = ({
                         )}
                     </p>
                     <Badge variant="outline">
-                      {
-                        jobStatusLabels[
-                          job.status as keyof typeof jobStatusLabels
-                        ]
-                      }
+                      {getJobStatusLabel(job.status, t)}
                     </Badge>
                     <Badge variant="outline">
-                      {jobKindLabels[job.jobKind as keyof typeof jobKindLabels]}
+                      {getJobKindLabel(job.jobKind, t)}
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground">

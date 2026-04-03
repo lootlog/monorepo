@@ -11,7 +11,9 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Separator } from "@lootlog/ui/components/separator";
 import type { GuildNotificationJob } from "@/hooks/api/guilds/use-guild-notifications";
 import {
+  getJobKindLabel,
   getJobStatusBadgeProps,
+  getJobStatusLabel,
   getGuildNotificationTargetLabel,
   getNotificationTriggerTranslationKey,
 } from "../utils/notification-settings.utils";
@@ -31,21 +33,6 @@ export const NotificationJobDetailDialog = ({
   if (!job) {
     return null;
   }
-
-  const jobStatusLabels = {
-    PENDING: t("settings.notifications.jobStatuses.pending"),
-    PROCESSING: t("settings.notifications.jobStatuses.processing"),
-    SENT: t("settings.notifications.jobStatuses.sent"),
-    FAILED: t("settings.notifications.jobStatuses.failed"),
-    BLOCKED: t("settings.notifications.jobStatuses.blocked"),
-    CANCELED: t("settings.notifications.jobStatuses.canceled"),
-  } as const;
-
-  const jobKindLabels = {
-    SCHEDULED: t("settings.notifications.jobKinds.scheduled"),
-    INSTANT: t("settings.notifications.jobKinds.instant"),
-    TEST: t("settings.notifications.jobKinds.test"),
-  } as const;
 
   const payload = job.payloadSnapshot;
   const world = (payload?.world as string) ?? job.rule.world;
@@ -96,11 +83,7 @@ export const NotificationJobDetailDialog = ({
                   label={t("settings.notifications.jobDetail.status")}
                   value={
                     <Badge {...getJobStatusBadgeProps(job.status)}>
-                      {
-                        jobStatusLabels[
-                          job.status as keyof typeof jobStatusLabels
-                        ]
-                      }
+                      {getJobStatusLabel(job.status, t)}
                     </Badge>
                   }
                 />
@@ -108,7 +91,7 @@ export const NotificationJobDetailDialog = ({
                   label={t("settings.notifications.jobDetail.kind")}
                   value={
                     <Badge variant="outline">
-                      {jobKindLabels[job.jobKind as keyof typeof jobKindLabels]}
+                      {getJobKindLabel(job.jobKind, t)}
                     </Badge>
                   }
                 />

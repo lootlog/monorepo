@@ -20,6 +20,7 @@ import { UpdateNotificationTargetDto } from "src/notifications/dto/update-notifi
 import { NotificationJobService } from "src/notifications/notification-job.service";
 import { NotificationRuleService } from "src/notifications/notification-rule.service";
 import { NotificationTargetService } from "src/notifications/notification-target.service";
+import { WatchedItemService } from "src/notifications/watched-item.service";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 
 @ApiTags("notifications")
@@ -31,6 +32,7 @@ export class NotificationsUserController {
     private readonly targetService: NotificationTargetService,
     private readonly ruleService: NotificationRuleService,
     private readonly jobService: NotificationJobService,
+    private readonly watchedItemService: WatchedItemService,
   ) {}
 
   @Get("targets")
@@ -108,7 +110,7 @@ export class NotificationsUserController {
 
   @Get("watched-items")
   async getWatchedItems(@DiscordId() discordId: string) {
-    return this.ruleService.listWatchedItems(discordId);
+    return this.watchedItemService.listWatchedItems(discordId);
   }
 
   @Post("watched-items")
@@ -117,7 +119,7 @@ export class NotificationsUserController {
     @UserId() userId: string,
     @Body() data: CreateWatchedItemDto,
   ) {
-    return this.ruleService.createWatchedItem(discordId, userId, data);
+    return this.watchedItemService.createWatchedItem(discordId, userId, data);
   }
 
   @Post("watched-items/quick-add")
@@ -126,7 +128,7 @@ export class NotificationsUserController {
     @UserId() userId: string,
     @Body() data: CreateWatchedItemQuickAddDto,
   ) {
-    return this.ruleService.quickAddWatchedItem(discordId, userId, data);
+    return this.watchedItemService.quickAddWatchedItem(discordId, userId, data);
   }
 
   @Delete("watched-items/:watchedItemId")
@@ -134,6 +136,6 @@ export class NotificationsUserController {
     @DiscordId() discordId: string,
     @Param("watchedItemId", ParseIntPipe) watchedItemId: number,
   ) {
-    return this.ruleService.deleteWatchedItem(discordId, watchedItemId);
+    return this.watchedItemService.deleteWatchedItem(discordId, watchedItemId);
   }
 }

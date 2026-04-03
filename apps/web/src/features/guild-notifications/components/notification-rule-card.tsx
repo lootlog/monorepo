@@ -216,6 +216,7 @@ export const NotificationRuleCard = ({
                 type="button"
                 size="icon"
                 variant="secondary"
+                aria-label={t("settings.notifications.actions.testNow")}
                 disabled={
                   isActionDisabled ||
                   !rule.enabled ||
@@ -244,6 +245,7 @@ export const NotificationRuleCard = ({
                 type="button"
                 size="icon"
                 variant="outline"
+                aria-label={t("settings.notifications.actions.rebuildPending")}
                 disabled={isActionDisabled || !rule.enabled}
                 onClick={handleRebuildJobs}
               >
@@ -260,6 +262,7 @@ export const NotificationRuleCard = ({
                 type="button"
                 size="icon"
                 variant="outline"
+                aria-label={t("settings.notifications.actions.edit")}
                 disabled={isActionDisabled}
                 asChild
               >
@@ -301,7 +304,12 @@ export const NotificationRuleCard = ({
                   )}
                   cancelButtonLabel={t("settings.notifications.actions.cancel")}
                   trigger={
-                    <Button type="button" size="icon" variant="destructive">
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="destructive"
+                      aria-label={t("settings.notifications.actions.delete")}
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   }
