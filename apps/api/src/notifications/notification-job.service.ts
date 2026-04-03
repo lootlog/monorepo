@@ -84,10 +84,10 @@ export class NotificationJobService {
     return { success: true };
   }
 
-  async listUserJobs(userId: string) {
+  async listUserJobs(discordId: string) {
     return this.getJobsForOwner({
       ownerType: DbNotificationOwnerType.USER,
-      ownerId: userId,
+      ownerId: discordId,
     });
   }
 

@@ -394,7 +394,7 @@ describe("Notification Services", () => {
 
   it("rejects creating user dm targets for another discord account", async () => {
     await expect(
-      targetService.createUserTarget("user-1", "discord-user-1", {
+      targetService.createUserTarget("discord-user-1", {
         targetType: NotificationTargetType.DM,
         externalId: "discord-user-2",
         displayName: "Discord DM",
@@ -501,7 +501,7 @@ describe("Notification Services", () => {
     mockPrisma.notificationTarget.findMany.mockResolvedValueOnce([]);
 
     await expect(
-      ruleService.createWatchedItem("user-1", "discord-user-1", {
+      ruleService.createWatchedItem("discord-user-1", "user-1", {
         itemId: 123,
         itemName: "Legendarny Miecz",
         itemIcon: "legendary-sword.png",
@@ -522,7 +522,7 @@ describe("Notification Services", () => {
     mockPrisma.watchedItem.count.mockResolvedValueOnce(20);
 
     await expect(
-      ruleService.createWatchedItem("user-1", "discord-user-1", {
+      ruleService.createWatchedItem("discord-user-1", "user-1", {
         itemId: 123,
         itemName: "Legendarny Miecz",
         itemIcon: "legendary-sword.png",
@@ -586,7 +586,7 @@ describe("Notification Services", () => {
       });
 
     await expect(
-      ruleService.quickAddWatchedItem("user-1", "discord-user-1", {
+      ruleService.quickAddWatchedItem("discord-user-1", "user-1", {
         itemId: 123,
         itemName: "Legendarny Miecz",
         itemIcon: "legendary-sword.png",
@@ -661,7 +661,7 @@ describe("Notification Services", () => {
       });
 
     await expect(
-      ruleService.quickAddWatchedItem("user-1", "discord-user-1", {
+      ruleService.quickAddWatchedItem("discord-user-1", "user-1", {
         itemId: 123,
         itemName: "Legendarny Miecz",
         itemIcon: "legendary-sword.png",
@@ -693,7 +693,7 @@ describe("Notification Services", () => {
     mockPrisma.notificationTarget.findMany.mockResolvedValueOnce([]);
 
     await expect(
-      ruleService.quickAddWatchedItem("user-1", "discord-user-1", {
+      ruleService.quickAddWatchedItem("discord-user-1", "user-1", {
         itemId: 123,
         itemName: "Legendarny Miecz",
         itemIcon: "legendary-sword.png",
@@ -711,7 +711,7 @@ describe("Notification Services", () => {
     mockPrisma.watchedItem.count.mockResolvedValueOnce(20);
 
     await expect(
-      ruleService.quickAddWatchedItem("user-1", "discord-user-1", {
+      ruleService.quickAddWatchedItem("discord-user-1", "user-1", {
         itemId: 123,
         itemName: "Legendarny Miecz",
         itemIcon: "legendary-sword.png",
@@ -730,7 +730,7 @@ describe("Notification Services", () => {
 
   it("rejects quick add for a guild outside the authenticated user scope", async () => {
     await expect(
-      ruleService.quickAddWatchedItem("user-1", "discord-user-1", {
+      ruleService.quickAddWatchedItem("discord-user-1", "user-1", {
         itemId: 123,
         itemName: "Legendarny Miecz",
         itemIcon: "legendary-sword.png",

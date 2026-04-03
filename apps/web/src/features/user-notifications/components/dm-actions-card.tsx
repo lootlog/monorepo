@@ -1,3 +1,4 @@
+import { format } from "date-fns";
 import {
   BellOff,
   BellRing,
@@ -142,15 +143,45 @@ export const DmActionsCard = ({ dmTarget, onAddWatch }: DmActionsCardProps) => {
         </Button>
         {hasActiveDm ? (
           <>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={isDmActionPending}
-              onClick={handleTriggerDmTest}
-            >
-              <FlaskConical className="size-4" />
-              {t("settings.userNotifications.dm.test")}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full"
+                    disabled={
+                      isDmActionPending || dmTarget?.testTrigger.remaining === 0
+                    }
+                    onClick={handleTriggerDmTest}
+                  >
+                    <FlaskConical className="size-4" />
+                    {t("settings.userNotifications.dm.test")}
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  {t("settings.userNotifications.dm.testUsage", {
+                    used: dmTarget?.testTrigger.used ?? 0,
+                    limit: dmTarget?.testTrigger.limit ?? 0,
+                    minutes: Math.floor(
+                      (dmTarget?.testTrigger.windowSeconds ?? 0) / 60,
+                    ),
+                  })}
+                </p>
+                {dmTarget?.testTrigger.nextAvailableAt ? (
+                  <p className="text-muted-foreground">
+                    {t("settings.userNotifications.dm.testNextAvailable", {
+                      date: format(
+                        new Date(dmTarget.testTrigger.nextAvailableAt),
+                        "dd.MM.yyyy HH:mm:ss",
+                      ),
+                    })}
+                  </p>
+                ) : null}
+              </TooltipContent>
+            </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button

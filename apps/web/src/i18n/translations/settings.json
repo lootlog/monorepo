@@ -354,7 +354,9 @@
       "requiredHint": "Włącz powiadomienia, aby otrzymywać informacje o obserwowanych itemach.",
       "reactivateHint": "Powiadomienia są obecnie wyłączone. Aktywuj je ponownie, aby odbierać informacje o obserwowanych itemach.",
       "cannotSendHint": "Nie udało się dostarczyć wiadomości. Sprawdź ustawienia prywatności na Discordzie lub połączenie konta.",
-      "targetLabel": "Odbiorca: {{name}}"
+      "targetLabel": "Odbiorca: {{name}}",
+      "testUsage": "{{used}}/{{limit}} testów ({{minutes}} min)",
+      "testNextAvailable": "Następny test dostępny: {{date}}"
     },
     "watchForm": {
       "title": "Dodaj obserwowany item",
@@ -447,7 +449,8 @@
       "manualItemNameRequired": "Podaj nazwę przedmiotu.",
       "manualItemIdInvalid": "ID przedmiotu musi być liczbą.",
       "worldRequired": "Najpierw wybierz świat.",
-      "watchLimitReached": "Osiągnąłeś limit {{limit}} obserwowanych itemów. Usuń jedną obserwację, aby dodać kolejną."
+      "watchLimitReached": "Osiągnąłeś limit {{limit}} obserwowanych itemów. Usuń jedną obserwację, aby dodać kolejną.",
+      "dmTestLimitReached": "Osiągnięto limit testowych wiadomości. Spróbuj ponownie za kilka minut."
     },
     "toasts": {
       "dmEnabled": "Powiadomienia zostały włączone.",

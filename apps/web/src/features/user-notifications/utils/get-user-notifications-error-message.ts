@@ -20,6 +20,10 @@ export const getUserNotificationsErrorMessage = (
     return t("settings.userNotifications.validation.guildSelectionUnavailable");
   }
 
+  if (apiMessage === "USER_DM_TEST_TRIGGER_LIMIT_REACHED") {
+    return t("settings.userNotifications.validation.dmTestLimitReached");
+  }
+
   if (apiMessage === "USER_WATCHED_ITEM_LIMIT_REACHED") {
     return t("settings.userNotifications.validation.watchLimitReached", {
       limit: USER_WATCHED_ITEMS_LIMIT,
