@@ -15,7 +15,7 @@ export class NpcsService {
   constructor() {
     this.meilisearch = meilisearchClient;
     const index = this.meilisearch.index(NPCS_INDEX);
-    index.updateFilterableAttributes(["name", "world"]);
+    index.updateFilterableAttributes(["name", "type", "world"]);
   }
 
   async getNpcs({ limit, search, world }: GetNpcsDto) {
@@ -43,7 +43,9 @@ export class NpcsService {
       const data = await index.search(searchTerm, query);
 
       const uniqueHits = Array.from(
-        new Map(data.hits.map((npc) => [npc.name, npc])).values(),
+        new Map(
+          data.hits.map((npc) => [`${npc.name}_${npc.type}`, npc]),
+        ).values(),
       );
       return uniqueHits;
     } catch (error) {
@@ -78,7 +80,7 @@ export class NpcsService {
 
     const npcsWithUid = validNpcs.map((npc) => ({
       ...npc,
-      uid: `${npc.id}_${npc.world}`,
+      uid: `${npc.id}_${npc.type}_${npc.world}`,
     }));
 
     try {

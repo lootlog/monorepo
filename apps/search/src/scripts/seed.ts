@@ -115,6 +115,7 @@ async function setupIndexes() {
   const npcsIndex = meilisearch.index(NPCS_INDEX);
   const npcsFilterTask = await npcsIndex.updateFilterableAttributes([
     "name",
+    "type",
     "world",
   ]);
   await waitForTask(npcsFilterTask.taskUid);
@@ -144,7 +145,7 @@ async function seedNpcs() {
   // Get the latest snapshot for each unique npcId
   // NpcSnapshot doesn't have world, so we need to join with Loot through LootNpc
   const latestNpcSnapshots = await prisma.$queryRaw<NpcSnapshotWithWorld[]>`
-    SELECT DISTINCT ON (ns."npcId", l."world")
+    SELECT DISTINCT ON (ns."npcId", ns."type", l."world")
       ns."id",
       ns."npcId",
       ns."name",
@@ -158,7 +159,7 @@ async function seedNpcs() {
     FROM "NpcSnapshot" ns
     INNER JOIN "LootNpc" ln ON ln."npcSnapshotId" = ns."id"
     INNER JOIN "Loot" l ON l."id" = ln."lootId"
-    ORDER BY ns."npcId", l."world", ns."createdAt" DESC
+    ORDER BY ns."npcId", ns."type", l."world", ns."createdAt" DESC
   `;
 
   console.log(`Found ${latestNpcSnapshots.length} unique NPC snapshots`);
@@ -179,7 +180,7 @@ async function seedNpcs() {
       margonemType: npc.margonemType ?? 0,
       prof: npc.prof ?? "",
       world: npc.world,
-      uid: `${npc.npcId}_${npc.world}`,
+      uid: `${npc.npcId}_${npc.type ?? ""}_${npc.world}`,
     }));
 
     const task = await npcsIndex.addDocuments(npcsForIndex, {
