@@ -25,6 +25,7 @@ interface ConfirmDeleteDialogProps {
   confirmText?: string;
   confirmLabel?: string;
   confirmButtonLabel?: string;
+  cancelButtonLabel?: string;
 }
 
 export function ConfirmDeleteDialog({
@@ -36,6 +37,7 @@ export function ConfirmDeleteDialog({
   confirmText,
   confirmLabel,
   confirmButtonLabel = "Usuń",
+  cancelButtonLabel = "Anuluj",
 }: ConfirmDeleteDialogProps) {
   const [inputValue, setInputValue] = useState("");
   const requiresConfirmation = confirmText !== undefined;
@@ -74,7 +76,7 @@ export function ConfirmDeleteDialog({
           </div>
         )}
         <AlertDialogFooter>
-          <AlertDialogCancel>Anuluj</AlertDialogCancel>
+          <AlertDialogCancel>{cancelButtonLabel}</AlertDialogCancel>
           <AlertDialogAction
             onClick={(e) => {
               e.preventDefault();

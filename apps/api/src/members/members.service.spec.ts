@@ -43,6 +43,7 @@ describe("MembersService", () => {
     vanityUrl: null,
     icon: "icon.png",
     ownerId: "owner-123",
+    notificationRuleLimit: 20,
     active: true,
     createdAt: new Date(),
     updatedAt: new Date(),

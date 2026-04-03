@@ -108,6 +108,41 @@ export type UserCharactersLootlogSettings = Prisma.UserCharactersLootlogSettings
  */
 export type UserSettings = Prisma.UserSettingsModel
 /**
+ * Model NotificationTarget
+ * 
+ */
+export type NotificationTarget = Prisma.NotificationTargetModel
+/**
+ * Model NotificationRule
+ * 
+ */
+export type NotificationRule = Prisma.NotificationRuleModel
+/**
+ * Model NotificationRuleTarget
+ * 
+ */
+export type NotificationRuleTarget = Prisma.NotificationRuleTargetModel
+/**
+ * Model NotificationJob
+ * 
+ */
+export type NotificationJob = Prisma.NotificationJobModel
+/**
+ * Model WatchedItem
+ * 
+ */
+export type WatchedItem = Prisma.WatchedItemModel
+/**
+ * Model DiscordGuildChannelSnapshot
+ * 
+ */
+export type DiscordGuildChannelSnapshot = Prisma.DiscordGuildChannelSnapshotModel
+/**
+ * Model DiscordGuildSyncState
+ * 
+ */
+export type DiscordGuildSyncState = Prisma.DiscordGuildSyncStateModel
+/**
  * Model MemberRefreshJob
  * 
  */

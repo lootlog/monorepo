@@ -1,5 +1,6 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { BadRequestException, ForbiddenException } from "@nestjs/common";
+import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { LootsService } from "./loots.service";
 import { PlayersService } from "../players/players.service";
@@ -85,6 +86,7 @@ describe("LootsService", () => {
     vanityUrl: null,
     icon: "icon.png",
     ownerId: "owner123",
+    notificationRuleLimit: 20,
     active: true,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -202,6 +204,10 @@ describe("LootsService", () => {
       warn: jest.fn(),
     };
 
+    const mockAmqpConnection = {
+      publish: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         LootsService,
@@ -219,6 +225,7 @@ describe("LootsService", () => {
           provide: UserLootlogConfigService,
           useValue: mockUserLootlogConfigService,
         },
+        { provide: AmqpConnection, useValue: mockAmqpConnection },
         { provide: RedisService, useValue: mockRedisService },
         { provide: WINSTON_MODULE_PROVIDER, useValue: mockLogger },
         {
@@ -398,6 +405,7 @@ describe("LootsService", () => {
         vanityUrl: null,
         icon: "icon2.png",
         ownerId: "owner456",
+        notificationRuleLimit: 20,
         active: true,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -488,6 +496,7 @@ describe("LootsService", () => {
         vanityUrl: null,
         icon: "icon2.png",
         ownerId: "owner456",
+        notificationRuleLimit: 20,
         active: true,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -556,6 +565,7 @@ describe("LootsService", () => {
         vanityUrl: null,
         icon: "icon2.png",
         ownerId: "owner456",
+        notificationRuleLimit: 20,
         active: true,
         createdAt: new Date(),
         updatedAt: new Date(),

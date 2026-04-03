@@ -24,7 +24,7 @@ export const useCreatePartyGathering = () => {
       const world = Game.getWorldName();
 
       return client.post<CreatePartyGatheringResponse>(
-        "/notifications/party-gathering",
+        "/messaging/party-gathering",
         {
           guildIds: options.guildIds,
           world,

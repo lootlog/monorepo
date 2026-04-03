@@ -42,3 +42,4 @@ This is a pnpm monorepo managed with Turborepo. It contains multiple apps (`apps
 ## Additional Notes
 
 - Don't try to run the app, assume it's already running.
+- ABSOLUTELY DON'T assume I need backwards compatibility unless explicitely told.

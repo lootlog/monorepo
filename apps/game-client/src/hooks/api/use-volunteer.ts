@@ -15,7 +15,7 @@ export const useVolunteer = () => {
     mutationKey: ["volunteer"],
     mutationFn: (options: UseVolunteerOptions) => {
       const hero = Game.hero;
-      return client.post(`/notifications/${options.notificationId}/volunteer`, {
+      return client.post(`/messaging/${options.notificationId}/volunteer`, {
         world: options.world,
         targetDiscordId: options.targetDiscordId,
         character: {
