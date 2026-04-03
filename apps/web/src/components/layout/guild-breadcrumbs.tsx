@@ -196,6 +196,7 @@ function getNavigationInfo({
   const guildTimers = ROUTES.guild.timers(guildId);
   const guildReservations = ROUTES.guild.reservations.base(guildId);
   const guildStats = ROUTES.guild.stats(guildId);
+  const guildNotifications = ROUTES.guild.notifications.base(guildId);
   const guildSettings = ROUTES.guild.settings.base(guildId);
   const guildSettingsRoles = ROUTES.guild.settings.roles(guildId);
   const guildSettingsMembers = ROUTES.guild.settings.members(guildId);
@@ -538,13 +539,60 @@ function getNavigationInfo({
         label: t("common.breadcrumbs.settings"),
         path: guildSettings,
       };
-      breadcrumbs.push({ label: "NPCs", path: null });
+      breadcrumbs.push({ label: t("common.breadcrumbs.npcs"), path: null });
+    } else if (path === guildNotifications) {
+      breadcrumbs.push({
+        label: t("common.breadcrumbs.notifications"),
+        path: null,
+      });
+    } else if (path === `${guildNotifications}/create`) {
+      breadcrumbs.push({
+        label: t("common.breadcrumbs.notifications"),
+        path: guildNotifications,
+      });
+      breadcrumbs.push({
+        label: t("common.breadcrumbs.notificationCreate"),
+        path: null,
+      });
+    } else if (path === `${guildNotifications}/history`) {
+      breadcrumbs.push({
+        label: t("common.breadcrumbs.notifications"),
+        path: guildNotifications,
+      });
+      breadcrumbs.push({
+        label: t("common.breadcrumbs.notificationHistory"),
+        path: null,
+      });
+    } else if (path.startsWith(`${guildNotifications}/`)) {
+      breadcrumbs.push({
+        label: t("common.breadcrumbs.notifications"),
+        path: guildNotifications,
+      });
+      breadcrumbs.push({
+        label: t("common.breadcrumbs.notificationEdit"),
+        path: null,
+      });
+    } else if (path === `${guildSettings}/info`) {
+      breadcrumbs[1] = {
+        label: t("common.breadcrumbs.settings"),
+        path: guildSettings,
+      };
+      breadcrumbs.push({ label: t("common.breadcrumbs.info"), path: null });
     }
 
     return {
       breadcrumbs,
       showBack: true,
-      backPath: path === guildSettings ? guildBase : guildSettings,
+      backPath:
+        path === guildSettings
+          ? guildBase
+          : path.startsWith(`${guildNotifications}/`)
+            ? guildNotifications
+            : path.startsWith(`${guildSettingsRoles}/`)
+              ? guildSettingsRoles
+              : path === guildNotifications
+                ? guildBase
+                : guildSettings,
     };
   }
 

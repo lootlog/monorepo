@@ -58,11 +58,19 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
     return () => container.removeEventListener("wheel", onWheel);
   }, []);
 
+  const activeUrl = items.reduce<string | null>((best, item) => {
+    const url = `${basePath}${item.href}`;
+    if (pathname === url || pathname.startsWith(`${url}/`)) {
+      if (!best || url.length > best.length) return url;
+    }
+    return best;
+  }, null);
+
   return (
     <div
       ref={scrollRef}
       className={cn(
-        "px-3 pt-3 pb-0 flex gap-2 overflow-x-auto md:overflow-visible [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden scroll-smooth",
+        "px-3 py-3 flex gap-2 overflow-x-auto md:overflow-visible [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden scroll-smooth",
         className,
       )}
       role="navigation"
@@ -70,7 +78,7 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
     >
       {items.map((item) => {
         const url = `${basePath}${item.href}`;
-        const active = pathname === url;
+        const active = url === activeUrl;
         const isHovered = hoveredId === item.id;
 
         const tabContent = (

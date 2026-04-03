@@ -36,6 +36,7 @@ describe("LootsController", () => {
     vanityUrl: null,
     icon: "icon.png",
     ownerId: "owner123",
+    notificationRuleLimit: 20,
     active: true,
     createdAt: new Date(),
     updatedAt: new Date(),

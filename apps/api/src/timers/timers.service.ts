@@ -1152,12 +1152,22 @@ export class TimersService implements OnModuleInit {
       RoutingKey.GUILDS_TIMERS_UPDATE,
       payload,
     );
+    this.amqpConnection.publish(
+      DEFAULT_EXCHANGE_NAME,
+      RoutingKey.NOTIFICATIONS_TIMER_UPDATED,
+      payload,
+    );
   }
 
   async emitDeleteTimer(payload: Partial<Timer>) {
     this.amqpConnection.publish(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.GUILDS_TIMERS_DELETE,
+      payload,
+    );
+    this.amqpConnection.publish(
+      DEFAULT_EXCHANGE_NAME,
+      RoutingKey.NOTIFICATIONS_TIMER_DELETED,
       payload,
     );
   }

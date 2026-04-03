@@ -1,5 +1,532 @@
 {
   "navigationLabel": "Ustawienia",
+  "guildNavigation": {
+    "general": "Ogólne",
+    "roles": "Role",
+    "npcs": "Ustawienia potworów i NPC",
+    "mapTemplates": "Szablony map",
+    "members": "Członkowie",
+    "notifications": "Powiadomienia",
+    "info": "Informacje"
+  },
+  "notifications": {
+    "title": "Powiadomienia",
+    "description": "Zarządzaj kanałami docelowymi, regułami wysyłki i historią dostarczania powiadomień.",
+    "info": {
+      "title": "Jak działają powiadomienia?",
+      "targets": {
+        "title": "Kanały docelowe",
+        "description": "Kanały Discorda, na które wysyłane są powiadomienia. Może to być kanał na serwerze lub wiadomość prywatna."
+      },
+      "rules": {
+        "title": "Reguły",
+        "description": "Określają kiedy i gdzie wysyłać powiadomienia. Możesz filtrować po świecie, konkretnych NPC i wybrać kanały docelowe."
+      },
+      "scheduling": {
+        "title": "Harmonogram",
+        "description": "Dla timerów możesz ustawić wysyłkę powiadomienia względem minimalnego lub maksymalnego czasu respawnu, z określonym wyprzedzeniem w minutach."
+      },
+      "jobs": {
+        "title": "Kolejka wysyłki",
+        "description": "Po spełnieniu warunków reguły, tworzony jest job wysyłki. Możesz śledzić oczekujące i zakończone wysyłki."
+      },
+      "limits": {
+        "title": "Limity",
+        "description": "Każdy lootlog ma limit reguł i testów. Możesz filtrować maksymalnie 5 NPC na regułę."
+      }
+    },
+    "notificationsHistory": {
+      "title": "Historia powiadomień",
+      "description": "Przeglądaj historię wysłanych i nieudanych powiadomień, sprawdzaj szczegóły dostarczenia i powody ewentualnych błędów."
+    },
+    "actions": {
+      "addTarget": "Dodaj kanał docelowy",
+      "addRule": "Dodaj regułę",
+      "testNow": "Testuj",
+      "edit": "Edytuj",
+      "delete": "Usuń",
+      "cancel": "Anuluj",
+      "cancelPending": "Anuluj oczekujące",
+      "rebuildPending": "Przebuduj kolejkę",
+      "save": "Zapisz",
+      "create": "Utwórz",
+      "createTarget": "Utwórz kanał docelowy",
+      "viewHistory": "Zobacz historię",
+      "showAllHistory": "Pokaż ostatnie {{count}}"
+    },
+    "sections": {
+      "actions": "Akcje",
+      "targets": "Kanały docelowe",
+      "targetsDescription": "Kanały Discorda używane do wysyłki powiadomień.",
+      "rules": "Reguły",
+      "rulesDescription": "Automatyzacje określające kiedy i gdzie wysyłać powiadomienia.",
+      "jobs": "Kolejka wysyłki",
+      "jobsDescription": "Oczekujące wysyłki powiadomień.",
+      "historyDescription": "Historia wysłanych i nieudanych powiadomień."
+    },
+    "permissionsBlocked": {
+      "title": "Brak wymaganych uprawnień bota",
+      "description": "Dopóki bot nie otrzyma wymaganych uprawnień, tworzenie kanałów docelowych, reguł i planowanie wysyłek jest zablokowane.",
+      "reinstall": "Zainstaluj bota ponownie"
+    },
+    "triggers": {
+      "timerBeforeSpawn": "Przypomnienie przed spawnem",
+      "npcSpawned": "Spawn potwora",
+      "watchedItemDropped": "Drop obserwowanego itemu",
+      "scheduledMessage": "Zaplanowana wiadomość"
+    },
+    "jobStatuses": {
+      "pending": "Oczekuje",
+      "processing": "Wysyłanie",
+      "sent": "Wysłane",
+      "failed": "Błąd",
+      "blocked": "Zablokowane",
+      "canceled": "Anulowane"
+    },
+    "jobKinds": {
+      "scheduled": "Zaplanowane",
+      "instant": "Natychmiastowe",
+      "test": "Testowe"
+    },
+    "states": {
+      "active": "Aktywny",
+      "inactive": "Nieaktywny",
+      "enabled": "Aktywna",
+      "disabled": "Nieaktywna",
+      "canSend": "Może wysyłać",
+      "cannotSend": "Brak wysyłki"
+    },
+    "schedule": {
+      "minSpawnExact": "W momencie najwcześniejszego spawnu",
+      "minSpawnBefore": "{{minutes}} min przed minimalnym czasem spawnu",
+      "maxSpawnExact": "W momencie maksymalnego czasu spawnu",
+      "maxSpawnBefore": "{{minutes}} min przed maksymalnym czasem spawnu"
+    },
+    "scheduleAnchors": {
+      "minSpawn": "Minimalny czas spawnu",
+      "maxSpawn": "Maksymalny czas spawnu"
+    },
+    "intervalTypes": {
+      "once": "Jednorazowo",
+      "hourly": "Co X godzin",
+      "daily": "Codziennie",
+      "weekly": "Co tydzień"
+    },
+    "weekdays": {
+      "0": "Niedziela",
+      "1": "Poniedziałek",
+      "2": "Wtorek",
+      "3": "Środa",
+      "4": "Czwartek",
+      "5": "Piątek",
+      "6": "Sobota"
+    },
+    "targetCount_one": "{{count}} kanał",
+    "targetCount_few": "{{count}} kanały",
+    "targetCount_many": "{{count}} kanałów",
+    "targetUsageCount_one": "Używany w {{count}} regule",
+    "targetUsageCount_few": "Używany w {{count}} regułach",
+    "targetUsageCount_many": "Używany w {{count}} regułach",
+    "npcCount_one": "{{count}} NPC",
+    "npcCount_few": "{{count}} NPC",
+    "npcCount_many": "{{count}} NPC",
+    "ruleLimitUsage": "{{count}} / {{limit}} reguł",
+    "testTriggerUsage": "{{used}}/{{limit}} testów ({{minutes}} min)",
+    "testTriggerNextAvailable": "Następny test dostępny: {{date}}",
+    "targetLabels": "Kanały docelowe: {{targets}}",
+    "targetInactive": "(nieaktywny)",
+    "targetTypes": {
+      "CHANNEL": "Kanał",
+      "DM": "Wiadomość prywatna"
+    },
+    "inactiveTargetsWarning": "Niektóre kanały docelowe są nieaktywne — powiadomienia nie będą na nie wysyłane.",
+    "allWorlds": "Wszystkie światy",
+    "allNpcs": "Wszystkie NPC",
+    "jobs": {
+      "pending": "Oczekujące",
+      "history": "Historia",
+      "targetLabel": "Kanał: {{target}}",
+      "scheduledFor": "Wysyłka: {{date}}",
+      "sendsIn": "Wysyłka za {{time}}",
+      "sendsNow": "Wysyłka teraz"
+    },
+    "jobDetail": {
+      "title": "Szczegóły wysyłki",
+      "rule": "Reguła",
+      "trigger": "Typ wyzwalacza",
+      "target": "Kanał docelowy",
+      "status": "Status",
+      "kind": "Rodzaj",
+      "scheduledFor": "Zaplanowana wysyłka",
+      "processedAt": "Przetworzono",
+      "createdAt": "Utworzono",
+      "updatedAt": "Ostatnia aktualizacja",
+      "world": "Świat",
+      "npcName": "NPC",
+      "attemptCount": "Liczba prób",
+      "providerMessageId": "ID wiadomości",
+      "sourceEntity": "Źródło",
+      "sectionOverview": "Przegląd",
+      "sectionContent": "Podgląd treści",
+      "sectionDelivery": "Szczegóły dostarczenia",
+      "blockedReason": "Powód blokady",
+      "lastError": "Ostatni błąd"
+    },
+    "empty": {
+      "targets": "Brak skonfigurowanych kanałów docelowych.",
+      "rules": "Brak skonfigurowanych reguł.",
+      "pendingJobs": "Brak oczekujących powiadomień.",
+      "historyJobs": "Brak historii powiadomień.",
+      "availableChannels": "Wszystkie dostępne kanały są już dodane.",
+      "npcs": "Brak pasujących NPC.",
+      "targetsSelect": "Brak dostępnych kanałów docelowych."
+    },
+    "loading": {
+      "availableChannels": "Pobieranie kanałów Discorda..."
+    },
+    "errors": {
+      "loadFailed": "Nie udało się załadować danych powiadomień.",
+      "ruleNotFound": "Nie znaleziono reguły powiadomień."
+    },
+    "validation": {
+      "channelRequired": "Wybierz kanał Discorda",
+      "displayNameRequired": "Nazwa wyświetlana jest wymagana",
+      "maxNpcCount": "Możesz wybrać maksymalnie {{count}} NPC",
+      "templateRequired": "Szablon wiadomości nie może być pusty",
+      "scheduleOffsetRequired": "Podaj liczbę minut",
+      "scheduleOffsetNonNegative": "Liczba minut musi być nieujemną liczbą całkowitą",
+      "targetRequired": "Wybierz przynajmniej jeden kanał docelowy",
+      "npcRequired": "Wybierz przynajmniej jednego NPC",
+      "worldRequired": "Wybierz świat",
+      "scheduledAtRequired": "Wybierz datę i godzinę wysyłki",
+      "scheduledAtFuture": "Data wysyłki musi być w przyszłości",
+      "intervalValueRequired": "Podaj co ile godzin",
+      "intervalValueRange": "Wartość musi być od 1 do 24",
+      "timeOfDayRequired": "Podaj godzinę wysyłki",
+      "weekdayRequired": "Wybierz dzień tygodnia"
+    },
+    "fields": {
+      "channel": "Kanał Discorda",
+      "displayName": "Nazwa wyświetlana",
+      "active": "Aktywność kanału",
+      "activeDescription": "Nieaktywny kanał nie będzie używany przez reguły.",
+      "activeDeactivateWarning": "Dezaktywacja kanału spowoduje anulowanie wszystkich oczekujących wysyłek na ten kanał.",
+      "trigger": "Typ reguły",
+      "triggerType": "Typ powiadomienia",
+      "name": "Nazwa reguły",
+      "scheduledAt": "Data i godzina pierwszej wysyłki",
+      "scheduleIntervalType": "Częstotliwość",
+      "scheduleIntervalValue": "Co ile godzin",
+      "scheduleTimeOfDay": "Godzina wysyłki",
+      "scheduleWeekday": "Dzień tygodnia",
+      "scheduledUntil": "Data zakończenia",
+      "world": "Świat",
+      "npcs": "Filtr NPC",
+      "contentTemplate": "Szablon wiadomości",
+      "scheduleAnchor": "Punkt odniesienia",
+      "scheduleOffsetMinutes": "Wyprzedzenie (minuty)",
+      "targets": "Kanały docelowe",
+      "enabled": "Aktywność reguły",
+      "enabledDescription": "Wyłączona reguła nie będzie planować nowych powiadomień."
+    },
+    "placeholders": {
+      "channel": "Wybierz kanał",
+      "displayName": "np. Herosi",
+      "name": "np. Przypomnienie o herosach",
+      "npcs": "Wszystkie NPC",
+      "searchNpcs": "Szukaj NPC po nazwie lub ID",
+      "scheduleOffsetMinutes": "np. 0",
+      "scheduledAt": "Wybierz datę i godzinę",
+      "scheduleTimeOfDay": "np. 19:00",
+      "scheduledUntil": "Opcjonalnie",
+      "targets": "Wybierz kanały docelowe",
+      "searchTargets": "Szukaj kanałów"
+    },
+    "templates": {
+      "default": {
+        "world": "Świat: **{{world}}**",
+        "spawnWindow": "Okno spawnu: **{{minSpawnTime}} - {{maxSpawnTime}}**",
+        "scheduledFor": "Zaplanowana wysyłka: **{{scheduledFor}}**"
+      },
+      "scheduledMessage": {
+        "scheduledFor": "Zaplanowana wysyłka: **{{scheduledFor}}**"
+      }
+    },
+    "templateEditor": {
+      "label": "Edytor wiadomości",
+      "description": "Treść wiadomości wysyłanej na Discorda. Obsługiwany jest Markdown oraz wzmianki ról.",
+      "placeholder": "Napisz treść powiadomienia...",
+      "insertRole": "Wstaw rolę",
+      "insertVariable": "Wstaw zmienną",
+      "showPreview": "Podgląd",
+      "hidePreview": "Ukryj podgląd",
+      "emptyRoles": "Brak ról do wstawienia.",
+      "emptyVariables": "Brak zmiennych do wstawienia.",
+      "emptySuggestions": "Brak pasujących sugestii.",
+      "availableVariables": "Dostępne zmienne",
+      "variablesSummary": "{{ruleName}}, {{npcName}}, {{npcId}}, {{world}}, {{minSpawnTime}}, {{maxSpawnTime}}, {{scheduledFor}}",
+      "mentionSuggestions": "Sugestie wzmianek",
+      "variableSuggestions": "Sugestie zmiennych",
+      "previewLabel": "Podgląd wiadomości",
+      "previewDescription": "Podgląd wiadomości z przykładowymi danymi podstawionymi za zmienne.",
+      "previewNotice": "Zmienne zostały zastąpione przykładowymi danymi. Wygląd może się nieznacznie różnić od wiadomości na Discordzie.",
+      "customTemplateEnabled": "Własny szablon",
+      "previewValues": {
+        "ruleName": "Timer herosów",
+        "npcName": "Tanroth",
+        "world": "Berufs"
+      },
+      "variables": {
+        "ruleName": "Nazwa reguły",
+        "npcName": "Nazwa NPC",
+        "npcId": "ID NPC",
+        "world": "Świat",
+        "minSpawnTime": "Najwcześniejszy spawn",
+        "maxSpawnTime": "Najpóźniejszy spawn",
+        "scheduledFor": "Czas wysyłki"
+      },
+      "presets": {
+        "simple": "Prosty",
+        "detailed": "Szczegółowy",
+        "minimal": "Minimalny"
+      }
+    },
+    "targetDialog": {
+      "createTitle": "Dodaj kanał docelowy",
+      "createDescription": "Wybierz kanał Discorda i opcjonalnie ustaw własną nazwę wyświetlaną.",
+      "editTitle": "Edytuj kanał docelowy",
+      "editDescription": "Zmień nazwę wyświetlaną lub dezaktywuj kanał."
+    },
+    "ruleDialog": {
+      "createTitle": "Dodaj regułę",
+      "createDescription": "Skonfiguruj kiedy bot ma wysyłać przypomnienia przed spawnem.",
+      "editTitle": "Edytuj regułę",
+      "editDescription": "Zmień warunki uruchamiania i targety dla tej reguły.",
+      "triggerDescription": "Ten widok obsługuje tylko przypomnienia planowane przed spawnem.",
+      "triggerDescriptionScheduledMessage": "Wyślij wiadomość jednorazowo lub cyklicznie w określonym czasie.",
+      "targetsDescription": "Wybierz jeden lub więcej kanałów docelowych. Możesz też dodać nowy bez opuszczania formularza."
+    },
+    "quickTargetDialog": {
+      "title": "Szybkie dodanie kanału",
+      "description": "Dodaj nowy kanał Discorda i od razu przypisz go do tej reguły."
+    },
+    "deleteTargetDialog": {
+      "title": "Usunąć kanał docelowy?",
+      "description": "Kanał {{name}} zostanie usunięty ze wszystkich reguł i zaplanowanych wysyłek.",
+      "descriptionWithOrphanedRules_one": "Kanał {{name}} zostanie usunięty ze wszystkich reguł i zaplanowanych wysyłek. {{count}} reguła, dla której jest to jedyny kanał, również zostanie usunięta.",
+      "descriptionWithOrphanedRules_few": "Kanał {{name}} zostanie usunięty ze wszystkich reguł i zaplanowanych wysyłek. {{count}} reguły, dla których jest to jedyny kanał, również zostaną usunięte.",
+      "descriptionWithOrphanedRules_many": "Kanał {{name}} zostanie usunięty ze wszystkich reguł i zaplanowanych wysyłek. {{count}} reguł, dla których jest to jedyny kanał, również zostanie usuniętych."
+    },
+    "deleteRuleDialog": {
+      "title": "Usunąć regułę?",
+      "description": "Reguła {{name}} przestanie planować i wysyłać powiadomienia."
+    },
+    "cancelJobDialog": {
+      "title": "Anulować oczekującą wysyłkę?",
+      "description": "Oczekująca wysyłka dla reguły {{name}} zostanie anulowana. Możesz ją później odtworzyć z poziomu reguły."
+    },
+    "toasts": {
+      "targetCreated": "Kanał docelowy został utworzony",
+      "targetUpdated": "Kanał docelowy został zaktualizowany",
+      "targetDeleted": "Kanał docelowy został usunięty",
+      "targetCreateError": "Nie udało się utworzyć kanału docelowego",
+      "targetUpdateError": "Nie udało się zaktualizować kanału docelowego",
+      "targetDeleteError": "Nie udało się usunąć kanału docelowego",
+      "ruleCreated": "Reguła została utworzona",
+      "ruleUpdated": "Reguła została zaktualizowana",
+      "ruleDeleted": "Reguła została usunięta",
+      "ruleTestTriggered": "Testowe powiadomienie zostało wysłane",
+      "ruleJobsRebuilt": "Kolejka wysyłek reguły została przebudowana",
+      "jobCanceled": "Oczekująca wysyłka została anulowana",
+      "ruleCreateError": "Nie udało się utworzyć reguły",
+      "ruleUpdateError": "Nie udało się zaktualizować reguły",
+      "ruleDeleteError": "Nie udało się usunąć reguły",
+      "ruleTestTriggerError": "Nie udało się wysłać testowego powiadomienia",
+      "ruleJobsRebuildError": "Nie udało się przebudować kolejki wysyłek reguły",
+      "jobCancelError": "Nie udało się anulować oczekującej wysyłki"
+    }
+  },
+  "userNotifications": {
+    "title": "Powiadomienia",
+    "description": "Obserwuj itemy dla wybranego świata i swoich lootlogów, a dropy dostaniesz jako prywatną wiadomość na Discordzie.",
+    "dm": {
+      "title": "Prywatna wiadomość",
+      "description": "Powiadomienia o obserwowanych itemach wysyłamy bezpośrednio na Twojego Discorda.",
+      "active": "Aktywne",
+      "actionRequired": "Wymaga konfiguracji",
+      "configure": "Włącz powiadomienia",
+      "test": "Testuj powiadomienie",
+      "deactivate": "Deaktywuj",
+      "deactivateHint": "Wstrzymuje wszystkie powiadomienia. Obserwowane itemy pozostaną zapisane — możesz je włączyć ponownie w dowolnym momencie.",
+      "requiredHint": "Włącz powiadomienia, aby otrzymywać informacje o obserwowanych itemach.",
+      "reactivateHint": "Powiadomienia są obecnie wyłączone. Aktywuj je ponownie, aby odbierać informacje o obserwowanych itemach.",
+      "cannotSendHint": "Nie udało się dostarczyć wiadomości. Sprawdź ustawienia prywatności na Discordzie lub połączenie konta.",
+      "targetLabel": "Odbiorca: {{name}}",
+      "testUsage": "{{used}}/{{limit}} testów ({{minutes}} min)",
+      "testNextAvailable": "Następny test dostępny: {{date}}"
+    },
+    "watchForm": {
+      "title": "Dodaj obserwowany item",
+      "description": "Wybierz lootlogi, świat i item. Powiadomienie przyjdzie tylko dla dopasowanych lootów.",
+      "footer": "Jedna obserwacja działa dla jednego świata i wielu lootlogów.",
+      "limitStatus": "Masz {{count}} z {{limit}} obserwowanych itemów."
+    },
+    "watchList": {
+      "title": "Obserwowane itemy",
+      "description": "Lista aktywnych obserwacji przypiętych do Twojego konta."
+    },
+    "infoDialog": {
+      "title": "Jak działa obserwowanie itemów?",
+      "howItWorks": {
+        "title": "Jak to działa",
+        "description": "Wybierz item, świat i lootlogi. Gdy wybrany item dropnie na danym świecie w jednym z wybranych lootlogów, natychmiast otrzymasz powiadomienie jako prywatną wiadomość na Discordzie."
+      },
+      "limits": {
+        "title": "Limity",
+        "description": "Możesz obserwować maksymalnie {{limit}} itemów. Jedna obserwacja to jeden item na jednym świecie — ten sam item na różnych światach to osobne obserwacje. Każda obserwacja może obejmować wiele lootlogów."
+      },
+      "scope": {
+        "title": "Zakres i bezpieczeństwo",
+        "description": "Powiadomienie zostanie wysłane tylko wtedy, gdy loot pochodzi z wybranego świata i przynajmniej jednego z wybranych lootlogów, a Ty nadal masz na nim aktywne członkostwo."
+      },
+      "quickAdd": {
+        "title": "Szybkie dodawanie",
+        "description": "Itemy możesz dodawać również bezpośrednio z listy lootów klikając ikonę oka. Jeśli item jest już obserwowany na danym świecie, lootlog zostanie dołączony do istniejącej obserwacji."
+      }
+    },
+    "actions": {
+      "addWatch": "Dodaj przedmiot",
+      "addingWatch": "Dodawanie..."
+    },
+    "quickAdd": {
+      "add": "Dodaj do obserwowanych",
+      "remove": "Przestań obserwować",
+      "watched": "Ten item jest już obserwowany dla tego lootloga i świata.",
+      "dmRequired": "Najpierw włącz powiadomienia w ustawieniach.",
+      "limitReached": "Osiągnięto limit {{limit}} obserwowanych itemów.",
+      "loading": "Ładowanie obserwacji...",
+      "loadError": "Nie udało się załadować obserwacji.",
+      "scopeUnavailable": "Nie udało się ustalić lootlogów dla tej obserwacji.",
+      "openNotifications": "Przejdź do powiadomień",
+      "configureDm": "Włącz powiadomienia",
+      "indicatorLabel": "Item jest już obserwowany",
+      "toasts": {
+        "adding": "Dodawanie {{itemName}} do obserwowanych ({{count}} / {{limit}})...",
+        "added": "{{itemName}} został dodany do obserwowanych ({{count}} / {{limit}}).",
+        "error": "Nie udało się dodać itemu do obserwowanych.",
+        "removing": "Usuwanie {{itemName}} z obserwowanych...",
+        "removed": "{{itemName}} został usunięty z obserwowanych.",
+        "removeError": "Nie udało się usunąć itemu z obserwowanych."
+      }
+    },
+    "fields": {
+      "guilds": "Lootlogi",
+      "item": "Item"
+    },
+    "placeholders": {
+      "guilds": "Wybierz lootlogi",
+      "searchGuilds": "Szukaj lootlogów",
+      "world": "Wybierz świat",
+      "item": "Wybierz item",
+      "searchItems": "Szukaj itemu po nazwie lub ID"
+    },
+    "empty": {
+      "guilds": "Brak dostępnych lootlogów.",
+      "items": "Brak pasujących itemów.",
+      "watchedItems": "Nie masz jeszcze żadnych obserwowanych itemów."
+    },
+    "loading": {
+      "worlds": "Pobieranie światów...",
+      "items": "Pobieranie itemów..."
+    },
+    "manualEntry": {
+      "checkbox": "Mój przedmiot nie pojawia się w wyszukiwarce",
+      "hint": "Nazwa musi być dokładnie taka sama jak w grze. ID znajdziesz w pasku adresu na margoworld.pl — np. dla margoworld.pl/item/view/34772/klejnot-wielkich-jezior ID to 34772.",
+      "itemId": "ID przedmiotu",
+      "itemName": "Nazwa przedmiotu",
+      "itemIdPlaceholder": "np. 34772",
+      "itemNamePlaceholder": "np. Klejnot Wielkich Jezior"
+    },
+    "validation": {
+      "dmRequired": "Najpierw włącz powiadomienia w ustawieniach.",
+      "guildRequired": "Wybierz przynajmniej jeden lootlog.",
+      "guildSelectionUnavailable": "Nie możesz dodać obserwacji dla wybranych lootlogów.",
+      "itemRequired": "Wybierz item do obserwowania.",
+      "manualItemIdRequired": "Podaj ID przedmiotu.",
+      "manualItemNameRequired": "Podaj nazwę przedmiotu.",
+      "manualItemIdInvalid": "ID przedmiotu musi być liczbą.",
+      "worldRequired": "Najpierw wybierz świat.",
+      "watchLimitReached": "Osiągnąłeś limit {{limit}} obserwowanych itemów. Usuń jedną obserwację, aby dodać kolejną.",
+      "dmTestLimitReached": "Osiągnięto limit testowych wiadomości. Spróbuj ponownie za kilka minut."
+    },
+    "toasts": {
+      "dmEnabled": "Powiadomienia zostały włączone.",
+      "dmDisabled": "Powiadomienia zostały wyłączone.",
+      "dmEnableError": "Nie udało się włączyć powiadomień.",
+      "dmDisableError": "Nie udało się wyłączyć powiadomień.",
+      "dmTestTriggered": "Testowe powiadomienie zostało wysłane.",
+      "dmTestTriggerError": "Nie udało się wysłać testowego powiadomienia.",
+      "watchCreating": "Dodawanie obserwowanego itemu ({{count}} / {{limit}})...",
+      "watchCreated": "Obserwowany item został dodany ({{count}} / {{limit}}).",
+      "watchCreateError": "Nie udało się dodać obserwowanego itemu.",
+      "watchDeleted": "Obserwowany item został usunięty.",
+      "watchDeleteError": "Nie udało się usunąć obserwowanego itemu."
+    },
+    "watchCount_one": "{{count}} obserwacja",
+    "watchCount_few": "{{count}} obserwacje",
+    "watchCount_many": "{{count}} obserwacji",
+    "watchLimitStatus": "{{count}} / {{limit}}",
+    "guildCount_one": "{{count}} lootlog",
+    "guildCount_few": "{{count}} lootlogi",
+    "guildCount_many": "{{count}} lootlogów",
+    "missingGuild": "Brak dostępu: {{guildId}}",
+    "staleGuildWarning": "Ta obserwacja zawiera lootlogi, do których nie masz już dostępu w aktualnej sesji.",
+    "itemSelector": {
+      "selectedLabel": "{{name}} (#{{id}})",
+      "itemId": "#{{id}}",
+      "itemLevel": "Lvl {{level}}"
+    },
+    "deleteWatchDialog": {
+      "title": "Usunąć obserwowany item?",
+      "description": "Ta operacja usunie obserwację dla itemu {{itemName}} i zatrzyma przyszłe powiadomienia."
+    }
+  },
+  "guildInfo": {
+    "title": "Informacje",
+    "description": "Sprawdź status synchronizacji Discorda, kanałów i uprawnień bota.",
+    "refresh": "Odśwież status",
+    "refreshing": "Odświeżanie...",
+    "syncStatus": "Status synchronizacji Discorda",
+    "syncStatusDescription": "Ten widok pokazuje aktualny stan połączenia bota z serwerem i kanałami.",
+    "channelCounts": "{{selectable}} z {{total}} kanałów jest dostępnych do wyboru",
+    "fields": {
+      "status": "Status",
+      "channels": "Kanały",
+      "permissions": "Uprawnienia",
+      "lastAttempt": "Ostatnia próba synchronizacji",
+      "lastSuccess": "Ostatni udany sync",
+      "lastError": "Ostatni błąd"
+    },
+    "permissions": {
+      "ok": "Kompletne",
+      "missing": "Brakujące"
+    },
+    "permissionSection": {
+      "title": "Wymagane uprawnienia",
+      "description": "Bot potrzebuje tych uprawnień, żeby synchronizować kanały i wysyłać powiadomienia."
+    },
+    "reinstall": {
+      "title": "Bot wymaga reinstallu",
+      "description": "Discord nie przyznał jeszcze wszystkich wymaganych uprawnień. Przeinstaluj bota na serwerze, żeby odblokować konfigurację powiadomień.",
+      "button": "Przeinstaluj bota",
+      "notNeeded": "Bot ma komplet wymaganych uprawnień. Reinstall nie jest potrzebny."
+    },
+    "activity": {
+      "title": "Aktywność synchronizacji"
+    },
+    "notAvailable": "Brak danych",
+    "noErrors": "Brak błędów"
+  },
   "mapTemplates": {
     "title": "Szablony map",
     "description": "Zarządzaj szablonami list mapek",

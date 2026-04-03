@@ -1,16 +1,34 @@
 import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@lootlog/ui/lib/utils";
 import { CatPawOverlay } from "@lootlog/ui/components/cat-paw-overlay";
 
-function Card({ className, children, ...props }: React.ComponentProps<"div">) {
+const cardVariants = cva(
+  "bg-card/40 text-card-foreground relative flex flex-col gap-6 overflow-hidden rounded-xl border py-6 shadow-sm",
+  {
+    variants: {
+      variant: {
+        default: "",
+        interactive: "cursor-pointer transition-colors hover:border-primary",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  },
+);
+
+function Card({
+  className,
+  children,
+  variant,
+  ...props
+}: React.ComponentProps<"div"> & VariantProps<typeof cardVariants>) {
   return (
     <div
       data-slot="card"
-      className={cn(
-        "bg-card/40 text-card-foreground relative flex flex-col gap-6 overflow-hidden rounded-xl border py-6 shadow-sm",
-        className,
-      )}
+      className={cn(cardVariants({ variant }), className)}
       {...props}
     >
       <CatPawOverlay />

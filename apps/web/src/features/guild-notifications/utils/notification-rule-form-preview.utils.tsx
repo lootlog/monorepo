@@ -1,0 +1,46 @@
+import { defaultUrlTransform } from "react-markdown";
+import type { Components } from "react-markdown";
+import { getGuildRoleHexColor } from "../components/notification-template-editor.utils";
+import type { GuildRole } from "@/hooks/api/guilds/use-guild-roles";
+
+export const ROLE_LINK_PREFIX = "role:";
+
+export const replaceRoleMentions = (text: string, roles: GuildRole[]) => {
+  const roleById = new Map(roles.map((role) => [role.id, role] as const));
+
+  return text
+    .replace(/<@&(\d+)>/g, (_match, roleId: string) => {
+      const role = roleById.get(roleId);
+      const name = role ? `@${role.name}` : `@${roleId}`;
+      const color = role ? (getGuildRoleHexColor(role) ?? "") : "";
+      return `[${name}](${ROLE_LINK_PREFIX}${color})`;
+    })
+    .replace(/@(everyone|here)/g, (_match, keyword: string) => {
+      return `[@${keyword}](${ROLE_LINK_PREFIX})`;
+    });
+};
+
+export const previewUrlTransform = (url: string) =>
+  url.startsWith(ROLE_LINK_PREFIX) ? url : defaultUrlTransform(url);
+
+export const previewMarkdownComponents: Components = {
+  a: ({ href, children }) => {
+    if (href?.startsWith(ROLE_LINK_PREFIX)) {
+      const color = href.slice(ROLE_LINK_PREFIX.length) || null;
+      return (
+        <span
+          style={{
+            backgroundColor: color
+              ? `${color}22`
+              : "color-mix(in oklab, var(--primary) 12%, transparent)",
+            borderRadius: "2px",
+            color: color ?? "var(--primary)",
+          }}
+        >
+          {children}
+        </span>
+      );
+    }
+    return <a href={href}>{children}</a>;
+  },
+};

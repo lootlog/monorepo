@@ -69,6 +69,13 @@ export const ModelName = {
   Reservation: 'Reservation',
   UserCharactersLootlogSettings: 'UserCharactersLootlogSettings',
   UserSettings: 'UserSettings',
+  NotificationTarget: 'NotificationTarget',
+  NotificationRule: 'NotificationRule',
+  NotificationRuleTarget: 'NotificationRuleTarget',
+  NotificationJob: 'NotificationJob',
+  WatchedItem: 'WatchedItem',
+  DiscordGuildChannelSnapshot: 'DiscordGuildChannelSnapshot',
+  DiscordGuildSyncState: 'DiscordGuildSyncState',
   MemberRefreshJob: 'MemberRefreshJob',
   UserTimerSettings: 'UserTimerSettings',
   UserGuildTimerSettings: 'UserGuildTimerSettings',
@@ -114,6 +121,7 @@ export const GuildScalarFieldEnum = {
   icon: 'icon',
   ownerId: 'ownerId',
   vanityUrl: 'vanityUrl',
+  notificationRuleLimit: 'notificationRuleLimit',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   active: 'active'
@@ -358,6 +366,149 @@ export const UserSettingsScalarFieldEnum = {
 } as const
 
 export type UserSettingsScalarFieldEnum = (typeof UserSettingsScalarFieldEnum)[keyof typeof UserSettingsScalarFieldEnum]
+
+
+export const NotificationTargetScalarFieldEnum = {
+  id: 'id',
+  ownerType: 'ownerType',
+  ownerId: 'ownerId',
+  provider: 'provider',
+  targetType: 'targetType',
+  externalId: 'externalId',
+  displayName: 'displayName',
+  guildName: 'guildName',
+  metadata: 'metadata',
+  active: 'active',
+  canSend: 'canSend',
+  lastSyncedAt: 'lastSyncedAt',
+  lastDeliveryAt: 'lastDeliveryAt',
+  lastDeliveryError: 'lastDeliveryError',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type NotificationTargetScalarFieldEnum = (typeof NotificationTargetScalarFieldEnum)[keyof typeof NotificationTargetScalarFieldEnum]
+
+
+export const NotificationRuleScalarFieldEnum = {
+  id: 'id',
+  ownerType: 'ownerType',
+  ownerId: 'ownerId',
+  triggerType: 'triggerType',
+  guildId: 'guildId',
+  world: 'world',
+  name: 'name',
+  filters: 'filters',
+  contentTemplate: 'contentTemplate',
+  scheduleStrategy: 'scheduleStrategy',
+  scheduleAnchor: 'scheduleAnchor',
+  scheduleOffsetMinutes: 'scheduleOffsetMinutes',
+  scheduledAt: 'scheduledAt',
+  scheduleIntervalType: 'scheduleIntervalType',
+  scheduleIntervalValue: 'scheduleIntervalValue',
+  scheduleWeekday: 'scheduleWeekday',
+  scheduleTimeOfDay: 'scheduleTimeOfDay',
+  scheduledUntil: 'scheduledUntil',
+  scheduleTimezone: 'scheduleTimezone',
+  enabled: 'enabled',
+  dedupeWindowSeconds: 'dedupeWindowSeconds',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type NotificationRuleScalarFieldEnum = (typeof NotificationRuleScalarFieldEnum)[keyof typeof NotificationRuleScalarFieldEnum]
+
+
+export const NotificationRuleTargetScalarFieldEnum = {
+  ruleId: 'ruleId',
+  targetId: 'targetId',
+  createdAt: 'createdAt'
+} as const
+
+export type NotificationRuleTargetScalarFieldEnum = (typeof NotificationRuleTargetScalarFieldEnum)[keyof typeof NotificationRuleTargetScalarFieldEnum]
+
+
+export const NotificationJobScalarFieldEnum = {
+  id: 'id',
+  ruleId: 'ruleId',
+  targetId: 'targetId',
+  ownerType: 'ownerType',
+  ownerId: 'ownerId',
+  jobKind: 'jobKind',
+  scheduledFor: 'scheduledFor',
+  status: 'status',
+  idempotencyKey: 'idempotencyKey',
+  sourceEntityType: 'sourceEntityType',
+  sourceEntityId: 'sourceEntityId',
+  sourceEventId: 'sourceEventId',
+  payloadSnapshot: 'payloadSnapshot',
+  attemptCount: 'attemptCount',
+  lastError: 'lastError',
+  blockedReason: 'blockedReason',
+  providerMessageId: 'providerMessageId',
+  processedAt: 'processedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type NotificationJobScalarFieldEnum = (typeof NotificationJobScalarFieldEnum)[keyof typeof NotificationJobScalarFieldEnum]
+
+
+export const WatchedItemScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  itemId: 'itemId',
+  itemName: 'itemName',
+  world: 'world',
+  enabled: 'enabled',
+  notificationRuleId: 'notificationRuleId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WatchedItemScalarFieldEnum = (typeof WatchedItemScalarFieldEnum)[keyof typeof WatchedItemScalarFieldEnum]
+
+
+export const DiscordGuildChannelSnapshotScalarFieldEnum = {
+  id: 'id',
+  guildId: 'guildId',
+  channelId: 'channelId',
+  name: 'name',
+  channelType: 'channelType',
+  parentId: 'parentId',
+  position: 'position',
+  active: 'active',
+  canView: 'canView',
+  canSend: 'canSend',
+  hasRequiredPermissions: 'hasRequiredPermissions',
+  requiredPermissions: 'requiredPermissions',
+  grantedPermissions: 'grantedPermissions',
+  missingPermissions: 'missingPermissions',
+  lastSyncedAt: 'lastSyncedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type DiscordGuildChannelSnapshotScalarFieldEnum = (typeof DiscordGuildChannelSnapshotScalarFieldEnum)[keyof typeof DiscordGuildChannelSnapshotScalarFieldEnum]
+
+
+export const DiscordGuildSyncStateScalarFieldEnum = {
+  guildId: 'guildId',
+  status: 'status',
+  hasRequiredPermissions: 'hasRequiredPermissions',
+  requiredPermissions: 'requiredPermissions',
+  grantedPermissions: 'grantedPermissions',
+  missingPermissions: 'missingPermissions',
+  channelCount: 'channelCount',
+  selectableChannelCount: 'selectableChannelCount',
+  lastAttemptAt: 'lastAttemptAt',
+  lastSuccessAt: 'lastSuccessAt',
+  lastError: 'lastError',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type DiscordGuildSyncStateScalarFieldEnum = (typeof DiscordGuildSyncStateScalarFieldEnum)[keyof typeof DiscordGuildSyncStateScalarFieldEnum]
 
 
 export const MemberRefreshJobScalarFieldEnum = {
