@@ -27,7 +27,6 @@ import {
   ruleTestWithWorld,
   ruleTestWithoutWorld,
 } from "src/notifications/constants/notification-messages.constant";
-import { GUILD_NOTIFICATION_TIMEZONE } from "src/notifications/constants/notification-schedule-timezone.constant";
 import { NotificationMatchingService } from "src/notifications/notification-matching.service";
 
 @Injectable()
@@ -113,7 +112,6 @@ export class NotificationContentService {
       name: string | null;
       triggerType: DbNotificationTriggerType;
       contentTemplate?: string | null;
-      scheduleTimezone?: string | null;
     };
     target: {
       targetType: DbNotificationTargetType;
@@ -130,8 +128,6 @@ export class NotificationContentService {
         DEFAULT_SCHEDULED_MESSAGE_TEMPLATE,
       notificationRuleName: params.notificationRule.name,
       scheduledFor: params.scheduledFor,
-      timeZone:
-        params.notificationRule.scheduleTimezone ?? GUILD_NOTIFICATION_TIMEZONE,
     });
 
     return {
@@ -290,15 +286,8 @@ export class NotificationContentService {
     };
   }
 
-  formatNotificationDate(date: Date, timeZone?: string) {
-    return new Intl.DateTimeFormat("pl-PL", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      ...(timeZone ? { timeZone } : {}),
-    }).format(date);
+  formatNotificationDate(date: Date) {
+    return `<t:${Math.floor(date.getTime() / 1000)}:R>`;
   }
 
   private buildTimerNotificationMessage(params: {
@@ -385,16 +374,12 @@ export class NotificationContentService {
     template: string;
     notificationRuleName: string | null;
     scheduledFor: Date;
-    timeZone: string;
   }) {
     const placeholderValues = {
       ruleName: params.notificationRuleName?.trim().length
         ? params.notificationRuleName.trim()
         : SCHEDULED_MESSAGE_DEFAULT_NAME,
-      scheduledFor: this.formatNotificationDate(
-        params.scheduledFor,
-        params.timeZone,
-      ),
+      scheduledFor: this.formatNotificationDate(params.scheduledFor),
     } satisfies Record<string, string>;
 
     return params.template.replaceAll(
