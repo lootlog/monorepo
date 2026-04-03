@@ -184,6 +184,10 @@
     "loading": {
       "availableChannels": "Pobieranie kanałów Discorda..."
     },
+    "errors": {
+      "loadFailed": "Nie udało się załadować danych powiadomień.",
+      "ruleNotFound": "Nie znaleziono reguły powiadomień."
+    },
     "validation": {
       "channelRequired": "Wybierz kanał Discorda",
       "displayNameRequired": "Nazwa wyświetlana jest wymagana",

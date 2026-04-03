@@ -145,7 +145,7 @@ export const WatchableItemTile = ({
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
-        <span className="relative inline-flex">
+        <span className="relative inline-flex" tabIndex={0} role="button">
           <ItemTile
             item={item}
             color={color}

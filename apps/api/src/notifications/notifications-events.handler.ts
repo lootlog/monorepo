@@ -17,6 +17,10 @@ import { NotificationJobService } from "src/notifications/notification-job.servi
 import { NotificationMatchingService } from "src/notifications/notification-matching.service";
 import { NotificationTargetService } from "src/notifications/notification-target.service";
 import { GuildsService } from "src/guilds/guilds.service";
+import {
+  WATCHED_ITEM_DROPPED_TITLE,
+  watchedItemDroppedMessage,
+} from "src/notifications/constants/notification-messages.constant";
 
 @Injectable()
 export class NotificationsEventsHandler {
@@ -59,16 +63,25 @@ export class NotificationsEventsHandler {
     });
 
     for (const notificationRule of notificationRules) {
-      if (
-        !this.matchingService.matchesTimerRule(
-          notificationRule.filters,
-          event.npcId,
-        )
-      ) {
-        continue;
-      }
+      try {
+        if (
+          !this.matchingService.matchesTimerRule(
+            notificationRule.filters,
+            event.npcId,
+          )
+        ) {
+          continue;
+        }
 
-      await this.jobService.rebuildTimerJobsForRule(notificationRule.id, event);
+        await this.jobService.rebuildTimerJobsForRule(
+          notificationRule.id,
+          event,
+        );
+      } catch (error) {
+        this.logger.error(
+          `Failed to rebuild timer jobs for rule ${notificationRule.id}: ${error instanceof Error ? error.message : error}`,
+        );
+      }
     }
   }
 
@@ -86,10 +99,16 @@ export class NotificationsEventsHandler {
     timerKey: string;
     npcId?: number;
   }) {
-    await this.jobService.cancelPendingJobs({
-      sourceEntityType: "timer",
-      sourceEntityId: this.jobService.getTimerSourceEntityId(event),
-    });
+    try {
+      await this.jobService.cancelPendingJobs({
+        sourceEntityType: "timer",
+        sourceEntityId: this.jobService.getTimerSourceEntityId(event),
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to cancel pending jobs for deleted timer ${event.timerKey}: ${error instanceof Error ? error.message : error}`,
+      );
+    }
   }
 
   @RabbitSubscribe({
@@ -170,93 +189,103 @@ export class NotificationsEventsHandler {
         );
 
     for (const watchedItem of watchedItems) {
-      const notificationRule = watchedItem.notificationRule;
-      if (!notificationRule) {
-        continue;
-      }
-
-      if (
-        !this.matchingService.matchesLootRule(notificationRule.filters, event)
-      ) {
-        continue;
-      }
-      const matchedGuildIds = this.matchingService.getMatchingLootGuildIds(
-        notificationRule.filters,
-        event.guildIds,
-      );
-      if (matchedGuildIds.length === 0) {
-        continue;
-      }
-
-      let visibleGuildIds: string[];
-
-      if (membershipsByOwner) {
-        const ownerMemberships =
-          membershipsByOwner.get(notificationRule.ownerId) ?? [];
-        const authorizedGuildIds = matchedGuildIds.filter((guildId) =>
-          ownerMemberships.some((m) => m.guildId === guildId),
-        );
-        visibleGuildIds = authorizedGuildIds.filter((guildId) => {
-          const membership = ownerMemberships.find(
-            (m) => m.guildId === guildId,
-          );
-          if (!membership) {
-            return false;
-          }
-          return this.matchingService.canRolesViewNpc(
-            membership.roles,
-            event.npcType,
-            event.npcLvl,
-            membership.isGuildOwner,
-          );
-        });
-      } else {
-        const activeOwnerGuildIds =
-          activeGuildIdsByOwnerId!.get(notificationRule.ownerId) ?? new Set();
-        visibleGuildIds = matchedGuildIds.filter((guildId) =>
-          activeOwnerGuildIds.has(guildId),
-        );
-      }
-
-      if (visibleGuildIds.length === 0) {
-        continue;
-      }
-
-      for (const relation of notificationRule.targets) {
-        if (!relation.target.active || !relation.target.canSend) {
+      try {
+        const notificationRule = watchedItem.notificationRule;
+        if (!notificationRule) {
           continue;
         }
 
-        const watchedItemName = watchedItem.itemName;
-        const guildNames = visibleGuildIds
-          .map((id) => guildNamesMap.get(id))
-          .filter(Boolean)
-          .join(", ");
-
-        const title = "Obserwowany item wypadł!";
-        const message = `Na świecie ${event.world} na lootlogu ${guildNames} wypadł obserwowany przedmiot: ${watchedItemName}`;
-
-        const notificationJob = await this.jobService.createNotificationJob({
-          notificationRule,
-          target: relation.target,
-          jobKind: DbNotificationJobKind.INSTANT,
-          scheduledFor: new Date(),
-          sourceEntityType: "loot",
-          sourceEntityId: String(event.lootId),
-          sourceEventId: `loot:${event.lootId}`,
-          payloadSnapshot: {
-            title,
-            message,
-            world: event.world,
-            itemId: watchedItem.itemId,
-            itemName: watchedItemName,
-            guildIds: visibleGuildIds,
-          },
-        });
-
-        if (notificationJob) {
-          await this.jobService.enqueueNotificationJob(notificationJob.id, 0);
+        if (
+          !this.matchingService.matchesLootRule(notificationRule.filters, event)
+        ) {
+          continue;
         }
+        const matchedGuildIds = this.matchingService.getMatchingLootGuildIds(
+          notificationRule.filters,
+          event.guildIds,
+        );
+        if (matchedGuildIds.length === 0) {
+          continue;
+        }
+
+        let visibleGuildIds: string[];
+
+        if (membershipsByOwner) {
+          const ownerMemberships =
+            membershipsByOwner.get(notificationRule.ownerId) ?? [];
+          const authorizedGuildIds = matchedGuildIds.filter((guildId) =>
+            ownerMemberships.some((m) => m.guildId === guildId),
+          );
+          visibleGuildIds = authorizedGuildIds.filter((guildId) => {
+            const membership = ownerMemberships.find(
+              (m) => m.guildId === guildId,
+            );
+            if (!membership) {
+              return false;
+            }
+            return this.matchingService.canRolesViewNpc(
+              membership.roles,
+              event.npcType,
+              event.npcLvl,
+              membership.isGuildOwner,
+            );
+          });
+        } else {
+          const activeOwnerGuildIds =
+            activeGuildIdsByOwnerId!.get(notificationRule.ownerId) ?? new Set();
+          visibleGuildIds = matchedGuildIds.filter((guildId) =>
+            activeOwnerGuildIds.has(guildId),
+          );
+        }
+
+        if (visibleGuildIds.length === 0) {
+          continue;
+        }
+
+        for (const relation of notificationRule.targets) {
+          if (!relation.target.active || !relation.target.canSend) {
+            continue;
+          }
+
+          const watchedItemName = watchedItem.itemName;
+          const guildNames = visibleGuildIds
+            .map((id) => guildNamesMap.get(id))
+            .filter(Boolean)
+            .join(", ");
+
+          const title = WATCHED_ITEM_DROPPED_TITLE;
+          const message = watchedItemDroppedMessage(
+            event.world,
+            guildNames,
+            watchedItemName,
+          );
+
+          const notificationJob = await this.jobService.createNotificationJob({
+            notificationRule,
+            target: relation.target,
+            jobKind: DbNotificationJobKind.INSTANT,
+            scheduledFor: new Date(),
+            sourceEntityType: "loot",
+            sourceEntityId: String(event.lootId),
+            sourceEventId: `loot:${event.lootId}`,
+            payloadSnapshot: {
+              title,
+              message,
+              world: event.world,
+              itemId: watchedItem.itemId,
+              itemName: watchedItemName,
+              guildIds: visibleGuildIds,
+            },
+          });
+
+          if (notificationJob) {
+            await this.jobService.enqueueNotificationJob(notificationJob.id, 0);
+          }
+        }
+      } catch (error) {
+        this.logger.error(
+          `Failed to process watched item ${watchedItem.id} for loot ${event.lootId}: ${error instanceof Error ? error.message : error}`,
+        );
       }
     }
   }
@@ -291,6 +320,12 @@ export class NotificationsEventsHandler {
   async handleDiscordGuildChannelDeleted(
     event: DiscordGuildChannelDeletedEvent,
   ) {
-    await this.targetService.handleGuildChannelDeleted(event);
+    try {
+      await this.targetService.handleGuildChannelDeleted(event);
+    } catch (error) {
+      this.logger.error(
+        `Failed to handle deleted guild channel ${event.channelId}: ${error instanceof Error ? error.message : error}`,
+      );
+    }
   }
 }

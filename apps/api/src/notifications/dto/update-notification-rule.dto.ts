@@ -17,6 +17,7 @@ import {
   IsString,
   Matches,
   Max,
+  MaxLength,
   Min,
   ValidateIf,
 } from "class-validator";
@@ -28,11 +29,13 @@ export class UpdateNotificationRuleDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  @MaxLength(255)
   name?: string | null;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  @MaxLength(4000)
   contentTemplate?: string | null;
 
   @ApiPropertyOptional({ enum: NotificationTriggerType })
@@ -44,6 +47,7 @@ export class UpdateNotificationRuleDto {
   @ValidateIf((obj) => obj.world !== undefined)
   @IsString()
   @IsNotEmpty({ message: Error.NOTIFICATION_RULE_WORLD_REQUIRED })
+  @MaxLength(50)
   world?: string;
 
   @ApiPropertyOptional()
@@ -66,6 +70,7 @@ export class UpdateNotificationRuleDto {
   @ApiPropertyOptional({ type: [Number] })
   @IsOptional()
   @IsArray()
+  @ArrayMaxSize(20)
   @IsInt({ each: true })
   itemIds?: number[];
 
@@ -83,6 +88,7 @@ export class UpdateNotificationRuleDto {
   @IsOptional()
   @IsInt()
   @Min(0)
+  @Max(1440)
   scheduleOffsetMinutes?: number;
 
   @ApiPropertyOptional()
@@ -123,6 +129,7 @@ export class UpdateNotificationRuleDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  @MaxLength(50)
   scheduleTimezone?: string;
 
   @ApiPropertyOptional({ type: [Number] })

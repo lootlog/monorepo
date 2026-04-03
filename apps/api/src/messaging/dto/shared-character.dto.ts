@@ -3,6 +3,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  MaxLength,
   ValidateNested,
 } from "class-validator";
 import { Type } from "class-transformer";
@@ -14,6 +15,7 @@ export class ClanDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(255)
   name?: string;
 }
 
@@ -24,22 +26,27 @@ export class CharacterDto {
 
   @IsNotEmpty()
   @IsString()
+  @MaxLength(255)
   nick: string;
 
   @IsNotEmpty()
   @IsString()
+  @MaxLength(255)
   accountId: string;
 
   @IsNotEmpty()
   @IsString()
+  @MaxLength(255)
   characterId: string;
 
   @IsNotEmpty()
   @IsString()
+  @MaxLength(100)
   prof: string;
 
   @IsNotEmpty()
   @IsString()
+  @MaxLength(2048)
   icon: string;
 
   @IsOptional()

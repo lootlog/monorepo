@@ -36,6 +36,8 @@ export class NotificationTargetService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly channelsService: ChannelsService,
+    // Shallow circular dependency: this service needs jobService for
+    // canceling/creating jobs, while jobService's module imports this service.
     @Inject(forwardRef(() => NotificationJobService))
     private readonly jobService: NotificationJobService,
   ) {}

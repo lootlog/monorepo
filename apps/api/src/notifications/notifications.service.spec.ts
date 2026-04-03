@@ -14,12 +14,14 @@ import { NotificationMatchingService } from "./notification-matching.service";
 import { NotificationRuleService } from "./notification-rule.service";
 import { NotificationTargetService } from "./notification-target.service";
 import { NotificationsEventsHandler } from "./notifications-events.handler";
+import { WatchedItemService } from "./watched-item.service";
 
 describe("Notification Services", () => {
   let targetService: NotificationTargetService;
   let ruleService: NotificationRuleService;
   let jobService: NotificationJobService;
   let eventsHandler: NotificationsEventsHandler;
+  let watchedItemService: WatchedItemService;
 
   const mockPrisma = {
     $transaction: jest.fn(),
@@ -86,6 +88,7 @@ describe("Notification Services", () => {
     hasRequiredGuildPermissions: jest.fn(),
     getGuildDiscordSyncStatus: jest.fn(),
     getUserGuilds: jest.fn(),
+    getMultipleGuildsByIds: jest.fn(),
   };
   const mockAmqpConnection = {
     publish: jest.fn(),
@@ -214,6 +217,10 @@ describe("Notification Services", () => {
       hasRequiredPermissions: true,
       missingPermissions: [],
     });
+    mockGuildsService.getMultipleGuildsByIds.mockResolvedValue([
+      { id: "guild-1", name: "Guild 1" },
+      { id: "guild-2", name: "Guild 2" },
+    ]);
     mockGuildsService.getUserGuilds.mockResolvedValue([
       { id: "guild-1", name: "Guild 1" },
       { id: "guild-2", name: "Guild 2" },
@@ -227,6 +234,7 @@ describe("Notification Services", () => {
         NotificationRuleService,
         NotificationTargetService,
         NotificationsEventsHandler,
+        WatchedItemService,
         {
           provide: PrismaService,
           useValue: mockPrisma,
@@ -258,6 +266,7 @@ describe("Notification Services", () => {
     eventsHandler = module.get<NotificationsEventsHandler>(
       NotificationsEventsHandler,
     );
+    watchedItemService = module.get<WatchedItemService>(WatchedItemService);
   });
 
   it("removes guild notification targets and cancels their queued jobs after channel deletion", async () => {
@@ -275,6 +284,9 @@ describe("Notification Services", () => {
         id: {
           in: ["job-1"],
         },
+        status: {
+          in: ["PENDING", "BLOCKED"],
+        },
       },
       data: {
         status: "CANCELED",
@@ -285,6 +297,9 @@ describe("Notification Services", () => {
       where: {
         id: {
           in: ["job-2"],
+        },
+        status: {
+          in: ["PENDING", "BLOCKED"],
         },
       },
       data: {
@@ -354,7 +369,7 @@ describe("Notification Services", () => {
       where: {
         id: "job-1",
         status: {
-          in: ["PENDING", "BLOCKED", "PROCESSING"],
+          in: ["PENDING", "BLOCKED"],
         },
       },
       select: { id: true },
@@ -365,6 +380,9 @@ describe("Notification Services", () => {
       where: {
         id: {
           in: ["job-1"],
+        },
+        status: {
+          in: ["PENDING", "BLOCKED"],
         },
       },
       data: {
@@ -500,7 +518,7 @@ describe("Notification Services", () => {
     mockPrisma.notificationTarget.findMany.mockResolvedValueOnce([]);
 
     await expect(
-      ruleService.createWatchedItem("discord-user-1", "user-1", {
+      watchedItemService.createWatchedItem("discord-user-1", "user-1", {
         itemId: 123,
         itemName: "Legendarny Miecz",
         world: "berufs",
@@ -520,7 +538,7 @@ describe("Notification Services", () => {
     mockPrisma.watchedItem.count.mockResolvedValueOnce(20);
 
     await expect(
-      ruleService.createWatchedItem("discord-user-1", "user-1", {
+      watchedItemService.createWatchedItem("discord-user-1", "user-1", {
         itemId: 123,
         itemName: "Legendarny Miecz",
         world: "berufs",
@@ -581,7 +599,7 @@ describe("Notification Services", () => {
       });
 
     await expect(
-      ruleService.quickAddWatchedItem("discord-user-1", "user-1", {
+      watchedItemService.quickAddWatchedItem("discord-user-1", "user-1", {
         itemId: 123,
         itemName: "Legendarny Miecz",
         world: "berufs",
@@ -653,7 +671,7 @@ describe("Notification Services", () => {
       });
 
     await expect(
-      ruleService.quickAddWatchedItem("discord-user-1", "user-1", {
+      watchedItemService.quickAddWatchedItem("discord-user-1", "user-1", {
         itemId: 123,
         itemName: "Legendarny Miecz",
         world: "berufs",
@@ -684,7 +702,7 @@ describe("Notification Services", () => {
     mockPrisma.notificationTarget.findMany.mockResolvedValueOnce([]);
 
     await expect(
-      ruleService.quickAddWatchedItem("discord-user-1", "user-1", {
+      watchedItemService.quickAddWatchedItem("discord-user-1", "user-1", {
         itemId: 123,
         itemName: "Legendarny Miecz",
         world: "berufs",
@@ -701,7 +719,7 @@ describe("Notification Services", () => {
     mockPrisma.watchedItem.count.mockResolvedValueOnce(20);
 
     await expect(
-      ruleService.quickAddWatchedItem("discord-user-1", "user-1", {
+      watchedItemService.quickAddWatchedItem("discord-user-1", "user-1", {
         itemId: 123,
         itemName: "Legendarny Miecz",
         world: "berufs",
@@ -719,7 +737,7 @@ describe("Notification Services", () => {
 
   it("rejects quick add for a guild outside the authenticated user scope", async () => {
     await expect(
-      ruleService.quickAddWatchedItem("discord-user-1", "user-1", {
+      watchedItemService.quickAddWatchedItem("discord-user-1", "user-1", {
         itemId: 123,
         itemName: "Legendarny Miecz",
         world: "berufs",
@@ -763,7 +781,7 @@ describe("Notification Services", () => {
     });
     mockPrisma.notificationJob.findMany.mockResolvedValueOnce(
       Array.from({ length: 10 }, (_, index) => ({
-        ruleId: 77,
+        targetId: 11,
         createdAt: new Date(currentTime - index * 60_000),
       })),
     );

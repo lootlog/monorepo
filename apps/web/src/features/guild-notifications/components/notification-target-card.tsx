@@ -83,6 +83,7 @@ export const NotificationTargetCard = ({
                 type="button"
                 size="icon"
                 variant="outline"
+                aria-label={t("settings.notifications.actions.edit")}
                 disabled={isActionDisabled}
                 onClick={() => onEdit(target)}
               >
@@ -111,7 +112,12 @@ export const NotificationTargetCard = ({
                   )}
                   cancelButtonLabel={t("settings.notifications.actions.cancel")}
                   trigger={
-                    <Button type="button" size="icon" variant="destructive">
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="destructive"
+                      aria-label={t("settings.notifications.actions.delete")}
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   }

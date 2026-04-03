@@ -8,25 +8,34 @@ import {
   Prisma,
 } from "prisma/generated/client";
 import { PrismaService } from "src/db/prisma.service";
+import {
+  DEFAULT_TIMER_NOTIFICATION_TEMPLATE,
+  DEFAULT_SCHEDULED_MESSAGE_TEMPLATE,
+  TIMER_NOTIFICATION_TITLE,
+  SCHEDULED_MESSAGE_TITLE,
+  SCHEDULED_MESSAGE_DEFAULT_NAME,
+  GENERIC_NOTIFICATION_TITLE,
+  SPAWN_NOTIFICATION_FALLBACK_NAME,
+  TIMER_BEFORE_SPAWN_LABEL,
+  FALLBACK_NPC_NAME,
+  FALLBACK_WORLD_NAME,
+  timerMaxSpawnReached,
+  timerMaxSpawnIn,
+  timerMinSpawnReached,
+  timerMinSpawnIn,
+  scheduledMessageNotification,
+  ruleTestWithWorld,
+  ruleTestWithoutWorld,
+} from "src/notifications/constants/notification-messages.constant";
 import { GUILD_NOTIFICATION_TIMEZONE } from "src/notifications/constants/notification-schedule-timezone.constant";
-
-const DEFAULT_TIMER_NOTIFICATION_TEMPLATE = [
-  "## {{npcName}}",
-  "",
-  "Swiat: **{{world}}**",
-  "Okno spawnu: **{{minSpawnTime}} - {{maxSpawnTime}}**",
-  "Zaplanowana wysylka: **{{scheduledFor}}**",
-].join("\n");
-
-const DEFAULT_SCHEDULED_MESSAGE_TEMPLATE = [
-  "## {{ruleName}}",
-  "",
-  "Zaplanowana wysylka: **{{scheduledFor}}**",
-].join("\n");
+import { NotificationMatchingService } from "src/notifications/notification-matching.service";
 
 @Injectable()
 export class NotificationContentService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly matchingService: NotificationMatchingService,
+  ) {}
 
   buildTimerNotificationPayload(params: {
     notificationRule: {
@@ -72,7 +81,7 @@ export class NotificationContentService {
     });
 
     return {
-      title: "Nadchodzacy spawn",
+      title: TIMER_NOTIFICATION_TITLE,
       message,
       content,
       allowedMentions: this.buildAllowedMentionsForTarget(
@@ -113,8 +122,8 @@ export class NotificationContentService {
   }) {
     const ruleName = params.notificationRule.name?.trim().length
       ? params.notificationRule.name.trim()
-      : "Zaplanowana wiadomosc";
-    const message = `Zaplanowana wiadomosc "${ruleName}".`;
+      : SCHEDULED_MESSAGE_DEFAULT_NAME;
+    const message = scheduledMessageNotification(ruleName);
     const content = this.renderScheduledMessageContent({
       template:
         params.notificationRule.contentTemplate ??
@@ -126,7 +135,7 @@ export class NotificationContentService {
     });
 
     return {
-      title: "Zaplanowana wiadomosc",
+      title: SCHEDULED_MESSAGE_TITLE,
       message,
       content,
       allowedMentions: this.buildAllowedMentionsForTarget(
@@ -184,7 +193,7 @@ export class NotificationContentService {
     }
 
     return {
-      title: "Powiadomienie",
+      title: GENERIC_NOTIFICATION_TITLE,
       message: this.buildRuleTestNotificationMessage({
         ruleName: params.notificationRule.name,
         triggerType: params.notificationRule.triggerType,
@@ -202,6 +211,12 @@ export class NotificationContentService {
     } satisfies Prisma.InputJsonObject;
   }
 
+  /**
+   * Builds Discord allowedMentions based on rendered template content.
+   * Role mentions (<@&roleId>), @everyone, and @here found in templates are
+   * intentionally forwarded — guild admins control templates and are trusted
+   * to configure mentions. DM targets skip mentions entirely.
+   */
   buildAllowedMentionsForTarget(
     content: string,
     targetType: DbNotificationTargetType,
@@ -297,17 +312,25 @@ export class NotificationContentService {
 
     if (params.scheduleAnchor === DbNotificationScheduleAnchor.MAX_SPAWN) {
       if (params.scheduleOffsetMinutes === 0) {
-        return `${npcLabel} osiąga maksymalny czas spawnu na świecie ${params.world}.`;
+        return timerMaxSpawnReached(npcLabel, params.world);
       }
 
-      return `${npcLabel} osiągnie maksymalny czas spawnu na świecie ${params.world} za ${params.scheduleOffsetMinutes} min.`;
+      return timerMaxSpawnIn(
+        npcLabel,
+        params.world,
+        params.scheduleOffsetMinutes,
+      );
     }
 
     if (params.scheduleOffsetMinutes === 0) {
-      return `${npcLabel} osiąga minimalny czas spawnu na świecie ${params.world}.`;
+      return timerMinSpawnReached(npcLabel, params.world);
     }
 
-    return `${npcLabel} osiągnie minimalny czas spawnu na świecie ${params.world} za ${params.scheduleOffsetMinutes} min.`;
+    return timerMinSpawnIn(
+      npcLabel,
+      params.world,
+      params.scheduleOffsetMinutes,
+    );
   }
 
   private buildRuleTestNotificationMessage(params: {
@@ -318,16 +341,16 @@ export class NotificationContentService {
     const ruleLabel = params.ruleName?.trim().length
       ? params.ruleName.trim()
       : params.triggerType === DbNotificationTriggerType.TIMER_BEFORE_SPAWN
-        ? "Przypomnienie przed spawnem"
+        ? TIMER_BEFORE_SPAWN_LABEL
         : params.triggerType === DbNotificationTriggerType.SCHEDULED_MESSAGE
-          ? "Zaplanowana wiadomosc"
-          : "Powiadomienie";
+          ? SCHEDULED_MESSAGE_DEFAULT_NAME
+          : GENERIC_NOTIFICATION_TITLE;
 
     if (params.world) {
-      return `To jest test reguły "${ruleLabel}" dla świata ${params.world}.`;
+      return ruleTestWithWorld(ruleLabel, params.world);
     }
 
-    return `To jest test reguły "${ruleLabel}".`;
+    return ruleTestWithoutWorld(ruleLabel);
   }
 
   private renderTimerNotificationContent(params: {
@@ -343,7 +366,7 @@ export class NotificationContentService {
     const placeholderValues = {
       ruleName: params.notificationRuleName?.trim().length
         ? params.notificationRuleName.trim()
-        : "Powiadomienie o spawnie",
+        : SPAWN_NOTIFICATION_FALLBACK_NAME,
       npcName: params.npcName ?? `NPC #${params.npcId}`,
       npcId: String(params.npcId),
       world: params.world,
@@ -367,7 +390,7 @@ export class NotificationContentService {
     const placeholderValues = {
       ruleName: params.notificationRuleName?.trim().length
         ? params.notificationRuleName.trim()
-        : "Zaplanowana wiadomosc",
+        : SCHEDULED_MESSAGE_DEFAULT_NAME,
       scheduledFor: this.formatNotificationDate(
         params.scheduledFor,
         params.timeZone,
@@ -408,9 +431,11 @@ export class NotificationContentService {
         take: 50,
       });
 
-      const filters = this.parseFilters(notificationRule.filters);
       const matchingTimer = timers.find((timer) =>
-        this.matchesTimerFilters(filters, timer.npcId),
+        this.matchingService.matchesTimerRule(
+          notificationRule.filters,
+          timer.npcId,
+        ),
       );
 
       if (matchingTimer) {
@@ -431,7 +456,7 @@ export class NotificationContentService {
       }
     }
 
-    const filters = this.parseFilters(notificationRule.filters);
+    const filters = this.matchingService.parseFilters(notificationRule.filters);
     const fallbackNpcId = filters.npcId ?? filters.npcIds?.[0] ?? 0;
     const anchor = notificationRule.scheduleAnchor;
     const offsetMinutes = notificationRule.scheduleOffsetMinutes ?? 0;
@@ -448,40 +473,11 @@ export class NotificationContentService {
 
     return {
       npcId: fallbackNpcId,
-      npcName: fallbackNpcId > 0 ? null : "Wybrany NPC",
-      world: notificationRule.world ?? "Wybrany swiat",
+      npcName: fallbackNpcId > 0 ? null : FALLBACK_NPC_NAME,
+      world: notificationRule.world ?? FALLBACK_WORLD_NAME,
       timerKey: `test-${randomUUID()}`,
       minSpawnTime,
       maxSpawnTime,
     };
-  }
-
-  // Used internally for getTimerTestContext filter matching
-  private parseFilters(filtersValue: Prisma.JsonValue) {
-    if (
-      !filtersValue ||
-      typeof filtersValue !== "object" ||
-      Array.isArray(filtersValue)
-    ) {
-      return {} as Record<string, unknown>;
-    }
-
-    return filtersValue as Record<string, unknown>;
-  }
-
-  private matchesTimerFilters(filters: Record<string, unknown>, npcId: number) {
-    if (filters.npcId && filters.npcId !== npcId) {
-      return false;
-    }
-
-    if (
-      Array.isArray(filters.npcIds) &&
-      filters.npcIds.length > 0 &&
-      !filters.npcIds.includes(npcId)
-    ) {
-      return false;
-    }
-
-    return true;
   }
 }

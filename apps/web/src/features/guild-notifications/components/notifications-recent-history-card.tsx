@@ -10,7 +10,9 @@ import type { GuildNotificationJob } from "@/hooks/api/guilds/use-guild-notifica
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { ROUTES } from "@/config/routes";
 import {
+  getJobKindLabel,
   getJobStatusBadgeProps,
+  getJobStatusLabel,
   getNotificationTriggerTranslationKey,
 } from "../utils/notification-settings.utils";
 import { NotificationJobDetailDialog } from "./notification-job-detail-dialog";
@@ -31,19 +33,6 @@ export const NotificationsRecentHistoryCard = ({
   );
   const recentJobs = historyJobs.slice(0, RECENT_HISTORY_PREVIEW_COUNT);
 
-  const jobStatusLabels = {
-    PENDING: t("settings.notifications.jobStatuses.pending"),
-    PROCESSING: t("settings.notifications.jobStatuses.processing"),
-    SENT: t("settings.notifications.jobStatuses.sent"),
-    FAILED: t("settings.notifications.jobStatuses.failed"),
-    BLOCKED: t("settings.notifications.jobStatuses.blocked"),
-    CANCELED: t("settings.notifications.jobStatuses.canceled"),
-  } as const;
-  const jobKindLabels = {
-    SCHEDULED: t("settings.notifications.jobKinds.scheduled"),
-    INSTANT: t("settings.notifications.jobKinds.instant"),
-    TEST: t("settings.notifications.jobKinds.test"),
-  } as const;
   const openJobDetails = (job: GuildNotificationJob) => {
     setSelectedJob(job);
   };
@@ -92,14 +81,10 @@ export const NotificationsRecentHistoryCard = ({
                   </p>
                   <div className="flex shrink-0 gap-1.5">
                     <Badge {...getJobStatusBadgeProps(job.status)}>
-                      {
-                        jobStatusLabels[
-                          job.status as keyof typeof jobStatusLabels
-                        ]
-                      }
+                      {getJobStatusLabel(job.status, t)}
                     </Badge>
                     <Badge variant="secondary">
-                      {jobKindLabels[job.jobKind as keyof typeof jobKindLabels]}
+                      {getJobKindLabel(job.jobKind, t)}
                     </Badge>
                   </div>
                 </div>

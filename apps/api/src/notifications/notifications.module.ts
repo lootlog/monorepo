@@ -19,6 +19,7 @@ import { NotificationsDispatchProcessor } from "src/notifications/notifications-
 import { NotificationsEventsHandler } from "src/notifications/notifications-events.handler";
 import { NotificationsGuildController } from "src/notifications/notifications-guild.controller";
 import { NotificationsUserController } from "src/notifications/notifications-user.controller";
+import { WatchedItemService } from "src/notifications/watched-item.service";
 
 @Module({
   imports: [
@@ -43,11 +44,13 @@ import { NotificationsUserController } from "src/notifications/notifications-use
     NotificationTargetService,
     NotificationsEventsHandler,
     NotificationsDispatchProcessor,
+    WatchedItemService,
   ],
   exports: [
     NotificationTargetService,
     NotificationRuleService,
     NotificationJobService,
+    WatchedItemService,
   ],
 })
 export class NotificationsModule {}

@@ -17,6 +17,7 @@ export class CreatePartyGatheringDto {
   @IsArray()
   @IsNotEmpty()
   @IsString({ each: true })
+  @MaxLength(50, { each: true })
   @ArrayMaxSize(10)
   guildIds: string[];
 
