@@ -1,10 +1,9 @@
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { ApiProperty } from "@nestjs/swagger";
 import {
   ArrayNotEmpty,
   IsArray,
   IsInt,
   IsNotEmpty,
-  IsOptional,
   IsString,
 } from "class-validator";
 
@@ -17,11 +16,6 @@ export class CreateWatchedItemDto {
   @IsString()
   @IsNotEmpty()
   itemName: string;
-
-  @ApiPropertyOptional()
-  @IsString()
-  @IsOptional()
-  itemIcon?: string;
 
   @ApiProperty()
   @IsString()

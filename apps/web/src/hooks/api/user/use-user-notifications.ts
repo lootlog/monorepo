@@ -38,7 +38,6 @@ export type UserWatchedItem = {
   id: number;
   itemId: number;
   itemName: string;
-  itemIcon: string | null;
   itemSnapshot: UserWatchedItemSnapshot | null;
   world: string;
   enabled: boolean;

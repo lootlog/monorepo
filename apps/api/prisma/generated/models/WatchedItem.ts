@@ -43,7 +43,6 @@ export type WatchedItemMinAggregateOutputType = {
   userId: string | null
   itemId: number | null
   itemName: string | null
-  itemIcon: string | null
   world: string | null
   enabled: boolean | null
   notificationRuleId: number | null
@@ -56,7 +55,6 @@ export type WatchedItemMaxAggregateOutputType = {
   userId: string | null
   itemId: number | null
   itemName: string | null
-  itemIcon: string | null
   world: string | null
   enabled: boolean | null
   notificationRuleId: number | null
@@ -69,7 +67,6 @@ export type WatchedItemCountAggregateOutputType = {
   userId: number
   itemId: number
   itemName: number
-  itemIcon: number
   world: number
   enabled: number
   notificationRuleId: number
@@ -96,7 +93,6 @@ export type WatchedItemMinAggregateInputType = {
   userId?: true
   itemId?: true
   itemName?: true
-  itemIcon?: true
   world?: true
   enabled?: true
   notificationRuleId?: true
@@ -109,7 +105,6 @@ export type WatchedItemMaxAggregateInputType = {
   userId?: true
   itemId?: true
   itemName?: true
-  itemIcon?: true
   world?: true
   enabled?: true
   notificationRuleId?: true
@@ -122,7 +117,6 @@ export type WatchedItemCountAggregateInputType = {
   userId?: true
   itemId?: true
   itemName?: true
-  itemIcon?: true
   world?: true
   enabled?: true
   notificationRuleId?: true
@@ -222,7 +216,6 @@ export type WatchedItemGroupByOutputType = {
   userId: string
   itemId: number
   itemName: string
-  itemIcon: string | null
   world: string
   enabled: boolean
   notificationRuleId: number | null
@@ -258,7 +251,6 @@ export type WatchedItemWhereInput = {
   userId?: Prisma.StringFilter<"WatchedItem"> | string
   itemId?: Prisma.IntFilter<"WatchedItem"> | number
   itemName?: Prisma.StringFilter<"WatchedItem"> | string
-  itemIcon?: Prisma.StringNullableFilter<"WatchedItem"> | string | null
   world?: Prisma.StringFilter<"WatchedItem"> | string
   enabled?: Prisma.BoolFilter<"WatchedItem"> | boolean
   notificationRuleId?: Prisma.IntNullableFilter<"WatchedItem"> | number | null
@@ -272,7 +264,6 @@ export type WatchedItemOrderByWithRelationInput = {
   userId?: Prisma.SortOrder
   itemId?: Prisma.SortOrder
   itemName?: Prisma.SortOrder
-  itemIcon?: Prisma.SortOrderInput | Prisma.SortOrder
   world?: Prisma.SortOrder
   enabled?: Prisma.SortOrder
   notificationRuleId?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -291,7 +282,6 @@ export type WatchedItemWhereUniqueInput = Prisma.AtLeast<{
   userId?: Prisma.StringFilter<"WatchedItem"> | string
   itemId?: Prisma.IntFilter<"WatchedItem"> | number
   itemName?: Prisma.StringFilter<"WatchedItem"> | string
-  itemIcon?: Prisma.StringNullableFilter<"WatchedItem"> | string | null
   world?: Prisma.StringFilter<"WatchedItem"> | string
   enabled?: Prisma.BoolFilter<"WatchedItem"> | boolean
   createdAt?: Prisma.DateTimeFilter<"WatchedItem"> | Date | string
@@ -304,7 +294,6 @@ export type WatchedItemOrderByWithAggregationInput = {
   userId?: Prisma.SortOrder
   itemId?: Prisma.SortOrder
   itemName?: Prisma.SortOrder
-  itemIcon?: Prisma.SortOrderInput | Prisma.SortOrder
   world?: Prisma.SortOrder
   enabled?: Prisma.SortOrder
   notificationRuleId?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -325,7 +314,6 @@ export type WatchedItemScalarWhereWithAggregatesInput = {
   userId?: Prisma.StringWithAggregatesFilter<"WatchedItem"> | string
   itemId?: Prisma.IntWithAggregatesFilter<"WatchedItem"> | number
   itemName?: Prisma.StringWithAggregatesFilter<"WatchedItem"> | string
-  itemIcon?: Prisma.StringNullableWithAggregatesFilter<"WatchedItem"> | string | null
   world?: Prisma.StringWithAggregatesFilter<"WatchedItem"> | string
   enabled?: Prisma.BoolWithAggregatesFilter<"WatchedItem"> | boolean
   notificationRuleId?: Prisma.IntNullableWithAggregatesFilter<"WatchedItem"> | number | null
@@ -337,7 +325,6 @@ export type WatchedItemCreateInput = {
   userId: string
   itemId: number
   itemName: string
-  itemIcon?: string | null
   world: string
   enabled?: boolean
   createdAt?: Date | string
@@ -350,7 +337,6 @@ export type WatchedItemUncheckedCreateInput = {
   userId: string
   itemId: number
   itemName: string
-  itemIcon?: string | null
   world: string
   enabled?: boolean
   notificationRuleId?: number | null
@@ -362,7 +348,6 @@ export type WatchedItemUpdateInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   itemId?: Prisma.IntFieldUpdateOperationsInput | number
   itemName?: Prisma.StringFieldUpdateOperationsInput | string
-  itemIcon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   world?: Prisma.StringFieldUpdateOperationsInput | string
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -375,7 +360,6 @@ export type WatchedItemUncheckedUpdateInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   itemId?: Prisma.IntFieldUpdateOperationsInput | number
   itemName?: Prisma.StringFieldUpdateOperationsInput | string
-  itemIcon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   world?: Prisma.StringFieldUpdateOperationsInput | string
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notificationRuleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -388,7 +372,6 @@ export type WatchedItemCreateManyInput = {
   userId: string
   itemId: number
   itemName: string
-  itemIcon?: string | null
   world: string
   enabled?: boolean
   notificationRuleId?: number | null
@@ -400,7 +383,6 @@ export type WatchedItemUpdateManyMutationInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   itemId?: Prisma.IntFieldUpdateOperationsInput | number
   itemName?: Prisma.StringFieldUpdateOperationsInput | string
-  itemIcon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   world?: Prisma.StringFieldUpdateOperationsInput | string
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -412,7 +394,6 @@ export type WatchedItemUncheckedUpdateManyInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   itemId?: Prisma.IntFieldUpdateOperationsInput | number
   itemName?: Prisma.StringFieldUpdateOperationsInput | string
-  itemIcon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   world?: Prisma.StringFieldUpdateOperationsInput | string
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notificationRuleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -441,7 +422,6 @@ export type WatchedItemCountOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   itemId?: Prisma.SortOrder
   itemName?: Prisma.SortOrder
-  itemIcon?: Prisma.SortOrder
   world?: Prisma.SortOrder
   enabled?: Prisma.SortOrder
   notificationRuleId?: Prisma.SortOrder
@@ -460,7 +440,6 @@ export type WatchedItemMaxOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   itemId?: Prisma.SortOrder
   itemName?: Prisma.SortOrder
-  itemIcon?: Prisma.SortOrder
   world?: Prisma.SortOrder
   enabled?: Prisma.SortOrder
   notificationRuleId?: Prisma.SortOrder
@@ -473,7 +452,6 @@ export type WatchedItemMinOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   itemId?: Prisma.SortOrder
   itemName?: Prisma.SortOrder
-  itemIcon?: Prisma.SortOrder
   world?: Prisma.SortOrder
   enabled?: Prisma.SortOrder
   notificationRuleId?: Prisma.SortOrder
@@ -533,7 +511,6 @@ export type WatchedItemCreateWithoutNotificationRuleInput = {
   userId: string
   itemId: number
   itemName: string
-  itemIcon?: string | null
   world: string
   enabled?: boolean
   createdAt?: Date | string
@@ -545,7 +522,6 @@ export type WatchedItemUncheckedCreateWithoutNotificationRuleInput = {
   userId: string
   itemId: number
   itemName: string
-  itemIcon?: string | null
   world: string
   enabled?: boolean
   createdAt?: Date | string
@@ -586,7 +562,6 @@ export type WatchedItemScalarWhereInput = {
   userId?: Prisma.StringFilter<"WatchedItem"> | string
   itemId?: Prisma.IntFilter<"WatchedItem"> | number
   itemName?: Prisma.StringFilter<"WatchedItem"> | string
-  itemIcon?: Prisma.StringNullableFilter<"WatchedItem"> | string | null
   world?: Prisma.StringFilter<"WatchedItem"> | string
   enabled?: Prisma.BoolFilter<"WatchedItem"> | boolean
   notificationRuleId?: Prisma.IntNullableFilter<"WatchedItem"> | number | null
@@ -599,7 +574,6 @@ export type WatchedItemCreateManyNotificationRuleInput = {
   userId: string
   itemId: number
   itemName: string
-  itemIcon?: string | null
   world: string
   enabled?: boolean
   createdAt?: Date | string
@@ -610,7 +584,6 @@ export type WatchedItemUpdateWithoutNotificationRuleInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   itemId?: Prisma.IntFieldUpdateOperationsInput | number
   itemName?: Prisma.StringFieldUpdateOperationsInput | string
-  itemIcon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   world?: Prisma.StringFieldUpdateOperationsInput | string
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -622,7 +595,6 @@ export type WatchedItemUncheckedUpdateWithoutNotificationRuleInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   itemId?: Prisma.IntFieldUpdateOperationsInput | number
   itemName?: Prisma.StringFieldUpdateOperationsInput | string
-  itemIcon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   world?: Prisma.StringFieldUpdateOperationsInput | string
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -634,7 +606,6 @@ export type WatchedItemUncheckedUpdateManyWithoutNotificationRuleInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   itemId?: Prisma.IntFieldUpdateOperationsInput | number
   itemName?: Prisma.StringFieldUpdateOperationsInput | string
-  itemIcon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   world?: Prisma.StringFieldUpdateOperationsInput | string
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -648,7 +619,6 @@ export type WatchedItemSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   userId?: boolean
   itemId?: boolean
   itemName?: boolean
-  itemIcon?: boolean
   world?: boolean
   enabled?: boolean
   notificationRuleId?: boolean
@@ -662,7 +632,6 @@ export type WatchedItemSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   userId?: boolean
   itemId?: boolean
   itemName?: boolean
-  itemIcon?: boolean
   world?: boolean
   enabled?: boolean
   notificationRuleId?: boolean
@@ -676,7 +645,6 @@ export type WatchedItemSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   userId?: boolean
   itemId?: boolean
   itemName?: boolean
-  itemIcon?: boolean
   world?: boolean
   enabled?: boolean
   notificationRuleId?: boolean
@@ -690,7 +658,6 @@ export type WatchedItemSelectScalar = {
   userId?: boolean
   itemId?: boolean
   itemName?: boolean
-  itemIcon?: boolean
   world?: boolean
   enabled?: boolean
   notificationRuleId?: boolean
@@ -698,7 +665,7 @@ export type WatchedItemSelectScalar = {
   updatedAt?: boolean
 }
 
-export type WatchedItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "itemId" | "itemName" | "itemIcon" | "world" | "enabled" | "notificationRuleId" | "createdAt" | "updatedAt", ExtArgs["result"]["watchedItem"]>
+export type WatchedItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "itemId" | "itemName" | "world" | "enabled" | "notificationRuleId" | "createdAt" | "updatedAt", ExtArgs["result"]["watchedItem"]>
 export type WatchedItemInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   notificationRule?: boolean | Prisma.WatchedItem$notificationRuleArgs<ExtArgs>
 }
@@ -719,7 +686,6 @@ export type $WatchedItemPayload<ExtArgs extends runtime.Types.Extensions.Interna
     userId: string
     itemId: number
     itemName: string
-    itemIcon: string | null
     world: string
     enabled: boolean
     notificationRuleId: number | null
@@ -1153,7 +1119,6 @@ export interface WatchedItemFieldRefs {
   readonly userId: Prisma.FieldRef<"WatchedItem", 'String'>
   readonly itemId: Prisma.FieldRef<"WatchedItem", 'Int'>
   readonly itemName: Prisma.FieldRef<"WatchedItem", 'String'>
-  readonly itemIcon: Prisma.FieldRef<"WatchedItem", 'String'>
   readonly world: Prisma.FieldRef<"WatchedItem", 'String'>
   readonly enabled: Prisma.FieldRef<"WatchedItem", 'Boolean'>
   readonly notificationRuleId: Prisma.FieldRef<"WatchedItem", 'Int'>
