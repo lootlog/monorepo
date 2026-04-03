@@ -17,6 +17,7 @@ type GuildWatchedItemsContextValue = {
   ) => Promise<UserWatchedItem>;
   hasWatchedItem: (itemId: number, world: string) => boolean;
   isItemWatchedInScope: (itemId: number, scope: WatchedItemScope) => boolean;
+  getWatchedItemId: (itemId: number, scope: WatchedItemScope) => number | null;
 };
 
 const getWatchedItemGuildIds = (watchedItem: UserWatchedItem): string[] =>
@@ -63,6 +64,13 @@ export const GuildWatchedItemsProvider = ({ children }: PropsWithChildren) => {
               watchedItem.world === scope.world &&
               getWatchedItemGuildIds(watchedItem).includes(scope.guildId),
           ),
+        getWatchedItemId: (itemId, scope) =>
+          watchedItems.find(
+            (watchedItem) =>
+              watchedItem.itemId === itemId &&
+              watchedItem.world === scope.world &&
+              getWatchedItemGuildIds(watchedItem).includes(scope.guildId),
+          )?.id ?? null,
       }}
     >
       {children}

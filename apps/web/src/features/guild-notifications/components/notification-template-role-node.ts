@@ -40,9 +40,7 @@ export class NotificationTemplateRoleNode extends TextNode {
     return clone;
   }
 
-  static importJSON(
-    serializedNode: SerializedNotificationTemplateRoleNode,
-  ) {
+  static importJSON(serializedNode: SerializedNotificationTemplateRoleNode) {
     return new NotificationTemplateRoleNode(
       serializedNode.roleId,
       serializedNode.label,
@@ -67,11 +65,7 @@ export class NotificationTemplateRoleNode extends TextNode {
     return element;
   }
 
-  updateDOM(
-    prevNode: this,
-    dom: HTMLElement,
-    config: EditorConfig,
-  ) {
+  updateDOM(prevNode: this, dom: HTMLElement, config: EditorConfig) {
     const hasUpdated = super.updateDOM(prevNode, dom, config);
 
     if (
@@ -95,9 +89,7 @@ export class NotificationTemplateRoleNode extends TextNode {
     };
   }
 
-  updateFromJSON(
-    serializedNode: SerializedNotificationTemplateRoleNode,
-  ) {
+  updateFromJSON(serializedNode: SerializedNotificationTemplateRoleNode) {
     return super
       .updateFromJSON(serializedNode)
       .setTextContent(serializedNode.label)
