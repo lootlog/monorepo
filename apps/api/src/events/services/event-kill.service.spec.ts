@@ -1048,7 +1048,7 @@ describe("EventKillService", () => {
     it("should calculate tracking duration only within current window", async () => {
       jest.useFakeTimers();
       const killedAt = new Date("2026-02-18T06:08:31.185Z");
-      jest.setSystemTime(killedAt);
+      jest.setSystemTime(killedAt.getTime());
 
       const windowOpenedAt = new Date("2026-02-18T06:08:25.185Z");
       const timerDataInWindow = {
@@ -1145,7 +1145,7 @@ describe("EventKillService", () => {
     it("should calculate tracking duration percentage from min spawn to kill", async () => {
       jest.useFakeTimers();
       const killedAt = new Date("2026-02-20T05:27:46.133Z");
-      jest.setSystemTime(killedAt);
+      jest.setSystemTime(killedAt.getTime());
 
       const timerDataInWindow = {
         ...timerData,
@@ -1233,7 +1233,7 @@ describe("EventKillService", () => {
     it("should clamp tracking duration to min spawn when member assigned before min spawn", async () => {
       jest.useFakeTimers();
       const killedAt = new Date("2026-02-20T05:27:46.133Z");
-      jest.setSystemTime(killedAt);
+      jest.setSystemTime(killedAt.getTime());
 
       const timerDataInWindow = {
         ...timerData,
@@ -1321,7 +1321,7 @@ describe("EventKillService", () => {
     it("should not double count tracking duration for overlapping assignments on multiple maps", async () => {
       jest.useFakeTimers();
       const killedAt = new Date("2026-02-18T06:10:00.000Z");
-      jest.setSystemTime(killedAt);
+      jest.setSystemTime(killedAt.getTime());
 
       const windowOpenedAt = new Date("2026-02-18T06:00:00.000Z");
       const timerDataInWindow = {
@@ -1420,7 +1420,7 @@ describe("EventKillService", () => {
     it("should exclude real gaps between map switches from tracking duration", async () => {
       jest.useFakeTimers();
       const killedAt = new Date("2026-02-18T06:10:00.000Z");
-      jest.setSystemTime(killedAt);
+      jest.setSystemTime(killedAt.getTime());
 
       const windowOpenedAt = new Date("2026-02-18T06:00:00.000Z");
       const timerDataInWindow = {
@@ -1510,7 +1510,7 @@ describe("EventKillService", () => {
     it("should keep tracking duration continuous when map switch has no gap", async () => {
       jest.useFakeTimers();
       const killedAt = new Date("2026-02-18T06:10:00.000Z");
-      jest.setSystemTime(killedAt);
+      jest.setSystemTime(killedAt.getTime());
 
       const windowOpenedAt = new Date("2026-02-18T06:00:00.000Z");
       const timerDataInWindow = {
@@ -1600,7 +1600,7 @@ describe("EventKillService", () => {
     it("should keep tracking duration percentage null when window duration is zero", async () => {
       jest.useFakeTimers();
       const killedAt = new Date("2026-02-18T06:08:31.185Z");
-      jest.setSystemTime(killedAt);
+      jest.setSystemTime(killedAt.getTime());
 
       const timerDataZeroWindow = {
         ...timerData,

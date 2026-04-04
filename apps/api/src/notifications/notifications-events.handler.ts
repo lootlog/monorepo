@@ -164,7 +164,9 @@ export class NotificationsEventsHandler {
     );
     const guildNamesMap = new Map(guilds.map((g) => [g.id, g.name]));
 
-    const hasNpcData = event.npcType != null || event.npcLvl != null;
+    const hasNpcData =
+      (event.npcType !== null && event.npcType !== undefined) ||
+      (event.npcLvl !== null && event.npcLvl !== undefined);
 
     const membershipsByOwner = hasNpcData
       ? await this.matchingService.getActiveMembershipsWithRoles(

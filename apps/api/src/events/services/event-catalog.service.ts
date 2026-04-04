@@ -12,8 +12,10 @@ import { EventPointsService } from "src/events/services/event-points.service";
 import { EventTrackingService } from "src/events/services/event-tracking.service";
 import { TIMER_TYPES } from "src/timers/constants/timer-limits";
 import { getEventWrappedCacheKey } from "src/shared/constants/cache.constant";
-import { DEFAULT_ADVANCED_EVENT_SCORING_RULES } from "../constants/scoring-rules.constant";
-import type { EventScoringMode } from "../constants/scoring-rules.constant";
+import {
+  DEFAULT_ADVANCED_EVENT_SCORING_RULES,
+  type EventScoringMode,
+} from "../constants/scoring-rules.constant";
 import { CreateEventDto } from "../dto/create-event.dto";
 import { CreateHeroDto } from "../dto/create-hero.dto";
 import { CreateLocationDto } from "../dto/create-location.dto";

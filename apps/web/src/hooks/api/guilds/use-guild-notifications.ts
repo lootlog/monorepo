@@ -1,18 +1,18 @@
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { apiClient } from "@/lib/api-client/api-client";
-import type {
-  DiscordGuildChannelSnapshot,
-  DiscordGuildSyncState,
-  NotificationFilters,
-  NotificationJobKind,
-  NotificationScheduleAnchor,
-  NotificationScheduleIntervalType,
-  NotificationScheduleStrategy,
-  NotificationJobStatus,
-  NotificationTargetType,
-  NotificationTriggerType,
+import {
+  NotificationTargetType as NotificationTargetTypeEnum,
+  type DiscordGuildChannelSnapshot,
+  type DiscordGuildSyncState,
+  type NotificationFilters,
+  type NotificationJobKind,
+  type NotificationScheduleAnchor,
+  type NotificationScheduleIntervalType,
+  type NotificationScheduleStrategy,
+  type NotificationJobStatus,
+  type NotificationTargetType,
+  type NotificationTriggerType,
 } from "@lootlog/types";
-import { NotificationTargetType as NotificationTargetTypeEnum } from "@lootlog/types";
 import {
   type QueryClient,
   queryOptions,

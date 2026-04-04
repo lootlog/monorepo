@@ -4,10 +4,9 @@ import type { WatchedItemScope } from "@/features/user-notifications/types/watch
 import { ItemRarity, type Item } from "@/hooks/api/loots/use-loots";
 import { cn } from "@lootlog/ui/lib/utils";
 import { AnimatePresence } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type FC } from "react";
 import { ItemStackBadge } from "@/features/guild/components/loots-list/item-stack-badge";
 import { ItemStackExpanded } from "@/features/guild/components/loots-list/item-stack-expanded";
-import type { FC } from "react";
 
 const RARITY_PRIORITY: Record<ItemRarity, number> = {
   [ItemRarity.LEGENDARY]: 4,

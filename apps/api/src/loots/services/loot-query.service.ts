@@ -751,17 +751,17 @@ export class LootQueryService {
     min?: number | null,
     max?: number | null,
   ): Prisma.IntNullableFilter | null {
-    if (min == null && max == null) {
+    if (min === undefined && max === undefined) {
       return null;
     }
 
     const rangeFilter: Prisma.IntNullableFilter = {};
 
-    if (min != null) {
+    if (min !== undefined && min !== null) {
       rangeFilter.gte = min;
     }
 
-    if (max != null) {
+    if (max !== undefined && max !== null) {
       rangeFilter.lte = max;
     }
 
@@ -772,17 +772,17 @@ export class LootQueryService {
     min?: string,
     max?: string,
   ): Prisma.DateTimeFilter | null {
-    if (min == null && max == null) {
+    if (min === undefined && max === undefined) {
       return null;
     }
 
     const rangeFilter: Prisma.DateTimeFilter = {};
 
-    if (min != null) {
+    if (min !== undefined) {
       rangeFilter.gte = new Date(min);
     }
 
-    if (max != null) {
+    if (max !== undefined) {
       rangeFilter.lte = new Date(max);
     }
 
