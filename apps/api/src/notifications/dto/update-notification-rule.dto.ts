@@ -22,6 +22,7 @@ import {
   ValidateIf,
 } from "class-validator";
 import { Error } from "src/notifications/enum/error.enum";
+import { swaggerStringEnum } from "src/shared/swagger/prisma-enum";
 import { HasAtLeastOneNpc } from "./has-at-least-one-npc.validator";
 
 @HasAtLeastOneNpc()
@@ -38,7 +39,9 @@ export class UpdateNotificationRuleDto {
   @MaxLength(4000)
   contentTemplate?: string | null;
 
-  @ApiPropertyOptional({ enum: NotificationTriggerType })
+  @ApiPropertyOptional(
+    swaggerStringEnum("NotificationTriggerType", NotificationTriggerType),
+  )
   @IsOptional()
   @IsEnum(NotificationTriggerType)
   triggerType?: NotificationTriggerType;
@@ -74,12 +77,19 @@ export class UpdateNotificationRuleDto {
   @IsInt({ each: true })
   itemIds?: number[];
 
-  @ApiPropertyOptional({ enum: NotificationScheduleStrategy })
+  @ApiPropertyOptional(
+    swaggerStringEnum(
+      "NotificationScheduleStrategy",
+      NotificationScheduleStrategy,
+    ),
+  )
   @IsOptional()
   @IsEnum(NotificationScheduleStrategy)
   scheduleStrategy?: NotificationScheduleStrategy;
 
-  @ApiPropertyOptional({ enum: NotificationScheduleAnchor })
+  @ApiPropertyOptional(
+    swaggerStringEnum("NotificationScheduleAnchor", NotificationScheduleAnchor),
+  )
   @IsOptional()
   @IsEnum(NotificationScheduleAnchor)
   scheduleAnchor?: NotificationScheduleAnchor;
@@ -96,7 +106,12 @@ export class UpdateNotificationRuleDto {
   @IsDateString()
   scheduledAt?: string;
 
-  @ApiPropertyOptional({ enum: NotificationScheduleIntervalType })
+  @ApiPropertyOptional(
+    swaggerStringEnum(
+      "NotificationScheduleIntervalType",
+      NotificationScheduleIntervalType,
+    ),
+  )
   @IsOptional()
   @IsEnum(NotificationScheduleIntervalType)
   scheduleIntervalType?: NotificationScheduleIntervalType;

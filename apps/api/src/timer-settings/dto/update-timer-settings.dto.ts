@@ -13,7 +13,7 @@ import {
 import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 
-class TimersGeneralConfigDto {
+export class TimersGeneralConfigDto {
   @ApiProperty({
     description: "Time in milliseconds to auto-remove expired timers",
     example: 30000,
@@ -63,7 +63,7 @@ class TimersGeneralConfigDto {
   countdownMode?: "min" | "max";
 }
 
-class TimersDisplayConfigDto {
+export class TimersDisplayConfigDto {
   @ApiProperty({
     description: "Show NPC type badge",
     example: true,

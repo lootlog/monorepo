@@ -8,7 +8,7 @@ import {
 } from "class-validator";
 import { Type } from "class-transformer";
 
-class MapItemDto {
+export class MapItemDto {
   @ApiProperty({ description: "Map ID" })
   @IsInt()
   id: number;

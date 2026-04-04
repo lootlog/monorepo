@@ -12,11 +12,17 @@ import {
   ApiTags,
   ApiBearerAuth,
   ApiOperation,
+  ApiQuery,
   ApiResponse,
   ApiParam,
 } from "@nestjs/swagger";
 import { plainToInstance } from "class-transformer";
-import { Guild, NpcType, Permission, type Role } from "src/generated/prisma/client";
+import {
+  Guild,
+  NpcType,
+  Permission,
+  type Role,
+} from "src/generated/prisma/client";
 import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";
 import { MemberRoles } from "src/shared/decorators/member-roles.decorator";
 import { AuthGuard } from "src/shared/guards/auth.guard";
@@ -168,6 +174,15 @@ export class KillsController {
   @ApiResponse({
     status: 403,
     description: "Forbidden - insufficient permissions",
+  })
+  @ApiQuery({
+    name: "npcType",
+    required: false,
+    description: "NPC type filter",
+    example: "HERO",
+    type: String,
+    enum: Object.values(NpcType),
+    enumName: "NpcType",
   })
   async getGuildTopNpcs(
     @MemberPermissions() permissions: Permission[],

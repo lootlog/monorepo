@@ -13,7 +13,7 @@ import { ApiProperty } from "@nestjs/swagger";
 import { NpcDto } from "src/loots/dto/create-loot.dto";
 import { Type } from "class-transformer";
 
-class PartyGatheringDataDto {
+export class PartyGatheringDataDto {
   @IsString()
   @IsNotEmpty()
   notificationId: string;
@@ -45,7 +45,7 @@ class PartyGatheringDataDto {
   world: string;
 }
 
-class ChatCharacterDataDto {
+export class ChatCharacterDataDto {
   @IsString()
   @IsNotEmpty()
   nick: string;
