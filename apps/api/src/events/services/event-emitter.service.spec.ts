@@ -8,11 +8,11 @@ describe("EventEmitterService", () => {
   let service: EventEmitterService;
 
   const mockAmqpConnection = {
-    publish: jest.fn(),
+    publish: vi.fn(),
   };
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [

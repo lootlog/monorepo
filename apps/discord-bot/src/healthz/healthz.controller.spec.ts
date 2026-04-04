@@ -27,7 +27,7 @@ describe("HealthzController", () => {
     });
 
     it("should call healthzService.healthCheck", () => {
-      const healthCheckSpy = jest.spyOn(service, "healthCheck");
+      const healthCheckSpy = vi.spyOn(service, "healthCheck");
       controller.healthCheck();
       expect(healthCheckSpy).toHaveBeenCalled();
     });

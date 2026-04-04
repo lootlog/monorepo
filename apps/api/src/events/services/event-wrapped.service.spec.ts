@@ -10,29 +10,29 @@ describe("EventWrappedService", () => {
 
   const mockPrismaService = {
     event: {
-      findFirst: jest.fn(),
+      findFirst: vi.fn(),
     },
     eventRanking: {
-      findMany: jest.fn(),
+      findMany: vi.fn(),
     },
     eventHeroKill: {
-      findMany: jest.fn(),
+      findMany: vi.fn(),
     },
     eventRespawnWindowSummary: {
-      findMany: jest.fn(),
+      findMany: vi.fn(),
     },
     eventMapAssignmentHistory: {
-      findMany: jest.fn(),
+      findMany: vi.fn(),
     },
   };
 
   const mockRedisService = {
-    get: jest.fn(),
-    set: jest.fn(),
+    get: vi.fn(),
+    set: vi.fn(),
   };
 
   const mockLootsService = {
-    fetchLootsByGuildId: jest.fn(),
+    fetchLootsByGuildId: vi.fn(),
   };
 
   const guild = {
@@ -41,7 +41,7 @@ describe("EventWrappedService", () => {
   } as Guild;
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [

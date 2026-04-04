@@ -1,3 +1,4 @@
+import type { Mocked } from "vitest";
 import { Test, type TestingModule } from "@nestjs/testing";
 import {
   BadRequestException,
@@ -34,10 +35,10 @@ import {
 describe("MembersService", () => {
   let service: MembersService;
   let prismaService: any;
-  let discordService: jest.Mocked<DiscordService>;
-  let _rateLimiter: jest.Mocked<DiscordRateLimiterService>;
-  let _refreshScheduler: jest.Mocked<MemberRefreshSchedulerService>;
-  let amqpConnection: jest.Mocked<AmqpConnection>;
+  let discordService: Mocked<DiscordService>;
+  let _rateLimiter: Mocked<DiscordRateLimiterService>;
+  let _refreshScheduler: Mocked<MemberRefreshSchedulerService>;
+  let amqpConnection: Mocked<AmqpConnection>;
 
   const mockGuild: Guild = {
     id: "guild-123",
@@ -88,50 +89,50 @@ describe("MembersService", () => {
   beforeEach(async () => {
     const mockPrismaService = {
       member: {
-        findUnique: jest.fn(),
-        findMany: jest.fn(),
-        upsert: jest.fn(),
-        update: jest.fn(),
-        updateMany: jest.fn(),
+        findUnique: vi.fn(),
+        findMany: vi.fn(),
+        upsert: vi.fn(),
+        update: vi.fn(),
+        updateMany: vi.fn(),
       },
       guild: {
-        findFirst: jest.fn(),
+        findFirst: vi.fn(),
       },
       role: {
-        findMany: jest.fn(),
+        findMany: vi.fn(),
       },
       memberRefreshJob: {
-        findFirst: jest.fn(),
-        findUnique: jest.fn(),
-        create: jest.fn(),
-        update: jest.fn(),
+        findFirst: vi.fn(),
+        findUnique: vi.fn(),
+        create: vi.fn(),
+        update: vi.fn(),
       },
     };
 
     const mockDiscordService = {
-      getGuildMember: jest.fn(),
+      getGuildMember: vi.fn(),
     };
 
     const mockRateLimiter = {
-      getNextAvailableAtForUser: jest.fn().mockResolvedValue(null),
+      getNextAvailableAtForUser: vi.fn().mockResolvedValue(null),
     };
 
     const mockRefreshScheduler = {
-      enqueueRefresh: jest.fn().mockResolvedValue({
+      enqueueRefresh: vi.fn().mockResolvedValue({
         queued: true,
         nextRefreshAt: new Date(Date.now() + 5000),
       }),
-      isUserRefreshLocked: jest.fn().mockResolvedValue(false),
-      acquireUserRefreshLock: jest.fn().mockResolvedValue(true),
-      releaseUserRefreshLock: jest.fn(),
+      isUserRefreshLocked: vi.fn().mockResolvedValue(false),
+      acquireUserRefreshLock: vi.fn().mockResolvedValue(true),
+      releaseUserRefreshLock: vi.fn(),
     };
 
     const mockAmqpConnection = {
-      publish: jest.fn(),
+      publish: vi.fn(),
     };
 
     const mockConfigService = {
-      get: jest.fn((key: string) => {
+      get: vi.fn((key: string) => {
         if (key === ConfigKey.SERVICE) {
           return { env: RuntimeEnvironment.LOCAL };
         }
@@ -140,17 +141,17 @@ describe("MembersService", () => {
     };
 
     const mockLogger = {
-      log: jest.fn(),
-      error: jest.fn(),
-      warn: jest.fn(),
-      debug: jest.fn(),
+      log: vi.fn(),
+      error: vi.fn(),
+      warn: vi.fn(),
+      debug: vi.fn(),
     };
 
     const mockRedisService = {
-      get: jest.fn(),
-      set: jest.fn(),
-      del: jest.fn(),
-      deleteByPattern: jest.fn(),
+      get: vi.fn(),
+      set: vi.fn(),
+      del: vi.fn(),
+      deleteByPattern: vi.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -178,14 +179,14 @@ describe("MembersService", () => {
     amqpConnection = module.get(AmqpConnection);
 
     // Suppress logger output
-    jest.spyOn(service["logger"], "warn").mockImplementation();
-    jest.spyOn(service["logger"], "debug").mockImplementation();
-    jest.spyOn(service["logger"], "error").mockImplementation();
-    jest.spyOn(service["logger"], "log").mockImplementation();
+    vi.spyOn(service["logger"], "warn").mockImplementation();
+    vi.spyOn(service["logger"], "debug").mockImplementation();
+    vi.spyOn(service["logger"], "error").mockImplementation();
+    vi.spyOn(service["logger"], "log").mockImplementation();
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("constructor", () => {
@@ -218,9 +219,9 @@ describe("MembersService", () => {
 
     it("should use the threshold helper when checking soft staleness", () => {
       const threshold = new Date("2026-03-10T10:00:00.000Z");
-      jest
-        .spyOn(service, "getMemberSoftStaleThreshold")
-        .mockReturnValue(threshold);
+      vi.spyOn(service, "getMemberSoftStaleThreshold").mockReturnValue(
+        threshold,
+      );
 
       expect(
         service.isMemberSoftStale({

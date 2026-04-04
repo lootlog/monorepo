@@ -1,3 +1,4 @@
+import type { Mock } from "vitest";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { BadRequestException, ForbiddenException } from "@nestjs/common";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
@@ -33,51 +34,51 @@ describe("LootsService", () => {
   let service: LootsService;
   let prismaService: {
     loot: {
-      findUnique: jest.Mock;
-      create: jest.Mock;
-      update: jest.Mock;
-      findFirst: jest.Mock;
-      findMany: jest.Mock;
+      findUnique: Mock;
+      create: Mock;
+      update: Mock;
+      findFirst: Mock;
+      findMany: Mock;
     };
     lootSubmission: {
-      createMany: jest.Mock;
-      upsert: jest.Mock;
-      deleteMany: jest.Mock;
-      findMany: jest.Mock;
+      createMany: Mock;
+      upsert: Mock;
+      deleteMany: Mock;
+      findMany: Mock;
     };
     lootComment: {
-      create: jest.Mock;
-      findMany: jest.Mock;
-      groupBy: jest.Mock;
+      create: Mock;
+      findMany: Mock;
+      groupBy: Mock;
     };
     member: {
-      findMany: jest.Mock;
+      findMany: Mock;
     };
-    $queryRaw: jest.Mock;
+    $queryRaw: Mock;
   };
   let playersService: {
-    bulkIndexPlayers: jest.Mock;
+    bulkIndexPlayers: Mock;
   };
   let npcsService: {
-    bulkIndexNpcs: jest.Mock;
+    bulkIndexNpcs: Mock;
   };
   let _itemsService: {
-    bulkIndexItems: jest.Mock;
+    bulkIndexItems: Mock;
   };
   let guildsService: {
-    getGuildsForRequiredPermissions: jest.Mock;
+    getGuildsForRequiredPermissions: Mock;
   };
   let lootlogConfigService: {
-    getMultipleLootlogConfigs: jest.Mock;
+    getMultipleLootlogConfigs: Mock;
   };
   let userLootlogConfigService: {
-    getLootlogCharacterConfig: jest.Mock;
+    getLootlogCharacterConfig: Mock;
   };
   let _redisService: {
-    getClient: jest.Mock;
-    get: jest.Mock;
-    del: jest.Mock;
-    set: jest.Mock;
+    getClient: Mock;
+    get: Mock;
+    del: Mock;
+    set: Mock;
   };
 
   const mockGuild: Guild = {
@@ -142,70 +143,70 @@ describe("LootsService", () => {
   beforeEach(async () => {
     const mockPrismaService = {
       loot: {
-        findUnique: jest.fn(),
-        create: jest.fn(),
-        update: jest.fn(),
-        findFirst: jest.fn(),
-        findMany: jest.fn(),
+        findUnique: vi.fn(),
+        create: vi.fn(),
+        update: vi.fn(),
+        findFirst: vi.fn(),
+        findMany: vi.fn(),
       },
       lootSubmission: {
-        createMany: jest.fn(),
-        upsert: jest.fn(),
-        deleteMany: jest.fn(),
-        findMany: jest.fn(),
+        createMany: vi.fn(),
+        upsert: vi.fn(),
+        deleteMany: vi.fn(),
+        findMany: vi.fn(),
       },
       lootComment: {
-        create: jest.fn(),
-        findMany: jest.fn(),
-        groupBy: jest.fn(),
+        create: vi.fn(),
+        findMany: vi.fn(),
+        groupBy: vi.fn(),
       },
       member: {
-        findMany: jest.fn(),
+        findMany: vi.fn(),
       },
-      $queryRaw: jest.fn(),
+      $queryRaw: vi.fn(),
     };
 
     const mockPlayersService = {
-      bulkIndexPlayers: jest.fn(),
+      bulkIndexPlayers: vi.fn(),
     };
 
     const mockNpcsService = {
-      bulkIndexNpcs: jest.fn(),
+      bulkIndexNpcs: vi.fn(),
     };
 
     const mockItemsService = {
-      bulkIndexItems: jest.fn(),
+      bulkIndexItems: vi.fn(),
     };
 
     const mockGuildsService = {
-      getGuildsForRequiredPermissions: jest.fn(),
+      getGuildsForRequiredPermissions: vi.fn(),
     };
 
     const mockLootlogConfigService = {
-      getMultipleLootlogConfigs: jest.fn(),
+      getMultipleLootlogConfigs: vi.fn(),
     };
 
     const mockUserLootlogConfigService = {
-      getLootlogCharacterConfig: jest.fn(),
+      getLootlogCharacterConfig: vi.fn(),
     };
 
     const mockRedisClient = {} as Record<string, never>;
 
     const mockRedisService = {
-      getClient: jest.fn().mockReturnValue(mockRedisClient),
-      get: jest.fn().mockResolvedValue(null),
-      del: jest.fn().mockResolvedValue(1),
-      set: jest.fn().mockResolvedValue("OK"),
+      getClient: vi.fn().mockReturnValue(mockRedisClient),
+      get: vi.fn().mockResolvedValue(null),
+      del: vi.fn().mockResolvedValue(1),
+      set: vi.fn().mockResolvedValue("OK"),
     };
 
     const mockLogger = {
-      log: jest.fn(),
-      error: jest.fn(),
-      warn: jest.fn(),
+      log: vi.fn(),
+      error: vi.fn(),
+      warn: vi.fn(),
     };
 
     const mockAmqpConnection = {
-      publish: jest.fn(),
+      publish: vi.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -231,7 +232,7 @@ describe("LootsService", () => {
         {
           provide: RedlockService,
           useValue: {
-            createInstance: jest.fn().mockReturnValue({ acquire: jest.fn() }),
+            createInstance: vi.fn().mockReturnValue({ acquire: vi.fn() }),
           },
         },
       ],
@@ -241,12 +242,10 @@ describe("LootsService", () => {
     await service.onModuleInit();
 
     const mockLock = {
-      release: jest.fn().mockResolvedValue(undefined),
+      release: vi.fn().mockResolvedValue(undefined),
     };
 
-    jest
-      .spyOn(service["redlock"], "acquire")
-      .mockResolvedValue(mockLock as any);
+    vi.spyOn(service["redlock"], "acquire").mockResolvedValue(mockLock as any);
 
     prismaService = module.get(PrismaService);
     playersService = module.get(PlayersService);
@@ -259,7 +258,7 @@ describe("LootsService", () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("constructor", () => {

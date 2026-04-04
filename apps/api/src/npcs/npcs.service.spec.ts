@@ -6,7 +6,7 @@ describe("NpcsService", () => {
   let service: NpcsService;
 
   const mockAmqpConnection = {
-    publish: jest.fn(),
+    publish: vi.fn(),
   };
 
   beforeEach(async () => {

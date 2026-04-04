@@ -6,7 +6,7 @@ describe("HealthzController", () => {
   let controller: HealthzController;
 
   const mockHealthzService = {
-    healthCheck: jest.fn(),
+    healthCheck: vi.fn(),
   };
 
   beforeEach(async () => {

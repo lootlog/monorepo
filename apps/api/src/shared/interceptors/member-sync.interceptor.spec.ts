@@ -1,3 +1,4 @@
+import type { Mock } from "vitest";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { MemberSyncInterceptor } from "./member-sync.interceptor";
@@ -10,37 +11,37 @@ describe("MemberSyncInterceptor", () => {
   let interceptor: MemberSyncInterceptor;
   let prismaService: {
     member: {
-      findMany: jest.Mock;
+      findMany: Mock;
     };
   };
   let membersService: {
-    getMemberSoftStaleThreshold: jest.Mock;
-    queueMemberRefresh: jest.Mock;
+    getMemberSoftStaleThreshold: Mock;
+    queueMemberRefresh: Mock;
   };
   let redisService: {
-    get: jest.Mock;
-    set: jest.Mock;
+    get: Mock;
+    set: Mock;
   };
 
   beforeEach(async () => {
     const mockPrismaService = {
       member: {
-        findMany: jest.fn(),
+        findMany: vi.fn(),
       },
     };
 
     const mockMembersService = {
-      getMemberSoftStaleThreshold: jest.fn(),
-      queueMemberRefresh: jest.fn(),
+      getMemberSoftStaleThreshold: vi.fn(),
+      queueMemberRefresh: vi.fn(),
     };
 
     const mockRedisService = {
-      get: jest.fn(),
-      set: jest.fn(),
+      get: vi.fn(),
+      set: vi.fn(),
     };
 
     const mockLogger = {
-      log: jest.fn(),
+      log: vi.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -60,7 +61,7 @@ describe("MemberSyncInterceptor", () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("queueStaleMemberRefreshes", () => {

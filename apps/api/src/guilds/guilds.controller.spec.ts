@@ -10,12 +10,12 @@ describe("GuildsController", () => {
   let controller: GuildsController;
 
   const mockGuildsService = {
-    getUserGuilds: jest.fn(),
-    getUserGuildsWithPermissions: jest.fn(),
-    getManageableUserGuilds: jest.fn(),
-    getGuildById: jest.fn(),
-    updateGuildConfig: jest.fn(),
-    getWorldsByGuildId: jest.fn(),
+    getUserGuilds: vi.fn(),
+    getUserGuildsWithPermissions: vi.fn(),
+    getManageableUserGuilds: vi.fn(),
+    getGuildById: vi.fn(),
+    updateGuildConfig: vi.fn(),
+    getWorldsByGuildId: vi.fn(),
   };
 
   const mockMemberSyncInterceptor = {

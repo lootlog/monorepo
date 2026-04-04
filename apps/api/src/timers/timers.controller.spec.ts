@@ -8,12 +8,12 @@ describe("TimersController", () => {
   let controller: TimersController;
 
   const mockTimersService = {
-    getAllTimers: jest.fn(),
-    getTimers: jest.fn(),
-    resetTimer: jest.fn(),
-    deleteTimer: jest.fn(),
-    createTimer: jest.fn(),
-    createManualTimer: jest.fn(),
+    getAllTimers: vi.fn(),
+    getTimers: vi.fn(),
+    resetTimer: vi.fn(),
+    deleteTimer: vi.fn(),
+    createTimer: vi.fn(),
+    createManualTimer: vi.fn(),
   };
 
   beforeEach(async () => {

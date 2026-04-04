@@ -14,48 +14,48 @@ describe("ChannelsService", () => {
 
   const mockTx = {
     discordGuildChannelSnapshot: {
-      upsert: jest.fn(),
-      deleteMany: jest.fn(),
+      upsert: vi.fn(),
+      deleteMany: vi.fn(),
     },
     discordGuildSyncState: {
-      upsert: jest.fn(),
+      upsert: vi.fn(),
     },
     notificationTarget: {
-      updateMany: jest.fn(),
+      updateMany: vi.fn(),
     },
   };
 
   const mockPrisma = {
-    $transaction: jest.fn(),
+    $transaction: vi.fn(),
     guild: {
-      findUnique: jest.fn(),
+      findUnique: vi.fn(),
     },
     discordGuildChannelSnapshot: {
-      findMany: jest.fn(),
+      findMany: vi.fn(),
     },
     discordGuildSyncState: {
-      findUnique: jest.fn(),
-      upsert: jest.fn(),
+      findUnique: vi.fn(),
+      upsert: vi.fn(),
     },
   };
 
   const mockDiscordBotClient = {
-    refreshGuildChannels: jest.fn(),
+    refreshGuildChannels: vi.fn(),
   };
 
   const mockAmqpConnection = {
-    publish: jest.fn(),
+    publish: vi.fn(),
   };
 
   const mockConfigService = {
-    get: jest.fn().mockReturnValue({
+    get: vi.fn().mockReturnValue({
       channelSnapshotStaleSeconds: 300,
     }),
   };
 
   const mockLogger = {
-    log: jest.fn(),
-    warn: jest.fn(),
+    log: vi.fn(),
+    warn: vi.fn(),
   };
 
   const baseSyncState = {
@@ -91,7 +91,7 @@ describe("ChannelsService", () => {
   };
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockPrisma.$transaction.mockImplementation(
       async (callback: (tx: typeof mockTx) => Promise<unknown>) =>

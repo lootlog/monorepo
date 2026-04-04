@@ -16,90 +16,90 @@ describe("GuildsService", () => {
   let service: GuildsService;
 
   const mockLogger = {
-    log: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
+    log: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
   };
 
   const mockPrismaService = {
     guild: {
-      findMany: jest.fn(),
-      findFirst: jest.fn(),
-      findUnique: jest.fn(),
-      update: jest.fn(),
-      upsert: jest.fn(),
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+      findUnique: vi.fn(),
+      update: vi.fn(),
+      upsert: vi.fn(),
     },
     discordGuildSyncState: {
-      findUnique: jest.fn(),
+      findUnique: vi.fn(),
     },
     member: {
-      findMany: jest.fn(),
+      findMany: vi.fn(),
     },
     timer: {
-      findMany: jest.fn(),
+      findMany: vi.fn(),
     },
     lootlogConfigNpc: {
-      deleteMany: jest.fn(),
+      deleteMany: vi.fn(),
     },
     lootlogConfig: {
-      deleteMany: jest.fn(),
-      upsert: jest.fn(),
+      deleteMany: vi.fn(),
+      upsert: vi.fn(),
     },
     userSettings: {
-      findUnique: jest.fn(),
+      findUnique: vi.fn(),
     },
-    $transaction: jest.fn(),
+    $transaction: vi.fn(),
   };
 
   const mockTransactionClient = {
     lootlogConfigNpc: {
-      deleteMany: jest.fn(),
+      deleteMany: vi.fn(),
     },
     lootlogConfig: {
-      deleteMany: jest.fn(),
+      deleteMany: vi.fn(),
     },
     guild: {
-      update: jest.fn(),
+      update: vi.fn(),
     },
   };
 
   const mockMembersService = {
-    getGuildMemberById: jest.fn(),
-    deleteMembersByGuildId: jest.fn(),
-    notifyMembersRemoved: jest.fn(),
-    isMemberSoftStale: jest.fn(),
-    refreshGuildMemberWithinBudget: jest.fn(),
-    queueMemberRefresh: jest.fn(),
+    getGuildMemberById: vi.fn(),
+    deleteMembersByGuildId: vi.fn(),
+    notifyMembersRemoved: vi.fn(),
+    isMemberSoftStale: vi.fn(),
+    refreshGuildMemberWithinBudget: vi.fn(),
+    queueMemberRefresh: vi.fn(),
   };
 
   const mockRolesService = {
-    bulkCreateRoles: jest.fn(),
-    deleteRolesByGuildId: jest.fn(),
+    bulkCreateRoles: vi.fn(),
+    deleteRolesByGuildId: vi.fn(),
   };
 
   const mockChannelsService = {
-    markGuildSyncStale: jest.fn(),
-    refreshGuildDiscordChannels: jest.fn(),
+    markGuildSyncStale: vi.fn(),
+    refreshGuildDiscordChannels: vi.fn(),
   };
 
   const mockDiscordService = {
-    getUserGuilds: jest.fn(),
-    clearUserGuildIdsCache: jest.fn(),
+    getUserGuilds: vi.fn(),
+    clearUserGuildIdsCache: vi.fn(),
   };
 
   const mockRedisService = {
-    get: jest.fn(),
-    set: jest.fn(),
-    del: jest.fn(),
-    deleteByPattern: jest.fn(),
+    get: vi.fn(),
+    set: vi.fn(),
+    del: vi.fn(),
+    deleteByPattern: vi.fn(),
   };
 
   const mockAmqpConnection = {
-    publish: jest.fn(),
+    publish: vi.fn(),
   };
 
   const mockConfigService = {
-    get: jest.fn().mockReturnValue({
+    get: vi.fn().mockReturnValue({
       channelSnapshotStaleSeconds: 300,
     }),
   };
@@ -171,7 +171,7 @@ describe("GuildsService", () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   const createGuild = (overrides: Partial<Guild> = {}): Guild => ({

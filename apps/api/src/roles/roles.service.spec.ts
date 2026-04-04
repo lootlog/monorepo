@@ -10,28 +10,28 @@ describe("RolesService", () => {
   let service: RolesService;
 
   const mockLogger = {
-    log: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
+    log: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
   };
 
   const mockPrismaService = {
     role: {
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
-      createMany: jest.fn(),
-      upsert: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      deleteMany: jest.fn(),
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      createMany: vi.fn(),
+      upsert: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      deleteMany: vi.fn(),
     },
     guild: {
-      findUnique: jest.fn(),
+      findUnique: vi.fn(),
     },
   };
 
   const mockRedisService = {
-    deleteByPattern: jest.fn(),
+    deleteByPattern: vi.fn(),
   };
 
   beforeEach(async () => {
@@ -45,7 +45,7 @@ describe("RolesService", () => {
     }).compile();
 
     service = module.get<RolesService>(RolesService);
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should be defined", () => {

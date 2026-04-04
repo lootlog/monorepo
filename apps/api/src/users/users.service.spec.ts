@@ -30,55 +30,55 @@ describe("UsersService", () => {
 
   const mockTx = {
     member: {
-      findMany: jest.fn(),
-      update: jest.fn(),
+      findMany: vi.fn(),
+      update: vi.fn(),
     },
     npcKillStats: {
-      deleteMany: jest.fn(),
+      deleteMany: vi.fn(),
     },
     userKillStats: {
-      deleteMany: jest.fn(),
+      deleteMany: vi.fn(),
     },
     userSettings: {
-      deleteMany: jest.fn(),
+      deleteMany: vi.fn(),
     },
     userTimerSettings: {
-      deleteMany: jest.fn(),
+      deleteMany: vi.fn(),
     },
     userSoundSettings: {
-      deleteMany: jest.fn(),
+      deleteMany: vi.fn(),
     },
     userCharactersLootlogSettings: {
-      deleteMany: jest.fn(),
+      deleteMany: vi.fn(),
     },
     userGuildTimerSettings: {
-      deleteMany: jest.fn(),
+      deleteMany: vi.fn(),
     },
     userGuildEventSettings: {
-      deleteMany: jest.fn(),
+      deleteMany: vi.fn(),
     },
   };
 
   const mockPrismaService = {
-    $transaction: jest.fn(),
+    $transaction: vi.fn(),
     userSettings: {
-      findUnique: jest.fn(),
-      upsert: jest.fn(),
+      findUnique: vi.fn(),
+      upsert: vi.fn(),
     },
   };
-  const mockLogger = { warn: jest.fn() };
-  const mockAuthService = { invalidateIdpTokenCache: jest.fn() };
-  const mockMembersService = { notifyMembersRemoved: jest.fn() };
-  const mockRedisService = { deleteByPattern: jest.fn() };
-  const mockHttpService = { post: jest.fn() };
+  const mockLogger = { warn: vi.fn() };
+  const mockAuthService = { invalidateIdpTokenCache: vi.fn() };
+  const mockMembersService = { notifyMembersRemoved: vi.fn() };
+  const mockRedisService = { deleteByPattern: vi.fn() };
+  const mockHttpService = { post: vi.fn() };
   const mockConfigService = {
-    get: jest
+    get: vi
       .fn()
       .mockReturnValue({ serviceUrl: "http://battlelog-service:4000" }),
   };
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockPrismaService.$transaction.mockImplementation(
       async (callback: (tx: typeof mockTx) => Promise<unknown>) =>

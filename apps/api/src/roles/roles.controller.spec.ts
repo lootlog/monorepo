@@ -8,8 +8,8 @@ describe("RolesController", () => {
   let controller: RolesController;
 
   const mockRolesService = {
-    getRolesByGuildId: jest.fn(),
-    updateRolePermissions: jest.fn(),
+    getRolesByGuildId: vi.fn(),
+    updateRolePermissions: vi.fn(),
   };
 
   beforeEach(async () => {

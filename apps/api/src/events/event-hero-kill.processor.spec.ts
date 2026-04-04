@@ -9,15 +9,15 @@ describe("EventHeroKillProcessor", () => {
   let processor: EventHeroKillProcessor;
 
   const mockEventsService = {
-    checkAndRecordEventHeroKill: jest.fn(),
+    checkAndRecordEventHeroKill: vi.fn(),
   };
 
   const mockLogger = {
-    log: jest.fn(),
+    log: vi.fn(),
   };
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [

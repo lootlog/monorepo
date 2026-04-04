@@ -121,6 +121,10 @@
         "tsconfig.json"
       ]
     },
+    "format:check": {
+      "cache": false,
+      "outputs": []
+    },
     "battlelog:migrate": {
       "cache": false
     },

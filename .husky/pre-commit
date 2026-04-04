@@ -9,6 +9,9 @@ pnpm lint-staged
 echo "\n🔍 Linting changed packages..."
 pnpm turbo run lint --filter=[HEAD]
 
+echo "\n🎨 Checking code formatting for changed packages..."
+pnpm turbo run format:check --filter=[HEAD]
+
 echo "\n🧪 Running tests for changed packages..."
 pnpm turbo run test --filter=[HEAD]
 

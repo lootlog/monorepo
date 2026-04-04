@@ -6,7 +6,7 @@ describe("PlayersService", () => {
   let service: PlayersService;
 
   const mockAmqpConnection = {
-    publish: jest.fn(),
+    publish: vi.fn(),
   };
 
   beforeEach(async () => {

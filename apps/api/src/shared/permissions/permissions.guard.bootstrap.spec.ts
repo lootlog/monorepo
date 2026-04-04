@@ -13,10 +13,10 @@ import { Permissions } from "./permissions.decorator";
 import { PermissionsGuard } from "./permissions.guard";
 
 const mockLogger = {
-  debug: jest.fn(),
-  error: jest.fn(),
-  log: jest.fn(),
-  warn: jest.fn(),
+  debug: vi.fn(),
+  error: vi.fn(),
+  log: vi.fn(),
+  warn: vi.fn(),
 };
 
 @Controller("guarded")
@@ -37,23 +37,23 @@ class GuardedPermissionsController {
     {
       provide: MembersService,
       useValue: {
-        getGuildMemberById: jest.fn().mockResolvedValue(null),
+        getGuildMemberById: vi.fn().mockResolvedValue(null),
       },
     },
     {
       provide: PrismaService,
       useValue: {
         guild: {
-          findFirst: jest.fn(),
+          findFirst: vi.fn(),
         },
       },
     },
     {
       provide: RedisService,
       useValue: {
-        del: jest.fn(),
-        get: jest.fn(),
-        set: jest.fn(),
+        del: vi.fn(),
+        get: vi.fn(),
+        set: vi.fn(),
       },
     },
     {
@@ -66,7 +66,7 @@ class GuardedPermissionsTestModule {}
 
 describe("PermissionsGuard bootstrap", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("keeps MembersModule independent from MemberContextModule", () => {

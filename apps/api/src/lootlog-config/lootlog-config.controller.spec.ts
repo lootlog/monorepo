@@ -8,8 +8,8 @@ describe("LootlogConfigController", () => {
   let controller: LootlogConfigController;
 
   const mockLootlogConfigService = {
-    getLootlogConfig: jest.fn(),
-    updateNpc: jest.fn(),
+    getLootlogConfig: vi.fn(),
+    updateNpc: vi.fn(),
   };
 
   beforeEach(async () => {
