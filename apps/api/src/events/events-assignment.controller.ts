@@ -18,7 +18,7 @@ import {
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
-import { Permission, type Role } from "prisma/generated/client";
+import { Permission, type Role } from "src/generated/prisma/client";
 import { AssignMemberDto } from "./dto/assign-member.dto";
 import { AssignMapLocationDto } from "./dto/assign-map-location.dto";
 import { CreateHeroDto } from "./dto/create-hero.dto";

@@ -4,7 +4,7 @@ import { KillsService } from "./kills.service";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared";
 import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
-import { Permission, NpcType, type Role } from "prisma/generated/client";
+import { Permission, NpcType, type Role } from "src/generated/prisma/client";
 import type { CreateKillDto } from "./dto/create-kill.dto";
 import {
   GetGuildKillStatsDto,

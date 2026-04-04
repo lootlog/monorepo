@@ -14,7 +14,7 @@ import {
   ApiResponse,
   ApiParam,
 } from "@nestjs/swagger";
-import { Permission } from "prisma/generated/client";
+import { Permission } from "src/generated/prisma/client";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";

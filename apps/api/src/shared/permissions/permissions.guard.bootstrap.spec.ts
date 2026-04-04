@@ -3,7 +3,7 @@ import { MODULE_METADATA } from "@nestjs/common/constants";
 import { Test } from "@nestjs/testing";
 import { RedisService } from "@lootlog/nest-shared";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import { Permission } from "prisma/generated/client";
+import { Permission } from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
 import { MembersModule } from "src/members/members.module";
 import { MembersService } from "src/members/members.service";

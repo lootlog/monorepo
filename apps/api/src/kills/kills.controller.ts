@@ -16,7 +16,7 @@ import {
   ApiParam,
 } from "@nestjs/swagger";
 import { plainToInstance } from "class-transformer";
-import { Guild, NpcType, Permission, type Role } from "prisma/generated/client";
+import { Guild, NpcType, Permission, type Role } from "src/generated/prisma/client";
 import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";
 import { MemberRoles } from "src/shared/decorators/member-roles.decorator";
 import { AuthGuard } from "src/shared/guards/auth.guard";

@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import type { NotificationFilters } from "@lootlog/types";
-import { NpcType, Permission, Prisma } from "prisma/generated/client";
+import { NpcType, Permission, Prisma } from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
 import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
 

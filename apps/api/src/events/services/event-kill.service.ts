@@ -6,7 +6,7 @@ import {
   Event,
   EventHeroNpc,
   type Prisma,
-} from "prisma/generated/client";
+} from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared";
 import { EventEmitterService } from "./event-emitter.service";

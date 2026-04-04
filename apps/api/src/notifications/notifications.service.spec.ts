@@ -2,7 +2,7 @@ import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { getQueueToken } from "@nestjs/bullmq";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { NotificationTargetType } from "@lootlog/types";
-import { Prisma } from "prisma/generated/client";
+import { Prisma } from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
 import { GuildsService } from "src/guilds/guilds.service";
 import { NOTIFICATIONS_DISPATCH_QUEUE } from "src/notifications/constants/notifications-dispatch-queue.constant";

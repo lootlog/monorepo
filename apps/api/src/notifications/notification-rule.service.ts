@@ -13,7 +13,7 @@ import {
   NotificationScheduleStrategy as DbNotificationScheduleStrategy,
   NotificationTriggerType as DbNotificationTriggerType,
   Prisma,
-} from "prisma/generated/client";
+} from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
 import { GuildsService } from "src/guilds/guilds.service";
 import { GUILD_NOTIFICATION_TIMEZONE } from "src/notifications/constants/notification-schedule-timezone.constant";

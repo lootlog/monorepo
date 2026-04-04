@@ -6,7 +6,7 @@ import {
 } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import { type Guild, Permission } from "prisma/generated/client";
+import { type Guild, Permission } from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
 import { MembersService } from "src/members/members.service";
 import { ErrorKey } from "src/guilds/enum/error-key.enum";

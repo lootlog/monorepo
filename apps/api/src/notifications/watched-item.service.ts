@@ -7,7 +7,7 @@ import {
 import {
   NotificationOwnerType as DbNotificationOwnerType,
   NotificationTriggerType as DbNotificationTriggerType,
-} from "prisma/generated/client";
+} from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
 import { GuildsService } from "src/guilds/guilds.service";
 import { NotificationJobService } from "src/notifications/notification-job.service";

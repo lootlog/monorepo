@@ -19,7 +19,7 @@ import {
 import { ChatService } from "src/chat/chat.service";
 import { SendMessageDto } from "src/chat/dto/send-message.dto";
 import { UpdateMessageDto } from "src/chat/dto/update-message.dto";
-import { type Guild, Permission } from "prisma/generated/client";
+import { type Guild, Permission } from "src/generated/prisma/client";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { Permissions } from "src/shared/permissions/permissions.decorator";

@@ -6,7 +6,7 @@ import {
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
-import { Permission, type Role } from "prisma/generated/client";
+import { Permission, type Role } from "src/generated/prisma/client";
 import { CloseRespawnWindowDto } from "./dto/close-respawn-window.dto";
 import { OpenRespawnWindowDto } from "./dto/open-respawn-window.dto";
 import { EventsService } from "./events.service";

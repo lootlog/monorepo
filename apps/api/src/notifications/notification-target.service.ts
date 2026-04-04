@@ -16,7 +16,7 @@ import {
   NotificationTargetType as DbNotificationTargetType,
   NotificationTriggerType as DbNotificationTriggerType,
   Prisma,
-} from "prisma/generated/client";
+} from "src/generated/prisma/client";
 import { ChannelsService } from "src/channels/channels.service";
 import { PrismaService } from "src/db/prisma.service";
 import { NotificationJobService } from "src/notifications/notification-job.service";

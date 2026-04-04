@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { CoverageGapType, Prisma } from "prisma/generated/client";
+import { CoverageGapType, Prisma } from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
 
 interface MemberStat {

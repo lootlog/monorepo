@@ -6,7 +6,7 @@ import {
   NotificationTriggerType as DbNotificationTriggerType,
   NotificationScheduleStrategy as DbNotificationScheduleStrategy,
   Prisma,
-} from "prisma/generated/client";
+} from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
 import {
   DEFAULT_TIMER_NOTIFICATION_TEMPLATE,

@@ -1,6 +1,6 @@
 import { Injectable, Logger, type OnModuleInit } from "@nestjs/common";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient, Prisma } from "prisma/generated/client";
+import { PrismaClient, Prisma } from "src/generated/prisma/client";
 
 const isDev = process.env.ENV === "local" || process.env.ENV === "dev";
 

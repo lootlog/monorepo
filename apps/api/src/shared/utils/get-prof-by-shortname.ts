@@ -1,4 +1,4 @@
-import { Profession } from "prisma/generated/client";
+import { Profession } from "src/generated/prisma/client";
 
 export const PROFESSIONS_SHORTNAMES = {
   b: Profession.BLADE_DANCER,

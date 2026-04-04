@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared";
-import { ItemRarity, NpcType } from "prisma/generated/client";
+import { ItemRarity, NpcType } from "src/generated/prisma/client";
 import type {
   Period,
   LootStatsResponse,

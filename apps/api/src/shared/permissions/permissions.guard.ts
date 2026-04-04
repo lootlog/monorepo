@@ -6,7 +6,7 @@ import {
 import { Reflector } from "@nestjs/core";
 import { PERMISSIONS_KEY } from "./permissions.decorator";
 import { MemberContextService } from "./member-context.service";
-import type { Permission } from "prisma/generated/client";
+import type { Permission } from "src/generated/prisma/client";
 
 interface RequestWithPermissions {
   userId?: string;

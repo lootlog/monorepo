@@ -11,7 +11,7 @@ import {
   LootSource,
   type Guild,
   type Role,
-} from "prisma/generated/client";
+} from "src/generated/prisma/client";
 import { BadRequestException } from "@nestjs/common";
 import { ErrorKey } from "./enum/error-key.enum";
 import { AuthGuard } from "src/shared/guards/auth.guard";

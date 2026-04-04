@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { Permission } from "prisma/generated/client";
+import { Permission } from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
 import type { CreateOrUpdateLootlogCharacterConfigDto } from "src/user-lootlog-config/dto/create-user-account-config.dto";
 import { GuildsService } from "src/guilds/guilds.service";
