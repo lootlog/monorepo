@@ -80,7 +80,7 @@
     "typescript": "5.9.3"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
   "packageManager": "pnpm@10.32.1",
   "pnpm": {
@@ -156,6 +156,7 @@
       "cpu-features",
       "esbuild",
       "msgpackr-extract",
+      "rolldown",
       "necord",
       "prisma",
       "protobufjs",
