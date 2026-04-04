@@ -2,13 +2,16 @@ import { ApiPropertyOptional } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
 import { IsEnum, IsNumber, IsOptional, IsString, Min } from "class-validator";
 import { NpcType } from "src/generated/prisma/client";
+import {
+  swaggerStringEnum,
+  swaggerStringEnumArray,
+} from "src/shared/swagger/prisma-enum";
 
 export class GetGuildKillStatsDto {
   @ApiPropertyOptional({
+    ...swaggerStringEnumArray("NpcType", NpcType),
     example: "HERO,TITAN",
     description: "Comma-separated NPC types to filter by",
-    enum: NpcType,
-    isArray: true,
   })
   @IsOptional()
   @Transform(({ value }) => {
@@ -47,10 +50,9 @@ export class GetGuildKillStatsDto {
 
 export class GetUserKillStatsDto {
   @ApiPropertyOptional({
+    ...swaggerStringEnumArray("NpcType", NpcType),
     example: "HERO,TITAN",
     description: "Comma-separated NPC types to filter by",
-    enum: NpcType,
-    isArray: true,
   })
   @IsOptional()
   @Transform(({ value }) => {
@@ -65,9 +67,9 @@ export class GetUserKillStatsDto {
   npcTypes?: NpcType[];
 
   @ApiPropertyOptional({
+    ...swaggerStringEnum("NpcType", NpcType),
     example: "HERO",
     description: "Single NPC type to filter by (alternative to npcTypes)",
-    enum: NpcType,
   })
   @IsOptional()
   @IsEnum(NpcType)

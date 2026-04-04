@@ -1,7 +1,8 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Permission } from "src/generated/prisma/client";
+import { swaggerStringEnumArray } from "src/shared/swagger/prisma-enum";
 
-class UserGuildPermissionsRole {
+export class UserGuildPermissionsRole {
   @ApiProperty({ description: "Role ID" })
   id: string;
 
@@ -12,14 +13,13 @@ class UserGuildPermissionsRole {
   lvlRangeTo: number;
 
   @ApiProperty({
+    ...swaggerStringEnumArray("Permission", Permission),
     description: "Permissions granted by this role",
-    enum: Permission,
-    isArray: true,
   })
   permissions: Permission[];
 }
 
-class UserGuildPermissionsGuild {
+export class UserGuildPermissionsGuild {
   @ApiProperty({ description: "Guild ID" })
   id: string;
 

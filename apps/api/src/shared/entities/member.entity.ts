@@ -1,6 +1,7 @@
 import { Exclude, Expose, Type } from "class-transformer";
 import { ApiProperty } from "@nestjs/swagger";
 import { MemberType } from "src/generated/prisma/client";
+import { swaggerStringEnum } from "src/shared/swagger/prisma-enum";
 import { RoleEntity } from "./role.entity";
 
 export class MemberEntity {
@@ -20,8 +21,8 @@ export class MemberEntity {
 
   @Expose()
   @ApiProperty({
+    ...swaggerStringEnum("MemberType", MemberType),
     example: "USER",
-    enum: MemberType,
     description: "Member type",
   })
   type: MemberType;

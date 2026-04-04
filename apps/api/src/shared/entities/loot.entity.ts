@@ -1,6 +1,7 @@
 import { Exclude, Expose } from "class-transformer";
 import { ApiProperty } from "@nestjs/swagger";
 import { LootSource } from "src/generated/prisma/client";
+import { swaggerStringEnum } from "src/shared/swagger/prisma-enum";
 
 export class LootEntity {
   @Expose()
@@ -16,8 +17,8 @@ export class LootEntity {
 
   @Exclude()
   @ApiProperty({
+    ...swaggerStringEnum("LootSource", LootSource),
     example: "FIGHT",
-    enum: LootSource,
     description: "Source of the loot",
   })
   source: LootSource;

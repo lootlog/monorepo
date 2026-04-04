@@ -1,9 +1,12 @@
 import { NotificationTargetType } from "@lootlog/types";
 import { ApiPropertyOptional } from "@nestjs/swagger";
 import { IsEnum, IsOptional, IsString, MaxLength } from "class-validator";
+import { swaggerStringEnum } from "src/shared/swagger/prisma-enum";
 
 export class CreateNotificationTargetDto {
-  @ApiPropertyOptional({ enum: NotificationTargetType })
+  @ApiPropertyOptional(
+    swaggerStringEnum("NotificationTargetType", NotificationTargetType),
+  )
   @IsEnum(NotificationTargetType)
   targetType: NotificationTargetType;
 
