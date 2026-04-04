@@ -12,6 +12,6 @@ export default registerAs(ConfigKey.SERVICE, (): ServiceConfig => {
 
   return {
     env: ENV,
-    port: PORT ? parseInt(PORT, 10) : 4000,
+    port: PORT ? Number.parseInt(PORT, 10) : 4000,
   };
 });

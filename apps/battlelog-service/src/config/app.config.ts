@@ -1,4 +1,4 @@
-import { ConfigModuleOptions } from "@nestjs/config";
+import type { ConfigModuleOptions } from "@nestjs/config";
 import * as Joi from "joi";
 import r2Config from "src/config/r2.config";
 import { redisConfig } from "@lootlog/nest-shared";

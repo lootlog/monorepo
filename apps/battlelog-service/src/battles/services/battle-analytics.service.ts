@@ -13,7 +13,10 @@ import type {
   PlayerVsPlayerPaginatedResponseDto,
 } from "src/battles/dto/battle-statistics-response.dto";
 import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
-import { battles, battleWarriors } from "src/shared/modules/drizzle/schema";
+import {
+  battleWarriors,
+  type battles,
+} from "src/shared/modules/drizzle/schema";
 import { RedisService } from "@lootlog/nest-shared";
 
 @Injectable()
