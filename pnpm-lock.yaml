@@ -40,6 +40,24 @@ overrides:
   effect@<3.20.0: '>=3.20.0'
   fast-xml-parser@>=4.0.0-beta.3 <=5.5.5: '>=5.5.6'
   socket.io-parser@>=4.0.0 <4.2.6: '>=4.2.6'
+  h3@>=2.0.0-beta.0 <=2.0.1-rc.16: '>=2.0.1-rc.17'
+  h3@>=2.0.0-beta.4 <2.0.1-rc.18: '>=2.0.1-rc.18'
+  fastify@<=5.8.2: '>=5.8.3'
+  smol-toml@<1.6.1: '>=1.6.1'
+  h3@>=2.0.1-alpha.0 <=2.0.1-rc.16: '>=2.0.1-rc.17'
+  handlebars@>=4.0.0 <=4.7.8: '>=4.7.9'
+  brace-expansion@>=2.0.0 <2.0.3: '>=2.0.3'
+  brace-expansion@>=4.0.0 <5.0.5: '>=5.0.5'
+  handlebars@>=4.0.0 <4.7.9: '>=4.7.9'
+  picomatch@<2.3.2: '>=2.3.2'
+  picomatch@>=4.0.0 <4.0.4: '>=4.0.4'
+  path-to-regexp@>=8.0.0 <8.4.0: '>=8.4.0'
+  handlebars@>=4.6.0 <=4.7.8: '>=4.7.9'
+  happy-dom@<20.8.9: '>=20.8.9'
+  happy-dom@>=15.10.0 <=20.8.7: '>=20.8.8'
+  lodash@>=4.0.0 <=4.17.23: '>=4.18.0'
+  lodash@<=4.17.23: '>=4.18.0'
+  defu@<=6.1.4: '>=6.1.5'
 
 packageExtensionsChecksum: sha256-7EyWhva5Lcamo6pe18OzfUc27A7xbWt39+G/ofluF9k=
 
@@ -908,8 +926,8 @@ importers:
         specifier: ^7.0.1
         version: 7.0.1(eslint@9.39.4(jiti@2.6.1))
       happy-dom:
-        specifier: ^20.8.4
-        version: 20.8.4
+        specifier: '>=20.8.8'
+        version: 20.8.9
       rollup-plugin-visualizer:
         specifier: ^7.0.1
         version: 7.0.1(rolldown@1.0.0-rc.10)(rollup@4.59.1)
@@ -927,7 +945,7 @@ importers:
         version: 7.1.9(postcss@8.5.8)(vite@8.0.1(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
       vitest:
         specifier: ^4.1.0
-        version: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@25.5.0)(@vitest/ui@4.1.0)(happy-dom@20.8.4)(jsdom@29.0.1(@noble/hashes@2.0.1))(vite@8.0.1(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+        version: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@25.5.0)(@vitest/ui@4.1.0)(happy-dom@20.8.9)(jsdom@29.0.1(@noble/hashes@2.0.1))(vite@8.0.1(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
 
   apps/gateway:
     dependencies:
@@ -1004,8 +1022,8 @@ importers:
         specifier: ^18.1.1
         version: 18.1.1
       lodash:
-        specifier: ^4.17.23
-        version: 4.17.23
+        specifier: '>=4.18.0'
+        version: 4.18.1
       nest-winston:
         specifier: ^1.10.2
         version: 1.10.2(@nestjs/common@11.1.17(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(winston@3.19.0)
@@ -1253,8 +1271,8 @@ importers:
         specifier: ^0.42.0
         version: 0.42.0
       lodash:
-        specifier: ^4.17.23
-        version: 4.17.23
+        specifier: '>=4.18.0'
+        version: 4.18.1
       lottie-react:
         specifier: ^2.4.1
         version: 2.4.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -1354,7 +1372,7 @@ importers:
         version: 8.0.1(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
       vitest:
         specifier: ^4.1.0
-        version: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@25.5.0)(@vitest/ui@4.1.0)(happy-dom@20.8.4)(jsdom@29.0.1(@noble/hashes@2.0.1))(vite@8.0.1(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+        version: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@25.5.0)(@vitest/ui@4.1.0)(happy-dom@20.8.9)(jsdom@29.0.1(@noble/hashes@2.0.1))(vite@8.0.1(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
 
   packages/api-helpers:
     dependencies:
@@ -1621,8 +1639,8 @@ importers:
         specifier: ^3.14.2
         version: 3.14.2
       lodash:
-        specifier: ^4.17.23
-        version: 4.17.23
+        specifier: '>=4.18.0'
+        version: 4.18.1
       lucide-react:
         specifier: 0.577.0
         version: 0.577.0(react@19.2.4)
@@ -7504,11 +7522,12 @@ packages:
   brace-expansion@1.1.13:
     resolution: {integrity: sha512-9ZLprWS6EENmhEOpjCYW2c8VkmOvckIJZfkr7rBW6dObmfgJ/L1GpSYW5Hpo9lDz4D1+n0Ckz8rU7FwHDQiG/w==}
 
-  brace-expansion@2.0.2:
-    resolution: {integrity: sha512-Jt0vHyM+jmUBqojB7E1NIYadt0vI0Qxjxd2TErW94wDz+E2LAm5vKMXXwg6ZZBTHPuUlDgQHKXvjGBdfcF1ZDQ==}
-
   brace-expansion@5.0.4:
     resolution: {integrity: sha512-h+DEnpVvxmfVefa4jFbCf5HdH5YMDXRsmKflpf1pILZWRFlTbJpxeU55nJl4Smt5HQaGzg1o6RHFPJaOqnmBDg==}
+    engines: {node: 18 || 20 || >=22}
+
+  brace-expansion@5.0.5:
+    resolution: {integrity: sha512-VZznLgtwhn+Mact9tfiwx64fA9erHH/MCXEUfB/0bX/6Fz6ny5EGTXYltMocqg4xFAQZtnO3DHWWXi8RiuN7cQ==}
     engines: {node: 18 || 20 || >=22}
 
   braces@3.0.3:
@@ -8077,8 +8096,8 @@ packages:
     resolution: {integrity: sha512-N+MeXYoqr3pOgn8xfyRPREN7gHakLYjhsHhWGT3fWAiL4IkAt0iDw14QiiEm2bE30c5XX5q0FtAA3CK5f9/BUg==}
     engines: {node: '>=12'}
 
-  defu@6.1.4:
-    resolution: {integrity: sha512-mEQCMmwJu317oSz8CwdIOdwf3xMif1ttiM8LTufzc3g6kR+9Pe236twL8j3IYT1F7GfRgGcW6MWxzZjLIkuHIg==}
+  defu@6.1.6:
+    resolution: {integrity: sha512-f8mefEW4WIVg4LckePx3mALjQSPQgFlg9U8yaPdlsbdYcHQyj9n2zL2LJEA52smeYxOvmd/nB7TpMtHGMTHcug==}
 
   delayed-stream@1.0.0:
     resolution: {integrity: sha512-ZySD7Nf91aLB0RxL4KGrKHBXl7Eds1DAmEdcoVawXnLD7SDhpNgtuII2aAkg7a7QS41jxPSZ17p4VdGnMHk3MQ==}
@@ -8643,9 +8662,6 @@ packages:
   fastify-plugin@5.1.0:
     resolution: {integrity: sha512-FAIDA8eovSt5qcDgcBvDuX/v0Cjz0ohGhENZ/wpc3y+oZCY2afZ9Baqql3g/lC+OHRnciQol4ww7tuthOb9idw==}
 
-  fastify@5.8.2:
-    resolution: {integrity: sha512-lZmt3navvZG915IE+f7/TIVamxIwmBd+OMB+O9WBzcpIwOo6F0LTh0sluoMFk5VkrKTvvrwIaoJPkir4Z+jtAg==}
-
   fastify@5.8.4:
     resolution: {integrity: sha512-sa42J1xylbBAYUWALSBoyXKPDUvM3OoNOibIefA+Oha57FryXKKCZarA1iDntOCWp3O35voZLuDg2mdODXtPzQ==}
 
@@ -8662,7 +8678,7 @@ packages:
     resolution: {integrity: sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg==}
     engines: {node: '>=12.0.0'}
     peerDependencies:
-      picomatch: ^3 || ^4
+      picomatch: '>=4.0.4'
     peerDependenciesMeta:
       picomatch:
         optional: true
@@ -9039,13 +9055,13 @@ packages:
       crossws:
         optional: true
 
-  handlebars@4.7.8:
-    resolution: {integrity: sha512-vafaFqs8MZkRrSX7sFVUdo3ap/eNiLnb4IakshzvP56X5Nr1iGKAIqdX6tMlm6HcNRIkr6AxO5jFEoJzzpT8aQ==}
+  handlebars@4.7.9:
+    resolution: {integrity: sha512-4E71E0rpOaQuJR2A3xDZ+GM1HyWYv1clR58tC8emQNeQe3RH7MAzSbat+V0wG78LQBo6m6bzSG/L4pBuCsgnUQ==}
     engines: {node: '>=0.4.7'}
     hasBin: true
 
-  happy-dom@20.8.4:
-    resolution: {integrity: sha512-GKhjq4OQCYB4VLFBzv8mmccUadwlAusOZOI7hC1D9xDIT5HhzkJK17c4el2f6R6C715P9xB4uiMxeKUa2nHMwQ==}
+  happy-dom@20.8.9:
+    resolution: {integrity: sha512-Tz23LR9T9jOGVZm2x1EPdXqwA37G/owYMxRwU0E4miurAtFsPMQ1d2Jc2okUaSjZqAFz2oEn3FLXC5a0a+siyA==}
     engines: {node: '>=20.0.0'}
 
   has-flag@4.0.0:
@@ -9808,8 +9824,8 @@ packages:
   lodash.startcase@4.4.0:
     resolution: {integrity: sha512-+WKqsK294HMSc2jEbNgpHpd0JfIBhp7rEV4aqXWqFr6AlXov+SlcgB1Fv01y2kGe3Gc8nMW7VA0SrGuSkRfIEg==}
 
-  lodash@4.17.23:
-    resolution: {integrity: sha512-LgVTMpQtIopCi79SJeDiP0TfWi5CNEc/L/aRdTh3yIvmZXTnheWpKjSZhnvMl8iXbC1tFg9gdHHDMLoV7CnG+w==}
+  lodash@4.18.1:
+    resolution: {integrity: sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q==}
 
   log-symbols@4.1.0:
     resolution: {integrity: sha512-8XPvpAA8uyhfteu8pIvQxpJZ7SYYdpUivZpGy6sFsBuKRY/7rQGavedeB8aK+Zkyq6upMFVL/9AW6vOYzfRyLg==}
@@ -10594,9 +10610,6 @@ packages:
     resolution: {integrity: sha512-3O/iVVsJAPsOnpwWIeD+d6z/7PmqApyQePUtCndjatj/9I5LylHvt5qluFaBT3I5h3r1ejfR056c+FCv+NnNXg==}
     engines: {node: 18 || 20 || >=22}
 
-  path-to-regexp@8.3.0:
-    resolution: {integrity: sha512-7jdwVIRtsP8MYpdXSwOS0YdD0Du+qOoF/AEPIt88PcCFrZCzx41oxku1jD88hZBwbNUIEfpqvuhjFaMAqMTWnA==}
-
   path-to-regexp@8.4.0:
     resolution: {integrity: sha512-PuseHIvAnz3bjrM2rGJtSgo1zjgxapTLZ7x2pjhzWwlp4SJQgK3f3iZIQwkpEnBaKz6seKBADpM4B4ySkuYypg==}
 
@@ -10646,22 +10659,6 @@ packages:
 
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
-
-  picomatch@2.3.1:
-    resolution: {integrity: sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==}
-    engines: {node: '>=8.6'}
-
-  picomatch@2.3.2:
-    resolution: {integrity: sha512-V7+vQEJ06Z+c5tSye8S+nHUfI51xoXIXjHQ99cQtKUkQqqO1kO/KCJUfZXuB47h/YBlDhah2H3hdUGXn8ie0oA==}
-    engines: {node: '>=8.6'}
-
-  picomatch@4.0.2:
-    resolution: {integrity: sha512-M7BAV6Rlcy5u+m6oPhAPFgJTzAioX/6B0DxyvDlo9l8+T3nLKbrczg2WLUyzd45L8RqfUMyGPzekbMvX2Ldkwg==}
-    engines: {node: '>=12'}
-
-  picomatch@4.0.3:
-    resolution: {integrity: sha512-5gTmgEY/sqK6gFXLIsQNH19lWb4ebPDLA4SdLP7dsWkIXHWlG66oPuVvXSGFPppYZz8ZDZq0dYYrbHfBCVUb1Q==}
-    engines: {node: '>=12'}
 
   picomatch@4.0.4:
     resolution: {integrity: sha512-QP88BAKvMam/3NxH6vj2o21R6MjxZUAd6nlwAS/pnGvN9IVLocLHxGYIzFhg6fUQ+5th6P4dv4eW9jX3DSIj7A==}
@@ -11390,8 +11387,8 @@ packages:
     resolution: {integrity: sha512-stxByr12oeeOyY2BlviTNQlYV5xOj47GirPr4yA1hE9JCtxfQN0+tVbkxwCtYDQWhEKWFHsEK48ORg5jrouCAg==}
     engines: {node: '>=20'}
 
-  smol-toml@1.6.0:
-    resolution: {integrity: sha512-4zemZi0HvTnYwLfrpk/CF9LOd9Lt87kAt50GnqhMpyF9U3poDAP2+iukq2bZsO/ufegbYehBkqINbsWxj4l4cw==}
+  smol-toml@1.6.1:
+    resolution: {integrity: sha512-dWUG8F5sIIARXih1DTaQAX4SsiTXhInKf1buxdY9DIg4ZYPZK5nGM1VRIYmEbDbsHt7USo99xSLFu5Q1IqTmsg==}
     engines: {node: '>= 18'}
 
   socket.io-adapter@2.5.6:
@@ -12195,7 +12192,7 @@ packages:
       '@vitest/browser-preview': 4.1.0
       '@vitest/browser-webdriverio': 4.1.0
       '@vitest/ui': 4.1.0
-      happy-dom: '*'
+      happy-dom: '>=20.8.9'
       jsdom: '*'
       vite: ^6.0.0 || ^7.0.0 || ^8.0.0-0
     peerDependenciesMeta:
@@ -12503,7 +12500,7 @@ snapshots:
       ajv: 8.18.0
       ajv-formats: 3.0.1(ajv@8.18.0)
       jsonc-parser: 3.3.1
-      picomatch: 4.0.2
+      picomatch: 4.0.4
       rxjs: 7.8.1
       source-map: 0.7.4
     optionalDependencies:
@@ -12514,7 +12511,7 @@ snapshots:
       ajv: 8.18.0
       ajv-formats: 3.0.1(ajv@8.18.0)
       jsonc-parser: 3.3.1
-      picomatch: 4.0.2
+      picomatch: 4.0.4
       rxjs: 7.8.1
       source-map: 0.7.4
     optionalDependencies:
@@ -14026,7 +14023,7 @@ snapshots:
     dependencies:
       '@nestjs/common': 11.1.17(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/core': 11.1.17(@nestjs/common@11.1.17(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@11.1.17)(@nestjs/platform-express@11.1.17)(@nestjs/websockets@11.1.17)(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      lodash: 4.17.23
+      lodash: 4.18.1
 
   '@golevelup/nestjs-rabbitmq@9.0.0(@nestjs/common@11.1.17(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.17)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
     dependencies:
@@ -14035,7 +14032,7 @@ snapshots:
       '@nestjs/core': 11.1.17(@nestjs/common@11.1.17(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@11.1.17)(@nestjs/platform-express@11.1.17)(@nestjs/websockets@11.1.17)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       amqp-connection-manager: 5.0.0(amqplib@0.10.9)
       amqplib: 0.10.9
-      lodash: 4.17.23
+      lodash: 4.18.1
       reflect-metadata: 0.2.2
       rxjs: 7.8.2
 
@@ -14791,7 +14788,7 @@ snapshots:
       cmdk: 1.1.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       date-fns: 4.1.0
       gsap: 3.14.2
-      lodash: 4.17.23
+      lodash: 4.18.1
       lucide-react: 0.577.0(react@19.2.4)
       motion: 12.38.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       next-themes: 0.4.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -14995,7 +14992,7 @@ snapshots:
       '@nestjs/common': 11.1.17(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       dotenv: 17.2.3
       dotenv-expand: 12.0.3
-      lodash: 4.17.23
+      lodash: 4.18.1
       rxjs: 7.8.2
 
   '@nestjs/core@11.1.17(@nestjs/common@11.1.17(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@11.1.17)(@nestjs/platform-express@11.1.17)(@nestjs/websockets@11.1.17)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
@@ -15004,7 +15001,7 @@ snapshots:
       '@nuxt/opencollective': 0.4.1
       fast-safe-stringify: 2.1.1
       iterare: 1.2.1
-      path-to-regexp: 8.3.0
+      path-to-regexp: 8.4.0
       reflect-metadata: 0.2.2
       rxjs: 7.8.2
       tslib: 2.8.1
@@ -15045,7 +15042,7 @@ snapshots:
       cors: 2.8.6
       express: 5.2.1
       multer: 2.1.1
-      path-to-regexp: 8.3.0
+      path-to-regexp: 8.4.0
       tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
@@ -15057,11 +15054,11 @@ snapshots:
       '@nestjs/common': 11.1.17(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/core': 11.1.17(@nestjs/common@11.1.17(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@11.1.17)(@nestjs/platform-express@11.1.17)(@nestjs/websockets@11.1.17)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       fast-querystring: 1.1.2
-      fastify: 5.8.2
+      fastify: 5.8.4
       fastify-plugin: 5.1.0
       find-my-way: 9.5.0
       light-my-request: 6.6.0
-      path-to-regexp: 8.3.0
+      path-to-regexp: 8.4.0
       reusify: 1.1.0
       tslib: 2.8.1
     optionalDependencies:
@@ -15103,8 +15100,8 @@ snapshots:
       '@nestjs/core': 11.1.17(@nestjs/common@11.1.17(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@11.1.17)(@nestjs/platform-express@11.1.17)(@nestjs/websockets@11.1.17)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/mapped-types': 2.1.0(@nestjs/common@11.1.17(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)
       js-yaml: 4.1.1
-      lodash: 4.17.23
-      path-to-regexp: 8.3.0
+      lodash: 4.18.1
+      path-to-regexp: 8.4.0
       reflect-metadata: 0.2.2
       swagger-ui-dist: 5.31.0
     optionalDependencies:
@@ -16979,7 +16976,7 @@ snapshots:
   '@rolldown/plugin-babel@0.2.2(@babel/core@7.29.0)(@babel/runtime@7.29.2)(rolldown@1.0.0-rc.10)(vite@8.0.1(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))':
     dependencies:
       '@babel/core': 7.29.0
-      picomatch: 4.0.3
+      picomatch: 4.0.4
       rolldown: 1.0.0-rc.10
     optionalDependencies:
       '@babel/runtime': 7.29.2
@@ -17000,10 +16997,10 @@ snapshots:
       '@rollup/pluginutils': 5.3.0(rollup@4.59.1)
       commondir: 1.0.1
       estree-walker: 2.0.2
-      fdir: 6.5.0(picomatch@4.0.3)
+      fdir: 6.5.0(picomatch@4.0.4)
       is-reference: 1.2.1
       magic-string: 0.30.21
-      picomatch: 4.0.3
+      picomatch: 4.0.4
     optionalDependencies:
       rollup: 4.59.1
 
@@ -17121,7 +17118,7 @@ snapshots:
   '@sapphire/shapeshift@4.0.0':
     dependencies:
       fast-deep-equal: 3.1.3
-      lodash: 4.17.23
+      lodash: 4.18.1
 
   '@sapphire/snowflake@3.5.3': {}
 
@@ -18440,7 +18437,7 @@ snapshots:
       sirv: 3.0.2
       tinyglobby: 0.2.15
       tinyrainbow: 3.1.0
-      vitest: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@25.5.0)(@vitest/ui@4.1.0)(happy-dom@20.8.4)(jsdom@29.0.1(@noble/hashes@2.0.1))(vite@8.0.1(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+      vitest: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@25.5.0)(@vitest/ui@4.1.0)(happy-dom@20.8.9)(jsdom@29.0.1(@noble/hashes@2.0.1))(vite@8.0.1(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
 
   '@vitest/utils@4.1.0':
     dependencies:
@@ -18642,7 +18639,7 @@ snapshots:
   anymatch@3.1.3:
     dependencies:
       normalize-path: 3.0.0
-      picomatch: 2.3.2
+      picomatch: 4.0.4
 
   append-field@1.0.0: {}
 
@@ -18652,7 +18649,7 @@ snapshots:
       graceful-fs: 4.2.11
       is-stream: 2.0.1
       lazystream: 1.0.1
-      lodash: 4.17.23
+      lodash: 4.18.1
       normalize-path: 3.0.0
       readable-stream: 4.7.0
 
@@ -18855,7 +18852,7 @@ snapshots:
       '@noble/ciphers': 2.1.1
       '@noble/hashes': 2.0.1
       better-call: 1.3.2(zod@4.3.6)
-      defu: 6.1.4
+      defu: 6.1.6
       jose: 6.2.2
       kysely: 0.28.14
       nanostores: 1.2.0
@@ -18870,7 +18867,7 @@ snapshots:
       prisma: 7.6.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
-      vitest: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@25.5.0)(@vitest/ui@4.1.0)(happy-dom@20.8.4)(jsdom@29.0.1(@noble/hashes@2.0.1))(vite@8.0.1(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+      vitest: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@25.5.0)(@vitest/ui@4.1.0)(happy-dom@20.8.9)(jsdom@29.0.1(@noble/hashes@2.0.1))(vite@8.0.1(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
     transitivePeerDependencies:
       - '@cloudflare/workers-types'
       - '@opentelemetry/api'
@@ -18950,11 +18947,11 @@ snapshots:
       balanced-match: 1.0.2
       concat-map: 0.0.1
 
-  brace-expansion@2.0.2:
-    dependencies:
-      balanced-match: 1.0.2
-
   brace-expansion@5.0.4:
+    dependencies:
+      balanced-match: 4.0.4
+
+  brace-expansion@5.0.5:
     dependencies:
       balanced-match: 4.0.4
 
@@ -19030,7 +19027,7 @@ snapshots:
     dependencies:
       chokidar: 4.0.3
       confbox: 0.2.4
-      defu: 6.1.4
+      defu: 6.1.6
       dotenv: 16.6.1
       exsolve: 1.0.8
       giget: 2.0.0
@@ -19491,7 +19488,7 @@ snapshots:
 
   define-lazy-prop@3.0.0: {}
 
-  defu@6.1.4: {}
+  defu@6.1.6: {}
 
   delayed-stream@1.0.0: {}
 
@@ -20093,24 +20090,6 @@ snapshots:
 
   fastify-plugin@5.1.0: {}
 
-  fastify@5.8.2:
-    dependencies:
-      '@fastify/ajv-compiler': 4.0.5
-      '@fastify/error': 4.2.0
-      '@fastify/fast-json-stringify-compiler': 5.0.3
-      '@fastify/proxy-addr': 5.1.0
-      abstract-logging: 2.0.1
-      avvio: 9.2.0
-      fast-json-stringify: 6.3.0
-      find-my-way: 9.5.0
-      light-my-request: 6.6.0
-      pino: 10.3.1
-      process-warning: 5.0.0
-      rfdc: 1.4.1
-      secure-json-parse: 4.1.0
-      semver: 7.7.4
-      toad-cache: 3.7.0
-
   fastify@5.8.4:
     dependencies:
       '@fastify/ajv-compiler': 4.0.5
@@ -20140,10 +20119,6 @@ snapshots:
   fd-package-json@2.0.0:
     dependencies:
       walk-up-path: 4.0.0
-
-  fdir@6.5.0(picomatch@4.0.3):
-    optionalDependencies:
-      picomatch: 4.0.3
 
   fdir@6.5.0(picomatch@4.0.4):
     optionalDependencies:
@@ -20351,7 +20326,7 @@ snapshots:
       mdast-util-mdx: 3.0.0
       mdast-util-to-markdown: 2.1.2
       picocolors: 1.1.1
-      picomatch: 4.0.3
+      picomatch: 4.0.4
       tinyexec: 1.0.4
       tinyglobby: 0.2.15
       unified: 11.0.5
@@ -20473,7 +20448,7 @@ snapshots:
     dependencies:
       citty: 0.1.6
       consola: 3.4.2
-      defu: 6.1.4
+      defu: 6.1.6
       node-fetch-native: 1.6.7
       nypm: 0.6.5
       pathe: 2.0.3
@@ -20526,7 +20501,7 @@ snapshots:
       rou3: 0.8.1
       srvx: 0.11.13
 
-  handlebars@4.7.8:
+  handlebars@4.7.9:
     dependencies:
       minimist: 1.2.8
       neo-async: 2.6.2
@@ -20535,7 +20510,7 @@ snapshots:
     optionalDependencies:
       uglify-js: 3.19.3
 
-  happy-dom@20.8.4:
+  happy-dom@20.8.9:
     dependencies:
       '@types/node': 25.5.0
       '@types/whatwg-mimetype': 3.0.2
@@ -21387,8 +21362,8 @@ snapshots:
       oxc-parser: 0.120.0
       oxc-resolver: 11.19.1
       picocolors: 1.1.1
-      picomatch: 4.0.3
-      smol-toml: 1.6.0
+      picomatch: 4.0.4
+      smol-toml: 1.6.1
       strip-json-comments: 5.0.3
       unbash: 2.2.0
       yaml: 2.8.3
@@ -21478,7 +21453,7 @@ snapshots:
     dependencies:
       commander: 14.0.3
       listr2: 9.0.5
-      picomatch: 4.0.3
+      picomatch: 4.0.4
       string-argv: 0.3.2
       tinyexec: 1.0.4
       yaml: 2.8.3
@@ -21534,7 +21509,7 @@ snapshots:
 
   lodash.startcase@4.4.0: {}
 
-  lodash@4.17.23: {}
+  lodash@4.18.1: {}
 
   log-symbols@4.1.0:
     dependencies:
@@ -22077,7 +22052,7 @@ snapshots:
   micromatch@4.0.8:
     dependencies:
       braces: 3.0.3
-      picomatch: 2.3.1
+      picomatch: 4.0.4
 
   mime-db@1.52.0: {}
 
@@ -22105,7 +22080,7 @@ snapshots:
 
   minimatch@10.2.4:
     dependencies:
-      brace-expansion: 5.0.4
+      brace-expansion: 5.0.5
 
   minimatch@3.1.5:
     dependencies:
@@ -22113,7 +22088,7 @@ snapshots:
 
   minimatch@5.1.9:
     dependencies:
-      brace-expansion: 2.0.2
+      brace-expansion: 5.0.4
 
   minimist@1.2.8: {}
 
@@ -22246,7 +22221,7 @@ snapshots:
       '@nuxt/opencollective': 0.4.1
       discord-api-types: 0.38.31
       discord.js: 14.25.1
-      path-to-regexp: 8.3.0
+      path-to-regexp: 8.4.0
       reflect-metadata: 0.2.2
       rxjs: 7.8.2
       tslib: 2.8.1
@@ -22300,7 +22275,7 @@ snapshots:
 
   node-emoji@1.11.0:
     dependencies:
-      lodash: 4.17.23
+      lodash: 4.18.1
 
   node-fetch-native@1.6.7: {}
 
@@ -22612,8 +22587,6 @@ snapshots:
       lru-cache: 11.2.7
       minipass: 7.1.3
 
-  path-to-regexp@8.3.0: {}
-
   path-to-regexp@8.4.0: {}
 
   path-type@4.0.0: {}
@@ -22658,14 +22631,6 @@ snapshots:
       split2: 4.2.0
 
   picocolors@1.1.1: {}
-
-  picomatch@2.3.1: {}
-
-  picomatch@2.3.2: {}
-
-  picomatch@4.0.2: {}
-
-  picomatch@4.0.3: {}
 
   picomatch@4.0.4: {}
 
@@ -22893,7 +22858,7 @@ snapshots:
 
   rc9@2.1.2:
     dependencies:
-      defu: 6.1.4
+      defu: 6.1.6
       destr: 2.0.5
 
   react-day-picker@9.14.0(react@19.2.4):
@@ -23054,7 +23019,7 @@ snapshots:
 
   readdirp@3.6.0:
     dependencies:
-      picomatch: 2.3.2
+      picomatch: 4.0.4
 
   readdirp@4.1.2: {}
 
@@ -23298,7 +23263,7 @@ snapshots:
   rollup-plugin-visualizer@7.0.1(rolldown@1.0.0-rc.10)(rollup@4.59.1):
     dependencies:
       open: 11.0.0
-      picomatch: 4.0.3
+      picomatch: 4.0.4
       source-map: 0.7.6
       yargs: 18.0.0
     optionalDependencies:
@@ -23561,7 +23526,7 @@ snapshots:
       ansi-styles: 6.2.3
       is-fullwidth-code-point: 5.1.0
 
-  smol-toml@1.6.0: {}
+  smol-toml@1.6.1: {}
 
   socket.io-adapter@2.5.6:
     dependencies:
@@ -24072,7 +24037,7 @@ snapshots:
     dependencies:
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
-      handlebars: 4.7.8
+      handlebars: 4.7.9
       jest: 30.3.0(@types/node@25.5.0)(ts-node@10.9.2(@types/node@25.5.0)(typescript@5.9.3))
       json5: 2.2.3
       lodash.memoize: 4.1.2
@@ -24253,7 +24218,7 @@ snapshots:
     dependencies:
       '@jridgewell/remapping': 2.3.5
       acorn: 8.16.0
-      picomatch: 4.0.3
+      picomatch: 4.0.4
       webpack-virtual-modules: 0.6.2
 
   unrs-resolver@1.11.1:
@@ -24407,7 +24372,7 @@ snapshots:
   vite@8.0.1(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3):
     dependencies:
       lightningcss: 1.32.0
-      picomatch: 4.0.3
+      picomatch: 4.0.4
       postcss: 8.5.8
       rolldown: 1.0.0-rc.10
       tinyglobby: 0.2.15
@@ -24424,7 +24389,7 @@ snapshots:
     optionalDependencies:
       vite: 8.0.1(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
 
-  vitest@4.1.0(@opentelemetry/api@1.9.1)(@types/node@25.5.0)(@vitest/ui@4.1.0)(happy-dom@20.8.4)(jsdom@29.0.1(@noble/hashes@2.0.1))(vite@8.0.1(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)):
+  vitest@4.1.0(@opentelemetry/api@1.9.1)(@types/node@25.5.0)(@vitest/ui@4.1.0)(happy-dom@20.8.9)(jsdom@29.0.1(@noble/hashes@2.0.1))(vite@8.0.1(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)):
     dependencies:
       '@vitest/expect': 4.1.0
       '@vitest/mocker': 4.1.0(vite@8.0.1(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
@@ -24438,7 +24403,7 @@ snapshots:
       magic-string: 0.30.21
       obug: 2.1.1
       pathe: 2.0.3
-      picomatch: 4.0.3
+      picomatch: 4.0.4
       std-env: 4.0.0
       tinybench: 2.9.0
       tinyexec: 1.0.4
@@ -24450,7 +24415,7 @@ snapshots:
       '@opentelemetry/api': 1.9.1
       '@types/node': 25.5.0
       '@vitest/ui': 4.1.0(vitest@4.1.0)
-      happy-dom: 20.8.4
+      happy-dom: 20.8.9
       jsdom: 29.0.1(@noble/hashes@2.0.1)
     transitivePeerDependencies:
       - msw
