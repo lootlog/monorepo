@@ -5,7 +5,7 @@ import {
   ActivityEntity,
   PaginatedActivitiesEntity,
 } from "../entities/activity.entity";
-import type { Prisma } from "../../../prisma/generated/client";
+import type { Prisma } from "src/generated/prisma/client";
 
 @Injectable()
 export class ActivitiesQueryService {

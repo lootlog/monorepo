@@ -7,7 +7,7 @@ import {
   PaginatedActivitiesEntity,
   ActivityEntity,
 } from "./entities/activity.entity";
-import { ActivityType, ActivitySource } from "../../prisma/generated/client";
+import { ActivityType, ActivitySource } from "src/generated/prisma/client";
 import { AuthGuard } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "src/shared/guards/permissions.guard";
 

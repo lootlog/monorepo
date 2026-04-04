@@ -1,5 +1,5 @@
 import { Expose, Type } from "class-transformer";
-import { ActivityType, ActivitySource } from "../../../prisma/generated/client";
+import { ActivityType, ActivitySource } from "src/generated/prisma/client";
 
 export class ActivityActorSnapshotEntity {
   @Expose()
