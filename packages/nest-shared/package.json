@@ -15,17 +15,17 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@axiomhq/winston": "^1.5.0",
+    "@axiomhq/winston": "^1.6.0",
     "@lootlog/types": "workspace:*",
     "fastify": "^5.8.4",
     "nest-winston": "^1.10.2",
     "winston": "^3.19.0"
   },
   "devDependencies": {
-    "@nestjs/common": "^11.1.17",
+    "@nestjs/common": "^11.1.18",
     "@nestjs/config": "^4.0.3",
-    "@nestjs/core": "^11.1.17",
-    "@types/node": "^25.5.0",
+    "@nestjs/core": "^11.1.18",
+    "@types/node": "^25.5.2",
     "ioredis": "^5.10.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",

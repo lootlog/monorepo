@@ -1,16 +1,16 @@
 // oxlint-disable-next-line consistent-type-imports
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { Inject, Injectable, Logger } from "@nestjs/common";
-import type {
-  DiscordGuildChannelDeletedEvent,
-  DiscordGuildChannelSnapshot,
-  DiscordGuildChannelUpsertedEvent,
-  DiscordGuildChannelsSyncFailedEvent,
-  DiscordGuildChannelsSyncedEvent,
-  DiscordGuildSyncState,
-  DiscordGuildSyncStateUpdatedEvent,
+import {
+  DiscordGuildSyncStatus,
+  type DiscordGuildChannelDeletedEvent,
+  type DiscordGuildChannelSnapshot,
+  type DiscordGuildChannelUpsertedEvent,
+  type DiscordGuildChannelsSyncFailedEvent,
+  type DiscordGuildChannelsSyncedEvent,
+  type DiscordGuildSyncState,
+  type DiscordGuildSyncStateUpdatedEvent,
 } from "@lootlog/types";
-import { DiscordGuildSyncStatus } from "@lootlog/types";
 import { isDiscordAdministrator } from "@lootlog/nest-shared";
 import {
   ChannelType,

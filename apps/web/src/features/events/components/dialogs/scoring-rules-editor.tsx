@@ -25,13 +25,13 @@ import {
   EVENT_SCORING_NUMERIC_FACTORS,
   EVENT_SCORING_NUMERIC_OPERATORS,
   type EventScoringCondition,
+  type EventScoringRules,
 } from "../../types/scoring-rules";
 import {
   getScoringActionTypeLabel,
   getScoringConditionTypeLabel,
   getScoringFactorLabel,
 } from "../../utils/scoring-rule-labels";
-import type { EventScoringRules } from "../../types/scoring-rules";
 import {
   createDefaultScoringAction,
   createDefaultScoringCondition,

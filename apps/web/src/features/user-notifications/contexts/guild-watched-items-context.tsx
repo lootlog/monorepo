@@ -1,9 +1,12 @@
-import type { QuickAddWatchedItemData } from "@/hooks/api/user/use-quick-add-watched-item";
-import { useQuickAddWatchedItem } from "@/hooks/api/user/use-quick-add-watched-item";
-import type { UserWatchedItem } from "@/hooks/api/user/use-user-notifications";
-import { useUserNotifications } from "@/hooks/api/user/use-user-notifications";
-import { createContext } from "react";
-import type { PropsWithChildren } from "react";
+import {
+  useQuickAddWatchedItem,
+  type QuickAddWatchedItemData,
+} from "@/hooks/api/user/use-quick-add-watched-item";
+import {
+  useUserNotifications,
+  type UserWatchedItem,
+} from "@/hooks/api/user/use-user-notifications";
+import { createContext, type PropsWithChildren } from "react";
 import type { WatchedItemScope } from "@/features/user-notifications/types/watched-item-scope";
 import { useGuild } from "@/hooks/api/guilds/use-guild";
 import { useGuildId } from "@/hooks/context/use-guild-id";
