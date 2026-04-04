@@ -49,7 +49,7 @@
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-error-boundary": "^6.1.1",
-    "react-hook-form": "7.67.0",
+    "react-hook-form": "7.72.1",
     "react-use": "^17.6.0",
     "socket.io-client": "^4.8.3",
     "sonner": "^2.0.7",

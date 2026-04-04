@@ -21,7 +21,7 @@
     "amqplib": "^1.0.3",
     "dotenv": "^17.4.0",
     "hono": "^4.12.10",
-    "meilisearch": "^0.56.0",
+    "meilisearch": "^0.57.0",
     "winston": "^3.19.0",
     "zod": "^4.3.6"
   },
