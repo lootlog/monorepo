@@ -1,10 +1,10 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import {
+import type {
+  Guild,
+  ItemRarity,
   Permission,
-  type Guild,
-  type ItemRarity,
-  type Role,
-} from "prisma/generated/client";
+  Role,
+} from "src/generated/prisma/client";
 import type { LootQueryResult } from "src/loots/dto/loot-query-result.dto";
 import { LootsService } from "src/loots/loots.service";
 import { PrismaService } from "src/db/prisma.service";
@@ -420,7 +420,7 @@ export class EventWrappedService {
     return response;
   }
 
-  private async getEventLoots(params: {
+  private getEventLoots(params: {
     guild: Guild;
     permissions: Permission[];
     roles: Role[];
@@ -430,13 +430,13 @@ export class EventWrappedService {
     createdAtMax: string;
   }): Promise<LootQueryResult[]> {
     if (params.heroNames.length === 0) {
-      return [];
+      return Promise.resolve([]);
     }
 
-    const allLoots: LootQueryResult[] = [];
-    let cursor: number | undefined;
-
-    while (true) {
+    const fetchLootsBatch = async (
+      cursor: number | undefined,
+      collectedLoots: LootQueryResult[],
+    ): Promise<LootQueryResult[]> => {
       const batch = await this.lootsService.fetchLootsByGuildId(
         params.guild,
         params.permissions,
@@ -454,17 +454,21 @@ export class EventWrappedService {
         },
       );
 
-      allLoots.push(...batch);
+      collectedLoots.push(...batch);
 
       if (batch.length < 100) {
-        return allLoots;
+        return collectedLoots;
       }
 
-      cursor = batch[batch.length - 1]?.id;
-      if (!cursor) {
-        return allLoots;
+      const nextCursor = batch[batch.length - 1]?.id;
+      if (!nextCursor) {
+        return collectedLoots;
       }
-    }
+
+      return fetchLootsBatch(nextCursor, collectedLoots);
+    };
+
+    return fetchLootsBatch(undefined, []);
   }
 
   private aggregateMembers(

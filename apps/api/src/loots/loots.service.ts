@@ -22,7 +22,7 @@ import {
   Permission,
   type Guild,
   type Role,
-} from "prisma/generated/client";
+} from "src/generated/prisma/client";
 import { GuildsService } from "src/guilds/guilds.service";
 import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
 import type { UpdateLootDto } from "src/loots/dto/update-loot.dto";
@@ -32,14 +32,14 @@ import { LootValidationService } from "./services/loot-validation.service";
 import { LootQueryService } from "./services/loot-query.service";
 import { LootCommentService } from "./services/loot-comment.service";
 import { RedisService } from "@lootlog/nest-shared";
-import Redlock, { ExecutionError } from "redlock";
+import { ExecutionError } from "redlock";
 import { RedlockService } from "src/lib/redlock/redlock.service";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { RoutingKey } from "src/enum/routing-key.enum";
 
 @Injectable()
 export class LootsService implements OnModuleInit {
-  private redlock: Redlock;
+  private redlock: ReturnType<RedlockService["createInstance"]>;
   private readonly lockTtl = 10000;
 
   constructor(
@@ -60,7 +60,7 @@ export class LootsService implements OnModuleInit {
     private readonly redlockService: RedlockService,
   ) {}
 
-  async onModuleInit() {
+  onModuleInit() {
     this.redlock = this.redlockService.createInstance({
       automaticExtensionThreshold: 5000,
     });
@@ -278,11 +278,7 @@ export class LootsService implements OnModuleInit {
     }
   }
 
-  async getComments(options: {
-    discordId: string;
-    guildId: string;
-    lootId: number;
-  }) {
+  getComments(options: { discordId: string; guildId: string; lootId: number }) {
     return this.lootCommentService.getComments(options);
   }
 
@@ -308,7 +304,7 @@ export class LootsService implements OnModuleInit {
     });
   }
 
-  async createComment(options: {
+  createComment(options: {
     discordId: string;
     guildId: string;
     lootId: number;
@@ -404,7 +400,7 @@ export class LootsService implements OnModuleInit {
     return mappedLootShare;
   }
 
-  async fetchLootsByGuildId(
+  fetchLootsByGuildId(
     guild: Guild,
     permissions: Permission[],
     roles: Role[],
@@ -418,7 +414,7 @@ export class LootsService implements OnModuleInit {
     );
   }
 
-  async countLootsByGuildId(
+  countLootsByGuildId(
     guild: Guild,
     permissions: Permission[],
     roles: Role[],
@@ -432,7 +428,7 @@ export class LootsService implements OnModuleInit {
     );
   }
 
-  async fetchLootById(guild: Guild, lootId: number) {
+  fetchLootById(guild: Guild, lootId: number) {
     return this.lootQueryService.fetchLootById(guild, lootId);
   }
 }

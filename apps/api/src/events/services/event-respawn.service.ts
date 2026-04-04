@@ -122,13 +122,13 @@ export class EventRespawnService {
           timer.maxSpawnTime,
           false,
         );
-      } catch (err) {
+      } catch (error) {
         this.logger.error({
           message: "Failed to close auto respawn window without scoring",
           heroId,
           eventId,
           guildId,
-          error: err instanceof Error ? err.message : err,
+          error: error instanceof Error ? error.message : error,
         });
         throw new InternalServerErrorException(
           "Window auto-closed but cleanup failed. Please contact support.",
@@ -150,13 +150,13 @@ export class EventRespawnService {
           },
           true,
         );
-      } catch (err) {
+      } catch (error) {
         this.logger.error({
           message: "Failed to record hero kill on manual window close",
           heroId,
           eventId,
           guildId,
-          error: err instanceof Error ? err.message : err,
+          error: error instanceof Error ? error.message : error,
         });
         throw new InternalServerErrorException(
           "Window closed but failed to record points. Please contact support.",
@@ -165,9 +165,11 @@ export class EventRespawnService {
     }
 
     if (isAutoClose || !timer) {
-      for (const map of hero.maps) {
-        await this.eventEmitter.emitMapStatusUpdate(guildId, eventId, map.id);
-      }
+      await Promise.all(
+        hero.maps.map((map) =>
+          this.eventEmitter.emitMapStatusUpdate(guildId, eventId, map.id),
+        ),
+      );
     }
 
     if (timer) {
@@ -184,9 +186,15 @@ export class EventRespawnService {
     await this.eventEmitter.emitRespawnWindowClosed(guildId, eventId, heroId);
 
     if (createNewWindow) {
+      if (!newMinSpawnTime || !newMaxSpawnTime) {
+        throw new InternalServerErrorException(
+          "Missing spawn window bounds for new window",
+        );
+      }
+
       await this.openRespawnWindow(guildId, eventId, heroId, {
-        minSpawnTime: newMinSpawnTime!,
-        maxSpawnTime: newMaxSpawnTime!,
+        minSpawnTime: newMinSpawnTime,
+        maxSpawnTime: newMaxSpawnTime,
       });
     }
   }
@@ -250,26 +258,34 @@ export class EventRespawnService {
       },
     });
 
-    let unassignedCount = 0;
-    let uncoveredCount = 0;
+    const gapResults = await Promise.all(
+      heroMaps.map(async (map) => {
+        if (!map.assignedMembers || map.assignedMembers.length === 0) {
+          await this.trackingService.openUnassignedGap(
+            map.id,
+            heroId,
+            windowOpenedAt,
+          );
+          return { unassigned: 1, uncovered: 0 };
+        }
 
-    for (const map of heroMaps) {
-      if (!map.assignedMembers || map.assignedMembers.length === 0) {
-        await this.trackingService.openUnassignedGap(
-          map.id,
-          heroId,
-          windowOpenedAt,
-        );
-        unassignedCount++;
-      } else {
         await this.trackingService.openUncoveredGap(
           map.id,
           heroId,
           windowOpenedAt,
         );
-        uncoveredCount++;
-      }
-    }
+        return { unassigned: 0, uncovered: 1 };
+      }),
+    );
+
+    const unassignedCount = gapResults.reduce(
+      (count, result) => count + result.unassigned,
+      0,
+    );
+    const uncoveredCount = gapResults.reduce(
+      (count, result) => count + result.uncovered,
+      0,
+    );
 
     this.logger.log({
       message: "Opened coverage gaps for hero maps",
@@ -281,9 +297,11 @@ export class EventRespawnService {
 
     await this.eventEmitter.emitRespawnWindowOpened(guildId, eventId, heroId);
 
-    for (const map of heroMaps) {
-      await this.eventEmitter.emitMapStatusUpdate(guildId, eventId, map.id);
-    }
+    await Promise.all(
+      heroMaps.map((map) =>
+        this.eventEmitter.emitMapStatusUpdate(guildId, eventId, map.id),
+      ),
+    );
 
     return { minSpawnTime, maxSpawnTime };
   }
@@ -351,15 +369,17 @@ export class EventRespawnService {
   private async cancelScheduledAutoClose(heroId: string): Promise<void> {
     const delayedJobs = await this.respawnWindowQueue.getJobs(["delayed"]);
 
-    for (const job of delayedJobs) {
-      if (job.data.heroId === heroId) {
-        await job.remove();
-        this.logger.log({
-          message: "Cancelled scheduled auto-close job",
-          heroId,
-          jobId: job.id,
-        });
-      }
-    }
+    await Promise.all(
+      delayedJobs
+        .filter((job) => job.data.heroId === heroId)
+        .map(async (job) => {
+          await job.remove();
+          this.logger.log({
+            message: "Cancelled scheduled auto-close job",
+            heroId,
+            jobId: job.id,
+          });
+        }),
+    );
   }
 }

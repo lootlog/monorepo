@@ -13,71 +13,71 @@ describe("BattlesService", () => {
     const mockDrizzleService = {
       db: {
         query: {
-          battles: { findMany: jest.fn(), findFirst: jest.fn() },
-          battleWarriors: { findMany: jest.fn() },
-          userCharacters: { findMany: jest.fn(), findFirst: jest.fn() },
+          battles: { findMany: vi.fn(), findFirst: vi.fn() },
+          battleWarriors: { findMany: vi.fn() },
+          userCharacters: { findMany: vi.fn(), findFirst: vi.fn() },
         },
-        insert: jest.fn().mockReturnValue({
-          values: jest.fn().mockReturnValue({
-            onConflictDoUpdate: jest.fn().mockReturnValue({
-              returning: jest.fn(),
+        insert: vi.fn().mockReturnValue({
+          values: vi.fn().mockReturnValue({
+            onConflictDoUpdate: vi.fn().mockReturnValue({
+              returning: vi.fn(),
             }),
-            returning: jest.fn(),
+            returning: vi.fn(),
           }),
         }),
-        update: jest.fn().mockReturnValue({
-          set: jest.fn().mockReturnValue({
-            where: jest.fn().mockReturnValue({
-              returning: jest.fn(),
-            }),
-          }),
-        }),
-        delete: jest.fn().mockReturnValue({
-          where: jest.fn().mockReturnValue({
-            returning: jest.fn(),
-          }),
-        }),
-        select: jest.fn().mockReturnValue({
-          from: jest.fn().mockReturnValue({
-            where: jest.fn(),
-          }),
-        }),
-        selectDistinctOn: jest.fn().mockReturnValue({
-          from: jest.fn().mockReturnValue({
-            where: jest.fn().mockReturnValue({
-              orderBy: jest.fn(),
+        update: vi.fn().mockReturnValue({
+          set: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              returning: vi.fn(),
             }),
           }),
         }),
-        execute: jest.fn(),
-        transaction: jest.fn(),
+        delete: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn(),
+          }),
+        }),
+        select: vi.fn().mockReturnValue({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn(),
+          }),
+        }),
+        selectDistinctOn: vi.fn().mockReturnValue({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              orderBy: vi.fn(),
+            }),
+          }),
+        }),
+        execute: vi.fn(),
+        transaction: vi.fn(),
       },
     };
 
     const mockR2Service = {
-      uploadBattleData: jest.fn(),
-      getBattleData: jest.fn(),
-      deleteBattleData: jest.fn(),
+      uploadBattleData: vi.fn(),
+      getBattleData: vi.fn(),
+      deleteBattleData: vi.fn(),
     };
 
     const mockPaginationService = {
-      paginateBattles: jest.fn(),
+      paginateBattles: vi.fn(),
     };
 
     const mockBattleAnalyticsService = {
-      getBattleAnalytics: jest.fn(),
-      calculateProfessionWinRate: jest.fn(),
-      getHeadToHead: jest.fn(),
-      getCurrentStreak: jest.fn(),
-      getBattleDurationStats: jest.fn(),
-      getPhGrowthTimeSeries: jest.fn(),
+      getBattleAnalytics: vi.fn(),
+      calculateProfessionWinRate: vi.fn(),
+      getHeadToHead: vi.fn(),
+      getCurrentStreak: vi.fn(),
+      getBattleDurationStats: vi.fn(),
+      getPhGrowthTimeSeries: vi.fn(),
     };
 
     const mockRedisService = {
-      get: jest.fn(),
-      set: jest.fn(),
-      del: jest.fn(),
-      deleteByPattern: jest.fn(),
+      get: vi.fn(),
+      set: vi.fn(),
+      del: vi.fn(),
+      deleteByPattern: vi.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({

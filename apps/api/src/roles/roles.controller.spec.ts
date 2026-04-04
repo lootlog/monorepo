@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { mockFn } from "src/test/mock-fn";
 import { RolesController } from "./roles.controller";
 import { RolesService } from "./roles.service";
 import { AuthGuard } from "src/shared/guards/auth.guard";
@@ -8,8 +9,8 @@ describe("RolesController", () => {
   let controller: RolesController;
 
   const mockRolesService = {
-    getRolesByGuildId: jest.fn(),
-    updateRolePermissions: jest.fn(),
+    getRolesByGuildId: mockFn(),
+    updateRolePermissions: mockFn(),
   };
 
   beforeEach(async () => {

@@ -16,7 +16,7 @@ const DEFAULT_OPTIONS: Required<
   backoffFactor: 2,
 };
 
-export async function retry<T>(
+export function retry<T>(
   fn: () => Promise<T>,
   options: RetryOptions = {},
 ): Promise<T> {
@@ -25,13 +25,11 @@ export async function retry<T>(
     ...options,
   };
 
-  let lastError: Error;
-
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+  const runAttempt = async (attempt: number): Promise<T> => {
     try {
       return await fn();
     } catch (error) {
-      lastError = error as Error;
+      const currentError = error as Error;
 
       if (
         options.retryableErrors &&
@@ -42,8 +40,8 @@ export async function retry<T>(
         throw error;
       }
 
-      if (attempt === maxAttempts) {
-        throw error;
+      if (attempt >= maxAttempts) {
+        throw currentError;
       }
 
       const delay = Math.min(
@@ -52,14 +50,15 @@ export async function retry<T>(
       );
 
       if (options.onRetry) {
-        options.onRetry(attempt, error as Error);
+        options.onRetry(attempt, currentError);
       }
 
       await sleep(delay);
+      return runAttempt(attempt + 1);
     }
-  }
+  };
 
-  throw new Error(lastError?.message || "Retry failed");
+  return runAttempt(1);
 }
 
 function sleep(ms: number): Promise<void> {
@@ -73,7 +72,7 @@ export class RetryableError extends Error {
   }
 }
 
-export function withRetry<T extends (...args: unknown[]) => Promise<any>>(
+export function withRetry<T extends (...args: unknown[]) => Promise<unknown>>(
   fn: T,
   options: RetryOptions = {},
 ): T {

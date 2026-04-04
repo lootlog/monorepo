@@ -1,3 +1,5 @@
+import type { Mock } from "vitest";
+import { mockFn } from "src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { Job } from "bullmq";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
@@ -9,19 +11,19 @@ import { PrismaService } from "src/db/prisma.service";
 describe("MemberBulkRefreshProcessor", () => {
   let processor: MemberBulkRefreshProcessor;
   let membersService: {
-    refreshMember: jest.Mock;
+    refreshMember: Mock;
   };
   let prismaService: {
     memberRefreshJob: {
-      update: jest.Mock;
-      findUnique: jest.Mock;
+      update: Mock;
+      findUnique: Mock;
     };
   };
   let amqpConnection: {
-    publish: jest.Mock;
+    publish: Mock;
   };
   let logger: {
-    log: jest.Mock;
+    log: Mock;
   };
 
   const mockJobRecord = {
@@ -57,25 +59,25 @@ describe("MemberBulkRefreshProcessor", () => {
     }>;
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     const mockMembersService = {
-      refreshMember: jest.fn(),
+      refreshMember: mockFn(),
     };
 
     const mockPrismaService = {
       memberRefreshJob: {
-        update: jest.fn(),
-        findUnique: jest.fn().mockResolvedValue(mockJobRecord),
+        update: mockFn(),
+        findUnique: mockFn().mockResolvedValue(mockJobRecord),
       },
     };
 
     const mockAmqpConnection = {
-      publish: jest.fn(),
+      publish: mockFn(),
     };
 
     const mockLogger = {
-      log: jest.fn(),
+      log: mockFn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -112,8 +114,8 @@ describe("MemberBulkRefreshProcessor", () => {
   it("should classify null and queued refreshes as skipped", async () => {
     membersService.refreshMember
       .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({ refreshQueued: true } as any)
-      .mockResolvedValueOnce({ refreshQueued: false } as any);
+      .mockResolvedValueOnce({ refreshQueued: true } as never)
+      .mockResolvedValueOnce({ refreshQueued: false } as never);
 
     await processor.process(createJob());
 

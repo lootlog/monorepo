@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared";
-import { ItemRarity, NpcType } from "prisma/generated/client";
+import { NpcType, type ItemRarity } from "src/generated/prisma/client";
 import type {
   Period,
   LootStatsResponse,
@@ -418,7 +418,10 @@ export class LootStatsService {
         timelineMap.set(dateStr, { total: 0, byRarity: {} });
       }
 
-      const entry = timelineMap.get(dateStr)!;
+      const entry = timelineMap.get(dateStr);
+      if (!entry) {
+        continue;
+      }
       const count = Number(row.count);
       entry.total += count;
       if (row.rarity) {

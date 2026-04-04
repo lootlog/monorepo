@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  forwardRef,
   HttpException,
   HttpStatus,
   Inject,
@@ -21,12 +20,12 @@ import {
 } from "src/members/constants/member-cache.constant";
 import type { APIGuildMember } from "discord-api-types/v10";
 import { ErrorKey } from "src/members/enum/error-key.enum";
-import { GuildsService } from "src/guilds/guilds.service";
-import type { Member, Prisma, Role } from "prisma/generated/client";
+import { ErrorKey as GuildErrorKey } from "src/guilds/enum/error-key.enum";
+import type { Member, Prisma, Role } from "src/generated/prisma/client";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { RoutingKey } from "src/enum/routing-key.enum";
 import { ConfigKey } from "src/config/config-key.enum";
-import { ServiceConfig } from "src/config/service.config";
+import type { ServiceConfig } from "src/config/service.config";
 import { RuntimeEnvironment } from "src/types/runtime.types";
 import { DiscordService } from "src/discord/discord.service";
 import { RedisService } from "@lootlog/nest-shared";
@@ -37,8 +36,8 @@ import {
 import { DiscordRateLimiterService } from "src/discord/discord-rate-limiter.service";
 import { MEMBER_REFRESH_PRIORITY } from "./constants/member-refresh-queue.constant";
 import {
-  type MemberRefreshScheduleResult,
   MemberRefreshSchedulerService,
+  type MemberRefreshScheduleResult,
 } from "./member-refresh-scheduler.service";
 
 type MemberWithRoles = Member & {
@@ -81,8 +80,6 @@ export class MembersService {
     private readonly discordService: DiscordService,
     private readonly rateLimiter: DiscordRateLimiterService,
     private readonly memberRefreshScheduler: MemberRefreshSchedulerService,
-    @Inject(forwardRef(() => GuildsService))
-    private readonly guildsService: GuildsService,
     private readonly amqpConnection: AmqpConnection,
     private readonly configService: ConfigService,
     private readonly redisService: RedisService,
@@ -112,7 +109,20 @@ export class MembersService {
 
     let desiredGuildId = guildId;
     if (refresh || standalone) {
-      const guild = await this.guildsService.getGuildById(guildId);
+      const guild = await this.prisma.guild.findFirst({
+        where: {
+          active: true,
+          OR: [{ id: guildId }, { vanityUrl: guildId }],
+        },
+        select: {
+          id: true,
+        },
+      });
+      if (!guild) {
+        throw new NotFoundException({
+          message: GuildErrorKey.GUILD_NOT_FOUND,
+        });
+      }
       desiredGuildId = guild.id;
     }
 
@@ -271,7 +281,7 @@ export class MembersService {
     }
   }
 
-  async queueMemberRefresh(options: {
+  queueMemberRefresh(options: {
     discordId: string;
     guildId: string;
     userId: string;
@@ -427,7 +437,7 @@ export class MembersService {
     });
   }
 
-  async getGuildMembers(
+  getGuildMembers(
     guildId: string,
     includeInactive = false,
   ): Promise<MemberWithRoles[]> {
@@ -649,12 +659,20 @@ export class MembersService {
     members: MemberRemovalNotificationTarget[],
     batchSize = 25,
   ): Promise<void> {
-    for (let index = 0; index < members.length; index += batchSize) {
+    const notifyBatch = async (index: number): Promise<void> => {
+      if (index >= members.length) {
+        return;
+      }
+
       const batch = members.slice(index, index + batchSize);
       await Promise.all(
         batch.map((member) => this.notifyMemberRemoved(member)),
       );
-    }
+
+      await notifyBatch(index + batchSize);
+    };
+
+    await notifyBatch(0);
   }
 
   async createBulkRefreshJob(guildId: string, requestedBy: string) {
@@ -700,7 +718,7 @@ export class MembersService {
     return job;
   }
 
-  async getLatestRefreshJob(guildId: string) {
+  getLatestRefreshJob(guildId: string) {
     return this.prisma.memberRefreshJob.findFirst({
       where: { guildId },
       orderBy: { createdAt: "desc" },
@@ -721,7 +739,7 @@ export class MembersService {
     return job;
   }
 
-  private async getStoredMember(
+  private getStoredMember(
     discordId: string,
     guildId: string,
   ): Promise<StoredMemberWithRoles | null> {

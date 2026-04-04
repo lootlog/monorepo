@@ -1,3 +1,5 @@
+import type { Mock } from "vitest";
+import { mockFn } from "src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import {
   UnauthorizedException,
@@ -25,27 +27,27 @@ import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
 describe("DiscordService", () => {
   let service: DiscordService;
   let authService: {
-    getIdpToken: jest.Mock;
+    getIdpToken: Mock;
   };
   let redisService: {
-    get: jest.Mock;
-    set: jest.Mock;
-    del: jest.Mock;
-    getClient: jest.Mock;
+    get: Mock;
+    set: Mock;
+    del: Mock;
+    getClient: Mock;
   };
   let rateLimiter: {
-    checkRateLimitForUser: jest.Mock;
-    setRateLimitForUser: jest.Mock;
-    updateRateLimitFromHeaders: jest.Mock;
+    checkRateLimitForUser: Mock;
+    setRateLimitForUser: Mock;
+    updateRateLimitFromHeaders: Mock;
   };
   let mockLogger: {
-    log: jest.Mock;
-    warn: jest.Mock;
-    error: jest.Mock;
-    debug: jest.Mock;
+    log: Mock;
+    warn: Mock;
+    error: Mock;
+    debug: Mock;
   };
   let mockRedlock: {
-    acquire: jest.Mock;
+    acquire: Mock;
   };
 
   const mockGuilds: APIGuild[] = [
@@ -83,53 +85,53 @@ describe("DiscordService", () => {
 
   const createJsonResponse = (data: unknown) => ({
     headers: {
-      get: jest.fn((header: string) =>
+      get: mockFn((header: string) =>
         header.toLowerCase() === "content-type" ? "application/json" : null,
       ),
     },
-    json: jest.fn().mockResolvedValue(data),
-    arrayBuffer: jest.fn(),
+    json: mockFn().mockResolvedValue(data),
+    arrayBuffer: mockFn(),
     bodyUsed: false,
     ok: true,
     status: 200,
     statusText: "OK",
-    text: jest.fn(),
+    text: mockFn(),
     body: null,
   });
 
   beforeEach(async () => {
     mockLogger = {
-      log: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-      debug: jest.fn(),
+      log: mockFn(),
+      warn: mockFn(),
+      error: mockFn(),
+      debug: mockFn(),
     };
 
     mockRedlock = {
-      acquire: jest.fn().mockResolvedValue({
-        release: jest.fn(),
+      acquire: mockFn().mockResolvedValue({
+        release: mockFn(),
       }),
     };
 
     const mockAuthService = {
-      getIdpToken: jest.fn(),
+      getIdpToken: mockFn(),
     };
 
     const mockRedisService = {
-      get: jest.fn(),
-      set: jest.fn(),
-      del: jest.fn(),
-      getClient: jest.fn().mockReturnValue({}),
+      get: mockFn(),
+      set: mockFn(),
+      del: mockFn(),
+      getClient: mockFn().mockReturnValue({}),
     };
 
     const mockRateLimiter = {
-      checkRateLimitForUser: jest.fn().mockResolvedValue(false),
-      setRateLimitForUser: jest.fn(),
-      updateRateLimitFromHeaders: jest.fn(),
+      checkRateLimitForUser: mockFn().mockResolvedValue(false),
+      setRateLimitForUser: mockFn(),
+      updateRateLimitFromHeaders: mockFn(),
     };
 
     const mockConfigService = {
-      get: jest.fn((key: string) => {
+      get: mockFn((key: string) => {
         if (key === ConfigKey.SERVICE) {
           return { env: RuntimeEnvironment.LOCAL };
         }
@@ -147,7 +149,7 @@ describe("DiscordService", () => {
         { provide: ConfigService, useValue: mockConfigService },
         {
           provide: RedlockService,
-          useValue: { createInstance: jest.fn().mockReturnValue(mockRedlock) },
+          useValue: { createInstance: mockFn().mockReturnValue(mockRedlock) },
         },
       ],
     }).compile();
@@ -157,11 +159,11 @@ describe("DiscordService", () => {
     redisService = module.get(RedisService);
     rateLimiter = module.get(DiscordRateLimiterService);
 
-    service["redlock"] = mockRedlock as any;
+    service["redlock"] = mockRedlock as never;
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("constructor and initialization", () => {
@@ -220,7 +222,7 @@ describe("DiscordService", () => {
         accessToken: "mock-token",
         scopes: ["guilds"],
       };
-      authService.getIdpToken.mockResolvedValue(invalidToken as any);
+      authService.getIdpToken.mockResolvedValue(invalidToken as never);
 
       await expect(service.getRestClient(userId, discordId)).rejects.toThrow(
         UnauthorizedException,
@@ -249,11 +251,11 @@ describe("DiscordService", () => {
       authService.getIdpToken.mockResolvedValue(mockToken);
 
       const mockRest = {
-        queueRequest: jest
-          .fn()
-          .mockResolvedValue(createJsonResponse(mockGuilds)),
+        queueRequest: mockFn().mockResolvedValue(
+          createJsonResponse(mockGuilds),
+        ),
       };
-      jest.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
+      vi.spyOn(service, "getRestClient").mockResolvedValue(mockRest as never);
 
       const result = await service.getUserGuilds(userId, discordId);
 
@@ -280,11 +282,11 @@ describe("DiscordService", () => {
       authService.getIdpToken.mockResolvedValue(mockToken);
 
       const mockRest = {
-        queueRequest: jest
-          .fn()
-          .mockResolvedValue(createJsonResponse(mockGuilds)),
+        queueRequest: mockFn().mockResolvedValue(
+          createJsonResponse(mockGuilds),
+        ),
       };
-      jest.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
+      vi.spyOn(service, "getRestClient").mockResolvedValue(mockRest as never);
 
       await service.getUserGuilds(userId, discordId);
 
@@ -299,9 +301,9 @@ describe("DiscordService", () => {
       authService.getIdpToken.mockResolvedValue(mockToken);
 
       const mockRest = {
-        queueRequest: jest.fn().mockResolvedValue(createJsonResponse([])),
+        queueRequest: mockFn().mockResolvedValue(createJsonResponse([])),
       };
-      jest.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
+      vi.spyOn(service, "getRestClient").mockResolvedValue(mockRest as never);
 
       const result = await service.getUserGuilds(userId, discordId);
 
@@ -373,9 +375,9 @@ describe("DiscordService", () => {
       });
 
       const mockRest = {
-        queueRequest: jest.fn().mockRejectedValue(rateLimitError),
+        queueRequest: mockFn().mockRejectedValue(rateLimitError),
       };
-      jest.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
+      vi.spyOn(service, "getRestClient").mockResolvedValue(mockRest as never);
 
       const result = await service.getUserGuilds(userId, discordId);
 
@@ -412,9 +414,9 @@ describe("DiscordService", () => {
       });
 
       const mockRest = {
-        queueRequest: jest.fn().mockRejectedValue(rateLimitError),
+        queueRequest: mockFn().mockRejectedValue(rateLimitError),
       };
-      jest.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
+      vi.spyOn(service, "getRestClient").mockResolvedValue(mockRest as never);
 
       await expect(service.getUserGuilds(userId, discordId)).rejects.toThrow(
         RateLimitError,
@@ -475,11 +477,11 @@ describe("DiscordService", () => {
       authService.getIdpToken.mockResolvedValue(mockToken);
 
       const mockRest = {
-        queueRequest: jest
-          .fn()
-          .mockResolvedValue(createJsonResponse(mockGuildMember)),
+        queueRequest: mockFn<() => Promise<unknown>>().mockResolvedValue(
+          createJsonResponse(mockGuildMember),
+        ),
       };
-      jest.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
+      vi.spyOn(service, "getRestClient").mockResolvedValue(mockRest as never);
 
       const result = await service.getGuildMember(options);
 
@@ -506,9 +508,9 @@ describe("DiscordService", () => {
 
       const notFoundError = { status: 404, message: "Not Found" };
       const mockRest = {
-        queueRequest: jest.fn().mockRejectedValue(notFoundError),
+        queueRequest: mockFn().mockRejectedValue(notFoundError),
       };
-      jest.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
+      vi.spyOn(service, "getRestClient").mockResolvedValue(mockRest as never);
 
       await expect(service.getGuildMember(options)).rejects.toThrow(
         NotFoundException,
@@ -582,9 +584,9 @@ describe("DiscordService", () => {
       });
 
       const mockRest = {
-        queueRequest: jest.fn().mockRejectedValue(rateLimitError),
+        queueRequest: mockFn().mockRejectedValue(rateLimitError),
       };
-      jest.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
+      vi.spyOn(service, "getRestClient").mockResolvedValue(mockRest as never);
 
       const result = await service.getGuildMember(options);
 
@@ -621,9 +623,9 @@ describe("DiscordService", () => {
       });
 
       const mockRest = {
-        queueRequest: jest.fn().mockRejectedValue(rateLimitError),
+        queueRequest: mockFn().mockRejectedValue(rateLimitError),
       };
-      jest.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
+      vi.spyOn(service, "getRestClient").mockResolvedValue(mockRest as never);
 
       await expect(service.getGuildMember(options)).rejects.toThrow(
         RateLimitError,
@@ -656,11 +658,11 @@ describe("DiscordService", () => {
       authService.getIdpToken.mockResolvedValue(mockToken);
 
       const mockRest = {
-        queueRequest: jest
-          .fn()
-          .mockResolvedValue(createJsonResponse(mockGuildMember)),
+        queueRequest: mockFn<() => Promise<unknown>>().mockResolvedValue(
+          createJsonResponse(mockGuildMember),
+        ),
       };
-      jest.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
+      vi.spyOn(service, "getRestClient").mockResolvedValue(mockRest as never);
 
       await service.getGuildMember(options);
 

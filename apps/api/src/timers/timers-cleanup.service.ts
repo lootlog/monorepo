@@ -18,7 +18,7 @@ export class TimersCleanupService {
   ) {
     this.enabled =
       this.configService.get<string>("TIMER_CLEANUP_ENABLED") !== "false";
-    this.retentionDays = parseInt(
+    this.retentionDays = Number.parseInt(
       this.configService.get<string>("TIMER_RETENTION_DAYS") ??
         String(DEFAULT_RETENTION_DAYS),
       10,

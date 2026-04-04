@@ -8,7 +8,7 @@ import {
 } from "@nestjs/swagger";
 import { plainToInstance } from "class-transformer";
 import { AuthGuard } from "src/shared/guards/auth.guard";
-import { UpdateSoundSettingsDto } from "./dto/update-sound-settings.dto";
+import type { UpdateSoundSettingsDto } from "./dto/update-sound-settings.dto";
 import { SoundSettingsService } from "src/sound-settings/sound-settings.service";
 import { SoundSettingsEntity } from "src/sound-settings/entities/sound-settings.entity";
 

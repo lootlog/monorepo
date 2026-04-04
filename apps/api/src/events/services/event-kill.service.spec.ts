@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { mockFn } from "src/test/mock-fn";
 import { getQueueToken } from "@nestjs/bullmq";
 import { NotFoundException } from "@nestjs/common";
 import { EventKillService } from "./event-kill.service";
@@ -9,7 +10,7 @@ import { EventSummaryService } from "./event-summary.service";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared";
 import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant";
-import type { Event, EventHeroNpc } from "prisma/generated/client";
+import type { Event, EventHeroNpc } from "src/generated/prisma/client";
 import { TimersService } from "src/timers/timers.service";
 
 describe("EventKillService", () => {
@@ -17,68 +18,68 @@ describe("EventKillService", () => {
 
   const mockPrismaService = {
     event: {
-      findFirst: jest.fn(),
+      findFirst: mockFn(),
     },
     eventHeroNpc: {
-      findFirst: jest.fn(),
-      findMany: jest.fn(),
-      update: jest.fn(),
+      findFirst: mockFn(),
+      findMany: mockFn(),
+      update: mockFn(),
     },
     eventMap: {
-      findMany: jest.fn(),
-      update: jest.fn(),
+      findMany: mockFn(),
+      update: mockFn(),
     },
     eventHeroKill: {
-      findFirst: jest.fn(),
-      findMany: jest.fn(),
-      create: jest.fn(),
+      findFirst: mockFn(),
+      findMany: mockFn(),
+      create: mockFn(),
     },
     eventKillPoint: {
-      create: jest.fn(),
-      createMany: jest.fn(),
-      findMany: jest.fn(),
+      create: mockFn(),
+      createMany: mockFn(),
+      findMany: mockFn(),
     },
     eventMapAssignmentHistory: {
-      findMany: jest.fn(),
-      updateMany: jest.fn(),
+      findMany: mockFn(),
+      updateMany: mockFn(),
     },
     eventMapCoverageGap: {
-      findMany: jest.fn(),
+      findMany: mockFn(),
     },
     eventRespawnWindowSummary: {
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
+      findMany: mockFn(),
+      findUnique: mockFn(),
     },
     timer: {
-      findMany: jest.fn(),
-      delete: jest.fn(),
+      findMany: mockFn(),
+      delete: mockFn(),
     },
     member: {
-      findFirst: jest.fn(),
-      findMany: jest.fn(),
+      findFirst: mockFn(),
+      findMany: mockFn(),
     },
-    $transaction: jest.fn(),
-    $queryRaw: jest.fn(),
+    $transaction: mockFn(),
+    $queryRaw: mockFn(),
   };
 
   const mockQueue = {
-    add: jest.fn(),
-    getJobs: jest.fn(),
+    add: mockFn(),
+    getJobs: mockFn(),
   };
 
   const mockEventEmitter = {
-    emitHeroKilled: jest.fn(),
-    emitMapStatusUpdate: jest.fn(),
-    emitRespawnWindowClosed: jest.fn(),
-    emitRespawnWindowOpened: jest.fn(),
+    emitHeroKilled: mockFn(),
+    emitMapStatusUpdate: mockFn(),
+    emitRespawnWindowClosed: mockFn(),
+    emitRespawnWindowOpened: mockFn(),
   };
 
   const mockPointsService = {
-    calculateMemberPoints: jest.fn(),
-    getMemberPresenceStats: jest.fn(),
-    getMemberPresenceStatsPerMap: jest.fn(),
-    getMembersPresenceStats: jest.fn(
-      async (
+    calculateMemberPoints: mockFn(),
+    getMemberPresenceStats: mockFn(),
+    getMemberPresenceStatsPerMap: mockFn(),
+    getMembersPresenceStats: mockFn(
+      (
         heroNpcId: string,
         memberIds: number[],
         since?: Date,
@@ -102,7 +103,7 @@ describe("EventKillService", () => {
           })),
         ),
     ),
-    getMembersPresenceStatsPerMap: jest.fn(
+    getMembersPresenceStatsPerMap: mockFn(
       async (
         mapIds: string[],
         memberIds: number[],
@@ -134,32 +135,32 @@ describe("EventKillService", () => {
         return statsByMember.flat();
       },
     ),
-    updateRankingAfterKill: jest.fn(),
+    updateRankingAfterKill: mockFn(),
   };
 
   const mockTrackingService = {
-    closeAllGapsForHero: jest.fn(),
-    openUnassignedGap: jest.fn(),
+    closeAllGapsForHero: mockFn(),
+    openUnassignedGap: mockFn(),
   };
 
   const mockSummaryService = {
-    createWindowSummary: jest.fn(),
+    createWindowSummary: mockFn(),
   };
 
   const mockRedisService = {
-    getClient: jest.fn().mockResolvedValue({}),
-    get: jest.fn().mockResolvedValue(null),
-    set: jest.fn().mockResolvedValue("OK"),
-    del: jest.fn().mockResolvedValue(1),
-    setNX: jest.fn().mockResolvedValue(true),
+    getClient: mockFn().mockResolvedValue({}),
+    get: mockFn().mockResolvedValue(null),
+    set: mockFn().mockResolvedValue("OK"),
+    del: mockFn().mockResolvedValue(1),
+    setNX: mockFn().mockResolvedValue(true),
   };
 
   const mockTimersService = {
-    getTimersForEventHeroFilters: jest.fn(),
+    getTimersForEventHeroFilters: mockFn(),
   };
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockPrismaService.eventRespawnWindowSummary.findMany.mockResolvedValue([]);
     mockPrismaService.eventRespawnWindowSummary.findUnique.mockResolvedValue(
       null,
@@ -482,18 +483,18 @@ describe("EventKillService", () => {
       mockPrismaService.eventMap.findMany.mockResolvedValue([]);
       const txMock = {
         eventHeroKill: {
-          create: jest.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: jest.fn().mockResolvedValue({ count: 0 }),
-          findMany: jest.fn().mockResolvedValue([]),
+          createMany: mockFn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
         },
         eventMap: {
-          update: jest.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: jest.fn().mockResolvedValue([]),
-          updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
+          updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -531,18 +532,18 @@ describe("EventKillService", () => {
       mockPrismaService.eventMap.findMany.mockResolvedValue([]);
       const txMock = {
         eventHeroKill: {
-          create: jest.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: jest.fn().mockResolvedValue({ count: 0 }),
-          findMany: jest.fn().mockResolvedValue([]),
+          createMany: mockFn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
         },
         eventMap: {
-          update: jest.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: jest.fn().mockResolvedValue([]),
-          updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
+          updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -604,9 +605,9 @@ describe("EventKillService", () => {
         .mockResolvedValueOnce([]);
       mockRedisService.get.mockResolvedValue(null);
 
-      const recordSpy = jest
+      const recordSpy = vi
         .spyOn(service, "recordHeroKill")
-        .mockResolvedValue({ id: "kill-1" } as any);
+        .mockResolvedValue({ id: "kill-1" } as never);
 
       await service.checkAndRecordEventHeroKill(
         guildId,
@@ -706,20 +707,20 @@ describe("EventKillService", () => {
       // Mock transaction to use the tx proxy properly
       const txMock = {
         eventHeroKill: {
-          create: jest.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: jest.fn().mockResolvedValue({ count: 2 }),
-          findMany: jest.fn().mockResolvedValue([
+          createMany: mockFn().mockResolvedValue({ count: 2 }),
+          findMany: mockFn().mockResolvedValue([
             { id: "point-1", killId: "kill-1", memberId: 1, points: 100 },
             { id: "point-2", killId: "kill-1", memberId: 2, points: 100 },
           ]),
         },
         eventMap: {
-          update: jest.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: jest.fn().mockResolvedValue([
+          findMany: mockFn().mockResolvedValue([
             {
               mapId: "map-1",
               memberId: 1,
@@ -731,7 +732,7 @@ describe("EventKillService", () => {
               assignedAt: new Date(now - 5 * 60 * 1000),
             },
           ]),
-          updateMany: jest.fn().mockResolvedValue({ count: 2 }),
+          updateMany: mockFn().mockResolvedValue({ count: 2 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -807,28 +808,26 @@ describe("EventKillService", () => {
 
       const txMock = {
         eventHeroKill: {
-          create: jest.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: jest.fn().mockResolvedValue({ count: 1 }),
-          findMany: jest
-            .fn()
-            .mockResolvedValue([
-              { id: "point-1", killId: "kill-1", memberId: 1, points: 100 },
-            ]),
+          createMany: mockFn().mockResolvedValue({ count: 1 }),
+          findMany: mockFn<() => Promise<unknown>>().mockResolvedValue([
+            { id: "point-1", killId: "kill-1", memberId: 1, points: 100 },
+          ]),
         },
         eventMap: {
-          update: jest.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: jest.fn().mockResolvedValue([
+          findMany: mockFn().mockResolvedValue([
             {
               mapId: "map-1",
               memberId: 1,
               assignedAt: new Date(now - 2 * 60 * 1000),
             },
           ]),
-          updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+          updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -893,21 +892,19 @@ describe("EventKillService", () => {
 
       const txMock = {
         eventHeroKill: {
-          create: jest.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: jest.fn().mockResolvedValue({ count: 1 }),
-          findMany: jest
-            .fn()
-            .mockResolvedValue([
-              { id: "point-1", killId: "kill-1", memberId: 1, points: 100 },
-            ]),
+          createMany: mockFn().mockResolvedValue({ count: 1 }),
+          findMany: mockFn<() => Promise<unknown>>().mockResolvedValue([
+            { id: "point-1", killId: "kill-1", memberId: 1, points: 100 },
+          ]),
         },
         eventMap: {
-          update: jest.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: jest.fn().mockResolvedValue([
+          findMany: mockFn().mockResolvedValue([
             {
               mapId: "map-1",
               memberId: 1,
@@ -915,7 +912,7 @@ describe("EventKillService", () => {
               unassignedAt: null,
             },
           ]),
-          updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+          updateMany: mockFn().mockResolvedValue({ count: 1 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -980,22 +977,20 @@ describe("EventKillService", () => {
 
       const txMock = {
         eventHeroKill: {
-          create: jest.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: jest.fn().mockResolvedValue({ count: 1 }),
-          findMany: jest
-            .fn()
-            .mockResolvedValue([
-              { id: "point-1", killId: "kill-1", memberId: 2, points: 100 },
-            ]),
+          createMany: mockFn().mockResolvedValue({ count: 1 }),
+          findMany: mockFn<() => Promise<unknown>>().mockResolvedValue([
+            { id: "point-1", killId: "kill-1", memberId: 2, points: 100 },
+          ]),
         },
         eventMap: {
-          update: jest.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
           // Includes one stale assignment that must be ignored.
-          findMany: jest.fn().mockResolvedValue([
+          findMany: mockFn().mockResolvedValue([
             {
               mapId: "map-1",
               memberId: 1,
@@ -1008,7 +1003,7 @@ describe("EventKillService", () => {
               assignedAt: new Date(now - 20 * 1000),
             },
           ]),
-          updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+          updateMany: mockFn().mockResolvedValue({ count: 1 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -1046,9 +1041,9 @@ describe("EventKillService", () => {
     });
 
     it("should calculate tracking duration only within current window", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       const killedAt = new Date("2026-02-18T06:08:31.185Z");
-      jest.setSystemTime(killedAt);
+      vi.setSystemTime(killedAt.getTime());
 
       const windowOpenedAt = new Date("2026-02-18T06:08:25.185Z");
       const timerDataInWindow = {
@@ -1063,22 +1058,20 @@ describe("EventKillService", () => {
 
       const txMock = {
         eventHeroKill: {
-          create: jest.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: jest.fn().mockResolvedValue({ count: 1 }),
-          findMany: jest
-            .fn()
-            .mockResolvedValue([
-              { id: "point-1", killId: "kill-1", memberId: 2, points: 100 },
-            ]),
+          createMany: mockFn().mockResolvedValue({ count: 1 }),
+          findMany: mockFn<() => Promise<unknown>>().mockResolvedValue([
+            { id: "point-1", killId: "kill-1", memberId: 2, points: 100 },
+          ]),
         },
         eventMap: {
-          update: jest.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
           // Includes one stale assignment that should be ignored.
-          findMany: jest.fn().mockResolvedValue([
+          findMany: mockFn().mockResolvedValue([
             {
               mapId: "map-1",
               memberId: 1,
@@ -1091,7 +1084,7 @@ describe("EventKillService", () => {
               assignedAt: new Date("2026-02-18T06:08:26.061Z"),
             },
           ]),
-          updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+          updateMany: mockFn().mockResolvedValue({ count: 1 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -1138,14 +1131,14 @@ describe("EventKillService", () => {
           }),
         );
       } finally {
-        jest.useRealTimers();
+        vi.useRealTimers();
       }
     });
 
     it("should calculate tracking duration percentage from min spawn to kill", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       const killedAt = new Date("2026-02-20T05:27:46.133Z");
-      jest.setSystemTime(killedAt);
+      vi.setSystemTime(killedAt.getTime());
 
       const timerDataInWindow = {
         ...timerData,
@@ -1159,21 +1152,19 @@ describe("EventKillService", () => {
 
       const txMock = {
         eventHeroKill: {
-          create: jest.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: jest.fn().mockResolvedValue({ count: 1 }),
-          findMany: jest
-            .fn()
-            .mockResolvedValue([
-              { id: "point-1", killId: "kill-1", memberId: 1, points: 100 },
-            ]),
+          createMany: mockFn().mockResolvedValue({ count: 1 }),
+          findMany: mockFn<() => Promise<unknown>>().mockResolvedValue([
+            { id: "point-1", killId: "kill-1", memberId: 1, points: 100 },
+          ]),
         },
         eventMap: {
-          update: jest.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: jest.fn().mockResolvedValue([
+          findMany: mockFn().mockResolvedValue([
             {
               mapId: "map-1",
               memberId: 1,
@@ -1181,7 +1172,7 @@ describe("EventKillService", () => {
               unassignedAt: null,
             },
           ]),
-          updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+          updateMany: mockFn().mockResolvedValue({ count: 1 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -1226,14 +1217,14 @@ describe("EventKillService", () => {
           }),
         );
       } finally {
-        jest.useRealTimers();
+        vi.useRealTimers();
       }
     });
 
     it("should clamp tracking duration to min spawn when member assigned before min spawn", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       const killedAt = new Date("2026-02-20T05:27:46.133Z");
-      jest.setSystemTime(killedAt);
+      vi.setSystemTime(killedAt.getTime());
 
       const timerDataInWindow = {
         ...timerData,
@@ -1247,21 +1238,19 @@ describe("EventKillService", () => {
 
       const txMock = {
         eventHeroKill: {
-          create: jest.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: jest.fn().mockResolvedValue({ count: 1 }),
-          findMany: jest
-            .fn()
-            .mockResolvedValue([
-              { id: "point-1", killId: "kill-1", memberId: 1, points: 100 },
-            ]),
+          createMany: mockFn().mockResolvedValue({ count: 1 }),
+          findMany: mockFn<() => Promise<unknown>>().mockResolvedValue([
+            { id: "point-1", killId: "kill-1", memberId: 1, points: 100 },
+          ]),
         },
         eventMap: {
-          update: jest.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: jest.fn().mockResolvedValue([
+          findMany: mockFn().mockResolvedValue([
             {
               mapId: "map-1",
               memberId: 1,
@@ -1269,7 +1258,7 @@ describe("EventKillService", () => {
               unassignedAt: null,
             },
           ]),
-          updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+          updateMany: mockFn().mockResolvedValue({ count: 1 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -1314,14 +1303,14 @@ describe("EventKillService", () => {
           }),
         );
       } finally {
-        jest.useRealTimers();
+        vi.useRealTimers();
       }
     });
 
     it("should not double count tracking duration for overlapping assignments on multiple maps", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       const killedAt = new Date("2026-02-18T06:10:00.000Z");
-      jest.setSystemTime(killedAt);
+      vi.setSystemTime(killedAt.getTime());
 
       const windowOpenedAt = new Date("2026-02-18T06:00:00.000Z");
       const timerDataInWindow = {
@@ -1337,21 +1326,19 @@ describe("EventKillService", () => {
 
       const txMock = {
         eventHeroKill: {
-          create: jest.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: jest.fn().mockResolvedValue({ count: 1 }),
-          findMany: jest
-            .fn()
-            .mockResolvedValue([
-              { id: "point-1", killId: "kill-1", memberId: 1, points: 100 },
-            ]),
+          createMany: mockFn().mockResolvedValue({ count: 1 }),
+          findMany: mockFn<() => Promise<unknown>>().mockResolvedValue([
+            { id: "point-1", killId: "kill-1", memberId: 1, points: 100 },
+          ]),
         },
         eventMap: {
-          update: jest.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: jest.fn().mockResolvedValue([
+          findMany: mockFn().mockResolvedValue([
             {
               mapId: "map-1",
               memberId: 1,
@@ -1365,7 +1352,7 @@ describe("EventKillService", () => {
               unassignedAt: new Date("2026-02-18T06:09:00.000Z"),
             },
           ]),
-          updateMany: jest.fn().mockResolvedValue({ count: 2 }),
+          updateMany: mockFn().mockResolvedValue({ count: 2 }),
         },
       };
 
@@ -1413,14 +1400,14 @@ describe("EventKillService", () => {
           }),
         );
       } finally {
-        jest.useRealTimers();
+        vi.useRealTimers();
       }
     });
 
     it("should exclude real gaps between map switches from tracking duration", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       const killedAt = new Date("2026-02-18T06:10:00.000Z");
-      jest.setSystemTime(killedAt);
+      vi.setSystemTime(killedAt.getTime());
 
       const windowOpenedAt = new Date("2026-02-18T06:00:00.000Z");
       const timerDataInWindow = {
@@ -1436,21 +1423,19 @@ describe("EventKillService", () => {
 
       const txMock = {
         eventHeroKill: {
-          create: jest.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: jest.fn().mockResolvedValue({ count: 1 }),
-          findMany: jest
-            .fn()
-            .mockResolvedValue([
-              { id: "point-1", killId: "kill-1", memberId: 1, points: 100 },
-            ]),
+          createMany: mockFn().mockResolvedValue({ count: 1 }),
+          findMany: mockFn<() => Promise<unknown>>().mockResolvedValue([
+            { id: "point-1", killId: "kill-1", memberId: 1, points: 100 },
+          ]),
         },
         eventMap: {
-          update: jest.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: jest.fn().mockResolvedValue([
+          findMany: mockFn().mockResolvedValue([
             {
               mapId: "map-1",
               memberId: 1,
@@ -1464,7 +1449,7 @@ describe("EventKillService", () => {
               unassignedAt: null,
             },
           ]),
-          updateMany: jest.fn().mockResolvedValue({ count: 2 }),
+          updateMany: mockFn().mockResolvedValue({ count: 2 }),
         },
       };
 
@@ -1503,14 +1488,14 @@ describe("EventKillService", () => {
         expect(createdPoint.trackingDurationSeconds).toBe(590);
         expect(createdPoint.trackingDurationPercentage).toBe(98);
       } finally {
-        jest.useRealTimers();
+        vi.useRealTimers();
       }
     });
 
     it("should keep tracking duration continuous when map switch has no gap", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       const killedAt = new Date("2026-02-18T06:10:00.000Z");
-      jest.setSystemTime(killedAt);
+      vi.setSystemTime(killedAt.getTime());
 
       const windowOpenedAt = new Date("2026-02-18T06:00:00.000Z");
       const timerDataInWindow = {
@@ -1526,21 +1511,19 @@ describe("EventKillService", () => {
 
       const txMock = {
         eventHeroKill: {
-          create: jest.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: jest.fn().mockResolvedValue({ count: 1 }),
-          findMany: jest
-            .fn()
-            .mockResolvedValue([
-              { id: "point-1", killId: "kill-1", memberId: 1, points: 100 },
-            ]),
+          createMany: mockFn().mockResolvedValue({ count: 1 }),
+          findMany: mockFn<() => Promise<unknown>>().mockResolvedValue([
+            { id: "point-1", killId: "kill-1", memberId: 1, points: 100 },
+          ]),
         },
         eventMap: {
-          update: jest.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: jest.fn().mockResolvedValue([
+          findMany: mockFn().mockResolvedValue([
             {
               mapId: "map-1",
               memberId: 1,
@@ -1554,7 +1537,7 @@ describe("EventKillService", () => {
               unassignedAt: null,
             },
           ]),
-          updateMany: jest.fn().mockResolvedValue({ count: 2 }),
+          updateMany: mockFn().mockResolvedValue({ count: 2 }),
         },
       };
 
@@ -1593,14 +1576,14 @@ describe("EventKillService", () => {
         expect(createdPoint.trackingDurationSeconds).toBe(600);
         expect(createdPoint.trackingDurationPercentage).toBe(100);
       } finally {
-        jest.useRealTimers();
+        vi.useRealTimers();
       }
     });
 
     it("should keep tracking duration percentage null when window duration is zero", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       const killedAt = new Date("2026-02-18T06:08:31.185Z");
-      jest.setSystemTime(killedAt);
+      vi.setSystemTime(killedAt.getTime());
 
       const timerDataZeroWindow = {
         ...timerData,
@@ -1614,28 +1597,26 @@ describe("EventKillService", () => {
 
       const txMock = {
         eventHeroKill: {
-          create: jest.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: jest.fn().mockResolvedValue({ count: 1 }),
-          findMany: jest
-            .fn()
-            .mockResolvedValue([
-              { id: "point-1", killId: "kill-1", memberId: 1, points: 100 },
-            ]),
+          createMany: mockFn().mockResolvedValue({ count: 1 }),
+          findMany: mockFn<() => Promise<unknown>>().mockResolvedValue([
+            { id: "point-1", killId: "kill-1", memberId: 1, points: 100 },
+          ]),
         },
         eventMap: {
-          update: jest.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: jest.fn().mockResolvedValue([
+          findMany: mockFn().mockResolvedValue([
             {
               mapId: "map-1",
               memberId: 1,
               assignedAt: killedAt,
             },
           ]),
-          updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+          updateMany: mockFn().mockResolvedValue({ count: 1 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -1678,7 +1659,7 @@ describe("EventKillService", () => {
           }),
         );
       } finally {
-        jest.useRealTimers();
+        vi.useRealTimers();
       }
     });
 
@@ -1686,18 +1667,18 @@ describe("EventKillService", () => {
       mockPrismaService.eventMap.findMany.mockResolvedValue([]);
       const txMock = {
         eventHeroKill: {
-          create: jest.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: jest.fn().mockResolvedValue({ count: 0 }),
-          findMany: jest.fn().mockResolvedValue([]),
+          createMany: mockFn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
         },
         eventMap: {
-          update: jest.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: jest.fn().mockResolvedValue([]),
-          updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
+          updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -1720,18 +1701,18 @@ describe("EventKillService", () => {
       mockPrismaService.eventMap.findMany.mockResolvedValue([]);
       const txMock = {
         eventHeroKill: {
-          create: jest.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: jest.fn().mockResolvedValue({ count: 0 }),
-          findMany: jest.fn().mockResolvedValue([]),
+          createMany: mockFn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
         },
         eventMap: {
-          update: jest.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: jest.fn().mockResolvedValue([]),
-          updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
+          updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -1755,18 +1736,18 @@ describe("EventKillService", () => {
       mockPrismaService.eventMap.findMany.mockResolvedValue([]);
       const txMock = {
         eventHeroKill: {
-          create: jest.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: jest.fn().mockResolvedValue({ count: 0 }),
-          findMany: jest.fn().mockResolvedValue([]),
+          createMany: mockFn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
         },
         eventMap: {
-          update: jest.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: jest.fn().mockResolvedValue([]),
-          updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
+          updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -1792,18 +1773,18 @@ describe("EventKillService", () => {
       mockPrismaService.eventMap.findMany.mockResolvedValue([]);
       const txMock = {
         eventHeroKill: {
-          create: jest.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: jest.fn().mockResolvedValue({ count: 0 }),
-          findMany: jest.fn().mockResolvedValue([]),
+          createMany: mockFn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
         },
         eventMap: {
-          update: jest.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: jest.fn().mockResolvedValue([]),
-          updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
+          updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -1843,18 +1824,18 @@ describe("EventKillService", () => {
 
       const txMock = {
         eventHeroKill: {
-          create: jest.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: jest.fn(),
-          findMany: jest.fn().mockResolvedValue([]),
+          createMany: mockFn(),
+          findMany: mockFn().mockResolvedValue([]),
         },
         eventMap: {
-          update: jest.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: jest.fn().mockResolvedValue([]),
-          updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
+          updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -1901,18 +1882,18 @@ describe("EventKillService", () => {
 
       const txMock = {
         eventHeroKill: {
-          create: jest.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: jest.fn(),
-          findMany: jest.fn().mockResolvedValue([]),
+          createMany: mockFn(),
+          findMany: mockFn().mockResolvedValue([]),
         },
         eventMap: {
-          update: jest.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: jest.fn().mockResolvedValue([]),
-          updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
+          updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -1949,18 +1930,18 @@ describe("EventKillService", () => {
 
       const txMock = {
         eventHeroKill: {
-          create: jest.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: jest.fn(),
-          findMany: jest.fn().mockResolvedValue([]),
+          createMany: mockFn(),
+          findMany: mockFn().mockResolvedValue([]),
         },
         eventMap: {
-          update: jest.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: jest.fn().mockResolvedValue([]),
-          updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
+          updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -1994,18 +1975,18 @@ describe("EventKillService", () => {
 
       const txMock = {
         eventHeroKill: {
-          create: jest.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: jest.fn(),
-          findMany: jest.fn().mockResolvedValue([]),
+          createMany: mockFn(),
+          findMany: mockFn().mockResolvedValue([]),
         },
         eventMap: {
-          update: jest.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: jest.fn().mockResolvedValue([]),
-          updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
+          updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -2017,7 +1998,7 @@ describe("EventKillService", () => {
         guildId,
         mockEventHero,
         mockEvent,
-        timerDataNoSpawnTimes as any,
+        timerDataNoSpawnTimes as never,
         false,
       );
 
@@ -2042,18 +2023,18 @@ describe("EventKillService", () => {
 
       const txMock = {
         eventHeroKill: {
-          create: jest.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: jest.fn(),
-          findMany: jest.fn().mockResolvedValue([]),
+          createMany: mockFn(),
+          findMany: mockFn().mockResolvedValue([]),
         },
         eventMap: {
-          update: jest.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: jest.fn().mockResolvedValue([]),
-          updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
+          updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>

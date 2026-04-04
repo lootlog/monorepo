@@ -16,7 +16,7 @@ import {
   NotificationOwnerType as DbNotificationOwnerType,
   NotificationProvider as DbNotificationProvider,
   NotificationTargetType as DbNotificationTargetType,
-} from "prisma/generated/client";
+} from "src/generated/prisma/client";
 import type { Logger as WinstonLogger } from "winston";
 import { DiscordBotClientService } from "src/discord-bot-client/discord-bot-client.service";
 import { ConfigKey } from "src/config/config-key.enum";

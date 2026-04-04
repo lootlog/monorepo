@@ -1,6 +1,7 @@
 import { Exclude, Expose } from "class-transformer";
 import { ApiProperty } from "@nestjs/swagger";
-import { Permission } from "prisma/generated/client";
+import { Permission } from "src/generated/prisma/client";
+import { swaggerStringEnumArray } from "src/shared/swagger/prisma-enum";
 
 export class RoleEntity {
   @Expose()
@@ -33,10 +34,9 @@ export class RoleEntity {
 
   @Expose()
   @ApiProperty({
+    ...swaggerStringEnumArray("Permission", Permission),
     example: ["ADMIN", "LOOTLOG_READ"],
     description: "Array of permissions",
-    enum: Permission,
-    isArray: true,
   })
   permissions: Permission[];
 

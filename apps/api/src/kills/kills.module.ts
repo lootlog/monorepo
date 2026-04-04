@@ -4,7 +4,7 @@ import { KillsController } from "./kills.controller";
 import { PrismaModule } from "src/db/prisma.module";
 import { RedisModule } from "src/lib/redis/redis.module";
 import { MembersModule } from "src/members/members.module";
-import { GuildsModule } from "src/guilds/guilds.module";
+import { MemberContextModule } from "src/shared/permissions/member-context.module";
 import { UserLootlogConfigModule } from "src/user-lootlog-config/user-lootlog-config.module";
 
 @Module({
@@ -12,7 +12,7 @@ import { UserLootlogConfigModule } from "src/user-lootlog-config/user-lootlog-co
     PrismaModule,
     RedisModule,
     MembersModule,
-    GuildsModule,
+    MemberContextModule,
     UserLootlogConfigModule,
   ],
   providers: [KillsService],

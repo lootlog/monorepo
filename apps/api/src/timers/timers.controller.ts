@@ -19,19 +19,19 @@ import {
 } from "@nestjs/swagger";
 import { DiscordId, UserId } from "@lootlog/nest-shared";
 import { plainToInstance } from "class-transformer";
-import { type Guild, Permission, type Role } from "prisma/generated/client";
+import { type Guild, Permission, type Role } from "src/generated/prisma/client";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";
 import { MemberRoles } from "src/shared/decorators/member-roles.decorator";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
-import { CreateManualTimerDto } from "src/timers/dto/create-manual-timer.dto";
-import { ResetTimerDto } from "src/timers/dto/reset-timer.dto";
+import type { CreateManualTimerDto } from "src/timers/dto/create-manual-timer.dto";
+import type { ResetTimerDto } from "src/timers/dto/reset-timer.dto";
 import { TimersService } from "src/timers/timers.service";
 import { TimerEntity } from "src/shared/entities/timer.entity";
-import { CreateTimerFromGameClientDto } from "src/timers/dto/create-timer-from-game-client.dto";
-import { SearchTimersNpcsDto } from "src/timers/dto/search-timers-npcs.dto";
+import type { CreateTimerFromGameClientDto } from "src/timers/dto/create-timer-from-game-client.dto";
+import type { SearchTimersNpcsDto } from "src/timers/dto/search-timers-npcs.dto";
 
 @ApiTags("timers")
 @ApiBearerAuth()
@@ -137,7 +137,7 @@ export class TimersController {
     status: 403,
     description: "Forbidden - insufficient permissions",
   })
-  async searchNpcsWithTimerData(
+  searchNpcsWithTimerData(
     @Param("guildId") guildId: string,
     @Query() query: SearchTimersNpcsDto,
   ) {
@@ -212,7 +212,7 @@ export class TimersController {
     description: "Forbidden - manage permission required",
   })
   @ApiResponse({ status: 404, description: "Timer not found" })
-  async deleteTimer(
+  deleteTimer(
     @Query("world") world: string,
     @Param("guildId") guildId: string,
     @Param("timerIdentifier") timerIdentifier: string,
@@ -237,7 +237,7 @@ export class TimersController {
     status: 403,
     description: "Forbidden - insufficient permissions",
   })
-  async createManualTimer(
+  createManualTimer(
     @Body() data: CreateManualTimerDto,
     @DiscordId() discordId: string,
     @Param("guildId") guildId: string,

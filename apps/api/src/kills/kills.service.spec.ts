@@ -1,10 +1,12 @@
+import type { Mock } from "vitest";
+import { mockFn } from "src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { KillsService } from "./kills.service";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared";
 import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
-import { Permission, NpcType, type Role } from "prisma/generated/client";
+import { Permission, NpcType, type Role } from "src/generated/prisma/client";
 import type { CreateKillDto } from "./dto/create-kill.dto";
 import {
   GetGuildKillStatsDto,
@@ -15,32 +17,32 @@ describe("KillsService", () => {
   let service: KillsService;
   let prismaService: {
     userKillStats: {
-      upsert: jest.Mock;
-      findMany: jest.Mock;
+      upsert: Mock;
+      findMany: Mock;
     };
     npcKillStats: {
-      upsert: jest.Mock;
-      findMany: jest.Mock;
+      upsert: Mock;
+      findMany: Mock;
     };
     guildKillSummary: {
-      upsert: jest.Mock;
-      findMany: jest.Mock;
-      findFirst: jest.Mock;
+      upsert: Mock;
+      findMany: Mock;
+      findFirst: Mock;
     };
     member: {
-      findUnique: jest.Mock;
-      findMany: jest.Mock;
+      findUnique: Mock;
+      findMany: Mock;
     };
   };
   let redisService: {
-    setNX: jest.Mock;
+    setNX: Mock;
   };
   let userLootlogConfigService: {
-    getLootlogCharacterConfig: jest.Mock;
+    getLootlogCharacterConfig: Mock;
   };
   let logger: {
-    log: jest.Mock;
-    error: jest.Mock;
+    log: Mock;
+    error: Mock;
   };
 
   const mockCreateKillDto: CreateKillDto = {
@@ -74,35 +76,35 @@ describe("KillsService", () => {
   beforeEach(async () => {
     const mockPrismaService = {
       userKillStats: {
-        upsert: jest.fn(),
-        findMany: jest.fn(),
+        upsert: mockFn(),
+        findMany: mockFn(),
       },
       npcKillStats: {
-        upsert: jest.fn(),
-        findMany: jest.fn(),
+        upsert: mockFn(),
+        findMany: mockFn(),
       },
       guildKillSummary: {
-        upsert: jest.fn(),
-        findMany: jest.fn(),
-        findFirst: jest.fn(),
+        upsert: mockFn(),
+        findMany: mockFn(),
+        findFirst: mockFn(),
       },
       member: {
-        findUnique: jest.fn(),
-        findMany: jest.fn().mockResolvedValue([]),
+        findUnique: mockFn(),
+        findMany: mockFn().mockResolvedValue([]),
       },
     };
 
     const mockRedisService = {
-      setNX: jest.fn().mockResolvedValue(true),
+      setNX: mockFn().mockResolvedValue(true),
     };
 
     const mockUserLootlogConfigService = {
-      getLootlogCharacterConfig: jest.fn(),
+      getLootlogCharacterConfig: mockFn(),
     };
 
     const mockLogger = {
-      log: jest.fn(),
-      error: jest.fn(),
+      log: mockFn(),
+      error: mockFn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -126,7 +128,7 @@ describe("KillsService", () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("constructor", () => {
@@ -353,7 +355,7 @@ describe("KillsService", () => {
         const firstNpcId =
           prismaService.userKillStats.upsert.mock.calls[0][0].create.npcId;
 
-        jest.clearAllMocks();
+        vi.clearAllMocks();
         redisService.setNX.mockResolvedValue(true);
 
         // Second kill with different spawn ID but same name
@@ -381,7 +383,7 @@ describe("KillsService", () => {
         const firstNpcId =
           prismaService.userKillStats.upsert.mock.calls[0][0].create.npcId;
 
-        jest.clearAllMocks();
+        vi.clearAllMocks();
         redisService.setNX.mockResolvedValue(true);
 
         const colossusKillDto2: CreateKillDto = {
@@ -582,7 +584,8 @@ describe("KillsService", () => {
         const call = prismaService.npcKillStats.findMany.mock.calls[0][0];
         const andConditions = call.where.OR?.[0]?.AND || [];
         const hasTitanFilter = andConditions.some(
-          (c: any) => c.npcType?.not === NpcType.TITAN,
+          (c: { npcType?: { not?: NpcType } }) =>
+            c.npcType?.not === NpcType.TITAN,
         );
         expect(hasTitanFilter).toBe(false);
       });
@@ -628,7 +631,7 @@ describe("KillsService", () => {
         const call = prismaService.npcKillStats.findMany.mock.calls[0][0];
         const andConditions = call.where.OR?.[0]?.AND || [];
         const hasHeroFilter = andConditions.some(
-          (c: any) =>
+          (c: { npcType?: { notIn?: NpcType[] } }) =>
             c.npcType?.notIn?.includes(NpcType.HERO) ||
             c.npcType?.notIn?.includes(NpcType.EVENT_HERO),
         );

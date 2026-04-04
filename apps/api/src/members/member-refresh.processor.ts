@@ -5,8 +5,8 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { MEMBER_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant";
 import {
-  MemberRefreshJobData,
   MemberRefreshSchedulerService,
+  type MemberRefreshJobData,
 } from "./member-refresh-scheduler.service";
 import { MembersService } from "./members.service";
 

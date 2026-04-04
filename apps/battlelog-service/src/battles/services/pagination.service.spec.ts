@@ -35,15 +35,15 @@ describe("PaginationService", () => {
       db: {
         query: {
           battles: {
-            findMany: jest.fn(),
+            findMany: vi.fn(),
           },
         },
-        select: jest.fn().mockReturnValue({
-          from: jest.fn().mockReturnValue({
-            where: jest.fn(),
+        select: vi.fn().mockReturnValue({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn(),
           }),
         }),
-        execute: jest.fn(),
+        execute: vi.fn(),
       },
     };
 

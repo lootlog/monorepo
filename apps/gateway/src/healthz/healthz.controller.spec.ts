@@ -7,7 +7,7 @@ describe("HealthzController", () => {
   let service: HealthzService;
 
   const mockHealthzService = {
-    healthCheck: jest.fn().mockReturnValue({ status: "ok" }),
+    healthCheck: vi.fn().mockReturnValue({ status: "ok" }),
   };
 
   beforeEach(async () => {

@@ -1,4 +1,4 @@
-import { NpcType } from "prisma/generated/client";
+import { NpcType } from "src/generated/prisma/client";
 
 /**
  * For COLOSSUS type monsters, generates a stable ID from the name

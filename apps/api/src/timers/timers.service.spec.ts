@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { mockFn } from "src/test/mock-fn";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { TimersService } from "./timers.service";
 import { PrismaService } from "src/db/prisma.service";
@@ -14,60 +15,61 @@ import { getSyntheticNpcId } from "src/events/utils/get-synthetic-npc-id";
 import { buildTimerKey } from "src/timers/utils/timer-key";
 import { EventTimerHooksService } from "src/events/services/event-timer-hooks.service";
 import { ErrorKey } from "src/timers/enum/error-key.enum";
+import { ExecutionError } from "redlock";
 
 describe("TimersService", () => {
   let service: TimersService;
 
   const mockPrismaService = {
     timer: {
-      upsert: jest.fn(),
-      create: jest.fn(),
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      deleteMany: jest.fn(),
+      upsert: mockFn(),
+      create: mockFn(),
+      findMany: mockFn(),
+      findUnique: mockFn(),
+      update: mockFn(),
+      delete: mockFn(),
+      deleteMany: mockFn(),
     },
-    $queryRaw: jest.fn(),
+    $queryRaw: mockFn(),
   };
 
   const mockAmqpConnection = {
-    publish: jest.fn(),
+    publish: mockFn(),
   };
 
   const mockGuildsService = {
-    getGuildsForRequiredPermissions: jest.fn(),
-    getMultipleGuildsPermissions: jest.fn(),
+    getGuildsForRequiredPermissions: mockFn(),
+    getMultipleGuildsPermissions: mockFn(),
   };
 
   const mockRedisService = {
-    get: jest.fn(),
-    set: jest.fn(),
-    setNX: jest.fn(),
-    del: jest.fn(),
-    deleteByPattern: jest.fn(),
+    get: mockFn(),
+    set: mockFn(),
+    setNX: mockFn(),
+    del: mockFn(),
+    deleteByPattern: mockFn(),
   };
 
   const mockEventTimerHooksService = {
-    enqueueEventHeroKillCheck: jest.fn().mockResolvedValue(undefined),
-    findActiveEventHeroByNpc: jest.fn().mockResolvedValue(null),
+    enqueueEventHeroKillCheck: mockFn().mockResolvedValue(undefined),
+    findActiveEventHeroByNpc: mockFn().mockResolvedValue(null),
   };
 
   const mockLogger = {
-    log: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
-    debug: jest.fn(),
-    verbose: jest.fn(),
+    log: mockFn(),
+    error: mockFn(),
+    warn: mockFn(),
+    debug: mockFn(),
+    verbose: mockFn(),
   };
 
   const mockRedlock = {
-    acquire: jest.fn(),
-    release: jest.fn(),
+    acquire: mockFn(),
+    release: mockFn(),
   };
 
   const mockRedlockLock = {
-    release: jest.fn().mockResolvedValue(undefined),
+    release: mockFn().mockResolvedValue(undefined),
   };
 
   beforeEach(async () => {
@@ -104,7 +106,7 @@ describe("TimersService", () => {
         },
         {
           provide: RedlockService,
-          useValue: { createInstance: jest.fn().mockReturnValue(mockRedlock) },
+          useValue: { createInstance: mockFn().mockReturnValue(mockRedlock) },
         },
       ],
     }).compile();
@@ -112,9 +114,10 @@ describe("TimersService", () => {
     service = module.get<TimersService>(TimersService);
 
     // Inject mock redlock (bypassing onModuleInit)
-    (service as any).redlock = mockRedlock;
+    (service as unknown as { redlock: typeof mockRedlock }).redlock =
+      mockRedlock;
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockRedisService.deleteByPattern.mockResolvedValue(0);
   });
 
@@ -257,7 +260,6 @@ describe("TimersService", () => {
     });
 
     it("should throw ConflictException when lock cannot be acquired", async () => {
-      const ExecutionError = require("redlock").ExecutionError;
       mockRedisService.get.mockResolvedValue(null);
       mockRedlock.acquire.mockRejectedValue(new ExecutionError("Lock failed"));
 
@@ -269,7 +271,6 @@ describe("TimersService", () => {
     });
 
     it("should return existing timer when lock cannot be acquired but timer was created concurrently", async () => {
-      const ExecutionError = require("redlock").ExecutionError;
       mockRedisService.get.mockResolvedValue(null);
       mockRedlock.acquire.mockRejectedValue(new ExecutionError("Lock failed"));
       mockPrismaService.timer.findUnique.mockResolvedValue(mockTimer);
@@ -498,7 +499,6 @@ describe("TimersService", () => {
     });
 
     it("should handle 50 concurrent createTimerForGuild calls idempotently for the same npc", async () => {
-      const ExecutionError = require("redlock").ExecutionError;
       const totalCalls = 50;
       let createdTimer: typeof mockTimer | null = null;
       let mainLockHeld = false;
@@ -510,7 +510,7 @@ describe("TimersService", () => {
       );
 
       mockPrismaService.timer.findUnique.mockImplementation(
-        async (args: any) => {
+        (args: { where?: { timerId?: { timerKey?: string } } }) => {
           const queriedTimerKey = args?.where?.timerId?.timerKey;
           if (
             queriedTimerKey !== buildTimerKey(mockDto.npc.id, mockDto.npc.name)
@@ -527,7 +527,7 @@ describe("TimersService", () => {
         return mockTimer;
       });
 
-      mockRedlock.acquire.mockImplementation(async (keys: string[]) => {
+      mockRedlock.acquire.mockImplementation((keys: string[]) => {
         const key = keys[0];
         if (
           key ===
@@ -538,13 +538,13 @@ describe("TimersService", () => {
           }
           mainLockHeld = true;
           return {
-            release: jest.fn().mockImplementation(async () => {
+            release: mockFn().mockImplementation(() => {
               mainLockHeld = false;
             }),
           };
         }
 
-        return { release: jest.fn().mockResolvedValue(undefined) };
+        return { release: mockFn().mockResolvedValue(undefined) };
       });
 
       const results = await Promise.all(
@@ -911,9 +911,9 @@ describe("TimersService", () => {
     ];
 
     it("should search NPCs with timer data", async () => {
-      mockPrismaService.$queryRaw = jest
-        .fn()
-        .mockResolvedValue(mockTimersQueryResult);
+      mockPrismaService.$queryRaw = mockFn<
+        () => Promise<unknown>
+      >().mockResolvedValue(mockTimersQueryResult);
 
       const result = await service.searchNpcsWithTimerData(
         "guild1",
@@ -940,7 +940,7 @@ describe("TimersService", () => {
     });
 
     it("should handle empty search results", async () => {
-      mockPrismaService.$queryRaw = jest.fn().mockResolvedValue([]);
+      mockPrismaService.$queryRaw = mockFn().mockResolvedValue([]);
 
       const result = await service.searchNpcsWithTimerData(
         "guild1",
@@ -962,9 +962,8 @@ describe("TimersService", () => {
         },
       ];
 
-      mockPrismaService.$queryRaw = jest
-        .fn()
-        .mockResolvedValue(invalidTimerData);
+      mockPrismaService.$queryRaw =
+        mockFn().mockResolvedValue(invalidTimerData);
 
       const result = await service.searchNpcsWithTimerData(
         "guild1",
@@ -977,9 +976,9 @@ describe("TimersService", () => {
     });
 
     it("should use default limit when not provided", async () => {
-      mockPrismaService.$queryRaw = jest
-        .fn()
-        .mockResolvedValue(mockTimersQueryResult);
+      mockPrismaService.$queryRaw = mockFn<
+        () => Promise<unknown>
+      >().mockResolvedValue(mockTimersQueryResult);
 
       await service.searchNpcsWithTimerData("guild1", "test-world", "Test");
 

@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { mockFn } from "src/test/mock-fn";
 import { getQueueToken } from "@nestjs/bullmq";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "src/db/prisma.service";
@@ -22,109 +23,109 @@ describe("EventsService", () => {
 
   const mockPrismaService = {
     event: {
-      create: jest.fn(),
-      findMany: jest.fn(),
-      findFirst: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
+      create: mockFn(),
+      findMany: mockFn(),
+      findFirst: mockFn(),
+      update: mockFn(),
+      delete: mockFn(),
     },
     eventHeroNpc: {
-      create: jest.fn(),
-      findFirst: jest.fn(),
-      findMany: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      deleteMany: jest.fn(),
+      create: mockFn(),
+      findFirst: mockFn(),
+      findMany: mockFn(),
+      update: mockFn(),
+      delete: mockFn(),
+      deleteMany: mockFn(),
     },
     eventMap: {
-      create: jest.fn(),
-      findFirst: jest.fn(),
-      findMany: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
+      create: mockFn(),
+      findFirst: mockFn(),
+      findMany: mockFn(),
+      update: mockFn(),
+      delete: mockFn(),
     },
     eventMapLocation: {
-      create: jest.fn(),
-      findFirst: jest.fn(),
-      findMany: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      aggregate: jest.fn(),
+      create: mockFn(),
+      findFirst: mockFn(),
+      findMany: mockFn(),
+      update: mockFn(),
+      delete: mockFn(),
+      aggregate: mockFn(),
     },
-    $transaction: jest.fn(),
-    $queryRaw: jest.fn(),
+    $transaction: mockFn(),
+    $queryRaw: mockFn(),
   };
 
   const mockPointsService = {
-    getRanking: jest.fn(),
-    calculateMemberPoints: jest.fn(),
-    recalculateEventPoints: jest.fn(),
-    getMemberPresenceStats: jest.fn(),
-    updateRankingAfterKill: jest.fn(),
-    updateKillPoint: jest.fn(),
-    updateRankingPoints: jest.fn(),
-    getRankingEditHistory: jest.fn(),
+    getRanking: mockFn(),
+    calculateMemberPoints: mockFn(),
+    recalculateEventPoints: mockFn(),
+    getMemberPresenceStats: mockFn(),
+    updateRankingAfterKill: mockFn(),
+    updateKillPoint: mockFn(),
+    updateRankingPoints: mockFn(),
+    getRankingEditHistory: mockFn(),
   };
 
   const mockTrackingService = {
-    assignMemberToMap: jest.fn(),
-    unassignMemberFromMap: jest.fn(),
-    getMemberByDiscordId: jest.fn(),
-    openUnassignedGap: jest.fn(),
-    closeUnassignedGap: jest.fn(),
-    openUncoveredGap: jest.fn(),
-    closeUncoveredGap: jest.fn(),
-    closeAllGapsForHero: jest.fn(),
-    getMapCoverageGaps: jest.fn(),
-    getHeroCoverageGaps: jest.fn(),
-    getActiveGapForMap: jest.fn(),
-    getActiveGapsForHero: jest.fn(),
-    handlePlayerPresenceChange: jest.fn(),
-    getHeroPresenceStats: jest.fn(),
+    assignMemberToMap: mockFn(),
+    unassignMemberFromMap: mockFn(),
+    getMemberByDiscordId: mockFn(),
+    openUnassignedGap: mockFn(),
+    closeUnassignedGap: mockFn(),
+    openUncoveredGap: mockFn(),
+    closeUncoveredGap: mockFn(),
+    closeAllGapsForHero: mockFn(),
+    getMapCoverageGaps: mockFn(),
+    getHeroCoverageGaps: mockFn(),
+    getActiveGapForMap: mockFn(),
+    getActiveGapsForHero: mockFn(),
+    handlePlayerPresenceChange: mockFn(),
+    getHeroPresenceStats: mockFn(),
   };
 
   const mockKillService = {
-    getEventHeroTimers: jest.fn(),
-    getEventHeroStats: jest.fn(),
-    checkAndRecordEventHeroKill: jest.fn(),
-    findActiveEventHeroByNpc: jest.fn(),
-    recordHeroKill: jest.fn(),
-    getHeroKillHistory: jest.fn(),
-    getEventKillHistory: jest.fn(),
-    getMemberKillHistory: jest.fn(),
-    getKillDetail: jest.fn(),
-    getKillTimelineData: jest.fn(),
+    getEventHeroTimers: mockFn(),
+    getEventHeroStats: mockFn(),
+    checkAndRecordEventHeroKill: mockFn(),
+    findActiveEventHeroByNpc: mockFn(),
+    recordHeroKill: mockFn(),
+    getHeroKillHistory: mockFn(),
+    getEventKillHistory: mockFn(),
+    getMemberKillHistory: mockFn(),
+    getKillDetail: mockFn(),
+    getKillTimelineData: mockFn(),
   };
 
   const mockRespawnService = {
-    closeRespawnWindow: jest.fn(),
-    openRespawnWindow: jest.fn(),
-    getHeroRespawnConfig: jest.fn(),
+    closeRespawnWindow: mockFn(),
+    openRespawnWindow: mockFn(),
+    getHeroRespawnConfig: mockFn(),
   };
 
   const mockWrappedService = {
-    getWrapped: jest.fn(),
+    getWrapped: mockFn(),
   };
 
   const mockQueue = {
-    getJobs: jest.fn(),
-    getJobCounts: jest.fn(),
-    isPaused: jest.fn(),
-    getWorkers: jest.fn(),
+    getJobs: mockFn(),
+    getJobCounts: mockFn(),
+    isPaused: mockFn(),
+    getWorkers: mockFn(),
     name: "respawn-window",
   };
 
   const mockEventHeroKillQueue = {
-    add: jest.fn(),
+    add: mockFn(),
     name: "event-hero-kill",
   };
 
   const mockRedisService = {
-    del: jest.fn(),
+    del: mockFn(),
   };
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockPointsService.calculateMemberPoints.mockReturnValue({
       totalPoints: 1,
       basePoints: 1,
@@ -518,7 +519,7 @@ describe("EventsService", () => {
 
     it("should update event successfully", async () => {
       mockPrismaService.event.findFirst.mockResolvedValue(existingEvent);
-      mockPrismaService.$transaction.mockImplementation(async (callback) =>
+      mockPrismaService.$transaction.mockImplementation((callback) =>
         callback(mockPrismaService),
       );
       mockPrismaService.event.update.mockResolvedValue({
@@ -533,7 +534,7 @@ describe("EventsService", () => {
 
     it("should request updated hero maps sorted by mapId", async () => {
       mockPrismaService.event.findFirst.mockResolvedValue(existingEvent);
-      mockPrismaService.$transaction.mockImplementation(async (callback) =>
+      mockPrismaService.$transaction.mockImplementation((callback) =>
         callback(mockPrismaService),
       );
       mockPrismaService.event.update.mockResolvedValue({});
@@ -549,7 +550,7 @@ describe("EventsService", () => {
     it("should set endsAt when provided", async () => {
       const newEndsAt = new Date(Date.now() + 60_000);
       mockPrismaService.event.findFirst.mockResolvedValue(existingEvent);
-      mockPrismaService.$transaction.mockImplementation(async (callback) =>
+      mockPrismaService.$transaction.mockImplementation((callback) =>
         callback(mockPrismaService),
       );
       mockPrismaService.event.update.mockResolvedValue({});
@@ -569,7 +570,7 @@ describe("EventsService", () => {
 
     it("should persist advanced scoring rules on update", async () => {
       mockPrismaService.event.findFirst.mockResolvedValue(existingEvent);
-      mockPrismaService.$transaction.mockImplementation(async (callback) =>
+      mockPrismaService.$transaction.mockImplementation((callback) =>
         callback(mockPrismaService),
       );
       mockPrismaService.event.update.mockResolvedValue({
@@ -595,7 +596,7 @@ describe("EventsService", () => {
 
     it("should not recalculate points automatically when basePointsPerKill changes", async () => {
       mockPrismaService.event.findFirst.mockResolvedValue(existingEvent);
-      mockPrismaService.$transaction.mockImplementation(async (callback) =>
+      mockPrismaService.$transaction.mockImplementation((callback) =>
         callback(mockPrismaService),
       );
       mockPrismaService.event.update.mockResolvedValue({});
@@ -637,8 +638,8 @@ describe("EventsService", () => {
     });
 
     it("should hard delete event and remove pending jobs", async () => {
-      const removeEventJob = jest.fn().mockResolvedValue(undefined);
-      const removeOtherEventJob = jest.fn().mockResolvedValue(undefined);
+      const removeEventJob = mockFn().mockResolvedValue(undefined);
+      const removeOtherEventJob = mockFn().mockResolvedValue(undefined);
 
       mockPrismaService.event.findFirst.mockResolvedValue({ id: eventId });
       mockQueue.getJobs

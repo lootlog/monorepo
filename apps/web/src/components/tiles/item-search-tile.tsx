@@ -8,6 +8,7 @@ type ItemSearchTileProps = {
 
 export const ItemSearchTile: FC<ItemSearchTileProps> = ({ icon, name }) => {
   return (
+    // eslint-disable-next-line eslint-plugin-next/no-img-element
     <img
       src={`${MARGONEM_CDN_ITEMS_URL}/${icon}`}
       alt={name}

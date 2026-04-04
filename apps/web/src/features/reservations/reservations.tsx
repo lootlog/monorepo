@@ -51,6 +51,17 @@ export const Reservations: React.FC = () => {
   }, [reservationsCards, normalizedSearch]);
 
   const isLoading = !guild || !reservations || !reservationsCards;
+  const guildPath = guild?.vanityUrl ?? guild?.id;
+
+  const handleReservationClick = (slug: string) => {
+    if (!guildPath) {
+      return;
+    }
+
+    navigate({
+      to: `/${guildPath}/reservations/${slug}`,
+    });
+  };
 
   const sortedCards = isLoading
     ? []
@@ -162,11 +173,7 @@ export const Reservations: React.FC = () => {
                     reservations={reservationsForCard}
                     members={members}
                     viewMode={viewMode}
-                    onClick={() => {
-                      navigate({
-                        to: `/${guild!.vanityUrl ?? guild!.id}/reservations/${slug}`,
-                      });
-                    }}
+                    onClick={() => handleReservationClick(slug)}
                   />
                 ),
               )}

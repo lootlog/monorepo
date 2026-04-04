@@ -1,3 +1,5 @@
+import type { Mock } from "vitest";
+import { mockFn } from "src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { getQueueToken } from "@nestjs/bullmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
@@ -12,22 +14,22 @@ import {
 describe("MemberRefreshSchedulerService", () => {
   let service: MemberRefreshSchedulerService;
   let queue: {
-    getJob: jest.Mock;
-    add: jest.Mock;
+    getJob: Mock;
+    add: Mock;
   };
   let rateLimiter: {
-    getNextAvailableAtForUser: jest.Mock;
+    getNextAvailableAtForUser: Mock;
   };
   let redisService: {
-    get: jest.Mock;
-    setNX: jest.Mock;
-    eval: jest.Mock;
+    get: Mock;
+    setNX: Mock;
+    eval: Mock;
   };
   let logger: {
-    log: jest.Mock;
-    error: jest.Mock;
-    warn: jest.Mock;
-    debug: jest.Mock;
+    log: Mock;
+    error: Mock;
+    warn: Mock;
+    debug: Mock;
   };
 
   const refreshData: MemberRefreshJobData = {
@@ -40,25 +42,25 @@ describe("MemberRefreshSchedulerService", () => {
 
   beforeEach(async () => {
     const mockQueue = {
-      getJob: jest.fn(),
-      add: jest.fn(),
+      getJob: mockFn(),
+      add: mockFn(),
     };
 
     const mockRateLimiter = {
-      getNextAvailableAtForUser: jest.fn().mockResolvedValue(null),
+      getNextAvailableAtForUser: mockFn().mockResolvedValue(null),
     };
 
     const mockRedisService = {
-      get: jest.fn(),
-      setNX: jest.fn(),
-      eval: jest.fn(),
+      get: mockFn(),
+      setNX: mockFn(),
+      eval: mockFn(),
     };
 
     const mockLogger = {
-      log: jest.fn(),
-      error: jest.fn(),
-      warn: jest.fn(),
-      debug: jest.fn(),
+      log: mockFn(),
+      error: mockFn(),
+      warn: mockFn(),
+      debug: mockFn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -91,7 +93,7 @@ describe("MemberRefreshSchedulerService", () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   const createJobMock = (
@@ -120,7 +122,7 @@ describe("MemberRefreshSchedulerService", () => {
         | "waiting-children";
     }> = {},
   ) => {
-    const getState = jest.fn().mockResolvedValue(state);
+    const getState = mockFn().mockResolvedValue(state);
     if (overrides.stateAfterPromoteError) {
       getState
         .mockResolvedValueOnce(state)
@@ -128,19 +130,19 @@ describe("MemberRefreshSchedulerService", () => {
     }
 
     const promote = overrides.promoteError
-      ? jest.fn().mockRejectedValue(overrides.promoteError)
-      : jest.fn().mockResolvedValue(undefined);
+      ? mockFn().mockRejectedValue(overrides.promoteError)
+      : mockFn().mockResolvedValue(undefined);
     const remove = overrides.removeError
-      ? jest.fn().mockRejectedValue(overrides.removeError)
-      : jest.fn().mockResolvedValue(undefined);
+      ? mockFn().mockRejectedValue(overrides.removeError)
+      : mockFn().mockResolvedValue(undefined);
 
     return {
       id: `member-refresh:${refreshData.userId}:${refreshData.guildId}`,
       data: overrides.data ?? refreshData,
       opts: { priority: overrides.priority ?? refreshData.priority },
       getState,
-      updateData: jest.fn().mockResolvedValue(undefined),
-      changePriority: jest.fn().mockResolvedValue(undefined),
+      updateData: mockFn().mockResolvedValue(undefined),
+      changePriority: mockFn().mockResolvedValue(undefined),
       promote,
       remove,
     };

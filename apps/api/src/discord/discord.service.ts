@@ -22,7 +22,7 @@ import {
   type APIGuild,
   type APIGuildMember,
 } from "discord-api-types/v10";
-import Redlock, { ExecutionError } from "redlock";
+import { ExecutionError } from "redlock";
 import { RedisService } from "@lootlog/nest-shared";
 import { DiscordRateLimiterService } from "./discord-rate-limiter.service";
 import { RedlockService } from "src/lib/redlock/redlock.service";
@@ -34,13 +34,13 @@ import {
   AuthBadRequestError,
 } from "src/auth/errors";
 import { ConfigKey } from "src/config/config-key.enum";
-import { ServiceConfig } from "src/config/service.config";
+import type { ServiceConfig } from "src/config/service.config";
 import { RuntimeEnvironment } from "src/types/runtime.types";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
 
 @Injectable()
 export class DiscordService implements OnModuleInit {
-  private redlock: Redlock;
+  private redlock: ReturnType<RedlockService["createInstance"]>;
 
   private readonly lockTtl = 6000;
 
@@ -72,7 +72,7 @@ export class DiscordService implements OnModuleInit {
     this.isLocal = serviceConfig?.env === RuntimeEnvironment.LOCAL;
   }
 
-  async onModuleInit() {
+  onModuleInit() {
     this.redlock = this.redlockService.createInstance({
       automaticExtensionThreshold: 3000,
     });

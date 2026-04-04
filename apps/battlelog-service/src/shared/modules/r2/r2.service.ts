@@ -9,7 +9,7 @@ import { ConfigService } from "@nestjs/config";
 import { ConfigKey } from "src/config/config-key.enum";
 import type { R2Config } from "src/config/r2.config";
 import { RedisService } from "@lootlog/nest-shared";
-import { gzipSync, gunzipSync } from "zlib";
+import { gzipSync, gunzipSync } from "node:zlib";
 
 @Injectable()
 export class R2Service {

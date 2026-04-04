@@ -1,4 +1,4 @@
-import type { Prisma } from "prisma/generated/client";
+import type { Prisma } from "src/generated/prisma/client";
 
 type EventActivityWindow = {
   startsAt: Date | null;

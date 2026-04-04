@@ -1,8 +1,10 @@
+import type { Mock } from "vitest";
+import { mockFn } from "src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { plainToInstance } from "class-transformer";
 import { KillsController } from "./kills.controller";
 import { KillsService } from "./kills.service";
-import { CreateKillDto } from "./dto/create-kill.dto";
+import type { CreateKillDto } from "./dto/create-kill.dto";
 import {
   GetGuildKillStatsDto,
   GetUserKillStatsDto,
@@ -12,16 +14,16 @@ import {
   GuildKillStatsEntity,
   UserKillStatsEntity,
 } from "./entities/kill-stats.entity";
-import { Permission, NpcType, type Role } from "prisma/generated/client";
+import { Permission, NpcType, type Role } from "src/generated/prisma/client";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 
 describe("KillsController", () => {
   let controller: KillsController;
   let service: {
-    createKill: jest.Mock;
-    getGuildKillStats: jest.Mock;
-    getUserKillStats: jest.Mock;
+    createKill: Mock;
+    getGuildKillStats: Mock;
+    getUserKillStats: Mock;
   };
 
   const mockRole: Role = {
@@ -53,9 +55,9 @@ describe("KillsController", () => {
 
   beforeEach(async () => {
     const mockKillsService = {
-      createKill: jest.fn(),
-      getGuildKillStats: jest.fn(),
-      getUserKillStats: jest.fn(),
+      createKill: mockFn(),
+      getGuildKillStats: mockFn(),
+      getUserKillStats: mockFn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -73,7 +75,7 @@ describe("KillsController", () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("constructor", () => {
@@ -122,7 +124,7 @@ describe("KillsController", () => {
 
   describe("getGuildKillStats", () => {
     const guildId = "guild123";
-    const mockGuildData = { id: guildId } as any;
+    const mockGuildData = { id: guildId } as { id: string };
     const permissions = [Permission.LOOTLOG_LOOTS_READ];
     const roles = [mockRole];
 

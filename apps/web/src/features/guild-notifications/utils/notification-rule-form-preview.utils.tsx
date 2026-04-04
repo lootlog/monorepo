@@ -1,5 +1,4 @@
-import { defaultUrlTransform } from "react-markdown";
-import type { Components } from "react-markdown";
+import { defaultUrlTransform, type Components } from "react-markdown";
 import { getGuildRoleHexColor } from "../components/notification-template-editor.utils";
 import type { GuildRole } from "@/hooks/api/guilds/use-guild-roles";
 

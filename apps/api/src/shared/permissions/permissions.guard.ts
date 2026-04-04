@@ -5,8 +5,8 @@ import {
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { PERMISSIONS_KEY } from "./permissions.decorator";
-import { GuildsService } from "src/guilds/guilds.service";
-import type { Permission } from "prisma/generated/client";
+import { MemberContextService } from "./member-context.service";
+import type { Permission } from "src/generated/prisma/client";
 
 interface RequestWithPermissions {
   userId?: string;
@@ -22,10 +22,10 @@ interface RequestWithPermissions {
 export class PermissionsGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
-    private guildsService: GuildsService,
+    private memberContextService: MemberContextService,
   ) {}
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
+  canActivate(context: ExecutionContext): Promise<boolean> | boolean {
     const requiredPermissions = this.reflector.getAllAndOverride<Permission[]>(
       PERMISSIONS_KEY,
       [context.getHandler(), context.getClass()],
@@ -70,7 +70,7 @@ export class PermissionsGuard implements CanActivate {
       request,
     } = options;
 
-    const context = await this.guildsService.getMemberContext({
+    const context = await this.memberContextService.getMemberContext({
       discordId,
       userId,
       guildId,

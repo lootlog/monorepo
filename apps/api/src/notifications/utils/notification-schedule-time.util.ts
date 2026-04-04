@@ -1,4 +1,4 @@
-import { NotificationScheduleIntervalType } from "prisma/generated/client";
+import { NotificationScheduleIntervalType } from "src/generated/prisma/client";
 
 type LocalDate = {
   year: number;
@@ -28,12 +28,6 @@ const getDateFormatter = createCachedFormatter("en-CA", {
   year: "numeric",
   month: "2-digit",
   day: "2-digit",
-});
-
-const getTimeFormatter = createCachedFormatter("en-GB", {
-  hour: "2-digit",
-  minute: "2-digit",
-  hour12: false,
 });
 
 const getOffsetFormatter = createCachedFormatter("en-US", {

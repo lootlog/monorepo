@@ -90,6 +90,32 @@ type VariableSuggestion = {
 
 type TemplateSuggestion = MentionSuggestion | VariableSuggestion;
 
+const getFilteredSuggestions = (
+  activeSuggestion: ActiveSuggestion,
+  mentionSuggestions: MentionSuggestion[],
+  variableSuggestions: VariableSuggestion[],
+): TemplateSuggestion[] => {
+  if (activeSuggestion?.type === "mention") {
+    return mentionSuggestions
+      .filter((suggestion) =>
+        suggestion.label
+          .toLocaleLowerCase("pl")
+          .includes(activeSuggestion.query.toLocaleLowerCase("pl")),
+      )
+      .slice(0, 8);
+  }
+
+  if (activeSuggestion?.type === "variable") {
+    return variableSuggestions.filter((suggestion) =>
+      suggestion.key
+        .toLocaleLowerCase("pl")
+        .includes(activeSuggestion.query.toLocaleLowerCase("pl")),
+    );
+  }
+
+  return [];
+};
+
 type ActiveSuggestion =
   | {
       left: number;
@@ -242,22 +268,15 @@ export const NotificationTemplateEditor = ({
     })),
   ];
 
-  const filteredSuggestions: TemplateSuggestion[] =
-    activeSuggestion?.type === "mention"
-      ? mentionSuggestions
-          .filter((suggestion) =>
-            suggestion.label
-              .toLocaleLowerCase("pl")
-              .includes(activeSuggestion.query.toLocaleLowerCase("pl")),
-          )
-          .slice(0, 8)
-      : activeSuggestion?.type === "variable"
-        ? variableSuggestions.filter((suggestion) =>
-            suggestion.key
-              .toLocaleLowerCase("pl")
-              .includes(activeSuggestion.query.toLocaleLowerCase("pl")),
-          )
-        : [];
+  const filteredSuggestions = getFilteredSuggestions(
+    activeSuggestion,
+    mentionSuggestions,
+    variableSuggestions,
+  );
+  const filteredSuggestionsRef = useRef<TemplateSuggestion[]>([]);
+  filteredSuggestionsRef.current = filteredSuggestions;
+  const highlightedSuggestionIndexRef = useRef(0);
+  highlightedSuggestionIndexRef.current = highlightedSuggestionIndex;
 
   useEffect(() => {
     setHighlightedSuggestionIndex(0);
@@ -265,7 +284,7 @@ export const NotificationTemplateEditor = ({
 
   useEffect(() => {
     const highlightedSuggestion =
-      filteredSuggestions[highlightedSuggestionIndex];
+      filteredSuggestionsRef.current[highlightedSuggestionIndexRef.current];
 
     if (!highlightedSuggestion) {
       return;
@@ -274,7 +293,11 @@ export const NotificationTemplateEditor = ({
     suggestionItemRefs.current[highlightedSuggestion.key]?.scrollIntoView({
       block: "nearest",
     });
-  }, [filteredSuggestions, highlightedSuggestionIndex]);
+  }, [
+    activeSuggestion?.type,
+    activeSuggestion?.query,
+    highlightedSuggestionIndex,
+  ]);
 
   const insertSuggestion = (
     suggestion: TemplateSuggestion,
@@ -412,10 +435,14 @@ export const NotificationTemplateEditor = ({
     if (event.key === "Enter") {
       event.preventDefault();
       event.stopPropagation();
-      insertSuggestion(
-        filteredSuggestions[highlightedSuggestionIndex]!,
-        activeSuggestion.replaceLength,
-      );
+      const selectedSuggestion =
+        filteredSuggestions[highlightedSuggestionIndex];
+
+      if (!selectedSuggestion) {
+        return;
+      }
+
+      insertSuggestion(selectedSuggestion, activeSuggestion.replaceLength);
       return;
     }
 
@@ -486,24 +513,22 @@ export const NotificationTemplateEditor = ({
             className="relative min-h-[220px] bg-background/40"
           >
             <PlainTextPlugin
-              contentEditable={
-                <ContentEditable
-                  className={cn(
-                    "relative z-10 min-h-[220px] whitespace-pre-wrap bg-transparent px-4 py-3 text-sm leading-6 outline-none",
-                    disabled ? "cursor-not-allowed opacity-70" : "",
-                  )}
-                  spellCheck={false}
-                  autoCorrect="off"
-                  autoCapitalize="off"
-                  onKeyDownCapture={handleEditorKeyDown}
-                  aria-placeholder={editorPlaceholder}
-                  placeholder={
-                    <div className="pointer-events-none absolute left-4 top-3 text-sm text-muted-foreground">
-                      {editorPlaceholder}
-                    </div>
-                  }
-                />
-              }
+              contentEditable=<ContentEditable
+                className={cn(
+                  "relative z-10 min-h-[220px] whitespace-pre-wrap bg-transparent px-4 py-3 text-sm leading-6 outline-none",
+                  disabled ? "cursor-not-allowed opacity-70" : "",
+                )}
+                spellCheck={false}
+                autoCorrect="off"
+                autoCapitalize="off"
+                onKeyDownCapture={handleEditorKeyDown}
+                aria-placeholder={editorPlaceholder}
+                placeholder={
+                  <div className="pointer-events-none absolute left-4 top-3 text-sm text-muted-foreground">
+                    {editorPlaceholder}
+                  </div>
+                }
+              />
               placeholder={null}
               ErrorBoundary={LexicalErrorBoundary}
             />

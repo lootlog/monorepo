@@ -1,7 +1,8 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { mockFn } from "src/test/mock-fn";
 import { ForbiddenException, NotFoundException } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import { Permission } from "prisma/generated/client";
+import { Permission } from "src/generated/prisma/client";
 import { RolesService } from "./roles.service";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared";
@@ -10,28 +11,28 @@ describe("RolesService", () => {
   let service: RolesService;
 
   const mockLogger = {
-    log: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
+    log: mockFn(),
+    error: mockFn(),
+    warn: mockFn(),
   };
 
   const mockPrismaService = {
     role: {
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
-      createMany: jest.fn(),
-      upsert: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      deleteMany: jest.fn(),
+      findMany: mockFn(),
+      findUnique: mockFn(),
+      createMany: mockFn(),
+      upsert: mockFn(),
+      update: mockFn(),
+      delete: mockFn(),
+      deleteMany: mockFn(),
     },
     guild: {
-      findUnique: jest.fn(),
+      findUnique: mockFn(),
     },
   };
 
   const mockRedisService = {
-    deleteByPattern: jest.fn(),
+    deleteByPattern: mockFn(),
   };
 
   beforeEach(async () => {
@@ -45,7 +46,7 @@ describe("RolesService", () => {
     }).compile();
 
     service = module.get<RolesService>(RolesService);
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should be defined", () => {

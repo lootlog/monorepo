@@ -17,10 +17,10 @@ import {
   NotificationScheduleAnchor as DbNotificationScheduleAnchor,
   NotificationScheduleIntervalType as DbNotificationScheduleIntervalType,
   NotificationScheduleStrategy as DbNotificationScheduleStrategy,
-  NotificationTargetType as DbNotificationTargetType,
   NotificationTriggerType as DbNotificationTriggerType,
+  type NotificationTargetType as DbNotificationTargetType,
   Prisma,
-} from "prisma/generated/client";
+} from "src/generated/prisma/client";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { PrismaService } from "src/db/prisma.service";
 import { RoutingKey } from "src/enum/routing-key.enum";
@@ -74,7 +74,7 @@ export class NotificationJobService {
     private readonly notificationsQueue: Queue<NotificationDispatchJobData>,
   ) {}
 
-  async listGuildJobs(guildId: string) {
+  listGuildJobs(guildId: string) {
     return this.getJobsForOwner({
       ownerType: DbNotificationOwnerType.GUILD,
       ownerId: guildId,
@@ -87,7 +87,7 @@ export class NotificationJobService {
     return { success: true };
   }
 
-  async listUserJobs(discordId: string) {
+  listUserJobs(discordId: string) {
     return this.getJobsForOwner({
       ownerType: DbNotificationOwnerType.USER,
       ownerId: discordId,
@@ -560,31 +560,33 @@ export class NotificationJobService {
       },
     });
 
-    for (const timer of timers) {
-      if (
-        !this.matchingService.matchesTimerRule(
-          notificationRule.filters,
-          timer.npcId,
-        )
-      ) {
-        continue;
-      }
+    await Promise.all(
+      timers.map(async (timer) => {
+        if (
+          !this.matchingService.matchesTimerRule(
+            notificationRule.filters,
+            timer.npcId,
+          )
+        ) {
+          return;
+        }
 
-      await this.rebuildTimerJobsForRule(notificationRule.id, {
-        guildId: timer.guildId,
-        world: timer.world,
-        npcId: timer.npcId,
-        timerKey: timer.timerKey,
-        minSpawnTime: timer.minSpawnTime,
-        maxSpawnTime: timer.maxSpawnTime,
-        npc:
-          timer.npc &&
-          typeof timer.npc === "object" &&
-          !Array.isArray(timer.npc)
-            ? (timer.npc as { name?: string })
-            : null,
-      });
-    }
+        await this.rebuildTimerJobsForRule(notificationRule.id, {
+          guildId: timer.guildId,
+          world: timer.world,
+          npcId: timer.npcId,
+          timerKey: timer.timerKey,
+          minSpawnTime: timer.minSpawnTime,
+          maxSpawnTime: timer.maxSpawnTime,
+          npc:
+            timer.npc &&
+            typeof timer.npc === "object" &&
+            !Array.isArray(timer.npc)
+              ? (timer.npc as { name?: string })
+              : null,
+        });
+      }),
+    );
   }
 
   async rebuildTimerJobsForRule(ruleId: number, event: TimerUpdatedEvent) {
@@ -624,53 +626,58 @@ export class NotificationJobService {
             notificationRule.ownerId,
           );
 
-    for (const relation of notificationRule.targets) {
-      if (!relation.target.active || !relation.target.canSend) {
-        continue;
-      }
+    const scheduledFor = this.calculateTimerNotificationSchedule({
+      minSpawnTime: event.minSpawnTime,
+      maxSpawnTime: event.maxSpawnTime,
+      scheduleAnchor: notificationRule.scheduleAnchor,
+      scheduleOffsetMinutes: notificationRule.scheduleOffsetMinutes,
+    });
 
-      const scheduledFor = this.calculateTimerNotificationSchedule({
-        minSpawnTime: event.minSpawnTime,
-        maxSpawnTime: event.maxSpawnTime,
-        scheduleAnchor: notificationRule.scheduleAnchor,
-        scheduleOffsetMinutes: notificationRule.scheduleOffsetMinutes,
-      });
+    const effectiveScheduledFor =
+      scheduledFor.getTime() < Date.now() ? new Date() : scheduledFor;
 
-      const effectiveScheduledFor =
-        scheduledFor.getTime() < Date.now() ? new Date() : scheduledFor;
+    await Promise.all(
+      notificationRule.targets.map(async (relation) => {
+        if (!relation.target.active || !relation.target.canSend) {
+          return;
+        }
 
-      const notificationJob = await this.createNotificationJob({
-        notificationRule,
-        target: relation.target,
-        jobKind: DbNotificationJobKind.SCHEDULED,
-        scheduledFor: effectiveScheduledFor,
-        sourceEntityType: "timer",
-        sourceEntityId,
-        payloadSnapshot: this.contentService.buildTimerNotificationPayload({
+        const notificationJob = await this.createNotificationJob({
           notificationRule,
           target: relation.target,
-          npcId: event.npcId,
-          npcName: event.npc?.name ?? null,
-          world: event.world,
-          timerKey: event.timerKey,
-          minSpawnTime: new Date(event.minSpawnTime),
-          maxSpawnTime: new Date(event.maxSpawnTime),
+          jobKind: DbNotificationJobKind.SCHEDULED,
           scheduledFor: effectiveScheduledFor,
-        }),
-        forceBlocked:
-          !hasRequiredPermissions ||
-          !relation.target.canSend ||
-          !relation.target.active,
-      });
+          sourceEntityType: "timer",
+          sourceEntityId,
+          payloadSnapshot: this.contentService.buildTimerNotificationPayload({
+            notificationRule,
+            target: relation.target,
+            npcId: event.npcId,
+            npcName: event.npc?.name ?? null,
+            world: event.world,
+            timerKey: event.timerKey,
+            minSpawnTime: new Date(event.minSpawnTime),
+            maxSpawnTime: new Date(event.maxSpawnTime),
+            scheduledFor: effectiveScheduledFor,
+          }),
+          forceBlocked:
+            !hasRequiredPermissions ||
+            !relation.target.canSend ||
+            !relation.target.active,
+        });
 
-      if (
-        notificationJob &&
-        notificationJob.status === DbNotificationJobStatus.PENDING
-      ) {
-        const delay = Math.max(0, effectiveScheduledFor.getTime() - Date.now());
-        await this.enqueueNotificationJob(notificationJob.id, delay);
-      }
-    }
+        if (
+          notificationJob &&
+          notificationJob.status === DbNotificationJobStatus.PENDING
+        ) {
+          const delay = Math.max(
+            0,
+            effectiveScheduledFor.getTime() - Date.now(),
+          );
+          await this.enqueueNotificationJob(notificationJob.id, delay);
+        }
+      }),
+    );
   }
 
   async rebuildScheduledMessageJobsForRule(ruleId: number) {
@@ -713,37 +720,39 @@ export class NotificationJobService {
             notificationRule.ownerId,
           );
 
-    for (const relation of notificationRule.targets) {
-      if (!relation.target.active || !relation.target.canSend) {
-        continue;
-      }
+    await Promise.all(
+      notificationRule.targets.map(async (relation) => {
+        if (!relation.target.active || !relation.target.canSend) {
+          return;
+        }
 
-      const notificationJob = await this.createNotificationJob({
-        notificationRule,
-        target: relation.target,
-        jobKind: DbNotificationJobKind.SCHEDULED,
-        scheduledFor: scheduledAt,
-        sourceEntityType: "scheduled-message",
-        sourceEntityId: String(notificationRule.id),
-        payloadSnapshot: this.contentService.buildScheduledMessagePayload({
+        const notificationJob = await this.createNotificationJob({
           notificationRule,
           target: relation.target,
+          jobKind: DbNotificationJobKind.SCHEDULED,
           scheduledFor: scheduledAt,
-        }),
-        forceBlocked:
-          !hasRequiredPermissions ||
-          !relation.target.canSend ||
-          !relation.target.active,
-      });
+          sourceEntityType: "scheduled-message",
+          sourceEntityId: String(notificationRule.id),
+          payloadSnapshot: this.contentService.buildScheduledMessagePayload({
+            notificationRule,
+            target: relation.target,
+            scheduledFor: scheduledAt,
+          }),
+          forceBlocked:
+            !hasRequiredPermissions ||
+            !relation.target.canSend ||
+            !relation.target.active,
+        });
 
-      if (
-        notificationJob &&
-        notificationJob.status === DbNotificationJobStatus.PENDING
-      ) {
-        const delay = Math.max(0, scheduledAt.getTime() - Date.now());
-        await this.enqueueNotificationJob(notificationJob.id, delay);
-      }
-    }
+        if (
+          notificationJob &&
+          notificationJob.status === DbNotificationJobStatus.PENDING
+        ) {
+          const delay = Math.max(0, scheduledAt.getTime() - Date.now());
+          await this.enqueueNotificationJob(notificationJob.id, delay);
+        }
+      }),
+    );
   }
 
   async scheduleNextRecurringJob(ruleId: number) {
@@ -777,7 +786,6 @@ export class NotificationJobService {
     });
 
     if (
-      currentCycleJobs.length > 0 &&
       currentCycleJobs.some(
         (job) =>
           !(FINAL_JOB_STATUSES as readonly DbNotificationJobStatus[]).includes(
@@ -828,37 +836,39 @@ export class NotificationJobService {
             notificationRule.ownerId,
           );
 
-    for (const relation of notificationRule.targets) {
-      if (!relation.target.active || !relation.target.canSend) {
-        continue;
-      }
+    await Promise.all(
+      notificationRule.targets.map(async (relation) => {
+        if (!relation.target.active || !relation.target.canSend) {
+          return;
+        }
 
-      const notificationJob = await this.createNotificationJob({
-        notificationRule,
-        target: relation.target,
-        jobKind: DbNotificationJobKind.SCHEDULED,
-        scheduledFor: nextScheduledAt,
-        sourceEntityType: "scheduled-message",
-        sourceEntityId: String(notificationRule.id),
-        payloadSnapshot: this.contentService.buildScheduledMessagePayload({
+        const notificationJob = await this.createNotificationJob({
           notificationRule,
           target: relation.target,
+          jobKind: DbNotificationJobKind.SCHEDULED,
           scheduledFor: nextScheduledAt,
-        }),
-        forceBlocked:
-          !hasRequiredPermissions ||
-          !relation.target.canSend ||
-          !relation.target.active,
-      });
+          sourceEntityType: "scheduled-message",
+          sourceEntityId: String(notificationRule.id),
+          payloadSnapshot: this.contentService.buildScheduledMessagePayload({
+            notificationRule,
+            target: relation.target,
+            scheduledFor: nextScheduledAt,
+          }),
+          forceBlocked:
+            !hasRequiredPermissions ||
+            !relation.target.canSend ||
+            !relation.target.active,
+        });
 
-      if (
-        notificationJob &&
-        notificationJob.status === DbNotificationJobStatus.PENDING
-      ) {
-        const delay = Math.max(0, nextScheduledAt.getTime() - Date.now());
-        await this.enqueueNotificationJob(notificationJob.id, delay);
-      }
-    }
+        if (
+          notificationJob &&
+          notificationJob.status === DbNotificationJobStatus.PENDING
+        ) {
+          const delay = Math.max(0, nextScheduledAt.getTime() - Date.now());
+          await this.enqueueNotificationJob(notificationJob.id, delay);
+        }
+      }),
+    );
   }
 
   getRuleById(ruleId: number) {

@@ -1,3 +1,5 @@
+import type { Mock } from "vitest";
+import { mockFn } from "src/test/mock-fn";
 import { getQueueToken } from "@nestjs/bullmq";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
@@ -13,32 +15,32 @@ import { TimersService } from "src/timers/timers.service";
 
 describe("RespawnWindowProcessor", () => {
   let processor: RespawnWindowProcessor;
-  let logger: { log: jest.Mock };
+  let logger: { log: Mock };
 
   const mockEventsService = {
-    closeRespawnWindow: jest.fn(),
+    closeRespawnWindow: mockFn(),
   };
 
   const mockLogger = {
-    log: jest.fn(),
+    log: mockFn(),
   };
 
   const mockPrisma = {
-    event: { findFirst: jest.fn() },
-    eventHeroNpc: { findFirst: jest.fn() },
-    timer: { findUnique: jest.fn() },
+    event: { findFirst: mockFn() },
+    eventHeroNpc: { findFirst: mockFn() },
+    timer: { findUnique: mockFn() },
   };
 
   const mockQueue = {
-    add: jest.fn(),
+    add: mockFn(),
   };
 
   const mockTimersService = {
-    getEventRespawnTimer: jest.fn(),
+    getEventRespawnTimer: mockFn(),
   };
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [

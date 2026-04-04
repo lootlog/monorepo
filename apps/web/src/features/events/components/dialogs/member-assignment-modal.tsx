@@ -99,6 +99,7 @@ export const MemberAssignmentModal = ({
                       className="group inline-flex items-center gap-2 pl-1 pr-1.5 py-1 bg-green-500/10 hover:bg-green-500/15 rounded-full border border-green-500/20 transition-colors"
                     >
                       <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center overflow-hidden ring-2 ring-green-500/20">
+                        {/* eslint-disable-next-line eslint-plugin-next/no-img-element */}
                         <img
                           src={getDiscordAvatarUrl(
                             member.userId,
@@ -192,6 +193,7 @@ export const MemberAssignmentModal = ({
                           )}
                         >
                           <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center overflow-hidden ring-2 ring-border">
+                            {/* eslint-disable-next-line eslint-plugin-next/no-img-element */}
                             <img
                               src={getDiscordAvatarUrl(
                                 member.userId,

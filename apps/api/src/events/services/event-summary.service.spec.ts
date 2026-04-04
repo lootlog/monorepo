@@ -1,37 +1,38 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { CoverageGapType } from "prisma/generated/client";
+import { mockFn } from "src/test/mock-fn";
+import { CoverageGapType } from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
 import { EventSummaryService } from "./event-summary.service";
 
 describe("EventSummaryService", () => {
   let service: EventSummaryService;
 
-  const mockTransaction = jest.fn();
+  const mockTransaction = mockFn();
 
   const mockPrismaService = {
     eventMap: {
-      findMany: jest.fn(),
+      findMany: mockFn(),
     },
     eventPresenceLog: {
-      findMany: jest.fn(),
-      deleteMany: jest.fn(),
+      findMany: mockFn(),
+      deleteMany: mockFn(),
     },
     eventMapCoverageGap: {
-      findMany: jest.fn(),
-      deleteMany: jest.fn(),
+      findMany: mockFn(),
+      deleteMany: mockFn(),
     },
     eventRespawnWindowSummary: {
-      create: jest.fn(),
-      findMany: jest.fn(),
+      create: mockFn(),
+      findMany: mockFn(),
     },
     eventHeroNpc: {
-      findFirst: jest.fn(),
+      findFirst: mockFn(),
     },
     $transaction: mockTransaction,
   };
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -71,16 +72,16 @@ describe("EventSummaryService", () => {
     };
 
     beforeEach(() => {
-      mockTransaction.mockImplementation(async (callback) => {
+      mockTransaction.mockImplementation((callback) => {
         const txClient = {
           eventRespawnWindowSummary: {
-            create: jest.fn().mockResolvedValue({}),
+            create: mockFn().mockResolvedValue({}),
           },
           eventPresenceLog: {
-            deleteMany: jest.fn().mockResolvedValue({ count: 5 }),
+            deleteMany: mockFn().mockResolvedValue({ count: 5 }),
           },
           eventMapCoverageGap: {
-            deleteMany: jest.fn().mockResolvedValue({ count: 2 }),
+            deleteMany: mockFn().mockResolvedValue({ count: 2 }),
           },
         };
         return callback(txClient);
@@ -191,19 +192,19 @@ describe("EventSummaryService", () => {
       mockPrismaService.eventMapCoverageGap.findMany.mockResolvedValue([]);
 
       let capturedData: unknown;
-      mockTransaction.mockImplementation(async (callback) => {
+      mockTransaction.mockImplementation((callback) => {
         const txClient = {
           eventRespawnWindowSummary: {
-            create: jest.fn().mockImplementation(({ data }) => {
+            create: mockFn().mockImplementation(({ data }) => {
               capturedData = data;
               return {};
             }),
           },
           eventPresenceLog: {
-            deleteMany: jest.fn().mockResolvedValue({ count: 2 }),
+            deleteMany: mockFn().mockResolvedValue({ count: 2 }),
           },
           eventMapCoverageGap: {
-            deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: mockFn().mockResolvedValue({ count: 0 }),
           },
         };
         return callback(txClient);
@@ -266,19 +267,19 @@ describe("EventSummaryService", () => {
       mockPrismaService.eventMapCoverageGap.findMany.mockResolvedValue(gaps);
 
       let capturedData: unknown;
-      mockTransaction.mockImplementation(async (callback) => {
+      mockTransaction.mockImplementation((callback) => {
         const txClient = {
           eventRespawnWindowSummary: {
-            create: jest.fn().mockImplementation(({ data }) => {
+            create: mockFn().mockImplementation(({ data }) => {
               capturedData = data;
               return {};
             }),
           },
           eventPresenceLog: {
-            deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: mockFn().mockResolvedValue({ count: 0 }),
           },
           eventMapCoverageGap: {
-            deleteMany: jest.fn().mockResolvedValue({ count: 2 }),
+            deleteMany: mockFn().mockResolvedValue({ count: 2 }),
           },
         };
         return callback(txClient);
@@ -332,19 +333,19 @@ describe("EventSummaryService", () => {
       mockPrismaService.eventMapCoverageGap.findMany.mockResolvedValue([]);
 
       let capturedData: unknown;
-      mockTransaction.mockImplementation(async (callback) => {
+      mockTransaction.mockImplementation((callback) => {
         const txClient = {
           eventRespawnWindowSummary: {
-            create: jest.fn().mockImplementation(({ data }) => {
+            create: mockFn().mockImplementation(({ data }) => {
               capturedData = data;
               return {};
             }),
           },
           eventPresenceLog: {
-            deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
+            deleteMany: mockFn().mockResolvedValue({ count: 1 }),
           },
           eventMapCoverageGap: {
-            deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: mockFn().mockResolvedValue({ count: 0 }),
           },
         };
         return callback(txClient);
@@ -374,19 +375,19 @@ describe("EventSummaryService", () => {
       mockPrismaService.eventMapCoverageGap.findMany.mockResolvedValue([]);
 
       let capturedData: unknown;
-      mockTransaction.mockImplementation(async (callback) => {
+      mockTransaction.mockImplementation((callback) => {
         const txClient = {
           eventRespawnWindowSummary: {
-            create: jest.fn().mockImplementation(({ data }) => {
+            create: mockFn().mockImplementation(({ data }) => {
               capturedData = data;
               return {};
             }),
           },
           eventPresenceLog: {
-            deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: mockFn().mockResolvedValue({ count: 0 }),
           },
           eventMapCoverageGap: {
-            deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: mockFn().mockResolvedValue({ count: 0 }),
           },
         };
         return callback(txClient);
@@ -416,13 +417,13 @@ describe("EventSummaryService", () => {
       mockPrismaService.eventPresenceLog.findMany.mockResolvedValue([]);
       mockPrismaService.eventMapCoverageGap.findMany.mockResolvedValue([]);
 
-      const deleteLogsMock = jest.fn().mockResolvedValue({ count: 5 });
-      const deleteGapsMock = jest.fn().mockResolvedValue({ count: 3 });
+      const deleteLogsMock = mockFn().mockResolvedValue({ count: 5 });
+      const deleteGapsMock = mockFn().mockResolvedValue({ count: 3 });
 
-      mockTransaction.mockImplementation(async (callback) => {
+      mockTransaction.mockImplementation((callback) => {
         const txClient = {
           eventRespawnWindowSummary: {
-            create: jest.fn().mockResolvedValue({}),
+            create: mockFn().mockResolvedValue({}),
           },
           eventPresenceLog: {
             deleteMany: deleteLogsMock,
@@ -491,19 +492,19 @@ describe("EventSummaryService", () => {
       mockPrismaService.eventMapCoverageGap.findMany.mockResolvedValue(gaps);
 
       let capturedData: unknown;
-      mockTransaction.mockImplementation(async (callback) => {
+      mockTransaction.mockImplementation((callback) => {
         const txClient = {
           eventRespawnWindowSummary: {
-            create: jest.fn().mockImplementation(({ data }) => {
+            create: mockFn().mockImplementation(({ data }) => {
               capturedData = data;
               return {};
             }),
           },
           eventPresenceLog: {
-            deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
+            deleteMany: mockFn().mockResolvedValue({ count: 1 }),
           },
           eventMapCoverageGap: {
-            deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
+            deleteMany: mockFn().mockResolvedValue({ count: 1 }),
           },
         };
         return callback(txClient);
@@ -559,19 +560,19 @@ describe("EventSummaryService", () => {
       mockPrismaService.eventMapCoverageGap.findMany.mockResolvedValue([]);
 
       let capturedData: unknown;
-      mockTransaction.mockImplementation(async (callback) => {
+      mockTransaction.mockImplementation((callback) => {
         const txClient = {
           eventRespawnWindowSummary: {
-            create: jest.fn().mockImplementation(({ data }) => {
+            create: mockFn().mockImplementation(({ data }) => {
               capturedData = data;
               return {};
             }),
           },
           eventPresenceLog: {
-            deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
+            deleteMany: mockFn().mockResolvedValue({ count: 1 }),
           },
           eventMapCoverageGap: {
-            deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: mockFn().mockResolvedValue({ count: 0 }),
           },
         };
         return callback(txClient);

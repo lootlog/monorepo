@@ -1,20 +1,21 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { mockFn } from "src/test/mock-fn";
 import { ConfigService } from "@nestjs/config";
 import { TimersCleanupService } from "./timers-cleanup.service";
 import { PrismaService } from "src/db/prisma.service";
 
 describe("TimersCleanupService", () => {
   const mockPrismaService = {
-    $executeRaw: jest.fn(),
+    $executeRaw: mockFn(),
   };
 
   const mockConfigService = {
-    get: jest.fn(),
+    get: mockFn(),
   };
 
-  beforeEach(async () => {
+  beforeEach(() => {
     mockConfigService.get.mockReturnValue(undefined);
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   const createService = async () => {

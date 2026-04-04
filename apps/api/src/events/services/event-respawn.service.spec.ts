@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { mockFn } from "src/test/mock-fn";
 import { getQueueToken } from "@nestjs/bullmq";
 import {
   BadRequestException,
@@ -19,61 +20,61 @@ describe("EventRespawnService", () => {
 
   const mockPrismaService = {
     eventHeroNpc: {
-      findFirst: jest.fn(),
+      findFirst: mockFn(),
     },
     eventMap: {
-      findMany: jest.fn(),
-      update: jest.fn(),
+      findMany: mockFn(),
+      update: mockFn(),
     },
     timer: {
-      findUnique: jest.fn(),
-      upsert: jest.fn(),
-      delete: jest.fn(),
+      findUnique: mockFn(),
+      upsert: mockFn(),
+      delete: mockFn(),
     },
     eventMapAssignmentHistory: {
-      updateMany: jest.fn(),
+      updateMany: mockFn(),
     },
     member: {
-      findFirst: jest.fn(),
+      findFirst: mockFn(),
     },
-    $transaction: jest.fn(),
+    $transaction: mockFn(),
   };
 
   const mockQueue = {
-    add: jest.fn(),
-    getJobs: jest.fn(),
+    add: mockFn(),
+    getJobs: mockFn(),
   };
 
   const mockEventEmitter = {
-    emitMapStatusUpdate: jest.fn(),
-    emitRespawnWindowOpened: jest.fn(),
-    emitRespawnWindowClosed: jest.fn(),
-    emitTimerUpdate: jest.fn(),
+    emitMapStatusUpdate: mockFn(),
+    emitRespawnWindowOpened: mockFn(),
+    emitRespawnWindowClosed: mockFn(),
+    emitTimerUpdate: mockFn(),
   };
 
   const mockKillService = {
-    checkAndRecordEventHeroKill: jest.fn(),
-    recordHeroKill: jest.fn(),
+    checkAndRecordEventHeroKill: mockFn(),
+    recordHeroKill: mockFn(),
   };
 
   const mockTrackingService = {
-    closeAllGapsForHero: jest.fn(),
-    openUnassignedGap: jest.fn(),
-    openUncoveredGap: jest.fn(),
+    closeAllGapsForHero: mockFn(),
+    openUnassignedGap: mockFn(),
+    openUncoveredGap: mockFn(),
   };
 
   const mockSummaryService = {
-    createWindowSummary: jest.fn(),
+    createWindowSummary: mockFn(),
   };
 
   const mockTimersService = {
-    getEventRespawnTimer: jest.fn(),
-    openEventRespawnTimer: jest.fn(),
-    closeEventRespawnTimer: jest.fn(),
+    getEventRespawnTimer: mockFn(),
+    openEventRespawnTimer: mockFn(),
+    closeEventRespawnTimer: mockFn(),
   };
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -183,7 +184,7 @@ describe("EventRespawnService", () => {
       mockPrismaService.eventMapAssignmentHistory.updateMany.mockResolvedValue({
         count: 1,
       });
-      mockPrismaService.$transaction.mockImplementation(async (callback) =>
+      mockPrismaService.$transaction.mockImplementation((callback) =>
         callback(mockPrismaService),
       );
       mockTimersService.closeEventRespawnTimer.mockResolvedValue(undefined);
@@ -230,7 +231,7 @@ describe("EventRespawnService", () => {
       mockPrismaService.eventMapAssignmentHistory.updateMany.mockResolvedValue({
         count: 1,
       });
-      mockPrismaService.$transaction.mockImplementation(async (callback) =>
+      mockPrismaService.$transaction.mockImplementation((callback) =>
         callback(mockPrismaService),
       );
       mockTimersService.closeEventRespawnTimer.mockResolvedValue(undefined);
@@ -264,7 +265,7 @@ describe("EventRespawnService", () => {
       const mockJob = {
         id: "job-1",
         data: { heroId },
-        remove: jest.fn().mockResolvedValue(undefined),
+        remove: mockFn().mockResolvedValue(undefined),
       };
       mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
       mockTimersService.getEventRespawnTimer.mockResolvedValue(mockTimer);

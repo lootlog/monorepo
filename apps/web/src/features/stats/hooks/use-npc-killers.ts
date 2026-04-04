@@ -53,7 +53,7 @@ export const useNpcKillers = (
       );
       return response.data;
     },
-    enabled: !!guildId && npcId !== undefined,
+    enabled: Boolean(guildId) && npcId !== undefined,
     staleTime: 30000,
   });
 };

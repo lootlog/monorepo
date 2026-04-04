@@ -18,15 +18,15 @@ import {
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
-import { Permission, type Role } from "prisma/generated/client";
-import { AssignMemberDto } from "./dto/assign-member.dto";
-import { AssignMapLocationDto } from "./dto/assign-map-location.dto";
-import { CreateHeroDto } from "./dto/create-hero.dto";
-import { CreateLocationDto } from "./dto/create-location.dto";
-import { CreateMapDto } from "./dto/create-map.dto";
-import { ReorderLocationsDto } from "./dto/reorder-locations.dto";
-import { UpdateHeroDto } from "./dto/update-hero.dto";
-import { UpdateLocationDto } from "./dto/update-location.dto";
+import { Permission, type Role } from "src/generated/prisma/client";
+import type { AssignMemberDto } from "./dto/assign-member.dto";
+import type { AssignMapLocationDto } from "./dto/assign-map-location.dto";
+import type { CreateHeroDto } from "./dto/create-hero.dto";
+import type { CreateLocationDto } from "./dto/create-location.dto";
+import type { CreateMapDto } from "./dto/create-map.dto";
+import type { ReorderLocationsDto } from "./dto/reorder-locations.dto";
+import type { UpdateHeroDto } from "./dto/update-hero.dto";
+import type { UpdateLocationDto } from "./dto/update-location.dto";
 import { EventsService } from "./events.service";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { GuildMember } from "src/shared/decorators/member.decorator";
@@ -58,7 +58,7 @@ export class EventsAssignmentController {
     description: "Member assigned successfully",
   })
   @ApiResponse({ status: 404, description: "Map not found" })
-  async assignMember(
+  assignMember(
     @GuildData() guildData: { id: string },
     @Param("eventId") eventId: string,
     @Param("mapId") mapId: string,
@@ -175,7 +175,7 @@ export class EventsAssignmentController {
     status: 201,
     description: "Hero added successfully",
   })
-  async addHero(
+  addHero(
     @GuildData() guildData: { id: string },
     @Param("eventId") eventId: string,
     @Body() data: CreateHeroDto,
@@ -197,7 +197,7 @@ export class EventsAssignmentController {
     status: 200,
     description: "Hero updated successfully",
   })
-  async updateHero(
+  updateHero(
     @GuildData() guildData: { id: string },
     @Param("eventId") eventId: string,
     @Param("heroId") heroId: string,
@@ -220,7 +220,7 @@ export class EventsAssignmentController {
     status: 200,
     description: "Hero deleted successfully",
   })
-  async deleteHero(
+  deleteHero(
     @GuildData() guildData: { id: string },
     @Param("eventId") eventId: string,
     @Param("heroId") heroId: string,
@@ -242,7 +242,7 @@ export class EventsAssignmentController {
     status: 201,
     description: "Map added successfully",
   })
-  async addMap(
+  addMap(
     @GuildData() guildData: { id: string },
     @Param("eventId") eventId: string,
     @Param("heroId") heroId: string,
@@ -266,7 +266,7 @@ export class EventsAssignmentController {
     status: 200,
     description: "Map deleted successfully",
   })
-  async deleteMap(
+  deleteMap(
     @GuildData() guildData: { id: string },
     @Param("eventId") eventId: string,
     @Param("heroId") heroId: string,
@@ -324,7 +324,7 @@ export class EventsAssignmentController {
     status: 400,
     description: "Location with this name already exists",
   })
-  async createLocation(
+  createLocation(
     @GuildData() guildData: { id: string },
     @Param("eventId") eventId: string,
     @Param("heroId") heroId: string,
@@ -356,7 +356,7 @@ export class EventsAssignmentController {
     description: "Location updated successfully",
   })
   @ApiResponse({ status: 404, description: "Location not found" })
-  async updateLocation(
+  updateLocation(
     @GuildData() guildData: { id: string },
     @Param("eventId") eventId: string,
     @Param("heroId") heroId: string,
@@ -391,7 +391,7 @@ export class EventsAssignmentController {
     description: "Location deleted successfully",
   })
   @ApiResponse({ status: 404, description: "Location not found" })
-  async deleteLocation(
+  deleteLocation(
     @GuildData() guildData: { id: string },
     @Param("eventId") eventId: string,
     @Param("heroId") heroId: string,
@@ -419,7 +419,7 @@ export class EventsAssignmentController {
     status: 200,
     description: "Locations reordered successfully",
   })
-  async reorderLocations(
+  reorderLocations(
     @GuildData() guildData: { id: string },
     @Param("eventId") eventId: string,
     @Param("heroId") heroId: string,
@@ -450,7 +450,7 @@ export class EventsAssignmentController {
     description: "Map location updated successfully",
   })
   @ApiResponse({ status: 404, description: "Map or location not found" })
-  async assignMapToLocation(
+  assignMapToLocation(
     @GuildData() guildData: { id: string },
     @Param("eventId") eventId: string,
     @Param("heroId") heroId: string,
@@ -487,7 +487,7 @@ export class EventsAssignmentController {
     description: "Member unassigned successfully",
   })
   @ApiResponse({ status: 404, description: "Map not found" })
-  async unassignMember(
+  unassignMember(
     @GuildData() guildData: { id: string },
     @Param("eventId") eventId: string,
     @Param("mapId") mapId: string,
@@ -497,7 +497,7 @@ export class EventsAssignmentController {
       guildData.id,
       eventId,
       mapId,
-      memberId ? parseInt(memberId, 10) : undefined,
+      memberId ? Number.parseInt(memberId, 10) : undefined,
     );
   }
 }

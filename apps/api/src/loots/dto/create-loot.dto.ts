@@ -1,4 +1,4 @@
-import { LootSource } from "prisma/generated/client";
+import { LootSource } from "src/generated/prisma/client";
 import { Type } from "class-transformer";
 import {
   ArrayMaxSize,
@@ -13,7 +13,7 @@ import {
   ValidateNested,
 } from "class-validator";
 
-class LootDto {
+export class LootDto {
   @IsNotEmpty()
   @IsString()
   hid: string;
@@ -51,7 +51,7 @@ class LootDto {
   own?: number;
 }
 
-class PlayerDto {
+export class PlayerDto {
   @IsNotEmpty()
   @IsNumber()
   id: number;

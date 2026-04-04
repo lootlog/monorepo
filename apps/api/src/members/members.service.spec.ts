@@ -1,3 +1,5 @@
+import type { Mocked } from "vitest";
+import { mockFn } from "src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import {
   BadRequestException,
@@ -13,13 +15,16 @@ import { MembersService } from "./members.service";
 import { PrismaService } from "src/db/prisma.service";
 import { DiscordService } from "src/discord/discord.service";
 import { DiscordRateLimiterService } from "src/discord/discord-rate-limiter.service";
-import { GuildsService } from "src/guilds/guilds.service";
 import { RedisService } from "@lootlog/nest-shared";
 import { ErrorKey } from "./enum/error-key.enum";
 import { RuntimeEnvironment } from "src/types/runtime.types";
 import { ConfigKey } from "src/config/config-key.enum";
 import type { APIGuildMember } from "discord-api-types/v10";
-import { type Member, type Guild, MemberType } from "prisma/generated/client";
+import {
+  type Member,
+  type Guild,
+  MemberType,
+} from "src/generated/prisma/client";
 import { MemberRefreshSchedulerService } from "./member-refresh-scheduler.service";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { RoutingKey } from "src/enum/routing-key.enum";
@@ -30,12 +35,11 @@ import {
 
 describe("MembersService", () => {
   let service: MembersService;
-  let prismaService: any;
-  let discordService: jest.Mocked<DiscordService>;
-  let _rateLimiter: jest.Mocked<DiscordRateLimiterService>;
-  let _refreshScheduler: jest.Mocked<MemberRefreshSchedulerService>;
-  let guildsService: jest.Mocked<GuildsService>;
-  let amqpConnection: jest.Mocked<AmqpConnection>;
+  let prismaService: Mocked<PrismaService>;
+  let discordService: Mocked<DiscordService>;
+  let _rateLimiter: Mocked<DiscordRateLimiterService>;
+  let _refreshScheduler: Mocked<MemberRefreshSchedulerService>;
+  let amqpConnection: Mocked<AmqpConnection>;
 
   const mockGuild: Guild = {
     id: "guild-123",
@@ -86,51 +90,50 @@ describe("MembersService", () => {
   beforeEach(async () => {
     const mockPrismaService = {
       member: {
-        findUnique: jest.fn(),
-        findMany: jest.fn(),
-        upsert: jest.fn(),
-        update: jest.fn(),
-        updateMany: jest.fn(),
+        findUnique: mockFn(),
+        findMany: mockFn(),
+        upsert: mockFn(),
+        update: mockFn(),
+        updateMany: mockFn(),
+      },
+      guild: {
+        findFirst: mockFn(),
       },
       role: {
-        findMany: jest.fn(),
+        findMany: mockFn(),
       },
       memberRefreshJob: {
-        findFirst: jest.fn(),
-        findUnique: jest.fn(),
-        create: jest.fn(),
-        update: jest.fn(),
+        findFirst: mockFn(),
+        findUnique: mockFn(),
+        create: mockFn(),
+        update: mockFn(),
       },
     };
 
     const mockDiscordService = {
-      getGuildMember: jest.fn(),
-    };
-
-    const mockGuildsService = {
-      getGuildById: jest.fn(),
+      getGuildMember: mockFn(),
     };
 
     const mockRateLimiter = {
-      getNextAvailableAtForUser: jest.fn().mockResolvedValue(null),
+      getNextAvailableAtForUser: mockFn().mockResolvedValue(null),
     };
 
     const mockRefreshScheduler = {
-      enqueueRefresh: jest.fn().mockResolvedValue({
+      enqueueRefresh: mockFn().mockResolvedValue({
         queued: true,
         nextRefreshAt: new Date(Date.now() + 5000),
       }),
-      isUserRefreshLocked: jest.fn().mockResolvedValue(false),
-      acquireUserRefreshLock: jest.fn().mockResolvedValue(true),
-      releaseUserRefreshLock: jest.fn(),
+      isUserRefreshLocked: mockFn().mockResolvedValue(false),
+      acquireUserRefreshLock: mockFn().mockResolvedValue(true),
+      releaseUserRefreshLock: mockFn(),
     };
 
     const mockAmqpConnection = {
-      publish: jest.fn(),
+      publish: mockFn(),
     };
 
     const mockConfigService = {
-      get: jest.fn((key: string) => {
+      get: mockFn((key: string) => {
         if (key === ConfigKey.SERVICE) {
           return { env: RuntimeEnvironment.LOCAL };
         }
@@ -139,17 +142,17 @@ describe("MembersService", () => {
     };
 
     const mockLogger = {
-      log: jest.fn(),
-      error: jest.fn(),
-      warn: jest.fn(),
-      debug: jest.fn(),
+      log: mockFn(),
+      error: mockFn(),
+      warn: mockFn(),
+      debug: mockFn(),
     };
 
     const mockRedisService = {
-      get: jest.fn(),
-      set: jest.fn(),
-      del: jest.fn(),
-      deleteByPattern: jest.fn(),
+      get: mockFn(),
+      set: mockFn(),
+      del: mockFn(),
+      deleteByPattern: mockFn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -163,7 +166,6 @@ describe("MembersService", () => {
           provide: MemberRefreshSchedulerService,
           useValue: mockRefreshScheduler,
         },
-        { provide: GuildsService, useValue: mockGuildsService },
         { provide: AmqpConnection, useValue: mockAmqpConnection },
         { provide: ConfigService, useValue: mockConfigService },
         { provide: RedisService, useValue: mockRedisService },
@@ -175,18 +177,17 @@ describe("MembersService", () => {
     discordService = module.get(DiscordService);
     _rateLimiter = module.get(DiscordRateLimiterService);
     _refreshScheduler = module.get(MemberRefreshSchedulerService);
-    guildsService = module.get(GuildsService);
     amqpConnection = module.get(AmqpConnection);
 
     // Suppress logger output
-    jest.spyOn(service["logger"], "warn").mockImplementation();
-    jest.spyOn(service["logger"], "debug").mockImplementation();
-    jest.spyOn(service["logger"], "error").mockImplementation();
-    jest.spyOn(service["logger"], "log").mockImplementation();
+    vi.spyOn(service["logger"], "warn").mockImplementation();
+    vi.spyOn(service["logger"], "debug").mockImplementation();
+    vi.spyOn(service["logger"], "error").mockImplementation();
+    vi.spyOn(service["logger"], "log").mockImplementation();
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("constructor", () => {
@@ -209,7 +210,8 @@ describe("MembersService", () => {
     });
 
     it("should return a 15 minute soft stale threshold in prod", () => {
-      (service as any).env = RuntimeEnvironment.PROD;
+      (service as MembersService & { env: RuntimeEnvironment }).env =
+        RuntimeEnvironment.PROD;
       const referenceTime = new Date("2026-03-10T10:00:00.000Z");
 
       const result = service.getMemberSoftStaleThreshold(referenceTime);
@@ -219,9 +221,9 @@ describe("MembersService", () => {
 
     it("should use the threshold helper when checking soft staleness", () => {
       const threshold = new Date("2026-03-10T10:00:00.000Z");
-      jest
-        .spyOn(service, "getMemberSoftStaleThreshold")
-        .mockReturnValue(threshold);
+      vi.spyOn(service, "getMemberSoftStaleThreshold").mockReturnValue(
+        threshold,
+      );
 
       expect(
         service.isMemberSoftStale({
@@ -276,7 +278,7 @@ describe("MembersService", () => {
     it("should throw BadRequestException when refresh=true and TTL active", async () => {
       const futureDate = new Date(Date.now() + 10000);
       const cachedMember = { ...mockMember, updatedAt: futureDate };
-      guildsService.getGuildById.mockResolvedValue(mockGuild);
+      prismaService.guild.findFirst.mockResolvedValue(mockGuild);
       prismaService.member.findUnique.mockResolvedValue(cachedMember);
 
       await expect(
@@ -446,7 +448,7 @@ describe("MembersService", () => {
     });
 
     it("should throw error when refresh=true and general error occurs", async () => {
-      guildsService.getGuildById.mockResolvedValue(mockGuild);
+      prismaService.guild.findFirst.mockResolvedValue(mockGuild);
       prismaService.member.findUnique.mockResolvedValue(null);
       discordService.getGuildMember.mockRejectedValue(
         new Error("Network error"),
@@ -494,7 +496,7 @@ describe("MembersService", () => {
     });
 
     it("should call getGuildById when refresh=true", async () => {
-      guildsService.getGuildById.mockResolvedValue(mockGuild);
+      prismaService.guild.findFirst.mockResolvedValue(mockGuild);
       prismaService.member.findUnique.mockResolvedValue(null);
       discordService.getGuildMember.mockResolvedValue(mockDiscordMember);
       prismaService.role.findMany.mockResolvedValue([]);
@@ -502,11 +504,11 @@ describe("MembersService", () => {
 
       await service.getGuildMemberById({ ...options, refresh: true });
 
-      expect(guildsService.getGuildById).toHaveBeenCalledWith(options.guildId);
+      expect(prismaService.guild.findFirst).toHaveBeenCalled();
     });
 
     it("should call getGuildById when standalone=true", async () => {
-      guildsService.getGuildById.mockResolvedValue(mockGuild);
+      prismaService.guild.findFirst.mockResolvedValue(mockGuild);
       prismaService.member.findUnique.mockResolvedValue(null);
       discordService.getGuildMember.mockResolvedValue(mockDiscordMember);
       prismaService.role.findMany.mockResolvedValue([]);
@@ -514,7 +516,7 @@ describe("MembersService", () => {
 
       await service.getGuildMemberById({ ...options, standalone: true });
 
-      expect(guildsService.getGuildById).toHaveBeenCalledWith(options.guildId);
+      expect(prismaService.guild.findFirst).toHaveBeenCalled();
     });
   });
 
@@ -543,7 +545,7 @@ describe("MembersService", () => {
 
     it("should successfully refresh member", async () => {
       prismaService.member.findUnique.mockResolvedValue(mockMember);
-      guildsService.getGuildById.mockResolvedValue(mockGuild);
+      prismaService.guild.findFirst.mockResolvedValue(mockGuild);
       prismaService.member.findUnique
         .mockResolvedValueOnce(mockMember)
         .mockResolvedValueOnce(null);

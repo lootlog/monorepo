@@ -17,13 +17,13 @@ import {
   ApiParam,
 } from "@nestjs/swagger";
 import { DiscordId } from "@lootlog/nest-shared";
-import { type Guild, Permission } from "prisma/generated/client";
+import { type Guild, Permission } from "src/generated/prisma/client";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 import { ReservationsService } from "./reservations.service";
-import { CreateReservationDto } from "./dto/create-reservation.dto";
+import type { CreateReservationDto } from "./dto/create-reservation.dto";
 
 @ApiTags("reservations")
 @ApiBearerAuth()
@@ -48,7 +48,7 @@ export class ReservationsController {
     status: 403,
     description: "Forbidden - insufficient permissions",
   })
-  async getReservations(@GuildData() guild: Guild) {
+  getReservations(@GuildData() guild: Guild) {
     return this.reservationsService.getReservations(guild.id);
   }
 
@@ -68,7 +68,7 @@ export class ReservationsController {
     status: 403,
     description: "Forbidden - insufficient permissions",
   })
-  async createReservation(
+  createReservation(
     @Body() data: CreateReservationDto,
     @GuildData() guild: Guild,
   ) {
@@ -91,7 +91,7 @@ export class ReservationsController {
     status: 200,
     description: "Reservation deleted successfully",
   })
-  async deleteReservation(
+  deleteReservation(
     @Param("reservationRecordId", ParseIntPipe) reservationRecordId: number,
     @GuildData() guild: Guild,
     @DiscordId() discordId: string,
@@ -121,7 +121,7 @@ export class ReservationsController {
     status: 403,
     description: "Forbidden - insufficient permissions",
   })
-  async getReservationsCards() {
+  getReservationsCards() {
     return this.reservationsService.getReservationsCards();
   }
 }

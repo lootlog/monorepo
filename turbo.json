@@ -104,7 +104,6 @@
         "src/**/*.tsx",
         "test/**/*.ts",
         "**/*.spec.ts",
-        "jest.config.*",
         "vitest.config.*",
         "tsconfig.json"
       ]
@@ -117,10 +116,14 @@
         "src/**/*.ts",
         "test/**/*.ts",
         "test/**/*.e2e-spec.ts",
-        "jest.config.*",
-        "jest-e2e.json",
+        "vitest.config.*",
+        "vitest.config.e2e.*",
         "tsconfig.json"
       ]
+    },
+    "format:check": {
+      "cache": false,
+      "outputs": []
     },
     "battlelog:migrate": {
       "cache": false

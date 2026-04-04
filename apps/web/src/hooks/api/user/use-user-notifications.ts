@@ -2,8 +2,11 @@ import type {
   NotificationFilters,
   NotificationTargetType,
 } from "@lootlog/types";
-import { queryOptions, useQuery } from "@tanstack/react-query";
-import type { QueryClient } from "@tanstack/react-query";
+import {
+  queryOptions,
+  useQuery,
+  type QueryClient,
+} from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client/api-client";
 
 export type UserNotificationTargetTestTrigger = {

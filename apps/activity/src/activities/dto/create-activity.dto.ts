@@ -12,7 +12,7 @@ import {
   ValidatorConstraintInterface,
 } from "class-validator";
 import { Type } from "class-transformer";
-import { ActivitySource, ActivityType } from "../../../prisma/generated/client";
+import { ActivitySource, ActivityType } from "src/generated/prisma/client";
 
 const GAME_SOURCE_REQUIRED_FIELDS: Array<keyof ActorSnapshotDto> = [
   "accountId",

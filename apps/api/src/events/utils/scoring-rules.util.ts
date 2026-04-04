@@ -61,7 +61,7 @@ function parseAction(value: unknown): EventScoringAction | null {
     return { type: "ZERO_BASE" };
   }
 
-  const points = toNumber(value.points, NaN, 0);
+  const points = toNumber(value.points, Number.NaN, 0);
   if (!Number.isFinite(points)) {
     return null;
   }
@@ -104,7 +104,7 @@ function parseCondition(value: unknown): EventScoringCondition | null {
       return null;
     }
 
-    const parsedValue = toNumber(value.value, NaN);
+    const parsedValue = toNumber(value.value, Number.NaN);
     if (!Number.isFinite(parsedValue)) {
       return null;
     }
@@ -152,7 +152,7 @@ function parseCondition(value: unknown): EventScoringCondition | null {
     return null;
   }
 
-  const parsedValue = toNumber(value.value, NaN, 0, 100);
+  const parsedValue = toNumber(value.value, Number.NaN, 0, 100);
   if (!Number.isFinite(parsedValue)) {
     return null;
   }

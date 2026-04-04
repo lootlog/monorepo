@@ -1,4 +1,5 @@
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
+import { mockFn } from "src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { ConfigService } from "@nestjs/config";
 import { DiscordGuildSyncStatus } from "@lootlog/types";
@@ -14,48 +15,48 @@ describe("ChannelsService", () => {
 
   const mockTx = {
     discordGuildChannelSnapshot: {
-      upsert: jest.fn(),
-      deleteMany: jest.fn(),
+      upsert: mockFn(),
+      deleteMany: mockFn(),
     },
     discordGuildSyncState: {
-      upsert: jest.fn(),
+      upsert: mockFn(),
     },
     notificationTarget: {
-      updateMany: jest.fn(),
+      updateMany: mockFn(),
     },
   };
 
   const mockPrisma = {
-    $transaction: jest.fn(),
+    $transaction: mockFn(),
     guild: {
-      findUnique: jest.fn(),
+      findUnique: mockFn(),
     },
     discordGuildChannelSnapshot: {
-      findMany: jest.fn(),
+      findMany: mockFn(),
     },
     discordGuildSyncState: {
-      findUnique: jest.fn(),
-      upsert: jest.fn(),
+      findUnique: mockFn(),
+      upsert: mockFn(),
     },
   };
 
   const mockDiscordBotClient = {
-    refreshGuildChannels: jest.fn(),
+    refreshGuildChannels: mockFn(),
   };
 
   const mockAmqpConnection = {
-    publish: jest.fn(),
+    publish: mockFn(),
   };
 
   const mockConfigService = {
-    get: jest.fn().mockReturnValue({
+    get: mockFn().mockReturnValue({
       channelSnapshotStaleSeconds: 300,
     }),
   };
 
   const mockLogger = {
-    log: jest.fn(),
-    warn: jest.fn(),
+    log: mockFn(),
+    warn: mockFn(),
   };
 
   const baseSyncState = {
@@ -91,11 +92,10 @@ describe("ChannelsService", () => {
   };
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockPrisma.$transaction.mockImplementation(
-      async (callback: (tx: typeof mockTx) => Promise<unknown>) =>
-        callback(mockTx),
+      (callback: (tx: typeof mockTx) => Promise<unknown>) => callback(mockTx),
     );
     mockPrisma.guild.findUnique.mockResolvedValue({ id: "guild-1" });
     mockTx.discordGuildChannelSnapshot.upsert.mockResolvedValue(undefined);

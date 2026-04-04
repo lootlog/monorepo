@@ -3,7 +3,6 @@ import {
   Inject,
   Injectable,
   NotFoundException,
-  forwardRef,
   HttpException,
   HttpStatus,
 } from "@nestjs/common";
@@ -17,7 +16,12 @@ import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { ChannelsService } from "src/channels/channels.service";
 import type { DiscordBotConfig } from "src/config/discord-bot.config";
 import { ConfigKey } from "src/config/config-key.enum";
-import { type Guild, Permission } from "prisma/generated/client";
+import {
+  type Guild,
+  ItemRarity,
+  NpcType,
+  Permission,
+} from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
 import type { CreateGuildDto } from "src/guilds/dto/create-guild.dto";
 import type { DeleteGuildDto } from "src/guilds/dto/delete-guild.dto";
@@ -27,17 +31,13 @@ import { ErrorKey } from "src/guilds/enum/error-key.enum";
 import { MembersService } from "src/members/members.service";
 import { RolesService } from "src/roles/roles.service";
 import { generateSlug } from "src/shared/utils/generate-slug";
-import { LootlogConfigService } from "src/lootlog-config/lootlog-config.service";
 import { RESTRICTED_VANITY_URLS } from "src/guilds/constants/restricted-vanity-urls";
-import { UsersService } from "src/users/users.service";
 import { DiscordService } from "src/discord/discord.service";
-import { RedisService, isDiscordAdministrator } from "@lootlog/nest-shared";
+import { isDiscordAdministrator, RedisService } from "@lootlog/nest-shared";
 import {
   getPermissionsCachePattern,
-  getPermissionsCacheKey,
   getGuildCacheKey,
   GUILD_CACHE_TTL_SECONDS,
-  PERMISSIONS_CACHE_TTL_SECONDS,
 } from "src/shared/constants/cache.constant";
 import { MEMBER_REFRESH_PRIORITY } from "src/members/constants/member-refresh-queue.constant";
 
@@ -58,17 +58,12 @@ export class GuildsService {
 
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
-    @Inject(forwardRef(() => MembersService))
     private readonly membersService: MembersService,
     private readonly channelsService: ChannelsService,
     private readonly rolesService: RolesService,
-    @Inject(forwardRef(() => LootlogConfigService))
-    private lootlogConfigService: LootlogConfigService,
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
     private readonly discordService: DiscordService,
-    @Inject(forwardRef(() => UsersService))
-    private readonly usersService: UsersService,
     private readonly redisService: RedisService,
     private readonly amqpConnection: AmqpConnection,
   ) {
@@ -79,7 +74,10 @@ export class GuildsService {
   }
 
   async getUserGuilds(discordId: string, userId: string, source?: string) {
-    const userPreferences = await this.usersService.getUserPreferences(userId);
+    const userPreferences = await this.prisma.userSettings.findUnique({
+      where: { userId },
+      select: { guildsOrder: true },
+    });
 
     let guilds: Guild[] = [];
     if (source === "game") {
@@ -368,73 +366,6 @@ export class GuildsService {
     return guilds;
   }
 
-  async getMemberContext(options: {
-    discordId: string;
-    userId: string;
-    guildId: string;
-  }): Promise<{
-    guild: Guild;
-    member: unknown;
-    roles: unknown[];
-    permissions: Permission[];
-  } | null> {
-    const { discordId, userId, guildId } = options;
-
-    const cacheKey = getPermissionsCacheKey(userId, guildId);
-    const cached = await this.redisService.get(cacheKey);
-
-    if (cached) {
-      try {
-        return JSON.parse(cached);
-      } catch (error) {
-        this.logger.warn({
-          message: `Failed to parse cached permissions data for key ${cacheKey}`,
-          error: error,
-        });
-        await this.redisService.del(cacheKey);
-      }
-    }
-
-    const guild = await this.getGuildByIdInternal(guildId);
-
-    const member = await this.membersService.getGuildMemberById({
-      userId,
-      discordId,
-      guildId: guild.id,
-    });
-
-    if (!member || !member.active) {
-      return null;
-    }
-
-    const isOwner = guild.ownerId === discordId;
-
-    const permissions = isOwner
-      ? Object.values(Permission)
-      : member?.roles.reduce((acc: Permission[], role) => {
-          return acc.concat(role.permissions);
-        }, []) || [];
-
-    const uniquePermissions = Array.from(new Set(permissions));
-
-    const context = {
-      permissions: uniquePermissions,
-      guild,
-      member,
-      roles: member?.roles || [],
-    };
-
-    if (!member.isStale && !member.refreshQueued) {
-      await this.redisService.set(
-        cacheKey,
-        JSON.stringify(context),
-        PERMISSIONS_CACHE_TTL_SECONDS,
-      );
-    }
-
-    return context;
-  }
-
   async getMultipleGuildsPermissions(discordId: string, guildIds: string[]) {
     const [guilds, members] = await Promise.all([
       this.prisma.guild.findMany({
@@ -617,10 +548,7 @@ export class GuildsService {
     }
   }
 
-  private async getGuildMembersForPermissions(
-    discordId: string,
-    guildIds: string[],
-  ) {
+  private getGuildMembersForPermissions(discordId: string, guildIds: string[]) {
     if (guildIds.length === 0) {
       return [];
     }
@@ -719,8 +647,16 @@ export class GuildsService {
       return members;
     }
 
-    let immediateAttempts = 0;
-    for (const candidate of candidates) {
+    const processCandidate = async (
+      candidateIndex: number,
+      immediateAttempts: number,
+    ): Promise<void> => {
+      if (candidateIndex >= candidates.length) {
+        return;
+      }
+
+      const candidate = candidates[candidateIndex];
+
       if (immediateAttempts < maxImmediateRefreshes) {
         const refreshResult =
           await this.membersService.refreshGuildMemberWithinBudget({
@@ -731,10 +667,13 @@ export class GuildsService {
             reason: "guild-connect",
           });
 
-        if (!refreshResult.refreshQueued) {
-          immediateAttempts++;
-        }
-        continue;
+        await processCandidate(
+          candidateIndex + 1,
+          refreshResult.refreshQueued
+            ? immediateAttempts
+            : immediateAttempts + 1,
+        );
+        return;
       }
 
       await this.membersService.queueMemberRefresh({
@@ -744,7 +683,11 @@ export class GuildsService {
         priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
         reason: "guild-connect-background",
       });
-    }
+
+      await processCandidate(candidateIndex + 1, immediateAttempts);
+    };
+
+    await processCandidate(0, 0);
 
     return this.getGuildMembersForPermissions(
       discordId,
@@ -928,7 +871,7 @@ export class GuildsService {
     return worlds.map((world) => world.world);
   }
 
-  async getMultipleGuildsByIds(ids: string[]) {
+  getMultipleGuildsByIds(ids: string[]) {
     return this.prisma.guild.findMany({
       where: { id: { in: ids } },
     });
@@ -997,7 +940,7 @@ export class GuildsService {
     try {
       const [rolesResult, lootlogResult] = await Promise.all([
         this.rolesService.bulkCreateRoles(data.guildId, data.roles),
-        this.lootlogConfigService.createLootlogConfig(data.guildId),
+        this.createDefaultLootlogConfig(data.guildId),
       ]);
 
       this.logger.log({
@@ -1112,7 +1055,7 @@ export class GuildsService {
     }
   }
 
-  private async loadGuildDiscordSyncState(guildId: string) {
+  private loadGuildDiscordSyncState(guildId: string) {
     return this.prisma.discordGuildSyncState.findUnique({
       where: { guildId },
     });
@@ -1180,5 +1123,25 @@ export class GuildsService {
       lastError:
         lastError ?? syncState.lastError ?? "Discord sync status is stale",
     };
+  }
+
+  private createDefaultLootlogConfig(guildId: string) {
+    return this.prisma.lootlogConfig.upsert({
+      where: { id: guildId },
+      update: {},
+      create: {
+        id: guildId,
+        npcs: {
+          createMany: {
+            data: Object.values(NpcType).map((npcType) => ({
+              npcType,
+              allowedRarities: Object.values(ItemRarity),
+            })),
+            skipDuplicates: true,
+          },
+        },
+      },
+      include: { npcs: true },
+    });
   }
 }

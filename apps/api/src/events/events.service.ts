@@ -1,25 +1,25 @@
 import { InjectQueue } from "@nestjs/bullmq";
 import { Injectable } from "@nestjs/common";
 import type { Queue } from "bullmq";
-import {
+import type {
   Event,
   EventHeroNpc,
   EventKillPoint,
+  Guild,
   Permission,
-  type Guild,
-  type Role,
-} from "prisma/generated/client";
+  Role,
+} from "src/generated/prisma/client";
 import type { EventWrappedResponseDto } from "./dto/event-wrapped.dto";
 import { EVENT_HERO_KILL_QUEUE } from "./constants/event-hero-kill-queue.constant";
 import { DEFAULT_ADVANCED_EVENT_SCORING_RULES } from "./constants/scoring-rules.constant";
-import { CreateEventDto } from "./dto/create-event.dto";
-import { CreateHeroDto } from "./dto/create-hero.dto";
-import { CreateLocationDto } from "./dto/create-location.dto";
-import { CreateMapDto } from "./dto/create-map.dto";
-import { ReorderLocationsDto } from "./dto/reorder-locations.dto";
-import { UpdateEventDto } from "./dto/update-event.dto";
-import { UpdateHeroDto } from "./dto/update-hero.dto";
-import { UpdateLocationDto } from "./dto/update-location.dto";
+import type { CreateEventDto } from "./dto/create-event.dto";
+import type { CreateHeroDto } from "./dto/create-hero.dto";
+import type { CreateLocationDto } from "./dto/create-location.dto";
+import type { CreateMapDto } from "./dto/create-map.dto";
+import type { ReorderLocationsDto } from "./dto/reorder-locations.dto";
+import type { UpdateEventDto } from "./dto/update-event.dto";
+import type { UpdateHeroDto } from "./dto/update-hero.dto";
+import type { UpdateLocationDto } from "./dto/update-location.dto";
 import type {
   CheckEventHeroKillParams,
   EventHeroKillJobData,
@@ -63,27 +63,27 @@ export class EventsService {
     private readonly eventHeroKillQueue: Queue<EventHeroKillJobData>,
   ) {}
 
-  async createEvent(guildId: string, data: CreateEventDto) {
+  createEvent(guildId: string, data: CreateEventDto) {
     return this.catalogService.createEvent(guildId, data);
   }
 
-  async getEvents(guildId: string, world?: string, activeOnly = true) {
+  getEvents(guildId: string, world?: string, activeOnly = true) {
     return this.catalogService.getEvents(guildId, world, activeOnly);
   }
 
-  async getEvent(guildId: string, eventId: string) {
+  getEvent(guildId: string, eventId: string) {
     return this.catalogService.getEvent(guildId, eventId);
   }
 
-  async getEventOverview(guildId: string, eventId: string) {
+  getEventOverview(guildId: string, eventId: string) {
     return this.catalogService.getEventOverview(guildId, eventId);
   }
 
-  async getEventMaps(guildId: string, eventId: string) {
+  getEventMaps(guildId: string, eventId: string) {
     return this.catalogService.getEventMaps(guildId, eventId);
   }
 
-  async getWrapped(
+  getWrapped(
     guild: Guild,
     eventId: string,
     permissions: Permission[],
@@ -92,19 +92,19 @@ export class EventsService {
     return this.wrappedService.getWrapped(guild, eventId, permissions, roles);
   }
 
-  async updateEvent(guildId: string, eventId: string, data: UpdateEventDto) {
+  updateEvent(guildId: string, eventId: string, data: UpdateEventDto) {
     return this.catalogService.updateEvent(guildId, eventId, data);
   }
 
-  async recalculateEventPointsForEvent(guildId: string, eventId: string) {
+  recalculateEventPointsForEvent(guildId: string, eventId: string) {
     return this.catalogService.recalculateEventPointsForEvent(guildId, eventId);
   }
 
-  async deleteEvent(guildId: string, eventId: string) {
+  deleteEvent(guildId: string, eventId: string) {
     return this.catalogService.deleteEvent(guildId, eventId);
   }
 
-  async assignMemberToMap(
+  assignMemberToMap(
     guildId: string,
     eventId: string,
     mapId: string,
@@ -118,7 +118,7 @@ export class EventsService {
     );
   }
 
-  async unassignMemberFromMap(
+  unassignMemberFromMap(
     guildId: string,
     eventId: string,
     mapId: string,
@@ -132,19 +132,19 @@ export class EventsService {
     );
   }
 
-  async getRanking(guildId: string, eventId: string) {
+  getRanking(guildId: string, eventId: string) {
     return this.pointsService.getRanking(guildId, eventId);
   }
 
-  async getMemberByDiscordId(discordId: string, guildId: string) {
+  getMemberByDiscordId(discordId: string, guildId: string) {
     return this.trackingService.getMemberByDiscordId(discordId, guildId);
   }
 
-  async createHero(guildId: string, eventId: string, data: CreateHeroDto) {
+  createHero(guildId: string, eventId: string, data: CreateHeroDto) {
     return this.catalogService.createHero(guildId, eventId, data);
   }
 
-  async updateHero(
+  updateHero(
     guildId: string,
     eventId: string,
     heroId: string,
@@ -153,29 +153,19 @@ export class EventsService {
     return this.catalogService.updateHero(guildId, eventId, heroId, data);
   }
 
-  async deleteHero(guildId: string, eventId: string, heroId: string) {
+  deleteHero(guildId: string, eventId: string, heroId: string) {
     return this.catalogService.deleteHero(guildId, eventId, heroId);
   }
 
-  async addMap(
-    guildId: string,
-    eventId: string,
-    heroId: string,
-    data: CreateMapDto,
-  ) {
+  addMap(guildId: string, eventId: string, heroId: string, data: CreateMapDto) {
     return this.catalogService.addMap(guildId, eventId, heroId, data);
   }
 
-  async deleteMap(
-    guildId: string,
-    eventId: string,
-    heroId: string,
-    mapId: string,
-  ) {
+  deleteMap(guildId: string, eventId: string, heroId: string, mapId: string) {
     return this.catalogService.deleteMap(guildId, eventId, heroId, mapId);
   }
 
-  async createLocation(
+  createLocation(
     guildId: string,
     eventId: string,
     heroId: string,
@@ -184,7 +174,7 @@ export class EventsService {
     return this.catalogService.createLocation(guildId, eventId, heroId, data);
   }
 
-  async updateLocation(
+  updateLocation(
     guildId: string,
     eventId: string,
     heroId: string,
@@ -200,7 +190,7 @@ export class EventsService {
     );
   }
 
-  async deleteLocation(
+  deleteLocation(
     guildId: string,
     eventId: string,
     heroId: string,
@@ -214,7 +204,7 @@ export class EventsService {
     );
   }
 
-  async reorderLocations(
+  reorderLocations(
     guildId: string,
     eventId: string,
     heroId: string,
@@ -223,7 +213,7 @@ export class EventsService {
     return this.catalogService.reorderLocations(guildId, eventId, heroId, data);
   }
 
-  async assignMapToLocation(
+  assignMapToLocation(
     guildId: string,
     eventId: string,
     heroId: string,
@@ -239,39 +229,35 @@ export class EventsService {
     );
   }
 
-  async getLocations(guildId: string, eventId: string, heroId: string) {
+  getLocations(guildId: string, eventId: string, heroId: string) {
     return this.catalogService.getLocations(guildId, eventId, heroId);
   }
 
-  async openUnassignedGap(mapId: string, heroNpcId: string): Promise<void> {
+  openUnassignedGap(mapId: string, heroNpcId: string): Promise<void> {
     return this.trackingService.openUnassignedGap(mapId, heroNpcId);
   }
 
-  async closeUnassignedGap(mapId: string): Promise<void> {
+  closeUnassignedGap(mapId: string): Promise<void> {
     return this.trackingService.closeUnassignedGap(mapId);
   }
 
-  async openUncoveredGap(mapId: string, heroNpcId: string): Promise<void> {
+  openUncoveredGap(mapId: string, heroNpcId: string): Promise<void> {
     return this.trackingService.openUncoveredGap(mapId, heroNpcId);
   }
 
-  async closeUncoveredGap(mapId: string): Promise<void> {
+  closeUncoveredGap(mapId: string): Promise<void> {
     return this.trackingService.closeUncoveredGap(mapId);
   }
 
-  async closeAllGapsForHero(heroNpcId: string): Promise<void> {
+  closeAllGapsForHero(heroNpcId: string): Promise<void> {
     return this.trackingService.closeAllGapsForHero(heroNpcId);
   }
 
-  async getMapCoverageGaps(guildId: string, eventId: string, mapId: string) {
+  getMapCoverageGaps(guildId: string, eventId: string, mapId: string) {
     return this.trackingService.getMapCoverageGaps(guildId, eventId, mapId);
   }
 
-  async getHeroCoverageGaps(
-    guildId: string,
-    eventId: string,
-    heroNpcId: string,
-  ) {
+  getHeroCoverageGaps(guildId: string, eventId: string, heroNpcId: string) {
     return this.trackingService.getHeroCoverageGaps(
       guildId,
       eventId,
@@ -279,15 +265,11 @@ export class EventsService {
     );
   }
 
-  async getActiveGapForMap(guildId: string, eventId: string, mapId: string) {
+  getActiveGapForMap(guildId: string, eventId: string, mapId: string) {
     return this.trackingService.getActiveGapForMap(guildId, eventId, mapId);
   }
 
-  async getActiveGapsForHero(
-    guildId: string,
-    eventId: string,
-    heroNpcId: string,
-  ) {
+  getActiveGapsForHero(guildId: string, eventId: string, heroNpcId: string) {
     return this.trackingService.getActiveGapsForHero(
       guildId,
       eventId,
@@ -295,7 +277,7 @@ export class EventsService {
     );
   }
 
-  async handlePlayerPresenceChange(
+  handlePlayerPresenceChange(
     guildId: string,
     mapName: string,
     discordId: string,
@@ -311,11 +293,7 @@ export class EventsService {
     );
   }
 
-  async getHeroPresenceStats(
-    guildId: string,
-    eventId: string,
-    heroNpcId: string,
-  ) {
+  getHeroPresenceStats(guildId: string, eventId: string, heroNpcId: string) {
     return this.trackingService.getHeroPresenceStats(
       guildId,
       eventId,
@@ -323,11 +301,11 @@ export class EventsService {
     );
   }
 
-  async getEventHeroTimers(guildId: string, eventId: string, world: string) {
+  getEventHeroTimers(guildId: string, eventId: string, world: string) {
     return this.killService.getEventHeroTimers(guildId, eventId, world);
   }
 
-  async getEventHeroStats(guildId: string, eventId: string) {
+  getEventHeroStats(guildId: string, eventId: string) {
     return this.killService.getEventHeroStats(guildId, eventId);
   }
 
@@ -357,7 +335,7 @@ export class EventsService {
     );
   }
 
-  async checkAndRecordEventHeroKill(
+  checkAndRecordEventHeroKill(
     params: CheckEventHeroKillParams,
     isManualClose = false,
   ): Promise<void> {
@@ -373,7 +351,7 @@ export class EventsService {
     );
   }
 
-  async findActiveEventHeroByNpc(
+  findActiveEventHeroByNpc(
     guildId: string,
     world: string,
     npcId: number,
@@ -387,7 +365,7 @@ export class EventsService {
     );
   }
 
-  async recordHeroKill(
+  recordHeroKill(
     guildId: string,
     eventHero: EventHeroNpc,
     event: Event,
@@ -428,18 +406,14 @@ export class EventsService {
     };
   }
 
-  async recalculateEventPoints(
+  recalculateEventPoints(
     eventId: string,
     newBasePoints: number,
   ): Promise<void> {
     return this.pointsService.recalculateEventPoints(eventId, newBasePoints);
   }
 
-  async getMemberPresenceStats(
-    heroNpcId: string,
-    memberId: number,
-    since?: Date,
-  ) {
+  getMemberPresenceStats(heroNpcId: string, memberId: number, since?: Date) {
     return this.pointsService.getMemberPresenceStats(
       heroNpcId,
       memberId,
@@ -447,7 +421,7 @@ export class EventsService {
     );
   }
 
-  async updateRankingAfterKill(
+  updateRankingAfterKill(
     eventId: string,
     heroNpcName: string,
     killPoints: EventKillPoint[],
@@ -459,7 +433,7 @@ export class EventsService {
     );
   }
 
-  async updateKillPoint(
+  updateKillPoint(
     guildId: string,
     eventId: string,
     killId: string,
@@ -479,7 +453,7 @@ export class EventsService {
     );
   }
 
-  async updateRankingPoints(
+  updateRankingPoints(
     guildId: string,
     eventId: string,
     rankingId: string,
@@ -497,11 +471,7 @@ export class EventsService {
     );
   }
 
-  async getRankingEditHistory(
-    guildId: string,
-    eventId: string,
-    rankingId: string,
-  ) {
+  getRankingEditHistory(guildId: string, eventId: string, rankingId: string) {
     return this.pointsService.getRankingEditHistory(
       guildId,
       eventId,
@@ -509,7 +479,7 @@ export class EventsService {
     );
   }
 
-  async getHeroKillHistory(
+  getHeroKillHistory(
     guildId: string,
     eventId: string,
     heroId: string,
@@ -525,7 +495,7 @@ export class EventsService {
     );
   }
 
-  async getEventKillHistory(
+  getEventKillHistory(
     guildId: string,
     eventId: string,
     limit = 20,
@@ -541,7 +511,7 @@ export class EventsService {
     );
   }
 
-  async getMemberKillHistory(
+  getMemberKillHistory(
     guildId: string,
     eventId: string,
     memberId: number,
@@ -559,7 +529,7 @@ export class EventsService {
     );
   }
 
-  async getPendingParticipationConfirmations(
+  getPendingParticipationConfirmations(
     guildId: string,
     eventId: string,
     memberId: number,
@@ -571,7 +541,7 @@ export class EventsService {
     );
   }
 
-  async confirmParticipationForKill(
+  confirmParticipationForKill(
     guildId: string,
     eventId: string,
     killId: string,
@@ -585,7 +555,7 @@ export class EventsService {
     );
   }
 
-  async getKillDetail(
+  getKillDetail(
     guildId: string,
     eventId: string,
     heroId: string,
@@ -594,7 +564,7 @@ export class EventsService {
     return this.killService.getKillDetail(guildId, eventId, heroId, killId);
   }
 
-  async getKillTimelineData(
+  getKillTimelineData(
     guildId: string,
     eventId: string,
     heroId: string,
@@ -608,7 +578,7 @@ export class EventsService {
     );
   }
 
-  async closeRespawnWindow(
+  closeRespawnWindow(
     guildId: string,
     eventId: string,
     heroId: string,
@@ -622,7 +592,7 @@ export class EventsService {
     );
   }
 
-  async openRespawnWindow(
+  openRespawnWindow(
     guildId: string,
     eventId: string,
     heroId: string,
@@ -636,7 +606,7 @@ export class EventsService {
     );
   }
 
-  async getHeroRespawnConfig(
+  getHeroRespawnConfig(
     guildId: string,
     eventId: string,
     heroId: string,
@@ -650,14 +620,14 @@ export class EventsService {
     return this.respawnService.getHeroRespawnConfig(guildId, eventId, heroId);
   }
 
-  async getAutoCloseJobsStatus(guildId: string, eventId: string) {
+  getAutoCloseJobsStatus(guildId: string, eventId: string) {
     return this.queueDiagnosticsService.getAutoCloseJobsStatus(
       guildId,
       eventId,
     );
   }
 
-  async getQueueHealth(guildId: string, eventId: string) {
+  getQueueHealth(guildId: string, eventId: string) {
     return this.queueDiagnosticsService.getQueueHealth(guildId, eventId);
   }
 
@@ -689,7 +659,7 @@ export class EventsService {
     return this.accessService.isHeroVisibleToUser(hero, roles, permissions);
   }
 
-  async getHeroWithAccessCheck(
+  getHeroWithAccessCheck(
     guildId: string,
     eventId: string,
     heroId: string,
@@ -705,7 +675,7 @@ export class EventsService {
     );
   }
 
-  async getMapWithHeroAccessCheck(
+  getMapWithHeroAccessCheck(
     guildId: string,
     eventId: string,
     mapId: string,
