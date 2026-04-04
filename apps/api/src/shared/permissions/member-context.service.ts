@@ -42,18 +42,26 @@ export class MemberContextService {
 
     const guild = await this.getGuild(guildId);
     const cacheKey = getPermissionsCacheKey(userId, guild.id);
-    const cached = await this.redisService.get(cacheKey);
 
-    if (cached) {
-      try {
-        return JSON.parse(cached);
-      } catch (error) {
-        this.logger.warn({
-          message: `Failed to parse cached permissions data for key ${cacheKey}`,
-          error: error,
-        });
-        await this.redisService.del(cacheKey);
+    try {
+      const cached = await this.redisService.get(cacheKey);
+
+      if (cached) {
+        try {
+          return JSON.parse(cached);
+        } catch (error) {
+          this.logger.warn({
+            message: `Failed to parse cached permissions data for key ${cacheKey}`,
+            error: error,
+          });
+          await this.redisService.del(cacheKey);
+        }
       }
+    } catch (error) {
+      this.logger.warn({
+        message: `Redis cache read failed for key ${cacheKey}, falling back to DB`,
+        error: error,
+      });
     }
 
     const member = await this.membersService.getGuildMemberById({
@@ -84,11 +92,18 @@ export class MemberContextService {
     };
 
     if (!member.isStale && !member.refreshQueued) {
-      await this.redisService.set(
-        getPermissionsCacheKey(userId, guild.id),
-        JSON.stringify(context),
-        PERMISSIONS_CACHE_TTL_SECONDS,
-      );
+      try {
+        await this.redisService.set(
+          getPermissionsCacheKey(userId, guild.id),
+          JSON.stringify(context),
+          PERMISSIONS_CACHE_TTL_SECONDS,
+        );
+      } catch (error) {
+        this.logger.warn({
+          message: `Failed to cache permissions for key ${getPermissionsCacheKey(userId, guild.id)}`,
+          error: error,
+        });
+      }
     }
 
     return context;
@@ -96,14 +111,22 @@ export class MemberContextService {
 
   private async getGuild(idOrVanityURL: string): Promise<Guild> {
     const cacheKey = getGuildCacheKey(idOrVanityURL);
-    const cached = await this.redisService.get(cacheKey);
 
-    if (cached) {
-      try {
-        return JSON.parse(cached);
-      } catch {
-        await this.redisService.del(cacheKey);
+    try {
+      const cached = await this.redisService.get(cacheKey);
+
+      if (cached) {
+        try {
+          return JSON.parse(cached);
+        } catch {
+          await this.redisService.del(cacheKey);
+        }
       }
+    } catch (error) {
+      this.logger.warn({
+        message: `Redis cache read failed for guild key ${cacheKey}, falling back to DB`,
+        error: error,
+      });
     }
 
     const guild = await this.prisma.guild.findFirst({
@@ -136,7 +159,14 @@ export class MemberContextService {
       );
     }
 
-    await Promise.all(cacheOperations);
+    try {
+      await Promise.all(cacheOperations);
+    } catch (error) {
+      this.logger.warn({
+        message: `Failed to cache guild data for ${idOrVanityURL}`,
+        error: error,
+      });
+    }
 
     return guild;
   }
