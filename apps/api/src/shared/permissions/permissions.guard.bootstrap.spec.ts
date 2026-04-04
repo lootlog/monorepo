@@ -70,8 +70,21 @@ describe("PermissionsGuard bootstrap", () => {
   });
 
   it("keeps MembersModule independent from MemberContextModule", () => {
-    const imports =
+    const rawImports =
       Reflect.getMetadata(MODULE_METADATA.IMPORTS, MembersModule) ?? [];
+
+    const imports = rawImports.map((imported: unknown) => {
+      if (
+        imported &&
+        typeof imported === "object" &&
+        "forwardRef" in imported &&
+        typeof imported.forwardRef === "function"
+      ) {
+        return imported.forwardRef();
+      }
+
+      return imported;
+    });
 
     expect(imports).not.toContain(MemberContextModule);
   });

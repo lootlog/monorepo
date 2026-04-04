@@ -114,6 +114,9 @@ export class MembersService {
           active: true,
           OR: [{ id: guildId }, { vanityUrl: guildId }],
         },
+        select: {
+          id: true,
+        },
       });
       if (!guild) {
         throw new NotFoundException({
