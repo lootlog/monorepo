@@ -25,25 +25,25 @@ const intercepted = new WeakSet<AxiosInstance>();
 
 let reauthPromise: Promise<void> | null = null;
 
-const handleReauthentication = async (): Promise<void> => {
+const handleReauthentication = (): Promise<void> => {
   if (reauthPromise) {
     return reauthPromise;
   }
 
-  reauthPromise = (async () => {
-    try {
-      await authClient.signIn.social({
-        provider: "discord",
-        callbackURL: window.location.href,
-        scopes: DISCORD_AUTH_SCOPES,
-      });
-    } catch (error) {
-      console.error("Reauthentication failed:", error);
+  reauthPromise = authClient.signIn
+    .social({
+      provider: "discord",
+      callbackURL: window.location.href,
+      scopes: DISCORD_AUTH_SCOPES,
+    })
+    .then(() => undefined)
+    .catch((error) => {
+      console.warn("Reauthentication failed:", error);
       throw error;
-    } finally {
+    })
+    .finally(() => {
       reauthPromise = null;
-    }
-  })();
+    });
 
   return reauthPromise;
 };

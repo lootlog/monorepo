@@ -77,7 +77,7 @@ export const useMemberKills = (
       );
       return response.data;
     },
-    enabled: !!guildId && memberId !== undefined,
+    enabled: Boolean(guildId) && memberId !== undefined,
     staleTime: 30000,
     placeholderData: keepPreviousData,
   });

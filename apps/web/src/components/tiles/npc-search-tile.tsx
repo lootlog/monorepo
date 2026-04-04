@@ -20,6 +20,7 @@ export const NpcSearchTile: FC<NpcSearchTileProps> = ({
 
   return (
     <div className="flex h-10 w-8 items-center justify-center">
+      {/* eslint-disable-next-line eslint-plugin-next/no-img-element */}
       <img
         className={cn(
           "relative cursor-pointer rounded-lg max-h-10 max-w-8",

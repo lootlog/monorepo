@@ -41,6 +41,10 @@ export const GuildBreadcrumbs: FC = () => {
   const isEventMemberRoute = Boolean(
     params.memberId && path.includes("/members/") && isEventRoute,
   );
+  const npcId = params.npcId ? Number.parseInt(params.npcId, 10) : undefined;
+  const memberId = params.memberId
+    ? Number.parseInt(params.memberId, 10)
+    : undefined;
 
   const { data: event } = useEventOverview({
     guildId: guildId ?? "",
@@ -51,10 +55,10 @@ export const GuildBreadcrumbs: FC = () => {
     eventId: isEventMemberRoute ? (eventId ?? "") : "",
   });
   const { data: npcKillersData } = useNpcKillers(
-    isNpcRoute ? Number.parseInt(params.npcId!, 10) : undefined,
+    isNpcRoute ? npcId : undefined,
   );
   const { data: memberKillsData } = useMemberKills(
-    isMemberStatsRoute ? Number.parseInt(params.memberId!, 10) : undefined,
+    isMemberStatsRoute ? memberId : undefined,
   );
 
   const navInfo = getNavigationInfo({

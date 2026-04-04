@@ -54,8 +54,10 @@ export const ItemStack: FC<Props> = ({ items, watchContext }) => {
   }
 
   const sorted = sortByRarity(items);
-  // Safe: sorted has at least 2 items here
-  const topItem = sorted[0]!;
+  const topItem = sorted[0];
+  if (!topItem) {
+    return null;
+  }
   const remainingCount = sorted.length - 1;
 
   const handleClick = (e: React.MouseEvent) => {

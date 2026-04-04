@@ -12,7 +12,7 @@ import {
 } from "@lootlog/ui/components/accordion";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
-import { type FC } from "react";
+import type { FC } from "react";
 import { cn } from "@lootlog/ui/lib/utils";
 import { ActorNameSelector } from "./actor-name-selector";
 import { DateTimePicker } from "@lootlog/ui/components/date-time-picker";
