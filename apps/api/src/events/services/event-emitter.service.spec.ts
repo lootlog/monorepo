@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { mockFn } from "src/test/mock-fn";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { EventEmitterService } from "./event-emitter.service";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
@@ -8,7 +9,7 @@ describe("EventEmitterService", () => {
   let service: EventEmitterService;
 
   const mockAmqpConnection = {
-    publish: vi.fn(),
+    publish: mockFn(),
   };
 
   beforeEach(async () => {

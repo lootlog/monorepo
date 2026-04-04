@@ -1,4 +1,5 @@
 import type { Mock } from "vitest";
+import { mockFn } from "src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { plainToInstance } from "class-transformer";
 import { LootsController } from "./loots.controller";
@@ -105,16 +106,16 @@ describe("LootsController", () => {
 
   beforeEach(async () => {
     const mockLootsService = {
-      createLoot: vi.fn(),
-      fetchLootsByGuildId: vi.fn(),
-      getComments: vi.fn(),
-      createComment: vi.fn(),
-      deleteLoot: vi.fn(),
-      updateLoot: vi.fn(),
+      createLoot: mockFn(),
+      fetchLootsByGuildId: mockFn(),
+      getComments: mockFn(),
+      createComment: mockFn(),
+      deleteLoot: mockFn(),
+      updateLoot: mockFn(),
     };
 
     const mockLootStatsService = {
-      getLootStats: vi.fn(),
+      getLootStats: mockFn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -288,7 +289,7 @@ describe("LootsController", () => {
           },
         },
       ];
-      service.getComments.mockResolvedValue(mockComments as any);
+      service.getComments.mockResolvedValue(mockComments as never);
 
       const result = await controller.getComments(discordId, lootId, mockGuild);
 

@@ -35,7 +35,7 @@ import { MemberContextModule } from "src/shared/permissions/member-context.modul
 @Module({
   imports: [
     WinstonModule.forRootAsync({
-      useFactory: async (configService: ConfigService) => {
+      useFactory: (configService: ConfigService) => {
         return configService.get<WinstonModuleOptions>(ConfigKey.WINSTON);
       },
       inject: [ConfigService],

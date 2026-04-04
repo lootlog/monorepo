@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { mockFn } from "src/test/mock-fn";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { EventTrackingService } from "./event-tracking.service";
@@ -14,68 +15,68 @@ describe("EventTrackingService", () => {
 
   const mockPrismaService = {
     eventMap: {
-      findFirst: vi.fn(),
-      findMany: vi.fn(),
-      findUnique: vi.fn(),
-      update: vi.fn(),
+      findFirst: mockFn(),
+      findMany: mockFn(),
+      findUnique: mockFn(),
+      update: mockFn(),
     },
     eventMapAssignmentHistory: {
-      create: vi.fn(),
-      findFirst: vi.fn(),
-      updateMany: vi.fn(),
+      create: mockFn(),
+      findFirst: mockFn(),
+      updateMany: mockFn(),
     },
     eventMapCoverageGap: {
-      findFirst: vi.fn(),
-      findMany: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
+      findFirst: mockFn(),
+      findMany: mockFn(),
+      create: mockFn(),
+      update: mockFn(),
     },
     eventPresenceLog: {
-      findMany: vi.fn(),
-      create: vi.fn(),
-      updateMany: vi.fn(),
+      findMany: mockFn(),
+      create: mockFn(),
+      updateMany: mockFn(),
     },
     eventHeroNpc: {
-      findFirst: vi.fn(),
+      findFirst: mockFn(),
     },
     member: {
-      findFirst: vi.fn(),
+      findFirst: mockFn(),
     },
     timer: {
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
+      findUnique: mockFn(),
+      findMany: mockFn(),
     },
-    $transaction: vi.fn(),
+    $transaction: mockFn(),
   };
 
   const mockEventEmitter = {
-    emitMapStatusUpdate: vi.fn(),
+    emitMapStatusUpdate: mockFn(),
   };
 
   const mockAmqpConnection = {
-    publish: vi.fn(),
+    publish: mockFn(),
   };
 
   const mockRedisClient = {
-    set: vi.fn(),
-    get: vi.fn(),
-    del: vi.fn(),
+    set: mockFn(),
+    get: mockFn(),
+    del: mockFn(),
   };
 
   const mockRedisService = {
-    getClient: vi.fn().mockReturnValue(mockRedisClient),
-    get: vi.fn(),
-    set: vi.fn(),
+    getClient: mockFn().mockReturnValue(mockRedisClient),
+    get: mockFn(),
+    set: mockFn(),
   };
 
   const mockRedlock = {
-    using: vi.fn(),
-    acquire: vi.fn(),
+    using: mockFn(),
+    acquire: mockFn(),
   };
 
   const mockTimersService = {
-    getActiveTimerKeys: vi.fn(),
-    getEventRespawnTimer: vi.fn(),
+    getActiveTimerKeys: mockFn(),
+    getEventRespawnTimer: mockFn(),
   };
 
   beforeEach(async () => {
@@ -90,7 +91,7 @@ describe("EventTrackingService", () => {
         { provide: RedisService, useValue: mockRedisService },
         {
           provide: RedlockService,
-          useValue: { createInstance: vi.fn().mockReturnValue(mockRedlock) },
+          useValue: { createInstance: mockFn().mockReturnValue(mockRedlock) },
         },
         { provide: TimersService, useValue: mockTimersService },
       ],
@@ -99,7 +100,8 @@ describe("EventTrackingService", () => {
     service = module.get<EventTrackingService>(EventTrackingService);
 
     // Inject mock redlock (bypassing onModuleInit)
-    (service as any).redlock = mockRedlock;
+    (service as unknown as { redlock: typeof mockRedlock }).redlock =
+      mockRedlock;
   });
 
   it("should be defined", () => {
@@ -369,7 +371,7 @@ describe("EventTrackingService", () => {
 
     beforeEach(() => {
       // Setup redlock.using to execute the callback
-      mockRedlock.using.mockImplementation(async (_keys, _ttl, callback) => {
+      mockRedlock.using.mockImplementation((_keys, _ttl, callback) => {
         return callback();
       });
     });

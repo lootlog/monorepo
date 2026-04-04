@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { mockFn } from "src/test/mock-fn";
 import { ForbiddenException, NotFoundException } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { Permission } from "src/generated/prisma/client";
@@ -10,28 +11,28 @@ describe("RolesService", () => {
   let service: RolesService;
 
   const mockLogger = {
-    log: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
+    log: mockFn(),
+    error: mockFn(),
+    warn: mockFn(),
   };
 
   const mockPrismaService = {
     role: {
-      findMany: vi.fn(),
-      findUnique: vi.fn(),
-      createMany: vi.fn(),
-      upsert: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-      deleteMany: vi.fn(),
+      findMany: mockFn(),
+      findUnique: mockFn(),
+      createMany: mockFn(),
+      upsert: mockFn(),
+      update: mockFn(),
+      delete: mockFn(),
+      deleteMany: mockFn(),
     },
     guild: {
-      findUnique: vi.fn(),
+      findUnique: mockFn(),
     },
   };
 
   const mockRedisService = {
-    deleteByPattern: vi.fn(),
+    deleteByPattern: mockFn(),
   };
 
   beforeEach(async () => {

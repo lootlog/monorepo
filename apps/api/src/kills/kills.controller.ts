@@ -18,9 +18,9 @@ import {
 } from "@nestjs/swagger";
 import { plainToInstance } from "class-transformer";
 import {
-  Guild,
   NpcType,
   Permission,
+  type Guild,
   type Role,
 } from "src/generated/prisma/client";
 import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";
@@ -29,12 +29,12 @@ import { AuthGuard } from "src/shared/guards/auth.guard";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 import { KillsService } from "./kills.service";
-import { CreateKillDto } from "./dto/create-kill.dto";
-import {
+import type { CreateKillDto } from "./dto/create-kill.dto";
+import type {
   GetGuildKillStatsDto,
   GetUserKillStatsDto,
 } from "./dto/get-kill-stats.dto";
-import { GetUserNpcKillsDto } from "./dto/get-user-npc-kills.dto";
+import type { GetUserNpcKillsDto } from "./dto/get-user-npc-kills.dto";
 import {
   CreateKillResponseEntity,
   GuildKillStatsEntity,
@@ -45,8 +45,8 @@ import {
   UserKillStatsEntity,
   UserNpcKillsEntity,
 } from "./entities/kill-stats.entity";
-import { GetNpcKillersDto } from "./dto/get-npc-killers.dto";
-import { GetMemberKillsDto } from "./dto/get-member-kills.dto";
+import type { GetNpcKillersDto } from "./dto/get-npc-killers.dto";
+import type { GetMemberKillsDto } from "./dto/get-member-kills.dto";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 
 @ApiTags("kills")

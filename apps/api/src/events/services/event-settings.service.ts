@@ -30,11 +30,7 @@ export class EventSettingsService {
     return settings;
   }
 
-  async updateSettings(
-    userId: string,
-    guildId: string,
-    dto: UpdateEventSettingsDto,
-  ) {
+  updateSettings(userId: string, guildId: string, dto: UpdateEventSettingsDto) {
     return this.prisma.userGuildEventSettings.upsert({
       where: {
         userId_guildId: {

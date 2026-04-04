@@ -15,9 +15,9 @@ import {
   ApiOperation,
   ApiResponse,
 } from "@nestjs/swagger";
-import { CreateNotificationDto } from "src/messaging/dto/create-notification.dto";
-import { CreatePartyGatheringDto } from "src/messaging/dto/create-party-gathering.dto";
-import { CreateVolunteerDto } from "src/messaging/dto/create-volunteer.dto";
+import type { CreateNotificationDto } from "src/messaging/dto/create-notification.dto";
+import type { CreatePartyGatheringDto } from "src/messaging/dto/create-party-gathering.dto";
+import type { CreateVolunteerDto } from "src/messaging/dto/create-volunteer.dto";
 import { MessagingService } from "src/messaging/messaging.service";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 
@@ -37,7 +37,7 @@ export class MessagingController {
     status: 201,
     description: "Notification sent successfully",
   })
-  async sendNotification(
+  sendNotification(
     @DiscordId() discordId: string,
     @Body() data: CreateNotificationDto,
   ) {
@@ -53,7 +53,7 @@ export class MessagingController {
     status: 201,
     description: "Volunteer request sent successfully",
   })
-  async volunteer(
+  volunteer(
     @DiscordId() discordId: string,
     @Param("notificationId") notificationId: string,
     @Body() data: CreateVolunteerDto,
@@ -70,7 +70,7 @@ export class MessagingController {
     status: 201,
     description: "Party gathering notification sent successfully",
   })
-  async createPartyGathering(
+  createPartyGathering(
     @DiscordId() discordId: string,
     @Body() data: CreatePartyGatheringDto,
   ) {
@@ -87,7 +87,7 @@ export class MessagingController {
     status: 200,
     description: "Party gathering notification cancelled successfully",
   })
-  async cancelPartyGatheringByUser(@DiscordId() discordId: string) {
+  cancelPartyGatheringByUser(@DiscordId() discordId: string) {
     return this.messagingService.cancelPartyGatheringByUser(discordId);
   }
 

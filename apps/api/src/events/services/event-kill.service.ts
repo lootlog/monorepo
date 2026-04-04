@@ -1,11 +1,11 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { InjectQueue } from "@nestjs/bullmq";
 import type { Queue } from "bullmq";
-import {
+import type {
   CoverageGapType,
   Event,
   EventHeroNpc,
-  type Prisma,
+  Prisma,
 } from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared";
@@ -436,76 +436,79 @@ export class EventKillService {
         return;
       }
 
-      for (const match of matches) {
-        let { eventHero } = match;
-        const { event } = match;
-        const heroDedupKey = this.getEventKillHeroDedupKey(
-          guildId,
-          world,
-          npcId,
-          eventHero.id,
-          windowKey,
-          isManualClose,
-        );
-
-        const heroDedupHit = await this.redis.get(heroDedupKey);
-        if (heroDedupHit) {
-          this.logger.debug({
-            message: "Skipping duplicate event hero kill for hero",
+      await Promise.all(
+        matches.map(async (match) => {
+          let { eventHero } = match;
+          const { event } = match;
+          const heroDedupKey = this.getEventKillHeroDedupKey(
             guildId,
             world,
             npcId,
-            heroId: eventHero.id,
-            eventId: event.id,
-          });
-          continue;
-        }
+            eventHero.id,
+            windowKey,
+            isManualClose,
+          );
 
-        const updateData = {
-          ...(eventHero.npcId === null && { npcId }),
-          ...(eventHero.npcIcon === null && { npcIcon }),
-          ...(eventHero.npcLvl === null && npcLvl !== undefined && { npcLvl }),
-        };
+          const heroDedupHit = await this.redis.get(heroDedupKey);
+          if (heroDedupHit) {
+            this.logger.debug({
+              message: "Skipping duplicate event hero kill for hero",
+              guildId,
+              world,
+              npcId,
+              heroId: eventHero.id,
+              eventId: event.id,
+            });
+            return;
+          }
 
-        if (Object.keys(updateData).length > 0) {
-          eventHero = await this.prisma.eventHeroNpc.update({
-            where: { id: eventHero.id },
-            data: updateData,
-          });
+          const updateData = {
+            ...(eventHero.npcId === null && { npcId }),
+            ...(eventHero.npcIcon === null && { npcIcon }),
+            ...(eventHero.npcLvl === null &&
+              npcLvl !== undefined && { npcLvl }),
+          };
+
+          if (Object.keys(updateData).length > 0) {
+            eventHero = await this.prisma.eventHeroNpc.update({
+              where: { id: eventHero.id },
+              data: updateData,
+            });
+            this.logger.log({
+              message: "Hero NPC data updated",
+              heroId: eventHero.id,
+              npcId: eventHero.npcId,
+              npcIcon: eventHero.npcIcon,
+              npcLvl: eventHero.npcLvl,
+            });
+          }
+
+          await this.recordHeroKill(
+            guildId,
+            eventHero,
+            event,
+            timerData,
+            isManualClose,
+          );
+
+          await this.redis.set(
+            heroDedupKey,
+            Date.now().toString(),
+            EVENT_KILL_DEDUP_TTL_SECONDS,
+          );
+
           this.logger.log({
-            message: "Hero NPC data updated",
+            message: isManualClose
+              ? "Manual close recorded"
+              : "Hero kill recorded",
+            guildId,
+            eventId: event.id,
             heroId: eventHero.id,
-            npcId: eventHero.npcId,
-            npcIcon: eventHero.npcIcon,
-            npcLvl: eventHero.npcLvl,
+            npcName: eventHero.npcName,
+            isManualClose,
           });
-        }
-
-        await this.recordHeroKill(
-          guildId,
-          eventHero,
-          event,
-          timerData,
-          isManualClose,
-        );
-
-        await this.redis.set(
-          heroDedupKey,
-          Date.now().toString(),
-          EVENT_KILL_DEDUP_TTL_SECONDS,
-        );
-
-        this.logger.log({
-          message: isManualClose
-            ? "Manual close recorded"
-            : "Hero kill recorded",
-          guildId,
-          eventId: event.id,
-          heroId: eventHero.id,
-          npcName: eventHero.npcName,
-          isManualClose,
-        });
-      }
+        }),
+      );
 
       await this.redis.set(
         dedupKey,
@@ -514,11 +517,11 @@ export class EventKillService {
       );
     } finally {
       // Always release lock
-      await this.redis.del(lockKey).catch((err) => {
+      await this.redis.del(lockKey).catch((error) => {
         this.logger.error({
           message: "Failed to release event kill lock",
           lockKey,
-          error: err instanceof Error ? err.message : err,
+          error: error instanceof Error ? error.message : error,
         });
       });
     }
@@ -1885,16 +1888,18 @@ export class EventKillService {
   private async cancelScheduledAutoClose(heroId: string): Promise<void> {
     const delayedJobs = await this.respawnWindowQueue.getJobs(["delayed"]);
 
-    for (const job of delayedJobs) {
-      if (job.data.heroId === heroId) {
-        await job.remove();
-        this.logger.log({
-          message: "Cancelled scheduled auto-close job (kill recorded)",
-          heroId,
-          jobId: job.id,
-        });
-      }
-    }
+    await Promise.all(
+      delayedJobs
+        .filter((job) => job.data.heroId === heroId)
+        .map(async (job) => {
+          await job.remove();
+          this.logger.log({
+            message: "Cancelled scheduled auto-close job (kill recorded)",
+            heroId,
+            jobId: job.id,
+          });
+        }),
+    );
   }
 
   private getEventKillLockKey(

@@ -1,4 +1,5 @@
 import type { Mock } from "vitest";
+import { mockFn } from "src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { getQueueToken } from "@nestjs/bullmq";
@@ -35,24 +36,24 @@ describe("MembersConsumer", () => {
   beforeEach(async () => {
     const mockPrismaService = {
       memberRefreshJob: {
-        update: vi.fn(),
-        findUnique: vi.fn(),
+        update: mockFn(),
+        findUnique: mockFn(),
       },
     };
 
     const mockAmqpConnection = {
-      publish: vi.fn(),
+      publish: mockFn(),
     };
 
     const mockBullQueue = {
-      add: vi.fn(),
+      add: mockFn(),
     };
 
     const mockLogger = {
-      log: vi.fn(),
-      error: vi.fn(),
-      warn: vi.fn(),
-      debug: vi.fn(),
+      log: mockFn(),
+      error: mockFn(),
+      warn: mockFn(),
+      debug: mockFn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -105,7 +106,7 @@ describe("MembersConsumer", () => {
 
     it("should queue job to BullMQ successfully", async () => {
       const bullQueue = consumer["bulkRefreshQueue"];
-      bullQueue.add = vi.fn().mockResolvedValue({});
+      bullQueue.add = mockFn().mockResolvedValue({});
 
       await consumer.handleBulkRefresh(payload);
 
@@ -140,7 +141,7 @@ describe("MembersConsumer", () => {
     it("should handle BullMQ queue errors", async () => {
       const bullQueue = consumer["bulkRefreshQueue"];
       const queueError = new Error("Queue connection failed");
-      bullQueue.add = vi.fn().mockRejectedValue(queueError);
+      bullQueue.add = mockFn().mockRejectedValue(queueError);
       prismaService.memberRefreshJob.update.mockResolvedValue({
         ...mockJob,
         status: "FAILED",

@@ -1,7 +1,7 @@
 import { IsOptional, IsIn, IsString, IsBoolean } from "class-validator";
 import { Transform } from "class-transformer";
 import { ApiProperty } from "@nestjs/swagger";
-import { ItemRarity, NpcType } from "src/generated/prisma/client";
+import type { ItemRarity, NpcType } from "src/generated/prisma/client";
 
 export type Period =
   | "24h"

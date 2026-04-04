@@ -46,7 +46,7 @@ export class NotificationTargetService {
     private readonly jobService: NotificationJobService,
   ) {}
 
-  async listGuildTargets(guildId: string) {
+  listGuildTargets(guildId: string) {
     return this.prisma.notificationTarget.findMany({
       where: {
         ownerType: DbNotificationOwnerType.GUILD,
@@ -365,9 +365,9 @@ export class NotificationTargetService {
       return;
     }
 
-    for (const target of targets) {
-      await this.deleteTargetAndOrphanedRules(target.id);
-    }
+    await Promise.all(
+      targets.map((target) => this.deleteTargetAndOrphanedRules(target.id)),
+    );
   }
 
   private async ensureTarget(
@@ -411,9 +411,11 @@ export class NotificationTargetService {
 
     await this.jobService.cancelPendingJobs({ targetId });
 
-    for (const ruleId of singleTargetRuleIds) {
-      await this.jobService.cancelPendingJobs({ ruleId });
-    }
+    await Promise.all(
+      singleTargetRuleIds.map((ruleId) =>
+        this.jobService.cancelPendingJobs({ ruleId }),
+      ),
+    );
 
     await this.prisma.notificationTarget.delete({ where: { id: targetId } });
 
@@ -529,7 +531,7 @@ export class NotificationTargetService {
     );
   }
 
-  private async getUserDmTestTriggerUsageForTargets(targetIds: number[]) {
+  private getUserDmTestTriggerUsageForTargets(targetIds: number[]) {
     return computeTestTriggerUsage(
       this.prisma,
       targetIds,

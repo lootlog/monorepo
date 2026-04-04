@@ -1,7 +1,7 @@
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
 import { ConfigService } from "@nestjs/config";
-import { ServiceConfig } from "src/config/service.config";
+import type { ServiceConfig } from "src/config/service.config";
 import {
   FastifyAdapter,
   type NestFastifyApplication,

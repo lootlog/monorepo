@@ -11,12 +11,12 @@ import {
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { DiscordId, UserId } from "@lootlog/nest-shared";
-import { CreateNotificationRuleDto } from "src/notifications/dto/create-notification-rule.dto";
-import { CreateNotificationTargetDto } from "src/notifications/dto/create-notification-target.dto";
-import { CreateWatchedItemQuickAddDto } from "src/notifications/dto/create-watched-item-quick-add.dto";
-import { CreateWatchedItemDto } from "src/notifications/dto/create-watched-item.dto";
-import { UpdateNotificationRuleDto } from "src/notifications/dto/update-notification-rule.dto";
-import { UpdateNotificationTargetDto } from "src/notifications/dto/update-notification-target.dto";
+import type { CreateNotificationRuleDto } from "src/notifications/dto/create-notification-rule.dto";
+import type { CreateNotificationTargetDto } from "src/notifications/dto/create-notification-target.dto";
+import type { CreateWatchedItemQuickAddDto } from "src/notifications/dto/create-watched-item-quick-add.dto";
+import type { CreateWatchedItemDto } from "src/notifications/dto/create-watched-item.dto";
+import type { UpdateNotificationRuleDto } from "src/notifications/dto/update-notification-rule.dto";
+import type { UpdateNotificationTargetDto } from "src/notifications/dto/update-notification-target.dto";
 import { NotificationJobService } from "src/notifications/notification-job.service";
 import { NotificationRuleService } from "src/notifications/notification-rule.service";
 import { NotificationTargetService } from "src/notifications/notification-target.service";
@@ -36,12 +36,12 @@ export class NotificationsUserController {
   ) {}
 
   @Get("targets")
-  async getUserTargets(@DiscordId() discordId: string) {
+  getUserTargets(@DiscordId() discordId: string) {
     return this.targetService.listUserTargets(discordId);
   }
 
   @Post("targets")
-  async createUserTarget(
+  createUserTarget(
     @DiscordId() discordId: string,
     @Body() data: CreateNotificationTargetDto,
   ) {
@@ -49,7 +49,7 @@ export class NotificationsUserController {
   }
 
   @Patch("targets/:targetId")
-  async updateUserTarget(
+  updateUserTarget(
     @DiscordId() discordId: string,
     @Param("targetId", ParseIntPipe) targetId: number,
     @Body() data: UpdateNotificationTargetDto,
@@ -58,7 +58,7 @@ export class NotificationsUserController {
   }
 
   @Post("targets/:targetId/test")
-  async triggerUserTargetTest(
+  triggerUserTargetTest(
     @DiscordId() discordId: string,
     @Param("targetId", ParseIntPipe) targetId: number,
   ) {
@@ -66,7 +66,7 @@ export class NotificationsUserController {
   }
 
   @Delete("targets/:targetId")
-  async deleteUserTarget(
+  deleteUserTarget(
     @DiscordId() discordId: string,
     @Param("targetId", ParseIntPipe) targetId: number,
   ) {
@@ -74,12 +74,12 @@ export class NotificationsUserController {
   }
 
   @Get("rules")
-  async getUserRules(@DiscordId() discordId: string) {
+  getUserRules(@DiscordId() discordId: string) {
     return this.ruleService.listUserRules(discordId);
   }
 
   @Post("rules")
-  async createUserRule(
+  createUserRule(
     @DiscordId() discordId: string,
     @Body() data: CreateNotificationRuleDto,
   ) {
@@ -87,7 +87,7 @@ export class NotificationsUserController {
   }
 
   @Patch("rules/:ruleId")
-  async updateUserRule(
+  updateUserRule(
     @DiscordId() discordId: string,
     @Param("ruleId", ParseIntPipe) ruleId: number,
     @Body() data: UpdateNotificationRuleDto,
@@ -96,7 +96,7 @@ export class NotificationsUserController {
   }
 
   @Delete("rules/:ruleId")
-  async deleteUserRule(
+  deleteUserRule(
     @DiscordId() discordId: string,
     @Param("ruleId", ParseIntPipe) ruleId: number,
   ) {
@@ -104,17 +104,17 @@ export class NotificationsUserController {
   }
 
   @Get("jobs")
-  async getUserJobs(@DiscordId() discordId: string) {
+  getUserJobs(@DiscordId() discordId: string) {
     return this.jobService.listUserJobs(discordId);
   }
 
   @Get("watched-items")
-  async getWatchedItems(@DiscordId() discordId: string) {
+  getWatchedItems(@DiscordId() discordId: string) {
     return this.watchedItemService.listWatchedItems(discordId);
   }
 
   @Post("watched-items")
-  async createWatchedItem(
+  createWatchedItem(
     @DiscordId() discordId: string,
     @UserId() userId: string,
     @Body() data: CreateWatchedItemDto,
@@ -123,7 +123,7 @@ export class NotificationsUserController {
   }
 
   @Post("watched-items/quick-add")
-  async quickAddWatchedItem(
+  quickAddWatchedItem(
     @DiscordId() discordId: string,
     @UserId() userId: string,
     @Body() data: CreateWatchedItemQuickAddDto,
@@ -132,7 +132,7 @@ export class NotificationsUserController {
   }
 
   @Delete("watched-items/:watchedItemId")
-  async deleteWatchedItem(
+  deleteWatchedItem(
     @DiscordId() discordId: string,
     @Param("watchedItemId", ParseIntPipe) watchedItemId: number,
   ) {

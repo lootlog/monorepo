@@ -30,12 +30,6 @@ const getDateFormatter = createCachedFormatter("en-CA", {
   day: "2-digit",
 });
 
-const getTimeFormatter = createCachedFormatter("en-GB", {
-  hour: "2-digit",
-  minute: "2-digit",
-  hour12: false,
-});
-
 const getOffsetFormatter = createCachedFormatter("en-US", {
   timeZoneName: "shortOffset",
   year: "numeric",

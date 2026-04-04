@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { mockFn } from "src/test/mock-fn";
 import { EventPointsService } from "./event-points.service";
 import { PrismaService } from "src/db/prisma.service";
 import { EventEmitterService } from "./event-emitter.service";
@@ -8,48 +9,48 @@ describe("EventPointsService", () => {
 
   const mockPrismaService = {
     event: {
-      findFirst: vi.fn(),
-      findUnique: vi.fn(),
+      findFirst: mockFn(),
+      findUnique: mockFn(),
     },
     eventRanking: {
-      findMany: vi.fn(),
-      findFirst: vi.fn(),
-      findUnique: vi.fn(),
-      create: vi.fn(),
-      createMany: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-      deleteMany: vi.fn(),
+      findMany: mockFn(),
+      findFirst: mockFn(),
+      findUnique: mockFn(),
+      create: mockFn(),
+      createMany: mockFn(),
+      update: mockFn(),
+      delete: mockFn(),
+      deleteMany: mockFn(),
     },
     eventKillPoint: {
-      findMany: vi.fn(),
-      findFirst: vi.fn(),
-      update: vi.fn(),
+      findMany: mockFn(),
+      findFirst: mockFn(),
+      update: mockFn(),
     },
     eventMap: {
-      findMany: vi.fn(),
+      findMany: mockFn(),
     },
     eventMapAssignmentHistory: {
-      findMany: vi.fn(),
+      findMany: mockFn(),
     },
     eventRespawnWindowSummary: {
-      findMany: vi.fn(),
+      findMany: mockFn(),
     },
     eventPresenceLog: {
-      findMany: vi.fn(),
+      findMany: mockFn(),
     },
     eventPointsEditHistory: {
-      findMany: vi.fn(),
-      create: vi.fn(),
+      findMany: mockFn(),
+      create: mockFn(),
     },
     member: {
-      findMany: vi.fn(),
+      findMany: mockFn(),
     },
-    $transaction: vi.fn(),
+    $transaction: mockFn(),
   };
 
   const mockEventEmitter = {
-    emitRankingUpdate: vi.fn(),
+    emitRankingUpdate: mockFn(),
   };
 
   beforeEach(async () => {
@@ -351,7 +352,7 @@ describe("EventPointsService", () => {
       mockPrismaService.eventRanking.findMany.mockResolvedValue([]);
       mockPrismaService.eventKillPoint.update.mockResolvedValue({});
       mockPrismaService.eventRanking.create.mockResolvedValue({});
-      mockPrismaService.$transaction.mockImplementation(async (operations) =>
+      mockPrismaService.$transaction.mockImplementation((operations) =>
         Promise.all(operations),
       );
       mockPrismaService.event.findUnique.mockResolvedValue({
@@ -417,7 +418,7 @@ describe("EventPointsService", () => {
       mockPrismaService.eventRanking.findMany.mockResolvedValue([]);
       mockPrismaService.eventKillPoint.update.mockResolvedValue({});
       mockPrismaService.eventRanking.create.mockResolvedValue({});
-      mockPrismaService.$transaction.mockImplementation(async (operations) =>
+      mockPrismaService.$transaction.mockImplementation((operations) =>
         Promise.all(operations),
       );
 
@@ -517,7 +518,7 @@ describe("EventPointsService", () => {
       mockPrismaService.eventRanking.findMany.mockResolvedValue([]);
       mockPrismaService.eventKillPoint.update.mockResolvedValue({});
       mockPrismaService.eventRanking.create.mockResolvedValue({});
-      mockPrismaService.$transaction.mockImplementation(async (operations) =>
+      mockPrismaService.$transaction.mockImplementation((operations) =>
         Promise.all(operations),
       );
 
@@ -600,7 +601,7 @@ describe("EventPointsService", () => {
       ]);
       mockPrismaService.eventKillPoint.update.mockResolvedValue({});
       mockPrismaService.eventRanking.update.mockResolvedValue({});
-      mockPrismaService.$transaction.mockImplementation(async (operations) =>
+      mockPrismaService.$transaction.mockImplementation((operations) =>
         Promise.all(operations),
       );
       mockPrismaService.event.findUnique.mockResolvedValue({

@@ -112,7 +112,7 @@ export class TimerSettingsService {
     });
 
     const updatedGuilds = await Promise.all(
-      Object.entries(guildSettings).map(async ([guildId, settings]) => {
+      Object.entries(guildSettings).map(([guildId, settings]) => {
         return this.prisma.userGuildTimerSettings.upsert({
           where: {
             userId_guildId: {

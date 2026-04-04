@@ -1,4 +1,5 @@
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
+import { mockFn } from "src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { ConfigService } from "@nestjs/config";
 import { DiscordGuildSyncStatus } from "@lootlog/types";
@@ -14,48 +15,48 @@ describe("ChannelsService", () => {
 
   const mockTx = {
     discordGuildChannelSnapshot: {
-      upsert: vi.fn(),
-      deleteMany: vi.fn(),
+      upsert: mockFn(),
+      deleteMany: mockFn(),
     },
     discordGuildSyncState: {
-      upsert: vi.fn(),
+      upsert: mockFn(),
     },
     notificationTarget: {
-      updateMany: vi.fn(),
+      updateMany: mockFn(),
     },
   };
 
   const mockPrisma = {
-    $transaction: vi.fn(),
+    $transaction: mockFn(),
     guild: {
-      findUnique: vi.fn(),
+      findUnique: mockFn(),
     },
     discordGuildChannelSnapshot: {
-      findMany: vi.fn(),
+      findMany: mockFn(),
     },
     discordGuildSyncState: {
-      findUnique: vi.fn(),
-      upsert: vi.fn(),
+      findUnique: mockFn(),
+      upsert: mockFn(),
     },
   };
 
   const mockDiscordBotClient = {
-    refreshGuildChannels: vi.fn(),
+    refreshGuildChannels: mockFn(),
   };
 
   const mockAmqpConnection = {
-    publish: vi.fn(),
+    publish: mockFn(),
   };
 
   const mockConfigService = {
-    get: vi.fn().mockReturnValue({
+    get: mockFn().mockReturnValue({
       channelSnapshotStaleSeconds: 300,
     }),
   };
 
   const mockLogger = {
-    log: vi.fn(),
-    warn: vi.fn(),
+    log: mockFn(),
+    warn: mockFn(),
   };
 
   const baseSyncState = {
@@ -94,8 +95,7 @@ describe("ChannelsService", () => {
     vi.clearAllMocks();
 
     mockPrisma.$transaction.mockImplementation(
-      async (callback: (tx: typeof mockTx) => Promise<unknown>) =>
-        callback(mockTx),
+      (callback: (tx: typeof mockTx) => Promise<unknown>) => callback(mockTx),
     );
     mockPrisma.guild.findUnique.mockResolvedValue({ id: "guild-1" });
     mockTx.discordGuildChannelSnapshot.upsert.mockResolvedValue(undefined);

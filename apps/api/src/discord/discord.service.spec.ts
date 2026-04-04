@@ -1,4 +1,5 @@
 import type { Mock } from "vitest";
+import { mockFn } from "src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import {
   UnauthorizedException,
@@ -84,53 +85,53 @@ describe("DiscordService", () => {
 
   const createJsonResponse = (data: unknown) => ({
     headers: {
-      get: vi.fn((header: string) =>
+      get: mockFn((header: string) =>
         header.toLowerCase() === "content-type" ? "application/json" : null,
       ),
     },
-    json: vi.fn().mockResolvedValue(data),
-    arrayBuffer: vi.fn(),
+    json: mockFn().mockResolvedValue(data),
+    arrayBuffer: mockFn(),
     bodyUsed: false,
     ok: true,
     status: 200,
     statusText: "OK",
-    text: vi.fn(),
+    text: mockFn(),
     body: null,
   });
 
   beforeEach(async () => {
     mockLogger = {
-      log: vi.fn(),
-      warn: vi.fn(),
-      error: vi.fn(),
-      debug: vi.fn(),
+      log: mockFn(),
+      warn: mockFn(),
+      error: mockFn(),
+      debug: mockFn(),
     };
 
     mockRedlock = {
-      acquire: vi.fn().mockResolvedValue({
-        release: vi.fn(),
+      acquire: mockFn().mockResolvedValue({
+        release: mockFn(),
       }),
     };
 
     const mockAuthService = {
-      getIdpToken: vi.fn(),
+      getIdpToken: mockFn(),
     };
 
     const mockRedisService = {
-      get: vi.fn(),
-      set: vi.fn(),
-      del: vi.fn(),
-      getClient: vi.fn().mockReturnValue({}),
+      get: mockFn(),
+      set: mockFn(),
+      del: mockFn(),
+      getClient: mockFn().mockReturnValue({}),
     };
 
     const mockRateLimiter = {
-      checkRateLimitForUser: vi.fn().mockResolvedValue(false),
-      setRateLimitForUser: vi.fn(),
-      updateRateLimitFromHeaders: vi.fn(),
+      checkRateLimitForUser: mockFn().mockResolvedValue(false),
+      setRateLimitForUser: mockFn(),
+      updateRateLimitFromHeaders: mockFn(),
     };
 
     const mockConfigService = {
-      get: vi.fn((key: string) => {
+      get: mockFn((key: string) => {
         if (key === ConfigKey.SERVICE) {
           return { env: RuntimeEnvironment.LOCAL };
         }
@@ -148,7 +149,7 @@ describe("DiscordService", () => {
         { provide: ConfigService, useValue: mockConfigService },
         {
           provide: RedlockService,
-          useValue: { createInstance: vi.fn().mockReturnValue(mockRedlock) },
+          useValue: { createInstance: mockFn().mockReturnValue(mockRedlock) },
         },
       ],
     }).compile();
@@ -158,7 +159,7 @@ describe("DiscordService", () => {
     redisService = module.get(RedisService);
     rateLimiter = module.get(DiscordRateLimiterService);
 
-    service["redlock"] = mockRedlock as any;
+    service["redlock"] = mockRedlock as never;
   });
 
   afterEach(() => {
@@ -221,7 +222,7 @@ describe("DiscordService", () => {
         accessToken: "mock-token",
         scopes: ["guilds"],
       };
-      authService.getIdpToken.mockResolvedValue(invalidToken as any);
+      authService.getIdpToken.mockResolvedValue(invalidToken as never);
 
       await expect(service.getRestClient(userId, discordId)).rejects.toThrow(
         UnauthorizedException,
@@ -250,9 +251,11 @@ describe("DiscordService", () => {
       authService.getIdpToken.mockResolvedValue(mockToken);
 
       const mockRest = {
-        queueRequest: vi.fn().mockResolvedValue(createJsonResponse(mockGuilds)),
+        queueRequest: mockFn().mockResolvedValue(
+          createJsonResponse(mockGuilds),
+        ),
       };
-      vi.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
+      vi.spyOn(service, "getRestClient").mockResolvedValue(mockRest as never);
 
       const result = await service.getUserGuilds(userId, discordId);
 
@@ -279,9 +282,11 @@ describe("DiscordService", () => {
       authService.getIdpToken.mockResolvedValue(mockToken);
 
       const mockRest = {
-        queueRequest: vi.fn().mockResolvedValue(createJsonResponse(mockGuilds)),
+        queueRequest: mockFn().mockResolvedValue(
+          createJsonResponse(mockGuilds),
+        ),
       };
-      vi.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
+      vi.spyOn(service, "getRestClient").mockResolvedValue(mockRest as never);
 
       await service.getUserGuilds(userId, discordId);
 
@@ -296,9 +301,9 @@ describe("DiscordService", () => {
       authService.getIdpToken.mockResolvedValue(mockToken);
 
       const mockRest = {
-        queueRequest: vi.fn().mockResolvedValue(createJsonResponse([])),
+        queueRequest: mockFn().mockResolvedValue(createJsonResponse([])),
       };
-      vi.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
+      vi.spyOn(service, "getRestClient").mockResolvedValue(mockRest as never);
 
       const result = await service.getUserGuilds(userId, discordId);
 
@@ -370,9 +375,9 @@ describe("DiscordService", () => {
       });
 
       const mockRest = {
-        queueRequest: vi.fn().mockRejectedValue(rateLimitError),
+        queueRequest: mockFn().mockRejectedValue(rateLimitError),
       };
-      vi.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
+      vi.spyOn(service, "getRestClient").mockResolvedValue(mockRest as never);
 
       const result = await service.getUserGuilds(userId, discordId);
 
@@ -409,9 +414,9 @@ describe("DiscordService", () => {
       });
 
       const mockRest = {
-        queueRequest: vi.fn().mockRejectedValue(rateLimitError),
+        queueRequest: mockFn().mockRejectedValue(rateLimitError),
       };
-      vi.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
+      vi.spyOn(service, "getRestClient").mockResolvedValue(mockRest as never);
 
       await expect(service.getUserGuilds(userId, discordId)).rejects.toThrow(
         RateLimitError,
@@ -472,11 +477,11 @@ describe("DiscordService", () => {
       authService.getIdpToken.mockResolvedValue(mockToken);
 
       const mockRest = {
-        queueRequest: vi
-          .fn()
-          .mockResolvedValue(createJsonResponse(mockGuildMember)),
+        queueRequest: mockFn<() => Promise<unknown>>().mockResolvedValue(
+          createJsonResponse(mockGuildMember),
+        ),
       };
-      vi.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
+      vi.spyOn(service, "getRestClient").mockResolvedValue(mockRest as never);
 
       const result = await service.getGuildMember(options);
 
@@ -503,9 +508,9 @@ describe("DiscordService", () => {
 
       const notFoundError = { status: 404, message: "Not Found" };
       const mockRest = {
-        queueRequest: vi.fn().mockRejectedValue(notFoundError),
+        queueRequest: mockFn().mockRejectedValue(notFoundError),
       };
-      vi.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
+      vi.spyOn(service, "getRestClient").mockResolvedValue(mockRest as never);
 
       await expect(service.getGuildMember(options)).rejects.toThrow(
         NotFoundException,
@@ -579,9 +584,9 @@ describe("DiscordService", () => {
       });
 
       const mockRest = {
-        queueRequest: vi.fn().mockRejectedValue(rateLimitError),
+        queueRequest: mockFn().mockRejectedValue(rateLimitError),
       };
-      vi.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
+      vi.spyOn(service, "getRestClient").mockResolvedValue(mockRest as never);
 
       const result = await service.getGuildMember(options);
 
@@ -618,9 +623,9 @@ describe("DiscordService", () => {
       });
 
       const mockRest = {
-        queueRequest: vi.fn().mockRejectedValue(rateLimitError),
+        queueRequest: mockFn().mockRejectedValue(rateLimitError),
       };
-      vi.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
+      vi.spyOn(service, "getRestClient").mockResolvedValue(mockRest as never);
 
       await expect(service.getGuildMember(options)).rejects.toThrow(
         RateLimitError,
@@ -653,11 +658,11 @@ describe("DiscordService", () => {
       authService.getIdpToken.mockResolvedValue(mockToken);
 
       const mockRest = {
-        queueRequest: vi
-          .fn()
-          .mockResolvedValue(createJsonResponse(mockGuildMember)),
+        queueRequest: mockFn<() => Promise<unknown>>().mockResolvedValue(
+          createJsonResponse(mockGuildMember),
+        ),
       };
-      vi.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
+      vi.spyOn(service, "getRestClient").mockResolvedValue(mockRest as never);
 
       await service.getGuildMember(options);
 

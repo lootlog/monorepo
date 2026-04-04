@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { mockFn } from "src/test/mock-fn";
 import { CoverageGapType } from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
 import { EventSummaryService } from "./event-summary.service";
@@ -6,26 +7,26 @@ import { EventSummaryService } from "./event-summary.service";
 describe("EventSummaryService", () => {
   let service: EventSummaryService;
 
-  const mockTransaction = vi.fn();
+  const mockTransaction = mockFn();
 
   const mockPrismaService = {
     eventMap: {
-      findMany: vi.fn(),
+      findMany: mockFn(),
     },
     eventPresenceLog: {
-      findMany: vi.fn(),
-      deleteMany: vi.fn(),
+      findMany: mockFn(),
+      deleteMany: mockFn(),
     },
     eventMapCoverageGap: {
-      findMany: vi.fn(),
-      deleteMany: vi.fn(),
+      findMany: mockFn(),
+      deleteMany: mockFn(),
     },
     eventRespawnWindowSummary: {
-      create: vi.fn(),
-      findMany: vi.fn(),
+      create: mockFn(),
+      findMany: mockFn(),
     },
     eventHeroNpc: {
-      findFirst: vi.fn(),
+      findFirst: mockFn(),
     },
     $transaction: mockTransaction,
   };
@@ -71,16 +72,16 @@ describe("EventSummaryService", () => {
     };
 
     beforeEach(() => {
-      mockTransaction.mockImplementation(async (callback) => {
+      mockTransaction.mockImplementation((callback) => {
         const txClient = {
           eventRespawnWindowSummary: {
-            create: vi.fn().mockResolvedValue({}),
+            create: mockFn().mockResolvedValue({}),
           },
           eventPresenceLog: {
-            deleteMany: vi.fn().mockResolvedValue({ count: 5 }),
+            deleteMany: mockFn().mockResolvedValue({ count: 5 }),
           },
           eventMapCoverageGap: {
-            deleteMany: vi.fn().mockResolvedValue({ count: 2 }),
+            deleteMany: mockFn().mockResolvedValue({ count: 2 }),
           },
         };
         return callback(txClient);
@@ -191,19 +192,19 @@ describe("EventSummaryService", () => {
       mockPrismaService.eventMapCoverageGap.findMany.mockResolvedValue([]);
 
       let capturedData: unknown;
-      mockTransaction.mockImplementation(async (callback) => {
+      mockTransaction.mockImplementation((callback) => {
         const txClient = {
           eventRespawnWindowSummary: {
-            create: vi.fn().mockImplementation(({ data }) => {
+            create: mockFn().mockImplementation(({ data }) => {
               capturedData = data;
               return {};
             }),
           },
           eventPresenceLog: {
-            deleteMany: vi.fn().mockResolvedValue({ count: 2 }),
+            deleteMany: mockFn().mockResolvedValue({ count: 2 }),
           },
           eventMapCoverageGap: {
-            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: mockFn().mockResolvedValue({ count: 0 }),
           },
         };
         return callback(txClient);
@@ -266,19 +267,19 @@ describe("EventSummaryService", () => {
       mockPrismaService.eventMapCoverageGap.findMany.mockResolvedValue(gaps);
 
       let capturedData: unknown;
-      mockTransaction.mockImplementation(async (callback) => {
+      mockTransaction.mockImplementation((callback) => {
         const txClient = {
           eventRespawnWindowSummary: {
-            create: vi.fn().mockImplementation(({ data }) => {
+            create: mockFn().mockImplementation(({ data }) => {
               capturedData = data;
               return {};
             }),
           },
           eventPresenceLog: {
-            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: mockFn().mockResolvedValue({ count: 0 }),
           },
           eventMapCoverageGap: {
-            deleteMany: vi.fn().mockResolvedValue({ count: 2 }),
+            deleteMany: mockFn().mockResolvedValue({ count: 2 }),
           },
         };
         return callback(txClient);
@@ -332,19 +333,19 @@ describe("EventSummaryService", () => {
       mockPrismaService.eventMapCoverageGap.findMany.mockResolvedValue([]);
 
       let capturedData: unknown;
-      mockTransaction.mockImplementation(async (callback) => {
+      mockTransaction.mockImplementation((callback) => {
         const txClient = {
           eventRespawnWindowSummary: {
-            create: vi.fn().mockImplementation(({ data }) => {
+            create: mockFn().mockImplementation(({ data }) => {
               capturedData = data;
               return {};
             }),
           },
           eventPresenceLog: {
-            deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
+            deleteMany: mockFn().mockResolvedValue({ count: 1 }),
           },
           eventMapCoverageGap: {
-            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: mockFn().mockResolvedValue({ count: 0 }),
           },
         };
         return callback(txClient);
@@ -374,19 +375,19 @@ describe("EventSummaryService", () => {
       mockPrismaService.eventMapCoverageGap.findMany.mockResolvedValue([]);
 
       let capturedData: unknown;
-      mockTransaction.mockImplementation(async (callback) => {
+      mockTransaction.mockImplementation((callback) => {
         const txClient = {
           eventRespawnWindowSummary: {
-            create: vi.fn().mockImplementation(({ data }) => {
+            create: mockFn().mockImplementation(({ data }) => {
               capturedData = data;
               return {};
             }),
           },
           eventPresenceLog: {
-            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: mockFn().mockResolvedValue({ count: 0 }),
           },
           eventMapCoverageGap: {
-            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: mockFn().mockResolvedValue({ count: 0 }),
           },
         };
         return callback(txClient);
@@ -416,13 +417,13 @@ describe("EventSummaryService", () => {
       mockPrismaService.eventPresenceLog.findMany.mockResolvedValue([]);
       mockPrismaService.eventMapCoverageGap.findMany.mockResolvedValue([]);
 
-      const deleteLogsMock = vi.fn().mockResolvedValue({ count: 5 });
-      const deleteGapsMock = vi.fn().mockResolvedValue({ count: 3 });
+      const deleteLogsMock = mockFn().mockResolvedValue({ count: 5 });
+      const deleteGapsMock = mockFn().mockResolvedValue({ count: 3 });
 
-      mockTransaction.mockImplementation(async (callback) => {
+      mockTransaction.mockImplementation((callback) => {
         const txClient = {
           eventRespawnWindowSummary: {
-            create: vi.fn().mockResolvedValue({}),
+            create: mockFn().mockResolvedValue({}),
           },
           eventPresenceLog: {
             deleteMany: deleteLogsMock,
@@ -491,19 +492,19 @@ describe("EventSummaryService", () => {
       mockPrismaService.eventMapCoverageGap.findMany.mockResolvedValue(gaps);
 
       let capturedData: unknown;
-      mockTransaction.mockImplementation(async (callback) => {
+      mockTransaction.mockImplementation((callback) => {
         const txClient = {
           eventRespawnWindowSummary: {
-            create: vi.fn().mockImplementation(({ data }) => {
+            create: mockFn().mockImplementation(({ data }) => {
               capturedData = data;
               return {};
             }),
           },
           eventPresenceLog: {
-            deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
+            deleteMany: mockFn().mockResolvedValue({ count: 1 }),
           },
           eventMapCoverageGap: {
-            deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
+            deleteMany: mockFn().mockResolvedValue({ count: 1 }),
           },
         };
         return callback(txClient);
@@ -559,19 +560,19 @@ describe("EventSummaryService", () => {
       mockPrismaService.eventMapCoverageGap.findMany.mockResolvedValue([]);
 
       let capturedData: unknown;
-      mockTransaction.mockImplementation(async (callback) => {
+      mockTransaction.mockImplementation((callback) => {
         const txClient = {
           eventRespawnWindowSummary: {
-            create: vi.fn().mockImplementation(({ data }) => {
+            create: mockFn().mockImplementation(({ data }) => {
               capturedData = data;
               return {};
             }),
           },
           eventPresenceLog: {
-            deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
+            deleteMany: mockFn().mockResolvedValue({ count: 1 }),
           },
           eventMapCoverageGap: {
-            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: mockFn().mockResolvedValue({ count: 0 }),
           },
         };
         return callback(txClient);

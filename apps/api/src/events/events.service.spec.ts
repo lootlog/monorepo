@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { mockFn } from "src/test/mock-fn";
 import { getQueueToken } from "@nestjs/bullmq";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "src/db/prisma.service";
@@ -22,105 +23,105 @@ describe("EventsService", () => {
 
   const mockPrismaService = {
     event: {
-      create: vi.fn(),
-      findMany: vi.fn(),
-      findFirst: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
+      create: mockFn(),
+      findMany: mockFn(),
+      findFirst: mockFn(),
+      update: mockFn(),
+      delete: mockFn(),
     },
     eventHeroNpc: {
-      create: vi.fn(),
-      findFirst: vi.fn(),
-      findMany: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-      deleteMany: vi.fn(),
+      create: mockFn(),
+      findFirst: mockFn(),
+      findMany: mockFn(),
+      update: mockFn(),
+      delete: mockFn(),
+      deleteMany: mockFn(),
     },
     eventMap: {
-      create: vi.fn(),
-      findFirst: vi.fn(),
-      findMany: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
+      create: mockFn(),
+      findFirst: mockFn(),
+      findMany: mockFn(),
+      update: mockFn(),
+      delete: mockFn(),
     },
     eventMapLocation: {
-      create: vi.fn(),
-      findFirst: vi.fn(),
-      findMany: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-      aggregate: vi.fn(),
+      create: mockFn(),
+      findFirst: mockFn(),
+      findMany: mockFn(),
+      update: mockFn(),
+      delete: mockFn(),
+      aggregate: mockFn(),
     },
-    $transaction: vi.fn(),
-    $queryRaw: vi.fn(),
+    $transaction: mockFn(),
+    $queryRaw: mockFn(),
   };
 
   const mockPointsService = {
-    getRanking: vi.fn(),
-    calculateMemberPoints: vi.fn(),
-    recalculateEventPoints: vi.fn(),
-    getMemberPresenceStats: vi.fn(),
-    updateRankingAfterKill: vi.fn(),
-    updateKillPoint: vi.fn(),
-    updateRankingPoints: vi.fn(),
-    getRankingEditHistory: vi.fn(),
+    getRanking: mockFn(),
+    calculateMemberPoints: mockFn(),
+    recalculateEventPoints: mockFn(),
+    getMemberPresenceStats: mockFn(),
+    updateRankingAfterKill: mockFn(),
+    updateKillPoint: mockFn(),
+    updateRankingPoints: mockFn(),
+    getRankingEditHistory: mockFn(),
   };
 
   const mockTrackingService = {
-    assignMemberToMap: vi.fn(),
-    unassignMemberFromMap: vi.fn(),
-    getMemberByDiscordId: vi.fn(),
-    openUnassignedGap: vi.fn(),
-    closeUnassignedGap: vi.fn(),
-    openUncoveredGap: vi.fn(),
-    closeUncoveredGap: vi.fn(),
-    closeAllGapsForHero: vi.fn(),
-    getMapCoverageGaps: vi.fn(),
-    getHeroCoverageGaps: vi.fn(),
-    getActiveGapForMap: vi.fn(),
-    getActiveGapsForHero: vi.fn(),
-    handlePlayerPresenceChange: vi.fn(),
-    getHeroPresenceStats: vi.fn(),
+    assignMemberToMap: mockFn(),
+    unassignMemberFromMap: mockFn(),
+    getMemberByDiscordId: mockFn(),
+    openUnassignedGap: mockFn(),
+    closeUnassignedGap: mockFn(),
+    openUncoveredGap: mockFn(),
+    closeUncoveredGap: mockFn(),
+    closeAllGapsForHero: mockFn(),
+    getMapCoverageGaps: mockFn(),
+    getHeroCoverageGaps: mockFn(),
+    getActiveGapForMap: mockFn(),
+    getActiveGapsForHero: mockFn(),
+    handlePlayerPresenceChange: mockFn(),
+    getHeroPresenceStats: mockFn(),
   };
 
   const mockKillService = {
-    getEventHeroTimers: vi.fn(),
-    getEventHeroStats: vi.fn(),
-    checkAndRecordEventHeroKill: vi.fn(),
-    findActiveEventHeroByNpc: vi.fn(),
-    recordHeroKill: vi.fn(),
-    getHeroKillHistory: vi.fn(),
-    getEventKillHistory: vi.fn(),
-    getMemberKillHistory: vi.fn(),
-    getKillDetail: vi.fn(),
-    getKillTimelineData: vi.fn(),
+    getEventHeroTimers: mockFn(),
+    getEventHeroStats: mockFn(),
+    checkAndRecordEventHeroKill: mockFn(),
+    findActiveEventHeroByNpc: mockFn(),
+    recordHeroKill: mockFn(),
+    getHeroKillHistory: mockFn(),
+    getEventKillHistory: mockFn(),
+    getMemberKillHistory: mockFn(),
+    getKillDetail: mockFn(),
+    getKillTimelineData: mockFn(),
   };
 
   const mockRespawnService = {
-    closeRespawnWindow: vi.fn(),
-    openRespawnWindow: vi.fn(),
-    getHeroRespawnConfig: vi.fn(),
+    closeRespawnWindow: mockFn(),
+    openRespawnWindow: mockFn(),
+    getHeroRespawnConfig: mockFn(),
   };
 
   const mockWrappedService = {
-    getWrapped: vi.fn(),
+    getWrapped: mockFn(),
   };
 
   const mockQueue = {
-    getJobs: vi.fn(),
-    getJobCounts: vi.fn(),
-    isPaused: vi.fn(),
-    getWorkers: vi.fn(),
+    getJobs: mockFn(),
+    getJobCounts: mockFn(),
+    isPaused: mockFn(),
+    getWorkers: mockFn(),
     name: "respawn-window",
   };
 
   const mockEventHeroKillQueue = {
-    add: vi.fn(),
+    add: mockFn(),
     name: "event-hero-kill",
   };
 
   const mockRedisService = {
-    del: vi.fn(),
+    del: mockFn(),
   };
 
   beforeEach(async () => {
@@ -518,7 +519,7 @@ describe("EventsService", () => {
 
     it("should update event successfully", async () => {
       mockPrismaService.event.findFirst.mockResolvedValue(existingEvent);
-      mockPrismaService.$transaction.mockImplementation(async (callback) =>
+      mockPrismaService.$transaction.mockImplementation((callback) =>
         callback(mockPrismaService),
       );
       mockPrismaService.event.update.mockResolvedValue({
@@ -533,7 +534,7 @@ describe("EventsService", () => {
 
     it("should request updated hero maps sorted by mapId", async () => {
       mockPrismaService.event.findFirst.mockResolvedValue(existingEvent);
-      mockPrismaService.$transaction.mockImplementation(async (callback) =>
+      mockPrismaService.$transaction.mockImplementation((callback) =>
         callback(mockPrismaService),
       );
       mockPrismaService.event.update.mockResolvedValue({});
@@ -549,7 +550,7 @@ describe("EventsService", () => {
     it("should set endsAt when provided", async () => {
       const newEndsAt = new Date(Date.now() + 60_000);
       mockPrismaService.event.findFirst.mockResolvedValue(existingEvent);
-      mockPrismaService.$transaction.mockImplementation(async (callback) =>
+      mockPrismaService.$transaction.mockImplementation((callback) =>
         callback(mockPrismaService),
       );
       mockPrismaService.event.update.mockResolvedValue({});
@@ -569,7 +570,7 @@ describe("EventsService", () => {
 
     it("should persist advanced scoring rules on update", async () => {
       mockPrismaService.event.findFirst.mockResolvedValue(existingEvent);
-      mockPrismaService.$transaction.mockImplementation(async (callback) =>
+      mockPrismaService.$transaction.mockImplementation((callback) =>
         callback(mockPrismaService),
       );
       mockPrismaService.event.update.mockResolvedValue({
@@ -595,7 +596,7 @@ describe("EventsService", () => {
 
     it("should not recalculate points automatically when basePointsPerKill changes", async () => {
       mockPrismaService.event.findFirst.mockResolvedValue(existingEvent);
-      mockPrismaService.$transaction.mockImplementation(async (callback) =>
+      mockPrismaService.$transaction.mockImplementation((callback) =>
         callback(mockPrismaService),
       );
       mockPrismaService.event.update.mockResolvedValue({});
@@ -637,8 +638,8 @@ describe("EventsService", () => {
     });
 
     it("should hard delete event and remove pending jobs", async () => {
-      const removeEventJob = vi.fn().mockResolvedValue(undefined);
-      const removeOtherEventJob = vi.fn().mockResolvedValue(undefined);
+      const removeEventJob = mockFn().mockResolvedValue(undefined);
+      const removeOtherEventJob = mockFn().mockResolvedValue(undefined);
 
       mockPrismaService.event.findFirst.mockResolvedValue({ id: eventId });
       mockQueue.getJobs

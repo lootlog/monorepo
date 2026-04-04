@@ -1,4 +1,5 @@
 import type { Mock } from "vitest";
+import { mockFn } from "src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { BadRequestException, ForbiddenException } from "@nestjs/common";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
@@ -143,70 +144,70 @@ describe("LootsService", () => {
   beforeEach(async () => {
     const mockPrismaService = {
       loot: {
-        findUnique: vi.fn(),
-        create: vi.fn(),
-        update: vi.fn(),
-        findFirst: vi.fn(),
-        findMany: vi.fn(),
+        findUnique: mockFn(),
+        create: mockFn(),
+        update: mockFn(),
+        findFirst: mockFn(),
+        findMany: mockFn(),
       },
       lootSubmission: {
-        createMany: vi.fn(),
-        upsert: vi.fn(),
-        deleteMany: vi.fn(),
-        findMany: vi.fn(),
+        createMany: mockFn(),
+        upsert: mockFn(),
+        deleteMany: mockFn(),
+        findMany: mockFn(),
       },
       lootComment: {
-        create: vi.fn(),
-        findMany: vi.fn(),
-        groupBy: vi.fn(),
+        create: mockFn(),
+        findMany: mockFn(),
+        groupBy: mockFn(),
       },
       member: {
-        findMany: vi.fn(),
+        findMany: mockFn(),
       },
-      $queryRaw: vi.fn(),
+      $queryRaw: mockFn(),
     };
 
     const mockPlayersService = {
-      bulkIndexPlayers: vi.fn(),
+      bulkIndexPlayers: mockFn(),
     };
 
     const mockNpcsService = {
-      bulkIndexNpcs: vi.fn(),
+      bulkIndexNpcs: mockFn(),
     };
 
     const mockItemsService = {
-      bulkIndexItems: vi.fn(),
+      bulkIndexItems: mockFn(),
     };
 
     const mockGuildsService = {
-      getGuildsForRequiredPermissions: vi.fn(),
+      getGuildsForRequiredPermissions: mockFn(),
     };
 
     const mockLootlogConfigService = {
-      getMultipleLootlogConfigs: vi.fn(),
+      getMultipleLootlogConfigs: mockFn(),
     };
 
     const mockUserLootlogConfigService = {
-      getLootlogCharacterConfig: vi.fn(),
+      getLootlogCharacterConfig: mockFn(),
     };
 
     const mockRedisClient = {} as Record<string, never>;
 
     const mockRedisService = {
-      getClient: vi.fn().mockReturnValue(mockRedisClient),
-      get: vi.fn().mockResolvedValue(null),
-      del: vi.fn().mockResolvedValue(1),
-      set: vi.fn().mockResolvedValue("OK"),
+      getClient: mockFn().mockReturnValue(mockRedisClient),
+      get: mockFn().mockResolvedValue(null),
+      del: mockFn().mockResolvedValue(1),
+      set: mockFn().mockResolvedValue("OK"),
     };
 
     const mockLogger = {
-      log: vi.fn(),
-      error: vi.fn(),
-      warn: vi.fn(),
+      log: mockFn(),
+      error: mockFn(),
+      warn: mockFn(),
     };
 
     const mockAmqpConnection = {
-      publish: vi.fn(),
+      publish: mockFn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -232,7 +233,7 @@ describe("LootsService", () => {
         {
           provide: RedlockService,
           useValue: {
-            createInstance: vi.fn().mockReturnValue({ acquire: vi.fn() }),
+            createInstance: mockFn().mockReturnValue({ acquire: mockFn() }),
           },
         },
       ],
@@ -242,10 +243,12 @@ describe("LootsService", () => {
     await service.onModuleInit();
 
     const mockLock = {
-      release: vi.fn().mockResolvedValue(undefined),
+      release: mockFn().mockResolvedValue(undefined),
     };
 
-    vi.spyOn(service["redlock"], "acquire").mockResolvedValue(mockLock as any);
+    vi.spyOn(service["redlock"], "acquire").mockResolvedValue(
+      mockLock as never,
+    );
 
     prismaService = module.get(PrismaService);
     playersService = module.get(PlayersService);
@@ -277,7 +280,7 @@ describe("LootsService", () => {
       ]);
       userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue({
         collectLootWhitelistGuildIds: ["guild1"],
-      } as any);
+      } as never);
       lootlogConfigService.getMultipleLootlogConfigs.mockResolvedValue([
         {
           id: "guild1",
@@ -293,7 +296,7 @@ describe("LootsService", () => {
               updatedAt: new Date(),
             },
           ],
-        } as any,
+        } as never,
       ]);
       prismaService.member.findMany.mockResolvedValue([
         {
@@ -350,7 +353,7 @@ describe("LootsService", () => {
     it("should throw BadRequestException when no valid configs found", async () => {
       userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue({
         collectLootWhitelistGuildIds: ["guild1"],
-      } as any);
+      } as never);
       lootlogConfigService.getMultipleLootlogConfigs.mockResolvedValue([]);
       prismaService.loot.findUnique.mockResolvedValue(null);
 
@@ -367,7 +370,7 @@ describe("LootsService", () => {
     it("should throw BadRequestException when no guild config accepts the loot", async () => {
       userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue({
         collectLootWhitelistGuildIds: ["guild1"],
-      } as any);
+      } as never);
       lootlogConfigService.getMultipleLootlogConfigs.mockResolvedValue([
         {
           id: "guild1",
@@ -383,7 +386,7 @@ describe("LootsService", () => {
               updatedAt: new Date(),
             },
           ],
-        } as any,
+        } as never,
       ]);
       prismaService.loot.findUnique.mockResolvedValue(null);
 
@@ -417,7 +420,7 @@ describe("LootsService", () => {
 
       userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue({
         collectLootWhitelistGuildIds: ["guild1", "guild2"],
-      } as any);
+      } as never);
 
       lootlogConfigService.getMultipleLootlogConfigs.mockResolvedValue([
         {
@@ -434,7 +437,7 @@ describe("LootsService", () => {
               updatedAt: new Date(),
             },
           ],
-        } as any,
+        } as never,
         {
           id: "guild2",
           createdAt: new Date(),
@@ -449,7 +452,7 @@ describe("LootsService", () => {
               updatedAt: new Date(),
             },
           ],
-        } as any,
+        } as never,
       ]);
 
       prismaService.member.findMany.mockResolvedValue([
@@ -508,7 +511,7 @@ describe("LootsService", () => {
 
       userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue({
         collectLootWhitelistGuildIds: ["guild1"],
-      } as any);
+      } as never);
 
       lootlogConfigService.getMultipleLootlogConfigs.mockResolvedValue([
         {
@@ -525,7 +528,7 @@ describe("LootsService", () => {
               updatedAt: new Date(),
             },
           ],
-        } as any,
+        } as never,
       ]);
 
       prismaService.member.findMany.mockResolvedValue([
@@ -577,7 +580,7 @@ describe("LootsService", () => {
 
       userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue({
         collectLootWhitelistGuildIds: ["guild1", "guild2"],
-      } as any);
+      } as never);
 
       lootlogConfigService.getMultipleLootlogConfigs.mockResolvedValue([
         {
@@ -594,7 +597,7 @@ describe("LootsService", () => {
               updatedAt: new Date(),
             },
           ],
-        } as any,
+        } as never,
         {
           id: "guild2",
           createdAt: new Date(),
@@ -609,7 +612,7 @@ describe("LootsService", () => {
               updatedAt: new Date(),
             },
           ],
-        } as any,
+        } as never,
       ]);
 
       prismaService.member.findMany.mockResolvedValue([

@@ -1,4 +1,5 @@
 import type { Mock } from "vitest";
+import { mockFn } from "src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { KillsService } from "./kills.service";
@@ -75,35 +76,35 @@ describe("KillsService", () => {
   beforeEach(async () => {
     const mockPrismaService = {
       userKillStats: {
-        upsert: vi.fn(),
-        findMany: vi.fn(),
+        upsert: mockFn(),
+        findMany: mockFn(),
       },
       npcKillStats: {
-        upsert: vi.fn(),
-        findMany: vi.fn(),
+        upsert: mockFn(),
+        findMany: mockFn(),
       },
       guildKillSummary: {
-        upsert: vi.fn(),
-        findMany: vi.fn(),
-        findFirst: vi.fn(),
+        upsert: mockFn(),
+        findMany: mockFn(),
+        findFirst: mockFn(),
       },
       member: {
-        findUnique: vi.fn(),
-        findMany: vi.fn().mockResolvedValue([]),
+        findUnique: mockFn(),
+        findMany: mockFn().mockResolvedValue([]),
       },
     };
 
     const mockRedisService = {
-      setNX: vi.fn().mockResolvedValue(true),
+      setNX: mockFn().mockResolvedValue(true),
     };
 
     const mockUserLootlogConfigService = {
-      getLootlogCharacterConfig: vi.fn(),
+      getLootlogCharacterConfig: mockFn(),
     };
 
     const mockLogger = {
-      log: vi.fn(),
-      error: vi.fn(),
+      log: mockFn(),
+      error: mockFn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -583,7 +584,8 @@ describe("KillsService", () => {
         const call = prismaService.npcKillStats.findMany.mock.calls[0][0];
         const andConditions = call.where.OR?.[0]?.AND || [];
         const hasTitanFilter = andConditions.some(
-          (c: any) => c.npcType?.not === NpcType.TITAN,
+          (c: { npcType?: { not?: NpcType } }) =>
+            c.npcType?.not === NpcType.TITAN,
         );
         expect(hasTitanFilter).toBe(false);
       });
@@ -629,7 +631,7 @@ describe("KillsService", () => {
         const call = prismaService.npcKillStats.findMany.mock.calls[0][0];
         const andConditions = call.where.OR?.[0]?.AND || [];
         const hasHeroFilter = andConditions.some(
-          (c: any) =>
+          (c: { npcType?: { notIn?: NpcType[] } }) =>
             c.npcType?.notIn?.includes(NpcType.HERO) ||
             c.npcType?.notIn?.includes(NpcType.EVENT_HERO),
         );

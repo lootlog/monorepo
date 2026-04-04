@@ -4,9 +4,9 @@ import { getNpcTypeByWt } from "@lootlog/types";
 import type { CreateLootDto } from "src/loots/dto/create-loot.dto";
 import {
   NpcType,
-  Prisma,
   Profession,
   type ItemRarity,
+  type Prisma,
 } from "src/generated/prisma/client";
 import { getProfByShortname } from "src/shared/utils/get-prof-by-shortname";
 import { getItemTypeByCl } from "src/shared/utils/get-item-type-by-cl";

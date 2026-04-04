@@ -4,8 +4,8 @@ import {
   NotificationScheduleAnchor as DbNotificationScheduleAnchor,
   NotificationTargetType as DbNotificationTargetType,
   NotificationTriggerType as DbNotificationTriggerType,
-  NotificationScheduleStrategy as DbNotificationScheduleStrategy,
-  Prisma,
+  type Prisma,
+  type NotificationScheduleStrategy as DbNotificationScheduleStrategy,
 } from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
 import {

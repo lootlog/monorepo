@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { mockFn } from "src/test/mock-fn";
 import { LootlogConfigService } from "./lootlog-config.service";
 import { PrismaService } from "src/db/prisma.service";
 
@@ -7,14 +8,14 @@ describe("LootlogConfigService", () => {
 
   const mockPrismaService = {
     lootlogConfig: {
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
+      findUnique: mockFn(),
+      findMany: mockFn(),
+      create: mockFn(),
+      update: mockFn(),
     },
     lootlogConfigNpc: {
-      upsert: vi.fn(),
-      delete: vi.fn(),
+      upsert: mockFn(),
+      delete: mockFn(),
     },
   };
 

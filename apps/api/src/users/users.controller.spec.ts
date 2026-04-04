@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { mockFn } from "src/test/mock-fn";
 import { UsersController } from "./users.controller";
 import { UsersService } from "./users.service";
 import { AuthGuard } from "src/shared/guards/auth.guard";
@@ -7,8 +8,8 @@ describe("UserController", () => {
   let controller: UsersController;
 
   const mockUsersService = {
-    getUserPreferences: vi.fn(),
-    updateUserPreferences: vi.fn(),
+    getUserPreferences: mockFn(),
+    updateUserPreferences: mockFn(),
   };
 
   beforeEach(async () => {

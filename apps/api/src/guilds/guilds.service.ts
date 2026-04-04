@@ -33,7 +33,7 @@ import { RolesService } from "src/roles/roles.service";
 import { generateSlug } from "src/shared/utils/generate-slug";
 import { RESTRICTED_VANITY_URLS } from "src/guilds/constants/restricted-vanity-urls";
 import { DiscordService } from "src/discord/discord.service";
-import { RedisService, isDiscordAdministrator } from "@lootlog/nest-shared";
+import { isDiscordAdministrator, RedisService } from "@lootlog/nest-shared";
 import {
   getPermissionsCachePattern,
   getGuildCacheKey,
@@ -548,10 +548,7 @@ export class GuildsService {
     }
   }
 
-  private async getGuildMembersForPermissions(
-    discordId: string,
-    guildIds: string[],
-  ) {
+  private getGuildMembersForPermissions(discordId: string, guildIds: string[]) {
     if (guildIds.length === 0) {
       return [];
     }
@@ -650,8 +647,16 @@ export class GuildsService {
       return members;
     }
 
-    let immediateAttempts = 0;
-    for (const candidate of candidates) {
+    const processCandidate = async (
+      candidateIndex: number,
+      immediateAttempts: number,
+    ): Promise<void> => {
+      if (candidateIndex >= candidates.length) {
+        return;
+      }
+
+      const candidate = candidates[candidateIndex];
+
       if (immediateAttempts < maxImmediateRefreshes) {
         const refreshResult =
           await this.membersService.refreshGuildMemberWithinBudget({
@@ -662,10 +667,13 @@ export class GuildsService {
             reason: "guild-connect",
           });
 
-        if (!refreshResult.refreshQueued) {
-          immediateAttempts++;
-        }
-        continue;
+        await processCandidate(
+          candidateIndex + 1,
+          refreshResult.refreshQueued
+            ? immediateAttempts
+            : immediateAttempts + 1,
+        );
+        return;
       }
 
       await this.membersService.queueMemberRefresh({
@@ -675,7 +683,11 @@ export class GuildsService {
         priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
         reason: "guild-connect-background",
       });
-    }
+
+      await processCandidate(candidateIndex + 1, immediateAttempts);
+    };
+
+    await processCandidate(0, 0);
 
     return this.getGuildMembersForPermissions(
       discordId,
@@ -859,7 +871,7 @@ export class GuildsService {
     return worlds.map((world) => world.world);
   }
 
-  async getMultipleGuildsByIds(ids: string[]) {
+  getMultipleGuildsByIds(ids: string[]) {
     return this.prisma.guild.findMany({
       where: { id: { in: ids } },
     });
@@ -1043,7 +1055,7 @@ export class GuildsService {
     }
   }
 
-  private async loadGuildDiscordSyncState(guildId: string) {
+  private loadGuildDiscordSyncState(guildId: string) {
     return this.prisma.discordGuildSyncState.findUnique({
       where: { guildId },
     });
@@ -1113,7 +1125,7 @@ export class GuildsService {
     };
   }
 
-  private async createDefaultLootlogConfig(guildId: string) {
+  private createDefaultLootlogConfig(guildId: string) {
     return this.prisma.lootlogConfig.upsert({
       where: { id: guildId },
       update: {},

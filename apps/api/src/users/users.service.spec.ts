@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { mockFn } from "src/test/mock-fn";
 import { HttpService } from "@nestjs/axios";
 import { ConfigService } from "@nestjs/config";
 import { RedisService } from "@lootlog/nest-shared";
@@ -30,59 +31,58 @@ describe("UsersService", () => {
 
   const mockTx = {
     member: {
-      findMany: vi.fn(),
-      update: vi.fn(),
+      findMany: mockFn(),
+      update: mockFn(),
     },
     npcKillStats: {
-      deleteMany: vi.fn(),
+      deleteMany: mockFn(),
     },
     userKillStats: {
-      deleteMany: vi.fn(),
+      deleteMany: mockFn(),
     },
     userSettings: {
-      deleteMany: vi.fn(),
+      deleteMany: mockFn(),
     },
     userTimerSettings: {
-      deleteMany: vi.fn(),
+      deleteMany: mockFn(),
     },
     userSoundSettings: {
-      deleteMany: vi.fn(),
+      deleteMany: mockFn(),
     },
     userCharactersLootlogSettings: {
-      deleteMany: vi.fn(),
+      deleteMany: mockFn(),
     },
     userGuildTimerSettings: {
-      deleteMany: vi.fn(),
+      deleteMany: mockFn(),
     },
     userGuildEventSettings: {
-      deleteMany: vi.fn(),
+      deleteMany: mockFn(),
     },
   };
 
   const mockPrismaService = {
-    $transaction: vi.fn(),
+    $transaction: mockFn(),
     userSettings: {
-      findUnique: vi.fn(),
-      upsert: vi.fn(),
+      findUnique: mockFn(),
+      upsert: mockFn(),
     },
   };
-  const mockLogger = { warn: vi.fn() };
-  const mockAuthService = { invalidateIdpTokenCache: vi.fn() };
-  const mockMembersService = { notifyMembersRemoved: vi.fn() };
-  const mockRedisService = { deleteByPattern: vi.fn() };
-  const mockHttpService = { post: vi.fn() };
+  const mockLogger = { warn: mockFn() };
+  const mockAuthService = { invalidateIdpTokenCache: mockFn() };
+  const mockMembersService = { notifyMembersRemoved: mockFn() };
+  const mockRedisService = { deleteByPattern: mockFn() };
+  const mockHttpService = { post: mockFn() };
   const mockConfigService = {
-    get: vi
-      .fn()
-      .mockReturnValue({ serviceUrl: "http://battlelog-service:4000" }),
+    get: mockFn<() => { serviceUrl: string }>().mockReturnValue({
+      serviceUrl: "http://battlelog-service:4000",
+    }),
   };
 
   beforeEach(async () => {
     vi.clearAllMocks();
 
     mockPrismaService.$transaction.mockImplementation(
-      async (callback: (tx: typeof mockTx) => Promise<unknown>) =>
-        callback(mockTx),
+      (callback: (tx: typeof mockTx) => Promise<unknown>) => callback(mockTx),
     );
 
     mockTx.member.findMany.mockResolvedValue(mockMemberRows);

@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { mockFn } from "src/test/mock-fn";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { TimersService } from "./timers.service";
 import { PrismaService } from "src/db/prisma.service";
@@ -21,54 +22,54 @@ describe("TimersService", () => {
 
   const mockPrismaService = {
     timer: {
-      upsert: vi.fn(),
-      create: vi.fn(),
-      findMany: vi.fn(),
-      findUnique: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-      deleteMany: vi.fn(),
+      upsert: mockFn(),
+      create: mockFn(),
+      findMany: mockFn(),
+      findUnique: mockFn(),
+      update: mockFn(),
+      delete: mockFn(),
+      deleteMany: mockFn(),
     },
-    $queryRaw: vi.fn(),
+    $queryRaw: mockFn(),
   };
 
   const mockAmqpConnection = {
-    publish: vi.fn(),
+    publish: mockFn(),
   };
 
   const mockGuildsService = {
-    getGuildsForRequiredPermissions: vi.fn(),
-    getMultipleGuildsPermissions: vi.fn(),
+    getGuildsForRequiredPermissions: mockFn(),
+    getMultipleGuildsPermissions: mockFn(),
   };
 
   const mockRedisService = {
-    get: vi.fn(),
-    set: vi.fn(),
-    setNX: vi.fn(),
-    del: vi.fn(),
-    deleteByPattern: vi.fn(),
+    get: mockFn(),
+    set: mockFn(),
+    setNX: mockFn(),
+    del: mockFn(),
+    deleteByPattern: mockFn(),
   };
 
   const mockEventTimerHooksService = {
-    enqueueEventHeroKillCheck: vi.fn().mockResolvedValue(undefined),
-    findActiveEventHeroByNpc: vi.fn().mockResolvedValue(null),
+    enqueueEventHeroKillCheck: mockFn().mockResolvedValue(undefined),
+    findActiveEventHeroByNpc: mockFn().mockResolvedValue(null),
   };
 
   const mockLogger = {
-    log: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
-    debug: vi.fn(),
-    verbose: vi.fn(),
+    log: mockFn(),
+    error: mockFn(),
+    warn: mockFn(),
+    debug: mockFn(),
+    verbose: mockFn(),
   };
 
   const mockRedlock = {
-    acquire: vi.fn(),
-    release: vi.fn(),
+    acquire: mockFn(),
+    release: mockFn(),
   };
 
   const mockRedlockLock = {
-    release: vi.fn().mockResolvedValue(undefined),
+    release: mockFn().mockResolvedValue(undefined),
   };
 
   beforeEach(async () => {
@@ -105,7 +106,7 @@ describe("TimersService", () => {
         },
         {
           provide: RedlockService,
-          useValue: { createInstance: vi.fn().mockReturnValue(mockRedlock) },
+          useValue: { createInstance: mockFn().mockReturnValue(mockRedlock) },
         },
       ],
     }).compile();
@@ -113,7 +114,8 @@ describe("TimersService", () => {
     service = module.get<TimersService>(TimersService);
 
     // Inject mock redlock (bypassing onModuleInit)
-    (service as any).redlock = mockRedlock;
+    (service as unknown as { redlock: typeof mockRedlock }).redlock =
+      mockRedlock;
 
     vi.clearAllMocks();
     mockRedisService.deleteByPattern.mockResolvedValue(0);
@@ -508,7 +510,7 @@ describe("TimersService", () => {
       );
 
       mockPrismaService.timer.findUnique.mockImplementation(
-        async (args: any) => {
+        (args: { where?: { timerId?: { timerKey?: string } } }) => {
           const queriedTimerKey = args?.where?.timerId?.timerKey;
           if (
             queriedTimerKey !== buildTimerKey(mockDto.npc.id, mockDto.npc.name)
@@ -525,7 +527,7 @@ describe("TimersService", () => {
         return mockTimer;
       });
 
-      mockRedlock.acquire.mockImplementation(async (keys: string[]) => {
+      mockRedlock.acquire.mockImplementation((keys: string[]) => {
         const key = keys[0];
         if (
           key ===
@@ -536,13 +538,13 @@ describe("TimersService", () => {
           }
           mainLockHeld = true;
           return {
-            release: vi.fn().mockImplementation(async () => {
+            release: mockFn().mockImplementation(() => {
               mainLockHeld = false;
             }),
           };
         }
 
-        return { release: vi.fn().mockResolvedValue(undefined) };
+        return { release: mockFn().mockResolvedValue(undefined) };
       });
 
       const results = await Promise.all(
@@ -909,9 +911,9 @@ describe("TimersService", () => {
     ];
 
     it("should search NPCs with timer data", async () => {
-      mockPrismaService.$queryRaw = vi
-        .fn()
-        .mockResolvedValue(mockTimersQueryResult);
+      mockPrismaService.$queryRaw = mockFn<
+        () => Promise<unknown>
+      >().mockResolvedValue(mockTimersQueryResult);
 
       const result = await service.searchNpcsWithTimerData(
         "guild1",
@@ -938,7 +940,7 @@ describe("TimersService", () => {
     });
 
     it("should handle empty search results", async () => {
-      mockPrismaService.$queryRaw = vi.fn().mockResolvedValue([]);
+      mockPrismaService.$queryRaw = mockFn().mockResolvedValue([]);
 
       const result = await service.searchNpcsWithTimerData(
         "guild1",
@@ -960,7 +962,8 @@ describe("TimersService", () => {
         },
       ];
 
-      mockPrismaService.$queryRaw = vi.fn().mockResolvedValue(invalidTimerData);
+      mockPrismaService.$queryRaw =
+        mockFn().mockResolvedValue(invalidTimerData);
 
       const result = await service.searchNpcsWithTimerData(
         "guild1",
@@ -973,9 +976,9 @@ describe("TimersService", () => {
     });
 
     it("should use default limit when not provided", async () => {
-      mockPrismaService.$queryRaw = vi
-        .fn()
-        .mockResolvedValue(mockTimersQueryResult);
+      mockPrismaService.$queryRaw = mockFn<
+        () => Promise<unknown>
+      >().mockResolvedValue(mockTimersQueryResult);
 
       await service.searchNpcsWithTimerData("guild1", "test-world", "Test");
 

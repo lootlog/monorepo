@@ -38,7 +38,7 @@ import { TIMER_LIMITS, TIMER_TYPES } from "src/timers/constants/timer-limits";
 import { RedisService } from "@lootlog/nest-shared";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import Redlock, { ExecutionError } from "redlock";
+import { ExecutionError } from "redlock";
 import { getSyntheticNpcId } from "src/events/utils/get-synthetic-npc-id";
 import { RedlockService } from "src/lib/redlock/redlock.service";
 import {
@@ -92,7 +92,7 @@ interface EventTimerLookupInput {
 
 @Injectable()
 export class TimersService implements OnModuleInit {
-  private redlock: Redlock;
+  private redlock: ReturnType<RedlockService["createInstance"]>;
   private readonly lockTtl = 10000;
 
   constructor(
@@ -105,7 +105,7 @@ export class TimersService implements OnModuleInit {
     private readonly redlockService: RedlockService,
   ) {}
 
-  async onModuleInit() {
+  onModuleInit() {
     this.redlock = this.redlockService.createInstance({
       automaticExtensionThreshold: 5000,
     });
@@ -289,27 +289,36 @@ export class TimersService implements OnModuleInit {
     }
   }
 
-  private async findTimerAfterLockFailure(
+  private findTimerAfterLockFailure(
     guildId: string,
     world: string,
     timerKey: string,
   ) {
     const maxAttempts = 10;
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+
+    const tryFindTimer = async (
+      attempt: number,
+    ): Promise<Awaited<
+      ReturnType<typeof this.prisma.timer.findUnique>
+    > | null> => {
       const timer = await this.prisma.timer.findUnique({
         where: { timerId: { guildId, world, timerKey } },
         include: { member: true },
       });
+
       if (timer) {
         return timer;
       }
 
-      if (attempt < maxAttempts - 1) {
-        await new Promise((resolve) => setTimeout(resolve, 20));
+      if (attempt >= maxAttempts - 1) {
+        return null;
       }
-    }
 
-    return null;
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      return tryFindTimer(attempt + 1);
+    };
+
+    return tryFindTimer(0);
   }
 
   private async findTimerByIdentifier(
@@ -346,15 +355,11 @@ export class TimersService implements OnModuleInit {
     });
   }
 
-  async getTimerByIdentifier(
-    guildId: string,
-    world: string,
-    identifier: string,
-  ) {
+  getTimerByIdentifier(guildId: string, world: string, identifier: string) {
     return this.findTimerByIdentifier(guildId, world, identifier);
   }
 
-  async getEventRespawnTimer({
+  getEventRespawnTimer({
     guildId,
     world,
     npcId,
@@ -773,11 +778,11 @@ export class TimersService implements OnModuleInit {
             windowOpenedAt: previousTimer?.windowOpenedAt ?? null,
           },
         })
-        .catch((err) => {
+        .catch((error) => {
           this.logger.error({
             level: "error",
             message: "Failed to enqueue event hero kill check",
-            error: err instanceof Error ? err.message : err,
+            error: error instanceof Error ? error.message : error,
             guildId,
             world: data.world,
             npcId: data.npc.id,
@@ -1146,7 +1151,7 @@ export class TimersService implements OnModuleInit {
     }
   }
 
-  async emitUpdateTimer(payload: Timer) {
+  emitUpdateTimer(payload: Timer) {
     this.amqpConnection.publish(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.GUILDS_TIMERS_UPDATE,
@@ -1159,7 +1164,7 @@ export class TimersService implements OnModuleInit {
     );
   }
 
-  async emitDeleteTimer(payload: Partial<Timer>) {
+  emitDeleteTimer(payload: Partial<Timer>) {
     this.amqpConnection.publish(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.GUILDS_TIMERS_DELETE,

@@ -93,17 +93,19 @@ export class UsersService {
         where: { userId: authUserId },
       });
 
-      for (const member of members) {
-        await tx.member.update({
-          where: { id: member.id },
-          data: {
-            active: false,
-            lastDiscordAttemptAt: new Date(),
-            lastDiscordStatus: "ACCOUNT_DELETED",
-            roles: { set: [] },
-          },
-        });
-      }
+      await Promise.all(
+        members.map((member) =>
+          tx.member.update({
+            where: { id: member.id },
+            data: {
+              active: false,
+              lastDiscordAttemptAt: new Date(),
+              lastDiscordStatus: "ACCOUNT_DELETED",
+              roles: { set: [] },
+            },
+          }),
+        ),
+      );
 
       return members.map((member) => ({
         discordId: member.userId,

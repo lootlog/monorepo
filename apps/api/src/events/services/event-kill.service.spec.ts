@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { mockFn } from "src/test/mock-fn";
 import { getQueueToken } from "@nestjs/bullmq";
 import { NotFoundException } from "@nestjs/common";
 import { EventKillService } from "./event-kill.service";
@@ -17,68 +18,68 @@ describe("EventKillService", () => {
 
   const mockPrismaService = {
     event: {
-      findFirst: vi.fn(),
+      findFirst: mockFn(),
     },
     eventHeroNpc: {
-      findFirst: vi.fn(),
-      findMany: vi.fn(),
-      update: vi.fn(),
+      findFirst: mockFn(),
+      findMany: mockFn(),
+      update: mockFn(),
     },
     eventMap: {
-      findMany: vi.fn(),
-      update: vi.fn(),
+      findMany: mockFn(),
+      update: mockFn(),
     },
     eventHeroKill: {
-      findFirst: vi.fn(),
-      findMany: vi.fn(),
-      create: vi.fn(),
+      findFirst: mockFn(),
+      findMany: mockFn(),
+      create: mockFn(),
     },
     eventKillPoint: {
-      create: vi.fn(),
-      createMany: vi.fn(),
-      findMany: vi.fn(),
+      create: mockFn(),
+      createMany: mockFn(),
+      findMany: mockFn(),
     },
     eventMapAssignmentHistory: {
-      findMany: vi.fn(),
-      updateMany: vi.fn(),
+      findMany: mockFn(),
+      updateMany: mockFn(),
     },
     eventMapCoverageGap: {
-      findMany: vi.fn(),
+      findMany: mockFn(),
     },
     eventRespawnWindowSummary: {
-      findMany: vi.fn(),
-      findUnique: vi.fn(),
+      findMany: mockFn(),
+      findUnique: mockFn(),
     },
     timer: {
-      findMany: vi.fn(),
-      delete: vi.fn(),
+      findMany: mockFn(),
+      delete: mockFn(),
     },
     member: {
-      findFirst: vi.fn(),
-      findMany: vi.fn(),
+      findFirst: mockFn(),
+      findMany: mockFn(),
     },
-    $transaction: vi.fn(),
-    $queryRaw: vi.fn(),
+    $transaction: mockFn(),
+    $queryRaw: mockFn(),
   };
 
   const mockQueue = {
-    add: vi.fn(),
-    getJobs: vi.fn(),
+    add: mockFn(),
+    getJobs: mockFn(),
   };
 
   const mockEventEmitter = {
-    emitHeroKilled: vi.fn(),
-    emitMapStatusUpdate: vi.fn(),
-    emitRespawnWindowClosed: vi.fn(),
-    emitRespawnWindowOpened: vi.fn(),
+    emitHeroKilled: mockFn(),
+    emitMapStatusUpdate: mockFn(),
+    emitRespawnWindowClosed: mockFn(),
+    emitRespawnWindowOpened: mockFn(),
   };
 
   const mockPointsService = {
-    calculateMemberPoints: vi.fn(),
-    getMemberPresenceStats: vi.fn(),
-    getMemberPresenceStatsPerMap: vi.fn(),
-    getMembersPresenceStats: vi.fn(
-      async (
+    calculateMemberPoints: mockFn(),
+    getMemberPresenceStats: mockFn(),
+    getMemberPresenceStatsPerMap: mockFn(),
+    getMembersPresenceStats: mockFn(
+      (
         heroNpcId: string,
         memberIds: number[],
         since?: Date,
@@ -102,7 +103,7 @@ describe("EventKillService", () => {
           })),
         ),
     ),
-    getMembersPresenceStatsPerMap: vi.fn(
+    getMembersPresenceStatsPerMap: mockFn(
       async (
         mapIds: string[],
         memberIds: number[],
@@ -134,28 +135,28 @@ describe("EventKillService", () => {
         return statsByMember.flat();
       },
     ),
-    updateRankingAfterKill: vi.fn(),
+    updateRankingAfterKill: mockFn(),
   };
 
   const mockTrackingService = {
-    closeAllGapsForHero: vi.fn(),
-    openUnassignedGap: vi.fn(),
+    closeAllGapsForHero: mockFn(),
+    openUnassignedGap: mockFn(),
   };
 
   const mockSummaryService = {
-    createWindowSummary: vi.fn(),
+    createWindowSummary: mockFn(),
   };
 
   const mockRedisService = {
-    getClient: vi.fn().mockResolvedValue({}),
-    get: vi.fn().mockResolvedValue(null),
-    set: vi.fn().mockResolvedValue("OK"),
-    del: vi.fn().mockResolvedValue(1),
-    setNX: vi.fn().mockResolvedValue(true),
+    getClient: mockFn().mockResolvedValue({}),
+    get: mockFn().mockResolvedValue(null),
+    set: mockFn().mockResolvedValue("OK"),
+    del: mockFn().mockResolvedValue(1),
+    setNX: mockFn().mockResolvedValue(true),
   };
 
   const mockTimersService = {
-    getTimersForEventHeroFilters: vi.fn(),
+    getTimersForEventHeroFilters: mockFn(),
   };
 
   beforeEach(async () => {
@@ -482,18 +483,18 @@ describe("EventKillService", () => {
       mockPrismaService.eventMap.findMany.mockResolvedValue([]);
       const txMock = {
         eventHeroKill: {
-          create: vi.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: vi.fn().mockResolvedValue({ count: 0 }),
-          findMany: vi.fn().mockResolvedValue([]),
+          createMany: mockFn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
         },
         eventMap: {
-          update: vi.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: vi.fn().mockResolvedValue([]),
-          updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
+          updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -531,18 +532,18 @@ describe("EventKillService", () => {
       mockPrismaService.eventMap.findMany.mockResolvedValue([]);
       const txMock = {
         eventHeroKill: {
-          create: vi.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: vi.fn().mockResolvedValue({ count: 0 }),
-          findMany: vi.fn().mockResolvedValue([]),
+          createMany: mockFn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
         },
         eventMap: {
-          update: vi.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: vi.fn().mockResolvedValue([]),
-          updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
+          updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -606,7 +607,7 @@ describe("EventKillService", () => {
 
       const recordSpy = vi
         .spyOn(service, "recordHeroKill")
-        .mockResolvedValue({ id: "kill-1" } as any);
+        .mockResolvedValue({ id: "kill-1" } as never);
 
       await service.checkAndRecordEventHeroKill(
         guildId,
@@ -706,20 +707,20 @@ describe("EventKillService", () => {
       // Mock transaction to use the tx proxy properly
       const txMock = {
         eventHeroKill: {
-          create: vi.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: vi.fn().mockResolvedValue({ count: 2 }),
-          findMany: vi.fn().mockResolvedValue([
+          createMany: mockFn().mockResolvedValue({ count: 2 }),
+          findMany: mockFn().mockResolvedValue([
             { id: "point-1", killId: "kill-1", memberId: 1, points: 100 },
             { id: "point-2", killId: "kill-1", memberId: 2, points: 100 },
           ]),
         },
         eventMap: {
-          update: vi.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: vi.fn().mockResolvedValue([
+          findMany: mockFn().mockResolvedValue([
             {
               mapId: "map-1",
               memberId: 1,
@@ -731,7 +732,7 @@ describe("EventKillService", () => {
               assignedAt: new Date(now - 5 * 60 * 1000),
             },
           ]),
-          updateMany: vi.fn().mockResolvedValue({ count: 2 }),
+          updateMany: mockFn().mockResolvedValue({ count: 2 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -807,28 +808,26 @@ describe("EventKillService", () => {
 
       const txMock = {
         eventHeroKill: {
-          create: vi.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: vi.fn().mockResolvedValue({ count: 1 }),
-          findMany: vi
-            .fn()
-            .mockResolvedValue([
-              { id: "point-1", killId: "kill-1", memberId: 1, points: 100 },
-            ]),
+          createMany: mockFn().mockResolvedValue({ count: 1 }),
+          findMany: mockFn<() => Promise<unknown>>().mockResolvedValue([
+            { id: "point-1", killId: "kill-1", memberId: 1, points: 100 },
+          ]),
         },
         eventMap: {
-          update: vi.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: vi.fn().mockResolvedValue([
+          findMany: mockFn().mockResolvedValue([
             {
               mapId: "map-1",
               memberId: 1,
               assignedAt: new Date(now - 2 * 60 * 1000),
             },
           ]),
-          updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+          updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -893,21 +892,19 @@ describe("EventKillService", () => {
 
       const txMock = {
         eventHeroKill: {
-          create: vi.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: vi.fn().mockResolvedValue({ count: 1 }),
-          findMany: vi
-            .fn()
-            .mockResolvedValue([
-              { id: "point-1", killId: "kill-1", memberId: 1, points: 100 },
-            ]),
+          createMany: mockFn().mockResolvedValue({ count: 1 }),
+          findMany: mockFn<() => Promise<unknown>>().mockResolvedValue([
+            { id: "point-1", killId: "kill-1", memberId: 1, points: 100 },
+          ]),
         },
         eventMap: {
-          update: vi.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: vi.fn().mockResolvedValue([
+          findMany: mockFn().mockResolvedValue([
             {
               mapId: "map-1",
               memberId: 1,
@@ -915,7 +912,7 @@ describe("EventKillService", () => {
               unassignedAt: null,
             },
           ]),
-          updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+          updateMany: mockFn().mockResolvedValue({ count: 1 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -980,22 +977,20 @@ describe("EventKillService", () => {
 
       const txMock = {
         eventHeroKill: {
-          create: vi.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: vi.fn().mockResolvedValue({ count: 1 }),
-          findMany: vi
-            .fn()
-            .mockResolvedValue([
-              { id: "point-1", killId: "kill-1", memberId: 2, points: 100 },
-            ]),
+          createMany: mockFn().mockResolvedValue({ count: 1 }),
+          findMany: mockFn<() => Promise<unknown>>().mockResolvedValue([
+            { id: "point-1", killId: "kill-1", memberId: 2, points: 100 },
+          ]),
         },
         eventMap: {
-          update: vi.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
           // Includes one stale assignment that must be ignored.
-          findMany: vi.fn().mockResolvedValue([
+          findMany: mockFn().mockResolvedValue([
             {
               mapId: "map-1",
               memberId: 1,
@@ -1008,7 +1003,7 @@ describe("EventKillService", () => {
               assignedAt: new Date(now - 20 * 1000),
             },
           ]),
-          updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+          updateMany: mockFn().mockResolvedValue({ count: 1 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -1063,22 +1058,20 @@ describe("EventKillService", () => {
 
       const txMock = {
         eventHeroKill: {
-          create: vi.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: vi.fn().mockResolvedValue({ count: 1 }),
-          findMany: vi
-            .fn()
-            .mockResolvedValue([
-              { id: "point-1", killId: "kill-1", memberId: 2, points: 100 },
-            ]),
+          createMany: mockFn().mockResolvedValue({ count: 1 }),
+          findMany: mockFn<() => Promise<unknown>>().mockResolvedValue([
+            { id: "point-1", killId: "kill-1", memberId: 2, points: 100 },
+          ]),
         },
         eventMap: {
-          update: vi.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
           // Includes one stale assignment that should be ignored.
-          findMany: vi.fn().mockResolvedValue([
+          findMany: mockFn().mockResolvedValue([
             {
               mapId: "map-1",
               memberId: 1,
@@ -1091,7 +1084,7 @@ describe("EventKillService", () => {
               assignedAt: new Date("2026-02-18T06:08:26.061Z"),
             },
           ]),
-          updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+          updateMany: mockFn().mockResolvedValue({ count: 1 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -1159,21 +1152,19 @@ describe("EventKillService", () => {
 
       const txMock = {
         eventHeroKill: {
-          create: vi.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: vi.fn().mockResolvedValue({ count: 1 }),
-          findMany: vi
-            .fn()
-            .mockResolvedValue([
-              { id: "point-1", killId: "kill-1", memberId: 1, points: 100 },
-            ]),
+          createMany: mockFn().mockResolvedValue({ count: 1 }),
+          findMany: mockFn<() => Promise<unknown>>().mockResolvedValue([
+            { id: "point-1", killId: "kill-1", memberId: 1, points: 100 },
+          ]),
         },
         eventMap: {
-          update: vi.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: vi.fn().mockResolvedValue([
+          findMany: mockFn().mockResolvedValue([
             {
               mapId: "map-1",
               memberId: 1,
@@ -1181,7 +1172,7 @@ describe("EventKillService", () => {
               unassignedAt: null,
             },
           ]),
-          updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+          updateMany: mockFn().mockResolvedValue({ count: 1 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -1247,21 +1238,19 @@ describe("EventKillService", () => {
 
       const txMock = {
         eventHeroKill: {
-          create: vi.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: vi.fn().mockResolvedValue({ count: 1 }),
-          findMany: vi
-            .fn()
-            .mockResolvedValue([
-              { id: "point-1", killId: "kill-1", memberId: 1, points: 100 },
-            ]),
+          createMany: mockFn().mockResolvedValue({ count: 1 }),
+          findMany: mockFn<() => Promise<unknown>>().mockResolvedValue([
+            { id: "point-1", killId: "kill-1", memberId: 1, points: 100 },
+          ]),
         },
         eventMap: {
-          update: vi.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: vi.fn().mockResolvedValue([
+          findMany: mockFn().mockResolvedValue([
             {
               mapId: "map-1",
               memberId: 1,
@@ -1269,7 +1258,7 @@ describe("EventKillService", () => {
               unassignedAt: null,
             },
           ]),
-          updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+          updateMany: mockFn().mockResolvedValue({ count: 1 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -1337,21 +1326,19 @@ describe("EventKillService", () => {
 
       const txMock = {
         eventHeroKill: {
-          create: vi.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: vi.fn().mockResolvedValue({ count: 1 }),
-          findMany: vi
-            .fn()
-            .mockResolvedValue([
-              { id: "point-1", killId: "kill-1", memberId: 1, points: 100 },
-            ]),
+          createMany: mockFn().mockResolvedValue({ count: 1 }),
+          findMany: mockFn<() => Promise<unknown>>().mockResolvedValue([
+            { id: "point-1", killId: "kill-1", memberId: 1, points: 100 },
+          ]),
         },
         eventMap: {
-          update: vi.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: vi.fn().mockResolvedValue([
+          findMany: mockFn().mockResolvedValue([
             {
               mapId: "map-1",
               memberId: 1,
@@ -1365,7 +1352,7 @@ describe("EventKillService", () => {
               unassignedAt: new Date("2026-02-18T06:09:00.000Z"),
             },
           ]),
-          updateMany: vi.fn().mockResolvedValue({ count: 2 }),
+          updateMany: mockFn().mockResolvedValue({ count: 2 }),
         },
       };
 
@@ -1436,21 +1423,19 @@ describe("EventKillService", () => {
 
       const txMock = {
         eventHeroKill: {
-          create: vi.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: vi.fn().mockResolvedValue({ count: 1 }),
-          findMany: vi
-            .fn()
-            .mockResolvedValue([
-              { id: "point-1", killId: "kill-1", memberId: 1, points: 100 },
-            ]),
+          createMany: mockFn().mockResolvedValue({ count: 1 }),
+          findMany: mockFn<() => Promise<unknown>>().mockResolvedValue([
+            { id: "point-1", killId: "kill-1", memberId: 1, points: 100 },
+          ]),
         },
         eventMap: {
-          update: vi.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: vi.fn().mockResolvedValue([
+          findMany: mockFn().mockResolvedValue([
             {
               mapId: "map-1",
               memberId: 1,
@@ -1464,7 +1449,7 @@ describe("EventKillService", () => {
               unassignedAt: null,
             },
           ]),
-          updateMany: vi.fn().mockResolvedValue({ count: 2 }),
+          updateMany: mockFn().mockResolvedValue({ count: 2 }),
         },
       };
 
@@ -1526,21 +1511,19 @@ describe("EventKillService", () => {
 
       const txMock = {
         eventHeroKill: {
-          create: vi.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: vi.fn().mockResolvedValue({ count: 1 }),
-          findMany: vi
-            .fn()
-            .mockResolvedValue([
-              { id: "point-1", killId: "kill-1", memberId: 1, points: 100 },
-            ]),
+          createMany: mockFn().mockResolvedValue({ count: 1 }),
+          findMany: mockFn<() => Promise<unknown>>().mockResolvedValue([
+            { id: "point-1", killId: "kill-1", memberId: 1, points: 100 },
+          ]),
         },
         eventMap: {
-          update: vi.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: vi.fn().mockResolvedValue([
+          findMany: mockFn().mockResolvedValue([
             {
               mapId: "map-1",
               memberId: 1,
@@ -1554,7 +1537,7 @@ describe("EventKillService", () => {
               unassignedAt: null,
             },
           ]),
-          updateMany: vi.fn().mockResolvedValue({ count: 2 }),
+          updateMany: mockFn().mockResolvedValue({ count: 2 }),
         },
       };
 
@@ -1614,28 +1597,26 @@ describe("EventKillService", () => {
 
       const txMock = {
         eventHeroKill: {
-          create: vi.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: vi.fn().mockResolvedValue({ count: 1 }),
-          findMany: vi
-            .fn()
-            .mockResolvedValue([
-              { id: "point-1", killId: "kill-1", memberId: 1, points: 100 },
-            ]),
+          createMany: mockFn().mockResolvedValue({ count: 1 }),
+          findMany: mockFn<() => Promise<unknown>>().mockResolvedValue([
+            { id: "point-1", killId: "kill-1", memberId: 1, points: 100 },
+          ]),
         },
         eventMap: {
-          update: vi.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: vi.fn().mockResolvedValue([
+          findMany: mockFn().mockResolvedValue([
             {
               mapId: "map-1",
               memberId: 1,
               assignedAt: killedAt,
             },
           ]),
-          updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+          updateMany: mockFn().mockResolvedValue({ count: 1 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -1686,18 +1667,18 @@ describe("EventKillService", () => {
       mockPrismaService.eventMap.findMany.mockResolvedValue([]);
       const txMock = {
         eventHeroKill: {
-          create: vi.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: vi.fn().mockResolvedValue({ count: 0 }),
-          findMany: vi.fn().mockResolvedValue([]),
+          createMany: mockFn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
         },
         eventMap: {
-          update: vi.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: vi.fn().mockResolvedValue([]),
-          updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
+          updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -1720,18 +1701,18 @@ describe("EventKillService", () => {
       mockPrismaService.eventMap.findMany.mockResolvedValue([]);
       const txMock = {
         eventHeroKill: {
-          create: vi.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: vi.fn().mockResolvedValue({ count: 0 }),
-          findMany: vi.fn().mockResolvedValue([]),
+          createMany: mockFn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
         },
         eventMap: {
-          update: vi.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: vi.fn().mockResolvedValue([]),
-          updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
+          updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -1755,18 +1736,18 @@ describe("EventKillService", () => {
       mockPrismaService.eventMap.findMany.mockResolvedValue([]);
       const txMock = {
         eventHeroKill: {
-          create: vi.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: vi.fn().mockResolvedValue({ count: 0 }),
-          findMany: vi.fn().mockResolvedValue([]),
+          createMany: mockFn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
         },
         eventMap: {
-          update: vi.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: vi.fn().mockResolvedValue([]),
-          updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
+          updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -1792,18 +1773,18 @@ describe("EventKillService", () => {
       mockPrismaService.eventMap.findMany.mockResolvedValue([]);
       const txMock = {
         eventHeroKill: {
-          create: vi.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: vi.fn().mockResolvedValue({ count: 0 }),
-          findMany: vi.fn().mockResolvedValue([]),
+          createMany: mockFn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
         },
         eventMap: {
-          update: vi.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: vi.fn().mockResolvedValue([]),
-          updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
+          updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -1843,18 +1824,18 @@ describe("EventKillService", () => {
 
       const txMock = {
         eventHeroKill: {
-          create: vi.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: vi.fn(),
-          findMany: vi.fn().mockResolvedValue([]),
+          createMany: mockFn(),
+          findMany: mockFn().mockResolvedValue([]),
         },
         eventMap: {
-          update: vi.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: vi.fn().mockResolvedValue([]),
-          updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
+          updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -1901,18 +1882,18 @@ describe("EventKillService", () => {
 
       const txMock = {
         eventHeroKill: {
-          create: vi.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: vi.fn(),
-          findMany: vi.fn().mockResolvedValue([]),
+          createMany: mockFn(),
+          findMany: mockFn().mockResolvedValue([]),
         },
         eventMap: {
-          update: vi.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: vi.fn().mockResolvedValue([]),
-          updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
+          updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -1949,18 +1930,18 @@ describe("EventKillService", () => {
 
       const txMock = {
         eventHeroKill: {
-          create: vi.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: vi.fn(),
-          findMany: vi.fn().mockResolvedValue([]),
+          createMany: mockFn(),
+          findMany: mockFn().mockResolvedValue([]),
         },
         eventMap: {
-          update: vi.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: vi.fn().mockResolvedValue([]),
-          updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
+          updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -1994,18 +1975,18 @@ describe("EventKillService", () => {
 
       const txMock = {
         eventHeroKill: {
-          create: vi.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: vi.fn(),
-          findMany: vi.fn().mockResolvedValue([]),
+          createMany: mockFn(),
+          findMany: mockFn().mockResolvedValue([]),
         },
         eventMap: {
-          update: vi.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: vi.fn().mockResolvedValue([]),
-          updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
+          updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>
@@ -2017,7 +1998,7 @@ describe("EventKillService", () => {
         guildId,
         mockEventHero,
         mockEvent,
-        timerDataNoSpawnTimes as any,
+        timerDataNoSpawnTimes as never,
         false,
       );
 
@@ -2042,18 +2023,18 @@ describe("EventKillService", () => {
 
       const txMock = {
         eventHeroKill: {
-          create: vi.fn().mockResolvedValue({ id: "kill-1" }),
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
         },
         eventKillPoint: {
-          createMany: vi.fn(),
-          findMany: vi.fn().mockResolvedValue([]),
+          createMany: mockFn(),
+          findMany: mockFn().mockResolvedValue([]),
         },
         eventMap: {
-          update: vi.fn().mockResolvedValue({}),
+          update: mockFn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: vi.fn().mockResolvedValue([]),
-          updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
+          updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
       mockPrismaService.$transaction.mockImplementation((callback) =>

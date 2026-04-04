@@ -136,7 +136,7 @@ export class NotificationRuleService {
     return this.jobService.getRuleById(ruleId);
   }
 
-  async deleteGuildRule(guildId: string, ruleId: number) {
+  deleteGuildRule(guildId: string, ruleId: number) {
     return this.deleteRule(DbNotificationOwnerType.GUILD, guildId, ruleId);
   }
 
@@ -213,39 +213,46 @@ export class NotificationRuleService {
 
     const now = new Date();
     const testEventId = `test:${notificationRule.id}:${randomUUID()}`;
-    let createdJobsCount = 0;
+    const notificationJobs = await Promise.all(
+      sendableTargets.map(async (target) => {
+        const testPayload =
+          await this.contentService.buildTestNotificationPayload({
+            notificationRule,
+            scheduledFor: now,
+            targetType: target.targetType,
+          });
 
-    for (const target of sendableTargets) {
-      const testPayload =
-        await this.contentService.buildTestNotificationPayload({
+        return this.jobService.createNotificationJob({
           notificationRule,
+          target,
+          jobKind: DbNotificationJobKind.TEST,
           scheduledFor: now,
-          targetType: target.targetType,
+          sourceEntityType: "rule-test",
+          sourceEntityId: String(notificationRule.id),
+          sourceEventId: testEventId,
+          payloadSnapshot: {
+            ...testPayload,
+            testTriggeredAt: now.toISOString(),
+            source: "rule-test",
+          },
         });
-      const notificationJob = await this.jobService.createNotificationJob({
-        notificationRule,
-        target,
-        jobKind: DbNotificationJobKind.TEST,
-        scheduledFor: now,
-        sourceEntityType: "rule-test",
-        sourceEntityId: String(notificationRule.id),
-        sourceEventId: testEventId,
-        payloadSnapshot: {
-          ...testPayload,
-          testTriggeredAt: now.toISOString(),
-          source: "rule-test",
-        },
-      });
+      }),
+    );
 
-      if (!notificationJob) {
-        continue;
-      }
+    const createdJobs = notificationJobs.filter(
+      (
+        notificationJob,
+      ): notificationJob is NonNullable<typeof notificationJob> =>
+        notificationJob !== null,
+    );
 
-      createdJobsCount += 1;
-      await this.jobService.enqueueNotificationJob(notificationJob.id, 0);
-    }
+    await Promise.all(
+      createdJobs.map((notificationJob) =>
+        this.jobService.enqueueNotificationJob(notificationJob.id, 0),
+      ),
+    );
 
-    if (createdJobsCount === 0) {
+    if (createdJobs.length === 0) {
       throw new ConflictException(Error.NO_TEST_JOBS_CREATED_FOR_RULE);
     }
 
@@ -254,7 +261,7 @@ export class NotificationRuleService {
 
   // ── User Rules ───────────────────────────────────────────────────────
 
-  async listUserRules(discordId: string) {
+  listUserRules(discordId: string) {
     return this.prisma.notificationRule.findMany({
       where: {
         ownerType: DbNotificationOwnerType.USER,
@@ -298,7 +305,7 @@ export class NotificationRuleService {
     return this.jobService.getRuleById(ruleId);
   }
 
-  async deleteUserRule(discordId: string, ruleId: number) {
+  deleteUserRule(discordId: string, ruleId: number) {
     return this.deleteRule(DbNotificationOwnerType.USER, discordId, ruleId);
   }
 
@@ -821,7 +828,7 @@ export class NotificationRuleService {
     return null;
   }
 
-  private async getTargetTestTriggerUsage(targetIds: number[]) {
+  private getTargetTestTriggerUsage(targetIds: number[]) {
     return computeTestTriggerUsage(
       this.prisma,
       targetIds,

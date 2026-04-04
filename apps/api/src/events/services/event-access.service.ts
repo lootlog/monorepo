@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import {
+import type {
   EventHeroNpc,
   Permission,
-  type Role,
+  Role,
 } from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
 import { filterHeroesByLevel } from "src/shared/utils/can-view-event-hero";

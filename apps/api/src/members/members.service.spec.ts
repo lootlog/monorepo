@@ -1,4 +1,5 @@
 import type { Mocked } from "vitest";
+import { mockFn } from "src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import {
   BadRequestException,
@@ -34,7 +35,7 @@ import {
 
 describe("MembersService", () => {
   let service: MembersService;
-  let prismaService: any;
+  let prismaService: Mocked<PrismaService>;
   let discordService: Mocked<DiscordService>;
   let _rateLimiter: Mocked<DiscordRateLimiterService>;
   let _refreshScheduler: Mocked<MemberRefreshSchedulerService>;
@@ -89,50 +90,50 @@ describe("MembersService", () => {
   beforeEach(async () => {
     const mockPrismaService = {
       member: {
-        findUnique: vi.fn(),
-        findMany: vi.fn(),
-        upsert: vi.fn(),
-        update: vi.fn(),
-        updateMany: vi.fn(),
+        findUnique: mockFn(),
+        findMany: mockFn(),
+        upsert: mockFn(),
+        update: mockFn(),
+        updateMany: mockFn(),
       },
       guild: {
-        findFirst: vi.fn(),
+        findFirst: mockFn(),
       },
       role: {
-        findMany: vi.fn(),
+        findMany: mockFn(),
       },
       memberRefreshJob: {
-        findFirst: vi.fn(),
-        findUnique: vi.fn(),
-        create: vi.fn(),
-        update: vi.fn(),
+        findFirst: mockFn(),
+        findUnique: mockFn(),
+        create: mockFn(),
+        update: mockFn(),
       },
     };
 
     const mockDiscordService = {
-      getGuildMember: vi.fn(),
+      getGuildMember: mockFn(),
     };
 
     const mockRateLimiter = {
-      getNextAvailableAtForUser: vi.fn().mockResolvedValue(null),
+      getNextAvailableAtForUser: mockFn().mockResolvedValue(null),
     };
 
     const mockRefreshScheduler = {
-      enqueueRefresh: vi.fn().mockResolvedValue({
+      enqueueRefresh: mockFn().mockResolvedValue({
         queued: true,
         nextRefreshAt: new Date(Date.now() + 5000),
       }),
-      isUserRefreshLocked: vi.fn().mockResolvedValue(false),
-      acquireUserRefreshLock: vi.fn().mockResolvedValue(true),
-      releaseUserRefreshLock: vi.fn(),
+      isUserRefreshLocked: mockFn().mockResolvedValue(false),
+      acquireUserRefreshLock: mockFn().mockResolvedValue(true),
+      releaseUserRefreshLock: mockFn(),
     };
 
     const mockAmqpConnection = {
-      publish: vi.fn(),
+      publish: mockFn(),
     };
 
     const mockConfigService = {
-      get: vi.fn((key: string) => {
+      get: mockFn((key: string) => {
         if (key === ConfigKey.SERVICE) {
           return { env: RuntimeEnvironment.LOCAL };
         }
@@ -141,17 +142,17 @@ describe("MembersService", () => {
     };
 
     const mockLogger = {
-      log: vi.fn(),
-      error: vi.fn(),
-      warn: vi.fn(),
-      debug: vi.fn(),
+      log: mockFn(),
+      error: mockFn(),
+      warn: mockFn(),
+      debug: mockFn(),
     };
 
     const mockRedisService = {
-      get: vi.fn(),
-      set: vi.fn(),
-      del: vi.fn(),
-      deleteByPattern: vi.fn(),
+      get: mockFn(),
+      set: mockFn(),
+      del: mockFn(),
+      deleteByPattern: mockFn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -209,7 +210,8 @@ describe("MembersService", () => {
     });
 
     it("should return a 15 minute soft stale threshold in prod", () => {
-      (service as any).env = RuntimeEnvironment.PROD;
+      (service as MembersService & { env: RuntimeEnvironment }).env =
+        RuntimeEnvironment.PROD;
       const referenceTime = new Date("2026-03-10T10:00:00.000Z");
 
       const result = service.getMemberSoftStaleThreshold(referenceTime);

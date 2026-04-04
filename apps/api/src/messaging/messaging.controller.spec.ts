@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { mockFn } from "src/test/mock-fn";
 import { MessagingController } from "./messaging.controller";
 import { MessagingService } from "./messaging.service";
 
@@ -10,7 +11,7 @@ describe("MessagingController", () => {
   let controller: MessagingController;
 
   const mockMessagingService = {
-    cancelPartyGathering: vi.fn(),
+    cancelPartyGathering: mockFn(),
   };
 
   beforeEach(async () => {
@@ -39,14 +40,14 @@ describe("MessagingController", () => {
       });
 
       const mockReply = {
-        status: vi.fn().mockReturnThis(),
-        send: vi.fn().mockReturnThis(),
+        status: mockFn().mockReturnThis(),
+        send: mockFn().mockReturnThis(),
       };
 
       await controller.cancelPartyGathering(
         discordId,
         notificationId,
-        mockReply as any,
+        mockReply as never,
       );
 
       expect(mockReply.status).toHaveBeenCalledWith(200);
@@ -62,14 +63,14 @@ describe("MessagingController", () => {
       });
 
       const mockReply = {
-        status: vi.fn().mockReturnThis(),
-        send: vi.fn().mockReturnThis(),
+        status: mockFn().mockReturnThis(),
+        send: mockFn().mockReturnThis(),
       };
 
       await controller.cancelPartyGathering(
         discordId,
         notificationId,
-        mockReply as any,
+        mockReply as never,
       );
 
       expect(mockReply.status).toHaveBeenCalledWith(204);

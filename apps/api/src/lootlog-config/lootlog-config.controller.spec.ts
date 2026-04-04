@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { mockFn } from "src/test/mock-fn";
 import { LootlogConfigController } from "./lootlog-config.controller";
 import { LootlogConfigService } from "./lootlog-config.service";
 import { AuthGuard } from "src/shared/guards/auth.guard";
@@ -8,8 +9,8 @@ describe("LootlogConfigController", () => {
   let controller: LootlogConfigController;
 
   const mockLootlogConfigService = {
-    getLootlogConfig: vi.fn(),
-    updateNpc: vi.fn(),
+    getLootlogConfig: mockFn(),
+    updateNpc: mockFn(),
   };
 
   beforeEach(async () => {

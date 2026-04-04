@@ -1,7 +1,7 @@
 import { InjectQueue } from "@nestjs/bullmq";
 import { Injectable } from "@nestjs/common";
 import type { Queue } from "bullmq";
-import { type Event, type EventHeroNpc } from "src/generated/prisma/client";
+import type { Event, EventHeroNpc } from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
 import type { CheckEventHeroKillParams } from "../interfaces";
 import { EVENT_HERO_KILL_QUEUE } from "../constants/event-hero-kill-queue.constant";

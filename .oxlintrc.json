@@ -24,6 +24,14 @@
       "version": "19.0"
     }
   },
+  "overrides": [
+    {
+      "files": ["apps/api/**/*.{ts,tsx}"],
+      "rules": {
+        "@typescript-eslint/consistent-type-imports": "off"
+      }
+    }
+  ],
   "rules": {
     "eqeqeq": "error",
     "no-console": ["warn", { "allow": ["warn"] }],

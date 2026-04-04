@@ -23,7 +23,7 @@ export class RespawnWindowProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: Job<AutoCloseRespawnWindowJobData>): Promise<void> {
+  process(job: Job<AutoCloseRespawnWindowJobData>): void {
     this.logger.log({
       level: "info",
       message:
