@@ -39,6 +39,7 @@ export const KillLootCard = ({ loot }: KillLootCardProps) => {
         {loot.npcs.slice(0, 3).map((npc) => (
           <div key={npc.id} className="flex items-center gap-1.5">
             {npc.icon && (
+              /* eslint-disable-next-line eslint-plugin-next/no-img-element */
               <img
                 src={`${MARGONEM_CDN_NPCS_URL}/${npc.icon}`}
                 alt={npc.name}
@@ -59,6 +60,7 @@ export const KillLootCard = ({ loot }: KillLootCardProps) => {
         {loot.players.slice(0, 6).map((player) => (
           <div key={player.id} className="flex items-center gap-1">
             {player.icon && (
+              /* eslint-disable-next-line eslint-plugin-next/no-img-element */
               <img
                 src={`${MARGONEM_CDN_CHARACTERS_URL}/${player.icon}`}
                 alt={player.name}
@@ -80,6 +82,7 @@ export const KillLootCard = ({ loot }: KillLootCardProps) => {
           {loot.items.slice(0, 8).map((item, idx) => (
             <Tooltip key={`${item.hid}-${idx}`}>
               <TooltipTrigger asChild>
+                {/* eslint-disable-next-line eslint-plugin-next/no-img-element */}
                 <img
                   src={`${MARGONEM_CDN_ITEMS_URL}/${item.icon}`}
                   alt={item.name}
