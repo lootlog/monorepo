@@ -30,6 +30,40 @@
       "rules": {
         "@typescript-eslint/consistent-type-imports": "off"
       }
+    },
+    {
+      "files": ["apps/battlelog-service/**/*.{ts,tsx}"],
+      "rules": {
+        "@typescript-eslint/consistent-type-imports": "off",
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-non-null-assertion": "off",
+        "no-await-in-loop": "off",
+        "no-unused-vars": "off",
+        "require-await": "off",
+        "vitest/require-mock-type-parameters": "off",
+        "unicorn/prefer-number-properties": "off",
+        "unicorn/prefer-string-slice": "off"
+      }
+    },
+    {
+      "files": ["apps/gateway/**/*.{ts,tsx}", "apps/activity/**/*.{ts,tsx}"],
+      "rules": {
+        "@typescript-eslint/consistent-type-imports": "off",
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-non-null-assertion": "off",
+        "require-await": "off",
+        "vitest/require-mock-type-parameters": "off"
+      }
+    },
+    {
+      "files": ["apps/discord-bot/**/*.{ts,tsx}"],
+      "rules": {
+        "@typescript-eslint/consistent-type-imports": "off",
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-non-null-assertion": "off",
+        "require-await": "off",
+        "vitest/require-mock-type-parameters": "off"
+      }
     }
   ],
   "rules": {

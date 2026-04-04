@@ -29,32 +29,34 @@ export class ActivityService {
       platform === Platform.GAME ? ActivitySource.GAME : ActivitySource.WEB_APP;
     const timestamp = Date.now();
 
-    for (const { guild } of guilds) {
-      const payload = this.buildActivityPayload({
-        type,
-        userId,
-        guildId: guild.id,
-        discordId,
-        source,
-        player,
-        sessionId,
-        userAgent: client.request.headers["user-agent"],
-        timestamp,
-      });
+    await Promise.all(
+      guilds.map(async ({ guild }) => {
+        const payload = this.buildActivityPayload({
+          type,
+          userId,
+          guildId: guild.id,
+          discordId,
+          source,
+          player,
+          sessionId,
+          userAgent: client.request.headers["user-agent"],
+          timestamp,
+        });
 
-      try {
-        await this.amqpConnection.publish(
-          DEFAULT_EXCHANGE_NAME,
-          RoutingKey.ACTIVITY_LOG_CREATE,
-          payload,
-        );
-      } catch (error) {
-        this.logger.error(
-          `Failed to publish ${type} for ${discordId} in guild ${guild.id}: ${error.message}`,
-          error.stack,
-        );
-      }
-    }
+        try {
+          await this.amqpConnection.publish(
+            DEFAULT_EXCHANGE_NAME,
+            RoutingKey.ACTIVITY_LOG_CREATE,
+            payload,
+          );
+        } catch (error) {
+          this.logger.error(
+            `Failed to publish ${type} for ${discordId} in guild ${guild.id}: ${error.message}`,
+            error.stack,
+          );
+        }
+      }),
+    );
   }
 
   private buildActivityPayload({
