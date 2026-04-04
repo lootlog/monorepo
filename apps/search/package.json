@@ -29,7 +29,7 @@
     "@lootlog/types": "workspace:*",
     "@lootlog/typescript-config": "workspace:*",
     "@types/amqplib": "^0.10.8",
-    "@types/node": "^25.5.0",
+    "@types/node": "^25.5.2",
     "pkgroll": "^2.27.0",
     "tsx": "^4.21.0"
   }
