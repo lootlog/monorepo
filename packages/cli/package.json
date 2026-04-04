@@ -15,7 +15,7 @@
     "@clack/prompts": "^1.1.0",
     "@lootlog/battle-processor": "workspace:*",
     "@lootlog/types": "workspace:*",
-    "amqplib": "^0.10.9",
+    "amqplib": "^1.0.2",
     "node-html-parser": "^7.1.0",
     "random-words": "^2.0.1",
     "uuid": "^13.0.0",
