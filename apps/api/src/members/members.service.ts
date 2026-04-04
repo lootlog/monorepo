@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  forwardRef,
   HttpException,
   HttpStatus,
   Inject,
@@ -21,7 +20,7 @@ import {
 } from "src/members/constants/member-cache.constant";
 import type { APIGuildMember } from "discord-api-types/v10";
 import { ErrorKey } from "src/members/enum/error-key.enum";
-import { GuildsService } from "src/guilds/guilds.service";
+import { ErrorKey as GuildErrorKey } from "src/guilds/enum/error-key.enum";
 import type { Member, Prisma, Role } from "prisma/generated/client";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { RoutingKey } from "src/enum/routing-key.enum";
@@ -81,8 +80,6 @@ export class MembersService {
     private readonly discordService: DiscordService,
     private readonly rateLimiter: DiscordRateLimiterService,
     private readonly memberRefreshScheduler: MemberRefreshSchedulerService,
-    @Inject(forwardRef(() => GuildsService))
-    private readonly guildsService: GuildsService,
     private readonly amqpConnection: AmqpConnection,
     private readonly configService: ConfigService,
     private readonly redisService: RedisService,
@@ -112,7 +109,20 @@ export class MembersService {
 
     let desiredGuildId = guildId;
     if (refresh || standalone) {
-      const guild = await this.guildsService.getGuildById(guildId);
+      const guild = await this.prisma.guild.findFirst({
+        where: {
+          active: true,
+          OR: [{ id: guildId }, { vanityUrl: guildId }],
+        },
+        select: {
+          id: true,
+        },
+      });
+      if (!guild) {
+        throw new NotFoundException({
+          message: GuildErrorKey.GUILD_NOT_FOUND,
+        });
+      }
       desiredGuildId = guild.id;
     }
 

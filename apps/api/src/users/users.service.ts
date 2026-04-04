@@ -1,5 +1,4 @@
 import {
-  forwardRef,
   Inject,
   Injectable,
   ServiceUnavailableException,
@@ -31,7 +30,6 @@ export class UsersService {
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: WinstonLogger,
     private readonly prisma: PrismaService,
     private readonly authService: AuthService,
-    @Inject(forwardRef(() => MembersService))
     private readonly membersService: MembersService,
     private readonly redisService: RedisService,
     private readonly httpService: HttpService,

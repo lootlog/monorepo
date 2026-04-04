@@ -6,9 +6,7 @@ import { ChannelsService } from "src/channels/channels.service";
 import { ConfigService } from "@nestjs/config";
 import { MembersService } from "src/members/members.service";
 import { RolesService } from "src/roles/roles.service";
-import { LootlogConfigService } from "src/lootlog-config/lootlog-config.service";
 import { DiscordService } from "src/discord/discord.service";
-import { UsersService } from "src/users/users.service";
 import { RedisService } from "@lootlog/nest-shared";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { DiscordGuildSyncStatus } from "@lootlog/types";
@@ -45,6 +43,10 @@ describe("GuildsService", () => {
     },
     lootlogConfig: {
       deleteMany: jest.fn(),
+      upsert: jest.fn(),
+    },
+    userSettings: {
+      findUnique: jest.fn(),
     },
     $transaction: jest.fn(),
   };
@@ -80,17 +82,9 @@ describe("GuildsService", () => {
     refreshGuildDiscordChannels: jest.fn(),
   };
 
-  const mockLootlogConfigService = {
-    createLootlogConfig: jest.fn(),
-  };
-
   const mockDiscordService = {
     getUserGuilds: jest.fn(),
     clearUserGuildIdsCache: jest.fn(),
-  };
-
-  const mockUsersService = {
-    getUserPreferences: jest.fn(),
   };
 
   const mockRedisService = {
@@ -139,16 +133,8 @@ describe("GuildsService", () => {
           useValue: mockRolesService,
         },
         {
-          provide: LootlogConfigService,
-          useValue: mockLootlogConfigService,
-        },
-        {
           provide: DiscordService,
           useValue: mockDiscordService,
-        },
-        {
-          provide: UsersService,
-          useValue: mockUsersService,
         },
         {
           provide: RedisService,
@@ -213,7 +199,7 @@ describe("GuildsService", () => {
       createGuild({ id: "guild-sync" }),
     );
     mockRolesService.bulkCreateRoles.mockResolvedValue(undefined);
-    mockLootlogConfigService.createLootlogConfig.mockResolvedValue(undefined);
+    mockPrismaService.lootlogConfig.upsert.mockResolvedValue(undefined);
 
     await service.createGuild({
       guildId: "guild-sync",
