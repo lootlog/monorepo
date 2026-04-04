@@ -18,8 +18,8 @@ describe("LootMappingService", () => {
       const loots = [{ hid: "item1" }, { hid: "item2" }];
       const world = "testworld";
 
-      const result1 = service.createUniqueLootId(loots as any, world);
-      const result2 = service.createUniqueLootId(loots as any, world);
+      const result1 = service.createUniqueLootId(loots as never, world);
+      const result2 = service.createUniqueLootId(loots as never, world);
 
       expect(result1).toBe(result2);
       expect(result1).toHaveLength(64);
@@ -30,8 +30,8 @@ describe("LootMappingService", () => {
       const loots2 = [{ hid: "item2" }];
       const world = "testworld";
 
-      const result1 = service.createUniqueLootId(loots1 as any, world);
-      const result2 = service.createUniqueLootId(loots2 as any, world);
+      const result1 = service.createUniqueLootId(loots1 as never, world);
+      const result2 = service.createUniqueLootId(loots2 as never, world);
 
       expect(result1).not.toBe(result2);
     });
@@ -72,7 +72,7 @@ describe("LootMappingService", () => {
       const item = {
         stat: "lvl=50;rarity=UNIQUE;reqp=w",
         cl: 1,
-      } as any;
+      } as never;
 
       const result = service.getItemStats(item);
 
@@ -88,7 +88,7 @@ describe("LootMappingService", () => {
       const item = {
         stat: "rarity=UNIQUE",
         cl: 1,
-      } as any;
+      } as never;
 
       const result = service.getItemStats(item);
 
@@ -99,7 +99,7 @@ describe("LootMappingService", () => {
       const item = {
         stat: "lvl=50;rarity=UNIQUE",
         cl: 1,
-      } as any;
+      } as never;
 
       const result = service.getItemStats(item);
 

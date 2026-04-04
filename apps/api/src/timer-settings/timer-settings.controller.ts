@@ -18,9 +18,9 @@ import {
 import { plainToInstance } from "class-transformer";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { TimerSettingsService } from "./timer-settings.service";
-import { UpdateTimerSettingsDto } from "./dto/update-timer-settings.dto";
-import { UpdateGuildTimerSettingsDto } from "./dto/update-guild-timer-settings.dto";
-import { MigrateTimerSettingsDto } from "./dto/migrate-timer-settings.dto";
+import type { UpdateTimerSettingsDto } from "./dto/update-timer-settings.dto";
+import type { UpdateGuildTimerSettingsDto } from "./dto/update-guild-timer-settings.dto";
+import type { MigrateTimerSettingsDto } from "./dto/migrate-timer-settings.dto";
 import { TimerSettingsEntity } from "./entities/timer-settings.entity";
 import { GuildTimerSettingsEntity } from "./entities/guild-timer-settings.entity";
 
@@ -139,7 +139,7 @@ export class TimerSettingsController {
     status: 200,
     description: "Migration result",
   })
-  async migrateSettings(
+  migrateSettings(
     @UserId() userId: string,
     @Body() dto: MigrateTimerSettingsDto,
   ) {

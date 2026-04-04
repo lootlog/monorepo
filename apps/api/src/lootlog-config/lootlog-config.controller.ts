@@ -7,7 +7,7 @@ import {
   ApiParam,
 } from "@nestjs/swagger";
 import { type Guild, Permission } from "src/generated/prisma/client";
-import { UpdateLootlogConfigNpcDto } from "src/lootlog-config/dto/update-lootlog-config-npc.dto";
+import type { UpdateLootlogConfigNpcDto } from "src/lootlog-config/dto/update-lootlog-config-npc.dto";
 import { LootlogConfigService } from "src/lootlog-config/lootlog-config.service";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { AuthGuard } from "src/shared/guards/auth.guard";
@@ -40,7 +40,7 @@ export class LootlogConfigController {
     description: "Forbidden - admin permission required",
   })
   @ApiResponse({ status: 404, description: "Configuration not found" })
-  async getLootlogConfig(@GuildData() guild: Guild) {
+  getLootlogConfig(@GuildData() guild: Guild) {
     return this.lootlogConfigService.getLootlogConfig(guild.id);
   }
 
@@ -67,7 +67,7 @@ export class LootlogConfigController {
     description: "Forbidden - admin permission required",
   })
   @ApiResponse({ status: 404, description: "NPC configuration not found" })
-  async updateNpc(
+  updateNpc(
     @GuildData() guild: Guild,
     @Param("npcId") npcId: string,
     @Body() data: UpdateLootlogConfigNpcDto,

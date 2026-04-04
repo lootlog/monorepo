@@ -1,4 +1,5 @@
 import type { Mock } from "vitest";
+import { mockFn } from "src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { getQueueToken } from "@nestjs/bullmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
@@ -41,25 +42,25 @@ describe("MemberRefreshSchedulerService", () => {
 
   beforeEach(async () => {
     const mockQueue = {
-      getJob: vi.fn(),
-      add: vi.fn(),
+      getJob: mockFn(),
+      add: mockFn(),
     };
 
     const mockRateLimiter = {
-      getNextAvailableAtForUser: vi.fn().mockResolvedValue(null),
+      getNextAvailableAtForUser: mockFn().mockResolvedValue(null),
     };
 
     const mockRedisService = {
-      get: vi.fn(),
-      setNX: vi.fn(),
-      eval: vi.fn(),
+      get: mockFn(),
+      setNX: mockFn(),
+      eval: mockFn(),
     };
 
     const mockLogger = {
-      log: vi.fn(),
-      error: vi.fn(),
-      warn: vi.fn(),
-      debug: vi.fn(),
+      log: mockFn(),
+      error: mockFn(),
+      warn: mockFn(),
+      debug: mockFn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -121,7 +122,7 @@ describe("MemberRefreshSchedulerService", () => {
         | "waiting-children";
     }> = {},
   ) => {
-    const getState = vi.fn().mockResolvedValue(state);
+    const getState = mockFn().mockResolvedValue(state);
     if (overrides.stateAfterPromoteError) {
       getState
         .mockResolvedValueOnce(state)
@@ -129,19 +130,19 @@ describe("MemberRefreshSchedulerService", () => {
     }
 
     const promote = overrides.promoteError
-      ? vi.fn().mockRejectedValue(overrides.promoteError)
-      : vi.fn().mockResolvedValue(undefined);
+      ? mockFn().mockRejectedValue(overrides.promoteError)
+      : mockFn().mockResolvedValue(undefined);
     const remove = overrides.removeError
-      ? vi.fn().mockRejectedValue(overrides.removeError)
-      : vi.fn().mockResolvedValue(undefined);
+      ? mockFn().mockRejectedValue(overrides.removeError)
+      : mockFn().mockResolvedValue(undefined);
 
     return {
       id: `member-refresh:${refreshData.userId}:${refreshData.guildId}`,
       data: overrides.data ?? refreshData,
       opts: { priority: overrides.priority ?? refreshData.priority },
       getState,
-      updateData: vi.fn().mockResolvedValue(undefined),
-      changePriority: vi.fn().mockResolvedValue(undefined),
+      updateData: mockFn().mockResolvedValue(undefined),
+      changePriority: mockFn().mockResolvedValue(undefined),
       promote,
       remove,
     };

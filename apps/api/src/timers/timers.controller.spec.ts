@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { mockFn } from "src/test/mock-fn";
 import { TimersController } from "./timers.controller";
 import { TimersService } from "./timers.service";
 import { AuthGuard } from "src/shared/guards/auth.guard";
@@ -8,12 +9,12 @@ describe("TimersController", () => {
   let controller: TimersController;
 
   const mockTimersService = {
-    getAllTimers: vi.fn(),
-    getTimers: vi.fn(),
-    resetTimer: vi.fn(),
-    deleteTimer: vi.fn(),
-    createTimer: vi.fn(),
-    createManualTimer: vi.fn(),
+    getAllTimers: mockFn(),
+    getTimers: mockFn(),
+    resetTimer: mockFn(),
+    deleteTimer: mockFn(),
+    createTimer: mockFn(),
+    createManualTimer: mockFn(),
   };
 
   beforeEach(async () => {

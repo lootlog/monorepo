@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { mockFn } from "src/test/mock-fn";
 import { getQueueToken } from "@nestjs/bullmq";
 import {
   BadRequestException,
@@ -19,57 +20,57 @@ describe("EventRespawnService", () => {
 
   const mockPrismaService = {
     eventHeroNpc: {
-      findFirst: vi.fn(),
+      findFirst: mockFn(),
     },
     eventMap: {
-      findMany: vi.fn(),
-      update: vi.fn(),
+      findMany: mockFn(),
+      update: mockFn(),
     },
     timer: {
-      findUnique: vi.fn(),
-      upsert: vi.fn(),
-      delete: vi.fn(),
+      findUnique: mockFn(),
+      upsert: mockFn(),
+      delete: mockFn(),
     },
     eventMapAssignmentHistory: {
-      updateMany: vi.fn(),
+      updateMany: mockFn(),
     },
     member: {
-      findFirst: vi.fn(),
+      findFirst: mockFn(),
     },
-    $transaction: vi.fn(),
+    $transaction: mockFn(),
   };
 
   const mockQueue = {
-    add: vi.fn(),
-    getJobs: vi.fn(),
+    add: mockFn(),
+    getJobs: mockFn(),
   };
 
   const mockEventEmitter = {
-    emitMapStatusUpdate: vi.fn(),
-    emitRespawnWindowOpened: vi.fn(),
-    emitRespawnWindowClosed: vi.fn(),
-    emitTimerUpdate: vi.fn(),
+    emitMapStatusUpdate: mockFn(),
+    emitRespawnWindowOpened: mockFn(),
+    emitRespawnWindowClosed: mockFn(),
+    emitTimerUpdate: mockFn(),
   };
 
   const mockKillService = {
-    checkAndRecordEventHeroKill: vi.fn(),
-    recordHeroKill: vi.fn(),
+    checkAndRecordEventHeroKill: mockFn(),
+    recordHeroKill: mockFn(),
   };
 
   const mockTrackingService = {
-    closeAllGapsForHero: vi.fn(),
-    openUnassignedGap: vi.fn(),
-    openUncoveredGap: vi.fn(),
+    closeAllGapsForHero: mockFn(),
+    openUnassignedGap: mockFn(),
+    openUncoveredGap: mockFn(),
   };
 
   const mockSummaryService = {
-    createWindowSummary: vi.fn(),
+    createWindowSummary: mockFn(),
   };
 
   const mockTimersService = {
-    getEventRespawnTimer: vi.fn(),
-    openEventRespawnTimer: vi.fn(),
-    closeEventRespawnTimer: vi.fn(),
+    getEventRespawnTimer: mockFn(),
+    openEventRespawnTimer: mockFn(),
+    closeEventRespawnTimer: mockFn(),
   };
 
   beforeEach(async () => {
@@ -183,7 +184,7 @@ describe("EventRespawnService", () => {
       mockPrismaService.eventMapAssignmentHistory.updateMany.mockResolvedValue({
         count: 1,
       });
-      mockPrismaService.$transaction.mockImplementation(async (callback) =>
+      mockPrismaService.$transaction.mockImplementation((callback) =>
         callback(mockPrismaService),
       );
       mockTimersService.closeEventRespawnTimer.mockResolvedValue(undefined);
@@ -230,7 +231,7 @@ describe("EventRespawnService", () => {
       mockPrismaService.eventMapAssignmentHistory.updateMany.mockResolvedValue({
         count: 1,
       });
-      mockPrismaService.$transaction.mockImplementation(async (callback) =>
+      mockPrismaService.$transaction.mockImplementation((callback) =>
         callback(mockPrismaService),
       );
       mockTimersService.closeEventRespawnTimer.mockResolvedValue(undefined);
@@ -264,7 +265,7 @@ describe("EventRespawnService", () => {
       const mockJob = {
         id: "job-1",
         data: { heroId },
-        remove: vi.fn().mockResolvedValue(undefined),
+        remove: mockFn().mockResolvedValue(undefined),
       };
       mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
       mockTimersService.getEventRespawnTimer.mockResolvedValue(mockTimer);

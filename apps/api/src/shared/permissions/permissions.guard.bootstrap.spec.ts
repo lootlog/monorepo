@@ -1,4 +1,5 @@
 import { Controller, Get, Module, UseGuards } from "@nestjs/common";
+import { mockFn } from "src/test/mock-fn";
 import { MODULE_METADATA } from "@nestjs/common/constants";
 import { Test } from "@nestjs/testing";
 import { RedisService } from "@lootlog/nest-shared";
@@ -13,10 +14,10 @@ import { Permissions } from "./permissions.decorator";
 import { PermissionsGuard } from "./permissions.guard";
 
 const mockLogger = {
-  debug: vi.fn(),
-  error: vi.fn(),
-  log: vi.fn(),
-  warn: vi.fn(),
+  debug: mockFn(),
+  error: mockFn(),
+  log: mockFn(),
+  warn: mockFn(),
 };
 
 @Controller("guarded")
@@ -37,23 +38,23 @@ class GuardedPermissionsController {
     {
       provide: MembersService,
       useValue: {
-        getGuildMemberById: vi.fn().mockResolvedValue(null),
+        getGuildMemberById: mockFn().mockResolvedValue(null),
       },
     },
     {
       provide: PrismaService,
       useValue: {
         guild: {
-          findFirst: vi.fn(),
+          findFirst: mockFn(),
         },
       },
     },
     {
       provide: RedisService,
       useValue: {
-        del: vi.fn(),
-        get: vi.fn(),
-        set: vi.fn(),
+        del: mockFn(),
+        get: mockFn(),
+        set: mockFn(),
       },
     },
     {

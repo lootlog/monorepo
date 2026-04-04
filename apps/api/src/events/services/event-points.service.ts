@@ -394,7 +394,7 @@ export class EventPointsService {
     };
   }
 
-  async recalculateEventPoints(
+  recalculateEventPoints(
     eventId: string,
     _newBasePoints: number,
   ): Promise<void> {
@@ -1127,30 +1127,13 @@ export class EventPointsService {
       return;
     }
 
-    for (const killPoint of rankableKillPoints) {
-      const trackingDurationSeconds = this.getTrackingDurationSecondsForRanking(
-        {
-          trackingDurationSeconds: killPoint.trackingDurationSeconds,
-        },
-      );
-      const existing = await this.prisma.eventRanking.findUnique({
-        where: {
-          eventId_memberId_heroNpcName: {
-            eventId,
-            memberId: killPoint.memberId,
-            heroNpcName,
-          },
-        },
-      });
-
-      if (existing) {
-        const newTotalKills = existing.totalKills + 1;
-        const newAvgAfk =
-          (existing.avgAfkPercentage * existing.totalKills +
-            killPoint.afkPercentage) /
-          newTotalKills;
-
-        await this.prisma.eventRanking.update({
+    await Promise.all(
+      rankableKillPoints.map(async (killPoint) => {
+        const trackingDurationSeconds =
+          this.getTrackingDurationSecondsForRanking({
+            trackingDurationSeconds: killPoint.trackingDurationSeconds,
+          });
+        const existing = await this.prisma.eventRanking.findUnique({
           where: {
             eventId_memberId_heroNpcName: {
               eventId,
@@ -1158,16 +1141,36 @@ export class EventPointsService {
               heroNpcName,
             },
           },
-          data: {
-            totalPoints: { increment: killPoint.points },
-            totalKills: { increment: 1 },
-            totalTimeSeconds: { increment: trackingDurationSeconds },
-            avgAfkPercentage: Math.round(newAvgAfk * 100) / 100,
-            pointsModified:
-              existing.pointsModified || killPoint.manualAdjustmentPoints !== 0,
-          },
         });
-      } else {
+
+        if (existing) {
+          const newTotalKills = existing.totalKills + 1;
+          const newAvgAfk =
+            (existing.avgAfkPercentage * existing.totalKills +
+              killPoint.afkPercentage) /
+            newTotalKills;
+
+          await this.prisma.eventRanking.update({
+            where: {
+              eventId_memberId_heroNpcName: {
+                eventId,
+                memberId: killPoint.memberId,
+                heroNpcName,
+              },
+            },
+            data: {
+              totalPoints: { increment: killPoint.points },
+              totalKills: { increment: 1 },
+              totalTimeSeconds: { increment: trackingDurationSeconds },
+              avgAfkPercentage: Math.round(newAvgAfk * 100) / 100,
+              pointsModified:
+                existing.pointsModified ||
+                killPoint.manualAdjustmentPoints !== 0,
+            },
+          });
+          return;
+        }
+
         await this.prisma.eventRanking.create({
           data: {
             eventId,
@@ -1180,8 +1183,8 @@ export class EventPointsService {
             pointsModified: killPoint.manualAdjustmentPoints !== 0,
           },
         });
-      }
-    }
+      }),
+    );
 
     await this.emitRankingUpdateByEventId(eventId);
   }

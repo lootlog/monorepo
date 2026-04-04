@@ -12,10 +12,10 @@ import {
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { Permission, type Guild } from "src/generated/prisma/client";
 import { ChannelsService } from "src/channels/channels.service";
-import { CreateNotificationRuleDto } from "src/notifications/dto/create-notification-rule.dto";
-import { CreateNotificationTargetDto } from "src/notifications/dto/create-notification-target.dto";
-import { UpdateNotificationRuleDto } from "src/notifications/dto/update-notification-rule.dto";
-import { UpdateNotificationTargetDto } from "src/notifications/dto/update-notification-target.dto";
+import type { CreateNotificationRuleDto } from "src/notifications/dto/create-notification-rule.dto";
+import type { CreateNotificationTargetDto } from "src/notifications/dto/create-notification-target.dto";
+import type { UpdateNotificationRuleDto } from "src/notifications/dto/update-notification-rule.dto";
+import type { UpdateNotificationTargetDto } from "src/notifications/dto/update-notification-target.dto";
 import { NotificationJobService } from "src/notifications/notification-job.service";
 import { NotificationRuleService } from "src/notifications/notification-rule.service";
 import { NotificationTargetService } from "src/notifications/notification-target.service";
@@ -38,17 +38,17 @@ export class NotificationsGuildController {
   ) {}
 
   @Get("targets")
-  async getGuildTargets(@GuildData() guild: Guild) {
+  getGuildTargets(@GuildData() guild: Guild) {
     return this.targetService.listGuildTargets(guild.id);
   }
 
   @Get("targets/available")
-  async getAvailableGuildTargets(@GuildData() guild: Guild) {
+  getAvailableGuildTargets(@GuildData() guild: Guild) {
     return this.channelsService.getSelectableGuildChannels(guild.id);
   }
 
   @Post("targets")
-  async createGuildTarget(
+  createGuildTarget(
     @GuildData() guild: Guild,
     @Body() data: CreateNotificationTargetDto,
   ) {
@@ -56,7 +56,7 @@ export class NotificationsGuildController {
   }
 
   @Patch("targets/:targetId")
-  async updateGuildTarget(
+  updateGuildTarget(
     @GuildData() guild: Guild,
     @Param("targetId", ParseIntPipe) targetId: number,
     @Body() data: UpdateNotificationTargetDto,
@@ -65,7 +65,7 @@ export class NotificationsGuildController {
   }
 
   @Delete("targets/:targetId")
-  async deleteGuildTarget(
+  deleteGuildTarget(
     @GuildData() guild: Guild,
     @Param("targetId", ParseIntPipe) targetId: number,
   ) {
@@ -73,12 +73,12 @@ export class NotificationsGuildController {
   }
 
   @Get("rules")
-  async getGuildRules(@GuildData() guild: Guild) {
+  getGuildRules(@GuildData() guild: Guild) {
     return this.ruleService.listGuildRules(guild.id);
   }
 
   @Post("rules")
-  async createGuildRule(
+  createGuildRule(
     @GuildData() guild: Guild,
     @Body() data: CreateNotificationRuleDto,
   ) {
@@ -86,7 +86,7 @@ export class NotificationsGuildController {
   }
 
   @Patch("rules/:ruleId")
-  async updateGuildRule(
+  updateGuildRule(
     @GuildData() guild: Guild,
     @Param("ruleId", ParseIntPipe) ruleId: number,
     @Body() data: UpdateNotificationRuleDto,
@@ -95,7 +95,7 @@ export class NotificationsGuildController {
   }
 
   @Delete("rules/:ruleId")
-  async deleteGuildRule(
+  deleteGuildRule(
     @GuildData() guild: Guild,
     @Param("ruleId", ParseIntPipe) ruleId: number,
   ) {
@@ -103,7 +103,7 @@ export class NotificationsGuildController {
   }
 
   @Post("rules/:ruleId/rebuild-jobs")
-  async rebuildGuildRuleJobs(
+  rebuildGuildRuleJobs(
     @GuildData() guild: Guild,
     @Param("ruleId", ParseIntPipe) ruleId: number,
   ) {
@@ -111,7 +111,7 @@ export class NotificationsGuildController {
   }
 
   @Post("rules/:ruleId/test")
-  async triggerGuildRuleTest(
+  triggerGuildRuleTest(
     @GuildData() guild: Guild,
     @Param("ruleId", ParseIntPipe) ruleId: number,
   ) {
@@ -119,15 +119,12 @@ export class NotificationsGuildController {
   }
 
   @Get("jobs")
-  async getGuildJobs(@GuildData() guild: Guild) {
+  getGuildJobs(@GuildData() guild: Guild) {
     return this.jobService.listGuildJobs(guild.id);
   }
 
   @Delete("jobs/:jobId")
-  async cancelGuildJob(
-    @GuildData() guild: Guild,
-    @Param("jobId") jobId: string,
-  ) {
+  cancelGuildJob(@GuildData() guild: Guild, @Param("jobId") jobId: string) {
     return this.jobService.cancelGuildJob(guild.id, jobId);
   }
 }

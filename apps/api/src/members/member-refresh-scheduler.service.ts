@@ -97,7 +97,7 @@ return 0
     return Boolean(await this.redisService.get(this.getUserLockKey(userId)));
   }
 
-  async acquireUserRefreshLock(
+  acquireUserRefreshLock(
     userId: string,
     owner: string,
     ttlSeconds = this.USER_LOCK_TTL_SECONDS,
@@ -131,7 +131,7 @@ return 0
     );
   }
 
-  async getNextRefreshAt(userId: string): Promise<Date | null> {
+  getNextRefreshAt(userId: string): Promise<Date | null> {
     return this.rateLimiter.getNextAvailableAtForUser(
       userId,
       this.MEMBER_ENDPOINT,

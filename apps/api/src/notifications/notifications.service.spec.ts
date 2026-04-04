@@ -1,4 +1,5 @@
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
+import { mockFn } from "src/test/mock-fn";
 import { getQueueToken } from "@nestjs/bullmq";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { NotificationTargetType } from "@lootlog/types";
@@ -24,77 +25,77 @@ describe("Notification Services", () => {
   let watchedItemService: WatchedItemService;
 
   const mockPrisma = {
-    $transaction: vi.fn(),
+    $transaction: mockFn(),
     guild: {
-      findUnique: vi.fn(),
+      findUnique: mockFn(),
     },
     member: {
-      findMany: vi.fn(),
+      findMany: mockFn(),
     },
     notificationRule: {
-      count: vi.fn(),
-      findFirst: vi.fn(),
-      findMany: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-      deleteMany: vi.fn(),
+      count: mockFn(),
+      findFirst: mockFn(),
+      findMany: mockFn(),
+      create: mockFn(),
+      update: mockFn(),
+      delete: mockFn(),
+      deleteMany: mockFn(),
     },
     notificationRuleTarget: {
-      createMany: vi.fn(),
-      findMany: vi.fn(),
+      createMany: mockFn(),
+      findMany: mockFn(),
     },
     timer: {
-      findMany: vi.fn(),
+      findMany: mockFn(),
     },
     watchedItem: {
-      count: vi.fn(),
-      findMany: vi.fn(),
-      findUnique: vi.fn(),
-      update: vi.fn(),
-      upsert: vi.fn(),
+      count: mockFn(),
+      findMany: mockFn(),
+      findUnique: mockFn(),
+      update: mockFn(),
+      upsert: mockFn(),
     },
     notificationTarget: {
-      findMany: vi.fn(),
-      delete: vi.fn(),
-      deleteMany: vi.fn(),
-      upsert: vi.fn(),
-      findFirst: vi.fn(),
-      update: vi.fn(),
+      findMany: mockFn(),
+      delete: mockFn(),
+      deleteMany: mockFn(),
+      upsert: mockFn(),
+      findFirst: mockFn(),
+      update: mockFn(),
     },
     notificationJob: {
-      create: vi.fn(),
-      findFirst: vi.fn(),
-      findMany: vi.fn(),
-      findUnique: vi.fn(),
-      update: vi.fn(),
-      updateMany: vi.fn(),
+      create: mockFn(),
+      findFirst: mockFn(),
+      findMany: mockFn(),
+      findUnique: mockFn(),
+      update: mockFn(),
+      updateMany: mockFn(),
     },
   };
 
   const removedJobs = [
     {
-      remove: vi.fn(),
+      remove: mockFn(),
     },
     {
-      remove: vi.fn(),
+      remove: mockFn(),
     },
   ];
 
   const mockQueue = {
-    add: vi.fn(),
-    getJob: vi.fn(),
+    add: mockFn(),
+    getJob: mockFn(),
   };
 
   const mockChannelsService = {};
   const mockGuildsService = {
-    hasRequiredGuildPermissions: vi.fn(),
-    getGuildDiscordSyncStatus: vi.fn(),
-    getUserGuilds: vi.fn(),
-    getMultipleGuildsByIds: vi.fn(),
+    hasRequiredGuildPermissions: mockFn(),
+    getGuildDiscordSyncStatus: mockFn(),
+    getUserGuilds: mockFn(),
+    getMultipleGuildsByIds: mockFn(),
   };
   const mockAmqpConnection = {
-    publish: vi.fn(),
+    publish: mockFn(),
   };
 
   beforeEach(async () => {
@@ -122,17 +123,15 @@ describe("Notification Services", () => {
       active: true,
       canSend: true,
     });
-    mockPrisma.notificationTarget.update.mockImplementation(
-      async ({ data }) => ({
-        id: 11,
-        ownerType: "USER",
-        ownerId: "user-1",
-        targetType: "DM",
-        active: data.active ?? true,
-        canSend: true,
-        displayName: "Discord DM",
-      }),
-    );
+    mockPrisma.notificationTarget.update.mockImplementation(({ data }) => ({
+      id: 11,
+      ownerType: "USER",
+      ownerId: "user-1",
+      targetType: "DM",
+      active: data.active ?? true,
+      canSend: true,
+      displayName: "Discord DM",
+    }));
     mockPrisma.guild.findUnique.mockResolvedValue({
       notificationRuleLimit: 20,
     });
@@ -198,12 +197,12 @@ describe("Notification Services", () => {
     mockPrisma.notificationRuleTarget.findMany.mockResolvedValue([]);
     mockPrisma.notificationRule.deleteMany.mockResolvedValue({ count: 0 });
     mockPrisma.notificationRule.delete.mockResolvedValue(undefined);
-    mockPrisma.$transaction.mockImplementation(async (callback) =>
+    mockPrisma.$transaction.mockImplementation((callback) =>
       callback({
         watchedItem: {
           update: mockPrisma.watchedItem.update,
           upsert: mockPrisma.watchedItem.upsert,
-          delete: vi.fn(),
+          delete: mockFn(),
         },
         notificationRule: {
           create: mockPrisma.notificationRule.create,
@@ -288,7 +287,7 @@ describe("Notification Services", () => {
       .mockResolvedValueOnce([{ id: "job-2" }]);
     mockQueue.getJob
       .mockResolvedValueOnce(removedJobs[0])
-      .mockResolvedValueOnce({ remove: vi.fn() })
+      .mockResolvedValueOnce({ remove: mockFn() })
       .mockResolvedValueOnce(removedJobs[1]);
 
     await targetService.handleGuildChannelDeleted({
@@ -386,7 +385,7 @@ describe("Notification Services", () => {
   it("rebuilds guild rule jobs after confirming rule ownership", async () => {
     const rebuildJobsForRuleSpy = vi
       .spyOn(jobService, "rebuildJobsForRule")
-      .mockImplementation(async () => undefined);
+      .mockImplementation(() => undefined);
 
     await ruleService.rebuildGuildRuleJobs("guild-1", 77);
 

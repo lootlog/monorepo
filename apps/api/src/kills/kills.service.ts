@@ -835,7 +835,13 @@ export class KillsService {
 
     return {
       npc: {
-        ...npcInfo!,
+        ...(npcInfo ?? {
+          npcName: "",
+          npcIcon: null,
+          npcLvl: null,
+          npcType: null,
+          npcProf: null,
+        }),
         uniqueGuildKills: summary?.uniqueKills ?? 0,
         totalMemberParticipations,
       },

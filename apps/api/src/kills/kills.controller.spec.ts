@@ -1,9 +1,10 @@
 import type { Mock } from "vitest";
+import { mockFn } from "src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { plainToInstance } from "class-transformer";
 import { KillsController } from "./kills.controller";
 import { KillsService } from "./kills.service";
-import { CreateKillDto } from "./dto/create-kill.dto";
+import type { CreateKillDto } from "./dto/create-kill.dto";
 import {
   GetGuildKillStatsDto,
   GetUserKillStatsDto,
@@ -54,9 +55,9 @@ describe("KillsController", () => {
 
   beforeEach(async () => {
     const mockKillsService = {
-      createKill: vi.fn(),
-      getGuildKillStats: vi.fn(),
-      getUserKillStats: vi.fn(),
+      createKill: mockFn(),
+      getGuildKillStats: mockFn(),
+      getUserKillStats: mockFn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -123,7 +124,7 @@ describe("KillsController", () => {
 
   describe("getGuildKillStats", () => {
     const guildId = "guild123";
-    const mockGuildData = { id: guildId } as any;
+    const mockGuildData = { id: guildId } as { id: string };
     const permissions = [Permission.LOOTLOG_LOOTS_READ];
     const roles = [mockRole];
 

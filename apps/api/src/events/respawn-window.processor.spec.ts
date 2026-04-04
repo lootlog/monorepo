@@ -1,4 +1,5 @@
 import type { Mock } from "vitest";
+import { mockFn } from "src/test/mock-fn";
 import { getQueueToken } from "@nestjs/bullmq";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
@@ -17,25 +18,25 @@ describe("RespawnWindowProcessor", () => {
   let logger: { log: Mock };
 
   const mockEventsService = {
-    closeRespawnWindow: vi.fn(),
+    closeRespawnWindow: mockFn(),
   };
 
   const mockLogger = {
-    log: vi.fn(),
+    log: mockFn(),
   };
 
   const mockPrisma = {
-    event: { findFirst: vi.fn() },
-    eventHeroNpc: { findFirst: vi.fn() },
-    timer: { findUnique: vi.fn() },
+    event: { findFirst: mockFn() },
+    eventHeroNpc: { findFirst: mockFn() },
+    timer: { findUnique: mockFn() },
   };
 
   const mockQueue = {
-    add: vi.fn(),
+    add: mockFn(),
   };
 
   const mockTimersService = {
-    getEventRespawnTimer: vi.fn(),
+    getEventRespawnTimer: mockFn(),
   };
 
   beforeEach(async () => {

@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { mockFn } from "src/test/mock-fn";
 import { GuildsController } from "./guilds.controller";
 import { GuildsService } from "./guilds.service";
 import { AuthGuard } from "src/shared/guards/auth.guard";
@@ -10,12 +11,12 @@ describe("GuildsController", () => {
   let controller: GuildsController;
 
   const mockGuildsService = {
-    getUserGuilds: vi.fn(),
-    getUserGuildsWithPermissions: vi.fn(),
-    getManageableUserGuilds: vi.fn(),
-    getGuildById: vi.fn(),
-    updateGuildConfig: vi.fn(),
-    getWorldsByGuildId: vi.fn(),
+    getUserGuilds: mockFn(),
+    getUserGuildsWithPermissions: mockFn(),
+    getManageableUserGuilds: mockFn(),
+    getGuildById: mockFn(),
+    updateGuildConfig: mockFn(),
+    getWorldsByGuildId: mockFn(),
   };
 
   const mockMemberSyncInterceptor = {

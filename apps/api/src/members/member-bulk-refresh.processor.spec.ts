@@ -1,4 +1,5 @@
 import type { Mock } from "vitest";
+import { mockFn } from "src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { Job } from "bullmq";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
@@ -61,22 +62,22 @@ describe("MemberBulkRefreshProcessor", () => {
     vi.clearAllMocks();
 
     const mockMembersService = {
-      refreshMember: vi.fn(),
+      refreshMember: mockFn(),
     };
 
     const mockPrismaService = {
       memberRefreshJob: {
-        update: vi.fn(),
-        findUnique: vi.fn().mockResolvedValue(mockJobRecord),
+        update: mockFn(),
+        findUnique: mockFn().mockResolvedValue(mockJobRecord),
       },
     };
 
     const mockAmqpConnection = {
-      publish: vi.fn(),
+      publish: mockFn(),
     };
 
     const mockLogger = {
-      log: vi.fn(),
+      log: mockFn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -113,8 +114,8 @@ describe("MemberBulkRefreshProcessor", () => {
   it("should classify null and queued refreshes as skipped", async () => {
     membersService.refreshMember
       .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({ refreshQueued: true } as any)
-      .mockResolvedValueOnce({ refreshQueued: false } as any);
+      .mockResolvedValueOnce({ refreshQueued: true } as never)
+      .mockResolvedValueOnce({ refreshQueued: false } as never);
 
     await processor.process(createJob());
 

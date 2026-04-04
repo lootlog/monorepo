@@ -10,8 +10,15 @@ import { ConfigKey } from "src/config/config-key.enum";
   imports: [
     SharedRedisModule.registerAsync({
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) =>
-        configService.get<RedisConfig>(ConfigKey.REDIS)!,
+      useFactory: (configService: ConfigService) => {
+        const redisConfig = configService.get<RedisConfig>(ConfigKey.REDIS);
+
+        if (!redisConfig) {
+          throw new Error("Missing Redis configuration");
+        }
+
+        return redisConfig;
+      },
     }),
   ],
   exports: [SharedRedisModule],

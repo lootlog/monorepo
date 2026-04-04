@@ -147,7 +147,7 @@ export class MessagingService {
     return { notificationId, guildIds };
   }
 
-  async emitNotification(payload: unknown) {
+  emitNotification(payload: unknown) {
     this.amqpConnection.publish(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.GUILDS_NOTIFICATIONS_SEND,

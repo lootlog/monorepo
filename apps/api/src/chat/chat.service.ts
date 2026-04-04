@@ -14,11 +14,17 @@ import { RedisService } from "@lootlog/nest-shared";
 import { v6 } from "uuid";
 import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
 import { GuildsService } from "src/guilds/guilds.service";
-import { NpcType, Permission, Role } from "src/generated/prisma/client";
-import { getNpcTypeByWt } from "@lootlog/types";
+import { Permission, type Role } from "src/generated/prisma/client";
 import { canViewChatMessage } from "src/shared/utils/can-view-chat-message";
 
 const MAX_MESSAGES = 100;
+
+type ChatMessage = SendMessageDto & {
+  id: string;
+  senderId: string;
+  timestamp: string;
+  guildId: string;
+};
 
 @Injectable()
 export class ChatService {
@@ -35,9 +41,6 @@ export class ChatService {
 
   async sendMessage(discordId: string, guildId: string, data: SendMessageDto) {
     const key = this.getChatMessagesKey(guildId);
-    const npcType = data.npc
-      ? getNpcTypeByWt(NpcType, data.npc.wt, data.npc.prof, data.npc.type)
-      : undefined;
     const msg = {
       id: v6(),
       message: data.message,
@@ -45,7 +48,7 @@ export class ChatService {
       timestamp: new Date().toISOString(),
       guildId,
       type: data.type,
-      npc: data.npc ? { ...data.npc, type: npcType } : undefined,
+      npc: data.npc ? { ...data.npc } : undefined,
       characterData: data.characterData,
       partyGathering: data.partyGathering,
     };
@@ -57,7 +60,7 @@ export class ChatService {
     return msg;
   }
 
-  private async getRawMessages(guildId: string): Promise<any[]> {
+  private async getRawMessages(guildId: string): Promise<ChatMessage[]> {
     const key = this.getChatMessagesKey(guildId);
     let elements: string[];
 
@@ -75,7 +78,7 @@ export class ChatService {
       throw error;
     }
 
-    return elements.reduce<any[]>((acc, element) => {
+    return elements.reduce<ChatMessage[]>((acc, element) => {
       try {
         acc.push(JSON.parse(element));
       } catch (error) {
@@ -129,8 +132,13 @@ export class ChatService {
     return this.filterMessagesByPermissions(messages, roles);
   }
 
-  private filterMessagesByPermissions(messages: any[], roles: Role[]): any[] {
-    return messages.filter((message) => canViewChatMessage(message, roles));
+  private filterMessagesByPermissions(
+    messages: ChatMessage[],
+    roles: Role[],
+  ): ChatMessage[] {
+    return messages.filter((message) =>
+      canViewChatMessage(message as SendMessageDto, roles),
+    );
   }
 
   async clearMessages(guildId: string) {
@@ -138,7 +146,7 @@ export class ChatService {
     await this.redisService.del(key);
   }
 
-  async emitMessage(msg: any) {
+  emitMessage(msg: ChatMessage) {
     this.amqpConnection.publish(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.GUILDS_SEND_MESSAGE,

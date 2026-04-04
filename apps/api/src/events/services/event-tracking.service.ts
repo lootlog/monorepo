@@ -3,10 +3,10 @@ import {
   Injectable,
   Logger,
   NotFoundException,
-  OnModuleInit,
+  type OnModuleInit,
 } from "@nestjs/common";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import Redlock, { ExecutionError } from "redlock";
+import { ExecutionError } from "redlock";
 import { CoverageGapType } from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared";
@@ -22,7 +22,7 @@ import { TimersService } from "src/timers/timers.service";
 @Injectable()
 export class EventTrackingService implements OnModuleInit {
   private readonly logger = new Logger(EventTrackingService.name);
-  private redlock: Redlock;
+  private redlock: ReturnType<RedlockService["createInstance"]>;
   private readonly presenceLockTtl = 5000;
 
   constructor(
@@ -34,7 +34,7 @@ export class EventTrackingService implements OnModuleInit {
     private readonly timersService: TimersService,
   ) {}
 
-  async onModuleInit() {
+  onModuleInit() {
     this.redlock = this.redlockService.createInstance();
   }
 
@@ -231,7 +231,7 @@ export class EventTrackingService implements OnModuleInit {
     return updated;
   }
 
-  async getMemberByDiscordId(discordId: string, guildId: string) {
+  getMemberByDiscordId(discordId: string, guildId: string) {
     return this.prisma.member.findFirst({
       where: {
         userId: discordId,
@@ -604,89 +604,92 @@ export class EventTrackingService implements OnModuleInit {
     const activeNonAfkByMap =
       await this.getActiveNonAfkMembersByMap(assignedActiveMapIds);
 
-    for (const map of activeMaps) {
-      const nonAfkMembers = activeNonAfkByMap.get(map.id) ?? new Set<number>();
+    await Promise.all(
+      activeMaps.map(async (map) => {
+        const nonAfkMembers =
+          activeNonAfkByMap.get(map.id) ?? new Set<number>();
 
-      if (member) {
-        if (hasPlayer) {
-          await this.prisma.eventPresenceLog.updateMany({
-            where: {
-              mapId: map.id,
-              memberId: member.id,
-              endedAt: null,
-            },
-            data: { endedAt: now },
-          });
+        if (member) {
+          if (hasPlayer) {
+            await this.prisma.eventPresenceLog.updateMany({
+              where: {
+                mapId: map.id,
+                memberId: member.id,
+                endedAt: null,
+              },
+              data: { endedAt: now },
+            });
 
-          await this.prisma.eventPresenceLog.create({
-            data: {
+            await this.prisma.eventPresenceLog.create({
+              data: {
+                mapId: map.id,
+                memberId: member.id,
+                isAfk,
+              },
+            });
+
+            this.logger.debug({
+              message: "Created presence log",
               mapId: map.id,
               memberId: member.id,
               isAfk,
-            },
-          });
+            });
 
-          this.logger.debug({
-            message: "Created presence log",
-            mapId: map.id,
-            memberId: member.id,
-            isAfk,
-          });
-
-          if (isAfk) {
-            nonAfkMembers.delete(member.id);
+            if (isAfk) {
+              nonAfkMembers.delete(member.id);
+            } else {
+              nonAfkMembers.add(member.id);
+            }
           } else {
-            nonAfkMembers.add(member.id);
+            const result = await this.prisma.eventPresenceLog.updateMany({
+              where: {
+                mapId: map.id,
+                memberId: member.id,
+                endedAt: null,
+              },
+              data: { endedAt: now },
+            });
+
+            if (result.count > 0) {
+              this.logger.debug({
+                message: "Closed presence log - player left map",
+                mapId: map.id,
+                memberId: member.id,
+              });
+            }
+
+            nonAfkMembers.delete(member.id);
+          }
+        }
+
+        const hasAssignedMembers = map.assignedMembers.length > 0;
+
+        if (!hasAssignedMembers) {
+          return;
+        }
+
+        if (hasPlayer) {
+          if (isAfk) {
+            if (nonAfkMembers.size === 0) {
+              await this.openUncoveredGap(map.id, map.heroNpcId);
+            }
+          } else {
+            await this.closeUncoveredGap(map.id);
           }
         } else {
-          const result = await this.prisma.eventPresenceLog.updateMany({
-            where: {
-              mapId: map.id,
-              memberId: member.id,
-              endedAt: null,
-            },
-            data: { endedAt: now },
-          });
-
-          if (result.count > 0) {
-            this.logger.debug({
-              message: "Closed presence log - player left map",
-              mapId: map.id,
-              memberId: member.id,
-            });
-          }
-
-          nonAfkMembers.delete(member.id);
-        }
-      }
-
-      const hasAssignedMembers = map.assignedMembers.length > 0;
-
-      if (!hasAssignedMembers) {
-        continue;
-      }
-
-      if (hasPlayer) {
-        if (isAfk) {
           if (nonAfkMembers.size === 0) {
             await this.openUncoveredGap(map.id, map.heroNpcId);
           }
-        } else {
-          await this.closeUncoveredGap(map.id);
         }
-      } else {
-        if (nonAfkMembers.size === 0) {
-          await this.openUncoveredGap(map.id, map.heroNpcId);
-        }
-      }
 
-      await this.eventEmitter.emitMapStatusUpdate(
-        guildId,
-        map.heroNpc.eventId,
-        map.id,
-        "presence",
-      );
-    }
+        await this.eventEmitter.emitMapStatusUpdate(
+          guildId,
+          map.heroNpc.eventId,
+          map.id,
+          "presence",
+        );
+      }),
+    );
   }
 
   async getActiveNonAfkPlayersOnMap(mapId: string): Promise<number[]> {
@@ -720,7 +723,10 @@ export class EventTrackingService implements OnModuleInit {
     }
 
     for (const log of activeLogs) {
-      membersByMap.get(log.mapId)!.add(log.memberId);
+      const members = membersByMap.get(log.mapId);
+      if (members) {
+        members.add(log.memberId);
+      }
     }
 
     return membersByMap;

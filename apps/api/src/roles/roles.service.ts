@@ -39,7 +39,7 @@ export class RolesService {
     return roles;
   }
 
-  async bulkCreateRoles(
+  bulkCreateRoles(
     guildId: string,
     roles: GuildRoleDto[],
   ): Promise<Prisma.BatchPayload | undefined> {

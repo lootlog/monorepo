@@ -49,9 +49,10 @@ export async function computeTestTriggerUsage(
 
   for (const targetId of targetIds) {
     const usage = jobsByTargetId.get(targetId) ?? [];
+    const firstUsage = usage[0];
     const nextAvailableAt =
-      usage.length >= limit
-        ? new Date(usage[0]!.getTime() + windowMs).toISOString()
+      usage.length >= limit && firstUsage
+        ? new Date(firstUsage.getTime() + windowMs).toISOString()
         : null;
 
     usageByTargetId.set(targetId, {

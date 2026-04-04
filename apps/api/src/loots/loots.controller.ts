@@ -21,9 +21,9 @@ import {
 import { DiscordId, UserId } from "@lootlog/nest-shared";
 import { plainToInstance } from "class-transformer";
 import { type Guild, Permission, type Role } from "src/generated/prisma/client";
-import { CreateCommentDto } from "src/loots/dto/create-comment-dto";
-import { CreateLootDto } from "src/loots/dto/create-loot.dto";
-import { UpdateLootDto } from "src/loots/dto/update-loot.dto";
+import type { CreateCommentDto } from "src/loots/dto/create-comment-dto";
+import type { CreateLootDto } from "src/loots/dto/create-loot.dto";
+import type { UpdateLootDto } from "src/loots/dto/update-loot.dto";
 import { LootsService } from "src/loots/loots.service";
 import { LootStatsService } from "src/loots/services/loot-stats.service";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
@@ -259,7 +259,7 @@ export class LootsController {
     status: 403,
     description: "Forbidden - insufficient permissions",
   })
-  async getLootStats(
+  getLootStats(
     @GuildData() guild: Guild,
     @Query("period") period?: Period,
     @Query("world") world?: string,
@@ -474,7 +474,7 @@ export class LootsController {
     description: "Loot created successfully",
     type: LootEntity,
   })
-  async createLoot(
+  createLoot(
     @DiscordId() discordId: string,
     @UserId() userId: string,
     @Body() body: CreateLootDto,
@@ -570,7 +570,7 @@ export class LootsController {
     description: "Forbidden - admin or manage permission required",
   })
   @ApiResponse({ status: 404, description: "Loot not found" })
-  async deleteLoot(
+  deleteLoot(
     @Param("lootId", new ParseIntPipe()) lootId: number,
     @GuildData() guild: Guild,
   ) {
@@ -592,7 +592,7 @@ export class LootsController {
     type: LootEntity,
   })
   @ApiResponse({ status: 404, description: "Loot not found" })
-  async updateLoot(
+  updateLoot(
     @DiscordId() discordId: string,
     @Body() body: UpdateLootDto,
     @Param("id", new ParseIntPipe()) lootId: number,

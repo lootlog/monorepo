@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { mockFn } from "src/test/mock-fn";
 import { ForbiddenException } from "@nestjs/common";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
@@ -15,20 +16,20 @@ vi.mock("uuid", () => ({
 describe("MessagingService", () => {
   let service: MessagingService;
 
-  const mockLogger = { log: vi.fn() };
+  const mockLogger = { log: mockFn() };
 
   const mockAmqpConnection = {
-    publish: vi.fn(),
+    publish: mockFn(),
   };
 
   const mockGuildsService = {
-    getGuildsForRequiredPermissions: vi.fn(),
+    getGuildsForRequiredPermissions: mockFn(),
   };
 
   const mockRedisService = {
-    get: vi.fn(),
-    set: vi.fn(),
-    del: vi.fn(),
+    get: mockFn(),
+    set: mockFn(),
+    del: mockFn(),
   };
 
   beforeEach(async () => {

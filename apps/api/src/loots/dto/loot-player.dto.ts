@@ -1,4 +1,4 @@
-import { Profession } from "src/generated/prisma/client";
+import type { Profession } from "src/generated/prisma/client";
 
 export type LootPlayerDto = {
   id: string;

@@ -1,12 +1,12 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "src/db/prisma.service";
 import {
-  Prisma,
-  Permission,
-  Profession,
   ItemRarity,
   NpcType,
+  Permission,
+  Profession,
   type Guild,
+  type Prisma,
   type Role,
 } from "src/generated/prisma/client";
 import type { FetchLootsParamsDto } from "src/loots/dto/fetch-loots-params.dto";
@@ -144,7 +144,7 @@ export class LootQueryService {
     return results;
   }
 
-  async countLootsByGuildId(
+  countLootsByGuildId(
     guild: Guild,
     permissions: Permission[],
     roles: Role[],

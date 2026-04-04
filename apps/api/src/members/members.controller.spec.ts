@@ -1,4 +1,5 @@
 import type { Mock } from "vitest";
+import { mockFn } from "src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { plainToInstance } from "class-transformer";
 import { MembersController } from "./members.controller";
@@ -69,12 +70,12 @@ describe("MembersController", () => {
 
   beforeEach(async () => {
     const mockMembersService = {
-      getGuildMemberById: vi.fn(),
-      refreshMember: vi.fn(),
-      getGuildMembers: vi.fn(),
-      createBulkRefreshJob: vi.fn(),
-      getLatestRefreshJob: vi.fn(),
-      getRefreshJobStatus: vi.fn(),
+      getGuildMemberById: mockFn(),
+      refreshMember: mockFn(),
+      getGuildMembers: mockFn(),
+      createBulkRefreshJob: mockFn(),
+      getLatestRefreshJob: mockFn(),
+      getRefreshJobStatus: mockFn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -87,9 +88,9 @@ describe("MembersController", () => {
       ],
     })
       .overrideGuard(AuthGuard)
-      .useValue({ canActivate: vi.fn().mockReturnValue(true) })
+      .useValue({ canActivate: mockFn().mockReturnValue(true) })
       .overrideGuard(PermissionsGuard)
-      .useValue({ canActivate: vi.fn().mockReturnValue(true) })
+      .useValue({ canActivate: mockFn().mockReturnValue(true) })
       .compile();
 
     controller = module.get<MembersController>(MembersController);

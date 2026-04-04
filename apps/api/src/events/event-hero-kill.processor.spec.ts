@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { mockFn } from "src/test/mock-fn";
 import type { Job } from "bullmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { EventHeroKillProcessor } from "./event-hero-kill.processor";
@@ -9,11 +10,11 @@ describe("EventHeroKillProcessor", () => {
   let processor: EventHeroKillProcessor;
 
   const mockEventsService = {
-    checkAndRecordEventHeroKill: vi.fn(),
+    checkAndRecordEventHeroKill: mockFn(),
   };
 
   const mockLogger = {
-    log: vi.fn(),
+    log: mockFn(),
   };
 
   beforeEach(async () => {

@@ -24,14 +24,16 @@ export function canViewEventHero(
     return true;
   }
 
-  if (hero.npcLvl === null || hero.npcLvl === 0) {
+  const heroLevel = hero.npcLvl;
+
+  if (heroLevel === null || heroLevel === 0) {
     return true;
   }
 
   return roles.some(
     (role) =>
-      (role.lvlRangeFrom ?? 0) <= hero.npcLvl! &&
-      (role.lvlRangeTo ?? 500) >= hero.npcLvl!,
+      (role.lvlRangeFrom ?? 0) <= heroLevel &&
+      (role.lvlRangeTo ?? 500) >= heroLevel,
   );
 }
 

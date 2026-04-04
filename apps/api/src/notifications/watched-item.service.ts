@@ -13,7 +13,7 @@ import { GuildsService } from "src/guilds/guilds.service";
 import { NotificationJobService } from "src/notifications/notification-job.service";
 import { NotificationMatchingService } from "src/notifications/notification-matching.service";
 import { NotificationTargetService } from "src/notifications/notification-target.service";
-import { Error } from "src/notifications/enum/error.enum";
+import { Error as NotificationError } from "src/notifications/enum/error.enum";
 import { ensureLimitNotExceeded } from "src/notifications/utils/ensure-limit-not-exceeded.util";
 import type { CreateWatchedItemQuickAddDto } from "src/notifications/dto/create-watched-item-quick-add.dto";
 import type { CreateWatchedItemDto } from "src/notifications/dto/create-watched-item.dto";
@@ -155,7 +155,9 @@ export class WatchedItemService {
       await this.targetService.getActiveUserTargetIds(discordId);
 
     if (targetIds.length === 0) {
-      throw new ConflictException(Error.ACTIVE_DISCORD_DM_TARGET_REQUIRED);
+      throw new ConflictException(
+        NotificationError.ACTIVE_DISCORD_DM_TARGET_REQUIRED,
+      );
     }
 
     const existingWatchedItem = await this.prisma.watchedItem.findUnique({
@@ -196,9 +198,16 @@ export class WatchedItemService {
             },
           },
         });
+        const notificationRuleId = existingWatchedItem.notificationRuleId;
+        if (!notificationRuleId) {
+          throw new globalThis.Error(
+            "Missing notification rule id for watched item",
+          );
+        }
+
         await tx.notificationRuleTarget.createMany({
           data: targetIds.map((targetId) => ({
-            ruleId: existingWatchedItem.notificationRuleId!,
+            ruleId: notificationRuleId,
             targetId,
           })),
           skipDuplicates: true,
@@ -281,7 +290,7 @@ export class WatchedItemService {
     });
 
     if (!watchedItem) {
-      throw new NotFoundException(Error.WATCHED_ITEM_NOT_FOUND);
+      throw new NotFoundException(NotificationError.WATCHED_ITEM_NOT_FOUND);
     }
 
     if (watchedItem.notificationRuleId) {
@@ -313,7 +322,7 @@ export class WatchedItemService {
     ensureLimitNotExceeded({
       currentCount: currentWatchedItemCount,
       limit: USER_WATCHED_ITEM_LIMIT,
-      errorMessage: Error.USER_WATCHED_ITEM_LIMIT_REACHED,
+      errorMessage: NotificationError.USER_WATCHED_ITEM_LIMIT_REACHED,
       metadata: {
         watchedItemLimit: USER_WATCHED_ITEM_LIMIT,
         watchedItemCount: currentWatchedItemCount,
@@ -329,7 +338,9 @@ export class WatchedItemService {
     const uniqueInputIds = [...new Set(params.guildIds)];
 
     if (uniqueInputIds.length === 0) {
-      throw new BadRequestException(Error.AT_LEAST_ONE_GUILD_REQUIRED);
+      throw new BadRequestException(
+        NotificationError.AT_LEAST_ONE_GUILD_REQUIRED,
+      );
     }
 
     const userGuilds = await this.guildsService.getUserGuilds(
@@ -350,7 +361,7 @@ export class WatchedItemService {
 
     if (resolvedGuildIds.some((id) => id === null)) {
       throw new BadRequestException(
-        Error.SELECTED_GUILDS_NOT_AVAILABLE_FOR_AUTHENTICATED_USER,
+        NotificationError.SELECTED_GUILDS_NOT_AVAILABLE_FOR_AUTHENTICATED_USER,
       );
     }
 
