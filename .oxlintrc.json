@@ -89,9 +89,9 @@
     "unicorn/prefer-ternary": "off",
     "unicorn/throw-new-error": "error",
 
-    "jest/no-disabled-tests": "warn",
-    "jest/no-focused-tests": "error",
-    "jest/valid-expect": "error",
+    "vitest/no-disabled-tests": "warn",
+    "vitest/no-focused-tests": "error",
+    "vitest/valid-expect": "error",
 
     "nextjs/no-html-link-for-pages": "off",
     "nextjs/no-assign-module-variable": "off"

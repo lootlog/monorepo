@@ -90,7 +90,7 @@ Lootlog is a comprehensive platform for **Margonem** clans that provides:
 - **GitHub Actions** - CI/CD pipelines
 - **Dependabot** - Automated dependency updates
 - **Oxlint + Oxfmt** - Code quality and formatting
-- **Jest + Vitest** - Testing frameworks
+- **Vitest** - Testing framework
 
 ## Quick Start
 
