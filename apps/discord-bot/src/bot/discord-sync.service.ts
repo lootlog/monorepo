@@ -662,7 +662,7 @@ export class DiscordSyncService {
           id: role.id,
           name: role.name,
           color: role.color,
-          admin: isDiscordAdministrator(Number(role.permissions.bitfield)),
+          admin: isDiscordAdministrator(role.permissions.bitfield),
           position: role.position,
         })),
       },
@@ -702,7 +702,7 @@ export class DiscordSyncService {
         name: role.name,
         color: role.color,
         position: role.position,
-        admin: isDiscordAdministrator(Number(role.permissions.bitfield)),
+        admin: isDiscordAdministrator(role.permissions.bitfield),
       },
     );
   }
@@ -717,7 +717,7 @@ export class DiscordSyncService {
         name: role.name,
         color: role.color,
         position: role.position,
-        admin: isDiscordAdministrator(Number(role.permissions.bitfield)),
+        admin: isDiscordAdministrator(role.permissions.bitfield),
       },
     );
   }
