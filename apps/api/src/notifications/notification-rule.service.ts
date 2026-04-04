@@ -27,18 +27,17 @@ import {
   calculateFirstOccurrenceInTimeZone,
   isValidTimeZone,
 } from "src/notifications/utils/notification-schedule-time.util";
+import { ensureLimitNotExceeded } from "src/notifications/utils/ensure-limit-not-exceeded.util";
+import {
+  type TestTriggerUsage,
+  computeTestTriggerUsage,
+  getDefaultTestTriggerUsage,
+  getWorstTestTriggerUsage,
+} from "src/notifications/utils/test-trigger-usage.util";
 
 const GUILD_NOTIFICATION_TEST_TRIGGER_LIMIT = 10;
 const GUILD_NOTIFICATION_TEST_TRIGGER_WINDOW_MS = 15 * 60_000;
 const GUILD_NOTIFICATION_MAX_NPCS_PER_RULE = 5;
-
-type TestTriggerUsage = {
-  limit: number;
-  used: number;
-  remaining: number;
-  windowSeconds: number;
-  nextAvailableAt: string | null;
-};
 const USER_NOTIFICATION_RULE_LIMIT = 50;
 
 @Injectable()
@@ -110,51 +109,17 @@ export class NotificationRuleService {
   async createGuildRule(guildId: string, data: CreateNotificationRuleDto) {
     await this.ensureGuildNotificationPermissions(guildId);
     await this.ensureGuildRuleLimitNotExceeded(guildId);
-    const isScheduledMessage =
-      (data.triggerType as string) ===
-      DbNotificationTriggerType.SCHEDULED_MESSAGE;
 
-    if (!isScheduledMessage) {
-      this.validateRuleNpcSelection(data);
-    }
+    const rule = await this.createRule(
+      DbNotificationOwnerType.GUILD,
+      guildId,
+      data,
+      { guildId },
+    );
 
-    const targetIds = await this.targetService.validateTargetIds({
-      ownerType: DbNotificationOwnerType.GUILD,
-      ownerId: guildId,
-      targetIds: data.targetIds,
-    });
+    await this.jobService.rebuildJobsForRule(rule.id);
 
-    const notificationRule = await this.prisma.notificationRule.create({
-      data: {
-        ownerType: DbNotificationOwnerType.GUILD,
-        ownerId: guildId,
-        triggerType: data.triggerType as DbNotificationTriggerType,
-        guildId,
-        world: isScheduledMessage ? null : (data.world ?? null),
-        name: data.name ?? null,
-        filters: isScheduledMessage ? Prisma.DbNull : this.buildFilters(data),
-        contentTemplate: this.normalizeContentTemplate(data.contentTemplate),
-        ...this.resolveScheduleConfig({
-          triggerType: data.triggerType as DbNotificationTriggerType,
-          data,
-        }),
-        ...this.resolveScheduledMessageFields({
-          ownerType: DbNotificationOwnerType.GUILD,
-          data: isScheduledMessage ? data : null,
-        }),
-        enabled: data.enabled ?? true,
-        dedupeWindowSeconds: 0,
-        targets: {
-          createMany: {
-            data: targetIds.map((targetId) => ({ targetId })),
-          },
-        },
-      },
-    });
-
-    await this.jobService.rebuildJobsForRule(notificationRule.id);
-
-    return this.jobService.getRuleById(notificationRule.id);
+    return this.jobService.getRuleById(rule.id);
   }
 
   async updateGuildRule(
@@ -163,92 +128,8 @@ export class NotificationRuleService {
     data: UpdateNotificationRuleDto,
   ) {
     await this.ensureGuildNotificationPermissions(guildId);
-    const hasName = Object.prototype.hasOwnProperty.call(data, "name");
-    const hasWorld = Object.prototype.hasOwnProperty.call(data, "world");
-    const hasContentTemplate = Object.prototype.hasOwnProperty.call(
-      data,
-      "contentTemplate",
-    );
-    const existingRule = await this.ensureRule({
-      ownerType: DbNotificationOwnerType.GUILD,
-      ownerId: guildId,
-      ruleId,
-    });
-    const nextTriggerType =
-      (data.triggerType as DbNotificationTriggerType | undefined) ??
-      existingRule.triggerType;
-    const isScheduledMessage =
-      nextTriggerType === DbNotificationTriggerType.SCHEDULED_MESSAGE;
 
-    if (!isScheduledMessage) {
-      this.validateRuleNpcSelection(data);
-    }
-
-    const targetIds = data.targetIds
-      ? await this.targetService.validateTargetIds({
-          ownerType: DbNotificationOwnerType.GUILD,
-          ownerId: guildId,
-          targetIds: data.targetIds,
-        })
-      : null;
-
-    await this.prisma.$transaction(async (tx) => {
-      await tx.notificationRule.update({
-        where: { id: ruleId },
-        data: {
-          triggerType: nextTriggerType,
-          world: isScheduledMessage
-            ? null
-            : hasWorld
-              ? (data.world ?? null)
-              : existingRule.world,
-          name: hasName ? (data.name ?? null) : existingRule.name,
-          contentTemplate: hasContentTemplate
-            ? this.normalizeContentTemplate(data.contentTemplate)
-            : existingRule.contentTemplate,
-          filters: isScheduledMessage
-            ? Prisma.DbNull
-            : data.npcId !== undefined ||
-                data.npcIds !== undefined ||
-                data.itemId !== undefined ||
-                data.itemIds !== undefined
-              ? this.buildFilters(data)
-              : existingRule.filters,
-          ...this.resolveScheduleConfig({
-            triggerType: nextTriggerType,
-            data,
-            existingRule,
-          }),
-          ...this.resolveScheduledMessageFields({
-            ownerType: DbNotificationOwnerType.GUILD,
-            data: isScheduledMessage ? data : null,
-            existingRule: isScheduledMessage
-              ? {
-                  scheduledAt: existingRule.scheduledAt,
-                  scheduleIntervalType: existingRule.scheduleIntervalType,
-                  scheduleIntervalValue: existingRule.scheduleIntervalValue,
-                  scheduleWeekday: existingRule.scheduleWeekday,
-                  scheduleTimeOfDay: existingRule.scheduleTimeOfDay,
-                  scheduledUntil: existingRule.scheduledUntil,
-                  scheduleTimezone: existingRule.scheduleTimezone,
-                }
-              : undefined,
-          }),
-          enabled: data.enabled ?? existingRule.enabled,
-          dedupeWindowSeconds: existingRule.dedupeWindowSeconds,
-        },
-      });
-
-      if (targetIds) {
-        await tx.notificationRuleTarget.deleteMany({
-          where: { ruleId },
-        });
-        await tx.notificationRuleTarget.createMany({
-          data: targetIds.map((targetId) => ({ ruleId, targetId })),
-          skipDuplicates: true,
-        });
-      }
-    });
+    await this.updateRule(DbNotificationOwnerType.GUILD, guildId, ruleId, data);
 
     await this.jobService.rebuildJobsForRule(ruleId);
 
@@ -256,14 +137,7 @@ export class NotificationRuleService {
   }
 
   async deleteGuildRule(guildId: string, ruleId: number) {
-    await this.ensureRule({
-      ownerType: DbNotificationOwnerType.GUILD,
-      ownerId: guildId,
-      ruleId,
-    });
-    await this.jobService.cancelPendingJobs({ ruleId });
-    await this.prisma.notificationRule.delete({ where: { id: ruleId } });
-    return { success: true };
+    return this.deleteRule(DbNotificationOwnerType.GUILD, guildId, ruleId);
   }
 
   async rebuildGuildRuleJobs(guildId: string, ruleId: number) {
@@ -326,7 +200,7 @@ export class NotificationRuleService {
     });
 
     if (sendableTargets.length === 0) {
-      const worstUsage = this.getWorstTargetUsage(targetUsage);
+      const worstUsage = getWorstTestTriggerUsage(targetUsage);
       throw new ConflictException({
         message: Error.TEST_TRIGGER_LIMIT_REACHED_FOR_RULE,
         limit: worstUsage?.limit ?? GUILD_NOTIFICATION_TEST_TRIGGER_LIMIT,
@@ -400,8 +274,44 @@ export class NotificationRuleService {
   async createUserRule(discordId: string, data: CreateNotificationRuleDto) {
     await this.ensureUserRuleLimitNotExceeded(discordId);
 
+    const rule = await this.createRule(
+      DbNotificationOwnerType.USER,
+      discordId,
+      data,
+    );
+
+    return this.jobService.getRuleById(rule.id);
+  }
+
+  async updateUserRule(
+    discordId: string,
+    ruleId: number,
+    data: UpdateNotificationRuleDto,
+  ) {
+    await this.updateRule(
+      DbNotificationOwnerType.USER,
+      discordId,
+      ruleId,
+      data,
+    );
+
+    return this.jobService.getRuleById(ruleId);
+  }
+
+  async deleteUserRule(discordId: string, ruleId: number) {
+    return this.deleteRule(DbNotificationOwnerType.USER, discordId, ruleId);
+  }
+
+  // ── Core CRUD (shared by Guild & User) ──────────────────────────────
+
+  private async createRule(
+    ownerType: DbNotificationOwnerType,
+    ownerId: string,
+    data: CreateNotificationRuleDto,
+    options?: { guildId?: string },
+  ) {
     const isScheduledMessage =
-      (data.triggerType as DbNotificationTriggerType) ===
+      (data.triggerType as string) ===
       DbNotificationTriggerType.SCHEDULED_MESSAGE;
 
     if (!isScheduledMessage) {
@@ -409,17 +319,17 @@ export class NotificationRuleService {
     }
 
     const targetIds = await this.targetService.validateTargetIds({
-      ownerType: DbNotificationOwnerType.USER,
-      ownerId: discordId,
+      ownerType,
+      ownerId,
       targetIds: data.targetIds,
     });
 
-    const notificationRule = await this.prisma.notificationRule.create({
+    return this.prisma.notificationRule.create({
       data: {
-        ownerType: DbNotificationOwnerType.USER,
-        ownerId: discordId,
+        ownerType,
+        ownerId,
         triggerType: data.triggerType as DbNotificationTriggerType,
-        guildId: null,
+        guildId: options?.guildId ?? null,
         world: isScheduledMessage ? null : (data.world ?? null),
         name: data.name ?? null,
         filters: isScheduledMessage ? Prisma.DbNull : this.buildFilters(data),
@@ -429,7 +339,7 @@ export class NotificationRuleService {
           data,
         }),
         ...this.resolveScheduledMessageFields({
-          ownerType: DbNotificationOwnerType.USER,
+          ownerType,
           data: isScheduledMessage ? data : null,
         }),
         enabled: data.enabled ?? true,
@@ -441,12 +351,11 @@ export class NotificationRuleService {
         },
       },
     });
-
-    return this.jobService.getRuleById(notificationRule.id);
   }
 
-  async updateUserRule(
-    discordId: string,
+  private async updateRule(
+    ownerType: DbNotificationOwnerType,
+    ownerId: string,
     ruleId: number,
     data: UpdateNotificationRuleDto,
   ) {
@@ -456,11 +365,7 @@ export class NotificationRuleService {
       data,
       "contentTemplate",
     );
-    const existingRule = await this.ensureRule({
-      ownerType: DbNotificationOwnerType.USER,
-      ownerId: discordId,
-      ruleId,
-    });
+    const existingRule = await this.ensureRule({ ownerType, ownerId, ruleId });
     const nextTriggerType =
       (data.triggerType as DbNotificationTriggerType | undefined) ??
       existingRule.triggerType;
@@ -473,8 +378,8 @@ export class NotificationRuleService {
 
     const targetIds = data.targetIds
       ? await this.targetService.validateTargetIds({
-          ownerType: DbNotificationOwnerType.USER,
-          ownerId: discordId,
+          ownerType,
+          ownerId,
           targetIds: data.targetIds,
         })
       : null;
@@ -507,7 +412,7 @@ export class NotificationRuleService {
             existingRule,
           }),
           ...this.resolveScheduledMessageFields({
-            ownerType: DbNotificationOwnerType.USER,
+            ownerType,
             data: isScheduledMessage ? data : null,
             existingRule: isScheduledMessage
               ? {
@@ -536,16 +441,14 @@ export class NotificationRuleService {
         });
       }
     });
-
-    return this.jobService.getRuleById(ruleId);
   }
 
-  async deleteUserRule(discordId: string, ruleId: number) {
-    await this.ensureRule({
-      ownerType: DbNotificationOwnerType.USER,
-      ownerId: discordId,
-      ruleId,
-    });
+  private async deleteRule(
+    ownerType: DbNotificationOwnerType,
+    ownerId: string,
+    ruleId: number,
+  ) {
+    await this.ensureRule({ ownerType, ownerId, ruleId });
     await this.jobService.cancelPendingJobs({ ruleId });
     await this.prisma.notificationRule.delete({ where: { id: ruleId } });
     return { success: true };
@@ -589,13 +492,15 @@ export class NotificationRuleService {
       },
     });
 
-    if (currentRuleCount >= guild.notificationRuleLimit) {
-      throw new ConflictException({
-        message: Error.GUILD_NOTIFICATION_RULE_LIMIT_REACHED,
+    ensureLimitNotExceeded({
+      currentCount: currentRuleCount,
+      limit: guild.notificationRuleLimit,
+      errorMessage: Error.GUILD_NOTIFICATION_RULE_LIMIT_REACHED,
+      metadata: {
         ruleLimit: guild.notificationRuleLimit,
         ruleCount: currentRuleCount,
-      });
-    }
+      },
+    });
   }
 
   private async ensureUserRuleLimitNotExceeded(discordId: string) {
@@ -606,13 +511,15 @@ export class NotificationRuleService {
       },
     });
 
-    if (currentRuleCount >= USER_NOTIFICATION_RULE_LIMIT) {
-      throw new ConflictException({
-        message: Error.USER_NOTIFICATION_RULE_LIMIT_REACHED,
+    ensureLimitNotExceeded({
+      currentCount: currentRuleCount,
+      limit: USER_NOTIFICATION_RULE_LIMIT,
+      errorMessage: Error.USER_NOTIFICATION_RULE_LIMIT_REACHED,
+      metadata: {
         ruleLimit: USER_NOTIFICATION_RULE_LIMIT,
         ruleCount: currentRuleCount,
-      });
-    }
+      },
+    });
   }
 
   private async ensureRule(params: {
@@ -915,104 +822,27 @@ export class NotificationRuleService {
   }
 
   private async getTargetTestTriggerUsage(targetIds: number[]) {
-    const usageByTargetId = new Map<number, TestTriggerUsage>();
-
-    if (targetIds.length === 0) {
-      return usageByTargetId;
-    }
-
-    const threshold = new Date(
-      Date.now() - GUILD_NOTIFICATION_TEST_TRIGGER_WINDOW_MS,
+    return computeTestTriggerUsage(
+      this.prisma,
+      targetIds,
+      GUILD_NOTIFICATION_TEST_TRIGGER_LIMIT,
+      GUILD_NOTIFICATION_TEST_TRIGGER_WINDOW_MS,
     );
-    const testJobs = await this.prisma.notificationJob.findMany({
-      where: {
-        targetId: { in: targetIds },
-        jobKind: DbNotificationJobKind.TEST,
-        createdAt: { gte: threshold },
-      },
-      select: {
-        targetId: true,
-        createdAt: true,
-      },
-      orderBy: [{ createdAt: "asc" }],
-    });
-
-    const jobsByTargetId = new Map<number, Date[]>();
-
-    for (const job of testJobs) {
-      if (!job.targetId) {
-        continue;
-      }
-
-      const current = jobsByTargetId.get(job.targetId) ?? [];
-      current.push(job.createdAt);
-      jobsByTargetId.set(job.targetId, current);
-    }
-
-    for (const targetId of targetIds) {
-      const usage = jobsByTargetId.get(targetId) ?? [];
-      const nextAvailableAt =
-        usage.length >= GUILD_NOTIFICATION_TEST_TRIGGER_LIMIT
-          ? new Date(
-              usage[0]!.getTime() + GUILD_NOTIFICATION_TEST_TRIGGER_WINDOW_MS,
-            ).toISOString()
-          : null;
-
-      usageByTargetId.set(targetId, {
-        limit: GUILD_NOTIFICATION_TEST_TRIGGER_LIMIT,
-        used: usage.length,
-        remaining: Math.max(
-          0,
-          GUILD_NOTIFICATION_TEST_TRIGGER_LIMIT - usage.length,
-        ),
-        windowSeconds: Math.floor(
-          GUILD_NOTIFICATION_TEST_TRIGGER_WINDOW_MS / 1000,
-        ),
-        nextAvailableAt,
-      });
-    }
-
-    return usageByTargetId;
   }
 
   private computeRuleTestTriggerFromTargets(
     targetIds: number[],
     targetUsage: Map<number, TestTriggerUsage>,
   ) {
-    const defaultUsage = {
-      limit: GUILD_NOTIFICATION_TEST_TRIGGER_LIMIT,
-      used: 0,
-      remaining: GUILD_NOTIFICATION_TEST_TRIGGER_LIMIT,
-      windowSeconds: Math.floor(
-        GUILD_NOTIFICATION_TEST_TRIGGER_WINDOW_MS / 1000,
-      ),
-      nextAvailableAt: null,
-    };
+    const defaultUsage = getDefaultTestTriggerUsage(
+      GUILD_NOTIFICATION_TEST_TRIGGER_LIMIT,
+      GUILD_NOTIFICATION_TEST_TRIGGER_WINDOW_MS,
+    );
 
     if (targetIds.length === 0) {
       return defaultUsage;
     }
 
-    return this.getWorstTargetUsage(targetUsage, targetIds) ?? defaultUsage;
-  }
-
-  private getWorstTargetUsage(
-    targetUsage: Map<number, TestTriggerUsage>,
-    targetIds?: number[],
-  ) {
-    const ids = targetIds ?? [...targetUsage.keys()];
-    let worst: TestTriggerUsage | null = null;
-
-    for (const id of ids) {
-      const usage = targetUsage.get(id);
-      if (!usage) {
-        continue;
-      }
-      if (!worst || usage.remaining < worst.remaining) {
-        worst = usage;
-      }
-    }
-
-    return worst;
+    return getWorstTestTriggerUsage(targetUsage, targetIds) ?? defaultUsage;
   }
 }

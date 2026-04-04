@@ -14,6 +14,7 @@ import { NotificationJobService } from "src/notifications/notification-job.servi
 import { NotificationMatchingService } from "src/notifications/notification-matching.service";
 import { NotificationTargetService } from "src/notifications/notification-target.service";
 import { Error } from "src/notifications/enum/error.enum";
+import { ensureLimitNotExceeded } from "src/notifications/utils/ensure-limit-not-exceeded.util";
 import type { CreateWatchedItemQuickAddDto } from "src/notifications/dto/create-watched-item-quick-add.dto";
 import type { CreateWatchedItemDto } from "src/notifications/dto/create-watched-item.dto";
 
@@ -103,128 +104,17 @@ export class WatchedItemService {
     userId: string,
     data: CreateWatchedItemDto,
   ) {
-    const normalizedGuildIds = await this.validateWatchedItemGuildIds({
+    const guildIds = await this.validateWatchedItemGuildIds({
       discordId,
       userId,
       guildIds: data.guildIds,
     });
-    const existingWatchedItem = await this.prisma.watchedItem.findUnique({
-      where: {
-        userId_itemId_world: {
-          userId: discordId,
-          itemId: data.itemId,
-          world: data.world,
-        },
-      },
-      include: {
-        notificationRule: true,
-      },
-    });
 
-    const targetIds =
-      await this.targetService.getActiveUserTargetIds(discordId);
-    if (targetIds.length === 0) {
-      throw new ConflictException(Error.ACTIVE_DISCORD_DM_TARGET_REQUIRED);
-    }
-
-    if (existingWatchedItem?.notificationRuleId) {
-      await this.prisma.$transaction(async (tx) => {
-        await tx.watchedItem.update({
-          where: { id: existingWatchedItem.id },
-          data: {
-            enabled: true,
-            itemName: data.itemName,
-          },
-        });
-        await tx.notificationRule.update({
-          where: { id: existingWatchedItem.notificationRuleId },
-          data: {
-            enabled: true,
-            world: data.world,
-            filters: {
-              itemId: data.itemId,
-              guildIds: normalizedGuildIds,
-            },
-          },
-        });
-        if (targetIds.length > 0) {
-          await tx.notificationRuleTarget.createMany({
-            data: targetIds.map((targetId) => ({
-              ruleId: existingWatchedItem.notificationRuleId!,
-              targetId,
-            })),
-            skipDuplicates: true,
-          });
-        }
-      });
-
-      return this.getWatchedItemByScope({
-        discordId,
-        itemId: data.itemId,
-        world: data.world,
-      });
-    }
-
-    if (!existingWatchedItem) {
-      await this.ensureWatchedItemLimitNotExceeded(discordId);
-    }
-
-    return this.prisma.$transaction(async (tx) => {
-      const notificationRule = await tx.notificationRule.create({
-        data: {
-          ownerType: DbNotificationOwnerType.USER,
-          ownerId: discordId,
-          triggerType: DbNotificationTriggerType.WATCHED_ITEM_DROPPED,
-          world: data.world,
-          filters: {
-            itemId: data.itemId,
-            guildIds: normalizedGuildIds,
-          },
-          enabled: true,
-          dedupeWindowSeconds: 0,
-          targets:
-            targetIds.length > 0
-              ? {
-                  createMany: {
-                    data: targetIds.map((targetId) => ({ targetId })),
-                  },
-                }
-              : undefined,
-        },
-      });
-
-      return tx.watchedItem.upsert({
-        where: {
-          userId_itemId_world: {
-            userId: discordId,
-            itemId: data.itemId,
-            world: data.world,
-          },
-        },
-        create: {
-          userId: discordId,
-          itemId: data.itemId,
-          itemName: data.itemName,
-          world: data.world,
-          notificationRuleId: notificationRule.id,
-        },
-        update: {
-          enabled: true,
-          itemName: data.itemName,
-          notificationRuleId: notificationRule.id,
-        },
-        include: {
-          notificationRule: {
-            include: {
-              targets: {
-                include: {
-                  target: true,
-                },
-              },
-            },
-          },
-        },
-      });
+    return this.upsertWatchedItem(discordId, {
+      itemId: data.itemId,
+      itemName: data.itemName,
+      world: data.world,
+      resolveGuildIds: () => guildIds,
     });
   }
 
@@ -238,6 +128,29 @@ export class WatchedItemService {
       userId,
       guildIds: [data.guildId],
     });
+
+    return this.upsertWatchedItem(discordId, {
+      itemId: data.itemId,
+      itemName: data.itemName,
+      world: data.world,
+      resolveGuildIds: (existingFilters) => {
+        const existing = existingFilters?.guildIds ?? [];
+        return [...new Set([...existing, guildId])].sort();
+      },
+    });
+  }
+
+  private async upsertWatchedItem(
+    discordId: string,
+    params: {
+      itemId: number;
+      itemName: string;
+      world: string;
+      resolveGuildIds: (
+        existingFilters: { guildIds?: string[] } | null,
+      ) => string[];
+    },
+  ) {
     const targetIds =
       await this.targetService.getActiveUserTargetIds(discordId);
 
@@ -249,39 +162,37 @@ export class WatchedItemService {
       where: {
         userId_itemId_world: {
           userId: discordId,
-          itemId: data.itemId,
-          world: data.world,
+          itemId: params.itemId,
+          world: params.world,
         },
       },
-      include: {
-        notificationRule: true,
-      },
+      include: { notificationRule: true },
     });
 
-    if (existingWatchedItem?.notificationRuleId) {
-      const existingFilters = this.matchingService.parseFilters(
-        existingWatchedItem.notificationRule?.filters ?? {},
-      );
-      const mergedGuildIds = [
-        ...new Set([...(existingFilters.guildIds ?? []), guildId]),
-      ].sort();
+    const existingFilters = existingWatchedItem?.notificationRule
+      ? this.matchingService.parseFilters(
+          existingWatchedItem.notificationRule.filters ?? {},
+        )
+      : null;
+    const guildIds = params.resolveGuildIds(existingFilters);
 
+    if (existingWatchedItem?.notificationRuleId) {
       await this.prisma.$transaction(async (tx) => {
         await tx.watchedItem.update({
           where: { id: existingWatchedItem.id },
           data: {
             enabled: true,
-            itemName: data.itemName,
+            itemName: params.itemName,
           },
         });
         await tx.notificationRule.update({
           where: { id: existingWatchedItem.notificationRuleId },
           data: {
             enabled: true,
-            world: data.world,
+            world: params.world,
             filters: {
-              itemId: data.itemId,
-              guildIds: mergedGuildIds,
+              itemId: params.itemId,
+              guildIds,
             },
           },
         });
@@ -296,8 +207,8 @@ export class WatchedItemService {
 
       return this.getWatchedItemByScope({
         discordId,
-        itemId: data.itemId,
-        world: data.world,
+        itemId: params.itemId,
+        world: params.world,
       });
     }
 
@@ -311,10 +222,10 @@ export class WatchedItemService {
           ownerType: DbNotificationOwnerType.USER,
           ownerId: discordId,
           triggerType: DbNotificationTriggerType.WATCHED_ITEM_DROPPED,
-          world: data.world,
+          world: params.world,
           filters: {
-            itemId: data.itemId,
-            guildIds: [guildId],
+            itemId: params.itemId,
+            guildIds,
           },
           enabled: true,
           dedupeWindowSeconds: 0,
@@ -330,20 +241,20 @@ export class WatchedItemService {
         where: {
           userId_itemId_world: {
             userId: discordId,
-            itemId: data.itemId,
-            world: data.world,
+            itemId: params.itemId,
+            world: params.world,
           },
         },
         create: {
           userId: discordId,
-          itemId: data.itemId,
-          itemName: data.itemName,
-          world: data.world,
+          itemId: params.itemId,
+          itemName: params.itemName,
+          world: params.world,
           notificationRuleId: notificationRule.id,
         },
         update: {
           enabled: true,
-          itemName: data.itemName,
+          itemName: params.itemName,
           notificationRuleId: notificationRule.id,
         },
         include: {
@@ -399,13 +310,15 @@ export class WatchedItemService {
       },
     });
 
-    if (currentWatchedItemCount >= USER_WATCHED_ITEM_LIMIT) {
-      throw new ConflictException({
-        message: Error.USER_WATCHED_ITEM_LIMIT_REACHED,
+    ensureLimitNotExceeded({
+      currentCount: currentWatchedItemCount,
+      limit: USER_WATCHED_ITEM_LIMIT,
+      errorMessage: Error.USER_WATCHED_ITEM_LIMIT_REACHED,
+      metadata: {
         watchedItemLimit: USER_WATCHED_ITEM_LIMIT,
         watchedItemCount: currentWatchedItemCount,
-      });
-    }
+      },
+    });
   }
 
   private async validateWatchedItemGuildIds(params: {
