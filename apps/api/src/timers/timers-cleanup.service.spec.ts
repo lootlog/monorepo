@@ -5,16 +5,16 @@ import { PrismaService } from "src/db/prisma.service";
 
 describe("TimersCleanupService", () => {
   const mockPrismaService = {
-    $executeRaw: jest.fn(),
+    $executeRaw: vi.fn(),
   };
 
   const mockConfigService = {
-    get: jest.fn(),
+    get: vi.fn(),
   };
 
   beforeEach(async () => {
     mockConfigService.get.mockReturnValue(undefined);
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   const createService = async () => {

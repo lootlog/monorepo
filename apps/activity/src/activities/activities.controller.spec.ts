@@ -34,21 +34,21 @@ describe("ActivitiesController", () => {
   } as PaginatedActivitiesEntity;
 
   const mockQueryService = {
-    findByGuild: jest.fn(),
-    findByUser: jest.fn(),
-    findOne: jest.fn(),
+    findByGuild: vi.fn(),
+    findByUser: vi.fn(),
+    findOne: vi.fn(),
   };
 
   const mockService = {
-    deleteOne: jest.fn(),
+    deleteOne: vi.fn(),
   };
 
   const mockAuthGuard = {
-    canActivate: jest.fn(() => true),
+    canActivate: vi.fn(() => true),
   };
 
   const mockPermissionsGuard = {
-    canActivate: jest.fn(() => true),
+    canActivate: vi.fn(() => true),
   };
 
   beforeEach(async () => {
@@ -75,7 +75,7 @@ describe("ActivitiesController", () => {
     queryService = module.get<ActivitiesQueryService>(ActivitiesQueryService);
     service = module.get<ActivitiesService>(ActivitiesService);
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should be defined", () => {

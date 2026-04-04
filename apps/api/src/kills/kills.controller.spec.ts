@@ -1,3 +1,4 @@
+import type { Mock } from "vitest";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { plainToInstance } from "class-transformer";
 import { KillsController } from "./kills.controller";
@@ -19,9 +20,9 @@ import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 describe("KillsController", () => {
   let controller: KillsController;
   let service: {
-    createKill: jest.Mock;
-    getGuildKillStats: jest.Mock;
-    getUserKillStats: jest.Mock;
+    createKill: Mock;
+    getGuildKillStats: Mock;
+    getUserKillStats: Mock;
   };
 
   const mockRole: Role = {
@@ -53,9 +54,9 @@ describe("KillsController", () => {
 
   beforeEach(async () => {
     const mockKillsService = {
-      createKill: jest.fn(),
-      getGuildKillStats: jest.fn(),
-      getUserKillStats: jest.fn(),
+      createKill: vi.fn(),
+      getGuildKillStats: vi.fn(),
+      getUserKillStats: vi.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -73,7 +74,7 @@ describe("KillsController", () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("constructor", () => {

@@ -22,109 +22,109 @@ describe("EventsService", () => {
 
   const mockPrismaService = {
     event: {
-      create: jest.fn(),
-      findMany: jest.fn(),
-      findFirst: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
+      create: vi.fn(),
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
     },
     eventHeroNpc: {
-      create: jest.fn(),
-      findFirst: jest.fn(),
-      findMany: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      deleteMany: jest.fn(),
+      create: vi.fn(),
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      deleteMany: vi.fn(),
     },
     eventMap: {
-      create: jest.fn(),
-      findFirst: jest.fn(),
-      findMany: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
+      create: vi.fn(),
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
     },
     eventMapLocation: {
-      create: jest.fn(),
-      findFirst: jest.fn(),
-      findMany: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      aggregate: jest.fn(),
+      create: vi.fn(),
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      aggregate: vi.fn(),
     },
-    $transaction: jest.fn(),
-    $queryRaw: jest.fn(),
+    $transaction: vi.fn(),
+    $queryRaw: vi.fn(),
   };
 
   const mockPointsService = {
-    getRanking: jest.fn(),
-    calculateMemberPoints: jest.fn(),
-    recalculateEventPoints: jest.fn(),
-    getMemberPresenceStats: jest.fn(),
-    updateRankingAfterKill: jest.fn(),
-    updateKillPoint: jest.fn(),
-    updateRankingPoints: jest.fn(),
-    getRankingEditHistory: jest.fn(),
+    getRanking: vi.fn(),
+    calculateMemberPoints: vi.fn(),
+    recalculateEventPoints: vi.fn(),
+    getMemberPresenceStats: vi.fn(),
+    updateRankingAfterKill: vi.fn(),
+    updateKillPoint: vi.fn(),
+    updateRankingPoints: vi.fn(),
+    getRankingEditHistory: vi.fn(),
   };
 
   const mockTrackingService = {
-    assignMemberToMap: jest.fn(),
-    unassignMemberFromMap: jest.fn(),
-    getMemberByDiscordId: jest.fn(),
-    openUnassignedGap: jest.fn(),
-    closeUnassignedGap: jest.fn(),
-    openUncoveredGap: jest.fn(),
-    closeUncoveredGap: jest.fn(),
-    closeAllGapsForHero: jest.fn(),
-    getMapCoverageGaps: jest.fn(),
-    getHeroCoverageGaps: jest.fn(),
-    getActiveGapForMap: jest.fn(),
-    getActiveGapsForHero: jest.fn(),
-    handlePlayerPresenceChange: jest.fn(),
-    getHeroPresenceStats: jest.fn(),
+    assignMemberToMap: vi.fn(),
+    unassignMemberFromMap: vi.fn(),
+    getMemberByDiscordId: vi.fn(),
+    openUnassignedGap: vi.fn(),
+    closeUnassignedGap: vi.fn(),
+    openUncoveredGap: vi.fn(),
+    closeUncoveredGap: vi.fn(),
+    closeAllGapsForHero: vi.fn(),
+    getMapCoverageGaps: vi.fn(),
+    getHeroCoverageGaps: vi.fn(),
+    getActiveGapForMap: vi.fn(),
+    getActiveGapsForHero: vi.fn(),
+    handlePlayerPresenceChange: vi.fn(),
+    getHeroPresenceStats: vi.fn(),
   };
 
   const mockKillService = {
-    getEventHeroTimers: jest.fn(),
-    getEventHeroStats: jest.fn(),
-    checkAndRecordEventHeroKill: jest.fn(),
-    findActiveEventHeroByNpc: jest.fn(),
-    recordHeroKill: jest.fn(),
-    getHeroKillHistory: jest.fn(),
-    getEventKillHistory: jest.fn(),
-    getMemberKillHistory: jest.fn(),
-    getKillDetail: jest.fn(),
-    getKillTimelineData: jest.fn(),
+    getEventHeroTimers: vi.fn(),
+    getEventHeroStats: vi.fn(),
+    checkAndRecordEventHeroKill: vi.fn(),
+    findActiveEventHeroByNpc: vi.fn(),
+    recordHeroKill: vi.fn(),
+    getHeroKillHistory: vi.fn(),
+    getEventKillHistory: vi.fn(),
+    getMemberKillHistory: vi.fn(),
+    getKillDetail: vi.fn(),
+    getKillTimelineData: vi.fn(),
   };
 
   const mockRespawnService = {
-    closeRespawnWindow: jest.fn(),
-    openRespawnWindow: jest.fn(),
-    getHeroRespawnConfig: jest.fn(),
+    closeRespawnWindow: vi.fn(),
+    openRespawnWindow: vi.fn(),
+    getHeroRespawnConfig: vi.fn(),
   };
 
   const mockWrappedService = {
-    getWrapped: jest.fn(),
+    getWrapped: vi.fn(),
   };
 
   const mockQueue = {
-    getJobs: jest.fn(),
-    getJobCounts: jest.fn(),
-    isPaused: jest.fn(),
-    getWorkers: jest.fn(),
+    getJobs: vi.fn(),
+    getJobCounts: vi.fn(),
+    isPaused: vi.fn(),
+    getWorkers: vi.fn(),
     name: "respawn-window",
   };
 
   const mockEventHeroKillQueue = {
-    add: jest.fn(),
+    add: vi.fn(),
     name: "event-hero-kill",
   };
 
   const mockRedisService = {
-    del: jest.fn(),
+    del: vi.fn(),
   };
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockPointsService.calculateMemberPoints.mockReturnValue({
       totalPoints: 1,
       basePoints: 1,
@@ -637,8 +637,8 @@ describe("EventsService", () => {
     });
 
     it("should hard delete event and remove pending jobs", async () => {
-      const removeEventJob = jest.fn().mockResolvedValue(undefined);
-      const removeOtherEventJob = jest.fn().mockResolvedValue(undefined);
+      const removeEventJob = vi.fn().mockResolvedValue(undefined);
+      const removeOtherEventJob = vi.fn().mockResolvedValue(undefined);
 
       mockPrismaService.event.findFirst.mockResolvedValue({ id: eventId });
       mockQueue.getJobs

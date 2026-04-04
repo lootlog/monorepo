@@ -1,3 +1,4 @@
+import type { Mock } from "vitest";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { plainToInstance } from "class-transformer";
 import { LootsController } from "./loots.controller";
@@ -22,12 +23,12 @@ import { LootEntity } from "src/shared/entities/loot.entity";
 describe("LootsController", () => {
   let controller: LootsController;
   let service: {
-    createLoot: jest.Mock;
-    fetchLootsByGuildId: jest.Mock;
-    getComments: jest.Mock;
-    createComment: jest.Mock;
-    deleteLoot: jest.Mock;
-    updateLoot: jest.Mock;
+    createLoot: Mock;
+    fetchLootsByGuildId: Mock;
+    getComments: Mock;
+    createComment: Mock;
+    deleteLoot: Mock;
+    updateLoot: Mock;
   };
 
   const mockGuild: Guild = {
@@ -104,16 +105,16 @@ describe("LootsController", () => {
 
   beforeEach(async () => {
     const mockLootsService = {
-      createLoot: jest.fn(),
-      fetchLootsByGuildId: jest.fn(),
-      getComments: jest.fn(),
-      createComment: jest.fn(),
-      deleteLoot: jest.fn(),
-      updateLoot: jest.fn(),
+      createLoot: vi.fn(),
+      fetchLootsByGuildId: vi.fn(),
+      getComments: vi.fn(),
+      createComment: vi.fn(),
+      deleteLoot: vi.fn(),
+      updateLoot: vi.fn(),
     };
 
     const mockLootStatsService = {
-      getLootStats: jest.fn(),
+      getLootStats: vi.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -134,7 +135,7 @@ describe("LootsController", () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("constructor", () => {

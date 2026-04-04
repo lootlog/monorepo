@@ -7,8 +7,8 @@ describe("UserController", () => {
   let controller: UsersController;
 
   const mockUsersService = {
-    getUserPreferences: jest.fn(),
-    updateUserPreferences: jest.fn(),
+    getUserPreferences: vi.fn(),
+    updateUserPreferences: vi.fn(),
   };
 
   beforeEach(async () => {

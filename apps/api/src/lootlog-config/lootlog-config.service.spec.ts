@@ -7,14 +7,14 @@ describe("LootlogConfigService", () => {
 
   const mockPrismaService = {
     lootlogConfig: {
-      findUnique: jest.fn(),
-      findMany: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
     },
     lootlogConfigNpc: {
-      upsert: jest.fn(),
-      delete: jest.fn(),
+      upsert: vi.fn(),
+      delete: vi.fn(),
     },
   };
 

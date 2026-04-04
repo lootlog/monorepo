@@ -14,72 +14,72 @@ describe("EventTrackingService", () => {
 
   const mockPrismaService = {
     eventMap: {
-      findFirst: jest.fn(),
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
-      update: jest.fn(),
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      update: vi.fn(),
     },
     eventMapAssignmentHistory: {
-      create: jest.fn(),
-      findFirst: jest.fn(),
-      updateMany: jest.fn(),
+      create: vi.fn(),
+      findFirst: vi.fn(),
+      updateMany: vi.fn(),
     },
     eventMapCoverageGap: {
-      findFirst: jest.fn(),
-      findMany: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
     },
     eventPresenceLog: {
-      findMany: jest.fn(),
-      create: jest.fn(),
-      updateMany: jest.fn(),
+      findMany: vi.fn(),
+      create: vi.fn(),
+      updateMany: vi.fn(),
     },
     eventHeroNpc: {
-      findFirst: jest.fn(),
+      findFirst: vi.fn(),
     },
     member: {
-      findFirst: jest.fn(),
+      findFirst: vi.fn(),
     },
     timer: {
-      findUnique: jest.fn(),
-      findMany: jest.fn(),
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
     },
-    $transaction: jest.fn(),
+    $transaction: vi.fn(),
   };
 
   const mockEventEmitter = {
-    emitMapStatusUpdate: jest.fn(),
+    emitMapStatusUpdate: vi.fn(),
   };
 
   const mockAmqpConnection = {
-    publish: jest.fn(),
+    publish: vi.fn(),
   };
 
   const mockRedisClient = {
-    set: jest.fn(),
-    get: jest.fn(),
-    del: jest.fn(),
+    set: vi.fn(),
+    get: vi.fn(),
+    del: vi.fn(),
   };
 
   const mockRedisService = {
-    getClient: jest.fn().mockReturnValue(mockRedisClient),
-    get: jest.fn(),
-    set: jest.fn(),
+    getClient: vi.fn().mockReturnValue(mockRedisClient),
+    get: vi.fn(),
+    set: vi.fn(),
   };
 
   const mockRedlock = {
-    using: jest.fn(),
-    acquire: jest.fn(),
+    using: vi.fn(),
+    acquire: vi.fn(),
   };
 
   const mockTimersService = {
-    getActiveTimerKeys: jest.fn(),
-    getEventRespawnTimer: jest.fn(),
+    getActiveTimerKeys: vi.fn(),
+    getEventRespawnTimer: vi.fn(),
   };
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -90,7 +90,7 @@ describe("EventTrackingService", () => {
         { provide: RedisService, useValue: mockRedisService },
         {
           provide: RedlockService,
-          useValue: { createInstance: jest.fn().mockReturnValue(mockRedlock) },
+          useValue: { createInstance: vi.fn().mockReturnValue(mockRedlock) },
         },
         { provide: TimersService, useValue: mockTimersService },
       ],

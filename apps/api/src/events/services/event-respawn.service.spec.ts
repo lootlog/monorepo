@@ -19,61 +19,61 @@ describe("EventRespawnService", () => {
 
   const mockPrismaService = {
     eventHeroNpc: {
-      findFirst: jest.fn(),
+      findFirst: vi.fn(),
     },
     eventMap: {
-      findMany: jest.fn(),
-      update: jest.fn(),
+      findMany: vi.fn(),
+      update: vi.fn(),
     },
     timer: {
-      findUnique: jest.fn(),
-      upsert: jest.fn(),
-      delete: jest.fn(),
+      findUnique: vi.fn(),
+      upsert: vi.fn(),
+      delete: vi.fn(),
     },
     eventMapAssignmentHistory: {
-      updateMany: jest.fn(),
+      updateMany: vi.fn(),
     },
     member: {
-      findFirst: jest.fn(),
+      findFirst: vi.fn(),
     },
-    $transaction: jest.fn(),
+    $transaction: vi.fn(),
   };
 
   const mockQueue = {
-    add: jest.fn(),
-    getJobs: jest.fn(),
+    add: vi.fn(),
+    getJobs: vi.fn(),
   };
 
   const mockEventEmitter = {
-    emitMapStatusUpdate: jest.fn(),
-    emitRespawnWindowOpened: jest.fn(),
-    emitRespawnWindowClosed: jest.fn(),
-    emitTimerUpdate: jest.fn(),
+    emitMapStatusUpdate: vi.fn(),
+    emitRespawnWindowOpened: vi.fn(),
+    emitRespawnWindowClosed: vi.fn(),
+    emitTimerUpdate: vi.fn(),
   };
 
   const mockKillService = {
-    checkAndRecordEventHeroKill: jest.fn(),
-    recordHeroKill: jest.fn(),
+    checkAndRecordEventHeroKill: vi.fn(),
+    recordHeroKill: vi.fn(),
   };
 
   const mockTrackingService = {
-    closeAllGapsForHero: jest.fn(),
-    openUnassignedGap: jest.fn(),
-    openUncoveredGap: jest.fn(),
+    closeAllGapsForHero: vi.fn(),
+    openUnassignedGap: vi.fn(),
+    openUncoveredGap: vi.fn(),
   };
 
   const mockSummaryService = {
-    createWindowSummary: jest.fn(),
+    createWindowSummary: vi.fn(),
   };
 
   const mockTimersService = {
-    getEventRespawnTimer: jest.fn(),
-    openEventRespawnTimer: jest.fn(),
-    closeEventRespawnTimer: jest.fn(),
+    getEventRespawnTimer: vi.fn(),
+    openEventRespawnTimer: vi.fn(),
+    closeEventRespawnTimer: vi.fn(),
   };
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -264,7 +264,7 @@ describe("EventRespawnService", () => {
       const mockJob = {
         id: "job-1",
         data: { heroId },
-        remove: jest.fn().mockResolvedValue(undefined),
+        remove: vi.fn().mockResolvedValue(undefined),
       };
       mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
       mockTimersService.getEventRespawnTimer.mockResolvedValue(mockTimer);

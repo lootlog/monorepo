@@ -1,5 +1,5 @@
 {
-  "plugins": ["react", "typescript", "unicorn", "jest", "nextjs"],
+  "plugins": ["react", "typescript", "unicorn", "nextjs", "vitest"],
   "ignorePatterns": [
     "**/node_modules",
     "**/dist",

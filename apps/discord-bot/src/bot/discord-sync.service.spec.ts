@@ -1,3 +1,4 @@
+import type { Mock } from "vitest";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { DiscordGuildSyncStatus } from "@lootlog/types";
 import { Test, type TestingModule } from "@nestjs/testing";
@@ -25,11 +26,11 @@ const REQUIRED_NOTIFICATION_PERMISSION_FLAGS = [
 
 describe("DiscordSyncService", () => {
   let service: DiscordSyncService;
-  let amqpConnection: { publish: jest.Mock };
+  let amqpConnection: { publish: Mock };
   let mockClient: {
     guilds: {
       cache: Collection<string, Guild>;
-      fetch: jest.Mock;
+      fetch: Mock;
     };
   };
 
@@ -55,7 +56,7 @@ describe("DiscordSyncService", () => {
       type,
       parentId: null,
       rawPosition: position,
-      permissionsFor: jest
+      permissionsFor: vi
         .fn()
         .mockReturnValue(createPermissionSet(allowedFlags)),
     }) as unknown as GuildBasedChannel;
@@ -114,9 +115,9 @@ describe("DiscordSyncService", () => {
       id: "guild-123",
       name: "Lootlog",
       ownerId: "owner-123",
-      iconURL: jest.fn().mockReturnValue("https://example.com/icon.png"),
+      iconURL: vi.fn().mockReturnValue("https://example.com/icon.png"),
       roles: {
-        fetch: jest.fn().mockResolvedValue(roles),
+        fetch: vi.fn().mockResolvedValue(roles),
       },
       members: {
         me: {
@@ -127,11 +128,11 @@ describe("DiscordSyncService", () => {
             REQUIRED_NOTIFICATION_PERMISSION_FLAGS,
           ),
         },
-        fetchMe: jest.fn(),
+        fetchMe: vi.fn(),
       },
       channels: {
         cache: fetchedChannels,
-        fetch: jest.fn().mockResolvedValue(fetchedChannels),
+        fetch: vi.fn().mockResolvedValue(fetchedChannels),
       },
     } as unknown as Guild;
 
@@ -163,12 +164,12 @@ describe("DiscordSyncService", () => {
 
   beforeEach(async () => {
     amqpConnection = {
-      publish: jest.fn().mockResolvedValue(undefined),
+      publish: vi.fn().mockResolvedValue(undefined),
     };
     mockClient = {
       guilds: {
         cache: new Collection<string, Guild>(),
-        fetch: jest.fn(),
+        fetch: vi.fn(),
       },
     };
 

@@ -30,15 +30,15 @@ const createPresenceSocket = (
 describe("PresenceService", () => {
   let service: PresenceService;
 
-  const mockFetchSockets = jest.fn();
+  const mockFetchSockets = vi.fn();
   const mockServer = {
-    in: jest.fn(() => ({
+    in: vi.fn(() => ({
       fetchSockets: mockFetchSockets,
     })),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     service = new PresenceService({} as never);
   });
 

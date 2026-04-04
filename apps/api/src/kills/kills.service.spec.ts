@@ -1,3 +1,4 @@
+import type { Mock } from "vitest";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { KillsService } from "./kills.service";
@@ -15,32 +16,32 @@ describe("KillsService", () => {
   let service: KillsService;
   let prismaService: {
     userKillStats: {
-      upsert: jest.Mock;
-      findMany: jest.Mock;
+      upsert: Mock;
+      findMany: Mock;
     };
     npcKillStats: {
-      upsert: jest.Mock;
-      findMany: jest.Mock;
+      upsert: Mock;
+      findMany: Mock;
     };
     guildKillSummary: {
-      upsert: jest.Mock;
-      findMany: jest.Mock;
-      findFirst: jest.Mock;
+      upsert: Mock;
+      findMany: Mock;
+      findFirst: Mock;
     };
     member: {
-      findUnique: jest.Mock;
-      findMany: jest.Mock;
+      findUnique: Mock;
+      findMany: Mock;
     };
   };
   let redisService: {
-    setNX: jest.Mock;
+    setNX: Mock;
   };
   let userLootlogConfigService: {
-    getLootlogCharacterConfig: jest.Mock;
+    getLootlogCharacterConfig: Mock;
   };
   let logger: {
-    log: jest.Mock;
-    error: jest.Mock;
+    log: Mock;
+    error: Mock;
   };
 
   const mockCreateKillDto: CreateKillDto = {
@@ -74,35 +75,35 @@ describe("KillsService", () => {
   beforeEach(async () => {
     const mockPrismaService = {
       userKillStats: {
-        upsert: jest.fn(),
-        findMany: jest.fn(),
+        upsert: vi.fn(),
+        findMany: vi.fn(),
       },
       npcKillStats: {
-        upsert: jest.fn(),
-        findMany: jest.fn(),
+        upsert: vi.fn(),
+        findMany: vi.fn(),
       },
       guildKillSummary: {
-        upsert: jest.fn(),
-        findMany: jest.fn(),
-        findFirst: jest.fn(),
+        upsert: vi.fn(),
+        findMany: vi.fn(),
+        findFirst: vi.fn(),
       },
       member: {
-        findUnique: jest.fn(),
-        findMany: jest.fn().mockResolvedValue([]),
+        findUnique: vi.fn(),
+        findMany: vi.fn().mockResolvedValue([]),
       },
     };
 
     const mockRedisService = {
-      setNX: jest.fn().mockResolvedValue(true),
+      setNX: vi.fn().mockResolvedValue(true),
     };
 
     const mockUserLootlogConfigService = {
-      getLootlogCharacterConfig: jest.fn(),
+      getLootlogCharacterConfig: vi.fn(),
     };
 
     const mockLogger = {
-      log: jest.fn(),
-      error: jest.fn(),
+      log: vi.fn(),
+      error: vi.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -126,7 +127,7 @@ describe("KillsService", () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("constructor", () => {
@@ -353,7 +354,7 @@ describe("KillsService", () => {
         const firstNpcId =
           prismaService.userKillStats.upsert.mock.calls[0][0].create.npcId;
 
-        jest.clearAllMocks();
+        vi.clearAllMocks();
         redisService.setNX.mockResolvedValue(true);
 
         // Second kill with different spawn ID but same name
@@ -381,7 +382,7 @@ describe("KillsService", () => {
         const firstNpcId =
           prismaService.userKillStats.upsert.mock.calls[0][0].create.npcId;
 
-        jest.clearAllMocks();
+        vi.clearAllMocks();
         redisService.setNX.mockResolvedValue(true);
 
         const colossusKillDto2: CreateKillDto = {

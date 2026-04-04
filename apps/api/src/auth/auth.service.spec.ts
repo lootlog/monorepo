@@ -9,25 +9,25 @@ describe("AuthService", () => {
   let service: AuthService;
 
   const mockLogger = {
-    log: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
+    log: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
   };
 
   const mockHttpService = {
-    post: jest.fn(),
+    post: vi.fn(),
   };
 
   const mockConfigService = {
-    get: jest.fn().mockReturnValue({
+    get: vi.fn().mockReturnValue({
       serviceUrl: "http://localhost:3001",
     }),
   };
 
   const mockRedisService = {
-    get: jest.fn(),
-    set: jest.fn(),
-    del: jest.fn(),
+    get: vi.fn(),
+    set: vi.fn(),
+    del: vi.fn(),
   };
 
   beforeEach(async () => {

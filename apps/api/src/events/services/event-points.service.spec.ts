@@ -8,52 +8,52 @@ describe("EventPointsService", () => {
 
   const mockPrismaService = {
     event: {
-      findFirst: jest.fn(),
-      findUnique: jest.fn(),
+      findFirst: vi.fn(),
+      findUnique: vi.fn(),
     },
     eventRanking: {
-      findMany: jest.fn(),
-      findFirst: jest.fn(),
-      findUnique: jest.fn(),
-      create: jest.fn(),
-      createMany: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      deleteMany: jest.fn(),
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      createMany: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      deleteMany: vi.fn(),
     },
     eventKillPoint: {
-      findMany: jest.fn(),
-      findFirst: jest.fn(),
-      update: jest.fn(),
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+      update: vi.fn(),
     },
     eventMap: {
-      findMany: jest.fn(),
+      findMany: vi.fn(),
     },
     eventMapAssignmentHistory: {
-      findMany: jest.fn(),
+      findMany: vi.fn(),
     },
     eventRespawnWindowSummary: {
-      findMany: jest.fn(),
+      findMany: vi.fn(),
     },
     eventPresenceLog: {
-      findMany: jest.fn(),
+      findMany: vi.fn(),
     },
     eventPointsEditHistory: {
-      findMany: jest.fn(),
-      create: jest.fn(),
+      findMany: vi.fn(),
+      create: vi.fn(),
     },
     member: {
-      findMany: jest.fn(),
+      findMany: vi.fn(),
     },
-    $transaction: jest.fn(),
+    $transaction: vi.fn(),
   };
 
   const mockEventEmitter = {
-    emitRankingUpdate: jest.fn(),
+    emitRankingUpdate: vi.fn(),
   };
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockPrismaService.eventRespawnWindowSummary.findMany.mockResolvedValue([]);
     mockPrismaService.member.findMany.mockResolvedValue([]);
 

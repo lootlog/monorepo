@@ -21,54 +21,54 @@ describe("TimersService", () => {
 
   const mockPrismaService = {
     timer: {
-      upsert: jest.fn(),
-      create: jest.fn(),
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      deleteMany: jest.fn(),
+      upsert: vi.fn(),
+      create: vi.fn(),
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      deleteMany: vi.fn(),
     },
-    $queryRaw: jest.fn(),
+    $queryRaw: vi.fn(),
   };
 
   const mockAmqpConnection = {
-    publish: jest.fn(),
+    publish: vi.fn(),
   };
 
   const mockGuildsService = {
-    getGuildsForRequiredPermissions: jest.fn(),
-    getMultipleGuildsPermissions: jest.fn(),
+    getGuildsForRequiredPermissions: vi.fn(),
+    getMultipleGuildsPermissions: vi.fn(),
   };
 
   const mockRedisService = {
-    get: jest.fn(),
-    set: jest.fn(),
-    setNX: jest.fn(),
-    del: jest.fn(),
-    deleteByPattern: jest.fn(),
+    get: vi.fn(),
+    set: vi.fn(),
+    setNX: vi.fn(),
+    del: vi.fn(),
+    deleteByPattern: vi.fn(),
   };
 
   const mockEventTimerHooksService = {
-    enqueueEventHeroKillCheck: jest.fn().mockResolvedValue(undefined),
-    findActiveEventHeroByNpc: jest.fn().mockResolvedValue(null),
+    enqueueEventHeroKillCheck: vi.fn().mockResolvedValue(undefined),
+    findActiveEventHeroByNpc: vi.fn().mockResolvedValue(null),
   };
 
   const mockLogger = {
-    log: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
-    debug: jest.fn(),
-    verbose: jest.fn(),
+    log: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+    debug: vi.fn(),
+    verbose: vi.fn(),
   };
 
   const mockRedlock = {
-    acquire: jest.fn(),
-    release: jest.fn(),
+    acquire: vi.fn(),
+    release: vi.fn(),
   };
 
   const mockRedlockLock = {
-    release: jest.fn().mockResolvedValue(undefined),
+    release: vi.fn().mockResolvedValue(undefined),
   };
 
   beforeEach(async () => {
@@ -105,7 +105,7 @@ describe("TimersService", () => {
         },
         {
           provide: RedlockService,
-          useValue: { createInstance: jest.fn().mockReturnValue(mockRedlock) },
+          useValue: { createInstance: vi.fn().mockReturnValue(mockRedlock) },
         },
       ],
     }).compile();
@@ -115,7 +115,7 @@ describe("TimersService", () => {
     // Inject mock redlock (bypassing onModuleInit)
     (service as any).redlock = mockRedlock;
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockRedisService.deleteByPattern.mockResolvedValue(0);
   });
 
@@ -536,13 +536,13 @@ describe("TimersService", () => {
           }
           mainLockHeld = true;
           return {
-            release: jest.fn().mockImplementation(async () => {
+            release: vi.fn().mockImplementation(async () => {
               mainLockHeld = false;
             }),
           };
         }
 
-        return { release: jest.fn().mockResolvedValue(undefined) };
+        return { release: vi.fn().mockResolvedValue(undefined) };
       });
 
       const results = await Promise.all(
@@ -909,7 +909,7 @@ describe("TimersService", () => {
     ];
 
     it("should search NPCs with timer data", async () => {
-      mockPrismaService.$queryRaw = jest
+      mockPrismaService.$queryRaw = vi
         .fn()
         .mockResolvedValue(mockTimersQueryResult);
 
@@ -938,7 +938,7 @@ describe("TimersService", () => {
     });
 
     it("should handle empty search results", async () => {
-      mockPrismaService.$queryRaw = jest.fn().mockResolvedValue([]);
+      mockPrismaService.$queryRaw = vi.fn().mockResolvedValue([]);
 
       const result = await service.searchNpcsWithTimerData(
         "guild1",
@@ -960,9 +960,7 @@ describe("TimersService", () => {
         },
       ];
 
-      mockPrismaService.$queryRaw = jest
-        .fn()
-        .mockResolvedValue(invalidTimerData);
+      mockPrismaService.$queryRaw = vi.fn().mockResolvedValue(invalidTimerData);
 
       const result = await service.searchNpcsWithTimerData(
         "guild1",
@@ -975,7 +973,7 @@ describe("TimersService", () => {
     });
 
     it("should use default limit when not provided", async () => {
-      mockPrismaService.$queryRaw = jest
+      mockPrismaService.$queryRaw = vi
         .fn()
         .mockResolvedValue(mockTimersQueryResult);
 

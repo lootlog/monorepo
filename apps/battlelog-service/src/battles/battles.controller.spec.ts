@@ -11,27 +11,27 @@ describe("BattlesController", () => {
 
   beforeEach(async () => {
     const mockBattlesService = {
-      createBattle: jest.fn(),
-      getDashboardBattles: jest.fn(),
-      getUserCharacters: jest.fn(),
-      getUserWorlds: jest.fn(),
-      getBattleFromDatabase: jest.fn(),
-      getBattleRawData: jest.fn(),
-      updateBattle: jest.fn(),
-      deleteBattle: jest.fn(),
-      getPublicBattles: jest.fn(),
-      getPublicBattle: jest.fn(),
-      getPublicBattleRaw: jest.fn(),
-      searchWarriors: jest.fn(),
+      createBattle: vi.fn(),
+      getDashboardBattles: vi.fn(),
+      getUserCharacters: vi.fn(),
+      getUserWorlds: vi.fn(),
+      getBattleFromDatabase: vi.fn(),
+      getBattleRawData: vi.fn(),
+      updateBattle: vi.fn(),
+      deleteBattle: vi.fn(),
+      getPublicBattles: vi.fn(),
+      getPublicBattle: vi.fn(),
+      getPublicBattleRaw: vi.fn(),
+      searchWarriors: vi.fn(),
     };
 
     const mockBattleAnalyticsService = {
-      getBattleAnalytics: jest.fn(),
-      calculateProfessionWinRate: jest.fn(),
-      getHeadToHead: jest.fn(),
-      getCurrentStreak: jest.fn(),
-      getBattleDurationStats: jest.fn(),
-      getPhGrowthTimeSeries: jest.fn(),
+      getBattleAnalytics: vi.fn(),
+      calculateProfessionWinRate: vi.fn(),
+      getHeadToHead: vi.fn(),
+      getCurrentStreak: vi.fn(),
+      getBattleDurationStats: vi.fn(),
+      getPhGrowthTimeSeries: vi.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({

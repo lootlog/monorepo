@@ -14,30 +14,30 @@ describe("HealthzController", () => {
   let controller: HealthzController;
 
   const mockHealthCheckService = {
-    check: jest.fn(),
+    check: vi.fn(),
   };
 
   const mockHttpHealthIndicator = {
-    pingCheck: jest.fn(),
+    pingCheck: vi.fn(),
   };
 
   const mockPrismaHealthIndicator = {
-    pingCheck: jest.fn(),
+    pingCheck: vi.fn(),
   };
 
   const mockMemoryHealthIndicator = {
-    checkHeap: jest.fn(),
-    checkRSS: jest.fn(),
+    checkHeap: vi.fn(),
+    checkRSS: vi.fn(),
   };
 
   const mockDiskHealthIndicator = {
-    checkStorage: jest.fn(),
+    checkStorage: vi.fn(),
   };
 
   const mockPrismaService = {};
 
   const mockConfigService = {
-    get: jest.fn().mockReturnValue({ url: "http://localhost:3000" }),
+    get: vi.fn().mockReturnValue({ url: "http://localhost:3000" }),
   };
 
   beforeEach(async () => {

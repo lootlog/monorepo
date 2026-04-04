@@ -25,17 +25,17 @@ describe("GatewayService", () => {
       discordId: "discord-123",
       guilds: [],
     },
-    emit: jest.fn(),
-    leave: jest.fn(),
-    join: jest.fn(),
+    emit: vi.fn(),
+    leave: vi.fn(),
+    join: vi.fn(),
     rooms: new Set(["room-1"]),
   };
 
   const mockServer = {
-    to: jest.fn().mockReturnThis(),
-    in: jest.fn().mockReturnThis(),
-    emit: jest.fn(),
-    fetchSockets: jest.fn(),
+    to: vi.fn().mockReturnThis(),
+    in: vi.fn().mockReturnThis(),
+    emit: vi.fn(),
+    fetchSockets: vi.fn(),
   };
 
   const mockGateway = {
@@ -43,16 +43,16 @@ describe("GatewayService", () => {
   };
 
   const mockRedisService = {
-    del: jest.fn(),
+    del: vi.fn(),
   };
 
   const mockGuildsService = {
-    invalidateUserGuildsCache: jest.fn(),
-    getUserGuilds: jest.fn(),
+    invalidateUserGuildsCache: vi.fn(),
+    getUserGuilds: vi.fn(),
   };
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Re-initialize mock return values after clearAllMocks
     mockServer.to.mockReturnThis();
@@ -133,7 +133,7 @@ describe("GatewayService", () => {
             },
           ],
         },
-        emit: jest.fn(),
+        emit: vi.fn(),
       };
 
       mockServer.fetchSockets.mockResolvedValue([mockSocketWithPermissions]);
@@ -181,7 +181,7 @@ describe("GatewayService", () => {
             },
           ],
         },
-        emit: jest.fn(),
+        emit: vi.fn(),
       };
 
       mockServer.fetchSockets.mockResolvedValue([mockAdminSocket]);
@@ -213,7 +213,7 @@ describe("GatewayService", () => {
             },
           ],
         },
-        emit: jest.fn(),
+        emit: vi.fn(),
       };
 
       mockServer.fetchSockets.mockResolvedValue([mockSocketWrongLevel]);
@@ -242,7 +242,7 @@ describe("GatewayService", () => {
             },
           ],
         },
-        emit: jest.fn(),
+        emit: vi.fn(),
       };
 
       mockServer.fetchSockets.mockResolvedValue([mockSocketWrongGuild]);
@@ -376,7 +376,7 @@ describe("GatewayService", () => {
             },
           ],
         },
-        emit: jest.fn(),
+        emit: vi.fn(),
       };
 
       mockServer.in.mockReturnValue(mockServer);
@@ -435,7 +435,7 @@ describe("GatewayService", () => {
             },
           ],
         },
-        emit: jest.fn(),
+        emit: vi.fn(),
       };
 
       mockServer.fetchSockets.mockResolvedValue([mockSocketWithHeroPerms]);
@@ -489,7 +489,7 @@ describe("GatewayService", () => {
             },
           ],
         },
-        emit: jest.fn(),
+        emit: vi.fn(),
       };
 
       const mockRegularSocket = {
@@ -509,7 +509,7 @@ describe("GatewayService", () => {
             },
           ],
         },
-        emit: jest.fn(),
+        emit: vi.fn(),
       };
 
       mockServer.fetchSockets.mockResolvedValue([
@@ -550,7 +550,7 @@ describe("GatewayService", () => {
             },
           ],
         },
-        emit: jest.fn(),
+        emit: vi.fn(),
       };
 
       mockServer.fetchSockets.mockResolvedValue([mockAdminSocket]);
@@ -601,9 +601,9 @@ describe("GatewayService", () => {
           "guild-1:presence",
           "old-guild:presence",
         ]),
-        leave: jest.fn(),
-        join: jest.fn(),
-        emit: jest.fn(),
+        leave: vi.fn(),
+        join: vi.fn(),
+        emit: vi.fn(),
       };
 
       mockGuildsService.getUserGuilds.mockResolvedValue(updatedGuilds);
@@ -669,9 +669,9 @@ describe("GatewayService", () => {
           discordId: "discord-target",
         },
         rooms: new Set(["socket-target"]),
-        leave: jest.fn(),
-        join: jest.fn(),
-        emit: jest.fn(),
+        leave: vi.fn(),
+        join: vi.fn(),
+        emit: vi.fn(),
       };
 
       const mockOtherSocket = {
@@ -680,9 +680,9 @@ describe("GatewayService", () => {
           discordId: "discord-other",
         },
         rooms: new Set(["socket-other"]),
-        leave: jest.fn(),
-        join: jest.fn(),
-        emit: jest.fn(),
+        leave: vi.fn(),
+        join: vi.fn(),
+        emit: vi.fn(),
       };
 
       mockGuildsService.getUserGuilds.mockResolvedValue(updatedGuilds);
