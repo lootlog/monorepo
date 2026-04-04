@@ -13,7 +13,6 @@ import { MembersService } from "./members.service";
 import { PrismaService } from "src/db/prisma.service";
 import { DiscordService } from "src/discord/discord.service";
 import { DiscordRateLimiterService } from "src/discord/discord-rate-limiter.service";
-import { GuildsService } from "src/guilds/guilds.service";
 import { RedisService } from "@lootlog/nest-shared";
 import { ErrorKey } from "./enum/error-key.enum";
 import { RuntimeEnvironment } from "src/types/runtime.types";
@@ -34,7 +33,6 @@ describe("MembersService", () => {
   let discordService: jest.Mocked<DiscordService>;
   let _rateLimiter: jest.Mocked<DiscordRateLimiterService>;
   let _refreshScheduler: jest.Mocked<MemberRefreshSchedulerService>;
-  let guildsService: jest.Mocked<GuildsService>;
   let amqpConnection: jest.Mocked<AmqpConnection>;
 
   const mockGuild: Guild = {
@@ -92,6 +90,9 @@ describe("MembersService", () => {
         update: jest.fn(),
         updateMany: jest.fn(),
       },
+      guild: {
+        findFirst: jest.fn(),
+      },
       role: {
         findMany: jest.fn(),
       },
@@ -105,10 +106,6 @@ describe("MembersService", () => {
 
     const mockDiscordService = {
       getGuildMember: jest.fn(),
-    };
-
-    const mockGuildsService = {
-      getGuildById: jest.fn(),
     };
 
     const mockRateLimiter = {
@@ -163,7 +160,6 @@ describe("MembersService", () => {
           provide: MemberRefreshSchedulerService,
           useValue: mockRefreshScheduler,
         },
-        { provide: GuildsService, useValue: mockGuildsService },
         { provide: AmqpConnection, useValue: mockAmqpConnection },
         { provide: ConfigService, useValue: mockConfigService },
         { provide: RedisService, useValue: mockRedisService },
@@ -175,7 +171,6 @@ describe("MembersService", () => {
     discordService = module.get(DiscordService);
     _rateLimiter = module.get(DiscordRateLimiterService);
     _refreshScheduler = module.get(MemberRefreshSchedulerService);
-    guildsService = module.get(GuildsService);
     amqpConnection = module.get(AmqpConnection);
 
     // Suppress logger output
@@ -276,7 +271,7 @@ describe("MembersService", () => {
     it("should throw BadRequestException when refresh=true and TTL active", async () => {
       const futureDate = new Date(Date.now() + 10000);
       const cachedMember = { ...mockMember, updatedAt: futureDate };
-      guildsService.getGuildById.mockResolvedValue(mockGuild);
+      prismaService.guild.findFirst.mockResolvedValue(mockGuild);
       prismaService.member.findUnique.mockResolvedValue(cachedMember);
 
       await expect(
@@ -446,7 +441,7 @@ describe("MembersService", () => {
     });
 
     it("should throw error when refresh=true and general error occurs", async () => {
-      guildsService.getGuildById.mockResolvedValue(mockGuild);
+      prismaService.guild.findFirst.mockResolvedValue(mockGuild);
       prismaService.member.findUnique.mockResolvedValue(null);
       discordService.getGuildMember.mockRejectedValue(
         new Error("Network error"),
@@ -494,7 +489,7 @@ describe("MembersService", () => {
     });
 
     it("should call getGuildById when refresh=true", async () => {
-      guildsService.getGuildById.mockResolvedValue(mockGuild);
+      prismaService.guild.findFirst.mockResolvedValue(mockGuild);
       prismaService.member.findUnique.mockResolvedValue(null);
       discordService.getGuildMember.mockResolvedValue(mockDiscordMember);
       prismaService.role.findMany.mockResolvedValue([]);
@@ -502,11 +497,11 @@ describe("MembersService", () => {
 
       await service.getGuildMemberById({ ...options, refresh: true });
 
-      expect(guildsService.getGuildById).toHaveBeenCalledWith(options.guildId);
+      expect(prismaService.guild.findFirst).toHaveBeenCalled();
     });
 
     it("should call getGuildById when standalone=true", async () => {
-      guildsService.getGuildById.mockResolvedValue(mockGuild);
+      prismaService.guild.findFirst.mockResolvedValue(mockGuild);
       prismaService.member.findUnique.mockResolvedValue(null);
       discordService.getGuildMember.mockResolvedValue(mockDiscordMember);
       prismaService.role.findMany.mockResolvedValue([]);
@@ -514,7 +509,7 @@ describe("MembersService", () => {
 
       await service.getGuildMemberById({ ...options, standalone: true });
 
-      expect(guildsService.getGuildById).toHaveBeenCalledWith(options.guildId);
+      expect(prismaService.guild.findFirst).toHaveBeenCalled();
     });
   });
 
@@ -543,7 +538,7 @@ describe("MembersService", () => {
 
     it("should successfully refresh member", async () => {
       prismaService.member.findUnique.mockResolvedValue(mockMember);
-      guildsService.getGuildById.mockResolvedValue(mockGuild);
+      prismaService.guild.findFirst.mockResolvedValue(mockGuild);
       prismaService.member.findUnique
         .mockResolvedValueOnce(mockMember)
         .mockResolvedValueOnce(null);

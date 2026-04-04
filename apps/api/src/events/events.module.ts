@@ -16,7 +16,7 @@ import { RESPAWN_WINDOW_QUEUE } from "./constants/respawn-queue.constant";
 import { EVENT_HERO_KILL_QUEUE } from "./constants/event-hero-kill-queue.constant";
 import { EventHeroKillProcessor } from "./event-hero-kill.processor";
 import { MembersModule } from "src/members/members.module";
-import { GuildsModule } from "src/guilds/guilds.module";
+import { MemberContextModule } from "src/shared/permissions/member-context.module";
 import { LootsModule } from "src/loots/loots.module";
 import { ConfigKey } from "src/config/config-key.enum";
 import { PrismaModule } from "src/db/prisma.module";
@@ -40,7 +40,7 @@ import { TimersModule } from "src/timers/timers.module";
 @Module({
   imports: [
     MembersModule,
-    GuildsModule,
+    MemberContextModule,
     LootsModule,
     RabbitMQModule.forRootAsync({
       inject: [ConfigService],
