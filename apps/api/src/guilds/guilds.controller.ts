@@ -18,8 +18,8 @@ import {
   ApiQuery,
 } from "@nestjs/swagger";
 import { plainToInstance } from "class-transformer";
-import { type Guild, Permission } from "prisma/generated/client";
-import { UpdateGuildConfigDto } from "src/guilds/dto/update-guild-config.dto";
+import { type Guild, Permission } from "src/generated/prisma/client";
+import type { UpdateGuildConfigDto } from "src/guilds/dto/update-guild-config.dto";
 import { UserGuildPermissionsDto } from "src/guilds/dto/user-guild-permissions.dto";
 import { GuildsService } from "src/guilds/guilds.service";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
@@ -75,14 +75,14 @@ export class GuildsController {
     description: "List of user guilds with permissions",
     type: [UserGuildPermissionsDto],
   })
-  async getUserGuildsWithPermissions(
+  getUserGuildsWithPermissions(
     @DiscordId() discordId: string,
   ): Promise<UserGuildPermissionsDto[]> {
     return this.guildsService.getUserGuildsWithPermissions(discordId);
   }
 
   @Get("/@me/manageable")
-  async getManageableUserGuilds(
+  getManageableUserGuilds(
     @DiscordId() discordId: string,
     @UserId() userId: string,
   ) {
@@ -134,28 +134,28 @@ export class GuildsController {
   @Permissions(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
   @Get(":guildId/worlds")
-  async getWorldsByGuildId(@GuildData() guild: Guild) {
+  getWorldsByGuildId(@GuildData() guild: Guild) {
     return this.guildsService.getWorldsByGuildId(guild.id);
   }
 
   @Permissions(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
   @Get(":guildId/permissions")
-  async getGuildPermissions(@MemberPermissions() permissions: Permission[]) {
+  getGuildPermissions(@MemberPermissions() permissions: Permission[]) {
     return permissions;
   }
 
   @Permissions(Permission.OWNER, Permission.ADMIN)
   @UseGuards(PermissionsGuard)
   @Get(":guildId/discord-sync")
-  async getGuildDiscordSyncStatus(@GuildData() guild: Guild) {
+  getGuildDiscordSyncStatus(@GuildData() guild: Guild) {
     return this.guildsService.getGuildDiscordSyncStatus(guild.id);
   }
 
   @Permissions(Permission.OWNER, Permission.ADMIN)
   @UseGuards(PermissionsGuard)
   @Post(":guildId/discord-sync/refresh")
-  async refreshGuildDiscordSync(@GuildData() guild: Guild) {
+  refreshGuildDiscordSync(@GuildData() guild: Guild) {
     return this.guildsService.refreshGuildDiscordSync(guild.id);
   }
 }

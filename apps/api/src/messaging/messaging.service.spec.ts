@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { mockFn } from "src/test/mock-fn";
 import { ForbiddenException } from "@nestjs/common";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
@@ -8,27 +9,27 @@ import { RedisService } from "@lootlog/nest-shared";
 import { RoutingKey } from "src/enum/routing-key.enum";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 
-jest.mock("uuid", () => ({
+vi.mock("uuid", () => ({
   v4: () => "mock-uuid",
 }));
 
 describe("MessagingService", () => {
   let service: MessagingService;
 
-  const mockLogger = { log: jest.fn() };
+  const mockLogger = { log: mockFn() };
 
   const mockAmqpConnection = {
-    publish: jest.fn(),
+    publish: mockFn(),
   };
 
   const mockGuildsService = {
-    getGuildsForRequiredPermissions: jest.fn(),
+    getGuildsForRequiredPermissions: mockFn(),
   };
 
   const mockRedisService = {
-    get: jest.fn(),
-    set: jest.fn(),
-    del: jest.fn(),
+    get: mockFn(),
+    set: mockFn(),
+    del: mockFn(),
   };
 
   beforeEach(async () => {
@@ -43,7 +44,7 @@ describe("MessagingService", () => {
     }).compile();
 
     service = module.get<MessagingService>(MessagingService);
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("cancelPartyGathering", () => {

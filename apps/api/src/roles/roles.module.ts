@@ -1,9 +1,8 @@
-import { Module, forwardRef } from "@nestjs/common";
+import { Module } from "@nestjs/common";
 import { RolesService } from "./roles.service";
 import { RolesEventsHandler } from "src/roles/roles-events.handler";
 import { RolesController } from "./roles.controller";
-import { MembersModule } from "src/members/members.module";
-import { GuildsModule } from "src/guilds/guilds.module";
+import { MemberContextModule } from "src/shared/permissions/member-context.module";
 import { RetryService } from "src/rabbitmq/retry.service";
 import {
   RabbitMQModule,
@@ -16,8 +15,7 @@ import { RedisModule } from "src/lib/redis/redis.module";
 
 @Module({
   imports: [
-    forwardRef(() => GuildsModule),
-    forwardRef(() => MembersModule),
+    MemberContextModule,
     RabbitMQModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) =>

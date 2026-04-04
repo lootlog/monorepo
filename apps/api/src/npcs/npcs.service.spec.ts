@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { mockFn } from "src/test/mock-fn";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { NpcsService } from "./npcs.service";
 
@@ -6,7 +7,7 @@ describe("NpcsService", () => {
   let service: NpcsService;
 
   const mockAmqpConnection = {
-    publish: jest.fn(),
+    publish: mockFn(),
   };
 
   beforeEach(async () => {

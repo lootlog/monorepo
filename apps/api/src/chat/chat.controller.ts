@@ -17,9 +17,9 @@ import {
   ApiParam,
 } from "@nestjs/swagger";
 import { ChatService } from "src/chat/chat.service";
-import { SendMessageDto } from "src/chat/dto/send-message.dto";
-import { UpdateMessageDto } from "src/chat/dto/update-message.dto";
-import { type Guild, Permission } from "prisma/generated/client";
+import type { SendMessageDto } from "src/chat/dto/send-message.dto";
+import type { UpdateMessageDto } from "src/chat/dto/update-message.dto";
+import { type Guild, Permission } from "src/generated/prisma/client";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
@@ -48,10 +48,7 @@ export class ChatController {
     status: 403,
     description: "Forbidden - insufficient permissions",
   })
-  async getChatMessages(
-    @DiscordId() discordId: string,
-    @GuildData() guild: Guild,
-  ) {
+  getChatMessages(@DiscordId() discordId: string, @GuildData() guild: Guild) {
     return this.chatService.getMessages(discordId, guild.id);
   }
 
@@ -71,7 +68,7 @@ export class ChatController {
     status: 403,
     description: "Forbidden - insufficient permissions",
   })
-  async sendChatMessage(
+  sendChatMessage(
     @Body() data: SendMessageDto,
     @GuildData() guild: Guild,
     @DiscordId() discordId: string,
@@ -100,7 +97,7 @@ export class ChatController {
     status: 403,
     description: "Forbidden - insufficient permissions or not message owner",
   })
-  async updateChatMessage(
+  updateChatMessage(
     @GuildData() guild: Guild,
     @DiscordId() discordId: string,
     @Param("messageId") messageId: string,
@@ -135,7 +132,7 @@ export class ChatController {
     status: 403,
     description: "Forbidden - insufficient permissions or not message owner",
   })
-  async deleteChatMessage(
+  deleteChatMessage(
     @GuildData() guild: Guild,
     @DiscordId() discordId: string,
     @Param("messageId") messageId: string,

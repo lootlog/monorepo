@@ -1,5 +1,6 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import type { Guild } from "prisma/generated/client";
+import { mockFn } from "src/test/mock-fn";
+import type { Guild } from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared";
 import { LootsService } from "src/loots/loots.service";
@@ -10,29 +11,29 @@ describe("EventWrappedService", () => {
 
   const mockPrismaService = {
     event: {
-      findFirst: jest.fn(),
+      findFirst: mockFn(),
     },
     eventRanking: {
-      findMany: jest.fn(),
+      findMany: mockFn(),
     },
     eventHeroKill: {
-      findMany: jest.fn(),
+      findMany: mockFn(),
     },
     eventRespawnWindowSummary: {
-      findMany: jest.fn(),
+      findMany: mockFn(),
     },
     eventMapAssignmentHistory: {
-      findMany: jest.fn(),
+      findMany: mockFn(),
     },
   };
 
   const mockRedisService = {
-    get: jest.fn(),
-    set: jest.fn(),
+    get: mockFn(),
+    set: mockFn(),
   };
 
   const mockLootsService = {
-    fetchLootsByGuildId: jest.fn(),
+    fetchLootsByGuildId: mockFn(),
   };
 
   const guild = {
@@ -41,7 +42,7 @@ describe("EventWrappedService", () => {
   } as Guild;
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [

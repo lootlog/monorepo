@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { mockFn } from "src/test/mock-fn";
 import { HealthzController } from "./healthz.controller";
 import { HealthzService } from "./healthz.service";
 
@@ -6,7 +7,7 @@ describe("HealthzController", () => {
   let controller: HealthzController;
 
   const mockHealthzService = {
-    healthCheck: jest.fn(),
+    healthCheck: mockFn(),
   };
 
   beforeEach(async () => {

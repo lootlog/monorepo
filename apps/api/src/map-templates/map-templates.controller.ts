@@ -14,12 +14,12 @@ import {
   ApiResponse,
   ApiParam,
 } from "@nestjs/swagger";
-import { Permission } from "prisma/generated/client";
+import { Permission } from "src/generated/prisma/client";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 import { MapTemplatesService } from "./map-templates.service";
-import { CreateMapTemplateDto } from "./dto/create-map-template.dto";
+import type { CreateMapTemplateDto } from "./dto/create-map-template.dto";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 
 @ApiTags("map-templates")
@@ -41,7 +41,7 @@ export class MapTemplatesController {
     status: 200,
     description: "List of map templates",
   })
-  async getTemplates(@GuildData() guildData: { id: string }) {
+  getTemplates(@GuildData() guildData: { id: string }) {
     return this.mapTemplatesService.getTemplates(guildData.id);
   }
 
@@ -57,7 +57,7 @@ export class MapTemplatesController {
     status: 201,
     description: "Template created successfully",
   })
-  async createTemplate(
+  createTemplate(
     @GuildData() guildData: { id: string },
     @Body() data: CreateMapTemplateDto,
   ) {
@@ -77,7 +77,7 @@ export class MapTemplatesController {
     status: 200,
     description: "Template deleted successfully",
   })
-  async deleteTemplate(
+  deleteTemplate(
     @GuildData() guildData: { id: string },
     @Param("templateId") templateId: string,
   ) {

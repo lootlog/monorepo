@@ -1,8 +1,9 @@
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
+import { mockFn } from "src/test/mock-fn";
 import { getQueueToken } from "@nestjs/bullmq";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { NotificationTargetType } from "@lootlog/types";
-import { Prisma } from "prisma/generated/client";
+import { Prisma } from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
 import { GuildsService } from "src/guilds/guilds.service";
 import { NOTIFICATIONS_DISPATCH_QUEUE } from "src/notifications/constants/notifications-dispatch-queue.constant";
@@ -24,81 +25,81 @@ describe("Notification Services", () => {
   let watchedItemService: WatchedItemService;
 
   const mockPrisma = {
-    $transaction: jest.fn(),
+    $transaction: mockFn(),
     guild: {
-      findUnique: jest.fn(),
+      findUnique: mockFn(),
     },
     member: {
-      findMany: jest.fn(),
+      findMany: mockFn(),
     },
     notificationRule: {
-      count: jest.fn(),
-      findFirst: jest.fn(),
-      findMany: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      deleteMany: jest.fn(),
+      count: mockFn(),
+      findFirst: mockFn(),
+      findMany: mockFn(),
+      create: mockFn(),
+      update: mockFn(),
+      delete: mockFn(),
+      deleteMany: mockFn(),
     },
     notificationRuleTarget: {
-      createMany: jest.fn(),
-      findMany: jest.fn(),
+      createMany: mockFn(),
+      findMany: mockFn(),
     },
     timer: {
-      findMany: jest.fn(),
+      findMany: mockFn(),
     },
     watchedItem: {
-      count: jest.fn(),
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
-      update: jest.fn(),
-      upsert: jest.fn(),
+      count: mockFn(),
+      findMany: mockFn(),
+      findUnique: mockFn(),
+      update: mockFn(),
+      upsert: mockFn(),
     },
     notificationTarget: {
-      findMany: jest.fn(),
-      delete: jest.fn(),
-      deleteMany: jest.fn(),
-      upsert: jest.fn(),
-      findFirst: jest.fn(),
-      update: jest.fn(),
+      findMany: mockFn(),
+      delete: mockFn(),
+      deleteMany: mockFn(),
+      upsert: mockFn(),
+      findFirst: mockFn(),
+      update: mockFn(),
     },
     notificationJob: {
-      create: jest.fn(),
-      findFirst: jest.fn(),
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
-      update: jest.fn(),
-      updateMany: jest.fn(),
+      create: mockFn(),
+      findFirst: mockFn(),
+      findMany: mockFn(),
+      findUnique: mockFn(),
+      update: mockFn(),
+      updateMany: mockFn(),
     },
   };
 
   const removedJobs = [
     {
-      remove: jest.fn(),
+      remove: mockFn(),
     },
     {
-      remove: jest.fn(),
+      remove: mockFn(),
     },
   ];
 
   const mockQueue = {
-    add: jest.fn(),
-    getJob: jest.fn(),
+    add: mockFn(),
+    getJob: mockFn(),
   };
 
   const mockChannelsService = {};
   const mockGuildsService = {
-    hasRequiredGuildPermissions: jest.fn(),
-    getGuildDiscordSyncStatus: jest.fn(),
-    getUserGuilds: jest.fn(),
-    getMultipleGuildsByIds: jest.fn(),
+    hasRequiredGuildPermissions: mockFn(),
+    getGuildDiscordSyncStatus: mockFn(),
+    getUserGuilds: mockFn(),
+    getMultipleGuildsByIds: mockFn(),
   };
   const mockAmqpConnection = {
-    publish: jest.fn(),
+    publish: mockFn(),
   };
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockQueue.getJob
       .mockResolvedValueOnce(removedJobs[0])
@@ -122,17 +123,15 @@ describe("Notification Services", () => {
       active: true,
       canSend: true,
     });
-    mockPrisma.notificationTarget.update.mockImplementation(
-      async ({ data }) => ({
-        id: 11,
-        ownerType: "USER",
-        ownerId: "user-1",
-        targetType: "DM",
-        active: data.active ?? true,
-        canSend: true,
-        displayName: "Discord DM",
-      }),
-    );
+    mockPrisma.notificationTarget.update.mockImplementation(({ data }) => ({
+      id: 11,
+      ownerType: "USER",
+      ownerId: "user-1",
+      targetType: "DM",
+      active: data.active ?? true,
+      canSend: true,
+      displayName: "Discord DM",
+    }));
     mockPrisma.guild.findUnique.mockResolvedValue({
       notificationRuleLimit: 20,
     });
@@ -198,12 +197,12 @@ describe("Notification Services", () => {
     mockPrisma.notificationRuleTarget.findMany.mockResolvedValue([]);
     mockPrisma.notificationRule.deleteMany.mockResolvedValue({ count: 0 });
     mockPrisma.notificationRule.delete.mockResolvedValue(undefined);
-    mockPrisma.$transaction.mockImplementation(async (callback) =>
+    mockPrisma.$transaction.mockImplementation((callback) =>
       callback({
         watchedItem: {
           update: mockPrisma.watchedItem.update,
           upsert: mockPrisma.watchedItem.upsert,
-          delete: jest.fn(),
+          delete: mockFn(),
         },
         notificationRule: {
           create: mockPrisma.notificationRule.create,
@@ -288,7 +287,7 @@ describe("Notification Services", () => {
       .mockResolvedValueOnce([{ id: "job-2" }]);
     mockQueue.getJob
       .mockResolvedValueOnce(removedJobs[0])
-      .mockResolvedValueOnce({ remove: jest.fn() })
+      .mockResolvedValueOnce({ remove: mockFn() })
       .mockResolvedValueOnce(removedJobs[1]);
 
     await targetService.handleGuildChannelDeleted({
@@ -384,9 +383,9 @@ describe("Notification Services", () => {
   });
 
   it("rebuilds guild rule jobs after confirming rule ownership", async () => {
-    const rebuildJobsForRuleSpy = jest
+    const rebuildJobsForRuleSpy = vi
       .spyOn(jobService, "rebuildJobsForRule")
-      .mockImplementation(async () => undefined);
+      .mockImplementation(() => undefined);
 
     await ruleService.rebuildGuildRuleJobs("guild-1", 77);
 

@@ -1,11 +1,11 @@
 import { RabbitSubscribe } from "@golevelup/nestjs-rabbitmq";
 import { Injectable, Logger } from "@nestjs/common";
-import {
-  type DiscordGuildChannelDeletedEvent,
-  type DiscordGuildChannelUpsertedEvent,
-  type DiscordGuildChannelsSyncFailedEvent,
-  type DiscordGuildChannelsSyncedEvent,
-  type DiscordGuildSyncStateUpdatedEvent,
+import type {
+  DiscordGuildChannelDeletedEvent,
+  DiscordGuildChannelUpsertedEvent,
+  DiscordGuildChannelsSyncFailedEvent,
+  DiscordGuildChannelsSyncedEvent,
+  DiscordGuildSyncStateUpdatedEvent,
 } from "@lootlog/types";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { RoutingKey } from "src/enum/routing-key.enum";

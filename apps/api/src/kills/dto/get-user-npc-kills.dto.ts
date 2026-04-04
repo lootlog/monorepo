@@ -9,14 +9,14 @@ import {
   Max,
   Min,
 } from "class-validator";
-import { NpcType } from "prisma/generated/client";
+import { NpcType } from "src/generated/prisma/client";
+import { swaggerStringEnumArray } from "src/shared/swagger/prisma-enum";
 
 export class GetUserNpcKillsDto {
   @ApiPropertyOptional({
+    ...swaggerStringEnumArray("NpcType", NpcType),
     example: "HERO,TITAN",
     description: "Comma-separated NPC types to filter by",
-    enum: NpcType,
-    isArray: true,
   })
   @IsOptional()
   @Transform(({ value }) => {

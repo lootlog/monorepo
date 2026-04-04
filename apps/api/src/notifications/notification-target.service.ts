@@ -16,7 +16,7 @@ import {
   NotificationTargetType as DbNotificationTargetType,
   NotificationTriggerType as DbNotificationTriggerType,
   Prisma,
-} from "prisma/generated/client";
+} from "src/generated/prisma/client";
 import { ChannelsService } from "src/channels/channels.service";
 import { PrismaService } from "src/db/prisma.service";
 import { NotificationJobService } from "src/notifications/notification-job.service";
@@ -26,7 +26,11 @@ import { Error } from "src/notifications/enum/error.enum";
 import {
   USER_DM_TEST_MESSAGE,
   USER_DM_TEST_RULE_NAME,
-} from "src/notifications/contants/user-dm.constant";
+} from "src/notifications/constants/user-dm.constant";
+import {
+  computeTestTriggerUsage,
+  getDefaultTestTriggerUsage,
+} from "src/notifications/utils/test-trigger-usage.util";
 
 const USER_DM_TEST_TRIGGER_LIMIT = 5;
 const USER_DM_TEST_TRIGGER_WINDOW_MS = 15 * 60_000;
@@ -42,7 +46,7 @@ export class NotificationTargetService {
     private readonly jobService: NotificationJobService,
   ) {}
 
-  async listGuildTargets(guildId: string) {
+  listGuildTargets(guildId: string) {
     return this.prisma.notificationTarget.findMany({
       where: {
         ownerType: DbNotificationOwnerType.GUILD,
@@ -113,7 +117,7 @@ export class NotificationTargetService {
     targetId: number,
     data: UpdateNotificationTargetDto,
   ) {
-    await this.ensureGuildTarget(guildId, targetId);
+    await this.ensureTarget(DbNotificationOwnerType.GUILD, guildId, targetId);
     const hasDisplayName = Object.prototype.hasOwnProperty.call(
       data,
       "displayName",
@@ -135,7 +139,7 @@ export class NotificationTargetService {
   }
 
   async deleteGuildTarget(guildId: string, targetId: number) {
-    await this.ensureGuildTarget(guildId, targetId);
+    await this.ensureTarget(DbNotificationOwnerType.GUILD, guildId, targetId);
     await this.deleteTargetAndOrphanedRules(targetId);
     return { success: true };
   }
@@ -213,7 +217,7 @@ export class NotificationTargetService {
     targetId: number,
     data: UpdateNotificationTargetDto,
   ) {
-    await this.ensureUserTarget(discordId, targetId);
+    await this.ensureTarget(DbNotificationOwnerType.USER, discordId, targetId);
 
     const hasDisplayName = Object.prototype.hasOwnProperty.call(
       data,
@@ -230,7 +234,11 @@ export class NotificationTargetService {
   }
 
   async triggerUserTargetTest(discordId: string, targetId: number) {
-    const target = await this.ensureUserTarget(discordId, targetId);
+    const target = await this.ensureTarget(
+      DbNotificationOwnerType.USER,
+      discordId,
+      targetId,
+    );
 
     if (target.targetType !== DbNotificationTargetType.DM) {
       throw new BadRequestException(Error.USER_TEST_TARGET_MUST_BE_DISCORD_DM);
@@ -293,7 +301,7 @@ export class NotificationTargetService {
   }
 
   async deleteUserTarget(discordId: string, targetId: number) {
-    await this.ensureUserTarget(discordId, targetId);
+    await this.ensureTarget(DbNotificationOwnerType.USER, discordId, targetId);
     await this.deleteTargetAndOrphanedRules(targetId);
     return { success: true };
   }
@@ -357,33 +365,21 @@ export class NotificationTargetService {
       return;
     }
 
-    for (const target of targets) {
-      await this.deleteTargetAndOrphanedRules(target.id);
-    }
+    await Promise.all(
+      targets.map((target) => this.deleteTargetAndOrphanedRules(target.id)),
+    );
   }
 
-  private async ensureGuildTarget(guildId: string, targetId: number) {
+  private async ensureTarget(
+    ownerType: DbNotificationOwnerType,
+    ownerId: string,
+    targetId: number,
+  ) {
     const target = await this.prisma.notificationTarget.findFirst({
       where: {
         id: targetId,
-        ownerType: DbNotificationOwnerType.GUILD,
-        ownerId: guildId,
-      },
-    });
-
-    if (!target) {
-      throw new NotFoundException(Error.NOTIFICATION_TARGET_NOT_FOUND);
-    }
-
-    return target;
-  }
-
-  private async ensureUserTarget(discordId: string, targetId: number) {
-    const target = await this.prisma.notificationTarget.findFirst({
-      where: {
-        id: targetId,
-        ownerType: DbNotificationOwnerType.USER,
-        ownerId: discordId,
+        ownerType,
+        ownerId,
       },
     });
 
@@ -415,9 +411,11 @@ export class NotificationTargetService {
 
     await this.jobService.cancelPendingJobs({ targetId });
 
-    for (const ruleId of singleTargetRuleIds) {
-      await this.jobService.cancelPendingJobs({ ruleId });
-    }
+    await Promise.all(
+      singleTargetRuleIds.map((ruleId) =>
+        this.jobService.cancelPendingJobs({ ruleId }),
+      ),
+    );
 
     await this.prisma.notificationTarget.delete({ where: { id: targetId } });
 
@@ -525,77 +523,20 @@ export class NotificationTargetService {
     const usageMap = await this.getUserDmTestTriggerUsageForTargets([targetId]);
 
     return (
-      usageMap.get(targetId) ?? {
-        limit: USER_DM_TEST_TRIGGER_LIMIT,
-        used: 0,
-        remaining: USER_DM_TEST_TRIGGER_LIMIT,
-        windowSeconds: Math.floor(USER_DM_TEST_TRIGGER_WINDOW_MS / 1000),
-        nextAvailableAt: null,
-      }
+      usageMap.get(targetId) ??
+      getDefaultTestTriggerUsage(
+        USER_DM_TEST_TRIGGER_LIMIT,
+        USER_DM_TEST_TRIGGER_WINDOW_MS,
+      )
     );
   }
 
-  private async getUserDmTestTriggerUsageForTargets(targetIds: number[]) {
-    const usageByTargetId = new Map<
-      number,
-      {
-        limit: number;
-        used: number;
-        remaining: number;
-        windowSeconds: number;
-        nextAvailableAt: string | null;
-      }
-    >();
-
-    if (targetIds.length === 0) {
-      return usageByTargetId;
-    }
-
-    const threshold = new Date(Date.now() - USER_DM_TEST_TRIGGER_WINDOW_MS);
-
-    const testJobs = await this.prisma.notificationJob.findMany({
-      where: {
-        targetId: { in: targetIds },
-        jobKind: DbNotificationJobKind.TEST,
-        createdAt: { gte: threshold },
-      },
-      select: {
-        targetId: true,
-        createdAt: true,
-      },
-      orderBy: [{ createdAt: "asc" }],
-    });
-
-    const jobsByTargetId = new Map<number, Date[]>();
-
-    for (const job of testJobs) {
-      if (!job.targetId) {
-        continue;
-      }
-
-      const current = jobsByTargetId.get(job.targetId) ?? [];
-      current.push(job.createdAt);
-      jobsByTargetId.set(job.targetId, current);
-    }
-
-    for (const targetId of targetIds) {
-      const usage = jobsByTargetId.get(targetId) ?? [];
-      const nextAvailableAt =
-        usage.length >= USER_DM_TEST_TRIGGER_LIMIT
-          ? new Date(
-              usage[0]!.getTime() + USER_DM_TEST_TRIGGER_WINDOW_MS,
-            ).toISOString()
-          : null;
-
-      usageByTargetId.set(targetId, {
-        limit: USER_DM_TEST_TRIGGER_LIMIT,
-        used: usage.length,
-        remaining: Math.max(0, USER_DM_TEST_TRIGGER_LIMIT - usage.length),
-        windowSeconds: Math.floor(USER_DM_TEST_TRIGGER_WINDOW_MS / 1000),
-        nextAvailableAt,
-      });
-    }
-
-    return usageByTargetId;
+  private getUserDmTestTriggerUsageForTargets(targetIds: number[]) {
+    return computeTestTriggerUsage(
+      this.prisma,
+      targetIds,
+      USER_DM_TEST_TRIGGER_LIMIT,
+      USER_DM_TEST_TRIGGER_WINDOW_MS,
+    );
   }
 }

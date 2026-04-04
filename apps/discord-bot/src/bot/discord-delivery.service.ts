@@ -1,11 +1,11 @@
 // oxlint-disable-next-line consistent-type-imports
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { Inject, Injectable, Logger } from "@nestjs/common";
-import type {
-  DiscordNotificationDeliveryResultEvent,
-  DiscordNotificationSendCommand,
+import {
+  NotificationTargetType,
+  type DiscordNotificationDeliveryResultEvent,
+  type DiscordNotificationSendCommand,
 } from "@lootlog/types";
-import { NotificationTargetType } from "@lootlog/types";
 import { ChannelType, Client, DiscordAPIError } from "discord.js";
 import { RoutingKey } from "src/bot/enums/routing-key.enum";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";

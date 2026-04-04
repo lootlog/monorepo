@@ -1,14 +1,14 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "src/db/prisma.service";
 import {
-  Prisma,
-  Permission,
-  Profession,
   ItemRarity,
   NpcType,
+  Permission,
+  Profession,
   type Guild,
+  type Prisma,
   type Role,
-} from "prisma/generated/client";
+} from "src/generated/prisma/client";
 import type { FetchLootsParamsDto } from "src/loots/dto/fetch-loots-params.dto";
 import type { LootItemDto } from "src/loots/dto/loot-item.dto";
 import type { LootNpcDto } from "src/loots/dto/loot-npc.dto";
@@ -144,7 +144,7 @@ export class LootQueryService {
     return results;
   }
 
-  async countLootsByGuildId(
+  countLootsByGuildId(
     guild: Guild,
     permissions: Permission[],
     roles: Role[],
@@ -751,17 +751,17 @@ export class LootQueryService {
     min?: number | null,
     max?: number | null,
   ): Prisma.IntNullableFilter | null {
-    if (min == null && max == null) {
+    if (min === undefined && max === undefined) {
       return null;
     }
 
     const rangeFilter: Prisma.IntNullableFilter = {};
 
-    if (min != null) {
+    if (min !== undefined && min !== null) {
       rangeFilter.gte = min;
     }
 
-    if (max != null) {
+    if (max !== undefined && max !== null) {
       rangeFilter.lte = max;
     }
 
@@ -772,17 +772,17 @@ export class LootQueryService {
     min?: string,
     max?: string,
   ): Prisma.DateTimeFilter | null {
-    if (min == null && max == null) {
+    if (min === undefined && max === undefined) {
       return null;
     }
 
     const rangeFilter: Prisma.DateTimeFilter = {};
 
-    if (min != null) {
+    if (min !== undefined) {
       rangeFilter.gte = new Date(min);
     }
 
-    if (max != null) {
+    if (max !== undefined) {
       rangeFilter.lte = new Date(max);
     }
 

@@ -6,9 +6,9 @@ import {
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
-import { Permission, type Role } from "prisma/generated/client";
-import { CloseRespawnWindowDto } from "./dto/close-respawn-window.dto";
-import { OpenRespawnWindowDto } from "./dto/open-respawn-window.dto";
+import { Permission, type Role } from "src/generated/prisma/client";
+import type { CloseRespawnWindowDto } from "./dto/close-respawn-window.dto";
+import type { OpenRespawnWindowDto } from "./dto/open-respawn-window.dto";
 import { EventsService } from "./events.service";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";
@@ -118,7 +118,7 @@ export class EventsMonitoringController {
     status: 200,
     description: "List of coverage gaps with type, duration, and timestamps",
   })
-  async getMapCoverageGaps(
+  getMapCoverageGaps(
     @GuildData() guildData: { id: string },
     @Param("eventId") eventId: string,
     @Param("mapId") mapId: string,
@@ -141,7 +141,7 @@ export class EventsMonitoringController {
     status: 200,
     description: "Active gap or null if no gap is currently active",
   })
-  async getActiveGapForMap(
+  getActiveGapForMap(
     @GuildData() guildData: { id: string },
     @Param("eventId") eventId: string,
     @Param("mapId") mapId: string,

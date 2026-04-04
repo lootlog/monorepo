@@ -13,11 +13,11 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node --import ./dist/instrumentation.js dist/main.js",
     "lint": "oxlint src",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:cov": "jest --coverage",
-    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "test": "vitest run --config ./vitest.config.ts",
+    "test:watch": "vitest --config ./vitest.config.ts",
+    "test:cov": "vitest run --config ./vitest.config.ts --coverage",
+    "test:debug": "vitest --config ./vitest.config.ts --inspect-brk --no-file-parallelism",
+    "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
     "battlelog:push": "drizzle-kit push",
     "battlelog:generate": "drizzle-kit generate",
     "battlelog:migrate": "drizzle-kit migrate",
@@ -27,28 +27,28 @@
     "battlelog:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1019.0",
-    "@axiomhq/winston": "^1.5.0",
+    "@aws-sdk/client-s3": "^3.1024.0",
+    "@axiomhq/winston": "^1.6.0",
     "@lootlog/battle-processor": "workspace:*",
     "@lootlog/instrumentation": "workspace:*",
     "@lootlog/nest-shared": "workspace:*",
     "@lootlog/types": "workspace:*",
     "@nestjs/bullmq": "^11.0.4",
-    "@nestjs/common": "^11.1.17",
+    "@nestjs/common": "^11.1.18",
     "@nestjs/config": "^4.0.3",
-    "@nestjs/core": "^11.1.17",
-    "@nestjs/platform-express": "^11.1.17",
-    "@nestjs/platform-fastify": "^11.1.17",
+    "@nestjs/core": "^11.1.18",
+    "@nestjs/platform-express": "^11.1.18",
+    "@nestjs/platform-fastify": "^11.1.18",
     "@nestjs/swagger": "^11.2.6",
     "@paralleldrive/cuid2": "^2.3.1",
-    "bullmq": "^5.71.1",
+    "bullmq": "^5.73.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
-    "dotenv": "^17.3.1",
-    "drizzle-orm": "1.0.0-beta.19",
+    "dotenv": "^17.4.0",
+    "drizzle-orm": "1.0.0-beta.20",
     "fastify": "^5.8.4",
     "ioredis": "^5.10.1",
-    "joi": "^18.1.1",
+    "joi": "^18.1.2",
     "nest-winston": "^1.10.2",
     "pg": "^8.20.0",
     "reflect-metadata": "^0.2.2",
@@ -56,38 +56,19 @@
     "winston": "^3.19.0"
   },
   "devDependencies": {
-    "@nestjs/cli": "^11.0.16",
-    "@nestjs/testing": "^11.1.17",
-    "@types/jest": "^30.0.0",
-    "@types/node": "^25.5.0",
+    "@nestjs/cli": "^11.0.17",
+    "@nestjs/testing": "^11.1.18",
+    "@swc/cli": "^0.7.8",
+    "@swc/core": "^1.15.24",
+    "@types/node": "^25.5.2",
     "@types/pg": "^8.20.0",
     "@types/supertest": "^7.2.0",
+    "@vitest/coverage-v8": "^4.1.2",
     "drizzle-kit": "1.0.0-beta.19",
-    "jest": "^30.3.0",
     "supertest": "^7.2.2",
-    "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
-  },
-  "jest": {
-    "collectCoverageFrom": [
-      "**/*.(t|j)s"
-    ],
-    "coverageDirectory": "../coverage",
-    "moduleFileExtensions": [
-      "js",
-      "json",
-      "ts"
-    ],
-    "moduleNameMapper": {
-      "^@lootlog/battle-processor$": "<rootDir>/../../../packages/battle-processor/src/index.ts",
-      "^src/(.*)$": "<rootDir>/$1"
-    },
-    "rootDir": "src",
-    "testEnvironment": "node",
-    "testRegex": ".*\\.spec\\.ts$",
-    "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
-    }
+    "typescript": "^5.9.3",
+    "unplugin-swc": "^1.5.9",
+    "vitest": "^4.1.2"
   }
 }

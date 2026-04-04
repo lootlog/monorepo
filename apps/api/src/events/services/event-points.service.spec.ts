@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { mockFn } from "src/test/mock-fn";
 import { EventPointsService } from "./event-points.service";
 import { PrismaService } from "src/db/prisma.service";
 import { EventEmitterService } from "./event-emitter.service";
@@ -8,52 +9,52 @@ describe("EventPointsService", () => {
 
   const mockPrismaService = {
     event: {
-      findFirst: jest.fn(),
-      findUnique: jest.fn(),
+      findFirst: mockFn(),
+      findUnique: mockFn(),
     },
     eventRanking: {
-      findMany: jest.fn(),
-      findFirst: jest.fn(),
-      findUnique: jest.fn(),
-      create: jest.fn(),
-      createMany: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      deleteMany: jest.fn(),
+      findMany: mockFn(),
+      findFirst: mockFn(),
+      findUnique: mockFn(),
+      create: mockFn(),
+      createMany: mockFn(),
+      update: mockFn(),
+      delete: mockFn(),
+      deleteMany: mockFn(),
     },
     eventKillPoint: {
-      findMany: jest.fn(),
-      findFirst: jest.fn(),
-      update: jest.fn(),
+      findMany: mockFn(),
+      findFirst: mockFn(),
+      update: mockFn(),
     },
     eventMap: {
-      findMany: jest.fn(),
+      findMany: mockFn(),
     },
     eventMapAssignmentHistory: {
-      findMany: jest.fn(),
+      findMany: mockFn(),
     },
     eventRespawnWindowSummary: {
-      findMany: jest.fn(),
+      findMany: mockFn(),
     },
     eventPresenceLog: {
-      findMany: jest.fn(),
+      findMany: mockFn(),
     },
     eventPointsEditHistory: {
-      findMany: jest.fn(),
-      create: jest.fn(),
+      findMany: mockFn(),
+      create: mockFn(),
     },
     member: {
-      findMany: jest.fn(),
+      findMany: mockFn(),
     },
-    $transaction: jest.fn(),
+    $transaction: mockFn(),
   };
 
   const mockEventEmitter = {
-    emitRankingUpdate: jest.fn(),
+    emitRankingUpdate: mockFn(),
   };
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockPrismaService.eventRespawnWindowSummary.findMany.mockResolvedValue([]);
     mockPrismaService.member.findMany.mockResolvedValue([]);
 
@@ -351,7 +352,7 @@ describe("EventPointsService", () => {
       mockPrismaService.eventRanking.findMany.mockResolvedValue([]);
       mockPrismaService.eventKillPoint.update.mockResolvedValue({});
       mockPrismaService.eventRanking.create.mockResolvedValue({});
-      mockPrismaService.$transaction.mockImplementation(async (operations) =>
+      mockPrismaService.$transaction.mockImplementation((operations) =>
         Promise.all(operations),
       );
       mockPrismaService.event.findUnique.mockResolvedValue({
@@ -417,7 +418,7 @@ describe("EventPointsService", () => {
       mockPrismaService.eventRanking.findMany.mockResolvedValue([]);
       mockPrismaService.eventKillPoint.update.mockResolvedValue({});
       mockPrismaService.eventRanking.create.mockResolvedValue({});
-      mockPrismaService.$transaction.mockImplementation(async (operations) =>
+      mockPrismaService.$transaction.mockImplementation((operations) =>
         Promise.all(operations),
       );
 
@@ -517,7 +518,7 @@ describe("EventPointsService", () => {
       mockPrismaService.eventRanking.findMany.mockResolvedValue([]);
       mockPrismaService.eventKillPoint.update.mockResolvedValue({});
       mockPrismaService.eventRanking.create.mockResolvedValue({});
-      mockPrismaService.$transaction.mockImplementation(async (operations) =>
+      mockPrismaService.$transaction.mockImplementation((operations) =>
         Promise.all(operations),
       );
 
@@ -600,7 +601,7 @@ describe("EventPointsService", () => {
       ]);
       mockPrismaService.eventKillPoint.update.mockResolvedValue({});
       mockPrismaService.eventRanking.update.mockResolvedValue({});
-      mockPrismaService.$transaction.mockImplementation(async (operations) =>
+      mockPrismaService.$transaction.mockImplementation((operations) =>
         Promise.all(operations),
       );
       mockPrismaService.event.findUnique.mockResolvedValue({

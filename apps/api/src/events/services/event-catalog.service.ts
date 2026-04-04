@@ -5,23 +5,25 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import type { Queue } from "bullmq";
-import type { Event } from "prisma/generated/client";
+import type { Event } from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared";
 import { EventPointsService } from "src/events/services/event-points.service";
 import { EventTrackingService } from "src/events/services/event-tracking.service";
 import { TIMER_TYPES } from "src/timers/constants/timer-limits";
 import { getEventWrappedCacheKey } from "src/shared/constants/cache.constant";
-import { DEFAULT_ADVANCED_EVENT_SCORING_RULES } from "../constants/scoring-rules.constant";
-import type { EventScoringMode } from "../constants/scoring-rules.constant";
-import { CreateEventDto } from "../dto/create-event.dto";
-import { CreateHeroDto } from "../dto/create-hero.dto";
-import { CreateLocationDto } from "../dto/create-location.dto";
-import { CreateMapDto } from "../dto/create-map.dto";
-import { ReorderLocationsDto } from "../dto/reorder-locations.dto";
-import { UpdateEventDto } from "../dto/update-event.dto";
-import { UpdateHeroDto } from "../dto/update-hero.dto";
-import { UpdateLocationDto } from "../dto/update-location.dto";
+import {
+  DEFAULT_ADVANCED_EVENT_SCORING_RULES,
+  type EventScoringMode,
+} from "../constants/scoring-rules.constant";
+import type { CreateEventDto } from "../dto/create-event.dto";
+import type { CreateHeroDto } from "../dto/create-hero.dto";
+import type { CreateLocationDto } from "../dto/create-location.dto";
+import type { CreateMapDto } from "../dto/create-map.dto";
+import type { ReorderLocationsDto } from "../dto/reorder-locations.dto";
+import type { UpdateEventDto } from "../dto/update-event.dto";
+import type { UpdateHeroDto } from "../dto/update-hero.dto";
+import type { UpdateLocationDto } from "../dto/update-location.dto";
 import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant";
 import type { AutoCloseRespawnWindowJobData } from "../respawn-window.processor";
 import {
@@ -189,7 +191,7 @@ export class EventCatalogService {
       .sort(compareEventsByActivityAndStart);
   }
 
-  async getEvent(guildId: string, eventId: string) {
+  getEvent(guildId: string, eventId: string) {
     return this.getEventOverview(guildId, eventId);
   }
 
@@ -463,9 +465,9 @@ export class EventCatalogService {
 
     const eventJobs = jobs.flat().filter((job) => job.data.eventId === eventId);
 
-    for (const job of eventJobs) {
-      await job.remove().catch(() => undefined);
-    }
+    await Promise.all(
+      eventJobs.map((job) => job.remove().catch(() => undefined)),
+    );
 
     await this.prisma.event.delete({
       where: { id: eventId },

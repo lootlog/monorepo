@@ -3,7 +3,6 @@ import {
   ATTACK_ACTIONS_SORT_ORDER,
   isAttackActionInContext,
   isBuffAction,
-  isIgnoredAction,
   isOutcomeAction,
   isPassiveActionInContext,
   isSpellActionInContext,
@@ -74,7 +73,6 @@ const categorizeAction = (
     parsedActions.attackActions.push(action);
   } else if (isOutcomeAction(actionType)) {
     parsedActions.outcomeActions.push(action);
-  } else if (isIgnoredAction(actionType)) {
   }
 };
 

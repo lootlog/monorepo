@@ -245,6 +245,7 @@ export const MapCard = ({
                                 : "border-background",
                           )}
                         >
+                          {/* eslint-disable-next-line eslint-plugin-next/no-img-element */}
                           <img
                             src={getDiscordAvatarUrl(
                               member.userId,

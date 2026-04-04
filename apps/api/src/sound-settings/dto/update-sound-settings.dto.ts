@@ -11,7 +11,7 @@ import {
 import { Type } from "class-transformer";
 import { ApiPropertyOptional } from "@nestjs/swagger";
 
-class NpcTypeSoundConfigDto {
+export class NpcTypeSoundConfigDto {
   @ApiPropertyOptional({
     description: "Volume for this NPC type (0.0 to 1.0)",
     example: 0.5,
@@ -33,7 +33,7 @@ class NpcTypeSoundConfigDto {
   soundUrl?: string;
 }
 
-class SoundConfigMapDto {
+export class SoundConfigMapDto {
   @ApiPropertyOptional({ type: () => NpcTypeSoundConfigDto })
   @IsOptional()
   @ValidateNested()

@@ -1,3 +1,5 @@
+import type { Mock } from "vitest";
+import { mockFn } from "src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { plainToInstance } from "class-transformer";
 import { LootsController } from "./loots.controller";
@@ -11,7 +13,7 @@ import {
   LootSource,
   type Guild,
   type Role,
-} from "prisma/generated/client";
+} from "src/generated/prisma/client";
 import { BadRequestException } from "@nestjs/common";
 import { ErrorKey } from "./enum/error-key.enum";
 import { AuthGuard } from "src/shared/guards/auth.guard";
@@ -22,12 +24,12 @@ import { LootEntity } from "src/shared/entities/loot.entity";
 describe("LootsController", () => {
   let controller: LootsController;
   let service: {
-    createLoot: jest.Mock;
-    fetchLootsByGuildId: jest.Mock;
-    getComments: jest.Mock;
-    createComment: jest.Mock;
-    deleteLoot: jest.Mock;
-    updateLoot: jest.Mock;
+    createLoot: Mock;
+    fetchLootsByGuildId: Mock;
+    getComments: Mock;
+    createComment: Mock;
+    deleteLoot: Mock;
+    updateLoot: Mock;
   };
 
   const mockGuild: Guild = {
@@ -104,16 +106,16 @@ describe("LootsController", () => {
 
   beforeEach(async () => {
     const mockLootsService = {
-      createLoot: jest.fn(),
-      fetchLootsByGuildId: jest.fn(),
-      getComments: jest.fn(),
-      createComment: jest.fn(),
-      deleteLoot: jest.fn(),
-      updateLoot: jest.fn(),
+      createLoot: mockFn(),
+      fetchLootsByGuildId: mockFn(),
+      getComments: mockFn(),
+      createComment: mockFn(),
+      deleteLoot: mockFn(),
+      updateLoot: mockFn(),
     };
 
     const mockLootStatsService = {
-      getLootStats: jest.fn(),
+      getLootStats: mockFn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -134,7 +136,7 @@ describe("LootsController", () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("constructor", () => {
@@ -287,7 +289,7 @@ describe("LootsController", () => {
           },
         },
       ];
-      service.getComments.mockResolvedValue(mockComments as any);
+      service.getComments.mockResolvedValue(mockComments as never);
 
       const result = await controller.getComments(discordId, lootId, mockGuild);
 

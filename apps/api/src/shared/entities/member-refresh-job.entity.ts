@@ -1,6 +1,7 @@
 import { Exclude, Expose } from "class-transformer";
 import { ApiProperty } from "@nestjs/swagger";
-import { RefreshJobStatus } from "prisma/generated/client";
+import { RefreshJobStatus } from "src/generated/prisma/client";
+import { swaggerStringEnum } from "src/shared/swagger/prisma-enum";
 
 export class MemberRefreshJobEntity {
   @Expose()
@@ -13,8 +14,8 @@ export class MemberRefreshJobEntity {
 
   @Expose()
   @ApiProperty({
+    ...swaggerStringEnum("RefreshJobStatus", RefreshJobStatus),
     example: "PROCESSING",
-    enum: RefreshJobStatus,
     description: "Job status",
   })
   status: RefreshJobStatus;

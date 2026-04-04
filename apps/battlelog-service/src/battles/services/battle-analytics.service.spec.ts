@@ -1,3 +1,4 @@
+import type { Mock, Mocked } from "vitest";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { NotFoundException } from "@nestjs/common";
 import { BattleAnalyticsService } from "./battle-analytics.service";
@@ -7,7 +8,7 @@ import { RedisService } from "@lootlog/nest-shared";
 describe("BattleAnalyticsService", () => {
   let service: BattleAnalyticsService;
   let drizzleService: { db: any };
-  let redisService: jest.Mocked<RedisService>;
+  let redisService: Mocked<RedisService>;
 
   const mockUserId = "user-123";
   const mockCharacterId = "char-123";
@@ -77,25 +78,25 @@ describe("BattleAnalyticsService", () => {
       db: {
         query: {
           userCharacters: {
-            findFirst: jest.fn(),
-            findMany: jest.fn(),
+            findFirst: vi.fn(),
+            findMany: vi.fn(),
           },
           battles: {
-            findMany: jest.fn(),
+            findMany: vi.fn(),
           },
         },
-        select: jest.fn().mockReturnValue({
-          from: jest.fn().mockReturnValue({
-            where: jest.fn(),
+        select: vi.fn().mockReturnValue({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn(),
           }),
         }),
       },
     };
 
     const mockRedisService = {
-      get: jest.fn(),
-      set: jest.fn(),
-      getClient: jest.fn(),
+      get: vi.fn(),
+      set: vi.fn(),
+      getClient: vi.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -114,11 +115,11 @@ describe("BattleAnalyticsService", () => {
 
     service = module.get<BattleAnalyticsService>(BattleAnalyticsService);
     drizzleService = module.get(DrizzleService);
-    redisService = module.get(RedisService) as jest.Mocked<RedisService>;
+    redisService = module.get(RedisService) as Mocked<RedisService>;
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("getBattleAnalytics", () => {
@@ -511,8 +512,8 @@ describe("BattleAnalyticsService", () => {
   describe("invalidateAnalyticsCache", () => {
     it("should delete matching cache keys", async () => {
       const mockRedisClient = {
-        keys: jest.fn().mockResolvedValue(["key1", "key2"]),
-        del: jest.fn().mockResolvedValue(2),
+        keys: vi.fn().mockResolvedValue(["key1", "key2"]),
+        del: vi.fn().mockResolvedValue(2),
       };
       redisService.getClient.mockReturnValue(mockRedisClient as any);
 
@@ -524,8 +525,8 @@ describe("BattleAnalyticsService", () => {
 
     it("should handle empty keys gracefully", async () => {
       const mockRedisClient = {
-        keys: jest.fn().mockResolvedValue([]),
-        del: jest.fn(),
+        keys: vi.fn().mockResolvedValue([]),
+        del: vi.fn(),
       };
       redisService.getClient.mockReturnValue(mockRedisClient as any);
 

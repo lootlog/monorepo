@@ -2,8 +2,7 @@ import { Module, type MiddlewareConsumer } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { WinstonModule, type WinstonModuleOptions } from "nest-winston";
 import { BullModule } from "@nestjs/bullmq";
-import type { RedisConfig } from "@lootlog/nest-shared";
-import { LoggerMiddleware } from "@lootlog/nest-shared";
+import { LoggerMiddleware, type RedisConfig } from "@lootlog/nest-shared";
 import { APP_CONFIG } from "src/config/app.config";
 import { UsersModule } from "./users/users.module";
 import { TimersModule } from "./timers/timers.module";
@@ -31,11 +30,12 @@ import { EventsModule } from "src/events/events.module";
 import { MapsModule } from "src/maps/maps.module";
 import { MapTemplatesModule } from "src/map-templates/map-templates.module";
 import { KillsModule } from "src/kills/kills.module";
+import { MemberContextModule } from "src/shared/permissions/member-context.module";
 
 @Module({
   imports: [
     WinstonModule.forRootAsync({
-      useFactory: async (configService: ConfigService) => {
+      useFactory: (configService: ConfigService) => {
         return configService.get<WinstonModuleOptions>(ConfigKey.WINSTON);
       },
       inject: [ConfigService],
@@ -63,6 +63,7 @@ import { KillsModule } from "src/kills/kills.module";
     TimerSettingsModule,
     LootsModule,
     HealthzModule,
+    MemberContextModule,
     GuildsModule,
     RolesModule,
     MembersModule,

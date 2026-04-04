@@ -18,8 +18,8 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { UserId } from "@lootlog/nest-shared";
-import { Permission, type Role } from "prisma/generated/client";
-import {
+import { Permission, type Role } from "src/generated/prisma/client";
+import type {
   UpdateKillPointDto,
   UpdateRankingPointsDto,
 } from "./dto/update-points.dto";
@@ -53,7 +53,7 @@ export class EventsRankingController {
     status: 200,
     description: "Participation confirmations",
   })
-  async getPendingParticipationConfirmations(
+  getPendingParticipationConfirmations(
     @GuildData() guildData: { id: string },
     @Param("eventId") eventId: string,
     @GuildMember() member: { id: number },
@@ -80,7 +80,7 @@ export class EventsRankingController {
     status: 200,
     description: "Participation confirmed",
   })
-  async confirmParticipationForKill(
+  confirmParticipationForKill(
     @GuildData() guildData: { id: string },
     @Param("eventId") eventId: string,
     @Param("killId") killId: string,
@@ -149,7 +149,7 @@ export class EventsRankingController {
     description: "Ranking updated",
   })
   @ApiResponse({ status: 404, description: "Ranking not found" })
-  async updateRankingPoints(
+  updateRankingPoints(
     @GuildData() guildData: { id: string },
     @Param("eventId") eventId: string,
     @Param("rankingId") rankingId: string,
@@ -181,7 +181,7 @@ export class EventsRankingController {
     description: "Edit history returned",
   })
   @ApiResponse({ status: 404, description: "Ranking not found" })
-  async getRankingEditHistory(
+  getRankingEditHistory(
     @GuildData() guildData: { id: string },
     @Param("eventId") eventId: string,
     @Param("rankingId") rankingId: string,
@@ -318,7 +318,7 @@ export class EventsRankingController {
     const result = await this.eventsService.getEventKillHistory(
       guildData.id,
       eventId,
-      limit ? parseInt(limit, 10) : 20,
+      limit ? Number.parseInt(limit, 10) : 20,
       cursor,
       heroId,
     );
@@ -376,7 +376,7 @@ export class EventsRankingController {
     @MemberRoles() roles: Role[] = [],
     @MemberPermissions() permissions: Permission[] = [],
   ) {
-    const parsedMemberId = parseInt(memberId, 10);
+    const parsedMemberId = Number.parseInt(memberId, 10);
 
     if (Number.isNaN(parsedMemberId)) {
       throw new BadRequestException("Invalid member ID");
@@ -396,7 +396,7 @@ export class EventsRankingController {
       guildData.id,
       eventId,
       parsedMemberId,
-      limit ? parseInt(limit, 10) : 20,
+      limit ? Number.parseInt(limit, 10) : 20,
       cursor,
       heroId,
     );
@@ -460,7 +460,7 @@ export class EventsRankingController {
       guildData.id,
       eventId,
       heroId,
-      limit ? parseInt(limit, 10) : 20,
+      limit ? Number.parseInt(limit, 10) : 20,
       cursor,
     );
   }
@@ -524,7 +524,7 @@ export class EventsRankingController {
     description: "Kill point updated and ranking recalculated",
   })
   @ApiResponse({ status: 404, description: "Kill point not found" })
-  async updateKillPoint(
+  updateKillPoint(
     @GuildData() guildData: { id: string },
     @Param("eventId") eventId: string,
     @Param("killId") killId: string,

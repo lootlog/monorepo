@@ -321,7 +321,8 @@ export const NotificationRuleFormPage = () => {
                   : null,
               scheduleStrategy:
                 NotificationScheduleStrategy.SPAWN_WINDOW_RELATIVE,
-              scheduleAnchor: values.scheduleAnchor!,
+              scheduleAnchor:
+                values.scheduleAnchor ?? NotificationScheduleAnchor.MIN_SPAWN,
               scheduleOffsetMinutes: Number(values.scheduleOffsetMinutes),
               ...npcFilterPayload,
             };

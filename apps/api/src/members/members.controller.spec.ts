@@ -1,8 +1,14 @@
+import type { Mock } from "vitest";
+import { mockFn } from "src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { plainToInstance } from "class-transformer";
 import { MembersController } from "./members.controller";
 import { MembersService } from "./members.service";
-import { type Guild, type Member, MemberType } from "prisma/generated/client";
+import {
+  type Guild,
+  type Member,
+  MemberType,
+} from "src/generated/prisma/client";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 import { MemberEntity } from "src/shared/entities/member.entity";
@@ -11,12 +17,12 @@ import { MemberRefreshJobEntity } from "src/shared/entities/member-refresh-job.e
 describe("MembersController", () => {
   let controller: MembersController;
   let membersService: {
-    getGuildMemberById: jest.Mock;
-    refreshMember: jest.Mock;
-    getGuildMembers: jest.Mock;
-    createBulkRefreshJob: jest.Mock;
-    getLatestRefreshJob: jest.Mock;
-    getRefreshJobStatus: jest.Mock;
+    getGuildMemberById: Mock;
+    refreshMember: Mock;
+    getGuildMembers: Mock;
+    createBulkRefreshJob: Mock;
+    getLatestRefreshJob: Mock;
+    getRefreshJobStatus: Mock;
   };
 
   const mockGuild: Guild = {
@@ -64,12 +70,12 @@ describe("MembersController", () => {
 
   beforeEach(async () => {
     const mockMembersService = {
-      getGuildMemberById: jest.fn(),
-      refreshMember: jest.fn(),
-      getGuildMembers: jest.fn(),
-      createBulkRefreshJob: jest.fn(),
-      getLatestRefreshJob: jest.fn(),
-      getRefreshJobStatus: jest.fn(),
+      getGuildMemberById: mockFn(),
+      refreshMember: mockFn(),
+      getGuildMembers: mockFn(),
+      createBulkRefreshJob: mockFn(),
+      getLatestRefreshJob: mockFn(),
+      getRefreshJobStatus: mockFn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -82,9 +88,9 @@ describe("MembersController", () => {
       ],
     })
       .overrideGuard(AuthGuard)
-      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+      .useValue({ canActivate: mockFn().mockReturnValue(true) })
       .overrideGuard(PermissionsGuard)
-      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+      .useValue({ canActivate: mockFn().mockReturnValue(true) })
       .compile();
 
     controller = module.get<MembersController>(MembersController);
@@ -92,7 +98,7 @@ describe("MembersController", () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("constructor", () => {

@@ -329,9 +329,7 @@ export const FiltersSidebar = ({
                     onMaxLevelChange={handleMaxLevelChange}
                     inputClassName="w-full"
                     containerClassName="flex-1"
-                    separator={
-                      <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    }
+                    separator=<ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
                   />
                 </div>
               </div>

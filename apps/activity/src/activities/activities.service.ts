@@ -3,7 +3,7 @@ import { PrismaService } from "src/shared/db/prisma.service";
 import { CreateActivityDto } from "./dto/create-activity.dto";
 import { ActivityEntity } from "./entities/activity.entity";
 import { createHash } from "node:crypto";
-import { ActivityType, Prisma } from "../../prisma/generated/client";
+import { ActivityType, Prisma } from "src/generated/prisma/client";
 
 @Injectable()
 export class ActivitiesService {

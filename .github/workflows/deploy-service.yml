@@ -62,7 +62,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 24
           cache: "pnpm"
 
       - name: Install dependencies
@@ -115,8 +115,8 @@ jobs:
           build-args: |
             GITHUB_SHA=${{ github.sha }}
             GITHUB_REF=${{ github.ref }}
-          cache-from: type=registry,ref=${{ env.IMAGE_NAME }}:${{ inputs.environment }}-buildcache
-          cache-to: type=registry,ref=${{ env.IMAGE_NAME }}:${{ inputs.environment }}-buildcache,mode=max
+          cache-from: type=gha
+          cache-to: type=gha,mode=min
           provenance: false
 
       # - name: Run Trivy vulnerability scanner
@@ -152,7 +152,7 @@ jobs:
           fetch-depth: 0
 
       - name: Update kustomization.yaml image tag
-        uses: mikefarah/yq@v4.52.4
+        uses: mikefarah/yq@v4.52.5
         with:
           cmd: yq e '( .images[] | select(.name == strenv(IMAGE_NAME)) ).newTag = strenv(IMAGE_TAG)' -i ${{ env.INFRA_REPO_PATH }}/${{ env.KUSTOMIZE_PATH }}
 

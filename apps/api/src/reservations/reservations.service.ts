@@ -6,8 +6,8 @@ import {
 } from "@nestjs/common";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { PrismaService } from "src/db/prisma.service";
-import { CreateReservationDto } from "./dto/create-reservation.dto";
-import { Permission } from "prisma/generated/client";
+import type { CreateReservationDto } from "./dto/create-reservation.dto";
+import { Permission, type Prisma } from "src/generated/prisma/client";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { RoutingKey } from "src/enum/routing-key.enum";
 import { RedisService } from "@lootlog/nest-shared";
@@ -193,21 +193,18 @@ export class ReservationsService {
       );
     }
 
-    const createPayload: Record<string, unknown> = {
+    const createPayload: Prisma.ReservationUncheckedCreateInput = {
       guildId,
       reservationId: data.reservationId,
       createdDate: data.createdDate,
       fromDate: data.fromDate,
       toDate: data.toDate,
       createdBy: data.createdBy,
+      ...(data.comment !== undefined ? { comment: data.comment } : {}),
     };
 
-    if (data.comment !== undefined) {
-      createPayload.comment = data.comment;
-    }
-
     const created = await this.prisma.reservation.create({
-      data: createPayload as any,
+      data: createPayload,
     });
 
     const record = this.mapReservationRecord(created);

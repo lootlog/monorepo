@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { mockFn } from "src/test/mock-fn";
 import { HttpService } from "@nestjs/axios";
 import { ConfigService } from "@nestjs/config";
 import { RedisService } from "@lootlog/nest-shared";
@@ -30,59 +31,58 @@ describe("UsersService", () => {
 
   const mockTx = {
     member: {
-      findMany: jest.fn(),
-      update: jest.fn(),
+      findMany: mockFn(),
+      update: mockFn(),
     },
     npcKillStats: {
-      deleteMany: jest.fn(),
+      deleteMany: mockFn(),
     },
     userKillStats: {
-      deleteMany: jest.fn(),
+      deleteMany: mockFn(),
     },
     userSettings: {
-      deleteMany: jest.fn(),
+      deleteMany: mockFn(),
     },
     userTimerSettings: {
-      deleteMany: jest.fn(),
+      deleteMany: mockFn(),
     },
     userSoundSettings: {
-      deleteMany: jest.fn(),
+      deleteMany: mockFn(),
     },
     userCharactersLootlogSettings: {
-      deleteMany: jest.fn(),
+      deleteMany: mockFn(),
     },
     userGuildTimerSettings: {
-      deleteMany: jest.fn(),
+      deleteMany: mockFn(),
     },
     userGuildEventSettings: {
-      deleteMany: jest.fn(),
+      deleteMany: mockFn(),
     },
   };
 
   const mockPrismaService = {
-    $transaction: jest.fn(),
+    $transaction: mockFn(),
     userSettings: {
-      findUnique: jest.fn(),
-      upsert: jest.fn(),
+      findUnique: mockFn(),
+      upsert: mockFn(),
     },
   };
-  const mockLogger = { warn: jest.fn() };
-  const mockAuthService = { invalidateIdpTokenCache: jest.fn() };
-  const mockMembersService = { notifyMembersRemoved: jest.fn() };
-  const mockRedisService = { deleteByPattern: jest.fn() };
-  const mockHttpService = { post: jest.fn() };
+  const mockLogger = { warn: mockFn() };
+  const mockAuthService = { invalidateIdpTokenCache: mockFn() };
+  const mockMembersService = { notifyMembersRemoved: mockFn() };
+  const mockRedisService = { deleteByPattern: mockFn() };
+  const mockHttpService = { post: mockFn() };
   const mockConfigService = {
-    get: jest
-      .fn()
-      .mockReturnValue({ serviceUrl: "http://battlelog-service:4000" }),
+    get: mockFn<() => { serviceUrl: string }>().mockReturnValue({
+      serviceUrl: "http://battlelog-service:4000",
+    }),
   };
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockPrismaService.$transaction.mockImplementation(
-      async (callback: (tx: typeof mockTx) => Promise<unknown>) =>
-        callback(mockTx),
+      (callback: (tx: typeof mockTx) => Promise<unknown>) => callback(mockTx),
     );
 
     mockTx.member.findMany.mockResolvedValue(mockMemberRows);

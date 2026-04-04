@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { mockFn } from "src/test/mock-fn";
 import { GuildsService } from "./guilds.service";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { PrismaService } from "src/db/prisma.service";
@@ -6,106 +7,100 @@ import { ChannelsService } from "src/channels/channels.service";
 import { ConfigService } from "@nestjs/config";
 import { MembersService } from "src/members/members.service";
 import { RolesService } from "src/roles/roles.service";
-import { LootlogConfigService } from "src/lootlog-config/lootlog-config.service";
 import { DiscordService } from "src/discord/discord.service";
-import { UsersService } from "src/users/users.service";
 import { RedisService } from "@lootlog/nest-shared";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { DiscordGuildSyncStatus } from "@lootlog/types";
-import { type Guild, Permission } from "prisma/generated/client";
+import { type Guild, Permission } from "src/generated/prisma/client";
 
 describe("GuildsService", () => {
   let service: GuildsService;
 
   const mockLogger = {
-    log: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
+    log: mockFn(),
+    error: mockFn(),
+    warn: mockFn(),
   };
 
   const mockPrismaService = {
     guild: {
-      findMany: jest.fn(),
-      findFirst: jest.fn(),
-      findUnique: jest.fn(),
-      update: jest.fn(),
-      upsert: jest.fn(),
+      findMany: mockFn(),
+      findFirst: mockFn(),
+      findUnique: mockFn(),
+      update: mockFn(),
+      upsert: mockFn(),
     },
     discordGuildSyncState: {
-      findUnique: jest.fn(),
+      findUnique: mockFn(),
     },
     member: {
-      findMany: jest.fn(),
+      findMany: mockFn(),
     },
     timer: {
-      findMany: jest.fn(),
+      findMany: mockFn(),
     },
     lootlogConfigNpc: {
-      deleteMany: jest.fn(),
+      deleteMany: mockFn(),
     },
     lootlogConfig: {
-      deleteMany: jest.fn(),
+      deleteMany: mockFn(),
+      upsert: mockFn(),
     },
-    $transaction: jest.fn(),
+    userSettings: {
+      findUnique: mockFn(),
+    },
+    $transaction: mockFn(),
   };
 
   const mockTransactionClient = {
     lootlogConfigNpc: {
-      deleteMany: jest.fn(),
+      deleteMany: mockFn(),
     },
     lootlogConfig: {
-      deleteMany: jest.fn(),
+      deleteMany: mockFn(),
     },
     guild: {
-      update: jest.fn(),
+      update: mockFn(),
     },
   };
 
   const mockMembersService = {
-    getGuildMemberById: jest.fn(),
-    deleteMembersByGuildId: jest.fn(),
-    notifyMembersRemoved: jest.fn(),
-    isMemberSoftStale: jest.fn(),
-    refreshGuildMemberWithinBudget: jest.fn(),
-    queueMemberRefresh: jest.fn(),
+    getGuildMemberById: mockFn(),
+    deleteMembersByGuildId: mockFn(),
+    notifyMembersRemoved: mockFn(),
+    isMemberSoftStale: mockFn(),
+    refreshGuildMemberWithinBudget: mockFn(),
+    queueMemberRefresh: mockFn(),
   };
 
   const mockRolesService = {
-    bulkCreateRoles: jest.fn(),
-    deleteRolesByGuildId: jest.fn(),
+    bulkCreateRoles: mockFn(),
+    deleteRolesByGuildId: mockFn(),
   };
 
   const mockChannelsService = {
-    markGuildSyncStale: jest.fn(),
-    refreshGuildDiscordChannels: jest.fn(),
-  };
-
-  const mockLootlogConfigService = {
-    createLootlogConfig: jest.fn(),
+    markGuildSyncStale: mockFn(),
+    refreshGuildDiscordChannels: mockFn(),
   };
 
   const mockDiscordService = {
-    getUserGuilds: jest.fn(),
-    clearUserGuildIdsCache: jest.fn(),
-  };
-
-  const mockUsersService = {
-    getUserPreferences: jest.fn(),
+    getUserGuilds: mockFn(),
+    clearUserGuildIdsCache: mockFn(),
   };
 
   const mockRedisService = {
-    get: jest.fn(),
-    set: jest.fn(),
-    del: jest.fn(),
-    deleteByPattern: jest.fn(),
+    get: mockFn(),
+    set: mockFn(),
+    del: mockFn(),
+    deleteByPattern: mockFn(),
   };
 
   const mockAmqpConnection = {
-    publish: jest.fn(),
+    publish: mockFn(),
   };
 
   const mockConfigService = {
-    get: jest.fn().mockReturnValue({
+    get: mockFn().mockReturnValue({
       channelSnapshotStaleSeconds: 300,
     }),
   };
@@ -139,16 +134,8 @@ describe("GuildsService", () => {
           useValue: mockRolesService,
         },
         {
-          provide: LootlogConfigService,
-          useValue: mockLootlogConfigService,
-        },
-        {
           provide: DiscordService,
           useValue: mockDiscordService,
-        },
-        {
-          provide: UsersService,
-          useValue: mockUsersService,
         },
         {
           provide: RedisService,
@@ -163,7 +150,7 @@ describe("GuildsService", () => {
 
     service = module.get<GuildsService>(GuildsService);
     mockPrismaService.$transaction.mockImplementation(
-      async (
+      (
         callback: (
           tx: typeof mockTransactionClient,
         ) => Promise<unknown> | unknown,
@@ -185,7 +172,7 @@ describe("GuildsService", () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   const createGuild = (overrides: Partial<Guild> = {}): Guild => ({
@@ -213,7 +200,7 @@ describe("GuildsService", () => {
       createGuild({ id: "guild-sync" }),
     );
     mockRolesService.bulkCreateRoles.mockResolvedValue(undefined);
-    mockLootlogConfigService.createLootlogConfig.mockResolvedValue(undefined);
+    mockPrismaService.lootlogConfig.upsert.mockResolvedValue(undefined);
 
     await service.createGuild({
       guildId: "guild-sync",
@@ -260,6 +247,18 @@ describe("GuildsService", () => {
 
   describe("getCandidateGuildsForUser", () => {
     it("should map Discord owner/admin metadata onto refresh candidates", async () => {
+      const testService = service as unknown as {
+        getCandidateGuildsForUser(
+          discordId: string,
+          userId: string,
+        ): Promise<
+          Array<{
+            guild: Guild;
+            isDiscordOwner: boolean;
+            hasDiscordAdmin: boolean;
+          }>
+        >;
+      };
       const ownerGuild = createGuild({ id: "guild-owner" });
       const adminGuild = createGuild({ id: "guild-admin" });
       mockDiscordService.getUserGuilds.mockResolvedValue([
@@ -281,7 +280,7 @@ describe("GuildsService", () => {
         adminGuild,
       ]);
 
-      const result = await (service as any).getCandidateGuildsForUser(
+      const result = await testService.getCandidateGuildsForUser(
         "discord-123",
         "user-123",
       );
@@ -301,11 +300,23 @@ describe("GuildsService", () => {
     });
 
     it("should fall back to metadata-free candidates when Discord guild lookup fails", async () => {
+      const testService = service as unknown as {
+        getCandidateGuildsForUser(
+          discordId: string,
+          userId: string,
+        ): Promise<
+          Array<{
+            guild: Guild;
+            isDiscordOwner: boolean;
+            hasDiscordAdmin: boolean;
+          }>
+        >;
+      };
       const guild = createGuild({ id: "guild-fallback" });
       mockDiscordService.getUserGuilds.mockRejectedValue(new Error("boom"));
       mockPrismaService.guild.findMany.mockResolvedValue([guild]);
 
-      const result = await (service as any).getCandidateGuildsForUser(
+      const result = await testService.getCandidateGuildsForUser(
         "discord-123",
         "user-123",
       );
@@ -322,6 +333,16 @@ describe("GuildsService", () => {
 
   describe("refreshGuildCandidatesWithinBudget", () => {
     it("should prioritize repair cases before Discord admin guilds", async () => {
+      const testService = service as unknown as {
+        refreshGuildCandidatesWithinBudget(options: {
+          discordId: string;
+          userId: string;
+          guildCandidates: typeof guildCandidates;
+          members: typeof members;
+          requiredPermissions: Permission[];
+          maxImmediateRefreshes: number;
+        }): Promise<Guild[]>;
+      };
       const guildCandidates = [
         {
           guild: createGuild({ id: "guild-missing" }),
@@ -386,7 +407,7 @@ describe("GuildsService", () => {
       ];
       mockPrismaService.member.findMany.mockResolvedValue(members);
 
-      await (service as any).refreshGuildCandidatesWithinBudget({
+      await testService.refreshGuildCandidatesWithinBudget({
         discordId: "discord-123",
         userId: "user-123",
         guildCandidates,
@@ -410,6 +431,16 @@ describe("GuildsService", () => {
     });
 
     it("should prioritize Discord owner guilds ahead of ordinary stale guilds", async () => {
+      const testService = service as unknown as {
+        refreshGuildCandidatesWithinBudget(options: {
+          discordId: string;
+          userId: string;
+          guildCandidates: typeof guildCandidates;
+          members: typeof members;
+          requiredPermissions: Permission[];
+          maxImmediateRefreshes: number;
+        }): Promise<Guild[]>;
+      };
       const guildCandidates = [
         {
           guild: createGuild({ id: "guild-owner", ownerId: "discord-123" }),
@@ -456,7 +487,7 @@ describe("GuildsService", () => {
       ];
       mockPrismaService.member.findMany.mockResolvedValue(members);
 
-      await (service as any).refreshGuildCandidatesWithinBudget({
+      await testService.refreshGuildCandidatesWithinBudget({
         discordId: "discord-123",
         userId: "user-123",
         guildCandidates,

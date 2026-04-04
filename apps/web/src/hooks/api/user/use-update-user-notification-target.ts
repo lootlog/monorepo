@@ -1,6 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { UserNotificationTarget } from "@/hooks/api/user/use-user-notifications";
-import { invalidateUserNotificationQueries } from "@/hooks/api/user/use-user-notifications";
+import {
+  invalidateUserNotificationQueries,
+  type UserNotificationTarget,
+} from "@/hooks/api/user/use-user-notifications";
 import { apiClient } from "@/lib/api-client/api-client";
 
 export type UpdateUserNotificationTargetData = {

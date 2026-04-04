@@ -8,7 +8,7 @@ import {
 import { getNpcTypeByWt } from "@lootlog/types";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import { NpcType, Permission } from "prisma/generated/client";
+import { NpcType, Permission } from "src/generated/prisma/client";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { GuildsService } from "src/guilds/guilds.service";
 import type { CreateNotificationDto } from "src/messaging/dto/create-notification.dto";
@@ -147,7 +147,7 @@ export class MessagingService {
     return { notificationId, guildIds };
   }
 
-  async emitNotification(payload: unknown) {
+  emitNotification(payload: unknown) {
     this.amqpConnection.publish(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.GUILDS_NOTIFICATIONS_SEND,

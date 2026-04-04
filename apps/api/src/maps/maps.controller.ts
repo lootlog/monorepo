@@ -17,7 +17,7 @@ export class MapsController {
     status: 200,
     description: "List of maps",
   })
-  async getMaps() {
+  getMaps() {
     return this.mapsService.getMaps();
   }
 }

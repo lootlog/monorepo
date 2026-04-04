@@ -1,8 +1,9 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { mockFn } from "src/test/mock-fn";
 import { MessagingController } from "./messaging.controller";
 import { MessagingService } from "./messaging.service";
 
-jest.mock("uuid", () => ({
+vi.mock("uuid", () => ({
   v4: () => "mock-uuid",
 }));
 
@@ -10,7 +11,7 @@ describe("MessagingController", () => {
   let controller: MessagingController;
 
   const mockMessagingService = {
-    cancelPartyGathering: jest.fn(),
+    cancelPartyGathering: mockFn(),
   };
 
   beforeEach(async () => {
@@ -25,7 +26,7 @@ describe("MessagingController", () => {
     }).compile();
 
     controller = module.get<MessagingController>(MessagingController);
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("cancelPartyGathering", () => {
@@ -39,14 +40,14 @@ describe("MessagingController", () => {
       });
 
       const mockReply = {
-        status: jest.fn().mockReturnThis(),
-        send: jest.fn().mockReturnThis(),
+        status: mockFn().mockReturnThis(),
+        send: mockFn().mockReturnThis(),
       };
 
       await controller.cancelPartyGathering(
         discordId,
         notificationId,
-        mockReply as any,
+        mockReply as never,
       );
 
       expect(mockReply.status).toHaveBeenCalledWith(200);
@@ -62,14 +63,14 @@ describe("MessagingController", () => {
       });
 
       const mockReply = {
-        status: jest.fn().mockReturnThis(),
-        send: jest.fn().mockReturnThis(),
+        status: mockFn().mockReturnThis(),
+        send: mockFn().mockReturnThis(),
       };
 
       await controller.cancelPartyGathering(
         discordId,
         notificationId,
-        mockReply as any,
+        mockReply as never,
       );
 
       expect(mockReply.status).toHaveBeenCalledWith(204);

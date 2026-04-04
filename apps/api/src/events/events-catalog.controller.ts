@@ -17,9 +17,9 @@ import {
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
-import { Permission, type Guild, type Role } from "prisma/generated/client";
-import { CreateEventDto } from "./dto/create-event.dto";
-import { UpdateEventDto } from "./dto/update-event.dto";
+import { Permission, type Guild, type Role } from "src/generated/prisma/client";
+import type { CreateEventDto } from "./dto/create-event.dto";
+import type { UpdateEventDto } from "./dto/update-event.dto";
 import { EventsService } from "./events.service";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";
@@ -51,7 +51,7 @@ export class EventsCatalogController {
     status: 403,
     description: "Forbidden - insufficient permissions",
   })
-  async createEvent(
+  createEvent(
     @Body() data: CreateEventDto,
     @GuildData() guildData: { id: string },
   ) {
@@ -176,7 +176,7 @@ export class EventsCatalogController {
     description: "Event wrapped summary",
   })
   @ApiResponse({ status: 404, description: "Event not found" })
-  async getWrapped(
+  getWrapped(
     @GuildData() guildData: Guild,
     @Param("eventId") eventId: string,
     @MemberRoles() roles: Role[] = [],
@@ -233,7 +233,7 @@ export class EventsCatalogController {
     description: "Event updated successfully",
   })
   @ApiResponse({ status: 404, description: "Event not found" })
-  async updateEvent(
+  updateEvent(
     @GuildData() guildData: { id: string },
     @Param("eventId") eventId: string,
     @Body() data: UpdateEventDto,
@@ -256,7 +256,7 @@ export class EventsCatalogController {
     description: "Points recalculated successfully",
   })
   @ApiResponse({ status: 404, description: "Event not found" })
-  async recalculatePoints(
+  recalculatePoints(
     @GuildData() guildData: { id: string },
     @Param("eventId") eventId: string,
   ) {
@@ -280,7 +280,7 @@ export class EventsCatalogController {
     description: "Event deleted successfully",
   })
   @ApiResponse({ status: 404, description: "Event not found" })
-  async deleteEvent(
+  deleteEvent(
     @GuildData() guildData: { id: string },
     @Param("eventId") eventId: string,
   ) {

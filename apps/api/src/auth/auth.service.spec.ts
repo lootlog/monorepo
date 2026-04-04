@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { mockFn } from "src/test/mock-fn";
 import { AuthService } from "./auth.service";
 import { HttpService } from "@nestjs/axios";
 import { ConfigService } from "@nestjs/config";
@@ -9,25 +10,25 @@ describe("AuthService", () => {
   let service: AuthService;
 
   const mockLogger = {
-    log: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
+    log: mockFn(),
+    error: mockFn(),
+    warn: mockFn(),
   };
 
   const mockHttpService = {
-    post: jest.fn(),
+    post: mockFn(),
   };
 
   const mockConfigService = {
-    get: jest.fn().mockReturnValue({
+    get: mockFn().mockReturnValue({
       serviceUrl: "http://localhost:3001",
     }),
   };
 
   const mockRedisService = {
-    get: jest.fn(),
-    set: jest.fn(),
-    del: jest.fn(),
+    get: mockFn(),
+    set: mockFn(),
+    del: mockFn(),
   };
 
   beforeEach(async () => {

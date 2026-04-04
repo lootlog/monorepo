@@ -1,3 +1,5 @@
+import type { Mock } from "vitest";
+import { mockFn } from "src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { DiscordRateLimiterService } from "./discord-rate-limiter.service";
@@ -6,32 +8,32 @@ import { RedisService } from "@lootlog/nest-shared";
 describe("DiscordRateLimiterService", () => {
   let service: DiscordRateLimiterService;
   let redisService: {
-    get: jest.Mock;
-    set: jest.Mock;
-    del: jest.Mock;
-    getClient: jest.Mock;
+    get: Mock;
+    set: Mock;
+    del: Mock;
+    getClient: Mock;
   };
   let mockLogger: {
-    log: jest.Mock;
-    warn: jest.Mock;
-    error: jest.Mock;
-    debug: jest.Mock;
+    log: Mock;
+    warn: Mock;
+    error: Mock;
+    debug: Mock;
   };
 
   beforeEach(async () => {
     mockLogger = {
-      log: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-      debug: jest.fn(),
+      log: mockFn(),
+      warn: mockFn(),
+      error: mockFn(),
+      debug: mockFn(),
     };
 
     const mockRedisService = {
-      get: jest.fn(),
-      set: jest.fn(),
-      del: jest.fn(),
-      getClient: jest.fn().mockReturnValue({
-        keys: jest.fn().mockResolvedValue([]),
+      get: mockFn(),
+      set: mockFn(),
+      del: mockFn(),
+      getClient: mockFn().mockReturnValue({
+        keys: mockFn().mockResolvedValue([]),
       }),
     };
 
@@ -48,7 +50,7 @@ describe("DiscordRateLimiterService", () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("checkRateLimitForUser", () => {
@@ -132,7 +134,7 @@ describe("DiscordRateLimiterService", () => {
 
     it("should persist header state without marking the bucket blocked when requests remain", async () => {
       const headers = {
-        get: jest.fn((name: string) => {
+        get: mockFn((name: string) => {
           switch (name.toLowerCase()) {
             case "x-ratelimit-bucket":
               return "bucket-123";
@@ -222,14 +224,12 @@ describe("DiscordRateLimiterService", () => {
 
     it("should clear all user rate limits when endpoint not provided", async () => {
       const mockClient = {
-        keys: jest
-          .fn()
-          .mockResolvedValue([
-            "discord:ratelimit:user:user-123:guilds",
-            "discord:ratelimit:user:user-123:guild-member",
-          ]),
+        keys: mockFn<() => Promise<string[]>>().mockResolvedValue([
+          "discord:ratelimit:user:user-123:guilds",
+          "discord:ratelimit:user:user-123:guild-member",
+        ]),
       };
-      redisService.getClient.mockReturnValue(mockClient as any);
+      redisService.getClient.mockReturnValue(mockClient as never);
 
       await service.clearRateLimitForUser(userId);
 
@@ -247,9 +247,9 @@ describe("DiscordRateLimiterService", () => {
 
     it("should not delete anything when no keys found", async () => {
       const mockClient = {
-        keys: jest.fn().mockResolvedValue([]),
+        keys: mockFn().mockResolvedValue([]),
       };
-      redisService.getClient.mockReturnValue(mockClient as any);
+      redisService.getClient.mockReturnValue(mockClient as never);
 
       await service.clearRateLimitForUser(userId);
 

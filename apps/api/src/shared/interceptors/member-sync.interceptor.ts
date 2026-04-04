@@ -25,7 +25,7 @@ export class MemberSyncInterceptor implements NestInterceptor {
     private readonly redis: RedisService,
   ) {}
 
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const request = context.switchToHttp().getRequest();
     const { userId, discordId } = request;
 
@@ -115,27 +115,29 @@ export class MemberSyncInterceptor implements NestInterceptor {
       message: `Queueing refresh for ${staleMembers.length} stale members for user ${userId}`,
     });
 
-    for (const member of staleMembers) {
-      try {
-        await this.membersService.queueMemberRefresh({
-          discordId: member.userId,
-          guildId: member.guildId,
-          userId: member.globalUserId,
-          priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
-          reason: "guild-list-sync",
-        });
+    await Promise.all(
+      staleMembers.map(async (member) => {
+        try {
+          await this.membersService.queueMemberRefresh({
+            discordId: member.userId,
+            guildId: member.guildId,
+            userId: member.globalUserId,
+            priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
+            reason: "guild-list-sync",
+          });
 
-        this.logger.log({
-          level: "debug",
-          message: `Queued refresh for member ${member.userId} in guild ${member.guildId}`,
-        });
-      } catch (error) {
-        this.logger.log({
-          level: "error",
-          message: `Failed to queue refresh for member ${member.userId}`,
-          stack: (error as Error).stack,
-        });
-      }
-    }
+          this.logger.log({
+            level: "debug",
+            message: `Queued refresh for member ${member.userId} in guild ${member.guildId}`,
+          });
+        } catch (error) {
+          this.logger.log({
+            level: "error",
+            message: `Failed to queue refresh for member ${member.userId}`,
+            stack: (error as Error).stack,
+          });
+        }
+      }),
+    );
   }
 }

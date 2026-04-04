@@ -1,3 +1,5 @@
+import type { Mock } from "vitest";
+import { mockFn } from "src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { getQueueToken } from "@nestjs/bullmq";
@@ -10,12 +12,12 @@ describe("MembersConsumer", () => {
   let consumer: MembersConsumer;
   let prismaService: {
     memberRefreshJob: {
-      update: jest.Mock;
-      findUnique: jest.Mock;
+      update: Mock;
+      findUnique: Mock;
     };
   };
   let amqpConnection: {
-    publish: jest.Mock;
+    publish: Mock;
   };
 
   const mockJob = {
@@ -34,24 +36,24 @@ describe("MembersConsumer", () => {
   beforeEach(async () => {
     const mockPrismaService = {
       memberRefreshJob: {
-        update: jest.fn(),
-        findUnique: jest.fn(),
+        update: mockFn(),
+        findUnique: mockFn(),
       },
     };
 
     const mockAmqpConnection = {
-      publish: jest.fn(),
+      publish: mockFn(),
     };
 
     const mockBullQueue = {
-      add: jest.fn(),
+      add: mockFn(),
     };
 
     const mockLogger = {
-      log: jest.fn(),
-      error: jest.fn(),
-      warn: jest.fn(),
-      debug: jest.fn(),
+      log: mockFn(),
+      error: mockFn(),
+      warn: mockFn(),
+      debug: mockFn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -82,7 +84,7 @@ describe("MembersConsumer", () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("constructor", () => {
@@ -104,7 +106,7 @@ describe("MembersConsumer", () => {
 
     it("should queue job to BullMQ successfully", async () => {
       const bullQueue = consumer["bulkRefreshQueue"];
-      bullQueue.add = jest.fn().mockResolvedValue({});
+      bullQueue.add = mockFn().mockResolvedValue({});
 
       await consumer.handleBulkRefresh(payload);
 
@@ -139,7 +141,7 @@ describe("MembersConsumer", () => {
     it("should handle BullMQ queue errors", async () => {
       const bullQueue = consumer["bulkRefreshQueue"];
       const queueError = new Error("Queue connection failed");
-      bullQueue.add = jest.fn().mockRejectedValue(queueError);
+      bullQueue.add = mockFn().mockRejectedValue(queueError);
       prismaService.memberRefreshJob.update.mockResolvedValue({
         ...mockJob,
         status: "FAILED",

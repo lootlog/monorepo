@@ -157,7 +157,7 @@ pnpm battlelog:generate
 
 - Write tests for new features
 - Ensure all tests pass before submitting PR
-- Backend tests use Jest
+- Backend tests use Vitest
 - Frontend tests use Vitest
 
 ### Commit Messages

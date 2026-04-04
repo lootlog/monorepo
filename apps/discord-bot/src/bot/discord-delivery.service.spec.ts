@@ -1,3 +1,4 @@
+import type { Mock } from "vitest";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import {
   NotificationOwnerType,
@@ -13,13 +14,13 @@ import { RoutingKey } from "./enums/routing-key.enum";
 
 describe("DiscordDeliveryService", () => {
   let service: DiscordDeliveryService;
-  let amqpConnection: { publish: jest.Mock };
+  let amqpConnection: { publish: Mock };
   let mockClient: {
     users: {
-      fetch: jest.Mock;
+      fetch: Mock;
     };
     channels: {
-      fetch: jest.Mock;
+      fetch: Mock;
     };
   };
 
@@ -57,14 +58,14 @@ describe("DiscordDeliveryService", () => {
 
   beforeEach(async () => {
     amqpConnection = {
-      publish: jest.fn().mockResolvedValue(undefined),
+      publish: vi.fn().mockResolvedValue(undefined),
     };
     mockClient = {
       users: {
-        fetch: jest.fn(),
+        fetch: vi.fn(),
       },
       channels: {
-        fetch: jest.fn(),
+        fetch: vi.fn(),
       },
     };
 
@@ -86,10 +87,10 @@ describe("DiscordDeliveryService", () => {
   });
 
   it("sends a direct message and publishes success result", async () => {
-    const send = jest.fn().mockResolvedValue({
+    const send = vi.fn().mockResolvedValue({
       id: "discord-message-1",
     });
-    const createDM = jest.fn().mockResolvedValue({
+    const createDM = vi.fn().mockResolvedValue({
       send,
     });
     mockClient.users.fetch.mockResolvedValue({
@@ -116,7 +117,7 @@ describe("DiscordDeliveryService", () => {
   });
 
   it("sends a guild channel message without title prefix when title is empty", async () => {
-    const send = jest.fn().mockResolvedValue({
+    const send = vi.fn().mockResolvedValue({
       id: "discord-message-2",
     });
     mockClient.channels.fetch.mockResolvedValue({
@@ -150,7 +151,7 @@ describe("DiscordDeliveryService", () => {
   });
 
   it("passes custom content and allowed mentions to guild channels", async () => {
-    const send = jest.fn().mockResolvedValue({
+    const send = vi.fn().mockResolvedValue({
       id: "discord-message-mentions",
     });
     mockClient.channels.fetch.mockResolvedValue({
@@ -181,10 +182,10 @@ describe("DiscordDeliveryService", () => {
   });
 
   it("does not pass allowed mentions to direct messages", async () => {
-    const send = jest.fn().mockResolvedValue({
+    const send = vi.fn().mockResolvedValue({
       id: "discord-message-dm-mentions",
     });
-    const createDM = jest.fn().mockResolvedValue({
+    const createDM = vi.fn().mockResolvedValue({
       send,
     });
     mockClient.users.fetch.mockResolvedValue({

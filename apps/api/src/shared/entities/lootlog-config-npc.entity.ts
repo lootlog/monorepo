@@ -1,6 +1,10 @@
 import { Exclude, Expose } from "class-transformer";
 import { ApiProperty } from "@nestjs/swagger";
-import { NpcType, ItemRarity } from "prisma/generated/client";
+import { NpcType, ItemRarity } from "src/generated/prisma/client";
+import {
+  swaggerStringEnum,
+  swaggerStringEnumArray,
+} from "src/shared/swagger/prisma-enum";
 
 export class LootlogConfigNpcEntity {
   @Expose()
@@ -9,17 +13,16 @@ export class LootlogConfigNpcEntity {
 
   @Expose()
   @ApiProperty({
+    ...swaggerStringEnum("NpcType", NpcType),
     example: "TITAN",
-    enum: NpcType,
     description: "NPC type",
   })
   npcType: NpcType;
 
   @Expose()
   @ApiProperty({
+    ...swaggerStringEnumArray("ItemRarity", ItemRarity),
     example: ["UNIQUE", "HEROIC", "LEGENDARY"],
-    enum: ItemRarity,
-    isArray: true,
     description: "Allowed item rarities for this NPC type",
   })
   allowedRarities: ItemRarity[];

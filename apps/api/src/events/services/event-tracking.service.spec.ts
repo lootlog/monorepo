@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { mockFn } from "src/test/mock-fn";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { EventTrackingService } from "./event-tracking.service";
@@ -6,7 +7,7 @@ import { EventEmitterService } from "./event-emitter.service";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared";
 import { RedlockService } from "src/lib/redlock/redlock.service";
-import { CoverageGapType } from "prisma/generated/client";
+import { CoverageGapType } from "src/generated/prisma/client";
 import { TimersService } from "src/timers/timers.service";
 
 describe("EventTrackingService", () => {
@@ -14,72 +15,72 @@ describe("EventTrackingService", () => {
 
   const mockPrismaService = {
     eventMap: {
-      findFirst: jest.fn(),
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
-      update: jest.fn(),
+      findFirst: mockFn(),
+      findMany: mockFn(),
+      findUnique: mockFn(),
+      update: mockFn(),
     },
     eventMapAssignmentHistory: {
-      create: jest.fn(),
-      findFirst: jest.fn(),
-      updateMany: jest.fn(),
+      create: mockFn(),
+      findFirst: mockFn(),
+      updateMany: mockFn(),
     },
     eventMapCoverageGap: {
-      findFirst: jest.fn(),
-      findMany: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
+      findFirst: mockFn(),
+      findMany: mockFn(),
+      create: mockFn(),
+      update: mockFn(),
     },
     eventPresenceLog: {
-      findMany: jest.fn(),
-      create: jest.fn(),
-      updateMany: jest.fn(),
+      findMany: mockFn(),
+      create: mockFn(),
+      updateMany: mockFn(),
     },
     eventHeroNpc: {
-      findFirst: jest.fn(),
+      findFirst: mockFn(),
     },
     member: {
-      findFirst: jest.fn(),
+      findFirst: mockFn(),
     },
     timer: {
-      findUnique: jest.fn(),
-      findMany: jest.fn(),
+      findUnique: mockFn(),
+      findMany: mockFn(),
     },
-    $transaction: jest.fn(),
+    $transaction: mockFn(),
   };
 
   const mockEventEmitter = {
-    emitMapStatusUpdate: jest.fn(),
+    emitMapStatusUpdate: mockFn(),
   };
 
   const mockAmqpConnection = {
-    publish: jest.fn(),
+    publish: mockFn(),
   };
 
   const mockRedisClient = {
-    set: jest.fn(),
-    get: jest.fn(),
-    del: jest.fn(),
+    set: mockFn(),
+    get: mockFn(),
+    del: mockFn(),
   };
 
   const mockRedisService = {
-    getClient: jest.fn().mockReturnValue(mockRedisClient),
-    get: jest.fn(),
-    set: jest.fn(),
+    getClient: mockFn().mockReturnValue(mockRedisClient),
+    get: mockFn(),
+    set: mockFn(),
   };
 
   const mockRedlock = {
-    using: jest.fn(),
-    acquire: jest.fn(),
+    using: mockFn(),
+    acquire: mockFn(),
   };
 
   const mockTimersService = {
-    getActiveTimerKeys: jest.fn(),
-    getEventRespawnTimer: jest.fn(),
+    getActiveTimerKeys: mockFn(),
+    getEventRespawnTimer: mockFn(),
   };
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -90,7 +91,7 @@ describe("EventTrackingService", () => {
         { provide: RedisService, useValue: mockRedisService },
         {
           provide: RedlockService,
-          useValue: { createInstance: jest.fn().mockReturnValue(mockRedlock) },
+          useValue: { createInstance: mockFn().mockReturnValue(mockRedlock) },
         },
         { provide: TimersService, useValue: mockTimersService },
       ],
@@ -99,7 +100,8 @@ describe("EventTrackingService", () => {
     service = module.get<EventTrackingService>(EventTrackingService);
 
     // Inject mock redlock (bypassing onModuleInit)
-    (service as any).redlock = mockRedlock;
+    (service as unknown as { redlock: typeof mockRedlock }).redlock =
+      mockRedlock;
   });
 
   it("should be defined", () => {
@@ -369,7 +371,7 @@ describe("EventTrackingService", () => {
 
     beforeEach(() => {
       // Setup redlock.using to execute the callback
-      mockRedlock.using.mockImplementation(async (_keys, _ttl, callback) => {
+      mockRedlock.using.mockImplementation((_keys, _ttl, callback) => {
         return callback();
       });
     });

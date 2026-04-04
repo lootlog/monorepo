@@ -66,7 +66,13 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
         failedIds: [],
       };
 
-      for (const memberId of memberIds) {
+      const processMember = async (index: number): Promise<void> => {
+        if (index >= memberIds.length) {
+          return;
+        }
+
+        const memberId = memberIds[index];
+
         try {
           const refreshedMember = await this.membersService.refreshMember({
             discordId: memberId,
@@ -110,7 +116,11 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
             await this.emitJobUpdate(jobId);
           }
         }
-      }
+
+        await processMember(index + 1);
+      };
+
+      await processMember(0);
 
       await this.prisma.memberRefreshJob.update({
         where: { id: jobId },

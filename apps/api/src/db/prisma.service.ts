@@ -1,6 +1,6 @@
 import { Injectable, Logger, type OnModuleInit } from "@nestjs/common";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient, Prisma } from "prisma/generated/client";
+import { PrismaClient, type Prisma } from "src/generated/prisma/client";
 
 const isDev = process.env.ENV === "local" || process.env.ENV === "dev";
 
@@ -10,8 +10,13 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   private readonly SLOW_QUERY_THRESHOLD_MS = 100;
 
   constructor() {
+    const connectionString = process.env.POSTGRESQL_CONNECTION_URI;
+    if (!connectionString) {
+      throw new Error("Missing POSTGRESQL_CONNECTION_URI");
+    }
+
     const adapter = new PrismaPg({
-      connectionString: process.env.POSTGRESQL_CONNECTION_URI!,
+      connectionString,
       max: 20,
     });
 

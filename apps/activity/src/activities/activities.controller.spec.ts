@@ -7,7 +7,7 @@ import {
   PaginatedActivitiesEntity,
   ActivityEntity,
 } from "./entities/activity.entity";
-import { ActivityType, ActivitySource } from "../../prisma/generated/client";
+import { ActivityType, ActivitySource } from "src/generated/prisma/client";
 import { AuthGuard } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "src/shared/guards/permissions.guard";
 
@@ -34,21 +34,21 @@ describe("ActivitiesController", () => {
   } as PaginatedActivitiesEntity;
 
   const mockQueryService = {
-    findByGuild: jest.fn(),
-    findByUser: jest.fn(),
-    findOne: jest.fn(),
+    findByGuild: vi.fn(),
+    findByUser: vi.fn(),
+    findOne: vi.fn(),
   };
 
   const mockService = {
-    deleteOne: jest.fn(),
+    deleteOne: vi.fn(),
   };
 
   const mockAuthGuard = {
-    canActivate: jest.fn(() => true),
+    canActivate: vi.fn(() => true),
   };
 
   const mockPermissionsGuard = {
-    canActivate: jest.fn(() => true),
+    canActivate: vi.fn(() => true),
   };
 
   beforeEach(async () => {
@@ -75,7 +75,7 @@ describe("ActivitiesController", () => {
     queryService = module.get<ActivitiesQueryService>(ActivitiesQueryService);
     service = module.get<ActivitiesService>(ActivitiesService);
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should be defined", () => {
