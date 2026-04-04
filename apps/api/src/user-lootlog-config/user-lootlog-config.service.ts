@@ -1,4 +1,4 @@
-import { Inject, Injectable, forwardRef } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { Permission } from "prisma/generated/client";
 import { PrismaService } from "src/db/prisma.service";
 import type { CreateOrUpdateLootlogCharacterConfigDto } from "src/user-lootlog-config/dto/create-user-account-config.dto";
@@ -12,7 +12,6 @@ const USER_LOOTLOG_CONFIG_CACHE_KEY_PREFIX = "user-lootlog-config";
 export class UserLootlogConfigService {
   constructor(
     private readonly prisma: PrismaService,
-    @Inject(forwardRef(() => GuildsService))
     private readonly guildsService: GuildsService,
     private readonly redisService: RedisService,
   ) {}

@@ -1,12 +1,10 @@
-import { Module, forwardRef } from "@nestjs/common";
+import { Module } from "@nestjs/common";
 import { BullModule } from "@nestjs/bullmq";
 import { MembersService } from "./members.service";
 import { MembersConsumer } from "./members.consumer";
 import { MemberBulkRefreshProcessor } from "./member-bulk-refresh.processor";
 import { MemberRefreshProcessor } from "./member-refresh.processor";
-import { GuildsModule } from "src/guilds/guilds.module";
 import { MembersController } from "./members.controller";
-import { RolesModule } from "src/roles/roles.module";
 import { RetryService } from "src/rabbitmq/retry.service";
 import {
   RabbitMQModule,
@@ -25,8 +23,6 @@ import { MemberRefreshSchedulerService } from "./member-refresh-scheduler.servic
 
 @Module({
   imports: [
-    forwardRef(() => GuildsModule),
-    forwardRef(() => RolesModule),
     RabbitMQModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) =>

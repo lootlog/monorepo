@@ -31,6 +31,7 @@ import { EventsModule } from "src/events/events.module";
 import { MapsModule } from "src/maps/maps.module";
 import { MapTemplatesModule } from "src/map-templates/map-templates.module";
 import { KillsModule } from "src/kills/kills.module";
+import { MemberContextModule } from "src/shared/permissions/member-context.module";
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { KillsModule } from "src/kills/kills.module";
     TimerSettingsModule,
     LootsModule,
     HealthzModule,
+    MemberContextModule,
     GuildsModule,
     RolesModule,
     MembersModule,
