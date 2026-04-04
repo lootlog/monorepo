@@ -14,6 +14,7 @@ import { getSyntheticNpcId } from "src/events/utils/get-synthetic-npc-id";
 import { buildTimerKey } from "src/timers/utils/timer-key";
 import { EventTimerHooksService } from "src/events/services/event-timer-hooks.service";
 import { ErrorKey } from "src/timers/enum/error-key.enum";
+import { ExecutionError } from "redlock";
 
 describe("TimersService", () => {
   let service: TimersService;
@@ -257,7 +258,6 @@ describe("TimersService", () => {
     });
 
     it("should throw ConflictException when lock cannot be acquired", async () => {
-      const ExecutionError = require("redlock").ExecutionError;
       mockRedisService.get.mockResolvedValue(null);
       mockRedlock.acquire.mockRejectedValue(new ExecutionError("Lock failed"));
 
@@ -269,7 +269,6 @@ describe("TimersService", () => {
     });
 
     it("should return existing timer when lock cannot be acquired but timer was created concurrently", async () => {
-      const ExecutionError = require("redlock").ExecutionError;
       mockRedisService.get.mockResolvedValue(null);
       mockRedlock.acquire.mockRejectedValue(new ExecutionError("Lock failed"));
       mockPrismaService.timer.findUnique.mockResolvedValue(mockTimer);
@@ -498,7 +497,6 @@ describe("TimersService", () => {
     });
 
     it("should handle 50 concurrent createTimerForGuild calls idempotently for the same npc", async () => {
-      const ExecutionError = require("redlock").ExecutionError;
       const totalCalls = 50;
       let createdTimer: typeof mockTimer | null = null;
       let mainLockHeld = false;
