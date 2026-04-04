@@ -4,7 +4,7 @@ import { MemberType } from "src/bot/enums/member-type.enum";
 
 export const getMemberType = (member: GuildMember) => {
   const isAdministrativeUser = isDiscordAdministrator(
-    Number(member.permissions.bitfield),
+    member.permissions.bitfield,
   );
   const isBot = member.user.bot;
 

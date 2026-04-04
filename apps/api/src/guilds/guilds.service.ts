@@ -169,9 +169,9 @@ export class GuildsService {
       }
 
       return discordGuilds
-        .filter((guild) =>
-          isDiscordAdministrator(Number.parseInt(guild.permissions, 10)),
-        )
+        .filter((guild) => {
+          return isDiscordAdministrator(BigInt(guild.permissions));
+        })
         .map((guild) => {
           return {
             id: guild.id,
@@ -878,9 +878,7 @@ export class GuildsService {
 
   private hasDiscordAdministratorAccess(discordGuild: APIGuild): boolean {
     try {
-      return isDiscordAdministrator(
-        Number.parseInt(discordGuild.permissions, 10),
-      );
+      return isDiscordAdministrator(BigInt(discordGuild.permissions));
     } catch {
       return false;
     }
