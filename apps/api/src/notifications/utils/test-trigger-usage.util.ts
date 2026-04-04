@@ -1,4 +1,4 @@
-import { NotificationJobKind as DbNotificationJobKind } from "prisma/generated/client";
+import { NotificationJobKind as DbNotificationJobKind } from "src/generated/prisma/client";
 import type { PrismaService } from "src/db/prisma.service";
 
 export type TestTriggerUsage = {

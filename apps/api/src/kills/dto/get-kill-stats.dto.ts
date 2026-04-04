@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
 import { IsEnum, IsNumber, IsOptional, IsString, Min } from "class-validator";
-import { NpcType } from "prisma/generated/client";
+import { NpcType } from "src/generated/prisma/client";
 
 export class GetGuildKillStatsDto {
   @ApiPropertyOptional({

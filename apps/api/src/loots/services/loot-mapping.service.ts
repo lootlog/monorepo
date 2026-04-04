@@ -7,7 +7,7 @@ import {
   Prisma,
   Profession,
   type ItemRarity,
-} from "prisma/generated/client";
+} from "src/generated/prisma/client";
 import { getProfByShortname } from "src/shared/utils/get-prof-by-shortname";
 import { getItemTypeByCl } from "src/shared/utils/get-item-type-by-cl";
 import {

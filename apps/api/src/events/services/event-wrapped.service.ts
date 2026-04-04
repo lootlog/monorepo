@@ -4,7 +4,7 @@ import {
   type Guild,
   type ItemRarity,
   type Role,
-} from "prisma/generated/client";
+} from "src/generated/prisma/client";
 import type { LootQueryResult } from "src/loots/dto/loot-query-result.dto";
 import { LootsService } from "src/loots/loots.service";
 import { PrismaService } from "src/db/prisma.service";

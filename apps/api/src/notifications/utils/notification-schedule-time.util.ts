@@ -1,4 +1,4 @@
-import { NotificationScheduleIntervalType } from "prisma/generated/client";
+import { NotificationScheduleIntervalType } from "src/generated/prisma/client";
 
 type LocalDate = {
   year: number;

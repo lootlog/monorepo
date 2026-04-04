@@ -21,7 +21,7 @@ import {
 import type { APIGuildMember } from "discord-api-types/v10";
 import { ErrorKey } from "src/members/enum/error-key.enum";
 import { ErrorKey as GuildErrorKey } from "src/guilds/enum/error-key.enum";
-import type { Member, Prisma, Role } from "prisma/generated/client";
+import type { Member, Prisma, Role } from "src/generated/prisma/client";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { RoutingKey } from "src/enum/routing-key.enum";
 import { ConfigKey } from "src/config/config-key.enum";

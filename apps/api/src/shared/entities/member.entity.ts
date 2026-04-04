@@ -1,6 +1,6 @@
 import { Exclude, Expose, Type } from "class-transformer";
 import { ApiProperty } from "@nestjs/swagger";
-import { MemberType } from "prisma/generated/client";
+import { MemberType } from "src/generated/prisma/client";
 import { RoleEntity } from "./role.entity";
 
 export class MemberEntity {

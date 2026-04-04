@@ -9,7 +9,7 @@ import { EventSummaryService } from "./event-summary.service";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared";
 import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant";
-import type { Event, EventHeroNpc } from "prisma/generated/client";
+import type { Event, EventHeroNpc } from "src/generated/prisma/client";
 import { TimersService } from "src/timers/timers.service";
 
 describe("EventKillService", () => {

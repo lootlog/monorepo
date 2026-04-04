@@ -1,4 +1,4 @@
-import { ItemRarity } from "prisma/generated/client";
+import { ItemRarity } from "src/generated/prisma/client";
 import { IsEnum } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
 

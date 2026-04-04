@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import type { CreateLootDto } from "src/loots/dto/create-loot.dto";
-import type { LootlogConfigNpc } from "prisma/generated/client";
+import type { LootlogConfigNpc } from "src/generated/prisma/client";
 import { LootMappingService } from "./loot-mapping.service";
 
 @Injectable()

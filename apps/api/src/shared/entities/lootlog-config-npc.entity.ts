@@ -1,6 +1,6 @@
 import { Exclude, Expose } from "class-transformer";
 import { ApiProperty } from "@nestjs/swagger";
-import { NpcType, ItemRarity } from "prisma/generated/client";
+import { NpcType, ItemRarity } from "src/generated/prisma/client";
 
 export class LootlogConfigNpcEntity {
   @Expose()

@@ -1,6 +1,6 @@
 import { Exclude, Expose } from "class-transformer";
 import { ApiProperty } from "@nestjs/swagger";
-import { LootSource } from "prisma/generated/client";
+import { LootSource } from "src/generated/prisma/client";
 
 export class LootEntity {
   @Expose()

@@ -21,7 +21,7 @@ import {
   ItemRarity,
   NpcType,
   Permission,
-} from "prisma/generated/client";
+} from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
 import type { CreateGuildDto } from "src/guilds/dto/create-guild.dto";
 import type { DeleteGuildDto } from "src/guilds/dto/delete-guild.dto";

@@ -14,7 +14,7 @@ import {
   type Timer,
   type Guild,
   type Role,
-} from "prisma/generated/client";
+} from "src/generated/prisma/client";
 import { getNpcTypeByWt } from "@lootlog/types";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { PrismaService } from "src/db/prisma.service";

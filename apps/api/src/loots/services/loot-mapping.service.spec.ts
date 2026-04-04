@@ -1,6 +1,6 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { LootMappingService } from "./loot-mapping.service";
-import { ItemRarity, Profession } from "prisma/generated/client";
+import { ItemRarity, Profession } from "src/generated/prisma/client";
 
 describe("LootMappingService", () => {
   let service: LootMappingService;

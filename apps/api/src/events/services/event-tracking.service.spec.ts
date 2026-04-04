@@ -6,7 +6,7 @@ import { EventEmitterService } from "./event-emitter.service";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared";
 import { RedlockService } from "src/lib/redlock/redlock.service";
-import { CoverageGapType } from "prisma/generated/client";
+import { CoverageGapType } from "src/generated/prisma/client";
 import { TimersService } from "src/timers/timers.service";
 
 describe("EventTrackingService", () => {

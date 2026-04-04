@@ -22,7 +22,7 @@ import {
   Permission,
   type Guild,
   type Role,
-} from "prisma/generated/client";
+} from "src/generated/prisma/client";
 import { GuildsService } from "src/guilds/guilds.service";
 import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
 import type { UpdateLootDto } from "src/loots/dto/update-loot.dto";
