@@ -1,6 +1,6 @@
 import { Module } from "@nestjs/common";
 import { MembersModule } from "src/members/members.module";
-import { GuildsModule } from "src/guilds/guilds.module";
+import { MemberContextModule } from "src/shared/permissions/member-context.module";
 import {
   RabbitMQModule,
   type RabbitMQConfig,
@@ -17,7 +17,7 @@ import { HttpModule } from "@nestjs/axios";
 @Module({
   imports: [
     MembersModule,
-    GuildsModule,
+    MemberContextModule,
     RabbitMQModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) =>
