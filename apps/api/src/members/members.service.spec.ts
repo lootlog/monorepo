@@ -18,7 +18,11 @@ import { ErrorKey } from "./enum/error-key.enum";
 import { RuntimeEnvironment } from "src/types/runtime.types";
 import { ConfigKey } from "src/config/config-key.enum";
 import type { APIGuildMember } from "discord-api-types/v10";
-import { type Member, type Guild, MemberType } from "src/generated/prisma/client";
+import {
+  type Member,
+  type Guild,
+  MemberType,
+} from "src/generated/prisma/client";
 import { MemberRefreshSchedulerService } from "./member-refresh-scheduler.service";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { RoutingKey } from "src/enum/routing-key.enum";
