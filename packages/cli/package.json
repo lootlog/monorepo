@@ -12,7 +12,7 @@
     "env:generate": "tsx src/commands/env/generate.ts"
   },
   "dependencies": {
-    "@clack/prompts": "^1.1.0",
+    "@clack/prompts": "^1.2.0",
     "@lootlog/battle-processor": "workspace:*",
     "@lootlog/types": "workspace:*",
     "amqplib": "^0.10.9",
@@ -24,7 +24,7 @@
   "devDependencies": {
     "@types/amqplib": "^0.10.8",
     "@types/node": "^25.5.0",
-    "dotenv": "^17.3.1",
+    "dotenv": "^17.4.0",
     "tsx": "^4.21.0"
   }
 }
