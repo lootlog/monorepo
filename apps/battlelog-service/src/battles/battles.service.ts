@@ -51,6 +51,10 @@ import type {
   RawBattleData,
 } from "./interfaces/battle-service.interface";
 
+function getErrorMessage(error: unknown): string {
+  return getErrorMessage(error);
+}
+
 @Injectable()
 export class BattlesService implements IBattlesService {
   private readonly logger = new Logger(BattlesService.name);
@@ -97,9 +101,7 @@ export class BattlesService implements IBattlesService {
       };
     } catch (error) {
       this.logger.error(`Failed to create battle for user ${userId}:`, error);
-      throw new Error(
-        `Battle creation failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      throw new Error(`Battle creation failed: ${getErrorMessage(error)}`);
     }
   }
 
@@ -123,7 +125,7 @@ export class BattlesService implements IBattlesService {
     } catch (error) {
       this.logger.error("Failed to retrieve public battles:", error);
       throw new Error(
-        `Failed to retrieve public battles: ${error instanceof Error ? error.message : "Unknown error"}`,
+        `Failed to retrieve public battles: ${getErrorMessage(error)}`,
       );
     }
   }
@@ -156,7 +158,7 @@ export class BattlesService implements IBattlesService {
     } catch (error) {
       this.logger.error("Failed to retrieve dashboard battles:", error);
       throw new Error(
-        `Failed to retrieve dashboard battles: ${error instanceof Error ? error.message : "Unknown error"}`,
+        `Failed to retrieve dashboard battles: ${getErrorMessage(error)}`,
       );
     }
   }
@@ -192,7 +194,7 @@ export class BattlesService implements IBattlesService {
     } catch (error) {
       this.logger.error("Failed to retrieve user characters:", error);
       throw new Error(
-        `Failed to retrieve user characters: ${error instanceof Error ? error.message : "Unknown error"}`,
+        `Failed to retrieve user characters: ${getErrorMessage(error)}`,
       );
     }
   }
@@ -213,7 +215,7 @@ export class BattlesService implements IBattlesService {
     } catch (error) {
       this.logger.error("Failed to retrieve user worlds:", error);
       throw new Error(
-        `Failed to retrieve user worlds: ${error instanceof Error ? error.message : "Unknown error"}`,
+        `Failed to retrieve user worlds: ${getErrorMessage(error)}`,
       );
     }
   }
@@ -383,9 +385,7 @@ export class BattlesService implements IBattlesService {
       return analysis;
     } catch (error) {
       this.logger.error("Failed to analyze battle data:", error);
-      throw new Error(
-        `Battle analysis failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      throw new Error(`Battle analysis failed: ${getErrorMessage(error)}`);
     }
   }
 
@@ -731,9 +731,7 @@ export class BattlesService implements IBattlesService {
       return battle;
     } catch (error) {
       this.logger.error("Failed to store battle in database:", error);
-      throw new Error(
-        `Database storage failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      throw new Error(`Database storage failed: ${getErrorMessage(error)}`);
     }
   }
 
@@ -756,9 +754,7 @@ export class BattlesService implements IBattlesService {
         `Failed to store raw battle data for ${battleId}:`,
         error,
       );
-      throw new Error(
-        `R2 storage failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      throw new Error(`R2 storage failed: ${getErrorMessage(error)}`);
     }
   }
 

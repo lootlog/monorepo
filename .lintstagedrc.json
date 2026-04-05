@@ -1,4 +1,4 @@
 {
-  "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}": "oxlint",
+  "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}": "oxlint -c .oxlintrc.json",
   "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,json,md,css,html,yml,yaml}": "oxfmt"
 }
