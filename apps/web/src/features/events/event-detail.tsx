@@ -32,8 +32,7 @@ import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import { HeroManageDialog } from "./components/dialogs/hero-manage-dialog";
 import { MapManageDialog } from "./components/dialogs/map-manage-dialog";
-import { EndEventDialog } from "./components/dialogs/end-event-dialog";
-import { ResumeEventDialog } from "./components/dialogs/resume-event-dialog";
+import { EventActionDialog } from "./components/dialogs/event-action-dialog";
 import { EventRulesDialog } from "./components/dialogs/event-rules-dialog";
 import { EventSummaryDialog } from "./components/dialogs/event-summary-dialog";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
@@ -47,7 +46,6 @@ import { useEventRanking } from "./hooks/queries/use-event-ranking";
 import { EventHeroLoots } from "./components/stats/event-hero-loots";
 import { RecentKillsPreview } from "./components/kills/recent-kills-preview";
 import { HeroCard } from "./components/heroes/hero-card";
-import { DeleteEventDialog } from "./components/dialogs/delete-event-dialog";
 import { EventActionsCard } from "./components/shared/event-actions-card";
 import { findEventHeroTimer } from "./utils/find-event-hero-timer";
 import {
@@ -268,10 +266,14 @@ export const EventDetail = () => {
               hero={selectedHero}
             />
           )}
-          <EndEventDialog
+          <EventActionDialog
             open={endDialogOpen}
             onOpenChange={setEndDialogOpen}
             eventName={event.name}
+            titleKey="events.endDialog.title"
+            descriptionKey="events.endDialog.description"
+            actionLabelKey="events.end"
+            variant="destructive"
             onConfirm={async () => {
               try {
                 await updateEvent.mutateAsync({
@@ -284,10 +286,13 @@ export const EventDetail = () => {
             }}
             isPending={updateEvent.isPending}
           />
-          <ResumeEventDialog
+          <EventActionDialog
             open={resumeDialogOpen}
             onOpenChange={setResumeDialogOpen}
             eventName={event.name}
+            titleKey="events.resumeDialog.title"
+            descriptionKey="events.resumeDialog.description"
+            actionLabelKey="events.resume"
             onConfirm={async () => {
               try {
                 await updateEvent.mutateAsync({
@@ -300,11 +305,15 @@ export const EventDetail = () => {
             }}
             isPending={updateEvent.isPending}
           />
-          <DeleteEventDialog
+          <EventActionDialog
             open={deleteDialogOpen}
             onOpenChange={setDeleteDialogOpen}
             eventName={event.name}
-            requireEventNameConfirmation
+            requireNameConfirmation
+            titleKey="events.deleteDialog.title"
+            descriptionKey="events.deleteDialog.description"
+            actionLabelKey="events.delete"
+            variant="destructive"
             isPending={deleteEvent.isPending}
             onConfirm={async () => {
               try {

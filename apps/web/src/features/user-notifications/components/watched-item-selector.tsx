@@ -60,7 +60,7 @@ export const WatchedItemSelector = ({
     setOpen(false);
   };
 
-  const handleClear = (event: React.MouseEvent) => {
+  const handleClear = (event: React.SyntheticEvent) => {
     event.preventDefault();
     event.stopPropagation();
     onSearchChange("");
@@ -124,7 +124,7 @@ export const WatchedItemSelector = ({
                 onClick={(event) => event.stopPropagation()}
                 onKeyDown={(event) => {
                   if (event.key === "Enter" || event.key === " ") {
-                    handleClear(event as unknown as React.MouseEvent);
+                    handleClear(event);
                   }
                 }}
                 className="flex items-center justify-center"

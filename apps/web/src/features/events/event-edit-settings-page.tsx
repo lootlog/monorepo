@@ -76,7 +76,7 @@ export const EventEditSettingsPage = () => {
     }
 
     if (data.endsAt && data.startsAt && data.endsAt <= data.startsAt) {
-      toast.error(t("events.createDialog.endDateMustBeAfterStart"));
+      toast.error(t("events.settings.endDateMustBeAfterStart"));
       return;
     }
 
@@ -167,7 +167,7 @@ export const EventEditSettingsPage = () => {
             <div className="grid gap-4">
               <div className="space-y-2">
                 <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  {t("events.createDialog.nameLabel")}
+                  {t("events.settings.nameLabel")}
                 </Label>
                 <Input
                   {...form.register("name", { required: true })}
@@ -178,7 +178,7 @@ export const EventEditSettingsPage = () => {
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    {t("events.createDialog.startsAt")}
+                    {t("events.settings.startsAt")}
                   </Label>
                   <Input
                     type="datetime-local"
@@ -188,7 +188,7 @@ export const EventEditSettingsPage = () => {
                 </div>
                 <div className="space-y-2">
                   <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    {t("events.createDialog.endsAt")}
+                    {t("events.settings.endsAt")}
                   </Label>
                   <Input
                     type="datetime-local"
@@ -198,7 +198,7 @@ export const EventEditSettingsPage = () => {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">
-                {t("events.createDialog.datesHint")}
+                {t("events.settings.datesHint")}
               </p>
 
               <div className="grid gap-3 xl:grid-cols-3">

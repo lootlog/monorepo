@@ -7,7 +7,7 @@ import { WorldSwitcher } from "@/components/common/world-switcher";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { LootSearchCommand } from "./loot-search-command";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
-import { useLootsViewMode } from "@/hooks/use-loots-view-mode";
+import { useViewMode } from "@/hooks/use-view-mode";
 import {
   Tooltip,
   TooltipContent,
@@ -31,7 +31,7 @@ export const LootFiltersHeader = ({
   const [hoveredButton, setHoveredButton] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const { filters } = useLootsFilters();
-  const { viewMode, setViewMode } = useLootsViewMode();
+  const { viewMode, setViewMode } = useViewMode("loots-view-mode");
   const { theme } = useTheme();
   const isRukiaTheme = theme === "rukia";
 

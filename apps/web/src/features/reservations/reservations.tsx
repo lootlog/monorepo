@@ -18,7 +18,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { useReservationsViewMode } from "@/hooks/use-reservations-view-mode";
+import { useViewMode } from "@/hooks/use-view-mode";
 import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
 import { ReservationCardSkeleton } from "./reservation-card-skeleton";
 
@@ -27,7 +27,7 @@ export const Reservations: React.FC = () => {
   const navigate = useNavigate();
 
   const [searchValue, setSearchValue] = useState("");
-  const { viewMode, setViewMode } = useReservationsViewMode();
+  const { viewMode, setViewMode } = useViewMode("reservations-view-mode");
 
   const { data: reservations } = useReservations();
   const { data: reservationsCards } = useReservationsCards();
