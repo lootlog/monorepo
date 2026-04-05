@@ -25,7 +25,7 @@ function getEventHeroKillMode(isManualClose: boolean): string {
   return isManualClose ? MANUAL_CLOSE_SUFFIX : TIMER_UPDATE_SUFFIX;
 }
 
-function buildEventHeroKillDedupKeyValue(
+function buildDedupKeyValue(
   data: EventHeroKillKeyData,
   heroId?: string,
 ): string {
@@ -45,15 +45,9 @@ function buildEventHeroKillDedupKeyValue(
   return dedupKeySegments.join(":");
 }
 
-function toRequiredDate(value: string, field: string): Date {
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    throw new Error(`Invalid ${field} in event hero kill job payload`);
-  }
-  return parsed;
-}
-
-function toOptionalDate(value: string | null, field: string): Date | null {
+function parseDate(value: string, field: string): Date;
+function parseDate(value: string | null, field: string): Date | null;
+function parseDate(value: string | null, field: string): Date | null {
   if (!value) {
     return null;
   }
@@ -81,18 +75,18 @@ export function deserializeKillTimerData(
   timerData: SerializedKillTimerData,
 ): KillTimerData {
   return {
-    minSpawnTime: toRequiredDate(timerData.minSpawnTime, "minSpawnTime"),
-    maxSpawnTime: toRequiredDate(timerData.maxSpawnTime, "maxSpawnTime"),
+    minSpawnTime: parseDate(timerData.minSpawnTime, "minSpawnTime"),
+    maxSpawnTime: parseDate(timerData.maxSpawnTime, "maxSpawnTime"),
     memberId: timerData.memberId,
-    previousMinSpawnTime: toOptionalDate(
+    previousMinSpawnTime: parseDate(
       timerData.previousMinSpawnTime,
       "previousMinSpawnTime",
     ),
-    previousMaxSpawnTime: toOptionalDate(
+    previousMaxSpawnTime: parseDate(
       timerData.previousMaxSpawnTime,
       "previousMaxSpawnTime",
     ),
-    windowOpenedAt: toOptionalDate(timerData.windowOpenedAt, "windowOpenedAt"),
+    windowOpenedAt: parseDate(timerData.windowOpenedAt, "windowOpenedAt"),
   };
 }
 
@@ -125,7 +119,7 @@ export function buildEventHeroKillJobId(data: {
 }
 
 export function buildEventHeroKillDedupKey(data: EventHeroKillKeyData): string {
-  return buildEventHeroKillDedupKeyValue(data);
+  return buildDedupKeyValue(data);
 }
 
 export function buildEventHeroKillHeroDedupKey(
@@ -133,7 +127,7 @@ export function buildEventHeroKillHeroDedupKey(
     heroId: string;
   },
 ): string {
-  return buildEventHeroKillDedupKeyValue(data, data.heroId);
+  return buildDedupKeyValue(data, data.heroId);
 }
 
 export function createEventHeroKillJobData(
