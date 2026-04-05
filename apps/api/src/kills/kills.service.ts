@@ -2,7 +2,12 @@ import { Injectable, Inject } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { getNpcTypeByWt } from "@lootlog/types";
-import { Permission, NpcType, type Role } from "src/generated/prisma/client";
+import {
+  Permission,
+  NpcType,
+  type Prisma,
+  type Role,
+} from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared";
 import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
@@ -234,15 +239,10 @@ export class KillsService {
       administrativeUser,
     );
 
-    const npcLvlCondition =
-      query.minLvl !== undefined || query.maxLvl !== undefined
-        ? {
-            npcLvl: {
-              ...(query.minLvl !== undefined && { gte: Number(query.minLvl) }),
-              ...(query.maxLvl !== undefined && { lte: Number(query.maxLvl) }),
-            },
-          }
-        : {};
+    const npcLvlCondition = this.buildNpcLvlCondition(
+      query.minLvl,
+      query.maxLvl,
+    );
 
     // Fetch member participation stats
     const memberStats = await this.prisma.npcKillStats.findMany({
@@ -332,6 +332,19 @@ export class KillsService {
     };
   }
 
+  private buildNpcLvlCondition(
+    minLvl?: number,
+    maxLvl?: number,
+  ): Prisma.NpcKillStatsWhereInput {
+    if (minLvl === undefined && maxLvl === undefined) return {};
+    return {
+      npcLvl: {
+        ...(minLvl !== undefined && { gte: Number(minLvl) }),
+        ...(maxLvl !== undefined && { lte: Number(maxLvl) }),
+      },
+    };
+  }
+
   private filterReadableRoles(roles: Role[]): Role[] {
     return roles.filter((role) =>
       role.permissions.includes(Permission.LOOTLOG_LOOTS_READ),
@@ -341,12 +354,12 @@ export class KillsService {
   private buildVisibilityCondition(
     roles: Role[],
     administrativeUser: boolean,
-  ): Record<string, unknown> {
+  ): Prisma.NpcKillStatsWhereInput {
     if (administrativeUser || roles.length === 0) {
       return {};
     }
 
-    const orConditions: Record<string, unknown>[] = [];
+    const orConditions: Prisma.NpcKillStatsWhereInput[] = [];
 
     for (const role of roles) {
       const roleCondition = this.buildRoleVisibilityCondition(role);
@@ -366,7 +379,7 @@ export class KillsService {
 
   private buildRoleVisibilityCondition(
     role: Role,
-  ): Record<string, unknown> | null {
+  ): Prisma.NpcKillStatsWhereInput | null {
     const hasReadTitans = role.permissions?.includes(
       Permission.LOOTLOG_LOOTS_TITANS_READ,
     );
@@ -377,7 +390,7 @@ export class KillsService {
     const lvlFrom = Number(role.lvlRangeFrom ?? 0);
     const lvlTo = Number(role.lvlRangeTo ?? 500);
 
-    const andConditions: Record<string, unknown>[] = [];
+    const andConditions: Prisma.NpcKillStatsWhereInput[] = [];
 
     andConditions.push({ npcLvl: { gte: lvlFrom } });
     andConditions.push({ npcLvl: { lte: lvlTo } });
@@ -584,15 +597,7 @@ export class KillsService {
       administrativeUser,
     );
 
-    const npcLvlCondition =
-      minLvl !== undefined || maxLvl !== undefined
-        ? {
-            npcLvl: {
-              ...(minLvl !== undefined && { gte: minLvl }),
-              ...(maxLvl !== undefined && { lte: maxLvl }),
-            },
-          }
-        : {};
+    const npcLvlCondition = this.buildNpcLvlCondition(minLvl, maxLvl);
 
     // Use GuildKillSummary for unique kills count
     const summaries = await this.prisma.guildKillSummary.findMany({
@@ -880,15 +885,10 @@ export class KillsService {
       return null;
     }
 
-    const npcLvlCondition =
-      query.minLvl !== undefined || query.maxLvl !== undefined
-        ? {
-            npcLvl: {
-              ...(query.minLvl !== undefined && { gte: Number(query.minLvl) }),
-              ...(query.maxLvl !== undefined && { lte: Number(query.maxLvl) }),
-            },
-          }
-        : {};
+    const npcLvlCondition = this.buildNpcLvlCondition(
+      query.minLvl,
+      query.maxLvl,
+    );
 
     // Get all kill stats for this member with visibility conditions
     const stats = await this.prisma.npcKillStats.findMany({
