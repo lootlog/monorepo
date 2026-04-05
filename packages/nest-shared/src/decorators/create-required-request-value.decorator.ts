@@ -1,9 +1,6 @@
 import { createParamDecorator, type ExecutionContext } from "@nestjs/common";
 
-type RequestLike = {
-  [key: string]: unknown;
-  params?: Record<string, string | undefined>;
-};
+import type { RequestLike } from "./types";
 
 interface CreateRequiredRequestValueDecoratorOptions<Value> {
   createException: () => Error;
