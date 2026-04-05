@@ -1,7 +1,6 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { PaginationService } from "./pagination.service";
 import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
-import { SortOrder } from "../dto/query-battles.dto";
 
 describe("PaginationService", () => {
   let service: PaginationService;
@@ -67,7 +66,7 @@ describe("PaginationService", () => {
 
       const result = await service.paginateBattles(() => undefined, {
         size: 2,
-        sortOrder: SortOrder.DESC,
+        sortOrder: "desc",
         includeTotal: false,
       });
 
@@ -88,7 +87,7 @@ describe("PaginationService", () => {
 
       const result = await service.paginateBattles(() => undefined, {
         size: 2,
-        sortOrder: SortOrder.DESC,
+        sortOrder: "desc",
         includeTotal: false,
       });
 
@@ -106,7 +105,7 @@ describe("PaginationService", () => {
 
       const result = await service.paginateBattles(() => undefined, {
         size: 2,
-        sortOrder: SortOrder.DESC,
+        sortOrder: "desc",
         includeTotal: false,
       });
 
@@ -121,7 +120,7 @@ describe("PaginationService", () => {
 
       const result = await service.paginateBattles(() => undefined, {
         size: 10,
-        sortOrder: SortOrder.DESC,
+        sortOrder: "desc",
         includeTotal: false,
       });
 
@@ -137,7 +136,7 @@ describe("PaginationService", () => {
 
       const result = await service.paginateBattles(() => undefined, {
         size: 10,
-        sortOrder: SortOrder.DESC,
+        sortOrder: "desc",
         includeTotal: true,
       });
 

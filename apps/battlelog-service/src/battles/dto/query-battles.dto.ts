@@ -1,111 +1,25 @@
-import { Transform, Type } from "class-transformer";
-import {
-  IsArray,
-  IsBoolean,
-  IsEnum,
-  IsIn,
-  IsNumber,
-  IsOptional,
-  IsString,
-  Max,
-  Min,
-} from "class-validator";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
+import { booleanFromString, commaSeparatedArray } from "./query-helpers";
 
-export enum SortOrder {
-  ASC = "asc",
-  DESC = "desc",
-}
+export type SortOrder = "asc" | "desc";
 
-export class QueryBattlesDto {
-  @IsOptional()
-  @IsString()
-  cursor?: string;
+const QueryBattlesSchema = z.object({
+  cursor: z.string().optional(),
+  size: z.coerce.number().min(1).max(100).default(20),
+  sortOrder: z.enum(["asc", "desc"]).default("desc"),
+  includeTotal: booleanFromString.default(false),
+  world: z.string().optional(),
+  type: commaSeparatedArray(z.enum(["solo", "group"])).optional(),
+  userId: z.string().optional(),
+  public: booleanFromString.optional(),
+  characterId: commaSeparatedArray(z.string()).optional(),
+  search: z.string().optional(),
+  result: commaSeparatedArray(z.enum(["won", "lost", "flee"])).optional(),
+  ph: booleanFromString.optional(),
+  matchmaking: booleanFromString.optional(),
+  minLevel: z.coerce.number().min(1).max(1000).optional(),
+  maxLevel: z.coerce.number().min(1).max(1000).optional(),
+});
 
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @Min(1)
-  @Max(100)
-  size?: number = 20;
-
-  @IsOptional()
-  @IsEnum(SortOrder)
-  sortOrder?: SortOrder = SortOrder.DESC;
-
-  @IsOptional()
-  @Transform(({ value }) => value === "true")
-  @IsBoolean()
-  includeTotal?: boolean = false;
-
-  // Filters
-  @IsOptional()
-  @IsString()
-  world?: string;
-
-  @IsOptional()
-  @IsArray()
-  @IsIn(["solo", "group"], { each: true })
-  @Transform(({ value }) => {
-    if (Array.isArray(value)) return value;
-    if (typeof value === "string") return value.split(",").map((v) => v.trim());
-    return [value];
-  })
-  type?: Array<"solo" | "group">;
-
-  @IsOptional()
-  @IsString()
-  userId?: string;
-
-  @IsOptional()
-  @Transform(({ value }) => value === "true")
-  @IsBoolean()
-  public?: boolean;
-
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  @Transform(({ value }) => {
-    if (Array.isArray(value)) return value;
-    if (typeof value === "string") return value.split(",").map((v) => v.trim());
-    return [value];
-  })
-  characterId?: Array<string>;
-
-  @IsOptional()
-  @IsString()
-  search?: string; // For searching by warrior names
-
-  @IsOptional()
-  @IsArray()
-  @IsIn(["won", "lost", "flee"], { each: true })
-  @Transform(({ value }) => {
-    if (Array.isArray(value)) return value;
-    if (typeof value === "string") return value.split(",").map((v) => v.trim());
-    return [value];
-  })
-  result?: Array<"won" | "lost" | "flee">; // Battle result filter
-
-  @IsOptional()
-  @Transform(({ value }) => value === "true")
-  @IsBoolean()
-  ph?: boolean; // Filter battles with honor points
-
-  @IsOptional()
-  @Transform(({ value }) => value === "true")
-  @IsBoolean()
-  matchmaking?: boolean; // Filter matchmaking battles (Otchłań)
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @Min(1)
-  @Max(1000)
-  minLevel?: number;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @Min(1)
-  @Max(1000)
-  maxLevel?: number;
-}
+export class QueryBattlesDto extends createZodDto(QueryBattlesSchema) {}

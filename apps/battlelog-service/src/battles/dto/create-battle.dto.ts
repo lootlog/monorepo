@@ -1,149 +1,72 @@
-import { Type } from "class-transformer";
-import {
-  ArrayMinSize,
-  IsArray,
-  IsBoolean,
-  IsNumber,
-  IsObject,
-  IsOptional,
-  IsString,
-  ValidateNested,
-} from "class-validator";
-import { ValidateWarriorsRecord } from "src/battles/validators/battle-warriors.validator";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class CreateBattlePartyMembersEventDto {
-  @IsNumber()
-  id: number;
+const CreateBattlePartyMembersEventSchema = z.object({
+  id: z.number(),
+  account: z.number(),
+  nick: z.string(),
+  icon: z.string(),
+  commander: z.number().optional(),
+});
 
-  @IsNumber()
-  account: number;
+const CreateBattlePartyEventSchema = z.object({
+  members: z.record(z.string(), CreateBattlePartyMembersEventSchema),
+});
 
-  @IsString()
-  nick: string;
+export const CreateBattleFightEventWarriorSchema = z.object({
+  originalId: z.number(),
+  name: z.string(),
+  lvl: z.number(),
+  prof: z.string(),
+  icon: z.string(),
+  team: z.number(),
+});
 
-  @IsString()
-  icon: string;
+export const WarriorsRecordSchema = z
+  .record(z.string(), CreateBattleFightEventWarriorSchema)
+  .refine(
+    (record) => {
+      const entries = Object.entries(record);
+      if (entries.length === 0) return false;
+      if (entries.some(([key]) => key.startsWith("-"))) return false;
+      const teams = new Set(entries.map(([, w]) => w.team));
+      return teams.size > 1;
+    },
+    { message: "w must be a valid Record of warriors" },
+  );
 
-  @IsOptional()
-  @IsNumber()
-  commander?: number;
-}
+const CreateBattleFightEventSchema = z.object({
+  m: z.array(z.string()).optional(),
+  endBattle: z.number().optional(),
+  init: z.string().optional(),
+  auto: z.string().optional(),
+  w: WarriorsRecordSchema.optional(),
+});
 
-export class CreateBattlePartyEventDto {
-  @IsObject()
-  @ValidateNested({ each: true })
-  @Type(() => CreateBattlePartyMembersEventDto)
-  members: Record<string, CreateBattlePartyMembersEventDto>;
-}
+const CreateBattleMatchSummarySchema = z.object({
+  difficulty_rank: z.number(),
+  result: z.number(),
+  rating_delta: z.number(),
+  opponent_lvl: z.number(),
+  opponent_oplvl: z.number(),
+  opponent_rating: z.number(),
+  rating: z.number(),
+  status: z.number(),
+});
 
-export class CreateBattleFightEventWarriorDto {
-  @IsNumber()
-  originalId: number;
+const CreateBattleEventsSchema = z.object({
+  party: CreateBattlePartyEventSchema.optional(),
+  f: CreateBattleFightEventSchema,
+  ev: z.number(),
+  match_summary: CreateBattleMatchSummarySchema.optional(),
+});
 
-  @IsString()
-  name: string;
+const CreateBattleSchema = z.object({
+  accountId: z.string(),
+  characterId: z.string(),
+  world: z.string(),
+  matchmaking: z.boolean().optional(),
+  events: z.array(CreateBattleEventsSchema).min(1),
+});
 
-  @IsNumber()
-  lvl: number;
-
-  @IsString()
-  prof: string;
-
-  @IsString()
-  icon: string;
-
-  @IsNumber()
-  team: number;
-}
-
-export class CreateBattleFightEventDto {
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  m?: string[];
-
-  @IsOptional()
-  @IsNumber()
-  endBattle?: number;
-
-  @IsOptional()
-  @IsString()
-  init?: string;
-
-  @IsOptional()
-  @IsString()
-  auto?: string;
-
-  @IsOptional()
-  @ValidateWarriorsRecord()
-  w?: Record<string, CreateBattleFightEventWarriorDto>;
-}
-
-export class CreateBattleMatchSummaryDto {
-  @IsNumber()
-  difficulty_rank: number;
-
-  @IsNumber()
-  result: number;
-
-  @IsNumber()
-  rating_delta: number;
-
-  @IsNumber()
-  opponent_lvl: number;
-
-  @IsNumber()
-  opponent_oplvl: number;
-
-  @IsNumber()
-  opponent_rating: number;
-
-  @IsNumber()
-  rating: number;
-
-  @IsNumber()
-  status: number;
-}
-
-export class CreateBattleEventsDto {
-  @IsOptional()
-  @IsObject()
-  @ValidateNested({ each: true })
-  @Type(() => CreateBattlePartyEventDto)
-  party?: CreateBattlePartyEventDto;
-
-  @IsObject()
-  @ValidateNested()
-  @Type(() => CreateBattleFightEventDto)
-  f: CreateBattleFightEventDto;
-
-  @IsNumber()
-  ev: number;
-
-  @IsOptional()
-  @IsObject()
-  @ValidateNested()
-  @Type(() => CreateBattleMatchSummaryDto)
-  match_summary?: CreateBattleMatchSummaryDto;
-}
-
-export class CreateBattleDto {
-  @IsString()
-  accountId: string;
-
-  @IsString()
-  characterId: string;
-
-  @IsString()
-  world: string;
-
-  @IsOptional()
-  @IsBoolean()
-  matchmaking?: boolean;
-
-  @IsArray()
-  @ArrayMinSize(1)
-  @ValidateNested({ each: true })
-  @Type(() => CreateBattleEventsDto)
-  events: CreateBattleEventsDto[];
-}
+export class CreateBattleDto extends createZodDto(CreateBattleSchema) {}

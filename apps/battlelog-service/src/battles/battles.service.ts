@@ -20,10 +20,7 @@ import {
   type SQL,
 } from "drizzle-orm";
 import type { CreateBattleDto } from "src/battles/dto/create-battle.dto";
-import {
-  SortOrder,
-  type QueryBattlesDto,
-} from "src/battles/dto/query-battles.dto";
+import type { QueryBattlesDto } from "src/battles/dto/query-battles.dto";
 import type { UpdateBattleDto } from "src/battles/dto/update-battle.dto";
 import type { PaginationOptions } from "src/battles/interfaces/pagination.interface";
 import { BattleAnalyticsService } from "src/battles/services/battle-analytics.service";
@@ -524,7 +521,7 @@ export class BattlesService implements IBattlesService {
 
   private buildPaginationOptions(query: QueryBattlesDto): PaginationOptions {
     return {
-      sortOrder: query.sortOrder ?? SortOrder.DESC,
+      sortOrder: query.sortOrder ?? "desc",
       includeTotal: query.includeTotal ?? false,
       cursor: query.cursor,
       size: query.size,
