@@ -1,6 +1,6 @@
 import { NpcTplManager } from "@/types/margonem/npc-tpl-manager";
 import { OldNpcMap } from "./npcs";
-import { OldOtherMap, OtherMap } from "./others";
+import { OldOtherMap } from "./others";
 import { WorldConfig } from "./world-config";
 import { NpcIconManager } from "@/types/margonem/npc-icon-manager";
 

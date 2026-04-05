@@ -33,8 +33,8 @@ type LocalSettingsSnapshot = {
 
 export const useTimerSettingsSync = () => {
   const [showConflict, setShowConflict] = useState(false);
-  const [remoteUpdatedAt, setRemoteUpdatedAt] = useState<Date>();
-  const [localUpdatedAt, setLocalUpdatedAt] = useState<number>();
+  const [remoteUpdatedAt, _setRemoteUpdatedAt] = useState<Date>();
+  const [localUpdatedAt, _setLocalUpdatedAt] = useState<number>();
   const [localSnapshot, setLocalSnapshot] =
     useState<LocalSettingsSnapshot | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -44,7 +44,6 @@ export const useTimerSettingsSync = () => {
     data: remoteSettings,
     isLoading,
     isFetching,
-    refetch,
   } = useTimerSettings(syncEnabled ?? true);
   const { mutateAsync: migrateSettings } = useMigrateTimerSettings();
 
@@ -96,14 +95,6 @@ export const useTimerSettingsSync = () => {
       }
 
       if (remoteSettings) {
-        const remoteTimestamp = remoteSettings.updatedAt
-          ? new Date(remoteSettings.updatedAt).getTime()
-          : 0;
-        const localTime = localTimestamp ?? 0;
-
-        const timeDiff = Math.abs(remoteTimestamp - localTime);
-        const hasSignificantDiff = timeDiff > 5000;
-
         // Temporarily disabled: always use server settings instead of showing conflict dialog
         // if (
         //   !isInitialized &&
@@ -125,8 +116,8 @@ export const useTimerSettingsSync = () => {
         //     hiddenTimers: localStore.hiddenTimers,
         //     pinnedTimers: localStore.pinnedTimers,
         //   });
-        //   setRemoteUpdatedAt(remoteSettings.updatedAt);
-        //   setLocalUpdatedAt(localTimestamp);
+        //   _setRemoteUpdatedAt(remoteSettings.updatedAt);
+        //   _setLocalUpdatedAt(localTimestamp);
         //   setShowConflict(true);
         //   setIsInitialized(false);
         //   return;
