@@ -141,10 +141,6 @@ export class LootMappingService {
     };
   }
 
-  sortNpcsByWt(npcs: CreateLootDto["npcs"]) {
-    return [...npcs].sort((a, b) => b.wt - a.wt);
-  }
-
   mapItems(items: CreateLootDto["loots"]) {
     return items.map((item) => {
       const { lvl, rarity, prof, type } = this.getItemStats(item);
@@ -163,37 +159,6 @@ export class LootMappingService {
         type,
       };
     });
-  }
-
-  mapLootShare(
-    items: CreateLootDto["loots"],
-    players: CreateLootDto["players"],
-  ) {
-    return items.reduce((acc, item) => {
-      if (item.own) {
-        const player = players.find((p) => p.id === item.own);
-        const playerId = player ? `${player.id}${player.accountId}` : null;
-        if (!playerId) return acc;
-
-        acc[playerId] = [item.hid];
-      }
-
-      return acc;
-    }, {});
-  }
-
-  mapNpcs(npcs: CreateLootDto["npcs"]) {
-    return npcs.map((npc) => ({
-      id: npc.id,
-      name: npc.name,
-      lvl: npc.lvl,
-      prof: getProfByShortname(npc.prof),
-      icon: npc.icon,
-      wt: npc.wt,
-      location: npc.location,
-      type: getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type),
-      margonemType: npc.type,
-    }));
   }
 
   mapPlayers(players: CreateLootDto["players"]) {
