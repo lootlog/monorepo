@@ -422,8 +422,8 @@ export class LootQueryService {
       Permission.LOOTLOG_LOOTS_HEROES_READ,
     );
 
-    const lvlFrom = role.lvlRangeFrom ?? 0;
-    const lvlTo = role.lvlRangeTo ?? 500;
+    const lvlFrom = Number(role.lvlRangeFrom ?? 0);
+    const lvlTo = Number(role.lvlRangeTo ?? 500);
 
     const npcConstraints: Prisma.NpcSnapshotWhereInput[] = [];
 
