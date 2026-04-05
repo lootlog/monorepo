@@ -20,7 +20,7 @@ export class DiscordBotClientService {
     const discordBotConfig = this.configService.get<DiscordBotConfig>(
       ConfigKey.DISCORD_BOT,
     );
-    this.serviceUrl = discordBotConfig?.serviceUrl || "http://discord-bot:4000";
+    this.serviceUrl = discordBotConfig?.serviceUrl ?? "http://discord-bot:4000";
   }
 
   async getGuildChannels(guildId: string): Promise<{

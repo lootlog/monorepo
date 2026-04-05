@@ -8,6 +8,6 @@ export default registerAs("battlelog", (): BattlelogConfig => {
   const { BATTLELOG_SERVICE_URL } = process.env;
 
   return {
-    serviceUrl: BATTLELOG_SERVICE_URL || "http://battlelog-service:4000",
+    serviceUrl: BATTLELOG_SERVICE_URL ?? "http://battlelog-service:4000",
   };
 });

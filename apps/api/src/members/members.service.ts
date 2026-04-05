@@ -87,7 +87,7 @@ export class MembersService {
     const serviceConfig = this.configService.get<ServiceConfig>(
       ConfigKey.SERVICE,
     );
-    this.env = serviceConfig?.env || RuntimeEnvironment.LOCAL;
+    this.env = serviceConfig?.env ?? RuntimeEnvironment.LOCAL;
   }
 
   async getGuildMemberById(options: {
