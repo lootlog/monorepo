@@ -14,7 +14,7 @@ type LocalDate = {
   day: number;
 };
 
-type EvaluationContext = {
+export type EvaluationContext = {
   trackingDurationPercentage: number | null;
   trackingDurationSeconds: number | null;
   assignedMembersCount: number;
@@ -578,4 +578,89 @@ export function getAppliedRuleIdsForParticipant(params: {
   }
 
   return appliedRuleIds;
+}
+
+export type ScoringSimulationAppliedRule = {
+  ruleId: string;
+  ruleName: string | null;
+  points: number;
+  actionType: string;
+};
+
+export type ScoringSimulationResult = {
+  totalPoints: number;
+  basePoints: number;
+  bonusPoints: number;
+  appliedRules: ScoringSimulationAppliedRule[];
+};
+
+export function evaluateEventScoring(
+  rules: EventScoringRules,
+  context: EvaluationContext,
+): ScoringSimulationResult {
+  let basePoints = 0;
+  let bonusPoints = 0;
+  const appliedRules: ScoringSimulationAppliedRule[] = [];
+
+  const minTrackingPercentForBonuses =
+    typeof rules.minTrackingPercentForBonuses === "number" &&
+    Number.isFinite(rules.minTrackingPercentForBonuses)
+      ? Math.min(100, Math.max(0, rules.minTrackingPercentForBonuses))
+      : 50;
+
+  for (const rule of rules.rules) {
+    if (rule.enabled === false) {
+      continue;
+    }
+
+    const matches = rule.conditions.every((condition) =>
+      evaluateCondition({ condition, rules, context }),
+    );
+
+    if (!matches) {
+      continue;
+    }
+
+    switch (rule.action.type) {
+      case "SET_BASE":
+        basePoints = rule.action.points;
+        appliedRules.push({
+          ruleId: rule.id,
+          ruleName: rule.name ?? null,
+          points: rule.action.points,
+          actionType: "SET_BASE",
+        });
+        break;
+      case "ADD_BONUS":
+        if (
+          typeof context.trackingDurationPercentage !== "number" ||
+          !Number.isFinite(context.trackingDurationPercentage) ||
+          context.trackingDurationPercentage < minTrackingPercentForBonuses
+        ) {
+          break;
+        }
+        bonusPoints += rule.action.points;
+        appliedRules.push({
+          ruleId: rule.id,
+          ruleName: rule.name ?? null,
+          points: rule.action.points,
+          actionType: "ADD_BONUS",
+        });
+        break;
+      case "ZERO_BASE":
+        basePoints = 0;
+        appliedRules.push({
+          ruleId: rule.id,
+          ruleName: rule.name ?? null,
+          points: 0,
+          actionType: "ZERO_BASE",
+        });
+        break;
+    }
+  }
+
+  const rawTotal = basePoints + bonusPoints;
+  const totalPoints = Math.min(rawTotal, rules.hardCapPoints);
+
+  return { totalPoints, basePoints, bonusPoints, appliedRules };
 }

@@ -6,51 +6,25 @@ import type {
   EventScoringNumericFactor,
 } from "../types/scoring-rules";
 
-const CONDITION_TYPE_FALLBACKS: Record<EventScoringCondition["type"], string> =
-  {
-    NUMERIC: "Warunek liczbowy",
-    BOOLEAN: "Warunek logiczny",
-    KILL_TIME_IN_WINDOW: "Godzina zabicia w oknie",
-    RESPAWN_WINDOW_COVERAGE: "Pokrycie okna respawnu",
-  };
-
-const ACTION_TYPE_FALLBACKS: Record<EventScoringAction["type"], string> = {
-  SET_BASE: "Ustaw podstawę",
-  ADD_BONUS: "Dodaj bonus",
-  ZERO_BASE: "Wyzeruj podstawę",
-};
-
-const FACTOR_FALLBACKS: Record<
-  EventScoringNumericFactor | EventScoringBooleanFactor,
-  string
-> = {
-  trackingDurationPercentage: "Pokrycie czasu respawnu (%)",
-  trackingDurationSeconds: "Czas na mapie (sekundy)",
-  assignedMembersCount: "Liczba przypisanych graczy",
-  minutesSinceLeaveToKill: "Minuty od zejścia do zabicia",
-  timeOnMapSeconds: "Czas na mapie (sekundy)",
-  afkPercentage: "Czas AFK (%)",
-  respawnDurationSeconds: "Długość respawnu (sekundy)",
-  respawnProgressPercentage: "Postęp respawnu (%)",
-  eligible: "Gracz eligible",
-  memberPresentAtKill: "Obecny przy zabiciu",
-  wasPresent: "Był obecny",
-};
-
 export const getScoringConditionTypeLabel = (
   type: EventScoringCondition["type"],
   t: TFunction,
-) => t(`events.scoring.conditionType.${type}`, CONDITION_TYPE_FALLBACKS[type]);
+) => t(`events.scoring.conditionType.${type}`);
 
 export const getScoringActionTypeLabel = (
   type: EventScoringAction["type"],
   t: TFunction,
-) => t(`events.scoring.actionType.${type}`, ACTION_TYPE_FALLBACKS[type]);
+) => t(`events.scoring.actionType.${type}`);
 
 export const getScoringFactorLabel = (
   factor: EventScoringNumericFactor | EventScoringBooleanFactor,
   t: TFunction,
-) => t(`events.scoring.factor.${factor}`, FACTOR_FALLBACKS[factor]);
+) => t(`events.scoring.factor.${factor}`);
+
+export const getScoringFactorDescription = (
+  factor: EventScoringNumericFactor | EventScoringBooleanFactor,
+  t: TFunction,
+) => t(`events.scoring.factorHint.${factor}`);
 
 export const getScoringBooleanValueLabel = (value: boolean, t: TFunction) =>
   t(`events.scoring.booleanValue.${value}`, value ? "tak" : "nie");
@@ -67,7 +41,7 @@ export const formatScoringCondition = (
     case "KILL_TIME_IN_WINDOW":
       return t(
         "events.scoring.conditionSummary.killTimeInWindow",
-        "Godzina zabicia w przedziale {{from}}-{{to}}",
+        "Kill w godzinach {{from}}\u2013{{to}}",
         {
           from: condition.from,
           to: condition.to,
@@ -76,7 +50,7 @@ export const formatScoringCondition = (
     case "RESPAWN_WINDOW_COVERAGE":
       return t(
         "events.scoring.conditionSummary.respawnWindowCoverage",
-        "Pokrycie czasu respu w oknie {{from}}-{{to}} {{operator}} {{value}}%",
+        "% respawnu w godz. {{from}}\u2013{{to}} {{operator}} {{value}}%",
         {
           from: condition.from,
           to: condition.to,

@@ -29,7 +29,7 @@ import {
   normalizeScoringRules,
 } from "../../utils/scoring-rules";
 import { getApiErrorMessage } from "../../utils/get-api-error-message";
-import { ScoringRulesEditor } from "./scoring-rules-editor";
+import { ScoringRulesEditor } from "../scoring/scoring-rules-editor";
 
 interface EventCreateDialogProps {
   open: boolean;
@@ -308,7 +308,6 @@ export const EventCreateDialog = ({
                   control={form.control}
                   register={form.register}
                   setValue={form.setValue}
-                  t={t}
                 />
               </div>
             )}
