@@ -1,5 +1,5 @@
-import { ChatMessage } from "@/hooks/api/use-chat-messages";
-import { GuildMember } from "@/hooks/api/use-guild-members";
+import type { ChatMessage } from "@/hooks/api/use-chat-messages";
+import type { GuildMember } from "@/hooks/api/use-guild-members";
 import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 
