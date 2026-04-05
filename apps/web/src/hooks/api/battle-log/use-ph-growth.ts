@@ -1,7 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
-import { battlelogApiClient } from "@/lib/api-client/api-client";
+import { createBattleLogStatistic } from "./create-battle-log-statistic";
 
-interface PhGrowthDataPoint {
+export interface PhGrowthDataPoint {
   date: string;
   ph: number;
   cumulativePh: number;
@@ -18,18 +17,7 @@ interface UsePhGrowthParams {
   matchmaking?: boolean;
 }
 
-export function usePhGrowth(params: UsePhGrowthParams) {
-  return useQuery({
-    queryKey: ["ph-growth", params],
-    queryFn: async () => {
-      const response = await battlelogApiClient.get(
-        "/battles/@me/statistics/ph-growth",
-        {
-          params,
-        },
-      );
-      return response.data as PhGrowthDataPoint[];
-    },
-    staleTime: 0,
-  });
-}
+export const usePhGrowth = createBattleLogStatistic<
+  PhGrowthDataPoint,
+  UsePhGrowthParams
+>("ph-growth", "/battles/@me/statistics/ph-growth");

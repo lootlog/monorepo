@@ -1,7 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
-import { battlelogApiClient } from "@/lib/api-client/api-client";
+import { createBattleLogStatistic } from "./create-battle-log-statistic";
 
-interface RatingGrowthDataPoint {
+export interface RatingGrowthDataPoint {
   date: string;
   ratingDelta: number;
   rating: number;
@@ -16,18 +15,7 @@ interface UseRatingGrowthParams {
   maxLevel?: number;
 }
 
-export function useRatingGrowth(params: UseRatingGrowthParams) {
-  return useQuery({
-    queryKey: ["rating-growth", params],
-    queryFn: async () => {
-      const response = await battlelogApiClient.get(
-        "/battles/@me/statistics/rating-growth",
-        {
-          params,
-        },
-      );
-      return response.data as RatingGrowthDataPoint[];
-    },
-    staleTime: 0,
-  });
-}
+export const useRatingGrowth = createBattleLogStatistic<
+  RatingGrowthDataPoint,
+  UseRatingGrowthParams
+>("rating-growth", "/battles/@me/statistics/rating-growth");

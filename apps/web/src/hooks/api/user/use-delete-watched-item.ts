@@ -1,24 +1,12 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { invalidateUserNotificationQueries } from "@/hooks/api/user/use-user-notifications";
-import { apiClient } from "@/lib/api-client/api-client";
+import { createUserNotificationMutation } from "./create-user-notification-mutation";
 
 export type DeleteWatchedItemData = {
   watchedItemId: number;
 };
 
-export const useDeleteWatchedItem = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (data: DeleteWatchedItemData) => {
-      const response = await apiClient.delete<{ success: true }>(
-        `/users/@me/notifications/watched-items/${data.watchedItemId}`,
-      );
-
-      return response.data;
-    },
-    onSuccess: async () => {
-      await invalidateUserNotificationQueries(queryClient);
-    },
-  });
-};
+export const useDeleteWatchedItem = createUserNotificationMutation<
+  DeleteWatchedItemData,
+  { success: true }
+>((data, client) =>
+  client.delete(`/users/@me/notifications/watched-items/${data.watchedItemId}`),
+);

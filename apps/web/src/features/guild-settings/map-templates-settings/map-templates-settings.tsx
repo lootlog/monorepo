@@ -14,8 +14,7 @@ import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialo
 import { useMapTemplates, type MapTemplate } from "./hooks/use-map-templates";
 import { useDeleteMapTemplate } from "./hooks/use-map-template-mutations";
 import { MapTemplatesHeader } from "./map-templates-header";
-import { MapTemplateCreateDialog } from "./map-template-create-dialog";
-import { MapTemplateEditDialog } from "./map-template-edit-dialog";
+import { MapTemplateFormDialog } from "./map-template-form-dialog";
 import { Spinner } from "@lootlog/ui/components/spinner";
 
 export const MapTemplatesSettings = () => {
@@ -153,13 +152,15 @@ export const MapTemplatesSettings = () => {
         </div>
       </ScrollArea>
 
-      <MapTemplateCreateDialog
+      <MapTemplateFormDialog
+        mode="create"
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
       />
 
       {editingTemplate && (
-        <MapTemplateEditDialog
+        <MapTemplateFormDialog
+          mode="edit"
           open={editDialogOpen}
           onOpenChange={setEditDialogOpen}
           template={editingTemplate}
