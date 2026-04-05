@@ -14,7 +14,7 @@ function calculateRespawnTime(
   respawnRandomness: number,
   now: Date,
 ): SpawnTimes {
-  const date = new Date(now).getTime();
+  const date = now.getTime();
   const respMs = respBaseSeconds * 1000;
   const multiplier = respawnRandomness / 100;
   const maxSpawnTime = Math.round(respMs * multiplier + respMs);
