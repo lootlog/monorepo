@@ -7,6 +7,11 @@ import {
 } from "../entities/activity.entity";
 import type { Prisma } from "src/generated/prisma/client";
 
+const NON_EMPTY_STRING_FILTER: Prisma.StringNullableFilter = {
+  not: null,
+  notIn: [""],
+};
+
 @Injectable()
 export class ActivitiesQueryService {
   constructor(private readonly prisma: PrismaService) {}
@@ -103,7 +108,7 @@ export class ActivitiesQueryService {
     search?: string,
     limit = 10,
   ): Promise<string[]> {
-    const limitValue = Math.min(Math.max(limit, 1), 50);
+    const limitValue = this.clampLimit(limit);
     const trimmedSearch = search?.trim();
 
     const where: Prisma.ActivityActorSnapshotWhereInput = {
@@ -137,12 +142,11 @@ export class ActivitiesQueryService {
     search?: string,
     limit = 20,
   ): Promise<string[]> {
-    const limitValue = Math.min(Math.max(limit, 1), 50);
+    const limitValue = this.clampLimit(limit);
     const trimmedSearch = search?.trim();
 
     const worldFilter: Prisma.StringNullableFilter = {
-      not: null,
-      notIn: [""],
+      ...NON_EMPTY_STRING_FILTER,
     };
 
     if (trimmedSearch) {
@@ -173,12 +177,11 @@ export class ActivitiesQueryService {
     search?: string,
     limit = 10,
   ): Promise<string[]> {
-    const limitValue = Math.min(Math.max(limit, 1), 50);
+    const limitValue = this.clampLimit(limit);
     const trimmedSearch = search?.trim();
 
     const clanNameFilter: Prisma.StringNullableFilter = {
-      not: null,
-      notIn: [""],
+      ...NON_EMPTY_STRING_FILTER,
     };
 
     if (trimmedSearch) {
@@ -219,6 +222,10 @@ export class ActivitiesQueryService {
     query: QueryActivitiesDto,
   ): Promise<PaginatedActivitiesEntity> {
     return this.findMany({ ...query, userId, guildId });
+  }
+
+  private clampLimit(limit: number, min = 1, max = 50): number {
+    return Math.min(Math.max(limit, min), max);
   }
 
   private deduplicateNames(
