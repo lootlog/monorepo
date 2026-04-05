@@ -238,8 +238,8 @@ export class KillsService {
       query.minLvl !== undefined || query.maxLvl !== undefined
         ? {
             npcLvl: {
-              ...(query.minLvl !== undefined && { gte: query.minLvl }),
-              ...(query.maxLvl !== undefined && { lte: query.maxLvl }),
+              ...(query.minLvl !== undefined && { gte: Number(query.minLvl) }),
+              ...(query.maxLvl !== undefined && { lte: Number(query.maxLvl) }),
             },
           }
         : {};
@@ -374,8 +374,8 @@ export class KillsService {
       Permission.LOOTLOG_LOOTS_HEROES_READ,
     );
 
-    const lvlFrom = role.lvlRangeFrom ?? 0;
-    const lvlTo = role.lvlRangeTo ?? 500;
+    const lvlFrom = Number(role.lvlRangeFrom ?? 0);
+    const lvlTo = Number(role.lvlRangeTo ?? 500);
 
     const andConditions: Record<string, unknown>[] = [];
 
@@ -490,8 +490,8 @@ export class KillsService {
       }),
       ...((query.minLvl !== undefined || query.maxLvl !== undefined) && {
         npcLvl: {
-          ...(query.minLvl !== undefined && { gte: query.minLvl }),
-          ...(query.maxLvl !== undefined && { lte: query.maxLvl }),
+          ...(query.minLvl !== undefined && { gte: Number(query.minLvl) }),
+          ...(query.maxLvl !== undefined && { lte: Number(query.maxLvl) }),
         },
       }),
     };
@@ -884,8 +884,8 @@ export class KillsService {
       query.minLvl !== undefined || query.maxLvl !== undefined
         ? {
             npcLvl: {
-              ...(query.minLvl !== undefined && { gte: query.minLvl }),
-              ...(query.maxLvl !== undefined && { lte: query.maxLvl }),
+              ...(query.minLvl !== undefined && { gte: Number(query.minLvl) }),
+              ...(query.maxLvl !== undefined && { lte: Number(query.maxLvl) }),
             },
           }
         : {};
