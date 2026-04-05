@@ -21,7 +21,8 @@ import {
   normalizeScoringRules,
 } from "./utils/scoring-rules";
 import { getApiErrorMessage } from "./utils/get-api-error-message";
-import { ScoringRulesEditor } from "./components/dialogs/scoring-rules-editor";
+import { ScoringRulesEditor } from "./components/scoring/scoring-rules-editor";
+import { ScoringModeSelector } from "./components/scoring/scoring-mode-selector";
 
 interface EventScoringFormData {
   scoringMode: EventScoringMode;
@@ -186,29 +187,12 @@ const EventEditScoringForm = ({
               control={form.control}
               name="scoringMode"
               render={({ field }) => (
-                <select
+                <ScoringModeSelector
                   value={normalizeScoringMode(field.value)}
-                  onChange={(changeEvent) => {
-                    field.onChange(
-                      normalizeScoringMode(changeEvent.currentTarget.value),
-                    );
-                  }}
-                  className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm"
-                >
-                  <option value="SIMPLE">
-                    {t("events.scoring.modeSimpleTitle")}
-                  </option>
-                  <option value="ADVANCED">
-                    {t("events.scoring.modeAdvancedTitle")}
-                  </option>
-                </select>
+                  onChange={(mode) => field.onChange(mode)}
+                />
               )}
             />
-            <p className="text-xs text-muted-foreground">
-              {scoringMode === "ADVANCED"
-                ? t("events.scoring.modeAdvancedDescription")
-                : t("events.scoring.modeSimpleDescription")}
-            </p>
           </div>
         </Card>
 
@@ -223,7 +207,6 @@ const EventEditScoringForm = ({
                 control={form.control}
                 register={form.register}
                 setValue={form.setValue}
-                t={t}
               />
             </div>
           </Card>

@@ -16,13 +16,13 @@ import { NPC_TYPE_NAMES, NPC_TYPE_SORT_ORDER } from "@/constants/npc";
 import { SearchInput } from "@/components/ui/search-input";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
-import { useTimersViewMode } from "@/hooks/use-timers-view-mode";
+import { useViewMode } from "@/hooks/use-view-mode";
 
 export const Timers = () => {
   const { data: timers, isPending } = useTimers();
   const [search, setSearch] = useState("");
   const isMobile = useIsMobile();
-  const { viewMode, setViewMode } = useTimersViewMode();
+  const { viewMode, setViewMode } = useViewMode("timers-view-mode", "list");
 
   const filtered = timers?.filter((timer) =>
     timer.npc.name.toLowerCase().includes(search.toLowerCase()),
