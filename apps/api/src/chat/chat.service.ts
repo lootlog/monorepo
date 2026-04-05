@@ -136,9 +136,7 @@ export class ChatService {
     messages: ChatMessage[],
     roles: Role[],
   ): ChatMessage[] {
-    return messages.filter((message) =>
-      canViewChatMessage(message as SendMessageDto, roles),
-    );
+    return messages.filter((message) => canViewChatMessage(message, roles));
   }
 
   async clearMessages(guildId: string) {
@@ -163,16 +161,14 @@ export class ChatService {
     const key = this.getChatMessagesKey(guildId);
     const elements = await this.redisService.lrange(key, 0, -1);
 
-    const messageIndex = elements.findIndex((element) => {
-      const parsed = JSON.parse(element);
-      return parsed.id === messageId;
-    });
+    const parsed = elements.map((el) => JSON.parse(el) as ChatMessage);
+    const messageIndex = parsed.findIndex((msg) => msg.id === messageId);
 
     if (messageIndex === -1) {
       throw new NotFoundException("Message not found");
     }
 
-    const message = JSON.parse(elements[messageIndex]);
+    const message = parsed[messageIndex];
     if (message.senderId !== discordId) {
       throw new ForbiddenException("Not the owner of this message");
     }
@@ -202,21 +198,18 @@ export class ChatService {
     const key = this.getChatMessagesKey(guildId);
     const elements = await this.redisService.lrange(key, 0, -1);
 
-    const targetElement = elements.find((element) => {
-      const parsed = JSON.parse(element);
-      return parsed.id === messageId;
-    });
+    const parsed = elements.map((el) => JSON.parse(el) as ChatMessage);
+    const targetIndex = parsed.findIndex((msg) => msg.id === messageId);
 
-    if (!targetElement) {
+    if (targetIndex === -1) {
       throw new NotFoundException("Message not found");
     }
 
-    const message = JSON.parse(targetElement);
-    if (message.senderId !== discordId) {
+    if (parsed[targetIndex].senderId !== discordId) {
       throw new ForbiddenException("Not the owner of this message");
     }
 
-    await this.redisService.lrem(key, 1, targetElement);
+    await this.redisService.lrem(key, 1, elements[targetIndex]);
 
     this.amqpConnection.publish(
       DEFAULT_EXCHANGE_NAME,
