@@ -486,7 +486,7 @@ export class KillsService {
       ...(query.world && { world: query.world }),
       ...(npcTypes && npcTypes.length > 0 && { npcType: { in: npcTypes } }),
       ...(query.search && {
-        npcName: { contains: query.search, mode: "insensitive" as const },
+        npcName: { contains: query.search, mode: "insensitive" },
       }),
       ...((query.minLvl !== undefined || query.maxLvl !== undefined) && {
         npcLvl: {
@@ -601,7 +601,7 @@ export class KillsService {
         ...(npcType && { npcType }),
         ...(world && { world }),
         ...(search && {
-          npcName: { contains: search, mode: "insensitive" as const },
+          npcName: { contains: search, mode: "insensitive" },
         }),
         ...npcLvlCondition,
         ...visibilityCondition,
@@ -898,7 +898,7 @@ export class KillsService {
         ...(npcTypes && npcTypes.length > 0 && { npcType: { in: npcTypes } }),
         ...(query.world && { world: query.world }),
         ...(query.search && {
-          npcName: { contains: query.search, mode: "insensitive" as const },
+          npcName: { contains: query.search, mode: "insensitive" },
         }),
         ...npcLvlCondition,
         ...visibilityCondition,
