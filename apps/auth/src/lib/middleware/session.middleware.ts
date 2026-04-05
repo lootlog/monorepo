@@ -1,4 +1,4 @@
-import { Context, Next } from "hono";
+import type { Context, Next } from "hono";
 import { auth } from "../auth.js";
 
 const sessionMiddleware = async (c: Context, next: Next) => {
