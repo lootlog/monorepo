@@ -45,7 +45,7 @@ function buildEventHeroKillDedupKeyValue(
   return dedupKeySegments.join(":");
 }
 
-function toRequiredDate(value: string, field: string): Date {
+function parseDate(value: string, field: string): Date {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
     throw new Error(`Invalid ${field} in event hero kill job payload`);
@@ -57,11 +57,7 @@ function toOptionalDate(value: string | null, field: string): Date | null {
   if (!value) {
     return null;
   }
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    throw new Error(`Invalid ${field} in event hero kill job payload`);
-  }
-  return parsed;
+  return parseDate(value, field);
 }
 
 export function serializeKillTimerData(
@@ -81,8 +77,8 @@ export function deserializeKillTimerData(
   timerData: SerializedKillTimerData,
 ): KillTimerData {
   return {
-    minSpawnTime: toRequiredDate(timerData.minSpawnTime, "minSpawnTime"),
-    maxSpawnTime: toRequiredDate(timerData.maxSpawnTime, "maxSpawnTime"),
+    minSpawnTime: parseDate(timerData.minSpawnTime, "minSpawnTime"),
+    maxSpawnTime: parseDate(timerData.maxSpawnTime, "maxSpawnTime"),
     memberId: timerData.memberId,
     previousMinSpawnTime: toOptionalDate(
       timerData.previousMinSpawnTime,
