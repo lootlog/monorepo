@@ -4,7 +4,7 @@ import { LootsListItemSkeleton } from "@/features/guild/components/loots-list/lo
 import { useGuildContext } from "@/hooks/context/use-guild-context";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { type Loot, useLoots } from "@/hooks/api/loots/use-loots";
-import { useLootsViewMode } from "@/hooks/use-loots-view-mode";
+import { useViewMode } from "@/hooks/use-view-mode";
 import {
   useResetScrollTop,
   useVirtualInfiniteScroll,
@@ -67,7 +67,7 @@ export const LootsList: FC = () => {
   const { world } = useGuildContext();
   const guildId = useGuildId();
   const scrollElementRef = useRef<HTMLDivElement>(null);
-  const { viewMode } = useLootsViewMode();
+  const { viewMode } = useViewMode("loots-view-mode");
   const { allLoots, gridRows } = useStableLootCollections(loots?.pages);
   const totalCount = allLoots.length;
 

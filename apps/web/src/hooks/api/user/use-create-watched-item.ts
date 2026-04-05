@@ -1,9 +1,5 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  invalidateUserNotificationQueries,
-  type UserWatchedItem,
-} from "@/hooks/api/user/use-user-notifications";
-import { apiClient } from "@/lib/api-client/api-client";
+import type { UserWatchedItem } from "@/hooks/api/user/use-user-notifications";
+import { createUserNotificationMutation } from "./create-user-notification-mutation";
 
 export type CreateWatchedItemData = {
   itemId: number;
@@ -12,20 +8,9 @@ export type CreateWatchedItemData = {
   guildIds: string[];
 };
 
-export const useCreateWatchedItem = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (data: CreateWatchedItemData) => {
-      const response = await apiClient.post<UserWatchedItem>(
-        "/users/@me/notifications/watched-items",
-        data,
-      );
-
-      return response.data;
-    },
-    onSuccess: async () => {
-      await invalidateUserNotificationQueries(queryClient);
-    },
-  });
-};
+export const useCreateWatchedItem = createUserNotificationMutation<
+  CreateWatchedItemData,
+  UserWatchedItem
+>((data, client) =>
+  client.post("/users/@me/notifications/watched-items", data),
+);

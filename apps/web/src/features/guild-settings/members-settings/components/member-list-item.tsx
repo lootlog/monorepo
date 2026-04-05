@@ -1,6 +1,5 @@
-import { Card } from "@lootlog/ui/components/card";
 import { cn } from "@lootlog/ui/lib/utils";
-import { ChevronRight, Crown } from "lucide-react";
+import { Crown } from "lucide-react";
 import { type FC, useMemo } from "react";
 import type { GuildMember } from "@/hooks/api/members/use-guild-member";
 import { getColorFromRole } from "@/utils/get-color-from-role";
@@ -8,6 +7,7 @@ import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
 import { Avatar, AvatarImage } from "@lootlog/ui/components/avatar";
 import { useSelectorPanel } from "@/components/selector-panel";
+import { SelectableListCard } from "@/components/selectable-list-card";
 import { Permission } from "@lootlog/types";
 import {
   Tooltip,
@@ -35,7 +35,6 @@ export const MemberListItem: FC<MemberListItemProps> = ({
   const color = getColorFromRole(member.roles);
   const avatarUrl = getDiscordAvatarUrl(member.userId, member.avatar);
 
-  // Collect all permissions from all roles
   const memberPermissions = useMemo(() => {
     const perms = new Set<Permission>();
     for (const role of member.roles) {
@@ -116,46 +115,27 @@ export const MemberListItem: FC<MemberListItemProps> = ({
   );
 
   return (
-    <Card
-      className={cn(
-        "group relative overflow-hidden cursor-pointer transition-all duration-150",
-        "bg-card/40 backdrop-blur-sm border-border",
-        "hover:bg-card/80 hover:border-primary/30 hover:shadow-lg hover:scale-[1.01] py-1",
-        isSelected && "bg-primary/10 border-primary/50 shadow-lg scale-[1.01]",
-        !member.active && "opacity-50",
-      )}
+    <SelectableListCard
+      isSelected={isSelected}
       onClick={() => handleSelect(member)}
+      icons={iconsContent}
+      showIcons={!isPanelOpen}
+      className={cn(!member.active && "opacity-50")}
     >
-      <div className="flex flex-wrap items-center gap-3 py-2 px-4 pl-5">
-        <Avatar className="size-8 shrink-0">
-          <AvatarImage src={avatarUrl} />
-        </Avatar>
-        <div className="flex-1 min-w-0">
-          <div
-            className="font-medium text-sm truncate"
-            style={{ color: `#${color}` }}
-          >
-            {member.name}
-          </div>
-          <div className="text-xs text-muted-foreground">
-            Odświeżono {getRelativeTime(member.updatedAt)}
-          </div>
+      <Avatar className="size-8 shrink-0">
+        <AvatarImage src={avatarUrl} />
+      </Avatar>
+      <div className="flex-1 min-w-0">
+        <div
+          className="font-medium text-sm truncate"
+          style={{ color: `#${color}` }}
+        >
+          {member.name}
         </div>
-        <ChevronRight
-          className={cn(
-            "size-4 text-muted-foreground shrink-0 transition-all duration-150 hidden md:block",
-            "absolute right-3 top-1/2 -translate-y-1/2",
-            "opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0",
-            isSelected && "opacity-100 translate-x-0 text-primary",
-          )}
-        />
-        {/* Show icons on right side when panel is closed */}
-        {!isPanelOpen && (
-          <div className="flex items-center gap-1 w-full md:w-auto md:order-none order-last mt-2 md:mt-0 ml-11 md:ml-0 md:mr-6">
-            {iconsContent}
-          </div>
-        )}
+        <div className="text-xs text-muted-foreground">
+          Odświeżono {getRelativeTime(member.updatedAt)}
+        </div>
       </div>
-    </Card>
+    </SelectableListCard>
   );
 };

@@ -29,7 +29,7 @@ import { useDeleteEvent } from "@/features/events/hooks/mutations/use-delete-eve
 import { useToggleEventPin } from "@/features/events/hooks/mutations/use-toggle-event-pin";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { EventCreateDialog } from "./components/dialogs/event-create-dialog";
-import { DeleteEventDialog } from "./components/dialogs/delete-event-dialog";
+import { EventActionDialog } from "./components/dialogs/event-action-dialog";
 import { getEventStatusAtTimestamp } from "./utils";
 import { Spinner } from "@lootlog/ui/components/spinner";
 
@@ -271,13 +271,17 @@ export const Events = () => {
           open={createDialogOpen}
           onOpenChange={setCreateDialogOpen}
         />
-        <DeleteEventDialog
+        <EventActionDialog
           open={!!eventToDelete}
           onOpenChange={(open) => {
             if (!open) setEventToDelete(null);
           }}
           eventName={eventToDelete?.name ?? ""}
-          requireEventNameConfirmation
+          requireNameConfirmation
+          titleKey="events.deleteDialog.title"
+          descriptionKey="events.deleteDialog.description"
+          actionLabelKey="events.delete"
+          variant="destructive"
           isPending={deleteEvent.isPending}
           onConfirm={async () => {
             if (!eventToDelete) return;

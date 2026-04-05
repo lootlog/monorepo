@@ -22,18 +22,29 @@ import {
 } from "@lootlog/ui/components/form";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Pencil, X, MapPin, Search } from "lucide-react";
+import { FileText, Pencil, X, MapPin, Search } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { toast } from "sonner";
-import { useUpdateMapTemplate } from "./hooks/use-map-template-mutations";
+import {
+  useCreateMapTemplate,
+  useUpdateMapTemplate,
+} from "./hooks/use-map-template-mutations";
 import { useGameMaps, type GameMap } from "@/hooks/api/use-game-maps";
 import type { MapItem, MapTemplate } from "./hooks/use-map-templates";
 
-interface MapTemplateEditDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  template: MapTemplate;
-}
+type MapTemplateFormDialogProps =
+  | {
+      mode: "create";
+      open: boolean;
+      onOpenChange: (open: boolean) => void;
+      template?: undefined;
+    }
+  | {
+      mode: "edit";
+      open: boolean;
+      onOpenChange: (open: boolean) => void;
+      template: MapTemplate;
+    };
 
 const createFormSchema = (t: (key: string) => string) =>
   z.object({
@@ -45,14 +56,21 @@ const createFormSchema = (t: (key: string) => string) =>
 
 type FormData = z.infer<ReturnType<typeof createFormSchema>>;
 
-export const MapTemplateEditDialog = ({
+export const MapTemplateFormDialog = ({
+  mode,
   open,
   onOpenChange,
   template,
-}: MapTemplateEditDialogProps) => {
+}: MapTemplateFormDialogProps) => {
   const { t } = useTranslation();
   const { data: gameMaps } = useGameMaps();
-  const { mutate: updateTemplate, isPending } = useUpdateMapTemplate();
+  const { mutate: createTemplate, isPending: isCreating } =
+    useCreateMapTemplate();
+  const { mutate: updateTemplate, isPending: isUpdating } =
+    useUpdateMapTemplate();
+
+  const isPending = mode === "create" ? isCreating : isUpdating;
+  const isCreate = mode === "create";
 
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -61,19 +79,18 @@ export const MapTemplateEditDialog = ({
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: template.name,
-      maps: template.maps,
+      name: template?.name ?? "",
+      maps: template?.maps ?? [],
     },
   });
 
   const maps = form.watch("maps");
 
-  // Reset form when dialog opens or template changes
   useEffect(() => {
     if (open) {
       form.reset({
-        name: template.name,
-        maps: template.maps,
+        name: template?.name ?? "",
+        maps: template?.maps ?? [],
       });
       setSearchQuery("");
     }
@@ -124,28 +141,46 @@ export const MapTemplateEditDialog = ({
   };
 
   const onSubmit = (data: FormData) => {
-    updateTemplate(
-      {
-        templateId: template.id,
-        name: data.name.trim(),
-        maps: data.maps,
-      },
-      {
+    const payload = { name: data.name.trim(), maps: data.maps };
+    const errorHandler = (error: unknown) => {
+      const axiosError = error as { response?: { status?: number } };
+      if (axiosError.response?.status === 400) {
+        toast.error(t("settings.mapTemplates.toasts.duplicateName"));
+      } else {
+        toast.error(
+          t(
+            isCreate
+              ? "settings.mapTemplates.toasts.createError"
+              : "settings.mapTemplates.toasts.updateError",
+          ),
+        );
+      }
+    };
+
+    if (isCreate) {
+      createTemplate(payload, {
         onSuccess: () => {
-          toast.success(t("settings.mapTemplates.toasts.updated"));
+          toast.success(t("settings.mapTemplates.toasts.created"));
           handleClose(false);
         },
-        onError: (error: unknown) => {
-          const axiosError = error as { response?: { status?: number } };
-          if (axiosError.response?.status === 400) {
-            toast.error(t("settings.mapTemplates.toasts.duplicateName"));
-          } else {
-            toast.error(t("settings.mapTemplates.toasts.updateError"));
-          }
+        onError: errorHandler,
+      });
+    } else {
+      updateTemplate(
+        { templateId: template.id, ...payload },
+        {
+          onSuccess: () => {
+            toast.success(t("settings.mapTemplates.toasts.updated"));
+            handleClose(false);
+          },
+          onError: errorHandler,
         },
-      },
-    );
+      );
+    }
   };
+
+  const Icon = isCreate ? FileText : Pencil;
+  const dialogKey = isCreate ? "createDialog" : "editDialog";
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -153,14 +188,14 @@ export const MapTemplateEditDialog = ({
         <DialogHeader className="px-5 pt-5 pb-4 border-b bg-muted/30">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary/10">
-              <Pencil className="size-4 text-primary" />
+              <Icon className="size-4 text-primary" />
             </div>
             <div>
               <DialogTitle className="text-base">
-                {t("settings.mapTemplates.editDialog.title")}
+                {t(`settings.mapTemplates.${dialogKey}.title`)}
               </DialogTitle>
               <DialogDescription className="text-xs mt-0.5">
-                {t("settings.mapTemplates.editDialog.description")}
+                {t(`settings.mapTemplates.${dialogKey}.description`)}
               </DialogDescription>
             </div>
           </div>
@@ -313,11 +348,15 @@ export const MapTemplateEditDialog = ({
                 {isPending ? (
                   <>
                     <Spinner className="size-3.5 mr-1.5" />
-                    {t("settings.mapTemplates.editDialog.saving")}
+                    {t(
+                      isCreate
+                        ? "settings.mapTemplates.createDialog.creating"
+                        : "settings.mapTemplates.editDialog.saving",
+                    )}
                   </>
                 ) : (
                   <>
-                    <Pencil className="size-3.5 mr-1.5" />
+                    <Icon className="size-3.5 mr-1.5" />
                     {t("settings.mapTemplates.saveTemplate")}
                   </>
                 )}

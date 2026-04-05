@@ -44,7 +44,7 @@ export function ActorNameSelector({
     setOpen(false);
   };
 
-  const handleClear = (e: React.MouseEvent) => {
+  const handleClear = (e: React.SyntheticEvent) => {
     e.preventDefault();
     e.stopPropagation();
     onSearchChange("");
@@ -94,7 +94,7 @@ export function ActorNameSelector({
                 onClick={(e) => e.stopPropagation()}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
-                    handleClear(e as unknown as React.MouseEvent);
+                    handleClear(e);
                   }
                 }}
                 className="flex items-center justify-center"
