@@ -1,6 +1,8 @@
-import { IsBoolean } from "class-validator";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class UpdateBattleDto {
-  @IsBoolean()
-  public: boolean;
-}
+const UpdateBattleSchema = z.object({
+  public: z.boolean(),
+});
+
+export class UpdateBattleDto extends createZodDto(UpdateBattleSchema) {}

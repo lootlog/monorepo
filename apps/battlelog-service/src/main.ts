@@ -6,8 +6,8 @@ import {
   FastifyAdapter,
   type NestFastifyApplication,
 } from "@nestjs/platform-fastify";
-import { ValidationPipe } from "@nestjs/common";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import { cleanupOpenApiDoc } from "nestjs-zod";
 import { WINSTON_MODULE_NEST_PROVIDER } from "nest-winston";
 
 async function bootstrap() {
@@ -24,15 +24,6 @@ async function bootstrap() {
     infer: true,
   });
 
-  app.useGlobalPipes(
-    new ValidationPipe({
-      transform: true,
-      transformOptions: {
-        enableImplicitConversion: false,
-      },
-    }),
-  );
-
   const config = new DocumentBuilder()
     .setTitle("Battle Log API")
     .setDescription("The Battle Log API documentation")
@@ -40,7 +31,7 @@ async function bootstrap() {
     .addBearerAuth()
     .build();
 
-  const document = SwaggerModule.createDocument(app, config);
+  const document = cleanupOpenApiDoc(SwaggerModule.createDocument(app, config));
   SwaggerModule.setup("docs", app, document);
 
   await app.startAllMicroservices();

@@ -2,7 +2,6 @@ import { Injectable, Logger } from "@nestjs/common";
 import { and, count, gt, lt, or, eq, sql, type SQL } from "drizzle-orm";
 import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
 import { battles } from "src/shared/modules/drizzle/schema";
-import { SortOrder } from "../dto/query-battles.dto";
 import type {
   CursorPagination,
   PaginationOptions,
@@ -47,7 +46,7 @@ export class PaginationService {
     const startTime = Date.now();
     const { size = 20, cursor, includeTotal } = options;
 
-    const order = options.sortOrder === SortOrder.ASC ? "asc" : "desc";
+    const order = options.sortOrder === "asc" ? "asc" : "desc";
 
     const results = await this.drizzle.db.query.battles.findMany({
       where: {
@@ -116,7 +115,7 @@ export class PaginationService {
     }
 
     const { createdAt, id } = decoded;
-    const cmp = options.sortOrder === SortOrder.DESC ? lt : gt;
+    const cmp = options.sortOrder === "desc" ? lt : gt;
     const cursorCondition = or(
       cmp(table.createdAt, createdAt),
       and(eq(table.createdAt, createdAt), cmp(table.id, id)),

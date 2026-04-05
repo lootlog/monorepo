@@ -1,16 +1,8 @@
-import "reflect-metadata";
-import { validate } from "class-validator";
-import { CreateBattleFightEventDto } from "../dto/create-battle.dto";
+import { WarriorsRecordSchema } from "../dto/create-battle.dto";
 
-describe("ValidateWarriorsRecord", () => {
-  let dto: CreateBattleFightEventDto;
-
-  beforeEach(() => {
-    dto = new CreateBattleFightEventDto();
-  });
-
-  it("should accept valid warriors record with two teams", async () => {
-    dto.w = {
+describe("WarriorsRecordSchema", () => {
+  it("should accept valid warriors record with two teams", () => {
+    const result = WarriorsRecordSchema.safeParse({
       "1": {
         originalId: 101,
         name: "Warrior1",
@@ -27,14 +19,13 @@ describe("ValidateWarriorsRecord", () => {
         icon: "icon2",
         team: 2,
       },
-    };
+    });
 
-    const errors = await validate(dto);
-    expect(errors).toHaveLength(0);
+    expect(result.success).toBe(true);
   });
 
-  it("should reject warriors record with only one team", async () => {
-    dto.w = {
+  it("should reject warriors record with only one team", () => {
+    const result = WarriorsRecordSchema.safeParse({
       "1": {
         originalId: 101,
         name: "Warrior1",
@@ -51,15 +42,13 @@ describe("ValidateWarriorsRecord", () => {
         icon: "icon2",
         team: 1,
       },
-    };
+    });
 
-    const errors = await validate(dto);
-    expect(errors.length).toBeGreaterThan(0);
-    expect(errors[0].property).toBe("w");
+    expect(result.success).toBe(false);
   });
 
-  it("should reject NPC warriors (negative IDs)", async () => {
-    dto.w = {
+  it("should reject NPC warriors (negative IDs)", () => {
+    const result = WarriorsRecordSchema.safeParse({
       "-1": {
         originalId: -101,
         name: "NPC",
@@ -76,15 +65,13 @@ describe("ValidateWarriorsRecord", () => {
         icon: "icon2",
         team: 2,
       },
-    };
+    });
 
-    const errors = await validate(dto);
-    expect(errors.length).toBeGreaterThan(0);
-    expect(errors[0].property).toBe("w");
+    expect(result.success).toBe(false);
   });
 
-  it("should reject invalid warrior data", async () => {
-    dto.w = {
+  it("should reject invalid warrior data", () => {
+    const result = WarriorsRecordSchema.safeParse({
       "1": {
         originalId: 101,
         name: "Warrior1",
@@ -95,35 +82,25 @@ describe("ValidateWarriorsRecord", () => {
       },
       "2": {
         originalId: 102,
-        name: 123 as any,
+        name: 123,
         lvl: 45,
         prof: "p",
         icon: "icon2",
         team: 2,
       },
-    };
+    });
 
-    const errors = await validate(dto);
-    expect(errors.length).toBeGreaterThan(0);
+    expect(result.success).toBe(false);
   });
 
-  it("should reject non-object values", async () => {
-    dto.w = "not an object" as any;
+  it("should reject non-object values", () => {
+    const result = WarriorsRecordSchema.safeParse("not an object");
 
-    const errors = await validate(dto);
-    expect(errors.length).toBeGreaterThan(0);
-    expect(errors[0].property).toBe("w");
+    expect(result.success).toBe(false);
   });
 
-  it("should accept undefined values (field is optional)", async () => {
-    dto.w = undefined;
-
-    const errors = await validate(dto);
-    expect(errors).toHaveLength(0);
-  });
-
-  it("should accept warriors from different teams", async () => {
-    dto.w = {
+  it("should accept warriors from different teams", () => {
+    const result = WarriorsRecordSchema.safeParse({
       "1": {
         originalId: 101,
         name: "Warrior1",
@@ -148,16 +125,14 @@ describe("ValidateWarriorsRecord", () => {
         icon: "icon3",
         team: 2,
       },
-    };
+    });
 
-    const errors = await validate(dto);
-    expect(errors).toHaveLength(0);
+    expect(result.success).toBe(true);
   });
 
-  it("should reject empty warriors record", async () => {
-    dto.w = {};
+  it("should reject empty warriors record", () => {
+    const result = WarriorsRecordSchema.safeParse({});
 
-    const errors = await validate(dto);
-    expect(errors.length).toBeGreaterThan(0);
+    expect(result.success).toBe(false);
   });
 });
