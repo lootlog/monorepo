@@ -1,5 +1,5 @@
 import { useDialogStore } from "@/store/game-store/dialog.store";
-import type { GameEvent } from "@lootlog/margonem-types/game-events";
+import type { GameEvent } from "@lootlog/margonem/game-events";
 
 export const useDialogHandlers = () => {
   const handleDialogEvents = (event: GameEvent) => {

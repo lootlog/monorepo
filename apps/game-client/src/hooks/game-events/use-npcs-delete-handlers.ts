@@ -7,7 +7,7 @@ import { getNpcTypeByWt } from "@lootlog/types";
 import { Game } from "@/lib/game";
 import { useNotificationsStore } from "@/store/notifications.store";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
-import type { GameEvent } from "@lootlog/margonem-types/game-events";
+import type { GameEvent } from "@lootlog/margonem/game-events";
 import { useQueryClient } from "@tanstack/react-query";
 
 export const useNpcsDeleteHandlers = () => {

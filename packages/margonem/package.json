@@ -1,5 +1,5 @@
 {
-  "name": "@lootlog/margonem-types",
+  "name": "@lootlog/margonem",
   "version": "1.0.0",
   "private": true,
   "main": "dist/index.js",

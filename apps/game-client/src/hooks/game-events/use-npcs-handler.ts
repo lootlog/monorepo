@@ -13,8 +13,8 @@ import {
   useNpcDetectorStore,
 } from "@/store/npc-detector.store";
 import { useWindowsStore } from "@/store/windows.store";
-import type { GameEvent } from "@lootlog/margonem-types/game-events";
-import type { GameNpc } from "@lootlog/margonem-types";
+import type { GameEvent } from "@lootlog/margonem/game-events";
+import type { GameNpc } from "@lootlog/margonem";
 import { getNpcTypeByWt } from "@lootlog/types";
 import { NpcType } from "@/hooks/api/use-npcs";
 import { getNpcIconFromEvent } from "@/utils/game/events/get-npc-icon-from-event";

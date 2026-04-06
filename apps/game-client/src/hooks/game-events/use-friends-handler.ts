@@ -1,5 +1,5 @@
 import { useEffectEvent } from "react";
-import type { GameEvent } from "@lootlog/margonem-types/game-events";
+import type { GameEvent } from "@lootlog/margonem/game-events";
 import { useFriendsStore } from "@/store/friends.store";
 import { parseFriendsListFromEvent } from "@/utils/game/events/parse-friends-list-from-event";
 

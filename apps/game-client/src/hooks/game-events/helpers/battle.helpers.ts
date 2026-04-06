@@ -1,6 +1,6 @@
 import { Game } from "@/lib/game";
 import type { BattleWarriorsWithAccountId } from "@/store/game-store/battle.store";
-import type { W } from "@lootlog/margonem-types/game-events";
+import type { W } from "@lootlog/margonem/game-events";
 
 export const addAccountIdsToWarriors = (
   warriors: W,

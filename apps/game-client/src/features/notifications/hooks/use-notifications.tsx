@@ -3,7 +3,7 @@ import { useSocket } from "@/contexts/socket-context";
 import { useSession } from "@/hooks/auth/use-session";
 import { Game } from "@/lib/game";
 import { useNotificationsStore } from "@/store/notifications.store";
-import type { GameNpc } from "@lootlog/margonem-types";
+import type { GameNpc } from "@lootlog/margonem";
 import { useEffect, useRef } from "react";
 import { getNpcTypeByWt } from "@lootlog/types";
 import { NpcType } from "@/hooks/api/use-npcs";

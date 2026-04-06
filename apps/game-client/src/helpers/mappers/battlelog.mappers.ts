@@ -1,5 +1,5 @@
 import type { BattleEventPayload } from "@/hooks/api/use-create-battle";
-import type { GameEvent, W } from "@lootlog/margonem-types/game-events";
+import type { GameEvent, W } from "@lootlog/margonem/game-events";
 import { isEmpty, pick } from "@/utils/object-utils";
 
 export const mapBattleEventsToPayload = (

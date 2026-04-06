@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { useBattleEventHandler } from "./use-battle-event-handler";
 import { useBattleStore } from "@/store/game-store/battle.store";
 import { NpcType } from "@/hooks/api/use-npcs";
-import type { GameEvent } from "@lootlog/margonem-types/game-events";
+import type { GameEvent } from "@lootlog/margonem/game-events";
 
 const mockCreateBattle = vi.fn();
 const mockCreateKill = vi.fn();
