@@ -20,8 +20,8 @@ const FetchLootsParamsSchema = z.object({
   search: z.string().optional(),
   hid: z.string().optional(),
   itemNames: commaSeparatedArray(z.string()).optional(),
-  createdAtMin: z.string().optional(),
-  createdAtMax: z.string().optional(),
+  createdAtMin: z.string().datetime({ offset: true }).optional(),
+  createdAtMax: z.string().datetime({ offset: true }).optional(),
 });
 
 export class FetchLootsParamsDto extends createZodDto(FetchLootsParamsSchema) {}

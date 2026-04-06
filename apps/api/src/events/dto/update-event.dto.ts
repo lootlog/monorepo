@@ -9,7 +9,7 @@ const UpdateEventSchema = z.object({
   startsAt: z.string().datetime().optional(),
   endsAt: z.string().datetime().optional(),
   heroNpcs: z.array(HeroNpcSchema).optional(),
-  basePointsPerKill: z.number().min(0).optional(),
+  basePointsPerKill: z.number().int().min(0).optional(),
   assignmentTimeoutMinutes: z.number().int().min(0).optional(),
   participationConfirmationMinutes: z.number().int().min(0).optional(),
   mapAssignmentCap: z.number().int().min(0).optional(),

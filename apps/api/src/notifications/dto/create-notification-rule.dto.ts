@@ -21,7 +21,7 @@ const CreateNotificationRuleSchema = z
     scheduleStrategy: z.nativeEnum(NotificationScheduleStrategy).optional(),
     scheduleAnchor: z.nativeEnum(NotificationScheduleAnchor).optional(),
     scheduleOffsetMinutes: z.number().int().min(0).max(1440).optional(),
-    scheduledAt: z.string().optional(),
+    scheduledAt: z.string().datetime({ offset: true }).optional(),
     scheduleIntervalType: z
       .nativeEnum(NotificationScheduleIntervalType)
       .optional(),
@@ -31,7 +31,7 @@ const CreateNotificationRuleSchema = z
       .string()
       .regex(/^\d{2}:\d{2}$/, { message: Error.TIME_MUST_BE_HH_MM_FORMAT })
       .optional(),
-    scheduledUntil: z.string().optional(),
+    scheduledUntil: z.string().datetime({ offset: true }).optional(),
     scheduleTimezone: z.string().max(50).optional(),
     targetIds: z.array(z.number().int()).max(3),
     enabled: z.boolean().optional(),
