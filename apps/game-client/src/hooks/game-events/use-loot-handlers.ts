@@ -6,7 +6,7 @@ import {
   type Npc,
   type PartyMember,
 } from "@/utils/game/get-battle-participants";
-import type { GameEvent } from "@/types/margonem/game-events/game-event";
+import type { GameEvent } from "@lootlog/margonem/game-events";
 import {
   type CreateLootResponse,
   useCreateLoot,
