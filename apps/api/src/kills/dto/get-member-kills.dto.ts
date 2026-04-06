@@ -1,12 +1,11 @@
 import { z } from "zod";
 import { createZodDto } from "nestjs-zod";
-import { levelFilterSchema } from "@lootlog/nest-shared";
+import { commaSeparatedArray, intFromString } from "@lootlog/nest-shared";
 import { NpcType } from "src/generated/prisma/client";
-import { commaSeparatedArray } from "src/shared/zod/query-helpers";
 
 const GetMemberKillsSchema = z.object({
-  minLvl: levelFilterSchema,
-  maxLvl: levelFilterSchema,
+  minLvl: intFromString({ min: 0, max: 500 }).optional(),
+  maxLvl: intFromString({ min: 0, max: 500 }).optional(),
   world: z.string().optional(),
   npcTypes: commaSeparatedArray(z.nativeEnum(NpcType)).optional(),
   search: z.string().optional(),

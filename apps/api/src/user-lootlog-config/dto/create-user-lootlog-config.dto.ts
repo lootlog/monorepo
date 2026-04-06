@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createZodDto } from "nestjs-zod";
-import { nonEmptyString } from "src/shared/zod/query-helpers";
+import { nonEmptyString } from "@lootlog/nest-shared";
 
 const CreateUserLootlogConfigPlayerSchema = z.object({
   id: z.number(),

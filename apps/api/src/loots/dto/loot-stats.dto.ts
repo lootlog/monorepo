@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createZodDto } from "nestjs-zod";
-import { booleanFromString } from "src/shared/zod/query-helpers";
+import { booleanFromString } from "@lootlog/nest-shared";
 import type { ItemRarity, NpcType } from "src/generated/prisma/client";
 
 export type Period =
