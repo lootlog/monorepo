@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { CoverageGapType, type Prisma } from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
+import { clipToWindow } from "../utils/tracking-window.util";
 
 interface MemberStat {
   memberId: number;
@@ -26,20 +27,6 @@ interface GapTimelineEntry {
   startedAt: Date;
   endedAt: Date | null;
   durationSeconds: number;
-}
-
-function clipToWindow(
-  start: Date,
-  end: Date | null,
-  windowOpenedAt: Date,
-  windowClosedAt: Date,
-): { clippedStart: Date; clippedEnd: Date } {
-  return {
-    clippedStart: new Date(Math.max(start.getTime(), windowOpenedAt.getTime())),
-    clippedEnd: new Date(
-      Math.min((end || windowClosedAt).getTime(), windowClosedAt.getTime()),
-    ),
-  };
 }
 
 @Injectable()
@@ -114,12 +101,12 @@ export class EventSummaryService {
     const memberStatsMap = new Map<number, MemberStat>();
 
     for (const log of presenceLogs) {
-      const { clippedStart, clippedEnd } = clipToWindow(
-        log.startedAt,
-        log.endedAt,
-        windowOpenedAt,
-        windowClosedAt,
-      );
+      const { start: clippedStart, end: clippedEnd } = clipToWindow({
+        start: log.startedAt,
+        end: log.endedAt,
+        windowStart: windowOpenedAt,
+        windowEnd: windowClosedAt,
+      });
 
       const durationMs = Math.max(
         0,
@@ -176,12 +163,12 @@ export class EventSummaryService {
     for (const log of presenceLogs) {
       if (log.isAfk) continue;
 
-      const { clippedStart, clippedEnd } = clipToWindow(
-        log.startedAt,
-        log.endedAt,
-        windowOpenedAt,
-        windowClosedAt,
-      );
+      const { start: clippedStart, end: clippedEnd } = clipToWindow({
+        start: log.startedAt,
+        end: log.endedAt,
+        windowStart: windowOpenedAt,
+        windowEnd: windowClosedAt,
+      });
 
       const durationSeconds = Math.max(
         0,
@@ -199,12 +186,12 @@ export class EventSummaryService {
     const gapsTimeline: GapTimelineEntry[] = [];
 
     for (const gap of gaps) {
-      const { clippedStart, clippedEnd } = clipToWindow(
-        gap.startedAt,
-        gap.endedAt,
-        windowOpenedAt,
-        windowClosedAt,
-      );
+      const { start: clippedStart, end: clippedEnd } = clipToWindow({
+        start: gap.startedAt,
+        end: gap.endedAt,
+        windowStart: windowOpenedAt,
+        windowEnd: windowClosedAt,
+      });
 
       const durationSeconds = Math.max(
         0,

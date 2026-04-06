@@ -9,6 +9,7 @@ import type { LootQueryResult } from "src/loots/dto/loot-query-result.dto";
 import { LootsService } from "src/loots/loots.service";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared";
+import { clipToWindowSeconds } from "../utils/tracking-window.util";
 import {
   EVENT_WRAPPED_CACHE_TTL_SECONDS,
   getEventWrappedCacheKey,
@@ -89,17 +90,6 @@ const createEmptyRarityTotals = (): EventWrappedRarityTotalsDto => ({
 
 const roundToTwo = (value: number): number =>
   Math.round((Number.isFinite(value) ? value : 0) * 100) / 100;
-
-const clipIntervalSeconds = (
-  start: Date,
-  end: Date | null,
-  minDate: Date,
-  maxDate: Date,
-): number => {
-  const clippedStart = Math.max(start.getTime(), minDate.getTime());
-  const clippedEnd = Math.min((end ?? maxDate).getTime(), maxDate.getTime());
-  return Math.max(0, Math.round((clippedEnd - clippedStart) / 1000));
-};
 
 const getRarityKey = (
   rarity: ItemRarity | null | undefined,
@@ -532,12 +522,12 @@ export class EventWrappedService {
         avgMapsPerRespawn: 0,
       };
 
-      const durationSeconds = clipIntervalSeconds(
-        assignment.assignedAt,
-        assignment.unassignedAt,
-        options.eventWindowStart,
-        options.eventWindowEnd,
-      );
+      const durationSeconds = clipToWindowSeconds({
+        start: assignment.assignedAt,
+        end: assignment.unassignedAt,
+        windowStart: options.eventWindowStart,
+        windowEnd: options.eventWindowEnd,
+      });
 
       existing.assignmentCount += 1;
       existing.totalAssignedSeconds += durationSeconds;
