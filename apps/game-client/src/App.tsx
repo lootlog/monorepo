@@ -95,10 +95,6 @@ function App() {
             fallback={<div>Error loading app</div>}
             onError={(error, info) => {
               console.error("[ErrorBoundary]", error);
-              console.error(
-                "[ErrorBoundary] Component stack:",
-                info.componentStack,
-              );
             }}
           >
             <AppContent />
