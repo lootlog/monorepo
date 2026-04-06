@@ -27,6 +27,7 @@ import { PartyFinder } from "@/features/party-finder/party-finder";
 import { CreatePartyGathering } from "@/features/party-finder/create-party-gathering";
 import { usePartyFinderSocket } from "@/features/party-finder/hooks/use-party-finder-socket";
 import { usePartyGatheringSocket } from "@/features/party-finder/hooks/use-party-gathering-socket";
+import { bootstrapPublicApi } from "@/features/public-api";
 
 const isDev = import.meta.env.MODE === "development";
 
@@ -51,6 +52,13 @@ persistQueryClient({
   persister: localStoragePersister,
   maxAge: QUERY_CLIENT_CACHE_TIME_MS,
 });
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- HMR teardown guard
+const win = window as any;
+if (win.__lootlogApiTeardown) {
+  win.__lootlogApiTeardown();
+}
+win.__lootlogApiTeardown = bootstrapPublicApi(queryClient);
 
 function AppContent() {
   useGameEventHandlers();
