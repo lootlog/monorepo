@@ -1,7 +1,6 @@
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { mockFn } from "src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
-import { ConfigService } from "@nestjs/config";
 import { DiscordGuildSyncStatus } from "@lootlog/types";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
@@ -9,6 +8,10 @@ import { PrismaService } from "src/db/prisma.service";
 import { RoutingKey } from "src/enum/routing-key.enum";
 import { ChannelsService } from "./channels.service";
 import { DiscordBotClientService } from "src/discord-bot-client/discord-bot-client.service";
+
+vi.mock("src/config/discord-bot.config", () => ({
+  discordBotConfig: { channelSnapshotStaleSeconds: 300 },
+}));
 
 describe("ChannelsService", () => {
   let service: ChannelsService;
@@ -46,12 +49,6 @@ describe("ChannelsService", () => {
 
   const mockAmqpConnection = {
     publish: mockFn(),
-  };
-
-  const mockConfigService = {
-    get: mockFn().mockReturnValue({
-      channelSnapshotStaleSeconds: 300,
-    }),
   };
 
   const mockLogger = {
@@ -121,10 +118,6 @@ describe("ChannelsService", () => {
         {
           provide: AmqpConnection,
           useValue: mockAmqpConnection,
-        },
-        {
-          provide: ConfigService,
-          useValue: mockConfigService,
         },
         {
           provide: WINSTON_MODULE_PROVIDER,

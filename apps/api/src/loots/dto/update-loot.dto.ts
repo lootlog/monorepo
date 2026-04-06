@@ -1,6 +1,8 @@
-import { IsString } from "class-validator";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class UpdateLootDto {
-  @IsString()
-  msg: string;
-}
+const UpdateLootSchema = z.object({
+  msg: z.string(),
+});
+
+export class UpdateLootDto extends createZodDto(UpdateLootSchema) {}

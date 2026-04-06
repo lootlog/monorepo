@@ -1,12 +1,8 @@
-import { IsArray, IsString } from "class-validator";
-import { ApiProperty } from "@nestjs/swagger";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class ReorderLocationsDto {
-  @ApiProperty({
-    description: "Array of location IDs in desired order",
-    example: ["clxxx1", "clxxx2", "clxxx3"],
-  })
-  @IsArray()
-  @IsString({ each: true })
-  locationIds: string[];
-}
+const ReorderLocationsSchema = z.object({
+  locationIds: z.array(z.string()),
+});
+
+export class ReorderLocationsDto extends createZodDto(ReorderLocationsSchema) {}

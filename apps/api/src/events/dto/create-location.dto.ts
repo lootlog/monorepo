@@ -1,10 +1,8 @@
-import { IsString, MinLength, MaxLength } from "class-validator";
-import { ApiProperty } from "@nestjs/swagger";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class CreateLocationDto {
-  @ApiProperty({ description: "Location name", example: "Mrozy" })
-  @IsString()
-  @MinLength(1)
-  @MaxLength(50)
-  name: string;
-}
+const CreateLocationSchema = z.object({
+  name: z.string().min(1).max(50),
+});
+
+export class CreateLocationDto extends createZodDto(CreateLocationSchema) {}

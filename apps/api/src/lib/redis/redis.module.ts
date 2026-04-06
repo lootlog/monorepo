@@ -1,24 +1,14 @@
 import { Module } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import {
-  RedisModule as SharedRedisModule,
-  type RedisConfig,
-} from "@lootlog/nest-shared";
-import { ConfigKey } from "src/config/config-key.enum";
+import { RedisModule as SharedRedisModule } from "@lootlog/nest-shared";
+import { env } from "src/config/env";
 
 @Module({
   imports: [
-    SharedRedisModule.registerAsync({
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
-        const redisConfig = configService.get<RedisConfig>(ConfigKey.REDIS);
-
-        if (!redisConfig) {
-          throw new Error("Missing Redis configuration");
-        }
-
-        return redisConfig;
-      },
+    SharedRedisModule.register({
+      host: env.REDIS_HOST,
+      port: env.REDIS_PORT,
+      password: env.REDIS_PASSWORD,
+      username: env.REDIS_USERNAME,
     }),
   ],
   exports: [SharedRedisModule],

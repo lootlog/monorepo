@@ -1,14 +1,10 @@
-import { IsNotEmpty, IsOptional, IsString } from "class-validator";
-import { ApiProperty } from "@nestjs/swagger";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class UpdateGuildConfigDto {
-  @ApiProperty({
-    description: "Custom vanity URL for the guild",
-    example: "my-awesome-guild",
-    required: false,
-  })
-  @IsNotEmpty()
-  @IsString()
-  @IsOptional()
-  vanityUrl?: string;
-}
+export const UpdateGuildConfigSchema = z.object({
+  vanityUrl: z.string().min(1).optional(),
+});
+
+export class UpdateGuildConfigDto extends createZodDto(
+  UpdateGuildConfigSchema,
+) {}

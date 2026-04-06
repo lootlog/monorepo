@@ -1,8 +1,8 @@
-import { IsNotEmpty, IsString, MaxLength } from "class-validator";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class UpdateMessageDto {
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(128)
-  message: string;
-}
+export const UpdateMessageSchema = z.object({
+  message: z.string().min(1).max(128),
+});
+
+export class UpdateMessageDto extends createZodDto(UpdateMessageSchema) {}

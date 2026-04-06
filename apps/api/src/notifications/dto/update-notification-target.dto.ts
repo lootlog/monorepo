@@ -1,15 +1,11 @@
-import { ApiPropertyOptional } from "@nestjs/swagger";
-import { IsBoolean, IsOptional, IsString, MaxLength } from "class-validator";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class UpdateNotificationTargetDto {
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  @MaxLength(255)
-  displayName?: string | null;
+const UpdateNotificationTargetSchema = z.object({
+  displayName: z.string().max(255).nullable().optional(),
+  active: z.boolean().optional(),
+});
 
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsBoolean()
-  active?: boolean;
-}
+export class UpdateNotificationTargetDto extends createZodDto(
+  UpdateNotificationTargetSchema,
+) {}

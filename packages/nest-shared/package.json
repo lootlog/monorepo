@@ -19,7 +19,8 @@
     "@lootlog/types": "workspace:*",
     "fastify": "^5.8.4",
     "nest-winston": "^1.10.2",
-    "winston": "^3.19.0"
+    "winston": "^3.19.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@nestjs/common": "^11.1.18",

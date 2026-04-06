@@ -1,7 +1,6 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "src/test/mock-fn";
 import { HttpService } from "@nestjs/axios";
-import { ConfigService } from "@nestjs/config";
 import { RedisService } from "@lootlog/nest-shared";
 import { of } from "rxjs";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
@@ -10,6 +9,10 @@ import { PrismaService } from "src/db/prisma.service";
 import { MembersService } from "src/members/members.service";
 import { getUserLootlogConfigCachePattern } from "src/shared/constants/cache.constant";
 import { UsersService } from "./users.service";
+
+vi.mock("src/config/battlelog.config", () => ({
+  battlelogConfig: { serviceUrl: "http://battlelog-service:4000" },
+}));
 
 describe("UsersService", () => {
   let service: UsersService;
@@ -72,11 +75,6 @@ describe("UsersService", () => {
   const mockMembersService = { notifyMembersRemoved: mockFn() };
   const mockRedisService = { deleteByPattern: mockFn() };
   const mockHttpService = { post: mockFn() };
-  const mockConfigService = {
-    get: mockFn<() => { serviceUrl: string }>().mockReturnValue({
-      serviceUrl: "http://battlelog-service:4000",
-    }),
-  };
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -129,10 +127,6 @@ describe("UsersService", () => {
         {
           provide: HttpService,
           useValue: mockHttpService,
-        },
-        {
-          provide: ConfigService,
-          useValue: mockConfigService,
         },
       ],
     }).compile();
