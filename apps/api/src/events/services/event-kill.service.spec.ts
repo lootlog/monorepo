@@ -375,6 +375,53 @@ describe("EventKillService", () => {
       expect(mockPrismaService.eventHeroNpc.findMany).toHaveBeenCalledTimes(2);
     });
 
+    it("should find hero by name even when stored npcId is incorrect", async () => {
+      const mockHeroNpc = {
+        id: "hero-1",
+        npcId: 999,
+        npcName,
+        event: { id: "event-1", guildId, world, active: true },
+      };
+
+      mockPrismaService.eventHeroNpc.findMany
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([mockHeroNpc]);
+
+      const result = await service.findActiveEventHeroByNpc(
+        guildId,
+        world,
+        npcId,
+        npcName,
+      );
+
+      expect(result).not.toBeNull();
+      expect(result?.eventHero.id).toBe("hero-1");
+      expect(result?.eventHero.npcId).toBe(999);
+    });
+
+    it("should deduplicate hero matched by both npcId and npcName", async () => {
+      const mockHeroNpc = {
+        id: "hero-1",
+        npcId,
+        npcName,
+        event: { id: "event-1", guildId, world, active: true },
+      };
+
+      mockPrismaService.eventHeroNpc.findMany
+        .mockResolvedValueOnce([mockHeroNpc])
+        .mockResolvedValueOnce([mockHeroNpc]);
+
+      const result = await service.findActiveEventHeroesByNpc(
+        guildId,
+        world,
+        npcId,
+        npcName,
+      );
+
+      expect(result).toHaveLength(1);
+      expect(result[0]?.eventHero.id).toBe("hero-1");
+    });
+
     it("should return null if hero not found", async () => {
       mockPrismaService.eventHeroNpc.findMany
         .mockResolvedValueOnce([])
@@ -515,6 +562,93 @@ describe("EventKillService", () => {
         where: { id: "hero-1" },
         data: { npcId, npcIcon },
       });
+    });
+
+    it("should update hero npcId if stored npcId is incorrect", async () => {
+      const mockHero = {
+        id: "hero-1",
+        npcId: 999,
+        npcIcon: null,
+        npcName,
+        event: { id: "event-1" },
+      };
+      const updatedHero = { ...mockHero, npcId, npcIcon };
+
+      mockPrismaService.eventHeroNpc.findMany
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([mockHero]);
+      mockRedisService.get
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null);
+      mockPrismaService.eventHeroNpc.update.mockResolvedValue(updatedHero);
+      mockPrismaService.eventMap.findMany.mockResolvedValue([]);
+      const txMock = {
+        eventHeroKill: {
+          create: mockFn().mockResolvedValue({ id: "kill-1" }),
+        },
+        eventKillPoint: {
+          createMany: mockFn().mockResolvedValue({ count: 0 }),
+          findMany: mockFn().mockResolvedValue([]),
+        },
+        eventMap: {
+          update: mockFn().mockResolvedValue({}),
+        },
+        eventMapAssignmentHistory: {
+          findMany: mockFn().mockResolvedValue([]),
+          updateMany: mockFn().mockResolvedValue({ count: 0 }),
+        },
+      };
+      mockPrismaService.$transaction.mockImplementation((callback) =>
+        callback(txMock),
+      );
+      mockQueue.getJobs.mockResolvedValue([]);
+
+      await service.checkAndRecordEventHeroKill(
+        guildId,
+        world,
+        npcId,
+        npcName,
+        npcIcon,
+        timerData,
+      );
+
+      expect(mockPrismaService.eventHeroNpc.update).toHaveBeenCalledWith({
+        where: { id: "hero-1" },
+        data: { npcId, npcIcon },
+      });
+    });
+
+    it("should record a matched hero only once when found by both npcId and npcName", async () => {
+      const mockHero = {
+        id: "hero-1",
+        npcId,
+        npcIcon,
+        npcName,
+        event: { id: "event-1" },
+      };
+
+      mockPrismaService.eventHeroNpc.findMany
+        .mockResolvedValueOnce([mockHero])
+        .mockResolvedValueOnce([mockHero]);
+      mockRedisService.get
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null);
+
+      const recordSpy = vi
+        .spyOn(service, "recordHeroKill")
+        .mockResolvedValue({ id: "kill-1" } as never);
+
+      await service.checkAndRecordEventHeroKill(
+        guildId,
+        world,
+        npcId,
+        npcName,
+        npcIcon,
+        timerData,
+      );
+
+      expect(recordSpy).toHaveBeenCalledTimes(1);
+      recordSpy.mockRestore();
     });
 
     it("should record kill for manual close", async () => {
