@@ -75,10 +75,12 @@ export const HeroManageDialog = ({
   const onSubmit = async (data: FormData) => {
     try {
       if (isEditing && hero) {
+        const updatedNpcId = data.npcId ? Number(data.npcId) : undefined;
         await updateHero.mutateAsync({
           heroId: hero.id,
           data: {
             npcName: data.npcName,
+            ...(updatedNpcId !== undefined && { npcId: updatedNpcId }),
           },
         });
         toast.success(t("events.heroes.updated"));
@@ -133,7 +135,7 @@ export const HeroManageDialog = ({
                 type="number"
                 placeholder={t("events.createDialog.heroIdPlaceholder")}
                 {...register("npcId")}
-                disabled={isEditing}
+                disabled={false}
                 className="h-9 text-sm font-mono"
               />
             </div>
