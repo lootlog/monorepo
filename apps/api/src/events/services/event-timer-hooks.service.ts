@@ -11,7 +11,7 @@ import {
   createEventHeroKillJobData,
   getEventHeroKillWindowKey,
 } from "../utils/event-hero-kill-job";
-import { buildActiveEventWhere } from "../utils/event-activity.util";
+import { findActiveEventHeroesByNpc } from "../utils/find-active-event-heroes-by-npc";
 
 @Injectable()
 export class EventTimerHooksService {
@@ -53,59 +53,14 @@ export class EventTimerHooksService {
     npcId: number,
     npcName: string,
   ): Promise<{ eventHero: EventHeroNpc; event: Event } | null> {
-    const now = new Date();
-
-    const directIdMatches = await this.prisma.eventHeroNpc.findMany({
-      where: {
-        npcId,
-        event: {
-          guildId,
-          world,
-          ...buildActiveEventWhere(now),
-        },
-      },
-      include: {
-        event: true,
-      },
-    });
-
-    const nameMatches = await this.prisma.eventHeroNpc.findMany({
-      where: {
-        npcName,
-        npcId: null,
-        event: {
-          guildId,
-          world,
-          ...buildActiveEventWhere(now),
-        },
-      },
-      include: {
-        event: true,
-      },
-    });
-
-    const uniqueMatches = new Map<
-      string,
-      { eventHero: EventHeroNpc; event: Event }
-    >();
-
-    for (const hero of [...directIdMatches, ...nameMatches]) {
-      uniqueMatches.set(hero.id, { eventHero: hero, event: hero.event });
-    }
-
-    return (
-      Array.from(uniqueMatches.values()).sort((leftHero, rightHero) => {
-        const leftStart =
-          leftHero.event.startsAt?.getTime() ??
-          leftHero.event.createdAt?.getTime?.() ??
-          0;
-        const rightStart =
-          rightHero.event.startsAt?.getTime() ??
-          rightHero.event.createdAt?.getTime?.() ??
-          0;
-
-        return rightStart - leftStart;
-      })[0] ?? null
+    const matches = await findActiveEventHeroesByNpc(
+      this.prisma,
+      guildId,
+      world,
+      npcId,
+      npcName,
     );
+
+    return matches[0] ?? null;
   }
 }

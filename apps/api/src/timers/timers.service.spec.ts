@@ -843,6 +843,26 @@ describe("TimersService", () => {
       expect(mockRedisService.deleteByPattern).not.toHaveBeenCalled();
     });
 
+    it("should block resetting event timers found by name when hero stores wrong npcId", async () => {
+      mockPrismaService.timer.findMany.mockResolvedValue([mockTimer]);
+      mockEventTimerHooksService.findActiveEventHeroByNpc.mockResolvedValue({
+        eventHero: { id: "hero-1", npcId: 999 },
+        event: { id: "event-1" },
+      });
+
+      await expect(
+        service.resetTimer("discord123", "guild1", "123", {
+          world: "test-world",
+        }),
+      ).rejects.toMatchObject({
+        response: { message: ErrorKey.EVENT_TIMER_CANNOT_BE_RESET },
+      });
+
+      expect(mockRedlock.acquire).not.toHaveBeenCalled();
+      expect(mockPrismaService.timer.update).not.toHaveBeenCalled();
+      expect(mockRedisService.deleteByPattern).not.toHaveBeenCalled();
+    });
+
     it("should invalidate cache when timer is deleted", async () => {
       mockRedisService.deleteByPattern.mockResolvedValue(1);
       mockEventTimerHooksService.findActiveEventHeroByNpc.mockResolvedValue(
@@ -862,6 +882,23 @@ describe("TimersService", () => {
       mockPrismaService.timer.findMany.mockResolvedValue([mockTimer]);
       mockEventTimerHooksService.findActiveEventHeroByNpc.mockResolvedValue({
         eventHero: { id: "hero-1", npcId: mockTimer.npcId },
+        event: { id: "event-1" },
+      });
+
+      await expect(
+        service.deleteTimer("guild1", "123", "test-world"),
+      ).rejects.toMatchObject({
+        response: { message: ErrorKey.EVENT_TIMER_MUST_USE_EVENT_CLOSE },
+      });
+
+      expect(mockPrismaService.timer.delete).not.toHaveBeenCalled();
+      expect(mockRedisService.deleteByPattern).not.toHaveBeenCalled();
+    });
+
+    it("should block deleting event timers found by name when hero stores wrong npcId", async () => {
+      mockPrismaService.timer.findMany.mockResolvedValue([mockTimer]);
+      mockEventTimerHooksService.findActiveEventHeroByNpc.mockResolvedValue({
+        eventHero: { id: "hero-1", npcId: 999 },
         event: { id: "event-1" },
       });
 
