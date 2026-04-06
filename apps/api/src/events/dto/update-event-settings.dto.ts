@@ -1,15 +1,10 @@
-import { IsOptional, IsArray, IsString } from "class-validator";
-import { ApiProperty } from "@nestjs/swagger";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class UpdateEventSettingsDto {
-  @ApiProperty({
-    description: "Array of pinned event IDs",
-    example: ["event-1", "event-2"],
-    required: false,
-    type: [String],
-  })
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  pinnedEvents?: string[];
-}
+const UpdateEventSettingsSchema = z.object({
+  pinnedEvents: z.array(z.string()).optional(),
+});
+
+export class UpdateEventSettingsDto extends createZodDto(
+  UpdateEventSettingsSchema,
+) {}

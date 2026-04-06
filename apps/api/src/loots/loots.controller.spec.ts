@@ -226,13 +226,7 @@ describe("LootsController", () => {
         [Permission.LOOTLOG_LOOTS_READ],
         [mockRole],
         mockGuild,
-        params.cursor,
-        params.limit,
-        params.world,
-        params.npcTypes,
-        params.rarities,
-        params.players,
-        params.npcs,
+        params,
       );
 
       expect(service.fetchLootsByGuildId).toHaveBeenCalledWith(
@@ -254,13 +248,7 @@ describe("LootsController", () => {
         [Permission.LOOTLOG_LOOTS_READ],
         [mockRole],
         mockGuild,
-        params.cursor,
-        params.limit,
-        params.world,
-        params.npcTypes,
-        params.rarities,
-        params.players,
-        params.npcs,
+        params,
       );
 
       expect(result).toEqual([]);

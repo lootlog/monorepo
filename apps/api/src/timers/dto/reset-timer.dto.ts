@@ -1,7 +1,8 @@
-import { IsNotEmpty, IsString } from "class-validator";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class ResetTimerDto {
-  @IsNotEmpty()
-  @IsString()
-  world: string;
-}
+const ResetTimerSchema = z.object({
+  world: z.string().min(1),
+});
+
+export class ResetTimerDto extends createZodDto(ResetTimerSchema) {}

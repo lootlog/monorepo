@@ -1,6 +1,6 @@
-import { IsOptional, IsIn, IsString, IsBoolean } from "class-validator";
-import { Transform } from "class-transformer";
-import { ApiProperty } from "@nestjs/swagger";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
+import { booleanFromString } from "src/shared/zod/query-helpers";
 import type { ItemRarity, NpcType } from "src/generated/prisma/client";
 
 export type Period =
@@ -13,42 +13,17 @@ export type Period =
   | "180d"
   | "all";
 
-export class LootStatsQueryDto {
-  @ApiProperty({
-    description: "Time period for statistics",
-    enum: ["24h", "3d", "7d", "14d", "30d", "90d", "180d", "all"],
-    default: "7d",
-    required: false,
-  })
-  @IsOptional()
-  @IsIn(["24h", "3d", "7d", "14d", "30d", "90d", "180d", "all"])
-  period?: Period = "7d";
+const LootStatsQuerySchema = z.object({
+  period: z
+    .enum(["24h", "3d", "7d", "14d", "30d", "90d", "180d", "all"])
+    .default("7d")
+    .optional(),
+  world: z.string().optional(),
+  npcTypes: z.string().optional(),
+  excludeColossus: booleanFromString.optional(),
+});
 
-  @ApiProperty({
-    description: "World name filter",
-    required: false,
-  })
-  @IsOptional()
-  @IsString()
-  world?: string;
-
-  @ApiProperty({
-    description: "NPC types filter (comma-separated)",
-    required: false,
-  })
-  @IsOptional()
-  @IsString()
-  npcTypes?: string;
-
-  @ApiProperty({
-    description: "Exclude COLOSSUS NPCs from statistics",
-    required: false,
-  })
-  @IsOptional()
-  @IsBoolean()
-  @Transform(({ value }) => value === "true" || value === true)
-  excludeColossus?: boolean;
-}
+export class LootStatsQueryDto extends createZodDto(LootStatsQuerySchema) {}
 
 export interface LootStatsOverview {
   totalLoots: number;

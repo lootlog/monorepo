@@ -1,41 +1,15 @@
-import { Type } from "class-transformer";
-import {
-  IsDate,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-  MaxLength,
-  Min,
-} from "class-validator";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class CreateManualTimerDto {
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(50)
-  name: string;
+const CreateManualTimerSchema = z.object({
+  name: z.string().min(1).max(50),
+  minSeconds: z.number().min(1).optional(),
+  maxSeconds: z.number().min(1).optional(),
+  customMinSpawnTime: z.coerce.date().optional(),
+  customMaxSpawnTime: z.coerce.date().optional(),
+  world: z.string().min(1),
+});
 
-  @IsOptional()
-  @IsNumber()
-  @Min(1)
-  minSeconds?: number;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(1)
-  maxSeconds?: number;
-
-  @IsOptional()
-  @IsDate()
-  @Type(() => Date)
-  customMinSpawnTime?: Date;
-
-  @IsOptional()
-  @IsDate()
-  @Type(() => Date)
-  customMaxSpawnTime?: Date;
-
-  @IsNotEmpty()
-  @IsString()
-  world: string;
-}
+export class CreateManualTimerDto extends createZodDto(
+  CreateManualTimerSchema,
+) {}

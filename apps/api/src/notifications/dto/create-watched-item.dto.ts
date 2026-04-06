@@ -1,36 +1,13 @@
-import { ApiProperty } from "@nestjs/swagger";
-import {
-  ArrayMaxSize,
-  ArrayNotEmpty,
-  IsArray,
-  IsInt,
-  IsNotEmpty,
-  IsString,
-  MaxLength,
-} from "class-validator";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class CreateWatchedItemDto {
-  @ApiProperty()
-  @IsInt()
-  itemId: number;
+const CreateWatchedItemSchema = z.object({
+  itemId: z.number().int(),
+  itemName: z.string().min(1).max(255),
+  world: z.string().min(1).max(50),
+  guildIds: z.array(z.string().max(50)).min(1).max(20),
+});
 
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(255)
-  itemName: string;
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(50)
-  world: string;
-
-  @ApiProperty({ type: [String] })
-  @IsArray()
-  @ArrayNotEmpty()
-  @ArrayMaxSize(20)
-  @IsString({ each: true })
-  @MaxLength(50, { each: true })
-  guildIds: string[];
-}
+export class CreateWatchedItemDto extends createZodDto(
+  CreateWatchedItemSchema,
+) {}

@@ -1,24 +1,11 @@
-import {
-  IsNotEmpty,
-  IsString,
-  MaxLength,
-  ValidateNested,
-} from "class-validator";
-import { Type } from "class-transformer";
-import { CharacterDto } from "src/messaging/dto/shared-character.dto";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
+import { CharacterSchema } from "src/messaging/dto/shared-character.dto";
 
-export class CreateVolunteerDto {
-  @IsNotEmpty()
-  @IsString()
-  @MaxLength(50)
-  world: string;
+const CreateVolunteerSchema = z.object({
+  world: z.string().min(1).max(50),
+  targetDiscordId: z.string().min(1).max(20),
+  character: CharacterSchema,
+});
 
-  @IsNotEmpty()
-  @IsString()
-  @MaxLength(20)
-  targetDiscordId: string;
-
-  @ValidateNested()
-  @Type(() => CharacterDto)
-  character: CharacterDto;
-}
+export class CreateVolunteerDto extends createZodDto(CreateVolunteerSchema) {}

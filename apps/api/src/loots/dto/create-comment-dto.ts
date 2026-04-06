@@ -1,7 +1,8 @@
-import { IsString, MinLength } from "class-validator";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class CreateCommentDto {
-  @IsString()
-  @MinLength(1)
-  content: string;
-}
+const CreateCommentSchema = z.object({
+  content: z.string().min(1),
+});
+
+export class CreateCommentDto extends createZodDto(CreateCommentSchema) {}

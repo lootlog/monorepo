@@ -1,26 +1,10 @@
-import {
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-  Max,
-  Min,
-} from "class-validator";
-import { Type } from "class-transformer";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class SearchTimersNpcsDto {
-  @IsString()
-  @IsNotEmpty()
-  search: string;
+const SearchTimersNpcsSchema = z.object({
+  search: z.string().min(1),
+  world: z.string().min(1),
+  limit: z.coerce.number().min(1).max(50).default(10).optional(),
+});
 
-  @IsString()
-  @IsNotEmpty()
-  world: string;
-
-  @IsNumber()
-  @IsOptional()
-  @Type(() => Number)
-  @Min(1)
-  @Max(50)
-  limit?: number = 10;
-}
+export class SearchTimersNpcsDto extends createZodDto(SearchTimersNpcsSchema) {}

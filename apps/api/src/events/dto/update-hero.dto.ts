@@ -1,13 +1,9 @@
-import { IsString, IsOptional, IsNumber } from "class-validator";
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class UpdateHeroDto {
-  @ApiProperty({ description: "NPC name" })
-  @IsString()
-  npcName: string;
+const UpdateHeroSchema = z.object({
+  npcName: z.string(),
+  npcId: z.number().optional(),
+});
 
-  @ApiPropertyOptional({ description: "NPC ID" })
-  @IsOptional()
-  @IsNumber()
-  npcId?: number;
-}
+export class UpdateHeroDto extends createZodDto(UpdateHeroSchema) {}
