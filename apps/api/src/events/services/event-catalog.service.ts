@@ -551,14 +551,16 @@ export class EventCatalogService {
       throw new NotFoundException("Hero not found");
     }
 
-    if (hero.npcId !== null && hero.npcName !== data.npcName) {
-      throw new BadRequestException("EVENT_HERO_NAME_LOCKED");
-    }
+    // @TODO - temporarily disabled hero locking for hotfix
+    // if (hero.npcId !== null && hero.npcName !== data.npcName) {
+    //   throw new BadRequestException("EVENT_HERO_NAME_LOCKED");
+    // }
 
     return this.prisma.eventHeroNpc.update({
       where: { id: heroId },
       data: {
         npcName: data.npcName,
+        ...(data.npcId !== undefined && { npcId: data.npcId }),
       },
     });
   }

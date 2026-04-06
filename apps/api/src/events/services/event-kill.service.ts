@@ -32,8 +32,11 @@ import {
   getTrackingWindowDurationSeconds,
   getTrackingWindowStartTime,
 } from "../utils/tracking-window.util";
-import { buildActiveEventWhere } from "../utils/event-activity.util";
 import { TimersService } from "src/timers/timers.service";
+import {
+  findActiveEventHeroesByNpc as findActiveEventHeroMatchesByNpc,
+  type ActiveEventHeroMatch,
+} from "../utils/find-active-event-heroes-by-npc";
 
 const EVENT_KILL_LOCK_TTL_SECONDS = 30;
 const EVENT_KILL_DEDUP_TTL_SECONDS = 120;
@@ -462,6 +465,14 @@ export class EventKillService {
             return;
           }
 
+          this.logger.warn({
+            message: "Updating hero NPC ID based on timer data",
+            guildId,
+            world,
+            newNpcId: npcId,
+            oldHeroNpcId: eventHero.npcId,
+          });
+
           const updateData = {
             ...((eventHero.npcId === null || eventHero.npcId !== npcId) && {
               npcId,
@@ -534,53 +545,14 @@ export class EventKillService {
     world: string,
     npcId: number,
     npcName: string,
-  ): Promise<Array<{ eventHero: EventHeroNpc; event: Event }>> {
-    const now = new Date();
-
-    const directIdMatches = await this.prisma.eventHeroNpc.findMany({
-      where: {
-        npcId,
-        event: {
-          guildId,
-          world,
-          ...buildActiveEventWhere(now),
-        },
-      },
-      include: {
-        event: true,
-      },
-    });
-
-    const nameMatches = await this.prisma.eventHeroNpc.findMany({
-      where: {
-        npcName,
-        npcId: null,
-        event: {
-          guildId,
-          world,
-          ...buildActiveEventWhere(now),
-        },
-      },
-      include: {
-        event: true,
-      },
-    });
-
-    const uniqueMatches = new Map<
-      string,
-      { eventHero: EventHeroNpc; event: Event }
-    >();
-    for (const hero of [...directIdMatches, ...nameMatches]) {
-      uniqueMatches.set(hero.id, { eventHero: hero, event: hero.event });
-    }
-
-    return Array.from(uniqueMatches.values()).sort((a, b) => {
-      const aStart =
-        a.event.startsAt?.getTime() ?? a.event.createdAt?.getTime?.() ?? 0;
-      const bStart =
-        b.event.startsAt?.getTime() ?? b.event.createdAt?.getTime?.() ?? 0;
-      return bStart - aStart;
-    });
+  ): Promise<ActiveEventHeroMatch[]> {
+    return findActiveEventHeroMatchesByNpc(
+      this.prisma,
+      guildId,
+      world,
+      npcId,
+      npcName,
+    );
   }
 
   async findActiveEventHeroByNpc(
