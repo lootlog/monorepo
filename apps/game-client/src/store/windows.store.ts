@@ -1,4 +1,4 @@
-import type { GameNpc } from "@lootlog/margonem-types";
+import type { GameNpc } from "@lootlog/margonem";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 

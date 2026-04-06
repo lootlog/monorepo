@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { getSocket } from "@/lib/socket";
 import { useGlobalStore } from "@/store/global.store";
 import { GatewayEvent } from "@/config/gateway";
-import type { GameEvent } from "@lootlog/margonem-types/game-events";
+import type { GameEvent } from "@lootlog/margonem/game-events";
 
 export const useMapChangeHandler = () => {
   const previousMapId = useRef<number | null>(null);

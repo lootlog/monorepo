@@ -11,7 +11,7 @@ import {
   useBattleStore,
   type BattleWarriorsWithAccountId,
 } from "@/store/game-store/battle.store";
-import type { GameEvent } from "@lootlog/margonem-types/game-events";
+import type { GameEvent } from "@lootlog/margonem/game-events";
 
 const TRACKABLE_NPC_TYPES = new Set([
   NpcType.ELITE2,

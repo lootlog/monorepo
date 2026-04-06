@@ -4,7 +4,7 @@ import type {
   NpcTpl,
   GameNpc,
   GameOther,
-} from "@lootlog/margonem-types";
+} from "@lootlog/margonem";
 
 export class Game {
   static get interface() {

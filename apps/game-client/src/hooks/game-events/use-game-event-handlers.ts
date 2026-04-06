@@ -1,6 +1,6 @@
 import { useEffect, useEffectEvent, useState } from "react";
 import { useGlobalStore } from "@/store/global.store";
-import type { GameEvent } from "@lootlog/margonem-types/game-events";
+import type { GameEvent } from "@lootlog/margonem/game-events";
 
 import { useLootHandlers } from "./use-loot-handlers";
 import { useBattleEventHandler } from "@/hooks/game-events/use-battle-event-handler";

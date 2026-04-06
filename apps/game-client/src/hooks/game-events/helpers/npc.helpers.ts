@@ -1,7 +1,7 @@
 import type { EventNpc, ProcessedNpcSettings } from "@/hooks/game-events/types";
 import { Game } from "@/lib/game";
 import type { GameNpcWithLocation } from "@/store/npc-detector.store";
-import type { NpcTpl, GameNpc } from "@lootlog/margonem-types";
+import type { NpcTpl, GameNpc } from "@lootlog/margonem";
 
 export const composeNpcFromEvent = (
   npc: EventNpc,

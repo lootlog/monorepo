@@ -1,5 +1,5 @@
 import { useEffectEvent } from "react";
-import type { GameEvent } from "@lootlog/margonem-types/game-events";
+import type { GameEvent } from "@lootlog/margonem/game-events";
 import { type PartyMember, usePartyStore } from "@/store/party.store";
 
 function parsePartyMembersFromEvent(
