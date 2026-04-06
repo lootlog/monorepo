@@ -26,6 +26,7 @@ export { createEnv } from "./config/create-env";
 export {
   nonEmptyString,
   booleanFromString,
+  optionalFromQuery,
   intFromString,
   commaSeparatedArray,
 } from "./validators/query-helpers";

@@ -1,22 +1,26 @@
 import { z } from "zod";
 import { createZodDto } from "nestjs-zod";
-import { commaSeparatedArray, intFromString } from "@lootlog/nest-shared";
+import {
+  commaSeparatedArray,
+  intFromString,
+  optionalFromQuery,
+} from "@lootlog/nest-shared";
 import { MAX_PAGE_LIMIT } from "../config/pagination";
 
 const FetchLootsParamsSchema = z.object({
-  limit: z.coerce.number().int().min(1).max(MAX_PAGE_LIMIT).optional(),
-  cursor: z.coerce.number().int().optional(),
+  limit: optionalFromQuery(z.coerce.number().int().min(1).max(MAX_PAGE_LIMIT)),
+  cursor: optionalFromQuery(z.coerce.number().int()),
   npcs: commaSeparatedArray(z.string()).optional(),
   players: commaSeparatedArray(z.string()).optional(),
   rarities: commaSeparatedArray(z.string()).optional(),
   npcTypes: commaSeparatedArray(z.string()).optional(),
   world: z.string().optional(),
-  npcLevelMin: intFromString({ min: 0, max: 500 }).optional(),
-  npcLevelMax: intFromString({ min: 0, max: 500 }).optional(),
-  itemLevelMin: intFromString({ min: 0, max: 500 }).optional(),
-  itemLevelMax: intFromString({ min: 0, max: 500 }).optional(),
-  playerLevelMin: intFromString({ min: 0, max: 500 }).optional(),
-  playerLevelMax: intFromString({ min: 0, max: 500 }).optional(),
+  npcLevelMin: optionalFromQuery(intFromString({ min: 0, max: 500 })),
+  npcLevelMax: optionalFromQuery(intFromString({ min: 0, max: 500 })),
+  itemLevelMin: optionalFromQuery(intFromString({ min: 0, max: 500 })),
+  itemLevelMax: optionalFromQuery(intFromString({ min: 0, max: 500 })),
+  playerLevelMin: optionalFromQuery(intFromString({ min: 0, max: 500 })),
+  playerLevelMax: optionalFromQuery(intFromString({ min: 0, max: 500 })),
   search: z.string().optional(),
   hid: z.string().optional(),
   itemNames: commaSeparatedArray(z.string()).optional(),
