@@ -107,6 +107,22 @@ export default defineConfig({
             if (id.includes("socket.io")) {
               return "vendor-socket";
             }
+            return "vendor-misc";
+          }
+
+          const sharedDirs = [
+            "/src/utils/",
+            "/src/lib/",
+            "/src/constants/",
+            "/src/config/",
+            "/src/contexts/",
+            "/src/store/",
+          ];
+          if (sharedDirs.some((dir) => id.includes(dir))) {
+            return "app-shared";
+          }
+          if (id.includes("/src/hooks/") && !id.includes("/src/hooks/api/")) {
+            return "app-shared";
           }
         },
       },
