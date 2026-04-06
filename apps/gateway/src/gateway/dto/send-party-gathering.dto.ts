@@ -1,26 +1,39 @@
-export class ClanDto {
-  id?: number;
-  name?: string;
-}
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class PartyGatheringCharacterDto {
-  lvl: number;
-  nick: string;
-  accountId: string;
-  characterId: string;
-  prof: string;
-  icon: string;
-  clan?: ClanDto;
-}
+const ClanSchema = z.object({
+  id: z.number().optional(),
+  name: z.string().optional(),
+});
 
-export class SendPartyGatheringDto {
-  guildId: string;
-  discordId: string;
-  notificationId: string;
-  world: string;
-  createdAt: string;
-  character: PartyGatheringCharacterDto;
-  description?: string;
-  minLvl?: number;
-  maxLvl?: number;
-}
+export class ClanDto extends createZodDto(ClanSchema) {}
+
+const PartyGatheringCharacterSchema = z.object({
+  lvl: z.number(),
+  nick: z.string(),
+  accountId: z.string(),
+  characterId: z.string(),
+  prof: z.string(),
+  icon: z.string(),
+  clan: ClanSchema.optional(),
+});
+
+export class PartyGatheringCharacterDto extends createZodDto(
+  PartyGatheringCharacterSchema,
+) {}
+
+const SendPartyGatheringSchema = z.object({
+  guildId: z.string(),
+  discordId: z.string(),
+  notificationId: z.string(),
+  world: z.string(),
+  createdAt: z.string(),
+  character: PartyGatheringCharacterSchema,
+  description: z.string().optional(),
+  minLvl: z.number().optional(),
+  maxLvl: z.number().optional(),
+});
+
+export class SendPartyGatheringDto extends createZodDto(
+  SendPartyGatheringSchema,
+) {}

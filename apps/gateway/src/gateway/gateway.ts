@@ -1,4 +1,4 @@
-import { UseFilters, UsePipes, ValidationPipe, Logger } from "@nestjs/common";
+import { UseFilters, Logger } from "@nestjs/common";
 import {
   BaseWsExceptionFilter,
   ConnectedSocket,
@@ -101,7 +101,6 @@ export class Gateway {
   }
 
   @UseFilters(new BaseWsExceptionFilter())
-  @UsePipes(new ValidationPipe())
   @SubscribeMessage(GatewayEvent.REQUEST_SERVER_PRESENCE)
   async handlePresenceFetch(
     @ConnectedSocket() client: Socket,
@@ -116,7 +115,6 @@ export class Gateway {
   }
 
   @UseFilters(new BaseWsExceptionFilter())
-  @UsePipes(new ValidationPipe())
   @SubscribeMessage(GatewayEvent.PRESENCE_UPDATE)
   handlePresenceUpdate(
     @WsDiscordId() discordId: string,
@@ -132,7 +130,6 @@ export class Gateway {
   }
 
   @UseFilters(new BaseWsExceptionFilter())
-  @UsePipes(new ValidationPipe())
   @SubscribeMessage(GatewayEvent.PRESENCE_FETCH)
   async handlePlayerPresenceFetch(
     @ConnectedSocket() client: Socket,

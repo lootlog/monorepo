@@ -1,12 +1,11 @@
-import { IsNotEmpty, IsString } from "class-validator";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class InitDto {
-  @IsNotEmpty()
-  @IsString()
-  token: string;
+const InitSchema = z.object({
+  token: z.string().min(1),
+  user: z.object({
+    sub: z.string(),
+  }),
+});
 
-  @IsNotEmpty()
-  user: {
-    sub: string;
-  };
-}
+export class InitDto extends createZodDto(InitSchema) {}
