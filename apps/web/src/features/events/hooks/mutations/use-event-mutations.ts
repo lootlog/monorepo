@@ -31,6 +31,7 @@ interface CreateHeroData {
 
 interface UpdateHeroData {
   npcName: string;
+  npcId?: number;
 }
 
 interface CreateMapData {

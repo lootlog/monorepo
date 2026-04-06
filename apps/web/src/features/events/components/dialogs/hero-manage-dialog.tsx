@@ -44,7 +44,9 @@ export const HeroManageDialog = ({
   const { t } = useTranslation();
   const { addHero, updateHero } = useEventMutations(guildId, eventId);
   const isEditing = !!hero;
-  const isHeroNameLocked = isEditing && hero?.npcId !== null;
+  // @TODO - temprorarily enable hero name editing
+  // const isHeroNameLocked = isEditing && hero?.npcId !== null;
+  const isHeroNameLocked = false;
   const isPending = addHero.isPending || updateHero.isPending;
 
   const { register, handleSubmit, reset } = useForm<FormData>({
@@ -73,10 +75,12 @@ export const HeroManageDialog = ({
   const onSubmit = async (data: FormData) => {
     try {
       if (isEditing && hero) {
+        const updatedNpcId = data.npcId ? Number(data.npcId) : undefined;
         await updateHero.mutateAsync({
           heroId: hero.id,
           data: {
             npcName: data.npcName,
+            ...(updatedNpcId !== undefined && { npcId: updatedNpcId }),
           },
         });
         toast.success(t("events.heroes.updated"));
@@ -131,7 +135,7 @@ export const HeroManageDialog = ({
                 type="number"
                 placeholder={t("events.createDialog.heroIdPlaceholder")}
                 {...register("npcId")}
-                disabled={isEditing}
+                disabled={false}
                 className="h-9 text-sm font-mono"
               />
             </div>
