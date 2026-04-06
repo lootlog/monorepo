@@ -1,3 +1,5 @@
+export const CLOCK_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
 export const EVENT_SCORING_TIMEZONE = "Europe/Warsaw" as const;
 
 export const EVENT_SCORING_MODES = ["SIMPLE", "ADVANCED"] as const;
