@@ -1,46 +1,17 @@
-import {
-  IsOptional,
-  IsString,
-  IsIn,
-  IsInt,
-  Min,
-  IsBoolean,
-} from "class-validator";
-import { Transform } from "class-transformer";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
+import { booleanFromString, intFromString } from "./query-helpers";
 
-export class QueryBattleAnalyticsDto {
-  @IsOptional()
-  @IsString()
-  characterId?: string; // If provided, analytics for specific character only
+const QueryBattleAnalyticsSchema = z.object({
+  characterId: z.string().optional(),
+  world: z.string().optional(),
+  period: z.enum(["24h", "3d", "7d", "14d", "30d", "90d", "180d"]).optional(),
+  minLevel: intFromString({ min: 1 }).optional(),
+  maxLevel: intFromString({ min: 1 }).optional(),
+  ph: booleanFromString.optional(),
+  matchmaking: booleanFromString.optional(),
+});
 
-  @IsOptional()
-  @IsString()
-  world?: string; // Filter by world
-
-  @IsOptional()
-  @IsString()
-  @IsIn(["24h", "3d", "7d", "14d", "30d", "90d", "180d"])
-  period?: "24h" | "3d" | "7d" | "14d" | "30d" | "90d" | "180d"; // Time period filter
-
-  @IsOptional()
-  @Transform(({ value }) => Number.parseInt(value, 10))
-  @IsInt()
-  @Min(1)
-  minLevel?: number;
-
-  @IsOptional()
-  @Transform(({ value }) => Number.parseInt(value, 10))
-  @IsInt()
-  @Min(1)
-  maxLevel?: number;
-
-  @IsOptional()
-  @Transform(({ value }) => value === "true" || value === true)
-  @IsBoolean()
-  ph?: boolean;
-
-  @IsOptional()
-  @Transform(({ value }) => value === "true" || value === true)
-  @IsBoolean()
-  matchmaking?: boolean;
-}
+export class QueryBattleAnalyticsDto extends createZodDto(
+  QueryBattleAnalyticsSchema,
+) {}
