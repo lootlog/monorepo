@@ -6,7 +6,6 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { RateLimitError } from "@discordjs/rest";
 import { DiscordService } from "./discord.service";
@@ -19,10 +18,13 @@ import {
   AuthServiceUnavailableError,
   InvalidScopesError,
 } from "src/auth/errors";
-import { ConfigKey } from "src/config/config-key.enum";
-import { RuntimeEnvironment } from "src/types/runtime.types";
 import type { APIGuild, APIGuildMember } from "discord-api-types/v10";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
+import { RuntimeEnvironment } from "src/types/runtime.types";
+
+vi.mock("src/config/service.config", () => ({
+  serviceConfig: { env: "local" },
+}));
 
 describe("DiscordService", () => {
   let service: DiscordService;
@@ -130,15 +132,6 @@ describe("DiscordService", () => {
       updateRateLimitFromHeaders: mockFn(),
     };
 
-    const mockConfigService = {
-      get: mockFn((key: string) => {
-        if (key === ConfigKey.SERVICE) {
-          return { env: RuntimeEnvironment.LOCAL };
-        }
-        return null;
-      }),
-    };
-
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DiscordService,
@@ -146,7 +139,6 @@ describe("DiscordService", () => {
         { provide: AuthService, useValue: mockAuthService },
         { provide: RedisService, useValue: mockRedisService },
         { provide: DiscordRateLimiterService, useValue: mockRateLimiter },
-        { provide: ConfigService, useValue: mockConfigService },
         {
           provide: RedlockService,
           useValue: { createInstance: mockFn().mockReturnValue(mockRedlock) },

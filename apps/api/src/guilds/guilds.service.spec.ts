@@ -4,7 +4,6 @@ import { GuildsService } from "./guilds.service";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { PrismaService } from "src/db/prisma.service";
 import { ChannelsService } from "src/channels/channels.service";
-import { ConfigService } from "@nestjs/config";
 import { MembersService } from "src/members/members.service";
 import { RolesService } from "src/roles/roles.service";
 import { DiscordService } from "src/discord/discord.service";
@@ -12,6 +11,10 @@ import { RedisService } from "@lootlog/nest-shared";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { DiscordGuildSyncStatus } from "@lootlog/types";
 import { type Guild, Permission } from "src/generated/prisma/client";
+
+vi.mock("src/config/discord-bot.config", () => ({
+  discordBotConfig: { channelSnapshotStaleSeconds: 300 },
+}));
 
 describe("GuildsService", () => {
   let service: GuildsService;
@@ -99,12 +102,6 @@ describe("GuildsService", () => {
     publish: mockFn(),
   };
 
-  const mockConfigService = {
-    get: mockFn().mockReturnValue({
-      channelSnapshotStaleSeconds: 300,
-    }),
-  };
-
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -116,10 +113,6 @@ describe("GuildsService", () => {
         {
           provide: PrismaService,
           useValue: mockPrismaService,
-        },
-        {
-          provide: ConfigService,
-          useValue: mockConfigService,
         },
         {
           provide: MembersService,

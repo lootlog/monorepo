@@ -6,7 +6,6 @@ import {
   HttpException,
   HttpStatus,
 } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
 import type { APIGuild } from "discord-api-types/v10";
 import { DiscordGuildSyncStatus } from "@lootlog/types";
 
@@ -14,8 +13,7 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { ChannelsService } from "src/channels/channels.service";
-import type { DiscordBotConfig } from "src/config/discord-bot.config";
-import { ConfigKey } from "src/config/config-key.enum";
+import { discordBotConfig } from "src/config/discord-bot.config";
 import {
   type Guild,
   ItemRarity,
@@ -62,14 +60,10 @@ export class GuildsService {
     private readonly channelsService: ChannelsService,
     private readonly rolesService: RolesService,
     private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
     private readonly discordService: DiscordService,
     private readonly redisService: RedisService,
     private readonly amqpConnection: AmqpConnection,
   ) {
-    const discordBotConfig = this.configService.get<DiscordBotConfig>(
-      ConfigKey.DISCORD_BOT,
-    );
     this.staleAfterMs = discordBotConfig.channelSnapshotStaleSeconds;
   }
 

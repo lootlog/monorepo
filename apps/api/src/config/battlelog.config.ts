@@ -1,13 +1,9 @@
-import { registerAs } from "@nestjs/config";
+import { env } from "src/config/env";
 
 export interface BattlelogConfig {
   serviceUrl: string;
 }
 
-export default registerAs("battlelog", (): BattlelogConfig => {
-  const { BATTLELOG_SERVICE_URL } = process.env;
-
-  return {
-    serviceUrl: BATTLELOG_SERVICE_URL || "http://battlelog-service:4000",
-  };
-});
+export const battlelogConfig: BattlelogConfig = {
+  serviceUrl: env.BATTLELOG_SERVICE_URL,
+};

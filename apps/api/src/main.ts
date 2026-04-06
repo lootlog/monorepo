@@ -1,7 +1,6 @@
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
-import { ConfigService } from "@nestjs/config";
-import type { ServiceConfig } from "src/config/service.config";
+import { env } from "src/config/env";
 import {
   FastifyAdapter,
   type NestFastifyApplication,
@@ -18,11 +17,6 @@ async function bootstrap() {
   );
 
   app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
-  const configService = app.get<ConfigService>(ConfigService);
-
-  const { port } = configService.get<ServiceConfig>("service", {
-    infer: true,
-  });
 
   // Swagger configuration
   const config = new DocumentBuilder()
@@ -36,6 +30,6 @@ async function bootstrap() {
   SwaggerModule.setup("api/docs", app, document);
 
   await app.startAllMicroservices();
-  await app.listen(port, "0.0.0.0");
+  await app.listen(env.PORT, "0.0.0.0");
 }
 bootstrap();

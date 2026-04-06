@@ -1,11 +1,11 @@
 import { Module, type MiddlewareConsumer } from "@nestjs/common";
 import { APP_PIPE } from "@nestjs/core";
-import { ConfigModule, ConfigService } from "@nestjs/config";
 import { ZodValidationPipe } from "nestjs-zod";
-import { WinstonModule, type WinstonModuleOptions } from "nest-winston";
+import { WinstonModule } from "nest-winston";
 import { BullModule } from "@nestjs/bullmq";
-import { LoggerMiddleware, type RedisConfig } from "@lootlog/nest-shared";
-import { APP_CONFIG } from "src/config/app.config";
+import { LoggerMiddleware } from "@lootlog/nest-shared";
+import { env } from "src/config/env";
+import { winstonConfig } from "src/config/winston.config";
 import { UsersModule } from "./users/users.module";
 import { TimersModule } from "./timers/timers.module";
 import { TimerSettingsModule } from "./timer-settings/timer-settings.module";
@@ -18,7 +18,6 @@ import { PlayersModule } from "./players/players.module";
 import { NpcsModule } from "./npcs/npcs.module";
 import { LootlogConfigModule } from "./lootlog-config/lootlog-config.module";
 import { UserLootlogConfigModule } from "./user-lootlog-config/user-lootlog-config.module";
-import { ConfigKey } from "src/config/config-key.enum";
 import { ChatModule } from "src/chat/chat.module";
 import { RedisModule } from "src/lib/redis/redis.module";
 import { ChannelsModule } from "src/channels/channels.module";
@@ -36,29 +35,17 @@ import { MemberContextModule } from "src/shared/permissions/member-context.modul
 
 @Module({
   imports: [
-    WinstonModule.forRootAsync({
-      useFactory: (configService: ConfigService) => {
-        return configService.get<WinstonModuleOptions>(ConfigKey.WINSTON);
+    WinstonModule.forRoot(winstonConfig),
+    BullModule.forRoot({
+      connection: {
+        host: env.REDIS_HOST,
+        port: env.REDIS_PORT,
+        password: env.REDIS_PASSWORD,
+        username: env.REDIS_USERNAME,
+        maxRetriesPerRequest: null,
+        enableReadyCheck: false,
       },
-      inject: [ConfigService],
-    }),
-    ConfigModule.forRoot(APP_CONFIG),
-    BullModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
-        const redisConfig = configService.get<RedisConfig>(ConfigKey.REDIS);
-        return {
-          connection: {
-            host: redisConfig.host,
-            port: redisConfig.port,
-            password: redisConfig.password,
-            username: redisConfig.username,
-            maxRetriesPerRequest: null,
-            enableReadyCheck: false,
-          },
-          prefix: "{bull}",
-        };
-      },
+      prefix: "{bull}",
     }),
     UsersModule,
     TimersModule,
@@ -97,6 +84,6 @@ import { MemberContextModule } from "src/shared/permissions/member-context.modul
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(LoggerMiddleware).exclude("/healthz").forRoutes("*"); // Apply the middleware to all routes
+    consumer.apply(LoggerMiddleware).exclude("/healthz").forRoutes("*");
   }
 }

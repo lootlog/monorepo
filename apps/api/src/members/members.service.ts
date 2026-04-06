@@ -7,7 +7,6 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
@@ -24,8 +23,7 @@ import { ErrorKey as GuildErrorKey } from "src/guilds/enum/error-key.enum";
 import type { Member, Prisma, Role } from "src/generated/prisma/client";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { RoutingKey } from "src/enum/routing-key.enum";
-import { ConfigKey } from "src/config/config-key.enum";
-import type { ServiceConfig } from "src/config/service.config";
+import { serviceConfig } from "src/config/service.config";
 import { RuntimeEnvironment } from "src/types/runtime.types";
 import { DiscordService } from "src/discord/discord.service";
 import { RedisService } from "@lootlog/nest-shared";
@@ -81,13 +79,9 @@ export class MembersService {
     private readonly rateLimiter: DiscordRateLimiterService,
     private readonly memberRefreshScheduler: MemberRefreshSchedulerService,
     private readonly amqpConnection: AmqpConnection,
-    private readonly configService: ConfigService,
     private readonly redisService: RedisService,
   ) {
-    const serviceConfig = this.configService.get<ServiceConfig>(
-      ConfigKey.SERVICE,
-    );
-    this.env = serviceConfig?.env || RuntimeEnvironment.LOCAL;
+    this.env = serviceConfig.env;
   }
 
   async getGuildMemberById(options: {

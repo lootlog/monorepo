@@ -1,26 +1,18 @@
 import { HttpService } from "@nestjs/axios";
 import { Injectable } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
 import type {
   DiscordGuildChannelSnapshot,
   DiscordGuildSyncState,
 } from "@lootlog/types";
 import { firstValueFrom } from "rxjs";
-import { ConfigKey } from "src/config/config-key.enum";
-import type { DiscordBotConfig } from "src/config/discord-bot.config";
+import { discordBotConfig } from "src/config/discord-bot.config";
 
 @Injectable()
 export class DiscordBotClientService {
   private readonly serviceUrl: string;
 
-  constructor(
-    private readonly httpService: HttpService,
-    private readonly configService: ConfigService,
-  ) {
-    const discordBotConfig = this.configService.get<DiscordBotConfig>(
-      ConfigKey.DISCORD_BOT,
-    );
-    this.serviceUrl = discordBotConfig?.serviceUrl || "http://discord-bot:4000";
+  constructor(private readonly httpService: HttpService) {
+    this.serviceUrl = discordBotConfig.serviceUrl;
   }
 
   async getGuildChannels(guildId: string): Promise<{
