@@ -1,4 +1,4 @@
-FROM node:25.8.2-alpine3.22 AS base
+FROM node:25.9.0-alpine3.22 AS base
 
 RUN apk add --no-cache dumb-init
 
