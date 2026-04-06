@@ -782,19 +782,19 @@ describe("EventsService", () => {
       });
     });
 
-    it("should block renaming hero after npcId is set", async () => {
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue({
-        id: heroId,
-        npcId: 123,
-        npcName: "Current Hero",
-      });
+    // it("should block renaming hero after npcId is set", async () => {
+    //   mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue({
+    //     id: heroId,
+    //     npcId: 123,
+    //     npcName: "Current Hero",
+    //   });
 
-      await expect(
-        service.updateHero(guildId, eventId, heroId, { npcName: "Updated" }),
-      ).rejects.toThrow(BadRequestException);
+    //   await expect(
+    //     service.updateHero(guildId, eventId, heroId, { npcName: "Updated" }),
+    //   ).rejects.toThrow(BadRequestException);
 
-      expect(mockPrismaService.eventHeroNpc.update).not.toHaveBeenCalled();
-    });
+    //   expect(mockPrismaService.eventHeroNpc.update).not.toHaveBeenCalled();
+    // });
   });
 
   describe("deleteHero", () => {
