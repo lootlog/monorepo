@@ -10,6 +10,7 @@ import {
 } from "class-validator";
 import { NpcType } from "src/generated/prisma/client";
 import { swaggerStringEnumArray } from "src/shared/swagger/prisma-enum";
+import { parseCommaSeparated } from "src/shared/transforms/parse-comma-separated";
 
 export class GetMemberKillsDto {
   @ApiPropertyOptional({ example: 100, description: "Minimum NPC level" })
@@ -39,14 +40,7 @@ export class GetMemberKillsDto {
     description: "Comma-separated NPC types to filter",
   })
   @IsOptional()
-  @Transform(({ value }) => {
-    if (!value) return undefined;
-    if (Array.isArray(value)) return value;
-    return value
-      .split(",")
-      .map((v: string) => v.trim())
-      .filter((v: string) => v.length > 0);
-  })
+  @Transform(parseCommaSeparated)
   @IsEnum(NpcType, { each: true })
   npcTypes?: NpcType[];
 

@@ -6,6 +6,7 @@ import {
   swaggerStringEnum,
   swaggerStringEnumArray,
 } from "src/shared/swagger/prisma-enum";
+import { parseCommaSeparated } from "src/shared/transforms/parse-comma-separated";
 
 export class GetGuildKillStatsDto {
   @ApiPropertyOptional({
@@ -14,14 +15,7 @@ export class GetGuildKillStatsDto {
     description: "Comma-separated NPC types to filter by",
   })
   @IsOptional()
-  @Transform(({ value }) => {
-    if (!value) return undefined;
-    if (Array.isArray(value)) return value;
-    return value
-      .split(",")
-      .map((v: string) => v.trim())
-      .filter((v: string) => v.length > 0);
-  })
+  @Transform(parseCommaSeparated)
   @IsEnum(NpcType, { each: true })
   npcTypes?: NpcType[];
 
@@ -55,14 +49,7 @@ export class GetUserKillStatsDto {
     description: "Comma-separated NPC types to filter by",
   })
   @IsOptional()
-  @Transform(({ value }) => {
-    if (!value) return undefined;
-    if (Array.isArray(value)) return value;
-    return value
-      .split(",")
-      .map((v: string) => v.trim())
-      .filter((v: string) => v.length > 0);
-  })
+  @Transform(parseCommaSeparated)
   @IsEnum(NpcType, { each: true })
   npcTypes?: NpcType[];
 
