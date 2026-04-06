@@ -462,6 +462,16 @@ export class EventKillService {
             return;
           }
 
+          if (eventHero.npcId !== npcId || eventHero.npcId === null) {
+            this.logger.debug({
+              message: "Updating hero NPC ID based on timer data",
+              guildId,
+              world,
+              newNpcId: npcId,
+              oldHeroNpcId: eventHero.npcId,
+            });
+          }
+
           const updateData = {
             ...((eventHero.npcId === null || eventHero.npcId !== npcId) && {
               npcId,
