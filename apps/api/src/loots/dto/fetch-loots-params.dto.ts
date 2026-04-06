@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { createZodDto } from "nestjs-zod";
+import { levelFilterSchema } from "@lootlog/nest-shared";
 import { MAX_PAGE_LIMIT } from "../config/pagination";
 import { commaSeparatedArray } from "src/shared/zod/query-helpers";
 
@@ -11,12 +12,12 @@ const FetchLootsParamsSchema = z.object({
   rarities: commaSeparatedArray(z.string()).optional(),
   npcTypes: commaSeparatedArray(z.string()).optional(),
   world: z.string().optional(),
-  npcLevelMin: z.coerce.number().int().min(0).max(500).optional(),
-  npcLevelMax: z.coerce.number().int().min(0).max(500).optional(),
-  itemLevelMin: z.coerce.number().int().min(0).max(500).optional(),
-  itemLevelMax: z.coerce.number().int().min(0).max(500).optional(),
-  playerLevelMin: z.coerce.number().int().min(0).max(500).optional(),
-  playerLevelMax: z.coerce.number().int().min(0).max(500).optional(),
+  npcLevelMin: levelFilterSchema,
+  npcLevelMax: levelFilterSchema,
+  itemLevelMin: levelFilterSchema,
+  itemLevelMax: levelFilterSchema,
+  playerLevelMin: levelFilterSchema,
+  playerLevelMax: levelFilterSchema,
   search: z.string().optional(),
   hid: z.string().optional(),
   itemNames: commaSeparatedArray(z.string()).optional(),
