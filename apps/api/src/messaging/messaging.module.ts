@@ -1,12 +1,8 @@
 import { Module } from "@nestjs/common";
 import { MembersModule } from "src/members/members.module";
 import { GuildsModule } from "src/guilds/guilds.module";
-import {
-  RabbitMQModule,
-  type RabbitMQConfig,
-} from "@golevelup/nestjs-rabbitmq";
-import { ConfigService } from "@nestjs/config";
-import { ConfigKey } from "src/config/config-key.enum";
+import { RabbitMQModule } from "@golevelup/nestjs-rabbitmq";
+import { rabbitmqConfig } from "src/config/rabbitmq.config";
 import { RedisModule } from "src/lib/redis/redis.module";
 import { MessagingController } from "src/messaging/messaging.controller";
 import { MessagingService } from "src/messaging/messaging.service";
@@ -16,11 +12,7 @@ import { MessagingService } from "src/messaging/messaging.service";
     MembersModule,
     GuildsModule,
     RedisModule,
-    RabbitMQModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) =>
-        configService.get<RabbitMQConfig>(ConfigKey.RABBITMQ),
-    }),
+    RabbitMQModule.forRoot(rabbitmqConfig),
   ],
   controllers: [MessagingController],
   providers: [MessagingService],

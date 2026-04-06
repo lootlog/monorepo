@@ -1,10 +1,8 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Cron, CronExpression } from "@nestjs/schedule";
 import { PrismaService } from "src/db/prisma.service";
-import { ConfigService } from "@nestjs/config";
+import { env } from "src/config/env";
 import { TIMER_TYPES } from "src/timers/constants/timer-limits";
-
-const DEFAULT_RETENTION_DAYS = 7;
 
 @Injectable()
 export class TimersCleanupService {
@@ -12,17 +10,9 @@ export class TimersCleanupService {
   private readonly retentionDays: number;
   private readonly enabled: boolean;
 
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
-  ) {
-    this.enabled =
-      this.configService.get<string>("TIMER_CLEANUP_ENABLED") !== "false";
-    this.retentionDays = Number.parseInt(
-      this.configService.get<string>("TIMER_RETENTION_DAYS") ??
-        String(DEFAULT_RETENTION_DAYS),
-      10,
-    );
+  constructor(private readonly prisma: PrismaService) {
+    this.enabled = env.TIMER_CLEANUP_ENABLED !== "false";
+    this.retentionDays = env.TIMER_RETENTION_DAYS;
   }
 
   /**

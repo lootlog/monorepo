@@ -1,6 +1,5 @@
 import { HttpService } from "@nestjs/axios";
 import { Inject, Injectable } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { firstValueFrom } from "rxjs";
@@ -11,8 +10,7 @@ import {
   AccountNotFoundError,
   AuthBadRequestError,
 } from "src/auth/errors";
-import { ConfigKey } from "src/config/config-key.enum";
-import type { AuthConfig } from "src/config/auth.config";
+import { authConfig } from "src/config/auth.config";
 import { RedisService } from "@lootlog/nest-shared";
 import {
   getAuthTokenCacheKey,
@@ -28,10 +26,8 @@ export class AuthService {
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     private readonly httpService: HttpService,
-    private readonly configService: ConfigService,
     private readonly redisService: RedisService,
   ) {
-    const authConfig = this.configService.get<AuthConfig>(ConfigKey.AUTH);
     this.authServiceUrl = authConfig.serviceUrl;
   }
 

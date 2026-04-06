@@ -2,9 +2,12 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "src/test/mock-fn";
 import { AuthService } from "./auth.service";
 import { HttpService } from "@nestjs/axios";
-import { ConfigService } from "@nestjs/config";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { RedisService } from "@lootlog/nest-shared";
+
+vi.mock("src/config/auth.config", () => ({
+  authConfig: { serviceUrl: "http://localhost:3001" },
+}));
 
 describe("AuthService", () => {
   let service: AuthService;
@@ -17,12 +20,6 @@ describe("AuthService", () => {
 
   const mockHttpService = {
     post: mockFn(),
-  };
-
-  const mockConfigService = {
-    get: mockFn().mockReturnValue({
-      serviceUrl: "http://localhost:3001",
-    }),
   };
 
   const mockRedisService = {
@@ -42,10 +39,6 @@ describe("AuthService", () => {
         {
           provide: HttpService,
           useValue: mockHttpService,
-        },
-        {
-          provide: ConfigService,
-          useValue: mockConfigService,
         },
         {
           provide: RedisService,

@@ -6,12 +6,8 @@ import { MemberBulkRefreshProcessor } from "./member-bulk-refresh.processor";
 import { MemberRefreshProcessor } from "./member-refresh.processor";
 import { MembersController } from "./members.controller";
 import { RetryService } from "src/rabbitmq/retry.service";
-import {
-  RabbitMQModule,
-  type RabbitMQConfig,
-} from "@golevelup/nestjs-rabbitmq";
-import { ConfigService } from "@nestjs/config";
-import { ConfigKey } from "src/config/config-key.enum";
+import { RabbitMQModule } from "@golevelup/nestjs-rabbitmq";
+import { rabbitmqConfig } from "src/config/rabbitmq.config";
 import { DiscordModule } from "src/discord/discord.module";
 import { PrismaModule } from "src/db/prisma.module";
 import { RedisModule } from "src/lib/redis/redis.module";
@@ -23,11 +19,7 @@ import { MemberRefreshSchedulerService } from "./member-refresh-scheduler.servic
 
 @Module({
   imports: [
-    RabbitMQModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) =>
-        configService.get<RabbitMQConfig>(ConfigKey.RABBITMQ),
-    }),
+    RabbitMQModule.forRoot(rabbitmqConfig),
     BullModule.registerQueue(
       { name: MEMBER_REFRESH_QUEUE },
       { name: MEMBER_BULK_REFRESH_QUEUE },

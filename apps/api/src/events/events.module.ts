@@ -1,10 +1,6 @@
 import { Module } from "@nestjs/common";
 import { BullModule } from "@nestjs/bullmq";
-import { ConfigService } from "@nestjs/config";
-import {
-  RabbitMQModule,
-  type RabbitMQConfig,
-} from "@golevelup/nestjs-rabbitmq";
+import { RabbitMQModule } from "@golevelup/nestjs-rabbitmq";
 import { EventsService } from "./events.service";
 import { EventsAssignmentController } from "./events-assignment.controller";
 import { EventsCatalogController } from "./events-catalog.controller";
@@ -18,7 +14,7 @@ import { EventHeroKillProcessor } from "./event-hero-kill.processor";
 import { MembersModule } from "src/members/members.module";
 import { MemberContextModule } from "src/shared/permissions/member-context.module";
 import { LootsModule } from "src/loots/loots.module";
-import { ConfigKey } from "src/config/config-key.enum";
+import { rabbitmqConfig } from "src/config/rabbitmq.config";
 import { PrismaModule } from "src/db/prisma.module";
 import { RedisModule } from "src/lib/redis/redis.module";
 import { RedlockModule } from "src/lib/redlock/redlock.module";
@@ -42,11 +38,7 @@ import { TimersModule } from "src/timers/timers.module";
     MembersModule,
     MemberContextModule,
     LootsModule,
-    RabbitMQModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) =>
-        configService.get<RabbitMQConfig>(ConfigKey.RABBITMQ),
-    }),
+    RabbitMQModule.forRoot(rabbitmqConfig),
     BullModule.registerQueue(
       { name: RESPAWN_WINDOW_QUEUE },
       { name: EVENT_HERO_KILL_QUEUE },
