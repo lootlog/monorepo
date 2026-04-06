@@ -20,11 +20,11 @@ import {
 import { DiscordId, UserId } from "@lootlog/nest-shared";
 import { plainToInstance } from "class-transformer";
 import { type Guild, Permission, type Role } from "src/generated/prisma/client";
-import type { CreateCommentDto } from "src/loots/dto/create-comment-dto";
-import type { CreateLootDto } from "src/loots/dto/create-loot.dto";
-import type { UpdateLootDto } from "src/loots/dto/update-loot.dto";
-import type { FetchLootsParamsDto } from "src/loots/dto/fetch-loots-params.dto";
-import type { LootStatsQueryDto } from "src/loots/dto/loot-stats.dto";
+import { CreateCommentDto } from "src/loots/dto/create-comment-dto";
+import { CreateLootDto } from "src/loots/dto/create-loot.dto";
+import { UpdateLootDto } from "src/loots/dto/update-loot.dto";
+import { FetchLootsParamsDto } from "src/loots/dto/fetch-loots-params.dto";
+import { LootStatsQueryDto } from "src/loots/dto/loot-stats.dto";
 import { LootsService } from "src/loots/loots.service";
 import { LootStatsService } from "src/loots/services/loot-stats.service";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";

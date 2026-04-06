@@ -3,9 +3,9 @@ import { createZodDto } from "nestjs-zod";
 
 const CreateReservationSchema = z.object({
   reservationId: z.string().min(1),
-  createdDate: z.string().datetime().pipe(z.coerce.date()),
-  fromDate: z.string().datetime().pipe(z.coerce.date()),
-  toDate: z.string().datetime().pipe(z.coerce.date()),
+  createdDate: z.string().datetime(),
+  fromDate: z.string().datetime(),
+  toDate: z.string().datetime(),
   createdBy: z.string().min(1),
   comment: z.string().max(128).optional(),
 });

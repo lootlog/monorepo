@@ -21,11 +21,11 @@ const CreateTimerFromGameClientSchema = z.object({
   respawnRandomness: z.number().optional(),
   customMinSpawnTime: z.preprocess(
     (val) => (val === null ? undefined : val),
-    z.coerce.date().optional(),
+    z.string().datetime().optional(),
   ),
   customMaxSpawnTime: z.preprocess(
     (val) => (val === null ? undefined : val),
-    z.coerce.date().optional(),
+    z.string().datetime().optional(),
   ),
   world: z.string().min(1),
   npc: NpcSchema,

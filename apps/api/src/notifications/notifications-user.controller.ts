@@ -11,12 +11,12 @@ import {
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { DiscordId, UserId } from "@lootlog/nest-shared";
-import type { CreateNotificationRuleDto } from "src/notifications/dto/create-notification-rule.dto";
-import type { CreateNotificationTargetDto } from "src/notifications/dto/create-notification-target.dto";
-import type { CreateWatchedItemQuickAddDto } from "src/notifications/dto/create-watched-item-quick-add.dto";
-import type { CreateWatchedItemDto } from "src/notifications/dto/create-watched-item.dto";
-import type { UpdateNotificationRuleDto } from "src/notifications/dto/update-notification-rule.dto";
-import type { UpdateNotificationTargetDto } from "src/notifications/dto/update-notification-target.dto";
+import { CreateNotificationRuleDto } from "src/notifications/dto/create-notification-rule.dto";
+import { CreateNotificationTargetDto } from "src/notifications/dto/create-notification-target.dto";
+import { CreateWatchedItemQuickAddDto } from "src/notifications/dto/create-watched-item-quick-add.dto";
+import { CreateWatchedItemDto } from "src/notifications/dto/create-watched-item.dto";
+import { UpdateNotificationRuleDto } from "src/notifications/dto/update-notification-rule.dto";
+import { UpdateNotificationTargetDto } from "src/notifications/dto/update-notification-target.dto";
 import { NotificationJobService } from "src/notifications/notification-job.service";
 import { NotificationRuleService } from "src/notifications/notification-rule.service";
 import { NotificationTargetService } from "src/notifications/notification-target.service";
