@@ -1,96 +1,44 @@
-import {
-  IsOptional,
-  IsString,
-  IsIn,
-  IsBoolean,
-  IsInt,
-  Min,
-} from "class-validator";
-import { Transform } from "class-transformer";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
+import { booleanFromString, intFromString } from "./query-helpers";
 
-export class QueryBattleStatisticsDto {
-  @IsOptional()
-  @IsString()
-  characterId?: string;
+export const QueryBattleStatisticsSchema = z.object({
+  characterId: z.string().optional(),
+  world: z.string().optional(),
+  period: z
+    .enum(["24h", "3d", "7d", "14d", "30d", "90d", "180d", "all"])
+    .optional(),
+  minLevel: intFromString({ min: 1 }).optional(),
+  maxLevel: intFromString({ min: 1 }).optional(),
+  cursor: z.string().optional(),
+  size: intFromString({ min: 1 }).default(20),
+  sortBy: z
+    .enum([
+      "wins",
+      "losses",
+      "totalBattles",
+      "winRate",
+      "lastBattleDate",
+      "totalRatingDelta",
+      "avgRatingDelta",
+    ])
+    .default("totalBattles"),
+  sortOrder: z.enum(["asc", "desc"]).default("desc"),
+  includeTotal: booleanFromString.default(false),
+  search: z.string().optional(),
+  minBattles: intFromString({ min: 1 }).optional(),
+  ph: booleanFromString.optional(),
+  matchmaking: booleanFromString.optional(),
+});
 
-  @IsOptional()
-  @IsString()
-  world?: string;
+export class QueryBattleStatisticsDto extends createZodDto(
+  QueryBattleStatisticsSchema,
+) {}
 
-  @IsOptional()
-  @IsString()
-  @IsIn(["24h", "3d", "7d", "14d", "30d", "90d", "180d", "all"])
-  period?: "24h" | "3d" | "7d" | "14d" | "30d" | "90d" | "180d" | "all";
+const QueryPlayerVsPlayerSchema = QueryBattleStatisticsSchema.extend({
+  opponentId: z.string(),
+});
 
-  @IsOptional()
-  @Transform(({ value }) => Number.parseInt(value, 10))
-  @IsInt()
-  @Min(1)
-  minLevel?: number;
-
-  @IsOptional()
-  @Transform(({ value }) => Number.parseInt(value, 10))
-  @IsInt()
-  @Min(1)
-  maxLevel?: number;
-
-  @IsOptional()
-  @IsString()
-  cursor?: string;
-
-  @IsOptional()
-  @Transform(({ value }) => Number.parseInt(value, 10))
-  @IsInt()
-  @Min(1)
-  size?: number = 20;
-
-  @IsOptional()
-  @IsString()
-  @IsIn([
-    "wins",
-    "losses",
-    "totalBattles",
-    "winRate",
-    "lastBattleDate",
-    "totalRatingDelta",
-    "avgRatingDelta",
-  ])
-  sortBy?:
-    | "wins"
-    | "losses"
-    | "totalBattles"
-    | "winRate"
-    | "lastBattleDate"
-    | "totalRatingDelta"
-    | "avgRatingDelta" = "totalBattles";
-
-  @IsOptional()
-  @IsString()
-  @IsIn(["asc", "desc"])
-  sortOrder?: "asc" | "desc" = "desc";
-
-  @IsOptional()
-  @Transform(({ value }) => value === "true" || value === true)
-  @IsBoolean()
-  includeTotal?: boolean = false;
-
-  @IsOptional()
-  @IsString()
-  search?: string;
-
-  @IsOptional()
-  @Transform(({ value }) => Number.parseInt(value, 10))
-  @IsInt()
-  @Min(1)
-  minBattles?: number;
-
-  @IsOptional()
-  @Transform(({ value }) => value === "true" || value === true)
-  @IsBoolean()
-  ph?: boolean;
-
-  @IsOptional()
-  @Transform(({ value }) => value === "true" || value === true)
-  @IsBoolean()
-  matchmaking?: boolean;
-}
+export class QueryPlayerVsPlayerDto extends createZodDto(
+  QueryPlayerVsPlayerSchema,
+) {}

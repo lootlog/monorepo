@@ -1,5 +1,7 @@
 import { Module, type MiddlewareConsumer } from "@nestjs/common";
+import { APP_PIPE } from "@nestjs/core";
 import { LoggerMiddleware, type RedisConfig } from "@lootlog/nest-shared";
+import { ZodValidationPipe } from "nestjs-zod";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { WinstonModule, type WinstonModuleOptions } from "nest-winston";
 import { BullModule } from "@nestjs/bullmq";
@@ -44,7 +46,12 @@ import { BattlesModule } from "./battles/battles.module";
     BattlesModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [
+    {
+      provide: APP_PIPE,
+      useClass: ZodValidationPipe,
+    },
+  ],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
