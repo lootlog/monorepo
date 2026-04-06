@@ -1,4 +1,4 @@
-import { GameEvent } from "@/types/margonem/game-events/game-event";
+import type { GameEvent } from "@lootlog/margonem-types/game-events";
 
 export const getNpcIconFromEvent = (
   event: GameEvent,

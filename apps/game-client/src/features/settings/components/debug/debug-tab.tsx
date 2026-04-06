@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { gameEventsManager } from "@/lib/game-events-manager";
 import { usePartyStore } from "@/store/party.store";
-import type { GameEvent } from "@/types/margonem/game-events/game-event";
+import type { GameEvent } from "@lootlog/margonem-types/game-events";
 import { useState, type FC } from "react";
 
 const createBaseEvent = (): Pick<GameEvent, "d" | "e" | "ev"> => ({
