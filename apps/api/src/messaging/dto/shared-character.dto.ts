@@ -1,56 +1,21 @@
-import {
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-  MaxLength,
-  ValidateNested,
-} from "class-validator";
-import { Type } from "class-transformer";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class ClanDto {
-  @IsOptional()
-  @IsNumber()
-  id?: number;
+const ClanSchema = z.object({
+  id: z.number().optional(),
+  name: z.string().max(255).optional(),
+});
 
-  @IsOptional()
-  @IsString()
-  @MaxLength(255)
-  name?: string;
-}
+export const CharacterSchema = z.object({
+  lvl: z.number(),
+  nick: z.string().max(255).min(1),
+  accountId: z.string().max(255).min(1),
+  characterId: z.string().max(255).min(1),
+  prof: z.string().max(100).min(1),
+  icon: z.string().max(2048).min(1),
+  clan: ClanSchema.optional(),
+});
 
-export class CharacterDto {
-  @IsNotEmpty()
-  @IsNumber()
-  lvl: number;
+export class ClanDto extends createZodDto(ClanSchema) {}
 
-  @IsNotEmpty()
-  @IsString()
-  @MaxLength(255)
-  nick: string;
-
-  @IsNotEmpty()
-  @IsString()
-  @MaxLength(255)
-  accountId: string;
-
-  @IsNotEmpty()
-  @IsString()
-  @MaxLength(255)
-  characterId: string;
-
-  @IsNotEmpty()
-  @IsString()
-  @MaxLength(100)
-  prof: string;
-
-  @IsNotEmpty()
-  @IsString()
-  @MaxLength(2048)
-  icon: string;
-
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => ClanDto)
-  clan?: ClanDto;
-}
+export class CharacterDto extends createZodDto(CharacterSchema) {}

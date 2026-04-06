@@ -1,11 +1,11 @@
-import { IsOptional, IsString } from "class-validator";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class FetchGuildPlayersDto {
-  @IsOptional()
-  @IsString()
-  limit?: string;
+const FetchGuildPlayersSchema = z.object({
+  limit: z.string().optional(),
+  search: z.string().optional(),
+});
 
-  @IsOptional()
-  @IsString()
-  search?: string;
-}
+export class FetchGuildPlayersDto extends createZodDto(
+  FetchGuildPlayersSchema,
+) {}

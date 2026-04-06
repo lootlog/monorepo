@@ -1,8 +1,13 @@
-export class CreateRoleDto {
-  guildId: string;
-  id: string;
-  name: string;
-  color: number;
-  position: number;
-  admin: boolean;
-}
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
+
+const CreateRoleSchema = z.object({
+  guildId: z.string(),
+  id: z.string(),
+  name: z.string(),
+  color: z.number(),
+  position: z.number(),
+  admin: z.boolean(),
+});
+
+export class CreateRoleDto extends createZodDto(CreateRoleSchema) {}

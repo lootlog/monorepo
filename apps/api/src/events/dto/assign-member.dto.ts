@@ -1,8 +1,8 @@
-import { IsInt } from "class-validator";
-import { ApiProperty } from "@nestjs/swagger";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class AssignMemberDto {
-  @ApiProperty({ description: "Member ID to assign to the map" })
-  @IsInt()
-  memberId: number;
-}
+const AssignMemberSchema = z.object({
+  memberId: z.number().int(),
+});
+
+export class AssignMemberDto extends createZodDto(AssignMemberSchema) {}

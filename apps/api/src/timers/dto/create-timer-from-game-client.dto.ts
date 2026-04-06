@@ -1,49 +1,32 @@
-import { Type } from "class-transformer";
-import {
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-  IsDate,
-  Min,
-  ValidateNested,
-} from "class-validator";
-import { NpcDto } from "src/loots/dto/create-loot.dto";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 import { TIMER_LIMITS } from "src/timers/constants/timer-limits";
 
-export class CreateTimerFromGameClientDto {
-  @IsNumber()
-  @Min(TIMER_LIMITS.MIN_RESP_BASE_SECONDS)
-  respBaseSeconds: number;
+const NpcSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  location: z.string(),
+  lvl: z.number(),
+  prof: z.string().optional(),
+  wt: z.number(),
+  hpp: z.number().optional(),
+  icon: z.string(),
+  type: z.number(),
+  x: z.number().optional(),
+  y: z.number().optional(),
+});
 
-  @IsOptional()
-  @IsNumber()
-  respawnRandomness?: number;
+const CreateTimerFromGameClientSchema = z.object({
+  respBaseSeconds: z.number().min(TIMER_LIMITS.MIN_RESP_BASE_SECONDS),
+  respawnRandomness: z.number().optional(),
+  customMinSpawnTime: z.coerce.date().optional(),
+  customMaxSpawnTime: z.coerce.date().optional(),
+  world: z.string().min(1),
+  npc: NpcSchema,
+  characterId: z.string().min(1),
+  accountId: z.string().min(1),
+});
 
-  @IsOptional()
-  @IsDate()
-  @Type(() => Date)
-  customMinSpawnTime?: Date;
-
-  @IsOptional()
-  @IsDate()
-  @Type(() => Date)
-  customMaxSpawnTime?: Date;
-
-  @IsNotEmpty()
-  @IsString()
-  world: string;
-
-  @IsNotEmpty()
-  @ValidateNested()
-  @Type(() => NpcDto)
-  npc: NpcDto;
-
-  @IsNotEmpty()
-  @IsString()
-  characterId: string;
-
-  @IsNotEmpty()
-  @IsString()
-  accountId: string;
-}
+export class CreateTimerFromGameClientDto extends createZodDto(
+  CreateTimerFromGameClientSchema,
+) {}

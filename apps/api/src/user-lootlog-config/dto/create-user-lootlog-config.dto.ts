@@ -1,54 +1,23 @@
-import { Type } from "class-transformer";
-import {
-  IsBoolean,
-  IsNotEmpty,
-  IsNumber,
-  IsString,
-  ValidateNested,
-} from "class-validator";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class CreateUserLootlogConfigDto {
-  @IsNotEmpty()
-  @IsString()
-  guildId: string;
+const CreateUserLootlogConfigPlayerSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  prof: z.string(),
+  icon: z.string(),
+  lvl: z.number(),
+  canAddLoot: z.boolean(),
+  canAddTimer: z.boolean(),
+});
 
-  @IsNotEmpty()
-  @IsString()
-  world: string;
+const CreateUserLootlogConfigSchema = z.object({
+  guildId: z.string(),
+  world: z.string(),
+  accountId: z.number(),
+  players: z.array(CreateUserLootlogConfigPlayerSchema),
+});
 
-  @IsNotEmpty()
-  @IsNumber()
-  accountId: number;
-
-  @IsNotEmpty()
-  @ValidateNested({ each: true })
-  @Type(() => CreateUserLootlogConfigPlayerDto)
-  players: CreateUserLootlogConfigPlayerDto[];
-}
-
-export class CreateUserLootlogConfigPlayerDto {
-  @IsNotEmpty()
-  @IsNumber()
-  id: number;
-
-  @IsNotEmpty()
-  name: string;
-
-  @IsNotEmpty()
-  prof: string;
-
-  @IsNotEmpty()
-  icon: string;
-
-  @IsNotEmpty()
-  @IsNumber()
-  lvl: number;
-
-  @IsNotEmpty()
-  @IsBoolean()
-  canAddLoot: boolean;
-
-  @IsNotEmpty()
-  @IsBoolean()
-  canAddTimer: boolean;
-}
+export class CreateUserLootlogConfigDto extends createZodDto(
+  CreateUserLootlogConfigSchema,
+) {}

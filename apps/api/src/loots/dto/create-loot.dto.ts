@@ -1,172 +1,58 @@
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 import { LootSource } from "src/generated/prisma/client";
-import { Type } from "class-transformer";
-import {
-  ArrayMaxSize,
-  ArrayMinSize,
-  IsArray,
-  IsEnum,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-  ValidateIf,
-  ValidateNested,
-} from "class-validator";
 
-export class LootDto {
-  @IsNotEmpty()
-  @IsString()
-  hid: string;
+const LootSchema = z.object({
+  hid: z.string().min(1),
+  name: z.string().min(1),
+  icon: z.string().min(1),
+  pr: z.number(),
+  prc: z.string().min(1),
+  stat: z.string().min(1),
+  id: z.number(),
+  cl: z.number(),
+  own: z.number().optional(),
+});
 
-  @IsNotEmpty()
-  @IsString()
-  name: string;
+export class LootDto extends createZodDto(LootSchema) {}
 
-  @IsNotEmpty()
-  @IsString()
-  icon: string;
+const PlayerSchema = z.object({
+  id: z.number(),
+  accountId: z.number(),
+  name: z.string().min(1),
+  lvl: z.number(),
+  prof: z.string().min(1),
+  icon: z.string().min(1),
+  hpp: z.number().optional(),
+});
 
-  @IsNotEmpty()
-  @IsNumber()
-  pr: number;
+export class PlayerDto extends createZodDto(PlayerSchema) {}
 
-  @IsNotEmpty()
-  @IsString()
-  prc: string;
+const NpcSchema = z.object({
+  id: z.number(),
+  name: z.string().min(1),
+  location: z.string().min(1),
+  lvl: z.number(),
+  prof: z.string().optional(),
+  wt: z.number(),
+  hpp: z.number().optional(),
+  icon: z.string().min(1),
+  type: z.number(),
+  x: z.number().optional(),
+  y: z.number().optional(),
+});
 
-  @IsNotEmpty()
-  @IsString()
-  stat: string;
+export class NpcDto extends createZodDto(NpcSchema) {}
 
-  @IsNotEmpty()
-  @IsNumber()
-  id: number;
+const CreateLootSchema = z.object({
+  loots: z.array(LootSchema).min(1).max(10),
+  npcs: z.array(NpcSchema).min(1),
+  players: z.array(PlayerSchema).min(1),
+  world: z.string().min(1),
+  source: z.nativeEnum(LootSource),
+  location: z.string().min(1),
+  accountId: z.string().min(1),
+  characterId: z.string().min(1),
+});
 
-  @IsNotEmpty()
-  @IsNumber()
-  cl: number;
-
-  @IsOptional()
-  @IsNumber()
-  own?: number;
-}
-
-export class PlayerDto {
-  @IsNotEmpty()
-  @IsNumber()
-  id: number;
-
-  @IsNotEmpty()
-  @IsNumber()
-  accountId: number;
-
-  @IsNotEmpty()
-  @IsString()
-  name: string;
-
-  @IsNotEmpty()
-  @IsNumber()
-  lvl: number;
-
-  @IsNotEmpty()
-  @IsString()
-  prof: string;
-
-  @IsNotEmpty()
-  @IsString()
-  icon: string;
-
-  @IsOptional()
-  @IsNumber()
-  hpp?: number;
-}
-
-export class NpcDto {
-  @IsNotEmpty()
-  @IsNumber()
-  id: number;
-
-  @IsNotEmpty()
-  @IsString()
-  name: string;
-
-  @IsNotEmpty()
-  @IsString()
-  location: string;
-
-  @IsNotEmpty()
-  @IsNumber()
-  lvl: number;
-
-  @ValidateIf((o) => {
-    // npc type
-    return !(o.type === 5 || o.type === 0);
-  })
-  @IsNotEmpty()
-  @IsString()
-  prof: string;
-
-  @IsNotEmpty()
-  @IsNumber()
-  wt: number;
-
-  @IsOptional()
-  @IsNumber()
-  hpp?: number;
-
-  @IsNotEmpty()
-  @IsString()
-  icon: string;
-
-  @IsNotEmpty()
-  @IsNumber()
-  type: number;
-
-  @IsOptional()
-  @IsNumber()
-  x: number;
-
-  @IsOptional()
-  @IsNumber()
-  y: number;
-}
-export class CreateLootDto {
-  @IsArray()
-  @ValidateNested({ each: true })
-  @ArrayMinSize(1)
-  @ArrayMaxSize(10)
-  @Type(() => LootDto)
-  loots: LootDto[];
-
-  @IsArray()
-  @ValidateNested({ each: true })
-  @ArrayMinSize(1)
-  @Type(() => NpcDto)
-  npcs: NpcDto[];
-
-  @IsArray()
-  @ValidateNested({ each: true })
-  @ArrayMinSize(1)
-  @Type(() => PlayerDto)
-  players: PlayerDto[];
-
-  @IsNotEmpty()
-  @IsString()
-  world: string;
-
-  @IsNotEmpty()
-  @IsEnum(LootSource)
-  source: LootSource;
-
-  @IsNotEmpty()
-  @IsString()
-  location: string;
-
-  @IsNotEmpty()
-  @IsString()
-  accountId: string;
-
-  @IsNotEmpty()
-  @IsString()
-  characterId: string;
-}
+export class CreateLootDto extends createZodDto(CreateLootSchema) {}

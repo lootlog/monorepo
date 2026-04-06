@@ -1,15 +1,16 @@
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 import { ItemRarity, NpcType } from "src/generated/prisma/client";
-import { IsArray, IsEnum } from "class-validator";
 
-export class UpdateLootlogConfigDto {
-  @IsArray({ each: true })
-  npcs: UpdateLootlogConfigNpcsDto[];
-}
+const UpdateLootlogConfigNpcsSchema = z.object({
+  npcType: z.nativeEnum(NpcType),
+  allowedRarities: z.array(z.nativeEnum(ItemRarity)),
+});
 
-export class UpdateLootlogConfigNpcsDto {
-  @IsEnum(NpcType)
-  npcType: NpcType;
+const UpdateLootlogConfigSchema = z.object({
+  npcs: z.array(UpdateLootlogConfigNpcsSchema),
+});
 
-  @IsEnum(ItemRarity, { each: true })
-  allowedRarities: ItemRarity[];
-}
+export class UpdateLootlogConfigDto extends createZodDto(
+  UpdateLootlogConfigSchema,
+) {}

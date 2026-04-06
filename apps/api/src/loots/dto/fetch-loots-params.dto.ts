@@ -1,112 +1,27 @@
-import {
-  IsOptional,
-  IsInt,
-  Min,
-  Max,
-  IsArray,
-  IsString,
-  IsDateString,
-} from "class-validator";
-import { Type } from "class-transformer";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 import { MAX_PAGE_LIMIT } from "../config/pagination";
+import { commaSeparatedArray } from "src/shared/zod/query-helpers";
 
-export class FetchLootsParamsDto {
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(MAX_PAGE_LIMIT)
-  limit: number;
+const FetchLootsParamsSchema = z.object({
+  limit: z.coerce.number().int().min(1).max(MAX_PAGE_LIMIT).optional(),
+  cursor: z.coerce.number().int().optional(),
+  npcs: commaSeparatedArray(z.string()).optional(),
+  players: commaSeparatedArray(z.string()).optional(),
+  rarities: commaSeparatedArray(z.string()).optional(),
+  npcTypes: commaSeparatedArray(z.string()).optional(),
+  world: z.string().optional(),
+  npcLevelMin: z.coerce.number().int().min(0).max(500).optional(),
+  npcLevelMax: z.coerce.number().int().min(0).max(500).optional(),
+  itemLevelMin: z.coerce.number().int().min(0).max(500).optional(),
+  itemLevelMax: z.coerce.number().int().min(0).max(500).optional(),
+  playerLevelMin: z.coerce.number().int().min(0).max(500).optional(),
+  playerLevelMax: z.coerce.number().int().min(0).max(500).optional(),
+  search: z.string().optional(),
+  hid: z.string().optional(),
+  itemNames: commaSeparatedArray(z.string()).optional(),
+  createdAtMin: z.string().optional(),
+  createdAtMax: z.string().optional(),
+});
 
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  cursor: number;
-
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  npcs: string[];
-
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  players: string[];
-
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  rarities: string[];
-
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  npcTypes: string[];
-
-  @IsOptional()
-  @IsString()
-  world: string;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(0)
-  @Max(500)
-  npcLevelMin?: number;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(0)
-  @Max(500)
-  npcLevelMax?: number;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(0)
-  @Max(500)
-  itemLevelMin?: number;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(0)
-  @Max(500)
-  itemLevelMax?: number;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(0)
-  @Max(500)
-  playerLevelMin?: number;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(0)
-  @Max(500)
-  playerLevelMax?: number;
-
-  @IsOptional()
-  @IsString()
-  search?: string;
-
-  @IsOptional()
-  @IsString()
-  hid?: string;
-
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  itemNames?: string[];
-
-  @IsOptional()
-  @IsDateString()
-  createdAtMin?: string;
-
-  @IsOptional()
-  @IsDateString()
-  createdAtMax?: string;
-}
+export class FetchLootsParamsDto extends createZodDto(FetchLootsParamsSchema) {}

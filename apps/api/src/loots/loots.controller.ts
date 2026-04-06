@@ -16,7 +16,6 @@ import {
   ApiOperation,
   ApiResponse,
   ApiParam,
-  ApiQuery,
 } from "@nestjs/swagger";
 import { DiscordId, UserId } from "@lootlog/nest-shared";
 import { plainToInstance } from "class-transformer";
@@ -24,6 +23,8 @@ import { type Guild, Permission, type Role } from "src/generated/prisma/client";
 import type { CreateCommentDto } from "src/loots/dto/create-comment-dto";
 import type { CreateLootDto } from "src/loots/dto/create-loot.dto";
 import type { UpdateLootDto } from "src/loots/dto/update-loot.dto";
+import type { FetchLootsParamsDto } from "src/loots/dto/fetch-loots-params.dto";
+import type { LootStatsQueryDto } from "src/loots/dto/loot-stats.dto";
 import { LootsService } from "src/loots/loots.service";
 import { LootStatsService } from "src/loots/services/loot-stats.service";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
@@ -32,10 +33,8 @@ import { MemberRoles } from "src/shared/decorators/member-roles.decorator";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
-import { ArrayValidationPipe } from "src/shared/pipes/array-validation.pipe";
 import { LootEntity } from "src/shared/entities/loot.entity";
 import { LootCommentEntity } from "src/shared/entities/loot-comment.entity";
-import type { Period } from "src/loots/dto/loot-stats.dto";
 
 @ApiTags("loots")
 @ApiBearerAuth()
@@ -55,98 +54,6 @@ export class LootsController {
     description: "Retrieve paginated loots for a guild with optional filters",
   })
   @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
-  @ApiQuery({
-    name: "cursor",
-    description: "Pagination cursor",
-    required: false,
-  })
-  @ApiQuery({
-    name: "limit",
-    description: "Number of results per page",
-    required: false,
-  })
-  @ApiQuery({
-    name: "world",
-    description: "World name filter",
-    required: false,
-  })
-  @ApiQuery({
-    name: "npcTypes",
-    description: "NPC types filter (comma-separated)",
-    required: false,
-  })
-  @ApiQuery({
-    name: "rarities",
-    description: "Item rarities filter (comma-separated)",
-    required: false,
-  })
-  @ApiQuery({
-    name: "players",
-    description: "Player names filter (comma-separated)",
-    required: false,
-  })
-  @ApiQuery({
-    name: "npcs",
-    description: "NPC names filter (comma-separated)",
-    required: false,
-  })
-  @ApiQuery({
-    name: "npcLevelMin",
-    description: "Minimum NPC level filter",
-    required: false,
-  })
-  @ApiQuery({
-    name: "npcLevelMax",
-    description: "Maximum NPC level filter",
-    required: false,
-  })
-  @ApiQuery({
-    name: "itemLevelMin",
-    description: "Minimum item level filter",
-    required: false,
-  })
-  @ApiQuery({
-    name: "itemLevelMax",
-    description: "Maximum item level filter",
-    required: false,
-  })
-  @ApiQuery({
-    name: "playerLevelMin",
-    description: "Minimum player level filter",
-    required: false,
-  })
-  @ApiQuery({
-    name: "playerLevelMax",
-    description: "Maximum player level filter",
-    required: false,
-  })
-  @ApiQuery({
-    name: "search",
-    description: "Search term for loots, items, NPCs or players",
-    required: false,
-  })
-  @ApiQuery({
-    name: "hid",
-    required: false,
-    type: String,
-    description: "house id or similar",
-  })
-  @ApiQuery({
-    name: "itemNames",
-    required: false,
-    type: [String],
-    description: "filter by item names",
-  })
-  @ApiQuery({
-    name: "createdAtMin",
-    description: "Minimum creation date filter (ISO 8601)",
-    required: false,
-  })
-  @ApiQuery({
-    name: "createdAtMax",
-    description: "Maximum creation date filter (ISO 8601)",
-    required: false,
-  })
   @ApiResponse({
     status: 200,
     description: "Paginated list of loots",
@@ -160,60 +67,13 @@ export class LootsController {
     @MemberPermissions() permissions: Permission[],
     @MemberRoles() roles: Role[],
     @GuildData() guild: Guild,
-    @Query("cursor") cursor: number,
-    @Query("limit", new ParseIntPipe({ optional: true })) limit: number,
-    @Query("world") world: string,
-    @Query("npcTypes", new ArrayValidationPipe())
-    npcTypes: string[],
-    @Query("rarities", new ArrayValidationPipe())
-    rarities: string[],
-    @Query("players", new ArrayValidationPipe())
-    players: string[],
-    @Query("npcs", new ArrayValidationPipe())
-    npcs: string[],
-    @Query("npcLevelMin", new ParseIntPipe({ optional: true }))
-    npcLevelMin?: number,
-    @Query("npcLevelMax", new ParseIntPipe({ optional: true }))
-    npcLevelMax?: number,
-    @Query("itemLevelMin", new ParseIntPipe({ optional: true }))
-    itemLevelMin?: number,
-    @Query("itemLevelMax", new ParseIntPipe({ optional: true }))
-    itemLevelMax?: number,
-    @Query("playerLevelMin", new ParseIntPipe({ optional: true }))
-    playerLevelMin?: number,
-    @Query("playerLevelMax", new ParseIntPipe({ optional: true }))
-    playerLevelMax?: number,
-    @Query("search") search?: string,
-    @Query("hid") hid?: string,
-    @Query("itemNames", new ArrayValidationPipe())
-    itemNames?: string[],
-    @Query("createdAtMin") createdAtMin?: string,
-    @Query("createdAtMax") createdAtMax?: string,
+    @Query() query: FetchLootsParamsDto,
   ) {
     const loots = await this.lootsService.fetchLootsByGuildId(
       guild,
       permissions,
       roles,
-      {
-        cursor,
-        limit,
-        npcTypes,
-        rarities,
-        players,
-        npcs,
-        world,
-        npcLevelMin,
-        npcLevelMax,
-        itemLevelMin,
-        itemLevelMax,
-        playerLevelMin,
-        playerLevelMax,
-        search,
-        hid,
-        itemNames,
-        createdAtMin,
-        createdAtMax,
-      },
+      query,
     );
     return plainToInstance(LootEntity, loots, {
       excludeExtraneousValues: true,
@@ -229,27 +89,6 @@ export class LootsController {
       "Retrieve aggregated loot statistics for a guild with optional time period and filters",
   })
   @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
-  @ApiQuery({
-    name: "period",
-    description: "Time period for statistics",
-    required: false,
-    enum: ["24h", "3d", "7d", "14d", "30d", "90d", "180d", "all"],
-  })
-  @ApiQuery({
-    name: "world",
-    description: "World name filter",
-    required: false,
-  })
-  @ApiQuery({
-    name: "npcTypes",
-    description: "NPC types filter (comma-separated)",
-    required: false,
-  })
-  @ApiQuery({
-    name: "excludeColossus",
-    description: "Exclude COLOSSUS NPCs from statistics",
-    required: false,
-  })
   @ApiResponse({
     status: 200,
     description:
@@ -259,19 +98,13 @@ export class LootsController {
     status: 403,
     description: "Forbidden - insufficient permissions",
   })
-  getLootStats(
-    @GuildData() guild: Guild,
-    @Query("period") period?: Period,
-    @Query("world") world?: string,
-    @Query("npcTypes", new ArrayValidationPipe()) npcTypes?: string[],
-    @Query("excludeColossus") excludeColossus?: string,
-  ) {
+  getLootStats(@GuildData() guild: Guild, @Query() query: LootStatsQueryDto) {
     return this.lootStatsService.getLootStats(
       guild.id,
-      period ?? "7d",
-      world,
-      npcTypes,
-      excludeColossus === "true",
+      query.period ?? "7d",
+      query.world,
+      query.npcTypes ? query.npcTypes.split(",") : undefined,
+      query.excludeColossus ?? false,
     );
   }
 
@@ -284,88 +117,6 @@ export class LootsController {
       "Retrieve the total count of loots for a guild with optional filters",
   })
   @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
-  @ApiQuery({
-    name: "world",
-    description: "World name filter",
-    required: false,
-  })
-  @ApiQuery({
-    name: "npcTypes",
-    description: "NPC types filter (comma-separated)",
-    required: false,
-  })
-  @ApiQuery({
-    name: "rarities",
-    description: "Item rarities filter (comma-separated)",
-    required: false,
-  })
-  @ApiQuery({
-    name: "players",
-    description: "Player names filter (comma-separated)",
-    required: false,
-  })
-  @ApiQuery({
-    name: "npcs",
-    description: "NPC names filter (comma-separated)",
-    required: false,
-  })
-  @ApiQuery({
-    name: "npcLevelMin",
-    description: "Minimum NPC level filter",
-    required: false,
-  })
-  @ApiQuery({
-    name: "npcLevelMax",
-    description: "Maximum NPC level filter",
-    required: false,
-  })
-  @ApiQuery({
-    name: "itemLevelMin",
-    description: "Minimum item level filter",
-    required: false,
-  })
-  @ApiQuery({
-    name: "itemLevelMax",
-    description: "Maximum item level filter",
-    required: false,
-  })
-  @ApiQuery({
-    name: "playerLevelMin",
-    description: "Minimum player level filter",
-    required: false,
-  })
-  @ApiQuery({
-    name: "playerLevelMax",
-    description: "Maximum player level filter",
-    required: false,
-  })
-  @ApiQuery({
-    name: "search",
-    description: "Search term for loots, items, NPCs or players",
-    required: false,
-  })
-  @ApiQuery({
-    name: "hid",
-    required: false,
-    type: String,
-    description: "house id or similar",
-  })
-  @ApiQuery({
-    name: "itemNames",
-    required: false,
-    type: [String],
-    description: "filter by item names",
-  })
-  @ApiQuery({
-    name: "createdAtMin",
-    description: "Minimum creation date filter (ISO 8601)",
-    required: false,
-  })
-  @ApiQuery({
-    name: "createdAtMax",
-    description: "Maximum creation date filter (ISO 8601)",
-    required: false,
-  })
   @ApiResponse({
     status: 200,
     description: "Count of loots matching the filters",
@@ -378,57 +129,16 @@ export class LootsController {
     @MemberPermissions() permissions: Permission[],
     @MemberRoles() roles: Role[],
     @GuildData() guild: Guild,
-    @Query("world") world: string,
-    @Query("npcTypes", new ArrayValidationPipe())
-    npcTypes: string[],
-    @Query("rarities", new ArrayValidationPipe())
-    rarities: string[],
-    @Query("players", new ArrayValidationPipe())
-    players: string[],
-    @Query("npcs", new ArrayValidationPipe())
-    npcs: string[],
-    @Query("npcLevelMin", new ParseIntPipe({ optional: true }))
-    npcLevelMin?: number,
-    @Query("npcLevelMax", new ParseIntPipe({ optional: true }))
-    npcLevelMax?: number,
-    @Query("itemLevelMin", new ParseIntPipe({ optional: true }))
-    itemLevelMin?: number,
-    @Query("itemLevelMax", new ParseIntPipe({ optional: true }))
-    itemLevelMax?: number,
-    @Query("playerLevelMin", new ParseIntPipe({ optional: true }))
-    playerLevelMin?: number,
-    @Query("playerLevelMax", new ParseIntPipe({ optional: true }))
-    playerLevelMax?: number,
-    @Query("search") search?: string,
-    @Query("hid") hid?: string,
-    @Query("itemNames", new ArrayValidationPipe())
-    itemNames?: string[],
-    @Query("createdAtMin") createdAtMin?: string,
-    @Query("createdAtMax") createdAtMax?: string,
+    @Query() query: FetchLootsParamsDto,
   ) {
     const count = await this.lootsService.countLootsByGuildId(
       guild,
       permissions,
       roles,
       {
+        ...query,
         limit: 0,
         cursor: 0,
-        npcTypes,
-        rarities,
-        players,
-        npcs,
-        world,
-        npcLevelMin,
-        npcLevelMax,
-        itemLevelMin,
-        itemLevelMax,
-        playerLevelMin,
-        playerLevelMax,
-        search,
-        hid,
-        itemNames,
-        createdAtMin,
-        createdAtMax,
       },
     );
     return { count };

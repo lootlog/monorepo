@@ -1,23 +1,12 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsArray, IsString, IsNotEmpty } from "class-validator";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class CreateOrUpdateLootlogCharacterConfigDto {
-  @ApiProperty({
-    type: [String],
-    description: "List of guild IDs for loot collection",
-  })
-  @IsArray()
-  lootGuildIds!: string[];
+const CreateOrUpdateLootlogCharacterConfigSchema = z.object({
+  lootGuildIds: z.array(z.string()),
+  timerGuildIds: z.array(z.string()),
+  characterId: z.string().min(1),
+});
 
-  @ApiProperty({
-    type: [String],
-    description: "List of guild IDs for timer management",
-  })
-  @IsArray()
-  timerGuildIds!: string[];
-
-  @ApiProperty({ description: "Character ID" })
-  @IsString()
-  @IsNotEmpty()
-  characterId!: string;
-}
+export class CreateOrUpdateLootlogCharacterConfigDto extends createZodDto(
+  CreateOrUpdateLootlogCharacterConfigSchema,
+) {}
