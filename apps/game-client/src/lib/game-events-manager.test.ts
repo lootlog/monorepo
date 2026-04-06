@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { gameEventsManager } from "./game-events-manager";
-import type { GameEvent } from "@/types/margonem/game-events/game-event";
+import type { GameEvent } from "@lootlog/margonem/game-events";
 
 type TestWindow = Window & {
   successData?: (...args: unknown[]) => unknown;

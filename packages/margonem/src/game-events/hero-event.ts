@@ -1,0 +1,56 @@
+import type { WarriorStats } from "../hero.js";
+
+export type HeroEvent = {
+  x?: number;
+  y?: number;
+  dir?: number;
+  back?: number;
+
+  credits?: number;
+  runes?: number;
+  blockade?: number;
+  id?: number;
+  account?: number;
+  uprawnienia?: number;
+  bagi?: number;
+  bint?: number;
+  bstr?: number;
+  gender?: string;
+  clan?: { id: number; name: string; rank: number };
+  exp?: number;
+  gold?: number;
+  goldlim?: number;
+  healpower?: number;
+  honor?: number;
+  img?: string;
+  lvl?: number;
+  oplvl?: number;
+  mails?: number;
+  mails_all?: number;
+  mails_last?: string;
+  mpath?: string;
+  nick?: string;
+  prof?: string;
+  ttl_value?: number;
+  ttl_end?: number;
+  ttl_del?: number;
+  pvp?: number;
+  ttl?: number;
+  stasis?: number;
+  stasis_incoming_seconds?: number;
+  bag?: number;
+  party?: number;
+  trade?: number;
+  wanted?: number;
+  stamina?: number;
+  stamina_ts?: number;
+  stamina_renew_sec?: number;
+  is_blessed?: number;
+  attr?: number;
+  warrior_stats?: WarriorStats;
+  passive_stats?: unknown;
+  matchmaking_champion?: number;
+
+  hp?: number;
+  maxhp?: number;
+};
