@@ -1,235 +1,77 @@
-import { Type } from "class-transformer";
-import {
-  IsArray,
-  IsBoolean,
-  IsIn,
-  IsNumber,
-  IsOptional,
-  IsString,
-  Matches,
-  Max,
-  Min,
-  ValidateNested,
-} from "class-validator";
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 import {
   EVENT_SCORING_ACTION_TYPES,
   EVENT_SCORING_BOOLEAN_FACTORS,
-  EVENT_SCORING_CONDITION_TYPES,
   EVENT_SCORING_NUMERIC_FACTORS,
   EVENT_SCORING_NUMERIC_OPERATORS,
 } from "../constants/scoring-rules.constant";
 
 const CLOCK_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
-export class EventScoringConditionDto {
-  @ApiProperty({
-    enum: EVENT_SCORING_CONDITION_TYPES,
+const NumericConditionSchema = z
+  .object({
+    type: z.literal("NUMERIC"),
+    factor: z.enum(EVENT_SCORING_NUMERIC_FACTORS),
+    operator: z.enum(EVENT_SCORING_NUMERIC_OPERATORS),
+    value: z.number(),
   })
-  @IsString()
-  @IsIn(EVENT_SCORING_CONDITION_TYPES)
-  type: string;
-}
+  .strict();
 
-export class EventScoringNumericConditionDto extends EventScoringConditionDto {
-  @ApiProperty({
-    enum: EVENT_SCORING_NUMERIC_FACTORS,
+const BooleanConditionSchema = z
+  .object({
+    type: z.literal("BOOLEAN"),
+    factor: z.enum(EVENT_SCORING_BOOLEAN_FACTORS),
+    value: z.boolean(),
   })
-  @IsString()
-  @IsIn(EVENT_SCORING_NUMERIC_FACTORS)
-  factor: string;
+  .strict();
 
-  @ApiProperty({
-    enum: EVENT_SCORING_NUMERIC_OPERATORS,
+const KillTimeInWindowConditionSchema = z
+  .object({
+    type: z.literal("KILL_TIME_IN_WINDOW"),
+    from: z.string().regex(CLOCK_PATTERN),
+    to: z.string().regex(CLOCK_PATTERN),
   })
-  @IsString()
-  @IsIn(EVENT_SCORING_NUMERIC_OPERATORS)
-  operator: string;
+  .strict();
 
-  @ApiProperty({ description: "Numeric value for compare conditions" })
-  @IsNumber()
-  value: number;
-}
-
-export class EventScoringBooleanConditionDto extends EventScoringConditionDto {
-  @ApiProperty({
-    enum: EVENT_SCORING_BOOLEAN_FACTORS,
+const RespawnWindowCoverageConditionSchema = z
+  .object({
+    type: z.literal("RESPAWN_WINDOW_COVERAGE"),
+    from: z.string().regex(CLOCK_PATTERN),
+    to: z.string().regex(CLOCK_PATTERN),
+    operator: z.enum(EVENT_SCORING_NUMERIC_OPERATORS),
+    value: z.number(),
   })
-  @IsString()
-  @IsIn(EVENT_SCORING_BOOLEAN_FACTORS)
-  factor: string;
+  .strict();
 
-  @ApiProperty({ description: "Boolean value for compare conditions" })
-  @IsBoolean()
-  value: boolean;
-}
+const ConditionSchema = z.discriminatedUnion("type", [
+  NumericConditionSchema,
+  BooleanConditionSchema,
+  KillTimeInWindowConditionSchema,
+  RespawnWindowCoverageConditionSchema,
+]);
 
-export class EventScoringKillTimeInWindowConditionDto extends EventScoringConditionDto {
-  @ApiProperty({
-    description: "Window start in HH:mm",
-    example: "03:00",
-  })
-  @IsString()
-  @Matches(CLOCK_PATTERN)
-  from: string;
+const ActionSchema = z.object({
+  type: z.enum(EVENT_SCORING_ACTION_TYPES),
+  points: z.number().min(0).optional(),
+});
 
-  @ApiProperty({
-    description: "Window end in HH:mm",
-    example: "08:00",
-  })
-  @IsString()
-  @Matches(CLOCK_PATTERN)
-  to: string;
-}
+const RuleSchema = z.object({
+  id: z.string(),
+  name: z.string().optional(),
+  enabled: z.boolean().optional(),
+  conditions: z.array(ConditionSchema),
+  action: ActionSchema,
+});
 
-export class EventScoringRespawnWindowCoverageConditionDto extends EventScoringConditionDto {
-  @ApiProperty({
-    description: "Window start in HH:mm",
-    example: "03:00",
-  })
-  @IsString()
-  @Matches(CLOCK_PATTERN)
-  from: string;
+export const EventScoringRulesSchema = z.object({
+  version: z.number().min(1).max(1),
+  timezone: z.string(),
+  hardCapPoints: z.number().min(0),
+  minTrackingPercentForBonuses: z.number().min(0).max(100).optional(),
+  rules: z.array(RuleSchema),
+});
 
-  @ApiProperty({
-    description: "Window end in HH:mm",
-    example: "08:00",
-  })
-  @IsString()
-  @Matches(CLOCK_PATTERN)
-  to: string;
-
-  @ApiProperty({
-    enum: EVENT_SCORING_NUMERIC_OPERATORS,
-  })
-  @IsString()
-  @IsIn(EVENT_SCORING_NUMERIC_OPERATORS)
-  operator: string;
-
-  @ApiProperty({ description: "Required coverage percentage" })
-  @IsNumber()
-  value: number;
-}
-
-export class EventScoringActionDto {
-  @ApiProperty({
-    enum: EVENT_SCORING_ACTION_TYPES,
-  })
-  @IsString()
-  @IsIn(EVENT_SCORING_ACTION_TYPES)
-  type: string;
-
-  @ApiPropertyOptional({
-    description: "Action points for SET_BASE / ADD_BONUS",
-  })
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  points?: number;
-}
-
-export class EventScoringRuleDto {
-  @ApiProperty({
-    description: "Rule identifier",
-  })
-  @IsString()
-  id: string;
-
-  @ApiPropertyOptional({
-    description: "Optional display name",
-  })
-  @IsOptional()
-  @IsString()
-  name?: string;
-
-  @ApiPropertyOptional({
-    description: "Rule toggle",
-    default: true,
-  })
-  @IsOptional()
-  @IsBoolean()
-  enabled?: boolean;
-
-  @ApiProperty({
-    type: [EventScoringConditionDto],
-  })
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => EventScoringConditionDto, {
-    discriminator: {
-      property: "type",
-      subTypes: [
-        {
-          name: "NUMERIC",
-          value: EventScoringNumericConditionDto,
-        },
-        {
-          name: "BOOLEAN",
-          value: EventScoringBooleanConditionDto,
-        },
-        {
-          name: "KILL_TIME_IN_WINDOW",
-          value: EventScoringKillTimeInWindowConditionDto,
-        },
-        {
-          name: "RESPAWN_WINDOW_COVERAGE",
-          value: EventScoringRespawnWindowCoverageConditionDto,
-        },
-      ],
-    },
-    keepDiscriminatorProperty: true,
-  })
-  conditions: EventScoringConditionDto[];
-
-  @ApiProperty({
-    type: EventScoringActionDto,
-  })
-  @ValidateNested()
-  @Type(() => EventScoringActionDto)
-  action: EventScoringActionDto;
-}
-
-export class EventScoringRulesDto {
-  @ApiProperty({
-    description: "Ruleset version",
-    default: 1,
-  })
-  @IsNumber()
-  @Min(1)
-  @Max(1)
-  version: number;
-
-  @ApiProperty({
-    description: "Timezone used for local-time windows",
-    example: "Europe/Warsaw",
-  })
-  @IsString()
-  timezone: string;
-
-  @ApiProperty({
-    description: "Maximum total points per kill",
-    example: 2,
-  })
-  @IsNumber()
-  @Min(0)
-  hardCapPoints: number;
-
-  @ApiPropertyOptional({
-    description:
-      "Minimum tracking percentage required to receive ADD_BONUS actions",
-    example: 50,
-  })
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  @Max(100)
-  minTrackingPercentForBonuses?: number;
-
-  @ApiProperty({
-    type: [EventScoringRuleDto],
-  })
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => EventScoringRuleDto)
-  rules: EventScoringRuleDto[];
-}
+export class EventScoringRulesDto extends createZodDto(
+  EventScoringRulesSchema,
+) {}

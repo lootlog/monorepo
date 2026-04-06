@@ -9,7 +9,7 @@ import {
 } from "@nestjs/swagger";
 import { plainToInstance } from "class-transformer";
 import { AuthGuard } from "src/shared/guards/auth.guard";
-import type { CreateOrUpdateLootlogCharacterConfigDto } from "src/user-lootlog-config/dto/create-user-account-config.dto";
+import { CreateOrUpdateLootlogCharacterConfigDto } from "src/user-lootlog-config/dto/create-user-account-config.dto";
 import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
 import { UserLootlogConfigEntity } from "src/shared/entities/user-lootlog-config.entity";
 

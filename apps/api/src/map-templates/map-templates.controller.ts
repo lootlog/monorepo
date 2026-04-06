@@ -19,7 +19,7 @@ import { AuthGuard } from "src/shared/guards/auth.guard";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 import { MapTemplatesService } from "./map-templates.service";
-import type { CreateMapTemplateDto } from "./dto/create-map-template.dto";
+import { CreateMapTemplateDto } from "./dto/create-map-template.dto";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 
 @ApiTags("map-templates")

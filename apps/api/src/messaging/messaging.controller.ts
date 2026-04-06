@@ -15,9 +15,9 @@ import {
   ApiOperation,
   ApiResponse,
 } from "@nestjs/swagger";
-import type { CreateNotificationDto } from "src/messaging/dto/create-notification.dto";
-import type { CreatePartyGatheringDto } from "src/messaging/dto/create-party-gathering.dto";
-import type { CreateVolunteerDto } from "src/messaging/dto/create-volunteer.dto";
+import { CreateNotificationDto } from "src/messaging/dto/create-notification.dto";
+import { CreatePartyGatheringDto } from "src/messaging/dto/create-party-gathering.dto";
+import { CreateVolunteerDto } from "src/messaging/dto/create-volunteer.dto";
 import { MessagingService } from "src/messaging/messaging.service";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 

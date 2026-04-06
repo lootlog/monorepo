@@ -1,13 +1,10 @@
-import { IsString, IsOptional, ValidateIf } from "class-validator";
-import { ApiPropertyOptional } from "@nestjs/swagger";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class AssignMapLocationDto {
-  @ApiPropertyOptional({
-    description: "Location ID (null to remove from location)",
-    example: "clxxx123",
-  })
-  @IsOptional()
-  @ValidateIf((o) => o.locationId !== null)
-  @IsString()
-  locationId?: string | null;
-}
+const AssignMapLocationSchema = z.object({
+  locationId: z.string().nullable().optional(),
+});
+
+export class AssignMapLocationDto extends createZodDto(
+  AssignMapLocationSchema,
+) {}

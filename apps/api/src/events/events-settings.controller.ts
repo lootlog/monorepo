@@ -10,7 +10,7 @@ import {
 import { plainToInstance } from "class-transformer";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { EventSettingsService } from "./services/event-settings.service";
-import type { UpdateEventSettingsDto } from "./dto/update-event-settings.dto";
+import { UpdateEventSettingsDto } from "./dto/update-event-settings.dto";
 import { EventSettingsEntity } from "./entities/event-settings.entity";
 
 @ApiTags("event-settings")

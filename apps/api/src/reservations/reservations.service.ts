@@ -11,8 +11,8 @@ import { Permission, type Prisma } from "src/generated/prisma/client";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { RoutingKey } from "src/enum/routing-key.enum";
 import { RedisService } from "@lootlog/nest-shared";
-import { ConfigService } from "@nestjs/config";
 import { HttpService } from "@nestjs/axios";
+import { env } from "src/config/env";
 import { lastValueFrom } from "rxjs";
 
 type ReservationRecord = {
@@ -42,7 +42,6 @@ export class ReservationsService {
     private readonly prisma: PrismaService,
     private readonly amqpConnection: AmqpConnection,
     private readonly redis: RedisService,
-    private readonly configService: ConfigService,
     private readonly httpService: HttpService,
   ) {}
 
@@ -230,9 +229,7 @@ export class ReservationsService {
       }
     }
 
-    const externalUrl = this.configService.getOrThrow<string>(
-      "RESERVATIONS_CARDS_URL",
-    );
+    const externalUrl = env.RESERVATIONS_CARDS_URL;
 
     const response = await lastValueFrom(
       this.httpService.get<unknown>(externalUrl),

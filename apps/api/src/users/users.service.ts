@@ -4,14 +4,12 @@ import {
   ServiceUnavailableException,
 } from "@nestjs/common";
 import { HttpService } from "@nestjs/axios";
-import { ConfigService } from "@nestjs/config";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger as WinstonLogger } from "winston";
 import { firstValueFrom } from "rxjs";
 import { PrismaService } from "src/db/prisma.service";
 import { AuthService } from "src/auth/auth.service";
-import { ConfigKey } from "src/config/config-key.enum";
-import type { BattlelogConfig } from "src/config/battlelog.config";
+import { battlelogConfig } from "src/config/battlelog.config";
 import { MembersService } from "src/members/members.service";
 import { RedisService } from "@lootlog/nest-shared";
 import { getUserLootlogConfigCachePattern } from "src/shared/constants/cache.constant";
@@ -33,11 +31,7 @@ export class UsersService {
     private readonly membersService: MembersService,
     private readonly redisService: RedisService,
     private readonly httpService: HttpService,
-    private readonly configService: ConfigService,
   ) {
-    const battlelogConfig = this.configService.get<BattlelogConfig>(
-      ConfigKey.BATTLELOG,
-    );
     this.battlelogServiceUrl = battlelogConfig.serviceUrl;
   }
 

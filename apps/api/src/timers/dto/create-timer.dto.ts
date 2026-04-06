@@ -1,36 +1,27 @@
-import { Type } from "class-transformer";
-import {
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-  Min,
-  ValidateNested,
-} from "class-validator";
-import { NpcDto } from "src/loots/dto/create-loot.dto";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class CreateTimerDto {
-  @IsNumber()
-  @Min(2)
-  respBaseSeconds: number;
+const NpcSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  location: z.string(),
+  lvl: z.number(),
+  prof: z.string().optional(),
+  wt: z.number(),
+  hpp: z.number().optional(),
+  icon: z.string(),
+  type: z.number(),
+  x: z.number().optional(),
+  y: z.number().optional(),
+});
 
-  @IsOptional()
-  respawnRandomness: number;
+const CreateTimerSchema = z.object({
+  respBaseSeconds: z.number().min(2),
+  respawnRandomness: z.number().optional(),
+  world: z.string().min(1),
+  npc: NpcSchema,
+  characterId: z.string().min(1),
+  accountId: z.string().min(1),
+});
 
-  @IsNotEmpty()
-  @IsString()
-  world: string;
-
-  @IsNotEmpty()
-  @ValidateNested()
-  @Type(() => NpcDto)
-  npc: NpcDto;
-
-  @IsNotEmpty()
-  @IsString()
-  characterId: string;
-
-  @IsNotEmpty()
-  @IsString()
-  accountId: string;
-}
+export class CreateTimerDto extends createZodDto(CreateTimerSchema) {}

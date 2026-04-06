@@ -1,20 +1,10 @@
 import { Module } from "@nestjs/common";
 import { ItemsService } from "./items.service";
-import {
-  RabbitMQModule,
-  type RabbitMQConfig,
-} from "@golevelup/nestjs-rabbitmq";
-import { ConfigService } from "@nestjs/config";
-import { ConfigKey } from "src/config/config-key.enum";
+import { RabbitMQModule } from "@golevelup/nestjs-rabbitmq";
+import { rabbitmqConfig } from "src/config/rabbitmq.config";
 
 @Module({
-  imports: [
-    RabbitMQModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) =>
-        configService.get<RabbitMQConfig>(ConfigKey.RABBITMQ),
-    }),
-  ],
+  imports: [RabbitMQModule.forRoot(rabbitmqConfig)],
   providers: [ItemsService],
   exports: [ItemsService],
 })

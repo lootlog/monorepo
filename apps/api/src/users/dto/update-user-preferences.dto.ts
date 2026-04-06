@@ -1,32 +1,16 @@
-import {
-  IsOptional,
-  IsString,
-  IsArray,
-  ArrayNotEmpty,
-  ArrayUnique,
-  IsIn,
-} from "class-validator";
-import { ApiProperty } from "@nestjs/swagger";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class UpdateUserPreferencesDto {
-  @ApiProperty({
-    description: "Ordered list of guild IDs for user preferences",
-    example: ["guild1", "guild2", "guild3"],
-    required: false,
-    type: [String],
-  })
-  @IsOptional()
-  @IsArray()
-  @ArrayNotEmpty()
-  @ArrayUnique()
-  @IsString({ each: true })
-  guildsOrder?: string[];
-
-  @ApiProperty({
-    description: "Theme preference",
-    example: "cyberpunk",
-    required: false,
-    enum: [
+const UpdateUserPreferencesSchema = z.object({
+  guildsOrder: z
+    .array(z.string())
+    .nonempty()
+    .refine((arr) => new Set(arr).size === arr.length, {
+      message: "guildsOrder must contain unique values",
+    })
+    .optional(),
+  theme: z
+    .enum([
       "default",
       "cyberpunk",
       "pastel",
@@ -45,40 +29,11 @@ export class UpdateUserPreferencesDto {
       "cat-purple",
       "cat-blue",
       "cat-random",
-    ],
-  })
-  @IsOptional()
-  @IsString()
-  @IsIn([
-    "default",
-    "cyberpunk",
-    "pastel",
-    "fantasy",
-    "shonen",
-    "onepiece",
-    "anime",
-    "goth",
-    "halloween",
-    "realmadrid",
-    "realmadrid-3rd",
-    "barcelona",
-    "waguri",
-    "rukia",
-    "cat-pink",
-    "cat-purple",
-    "cat-blue",
-    "cat-random",
-  ])
-  theme?: string;
+    ])
+    .optional(),
+  colorMode: z.enum(["light", "dark"]).optional(),
+});
 
-  @ApiProperty({
-    description: "Color mode preference",
-    example: "dark",
-    required: false,
-    enum: ["light", "dark"],
-  })
-  @IsOptional()
-  @IsString()
-  @IsIn(["light", "dark"])
-  colorMode?: string;
-}
+export class UpdateUserPreferencesDto extends createZodDto(
+  UpdateUserPreferencesSchema,
+) {}

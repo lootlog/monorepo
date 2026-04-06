@@ -1,24 +1,13 @@
 import { NotificationTargetType } from "@lootlog/types";
-import { ApiPropertyOptional } from "@nestjs/swagger";
-import { IsEnum, IsOptional, IsString, MaxLength } from "class-validator";
-import { swaggerStringEnum } from "src/shared/swagger/prisma-enum";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class CreateNotificationTargetDto {
-  @ApiPropertyOptional(
-    swaggerStringEnum("NotificationTargetType", NotificationTargetType),
-  )
-  @IsEnum(NotificationTargetType)
-  targetType: NotificationTargetType;
+const CreateNotificationTargetSchema = z.object({
+  targetType: z.nativeEnum(NotificationTargetType),
+  externalId: z.string().max(100).optional(),
+  displayName: z.string().max(255).optional(),
+});
 
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  externalId?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  @MaxLength(255)
-  displayName?: string;
-}
+export class CreateNotificationTargetDto extends createZodDto(
+  CreateNotificationTargetSchema,
+) {}

@@ -19,7 +19,7 @@ import {
 } from "@nestjs/swagger";
 import { plainToInstance } from "class-transformer";
 import { type Guild, Permission } from "src/generated/prisma/client";
-import type { UpdateGuildConfigDto } from "src/guilds/dto/update-guild-config.dto";
+import { UpdateGuildConfigDto } from "src/guilds/dto/update-guild-config.dto";
 import { UserGuildPermissionsDto } from "src/guilds/dto/user-guild-permissions.dto";
 import { GuildsService } from "src/guilds/guilds.service";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";

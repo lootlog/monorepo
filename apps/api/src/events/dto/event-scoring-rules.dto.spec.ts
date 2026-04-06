@@ -1,29 +1,14 @@
-import "reflect-metadata";
-import { plainToInstance } from "class-transformer";
-import { type ValidationError, validateSync } from "class-validator";
 import { DEFAULT_ADVANCED_EVENT_SCORING_RULES } from "../constants/scoring-rules.constant";
-import { EventScoringRulesDto } from "./event-scoring-rules.dto";
+import { EventScoringRulesSchema } from "./event-scoring-rules.dto";
 
 const cloneRulesPayload = () =>
   JSON.parse(JSON.stringify(DEFAULT_ADVANCED_EVENT_SCORING_RULES));
 
-const collectConstraintMessages = (errors: ValidationError[]): string[] =>
-  errors.flatMap((error) => [
-    ...Object.values(error.constraints ?? {}),
-    ...collectConstraintMessages(error.children ?? []),
-  ]);
-
-const validatePayload = (payload: unknown) =>
-  validateSync(plainToInstance(EventScoringRulesDto, payload), {
-    whitelist: true,
-    forbidNonWhitelisted: true,
-  });
-
 describe("EventScoringRulesDto", () => {
   it("accepts the default advanced ruleset with boolean conditions", () => {
-    const errors = validatePayload(cloneRulesPayload());
+    const result = EventScoringRulesSchema.safeParse(cloneRulesPayload());
 
-    expect(errors).toHaveLength(0);
+    expect(result.success).toBe(true);
   });
 
   it("rejects a boolean condition with a numeric factor", () => {
@@ -34,11 +19,9 @@ describe("EventScoringRulesDto", () => {
       value: false,
     };
 
-    const messages = collectConstraintMessages(validatePayload(payload));
+    const result = EventScoringRulesSchema.safeParse(payload);
 
-    expect(messages).toContain(
-      "factor must be one of the following values: eligible, memberPresentAtKill, wasPresent",
-    );
+    expect(result.success).toBe(false);
   });
 
   it("rejects a numeric condition with a boolean value", () => {
@@ -50,14 +33,12 @@ describe("EventScoringRulesDto", () => {
       value: false,
     };
 
-    const messages = collectConstraintMessages(validatePayload(payload));
+    const result = EventScoringRulesSchema.safeParse(payload);
 
-    expect(messages).toContain(
-      "value must be a number conforming to the specified constraints",
-    );
+    expect(result.success).toBe(false);
   });
 
-  it("rejects a boolean condition with a numeric operator", () => {
+  it("rejects a boolean condition with extra properties", () => {
     const payload = cloneRulesPayload();
     payload.rules[3].conditions[1] = {
       type: "BOOLEAN",
@@ -66,9 +47,9 @@ describe("EventScoringRulesDto", () => {
       operator: ">=",
     };
 
-    const messages = collectConstraintMessages(validatePayload(payload));
+    const result = EventScoringRulesSchema.safeParse(payload);
 
-    expect(messages).toContain("property operator should not exist");
+    expect(result.success).toBe(false);
   });
 
   it("rejects an incomplete kill time window condition", () => {
@@ -78,10 +59,8 @@ describe("EventScoringRulesDto", () => {
       from: "08:00",
     };
 
-    const messages = collectConstraintMessages(validatePayload(payload));
+    const result = EventScoringRulesSchema.safeParse(payload);
 
-    expect(messages).toContain(
-      "to must match /^([01]\\d|2[0-3]):([0-5]\\d)$/ regular expression",
-    );
+    expect(result.success).toBe(false);
   });
 });

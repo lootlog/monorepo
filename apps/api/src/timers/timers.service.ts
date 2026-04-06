@@ -141,7 +141,7 @@ export class TimersService implements OnModuleInit {
   private buildNpcData(npc: {
     id: number;
     name: string;
-    prof: string;
+    prof?: string;
     location: string;
     wt: number;
     lvl: number;
@@ -151,11 +151,11 @@ export class TimersService implements OnModuleInit {
     return {
       id: npc.id,
       name: npc.name,
-      prof: getProfByShortname(npc.prof),
+      prof: getProfByShortname(npc.prof ?? ""),
       location: npc.location,
       wt: String(npc.wt),
       lvl: npc.lvl,
-      type: getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type),
+      type: getNpcTypeByWt(NpcType, npc.wt, npc.prof ?? "", npc.type),
       icon: npc.icon,
       margonemType: String(npc.type),
     };
@@ -837,8 +837,8 @@ export class TimersService implements OnModuleInit {
     let latestRespawnRandomness: number;
 
     if (data.customMinSpawnTime && data.customMaxSpawnTime) {
-      minSpawnTime = data.customMinSpawnTime;
-      maxSpawnTime = data.customMaxSpawnTime;
+      minSpawnTime = new Date(data.customMinSpawnTime);
+      maxSpawnTime = new Date(data.customMaxSpawnTime);
 
       const diffMs = maxSpawnTime.getTime() - minSpawnTime.getTime();
       const midpointSeconds = Math.round(diffMs / 2000);

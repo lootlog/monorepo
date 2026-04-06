@@ -1,75 +1,5 @@
-import {
-  IsEnum,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-  Max,
-  MaxLength,
-  Min,
-  ValidateNested,
-} from "class-validator";
-import { ApiProperty } from "@nestjs/swagger";
-import { NpcDto } from "src/loots/dto/create-loot.dto";
-import { Type } from "class-transformer";
-
-export class PartyGatheringDataDto {
-  @IsString()
-  @IsNotEmpty()
-  notificationId: string;
-
-  @IsString()
-  @IsNotEmpty()
-  discordId: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(200)
-  description?: string;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(1)
-  @Max(500)
-  minLvl?: number;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(1)
-  @Max(500)
-  maxLvl?: number;
-
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(50)
-  world: string;
-}
-
-export class ChatCharacterDataDto {
-  @IsString()
-  @IsNotEmpty()
-  nick: string;
-
-  @IsNumber()
-  @IsNotEmpty()
-  id: number;
-
-  @IsNumber()
-  @IsNotEmpty()
-  acc: number;
-
-  @IsNumber()
-  @IsNotEmpty()
-  lvl: number;
-
-  @IsString()
-  @IsNotEmpty()
-  prof: string;
-
-  @IsString()
-  @IsNotEmpty()
-  icon: string;
-}
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
 export enum MessageType {
   NORMAL = "NORMAL",
@@ -78,33 +8,52 @@ export enum MessageType {
   PARTY_GATHERING = "PARTY_GATHERING",
 }
 
-export class SendMessageDto {
-  @ApiProperty({
-    description: "Chat message content",
-    example: "Hello, guild!",
-    minLength: 1,
-    maxLength: 128,
-  })
-  @IsString()
-  @MaxLength(128)
-  message: string;
+export const PartyGatheringDataSchema = z.object({
+  notificationId: z.string().min(1),
+  discordId: z.string().min(1),
+  description: z.string().max(200).optional(),
+  minLvl: z.number().min(1).max(500).optional(),
+  maxLvl: z.number().min(1).max(500).optional(),
+  world: z.string().min(1).max(50),
+});
 
-  @IsEnum(MessageType)
-  @IsNotEmpty()
-  type: MessageType;
+export class PartyGatheringDataDto extends createZodDto(
+  PartyGatheringDataSchema,
+) {}
 
-  @ValidateNested()
-  @Type(() => ChatCharacterDataDto)
-  @IsNotEmpty()
-  characterData: ChatCharacterDataDto;
+export const ChatCharacterDataSchema = z.object({
+  nick: z.string().min(1),
+  id: z.number(),
+  acc: z.number(),
+  lvl: z.number(),
+  prof: z.string().min(1),
+  icon: z.string().min(1),
+});
 
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => NpcDto)
-  npc?: NpcDto;
+export class ChatCharacterDataDto extends createZodDto(
+  ChatCharacterDataSchema,
+) {}
 
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => PartyGatheringDataDto)
-  partyGathering?: PartyGatheringDataDto;
-}
+const NpcEmbeddedSchema = z.object({
+  id: z.number(),
+  name: z.string().min(1),
+  location: z.string().min(1),
+  lvl: z.number(),
+  prof: z.string().min(1),
+  wt: z.number(),
+  hpp: z.number().optional(),
+  icon: z.string().min(1),
+  type: z.number(),
+  x: z.number().optional(),
+  y: z.number().optional(),
+});
+
+export const SendMessageSchema = z.object({
+  message: z.string().max(128),
+  type: z.nativeEnum(MessageType),
+  characterData: ChatCharacterDataSchema,
+  npc: NpcEmbeddedSchema.optional(),
+  partyGathering: PartyGatheringDataSchema.optional(),
+});
+
+export class SendMessageDto extends createZodDto(SendMessageSchema) {}

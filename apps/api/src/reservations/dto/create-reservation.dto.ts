@@ -1,33 +1,15 @@
-import {
-  IsDate,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  MaxLength,
-} from "class-validator";
-import { Type } from "class-transformer";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class CreateReservationDto {
-  @IsString()
-  @IsNotEmpty()
-  reservationId: string;
-  @IsDate()
-  @IsNotEmpty()
-  @Type(() => Date)
-  createdDate: Date;
-  @IsDate()
-  @IsNotEmpty()
-  @Type(() => Date)
-  fromDate: Date;
-  @IsDate()
-  @IsNotEmpty()
-  @Type(() => Date)
-  toDate: Date;
-  @IsString()
-  @IsNotEmpty()
-  createdBy: string;
-  @IsOptional()
-  @IsString()
-  @MaxLength(128)
-  comment?: string;
-}
+const CreateReservationSchema = z.object({
+  reservationId: z.string().min(1),
+  createdDate: z.string().datetime(),
+  fromDate: z.string().datetime(),
+  toDate: z.string().datetime(),
+  createdBy: z.string().min(1),
+  comment: z.string().max(128).optional(),
+});
+
+export class CreateReservationDto extends createZodDto(
+  CreateReservationSchema,
+) {}

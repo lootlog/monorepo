@@ -1,12 +1,9 @@
-import { IsString, IsInt } from "class-validator";
-import { ApiProperty } from "@nestjs/swagger";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class CreateMapDto {
-  @ApiProperty({ description: "Margonem map ID" })
-  @IsInt()
-  mapId: number;
+const CreateMapSchema = z.object({
+  mapId: z.number().int(),
+  mapName: z.string(),
+});
 
-  @ApiProperty({ description: "Map name" })
-  @IsString()
-  mapName: string;
-}
+export class CreateMapDto extends createZodDto(CreateMapSchema) {}

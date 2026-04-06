@@ -1,20 +1,27 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "src/test/mock-fn";
-import { ConfigService } from "@nestjs/config";
 import { TimersCleanupService } from "./timers-cleanup.service";
 import { PrismaService } from "src/db/prisma.service";
+
+const mockEnv = {
+  TIMER_CLEANUP_ENABLED: "true",
+  TIMER_RETENTION_DAYS: 7,
+};
+
+vi.mock("src/config/env", () => ({
+  get env() {
+    return mockEnv;
+  },
+}));
 
 describe("TimersCleanupService", () => {
   const mockPrismaService = {
     $executeRaw: mockFn(),
   };
 
-  const mockConfigService = {
-    get: mockFn(),
-  };
-
   beforeEach(() => {
-    mockConfigService.get.mockReturnValue(undefined);
+    mockEnv.TIMER_CLEANUP_ENABLED = "true";
+    mockEnv.TIMER_RETENTION_DAYS = 7;
     vi.clearAllMocks();
   });
 
@@ -26,10 +33,6 @@ describe("TimersCleanupService", () => {
           provide: PrismaService,
           useValue: mockPrismaService,
         },
-        {
-          provide: ConfigService,
-          useValue: mockConfigService,
-        },
       ],
     }).compile();
 
@@ -38,7 +41,6 @@ describe("TimersCleanupService", () => {
 
   describe("cleanupExpiredTimers", () => {
     it("should delete only expired manual timers with default retention", async () => {
-      mockConfigService.get.mockReturnValue(undefined);
       const service = await createService();
       mockPrismaService.$executeRaw.mockResolvedValue(42);
 
@@ -48,10 +50,7 @@ describe("TimersCleanupService", () => {
     });
 
     it("should skip cleanup when disabled", async () => {
-      mockConfigService.get.mockImplementation((key: string) => {
-        if (key === "TIMER_CLEANUP_ENABLED") return "false";
-        return undefined;
-      });
+      mockEnv.TIMER_CLEANUP_ENABLED = "false";
       const service = await createService();
 
       await service.cleanupExpiredTimers();
@@ -60,10 +59,7 @@ describe("TimersCleanupService", () => {
     });
 
     it("should use custom retention days from config", async () => {
-      mockConfigService.get.mockImplementation((key: string) => {
-        if (key === "TIMER_RETENTION_DAYS") return "14";
-        return undefined;
-      });
+      mockEnv.TIMER_RETENTION_DAYS = 14;
       const service = await createService();
       mockPrismaService.$executeRaw.mockResolvedValue(10);
 
@@ -73,7 +69,6 @@ describe("TimersCleanupService", () => {
     });
 
     it("should handle cleanup errors gracefully", async () => {
-      mockConfigService.get.mockReturnValue(undefined);
       const service = await createService();
       mockPrismaService.$executeRaw.mockRejectedValue(
         new Error("Database error"),
@@ -83,7 +78,6 @@ describe("TimersCleanupService", () => {
     });
 
     it("should preserve game NPC timers and only delete manual timers", async () => {
-      mockConfigService.get.mockReturnValue(undefined);
       const service = await createService();
       mockPrismaService.$executeRaw.mockResolvedValue(5);
 
@@ -95,7 +89,6 @@ describe("TimersCleanupService", () => {
 
   describe("cleanupExpiredTimersManual", () => {
     it("should delete only manual timers with specified retention period", async () => {
-      mockConfigService.get.mockReturnValue(undefined);
       const service = await createService();
       mockPrismaService.$executeRaw.mockResolvedValue(25);
 
@@ -106,7 +99,6 @@ describe("TimersCleanupService", () => {
     });
 
     it("should use default retention days if not specified", async () => {
-      mockConfigService.get.mockReturnValue(undefined);
       const service = await createService();
       mockPrismaService.$executeRaw.mockResolvedValue(15);
 
@@ -116,7 +108,6 @@ describe("TimersCleanupService", () => {
     });
 
     it("should preserve game NPC timers in manual cleanup", async () => {
-      mockConfigService.get.mockReturnValue(undefined);
       const service = await createService();
       mockPrismaService.$executeRaw.mockResolvedValue(8);
 
@@ -127,7 +118,6 @@ describe("TimersCleanupService", () => {
     });
 
     it("should propagate cleanup errors in manual mode", async () => {
-      mockConfigService.get.mockReturnValue(undefined);
       const service = await createService();
       mockPrismaService.$executeRaw.mockRejectedValue(
         new Error("Database error"),
