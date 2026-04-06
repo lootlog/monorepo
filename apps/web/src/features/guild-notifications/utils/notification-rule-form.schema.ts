@@ -20,7 +20,7 @@ export const ruleFormSchema = (
       name: z.string(),
       triggerType: z.nativeEnum(NotificationTriggerType),
       world: z.string().optional(),
-      npcIds: z.array(z.string()).optional(),
+      npcNames: z.array(z.string()).optional(),
       contentTemplate: z
         .string()
         .trim()
@@ -49,20 +49,20 @@ export const ruleFormSchema = (
             path: ["world"],
           });
         }
-        if (!data.npcIds || data.npcIds.length === 0) {
+        if (!data.npcNames || data.npcNames.length === 0) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: t("settings.notifications.validation.npcRequired"),
-            path: ["npcIds"],
+            path: ["npcNames"],
           });
         }
-        if (data.npcIds && data.npcIds.length > maxNpcCount) {
+        if (data.npcNames && data.npcNames.length > maxNpcCount) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: t("settings.notifications.validation.maxNpcCount", {
               count: maxNpcCount,
             }),
-            path: ["npcIds"],
+            path: ["npcNames"],
           });
         }
         if (!data.scheduleAnchor) {

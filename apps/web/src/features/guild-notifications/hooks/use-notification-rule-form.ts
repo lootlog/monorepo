@@ -23,7 +23,7 @@ import {
 import {
   getDefaultGuildNotificationRuleContentTemplate,
   getDefaultScheduledMessageContentTemplate,
-  getGuildNotificationRuleNpcIds,
+  getGuildNotificationRuleNpcNames,
   getGuildNotificationRuleTargetIds,
   getGuildNotificationTargetLabel,
   mergeGuildNotificationTargets,
@@ -79,7 +79,7 @@ export const useNotificationRuleForm = () => {
       name: "",
       triggerType: NotificationTriggerType.TIMER_BEFORE_SPAWN,
       world: ALL_WORLDS_VALUE,
-      npcIds: [],
+      npcNames: [],
       contentTemplate: getDefaultGuildNotificationRuleContentTemplate(),
       scheduleAnchor: NotificationScheduleAnchor.MIN_SPAWN,
       scheduleOffsetMinutes: "0",
@@ -102,7 +102,7 @@ export const useNotificationRuleForm = () => {
       name: rule?.name ?? "",
       triggerType,
       world: rule?.world ?? ALL_WORLDS_VALUE,
-      npcIds: rule ? getGuildNotificationRuleNpcIds(rule) : [],
+      npcNames: rule ? getGuildNotificationRuleNpcNames(rule) : [],
       contentTemplate:
         rule?.contentTemplate ?? getDefaultContentTemplate(triggerType),
       scheduleAnchor:
@@ -169,14 +169,9 @@ export const useNotificationRuleForm = () => {
     isScheduledMessage &&
     watchedIntervalType === NotificationScheduleIntervalType.HOURLY;
   const selectedWorld = form.watch("world");
-  const selectedNpcIds = form.watch("npcIds") ?? [];
+  const selectedNpcNames = form.watch("npcNames") ?? [];
   const normalizedWorld =
     selectedWorld !== ALL_WORLDS_VALUE ? selectedWorld : undefined;
-  const selectedNpcQuery = useNpcs({
-    selectedNpcs: selectedNpcIds.join(","),
-    world: normalizedWorld,
-    enabled: selectedNpcIds.length > 0,
-  });
   const searchedNpcQuery = useNpcs({
     search: npcSearch,
     world: normalizedWorld,
@@ -185,16 +180,15 @@ export const useNotificationRuleForm = () => {
 
   const npcOptionsMap = new Map<string, { value: string; label: string }>();
 
-  for (const npc of selectedNpcQuery.data ?? []) {
-    npcOptionsMap.set(String(npc.id), {
-      value: String(npc.id),
-      label: `${npc.name} ${t(`npcType.${npc.type}`)} (#${npc.id})`,
-    });
+  for (const name of selectedNpcNames) {
+    if (!npcOptionsMap.has(name)) {
+      npcOptionsMap.set(name, { value: name, label: name });
+    }
   }
 
   for (const npc of searchedNpcQuery.data ?? []) {
-    npcOptionsMap.set(String(npc.id), {
-      value: String(npc.id),
+    npcOptionsMap.set(npc.name, {
+      value: npc.name,
       label: `${npc.name} ${t(`npcType.${npc.type}`)} (#${npc.id})`,
     });
   }
@@ -270,13 +264,11 @@ export const useNotificationRuleForm = () => {
             scheduleTimezone: GUILD_NOTIFICATION_TIMEZONE,
           }
         : (() => {
-            const numericNpcIds = (values.npcIds ?? []).map((npcId) =>
-              Number(npcId),
-            );
+            const npcNamesList = values.npcNames ?? [];
             const npcFilterPayload =
-              numericNpcIds.length === 1
-                ? { npcId: numericNpcIds[0] }
-                : { npcIds: numericNpcIds };
+              npcNamesList.length === 1
+                ? { npcName: npcNamesList[0] }
+                : { npcNames: npcNamesList };
             return {
               ...basePayload,
               world:

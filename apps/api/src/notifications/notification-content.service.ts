@@ -416,12 +416,20 @@ export class NotificationContentService {
         take: 50,
       });
 
-      const matchingTimer = timers.find((timer) =>
-        this.matchingService.matchesTimerRule(
+      const matchingTimer = timers.find((timer) => {
+        const timerNpcName =
+          timer.npc &&
+          typeof timer.npc === "object" &&
+          !Array.isArray(timer.npc) &&
+          typeof (timer.npc as { name?: string }).name === "string"
+            ? (timer.npc as { name: string }).name
+            : null;
+
+        return this.matchingService.matchesTimerRule(
           notificationRule.filters,
-          timer.npcId,
-        ),
-      );
+          timerNpcName,
+        );
+      });
 
       if (matchingTimer) {
         return {
@@ -442,7 +450,8 @@ export class NotificationContentService {
     }
 
     const filters = this.matchingService.parseFilters(notificationRule.filters);
-    const fallbackNpcId = filters.npcId ?? filters.npcIds?.[0] ?? 0;
+    const fallbackNpcName =
+      filters.npcName ?? filters.npcNames?.[0] ?? FALLBACK_NPC_NAME;
     const anchor = notificationRule.scheduleAnchor;
     const offsetMinutes = notificationRule.scheduleOffsetMinutes ?? 0;
     const minSpawnTime =
@@ -457,8 +466,8 @@ export class NotificationContentService {
         : new Date(minSpawnTime.getTime() + 20 * 60_000);
 
     return {
-      npcId: fallbackNpcId,
-      npcName: fallbackNpcId > 0 ? null : FALLBACK_NPC_NAME,
+      npcId: 0,
+      npcName: fallbackNpcName,
       world: notificationRule.world ?? FALLBACK_WORLD_NAME,
       timerKey: `test-${randomUUID()}`,
       minSpawnTime,

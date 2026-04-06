@@ -407,8 +407,8 @@ export class NotificationRuleService {
             : existingRule.contentTemplate,
           filters: isScheduledMessage
             ? Prisma.DbNull
-            : data.npcId !== undefined ||
-                data.npcIds !== undefined ||
+            : data.npcName !== undefined ||
+                data.npcNames !== undefined ||
                 data.itemId !== undefined ||
                 data.itemIds !== undefined
               ? this.buildFilters(data)
@@ -552,22 +552,22 @@ export class NotificationRuleService {
   private validateRuleNpcSelection(
     data: Pick<
       CreateNotificationRuleDto | UpdateNotificationRuleDto,
-      "npcId" | "npcIds"
+      "npcName" | "npcNames"
     >,
   ) {
-    const uniqueNpcIds = new Set<number>();
+    const uniqueNpcNames = new Set<string>();
 
-    if (typeof data.npcId === "number") {
-      uniqueNpcIds.add(data.npcId);
+    if (typeof data.npcName === "string") {
+      uniqueNpcNames.add(data.npcName);
     }
 
-    if (Array.isArray(data.npcIds)) {
-      for (const npcId of data.npcIds) {
-        uniqueNpcIds.add(npcId);
+    if (Array.isArray(data.npcNames)) {
+      for (const npcName of data.npcNames) {
+        uniqueNpcNames.add(npcName);
       }
     }
 
-    if (uniqueNpcIds.size > GUILD_NOTIFICATION_MAX_NPCS_PER_RULE) {
+    if (uniqueNpcNames.size > GUILD_NOTIFICATION_MAX_NPCS_PER_RULE) {
       throw new BadRequestException({
         message: Error.NOTIFICATION_RULE_MAX_NPCS_EXCEEDED,
         maxNpcsPerRule: GUILD_NOTIFICATION_MAX_NPCS_PER_RULE,
@@ -578,7 +578,7 @@ export class NotificationRuleService {
   private buildFilters(
     data: Pick<
       CreateNotificationRuleDto | UpdateNotificationRuleDto,
-      "npcId" | "npcIds" | "itemId" | "itemIds"
+      "npcName" | "npcNames" | "itemId" | "itemIds"
     > & {
       guildIds?: string[];
     },
@@ -589,12 +589,12 @@ export class NotificationRuleService {
       filters.guildIds = data.guildIds;
     }
 
-    if (data.npcId !== undefined) {
-      filters.npcId = data.npcId;
+    if (data.npcName !== undefined) {
+      filters.npcName = data.npcName;
     }
 
-    if (data.npcIds !== undefined) {
-      filters.npcIds = data.npcIds;
+    if (data.npcNames !== undefined) {
+      filters.npcNames = data.npcNames;
     }
 
     if (data.itemId !== undefined) {

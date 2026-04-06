@@ -62,8 +62,8 @@ export enum DiscordGuildSyncStatus {
 export interface NotificationFilters {
   guildIds?: string[];
   world?: string;
-  npcId?: number | null;
-  npcIds?: number[];
+  npcName?: string | null;
+  npcNames?: string[];
   itemId?: number | null;
   itemIds?: number[];
 }

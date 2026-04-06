@@ -56,15 +56,16 @@ export class CreateNotificationRuleDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsInt()
-  npcId?: number;
+  @IsString()
+  @MaxLength(255)
+  npcName?: string;
 
-  @ApiPropertyOptional({ type: [Number] })
+  @ApiPropertyOptional({ type: [String] })
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(5)
-  @IsInt({ each: true })
-  npcIds?: number[];
+  @IsString({ each: true })
+  npcNames?: string[];
 
   @ApiPropertyOptional()
   @IsOptional()

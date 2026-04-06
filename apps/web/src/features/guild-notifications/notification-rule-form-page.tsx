@@ -134,7 +134,7 @@ export const NotificationRuleFormPage = () => {
                                 NotificationTriggerType.SCHEDULED_MESSAGE
                               ) {
                                 form.setValue("world", ALL_WORLDS_VALUE);
-                                form.setValue("npcIds", []);
+                                form.setValue("npcNames", []);
                               } else {
                                 form.setValue("scheduledAt", "");
                               }
@@ -257,7 +257,7 @@ export const NotificationRuleFormPage = () => {
 
                         <FormField
                           control={form.control}
-                          name="npcIds"
+                          name="npcNames"
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">

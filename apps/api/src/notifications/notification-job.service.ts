@@ -562,10 +562,18 @@ export class NotificationJobService {
 
     await Promise.all(
       timers.map(async (timer) => {
+        const timerNpcName =
+          timer.npc &&
+          typeof timer.npc === "object" &&
+          !Array.isArray(timer.npc) &&
+          typeof (timer.npc as { name?: string }).name === "string"
+            ? (timer.npc as { name: string }).name
+            : null;
+
         if (
           !this.matchingService.matchesTimerRule(
             notificationRule.filters,
-            timer.npcId,
+            timerNpcName,
           )
         ) {
           return;

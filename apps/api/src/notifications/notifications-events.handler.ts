@@ -68,7 +68,7 @@ export class NotificationsEventsHandler {
           if (
             !this.matchingService.matchesTimerRule(
               notificationRule.filters,
-              event.npcId,
+              event.npc?.name ?? null,
             )
           ) {
             return;

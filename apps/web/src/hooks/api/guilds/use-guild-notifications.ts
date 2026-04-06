@@ -136,8 +136,8 @@ export type CreateGuildNotificationRuleData = {
   contentTemplate?: string | null;
   triggerType: NotificationTriggerType;
   world?: string | null;
-  npcId?: number;
-  npcIds?: number[];
+  npcName?: string;
+  npcNames?: string[];
   scheduleStrategy?: NotificationScheduleStrategy;
   scheduleAnchor?: NotificationScheduleAnchor;
   scheduleOffsetMinutes?: number;
@@ -158,8 +158,8 @@ export type UpdateGuildNotificationRuleData = {
   contentTemplate?: string | null;
   triggerType?: NotificationTriggerType;
   world?: string | null;
-  npcId?: number;
-  npcIds?: number[];
+  npcName?: string;
+  npcNames?: string[];
   scheduleStrategy?: NotificationScheduleStrategy;
   scheduleAnchor?: NotificationScheduleAnchor;
   scheduleOffsetMinutes?: number;

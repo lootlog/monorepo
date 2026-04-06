@@ -28,14 +28,18 @@ type MemberRoleInfo = {
 export class NotificationMatchingService {
   constructor(private readonly prisma: PrismaService) {}
 
-  matchesTimerRule(filtersValue: Prisma.JsonValue, npcId: number) {
-    const filters = this.parseFilters(filtersValue);
-
-    if (filters.npcId && filters.npcId !== npcId) {
+  matchesTimerRule(filtersValue: Prisma.JsonValue, npcName: string | null) {
+    if (!npcName) {
       return false;
     }
 
-    if (filters.npcIds?.length && !filters.npcIds.includes(npcId)) {
+    const filters = this.parseFilters(filtersValue);
+
+    if (filters.npcName && filters.npcName !== npcName) {
+      return false;
+    }
+
+    if (filters.npcNames?.length && !filters.npcNames.includes(npcName)) {
       return false;
     }
 

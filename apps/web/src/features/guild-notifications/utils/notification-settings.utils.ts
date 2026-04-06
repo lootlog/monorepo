@@ -65,34 +65,34 @@ export const getGuildNotificationRuleTargetIds = (
   rule: Pick<GuildNotificationRule, "targets">,
 ) => rule.targets.map(({ target }) => String(target.id));
 
-export const getGuildNotificationRuleNpcIds = (
+export const getGuildNotificationRuleNpcNames = (
   rule: Pick<GuildNotificationRule, "filters">,
 ) => {
-  const npcIds = new Set<string>();
+  const npcNames = new Set<string>();
   const filters = rule.filters;
 
   if (!filters) {
     return [];
   }
 
-  if (typeof filters.npcId === "number") {
-    npcIds.add(String(filters.npcId));
+  if (typeof filters.npcName === "string") {
+    npcNames.add(filters.npcName);
   }
 
-  if (Array.isArray(filters.npcIds)) {
-    for (const npcId of filters.npcIds) {
-      if (typeof npcId === "number") {
-        npcIds.add(String(npcId));
+  if (Array.isArray(filters.npcNames)) {
+    for (const npcName of filters.npcNames) {
+      if (typeof npcName === "string") {
+        npcNames.add(npcName);
       }
     }
   }
 
-  return Array.from(npcIds);
+  return Array.from(npcNames);
 };
 
 export const getGuildNotificationRuleNpcCount = (
   rule: Pick<GuildNotificationRule, "filters">,
-) => getGuildNotificationRuleNpcIds(rule).length;
+) => getGuildNotificationRuleNpcNames(rule).length;
 
 export const getGuildNotificationTargetUsageCount = (
   targetId: number,
