@@ -1,7 +1,4 @@
-import type { Engine } from "./margonem/engine";
-import type { Game } from "./margonem/game";
-import type { GameHero } from "./margonem/hero";
-import type { GameMap } from "./margonem/map";
+import type { Engine, Game, GameHero, GameMap } from "@lootlog/margonem-types";
 
 declare global {
   interface Window {

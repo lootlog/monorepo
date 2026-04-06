@@ -1,5 +1,4 @@
-import type { GameEvent } from "@/types/margonem/game-events/game-event";
-import type { Npcs } from "@/types/margonem/game-events/npcs";
+import type { GameEvent, Npcs } from "@lootlog/margonem-types/game-events";
 import type { NpcDetectorSettingByNpc } from "@/store/npc-detector.store";
 import type { LootDto } from "@/hooks/api/use-create-loot";
 import type { PartyMember, Npc } from "@/utils/game/get-battle-participants";

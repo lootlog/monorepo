@@ -1,5 +1,5 @@
 import { NpcType } from "@/hooks/api/use-npcs";
-import type { GameNpc } from "@/types/margonem/npcs";
+import type { GameNpc } from "@lootlog/margonem-types";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
