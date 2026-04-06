@@ -30,14 +30,8 @@ export function validateAndCalculateSpawnTimes(
   now: Date = new Date(),
 ): SpawnTimes {
   if (dto.customMinSpawnTime && dto.customMaxSpawnTime) {
-    const customMin =
-      dto.customMinSpawnTime instanceof Date
-        ? dto.customMinSpawnTime
-        : new Date(dto.customMinSpawnTime);
-    const customMax =
-      dto.customMaxSpawnTime instanceof Date
-        ? dto.customMaxSpawnTime
-        : new Date(dto.customMaxSpawnTime);
+    const customMin = new Date(dto.customMinSpawnTime);
+    const customMax = new Date(dto.customMaxSpawnTime);
 
     if (customMax <= customMin) {
       throw new BadRequestException({

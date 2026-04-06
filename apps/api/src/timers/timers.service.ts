@@ -837,8 +837,8 @@ export class TimersService implements OnModuleInit {
     let latestRespawnRandomness: number;
 
     if (data.customMinSpawnTime && data.customMaxSpawnTime) {
-      minSpawnTime = data.customMinSpawnTime;
-      maxSpawnTime = data.customMaxSpawnTime;
+      minSpawnTime = new Date(data.customMinSpawnTime);
+      maxSpawnTime = new Date(data.customMaxSpawnTime);
 
       const diffMs = maxSpawnTime.getTime() - minSpawnTime.getTime();
       const midpointSeconds = Math.round(diffMs / 2000);
