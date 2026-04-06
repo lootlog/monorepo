@@ -44,7 +44,9 @@ export const HeroManageDialog = ({
   const { t } = useTranslation();
   const { addHero, updateHero } = useEventMutations(guildId, eventId);
   const isEditing = !!hero;
-  const isHeroNameLocked = isEditing && hero?.npcId !== null;
+  // @TODO - temprorarily enable hero name editing
+  // const isHeroNameLocked = isEditing && hero?.npcId !== null;
+  const isHeroNameLocked = false;
   const isPending = addHero.isPending || updateHero.isPending;
 
   const { register, handleSubmit, reset } = useForm<FormData>({
