@@ -14,10 +14,11 @@ import {
 } from "src/config/rabbitmq.config";
 import { RoutingKey } from "src/enum/routing-key.enum";
 import { RetryService } from "src/shared/rabbitmq/retry.service";
-import { CreateActivityDto } from "src/activities/dto/create-activity.dto";
+import {
+  CreateActivityDto,
+  CreateActivitySchema,
+} from "src/activities/dto/create-activity.dto";
 import { ActivitiesService } from "src/activities/activities.service";
-import { plainToInstance } from "class-transformer";
-import { validate } from "class-validator";
 
 interface AmqpMessage {
   properties: {
@@ -48,25 +49,20 @@ export class ActivitiesEventsService {
     @RabbitPayload() data: unknown,
     amqpMsg: AmqpMessage,
   ) {
-    const dto = plainToInstance(CreateActivityDto, data);
-    const validationErrors = await validate(dto);
+    const result = CreateActivitySchema.safeParse(data);
 
-    if (validationErrors.length > 0) {
+    if (!result.success) {
       this.logger.error({
         level: "error",
         message:
           "Invalid activity payload - validation failed (permanent error, sending to DLQ)",
         rawPayload: data,
-        validationErrors: validationErrors.map((err) => ({
-          property: err.property,
-          constraints: err.constraints,
-          value: err.value,
+        validationErrors: result.error.issues.map((issue) => ({
+          path: issue.path.join("."),
+          message: issue.message,
         })),
       });
 
-      // Don't throw - validation errors are permanent and should not be retried
-      // Message will be ACKed and removed from queue
-      // For manual intervention, send to DLQ directly
       await this.retryService.sendToDlq(
         data,
         RoutingKey.ACTIVITY_LOG_CREATE_DLQ,
@@ -78,6 +74,8 @@ export class ActivitiesEventsService {
 
       return;
     }
+
+    const dto = result.data as CreateActivityDto;
 
     const headers = amqpMsg?.properties.headers ?? {};
 

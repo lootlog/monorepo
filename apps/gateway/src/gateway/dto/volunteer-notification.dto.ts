@@ -1,22 +1,35 @@
-export class ClanDto {
-  id?: number;
-  name?: string;
-}
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class VolunteerCharacterDto {
-  lvl: number;
-  nick: string;
-  accountId: string;
-  characterId: string;
-  prof: string;
-  icon: string;
-  clan?: ClanDto;
-}
+const ClanSchema = z.object({
+  id: z.number().optional(),
+  name: z.string().optional(),
+});
 
-export class VolunteerNotificationDto {
-  notificationId: string;
-  targetDiscordId: string;
-  volunteerDiscordId: string;
-  world: string;
-  character: VolunteerCharacterDto;
-}
+export class ClanDto extends createZodDto(ClanSchema) {}
+
+const VolunteerCharacterSchema = z.object({
+  lvl: z.number(),
+  nick: z.string(),
+  accountId: z.string(),
+  characterId: z.string(),
+  prof: z.string(),
+  icon: z.string(),
+  clan: ClanSchema.optional(),
+});
+
+export class VolunteerCharacterDto extends createZodDto(
+  VolunteerCharacterSchema,
+) {}
+
+const VolunteerNotificationSchema = z.object({
+  notificationId: z.string(),
+  targetDiscordId: z.string(),
+  volunteerDiscordId: z.string(),
+  world: z.string(),
+  character: VolunteerCharacterSchema,
+});
+
+export class VolunteerNotificationDto extends createZodDto(
+  VolunteerNotificationSchema,
+) {}
