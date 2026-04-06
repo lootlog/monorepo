@@ -1,11 +1,11 @@
-import { IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class RequestPlayerPresenceDto {
-  @IsNotEmpty()
-  @IsString()
-  guildId: string;
+const RequestPlayerPresenceSchema = z.object({
+  guildId: z.string().min(1),
+  world: z.string().optional(),
+});
 
-  @IsOptional()
-  @IsString()
-  world?: string;
-}
+export class RequestPlayerPresenceDto extends createZodDto(
+  RequestPlayerPresenceSchema,
+) {}

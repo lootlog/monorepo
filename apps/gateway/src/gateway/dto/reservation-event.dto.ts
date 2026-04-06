@@ -1,18 +1,33 @@
-export class ReservationRecordDto {
-  id: number;
-  reservationId: string;
-  createdDate: string;
-  fromDate: string;
-  toDate: string;
-  createdBy: string;
-}
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class ReservationCreateEventDto {
-  guildId: string;
-  reservation: ReservationRecordDto;
-}
+const ReservationRecordSchema = z.object({
+  id: z.number(),
+  reservationId: z.string(),
+  createdDate: z.string(),
+  fromDate: z.string(),
+  toDate: z.string(),
+  createdBy: z.string(),
+});
 
-export class ReservationDeleteEventDto {
-  guildId: string;
-  reservation: ReservationRecordDto;
-}
+export class ReservationRecordDto extends createZodDto(
+  ReservationRecordSchema,
+) {}
+
+const ReservationCreateEventSchema = z.object({
+  guildId: z.string(),
+  reservation: ReservationRecordSchema,
+});
+
+export class ReservationCreateEventDto extends createZodDto(
+  ReservationCreateEventSchema,
+) {}
+
+const ReservationDeleteEventSchema = z.object({
+  guildId: z.string(),
+  reservation: ReservationRecordSchema,
+});
+
+export class ReservationDeleteEventDto extends createZodDto(
+  ReservationDeleteEventSchema,
+) {}

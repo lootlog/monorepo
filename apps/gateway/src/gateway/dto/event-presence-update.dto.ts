@@ -1,18 +1,15 @@
-import { IsBoolean, IsNumber, IsOptional, IsString } from "class-validator";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class EventPresenceUpdateDto {
-  @IsOptional()
-  @IsNumber()
-  mapId?: number;
+const EventPresenceUpdateSchema = z.object({
+  mapId: z.number().optional(),
+  mapName: z.string().optional(),
+  isAfk: z.boolean().optional(),
+});
 
-  @IsOptional()
-  @IsString()
-  mapName?: string;
-
-  @IsOptional()
-  @IsBoolean()
-  isAfk?: boolean;
-}
+export class EventPresenceUpdateDto extends createZodDto(
+  EventPresenceUpdateSchema,
+) {}
 
 export interface PlayerPresenceData {
   mapId?: number;
