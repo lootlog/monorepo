@@ -462,7 +462,7 @@ export class EventKillService {
             return;
           }
 
-          this.logger.debug({
+          this.logger.warn({
             message: "Updating hero NPC ID based on timer data",
             guildId,
             world,
