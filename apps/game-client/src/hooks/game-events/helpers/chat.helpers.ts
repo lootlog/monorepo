@@ -1,4 +1,4 @@
-import type { GameEvent } from "@/types/margonem/game-events/game-event";
+import type { GameEvent } from "@lootlog/margonem/game-events";
 
 export const getLootDistributionMessage = (event: GameEvent) => {
   return event.chat?.channels?.system?.msg?.find(({ msg }) =>

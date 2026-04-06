@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import type { Item } from "@/types/margonem/game-events/item";
+import type { Item } from "@lootlog/margonem/game-events";
 import type { Npc, PartyMember } from "@/utils/game/get-battle-participants";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 

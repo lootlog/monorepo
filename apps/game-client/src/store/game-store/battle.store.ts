@@ -1,6 +1,5 @@
 import { create } from "zustand";
-import type { GameEvent } from "@/types/margonem/game-events/game-event";
-import type { W } from "@/types/margonem/game-events/f";
+import type { GameEvent, W } from "@lootlog/margonem/game-events";
 
 export type BattleWarriorsWithAccountId = Record<
   string,
