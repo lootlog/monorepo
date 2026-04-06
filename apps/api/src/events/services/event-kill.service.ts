@@ -463,7 +463,9 @@ export class EventKillService {
           }
 
           const updateData = {
-            ...(eventHero.npcId === null && { npcId }),
+            ...((eventHero.npcId === null || eventHero.npcId !== npcId) && {
+              npcId,
+            }),
             ...(eventHero.npcIcon === null && { npcIcon }),
             ...(eventHero.npcLvl === null &&
               npcLvl !== undefined && { npcLvl }),
