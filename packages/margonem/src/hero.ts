@@ -48,7 +48,7 @@ export interface GameHero {
   is_blessed: number;
   attr: number;
   warrior_stats: WarriorStats;
-  passive_stats: any;
+  passive_stats: unknown;
   matchmaking_champion: number;
   hpp: number;
   clan?: {

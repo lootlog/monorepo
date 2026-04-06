@@ -1,7 +1,7 @@
 import { useUpdateLoot } from "@/hooks/api/use-update-loot";
 import { getLootDistributionMessage } from "@/hooks/game-events/helpers/chat.helpers";
 import { useLootStore } from "@/store/game-store/loot.store";
-import type { GameEvent } from "@/types/margonem/game-events/game-event";
+import type { GameEvent } from "@lootlog/margonem/game-events";
 
 export const useChatEventsHandlers = () => {
   const { mutate: updateLoot } = useUpdateLoot();
