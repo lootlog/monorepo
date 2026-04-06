@@ -1,13 +1,12 @@
 import { z } from "zod";
 import { createZodDto } from "nestjs-zod";
 import {
+  CLOCK_PATTERN,
   EVENT_SCORING_ACTION_TYPES,
   EVENT_SCORING_BOOLEAN_FACTORS,
   EVENT_SCORING_NUMERIC_FACTORS,
   EVENT_SCORING_NUMERIC_OPERATORS,
 } from "../constants/scoring-rules.constant";
-
-const CLOCK_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
 const NumericConditionSchema = z
   .object({
