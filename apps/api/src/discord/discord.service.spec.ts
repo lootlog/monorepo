@@ -20,7 +20,6 @@ import {
 } from "src/auth/errors";
 import type { APIGuild, APIGuildMember } from "discord-api-types/v10";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
-import { RuntimeEnvironment } from "src/types/runtime.types";
 
 vi.mock("src/config/service.config", () => ({
   serviceConfig: { env: "local" },

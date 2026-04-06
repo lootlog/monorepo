@@ -19,8 +19,14 @@ const NpcSchema = z.object({
 const CreateTimerFromGameClientSchema = z.object({
   respBaseSeconds: z.number().min(TIMER_LIMITS.MIN_RESP_BASE_SECONDS),
   respawnRandomness: z.number().optional(),
-  customMinSpawnTime: z.coerce.date().optional(),
-  customMaxSpawnTime: z.coerce.date().optional(),
+  customMinSpawnTime: z.preprocess(
+    (val) => (val === null ? undefined : val),
+    z.coerce.date().optional(),
+  ),
+  customMaxSpawnTime: z.preprocess(
+    (val) => (val === null ? undefined : val),
+    z.coerce.date().optional(),
+  ),
   world: z.string().min(1),
   npc: NpcSchema,
   characterId: z.string().min(1),
