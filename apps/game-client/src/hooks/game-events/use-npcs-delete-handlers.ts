@@ -57,7 +57,7 @@ export const useNpcsDeleteHandlers = () => {
           world,
           npc: {
             icon: data.icon,
-            id: data.tpl,
+            id: data.id,
             prof: data.prof,
             wt: data.wt,
             hpp: 0,
