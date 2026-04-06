@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { guildNotificationJobsQueryOptions } from "@/hooks/api/guilds/use-guild-notifications";
+import { NotificationsHistoryPage } from "@/features/guild-notifications/notifications-history-page";
 
 export const Route = createFileRoute(
   "/_authenticated/$guildId/notifications/history",
@@ -9,4 +10,5 @@ export const Route = createFileRoute(
       guildNotificationJobsQueryOptions(params.guildId),
     );
   },
+  component: NotificationsHistoryPage,
 });

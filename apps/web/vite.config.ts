@@ -3,7 +3,75 @@ import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
 import path from "node:path";
-import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
+import { tanstackRouter } from "@tanstack/router-plugin/vite";
+
+const vendorChunkGroups = {
+  "vendor-react": [
+    "/node_modules/react/",
+    "/node_modules/react-dom/",
+    "/node_modules/scheduler/",
+  ],
+  "vendor-tanstack": [
+    "/node_modules/@tanstack/react-query",
+    "/node_modules/@tanstack/react-query-devtools",
+    "/node_modules/@tanstack/react-query-persist-client",
+    "/node_modules/@tanstack/react-router",
+    "/node_modules/@tanstack/router-core",
+    "/node_modules/@tanstack/react-table",
+    "/node_modules/@tanstack/react-virtual",
+    "/node_modules/@tanstack/query-core",
+    "/node_modules/nuqs/",
+  ],
+  "vendor-forms": [
+    "/node_modules/react-hook-form/",
+    "/node_modules/@hookform/resolvers/",
+    "/node_modules/zod/",
+  ],
+  "vendor-i18n": ["/node_modules/i18next/", "/node_modules/react-i18next/"],
+  "vendor-dates": [
+    "/node_modules/date-fns/",
+    "/node_modules/react-day-picker/",
+  ],
+  "vendor-icons": ["/node_modules/lucide-react/"],
+  "vendor-motion": [
+    "/node_modules/framer-motion/",
+    "/node_modules/motion/",
+    "/node_modules/gsap/",
+    "/node_modules/three/",
+    "/node_modules/ogl/",
+  ],
+  "vendor-ui": [
+    "/node_modules/@radix-ui/",
+    "/node_modules/cmdk/",
+    "/node_modules/vaul/",
+    "/node_modules/sonner/",
+    "/node_modules/next-themes/",
+  ],
+  "vendor-style": [
+    "/node_modules/class-variance-authority/",
+    "/node_modules/clsx/",
+    "/node_modules/tailwind-merge/",
+    "/node_modules/tw-animate-css/",
+  ],
+  "vendor-charts": ["/node_modules/recharts/", "/node_modules/d3-"],
+  "vendor-editor": ["/node_modules/@lexical/", "/node_modules/lexical/"],
+  "vendor-lottie": ["/node_modules/lottie-react/", "/node_modules/lottie-web/"],
+} as const;
+
+function getChunkNameFromGroups(
+  id: string,
+  groups: Record<string, readonly string[]>,
+) {
+  for (const [chunkName, modulePaths] of Object.entries(groups)) {
+    if (modulePaths.some((modulePath) => id.includes(modulePath))) {
+      return chunkName;
+    }
+  }
+}
+
+function getVendorChunkName(id: string) {
+  return getChunkNameFromGroups(id, vendorChunkGroups);
+}
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -86,50 +154,14 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes("node_modules")) {
-            if (id.includes("react-dom") || id.includes("/react/")) {
-              return "vendor-react";
-            }
-            if (id.includes("@tanstack/react-router")) {
-              return "vendor-router";
-            }
-            if (id.includes("@tanstack/react-query")) {
-              return "vendor-query";
-            }
-            if (id.includes("recharts") || id.includes("d3-")) {
-              return "vendor-charts";
-            }
-            if (id.includes("framer-motion")) {
-              return "vendor-motion";
-            }
-            if (id.includes("i18next") || id.includes("react-i18next")) {
-              return "vendor-i18n";
-            }
-            if (id.includes("socket.io")) {
-              return "vendor-socket";
-            }
-            return "vendor-misc";
-          }
-
-          const sharedDirs = [
-            "/src/utils/",
-            "/src/lib/",
-            "/src/constants/",
-            "/src/config/",
-            "/src/contexts/",
-            "/src/store/",
-          ];
-          if (sharedDirs.some((dir) => id.includes(dir))) {
-            return "app-shared";
-          }
-          if (id.includes("/src/hooks/") && !id.includes("/src/hooks/api/")) {
-            return "app-shared";
+            return getVendorChunkName(id);
           }
         },
       },
     },
   },
   plugins: [
-    TanStackRouterVite(),
+    tanstackRouter({ target: "react", autoCodeSplitting: true }),
     react(),
     babel({ presets: [reactCompilerPreset()] }),
     tailwindcss(),
