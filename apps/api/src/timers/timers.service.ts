@@ -55,6 +55,14 @@ function parseNpc(npc: unknown): { lvl: number; type: NpcType } | null {
   return npc as { lvl: number; type: NpcType };
 }
 
+function extractNpcName(npc: unknown): string {
+  if (npc && typeof npc === "object" && !Array.isArray(npc)) {
+    const name = (npc as Record<string, unknown>).name;
+    return typeof name === "string" ? name : "";
+  }
+  return "";
+}
+
 const DEDUP_TTL_SECONDS = 10;
 const CACHE_TTL_SECONDS = 2;
 
@@ -1008,18 +1016,11 @@ export class TimersService implements OnModuleInit {
       throw new BadRequestException({ message: ErrorKey.TIMER_NOT_FOUND });
     }
 
-    const resolvedTimerNpc =
-      resolvedTimer.npc &&
-      typeof resolvedTimer.npc === "object" &&
-      !Array.isArray(resolvedTimer.npc)
-        ? resolvedTimer.npc
-        : null;
-
     const eventHero = await this.eventTimerHooks.findActiveEventHeroByNpc(
       guildId,
       data.world,
       resolvedTimer.npcId,
-      typeof resolvedTimerNpc?.name === "string" ? resolvedTimerNpc.name : "",
+      extractNpcName(resolvedTimer.npc),
     );
 
     if (eventHero) {
@@ -1106,18 +1107,11 @@ export class TimersService implements OnModuleInit {
       throw new BadRequestException({ message: ErrorKey.TIMER_NOT_FOUND });
     }
 
-    const resolvedTimerNpc =
-      resolvedTimer.npc &&
-      typeof resolvedTimer.npc === "object" &&
-      !Array.isArray(resolvedTimer.npc)
-        ? resolvedTimer.npc
-        : null;
-
     const eventHero = await this.eventTimerHooks.findActiveEventHeroByNpc(
       guildId,
       world,
       resolvedTimer.npcId,
-      typeof resolvedTimerNpc?.name === "string" ? resolvedTimerNpc.name : "",
+      extractNpcName(resolvedTimer.npc),
     );
 
     if (eventHero) {
