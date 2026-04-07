@@ -13,8 +13,4 @@ export class FriendsProcessor {
       useFriendsStore.getState().setFriendsMax(event.friends_max);
     }
   }
-
-  fetchFriends(): void {
-    window._g("friends&a=show");
-  }
 }

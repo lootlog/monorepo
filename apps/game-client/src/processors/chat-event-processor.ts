@@ -19,7 +19,9 @@ export class ChatEventProcessor {
 
     updateLoot({ msg: message, id: lastLootId })
       .then(() => {
-        useLootStore.getState().setLastLootId(null);
+        if (useLootStore.getState().lastLootId === lastLootId) {
+          useLootStore.getState().setLastLootId(null);
+        }
       })
       .catch((error) => {
         console.warn("[ChatEventProcessor] Failed to update loot:", error);

@@ -15,15 +15,16 @@ export class NpcsDeleteProcessor {
     if (!event.npcs_del?.length) return;
 
     event.npcs_del.forEach((npc) => {
-      const data = Game.getNpc(npc.id);
       const world = Game.getWorldName();
+
+      useNpcDetectorStore.getState().removeNpc(npc.id);
+      useNotificationsStore.getState().removeNotificationByNpcId(npc.id, world);
+
+      const data = Game.getNpc(npc.id);
       const characterId = Game.hero.id;
       const accountId = Game.hero.account;
 
       if (!data || !npc.respBaseSeconds || data.wt < MIN_NPC_WT) return;
-
-      useNpcDetectorStore.getState().removeNpc(npc.id);
-      useNotificationsStore.getState().removeNotificationByNpcId(npc.id, world);
 
       if (npc.respBaseSeconds < MIN_RESP_BASE_SECONDS) return;
 

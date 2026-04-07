@@ -159,7 +159,7 @@ export async function createTimerForGuilds({
 
   const client = getApiClient("default");
 
-  await Promise.allSettled(
+  const results = await Promise.allSettled(
     guildIds.map((guildId) => {
       const payload = {
         respBaseSeconds: timer.respBaseSeconds,
@@ -178,6 +178,11 @@ export async function createTimerForGuilds({
       return client.post(`/guilds/${guildId}/timers`, payload);
     }),
   );
+
+  const failures = results.filter((r) => r.status === "rejected");
+  if (failures.length === results.length) {
+    throw new Error("Failed to create timer for all guilds");
+  }
 }
 
 // --- Chat Message ---
@@ -242,7 +247,7 @@ export async function sendChatMessage({
 
   const failures = results.filter((r) => r.status === "rejected");
   if (failures.length === results.length) {
-    console.warn("Failed to send chat message to all guilds");
+    throw new Error("Failed to send chat message to all guilds");
   } else if (failures.length > 0) {
     console.warn(`Failed to send chat message to ${failures.length} guilds`);
   }
