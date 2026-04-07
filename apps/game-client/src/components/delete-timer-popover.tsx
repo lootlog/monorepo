@@ -32,7 +32,7 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
   const { client } = useAuthenticatedApiClient();
 
   const guildEntries = useMemo(
-    () => timer.mergedGuildIds || [],
+    () => timer.mergedGuildIds ?? [],
     [timer.mergedGuildIds],
   );
 
@@ -131,7 +131,7 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
                   setOpen(false);
                 }}
               >
-                {guildData?.name || guild.guildId}
+                {guildData?.name ?? guild.guildId}
               </button>
             );
           })}
