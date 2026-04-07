@@ -1,34 +1,30 @@
 import { MIN_NPC_WT, MIN_RESP_BASE_SECONDS } from "@/constants/margonem";
 import { SpecialE2 } from "@/constants/special-e2";
-import { useCreateTimer } from "@/hooks/api/use-create-timer";
-import type { LootlogCharacterConfigResponse } from "@/hooks/api/use-lootlog-character-config";
 import { NpcType } from "@/hooks/api/use-npcs";
 import { getNpcTypeByWt } from "@lootlog/types";
 import { Game } from "@/lib/game";
 import { useNotificationsStore } from "@/store/notifications.store";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import type { GameEvent } from "@lootlog/margonem/game-events";
-import { useQueryClient } from "@tanstack/react-query";
+import { queryClient } from "@/lib/query-client";
+import { createTimerForGuilds } from "@/services/api.service";
+import type { LootlogCharacterConfigResponse } from "@/hooks/api/use-lootlog-character-config";
 
-export const useNpcsDeleteHandlers = () => {
-  const { removeNpc } = useNpcDetectorStore();
-  const { mutate: createTimer } = useCreateTimer();
-  const { removeNotificationByNpcId } = useNotificationsStore();
-  const queryClient = useQueryClient();
-
-  const handleNpcsDelete = (event: GameEvent) => {
+export class NpcsDeleteProcessor {
+  handle(event: GameEvent): void {
     if (!event.npcs_del?.length) return;
 
-    event.npcs_del?.forEach((npc) => {
-      const data = Game.getNpc(npc.id);
+    event.npcs_del.forEach((npc) => {
       const world = Game.getWorldName();
+
+      useNpcDetectorStore.getState().removeNpc(npc.id);
+      useNotificationsStore.getState().removeNotificationByNpcId(npc.id, world);
+
+      const data = Game.getNpc(npc.id);
       const characterId = Game.hero.id;
       const accountId = Game.hero.account;
 
       if (!data || !npc.respBaseSeconds || data.wt < MIN_NPC_WT) return;
-
-      removeNpc(npc.id);
-      removeNotificationByNpcId(npc.id, world);
 
       if (npc.respBaseSeconds < MIN_RESP_BASE_SECONDS) return;
 
@@ -48,7 +44,7 @@ export const useNpcsDeleteHandlers = () => {
 
       if (whitelistedGuildIds.length === 0) return;
 
-      createTimer({
+      createTimerForGuilds({
         timer: {
           respawnRandomness: data.resp_rand,
           respBaseSeconds: npc.respBaseSeconds,
@@ -68,12 +64,9 @@ export const useNpcsDeleteHandlers = () => {
           },
         },
         guildIds: whitelistedGuildIds,
-        npcType,
+      }).catch((error) => {
+        console.warn("[NpcsDeleteProcessor] Failed to create timer:", error);
       });
     });
-  };
-
-  return {
-    handleNpcsDelete,
-  };
-};
+  }
+}

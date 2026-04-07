@@ -3,6 +3,9 @@ import { NpcType } from "@/hooks/api/use-npcs";
 import type { PartyGatheringCharacterBase } from "@/types/party-gathering";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import { storageKey } from "@/lib/storage-key";
+
+const STORAGE_KEY = storageKey("ll-notifications-state");
 
 export type NotificationType =
   | NpcType.HERO
@@ -210,7 +213,7 @@ export const useNotificationsStore = create<NotificationsState>()(
         })),
     }),
     {
-      name: "ll-notifications-state",
+      name: STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         settings: state.settings,

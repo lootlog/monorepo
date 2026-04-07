@@ -1,10 +1,13 @@
 import { NpcType } from "@/hooks/api/use-npcs";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import { storageKey } from "@/lib/storage-key";
 import {
   debouncedSyncGlobalSettings,
   debouncedSyncGuildSettings,
 } from "./timer-settings-sync";
+
+export const TIMERS_STORAGE_KEY = storageKey("ll-timers-state");
 
 type TimersFilters = {
   minLvl: number;
@@ -397,7 +400,7 @@ export const useTimersStore = create<TimersState>()(
       };
     },
     {
-      name: "ll-timers-state",
+      name: TIMERS_STORAGE_KEY,
       partialize: (state) => ({
         updatedAt: state.updatedAt,
         hiddenTimers: state.hiddenTimers,
