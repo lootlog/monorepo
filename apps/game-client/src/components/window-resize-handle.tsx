@@ -67,10 +67,10 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
       const startY = e.clientY;
       const startWidth =
         (e.currentTarget.parentElement?.parentElement as HTMLElement)
-          ?.offsetWidth || minWidth;
+          ?.offsetWidth ?? minWidth;
       const startHeight =
         (e.currentTarget.parentElement?.parentElement as HTMLElement)
-          ?.offsetHeight || minHeight;
+          ?.offsetHeight ?? minHeight;
 
       const handleMouseMove = (e: MouseEvent) => {
         if (activeResizeSessionId !== sessionId) return;
@@ -86,11 +86,11 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
 
         const newWidth = Math.max(
           minWidth,
-          Math.min(maxWidth || scaledViewportWidth, startWidth + deltaX),
+          Math.min(maxWidth ?? scaledViewportWidth, startWidth + deltaX),
         );
         const newHeight = Math.max(
           minHeight,
-          Math.min(maxHeight || scaledViewportHeight, startHeight + deltaY),
+          Math.min(maxHeight ?? scaledViewportHeight, startHeight + deltaY),
         );
         onResize({ width: newWidth, height: newHeight });
       };
@@ -147,10 +147,10 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
       const startY = touch.pageY - window.scrollY;
       const startWidth =
         (e.currentTarget.parentElement?.parentElement as HTMLElement)
-          ?.offsetWidth || minWidth;
+          ?.offsetWidth ?? minWidth;
       const startHeight =
         (e.currentTarget.parentElement?.parentElement as HTMLElement)
-          ?.offsetHeight || minHeight;
+          ?.offsetHeight ?? minHeight;
 
       const handleTouchMove = (e: TouchEvent) => {
         if (activeResizeSessionId !== sessionId) return;
@@ -175,11 +175,11 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
 
         const newWidth = Math.max(
           minWidth,
-          Math.min(maxWidth || scaledViewportWidth, startWidth + deltaX),
+          Math.min(maxWidth ?? scaledViewportWidth, startWidth + deltaX),
         );
         const newHeight = Math.max(
           minHeight,
-          Math.min(maxHeight || scaledViewportHeight, startHeight + deltaY),
+          Math.min(maxHeight ?? scaledViewportHeight, startHeight + deltaY),
         );
         onResize({ width: newWidth, height: newHeight });
       };
