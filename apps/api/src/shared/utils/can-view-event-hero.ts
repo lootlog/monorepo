@@ -1,4 +1,5 @@
-import { Permission, type Role } from "src/generated/prisma/client";
+import type { Permission, Role } from "src/generated/prisma/client";
+import { PermissionResolver } from "src/shared/permissions/permission-resolver";
 
 export interface EventHeroWithLevel {
   npcLvl: number | null;
@@ -17,10 +18,7 @@ export function canViewEventHero(
   roles: Role[],
   permissions: Permission[],
 ): boolean {
-  if (
-    permissions.includes(Permission.OWNER) ||
-    permissions.includes(Permission.ADMIN)
-  ) {
+  if (PermissionResolver.isAdministrative(permissions)) {
     return true;
   }
 
