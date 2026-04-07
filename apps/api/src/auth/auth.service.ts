@@ -78,8 +78,7 @@ export class AuthService {
       }
 
       if (this.isClientError(error)) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
+        const errorMessage = this.getErrorMessage(error);
         this.logger.log({
           level: "error",
           message: `Auth service returned client error for user ${userId}: ${errorMessage}`,
@@ -87,8 +86,7 @@ export class AuthService {
         throw new AuthBadRequestError(errorMessage);
       }
 
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
+      const errorMessage = this.getErrorMessage(error);
       this.logger.log({
         level: "error",
         message: `HTTP request failed for user ${userId}: ${errorMessage}`,
@@ -155,8 +153,7 @@ export class AuthService {
         throw error;
       }
 
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
+      const errorMessage = this.getErrorMessage(error);
       const errorStack = error instanceof Error ? error.stack : undefined;
       this.logger.log({
         level: "error",
@@ -172,6 +169,10 @@ export class AuthService {
   async invalidateIdpTokenCache(userId: string): Promise<void> {
     const cacheKey = getAuthTokenCacheKey(userId);
     await this.redisService.del(cacheKey);
+  }
+
+  private getErrorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : String(error);
   }
 
   private isKnownAuthError(error: unknown): boolean {
