@@ -64,7 +64,7 @@
     "@types/pg": "^8.20.0",
     "@types/supertest": "^7.2.0",
     "@vitest/coverage-v8": "^4.1.2",
-    "drizzle-kit": "1.0.0-beta.19",
+    "drizzle-kit": "1.0.0-beta.20",
     "supertest": "^7.2.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
