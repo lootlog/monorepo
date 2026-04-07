@@ -55,7 +55,7 @@ export class ChatService {
 
     await this.redisService.rpush(key, JSON.stringify(msg));
     await this.redisService.ltrim(key, -MAX_MESSAGES, -1);
-    await this.emitMessage(msg);
+    this.emitMessage(msg);
 
     return msg;
   }

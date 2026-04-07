@@ -76,6 +76,15 @@ export class DiscordService implements OnModuleInit {
     return this.isLocal ? localTtl : prodTtl;
   }
 
+  private isNotFoundStatus(error: unknown): boolean {
+    return (
+      typeof error === "object" &&
+      error !== null &&
+      "status" in error &&
+      error.status === 404
+    );
+  }
+
   async getRestClient(userId: string, discordId: string) {
     try {
       const token = await this.authService.getIdpToken(userId, discordId);
@@ -352,12 +361,7 @@ export class DiscordService implements OnModuleInit {
           path,
         });
       } catch (error: unknown) {
-        if (
-          typeof error === "object" &&
-          error !== null &&
-          "status" in error &&
-          error.status === 404
-        ) {
+        if (this.isNotFoundStatus(error)) {
           throw error;
         }
 
@@ -408,12 +412,7 @@ export class DiscordService implements OnModuleInit {
         throw error;
       }
 
-      if (
-        typeof error === "object" &&
-        error !== null &&
-        "status" in error &&
-        error.status === 404
-      ) {
+      if (this.isNotFoundStatus(error)) {
         this.logger.log({
           level: "debug",
           message: `Guild member not found for guildId: ${guildId}, userId: ${userId}`,
