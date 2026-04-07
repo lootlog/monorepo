@@ -114,6 +114,20 @@ export type Warrior = {
   legbonAnguish: number;
   legbonAnguishDamageTaken: number;
   legbonPunctureValue: number;
+  legbonFrenzy: number;
+  legbonRetaliation: number;
+  legbonDmgred: number;
+  legbonResgain: number;
+  legbonPushback: number;
+  absorbedDamage: number;
+  absorbedMagicDamage: number;
+  vampirismHealing: number;
+  energyRecovered: number;
+  crushDamage: number;
+  stuns: number;
+  freezes: number;
+  parries: number;
+  attacksParried: number;
   ph: number;
 };
 
@@ -166,6 +180,7 @@ export type BattleAnalysis = {
     winningTeam: number | null;
     losingTeam: number | null;
     hasFlee: boolean;
+    isDraw: boolean;
   };
   type: string;
   statistics: BattleStatistics;
@@ -181,6 +196,7 @@ export class BattleProcessor {
     winningTeam: null as number | null,
     losingTeam: null as number | null,
     hasFlee: false,
+    isDraw: false,
   };
   private battleType = "";
   private lastAttackerId: string | null = null;
@@ -240,8 +256,6 @@ export class BattleProcessor {
     battleMeta: { characterId: string },
   ) {
     for (const move of moves) {
-      this.processOutcome(move);
-
       if (!move.actions.length) {
         this.updateHpTracking(move);
         continue;
@@ -249,16 +263,27 @@ export class BattleProcessor {
 
       const tspellAction = move.actions.find((a) => a.actionType === "tspell");
       const hasStepAction = move.actions.some((a) => a.actionType === "step");
+      const hasDamageOrSpell =
+        tspellAction ||
+        move.actions.some((a) =>
+          a.actionType.startsWith("+dmg") || a.actionType.startsWith("-dmg"),
+        );
 
       if (hasStepAction) {
         const attacker = this.warriors.get(move.attackerId!);
         if (attacker) {
-          attacker.turns++;
           attacker.steps++;
         }
       }
 
-      this.processTurnTracking(move, tspellAction);
+      if (!(hasStepAction && !hasDamageOrSpell)) {
+        this.processTurnTracking(move, tspellAction);
+      } else {
+        const attacker = this.warriors.get(move.attackerId!);
+        if (attacker) {
+          attacker.turns++;
+        }
+      }
       this.processActions(move, !!tspellAction, battleMeta);
       this.updateHpTracking(move);
     }
@@ -502,10 +527,6 @@ export class BattleProcessor {
           attacker.regeneratedEnergy -= value;
           break;
 
-        case "en-regen":
-          attacker.regeneratedEnergy += value;
-          break;
-
         case "+legbon_curse":
           attacker.legbonCurse++;
           break;
@@ -534,6 +555,144 @@ export class BattleProcessor {
             attacker.legbonLastheal++;
             attacker.legbonLasthealValue += value;
           }
+          break;
+
+        case "+legbon_frenzy_main":
+        case "+legbon_frenzy_off":
+          attacker.legbonFrenzy++;
+          break;
+
+        case "+legbon_pushback":
+          attacker.legbonPushback++;
+          break;
+
+        case "vamp_time":
+          attacker.vampirismHealing += value;
+          break;
+
+        case "+engback":
+          attacker.energyRecovered += value;
+          break;
+
+        case "+crush":
+          attacker.crushDamage += value;
+          break;
+
+        case "+stun":
+        case "+stun2":
+        case "+stun2-c":
+        case "+stun2-d":
+        case "+stun2-f":
+          attacker.stuns++;
+          break;
+
+        case "+freeze":
+          attacker.freezes++;
+          break;
+
+        case "+stun2-l":
+          attacker.stuns++;
+          break;
+
+        // Absorb regeneration
+        case "+absorb":
+          attacker.absorbedDamage -= value; // reduces net absorbed (regen)
+          break;
+
+        case "+absorbm":
+          attacker.absorbedMagicDamage -= value;
+          break;
+
+        case "+woundpoison":
+        case "-dmga":
+          break;
+
+        case "+endest":
+          attacker.destroyedEnergy += value;
+          break;
+
+        case "+manadest":
+          attacker.destroyedMana += value;
+          break;
+
+        // Informational buff/debuff modifiers — acknowledged, no stat tracking
+        case "skillId":
+        case "combo-max":
+        case "prepare":
+        case "+critslow_per":
+        case "+critsa_per":
+        case "+critpoison_per":
+        case "+of_crit":
+        case "+of_wound":
+        case "+of_woundpoison":
+        case "+wound":
+        case "+critwound":
+        case "dmg_hpp":
+        case "+exp":
+        case "+vulture":
+        case "+swing":
+        case "+distract":
+        case "+superspell-dispel":
+        case "+energy":
+        case "+abdest":
+        case "+critpierce":
+        case "tcustom":
+        case "shout":
+        case "afterheal":
+        case "energyout":
+        case "alllowdmg":
+        case "-ph":
+          break;
+
+        // Spell/aura effects on enemies/allies — informational
+        case "heal_per-enemies":
+        case "heal_per-allies":
+        case "lowheal_per-enemies":
+        case "hp_per-allies":
+        case "healall_per":
+        case "heal_target":
+        case "poison_lowdmg_per-enemies":
+        case "-poison_lowdmg_per":
+        case "+spell-taken_dmg-all":
+        case "spell-taken_dmg":
+        case "active_decblock_per":
+        case "active_absorbdest_per":
+        case "active_block_per":
+        case "active_decblock_per-enemies":
+        case "+acdmg_destroyed":
+        case "-redacdmg_per":
+        case "-redabdest_per":
+        case "+abdest_per":
+        case "+abmdest_per":
+        case "resfire_per":
+        case "resfrost_per":
+        case "reslight_per":
+        case "allslow_per":
+        case "sunshield_per":
+        case "lightshield":
+        case "achpp_per":
+        case "stinkbomb_crit":
+        case "stinkbomb_pierce":
+        case "critval-allies":
+        case "critval-enemies":
+        case "critmval-allies":
+        case "critmval-enemies":
+        case "aura-sa_per":
+        case "aura-ac_per":
+        case "aura-resall":
+        case "aura-adddmg2_per-meele":
+        case "removestun-allies":
+        case "removeslow-allies":
+        case "en-regen-cast":
+        case "-immunity_to_dmg":
+          break;
+
+        // Antidote / mana steal
+        case "antidote":
+          break;
+
+        case "stealmana":
+          if (defender) defender.destroyedMana += value;
           break;
       }
 
@@ -597,6 +756,42 @@ export class BattleProcessor {
 
         case "+actdmg":
           attacker.reducedPoisonResistance += value;
+          break;
+
+        case "-absorb":
+          defender.absorbedDamage += value;
+          break;
+
+        case "-absorbm":
+          defender.absorbedMagicDamage += value;
+          break;
+
+        case "-parry":
+          defender.parries++;
+          if (attacker) attacker.attacksParried++;
+          break;
+
+        case "-legbon_retaliation":
+          defender.legbonRetaliation++;
+          break;
+
+        case "-legbon_dmgred":
+          defender.legbonDmgred++;
+          break;
+
+        case "-legbon_resgain":
+          defender.legbonResgain++;
+          break;
+
+        case "-pierceb":
+          defender.blocks++;
+          break;
+
+        case "-arrowblock":
+          defender.blocks++;
+          break;
+
+        case "-tenacity":
           break;
       }
     }
@@ -737,7 +932,21 @@ export class BattleProcessor {
       legbonVerycrit: 0,
       legbonAnguish: 0,
       legbonPunctureValue: 0,
+      legbonFrenzy: 0,
+      legbonRetaliation: 0,
+      legbonDmgred: 0,
+      legbonResgain: 0,
+      legbonPushback: 0,
       legbons: 0,
+      absorbedDamage: 0,
+      absorbedMagicDamage: 0,
+      vampirismHealing: 0,
+      energyRecovered: 0,
+      crushDamage: 0,
+      stuns: 0,
+      freezes: 0,
+      parries: 0,
+      attacksParried: 0,
       ph: 0,
     };
   }
@@ -751,16 +960,6 @@ export class BattleProcessor {
     const lastTimestamp = events[events.length - 1]?.ev || 0;
 
     return lastTimestamp - firstTimestamp;
-  }
-
-  private processOutcome(move: ParsedMove) {
-    for (const { actionType, param } of move.actions) {
-      if (actionType === "winner") {
-        this.battleOutcome.winner = param;
-      } else if (actionType === "loser") {
-        this.battleOutcome.loser = param;
-      }
-    }
   }
 
   private determineBattleType() {
@@ -829,6 +1028,14 @@ export class BattleProcessor {
 
     const winnerNames = splitNames(this.battleOutcome.winner);
     const loserNames = splitNames(this.battleOutcome.loser);
+
+    // No winner AND no loser from the engine = draw (turns ran out)
+    if (winnerNames.length === 0 && loserNames.length === 0) {
+      this.battleOutcome.isDraw = true;
+      this.battleOutcome.winningTeam = null;
+      this.battleOutcome.losingTeam = null;
+      return;
+    }
 
     let winningTeam = getTeamFromNames(winnerNames);
     let losingTeam = getTeamFromNames(loserNames);
@@ -1023,7 +1230,12 @@ export class BattleProcessor {
       w.legbonGlare +
       w.legbonHolytouch +
       w.legbonVerycrit +
-      w.legbonAnguish
+      w.legbonAnguish +
+      w.legbonFrenzy +
+      w.legbonRetaliation +
+      w.legbonDmgred +
+      w.legbonResgain +
+      w.legbonPushback
     );
   }
 }

@@ -86,8 +86,16 @@ export class PaginationService {
 
     const queryTime = Date.now() - startTime;
 
+    const flattenedItems = items.map((battle) => ({
+      ...battle,
+      warriors: battle.warriors.map((w: Record<string, unknown>) => {
+        const { stats, ...rest } = w;
+        return { ...rest, ...(stats as Record<string, unknown>) };
+      }),
+    }));
+
     return {
-      data: items,
+      data: flattenedItems,
       pagination,
       performance: {
         queryTime,

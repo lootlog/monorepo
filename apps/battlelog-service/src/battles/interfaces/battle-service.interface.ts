@@ -1,13 +1,20 @@
-import type { Battle, BattleWarrior } from "src/shared/modules/drizzle/schema";
+import type {
+  Battle,
+  BattleWarrior,
+  WarriorStats,
+} from "src/shared/modules/drizzle/schema";
 import type { QueryBattlesDto } from "../dto/query-battles.dto";
 import type { UpdateBattleDto } from "../dto/update-battle.dto";
 import type { CreateBattleDto } from "../dto/create-battle.dto";
 import type { PaginationResult } from "./pagination.interface";
 import type { BattleAnalysis, ParsedMove } from "@lootlog/battle-processor";
 
-// Complete battle with all relations
+// Warrior with stats flattened into top-level fields (API response shape)
+export type FlatWarrior = Omit<BattleWarrior, "stats"> & WarriorStats;
+
+// Complete battle with all relations (API response shape)
 export interface BattleWithRelations extends Battle {
-  warriors: BattleWarrior[];
+  warriors: FlatWarrior[];
 }
 
 // Service method parameters

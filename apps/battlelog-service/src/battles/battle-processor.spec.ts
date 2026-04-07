@@ -641,5 +641,177 @@ describe("BattleProcessor", () => {
 
       expect(runner?.steps).toBe(3);
     });
+
+    it("should not double-count turns on step+damage moves", () => {
+      const battleData: CreateBattleDto = {
+        accountId: "test-account",
+        characterId: "1",
+        world: "test-world",
+        events: [
+          {
+            ev: 1000,
+            f: {
+              w: {
+                "1": {
+                  originalId: 101,
+                  name: "Runner",
+                  lvl: 50,
+                  prof: "w",
+                  icon: "icon1",
+                  team: 1,
+                },
+                "2": {
+                  originalId: 102,
+                  name: "Target",
+                  lvl: 45,
+                  prof: "p",
+                  icon: "icon2",
+                  team: 2,
+                },
+              },
+              m: [
+                "1=100;2=100;step",
+                "1=100;2=90;step;+dmg=200;-dmg=200",
+              ],
+            },
+          },
+        ],
+      };
+
+      const result = processor.processBattle(battleData);
+      const runner = result.warriors.find((w) => w.name === "Runner");
+
+      expect(runner?.steps).toBe(2);
+      expect(runner?.turns).toBe(2);
+      expect(runner?.normalAttacks).toBe(1);
+    });
+  });
+
+  describe("new action handlers", () => {
+    const makeSimpleBattle = (moves: string[]): CreateBattleDto => ({
+      accountId: "test-account",
+      characterId: "1",
+      world: "test-world",
+      events: [
+        {
+          ev: 1000,
+          f: {
+            w: {
+              "1": {
+                originalId: 101,
+                name: "Attacker",
+                lvl: 50,
+                prof: "w",
+                icon: "icon1",
+                team: 1,
+              },
+              "2": {
+                originalId: 102,
+                name: "Defender",
+                lvl: 45,
+                prof: "p",
+                icon: "icon2",
+                team: 2,
+              },
+            },
+            m: moves,
+          },
+        },
+      ],
+    });
+
+    it("should track vampirism healing", () => {
+      const result = processor.processBattle(
+        makeSimpleBattle(["1=100;2=90;+dmg=300;-dmg=300;vamp_time=45"]),
+      );
+      const attacker = result.warriors.find((w) => w.name === "Attacker");
+      expect(attacker?.vampirismHealing).toBe(45);
+    });
+
+    it("should track absorbed damage", () => {
+      const result = processor.processBattle(
+        makeSimpleBattle([
+          "1=100;2=100;+dmg=500;-dmg=300;-absorb=200",
+          "1=100;2=90;+dmgf=200;-dmgf=100;-absorbm=100",
+        ]),
+      );
+      const defender = result.warriors.find((w) => w.name === "Defender");
+      expect(defender?.absorbedDamage).toBe(200);
+      expect(defender?.absorbedMagicDamage).toBe(100);
+    });
+
+    it("should track energy recovered via +engback", () => {
+      const result = processor.processBattle(
+        makeSimpleBattle(["1=100;2=100;+dmg=100;-dmg=100;+engback=15"]),
+      );
+      const attacker = result.warriors.find((w) => w.name === "Attacker");
+      expect(attacker?.energyRecovered).toBe(15);
+    });
+
+    it("should track crush damage", () => {
+      const result = processor.processBattle(
+        makeSimpleBattle(["1=100;2=80;+dmg=500;-dmg=500;+crush=120"]),
+      );
+      const attacker = result.warriors.find((w) => w.name === "Attacker");
+      expect(attacker?.crushDamage).toBe(120);
+    });
+
+    it("should track stuns and freezes", () => {
+      const result = processor.processBattle(
+        makeSimpleBattle([
+          "1=100;2=100;+dmg=100;-dmg=100;+stun",
+          "1=100;2=90;+dmg=100;-dmg=100;+stun2",
+          "1=100;2=80;+dmg=100;-dmg=100;+freeze",
+        ]),
+      );
+      const attacker = result.warriors.find((w) => w.name === "Attacker");
+      expect(attacker?.stuns).toBe(2);
+      expect(attacker?.freezes).toBe(1);
+    });
+
+    it("should track parries", () => {
+      const result = processor.processBattle(
+        makeSimpleBattle([
+          "1=100;2=100;-parry",
+          "1=100;2=100;-parry",
+        ]),
+      );
+      const defender = result.warriors.find((w) => w.name === "Defender");
+      const attacker = result.warriors.find((w) => w.name === "Attacker");
+      expect(defender?.parries).toBe(2);
+      expect(attacker?.attacksParried).toBe(2);
+    });
+
+    it("should track missing legbons", () => {
+      const result = processor.processBattle(
+        makeSimpleBattle([
+          "1=100;2=100;+dmg=100;-dmg=100;+legbon_frenzy_main=1",
+          "1=100;2=90;+dmg=100;-dmg=100;+legbon_frenzy_off=1",
+          "1=100;2=80;+dmg=100;-dmg=100;+legbon_pushback",
+          "1=100;2=70;+dmg=100;-dmg=100;-legbon_retaliation",
+          "1=100;2=60;+dmg=100;-dmg=100;-legbon_dmgred=5",
+          "1=100;2=50;+dmg=100;-dmg=100;-legbon_resgain",
+        ]),
+      );
+      const attacker = result.warriors.find((w) => w.name === "Attacker");
+      const defender = result.warriors.find((w) => w.name === "Defender");
+
+      expect(attacker?.legbonFrenzy).toBe(2);
+      expect(attacker?.legbonPushback).toBe(1);
+      expect(defender?.legbonRetaliation).toBe(1);
+      expect(defender?.legbonDmgred).toBe(1);
+      expect(defender?.legbonResgain).toBe(1);
+    });
+
+    it("should not double-count en-regen", () => {
+      const result = processor.processBattle(
+        makeSimpleBattle(["1=100;2=100;+dmg=100;-dmg=100;en-regen=10"]),
+      );
+      const defender = result.warriors.find((w) => w.name === "Defender");
+      expect(defender?.regeneratedEnergy).toBe(10);
+
+      const attacker = result.warriors.find((w) => w.name === "Attacker");
+      expect(attacker?.regeneratedEnergy).toBe(0);
+    });
   });
 });

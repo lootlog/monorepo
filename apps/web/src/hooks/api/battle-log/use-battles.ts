@@ -81,6 +81,20 @@ export type Warrior = {
   legbonAnguishDamageTaken: number;
   stigmaDamageDealt: number;
   stigmaDamageTaken: number;
+  absorbedDamage: number;
+  absorbedMagicDamage: number;
+  vampirismHealing: number;
+  energyRecovered: number;
+  crushDamage: number;
+  stuns: number;
+  freezes: number;
+  parries: number;
+  attacksParried: number;
+  legbonFrenzy: number;
+  legbonRetaliation: number;
+  legbonDmgred: number;
+  legbonResgain: number;
+  legbonPushback: number;
   ph: number;
 };
 
@@ -99,6 +113,7 @@ export type Battle = {
   winningTeam: number;
   losingTeam: number;
   hasFlee: boolean;
+  isDraw: boolean;
   warriors: Warrior[];
   world: string;
   matchmaking: boolean;

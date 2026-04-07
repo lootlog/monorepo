@@ -95,6 +95,11 @@ export const STAT_CATEGORIES: StatCategory[] = [
         color: "text-purple-400",
       },
       {
+        key: "crushDamage",
+        label: "Obrażenia od zmiażdżenia",
+        color: "text-amber-400",
+      },
+      {
         key: "reflectedDamage",
         label: "Odbite obrażenia",
         color: "text-purple-400",
@@ -260,6 +265,31 @@ export const STAT_CATEGORIES: StatCategory[] = [
         label: "Przeszywająca skuteczność (wartość)",
         color: "text-red-300",
       },
+      {
+        key: "legbonFrenzy",
+        label: "Eskalacja szału",
+        color: "text-red-400",
+      },
+      {
+        key: "legbonRetaliation",
+        label: "Aura odwetu",
+        color: "text-orange-400",
+      },
+      {
+        key: "legbonDmgred",
+        label: "Fizyczna osłona",
+        color: "text-blue-400",
+      },
+      {
+        key: "legbonResgain",
+        label: "Ochrona żywiołów",
+        color: "text-green-400",
+      },
+      {
+        key: "legbonPushback",
+        label: "Odrzut",
+        color: "text-yellow-400",
+      },
     ],
   },
   {
@@ -293,6 +323,18 @@ export const STAT_CATEGORIES: StatCategory[] = [
         label: "Zablokowane obrażenia",
         color: "text-green-400",
       },
+      { key: "parries", label: "Parowania", color: "text-blue-400" },
+      { key: "attacksParried", label: "Sparowane ataki", color: "text-red-400" },
+      {
+        key: "absorbedDamage",
+        label: "Zaabsorbowane obrażenia fiz.",
+        color: "text-sky-400",
+      },
+      {
+        key: "absorbedMagicDamage",
+        label: "Zaabsorbowane obrażenia mag.",
+        color: "text-indigo-400",
+      },
     ],
   },
   {
@@ -307,6 +349,11 @@ export const STAT_CATEGORIES: StatCategory[] = [
         key: "activeHealing",
         label: "Aktywne leczenie",
         color: "text-green-400",
+      },
+      {
+        key: "vampirismHealing",
+        label: "Wampiryzm",
+        color: "text-red-400",
       },
     ],
   },
@@ -327,6 +374,28 @@ export const STAT_CATEGORIES: StatCategory[] = [
         key: "regeneratedEnergy",
         label: "Zregenerowana energia",
         color: "text-cyan-400",
+      },
+      {
+        key: "energyRecovered",
+        label: "Odzyskana energia",
+        color: "text-cyan-400",
+      },
+    ],
+  },
+  {
+    name: "Kontrola tłumu",
+    stats: [
+      { key: "stuns", label: "Ogłuszenia", color: "text-yellow-400" },
+      { key: "freezes", label: "Zamrożenia", color: "text-cyan-400" },
+      {
+        key: "attacksEvaded",
+        label: "Uniknięte ataki",
+        color: "text-green-400",
+      },
+      {
+        key: "attacksBlocked",
+        label: "Zablokowane ataki",
+        color: "text-blue-400",
       },
     ],
   },

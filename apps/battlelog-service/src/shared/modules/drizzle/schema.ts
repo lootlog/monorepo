@@ -36,6 +36,7 @@ export const battles = pgTable(
     losingTeam: integer("losingTeam").notNull(),
     honorPoints: integer("honorPoints").default(0).notNull(),
     hasFlee: boolean("hasFlee").default(false).notNull(),
+    isDraw: boolean("isDraw").default(false).notNull(),
     matchmaking: boolean("matchmaking").default(false).notNull(),
     statistics: jsonb("statistics").notNull(),
 
@@ -93,6 +94,93 @@ export const userCharacters = pgTable(
   ],
 );
 
+export type WarriorStats = {
+  turnsLost?: number;
+  steps?: number;
+  normalAttacks?: number;
+  spellsUsed?: number;
+  spellsUsedMap?: Record<string, number>;
+  damageDealt?: number;
+  distanceDamage?: number;
+  meleeDamage?: number;
+  auxiliaryDamage?: number;
+  fireDamage?: number;
+  frostDamage?: number;
+  lightningDamage?: number;
+  thirdAttDamage?: number;
+  damageDealtAfterDefensive?: number;
+  damageDealtAfterDefensivePercentage?: number;
+  damageTaken?: number;
+  distanceDamageTaken?: number;
+  meleeDamageTaken?: number;
+  auxiliaryDamageTaken?: number;
+  fireDamageTaken?: number;
+  frostDamageTaken?: number;
+  lightningDamageTaken?: number;
+  thirdAttDamageTaken?: number;
+  flatDamageTaken?: number;
+  rageDamageDealt?: number;
+  trueDamageDealt?: number;
+  trueDamageTaken?: number;
+  stigmaDamageDealt?: number;
+  stigmaDamageTaken?: number;
+  passiveHealing?: number;
+  activeHealing?: number;
+  armorPierces?: number;
+  criticalHits?: number;
+  reducedArmor?: number;
+  reducedPoisonResistance?: number;
+  magicResistanceDestroyed?: number;
+  evasions?: number;
+  attacksEvaded?: number;
+  counters?: number;
+  fastArrows?: number;
+  blocks?: number;
+  attacksBlocked?: number;
+  blockedDamage?: number;
+  woundDamageTaken?: number;
+  poisonDamageTaken?: number;
+  injureDamageTaken?: number;
+  injures?: number;
+  critWoundDamageTaken?: number;
+  firePassiveDamageTaken?: number;
+  lightningPassiveDamageTaken?: number;
+  destroyedEnergy?: number;
+  destroyedMana?: number;
+  regeneratedEnergy?: number;
+  regeneratedMana?: number;
+  reflectedDamage?: number;
+  reflectedDamageTaken?: number;
+  legbons?: number;
+  legbonCurse?: number;
+  legbonCleanse?: number;
+  legbonLastheal?: number;
+  legbonLasthealValue?: number;
+  legbonGlare?: number;
+  legbonHolytouch?: number;
+  legbonHolytouchValue?: number;
+  legbonCritredValue?: number;
+  legbonFacadeValue?: number;
+  legbonPunctureValue?: number;
+  legbonVerycrit?: number;
+  legbonAnguish?: number;
+  legbonAnguishDamageTaken?: number;
+  legbonFrenzy?: number;
+  legbonRetaliation?: number;
+  legbonDmgred?: number;
+  legbonResgain?: number;
+  legbonPushback?: number;
+  absorbedDamage?: number;
+  absorbedMagicDamage?: number;
+  vampirismHealing?: number;
+  energyRecovered?: number;
+  crushDamage?: number;
+  stuns?: number;
+  freezes?: number;
+  parries?: number;
+  attacksParried?: number;
+};
+
 export const battleWarriors = pgTable(
   "battle_warriors",
   {
@@ -110,106 +198,14 @@ export const battleWarriors = pgTable(
     icon: text("icon").notNull(),
     team: integer("team").notNull(),
     turns: integer("turns").notNull(),
-    turnsLost: integer("turnsLost").default(0).notNull(),
-    steps: integer("steps").default(0).notNull(),
-    normalAttacks: integer("normalAttacks").default(0).notNull(),
-    spellsUsed: integer("spellsUsed").default(0).notNull(),
-    spellsUsedMap: jsonb("spellsUsedMap").default({}).notNull(),
 
     isDead: boolean("isDead").default(false).notNull(),
     surrendered: boolean("surrendered").default(false).notNull(),
     fled: boolean("fled").default(false).notNull(),
     maxHp: integer("maxHp").default(0).notNull(),
-
-    damageDealt: integer("damageDealt").default(0).notNull(),
-    distanceDamage: integer("distanceDamage").default(0).notNull(),
-    meleeDamage: integer("meleeDamage").default(0).notNull(),
-    auxiliaryDamage: integer("auxiliaryDamage").default(0).notNull(),
-    fireDamage: integer("fireDamage").default(0).notNull(),
-    frostDamage: integer("frostDamage").default(0).notNull(),
-    lightningDamage: integer("lightningDamage").default(0).notNull(),
-    thirdAttDamage: integer("thirdAttDamage").default(0).notNull(),
-    damageDealtAfterDefensive: integer("damageDealtAfterDefensive")
-      .default(0)
-      .notNull(),
-    damageDealtAfterDefensivePercentage: doublePrecision(
-      "damageDealtAfterDefensivePercentage",
-    )
-      .default(0)
-      .notNull(),
-    damageTaken: integer("damageTaken").default(0).notNull(),
-    distanceDamageTaken: integer("distanceDamageTaken").default(0).notNull(),
-    meleeDamageTaken: integer("meleeDamageTaken").default(0).notNull(),
-    auxiliaryDamageTaken: integer("auxiliaryDamageTaken").default(0).notNull(),
-    fireDamageTaken: integer("fireDamageTaken").default(0).notNull(),
-    frostDamageTaken: integer("frostDamageTaken").default(0).notNull(),
-    lightningDamageTaken: integer("lightningDamageTaken").default(0).notNull(),
-    thirdAttDamageTaken: integer("thirdAttDamageTaken").default(0).notNull(),
-    flatDamageTaken: integer("flatDamageTaken").default(0).notNull(),
-    rageDamageDealt: integer("rageDamageDealt").default(0).notNull(),
-    trueDamageDealt: integer("trueDamageDealt").default(0).notNull(),
-    trueDamageTaken: integer("trueDamageTaken").default(0).notNull(),
-    stigmaDamageDealt: integer("stigmaDamageDealt").default(0).notNull(),
-    stigmaDamageTaken: integer("stigmaDamageTaken").default(0).notNull(),
-
-    passiveHealing: integer("passiveHealing").default(0).notNull(),
-    activeHealing: integer("activeHealing").default(0).notNull(),
-
-    armorPierces: integer("armorPierces").default(0).notNull(),
-    criticalHits: integer("criticalHits").default(0).notNull(),
-    reducedArmor: integer("reducedArmor").default(0).notNull(),
-    reducedPoisonResistance: integer("reducedPoisonResistance")
-      .default(0)
-      .notNull(),
-    magicResistanceDestroyed: integer("magicResistanceDestroyed")
-      .default(0)
-      .notNull(),
-    evasions: integer("evasions").default(0).notNull(),
-    attacksEvaded: integer("attacksEvaded").default(0).notNull(),
-    counters: integer("counters").default(0).notNull(),
-    fastArrows: integer("fastArrows").default(0).notNull(),
-    blocks: integer("blocks").default(0).notNull(),
-    attacksBlocked: integer("attacksBlocked").default(0).notNull(),
-    blockedDamage: integer("blockedDamage").default(0).notNull(),
-
-    woundDamageTaken: integer("woundDamageTaken").default(0).notNull(),
-    poisonDamageTaken: integer("poisonDamageTaken").default(0).notNull(),
-    injureDamageTaken: integer("injureDamageTaken").default(0).notNull(),
-    injures: integer("injures").default(0).notNull(),
-    critWoundDamageTaken: integer("critWoundDamageTaken").default(0).notNull(),
-    firePassiveDamageTaken: integer("firePassiveDamageTaken")
-      .default(0)
-      .notNull(),
-    lightningPassiveDamageTaken: integer("lightningPassiveDamageTaken")
-      .default(0)
-      .notNull(),
-
-    destroyedEnergy: integer("destroyedEnergy").default(0).notNull(),
-    destroyedMana: integer("destroyedMana").default(0).notNull(),
-    regeneratedEnergy: integer("regeneratedEnergy").default(0).notNull(),
-    regeneratedMana: integer("regeneratedMana").default(0).notNull(),
-
-    reflectedDamage: integer("reflectedDamage").default(0).notNull(),
-    reflectedDamageTaken: integer("reflectedDamageTaken").default(0).notNull(),
-
-    legbons: integer("legbons").default(0).notNull(),
-    legbonCurse: integer("legbonCurse").default(0).notNull(),
-    legbonCleanse: integer("legbonCleanse").default(0).notNull(),
-    legbonLastheal: integer("legbonLastheal").default(0).notNull(),
-    legbonLasthealValue: integer("legbonLasthealValue").default(0).notNull(),
-    legbonGlare: integer("legbonGlare").default(0).notNull(),
-    legbonHolytouch: integer("legbonHolytouch").default(0).notNull(),
-    legbonHolytouchValue: integer("legbonHolytouchValue").default(0).notNull(),
-    legbonCritredValue: integer("legbonCritredValue").default(0).notNull(),
-    legbonFacadeValue: integer("legbonFacadeValue").default(0).notNull(),
-    legbonPunctureValue: integer("legbonPunctureValue").default(0).notNull(),
-    legbonVerycrit: integer("legbonVerycrit").default(0).notNull(),
-    legbonAnguish: integer("legbonAnguish").default(0).notNull(),
-    legbonAnguishDamageTaken: integer("legbonAnguishDamageTaken")
-      .default(0)
-      .notNull(),
-
     ph: integer("ph").default(0).notNull(),
+
+    stats: jsonb("stats").notNull().default({}).$type<WarriorStats>(),
   },
   (table) => [
     index("battle_warriors_originalId_idx").on(table.originalId),

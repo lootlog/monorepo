@@ -30,6 +30,7 @@ import {
   battles,
   battleWarriors,
   userCharacters,
+  type WarriorStats,
 } from "src/shared/modules/drizzle/schema";
 import { R2Service } from "src/shared/modules/r2/r2.service";
 import {
@@ -58,6 +59,18 @@ export class BattlesService implements IBattlesService {
     private readonly paginationService: PaginationService,
     private readonly battleAnalyticsService: BattleAnalyticsService,
   ) {}
+
+  private flattenBattleWarriors<
+    T extends { warriors: Array<{ stats: WarriorStats }> },
+  >(battle: T) {
+    return {
+      ...battle,
+      warriors: battle.warriors.map((w) => {
+        const { stats, ...rest } = w;
+        return { ...rest, ...stats };
+      }),
+    };
+  }
 
   private warriorExists(
     battlesRef: typeof battles,
@@ -252,7 +265,7 @@ export class BattlesService implements IBattlesService {
       throw new NotFoundException(`Battle with ID ${battleId} not found`);
     }
 
-    return battle;
+    return this.flattenBattleWarriors(battle);
   }
 
   async updateBattle(
@@ -281,7 +294,7 @@ export class BattlesService implements IBattlesService {
       throw new NotFoundException(`Battle with ID ${battleId} not found`);
     }
 
-    return battle;
+    return this.flattenBattleWarriors(battle);
   }
 
   async deleteUserBattles(userId: string): Promise<{ deletedCount: number }> {
@@ -354,7 +367,7 @@ export class BattlesService implements IBattlesService {
       );
     }
 
-    return battle;
+    return this.flattenBattleWarriors(battle);
   }
 
   async getPublicBattleRaw(battleId: string): Promise<RawBattleData> {
@@ -612,9 +625,10 @@ export class BattlesService implements IBattlesService {
             type: analysis.type,
             winner: analysis.outcome.winner,
             loser: analysis.outcome.loser,
-            winningTeam: analysis.outcome.winningTeam!,
-            losingTeam: analysis.outcome.losingTeam!,
+            winningTeam: analysis.outcome.winningTeam ?? 0,
+            losingTeam: analysis.outcome.losingTeam ?? 0,
             hasFlee: analysis.outcome.hasFlee,
+            isDraw: analysis.outcome.isDraw,
             matchmaking: !!analysis.matchmaking,
             statistics: analysis.statistics,
             ...(analysis.matchmaking && {
@@ -630,92 +644,66 @@ export class BattlesService implements IBattlesService {
           })
           .returning();
 
-        const warriorValues = analysis.warriors.map((warrior: Warrior) => ({
-          battleId: insertedBattle.id,
-          originalId: warrior.originalId,
-          name: warrior.name,
-          lvl: warrior.lvl,
-          prof: warrior.prof,
-          icon: warrior.icon,
-          team: warrior.team,
-          isDead: warrior.isDead,
-          surrendered: warrior.surrendered,
-          fled: warrior.fled,
-          maxHp: warrior.maxHp,
-          turns: warrior.turns,
-          turnsLost: warrior.turnsLost,
-          steps: warrior.steps,
-          normalAttacks: warrior.normalAttacks,
-          spellsUsed: warrior.spellsUsed,
-          spellsUsedMap: warrior.spellsUsedMap,
-          damageDealt: warrior.damageDealt,
-          distanceDamage: warrior.distanceDamage,
-          meleeDamage: warrior.meleeDamage,
-          auxiliaryDamage: warrior.auxiliaryDamage,
-          fireDamage: warrior.fireDamage,
-          frostDamage: warrior.frostDamage,
-          lightningDamage: warrior.lightningDamage,
-          thirdAttDamage: warrior.thirdAttDamage,
-          damageDealtAfterDefensive: warrior.damageDealtAfterDefensive,
-          damageDealtAfterDefensivePercentage:
-            warrior.damageDealtAfterDefensivePercentage,
-          damageTaken: warrior.damageTaken,
-          distanceDamageTaken: warrior.distanceDamageTaken,
-          meleeDamageTaken: warrior.meleeDamageTaken,
-          auxiliaryDamageTaken: warrior.auxiliaryDamageTaken,
-          fireDamageTaken: warrior.fireDamageTaken,
-          frostDamageTaken: warrior.frostDamageTaken,
-          lightningDamageTaken: warrior.lightningDamageTaken,
-          thirdAttDamageTaken: warrior.thirdAttDamageTaken,
-          flatDamageTaken: warrior.flatDamageTaken,
-          rageDamageDealt: warrior.rageDamageDealt,
-          trueDamageDealt: warrior.trueDamageDealt,
-          trueDamageTaken: warrior.trueDamageTaken,
-          stigmaDamageDealt: warrior.stigmaDamageDealt,
-          stigmaDamageTaken: warrior.stigmaDamageTaken,
-          passiveHealing: warrior.passiveHealing,
-          activeHealing: warrior.activeHealing,
-          armorPierces: warrior.armorPierces,
-          criticalHits: warrior.criticalHits,
-          reducedArmor: warrior.reducedArmor,
-          reducedPoisonResistance: warrior.reducedPoisonResistance,
-          magicResistanceDestroyed: warrior.magicResistanceDestroyed,
-          evasions: warrior.evasions,
-          attacksEvaded: warrior.attacksEvaded,
-          counters: warrior.counters,
-          fastArrows: warrior.fastArrows,
-          blocks: warrior.blocks,
-          attacksBlocked: warrior.attacksBlocked,
-          blockedDamage: warrior.blockedDamage,
-          woundDamageTaken: warrior.woundDamageTaken,
-          poisonDamageTaken: warrior.poisonDamageTaken,
-          injureDamageTaken: warrior.injureDamageTaken,
-          injures: warrior.injures,
-          critWoundDamageTaken: warrior.critWoundDamageTaken,
-          firePassiveDamageTaken: warrior.firePassiveDamageTaken,
-          lightningPassiveDamageTaken: warrior.lightningPassiveDamageTaken,
-          destroyedEnergy: warrior.destroyedEnergy,
-          destroyedMana: warrior.destroyedMana,
-          regeneratedEnergy: warrior.regeneratedEnergy,
-          regeneratedMana: warrior.regeneratedMana,
-          reflectedDamage: warrior.reflectedDamage,
-          reflectedDamageTaken: warrior.reflectedDamageTaken,
-          legbonCurse: warrior.legbonCurse,
-          legbonCleanse: warrior.legbonCleanse,
-          legbonLastheal: warrior.legbonLastheal,
-          legbonLasthealValue: warrior.legbonLasthealValue,
-          legbonGlare: warrior.legbonGlare,
-          legbonHolytouch: warrior.legbonHolytouch,
-          legbonHolytouchValue: warrior.legbonHolytouchValue,
-          legbonCritredValue: warrior.legbonCritredValue,
-          legbonVerycrit: warrior.legbonVerycrit,
-          legbonAnguish: warrior.legbonAnguish,
-          legbonFacadeValue: warrior.legbonFacadeValue,
-          legbonPunctureValue: warrior.legbonPunctureValue,
-          legbons: warrior.legbons,
-          legbonAnguishDamageTaken: warrior.legbonAnguishDamageTaken,
-          ph: warrior.ph,
-        }));
+        const warriorValues = analysis.warriors.map((warrior: Warrior) => {
+          const stats: Record<string, unknown> = {};
+          const statKeys: (keyof Warrior)[] = [
+            "turnsLost", "steps", "normalAttacks", "spellsUsed", "spellsUsedMap",
+            "damageDealt", "distanceDamage", "meleeDamage", "auxiliaryDamage",
+            "fireDamage", "frostDamage", "lightningDamage", "thirdAttDamage",
+            "damageDealtAfterDefensive", "damageDealtAfterDefensivePercentage",
+            "damageTaken", "distanceDamageTaken", "meleeDamageTaken",
+            "auxiliaryDamageTaken", "fireDamageTaken", "frostDamageTaken",
+            "lightningDamageTaken", "thirdAttDamageTaken", "flatDamageTaken",
+            "rageDamageDealt", "trueDamageDealt", "trueDamageTaken",
+            "stigmaDamageDealt", "stigmaDamageTaken",
+            "passiveHealing", "activeHealing",
+            "armorPierces", "criticalHits", "reducedArmor",
+            "reducedPoisonResistance", "magicResistanceDestroyed",
+            "evasions", "attacksEvaded", "counters", "fastArrows",
+            "blocks", "attacksBlocked", "blockedDamage",
+            "woundDamageTaken", "poisonDamageTaken", "injureDamageTaken",
+            "injures", "critWoundDamageTaken",
+            "firePassiveDamageTaken", "lightningPassiveDamageTaken",
+            "destroyedEnergy", "destroyedMana", "regeneratedEnergy", "regeneratedMana",
+            "reflectedDamage", "reflectedDamageTaken",
+            "legbons", "legbonCurse", "legbonCleanse",
+            "legbonLastheal", "legbonLasthealValue",
+            "legbonGlare", "legbonHolytouch", "legbonHolytouchValue",
+            "legbonCritredValue", "legbonFacadeValue", "legbonPunctureValue",
+            "legbonVerycrit", "legbonAnguish", "legbonAnguishDamageTaken",
+            "legbonFrenzy", "legbonRetaliation", "legbonDmgred",
+            "legbonResgain", "legbonPushback",
+            "absorbedDamage", "absorbedMagicDamage", "vampirismHealing",
+            "energyRecovered", "crushDamage",
+            "stuns", "freezes", "parries", "attacksParried",
+          ];
+
+          for (const key of statKeys) {
+            const val = warrior[key];
+            if (typeof val === "number" && val !== 0) {
+              stats[key] = val;
+            } else if (typeof val === "object" && val !== null && Object.keys(val).length > 0) {
+              stats[key] = val;
+            }
+          }
+
+          return {
+            battleId: insertedBattle.id,
+            originalId: warrior.originalId,
+            name: warrior.name,
+            lvl: warrior.lvl,
+            prof: warrior.prof,
+            icon: warrior.icon,
+            team: warrior.team,
+            isDead: warrior.isDead,
+            surrendered: warrior.surrendered,
+            fled: warrior.fled,
+            maxHp: warrior.maxHp,
+            turns: warrior.turns,
+            ph: warrior.ph,
+            stats,
+          };
+        });
 
         const insertedWarriors = await tx
           .insert(battleWarriors)
