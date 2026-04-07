@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useTimersStore } from "@/store/timers.store";
+import { useTimersStore, TIMERS_STORAGE_KEY } from "@/store/timers.store";
 import {
   useTimerSettings,
   useMigrateTimerSettings,
@@ -61,7 +61,7 @@ export const useTimerSettingsSync = () => {
     const initializeSettings = async () => {
       const localStore = useTimersStore.getState();
 
-      const localStorageData = localStorage.getItem("ll-timers-state");
+      const localStorageData = localStorage.getItem(TIMERS_STORAGE_KEY);
       let localTimestamp: number | undefined;
 
       if (localStorageData) {

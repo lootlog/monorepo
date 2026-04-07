@@ -1,6 +1,9 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import { storageKey } from "@/lib/storage-key";
 import type { PartyGatheringCharacter } from "@/types/party-gathering";
+
+const STORAGE_KEY = storageKey("ll-party-finder-storage");
 
 export type PartyFinderNpc = {
   id: number;
@@ -126,7 +129,7 @@ export const usePartyFinderStore = create<PartyFinderState>()(
         }),
     }),
     {
-      name: "ll-party-finder-storage",
+      name: STORAGE_KEY,
       storage: createJSONStorage(() => sessionStorage),
       partialize: (state) => ({
         partyGathering: state.partyGathering,

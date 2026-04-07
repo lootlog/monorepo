@@ -1,5 +1,8 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { storageKey } from "@/lib/storage-key";
+
+const STORAGE_KEY = storageKey("ll:settings:state");
 
 interface SettingsState {
   allowWorldSelection?: boolean;
@@ -48,7 +51,7 @@ export const useSettingsStore = create<SettingsState>()(
       },
     }),
     {
-      name: "ll:settings:state",
+      name: STORAGE_KEY,
       partialize: (state) => ({
         allowWorldSelection: state.allowWorldSelection,
         worldByGuildId: state.worldByGuildId,

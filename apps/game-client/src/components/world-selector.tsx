@@ -5,6 +5,10 @@ import { cn } from "@/lib/utils";
 import { useSettingsStore } from "@/store/settings.store";
 import { type FC, useEffect, useMemo } from "react";
 import { useLocalStorage } from "react-use";
+import { storageKey } from "@/lib/storage-key";
+
+const recentWorldsKey = (accountId: string, characterId: string) =>
+  storageKey(`ll:recent-worlds:${accountId}:${characterId}`);
 
 export type WorldSelectorProps = {
   disabled?: boolean;
@@ -27,7 +31,7 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
   const { data: worlds, isFetched } = useWorlds({ guildId });
 
   const [recentWorlds, setRecentWorlds] = useLocalStorage<string[]>(
-    `ll:recent-worlds:${accountId}:${characterId}`,
+    recentWorldsKey(accountId, characterId),
     [],
   );
 

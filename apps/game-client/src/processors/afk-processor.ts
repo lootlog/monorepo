@@ -1,22 +1,20 @@
-import { useRef } from "react";
 import { getSocket } from "@/lib/socket";
 import { useGlobalStore } from "@/store/global.store";
 import { GatewayEvent } from "@/config/gateway";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import { Game } from "@/lib/game";
 
-export const useAfkHandler = () => {
-  const previousStasis = useRef<number | null>(null);
+export class AfkProcessor {
+  private previousStasis: number | null = null;
 
-  const handleAfkEvent = (event: GameEvent) => {
+  handle(event: GameEvent): void {
     if (event.h?.stasis === undefined) return;
 
     const isAfk = event.h.stasis === 1;
 
-    if (previousStasis.current !== event.h.stasis) {
-      previousStasis.current = event.h.stasis;
+    if (this.previousStasis !== event.h.stasis) {
+      this.previousStasis = event.h.stasis;
 
-      // Read current socket state from store (not frozen hook values)
       const { connected, joinedGuilds } = useGlobalStore.getState().socketState;
 
       if (connected && joinedGuilds.length > 0) {
@@ -28,7 +26,5 @@ export const useAfkHandler = () => {
         });
       }
     }
-  };
-
-  return { handleAfkEvent };
-};
+  }
+}

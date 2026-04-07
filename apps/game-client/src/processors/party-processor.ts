@@ -1,4 +1,3 @@
-import { useEffectEvent } from "react";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import { type PartyMember, usePartyStore } from "@/store/party.store";
 
@@ -50,37 +49,32 @@ function parsePartyMembersFromGame(
   }));
 }
 
-export const usePartyHandler = () => {
-  const setMembers = usePartyStore((s) => s.setMembers);
-  const clearParty = usePartyStore((s) => s.clearParty);
-
-  const handlePartyEvent = useEffectEvent((event: GameEvent) => {
+export class PartyProcessor {
+  handle(event: GameEvent): void {
     if (event.party === undefined) return;
 
     const members = event.party.members;
     if (!members || Object.keys(members).length === 0) {
-      clearParty();
+      usePartyStore.getState().clearParty();
       return;
     }
 
     const parsed = parsePartyMembersFromEvent(members);
-    setMembers(parsed);
-  });
+    usePartyStore.getState().setMembers(parsed);
+  }
 
-  const handleInitialPartyDetection = useEffectEvent(() => {
+  handleInitialDetection(): void {
     try {
       const membersMap = window.Engine?.party?.getMembers?.();
       if (!membersMap || membersMap.size === 0) {
-        clearParty();
+        usePartyStore.getState().clearParty();
         return;
       }
 
       const parsed = parsePartyMembersFromGame(membersMap);
-      setMembers(parsed);
+      usePartyStore.getState().setMembers(parsed);
     } catch (error) {
       console.warn("Failed to get initial party members:", error);
     }
-  });
-
-  return { handlePartyEvent, handleInitialPartyDetection };
-};
+  }
+}

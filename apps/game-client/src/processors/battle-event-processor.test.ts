@@ -1,19 +1,15 @@
-import { renderHook } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { useBattleEventHandler } from "./use-battle-event-handler";
+import { BattleEventProcessor } from "./battle-event-processor";
 import { useBattleStore } from "@/store/game-store/battle.store";
 import { NpcType } from "@/hooks/api/use-npcs";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 
-const mockCreateBattle = vi.fn();
-const mockCreateKill = vi.fn();
+const mockCreateKill = vi.fn().mockResolvedValue({ updated: 1 });
+const mockCreateBattle = vi.fn().mockResolvedValue({ battleId: 1 });
 
-vi.mock("@/hooks/api/use-create-battle", () => ({
-  useCreateBattle: () => ({ mutate: mockCreateBattle }),
-}));
-
-vi.mock("@/hooks/api/use-create-kill", () => ({
-  useCreateKill: () => ({ mutate: mockCreateKill }),
+vi.mock("@/services/api.service", () => ({
+  createKill: (...args: unknown[]) => mockCreateKill(...args),
+  createBattle: (...args: unknown[]) => mockCreateBattle(...args),
 }));
 
 vi.mock("@/lib/game", () => ({
@@ -52,9 +48,12 @@ vi.mock("@/store/battle-panel.store", () => ({
   },
 }));
 
-describe("useBattleEventHandler", () => {
+describe("BattleEventProcessor", () => {
+  let processor: BattleEventProcessor;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    processor = new BattleEventProcessor();
     useBattleStore.setState({
       events: [],
       battleState: "idle",
@@ -71,13 +70,11 @@ describe("useBattleEventHandler", () => {
 
   describe("battle initialization", () => {
     it("should clear events and set battle state on init", async () => {
-      const { result } = renderHook(() => useBattleEventHandler());
-
       const initEvent: GameEvent = {
         f: { init: "1" },
       };
 
-      await result.current.handleBattleEvents(initEvent);
+      await processor.handle(initEvent);
 
       const state = useBattleStore.getState();
       expect(state.battleState).toBe("in-battle");
@@ -85,11 +82,9 @@ describe("useBattleEventHandler", () => {
     });
 
     it("should do nothing if event.f is undefined", async () => {
-      const { result } = renderHook(() => useBattleEventHandler());
-
       const emptyEvent: GameEvent = {};
 
-      await result.current.handleBattleEvents(emptyEvent);
+      await processor.handle(emptyEvent);
 
       const state = useBattleStore.getState();
       expect(state.battleState).toBe("idle");
@@ -98,8 +93,6 @@ describe("useBattleEventHandler", () => {
 
   describe("warrior updates", () => {
     it("should update battle warriors when event.f.w is present", async () => {
-      const { result } = renderHook(() => useBattleEventHandler());
-
       const warriorEvent: GameEvent = {
         f: {
           w: {
@@ -119,7 +112,7 @@ describe("useBattleEventHandler", () => {
         },
       };
 
-      await result.current.handleBattleEvents(warriorEvent);
+      await processor.handle(warriorEvent);
 
       const state = useBattleStore.getState();
       expect(state.battleWarriors["12345"]).toBeDefined();
@@ -129,13 +122,12 @@ describe("useBattleEventHandler", () => {
   describe("battle collection disabled", () => {
     it("should not add events when battle collection is disabled", async () => {
       mockBattlePanelStore.isBattleCollectionEnabled = false;
-      const { result } = renderHook(() => useBattleEventHandler());
 
       const event: GameEvent = {
         f: { init: "1" },
       };
 
-      await result.current.handleBattleEvents(event);
+      await processor.handle(event);
 
       const state = useBattleStore.getState();
       expect(state.events).toHaveLength(0);
@@ -183,13 +175,44 @@ describe("useBattleEventHandler", () => {
         battleWarriors: {},
       });
 
-      const { result } = renderHook(() => useBattleEventHandler());
+      // Simulate warrior event to trigger incremental team detection
+      const warriorEvent: GameEvent = {
+        f: {
+          w: {
+            "111": {
+              id: 111,
+              originalId: 111,
+              name: "Player1",
+              team: 1,
+              hpp: 100,
+              lvl: 100,
+              icon: "",
+              prof: "w",
+              wt: 0,
+              type: 0,
+            },
+            "222": {
+              id: 222,
+              originalId: 222,
+              name: "Player2",
+              team: 2,
+              hpp: 0,
+              lvl: 100,
+              icon: "",
+              prof: "m",
+              wt: 0,
+              type: 0,
+            },
+          },
+        },
+      };
+      await processor.handle(warriorEvent);
 
       const endEvent: GameEvent = {
         f: { endBattle: 1, m: ["final"] },
       };
 
-      await result.current.handleBattleEvents(endEvent);
+      await processor.handle(endEvent);
 
       expect(mockCreateBattle).toHaveBeenCalledWith({
         accountId: "67890",
@@ -240,13 +263,44 @@ describe("useBattleEventHandler", () => {
         battleWarriors: {},
       });
 
-      const { result } = renderHook(() => useBattleEventHandler());
+      // Simulate warrior event — same team
+      const warriorEvent: GameEvent = {
+        f: {
+          w: {
+            "111": {
+              id: 111,
+              originalId: 111,
+              name: "Player1",
+              team: 1,
+              hpp: 100,
+              lvl: 100,
+              icon: "",
+              prof: "w",
+              wt: 0,
+              type: 0,
+            },
+            "222": {
+              id: 222,
+              originalId: 222,
+              name: "Player2",
+              team: 1,
+              hpp: 100,
+              lvl: 100,
+              icon: "",
+              prof: "m",
+              wt: 0,
+              type: 0,
+            },
+          },
+        },
+      };
+      await processor.handle(warriorEvent);
 
       const endEvent: GameEvent = {
         f: { endBattle: 1, m: ["final"] },
       };
 
-      await result.current.handleBattleEvents(endEvent);
+      await processor.handle(endEvent);
 
       expect(mockCreateBattle).not.toHaveBeenCalled();
     });
@@ -294,13 +348,11 @@ describe("useBattleEventHandler", () => {
         },
       });
 
-      const { result } = renderHook(() => useBattleEventHandler());
-
       const endEvent: GameEvent = {
         f: { endBattle: 1, m: ["final"] },
       };
 
-      await result.current.handleBattleEvents(endEvent);
+      await processor.handle(endEvent);
 
       expect(mockCreateKill).toHaveBeenCalledWith({
         world: "pandora",
@@ -348,13 +400,11 @@ describe("useBattleEventHandler", () => {
         },
       });
 
-      const { result } = renderHook(() => useBattleEventHandler());
-
       const endEvent: GameEvent = {
         f: { endBattle: 1, m: ["final"] },
       };
 
-      await result.current.handleBattleEvents(endEvent);
+      await processor.handle(endEvent);
 
       expect(mockCreateKill).toHaveBeenCalledWith({
         world: "pandora",
@@ -460,13 +510,11 @@ describe("useBattleEventHandler", () => {
         },
       });
 
-      const { result } = renderHook(() => useBattleEventHandler());
-
       const endEvent: GameEvent = {
         f: { endBattle: 1, m: ["final"] },
       };
 
-      await result.current.handleBattleEvents(endEvent);
+      await processor.handle(endEvent);
 
       expect(mockCreateKill).toHaveBeenCalledTimes(1);
       expect(mockCreateKill).toHaveBeenCalledWith(
@@ -520,13 +568,11 @@ describe("useBattleEventHandler", () => {
         },
       });
 
-      const { result } = renderHook(() => useBattleEventHandler());
-
       const endEvent: GameEvent = {
         f: { endBattle: 1, m: ["final"] },
       };
 
-      await result.current.handleBattleEvents(endEvent);
+      await processor.handle(endEvent);
 
       expect(mockCreateKill).not.toHaveBeenCalled();
     });
@@ -572,13 +618,11 @@ describe("useBattleEventHandler", () => {
         },
       });
 
-      const { result } = renderHook(() => useBattleEventHandler());
-
       const endEvent: GameEvent = {
         f: { endBattle: 1, m: ["final"] },
       };
 
-      await result.current.handleBattleEvents(endEvent);
+      await processor.handle(endEvent);
 
       expect(mockCreateKill).not.toHaveBeenCalled();
     });
@@ -624,13 +668,11 @@ describe("useBattleEventHandler", () => {
         },
       });
 
-      const { result } = renderHook(() => useBattleEventHandler());
-
       const endEvent: GameEvent = {
         f: { endBattle: 1, m: ["final"] },
       };
 
-      await result.current.handleBattleEvents(endEvent);
+      await processor.handle(endEvent);
 
       expect(mockCreateKill).toHaveBeenCalledTimes(1);
     });
@@ -676,13 +718,11 @@ describe("useBattleEventHandler", () => {
         },
       });
 
-      const { result } = renderHook(() => useBattleEventHandler());
-
       const endEvent: GameEvent = {
         f: { endBattle: 1, m: ["final"] },
       };
 
-      await result.current.handleBattleEvents(endEvent);
+      await processor.handle(endEvent);
 
       expect(mockCreateKill).toHaveBeenCalledTimes(1);
     });
@@ -728,13 +768,11 @@ describe("useBattleEventHandler", () => {
         },
       });
 
-      const { result } = renderHook(() => useBattleEventHandler());
-
       const endEvent: GameEvent = {
         f: { endBattle: 1, m: ["final"] },
       };
 
-      await result.current.handleBattleEvents(endEvent);
+      await processor.handle(endEvent);
 
       expect(mockCreateKill).not.toHaveBeenCalled();
     });
@@ -787,13 +825,11 @@ describe("useBattleEventHandler", () => {
         },
       });
 
-      const { result } = renderHook(() => useBattleEventHandler());
-
       const endEvent: GameEvent = {
         f: { endBattle: 1, m: ["final"] },
       };
 
-      await result.current.handleBattleEvents(endEvent);
+      await processor.handle(endEvent);
 
       expect(mockCreateKill).not.toHaveBeenCalled();
       expect(mockCreateBattle).not.toHaveBeenCalled();
@@ -809,13 +845,11 @@ describe("useBattleEventHandler", () => {
         battleWarriors: {},
       });
 
-      const { result } = renderHook(() => useBattleEventHandler());
-
       const endEvent: GameEvent = {
         f: { endBattle: 1, m: ["final"] },
       };
 
-      await result.current.handleBattleEvents(endEvent);
+      await processor.handle(endEvent);
 
       const state = useBattleStore.getState();
       expect(state.battleState).toBe("idle");
@@ -834,13 +868,11 @@ describe("useBattleEventHandler", () => {
         battleWarriors: {},
       });
 
-      const { result } = renderHook(() => useBattleEventHandler());
-
       const endEvent: GameEvent = {
         f: { endBattle: 1, m: ["final"] },
       };
 
-      await result.current.handleBattleEvents(endEvent);
+      await processor.handle(endEvent);
 
       const state = useBattleStore.getState();
       expect(state.lastBattleHash).toBe("new-hash-456");
@@ -854,13 +886,11 @@ describe("useBattleEventHandler", () => {
         battleWarriors: {},
       });
 
-      const { result } = renderHook(() => useBattleEventHandler());
-
       const endEvent: GameEvent = {
         f: { endBattle: 1, m: ["final"] },
       };
 
-      await result.current.handleBattleEvents(endEvent);
+      await processor.handle(endEvent);
 
       expect(mockCreateKill).not.toHaveBeenCalled();
       expect(mockCreateBattle).not.toHaveBeenCalled();

@@ -7,6 +7,7 @@ import {
 import { useRef, useMemo, useEffect, useLayoutEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useLocalStorage } from "react-use";
+import { storageKey } from "@/lib/storage-key";
 import { useWindowsStore } from "@/store/windows.store";
 import { useChatMessagesListener } from "@/features/chat/hooks/use-chat-messages";
 import { useGuildMembers } from "@/hooks/api/use-guild-members";
@@ -21,6 +22,9 @@ import { useGuilds } from "@/hooks/api/use-guilds";
 import { ChatWindowActions } from "@/features/chat/components/chat-window-actions";
 import { MessageType } from "@/hooks/api/use-send-chat-message";
 import { cn } from "@/lib/utils";
+
+const chatSelectedGuildKey = (accountId: string, characterId: string) =>
+  storageKey(`ll:chat:selected-guild:${accountId}:${characterId}`);
 
 const CHAT_FILTERS: { key: ChatFilter; label: string }[] = [
   { key: "all", label: "Wszystko" },
@@ -45,7 +49,7 @@ export const Chat = () => {
   const open = useWindowsStore((state) => state.chat.open);
   const setOpen = useWindowsStore((state) => state.setOpen);
   const [selectedGuildId, setSelectedGuildId] = useLocalStorage(
-    `ll:chat:selected-guild:${accountId}:${characterId}`,
+    chatSelectedGuildKey(accountId, characterId),
     "",
   );
   const { data: guilds } = useGuilds();
