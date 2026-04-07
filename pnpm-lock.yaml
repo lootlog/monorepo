@@ -266,7 +266,7 @@ importers:
         version: 9.0.0(@nestjs/common@11.1.18(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.18)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@lootlog/api-helpers':
         specifier: workspace:*
-        version: link:../../packages/api-helpers
+        version: file:packages/api-helpers
       '@lootlog/instrumentation':
         specifier: workspace:*
         version: link:../../packages/instrumentation
@@ -423,7 +423,7 @@ importers:
         version: 1.1.1(hono@4.12.11)
       '@lootlog/api-helpers':
         specifier: workspace:*
-        version: link:../../packages/api-helpers
+        version: file:packages/api-helpers
       '@lootlog/instrumentation':
         specifier: workspace:*
         version: link:../../packages/instrumentation
@@ -987,7 +987,7 @@ importers:
         version: 9.0.0(@nestjs/common@11.1.18(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.18)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@lootlog/api-helpers':
         specifier: workspace:*
-        version: link:../../packages/api-helpers
+        version: file:packages/api-helpers
       '@lootlog/instrumentation':
         specifier: workspace:*
         version: link:../../packages/instrumentation
@@ -1134,8 +1134,8 @@ importers:
         specifier: ^12.38.0
         version: 12.38.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       i18next:
-        specifier: ^25.10.10
-        version: 25.10.10(typescript@5.9.3)
+        specifier: ^26.0.3
+        version: 26.0.3(typescript@5.9.3)
       lucide-react:
         specifier: ^1.7.0
         version: 1.7.0(react@19.2.4)
@@ -1150,7 +1150,7 @@ importers:
         version: 19.2.4(react@19.2.4)
       react-i18next:
         specifier: ^17.0.2
-        version: 17.0.2(i18next@25.10.10(typescript@5.9.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
+        version: 17.0.2(i18next@26.0.3(typescript@5.9.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
     devDependencies:
       '@lootlog/typescript-config':
         specifier: workspace:*
@@ -1184,7 +1184,7 @@ importers:
         version: 1.2.4(hono@4.12.11)(zod@4.3.6)
       '@lootlog/api-helpers':
         specifier: workspace:*
-        version: link:../../packages/api-helpers
+        version: file:packages/api-helpers
       '@lootlog/instrumentation':
         specifier: workspace:*
         version: link:../../packages/instrumentation
@@ -1298,8 +1298,8 @@ importers:
         specifier: ^12.38.0
         version: 12.38.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       i18next:
-        specifier: ^25.10.10
-        version: 25.10.10(typescript@5.9.3)
+        specifier: ^26.0.3
+        version: 26.0.3(typescript@5.9.3)
       idb-keyval:
         specifier: ^6.2.2
         version: 6.2.2
@@ -1335,7 +1335,7 @@ importers:
         version: 7.67.0(react@19.2.4)
       react-i18next:
         specifier: ^17.0.2
-        version: 17.0.2(i18next@25.10.10(typescript@5.9.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
+        version: 17.0.2(i18next@26.0.3(typescript@5.9.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
       react-markdown:
         specifier: ^10.1.0
         version: 10.1.0(@types/react@19.2.14)(react@19.2.4)
@@ -3368,6 +3368,9 @@ packages:
     resolution: {integrity: sha512-DplzWnYhfFceGPR+UyDFpZdB287wF/vNOHFuDsBF/nGDdTezvr0Gf60opzyBEF3oXym6p3xTmGygxvO97LZ+vw==}
     peerDependencies:
       yjs: '>=13.5.22'
+
+  '@lootlog/api-helpers@file:packages/api-helpers':
+    resolution: {directory: packages/api-helpers, type: directory}
 
   '@lootlog/nest-shared@file:packages/nest-shared':
     resolution: {directory: packages/nest-shared, type: directory}
@@ -9115,6 +9118,10 @@ packages:
     resolution: {integrity: sha512-r4xbIa3mGGGoH9nN4A14DOg2wx7y2oQyJEb5O57C/xzETG/qx4c7CVDQ5WMeKHZ7ORk2W0hZ/sQKXTav3cmYBA==}
     engines: {node: '>=16.9.0'}
 
+  hono@4.12.12:
+    resolution: {integrity: sha512-p1JfQMKaceuCbpJKAPKVqyqviZdS0eUxH9v82oWo1kb9xjQ5wA6iP3FNVAPDFlz5/p7d45lO+BpSk1tuSZMF4Q==}
+    engines: {node: '>=16.9.0'}
+
   hookified@1.15.1:
     resolution: {integrity: sha512-MvG/clsADq1GPM2KGo2nyfaWVyn9naPiXrqIe4jYjXNZQt238kWyOGrsyc/DmRAQ+Re6yeo6yX/yoNCG5KAEVg==}
 
@@ -9178,8 +9185,8 @@ packages:
   hyphenate-style-name@1.1.0:
     resolution: {integrity: sha512-WDC/ui2VVRrz3jOVi+XtjqkDjiVjTtFaAGiW37k6b+ohyQ5wYDOGkvCZa8+H0nx3gyvv0+BST9xuOgIyGQ00gw==}
 
-  i18next@25.10.10:
-    resolution: {integrity: sha512-cqUW2Z3EkRx7NqSyywjkgCLK7KLCL6IFVFcONG7nVYIJ3ekZ1/N5jUsihHV6Bq37NfhgtczxJcxduELtjTwkuQ==}
+  i18next@26.0.3:
+    resolution: {integrity: sha512-1571kXINxHKY7LksWp8wP+zP0YqHSSpl/OW0Y0owFEf2H3s8gCAffWaZivcz14rMkOvn3R/psiQxVsR9t2Nafg==}
     peerDependencies:
       typescript: ^5 || ^6
     peerDependenciesMeta:
@@ -13847,9 +13854,9 @@ snapshots:
     dependencies:
       '@hapi/hoek': 11.0.7
 
-  '@hono/node-server@1.19.11(hono@4.12.11)':
+  '@hono/node-server@1.19.11(hono@4.12.12)':
     dependencies:
-      hono: 4.12.11
+      hono: 4.12.12
 
   '@hono/node-server@1.19.12(hono@4.12.11)':
     dependencies:
@@ -14352,6 +14359,12 @@ snapshots:
       '@lexical/selection': 0.42.0
       lexical: 0.42.0
       yjs: 13.6.30
+
+  '@lootlog/api-helpers@file:packages/api-helpers':
+    dependencies:
+      '@lootlog/types': file:packages/types
+      hono: 4.12.12
+      jose: 6.2.2
 
   '@lootlog/nest-shared@file:packages/nest-shared(@nestjs/common@11.1.18(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/config@4.0.3(@nestjs/common@11.1.18(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(rxjs@7.8.2))(@nestjs/core@11.1.18)(ioredis@5.10.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
     dependencies:
@@ -15988,13 +16001,13 @@ snapshots:
       '@electric-sql/pglite': 0.4.1
       '@electric-sql/pglite-socket': 0.1.1(@electric-sql/pglite@0.4.1)
       '@electric-sql/pglite-tools': 0.3.1(@electric-sql/pglite@0.4.1)
-      '@hono/node-server': 1.19.11(hono@4.12.11)
+      '@hono/node-server': 1.19.11(hono@4.12.12)
       '@prisma/get-platform': 7.2.0
       '@prisma/query-plan-executor': 7.2.0
       '@prisma/streams-local': 0.1.2
       foreground-child: 3.3.1
       get-port-please: 3.2.0
-      hono: 4.12.11
+      hono: 4.12.12
       http-status-codes: 2.3.0
       pathe: 2.0.3
       proper-lockfile: 4.1.2
@@ -20493,6 +20506,8 @@ snapshots:
 
   hono@4.12.11: {}
 
+  hono@4.12.12: {}
+
   hookified@1.15.1: {}
 
   hookified@2.1.1: {}
@@ -20559,7 +20574,7 @@ snapshots:
 
   hyphenate-style-name@1.1.0: {}
 
-  i18next@25.10.10(typescript@5.9.3):
+  i18next@26.0.3(typescript@5.9.3):
     dependencies:
       '@babel/runtime': 7.29.2
     optionalDependencies:
@@ -22424,11 +22439,11 @@ snapshots:
     dependencies:
       react: 19.2.4
 
-  react-i18next@17.0.2(i18next@25.10.10(typescript@5.9.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3):
+  react-i18next@17.0.2(i18next@26.0.3(typescript@5.9.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3):
     dependencies:
       '@babel/runtime': 7.29.2
       html-parse-stringify: 3.0.1
-      i18next: 25.10.10(typescript@5.9.3)
+      i18next: 26.0.3(typescript@5.9.3)
       react: 19.2.4
       use-sync-external-store: 1.6.0(react@19.2.4)
     optionalDependencies:
