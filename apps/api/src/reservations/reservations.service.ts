@@ -111,36 +111,17 @@ export class ReservationsService {
     };
   }
 
-  private emitReservationCreated(
+  private emitReservationEvent(
     guildId: string,
     reservation: ReservationRecord,
+    routingKey: RoutingKey,
   ) {
     const payload = {
       guildId,
       reservation: this.serializeReservationRecord(reservation),
     };
 
-    this.amqpConnection.publish(
-      DEFAULT_EXCHANGE_NAME,
-      RoutingKey.GUILDS_RESERVATIONS_CREATE,
-      payload,
-    );
-  }
-
-  private emitReservationDeleted(
-    guildId: string,
-    reservation: ReservationRecord,
-  ) {
-    const payload = {
-      guildId,
-      reservation: this.serializeReservationRecord(reservation),
-    };
-
-    this.amqpConnection.publish(
-      DEFAULT_EXCHANGE_NAME,
-      RoutingKey.GUILDS_RESERVATIONS_DELETE,
-      payload,
-    );
+    this.amqpConnection.publish(DEFAULT_EXCHANGE_NAME, routingKey, payload);
   }
 
   async createReservation(guildId: string, data: CreateReservationDto) {
@@ -208,7 +189,11 @@ export class ReservationsService {
     });
 
     const record = this.mapReservationRecord(created);
-    this.emitReservationCreated(guildId, record);
+    this.emitReservationEvent(
+      guildId,
+      record,
+      RoutingKey.GUILDS_RESERVATIONS_CREATE,
+    );
 
     return record;
   }
@@ -345,7 +330,11 @@ export class ReservationsService {
     });
 
     const record = this.mapReservationRecord(reservation);
-    this.emitReservationDeleted(guildId, record);
+    this.emitReservationEvent(
+      guildId,
+      record,
+      RoutingKey.GUILDS_RESERVATIONS_DELETE,
+    );
 
     return record;
   }

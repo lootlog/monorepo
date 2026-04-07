@@ -8,12 +8,6 @@ import {
   RETRY_EXCHANGE_NAME,
 } from "src/config/rabbitmq.config";
 
-interface AmqpMessage {
-  properties: {
-    headers?: Record<string, unknown>;
-  };
-}
-
 export interface RetryConfig {
   maxRetries?: number;
   retryDelayMs?: number;
@@ -118,42 +112,5 @@ export class RetryService {
       message: `Processing ${identifier} (attempt ${retryCount + 1}/${maxRetries})`,
     });
     return true;
-  }
-
-  handleRetryQueue(
-    _data: unknown,
-    amqpMsg: AmqpMessage,
-    identifier: string,
-    config: RetryConfig = {},
-  ): void {
-    const headers = amqpMsg.properties.headers || {};
-    const currentRetryCount = this.getRetryCount(headers);
-    const retryDelayMs = config.retryDelayMs || 30000;
-
-    this.logger.log({
-      level: "info",
-      message: `[RETRY QUEUE] Processing retry for ${identifier}`,
-    });
-    this.logger.log({
-      level: "info",
-      message: `[RETRY QUEUE] Current headers: ${JSON.stringify(headers)}`,
-    });
-    this.logger.log({
-      level: "info",
-      message: `[RETRY QUEUE] Current retry count: ${currentRetryCount}`,
-    });
-    this.logger.log({
-      level: "info",
-      message: `[RETRY QUEUE] TTL: ${retryDelayMs}ms`,
-    });
-
-    this.logger.log({
-      level: "info",
-      message: `[RETRY QUEUE] Message will expire in ${retryDelayMs}ms and return to main queue`,
-    });
-    this.logger.log({
-      level: "info",
-      message: `[RETRY QUEUE] Next attempt will be #${currentRetryCount + 1}`,
-    });
   }
 }
