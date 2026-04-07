@@ -2,7 +2,11 @@ import { useSharedTooltip } from "@/components/shared-tooltip/shared-tooltip-pro
 import { ItemImage } from "@/components/tiles/item-image";
 import { ItemRarity, type Item } from "@/hooks/api/loots/use-loots";
 import { cn } from "@/utils/cn";
-import { mapStatsToDisplayValues } from "@/utils/item-tips/map-stats-to-display-values";
+import {
+  mapStatsToDisplayValues,
+  type ItemDisplayValue,
+  type StatBlocks,
+} from "@/utils/item-tips/map-stats-to-display-values";
 import { parseItemStats } from "@/utils/item-tips/parse-item-stats";
 import {
   Tooltip,
@@ -50,7 +54,9 @@ const ItemTileTooltipBody: FC<ItemTileTooltipBodyProps> = ({
   const renderStats = () => {
     const stats = parseItemStats(stat);
     const values = mapStatsToDisplayValues(stats);
-    const statGroups = Object.entries(values);
+    const statGroups = Object.entries(values) as Array<
+      [keyof StatBlocks, ItemDisplayValue[]]
+    >;
 
     return statGroups.map(([key, value], index) => {
       if (value.length === 0) {

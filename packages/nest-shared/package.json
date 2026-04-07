@@ -12,7 +12,8 @@
     }
   },
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "dev": "nest start --watch --exec \"node --watch\""
   },
   "dependencies": {
     "@axiomhq/winston": "^1.6.0",

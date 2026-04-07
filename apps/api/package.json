@@ -66,7 +66,6 @@
     "@swc/core": "^1.15.24",
     "@testcontainers/postgresql": "^11.13.0",
     "@types/node": "^25.5.2",
-    "@types/redlock": "^4.0.8",
     "@types/supertest": "^7.2.0",
     "@vitest/coverage-v8": "^4.1.2",
     "prisma": "7.6.0",
@@ -74,7 +73,7 @@
     "testcontainers": "^11.13.0",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.2",
     "unplugin-swc": "^1.5.9",
     "vitest": "^4.1.2"
   }

@@ -7,9 +7,13 @@
     "isolatedModules": true,
     "target": "ES2023",
     "outDir": "./dist",
-    "baseUrl": "./",
+    "declaration": false,
+    "rootDir": ".",
     "strictNullChecks": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "paths": {
+      "src/*": ["./src/*"]
+    }
   },
   "include": ["src", "vitest.d.ts"]
 }
