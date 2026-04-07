@@ -266,7 +266,7 @@ importers:
         version: 9.0.0(@nestjs/common@11.1.18(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.18)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@lootlog/api-helpers':
         specifier: workspace:*
-        version: link:../../packages/api-helpers
+        version: file:packages/api-helpers
       '@lootlog/instrumentation':
         specifier: workspace:*
         version: link:../../packages/instrumentation
@@ -423,7 +423,7 @@ importers:
         version: 1.1.1(hono@4.12.11)
       '@lootlog/api-helpers':
         specifier: workspace:*
-        version: link:../../packages/api-helpers
+        version: file:packages/api-helpers
       '@lootlog/instrumentation':
         specifier: workspace:*
         version: link:../../packages/instrumentation
@@ -574,8 +574,8 @@ importers:
         specifier: ^4.1.2
         version: 4.1.2(vitest@4.1.2)
       drizzle-kit:
-        specifier: 1.0.0-beta.19
-        version: 1.0.0-beta.19
+        specifier: 1.0.0-beta.20
+        version: 1.0.0-beta.20
       supertest:
         specifier: ^7.2.2
         version: 7.2.2
@@ -987,7 +987,7 @@ importers:
         version: 9.0.0(@nestjs/common@11.1.18(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.18)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@lootlog/api-helpers':
         specifier: workspace:*
-        version: link:../../packages/api-helpers
+        version: file:packages/api-helpers
       '@lootlog/instrumentation':
         specifier: workspace:*
         version: link:../../packages/instrumentation
@@ -1184,7 +1184,7 @@ importers:
         version: 1.2.4(hono@4.12.11)(zod@4.3.6)
       '@lootlog/api-helpers':
         specifier: workspace:*
-        version: link:../../packages/api-helpers
+        version: file:packages/api-helpers
       '@lootlog/instrumentation':
         specifier: workspace:*
         version: link:../../packages/instrumentation
@@ -3377,6 +3377,9 @@ packages:
     resolution: {integrity: sha512-DplzWnYhfFceGPR+UyDFpZdB287wF/vNOHFuDsBF/nGDdTezvr0Gf60opzyBEF3oXym6p3xTmGygxvO97LZ+vw==}
     peerDependencies:
       yjs: '>=13.5.22'
+
+  '@lootlog/api-helpers@file:packages/api-helpers':
+    resolution: {directory: packages/api-helpers, type: directory}
 
   '@lootlog/nest-shared@file:packages/nest-shared':
     resolution: {directory: packages/nest-shared, type: directory}
@@ -8199,8 +8202,8 @@ packages:
     resolution: {integrity: sha512-k8DaKGP6r1G30Lx8V4+pCsLzKr8vLmV2paqEj1Y55GdAgJuIqpRp5FfajGF8KtwMxCz9qJc6wUIJnm053d/WCw==}
     engines: {node: '>=12'}
 
-  drizzle-kit@1.0.0-beta.19:
-    resolution: {integrity: sha512-LO9cz8iipjyOROaBLmVAhu1WT4JGd8QKSc0XYhnO0FGXP5FappHII52lHcxfj2j+vVuDCTjoqeTTvW1N9NJYZQ==}
+  drizzle-kit@1.0.0-beta.20:
+    resolution: {integrity: sha512-qMUBnrOQIU+H32aF80BSn7lT1IQuKmofCypmkrKMuOMqvM0bhz5hjCHim1bLcXUzXYRtTSr6U2pe0MSV79WbAg==}
     hasBin: true
 
   drizzle-orm@1.0.0-beta.20:
@@ -9122,6 +9125,10 @@ packages:
 
   hono@4.12.11:
     resolution: {integrity: sha512-r4xbIa3mGGGoH9nN4A14DOg2wx7y2oQyJEb5O57C/xzETG/qx4c7CVDQ5WMeKHZ7ORk2W0hZ/sQKXTav3cmYBA==}
+    engines: {node: '>=16.9.0'}
+
+  hono@4.12.12:
+    resolution: {integrity: sha512-p1JfQMKaceuCbpJKAPKVqyqviZdS0eUxH9v82oWo1kb9xjQ5wA6iP3FNVAPDFlz5/p7d45lO+BpSk1tuSZMF4Q==}
     engines: {node: '>=16.9.0'}
 
   hookified@1.15.1:
@@ -13872,9 +13879,9 @@ snapshots:
     dependencies:
       '@hapi/hoek': 11.0.7
 
-  '@hono/node-server@1.19.11(hono@4.12.11)':
+  '@hono/node-server@1.19.11(hono@4.12.12)':
     dependencies:
-      hono: 4.12.11
+      hono: 4.12.12
 
   '@hono/node-server@1.19.12(hono@4.12.11)':
     dependencies:
@@ -14377,6 +14384,12 @@ snapshots:
       '@lexical/selection': 0.42.0
       lexical: 0.42.0
       yjs: 13.6.30
+
+  '@lootlog/api-helpers@file:packages/api-helpers':
+    dependencies:
+      '@lootlog/types': file:packages/types
+      hono: 4.12.12
+      jose: 6.2.2
 
   '@lootlog/nest-shared@file:packages/nest-shared(@nestjs/common@11.1.18(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/config@4.0.3(@nestjs/common@11.1.18(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(rxjs@7.8.2))(@nestjs/core@11.1.18)(ioredis@5.10.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
     dependencies:
@@ -16020,13 +16033,13 @@ snapshots:
       '@electric-sql/pglite': 0.4.1
       '@electric-sql/pglite-socket': 0.1.1(@electric-sql/pglite@0.4.1)
       '@electric-sql/pglite-tools': 0.3.1(@electric-sql/pglite@0.4.1)
-      '@hono/node-server': 1.19.11(hono@4.12.11)
+      '@hono/node-server': 1.19.11(hono@4.12.12)
       '@prisma/get-platform': 7.2.0
       '@prisma/query-plan-executor': 7.2.0
       '@prisma/streams-local': 0.1.2
       foreground-child: 3.3.1
       get-port-please: 3.2.0
-      hono: 4.12.11
+      hono: 4.12.12
       http-status-codes: 2.3.0
       pathe: 2.0.3
       proper-lockfile: 4.1.2
@@ -19458,7 +19471,7 @@ snapshots:
 
   dotenv@17.4.1: {}
 
-  drizzle-kit@1.0.0-beta.19:
+  drizzle-kit@1.0.0-beta.20:
     dependencies:
       '@drizzle-team/brocli': 0.11.0
       '@js-temporal/polyfill': 0.5.1
@@ -20523,6 +20536,8 @@ snapshots:
       hermes-estree: 0.25.1
 
   hono@4.12.11: {}
+
+  hono@4.12.12: {}
 
   hookified@1.15.1: {}
 
