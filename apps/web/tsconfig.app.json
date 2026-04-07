@@ -25,8 +25,7 @@
     "paths": {
       "@/*": ["./src/*"],
       "@lootlog/ui/*": ["../../packages/ui/src/*"]
-    },
-    "baseUrl": "src"
+    }
   },
   "include": ["src"]
 }

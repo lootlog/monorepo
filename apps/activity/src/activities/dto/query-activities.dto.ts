@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createZodDto } from "nestjs-zod";
+import { createZodDto, type ZodDto } from "nestjs-zod";
 import { ActivityType, ActivitySource } from "src/generated/prisma/client";
 
 const singleToArray = (val: unknown) => {
@@ -28,4 +28,7 @@ const QueryActivitiesSchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(50),
 });
 
-export class QueryActivitiesDto extends createZodDto(QueryActivitiesSchema) {}
+const QueryActivitiesDtoBase: ZodDto<typeof QueryActivitiesSchema> =
+  createZodDto(QueryActivitiesSchema);
+
+export class QueryActivitiesDto extends QueryActivitiesDtoBase {}
