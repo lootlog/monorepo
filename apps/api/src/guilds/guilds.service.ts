@@ -104,11 +104,11 @@ export class GuildsService {
           },
         });
 
-        const comparedGuilds = guilds.every((guild) => {
+        const allGuildsInDiscord = guilds.every((guild) => {
           return discordGuildIds.includes(guild.id);
         });
 
-        if (!comparedGuilds) {
+        if (!allGuildsInDiscord) {
           await this.discordService.clearUserGuildIdsCache(userId);
         }
       } catch (error) {
@@ -188,11 +188,6 @@ export class GuildsService {
   }
 
   async getGuildById(idOrVanityURL: string) {
-    const guild = await this.getGuildByIdInternal(idOrVanityURL);
-    return guild;
-  }
-
-  async getGuildByIdInternal(idOrVanityURL: string) {
     const cacheKey = getGuildCacheKey(idOrVanityURL);
     const cached = await this.redisService.get(cacheKey);
 
@@ -503,11 +498,11 @@ export class GuildsService {
         },
       });
 
-      const comparedGuilds = guilds.every((guild) =>
+      const allGuildsInDiscord = guilds.every((guild) =>
         discordGuildIds.includes(guild.id),
       );
 
-      if (!comparedGuilds) {
+      if (!allGuildsInDiscord) {
         await this.discordService.clearUserGuildIdsCache(userId);
       }
 
