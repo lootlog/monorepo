@@ -374,18 +374,20 @@ export class LootsService implements OnModuleInit {
       items,
     );
 
-    if (Object.keys(mappedLootShare).length === 0) {
+    const mappedItemsCount = Object.keys(mappedLootShare).length;
+
+    if (mappedItemsCount === 0) {
       throw new BadRequestException(ErrorKey.MISSING_LOOT_SHARE_ITEM_OR_PLAYER);
     }
 
-    if (Object.keys(mappedLootShare).length < items.length) {
+    if (mappedItemsCount < items.length) {
       this.logger.log({
         level: "warn",
         message:
           "Loot share does not include all items, some items may not be shared",
         lootId,
         lootShareMsg: data.msg,
-        mappedItemsCount: Object.keys(mappedLootShare).length,
+        mappedItemsCount,
         totalItemsCount: items.length,
       });
     }

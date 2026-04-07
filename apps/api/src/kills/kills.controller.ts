@@ -28,6 +28,12 @@ import { MemberRoles } from "src/shared/decorators/member-roles.decorator";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
+
+const DEFAULT_BOSS_NPC_TYPES: NpcType[] = [
+  NpcType.TITAN,
+  NpcType.HERO,
+  NpcType.EVENT_HERO,
+];
 import { KillsService } from "./kills.service";
 import { CreateKillDto } from "./dto/create-kill.dto";
 import {
@@ -239,7 +245,7 @@ export class KillsController {
       guildData.id,
       permissions,
       roles,
-      [NpcType.TITAN, NpcType.HERO, NpcType.EVENT_HERO],
+      DEFAULT_BOSS_NPC_TYPES,
       limit ?? 5,
     );
     return plainToInstance(GuildTopKillersByTypeEntity, result, {
