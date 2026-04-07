@@ -67,10 +67,7 @@ export const formatScoringAction = (
   action: EventScoringAction,
   t: TFunction,
 ): string => {
-  if (action.type === "SET_BASE") {
-    return `${getScoringActionTypeLabel(action.type, t)} ${action.points}`;
-  }
-  if (action.type === "ADD_BONUS") {
+  if (action.type === "SET_BASE" || action.type === "ADD_BONUS") {
     return `${getScoringActionTypeLabel(action.type, t)} ${action.points}`;
   }
   return getScoringActionTypeLabel(action.type, t);
