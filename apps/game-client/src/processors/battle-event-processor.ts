@@ -1,7 +1,5 @@
 import { createSHA256Hash } from "@/helpers/create-sha-256-hash";
 import { mapBattleEventsToPayload } from "@/helpers/mappers/battlelog.mappers";
-import { useCreateBattle } from "@/hooks/api/use-create-battle";
-import { useCreateKill } from "@/hooks/api/use-create-kill";
 import { getNpcTypeByWt } from "@lootlog/types";
 import { NpcType } from "@/hooks/api/use-npcs";
 import { addAccountIdsToWarriors } from "@/hooks/game-events/helpers/battle.helpers";
@@ -12,6 +10,7 @@ import {
   type BattleWarriorsWithAccountId,
 } from "@/store/game-store/battle.store";
 import type { GameEvent } from "@lootlog/margonem/game-events";
+import { createKill, createBattle } from "@/services/api.service";
 
 const TRACKABLE_NPC_TYPES = new Set([
   NpcType.ELITE2,
@@ -73,11 +72,11 @@ const extractDeadNpcs = (warriors: BattleWarriorsWithAccountId) => {
   return deadNpcs;
 };
 
-export const useBattleEventHandler = () => {
-  const { mutate: createBattle } = useCreateBattle();
-  const { mutate: createKill } = useCreateKill();
+export class BattleEventProcessor {
+  private observedTeams = new Set<number>();
+  private hasMultipleTeams = false;
 
-  const handleBattleEvents = async (event: GameEvent) => {
+  async handle(event: GameEvent): Promise<void> {
     if (!event.f) return;
 
     const accountId = Game.hero.account;
@@ -91,6 +90,8 @@ export const useBattleEventHandler = () => {
       battleStore.clearEvents();
       battleStore.setBattleState("in-battle");
       battleStore.updateBattleWarriors(null);
+      this.observedTeams.clear();
+      this.hasMultipleTeams = false;
     }
 
     if (event.f.w) {
@@ -100,6 +101,19 @@ export const useBattleEventHandler = () => {
         previousBattleWarriors,
       );
       battleStore.updateBattleWarriors(battleWarriorsWithAccountId);
+
+      // Incremental team detection — O(1) amortized instead of O(N*M)
+      if (!this.hasMultipleTeams) {
+        for (const warrior of Object.values(event.f.w)) {
+          if (warrior.team !== undefined) {
+            this.observedTeams.add(warrior.team);
+            if (this.observedTeams.size > 1) {
+              this.hasMultipleTeams = true;
+              break;
+            }
+          }
+        }
+      }
     }
 
     if (battlePanelStore.isBattleCollectionEnabled) {
@@ -115,7 +129,7 @@ export const useBattleEventHandler = () => {
         key.startsWith("-"),
       );
 
-      // Kill tracking - always runs regardless of isBattleCollectionEnabled
+      // Kill tracking — always runs regardless of isBattleCollectionEnabled
       if (hasNpcInBattle) {
         const deadNpcs = extractDeadNpcs(battleWarriors);
 
@@ -132,9 +146,12 @@ export const useBattleEventHandler = () => {
             );
 
             if (TRACKABLE_NPC_TYPES.has(npcType)) {
-              // Deduplicate kills by hashing the dead NPCs
+              // Kill hash includes timestamp to prevent ignoring repeat kills of same respawned monster
               const killHash = await createSHA256Hash(
-                JSON.stringify(deadNpcs.map((npc) => npc.id).sort()),
+                JSON.stringify({
+                  ids: deadNpcs.map((npc) => npc.id).sort(),
+                  ts: Date.now(),
+                }),
               );
               const lastKillHash = useBattleStore.getState().lastKillHash;
 
@@ -145,6 +162,11 @@ export const useBattleEventHandler = () => {
                   npc: npcWithoutType,
                   characterId: String(characterId),
                   accountId: String(accountId),
+                }).catch((error) => {
+                  console.warn(
+                    "[BattleEventProcessor] Failed to create kill:",
+                    error,
+                  );
                 });
                 battleStore.setLastKillHash(killHash);
               }
@@ -153,7 +175,7 @@ export const useBattleEventHandler = () => {
         }
       }
 
-      // Battle logging - only if enabled
+      // Battle logging — only if enabled
       if (battlePanelStore.isBattleCollectionEnabled) {
         const battleTurns = useBattleStore
           .getState()
@@ -171,25 +193,19 @@ export const useBattleEventHandler = () => {
             useBattleStore.getState().events,
           );
 
-          if (events && !hasNpcInBattle) {
-            const teams = new Set<number>();
-            useBattleStore.getState().events.forEach((event) => {
-              if (!event.f?.w) return;
-              Object.values(event.f.w).forEach((warrior) => {
-                if (warrior.team !== undefined) {
-                  teams.add(warrior.team);
-                }
-              });
+          // Use incremental hasMultipleTeams flag instead of O(N*M) loop
+          if (events && !hasNpcInBattle && this.hasMultipleTeams) {
+            createBattle({
+              accountId: String(accountId),
+              characterId: String(characterId),
+              world,
+              events,
+            }).catch((error) => {
+              console.warn(
+                "[BattleEventProcessor] Failed to create battle:",
+                error,
+              );
             });
-
-            if (teams.size > 1) {
-              createBattle({
-                accountId: String(accountId),
-                characterId: String(characterId),
-                world,
-                events,
-              });
-            }
           }
         }
 
@@ -199,9 +215,5 @@ export const useBattleEventHandler = () => {
       battleStore.clearEvents();
       battleStore.setBattleState("idle");
     }
-  };
-
-  return {
-    handleBattleEvents,
-  };
-};
+  }
+}

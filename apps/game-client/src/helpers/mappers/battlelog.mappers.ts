@@ -1,4 +1,4 @@
-import type { BattleEventPayload } from "@/hooks/api/use-create-battle";
+import type { BattleEventPayload } from "@/services/api.service";
 import type { GameEvent, W } from "@lootlog/margonem/game-events";
 import { isEmpty, pick } from "@/utils/object-utils";
 

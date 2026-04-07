@@ -61,6 +61,7 @@ describe("gameEventsManager", () => {
 
     testWindow.successData?.(event);
 
+    // Object payloads are processed synchronously
     expect(eventProcessor).toHaveBeenCalledTimes(1);
     expect(eventProcessor).toHaveBeenCalledWith(event);
     expect(originalSuccessData).toHaveBeenCalledWith(event);

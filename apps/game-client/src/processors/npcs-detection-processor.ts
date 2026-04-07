@@ -3,8 +3,6 @@ import {
   composeNpcFromGame,
 } from "@/hooks/game-events/helpers/npc.helpers";
 import type { EventNpc, ProcessedNpcSettings } from "@/hooks/game-events/types";
-import { useMessagingHandlers } from "@/hooks/game-events/use-messaging-handlers";
-import { useSoundPlayback } from "@/hooks/use-sound-playback";
 import { Game } from "@/lib/game";
 import {
   type DetectorNpcType,
@@ -19,14 +17,15 @@ import { getNpcTypeByWt } from "@lootlog/types";
 import { NpcType } from "@/hooks/api/use-npcs";
 import { getNpcIconFromEvent } from "@/utils/game/events/get-npc-icon-from-event";
 import { getNpcTplFromEvent } from "@/utils/game/events/get-npc-tpl-from-event";
+import {
+  sendChatMessage,
+  createNotification,
+  MessageType,
+} from "@/services/api.service";
+import { playSound } from "@/lib/sound-playback";
 
-export const useNpcsHandlers = () => {
-  const { addNpc } = useNpcDetectorStore();
-  const setOpen = useWindowsStore((state) => state.setOpen);
-  const { handleSendMessage, handleSendNotification } = useMessagingHandlers();
-  const { playSound } = useSoundPlayback();
-
-  const handleNpcDetection = (event: GameEvent) => {
+export class NpcsDetectionProcessor {
+  handle(event: GameEvent): void {
     if (!event.npcs?.length) return;
     if (event.f?.init === "1") return;
 
@@ -43,12 +42,12 @@ export const useNpcsHandlers = () => {
           tpl.type,
         ) as DetectorNpcType;
 
-        const processedSettings = processNpcSettings(npc, npcType, event);
+        const processedSettings = this.processNpcSettings(npc, npcType, event);
         if (!processedSettings) return acc;
 
         const composedNpc = composeNpcFromEvent(npc, tpl, processedSettings);
 
-        sendNotification({
+        this.sendNotification({
           composedNpc,
           guildIds: processedSettings.guildIds,
           autoSendNotification: processedSettings.autoSendNotification,
@@ -61,12 +60,12 @@ export const useNpcsHandlers = () => {
       }, []) ?? [];
 
     if (npcs.length > 0) {
-      setOpen("npc-detector", true);
-      addNpc(npcs);
+      useWindowsStore.getState().setOpen("npc-detector", true);
+      useNpcDetectorStore.getState().addNpc(npcs);
     }
-  };
+  }
 
-  const handleInitialNpcsDetection = () => {
+  handleInitialDetection(): void {
     const npcs = Game.npcs;
 
     const calculatedNpcs =
@@ -80,12 +79,12 @@ export const useNpcsHandlers = () => {
           npc.type,
         ) as DetectorNpcType;
 
-        const processedSettings = processGameNpcSettings(npc, npcType);
+        const processedSettings = this.processGameNpcSettings(npc, npcType);
         if (!processedSettings) return acc;
 
         const composedNpc = composeNpcFromGame(npc, processedSettings);
 
-        sendNotification({
+        this.sendNotification({
           composedNpc,
           guildIds: processedSettings.guildIds,
           autoSendNotification: processedSettings.autoSendNotification,
@@ -98,16 +97,16 @@ export const useNpcsHandlers = () => {
       }, []) ?? [];
 
     if (calculatedNpcs.length > 0) {
-      setOpen("npc-detector", true);
-      addNpc(calculatedNpcs);
+      useWindowsStore.getState().setOpen("npc-detector", true);
+      useNpcDetectorStore.getState().addNpc(calculatedNpcs);
     }
-  };
+  }
 
-  const processNpcSettings = (
+  private processNpcSettings(
     npc: EventNpc,
     npcType: DetectorNpcType,
     event?: GameEvent,
-  ): ProcessedNpcSettings | null => {
+  ): ProcessedNpcSettings | null {
     const characterId = Game.hero.id;
     const detectorSettings = useNpcDetectorStore.getState().settings;
 
@@ -129,12 +128,12 @@ export const useNpcsHandlers = () => {
       autoSendNotification,
       guildIds,
     };
-  };
+  }
 
-  const processGameNpcSettings = (
+  private processGameNpcSettings(
     npc: GameNpc,
     npcType: DetectorNpcType,
-  ): ProcessedNpcSettings | null => {
+  ): ProcessedNpcSettings | null {
     const characterId = Game.hero.id;
 
     const detectorSettings = useNpcDetectorStore.getState().settings;
@@ -153,9 +152,9 @@ export const useNpcsHandlers = () => {
       autoSendNotification,
       guildIds,
     };
-  };
+  }
 
-  const sendNotification = ({
+  private sendNotification({
     composedNpc,
     guildIds,
     autoSendNotification,
@@ -167,19 +166,70 @@ export const useNpcsHandlers = () => {
     autoSendNotification: boolean;
     npcType: DetectorNpcType;
     detectorSettings: NpcDetectorSettingByNpc;
-  }) => {
+  }): void {
     if (autoSendNotification) {
-      handleSendNotification(composedNpc, guildIds);
-      handleSendMessage(guildIds, composedNpc);
+      const world = Game.getWorldName();
+
+      createNotification({
+        npc: {
+          id: composedNpc.id,
+          hpp: 0,
+          location: composedNpc.location,
+          name: composedNpc.nick,
+          wt: composedNpc.wt,
+          lvl: composedNpc.lvl,
+          prof: composedNpc.prof,
+          icon: composedNpc.icon,
+          type: composedNpc.type,
+        },
+        world,
+        guildIds,
+      }).catch((error) => {
+        console.warn(
+          "[NpcsDetectionProcessor] Failed to send notification:",
+          error,
+        );
+      });
+
+      sendChatMessage({
+        message: "",
+        guildIds,
+        type: MessageType.NPC,
+        characterData: {
+          nick: Game.hero.nick,
+          id: Game.hero.id,
+          acc: Game.hero.account,
+          lvl: Game.hero.lvl,
+          prof: Game.hero.prof,
+          icon: Game.hero.img,
+        },
+        npc: {
+          x: composedNpc.x,
+          y: composedNpc.y,
+          icon: composedNpc.icon,
+          id: composedNpc.id,
+          name: composedNpc.nick,
+          lvl: composedNpc.lvl,
+          prof: composedNpc.prof,
+          type: composedNpc.type,
+          hpp: 0,
+          location: composedNpc.location,
+          wt: composedNpc.wt,
+        },
+      })
+        .then(() => {
+          useWindowsStore.getState().setOpen("npc-detector", true);
+        })
+        .catch((error) => {
+          console.warn(
+            "[NpcsDetectionProcessor] Failed to send chat message:",
+            error,
+          );
+        });
     }
 
     if (detectorSettings.notifySound) {
       playSound("detector", npcType);
     }
-  };
-
-  return {
-    handleNpcDetection,
-    handleInitialNpcsDetection,
-  };
-};
+  }
+}
