@@ -24,7 +24,7 @@
   "devDependencies": {
     "@types/amqplib": "^0.10.8",
     "@types/node": "^25.5.2",
-    "dotenv": "^17.4.0",
+    "dotenv": "^17.4.1",
     "tsx": "^4.21.0"
   }
 }

@@ -2,7 +2,6 @@ import { PrismaClient } from "../../../../../apps/api/generated/client/index.js"
 import { PrismaClient as BattlelogPrismaClient } from "../../../../../apps/battlelog-service/generated/client/index.js";
 import { GuildGenerator } from "./generators/guild-generator.js";
 import { LootGenerator } from "./generators/loot-generator.js";
-import { generatePlayers } from "./generators/players-generator.js";
 import { BattlesGenerator } from "./generators/battles-generator.js";
 import { BattleProcessor } from "@lootlog/battle-processor";
 import { SEED_CONFIG } from "./config.js";

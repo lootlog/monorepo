@@ -1,6 +1,9 @@
 import type { GameNpc } from "@lootlog/margonem";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import { storageKey } from "@/lib/storage-key";
+
+const STORAGE_KEY = storageKey("ll-windows-state");
 
 export type NpcDetectorWindowState = {
   npcs: GameNpc[];
@@ -240,7 +243,7 @@ export const useWindowsStore = create<WindowsState>()(
       },
     }),
     {
-      name: "ll-windows-state",
+      name: STORAGE_KEY,
       partialize: (state) => ({
         settings: state.settings,
         timers: state.timers,

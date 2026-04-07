@@ -1,5 +1,8 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { storageKey } from "@/lib/storage-key";
+
+const STORAGE_KEY = storageKey("ll:chat:state");
 
 export type ChatFilter = "all" | "normal" | "npc" | "party";
 
@@ -58,7 +61,7 @@ export const useChatStore = create<ChatState>()(
       },
     }),
     {
-      name: "ll:chat:state",
+      name: STORAGE_KEY,
       partialize: (state) => ({
         isIntegratedMode: state.isIntegratedMode,
         isNotificationEnabled: state.isNotificationEnabled,
