@@ -294,7 +294,6 @@ describe("LootsController", () => {
   });
 
   describe("getComments", () => {
-    const discordId = "discord123";
     const lootId = 1;
 
     it("should get comments for loot", async () => {
@@ -317,10 +316,9 @@ describe("LootsController", () => {
       ];
       service.getComments.mockResolvedValue(mockComments as never);
 
-      const result = await controller.getComments(discordId, lootId, mockGuild);
+      const result = await controller.getComments(lootId, mockGuild);
 
       expect(service.getComments).toHaveBeenCalledWith({
-        discordId,
         lootId,
         guildId: mockGuild.id,
       });
