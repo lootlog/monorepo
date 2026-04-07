@@ -26,8 +26,16 @@ import { PartyFinder } from "@/features/party-finder/party-finder";
 import { CreatePartyGathering } from "@/features/party-finder/create-party-gathering";
 import { usePartyFinderSocket } from "@/features/party-finder/hooks/use-party-finder-socket";
 import { usePartyGatheringSocket } from "@/features/party-finder/hooks/use-party-gathering-socket";
+import { bootstrapPublicApi } from "@/features/public-api";
 
 const THEME_STORAGE_KEY = storageKey("lootlog-theme");
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- HMR teardown guard
+const win = window as any;
+if (win.__lootlogApiTeardown) {
+  win.__lootlogApiTeardown();
+}
+win.__lootlogApiTeardown = bootstrapPublicApi(queryClient);
 
 function AppContent() {
   useGameEventHandlers();

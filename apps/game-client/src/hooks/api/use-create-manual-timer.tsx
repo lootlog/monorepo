@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
+import { queryKeys } from "@/features/public-api/query-keys";
 
 export type UseCreateManualTimerOptions = {
   name: string;
@@ -78,7 +79,7 @@ export const useCreateManualTimer = () => {
       };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["guild-timers"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.allTimers() });
     },
   });
 
