@@ -1,4 +1,5 @@
 import {
+  CLOCK_PATTERN,
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
   EVENT_SCORING_ACTION_TYPES,
   EVENT_SCORING_BOOLEAN_FACTORS,
@@ -15,8 +16,6 @@ import {
   type EventScoringNumericOperator,
   type EventScoringRules,
 } from "../constants/scoring-rules.constant";
-
-const CLOCK_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -215,7 +214,7 @@ export function normalizeEventScoringRules(value: unknown): EventScoringRules {
           return parsedRule;
         })
       : []
-  ).filter((rule) => rule !== null) as EventScoringRules["rules"];
+  ).filter((rule) => rule !== null);
 
   return {
     version: 1,
