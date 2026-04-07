@@ -1,35 +1,30 @@
-import { useUpdateLoot } from "@/hooks/api/use-update-loot";
 import { getLootDistributionMessage } from "@/hooks/game-events/helpers/chat.helpers";
 import { useLootStore } from "@/store/game-store/loot.store";
+import { updateLoot } from "@/services/api.service";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 
-export const useChatEventsHandlers = () => {
-  const { mutate: updateLoot } = useUpdateLoot();
-
-  const handleChatEvents = (event: GameEvent) => {
+export class ChatEventProcessor {
+  handle(event: GameEvent): void {
     if (!event.chat) return;
 
     const lootDistributionMessage = getLootDistributionMessage(event);
     if (!lootDistributionMessage) return;
 
-    handleUpdateLoot(lootDistributionMessage);
-  };
+    this.handleUpdateLoot(lootDistributionMessage);
+  }
 
-  const handleUpdateLoot = (message: string) => {
+  private handleUpdateLoot(message: string): void {
     const lastLootId = useLootStore.getState().lastLootId;
     if (!lastLootId) return;
 
-    updateLoot(
-      { msg: message, id: lastLootId },
-      {
-        onSuccess: () => {
+    updateLoot({ msg: message, id: lastLootId })
+      .then(() => {
+        if (useLootStore.getState().lastLootId === lastLootId) {
           useLootStore.getState().setLastLootId(null);
-        },
-      },
-    );
-  };
-
-  return {
-    handleChatEvents,
-  };
-};
+        }
+      })
+      .catch((error) => {
+        console.warn("[ChatEventProcessor] Failed to update loot:", error);
+      });
+  }
+}

@@ -1,4 +1,3 @@
-import type { AxiosResponse } from "axios";
 import { Game } from "@/lib/game";
 import { getLoot } from "@/utils/game/get-loots";
 import {
@@ -7,19 +6,14 @@ import {
   type PartyMember,
 } from "@/utils/game/get-battle-participants";
 import type { GameEvent } from "@lootlog/margonem/game-events";
-import {
-  type CreateLootResponse,
-  useCreateLoot,
-} from "@/hooks/api/use-create-loot";
+import { createLoot } from "@/services/api.service";
 import { useBattleStore } from "@/store/game-store/battle.store";
 import { isEmpty } from "@/utils/object-utils";
 import { useLootStore } from "@/store/game-store/loot.store";
 import { useDialogStore } from "@/store/game-store/dialog.store";
 
-export const useLootHandlers = () => {
-  const { mutate: createLoot } = useCreateLoot();
-
-  const handleLootFromBattle = (event: GameEvent) => {
+export class LootEventProcessor {
+  handleLootFromBattle(event: GameEvent): void {
     if (!event.item || event.loot?.source !== "fight") return;
 
     const battleStore = useBattleStore.getState();
@@ -28,69 +22,69 @@ export const useLootHandlers = () => {
     if (isEmpty(battleStore.battleWarriors)) return;
 
     lootStore.setLastLootId(null);
-    createLootFromBattle(event);
-  };
+    this.createLootFromBattle(event);
+  }
 
-  const handleDialogLoot = (event: GameEvent) => {
+  handleDialogLoot(event: GameEvent): void {
     if (!event.item || event.loot?.source !== "dialog") return;
 
     const dialogStore = useDialogStore.getState();
     if (!dialogStore.talkingNpcId) return;
 
     const lootStore = useLootStore.getState();
-
     lootStore.setLastLootId(null);
 
     if (event.npcs_del?.length) {
-      createLootFromDialog(event);
+      this.createLootFromDialog(event);
     } else if (dialogStore.talkingNpcId) {
       const npc = Game.getNpc(+dialogStore.talkingNpcId);
       if (npc) {
-        createLootFromDialog({ ...event, npcs_del: [{ id: npc.id }] });
+        this.createLootFromDialog({ ...event, npcs_del: [{ id: npc.id }] });
       }
     }
-  };
+  }
 
-  const createLootFromBattle = (event: GameEvent) => {
+  private createLootFromBattle(event: GameEvent): void {
     const battleStore = useBattleStore.getState();
-    const lootStore = useLootStore.getState();
 
     const world = Game.getWorldName();
     const accountId = Game.hero.account;
     const characterId = Game.hero.id;
 
-    const loots = getLoot(event.item, event.loot!);
-    if (!loots.length || !event.loot || !event.f) return;
+    if (!event.loot || !event.f) return;
+
+    const loots = getLoot(event.item, event.loot);
+    if (!loots.length) return;
 
     const { npcs, party } = getBattleParticipants(battleStore.battleWarriors);
 
-    createLoot(
-      {
-        world,
-        source: event.loot.source.toUpperCase(),
-        location: Game.map.name,
-        npcs,
-        loots,
-        players: party,
-        accountId: String(accountId),
-        characterId: String(characterId),
-      },
-      {
-        onSuccess: (response: AxiosResponse<CreateLootResponse>) => {
-          lootStore.setLastLootId(response.data.id);
-        },
-      },
-    );
-  };
+    createLoot({
+      world,
+      source: event.loot.source.toUpperCase(),
+      location: Game.map.name,
+      npcs,
+      loots,
+      players: party,
+      accountId: String(accountId),
+      characterId: String(characterId),
+    })
+      .then((response) => {
+        useLootStore.getState().setLastLootId(response.id);
+      })
+      .catch((error) => {
+        console.warn("[LootEventProcessor] Failed to create loot:", error);
+      });
+  }
 
-  const createLootFromDialog = (event: GameEvent) => {
+  private createLootFromDialog(event: GameEvent): void {
     const world = Game.getWorldName();
     const accountId = Game.hero.account;
     const characterId = Game.hero.id;
-    const lootStore = useLootStore.getState();
 
-    const loots = getLoot(event.item, event.loot!);
-    if (!loots.length || !event.loot) return;
+    if (!event.loot) return;
+
+    const loots = getLoot(event.item, event.loot);
+    if (!loots.length) return;
 
     const npcs: Npc[] =
       event.npcs_del
@@ -128,29 +122,24 @@ export const useLootHandlers = () => {
       },
     ];
 
-    createLoot(
-      {
-        world,
-        source: event.loot.source.toUpperCase(),
-        location: Game.map.name,
-        loots,
-        npcs,
-        players,
-        accountId: String(accountId),
-        characterId: String(characterId),
-      },
-      {
-        onSuccess: (response: AxiosResponse<CreateLootResponse>) => {
-          lootStore.setLastLootId(response.data.id);
-        },
-      },
-    );
-  };
-
-  return {
-    createLootFromBattle,
-    createLootFromDialog,
-    handleLootFromBattle,
-    handleDialogLoot,
-  };
-};
+    createLoot({
+      world,
+      source: event.loot.source.toUpperCase(),
+      location: Game.map.name,
+      loots,
+      npcs,
+      players,
+      accountId: String(accountId),
+      characterId: String(characterId),
+    })
+      .then((response) => {
+        useLootStore.getState().setLastLootId(response.id);
+      })
+      .catch((error) => {
+        console.warn(
+          "[LootEventProcessor] Failed to create dialog loot:",
+          error,
+        );
+      });
+  }
+}

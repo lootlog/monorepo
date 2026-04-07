@@ -202,7 +202,7 @@ export class GuildsService {
       } catch (error) {
         this.logger.warn({
           message: `Failed to parse cached guild data for key ${cacheKey}`,
-          error: error,
+          error,
         });
         await this.redisService.del(cacheKey);
       }

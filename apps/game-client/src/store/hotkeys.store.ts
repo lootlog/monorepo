@@ -1,5 +1,8 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { storageKey } from "@/lib/storage-key";
+
+const STORAGE_KEY = storageKey("ll:hotkeys:state");
 
 export type HotkeyAction =
   | "toggle-command"
@@ -113,7 +116,7 @@ export const useHotkeysStore = create<HotkeysState>()(
       resetAll: () => set({ bindings: getDefaultBindings() }),
     }),
     {
-      name: "ll:hotkeys:state",
+      name: STORAGE_KEY,
       partialize: (state) => ({ bindings: state.bindings }),
       storage: createJSONStorage(() => localStorage),
       version: 2,
