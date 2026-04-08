@@ -281,7 +281,6 @@ export class TimersService implements OnModuleInit {
       };
     } catch (error) {
       this.logger.warn({
-        level: "warn",
         message: "Failed to resolve synthetic timer context for event hero",
         guildId,
         world,
@@ -788,7 +787,6 @@ export class TimersService implements OnModuleInit {
         })
         .catch((error) => {
           this.logger.error({
-            level: "error",
             message: "Failed to enqueue event hero kill check",
             error: error instanceof Error ? error.message : error,
             guildId,
