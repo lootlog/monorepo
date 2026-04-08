@@ -25,11 +25,6 @@ export const composeNpcFromGame = (
 ): GameNpcWithLocation => ({
   ...npc,
   icon: processedSettings.icon,
-  nick: npc.nick,
-  prof: npc.prof,
-  wt: npc.wt,
-  lvl: npc.lvl,
-  type: npc.type,
   location: Game.map.name,
   notificationSent: processedSettings.autoSendNotification,
 });
