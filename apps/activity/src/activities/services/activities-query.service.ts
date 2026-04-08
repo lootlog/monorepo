@@ -103,7 +103,7 @@ export class ActivitiesQueryService {
     search?: string,
     limit = 10,
   ): Promise<string[]> {
-    const limitValue = Math.min(Math.max(limit, 1), 50);
+    const limitValue = this.clampLimit(limit);
     const trimmedSearch = search?.trim();
 
     const where: Prisma.ActivityActorSnapshotWhereInput = {
@@ -137,7 +137,7 @@ export class ActivitiesQueryService {
     search?: string,
     limit = 20,
   ): Promise<string[]> {
-    const limitValue = Math.min(Math.max(limit, 1), 50);
+    const limitValue = this.clampLimit(limit);
     const trimmedSearch = search?.trim();
 
     const worldFilter: Prisma.StringNullableFilter = {
@@ -173,7 +173,7 @@ export class ActivitiesQueryService {
     search?: string,
     limit = 10,
   ): Promise<string[]> {
-    const limitValue = Math.min(Math.max(limit, 1), 50);
+    const limitValue = this.clampLimit(limit);
     const trimmedSearch = search?.trim();
 
     const clanNameFilter: Prisma.StringNullableFilter = {
@@ -219,6 +219,10 @@ export class ActivitiesQueryService {
     query: QueryActivitiesDto,
   ): Promise<PaginatedActivitiesEntity> {
     return this.findMany({ ...query, userId, guildId });
+  }
+
+  private clampLimit(limit: number): number {
+    return Math.min(Math.max(limit, 1), 50);
   }
 
   private deduplicateNames(
