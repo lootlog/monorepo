@@ -185,14 +185,10 @@ export const useNotificationRuleForm = () => {
 
   const npcOptionsMap = new Map<string, { value: string; label: string }>();
 
-  for (const npc of selectedNpcQuery.data ?? []) {
-    npcOptionsMap.set(String(npc.id), {
-      value: String(npc.id),
-      label: `${npc.name} ${t(`npcType.${npc.type}`)} (#${npc.id})`,
-    });
-  }
-
-  for (const npc of searchedNpcQuery.data ?? []) {
+  for (const npc of [
+    ...(selectedNpcQuery.data ?? []),
+    ...(searchedNpcQuery.data ?? []),
+  ]) {
     npcOptionsMap.set(String(npc.id), {
       value: String(npc.id),
       label: `${npc.name} ${t(`npcType.${npc.type}`)} (#${npc.id})`,
