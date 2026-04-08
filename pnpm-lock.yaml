@@ -1519,10 +1519,10 @@ importers:
         version: 25.5.2
       pkgroll:
         specifier: ^2.27.0
-        version: 2.27.0(typescript@5.9.3)(vite@8.0.6(@types/node@25.5.2)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+        version: 2.27.0(typescript@6.0.2)
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.2
+        version: 6.0.2
 
   packages/margonem:
     devDependencies:
@@ -1576,8 +1576,8 @@ importers:
         specifier: ^7.8.2
         version: 7.8.2
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.2
+        version: 6.0.2
 
   packages/socket-parser:
     dependencies:
@@ -22336,6 +22336,25 @@ snapshots:
       yaml: 2.8.3
     optionalDependencies:
       typescript: 5.9.3
+    transitivePeerDependencies:
+      - vite
+
+  pkgroll@2.27.0(typescript@6.0.2):
+    dependencies:
+      '@rollup/plugin-alias': 6.0.0(rollup@4.60.1)
+      '@rollup/plugin-commonjs': 29.0.2(rollup@4.60.1)
+      '@rollup/plugin-dynamic-import-vars': 2.1.5(rollup@4.60.1)
+      '@rollup/plugin-json': 6.1.0(rollup@4.60.1)
+      '@rollup/plugin-node-resolve': 16.0.3(rollup@4.60.1)
+      cjs-module-lexer: 2.2.0
+      esbuild: 0.28.0
+      magic-string: 0.30.21
+      rollup: 4.60.1
+      rollup-plugin-import-trace: 1.0.1(rollup@4.60.1)(vite@8.0.6(@types/node@25.5.2)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+      rollup-pluginutils: 2.8.2
+      yaml: 2.8.3
+    optionalDependencies:
+      typescript: 6.0.2
     transitivePeerDependencies:
       - vite
 
