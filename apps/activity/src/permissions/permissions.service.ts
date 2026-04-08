@@ -62,13 +62,11 @@ export class PermissionsService {
           ),
       );
 
-      const permissions = response ?? [];
-
-      await this.cacheManager.set(cacheKey, permissions, 60000 * 5);
+      await this.cacheManager.set(cacheKey, response, 60000 * 5);
 
       this.logger.debug(`Cached user permissions: ${cacheKey}`);
 
-      return permissions;
+      return response;
     } catch (error) {
       this.logger.log({
         level: "error",
