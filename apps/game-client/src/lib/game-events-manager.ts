@@ -2,7 +2,10 @@ import type { GameEvent } from "@lootlog/margonem/game-events";
 
 type GameEventHandler = (event: GameEvent) => void;
 type RawGameEventPayload = string | GameEvent;
-type SuccessDataHandler = (...args: unknown[]) => unknown;
+type SuccessDataHandler = ((...args: unknown[]) => unknown) & {
+  __lootlog_original?: SuccessDataHandler;
+  __lootlog_wrapped?: boolean;
+};
 type SuccessDataContainer = {
   successData?: SuccessDataHandler;
 };
@@ -13,6 +16,7 @@ class GameEventsManager {
   private isReady = false;
   private proxies: Array<{ cleanup: () => void }> = [];
   private stripFriendsFromNextEvent = false;
+  hadEarlyEvents = false;
 
   markStripFriendsFromNextEvent() {
     this.stripFriendsFromNextEvent = true;
@@ -116,7 +120,35 @@ class GameEventsManager {
   }
 
   setupProxies() {
+    this.drainEarlyEventBuffer();
     this.setupSuccessDataProxies();
+  }
+
+  private drainEarlyEventBuffer() {
+    const earlyEvents = (
+      window as Window & { __lootlog_early_events?: unknown[] }
+    ).__lootlog_early_events;
+
+    if (!Array.isArray(earlyEvents)) {
+      return;
+    }
+
+    this.hadEarlyEvents = true;
+
+    if (earlyEvents.length === 0) {
+      return;
+    }
+
+    for (const raw of earlyEvents) {
+      const event = this.parseGameEventPayload(raw);
+      if (event) {
+        this.eventQueue.push(event);
+      }
+    }
+
+    earlyEvents.length = 0;
+    delete (window as Window & { __lootlog_early_events?: unknown[] })
+      .__lootlog_early_events;
   }
 
   private setupSuccessDataProxies() {
@@ -144,7 +176,10 @@ class GameEventsManager {
         continue;
       }
 
-      const proxiedSuccessData = new Proxy(originalSuccessData, {
+      const baseSuccessData =
+        originalSuccessData.__lootlog_original ?? originalSuccessData;
+
+      const proxiedSuccessData = new Proxy(baseSuccessData, {
         apply: (target, thisArg, args) => {
           this.onGameInitChange();
 
@@ -152,6 +187,8 @@ class GameEventsManager {
           return target.apply(thisArg, forwardedArgs);
         },
       });
+
+      proxiedSuccessData.__lootlog_original = baseSuccessData;
 
       container[property] = proxiedSuccessData;
 

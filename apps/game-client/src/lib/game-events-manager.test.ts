@@ -4,6 +4,7 @@ import type { GameEvent } from "@lootlog/margonem/game-events";
 
 type TestWindow = Window & {
   successData?: (...args: unknown[]) => unknown;
+  __lootlog_early_events?: unknown[];
 };
 
 const testWindow = window as TestWindow;
@@ -20,6 +21,7 @@ describe("gameEventsManager", () => {
     gameEventsManager.cleanup();
     testWindow.successData = originalWindowSuccessData;
     testWindow.Engine = originalEngine;
+    delete testWindow.__lootlog_early_events;
   });
 
   it("should process event payload when successData receives JSON string", () => {
@@ -94,5 +96,61 @@ describe("gameEventsManager", () => {
     expect(forwardedEvent.friends).toBeUndefined();
     expect(forwardedEvent.friends_max).toBeUndefined();
     expect(forwardedEvent.f).toEqual(event.f);
+  });
+
+  it("should drain buffered early events before processing live events", () => {
+    const originalSuccessData = vi.fn();
+    const eventProcessor = vi.fn();
+    const earlyEvent: GameEvent = {
+      f: {
+        init: "1",
+      },
+    };
+
+    testWindow.successData = originalSuccessData;
+    testWindow.__lootlog_early_events = [JSON.stringify(earlyEvent)];
+
+    gameEventsManager.setupProxies();
+    gameEventsManager.setProcessor(eventProcessor);
+    gameEventsManager.setReady(true);
+
+    expect(eventProcessor).toHaveBeenCalledTimes(1);
+    expect(eventProcessor).toHaveBeenCalledWith(earlyEvent);
+    expect(testWindow.__lootlog_early_events).toBeUndefined();
+    expect(gameEventsManager.hadEarlyEvents).toBe(true);
+  });
+
+  it("should unwrap the entrypoint wrapper before applying the runtime proxy", () => {
+    const bufferedEvents: unknown[] = [];
+    const originalSuccessData = vi.fn();
+    const eventProcessor = vi.fn();
+    const event: GameEvent = {
+      f: {
+        init: "1",
+      },
+    };
+
+    const earlyWrapper = new Proxy(originalSuccessData, {
+      apply: (target, thisArg, args) => {
+        bufferedEvents.push(args[0]);
+        return target.apply(thisArg, args);
+      },
+    }) as typeof originalSuccessData & {
+      __lootlog_original?: typeof originalSuccessData;
+    };
+    earlyWrapper.__lootlog_original = originalSuccessData;
+
+    testWindow.successData = earlyWrapper;
+
+    gameEventsManager.setupProxies();
+    gameEventsManager.setProcessor(eventProcessor);
+    gameEventsManager.setReady(true);
+
+    testWindow.successData?.(event);
+
+    expect(eventProcessor).toHaveBeenCalledTimes(1);
+    expect(eventProcessor).toHaveBeenCalledWith(event);
+    expect(originalSuccessData).toHaveBeenCalledWith(event);
+    expect(bufferedEvents).toHaveLength(0);
   });
 });

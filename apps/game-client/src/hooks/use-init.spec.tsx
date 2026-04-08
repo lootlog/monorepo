@@ -5,9 +5,18 @@ import { useGlobalStore } from "@/store/global.store";
 import { gameEventsManager } from "@/lib/game-events-manager";
 import { Game } from "@/lib/game";
 
+const { mockToastWarning } = vi.hoisted(() => ({
+  mockToastWarning: vi.fn(),
+}));
+
 vi.mock("@/store/global.store");
 vi.mock("@/lib/game-events-manager");
 vi.mock("@/lib/game");
+vi.mock("sonner", () => ({
+  toast: {
+    warning: mockToastWarning,
+  },
+}));
 
 describe("useInit", () => {
   const mockSetGameState = vi.fn();
@@ -19,6 +28,7 @@ describe("useInit", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    delete window.__lootlog_early_events;
 
     vi.mocked(useGlobalStore).mockReturnValue({
       setGameState: mockSetGameState,
@@ -28,6 +38,7 @@ describe("useInit", () => {
     vi.mocked(gameEventsManager).setGameInitCallback = mockSetGameInitCallback;
     vi.mocked(gameEventsManager).setReady = mockSetReady;
     vi.mocked(gameEventsManager).cleanup = mockCleanup;
+    vi.mocked(gameEventsManager).hadEarlyEvents = false;
 
     vi.mocked(Game).getInitializeState = mockGetInitializeState;
     mockGetInitializeState.mockReturnValue(false);
@@ -46,6 +57,34 @@ describe("useInit", () => {
     unmount();
 
     expect(mockCleanup).toHaveBeenCalledTimes(1);
+  });
+
+  it("should show an update warning when early event support is unavailable", () => {
+    renderHook(() => useInit());
+
+    expect(mockToastWarning).toHaveBeenCalledTimes(1);
+    expect(mockToastWarning).toHaveBeenCalledWith(
+      "Wymagana aktualizacja Lootlog",
+      expect.objectContaining({
+        duration: Infinity,
+      }),
+    );
+  });
+
+  it("should not show an update warning when the early event buffer exists", () => {
+    window.__lootlog_early_events = [];
+
+    renderHook(() => useInit());
+
+    expect(mockToastWarning).not.toHaveBeenCalled();
+  });
+
+  it("should not show an update warning after early event support was detected", () => {
+    vi.mocked(gameEventsManager).hadEarlyEvents = true;
+
+    renderHook(() => useInit());
+
+    expect(mockToastWarning).not.toHaveBeenCalled();
   });
 
   describe("game initialization flow", () => {

@@ -10,5 +10,6 @@ declare global {
     getCookie: (name: string) => string | null;
     message: (text: string) => void;
     getZoomFactor: () => number;
+    __lootlog_early_events?: unknown[];
   }
 }
