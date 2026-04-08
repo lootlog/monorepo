@@ -1,5 +1,6 @@
 import { readFile } from "fs/promises";
 import path from "path";
+import crypto from "node:crypto";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -30,7 +31,7 @@ export class BattlesGenerator {
     }
 
     const worlds = ["gordion", "classic", "katahha", "aldous", "gefion"];
-    const randomWorld = worlds[Math.floor(Math.random() * worlds.length)];
+    const randomWorld = worlds[crypto.randomInt(0, worlds.length)];
 
     return {
       accountId,

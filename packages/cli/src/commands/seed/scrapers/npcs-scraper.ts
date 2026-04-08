@@ -1,5 +1,6 @@
 import { parse } from "node-html-parser";
 import { writeFile, readFile } from "node:fs/promises";
+import crypto from "node:crypto";
 import path from "node:path";
 import { SCRAPER_CONFIG } from "../config.js";
 import { fileExists } from "../utils/file-exists.js";
@@ -31,7 +32,7 @@ const NPC_TYPE_WT_MAP: Record<string, number> = {
 
 function getRandomProfession(): string {
   const { professions } = SCRAPER_CONFIG;
-  return professions[Math.floor(Math.random() * professions.length)] ?? "w";
+  return professions[crypto.randomInt(0, professions.length)] ?? "w";
 }
 
 function getWtByType(type: string): number {
@@ -44,7 +45,7 @@ function getNpcLevelFromMeta(meta: string): number {
 
   const lvl = regex.exec(meta) ?? grpRegex.exec(meta);
 
-  if (!lvl) return Math.floor(Math.random() * 300);
+  if (!lvl) return crypto.randomInt(0, 300);
 
   return Number(lvl[1]);
 }
