@@ -324,7 +324,7 @@ export class EventKillService {
 
       return {
         mapId,
-        mapName: params.mapNameById.get(mapId) || "",
+        mapName: params.mapNameById.get(mapId) ?? "",
         presenceTimeSeconds: presenceStats?.presenceTimeSeconds ?? 0,
         afkTimeSeconds: presenceStats?.afkTimeSeconds ?? 0,
       };
@@ -1385,12 +1385,12 @@ export class EventKillService {
 
         return {
           mapId: assignment.mapId,
-          mapName: mapIdToName.get(assignment.mapId) || "",
+          mapName: mapIdToName.get(assignment.mapId) ?? "",
           assignedAt: assignment.assignedAt.toISOString(),
-          unassignedAt: assignment.unassignedAt?.toISOString() || null,
+          unassignedAt: assignment.unassignedAt?.toISOString() ?? null,
           assignmentDurationSeconds,
-          presenceTimeSeconds: presence?.presenceTimeSeconds || 0,
-          afkTimeSeconds: presence?.afkTimeSeconds || 0,
+          presenceTimeSeconds: presence?.presenceTimeSeconds ?? 0,
+          afkTimeSeconds: presence?.afkTimeSeconds ?? 0,
         };
       });
 
@@ -1572,12 +1572,12 @@ export class EventKillService {
 
             return {
               mapId: assignment.mapId,
-              mapName: mapIdToName.get(assignment.mapId) || "",
+              mapName: mapIdToName.get(assignment.mapId) ?? "",
               assignedAt: assignment.assignedAt.toISOString(),
-              unassignedAt: assignment.unassignedAt?.toISOString() || null,
+              unassignedAt: assignment.unassignedAt?.toISOString() ?? null,
               assignmentDurationSeconds,
-              presenceTimeSeconds: presence?.presenceTimeSeconds || 0,
-              afkTimeSeconds: presence?.afkTimeSeconds || 0,
+              presenceTimeSeconds: presence?.presenceTimeSeconds ?? 0,
+              afkTimeSeconds: presence?.afkTimeSeconds ?? 0,
             };
           })
           .filter((entry): entry is KillPointMapDataEntry => entry !== null);
