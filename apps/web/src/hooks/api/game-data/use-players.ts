@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useApiClient } from "hooks/api/use-api-client";
+import { useApiClient } from "@/hooks/api/use-api-client";
 // import { apiClient } from "lib/api-client";
 
 export const usePlayers = () => {

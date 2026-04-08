@@ -1,4 +1,4 @@
-import type { ItemStat } from "utils/item-tips/parse-item-stats";
+import type { ItemStat } from "@/utils/item-tips/parse-item-stats";
 
 export type ItemDisplayValue = {
   key: string | undefined;

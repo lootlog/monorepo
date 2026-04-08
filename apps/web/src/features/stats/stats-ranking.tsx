@@ -86,7 +86,7 @@ export const StatsRanking: React.FC = () => {
     setCursor(0);
   };
 
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleMinLvlChange = (value: string) => {
     setMinLvl(value);

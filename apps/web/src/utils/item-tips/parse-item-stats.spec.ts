@@ -1,4 +1,4 @@
-import { parseItemStats } from "utils/item-tips/parse-item-stats";
+import { parseItemStats } from "@/utils/item-tips/parse-item-stats";
 import { describe, expect, it } from "vitest";
 
 describe("parseItemStats", () => {
