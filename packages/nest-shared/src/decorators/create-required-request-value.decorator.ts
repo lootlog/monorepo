@@ -1,6 +1,6 @@
 import { createParamDecorator, type ExecutionContext } from "@nestjs/common";
 
-type RequestLike = {
+export type RequestLike = {
   [key: string]: unknown;
   params?: Record<string, string | undefined>;
 };
