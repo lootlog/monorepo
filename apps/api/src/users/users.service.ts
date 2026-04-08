@@ -40,7 +40,7 @@ export class UsersService {
       where: { userId },
     });
 
-    const settings = userSettings || {
+    const settings = userSettings ?? {
       id: 0,
       userId,
       guildsOrder: [],
