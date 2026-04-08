@@ -157,11 +157,7 @@ export class EventPointsService {
   private getTrackingDurationSecondsForRanking(params: {
     trackingDurationSeconds: number | null | undefined;
   }): number {
-    if (
-      params.trackingDurationSeconds === null ||
-      params.trackingDurationSeconds === undefined ||
-      !Number.isFinite(params.trackingDurationSeconds)
-    ) {
+    if (!Number.isFinite(params.trackingDurationSeconds)) {
       return 0;
     }
 
@@ -264,11 +260,7 @@ export class EventPointsService {
     killedAt: Date;
     minSpawnTimeAtKill: Date;
   }): number | undefined {
-    if (
-      params.trackingDurationSeconds === null ||
-      params.trackingDurationSeconds === undefined ||
-      !Number.isFinite(params.trackingDurationSeconds)
-    ) {
+    if (!Number.isFinite(params.trackingDurationSeconds)) {
       return undefined;
     }
 
