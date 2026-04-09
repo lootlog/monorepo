@@ -44,7 +44,7 @@ export class RolesEventsHandler {
     },
   })
   async handleRoleCreate(data: CreateRoleDto, amqpMsg: AmqpMessage) {
-    const headers = amqpMsg.properties.headers || {};
+    const headers = amqpMsg.properties.headers ?? {};
 
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
@@ -78,7 +78,7 @@ export class RolesEventsHandler {
     },
   })
   async handleRoleUpdate(data: UpdateRoleDto, amqpMsg: AmqpMessage) {
-    const headers = amqpMsg.properties.headers || {};
+    const headers = amqpMsg.properties.headers ?? {};
 
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
@@ -112,7 +112,7 @@ export class RolesEventsHandler {
     },
   })
   async handleRoleDelete(data: DeleteRoleDto, amqpMsg: AmqpMessage) {
-    const headers = amqpMsg.properties.headers || {};
+    const headers = amqpMsg.properties.headers ?? {};
 
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
@@ -150,7 +150,7 @@ export class RolesEventsHandler {
       roleId: data.id,
       guildId: data.guildId,
       retryCount: this.retryService.getRetryCount(
-        amqpMsg.properties.headers || {},
+        amqpMsg.properties.headers ?? {},
       ),
       headers: amqpMsg.properties.headers,
     });
@@ -171,7 +171,7 @@ export class RolesEventsHandler {
       roleId: data.id,
       guildId: data.guildId,
       retryCount: this.retryService.getRetryCount(
-        amqpMsg.properties.headers || {},
+        amqpMsg.properties.headers ?? {},
       ),
       headers: amqpMsg.properties.headers,
     });
@@ -192,7 +192,7 @@ export class RolesEventsHandler {
       roleId: data.id,
       guildId: data.guildId,
       retryCount: this.retryService.getRetryCount(
-        amqpMsg.properties.headers || {},
+        amqpMsg.properties.headers ?? {},
       ),
       headers: amqpMsg.properties.headers,
     });
