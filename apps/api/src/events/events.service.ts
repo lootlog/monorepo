@@ -11,7 +11,6 @@ import type {
 } from "src/generated/prisma/client";
 import type { EventWrappedResponseDto } from "./dto/event-wrapped.dto";
 import { EVENT_HERO_KILL_QUEUE } from "./constants/event-hero-kill-queue.constant";
-import { DEFAULT_ADVANCED_EVENT_SCORING_RULES } from "./constants/scoring-rules.constant";
 import type { CreateEventDto } from "./dto/create-event.dto";
 import type { CreateHeroDto } from "./dto/create-hero.dto";
 import type { CreateLocationDto } from "./dto/create-location.dto";
@@ -377,33 +376,6 @@ export class EventsService {
       event,
       timerData,
     );
-  }
-
-  calculateMemberPoints(
-    _event: Event,
-    killTime: Date,
-    _heroMapCount: number,
-    assignedMembersCount: number,
-  ): { points: number } {
-    const result = this.pointsService.calculateMemberPoints({
-      scoringMode: "SIMPLE",
-      scoringRules: DEFAULT_ADVANCED_EVENT_SCORING_RULES,
-      eligible: true,
-      trackingDurationPercentage: 100,
-      trackingDurationSeconds: 0,
-      assignedMembersCount,
-      killTime,
-      respawnStartTime: killTime,
-      memberLeaveTime: null,
-      memberPresentAtKill: true,
-      timeOnMapSeconds: 0,
-      afkPercentage: 0,
-      wasPresent: true,
-    });
-
-    return {
-      points: result.totalPoints,
-    };
   }
 
   recalculateEventPoints(
