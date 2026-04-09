@@ -32,7 +32,7 @@ export class RetryService {
 
     const xDeath = headers["x-death"];
     if (Array.isArray(xDeath) && xDeath.length > 0) {
-      return (xDeath[0].count as number) || 0;
+      return (xDeath[0].count as number) ?? 0;
     }
 
     return 0;
@@ -44,7 +44,7 @@ export class RetryService {
     headers: Record<string, unknown> = {},
     config: RetryConfig = {},
   ): Promise<void> {
-    const dlqExchange = config.dlqExchange || DEAD_LETTER_EXCHANGE_NAME;
+    const dlqExchange = config.dlqExchange ?? DEAD_LETTER_EXCHANGE_NAME;
 
     this.logger.warn(`Sending message to DLQ: ${dlqRoutingKey}`);
 
@@ -64,7 +64,7 @@ export class RetryService {
     identifier: string,
     config: RetryConfig = {},
   ): Promise<boolean> {
-    const maxRetries = config.maxRetries || GatewayConfig.DEFAULT_MAX_RETRIES;
+    const maxRetries = config.maxRetries ?? GatewayConfig.DEFAULT_MAX_RETRIES;
 
     if (!this.shouldRetry(headers, maxRetries)) {
       this.logger.warn(
