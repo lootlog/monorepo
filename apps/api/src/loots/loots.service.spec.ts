@@ -650,7 +650,6 @@ describe("LootsService", () => {
 
   describe("getComments", () => {
     const options = {
-      discordId: "discord123",
       guildId: "guild1",
       lootId: 1,
     };
