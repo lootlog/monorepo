@@ -74,6 +74,8 @@ const TimerItem: FC<TimerItemProps> = ({
             eventId,
             heroId: timer.heroId ?? "",
           }}
+          preload="intent"
+          preloadDelay={0}
           onClick={onNavigate}
           className="group block"
         >

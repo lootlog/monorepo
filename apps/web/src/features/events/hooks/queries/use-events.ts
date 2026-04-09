@@ -1,5 +1,5 @@
-import { useApiClient } from "@/hooks/api/use-api-client";
-import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/lib/api-client/api-client";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 import type {
   EventScoringMode,
   EventScoringRules,
@@ -89,23 +89,30 @@ export const useEvents = ({
   activeOnly = true,
   enabled = true,
 }: UseEventsOptions) => {
-  const { client } = useApiClient();
+  return useQuery(eventsQueryOptions({ guildId, world, activeOnly, enabled }));
+};
 
-  return useQuery<Event[]>({
+export const eventsQueryOptions = ({
+  guildId,
+  world,
+  activeOnly = true,
+  enabled = true,
+}: UseEventsOptions) =>
+  queryOptions({
     queryKey: ["events", guildId, world, activeOnly],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (world) params.set("world", world);
       params.set("activeOnly", String(activeOnly));
 
-      const response = await client.get<Event[]>(
+      const response = await apiClient.get<Event[]>(
         `/guilds/${guildId}/events?${params.toString()}`,
       );
       return response.data;
     },
     enabled: !!guildId && enabled,
+    staleTime: 30_000,
   });
-};
 
 export type {
   Event,

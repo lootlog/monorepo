@@ -1,7 +1,7 @@
 import type { FC, ReactNode } from "react";
 import { SpinnerOverrideProvider } from "@lootlog/ui/components/spinner";
 import { useTheme } from "@/hooks/context/use-theme";
-import { CatPawSpinner } from "@/components/ui/cat-paw-spinner";
+import { LazyCatPawSpinner } from "@/components/ui/lazy-cat-paw-spinner";
 
 export const CatSpinnerProvider: FC<{ children: ReactNode }> = ({
   children,
@@ -10,7 +10,7 @@ export const CatSpinnerProvider: FC<{ children: ReactNode }> = ({
   const isCatTheme = theme.startsWith("cat-");
 
   return (
-    <SpinnerOverrideProvider spinner={isCatTheme ? CatPawSpinner : null}>
+    <SpinnerOverrideProvider spinner={isCatTheme ? LazyCatPawSpinner : null}>
       {children}
     </SpinnerOverrideProvider>
   );
