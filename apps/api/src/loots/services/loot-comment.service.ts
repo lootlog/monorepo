@@ -7,11 +7,7 @@ import { ErrorKey } from "../enum/error-key.enum";
 export class LootCommentService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getComments(options: {
-    discordId: string;
-    guildId: string;
-    lootId: number;
-  }) {
+  async getComments(options: { guildId: string; lootId: number }) {
     const { guildId, lootId } = options;
 
     const comments = await this.prisma.lootComment.findMany({

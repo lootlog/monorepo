@@ -212,12 +212,10 @@ export class LootsController {
   })
   @ApiResponse({ status: 404, description: "Loot not found" })
   async getComments(
-    @DiscordId() discordId: string,
     @Param("lootId", new ParseIntPipe()) lootId: number,
     @GuildData() guild: Guild,
   ) {
     const comments = await this.lootsService.getComments({
-      discordId,
       lootId,
       guildId: guild.id,
     });

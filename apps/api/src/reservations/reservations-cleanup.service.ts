@@ -27,8 +27,7 @@ export class ReservationsCleanupService {
       return;
     }
 
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - this.retentionDays);
+    const cutoffDate = this.createCutoffDate(this.retentionDays);
 
     this.logger.log(
       `Starting reservation cleanup (cutoff: ${cutoffDate.toISOString()}, retention: ${this.retentionDays} days)`,
@@ -59,8 +58,7 @@ export class ReservationsCleanupService {
   async cleanupExpiredReservationsManual(
     retentionDays: number = this.retentionDays,
   ): Promise<number> {
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
+    const cutoffDate = this.createCutoffDate(retentionDays);
 
     this.logger.log(
       `Manual cleanup of expired reservations (cutoff: ${cutoffDate.toISOString()}, retention: ${retentionDays} days)`,
@@ -75,5 +73,12 @@ export class ReservationsCleanupService {
     this.logger.log(`Manual cleanup deleted ${count} expired reservations`);
 
     return count;
+  }
+
+  private createCutoffDate(retentionDays: number): Date {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
+
+    return cutoffDate;
   }
 }
