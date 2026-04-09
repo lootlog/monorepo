@@ -1574,10 +1574,10 @@ export class EventKillService {
               mapId: assignment.mapId,
               mapName: mapIdToName.get(assignment.mapId) ?? "",
               assignedAt: assignment.assignedAt.toISOString(),
-              unassignedAt: assignment.unassignedAt?.toISOString() || null,
+              unassignedAt: assignment.unassignedAt?.toISOString() ?? null,
               assignmentDurationSeconds,
-              presenceTimeSeconds: presence?.presenceTimeSeconds || 0,
-              afkTimeSeconds: presence?.afkTimeSeconds || 0,
+              presenceTimeSeconds: presence?.presenceTimeSeconds ?? 0,
+              afkTimeSeconds: presence?.afkTimeSeconds ?? 0,
             };
           })
           .filter((entry): entry is KillPointMapDataEntry => entry !== null);
