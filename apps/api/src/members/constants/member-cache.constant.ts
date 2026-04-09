@@ -23,13 +23,3 @@ export function getAdminBulkRefreshRateLimit(env: RuntimeEnvironment): number {
     ? 1000 * 60 * 5 // 5 minutes in local
     : 1000 * 60 * 10; // 10 minutes in prod
 }
-
-/**
- * Rate limit for game-client Discord refresh.
- * Users can only refresh their Discord roles once per 15 minutes via game-client.
- */
-export function getGameClientRefreshRateLimit(env: RuntimeEnvironment): number {
-  return env === RuntimeEnvironment.LOCAL
-    ? 1000 * 60 * 5 // 5 minutes in local
-    : 1000 * 60 * 15; // 15 minutes in prod
-}

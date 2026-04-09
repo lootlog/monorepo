@@ -1,4 +1,4 @@
-export function normalizeTimerNpcName(name: string): string {
+function normalizeTimerNpcName(name: string): string {
   return name.trim().toLowerCase().replace(/\s+/g, " ");
 }
 

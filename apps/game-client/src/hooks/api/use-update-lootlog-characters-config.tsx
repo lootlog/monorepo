@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { LootlogCharacterConfigResponse } from "@/hooks/api/use-lootlog-character-config";
 import { Game } from "@/lib/game";
 
-export type UseUpdateLootlogCharacterSettings = {
+type UseUpdateLootlogCharacterSettings = {
   characterId: string;
   lootGuildIds: string[];
   timerGuildIds: string[];

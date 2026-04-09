@@ -8,7 +8,7 @@ import { Avatar } from "@/components/ui/avatar";
 import type { FC, PropsWithChildren } from "react";
 import { Button } from "@/components/ui/button";
 
-export type GuildButtonProps = PropsWithChildren<{
+type GuildButtonProps = PropsWithChildren<{
   isSelected: boolean;
   disabled: boolean;
   onClick: () => void;

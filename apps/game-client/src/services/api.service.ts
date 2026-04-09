@@ -11,7 +11,7 @@ import type { Npc, PartyMember } from "@/utils/game/get-battle-participants";
 
 // --- Kill ---
 
-export type KillNpcData = {
+type KillNpcData = {
   id: number;
   name: string;
   icon?: string;
@@ -20,7 +20,7 @@ export type KillNpcData = {
   wt: number;
 };
 
-export type CreateKillParams = {
+type CreateKillParams = {
   world: string;
   npc: KillNpcData;
   characterId: string;
@@ -49,14 +49,14 @@ export type BattleEventPayload = {
   matchmaking_state?: number;
 };
 
-export type CreateBattleOptions = {
+type CreateBattleOptions = {
   accountId: string;
   characterId: string;
   world: string;
   events: BattleEventPayload[];
 };
 
-export type CreateBattleResponse = {
+type CreateBattleResponse = {
   battleId: number;
 };
 
@@ -83,7 +83,7 @@ export async function createBattle(
 
 // --- Loot ---
 
-export type CreateLootOptions = {
+type CreateLootOptions = {
   npcs: Npc[];
   players: PartyMember[];
   loots: Partial<Item>[];
@@ -94,7 +94,7 @@ export type CreateLootOptions = {
   location: string;
 };
 
-export type CreateLootResponse = {
+type CreateLootResponse = {
   id: number;
 };
 
@@ -108,7 +108,7 @@ export async function createLoot(
 
 // --- Update Loot ---
 
-export type UpdateLootOptions = {
+type UpdateLootOptions = {
   msg: string;
   id: number;
 };
@@ -123,7 +123,7 @@ export async function updateLoot({
 
 // --- Timer ---
 
-export type CreateTimerNpc = {
+type CreateTimerNpc = {
   id: number;
   name: string;
   icon: string;
@@ -135,7 +135,7 @@ export type CreateTimerNpc = {
   wt: number;
 };
 
-export type CreateTimerOptions = {
+type CreateTimerOptions = {
   respawnRandomness?: number;
   respBaseSeconds: number;
   characterId: string;
@@ -146,7 +146,7 @@ export type CreateTimerOptions = {
   npc: CreateTimerNpc;
 };
 
-export type CreateTimerForGuildsParams = {
+type CreateTimerForGuildsParams = {
   timer: CreateTimerOptions;
   guildIds: string[];
 };
@@ -194,7 +194,7 @@ export enum MessageType {
   PARTY_GATHERING = "PARTY_GATHERING",
 }
 
-export type ChatCharacterData = {
+type ChatCharacterData = {
   nick: string;
   id: number;
   acc: number;
@@ -203,7 +203,7 @@ export type ChatCharacterData = {
   icon: string;
 };
 
-export type ChatNpc = {
+type ChatNpc = {
   icon: string;
   id: number;
   x: number;
@@ -217,7 +217,7 @@ export type ChatNpc = {
   lvl: number;
 };
 
-export type SendChatMessageOptions = {
+type SendChatMessageOptions = {
   message: string;
   guildIds: string[];
   type: MessageType;
@@ -255,7 +255,7 @@ export async function sendChatMessage({
 
 // --- Notification ---
 
-export type CreateNotificationOptions = {
+type CreateNotificationOptions = {
   npc?: Npc;
   guildIds: string[];
   world: string;

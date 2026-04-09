@@ -44,7 +44,7 @@ export const useUpdateTimerSettings = () => {
   });
 };
 
-export const useGuildTimerSettings = (guildId: string) => {
+const useGuildTimerSettings = (guildId: string) => {
   const { client } = useAuthenticatedApiClient();
 
   const query = useQuery({
@@ -61,7 +61,7 @@ export const useGuildTimerSettings = (guildId: string) => {
   return query;
 };
 
-export const useUpdateGuildTimerSettings = (guildId: string) => {
+const useUpdateGuildTimerSettings = (guildId: string) => {
   const { client } = useAuthenticatedApiClient();
   const queryClient = useQueryClient();
 

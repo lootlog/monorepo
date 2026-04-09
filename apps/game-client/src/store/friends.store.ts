@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type Friend = {
+type Friend = {
   characterId: string;
   nick: string;
   icon: string;

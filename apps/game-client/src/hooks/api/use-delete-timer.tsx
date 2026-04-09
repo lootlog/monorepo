@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 
-export type UseDeleteTimerOptions = {
+type UseDeleteTimerOptions = {
   timerKey: string;
   guildId: string;
   world?: string;

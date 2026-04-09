@@ -17,7 +17,7 @@ import { useForm } from "react-hook-form";
 import { useDeepCompareEffect } from "react-use";
 import { z } from "zod";
 
-export type NotificationsSettingsTabFormProps = {
+type NotificationsSettingsTabFormProps = {
   characterId?: number;
 };
 

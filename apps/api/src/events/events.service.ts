@@ -44,9 +44,6 @@ import { EventRespawnService } from "./services/event-respawn.service";
 import { EventTrackingService } from "./services/event-tracking.service";
 import { EventWrappedService } from "./services/event-wrapped.service";
 
-export type { MapStatus, CloseRespawnWindowOptions, OpenRespawnWindowOptions };
-export type { CheckEventHeroKillParams, KillTimerData };
-
 @Injectable()
 export class EventsService {
   constructor(

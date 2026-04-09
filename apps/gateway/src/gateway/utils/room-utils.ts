@@ -9,7 +9,7 @@ export type TierName = "base" | "titans" | "heroes";
 // Features excluded for web app (they don't need chat/notifications)
 const WEB_EXCLUDED_FEATURES: FeatureName[] = ["chat", "notifications"];
 
-export const FEATURE_ROOMS = {
+const FEATURE_ROOMS = {
   chat: {
     base: Permission.LOOTLOG_CHAT_READ,
     titans: Permission.LOOTLOG_CHAT_TITANS_READ,
@@ -59,7 +59,7 @@ export function parseRoomName(
   };
 }
 
-export interface RoomCalculationResult {
+interface RoomCalculationResult {
   rooms: string[];
   roomsByGuild: Map<string, string[]>;
 }

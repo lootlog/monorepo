@@ -2,7 +2,7 @@ import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
 import { cn } from "@/lib/utils";
 import { type FC, useState } from "react";
 
-export type TileProps = {
+type TileProps = {
   children?: React.ReactNode;
   id?: string;
   color?: keyof typeof TIMERS_COLORS | string;

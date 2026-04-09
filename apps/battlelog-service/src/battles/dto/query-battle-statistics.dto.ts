@@ -2,7 +2,7 @@ import { z } from "zod";
 import { createZodDto } from "nestjs-zod";
 import { booleanFromString, intFromString } from "@lootlog/nest-shared";
 
-export const QueryBattleStatisticsSchema = z.object({
+const QueryBattleStatisticsSchema = z.object({
   characterId: z.string().optional(),
   world: z.string().optional(),
   period: z

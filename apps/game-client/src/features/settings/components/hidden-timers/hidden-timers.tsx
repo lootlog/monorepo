@@ -3,7 +3,7 @@ import { useTimersStore } from "@/store/timers.store";
 import { XIcon } from "lucide-react";
 import { FC } from "react";
 
-export type HiddenTimersProps = {
+type HiddenTimersProps = {
   guildId?: string;
 };
 

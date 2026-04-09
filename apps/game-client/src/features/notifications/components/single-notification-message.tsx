@@ -4,7 +4,7 @@ import type { NotificationWithServers } from "@/store/notifications.store";
 import { getDiscordAvatarUrl } from "@/utils/discord/get-avatar-url";
 import type { FC } from "react";
 
-export type SingleNotificationMessageProps = {
+type SingleNotificationMessageProps = {
   notification: NotificationWithServers;
   time?: string;
   member?: GuildMember;

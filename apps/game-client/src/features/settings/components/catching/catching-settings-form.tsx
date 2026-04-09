@@ -7,7 +7,7 @@ import { useLootlogCharactersConfig } from "@/hooks/api/use-lootlog-character-co
 import { useUpdateLootlogCharactersConfig } from "@/hooks/api/use-update-lootlog-characters-config";
 import { useGuilds } from "@/hooks/api/use-guilds";
 
-export type CatchingSettingsFormProps = {
+type CatchingSettingsFormProps = {
   characterId: string;
 };
 

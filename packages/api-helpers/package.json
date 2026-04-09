@@ -28,7 +28,6 @@
     "build": "pkgroll"
   },
   "dependencies": {
-    "@lootlog/types": "workspace:*",
     "hono": "^4.12.11",
     "jose": "^6.2.2"
   },

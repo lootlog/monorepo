@@ -14,7 +14,7 @@ import { EventPointsService } from "./event-points.service";
 import { EventTrackingService } from "./event-tracking.service";
 import { EventSummaryService } from "./event-summary.service";
 import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant";
-import type { AutoCloseRespawnWindowJobData } from "../respawn-window.processor";
+import type { AutoCloseRespawnWindowJobData } from "../interfaces/auto-close-respawn-window-job-data";
 import type { KillTimerData } from "../interfaces/kill-timer-data.interface";
 import {
   buildEventHeroKillDedupKey,
@@ -50,7 +50,7 @@ interface GapTimelineEntry {
   durationSeconds: number;
 }
 
-export interface EventTimerNpc {
+interface EventTimerNpc {
   name: string;
   icon: string | null;
 }

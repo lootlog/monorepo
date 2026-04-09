@@ -5,7 +5,7 @@ import { IntentsBitField } from "discord.js";
 import { ConfigKey } from "./config-key.enum";
 import { RuntimeEnvironment } from "src/types/common.types";
 
-export interface DiscordConfig {
+interface DiscordConfig {
   discordBotToken: string;
   discordDevelopmentGuildId?: string;
 }

@@ -2,7 +2,7 @@ import type { AxiosInstance } from "axios";
 import { Game } from "@/lib/game";
 import type { PartyGatheringSession } from "@/store/party-finder.store";
 
-export type CancelPartyGatheringResponse = {
+type CancelPartyGatheringResponse = {
   success: boolean;
   guildIds: string[];
 };

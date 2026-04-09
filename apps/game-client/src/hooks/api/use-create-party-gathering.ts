@@ -2,14 +2,14 @@ import { useMutation } from "@tanstack/react-query";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 import { Game } from "@/lib/game";
 
-export type UseCreatePartyGatheringOptions = {
+type UseCreatePartyGatheringOptions = {
   guildIds: string[];
   description?: string;
   minLvl?: number;
   maxLvl?: number;
 };
 
-export type CreatePartyGatheringResponse = {
+type CreatePartyGatheringResponse = {
   notificationId: string;
   guildIds?: string[];
 };

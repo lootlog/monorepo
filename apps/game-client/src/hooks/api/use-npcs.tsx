@@ -18,11 +18,11 @@ export type Npc = {
   margonemType: number;
 };
 
-export type UseGuildNpcsOptions = {
+type UseGuildNpcsOptions = {
   search?: string;
 };
 
-export const useNpcs = ({ search }: UseGuildNpcsOptions) => {
+const useNpcs = ({ search }: UseGuildNpcsOptions) => {
   const token = useAuthToken();
   const guildId = undefined; // TODO: Add proper guild context
 

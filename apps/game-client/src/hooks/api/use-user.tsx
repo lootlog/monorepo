@@ -12,7 +12,7 @@ export interface User {
   username: string;
 }
 
-export const useUser = () => {
+const useUser = () => {
   const token = useAuthToken();
 
   const query = useQuery({

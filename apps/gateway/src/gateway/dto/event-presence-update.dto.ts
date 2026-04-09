@@ -10,10 +10,3 @@ const EventPresenceUpdateSchema = z.object({
 export class EventPresenceUpdateDto extends createZodDto(
   EventPresenceUpdateSchema,
 ) {}
-
-export interface PlayerPresenceData {
-  mapId?: number;
-  mapName?: string;
-  isAfk: boolean;
-  updatedAt: number;
-}

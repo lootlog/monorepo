@@ -1,4 +1,4 @@
-export const CACHE_KEYS = {
+const CACHE_KEYS = {
   USER_GUILDS: "user-guilds",
 } as const;
 

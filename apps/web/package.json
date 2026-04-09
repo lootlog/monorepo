@@ -16,11 +16,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
-    "@lexical/markdown": "^0.42.0",
     "@lexical/react": "^0.42.0",
-    "@lexical/rich-text": "^0.42.0",
-    "@lexical/selection": "^0.42.0",
-    "@lexical/utils": "^0.42.0",
     "@lootlog/socket-parser": "workspace:*",
     "@lootlog/types": "workspace:*",
     "@lootlog/ui": "workspace:*",
@@ -64,7 +60,6 @@
   "devDependencies": {
     "@rolldown/plugin-babel": "^0.2.2",
     "@tanstack/router-plugin": "^1.167.12",
-    "@testing-library/jest-dom": "^6.9.1",
     "@types/lodash": "^4.17.24",
     "@types/node": "^25.5.2",
     "@types/qs": "^6.15.0",
@@ -73,7 +68,6 @@
     "@vitejs/plugin-react": "^6.0.1",
     "babel-plugin-react-compiler": "^1.0.0",
     "eslint-plugin-react-hooks": "^7.0.1",
-    "jsdom": "^29.0.1",
     "typescript": "~6.0.2",
     "vite": "^8.0.5",
     "vitest": "^4.1.2"

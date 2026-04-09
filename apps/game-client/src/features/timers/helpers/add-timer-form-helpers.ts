@@ -13,7 +13,7 @@ export const parseDurationToSeconds = (input: string): number => {
   return Math.min(totalSeconds, MAX_DURATION_SECONDS);
 };
 
-export function calculateMaxOffsetFromMinOffset(
+function calculateMaxOffsetFromMinOffset(
   minOffsetSeconds: number,
   respawnRandomness: number = DEFAULT_RESPAWN_RANDOMNESS,
 ): number {
@@ -21,7 +21,7 @@ export function calculateMaxOffsetFromMinOffset(
   return Math.round((minOffsetSeconds * (1 + multiplier)) / (1 - multiplier));
 }
 
-export function formatSecondsToHHMMSS(seconds: number): string {
+function formatSecondsToHHMMSS(seconds: number): string {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
@@ -31,7 +31,7 @@ export function formatSecondsToHHMMSS(seconds: number): string {
   return `${pad(h)}:${pad(m)}:${pad(s)}`;
 }
 
-export function calculateRespBaseSecondsFromMinOffset(
+function calculateRespBaseSecondsFromMinOffset(
   minOffsetSeconds: number,
   respawnRandomness: number = DEFAULT_RESPAWN_RANDOMNESS,
 ): number {

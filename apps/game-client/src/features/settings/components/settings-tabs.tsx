@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import type { FC, ReactNode } from "react";
 
-export type SettingsTabsProps = {};
+type SettingsTabsProps = {};
 
 const TABS_LIST: {
   value: string;

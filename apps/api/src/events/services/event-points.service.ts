@@ -25,7 +25,7 @@ import {
   clipIntervalToWindow,
 } from "../utils/tracking-window.util";
 
-export type CalculateMemberPointsParams = {
+type CalculateMemberPointsParams = {
   scoringMode?: EventScoringMode;
   scoringRules?: EventScoringRules | null;
   eligible: boolean;
@@ -42,14 +42,14 @@ export type CalculateMemberPointsParams = {
   wasPresent: boolean;
 };
 
-export type CalculatedMemberPoints = {
+type CalculatedMemberPoints = {
   totalPoints: number;
   basePoints: number;
   bonusPoints: number;
   appliedBonuses: EventScoringAppliedBonus[];
 };
 
-export type MemberPresenceStats = {
+type MemberPresenceStats = {
   memberId: number;
   timeOnMapSeconds: number;
   afkPercentage: number;
