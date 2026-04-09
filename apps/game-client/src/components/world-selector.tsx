@@ -10,7 +10,7 @@ import { storageKey } from "@/lib/storage-key";
 const recentWorldsKey = (accountId: string, characterId: string) =>
   storageKey(`ll:recent-worlds:${accountId}:${characterId}`);
 
-export type WorldSelectorProps = {
+type WorldSelectorProps = {
   disabled?: boolean;
   className?: string;
 };

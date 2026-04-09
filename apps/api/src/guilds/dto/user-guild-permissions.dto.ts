@@ -2,7 +2,7 @@ import { z } from "zod";
 import { createZodDto } from "nestjs-zod";
 import { Permission } from "src/generated/prisma/client";
 
-export const UserGuildPermissionsRoleSchema = z.object({
+const UserGuildPermissionsRoleSchema = z.object({
   id: z.string(),
   lvlRangeFrom: z.number(),
   lvlRangeTo: z.number(),
@@ -13,7 +13,7 @@ export class UserGuildPermissionsRole extends createZodDto(
   UserGuildPermissionsRoleSchema,
 ) {}
 
-export const UserGuildPermissionsGuildSchema = z.object({
+const UserGuildPermissionsGuildSchema = z.object({
   id: z.string(),
   ownerId: z.string(),
 });
@@ -22,7 +22,7 @@ export class UserGuildPermissionsGuild extends createZodDto(
   UserGuildPermissionsGuildSchema,
 ) {}
 
-export const UserGuildPermissionsSchema = z.object({
+const UserGuildPermissionsSchema = z.object({
   guild: UserGuildPermissionsGuildSchema,
   roles: z.array(UserGuildPermissionsRoleSchema),
 });

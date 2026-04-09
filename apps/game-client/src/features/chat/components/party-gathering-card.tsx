@@ -10,7 +10,7 @@ import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
 import type { FC } from "react";
 
-export type PartyGatheringCardProps = {
+type PartyGatheringCardProps = {
   message: ChatMessageType;
   member: GuildMember;
   guild: { name: string };

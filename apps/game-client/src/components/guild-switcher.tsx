@@ -9,7 +9,7 @@ import type { Viewport } from "@radix-ui/react-scroll-area";
 import { Game } from "@/lib/game";
 import { GuildButton } from "@/components/guild-button";
 
-export type GuildSwitcherProps = {
+type GuildSwitcherProps = {
   disabled?: boolean;
   allowAll?: boolean;
   className?: string;

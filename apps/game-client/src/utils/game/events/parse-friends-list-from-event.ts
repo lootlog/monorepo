@@ -1,4 +1,4 @@
-export interface Friend {
+interface Friend {
   characterId: string;
   nick: string;
   icon: string;

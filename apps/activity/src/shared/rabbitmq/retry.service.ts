@@ -14,7 +14,7 @@ interface AmqpMessage {
   };
 }
 
-export interface RetryConfig {
+interface RetryConfig {
   maxRetries?: number;
   retryDelayMs?: number;
   retryExchange?: string;

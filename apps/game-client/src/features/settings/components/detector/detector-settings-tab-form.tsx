@@ -15,7 +15,7 @@ import { useForm } from "react-hook-form";
 import { useDeepCompareEffect } from "react-use";
 import { z } from "zod";
 
-export type DetectorSettingsTabFormProps = {
+type DetectorSettingsTabFormProps = {
   characterId?: number;
 };
 

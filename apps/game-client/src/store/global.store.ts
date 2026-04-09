@@ -1,6 +1,5 @@
 import { create } from "zustand";
 
-export type GameInterface = "si" | "ni";
 export enum LanguageVersion {
   EN = "en",
   PL = "pl",

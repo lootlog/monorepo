@@ -19,7 +19,6 @@
     "test:e2e": "vitest run --config ./vitest.config.e2e.ts"
   },
   "dependencies": {
-    "@axiomhq/winston": "^1.6.0",
     "@golevelup/nestjs-rabbitmq": "^9.0.0",
     "@lootlog/instrumentation": "workspace:*",
     "@lootlog/nest-shared": "workspace:*",
@@ -47,7 +46,6 @@
     "@types/supertest": "^7.2.0",
     "@vitest/coverage-v8": "^4.1.2",
     "supertest": "^7.2.2",
-    "ts-node": "^10.9.2",
     "typescript": "^6.0.2",
     "unplugin-swc": "^1.5.9",
     "vitest": "^4.1.2"

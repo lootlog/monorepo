@@ -29,7 +29,7 @@ export interface ComboboxGroup {
   options: ComboboxOption[];
 }
 
-export interface ComboboxProps {
+interface ComboboxProps {
   value?: string;
   onValueChange?: (value: string) => void;
   options?: ComboboxOption[];

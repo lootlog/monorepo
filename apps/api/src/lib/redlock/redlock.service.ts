@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared";
 import Redlock from "redlock";
 
-export interface RedlockOptions {
+interface RedlockOptions {
   driftFactor?: number;
   retryCount?: number;
   retryDelay?: number;

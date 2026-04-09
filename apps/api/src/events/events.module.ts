@@ -7,7 +7,6 @@ import { EventsCatalogController } from "./events-catalog.controller";
 import { EventsMonitoringController } from "./events-monitoring.controller";
 import { EventsRankingController } from "./events-ranking.controller";
 import { EventsQueueHandler } from "./events-queue.handler";
-import { RespawnWindowProcessor } from "./respawn-window.processor";
 import { RESPAWN_WINDOW_QUEUE } from "./constants/respawn-queue.constant";
 import { EVENT_HERO_KILL_QUEUE } from "./constants/event-hero-kill-queue.constant";
 import { EventHeroKillProcessor } from "./event-hero-kill.processor";
@@ -64,7 +63,6 @@ import { TimersModule } from "src/timers/timers.module";
     EventSettingsService,
 
     EventsQueueHandler,
-    RespawnWindowProcessor,
     EventHeroKillProcessor,
   ],
   controllers: [

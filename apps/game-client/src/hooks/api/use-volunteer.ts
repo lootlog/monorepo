@@ -2,7 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 import { Game } from "@/lib/game";
 
-export type UseVolunteerOptions = {
+type UseVolunteerOptions = {
   notificationId: string;
   targetDiscordId: string;
   world: string;

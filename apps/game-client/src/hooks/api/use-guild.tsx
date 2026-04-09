@@ -14,7 +14,7 @@ type UseGuildOptions = {
   retry?: boolean;
 };
 
-export const useGuild = ({ guildId, retry = true }: UseGuildOptions) => {
+const useGuild = ({ guildId, retry = true }: UseGuildOptions) => {
   const { client } = useAuthenticatedApiClient();
 
   const query = useQuery({

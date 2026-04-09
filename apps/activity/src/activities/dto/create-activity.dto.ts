@@ -23,8 +23,6 @@ const ActorSnapshotSchema = z.object({
   prof: z.string().optional(),
 });
 
-export type ActorSnapshotDto = z.infer<typeof ActorSnapshotSchema>;
-
 export const CreateActivitySchema = z
   .object({
     userId: z.string().min(1),

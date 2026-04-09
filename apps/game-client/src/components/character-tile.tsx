@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/tooltip";
 import type { FC } from "react";
 
-export type CharacterTileProps = {
+type CharacterTileProps = {
   character: MargonemCharacter;
   className?: string;
 };

@@ -5,7 +5,7 @@ import type { PartyGatheringCharacter } from "@/types/party-gathering";
 
 const STORAGE_KEY = storageKey("ll-party-finder-storage");
 
-export type PartyFinderNpc = {
+type PartyFinderNpc = {
   id: number;
   name: string;
   lvl: number;

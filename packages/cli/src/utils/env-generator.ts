@@ -167,7 +167,7 @@ export const extractSharedValues = (
   return sharedValues;
 };
 
-export const buildRabbitMQUri = (
+const buildRabbitMQUri = (
   user: string,
   password: string,
   host: string = "localhost",
@@ -176,7 +176,7 @@ export const buildRabbitMQUri = (
   return `amqp://${user}:${password}@${host}:${port}`;
 };
 
-export const buildPostgreSQLUri = (
+const buildPostgreSQLUri = (
   user: string,
   password: string,
   database: string,

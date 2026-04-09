@@ -1,6 +1,6 @@
 import { env } from "src/config/env";
 
-export interface DiscordBotConfig {
+interface DiscordBotConfig {
   serviceUrl: string;
   channelSnapshotStaleSeconds: number;
 }

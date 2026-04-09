@@ -60,7 +60,7 @@ function toOptionalDate(value: string | null, field: string): Date | null {
   return parseDate(value, field);
 }
 
-export function serializeKillTimerData(
+function serializeKillTimerData(
   timerData: KillTimerData,
 ): SerializedKillTimerData {
   return {

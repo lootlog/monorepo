@@ -1,7 +1,7 @@
 import type { Permission, Role } from "src/generated/prisma/client";
 import { PermissionResolver } from "src/shared/permissions/permission-resolver";
 
-export interface EventHeroWithLevel {
+interface EventHeroWithLevel {
   npcLvl: number | null;
 }
 
@@ -13,7 +13,7 @@ export interface EventHeroWithLevel {
  * - npcLvl is null or 0: hero is visible (unknown level = no filtering)
  * - Otherwise: check if npcLvl falls within any role's level range
  */
-export function canViewEventHero(
+function canViewEventHero(
   hero: EventHeroWithLevel,
   roles: Role[],
   permissions: Permission[],

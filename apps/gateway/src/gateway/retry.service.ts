@@ -2,7 +2,7 @@ import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { Injectable, Logger } from "@nestjs/common";
 import { GatewayConfig } from "./constants/gateway-config.constant";
 
-export interface RetryConfig {
+interface RetryConfig {
   maxRetries?: number;
   retryDelayMs?: number;
   retryExchange?: string;
