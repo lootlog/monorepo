@@ -79,10 +79,7 @@ class MsgpackDecoder {
   }
 
   add(obj: Uint8Array | ArrayLike<number>) {
-    const input =
-      obj instanceof Uint8Array
-        ? obj
-        : new Uint8Array(obj as ArrayLike<number>);
+    const input = obj instanceof Uint8Array ? obj : new Uint8Array(obj);
     const decoded = decode(input, { extensionCodec }) as Packet;
 
     // Convert null data to undefined (msgpack encodes undefined as null by default)
