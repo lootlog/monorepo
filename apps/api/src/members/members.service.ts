@@ -498,8 +498,8 @@ export class MembersService {
             ).map((role) => role.id)
           : [];
 
-      const memberName = nick || user.global_name || user.username;
-      const memberAvatar = avatar || user.avatar;
+      const memberName = nick ?? user.global_name ?? user.username;
+      const memberAvatar = avatar ?? user.avatar;
 
       const member = await this.prisma.member.upsert({
         where: { memberId: { userId: id, guildId } },

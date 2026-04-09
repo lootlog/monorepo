@@ -103,14 +103,6 @@ export class GuildsService {
             active: true,
           },
         });
-
-        const allGuildsInDiscord = guilds.every((guild) => {
-          return discordGuildIds.includes(guild.id);
-        });
-
-        if (!allGuildsInDiscord) {
-          await this.discordService.clearUserGuildIdsCache(userId);
-        }
       } catch (error) {
         if (
           error instanceof HttpException &&
@@ -126,10 +118,7 @@ export class GuildsService {
       }
     }
 
-    if (
-      userPreferences?.guildsOrder &&
-      Array.isArray(userPreferences.guildsOrder)
-    ) {
+    if (userPreferences?.guildsOrder) {
       const guildOrderMap = new Map<string, number>(
         userPreferences.guildsOrder.map(
           (id: string, idx: number) => [id, idx] as const,
@@ -497,14 +486,6 @@ export class GuildsService {
           active: true,
         },
       });
-
-      const allGuildsInDiscord = guilds.every((guild) =>
-        discordGuildIds.includes(guild.id),
-      );
-
-      if (!allGuildsInDiscord) {
-        await this.discordService.clearUserGuildIdsCache(userId);
-      }
 
       return guilds.map((guild) => {
         const discordGuild = discordGuildMap.get(guild.id);
