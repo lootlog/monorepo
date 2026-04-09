@@ -48,7 +48,7 @@ export const useEventPresence = ({
         const { discordId, sessionId, player, disconnected } = payload;
 
         if (disconnected && sessionId) {
-          const existing = newMap.get(discordId) || [];
+          const existing = newMap.get(discordId) ?? [];
           const filtered = existing.filter((p) => p.sessionId !== sessionId);
           if (filtered.length === 0) {
             newMap.delete(discordId);
@@ -57,7 +57,7 @@ export const useEventPresence = ({
           }
         } else if (player) {
           if (world && player.world !== world) {
-            const existing = newMap.get(discordId) || [];
+            const existing = newMap.get(discordId) ?? [];
             const filtered = existing.filter(
               (p) => p.sessionId !== player.sessionId,
             );
@@ -70,7 +70,7 @@ export const useEventPresence = ({
             return newMap;
           }
 
-          const existing = newMap.get(discordId) || [];
+          const existing = newMap.get(discordId) ?? [];
           const idx = existing.findIndex(
             (p) => p.sessionId === player.sessionId,
           );
