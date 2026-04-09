@@ -19,7 +19,7 @@
     "@lootlog/instrumentation": "workspace:*",
     "better-auth": "^1.6.0",
     "dotenv": "^17.4.1",
-    "hono": "^4.12.11",
+    "hono": "^4.12.12",
     "kysely": "^0.28.15",
     "pg": "^8.20.0",
     "winston": "^3.19.0",

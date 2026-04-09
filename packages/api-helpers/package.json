@@ -28,7 +28,7 @@
     "build": "pkgroll"
   },
   "dependencies": {
-    "hono": "^4.12.11",
+    "hono": "^4.12.12",
     "jose": "^6.2.2"
   },
   "devDependencies": {
