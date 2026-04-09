@@ -42,7 +42,7 @@ export class GuildsEventsHandler {
     },
   })
   async handleGuildsCreate(data: CreateGuildDto, amqpMsg: AmqpMessage) {
-    const headers = amqpMsg.properties.headers || {};
+    const headers = amqpMsg.properties.headers ?? {};
 
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
@@ -126,7 +126,7 @@ export class GuildsEventsHandler {
     },
   })
   async handleGuildsUpdate(data: CreateGuildDto, amqpMsg: AmqpMessage) {
-    const headers = amqpMsg.properties.headers || {};
+    const headers = amqpMsg.properties.headers ?? {};
 
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
@@ -159,7 +159,7 @@ export class GuildsEventsHandler {
     },
   })
   async handleGuildsDelete(data: CreateGuildDto, amqpMsg: AmqpMessage) {
-    const headers = amqpMsg.properties.headers || {};
+    const headers = amqpMsg.properties.headers ?? {};
 
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
