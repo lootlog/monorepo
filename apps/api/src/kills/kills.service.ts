@@ -82,7 +82,6 @@ export class KillsService {
       });
     } catch (error) {
       this.logger.error({
-        level: "error",
         message: "Failed to upsert user kill stats",
         error: error instanceof Error ? error.message : error,
       });
@@ -205,7 +204,6 @@ export class KillsService {
           return { guildId, isFirstGuildKill };
         } catch (error) {
           this.logger.error({
-            level: "error",
             message: `Failed to upsert kill stats for guildId ${guildId}`,
             error: error instanceof Error ? error.message : error,
           });
