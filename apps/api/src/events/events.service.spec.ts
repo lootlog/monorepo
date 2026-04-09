@@ -58,7 +58,6 @@ describe("EventsService", () => {
 
   const mockPointsService = {
     getRanking: mockFn(),
-    calculateMemberPoints: mockFn(),
     recalculateEventPoints: mockFn(),
     getMemberPresenceStats: mockFn(),
     updateRankingAfterKill: mockFn(),
@@ -126,13 +125,6 @@ describe("EventsService", () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    mockPointsService.calculateMemberPoints.mockReturnValue({
-      totalPoints: 1,
-      basePoints: 1,
-      bonusPoints: 0,
-      appliedBonuses: [],
-    });
-
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         EventsService,
@@ -1153,14 +1145,6 @@ describe("EventsService", () => {
         "guild-1",
         "event-1",
       );
-    });
-
-    it("should delegate calculateMemberPoints", () => {
-      const event = { id: "event-1" } as Parameters<
-        typeof service.calculateMemberPoints
-      >[0];
-      service.calculateMemberPoints(event, new Date(), 3, 2);
-      expect(mockPointsService.calculateMemberPoints).toHaveBeenCalled();
     });
 
     it("should delegate updateKillPoint", async () => {
