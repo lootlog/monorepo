@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
+    "@lootlog/margonem": "workspace:*",
     "@lootlog/socket-parser": "workspace:*",
     "@lootlog/types": "workspace:*",
     "@radix-ui/react-accordion": "^1.2.12",
@@ -38,7 +39,7 @@
     "@tanstack/react-query": "^5.96.2",
     "@tanstack/react-query-persist-client": "^5.96.2",
     "axios": "^1.14.0",
-    "better-auth": "^1.5.6",
+    "better-auth": "^1.6.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "1.1.1",
@@ -49,7 +50,7 @@
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-error-boundary": "^6.1.1",
-    "react-hook-form": "7.67.0",
+    "react-hook-form": "7.72.1",
     "react-use": "^17.6.0",
     "socket.io-client": "^4.8.3",
     "sonner": "^2.0.7",
@@ -76,8 +77,8 @@
     "happy-dom": "^20.8.9",
     "rollup-plugin-visualizer": "^7.0.1",
     "terser": "^5.46.1",
-    "typescript": "^5.9.3",
-    "vite": "^8.0.3",
+    "typescript": "^6.0.2",
+    "vite": "^8.0.5",
     "vite-plugin-monkey": "^7.1.9",
     "vitest": "^4.1.2"
   }

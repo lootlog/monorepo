@@ -52,7 +52,7 @@ export class MemberContextService {
         } catch (error) {
           this.logger.warn({
             message: `Failed to parse cached permissions data for key ${cacheKey}`,
-            error: error,
+            error,
           });
           await this.redisService.del(cacheKey);
         }
@@ -60,7 +60,7 @@ export class MemberContextService {
     } catch (error) {
       this.logger.warn({
         message: `Redis cache read failed for key ${cacheKey}, falling back to DB`,
-        error: error,
+        error,
       });
     }
 
@@ -101,7 +101,7 @@ export class MemberContextService {
       } catch (error) {
         this.logger.warn({
           message: `Failed to cache permissions for key ${getPermissionsCacheKey(userId, guild.id)}`,
-          error: error,
+          error,
         });
       }
     }
@@ -125,7 +125,7 @@ export class MemberContextService {
     } catch (error) {
       this.logger.warn({
         message: `Redis cache read failed for guild key ${cacheKey}, falling back to DB`,
-        error: error,
+        error,
       });
     }
 
@@ -164,7 +164,7 @@ export class MemberContextService {
     } catch (error) {
       this.logger.warn({
         message: `Failed to cache guild data for ${idOrVanityURL}`,
-        error: error,
+        error,
       });
     }
 

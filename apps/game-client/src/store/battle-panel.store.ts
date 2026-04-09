@@ -1,5 +1,8 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { storageKey } from "@/lib/storage-key";
+
+const STORAGE_KEY = storageKey("ll:battle-panel:state");
 
 interface BattlePanelState {
   isBattleCollectionEnabled: boolean;
@@ -17,7 +20,7 @@ export const useBattlePanelStore = create<BattlePanelState>()(
       },
     }),
     {
-      name: "ll:battle-panel:state",
+      name: STORAGE_KEY,
       partialize: (state) => ({
         isBattleCollectionEnabled: state.isBattleCollectionEnabled,
       }),

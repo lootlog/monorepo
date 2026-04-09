@@ -8,7 +8,6 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { MembersService } from "./members.service";
@@ -18,7 +17,6 @@ import { DiscordRateLimiterService } from "src/discord/discord-rate-limiter.serv
 import { RedisService } from "@lootlog/nest-shared";
 import { ErrorKey } from "./enum/error-key.enum";
 import { RuntimeEnvironment } from "src/types/runtime.types";
-import { ConfigKey } from "src/config/config-key.enum";
 import type { APIGuildMember } from "discord-api-types/v10";
 import {
   type Member,
@@ -32,6 +30,10 @@ import {
   getPermissionsCacheKey,
   getUserLootlogConfigCachePattern,
 } from "src/shared/constants/cache.constant";
+
+vi.mock("src/config/service.config", () => ({
+  serviceConfig: { env: "local" },
+}));
 
 describe("MembersService", () => {
   let service: MembersService;
@@ -132,15 +134,6 @@ describe("MembersService", () => {
       publish: mockFn(),
     };
 
-    const mockConfigService = {
-      get: mockFn((key: string) => {
-        if (key === ConfigKey.SERVICE) {
-          return { env: RuntimeEnvironment.LOCAL };
-        }
-        return null;
-      }),
-    };
-
     const mockLogger = {
       log: mockFn(),
       error: mockFn(),
@@ -167,7 +160,6 @@ describe("MembersService", () => {
           useValue: mockRefreshScheduler,
         },
         { provide: AmqpConnection, useValue: mockAmqpConnection },
-        { provide: ConfigService, useValue: mockConfigService },
         { provide: RedisService, useValue: mockRedisService },
       ],
     }).compile();

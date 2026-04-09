@@ -1,5 +1,4 @@
-import { registerAs } from "@nestjs/config";
-import { ConfigKey } from "src/config/config-key.enum";
+import { env } from "src/config/env";
 
 export interface DiscordBotConfig {
   serviceUrl: string;
@@ -8,11 +7,7 @@ export interface DiscordBotConfig {
 
 const DEFAULT_DISCORD_CHANNEL_SNAPSHOT_STALE_SECONDS = 900;
 
-export default registerAs(ConfigKey.DISCORD_BOT, (): DiscordBotConfig => {
-  const { DISCORD_BOT_SERVICE_URL } = process.env;
-
-  return {
-    serviceUrl: DISCORD_BOT_SERVICE_URL ?? "http://discord-bot:4000",
-    channelSnapshotStaleSeconds: DEFAULT_DISCORD_CHANNEL_SNAPSHOT_STALE_SECONDS,
-  };
-});
+export const discordBotConfig: DiscordBotConfig = {
+  serviceUrl: env.DISCORD_BOT_SERVICE_URL,
+  channelSnapshotStaleSeconds: DEFAULT_DISCORD_CHANNEL_SNAPSHOT_STALE_SECONDS,
+};

@@ -1,36 +1,25 @@
-import { ApiPropertyOptional } from "@nestjs/swagger";
-import {
-  IsBoolean,
-  IsDateString,
-  IsNotEmpty,
-  IsOptional,
-  ValidateIf,
-} from "class-validator";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class CloseRespawnWindowDto {
-  @ApiPropertyOptional({
-    description: "Whether to create a new respawn window after closing",
-    default: true,
+const CloseRespawnWindowSchema = z
+  .object({
+    createNewWindow: z.boolean().optional(),
+    newMinSpawnTime: z.string().datetime().optional(),
+    newMaxSpawnTime: z.string().datetime().optional(),
   })
-  @IsOptional()
-  @IsBoolean()
-  createNewWindow?: boolean;
+  .refine(
+    (data) => {
+      if (data.createNewWindow) {
+        return !!data.newMinSpawnTime && !!data.newMaxSpawnTime;
+      }
+      return true;
+    },
+    {
+      message:
+        "newMinSpawnTime and newMaxSpawnTime are required when createNewWindow is true",
+    },
+  );
 
-  @ApiPropertyOptional({
-    description:
-      "Minimum spawn time for the new window (ISO date string). Required when createNewWindow is true.",
-  })
-  @ValidateIf((o) => o.createNewWindow)
-  @IsNotEmpty()
-  @IsDateString()
-  newMinSpawnTime?: string;
-
-  @ApiPropertyOptional({
-    description:
-      "Maximum spawn time for the new window (ISO date string). Required when createNewWindow is true.",
-  })
-  @ValidateIf((o) => o.createNewWindow)
-  @IsNotEmpty()
-  @IsDateString()
-  newMaxSpawnTime?: string;
-}
+export class CloseRespawnWindowDto extends createZodDto(
+  CloseRespawnWindowSchema,
+) {}

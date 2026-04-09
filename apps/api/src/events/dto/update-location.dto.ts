@@ -1,11 +1,8 @@
-import { IsString, MinLength, MaxLength, IsOptional } from "class-validator";
-import { ApiPropertyOptional } from "@nestjs/swagger";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class UpdateLocationDto {
-  @ApiPropertyOptional({ description: "Location name" })
-  @IsOptional()
-  @IsString()
-  @MinLength(1)
-  @MaxLength(50)
-  name?: string;
-}
+const UpdateLocationSchema = z.object({
+  name: z.string().min(1).max(50).optional(),
+});
+
+export class UpdateLocationDto extends createZodDto(UpdateLocationSchema) {}

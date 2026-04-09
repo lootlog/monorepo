@@ -1,12 +1,8 @@
 import { Module } from "@nestjs/common";
 import { BullModule } from "@nestjs/bullmq";
-import {
-  RabbitMQModule,
-  type RabbitMQConfig,
-} from "@golevelup/nestjs-rabbitmq";
-import { ConfigService } from "@nestjs/config";
+import { RabbitMQModule } from "@golevelup/nestjs-rabbitmq";
 import { ChannelsModule } from "src/channels/channels.module";
-import { ConfigKey } from "src/config/config-key.enum";
+import { rabbitmqConfig } from "src/config/rabbitmq.config";
 import { PrismaModule } from "src/db/prisma.module";
 import { GuildsModule } from "src/guilds/guilds.module";
 import { NOTIFICATIONS_DISPATCH_QUEUE } from "src/notifications/constants/notifications-dispatch-queue.constant";
@@ -29,11 +25,7 @@ import { WatchedItemService } from "src/notifications/watched-item.service";
     BullModule.registerQueue({
       name: NOTIFICATIONS_DISPATCH_QUEUE,
     }),
-    RabbitMQModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) =>
-        configService.get<RabbitMQConfig>(ConfigKey.RABBITMQ),
-    }),
+    RabbitMQModule.forRoot(rabbitmqConfig),
   ],
   controllers: [NotificationsGuildController, NotificationsUserController],
   providers: [

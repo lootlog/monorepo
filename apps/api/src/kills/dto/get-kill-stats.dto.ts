@@ -1,95 +1,32 @@
-import { ApiPropertyOptional } from "@nestjs/swagger";
-import { Transform } from "class-transformer";
-import { IsEnum, IsNumber, IsOptional, IsString, Min } from "class-validator";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
+import { commaSeparatedArray, intFromString } from "@lootlog/nest-shared";
 import { NpcType } from "src/generated/prisma/client";
-import {
-  swaggerStringEnum,
-  swaggerStringEnumArray,
-} from "src/shared/swagger/prisma-enum";
 
-export class GetGuildKillStatsDto {
-  @ApiPropertyOptional({
-    ...swaggerStringEnumArray("NpcType", NpcType),
-    example: "HERO,TITAN",
-    description: "Comma-separated NPC types to filter by",
+const GetGuildKillStatsSchema = z
+  .object({
+    npcTypes: commaSeparatedArray(z.nativeEnum(NpcType)).optional(),
+    minLvl: intFromString({ min: 0, max: 500 }).optional(),
+    maxLvl: intFromString({ min: 0, max: 500 }).optional(),
+    world: z.string().optional(),
   })
-  @IsOptional()
-  @Transform(({ value }) => {
-    if (!value) return undefined;
-    if (Array.isArray(value)) return value;
-    return value
-      .split(",")
-      .map((v: string) => v.trim())
-      .filter((v: string) => v.length > 0);
-  })
-  @IsEnum(NpcType, { each: true })
-  npcTypes?: NpcType[];
+  .refine(
+    (data) =>
+      data.minLvl === undefined ||
+      data.maxLvl === undefined ||
+      data.minLvl <= data.maxLvl,
+    { message: "minLvl must be <= maxLvl", path: ["minLvl"] },
+  );
 
-  @ApiPropertyOptional({ example: 100, description: "Minimum NPC level" })
-  @IsOptional()
-  @Transform(({ value }) => (value ? Number.parseInt(value, 10) : undefined))
-  @IsNumber()
-  @Min(0)
-  minLvl?: number;
+export class GetGuildKillStatsDto extends createZodDto(
+  GetGuildKillStatsSchema,
+) {}
 
-  @ApiPropertyOptional({ example: 200, description: "Maximum NPC level" })
-  @IsOptional()
-  @Transform(({ value }) => (value ? Number.parseInt(value, 10) : undefined))
-  @IsNumber()
-  @Min(0)
-  maxLvl?: number;
+const GetUserKillStatsSchema = z.object({
+  npcTypes: commaSeparatedArray(z.nativeEnum(NpcType)).optional(),
+  npcType: z.nativeEnum(NpcType).optional(),
+  world: z.string().optional(),
+  topNpcsLimit: z.coerce.number().int().min(1).optional(),
+});
 
-  @ApiPropertyOptional({
-    example: "pandora",
-    description: "Filter by world",
-  })
-  @IsOptional()
-  @IsString()
-  world?: string;
-}
-
-export class GetUserKillStatsDto {
-  @ApiPropertyOptional({
-    ...swaggerStringEnumArray("NpcType", NpcType),
-    example: "HERO,TITAN",
-    description: "Comma-separated NPC types to filter by",
-  })
-  @IsOptional()
-  @Transform(({ value }) => {
-    if (!value) return undefined;
-    if (Array.isArray(value)) return value;
-    return value
-      .split(",")
-      .map((v: string) => v.trim())
-      .filter((v: string) => v.length > 0);
-  })
-  @IsEnum(NpcType, { each: true })
-  npcTypes?: NpcType[];
-
-  @ApiPropertyOptional({
-    ...swaggerStringEnum("NpcType", NpcType),
-    example: "HERO",
-    description: "Single NPC type to filter by (alternative to npcTypes)",
-  })
-  @IsOptional()
-  @IsEnum(NpcType)
-  npcType?: NpcType;
-
-  @ApiPropertyOptional({
-    example: "pandora",
-    description: "Filter by world",
-  })
-  @IsOptional()
-  @IsString()
-  world?: string;
-
-  @ApiPropertyOptional({
-    example: 5,
-    description: "Limit number of top NPCs returned (default: 5)",
-  })
-  @IsOptional()
-  @Transform(({ value }) => (value ? Number.parseInt(value, 10) : undefined))
-  @IsNumber()
-  @Min(1)
-  topNpcsLimit?: number;
-}
+export class GetUserKillStatsDto extends createZodDto(GetUserKillStatsSchema) {}

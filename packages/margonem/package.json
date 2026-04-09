@@ -1,0 +1,27 @@
+{
+  "name": "@lootlog/margonem",
+  "version": "1.0.0",
+  "private": true,
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./game-events": {
+      "import": "./dist/game-events/index.mjs",
+      "require": "./dist/game-events/index.js",
+      "types": "./dist/game-events/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "pkgroll"
+  },
+  "devDependencies": {
+    "@lootlog/typescript-config": "workspace:*",
+    "pkgroll": "^2.27.0"
+  }
+}

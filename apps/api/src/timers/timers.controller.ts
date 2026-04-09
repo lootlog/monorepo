@@ -26,12 +26,12 @@ import { MemberRoles } from "src/shared/decorators/member-roles.decorator";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
-import type { CreateManualTimerDto } from "src/timers/dto/create-manual-timer.dto";
-import type { ResetTimerDto } from "src/timers/dto/reset-timer.dto";
+import { CreateManualTimerDto } from "src/timers/dto/create-manual-timer.dto";
+import { ResetTimerDto } from "src/timers/dto/reset-timer.dto";
 import { TimersService } from "src/timers/timers.service";
 import { TimerEntity } from "src/shared/entities/timer.entity";
-import type { CreateTimerFromGameClientDto } from "src/timers/dto/create-timer-from-game-client.dto";
-import type { SearchTimersNpcsDto } from "src/timers/dto/search-timers-npcs.dto";
+import { CreateTimerFromGameClientDto } from "src/timers/dto/create-timer-from-game-client.dto";
+import { SearchTimersNpcsDto } from "src/timers/dto/search-timers-npcs.dto";
 
 @ApiTags("timers")
 @ApiBearerAuth()

@@ -1,24 +1,9 @@
-import { ApiPropertyOptional } from "@nestjs/swagger";
-import { Transform } from "class-transformer";
-import { IsNumber, IsOptional, IsString, Max, Min } from "class-validator";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class GetNpcKillersDto {
-  @ApiPropertyOptional({
-    example: 50,
-    description: "Limit number of killers to return (default: 50, max: 100)",
-  })
-  @IsOptional()
-  @Transform(({ value }) => (value ? Number.parseInt(value, 10) : undefined))
-  @IsNumber()
-  @Min(1)
-  @Max(100)
-  limit?: number;
+const GetNpcKillersSchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  world: z.string().optional(),
+});
 
-  @ApiPropertyOptional({
-    example: "pandora",
-    description: "Filter by world",
-  })
-  @IsOptional()
-  @IsString()
-  world?: string;
-}
+export class GetNpcKillersDto extends createZodDto(GetNpcKillersSchema) {}

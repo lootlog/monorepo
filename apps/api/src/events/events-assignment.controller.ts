@@ -19,14 +19,14 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { Permission, type Role } from "src/generated/prisma/client";
-import type { AssignMemberDto } from "./dto/assign-member.dto";
-import type { AssignMapLocationDto } from "./dto/assign-map-location.dto";
-import type { CreateHeroDto } from "./dto/create-hero.dto";
-import type { CreateLocationDto } from "./dto/create-location.dto";
-import type { CreateMapDto } from "./dto/create-map.dto";
-import type { ReorderLocationsDto } from "./dto/reorder-locations.dto";
-import type { UpdateHeroDto } from "./dto/update-hero.dto";
-import type { UpdateLocationDto } from "./dto/update-location.dto";
+import { AssignMemberDto } from "./dto/assign-member.dto";
+import { AssignMapLocationDto } from "./dto/assign-map-location.dto";
+import { CreateHeroDto } from "./dto/create-hero.dto";
+import { CreateLocationDto } from "./dto/create-location.dto";
+import { CreateMapDto } from "./dto/create-map.dto";
+import { ReorderLocationsDto } from "./dto/reorder-locations.dto";
+import { UpdateHeroDto } from "./dto/update-hero.dto";
+import { UpdateLocationDto } from "./dto/update-location.dto";
 import { EventsService } from "./events.service";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { GuildMember } from "src/shared/decorators/member.decorator";

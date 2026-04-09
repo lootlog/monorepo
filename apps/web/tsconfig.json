@@ -1,11 +1,10 @@
 {
   "extends": "@lootlog/typescript-config/vite.json",
   "compilerOptions": {
-    "baseUrl": "src",
     "declaration": false,
     "declarationMap": false,
     "paths": {
-      "@/*": ["./*"],
+      "@/*": ["./src/*"],
       "@lootlog/ui/*": ["../../packages/ui/src/*"]
     }
   },

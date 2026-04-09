@@ -1,49 +1,16 @@
-import {
-  ArrayMaxSize,
-  IsArray,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-  Max,
-  MaxLength,
-  Min,
-  ValidateNested,
-} from "class-validator";
-import { Type } from "class-transformer";
-import { CharacterDto } from "src/messaging/dto/shared-character.dto";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
+import { CharacterSchema } from "src/messaging/dto/shared-character.dto";
 
-export class CreatePartyGatheringDto {
-  @IsArray()
-  @IsNotEmpty()
-  @IsString({ each: true })
-  @MaxLength(50, { each: true })
-  @ArrayMaxSize(10)
-  guildIds: string[];
+const CreatePartyGatheringSchema = z.object({
+  guildIds: z.array(z.string().max(50)).min(1).max(10),
+  world: z.string().min(1).max(50),
+  character: CharacterSchema,
+  description: z.string().max(200).optional(),
+  minLvl: z.number().min(1).max(500).optional(),
+  maxLvl: z.number().min(1).max(500).optional(),
+});
 
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(50)
-  world: string;
-
-  @ValidateNested()
-  @Type(() => CharacterDto)
-  character: CharacterDto;
-
-  @IsString()
-  @IsOptional()
-  @MaxLength(200)
-  description?: string;
-
-  @IsNumber()
-  @IsOptional()
-  @Min(1)
-  @Max(500)
-  minLvl?: number;
-
-  @IsNumber()
-  @IsOptional()
-  @Min(1)
-  @Max(500)
-  maxLvl?: number;
-}
+export class CreatePartyGatheringDto extends createZodDto(
+  CreatePartyGatheringSchema,
+) {}

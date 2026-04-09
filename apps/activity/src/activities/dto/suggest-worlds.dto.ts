@@ -1,23 +1,12 @@
-import {
-  IsNumber,
-  IsOptional,
-  IsString,
-  Max,
-  MaxLength,
-  Min,
-} from "class-validator";
-import { Type } from "class-transformer";
+import { z } from "zod";
+import { createZodDto, type ZodDto } from "nestjs-zod";
 
-export class SuggestWorldsDto {
-  @IsString()
-  @IsOptional()
-  @MaxLength(50)
-  search?: string;
+const SuggestWorldsSchema = z.object({
+  search: z.string().max(50).optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+});
 
-  @IsNumber()
-  @IsOptional()
-  @Type(() => Number)
-  @Min(1)
-  @Max(50)
-  limit?: number = 20;
-}
+const SuggestWorldsDtoBase: ZodDto<typeof SuggestWorldsSchema> =
+  createZodDto(SuggestWorldsSchema);
+
+export class SuggestWorldsDto extends SuggestWorldsDtoBase {}

@@ -506,7 +506,7 @@ export class LootQueryService {
     return {
       lootItems: {
         some: {
-          hid: hid,
+          hid,
         },
       },
     };

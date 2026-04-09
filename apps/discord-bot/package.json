@@ -30,7 +30,7 @@
     "@nestjs/microservices": "^11.1.18",
     "@nestjs/platform-express": "^11.1.18",
     "discord.js": "^14.26.2",
-    "dotenv": "^17.4.0",
+    "dotenv": "^17.4.1",
     "joi": "^18.1.2",
     "necord": "^6.12.4",
     "nest-winston": "^1.10.2",
@@ -48,7 +48,7 @@
     "@vitest/coverage-v8": "^4.1.2",
     "supertest": "^7.2.2",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.2",
     "unplugin-swc": "^1.5.9",
     "vitest": "^4.1.2"
   }

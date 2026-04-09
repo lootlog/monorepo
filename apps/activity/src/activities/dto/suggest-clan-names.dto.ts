@@ -1,23 +1,12 @@
-import {
-  IsNumber,
-  IsOptional,
-  IsString,
-  Max,
-  MaxLength,
-  Min,
-} from "class-validator";
-import { Type } from "class-transformer";
+import { z } from "zod";
+import { createZodDto, type ZodDto } from "nestjs-zod";
 
-export class SuggestClanNamesDto {
-  @IsString()
-  @IsOptional()
-  @MaxLength(50)
-  search?: string;
+const SuggestClanNamesSchema = z.object({
+  search: z.string().max(50).optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(10),
+});
 
-  @IsNumber()
-  @IsOptional()
-  @Type(() => Number)
-  @Min(1)
-  @Max(50)
-  limit?: number = 10;
-}
+const SuggestClanNamesDtoBase: ZodDto<typeof SuggestClanNamesSchema> =
+  createZodDto(SuggestClanNamesSchema);
+
+export class SuggestClanNamesDto extends SuggestClanNamesDtoBase {}

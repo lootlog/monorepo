@@ -1,4 +1,6 @@
 import { MiddlewareConsumer, Module } from "@nestjs/common";
+import { APP_PIPE } from "@nestjs/core";
+import { ZodValidationPipe } from "nestjs-zod";
 import { HealthzModule } from "./healthz/healthz.module";
 import { APP_CONFIG } from "src/config/app.config";
 import { ConfigModule, ConfigService } from "@nestjs/config";
@@ -21,7 +23,12 @@ import { GatewayModule } from "./gateway/gateway.module";
     GatewayModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [
+    {
+      provide: APP_PIPE,
+      useClass: ZodValidationPipe,
+    },
+  ],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {

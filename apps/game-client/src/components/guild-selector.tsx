@@ -5,6 +5,10 @@ import { cn } from "@/lib/utils";
 import { useSettingsStore } from "@/store/settings.store";
 import { type FC, useMemo } from "react";
 import { useDeepCompareEffect, useLocalStorage } from "react-use";
+import { storageKey } from "@/lib/storage-key";
+
+const recentGuildsKey = (accountId: string, characterId: string) =>
+  storageKey(`ll:recent-guilds:${accountId}:${characterId}`);
 
 export type GuildSelectorProps = {
   disabled?: boolean;
@@ -27,7 +31,7 @@ export const GuildSelector: FC<GuildSelectorProps> = ({
   const { setGuildId, guildIdByCharId } = useSettingsStore();
 
   const [recentGuildIds, setRecentGuildIds] = useLocalStorage<string[]>(
-    `ll:recent-guilds:${accountId}:${characterId}`,
+    recentGuildsKey(accountId, characterId),
     [],
   );
 

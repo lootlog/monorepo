@@ -1,9 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Cron, CronExpression } from "@nestjs/schedule";
-import { ConfigService } from "@nestjs/config";
 import { PrismaService } from "src/db/prisma.service";
-
-const DEFAULT_RETENTION_DAYS = 30;
+import { env } from "src/config/env";
 
 @Injectable()
 export class ReservationsCleanupService {
@@ -11,18 +9,9 @@ export class ReservationsCleanupService {
   private readonly retentionDays: number;
   private readonly enabled: boolean;
 
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
-  ) {
-    this.enabled =
-      this.configService.get<string>("RESERVATIONS_CLEANUP_ENABLED") !==
-      "false";
-    this.retentionDays = Number.parseInt(
-      this.configService.get<string>("RESERVATIONS_RETENTION_DAYS") ??
-        String(DEFAULT_RETENTION_DAYS),
-      10,
-    );
+  constructor(private readonly prisma: PrismaService) {
+    this.enabled = env.RESERVATIONS_CLEANUP_ENABLED !== "false";
+    this.retentionDays = env.RESERVATIONS_RETENTION_DAYS;
   }
 
   /**

@@ -1,18 +1,11 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsDateString, IsNotEmpty } from "class-validator";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class OpenRespawnWindowDto {
-  @ApiProperty({
-    description: "Minimum spawn time (ISO date string)",
-  })
-  @IsNotEmpty()
-  @IsDateString()
-  minSpawnTime: string;
+const OpenRespawnWindowSchema = z.object({
+  minSpawnTime: z.string().min(1).datetime(),
+  maxSpawnTime: z.string().min(1).datetime(),
+});
 
-  @ApiProperty({
-    description: "Maximum spawn time (ISO date string)",
-  })
-  @IsNotEmpty()
-  @IsDateString()
-  maxSpawnTime: string;
-}
+export class OpenRespawnWindowDto extends createZodDto(
+  OpenRespawnWindowSchema,
+) {}

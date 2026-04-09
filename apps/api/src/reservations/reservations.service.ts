@@ -11,8 +11,8 @@ import { Permission, type Prisma } from "src/generated/prisma/client";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { RoutingKey } from "src/enum/routing-key.enum";
 import { RedisService } from "@lootlog/nest-shared";
-import { ConfigService } from "@nestjs/config";
 import { HttpService } from "@nestjs/axios";
+import { env } from "src/config/env";
 import { lastValueFrom } from "rxjs";
 
 type ReservationRecord = {
@@ -42,9 +42,19 @@ export class ReservationsService {
     private readonly prisma: PrismaService,
     private readonly amqpConnection: AmqpConnection,
     private readonly redis: RedisService,
-    private readonly configService: ConfigService,
     private readonly httpService: HttpService,
   ) {}
+
+  private async deleteExpiredReservations(guildId: string) {
+    const monthAgoDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    await this.prisma.reservation.deleteMany({
+      where: {
+        guildId,
+        toDate: { lt: monthAgoDate },
+      },
+    });
+    return monthAgoDate;
+  }
 
   private normalizeReservationsCards(input: ReservationsCardsPayload) {
     const result: Record<string, ReservationCard[]> = {};
@@ -58,12 +68,8 @@ export class ReservationsService {
       const sanitized = cards
         .map((card) => ({
           lvl: Number(card.lvl) || 0,
-          images: Array.isArray(card.images)
-            ? card.images.filter((image) => Boolean(image))
-            : [],
-          maps: Array.isArray(card.maps)
-            ? card.maps.filter((map) => Boolean(map))
-            : [],
+          images: Array.isArray(card.images) ? card.images.filter(Boolean) : [],
+          maps: Array.isArray(card.maps) ? card.maps.filter(Boolean) : [],
         }))
         .filter(
           (card) =>
@@ -166,13 +172,7 @@ export class ReservationsService {
       );
     }
 
-    const monthAgoDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    await this.prisma.reservation.deleteMany({
-      where: {
-        guildId,
-        toDate: { lt: monthAgoDate },
-      },
-    });
+    await this.deleteExpiredReservations(guildId);
 
     const overlappingReservation = await this.prisma.reservation.findFirst({
       where: {
@@ -230,9 +230,7 @@ export class ReservationsService {
       }
     }
 
-    const externalUrl = this.configService.getOrThrow<string>(
-      "RESERVATIONS_CARDS_URL",
-    );
+    const externalUrl = env.RESERVATIONS_CARDS_URL;
 
     const response = await lastValueFrom(
       this.httpService.get<unknown>(externalUrl),
@@ -276,14 +274,7 @@ export class ReservationsService {
     return normalized;
   }
   async getReservations(guildId: string) {
-    const monthAgoDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-
-    await this.prisma.reservation.deleteMany({
-      where: {
-        guildId,
-        toDate: { lt: monthAgoDate },
-      },
-    });
+    const monthAgoDate = await this.deleteExpiredReservations(guildId);
 
     const reservations = (await this.prisma.reservation.findMany({
       where: {
@@ -299,15 +290,7 @@ export class ReservationsService {
           accumulator[reservation.reservationId] ??
           (accumulator[reservation.reservationId] = []);
 
-        list.push({
-          id: reservation.id,
-          reservationId: reservation.reservationId,
-          createdDate: reservation.createdDate,
-          fromDate: reservation.fromDate,
-          toDate: reservation.toDate,
-          createdBy: reservation.createdBy,
-          comment: (reservation as { comment?: string | null }).comment ?? null,
-        });
+        list.push(this.mapReservationRecord(reservation));
 
         return accumulator;
       },

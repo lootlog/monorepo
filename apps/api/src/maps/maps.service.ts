@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
 import { RedisService } from "@lootlog/nest-shared";
+import { env } from "src/config/env";
 
 export interface GameMap {
   id: number;
@@ -14,10 +14,7 @@ const CACHE_TTL_SECONDS = 60 * 60; // 1 hour
 export class MapsService {
   private readonly logger = new Logger(MapsService.name);
 
-  constructor(
-    private readonly redisService: RedisService,
-    private readonly configService: ConfigService,
-  ) {}
+  constructor(private readonly redisService: RedisService) {}
 
   async getMaps(): Promise<GameMap[]> {
     // Try to get from cache first
@@ -28,11 +25,7 @@ export class MapsService {
     }
 
     // Fetch from external API
-    const apiUrl = this.configService.get<string>("MAPS_API_URL");
-    if (!apiUrl) {
-      this.logger.error("MAPS_API_URL is not configured");
-      return [];
-    }
+    const apiUrl = env.MAPS_API_URL;
 
     try {
       this.logger.debug(`Fetching maps from ${apiUrl}`);

@@ -1,4 +1,4 @@
-import type { GameEvent } from "@/types/margonem/game-events/game-event";
+import type { GameEvent } from "@lootlog/margonem/game-events";
 
 type GameEventHandler = (event: GameEvent) => void;
 type RawGameEventPayload = string | GameEvent;
