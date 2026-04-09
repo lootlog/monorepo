@@ -23,7 +23,7 @@ import { AuthGuard } from "src/shared/guards/auth.guard";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 import { ReservationsService } from "./reservations.service";
-import type { CreateReservationDto } from "./dto/create-reservation.dto";
+import { CreateReservationDto } from "./dto/create-reservation.dto";
 
 @ApiTags("reservations")
 @ApiBearerAuth()

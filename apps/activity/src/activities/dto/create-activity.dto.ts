@@ -1,20 +1,8 @@
-import {
-  IsEnum,
-  IsNotEmpty,
-  IsNumber,
-  IsObject,
-  IsOptional,
-  IsString,
-  ValidateNested,
-  ValidationArguments,
-  Validate,
-  ValidatorConstraint,
-  ValidatorConstraintInterface,
-} from "class-validator";
-import { Type } from "class-transformer";
+import { z } from "zod";
+import { createZodDto, type ZodDto } from "nestjs-zod";
 import { ActivitySource, ActivityType } from "src/generated/prisma/client";
 
-const GAME_SOURCE_REQUIRED_FIELDS: Array<keyof ActorSnapshotDto> = [
+const GAME_SOURCE_REQUIRED_FIELDS = [
   "accountId",
   "characterId",
   "clanName",
@@ -22,117 +10,60 @@ const GAME_SOURCE_REQUIRED_FIELDS: Array<keyof ActorSnapshotDto> = [
   "icon",
   "lvl",
   "prof",
-];
+] as const;
 
-@ValidatorConstraint({ name: "actorSnapshotForGameSource", async: false })
-class ActorSnapshotForGameSourceConstraint implements ValidatorConstraintInterface {
-  validate(
-    actorSnapshot: ActorSnapshotDto | undefined,
-    args: ValidationArguments,
-  ) {
-    const dto = args.object as CreateActivityDto;
+const ActorSnapshotSchema = z.object({
+  accountId: z.number().optional(),
+  characterId: z.number().optional(),
+  name: z.string().optional(),
+  clanName: z.string().optional(),
+  clanId: z.number().optional(),
+  icon: z.string().optional(),
+  lvl: z.number().optional(),
+  prof: z.string().optional(),
+});
 
-    if (dto.source !== ActivitySource.GAME) {
-      return true;
-    }
+export type ActorSnapshotDto = z.infer<typeof ActorSnapshotSchema>;
 
-    if (!actorSnapshot) {
-      return false;
-    }
+export const CreateActivitySchema = z
+  .object({
+    userId: z.string().min(1),
+    guildId: z.string().min(1),
+    discordId: z.string().min(1),
+    type: z.nativeEnum(ActivityType),
+    source: z.nativeEnum(ActivitySource),
+    world: z.string().optional(),
+    details: z.record(z.string(), z.unknown()).optional(),
+    actorSnapshot: ActorSnapshotSchema.optional(),
+    idempotencyKey: z.string().min(1),
+  })
+  .superRefine((data, ctx) => {
+    if (data.source !== ActivitySource.GAME) return;
 
-    return GAME_SOURCE_REQUIRED_FIELDS.every((field) => {
-      const value = actorSnapshot[field];
-      return value !== null && value !== undefined;
-    });
-  }
-
-  defaultMessage(args: ValidationArguments) {
-    const dto = args.object as CreateActivityDto;
-    const actorSnapshot = dto.actorSnapshot;
-
-    if (!actorSnapshot) {
-      return "actorSnapshot is required when source is GAME";
+    if (!data.actorSnapshot) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "actorSnapshot is required when source is GAME",
+        path: ["actorSnapshot"],
+      });
+      return;
     }
 
     const missingFields = GAME_SOURCE_REQUIRED_FIELDS.filter((field) => {
-      const value = actorSnapshot[field];
+      const value = data.actorSnapshot![field];
       return value === null || value === undefined;
     });
 
-    return `actorSnapshot is missing required fields for GAME source: ${missingFields.join(", ")}`;
-  }
-}
+    if (missingFields.length > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `actorSnapshot is missing required fields for GAME source: ${missingFields.join(", ")}`,
+        path: ["actorSnapshot"],
+      });
+    }
+  });
 
-export class ActorSnapshotDto {
-  @IsNumber()
-  @IsOptional()
-  accountId?: number;
+const CreateActivityDtoBase: ZodDto<typeof CreateActivitySchema> =
+  createZodDto(CreateActivitySchema);
 
-  @IsNumber()
-  @IsOptional()
-  characterId?: number;
-
-  @IsString()
-  @IsOptional()
-  name?: string;
-
-  @IsString()
-  @IsOptional()
-  clanName?: string;
-
-  @IsNumber()
-  @IsOptional()
-  clanId?: number;
-
-  @IsString()
-  @IsOptional()
-  icon?: string;
-
-  @IsNumber()
-  @IsOptional()
-  lvl?: number;
-
-  @IsString()
-  @IsOptional()
-  prof?: string;
-}
-
-export class CreateActivityDto {
-  @IsString()
-  @IsNotEmpty()
-  userId: string;
-
-  @IsString()
-  @IsNotEmpty()
-  guildId: string;
-
-  @IsString()
-  @IsNotEmpty()
-  discordId: string;
-
-  @IsEnum(ActivityType)
-  @IsNotEmpty()
-  type: ActivityType;
-
-  @IsEnum(ActivitySource)
-  @IsNotEmpty()
-  source: ActivitySource;
-
-  @IsString()
-  @IsOptional()
-  world?: string;
-
-  @IsObject()
-  @IsOptional()
-  details?: Record<string, unknown>;
-
-  @ValidateNested()
-  @Type(() => ActorSnapshotDto)
-  @Validate(ActorSnapshotForGameSourceConstraint)
-  @IsOptional()
-  actorSnapshot?: ActorSnapshotDto;
-
-  @IsString()
-  @IsNotEmpty()
-  idempotencyKey: string;
-}
+export class CreateActivityDto extends CreateActivityDtoBase {}

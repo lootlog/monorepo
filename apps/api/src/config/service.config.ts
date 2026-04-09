@@ -1,4 +1,4 @@
-import { registerAs } from "@nestjs/config";
+import { env } from "src/config/env";
 import type { RuntimeEnvironment } from "src/types/runtime.types";
 
 export interface ServiceConfig {
@@ -6,11 +6,7 @@ export interface ServiceConfig {
   port: number;
 }
 
-export default registerAs("service", (): ServiceConfig => {
-  const { ENV, PORT } = process.env;
-
-  return {
-    env: ENV,
-    port: PORT || 4000,
-  };
-});
+export const serviceConfig: ServiceConfig = {
+  env: env.ENV,
+  port: env.PORT,
+};

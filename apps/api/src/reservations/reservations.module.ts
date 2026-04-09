@@ -1,12 +1,8 @@
 import { Module } from "@nestjs/common";
 import { MembersModule } from "src/members/members.module";
 import { MemberContextModule } from "src/shared/permissions/member-context.module";
-import {
-  RabbitMQModule,
-  type RabbitMQConfig,
-} from "@golevelup/nestjs-rabbitmq";
-import { ConfigService } from "@nestjs/config";
-import { ConfigKey } from "src/config/config-key.enum";
+import { RabbitMQModule } from "@golevelup/nestjs-rabbitmq";
+import { rabbitmqConfig } from "src/config/rabbitmq.config";
 import { PrismaModule } from "src/db/prisma.module";
 import { ReservationsController } from "./reservations.controller";
 import { ReservationsService } from "./reservations.service";
@@ -18,11 +14,7 @@ import { HttpModule } from "@nestjs/axios";
   imports: [
     MembersModule,
     MemberContextModule,
-    RabbitMQModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) =>
-        configService.get<RabbitMQConfig>(ConfigKey.RABBITMQ),
-    }),
+    RabbitMQModule.forRoot(rabbitmqConfig),
     PrismaModule,
     RedisModule,
     HttpModule,

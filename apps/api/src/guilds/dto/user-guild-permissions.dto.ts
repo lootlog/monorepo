@@ -1,42 +1,32 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 import { Permission } from "src/generated/prisma/client";
-import { swaggerStringEnumArray } from "src/shared/swagger/prisma-enum";
 
-export class UserGuildPermissionsRole {
-  @ApiProperty({ description: "Role ID" })
-  id: string;
+export const UserGuildPermissionsRoleSchema = z.object({
+  id: z.string(),
+  lvlRangeFrom: z.number(),
+  lvlRangeTo: z.number(),
+  permissions: z.array(z.nativeEnum(Permission)),
+});
 
-  @ApiProperty({ description: "Minimum level for the role" })
-  lvlRangeFrom: number;
+export class UserGuildPermissionsRole extends createZodDto(
+  UserGuildPermissionsRoleSchema,
+) {}
 
-  @ApiProperty({ description: "Maximum level for the role" })
-  lvlRangeTo: number;
+export const UserGuildPermissionsGuildSchema = z.object({
+  id: z.string(),
+  ownerId: z.string(),
+});
 
-  @ApiProperty({
-    ...swaggerStringEnumArray("Permission", Permission),
-    description: "Permissions granted by this role",
-  })
-  permissions: Permission[];
-}
+export class UserGuildPermissionsGuild extends createZodDto(
+  UserGuildPermissionsGuildSchema,
+) {}
 
-export class UserGuildPermissionsGuild {
-  @ApiProperty({ description: "Guild ID" })
-  id: string;
+export const UserGuildPermissionsSchema = z.object({
+  guild: UserGuildPermissionsGuildSchema,
+  roles: z.array(UserGuildPermissionsRoleSchema),
+});
 
-  @ApiProperty({ description: "Guild owner Discord ID" })
-  ownerId: string;
-}
-
-export class UserGuildPermissionsDto {
-  @ApiProperty({
-    description: "Guild basic information",
-    type: UserGuildPermissionsGuild,
-  })
-  guild: UserGuildPermissionsGuild;
-
-  @ApiProperty({
-    description: "User roles in the guild with their permissions",
-    type: [UserGuildPermissionsRole],
-  })
-  roles: UserGuildPermissionsRole[];
-}
+export class UserGuildPermissionsDto extends createZodDto(
+  UserGuildPermissionsSchema,
+) {}

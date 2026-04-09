@@ -7,8 +7,9 @@ import { ConfigService } from "@nestjs/config";
 import { WINSTON_MODULE_NEST_PROVIDER } from "nest-winston";
 
 import { AppModule } from "./app.module";
-import { ClassSerializerInterceptor, ValidationPipe } from "@nestjs/common";
+import { ClassSerializerInterceptor } from "@nestjs/common";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import { cleanupOpenApiDoc } from "nestjs-zod";
 import { ServiceConfig } from "src/config/service.config";
 import { ConfigKey } from "src/config/config-key.enum";
 import { SwaggerConfig } from "src/config/swagger.config";
@@ -29,14 +30,6 @@ async function bootstrap() {
   const { path, title, description, version } =
     configService.get<SwaggerConfig>(ConfigKey.SWAGGER, { infer: true });
 
-  app.useGlobalPipes(
-    new ValidationPipe({
-      transform: true,
-      whitelist: true,
-      forbidNonWhitelisted: true,
-    }),
-  );
-
   app.useGlobalInterceptors(
     new ClassSerializerInterceptor(app.get(Reflector), {
       excludeExtraneousValues: true,
@@ -50,7 +43,9 @@ async function bootstrap() {
     .addBearerAuth()
     .build();
 
-  const document = SwaggerModule.createDocument(app, swaggerDocument);
+  const document = cleanupOpenApiDoc(
+    SwaggerModule.createDocument(app, swaggerDocument),
+  );
   SwaggerModule.setup(path, app, document);
 
   await app.startAllMicroservices();

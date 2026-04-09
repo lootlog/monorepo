@@ -1,6 +1,5 @@
 import { HttpService } from "@nestjs/axios";
 import { Inject, Injectable } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { firstValueFrom } from "rxjs";
@@ -11,8 +10,7 @@ import {
   AccountNotFoundError,
   AuthBadRequestError,
 } from "src/auth/errors";
-import { ConfigKey } from "src/config/config-key.enum";
-import type { AuthConfig } from "src/config/auth.config";
+import { authConfig } from "src/config/auth.config";
 import { RedisService } from "@lootlog/nest-shared";
 import {
   getAuthTokenCacheKey,
@@ -28,10 +26,8 @@ export class AuthService {
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     private readonly httpService: HttpService,
-    private readonly configService: ConfigService,
     private readonly redisService: RedisService,
   ) {
-    const authConfig = this.configService.get<AuthConfig>(ConfigKey.AUTH);
     this.authServiceUrl = authConfig.serviceUrl;
   }
 
@@ -82,8 +78,7 @@ export class AuthService {
       }
 
       if (this.isClientError(error)) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
+        const errorMessage = this.getErrorMessage(error);
         this.logger.log({
           level: "error",
           message: `Auth service returned client error for user ${userId}: ${errorMessage}`,
@@ -91,8 +86,7 @@ export class AuthService {
         throw new AuthBadRequestError(errorMessage);
       }
 
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
+      const errorMessage = this.getErrorMessage(error);
       this.logger.log({
         level: "error",
         message: `HTTP request failed for user ${userId}: ${errorMessage}`,
@@ -159,8 +153,7 @@ export class AuthService {
         throw error;
       }
 
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
+      const errorMessage = this.getErrorMessage(error);
       const errorStack = error instanceof Error ? error.stack : undefined;
       this.logger.log({
         level: "error",
@@ -176,6 +169,10 @@ export class AuthService {
   async invalidateIdpTokenCache(userId: string): Promise<void> {
     const cacheKey = getAuthTokenCacheKey(userId);
     await this.redisService.del(cacheKey);
+  }
+
+  private getErrorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : String(error);
   }
 
   private isKnownAuthError(error: unknown): boolean {

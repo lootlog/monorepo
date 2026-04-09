@@ -14,12 +14,6 @@ export const useUpdateLoot = () => {
     mutationFn: ({ id, ...rest }: UpdateLootOptions) => {
       return client.patch(`/loots/${id}`, rest);
     },
-    onSuccess: () => {
-      console.log("onSuccess");
-    },
-    onError: () => {
-      console.log("onError");
-    },
   });
 
   return mutation;

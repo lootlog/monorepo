@@ -1,140 +1,44 @@
-import {
-  IsString,
-  IsOptional,
-  IsArray,
-  ValidateNested,
-  IsInt,
-  IsNumber,
-  IsDateString,
-  Min,
-  MaxLength,
-  IsIn,
-} from "class-validator";
-import { Type } from "class-transformer";
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { EventScoringRulesDto } from "./event-scoring-rules.dto";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
+import { EventScoringRulesSchema } from "./event-scoring-rules.dto";
 import { EVENT_SCORING_MODES } from "../constants/scoring-rules.constant";
 
-export class HeroMapDto {
-  @ApiProperty({ description: "Margonem map ID" })
-  @IsInt()
-  mapId: number;
+export const HeroMapSchema = z.object({
+  mapId: z.number().int(),
+  mapName: z.string(),
+});
 
-  @ApiProperty({ description: "Map name" })
-  @IsString()
-  mapName: string;
-}
+export class HeroMapDto extends createZodDto(HeroMapSchema) {}
 
-export class HeroNpcDto {
-  @ApiPropertyOptional({ description: "NPC ID" })
-  @IsOptional()
-  @IsInt()
-  npcId?: number;
+export const HeroNpcSchema = z.object({
+  npcId: z.number().int().optional(),
+  npcName: z.string(),
+  maps: z.array(HeroMapSchema),
+});
 
-  @ApiProperty({ description: "NPC name" })
-  @IsString()
-  npcName: string;
+export class HeroNpcDto extends createZodDto(HeroNpcSchema) {}
 
-  @ApiProperty({
-    description: "Maps where the NPC can spawn",
-    type: [HeroMapDto],
+const CreateEventSchema = z
+  .object({
+    name: z.string(),
+    world: z.string(),
+    startsAt: z.string().datetime().optional(),
+    endsAt: z.string().datetime().optional(),
+    basePointsPerKill: z.number().int().min(0).optional(),
+    assignmentTimeoutMinutes: z.number().int().min(0).optional(),
+    participationConfirmationMinutes: z.number().int().min(0).optional(),
+    mapAssignmentCap: z.number().int().min(0).optional(),
+    rulebookMarkdown: z.string().max(10_000).optional(),
+    scoringRules: EventScoringRulesSchema.optional(),
+    scoringMode: z.enum(EVENT_SCORING_MODES).optional(),
+    heroNpcs: z.array(HeroNpcSchema).optional(),
   })
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => HeroMapDto)
-  maps: HeroMapDto[];
-}
+  .refine(
+    (data) =>
+      !data.startsAt ||
+      !data.endsAt ||
+      Date.parse(data.endsAt) >= Date.parse(data.startsAt),
+    { message: "endsAt must not be before startsAt", path: ["endsAt"] },
+  );
 
-export class CreateEventDto {
-  @ApiProperty({ description: "Event name" })
-  @IsString()
-  name: string;
-
-  @ApiProperty({ description: "World name" })
-  @IsString()
-  world: string;
-
-  @ApiPropertyOptional({ description: "Event start time" })
-  @IsOptional()
-  @IsDateString()
-  startsAt?: string;
-
-  @ApiPropertyOptional({ description: "Event end time" })
-  @IsOptional()
-  @IsDateString()
-  endsAt?: string;
-
-  @ApiPropertyOptional({
-    description: "Legacy base points value kept for compatibility",
-    default: 1,
-  })
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  basePointsPerKill?: number;
-
-  @ApiPropertyOptional({
-    description: "Minutes before minSpawnTime when assignments are allowed",
-    default: 5,
-  })
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  assignmentTimeoutMinutes?: number;
-
-  @ApiPropertyOptional({
-    description:
-      "Minutes from kill time to confirm participation (0 disables confirmations)",
-    default: 0,
-  })
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  participationConfirmationMinutes?: number;
-
-  @ApiPropertyOptional({
-    description:
-      "Maximum number of members that can assign to a single map (null or 0 = no limit)",
-  })
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  mapAssignmentCap?: number;
-
-  @ApiPropertyOptional({
-    description: "Optional event rulebook displayed to participants",
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(10_000)
-  rulebookMarkdown?: string;
-
-  @ApiPropertyOptional({
-    description: "Scoring rules configuration for this event",
-    type: EventScoringRulesDto,
-  })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => EventScoringRulesDto)
-  scoringRules?: EventScoringRulesDto;
-
-  @ApiPropertyOptional({
-    description: "Scoring mode used for this event",
-    enum: EVENT_SCORING_MODES,
-    default: "SIMPLE",
-  })
-  @IsOptional()
-  @IsString()
-  @IsIn(EVENT_SCORING_MODES)
-  scoringMode?: "SIMPLE" | "ADVANCED";
-
-  @ApiPropertyOptional({
-    description: "Hero NPCs to track in this event",
-    type: [HeroNpcDto],
-  })
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => HeroNpcDto)
-  heroNpcs?: HeroNpcDto[];
-}
+export class CreateEventDto extends createZodDto(CreateEventSchema) {}

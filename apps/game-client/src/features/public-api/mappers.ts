@@ -1,0 +1,101 @@
+import type { Guild } from "@/hooks/api/use-guild";
+import type { GuildMember } from "@/hooks/api/use-guild-members";
+import type { Npc } from "@/hooks/api/use-npcs";
+import type { Timer } from "@/hooks/api/use-timers";
+import type {
+  PublicGuild,
+  PublicMember,
+  PublicNpc,
+  PublicTimer,
+  PublicUser,
+} from "./types";
+import type { User } from "@/hooks/api/use-user";
+
+const mapUser = (user: User): PublicUser => ({
+  avatar: user.avatar,
+  banner: user.banner,
+  discriminator: user.discriminator,
+  globalName: user.globalName,
+  id: user.id,
+  username: user.username,
+});
+
+const mapMember = (member: GuildMember): PublicMember => ({
+  id: member.id,
+  userId: member.userId,
+  guildId: member.guildId,
+  avatar: member.avatar,
+  type: member.type,
+  name: member.name,
+  user: member.user ? mapUser(member.user) : undefined,
+  roles: member.roles?.map((r) => ({ position: r.position, color: r.color })),
+});
+
+const mapNpc = (npc: Npc): PublicNpc => ({
+  id: npc.id,
+  name: npc.name,
+  lvl: npc.lvl,
+  prof: npc.prof,
+  icon: npc.icon,
+  wt: npc.wt,
+  type: npc.type,
+  location: npc.location,
+  margonemType: npc.margonemType,
+});
+
+const toIso = (value: Date | string | undefined | null): string | null => {
+  if (value === undefined || value === null) return null;
+  return new Date(value).toISOString();
+};
+
+const mapTimer = (timer: Timer): PublicTimer => ({
+  timerKey: timer.timerKey,
+  npcId: timer.npcId,
+  npc: mapNpc(timer.npc),
+  member: mapMember(timer.member),
+  members: timer.members?.map(mapMember),
+  world: timer.world,
+  guildId: timer.guildId,
+  minSpawnTime: new Date(timer.minSpawnTime).toISOString(),
+  maxSpawnTime: new Date(timer.maxSpawnTime).toISOString(),
+  updatedAt: toIso(timer.updatedAt),
+  isCustomTime: timer.isCustomTime,
+  isPending: timer.isPending,
+  wasReset: timer.wasReset,
+});
+
+export const mapGuilds = (
+  data: Guild[] | undefined,
+): PublicGuild[] | undefined => {
+  if (!data) return undefined;
+  return data.map(
+    (g): PublicGuild => ({
+      id: g.id,
+      name: g.name,
+      icon: g.icon,
+      vanityUrl: g.vanityUrl,
+    }),
+  );
+};
+
+export const mapTimers = (
+  data: Timer[] | undefined,
+): PublicTimer[] | undefined => {
+  if (!data) return undefined;
+  return data.map(mapTimer);
+};
+
+export const groupTimersByGuild = (
+  timers: PublicTimer[],
+): Map<string, PublicTimer[]> => {
+  const grouped = new Map<string, PublicTimer[]>();
+  for (const timer of timers) {
+    const existing = grouped.get(timer.guildId);
+    if (existing) {
+      existing.push(timer);
+    } else {
+      grouped.set(timer.guildId, [timer]);
+    }
+  }
+  return grouped;
+};

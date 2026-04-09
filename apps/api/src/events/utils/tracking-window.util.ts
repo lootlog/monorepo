@@ -3,6 +3,39 @@ export type TrackingWindowInterval = {
   end: Date;
 };
 
+/**
+ * Clips an interval (with optional open end) to a window, returning the
+ * clamped start/end as Dates. A `null` end is treated as `windowEnd`.
+ */
+export function clipToWindow(params: {
+  start: Date;
+  end: Date | null;
+  windowStart: Date;
+  windowEnd: Date;
+}): { start: Date; end: Date } {
+  const effectiveEnd = params.end ?? params.windowEnd;
+  return {
+    start: new Date(
+      Math.max(params.start.getTime(), params.windowStart.getTime()),
+    ),
+    end: new Date(Math.min(effectiveEnd.getTime(), params.windowEnd.getTime())),
+  };
+}
+
+/**
+ * Like {@link clipToWindow} but returns the duration in whole seconds,
+ * clamped to a minimum of 0.
+ */
+export function clipToWindowSeconds(params: {
+  start: Date;
+  end: Date | null;
+  windowStart: Date;
+  windowEnd: Date;
+}): number {
+  const { start, end } = clipToWindow(params);
+  return Math.max(0, Math.round((end.getTime() - start.getTime()) / 1000));
+}
+
 export function clipIntervalToWindow(params: {
   start: Date;
   end: Date;

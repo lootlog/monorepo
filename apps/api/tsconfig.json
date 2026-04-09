@@ -2,7 +2,11 @@
   "extends": "@lootlog/typescript-config/nestjs.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "baseUrl": "./",
-    "strict": true
+    "declaration": false,
+    "rootDir": ".",
+    "strict": true,
+    "paths": {
+      "src/*": ["./src/*"]
+    }
   }
 }

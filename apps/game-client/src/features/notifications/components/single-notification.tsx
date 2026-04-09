@@ -60,13 +60,13 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
       : undefined;
 
   const key = (
-    isPartyGathering ? "party-gathering" : npcType ? npcType : "message"
+    isPartyGathering ? "party-gathering" : (npcType ?? "message")
   ) as keyof (typeof settings)[string];
 
   const settingsByNpcType = characterId
     ? settings[characterId]?.[key]
     : undefined;
-  const autoHideTimeout = settingsByNpcType?.autoHideTimeout || 0;
+  const autoHideTimeout = settingsByNpcType?.autoHideTimeout ?? 0;
 
   const createdAtMs = useMemo(
     () => new Date(notification.createdAt).getTime(),
@@ -83,7 +83,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   const serverNames = useMemo(
     () =>
       notification.servers
-        .map((server) => guilds?.find((g) => g.id === server)?.name || "")
+        .map((server) => guilds?.find((g) => g.id === server)?.name ?? "")
         .filter(Boolean),
     [notification.servers, guilds],
   );

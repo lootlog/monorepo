@@ -1,6 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { sessionQueryOptions } from "@/hooks/auth/use-session-query";
 import { z } from "zod";
+import { SignIn } from "@/features/signin/signin";
 
 const signinSearchSchema = z.object({
   redirect: z.string().optional().catch("/"),
@@ -17,4 +18,5 @@ export const Route = createFileRoute("/signin")({
       });
     }
   },
+  component: SignIn,
 });

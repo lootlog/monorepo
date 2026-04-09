@@ -1,5 +1,4 @@
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import { ConfigService } from "@nestjs/config";
 import { Inject, Injectable } from "@nestjs/common";
 import {
   DiscordGuildSyncStatus,
@@ -19,8 +18,7 @@ import {
 } from "src/generated/prisma/client";
 import type { Logger as WinstonLogger } from "winston";
 import { DiscordBotClientService } from "src/discord-bot-client/discord-bot-client.service";
-import { ConfigKey } from "src/config/config-key.enum";
-import type { DiscordBotConfig } from "src/config/discord-bot.config";
+import { discordBotConfig } from "src/config/discord-bot.config";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { PrismaService } from "src/db/prisma.service";
 import { RoutingKey } from "src/enum/routing-key.enum";
@@ -48,15 +46,10 @@ export class ChannelsService {
     private readonly prisma: PrismaService,
     private readonly discordBotClient: DiscordBotClientService,
     private readonly amqpConnection: AmqpConnection,
-    private readonly configService: ConfigService,
     @Inject(WINSTON_MODULE_PROVIDER)
     private readonly winstonLogger: WinstonLogger,
   ) {
-    const discordBotConfig = this.configService.get<DiscordBotConfig>(
-      ConfigKey.DISCORD_BOT,
-    );
-    this.staleAfterMs =
-      (discordBotConfig?.channelSnapshotStaleSeconds ?? 300) * 1000;
+    this.staleAfterMs = discordBotConfig.channelSnapshotStaleSeconds * 1000;
   }
 
   async getGuildDiscordChannels(

@@ -7,8 +7,8 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { Permission, type Role } from "src/generated/prisma/client";
-import type { CloseRespawnWindowDto } from "./dto/close-respawn-window.dto";
-import type { OpenRespawnWindowDto } from "./dto/open-respawn-window.dto";
+import { CloseRespawnWindowDto } from "./dto/close-respawn-window.dto";
+import { OpenRespawnWindowDto } from "./dto/open-respawn-window.dto";
 import { EventsService } from "./events.service";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";

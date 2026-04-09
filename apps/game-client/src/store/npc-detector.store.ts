@@ -1,7 +1,10 @@
 import { NpcType } from "@/hooks/api/use-npcs";
-import type { GameNpc } from "@/types/margonem/npcs";
+import type { GameNpc } from "@lootlog/margonem";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { storageKey } from "@/lib/storage-key";
+
+const STORAGE_KEY = storageKey("ll-npc-detector-state");
 
 export type GameNpcWithLocation = GameNpc & {
   location: string;
@@ -116,7 +119,7 @@ export const useNpcDetectorStore = create<NpcDetectorState>()(
       },
     }),
     {
-      name: "ll-npc-detector-state",
+      name: STORAGE_KEY,
       partialize: (state) => ({
         settings: state.settings,
       }),

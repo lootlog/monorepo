@@ -18,8 +18,8 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { Permission, type Guild, type Role } from "src/generated/prisma/client";
-import type { CreateEventDto } from "./dto/create-event.dto";
-import type { UpdateEventDto } from "./dto/update-event.dto";
+import { CreateEventDto } from "./dto/create-event.dto";
+import { UpdateEventDto } from "./dto/update-event.dto";
 import { EventsService } from "./events.service";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";

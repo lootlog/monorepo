@@ -15,7 +15,6 @@ import {
 } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import { ConfigService } from "@nestjs/config";
 import { AuthService } from "src/auth/auth.service";
 import {
   Routes,
@@ -33,8 +32,7 @@ import {
   AccountNotFoundError,
   AuthBadRequestError,
 } from "src/auth/errors";
-import { ConfigKey } from "src/config/config-key.enum";
-import type { ServiceConfig } from "src/config/service.config";
+import { serviceConfig } from "src/config/service.config";
 import { RuntimeEnvironment } from "src/types/runtime.types";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
 
@@ -63,13 +61,9 @@ export class DiscordService implements OnModuleInit {
     private readonly authService: AuthService,
     private readonly redisService: RedisService,
     private readonly rateLimiter: DiscordRateLimiterService,
-    private readonly configService: ConfigService,
     private readonly redlockService: RedlockService,
   ) {
-    const serviceConfig = this.configService.get<ServiceConfig>(
-      ConfigKey.SERVICE,
-    );
-    this.isLocal = serviceConfig?.env === RuntimeEnvironment.LOCAL;
+    this.isLocal = serviceConfig.env === RuntimeEnvironment.LOCAL;
   }
 
   onModuleInit() {
@@ -80,6 +74,15 @@ export class DiscordService implements OnModuleInit {
 
   private getCacheTtl(localTtl: number, prodTtl: number): number {
     return this.isLocal ? localTtl : prodTtl;
+  }
+
+  private isNotFoundStatus(error: unknown): boolean {
+    return (
+      typeof error === "object" &&
+      error !== null &&
+      "status" in error &&
+      error.status === 404
+    );
   }
 
   async getRestClient(userId: string, discordId: string) {
@@ -358,12 +361,7 @@ export class DiscordService implements OnModuleInit {
           path,
         });
       } catch (error: unknown) {
-        if (
-          typeof error === "object" &&
-          error !== null &&
-          "status" in error &&
-          error.status === 404
-        ) {
+        if (this.isNotFoundStatus(error)) {
           throw error;
         }
 
@@ -414,12 +412,7 @@ export class DiscordService implements OnModuleInit {
         throw error;
       }
 
-      if (
-        typeof error === "object" &&
-        error !== null &&
-        "status" in error &&
-        error.status === 404
-      ) {
+      if (this.isNotFoundStatus(error)) {
         this.logger.log({
           level: "debug",
           message: `Guild member not found for guildId: ${guildId}, userId: ${userId}`,

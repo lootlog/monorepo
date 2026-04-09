@@ -100,8 +100,8 @@ describe("ActivitiesController", () => {
       const guildId = "guild-1";
       const query: QueryActivitiesDto = {
         type: [ActivityType.CONNECT_EVENT],
-        startDate: "2024-01-01",
-        endDate: "2024-12-31",
+        startDate: "2024-01-01T00:00:00Z",
+        endDate: "2024-12-31T23:59:59Z",
         cursor: "cursor-1",
         limit: 25,
       };

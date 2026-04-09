@@ -1,8 +1,7 @@
 import { useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Timer } from "@/hooks/api/use-timers";
-
-const timersKey = (world: string) => ["guild-timers", world] as const;
+import { queryKeys } from "@/features/public-api/query-keys";
 
 type TimerIdentity = Pick<Timer, "world" | "timerKey" | "guildId">;
 
@@ -16,21 +15,24 @@ export const useTimersCache = () => {
     (timer: Timer) => {
       if (!timer.world) return;
 
-      queryClient.setQueryData<Timer[]>(timersKey(timer.world), (old = []) => {
-        const updated = [...old];
+      queryClient.setQueryData<Timer[]>(
+        queryKeys.timers(timer.world),
+        (old = []) => {
+          const updated = [...old];
 
-        const index = updated.findIndex((t) => isSameTimer(t, timer));
+          const index = updated.findIndex((t) => isSameTimer(t, timer));
 
-        const next = { ...timer, isPending: false };
+          const next = { ...timer, isPending: false };
 
-        if (index !== -1) {
-          updated[index] = next;
-        } else {
-          updated.push(next);
-        }
+          if (index !== -1) {
+            updated[index] = next;
+          } else {
+            updated.push(next);
+          }
 
-        return updated;
-      });
+          return updated;
+        },
+      );
     },
     [queryClient],
   );
@@ -39,8 +41,9 @@ export const useTimersCache = () => {
     (timer: TimerIdentity) => {
       if (!timer.world) return;
 
-      queryClient.setQueryData<Timer[]>(timersKey(timer.world), (old = []) =>
-        old.filter((t) => !isSameTimer(t, timer)),
+      queryClient.setQueryData<Timer[]>(
+        queryKeys.timers(timer.world),
+        (old = []) => old.filter((t) => !isSameTimer(t, timer)),
       );
     },
     [queryClient],

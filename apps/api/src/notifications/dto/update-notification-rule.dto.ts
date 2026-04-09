@@ -4,158 +4,65 @@ import {
   NotificationScheduleStrategy,
   NotificationTriggerType,
 } from "@lootlog/types";
-import { ApiPropertyOptional } from "@nestjs/swagger";
-import {
-  ArrayMaxSize,
-  IsArray,
-  IsBoolean,
-  IsDateString,
-  IsEnum,
-  IsInt,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  Matches,
-  Max,
-  MaxLength,
-  Min,
-  ValidateIf,
-} from "class-validator";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 import { Error } from "src/notifications/enum/error.enum";
-import { swaggerStringEnum } from "src/shared/swagger/prisma-enum";
-import { HasAtLeastOneNpc } from "./has-at-least-one-npc.validator";
 
-@HasAtLeastOneNpc()
-export class UpdateNotificationRuleDto {
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  @MaxLength(255)
-  name?: string | null;
+const UpdateNotificationRuleSchema = z
+  .object({
+    name: z.string().max(255).nullable().optional(),
+    contentTemplate: z.string().max(4000).nullable().optional(),
+    triggerType: z.nativeEnum(NotificationTriggerType).optional(),
+    world: z.string().max(50).optional(),
+    npcId: z.number().int().optional(),
+    npcIds: z.array(z.number().int()).max(5).optional(),
+    itemId: z.number().int().optional(),
+    itemIds: z.array(z.number().int()).max(20).optional(),
+    scheduleStrategy: z.nativeEnum(NotificationScheduleStrategy).optional(),
+    scheduleAnchor: z.nativeEnum(NotificationScheduleAnchor).optional(),
+    scheduleOffsetMinutes: z.number().int().min(0).max(1440).optional(),
+    scheduledAt: z.string().datetime({ offset: true }).optional(),
+    scheduleIntervalType: z
+      .nativeEnum(NotificationScheduleIntervalType)
+      .optional(),
+    scheduleIntervalValue: z.number().int().min(1).max(24).optional(),
+    scheduleWeekday: z.number().int().min(0).max(6).optional(),
+    scheduleTimeOfDay: z
+      .string()
+      .regex(/^\d{2}:\d{2}$/, { message: Error.TIME_MUST_BE_HH_MM_FORMAT })
+      .optional(),
+    scheduledUntil: z.string().datetime({ offset: true }).optional(),
+    scheduleTimezone: z.string().max(50).optional(),
+    targetIds: z.array(z.number().int()).max(3).optional(),
+    enabled: z.boolean().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (
+      data.world !== undefined &&
+      (!data.world || data.world.trim().length === 0)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: Error.NOTIFICATION_RULE_WORLD_REQUIRED,
+        path: ["world"],
+      });
+    }
+  })
+  .superRefine((data, ctx) => {
+    const hasNpcId = typeof data.npcId === "number";
+    const hasNpcIds = Array.isArray(data.npcIds) && data.npcIds.length > 0;
 
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  @MaxLength(4000)
-  contentTemplate?: string | null;
+    if (data.npcId !== undefined || data.npcIds !== undefined) {
+      if (!hasNpcId && !hasNpcIds) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: Error.NOTIFICATION_RULE_MUST_TARGET_AT_LEAST_ONE_NPC,
+          path: ["npcId"],
+        });
+      }
+    }
+  });
 
-  @ApiPropertyOptional(
-    swaggerStringEnum("NotificationTriggerType", NotificationTriggerType),
-  )
-  @IsOptional()
-  @IsEnum(NotificationTriggerType)
-  triggerType?: NotificationTriggerType;
-
-  @ApiPropertyOptional()
-  @ValidateIf((obj) => obj.world !== undefined)
-  @IsString()
-  @IsNotEmpty({ message: Error.NOTIFICATION_RULE_WORLD_REQUIRED })
-  @MaxLength(50)
-  world?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsInt()
-  npcId?: number;
-
-  @ApiPropertyOptional({ type: [Number] })
-  @IsOptional()
-  @IsArray()
-  @ArrayMaxSize(5)
-  @IsInt({ each: true })
-  npcIds?: number[];
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsInt()
-  itemId?: number;
-
-  @ApiPropertyOptional({ type: [Number] })
-  @IsOptional()
-  @IsArray()
-  @ArrayMaxSize(20)
-  @IsInt({ each: true })
-  itemIds?: number[];
-
-  @ApiPropertyOptional(
-    swaggerStringEnum(
-      "NotificationScheduleStrategy",
-      NotificationScheduleStrategy,
-    ),
-  )
-  @IsOptional()
-  @IsEnum(NotificationScheduleStrategy)
-  scheduleStrategy?: NotificationScheduleStrategy;
-
-  @ApiPropertyOptional(
-    swaggerStringEnum("NotificationScheduleAnchor", NotificationScheduleAnchor),
-  )
-  @IsOptional()
-  @IsEnum(NotificationScheduleAnchor)
-  scheduleAnchor?: NotificationScheduleAnchor;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  @Max(1440)
-  scheduleOffsetMinutes?: number;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsDateString()
-  scheduledAt?: string;
-
-  @ApiPropertyOptional(
-    swaggerStringEnum(
-      "NotificationScheduleIntervalType",
-      NotificationScheduleIntervalType,
-    ),
-  )
-  @IsOptional()
-  @IsEnum(NotificationScheduleIntervalType)
-  scheduleIntervalType?: NotificationScheduleIntervalType;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  @Max(24)
-  scheduleIntervalValue?: number;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  @Max(6)
-  scheduleWeekday?: number;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  @Matches(/^\d{2}:\d{2}$/, { message: Error.TIME_MUST_BE_HH_MM_FORMAT })
-  scheduleTimeOfDay?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsDateString()
-  scheduledUntil?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  @MaxLength(50)
-  scheduleTimezone?: string;
-
-  @ApiPropertyOptional({ type: [Number] })
-  @IsOptional()
-  @IsArray()
-  @ArrayMaxSize(3)
-  @IsInt({ each: true })
-  targetIds?: number[];
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsBoolean()
-  enabled?: boolean;
-}
+export class UpdateNotificationRuleDto extends createZodDto(
+  UpdateNotificationRuleSchema,
+) {}

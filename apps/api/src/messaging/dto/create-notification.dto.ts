@@ -1,40 +1,26 @@
-import { Type } from "class-transformer";
-import {
-  ArrayMaxSize,
-  IsArray,
-  IsBoolean,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  MaxLength,
-  ValidateNested,
-} from "class-validator";
-import { NpcDto } from "src/loots/dto/create-loot.dto";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
 
-export class CreateNotificationDto {
-  @IsString()
-  @IsOptional()
-  @MaxLength(500)
-  message: string;
+const NpcSchema = z.object({
+  id: z.number(),
+  name: z.string().min(1),
+  location: z.string().min(1),
+  lvl: z.number(),
+  prof: z.string().optional(),
+  wt: z.number(),
+  hpp: z.number().optional(),
+  icon: z.string().min(1),
+  type: z.number(),
+});
 
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => NpcDto)
-  npc: NpcDto;
+const CreateNotificationSchema = z.object({
+  message: z.string().max(500).optional(),
+  npc: NpcSchema.optional(),
+  guildIds: z.array(z.string().max(50)).min(1).max(10),
+  world: z.string().min(1).max(50),
+  isGatheringParty: z.boolean().optional(),
+});
 
-  @IsArray()
-  @IsNotEmpty()
-  @IsString({ each: true })
-  @MaxLength(50, { each: true })
-  @ArrayMaxSize(10)
-  guildIds: string[];
-
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(50)
-  world: string;
-
-  @IsOptional()
-  @IsBoolean()
-  isGatheringParty?: boolean;
-}
+export class CreateNotificationDto extends createZodDto(
+  CreateNotificationSchema,
+) {}

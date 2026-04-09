@@ -5,9 +5,11 @@ import { plainToInstance } from "class-transformer";
 import { LootsController } from "./loots.controller";
 import { LootsService } from "./loots.service";
 import { LootStatsService } from "./services/loot-stats.service";
-import type { CreateLootDto } from "./dto/create-loot.dto";
-import type { UpdateLootDto } from "./dto/update-loot.dto";
-import type { CreateCommentDto } from "./dto/create-comment-dto";
+import { CreateLootDto } from "./dto/create-loot.dto";
+import { UpdateLootDto } from "./dto/update-loot.dto";
+import { CreateCommentDto } from "./dto/create-comment-dto";
+import { FetchLootsParamsDto } from "./dto/fetch-loots-params.dto";
+import { LootStatsQueryDto } from "./dto/loot-stats.dto";
 import {
   Permission,
   LootSource,
@@ -145,6 +147,42 @@ describe("LootsController", () => {
     });
   });
 
+  describe("runtime DTO metadata", () => {
+    it("should preserve zod dto classes for decorated params", () => {
+      const fetchLootsParamTypes = Reflect.getMetadata(
+        "design:paramtypes",
+        LootsController.prototype,
+        "fetchLootsByGuildId",
+      );
+      const getLootStatsParamTypes = Reflect.getMetadata(
+        "design:paramtypes",
+        LootsController.prototype,
+        "getLootStats",
+      );
+      const createLootParamTypes = Reflect.getMetadata(
+        "design:paramtypes",
+        LootsController.prototype,
+        "createLoot",
+      );
+      const createCommentParamTypes = Reflect.getMetadata(
+        "design:paramtypes",
+        LootsController.prototype,
+        "createComment",
+      );
+      const updateLootParamTypes = Reflect.getMetadata(
+        "design:paramtypes",
+        LootsController.prototype,
+        "updateLoot",
+      );
+
+      expect(fetchLootsParamTypes[3]).toBe(FetchLootsParamsDto);
+      expect(getLootStatsParamTypes[1]).toBe(LootStatsQueryDto);
+      expect(createLootParamTypes[2]).toBe(CreateLootDto);
+      expect(createCommentParamTypes[2]).toBe(CreateCommentDto);
+      expect(updateLootParamTypes[1]).toBe(UpdateLootDto);
+    });
+  });
+
   describe("createLoot", () => {
     const discordId = "discord123";
     const userId = "user123";
@@ -226,13 +264,7 @@ describe("LootsController", () => {
         [Permission.LOOTLOG_LOOTS_READ],
         [mockRole],
         mockGuild,
-        params.cursor,
-        params.limit,
-        params.world,
-        params.npcTypes,
-        params.rarities,
-        params.players,
-        params.npcs,
+        params,
       );
 
       expect(service.fetchLootsByGuildId).toHaveBeenCalledWith(
@@ -254,13 +286,7 @@ describe("LootsController", () => {
         [Permission.LOOTLOG_LOOTS_READ],
         [mockRole],
         mockGuild,
-        params.cursor,
-        params.limit,
-        params.world,
-        params.npcTypes,
-        params.rarities,
-        params.players,
-        params.npcs,
+        params,
       );
 
       expect(result).toEqual([]);

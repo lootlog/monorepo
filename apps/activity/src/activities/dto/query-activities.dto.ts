@@ -1,65 +1,34 @@
-import {
-  IsEnum,
-  IsOptional,
-  IsString,
-  IsDateString,
-  IsArray,
-  IsNumber,
-  Min,
-  Max,
-} from "class-validator";
-import { Type, Transform } from "class-transformer";
+import { z } from "zod";
+import { createZodDto, type ZodDto } from "nestjs-zod";
 import { ActivityType, ActivitySource } from "src/generated/prisma/client";
 
-export class QueryActivitiesDto {
-  @IsString()
-  @IsOptional()
-  userId?: string;
+const singleToArray = (val: unknown) => {
+  if (Array.isArray(val)) return val;
+  if (val === undefined || val === null) return undefined;
+  return [val];
+};
 
-  @IsString()
-  @IsOptional()
-  guildId?: string;
+const QueryActivitiesSchema = z.object({
+  userId: z.string().optional(),
+  guildId: z.string().optional(),
+  type: z.preprocess(
+    singleToArray,
+    z.array(z.nativeEnum(ActivityType)).optional(),
+  ),
+  source: z.preprocess(
+    singleToArray,
+    z.array(z.nativeEnum(ActivitySource)).optional(),
+  ),
+  playerName: z.string().optional(),
+  clanName: z.string().optional(),
+  world: z.string().optional(),
+  startDate: z.string().datetime({ offset: true }).optional(),
+  endDate: z.string().datetime({ offset: true }).optional(),
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+});
 
-  @IsArray()
-  @IsEnum(ActivityType, { each: true })
-  @IsOptional()
-  @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
-  type?: ActivityType[];
+const QueryActivitiesDtoBase: ZodDto<typeof QueryActivitiesSchema> =
+  createZodDto(QueryActivitiesSchema);
 
-  @IsArray()
-  @IsEnum(ActivitySource, { each: true })
-  @IsOptional()
-  @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
-  source?: ActivitySource[];
-
-  @IsString()
-  @IsOptional()
-  playerName?: string;
-
-  @IsString()
-  @IsOptional()
-  clanName?: string;
-
-  @IsString()
-  @IsOptional()
-  world?: string;
-
-  @IsDateString()
-  @IsOptional()
-  startDate?: string;
-
-  @IsDateString()
-  @IsOptional()
-  endDate?: string;
-
-  @IsString()
-  @IsOptional()
-  cursor?: string;
-
-  @Type(() => Number)
-  @IsNumber()
-  @Min(1)
-  @Max(100)
-  @IsOptional()
-  limit?: number = 50;
-}
+export class QueryActivitiesDto extends QueryActivitiesDtoBase {}

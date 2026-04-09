@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { guildRolesQueryOptions } from "@/hooks/api/guilds/use-guild-roles";
+import { RolesSettings } from "@/features/guild-settings/roles-settings/roles-settings";
 
 export const Route = createFileRoute("/_authenticated/$guildId/settings/roles")(
   {
@@ -8,5 +9,6 @@ export const Route = createFileRoute("/_authenticated/$guildId/settings/roles")(
         guildRolesQueryOptions(params.guildId),
       );
     },
+    component: RolesSettings,
   },
 );

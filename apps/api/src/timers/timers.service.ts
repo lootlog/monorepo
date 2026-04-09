@@ -55,6 +55,14 @@ function parseNpc(npc: unknown): { lvl: number; type: NpcType } | null {
   return npc as { lvl: number; type: NpcType };
 }
 
+function extractNpcName(npc: unknown): string {
+  if (npc && typeof npc === "object" && !Array.isArray(npc)) {
+    const name = (npc as Record<string, unknown>).name;
+    return typeof name === "string" ? name : "";
+  }
+  return "";
+}
+
 const DEDUP_TTL_SECONDS = 10;
 const CACHE_TTL_SECONDS = 2;
 
@@ -141,7 +149,7 @@ export class TimersService implements OnModuleInit {
   private buildNpcData(npc: {
     id: number;
     name: string;
-    prof: string;
+    prof?: string;
     location: string;
     wt: number;
     lvl: number;
@@ -151,11 +159,11 @@ export class TimersService implements OnModuleInit {
     return {
       id: npc.id,
       name: npc.name,
-      prof: getProfByShortname(npc.prof),
+      prof: getProfByShortname(npc.prof ?? ""),
       location: npc.location,
       wt: String(npc.wt),
       lvl: npc.lvl,
-      type: getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type),
+      type: getNpcTypeByWt(NpcType, npc.wt, npc.prof ?? "", npc.type),
       icon: npc.icon,
       margonemType: String(npc.type),
     };
@@ -837,8 +845,8 @@ export class TimersService implements OnModuleInit {
     let latestRespawnRandomness: number;
 
     if (data.customMinSpawnTime && data.customMaxSpawnTime) {
-      minSpawnTime = data.customMinSpawnTime;
-      maxSpawnTime = data.customMaxSpawnTime;
+      minSpawnTime = new Date(data.customMinSpawnTime);
+      maxSpawnTime = new Date(data.customMaxSpawnTime);
 
       const diffMs = maxSpawnTime.getTime() - minSpawnTime.getTime();
       const midpointSeconds = Math.round(diffMs / 2000);
@@ -1008,18 +1016,11 @@ export class TimersService implements OnModuleInit {
       throw new BadRequestException({ message: ErrorKey.TIMER_NOT_FOUND });
     }
 
-    const resolvedTimerNpc =
-      resolvedTimer.npc &&
-      typeof resolvedTimer.npc === "object" &&
-      !Array.isArray(resolvedTimer.npc)
-        ? resolvedTimer.npc
-        : null;
-
     const eventHero = await this.eventTimerHooks.findActiveEventHeroByNpc(
       guildId,
       data.world,
       resolvedTimer.npcId,
-      typeof resolvedTimerNpc?.name === "string" ? resolvedTimerNpc.name : "",
+      extractNpcName(resolvedTimer.npc),
     );
 
     if (eventHero) {
@@ -1106,18 +1107,11 @@ export class TimersService implements OnModuleInit {
       throw new BadRequestException({ message: ErrorKey.TIMER_NOT_FOUND });
     }
 
-    const resolvedTimerNpc =
-      resolvedTimer.npc &&
-      typeof resolvedTimer.npc === "object" &&
-      !Array.isArray(resolvedTimer.npc)
-        ? resolvedTimer.npc
-        : null;
-
     const eventHero = await this.eventTimerHooks.findActiveEventHeroByNpc(
       guildId,
       world,
       resolvedTimer.npcId,
-      typeof resolvedTimerNpc?.name === "string" ? resolvedTimerNpc.name : "",
+      extractNpcName(resolvedTimer.npc),
     );
 
     if (eventHero) {

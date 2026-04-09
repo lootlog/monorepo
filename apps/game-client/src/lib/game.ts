@@ -1,8 +1,10 @@
-import type { GameHero } from "@/types/margonem/hero";
-import type { GameMap } from "@/types/margonem/map";
-import type { NpcTpl } from "@/types/margonem/npc-tpl-manager";
-import type { GameNpc } from "@/types/margonem/npcs";
-import type { GameOther } from "@/types/margonem/others";
+import type {
+  GameHero,
+  GameMap,
+  NpcTpl,
+  GameNpc,
+  GameOther,
+} from "@lootlog/margonem";
 
 export class Game {
   static get interface() {

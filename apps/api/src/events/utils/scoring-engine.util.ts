@@ -135,9 +135,6 @@ function evaluateCondition(params: {
 
   const totalDurationMs =
     context.killTime.getTime() - context.respawnStartTime.getTime();
-  if (totalDurationMs <= 0) {
-    return false;
-  }
 
   const overlapMs = calculateLocalWindowOverlapMs({
     startUtc: context.respawnStartTime,

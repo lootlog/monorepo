@@ -1,31 +1,11 @@
-import {
-  IsInt,
-  IsString,
-  IsArray,
-  IsOptional,
-  ValidateNested,
-} from "class-validator";
-import { Type } from "class-transformer";
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { HeroMapDto } from "./create-event.dto";
+import { z } from "zod";
+import { createZodDto } from "nestjs-zod";
+import { HeroMapSchema } from "./create-event.dto";
 
-export class CreateHeroDto {
-  @ApiPropertyOptional({ description: "NPC ID" })
-  @IsOptional()
-  @IsInt()
-  npcId?: number;
+const CreateHeroSchema = z.object({
+  npcId: z.number().int().optional(),
+  npcName: z.string(),
+  maps: z.array(HeroMapSchema).optional(),
+});
 
-  @ApiProperty({ description: "NPC name" })
-  @IsString()
-  npcName: string;
-
-  @ApiPropertyOptional({
-    description: "Initial maps for this hero",
-    type: [HeroMapDto],
-  })
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => HeroMapDto)
-  maps?: HeroMapDto[];
-}
+export class CreateHeroDto extends createZodDto(CreateHeroSchema) {}

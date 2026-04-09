@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createZodDto } from "nestjs-zod";
-import { booleanFromString, intFromString } from "./query-helpers";
+import { booleanFromString, intFromString } from "@lootlog/nest-shared";
 
 export const QueryBattleStatisticsSchema = z.object({
   characterId: z.string().optional(),

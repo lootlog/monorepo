@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createZodDto } from "nestjs-zod";
-import { booleanFromString, commaSeparatedArray } from "./query-helpers";
+import { booleanFromString, commaSeparatedArray } from "@lootlog/nest-shared";
 
 export type SortOrder = "asc" | "desc";
 

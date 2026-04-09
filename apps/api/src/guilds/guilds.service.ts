@@ -6,7 +6,6 @@ import {
   HttpException,
   HttpStatus,
 } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
 import type { APIGuild } from "discord-api-types/v10";
 import { DiscordGuildSyncStatus } from "@lootlog/types";
 
@@ -14,8 +13,7 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { ChannelsService } from "src/channels/channels.service";
-import type { DiscordBotConfig } from "src/config/discord-bot.config";
-import { ConfigKey } from "src/config/config-key.enum";
+import { discordBotConfig } from "src/config/discord-bot.config";
 import {
   type Guild,
   ItemRarity,
@@ -62,14 +60,10 @@ export class GuildsService {
     private readonly channelsService: ChannelsService,
     private readonly rolesService: RolesService,
     private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
     private readonly discordService: DiscordService,
     private readonly redisService: RedisService,
     private readonly amqpConnection: AmqpConnection,
   ) {
-    const discordBotConfig = this.configService.get<DiscordBotConfig>(
-      ConfigKey.DISCORD_BOT,
-    );
     this.staleAfterMs = discordBotConfig.channelSnapshotStaleSeconds;
   }
 
@@ -109,14 +103,6 @@ export class GuildsService {
             active: true,
           },
         });
-
-        const comparedGuilds = guilds.every((guild) => {
-          return discordGuildIds.includes(guild.id);
-        });
-
-        if (!comparedGuilds) {
-          await this.discordService.clearUserGuildIdsCache(userId);
-        }
       } catch (error) {
         if (
           error instanceof HttpException &&
@@ -132,10 +118,7 @@ export class GuildsService {
       }
     }
 
-    if (
-      userPreferences?.guildsOrder &&
-      Array.isArray(userPreferences.guildsOrder)
-    ) {
+    if (userPreferences?.guildsOrder) {
       const guildOrderMap = new Map<string, number>(
         userPreferences.guildsOrder.map(
           (id: string, idx: number) => [id, idx] as const,
@@ -194,11 +177,6 @@ export class GuildsService {
   }
 
   async getGuildById(idOrVanityURL: string) {
-    const guild = await this.getGuildByIdInternal(idOrVanityURL);
-    return guild;
-  }
-
-  async getGuildByIdInternal(idOrVanityURL: string) {
     const cacheKey = getGuildCacheKey(idOrVanityURL);
     const cached = await this.redisService.get(cacheKey);
 
@@ -208,7 +186,7 @@ export class GuildsService {
       } catch (error) {
         this.logger.warn({
           message: `Failed to parse cached guild data for key ${cacheKey}`,
-          error: error,
+          error,
         });
         await this.redisService.del(cacheKey);
       }
@@ -508,14 +486,6 @@ export class GuildsService {
           active: true,
         },
       });
-
-      const comparedGuilds = guilds.every((guild) =>
-        discordGuildIds.includes(guild.id),
-      );
-
-      if (!comparedGuilds) {
-        await this.discordService.clearUserGuildIdsCache(userId);
-      }
 
       return guilds.map((guild) => {
         const discordGuild = discordGuildMap.get(guild.id);

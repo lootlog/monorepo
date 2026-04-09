@@ -1,4 +1,6 @@
 import { MiddlewareConsumer, Module } from "@nestjs/common";
+import { APP_PIPE } from "@nestjs/core";
+import { ZodValidationPipe } from "nestjs-zod";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { WinstonModule, WinstonModuleOptions } from "nest-winston";
 import { APP_CONFIG } from "src/config/app.config";
@@ -20,7 +22,12 @@ import { LoggerMiddleware } from "@lootlog/nest-shared";
     ActivitiesModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [
+    {
+      provide: APP_PIPE,
+      useClass: ZodValidationPipe,
+    },
+  ],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
