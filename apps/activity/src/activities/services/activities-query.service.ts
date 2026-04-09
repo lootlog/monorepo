@@ -140,15 +140,7 @@ export class ActivitiesQueryService {
     const limitValue = Math.min(Math.max(limit, 1), 50);
     const trimmedSearch = search?.trim();
 
-    const worldFilter: Prisma.StringNullableFilter = {
-      not: null,
-      notIn: [""],
-    };
-
-    if (trimmedSearch) {
-      worldFilter.contains = trimmedSearch;
-      worldFilter.mode = "insensitive";
-    }
+    const worldFilter = this.buildNonEmptyNullableFilter(trimmedSearch);
 
     const where: Prisma.ActivityWhereInput = {
       guildId,
@@ -176,15 +168,7 @@ export class ActivitiesQueryService {
     const limitValue = Math.min(Math.max(limit, 1), 50);
     const trimmedSearch = search?.trim();
 
-    const clanNameFilter: Prisma.StringNullableFilter = {
-      not: null,
-      notIn: [""],
-    };
-
-    if (trimmedSearch) {
-      clanNameFilter.contains = trimmedSearch;
-      clanNameFilter.mode = "insensitive";
-    }
+    const clanNameFilter = this.buildNonEmptyNullableFilter(trimmedSearch);
 
     const where: Prisma.ActivityActorSnapshotWhereInput = {
       activities: {
@@ -219,6 +203,22 @@ export class ActivitiesQueryService {
     query: QueryActivitiesDto,
   ): Promise<PaginatedActivitiesEntity> {
     return this.findMany({ ...query, userId, guildId });
+  }
+
+  private buildNonEmptyNullableFilter(
+    search?: string,
+  ): Prisma.StringNullableFilter {
+    const filter: Prisma.StringNullableFilter = {
+      not: null,
+      notIn: [""],
+    };
+
+    if (search) {
+      filter.contains = search;
+      filter.mode = "insensitive";
+    }
+
+    return filter;
   }
 
   private deduplicateNames(
