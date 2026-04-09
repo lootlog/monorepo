@@ -1,8 +1,8 @@
 import { UnauthorizedException } from "@nestjs/common";
 
 import {
-  type RequestLike,
   createRequiredRequestValueDecorator,
+  type RequestLike,
 } from "./create-required-request-value.decorator";
 
 export function createRequiredUnauthorizedRequestValueDecorator<Value>(
