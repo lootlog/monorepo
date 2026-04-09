@@ -1,5 +1,5 @@
 import { HttpService } from "@nestjs/axios";
-import { ValidationPipe, type INestApplication } from "@nestjs/common";
+import { type INestApplication } from "@nestjs/common";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { Test } from "@nestjs/testing";
 import { RedisService } from "@lootlog/nest-shared";
@@ -42,7 +42,6 @@ describe("Account Deletion E2E", () => {
 
     app = moduleFixture.createNestApplication();
     app.enableShutdownHooks();
-    app.useGlobalPipes(new ValidationPipe({ transform: true }));
     await app.init();
 
     prisma = app.get<PrismaService>(PrismaService);

@@ -16,15 +16,21 @@ import {
   ApiParam,
   ApiQuery,
 } from "@nestjs/swagger";
-import { plainToInstance } from "class-transformer";
+import { ZodResponse } from "nestjs-zod";
 import { MembersService } from "./members.service";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { type Guild, Permission } from "src/generated/prisma/client";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
-import { MemberEntity } from "src/shared/entities/member.entity";
-import { MemberRefreshJobEntity } from "src/shared/entities/member-refresh-job.entity";
+import {
+  MemberRefreshJobResponseDto,
+  NullableMemberRefreshJobResponseDto,
+} from "src/shared/dto/member-refresh-job-response.dto";
+import {
+  MemberResponseDto,
+  NullableMemberResponseDto,
+} from "src/shared/dto/member-response.dto";
 
 @ApiTags("members")
 @ApiBearerAuth()
@@ -40,10 +46,10 @@ export class MembersController {
       "Retrieve the authenticated user's member information for this guild",
   })
   @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Current member information",
-    type: MemberEntity,
+    type: NullableMemberResponseDto,
   })
   @ApiResponse({ status: 404, description: "Member not found" })
   async getMe(
@@ -51,14 +57,11 @@ export class MembersController {
     @UserId() userId: string,
     @Param("guildId") guildId: string,
   ) {
-    const member = await this.membersService.getGuildMemberById({
+    return this.membersService.getGuildMemberById({
       discordId,
       guildId,
       userId,
       standalone: true,
-    });
-    return plainToInstance(MemberEntity, member, {
-      excludeExtraneousValues: true,
     });
   }
 
@@ -69,25 +72,22 @@ export class MembersController {
       "Refresh the authenticated user's member information from Discord",
   })
   @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Refreshed member information",
-    type: MemberEntity,
+    type: NullableMemberResponseDto,
   })
   async refreshMe(
     @DiscordId() discordId: string,
     @UserId() userId: string,
     @Param("guildId") guildId: string,
   ) {
-    const member = await this.membersService.getGuildMemberById({
+    return this.membersService.getGuildMemberById({
       discordId,
       guildId,
       userId,
       refresh: true,
       standalone: true,
-    });
-    return plainToInstance(MemberEntity, member, {
-      excludeExtraneousValues: true,
     });
   }
 
@@ -105,10 +105,10 @@ export class MembersController {
     description: "Discord user ID",
     example: "user_123",
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Member refreshed successfully",
-    type: MemberEntity,
+    type: MemberResponseDto,
   })
   @ApiResponse({
     status: 403,
@@ -119,12 +119,9 @@ export class MembersController {
     @Param("discordId") discordId: string,
     @GuildData() guild: Guild,
   ) {
-    const member = await this.membersService.refreshMember({
+    return this.membersService.refreshMember({
       discordId,
       guildId: guild.id,
-    });
-    return plainToInstance(MemberEntity, member, {
-      excludeExtraneousValues: true,
     });
   }
 
@@ -141,10 +138,10 @@ export class MembersController {
     description: "Discord user ID",
     example: "user_123",
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Member deactivated successfully",
-    type: MemberEntity,
+    type: MemberResponseDto,
   })
   @ApiResponse({
     status: 403,
@@ -155,12 +152,9 @@ export class MembersController {
     @Param("discordId") discordId: string,
     @GuildData() guild: Guild,
   ) {
-    const member = await this.membersService.deactivateMember({
+    return this.membersService.deactivateMember({
       discordId,
       guildId: guild.id,
-    });
-    return plainToInstance(MemberEntity, member, {
-      excludeExtraneousValues: true,
     });
   }
 
@@ -178,10 +172,10 @@ export class MembersController {
     type: Boolean,
     description: "Include inactive members",
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "List of guild members",
-    type: [MemberEntity],
+    type: [MemberResponseDto],
   })
   @ApiResponse({
     status: 403,
@@ -192,13 +186,7 @@ export class MembersController {
     @Query("includeInactive") includeInactive?: string,
   ) {
     const includeInactiveBool = includeInactive === "true";
-    const members = await this.membersService.getGuildMembers(
-      guild.id,
-      includeInactiveBool,
-    );
-    return plainToInstance(MemberEntity, members, {
-      excludeExtraneousValues: true,
-    });
+    return this.membersService.getGuildMembers(guild.id, includeInactiveBool);
   }
 
   @Permissions(Permission.ADMIN, Permission.OWNER)
@@ -209,10 +197,10 @@ export class MembersController {
     description: "Create a job to refresh all guild members (admin only)",
   })
   @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
-  @ApiResponse({
+  @ZodResponse({
     status: 201,
     description: "Bulk refresh job created",
-    type: MemberRefreshJobEntity,
+    type: MemberRefreshJobResponseDto,
   })
   @ApiResponse({
     status: 403,
@@ -222,13 +210,7 @@ export class MembersController {
     @GuildData() guild: Guild,
     @DiscordId() discordId: string,
   ) {
-    const job = await this.membersService.createBulkRefreshJob(
-      guild.id,
-      discordId,
-    );
-    return plainToInstance(MemberRefreshJobEntity, job, {
-      excludeExtraneousValues: true,
-    });
+    return this.membersService.createBulkRefreshJob(guild.id, discordId);
   }
 
   @Permissions(Permission.ADMIN, Permission.OWNER)
@@ -239,10 +221,10 @@ export class MembersController {
     description: "Retrieve the latest member refresh job for this guild",
   })
   @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Latest refresh job",
-    type: MemberRefreshJobEntity,
+    type: NullableMemberRefreshJobResponseDto,
   })
   @ApiResponse({
     status: 403,
@@ -250,12 +232,7 @@ export class MembersController {
   })
   @ApiResponse({ status: 404, description: "No refresh jobs found" })
   async getLatestRefreshJob(@GuildData() guild: Guild) {
-    const job = await this.membersService.getLatestRefreshJob(guild.id);
-    return job
-      ? plainToInstance(MemberRefreshJobEntity, job, {
-          excludeExtraneousValues: true,
-        })
-      : null;
+    return this.membersService.getLatestRefreshJob(guild.id);
   }
 
   @Permissions(Permission.ADMIN, Permission.OWNER)
@@ -267,10 +244,10 @@ export class MembersController {
   })
   @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
   @ApiParam({ name: "jobId", description: "Refresh job ID", example: "123" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Refresh job status",
-    type: MemberRefreshJobEntity,
+    type: MemberRefreshJobResponseDto,
   })
   @ApiResponse({
     status: 403,
@@ -278,11 +255,6 @@ export class MembersController {
   })
   @ApiResponse({ status: 404, description: "Refresh job not found" })
   async getRefreshJobStatus(@Param("jobId") jobId: string) {
-    const job = await this.membersService.getRefreshJobStatus(
-      Number.parseInt(jobId, 10),
-    );
-    return plainToInstance(MemberRefreshJobEntity, job, {
-      excludeExtraneousValues: true,
-    });
+    return this.membersService.getRefreshJobStatus(Number.parseInt(jobId, 10));
   }
 }

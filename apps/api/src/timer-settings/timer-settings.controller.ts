@@ -15,14 +15,16 @@ import {
   ApiResponse,
   ApiParam,
 } from "@nestjs/swagger";
-import { plainToInstance } from "class-transformer";
+import { ZodResponse } from "nestjs-zod";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { TimerSettingsService } from "./timer-settings.service";
 import { UpdateTimerSettingsDto } from "./dto/update-timer-settings.dto";
 import { UpdateGuildTimerSettingsDto } from "./dto/update-guild-timer-settings.dto";
 import { MigrateTimerSettingsDto } from "./dto/migrate-timer-settings.dto";
-import { TimerSettingsEntity } from "./entities/timer-settings.entity";
-import { GuildTimerSettingsEntity } from "./entities/guild-timer-settings.entity";
+import {
+  GuildTimerSettingsResponseDto,
+  TimerSettingsResponseDto,
+} from "./dto/timer-settings-response.dto";
 
 @ApiTags("timer-settings")
 @ApiBearerAuth()
@@ -36,16 +38,13 @@ export class TimerSettingsController {
     summary: "Get global timer settings",
     description: "Retrieve user global timer settings",
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "User global timer settings",
-    type: TimerSettingsEntity,
+    type: TimerSettingsResponseDto,
   })
-  async getGlobalSettings(@UserId() userId: string) {
-    const settings = await this.timerSettingsService.getGlobalSettings(userId);
-    return plainToInstance(TimerSettingsEntity, settings, {
-      excludeExtraneousValues: true,
-    });
+  getGlobalSettings(@UserId() userId: string) {
+    return this.timerSettingsService.getGlobalSettings(userId);
   }
 
   @Patch()
@@ -53,22 +52,16 @@ export class TimerSettingsController {
     summary: "Update global timer settings",
     description: "Update user global timer settings",
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Updated global timer settings",
-    type: TimerSettingsEntity,
+    type: TimerSettingsResponseDto,
   })
-  async updateGlobalSettings(
+  updateGlobalSettings(
     @UserId() userId: string,
     @Body() dto: UpdateTimerSettingsDto,
   ) {
-    const settings = await this.timerSettingsService.updateGlobalSettings(
-      userId,
-      dto,
-    );
-    return plainToInstance(TimerSettingsEntity, settings, {
-      excludeExtraneousValues: true,
-    });
+    return this.timerSettingsService.updateGlobalSettings(userId, dto);
   }
 
   @Get("guilds/:guildId")
@@ -81,22 +74,16 @@ export class TimerSettingsController {
     description: "Guild ID",
     example: "guild_123",
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Guild-specific timer settings",
-    type: GuildTimerSettingsEntity,
+    type: GuildTimerSettingsResponseDto,
   })
-  async getGuildSettings(
+  getGuildSettings(
     @UserId() userId: string,
     @Param("guildId") guildId: string,
   ) {
-    const settings = await this.timerSettingsService.getGuildSettings(
-      userId,
-      guildId,
-    );
-    return plainToInstance(GuildTimerSettingsEntity, settings, {
-      excludeExtraneousValues: true,
-    });
+    return this.timerSettingsService.getGuildSettings(userId, guildId);
   }
 
   @Patch("guilds/:guildId")
@@ -109,24 +96,17 @@ export class TimerSettingsController {
     description: "Guild ID",
     example: "guild_123",
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Updated guild-specific timer settings",
-    type: GuildTimerSettingsEntity,
+    type: GuildTimerSettingsResponseDto,
   })
-  async updateGuildSettings(
+  updateGuildSettings(
     @UserId() userId: string,
     @Param("guildId") guildId: string,
     @Body() dto: UpdateGuildTimerSettingsDto,
   ) {
-    const settings = await this.timerSettingsService.updateGuildSettings(
-      userId,
-      guildId,
-      dto,
-    );
-    return plainToInstance(GuildTimerSettingsEntity, settings, {
-      excludeExtraneousValues: true,
-    });
+    return this.timerSettingsService.updateGuildSettings(userId, guildId, dto);
   }
 
   @Post("migrate")

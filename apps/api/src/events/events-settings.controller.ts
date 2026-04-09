@@ -4,14 +4,13 @@ import {
   ApiTags,
   ApiBearerAuth,
   ApiOperation,
-  ApiResponse,
   ApiParam,
 } from "@nestjs/swagger";
-import { plainToInstance } from "class-transformer";
+import { ZodResponse } from "nestjs-zod";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { EventSettingsService } from "./services/event-settings.service";
 import { UpdateEventSettingsDto } from "./dto/update-event-settings.dto";
-import { EventSettingsEntity } from "./entities/event-settings.entity";
+import { EventSettingsResponseDto } from "./dto/event-settings-response.dto";
 
 @ApiTags("event-settings")
 @ApiBearerAuth()
@@ -30,22 +29,13 @@ export class EventsSettingsController {
     description: "Guild ID",
     example: "guild_123",
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Guild event settings",
-    type: EventSettingsEntity,
+    type: EventSettingsResponseDto,
   })
-  async getSettings(
-    @UserId() userId: string,
-    @Param("guildId") guildId: string,
-  ) {
-    const settings = await this.eventSettingsService.getSettings(
-      userId,
-      guildId,
-    );
-    return plainToInstance(EventSettingsEntity, settings, {
-      excludeExtraneousValues: true,
-    });
+  getSettings(@UserId() userId: string, @Param("guildId") guildId: string) {
+    return this.eventSettingsService.getSettings(userId, guildId);
   }
 
   @Patch("guilds/:guildId/event-settings")
@@ -58,23 +48,16 @@ export class EventsSettingsController {
     description: "Guild ID",
     example: "guild_123",
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Updated guild event settings",
-    type: EventSettingsEntity,
+    type: EventSettingsResponseDto,
   })
-  async updateSettings(
+  updateSettings(
     @UserId() userId: string,
     @Param("guildId") guildId: string,
     @Body() dto: UpdateEventSettingsDto,
   ) {
-    const settings = await this.eventSettingsService.updateSettings(
-      userId,
-      guildId,
-      dto,
-    );
-    return plainToInstance(EventSettingsEntity, settings, {
-      excludeExtraneousValues: true,
-    });
+    return this.eventSettingsService.updateSettings(userId, guildId, dto);
   }
 }

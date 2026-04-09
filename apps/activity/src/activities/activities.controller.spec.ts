@@ -1,22 +1,18 @@
 import { Test, TestingModule } from "@nestjs/testing";
+import { AuthGuard } from "@lootlog/nest-shared";
+import { ActivitySource, ActivityType } from "src/generated/prisma/client";
+import { PermissionsGuard } from "src/shared/guards/permissions.guard";
 import { ActivitiesController } from "./activities.controller";
+import { QueryActivitiesDto } from "./dto/query-activities.dto";
 import { ActivitiesService } from "./activities.service";
 import { ActivitiesQueryService } from "./services/activities-query.service";
-import { QueryActivitiesDto } from "./dto/query-activities.dto";
-import {
-  PaginatedActivitiesEntity,
-  ActivityEntity,
-} from "./entities/activity.entity";
-import { ActivityType, ActivitySource } from "src/generated/prisma/client";
-import { AuthGuard } from "@lootlog/nest-shared";
-import { PermissionsGuard } from "src/shared/guards/permissions.guard";
 
 describe("ActivitiesController", () => {
   let controller: ActivitiesController;
   let queryService: ActivitiesQueryService;
   let service: ActivitiesService;
 
-  const mockActivity: ActivityEntity = {
+  const mockActivity = {
     id: "activity-1",
     userId: "user-1",
     guildId: "guild-1",
@@ -25,13 +21,13 @@ describe("ActivitiesController", () => {
     source: ActivitySource.WEB_APP,
     createdAt: new Date("2024-01-01"),
     details: { itemName: "Sword" },
-  } as ActivityEntity;
+  };
 
-  const mockPaginatedResponse: PaginatedActivitiesEntity = {
+  const mockPaginatedResponse = {
     data: [mockActivity],
     nextCursor: "cursor-1",
     hasMore: false,
-  } as PaginatedActivitiesEntity;
+  };
 
   const mockQueryService = {
     findByGuild: vi.fn(),

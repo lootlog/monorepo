@@ -827,19 +827,17 @@ export class KillsService {
       };
     }
 
+    if (!npcInfo) {
+      return null;
+    }
+
     const killers = Array.from(memberMap.values())
       .sort((a, b) => b.participationCount - a.participationCount)
       .slice(0, limit);
 
     return {
       npc: {
-        ...(npcInfo ?? {
-          npcName: "",
-          npcIcon: null,
-          npcLvl: null,
-          npcType: null,
-          npcProf: null,
-        }),
+        ...npcInfo,
         uniqueGuildKills: summary?.uniqueKills ?? 0,
         totalMemberParticipations,
       },

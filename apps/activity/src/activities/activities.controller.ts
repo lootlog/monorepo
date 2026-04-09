@@ -1,13 +1,10 @@
 import {
   Controller,
-  Get,
   Delete,
+  Get,
   Param,
   Query,
   UseGuards,
-  UseInterceptors,
-  ClassSerializerInterceptor,
-  SerializeOptions,
 } from "@nestjs/common";
 import {
   ApiBearerAuth,
@@ -16,23 +13,27 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { AuthGuard, RequiredPermissions } from "@lootlog/nest-shared";
-import { PermissionsGuard } from "src/shared/guards/permissions.guard";
 import { Permission } from "@lootlog/types";
-import { ActivitiesService } from "./activities.service";
-import { ActivitiesQueryService } from "./services/activities-query.service";
+import { ZodResponse } from "nestjs-zod";
+import { PermissionsGuard } from "src/shared/guards/permissions.guard";
+import {
+  ActivityResponseDto,
+  ActorNameSuggestionsResponseDto,
+  ClanNameSuggestionsResponseDto,
+  DeleteActivityResponseDto,
+  PaginatedActivitiesResponseDto,
+  WorldSuggestionsResponseDto,
+} from "./dto/activity-response.dto";
 import { QueryActivitiesDto } from "./dto/query-activities.dto";
 import { SuggestActorNamesDto } from "./dto/suggest-actor-names.dto";
-import { SuggestWorldsDto } from "./dto/suggest-worlds.dto";
 import { SuggestClanNamesDto } from "./dto/suggest-clan-names.dto";
-import {
-  ActivityEntity,
-  PaginatedActivitiesEntity,
-} from "./entities/activity.entity";
+import { SuggestWorldsDto } from "./dto/suggest-worlds.dto";
+import { ActivitiesService } from "./activities.service";
+import { ActivitiesQueryService } from "./services/activities-query.service";
 
 @ApiTags("guilds")
 @ApiBearerAuth()
 @UseGuards(AuthGuard, PermissionsGuard)
-@UseInterceptors(ClassSerializerInterceptor)
 @Controller("guilds")
 export class ActivitiesController {
   constructor(
@@ -42,35 +43,23 @@ export class ActivitiesController {
 
   @Get(":guildId/activity-logs")
   @RequiredPermissions(Permission.ADMIN)
-  @SerializeOptions({ type: PaginatedActivitiesEntity })
   @ApiOperation({ summary: "Get activities for a specific guild" })
-  @ApiResponse({ status: 200, type: PaginatedActivitiesEntity })
+  @ZodResponse({ status: 200, type: PaginatedActivitiesResponseDto })
   findByGuild(
     @Param("guildId") guildId: string,
     @Query() query: QueryActivitiesDto,
-  ): Promise<PaginatedActivitiesEntity> {
+  ) {
     return this.activitiesQueryService.findByGuild(guildId, query);
   }
 
   @Get(":guildId/activity-logs/actor-name-suggestions")
   @RequiredPermissions(Permission.ADMIN)
   @ApiOperation({ summary: "Get actor name suggestions for a guild" })
-  @ApiResponse({
-    status: 200,
-    schema: {
-      type: "object",
-      properties: {
-        suggestions: {
-          type: "array",
-          items: { type: "string" },
-        },
-      },
-    },
-  })
+  @ZodResponse({ status: 200, type: ActorNameSuggestionsResponseDto })
   async suggestActorNames(
     @Param("guildId") guildId: string,
     @Query() query: SuggestActorNamesDto,
-  ): Promise<{ suggestions: string[] }> {
+  ) {
     const suggestions = await this.activitiesQueryService.suggestActorNames(
       guildId,
       query.search,
@@ -83,22 +72,11 @@ export class ActivitiesController {
   @Get(":guildId/activity-logs/world-suggestions")
   @RequiredPermissions(Permission.ADMIN)
   @ApiOperation({ summary: "Get world suggestions for a guild" })
-  @ApiResponse({
-    status: 200,
-    schema: {
-      type: "object",
-      properties: {
-        worlds: {
-          type: "array",
-          items: { type: "string" },
-        },
-      },
-    },
-  })
+  @ZodResponse({ status: 200, type: WorldSuggestionsResponseDto })
   async suggestWorlds(
     @Param("guildId") guildId: string,
     @Query() query: SuggestWorldsDto,
-  ): Promise<{ worlds: string[] }> {
+  ) {
     const worlds = await this.activitiesQueryService.suggestWorlds(
       guildId,
       query.search,
@@ -111,22 +89,11 @@ export class ActivitiesController {
   @Get(":guildId/activity-logs/clan-name-suggestions")
   @RequiredPermissions(Permission.ADMIN)
   @ApiOperation({ summary: "Get clan name suggestions for a guild" })
-  @ApiResponse({
-    status: 200,
-    schema: {
-      type: "object",
-      properties: {
-        suggestions: {
-          type: "array",
-          items: { type: "string" },
-        },
-      },
-    },
-  })
+  @ZodResponse({ status: 200, type: ClanNameSuggestionsResponseDto })
   async suggestClanNames(
     @Param("guildId") guildId: string,
     @Query() query: SuggestClanNamesDto,
-  ): Promise<{ suggestions: string[] }> {
+  ) {
     const suggestions = await this.activitiesQueryService.suggestClanNames(
       guildId,
       query.search,
@@ -138,42 +105,34 @@ export class ActivitiesController {
 
   @Get(":guildId/users/:userId/activity-logs")
   @RequiredPermissions(Permission.ADMIN)
-  @SerializeOptions({ type: PaginatedActivitiesEntity })
   @ApiOperation({ summary: "Get activities for a specific user in a guild" })
-  @ApiResponse({ status: 200, type: PaginatedActivitiesEntity })
+  @ZodResponse({ status: 200, type: PaginatedActivitiesResponseDto })
   findByUser(
     @Param("guildId") guildId: string,
     @Param("userId") userId: string,
     @Query() query: QueryActivitiesDto,
-  ): Promise<PaginatedActivitiesEntity> {
+  ) {
     return this.activitiesQueryService.findByUser(userId, guildId, query);
   }
 
   @Get(":guildId/activity-logs/:id")
   @RequiredPermissions(Permission.ADMIN)
-  @SerializeOptions({ type: ActivityEntity })
   @ApiOperation({ summary: "Get a single activity by ID" })
-  @ApiResponse({ status: 200, type: ActivityEntity })
+  @ZodResponse({ status: 200, type: ActivityResponseDto })
   @ApiResponse({ status: 404, description: "Activity not found" })
-  findOne(
-    @Param("guildId") guildId: string,
-    @Param("id") id: string,
-  ): Promise<ActivityEntity> {
+  findOne(@Param("guildId") guildId: string, @Param("id") id: string) {
     return this.activitiesQueryService.findOne(id, guildId);
   }
 
   @Delete(":guildId/activity-logs/:id")
   @RequiredPermissions(Permission.OWNER)
   @ApiOperation({ summary: "Delete a specific activity by ID" })
-  @ApiResponse({
-    status: 200,
-    schema: { type: "object", properties: { count: { type: "number" } } },
-  })
+  @ZodResponse({ status: 200, type: DeleteActivityResponseDto })
   @ApiResponse({ status: 404, description: "Activity not found" })
   async deleteActivity(
     @Param("guildId") guildId: string,
     @Param("id") id: string,
-  ): Promise<{ count: number }> {
+  ) {
     const count = await this.activitiesService.deleteOne(id, guildId);
     return { count };
   }
