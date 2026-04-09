@@ -124,10 +124,7 @@ export const reservationsQueryOptions = (guildId: string) =>
       return mapReservationsByAlias(response.data);
     },
     enabled: !!guildId,
-    staleTime: 0,
-    refetchOnMount: "always",
-    refetchOnWindowFocus: "always",
-    refetchOnReconnect: "always",
+    staleTime: 30_000,
     meta: { persist: false },
   });
 

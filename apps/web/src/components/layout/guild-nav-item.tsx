@@ -62,6 +62,8 @@ const GuildNavItemComponent: FC<GuildNavItemProps> = ({
         <div className="w-full flex items-center justify-center mb-1">
           <Link
             to={`/${guild.vanityUrl ?? guild.id}` as string}
+            preload="intent"
+            preloadDelay={0}
             draggable={false}
             className="group block"
             onClick={handleClick}

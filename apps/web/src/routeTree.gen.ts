@@ -77,12 +77,12 @@ const SigninRoute = SigninRouteImport.update({
   id: '/signin',
   path: '/signin',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any).lazy(() => import('./routes/signin.lazy').then((d) => d.Route))
 const InitRoute = InitRouteImport.update({
   id: '/init',
   path: '/init',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any).lazy(() => import('./routes/init.lazy').then((d) => d.Route))
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
@@ -91,93 +91,135 @@ const BattlesIdRoute = BattlesIdRouteImport.update({
   id: '/battles/$id',
   path: '/battles/$id',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any).lazy(() => import('./routes/battles.$id.lazy').then((d) => d.Route))
 const AuthenticatedAtmeRoute = AuthenticatedAtmeRouteImport.update({
   id: '/@me',
   path: '/@me',
   getParentRoute: () => AuthenticatedRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authenticated/@me.lazy').then((d) => d.Route),
+)
 const AuthenticatedGuildIdRoute = AuthenticatedGuildIdRouteImport.update({
   id: '/$guildId',
   path: '/$guildId',
   getParentRoute: () => AuthenticatedRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authenticated/$guildId.lazy').then((d) => d.Route),
+)
 const AuthenticatedAtmeIndexRoute = AuthenticatedAtmeIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedAtmeRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authenticated/@me/index.lazy').then((d) => d.Route),
+)
 const AuthenticatedGuildIdIndexRoute =
   AuthenticatedGuildIdIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedGuildIdRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/index.lazy').then((d) => d.Route),
+  )
 const AuthenticatedAtmeSettingsRoute =
   AuthenticatedAtmeSettingsRouteImport.update({
     id: '/settings',
     path: '/settings',
     getParentRoute: () => AuthenticatedAtmeRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/@me/settings.lazy').then((d) => d.Route),
+  )
 const AuthenticatedAtmeNotificationsRoute =
   AuthenticatedAtmeNotificationsRouteImport.update({
     id: '/notifications',
     path: '/notifications',
     getParentRoute: () => AuthenticatedAtmeRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/@me/notifications.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedAtmeKillsRoute = AuthenticatedAtmeKillsRouteImport.update({
   id: '/kills',
   path: '/kills',
   getParentRoute: () => AuthenticatedAtmeRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authenticated/@me/kills.lazy').then((d) => d.Route),
+)
 const AuthenticatedAtmeBattlePanelRoute =
   AuthenticatedAtmeBattlePanelRouteImport.update({
     id: '/battle-panel',
     path: '/battle-panel',
     getParentRoute: () => AuthenticatedAtmeRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/@me/battle-panel.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdTimersRoute =
   AuthenticatedGuildIdTimersRouteImport.update({
     id: '/timers',
     path: '/timers',
     getParentRoute: () => AuthenticatedGuildIdRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/timers.lazy').then((d) => d.Route),
+  )
 const AuthenticatedGuildIdStatsRoute =
   AuthenticatedGuildIdStatsRouteImport.update({
     id: '/stats',
     path: '/stats',
     getParentRoute: () => AuthenticatedGuildIdRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/stats.lazy').then((d) => d.Route),
+  )
 const AuthenticatedGuildIdSettingsRoute =
   AuthenticatedGuildIdSettingsRouteImport.update({
     id: '/settings',
     path: '/settings',
     getParentRoute: () => AuthenticatedGuildIdRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/settings.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdReservationsRoute =
   AuthenticatedGuildIdReservationsRouteImport.update({
     id: '/reservations',
     path: '/reservations',
     getParentRoute: () => AuthenticatedGuildIdRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/reservations.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdNotificationsRoute =
   AuthenticatedGuildIdNotificationsRouteImport.update({
     id: '/notifications',
     path: '/notifications',
     getParentRoute: () => AuthenticatedGuildIdRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/notifications.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdEventsRoute =
   AuthenticatedGuildIdEventsRouteImport.update({
     id: '/events',
     path: '/events',
     getParentRoute: () => AuthenticatedGuildIdRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/events.lazy').then((d) => d.Route),
+  )
 const AuthenticatedGuildIdActivityLogsRoute =
   AuthenticatedGuildIdActivityLogsRouteImport.update({
     id: '/activity-logs',
     path: '/activity-logs',
     getParentRoute: () => AuthenticatedGuildIdRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/activity-logs.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedAtmeSettingsIndexRoute =
   AuthenticatedAtmeSettingsIndexRouteImport.update({
     id: '/',
@@ -189,7 +231,11 @@ const AuthenticatedAtmeBattlePanelIndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/@me/battle-panel/index.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdStatsIndexRoute =
   AuthenticatedGuildIdStatsIndexRouteImport.update({
     id: '/',
@@ -201,193 +247,321 @@ const AuthenticatedGuildIdSettingsIndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedGuildIdSettingsRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/settings/index.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdReservationsIndexRoute =
   AuthenticatedGuildIdReservationsIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedGuildIdReservationsRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/reservations/index.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdNotificationsIndexRoute =
   AuthenticatedGuildIdNotificationsIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedGuildIdNotificationsRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/notifications/index.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedAtmeSettingsAppearanceRoute =
   AuthenticatedAtmeSettingsAppearanceRouteImport.update({
     id: '/appearance',
     path: '/appearance',
     getParentRoute: () => AuthenticatedAtmeSettingsRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/@me/settings/appearance.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedAtmeSettingsAccountRoute =
   AuthenticatedAtmeSettingsAccountRouteImport.update({
     id: '/account',
     path: '/account',
     getParentRoute: () => AuthenticatedAtmeSettingsRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/@me/settings/account.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedAtmeBattlePanelStatsRoute =
   AuthenticatedAtmeBattlePanelStatsRouteImport.update({
     id: '/stats',
     path: '/stats',
     getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/@me/battle-panel/stats.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedAtmeBattlePanelStatisticsRoute =
   AuthenticatedAtmeBattlePanelStatisticsRouteImport.update({
     id: '/statistics',
     path: '/statistics',
     getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/@me/battle-panel/statistics.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedAtmeBattlePanelBattlesRoute =
   AuthenticatedAtmeBattlePanelBattlesRouteImport.update({
     id: '/battles',
     path: '/battles',
     getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/@me/battle-panel/battles.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdStatsRankingRoute =
   AuthenticatedGuildIdStatsRankingRouteImport.update({
     id: '/ranking',
     path: '/ranking',
     getParentRoute: () => AuthenticatedGuildIdStatsRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/stats/ranking.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdStatsLootsRoute =
   AuthenticatedGuildIdStatsLootsRouteImport.update({
     id: '/loots',
     path: '/loots',
     getParentRoute: () => AuthenticatedGuildIdStatsRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/stats/loots.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdStatsKillsRoute =
   AuthenticatedGuildIdStatsKillsRouteImport.update({
     id: '/kills',
     path: '/kills',
     getParentRoute: () => AuthenticatedGuildIdStatsRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/stats/kills.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdSettingsRolesRoute =
   AuthenticatedGuildIdSettingsRolesRouteImport.update({
     id: '/roles',
     path: '/roles',
     getParentRoute: () => AuthenticatedGuildIdSettingsRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/settings/roles.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdSettingsNpcsRoute =
   AuthenticatedGuildIdSettingsNpcsRouteImport.update({
     id: '/npcs',
     path: '/npcs',
     getParentRoute: () => AuthenticatedGuildIdSettingsRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/settings/npcs.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdSettingsMembersRoute =
   AuthenticatedGuildIdSettingsMembersRouteImport.update({
     id: '/members',
     path: '/members',
     getParentRoute: () => AuthenticatedGuildIdSettingsRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/settings/members.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdSettingsMapTemplatesRoute =
   AuthenticatedGuildIdSettingsMapTemplatesRouteImport.update({
     id: '/map-templates',
     path: '/map-templates',
     getParentRoute: () => AuthenticatedGuildIdSettingsRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/settings/map-templates.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdSettingsInfoRoute =
   AuthenticatedGuildIdSettingsInfoRouteImport.update({
     id: '/info',
     path: '/info',
     getParentRoute: () => AuthenticatedGuildIdSettingsRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/settings/info.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdReservationsReservationIdRoute =
   AuthenticatedGuildIdReservationsReservationIdRouteImport.update({
     id: '/$reservationId',
     path: '/$reservationId',
     getParentRoute: () => AuthenticatedGuildIdReservationsRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/reservations/$reservationId.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdNotificationsHistoryRoute =
   AuthenticatedGuildIdNotificationsHistoryRouteImport.update({
     id: '/history',
     path: '/history',
     getParentRoute: () => AuthenticatedGuildIdNotificationsRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/notifications/history.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdNotificationsCreateRoute =
   AuthenticatedGuildIdNotificationsCreateRouteImport.update({
     id: '/create',
     path: '/create',
     getParentRoute: () => AuthenticatedGuildIdNotificationsRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/notifications/create.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdNotificationsRuleIdRoute =
   AuthenticatedGuildIdNotificationsRuleIdRouteImport.update({
     id: '/$ruleId',
     path: '/$ruleId',
     getParentRoute: () => AuthenticatedGuildIdNotificationsRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/notifications/$ruleId.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdEventsEventIdRoute =
   AuthenticatedGuildIdEventsEventIdRouteImport.update({
     id: '/events_/$eventId_',
     path: '/events/$eventId',
     getParentRoute: () => AuthenticatedGuildIdRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/events_.$eventId_.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdStatsNpcsIndexRoute =
   AuthenticatedGuildIdStatsNpcsIndexRouteImport.update({
     id: '/npcs/',
     path: '/npcs/',
     getParentRoute: () => AuthenticatedGuildIdStatsRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/stats/npcs.index.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdEventsEventIdIndexRoute =
   AuthenticatedGuildIdEventsEventIdIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedGuildIdEventsEventIdRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/events_.$eventId_/index.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRoute =
   AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRouteImport.update({
     id: '/statistics_/matchmaking-h2h',
     path: '/statistics/matchmaking-h2h',
     getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/@me/battle-panel/statistics_.matchmaking-h2h.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedAtmeBattlePanelStatisticsH2hRoute =
   AuthenticatedAtmeBattlePanelStatisticsH2hRouteImport.update({
     id: '/statistics_/h2h',
     path: '/statistics/h2h',
     getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/@me/battle-panel/statistics_.h2h.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedAtmeBattlePanelBattlesBattleIdRoute =
   AuthenticatedAtmeBattlePanelBattlesBattleIdRouteImport.update({
     id: '/battles_/$battleId',
     path: '/battles/$battleId',
     getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/@me/battle-panel/battles_.$battleId.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdStatsNpcsNpcIdRoute =
   AuthenticatedGuildIdStatsNpcsNpcIdRouteImport.update({
     id: '/npcs/$npcId',
     path: '/npcs/$npcId',
     getParentRoute: () => AuthenticatedGuildIdStatsRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/stats/npcs.$npcId.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdStatsMembersMemberIdRoute =
   AuthenticatedGuildIdStatsMembersMemberIdRouteImport.update({
     id: '/members/$memberId',
     path: '/members/$memberId',
     getParentRoute: () => AuthenticatedGuildIdStatsRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/stats/members.$memberId.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdSettingsRolesRoleIdRoute =
   AuthenticatedGuildIdSettingsRolesRoleIdRouteImport.update({
     id: '/$roleId',
     path: '/$roleId',
     getParentRoute: () => AuthenticatedGuildIdSettingsRolesRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/settings/roles.$roleId.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdEventsEventIdRankingRoute =
   AuthenticatedGuildIdEventsEventIdRankingRouteImport.update({
     id: '/ranking',
     path: '/ranking',
     getParentRoute: () => AuthenticatedGuildIdEventsEventIdRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/events_.$eventId_.ranking.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdEventsEventIdKillsRoute =
   AuthenticatedGuildIdEventsEventIdKillsRouteImport.update({
     id: '/kills',
     path: '/kills',
     getParentRoute: () => AuthenticatedGuildIdEventsEventIdRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/events_.$eventId_.kills.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdEventsEventIdEditRoute =
   AuthenticatedGuildIdEventsEventIdEditRouteImport.update({
     id: '/edit',
     path: '/edit',
     getParentRoute: () => AuthenticatedGuildIdEventsEventIdRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/events_.$eventId_.edit.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdEventsEventIdEditIndexRoute =
   AuthenticatedGuildIdEventsEventIdEditIndexRouteImport.update({
     id: '/',
@@ -399,31 +573,51 @@ const AuthenticatedGuildIdEventsEventIdMembersMemberIdRoute =
     id: '/members_/$memberId',
     path: '/members/$memberId',
     getParentRoute: () => AuthenticatedGuildIdEventsEventIdRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/events_.$eventId_.members_.$memberId.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdEventsEventIdHeroesHeroIdRoute =
   AuthenticatedGuildIdEventsEventIdHeroesHeroIdRouteImport.update({
     id: '/heroes_/$heroId',
     path: '/heroes/$heroId',
     getParentRoute: () => AuthenticatedGuildIdEventsEventIdRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/events_.$eventId_.heroes_.$heroId.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdEventsEventIdEditSettingsRoute =
   AuthenticatedGuildIdEventsEventIdEditSettingsRouteImport.update({
     id: '/settings',
     path: '/settings',
     getParentRoute: () => AuthenticatedGuildIdEventsEventIdEditRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/events_.$eventId_.edit/settings.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdEventsEventIdEditScoringRoute =
   AuthenticatedGuildIdEventsEventIdEditScoringRouteImport.update({
     id: '/scoring',
     path: '/scoring',
     getParentRoute: () => AuthenticatedGuildIdEventsEventIdEditRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/events_.$eventId_.edit/scoring.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdEventsEventIdEditRulebookRoute =
   AuthenticatedGuildIdEventsEventIdEditRulebookRouteImport.update({
     id: '/rulebook',
     path: '/rulebook',
     getParentRoute: () => AuthenticatedGuildIdEventsEventIdEditRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/events_.$eventId_.edit/rulebook.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRoute =
   AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRouteImport.update(
     {
@@ -431,19 +625,31 @@ const AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRoute =
       path: '/statistics/player-vs-player/$myId/$opponentId',
       getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
     } as any,
+  ).lazy(() =>
+    import('./routes/_authenticated/@me/battle-panel/statistics_.player-vs-player.$myId.$opponentId.lazy').then(
+      (d) => d.Route,
+    ),
   )
 const AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRoute =
   AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRouteImport.update({
     id: '/heroes_/$heroId_/kills',
     path: '/heroes/$heroId/kills',
     getParentRoute: () => AuthenticatedGuildIdEventsEventIdRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/events_.$eventId_.heroes_.$heroId_.kills.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsKillIdRoute =
   AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsKillIdRouteImport.update({
     id: '/heroes_/$heroId_/kills_/$killId',
     path: '/heroes/$heroId/kills/$killId',
     getParentRoute: () => AuthenticatedGuildIdEventsEventIdRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/$guildId/events_.$eventId_.heroes_.$heroId_.kills_.$killId.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedRouteWithChildren

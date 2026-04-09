@@ -12,7 +12,7 @@ export const guildPermissionsQueryOptions = (guildId: string) =>
       );
       return response.data;
     },
-    staleTime: 0,
+    staleTime: 30_000,
   });
 
 export const useGuildPermissions = () => {

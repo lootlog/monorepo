@@ -3,6 +3,7 @@ import { routeTree } from "./routeTree.gen";
 import { queryClient } from "@/lib/query-client";
 import type { QueryClient } from "@tanstack/react-query";
 import type { SessionData } from "@/hooks/auth/use-session";
+import { RouteSectionLoading } from "@/components/ui/route-section-loading";
 
 export interface RouterContext {
   queryClient: QueryClient;
@@ -15,7 +16,12 @@ const router = createRouter({
     queryClient,
     session: undefined,
   },
-  defaultPreloadStaleTime: 0,
+  defaultPreload: "intent",
+  defaultPreloadDelay: 50,
+  defaultPreloadStaleTime: 30_000,
+  defaultPendingComponent: RouteSectionLoading,
+  defaultPendingMs: 120,
+  defaultPendingMinMs: 250,
   scrollRestoration: true,
 });
 

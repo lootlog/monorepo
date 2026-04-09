@@ -1,17 +1,23 @@
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
 import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
+import { lazy, Suspense } from "react";
 import { useReducedMotion } from "framer-motion";
 import { GlobalContextProvider } from "@/contexts/global-context";
 import { ThemeProvider } from "@/contexts/theme-context";
 import { persister } from "@/lib/query-client";
 import type { RouterContext } from "@/App";
 import { CatSpinnerProvider } from "@/contexts/cat-spinner-provider";
-import { RukiaFrostOverlay } from "@/components/effects/rukia-frost-overlay";
+import { ThemedRukiaFrostOverlay } from "@/components/effects/themed-rukia-frost-overlay";
 
 import "@lootlog/ui/globals.css";
 import "@/i18n/config";
+
+const ReactQueryDevtools = lazy(() =>
+  import("@tanstack/react-query-devtools").then((module) => ({
+    default: module.ReactQueryDevtools,
+  })),
+);
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
@@ -27,8 +33,12 @@ function RootComponent() {
           <NuqsAdapter>
             <GlobalContextProvider>
               <Outlet />
-              {!prefersReducedMotion && <RukiaFrostOverlay />}
-              <ReactQueryDevtools initialIsOpen={false} />
+              {!prefersReducedMotion && <ThemedRukiaFrostOverlay />}
+              {import.meta.env.DEV ? (
+                <Suspense fallback={null}>
+                  <ReactQueryDevtools initialIsOpen={false} />
+                </Suspense>
+              ) : null}
             </GlobalContextProvider>
           </NuqsAdapter>
         </CatSpinnerProvider>
