@@ -44,6 +44,8 @@ export class UsersService {
       id: 0,
       userId,
       guildsOrder: [],
+      theme: "default",
+      colorMode: "dark",
       createdAt: new Date(),
       updatedAt: new Date(),
     };

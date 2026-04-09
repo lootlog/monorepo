@@ -1,0 +1,38 @@
+import { createZodDto } from "nestjs-zod";
+import { z } from "zod";
+import { MemberType } from "src/generated/prisma/client";
+import {
+  isoDatetimeCodec,
+  nullableIsoDatetimeCodec,
+} from "src/shared/dto/zod-response-codecs";
+import { RoleResponseDto } from "./role-response.dto";
+
+const MemberResponseSchema = z.object({
+  id: z.number(),
+  userId: z.string(),
+  guildId: z.string(),
+  type: z.nativeEnum(MemberType),
+  name: z.string(),
+  avatar: z.string().nullable().optional(),
+  banner: z.string().nullable().optional(),
+  active: z.boolean(),
+  roles: z.array(RoleResponseDto.schema).optional(),
+  globalUserId: z.string().nullable().optional(),
+  lastDiscordSyncAt: nullableIsoDatetimeCodec.optional(),
+  isStale: z.boolean().optional(),
+  staleWarning: z.string().optional(),
+  refreshQueued: z.boolean().optional(),
+  nextRefreshAt: nullableIsoDatetimeCodec.optional(),
+  updatedAt: isoDatetimeCodec,
+});
+
+export class MemberResponseDto extends createZodDto(MemberResponseSchema, {
+  codec: true,
+}) {}
+
+export class NullableMemberResponseDto extends createZodDto(
+  MemberResponseSchema.nullable(),
+  {
+    codec: true,
+  },
+) {}

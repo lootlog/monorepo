@@ -10,28 +10,29 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import {
-  ApiTags,
   ApiBearerAuth,
   ApiOperation,
-  ApiResponse,
   ApiParam,
   ApiQuery,
+  ApiResponse,
+  ApiTags,
 } from "@nestjs/swagger";
 import { DiscordId, UserId } from "@lootlog/nest-shared";
-import { plainToInstance } from "class-transformer";
+import { ZodResponse } from "nestjs-zod";
 import { type Guild, Permission, type Role } from "src/generated/prisma/client";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";
 import { MemberRoles } from "src/shared/decorators/member-roles.decorator";
+import { TimerResponseDto } from "src/shared/dto/timer-response.dto";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 import { CreateManualTimerDto } from "src/timers/dto/create-manual-timer.dto";
-import { ResetTimerDto } from "src/timers/dto/reset-timer.dto";
-import { TimersService } from "src/timers/timers.service";
-import { TimerEntity } from "src/shared/entities/timer.entity";
 import { CreateTimerFromGameClientDto } from "src/timers/dto/create-timer-from-game-client.dto";
+import { ResetTimerDto } from "src/timers/dto/reset-timer.dto";
+import { SearchTimersNpcResponseDto } from "src/timers/dto/search-timers-npcs-response.dto";
 import { SearchTimersNpcsDto } from "src/timers/dto/search-timers-npcs.dto";
+import { TimersService } from "src/timers/timers.service";
 
 @ApiTags("timers")
 @ApiBearerAuth()
@@ -51,21 +52,13 @@ export class TimersController {
     description: "World name filter",
     required: false,
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "List of timers",
-    type: [TimerEntity],
+    type: [TimerResponseDto],
   })
-  async getAllTimers(
-    @Query("world") world: string,
-    @DiscordId() discordId: string,
-  ) {
-    const timers = await this.timersService.getAllTimers(discordId, {
-      world,
-    });
-    return plainToInstance(TimerEntity, timers, {
-      excludeExtraneousValues: true,
-    });
+  getAllTimers(@Query("world") world: string, @DiscordId() discordId: string) {
+    return this.timersService.getAllTimers(discordId, { world });
   }
 
   @Permissions(Permission.LOOTLOG_TIMERS_READ)
@@ -81,22 +74,22 @@ export class TimersController {
     description: "World name filter",
     required: false,
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "List of guild timers",
-    type: [TimerEntity],
+    type: [TimerResponseDto],
   })
   @ApiResponse({
     status: 403,
     description: "Forbidden - insufficient permissions",
   })
-  async getTimers(
+  getTimers(
     @Query("world") world: string,
     @MemberPermissions() permissions: Permission[],
     @MemberRoles() roles: Role[],
     @GuildData() guild: Guild,
   ) {
-    const timers = await this.timersService.getTimers(
+    return this.timersService.getTimers(
       {
         world,
       },
@@ -104,9 +97,6 @@ export class TimersController {
       permissions,
       roles,
     );
-    return plainToInstance(TimerEntity, timers, {
-      excludeExtraneousValues: true,
-    });
   }
 
   @Permissions(Permission.LOOTLOG_TIMERS_READ)
@@ -129,9 +119,10 @@ export class TimersController {
     description: "Result limit (1-50)",
     required: false,
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "List of NPCs with timer metadata",
+    type: [SearchTimersNpcResponseDto],
   })
   @ApiResponse({
     status: 403,
@@ -162,31 +153,28 @@ export class TimersController {
     description: "Timer key or legacy NPC ID when unambiguous",
     example: "12345:test boss",
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Timer reset successfully",
-    type: TimerEntity,
+    type: TimerResponseDto,
   })
   @ApiResponse({
     status: 403,
     description: "Forbidden - insufficient permissions",
   })
   @ApiResponse({ status: 404, description: "Timer not found" })
-  async resetTimer(
+  resetTimer(
     @DiscordId() discordId: string,
     @Param("guildId") guildId: string,
     @Param("timerIdentifier") timerIdentifier: string,
     @Body() data: ResetTimerDto,
   ) {
-    const timer = await this.timersService.resetTimer(
+    return this.timersService.resetTimer(
       discordId,
       guildId,
       timerIdentifier,
       data,
     );
-    return plainToInstance(TimerEntity, timer, {
-      excludeExtraneousValues: true,
-    });
   }
 
   @Permissions(Permission.LOOTLOG_MANAGE)
@@ -228,10 +216,10 @@ export class TimersController {
     description: "Manually create a timer for a guild",
   })
   @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
-  @ApiResponse({
+  @ZodResponse({
     status: 201,
     description: "Manual timer created successfully",
-    type: TimerEntity,
+    type: TimerResponseDto,
   })
   @ApiResponse({
     status: 403,
@@ -254,10 +242,10 @@ export class TimersController {
       "Create a timer submitted by user from game client for a specific guild. Supports custom spawn times.",
   })
   @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
-  @ApiResponse({
+  @ZodResponse({
     status: 201,
     description: "Timer created successfully",
-    type: TimerEntity,
+    type: TimerResponseDto,
   })
   @ApiResponse({
     status: 400,
@@ -267,20 +255,17 @@ export class TimersController {
     status: 403,
     description: "Forbidden - insufficient permissions",
   })
-  async createTimerFromGameClient(
+  createTimerFromGameClient(
     @Body() data: CreateTimerFromGameClientDto,
     @DiscordId() discordId: string,
     @UserId() userId: string,
     @Param("guildId") guildId: string,
   ) {
-    const timer = await this.timersService.createTimerForGuild(
+    return this.timersService.createTimerForGuild(
       discordId,
       userId,
       guildId,
       data,
     );
-    return plainToInstance(TimerEntity, timer, {
-      excludeExtraneousValues: true,
-    });
   }
 }
