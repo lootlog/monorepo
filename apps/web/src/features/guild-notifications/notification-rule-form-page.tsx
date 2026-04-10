@@ -16,6 +16,7 @@ import {
 } from "@lootlog/ui/components/form";
 import { Input } from "@lootlog/ui/components/input";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { Switch } from "@lootlog/ui/components/switch";
 import {
@@ -73,8 +74,29 @@ export const NotificationRuleFormPage = () => {
 
   if (isLoading) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <Spinner />
+      <div className="flex h-full min-h-0 flex-col bg-background/50">
+        <div className="flex flex-col gap-3 px-3 py-3">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <Card className="border-border bg-card/40 p-4 backdrop-blur-sm">
+                <div className="space-y-4">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="space-y-2">
+                      <Skeleton className="h-3 w-24" />
+                      <Skeleton className="h-9 w-full" />
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </div>
+            <div className="hidden lg:block">
+              <Card className="border-border bg-card/40 p-4 backdrop-blur-sm">
+                <Skeleton className="mb-3 h-5 w-24" />
+                <Skeleton className="h-40 w-full rounded-lg" />
+              </Card>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

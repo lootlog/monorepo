@@ -9,7 +9,7 @@ import { useRecentHeroKills } from "../../hooks/queries/use-recent-hero-kills";
 import { KillHistoryCard } from "./kill-history-card";
 import type { EventHeroNpc } from "../../hooks/queries/use-events";
 import { EventScrollableTabsList } from "../shared/event-scrollable-tabs-list";
-import { Spinner } from "@lootlog/ui/components/spinner";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
 
 interface RecentKillsPreviewProps {
   guildId: string;
@@ -63,8 +63,10 @@ export const RecentKillsPreview = ({
             </h2>
           </div>
         </div>
-        <div className="flex items-center justify-center h-32">
-          <Spinner className="h-6 w-6" />
+        <div className="space-y-2">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-12 rounded-lg" />
+          ))}
         </div>
       </Card>
     );

@@ -53,7 +53,7 @@ import {
   normalizeScoringRules,
 } from "./utils/scoring-rules";
 import { getEventStatusAtTimestamp } from "./utils";
-import { Spinner } from "@lootlog/ui/components/spinner";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
 
 type EventDetailHero = EventHeroNpc & {
   locations: EventMapLocation[];
@@ -205,8 +205,55 @@ export const EventDetail = () => {
 
   if (isLoading || isMapsLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Spinner className="h-8 w-8" />
+      <div className="flex flex-col h-full min-h-0 bg-background/50">
+        <div className="px-3 py-3 flex flex-col gap-4">
+          <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-10 w-10 rounded-xl" />
+              <div className="flex flex-col gap-2 flex-1">
+                <Skeleton className="h-4 w-48" />
+                <div className="flex gap-2">
+                  <Skeleton className="h-5 w-16 rounded-full" />
+                  <Skeleton className="h-5 w-20 rounded-full" />
+                  <Skeleton className="h-5 w-32 rounded-full" />
+                </div>
+              </div>
+            </div>
+          </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="lg:col-span-2 space-y-4">
+              <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2">
+                <Skeleton className="h-5 w-32 mb-3" />
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 rounded-lg border border-border p-3"
+                  >
+                    <Skeleton className="h-10 w-10 rounded" />
+                    <div className="flex flex-col gap-2 flex-1">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-3 w-20" />
+                    </div>
+                    <Skeleton className="h-6 w-16 rounded-full" />
+                  </div>
+                ))}
+              </Card>
+            </div>
+            <div className="space-y-4">
+              <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2">
+                <Skeleton className="h-5 w-24 mb-3" />
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-3 py-2">
+                    <Skeleton className="h-4 w-6" />
+                    <Skeleton className="h-6 w-6 rounded-full" />
+                    <Skeleton className="h-4 flex-1" />
+                    <Skeleton className="h-4 w-10" />
+                  </div>
+                ))}
+              </Card>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

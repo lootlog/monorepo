@@ -15,7 +15,7 @@ import { useMapTemplates, type MapTemplate } from "./hooks/use-map-templates";
 import { useDeleteMapTemplate } from "./hooks/use-map-template-mutations";
 import { MapTemplatesHeader } from "./map-templates-header";
 import { MapTemplateFormDialog } from "./map-template-form-dialog";
-import { Spinner } from "@lootlog/ui/components/spinner";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
 
 export const MapTemplatesSettings = () => {
   const { t } = useTranslation();
@@ -59,8 +59,21 @@ export const MapTemplatesSettings = () => {
       <ScrollArea className="flex-1 min-h-0 bg-background/50">
         <div className="p-3 flex flex-col gap-3">
           {isLoading ? (
-            <div className="flex items-center justify-center h-64">
-              <Spinner className="h-8 w-8" />
+            <div className="space-y-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Card
+                  key={i}
+                  className="border-border bg-card/40 p-3 backdrop-blur-sm"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-8 w-8 rounded-lg" />
+                      <Skeleton className="h-4 w-32" />
+                    </div>
+                    <Skeleton className="h-5 w-8 rounded-full" />
+                  </div>
+                </Card>
+              ))}
             </div>
           ) : templates?.length === 0 ? (
             <Card className="flex flex-col items-center justify-center h-64 gap-4 bg-card/40 backdrop-blur-sm">

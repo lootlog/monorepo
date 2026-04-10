@@ -4,6 +4,7 @@ import { Link, useParams } from "@tanstack/react-router";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { differenceInSeconds } from "date-fns";
 import { AlertCircle, BarChart3, Clock, Skull, Swords } from "lucide-react";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { cn } from "@lootlog/ui/lib/utils";
 import {
@@ -650,8 +651,10 @@ const MemberKillsListSection = ({
       )}
 
       {isLoading ? (
-        <div className="flex flex-1 items-center justify-center">
-          <Spinner className="h-8 w-8" />
+        <div className="flex flex-1 flex-col gap-2 p-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-16 w-full rounded-xl" />
+          ))}
         </div>
       ) : hasError ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-2 text-muted-foreground">

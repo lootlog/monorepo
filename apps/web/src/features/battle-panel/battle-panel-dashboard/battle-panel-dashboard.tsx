@@ -12,17 +12,13 @@ import {
   EmptyDescription,
 } from "@lootlog/ui/components/empty";
 import { Swords } from "lucide-react";
-import { Spinner } from "@lootlog/ui/components/spinner";
+import { BattlePanelDashboardSkeleton } from "@/features/battle-panel/battle-panel-dashboard/battle-panel-dashboard-skeleton";
 
 export const BattlePanelDashboard = () => {
   const { data: analytics, isLoading } = useBattleAnalytics({ period: "180d" });
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center p-12">
-        <Spinner />
-      </div>
-    );
+    return <BattlePanelDashboardSkeleton />;
   }
 
   if (!analytics || analytics.totalBattles === 0) {

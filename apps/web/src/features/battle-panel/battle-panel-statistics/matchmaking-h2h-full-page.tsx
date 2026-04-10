@@ -29,7 +29,7 @@ import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
 import { Card } from "@lootlog/ui/components/card";
 import { SectionHeader } from "@/components/layout/section-header";
 import { useHeadToHead } from "@/hooks/api/battle-log/use-head-to-head";
-import { Spinner } from "@lootlog/ui/components/spinner";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { Swords } from "lucide-react";
 import type { Warrior } from "@/hooks/api/battle-log/use-search-warriors";
 import { HeadToHeadFilters } from "./components/head-to-head-filters";
@@ -206,8 +206,20 @@ export function MatchmakingH2HFullPage() {
           <Card className="flex-1 min-h-0 flex flex-col border-border bg-card/40 p-0 backdrop-blur-sm overflow-hidden gap-0">
             <ScrollArea className={cn("relative flex-1 min-h-0 w-full")}>
               {isLoading ? (
-                <div className="flex items-center justify-center h-64">
-                  <Spinner className="h-8 w-8" />
+                <div>
+                  {Array.from({ length: 10 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="flex h-14 items-center gap-4 border-b border-border px-4"
+                    >
+                      <Skeleton className="h-8 w-8 rounded-full" />
+                      <Skeleton className="h-4 flex-1" />
+                      <Skeleton className="h-4 w-12" />
+                      <Skeleton className="h-4 w-12" />
+                      <Skeleton className="h-4 w-12" />
+                      <Skeleton className="h-4 w-16" />
+                    </div>
+                  ))}
                 </div>
               ) : !data || data.records.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">

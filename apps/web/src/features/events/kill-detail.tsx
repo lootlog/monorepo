@@ -15,7 +15,7 @@ import { LootsListItem } from "@/features/guild/components/loots-list/loots-list
 import { KillMapsTimelineSection } from "./components/kills/kill-maps-timeline-section";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
-import { Spinner } from "@lootlog/ui/components/spinner";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useSession } from "@/hooks/auth/use-session";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { getAppliedRuleIdsForParticipant } from "./utils/scoring-applied-rules";
@@ -58,8 +58,38 @@ export const KillDetail = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Spinner className="h-8 w-8" />
+      <div className="flex flex-col gap-4 px-3 py-3">
+        <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-10 w-10 shrink-0 rounded-lg" />
+            <div className="space-y-1.5">
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+          </div>
+        </Card>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div className="space-y-4 lg:col-span-2">
+            <Card className="border-border bg-card/40 p-4 backdrop-blur-sm">
+              <Skeleton className="mb-3 h-5 w-32" />
+              <div className="space-y-2">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-10 rounded-lg" />
+                ))}
+              </div>
+            </Card>
+          </div>
+          <div className="space-y-4">
+            <Card className="border-border bg-card/40 p-4 backdrop-blur-sm">
+              <Skeleton className="mb-3 h-5 w-24" />
+              <div className="space-y-2">
+                <Skeleton className="h-8 rounded-md" />
+                <Skeleton className="h-8 rounded-md" />
+                <Skeleton className="h-8 rounded-md" />
+              </div>
+            </Card>
+          </div>
+        </div>
       </div>
     );
   }
@@ -242,8 +272,10 @@ export const KillDetail = () => {
                 </h3>
 
                 {isLootsLoading ? (
-                  <div className="flex items-center justify-center py-6">
-                    <Spinner className="h-6 w-6" />
+                  <div className="space-y-2 py-2">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <Skeleton key={i} className="h-12 rounded-lg" />
+                    ))}
                   </div>
                 ) : loots.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">

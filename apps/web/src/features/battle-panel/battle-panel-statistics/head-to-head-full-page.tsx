@@ -32,7 +32,7 @@ import { Label } from "@lootlog/ui/components/label";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Separator } from "@lootlog/ui/components/separator";
 import { useHeadToHead } from "@/hooks/api/battle-log/use-head-to-head";
-import { Spinner } from "@lootlog/ui/components/spinner";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { Award, ArrowRight, Filter, Swords } from "lucide-react";
 import type { Warrior } from "@/hooks/api/battle-log/use-search-warriors";
 import {
@@ -318,8 +318,20 @@ export function HeadToHeadFullPage() {
             <Card className="flex-1 flex flex-col min-h-0 border-border bg-card/40 backdrop-blur-sm overflow-hidden gap-0 p-0">
               <ScrollArea className="flex-1 min-h-0">
                 {isLoading ? (
-                  <div className="flex items-center justify-center h-64">
-                    <Spinner className="size-8" />
+                  <div>
+                    {Array.from({ length: 10 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="flex h-14 items-center gap-4 border-b border-border px-4"
+                      >
+                        <Skeleton className="h-4 w-8" />
+                        <Skeleton className="h-8 w-8 rounded-full" />
+                        <Skeleton className="h-4 flex-1" />
+                        {Array.from({ length: 4 }).map((_, j) => (
+                          <Skeleton key={j} className="h-4 w-12" />
+                        ))}
+                      </div>
+                    ))}
                   </div>
                 ) : !data || data.records.length === 0 ? (
                   <div className="flex flex-col items-center justify-center gap-3 p-16">

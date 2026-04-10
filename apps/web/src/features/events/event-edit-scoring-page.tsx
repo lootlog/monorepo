@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { AlertCircle, RefreshCcw, Settings, Trophy } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
 import { Label } from "@lootlog/ui/components/label";
@@ -54,8 +55,25 @@ export const EventEditScoringPage = () => {
   const { data: event, isLoading, error } = useEventOverview(routeParams);
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Spinner className="size-8 text-primary" />
+      <div className="flex flex-col gap-3 px-3 py-3">
+        <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-9 w-9 rounded-xl" />
+              <div className="flex flex-col gap-2">
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-4 w-32" />
+              </div>
+            </div>
+            <Skeleton className="h-8 w-28 rounded-md" />
+          </div>
+        </Card>
+        <Card className="gap-4 border-border bg-card/40 p-3 backdrop-blur-sm">
+          <div className="space-y-2">
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        </Card>
       </div>
     );
   }

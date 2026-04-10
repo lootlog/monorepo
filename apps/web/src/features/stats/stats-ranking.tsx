@@ -24,7 +24,7 @@ import {
 } from "@lootlog/ui/components/avatar";
 import { Card } from "@lootlog/ui/components/card";
 import { Input } from "@lootlog/ui/components/input";
-import { Spinner } from "@lootlog/ui/components/spinner";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
@@ -217,8 +217,20 @@ export const StatsRanking: React.FC = () => {
           <Card className="flex-1 min-h-0 flex flex-col border-border bg-card/40 p-0 backdrop-blur-sm overflow-hidden gap-0">
             <ScrollArea className="relative flex-1 min-h-0 w-full">
               {isLoading ? (
-                <div className="flex items-center justify-center h-64">
-                  <Spinner className="h-8 w-8" />
+                <div>
+                  {Array.from({ length: 10 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="flex h-14 items-center gap-4 border-b border-border px-4"
+                    >
+                      <Skeleton className="h-4 w-8" />
+                      <Skeleton className="h-8 w-8 rounded-full" />
+                      <Skeleton className="h-4 flex-1" />
+                      {Array.from({ length: 4 }).map((_, j) => (
+                        <Skeleton key={j} className="h-4 w-12" />
+                      ))}
+                    </div>
+                  ))}
                 </div>
               ) : !data || paginatedData.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">

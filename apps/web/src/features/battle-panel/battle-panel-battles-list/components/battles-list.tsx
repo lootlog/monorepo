@@ -22,7 +22,7 @@ import { BattlesListFilters, type BattleFilters } from "./battles-list-filters";
 import { Swords } from "lucide-react";
 import { cn } from "@lootlog/ui/lib/utils";
 import { Card } from "@lootlog/ui/components/card";
-import { Spinner } from "@lootlog/ui/components/spinner";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useEffect, useRef } from "react";
 
@@ -147,9 +147,10 @@ export const BattlesList = ({
           })}
         >
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center gap-3 p-8">
-              <Spinner className="size-8" />
-              <p className="text-sm text-muted-foreground">Ładowanie walk...</p>
+            <div className="flex flex-col gap-2 p-3">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton key={i} className="h-16 w-full rounded-xl" />
+              ))}
             </div>
           ) : battlesResponse?.battles.length === 0 ? (
             <Empty className="border-0">

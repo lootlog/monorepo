@@ -10,7 +10,7 @@ import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Spinner } from "@lootlog/ui/components/spinner";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { PageHeader } from "@/components/common/page-header";
 import { NotificationsActionsCard } from "./components/notifications-actions-card";
 import { NotificationsPendingJobsCard } from "./components/notifications-jobs-card";
@@ -119,8 +119,34 @@ export const NotificationsSettings = () => {
             ) : null}
 
             {isLoading ? (
-              <div className="flex h-64 items-center justify-center">
-                <Spinner className="h-8 w-8" />
+              <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+                <div className="space-y-4 lg:col-span-2">
+                  <Card className="border-border bg-card/40 p-4 backdrop-blur-sm">
+                    <Skeleton className="mb-3 h-5 w-32" />
+                    <div className="space-y-2">
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <Skeleton key={i} className="h-12 rounded-lg" />
+                      ))}
+                    </div>
+                  </Card>
+                  <Card className="border-border bg-card/40 p-4 backdrop-blur-sm">
+                    <Skeleton className="mb-3 h-5 w-24" />
+                    <div className="space-y-2">
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <Skeleton key={i} className="h-14 rounded-lg" />
+                      ))}
+                    </div>
+                  </Card>
+                </div>
+                <div className="space-y-4">
+                  <Card className="border-border bg-card/40 p-4 backdrop-blur-sm">
+                    <Skeleton className="mb-3 h-5 w-24" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-10 rounded-md" />
+                      <Skeleton className="h-10 rounded-md" />
+                    </div>
+                  </Card>
+                </div>
               </div>
             ) : (
               <>
