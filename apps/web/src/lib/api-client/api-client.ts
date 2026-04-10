@@ -145,7 +145,19 @@ const parseResponseBody = (
   }
 };
 
-const buildRequestUrl = ({
+const isAbsoluteUrl = (value: string) => {
+  return /^[a-z][a-z\d+.-]*:\/\//i.test(value);
+};
+
+const normalizeBaseUrl = (baseURL: string) => {
+  return baseURL.endsWith("/") ? baseURL : `${baseURL}/`;
+};
+
+const normalizeRequestPath = (path: string) => {
+  return path.replace(/^\/+/, "");
+};
+
+export const buildRequestUrl = ({
   baseURL,
   path,
   params,
@@ -154,7 +166,9 @@ const buildRequestUrl = ({
   path: string;
   params?: Record<string, unknown>;
 }) => {
-  const url = new URL(path, baseURL);
+  const url = isAbsoluteUrl(path)
+    ? new URL(path)
+    : new URL(normalizeRequestPath(path), normalizeBaseUrl(baseURL));
   const serializedParams = params
     ? stringify(params, {
         addQueryPrefix: false,
