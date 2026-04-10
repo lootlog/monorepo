@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { stringify } from "qs";
+import { queryKeys } from "@/lib/query-keys";
 
 export type TopNpc = {
   npcId: number;
@@ -37,21 +38,20 @@ export const useGuildTopNpcs = (params: GuildTopNpcsParams = {}) => {
   );
 
   return useQuery({
-    queryKey: [
-      "guild-top-npcs",
+    queryKey: queryKeys.stats.guildTopNpcs(
       guildId,
       limit,
-      npcType,
+      npcType ?? "",
       world,
-      search,
+      search ?? "",
       minLvl,
       maxLvl,
-    ],
+    ),
     queryFn: async () => {
       const response = await client.get<GuildTopNpcsResponse>(
         `/guilds/${guildId}/stats/kills/top-npcs${queryParams}`,
       );
-      return response.data;
+      return response;
     },
     enabled: !!guildId,
     staleTime: 30000,

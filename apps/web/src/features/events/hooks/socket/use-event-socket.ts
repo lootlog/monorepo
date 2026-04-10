@@ -8,6 +8,7 @@ import {
   invalidateGapQueries,
 } from "../mutations/invalidate-map-queries";
 import { invalidateRespawnQueries } from "../mutations/invalidate-respawn-queries";
+import { queryKeys } from "@/lib/query-keys";
 
 interface UseEventSocketOptions {
   eventId?: string;
@@ -77,7 +78,7 @@ export const useEventSocket = (options?: UseEventSocketOptions) => {
     }
 
     queryClient.invalidateQueries({
-      queryKey: ["event-ranking", payload.guildId, payload.eventId],
+      queryKey: queryKeys.events.ranking(payload.guildId, payload.eventId),
     });
   });
   const handleRespawnWindowChange = useEffectEvent(

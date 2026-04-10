@@ -224,13 +224,12 @@ export const RolesSettingsForm: FC<RolesSettingsFormProps> = ({ role }) => {
           toast.success("Zaktualizowano ustawienia");
           form.reset({
             lvlRangeFrom:
-              response.data.lvlRangeFrom?.toString() || DEFAULT_LVL_RANGE_FROM,
-            lvlRangeTo:
-              response.data.lvlRangeTo?.toString() || DEFAULT_LVL_RANGE_TO,
+              response.lvlRangeFrom?.toString() || DEFAULT_LVL_RANGE_FROM,
+            lvlRangeTo: response.lvlRangeTo?.toString() || DEFAULT_LVL_RANGE_TO,
             ...PERMISSIONS.reduce(
               (acc, p) => ({
                 ...acc,
-                [p]: response.data.permissions.includes(p),
+                [p]: response.permissions.includes(p),
               }),
               {} as Record<Permission, boolean>,
             ),

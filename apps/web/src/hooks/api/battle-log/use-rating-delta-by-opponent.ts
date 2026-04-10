@@ -3,6 +3,7 @@ import {
   battlelogApiClient,
   type ApiRequestConfig,
 } from "@/lib/api-client/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 export interface RatingDeltaByOpponentRecord {
   opponentId: string;
@@ -31,23 +32,19 @@ export const ratingDeltaByOpponentQueryOptions = (
   params: UseRatingDeltaByOpponentParams,
 ) =>
   queryOptions({
-    queryKey: [
-      "rating-delta-by-opponent",
-      {
-        ...params,
-        suppressRouteErrorToast: undefined,
-      },
-    ],
+    queryKey: queryKeys.battleLog.ratingDeltaByOpponent({
+      ...params,
+      suppressRouteErrorToast: undefined,
+    }),
     queryFn: async () => {
       const { suppressRouteErrorToast = false, ...requestParams } = params;
-      const response = await battlelogApiClient.get(
-        "/battles/@me/statistics/rating-delta-by-opponent",
-        {
-          params: requestParams,
-          suppressRouteErrorToast,
-        } as ApiRequestConfig,
-      );
-      return response.data as RatingDeltaByOpponentRecord[];
+      const response = await battlelogApiClient.get<
+        RatingDeltaByOpponentRecord[]
+      >("/battles/@me/statistics/rating-delta-by-opponent", {
+        params: requestParams,
+        suppressRouteErrorToast,
+      } as ApiRequestConfig);
+      return response;
     },
     staleTime: 0,
   });

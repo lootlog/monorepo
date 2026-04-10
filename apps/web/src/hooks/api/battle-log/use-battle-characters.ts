@@ -1,5 +1,6 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { useBattleLogApiClient } from "@/hooks/api/battle-log/use-battle-log-api-client";
+import { queryKeys } from "@/lib/query-keys";
 import {
   battlelogApiClient,
   type ApiRequestConfig,
@@ -24,7 +25,7 @@ export const battleCharactersQueryOptions = ({
   suppressRouteErrorToast = false,
 }: BattleCharactersQueryOptionsOptions = {}) =>
   queryOptions({
-    queryKey: ["battle-characters", "@me"],
+    queryKey: queryKeys.battleLog.characters(),
     queryFn: async () => {
       const response =
         await battlelogApiClient.get<GetBattleCharactersResponse>(
@@ -33,7 +34,7 @@ export const battleCharactersQueryOptions = ({
             suppressRouteErrorToast,
           } as ApiRequestConfig,
         );
-      return response.data.characters;
+      return response.characters;
     },
   });
 

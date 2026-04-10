@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
 import type { NpcType } from "@/features/home/hooks/use-player-kill-stats";
 import { stringifyQueryParams } from "@/lib/stringify-query-params";
+import { queryKeys } from "@/lib/query-keys";
 
 export type NpcKill = {
   npcId: number;
@@ -55,12 +56,12 @@ export const useNpcKills = (filters: NpcKillsFilters = {}) => {
   const queryString = stringifyQueryParams(queryParams);
 
   return useQuery({
-    queryKey: ["npc-kills", queryString],
+    queryKey: queryKeys.stats.npcKills(queryString),
     queryFn: async () => {
       const response = await client.get<NpcKillsResponse>(
         `/users/@me/kills/npcs${queryString ? `?${queryString}` : ""}`,
       );
-      return response.data;
+      return response;
     },
     staleTime: 30000,
   });

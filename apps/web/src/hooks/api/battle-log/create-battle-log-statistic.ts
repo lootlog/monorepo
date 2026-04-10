@@ -1,4 +1,5 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 import {
   battlelogApiClient,
   type ApiRequestConfig,
@@ -27,13 +28,13 @@ export function battleLogStatisticQueryOptions<TData, TParams>({
   }
 
   return queryOptions({
-    queryKey: [queryKey, requestParams],
+    queryKey: queryKeys.battleLog.statistic(queryKey, requestParams),
     queryFn: async () => {
-      const response = await battlelogApiClient.get(endpoint, {
+      const response = await battlelogApiClient.get<TData[]>(endpoint, {
         params: requestParams,
         suppressRouteErrorToast,
       } as ApiRequestConfig);
-      return response.data as TData[];
+      return response;
     },
     staleTime: 0,
   });

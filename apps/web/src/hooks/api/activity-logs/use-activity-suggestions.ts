@@ -1,5 +1,6 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { useDebounceValue } from "usehooks-ts";
+import { queryKeys } from "@/lib/query-keys";
 import {
   activityApiClient,
   type ApiRequestConfig,
@@ -43,9 +44,14 @@ export const activitySuggestionsQueryOptions = ({
   const trimmedSearch = search.trim();
 
   return queryOptions({
-    queryKey: [endpoint, guildId, trimmedSearch, limit],
+    queryKey: queryKeys.activity.suggestions(
+      endpoint,
+      guildId,
+      trimmedSearch,
+      limit,
+    ),
     queryFn: async () => {
-      const response = await activityApiClient.get(
+      const response = await activityApiClient.get<Record<string, string[]>>(
         `/guilds/${guildId}/activity-logs/${endpoint}`,
         {
           params: {
@@ -56,7 +62,7 @@ export const activitySuggestionsQueryOptions = ({
         } as ApiRequestConfig,
       );
 
-      return (response.data as Record<string, string[]>)[responseKey];
+      return response[responseKey];
     },
     enabled:
       enabled && !!guildId && (!requireSearch || trimmedSearch.length >= 1),

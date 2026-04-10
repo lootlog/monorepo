@@ -22,6 +22,8 @@ import { ScheduleGrid } from "./schedule-grid";
 import { CreateReservationDialog } from "./create-reservation-dialog";
 import { useScheduleNavigation } from "./use-schedule-navigation";
 import { useReservationSegments } from "./use-reservation-segments";
+import { getApiErrorMessage } from "@/features/events/utils/get-api-error-message";
+import { queryKeys } from "@/lib/query-keys";
 
 export const ReservationsSchedule: React.FC = () => {
   const { reservationId } = useParams({
@@ -114,7 +116,7 @@ export const ReservationsSchedule: React.FC = () => {
       }
 
       void queryClient.invalidateQueries({
-        queryKey: ["reservations", guildId],
+        queryKey: queryKeys.reservations.all(guildId),
       });
     };
 
@@ -142,31 +144,9 @@ export const ReservationsSchedule: React.FC = () => {
         await deleteReservation({ reservationRecordId });
         toast.success(successMessage, { position: "bottom-right" });
       } catch (error) {
-        if (error && typeof error === "object" && "response" in error) {
-          const maybeAxiosError = error as {
-            response?: { data?: { message?: string | string[] } };
-          };
-          const rawMessage = maybeAxiosError.response?.data?.message;
-          const normalizedMessage = Array.isArray(rawMessage)
-            ? rawMessage[0]
-            : rawMessage;
-          const message =
-            typeof normalizedMessage === "string"
-              ? normalizedMessage
-              : undefined;
-          toast.error(message ?? fallbackMessage, {
-            position: "bottom-right",
-          });
-        } else if (error instanceof Error) {
-          const message = error.message || undefined;
-          toast.error(message || fallbackMessage, {
-            position: "bottom-right",
-          });
-        } else {
-          toast.error(fallbackMessage, {
-            position: "bottom-right",
-          });
-        }
+        toast.error(getApiErrorMessage(error) ?? fallbackMessage, {
+          position: "bottom-right",
+        });
       }
     },
     [deleteReservation],

@@ -3,6 +3,7 @@ import { useApiClient } from "@/hooks/api/use-api-client";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import type { NpcType } from "@/hooks/api/game-data/use-npcs";
 import type { ItemRarity } from "@/hooks/api/loots/use-loots";
+import { queryKeys } from "@/lib/query-keys";
 
 export type LootlogConfigNpc = {
   id: number;
@@ -23,11 +24,11 @@ export const useGuildLootlogConfig = () => {
   const { client } = useApiClient();
 
   const query = useQuery({
-    queryKey: ["guild-lootlog-config", guildId],
+    queryKey: queryKeys.guilds.lootlogConfig(guildId),
     queryFn: () =>
       client.get<LootlogConfig>(`/guilds/${guildId}/lootlog-config`),
     enabled: !!guildId,
-    select: (response) => response.data,
+    select: (data) => data,
   });
 
   return query;

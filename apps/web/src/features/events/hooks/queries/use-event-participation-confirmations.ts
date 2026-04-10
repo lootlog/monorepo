@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 export interface PendingParticipationConfirmation {
   killId: string;
@@ -32,13 +33,13 @@ export const useEventParticipationConfirmations = ({
   const { client } = useApiClient();
 
   return useQuery<PendingParticipationConfirmationsResponse>({
-    queryKey: ["event-participation-confirmations", guildId, eventId],
+    queryKey: queryKeys.events.participationConfirmations(guildId, eventId),
     queryFn: async () => {
       const response =
         await client.get<PendingParticipationConfirmationsResponse>(
           `/guilds/${guildId}/events/${eventId}/participation-confirmations/pending`,
         );
-      return response.data;
+      return response;
     },
     enabled: Boolean(guildId && eventId && enabled),
     refetchInterval: 15_000,

@@ -4,6 +4,7 @@ import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useApiClient } from "@/hooks/api/use-api-client";
 import type { CoverageGapType } from "../utils/use-local-coverage-timer";
 import { formatDurationPadded } from "../../utils";
+import { queryKeys } from "@/lib/query-keys";
 
 export { type CoverageGapType };
 export { formatDurationPadded as formatDuration };
@@ -34,12 +35,12 @@ export const useMapCoverageTimer = (
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   const { data: activeGap, isLoading } = useQuery<CoverageGap | null>({
-    queryKey: ["map-active-gap", guildId, eventId, mapId],
+    queryKey: queryKeys.events.mapActiveGap(guildId, eventId, mapId),
     queryFn: async () => {
       const response = await client.get<CoverageGap | null>(
         `/guilds/${guildId}/events/${eventId}/maps/${mapId}/active-gap`,
       );
-      return response.data;
+      return response;
     },
     enabled: enabled && !!guildId && !!eventId && !!mapId,
     refetchInterval: 30000,
@@ -93,12 +94,12 @@ export const useHeroCoverageGaps = (eventId: string, heroId: string) => {
   const { client } = useApiClient();
 
   return useQuery<CoverageGap[]>({
-    queryKey: ["hero-coverage-gaps", guildId, eventId, heroId],
+    queryKey: queryKeys.events.heroCoverageGaps(guildId, eventId, heroId),
     queryFn: async () => {
       const response = await client.get<CoverageGap[]>(
         `/guilds/${guildId}/events/${eventId}/heroes/${heroId}/coverage-gaps`,
       );
-      return response.data;
+      return response;
     },
     enabled: !!guildId && !!eventId && !!heroId,
   });
@@ -109,12 +110,12 @@ export const useMapCoverageGaps = (eventId: string, mapId: string) => {
   const { client } = useApiClient();
 
   return useQuery<CoverageGap[]>({
-    queryKey: ["map-coverage-gaps", guildId, eventId, mapId],
+    queryKey: queryKeys.events.mapCoverageGaps(guildId, eventId, mapId),
     queryFn: async () => {
       const response = await client.get<CoverageGap[]>(
         `/guilds/${guildId}/events/${eventId}/maps/${mapId}/coverage-gaps`,
       );
-      return response.data;
+      return response;
     },
     enabled: !!guildId && !!eventId && !!mapId,
   });

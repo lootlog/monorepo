@@ -23,9 +23,9 @@ const GRID_COLUMNS = 2;
 const EMPTY_LOOTS: Loot[] = [];
 const EMPTY_GRID_ROWS: Loot[][] = [];
 
-const useStableLootCollections = (pages: { data: Loot[] }[] | undefined) => {
+const useStableLootCollections = (pages: Loot[][] | undefined) => {
   const collectionsRef = useRef<{
-    pages: { data: Loot[] }[] | undefined;
+    pages: Loot[][] | undefined;
     allLoots: Loot[];
     gridRows: Loot[][];
   }>({
@@ -35,7 +35,7 @@ const useStableLootCollections = (pages: { data: Loot[] }[] | undefined) => {
   });
 
   if (collectionsRef.current.pages !== pages) {
-    const allLoots = pages?.flatMap((page) => page.data) ?? EMPTY_LOOTS;
+    const allLoots = pages?.flatMap((page) => page) ?? EMPTY_LOOTS;
     const gridRows: Loot[][] = [];
 
     for (let index = 0; index < allLoots.length; index += GRID_COLUMNS) {
@@ -115,7 +115,7 @@ export const LootsList: FC = () => {
     scrollElementRef,
   });
 
-  const hasLoots = (loots?.pages?.[0]?.data?.length ?? 0) > 0;
+  const hasLoots = (loots?.pages?.[0]?.length ?? 0) > 0;
 
   if (!world) {
     return (

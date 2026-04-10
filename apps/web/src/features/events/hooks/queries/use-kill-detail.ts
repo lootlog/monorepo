@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
 import type { KillParticipant, HeroKillHeroNpc } from "./use-hero-kill-history";
+import { queryKeys } from "@/lib/query-keys";
 import type {
   EventScoringMode,
   EventScoringRules,
@@ -72,12 +73,12 @@ export const useKillDetail = ({
   const { client } = useApiClient();
 
   return useQuery({
-    queryKey: ["kill-detail", guildId, eventId, heroId, killId],
+    queryKey: queryKeys.events.killDetail(guildId, eventId, heroId, killId),
     queryFn: async (): Promise<KillDetailResponse> => {
       const response = await client.get<KillDetailResponse>(
         `/guilds/${guildId}/events/${eventId}/heroes/${heroId}/kills/${killId}`,
       );
-      return response.data;
+      return response;
     },
     enabled: !!guildId && !!eventId && !!heroId && !!killId,
   });

@@ -3,8 +3,8 @@ import { useApiClient } from "@/hooks/api/use-api-client";
 import type { Permission } from "@lootlog/types";
 
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import type { AxiosResponse } from "axios";
 import type { GuildRole } from "@/hooks/api/guilds/use-guild-roles";
+import { mutationKeys, queryKeys } from "@/lib/query-keys";
 
 type UpdateGuildRoleOptions = {
   roleId: string;
@@ -13,7 +13,7 @@ type UpdateGuildRoleOptions = {
   lvlRangeTo: number;
 };
 
-type UpdateGuildRoleResponse = AxiosResponse<GuildRole>;
+type UpdateGuildRoleResponse = GuildRole;
 
 export const useUpdateGuildRole = () => {
   const guildId = useGuildId();
@@ -31,10 +31,10 @@ export const useUpdateGuildRole = () => {
         rest,
       );
     },
-    mutationKey: ["update-guild-role"],
+    mutationKey: mutationKeys.guilds.updateRole(),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["guild-roles", guildId],
+        queryKey: queryKeys.guilds.roles(guildId),
       });
     },
   });

@@ -1,5 +1,6 @@
 import { apiClient, type ApiRequestConfig } from "@/lib/api-client/api-client";
 import { queryOptions, useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 import type {
   EventScoringMode,
   EventScoringRules,
@@ -110,7 +111,7 @@ export const eventsQueryOptions = ({
   suppressRouteErrorToast = false,
 }: UseEventsOptions) =>
   queryOptions({
-    queryKey: ["events", guildId, world, activeOnly],
+    queryKey: queryKeys.events.list(guildId, world, activeOnly),
     queryFn: async () => {
       const params = new URLSearchParams();
       if (world) params.set("world", world);
@@ -122,7 +123,7 @@ export const eventsQueryOptions = ({
           suppressRouteErrorToast,
         } as ApiRequestConfig,
       );
-      return response.data;
+      return response;
     },
     enabled: !!guildId && enabled,
     staleTime: 30_000,

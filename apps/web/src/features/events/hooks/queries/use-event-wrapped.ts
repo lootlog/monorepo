@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 export interface EventWrappedRarityTotals {
   unique: number;
@@ -111,12 +112,12 @@ export const useEventWrapped = ({
   const { client } = useApiClient();
 
   return useQuery<EventWrapped>({
-    queryKey: ["event-wrapped", guildId, eventId],
+    queryKey: queryKeys.events.wrapped(guildId, eventId),
     queryFn: async () => {
       const response = await client.get<EventWrapped>(
         `/guilds/${guildId}/events/${eventId}/wrapped`,
       );
-      return response.data;
+      return response;
     },
     enabled: !!guildId && !!eventId && enabled,
     staleTime: 5 * 60 * 1000,

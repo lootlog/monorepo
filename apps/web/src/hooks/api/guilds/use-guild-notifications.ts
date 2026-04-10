@@ -1,5 +1,6 @@
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { apiClient, type ApiRequestConfig } from "@/lib/api-client/api-client";
+import { queryKeys } from "@/lib/query-keys";
 import {
   NotificationTargetType as NotificationTargetTypeEnum,
   type DiscordGuildChannelSnapshot,
@@ -195,13 +196,13 @@ type UseGuildNotificationJobsOptions = {
 };
 
 const createGuildNotificationsQueryKey = (guildId: string) =>
-  ["guild-notifications", guildId] as const;
+  queryKeys.guilds.notifications(guildId);
 
 const createGuildNotificationJobsQueryKey = (guildId: string) =>
-  ["guild-notification-jobs", guildId] as const;
+  queryKeys.guilds.notificationJobs(guildId);
 
 const createGuildAvailableNotificationTargetsQueryKey = (guildId: string) =>
-  ["guild-notification-available-targets", guildId] as const;
+  queryKeys.guilds.notificationAvailableTargets(guildId);
 
 const invalidateGuildNotificationQueries = async (
   guildId: string,
@@ -249,9 +250,9 @@ export const guildNotificationsQueryOptions = (
       ]);
 
       return {
-        targets: targetsResponse.data,
-        rules: rulesResponse.data.items,
-        limits: rulesResponse.data.limits,
+        targets: targetsResponse,
+        rules: rulesResponse.items,
+        limits: rulesResponse.limits,
       };
     },
     enabled: guildId.length > 0,
@@ -273,7 +274,7 @@ export const guildNotificationJobsQueryOptions = (
         } as ApiRequestConfig,
       );
 
-      return response.data;
+      return response;
     },
     enabled: guildId.length > 0,
   });
@@ -294,7 +295,7 @@ export const guildAvailableNotificationTargetsQueryOptions = (
           } as ApiRequestConfig,
         );
 
-      return response.data;
+      return response;
     },
     enabled: guildId.length > 0 && enabled,
   });
@@ -351,7 +352,7 @@ export const useCreateGuildNotificationTarget = () => {
         },
       );
 
-      return response.data;
+      return response;
     },
     onSuccess: async () => {
       await invalidateGuildNotificationQueries(guildId ?? "", queryClient);
@@ -377,7 +378,7 @@ export const useUpdateGuildNotificationTarget = () => {
         },
       );
 
-      return response.data;
+      return response;
     },
     onSuccess: async () => {
       await invalidateGuildNotificationQueries(guildId ?? "", queryClient);
@@ -395,7 +396,7 @@ export const useDeleteGuildNotificationTarget = () => {
         `/guilds/${guildId}/notifications/targets/${targetId}`,
       );
 
-      return response.data;
+      return response;
     },
     onSuccess: async () => {
       await invalidateGuildNotificationQueries(guildId ?? "", queryClient);
@@ -414,7 +415,7 @@ export const useCreateGuildNotificationRule = () => {
         data,
       );
 
-      return response.data;
+      return response;
     },
     onSuccess: async () => {
       await invalidateGuildNotificationQueries(guildId ?? "", queryClient);
@@ -436,7 +437,7 @@ export const useUpdateGuildNotificationRule = () => {
         data,
       );
 
-      return response.data;
+      return response;
     },
     onSuccess: async () => {
       await invalidateGuildNotificationQueries(guildId ?? "", queryClient);
@@ -454,7 +455,7 @@ export const useDeleteGuildNotificationRule = () => {
         `/guilds/${guildId}/notifications/rules/${ruleId}`,
       );
 
-      return response.data;
+      return response;
     },
     onSuccess: async () => {
       await invalidateGuildNotificationQueries(guildId ?? "", queryClient);
@@ -472,7 +473,7 @@ export const useCancelGuildNotificationJob = () => {
         `/guilds/${guildId}/notifications/jobs/${jobId}`,
       );
 
-      return response.data;
+      return response;
     },
     onSuccess: async () => {
       await invalidateGuildNotificationQueries(guildId ?? "", queryClient);
@@ -490,7 +491,7 @@ export const useRebuildGuildNotificationRuleJobs = () => {
         `/guilds/${guildId}/notifications/rules/${ruleId}/rebuild-jobs`,
       );
 
-      return response.data;
+      return response;
     },
     onSuccess: async () => {
       await invalidateGuildNotificationQueries(guildId ?? "", queryClient);
@@ -508,7 +509,7 @@ export const useTriggerGuildNotificationRuleTest = () => {
         `/guilds/${guildId}/notifications/rules/${ruleId}/test`,
       );
 
-      return response.data;
+      return response;
     },
     onSuccess: async () => {
       await invalidateGuildNotificationQueries(guildId ?? "", queryClient);

@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
 import { useGuildId } from "@/hooks/context/use-guild-id";
+import { queryKeys } from "@/lib/query-keys";
 
 export interface MapAssignment {
   memberId: number;
@@ -42,12 +43,12 @@ export const useKillTimeline = ({
   const { client } = useApiClient();
 
   return useQuery({
-    queryKey: ["kill-timeline", guildId, eventId, heroId, killId],
+    queryKey: queryKeys.events.killTimeline(guildId, eventId, heroId, killId),
     queryFn: async (): Promise<MapTimelineData[]> => {
       const response = await client.get<MapTimelineData[]>(
         `/guilds/${guildId}/events/${eventId}/heroes/${heroId}/kills/${killId}/timeline`,
       );
-      return response.data;
+      return response;
     },
     enabled: !!guildId && !!eventId && !!heroId && !!killId,
   });

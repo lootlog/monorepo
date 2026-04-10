@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import type { GuildMember } from "@/hooks/api/members/use-guild-member";
 import { useContext } from "react";
 import { RefreshStatusContext } from "@/features/guild-settings/members-settings/contexts/refresh-status-context";
+import { queryKeys } from "@/lib/query-keys";
 
 export type MemberRefreshOptions = {
   memberId: string;
@@ -23,7 +24,7 @@ export const useMemberRefresh = () => {
       const now = new Date().toISOString();
 
       queryClient.setQueriesData(
-        { queryKey: ["members", guildId] },
+        { queryKey: queryKeys.members.list(guildId) },
         (oldData: { data: GuildMember[] } | undefined) => {
           if (!oldData?.data) return oldData;
 
@@ -44,13 +45,13 @@ export const useMemberRefresh = () => {
 
       toast.success("Dane uprawnień członka zostały odświeżone.");
       queryClient.invalidateQueries({
-        queryKey: ["member", guildId],
+        queryKey: queryKeys.members.detailPrefix(guildId),
       });
       queryClient.invalidateQueries({
-        queryKey: ["members", guildId],
+        queryKey: queryKeys.members.list(guildId),
       });
       queryClient.invalidateQueries({
-        queryKey: ["loots", guildId],
+        queryKey: queryKeys.loots.listByGuild(guildId),
       });
     },
     onError: (_error, variables) => {

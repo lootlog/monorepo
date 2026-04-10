@@ -2,6 +2,7 @@ import { queryOptions, useQuery } from "@tanstack/react-query";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { apiClient, type ApiRequestConfig } from "@/lib/api-client/api-client";
 import { stringify } from "qs";
+import { queryKeys } from "@/lib/query-keys";
 
 export type NpcInfo = {
   npcId: number;
@@ -49,7 +50,7 @@ export const npcKillersQueryOptions = (
   );
 
   return queryOptions({
-    queryKey: ["npc-killers", guildId, npcId, limit, world],
+    queryKey: queryKeys.stats.npcKillers(guildId, npcId, limit, world),
     queryFn: async () => {
       const response = await apiClient.get<NpcKillersResponse>(
         `/guilds/${guildId}/stats/kills/npcs/${npcId}/killers${queryParams}`,
@@ -57,7 +58,7 @@ export const npcKillersQueryOptions = (
           suppressRouteErrorToast,
         } as ApiRequestConfig,
       );
-      return response.data;
+      return response;
     },
     enabled: !!guildId && npcId !== undefined,
     staleTime: 30000,

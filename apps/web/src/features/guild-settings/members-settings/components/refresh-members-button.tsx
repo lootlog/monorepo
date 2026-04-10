@@ -21,8 +21,8 @@ export const RefreshMembersButton = () => {
   } = useBulkMemberRefresh();
 
   const currentJob = useMemo(() => {
-    return data?.data || latestJob;
-  }, [data?.data, latestJob]);
+    return data ?? latestJob;
+  }, [data, latestJob]);
 
   const nextAvailableAt = useMemo(() => {
     if (!currentJob?.createdAt) return null;

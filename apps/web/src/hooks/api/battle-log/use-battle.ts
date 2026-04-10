@@ -1,6 +1,7 @@
 import { useBattleLogApiClient } from "@/hooks/api/battle-log/use-battle-log-api-client";
 import type { Battle } from "@/hooks/api/battle-log/use-battles";
 import { queryOptions, useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 import {
   battlelogApiClient,
   type ApiRequestConfig,
@@ -24,7 +25,7 @@ export const battleQueryOptions = ({
     : `/battles/${battleId}`;
 
   return queryOptions({
-    queryKey: ["battles", battleId, isPublic ? "public" : "private"],
+    queryKey: queryKeys.battleLog.battle(battleId, isPublic),
     queryFn: async () => {
       const response = await battlelogApiClient.get<GetBattleResponse>(
         endpoint,
@@ -32,7 +33,7 @@ export const battleQueryOptions = ({
           suppressRouteErrorToast,
         } as ApiRequestConfig,
       );
-      return response.data;
+      return response;
     },
     enabled: !!battleId,
   });

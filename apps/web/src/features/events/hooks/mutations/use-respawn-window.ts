@@ -45,7 +45,7 @@ export const useCloseRespawnWindow = () => {
           newMaxSpawnTime,
         },
       );
-      return response.data;
+      return response;
     },
     onSuccess: (_data, variables) => {
       invalidateRespawnQueries(
@@ -77,7 +77,7 @@ export const useOpenRespawnWindow = () => {
           maxSpawnTime,
         },
       );
-      return response.data;
+      return response;
     },
     onSuccess: (_data, variables) => {
       invalidateRespawnQueries(

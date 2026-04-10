@@ -1,4 +1,5 @@
 import { useQuery, queryOptions } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 import {
   authApiClient,
   type ApiRequestConfig,
@@ -24,13 +25,13 @@ export const authScopesQueryOptions = ({
   suppressRouteErrorToast = false,
 }: AuthScopesQueryOptionsOptions = {}) =>
   queryOptions({
-    queryKey: ["auth-scopes"],
+    queryKey: queryKeys.auth.scopes(),
     queryFn: () =>
       authApiClient
         .get<unknown>(`/auth/@me/scopes`, {
           suppressRouteErrorToast,
         } as ApiRequestConfig)
-        .then((res) => res.data),
+        .then((data) => data),
     select: normalizeAuthScopes,
   });
 

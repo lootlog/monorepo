@@ -1,37 +1,174 @@
-import axios, {
-  type AxiosInstance,
-  type AxiosRequestConfig,
-  type InternalAxiosRequestConfig,
-} from "axios";
+import { stringify } from "qs";
 import {
-  API_URL,
-  BATTLELOG_API_URL,
-  SEARCH_API_URL,
-  AUTH_API_URL,
   ACTIVITY_API_URL,
+  API_URL,
+  AUTH_API_URL,
+  BATTLELOG_API_URL,
 } from "@/config/api";
+import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
-import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
 
-type ApiName = "default" | "battlelog" | "search" | "auth" | "activity";
+type ApiName = "default" | "battlelog" | "auth" | "activity";
 
-export type ApiRequestConfig = AxiosRequestConfig & {
+type ApiErrorLike = {
+  message?: string | string[];
+  requiresReauth?: boolean;
+};
+
+type ApiRequestBody = unknown;
+
+export type ApiRequestConfig = Omit<RequestInit, "body" | "method"> & {
+  params?: Record<string, unknown>;
   suppressRouteErrorToast?: boolean;
+};
+
+export class ApiError<TData = unknown> extends Error {
+  public readonly status?: number;
+  public readonly data: TData | undefined;
+  public readonly url: string;
+  public readonly method: string;
+
+  public constructor({
+    status,
+    data,
+    url,
+    method,
+    message,
+  }: {
+    status?: number;
+    data?: TData;
+    url: string;
+    method: string;
+    message: string;
+  }) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.data = data;
+    this.url = url;
+    this.method = method;
+  }
+}
+
+export type ApiClient = {
+  get<T>(url: string, config?: ApiRequestConfig): Promise<T>;
+  post<T>(
+    url: string,
+    body?: ApiRequestBody,
+    config?: ApiRequestConfig,
+  ): Promise<T>;
+  put<T>(
+    url: string,
+    body?: ApiRequestBody,
+    config?: ApiRequestConfig,
+  ): Promise<T>;
+  patch<T>(
+    url: string,
+    body?: ApiRequestBody,
+    config?: ApiRequestConfig,
+  ): Promise<T>;
+  delete<T>(url: string, config?: ApiRequestConfig): Promise<T>;
 };
 
 const BASE_URLS: Record<ApiName, string | undefined> = {
   default: API_URL,
   battlelog: BATTLELOG_API_URL,
-  search: SEARCH_API_URL,
   auth: AUTH_API_URL,
   activity: ACTIVITY_API_URL,
 };
 
-const clients = new Map<ApiName, AxiosInstance>();
-const intercepted = new WeakSet<AxiosInstance>();
+const clients = new Map<ApiName, ApiClient>();
 
 let reauthPromise: Promise<void> | null = null;
+
+const isObject = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === "object" && value !== null;
+};
+
+const isApiErrorData = (value: unknown): value is ApiErrorLike => {
+  return isObject(value);
+};
+
+const isBinaryBody = (body: unknown): body is BodyInit => {
+  return (
+    typeof body === "string" ||
+    body instanceof Blob ||
+    body instanceof FormData ||
+    body instanceof URLSearchParams ||
+    body instanceof ArrayBuffer ||
+    ArrayBuffer.isView(body)
+  );
+};
+
+const getApiMessageFromData = (data: unknown): string | undefined => {
+  if (typeof data === "string") {
+    return data.trim().length > 0 ? data : undefined;
+  }
+
+  if (!isApiErrorData(data)) {
+    return undefined;
+  }
+
+  const rawMessage = data.message;
+  const normalizedMessage = Array.isArray(rawMessage)
+    ? rawMessage[0]
+    : rawMessage;
+
+  if (typeof normalizedMessage !== "string") {
+    return undefined;
+  }
+
+  return normalizedMessage.trim().length > 0 ? normalizedMessage : undefined;
+};
+
+const parseResponseBody = (
+  responseText: string,
+  contentType: string | null,
+) => {
+  if (responseText.length === 0) {
+    return undefined;
+  }
+
+  const isJsonResponse =
+    contentType?.includes("application/json") === true ||
+    contentType?.includes("+json") === true;
+
+  if (!isJsonResponse) {
+    return responseText;
+  }
+
+  try {
+    return JSON.parse(responseText) as unknown;
+  } catch {
+    return responseText;
+  }
+};
+
+const buildRequestUrl = ({
+  baseURL,
+  path,
+  params,
+}: {
+  baseURL: string;
+  path: string;
+  params?: Record<string, unknown>;
+}) => {
+  const url = new URL(path, baseURL);
+  const serializedParams = params
+    ? stringify(params, {
+        addQueryPrefix: false,
+        arrayFormat: "repeat",
+        skipNulls: true,
+      })
+    : "";
+
+  if (serializedParams.length > 0) {
+    url.search = serializedParams;
+  }
+
+  return url;
+};
 
 const handleReauthentication = (): Promise<void> => {
   if (reauthPromise) {
@@ -56,59 +193,181 @@ const handleReauthentication = (): Promise<void> => {
   return reauthPromise;
 };
 
-const attachInterceptors = (instance: AxiosInstance) => {
-  if (intercepted.has(instance)) return instance;
+const handleApiErrorSideEffects = ({
+  status,
+  data,
+  isPublicEndpoint,
+  suppressRouteErrorToast,
+}: {
+  status?: number;
+  data: unknown;
+  isPublicEndpoint: boolean;
+  suppressRouteErrorToast: boolean;
+}) => {
+  const requiresReauth = isApiErrorData(data) && data.requiresReauth === true;
 
-  instance.interceptors.response.use(
-    (response) => response,
-    (error) => {
-      const requestConfig = error?.config as
-        | (InternalAxiosRequestConfig & {
-            suppressRouteErrorToast?: boolean;
-          })
-        | undefined;
-      const status = error?.response?.status;
-      const requiresReauth = error?.response?.data?.requiresReauth;
-      const isPublicEndpoint = error?.config?.url?.includes("/public/");
-      const suppressRouteErrorToast =
-        requestConfig?.suppressRouteErrorToast === true;
-
-      if ((status === 401 || requiresReauth) && !isPublicEndpoint) {
-        toast.error("Sesja wygasła. Przekierowywanie do logowania...");
-        handleReauthentication();
-        return Promise.reject(error);
-      }
-
-      if (status === 403 && !isPublicEndpoint && !suppressRouteErrorToast) {
-        toast.error("Brak dostępu");
-      }
-      if (status === 404 && !suppressRouteErrorToast) {
-        toast.error("Nie znaleziono");
-      }
-      return Promise.reject(error);
-    },
-  );
-
-  intercepted.add(instance);
-  return instance;
-};
-
-export const getApiClient = (api: ApiName = "default"): AxiosInstance => {
-  const existing = clients.get(api);
-  if (existing) return existing;
-
-  const baseURL = BASE_URLS[api];
-  if (!baseURL) {
-    console.warn(
-      `No base URL configured for API: ${api}, falling back to default`,
-    );
+  if ((status === 401 || requiresReauth) && !isPublicEndpoint) {
+    toast.error("Sesja wygasła. Przekierowywanie do logowania...");
+    void handleReauthentication();
+    return;
   }
 
-  const instance = attachInterceptors(
-    axios.create({ baseURL: baseURL ?? API_URL, withCredentials: true }),
-  );
-  clients.set(api, instance);
-  return instance;
+  if (status === 403 && !isPublicEndpoint && !suppressRouteErrorToast) {
+    toast.error("Brak dostępu");
+  }
+
+  if (status === 404 && !suppressRouteErrorToast) {
+    toast.error("Nie znaleziono");
+  }
+};
+
+const createApiClient = (api: ApiName): ApiClient => {
+  const baseURL = BASE_URLS[api] ?? API_URL;
+
+  const request = async <T>(
+    method: string,
+    path: string,
+    body?: ApiRequestBody,
+    config: ApiRequestConfig = {},
+  ): Promise<T> => {
+    const {
+      params,
+      suppressRouteErrorToast = false,
+      headers: headerInit,
+      credentials,
+      ...requestInit
+    } = config;
+    const url = buildRequestUrl({ baseURL, path, params });
+    const headers = new Headers(headerInit);
+
+    let requestBody: BodyInit | undefined;
+
+    if (body !== undefined && body !== null) {
+      if (isBinaryBody(body)) {
+        requestBody = body;
+      } else {
+        requestBody = JSON.stringify(body);
+        if (!headers.has("content-type")) {
+          headers.set("content-type", "application/json");
+        }
+      }
+    }
+
+    let response: Response;
+
+    try {
+      response = await fetch(url, {
+        ...requestInit,
+        method,
+        body: requestBody,
+        credentials: credentials ?? "include",
+        headers,
+      });
+    } catch (error) {
+      throw new ApiError({
+        status: undefined,
+        data: undefined,
+        url: url.toString(),
+        method,
+        message:
+          error instanceof Error ? error.message : "Network request failed",
+      });
+    }
+
+    const responseText = await response.text();
+    const responseData = parseResponseBody(
+      responseText,
+      response.headers.get("content-type"),
+    );
+
+    if (response.ok) {
+      return responseData as T;
+    }
+
+    handleApiErrorSideEffects({
+      status: response.status,
+      data: responseData,
+      isPublicEndpoint: url.pathname.includes("/public/"),
+      suppressRouteErrorToast,
+    });
+
+    throw new ApiError({
+      status: response.status,
+      data: responseData,
+      url: url.toString(),
+      method,
+      message:
+        getApiMessageFromData(responseData) ??
+        response.statusText ??
+        "Request failed",
+    });
+  };
+
+  return {
+    get: <T>(url: string, config?: ApiRequestConfig) =>
+      request<T>("GET", url, undefined, config),
+    post: <T>(url: string, body?: ApiRequestBody, config?: ApiRequestConfig) =>
+      request<T>("POST", url, body, config),
+    put: <T>(url: string, body?: ApiRequestBody, config?: ApiRequestConfig) =>
+      request<T>("PUT", url, body, config),
+    patch: <T>(url: string, body?: ApiRequestBody, config?: ApiRequestConfig) =>
+      request<T>("PATCH", url, body, config),
+    delete: <T>(url: string, config?: ApiRequestConfig) =>
+      request<T>("DELETE", url, undefined, config),
+  };
+};
+
+export const isApiError = (error: unknown): error is ApiError<unknown> => {
+  return error instanceof ApiError;
+};
+
+export const getApiErrorStatus = (error: unknown) => {
+  if (isApiError(error)) {
+    return error.status;
+  }
+
+  if (
+    error &&
+    typeof error === "object" &&
+    "statusCode" in error &&
+    typeof error.statusCode === "number"
+  ) {
+    return error.statusCode;
+  }
+
+  if (
+    error &&
+    typeof error === "object" &&
+    "status" in error &&
+    typeof error.status === "number"
+  ) {
+    return error.status;
+  }
+
+  return undefined;
+};
+
+export const getApiErrorMessage = (error: unknown) => {
+  if (isApiError(error)) {
+    return getApiMessageFromData(error.data) ?? error.message;
+  }
+
+  if (error instanceof Error && error.message.trim().length > 0) {
+    return error.message;
+  }
+
+  return undefined;
+};
+
+export const getApiClient = (api: ApiName = "default"): ApiClient => {
+  const existing = clients.get(api);
+  if (existing) {
+    return existing;
+  }
+
+  const client = createApiClient(api);
+  clients.set(api, client);
+  return client;
 };
 
 export const apiClient = getApiClient("default");

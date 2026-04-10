@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
 import { useGuildId } from "@/hooks/context/use-guild-id";
+import { queryKeys } from "@/lib/query-keys";
 
 interface AssignMemberOptions {
   eventId: string;
@@ -25,11 +26,11 @@ export const useAssignMember = () => {
         `/guilds/${guildId}/events/${eventId}/maps/${mapId}/assign`,
         { memberId },
       );
-      return response.data;
+      return response;
     },
     onSuccess: (_, { eventId }) => {
       queryClient.invalidateQueries({
-        queryKey: ["event-maps", guildId, eventId],
+        queryKey: queryKeys.events.maps(guildId, eventId),
       });
     },
   });
@@ -46,11 +47,11 @@ export const useUnassignMember = () => {
         ? `/guilds/${guildId}/events/${eventId}/maps/${mapId}/assign?memberId=${memberId}`
         : `/guilds/${guildId}/events/${eventId}/maps/${mapId}/assign`;
       const response = await client.delete(url);
-      return response.data;
+      return response;
     },
     onSuccess: (_, { eventId }) => {
       queryClient.invalidateQueries({
-        queryKey: ["event-maps", guildId, eventId],
+        queryKey: queryKeys.events.maps(guildId, eventId),
       });
     },
   });
@@ -71,11 +72,11 @@ export const useSelfAssignMember = () => {
       const response = await client.post(
         `/guilds/${guildId}/events/${eventId}/maps/${mapId}/self-assign`,
       );
-      return response.data;
+      return response;
     },
     onSuccess: (_, { eventId }) => {
       queryClient.invalidateQueries({
-        queryKey: ["event-maps", guildId, eventId],
+        queryKey: queryKeys.events.maps(guildId, eventId),
       });
     },
   });
@@ -91,11 +92,11 @@ export const useSelfUnassignMember = () => {
       const response = await client.delete(
         `/guilds/${guildId}/events/${eventId}/maps/${mapId}/self-assign`,
       );
-      return response.data;
+      return response;
     },
     onSuccess: (_, { eventId }) => {
       queryClient.invalidateQueries({
-        queryKey: ["event-maps", guildId, eventId],
+        queryKey: queryKeys.events.maps(guildId, eventId),
       });
     },
   });

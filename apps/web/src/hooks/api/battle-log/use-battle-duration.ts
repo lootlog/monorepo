@@ -3,6 +3,7 @@ import {
   battlelogApiClient,
   type ApiRequestConfig,
 } from "@/lib/api-client/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 interface BattleDurationStats {
   avgWinDuration: number;
@@ -30,23 +31,20 @@ interface UseBattleDurationParams {
 
 export const battleDurationQueryOptions = (params: UseBattleDurationParams) =>
   queryOptions({
-    queryKey: [
-      "battle-duration",
-      {
-        ...params,
-        suppressRouteErrorToast: undefined,
-      },
-    ],
+    queryKey: queryKeys.battleLog.duration({
+      ...params,
+      suppressRouteErrorToast: undefined,
+    }),
     queryFn: async () => {
       const { suppressRouteErrorToast = false, ...requestParams } = params;
-      const response = await battlelogApiClient.get(
+      const response = await battlelogApiClient.get<BattleDurationStats>(
         "/battles/@me/statistics/duration",
         {
           params: requestParams,
           suppressRouteErrorToast,
         } as ApiRequestConfig,
       );
-      return response.data as BattleDurationStats;
+      return response;
     },
     staleTime: 0,
   });

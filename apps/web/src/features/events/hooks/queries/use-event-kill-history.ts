@@ -1,5 +1,6 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
+import { queryKeys } from "@/lib/query-keys";
 import type {
   HeroKill,
   KillHistoryResponse,
@@ -39,7 +40,7 @@ export const useEventKillHistory = ({
   const { client } = useApiClient();
 
   return useInfiniteQuery({
-    queryKey: ["event-kill-history", guildId, eventId, heroId, limit],
+    queryKey: queryKeys.events.killHistory(guildId, eventId, heroId, limit),
     queryFn: async ({ pageParam }) => {
       const params = new URLSearchParams();
       params.set("limit", String(limit));
@@ -55,8 +56,8 @@ export const useEventKillHistory = ({
       );
 
       return {
-        ...response.data,
-        data: response.data.data.map((kill) => ({
+        ...response,
+        data: response.data.map((kill) => ({
           ...kill,
           participants: kill.points ?? [],
         })),

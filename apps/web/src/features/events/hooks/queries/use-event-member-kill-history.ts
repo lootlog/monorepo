@@ -1,5 +1,6 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
+import { queryKeys } from "@/lib/query-keys";
 import type {
   HeroKillHeroNpc,
   KillParticipant,
@@ -41,14 +42,13 @@ export const useEventMemberKillHistory = ({
   const { client } = useApiClient();
 
   return useInfiniteQuery({
-    queryKey: [
-      "event-member-kill-history",
+    queryKey: queryKeys.events.memberKillHistory(
       guildId,
       eventId,
       memberId,
       heroId,
       limit,
-    ],
+    ),
     queryFn: async ({ pageParam }) => {
       const params = new URLSearchParams();
       params.set("limit", String(limit));
@@ -63,7 +63,7 @@ export const useEventMemberKillHistory = ({
         `/guilds/${guildId}/events/${eventId}/members/${memberId}/kills?${params.toString()}`,
       );
 
-      return response.data;
+      return response;
     },
     enabled: !!guildId && !!eventId && !!memberId,
     initialPageParam: "",

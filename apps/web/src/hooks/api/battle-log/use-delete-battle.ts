@@ -1,5 +1,6 @@
 import { useBattleLogApiClient } from "@/hooks/api/battle-log/use-battle-log-api-client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 
 export type DeleteBattleOptions = {
   battleId: string;
@@ -15,7 +16,9 @@ export const useDeleteBattle = () => {
     mutationFn: ({ battleId }: DeleteBattleOptions) =>
       client.delete<DeleteBattleResponse>(`/battles/${battleId}`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["battles"] });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.battleLog.battles(),
+      });
     },
   });
 };

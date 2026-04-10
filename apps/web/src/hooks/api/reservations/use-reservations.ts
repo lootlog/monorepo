@@ -2,6 +2,7 @@ import { useQuery, queryOptions } from "@tanstack/react-query";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { apiClient, type ApiRequestConfig } from "@/lib/api-client/api-client";
 import { reservationSlug } from "@/features/reservations/reservation-slug";
+import { queryKeys } from "@/lib/query-keys";
 
 export interface ApiReservation {
   id: number;
@@ -122,7 +123,7 @@ export const reservationsQueryOptions = (
   { suppressRouteErrorToast = false }: ReservationsQueryOptionsOptions = {},
 ) =>
   queryOptions({
-    queryKey: ["reservations", guildId],
+    queryKey: queryKeys.reservations.all(guildId),
     queryFn: async () => {
       const response = await apiClient.get<Record<string, ApiReservation[]>>(
         `/guilds/${guildId}/reservations`,
@@ -131,7 +132,7 @@ export const reservationsQueryOptions = (
         } as ApiRequestConfig,
       );
 
-      return mapReservationsByAlias(response.data);
+      return mapReservationsByAlias(response);
     },
     enabled: !!guildId,
     staleTime: 30_000,

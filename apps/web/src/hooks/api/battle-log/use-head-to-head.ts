@@ -4,6 +4,7 @@ import {
   battlelogApiClient,
   type ApiRequestConfig,
 } from "@/lib/api-client/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 export interface HeadToHeadRecord {
   opponentId: string;
@@ -100,15 +101,14 @@ const buildHeadToHeadSearchParams = (params?: UseHeadToHeadParams) => {
 
 export const headToHeadQueryOptions = (params?: UseHeadToHeadParams) =>
   queryOptions({
-    queryKey: [
-      "head-to-head",
+    queryKey: queryKeys.battleLog.headToHead(
       params
         ? {
             ...params,
             suppressRouteErrorToast: undefined,
           }
         : undefined,
-    ],
+    ),
     queryFn: async () => {
       const searchParams = buildHeadToHeadSearchParams(params);
 
@@ -118,7 +118,7 @@ export const headToHeadQueryOptions = (params?: UseHeadToHeadParams) =>
           suppressRouteErrorToast: params?.suppressRouteErrorToast ?? false,
         } as ApiRequestConfig,
       );
-      return response.data;
+      return response;
     },
     staleTime: 0,
   });

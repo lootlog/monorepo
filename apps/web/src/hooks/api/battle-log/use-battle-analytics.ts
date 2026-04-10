@@ -1,5 +1,6 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { useBattleLogApiClient } from "@/hooks/api/battle-log/use-battle-log-api-client";
+import { queryKeys } from "@/lib/query-keys";
 import {
   battlelogApiClient,
   type ApiRequestConfig,
@@ -28,7 +29,7 @@ export const battleAnalyticsQueryOptions = (
   const { suppressRouteErrorToast = false, ...requestParams } = params;
 
   return queryOptions({
-    queryKey: ["battle-analytics", "@me", requestParams],
+    queryKey: queryKeys.battleLog.analytics(requestParams),
     queryFn: async () => {
       const response = await battlelogApiClient.get<BattleAnalytics>(
         `/battles/@me/analytics`,
@@ -37,7 +38,7 @@ export const battleAnalyticsQueryOptions = (
           suppressRouteErrorToast,
         } as ApiRequestConfig,
       );
-      return response.data;
+      return response;
     },
     staleTime: 0,
   });

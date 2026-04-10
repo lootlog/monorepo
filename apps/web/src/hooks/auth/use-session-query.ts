@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
+import { queryKeys } from "@/lib/query-keys";
 
 export function useSessionQuery() {
   return useQuery({
-    queryKey: ["session"],
+    queryKey: queryKeys.auth.session(),
     queryFn: () => authClient.getSession(),
     staleTime: 5 * 60 * 1000,
     retry: false,
@@ -11,7 +12,7 @@ export function useSessionQuery() {
 }
 
 export const sessionQueryOptions = {
-  queryKey: ["session"],
+  queryKey: queryKeys.auth.session(),
   queryFn: () => authClient.getSession(),
   staleTime: 5 * 60 * 1000,
   retry: false,

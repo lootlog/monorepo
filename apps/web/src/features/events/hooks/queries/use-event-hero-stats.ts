@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 export interface EventHeroStats {
   heroId: string;
@@ -20,12 +21,12 @@ export const useEventHeroStats = ({
   const { client } = useApiClient();
 
   return useQuery<EventHeroStats[]>({
-    queryKey: ["event-hero-stats", guildId, eventId],
+    queryKey: queryKeys.events.heroStats(guildId, eventId),
     queryFn: async () => {
       const response = await client.get<EventHeroStats[]>(
         `/guilds/${guildId}/events/${eventId}/hero-stats`,
       );
-      return response.data;
+      return response;
     },
     enabled: !!guildId && !!eventId,
   });

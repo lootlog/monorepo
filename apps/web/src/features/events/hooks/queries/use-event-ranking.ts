@@ -2,6 +2,7 @@ import { queryOptions, useQuery } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
 import { apiClient, type ApiRequestConfig } from "@/lib/api-client/api-client";
 import type { EventRanking } from "./use-events";
+import { queryKeys } from "@/lib/query-keys";
 
 interface UseEventRankingOptions {
   guildId: string;
@@ -15,7 +16,7 @@ export const eventRankingQueryOptions = ({
   suppressRouteErrorToast = false,
 }: UseEventRankingOptions) =>
   queryOptions({
-    queryKey: ["event-ranking", guildId, eventId],
+    queryKey: queryKeys.events.ranking(guildId, eventId),
     queryFn: async () => {
       const response = await apiClient.get<EventRanking[]>(
         `/guilds/${guildId}/events/${eventId}/ranking`,
@@ -23,7 +24,7 @@ export const eventRankingQueryOptions = ({
           suppressRouteErrorToast,
         } as ApiRequestConfig,
       );
-      return response.data;
+      return response;
     },
     enabled: !!guildId && !!eventId,
   });

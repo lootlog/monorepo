@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
+import { queryKeys } from "@/lib/query-keys";
 import type {
   HeroKill,
   KillParticipant,
@@ -38,7 +39,7 @@ export const useRecentHeroKills = ({
   const { client } = useApiClient();
 
   return useQuery<HeroKill[]>({
-    queryKey: ["recent-hero-kills", guildId, eventId, heroId, limit],
+    queryKey: queryKeys.events.recentHeroKills(guildId, eventId, heroId, limit),
     queryFn: async () => {
       const params = new URLSearchParams();
       params.set("limit", String(limit));
@@ -51,7 +52,7 @@ export const useRecentHeroKills = ({
         `${endpoint}?${params.toString()}`,
       );
 
-      return response.data.data.map((kill) => ({
+      return response.data.map((kill) => ({
         ...kill,
         participants: kill.points ?? [],
       }));
