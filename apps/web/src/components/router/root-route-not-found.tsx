@@ -8,7 +8,7 @@ export const RootRouteNotFound = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-dvh bg-background">
+    <div className="flex min-h-dvh bg-background">
       <RouteErrorState
         status={404}
         title={t("common.routeErrors.status.404.title")}
