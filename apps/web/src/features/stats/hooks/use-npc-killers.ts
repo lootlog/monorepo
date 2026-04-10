@@ -1,6 +1,6 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { apiClient, type ApiRequestConfig } from "@/lib/api-client/api-client";
+import { apiClient } from "@/lib/api-client/api-client";
 import { stringify } from "qs";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -33,15 +33,10 @@ export type NpcKillersParams = {
   world?: string;
 };
 
-type NpcKillersQueryOptionsOptions = {
-  suppressRouteErrorToast?: boolean;
-};
-
 export const npcKillersQueryOptions = (
   guildId: string,
   npcId: number | undefined,
   params: NpcKillersParams = {},
-  { suppressRouteErrorToast = false }: NpcKillersQueryOptionsOptions = {},
 ) => {
   const { limit = 50, world } = params;
   const queryParams = stringify(
@@ -54,9 +49,6 @@ export const npcKillersQueryOptions = (
     queryFn: async () => {
       const response = await apiClient.get<NpcKillersResponse>(
         `/guilds/${guildId}/stats/kills/npcs/${npcId}/killers${queryParams}`,
-        {
-          suppressRouteErrorToast,
-        } as ApiRequestConfig,
       );
       return response;
     },

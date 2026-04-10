@@ -63,7 +63,6 @@ export interface UseHeadToHeadParams {
   maxLevel?: number;
   ph?: boolean;
   matchmaking?: boolean;
-  suppressRouteErrorToast?: boolean;
 }
 
 const buildHeadToHeadSearchParams = (params?: UseHeadToHeadParams) => {
@@ -105,7 +104,6 @@ export const headToHeadQueryOptions = (params?: UseHeadToHeadParams) =>
       params
         ? {
             ...params,
-            suppressRouteErrorToast: undefined,
           }
         : undefined,
     ),
@@ -114,9 +112,7 @@ export const headToHeadQueryOptions = (params?: UseHeadToHeadParams) =>
 
       const response = await battlelogApiClient.get<GetHeadToHeadResponse>(
         `/battles/@me/statistics/head-to-head?${searchParams.toString()}`,
-        {
-          suppressRouteErrorToast: params?.suppressRouteErrorToast ?? false,
-        } as ApiRequestConfig,
+        {} as ApiRequestConfig,
       );
       return response;
     },

@@ -82,7 +82,6 @@ interface UseEventsOptions {
   world?: string;
   activeOnly?: boolean;
   enabled?: boolean;
-  suppressRouteErrorToast?: boolean;
 }
 
 export const useEvents = ({
@@ -90,7 +89,6 @@ export const useEvents = ({
   world,
   activeOnly = true,
   enabled = true,
-  suppressRouteErrorToast = false,
 }: UseEventsOptions) => {
   return useQuery(
     eventsQueryOptions({
@@ -98,7 +96,6 @@ export const useEvents = ({
       world,
       activeOnly,
       enabled,
-      suppressRouteErrorToast,
     }),
   );
 };
@@ -108,7 +105,6 @@ export const eventsQueryOptions = ({
   world,
   activeOnly = true,
   enabled = true,
-  suppressRouteErrorToast = false,
 }: UseEventsOptions) =>
   queryOptions({
     queryKey: queryKeys.events.list(guildId, world, activeOnly),
@@ -119,9 +115,7 @@ export const eventsQueryOptions = ({
 
       const response = await apiClient.get<Event[]>(
         `/guilds/${guildId}/events?${params.toString()}`,
-        {
-          suppressRouteErrorToast,
-        } as ApiRequestConfig,
+        {} as ApiRequestConfig,
       );
       return response;
     },

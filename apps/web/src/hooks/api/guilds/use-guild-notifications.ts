@@ -1,5 +1,5 @@
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { apiClient, type ApiRequestConfig } from "@/lib/api-client/api-client";
+import { apiClient } from "@/lib/api-client/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import {
   NotificationTargetType as NotificationTargetTypeEnum,
@@ -221,31 +221,16 @@ const invalidateGuildNotificationQueries = async (
   ]);
 };
 
-type GuildNotificationsQueryOptionsOptions = {
-  suppressRouteErrorToast?: boolean;
-};
-
-export const guildNotificationsQueryOptions = (
-  guildId: string,
-  {
-    suppressRouteErrorToast = false,
-  }: GuildNotificationsQueryOptionsOptions = {},
-) =>
+export const guildNotificationsQueryOptions = (guildId: string) =>
   queryOptions({
     queryKey: createGuildNotificationsQueryKey(guildId),
     queryFn: async () => {
       const [targetsResponse, rulesResponse] = await Promise.all([
         apiClient.get<GuildNotificationTarget[]>(
           `/guilds/${guildId}/notifications/targets`,
-          {
-            suppressRouteErrorToast,
-          } as ApiRequestConfig,
         ),
         apiClient.get<GuildNotificationRulesResponse>(
           `/guilds/${guildId}/notifications/rules`,
-          {
-            suppressRouteErrorToast,
-          } as ApiRequestConfig,
         ),
       ]);
 
@@ -258,20 +243,12 @@ export const guildNotificationsQueryOptions = (
     enabled: guildId.length > 0,
   });
 
-export const guildNotificationJobsQueryOptions = (
-  guildId: string,
-  {
-    suppressRouteErrorToast = false,
-  }: GuildNotificationsQueryOptionsOptions = {},
-) =>
+export const guildNotificationJobsQueryOptions = (guildId: string) =>
   queryOptions({
     queryKey: createGuildNotificationJobsQueryKey(guildId),
     queryFn: async () => {
       const response = await apiClient.get<GuildNotificationsResponse["jobs"]>(
         `/guilds/${guildId}/notifications/jobs`,
-        {
-          suppressRouteErrorToast,
-        } as ApiRequestConfig,
       );
 
       return response;
@@ -282,7 +259,6 @@ export const guildNotificationJobsQueryOptions = (
 export const guildAvailableNotificationTargetsQueryOptions = (
   guildId: string,
   enabled = true,
-  suppressRouteErrorToast = false,
 ) =>
   queryOptions({
     queryKey: createGuildAvailableNotificationTargetsQueryKey(guildId),
@@ -290,9 +266,6 @@ export const guildAvailableNotificationTargetsQueryOptions = (
       const response =
         await apiClient.get<GuildAvailableNotificationTargetsResponse>(
           `/guilds/${guildId}/notifications/targets/available`,
-          {
-            suppressRouteErrorToast,
-          } as ApiRequestConfig,
         );
 
       return response;

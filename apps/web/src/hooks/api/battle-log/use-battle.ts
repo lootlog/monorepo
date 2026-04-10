@@ -12,13 +12,11 @@ export type GetBattleResponse = Battle;
 export type UseBattleOptions = {
   battleId?: string;
   isPublic?: boolean;
-  suppressRouteErrorToast?: boolean;
 };
 
 export const battleQueryOptions = ({
   battleId,
   isPublic = false,
-  suppressRouteErrorToast = false,
 }: UseBattleOptions) => {
   const endpoint = isPublic
     ? `/battles/public/${battleId}`
@@ -29,9 +27,7 @@ export const battleQueryOptions = ({
     queryFn: async () => {
       const response = await battlelogApiClient.get<GetBattleResponse>(
         endpoint,
-        {
-          suppressRouteErrorToast,
-        } as ApiRequestConfig,
+        {} as ApiRequestConfig,
       );
       return response;
     },

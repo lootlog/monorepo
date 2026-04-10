@@ -8,19 +8,14 @@ export const Route = createFileRoute("/_authenticated/$guildId/reservations")({
   loader: async ({ context, params }) => {
     await Promise.all([
       context.queryClient.ensureQueryData(
-        reservationsQueryOptions(params.guildId, {
-          suppressRouteErrorToast: true,
-        }),
+        reservationsQueryOptions(params.guildId),
       ),
       context.queryClient.ensureQueryData(
-        reservationsCardsQueryOptions(params.guildId, {
-          suppressRouteErrorToast: true,
-        }),
+        reservationsCardsQueryOptions(params.guildId),
       ),
       context.queryClient.ensureQueryData(
         guildMembersQueryOptions(params.guildId, {
           includeInactive: true,
-          suppressRouteErrorToast: true,
         }),
       ),
     ]);

@@ -20,13 +20,12 @@ export type GetBattleAnalyticsParams = {
   period?: "24h" | "3d" | "7d" | "14d" | "30d" | "90d" | "180d";
   minLevel?: number;
   maxLevel?: number;
-  suppressRouteErrorToast?: boolean;
 };
 
 export const battleAnalyticsQueryOptions = (
   params: GetBattleAnalyticsParams = {},
 ) => {
-  const { suppressRouteErrorToast = false, ...requestParams } = params;
+  const requestParams = { ...params };
 
   return queryOptions({
     queryKey: queryKeys.battleLog.analytics(requestParams),
@@ -35,7 +34,6 @@ export const battleAnalyticsQueryOptions = (
         `/battles/@me/analytics`,
         {
           params: requestParams,
-          suppressRouteErrorToast,
         } as ApiRequestConfig,
       );
       return response;

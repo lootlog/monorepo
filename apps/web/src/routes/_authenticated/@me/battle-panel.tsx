@@ -4,11 +4,7 @@ import { battleCharactersQueryOptions } from "@/hooks/api/battle-log/use-battle-
 
 export const Route = createFileRoute("/_authenticated/@me/battle-panel")({
   loader: async ({ context }) => {
-    await context.queryClient.ensureQueryData(
-      battleCharactersQueryOptions({
-        suppressRouteErrorToast: true,
-      }),
-    );
+    await context.queryClient.ensureQueryData(battleCharactersQueryOptions());
 
     return null;
   },

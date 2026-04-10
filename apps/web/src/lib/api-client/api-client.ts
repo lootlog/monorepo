@@ -6,7 +6,6 @@ import {
   BATTLELOG_API_URL,
 } from "@/config/api";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
-import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 
 type ApiName = "default" | "battlelog" | "auth" | "activity";
@@ -20,7 +19,6 @@ type ApiRequestBody = unknown;
 
 export type ApiRequestConfig = Omit<RequestInit, "body" | "method"> & {
   params?: Record<string, unknown>;
-  suppressRouteErrorToast?: boolean;
 };
 
 export class ApiError<TData = unknown> extends Error {
@@ -211,27 +209,15 @@ const handleApiErrorSideEffects = ({
   status,
   data,
   isPublicEndpoint,
-  suppressRouteErrorToast,
 }: {
   status?: number;
   data: unknown;
   isPublicEndpoint: boolean;
-  suppressRouteErrorToast: boolean;
 }) => {
   const requiresReauth = isApiErrorData(data) && data.requiresReauth === true;
 
   if ((status === 401 || requiresReauth) && !isPublicEndpoint) {
-    toast.error("Sesja wygasła. Przekierowywanie do logowania...");
     void handleReauthentication();
-    return;
-  }
-
-  if (status === 403 && !isPublicEndpoint && !suppressRouteErrorToast) {
-    toast.error("Brak dostępu");
-  }
-
-  if (status === 404 && !suppressRouteErrorToast) {
-    toast.error("Nie znaleziono");
   }
 };
 
@@ -244,13 +230,7 @@ const createApiClient = (api: ApiName): ApiClient => {
     body?: ApiRequestBody,
     config: ApiRequestConfig = {},
   ): Promise<T> => {
-    const {
-      params,
-      suppressRouteErrorToast = false,
-      headers: headerInit,
-      credentials,
-      ...requestInit
-    } = config;
+    const { params, headers: headerInit, credentials, ...requestInit } = config;
     const url = buildRequestUrl({ baseURL, path, params });
     const headers = new Headers(headerInit);
 
@@ -302,7 +282,6 @@ const createApiClient = (api: ApiName): ApiClient => {
       status: response.status,
       data: responseData,
       isPublicEndpoint: url.pathname.includes("/public/"),
-      suppressRouteErrorToast,
     });
 
     throw new ApiError({

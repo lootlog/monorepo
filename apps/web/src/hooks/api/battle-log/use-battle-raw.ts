@@ -35,13 +35,11 @@ export type GetBattleRawResponse = {
 export type UseBattleRawOptions = {
   battleId?: string;
   isPublic?: boolean;
-  suppressRouteErrorToast?: boolean;
 };
 
 export const battleRawQueryOptions = ({
   battleId,
   isPublic = false,
-  suppressRouteErrorToast = false,
 }: UseBattleRawOptions) => {
   const endpoint = isPublic
     ? `/battles/public/${battleId}/raw`
@@ -52,9 +50,7 @@ export const battleRawQueryOptions = ({
     queryFn: async () => {
       const response = await battlelogApiClient.get<GetBattleRawResponse>(
         endpoint,
-        {
-          suppressRouteErrorToast,
-        } as ApiRequestConfig,
+        {} as ApiRequestConfig,
       );
       return response;
     },

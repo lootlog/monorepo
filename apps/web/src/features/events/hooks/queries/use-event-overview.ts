@@ -38,22 +38,18 @@ export interface EventOverview {
 interface UseEventOverviewOptions {
   guildId: string;
   eventId: string;
-  suppressRouteErrorToast?: boolean;
 }
 
 export const eventOverviewQueryOptions = ({
   guildId,
   eventId,
-  suppressRouteErrorToast = false,
 }: UseEventOverviewOptions) =>
   queryOptions({
     queryKey: queryKeys.events.overview(guildId, eventId),
     queryFn: async () => {
       const response = await apiClient.get<EventOverview>(
         `/guilds/${guildId}/events/${eventId}/overview`,
-        {
-          suppressRouteErrorToast,
-        } as ApiRequestConfig,
+        {} as ApiRequestConfig,
       );
       return response;
     },
@@ -63,7 +59,6 @@ export const eventOverviewQueryOptions = ({
 export const useEventOverview = ({
   guildId,
   eventId,
-  suppressRouteErrorToast = false,
 }: UseEventOverviewOptions) => {
   useApiClient();
 
@@ -71,7 +66,6 @@ export const useEventOverview = ({
     eventOverviewQueryOptions({
       guildId,
       eventId,
-      suppressRouteErrorToast,
     }),
   );
 };

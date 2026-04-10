@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ActivityLogs } from "@/features/activity-logs/activity-logs";
 import { ActivityLogsPageSkeleton } from "@/features/activity-logs/activity-logs-page-skeleton";
 import { activityLogsInfiniteQueryOptions } from "@/hooks/api/activity-logs/use-activity-logs";
-import { activitySuggestionsQueryOptions } from "@/hooks/api/activity-logs/use-activity-suggestions";
+import { activityWorldSuggestionsQueryOptions } from "@/hooks/api/activity-logs/use-activity-world-suggestions";
 
 const getSearchParamValues = (searchParams: URLSearchParams, key: string) => {
   const values = searchParams.getAll(key).filter(Boolean);
@@ -34,16 +34,12 @@ export const Route = createFileRoute("/_authenticated/$guildId/activity-logs")({
           clanName,
           world,
           limit: 20,
-          suppressRouteErrorToast: true,
         }),
       ),
       context.queryClient.ensureQueryData(
-        activitySuggestionsQueryOptions({
-          endpoint: "world-suggestions",
+        activityWorldSuggestionsQueryOptions({
           guildId: params.guildId,
           limit: 20,
-          requireSearch: false,
-          suppressRouteErrorToast: true,
         }),
       ),
     ]);

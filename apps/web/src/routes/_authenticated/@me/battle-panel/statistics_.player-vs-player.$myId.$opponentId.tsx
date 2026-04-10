@@ -26,7 +26,6 @@ export const Route = createFileRoute(
         maxLevel: search.maxLevel,
         size: 20,
         includeTotal: true,
-        suppressRouteErrorToast: true,
       }),
     );
 

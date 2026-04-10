@@ -25,7 +25,6 @@ interface UseRatingDeltaByOpponentParams {
   period?: string;
   minLevel?: number;
   maxLevel?: number;
-  suppressRouteErrorToast?: boolean;
 }
 
 export const ratingDeltaByOpponentQueryOptions = (
@@ -34,15 +33,13 @@ export const ratingDeltaByOpponentQueryOptions = (
   queryOptions({
     queryKey: queryKeys.battleLog.ratingDeltaByOpponent({
       ...params,
-      suppressRouteErrorToast: undefined,
     }),
     queryFn: async () => {
-      const { suppressRouteErrorToast = false, ...requestParams } = params;
+      const requestParams = { ...params };
       const response = await battlelogApiClient.get<
         RatingDeltaByOpponentRecord[]
       >("/battles/@me/statistics/rating-delta-by-opponent", {
         params: requestParams,
-        suppressRouteErrorToast,
       } as ApiRequestConfig);
       return response;
     },

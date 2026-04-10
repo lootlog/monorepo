@@ -18,21 +18,15 @@ export const Route = createFileRoute("/_authenticated/$guildId")({
   loader: async ({ context, params }) => {
     try {
       const guild = await context.queryClient.ensureQueryData(
-        guildQueryOptions(params.guildId, {
-          suppressRouteErrorToast: true,
-        }),
+        guildQueryOptions(params.guildId),
       );
 
       const [guildMember, permissions] = await Promise.all([
         context.queryClient.ensureQueryData(
-          guildMemberQueryOptions(params.guildId, {
-            suppressRouteErrorToast: true,
-          }),
+          guildMemberQueryOptions(params.guildId),
         ),
         context.queryClient.ensureQueryData(
-          guildPermissionsQueryOptions(params.guildId, {
-            suppressRouteErrorToast: true,
-          }),
+          guildPermissionsQueryOptions(params.guildId),
         ),
       ]);
 

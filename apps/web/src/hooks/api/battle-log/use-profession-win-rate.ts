@@ -19,7 +19,6 @@ interface UseProfessionWinRateParams {
   maxLevel?: number;
   ph?: boolean;
   matchmaking?: boolean;
-  suppressRouteErrorToast?: boolean;
 }
 
 export const professionWinRateQueryOptions = (
@@ -30,7 +29,6 @@ export const professionWinRateQueryOptions = (
       queryKey: "profession-win-rate",
       endpoint: "/battles/@me/statistics/profession-win-rate",
       params,
-      suppressRouteErrorToast: params.suppressRouteErrorToast,
     },
   );
 

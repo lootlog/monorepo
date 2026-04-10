@@ -15,14 +15,12 @@ export const Route = createFileRoute(
           eventOverviewQueryOptions({
             guildId: params.guildId,
             eventId: params.eventId,
-            suppressRouteErrorToast: true,
           }),
         ),
         context.queryClient.ensureQueryData(
           eventRankingQueryOptions({
             guildId: params.guildId,
             eventId: params.eventId,
-            suppressRouteErrorToast: true,
           }),
         ),
       ]);

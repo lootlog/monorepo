@@ -13,14 +13,12 @@ export const Route = createFileRoute("/battles/$id")({
           battleQueryOptions({
             battleId: params.id,
             isPublic: true,
-            suppressRouteErrorToast: true,
           }),
         ),
         context.queryClient.ensureQueryData(
           battleRawQueryOptions({
             battleId: params.id,
             isPublic: true,
-            suppressRouteErrorToast: true,
           }),
         ),
       ]);

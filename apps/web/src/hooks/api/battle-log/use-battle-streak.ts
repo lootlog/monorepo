@@ -24,22 +24,19 @@ interface UseBattleStreakParams {
   maxLevel?: number;
   ph?: boolean;
   matchmaking?: boolean;
-  suppressRouteErrorToast?: boolean;
 }
 
 export const battleStreakQueryOptions = (params: UseBattleStreakParams) =>
   queryOptions({
     queryKey: queryKeys.battleLog.streak({
       ...params,
-      suppressRouteErrorToast: undefined,
     }),
     queryFn: async () => {
-      const { suppressRouteErrorToast = false, ...requestParams } = params;
+      const requestParams = { ...params };
       const response = await battlelogApiClient.get<Streak>(
         "/battles/@me/statistics/streak",
         {
           params: requestParams,
-          suppressRouteErrorToast,
         } as ApiRequestConfig,
       );
       return response;
