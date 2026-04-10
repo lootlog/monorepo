@@ -1,4 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { SignIn } from "@/features/signin/signin";
 import { sessionQueryOptions } from "@/hooks/auth/use-session-query";
 import { SigninPageSkeleton } from "@/features/signin/signin-page-skeleton";
 import { z } from "zod";
@@ -8,6 +9,7 @@ const signinSearchSchema = z.object({
 });
 
 export const Route = createFileRoute("/signin")({
+  component: SignIn,
   pendingComponent: SigninPageSkeleton,
   validateSearch: signinSearchSchema,
   beforeLoad: async ({ context, search }) => {

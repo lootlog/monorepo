@@ -48,8 +48,6 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
           <Link
             to="/$guildId/events/$eventId"
             params={{ guildId, eventId: featuredEvent.id }}
-            preload="intent"
-            preloadDelay={0}
             onClick={onNavigate}
             className="block"
           >
@@ -124,8 +122,6 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
                       <Link
                         to="/$guildId/events/$eventId"
                         params={{ guildId, eventId: event.id }}
-                        preload="intent"
-                        preloadDelay={0}
                         onClick={onNavigate}
                         className="block"
                       >
