@@ -1,5 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 import { useBattleLogApiClient } from "@/hooks/api/battle-log/use-battle-log-api-client";
+import {
+  battlelogApiClient,
+  type ApiRequestConfig,
+} from "@/lib/api-client/api-client";
 
 export interface HeadToHeadRecord {
   opponentId: string;
@@ -58,46 +62,69 @@ export interface UseHeadToHeadParams {
   maxLevel?: number;
   ph?: boolean;
   matchmaking?: boolean;
+  suppressRouteErrorToast?: boolean;
 }
 
-export function useHeadToHead(params?: UseHeadToHeadParams) {
-  const { client } = useBattleLogApiClient();
+const buildHeadToHeadSearchParams = (params?: UseHeadToHeadParams) => {
   const size = params?.size ?? 20;
   const sortBy = params?.sortBy ?? "totalBattles";
   const sortOrder = params?.sortOrder ?? "desc";
 
-  const query = useQuery({
-    queryKey: ["head-to-head", params],
-    queryFn: () => {
-      const searchParams = new URLSearchParams({
-        size: size.toString(),
-        sortBy,
-        sortOrder,
-      });
+  const searchParams = new URLSearchParams({
+    size: size.toString(),
+    sortBy,
+    sortOrder,
+  });
 
-      if (params?.cursor) searchParams.append("cursor", params.cursor);
-      if (params?.includeTotal) searchParams.append("includeTotal", "true");
-      if (params?.characterId)
-        searchParams.append("characterId", params.characterId);
-      if (params?.world) searchParams.append("world", params.world);
-      if (params?.period) searchParams.append("period", params.period);
-      if (params?.search) searchParams.append("search", params.search);
-      if (params?.minBattles)
-        searchParams.append("minBattles", params.minBattles.toString());
-      if (params?.minLevel)
-        searchParams.append("minLevel", params.minLevel.toString());
-      if (params?.maxLevel)
-        searchParams.append("maxLevel", params.maxLevel.toString());
-      if (params?.ph) searchParams.append("ph", "true");
-      if (params?.matchmaking) searchParams.append("matchmaking", "true");
+  if (params?.cursor) searchParams.append("cursor", params.cursor);
+  if (params?.includeTotal) searchParams.append("includeTotal", "true");
+  if (params?.characterId)
+    searchParams.append("characterId", params.characterId);
+  if (params?.world) searchParams.append("world", params.world);
+  if (params?.period) searchParams.append("period", params.period);
+  if (params?.search) searchParams.append("search", params.search);
+  if (params?.minBattles) {
+    searchParams.append("minBattles", params.minBattles.toString());
+  }
+  if (params?.minLevel) {
+    searchParams.append("minLevel", params.minLevel.toString());
+  }
+  if (params?.maxLevel) {
+    searchParams.append("maxLevel", params.maxLevel.toString());
+  }
+  if (params?.ph) searchParams.append("ph", "true");
+  if (params?.matchmaking) searchParams.append("matchmaking", "true");
 
-      return client.get<GetHeadToHeadResponse>(
+  return searchParams;
+};
+
+export const headToHeadQueryOptions = (params?: UseHeadToHeadParams) =>
+  queryOptions({
+    queryKey: [
+      "head-to-head",
+      params
+        ? {
+            ...params,
+            suppressRouteErrorToast: undefined,
+          }
+        : undefined,
+    ],
+    queryFn: async () => {
+      const searchParams = buildHeadToHeadSearchParams(params);
+
+      const response = await battlelogApiClient.get<GetHeadToHeadResponse>(
         `/battles/@me/statistics/head-to-head?${searchParams.toString()}`,
+        {
+          suppressRouteErrorToast: params?.suppressRouteErrorToast ?? false,
+        } as ApiRequestConfig,
       );
+      return response.data;
     },
-    select: (response) => response.data,
     staleTime: 0,
   });
 
-  return query;
+export function useHeadToHead(params?: UseHeadToHeadParams) {
+  useBattleLogApiClient();
+
+  return useQuery(headToHeadQueryOptions(params));
 }

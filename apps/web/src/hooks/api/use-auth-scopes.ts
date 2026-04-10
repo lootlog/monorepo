@@ -1,5 +1,8 @@
 import { useQuery, queryOptions } from "@tanstack/react-query";
-import { authApiClient } from "@/lib/api-client/api-client";
+import {
+  authApiClient,
+  type ApiRequestConfig,
+} from "@/lib/api-client/api-client";
 
 const normalizeAuthScopes = (data: unknown): string[] => {
   if (Array.isArray(data)) {
@@ -13,16 +16,27 @@ const normalizeAuthScopes = (data: unknown): string[] => {
   return [];
 };
 
-export const authScopesQueryOptions = queryOptions({
-  queryKey: ["auth-scopes"],
-  queryFn: () =>
-    authApiClient.get<unknown>(`/auth/@me/scopes`).then((res) => res.data),
-  select: normalizeAuthScopes,
-});
+type AuthScopesQueryOptionsOptions = {
+  suppressRouteErrorToast?: boolean;
+};
+
+export const authScopesQueryOptions = ({
+  suppressRouteErrorToast = false,
+}: AuthScopesQueryOptionsOptions = {}) =>
+  queryOptions({
+    queryKey: ["auth-scopes"],
+    queryFn: () =>
+      authApiClient
+        .get<unknown>(`/auth/@me/scopes`, {
+          suppressRouteErrorToast,
+        } as ApiRequestConfig)
+        .then((res) => res.data),
+    select: normalizeAuthScopes,
+  });
 
 export const useAuthScopes = () => {
   const query = useQuery({
-    ...authScopesQueryOptions,
+    ...authScopesQueryOptions(),
   });
 
   return query;

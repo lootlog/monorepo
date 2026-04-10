@@ -1,6 +1,6 @@
 import { useQuery, queryOptions } from "@tanstack/react-query";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { apiClient } from "@/lib/api-client/api-client";
+import { apiClient, type ApiRequestConfig } from "@/lib/api-client/api-client";
 import type { Permission } from "@lootlog/types";
 
 export type GuildRole = {
@@ -14,12 +14,22 @@ export type GuildRole = {
   position?: number;
 };
 
-export const guildRolesQueryOptions = (guildId: string) =>
+type GuildRolesQueryOptionsOptions = {
+  suppressRouteErrorToast?: boolean;
+};
+
+export const guildRolesQueryOptions = (
+  guildId: string,
+  { suppressRouteErrorToast = false }: GuildRolesQueryOptionsOptions = {},
+) =>
   queryOptions({
     queryKey: ["guild-roles", guildId],
     queryFn: async () => {
       const response = await apiClient.get<GuildRole[]>(
         `/guilds/${guildId}/roles`,
+        {
+          suppressRouteErrorToast,
+        } as ApiRequestConfig,
       );
       return response.data;
     },

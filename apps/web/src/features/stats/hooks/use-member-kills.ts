@@ -1,6 +1,10 @@
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { useApiClient } from "@/hooks/api/use-api-client";
+import {
+  keepPreviousData,
+  queryOptions,
+  useQuery,
+} from "@tanstack/react-query";
 import { useGuildId } from "@/hooks/context/use-guild-id";
+import { apiClient, type ApiRequestConfig } from "@/lib/api-client/api-client";
 import { stringifyQueryParams } from "@/lib/stringify-query-params";
 import type { KillsByType, NpcType } from "./use-guild-kill-stats";
 
@@ -50,13 +54,16 @@ export type MemberKillsFilters = {
   maxLvl?: number;
 };
 
-export const useMemberKills = (
+type MemberKillsQueryOptionsOptions = {
+  suppressRouteErrorToast?: boolean;
+};
+
+export const memberKillsQueryOptions = (
+  guildId: string,
   memberId: number | undefined,
   filters: MemberKillsFilters = {},
+  { suppressRouteErrorToast = false }: MemberKillsQueryOptionsOptions = {},
 ) => {
-  const guildId = useGuildId();
-  const { client } = useApiClient();
-
   const queryParams = {
     world: filters.world || undefined,
     npcTypes: filters.npcTypes?.join(",") || undefined,
@@ -69,16 +76,28 @@ export const useMemberKills = (
 
   const queryString = stringifyQueryParams(queryParams);
 
-  return useQuery({
+  return queryOptions({
     queryKey: ["member-kills", guildId, memberId, queryString],
     queryFn: async () => {
-      const response = await client.get<MemberKillsResponse>(
+      const response = await apiClient.get<MemberKillsResponse>(
         `/guilds/${guildId}/stats/kills/members/${memberId}${queryString ? `?${queryString}` : ""}`,
+        {
+          suppressRouteErrorToast,
+        } as ApiRequestConfig,
       );
       return response.data;
     },
-    enabled: Boolean(guildId) && memberId !== undefined,
+    enabled: !!guildId && memberId !== undefined,
     staleTime: 30000,
     placeholderData: keepPreviousData,
   });
+};
+
+export const useMemberKills = (
+  memberId: number | undefined,
+  filters: MemberKillsFilters = {},
+) => {
+  const guildId = useGuildId();
+
+  return useQuery(memberKillsQueryOptions(guildId ?? "", memberId, filters));
 };

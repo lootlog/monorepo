@@ -13,20 +13,22 @@ import { useRef } from "react";
 import { useTheme } from "@/hooks/context/use-theme";
 import { CatEmptyStateIcon } from "@/components/ui/cat-empty-state-icon";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { useGuild } from "@/hooks/api/guilds/use-guild";
 import {
   useResetScrollTop,
   useVirtualInfiniteScroll,
 } from "@/hooks/utils/use-virtual-infinite-scroll";
 import { useTranslation } from "react-i18next";
+import { useParams } from "@tanstack/react-router";
 
 const ACTIVITY_LOGS_PAGE_LIMIT = 20;
 
 export const ActivityLogsList = () => {
   const { t } = useTranslation();
+  const { guildId } = useParams({
+    from: "/_authenticated/$guildId/activity-logs",
+  });
   const { theme } = useTheme();
   const isCatTheme = theme.startsWith("cat-");
-  const { data: guild } = useGuild();
   const { filters } = useActivityLogsFilters();
   const scrollElementRef = useRef<HTMLDivElement>(null);
 
@@ -38,7 +40,7 @@ export const ActivityLogsList = () => {
     isLoading,
     error,
   } = useActivityLogs({
-    guildId: guild?.id,
+    guildId,
     types:
       filters.types.length > 0 ? (filters.types as ActivityType[]) : undefined,
     sources:
@@ -68,7 +70,7 @@ export const ActivityLogsList = () => {
   const virtualItems = virtualizer.getVirtualItems();
   const activityLogsResetKey = JSON.stringify({
     filters,
-    guildId: guild?.id ?? "",
+    guildId,
   });
 
   useVirtualInfiniteScroll({

@@ -1,7 +1,7 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import type { GuildRole } from "@/hooks/api/guilds/use-guild-roles";
-import { apiClient } from "@/lib/api-client/api-client";
+import { apiClient, type ApiRequestConfig } from "@/lib/api-client/api-client";
 
 export type GuildMember = {
   id: number;
@@ -22,12 +22,22 @@ export const useGuildMember = () => {
   return useQuery(guildMemberQueryOptions(guildId ?? ""));
 };
 
-export const guildMemberQueryOptions = (guildId: string) =>
+type GuildMemberQueryOptionsOptions = {
+  suppressRouteErrorToast?: boolean;
+};
+
+export const guildMemberQueryOptions = (
+  guildId: string,
+  { suppressRouteErrorToast = false }: GuildMemberQueryOptionsOptions = {},
+) =>
   queryOptions({
     queryKey: ["member", guildId, "@me"],
     queryFn: async () => {
       const response = await apiClient.get<GuildMember>(
         `/guilds/${guildId}/members/@me`,
+        {
+          suppressRouteErrorToast,
+        } as ApiRequestConfig,
       );
 
       return response.data;

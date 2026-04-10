@@ -9,6 +9,8 @@ import { persister } from "@/lib/query-client";
 import type { RouterContext } from "@/App";
 import { CatSpinnerProvider } from "@/contexts/cat-spinner-provider";
 import { ThemedRukiaFrostOverlay } from "@/components/effects/themed-rukia-frost-overlay";
+import { RootRouteError } from "@/components/router/root-route-error";
+import { RootRouteNotFound } from "@/components/router/root-route-not-found";
 
 import "@lootlog/ui/globals.css";
 import "@/i18n/config";
@@ -49,4 +51,6 @@ function RootComponent() {
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   component: RootComponent,
+  errorComponent: RootRouteError,
+  notFoundComponent: RootRouteNotFound,
 });

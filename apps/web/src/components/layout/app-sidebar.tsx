@@ -1,6 +1,5 @@
 import { GuildsSelector } from "@/components/layout/guilds-selector";
 import { UserMenu } from "@/components/layout/user-menu";
-import { UserSidebarNav } from "@/components/layout/user-sidebar-nav";
 import {
   Sidebar,
   SidebarContent,
@@ -9,17 +8,21 @@ import {
   SidebarGroupContent,
   SidebarMenu,
 } from "@lootlog/ui/components/sidebar";
-import type { FC } from "react";
+import type { ReactNode } from "react";
 
-export const UserSidebar: FC = () => {
+type AppSidebarProps = {
+  navigation?: ReactNode;
+};
+
+export const AppSidebar = ({ navigation }: AppSidebarProps) => {
   return (
     <Sidebar>
-      <SidebarContent className="bg-sidebar h-full">
-        <SidebarGroup className="p-0 h-full">
+      <SidebarContent className="h-full bg-sidebar">
+        <SidebarGroup className="h-full p-0">
           <SidebarGroupContent className="h-full">
-            <SidebarMenu className="flex flex-row h-full gap-0">
+            <SidebarMenu className="flex h-full flex-row gap-0">
               <GuildsSelector />
-              <UserSidebarNav />
+              {navigation ?? <div className="flex-1 bg-sidebar" />}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

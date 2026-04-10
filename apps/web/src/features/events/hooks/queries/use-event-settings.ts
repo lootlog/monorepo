@@ -1,18 +1,28 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import type { UserGuildEventSettings } from "@lootlog/types";
-import { apiClient } from "@/lib/api-client/api-client";
+import { apiClient, type ApiRequestConfig } from "@/lib/api-client/api-client";
 
 export const eventSettingsQueryKey = (guildId: string) => [
   "event-settings",
   guildId,
 ];
 
-export const eventSettingsQueryOptions = (guildId: string) =>
+type EventSettingsQueryOptionsOptions = {
+  suppressRouteErrorToast?: boolean;
+};
+
+export const eventSettingsQueryOptions = (
+  guildId: string,
+  { suppressRouteErrorToast = false }: EventSettingsQueryOptionsOptions = {},
+) =>
   queryOptions({
     queryKey: eventSettingsQueryKey(guildId),
     queryFn: async () => {
       const response = await apiClient.get<UserGuildEventSettings>(
         `/guilds/${guildId}/event-settings`,
+        {
+          suppressRouteErrorToast,
+        } as ApiRequestConfig,
       );
       return response.data;
     },

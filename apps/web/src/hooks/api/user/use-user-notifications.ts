@@ -7,7 +7,7 @@ import {
   useQuery,
   type QueryClient,
 } from "@tanstack/react-query";
-import { apiClient } from "@/lib/api-client/api-client";
+import { apiClient, type ApiRequestConfig } from "@/lib/api-client/api-client";
 
 export type UserNotificationTargetTestTrigger = {
   limit: number;
@@ -72,16 +72,28 @@ export const invalidateUserNotificationQueries = async (
   });
 };
 
-export const userNotificationsQueryOptions = () =>
+type UserNotificationsQueryOptionsOptions = {
+  suppressRouteErrorToast?: boolean;
+};
+
+export const userNotificationsQueryOptions = ({
+  suppressRouteErrorToast = false,
+}: UserNotificationsQueryOptionsOptions = {}) =>
   queryOptions({
     queryKey: createUserNotificationsQueryKey(),
     queryFn: async () => {
       const [targetsResponse, watchedItemsResponse] = await Promise.all([
         apiClient.get<UserNotificationTarget[]>(
           "/users/@me/notifications/targets",
+          {
+            suppressRouteErrorToast,
+          } as ApiRequestConfig,
         ),
         apiClient.get<UserWatchedItem[]>(
           "/users/@me/notifications/watched-items",
+          {
+            suppressRouteErrorToast,
+          } as ApiRequestConfig,
         ),
       ]);
 

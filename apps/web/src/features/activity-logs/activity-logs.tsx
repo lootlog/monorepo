@@ -13,15 +13,17 @@ import {
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { useLocalStorage } from "usehooks-ts";
 import { useActivityWorldSuggestions } from "@/hooks/api/activity-logs/use-activity-world-suggestions";
-import { useGuild } from "@/hooks/api/guilds/use-guild";
 import { Button } from "@lootlog/ui/components/button";
 import { Filter } from "lucide-react";
+import { useParams } from "@tanstack/react-router";
 
 const FILTERS_OPEN_KEY = "activity-logs-filters-open";
 
 export const ActivityLogs: FC = () => {
+  const { guildId } = useParams({
+    from: "/_authenticated/$guildId/activity-logs",
+  });
   const { filters, setFilters, hasActiveFilters } = useActivityLogsFilters();
-  const { data: guild } = useGuild();
   const [isFiltersOpen, setIsFiltersOpen] = useLocalStorage(
     FILTERS_OPEN_KEY,
     true,
@@ -30,7 +32,7 @@ export const ActivityLogs: FC = () => {
   const isMobile = useIsMobile();
 
   const { data: worldSuggestions = [] } = useActivityWorldSuggestions({
-    guildId: guild?.id,
+    guildId,
   });
 
   const handleOpenSidebar = () => {

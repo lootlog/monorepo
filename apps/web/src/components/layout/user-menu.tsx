@@ -13,9 +13,6 @@ import { LogOut, Settings, User2 } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { authClient } from "@/lib/auth-client";
 import { useUser } from "@/hooks/api/user/use-user";
-import { useGuildMember } from "@/hooks/api/members/use-guild-member";
-import { useGuildId } from "@/hooks/context/use-guild-id";
-import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { useNavigate } from "@tanstack/react-router";
 import { ROUTES } from "@/config/routes";
 import { persister } from "@/lib/query-client";
@@ -23,16 +20,8 @@ import { useQueryClient } from "@tanstack/react-query";
 
 export const UserMenu = () => {
   const { user, isPending } = useUser();
-  const guildId = useGuildId();
-  const { data: member } = useGuildMember();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-
-  const displayName = guildId && member ? member.name : user?.name;
-  const displayImage =
-    guildId && member
-      ? getDiscordAvatarUrl(member.userId, member.avatar)
-      : (user?.image ?? undefined);
 
   const handleLogout = async () => {
     await authClient.signOut();
@@ -61,7 +50,7 @@ export const UserMenu = () => {
             <DropdownMenuTrigger asChild>
               <div className="flex flex-row gap-4 items-center">
                 <Avatar className="cursor-pointer size-8 rounded-full">
-                  <AvatarImage src={displayImage} />
+                  <AvatarImage src={user?.image ?? undefined} />
                   <AvatarFallback>
                     <User2 className="h-4 w-4" />
                   </AvatarFallback>
@@ -81,7 +70,7 @@ export const UserMenu = () => {
             </DropdownMenuContent>
           </DropdownMenu>
           <div className="h-full flex items-center">
-            <span className="text-sm font-semibold">{displayName}</span>
+            <span className="text-sm font-semibold">{user.name}</span>
           </div>
         </div>
       )}

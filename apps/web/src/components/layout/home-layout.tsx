@@ -1,9 +1,9 @@
-import { UserSidebar } from "@/components/layout/user-sidebar";
+import { AppSidebar } from "@/components/layout/app-sidebar";
 import {
   SidebarProvider,
   SidebarTrigger,
 } from "@lootlog/ui/components/sidebar";
-import { useState, type FC } from "react";
+import { useState, type FC, type ReactNode } from "react";
 import { Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { PageHeader } from "@/components/layout/page-header";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -13,8 +13,13 @@ import { ROUTES } from "@/config/routes";
 import { useTheme } from "@/hooks/context/use-theme";
 import { FrozenButton } from "@/components/effects/rukia-frost";
 import { useTranslation } from "react-i18next";
+import { UserSidebarNav } from "@/components/layout/user-sidebar-nav";
 
-export const HomeLayout: FC = () => {
+type HomeLayoutProps = {
+  children?: ReactNode;
+};
+
+export const HomeLayout: FC<HomeLayoutProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { theme } = useTheme();
@@ -154,11 +159,13 @@ export const HomeLayout: FC = () => {
   };
 
   const navInfo = getNavigationInfo();
+  const content = children ?? <Outlet />;
+  const sidebarNavigation = <UserSidebarNav />;
 
   return (
     <div className="h-full max-h-full overflow-hidden flex flex-row">
       <SidebarProvider>
-        <UserSidebar />
+        <AppSidebar navigation={sidebarNavigation} />
         <div className="flex flex-row w-full h-full min-h-0">
           <div className="w-full h-full flex flex-col min-h-0">
             <PageHeader>
@@ -265,14 +272,10 @@ export const HomeLayout: FC = () => {
               `${ROUTES.user.battlePanel.statistics}/player-vs-player/`,
             ) ||
             location.pathname === "/@me/kills" ? (
-              <div className="flex-1 min-h-0 overflow-auto">
-                <Outlet />
-              </div>
+              <div className="flex-1 min-h-0 overflow-auto">{content}</div>
             ) : (
               <ScrollArea className="flex-1 min-h-0 flex flex-col gap-4 w-full max-w-full h-full">
-                <div className="h-full">
-                  <Outlet />
-                </div>
+                <div className="h-full">{content}</div>
               </ScrollArea>
             )}
           </div>

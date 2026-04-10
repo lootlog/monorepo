@@ -1,5 +1,9 @@
 import { useActivityApiClient } from "@/hooks/api/activity-logs/use-activity-log-api-client";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { infiniteQueryOptions, useInfiniteQuery } from "@tanstack/react-query";
+import {
+  activityApiClient,
+  type ApiRequestConfig,
+} from "@/lib/api-client/api-client";
 import {
   createSerializer,
   parseAsInteger,
@@ -68,6 +72,7 @@ export type UseActivityLogsOptions = {
   world?: string;
   limit?: number;
   name?: string;
+  suppressRouteErrorToast?: boolean;
 };
 
 const serializeActivityLogsQuery = createSerializer({
@@ -82,8 +87,9 @@ const serializeActivityLogsQuery = createSerializer({
   cursor: parseAsString,
 });
 
-export const useActivityLogs = (options: UseActivityLogsOptions) => {
-  const { client } = useActivityApiClient();
+export const activityLogsInfiniteQueryOptions = (
+  options: UseActivityLogsOptions,
+) => {
   const {
     guildId,
     types,
@@ -94,6 +100,7 @@ export const useActivityLogs = (options: UseActivityLogsOptions) => {
     world,
     limit = 20,
     name,
+    suppressRouteErrorToast = false,
   } = options;
 
   const buildQueryString = (cursor?: string) =>
@@ -111,15 +118,18 @@ export const useActivityLogs = (options: UseActivityLogsOptions) => {
 
   const baseQueryString = buildQueryString();
 
-  const query = useInfiniteQuery({
+  return infiniteQueryOptions({
     queryKey: ["activity-logs", guildId, baseQueryString],
     queryFn: ({ pageParam }) => {
       const queryString = buildQueryString(
         pageParam ? (pageParam as string) : undefined,
       );
 
-      return client.get<PaginatedActivitiesResponse>(
+      return activityApiClient.get<PaginatedActivitiesResponse>(
         `/guilds/${guildId}/activity-logs${queryString}`,
+        {
+          suppressRouteErrorToast,
+        } as ApiRequestConfig,
       );
     },
     enabled: !!guildId,
@@ -129,6 +139,10 @@ export const useActivityLogs = (options: UseActivityLogsOptions) => {
       return lastPage.data.hasMore ? lastPage.data.nextCursor : undefined;
     },
   });
+};
 
-  return query;
+export const useActivityLogs = (options: UseActivityLogsOptions) => {
+  useActivityApiClient();
+
+  return useInfiniteQuery(activityLogsInfiniteQueryOptions(options));
 };
