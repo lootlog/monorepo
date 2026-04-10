@@ -20,35 +20,42 @@ import { Button } from "@lootlog/ui/components/button";
 import { ArrowRight } from "lucide-react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ROUTES } from "@/config/routes";
-import { useBattleFiltersStore } from "@/store/battle-filters.store";
 import type { RatingDeltaByOpponentRecord } from "@/hooks/api/battle-log/use-rating-delta-by-opponent";
+
+type RatingDeltaByOpponentCardSearch = {
+  characterId?: string;
+  period: string;
+  minLevel: number;
+  maxLevel: number;
+};
 
 interface RatingDeltaByOpponentCardProps {
   data: RatingDeltaByOpponentRecord[];
+  search: RatingDeltaByOpponentCardSearch;
   isLoading?: boolean;
 }
 
 export function RatingDeltaByOpponentCard({
   data,
+  search,
   isLoading,
 }: RatingDeltaByOpponentCardProps) {
   const navigate = useNavigate();
   const topData = useMemo(() => data.slice(0, 5), [data]);
-  const currentCharacterId = useBattleFiltersStore(
-    (state) => state.currentCharacterId,
-  );
 
   const handleRowClick = useCallback(
     (opponentId: string) => {
-      if (!currentCharacterId) return;
+      if (!search.characterId) return;
+
       navigate({
         to: ROUTES.user.battlePanel.playerVsPlayer(
-          currentCharacterId,
+          search.characterId,
           opponentId,
         ),
+        search: search as never,
       });
     },
-    [currentCharacterId, navigate],
+    [navigate, search],
   );
 
   const columns: ColumnDef<RatingDeltaByOpponentRecord>[] = useMemo(
@@ -210,7 +217,10 @@ export function RatingDeltaByOpponentCard({
         </div>
         <div className="flex justify-end pt-4 mt-auto">
           <Button asChild variant="outline" size="sm">
-            <Link to={ROUTES.user.battlePanel.matchmakingH2h}>
+            <Link
+              to={ROUTES.user.battlePanel.matchmakingH2h}
+              search={search as never}
+            >
               Zobacz pełny bilans Otchłani
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>

@@ -1,12 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
-import {
-  useBattleFiltersStore,
-  type Period,
-} from "@/store/battle-filters.store";
+import type { Period } from "@/store/battle-filters.store";
 import {
   useReactTable,
   getCoreRowModel,
-  getSortedRowModel,
   flexRender,
   type SortingState,
 } from "@tanstack/react-table";
@@ -37,6 +32,11 @@ import { matchmakingH2HColumns } from "./components/matchmaking-h2h-columns";
 import { cn } from "@lootlog/ui/lib/utils";
 import { useNavigate } from "@tanstack/react-router";
 import { ROUTES } from "@/config/routes";
+import { useQueryStates } from "nuqs";
+import {
+  battlePanelHeadToHeadSearchParsers,
+  getSelectedWarriorsFromSearch,
+} from "@/features/battle-panel/battle-panel-statistics-search";
 
 type SortBy =
   | "wins"
@@ -49,46 +49,36 @@ type SortBy =
 
 export function MatchmakingH2HFullPage() {
   const navigate = useNavigate();
-  const currentCharacterId = useBattleFiltersStore(
-    (state) => state.currentCharacterId,
+  const [queryState, setQueryState] = useQueryStates(
+    battlePanelHeadToHeadSearchParsers,
   );
-  const setCurrentCharacterId = useBattleFiltersStore(
-    (state) => state.setCurrentCharacterId,
-  );
-
-  const filterPeriod = useBattleFiltersStore(
-    (state) => state.getFilters(state.currentCharacterId).period,
-  );
-  const minLevel = useBattleFiltersStore(
-    (state) => state.getFilters(state.currentCharacterId).minLevel,
-  );
-  const maxLevel = useBattleFiltersStore(
-    (state) => state.getFilters(state.currentCharacterId).maxLevel,
-  );
-
-  const [selectedWarriors, setSelectedWarriors] = useState<Warrior[]>([]);
-  const [sorting, setSorting] = useState<SortingState>([
-    { id: "totalBattles", desc: true },
-  ]);
-  const [cursor, setCursor] = useState<string | undefined>(undefined);
-  const period = filterPeriod || "30d";
+  const currentCharacterId = queryState.characterId ?? undefined;
+  const period = queryState.period ?? "30d";
+  const minLevel = queryState.minLevel;
+  const maxLevel = queryState.maxLevel;
+  const cursor = queryState.cursor ?? undefined;
+  const search = queryState.search ?? undefined;
+  const sortBy = queryState.sortBy ?? "totalBattles";
+  const sortOrder = queryState.sortOrder ?? "desc";
+  const selectedWarriors = getSelectedWarriorsFromSearch(search);
+  const sorting: SortingState = [{ id: sortBy, desc: sortOrder === "desc" }];
 
   const handleRowClick = (opponentId: string) => {
     if (!currentCharacterId) return;
+
     navigate({
       to: ROUTES.user.battlePanel.playerVsPlayer(
         currentCharacterId,
         opponentId,
       ),
+      search: {
+        characterId: currentCharacterId,
+        period,
+        minLevel,
+        maxLevel,
+      } as never,
     });
   };
-
-  const sortBy = (sorting[0]?.id || "totalBattles") as SortBy;
-  const sortOrder = sorting[0]?.desc ? "desc" : "asc";
-
-  useEffect(() => {
-    setCursor(undefined);
-  }, [minLevel, maxLevel]);
 
   const { data, isLoading } = useHeadToHead({
     cursor,
@@ -97,7 +87,7 @@ export function MatchmakingH2HFullPage() {
     sortOrder,
     characterId: currentCharacterId,
     period,
-    search: selectedWarriors[0]?.name,
+    search,
     minLevel,
     maxLevel,
     matchmaking: true,
@@ -105,59 +95,61 @@ export function MatchmakingH2HFullPage() {
   });
 
   const handleWarriorToggle = (warrior: Warrior) => {
-    setSelectedWarriors((prev) => {
-      const isSelected = prev.some((w) => w.name === warrior.name);
-      if (isSelected) {
-        return prev.filter((w) => w.name !== warrior.name);
-      }
-      return [warrior];
+    const isSelected = selectedWarriors.some(
+      (item) => item.name === warrior.name,
+    );
+    const nextSelectedWarriors = isSelected
+      ? selectedWarriors.filter((item) => item.name !== warrior.name)
+      : [warrior];
+
+    void setQueryState({
+      search:
+        nextSelectedWarriors.length > 0
+          ? nextSelectedWarriors.map((item) => item.name).join(",")
+          : null,
+      cursor: null,
     });
-    setCursor(undefined);
   };
 
   const handleNextPage = () => {
     if (data?.pagination.nextCursor) {
-      setCursor(data.pagination.nextCursor);
+      void setQueryState({ cursor: data.pagination.nextCursor });
     }
   };
 
   const handlePreviousPage = () => {
     if (data?.pagination.previousCursor) {
-      setCursor(data.pagination.previousCursor);
+      void setQueryState({ cursor: data.pagination.previousCursor });
     }
   };
 
   const handlePeriodChange = (value: Period) => {
-    const currentId = useBattleFiltersStore.getState().currentCharacterId;
-    useBattleFiltersStore
-      .getState()
-      .updateFilters(currentId, { period: value });
-    setCursor(undefined);
+    void setQueryState({
+      period: value,
+      cursor: null,
+    });
   };
 
-  const handleCharacterChange = useCallback(
-    (id: string | undefined) => {
-      setCurrentCharacterId(id);
-      setCursor(undefined);
-    },
-    [setCurrentCharacterId],
-  );
+  const handleCharacterChange = (id: string | undefined) => {
+    void setQueryState({
+      characterId: id ?? null,
+      cursor: null,
+    });
+  };
 
-  const handleMinLevelChange = useCallback((value: number | undefined) => {
-    const currentId = useBattleFiltersStore.getState().currentCharacterId;
-    useBattleFiltersStore
-      .getState()
-      .updateFilters(currentId, { minLevel: value });
-    setCursor(undefined);
-  }, []);
+  const handleMinLevelChange = (value: number | undefined) => {
+    void setQueryState({
+      minLevel: value ?? 1,
+      cursor: null,
+    });
+  };
 
-  const handleMaxLevelChange = useCallback((value: number | undefined) => {
-    const currentId = useBattleFiltersStore.getState().currentCharacterId;
-    useBattleFiltersStore
-      .getState()
-      .updateFilters(currentId, { maxLevel: value });
-    setCursor(undefined);
-  }, []);
+  const handleMaxLevelChange = (value: number | undefined) => {
+    void setQueryState({
+      maxLevel: value ?? 500,
+      cursor: null,
+    });
+  };
 
   const table = useReactTable({
     data: data?.records || [],
@@ -166,11 +158,17 @@ export function MatchmakingH2HFullPage() {
       sorting,
     },
     onSortingChange: (updater) => {
-      setSorting(updater);
-      setCursor(undefined);
+      const nextSorting =
+        typeof updater === "function" ? updater(sorting) : updater;
+      const nextSort = nextSorting[0];
+
+      void setQueryState({
+        sortBy: (nextSort?.id as SortBy | undefined) ?? "totalBattles",
+        sortOrder: nextSort?.desc ? "desc" : "asc",
+        cursor: null,
+      });
     },
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
     manualSorting: true,
   });
 

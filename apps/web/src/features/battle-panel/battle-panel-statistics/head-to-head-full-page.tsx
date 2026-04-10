@@ -1,12 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
-import {
-  useBattleFiltersStore,
-  type Period,
-} from "@/store/battle-filters.store";
+import { useState } from "react";
+import type { Period } from "@/store/battle-filters.store";
 import {
   useReactTable,
   getCoreRowModel,
-  getSortedRowModel,
   flexRender,
   type SortingState,
 } from "@tanstack/react-table";
@@ -51,6 +47,11 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@lootlog/ui/components/drawer";
+import { useQueryStates } from "nuqs";
+import {
+  battlePanelHeadToHeadSearchParsers,
+  getSelectedWarriorsFromSearch,
+} from "@/features/battle-panel/battle-panel-statistics-search";
 
 const H2H_FILTERS_OPEN_KEY = "h2h-filters-open";
 
@@ -64,42 +65,21 @@ export function HeadToHeadFullPage() {
   );
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
-  const currentCharacterId = useBattleFiltersStore(
-    (state) => state.currentCharacterId,
+  const [queryState, setQueryState] = useQueryStates(
+    battlePanelHeadToHeadSearchParsers,
   );
-  const setCurrentCharacterId = useBattleFiltersStore(
-    (state) => state.setCurrentCharacterId,
-  );
-
-  const filterPeriod = useBattleFiltersStore(
-    (state) => state.getFilters(state.currentCharacterId).period,
-  );
-  const minLevel = useBattleFiltersStore(
-    (state) => state.getFilters(state.currentCharacterId).minLevel,
-  );
-  const maxLevel = useBattleFiltersStore(
-    (state) => state.getFilters(state.currentCharacterId).maxLevel,
-  );
-  const ph = useBattleFiltersStore(
-    (state) => state.getFilters(state.currentCharacterId).ph,
-  );
-  const matchmaking = useBattleFiltersStore(
-    (state) => state.getFilters(state.currentCharacterId).matchmaking,
-  );
-
-  const [selectedWarriors, setSelectedWarriors] = useState<Warrior[]>([]);
-  const [sorting, setSorting] = useState<SortingState>([
-    { id: "totalBattles", desc: true },
-  ]);
-  const [cursor, setCursor] = useState<string | undefined>(undefined);
-  const period = filterPeriod || "30d";
-
-  const sortBy = (sorting[0]?.id || "totalBattles") as SortBy;
-  const sortOrder = sorting[0]?.desc ? "desc" : "asc";
-
-  useEffect(() => {
-    setCursor(undefined);
-  }, [minLevel, maxLevel, ph, matchmaking]);
+  const currentCharacterId = queryState.characterId ?? undefined;
+  const period = queryState.period ?? "30d";
+  const minLevel = queryState.minLevel;
+  const maxLevel = queryState.maxLevel;
+  const ph = queryState.ph ?? undefined;
+  const matchmaking = queryState.matchmaking ?? undefined;
+  const cursor = queryState.cursor ?? undefined;
+  const search = queryState.search ?? undefined;
+  const sortBy = queryState.sortBy ?? "totalBattles";
+  const sortOrder = queryState.sortOrder ?? "desc";
+  const selectedWarriors = getSelectedWarriorsFromSearch(search);
+  const sorting: SortingState = [{ id: sortBy, desc: sortOrder === "desc" }];
 
   const { data, isLoading } = useHeadToHead({
     cursor,
@@ -108,7 +88,7 @@ export function HeadToHeadFullPage() {
     sortOrder,
     characterId: currentCharacterId,
     period,
-    search: selectedWarriors[0]?.name,
+    search,
     minLevel,
     maxLevel,
     ph,
@@ -117,73 +97,75 @@ export function HeadToHeadFullPage() {
   });
 
   const handleWarriorToggle = (warrior: Warrior) => {
-    setSelectedWarriors((prev) => {
-      const isSelected = prev.some((w) => w.name === warrior.name);
-      if (isSelected) {
-        return prev.filter((w) => w.name !== warrior.name);
-      }
-      return [warrior];
+    const isSelected = selectedWarriors.some(
+      (item) => item.name === warrior.name,
+    );
+    const nextSelectedWarriors = isSelected
+      ? selectedWarriors.filter((item) => item.name !== warrior.name)
+      : [warrior];
+
+    void setQueryState({
+      search:
+        nextSelectedWarriors.length > 0
+          ? nextSelectedWarriors.map((item) => item.name).join(",")
+          : null,
+      cursor: null,
     });
-    setCursor(undefined);
   };
 
   const handleNextPage = () => {
     if (data?.pagination.nextCursor) {
-      setCursor(data.pagination.nextCursor);
+      void setQueryState({ cursor: data.pagination.nextCursor });
     }
   };
 
   const handlePreviousPage = () => {
     if (data?.pagination.previousCursor) {
-      setCursor(data.pagination.previousCursor);
+      void setQueryState({ cursor: data.pagination.previousCursor });
     }
   };
 
   const handlePeriodChange = (value: Period) => {
-    const currentId = useBattleFiltersStore.getState().currentCharacterId;
-    useBattleFiltersStore
-      .getState()
-      .updateFilters(currentId, { period: value });
-    setCursor(undefined);
+    void setQueryState({
+      period: value,
+      cursor: null,
+    });
   };
 
-  const handleCharacterChange = useCallback(
-    (id: string | undefined) => {
-      setCurrentCharacterId(id);
-      setCursor(undefined);
-    },
-    [setCurrentCharacterId],
-  );
+  const handleCharacterChange = (id: string | undefined) => {
+    void setQueryState({
+      characterId: id ?? null,
+      cursor: null,
+    });
+  };
 
-  const handleMinLevelChange = useCallback((value: number | undefined) => {
-    const currentId = useBattleFiltersStore.getState().currentCharacterId;
-    useBattleFiltersStore
-      .getState()
-      .updateFilters(currentId, { minLevel: value });
-    setCursor(undefined);
-  }, []);
+  const handleMinLevelChange = (value: number | undefined) => {
+    void setQueryState({
+      minLevel: value ?? 1,
+      cursor: null,
+    });
+  };
 
-  const handleMaxLevelChange = useCallback((value: number | undefined) => {
-    const currentId = useBattleFiltersStore.getState().currentCharacterId;
-    useBattleFiltersStore
-      .getState()
-      .updateFilters(currentId, { maxLevel: value });
-    setCursor(undefined);
-  }, []);
+  const handleMaxLevelChange = (value: number | undefined) => {
+    void setQueryState({
+      maxLevel: value ?? 500,
+      cursor: null,
+    });
+  };
 
-  const handlePhChange = useCallback((value: boolean) => {
-    const currentId = useBattleFiltersStore.getState().currentCharacterId;
-    useBattleFiltersStore.getState().updateFilters(currentId, { ph: value });
-    setCursor(undefined);
-  }, []);
+  const handlePhChange = (value: boolean) => {
+    void setQueryState({
+      ph: value ? true : null,
+      cursor: null,
+    });
+  };
 
-  const handleMatchmakingChange = useCallback((value: boolean) => {
-    const currentId = useBattleFiltersStore.getState().currentCharacterId;
-    useBattleFiltersStore
-      .getState()
-      .updateFilters(currentId, { matchmaking: value });
-    setCursor(undefined);
-  }, []);
+  const handleMatchmakingChange = (value: boolean) => {
+    void setQueryState({
+      matchmaking: value ? true : null,
+      cursor: null,
+    });
+  };
 
   const table = useReactTable({
     data: data?.records || [],
@@ -192,11 +174,17 @@ export function HeadToHeadFullPage() {
       sorting,
     },
     onSortingChange: (updater) => {
-      setSorting(updater);
-      setCursor(undefined);
+      const nextSorting =
+        typeof updater === "function" ? updater(sorting) : updater;
+      const nextSort = nextSorting[0];
+
+      void setQueryState({
+        sortBy: (nextSort?.id as SortBy | undefined) ?? "totalBattles",
+        sortOrder: nextSort?.desc ? "desc" : "asc",
+        cursor: null,
+      });
     },
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
     manualSorting: true,
   });
 

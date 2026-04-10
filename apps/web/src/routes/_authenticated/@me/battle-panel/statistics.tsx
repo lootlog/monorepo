@@ -1,10 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { BattlePanelStatistics } from "@/features/battle-panel/battle-panel-statistics/battle-panel-statistics";
 import { BattlePanelStatisticsSkeleton } from "@/features/battle-panel/battle-panel-statistics/battle-panel-statistics-skeleton";
-import {
-  ensureBattlePanelCharacterId,
-  getBattlePanelFilters,
-} from "@/features/battle-panel/battle-panel-route-loader";
+import { ensureBattlePanelCharacterId } from "@/features/battle-panel/battle-panel-route-loader";
+import { getBattlePanelStatisticsSearch } from "@/features/battle-panel/battle-panel-statistics-search";
 import { professionWinRateQueryOptions } from "@/hooks/api/battle-log/use-profession-win-rate";
 import { headToHeadQueryOptions } from "@/hooks/api/battle-log/use-head-to-head";
 import { battleStreakQueryOptions } from "@/hooks/api/battle-log/use-battle-streak";
@@ -16,18 +14,19 @@ import { ratingDeltaByOpponentQueryOptions } from "@/hooks/api/battle-log/use-ra
 export const Route = createFileRoute(
   "/_authenticated/@me/battle-panel/statistics",
 )({
-  loader: async ({ context }) => {
+  loader: async ({ context, location }) => {
+    const search = getBattlePanelStatisticsSearch(location.searchStr);
     const characterId = await ensureBattlePanelCharacterId({
       queryClient: context.queryClient,
+      characterId: search.characterId,
     });
-    const filters = getBattlePanelFilters(characterId);
     const baseParams = {
       characterId,
-      period: filters.period ?? "30d",
-      minLevel: filters.minLevel ?? 1,
-      maxLevel: filters.maxLevel ?? 500,
-      ph: filters.ph,
-      matchmaking: filters.matchmaking,
+      period: search.period,
+      minLevel: search.minLevel,
+      maxLevel: search.maxLevel,
+      ph: search.ph,
+      matchmaking: search.matchmaking,
       suppressRouteErrorToast: true,
     };
 

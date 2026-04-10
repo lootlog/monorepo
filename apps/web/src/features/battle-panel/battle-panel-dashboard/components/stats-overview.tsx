@@ -8,15 +8,14 @@ import { Card } from "@lootlog/ui/components/card";
 import CountUp from "@lootlog/ui/components/count-up";
 import { ROUTES } from "@/config/routes";
 import { Link } from "@tanstack/react-router";
-import {
-  useBattleFiltersStore,
-  type Period,
-} from "@/store/battle-filters.store";
+import type { Period } from "@/store/battle-filters.store";
 import {
   CharacterSelector,
   PeriodSelector,
   LevelRangeFilter,
 } from "@/components/filters";
+import { useQueryStates } from "nuqs";
+import { battlePanelStatisticsSearchParsers } from "@/features/battle-panel/battle-panel-statistics-search";
 
 interface Stat {
   title: string;
@@ -54,29 +53,22 @@ const getGradientColor = (value: number, type: "winRatio" | "ph"): string => {
 type DashboardPeriod = Exclude<Period, "all">;
 
 export function StatsOverview() {
-  const currentCharacterId = useBattleFiltersStore(
-    (state) => state.currentCharacterId,
-  );
-  const setCurrentCharacterId = useBattleFiltersStore(
-    (state) => state.setCurrentCharacterId,
-  );
-
-  const filters = useBattleFiltersStore((state) =>
-    state.getFilters(state.currentCharacterId),
+  const [queryState, setQueryState] = useQueryStates(
+    battlePanelStatisticsSearchParsers,
   );
 
   const selectedPeriod: DashboardPeriod =
-    (filters.period === "all" ? "30d" : filters.period) || "30d";
+    queryState.period === "all" ? "30d" : queryState.period;
 
-  const minLevel = filters.minLevel ?? 1;
-  const maxLevel = filters.maxLevel ?? 500;
+  const minLevel = queryState.minLevel;
+  const maxLevel = queryState.maxLevel;
 
   const { data: characters = [], isLoading: isLoadingCharacters } =
     useBattleCharacters();
 
   const { data: analytics, isLoading: isLoadingAnalytics } = useBattleAnalytics(
     {
-      characterId: currentCharacterId,
+      characterId: queryState.characterId ?? undefined,
       period: selectedPeriod,
       minLevel,
       maxLevel,
@@ -86,14 +78,13 @@ export function StatsOverview() {
   const handlePeriodChange = (period: Period) => {
     const dashboardPeriod =
       period === "all" ? "30d" : (period as DashboardPeriod);
-    const currentId = useBattleFiltersStore.getState().currentCharacterId;
-    useBattleFiltersStore
-      .getState()
-      .updateFilters(currentId, { period: dashboardPeriod });
+    void setQueryState({
+      period: dashboardPeriod,
+    });
   };
 
   const selectedCharacter = characters.find(
-    (char) => char.id === currentCharacterId,
+    (char) => char.id === queryState.characterId,
   );
 
   const stats: Stat[] = [
@@ -153,7 +144,15 @@ export function StatsOverview() {
         subtitle="Statystyki walk dla wybranego okresu"
         actions={
           <Button variant="outline" size="sm" asChild>
-            <Link to={ROUTES.user.battlePanel.statistics}>
+            <Link
+              to={ROUTES.user.battlePanel.statistics}
+              search={{
+                characterId: queryState.characterId ?? null,
+                period: queryState.period,
+                minLevel,
+                maxLevel,
+              }}
+            >
               Zobacz szczegółowe statystyki
               <ChevronRight className="h-4 w-4 ml-2" />
             </Link>
@@ -163,8 +162,12 @@ export function StatsOverview() {
         <div className="flex flex-col md:flex-row md:items-end gap-3 flex-wrap">
           <div className="w-full md:w-auto">
             <CharacterSelector
-              characterId={currentCharacterId}
-              onCharacterChange={setCurrentCharacterId}
+              characterId={queryState.characterId ?? undefined}
+              onCharacterChange={(characterId) => {
+                void setQueryState({
+                  characterId: characterId ?? null,
+                });
+              }}
               allowAllCharacters
               className="w-full md:w-[250px] h-10"
             />
@@ -184,18 +187,14 @@ export function StatsOverview() {
               minLevel={minLevel}
               maxLevel={maxLevel}
               onMinLevelChange={(value) => {
-                const currentId =
-                  useBattleFiltersStore.getState().currentCharacterId;
-                useBattleFiltersStore
-                  .getState()
-                  .updateFilters(currentId, { minLevel: value ?? 1 });
+                void setQueryState({
+                  minLevel: value ?? 1,
+                });
               }}
               onMaxLevelChange={(value) => {
-                const currentId =
-                  useBattleFiltersStore.getState().currentCharacterId;
-                useBattleFiltersStore
-                  .getState()
-                  .updateFilters(currentId, { maxLevel: value ?? 500 });
+                void setQueryState({
+                  maxLevel: value ?? 500,
+                });
               }}
               inputClassName="w-full md:w-[80px]"
               containerClassName="flex-1 md:flex-none"
