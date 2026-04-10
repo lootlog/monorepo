@@ -55,8 +55,7 @@ export const ActivityLogsList = () => {
     clanName: filters.clanName || undefined,
   });
 
-  const allActivities =
-    activityLogs?.pages.flatMap((page) => page.data.data) ?? [];
+  const allActivities = activityLogs?.pages.flatMap((page) => page.data) ?? [];
   const totalCount = allActivities.length;
 
   const virtualizer = useVirtualizer({

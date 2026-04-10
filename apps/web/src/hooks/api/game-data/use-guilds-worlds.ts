@@ -1,15 +1,16 @@
 import { useQueries } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 export const useGuildsWorlds = (guildIds: string[]) => {
   const { client } = useApiClient();
 
   const queries = useQueries({
     queries: guildIds.map((guildId) => ({
-      queryKey: ["worlds", guildId],
+      queryKey: queryKeys.gameData.worlds(guildId),
       queryFn: () => client.get<string[]>(`/guilds/${guildId}/worlds`),
       enabled: guildIds.length > 0,
-      select: (response: { data: string[] }) => response.data,
+      select: (response: string[]) => response,
     })),
   });
 

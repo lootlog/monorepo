@@ -1,14 +1,14 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { AxiosResponse } from "axios";
 import { useApiClient } from "@/hooks/api/use-api-client";
 import type { Guild } from "@/hooks/api/guilds/use-guild";
 import { useGuildId } from "@/hooks/context/use-guild-id";
+import { mutationKeys, queryKeys } from "@/lib/query-keys";
 
 type UpdateGuildConfigOptions = {
   vanityUrl: string | null;
 };
 
-type UpdateGuildConfigResponse = AxiosResponse<Guild>;
+type UpdateGuildConfigResponse = Guild;
 
 export const useUpdateGuild = () => {
   const guildId = useGuildId();
@@ -25,10 +25,10 @@ export const useUpdateGuild = () => {
         vanityUrl,
       });
     },
-    mutationKey: ["update-guild-config"],
+    mutationKey: mutationKeys.guilds.updateConfig(),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["guilds", guildId],
+        queryKey: queryKeys.guilds.current(guildId),
       });
     },
   });

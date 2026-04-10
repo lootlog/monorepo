@@ -7,6 +7,7 @@ import { useGuildId } from "@/hooks/context/use-guild-id";
 import { apiClient, type ApiRequestConfig } from "@/lib/api-client/api-client";
 import { stringifyQueryParams } from "@/lib/stringify-query-params";
 import type { KillsByType, NpcType } from "./use-guild-kill-stats";
+import { queryKeys } from "@/lib/query-keys";
 
 export type MemberInfo = {
   memberId: number;
@@ -77,7 +78,7 @@ export const memberKillsQueryOptions = (
   const queryString = stringifyQueryParams(queryParams);
 
   return queryOptions({
-    queryKey: ["member-kills", guildId, memberId, queryString],
+    queryKey: queryKeys.members.kills(guildId, memberId, queryString),
     queryFn: async () => {
       const response = await apiClient.get<MemberKillsResponse>(
         `/guilds/${guildId}/stats/kills/members/${memberId}${queryString ? `?${queryString}` : ""}`,
@@ -85,7 +86,7 @@ export const memberKillsQueryOptions = (
           suppressRouteErrorToast,
         } as ApiRequestConfig,
       );
-      return response.data;
+      return response;
     },
     enabled: !!guildId && memberId !== undefined,
     staleTime: 30000,

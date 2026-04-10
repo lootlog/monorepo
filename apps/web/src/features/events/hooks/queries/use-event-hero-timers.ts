@@ -1,5 +1,6 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 interface EventTimerNpc {
   name: string;
@@ -34,12 +35,12 @@ export const eventHeroTimersQueryOptions = ({
   world,
 }: UseEventHeroTimersOptions) =>
   queryOptions({
-    queryKey: ["event-hero-timers", guildId, eventId, world],
+    queryKey: queryKeys.events.heroTimers(guildId, eventId, world),
     queryFn: async () => {
       const response = await apiClient.get<EventTimer[]>(
         `/guilds/${guildId}/events/${eventId}/timers?world=${world}`,
       );
-      return response.data;
+      return response;
     },
     enabled: !!guildId && !!eventId && !!world,
     staleTime: 15_000,

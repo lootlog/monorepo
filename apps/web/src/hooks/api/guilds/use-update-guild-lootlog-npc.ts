@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
 import type { ItemRarity } from "@/hooks/api/loots/use-loots";
 import { useGuildId } from "@/hooks/context/use-guild-id";
+import { mutationKeys, queryKeys } from "@/lib/query-keys";
 
 type UpdateGuildLootlogNpcOptions = {
   npcId: number;
@@ -25,10 +26,10 @@ export const useUpdateGuildLootlogNpc = () => {
         allowedRarities,
       });
     },
-    mutationKey: ["update-guild-lootlog-npc"],
+    mutationKey: mutationKeys.guilds.updateLootlogNpc(),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["guild-lootlog-config", guildId],
+        queryKey: queryKeys.guilds.lootlogConfig(guildId),
       });
     },
   });

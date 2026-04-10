@@ -21,7 +21,7 @@ export const useUpdateEventSettings = (guildId: string) => {
         `/guilds/${guildId}/event-settings`,
         payload,
       );
-      return response.data;
+      return response;
     },
     onMutate: async (payload) => {
       await queryClient.cancelQueries({

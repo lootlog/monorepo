@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 export interface PointsEditHistoryEntry {
   id: string;
@@ -30,12 +31,12 @@ export const useRankingEditHistory = ({
   const { client } = useApiClient();
 
   return useQuery<PointsEditHistoryEntry[]>({
-    queryKey: ["ranking-edit-history", guildId, eventId, rankingId],
+    queryKey: queryKeys.events.rankingEditHistory(guildId, eventId, rankingId),
     queryFn: async () => {
       const response = await client.get<PointsEditHistoryEntry[]>(
         `/guilds/${guildId}/events/${eventId}/ranking/${rankingId}/history`,
       );
-      return response.data;
+      return response;
     },
     enabled: !!guildId && !!eventId && !!rankingId && enabled,
   });

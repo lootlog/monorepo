@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { stringify } from "qs";
 import { useApiClient } from "@/hooks/api/use-api-client";
 import type { Loot } from "@/hooks/api/loots/use-loots";
+import { queryKeys } from "@/lib/query-keys";
 
 const MATCHING_LOOTS_TIME_WINDOW_MS = 5 * 60 * 1000;
 
@@ -60,12 +61,17 @@ export const useMatchingLoots = ({
   })();
 
   return useQuery({
-    queryKey: ["matching-loots", guildId, createdAtMin, createdAtMax, npcName],
+    queryKey: queryKeys.events.matchingLoots(
+      guildId,
+      createdAtMin,
+      createdAtMax,
+      npcName,
+    ),
     queryFn: async () => {
       const response = await client.get<Loot[]>(
         `/guilds/${guildId}/loots?${queryString}`,
       );
-      return response.data;
+      return response;
     },
     enabled: enabled && isValidParams,
   });

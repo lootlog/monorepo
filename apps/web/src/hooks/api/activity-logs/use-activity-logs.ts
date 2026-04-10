@@ -1,5 +1,6 @@
 import { useActivityApiClient } from "@/hooks/api/activity-logs/use-activity-log-api-client";
 import { infiniteQueryOptions, useInfiniteQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 import {
   activityApiClient,
   type ApiRequestConfig,
@@ -119,7 +120,7 @@ export const activityLogsInfiniteQueryOptions = (
   const baseQueryString = buildQueryString();
 
   return infiniteQueryOptions({
-    queryKey: ["activity-logs", guildId, baseQueryString],
+    queryKey: queryKeys.activity.logs(guildId, baseQueryString),
     queryFn: ({ pageParam }) => {
       const queryString = buildQueryString(
         pageParam ? (pageParam as string) : undefined,
@@ -135,8 +136,8 @@ export const activityLogsInfiniteQueryOptions = (
     enabled: !!guildId,
     initialPageParam: "",
     getNextPageParam: (lastPage) => {
-      if (!lastPage?.data) return undefined;
-      return lastPage.data.hasMore ? lastPage.data.nextCursor : undefined;
+      if (!lastPage) return undefined;
+      return lastPage.hasMore ? lastPage.nextCursor : undefined;
     },
   });
 };

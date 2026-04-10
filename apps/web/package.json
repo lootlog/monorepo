@@ -28,7 +28,6 @@
     "@tanstack/react-router": "^1.168.10",
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-virtual": "^3.13.23",
-    "axios": "^1.14.0",
     "better-auth": "^1.6.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

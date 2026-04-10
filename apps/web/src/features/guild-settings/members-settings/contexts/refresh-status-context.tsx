@@ -12,6 +12,7 @@ import { useGuildId } from "@/hooks/context/use-guild-id";
 import { GatewayEvent } from "@/config/gateway";
 import type { RefreshJobUpdate } from "@/types/refresh-job";
 import type { GuildMember } from "@/hooks/api/members/use-guild-member";
+import { queryKeys } from "@/lib/query-keys";
 
 interface RefreshStatusContextValue {
   refreshedIds: Set<string>;
@@ -59,7 +60,7 @@ export const RefreshStatusProvider = ({
 
       if (data.refreshedIds && data.refreshedIds.length > 0) {
         queryClient.setQueriesData(
-          { queryKey: ["members", guildId] },
+          { queryKey: queryKeys.members.list(guildId) },
           (oldData: { data: GuildMember[] } | undefined) => {
             if (!oldData?.data) return oldData;
 

@@ -1,5 +1,6 @@
 import { useApiClient } from "@/hooks/api/use-api-client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 
 interface EventMapLocationSnapshot {
   id: string;
@@ -31,6 +32,10 @@ interface AssignMapLocationData {
   locationId: string | null;
 }
 
+interface EventLocationMutationResponse {
+  id: string;
+}
+
 export const useLocationMutations = (
   guildId: string,
   eventId: string,
@@ -38,15 +43,15 @@ export const useLocationMutations = (
 ) => {
   const { client } = useApiClient();
   const queryClient = useQueryClient();
-  const queryKeyMaps = ["event-maps", guildId, eventId];
+  const queryKeyMaps = queryKeys.events.maps(guildId, eventId);
 
   const createLocation = useMutation({
     mutationFn: async (data: CreateLocationData) => {
-      const response = await client.post(
+      const response = await client.post<EventLocationMutationResponse>(
         `/guilds/${guildId}/events/${eventId}/heroes/${heroId}/locations`,
         data,
       );
-      return response.data;
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeyMaps });
@@ -65,7 +70,7 @@ export const useLocationMutations = (
         `/guilds/${guildId}/events/${eventId}/heroes/${heroId}/locations/${locationId}`,
         data,
       );
-      return response.data;
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeyMaps });
@@ -77,7 +82,7 @@ export const useLocationMutations = (
       const response = await client.delete(
         `/guilds/${guildId}/events/${eventId}/heroes/${heroId}/locations/${locationId}`,
       );
-      return response.data;
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeyMaps });
@@ -90,7 +95,7 @@ export const useLocationMutations = (
         `/guilds/${guildId}/events/${eventId}/heroes/${heroId}/locations/reorder`,
         data,
       );
-      return response.data;
+      return response;
     },
     onMutate: async (data: ReorderLocationsData) => {
       await queryClient.cancelQueries({ queryKey: queryKeyMaps });
@@ -147,7 +152,7 @@ export const useLocationMutations = (
         `/guilds/${guildId}/events/${eventId}/heroes/${heroId}/maps/${mapId}/location`,
         data,
       );
-      return response.data;
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeyMaps });

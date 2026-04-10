@@ -4,6 +4,7 @@ import {
   battlelogApiClient,
   type ApiRequestConfig,
 } from "@/lib/api-client/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 export type Warrior = {
   id: string;
@@ -180,16 +181,14 @@ const buildBattlesSearchParams = (params?: UseBattlesParams) => {
 
 export const battlesQueryOptions = (params?: UseBattlesParams) =>
   queryOptions({
-    queryKey: [
-      "battles",
-      "@me",
+    queryKey: queryKeys.battleLog.battlesList(
       params
         ? {
             ...params,
             suppressRouteErrorToast: undefined,
           }
         : undefined,
-    ],
+    ),
     queryFn: async () => {
       const searchParams = buildBattlesSearchParams(params);
 
@@ -199,7 +198,7 @@ export const battlesQueryOptions = (params?: UseBattlesParams) =>
           suppressRouteErrorToast: params?.suppressRouteErrorToast ?? false,
         } as ApiRequestConfig,
       );
-      return response.data;
+      return response;
     },
     staleTime: 1000 * 30,
   });

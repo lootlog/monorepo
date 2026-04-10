@@ -1,6 +1,7 @@
 import { useApiClient } from "@/hooks/api/use-api-client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { invalidateKillQueries } from "./invalidate-kill-queries";
+import { queryKeys } from "@/lib/query-keys";
 
 interface UpdateKillPointParams {
   killId: string;
@@ -30,15 +31,15 @@ export const useUpdatePoints = (guildId: string, eventId: string) => {
         `/guilds/${guildId}/events/${eventId}/kills/${killId}/points/${killPointId}`,
         { pointsDelta, comment },
       );
-      return response.data;
+      return response;
     },
     onSuccess: () => {
       invalidateKillQueries(queryClient, guildId, eventId);
       queryClient.invalidateQueries({
-        queryKey: ["event-ranking", guildId, eventId],
+        queryKey: queryKeys.events.ranking(guildId, eventId),
       });
       queryClient.invalidateQueries({
-        queryKey: ["ranking-edit-history", guildId, eventId],
+        queryKey: queryKeys.events.rankingEditHistory(guildId, eventId),
       });
     },
   });
@@ -53,14 +54,14 @@ export const useUpdatePoints = (guildId: string, eventId: string) => {
         `/guilds/${guildId}/events/${eventId}/ranking/${rankingId}`,
         { pointsDelta, comment },
       );
-      return response.data;
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["event-ranking", guildId, eventId],
+        queryKey: queryKeys.events.ranking(guildId, eventId),
       });
       queryClient.invalidateQueries({
-        queryKey: ["ranking-edit-history", guildId, eventId],
+        queryKey: queryKeys.events.rankingEditHistory(guildId, eventId),
       });
     },
   });

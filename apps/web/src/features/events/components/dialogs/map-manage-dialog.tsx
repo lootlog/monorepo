@@ -43,6 +43,7 @@ import {
   useMapTemplates,
   type MapTemplate,
 } from "@/features/guild-settings/map-templates-settings/hooks/use-map-templates";
+import { getApiErrorStatus } from "@/lib/api-client/api-client";
 import type { LocationData } from "./map-manage-dialog.types";
 import { LocationItem } from "./location-item";
 import { MapChip } from "./map-chip";
@@ -162,15 +163,14 @@ export const MapManageDialog = ({
         data: { mapId: gameMap.id, mapName: gameMap.name },
       });
 
-      if (selectedLocationId && result?.id) {
+      if (selectedLocationId) {
         await assignMapToLocation.mutateAsync({
           mapId: result.id,
           data: { locationId: selectedLocationId },
         });
       }
     } catch (error) {
-      const typedError = error as { response?: { status?: number } };
-      if (typedError.response?.status === 400) {
+      if (getApiErrorStatus(error) === 400) {
         toast.error(t("events.maps.errors.duplicate"));
       } else {
         toast.error(t("events.maps.errors.addFailed"));
@@ -206,7 +206,7 @@ export const MapManageDialog = ({
           heroId: hero.id,
           data: { mapId: mapItem.id, mapName: mapItem.name },
         });
-        if (targetLocationId && result?.id) {
+        if (targetLocationId) {
           await assignMapToLocation.mutateAsync({
             mapId: result.id,
             data: { locationId: targetLocationId },
@@ -234,8 +234,7 @@ export const MapManageDialog = ({
       setNewLocationName("");
       toast.success(t("events.locations.createSuccess"));
     } catch (error) {
-      const typedError = error as { response?: { status?: number } };
-      if (typedError.response?.status === 400) {
+      if (getApiErrorStatus(error) === 400) {
         toast.error(t("events.locations.errors.duplicateName"));
       } else {
         toast.error(t("events.locations.errors.createFailed"));
@@ -253,8 +252,7 @@ export const MapManageDialog = ({
       setEditingLocation(null);
       toast.success(t("events.locations.updateSuccess"));
     } catch (error) {
-      const typedError = error as { response?: { status?: number } };
-      if (typedError.response?.status === 400) {
+      if (getApiErrorStatus(error) === 400) {
         toast.error(t("events.locations.errors.duplicateName"));
       } else {
         toast.error(t("events.locations.errors.updateFailed"));

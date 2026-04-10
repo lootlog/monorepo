@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { useCreateReservation } from "@/hooks/api/reservations/use-create-reservation";
 import { Button } from "@lootlog/ui/components/button";
 import { Textarea } from "@lootlog/ui/components/textarea";
+import { getApiErrorMessage } from "@/features/events/utils/get-api-error-message";
 
 type ReservationQuickAddPopoverProps = {
   start: Date;
@@ -43,16 +44,7 @@ export const ReservationQuickAddPopover: React.FC<
       onSuccess();
     } catch (error) {
       const fallbackMessage = "Nie udało się utworzyć rezerwacji.";
-      if (error && typeof error === "object" && "response" in error) {
-        const maybeAxiosError = error as {
-          response?: { data?: { message?: string | string[] } };
-        };
-        const rawMessage = maybeAxiosError.response?.data?.message;
-        const message = Array.isArray(rawMessage) ? rawMessage[0] : rawMessage;
-        toast.error(typeof message === "string" ? message : fallbackMessage);
-      } else {
-        toast.error(fallbackMessage);
-      }
+      toast.error(getApiErrorMessage(error) ?? fallbackMessage);
     }
   };
 

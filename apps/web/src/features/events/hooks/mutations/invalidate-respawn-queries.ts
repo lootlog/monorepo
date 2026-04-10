@@ -1,4 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 
 export function invalidateRespawnQueries(
   queryClient: QueryClient,
@@ -7,15 +8,15 @@ export function invalidateRespawnQueries(
   heroId: string,
 ) {
   queryClient.invalidateQueries({
-    queryKey: ["hero-respawn-config", guildId, eventId, heroId],
+    queryKey: queryKeys.events.heroRespawnConfig(guildId, eventId, heroId),
   });
   queryClient.invalidateQueries({
-    queryKey: ["event-hero-timers", guildId, eventId],
+    queryKey: queryKeys.events.heroTimers(guildId, eventId),
   });
   queryClient.invalidateQueries({
-    queryKey: ["event-maps", guildId, eventId],
+    queryKey: queryKeys.events.maps(guildId, eventId),
   });
   queryClient.invalidateQueries({
-    queryKey: ["map-active-gap", guildId, eventId],
+    queryKey: queryKeys.events.mapActiveGapRoot(guildId, eventId),
   });
 }

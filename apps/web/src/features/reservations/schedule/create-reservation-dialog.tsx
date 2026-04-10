@@ -19,6 +19,7 @@ import { DatePicker } from "../date-picker";
 import { toast } from "sonner";
 import { useCreateReservation } from "@/hooks/api/reservations/use-create-reservation";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
+import { getApiErrorMessage } from "@/features/events/utils/get-api-error-message";
 
 type CreateReservationDialogProps = {
   open: boolean;
@@ -116,32 +117,9 @@ const CreateReservationDialogContent: React.FC<
       onOpenChange(false);
     } catch (error) {
       const fallbackMessage = "Nie udało się utworzyć rezerwacji.";
-      if (error && typeof error === "object" && "response" in error) {
-        const maybeAxiosError = error as {
-          response?: {
-            data?: { message?: string | string[] };
-            status?: number;
-          };
-        };
-        const rawMessage = maybeAxiosError.response?.data?.message;
-        const normalizedMessage = Array.isArray(rawMessage)
-          ? rawMessage[0]
-          : rawMessage;
-        const message =
-          typeof normalizedMessage === "string" ? normalizedMessage : undefined;
-        toast.error(message ?? fallbackMessage, {
-          position: "bottom-right",
-        });
-      } else if (error instanceof Error) {
-        const message = error.message || undefined;
-        toast.error(message || fallbackMessage, {
-          position: "bottom-right",
-        });
-      } else {
-        toast.error(fallbackMessage, {
-          position: "bottom-right",
-        });
-      }
+      toast.error(getApiErrorMessage(error) ?? fallbackMessage, {
+        position: "bottom-right",
+      });
     }
   }, [
     fromDate,

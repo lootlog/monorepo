@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
 import { useGuildId } from "@/hooks/context/use-guild-id";
+import { queryKeys } from "@/lib/query-keys";
 
 export interface MapItem {
   id: number;
@@ -25,12 +26,12 @@ export const useMapTemplates = (options?: UseMapTemplatesOptions) => {
   const { client } = useApiClient();
 
   return useQuery({
-    queryKey: ["map-templates", guildId],
+    queryKey: queryKeys.guilds.mapTemplates(guildId),
     queryFn: async () => {
       const response = await client.get<MapTemplate[]>(
         `/guilds/${guildId}/map-templates`,
       );
-      return response.data;
+      return response;
     },
     enabled: !!guildId,
   });

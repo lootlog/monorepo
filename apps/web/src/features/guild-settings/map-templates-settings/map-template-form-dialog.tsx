@@ -25,6 +25,7 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { FileText, Pencil, X, MapPin, Search } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { toast } from "sonner";
+import { getApiErrorStatus } from "@/lib/api-client/api-client";
 import {
   useCreateMapTemplate,
   useUpdateMapTemplate,
@@ -143,8 +144,7 @@ export const MapTemplateFormDialog = ({
   const onSubmit = (data: FormData) => {
     const payload = { name: data.name.trim(), maps: data.maps };
     const errorHandler = (error: unknown) => {
-      const axiosError = error as { response?: { status?: number } };
-      if (axiosError.response?.status === 400) {
+      if (getApiErrorStatus(error) === 400) {
         toast.error(t("settings.mapTemplates.toasts.duplicateName"));
       } else {
         toast.error(

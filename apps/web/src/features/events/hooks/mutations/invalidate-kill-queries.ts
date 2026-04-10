@@ -1,4 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 
 export function invalidateKillQueries(
   queryClient: QueryClient,
@@ -6,31 +7,31 @@ export function invalidateKillQueries(
   eventId: string,
 ) {
   queryClient.invalidateQueries({
-    queryKey: ["event-overview", guildId, eventId],
+    queryKey: queryKeys.events.overview(guildId, eventId),
   });
   queryClient.invalidateQueries({
-    queryKey: ["kill-detail", guildId, eventId],
+    queryKey: queryKeys.events.killDetailRoot(guildId, eventId),
     exact: false,
   });
   queryClient.invalidateQueries({
-    queryKey: ["event-kill-history", guildId, eventId],
+    queryKey: queryKeys.events.killHistoryRoot(guildId, eventId),
   });
   queryClient.invalidateQueries({
-    queryKey: ["hero-kill-history", guildId, eventId],
+    queryKey: queryKeys.events.heroKillHistoryRoot(guildId, eventId),
   });
   queryClient.invalidateQueries({
-    queryKey: ["event-member-kill-history", guildId, eventId],
+    queryKey: queryKeys.events.memberKillHistoryRoot(guildId, eventId),
   });
   queryClient.invalidateQueries({
-    queryKey: ["recent-hero-kills", guildId, eventId],
+    queryKey: queryKeys.events.recentHeroKillsRoot(guildId, eventId),
   });
   queryClient.invalidateQueries({
-    queryKey: ["event-hero-stats", guildId, eventId],
+    queryKey: queryKeys.events.heroStats(guildId, eventId),
   });
   queryClient.invalidateQueries({
-    queryKey: ["event-participation-confirmations", guildId, eventId],
+    queryKey: queryKeys.events.participationConfirmations(guildId, eventId),
   });
   queryClient.invalidateQueries({
-    queryKey: ["event-ranking", guildId, eventId],
+    queryKey: queryKeys.events.ranking(guildId, eventId),
   });
 }

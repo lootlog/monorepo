@@ -29,7 +29,7 @@ export const useBattleSharing = () => {
       { battleId, data: { public: true } },
       {
         onSuccess: (response) => {
-          const battleUrl = composeBattleUrl(response.data.id);
+          const battleUrl = composeBattleUrl(response.id);
           toast.success("Walka została udostępniona!", { duration: 3000 });
           handleCopy(battleUrl);
         },

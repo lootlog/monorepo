@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import type { MapItem } from "./use-map-templates";
+import { queryKeys } from "@/lib/query-keys";
 
 interface CreateMapTemplateData {
   name: string;
@@ -19,11 +20,11 @@ export const useCreateMapTemplate = () => {
         `/guilds/${guildId}/map-templates`,
         data,
       );
-      return response.data;
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["map-templates", guildId],
+        queryKey: queryKeys.guilds.mapTemplates(guildId),
       });
     },
   });
@@ -39,11 +40,11 @@ export const useDeleteMapTemplate = () => {
       const response = await client.delete(
         `/guilds/${guildId}/map-templates/${templateId}`,
       );
-      return response.data;
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["map-templates", guildId],
+        queryKey: queryKeys.guilds.mapTemplates(guildId),
       });
     },
   });
@@ -66,11 +67,11 @@ export const useUpdateMapTemplate = () => {
         `/guilds/${guildId}/map-templates/${templateId}`,
         { name, maps },
       );
-      return response.data;
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["map-templates", guildId],
+        queryKey: queryKeys.guilds.mapTemplates(guildId),
       });
     },
   });

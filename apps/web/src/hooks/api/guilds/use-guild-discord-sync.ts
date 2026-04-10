@@ -1,6 +1,7 @@
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { apiClient, type ApiRequestConfig } from "@/lib/api-client/api-client";
 import type { DiscordGuildSyncState } from "@lootlog/types";
+import { queryKeys } from "@/lib/query-keys";
 import {
   queryOptions,
   useMutation,
@@ -17,7 +18,7 @@ export const guildDiscordSyncQueryOptions = (
   { suppressRouteErrorToast = false }: GuildDiscordSyncQueryOptionsOptions = {},
 ) =>
   queryOptions({
-    queryKey: ["guild-discord-sync", guildId],
+    queryKey: queryKeys.guilds.discordSync(guildId),
     queryFn: async () => {
       const response = await apiClient.get<DiscordGuildSyncState>(
         `/guilds/${guildId}/discord-sync`,
@@ -25,7 +26,7 @@ export const guildDiscordSyncQueryOptions = (
           suppressRouteErrorToast,
         } as ApiRequestConfig,
       );
-      return response.data;
+      return response;
     },
     enabled: !!guildId,
   });
@@ -47,15 +48,15 @@ export const useRefreshGuildDiscordSync = () => {
       const response = await apiClient.post(
         `/guilds/${guildId}/discord-sync/refresh`,
       );
-      return response.data;
+      return response;
     },
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: ["guild-discord-sync", guildId],
+          queryKey: queryKeys.guilds.discordSync(guildId),
         }),
         queryClient.invalidateQueries({
-          queryKey: ["guild-notifications", guildId],
+          queryKey: queryKeys.guilds.notifications(guildId),
         }),
       ]);
     },

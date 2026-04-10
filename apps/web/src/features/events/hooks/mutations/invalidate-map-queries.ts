@@ -1,4 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 
 export function invalidateMapQueries(
   queryClient: QueryClient,
@@ -7,7 +8,7 @@ export function invalidateMapQueries(
   mapId: string,
 ) {
   queryClient.invalidateQueries({
-    queryKey: ["event-maps", guildId, eventId],
+    queryKey: queryKeys.events.maps(guildId, eventId),
   });
   invalidateGapQueries(queryClient, guildId, eventId, mapId);
 }
@@ -19,10 +20,10 @@ export function invalidateGapQueries(
   mapId: string,
 ) {
   queryClient.invalidateQueries({
-    queryKey: ["map-active-gap", guildId, eventId, mapId],
+    queryKey: queryKeys.events.mapActiveGap(guildId, eventId, mapId),
   });
   queryClient.invalidateQueries({
-    queryKey: ["hero-active-gaps"],
+    queryKey: queryKeys.events.heroActiveGapsRoot(),
     predicate: (query) =>
       query.queryKey[1] === guildId && query.queryKey[2] === eventId,
   });

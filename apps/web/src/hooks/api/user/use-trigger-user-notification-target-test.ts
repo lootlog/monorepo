@@ -15,7 +15,7 @@ export const useTriggerUserNotificationTargetTest = () => {
         `/users/@me/notifications/targets/${data.targetId}/test`,
       );
 
-      return response.data;
+      return response;
     },
     onSuccess: async () => {
       await invalidateUserNotificationQueries(queryClient);

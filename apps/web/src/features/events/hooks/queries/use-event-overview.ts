@@ -1,6 +1,7 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
 import { apiClient, type ApiRequestConfig } from "@/lib/api-client/api-client";
+import { queryKeys } from "@/lib/query-keys";
 import type {
   EventScoringMode,
   EventScoringRules,
@@ -46,7 +47,7 @@ export const eventOverviewQueryOptions = ({
   suppressRouteErrorToast = false,
 }: UseEventOverviewOptions) =>
   queryOptions({
-    queryKey: ["event-overview", guildId, eventId],
+    queryKey: queryKeys.events.overview(guildId, eventId),
     queryFn: async () => {
       const response = await apiClient.get<EventOverview>(
         `/guilds/${guildId}/events/${eventId}/overview`,
@@ -54,7 +55,7 @@ export const eventOverviewQueryOptions = ({
           suppressRouteErrorToast,
         } as ApiRequestConfig,
       );
-      return response.data;
+      return response;
     },
     enabled: !!guildId && !!eventId,
   });

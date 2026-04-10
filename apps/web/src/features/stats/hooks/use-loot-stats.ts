@@ -3,6 +3,7 @@ import { useApiClient } from "@/hooks/api/use-api-client";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { stringifyQueryParams } from "@/lib/stringify-query-params";
 import type { NpcType } from "./use-guild-kill-stats";
+import { queryKeys } from "@/lib/query-keys";
 
 export type Period =
   | "24h"
@@ -128,12 +129,12 @@ export const useLootStats = (filters: LootStatsFilters = {}) => {
   const queryString = stringifyQueryParams(queryParams);
 
   return useQuery({
-    queryKey: ["loot-stats", guildId, queryString],
+    queryKey: queryKeys.stats.lootStats(guildId, queryString),
     queryFn: async () => {
       const response = await client.get<LootStatsResponse>(
         `/guilds/${guildId}/loots/stats${queryString ? `?${queryString}` : ""}`,
       );
-      return response.data;
+      return response;
     },
     enabled: !!guildId,
     staleTime: 30000,

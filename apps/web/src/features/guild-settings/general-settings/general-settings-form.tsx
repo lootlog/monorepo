@@ -59,7 +59,7 @@ export const GeneralSettingsForm = () => {
     updateGuildConfig(
       { vanityUrl: values.vanityUrl.length > 0 ? values.vanityUrl : null },
       {
-        onSuccess: ({ data }) => {
+        onSuccess: (data) => {
           toast.success("Zaktualizowano konfigurację lootloga");
           navigate({ to: `/${data.vanityUrl ?? data.id}/settings` as string });
           form.reset({ vanityUrl: data.vanityUrl ?? "" });

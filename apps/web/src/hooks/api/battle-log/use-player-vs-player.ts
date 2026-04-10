@@ -4,6 +4,7 @@ import {
   battlelogApiClient,
   type ApiRequestConfig,
 } from "@/lib/api-client/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 export interface PlayerVsPlayerBattle {
   battleId: string;
@@ -85,13 +86,10 @@ const buildPlayerVsPlayerSearchParams = (params: UsePlayerVsPlayerParams) => {
 
 export const playerVsPlayerQueryOptions = (params: UsePlayerVsPlayerParams) =>
   queryOptions({
-    queryKey: [
-      "player-vs-player",
-      {
-        ...params,
-        suppressRouteErrorToast: undefined,
-      },
-    ],
+    queryKey: queryKeys.battleLog.playerVsPlayer({
+      ...params,
+      suppressRouteErrorToast: undefined,
+    }),
     queryFn: async () => {
       const searchParams = buildPlayerVsPlayerSearchParams(params);
 
@@ -101,7 +99,7 @@ export const playerVsPlayerQueryOptions = (params: UsePlayerVsPlayerParams) =>
           suppressRouteErrorToast: params.suppressRouteErrorToast ?? false,
         } as ApiRequestConfig,
       );
-      return response.data;
+      return response;
     },
     staleTime: 0,
     enabled: !!params.opponentId,

@@ -1,6 +1,7 @@
 import { useApiClient } from "@/hooks/api/use-api-client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { invalidateKillQueries } from "./invalidate-kill-queries";
+import { queryKeys } from "@/lib/query-keys";
 import type {
   EventScoringMode,
   EventScoringRules,
@@ -39,12 +40,16 @@ interface CreateMapData {
   mapName: string;
 }
 
+interface EventMapMutationResponse {
+  id: string;
+}
+
 export const useEventMutations = (guildId: string, eventId: string) => {
   const { client } = useApiClient();
   const queryClient = useQueryClient();
-  const queryKeyOverview = ["event-overview", guildId, eventId];
-  const queryKeyMaps = ["event-maps", guildId, eventId];
-  const queryKeyWrapped = ["event-wrapped", guildId, eventId];
+  const queryKeyOverview = queryKeys.events.overview(guildId, eventId);
+  const queryKeyMaps = queryKeys.events.maps(guildId, eventId);
+  const queryKeyWrapped = queryKeys.events.wrapped(guildId, eventId);
 
   const updateEvent = useMutation({
     mutationFn: async (data: UpdateEventData) => {
@@ -52,13 +57,15 @@ export const useEventMutations = (guildId: string, eventId: string) => {
         `/guilds/${guildId}/events/${eventId}`,
         data,
       );
-      return response.data;
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeyOverview });
       queryClient.invalidateQueries({ queryKey: queryKeyMaps });
       queryClient.invalidateQueries({ queryKey: queryKeyWrapped });
-      queryClient.invalidateQueries({ queryKey: ["events", guildId] });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.events.listByGuild(guildId),
+      });
     },
   });
 
@@ -67,7 +74,7 @@ export const useEventMutations = (guildId: string, eventId: string) => {
       const response = await client.post(
         `/guilds/${guildId}/events/${eventId}/recalculate-points`,
       );
-      return response.data;
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeyOverview });
@@ -81,10 +88,12 @@ export const useEventMutations = (guildId: string, eventId: string) => {
       const response = await client.delete(
         `/guilds/${guildId}/events/${eventId}`,
       );
-      return response.data;
+      return response;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["events", guildId] });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.events.listByGuild(guildId),
+      });
       queryClient.invalidateQueries({ queryKey: queryKeyOverview });
       queryClient.invalidateQueries({ queryKey: queryKeyMaps });
       queryClient.invalidateQueries({ queryKey: queryKeyWrapped });
@@ -97,13 +106,15 @@ export const useEventMutations = (guildId: string, eventId: string) => {
         `/guilds/${guildId}/events/${eventId}/heroes`,
         data,
       );
-      return response.data;
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeyOverview });
       queryClient.invalidateQueries({ queryKey: queryKeyMaps });
       queryClient.invalidateQueries({ queryKey: queryKeyWrapped });
-      queryClient.invalidateQueries({ queryKey: ["events", guildId] });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.events.listByGuild(guildId),
+      });
     },
   });
 
@@ -119,13 +130,15 @@ export const useEventMutations = (guildId: string, eventId: string) => {
         `/guilds/${guildId}/events/${eventId}/heroes/${heroId}`,
         data,
       );
-      return response.data;
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeyOverview });
       queryClient.invalidateQueries({ queryKey: queryKeyMaps });
       queryClient.invalidateQueries({ queryKey: queryKeyWrapped });
-      queryClient.invalidateQueries({ queryKey: ["events", guildId] });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.events.listByGuild(guildId),
+      });
     },
   });
 
@@ -134,13 +147,15 @@ export const useEventMutations = (guildId: string, eventId: string) => {
       const response = await client.delete(
         `/guilds/${guildId}/events/${eventId}/heroes/${heroId}`,
       );
-      return response.data;
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeyOverview });
       queryClient.invalidateQueries({ queryKey: queryKeyMaps });
       queryClient.invalidateQueries({ queryKey: queryKeyWrapped });
-      queryClient.invalidateQueries({ queryKey: ["events", guildId] });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.events.listByGuild(guildId),
+      });
     },
   });
 
@@ -152,11 +167,11 @@ export const useEventMutations = (guildId: string, eventId: string) => {
       heroId: string;
       data: CreateMapData;
     }) => {
-      const response = await client.post(
+      const response = await client.post<EventMapMutationResponse>(
         `/guilds/${guildId}/events/${eventId}/heroes/${heroId}/maps`,
         data,
       );
-      return response.data;
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeyMaps });
@@ -175,7 +190,7 @@ export const useEventMutations = (guildId: string, eventId: string) => {
       const response = await client.delete(
         `/guilds/${guildId}/events/${eventId}/heroes/${heroId}/maps/${mapId}`,
       );
-      return response.data;
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeyMaps });

@@ -18,9 +18,9 @@ import {
 import { Badge } from "@lootlog/ui/components/badge";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
-import { isAxiosError } from "axios";
 import { toast } from "sonner";
 import { Permission } from "@lootlog/types";
+import { getApiErrorStatus } from "@/lib/api-client/api-client";
 import {
   type Event,
   useEvents,
@@ -65,7 +65,7 @@ export const Events = () => {
     permissions?.includes(Permission.OWNER);
 
   if (error) {
-    const isForbidden = isAxiosError(error) && error.response?.status === 403;
+    const isForbidden = getApiErrorStatus(error) === 403;
 
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">

@@ -1,22 +1,15 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { invalidateUserNotificationQueries } from "@/hooks/api/user/use-user-notifications";
-import { apiClient } from "@/lib/api-client/api-client";
-import type { AxiosResponse } from "axios";
+import { apiClient, type ApiClient } from "@/lib/api-client/api-client";
 
 export function createUserNotificationMutation<TData, TResponse>(
-  mutationFn: (
-    data: TData,
-    client: typeof apiClient,
-  ) => Promise<AxiosResponse<TResponse>>,
+  mutationFn: (data: TData, client: ApiClient) => Promise<TResponse>,
 ) {
   return () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-      mutationFn: async (data: TData) => {
-        const response = await mutationFn(data, apiClient);
-        return response.data;
-      },
+      mutationFn: (data: TData) => mutationFn(data, apiClient),
       onSuccess: async () => {
         await invalidateUserNotificationQueries(queryClient);
       },

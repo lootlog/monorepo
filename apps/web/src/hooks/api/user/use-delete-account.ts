@@ -2,13 +2,14 @@ import { useApiClient } from "@/hooks/api/use-api-client";
 import { authClient } from "@/lib/auth-client";
 import { persister } from "@/lib/query-client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { mutationKeys } from "@/lib/query-keys";
 
 export const useDeleteAccount = () => {
   const { client } = useApiClient();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationKey: ["delete-account"],
+    mutationKey: mutationKeys.account.delete(),
     mutationFn: async () => {
       await client.delete("/users/@me");
 

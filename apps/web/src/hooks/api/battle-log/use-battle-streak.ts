@@ -3,6 +3,7 @@ import {
   battlelogApiClient,
   type ApiRequestConfig,
 } from "@/lib/api-client/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 interface Streak {
   current: {
@@ -28,23 +29,20 @@ interface UseBattleStreakParams {
 
 export const battleStreakQueryOptions = (params: UseBattleStreakParams) =>
   queryOptions({
-    queryKey: [
-      "battle-streak",
-      {
-        ...params,
-        suppressRouteErrorToast: undefined,
-      },
-    ],
+    queryKey: queryKeys.battleLog.streak({
+      ...params,
+      suppressRouteErrorToast: undefined,
+    }),
     queryFn: async () => {
       const { suppressRouteErrorToast = false, ...requestParams } = params;
-      const response = await battlelogApiClient.get(
+      const response = await battlelogApiClient.get<Streak>(
         "/battles/@me/statistics/streak",
         {
           params: requestParams,
           suppressRouteErrorToast,
         } as ApiRequestConfig,
       );
-      return response.data as Streak;
+      return response;
     },
     staleTime: 0,
   });

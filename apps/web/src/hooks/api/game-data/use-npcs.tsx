@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { SEARCH_API_URL } from "@/config/api";
 import { useApiClient } from "@/hooks/api/use-api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 export enum NpcType {
   COMMON = "COMMON",
@@ -49,17 +50,16 @@ export const useNpcs = ({
   };
 
   const query = useQuery({
-    queryKey: [
-      "guild-npcs",
+    queryKey: queryKeys.gameData.guildNpcs(
       normalizedSearch,
       normalizedSelectedNpcs,
       world ?? "",
-    ],
+    ),
     queryFn: () =>
       client.get<Npc[]>(
         `${SEARCH_API_URL}/npcs?${new URLSearchParams(queryParams).toString()}`,
       ),
-    select: (response) => response.data,
+    select: (data) => data,
     enabled:
       enabled &&
       (normalizedSearch.length > 0 || normalizedSelectedNpcs.length > 0),
