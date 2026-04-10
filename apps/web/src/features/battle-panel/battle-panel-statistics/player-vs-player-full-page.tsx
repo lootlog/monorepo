@@ -1,8 +1,5 @@
-import { useState, useEffect } from "react";
-import {
-  useBattleFiltersStore,
-  type Period,
-} from "@/store/battle-filters.store";
+import { useState } from "react";
+import type { Period } from "@/store/battle-filters.store";
 import { usePlayerVsPlayer } from "@/hooks/api/battle-log/use-player-vs-player";
 import {
   useReactTable,
@@ -45,6 +42,8 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@lootlog/ui/components/drawer";
+import { useQueryStates } from "nuqs";
+import { battlePanelPlayerVsPlayerSearchParsers } from "@/features/battle-panel/battle-panel-statistics-search";
 
 const PVP_FILTERS_OPEN_KEY = "pvp-filters-open";
 
@@ -63,48 +62,34 @@ export function PlayerVsPlayerFullPage() {
   };
 
   const opponentId = params.opponentId ?? params.myId;
-
-  const currentCharacterId = useBattleFiltersStore(
-    (state) => state.currentCharacterId,
+  const [queryState, setQueryState] = useQueryStates(
+    battlePanelPlayerVsPlayerSearchParsers,
   );
-
-  const filterPeriod = useBattleFiltersStore(
-    (state) => state.getFilters(state.currentCharacterId).period,
-  );
-  const minLevel = useBattleFiltersStore(
-    (state) => state.getFilters(state.currentCharacterId).minLevel,
-  );
-  const maxLevel = useBattleFiltersStore(
-    (state) => state.getFilters(state.currentCharacterId).maxLevel,
-  );
-
-  const [period, setPeriod] = useState<Period>(filterPeriod || "30d");
-  const [cursor, setCursor] = useState<string | undefined>(undefined);
-
-  useEffect(() => {
-    setCursor(undefined);
-  }, [opponentId, minLevel, maxLevel, period]);
+  const currentCharacterId = queryState.characterId ?? params.myId;
+  const period = queryState.period ?? "30d";
+  const minLevel = queryState.minLevel;
+  const maxLevel = queryState.maxLevel;
+  const cursor = queryState.cursor ?? undefined;
 
   const handlePeriodChange = (newPeriod: Period) => {
-    setPeriod(newPeriod);
-    const currentId = useBattleFiltersStore.getState().currentCharacterId;
-    useBattleFiltersStore
-      .getState()
-      .updateFilters(currentId, { period: newPeriod });
+    void setQueryState({
+      period: newPeriod,
+      cursor: null,
+    });
   };
 
   const handleMinLevelChange = (value: number | undefined) => {
-    const currentId = useBattleFiltersStore.getState().currentCharacterId;
-    useBattleFiltersStore
-      .getState()
-      .updateFilters(currentId, { minLevel: value ?? 1 });
+    void setQueryState({
+      minLevel: value ?? 1,
+      cursor: null,
+    });
   };
 
   const handleMaxLevelChange = (value: number | undefined) => {
-    const currentId = useBattleFiltersStore.getState().currentCharacterId;
-    useBattleFiltersStore
-      .getState()
-      .updateFilters(currentId, { maxLevel: value ?? 500 });
+    void setQueryState({
+      maxLevel: value ?? 500,
+      cursor: null,
+    });
   };
 
   const { data, isLoading } = usePlayerVsPlayer({
@@ -120,13 +105,13 @@ export function PlayerVsPlayerFullPage() {
 
   const handleNextPage = () => {
     if (data?.pagination.nextCursor) {
-      setCursor(data.pagination.nextCursor);
+      void setQueryState({ cursor: data.pagination.nextCursor });
     }
   };
 
   const handlePreviousPage = () => {
     if (data?.pagination.previousCursor) {
-      setCursor(data.pagination.previousCursor);
+      void setQueryState({ cursor: data.pagination.previousCursor });
     }
   };
 

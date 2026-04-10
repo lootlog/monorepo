@@ -1,5 +1,4 @@
-import { useEffect, useCallback } from "react";
-import { useShallow } from "zustand/react/shallow";
+import { useEffect } from "react";
 import { useBattleCharacters } from "@/hooks/api/battle-log/use-battle-characters";
 import { useProfessionWinRate } from "@/hooks/api/battle-log/use-profession-win-rate";
 import { useHeadToHead } from "@/hooks/api/battle-log/use-head-to-head";
@@ -16,45 +15,37 @@ import { BattleDurationStatsCard } from "./components/battle-duration-stats";
 import { PhGrowthChart } from "./components/ph-growth-chart";
 import { RatingGrowthChart } from "./components/rating-growth-chart";
 import { RatingDeltaByOpponentCard } from "./components/rating-delta-by-opponent-card";
-import {
-  useBattleFiltersStore,
-  type Period,
-} from "@/store/battle-filters.store";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Card } from "@lootlog/ui/components/card";
 import { SectionHeader } from "@/components/layout/section-header";
 import { BarChart3 } from "lucide-react";
+import { useQueryStates } from "nuqs";
+import { battlePanelStatisticsSearchParsers } from "@/features/battle-panel/battle-panel-statistics-search";
 
 export function BattlePanelStatistics() {
   const { data: characters, isLoading: isLoadingCharacters } =
     useBattleCharacters();
+  const [queryState, setQueryState] = useQueryStates(
+    battlePanelStatisticsSearchParsers,
+  );
 
-  const { currentCharacterId, period, minLevel, maxLevel, ph, matchmaking } =
-    useBattleFiltersStore(
-      useShallow((state) => {
-        const charId = state.currentCharacterId;
-        const filters = state.getFilters(charId);
-        return {
-          currentCharacterId: charId,
-          period: filters.period ?? "30d",
-          minLevel: filters.minLevel ?? 1,
-          maxLevel: filters.maxLevel ?? 500,
-          ph: filters.ph,
-          matchmaking: filters.matchmaking,
-        };
-      }),
-    );
+  const currentCharacterId = queryState.characterId ?? undefined;
+  const period = queryState.period ?? "30d";
+  const minLevel = queryState.minLevel;
+  const maxLevel = queryState.maxLevel;
+  const ph = queryState.ph ?? undefined;
+  const matchmaking = queryState.matchmaking ?? undefined;
 
   useEffect(() => {
     if (!isLoadingCharacters && characters?.length && !currentCharacterId) {
       const firstCharacterId = characters[0]?.id;
       if (firstCharacterId) {
-        useBattleFiltersStore
-          .getState()
-          .setCurrentCharacterId(firstCharacterId);
+        void setQueryState({
+          characterId: firstCharacterId,
+        });
       }
     }
-  }, [characters, currentCharacterId, isLoadingCharacters]);
+  }, [characters, currentCharacterId, isLoadingCharacters, setQueryState]);
 
   const { data: professionData, isLoading: isProfessionLoading } =
     useProfessionWinRate({
@@ -121,51 +112,14 @@ export function BattlePanelStatistics() {
       maxLevel,
     });
 
-  const handleCharacterChange = useCallback(
-    (newCharacterId: string | undefined) => {
-      useBattleFiltersStore.getState().setCurrentCharacterId(newCharacterId);
-    },
-    [],
-  );
-
-  const handlePeriodChange = useCallback((newPeriod: Period) => {
-    const currentId = useBattleFiltersStore.getState().currentCharacterId;
-    useBattleFiltersStore
-      .getState()
-      .updateFilters(currentId, { period: newPeriod });
-  }, []);
-
-  const handleMinLevelChange = useCallback(
-    (newMinLevel: number | undefined) => {
-      const currentId = useBattleFiltersStore.getState().currentCharacterId;
-      useBattleFiltersStore
-        .getState()
-        .updateFilters(currentId, { minLevel: newMinLevel ?? 1 });
-    },
-    [],
-  );
-
-  const handleMaxLevelChange = useCallback(
-    (newMaxLevel: number | undefined) => {
-      const currentId = useBattleFiltersStore.getState().currentCharacterId;
-      useBattleFiltersStore
-        .getState()
-        .updateFilters(currentId, { maxLevel: newMaxLevel ?? 500 });
-    },
-    [],
-  );
-
-  const handlePhChange = useCallback((newPh: boolean) => {
-    const currentId = useBattleFiltersStore.getState().currentCharacterId;
-    useBattleFiltersStore.getState().updateFilters(currentId, { ph: newPh });
-  }, []);
-
-  const handleMatchmakingChange = useCallback((newMatchmaking: boolean) => {
-    const currentId = useBattleFiltersStore.getState().currentCharacterId;
-    useBattleFiltersStore
-      .getState()
-      .updateFilters(currentId, { matchmaking: newMatchmaking });
-  }, []);
+  const statisticsSearch = {
+    characterId: currentCharacterId,
+    period,
+    minLevel,
+    maxLevel,
+    ph,
+    matchmaking,
+  };
 
   if (isLoadingCharacters) {
     return null;
@@ -187,12 +141,36 @@ export function BattlePanelStatistics() {
             maxLevel={maxLevel}
             ph={ph}
             matchmaking={matchmaking}
-            onCharacterChange={handleCharacterChange}
-            onPeriodChange={handlePeriodChange}
-            onMinLevelChange={handleMinLevelChange}
-            onMaxLevelChange={handleMaxLevelChange}
-            onPhChange={handlePhChange}
-            onMatchmakingChange={handleMatchmakingChange}
+            onCharacterChange={(characterId) => {
+              void setQueryState({
+                characterId: characterId ?? null,
+              });
+            }}
+            onPeriodChange={(newPeriod) => {
+              void setQueryState({
+                period: newPeriod,
+              });
+            }}
+            onMinLevelChange={(newMinLevel) => {
+              void setQueryState({
+                minLevel: newMinLevel ?? 1,
+              });
+            }}
+            onMaxLevelChange={(newMaxLevel) => {
+              void setQueryState({
+                maxLevel: newMaxLevel ?? 500,
+              });
+            }}
+            onPhChange={(newPh) => {
+              void setQueryState({
+                ph: newPh ? true : null,
+              });
+            }}
+            onMatchmakingChange={(newMatchmaking) => {
+              void setQueryState({
+                matchmaking: newMatchmaking ? true : null,
+              });
+            }}
           />
         </Card>
 
@@ -232,6 +210,12 @@ export function BattlePanelStatistics() {
               />
               <RatingDeltaByOpponentCard
                 data={ratingDeltaData ?? []}
+                search={{
+                  characterId: statisticsSearch.characterId,
+                  period: statisticsSearch.period,
+                  minLevel: statisticsSearch.minLevel,
+                  maxLevel: statisticsSearch.maxLevel,
+                }}
                 isLoading={isRatingDeltaLoading}
               />
             </div>
@@ -272,6 +256,7 @@ export function BattlePanelStatistics() {
               />
               <HeadToHeadTable
                 data={headToHeadData?.records ?? []}
+                search={statisticsSearch}
                 isLoading={isHeadToHeadLoading}
               />
             </div>

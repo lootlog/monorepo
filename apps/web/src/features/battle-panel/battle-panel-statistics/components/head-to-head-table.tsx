@@ -23,6 +23,15 @@ import { ArrowRight } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { ROUTES } from "@/config/routes";
 
+type HeadToHeadTableSearch = {
+  characterId?: string;
+  period: string;
+  minLevel: number;
+  maxLevel: number;
+  ph?: boolean;
+  matchmaking?: boolean;
+};
+
 interface HeadToHeadRecord {
   opponentId: string;
   opponentName: string;
@@ -38,10 +47,15 @@ interface HeadToHeadRecord {
 
 interface HeadToHeadTableProps {
   data: HeadToHeadRecord[];
+  search: HeadToHeadTableSearch;
   isLoading?: boolean;
 }
 
-export function HeadToHeadTable({ data, isLoading }: HeadToHeadTableProps) {
+export function HeadToHeadTable({
+  data,
+  search,
+  isLoading,
+}: HeadToHeadTableProps) {
   const columns: ColumnDef<HeadToHeadRecord>[] = useMemo(
     () => [
       {
@@ -182,7 +196,7 @@ export function HeadToHeadTable({ data, isLoading }: HeadToHeadTableProps) {
         </div>
         <div className="flex justify-end pt-4 mt-auto">
           <Button asChild variant="outline" size="sm">
-            <Link to={ROUTES.user.battlePanel.h2h}>
+            <Link to={ROUTES.user.battlePanel.h2h} search={search as never}>
               Zobacz cały bilans
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>

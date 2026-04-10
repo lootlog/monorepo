@@ -2,11 +2,11 @@ import { BattlesList } from "@/features/battle-panel/battle-panel-battles-list/c
 import { FiltersSidebar } from "@/features/battle-panel/battle-panel-battles-list/components/filters-sidebar";
 import { useQueryStates } from "nuqs";
 import type { BattleFilters } from "./components/battles-list-filters";
+import { getSelectedWarriorsFromSearch } from "@/features/battle-panel/battle-panel-statistics-search";
 import { useBattles } from "@/hooks/api/battle-log/use-battles";
 import { useBattleCharacters } from "@/hooks/api/battle-log/use-battle-characters";
 import { battleQueryParsers } from "./battle-query-parsers";
-import { useBattleFiltersStore } from "@/store/battle-filters.store";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { useLocalStorage } from "usehooks-ts";
@@ -33,23 +33,9 @@ export const BattlePanelBattlesList = () => {
     true,
   );
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
-  const [selectedWarriors, setSelectedWarriors] = useState<Warrior[]>([]);
-
-  const currentCharacterId = useBattleFiltersStore(
-    (state) => state.currentCharacterId,
+  const selectedWarriors = getSelectedWarriorsFromSearch(
+    queryState.search ?? undefined,
   );
-  const setCurrentCharacterId = useBattleFiltersStore(
-    (state) => state.setCurrentCharacterId,
-  );
-
-  useEffect(() => {
-    if (queryState.characterId && queryState.characterId.length > 0) {
-      const firstCharId = queryState.characterId[0];
-      if (firstCharId !== currentCharacterId) {
-        setCurrentCharacterId(firstCharId);
-      }
-    }
-  }, [queryState.characterId, currentCharacterId, setCurrentCharacterId]);
 
   const { data: battlesResponse, isLoading: isBattlesLoading } = useBattles({
     cursor: queryState.cursor ?? undefined,
@@ -84,17 +70,6 @@ export const BattlePanelBattlesList = () => {
   };
 
   const handleFiltersChange = (newFilters: BattleFilters) => {
-    const currentId = useBattleFiltersStore.getState().currentCharacterId;
-    useBattleFiltersStore.getState().updateFilters(currentId, {
-      world: newFilters.world,
-      type: newFilters.type,
-      result: newFilters.result,
-      ph: newFilters.ph,
-      matchmaking: newFilters.matchmaking,
-      minLevel: newFilters.minLevel,
-      maxLevel: newFilters.maxLevel,
-    });
-
     setQueryState({
       cursor: null,
       world: newFilters.world ?? null,
@@ -114,8 +89,6 @@ export const BattlePanelBattlesList = () => {
     const newSelectedWarriors = isSelected
       ? selectedWarriors.filter((w) => w.name !== warrior.name)
       : [...selectedWarriors, warrior];
-
-    setSelectedWarriors(newSelectedWarriors);
 
     const warriorNames = newSelectedWarriors.map((w) => w.name);
     handleFiltersChange({
