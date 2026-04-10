@@ -4,7 +4,7 @@ import {
   useQuery,
 } from "@tanstack/react-query";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { apiClient, type ApiRequestConfig } from "@/lib/api-client/api-client";
+import { apiClient } from "@/lib/api-client/api-client";
 import { stringifyQueryParams } from "@/lib/stringify-query-params";
 import type { KillsByType, NpcType } from "./use-guild-kill-stats";
 import { queryKeys } from "@/lib/query-keys";
@@ -55,15 +55,10 @@ export type MemberKillsFilters = {
   maxLvl?: number;
 };
 
-type MemberKillsQueryOptionsOptions = {
-  suppressRouteErrorToast?: boolean;
-};
-
 export const memberKillsQueryOptions = (
   guildId: string,
   memberId: number | undefined,
   filters: MemberKillsFilters = {},
-  { suppressRouteErrorToast = false }: MemberKillsQueryOptionsOptions = {},
 ) => {
   const queryParams = {
     world: filters.world || undefined,
@@ -82,9 +77,6 @@ export const memberKillsQueryOptions = (
     queryFn: async () => {
       const response = await apiClient.get<MemberKillsResponse>(
         `/guilds/${guildId}/stats/kills/members/${memberId}${queryString ? `?${queryString}` : ""}`,
-        {
-          suppressRouteErrorToast,
-        } as ApiRequestConfig,
       );
       return response;
     },

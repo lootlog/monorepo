@@ -1,5 +1,5 @@
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { apiClient, type ApiRequestConfig } from "@/lib/api-client/api-client";
+import { apiClient } from "@/lib/api-client/api-client";
 import type { DiscordGuildSyncState } from "@lootlog/types";
 import { queryKeys } from "@/lib/query-keys";
 import {
@@ -9,22 +9,12 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 
-type GuildDiscordSyncQueryOptionsOptions = {
-  suppressRouteErrorToast?: boolean;
-};
-
-export const guildDiscordSyncQueryOptions = (
-  guildId: string,
-  { suppressRouteErrorToast = false }: GuildDiscordSyncQueryOptionsOptions = {},
-) =>
+export const guildDiscordSyncQueryOptions = (guildId: string) =>
   queryOptions({
     queryKey: queryKeys.guilds.discordSync(guildId),
     queryFn: async () => {
       const response = await apiClient.get<DiscordGuildSyncState>(
         `/guilds/${guildId}/discord-sync`,
-        {
-          suppressRouteErrorToast,
-        } as ApiRequestConfig,
       );
       return response;
     },

@@ -11,7 +11,6 @@ export const Route = createFileRoute("/_authenticated/$guildId/events")({
       eventsQueryOptions({
         guildId: params.guildId,
         activeOnly: false,
-        suppressRouteErrorToast: true,
       }),
     );
 

@@ -18,7 +18,6 @@ interface UsePhGrowthParams {
   maxLevel?: number;
   ph?: boolean;
   matchmaking?: boolean;
-  suppressRouteErrorToast?: boolean;
 }
 
 export const phGrowthQueryOptions = (params: UsePhGrowthParams) =>
@@ -26,7 +25,6 @@ export const phGrowthQueryOptions = (params: UsePhGrowthParams) =>
     queryKey: "ph-growth",
     endpoint: "/battles/@me/statistics/ph-growth",
     params,
-    suppressRouteErrorToast: params.suppressRouteErrorToast,
   });
 
 export const usePhGrowth = createBattleLogStatistic<

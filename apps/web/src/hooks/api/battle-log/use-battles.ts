@@ -142,7 +142,6 @@ export type UseBattlesParams = {
   characterId?: Array<string>;
   minLevel?: number;
   maxLevel?: number;
-  suppressRouteErrorToast?: boolean;
 };
 
 const buildBattlesSearchParams = (params?: UseBattlesParams) => {
@@ -185,7 +184,6 @@ export const battlesQueryOptions = (params?: UseBattlesParams) =>
       params
         ? {
             ...params,
-            suppressRouteErrorToast: undefined,
           }
         : undefined,
     ),
@@ -194,9 +192,7 @@ export const battlesQueryOptions = (params?: UseBattlesParams) =>
 
       const response = await battlelogApiClient.get<GetBattlesResponse>(
         `/battles/@me?${searchParams}`,
-        {
-          suppressRouteErrorToast: params?.suppressRouteErrorToast ?? false,
-        } as ApiRequestConfig,
+        {} as ApiRequestConfig,
       );
       return response;
     },

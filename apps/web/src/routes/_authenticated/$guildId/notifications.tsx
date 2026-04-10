@@ -17,19 +17,13 @@ export const Route = createFileRoute("/_authenticated/$guildId/notifications")({
   loader: async ({ context, params }) => {
     await Promise.all([
       context.queryClient.ensureQueryData(
-        guildNotificationsQueryOptions(params.guildId, {
-          suppressRouteErrorToast: true,
-        }),
+        guildNotificationsQueryOptions(params.guildId),
       ),
       context.queryClient.ensureQueryData(
-        guildNotificationJobsQueryOptions(params.guildId, {
-          suppressRouteErrorToast: true,
-        }),
+        guildNotificationJobsQueryOptions(params.guildId),
       ),
       context.queryClient.ensureQueryData(
-        guildDiscordSyncQueryOptions(params.guildId, {
-          suppressRouteErrorToast: true,
-        }),
+        guildDiscordSyncQueryOptions(params.guildId),
       ),
     ]);
 

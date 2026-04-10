@@ -28,7 +28,6 @@ export const Route = createFileRoute(
         sortOrder: search.sortOrder,
         size: 20,
         includeTotal: true,
-        suppressRouteErrorToast: true,
       }),
     );
 

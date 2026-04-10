@@ -57,7 +57,6 @@ export interface UsePlayerVsPlayerParams {
   opponentId: string;
   minLevel?: number;
   maxLevel?: number;
-  suppressRouteErrorToast?: boolean;
 }
 
 const buildPlayerVsPlayerSearchParams = (params: UsePlayerVsPlayerParams) => {
@@ -88,16 +87,13 @@ export const playerVsPlayerQueryOptions = (params: UsePlayerVsPlayerParams) =>
   queryOptions({
     queryKey: queryKeys.battleLog.playerVsPlayer({
       ...params,
-      suppressRouteErrorToast: undefined,
     }),
     queryFn: async () => {
       const searchParams = buildPlayerVsPlayerSearchParams(params);
 
       const response = await battlelogApiClient.get<GetPlayerVsPlayerResponse>(
         `/battles/@me/statistics/player-vs-player?${searchParams.toString()}`,
-        {
-          suppressRouteErrorToast: params.suppressRouteErrorToast ?? false,
-        } as ApiRequestConfig,
+        {} as ApiRequestConfig,
       );
       return response;
     },

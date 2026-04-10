@@ -24,11 +24,7 @@ export const Route = createFileRoute(
     const searchParams = new URLSearchParams(location.searchStr);
 
     await Promise.all([
-      context.queryClient.ensureQueryData(
-        battleCharactersQueryOptions({
-          suppressRouteErrorToast: true,
-        }),
-      ),
+      context.queryClient.ensureQueryData(battleCharactersQueryOptions()),
       context.queryClient.ensureQueryData(
         battlesQueryOptions({
           cursor: searchParams.get("cursor") || undefined,
@@ -48,7 +44,6 @@ export const Route = createFileRoute(
           characterId: getSearchParamValues(searchParams, "characterId"),
           minLevel: getOptionalNumber(searchParams, "minLevel") ?? 1,
           maxLevel: getOptionalNumber(searchParams, "maxLevel") ?? 500,
-          suppressRouteErrorToast: true,
         }),
       ),
     ]);

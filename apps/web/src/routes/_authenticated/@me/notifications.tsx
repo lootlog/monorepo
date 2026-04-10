@@ -9,16 +9,8 @@ export const Route = createFileRoute("/_authenticated/@me/notifications")({
   pendingComponent: UserNotificationsPageSkeleton,
   loader: async ({ context }) => {
     await Promise.all([
-      context.queryClient.ensureQueryData(
-        guildsQueryOptions({
-          suppressRouteErrorToast: true,
-        }),
-      ),
-      context.queryClient.ensureQueryData(
-        userNotificationsQueryOptions({
-          suppressRouteErrorToast: true,
-        }),
-      ),
+      context.queryClient.ensureQueryData(guildsQueryOptions()),
+      context.queryClient.ensureQueryData(userNotificationsQueryOptions()),
     ]);
 
     return null;

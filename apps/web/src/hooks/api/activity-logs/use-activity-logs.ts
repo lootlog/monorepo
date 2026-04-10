@@ -73,7 +73,6 @@ export type UseActivityLogsOptions = {
   world?: string;
   limit?: number;
   name?: string;
-  suppressRouteErrorToast?: boolean;
 };
 
 const serializeActivityLogsQuery = createSerializer({
@@ -101,7 +100,6 @@ export const activityLogsInfiniteQueryOptions = (
     world,
     limit = 20,
     name,
-    suppressRouteErrorToast = false,
   } = options;
 
   const buildQueryString = (cursor?: string) =>
@@ -128,9 +126,7 @@ export const activityLogsInfiniteQueryOptions = (
 
       return activityApiClient.get<PaginatedActivitiesResponse>(
         `/guilds/${guildId}/activity-logs${queryString}`,
-        {
-          suppressRouteErrorToast,
-        } as ApiRequestConfig,
+        {} as ApiRequestConfig,
       );
     },
     enabled: !!guildId,

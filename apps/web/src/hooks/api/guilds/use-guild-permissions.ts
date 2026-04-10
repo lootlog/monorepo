@@ -1,25 +1,15 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { apiClient, type ApiRequestConfig } from "@/lib/api-client/api-client";
+import { apiClient } from "@/lib/api-client/api-client";
 import type { Permission } from "@lootlog/types";
 import { queryKeys } from "@/lib/query-keys";
 
-type GuildPermissionsQueryOptionsOptions = {
-  suppressRouteErrorToast?: boolean;
-};
-
-export const guildPermissionsQueryOptions = (
-  guildId: string,
-  { suppressRouteErrorToast = false }: GuildPermissionsQueryOptionsOptions = {},
-) =>
+export const guildPermissionsQueryOptions = (guildId: string) =>
   queryOptions({
     queryKey: queryKeys.guilds.permissions(guildId),
     queryFn: async () => {
       const response = await apiClient.get<Permission[]>(
         `/guilds/${guildId}/permissions`,
-        {
-          suppressRouteErrorToast,
-        } as ApiRequestConfig,
       );
       return response;
     },

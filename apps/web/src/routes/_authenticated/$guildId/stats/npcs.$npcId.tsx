@@ -16,19 +16,11 @@ export const Route = createFileRoute(
 
     const [npcKillers] = await Promise.all([
       context.queryClient.ensureQueryData(
-        npcKillersQueryOptions(
-          params.guildId,
-          npcId,
-          {},
-          {
-            suppressRouteErrorToast: true,
-          },
-        ),
+        npcKillersQueryOptions(params.guildId, npcId, {}),
       ),
       context.queryClient.ensureQueryData(
         guildMembersQueryOptions(params.guildId, {
           includeInactive: true,
-          suppressRouteErrorToast: true,
         }),
       ),
     ]);

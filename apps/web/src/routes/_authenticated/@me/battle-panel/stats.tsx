@@ -14,7 +14,6 @@ export const Route = createFileRoute("/_authenticated/@me/battle-panel/stats")({
         period: "180d",
         minLevel: search.minLevel,
         maxLevel: search.maxLevel,
-        suppressRouteErrorToast: true,
       }),
     );
 

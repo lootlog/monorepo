@@ -16,19 +16,11 @@ export const Route = createFileRoute(
 
     const [memberKills] = await Promise.all([
       context.queryClient.ensureQueryData(
-        memberKillsQueryOptions(
-          params.guildId,
-          memberId,
-          {},
-          {
-            suppressRouteErrorToast: true,
-          },
-        ),
+        memberKillsQueryOptions(params.guildId, memberId, {}),
       ),
       context.queryClient.ensureQueryData(
         guildMembersQueryOptions(params.guildId, {
           includeInactive: true,
-          suppressRouteErrorToast: true,
         }),
       ),
     ]);

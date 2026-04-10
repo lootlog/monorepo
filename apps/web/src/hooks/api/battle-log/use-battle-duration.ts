@@ -26,22 +26,19 @@ interface UseBattleDurationParams {
   maxLevel?: number;
   ph?: boolean;
   matchmaking?: boolean;
-  suppressRouteErrorToast?: boolean;
 }
 
 export const battleDurationQueryOptions = (params: UseBattleDurationParams) =>
   queryOptions({
     queryKey: queryKeys.battleLog.duration({
       ...params,
-      suppressRouteErrorToast: undefined,
     }),
     queryFn: async () => {
-      const { suppressRouteErrorToast = false, ...requestParams } = params;
+      const requestParams = { ...params };
       const response = await battlelogApiClient.get<BattleDurationStats>(
         "/battles/@me/statistics/duration",
         {
           params: requestParams,
-          suppressRouteErrorToast,
         } as ApiRequestConfig,
       );
       return response;

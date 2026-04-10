@@ -27,7 +27,6 @@ export const Route = createFileRoute(
       maxLevel: search.maxLevel,
       ph: search.ph,
       matchmaking: search.matchmaking,
-      suppressRouteErrorToast: true,
     };
 
     await Promise.all([
@@ -51,7 +50,6 @@ export const Route = createFileRoute(
           period: baseParams.period,
           minLevel: baseParams.minLevel,
           maxLevel: baseParams.maxLevel,
-          suppressRouteErrorToast: true,
         }),
       ),
       context.queryClient.ensureQueryData(
@@ -60,7 +58,6 @@ export const Route = createFileRoute(
           period: baseParams.period,
           minLevel: baseParams.minLevel,
           maxLevel: baseParams.maxLevel,
-          suppressRouteErrorToast: true,
         }),
       ),
     ]);

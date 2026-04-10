@@ -17,7 +17,6 @@ export type UseActivitySuggestionsOptions = {
 type UseActivitySuggestionsConfig = {
   responseKey?: string;
   requireSearch?: boolean;
-  suppressRouteErrorToast?: boolean;
 };
 
 type ActivitySuggestionsQueryOptionsParams = {
@@ -28,7 +27,6 @@ type ActivitySuggestionsQueryOptionsParams = {
   enabled?: boolean;
   responseKey?: string;
   requireSearch?: boolean;
-  suppressRouteErrorToast?: boolean;
 };
 
 export const activitySuggestionsQueryOptions = ({
@@ -39,7 +37,6 @@ export const activitySuggestionsQueryOptions = ({
   enabled = true,
   responseKey = "suggestions",
   requireSearch = true,
-  suppressRouteErrorToast = false,
 }: ActivitySuggestionsQueryOptionsParams) => {
   const trimmedSearch = search.trim();
 
@@ -58,7 +55,6 @@ export const activitySuggestionsQueryOptions = ({
             search: trimmedSearch || undefined,
             limit,
           },
-          suppressRouteErrorToast,
         } as ApiRequestConfig,
       );
 
@@ -81,11 +77,7 @@ export const useActivitySuggestions = (
   }: UseActivitySuggestionsOptions,
   config: UseActivitySuggestionsConfig = {},
 ) => {
-  const {
-    responseKey = "suggestions",
-    requireSearch = true,
-    suppressRouteErrorToast = false,
-  } = config;
+  const { responseKey = "suggestions", requireSearch = true } = config;
   const [debouncedSearch] = useDebounceValue(search, debounceMs);
 
   return useQuery(
@@ -97,7 +89,6 @@ export const useActivitySuggestions = (
       enabled,
       responseKey,
       requireSearch,
-      suppressRouteErrorToast,
     }),
   );
 };

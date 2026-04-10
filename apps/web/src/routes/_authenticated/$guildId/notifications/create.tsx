@@ -10,9 +10,7 @@ export const Route = createFileRoute(
   pendingComponent: NotificationCreateSkeleton,
   loader: async ({ context, params }) => {
     await context.queryClient.ensureQueryData(
-      guildRolesQueryOptions(params.guildId, {
-        suppressRouteErrorToast: true,
-      }),
+      guildRolesQueryOptions(params.guildId),
     );
 
     return null;

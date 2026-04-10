@@ -5,15 +5,11 @@ import { queryKeys } from "@/lib/query-keys";
 
 type GuildMembersQueryOptionsOptions = {
   includeInactive?: boolean;
-  suppressRouteErrorToast?: boolean;
 };
 
 export const guildMembersQueryOptions = (
   guildId: string,
-  {
-    includeInactive = false,
-    suppressRouteErrorToast = false,
-  }: GuildMembersQueryOptionsOptions = {},
+  { includeInactive = false }: GuildMembersQueryOptionsOptions = {},
 ) =>
   queryOptions({
     queryKey: queryKeys.members.list(guildId, includeInactive),
@@ -22,7 +18,6 @@ export const guildMembersQueryOptions = (
         `/guilds/${guildId}/members`,
         {
           params: { includeInactive: includeInactive.toString() },
-          suppressRouteErrorToast,
         } as ApiRequestConfig,
       );
 

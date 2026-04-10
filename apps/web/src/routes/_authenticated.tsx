@@ -37,21 +37,9 @@ export const Route = createFileRoute("/_authenticated")({
   },
   loader: async ({ context }) => {
     await Promise.all([
-      context.queryClient.ensureQueryData(
-        authScopesQueryOptions({
-          suppressRouteErrorToast: true,
-        }),
-      ),
-      context.queryClient.ensureQueryData(
-        guildsQueryOptions({
-          suppressRouteErrorToast: true,
-        }),
-      ),
-      context.queryClient.ensureQueryData(
-        userPreferencesQueryOptions({
-          suppressRouteErrorToast: true,
-        }),
-      ),
+      context.queryClient.ensureQueryData(authScopesQueryOptions()),
+      context.queryClient.ensureQueryData(guildsQueryOptions()),
+      context.queryClient.ensureQueryData(userPreferencesQueryOptions()),
     ]);
 
     return null;
