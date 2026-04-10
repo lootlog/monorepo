@@ -31,7 +31,7 @@ import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { EventCreateDialog } from "./components/dialogs/event-create-dialog";
 import { EventActionDialog } from "./components/dialogs/event-action-dialog";
 import { getEventStatusAtTimestamp } from "./utils";
-import { Spinner } from "@lootlog/ui/components/spinner";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
 
 export const Events = () => {
   const { t } = useTranslation();
@@ -116,8 +116,25 @@ export const Events = () => {
         </Card>
 
         {isLoading ? (
-          <div className="flex items-center justify-center h-64">
-            <Spinner className="h-8 w-8" />
+          <div className="flex flex-col gap-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Card
+                key={i}
+                className="border-border bg-card/40 p-3 backdrop-blur-sm"
+              >
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-8 w-8 shrink-0 rounded-lg" />
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <Skeleton className="h-4 w-40" />
+                    <div className="flex gap-2">
+                      <Skeleton className="h-5 w-16 rounded-full" />
+                      <Skeleton className="h-5 w-20 rounded-full" />
+                      <Skeleton className="h-5 w-24 rounded-full" />
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ))}
           </div>
         ) : events?.length === 0 ? (
           <Card className="flex flex-col items-center justify-center gap-3 bg-card/40 py-12 backdrop-blur-sm">

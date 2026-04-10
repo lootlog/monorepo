@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { AlertCircle, BookOpenText } from "lucide-react";
-import { Spinner } from "@lootlog/ui/components/spinner";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
@@ -75,8 +75,22 @@ export const EventEditRulebookPage = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Spinner className="size-8 text-primary" />
+      <div className="flex flex-col gap-4 px-3 py-3">
+        <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-9 w-9 shrink-0 rounded-xl" />
+            <div className="space-y-1.5">
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+          </div>
+        </Card>
+        <Card className="border-border bg-card/40 p-4 backdrop-blur-sm">
+          <div className="space-y-2">
+            <Skeleton className="h-3 w-16" />
+            <Skeleton className="h-32 w-full" />
+          </div>
+        </Card>
       </div>
     );
   }

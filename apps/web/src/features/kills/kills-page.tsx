@@ -23,7 +23,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@lootlog/ui/components/pagination";
-import { Spinner } from "@lootlog/ui/components/spinner";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Card } from "@lootlog/ui/components/card";
 import { Skull } from "lucide-react";
@@ -234,13 +234,19 @@ export const KillsPage: React.FC = () => {
           <Card className="flex-1 min-h-0 flex flex-col border-border bg-card/40 p-0 backdrop-blur-sm overflow-hidden gap-0">
             <ScrollArea className="relative flex-1 min-h-0 w-full">
               {isLoading ? (
-                <div className="flex items-center justify-center h-64">
-                  <div className="flex flex-col items-center justify-center gap-3">
-                    <Spinner className="size-8" />
-                    <p className="text-sm text-muted-foreground">
-                      {t("kills.ranking.loading")}
-                    </p>
-                  </div>
+                <div>
+                  {Array.from({ length: 10 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="flex h-14 items-center gap-4 border-b border-border px-4"
+                    >
+                      <Skeleton className="h-4 w-8" />
+                      <Skeleton className="h-8 w-8 rounded-lg" />
+                      <Skeleton className="h-4 flex-1" />
+                      <Skeleton className="h-4 w-12" />
+                      <Skeleton className="h-4 w-16" />
+                    </div>
+                  ))}
                 </div>
               ) : !data || data.npcs.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">

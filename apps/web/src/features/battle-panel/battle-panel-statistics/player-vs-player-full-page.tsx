@@ -27,7 +27,7 @@ import {
 import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
 import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
-import { Spinner } from "@lootlog/ui/components/spinner";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { PlayerTile } from "@/components/battle";
 
 import { useParams, useNavigate } from "@tanstack/react-router";
@@ -238,8 +238,20 @@ export function PlayerVsPlayerFullPage() {
             <Card className="flex-1 flex flex-col min-h-0 border-border bg-card/40 backdrop-blur-sm overflow-hidden gap-0 p-0">
               <ScrollArea className="flex-1 min-h-0">
                 {isLoading ? (
-                  <div className="flex items-center justify-center h-64">
-                    <Spinner className="h-8 w-8" />
+                  <div>
+                    {Array.from({ length: 10 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="flex h-14 items-center gap-4 border-b border-border px-4"
+                      >
+                        <Skeleton className="h-4 w-8" />
+                        <Skeleton className="h-8 w-8 rounded-full" />
+                        <Skeleton className="h-4 flex-1" />
+                        {Array.from({ length: 4 }).map((_, j) => (
+                          <Skeleton key={j} className="h-4 w-12" />
+                        ))}
+                      </div>
+                    ))}
                   </div>
                 ) : !data || data.battles.length === 0 ? (
                   <div className="flex flex-col items-center justify-center gap-3 p-16">

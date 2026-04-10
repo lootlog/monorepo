@@ -23,7 +23,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@lootlog/ui/components/pagination";
-import { Spinner } from "@lootlog/ui/components/spinner";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Card } from "@lootlog/ui/components/card";
 import { NpcTile } from "@/components/tiles/npc-tile";
@@ -131,8 +131,33 @@ export const NpcKillersPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="h-full flex flex-col items-center justify-center">
-        <Spinner className="size-8" />
+      <div className="flex flex-col h-full min-h-0 bg-background/50">
+        <div className="px-3 py-3 flex flex-col gap-4">
+          <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-10 w-10 rounded" />
+              <div className="flex flex-col gap-2 flex-1">
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+            </div>
+          </Card>
+          <Card className="flex-1 min-h-0 flex flex-col border-border bg-card/40 p-0 backdrop-blur-sm overflow-hidden gap-0">
+            <div>
+              {Array.from({ length: 10 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="flex h-14 items-center gap-4 border-b border-border px-4"
+                >
+                  <Skeleton className="h-4 w-8" />
+                  <Skeleton className="h-8 w-8 rounded-full" />
+                  <Skeleton className="h-4 flex-1" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
       </div>
     );
   }

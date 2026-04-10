@@ -3,7 +3,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { SectionHeader } from "@/components/layout/section-header";
 import { useBattleCharacters } from "@/hooks/api/battle-log/use-battle-characters";
 import { useBattleAnalytics } from "@/hooks/api/battle-log/use-battle-analytics";
-import { Spinner } from "@lootlog/ui/components/spinner";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { Card } from "@lootlog/ui/components/card";
 import CountUp from "@lootlog/ui/components/count-up";
 import { ROUTES } from "@/config/routes";
@@ -131,8 +131,16 @@ export function StatsOverview() {
 
   if (isLoadingCharacters) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <Spinner />
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Card
+            key={i}
+            className="border-border bg-card/40 p-4 backdrop-blur-sm"
+          >
+            <Skeleton className="mb-2 h-3 w-24" />
+            <Skeleton className="h-7 w-16" />
+          </Card>
+        ))}
       </div>
     );
   }
@@ -197,8 +205,16 @@ export function StatsOverview() {
       </SectionHeader>
 
       {isLoadingAnalytics ? (
-        <div className="flex items-center justify-center h-64">
-          <Spinner />
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Card
+              key={i}
+              className="border-border bg-card/40 p-4 backdrop-blur-sm"
+            >
+              <Skeleton className="mb-2 h-3 w-24" />
+              <Skeleton className="h-7 w-16" />
+            </Card>
+          ))}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
