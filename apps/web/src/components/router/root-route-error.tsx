@@ -42,7 +42,7 @@ export const RootRouteError = ({ error, reset }: ErrorComponentProps) => {
   };
 
   return (
-    <div className="min-h-dvh bg-background">
+    <div className="flex min-h-dvh bg-background">
       <RouteErrorState
         status={normalizedStatus}
         title={t(`common.routeErrors.status.${normalizedStatus}.title`)}
