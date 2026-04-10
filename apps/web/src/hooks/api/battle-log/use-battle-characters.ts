@@ -1,5 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 import { useBattleLogApiClient } from "@/hooks/api/battle-log/use-battle-log-api-client";
+import {
+  battlelogApiClient,
+  type ApiRequestConfig,
+} from "@/lib/api-client/api-client";
 
 export type BattleCharacter = {
   id: string;
@@ -12,16 +16,29 @@ export type GetBattleCharactersResponse = {
   characters: BattleCharacter[];
 };
 
-export const useBattleCharacters = () => {
-  const { client } = useBattleLogApiClient();
+type BattleCharactersQueryOptionsOptions = {
+  suppressRouteErrorToast?: boolean;
+};
 
-  const query = useQuery({
+export const battleCharactersQueryOptions = ({
+  suppressRouteErrorToast = false,
+}: BattleCharactersQueryOptionsOptions = {}) =>
+  queryOptions({
     queryKey: ["battle-characters", "@me"],
-    queryFn: () => {
-      return client.get<GetBattleCharactersResponse>(`/battles/@me/characters`);
+    queryFn: async () => {
+      const response =
+        await battlelogApiClient.get<GetBattleCharactersResponse>(
+          `/battles/@me/characters`,
+          {
+            suppressRouteErrorToast,
+          } as ApiRequestConfig,
+        );
+      return response.data.characters;
     },
-    select: (response) => response.data.characters,
   });
 
-  return query;
+export const useBattleCharacters = () => {
+  useBattleLogApiClient();
+
+  return useQuery(battleCharactersQueryOptions());
 };

@@ -18,7 +18,7 @@ const router = createRouter({
   },
   defaultPreload: "intent",
   defaultPreloadDelay: 50,
-  defaultPreloadStaleTime: 30_000,
+  defaultPreloadStaleTime: 0,
   defaultPendingComponent: RouteSectionLoading,
   defaultPendingMs: 120,
   defaultPendingMinMs: 250,

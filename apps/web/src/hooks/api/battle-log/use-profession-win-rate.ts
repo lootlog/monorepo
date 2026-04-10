@@ -1,4 +1,7 @@
-import { createBattleLogStatistic } from "./create-battle-log-statistic";
+import {
+  battleLogStatisticQueryOptions,
+  createBattleLogStatistic,
+} from "./create-battle-log-statistic";
 
 export interface ProfessionWinRate {
   prof: string;
@@ -16,7 +19,20 @@ interface UseProfessionWinRateParams {
   maxLevel?: number;
   ph?: boolean;
   matchmaking?: boolean;
+  suppressRouteErrorToast?: boolean;
 }
+
+export const professionWinRateQueryOptions = (
+  params: UseProfessionWinRateParams,
+) =>
+  battleLogStatisticQueryOptions<ProfessionWinRate, UseProfessionWinRateParams>(
+    {
+      queryKey: "profession-win-rate",
+      endpoint: "/battles/@me/statistics/profession-win-rate",
+      params,
+      suppressRouteErrorToast: params.suppressRouteErrorToast,
+    },
+  );
 
 export const useProfessionWinRate = createBattleLogStatistic<
   ProfessionWinRate,

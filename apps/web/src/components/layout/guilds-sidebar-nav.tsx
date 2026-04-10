@@ -139,12 +139,13 @@ export const GuildsSidebarNav: FC = () => {
   const handleItemClick = () => {
     setOpenMobile(false);
   };
+  const sidebarHeader = <GuildSidebarHeader guildId={guildId} />;
 
   return (
     <SidebarNav
       items={menuItems}
       basePath={`/${guildId}`}
-      header={<GuildSidebarHeader guildId={guildId} />}
+      header={sidebarHeader}
       beforeItems={
         canViewEvents ? (
           <GuildPinnedEventsSection

@@ -1,4 +1,8 @@
-import axios, { type AxiosInstance } from "axios";
+import axios, {
+  type AxiosInstance,
+  type AxiosRequestConfig,
+  type InternalAxiosRequestConfig,
+} from "axios";
 import {
   API_URL,
   BATTLELOG_API_URL,
@@ -11,6 +15,10 @@ import { authClient } from "@/lib/auth-client";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
 
 type ApiName = "default" | "battlelog" | "search" | "auth" | "activity";
+
+export type ApiRequestConfig = AxiosRequestConfig & {
+  suppressRouteErrorToast?: boolean;
+};
 
 const BASE_URLS: Record<ApiName, string | undefined> = {
   default: API_URL,
@@ -54,9 +62,16 @@ const attachInterceptors = (instance: AxiosInstance) => {
   instance.interceptors.response.use(
     (response) => response,
     (error) => {
+      const requestConfig = error?.config as
+        | (InternalAxiosRequestConfig & {
+            suppressRouteErrorToast?: boolean;
+          })
+        | undefined;
       const status = error?.response?.status;
       const requiresReauth = error?.response?.data?.requiresReauth;
       const isPublicEndpoint = error?.config?.url?.includes("/public/");
+      const suppressRouteErrorToast =
+        requestConfig?.suppressRouteErrorToast === true;
 
       if ((status === 401 || requiresReauth) && !isPublicEndpoint) {
         toast.error("Sesja wygasła. Przekierowywanie do logowania...");
@@ -64,10 +79,10 @@ const attachInterceptors = (instance: AxiosInstance) => {
         return Promise.reject(error);
       }
 
-      if (status === 403 && !isPublicEndpoint) {
+      if (status === 403 && !isPublicEndpoint && !suppressRouteErrorToast) {
         toast.error("Brak dostępu");
       }
-      if (status === 404) {
+      if (status === 404 && !suppressRouteErrorToast) {
         toast.error("Nie znaleziono");
       }
       return Promise.reject(error);

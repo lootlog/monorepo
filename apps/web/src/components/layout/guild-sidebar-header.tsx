@@ -6,7 +6,7 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { useGuildMember } from "@/hooks/api/members/use-guild-member";
 import { useMemberRefresh } from "@/hooks/api/members/use-member-refresh";
-import { useGuilds } from "@/hooks/api/guilds/use-guilds";
+import { useGuild } from "@/hooks/api/guilds/use-guild";
 import { useTheme } from "@/hooks/context/use-theme";
 import { cn } from "@lootlog/ui/lib/utils";
 import { getPermissionRefreshInfo } from "@/utils/get-permission-refresh-info";
@@ -14,17 +14,12 @@ import { RefreshCcw } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export const GuildSidebarHeader = ({ guildId }: { guildId?: string }) => {
-  const { data: guilds } = useGuilds();
+  const { data: guild } = useGuild({ retry: false });
   const { data: member } = useGuildMember();
   const { mutate: refreshMember } = useMemberRefresh();
   const { theme } = useTheme();
   const isRukiaTheme = theme === "rukia";
   const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
-
-  const guild = guilds?.find(
-    (currentGuild) =>
-      currentGuild.id === guildId || currentGuild.vanityUrl === guildId,
-  );
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {

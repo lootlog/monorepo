@@ -1,5 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
+import { apiClient, type ApiRequestConfig } from "@/lib/api-client/api-client";
 import type {
   EventScoringMode,
   EventScoringRules,
@@ -36,22 +37,40 @@ export interface EventOverview {
 interface UseEventOverviewOptions {
   guildId: string;
   eventId: string;
+  suppressRouteErrorToast?: boolean;
 }
 
-export const useEventOverview = ({
+export const eventOverviewQueryOptions = ({
   guildId,
   eventId,
-}: UseEventOverviewOptions) => {
-  const { client } = useApiClient();
-
-  return useQuery<EventOverview>({
+  suppressRouteErrorToast = false,
+}: UseEventOverviewOptions) =>
+  queryOptions({
     queryKey: ["event-overview", guildId, eventId],
     queryFn: async () => {
-      const response = await client.get<EventOverview>(
+      const response = await apiClient.get<EventOverview>(
         `/guilds/${guildId}/events/${eventId}/overview`,
+        {
+          suppressRouteErrorToast,
+        } as ApiRequestConfig,
       );
       return response.data;
     },
     enabled: !!guildId && !!eventId,
   });
+
+export const useEventOverview = ({
+  guildId,
+  eventId,
+  suppressRouteErrorToast = false,
+}: UseEventOverviewOptions) => {
+  useApiClient();
+
+  return useQuery(
+    eventOverviewQueryOptions({
+      guildId,
+      eventId,
+      suppressRouteErrorToast,
+    }),
+  );
 };

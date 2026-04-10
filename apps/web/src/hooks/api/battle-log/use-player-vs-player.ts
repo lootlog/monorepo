@@ -1,5 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 import { useBattleLogApiClient } from "@/hooks/api/battle-log/use-battle-log-api-client";
+import {
+  battlelogApiClient,
+  type ApiRequestConfig,
+} from "@/lib/api-client/api-client";
 
 export interface PlayerVsPlayerBattle {
   battleId: string;
@@ -52,39 +56,59 @@ export interface UsePlayerVsPlayerParams {
   opponentId: string;
   minLevel?: number;
   maxLevel?: number;
+  suppressRouteErrorToast?: boolean;
 }
 
-export function usePlayerVsPlayer(params: UsePlayerVsPlayerParams) {
-  const { client } = useBattleLogApiClient();
+const buildPlayerVsPlayerSearchParams = (params: UsePlayerVsPlayerParams) => {
   const size = params.size ?? 20;
 
-  const query = useQuery({
-    queryKey: ["player-vs-player", params],
-    queryFn: () => {
-      const searchParams = new URLSearchParams({
-        size: size.toString(),
-        opponentId: params.opponentId,
-      });
+  const searchParams = new URLSearchParams({
+    size: size.toString(),
+    opponentId: params.opponentId,
+  });
 
-      if (params.cursor) searchParams.append("cursor", params.cursor);
-      if (params.includeTotal) searchParams.append("includeTotal", "true");
-      if (params.characterId)
-        searchParams.append("characterId", params.characterId);
-      if (params.world) searchParams.append("world", params.world);
-      if (params.period) searchParams.append("period", params.period);
-      if (params.minLevel)
-        searchParams.append("minLevel", params.minLevel.toString());
-      if (params.maxLevel)
-        searchParams.append("maxLevel", params.maxLevel.toString());
+  if (params.cursor) searchParams.append("cursor", params.cursor);
+  if (params.includeTotal) searchParams.append("includeTotal", "true");
+  if (params.characterId)
+    searchParams.append("characterId", params.characterId);
+  if (params.world) searchParams.append("world", params.world);
+  if (params.period) searchParams.append("period", params.period);
+  if (params.minLevel) {
+    searchParams.append("minLevel", params.minLevel.toString());
+  }
+  if (params.maxLevel) {
+    searchParams.append("maxLevel", params.maxLevel.toString());
+  }
 
-      return client.get<GetPlayerVsPlayerResponse>(
+  return searchParams;
+};
+
+export const playerVsPlayerQueryOptions = (params: UsePlayerVsPlayerParams) =>
+  queryOptions({
+    queryKey: [
+      "player-vs-player",
+      {
+        ...params,
+        suppressRouteErrorToast: undefined,
+      },
+    ],
+    queryFn: async () => {
+      const searchParams = buildPlayerVsPlayerSearchParams(params);
+
+      const response = await battlelogApiClient.get<GetPlayerVsPlayerResponse>(
         `/battles/@me/statistics/player-vs-player?${searchParams.toString()}`,
+        {
+          suppressRouteErrorToast: params.suppressRouteErrorToast ?? false,
+        } as ApiRequestConfig,
       );
+      return response.data;
     },
-    select: (response) => response.data,
     staleTime: 0,
     enabled: !!params.opponentId,
   });
 
-  return query;
+export function usePlayerVsPlayer(params: UsePlayerVsPlayerParams) {
+  useBattleLogApiClient();
+
+  return useQuery(playerVsPlayerQueryOptions(params));
 }

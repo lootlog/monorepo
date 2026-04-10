@@ -1,4 +1,7 @@
-import { createBattleLogStatistic } from "./create-battle-log-statistic";
+import {
+  battleLogStatisticQueryOptions,
+  createBattleLogStatistic,
+} from "./create-battle-log-statistic";
 
 export interface RatingGrowthDataPoint {
   date: string;
@@ -13,7 +16,16 @@ interface UseRatingGrowthParams {
   period?: string;
   minLevel?: number;
   maxLevel?: number;
+  suppressRouteErrorToast?: boolean;
 }
+
+export const ratingGrowthQueryOptions = (params: UseRatingGrowthParams) =>
+  battleLogStatisticQueryOptions<RatingGrowthDataPoint, UseRatingGrowthParams>({
+    queryKey: "rating-growth",
+    endpoint: "/battles/@me/statistics/rating-growth",
+    params,
+    suppressRouteErrorToast: params.suppressRouteErrorToast,
+  });
 
 export const useRatingGrowth = createBattleLogStatistic<
   RatingGrowthDataPoint,

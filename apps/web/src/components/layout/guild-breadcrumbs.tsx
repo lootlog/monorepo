@@ -1,9 +1,11 @@
 import { type FC, useEffect, useRef } from "react";
-import { useLocation, useNavigate, useParams } from "@tanstack/react-router";
-import { useGuild } from "@/hooks/api/guilds/use-guild";
-import { useEventOverview, useEventRanking } from "@/features/events/hooks";
-import { useNpcKillers } from "@/features/stats/hooks/use-npc-killers";
-import { useMemberKills } from "@/features/stats/hooks/use-member-kills";
+import {
+  getRouteApi,
+  useLocation,
+  useMatches,
+  useNavigate,
+  useParams,
+} from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
 import { ArrowLeft, ChevronRight } from "lucide-react";
@@ -11,44 +13,43 @@ import { SidebarTrigger } from "@lootlog/ui/components/sidebar";
 import { PageHeader } from "@/components/layout/page-header";
 import { getNavigationInfo } from "./get-navigation-info";
 
+const guildRouteApi = getRouteApi("/_authenticated/$guildId");
+
 export const GuildBreadcrumbs: FC = () => {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const params = useParams({ strict: false });
   const mobileBreadcrumbsRef = useRef<HTMLDivElement>(null);
-  const { data: guild } = useGuild({ retry: false });
+  const guildRouteData = guildRouteApi.useLoaderData();
+  const eventRouteData = useMatches({
+    select: (matches) =>
+      matches.find(
+        (match) =>
+          match.routeId === "/_authenticated/$guildId/events_/$eventId_",
+      )?.loaderData as
+        | {
+            event?: {
+              name?: string;
+              heroNpcs?: Array<{ id: string; npcName: string }>;
+            };
+            rankings?: Array<{ memberId: number; member?: { name?: string } }>;
+          }
+        | undefined,
+  });
+  const guild = guildRouteData?.guild;
 
   const { guildId, eventId, heroId, killId, reservationId } = params;
   const path = location.pathname;
 
   const isEventRoute = Boolean(eventId && guildId && path.includes("/events"));
-  const isNpcRoute = Boolean(params.npcId && path.includes("/stats/npcs/"));
-  const isMemberStatsRoute = Boolean(
-    params.memberId && path.includes("/stats/members/"),
-  );
   const isEventMemberRoute = Boolean(
     params.memberId && path.includes("/members/") && isEventRoute,
   );
-  const npcId = params.npcId ? Number.parseInt(params.npcId, 10) : undefined;
-  const memberId = params.memberId
-    ? Number.parseInt(params.memberId, 10)
-    : undefined;
-
-  const { data: event } = useEventOverview({
-    guildId: guildId ?? "",
-    eventId: isEventRoute ? (eventId ?? "") : "",
-  });
-  const { data: eventRankings = [] } = useEventRanking({
-    guildId: guildId ?? "",
-    eventId: isEventMemberRoute ? (eventId ?? "") : "",
-  });
-  const { data: npcKillersData } = useNpcKillers(
-    isNpcRoute ? npcId : undefined,
-  );
-  const { data: memberKillsData } = useMemberKills(
-    isMemberStatsRoute ? memberId : undefined,
-  );
+  const event = isEventRoute ? eventRouteData?.event : undefined;
+  const eventRankings = isEventMemberRoute
+    ? (eventRouteData?.rankings ?? [])
+    : [];
 
   const navInfo = getNavigationInfo({
     path,
@@ -57,8 +58,6 @@ export const GuildBreadcrumbs: FC = () => {
     eventName: event?.name,
     eventHeroNpcs: event?.heroNpcs,
     eventRankings,
-    npcKillersData,
-    memberKillsData,
     t,
   });
 

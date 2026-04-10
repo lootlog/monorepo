@@ -1,5 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
-import { battlelogApiClient } from "@/lib/api-client/api-client";
+import { queryOptions, useQuery } from "@tanstack/react-query";
+import {
+  battlelogApiClient,
+  type ApiRequestConfig,
+} from "@/lib/api-client/api-client";
 
 interface Streak {
   current: {
@@ -20,20 +23,32 @@ interface UseBattleStreakParams {
   maxLevel?: number;
   ph?: boolean;
   matchmaking?: boolean;
+  suppressRouteErrorToast?: boolean;
 }
 
-export function useBattleStreak(params: UseBattleStreakParams) {
-  return useQuery({
-    queryKey: ["battle-streak", params],
+export const battleStreakQueryOptions = (params: UseBattleStreakParams) =>
+  queryOptions({
+    queryKey: [
+      "battle-streak",
+      {
+        ...params,
+        suppressRouteErrorToast: undefined,
+      },
+    ],
     queryFn: async () => {
+      const { suppressRouteErrorToast = false, ...requestParams } = params;
       const response = await battlelogApiClient.get(
         "/battles/@me/statistics/streak",
         {
-          params,
-        },
+          params: requestParams,
+          suppressRouteErrorToast,
+        } as ApiRequestConfig,
       );
       return response.data as Streak;
     },
     staleTime: 0,
   });
+
+export function useBattleStreak(params: UseBattleStreakParams) {
+  return useQuery(battleStreakQueryOptions(params));
 }

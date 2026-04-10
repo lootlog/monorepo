@@ -1,6 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
-import { useApiClient } from "@/hooks/api/use-api-client";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 import { useGuildId } from "@/hooks/context/use-guild-id";
+import { apiClient, type ApiRequestConfig } from "@/lib/api-client/api-client";
 import { stringify } from "qs";
 
 export type NpcInfo = {
@@ -32,28 +32,43 @@ export type NpcKillersParams = {
   world?: string;
 };
 
-export const useNpcKillers = (
+type NpcKillersQueryOptionsOptions = {
+  suppressRouteErrorToast?: boolean;
+};
+
+export const npcKillersQueryOptions = (
+  guildId: string,
   npcId: number | undefined,
   params: NpcKillersParams = {},
+  { suppressRouteErrorToast = false }: NpcKillersQueryOptionsOptions = {},
 ) => {
   const { limit = 50, world } = params;
-  const guildId = useGuildId();
-  const { client } = useApiClient();
-
   const queryParams = stringify(
     { limit, world },
     { skipNulls: true, addQueryPrefix: true },
   );
 
-  return useQuery({
+  return queryOptions({
     queryKey: ["npc-killers", guildId, npcId, limit, world],
     queryFn: async () => {
-      const response = await client.get<NpcKillersResponse>(
+      const response = await apiClient.get<NpcKillersResponse>(
         `/guilds/${guildId}/stats/kills/npcs/${npcId}/killers${queryParams}`,
+        {
+          suppressRouteErrorToast,
+        } as ApiRequestConfig,
       );
       return response.data;
     },
-    enabled: Boolean(guildId) && npcId !== undefined,
+    enabled: !!guildId && npcId !== undefined,
     staleTime: 30000,
   });
+};
+
+export const useNpcKillers = (
+  npcId: number | undefined,
+  params: NpcKillersParams = {},
+) => {
+  const guildId = useGuildId();
+
+  return useQuery(npcKillersQueryOptions(guildId ?? "", npcId, params));
 };

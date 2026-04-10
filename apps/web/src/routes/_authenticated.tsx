@@ -3,6 +3,9 @@ import { AuthenticationGuard } from "@/components/auth/authentication-guard";
 import { Layout } from "@/components/layout/layout";
 import { GatewayProvider } from "@/contexts/gateway-context";
 import { sessionQueryOptions } from "@/hooks/auth/use-session-query";
+import { authScopesQueryOptions } from "@/hooks/api/use-auth-scopes";
+import { guildsQueryOptions } from "@/hooks/api/guilds/use-guilds";
+import { userPreferencesQueryOptions } from "@/hooks/api/user/use-user-preferences";
 
 function AuthenticatedLayout() {
   return (
@@ -31,6 +34,27 @@ export const Route = createFileRoute("/_authenticated")({
     return {
       session,
     };
+  },
+  loader: async ({ context }) => {
+    await Promise.all([
+      context.queryClient.ensureQueryData(
+        authScopesQueryOptions({
+          suppressRouteErrorToast: true,
+        }),
+      ),
+      context.queryClient.ensureQueryData(
+        guildsQueryOptions({
+          suppressRouteErrorToast: true,
+        }),
+      ),
+      context.queryClient.ensureQueryData(
+        userPreferencesQueryOptions({
+          suppressRouteErrorToast: true,
+        }),
+      ),
+    ]);
+
+    return null;
   },
   component: AuthenticatedLayout,
 });
