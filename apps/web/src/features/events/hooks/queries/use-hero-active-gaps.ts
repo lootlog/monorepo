@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
 import { useGuildId } from "@/hooks/context/use-guild-id";
@@ -22,10 +21,10 @@ export const useHeroActiveGaps = (eventId: string, heroId: string) => {
     refetchOnReconnect: false,
   });
 
-  const activeGapsMap = useMemo(() => {
+  const activeGapsMap = (() => {
     if (!query.data) return new Map<string, CoverageGap>();
     return new Map(query.data.map((gap) => [gap.mapId, gap]));
-  }, [query.data]);
+  })();
 
   return {
     ...query,

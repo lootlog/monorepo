@@ -1,6 +1,6 @@
 import { cn } from "@lootlog/ui/lib/utils";
 import { Crown } from "lucide-react";
-import { type FC, useMemo } from "react";
+import type { FC } from "react";
 import type { GuildMember } from "@/hooks/api/members/use-guild-member";
 import { getColorFromRole } from "@/utils/get-color-from-role";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
@@ -35,7 +35,7 @@ export const MemberListItem: FC<MemberListItemProps> = ({
   const color = getColorFromRole(member.roles);
   const avatarUrl = getDiscordAvatarUrl(member.userId, member.avatar);
 
-  const memberPermissions = useMemo(() => {
+  const memberPermissions = (() => {
     const perms = new Set<Permission>();
     for (const role of member.roles) {
       for (const perm of role.permissions) {
@@ -43,7 +43,7 @@ export const MemberListItem: FC<MemberListItemProps> = ({
       }
     }
     return Array.from(perms);
-  }, [member.roles]);
+  })();
 
   const hasAdminPermission = memberPermissions.includes(Permission.ADMIN);
 

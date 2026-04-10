@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useApiClient } from "@/hooks/api/use-api-client";
@@ -46,7 +46,7 @@ export const useMapCoverageTimer = (
     staleTime: 10000,
   });
 
-  const state: MapCoverageState = useMemo(() => {
+  const state: MapCoverageState = (() => {
     if (!activeGap) {
       return { gapType: null, startedAt: null, elapsedSeconds: 0 };
     }
@@ -56,7 +56,7 @@ export const useMapCoverageTimer = (
       startedAt: new Date(activeGap.startedAt),
       elapsedSeconds,
     };
-  }, [activeGap, elapsedSeconds]);
+  })();
 
   useEffect(() => {
     if (!activeGap?.startedAt) {

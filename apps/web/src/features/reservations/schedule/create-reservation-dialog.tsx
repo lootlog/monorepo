@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -54,7 +54,7 @@ const CreateReservationDialogContent: React.FC<
   const { mutateAsync: createReservation, isPending: isCreating } =
     useCreateReservation();
 
-  const handleCreateReservation = useCallback(async () => {
+  const handleCreateReservation = async () => {
     if (!fromDate || !toDate) {
       toast.error("Wybierz zakres czasowy rezerwacji.", {
         position: "bottom-right",
@@ -143,15 +143,7 @@ const CreateReservationDialogContent: React.FC<
         });
       }
     }
-  }, [
-    fromDate,
-    toDate,
-    reservationKey,
-    currentUserId,
-    createReservation,
-    comment,
-    onOpenChange,
-  ]);
+  };
 
   const renderFormContent = () => (
     <div className="space-y-4 px-3 mb-4 mt-3">

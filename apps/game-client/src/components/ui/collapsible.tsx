@@ -105,15 +105,12 @@ const CollapsibleRoot = React.forwardRef<
 
   const isOpen = isControlled ? open : internalOpen;
 
-  const handleOpenChange = React.useCallback(
-    (newOpen: boolean) => {
-      if (!isControlled) {
-        setInternalOpen(newOpen);
-      }
-      onOpenChange?.(newOpen);
-    },
-    [isControlled, onOpenChange],
-  );
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!isControlled) {
+      setInternalOpen(newOpen);
+    }
+    onOpenChange?.(newOpen);
+  };
 
   return (
     <CollapsibleContext.Provider value={{ isOpen }}>

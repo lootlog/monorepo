@@ -3,7 +3,7 @@ import { useWorlds } from "@/hooks/api/use-worlds";
 import { Game } from "@/lib/game";
 import { cn } from "@/lib/utils";
 import { useSettingsStore } from "@/store/settings.store";
-import { type FC, useEffect, useMemo } from "react";
+import { type FC, useEffect } from "react";
 import { useLocalStorage } from "react-use";
 import { storageKey } from "@/lib/storage-key";
 
@@ -55,7 +55,7 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
     }
   }, [guildId, isFetched, worlds, world, defaultWorld, setWorld]);
 
-  const worldGroups = useMemo<ComboboxGroup[]>(() => {
+  const worldGroups: ComboboxGroup[] = (() => {
     if (!worlds || worlds.length === 0) return [];
 
     const recent =
@@ -85,7 +85,7 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
     }
 
     return groups;
-  }, [worlds, recentWorlds]);
+  })();
 
   const handleWorldChange = (newWorld: string) => {
     if (!guildId) return;

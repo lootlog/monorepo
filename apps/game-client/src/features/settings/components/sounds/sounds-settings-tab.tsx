@@ -1,6 +1,6 @@
 import { Accordion } from "@/components/ui/accordion";
 import { NpcType } from "@/hooks/api/use-npcs";
-import React, { useCallback, useState, type FC } from "react";
+import React, { useState, type FC } from "react";
 import { useSoundPlayback } from "@/hooks/use-sound-playback";
 import { Bell, Crosshair, Clock, Loader2 } from "lucide-react";
 import { MasterVolumeControl } from "./master-volume-control";
@@ -81,91 +81,89 @@ export const SoundsSettingsTab: FC = () => {
     }
   }, [settings]);
 
-  const handleMasterVolumeChange = useCallback((value: number[]) => {
+  const handleMasterVolumeChange = (value: number[]) => {
     setLocalVolumes((prev) => ({ ...prev, master: value[0] }));
-  }, []);
+  };
 
-  const handleMasterVolumeCommit = useCallback(
-    (value: number[]) => {
-      updateSettings({ masterVolume: value[0] });
-    },
-    [updateSettings],
-  );
+  const handleMasterVolumeCommit = (value: number[]) => {
+    updateSettings({ masterVolume: value[0] });
+  };
 
-  const handleMasterMuteToggle = useCallback(() => {
+  const handleMasterMuteToggle = () => {
     const currentVolume = localVolumes.master;
     const newVolume = currentVolume > 0 ? 0 : 0.5;
     setLocalVolumes((prev) => ({ ...prev, master: newVolume }));
     updateSettings({ masterVolume: newVolume });
-  }, [localVolumes.master, updateSettings]);
+  };
 
-  const handleCategoryVolumeChange = useCallback(
-    (category: SoundCategory, value: number[]) => {
-      const newVolume = value[0];
-      setLocalVolumes((prev) => ({ ...prev, [category]: newVolume }));
-      if (newVolume > 0) {
-        setMutedCategories((prev) => ({ ...prev, [category]: false }));
-      }
-    },
-    [],
-  );
+  const handleCategoryVolumeChange = (
+    category: SoundCategory,
+    value: number[],
+  ) => {
+    const newVolume = value[0];
+    setLocalVolumes((prev) => ({ ...prev, [category]: newVolume }));
+    if (newVolume > 0) {
+      setMutedCategories((prev) => ({ ...prev, [category]: false }));
+    }
+  };
 
-  const handleCategoryVolumeCommit = useCallback(
-    (category: SoundCategory, value: number[]) => {
-      updateSettings({ [`${category}Volume`]: value[0] });
-    },
-    [updateSettings],
-  );
+  const handleCategoryVolumeCommit = (
+    category: SoundCategory,
+    value: number[],
+  ) => {
+    updateSettings({ [`${category}Volume`]: value[0] });
+  };
 
-  const handleCategoryMuteToggle = useCallback(
-    (category: SoundCategory, e: React.MouseEvent) => {
-      e.stopPropagation();
-      const currentVolume = localVolumes[category];
-      const isMuted = mutedCategories[category] || currentVolume === 0;
-      const newVolume = isMuted ? 0.5 : 0;
+  const handleCategoryMuteToggle = (
+    category: SoundCategory,
+    e: React.MouseEvent,
+  ) => {
+    e.stopPropagation();
+    const currentVolume = localVolumes[category];
+    const isMuted = mutedCategories[category] || currentVolume === 0;
+    const newVolume = isMuted ? 0.5 : 0;
 
-      setLocalVolumes((prev) => ({ ...prev, [category]: newVolume }));
-      setMutedCategories((prev) => ({ ...prev, [category]: !isMuted }));
-      updateSettings({ [`${category}Volume`]: newVolume });
-    },
-    [localVolumes, mutedCategories, updateSettings],
-  );
+    setLocalVolumes((prev) => ({ ...prev, [category]: newVolume }));
+    setMutedCategories((prev) => ({ ...prev, [category]: !isMuted }));
+    updateSettings({ [`${category}Volume`]: newVolume });
+  };
 
-  const handleSoundUrlChange = useCallback(
-    (category: SoundCategory, key: string, soundUrl: string) => {
-      if (!isValidUrl(soundUrl) && soundUrl.trim() !== "") {
-        setUrlErrors((prev) => ({
-          ...prev,
-          [category]: {
-            ...prev[category],
-            [key]: "Nieprawidłowy URL",
-          },
-        }));
-        return;
-      }
-
-      setUrlErrors((prev) => {
-        const newErrors = { ...prev };
-        if (newErrors[category]) {
-          delete newErrors[category][key];
-          if (Object.keys(newErrors[category]).length === 0) {
-            delete newErrors[category];
-          }
-        }
-        return newErrors;
-      });
-
-      const configKey = `${category}Config` as const;
-      const currentCategoryConfig = settings?.[configKey] ?? {};
-      const currentConfig = currentCategoryConfig[key] ?? DEFAULT_NPC_CONFIG;
-      debouncedUpdate({
-        [configKey]: {
-          [key]: { ...currentConfig, soundUrl },
+  const handleSoundUrlChange = (
+    category: SoundCategory,
+    key: string,
+    soundUrl: string,
+  ) => {
+    if (!isValidUrl(soundUrl) && soundUrl.trim() !== "") {
+      setUrlErrors((prev) => ({
+        ...prev,
+        [category]: {
+          ...prev[category],
+          [key]: "Nieprawidłowy URL",
         },
-      });
-    },
-    [settings, debouncedUpdate],
-  );
+      }));
+      return;
+    }
+
+    setUrlErrors((prev) => {
+      const newErrors = { ...prev };
+      if (newErrors[category]) {
+        delete newErrors[category][key];
+        if (Object.keys(newErrors[category]).length === 0) {
+          delete newErrors[category];
+        }
+      }
+      return newErrors;
+    });
+
+    const configKey = `${category}Config` as const;
+    const currentCategoryConfig = settings?.[configKey] ?? {};
+    const currentConfig = currentCategoryConfig[key] ?? DEFAULT_NPC_CONFIG;
+    debouncedUpdate({
+      [configKey]: {
+        [key]: { ...currentConfig, soundUrl },
+      },
+    });
+  };
 
   if (isLoading) {
     return (

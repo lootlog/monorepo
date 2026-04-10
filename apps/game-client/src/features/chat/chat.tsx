@@ -4,7 +4,7 @@ import {
   type ChatMessage as ChatMessageType,
   useChatMessages,
 } from "@/hooks/api/use-chat-messages";
-import { useRef, useMemo, useEffect, useLayoutEffect } from "react";
+import { useRef, useEffect, useLayoutEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useLocalStorage } from "react-use";
 import { storageKey } from "@/lib/storage-key";
@@ -97,7 +97,7 @@ export const Chat = () => {
     }
   }, [selectedGuildId, setSelectedGuildId, guilds]);
 
-  const currentMessages = useMemo(() => {
+  const currentMessages = (() => {
     let allMessages;
 
     if (selectedGuildId === "all") {
@@ -144,7 +144,7 @@ export const Chat = () => {
           return true;
       }
     });
-  }, [selectedGuildId, messageCache, chatFilter]);
+  })();
 
   const hasVisibleMessages = currentMessages.some((m) => {
     const members = memberCache[m.guildId] ?? {};
@@ -175,12 +175,10 @@ export const Chat = () => {
     prevMessagesLenRef.current = msgCount;
   }, [currentMessages, hasVisibleMessages]);
 
-  const currentMembers = useMemo(() => {
-    if (selectedGuildId === "all") {
-      return Object.values(memberCache).flat();
-    }
-    return memberCache[selectedGuildId ?? ""] ?? [];
-  }, [selectedGuildId, memberCache]);
+  const currentMembers =
+    selectedGuildId === "all"
+      ? Object.values(memberCache).flat()
+      : (memberCache[selectedGuildId ?? ""] ?? []);
 
   useEffect(() => {
     if (selectedGuildId && selectedGuildId !== "all") {

@@ -1,5 +1,5 @@
 import { SearchInput } from "@/components/ui/search-input";
-import { useState, useMemo, useRef } from "react";
+import { useState, useRef } from "react";
 import { cn } from "@/utils/cn";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Label } from "@lootlog/ui/components/label";
@@ -60,7 +60,7 @@ const MembersSettingsContent = () => {
     isMobile,
   } = useSelectorPanel<GuildMember>();
 
-  const filteredMembers = useMemo(() => {
+  const filteredMembers = (() => {
     if (!members || !guild) return [];
     const search = searchValue.trim().toLowerCase();
     const filtered = search
@@ -87,12 +87,11 @@ const MembersSettingsContent = () => {
 
       return a.name.localeCompare(b.name);
     });
-  }, [members, searchValue, guild]);
+  })();
 
-  const selectedMemberColor = useMemo(() => {
-    if (!selectedMember) return undefined;
-    return getColorFromRole(selectedMember.roles);
-  }, [selectedMember]);
+  const selectedMemberColor = selectedMember
+    ? getColorFromRole(selectedMember.roles)
+    : undefined;
 
   const parentRef = useRef<HTMLDivElement>(null);
 

@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect } from "react";
 import { useSocket } from "@/contexts/socket-context";
 
 interface EventRanking {
@@ -68,41 +68,29 @@ export const useEventSocket = ({
 }: UseEventSocketOptions) => {
   const { socket, connected } = useSocket();
 
-  const handlePresenceUpdate = useCallback(
-    (payload: PresenceUpdatePayload) => {
-      if (payload.guildId === guildId && payload.eventId === eventId) {
-        onPresenceUpdate?.(payload);
-      }
-    },
-    [eventId, guildId, onPresenceUpdate],
-  );
+  const handlePresenceUpdate = (payload: PresenceUpdatePayload) => {
+    if (payload.guildId === guildId && payload.eventId === eventId) {
+      onPresenceUpdate?.(payload);
+    }
+  };
 
-  const handleMapStatusUpdate = useCallback(
-    (payload: MapStatusUpdatePayload) => {
-      if (payload.guildId === guildId && payload.eventId === eventId) {
-        onMapStatusUpdate?.(payload);
-      }
-    },
-    [eventId, guildId, onMapStatusUpdate],
-  );
+  const handleMapStatusUpdate = (payload: MapStatusUpdatePayload) => {
+    if (payload.guildId === guildId && payload.eventId === eventId) {
+      onMapStatusUpdate?.(payload);
+    }
+  };
 
-  const handleHeroKilled = useCallback(
-    (payload: HeroKilledPayload) => {
-      if (payload.guildId === guildId && payload.eventId === eventId) {
-        onHeroKilled?.(payload);
-      }
-    },
-    [eventId, guildId, onHeroKilled],
-  );
+  const handleHeroKilled = (payload: HeroKilledPayload) => {
+    if (payload.guildId === guildId && payload.eventId === eventId) {
+      onHeroKilled?.(payload);
+    }
+  };
 
-  const handleRankingUpdate = useCallback(
-    (payload: RankingUpdatePayload) => {
-      if (payload.guildId === guildId && payload.eventId === eventId) {
-        onRankingUpdate?.(payload);
-      }
-    },
-    [eventId, guildId, onRankingUpdate],
-  );
+  const handleRankingUpdate = (payload: RankingUpdatePayload) => {
+    if (payload.guildId === guildId && payload.eventId === eventId) {
+      onRankingUpdate?.(payload);
+    }
+  };
 
   useEffect(() => {
     if (!socket || !connected) return;

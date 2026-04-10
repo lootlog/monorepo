@@ -33,7 +33,7 @@ export const UserNavItem = () => {
               alt={data?.user.image ?? ""}
             />
             <AvatarFallback className="rounded-none">
-              {data?.user?.name[0] || ""}
+              {data?.user?.name[0] ?? ""}
             </AvatarFallback>
           </Avatar>
         </Link>

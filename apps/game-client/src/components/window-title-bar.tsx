@@ -1,4 +1,4 @@
-import { type FC, useCallback } from "react";
+import type { FC } from "react";
 import { Blend, Lock, Unlock, XIcon } from "lucide-react";
 import {
   Tooltip,
@@ -32,11 +32,11 @@ export const WindowTitleBar: FC<WindowTitleBarProps> = ({
   onClose,
   onTouchStart,
 }) => {
-  const handleOpacityChange = useCallback(() => {
+  const handleOpacityChange = () => {
     const currentIndex = OPACITY_LEVELS.indexOf(opacity);
     const nextIndex = (currentIndex + 1) % OPACITY_LEVELS.length;
     onOpacityChange(OPACITY_LEVELS[nextIndex]);
-  }, [opacity, onOpacityChange]);
+  };
 
   return (
     <div

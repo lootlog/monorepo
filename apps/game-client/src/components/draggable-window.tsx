@@ -5,7 +5,7 @@ import {
   type WindowId,
   type WindowOpacity,
 } from "@/store/windows.store";
-import { type FC, useCallback, useEffect, useRef, useState } from "react";
+import { type FC, useEffect, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { WindowTitleBar } from "./window-title-bar";
 import {
@@ -77,18 +77,15 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   });
   const [isResizing, setIsResizing] = useState(false);
 
-  const getClampedPosition = useCallback(
-    (pos: { x: number; y: number }) => {
-      if (typeof window === "undefined") return pos;
-      const maxX = window.innerWidth - localSize.width;
-      const maxY = window.innerHeight - localSize.height;
-      return {
-        x: Math.max(0, Math.min(pos.x, maxX)),
-        y: Math.max(0, Math.min(pos.y, maxY)),
-      };
-    },
-    [localSize.width, localSize.height],
-  );
+  const getClampedPosition = (pos: { x: number; y: number }) => {
+    if (typeof window === "undefined") return pos;
+    const maxX = window.innerWidth - localSize.width;
+    const maxY = window.innerHeight - localSize.height;
+    return {
+      x: Math.max(0, Math.min(pos.x, maxX)),
+      y: Math.max(0, Math.min(pos.y, maxY)),
+    };
+  };
 
   const defaultPosition = isLocked
     ? rawDefaultPosition
@@ -96,12 +93,9 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
 
   const draggableRef = useRef<HTMLDivElement>(null!);
 
-  const onDragStop = useCallback(
-    (position: { x: number; y: number }) => {
-      setPositionInStore(id, position);
-    },
-    [id, setPositionInStore],
-  );
+  const onDragStop = (position: { x: number; y: number }) => {
+    setPositionInStore(id, position);
+  };
 
   const {
     position,
@@ -116,57 +110,45 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
     isLocked,
   });
 
-  const handleResize = useCallback(
-    (newSize: { width: number; height: number }) => {
-      setLocalSize(newSize);
-    },
-    [],
-  );
+  const handleResize = (newSize: { width: number; height: number }) => {
+    setLocalSize(newSize);
+  };
 
-  const handleResizeStart = useCallback(() => {
+  const handleResizeStart = () => {
     cancelDrag();
     setCurrentWindowFocus(id);
     setIsResizing(true);
-  }, [cancelDrag, id, setCurrentWindowFocus]);
+  };
 
-  const handleResizeEnd = useCallback(() => {
+  const handleResizeEnd = () => {
     setIsResizing(false);
-  }, []);
+  };
 
-  const handleOpacityChange = useCallback(
-    (newOpacity: WindowOpacity) => {
-      setOpacityInStore(id, newOpacity);
-    },
-    [id, setOpacityInStore],
-  );
+  const handleOpacityChange = (newOpacity: WindowOpacity) => {
+    setOpacityInStore(id, newOpacity);
+  };
 
-  const handleClick = useCallback((e: React.MouseEvent) => {
+  const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-  }, []);
+  };
 
-  const onMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      cancelWindowResizeSession();
-      handleMouseDown(e as React.MouseEvent<HTMLElement, MouseEvent>);
-    },
-    [handleMouseDown],
-  );
+  const onMouseDown = (e: React.MouseEvent) => {
+    cancelWindowResizeSession();
+    handleMouseDown(e as React.MouseEvent<HTMLElement, MouseEvent>);
+  };
 
-  const onTouchStart = useCallback(
-    (e: React.TouchEvent) => {
-      cancelWindowResizeSession();
-      handleTouchStart(e as React.TouchEvent<HTMLElement>);
-    },
-    [handleTouchStart],
-  );
+  const onTouchStart = (e: React.TouchEvent) => {
+    cancelWindowResizeSession();
+    handleTouchStart(e as React.TouchEvent<HTMLElement>);
+  };
 
-  const onMouseDownCapture = useCallback(() => {
+  const onMouseDownCapture = () => {
     setCurrentWindowFocus(id);
-  }, [id, setCurrentWindowFocus]);
+  };
 
-  const onTouchStartCapture = useCallback(() => {
+  const onTouchStartCapture = () => {
     setCurrentWindowFocus(id);
-  }, [id, setCurrentWindowFocus]);
+  };
 
   useEffect(() => {
     if (isResizing) return;
@@ -177,9 +159,9 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
     ? { height: "auto", width: localSize.width }
     : { width: localSize.width, height: localSize.height };
 
-  const handleLockToggle = useCallback(() => {
+  const handleLockToggle = () => {
     setLockedInStore(id, !isLocked);
-  }, [id, isLocked, setLockedInStore]);
+  };
 
   const windowZIndex = windowFocusHistory.indexOf(id);
   const zIndex =

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   useNotificationsStore,
   type NotificationWithServers,
@@ -39,7 +39,7 @@ export const useVisibleNotifications = ({
 
   const [now, setNow] = useState(() => Date.now());
 
-  const needsTick = useMemo(() => {
+  const needsTick = (() => {
     if (!characterId) return false;
     const charSettings = settings[characterId];
     if (!charSettings) return false;
@@ -48,7 +48,7 @@ export const useVisibleNotifications = ({
       const s = charSettings[key];
       return !!s?.autoHideTimeout && s.autoHideTimeout > 0;
     });
-  }, [notifications, settings, characterId]);
+  })();
 
   useEffect(() => {
     if (!needsTick) return;
@@ -59,7 +59,7 @@ export const useVisibleNotifications = ({
   const removeRef = useRef(removeNotification);
   removeRef.current = removeNotification;
 
-  const visible = useMemo(() => {
+  const visible = (() => {
     if (!characterId) return [] as NotificationWithServers[];
     const charSettings = settings[characterId];
     if (!charSettings) return [] as NotificationWithServers[];
@@ -81,7 +81,7 @@ export const useVisibleNotifications = ({
       }
       return true;
     });
-  }, [notifications, settings, characterId, world, now]);
+  })();
 
   useEffect(() => {
     if (!autoCleanup || !characterId) return;

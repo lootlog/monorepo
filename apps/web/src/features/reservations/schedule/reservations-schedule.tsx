@@ -1,6 +1,6 @@
 import { useParams } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
@@ -51,7 +51,7 @@ export const ReservationsSchedule: React.FC = () => {
     handleNextWeek,
   } = useScheduleNavigation();
 
-  const canModerateReservations = useMemo(() => {
+  const canModerateReservations = (() => {
     if (isOwner) {
       return true;
     }
@@ -64,7 +64,7 @@ export const ReservationsSchedule: React.FC = () => {
       permissions.includes(Permission.LOOTLOG_MANAGE) ||
       permissions.includes(Permission.ADMIN)
     );
-  }, [permissions, isOwner]);
+  })();
 
   const normalizedReservationId = reservationId
     ? reservationSlug(reservationId)
@@ -127,60 +127,54 @@ export const ReservationsSchedule: React.FC = () => {
     };
   }, [connected, guildId, queryClient, socket]);
 
-  const handleDeleteReservation = useCallback(
-    async (reservationRecordId: number, action: "cancel" | "remove") => {
-      const successMessage =
-        action === "cancel"
-          ? "Rezerwacja została anulowana."
-          : "Rezerwacja została usunięta.";
-      const fallbackMessage =
-        action === "cancel"
-          ? "Nie udało się anulować rezerwacji."
-          : "Nie udało się usunąć rezerwacji.";
+  const handleDeleteReservation = async (
+    reservationRecordId: number,
+    action: "cancel" | "remove",
+  ) => {
+    const successMessage =
+      action === "cancel"
+        ? "Rezerwacja została anulowana."
+        : "Rezerwacja została usunięta.";
+    const fallbackMessage =
+      action === "cancel"
+        ? "Nie udało się anulować rezerwacji."
+        : "Nie udało się usunąć rezerwacji.";
 
-      try {
-        await deleteReservation({ reservationRecordId });
-        toast.success(successMessage, { position: "bottom-right" });
-      } catch (error) {
-        if (error && typeof error === "object" && "response" in error) {
-          const maybeAxiosError = error as {
-            response?: { data?: { message?: string | string[] } };
-          };
-          const rawMessage = maybeAxiosError.response?.data?.message;
-          const normalizedMessage = Array.isArray(rawMessage)
-            ? rawMessage[0]
-            : rawMessage;
-          const message =
-            typeof normalizedMessage === "string"
-              ? normalizedMessage
-              : undefined;
-          toast.error(message ?? fallbackMessage, {
-            position: "bottom-right",
-          });
-        } else if (error instanceof Error) {
-          const message = error.message || undefined;
-          toast.error(message || fallbackMessage, {
-            position: "bottom-right",
-          });
-        } else {
-          toast.error(fallbackMessage, {
-            position: "bottom-right",
-          });
-        }
+    try {
+      await deleteReservation({ reservationRecordId });
+      toast.success(successMessage, { position: "bottom-right" });
+    } catch (error) {
+      if (error && typeof error === "object" && "response" in error) {
+        const maybeAxiosError = error as {
+          response?: { data?: { message?: string | string[] } };
+        };
+        const rawMessage = maybeAxiosError.response?.data?.message;
+        const normalizedMessage = Array.isArray(rawMessage)
+          ? rawMessage[0]
+          : rawMessage;
+        const message =
+          typeof normalizedMessage === "string" ? normalizedMessage : undefined;
+        toast.error(message ?? fallbackMessage, {
+          position: "bottom-right",
+        });
+      } else if (error instanceof Error) {
+        const message = error.message || undefined;
+        toast.error(message || fallbackMessage, {
+          position: "bottom-right",
+        });
+      } else {
+        toast.error(fallbackMessage, {
+          position: "bottom-right",
+        });
       }
-    },
-    [deleteReservation],
-  );
-
-  const membersByUserId = useMemo(() => {
-    if (!members) {
-      return new Map<string, GuildMember>();
     }
+  };
 
-    return new Map<string, GuildMember>(
-      members.map((member) => [member.userId, member]),
-    );
-  }, [members]);
+  const membersByUserId = members
+    ? new Map<string, GuildMember>(
+        members.map((member) => [member.userId, member]),
+      )
+    : new Map<string, GuildMember>();
 
   return (
     <TooltipProvider>

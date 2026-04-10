@@ -31,7 +31,7 @@ const Slider = React.forwardRef<
     ref,
   ) => {
     const [internalValue, setInternalValue] = React.useState<number[]>(
-      (value as number[]) || (defaultValue as number[]) || [0],
+      (value as number[]) ?? (defaultValue as number[]) ?? [0],
     );
 
     React.useEffect(() => {

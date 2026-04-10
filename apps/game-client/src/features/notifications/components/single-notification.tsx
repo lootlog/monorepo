@@ -1,4 +1,4 @@
-import { type FC, Fragment, useMemo } from "react";
+import { type FC, Fragment } from "react";
 import { cn } from "@/lib/utils";
 import { XIcon } from "lucide-react";
 import {
@@ -68,25 +68,18 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
     : undefined;
   const autoHideTimeout = settingsByNpcType?.autoHideTimeout ?? 0;
 
-  const createdAtMs = useMemo(
-    () => new Date(notification.createdAt).getTime(),
-    [notification.createdAt],
-  );
-  const secondsLeft = useMemo(() => {
+  const createdAtMs = new Date(notification.createdAt).getTime();
+  const secondsLeft = (() => {
     if (!autoHideTimeout || autoHideTimeout <= 0) return 0;
     const endAt = createdAtMs + autoHideTimeout * 1000;
     const diffMs = endAt - (now ?? Date.now());
     if (diffMs <= 0) return 0;
     return Math.ceil(diffMs / 1000);
-  }, [autoHideTimeout, createdAtMs, now]);
+  })();
 
-  const serverNames = useMemo(
-    () =>
-      notification.servers
-        .map((server) => guilds?.find((g) => g.id === server)?.name ?? "")
-        .filter(Boolean),
-    [notification.servers, guilds],
-  );
+  const serverNames = notification.servers
+    .map((server) => guilds?.find((g) => g.id === server)?.name ?? "")
+    .filter(Boolean);
 
   const handleRemoveNotification = () =>
     removeNotification(notification.notificationId);

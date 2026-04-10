@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useRef } from "react";
 import { useSoundSettings } from "@/hooks/api/use-sound-settings";
 import { DEFAULT_SOUND_URLS } from "@/features/settings/config/default-sounds";
 import { useQueryClient } from "@tanstack/react-query";
@@ -12,7 +12,7 @@ export const useSoundPlayback = () => {
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const testAudioRef = useRef<HTMLAudioElement | null>(null);
 
-  const getLatestSettings = useCallback((): UserSoundSettings | undefined => {
+  const getLatestSettings = (): UserSoundSettings | undefined => {
     const cached = queryClient.getQueryData<
       UserSoundSettings | { data: UserSoundSettings }
     >(["sound-settings"]);
@@ -26,97 +26,95 @@ export const useSoundPlayback = () => {
     }
 
     return soundSettings;
-  }, [queryClient, soundSettings]);
+  };
 
-  const playSound = useCallback(
-    (category: SoundCategory, key: string) => {
-      const settings = getLatestSettings();
-      if (!settings) {
-        return;
-      }
+  const playSound = (category: SoundCategory, key: string) => {
+    const settings = getLatestSettings();
+    if (!settings) {
+      return;
+    }
 
-      const categoryVolume = settings[`${category}Volume`];
-      const masterVolume = settings.masterVolume;
+    const categoryVolume = settings[`${category}Volume`];
+    const masterVolume = settings.masterVolume;
 
-      if (masterVolume === 0 || categoryVolume === 0) {
-        return;
-      }
+    if (masterVolume === 0 || categoryVolume === 0) {
+      return;
+    }
 
-      const soundConfig = settings[`${category}Config`]?.[key];
-      const soundUrl =
-        soundConfig?.soundUrl === "" || !soundConfig?.soundUrl
-          ? DEFAULT_SOUND_URLS[key]
-          : soundConfig.soundUrl;
+    const soundConfig = settings[`${category}Config`]?.[key];
+    const soundUrl =
+      soundConfig?.soundUrl === "" || !soundConfig?.soundUrl
+        ? DEFAULT_SOUND_URLS[key]
+        : soundConfig.soundUrl;
 
-      if (!soundUrl) {
-        return;
-      }
+    if (!soundUrl) {
+      return;
+    }
 
-      if (currentAudioRef.current) {
-        currentAudioRef.current.pause();
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current = null;
+    }
+
+    const audio = new Audio(soundUrl);
+    audio.volume = categoryVolume * masterVolume;
+    currentAudioRef.current = audio;
+
+    audio.play().catch(() => {});
+
+    audio.onended = () => {
+      if (currentAudioRef.current === audio) {
         currentAudioRef.current = null;
       }
+    };
+  };
 
-      const audio = new Audio(soundUrl);
-      audio.volume = categoryVolume * masterVolume;
-      currentAudioRef.current = audio;
+  const playSoundTest = (
+    category: SoundCategory,
+    key: string,
+    customSoundUrl?: string,
+  ) => {
+    const settings = getLatestSettings();
+    if (!settings) {
+      return;
+    }
 
-      audio.play().catch(() => {});
+    const categoryVolume = settings[`${category}Volume`];
+    const masterVolume = settings.masterVolume;
 
-      audio.onended = () => {
-        if (currentAudioRef.current === audio) {
-          currentAudioRef.current = null;
-        }
-      };
-    },
-    [getLatestSettings],
-  );
+    const soundConfig = settings[`${category}Config`]?.[key];
+    const soundUrl =
+      customSoundUrl ||
+      (soundConfig?.soundUrl === "" || !soundConfig?.soundUrl
+        ? DEFAULT_SOUND_URLS[key]
+        : soundConfig.soundUrl);
 
-  const playSoundTest = useCallback(
-    (category: SoundCategory, key: string, customSoundUrl?: string) => {
-      const settings = getLatestSettings();
-      if (!settings) {
-        return;
-      }
+    if (!soundUrl) {
+      return;
+    }
 
-      const categoryVolume = settings[`${category}Volume`];
-      const masterVolume = settings.masterVolume;
+    if (testAudioRef.current) {
+      testAudioRef.current.pause();
+      testAudioRef.current = null;
+    }
 
-      const soundConfig = settings[`${category}Config`]?.[key];
-      const soundUrl =
-        customSoundUrl ||
-        (soundConfig?.soundUrl === "" || !soundConfig?.soundUrl
-          ? DEFAULT_SOUND_URLS[key]
-          : soundConfig.soundUrl);
+    const effectiveVolume =
+      masterVolume === 0 || categoryVolume === 0
+        ? 1.0
+        : categoryVolume * masterVolume;
 
-      if (!soundUrl) {
-        return;
-      }
+    const audio = new Audio(soundUrl);
+    audio.volume = effectiveVolume;
+    testAudioRef.current = audio;
 
-      if (testAudioRef.current) {
-        testAudioRef.current.pause();
+    audio.play().catch(() => {});
+
+    audio.onended = () => {
+      if (testAudioRef.current === audio) {
         testAudioRef.current = null;
       }
-
-      const effectiveVolume =
-        masterVolume === 0 || categoryVolume === 0
-          ? 1.0
-          : categoryVolume * masterVolume;
-
-      const audio = new Audio(soundUrl);
-      audio.volume = effectiveVolume;
-      testAudioRef.current = audio;
-
-      audio.play().catch(() => {});
-
-      audio.onended = () => {
-        if (testAudioRef.current === audio) {
-          testAudioRef.current = null;
-        }
-      };
-    },
-    [getLatestSettings],
-  );
+    };
+  };
 
   return { playSound, playSoundTest };
 };

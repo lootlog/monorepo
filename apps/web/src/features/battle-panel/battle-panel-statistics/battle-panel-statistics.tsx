@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useBattleCharacters } from "@/hooks/api/battle-log/use-battle-characters";
 import { useProfessionWinRate } from "@/hooks/api/battle-log/use-profession-win-rate";
@@ -121,51 +121,42 @@ export function BattlePanelStatistics() {
       maxLevel,
     });
 
-  const handleCharacterChange = useCallback(
-    (newCharacterId: string | undefined) => {
-      useBattleFiltersStore.getState().setCurrentCharacterId(newCharacterId);
-    },
-    [],
-  );
+  const handleCharacterChange = (newCharacterId: string | undefined) => {
+    useBattleFiltersStore.getState().setCurrentCharacterId(newCharacterId);
+  };
 
-  const handlePeriodChange = useCallback((newPeriod: Period) => {
+  const handlePeriodChange = (newPeriod: Period) => {
     const currentId = useBattleFiltersStore.getState().currentCharacterId;
     useBattleFiltersStore
       .getState()
       .updateFilters(currentId, { period: newPeriod });
-  }, []);
+  };
 
-  const handleMinLevelChange = useCallback(
-    (newMinLevel: number | undefined) => {
-      const currentId = useBattleFiltersStore.getState().currentCharacterId;
-      useBattleFiltersStore
-        .getState()
-        .updateFilters(currentId, { minLevel: newMinLevel ?? 1 });
-    },
-    [],
-  );
+  const handleMinLevelChange = (newMinLevel: number | undefined) => {
+    const currentId = useBattleFiltersStore.getState().currentCharacterId;
+    useBattleFiltersStore
+      .getState()
+      .updateFilters(currentId, { minLevel: newMinLevel ?? 1 });
+  };
 
-  const handleMaxLevelChange = useCallback(
-    (newMaxLevel: number | undefined) => {
-      const currentId = useBattleFiltersStore.getState().currentCharacterId;
-      useBattleFiltersStore
-        .getState()
-        .updateFilters(currentId, { maxLevel: newMaxLevel ?? 500 });
-    },
-    [],
-  );
+  const handleMaxLevelChange = (newMaxLevel: number | undefined) => {
+    const currentId = useBattleFiltersStore.getState().currentCharacterId;
+    useBattleFiltersStore
+      .getState()
+      .updateFilters(currentId, { maxLevel: newMaxLevel ?? 500 });
+  };
 
-  const handlePhChange = useCallback((newPh: boolean) => {
+  const handlePhChange = (newPh: boolean) => {
     const currentId = useBattleFiltersStore.getState().currentCharacterId;
     useBattleFiltersStore.getState().updateFilters(currentId, { ph: newPh });
-  }, []);
+  };
 
-  const handleMatchmakingChange = useCallback((newMatchmaking: boolean) => {
+  const handleMatchmakingChange = (newMatchmaking: boolean) => {
     const currentId = useBattleFiltersStore.getState().currentCharacterId;
     useBattleFiltersStore
       .getState()
       .updateFilters(currentId, { matchmaking: newMatchmaking });
-  }, []);
+  };
 
   if (isLoadingCharacters) {
     return null;

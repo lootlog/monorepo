@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import {
   useBattleFiltersStore,
   type Period,
@@ -147,43 +147,40 @@ export function HeadToHeadFullPage() {
     setCursor(undefined);
   };
 
-  const handleCharacterChange = useCallback(
-    (id: string | undefined) => {
-      setCurrentCharacterId(id);
-      setCursor(undefined);
-    },
-    [setCurrentCharacterId],
-  );
+  const handleCharacterChange = (id: string | undefined) => {
+    setCurrentCharacterId(id);
+    setCursor(undefined);
+  };
 
-  const handleMinLevelChange = useCallback((value: number | undefined) => {
+  const handleMinLevelChange = (value: number | undefined) => {
     const currentId = useBattleFiltersStore.getState().currentCharacterId;
     useBattleFiltersStore
       .getState()
       .updateFilters(currentId, { minLevel: value });
     setCursor(undefined);
-  }, []);
+  };
 
-  const handleMaxLevelChange = useCallback((value: number | undefined) => {
+  const handleMaxLevelChange = (value: number | undefined) => {
     const currentId = useBattleFiltersStore.getState().currentCharacterId;
     useBattleFiltersStore
       .getState()
       .updateFilters(currentId, { maxLevel: value });
     setCursor(undefined);
-  }, []);
+  };
 
-  const handlePhChange = useCallback((value: boolean) => {
+  const handlePhChange = (value: boolean) => {
     const currentId = useBattleFiltersStore.getState().currentCharacterId;
     useBattleFiltersStore.getState().updateFilters(currentId, { ph: value });
     setCursor(undefined);
-  }, []);
+  };
 
-  const handleMatchmakingChange = useCallback((value: boolean) => {
+  const handleMatchmakingChange = (value: boolean) => {
     const currentId = useBattleFiltersStore.getState().currentCharacterId;
     useBattleFiltersStore
       .getState()
       .updateFilters(currentId, { matchmaking: value });
     setCursor(undefined);
-  }, []);
+  };
 
   const table = useReactTable({
     data: data?.records || [],

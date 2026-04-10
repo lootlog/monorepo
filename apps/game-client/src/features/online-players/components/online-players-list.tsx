@@ -8,7 +8,7 @@ import { useSettingsStore } from "@/store/settings.store";
 import { useGuildMembers } from "@/hooks/api/use-guild-members";
 import { useMemberInvalidation } from "@/hooks/api/use-member-invalidation";
 import { Search } from "lucide-react";
-import { useState, useMemo, type FC } from "react";
+import { useState, type FC } from "react";
 import { Game } from "@/lib/game";
 
 export const OnlinePlayersList: FC = () => {
@@ -23,16 +23,16 @@ export const OnlinePlayersList: FC = () => {
   const { data: guildMembers } = useGuildMembers(guildId);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const missingMemberIds = useMemo(() => {
+  const missingMemberIds = (() => {
     if (!guildMembers) return [];
     return Object.keys(onlinePlayers).filter(
       (discordId) => !guildMembers[discordId],
     );
-  }, [onlinePlayers, guildMembers]);
+  })();
 
   useMemberInvalidation(guildId, missingMemberIds);
 
-  const onlinePlayersList = useMemo(() => {
+  const onlinePlayersList = (() => {
     if (!searchQuery) return Object.entries(onlinePlayers);
 
     const query = searchQuery.toLowerCase();
@@ -45,7 +45,7 @@ export const OnlinePlayersList: FC = () => {
 
       return hasMatchingMember || hasMatchingCharacter;
     });
-  }, [onlinePlayers, searchQuery, guildMembers]);
+  })();
 
   return (
     <div className="ll:h-full ll:w-full">

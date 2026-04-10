@@ -1,4 +1,4 @@
-import { useContext, useMemo } from "react";
+import { useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocalStorage } from "usehooks-ts";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
@@ -45,14 +45,14 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
   const isControlled = value !== undefined;
   const currentWorld = isControlled ? value : contextWorld;
 
-  const orderedWorlds = useMemo(() => {
+  const orderedWorlds = (() => {
     if (!worlds) return [];
     const sanitizedOrder = worldOrder.filter((w) => worlds.includes(w));
     const remaining = worlds.filter((w) => !sanitizedOrder.includes(w));
     return [...sanitizedOrder, ...remaining];
-  }, [worldOrder, worlds]);
+  })();
 
-  const options = useMemo(() => {
+  const options = (() => {
     const worldOptions =
       orderedWorlds?.map((w) => ({
         value: w,
@@ -70,7 +70,7 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
     }
 
     return worldOptions;
-  }, [orderedWorlds, showAllOption, t]);
+  })();
 
   const handleSelect = (selectedValue: string) => {
     const actualWorld =

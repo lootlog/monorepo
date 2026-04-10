@@ -3,7 +3,7 @@ import { ExpandableDataTable } from "./expandable-data-table";
 import { getBattleStatsTableColumns } from "./battle-stats-table-columns-full";
 import { OneVsOneStatsTable } from "./one-vs-one-stats-table";
 import { ChartArea } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
 import { cn } from "@lootlog/ui/lib/utils";
 import type { Battle, Warrior } from "@/hooks/api/battle-log/use-battles";
@@ -23,110 +23,50 @@ export function BattleStatsTable({
   hideZeros,
   onHideZerosChange,
 }: BattleStatsTableProps) {
-  const [expandedRows, setExpandedRows] = useState<
-    Map<
-      string,
-      "damage" | "legendary" | "turns" | "blocks" | "details" | "damageDealt"
-    >
-  >(new Map());
+  type ExpansionType =
+    | "damage"
+    | "legendary"
+    | "turns"
+    | "blocks"
+    | "details"
+    | "damageDealt";
 
-  const userTeam = useMemo(() => {
-    return battle.warriors.find((w) => w.originalId === battle.characterId)
-      ?.team;
-  }, [battle.warriors, battle.characterId]);
+  const [expandedRows, setExpandedRows] = useState<Map<string, ExpansionType>>(
+    new Map(),
+  );
 
-  const toggleDamageExpansion = (warriorId: string) => {
+  const userTeam = battle.warriors.find(
+    (w) => w.originalId === battle.characterId,
+  )?.team;
+
+  const toggleExpansion = (warriorId: string, type: ExpansionType) => {
     setExpandedRows((prev) => {
       const newMap = new Map(prev);
-      if (newMap.get(warriorId) === "damage") {
+      if (newMap.get(warriorId) === type) {
         newMap.delete(warriorId);
       } else {
-        newMap.set(warriorId, "damage");
+        newMap.set(warriorId, type);
       }
       return newMap;
     });
   };
 
-  const toggleLegendaryExpansion = (warriorId: string) => {
-    setExpandedRows((prev) => {
-      const newMap = new Map(prev);
-      if (newMap.get(warriorId) === "legendary") {
-        newMap.delete(warriorId);
-      } else {
-        newMap.set(warriorId, "legendary");
-      }
-      return newMap;
-    });
-  };
+  const sortedWarriors = [...battle.warriors].sort((a, b) => {
+    if (a.team === userTeam && b.team !== userTeam) return -1;
+    if (a.team !== userTeam && b.team === userTeam) return 1;
+    return a.team - b.team;
+  });
 
-  const toggleTurnsExpansion = (warriorId: string) => {
-    setExpandedRows((prev) => {
-      const newMap = new Map(prev);
-      if (newMap.get(warriorId) === "turns") {
-        newMap.delete(warriorId);
-      } else {
-        newMap.set(warriorId, "turns");
-      }
-      return newMap;
-    });
-  };
-
-  const toggleBlocksExpansion = (warriorId: string) => {
-    setExpandedRows((prev) => {
-      const newMap = new Map(prev);
-      if (newMap.get(warriorId) === "blocks") {
-        newMap.delete(warriorId);
-      } else {
-        newMap.set(warriorId, "blocks");
-      }
-      return newMap;
-    });
-  };
-
-  const toggleDetailsExpansion = (warriorId: string) => {
-    setExpandedRows((prev) => {
-      const newMap = new Map(prev);
-      if (newMap.get(warriorId) === "details") {
-        newMap.delete(warriorId);
-      } else {
-        newMap.set(warriorId, "details");
-      }
-      return newMap;
-    });
-  };
-
-  const toggleDamageDealtExpansion = (warriorId: string) => {
-    setExpandedRows((prev) => {
-      const newMap = new Map(prev);
-      if (newMap.get(warriorId) === "damageDealt") {
-        newMap.delete(warriorId);
-      } else {
-        newMap.set(warriorId, "damageDealt");
-      }
-      return newMap;
-    });
-  };
-
-  const sortedWarriors = useMemo(() => {
-    return [...battle.warriors].sort((a, b) => {
-      if (a.team === userTeam && b.team !== userTeam) return -1;
-      if (a.team !== userTeam && b.team === userTeam) return 1;
-      return a.team - b.team;
-    });
-  }, [battle.warriors, userTeam]);
-
-  const currentColumns = useMemo(() => {
-    return getBattleStatsTableColumns(
-      battle,
-      expandedRows,
-      toggleDamageExpansion,
-      toggleLegendaryExpansion,
-      toggleTurnsExpansion,
-      toggleBlocksExpansion,
-      toggleDetailsExpansion,
-      toggleDamageDealtExpansion,
-    );
-  }, [battle, expandedRows]);
+  const currentColumns = getBattleStatsTableColumns(
+    battle,
+    expandedRows,
+    (id) => toggleExpansion(id, "damage"),
+    (id) => toggleExpansion(id, "legendary"),
+    (id) => toggleExpansion(id, "turns"),
+    (id) => toggleExpansion(id, "blocks"),
+    (id) => toggleExpansion(id, "details"),
+    (id) => toggleExpansion(id, "damageDealt"),
+  );
 
   if (battle.type === "1v1") {
     return (

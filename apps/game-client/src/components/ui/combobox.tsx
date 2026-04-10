@@ -61,11 +61,9 @@ export const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
   ) => {
     const [open, setOpen] = React.useState(false);
 
-    const selectedOption = React.useMemo(() => {
-      const allOptions =
-        groups.length > 0 ? groups.flatMap((g) => g.options) : options;
-      return allOptions.find((option) => option.value === value);
-    }, [value, options, groups]);
+    const allOptions =
+      groups.length > 0 ? groups.flatMap((g) => g.options) : options;
+    const selectedOption = allOptions.find((option) => option.value === value);
 
     const handleSelect = (currentValue: string) => {
       onValueChange?.(currentValue);

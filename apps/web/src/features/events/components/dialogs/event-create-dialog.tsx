@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@lootlog/ui/components/button";
 import {
@@ -82,9 +82,7 @@ export const EventCreateDialog = ({
     onOpenChange(isOpen);
   };
 
-  const canGoNext = useMemo(() => {
-    return scoringMode === "SIMPLE" || scoringMode === "ADVANCED";
-  }, [scoringMode]);
+  const canGoNext = scoringMode === "SIMPLE" || scoringMode === "ADVANCED";
 
   const onSubmit = (data: FormData) => {
     if (data.endsAt && data.startsAt && data.endsAt <= data.startsAt) {

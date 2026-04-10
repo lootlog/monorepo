@@ -2,7 +2,6 @@ import {
   createContext,
   useContext,
   useState,
-  useCallback,
   useEffect,
   type ReactNode,
 } from "react";
@@ -112,7 +111,7 @@ export const RefreshStatusProvider = ({
     };
   }, [guildId, socket, connected, queryClient]);
 
-  const markAsRefreshed = useCallback((ids: string[]) => {
+  const markAsRefreshed = (ids: string[]) => {
     setRefreshedIds((prev) => {
       const newSet = new Set(prev);
       ids.forEach((id) => newSet.add(id));
@@ -123,9 +122,9 @@ export const RefreshStatusProvider = ({
       ids.forEach((id) => newSet.delete(id));
       return newSet;
     });
-  }, []);
+  };
 
-  const markAsFailed = useCallback((ids: string[]) => {
+  const markAsFailed = (ids: string[]) => {
     setFailedIds((prev) => {
       const newSet = new Set(prev);
       ids.forEach((id) => newSet.add(id));
@@ -136,20 +135,20 @@ export const RefreshStatusProvider = ({
       ids.forEach((id) => newSet.delete(id));
       return newSet;
     });
-  }, []);
+  };
 
-  const clearRefreshedId = useCallback((id: string) => {
+  const clearRefreshedId = (id: string) => {
     setRefreshedIds((prev) => {
       const newSet = new Set(prev);
       newSet.delete(id);
       return newSet;
     });
-  }, []);
+  };
 
-  const clearAll = useCallback(() => {
+  const clearAll = () => {
     setRefreshedIds(new Set());
     setFailedIds(new Set());
-  }, []);
+  };
 
   return (
     <RefreshStatusContext.Provider

@@ -10,7 +10,7 @@ import {
 } from "@/store/npc-detector.store";
 import { getTextColor } from "@/utils/notifications-and-detector/background";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { type FC, useCallback, useEffect, useMemo } from "react";
+import { type FC, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useDeepCompareEffect } from "react-use";
 import { z } from "zod";
@@ -52,12 +52,9 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
   const currentSettings: NpcDetectorSettings =
     (characterId && settings?.[characterId]) || recommendedSettings;
 
-  const defaultValues: FormData = useMemo(
-    () => ({
-      settingsByNpcType: currentSettings,
-    }),
-    [currentSettings],
-  );
+  const defaultValues: FormData = {
+    settingsByNpcType: currentSettings,
+  };
 
   const { register, watch, reset } = useForm<FormData>({
     resolver: zodResolver(FormSchema),
@@ -68,16 +65,13 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
     reset(defaultValues);
   }, [characterId, reset, defaultValues]);
 
-  const onSubmit = useCallback(
-    (data: FormData) => {
-      if (!characterId) return;
-      setSettings(
-        characterId?.toString(),
-        data.settingsByNpcType as NpcDetectorSettings,
-      );
-    },
-    [characterId, setSettings],
-  );
+  const onSubmit = (data: FormData) => {
+    if (!characterId) return;
+    setSettings(
+      characterId?.toString(),
+      data.settingsByNpcType as NpcDetectorSettings,
+    );
+  };
 
   const watchedData = watch();
   useDeepCompareEffect(() => {

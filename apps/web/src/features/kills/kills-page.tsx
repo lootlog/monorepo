@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearch, useNavigate } from "@tanstack/react-router";
 import {
@@ -91,24 +91,21 @@ export const KillsPage: React.FC = () => {
     sortBy,
   });
 
-  const updateSearchParams = useCallback(
-    (updates: Partial<KillsSearchParams>) => {
-      const newParams = { ...searchParams, ...updates };
+  const updateSearchParams = (updates: Partial<KillsSearchParams>) => {
+    const newParams = { ...searchParams, ...updates };
 
-      const cleanParams = Object.fromEntries(
-        Object.entries(newParams).filter(
-          ([, value]) => value !== undefined && value !== "",
-        ),
-      );
+    const cleanParams = Object.fromEntries(
+      Object.entries(newParams).filter(
+        ([, value]) => value !== undefined && value !== "",
+      ),
+    );
 
-      navigate({
-        to: ".",
-        search: cleanParams,
-        replace: true,
-      });
-    },
-    [navigate, searchParams],
-  );
+    navigate({
+      to: ".",
+      search: cleanParams,
+      replace: true,
+    });
+  };
 
   useEffect(() => {
     if (debouncedSearch !== prevDebouncedSearch.current) {
@@ -118,7 +115,7 @@ export const KillsPage: React.FC = () => {
         cursor: undefined,
       });
     }
-  }, [debouncedSearch, updateSearchParams]);
+  }, [debouncedSearch]);
 
   useEffect(() => {
     if (debouncedMinLvl !== prevDebouncedMinLvl.current) {
@@ -128,7 +125,7 @@ export const KillsPage: React.FC = () => {
         cursor: undefined,
       });
     }
-  }, [debouncedMinLvl, updateSearchParams]);
+  }, [debouncedMinLvl]);
 
   useEffect(() => {
     if (debouncedMaxLvl !== prevDebouncedMaxLvl.current) {
@@ -138,7 +135,7 @@ export const KillsPage: React.FC = () => {
         cursor: undefined,
       });
     }
-  }, [debouncedMaxLvl, updateSearchParams]);
+  }, [debouncedMaxLvl]);
 
   const handleWorldChange = (world: string | undefined) => {
     updateSearchParams({ world, cursor: undefined });
