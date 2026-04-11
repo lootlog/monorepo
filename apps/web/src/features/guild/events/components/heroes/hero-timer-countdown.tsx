@@ -10,7 +10,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { parseMsToTime } from "@/utils/date/parse-ms-to-time";
-import type { EventTimer } from "../../hooks/queries/use-event-hero-timers";
+import type { EventTimer } from "../../types/api";
 
 interface HeroTimerCountdownProps {
   timer: EventTimer | undefined;

@@ -11,15 +11,16 @@ import { Card } from "@lootlog/ui/components/card";
 import { Label } from "@lootlog/ui/components/label";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Textarea } from "@lootlog/ui/components/textarea";
-import { useEventOverview } from "./hooks/queries/use-event-overview";
 import { useEventMutations } from "./hooks/mutations/use-event-mutations";
+import type { EventOverviewResponseDto } from "@/lib/api/generated/main/model";
+import { useShowEventOverview } from "@/lib/api/generated/main/events/events";
 
 interface EventRulebookFormData {
   rulebookMarkdown: string;
 }
 
 const toRulebookDefaults = (
-  event: NonNullable<ReturnType<typeof useEventOverview>["data"]>,
+  event: EventOverviewResponseDto,
 ): EventRulebookFormData => ({
   rulebookMarkdown: event.rulebookMarkdown ?? "",
 });
@@ -33,7 +34,7 @@ export const EventEditRulebookPage = () => {
     eventId: eventId ?? "",
   };
 
-  const { data: event, isLoading, error } = useEventOverview(routeParams);
+  const { data: event, isLoading, error } = useShowEventOverview(routeParams);
   const { updateEvent } = useEventMutations(
     routeParams.guildId,
     routeParams.eventId,

@@ -1,7 +1,8 @@
 import { startTransition, useEffect, useState } from "react";
-import { useEvents, useEventSettings } from "@/features/guild/events/hooks";
 import { isEventActiveAtTimestamp } from "@/features/guild/events/utils";
 import { PinnedEventsBanner } from "./pinned-events-banner";
+import { useListEvents } from "@/lib/api/generated/main/events/events";
+import { useEventsSettingsControllerGetSettings } from "@/lib/api/generated/main/event-settings/event-settings";
 
 export const GuildPinnedEventsSection = ({
   guildId,
@@ -10,13 +11,16 @@ export const GuildPinnedEventsSection = ({
   guildId: string;
   onNavigate?: () => void;
 }) => {
-  const { data: activeEvents, isPending: isEventsPending } = useEvents({
-    guildId,
-    activeOnly: true,
-    enabled: Boolean(guildId),
-  });
+  const { data: activeEvents, isPending: isEventsPending } = useListEvents(
+    {
+      guildId,
+    },
+    {
+      activeOnly: "true",
+    },
+  );
   const { data: eventSettings, isPending: isSettingsPending } =
-    useEventSettings(guildId);
+    useEventsSettingsControllerGetSettings({ guildId });
   const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
 
   useEffect(() => {

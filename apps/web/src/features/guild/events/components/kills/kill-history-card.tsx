@@ -46,7 +46,7 @@ export const KillHistoryCard = ({
 }: KillHistoryCardProps) => {
   const { t } = useTranslation();
 
-  const participants = kill.participants ?? [];
+  const participants = kill.points ?? [];
   const totalPoints = participants.reduce((sum, p) => sum + p.points, 0);
 
   const respawnTime = kill.isManualClose

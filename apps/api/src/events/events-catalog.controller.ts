@@ -10,15 +10,24 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import {
-  ApiBearerAuth,
   ApiOperation,
   ApiParam,
   ApiQuery,
+  ApiBearerAuth,
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
+import { ZodResponse } from "nestjs-zod";
 import { Permission, type Guild, type Role } from "src/generated/prisma/client";
 import { CreateEventDto } from "./dto/create-event.dto";
+import {
+  EventListItemResponseDto,
+  EventMapsResponseDto,
+  EventMutationResponseDto,
+  EventOverviewResponseDto,
+  SuccessResponseDto,
+} from "./dto/event-response.dto";
+import { EventWrappedApiResponseDto } from "./dto/event-wrapped-response.dto";
 import { UpdateEventDto } from "./dto/update-event.dto";
 import { EventsService } from "./events.service";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
@@ -39,13 +48,15 @@ export class EventsCatalogController {
   @UseGuards(PermissionsGuard)
   @Post("/guilds/:guildId/events")
   @ApiOperation({
+    operationId: "createEvent",
     summary: "Create event",
     description: "Create a new guild event with maps and hero NPCs",
   })
   @ApiParam({ name: "guildId", description: "Guild ID" })
-  @ApiResponse({
+  @ZodResponse({
     status: 201,
     description: "Event created successfully",
+    type: EventMutationResponseDto,
   })
   @ApiResponse({
     status: 403,
@@ -62,6 +73,7 @@ export class EventsCatalogController {
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/events")
   @ApiOperation({
+    operationId: "listEvents",
     summary: "List guild events",
     description: "Get all events for a guild",
   })
@@ -76,9 +88,10 @@ export class EventsCatalogController {
     description: "Only return events active at request time",
     required: false,
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "List of events",
+    type: [EventListItemResponseDto],
   })
   async getEvents(
     @GuildData() guildData: { id: string },
@@ -104,14 +117,16 @@ export class EventsCatalogController {
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/events/:eventId")
   @ApiOperation({
+    operationId: "showEvent",
     summary: "Get event details",
     description: "Get detailed information about a specific event",
   })
   @ApiParam({ name: "guildId", description: "Guild ID" })
   @ApiParam({ name: "eventId", description: "Event ID" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Event details",
+    type: EventOverviewResponseDto,
   })
   @ApiResponse({ status: 404, description: "Event not found" })
   async getEvent(
@@ -132,15 +147,17 @@ export class EventsCatalogController {
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/events/:eventId/overview")
   @ApiOperation({
+    operationId: "showEventOverview",
     summary: "Get event overview",
     description:
       "Get lightweight event overview for read-only views (without maps and rankings)",
   })
   @ApiParam({ name: "guildId", description: "Guild ID" })
   @ApiParam({ name: "eventId", description: "Event ID" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Event overview",
+    type: EventOverviewResponseDto,
   })
   @ApiResponse({ status: 404, description: "Event not found" })
   async getEventOverview(
@@ -165,15 +182,17 @@ export class EventsCatalogController {
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/events/:eventId/wrapped")
   @ApiOperation({
+    operationId: "showEventWrapped",
     summary: "Get event wrapped summary",
     description:
       "Get cached event wrapped summary with loot, coverage and member highlights",
   })
   @ApiParam({ name: "guildId", description: "Guild ID" })
   @ApiParam({ name: "eventId", description: "Event ID" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Event wrapped summary",
+    type: EventWrappedApiResponseDto,
   })
   @ApiResponse({ status: 404, description: "Event not found" })
   getWrapped(
@@ -194,15 +213,17 @@ export class EventsCatalogController {
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/events/:eventId/maps")
   @ApiOperation({
+    operationId: "listEventMaps",
     summary: "Get event maps",
     description:
       "Get map assignments grouped by hero for a specific event (read model for realtime map updates)",
   })
   @ApiParam({ name: "guildId", description: "Guild ID" })
   @ApiParam({ name: "eventId", description: "Event ID" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Event maps data",
+    type: EventMapsResponseDto,
   })
   @ApiResponse({ status: 404, description: "Event not found" })
   async getEventMaps(
@@ -223,14 +244,16 @@ export class EventsCatalogController {
   @UseGuards(PermissionsGuard)
   @Patch("/guilds/:guildId/events/:eventId")
   @ApiOperation({
+    operationId: "updateEvent",
     summary: "Update event",
     description: "Update an existing event",
   })
   @ApiParam({ name: "guildId", description: "Guild ID" })
   @ApiParam({ name: "eventId", description: "Event ID" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Event updated successfully",
+    type: EventMutationResponseDto,
   })
   @ApiResponse({ status: 404, description: "Event not found" })
   updateEvent(
@@ -245,15 +268,17 @@ export class EventsCatalogController {
   @UseGuards(PermissionsGuard)
   @Post("/guilds/:guildId/events/:eventId/recalculate-points")
   @ApiOperation({
+    operationId: "recalculateEventPoints",
     summary: "Recalculate event points",
     description:
       "Manually recalculate all event kill points with current rules",
   })
   @ApiParam({ name: "guildId", description: "Guild ID" })
   @ApiParam({ name: "eventId", description: "Event ID" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Points recalculated successfully",
+    type: SuccessResponseDto,
   })
   @ApiResponse({ status: 404, description: "Event not found" })
   recalculatePoints(
@@ -270,14 +295,16 @@ export class EventsCatalogController {
   @UseGuards(PermissionsGuard)
   @Delete("/guilds/:guildId/events/:eventId")
   @ApiOperation({
+    operationId: "deleteEvent",
     summary: "Delete event",
     description: "Delete an event",
   })
   @ApiParam({ name: "guildId", description: "Guild ID" })
   @ApiParam({ name: "eventId", description: "Event ID" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Event deleted successfully",
+    type: SuccessResponseDto,
   })
   @ApiResponse({ status: 404, description: "Event not found" })
   deleteEvent(

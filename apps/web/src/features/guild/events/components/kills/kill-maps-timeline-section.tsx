@@ -1,8 +1,9 @@
 import { Card } from "@lootlog/ui/components/card";
 import { Accordion } from "@lootlog/ui/components/accordion";
+import { useParams } from "@tanstack/react-router";
 import { Map } from "lucide-react";
+import { useEventsMonitoringControllerGetKillTimelineData } from "@/lib/api/generated/main/events/events";
 import { KillMapTimelineCard } from "./kill-map-timeline-card";
-import { useKillTimeline } from "../../hooks/queries/use-kill-timeline";
 import type { TFunction } from "i18next";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 
@@ -23,11 +24,14 @@ export const KillMapsTimelineSection = ({
   killedAt,
   t,
 }: KillMapsTimelineSectionProps) => {
-  const { data: mapsTimeline, isLoading } = useKillTimeline({
-    eventId,
-    heroId,
-    killId,
-  });
+  const { guildId } = useParams({ strict: false });
+  const { data: mapsTimeline, isLoading } =
+    useEventsMonitoringControllerGetKillTimelineData({
+      guildId: guildId ?? "",
+      eventId,
+      heroId,
+      killId,
+    });
 
   const startTime = new Date(minSpawnTimeAtKill);
   const endTime = new Date(killedAt);

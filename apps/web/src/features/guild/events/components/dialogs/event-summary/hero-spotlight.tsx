@@ -1,6 +1,6 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { Badge } from "@lootlog/ui/components/badge";
-import type { EventWrappedHero } from "../../../hooks/queries/use-event-wrapped";
+import type { EventWrappedHero } from "../../../types/api";
 import { MetricCard } from "./metric-card";
 import { formatMetric } from "./utils";
 

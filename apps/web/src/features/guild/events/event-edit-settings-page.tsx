@@ -11,12 +11,13 @@ import { Card } from "@lootlog/ui/components/card";
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { useEventOverview } from "./hooks/queries/use-event-overview";
 import { useEventMutations } from "./hooks/mutations/use-event-mutations";
 import {
   fromDateTimeLocalValueToIso,
   toDateTimeLocalValue,
 } from "./utils/date-time-local";
+import type { EventOverviewResponseDto } from "@/lib/api/generated/main/model";
+import { useShowEventOverview } from "@/lib/api/generated/main/events/events";
 
 interface EventSettingsFormData {
   name: string;
@@ -28,7 +29,7 @@ interface EventSettingsFormData {
 }
 
 const toSettingsDefaults = (
-  event: NonNullable<ReturnType<typeof useEventOverview>["data"]>,
+  event: EventOverviewResponseDto,
 ): EventSettingsFormData => ({
   name: event.name,
   startsAt: toDateTimeLocalValue(event.startsAt ?? event.createdAt),
@@ -47,7 +48,7 @@ export const EventEditSettingsPage = () => {
     eventId: eventId ?? "",
   };
 
-  const { data: event, isLoading, error } = useEventOverview(routeParams);
+  const { data: event, isLoading, error } = useShowEventOverview(routeParams);
   const { updateEvent } = useEventMutations(
     routeParams.guildId,
     routeParams.eventId,
