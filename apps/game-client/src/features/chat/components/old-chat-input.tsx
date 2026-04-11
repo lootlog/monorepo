@@ -12,7 +12,7 @@ import type { FC } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-export type OldChatInputProps = {
+type OldChatInputProps = {
   selectedGuildId?: string;
   autofocus?: boolean;
 };

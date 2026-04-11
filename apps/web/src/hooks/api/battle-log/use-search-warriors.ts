@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useBattleLogApiClient } from "@/hooks/api/battle-log/use-battle-log-api-client";
 import { useState, useEffect } from "react";
+import { queryKeys } from "@/lib/query-keys";
 
 export type Warrior = {
   name: string;
@@ -28,7 +29,7 @@ export const useSearchWarriors = (searchQuery: string, debounceMs = 300) => {
   }, [searchQuery, debounceMs]);
 
   const query = useQuery({
-    queryKey: ["warriors-search", debouncedQuery],
+    queryKey: queryKeys.battleLog.searchWarriors(debouncedQuery),
     queryFn: () => {
       return client.get<SearchWarriorsResponse>(
         `/battles/@me/warriors/search`,
@@ -38,7 +39,7 @@ export const useSearchWarriors = (searchQuery: string, debounceMs = 300) => {
       );
     },
     enabled: debouncedQuery.length >= 2,
-    select: (response) => response.data.warriors,
+    select: (response) => response.warriors,
   });
 
   return query;

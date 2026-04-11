@@ -1,6 +1,6 @@
 import { Module, type MiddlewareConsumer } from "@nestjs/common";
-import { APP_PIPE } from "@nestjs/core";
-import { ZodValidationPipe } from "nestjs-zod";
+import { APP_INTERCEPTOR, APP_PIPE } from "@nestjs/core";
+import { ZodSerializerInterceptor, ZodValidationPipe } from "nestjs-zod";
 import { WinstonModule } from "nest-winston";
 import { BullModule } from "@nestjs/bullmq";
 import { LoggerMiddleware } from "@lootlog/nest-shared";
@@ -79,6 +79,10 @@ import { MemberContextModule } from "src/shared/permissions/member-context.modul
     {
       provide: APP_PIPE,
       useClass: ZodValidationPipe,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ZodSerializerInterceptor,
     },
   ],
 })

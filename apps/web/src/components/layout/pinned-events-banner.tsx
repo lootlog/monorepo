@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Trophy, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
-import type { Event } from "@/features/events/hooks";
+import type { Event } from "@/features/guild/events/hooks";
 import { EventTimersList } from "./event-timers-list";
 
 interface PinnedEventsBannerProps {
@@ -29,12 +29,7 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
 
   return (
     <div className="px-2 mb-3 pb-3 border-b border-border">
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="rounded-lg overflow-hidden bg-gradient-to-r from-yellow-500/20 via-amber-500/15 to-orange-500/20 border border-yellow-500/30 relative"
-      >
+      <div className="rounded-lg overflow-hidden bg-gradient-to-r from-yellow-500/20 via-amber-500/15 to-orange-500/20 border border-yellow-500/30 relative">
         <motion.div
           className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-400/20 to-transparent"
           animate={{
@@ -56,11 +51,7 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
             onClick={onNavigate}
             className="block"
           >
-            <motion.div
-              className="px-3 py-2.5 flex items-center gap-3 hover:bg-yellow-500/10 transition-colors relative"
-              whileHover={{ x: 2 }}
-              transition={{ duration: 0.2 }}
-            >
+            <div className="relative flex items-center gap-3 px-3 py-2.5 transition-[background-color,transform] duration-200 hover:translate-x-0.5 hover:bg-yellow-500/10">
               <div className="relative">
                 <Trophy className="h-4 w-4 text-yellow-500" />
                 <motion.div
@@ -86,7 +77,7 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
                 </p>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-            </motion.div>
+            </div>
           </Link>
 
           <EventTimersList
@@ -117,7 +108,7 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
               </motion.div>
             </motion.button>
 
-            <AnimatePresence>
+            <AnimatePresence initial={false}>
               {isExpanded && (
                 <motion.div
                   initial={{ height: 0, opacity: 0 }}
@@ -126,7 +117,7 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
                   transition={{ duration: 0.2 }}
                   className="border-t border-yellow-500/20 overflow-hidden"
                 >
-                  {otherEvents.map((event, index) => (
+                  {otherEvents.map((event) => (
                     <div key={event.id}>
                       <Link
                         to="/$guildId/events/$eventId"
@@ -134,19 +125,13 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
                         onClick={onNavigate}
                         className="block"
                       >
-                        <motion.div
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.05 }}
-                          className="px-3 py-2 flex items-center gap-2 hover:bg-yellow-500/10 transition-colors"
-                          whileHover={{ x: 2 }}
-                        >
+                        <div className="flex items-center gap-2 px-3 py-2 transition-[background-color,transform] duration-200 hover:translate-x-0.5 hover:bg-yellow-500/10">
                           <Trophy className="h-3.5 w-3.5 text-yellow-500/70" />
                           <span className="text-sm truncate flex-1">
                             {event.name}
                           </span>
                           <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                        </motion.div>
+                        </div>
                       </Link>
                       <EventTimersList
                         event={event}
@@ -160,7 +145,7 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
             </AnimatePresence>
           </>
         )}
-      </motion.div>
+      </div>
     </div>
   );
 };

@@ -9,7 +9,7 @@ import {
   isLocalTimeInRange,
 } from "./scoring-time.util";
 
-export type EventScoringContext = {
+type EventScoringContext = {
   eligible: boolean;
   trackingDurationPercentage?: number;
   trackingDurationSeconds?: number;
@@ -24,7 +24,7 @@ export type EventScoringContext = {
   wasPresent: boolean;
 };
 
-export type EventScoringResult = {
+type EventScoringResult = {
   totalPoints: number;
   basePoints: number;
   bonusPoints: number;

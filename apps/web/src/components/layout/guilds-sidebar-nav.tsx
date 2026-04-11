@@ -1,4 +1,3 @@
-import { Button } from "@lootlog/ui/components/button";
 import { useSidebar } from "@lootlog/ui/components/sidebar";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { useGuildId } from "@/hooks/context/use-guild-id";
@@ -9,40 +8,25 @@ import {
   ClipboardList,
   Clock,
   Logs,
-  RefreshCcw,
   Settings,
   Trophy,
 } from "lucide-react";
-import { useEffect, useState, type FC } from "react";
-import { useGuilds } from "@/hooks/api/guilds/use-guilds";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@lootlog/ui/components/tooltip";
-import { useGuildMember } from "@/hooks/api/members/use-guild-member";
+import type { FC } from "react";
 import { SidebarNav, type MenuItem } from "./sidebar-nav/index";
-import { useMemberRefresh } from "@/hooks/api/members/use-member-refresh";
 import { ROUTE_SEGMENTS } from "@/config/routes";
 import { Permission } from "@lootlog/types";
-import { useEvents, useEventSettings } from "@/features/events/hooks";
-import { isEventActiveAtTimestamp } from "@/features/events/utils";
-import { PinnedEventsBanner } from "./pinned-events-banner";
-import { useTheme } from "@/hooks/context/use-theme";
-import { cn } from "@lootlog/ui/lib/utils";
-import { getPermissionRefreshInfo } from "@/utils/get-permission-refresh-info";
 import { useTranslation } from "react-i18next";
+import { useEvents } from "@/features/guild/events/hooks";
+import { GuildSidebarHeader } from "./guild-sidebar-header";
+import { GuildPinnedEventsSection } from "./guild-pinned-events-section";
+import { canManageGuild } from "@/lib/guild-permissions";
 
 export const GuildsSidebarNav: FC = () => {
   const guildId = useGuildId();
-  const { data: guilds } = useGuilds();
-  const { data: member } = useGuildMember();
   const { data: permissions } = useGuildPermissions();
   const { setOpenMobile } = useSidebar();
-  const { mutate: refreshMember } = useMemberRefresh();
-  const { theme } = useTheme();
   const { t } = useTranslation();
-  const isRukiaTheme = theme === "rukia";
+  const canManageCurrentGuild = canManageGuild(permissions);
 
   const canViewEvents =
     permissions?.includes(Permission.LOOTLOG_EVENTS_READ) ||
@@ -54,21 +38,12 @@ export const GuildsSidebarNav: FC = () => {
     activeOnly: true,
     enabled: Boolean(canViewEvents),
   });
-  const { data: eventSettings } = useEventSettings(guildId ?? "");
-  const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
-  const filteredActiveEvents = (activeEvents ?? []).filter((event) =>
-    isEventActiveAtTimestamp(event, currentTimestamp),
-  );
-  const pinnedEvents = eventSettings?.pinnedEvents ?? [];
-  const pinnedActiveEvents = pinnedEvents
-    .map((id) => filteredActiveEvents.find((e) => e.id === id))
-    .filter((e) => e !== undefined);
-  const hasActiveEvents = filteredActiveEvents.length > 0;
-  const activeEventCount = filteredActiveEvents.length;
+  const hasActiveEvents = (activeEvents?.length ?? 0) > 0;
+  const activeEventCount = activeEvents?.length ?? 0;
 
   const menuItems: MenuItem[] = [
     {
-      label: "Lootlog",
+      label: t("layout.navigation.lootlog"),
       icon: <ClipboardList className="mr-1 h-4 w-4" />,
       path: "",
       available: true,
@@ -78,7 +53,7 @@ export const GuildsSidebarNav: FC = () => {
       ),
     },
     {
-      label: "Timery",
+      label: t("layout.navigation.timers"),
       icon: <Clock className="mr-1 h-4 w-4" />,
       path: ROUTE_SEGMENTS.guild.timers,
       available: true,
@@ -88,7 +63,7 @@ export const GuildsSidebarNav: FC = () => {
       ),
     },
     {
-      label: "Rezerwacje",
+      label: t("layout.navigation.reservations"),
       icon: <CalendarClock className="mr-1 h-4 w-4" />,
       path: ROUTE_SEGMENTS.guild.reservations,
       available: true,
@@ -98,7 +73,7 @@ export const GuildsSidebarNav: FC = () => {
       ),
     },
     {
-      label: "Eventy",
+      label: t("layout.navigation.events"),
       icon: (
         <div className="relative mr-1">
           <Trophy
@@ -121,7 +96,7 @@ export const GuildsSidebarNav: FC = () => {
       highlight: hasActiveEvents,
     },
     {
-      label: "Statystyki",
+      label: t("layout.navigation.stats"),
       icon: <BarChart4 className="mr-1 h-4 w-4" />,
       path: ROUTE_SEGMENTS.guild.stats,
       available: true,
@@ -132,117 +107,41 @@ export const GuildsSidebarNav: FC = () => {
     },
     {
       divided: true,
-      label: "Logi aktywności",
+      label: t("layout.navigation.activityLogs"),
       icon: <Logs className="mr-1 h-4 w-4" />,
       path: ROUTE_SEGMENTS.guild.activityLogs,
       available: true,
-      enabled: Boolean(
-        permissions?.includes(Permission.ADMIN) ||
-        permissions?.includes(Permission.OWNER),
-      ),
+      enabled: canManageCurrentGuild,
     },
     {
-      label: t("common.breadcrumbs.notifications"),
+      label: t("layout.navigation.notifications"),
       icon: <BellRing className="mr-1 h-4 w-4" />,
       path: ROUTE_SEGMENTS.guild.notifications,
       available: true,
-      enabled: Boolean(
-        permissions?.includes(Permission.ADMIN) ||
-        permissions?.includes(Permission.OWNER),
-      ),
+      enabled: canManageCurrentGuild,
     },
     {
-      label: "Ustawienia",
+      label: t("layout.navigation.settings"),
       icon: <Settings className="mr-1 h-4 w-4" />,
       path: ROUTE_SEGMENTS.guild.settings,
       available: true,
-      enabled: Boolean(
-        permissions?.includes(Permission.ADMIN) ||
-        permissions?.includes(Permission.OWNER),
-      ),
+      enabled: canManageCurrentGuild,
     },
   ];
-
-  const handleRefreshPermissions = () => {
-    if (!guildId) return;
-
-    refreshMember({ memberId: "@me" });
-  };
 
   const handleItemClick = () => {
     setOpenMobile(false);
   };
-
-  const guild = guilds?.find(
-    (g) => g.id === guildId || g.vanityUrl === guildId,
-  );
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTimestamp(Date.now());
-    }, 60000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const { canTriggerRefresh, canTriggerRefreshText } = getPermissionRefreshInfo(
-    member?.updatedAt,
-    currentTimestamp,
-  );
-
-  const header = (
-    <>
-      <span
-        className={cn(
-          "ml-3 max-w-44 text-nowrap text-ellipsis overflow-hidden",
-          isRukiaTheme && "font-semibold",
-        )}
-        style={
-          isRukiaTheme
-            ? {
-                background:
-                  "linear-gradient(135deg, #e0f4ff 0%, #a8d8ff 30%, #7cc4ff 50%, #b8e0ff 70%, #ffffff 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-                filter:
-                  "drop-shadow(0 0 4px rgba(180, 220, 255, 0.6)) drop-shadow(0 0 8px rgba(150, 200, 255, 0.3))",
-              }
-            : undefined
-        }
-      >
-        {guild?.name}
-      </span>
-      <span>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span tabIndex={0}>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleRefreshPermissions}
-                disabled={!canTriggerRefresh}
-              >
-                <RefreshCcw />
-              </Button>
-            </span>
-          </TooltipTrigger>
-          <TooltipContent className="z-50 mt-4">
-            {canTriggerRefreshText}
-          </TooltipContent>
-        </Tooltip>
-      </span>
-    </>
-  );
+  const sidebarHeader = <GuildSidebarHeader guildId={guildId} />;
 
   return (
     <SidebarNav
       items={menuItems}
       basePath={`/${guildId}`}
-      header={header}
+      header={sidebarHeader}
       beforeItems={
         canViewEvents ? (
-          <PinnedEventsBanner
-            events={pinnedActiveEvents}
+          <GuildPinnedEventsSection
             guildId={guildId ?? ""}
             onNavigate={handleItemClick}
           />

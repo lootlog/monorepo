@@ -8,24 +8,6 @@ export enum MessageType {
   PARTY_GATHERING = "PARTY_GATHERING",
 }
 
-export type PartyGatheringData = {
-  notificationId: string;
-  discordId: string;
-  description?: string;
-  minLvl?: number;
-  maxLvl?: number;
-  world: string;
-};
-
-export type ChatCharacterData = {
-  nick: string;
-  id: number;
-  acc: number;
-  lvl: number;
-  prof: string;
-  icon: string;
-};
-
 const NpcSchema = z.object({
   id: z.number(),
   name: z.string(),

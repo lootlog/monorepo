@@ -50,7 +50,6 @@ export const mapBattleEventsToPayload = (
     return {
       f,
       ev: event.ev,
-      // party: event.party,
       match_summary,
       matchmaking_state: event.matchmaking_state,
     };

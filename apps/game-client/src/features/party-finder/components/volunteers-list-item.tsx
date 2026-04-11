@@ -10,7 +10,7 @@ import { useFriendsStore } from "@/store/friends.store";
 import { Loader2, Plus, RotateCcw, UserPlus, X } from "lucide-react";
 import { useEffect, type FC } from "react";
 
-export type VolunteersListItemProps = {
+type VolunteersListItemProps = {
   volunteer: PartyFinderVolunteer;
 };
 

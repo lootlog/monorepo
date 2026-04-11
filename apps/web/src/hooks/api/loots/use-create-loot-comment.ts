@@ -1,6 +1,7 @@
 import { useApiClient } from "@/hooks/api/use-api-client";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 
 export type CreateCommentOptions = {
   content: string;
@@ -32,7 +33,7 @@ export const useCreateLootComment = () => {
       ),
     onSuccess: (comment) => {
       queryClient.invalidateQueries({
-        queryKey: ["loot-comments", guildId, comment.data.lootId],
+        queryKey: queryKeys.loots.comments(guildId, comment.lootId),
       });
     },
   });

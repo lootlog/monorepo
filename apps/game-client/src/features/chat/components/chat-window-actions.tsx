@@ -6,7 +6,7 @@ import {
 import { Filter, Pencil } from "lucide-react";
 import type { FC } from "react";
 
-export type ChatWindowActionsProps = {
+type ChatWindowActionsProps = {
   chatInputEnabled: boolean;
   toggleChatInputEnabled: () => void;
   filtersVisible: boolean;

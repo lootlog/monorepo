@@ -41,7 +41,7 @@ export type ChatNpc = {
   lvl: number;
 };
 
-export type UseSendChatMessageOptions = {
+type UseSendChatMessageOptions = {
   message: string;
   guildIds: string[];
   type: MessageType;

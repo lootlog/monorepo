@@ -1,5 +1,4 @@
 // Battle Labels
-export { DEFAULT_BATTLE_LABELS } from "./battle-labels";
 export type { BattleLabels } from "./battle-labels";
 
 // Battle Overview Components

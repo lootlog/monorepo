@@ -2,13 +2,6 @@ import { createParamDecorator, type ExecutionContext } from "@nestjs/common";
 import { WsException } from "@nestjs/websockets";
 import type { Socket } from "src/gateway/types/socket-user.type";
 
-export const UserId = createParamDecorator(
-  (data: unknown, ctx: ExecutionContext) => {
-    const request = ctx.switchToHttp().getRequest();
-    return request.user.sub;
-  },
-);
-
 export const WsDiscordId = createParamDecorator(
   (data: unknown, ctx: ExecutionContext): string => {
     const wsCtx = ctx.switchToWs();

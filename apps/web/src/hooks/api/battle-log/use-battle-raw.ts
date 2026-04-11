@@ -1,5 +1,10 @@
 import { useBattleLogApiClient } from "@/hooks/api/battle-log/use-battle-log-api-client";
-import { useQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
+import {
+  battlelogApiClient,
+  type ApiRequestConfig,
+} from "@/lib/api-client/api-client";
 
 export type RawBattleParsedEventAction = {
   actionType: string;
@@ -32,24 +37,29 @@ export type UseBattleRawOptions = {
   isPublic?: boolean;
 };
 
-export const useBattleRaw = (options: UseBattleRawOptions) => {
-  const { client } = useBattleLogApiClient();
+export const battleRawQueryOptions = ({
+  battleId,
+  isPublic = false,
+}: UseBattleRawOptions) => {
+  const endpoint = isPublic
+    ? `/battles/public/${battleId}/raw`
+    : `/battles/${battleId}/raw`;
 
-  const endpoint = options.isPublic
-    ? `/battles/public/${options.battleId}/raw`
-    : `/battles/${options.battleId}/raw`;
-
-  const query = useQuery({
-    queryKey: [
-      "battles",
-      "raw",
-      options.battleId,
-      options.isPublic ? "public" : "private",
-    ],
-    queryFn: () => client.get<GetBattleRawResponse>(endpoint),
-    enabled: !!options.battleId,
-    select: (response) => response.data,
+  return queryOptions({
+    queryKey: queryKeys.battleLog.battleRaw(battleId, isPublic),
+    queryFn: async () => {
+      const response = await battlelogApiClient.get<GetBattleRawResponse>(
+        endpoint,
+        {} as ApiRequestConfig,
+      );
+      return response;
+    },
+    enabled: !!battleId,
   });
+};
 
-  return query;
+export const useBattleRaw = (options: UseBattleRawOptions) => {
+  useBattleLogApiClient();
+
+  return useQuery(battleRawQueryOptions(options));
 };

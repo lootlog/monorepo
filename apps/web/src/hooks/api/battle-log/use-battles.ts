@@ -1,5 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 import { useBattleLogApiClient } from "@/hooks/api/battle-log/use-battle-log-api-client";
+import {
+  battlelogApiClient,
+  type ApiRequestConfig,
+} from "@/lib/api-client/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 export type Warrior = {
   id: string;
@@ -139,46 +144,63 @@ export type UseBattlesParams = {
   maxLevel?: number;
 };
 
-export const useBattles = (params?: UseBattlesParams) => {
-  const { client } = useBattleLogApiClient();
+const buildBattlesSearchParams = (params?: UseBattlesParams) => {
   const size = params?.size ?? 20;
   const sortOrder = params?.sortOrder ?? "desc";
 
-  const query = useQuery({
-    queryKey: ["battles", "@me", params],
-    queryFn: () => {
-      const searchParams = new URLSearchParams({
-        size: size.toString(),
-        sortOrder,
-      });
-
-      if (params?.cursor) searchParams.append("cursor", params.cursor);
-      if (params?.includeTotal) searchParams.append("includeTotal", "true");
-      if (params?.world) searchParams.append("world", params.world);
-      if (params?.type && params.type.length > 0) {
-        params.type.forEach((t) => searchParams.append("type", t));
-      }
-      if (params?.search) searchParams.append("search", params.search);
-      if (params?.result && params.result.length > 0) {
-        params.result.forEach((r) => searchParams.append("result", r));
-      }
-      if (params?.ph) searchParams.append("ph", "true");
-      if (params?.matchmaking) searchParams.append("matchmaking", "true");
-      if (params?.characterId && params.characterId.length > 0) {
-        params.characterId.forEach((id) =>
-          searchParams.append("characterId", id),
-        );
-      }
-      if (params?.minLevel)
-        searchParams.append("minLevel", params.minLevel.toString());
-      if (params?.maxLevel)
-        searchParams.append("maxLevel", params.maxLevel.toString());
-
-      return client.get<GetBattlesResponse>(`/battles/@me?${searchParams}`);
-    },
-    select: (response) => response.data,
-    staleTime: 1000 * 30, // 30 seconds
+  const searchParams = new URLSearchParams({
+    size: size.toString(),
+    sortOrder,
   });
 
-  return query;
+  if (params?.cursor) searchParams.append("cursor", params.cursor);
+  if (params?.includeTotal) searchParams.append("includeTotal", "true");
+  if (params?.world) searchParams.append("world", params.world);
+  if (params?.type && params.type.length > 0) {
+    params.type.forEach((type) => searchParams.append("type", type));
+  }
+  if (params?.search) searchParams.append("search", params.search);
+  if (params?.result && params.result.length > 0) {
+    params.result.forEach((result) => searchParams.append("result", result));
+  }
+  if (params?.ph) searchParams.append("ph", "true");
+  if (params?.matchmaking) searchParams.append("matchmaking", "true");
+  if (params?.characterId && params.characterId.length > 0) {
+    params.characterId.forEach((id) => searchParams.append("characterId", id));
+  }
+  if (params?.minLevel) {
+    searchParams.append("minLevel", params.minLevel.toString());
+  }
+  if (params?.maxLevel) {
+    searchParams.append("maxLevel", params.maxLevel.toString());
+  }
+
+  return searchParams;
+};
+
+export const battlesQueryOptions = (params?: UseBattlesParams) =>
+  queryOptions({
+    queryKey: queryKeys.battleLog.battlesList(
+      params
+        ? {
+            ...params,
+          }
+        : undefined,
+    ),
+    queryFn: async () => {
+      const searchParams = buildBattlesSearchParams(params);
+
+      const response = await battlelogApiClient.get<GetBattlesResponse>(
+        `/battles/@me?${searchParams}`,
+        {} as ApiRequestConfig,
+      );
+      return response;
+    },
+    staleTime: 1000 * 30,
+  });
+
+export const useBattles = (params?: UseBattlesParams) => {
+  useBattleLogApiClient();
+
+  return useQuery(battlesQueryOptions(params));
 };

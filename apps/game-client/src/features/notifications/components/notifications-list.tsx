@@ -6,7 +6,7 @@ import type {
 } from "@/store/notifications.store";
 import type { FC } from "react";
 
-export type NotificationsListProps = {
+type NotificationsListProps = {
   notifications?: (NotificationWithServers | PartyGatheringNotification)[];
   now?: number;
 };

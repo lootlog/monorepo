@@ -8,6 +8,7 @@ import {
   type QueryClient,
 } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 export type UserNotificationTargetTestTrigger = {
   limit: number;
@@ -62,7 +63,7 @@ export type UserNotificationsResponse = {
 };
 
 export const createUserNotificationsQueryKey = () =>
-  ["user-notifications"] as const;
+  queryKeys.notifications.user();
 
 export const invalidateUserNotificationQueries = async (
   queryClient: QueryClient,
@@ -86,8 +87,8 @@ export const userNotificationsQueryOptions = () =>
       ]);
 
       return {
-        targets: targetsResponse.data,
-        watchedItems: watchedItemsResponse.data,
+        targets: targetsResponse,
+        watchedItems: watchedItemsResponse,
       };
     },
   });

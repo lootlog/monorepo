@@ -21,8 +21,6 @@ import { calculateColorStatistics } from "@/features/timers/utils/color-statisti
 import { Game } from "@/lib/game";
 import { useTimersSocket } from "@/features/timers/hooks/use-timers-socket";
 
-export type { TimerWithTimeLeft } from "@/features/timers/utils/timers-utils";
-
 const EMPTY_TIMERS: Timer[] = [];
 
 export const Timers = () => {

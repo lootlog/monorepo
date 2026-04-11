@@ -71,7 +71,7 @@ const ITEM_TYPES: Record<number, ItemType> = {
 };
 
 const getItemTypeByCl = (cl: number): ItemType | undefined => {
-  return ITEM_TYPES[cl] ?? undefined;
+  return ITEM_TYPES[cl];
 };
 
 const generateStatsHash = (stat: string): string => {
@@ -353,7 +353,7 @@ async function processBatch(db: PrismaClient, loots: Loot[]) {
             characterId,
             snapshotHash,
             lvl: toOptionalInt(player.lvl),
-            hpp: player.hpp || null,
+            hpp: player.hpp ?? null,
           });
         }
       }

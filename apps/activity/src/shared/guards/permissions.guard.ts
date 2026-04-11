@@ -44,11 +44,27 @@ export class PermissionsGuard implements CanActivate {
       throw new ForbiddenException("Guild ID is required");
     }
 
+    const resolvedGuildId =
+      await this.permissionsService.resolveGuildId(guildId);
+
+    if (!resolvedGuildId) {
+      this.logger.log({
+        level: "warn",
+        message: "Guild could not be resolved from request params",
+        userId,
+        discordId,
+        guildId,
+      });
+      throw new ForbiddenException("Insufficient permissions");
+    }
+
+    request.params.guildId = resolvedGuildId;
+
     const userPermissions =
       await this.permissionsService.getUserGuildPermissions(
         discordId,
         userId,
-        guildId,
+        resolvedGuildId,
       );
 
     const hasPermission = requiredPermissions.some((permission) =>
@@ -61,7 +77,7 @@ export class PermissionsGuard implements CanActivate {
         message: "User lacks required permissions",
         userId,
         discordId,
-        guildId,
+        guildId: resolvedGuildId,
         requiredPermissions,
         userPermissions,
       });

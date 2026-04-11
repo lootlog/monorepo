@@ -13,7 +13,7 @@ const CreateBattlePartyEventSchema = z.object({
   members: z.record(z.string(), CreateBattlePartyMembersEventSchema),
 });
 
-export const CreateBattleFightEventWarriorSchema = z.object({
+const CreateBattleFightEventWarriorSchema = z.object({
   originalId: z.number(),
   name: z.string(),
   lvl: z.number(),

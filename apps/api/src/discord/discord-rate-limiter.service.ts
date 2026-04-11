@@ -11,7 +11,7 @@ interface UserRateLimitData {
   resetAt: number;
 }
 
-export interface DiscordRateLimitState {
+interface DiscordRateLimitState {
   bucket: string | null;
   limit: number | null;
   remaining: number | null;

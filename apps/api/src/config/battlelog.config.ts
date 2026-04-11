@@ -1,6 +1,6 @@
 import { env } from "src/config/env";
 
-export interface BattlelogConfig {
+interface BattlelogConfig {
   serviceUrl: string;
 }
 

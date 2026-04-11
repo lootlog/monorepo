@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { EmergencyExitIcon } from "@lootlog/ui/components/emergency-exit-icon";
 import type { FC } from "react";
+import { useTranslation } from "react-i18next";
 import { formatSeconds } from "@/utils/date/format-seconds";
 import type { Battle } from "@/hooks/api/battle-log/use-battles";
 import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
@@ -41,20 +42,21 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
   battle,
   align = "center",
   className,
-  labels = {
-    startTime: "Battle start date and time",
-    duration: "Battle duration",
-    battleType: "Battle type",
-    public: "Public",
-    private: "Private",
-    publicTooltip:
-      "This battle is public - it can be viewed by anyone with the link",
-    privateTooltip: "This battle is private - only you can see it",
-  },
+  labels,
 }) => {
+  const { t } = useTranslation();
   const warrior = battle.warriors.find(
     (w) => w.originalId === battle.characterId,
   );
+  const resolvedLabels = labels ?? {
+    startTime: t("battleUi.metadata.startTime"),
+    duration: t("battleUi.metadata.duration"),
+    battleType: t("battleUi.metadata.battleType"),
+    public: t("battleUi.metadata.public"),
+    private: t("battleUi.metadata.private"),
+    publicTooltip: t("battleUi.metadata.publicTooltip"),
+    privateTooltip: t("battleUi.metadata.privateTooltip"),
+  };
 
   return (
     <TooltipProvider>
@@ -73,7 +75,7 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
             </div>
           </TooltipTrigger>
           <TooltipContent side="top" sideOffset={8}>
-            <p>{labels.startTime}</p>
+            <p>{resolvedLabels.startTime}</p>
           </TooltipContent>
         </Tooltip>
 
@@ -85,7 +87,7 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
             </div>
           </TooltipTrigger>
           <TooltipContent side="top" sideOffset={8}>
-            <p>{labels.duration}</p>
+            <p>{resolvedLabels.duration}</p>
           </TooltipContent>
         </Tooltip>
 
@@ -97,7 +99,7 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
             </div>
           </TooltipTrigger>
           <TooltipContent side="top" sideOffset={8}>
-            <p>{labels.battleType}</p>
+            <p>{resolvedLabels.battleType}</p>
           </TooltipContent>
         </Tooltip>
 
@@ -105,12 +107,14 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
           <TooltipTrigger asChild>
             <div className="flex items-center gap-1 cursor-help whitespace-nowrap">
               {battle.public ? <Unlock size="14" /> : <Lock size="14" />}
-              {battle.public ? labels.public : labels.private}
+              {battle.public ? resolvedLabels.public : resolvedLabels.private}
             </div>
           </TooltipTrigger>
           <TooltipContent side="top" sideOffset={8}>
             <p>
-              {battle.public ? labels.publicTooltip : labels.privateTooltip}
+              {battle.public
+                ? resolvedLabels.publicTooltip
+                : resolvedLabels.privateTooltip}
             </p>
           </TooltipContent>
         </Tooltip>
@@ -122,7 +126,7 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
             </div>
           </TooltipTrigger>
           <TooltipContent side="top" sideOffset={8}>
-            <p>Świat</p>
+            <p>{t("battleUi.metadata.world")}</p>
           </TooltipContent>
         </Tooltip>
 
@@ -130,11 +134,14 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="flex items-center gap-1 cursor-help whitespace-nowrap">
-                <Award size={14} /> Punkty honoru: {warrior?.ph}
+                <Award size={14} />{" "}
+                {t("battleUi.metadata.honorPointsLabel", {
+                  value: warrior?.ph,
+                })}
               </div>
             </TooltipTrigger>
             <TooltipContent side="top" sideOffset={8}>
-              <p>Otrzymane lub stracone punkty honoru</p>
+              <p>{t("battleUi.metadata.honorPointsTooltip")}</p>
             </TooltipContent>
           </Tooltip>
         )}
@@ -143,11 +150,11 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="flex items-center gap-1 cursor-help whitespace-nowrap">
-                <EmergencyExitIcon size={14} /> Ucieczka
+                <EmergencyExitIcon size={14} /> {t("battleUi.metadata.flee")}
               </div>
             </TooltipTrigger>
             <TooltipContent side="top" sideOffset={8}>
-              <p>Walka przerwana przez ucieczkę</p>
+              <p>{t("battleUi.metadata.fleeTooltip")}</p>
             </TooltipContent>
           </Tooltip>
         )}
@@ -156,11 +163,11 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="flex items-center gap-1 cursor-help whitespace-nowrap text-purple-500">
-                <Swords size={14} /> Otchłań
+                <Swords size={14} /> {t("battleUi.metadata.matchmaking")}
               </div>
             </TooltipTrigger>
             <TooltipContent side="top" sideOffset={8}>
-              <p>Walka z systemu matchmakingu (Otchłań)</p>
+              <p>{t("battleUi.metadata.matchmakingTooltip")}</p>
             </TooltipContent>
           </Tooltip>
         )}

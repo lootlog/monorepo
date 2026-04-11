@@ -27,7 +27,7 @@ export const getDateFormatter = createCachedFormatter("en-CA", {
   day: "2-digit",
 });
 
-export const getOffsetFormatter = createCachedFormatter("en-US", {
+const getOffsetFormatter = createCachedFormatter("en-US", {
   timeZoneName: "shortOffset",
   year: "numeric",
   month: "2-digit",
@@ -54,7 +54,7 @@ export function getLocalDate(date: Date, timeZone: string): LocalDate {
   };
 }
 
-export function getTimeZoneOffsetMinutes(date: Date, timeZone: string): number {
+function getTimeZoneOffsetMinutes(date: Date, timeZone: string): number {
   const parts = getOffsetFormatter(timeZone).formatToParts(date);
   const offsetToken = getPartValue(parts, "timeZoneName");
 

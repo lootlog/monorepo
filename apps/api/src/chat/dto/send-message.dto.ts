@@ -8,7 +8,7 @@ export enum MessageType {
   PARTY_GATHERING = "PARTY_GATHERING",
 }
 
-export const PartyGatheringDataSchema = z.object({
+const PartyGatheringDataSchema = z.object({
   notificationId: z.string().min(1),
   discordId: z.string().min(1),
   description: z.string().max(200).optional(),
@@ -21,7 +21,7 @@ export class PartyGatheringDataDto extends createZodDto(
   PartyGatheringDataSchema,
 ) {}
 
-export const ChatCharacterDataSchema = z.object({
+const ChatCharacterDataSchema = z.object({
   nick: z.string().min(1),
   id: z.number(),
   acc: z.number(),
@@ -48,7 +48,7 @@ const NpcEmbeddedSchema = z.object({
   y: z.number().optional(),
 });
 
-export const SendMessageSchema = z.object({
+const SendMessageSchema = z.object({
   message: z.string().max(128),
   type: z.nativeEnum(MessageType),
   characterData: ChatCharacterDataSchema,

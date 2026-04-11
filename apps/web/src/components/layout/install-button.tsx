@@ -6,9 +6,11 @@ import {
 import { Button } from "@lootlog/ui/components/button";
 import { Blocks } from "lucide-react";
 import type { FC } from "react";
+import { useTranslation } from "react-i18next";
 import { useGlobalContext } from "@/hooks/context/use-global-context";
 
 export const InstallButton: FC = () => {
+  const { t } = useTranslation();
   const {
     installAddonModal: { dispatch },
   } = useGlobalContext();
@@ -24,7 +26,9 @@ export const InstallButton: FC = () => {
           <Blocks color="#3E8667" className="!size-6" />
         </Button>
       </TooltipTrigger>
-      <TooltipContent side="right">Zainstaluj dodatek</TooltipContent>
+      <TooltipContent side="right">
+        {t("ui.tooltips.installAddon")}
+      </TooltipContent>
     </Tooltip>
   );
 };

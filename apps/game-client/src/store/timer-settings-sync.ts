@@ -22,14 +22,14 @@ export const registerGlobalSettingsMutation = (mutateFn: MutateGlobalFn) => {
   globalMutateFn = mutateFn;
 };
 
-export const registerGuildSettingsMutation = (
+const registerGuildSettingsMutation = (
   guildId: string,
   mutateFn: MutateGuildFn,
 ) => {
   guildMutateFns.set(guildId, mutateFn);
 };
 
-export const unregisterGuildSettingsMutation = (guildId: string) => {
+const unregisterGuildSettingsMutation = (guildId: string) => {
   guildMutateFns.delete(guildId);
 };
 
@@ -104,7 +104,7 @@ export const debouncedSyncGuildSettings = (
   guildSyncTimeouts.set(guildId, timeoutId);
 };
 
-export const clearAllSyncTimeouts = () => {
+const clearAllSyncTimeouts = () => {
   if (syncTimeoutId) {
     clearTimeout(syncTimeoutId);
     syncTimeoutId = null;

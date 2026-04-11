@@ -1,8 +1,9 @@
 import { useApiClient } from "@/hooks/api/use-api-client";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { AxiosError } from "axios";
+import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
 import { toast } from "sonner";
+import { queryKeys } from "@/lib/query-keys";
 
 export interface RefreshJob {
   id: number;
@@ -22,13 +23,13 @@ export const useLatestRefreshJob = () => {
   const { client } = useApiClient();
 
   return useQuery({
-    queryKey: ["latest-refresh-job", guildId],
+    queryKey: queryKeys.members.latestRefreshJob(guildId),
     queryFn: async () => {
       try {
         const response = await client.get<RefreshJob>(
           `/guilds/${guildId}/members/refresh-jobs/latest`,
         );
-        return response.data;
+        return response;
       } catch {
         return null;
       }
@@ -50,14 +51,14 @@ export const useBulkMemberRefresh = () => {
     onSuccess: () => {
       toast.success("Rozpoczęto odświeżanie wszystkich członków.");
       queryClient.invalidateQueries({
-        queryKey: ["members", guildId],
+        queryKey: queryKeys.members.list(guildId),
       });
       queryClient.invalidateQueries({
-        queryKey: ["latest-refresh-job", guildId],
+        queryKey: queryKeys.members.latestRefreshJob(guildId),
       });
     },
-    onError: (error: AxiosError<{ message: string }>) => {
-      const message = error?.response?.data?.message;
+    onError: (error: unknown) => {
+      const message = getApiErrorMessage(error);
       if (message === "BULK_REFRESH_RATE_LIMIT_ACTIVE") {
         toast.error("Musisz poczekać przed kolejnym odświeżeniem.");
       } else {
@@ -77,13 +78,13 @@ export const useRefreshJobStatus = (jobId: number | undefined) => {
   const { client } = useApiClient();
 
   return useQuery({
-    queryKey: ["refresh-job", guildId, jobId],
+    queryKey: queryKeys.members.refreshJob(guildId, jobId),
     queryFn: async () => {
       if (!jobId) return null;
       const response = await client.get<RefreshJob>(
         `/guilds/${guildId}/members/refresh-jobs/${jobId}`,
       );
-      return response.data;
+      return response;
     },
     enabled: !!jobId && !!guildId,
     refetchInterval: (query) => {

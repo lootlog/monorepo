@@ -3,7 +3,7 @@ import { Platform } from "src/gateway/enums/platform.enum";
 import { GAME_URL_REGEX } from "src/gateway/constants/game-url-regex.constant";
 import type { Socket, SocketUser } from "src/gateway/types/socket-user.type";
 
-export interface ConnectionMetadata {
+interface ConnectionMetadata {
   discordId: string | null;
   userId: string | null;
   platform: Platform;

@@ -8,10 +8,15 @@ import { ApiServiceConfig } from "src/config/api-service.config";
 import { ConfigKey } from "src/config/config-key.enum";
 import type { Cache } from "cache-manager";
 
+type ResolvedGuildDto = {
+  id: string;
+};
+
 @Injectable()
 export class PermissionsService {
   private readonly logger = new Logger(PermissionsService.name);
   private readonly apiServiceUrl: string;
+  private readonly permissionsCacheTtlMs = 60000 * 5;
 
   constructor(
     private readonly httpService: HttpService,
@@ -22,6 +27,58 @@ export class PermissionsService {
       ConfigKey.API_SERVICE,
     );
     this.apiServiceUrl = apiServiceConfig.url;
+  }
+
+  async resolveGuildId(idOrVanityUrl: string): Promise<string | null> {
+    const cacheKey = `guild-id:${idOrVanityUrl}`;
+    const cachedGuildId = await this.cacheManager.get<string>(cacheKey);
+
+    if (cachedGuildId) {
+      this.logger.debug(`Cache hit for guild resolution: ${cacheKey}`);
+      return cachedGuildId;
+    }
+
+    const url = `${this.apiServiceUrl}/internal/guilds/${encodeURIComponent(idOrVanityUrl)}`;
+
+    try {
+      const guild = await firstValueFrom(
+        this.httpService
+          .get<ResolvedGuildDto>(url)
+          .pipe(map((res) => res.data)),
+      );
+
+      await this.cacheManager.set(
+        cacheKey,
+        guild.id,
+        this.permissionsCacheTtlMs,
+      );
+
+      this.logger.debug(`Cached guild resolution: ${cacheKey}`);
+
+      return guild.id;
+    } catch (error) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "response" in error &&
+        typeof error.response === "object" &&
+        error.response !== null &&
+        "status" in error.response &&
+        error.response.status === 404
+      ) {
+        this.logger.warn(`Guild not found for identifier: ${idOrVanityUrl}`);
+        return null;
+      }
+
+      this.logger.log({
+        level: "error",
+        message: "Error resolving guild ID",
+        error: error instanceof Error ? error.message : "Unknown error",
+        idOrVanityUrl,
+      });
+
+      throw error;
+    }
   }
 
   async getUserPermissions(
@@ -62,13 +119,17 @@ export class PermissionsService {
           ),
       );
 
-      const permissions = response ?? [];
+      const normalizedResponse = response ?? [];
 
-      await this.cacheManager.set(cacheKey, permissions, 60000 * 5);
+      await this.cacheManager.set(
+        cacheKey,
+        normalizedResponse,
+        this.permissionsCacheTtlMs,
+      );
 
       this.logger.debug(`Cached user permissions: ${cacheKey}`);
 
-      return permissions;
+      return normalizedResponse;
     } catch (error) {
       this.logger.log({
         level: "error",

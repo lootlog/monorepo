@@ -1,19 +1,23 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
+import type { Prisma } from "src/generated/prisma/client";
 import { PrismaService } from "src/shared/db/prisma.service";
 import type { QueryActivitiesDto } from "../dto/query-activities.dto";
-import {
-  ActivityEntity,
-  PaginatedActivitiesEntity,
-} from "../entities/activity.entity";
-import type { Prisma } from "src/generated/prisma/client";
+
+function mapActivityDetails(
+  details: unknown,
+): Record<string, unknown> | undefined {
+  if (!details || typeof details !== "object" || Array.isArray(details)) {
+    return undefined;
+  }
+
+  return details as Record<string, unknown>;
+}
 
 @Injectable()
 export class ActivitiesQueryService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findMany(
-    query: QueryActivitiesDto,
-  ): Promise<PaginatedActivitiesEntity> {
+  async findMany(query: QueryActivitiesDto) {
     const limit = Math.min(query.limit ?? 50, 100);
     const where: Prisma.ActivityWhereInput = {};
 
@@ -85,17 +89,15 @@ export class ActivitiesQueryService {
     const data = hasMore ? activities.slice(0, limit) : activities;
     const nextCursor = hasMore ? data[data.length - 1].id : undefined;
 
-    return new PaginatedActivitiesEntity({
-      data: data.map(
-        (activity) =>
-          new ActivityEntity({
-            ...activity,
-            details: activity.details as Record<string, unknown> | undefined,
-          }),
-      ),
+    return {
+      data: data.map((activity) => ({
+        ...activity,
+        actorSnapshot: activity.actorSnapshot ?? undefined,
+        details: mapActivityDetails(activity.details),
+      })),
       nextCursor,
       hasMore,
-    });
+    };
   }
 
   async suggestActorNames(
@@ -127,7 +129,7 @@ export class ActivitiesQueryService {
     });
 
     return this.deduplicateNames(
-      snapshots.map((s) => s.name),
+      snapshots.map((snapshot) => snapshot.name),
       limitValue,
     );
   }
@@ -140,15 +142,7 @@ export class ActivitiesQueryService {
     const limitValue = Math.min(Math.max(limit, 1), 50);
     const trimmedSearch = search?.trim();
 
-    const worldFilter: Prisma.StringNullableFilter = {
-      not: null,
-      notIn: [""],
-    };
-
-    if (trimmedSearch) {
-      worldFilter.contains = trimmedSearch;
-      worldFilter.mode = "insensitive";
-    }
+    const worldFilter = this.buildNonEmptyNullableFilter(trimmedSearch);
 
     const where: Prisma.ActivityWhereInput = {
       guildId,
@@ -176,15 +170,7 @@ export class ActivitiesQueryService {
     const limitValue = Math.min(Math.max(limit, 1), 50);
     const trimmedSearch = search?.trim();
 
-    const clanNameFilter: Prisma.StringNullableFilter = {
-      not: null,
-      notIn: [""],
-    };
-
-    if (trimmedSearch) {
-      clanNameFilter.contains = trimmedSearch;
-      clanNameFilter.mode = "insensitive";
-    }
+    const clanNameFilter = this.buildNonEmptyNullableFilter(trimmedSearch);
 
     const where: Prisma.ActivityActorSnapshotWhereInput = {
       activities: {
@@ -201,24 +187,33 @@ export class ActivitiesQueryService {
     });
 
     return this.deduplicateNames(
-      snapshots.map((s) => s.clanName),
+      snapshots.map((snapshot) => snapshot.clanName),
       limitValue,
     );
   }
 
-  findByGuild(
-    guildId: string,
-    query: QueryActivitiesDto,
-  ): Promise<PaginatedActivitiesEntity> {
+  findByGuild(guildId: string, query: QueryActivitiesDto) {
     return this.findMany({ ...query, guildId });
   }
 
-  findByUser(
-    userId: string,
-    guildId: string,
-    query: QueryActivitiesDto,
-  ): Promise<PaginatedActivitiesEntity> {
+  findByUser(userId: string, guildId: string, query: QueryActivitiesDto) {
     return this.findMany({ ...query, userId, guildId });
+  }
+
+  private buildNonEmptyNullableFilter(
+    search?: string,
+  ): Prisma.StringNullableFilter {
+    const filter: Prisma.StringNullableFilter = {
+      not: null,
+      notIn: [""],
+    };
+
+    if (search) {
+      filter.contains = search;
+      filter.mode = "insensitive";
+    }
+
+    return filter;
   }
 
   private deduplicateNames(
@@ -230,21 +225,27 @@ export class ActivitiesQueryService {
 
     for (const raw of names) {
       const name = raw?.trim();
-      if (!name) continue;
+      if (!name) {
+        continue;
+      }
 
       const key = name.toLowerCase();
-      if (seen.has(key)) continue;
+      if (seen.has(key)) {
+        continue;
+      }
 
       seen.add(key);
       result.push(name);
 
-      if (result.length >= limit) break;
+      if (result.length >= limit) {
+        break;
+      }
     }
 
     return result;
   }
 
-  async findOne(id: string, guildId: string): Promise<ActivityEntity> {
+  async findOne(id: string, guildId: string) {
     const activity = await this.prisma.activity.findFirst({
       where: {
         id,
@@ -259,9 +260,10 @@ export class ActivitiesQueryService {
       throw new NotFoundException(`Activity with ID ${id} not found`);
     }
 
-    return new ActivityEntity({
+    return {
       ...activity,
-      details: activity.details as Record<string, unknown> | undefined,
-    });
+      actorSnapshot: activity.actorSnapshot ?? undefined,
+      details: mapActivityDetails(activity.details),
+    };
   }
 }

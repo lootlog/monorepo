@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "src/db/prisma.service";
+import type { Prisma } from "src/generated/prisma/client";
 import type { UpdateTimerSettingsDto } from "./dto/update-timer-settings.dto";
 import type { UpdateGuildTimerSettingsDto } from "./dto/update-guild-timer-settings.dto";
 import type { MigrateTimerSettingsDto } from "./dto/migrate-timer-settings.dto";
@@ -8,16 +9,60 @@ import type { MigrateTimerSettingsDto } from "./dto/migrate-timer-settings.dto";
 export class TimerSettingsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private mapGlobalSettingsResponse(settings: {
+    userId: string;
+    generalConfig: Prisma.JsonValue;
+    displayConfig: Prisma.JsonValue;
+    customColors: Prisma.JsonValue;
+    timersColors: Prisma.JsonValue;
+    defaultColorNames: Prisma.JsonValue;
+    overriddenDefaultColors: Prisma.JsonValue;
+    hiddenDefaultColors: unknown;
+    timerFiltersEnabled: boolean;
+    colorFiltersEnabled: boolean;
+    timersSortOrder: string;
+    syncEnabled: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+  }): {
+    userId: string;
+    generalConfig: Prisma.JsonValue;
+    displayConfig: Prisma.JsonValue;
+    customColors: Prisma.JsonValue;
+    timersColors: Prisma.JsonValue;
+    defaultColorNames: Prisma.JsonValue;
+    overriddenDefaultColors: Prisma.JsonValue;
+    hiddenDefaultColors: string[];
+    timerFiltersEnabled: boolean;
+    colorFiltersEnabled: boolean;
+    timersSortOrder: "asc" | "desc";
+    syncEnabled: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+  } {
+    return {
+      ...settings,
+      hiddenDefaultColors: Array.isArray(settings.hiddenDefaultColors)
+        ? settings.hiddenDefaultColors.filter(
+            (colorName): colorName is string => typeof colorName === "string",
+          )
+        : [],
+      timersSortOrder: settings.timersSortOrder === "desc" ? "desc" : "asc",
+    };
+  }
+
   async getGlobalSettings(userId: string) {
     const settings = await this.prisma.userTimerSettings.findUnique({
       where: { userId },
     });
 
     if (!settings) {
-      return this.createDefaultGlobalSettings(userId);
+      return this.mapGlobalSettingsResponse(
+        this.createDefaultGlobalSettings(userId),
+      );
     }
 
-    return settings;
+    return this.mapGlobalSettingsResponse(settings);
   }
 
   async updateGlobalSettings(userId: string, dto: UpdateTimerSettingsDto) {
@@ -34,7 +79,7 @@ export class TimerSettingsService {
       },
     });
 
-    return settings;
+    return this.mapGlobalSettingsResponse(settings);
   }
 
   async getGuildSettings(userId: string, guildId: string) {

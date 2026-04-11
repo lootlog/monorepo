@@ -3,27 +3,6 @@
  * These events are related to in-game activities during guild events.
  */
 
-export interface EventPresencePlayer {
-  discordId: string;
-  characterId: string;
-  characterName: string;
-  mapId: string;
-  mapName: string;
-  isAfk: boolean;
-}
-
-export interface EventPresenceLog {
-  players: EventPresencePlayer[];
-  timestamp: number;
-}
-
-export interface EventPresenceUpdatePayload {
-  guildId: string;
-  eventId: string;
-  mapId: string;
-  presenceLog: EventPresenceLog;
-}
-
 export interface EventHeroKilledPayload {
   guildId: string;
   eventId: string;

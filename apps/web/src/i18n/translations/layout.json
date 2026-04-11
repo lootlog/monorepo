@@ -1,0 +1,22 @@
+{
+  "navigation": {
+    "dashboard": "Dashboard",
+    "battlePanel": "Panel walk",
+    "notifications": "Powiadomienia",
+    "settings": "Ustawienia",
+    "lootlog": "Lootlog",
+    "timers": "Timery",
+    "reservations": "Rezerwacje",
+    "events": "Eventy",
+    "stats": "Statystyki",
+    "activityLogs": "Logi aktywności"
+  },
+  "breadcrumbs": {
+    "statistics": "Statystyki",
+    "headToHead": "Bilans H2H",
+    "matchmakingHeadToHead": "Matchmaking H2H",
+    "playerVsPlayer": "Gracz vs Gracz",
+    "battles": "Walki",
+    "npcRanking": "Ranking NPC"
+  }
+}

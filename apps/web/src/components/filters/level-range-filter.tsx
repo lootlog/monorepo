@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Input } from "@lootlog/ui/components/input";
 import { useDebounce } from "@/hooks/use-debounce";
 import { cn } from "@lootlog/ui/lib/utils";
@@ -63,17 +63,35 @@ function LevelRangeFilterFields({
   const [localMaxLevel, setLocalMaxLevel] = useState<number | undefined>(
     maxLevel,
   );
+  const onMinLevelChangeRef = useRef(onMinLevelChange);
+  const onMaxLevelChangeRef = useRef(onMaxLevelChange);
 
   const debouncedMinLevel = useDebounce(localMinLevel, debounceMs);
   const debouncedMaxLevel = useDebounce(localMaxLevel, debounceMs);
 
   useEffect(() => {
-    onMinLevelChange(debouncedMinLevel);
-  }, [debouncedMinLevel, onMinLevelChange]);
+    onMinLevelChangeRef.current = onMinLevelChange;
+  }, [onMinLevelChange]);
 
   useEffect(() => {
-    onMaxLevelChange(debouncedMaxLevel);
-  }, [debouncedMaxLevel, onMaxLevelChange]);
+    onMaxLevelChangeRef.current = onMaxLevelChange;
+  }, [onMaxLevelChange]);
+
+  useEffect(() => {
+    if (debouncedMinLevel === minLevel) {
+      return;
+    }
+
+    onMinLevelChangeRef.current(debouncedMinLevel);
+  }, [debouncedMinLevel, minLevel]);
+
+  useEffect(() => {
+    if (debouncedMaxLevel === maxLevel) {
+      return;
+    }
+
+    onMaxLevelChangeRef.current(debouncedMaxLevel);
+  }, [debouncedMaxLevel, maxLevel]);
 
   const handleMinLevelChange = (value: string) => {
     if (value === "") {

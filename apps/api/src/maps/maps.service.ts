@@ -2,7 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared";
 import { env } from "src/config/env";
 
-export interface GameMap {
+interface GameMap {
   id: number;
   name: string;
 }

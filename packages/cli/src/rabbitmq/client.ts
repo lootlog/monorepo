@@ -1,14 +1,14 @@
 import amqp from "amqplib";
 import { chalk } from "zx";
 
-export interface PublishOptions {
+interface PublishOptions {
   exchange: string;
   routingKey: string;
   payload: Record<string, unknown>;
   exchangeType?: "topic" | "direct" | "fanout";
 }
 
-export class RabbitMQClient {
+class RabbitMQClient {
   private connection: amqp.Connection | null = null;
   private channel: amqp.Channel | null = null;
 

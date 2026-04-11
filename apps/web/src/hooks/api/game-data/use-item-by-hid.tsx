@@ -3,6 +3,7 @@ import { useApiClient } from "@/hooks/api/use-api-client";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { parseItemHid } from "@/lib/utils/hid-detection";
 import type { Loot } from "@/hooks/api/loots/use-loots";
+import { queryKeys } from "@/lib/query-keys";
 
 export const useItemByHid = (input: string, enabled: boolean) => {
   const { client } = useApiClient();
@@ -11,7 +12,7 @@ export const useItemByHid = (input: string, enabled: boolean) => {
   const parsed = parseItemHid(input);
 
   return useQuery({
-    queryKey: ["item-by-hid", parsed?.hid, parsed?.world, guildId],
+    queryKey: queryKeys.gameData.itemByHid(parsed?.hid, parsed?.world, guildId),
     queryFn: async () => {
       if (!parsed) return null;
 
@@ -19,7 +20,7 @@ export const useItemByHid = (input: string, enabled: boolean) => {
         `/guilds/${guildId}/loots?hid=${parsed.hid}&world=${parsed.world}&limit=1`,
       );
 
-      const loot = response.data[0];
+      const loot = response[0];
       if (!loot) return null;
 
       const item = loot.items.find((i) => i.hid === parsed.hid);

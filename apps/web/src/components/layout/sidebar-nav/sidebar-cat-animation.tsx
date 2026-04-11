@@ -1,5 +1,10 @@
-import { useEffect, useState } from "react";
-import { CatLottiePlayer } from "./cat-lottie-player";
+import { lazy, Suspense, useEffect, useState } from "react";
+
+const CatLottiePlayer = lazy(() =>
+  import("./cat-lottie-player").then((module) => ({
+    default: module.CatLottiePlayer,
+  })),
+);
 
 const lottieByTheme: Record<string, string> = {
   "cat-pink": "/lottie/rolling-cat.json",
@@ -21,5 +26,9 @@ export const SidebarCatAnimation = ({ theme }: { theme: string }) => {
 
   if (!animationData) return null;
 
-  return <CatLottiePlayer animationData={animationData} />;
+  return (
+    <Suspense fallback={null}>
+      <CatLottiePlayer animationData={animationData} />
+    </Suspense>
+  );
 };

@@ -8,6 +8,7 @@ import { useGuildContext } from "@/hooks/context/use-guild-context";
 import type { Player } from "@/hooks/api/game-data/use-guild-players";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
 import { createLootsQueryString } from "@/hooks/api/loots/create-loots-query-string";
+import { queryKeys } from "@/lib/query-keys";
 
 export enum ItemRarity {
   COMMON = "COMMON",
@@ -70,7 +71,7 @@ export const useLoots = ({ limit = DEFAULT_PAGE_LIMIT }: UseLootsOptions) => {
   const queryString = createLootsQueryString({ filters, world, limit });
 
   const query = useInfiniteQuery({
-    queryKey: ["loots", guildId, queryString],
+    queryKey: queryKeys.loots.list(guildId, queryString),
     queryFn: ({ pageParam }) => {
       const cursor = pageParam ? `&cursor=${pageParam}` : "";
 
@@ -79,14 +80,11 @@ export const useLoots = ({ limit = DEFAULT_PAGE_LIMIT }: UseLootsOptions) => {
       );
     },
     getNextPageParam: (lastPage) =>
-      lastPage.data.length === limit
-        ? lastPage.data[lastPage.data.length - 1]?.id
-        : undefined,
+      lastPage.length === limit ? lastPage[lastPage.length - 1]?.id : undefined,
     initialPageParam: 0,
     enabled: !!guildId && !!world,
     refetchOnMount: "always",
     staleTime: 0,
-    meta: { persist: false },
   });
 
   return query;

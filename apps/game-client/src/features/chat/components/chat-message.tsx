@@ -26,7 +26,7 @@ import { useGuilds } from "@/hooks/api/use-guilds";
 import { CharacterTile } from "@/components/character-tile";
 import { PartyGatheringCard } from "./party-gathering-card";
 
-export type ChatMessageProps = {
+type ChatMessageProps = {
   all: boolean;
   message: ChatMessageType;
   member?: GuildMember;

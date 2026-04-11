@@ -699,7 +699,7 @@ export class EventWrappedService {
       const heroCoverage = heroCoverageById.get(summary.heroNpcId);
       const heroTotals = heroCoverageTotals.get(summary.heroNpcId);
       const mapCount =
-        countMapStats(summary.mapStats) || heroCoverage?.mapCount || 0;
+        countMapStats(summary.mapStats) ?? heroCoverage?.mapCount ?? 0;
 
       totalWindowSeconds += summary.totalWindowSeconds;
       totalCoverageSeconds += summary.totalCoverageSeconds;

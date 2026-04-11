@@ -7,7 +7,7 @@ export enum Profession {
   TRACKER = "TRACKER",
 }
 
-export const PROFESSIONS_SHORTNAMES: Record<string, Profession> = {
+const PROFESSIONS_SHORTNAMES: Record<string, Profession> = {
   b: Profession.BLADE_DANCER,
   h: Profession.HUNTER,
   m: Profession.MAGE,

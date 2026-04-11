@@ -43,8 +43,6 @@ export const EVENT_SCORING_CONDITION_TYPES = [
   "KILL_TIME_IN_WINDOW",
   "RESPAWN_WINDOW_COVERAGE",
 ] as const;
-export type EventScoringConditionType =
-  (typeof EVENT_SCORING_CONDITION_TYPES)[number];
 
 export type EventScoringNumericCondition = {
   type: "NUMERIC";
@@ -84,8 +82,6 @@ export const EVENT_SCORING_ACTION_TYPES = [
   "ADD_BONUS",
   "ZERO_BASE",
 ] as const;
-export type EventScoringActionType =
-  (typeof EVENT_SCORING_ACTION_TYPES)[number];
 
 export type EventScoringSetBaseAction = {
   type: "SET_BASE";

@@ -1,4 +1,4 @@
-export type TrackingWindowInterval = {
+type TrackingWindowInterval = {
   start: Date;
   end: Date;
 };

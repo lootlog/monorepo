@@ -23,7 +23,7 @@ import { useGuilds } from "@/hooks/api/use-guilds";
 import { NpcType } from "@/hooks/api/use-npcs";
 import { Game } from "@/lib/game";
 
-export type SingleNotificationProps = {
+type SingleNotificationProps = {
   notification: NotificationWithServers | PartyGatheringNotification;
   index: number;
   showCloseButton?: boolean;

@@ -1,27 +1,24 @@
-import type { Mock } from "vitest";
-import { mockFn } from "src/test/mock-fn";
+import { BadRequestException } from "@nestjs/common";
 import { Test, type TestingModule } from "@nestjs/testing";
-import { plainToInstance } from "class-transformer";
-import { LootsController } from "./loots.controller";
-import { LootsService } from "./loots.service";
-import { LootStatsService } from "./services/loot-stats.service";
-import { CreateLootDto } from "./dto/create-loot.dto";
-import { UpdateLootDto } from "./dto/update-loot.dto";
-import { CreateCommentDto } from "./dto/create-comment-dto";
-import { FetchLootsParamsDto } from "./dto/fetch-loots-params.dto";
-import { LootStatsQueryDto } from "./dto/loot-stats.dto";
+import type { Mock } from "vitest";
 import {
-  Permission,
   LootSource,
+  Permission,
   type Guild,
   type Role,
 } from "src/generated/prisma/client";
-import { BadRequestException } from "@nestjs/common";
-import { ErrorKey } from "./enum/error-key.enum";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
-import { LootCommentEntity } from "src/shared/entities/loot-comment.entity";
-import { LootEntity } from "src/shared/entities/loot.entity";
+import { mockFn } from "src/test/mock-fn";
+import { CreateCommentDto } from "./dto/create-comment-dto";
+import { CreateLootDto } from "./dto/create-loot.dto";
+import { FetchLootsParamsDto } from "./dto/fetch-loots-params.dto";
+import { LootStatsQueryDto } from "./dto/loot-stats.dto";
+import { UpdateLootDto } from "./dto/update-loot.dto";
+import { ErrorKey } from "./enum/error-key.enum";
+import { LootsController } from "./loots.controller";
+import { LootsService } from "./loots.service";
+import { LootStatsService } from "./services/loot-stats.service";
 
 describe("LootsController", () => {
   let controller: LootsController;
@@ -273,10 +270,7 @@ describe("LootsController", () => {
         [mockRole],
         params,
       );
-      const expectedResult = plainToInstance(LootEntity, mockLoots, {
-        excludeExtraneousValues: true,
-      });
-      expect(result).toEqual(expectedResult);
+      expect(result).toEqual(mockLoots);
     });
 
     it("should handle empty results", async () => {
@@ -294,7 +288,6 @@ describe("LootsController", () => {
   });
 
   describe("getComments", () => {
-    const discordId = "discord123";
     const lootId = 1;
 
     it("should get comments for loot", async () => {
@@ -317,17 +310,13 @@ describe("LootsController", () => {
       ];
       service.getComments.mockResolvedValue(mockComments as never);
 
-      const result = await controller.getComments(discordId, lootId, mockGuild);
+      const result = await controller.getComments(lootId, mockGuild);
 
       expect(service.getComments).toHaveBeenCalledWith({
-        discordId,
         lootId,
         guildId: mockGuild.id,
       });
-      const expectedResult = plainToInstance(LootCommentEntity, mockComments, {
-        excludeExtraneousValues: true,
-      });
-      expect(result).toEqual(expectedResult);
+      expect(result).toEqual(mockComments);
     });
   });
 
@@ -361,10 +350,7 @@ describe("LootsController", () => {
         body,
         guildId: mockGuild.id,
       });
-      const expectedResult = plainToInstance(LootCommentEntity, mockComment, {
-        excludeExtraneousValues: true,
-      });
-      expect(result).toEqual(expectedResult);
+      expect(result).toEqual(mockComment);
     });
   });
 

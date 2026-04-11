@@ -1,13 +1,14 @@
 import { AUTH_SERVICE_URL } from "@/config/auth";
 import { useSession } from "@/hooks/auth/use-session";
 import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 
 export const useAuthToken = () => {
   const { data: session } = useSession();
   const sessionToken = session?.session.token;
 
   return useQuery({
-    queryKey: ["auth-token"],
+    queryKey: queryKeys.auth.token(),
     enabled: Boolean(sessionToken),
     select: (data: { token: string }) => data.token,
     queryFn: async () => {

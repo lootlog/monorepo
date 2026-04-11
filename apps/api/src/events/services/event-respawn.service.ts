@@ -9,7 +9,7 @@ import {
 import type { Queue } from "bullmq";
 import { PrismaService } from "src/db/prisma.service";
 import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant";
-import type { AutoCloseRespawnWindowJobData } from "../respawn-window.processor";
+import type { AutoCloseRespawnWindowJobData } from "../interfaces/auto-close-respawn-window-job-data";
 import type {
   CloseRespawnWindowOptions,
   OpenRespawnWindowOptions,

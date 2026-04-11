@@ -15,11 +15,7 @@ export type LootDto = {
   own?: number;
 };
 
-export type CreateLootOptions = {
-  loots: LootDto[];
-};
-
-export type UseCreateLootOptions = {
+type UseCreateLootOptions = {
   npcs: Npc[];
   players: PartyMember[];
   loots: Partial<Item>[];
@@ -30,11 +26,11 @@ export type UseCreateLootOptions = {
   location: string;
 };
 
-export type CreateLootResponse = {
+type CreateLootResponse = {
   id: number;
 };
 
-export const useCreateLoot = () => {
+const useCreateLoot = () => {
   const { client } = useAuthenticatedApiClient();
 
   const mutation = useMutation({

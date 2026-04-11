@@ -6,11 +6,11 @@ type EventActivityWindow = {
   createdAt: Date;
 };
 
-export function getEventEffectiveStartDate(event: EventActivityWindow): Date {
+function getEventEffectiveStartDate(event: EventActivityWindow): Date {
   return event.startsAt ?? event.createdAt;
 }
 
-export function isEventActiveAt(
+function isEventActiveAt(
   event: EventActivityWindow,
   referenceTime: Date,
 ): boolean {

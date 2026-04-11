@@ -6,6 +6,7 @@ import {
   ApiResponse,
   ApiParam,
 } from "@nestjs/swagger";
+import { ZodResponse } from "nestjs-zod";
 import { type Guild, Permission } from "src/generated/prisma/client";
 import { UpdateLootlogConfigNpcDto } from "src/lootlog-config/dto/update-lootlog-config-npc.dto";
 import { LootlogConfigService } from "src/lootlog-config/lootlog-config.service";
@@ -13,7 +14,8 @@ import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
-import { LootlogConfigEntity } from "src/shared/entities/lootlog-config.entity";
+import { NullableLootlogConfigResponseDto } from "src/shared/dto/lootlog-config-response.dto";
+import { LootlogConfigNpcResponseDto } from "src/shared/dto/lootlog-config-npc-response.dto";
 
 @ApiTags("lootlog-config")
 @ApiBearerAuth()
@@ -30,10 +32,10 @@ export class LootlogConfigController {
     description: "Retrieve lootlog configuration for a guild",
   })
   @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Lootlog configuration",
-    type: LootlogConfigEntity,
+    type: NullableLootlogConfigResponseDto,
   })
   @ApiResponse({
     status: 403,
@@ -58,9 +60,10 @@ export class LootlogConfigController {
     description: "NPC configuration ID",
     example: "1",
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "NPC configuration updated successfully",
+    type: LootlogConfigNpcResponseDto,
   })
   @ApiResponse({
     status: 403,

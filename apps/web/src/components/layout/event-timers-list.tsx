@@ -9,7 +9,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { useEventHeroTimers, type Event } from "@/features/events/hooks";
+import { useEventHeroTimers, type Event } from "@/features/guild/events/hooks";
 import { parseMsToTime } from "@/utils/date/parse-ms-to-time";
 import { cn } from "@/utils/cn";
 

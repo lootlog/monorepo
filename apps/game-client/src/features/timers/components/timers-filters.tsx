@@ -39,7 +39,7 @@ const clampValue = (value: number, min: number, max: number): number => {
   return Math.max(min, Math.min(max, value));
 };
 
-export type TimersFiltersProps = {
+type TimersFiltersProps = {
   filtersKey: string;
 };
 

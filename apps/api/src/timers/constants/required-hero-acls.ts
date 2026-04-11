@@ -1,7 +1,0 @@
-import { Permission } from "src/generated/prisma/client";
-
-export const ELIGIBLE_HERO_READ_ACL = [
-  Permission.LOOTLOG_TIMERS_HEROES_READ,
-  Permission.OWNER,
-  Permission.ADMIN,
-];

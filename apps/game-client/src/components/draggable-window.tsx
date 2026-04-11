@@ -13,7 +13,7 @@ import {
   WindowResizeHandle,
 } from "./window-resize-handle";
 
-export type DraggableWindowProps = {
+type DraggableWindowProps = {
   children: React.ReactNode;
   id: WindowId;
   actions?: React.ReactNode;

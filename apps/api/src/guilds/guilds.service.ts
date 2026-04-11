@@ -64,7 +64,7 @@ export class GuildsService {
     private readonly redisService: RedisService,
     private readonly amqpConnection: AmqpConnection,
   ) {
-    this.staleAfterMs = discordBotConfig.channelSnapshotStaleSeconds;
+    this.staleAfterMs = discordBotConfig.channelSnapshotStaleSeconds * 1000;
   }
 
   async getUserGuilds(discordId: string, userId: string, source?: string) {

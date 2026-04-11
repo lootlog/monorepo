@@ -11,7 +11,7 @@ import { useWindowsStore } from "@/store/windows.store";
 import { getDiscordAvatarUrl } from "@/utils/discord/get-avatar-url";
 import type { FC } from "react";
 
-export type SingleNotificationNpcProps = {
+type SingleNotificationNpcProps = {
   notification: NotificationWithServers;
   serverNames?: string[];
   member?: GuildMember;

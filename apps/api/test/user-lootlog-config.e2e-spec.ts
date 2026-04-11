@@ -1,4 +1,4 @@
-import { INestApplication, ValidationPipe } from "@nestjs/common";
+import { type INestApplication } from "@nestjs/common";
 import request from "supertest";
 import { AppModule } from "../src/app.module";
 import { PrismaService } from "../src/db/prisma.service";
@@ -19,13 +19,6 @@ describe("User Lootlog Config E2E Tests", () => {
 
     app = moduleFixture.createNestApplication();
     app.enableShutdownHooks();
-    app.useGlobalPipes(
-      new ValidationPipe({
-        transform: true,
-        whitelist: true,
-        forbidNonWhitelisted: true,
-      }),
-    );
     await app.init();
 
     prisma = app.get<PrismaService>(PrismaService);

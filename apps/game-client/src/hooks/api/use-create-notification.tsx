@@ -2,7 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 import type { Npc } from "@/utils/game/get-battle-participants";
 
-export type UseCreateNotificationOptions = {
+type UseCreateNotificationOptions = {
   npc?: Npc;
   guildIds: string[];
   world: string;
@@ -10,7 +10,7 @@ export type UseCreateNotificationOptions = {
   isGatheringParty?: boolean;
 };
 
-export type CreateNotificationResponse = {
+type CreateNotificationResponse = {
   notificationId: string;
   guildIds?: string[];
 };

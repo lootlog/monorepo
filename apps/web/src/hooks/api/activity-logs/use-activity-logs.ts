@@ -1,5 +1,10 @@
 import { useActivityApiClient } from "@/hooks/api/activity-logs/use-activity-log-api-client";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { infiniteQueryOptions, useInfiniteQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
+import {
+  activityApiClient,
+  type ApiRequestConfig,
+} from "@/lib/api-client/api-client";
 import {
   createSerializer,
   parseAsInteger,
@@ -82,8 +87,9 @@ const serializeActivityLogsQuery = createSerializer({
   cursor: parseAsString,
 });
 
-export const useActivityLogs = (options: UseActivityLogsOptions) => {
-  const { client } = useActivityApiClient();
+export const activityLogsInfiniteQueryOptions = (
+  options: UseActivityLogsOptions,
+) => {
   const {
     guildId,
     types,
@@ -111,24 +117,29 @@ export const useActivityLogs = (options: UseActivityLogsOptions) => {
 
   const baseQueryString = buildQueryString();
 
-  const query = useInfiniteQuery({
-    queryKey: ["activity-logs", guildId, baseQueryString],
+  return infiniteQueryOptions({
+    queryKey: queryKeys.activity.logs(guildId, baseQueryString),
     queryFn: ({ pageParam }) => {
       const queryString = buildQueryString(
         pageParam ? (pageParam as string) : undefined,
       );
 
-      return client.get<PaginatedActivitiesResponse>(
+      return activityApiClient.get<PaginatedActivitiesResponse>(
         `/guilds/${guildId}/activity-logs${queryString}`,
+        {} as ApiRequestConfig,
       );
     },
     enabled: !!guildId,
     initialPageParam: "",
     getNextPageParam: (lastPage) => {
-      if (!lastPage?.data) return undefined;
-      return lastPage.data.hasMore ? lastPage.data.nextCursor : undefined;
+      if (!lastPage) return undefined;
+      return lastPage.hasMore ? lastPage.nextCursor : undefined;
     },
   });
+};
 
-  return query;
+export const useActivityLogs = (options: UseActivityLogsOptions) => {
+  useActivityApiClient();
+
+  return useInfiniteQuery(activityLogsInfiniteQueryOptions(options));
 };

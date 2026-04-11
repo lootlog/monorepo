@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import type { Viewport } from "@radix-ui/react-scroll-area";
 
-export type GuildMultiSelectorProps = {
+type GuildMultiSelectorProps = {
   disabled?: boolean;
   className?: string;
   onChange: (guildIds: string[]) => void;

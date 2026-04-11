@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 import type { Permission } from "@lootlog/types";
 
-export type UseGuildPermissionsOptions = {
+type UseGuildPermissionsOptions = {
   guildId?: string;
 };
 

@@ -25,7 +25,7 @@ import {
   clipIntervalToWindow,
 } from "../utils/tracking-window.util";
 
-export type CalculateMemberPointsParams = {
+type CalculateMemberPointsParams = {
   scoringMode?: EventScoringMode;
   scoringRules?: EventScoringRules | null;
   eligible: boolean;
@@ -42,14 +42,14 @@ export type CalculateMemberPointsParams = {
   wasPresent: boolean;
 };
 
-export type CalculatedMemberPoints = {
+type CalculatedMemberPoints = {
   totalPoints: number;
   basePoints: number;
   bonusPoints: number;
   appliedBonuses: EventScoringAppliedBonus[];
 };
 
-export type MemberPresenceStats = {
+type MemberPresenceStats = {
   memberId: number;
   timeOnMapSeconds: number;
   afkPercentage: number;
@@ -157,11 +157,7 @@ export class EventPointsService {
   private getTrackingDurationSecondsForRanking(params: {
     trackingDurationSeconds: number | null | undefined;
   }): number {
-    if (
-      params.trackingDurationSeconds === null ||
-      params.trackingDurationSeconds === undefined ||
-      !Number.isFinite(params.trackingDurationSeconds)
-    ) {
+    if (!Number.isFinite(params.trackingDurationSeconds)) {
       return 0;
     }
 
@@ -264,11 +260,7 @@ export class EventPointsService {
     killedAt: Date;
     minSpawnTimeAtKill: Date;
   }): number | undefined {
-    if (
-      params.trackingDurationSeconds === null ||
-      params.trackingDurationSeconds === undefined ||
-      !Number.isFinite(params.trackingDurationSeconds)
-    ) {
+    if (!Number.isFinite(params.trackingDurationSeconds)) {
       return undefined;
     }
 

@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import type { GameNpc } from "@lootlog/margonem";
 import type { FC } from "react";
 
-export type NpcTileProps = {
+type NpcTileProps = {
   npc: GameNpc;
   className?: string;
   containerClassName?: string;
