@@ -1,6 +1,8 @@
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
 import { env } from "src/config/env";
+import * as yaml from "js-yaml";
+import { writeFileSync } from "node:fs";
 import {
   FastifyAdapter,
   type NestFastifyApplication,
@@ -8,6 +10,7 @@ import {
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { cleanupOpenApiDoc } from "nestjs-zod";
 import { WINSTON_MODULE_NEST_PROVIDER } from "nest-winston";
+import { RuntimeEnvironment } from "src/types/runtime.types";
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -28,6 +31,12 @@ async function bootstrap() {
 
   const document = cleanupOpenApiDoc(SwaggerModule.createDocument(app, config));
   SwaggerModule.setup("api/docs", app, document);
+
+  if (env.ENV === RuntimeEnvironment.LOCAL) {
+    // Export OpenAPI document as YAML
+    const yamlDocument = yaml.dump(document);
+    writeFileSync("openapi.yaml", yamlDocument, "utf8");
+  }
 
   await app.startAllMicroservices();
   await app.listen(env.PORT, "0.0.0.0");
