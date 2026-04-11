@@ -18,14 +18,15 @@ import { StatCard } from "./stat-card";
 import { getProfessionName } from "@/lib/utils/professions";
 import { Button } from "@lootlog/ui/components/button";
 import { ArrowRight } from "lucide-react";
-import { Link, useNavigate } from "@tanstack/react-router";
 import { ROUTES } from "@/config/routes";
 import type { RatingDeltaByOpponentRecord } from "@/hooks/api/battle-log/use-rating-delta-by-opponent";
 import { useTranslation } from "react-i18next";
+import { Link, useNavigate } from "@tanstack/react-router";
+import type { Period } from "@/store/battle-filters.store";
 
 type RatingDeltaByOpponentCardSearch = {
   characterId?: string;
-  period: string;
+  period: Period;
   minLevel: number;
   maxLevel: number;
 };
@@ -41,20 +42,21 @@ export function RatingDeltaByOpponentCard({
   search,
   isLoading,
 }: RatingDeltaByOpponentCardProps) {
-  const { t } = useTranslation();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const topData = useMemo(() => data.slice(0, 5), [data]);
 
   const handleRowClick = useCallback(
     (opponentId: string) => {
       if (!search.characterId) return;
 
-      navigate({
-        to: ROUTES.user.battlePanel.playerVsPlayer(
-          search.characterId,
+      void navigate({
+        to: "/@me/battle-panel/statistics/player-vs-player/$myId/$opponentId",
+        params: {
+          myId: search.characterId,
           opponentId,
-        ),
-        search: search as never,
+        },
+        search,
       });
     },
     [navigate, search],
@@ -239,10 +241,7 @@ export function RatingDeltaByOpponentCard({
         </div>
         <div className="flex justify-end pt-4 mt-auto">
           <Button asChild variant="outline" size="sm">
-            <Link
-              to={ROUTES.user.battlePanel.matchmakingH2h}
-              search={search as never}
-            >
+            <Link to={ROUTES.user.battlePanel.matchmakingH2h} search={search}>
               {t("battlePanel.statistics.matchmaking.link")}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>

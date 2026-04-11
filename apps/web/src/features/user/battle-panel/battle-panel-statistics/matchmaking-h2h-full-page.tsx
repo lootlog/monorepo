@@ -31,11 +31,11 @@ import { HeadToHeadFilters } from "./components/head-to-head-filters";
 import { matchmakingH2HColumns } from "./components/matchmaking-h2h-columns";
 import { cn } from "@lootlog/ui/lib/utils";
 import { useNavigate } from "@tanstack/react-router";
-import { ROUTES } from "@/config/routes";
 import { useQueryStates } from "nuqs";
 import {
   battlePanelHeadToHeadSearchParsers,
   getSelectedWarriorsFromSearch,
+  normalizeBattlePanelCharacterId,
 } from "@/features/user/battle-panel/battle-panel-statistics-search";
 
 type SortBy =
@@ -52,7 +52,9 @@ export function MatchmakingH2HFullPage() {
   const [queryState, setQueryState] = useQueryStates(
     battlePanelHeadToHeadSearchParsers,
   );
-  const currentCharacterId = queryState.characterId ?? undefined;
+  const currentCharacterId = normalizeBattlePanelCharacterId(
+    queryState.characterId,
+  );
   const period = queryState.period ?? "30d";
   const minLevel = queryState.minLevel;
   const maxLevel = queryState.maxLevel;
@@ -66,17 +68,18 @@ export function MatchmakingH2HFullPage() {
   const handleRowClick = (opponentId: string) => {
     if (!currentCharacterId) return;
 
-    navigate({
-      to: ROUTES.user.battlePanel.playerVsPlayer(
-        currentCharacterId,
+    void navigate({
+      to: "/@me/battle-panel/statistics/player-vs-player/$myId/$opponentId",
+      params: {
+        myId: currentCharacterId,
         opponentId,
-      ),
+      },
       search: {
         characterId: currentCharacterId,
         period,
         minLevel,
         maxLevel,
-      } as never,
+      },
     });
   };
 

@@ -1,4 +1,6 @@
 import {
+  createLoader,
+  createStandardSchemaV1,
   parseAsBoolean,
   parseAsInteger,
   parseAsString,
@@ -54,74 +56,47 @@ export const battlePanelPlayerVsPlayerSearchParsers = {
   cursor: parseAsString,
 };
 
-const isPeriod = (value: string | null): value is Period => {
-  return value !== null && PERIOD_VALUES.includes(value as Period);
-};
+export const battlePanelStatisticsSearchSchema = createStandardSchemaV1(
+  battlePanelStatisticsSearchParsers,
+  {
+    partialOutput: true,
+  },
+);
 
-const parseOptionalInteger = (value: string | null) => {
-  if (!value) return undefined;
+export const battlePanelHeadToHeadSearchSchema = createStandardSchemaV1(
+  battlePanelHeadToHeadSearchParsers,
+  {
+    partialOutput: true,
+  },
+);
 
-  const parsedValue = Number.parseInt(value, 10);
-  return Number.isNaN(parsedValue) ? undefined : parsedValue;
-};
+export const battlePanelPlayerVsPlayerSearchSchema = createStandardSchemaV1(
+  battlePanelPlayerVsPlayerSearchParsers,
+  {
+    partialOutput: true,
+  },
+);
 
-const isHeadToHeadSortBy = (
-  value: string | null,
-): value is (typeof HEAD_TO_HEAD_SORT_BY_VALUES)[number] => {
-  return (
-    value !== null &&
-    HEAD_TO_HEAD_SORT_BY_VALUES.includes(
-      value as (typeof HEAD_TO_HEAD_SORT_BY_VALUES)[number],
-    )
-  );
-};
+export const loadBattlePanelStatisticsSearch = createLoader(
+  battlePanelStatisticsSearchParsers,
+);
 
-const isSortOrder = (
-  value: string | null,
-): value is (typeof SORT_ORDER_VALUES)[number] => {
-  return (
-    value !== null &&
-    SORT_ORDER_VALUES.includes(value as (typeof SORT_ORDER_VALUES)[number])
-  );
-};
+export const loadBattlePanelHeadToHeadSearch = createLoader(
+  battlePanelHeadToHeadSearchParsers,
+);
 
-export const getBattlePanelStatisticsSearch = (searchStr: string) => {
-  const searchParams = new URLSearchParams(searchStr);
-  const period = searchParams.get("period");
+export const loadBattlePanelPlayerVsPlayerSearch = createLoader(
+  battlePanelPlayerVsPlayerSearchParsers,
+);
 
-  return {
-    characterId: searchParams.get("characterId") || undefined,
-    period: isPeriod(period) ? period : "30d",
-    minLevel: parseOptionalInteger(searchParams.get("minLevel")) ?? 1,
-    maxLevel: parseOptionalInteger(searchParams.get("maxLevel")) ?? 500,
-    ph: searchParams.get("ph") === "true" ? true : undefined,
-    matchmaking: searchParams.get("matchmaking") === "true" ? true : undefined,
-  };
-};
+export const normalizeBattlePanelCharacterId = (
+  value: string | null | undefined,
+) => {
+  if (!value || value === "null") {
+    return undefined;
+  }
 
-export const getBattlePanelHeadToHeadSearch = (searchStr: string) => {
-  const searchParams = new URLSearchParams(searchStr);
-  const statisticsSearch = getBattlePanelStatisticsSearch(searchStr);
-  const sortBy = searchParams.get("sortBy");
-  const sortOrder = searchParams.get("sortOrder");
-
-  return {
-    ...statisticsSearch,
-    cursor: searchParams.get("cursor") || undefined,
-    search: searchParams.get("search") || undefined,
-    sortBy: isHeadToHeadSortBy(sortBy) ? sortBy : "totalBattles",
-    sortOrder: isSortOrder(sortOrder) ? sortOrder : "desc",
-  };
-};
-
-export const getBattlePanelPlayerVsPlayerSearch = (searchStr: string) => {
-  const searchParams = new URLSearchParams(searchStr);
-  const statisticsSearch = getBattlePanelStatisticsSearch(searchStr);
-
-  return {
-    ...statisticsSearch,
-    cursor: searchParams.get("cursor") || undefined,
-  };
+  return value;
 };
 
 export const getSelectedWarriorsFromSearch = (

@@ -41,7 +41,7 @@ export const HeadToHeadFilters = ({
   onWarriorToggle,
 }: HeadToHeadFiltersProps) => {
   return (
-    <div className="sticky top-0 z-10 bg-background border-b p-4">
+    <div className="sticky top-0 z-10 p-4">
       <div className="md:hidden">
         <HeadToHeadFiltersMobile
           characterId={characterId}

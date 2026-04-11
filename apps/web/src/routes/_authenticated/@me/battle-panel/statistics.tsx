@@ -2,7 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { BattlePanelStatistics } from "@/features/user/battle-panel/battle-panel-statistics/battle-panel-statistics";
 import { BattlePanelStatisticsSkeleton } from "@/features/user/battle-panel/battle-panel-statistics/battle-panel-statistics-skeleton";
 import { ensureBattlePanelCharacterId } from "@/features/user/battle-panel/battle-panel-route-loader";
-import { getBattlePanelStatisticsSearch } from "@/features/user/battle-panel/battle-panel-statistics-search";
+import {
+  battlePanelStatisticsSearchSchema,
+  loadBattlePanelStatisticsSearch,
+  normalizeBattlePanelCharacterId,
+} from "@/features/user/battle-panel/battle-panel-statistics-search";
 import { professionWinRateQueryOptions } from "@/hooks/api/battle-log/use-profession-win-rate";
 import { headToHeadQueryOptions } from "@/hooks/api/battle-log/use-head-to-head";
 import { battleStreakQueryOptions } from "@/hooks/api/battle-log/use-battle-streak";
@@ -14,19 +18,23 @@ import { ratingDeltaByOpponentQueryOptions } from "@/hooks/api/battle-log/use-ra
 export const Route = createFileRoute(
   "/_authenticated/@me/battle-panel/statistics",
 )({
+  validateSearch: battlePanelStatisticsSearchSchema,
   loader: async ({ context, location }) => {
-    const search = getBattlePanelStatisticsSearch(location.searchStr);
+    const search = loadBattlePanelStatisticsSearch(location.searchStr);
+    const normalizedCharacterId = normalizeBattlePanelCharacterId(
+      search.characterId,
+    );
     const characterId = await ensureBattlePanelCharacterId({
       queryClient: context.queryClient,
-      characterId: search.characterId,
+      characterId: normalizedCharacterId,
     });
     const baseParams = {
       characterId,
       period: search.period,
       minLevel: search.minLevel,
       maxLevel: search.maxLevel,
-      ph: search.ph,
-      matchmaking: search.matchmaking,
+      ph: search.ph ?? undefined,
+      matchmaking: search.matchmaking ?? undefined,
     };
 
     await Promise.all([

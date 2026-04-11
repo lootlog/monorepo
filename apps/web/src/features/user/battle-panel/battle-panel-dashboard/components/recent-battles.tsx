@@ -6,8 +6,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useBattles } from "@/hooks/api/battle-log/use-battles";
 import { useBattleCharacters } from "@/hooks/api/battle-log/use-battle-characters";
 import type { BattleFilters } from "@/features/user/battle-panel/battle-panel-battles-list/components/battles-list-filters";
-import { battleQueryParsers } from "@/features/user/battle-panel/battle-panel-battles-list/battle-query-parsers";
-import { createSerializer } from "nuqs";
+import { serializeBattlePanelBattlesSearch } from "@/features/user/battle-panel/battle-panel-battles-list/battle-query-parsers";
 import { ROUTES } from "@/config/routes";
 
 export const RecentBattles = () => {
@@ -18,9 +17,7 @@ export const RecentBattles = () => {
   const { data: characters } = useBattleCharacters();
 
   const handleFiltersChange = (filters: BattleFilters) => {
-    const serialize = createSerializer(battleQueryParsers);
-
-    const queryString = serialize({
+    const queryString = serializeBattlePanelBattlesSearch({
       cursor: null,
       world: filters.world ?? null,
       type: filters.type ?? null,

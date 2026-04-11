@@ -1,4 +1,6 @@
 import {
+  createLoader,
+  createSerializer,
   parseAsString,
   parseAsBoolean,
   parseAsStringLiteral,
@@ -20,3 +22,8 @@ export const battleQueryParsers = {
   minLevel: parseAsInteger.withDefault(1),
   maxLevel: parseAsInteger.withDefault(500),
 };
+
+export const loadBattlePanelBattlesSearch = createLoader(battleQueryParsers);
+
+export const serializeBattlePanelBattlesSearch =
+  createSerializer(battleQueryParsers);

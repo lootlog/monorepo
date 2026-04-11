@@ -20,13 +20,14 @@ import { StatCard } from "./stat-card";
 import { getProfessionName } from "@/lib/utils/professions";
 import { Button } from "@lootlog/ui/components/button";
 import { ArrowRight } from "lucide-react";
-import { Link } from "@tanstack/react-router";
 import { ROUTES } from "@/config/routes";
 import { useTranslation } from "react-i18next";
+import { Link } from "@tanstack/react-router";
+import type { Period } from "@/store/battle-filters.store";
 
 type HeadToHeadTableSearch = {
   characterId?: string;
-  period: string;
+  period: Period;
   minLevel: number;
   maxLevel: number;
   ph?: boolean;
@@ -218,7 +219,7 @@ export function HeadToHeadTable({
         </div>
         <div className="flex justify-end pt-4 mt-auto">
           <Button asChild variant="outline" size="sm">
-            <Link to={ROUTES.user.battlePanel.h2h} search={search as never}>
+            <Link to={ROUTES.user.battlePanel.h2h} search={search}>
               {t("battlePanel.statistics.directMatchups.link")}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
