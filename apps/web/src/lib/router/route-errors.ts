@@ -10,6 +10,15 @@ export const getRouteErrorStatus = (error: unknown) => {
 
 export const getRouteErrorMessage = getApiErrorMessage;
 
+export const throwForbiddenRouteError = (message = ""): never => {
+  const forbiddenError = new Error(message) as Error & {
+    status: number;
+  };
+  forbiddenError.status = 403;
+
+  throw forbiddenError;
+};
+
 export const throwNotFoundIfResponseMatches = (error: unknown) => {
   if (getRouteErrorStatus(error) === 404) {
     throw notFound({ throw: true });

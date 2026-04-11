@@ -19,12 +19,14 @@ import { useTranslation } from "react-i18next";
 import { useEvents } from "@/features/events/hooks";
 import { GuildSidebarHeader } from "./guild-sidebar-header";
 import { GuildPinnedEventsSection } from "./guild-pinned-events-section";
+import { canManageGuild } from "@/lib/guild-permissions";
 
 export const GuildsSidebarNav: FC = () => {
   const guildId = useGuildId();
   const { data: permissions } = useGuildPermissions();
   const { setOpenMobile } = useSidebar();
   const { t } = useTranslation();
+  const canManageCurrentGuild = canManageGuild(permissions);
 
   const canViewEvents =
     permissions?.includes(Permission.LOOTLOG_EVENTS_READ) ||
@@ -109,30 +111,21 @@ export const GuildsSidebarNav: FC = () => {
       icon: <Logs className="mr-1 h-4 w-4" />,
       path: ROUTE_SEGMENTS.guild.activityLogs,
       available: true,
-      enabled: Boolean(
-        permissions?.includes(Permission.ADMIN) ||
-        permissions?.includes(Permission.OWNER),
-      ),
+      enabled: canManageCurrentGuild,
     },
     {
       label: t("common.breadcrumbs.notifications"),
       icon: <BellRing className="mr-1 h-4 w-4" />,
       path: ROUTE_SEGMENTS.guild.notifications,
       available: true,
-      enabled: Boolean(
-        permissions?.includes(Permission.ADMIN) ||
-        permissions?.includes(Permission.OWNER),
-      ),
+      enabled: canManageCurrentGuild,
     },
     {
       label: "Ustawienia",
       icon: <Settings className="mr-1 h-4 w-4" />,
       path: ROUTE_SEGMENTS.guild.settings,
       available: true,
-      enabled: Boolean(
-        permissions?.includes(Permission.ADMIN) ||
-        permissions?.includes(Permission.OWNER),
-      ),
+      enabled: canManageCurrentGuild,
     },
   ];
 

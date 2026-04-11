@@ -4,6 +4,7 @@ import { RotateCw } from "lucide-react";
 import {
   useNavigate,
   useRouter,
+  useMatches,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
@@ -19,6 +20,15 @@ export const GuildRouteError = ({ error, reset }: ErrorComponentProps) => {
   const router = useRouter();
   const navigate = useNavigate();
   const queryErrorResetBoundary = useQueryErrorResetBoundary();
+  const hasResolvedGuildRoute = useMatches({
+    select: (matches) =>
+      matches.some(
+        (match) =>
+          match.routeId === "/_authenticated/$guildId" &&
+          match.status === "success" &&
+          match.loaderData !== undefined,
+      ),
+  });
   const status = getRouteErrorStatus(error);
   const normalizedStatus =
     status === 401 || status === 403 || status === 404 ? status : 500;
@@ -30,7 +40,7 @@ export const GuildRouteError = ({ error, reset }: ErrorComponentProps) => {
   };
 
   return (
-    <GuildLayout showGuildChrome={false}>
+    <GuildLayout showGuildChrome={hasResolvedGuildRoute}>
       <RouteErrorState
         status={normalizedStatus}
         title={t(`common.routeErrors.status.${normalizedStatus}.title`)}
