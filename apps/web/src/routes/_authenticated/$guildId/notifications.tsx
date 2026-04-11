@@ -14,7 +14,11 @@ function GuildNotificationsLayout() {
 }
 
 export const Route = createFileRoute("/_authenticated/$guildId/notifications")({
-  loader: async ({ context, params }) => {
+  loader: async ({ context, params, preload }) => {
+    if (preload) {
+      return null;
+    }
+
     await Promise.all([
       context.queryClient.ensureQueryData(
         guildNotificationsQueryOptions(params.guildId),

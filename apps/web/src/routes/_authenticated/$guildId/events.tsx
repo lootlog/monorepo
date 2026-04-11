@@ -6,7 +6,11 @@ import { eventsQueryOptions } from "@/features/guild/events/hooks/queries/use-ev
 export const Route = createFileRoute("/_authenticated/$guildId/events")({
   component: Events,
   pendingComponent: EventsPageSkeleton,
-  loader: async ({ context, params }) => {
+  loader: async ({ context, params, preload }) => {
+    if (preload) {
+      return null;
+    }
+
     await context.queryClient.ensureQueryData(
       eventsQueryOptions({
         guildId: params.guildId,

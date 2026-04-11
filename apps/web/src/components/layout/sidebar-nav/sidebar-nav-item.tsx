@@ -94,6 +94,7 @@ export const SidebarNavItem = ({
       <Link
         to={url}
         key={path}
+        preload="intent"
         onClick={(e) => {
           if (!available) e.preventDefault();
           onItemClick(e);
