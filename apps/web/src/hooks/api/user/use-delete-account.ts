@@ -1,6 +1,5 @@
 import { useApiClient } from "@/hooks/api/use-api-client";
 import { authClient } from "@/lib/auth-client";
-import { persister } from "@/lib/query-client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { mutationKeys } from "@/lib/query-keys";
 
@@ -34,7 +33,6 @@ export const useDeleteAccount = () => {
       }
 
       queryClient.clear();
-      await persister.removeClient();
       window.location.replace("/");
     },
   });

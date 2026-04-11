@@ -8,7 +8,6 @@ import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialo
 import { authClient } from "@/lib/auth-client";
 import { useUser } from "@/hooks/api/user/use-user";
 import { useDeleteAccount } from "@/hooks/api/user/use-delete-account";
-import { persister } from "@/lib/query-client";
 import { useQueryClient } from "@tanstack/react-query";
 
 export const AccountSettings: FC = () => {
@@ -21,7 +20,6 @@ export const AccountSettings: FC = () => {
   const handleLogout = async () => {
     await authClient.signOut();
     queryClient.clear();
-    await persister.removeClient();
     window.location.replace("/");
   };
 

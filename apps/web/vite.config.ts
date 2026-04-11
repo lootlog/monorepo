@@ -14,7 +14,6 @@ const vendorChunkGroups = {
   "vendor-tanstack": [
     "/node_modules/@tanstack/react-query",
     "/node_modules/@tanstack/react-query-devtools",
-    "/node_modules/@tanstack/react-query-persist-client",
     "/node_modules/@tanstack/react-router",
     "/node_modules/@tanstack/router-core",
     "/node_modules/@tanstack/react-table",

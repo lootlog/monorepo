@@ -47,6 +47,5 @@ export const useEventLoots = ({
     enabled: !!guildId && !!world && npcNames.length > 0,
     refetchOnMount: "always",
     staleTime: 0,
-    meta: { persist: false },
   });
 };
