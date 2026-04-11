@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { AuthenticationGuard } from "@/components/auth/authentication-guard";
-import { Layout } from "@/components/layout/layout";
+import { AppLayout } from "@/components/layout/app-layout";
 import { GatewayProvider } from "@/contexts/gateway-context";
 import { sessionQueryOptions } from "@/hooks/auth/use-session-query";
 import { authScopesQueryOptions } from "@/hooks/api/use-auth-scopes";
@@ -11,7 +11,7 @@ function AuthenticatedLayout() {
   return (
     <AuthenticationGuard>
       <GatewayProvider>
-        <Layout />
+        <AppLayout />
       </GatewayProvider>
     </AuthenticationGuard>
   );

@@ -1,6 +1,6 @@
 import { Permission } from "@lootlog/types";
 import { createFileRoute } from "@tanstack/react-router";
-import { GuildLayout } from "@/components/layout/guild-layout";
+import { GuildRouteProviders } from "@/components/layout/guild-route-providers";
 import { GuildRouteError } from "@/components/router/guild-route-error";
 import { GuildRouteNotFound } from "@/components/router/guild-route-not-found";
 import { guildQueryOptions } from "@/hooks/api/guilds/use-guild";
@@ -12,7 +12,7 @@ import {
 } from "@/lib/router/route-errors";
 
 export const Route = createFileRoute("/_authenticated/$guildId")({
-  component: GuildLayout,
+  component: GuildRouteProviders,
   beforeLoad: ({ params }) => {
     return {
       guildId: params.guildId,
