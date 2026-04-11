@@ -3,10 +3,6 @@ import { useParams, Link } from "@tanstack/react-router";
 import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { useEventOverview } from "./hooks/queries/use-event-overview";
-import { useEventRanking } from "./hooks/queries/use-event-ranking";
-import { useEventMaps } from "./hooks/queries/use-event-maps";
-import { useEventHeroTimers } from "./hooks/queries/use-event-hero-timers";
 import { EventMapGrid } from "./components/maps/event-map-grid";
 import {
   Swords,
@@ -43,7 +39,6 @@ import {
 import { toast } from "sonner";
 import { useGuildMember } from "@/hooks/api/members/use-guild-member";
 import { useEventPresence } from "./hooks/socket/use-event-presence";
-import { useHeroActiveGaps } from "./hooks/queries/use-hero-active-gaps";
 import { RecentKillsPreview } from "./components/kills/recent-kills-preview";
 import { EventHeroLoots } from "./components/stats/event-hero-loots";
 import { EventRankingPreview } from "./components/ranking/event-ranking-preview";
@@ -57,6 +52,13 @@ import { useGuild } from "@/hooks/api/guilds/use-guild";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { findEventHeroTimer } from "./utils/find-event-hero-timer";
+import {
+  useEventsMonitoringControllerGetActiveGapsForHero,
+  useListEventHeroTimers,
+  useListEventMaps,
+  useListEventRanking,
+  useShowEventOverview,
+} from "@/lib/api/generated/main/events/events";
 
 const getWindowStatusConfig = (
   status: WindowStatus,
@@ -117,7 +119,7 @@ export const HeroDetail = () => {
     data: event,
     isLoading,
     error,
-  } = useEventOverview({
+  } = useShowEventOverview({
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   });
@@ -127,21 +129,32 @@ export const HeroDetail = () => {
     world: event?.world,
   });
 
-  const { activeGapsMap } = useHeroActiveGaps(eventId ?? "", heroId ?? "");
-  const { data: rankings = [] } = useEventRanking({
+  const { data: activeGaps = [] } =
+    useEventsMonitoringControllerGetActiveGapsForHero({
+      guildId: guildId ?? "",
+      eventId: eventId ?? "",
+      heroId: heroId ?? "",
+    });
+  const { data: rankings = [] } = useListEventRanking({
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   });
-  const { data: eventMaps, isLoading: isMapsLoading } = useEventMaps({
+  const { data: eventMaps, isLoading: isMapsLoading } = useListEventMaps({
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   });
 
-  const { data: timers } = useEventHeroTimers({
-    guildId: guildId ?? "",
-    eventId: eventId ?? "",
-    world: event?.world ?? "",
-  });
+  const { data: timers } = useListEventHeroTimers(
+    {
+      guildId: guildId ?? "",
+      eventId: eventId ?? "",
+    },
+    {
+      world: event?.world ?? "",
+    },
+  );
+
+  const activeGapsMap = new Map(activeGaps.map((gap) => [gap.mapId, gap]));
 
   const heroBase = event?.heroNpcs?.find((h) => h.id === heroId);
   const heroMapsData = eventMaps?.heroNpcs?.find((h) => h.id === heroId);

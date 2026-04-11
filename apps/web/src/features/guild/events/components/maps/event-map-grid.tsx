@@ -4,10 +4,7 @@ import { useState } from "react";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { Permission } from "@lootlog/types";
 import { cn } from "@lootlog/ui/lib/utils";
-import type {
-  EventMap,
-  EventMapLocation,
-} from "../../hooks/queries/use-events";
+import type { EventMap, EventMapLocation } from "../../types/api";
 import type { PlayerPresence } from "../../hooks/socket/use-event-presence";
 import {
   isWindowActive,

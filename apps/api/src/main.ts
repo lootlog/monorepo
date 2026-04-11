@@ -29,7 +29,13 @@ async function bootstrap() {
     .addBearerAuth()
     .build();
 
-  const document = cleanupOpenApiDoc(SwaggerModule.createDocument(app, config));
+  const document = cleanupOpenApiDoc(
+    SwaggerModule.createDocument(app, config, {
+      operationIdFactory: (controllerKey, methodKey) =>
+        `${controllerKey}_${methodKey}`,
+    }),
+    { version: "3.0" },
+  );
   SwaggerModule.setup("api/docs", app, document);
 
   if (env.ENV === RuntimeEnvironment.LOCAL) {

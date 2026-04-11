@@ -20,6 +20,7 @@ import { useSession } from "@/hooks/auth/use-session";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { getAppliedRuleIdsForParticipant } from "./utils/scoring-applied-rules";
 import { formatDurationHuman } from "./utils/format-duration";
+import { normalizeBonusBreakdown } from "./utils/normalize-bonus-breakdown";
 import { KillDetailStatsCard } from "./components/kills/kill-detail-stats-card";
 
 const formatRespawnWindow = (minSpawn: string, maxSpawn: string): string => {
@@ -129,7 +130,9 @@ export const KillDetail = () => {
             scoringRules: eventConfig.scoringRules,
             assignedMembersCount: participants.length,
           });
-          const bonusBreakdownRuleIds = (participant.bonusBreakdown ?? [])
+          const bonusBreakdownRuleIds = normalizeBonusBreakdown(
+            participant.bonusBreakdown,
+          )
             .map((bonus) => bonus.ruleId)
             .filter(
               (ruleId): ruleId is string =>

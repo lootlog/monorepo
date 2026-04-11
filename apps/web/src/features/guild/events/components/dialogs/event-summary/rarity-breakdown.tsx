@@ -1,4 +1,4 @@
-import type { EventWrappedRarityTotals } from "../../../hooks/queries/use-event-wrapped";
+import type { EventWrappedRarityTotals } from "../../../types/api";
 import { AnimatedPanel } from "./animated-panel";
 import { MetricCard } from "./metric-card";
 import { formatMetric } from "./utils";

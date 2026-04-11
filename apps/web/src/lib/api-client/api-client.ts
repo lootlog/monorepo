@@ -182,6 +182,62 @@ export const buildRequestUrl = ({
   return url;
 };
 
+export const executeApiRequest = async <T>({
+  url,
+  method,
+  requestInit = {},
+}: {
+  url: URL;
+  method: string;
+  requestInit?: RequestInit;
+}): Promise<T> => {
+  let response: Response;
+
+  try {
+    response = await fetch(url, {
+      ...requestInit,
+      method,
+      credentials: requestInit.credentials ?? "include",
+    });
+  } catch (error) {
+    throw new ApiError({
+      status: undefined,
+      data: undefined,
+      url: url.toString(),
+      method,
+      message:
+        error instanceof Error ? error.message : "Network request failed",
+    });
+  }
+
+  const responseText = await response.text();
+  const responseData = parseResponseBody(
+    responseText,
+    response.headers.get("content-type"),
+  );
+
+  if (response.ok) {
+    return responseData as T;
+  }
+
+  handleApiErrorSideEffects({
+    status: response.status,
+    data: responseData,
+    isPublicEndpoint: url.pathname.includes("/public/"),
+  });
+
+  throw new ApiError({
+    status: response.status,
+    data: responseData,
+    url: url.toString(),
+    method,
+    message:
+      getApiMessageFromData(responseData) ??
+      response.statusText ??
+      "Request failed",
+  });
+};
+
 const handleReauthentication = (): Promise<void> => {
   if (reauthPromise) {
     return reauthPromise;
@@ -224,7 +280,7 @@ const handleApiErrorSideEffects = ({
 const createApiClient = (api: ApiName): ApiClient => {
   const baseURL = BASE_URLS[api] ?? API_URL;
 
-  const request = async <T>(
+  const request = <T>(
     method: string,
     path: string,
     body?: ApiRequestBody,
@@ -247,52 +303,15 @@ const createApiClient = (api: ApiName): ApiClient => {
       }
     }
 
-    let response: Response;
-
-    try {
-      response = await fetch(url, {
+    return executeApiRequest<T>({
+      url,
+      method,
+      requestInit: {
         ...requestInit,
-        method,
         body: requestBody,
         credentials: credentials ?? "include",
         headers,
-      });
-    } catch (error) {
-      throw new ApiError({
-        status: undefined,
-        data: undefined,
-        url: url.toString(),
-        method,
-        message:
-          error instanceof Error ? error.message : "Network request failed",
-      });
-    }
-
-    const responseText = await response.text();
-    const responseData = parseResponseBody(
-      responseText,
-      response.headers.get("content-type"),
-    );
-
-    if (response.ok) {
-      return responseData as T;
-    }
-
-    handleApiErrorSideEffects({
-      status: response.status,
-      data: responseData,
-      isPublicEndpoint: url.pathname.includes("/public/"),
-    });
-
-    throw new ApiError({
-      status: response.status,
-      data: responseData,
-      url: url.toString(),
-      method,
-      message:
-        getApiMessageFromData(responseData) ??
-        response.statusText ??
-        "Request failed",
+      },
     });
   };
 

@@ -39,9 +39,9 @@ npm-debug.log*
 .DS_Store
 *.pem
 
-**/api/generated
 **/battlelog-service/generated
 **/activity/prisma/generated
+/apps/api/generated
 
 .claude/settings.local.json
 analysis

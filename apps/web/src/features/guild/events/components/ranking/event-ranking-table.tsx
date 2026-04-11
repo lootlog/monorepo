@@ -5,7 +5,7 @@ import { Trophy, Pencil, PenLine, History, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
-import type { EventRanking } from "../../hooks/queries/use-events";
+import type { EventRanking } from "../../types/api";
 import { cn } from "@lootlog/ui/lib/utils";
 import { Button } from "@lootlog/ui/components/button";
 import {
@@ -19,8 +19,8 @@ import {
   PopoverTrigger,
 } from "@lootlog/ui/components/popover";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { useListRankingEditHistory } from "@/lib/api/generated/main/events/events";
 import { useUpdatePoints } from "../../hooks/mutations/use-update-points";
-import { useRankingEditHistory } from "../../hooks/queries/use-ranking-edit-history";
 import { ManualPointsEditDialog } from "../dialogs/manual-points-edit-dialog";
 
 interface EventRankingTableProps {
@@ -70,11 +70,10 @@ const RankingRow = ({
   const [historyOpen, setHistoryOpen] = useState(false);
 
   const { data: editHistory, isLoading: historyLoading } =
-    useRankingEditHistory({
+    useListRankingEditHistory({
       guildId: guildId ?? "",
       eventId: eventId ?? "",
       rankingId: ranking.id,
-      enabled: historyOpen && ranking.pointsModified,
     });
 
   const isTop3 = position <= 3;

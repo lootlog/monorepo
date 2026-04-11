@@ -1,5 +1,5 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { useApiClient } from "@/hooks/api/use-api-client";
+import { eventsRankingControllerGetMemberKillHistory } from "@/lib/api/generated/main/events/events";
 import { queryKeys } from "@/lib/query-keys";
 import type {
   HeroKillHeroNpc,
@@ -39,8 +39,6 @@ export const useEventMemberKillHistory = ({
   heroId,
   limit = 20,
 }: UseEventMemberKillHistoryOptions) => {
-  const { client } = useApiClient();
-
   return useInfiniteQuery({
     queryKey: queryKeys.events.memberKillHistory(
       guildId,
@@ -49,24 +47,17 @@ export const useEventMemberKillHistory = ({
       heroId,
       limit,
     ),
-    queryFn: async ({ pageParam }) => {
-      const params = new URLSearchParams();
-      params.set("limit", String(limit));
-      if (pageParam) {
-        params.set("cursor", pageParam as string);
-      }
-      if (heroId) {
-        params.set("heroId", heroId);
-      }
-
-      const response = await client.get<EventMemberKillHistoryResponse>(
-        `/guilds/${guildId}/events/${eventId}/members/${memberId}/kills?${params.toString()}`,
-      );
-
-      return response;
-    },
+    queryFn: ({ pageParam }) =>
+      eventsRankingControllerGetMemberKillHistory(
+        { guildId, eventId, memberId },
+        {
+          limit: String(limit),
+          heroId,
+          cursor: typeof pageParam === "string" ? pageParam : undefined,
+        },
+      ) as Promise<EventMemberKillHistoryResponse>,
     enabled: !!guildId && !!eventId && !!memberId,
-    initialPageParam: "",
+    initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => {
       if (!lastPage) return undefined;
       return lastPage.nextCursor ?? undefined;

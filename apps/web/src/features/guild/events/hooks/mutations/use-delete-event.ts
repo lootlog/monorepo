@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
-import { queryKeys } from "@/lib/query-keys";
+import { getListEventsQueryKey } from "@/lib/api/generated/main/events/events";
 
 interface DeleteEventResponse {
   success: boolean;
@@ -19,7 +19,7 @@ export const useDeleteEvent = (guildId: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.events.listByGuild(guildId),
+        queryKey: getListEventsQueryKey({ guildId }),
       });
     },
   });
