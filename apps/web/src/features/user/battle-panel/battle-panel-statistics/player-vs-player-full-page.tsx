@@ -43,7 +43,10 @@ import {
   DrawerTitle,
 } from "@lootlog/ui/components/drawer";
 import { useQueryStates } from "nuqs";
-import { battlePanelPlayerVsPlayerSearchParsers } from "@/features/user/battle-panel/battle-panel-statistics-search";
+import {
+  battlePanelPlayerVsPlayerSearchParsers,
+  normalizeBattlePanelCharacterId,
+} from "@/features/user/battle-panel/battle-panel-statistics-search";
 import { useTranslation } from "react-i18next";
 
 const PVP_FILTERS_OPEN_KEY = "pvp-filters-open";
@@ -67,7 +70,8 @@ export function PlayerVsPlayerFullPage() {
   const [queryState, setQueryState] = useQueryStates(
     battlePanelPlayerVsPlayerSearchParsers,
   );
-  const currentCharacterId = queryState.characterId ?? params.myId;
+  const currentCharacterId =
+    normalizeBattlePanelCharacterId(queryState.characterId) ?? params.myId;
   const period = queryState.period ?? "30d";
   const minLevel = queryState.minLevel;
   const maxLevel = queryState.maxLevel;

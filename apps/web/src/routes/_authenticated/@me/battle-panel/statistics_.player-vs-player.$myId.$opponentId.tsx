@@ -2,23 +2,29 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PlayerVsPlayerFullPage } from "@/features/user/battle-panel/battle-panel-statistics/player-vs-player-full-page";
 import { BattlePanelH2hSkeleton } from "@/features/user/battle-panel/battle-panel-statistics/battle-panel-h2h-skeleton";
 import { ensureBattlePanelCharacterId } from "@/features/user/battle-panel/battle-panel-route-loader";
-import { getBattlePanelPlayerVsPlayerSearch } from "@/features/user/battle-panel/battle-panel-statistics-search";
+import {
+  battlePanelPlayerVsPlayerSearchSchema,
+  loadBattlePanelPlayerVsPlayerSearch,
+  normalizeBattlePanelCharacterId,
+} from "@/features/user/battle-panel/battle-panel-statistics-search";
 import { playerVsPlayerQueryOptions } from "@/hooks/api/battle-log/use-player-vs-player";
 
 export const Route = createFileRoute(
   "/_authenticated/@me/battle-panel/statistics_/player-vs-player/$myId/$opponentId",
 )({
+  validateSearch: battlePanelPlayerVsPlayerSearchSchema,
   loader: async ({ context, location, params }) => {
-    const search = getBattlePanelPlayerVsPlayerSearch(location.searchStr);
+    const search = loadBattlePanelPlayerVsPlayerSearch(location.searchStr);
     const characterId =
       (await ensureBattlePanelCharacterId({
         queryClient: context.queryClient,
-        characterId: search.characterId ?? params.myId,
+        characterId:
+          normalizeBattlePanelCharacterId(search.characterId) ?? params.myId,
       })) ?? params.myId;
 
     await context.queryClient.ensureQueryData(
       playerVsPlayerQueryOptions({
-        cursor: search.cursor,
+        cursor: search.cursor ?? undefined,
         characterId,
         opponentId: params.opponentId,
         period: search.period,

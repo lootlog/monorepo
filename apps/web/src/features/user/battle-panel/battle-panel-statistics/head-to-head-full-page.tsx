@@ -1,4 +1,3 @@
-import { useState } from "react";
 import type { Period } from "@/store/battle-filters.store";
 import {
   useReactTable,
@@ -23,54 +22,33 @@ import {
 } from "@lootlog/ui/components/pagination";
 import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
 import { Card } from "@lootlog/ui/components/card";
-import { Button } from "@lootlog/ui/components/button";
-import { Label } from "@lootlog/ui/components/label";
-import { Checkbox } from "@lootlog/ui/components/checkbox";
-import { Separator } from "@lootlog/ui/components/separator";
+import { SectionHeader } from "@/components/layout/section-header";
 import { useHeadToHead } from "@/hooks/api/battle-log/use-head-to-head";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { Award, ArrowRight, Filter, Swords } from "lucide-react";
+import { Swords } from "lucide-react";
 import type { Warrior } from "@/hooks/api/battle-log/use-search-warriors";
-import {
-  CharacterSelector,
-  PeriodSelector,
-  LevelRangeFilter,
-  WarriorSearchFilter,
-} from "@/components/filters";
+import { HeadToHeadFilters } from "./components/head-to-head-filters";
 import { headToHeadColumns } from "./components/head-to-head-columns";
-import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
-import { useLocalStorage } from "usehooks-ts";
-import { AnimatePresence, motion } from "framer-motion";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-} from "@lootlog/ui/components/drawer";
+import { cn } from "@lootlog/ui/lib/utils";
 import { useQueryStates } from "nuqs";
 import {
   battlePanelHeadToHeadSearchParsers,
   getSelectedWarriorsFromSearch,
+  normalizeBattlePanelCharacterId,
 } from "@/features/user/battle-panel/battle-panel-statistics-search";
 import { useTranslation } from "react-i18next";
-
-const H2H_FILTERS_OPEN_KEY = "h2h-filters-open";
+import { getRouteErrorMessage } from "@/lib/router/route-errors";
 
 type SortBy = "wins" | "losses" | "totalBattles" | "winRate" | "lastBattleDate";
 
 export function HeadToHeadFullPage() {
   const { t } = useTranslation();
-  const isMobile = useIsMobile();
-  const [isFiltersOpen, setIsFiltersOpen] = useLocalStorage(
-    H2H_FILTERS_OPEN_KEY,
-    true,
-  );
-  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
-
   const [queryState, setQueryState] = useQueryStates(
     battlePanelHeadToHeadSearchParsers,
   );
-  const currentCharacterId = queryState.characterId ?? undefined;
+  const currentCharacterId = normalizeBattlePanelCharacterId(
+    queryState.characterId,
+  );
   const period = queryState.period ?? "30d";
   const minLevel = queryState.minLevel;
   const maxLevel = queryState.maxLevel;
@@ -83,7 +61,7 @@ export function HeadToHeadFullPage() {
   const selectedWarriors = getSelectedWarriorsFromSearch(search);
   const sorting: SortingState = [{ id: sortBy, desc: sortOrder === "desc" }];
 
-  const { data, isLoading } = useHeadToHead({
+  const { data, isLoading, isError, error } = useHeadToHead({
     cursor,
     size: 20,
     sortBy,
@@ -190,269 +168,148 @@ export function HeadToHeadFullPage() {
     manualSorting: true,
   });
 
-  const filtersContent = (
-    <div className="p-4 space-y-4">
-      <div className="space-y-2">
-        <Label className="text-xs text-muted-foreground">
-          {t("battlePanel.filters.character")}
-        </Label>
-        <CharacterSelector
-          characterId={currentCharacterId}
-          onCharacterChange={handleCharacterChange}
-          allowAllCharacters
-          className="w-full h-10"
-        />
-      </div>
-
-      <Separator />
-
-      <div className="space-y-2">
-        <Label className="text-xs text-muted-foreground">
-          {t("battlePanel.filters.period")}
-        </Label>
-        <PeriodSelector
-          value={period}
-          onValueChange={handlePeriodChange}
-          width="w-full"
-        />
-      </div>
-
-      <Separator />
-
-      <div className="flex items-center gap-2">
-        <Award className="h-4 w-4" />
-        <Checkbox
-          id="h2h-ph-checkbox"
-          checked={ph === true}
-          onCheckedChange={handlePhChange}
-        />
-        <Label htmlFor="h2h-ph-checkbox" className="cursor-pointer text-sm">
-          {t("battlePanel.filters.honorPoints")}
-        </Label>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <Swords className="h-4 w-4" />
-        <Checkbox
-          id="h2h-matchmaking-checkbox"
-          checked={matchmaking === true}
-          onCheckedChange={handleMatchmakingChange}
-        />
-        <Label
-          htmlFor="h2h-matchmaking-checkbox"
-          className="cursor-pointer text-sm"
-        >
-          {t("battlePanel.filters.matchmaking")}
-        </Label>
-      </div>
-
-      <Separator />
-
-      <div className="space-y-2">
-        <Label className="text-xs text-muted-foreground">
-          {t("battlePanel.filters.levelRange")}
-        </Label>
-        <div className="flex items-center gap-2">
-          <LevelRangeFilter
-            minLevel={minLevel}
-            maxLevel={maxLevel}
-            onMinLevelChange={handleMinLevelChange}
-            onMaxLevelChange={handleMaxLevelChange}
-            inputClassName="w-full"
-            containerClassName="flex-1"
-            separator=<ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-          />
-        </div>
-      </div>
-    </div>
-  );
-
   return (
-    <>
-      {isMobile && (
-        <Drawer
-          open={isMobileFiltersOpen}
-          onOpenChange={setIsMobileFiltersOpen}
-          shouldScaleBackground={false}
-        >
-          <DrawerContent className="p-0 h-[85vh] max-h-[85vh] flex flex-col overflow-hidden">
-            <DrawerHeader className="border-b px-4 py-3 shrink-0">
-              <DrawerTitle>{t("battlePanel.filters.title")}</DrawerTitle>
-            </DrawerHeader>
-            <div className="flex-1 overflow-hidden">
-              <ScrollArea className="h-full">{filtersContent}</ScrollArea>
-            </div>
-          </DrawerContent>
-        </Drawer>
-      )}
+    <div className="flex flex-col h-full min-h-0 bg-background/50">
+      <ScrollArea className="flex-1 min-h-0">
+        <div className="px-3 py-3 flex flex-col gap-4">
+          <SectionHeader
+            icon={Swords}
+            title={t("battlePanel.statistics.directMatchups.title")}
+            subtitle={t("battlePanel.statistics.directMatchups.description")}
+          >
+            <HeadToHeadFilters
+              characterId={currentCharacterId}
+              period={period}
+              minLevel={minLevel}
+              maxLevel={maxLevel}
+              ph={ph}
+              matchmaking={matchmaking}
+              selectedWarriors={selectedWarriors}
+              onCharacterChange={handleCharacterChange}
+              onPeriodChange={handlePeriodChange}
+              onMinLevelChange={handleMinLevelChange}
+              onMaxLevelChange={handleMaxLevelChange}
+              onPhChange={handlePhChange}
+              onMatchmakingChange={handleMatchmakingChange}
+              onWarriorToggle={handleWarriorToggle}
+            />
+          </SectionHeader>
 
-      <div className="w-full flex flex-col h-full overflow-hidden bg-background/50">
-        <div className="px-3 pt-3 pb-0">
-          <Card className="gap-3 border-border bg-card/60 p-4 backdrop-blur-sm">
-            <div className="flex items-center gap-3">
-              <WarriorSearchFilter
-                selectedWarriors={selectedWarriors}
-                onWarriorToggle={handleWarriorToggle}
-                className="flex-1"
-              />
-              {!isMobile && (
-                <Button
-                  onClick={() => setIsFiltersOpen((prev) => !prev)}
-                  variant={isFiltersOpen ? "default" : "outline"}
-                  size="icon"
-                  className="relative shrink-0"
-                >
-                  <Filter className="h-4 w-4" />
-                </Button>
+          <Card className="flex-1 min-h-0 flex flex-col border-border bg-card/40 p-0 backdrop-blur-sm overflow-hidden gap-0">
+            <ScrollArea className={cn("relative flex-1 min-h-0 w-full")}>
+              {isLoading ? (
+                <div>
+                  {Array.from({ length: 10 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="flex h-14 items-center gap-4 border-b border-border px-4"
+                    >
+                      <Skeleton className="h-4 w-8" />
+                      <Skeleton className="h-8 w-8 rounded-full" />
+                      <Skeleton className="h-4 flex-1" />
+                      {Array.from({ length: 4 }).map((_, j) => (
+                        <Skeleton key={j} className="h-4 w-12" />
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              ) : isError ? (
+                <div className="flex flex-col items-center justify-center gap-3 p-16">
+                  <p className="text-muted-foreground">
+                    {getRouteErrorMessage(error) ??
+                      t("common.routeErrors.status.500.description")}
+                  </p>
+                </div>
+              ) : !data || data.records.length === 0 ? (
+                <div className="flex flex-col items-center justify-center gap-3 p-16">
+                  <p className="text-muted-foreground">
+                    Brak danych do wyświetlenia
+                  </p>
+                </div>
+              ) : (
+                <Table className="border-b">
+                  <TableHeader className="bg-background sticky top-0 z-10">
+                    {table.getHeaderGroups().map((headerGroup) => (
+                      <TableRow
+                        key={headerGroup.id}
+                        className="border-b-1! border-border"
+                      >
+                        {headerGroup.headers.map((header) => (
+                          <TableHead
+                            key={header.id}
+                            className="whitespace-nowrap"
+                          >
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext(),
+                                )}
+                          </TableHead>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableHeader>
+                  <TableBody>
+                    {table.getRowModel().rows.map((row) => (
+                      <TableRow
+                        key={row.id}
+                        className="bg-background/30 border-b border-border"
+                      >
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell
+                            key={cell.id}
+                            className="whitespace-nowrap"
+                          >
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext(),
+                            )}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               )}
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
+
+            <div className="h-14 shrink-0 border-t border-border py-4 flex items-center justify-between px-4">
+              <div className="text-sm text-muted-foreground whitespace-nowrap">
+                Łącznie:&nbsp;
+                {data?.pagination?.total && (
+                  <span>{data.pagination.total}</span>
+                )}
+              </div>
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={handlePreviousPage}
+                      className={
+                        !data?.pagination?.hasPrev
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                    />
+                  </PaginationItem>
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={handleNextPage}
+                      className={
+                        !data?.pagination?.hasNext
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
             </div>
           </Card>
         </div>
-
-        <div className="flex-1 flex overflow-hidden">
-          <div className="flex-1 flex flex-col min-w-0 overflow-hidden p-3">
-            <Card className="flex-1 flex flex-col min-h-0 border-border bg-card/40 backdrop-blur-sm overflow-hidden gap-0 p-0">
-              <ScrollArea className="flex-1 min-h-0">
-                {isLoading ? (
-                  <div>
-                    {Array.from({ length: 10 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className="flex h-14 items-center gap-4 border-b border-border px-4"
-                      >
-                        <Skeleton className="h-4 w-8" />
-                        <Skeleton className="h-8 w-8 rounded-full" />
-                        <Skeleton className="h-4 flex-1" />
-                        {Array.from({ length: 4 }).map((_, j) => (
-                          <Skeleton key={j} className="h-4 w-12" />
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                ) : !data || data.records.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center gap-3 p-16">
-                    <p className="text-muted-foreground">
-                      Brak danych do wyświetlenia
-                    </p>
-                  </div>
-                ) : (
-                  <Table className="border-b">
-                    <TableHeader className="bg-background sticky top-0 z-10">
-                      {table.getHeaderGroups().map((headerGroup) => (
-                        <TableRow
-                          key={headerGroup.id}
-                          className="border-b-1! border-border"
-                        >
-                          {headerGroup.headers.map((header) => (
-                            <TableHead
-                              key={header.id}
-                              className="whitespace-nowrap"
-                            >
-                              {header.isPlaceholder
-                                ? null
-                                : flexRender(
-                                    header.column.columnDef.header,
-                                    header.getContext(),
-                                  )}
-                            </TableHead>
-                          ))}
-                        </TableRow>
-                      ))}
-                    </TableHeader>
-                    <TableBody>
-                      {table.getRowModel().rows.map((row) => (
-                        <TableRow
-                          key={row.id}
-                          className="bg-background/30 border-b border-border"
-                        >
-                          {row.getVisibleCells().map((cell) => (
-                            <TableCell
-                              key={cell.id}
-                              className="whitespace-nowrap"
-                            >
-                              {flexRender(
-                                cell.column.columnDef.cell,
-                                cell.getContext(),
-                              )}
-                            </TableCell>
-                          ))}
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-                <ScrollBar orientation="horizontal" />
-              </ScrollArea>
-            </Card>
-
-            <div className="sticky bottom-0 pt-3">
-              <Card className="flex items-center justify-center px-4 py-3 bg-card/60 backdrop-blur-sm border-border relative">
-                <div className="absolute left-4 text-sm text-muted-foreground max-w-[30%]">
-                  {data?.pagination?.total && (
-                    <span>Łącznie: {data.pagination.total}</span>
-                  )}
-                </div>
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious
-                        onClick={handlePreviousPage}
-                        className={
-                          !data?.pagination?.hasPrev
-                            ? "pointer-events-none opacity-50"
-                            : "cursor-pointer"
-                        }
-                      />
-                    </PaginationItem>
-                    <PaginationItem>
-                      <PaginationNext
-                        onClick={handleNextPage}
-                        className={
-                          !data?.pagination?.hasNext
-                            ? "pointer-events-none opacity-50"
-                            : "cursor-pointer"
-                        }
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
-              </Card>
-            </div>
-          </div>
-
-          {!isMobile && (
-            <AnimatePresence initial={false}>
-              {isFiltersOpen && (
-                <motion.div
-                  initial={{ width: 0, opacity: 0 }}
-                  animate={{ width: 320, opacity: 1 }}
-                  exit={{ width: 0, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="overflow-hidden h-full"
-                >
-                  <div className="w-[320px] h-full flex flex-col shrink-0 bg-background/50 py-3 pr-3">
-                    <Card className="flex-1 flex flex-col min-h-0 bg-filters-sidebar border-border backdrop-blur-sm p-0">
-                      <ScrollArea className="h-full">
-                        {filtersContent}
-                      </ScrollArea>
-                    </Card>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          )}
-        </div>
-      </div>
-
-      {isMobile && (
-        <Button
-          onClick={() => setIsMobileFiltersOpen(true)}
-          size="icon"
-          className="fixed bottom-4 right-4 h-14 w-14 rounded-full shadow-lg z-20"
-        >
-          <Filter className="h-5 w-5" />
-        </Button>
-      )}
-    </>
+      </ScrollArea>
+    </div>
   );
 }

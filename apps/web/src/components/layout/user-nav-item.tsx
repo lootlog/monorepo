@@ -4,6 +4,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { useSession } from "@/hooks/auth/use-session";
+import { ROUTES } from "@/config/routes";
 import { cn } from "@/utils/cn";
 import {
   Avatar,
@@ -21,7 +22,10 @@ export const UserNavItem = () => {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Link to="/@me" className="h-10 flex items-center justify-center">
+        <Link
+          to={ROUTES.user.dashboard}
+          className="h-10 flex items-center justify-center"
+        >
           <Avatar
             className={cn(
               "size-12 border-solid border-4 transition-all border-transparent  rounded-lg",

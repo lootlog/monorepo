@@ -7,15 +7,18 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { Card } from "@lootlog/ui/components/card";
 import CountUp from "@lootlog/ui/components/count-up";
 import { ROUTES } from "@/config/routes";
-import { Link } from "@tanstack/react-router";
 import type { Period } from "@/store/battle-filters.store";
 import {
   CharacterSelector,
   PeriodSelector,
   LevelRangeFilter,
 } from "@/components/filters";
+import { Link } from "@tanstack/react-router";
 import { useQueryStates } from "nuqs";
-import { battlePanelStatisticsSearchParsers } from "@/features/user/battle-panel/battle-panel-statistics-search";
+import {
+  battlePanelStatisticsSearchParsers,
+  normalizeBattlePanelCharacterId,
+} from "@/features/user/battle-panel/battle-panel-statistics-search";
 
 interface Stat {
   title: string;
@@ -65,10 +68,14 @@ export function StatsOverview() {
 
   const { data: characters = [], isLoading: isLoadingCharacters } =
     useBattleCharacters();
+  const currentCharacterId = normalizeBattlePanelCharacterId(
+    queryState.characterId,
+  );
+  const defaultCharacterId = currentCharacterId ?? characters[0]?.id;
 
   const { data: analytics, isLoading: isLoadingAnalytics } = useBattleAnalytics(
     {
-      characterId: queryState.characterId ?? undefined,
+      characterId: currentCharacterId,
       period: selectedPeriod,
       minLevel,
       maxLevel,
@@ -84,7 +91,7 @@ export function StatsOverview() {
   };
 
   const selectedCharacter = characters.find(
-    (char) => char.id === queryState.characterId,
+    (char) => char.id === currentCharacterId,
   );
 
   const stats: Stat[] = [
@@ -147,7 +154,7 @@ export function StatsOverview() {
             <Link
               to={ROUTES.user.battlePanel.statistics}
               search={{
-                characterId: queryState.characterId ?? null,
+                characterId: defaultCharacterId,
                 period: queryState.period,
                 minLevel,
                 maxLevel,
@@ -162,7 +169,7 @@ export function StatsOverview() {
         <div className="flex flex-col md:flex-row md:items-end gap-3 flex-wrap">
           <div className="w-full md:w-auto">
             <CharacterSelector
-              characterId={queryState.characterId ?? undefined}
+              characterId={currentCharacterId}
               onCharacterChange={(characterId) => {
                 void setQueryState({
                   characterId: characterId ?? null,

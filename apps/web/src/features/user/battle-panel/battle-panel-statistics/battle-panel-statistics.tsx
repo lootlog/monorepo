@@ -20,7 +20,10 @@ import { Card } from "@lootlog/ui/components/card";
 import { SectionHeader } from "@/components/layout/section-header";
 import { BarChart3 } from "lucide-react";
 import { useQueryStates } from "nuqs";
-import { battlePanelStatisticsSearchParsers } from "@/features/user/battle-panel/battle-panel-statistics-search";
+import {
+  battlePanelStatisticsSearchParsers,
+  normalizeBattlePanelCharacterId,
+} from "@/features/user/battle-panel/battle-panel-statistics-search";
 
 export function BattlePanelStatistics() {
   const { data: characters, isLoading: isLoadingCharacters } =
@@ -29,7 +32,9 @@ export function BattlePanelStatistics() {
     battlePanelStatisticsSearchParsers,
   );
 
-  const currentCharacterId = queryState.characterId ?? undefined;
+  const currentCharacterId = normalizeBattlePanelCharacterId(
+    queryState.characterId,
+  );
   const period = queryState.period ?? "30d";
   const minLevel = queryState.minLevel;
   const maxLevel = queryState.maxLevel;
