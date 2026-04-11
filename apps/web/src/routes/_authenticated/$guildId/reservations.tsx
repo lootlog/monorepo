@@ -5,7 +5,11 @@ import { reservationsCardsQueryOptions } from "@/hooks/api/reservations/use-rese
 import { reservationsQueryOptions } from "@/hooks/api/reservations/use-reservations";
 
 export const Route = createFileRoute("/_authenticated/$guildId/reservations")({
-  loader: async ({ context, params }) => {
+  loader: async ({ context, params, preload }) => {
+    if (preload) {
+      return null;
+    }
+
     await Promise.all([
       context.queryClient.ensureQueryData(
         reservationsQueryOptions(params.guildId),

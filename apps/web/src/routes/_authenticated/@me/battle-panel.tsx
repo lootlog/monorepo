@@ -3,7 +3,11 @@ import { BattlePanelLayout } from "@/features/user/battle-panel/battle-panel-lay
 import { battleCharactersQueryOptions } from "@/hooks/api/battle-log/use-battle-characters";
 
 export const Route = createFileRoute("/_authenticated/@me/battle-panel")({
-  loader: async ({ context }) => {
+  loader: async ({ context, preload }) => {
+    if (preload) {
+      return null;
+    }
+
     await context.queryClient.ensureQueryData(battleCharactersQueryOptions());
 
     return null;

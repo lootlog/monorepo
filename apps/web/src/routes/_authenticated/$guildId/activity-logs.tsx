@@ -10,7 +10,11 @@ const getSearchParamValues = (searchParams: URLSearchParams, key: string) => {
 };
 
 export const Route = createFileRoute("/_authenticated/$guildId/activity-logs")({
-  loader: async ({ context, location, params }) => {
+  loader: async ({ context, location, params, preload }) => {
+    if (preload) {
+      return null;
+    }
+
     const searchParams = new URLSearchParams(location.searchStr);
     const startDate = searchParams.get("startDate") || undefined;
     const endDate = searchParams.get("endDate") || undefined;

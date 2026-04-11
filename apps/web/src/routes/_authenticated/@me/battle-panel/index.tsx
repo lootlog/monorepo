@@ -5,7 +5,11 @@ import { getBattlePanelStatisticsSearch } from "@/features/user/battle-panel/bat
 import { battleAnalyticsQueryOptions } from "@/hooks/api/battle-log/use-battle-analytics";
 
 export const Route = createFileRoute("/_authenticated/@me/battle-panel/")({
-  loader: async ({ context, location }) => {
+  loader: async ({ context, location, preload }) => {
+    if (preload) {
+      return null;
+    }
+
     const search = getBattlePanelStatisticsSearch(location.searchStr);
 
     await context.queryClient.ensureQueryData(

@@ -7,7 +7,11 @@ import { userNotificationsQueryOptions } from "@/hooks/api/user/use-user-notific
 export const Route = createFileRoute("/_authenticated/@me/notifications")({
   component: UserNotifications,
   pendingComponent: UserNotificationsPageSkeleton,
-  loader: async ({ context }) => {
+  loader: async ({ context, preload }) => {
+    if (preload) {
+      return null;
+    }
+
     await Promise.all([
       context.queryClient.ensureQueryData(guildsQueryOptions()),
       context.queryClient.ensureQueryData(userNotificationsQueryOptions()),
