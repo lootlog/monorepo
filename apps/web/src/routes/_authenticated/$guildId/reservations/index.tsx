@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Reservations } from "@/features/reservations/reservations";
+import { Reservations } from "@/features/guild/reservations/reservations";
+import { ReservationsPageSkeleton } from "@/features/guild/reservations/reservations-page-skeleton";
 
 export const Route = createFileRoute("/_authenticated/$guildId/reservations/")({
   component: Reservations,
+  pendingComponent: ReservationsPageSkeleton,
 });

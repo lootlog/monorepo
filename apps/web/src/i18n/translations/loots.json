@@ -87,6 +87,23 @@
       "npcCategory": "Potwór"
     }
   },
+  "header": {
+    "searchPlaceholder": "Szukaj przedmiotów, potworów, graczy...",
+    "shortcut": "Ctrl + K",
+    "listView": "Widok listy",
+    "gridView": "Widok siatki",
+    "mobileFiltersTitle": "Filtry łupów"
+  },
+  "searchCommand": {
+    "placeholder": "Szukaj przedmiotów, potworów, graczy...",
+    "loading": "Wyszukiwanie...",
+    "startTyping": "Zacznij wpisywać aby wyszukać...",
+    "itemById": "Znaleziony przedmiot (ID)",
+    "npcs": "Potwory",
+    "items": "Przedmioty",
+    "players": "Gracze",
+    "noResults": "Nie znaleziono wyników."
+  },
   "list": {
     "noWorldSelected": "Brak wybranego świata, wybierz go z listy na górze.",
     "noWorldSelectedCat": "Miau! Wybierz świat, żeby zobaczyć łupy 🐱",
@@ -104,6 +121,8 @@
   "details": {
     "copySuccess": "ID skopiowane",
     "copyError": "Nie udało się skopiować ID. Spróbuj ponownie.",
+    "notFound": "Nie znaleziono łupu",
+    "obtainedAt": "Zdobyto {{date}}",
     "showLess": "Pokaż mniej",
     "showMore": "Pokaż więcej ({{count}})"
   }

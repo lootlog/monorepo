@@ -1,11 +1,9 @@
 import { UnauthorizedException } from "@nestjs/common";
 
-import { createRequiredRequestValueDecorator } from "./create-required-request-value.decorator";
-
-type RequestLike = {
-  [key: string]: unknown;
-  params?: Record<string, string | undefined>;
-};
+import {
+  createRequiredRequestValueDecorator,
+  type RequestLike,
+} from "./create-required-request-value.decorator";
 
 export function createRequiredUnauthorizedRequestValueDecorator<Value>(
   getValue: (request: RequestLike) => Value | null | undefined,

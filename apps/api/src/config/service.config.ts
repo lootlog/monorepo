@@ -1,7 +1,7 @@
 import { env } from "src/config/env";
 import type { RuntimeEnvironment } from "src/types/runtime.types";
 
-export interface ServiceConfig {
+interface ServiceConfig {
   env: RuntimeEnvironment;
   port: number;
 }

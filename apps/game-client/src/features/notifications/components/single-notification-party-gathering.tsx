@@ -12,7 +12,7 @@ import { useWindowsStore } from "@/store/windows.store";
 import { CharacterTile } from "@/components/character-tile";
 import { Game } from "@/lib/game";
 
-export type SingleNotificationPartyGatheringProps = {
+type SingleNotificationPartyGatheringProps = {
   notification: PartyGatheringNotification;
   serverNames?: string[];
   member?: GuildMember;

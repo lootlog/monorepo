@@ -6,7 +6,7 @@ import type { GuildMember } from "@/hooks/api/use-guild-members";
 import { cn } from "@/lib/utils";
 import type { FC } from "react";
 
-export type OnlinePlayersListEntryProps = {
+type OnlinePlayersListEntryProps = {
   presences: PlayerPresence[];
   guildMember?: GuildMember;
 };

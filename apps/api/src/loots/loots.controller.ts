@@ -11,30 +11,39 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import {
-  ApiTags,
   ApiBearerAuth,
   ApiOperation,
-  ApiResponse,
   ApiParam,
+  ApiResponse,
+  ApiTags,
 } from "@nestjs/swagger";
 import { DiscordId, UserId } from "@lootlog/nest-shared";
-import { plainToInstance } from "class-transformer";
+import { ZodResponse } from "nestjs-zod";
 import { type Guild, Permission, type Role } from "src/generated/prisma/client";
 import { CreateCommentDto } from "src/loots/dto/create-comment-dto";
 import { CreateLootDto } from "src/loots/dto/create-loot.dto";
-import { UpdateLootDto } from "src/loots/dto/update-loot.dto";
 import { FetchLootsParamsDto } from "src/loots/dto/fetch-loots-params.dto";
+import {
+  CreateLootResponseDto,
+  LootShareResponseDto,
+  LootStatsResponseDto,
+} from "src/loots/dto/loot-response.dto";
 import { LootStatsQueryDto } from "src/loots/dto/loot-stats.dto";
+import { UpdateLootDto } from "src/loots/dto/update-loot.dto";
 import { LootsService } from "src/loots/loots.service";
 import { LootStatsService } from "src/loots/services/loot-stats.service";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";
 import { MemberRoles } from "src/shared/decorators/member-roles.decorator";
+import { CountResponseDto } from "src/shared/dto/common-response.dto";
+import { LootCommentResponseDto } from "src/shared/dto/loot-comment-response.dto";
+import {
+  LootResponseDto,
+  NullableLootResponseDto,
+} from "src/shared/dto/loot-response.dto";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
-import { LootEntity } from "src/shared/entities/loot.entity";
-import { LootCommentEntity } from "src/shared/entities/loot-comment.entity";
 
 @ApiTags("loots")
 @ApiBearerAuth()
@@ -54,30 +63,27 @@ export class LootsController {
     description: "Retrieve paginated loots for a guild with optional filters",
   })
   @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Paginated list of loots",
-    type: [LootEntity],
+    type: [LootResponseDto],
   })
   @ApiResponse({
     status: 403,
     description: "Forbidden - insufficient permissions",
   })
-  async fetchLootsByGuildId(
+  fetchLootsByGuildId(
     @MemberPermissions() permissions: Permission[],
     @MemberRoles() roles: Role[],
     @GuildData() guild: Guild,
     @Query() query: FetchLootsParamsDto,
   ) {
-    const loots = await this.lootsService.fetchLootsByGuildId(
+    return this.lootsService.fetchLootsByGuildId(
       guild,
       permissions,
       roles,
       query,
     );
-    return plainToInstance(LootEntity, loots, {
-      excludeExtraneousValues: true,
-    });
   }
 
   @Permissions(Permission.LOOTLOG_LOOTS_READ)
@@ -89,10 +95,11 @@ export class LootsController {
       "Retrieve aggregated loot statistics for a guild with optional time period and filters",
   })
   @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description:
       "Loot statistics including overview, timeline, top NPCs, and top contributors",
+    type: LootStatsResponseDto,
   })
   @ApiResponse({
     status: 403,
@@ -117,9 +124,10 @@ export class LootsController {
       "Retrieve the total count of loots for a guild with optional filters",
   })
   @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Count of loots matching the filters",
+    type: CountResponseDto,
   })
   @ApiResponse({
     status: 403,
@@ -141,6 +149,7 @@ export class LootsController {
         cursor: 0,
       },
     );
+
     return { count };
   }
 
@@ -153,25 +162,21 @@ export class LootsController {
   })
   @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
   @ApiParam({ name: "lootId", description: "Loot ID", example: "123" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Loot details",
-    type: LootEntity,
+    type: NullableLootResponseDto,
   })
   @ApiResponse({
     status: 403,
     description: "Forbidden - insufficient permissions",
   })
   @ApiResponse({ status: 404, description: "Loot not found" })
-  async fetchLootById(
+  fetchLootById(
     @Param("lootId", new ParseIntPipe()) lootId: number,
     @GuildData() guild: Guild,
   ) {
-    const loot = await this.lootsService.fetchLootById(guild, lootId);
-    if (!loot) {
-      return null;
-    }
-    return plainToInstance(LootEntity, loot, { excludeExtraneousValues: true });
+    return this.lootsService.fetchLootById(guild, lootId);
   }
 
   @Post("/loots")
@@ -179,10 +184,10 @@ export class LootsController {
     summary: "Create loot",
     description: "Submit a loot from game client",
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 201,
     description: "Loot created successfully",
-    type: LootEntity,
+    type: CreateLootResponseDto,
   })
   createLoot(
     @DiscordId() discordId: string,
@@ -201,28 +206,23 @@ export class LootsController {
   })
   @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
   @ApiParam({ name: "lootId", description: "Loot ID", example: "123" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "List of loot comments",
-    type: [LootCommentEntity],
+    type: [LootCommentResponseDto],
   })
   @ApiResponse({
     status: 403,
     description: "Forbidden - insufficient permissions",
   })
   @ApiResponse({ status: 404, description: "Loot not found" })
-  async getComments(
-    @DiscordId() discordId: string,
+  getComments(
     @Param("lootId", new ParseIntPipe()) lootId: number,
     @GuildData() guild: Guild,
   ) {
-    const comments = await this.lootsService.getComments({
-      discordId,
+    return this.lootsService.getComments({
       lootId,
       guildId: guild.id,
-    });
-    return plainToInstance(LootCommentEntity, comments, {
-      excludeExtraneousValues: true,
     });
   }
 
@@ -235,30 +235,27 @@ export class LootsController {
   })
   @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
   @ApiParam({ name: "lootId", description: "Loot ID", example: "123" })
-  @ApiResponse({
+  @ZodResponse({
     status: 201,
     description: "Comment created successfully",
-    type: LootCommentEntity,
+    type: LootCommentResponseDto,
   })
   @ApiResponse({
     status: 403,
     description: "Forbidden - insufficient permissions",
   })
   @ApiResponse({ status: 404, description: "Loot not found" })
-  async createComment(
+  createComment(
     @DiscordId() discordId: string,
     @Param("lootId", new ParseIntPipe()) lootId: number,
     @Body() body: CreateCommentDto,
     @GuildData() guild: Guild,
   ) {
-    const comment = await this.lootsService.createComment({
+    return this.lootsService.createComment({
       discordId,
       lootId,
       body,
       guildId: guild.id,
-    });
-    return plainToInstance(LootCommentEntity, comment, {
-      excludeExtraneousValues: true,
     });
   }
 
@@ -296,10 +293,10 @@ export class LootsController {
     description: "Update loot information",
   })
   @ApiParam({ name: "id", description: "Loot ID", example: "123" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Loot updated successfully",
-    type: LootEntity,
+    type: LootShareResponseDto,
   })
   @ApiResponse({ status: 404, description: "Loot not found" })
   updateLoot(

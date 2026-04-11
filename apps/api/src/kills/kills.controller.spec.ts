@@ -1,22 +1,16 @@
-import type { Mock } from "vitest";
-import { mockFn } from "src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
-import { plainToInstance } from "class-transformer";
-import { KillsController } from "./kills.controller";
-import { KillsService } from "./kills.service";
+import type { Mock } from "vitest";
+import { Permission, NpcType, type Role } from "src/generated/prisma/client";
+import { AuthGuard } from "src/shared/guards/auth.guard";
+import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
+import { mockFn } from "src/test/mock-fn";
 import type { CreateKillDto } from "./dto/create-kill.dto";
 import {
   GetGuildKillStatsDto,
   GetUserKillStatsDto,
 } from "./dto/get-kill-stats.dto";
-import {
-  CreateKillResponseEntity,
-  GuildKillStatsEntity,
-  UserKillStatsEntity,
-} from "./entities/kill-stats.entity";
-import { Permission, NpcType, type Role } from "src/generated/prisma/client";
-import { AuthGuard } from "src/shared/guards/auth.guard";
-import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
+import { KillsController } from "./kills.controller";
+import { KillsService } from "./kills.service";
 
 describe("KillsController", () => {
   let controller: KillsController;
@@ -97,9 +91,7 @@ describe("KillsController", () => {
         discordId,
         mockCreateKillDto,
       );
-      expect(result).toEqual(
-        plainToInstance(CreateKillResponseEntity, mockResult),
-      );
+      expect(result).toEqual(mockResult);
     });
 
     it("should return updated: 0 when no guilds are configured", async () => {
@@ -108,9 +100,7 @@ describe("KillsController", () => {
 
       const result = await controller.createKill(mockCreateKillDto, discordId);
 
-      expect(result).toEqual(
-        plainToInstance(CreateKillResponseEntity, mockResult),
-      );
+      expect(result).toEqual(mockResult);
     });
 
     it("should handle service errors", async () => {
@@ -187,7 +177,7 @@ describe("KillsController", () => {
         roles,
         query,
       );
-      expect(result).toEqual(plainToInstance(GuildKillStatsEntity, mockStats));
+      expect(result).toEqual(mockStats);
     });
 
     it("should handle empty results", async () => {
@@ -210,7 +200,7 @@ describe("KillsController", () => {
         mockGuildData,
       );
 
-      expect(result).toEqual(plainToInstance(GuildKillStatsEntity, mockStats));
+      expect(result).toEqual(mockStats);
     });
 
     it("should pass query filters to service", async () => {
@@ -278,7 +268,7 @@ describe("KillsController", () => {
       const result = await controller.getUserKillStats(discordId, query);
 
       expect(service.getUserKillStats).toHaveBeenCalledWith(discordId, query);
-      expect(result).toEqual(plainToInstance(UserKillStatsEntity, mockStats));
+      expect(result).toEqual(mockStats);
     });
 
     it("should handle empty user stats", async () => {
@@ -295,7 +285,7 @@ describe("KillsController", () => {
       const query = new GetUserKillStatsDto();
       const result = await controller.getUserKillStats(discordId, query);
 
-      expect(result).toEqual(plainToInstance(UserKillStatsEntity, mockStats));
+      expect(result).toEqual(mockStats);
     });
 
     it("should pass query filters to service", async () => {

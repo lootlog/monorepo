@@ -4,8 +4,9 @@ import { BattleOverviewHeader } from "./battle-overview-header";
 import { BattleTeamSection } from "./battle-team-section";
 import { AnimatedTrophy } from "./animated-trophy";
 import { BattleMetadata } from "./battle-metadata";
-import { DEFAULT_BATTLE_LABELS, type BattleLabels } from "./battle-labels";
+import type { BattleLabels } from "./battle-labels";
 import type { Battle, Warrior } from "@/hooks/api/battle-log/use-battles";
+import { useTranslation } from "react-i18next";
 
 export type BattleOverviewCardProps = {
   battle: Battle;
@@ -31,13 +32,42 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
   isSharePending = false,
   showActions = true,
   cdnBaseUrl,
-  labels = DEFAULT_BATTLE_LABELS,
+  labels = {},
   showHeader = true,
 }) => {
+  const { t } = useTranslation();
+  const defaultLabels: BattleLabels = {
+    header: {
+      title: t("battleUi.overviewHeader.title"),
+      copyLink: t("battleUi.overviewHeader.copyLink"),
+      hide: t("battleUi.overviewHeader.hide"),
+      share: t("battleUi.overviewHeader.share"),
+      delete: t("battleUi.overviewHeader.delete"),
+      deleteConfirmTitle: t("battleUi.overviewHeader.deleteConfirmTitle"),
+      deleteConfirmDescription: t(
+        "battleUi.overviewHeader.deleteConfirmDescription",
+      ),
+      cancel: t("battleUi.overviewHeader.cancel"),
+      deleteBattle: t("battleUi.overviewHeader.deleteBattle"),
+    },
+    teams: {
+      userTeam: t("battleUi.team.userTeam"),
+      enemyTeam: t("battleUi.team.enemyTeam"),
+    },
+    metadata: {
+      startTime: t("battleUi.metadata.startTime"),
+      duration: t("battleUi.metadata.duration"),
+      battleType: t("battleUi.metadata.battleType"),
+      public: t("battleUi.metadata.public"),
+      private: t("battleUi.metadata.private"),
+      publicTooltip: t("battleUi.metadata.publicTooltip"),
+      privateTooltip: t("battleUi.metadata.privateTooltip"),
+    },
+  };
   const mergedLabels = {
-    header: { ...DEFAULT_BATTLE_LABELS.header, ...labels.header },
-    teams: { ...DEFAULT_BATTLE_LABELS.teams, ...labels.teams },
-    metadata: { ...DEFAULT_BATTLE_LABELS.metadata, ...labels.metadata },
+    header: { ...defaultLabels.header, ...(labels.header ?? {}) },
+    teams: { ...defaultLabels.teams, ...(labels.teams ?? {}) },
+    metadata: { ...defaultLabels.metadata, ...(labels.metadata ?? {}) },
   };
 
   const attackingTeam = battle.warriors.filter((w: Warrior) => w.team === 1);
@@ -104,7 +134,9 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
                 />
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold mb-1">VS</div>
+                <div className="text-2xl font-bold mb-1">
+                  {t("battleUi.overview.vs")}
+                </div>
               </div>
               <div>
                 <AnimatedTrophy

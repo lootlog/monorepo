@@ -1,6 +1,8 @@
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 import { useApiClient } from "../use-api-client";
+import { apiClient } from "@/lib/api-client/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 export interface ReservationCard {
   lvl: number;
@@ -8,18 +10,20 @@ export interface ReservationCard {
   maps: string[];
 }
 
+export const reservationsCardsQueryOptions = (guildId: string) =>
+  queryOptions({
+    queryKey: queryKeys.reservations.cards(guildId),
+    enabled: Boolean(guildId),
+    queryFn: () =>
+      apiClient.get<Record<string, ReservationCard[]>>(
+        `/guilds/${guildId}/reservations/cards`,
+      ),
+    staleTime: 30_000,
+  });
+
 export const useReservationsCards = () => {
-  const { client } = useApiClient();
+  useApiClient();
   const guildId = useGuildId();
 
-  return useQuery({
-    queryKey: ["reservations-cards", guildId],
-    enabled: Boolean(guildId),
-    queryFn: async () => {
-      const response = await client.get<Record<string, ReservationCard[]>>(
-        `/guilds/${guildId}/reservations/cards`,
-      );
-      return response.data;
-    },
-  });
+  return useQuery(reservationsCardsQueryOptions(guildId ?? ""));
 };

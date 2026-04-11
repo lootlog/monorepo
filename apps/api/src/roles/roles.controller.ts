@@ -7,7 +7,7 @@ import {
   ApiResponse,
   ApiParam,
 } from "@nestjs/swagger";
-import { plainToInstance } from "class-transformer";
+import { ZodResponse } from "nestjs-zod";
 import { type Guild, Permission } from "src/generated/prisma/client";
 import { UpdateRolePermissionsDto } from "src/roles/dto/update-role-permissions.dto";
 import { RolesService } from "src/roles/roles.service";
@@ -15,7 +15,7 @@ import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
-import { RoleEntity } from "src/shared/entities/role.entity";
+import { RoleResponseDto } from "src/shared/dto/role-response.dto";
 
 @ApiTags("roles")
 @ApiBearerAuth()
@@ -32,20 +32,17 @@ export class RolesController {
     description: "Retrieve all roles for a guild",
   })
   @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "List of guild roles",
-    type: [RoleEntity],
+    type: [RoleResponseDto],
   })
   @ApiResponse({
     status: 403,
     description: "Forbidden - admin permission required",
   })
   async getGuildRoles(@GuildData() guild: Guild) {
-    const roles = await this.rolesService.getRolesByGuildId(guild.id);
-    return plainToInstance(RoleEntity, roles, {
-      excludeExtraneousValues: true,
-    });
+    return this.rolesService.getRolesByGuildId(guild.id);
   }
 
   @Permissions(Permission.ADMIN)
@@ -57,10 +54,10 @@ export class RolesController {
   })
   @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
   @ApiParam({ name: "roleId", description: "Role ID", example: "role_123" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Role permissions updated successfully",
-    type: RoleEntity,
+    type: RoleResponseDto,
   })
   @ApiResponse({
     status: 403,
@@ -73,12 +70,11 @@ export class RolesController {
     @DiscordId() discordId: string,
     @Body() data: UpdateRolePermissionsDto,
   ) {
-    const role = await this.rolesService.updateRolePermissions(
+    return this.rolesService.updateRolePermissions(
       discordId,
       guild.id,
       roleId,
       data,
     );
-    return plainToInstance(RoleEntity, role, { excludeExtraneousValues: true });
   }
 }

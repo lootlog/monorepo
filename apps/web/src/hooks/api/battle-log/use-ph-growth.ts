@@ -1,4 +1,7 @@
-import { createBattleLogStatistic } from "./create-battle-log-statistic";
+import {
+  battleLogStatisticQueryOptions,
+  createBattleLogStatistic,
+} from "./create-battle-log-statistic";
 
 export interface PhGrowthDataPoint {
   date: string;
@@ -16,6 +19,13 @@ interface UsePhGrowthParams {
   ph?: boolean;
   matchmaking?: boolean;
 }
+
+export const phGrowthQueryOptions = (params: UsePhGrowthParams) =>
+  battleLogStatisticQueryOptions<PhGrowthDataPoint, UsePhGrowthParams>({
+    queryKey: "ph-growth",
+    endpoint: "/battles/@me/statistics/ph-growth",
+    params,
+  });
 
 export const usePhGrowth = createBattleLogStatistic<
   PhGrowthDataPoint,

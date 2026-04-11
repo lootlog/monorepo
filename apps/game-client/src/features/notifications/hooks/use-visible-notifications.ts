@@ -9,12 +9,12 @@ import type { Notification } from "@/features/notifications/hooks/use-notificati
 import { NpcType } from "@/hooks/api/use-npcs";
 import { Game } from "@/lib/game";
 
-export interface UseVisibleNotificationsOptions {
+interface UseVisibleNotificationsOptions {
   autoCleanup?: boolean;
   tickMs?: number;
 }
 
-export interface UseVisibleNotificationsResult {
+interface UseVisibleNotificationsResult {
   notifications: NotificationWithServers[];
   all: NotificationWithServers[];
   now: number;

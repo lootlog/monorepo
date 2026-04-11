@@ -4,6 +4,7 @@ import { GripVertical, ChevronDown, Trash2 } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import { Input } from "@lootlog/ui/components/input";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
+import { useTranslation } from "react-i18next";
 import type { CategoryCustomization } from "@/types/stats-customization.types";
 import { CategoryStatsSection } from "./category-stats-section";
 import { AvailableStatsSection } from "./available-stats-section";
@@ -54,6 +55,7 @@ const CategoryItemContent = ({
   onRemoveStat,
   onRemoveCategory,
 }: CategoryItemProps) => {
+  const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
   const [localName, setLocalName] = useState(category.name);
 
@@ -119,7 +121,7 @@ const CategoryItemContent = ({
           <div className="px-3 pb-3 pt-1 border-t bg-muted/30 space-y-4">
             <div>
               <div className="text-xs text-muted-foreground mb-2 font-medium">
-                W tej kategorii:
+                {t("battleUi.customization.inCategory")}
               </div>
               <CategoryStatsSection
                 statOrder={category.statOrder}

@@ -1,4 +1,5 @@
 import { useQuery, queryOptions } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 import { authApiClient } from "@/lib/api-client/api-client";
 
 const normalizeAuthScopes = (data: unknown): string[] => {
@@ -13,16 +14,17 @@ const normalizeAuthScopes = (data: unknown): string[] => {
   return [];
 };
 
-export const authScopesQueryOptions = queryOptions({
-  queryKey: ["auth-scopes"],
-  queryFn: () =>
-    authApiClient.get<unknown>(`/auth/@me/scopes`).then((res) => res.data),
-  select: normalizeAuthScopes,
-});
+export const authScopesQueryOptions = () =>
+  queryOptions({
+    queryKey: queryKeys.auth.scopes(),
+    queryFn: () =>
+      authApiClient.get<unknown>(`/auth/@me/scopes`).then((data) => data),
+    select: normalizeAuthScopes,
+  });
 
 export const useAuthScopes = () => {
   const query = useQuery({
-    ...authScopesQueryOptions,
+    ...authScopesQueryOptions(),
   });
 
   return query;

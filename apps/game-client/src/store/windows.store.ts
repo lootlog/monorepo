@@ -5,11 +5,11 @@ import { storageKey } from "@/lib/storage-key";
 
 const STORAGE_KEY = storageKey("ll-windows-state");
 
-export type NpcDetectorWindowState = {
+type NpcDetectorWindowState = {
   npcs: GameNpc[];
 };
 
-export type CreateNotificationState = {
+type CreateNotificationState = {
   npc?: GameNpc;
 };
 

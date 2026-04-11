@@ -8,20 +8,22 @@ import {
   TableRow,
 } from "@lootlog/ui/components/table";
 import type { FC } from "react";
+import { useTranslation } from "react-i18next";
 
 interface BlocksBreakdownProps {
   warrior: Warrior;
 }
 
 export const BlocksBreakdown: FC<BlocksBreakdownProps> = ({ warrior }) => {
+  const { t } = useTranslation();
   const blocksBreakdown = [
     {
-      type: "Liczba bloków",
+      type: t("battleUi.breakdowns.blocks.blocks"),
       value: warrior.blocks,
       color: "text-blue-400",
     },
     {
-      type: "Zablokowane obrażenia",
+      type: t("battleUi.breakdowns.blocks.blockedDamage"),
       value: warrior.blockedDamage,
       color: "text-green-400",
     },
@@ -30,7 +32,7 @@ export const BlocksBreakdown: FC<BlocksBreakdownProps> = ({ warrior }) => {
   if (blocksBreakdown.length === 0) {
     return (
       <div className="p-4 text-sm text-muted-foreground bg-background hover:bg-background">
-        Brak informacji o blokach dla tego wojownika
+        {t("battleUi.breakdowns.blocks.empty")}
       </div>
     );
   }
@@ -38,13 +40,17 @@ export const BlocksBreakdown: FC<BlocksBreakdownProps> = ({ warrior }) => {
   return (
     <div className="p-4 bg-background hover:bg-background">
       <h4 className="font-semibold mb-3 text-sm">
-        Szczegółowe informacje o blokach - {warrior.name}
+        {t("battleUi.breakdowns.blocks.title", { name: warrior.name })}
       </h4>
       <Table className="text-sm">
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            <TableHead className="h-8 text-xs">Typ</TableHead>
-            <TableHead className="h-8 text-xs text-right">Wartość</TableHead>
+            <TableHead className="h-8 text-xs">
+              {t("battleUi.breakdowns.headers.type")}
+            </TableHead>
+            <TableHead className="h-8 text-xs text-right">
+              {t("battleUi.breakdowns.headers.value")}
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

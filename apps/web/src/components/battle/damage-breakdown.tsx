@@ -8,90 +8,92 @@ import {
   TableRow,
 } from "@lootlog/ui/components/table";
 import type { FC } from "react";
+import { useTranslation } from "react-i18next";
 
 interface DamageBreakdownProps {
   warrior: Warrior;
 }
 
 export const DamageBreakdown: FC<DamageBreakdownProps> = ({ warrior }) => {
+  const { t } = useTranslation();
   const damageBreakdown = [
     {
-      type: "Wszystkie otrzymane obrażenia",
+      type: t("battleUi.breakdowns.damageTaken.all"),
       value: warrior.damageTaken,
       color: "text-white",
     },
     {
-      type: "Obrażenia dystansowe",
+      type: t("battleUi.breakdowns.damageTaken.ranged"),
       value: warrior.distanceDamageTaken,
       color: "text-green-400",
     },
     {
-      type: "Obrażenia fizyczne",
+      type: t("battleUi.breakdowns.damageTaken.physical"),
       value: warrior.meleeDamageTaken,
       color: "text-blue-300",
     },
     {
-      type: "Obrażenia pomocnicze",
+      type: t("battleUi.breakdowns.damageTaken.auxiliary"),
       value: warrior.auxiliaryDamageTaken,
       color: "text-orange-300",
     },
     {
-      type: "Obrażenia od ognia",
+      type: t("battleUi.breakdowns.damageTaken.fire"),
       value: warrior.fireDamageTaken,
       color: "text-red-400",
     },
     {
-      type: "Obrażenia od lodu",
+      type: t("battleUi.breakdowns.damageTaken.ice"),
       value: warrior.frostDamageTaken,
       color: "text-cyan-400",
     },
     {
-      type: "Obrażenia od błyskawic",
+      type: t("battleUi.breakdowns.damageTaken.lightning"),
       value: warrior.lightningDamageTaken,
       color: "text-yellow-400",
     },
     {
-      type: "Obrażenia od trzeciego ataku",
+      type: t("battleUi.breakdowns.damageTaken.thirdAttack"),
       value: warrior.thirdAttDamageTaken,
       color: "text-orange-400",
     },
     {
-      type: "Obrażenia od procentówek",
+      type: t("battleUi.breakdowns.damageTaken.percent"),
       value: warrior.trueDamageTaken,
       color: "text-white",
     },
     {
-      type: "Dodatkowe obrażenia od piętna bestii",
+      type: t("battleUi.breakdowns.damageTaken.stigma"),
       value: warrior.stigmaDamageTaken,
       color: "text-purple-400",
     },
     {
-      type: "Obrażenia od głębokich ran",
+      type: t("battleUi.breakdowns.damageTaken.wound"),
       value: warrior.woundDamageTaken,
       color: "text-orange-600",
     },
     {
-      type: "Obrażenia od trucizny",
+      type: t("battleUi.breakdowns.damageTaken.poison"),
       value: warrior.poisonDamageTaken,
       color: "text-green-600",
     },
     {
-      type: "Obrażenia od zranienia",
+      type: t("battleUi.breakdowns.damageTaken.injure"),
       value: warrior.injureDamageTaken,
       color: "text-red-300",
     },
     {
-      type: "Krytyczne obrażenia od głębokich ran",
+      type: t("battleUi.breakdowns.damageTaken.criticalWound"),
       value: warrior.critWoundDamageTaken,
       color: "text-orange-400",
     },
     {
-      type: "Pasywne obrażenia od ognia",
+      type: t("battleUi.breakdowns.damageTaken.firePassive"),
       value: warrior.firePassiveDamageTaken,
       color: "text-red-500",
     },
     {
-      type: "Pasywne obrażenia od błyskawic",
+      type: t("battleUi.breakdowns.damageTaken.lightningPassive"),
       value: warrior.lightningPassiveDamageTaken,
       color: "text-yellow-500",
     },
@@ -100,7 +102,7 @@ export const DamageBreakdown: FC<DamageBreakdownProps> = ({ warrior }) => {
   if (damageBreakdown.length === 0) {
     return (
       <div className="p-4 text-sm text-muted-foreground bg-background hover:bg-background">
-        Brak szczegółowych obrażeń dla tego wojownika
+        {t("battleUi.breakdowns.damageTaken.empty")}
       </div>
     );
   }
@@ -108,13 +110,17 @@ export const DamageBreakdown: FC<DamageBreakdownProps> = ({ warrior }) => {
   return (
     <div className="p-4 bg-background hover:bg-background">
       <h4 className="font-semibold mb-3 text-sm">
-        Szczegółowy podział obrażeń {warrior.name}
+        {t("battleUi.breakdowns.damageTaken.title", { name: warrior.name })}
       </h4>
       <Table className="text-sm">
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            <TableHead className="h-8 text-xs">Typ obrażeń</TableHead>
-            <TableHead className="h-8 text-xs text-right">Wartość</TableHead>
+            <TableHead className="h-8 text-xs">
+              {t("battleUi.breakdowns.headers.damageType")}
+            </TableHead>
+            <TableHead className="h-8 text-xs text-right">
+              {t("battleUi.breakdowns.headers.value")}
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

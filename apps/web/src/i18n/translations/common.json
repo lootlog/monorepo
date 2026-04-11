@@ -10,7 +10,21 @@
   },
   "save": "Zapisz",
   "saving": "Zapisywanie...",
+  "close": "Zamknij",
   "unsavedChanges": "Masz niezapisane zmiany",
+  "filterLabels": {
+    "period": "Okres"
+  },
+  "periodOptions": {
+    "24h": "Ostatnie 24 godziny",
+    "3d": "Ostatnie 3 dni",
+    "7d": "Ostatni tydzień",
+    "14d": "Ostatnie 2 tygodnie",
+    "30d": "Ostatni miesiąc",
+    "90d": "Ostatnie 3 miesiące",
+    "180d": "Ostatnie pół roku",
+    "all": "Wszystko"
+  },
   "breadcrumbs": {
     "lootsList": "Lista łupów",
     "timers": "Timery",
@@ -39,6 +53,33 @@
     "npcs": "Ustawienia potworów i NPC"
   },
   "greeting": "Cześć, {{name}}!",
+  "routeErrors": {
+    "guildShellTitle": "Nawigacja gildii",
+    "actions": {
+      "retry": "Spróbuj ponownie",
+      "goToDashboard": "Przejdź do dashboardu",
+      "goToInit": "Przejdź do startu",
+      "goToSignIn": "Przejdź do logowania"
+    },
+    "status": {
+      "401": {
+        "title": "Sesja wymaga ponownego logowania",
+        "description": "Nie udało się potwierdzić dostępu do tej strony. Zaloguj się ponownie i spróbuj jeszcze raz."
+      },
+      "403": {
+        "title": "Brak dostępu",
+        "description": "Ta strona jest dostępna tylko dla użytkowników z odpowiednimi uprawnieniami."
+      },
+      "404": {
+        "title": "Nie znaleziono strony",
+        "description": "Adres jest nieprawidłowy albo zasób został usunięty."
+      },
+      "500": {
+        "title": "Wystąpił błąd",
+        "description": "Nie udało się załadować tej strony. Spróbuj ponownie za chwilę."
+      }
+    }
+  },
   "activityLogs": {
     "loadError": "Nie udało się załadować aktywności.",
     "empty": "Nie znaleziono żadnych aktywności.",

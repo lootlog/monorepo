@@ -1,14 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { guildAvailableNotificationTargetsQueryOptions } from "@/hooks/api/guilds/use-guild-notifications";
-import { NotificationRuleFormPage } from "@/features/guild-notifications/notification-rule-form-page";
+import { NotificationRuleFormPage } from "@/features/guild/notifications/notification-rule-form-page";
+import { NotificationCreateSkeleton } from "@/features/guild/notifications/notification-create-skeleton";
+import { guildRolesQueryOptions } from "@/hooks/api/guilds/use-guild-roles";
 
 export const Route = createFileRoute(
   "/_authenticated/$guildId/notifications/$ruleId",
 )({
+  component: NotificationRuleFormPage,
+  pendingComponent: NotificationCreateSkeleton,
   loader: async ({ context, params }) => {
     await context.queryClient.ensureQueryData(
-      guildAvailableNotificationTargetsQueryOptions(params.guildId),
+      guildRolesQueryOptions(params.guildId),
     );
+
+    return null;
   },
-  component: NotificationRuleFormPage,
 });

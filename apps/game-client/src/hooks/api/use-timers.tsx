@@ -6,7 +6,7 @@ import { API_URL } from "@/config/api";
 import type { GuildMember } from "@/hooks/api/use-guild-members";
 import { queryKeys } from "@/features/public-api/query-keys";
 
-export type UseTimersOptions = {
+type UseTimersOptions = {
   world?: string;
 };
 

@@ -1,9 +1,5 @@
 import type { Mock } from "vitest";
-import { mockFn } from "src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
-import { plainToInstance } from "class-transformer";
-import { MembersController } from "./members.controller";
-import { MembersService } from "./members.service";
 import {
   type Guild,
   type Member,
@@ -11,8 +7,9 @@ import {
 } from "src/generated/prisma/client";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
-import { MemberEntity } from "src/shared/entities/member.entity";
-import { MemberRefreshJobEntity } from "src/shared/entities/member-refresh-job.entity";
+import { mockFn } from "src/test/mock-fn";
+import { MembersController } from "./members.controller";
+import { MembersService } from "./members.service";
 
 describe("MembersController", () => {
   let controller: MembersController;
@@ -117,10 +114,7 @@ describe("MembersController", () => {
         "guild-123",
       );
 
-      const expectedResult = plainToInstance(MemberEntity, mockMember, {
-        excludeExtraneousValues: true,
-      });
-      expect(result).toEqual(expectedResult);
+      expect(result).toEqual(mockMember);
       expect(membersService.getGuildMemberById).toHaveBeenCalledWith({
         discordId: "discord-123",
         guildId: "guild-123",
@@ -138,9 +132,7 @@ describe("MembersController", () => {
         "guild-123",
       );
 
-      expect(result).toEqual(
-        plainToInstance(MemberEntity, null, { excludeExtraneousValues: true }),
-      );
+      expect(result).toBeNull();
     });
   });
 
@@ -155,10 +147,7 @@ describe("MembersController", () => {
         "guild-123",
       );
 
-      const expectedResult = plainToInstance(MemberEntity, refreshedMember, {
-        excludeExtraneousValues: true,
-      });
-      expect(result).toEqual(expectedResult);
+      expect(result).toEqual(refreshedMember);
       expect(membersService.getGuildMemberById).toHaveBeenCalledWith({
         discordId: "discord-123",
         guildId: "guild-123",
@@ -176,10 +165,7 @@ describe("MembersController", () => {
 
       const result = await controller.refreshMember("discord-456", mockGuild);
 
-      const expectedResult = plainToInstance(MemberEntity, refreshedMember, {
-        excludeExtraneousValues: true,
-      });
-      expect(result).toEqual(expectedResult);
+      expect(result).toEqual(refreshedMember);
       expect(membersService.refreshMember).toHaveBeenCalledWith({
         discordId: "discord-456",
         guildId: mockGuild.id,
@@ -198,10 +184,7 @@ describe("MembersController", () => {
 
       const result = await controller.getGuildMembers(mockGuild);
 
-      const expectedResult = plainToInstance(MemberEntity, members, {
-        excludeExtraneousValues: true,
-      });
-      expect(result).toEqual(expectedResult);
+      expect(result).toEqual(members);
       expect(membersService.getGuildMembers).toHaveBeenCalledWith(
         mockGuild.id,
         false,
@@ -213,9 +196,7 @@ describe("MembersController", () => {
 
       const result = await controller.getGuildMembers(mockGuild);
 
-      expect(result).toEqual(
-        plainToInstance(MemberEntity, [], { excludeExtraneousValues: true }),
-      );
+      expect(result).toEqual([]);
     });
   });
 
@@ -228,12 +209,7 @@ describe("MembersController", () => {
         "discord-123",
       );
 
-      const expectedResult = plainToInstance(
-        MemberRefreshJobEntity,
-        mockRefreshJob,
-        { excludeExtraneousValues: true },
-      );
-      expect(result).toEqual(expectedResult);
+      expect(result).toEqual(mockRefreshJob);
       expect(membersService.createBulkRefreshJob).toHaveBeenCalledWith(
         mockGuild.id,
         "discord-123",
@@ -253,12 +229,7 @@ describe("MembersController", () => {
 
       const result = await controller.getLatestRefreshJob(mockGuild);
 
-      const expectedResult = plainToInstance(
-        MemberRefreshJobEntity,
-        completedJob,
-        { excludeExtraneousValues: true },
-      );
-      expect(result).toEqual(expectedResult);
+      expect(result).toEqual(completedJob);
       expect(membersService.getLatestRefreshJob).toHaveBeenCalledWith(
         mockGuild.id,
       );
@@ -284,12 +255,7 @@ describe("MembersController", () => {
 
       const result = await controller.getRefreshJobStatus("1");
 
-      const expectedResult = plainToInstance(
-        MemberRefreshJobEntity,
-        processingJob,
-        { excludeExtraneousValues: true },
-      );
-      expect(result).toEqual(expectedResult);
+      expect(result).toEqual(processingJob);
       expect(membersService.getRefreshJobStatus).toHaveBeenCalledWith(1);
     });
 
@@ -313,12 +279,7 @@ describe("MembersController", () => {
 
       const result = await controller.getRefreshJobStatus("1");
 
-      const expectedResult = plainToInstance(
-        MemberRefreshJobEntity,
-        failedJob,
-        { excludeExtraneousValues: true },
-      );
-      expect(result).toEqual(expectedResult);
+      expect(result).toEqual(failedJob);
       expect(result.status).toBe("FAILED");
       expect(result.failedMembers).toBe(7);
     });

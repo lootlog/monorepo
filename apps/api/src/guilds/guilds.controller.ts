@@ -17,7 +17,7 @@ import {
   ApiParam,
   ApiQuery,
 } from "@nestjs/swagger";
-import { plainToInstance } from "class-transformer";
+import { ZodResponse } from "nestjs-zod";
 import { type Guild, Permission } from "src/generated/prisma/client";
 import { UpdateGuildConfigDto } from "src/guilds/dto/update-guild-config.dto";
 import { UserGuildPermissionsDto } from "src/guilds/dto/user-guild-permissions.dto";
@@ -28,7 +28,7 @@ import { AuthGuard } from "src/shared/guards/auth.guard";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 import { MemberSyncInterceptor } from "src/shared/interceptors/member-sync.interceptor";
-import { GuildEntity } from "src/shared/entities/guild.entity";
+import { GuildResponseDto } from "src/shared/dto/guild-response.dto";
 
 @ApiTags("guilds")
 @ApiBearerAuth()
@@ -43,7 +43,11 @@ export class GuildsController {
     summary: "Get user guilds",
     description: "Retrieve all guilds for the authenticated user",
   })
-  @ApiResponse({ status: 200, description: "List of user guilds" })
+  @ZodResponse({
+    status: 200,
+    description: "List of user guilds",
+    type: [GuildResponseDto],
+  })
   @ApiQuery({
     name: "source",
     required: false,
@@ -54,14 +58,7 @@ export class GuildsController {
     @UserId() userId: string,
     @Query("source") source: string,
   ) {
-    const guilds = await this.guildsService.getUserGuilds(
-      discordId,
-      userId,
-      source,
-    );
-    return plainToInstance(GuildEntity, guilds, {
-      excludeExtraneousValues: true,
-    });
+    return this.guildsService.getUserGuilds(discordId, userId, source);
   }
 
   @Get("/@me/permissions")
@@ -70,7 +67,7 @@ export class GuildsController {
     description:
       "Retrieve all guilds with permissions and roles for the authenticated user",
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "List of user guilds with permissions",
     type: [UserGuildPermissionsDto],
@@ -97,17 +94,23 @@ export class GuildsController {
     description: "Retrieve guild information by guild ID",
   })
   @ApiParam({ name: "guildId", description: "Guild ID" })
-  @ApiResponse({ status: 200, description: "Guild information" })
+  @ZodResponse({
+    status: 200,
+    description: "Guild information",
+    type: GuildResponseDto,
+  })
   async getGuildById(@GuildData() guild: Guild) {
-    const guildData = await this.guildsService.getGuildById(guild.id);
-    return plainToInstance(GuildEntity, guildData, {
-      excludeExtraneousValues: true,
-    });
+    return this.guildsService.getGuildById(guild.id);
   }
 
   @Permissions(Permission.OWNER, Permission.ADMIN)
   @UseGuards(PermissionsGuard)
   @Patch(":guildId/config")
+  @ZodResponse({
+    status: 200,
+    description: "Updated guild config",
+    type: GuildResponseDto,
+  })
   async updateGuildConfig(
     @GuildData() guild: Guild,
     @Body() data: UpdateGuildConfigDto,
@@ -116,19 +119,19 @@ export class GuildsController {
       guild.id,
       data,
     );
-    return plainToInstance(GuildEntity, updatedGuild, {
-      excludeExtraneousValues: true,
-    });
+    return updatedGuild;
   }
 
   @Permissions(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
   @Get(":guildId/config")
+  @ZodResponse({
+    status: 200,
+    description: "Guild config",
+    type: GuildResponseDto,
+  })
   async getGuildConfig(@GuildData() guild: Guild) {
-    const guildData = await this.guildsService.getGuildById(guild.id);
-    return plainToInstance(GuildEntity, guildData, {
-      excludeExtraneousValues: true,
-    });
+    return this.guildsService.getGuildById(guild.id);
   }
 
   @Permissions(Permission.LOOTLOG_ACCESS)

@@ -1,4 +1,4 @@
-import { INestApplication, ValidationPipe } from "@nestjs/common";
+import { type INestApplication } from "@nestjs/common";
 import request from "supertest";
 import { AppModule } from "../src/app.module";
 import { createTestLootPayload, TEST_USERS } from "./test-helpers";
@@ -14,7 +14,6 @@ describe("Loot Diagnostic", () => {
 
     app = moduleFixture.createNestApplication();
     app.enableShutdownHooks();
-    app.useGlobalPipes(new ValidationPipe({ transform: true }));
     await app.init();
   });
 

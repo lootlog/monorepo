@@ -8,15 +8,11 @@ export async function validateToken({
   issuer,
   audience,
 }: VerifyTokenOptions): Promise<VerifyTokenResponse> {
-  let keyset;
-
-  if (jwks) {
-    keyset = createLocalJWKSet(jwks);
-  }
-
-  if (jwksUri) {
-    keyset = createRemoteJWKSet(new URL(jwksUri));
-  }
+  const keyset = jwks
+    ? createLocalJWKSet(jwks)
+    : jwksUri
+      ? createRemoteJWKSet(new URL(jwksUri))
+      : undefined;
 
   if (!keyset) {
     throw new Error("No keyset provided");

@@ -8,7 +8,7 @@ import type {
   PaginationResult,
 } from "../interfaces/pagination.interface";
 
-export type WhereBuilder = (table: typeof battles) => SQL | undefined;
+type WhereBuilder = (table: typeof battles) => SQL | undefined;
 
 interface DecodedCursor {
   createdAt: Date;

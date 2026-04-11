@@ -1,14 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { guildNotificationJobsQueryOptions } from "@/hooks/api/guilds/use-guild-notifications";
-import { NotificationsHistoryPage } from "@/features/guild-notifications/notifications-history-page";
+import { NotificationsHistoryPage } from "@/features/guild/notifications/notifications-history-page";
+import { NotificationHistorySkeleton } from "@/features/guild/notifications/notification-history-skeleton";
 
 export const Route = createFileRoute(
   "/_authenticated/$guildId/notifications/history",
 )({
-  loader: async ({ context, params }) => {
-    await context.queryClient.ensureQueryData(
-      guildNotificationJobsQueryOptions(params.guildId),
-    );
-  },
   component: NotificationsHistoryPage,
+  pendingComponent: NotificationHistorySkeleton,
 });

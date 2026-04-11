@@ -13,11 +13,12 @@ import {
   ApiOperation,
   ApiResponse,
 } from "@nestjs/swagger";
-import { plainToInstance } from "class-transformer";
+import { ZodResponse } from "nestjs-zod";
 import { AuthGuard } from "src/shared/guards/auth.guard";
+import { StatusOkResponseDto } from "src/shared/dto/common-response.dto";
+import { UserPreferencesResponseDto } from "src/shared/dto/user-preferences-response.dto";
 import { UpdateUserPreferencesDto } from "src/users/dto/update-user-preferences.dto";
 import { UsersService } from "src/users/users.service";
-import { UserPreferencesEntity } from "src/shared/entities/user-preferences.entity";
 
 @ApiTags("users")
 @ApiBearerAuth()
@@ -31,7 +32,11 @@ export class UsersController {
     summary: "Delete user account",
     description: "Permanently delete user account and associated data",
   })
-  @ApiResponse({ status: 200, description: "Account deleted" })
+  @ZodResponse({
+    status: 200,
+    description: "Account deleted",
+    type: StatusOkResponseDto,
+  })
   @ApiResponse({
     status: 503,
     description: "Account deletion is temporarily unavailable",
@@ -41,7 +46,7 @@ export class UsersController {
     @DiscordId() discordId: string,
   ) {
     await this.usersService.deleteAccount({ authUserId, discordId });
-    return { status: "OK" };
+    return { status: "OK" as const };
   }
 
   @Get("/@me/preferences")
@@ -49,12 +54,13 @@ export class UsersController {
     summary: "Get user preferences",
     description: "Retrieve user preferences",
   })
-  @ApiResponse({ status: 200, description: "User preferences" })
+  @ZodResponse({
+    status: 200,
+    description: "User preferences",
+    type: UserPreferencesResponseDto,
+  })
   async getUserPreferences(@UserId() userId: string) {
-    const preferences = await this.usersService.getUserPreferences(userId);
-    return plainToInstance(UserPreferencesEntity, preferences, {
-      excludeExtraneousValues: true,
-    });
+    return this.usersService.getUserPreferences(userId);
   }
 
   @Patch("/@me/preferences")
@@ -62,7 +68,11 @@ export class UsersController {
     summary: "Update user preferences",
     description: "Update user preferences",
   })
-  @ApiResponse({ status: 200, description: "Updated user preferences" })
+  @ZodResponse({
+    status: 200,
+    description: "Updated user preferences",
+    type: UserPreferencesResponseDto,
+  })
   async updateUserPreferences(
     @UserId() userId: string,
     @Body() preferences: UpdateUserPreferencesDto,
@@ -71,8 +81,6 @@ export class UsersController {
       userId,
       preferences,
     );
-    return plainToInstance(UserPreferencesEntity, updatedPreferences, {
-      excludeExtraneousValues: true,
-    });
+    return updatedPreferences;
   }
 }

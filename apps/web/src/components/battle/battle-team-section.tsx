@@ -1,6 +1,7 @@
 import { cn } from "@lootlog/ui/lib/utils";
 import { Sword } from "lucide-react";
 import type { FC } from "react";
+import { useTranslation } from "react-i18next";
 import { TeamDisplay } from "./team-display";
 import type { Warrior } from "@/hooks/api/battle-log/use-battles";
 
@@ -22,12 +23,14 @@ export const BattleTeamSection: FC<BattleTeamSectionProps> = ({
   userTeam,
   characterId,
   cdnBaseUrl,
-  teamLabels = {
-    userTeam: "Your Team",
-    enemyTeam: "Enemies",
-  },
+  teamLabels,
 }) => {
+  const { t } = useTranslation();
   const isUserTeam = userTeam === teamNumber;
+  const resolvedTeamLabels = teamLabels ?? {
+    userTeam: t("battleUi.team.userTeam"),
+    enemyTeam: t("battleUi.team.enemyTeam"),
+  };
 
   return (
     <div className="space-y-3">
@@ -38,7 +41,9 @@ export const BattleTeamSection: FC<BattleTeamSectionProps> = ({
         })}
       >
         <Sword className="h-5 w-5" />
-        {isUserTeam ? teamLabels.userTeam : teamLabels.enemyTeam}
+        {isUserTeam
+          ? resolvedTeamLabels.userTeam
+          : resolvedTeamLabels.enemyTeam}
       </h3>
       <div className="space-y-2">
         <TeamDisplay

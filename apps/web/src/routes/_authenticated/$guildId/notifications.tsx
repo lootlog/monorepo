@@ -1,12 +1,24 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router";
+import { guildDiscordSyncQueryOptions } from "@/hooks/api/guilds/use-guild-discord-sync";
 import {
   guildNotificationJobsQueryOptions,
   guildNotificationsQueryOptions,
 } from "@/hooks/api/guilds/use-guild-notifications";
-import { guildDiscordSyncQueryOptions } from "@/hooks/api/guilds/use-guild-discord-sync";
+
+function GuildNotificationsLayout() {
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <Outlet />
+    </div>
+  );
+}
 
 export const Route = createFileRoute("/_authenticated/$guildId/notifications")({
-  loader: async ({ context, params }) => {
+  loader: async ({ context, params, preload }) => {
+    if (preload) {
+      return null;
+    }
+
     await Promise.all([
       context.queryClient.ensureQueryData(
         guildNotificationsQueryOptions(params.guildId),
@@ -18,10 +30,8 @@ export const Route = createFileRoute("/_authenticated/$guildId/notifications")({
         guildDiscordSyncQueryOptions(params.guildId),
       ),
     ]);
+
+    return null;
   },
-  component: () => (
-    <div className="flex h-full min-h-0 flex-col">
-      <Outlet />
-    </div>
-  ),
+  component: GuildNotificationsLayout,
 });

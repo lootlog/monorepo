@@ -53,7 +53,6 @@ export class ActivitiesEventsService {
 
     if (!result.success) {
       this.logger.error({
-        level: "error",
         message:
           "Invalid activity payload - validation failed (permanent error, sending to DLQ)",
         rawPayload: data,
@@ -94,7 +93,6 @@ export class ActivitiesEventsService {
       await this.activitiesService.create(dto);
     } catch (error) {
       this.logger.error({
-        level: "error",
         message: "Failed to create activity",
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
@@ -116,8 +114,7 @@ export class ActivitiesEventsService {
     },
   })
   handleActivityCreateDlq(@RabbitPayload() message: unknown) {
-    this.logger.log({
-      level: "warn",
+    this.logger.warn({
       message: "Activity CREATE DLQ message - manual intervention needed",
       rawPayload: message,
     });

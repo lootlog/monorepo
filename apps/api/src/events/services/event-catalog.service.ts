@@ -25,7 +25,7 @@ import type { UpdateEventDto } from "../dto/update-event.dto";
 import type { UpdateHeroDto } from "../dto/update-hero.dto";
 import type { UpdateLocationDto } from "../dto/update-location.dto";
 import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant";
-import type { AutoCloseRespawnWindowJobData } from "../respawn-window.processor";
+import type { AutoCloseRespawnWindowJobData } from "../interfaces/auto-close-respawn-window-job-data";
 import {
   attachComputedEventActive,
   buildActiveEventWhere,

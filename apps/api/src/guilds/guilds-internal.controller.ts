@@ -1,7 +1,15 @@
-import { Controller, Get, Query } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from "@nestjs/swagger";
+import { Controller, Get, Param, Query } from "@nestjs/common";
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiQuery,
+  ApiParam,
+} from "@nestjs/swagger";
+import { ZodResponse } from "nestjs-zod";
 import { UserGuildPermissionsDto } from "src/guilds/dto/user-guild-permissions.dto";
 import { GuildsService } from "src/guilds/guilds.service";
+import { GuildResponseDto } from "src/shared/dto/guild-response.dto";
 
 @ApiTags("internal")
 @Controller("internal/guilds")
@@ -34,5 +42,25 @@ export class GuildsInternalController {
     }
 
     return this.guildsService.getUserGuildsWithPermissions(discordId, userId);
+  }
+
+  @Get(":idOrVanityUrl")
+  @ApiOperation({
+    summary: "[Internal] Get guild by ID or vanity URL",
+    description:
+      "Internal endpoint for services that need to resolve a guild identifier to its canonical guild data.",
+  })
+  @ApiParam({
+    name: "idOrVanityUrl",
+    required: true,
+    description: "Guild ID or vanity URL",
+  })
+  @ZodResponse({
+    status: 200,
+    description: "Resolved guild data",
+    type: GuildResponseDto,
+  })
+  getGuildByIdOrVanityUrl(@Param("idOrVanityUrl") idOrVanityUrl: string) {
+    return this.guildsService.getGuildById(idOrVanityUrl);
   }
 }

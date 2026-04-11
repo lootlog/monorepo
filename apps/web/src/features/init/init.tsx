@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { ROUTES } from "@/config/routes";
 import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 
 export const Init: React.FC = () => {
   const navigate = useNavigate();
@@ -14,7 +15,7 @@ export const Init: React.FC = () => {
 
   useEffect(() => {
     if (guildData) {
-      queryClient.invalidateQueries({ queryKey: ["user-guilds"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.guilds.user() });
       navigate({ to: ROUTES.guild.base(guildData.id) });
     }
   }, [navigate, guildData, queryClient]);

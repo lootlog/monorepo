@@ -1,16 +1,11 @@
 import { Body, Controller, Get, Patch, UseGuards } from "@nestjs/common";
 import { UserId } from "@lootlog/nest-shared";
-import {
-  ApiTags,
-  ApiBearerAuth,
-  ApiOperation,
-  ApiResponse,
-} from "@nestjs/swagger";
-import { plainToInstance } from "class-transformer";
+import { ApiTags, ApiBearerAuth, ApiOperation } from "@nestjs/swagger";
+import { ZodResponse } from "nestjs-zod";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { UpdateSoundSettingsDto } from "./dto/update-sound-settings.dto";
 import { SoundSettingsService } from "src/sound-settings/sound-settings.service";
-import { SoundSettingsEntity } from "src/sound-settings/entities/sound-settings.entity";
+import { SoundSettingsResponseDto } from "./dto/sound-settings-response.dto";
 
 @ApiTags("sound-settings")
 @ApiBearerAuth()
@@ -24,16 +19,13 @@ export class SoundSettingsController {
     summary: "Get sound settings",
     description: "Retrieve user sound settings",
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "User sound settings",
-    type: SoundSettingsEntity,
+    type: SoundSettingsResponseDto,
   })
-  async getSettings(@UserId() userId: string) {
-    const settings = await this.soundSettingsService.getSettings(userId);
-    return plainToInstance(SoundSettingsEntity, settings, {
-      excludeExtraneousValues: true,
-    });
+  getSettings(@UserId() userId: string) {
+    return this.soundSettingsService.getSettings(userId);
   }
 
   @Patch()
@@ -41,21 +33,15 @@ export class SoundSettingsController {
     summary: "Update sound settings",
     description: "Update user sound settings",
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Updated sound settings",
-    type: SoundSettingsEntity,
+    type: SoundSettingsResponseDto,
   })
-  async updateSettings(
+  updateSettings(
     @UserId() userId: string,
     @Body() dto: UpdateSoundSettingsDto,
   ) {
-    const settings = await this.soundSettingsService.updateSettings(
-      userId,
-      dto,
-    );
-    return plainToInstance(SoundSettingsEntity, settings, {
-      excludeExtraneousValues: true,
-    });
+    return this.soundSettingsService.updateSettings(userId, dto);
   }
 }

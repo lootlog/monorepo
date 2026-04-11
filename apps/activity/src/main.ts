@@ -1,4 +1,4 @@
-import { NestFactory, Reflector } from "@nestjs/core";
+import { NestFactory } from "@nestjs/core";
 import {
   FastifyAdapter,
   type NestFastifyApplication,
@@ -7,7 +7,6 @@ import { ConfigService } from "@nestjs/config";
 import { WINSTON_MODULE_NEST_PROVIDER } from "nest-winston";
 
 import { AppModule } from "./app.module";
-import { ClassSerializerInterceptor } from "@nestjs/common";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { cleanupOpenApiDoc } from "nestjs-zod";
 import { ServiceConfig } from "src/config/service.config";
@@ -29,12 +28,6 @@ async function bootstrap() {
   });
   const { path, title, description, version } =
     configService.get<SwaggerConfig>(ConfigKey.SWAGGER, { infer: true });
-
-  app.useGlobalInterceptors(
-    new ClassSerializerInterceptor(app.get(Reflector), {
-      excludeExtraneousValues: true,
-    }),
-  );
 
   const swaggerDocument = new DocumentBuilder()
     .setTitle(title)

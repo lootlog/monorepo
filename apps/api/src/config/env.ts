@@ -32,5 +32,3 @@ export const env = createEnv(
     RESERVATIONS_RETENTION_DAYS: z.coerce.number().default(30),
   }),
 );
-
-export type Env = typeof env;

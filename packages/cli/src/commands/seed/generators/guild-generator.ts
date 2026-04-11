@@ -4,7 +4,7 @@ import { v7 as uuidv7 } from "uuid";
 import { SEED_CONFIG } from "../config.js";
 import { Permission } from "../../../../../../apps/api/generated/client/index.js";
 
-export interface GeneratedRole {
+interface GeneratedRole {
   id: string;
   name: string;
   color: number;
@@ -14,7 +14,7 @@ export interface GeneratedRole {
   lvlRangeTo: number;
 }
 
-export interface GeneratedMember {
+interface GeneratedMember {
   userId: string;
   name: string;
   avatar?: string;
@@ -22,7 +22,7 @@ export interface GeneratedMember {
   active: boolean;
 }
 
-export interface GeneratedGuild {
+interface GeneratedGuild {
   id: string;
   name: string;
   icon?: string;

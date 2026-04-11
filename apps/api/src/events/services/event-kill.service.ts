@@ -14,7 +14,7 @@ import { EventPointsService } from "./event-points.service";
 import { EventTrackingService } from "./event-tracking.service";
 import { EventSummaryService } from "./event-summary.service";
 import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant";
-import type { AutoCloseRespawnWindowJobData } from "../respawn-window.processor";
+import type { AutoCloseRespawnWindowJobData } from "../interfaces/auto-close-respawn-window-job-data";
 import type { KillTimerData } from "../interfaces/kill-timer-data.interface";
 import {
   buildEventHeroKillDedupKey,
@@ -50,7 +50,7 @@ interface GapTimelineEntry {
   durationSeconds: number;
 }
 
-export interface EventTimerNpc {
+interface EventTimerNpc {
   name: string;
   icon: string | null;
 }
@@ -324,7 +324,7 @@ export class EventKillService {
 
       return {
         mapId,
-        mapName: params.mapNameById.get(mapId) || "",
+        mapName: params.mapNameById.get(mapId) ?? "",
         presenceTimeSeconds: presenceStats?.presenceTimeSeconds ?? 0,
         afkTimeSeconds: presenceStats?.afkTimeSeconds ?? 0,
       };
@@ -1385,12 +1385,12 @@ export class EventKillService {
 
         return {
           mapId: assignment.mapId,
-          mapName: mapIdToName.get(assignment.mapId) || "",
+          mapName: mapIdToName.get(assignment.mapId) ?? "",
           assignedAt: assignment.assignedAt.toISOString(),
-          unassignedAt: assignment.unassignedAt?.toISOString() || null,
+          unassignedAt: assignment.unassignedAt?.toISOString() ?? null,
           assignmentDurationSeconds,
-          presenceTimeSeconds: presence?.presenceTimeSeconds || 0,
-          afkTimeSeconds: presence?.afkTimeSeconds || 0,
+          presenceTimeSeconds: presence?.presenceTimeSeconds ?? 0,
+          afkTimeSeconds: presence?.afkTimeSeconds ?? 0,
         };
       });
 
@@ -1572,12 +1572,12 @@ export class EventKillService {
 
             return {
               mapId: assignment.mapId,
-              mapName: mapIdToName.get(assignment.mapId) || "",
+              mapName: mapIdToName.get(assignment.mapId) ?? "",
               assignedAt: assignment.assignedAt.toISOString(),
-              unassignedAt: assignment.unassignedAt?.toISOString() || null,
+              unassignedAt: assignment.unassignedAt?.toISOString() ?? null,
               assignmentDurationSeconds,
-              presenceTimeSeconds: presence?.presenceTimeSeconds || 0,
-              afkTimeSeconds: presence?.afkTimeSeconds || 0,
+              presenceTimeSeconds: presence?.presenceTimeSeconds ?? 0,
+              afkTimeSeconds: presence?.afkTimeSeconds ?? 0,
             };
           })
           .filter((entry): entry is KillPointMapDataEntry => entry !== null);

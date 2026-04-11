@@ -1,7 +1,8 @@
 import { useQuery, queryOptions } from "@tanstack/react-query";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { apiClient } from "@/lib/api-client/api-client";
-import { reservationSlug } from "@/features/reservations/reservation-slug";
+import { reservationSlug } from "@/features/guild/reservations/reservation-slug";
+import { queryKeys } from "@/lib/query-keys";
 
 export interface ApiReservation {
   id: number;
@@ -115,20 +116,16 @@ export const mapReservationsByAlias = (
 
 export const reservationsQueryOptions = (guildId: string) =>
   queryOptions({
-    queryKey: ["reservations", guildId],
+    queryKey: queryKeys.reservations.all(guildId),
     queryFn: async () => {
       const response = await apiClient.get<Record<string, ApiReservation[]>>(
         `/guilds/${guildId}/reservations`,
       );
 
-      return mapReservationsByAlias(response.data);
+      return mapReservationsByAlias(response);
     },
     enabled: !!guildId,
-    staleTime: 0,
-    refetchOnMount: "always",
-    refetchOnWindowFocus: "always",
-    refetchOnReconnect: "always",
-    meta: { persist: false },
+    staleTime: 30_000,
   });
 
 export const useReservations = () => {

@@ -133,10 +133,3 @@ export interface PlayerVsPlayerPaginatedResponseDto {
     };
   };
 }
-
-export interface BattleStatisticsResponseDto {
-  professionWinRate: ProfessionWinRateDto[];
-  headToHead: HeadToHeadRecordDto[];
-  streak: StreakDto;
-  duration: BattleDurationStatsDto;
-}

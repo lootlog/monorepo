@@ -37,7 +37,7 @@ interface ItemData {
 
 type ItemRarity = "UNIQUE" | "HEROIC" | "LEGENDARY" | "UPGRADED";
 
-export interface GeneratedLoot {
+interface GeneratedLoot {
   npcs: Array<{
     id: number;
     wt: number;

@@ -96,27 +96,3 @@ export interface IBattlesService {
    */
   analyzeBattle(dto: CreateBattleDto): BattleAnalysis;
 }
-
-// Error types
-export class BattleNotFoundError extends Error {
-  constructor(battleId: string) {
-    super(`Battle with ID ${battleId} not found`);
-    this.name = "BattleNotFoundError";
-  }
-}
-
-export class BattleProcessingError extends Error {
-  constructor(message: string, cause?: Error) {
-    super(message);
-    this.name = "BattleProcessingError";
-    this.cause = cause;
-  }
-}
-
-export class R2StorageError extends Error {
-  constructor(message: string, battleId?: string, cause?: Error) {
-    super(battleId ? `${message} for battle ${battleId}` : message);
-    this.name = "R2StorageError";
-    this.cause = cause;
-  }
-}

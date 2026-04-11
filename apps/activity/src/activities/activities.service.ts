@@ -1,9 +1,18 @@
+import { createHash } from "node:crypto";
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { ActivityType, Prisma } from "src/generated/prisma/client";
 import { PrismaService } from "src/shared/db/prisma.service";
 import { CreateActivityDto } from "./dto/create-activity.dto";
-import { ActivityEntity } from "./entities/activity.entity";
-import { createHash } from "node:crypto";
-import { ActivityType, Prisma } from "src/generated/prisma/client";
+
+function mapActivityDetails(
+  details: unknown,
+): Record<string, unknown> | undefined {
+  if (!details || typeof details !== "object" || Array.isArray(details)) {
+    return undefined;
+  }
+
+  return details as Record<string, unknown>;
+}
 
 @Injectable()
 export class ActivitiesService {
@@ -11,7 +20,7 @@ export class ActivitiesService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(dto: CreateActivityDto): Promise<ActivityEntity> {
+  async create(dto: CreateActivityDto) {
     let actorSnapshotId: string | undefined;
     if (dto.actorSnapshot) {
       actorSnapshotId = await this.findOrCreateActorSnapshot(
@@ -40,10 +49,11 @@ export class ActivitiesService {
         },
       });
 
-      return new ActivityEntity({
+      return {
         ...activity,
-        details: activity.details as Record<string, unknown> | undefined,
-      });
+        actorSnapshot: activity.actorSnapshot ?? undefined,
+        details: mapActivityDetails(activity.details),
+      };
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -64,10 +74,11 @@ export class ActivitiesService {
           throw error;
         }
 
-        return new ActivityEntity({
+        return {
           ...existing,
-          details: existing.details as Record<string, unknown> | undefined,
-        });
+          actorSnapshot: existing.actorSnapshot ?? undefined,
+          details: mapActivityDetails(existing.details),
+        };
       }
 
       throw error;

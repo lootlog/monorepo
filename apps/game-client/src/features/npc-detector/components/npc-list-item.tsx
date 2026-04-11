@@ -27,7 +27,7 @@ import { useSession } from "@/hooks/auth/use-session";
 
 const BUTTON_UNLOCK_DELAY_MS = 5000;
 
-export type NpcListItemProps = {
+type NpcListItemProps = {
   npc: GameNpcWithLocation;
   idx: number;
 };

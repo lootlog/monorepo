@@ -33,7 +33,7 @@ export interface BaseObservabilityConfig {
   enableDebugLogging?: boolean;
 }
 
-export interface ObservabilityComponents {
+interface ObservabilityComponents {
   resource: ReturnType<typeof resourceFromAttributes>;
   sampler: ParentBasedSampler;
   spanProcessor: SpanProcessor;

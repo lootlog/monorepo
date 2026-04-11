@@ -2,12 +2,14 @@ import { useState } from "react";
 import { FolderPlus } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import { Input } from "@lootlog/ui/components/input";
+import { useTranslation } from "react-i18next";
 
 interface AddCategoryFormProps {
   onAddCategory: (categoryName: string) => void;
 }
 
 export const AddCategoryForm = ({ onAddCategory }: AddCategoryFormProps) => {
+  const { t } = useTranslation();
   const [newCategoryName, setNewCategoryName] = useState("");
   const [isAddingCategory, setIsAddingCategory] = useState(false);
 
@@ -33,7 +35,7 @@ export const AddCategoryForm = ({ onAddCategory }: AddCategoryFormProps) => {
               setNewCategoryName("");
             }
           }}
-          placeholder="Nazwa nowej kategorii..."
+          placeholder={t("battleUi.customization.categoryPlaceholder")}
           className="flex-1 h-8"
           autoFocus
         />
@@ -43,7 +45,7 @@ export const AddCategoryForm = ({ onAddCategory }: AddCategoryFormProps) => {
           onClick={handleAddCategory}
           className="h-8 px-3"
         >
-          Dodaj
+          {t("battleUi.customization.add")}
         </Button>
         <Button
           variant="ghost"
@@ -54,7 +56,7 @@ export const AddCategoryForm = ({ onAddCategory }: AddCategoryFormProps) => {
           }}
           className="h-8 px-3"
         >
-          Anuluj
+          {t("battleUi.customization.cancel")}
         </Button>
       </div>
     );
@@ -67,7 +69,7 @@ export const AddCategoryForm = ({ onAddCategory }: AddCategoryFormProps) => {
       className="w-full gap-2 mt-2"
     >
       <FolderPlus className="h-4 w-4" />
-      Dodaj kategorię
+      {t("battleUi.customization.addCategory")}
     </Button>
   );
 };

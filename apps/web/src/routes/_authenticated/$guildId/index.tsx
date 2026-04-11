@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Guild } from "@/features/guild/guild";
+import { LootsListPage } from "@/features/guild/loots-list/loots-list";
+import { LootsListPageSkeleton } from "@/features/guild/loots-list/loots-list-page-skeleton";
 
 export const Route = createFileRoute("/_authenticated/$guildId/")({
-  component: Guild,
+  component: LootsListPage,
+  pendingComponent: LootsListPageSkeleton,
 });

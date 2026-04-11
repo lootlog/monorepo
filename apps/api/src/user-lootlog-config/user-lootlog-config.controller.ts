@@ -7,11 +7,14 @@ import {
   ApiResponse,
   ApiParam,
 } from "@nestjs/swagger";
-import { plainToInstance } from "class-transformer";
+import { ZodResponse } from "nestjs-zod";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { CreateOrUpdateLootlogCharacterConfigDto } from "src/user-lootlog-config/dto/create-user-account-config.dto";
 import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
-import { UserLootlogConfigEntity } from "src/shared/entities/user-lootlog-config.entity";
+import {
+  UserLootlogConfigAccountResponseDto,
+  UserLootlogConfigResponseDto,
+} from "src/shared/dto/user-lootlog-config-response.dto";
 
 @ApiTags("user-lootlog-config")
 @ApiBearerAuth()
@@ -32,34 +35,20 @@ export class UserLootlogConfigController {
     description: "Account ID",
     example: "account_123",
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "User lootlog configuration",
-    type: UserLootlogConfigEntity,
+    type: UserLootlogConfigAccountResponseDto,
   })
   @ApiResponse({ status: 404, description: "Configuration not found" })
-  async getUserLootlogConfigByAccountId(
+  getUserLootlogConfigByAccountId(
     @DiscordId() discordId: string,
     @Param("accountId") accountId: string,
   ) {
-    const configs = await this.userLootlogConfigService.getLootlogAccountConfig(
+    return this.userLootlogConfigService.getLootlogAccountConfig(
       discordId,
       accountId,
     );
-
-    const serialized = Object.entries(configs).reduce(
-      (acc, [characterId, config]) => {
-        return {
-          ...acc,
-          [characterId]: plainToInstance(UserLootlogConfigEntity, config, {
-            excludeExtraneousValues: true,
-          }),
-        };
-      },
-      {},
-    );
-
-    return serialized;
   }
 
   @Put("accounts/:accountId")
@@ -72,25 +61,20 @@ export class UserLootlogConfigController {
     description: "Account ID",
     example: "account_123",
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Configuration created/updated successfully",
-    type: UserLootlogConfigEntity,
+    type: UserLootlogConfigResponseDto,
   })
-  async createOrUpdateLootlogCharacterConfig(
+  createOrUpdateLootlogCharacterConfig(
     @DiscordId() discordId: string,
     @Param("accountId") accountId: string,
     @Body() data: CreateOrUpdateLootlogCharacterConfigDto,
   ) {
-    const config =
-      await this.userLootlogConfigService.createOrUpdateLootlogCharacterConfig(
-        discordId,
-        accountId,
-        data,
-      );
-
-    return plainToInstance(UserLootlogConfigEntity, config, {
-      excludeExtraneousValues: true,
-    });
+    return this.userLootlogConfigService.createOrUpdateLootlogCharacterConfig(
+      discordId,
+      accountId,
+      data,
+    );
   }
 }

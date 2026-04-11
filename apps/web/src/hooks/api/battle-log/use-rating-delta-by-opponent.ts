@@ -1,5 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
-import { battlelogApiClient } from "@/lib/api-client/api-client";
+import { queryOptions, useQuery } from "@tanstack/react-query";
+import {
+  battlelogApiClient,
+  type ApiRequestConfig,
+} from "@/lib/api-client/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 export interface RatingDeltaByOpponentRecord {
   opponentId: string;
@@ -23,20 +27,27 @@ interface UseRatingDeltaByOpponentParams {
   maxLevel?: number;
 }
 
-export function useRatingDeltaByOpponent(
+export const ratingDeltaByOpponentQueryOptions = (
   params: UseRatingDeltaByOpponentParams,
-) {
-  return useQuery({
-    queryKey: ["rating-delta-by-opponent", params],
+) =>
+  queryOptions({
+    queryKey: queryKeys.battleLog.ratingDeltaByOpponent({
+      ...params,
+    }),
     queryFn: async () => {
-      const response = await battlelogApiClient.get(
-        "/battles/@me/statistics/rating-delta-by-opponent",
-        {
-          params,
-        },
-      );
-      return response.data as RatingDeltaByOpponentRecord[];
+      const requestParams = { ...params };
+      const response = await battlelogApiClient.get<
+        RatingDeltaByOpponentRecord[]
+      >("/battles/@me/statistics/rating-delta-by-opponent", {
+        params: requestParams,
+      } as ApiRequestConfig);
+      return response;
     },
     staleTime: 0,
   });
+
+export function useRatingDeltaByOpponent(
+  params: UseRatingDeltaByOpponentParams,
+) {
+  return useQuery(ratingDeltaByOpponentQueryOptions(params));
 }

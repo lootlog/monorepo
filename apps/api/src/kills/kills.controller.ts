@@ -9,45 +9,45 @@ import {
 } from "@nestjs/common";
 import { DiscordId } from "@lootlog/nest-shared";
 import {
-  ApiTags,
   ApiBearerAuth,
   ApiOperation,
+  ApiParam,
   ApiQuery,
   ApiResponse,
-  ApiParam,
+  ApiTags,
 } from "@nestjs/swagger";
-import { plainToInstance } from "class-transformer";
+import { ZodResponse } from "nestjs-zod";
 import {
   NpcType,
   Permission,
   type Guild,
   type Role,
 } from "src/generated/prisma/client";
+import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";
 import { MemberRoles } from "src/shared/decorators/member-roles.decorator";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
-import { KillsService } from "./kills.service";
 import { CreateKillDto } from "./dto/create-kill.dto";
+import {
+  CreateKillResponseDto,
+  GuildKillStatsResponseDto,
+  GuildTopKillersByTypeResponseDto,
+  GuildTopNpcsResponseDto,
+  MemberKillsResponseDto,
+  NpcKillersResponseDto,
+  UserKillStatsResponseDto,
+  UserNpcKillsResponseDto,
+} from "./dto/kill-stats-response.dto";
 import {
   GetGuildKillStatsDto,
   GetUserKillStatsDto,
 } from "./dto/get-kill-stats.dto";
-import { GetUserNpcKillsDto } from "./dto/get-user-npc-kills.dto";
-import {
-  CreateKillResponseEntity,
-  GuildKillStatsEntity,
-  GuildTopNpcsEntity,
-  GuildTopKillersByTypeEntity,
-  NpcKillersResponseEntity,
-  MemberKillsResponseEntity,
-  UserKillStatsEntity,
-  UserNpcKillsEntity,
-} from "./entities/kill-stats.entity";
-import { GetNpcKillersDto } from "./dto/get-npc-killers.dto";
 import { GetMemberKillsDto } from "./dto/get-member-kills.dto";
-import { GuildData } from "src/shared/decorators/guild-data.decorator";
+import { GetNpcKillersDto } from "./dto/get-npc-killers.dto";
+import { GetUserNpcKillsDto } from "./dto/get-user-npc-kills.dto";
+import { KillsService } from "./kills.service";
 
 @ApiTags("kills")
 @ApiBearerAuth()
@@ -62,23 +62,17 @@ export class KillsController {
     description:
       "Records an NPC kill. Guilds are auto-detected from user lootlog config (loot/timer whitelists).",
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 201,
     description: "Kill recorded successfully",
-    type: CreateKillResponseEntity,
+    type: CreateKillResponseDto,
   })
   @ApiResponse({
     status: 400,
     description: "Validation error",
   })
-  async createKill(
-    @Body() data: CreateKillDto,
-    @DiscordId() discordId: string,
-  ) {
-    const result = await this.killsService.createKill(discordId, data);
-    return plainToInstance(CreateKillResponseEntity, result, {
-      excludeExtraneousValues: true,
-    });
+  createKill(@Body() data: CreateKillDto, @DiscordId() discordId: string) {
+    return this.killsService.createKill(discordId, data);
   }
 
   @Permissions(Permission.LOOTLOG_ACCESS)
@@ -90,30 +84,27 @@ export class KillsController {
       "Retrieves kill statistics for a guild including overview and member ranking.",
   })
   @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Guild kill statistics",
-    type: GuildKillStatsEntity,
+    type: GuildKillStatsResponseDto,
   })
   @ApiResponse({
     status: 403,
     description: "Forbidden - insufficient permissions",
   })
-  async getGuildKillStats(
+  getGuildKillStats(
     @MemberPermissions() permissions: Permission[],
     @MemberRoles() roles: Role[],
     @Query() query: GetGuildKillStatsDto,
     @GuildData() guildData: Guild,
   ) {
-    const stats = await this.killsService.getGuildKillStats(
+    return this.killsService.getGuildKillStats(
       guildData.id,
       permissions,
       roles,
       query,
     );
-    return plainToInstance(GuildKillStatsEntity, stats, {
-      excludeExtraneousValues: true,
-    });
   }
 
   @Get("/users/@me/stats/kills")
@@ -122,19 +113,16 @@ export class KillsController {
     description:
       "Retrieves kill statistics for the authenticated user across all guilds, deduplicated.",
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "User kill statistics",
-    type: UserKillStatsEntity,
+    type: UserKillStatsResponseDto,
   })
-  async getUserKillStats(
+  getUserKillStats(
     @DiscordId() discordId: string,
     @Query() query: GetUserKillStatsDto,
   ) {
-    const stats = await this.killsService.getUserKillStats(discordId, query);
-    return plainToInstance(UserKillStatsEntity, stats, {
-      excludeExtraneousValues: true,
-    });
+    return this.killsService.getUserKillStats(discordId, query);
   }
 
   @Get("/users/@me/kills/npcs")
@@ -143,19 +131,16 @@ export class KillsController {
     description:
       "Retrieves a paginated, searchable list of NPCs killed by the authenticated user.",
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Paginated list of killed NPCs",
-    type: UserNpcKillsEntity,
+    type: UserNpcKillsResponseDto,
   })
-  async getUserNpcKills(
+  getUserNpcKills(
     @DiscordId() discordId: string,
     @Query() query: GetUserNpcKillsDto,
   ) {
-    const result = await this.killsService.getUserNpcKills(discordId, query);
-    return plainToInstance(UserNpcKillsEntity, result, {
-      excludeExtraneousValues: true,
-    });
+    return this.killsService.getUserNpcKills(discordId, query);
   }
 
   @Permissions(Permission.LOOTLOG_ACCESS)
@@ -166,10 +151,10 @@ export class KillsController {
     description: "Retrieves the most frequently killed NPCs in a guild.",
   })
   @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Top killed NPCs",
-    type: GuildTopNpcsEntity,
+    type: GuildTopNpcsResponseDto,
   })
   @ApiResponse({
     status: 403,
@@ -184,7 +169,7 @@ export class KillsController {
     enum: Object.values(NpcType),
     enumName: "NpcType",
   })
-  async getGuildTopNpcs(
+  getGuildTopNpcs(
     @MemberPermissions() permissions: Permission[],
     @MemberRoles() roles: Role[],
     @GuildData() guildData: Guild,
@@ -195,7 +180,7 @@ export class KillsController {
     @Query("minLvl") minLvl?: string,
     @Query("maxLvl") maxLvl?: string,
   ) {
-    const result = await this.killsService.getGuildTopNpcs(
+    return this.killsService.getGuildTopNpcs(
       guildData.id,
       permissions,
       roles,
@@ -206,9 +191,6 @@ export class KillsController {
       minLvl ? Number.parseInt(minLvl, 10) : undefined,
       maxLvl ? Number.parseInt(maxLvl, 10) : undefined,
     );
-    return plainToInstance(GuildTopNpcsEntity, result, {
-      excludeExtraneousValues: true,
-    });
   }
 
   @Permissions(Permission.LOOTLOG_ACCESS)
@@ -220,31 +202,28 @@ export class KillsController {
       "Retrieves top members by kill count for specific NPC types (TITAN, HERO).",
   })
   @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Top killers by NPC type",
-    type: GuildTopKillersByTypeEntity,
+    type: GuildTopKillersByTypeResponseDto,
   })
   @ApiResponse({
     status: 403,
     description: "Forbidden - insufficient permissions",
   })
-  async getGuildTopKillersByType(
+  getGuildTopKillersByType(
     @MemberPermissions() permissions: Permission[],
     @MemberRoles() roles: Role[],
     @GuildData() guildData: Guild,
     @Query("limit") limit?: number,
   ) {
-    const result = await this.killsService.getGuildTopKillersByType(
+    return this.killsService.getGuildTopKillersByType(
       guildData.id,
       permissions,
       roles,
       [NpcType.TITAN, NpcType.HERO, NpcType.EVENT_HERO],
       limit ?? 5,
     );
-    return plainToInstance(GuildTopKillersByTypeEntity, result, {
-      excludeExtraneousValues: true,
-    });
   }
 
   @Permissions(Permission.LOOTLOG_ACCESS)
@@ -257,10 +236,10 @@ export class KillsController {
   })
   @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
   @ApiParam({ name: "npcId", description: "NPC ID", example: "999" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "NPC killers ranking",
-    type: NpcKillersResponseEntity,
+    type: NpcKillersResponseDto,
   })
   @ApiResponse({
     status: 403,
@@ -290,9 +269,7 @@ export class KillsController {
       return { npc: null, killers: [] };
     }
 
-    return plainToInstance(NpcKillersResponseEntity, result, {
-      excludeExtraneousValues: true,
-    });
+    return result;
   }
 
   @Permissions(Permission.LOOTLOG_ACCESS)
@@ -305,10 +282,10 @@ export class KillsController {
   })
   @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
   @ApiParam({ name: "memberId", description: "Member ID", example: "123" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Member kill statistics",
-    type: MemberKillsResponseEntity,
+    type: MemberKillsResponseDto,
   })
   @ApiResponse({
     status: 403,
@@ -337,8 +314,6 @@ export class KillsController {
       return { member: null, overview: null, npcs: [], pagination: null };
     }
 
-    return plainToInstance(MemberKillsResponseEntity, result, {
-      excludeExtraneousValues: true,
-    });
+    return result;
   }
 }

@@ -278,7 +278,7 @@ export class LootsService implements OnModuleInit {
     }
   }
 
-  getComments(options: { discordId: string; guildId: string; lootId: number }) {
+  getComments(options: { guildId: string; lootId: number }) {
     return this.lootCommentService.getComments(options);
   }
 

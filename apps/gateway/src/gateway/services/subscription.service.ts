@@ -17,7 +17,7 @@ import type {
 } from "src/gateway/types/socket-user.type";
 import type { UserGuildData } from "src/guilds/types/guild.types";
 
-export interface JoinResult {
+interface JoinResult {
   status: ResponseStatus;
   message?: string;
   guildsCount?: number;

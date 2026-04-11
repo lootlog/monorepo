@@ -8,9 +8,11 @@ import {
 import type { FC } from "react";
 import { ADDON_INSTALL_URL } from "@/config/addon";
 import { useGlobalContext } from "@/hooks/context/use-global-context";
+import { useTranslation } from "react-i18next";
 
 export const InstallAddonModal: FC = () => {
   const { installAddonModal } = useGlobalContext();
+  const { t } = useTranslation();
 
   const handleModalClose = () => {
     installAddonModal.dispatch({ type: "CLOSE" });
@@ -23,9 +25,9 @@ export const InstallAddonModal: FC = () => {
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Instalacja dodatku</DialogTitle>
+          <DialogTitle>{t("ui.modals.installAddon.title")}</DialogTitle>
           <DialogDescription>
-            Zainstaluj dodatek, aby korzystać z lootloga w grze.
+            {t("ui.modals.installAddon.description")}
           </DialogDescription>
         </DialogHeader>
         <div className="p-4">
@@ -36,7 +38,7 @@ export const InstallAddonModal: FC = () => {
             className="text-blue-500 hover:underline"
             onClick={handleModalClose}
           >
-            Instaluj dodatek
+            {t("ui.actions.installAddon")}
           </a>
         </div>
       </DialogContent>

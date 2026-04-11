@@ -14,7 +14,6 @@ const vendorChunkGroups = {
   "vendor-tanstack": [
     "/node_modules/@tanstack/react-query",
     "/node_modules/@tanstack/react-query-devtools",
-    "/node_modules/@tanstack/react-query-persist-client",
     "/node_modules/@tanstack/react-router",
     "/node_modules/@tanstack/router-core",
     "/node_modules/@tanstack/react-table",
@@ -53,8 +52,6 @@ const vendorChunkGroups = {
     "/node_modules/tailwind-merge/",
     "/node_modules/tw-animate-css/",
   ],
-  "vendor-charts": ["/node_modules/recharts/", "/node_modules/d3-"],
-  "vendor-editor": ["/node_modules/@lexical/", "/node_modules/lexical/"],
   "vendor-lottie": ["/node_modules/lottie-react/", "/node_modules/lottie-web/"],
 } as const;
 

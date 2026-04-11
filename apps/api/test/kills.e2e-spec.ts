@@ -1,4 +1,4 @@
-import { INestApplication, ValidationPipe } from "@nestjs/common";
+import { type INestApplication } from "@nestjs/common";
 import request from "supertest";
 import { AppModule } from "../src/app.module";
 import { PrismaService } from "../src/db/prisma.service";
@@ -52,7 +52,6 @@ describe("Kills E2E Tests (Deduplication)", () => {
 
     app = moduleFixture.createNestApplication();
     app.enableShutdownHooks();
-    app.useGlobalPipes(new ValidationPipe({ transform: true }));
     await app.init();
 
     prisma = app.get<PrismaService>(PrismaService);
