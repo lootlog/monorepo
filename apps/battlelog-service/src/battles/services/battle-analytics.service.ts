@@ -52,10 +52,11 @@ export class BattleAnalyticsService {
     winRatio: number;
     totalPH: number;
   }> {
-    const levelFilter = `${query.minLevel || "any"}-${query.maxLevel || "any"}`;
-    const phFilter = query.ph ? "ph" : "all";
-    const matchmakingFilter = query.matchmaking ? "matchmaking" : "all";
-    const cacheKey = `${this.ANALYTICS_CACHE_PREFIX}:${userId}:${query.characterId || "all"}:${query.world || "all"}:${query.period || "all"}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
+    const cacheKey = this.buildQueryCacheKey(
+      this.ANALYTICS_CACHE_PREFIX,
+      userId,
+      query,
+    );
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -122,17 +123,11 @@ export class BattleAnalyticsService {
       with: { warriors: true },
     });
 
-    let filteredBattles = fetchedBattles;
-    if (query.minLevel !== undefined || query.maxLevel !== undefined) {
-      filteredBattles = fetchedBattles.filter((battle) =>
-        this.isOpponentLevelInRange(
-          battle,
-          characterIds,
-          query.minLevel,
-          query.maxLevel,
-        ),
-      );
-    }
+    const filteredBattles = this.filterByOpponentLevel(
+      fetchedBattles,
+      characterIds,
+      query,
+    );
 
     let wins = 0;
     let losses = 0;
@@ -180,10 +175,11 @@ export class BattleAnalyticsService {
     query: QueryBattleStatisticsDto,
     userId: string,
   ): Promise<ProfessionWinRateDto[]> {
-    const levelFilter = `${query.minLevel || "any"}-${query.maxLevel || "any"}`;
-    const phFilter = query.ph ? "ph" : "all";
-    const matchmakingFilter = query.matchmaking ? "matchmaking" : "all";
-    const cacheKey = `statistics:profession-win-rate:${userId}:${query.characterId || "all"}:${query.world || "all"}:${query.period || "all"}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
+    const cacheKey = this.buildQueryCacheKey(
+      "statistics:profession-win-rate",
+      userId,
+      query,
+    );
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -214,17 +210,11 @@ export class BattleAnalyticsService {
       with: { warriors: true },
     });
 
-    let filteredBattles = fetchedBattles;
-    if (query.minLevel !== undefined || query.maxLevel !== undefined) {
-      filteredBattles = fetchedBattles.filter((battle) =>
-        this.isOpponentLevelInRange(
-          battle,
-          characterIds,
-          query.minLevel,
-          query.maxLevel,
-        ),
-      );
-    }
+    const filteredBattles = this.filterByOpponentLevel(
+      fetchedBattles,
+      characterIds,
+      query,
+    );
 
     const professionStats = new Map<string, { wins: number; losses: number }>();
 
@@ -321,17 +311,11 @@ export class BattleAnalyticsService {
       orderBy: { createdAt: "desc" },
     });
 
-    let filteredBattles = fetchedBattles;
-    if (query.minLevel !== undefined || query.maxLevel !== undefined) {
-      filteredBattles = fetchedBattles.filter((battle) =>
-        this.isOpponentLevelInRange(
-          battle,
-          characterIds,
-          query.minLevel,
-          query.maxLevel,
-        ),
-      );
-    }
+    const filteredBattles = this.filterByOpponentLevel(
+      fetchedBattles,
+      characterIds,
+      query,
+    );
 
     const opponentStats = new Map<
       string,
@@ -527,10 +511,11 @@ export class BattleAnalyticsService {
     query: QueryBattleStatisticsDto,
     userId: string,
   ): Promise<StreakDto> {
-    const levelFilter = `${query.minLevel || "any"}-${query.maxLevel || "any"}`;
-    const phFilter = query.ph ? "ph" : "all";
-    const matchmakingFilter = query.matchmaking ? "matchmaking" : "all";
-    const cacheKey = `statistics:streak:${userId}:${query.characterId || "all"}:${query.world || "all"}:${query.period || "all"}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
+    const cacheKey = this.buildQueryCacheKey(
+      "statistics:streak",
+      userId,
+      query,
+    );
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -565,17 +550,11 @@ export class BattleAnalyticsService {
       orderBy: { createdAt: "desc" },
     });
 
-    let filteredBattles = fetchedBattles;
-    if (query.minLevel !== undefined || query.maxLevel !== undefined) {
-      filteredBattles = fetchedBattles.filter((battle) =>
-        this.isOpponentLevelInRange(
-          battle,
-          characterIds,
-          query.minLevel,
-          query.maxLevel,
-        ),
-      );
-    }
+    const filteredBattles = this.filterByOpponentLevel(
+      fetchedBattles,
+      characterIds,
+      query,
+    );
 
     if (filteredBattles.length === 0) {
       return {
@@ -647,10 +626,11 @@ export class BattleAnalyticsService {
     query: QueryBattleStatisticsDto,
     userId: string,
   ): Promise<BattleDurationStatsDto> {
-    const levelFilter = `${query.minLevel || "any"}-${query.maxLevel || "any"}`;
-    const phFilter = query.ph ? "ph" : "all";
-    const matchmakingFilter = query.matchmaking ? "matchmaking" : "all";
-    const cacheKey = `statistics:duration:${userId}:${query.characterId || "all"}:${query.world || "all"}:${query.period || "all"}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
+    const cacheKey = this.buildQueryCacheKey(
+      "statistics:duration",
+      userId,
+      query,
+    );
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -687,17 +667,11 @@ export class BattleAnalyticsService {
       orderBy: { duration: "asc" },
     });
 
-    let filteredBattles = fetchedBattles;
-    if (query.minLevel !== undefined || query.maxLevel !== undefined) {
-      filteredBattles = fetchedBattles.filter((battle) =>
-        this.isOpponentLevelInRange(
-          battle,
-          characterIds,
-          query.minLevel,
-          query.maxLevel,
-        ),
-      );
-    }
+    const filteredBattles = this.filterByOpponentLevel(
+      fetchedBattles,
+      characterIds,
+      query,
+    );
 
     if (filteredBattles.length === 0) {
       return {
@@ -768,10 +742,11 @@ export class BattleAnalyticsService {
     query: QueryBattleStatisticsDto,
     userId: string,
   ): Promise<PhGrowthDataPointDto[]> {
-    const levelFilter = `${query.minLevel || "any"}-${query.maxLevel || "any"}`;
-    const phFilter = query.ph ? "ph" : "all";
-    const matchmakingFilter = query.matchmaking ? "matchmaking" : "all";
-    const cacheKey = `statistics:ph-growth:${userId}:${query.characterId || "all"}:${query.world || "all"}:${query.period || "all"}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
+    const cacheKey = this.buildQueryCacheKey(
+      "statistics:ph-growth",
+      userId,
+      query,
+    );
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -810,17 +785,11 @@ export class BattleAnalyticsService {
       orderBy: { createdAt: "asc" },
     });
 
-    let filteredBattles = fetchedBattles;
-    if (query.minLevel !== undefined || query.maxLevel !== undefined) {
-      filteredBattles = fetchedBattles.filter((battle) =>
-        this.isOpponentLevelInRange(
-          battle,
-          characterIds,
-          query.minLevel,
-          query.maxLevel,
-        ),
-      );
-    }
+    const filteredBattles = this.filterByOpponentLevel(
+      fetchedBattles,
+      characterIds,
+      query,
+    );
 
     let cumulativePh = 0;
     const result: PhGrowthDataPointDto[] = filteredBattles.map((battle) => {
@@ -965,8 +934,11 @@ export class BattleAnalyticsService {
     query: QueryBattleStatisticsDto,
     userId: string,
   ): Promise<RatingGrowthDataPointDto[]> {
-    const levelFilter = `${query.minLevel || "any"}-${query.maxLevel || "any"}`;
-    const cacheKey = `statistics:rating-growth:${userId}:${query.characterId || "all"}:${query.world || "all"}:${query.period || "all"}:${levelFilter}`;
+    const cacheKey = this.buildQueryCacheKey(
+      "statistics:rating-growth",
+      userId,
+      query,
+    );
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -998,17 +970,11 @@ export class BattleAnalyticsService {
       orderBy: { createdAt: "asc" },
     });
 
-    let filteredBattles = fetchedBattles;
-    if (query.minLevel !== undefined || query.maxLevel !== undefined) {
-      filteredBattles = fetchedBattles.filter((battle) =>
-        this.isOpponentLevelInRange(
-          battle,
-          characterIds,
-          query.minLevel,
-          query.maxLevel,
-        ),
-      );
-    }
+    const filteredBattles = this.filterByOpponentLevel(
+      fetchedBattles,
+      characterIds,
+      query,
+    );
 
     const result: RatingGrowthDataPointDto[] = filteredBattles.map((battle) => {
       return {
@@ -1032,8 +998,11 @@ export class BattleAnalyticsService {
     query: QueryBattleStatisticsDto,
     userId: string,
   ): Promise<RatingDeltaByOpponentDto[]> {
-    const levelFilter = `${query.minLevel || "any"}-${query.maxLevel || "any"}`;
-    const cacheKey = `statistics:rating-delta-by-opponent:${userId}:${query.characterId || "all"}:${query.world || "all"}:${query.period || "all"}:${levelFilter}`;
+    const cacheKey = this.buildQueryCacheKey(
+      "statistics:rating-delta-by-opponent",
+      userId,
+      query,
+    );
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -1065,17 +1034,11 @@ export class BattleAnalyticsService {
       orderBy: { createdAt: "desc" },
     });
 
-    let filteredBattles = fetchedBattles;
-    if (query.minLevel !== undefined || query.maxLevel !== undefined) {
-      filteredBattles = fetchedBattles.filter((battle) =>
-        this.isOpponentLevelInRange(
-          battle,
-          characterIds,
-          query.minLevel,
-          query.maxLevel,
-        ),
-      );
-    }
+    const filteredBattles = this.filterByOpponentLevel(
+      fetchedBattles,
+      characterIds,
+      query,
+    );
 
     const opponentStats = new Map<
       string,
@@ -1312,6 +1275,57 @@ export class BattleAnalyticsService {
         },
       },
     };
+  }
+
+  private buildQueryCacheKey(
+    prefix: string,
+    userId: string,
+    query: {
+      characterId?: string;
+      world?: string;
+      period?: string;
+      minLevel?: number;
+      maxLevel?: number;
+      ph?: boolean;
+      matchmaking?: boolean;
+    },
+  ): string {
+    const levelFilter = `${query.minLevel ?? "any"}-${query.maxLevel ?? "any"}`;
+    const phFilter = query.ph ? "ph" : "all";
+    const matchmakingFilter = query.matchmaking ? "matchmaking" : "all";
+    return `${prefix}:${userId}:${query.characterId ?? "all"}:${query.world ?? "all"}:${query.period ?? "all"}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
+  }
+
+  private async withCache<T>(key: string, fn: () => Promise<T>): Promise<T> {
+    const cached = await this.redisService.get(key);
+    if (cached) {
+      return JSON.parse(cached);
+    }
+    const result = await fn();
+    await this.redisService.set(
+      key,
+      JSON.stringify(result),
+      this.ANALYTICS_CACHE_TTL,
+    );
+    return result;
+  }
+
+  private filterByOpponentLevel(
+    battles: any[],
+    characterIds: string[],
+    query: { minLevel?: number; maxLevel?: number },
+  ) {
+    if (query.minLevel === undefined && query.maxLevel === undefined) {
+      return battles;
+    }
+    return battles.filter((battle) =>
+      this.isOpponentLevelInRange(
+        battle,
+        characterIds,
+        query.minLevel,
+        query.maxLevel,
+      ),
+    );
   }
 
   private isOpponentLevelInRange(

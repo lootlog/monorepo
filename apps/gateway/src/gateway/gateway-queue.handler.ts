@@ -61,7 +61,7 @@ export class GatewayQueueHandler {
     },
   })
   async handleGuildsTimerUpdate(data: CreateTimerDto, amqpMsg: AmqpMessage) {
-    const headers = amqpMsg.properties.headers || {};
+    const headers = amqpMsg.properties.headers ?? {};
 
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
@@ -89,7 +89,7 @@ export class GatewayQueueHandler {
     },
   })
   async handleGuildsTimerDelete(data: DeleteTimerDto, amqpMsg: AmqpMessage) {
-    const headers = amqpMsg.properties.headers || {};
+    const headers = amqpMsg.properties.headers ?? {};
 
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
@@ -120,7 +120,7 @@ export class GatewayQueueHandler {
     data: ReservationCreateEventDto,
     amqpMsg: AmqpMessage,
   ) {
-    const headers = amqpMsg.properties.headers || {};
+    const headers = amqpMsg.properties.headers ?? {};
 
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
@@ -151,7 +151,7 @@ export class GatewayQueueHandler {
     data: ReservationDeleteEventDto,
     amqpMsg: AmqpMessage,
   ) {
-    const headers = amqpMsg.properties.headers || {};
+    const headers = amqpMsg.properties.headers ?? {};
 
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
@@ -179,7 +179,7 @@ export class GatewayQueueHandler {
     },
   })
   async handleGuildMessageSend(data: SendMessageDto, amqpMsg: AmqpMessage) {
-    const headers = amqpMsg.properties.headers || {};
+    const headers = amqpMsg.properties.headers ?? {};
 
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
@@ -207,7 +207,7 @@ export class GatewayQueueHandler {
     },
   })
   async handleAddMember(data: AddMemberDto, amqpMsg: AmqpMessage) {
-    const headers = amqpMsg.properties.headers || {};
+    const headers = amqpMsg.properties.headers ?? {};
 
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
@@ -235,7 +235,7 @@ export class GatewayQueueHandler {
     },
   })
   async handleUpdateMember(data: AddMemberDto, amqpMsg: AmqpMessage) {
-    const headers = amqpMsg.properties.headers || {};
+    const headers = amqpMsg.properties.headers ?? {};
 
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
@@ -270,7 +270,7 @@ export class GatewayQueueHandler {
     },
   })
   async handleDeleteMember(data: DeleteMemberDto, amqpMsg: AmqpMessage) {
-    const headers = amqpMsg.properties.headers || {};
+    const headers = amqpMsg.properties.headers ?? {};
 
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
@@ -305,7 +305,7 @@ export class GatewayQueueHandler {
     },
   })
   async handleAddMemberRole(data: AddMemberRoleDto, amqpMsg: AmqpMessage) {
-    const headers = amqpMsg.properties.headers || {};
+    const headers = amqpMsg.properties.headers ?? {};
 
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
@@ -343,7 +343,7 @@ export class GatewayQueueHandler {
     data: DeleteMemberRoleDto,
     amqpMsg: AmqpMessage,
   ) {
-    const headers = amqpMsg.properties.headers || {};
+    const headers = amqpMsg.properties.headers ?? {};
 
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
@@ -381,7 +381,7 @@ export class GatewayQueueHandler {
     data: SendNotificationDto,
     amqpMsg: AmqpMessage,
   ) {
-    const headers = amqpMsg.properties.headers || {};
+    const headers = amqpMsg.properties.headers ?? {};
 
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
@@ -410,7 +410,7 @@ export class GatewayQueueHandler {
     this.logger.error("Message sent to DLQ - Timer Update:", {
       data,
       retryCount: this.retryService.getRetryCount(
-        amqpMsg.properties.headers || {},
+        amqpMsg.properties.headers ?? {},
       ),
       headers: amqpMsg.properties.headers,
     });
@@ -428,7 +428,7 @@ export class GatewayQueueHandler {
     this.logger.error("Message sent to DLQ - Timer Delete:", {
       data,
       retryCount: this.retryService.getRetryCount(
-        amqpMsg.properties.headers || {},
+        amqpMsg.properties.headers ?? {},
       ),
       headers: amqpMsg.properties.headers,
     });
@@ -449,7 +449,7 @@ export class GatewayQueueHandler {
     this.logger.error("Message sent to DLQ - Reservation Create:", {
       data,
       retryCount: this.retryService.getRetryCount(
-        amqpMsg.properties.headers || {},
+        amqpMsg.properties.headers ?? {},
       ),
       headers: amqpMsg.properties.headers,
     });
@@ -470,7 +470,7 @@ export class GatewayQueueHandler {
     this.logger.error("Message sent to DLQ - Reservation Delete:", {
       data,
       retryCount: this.retryService.getRetryCount(
-        amqpMsg.properties.headers || {},
+        amqpMsg.properties.headers ?? {},
       ),
       headers: amqpMsg.properties.headers,
     });
@@ -488,7 +488,7 @@ export class GatewayQueueHandler {
     this.logger.error("Message sent to DLQ - Send Message:", {
       data,
       retryCount: this.retryService.getRetryCount(
-        amqpMsg.properties.headers || {},
+        amqpMsg.properties.headers ?? {},
       ),
       headers: amqpMsg.properties.headers,
     });
@@ -506,7 +506,7 @@ export class GatewayQueueHandler {
     this.logger.error("Message sent to DLQ - Add Member Cache Invalidation:", {
       data,
       retryCount: this.retryService.getRetryCount(
-        amqpMsg.properties.headers || {},
+        amqpMsg.properties.headers ?? {},
       ),
       headers: amqpMsg.properties.headers,
     });
@@ -526,7 +526,7 @@ export class GatewayQueueHandler {
       {
         data,
         retryCount: this.retryService.getRetryCount(
-          amqpMsg.properties.headers || {},
+          amqpMsg.properties.headers ?? {},
         ),
         headers: amqpMsg.properties.headers,
       },
@@ -547,7 +547,7 @@ export class GatewayQueueHandler {
       {
         data,
         retryCount: this.retryService.getRetryCount(
-          amqpMsg.properties.headers || {},
+          amqpMsg.properties.headers ?? {},
         ),
         headers: amqpMsg.properties.headers,
       },
@@ -568,7 +568,7 @@ export class GatewayQueueHandler {
       {
         data,
         retryCount: this.retryService.getRetryCount(
-          amqpMsg.properties.headers || {},
+          amqpMsg.properties.headers ?? {},
         ),
         headers: amqpMsg.properties.headers,
       },
@@ -589,7 +589,7 @@ export class GatewayQueueHandler {
       {
         data,
         retryCount: this.retryService.getRetryCount(
-          amqpMsg.properties.headers || {},
+          amqpMsg.properties.headers ?? {},
         ),
         headers: amqpMsg.properties.headers,
       },
@@ -608,7 +608,7 @@ export class GatewayQueueHandler {
     this.logger.error("Message sent to DLQ - Send Notification:", {
       data,
       retryCount: this.retryService.getRetryCount(
-        amqpMsg.properties.headers || {},
+        amqpMsg.properties.headers ?? {},
       ),
       headers: amqpMsg.properties.headers,
     });
@@ -629,7 +629,7 @@ export class GatewayQueueHandler {
     data: VolunteerNotificationDto,
     amqpMsg: AmqpMessage,
   ) {
-    const headers = amqpMsg.properties.headers || {};
+    const headers = amqpMsg.properties.headers ?? {};
 
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
@@ -660,7 +660,7 @@ export class GatewayQueueHandler {
     this.logger.error("Message sent to DLQ - Volunteer Notification:", {
       data,
       retryCount: this.retryService.getRetryCount(
-        amqpMsg.properties.headers || {},
+        amqpMsg.properties.headers ?? {},
       ),
       headers: amqpMsg.properties.headers,
     });
@@ -681,7 +681,7 @@ export class GatewayQueueHandler {
     data: SendPartyGatheringDto,
     amqpMsg: AmqpMessage,
   ) {
-    const headers = amqpMsg.properties.headers || {};
+    const headers = amqpMsg.properties.headers ?? {};
 
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
@@ -709,7 +709,7 @@ export class GatewayQueueHandler {
     this.logger.error("Message sent to DLQ - Party Gathering:", {
       data,
       retryCount: this.retryService.getRetryCount(
-        amqpMsg.properties.headers || {},
+        amqpMsg.properties.headers ?? {},
       ),
       headers: amqpMsg.properties.headers,
     });

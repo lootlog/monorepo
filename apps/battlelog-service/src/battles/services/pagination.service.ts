@@ -33,7 +33,7 @@ export class PaginationService {
     const timestamp = cursor.substring(0, separatorIndex);
     const id = cursor.substring(separatorIndex + 1);
     const createdAt = new Date(timestamp);
-    if (isNaN(createdAt.getTime())) {
+    if (Number.isNaN(createdAt.getTime())) {
       return null;
     }
     return { createdAt, id };

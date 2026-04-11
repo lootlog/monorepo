@@ -2,7 +2,7 @@ import { cn } from "@lootlog/ui/lib/utils";
 import { motion } from "framer-motion";
 import type { FC } from "react";
 import type { GuildRole } from "@/hooks/api/guilds/use-guild-roles";
-import { Permission } from "@lootlog/types";
+
 import {
   Tooltip,
   TooltipContent,
@@ -10,9 +10,10 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { useTranslation } from "react-i18next";
-import { PERMISSION_CATEGORIES } from "@/features/guild-settings/roles-settings/constants/permission-categories";
+import { getActiveCategories } from "@/features/guild-settings/roles-settings/constants/permission-categories";
 import { useSelectorPanel } from "@/components/selector-panel";
 import { SelectableListCard } from "@/components/selectable-list-card";
+import { colorIntToHex } from "@/utils/color-to-hex";
 
 export type RoleListItemProps = {
   role: GuildRole;
@@ -26,18 +27,9 @@ export const RoleListItem: FC<RoleListItemProps> = ({ role, index }) => {
   const isSelected = selectedItem?.id === role.id;
   const isPanelOpen = selectedItem !== null;
 
-  const color =
-    role.color === 0 ? "FFF" : role.color.toString(16).padStart(6, "0");
+  const color = colorIntToHex(role.color);
 
-  const hasAdminPermission = role.permissions.includes(Permission.ADMIN);
-
-  const activeCategories = hasAdminPermission
-    ? PERMISSION_CATEGORIES.filter((category) =>
-        category.permissions.includes(Permission.ADMIN),
-      )
-    : PERMISSION_CATEGORIES.filter((category) =>
-        category.permissions.some((perm) => role.permissions.includes(perm)),
-      );
+  const activeCategories = getActiveCategories(role.permissions);
 
   const iconsContent = (
     <TooltipProvider delayDuration={100}>

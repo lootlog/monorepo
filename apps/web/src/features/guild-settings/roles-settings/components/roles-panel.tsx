@@ -6,7 +6,7 @@ import {
 import { RolesSettingsForm } from "@/features/guild-settings/roles-settings/components/roles-settings-form";
 import { ArrowLeft } from "lucide-react";
 import type { FC } from "react";
-import { Permission } from "@lootlog/types";
+
 import {
   Tooltip,
   TooltipContent,
@@ -15,7 +15,7 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { cn } from "@lootlog/ui/lib/utils";
 import { useTranslation } from "react-i18next";
-import { PERMISSION_CATEGORIES } from "@/features/guild-settings/roles-settings/constants/permission-categories";
+import { getActiveCategories } from "@/features/guild-settings/roles-settings/constants/permission-categories";
 import { useSelectorPanel } from "@/components/selector-panel";
 
 export type RolePanelContentProps = {
@@ -37,17 +37,7 @@ export const RolePanelContent: FC<RolePanelContentProps> = ({
   const currentRole =
     roles?.find((r) => r.id === selectedRole.id) ?? selectedRole;
 
-  const hasAdminPermission = currentRole.permissions.includes(Permission.ADMIN);
-
-  const activeCategories = hasAdminPermission
-    ? PERMISSION_CATEGORIES.filter((category) =>
-        category.permissions.includes(Permission.ADMIN),
-      )
-    : PERMISSION_CATEGORIES.filter((category) =>
-        category.permissions.some((perm) =>
-          currentRole.permissions.includes(perm),
-        ),
-      );
+  const activeCategories = getActiveCategories(currentRole.permissions);
 
   return (
     <div className="flex flex-col h-full min-h-0 overflow-hidden">

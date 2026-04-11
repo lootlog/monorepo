@@ -114,3 +114,16 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     ],
   },
 ];
+
+export const getActiveCategories = (
+  permissions: Permission[],
+): PermissionCategory[] => {
+  const hasAdmin = permissions.includes(Permission.ADMIN);
+  return hasAdmin
+    ? PERMISSION_CATEGORIES.filter((category) =>
+        category.permissions.includes(Permission.ADMIN),
+      )
+    : PERMISSION_CATEGORIES.filter((category) =>
+        category.permissions.some((perm) => permissions.includes(perm)),
+      );
+};

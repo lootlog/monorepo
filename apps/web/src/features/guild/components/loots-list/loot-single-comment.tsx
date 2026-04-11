@@ -3,6 +3,7 @@ import { getRelativeTime } from "@/utils/date/get-relative-time";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { Avatar, AvatarImage } from "@lootlog/ui/components/avatar";
 import type { FC } from "react";
+import { colorIntToHex } from "@/utils/color-to-hex";
 
 export type LootSingleCommentProps = {
   comment: LootComment;
@@ -14,10 +15,8 @@ export const LootSingleComment: FC<LootSingleCommentProps> = ({ comment }) => {
     comment.member.avatar,
   );
   const relativeTime = getRelativeTime(comment.createdAt);
-  const color =
-    comment.member.roles?.[0]?.color === 0
-      ? "FFF"
-      : comment.member.roles?.[0]?.color.toString(16).padStart(6, "0");
+  const roleColor = comment.member.roles?.[0]?.color;
+  const color = roleColor !== undefined ? colorIntToHex(roleColor) : undefined;
 
   return (
     <li className="text-sm border-b border-border/50 px-4 py-3 flex flex-row gap-3 bg-card/10 hover:bg-card/30 transition-colors">

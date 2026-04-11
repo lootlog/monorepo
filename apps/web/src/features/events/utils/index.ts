@@ -30,5 +30,6 @@ export {
   formatDateTimeFull,
 } from "./format-date";
 
+export { formatPoints, formatSignedPoints } from "./format-points";
 export { isEventActiveAtTimestamp } from "./event-activity";
 export { getEventStatusAtTimestamp, type EventStatus } from "./event-activity";

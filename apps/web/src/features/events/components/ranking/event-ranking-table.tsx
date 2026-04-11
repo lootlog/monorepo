@@ -22,6 +22,7 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useUpdatePoints } from "../../hooks/mutations/use-update-points";
 import { useRankingEditHistory } from "../../hooks/queries/use-ranking-edit-history";
 import { ManualPointsEditDialog } from "../dialogs/manual-points-edit-dialog";
+import { formatPoints, formatSignedPoints } from "../../utils/format-points";
 
 interface EventRankingTableProps {
   rankings: EventRanking[];
@@ -43,18 +44,6 @@ interface RankingRowProps {
   guildId?: string;
   eventId?: string;
 }
-
-const formatPoints = (points: number): string => {
-  return Number.isInteger(points) ? String(points) : points.toFixed(2);
-};
-
-const formatSignedPoints = (points: number): string => {
-  if (points > 0) {
-    return `+${formatPoints(points)}`;
-  }
-
-  return formatPoints(points);
-};
 
 const RankingRow = ({
   ranking,

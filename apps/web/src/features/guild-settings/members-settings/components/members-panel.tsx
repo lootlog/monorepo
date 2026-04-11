@@ -5,8 +5,8 @@ import { MemberSyncButton } from "@/features/guild-settings/members-settings/com
 import { ArrowLeft, Crown } from "lucide-react";
 import { useMemo, type FC } from "react";
 import { useSelectorPanel } from "@/components/selector-panel";
-import { Permission } from "@lootlog/types";
-import { PERMISSION_CATEGORIES } from "@/features/guild-settings/roles-settings/constants/permission-categories";
+import type { Permission } from "@lootlog/types";
+import { getActiveCategories } from "@/features/guild-settings/roles-settings/constants/permission-categories";
 import {
   Tooltip,
   TooltipContent,
@@ -44,15 +44,7 @@ export const MembersPanelContent: FC<MembersPanelContentProps> = ({
     return Array.from(perms);
   }, [selectedMember]);
 
-  const hasAdminPermission = memberPermissions.includes(Permission.ADMIN);
-
-  const activeCategories = hasAdminPermission
-    ? PERMISSION_CATEGORIES.filter((category) =>
-        category.permissions.includes(Permission.ADMIN),
-      )
-    : PERMISSION_CATEGORIES.filter((category) =>
-        category.permissions.some((perm) => memberPermissions.includes(perm)),
-      );
+  const activeCategories = getActiveCategories(memberPermissions);
 
   if (!selectedMember) return null;
 

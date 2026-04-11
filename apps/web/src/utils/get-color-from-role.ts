@@ -1,6 +1,7 @@
 import type { GuildMember } from "@/hooks/api/members/use-guild-member";
+import { colorIntToHex } from "./color-to-hex";
 
 export const getColorFromRole = (roles: GuildMember["roles"]) => {
   const color = roles[0]?.color;
-  return color === 0 ? "FFF" : color?.toString(16).padStart(6, "0");
+  return color !== undefined ? colorIntToHex(color) : undefined;
 };

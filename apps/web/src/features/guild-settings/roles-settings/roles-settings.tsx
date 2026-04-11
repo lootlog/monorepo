@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Shield } from "lucide-react";
 import { Card } from "@lootlog/ui/components/card";
 import { Permission } from "@lootlog/types";
+import { colorIntToHex } from "@/utils/color-to-hex";
 import { RolePanelContent } from "@/features/guild-settings/roles-settings/components/roles-panel";
 import { RoleListItem } from "@/features/guild-settings/roles-settings/components/role-list-item";
 import {
@@ -54,10 +55,9 @@ const RolesSettingsContent = () => {
       return a.name.localeCompare(b.name);
     });
 
-  const selectedRoleColor =
-    selectedRole?.color === 0
-      ? "FFF"
-      : selectedRole?.color.toString(16).padStart(6, "0");
+  const selectedRoleColor = selectedRole
+    ? colorIntToHex(selectedRole.color)
+    : undefined;
 
   return (
     <SelectorPanel<GuildRole>
@@ -99,7 +99,7 @@ const RolesSettingsContent = () => {
           <div
             className="size-4 rounded-full"
             style={{
-              backgroundColor: `#${role.color === 0 ? "FFF" : role.color.toString(16).padStart(6, "0")}`,
+              backgroundColor: `#${colorIntToHex(role.color)}`,
             }}
           />
           <span>{role.name}</span>

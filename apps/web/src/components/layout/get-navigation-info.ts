@@ -1,4 +1,5 @@
 import { ROUTES } from "@/config/routes";
+import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
 
 export type Breadcrumb = {
   label: string;
@@ -177,7 +178,7 @@ function resolveSimpleRoute(
         },
         {
           label: reservationId
-            ? reservationId.charAt(0).toUpperCase() + reservationId.slice(1)
+            ? capitalizeFirstLetter(reservationId)
             : (reservationId ?? ""),
           path: null,
         },

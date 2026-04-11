@@ -30,6 +30,7 @@ import {
   aggregateMapData,
   normalizeBonusBreakdown,
 } from "../../utils";
+import { formatPoints, formatSignedPoints } from "../../utils/format-points";
 
 interface KillParticipantsCardProps {
   participants: KillDetailParticipant[];
@@ -54,18 +55,6 @@ interface ParticipantRowProps {
   ) => Promise<void>;
   isEditPending?: boolean;
 }
-
-const formatPoints = (points: number): string => {
-  return Number.isInteger(points) ? String(points) : points.toFixed(2);
-};
-
-const formatSignedPoints = (points: number): string => {
-  if (points > 0) {
-    return `+${formatPoints(points)}`;
-  }
-
-  return formatPoints(points);
-};
 
 const ParticipantRow = ({
   participant,

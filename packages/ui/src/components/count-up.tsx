@@ -41,13 +41,8 @@ export default function CountUp({
 
   const getDecimalPlaces = (num: number): number => {
     const str = num.toString();
-    if (str.includes(".")) {
-      const decimals = str.split(".")[1];
-      if (decimals && Number.parseInt(decimals) !== 0) {
-        return decimals.length;
-      }
-    }
-    return 0;
+    const dotIndex = str.indexOf(".");
+    return dotIndex === -1 ? 0 : str.length - dotIndex - 1;
   };
 
   const maxDecimals = Math.max(getDecimalPlaces(from), getDecimalPlaces(to));

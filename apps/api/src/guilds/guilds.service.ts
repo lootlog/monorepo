@@ -238,7 +238,7 @@ export class GuildsService {
       return this.refreshGuildDiscordSync(guildId);
     }
 
-    const isStale = this.shouldRefreshGuildDiscordSync(cachedSyncState, true);
+    const isStale = this.shouldRefreshGuildDiscordSync(cachedSyncState);
 
     if (forceRefresh || (refreshIfStale && isStale)) {
       try {
@@ -1033,12 +1033,7 @@ export class GuildsService {
 
   private shouldRefreshGuildDiscordSync(
     syncState: { updatedAt: Date; status: string } | null,
-    refreshIfStale: boolean,
   ) {
-    if (!refreshIfStale) {
-      return false;
-    }
-
     if (!syncState) {
       return true;
     }

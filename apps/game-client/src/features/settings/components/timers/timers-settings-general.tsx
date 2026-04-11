@@ -26,8 +26,8 @@ export const TimersSettingsGeneral: FC = () => {
       return;
     }
 
-    const num = parseInt(value, 10);
-    if (isNaN(num)) {
+    const num = Number.parseInt(value, 10);
+    if (Number.isNaN(num)) {
       setGeneralConfig({ ...generalConfig, removeTimerAfterMs: 0 });
       return;
     }

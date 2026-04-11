@@ -528,7 +528,7 @@ export class TimersService implements OnModuleInit {
     }
   }
 
-  async getActiveTimerKeys(timerLookups: EventTimerLookupInput[], _now: Date) {
+  async getActiveTimerKeys(timerLookups: EventTimerLookupInput[]) {
     if (timerLookups.length === 0) {
       return new Set<string>();
     }

@@ -13,6 +13,7 @@ import {
   usePlayerKillStats,
   type NpcType,
 } from "@/features/home/hooks/use-player-kill-stats";
+import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
 
 export type KillsFiltersState = {
   world?: string;
@@ -91,7 +92,7 @@ export const KillsFilters: React.FC<KillsFiltersProps> = ({
             </SelectItem>
             {worlds.map((world) => (
               <SelectItem key={world} value={world}>
-                {world.charAt(0).toUpperCase() + world.slice(1)}
+                {capitalizeFirstLetter(world)}
               </SelectItem>
             ))}
           </SelectContent>

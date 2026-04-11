@@ -764,10 +764,12 @@ export class BattleProcessor {
   }
 
   private determineBattleType() {
-    const warriors = Array.from(this.warriors.values());
-    const team1Count = warriors.filter((w) => w.team === 1).length;
-    const team2Count = warriors.filter((w) => w.team === 2).length;
-
+    let team1Count = 0;
+    let team2Count = 0;
+    for (const w of this.warriors.values()) {
+      if (w.team === 1) team1Count++;
+      else if (w.team === 2) team2Count++;
+    }
     this.battleType = `${team1Count}v${team2Count}`;
   }
 

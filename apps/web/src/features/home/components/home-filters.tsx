@@ -8,6 +8,7 @@ import {
   SelectValue,
 } from "@lootlog/ui/components/select";
 import type { HomeFilters } from "../hooks/use-home-filters";
+import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
 import { usePlayerKillStats } from "../hooks/use-player-kill-stats";
 
 type HomeFiltersProps = {
@@ -45,7 +46,7 @@ export const HomeFiltersBar: React.FC<HomeFiltersProps> = ({
           </SelectItem>
           {worlds.map((world) => (
             <SelectItem key={world} value={world}>
-              {world.charAt(0).toUpperCase() + world.slice(1)}
+              {capitalizeFirstLetter(world)}
             </SelectItem>
           ))}
         </SelectContent>

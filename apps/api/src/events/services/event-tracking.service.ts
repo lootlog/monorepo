@@ -585,10 +585,8 @@ export class EventTrackingService implements OnModuleInit {
       npcName: map.heroNpc.npcName,
     }));
 
-    const activeTimerSet = await this.timersService.getActiveTimerKeys(
-      timerLookups,
-      now,
-    );
+    const activeTimerSet =
+      await this.timersService.getActiveTimerKeys(timerLookups);
 
     const activeMaps = eventMaps.filter((map) => {
       const effectiveNpcId =

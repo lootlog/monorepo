@@ -10,6 +10,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
 import { useEventOverview } from "./hooks/queries/use-event-overview";
 import { useEventMaps } from "./hooks/queries/use-event-maps";
 import type {
@@ -415,8 +416,7 @@ export const EventDetail = () => {
 
                     <div className="mt-3 flex flex-wrap gap-2">
                       <Badge variant="outline" className="text-xs">
-                        {event.world.charAt(0).toUpperCase() +
-                          event.world.slice(1)}
+                        {capitalizeFirstLetter(event.world)}
                       </Badge>
 
                       <Tooltip>

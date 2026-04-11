@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Card } from "@lootlog/ui/components/card";
 import { cn } from "@lootlog/ui/lib/utils";
 import { PERMISSION_CATEGORIES } from "@/features/guild-settings/roles-settings/constants/permission-categories";
+import { colorIntToHex } from "@/utils/color-to-hex";
 
 export type MemberDataProps = {
   member: GuildMember;
@@ -35,8 +36,7 @@ export const MemberData = ({ member }: MemberDataProps) => {
   return (
     <div className="p-3 space-y-3">
       {member.roles.map((role) => {
-        const color =
-          role.color === 0 ? "FFF" : role.color.toString(16).padStart(6, "0");
+        const color = colorIntToHex(role.color);
         const filteredPermissions = role.permissions.filter(
           (p) => p !== Permission.OWNER,
         );

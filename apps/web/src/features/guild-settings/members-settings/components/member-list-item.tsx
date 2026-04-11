@@ -8,7 +8,7 @@ import { getRelativeTime } from "@/utils/date/get-relative-time";
 import { Avatar, AvatarImage } from "@lootlog/ui/components/avatar";
 import { useSelectorPanel } from "@/components/selector-panel";
 import { SelectableListCard } from "@/components/selectable-list-card";
-import { Permission } from "@lootlog/types";
+
 import {
   Tooltip,
   TooltipContent,
@@ -16,7 +16,8 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { useTranslation } from "react-i18next";
-import { PERMISSION_CATEGORIES } from "@/features/guild-settings/roles-settings/constants/permission-categories";
+import type { Permission } from "@lootlog/types";
+import { getActiveCategories } from "@/features/guild-settings/roles-settings/constants/permission-categories";
 
 export type MemberListItemProps = {
   member: GuildMember;
@@ -45,15 +46,7 @@ export const MemberListItem: FC<MemberListItemProps> = ({
     return Array.from(perms);
   }, [member.roles]);
 
-  const hasAdminPermission = memberPermissions.includes(Permission.ADMIN);
-
-  const activeCategories = hasAdminPermission
-    ? PERMISSION_CATEGORIES.filter((category) =>
-        category.permissions.includes(Permission.ADMIN),
-      )
-    : PERMISSION_CATEGORIES.filter((category) =>
-        category.permissions.some((perm) => memberPermissions.includes(perm)),
-      );
+  const activeCategories = getActiveCategories(memberPermissions);
 
   const iconsContent = (
     <>
