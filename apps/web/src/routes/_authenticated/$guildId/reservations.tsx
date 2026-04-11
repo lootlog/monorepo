@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ReservationsLayout } from "@/features/reservations/reservations-layout/reservations-layout";
+import { ReservationsLayout } from "@/features/guild/reservations/reservations-layout/reservations-layout";
 import { guildMembersQueryOptions } from "@/hooks/api/members/use-guild-members-query-options";
 import { reservationsCardsQueryOptions } from "@/hooks/api/reservations/use-reservations-cards";
 import { reservationsQueryOptions } from "@/hooks/api/reservations/use-reservations";

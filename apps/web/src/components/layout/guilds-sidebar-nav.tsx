@@ -16,7 +16,7 @@ import { SidebarNav, type MenuItem } from "./sidebar-nav/index";
 import { ROUTE_SEGMENTS } from "@/config/routes";
 import { Permission } from "@lootlog/types";
 import { useTranslation } from "react-i18next";
-import { useEvents } from "@/features/events/hooks";
+import { useEvents } from "@/features/guild/events/hooks";
 import { GuildSidebarHeader } from "./guild-sidebar-header";
 import { GuildPinnedEventsSection } from "./guild-pinned-events-section";
 import { canManageGuild } from "@/lib/guild-permissions";

@@ -1,7 +1,7 @@
 import { useApiClient } from "@/hooks/api/use-api-client";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getApiErrorMessage } from "@/features/events/utils/get-api-error-message";
+import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
 import { toast } from "sonner";
 import { queryKeys } from "@/lib/query-keys";
 

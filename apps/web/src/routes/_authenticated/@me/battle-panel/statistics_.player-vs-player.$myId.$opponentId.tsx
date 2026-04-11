@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PlayerVsPlayerFullPage } from "@/features/battle-panel/battle-panel-statistics/player-vs-player-full-page";
-import { BattlePanelH2hSkeleton } from "@/features/battle-panel/battle-panel-statistics/battle-panel-h2h-skeleton";
-import { ensureBattlePanelCharacterId } from "@/features/battle-panel/battle-panel-route-loader";
-import { getBattlePanelPlayerVsPlayerSearch } from "@/features/battle-panel/battle-panel-statistics-search";
+import { PlayerVsPlayerFullPage } from "@/features/user/battle-panel/battle-panel-statistics/player-vs-player-full-page";
+import { BattlePanelH2hSkeleton } from "@/features/user/battle-panel/battle-panel-statistics/battle-panel-h2h-skeleton";
+import { ensureBattlePanelCharacterId } from "@/features/user/battle-panel/battle-panel-route-loader";
+import { getBattlePanelPlayerVsPlayerSearch } from "@/features/user/battle-panel/battle-panel-statistics-search";
 import { playerVsPlayerQueryOptions } from "@/hooks/api/battle-log/use-player-vs-player";
 
 export const Route = createFileRoute(
