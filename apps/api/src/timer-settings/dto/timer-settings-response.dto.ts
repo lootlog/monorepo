@@ -34,6 +34,7 @@ const GuildTimerSettingsResponseSchema = z.object({
   guildId: z.string(),
   hiddenTimers: z.array(z.string()),
   pinnedTimers: z.array(z.string()),
+  filters: jsonValueSchema,
   createdAt: isoDatetimeCodec,
   updatedAt: isoDatetimeCodec,
 });
