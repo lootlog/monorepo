@@ -209,7 +209,7 @@ export const queryKeys = {
       world: string | undefined,
       limit: number,
     ) => ["search-all", search, world, limit] as const,
-    worlds: (guildId: string | undefined) => ["worlds", guildId] as const,
+    worlds: (guildId: string | undefined) => ["guild-worlds", guildId] as const,
   },
   guilds: {
     current: (guildId: string | undefined) => ["guilds", guildId] as const,
