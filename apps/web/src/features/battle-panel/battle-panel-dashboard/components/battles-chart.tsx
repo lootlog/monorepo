@@ -8,6 +8,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@lootlog/ui/components/chart";
+import { useTranslation } from "react-i18next";
 
 export const description = "An area chart with a legend";
 
@@ -20,24 +21,27 @@ const chartData = [
   { month: "Czerwiec", battles: 214, winrate: 140 },
 ];
 
-const chartConfig = {
-  battles: {
-    label: "Walki",
-    color: "var(--chart-1)",
-  },
-  winrate: {
-    label: "Winrate",
-    color: "var(--chart-2)",
-  },
-} satisfies ChartConfig;
-
 export function BattlesChart() {
+  const { t } = useTranslation();
+  const chartConfig = {
+    battles: {
+      label: t("battlePanel.dashboard.chartLabels.battles"),
+      color: "var(--chart-1)",
+    },
+    winrate: {
+      label: t("battlePanel.dashboard.chartLabels.winrate"),
+      color: "var(--chart-2)",
+    },
+  } satisfies ChartConfig;
+
   return (
     <div className="p-4">
       <div>
-        <h2 className="text-lg font-semibold">Walki</h2>
+        <h2 className="text-lg font-semibold">
+          {t("battlePanel.dashboard.chartTitle")}
+        </h2>
         <p className="text-sm text-muted-foreground">
-          Pokazuje statystyki walk dla danej postaci z ostatnich 6 miesięcy
+          {t("battlePanel.dashboard.chartDescription")}
         </p>
       </div>
       <div className="pt-4">

@@ -16,23 +16,27 @@ import { useTranslation } from "react-i18next";
 import { NpcListItem } from "@/features/guild-settings/lootlog-settings/components/npc-list-item";
 import { NpcType } from "@/hooks/api/game-data/use-npcs";
 
-const NpcSettingsHeader = () => (
-  <Card className="mx-3 mt-3 gap-4 border-border bg-card/60 p-4 backdrop-blur-sm shrink-0">
-    <div className="flex items-center gap-3 flex-1 min-w-0">
-      <div className="p-2.5 rounded-xl bg-primary/10 shadow-inner shadow-primary/10">
-        <Settings2 className="size-4 text-primary" />
+const NpcSettingsHeader = () => {
+  const { t } = useTranslation();
+
+  return (
+    <Card className="mx-3 mt-3 gap-4 border-border bg-card/60 p-4 backdrop-blur-sm shrink-0">
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        <div className="p-2.5 rounded-xl bg-primary/10 shadow-inner shadow-primary/10">
+          <Settings2 className="size-4 text-primary" />
+        </div>
+        <div>
+          <h2 className="text-base font-semibold leading-tight">
+            {t("settings.npcs.title")}
+          </h2>
+          <p className="text-xs text-muted-foreground leading-tight">
+            {t("settings.npcs.description")}
+          </p>
+        </div>
       </div>
-      <div>
-        <h2 className="text-base font-semibold leading-tight">
-          Ustawienia potworów i NPC
-        </h2>
-        <p className="text-xs text-muted-foreground leading-tight">
-          Jakie przedmioty ma zbierać dla jakiego potwora
-        </p>
-      </div>
-    </div>
-  </Card>
-);
+    </Card>
+  );
+};
 
 const NpcSettingsContent = () => {
   const { data: config } = useGuildLootlogConfig();
@@ -55,7 +59,7 @@ const NpcSettingsContent = () => {
         <Card className="mx-3 mt-3 mb-3 shrink-0 border-border bg-card/40 p-3 backdrop-blur-sm">
           <SearchInput
             onChange={(e) => setSearchValue(e.target.value)}
-            placeholder="Szukaj potwora..."
+            placeholder={t("settings.npcs.searchPlaceholder")}
             className="bg-input/30 h-9"
           />
         </Card>
@@ -72,9 +76,11 @@ const NpcSettingsContent = () => {
         filteredNpcs?.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
             <Settings2 className="size-12 mb-4 opacity-30" />
-            <p className="text-sm font-medium">Nie znaleziono potworów</p>
+            <p className="text-sm font-medium">
+              {t("settings.npcs.emptyTitle")}
+            </p>
             <p className="text-xs mt-1">
-              Spróbuj zmienić kryteria wyszukiwania
+              {t("settings.npcs.emptyDescription")}
             </p>
           </div>
         )

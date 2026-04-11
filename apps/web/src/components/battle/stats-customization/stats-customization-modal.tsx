@@ -11,6 +11,7 @@ import {
 } from "@lootlog/ui/components/dialog";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { useTranslation } from "react-i18next";
 import type { StatsCustomizationConfig } from "@/types/stats-customization.types";
 import { CategoryItem } from "./category-item";
 import { AddCategoryForm } from "./add-category-form";
@@ -47,6 +48,7 @@ export const StatsCustomizationModal = ({
   onRemoveCategory,
   onResetToDefaults,
 }: StatsCustomizationModalProps) => {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [localCategoryOrder, setLocalCategoryOrder] = useState(
     config.categoryOrder,
@@ -75,19 +77,18 @@ export const StatsCustomizationModal = ({
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2">
           <Settings2 className="h-4 w-4" />
-          Dostosuj widok
+          {t("battleUi.customization.open")}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-sm:w-screen max-sm:h-dvh max-sm:max-w-none max-sm:rounded-none sm:max-w-2xl sm:h-[80vh] flex flex-col overflow-hidden">
         <DialogHeader className="flex-shrink-0 py-4">
-          <DialogTitle>Dostosuj statystyki</DialogTitle>
+          <DialogTitle>{t("battleUi.customization.title")}</DialogTitle>
         </DialogHeader>
 
         <ScrollArea className="flex-1 min-h-0 max-sm:px-2 sm:px-1">
           <div className="space-y-4 p-4">
             <div className="text-sm text-muted-foreground">
-              Przeciągnij kategorie aby zmienić ich kolejność, edytuj nazwy i
-              ukryj niepotrzebne sekcje.
+              {t("battleUi.customization.description")}
             </div>
 
             <Reorder.Group
@@ -151,9 +152,11 @@ export const StatsCustomizationModal = ({
             className="gap-2"
           >
             <RotateCcw className="h-4 w-4" />
-            Reset
+            {t("battleUi.customization.reset")}
           </Button>
-          <Button onClick={() => setOpen(false)}>Zamknij</Button>
+          <Button onClick={() => setOpen(false)}>
+            {t("battleUi.customization.close")}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

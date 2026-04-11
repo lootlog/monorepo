@@ -21,6 +21,7 @@ import {
   useSearchWarriors,
   type Warrior,
 } from "@/hooks/api/battle-log/use-search-warriors";
+import { useTranslation } from "react-i18next";
 
 type WarriorSearchFilterProps = {
   selectedWarriors: Warrior[];
@@ -32,12 +33,13 @@ type WarriorSearchFilterProps = {
 export const WarriorSearchFilter = ({
   selectedWarriors,
   onWarriorToggle,
-  placeholder = "Szukaj wojowników...",
+  placeholder,
   className,
 }: WarriorSearchFilterProps) => {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const resultsListId = useId();
+  const { t } = useTranslation();
 
   const { data: searchResults = [], isFetching } =
     useSearchWarriors(searchQuery);
@@ -56,8 +58,10 @@ export const WarriorSearchFilter = ({
             <Search className="h-4 w-4" />
             <span className="text-sm">
               {selectedWarriors.length > 0
-                ? `${selectedWarriors.length} wybranych`
-                : placeholder}
+                ? t("ui.warriorSearch.selectedCount", {
+                    count: selectedWarriors.length,
+                  })
+                : (placeholder ?? t("ui.warriorSearch.defaultPlaceholder"))}
             </span>
           </div>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -66,17 +70,17 @@ export const WarriorSearchFilter = ({
       <PopoverContent className="w-[300px] p-0" align="start">
         <Command shouldFilter={false}>
           <CommandInput
-            placeholder="Wpisz nazwę wojownika..."
+            placeholder={t("ui.warriorSearch.inputPlaceholder")}
             value={searchQuery}
             onValueChange={setSearchQuery}
           />
           <CommandList id={resultsListId}>
             <CommandEmpty>
               {isFetching
-                ? "Wyszukiwanie..."
+                ? t("ui.warriorSearch.searching")
                 : searchQuery.length < 2
-                  ? "Wpisz przynajmniej 2 znaki"
-                  : "Nie znaleziono"}
+                  ? t("ui.warriorSearch.typeAtLeastTwoCharacters")
+                  : t("ui.warriorSearch.empty")}
             </CommandEmpty>
             <CommandGroup>
               {searchResults.map((warrior) => {
@@ -96,7 +100,8 @@ export const WarriorSearchFilter = ({
                       className="scale-70 mr-2"
                     />
                     <span>
-                      {warrior.name} ({warrior.lvl} lvl)
+                      {warrior.name} (
+                      {t("ui.warriorSearch.level", { level: warrior.lvl })})
                     </span>
                     <Check
                       className={cn(

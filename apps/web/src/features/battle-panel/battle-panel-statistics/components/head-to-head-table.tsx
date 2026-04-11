@@ -22,6 +22,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { ArrowRight } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { ROUTES } from "@/config/routes";
+import { useTranslation } from "react-i18next";
 
 type HeadToHeadTableSearch = {
   characterId?: string;
@@ -56,6 +57,7 @@ export function HeadToHeadTable({
   search,
   isLoading,
 }: HeadToHeadTableProps) {
+  const { t } = useTranslation();
   const columns: ColumnDef<HeadToHeadRecord>[] = useMemo(
     () => [
       {
@@ -75,21 +77,29 @@ export function HeadToHeadTable({
       },
       {
         accessorKey: "opponentName",
-        header: "Nazwa",
+        header: t("battlePanel.statistics.columns.name"),
         cell: ({ row }) => (
           <span className="font-medium">{row.original.opponentName}</span>
         ),
       },
       {
         accessorKey: "opponentLvl",
-        header: () => <div className="text-center">Poziom</div>,
+        header: () => (
+          <div className="text-center">
+            {t("battlePanel.statistics.columns.level")}
+          </div>
+        ),
         cell: ({ row }) => (
           <div className="text-center">{row.original.opponentLvl}</div>
         ),
       },
       {
         accessorKey: "opponentProf",
-        header: () => <div className="text-center">Profesja</div>,
+        header: () => (
+          <div className="text-center">
+            {t("battlePanel.statistics.columns.profession")}
+          </div>
+        ),
         cell: ({ row }) => (
           <div className="text-center">
             {getProfessionName(row.original.opponentProf)}
@@ -98,7 +108,11 @@ export function HeadToHeadTable({
       },
       {
         id: "record",
-        header: () => <div className="text-center">W - L</div>,
+        header: () => (
+          <div className="text-center">
+            {t("battlePanel.statistics.columns.winLoss")}
+          </div>
+        ),
         cell: ({ row }) => (
           <div className="text-center">
             <span className="text-green-600 font-medium">
@@ -113,7 +127,11 @@ export function HeadToHeadTable({
       },
       {
         accessorKey: "winRate",
-        header: () => <div className="text-center">Win %</div>,
+        header: () => (
+          <div className="text-center">
+            {t("battlePanel.statistics.columns.winRate")}
+          </div>
+        ),
         cell: ({ row }) => (
           <div className="text-center">
             <span
@@ -130,7 +148,11 @@ export function HeadToHeadTable({
       },
       {
         accessorKey: "lastBattleDate",
-        header: () => <div className="text-right">Ostatnia walka</div>,
+        header: () => (
+          <div className="text-right">
+            {t("battlePanel.statistics.columns.lastBattle")}
+          </div>
+        ),
         cell: ({ row }) => (
           <div className="text-right text-sm text-muted-foreground">
             {formatDistanceToNow(new Date(row.original.lastBattleDate), {
@@ -141,7 +163,7 @@ export function HeadToHeadTable({
         ),
       },
     ],
-    [],
+    [t],
   );
 
   const table = useReactTable({
@@ -152,11 +174,11 @@ export function HeadToHeadTable({
 
   return (
     <StatCard
-      title="Bilans bezpośrednich starć"
-      description="Historia walk z konkretnymi przeciwnikami (top 5)"
+      title={t("battlePanel.statistics.directMatchups.title")}
+      description={t("battlePanel.statistics.directMatchups.description")}
       isLoading={isLoading}
       isEmpty={data.length === 0}
-      emptyMessage="Brak danych o walkach"
+      emptyMessage={t("battlePanel.statistics.battleDuration.empty")}
       className="flex flex-col"
     >
       <div className="min-h-72 flex flex-col flex-1">
@@ -197,7 +219,7 @@ export function HeadToHeadTable({
         <div className="flex justify-end pt-4 mt-auto">
           <Button asChild variant="outline" size="sm">
             <Link to={ROUTES.user.battlePanel.h2h} search={search as never}>
-              Zobacz cały bilans
+              {t("battlePanel.statistics.directMatchups.link")}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>

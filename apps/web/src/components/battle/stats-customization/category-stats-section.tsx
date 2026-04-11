@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Reorder } from "framer-motion";
 import { GripVertical, X } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
+import { useTranslation } from "react-i18next";
 
 interface CategoryStatsSectionProps {
   statOrder: string[];
@@ -16,6 +17,7 @@ export const CategoryStatsSection = ({
   onUpdateStatOrder,
   onRemoveStat,
 }: CategoryStatsSectionProps) => {
+  const { t } = useTranslation();
   const [localOrder, setLocalOrder] = useState(statOrder);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -36,7 +38,7 @@ export const CategoryStatsSection = ({
   if (statOrder.length === 0) {
     return (
       <div className="text-xs text-muted-foreground italic py-2">
-        Brak statystyk w tej kategorii
+        {t("battleUi.customization.noStatsInCategory")}
       </div>
     );
   }

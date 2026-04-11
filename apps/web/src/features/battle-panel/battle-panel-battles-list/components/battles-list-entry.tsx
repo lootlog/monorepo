@@ -29,6 +29,7 @@ import { PlayerTile } from "@/features/guild/components/loots-list/player-tile";
 import { useBattleSharing } from "@/features/battle-panel/battle-panel-single-battle/hooks/use-battle-sharing";
 import { useDeleteBattle } from "@/hooks/api/battle-log/use-delete-battle";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 export type BattlesListEntryProps = {
   battle: Battle;
@@ -45,6 +46,7 @@ export const BattlesListEntry: FC<BattlesListEntryProps> = ({
   onPhClick,
   onMatchmakingClick,
 }) => {
+  const { t } = useTranslation();
   const { handleShare, handleCopyLink, handleUnshare, isPending } =
     useBattleSharing();
   const { mutate: deleteBattle } = useDeleteBattle();
@@ -123,10 +125,12 @@ export const BattlesListEntry: FC<BattlesListEntryProps> = ({
       { battleId: battle.id },
       {
         onSuccess: () => {
-          toast.success("Walka została usunięta.", { duration: 3000 });
+          toast.success(t("battlePanel.toasts.battleDeleted"), {
+            duration: 3000,
+          });
         },
         onError: () => {
-          toast.error("Wystąpił błąd podczas usuwania walki.", {
+          toast.error(t("battlePanel.toasts.battleDeleteError"), {
             duration: 3000,
           });
         },
@@ -161,7 +165,11 @@ export const BattlesListEntry: FC<BattlesListEntryProps> = ({
                 battle.hasFlee,
             })}
           >
-            {battle.hasFlee ? "Ucieczka" : isWon ? "Wygrana" : "Przegrana"}
+            {battle.hasFlee
+              ? t("battleUi.metadata.flee")
+              : isWon
+                ? t("battlePanel.filters.results.won")
+                : t("battlePanel.filters.results.lost")}
           </Badge>
           <Badge
             onClick={handleWorldClick}
@@ -176,7 +184,7 @@ export const BattlesListEntry: FC<BattlesListEntryProps> = ({
               variant="outline"
               className="text-xs cursor-pointer border-foreground/50 whitespace-nowrap"
             >
-              Punkty Honoru
+              {t("battlePanel.filters.honorPoints")}
             </Badge>
           )}
           {battle.matchmaking && (
@@ -185,7 +193,7 @@ export const BattlesListEntry: FC<BattlesListEntryProps> = ({
               variant="outline"
               className="text-xs cursor-pointer border-purple-500/50 bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 whitespace-nowrap"
             >
-              Otchłań
+              {t("battlePanel.filters.matchmaking")}
             </Badge>
           )}
           <div
@@ -212,7 +220,9 @@ export const BattlesListEntry: FC<BattlesListEntryProps> = ({
                       <Copy className="h-3.5 w-3.5" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>Skopiuj link</TooltipContent>
+                  <TooltipContent>
+                    {t("battlePanel.actions.copyLink")}
+                  </TooltipContent>
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -226,7 +236,9 @@ export const BattlesListEntry: FC<BattlesListEntryProps> = ({
                       <Lock className="h-3.5 w-3.5" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>Ukryj</TooltipContent>
+                  <TooltipContent>
+                    {t("battlePanel.actions.hide")}
+                  </TooltipContent>
                 </Tooltip>
               </>
             ) : (
@@ -242,7 +254,9 @@ export const BattlesListEntry: FC<BattlesListEntryProps> = ({
                     <Share2 className="h-3.5 w-3.5" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Udostępnij</TooltipContent>
+                <TooltipContent>
+                  {t("battlePanel.actions.share")}
+                </TooltipContent>
               </Tooltip>
             )}
             <AlertDialog>
@@ -261,7 +275,9 @@ export const BattlesListEntry: FC<BattlesListEntryProps> = ({
                     </Button>
                   </AlertDialogTrigger>
                 </TooltipTrigger>
-                <TooltipContent>Usuń</TooltipContent>
+                <TooltipContent>
+                  {t("battlePanel.actions.delete")}
+                </TooltipContent>
               </Tooltip>
               <AlertDialogContent
                 onClick={(e) => {
@@ -271,19 +287,17 @@ export const BattlesListEntry: FC<BattlesListEntryProps> = ({
               >
                 <AlertDialogHeader>
                   <AlertDialogTitle>
-                    Czy na pewno chcesz usunąć tę walkę?
+                    {t("battlePanel.dialogs.deleteBattle.title")}
                   </AlertDialogTitle>
                   <AlertDialogDescription>
-                    Ta akcja jest nieodwracalna. Walka zostanie całkowicie
-                    usunięta z systemu i nie będzie można jej przywrócić. Nie
-                    będzie również brana podczas obliczania statystyk.
+                    {t("battlePanel.dialogs.deleteBattle.description")}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Anuluj</AlertDialogCancel>
+                  <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                   <AlertDialogAction asChild>
                     <Button variant="destructive" onClick={handleDeleteClick}>
-                      Usuń walkę
+                      {t("battlePanel.dialogs.deleteBattle.confirm")}
                     </Button>
                   </AlertDialogAction>
                 </AlertDialogFooter>
@@ -335,14 +349,13 @@ export const BattlesListEntry: FC<BattlesListEntryProps> = ({
           align="left"
           className="p-0 gap-3"
           labels={{
-            startTime: "Data i godzina rozpoczęcia walki",
-            duration: "Czas trwania walki",
-            battleType: "Typ walki",
-            public: "Publiczna",
-            private: "Prywatna",
-            publicTooltip:
-              "Walka jest publiczna - może być przeglądana przez osoby posiadające link",
-            privateTooltip: "Walka jest prywatna - tylko Ty możesz ją zobaczyć",
+            startTime: t("battleUi.metadata.startTime"),
+            duration: t("battleUi.metadata.duration"),
+            battleType: t("battleUi.metadata.battleType"),
+            public: t("battleUi.metadata.public"),
+            private: t("battleUi.metadata.private"),
+            publicTooltip: t("battleUi.metadata.publicTooltip"),
+            privateTooltip: t("battleUi.metadata.privateTooltip"),
           }}
         />
       </div>

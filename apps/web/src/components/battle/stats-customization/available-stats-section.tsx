@@ -3,6 +3,7 @@ import { Search, X, Plus } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import { Input } from "@lootlog/ui/components/input";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { useTranslation } from "react-i18next";
 
 interface AvailableStatsSectionProps {
   availableStats: Array<{ key: string; label: string }>;
@@ -13,6 +14,7 @@ export const AvailableStatsSection = ({
   availableStats,
   onAddStat,
 }: AvailableStatsSectionProps) => {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredAvailableStats = availableStats.filter((stat) =>
@@ -26,14 +28,14 @@ export const AvailableStatsSection = ({
   return (
     <div>
       <div className="text-xs text-muted-foreground mb-2 font-medium">
-        Dostępne statystyki:
+        {t("battleUi.customization.availableStats")}
       </div>
       <div className="relative mb-2">
         <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground" />
         <Input
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Szukaj statystyki..."
+          placeholder={t("battleUi.customization.searchStat")}
           className="h-7 pl-7 pr-7 text-xs"
         />
         {searchQuery && (
@@ -68,7 +70,7 @@ export const AvailableStatsSection = ({
             ))
           ) : (
             <div className="text-xs text-muted-foreground italic py-2 text-center">
-              Nie znaleziono statystyk
+              {t("battleUi.customization.noStatsFound")}
             </div>
           )}
         </div>

@@ -16,10 +16,12 @@ import { useActivityWorldSuggestions } from "@/hooks/api/activity-logs/use-activ
 import { Button } from "@lootlog/ui/components/button";
 import { Filter } from "lucide-react";
 import { useParams } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 
 const FILTERS_OPEN_KEY = "activity-logs-filters-open";
 
 export const ActivityLogs: FC = () => {
+  const { t } = useTranslation();
   const { guildId } = useParams({
     from: "/_authenticated/$guildId/activity-logs",
   });
@@ -67,7 +69,7 @@ export const ActivityLogs: FC = () => {
         >
           <DrawerContent className="p-0 h-[85vh] max-h-[85vh] flex flex-col overflow-hidden">
             <DrawerHeader className="border-b px-4 py-3 shrink-0">
-              <DrawerTitle>Filtry aktywności</DrawerTitle>
+              <DrawerTitle>{t("activityLogs.filters.title")}</DrawerTitle>
             </DrawerHeader>
             <div className="flex-1 overflow-hidden">
               <ActivityLogsFiltersSidebar className="w-full border-l-0 h-full p-0" />

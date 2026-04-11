@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@lootlog/ui/components/select";
 import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
+import { useTranslation } from "react-i18next";
 
 export type ActivityLogsFiltersHeaderProps = {
   isFiltersOpen: boolean;
@@ -31,6 +32,7 @@ export const ActivityLogsFiltersHeader = ({
   onWorldChange,
 }: ActivityLogsFiltersHeaderProps) => {
   const isMobile = useIsMobile();
+  const { t } = useTranslation();
 
   return (
     <Card className="gap-3 border-border bg-card/60 p-4 backdrop-blur-sm">
@@ -38,7 +40,7 @@ export const ActivityLogsFiltersHeader = ({
         <div className="rounded-xl bg-primary/10 p-2 shadow-inner shadow-primary/10">
           <Activity className="size-4 text-primary" />
         </div>
-        <h2 className="text-base font-semibold">Logi aktywności</h2>
+        <h2 className="text-base font-semibold">{t("activityLogs.title")}</h2>
 
         <div className="flex-1" />
 
@@ -51,10 +53,14 @@ export const ActivityLogsFiltersHeader = ({
               }
             >
               <SelectTrigger className="h-9 w-48">
-                <SelectValue placeholder="Wszystkie światy" />
+                <SelectValue
+                  placeholder={t("activityLogs.filters.allWorlds")}
+                />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Wszystkie światy</SelectItem>
+                <SelectItem value="all">
+                  {t("activityLogs.filters.allWorlds")}
+                </SelectItem>
                 {worldOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {capitalizeFirstLetter(option.label)}

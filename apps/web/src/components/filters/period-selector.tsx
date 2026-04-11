@@ -4,22 +4,7 @@ import {
   type FilterPopoverOption,
 } from "@lootlog/ui/components/filter-popover";
 import type { Period } from "@/store/battle-filters.store";
-
-type PeriodOption = {
-  value: Period;
-  label: string;
-};
-
-const ALL_PERIODS: PeriodOption[] = [
-  { value: "24h", label: "Ostatnie 24 godziny" },
-  { value: "3d", label: "Ostatnie 3 dni" },
-  { value: "7d", label: "Ostatni tydzień" },
-  { value: "14d", label: "Ostatnie 2 tygodnie" },
-  { value: "30d", label: "Ostatni miesiąc" },
-  { value: "90d", label: "Ostatnie 3 miesiące" },
-  { value: "180d", label: "Ostatnie pół roku" },
-  { value: "all", label: "Wszystko" },
-];
+import { useTranslation } from "react-i18next";
 
 interface PeriodSelectorProps {
   value: Period;
@@ -34,11 +19,22 @@ export function PeriodSelector({
   value,
   onValueChange,
   excludePeriods = [],
-  placeholder = "Okres",
+  placeholder,
   width = "w-[200px]",
   className,
 }: PeriodSelectorProps) {
-  const availablePeriods = ALL_PERIODS.filter(
+  const { t } = useTranslation();
+  const allPeriods = [
+    { value: "24h" as const, label: t("common.periodOptions.24h") },
+    { value: "3d" as const, label: t("common.periodOptions.3d") },
+    { value: "7d" as const, label: t("common.periodOptions.7d") },
+    { value: "14d" as const, label: t("common.periodOptions.14d") },
+    { value: "30d" as const, label: t("common.periodOptions.30d") },
+    { value: "90d" as const, label: t("common.periodOptions.90d") },
+    { value: "180d" as const, label: t("common.periodOptions.180d") },
+    { value: "all" as const, label: t("common.periodOptions.all") },
+  ];
+  const availablePeriods = allPeriods.filter(
     (period) => !excludePeriods.includes(period.value),
   );
 
@@ -54,7 +50,7 @@ export function PeriodSelector({
       options={options}
       value={value}
       onValueChange={onValueChange}
-      placeholder={placeholder}
+      placeholder={placeholder ?? t("common.filterLabels.period")}
       icon={Calendar}
       width={width}
       triggerClassName={className}

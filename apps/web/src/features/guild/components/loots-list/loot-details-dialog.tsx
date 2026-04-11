@@ -26,6 +26,7 @@ import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { useIsOwner } from "@/hooks/context/use-is-owner";
 import { Permission } from "@lootlog/types";
 import { LOOT_SHARE_COLOR_PALETTE } from "@/features/guild/constants/loot-share-color-palette";
+import { useTranslation } from "react-i18next";
 
 const MANAGE_LOOTS_PERMISSIONS = [Permission.LOOTLOG_MANAGE, Permission.ADMIN];
 
@@ -59,12 +60,16 @@ const LoadingState: FC = () => (
   </div>
 );
 
-const NotFoundState: FC = () => (
-  <div className="flex flex-col items-center justify-center h-64 gap-3 text-muted-foreground">
-    <AlertCircle className="h-12 w-12" />
-    <p className="text-sm">Nie znaleziono łupu</p>
-  </div>
-);
+const NotFoundState: FC = () => {
+  const { t } = useTranslation();
+
+  return (
+    <div className="flex flex-col items-center justify-center h-64 gap-3 text-muted-foreground">
+      <AlertCircle className="h-12 w-12" />
+      <p className="text-sm">{t("loots.details.notFound")}</p>
+    </div>
+  );
+};
 
 type LootDetailsContentProps = {
   loot: Loot;
@@ -75,6 +80,7 @@ const LootDetailsContent: FC<LootDetailsContentProps> = ({
   loot,
   canManageLoots,
 }) => {
+  const { t } = useTranslation();
   const date = timestampToDate(loot.createdAt);
   const isMobile = useIsMobile();
   const { theme } = useTheme();
@@ -104,7 +110,7 @@ const LootDetailsContent: FC<LootDetailsContentProps> = ({
             </span>
             <span className="flex items-center gap-1.5 text-xs font-normal text-muted-foreground">
               <Calendar className="h-3 w-3" />
-              Zdobyto {date}
+              {t("loots.details.obtainedAt", { date })}
             </span>
           </div>
         </DialogTitle>

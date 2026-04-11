@@ -6,6 +6,7 @@ import {
   CardTitle,
 } from "@lootlog/ui/components/card";
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 
 interface StatCardProps {
   title: string;
@@ -26,6 +27,7 @@ export function StatCard({
   children,
   className,
 }: StatCardProps) {
+  const { t } = useTranslation();
   return (
     <Card className={className}>
       <CardHeader>
@@ -43,7 +45,9 @@ export function StatCard({
       >
         {isLoading ? (
           <div className="h-72 flex items-center justify-center">
-            <p className="text-sm text-muted-foreground">Ładowanie...</p>
+            <p className="text-sm text-muted-foreground">
+              {t("battlePanel.statistics.loading")}
+            </p>
           </div>
         ) : isEmpty ? (
           <div className="h-72 flex items-center justify-center">

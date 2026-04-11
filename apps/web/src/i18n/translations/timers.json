@@ -1,0 +1,15 @@
+{
+  "searchPlaceholder": "Szukaj timerów...",
+  "view": {
+    "list": "Widok listy",
+    "grid": "Widok siatki"
+  },
+  "empty": "Brak timerów",
+  "npcType": {
+    "manual": "Dodane ręcznie"
+  },
+  "details": {
+    "minSpawnTime": "Min. czas spawnu:",
+    "maxSpawnTime": "Max. czas spawnu:"
+  }
+}

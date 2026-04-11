@@ -25,16 +25,7 @@ import { useActivityLogsFilters } from "@/hooks/use-activity-logs-filters";
 import { useActivityActorNameSuggestions } from "@/hooks/api/activity-logs/use-activity-actor-name-suggestions";
 import { useActivityClanNameSuggestions } from "@/hooks/api/activity-logs/use-activity-clan-name-suggestions";
 import { useGuild } from "@/hooks/api/guilds/use-guild";
-
-const ACTIVITY_TYPES: { value: ActivityType; label: string }[] = [
-  { value: "CONNECT_EVENT", label: "Połączenie" },
-  { value: "DISCONNECT_EVENT", label: "Rozłączenie" },
-];
-
-const ACTIVITY_SOURCES: { value: ActivitySource; label: string }[] = [
-  { value: "GAME", label: "Gra" },
-  { value: "WEB_APP", label: "Strona internetowa" },
-];
+import { useTranslation } from "react-i18next";
 
 type ActivityLogsFiltersSidebarProps = {
   className?: string;
@@ -43,6 +34,7 @@ type ActivityLogsFiltersSidebarProps = {
 export const ActivityLogsFiltersSidebar: FC<
   ActivityLogsFiltersSidebarProps
 > = ({ className }) => {
+  const { t } = useTranslation();
   const { filters, setFilters, clearFilters, hasActiveFilters } =
     useActivityLogsFilters();
   const { data: guild } = useGuild();
@@ -112,6 +104,23 @@ export const ActivityLogsFiltersSidebar: FC<
       };
     });
   };
+  const activityTypes: { value: ActivityType; label: string }[] = [
+    {
+      value: "CONNECT_EVENT",
+      label: t("activityLogs.filters.types.CONNECT_EVENT"),
+    },
+    {
+      value: "DISCONNECT_EVENT",
+      label: t("activityLogs.filters.types.DISCONNECT_EVENT"),
+    },
+  ];
+  const activitySources: { value: ActivitySource; label: string }[] = [
+    { value: "GAME", label: t("activityLogs.filters.sources.GAME") },
+    {
+      value: "WEB_APP",
+      label: t("activityLogs.filters.sources.WEB_APP"),
+    },
+  ];
 
   return (
     <div
@@ -130,11 +139,13 @@ export const ActivityLogsFiltersSidebar: FC<
                 className="space-y-4"
               >
                 <AccordionItem value="general" className="space-y-3">
-                  <AccordionTrigger>Filtry ogólne</AccordionTrigger>
+                  <AccordionTrigger>
+                    {t("activityLogs.filters.general")}
+                  </AccordionTrigger>
                   <AccordionContent className="space-y-3">
                     <div>
                       <Label className="text-xs text-muted-foreground mb-2 block">
-                        Nazwa gracza
+                        {t("activityLogs.filters.playerName")}
                       </Label>
                       <ActorNameSelector
                         value={filters.name ?? ""}
@@ -146,14 +157,16 @@ export const ActivityLogsFiltersSidebar: FC<
                         onValueChange={(value) =>
                           updateFilters({ name: value })
                         }
-                        placeholder="Szukaj po nazwie..."
+                        placeholder={t(
+                          "activityLogs.filters.nameSearchPlaceholder",
+                        )}
                         className="w-full"
                       />
                     </div>
 
                     <div>
                       <Label className="text-xs text-muted-foreground mb-2 block">
-                        Nazwa klanu
+                        {t("activityLogs.filters.clanName")}
                       </Label>
                       <ActorNameSelector
                         value={filters.clanName ?? ""}
@@ -165,7 +178,9 @@ export const ActivityLogsFiltersSidebar: FC<
                         onValueChange={(value) =>
                           updateFilters({ clanName: value })
                         }
-                        placeholder="Szukaj po klanie..."
+                        placeholder={t(
+                          "activityLogs.filters.clanSearchPlaceholder",
+                        )}
                         className="w-full"
                       />
                     </div>
@@ -175,10 +190,12 @@ export const ActivityLogsFiltersSidebar: FC<
                 <Separator />
 
                 <AccordionItem value="type" className="space-y-3">
-                  <AccordionTrigger>Typ aktywności</AccordionTrigger>
+                  <AccordionTrigger>
+                    {t("activityLogs.filters.type")}
+                  </AccordionTrigger>
                   <AccordionContent className="space-y-3">
                     <div className="flex flex-col gap-2">
-                      {ACTIVITY_TYPES.map((type) => (
+                      {activityTypes.map((type) => (
                         <div
                           key={type.value}
                           className="flex items-center gap-2"
@@ -211,10 +228,12 @@ export const ActivityLogsFiltersSidebar: FC<
                 <Separator />
 
                 <AccordionItem value="source" className="space-y-3">
-                  <AccordionTrigger>Źródło</AccordionTrigger>
+                  <AccordionTrigger>
+                    {t("activityLogs.filters.source")}
+                  </AccordionTrigger>
                   <AccordionContent className="space-y-3">
                     <div className="flex flex-col gap-2">
-                      {ACTIVITY_SOURCES.map((source) => (
+                      {activitySources.map((source) => (
                         <div
                           key={source.value}
                           className="flex items-center gap-2"
@@ -249,11 +268,13 @@ export const ActivityLogsFiltersSidebar: FC<
                 <Separator />
 
                 <AccordionItem value="date" className="space-y-3">
-                  <AccordionTrigger>Zakres dat</AccordionTrigger>
+                  <AccordionTrigger>
+                    {t("activityLogs.filters.dateRange")}
+                  </AccordionTrigger>
                   <AccordionContent className="space-y-3">
                     <div>
                       <Label className="text-xs text-muted-foreground mb-2 block">
-                        Data początkowa
+                        {t("activityLogs.filters.startDate")}
                       </Label>
                       <DateTimePicker
                         value={startDateValue}
@@ -274,7 +295,9 @@ export const ActivityLogsFiltersSidebar: FC<
                             endDate: shouldClearEndDate ? "" : filters.endDate,
                           });
                         }}
-                        placeholder="Wybierz datę początkową"
+                        placeholder={t(
+                          "activityLogs.filters.startDatePlaceholder",
+                        )}
                         className="w-full"
                         disabled={isStartDateDisabled}
                       />
@@ -282,7 +305,7 @@ export const ActivityLogsFiltersSidebar: FC<
 
                     <div>
                       <Label className="text-xs text-muted-foreground mb-2 block">
-                        Data końcowa
+                        {t("activityLogs.filters.endDate")}
                       </Label>
                       <DateTimePicker
                         value={endDateValue}
@@ -291,7 +314,9 @@ export const ActivityLogsFiltersSidebar: FC<
                             endDate: date?.toISOString() ?? "",
                           })
                         }
-                        placeholder="Wybierz datę końcową"
+                        placeholder={t(
+                          "activityLogs.filters.endDatePlaceholder",
+                        )}
                         className="w-full"
                         disabled={isEndDateDisabled}
                       />
@@ -319,7 +344,7 @@ export const ActivityLogsFiltersSidebar: FC<
                   size="sm"
                 >
                   <X className="h-4 w-4 mr-2" />
-                  Wyczyść filtry
+                  {t("loots.filtersPanel.quickFilters.clearButton")}
                 </Button>
               </div>
             </motion.div>

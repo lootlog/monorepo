@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
 import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
 import { BattleOverviewCard } from "@/components/battle";
+import { useTranslation } from "react-i18next";
 
 export type BattleOverviewProps = {
   battle: Battle;
@@ -16,6 +17,7 @@ export const BattleOverview: FC<BattleOverviewProps> = ({
   battle,
   showHeader = true,
 }) => {
+  const { t } = useTranslation();
   const { handleShare, handleCopyLink, handleUnshare, isPending } =
     useBattleSharing();
   const { mutate: deleteBattle } = useDeleteBattle();
@@ -38,11 +40,13 @@ export const BattleOverview: FC<BattleOverviewProps> = ({
       { battleId: battle.id },
       {
         onSuccess: () => {
-          toast.success("Walka została usunięta.", { duration: 3000 });
+          toast.success(t("battlePanel.toasts.battleDeleted"), {
+            duration: 3000,
+          });
           navigate({ to: "/@me/battle-panel/battles" });
         },
         onError: () => {
-          toast.error("Wystąpił błąd podczas usuwania walki.", {
+          toast.error(t("battlePanel.toasts.battleDeleteError"), {
             duration: 3000,
           });
         },
@@ -60,34 +64,6 @@ export const BattleOverview: FC<BattleOverviewProps> = ({
       isSharePending={isPending}
       cdnBaseUrl={MARGONEM_CDN_CHARACTERS_URL}
       showHeader={showHeader}
-      labels={{
-        header: {
-          title: "Przegląd walki",
-          copyLink: "Skopiuj link",
-          hide: "Ukryj",
-          share: "Udostępnij",
-          delete: "Usuń",
-          deleteConfirmTitle: "Czy na pewno chcesz usunąć tę walkę?",
-          deleteConfirmDescription:
-            "Ta akcja jest nieodwracalna. Walka zostanie całkowicie usunięta z systemu i nie będzie można jej przywrócić. Nie będzie również brana podczas obliczania statystyk.",
-          cancel: "Anuluj",
-          deleteBattle: "Usuń walkę",
-        },
-        teams: {
-          userTeam: "Twoja drużyna",
-          enemyTeam: "Przeciwnicy",
-        },
-        metadata: {
-          startTime: "Data i godzina rozpoczęcia walki",
-          duration: "Czas trwania walki",
-          battleType: "Typ walki",
-          public: "Publiczna",
-          private: "Prywatna",
-          publicTooltip:
-            "Walka jest publiczna - może być przeglądana przez osoby posiadające link",
-          privateTooltip: "Walka jest prywatna - tylko Ty możesz ją zobaczyć",
-        },
-      }}
     />
   );
 };

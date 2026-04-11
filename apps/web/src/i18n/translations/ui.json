@@ -1,0 +1,37 @@
+{
+  "tooltips": {
+    "installAddon": "Zainstaluj dodatek",
+    "createLootlog": "Stwórz nowy lootlog"
+  },
+  "actions": {
+    "logout": "Wyloguj się",
+    "add": "Dodaj",
+    "installAddon": "Instaluj dodatek"
+  },
+  "modals": {
+    "createLootlog": {
+      "title": "Nowy lootlog",
+      "description": "Utwórz nowy lootlog dla swojego klanu. Jeśli nie widzisz tutaj swojego Discorda, nie masz uprawnień do dodawania bota na serwer lub dopiero założyłeś serwer Discord. Odczekaj proszę do 10 minut i spróbuj ponownie.",
+      "searchPlaceholder": "Szukaj serwera..."
+    },
+    "installAddon": {
+      "title": "Instalacja dodatku",
+      "description": "Zainstaluj dodatek, aby korzystać z lootloga w grze."
+    }
+  },
+  "characterSelector": {
+    "allCharacters": "Wszystkie postacie",
+    "selectCharacter": "Wybierz postać",
+    "searchPlaceholder": "Szukaj postaci...",
+    "empty": "Nie znaleziono postaci."
+  },
+  "warriorSearch": {
+    "defaultPlaceholder": "Szukaj wojowników...",
+    "inputPlaceholder": "Wpisz nazwę wojownika...",
+    "searching": "Wyszukiwanie...",
+    "typeAtLeastTwoCharacters": "Wpisz przynajmniej 2 znaki",
+    "empty": "Nie znaleziono",
+    "selectedCount": "{{count}} wybranych",
+    "level": "{{level}} lvl"
+  }
+}

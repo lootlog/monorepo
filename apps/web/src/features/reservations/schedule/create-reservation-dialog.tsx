@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { useCreateReservation } from "@/hooks/api/reservations/use-create-reservation";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { getApiErrorMessage } from "@/features/events/utils/get-api-error-message";
+import { useTranslation } from "react-i18next";
 
 type CreateReservationDialogProps = {
   open: boolean;
@@ -46,6 +47,7 @@ const CreateReservationDialogContent: React.FC<
   CreateReservationDialogProps
 > = ({ open, onOpenChange, reservationKey, currentUserId }) => {
   const isMobile = useIsMobile();
+  const { t } = useTranslation();
   const [fromDate, setFromDate] = useState<Date | undefined>();
   const [toDate, setToDate] = useState<Date | undefined>();
   const [isFromPickerOpen, setIsFromPickerOpen] = useState(false);
@@ -57,28 +59,31 @@ const CreateReservationDialogContent: React.FC<
 
   const handleCreateReservation = useCallback(async () => {
     if (!fromDate || !toDate) {
-      toast.error("Wybierz zakres czasowy rezerwacji.", {
+      toast.error(t("reservations.schedule.validation.timeRangeRequired"), {
         position: "bottom-right",
       });
       return;
     }
 
     if (fromDate >= toDate) {
-      toast.error("Data zakończenia musi być późniejsza niż rozpoczęcia.", {
+      toast.error(t("reservations.schedule.validation.endAfterStart"), {
         position: "bottom-right",
       });
       return;
     }
 
     if (!reservationKey) {
-      toast.error("Nie udało się ustalić rodzaju rezerwacji.", {
-        position: "bottom-right",
-      });
+      toast.error(
+        t("reservations.schedule.validation.reservationTypeMissing"),
+        {
+          position: "bottom-right",
+        },
+      );
       return;
     }
 
     if (!currentUserId) {
-      toast.error("Brak informacji o użytkowniku.", {
+      toast.error(t("reservations.schedule.validation.userMissing"), {
         position: "bottom-right",
       });
       return;
@@ -86,16 +91,15 @@ const CreateReservationDialogContent: React.FC<
 
     const oneHourAgo = Date.now() - 60 * 60 * 1000;
     if (fromDate.getTime() < oneHourAgo) {
-      toast.error(
-        "Godzina rozpoczęcia rezerwacji nie może być starsza niż 1 godzina od aktualnego czasu.",
-        { position: "bottom-right" },
-      );
+      toast.error(t("reservations.schedule.validation.startTooOld"), {
+        position: "bottom-right",
+      });
       return;
     }
 
     const minimumDurationMs = 30 * 60 * 1000;
     if (toDate.getTime() - fromDate.getTime() < minimumDurationMs) {
-      toast.error("Rezerwacja musi trwać co najmniej 30 minut.", {
+      toast.error(t("reservations.schedule.validation.minimumDuration"), {
         position: "bottom-right",
       });
       return;
@@ -111,12 +115,12 @@ const CreateReservationDialogContent: React.FC<
         createdBy: currentUserId,
         comment: normalizedComment.length > 0 ? normalizedComment : undefined,
       });
-      toast.success("Rezerwacja została utworzona.", {
+      toast.success(t("reservations.schedule.toasts.created"), {
         position: "bottom-right",
       });
       onOpenChange(false);
     } catch (error) {
-      const fallbackMessage = "Nie udało się utworzyć rezerwacji.";
+      const fallbackMessage = t("reservations.schedule.toasts.createError");
       toast.error(getApiErrorMessage(error) ?? fallbackMessage, {
         position: "bottom-right",
       });
@@ -129,13 +133,14 @@ const CreateReservationDialogContent: React.FC<
     createReservation,
     comment,
     onOpenChange,
+    t,
   ]);
 
   const renderFormContent = () => (
     <div className="space-y-4 px-3 mb-4 mt-3">
       <DatePicker
-        label="Data rozpoczęcia"
-        placeholder="Wybierz początek rezerwacji"
+        label={t("reservations.schedule.dialog.startDate")}
+        placeholder={t("reservations.schedule.dialog.startDatePlaceholder")}
         date={fromDate}
         setDate={(date) => setFromDate(date)}
         open={isFromPickerOpen}
@@ -143,8 +148,8 @@ const CreateReservationDialogContent: React.FC<
         onClear={() => setFromDate(undefined)}
       />
       <DatePicker
-        label="Data zakończenia"
-        placeholder="Wybierz koniec rezerwacji"
+        label={t("reservations.schedule.dialog.endDate")}
+        placeholder={t("reservations.schedule.dialog.endDatePlaceholder")}
         date={toDate}
         setDate={(date) => setToDate(date)}
         open={isToPickerOpen}
@@ -156,12 +161,12 @@ const CreateReservationDialogContent: React.FC<
           className="text-xs font-semibold text-muted-foreground"
           htmlFor="reservation-comment"
         >
-          Komentarz (opcjonalnie)
+          {t("reservations.schedule.dialog.comment")}
         </label>
         <Textarea
           id="reservation-comment"
           maxLength={128}
-          placeholder="Dodaj krótki komentarz do rezerwacji"
+          placeholder={t("reservations.schedule.dialog.commentPlaceholder")}
           value={comment}
           onChange={(event) => setComment(event.target.value)}
           className="min-h-[58px] max-h-[58px] resize-none"
@@ -177,7 +182,7 @@ const CreateReservationDialogContent: React.FC<
   const renderFooter = () => (
     <>
       <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
-        Anuluj
+        {t("common.cancel")}
       </Button>
       <Button
         type="button"
@@ -191,7 +196,7 @@ const CreateReservationDialogContent: React.FC<
         }
         onClick={handleCreateReservation}
       >
-        Zapisz
+        {t("common.save")}
       </Button>
     </>
   );
@@ -201,7 +206,7 @@ const CreateReservationDialogContent: React.FC<
       <Drawer open={open} onOpenChange={onOpenChange}>
         <DrawerContent>
           <DrawerHeader>
-            <DrawerTitle>Dodaj rezerwację</DrawerTitle>
+            <DrawerTitle>{t("reservations.schedule.dialog.title")}</DrawerTitle>
           </DrawerHeader>
           {renderFormContent()}
           <DrawerFooter>{renderFooter()}</DrawerFooter>
@@ -217,7 +222,7 @@ const CreateReservationDialogContent: React.FC<
         aria-describedby={undefined}
       >
         <DialogHeader>
-          <DialogTitle>Dodaj rezerwację</DialogTitle>
+          <DialogTitle>{t("reservations.schedule.dialog.title")}</DialogTitle>
         </DialogHeader>
         {renderFormContent()}
         <DialogFooter className="mr-3 mb-2">{renderFooter()}</DialogFooter>

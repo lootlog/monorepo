@@ -14,26 +14,32 @@ import {
   SelectorPanelProvider,
   useSelectorPanel,
 } from "@/components/selector-panel";
+import { useTranslation } from "react-i18next";
 
-const RolesSettingsHeader = () => (
-  <Card className="mx-3 mt-3 gap-4 border-border bg-card/60 p-4 backdrop-blur-sm shrink-0">
-    <div className="flex items-center gap-3 flex-1 min-w-0">
-      <div className="p-2.5 rounded-xl bg-primary/10 shadow-inner shadow-primary/10">
-        <Shield className="size-4 text-primary" />
+const RolesSettingsHeader = () => {
+  const { t } = useTranslation();
+
+  return (
+    <Card className="mx-3 mt-3 gap-4 border-border bg-card/60 p-4 backdrop-blur-sm shrink-0">
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        <div className="p-2.5 rounded-xl bg-primary/10 shadow-inner shadow-primary/10">
+          <Shield className="size-4 text-primary" />
+        </div>
+        <div>
+          <h2 className="text-base font-semibold leading-tight">
+            {t("settings.roles.title")}
+          </h2>
+          <p className="text-xs text-muted-foreground leading-tight">
+            {t("settings.roles.description")}
+          </p>
+        </div>
       </div>
-      <div>
-        <h2 className="text-base font-semibold leading-tight">
-          Ustawienia ról
-        </h2>
-        <p className="text-xs text-muted-foreground leading-tight">
-          Zarządzaj uprawnieniami dla ról Discord
-        </p>
-      </div>
-    </div>
-  </Card>
-);
+    </Card>
+  );
+};
 
 const RolesSettingsContent = () => {
+  const { t } = useTranslation();
   const { data: roles } = useGuildRoles();
   const [searchValue, setSearchValue] = useState("");
   const { selectedItem: selectedRole } = useSelectorPanel<GuildRole>();
@@ -66,7 +72,7 @@ const RolesSettingsContent = () => {
         <Card className="mx-3 mt-3 mb-3 shrink-0 border-border bg-card/40 p-3 backdrop-blur-sm">
           <SearchInput
             onChange={(e) => setSearchValue(e.target.value)}
-            placeholder="Szukaj roli..."
+            placeholder={t("settings.roles.searchPlaceholder")}
             className="h-9"
           />
         </Card>
@@ -87,9 +93,11 @@ const RolesSettingsContent = () => {
         filteredRoles?.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
             <Shield className="size-12 mb-4 opacity-30" />
-            <p className="text-sm font-medium">Nie znaleziono ról</p>
+            <p className="text-sm font-medium">
+              {t("settings.roles.emptyTitle")}
+            </p>
             <p className="text-xs mt-1">
-              Spróbuj zmienić kryteria wyszukiwania
+              {t("settings.roles.emptyDescription")}
             </p>
           </div>
         )

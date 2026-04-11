@@ -1,0 +1,50 @@
+{
+  "title": "Logi aktywności",
+  "filters": {
+    "title": "Filtry aktywności",
+    "general": "Filtry ogólne",
+    "type": "Typ aktywności",
+    "source": "Źródło",
+    "dateRange": "Zakres dat",
+    "playerName": "Nazwa gracza",
+    "clanName": "Nazwa klanu",
+    "startDate": "Data początkowa",
+    "endDate": "Data końcowa",
+    "nameSearchPlaceholder": "Szukaj po nazwie...",
+    "clanSearchPlaceholder": "Szukaj po klanie...",
+    "startDatePlaceholder": "Wybierz datę początkową",
+    "endDatePlaceholder": "Wybierz datę końcową",
+    "allWorlds": "Wszystkie światy",
+    "types": {
+      "CONNECT_EVENT": "Połączenie",
+      "DISCONNECT_EVENT": "Rozłączenie"
+    },
+    "sources": {
+      "GAME": "Gra",
+      "WEB_APP": "Strona internetowa"
+    }
+  },
+  "list": {
+    "types": {
+      "LOOT_EVENT": "Loot",
+      "TIMER_EVENT": "Timer",
+      "CONNECT_EVENT": "Połączenie",
+      "DISCONNECT_EVENT": "Rozłączenie"
+    },
+    "sources": {
+      "GAME": "Gra",
+      "WEB_APP": "Web"
+    },
+    "id": "ID: {{id}}",
+    "discord": "Discord: ",
+    "world": "Świat: {{world}}",
+    "dataFresh": "Dane aktualne",
+    "dataStale": "Dane nieaktualne",
+    "updatedAt": "Zaktualizowano: {{date}}",
+    "lootContext": "Kontekst Loot",
+    "timerContext": "Kontekst Timer",
+    "additionalData": "Dodatkowe dane",
+    "lootId": "Loot ID: ",
+    "npc": "NPC: "
+  }
+}

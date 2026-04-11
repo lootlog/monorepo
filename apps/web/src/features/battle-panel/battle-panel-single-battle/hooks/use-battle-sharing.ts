@@ -2,10 +2,12 @@ import { useEditBattle } from "@/hooks/api/battle-log/use-edit-battle";
 import { BATTLELOG_PUBLIC_URL } from "@/config/addon";
 import { useCopyToClipboard } from "usehooks-ts";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 export const useBattleSharing = () => {
   const { mutate: editBattle, isPending } = useEditBattle();
   const [, copy] = useCopyToClipboard();
+  const { t } = useTranslation();
 
   const composeBattleUrl = (battleId: string) => {
     return `${BATTLELOG_PUBLIC_URL}/battles/${battleId}`;
@@ -14,11 +16,11 @@ export const useBattleSharing = () => {
   const handleCopy = async (url: string) => {
     try {
       await copy(url);
-      toast.success("Link do walki został skopiowany do schowka!", {
+      toast.success(t("battlePanel.toasts.linkCopied"), {
         duration: 3000,
       });
     } catch {
-      toast.error("Wystąpił błąd podczas kopiowania linku.", {
+      toast.error(t("battlePanel.toasts.linkCopyError"), {
         duration: 3000,
       });
     }
@@ -30,11 +32,13 @@ export const useBattleSharing = () => {
       {
         onSuccess: (response) => {
           const battleUrl = composeBattleUrl(response.id);
-          toast.success("Walka została udostępniona!", { duration: 3000 });
+          toast.success(t("battlePanel.toasts.battleShared"), {
+            duration: 3000,
+          });
           handleCopy(battleUrl);
         },
         onError: () => {
-          toast.error("Wystąpił błąd podczas udostępniania walki.", {
+          toast.error(t("battlePanel.toasts.battleShareError"), {
             duration: 3000,
           });
         },
@@ -52,10 +56,12 @@ export const useBattleSharing = () => {
       { battleId, data: { public: false } },
       {
         onSuccess: () => {
-          toast.success("Walka została ukryta!", { duration: 3000 });
+          toast.success(t("battlePanel.toasts.battleHidden"), {
+            duration: 3000,
+          });
         },
         onError: () => {
-          toast.error("Wystąpił błąd podczas ukrywania walki.", {
+          toast.error(t("battlePanel.toasts.battleHideError"), {
             duration: 3000,
           });
         },

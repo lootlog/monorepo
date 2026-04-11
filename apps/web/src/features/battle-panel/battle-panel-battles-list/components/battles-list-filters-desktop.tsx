@@ -33,17 +33,7 @@ import type { BattleFilters } from "./battles-list-filters";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import { LevelRangeFilter, WarriorSearchFilter } from "@/components/filters";
 import type { Warrior } from "@/hooks/api/battle-log/use-search-warriors";
-
-const battleTypes = [
-  { value: "solo" as const, label: "Solo" },
-  { value: "group" as const, label: "Grupowe" },
-];
-
-const battleResults = [
-  { value: "won" as const, label: "Zwycięstwa" },
-  { value: "lost" as const, label: "Porażki" },
-  { value: "flee" as const, label: "Ucieczki" },
-];
+import { useTranslation } from "react-i18next";
 
 type BattlesListFiltersDesktopProps = {
   filters: BattleFilters;
@@ -80,7 +70,17 @@ export const BattlesListFiltersDesktop = ({
   onMinLevelChange,
   onMaxLevelChange,
 }: BattlesListFiltersDesktopProps) => {
+  const { t } = useTranslation();
   const characterListId = useId();
+  const battleTypes = [
+    { value: "solo" as const, label: t("battlePanel.filters.types.solo") },
+    { value: "group" as const, label: t("battlePanel.filters.types.group") },
+  ];
+  const battleResults = [
+    { value: "won" as const, label: t("battlePanel.filters.results.won") },
+    { value: "lost" as const, label: t("battlePanel.filters.results.lost") },
+    { value: "flee" as const, label: t("battlePanel.filters.results.flee") },
+  ];
 
   return (
     <div className="flex items-end gap-3 flex-wrap">
@@ -96,24 +96,26 @@ export const BattlesListFiltersDesktop = ({
         }))}
         value={filters.world}
         onValueChange={onWorldChange}
-        placeholder="Świat"
+        placeholder={t("battlePanel.filters.world")}
         icon={Globe}
         width="w-[160px]"
-        searchPlaceholder="Szukaj świata..."
-        emptyMessage="Brak światów"
+        searchPlaceholder={t("battlePanel.filters.worldSearchPlaceholder")}
+        emptyMessage={t("battlePanel.filters.noWorlds")}
       />
 
       <FilterPopover
         options={battleResults}
         value={filters.result}
         onValueChange={onResultChange}
-        placeholder="Wynik"
+        placeholder={t("battlePanel.filters.battleResult")}
         icon={Medal}
         width="w-[180px]"
         multiSelect
         showSearch={false}
         renderTriggerLabel={(count) =>
-          count > 0 ? `${count} wybranych` : "Wynik"
+          count > 0
+            ? t("battlePanel.filters.selectedCount", { count })
+            : t("battlePanel.filters.battleResult")
         }
       />
 
@@ -130,8 +132,10 @@ export const BattlesListFiltersDesktop = ({
               <User className="h-4 w-4" />
               <span className="text-sm">
                 {filters.characterId && filters.characterId.length > 0
-                  ? `${filters.characterId.length} wybranych`
-                  : "Postać"}
+                  ? t("battlePanel.filters.selectedCount", {
+                      count: filters.characterId.length,
+                    })
+                  : t("battlePanel.filters.character")}
               </span>
             </div>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -139,9 +143,13 @@ export const BattlesListFiltersDesktop = ({
         </PopoverTrigger>
         <PopoverContent className="w-[180px] p-0">
           <Command>
-            <CommandInput placeholder="Szukaj postaci..." />
+            <CommandInput
+              placeholder={t("battlePanel.filters.characterSearchPlaceholder")}
+            />
             <CommandList id={characterListId}>
-              <CommandEmpty>Brak postaci</CommandEmpty>
+              <CommandEmpty>
+                {t("battlePanel.filters.noCharacters")}
+              </CommandEmpty>
               <CommandGroup>
                 {characters.map((char) => (
                   <CommandItem
@@ -176,20 +184,22 @@ export const BattlesListFiltersDesktop = ({
         options={battleTypes}
         value={filters.type}
         onValueChange={onTypeChange}
-        placeholder="Typ walki"
+        placeholder={t("battlePanel.filters.battleType")}
         icon={Users}
         width="w-[200px]"
         multiSelect
         showSearch={false}
         renderTriggerLabel={(count) =>
-          count > 0 ? `${count} wybranych` : "Typ walki"
+          count > 0
+            ? t("battlePanel.filters.selectedCount", { count })
+            : t("battlePanel.filters.battleType")
         }
       />
 
       <div className="flex items-center gap-2 border rounded-md px-3 h-10">
         <Award className="h-4 w-4" />
         <Label htmlFor="ph-checkbox" className="cursor-pointer text-sm">
-          Punkty Honoru
+          {t("battlePanel.filters.honorPoints")}
         </Label>
         <Checkbox
           id="ph-checkbox"
@@ -204,7 +214,7 @@ export const BattlesListFiltersDesktop = ({
           htmlFor="matchmaking-checkbox"
           className="cursor-pointer text-sm"
         >
-          Otchłań
+          {t("battlePanel.filters.matchmaking")}
         </Label>
         <Checkbox
           id="matchmaking-checkbox"

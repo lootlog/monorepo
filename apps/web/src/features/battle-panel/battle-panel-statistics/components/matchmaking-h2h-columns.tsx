@@ -6,6 +6,7 @@ import { pl } from "date-fns/locale";
 import { PlayerTile } from "@/components/battle";
 import { getProfessionName } from "@/lib/utils/professions";
 import type { HeadToHeadRecord } from "@/hooks/api/battle-log/use-head-to-head";
+import i18n from "@/i18n/config";
 
 export const matchmakingH2HColumns: ColumnDef<HeadToHeadRecord>[] = [
   {
@@ -26,7 +27,7 @@ export const matchmakingH2HColumns: ColumnDef<HeadToHeadRecord>[] = [
   },
   {
     accessorKey: "opponentName",
-    header: "Nazwa",
+    header: i18n.t("battlePanel.statistics.columns.name"),
     cell: ({ row }) => (
       <span className="font-medium">{row.original.opponentName}</span>
     ),
@@ -34,7 +35,11 @@ export const matchmakingH2HColumns: ColumnDef<HeadToHeadRecord>[] = [
   },
   {
     accessorKey: "opponentLvl",
-    header: () => <div className="text-center">Poziom</div>,
+    header: () => (
+      <div className="text-center">
+        {i18n.t("battlePanel.statistics.columns.level")}
+      </div>
+    ),
     cell: ({ row }) => (
       <div className="text-center">{row.original.opponentLvl}</div>
     ),
@@ -42,7 +47,11 @@ export const matchmakingH2HColumns: ColumnDef<HeadToHeadRecord>[] = [
   },
   {
     accessorKey: "opponentProf",
-    header: () => <div className="text-center">Profesja</div>,
+    header: () => (
+      <div className="text-center">
+        {i18n.t("battlePanel.statistics.columns.profession")}
+      </div>
+    ),
     cell: ({ row }) => (
       <div className="text-center">
         {getProfessionName(row.original.opponentProf)}
@@ -60,7 +69,7 @@ export const matchmakingH2HColumns: ColumnDef<HeadToHeadRecord>[] = [
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="h-8"
         >
-          Wygrane
+          {i18n.t("battlePanel.filters.results.won")}
           <ArrowUpDown className="ml-2 h-3 w-3" />
         </Button>
       </div>
@@ -81,7 +90,7 @@ export const matchmakingH2HColumns: ColumnDef<HeadToHeadRecord>[] = [
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="h-8"
         >
-          Przegrane
+          {i18n.t("battlePanel.filters.results.lost")}
           <ArrowUpDown className="ml-2 h-3 w-3" />
         </Button>
       </div>
@@ -102,7 +111,7 @@ export const matchmakingH2HColumns: ColumnDef<HeadToHeadRecord>[] = [
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="h-8"
         >
-          Łącznie
+          {i18n.t("battlePanel.statistics.columns.total")}
           <ArrowUpDown className="ml-2 h-3 w-3" />
         </Button>
       </div>
@@ -121,7 +130,7 @@ export const matchmakingH2HColumns: ColumnDef<HeadToHeadRecord>[] = [
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="h-8"
         >
-          Win %
+          {i18n.t("battlePanel.statistics.columns.winRate")}
           <ArrowUpDown className="ml-2 h-3 w-3" />
         </Button>
       </div>
@@ -150,7 +159,7 @@ export const matchmakingH2HColumns: ColumnDef<HeadToHeadRecord>[] = [
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="h-8"
         >
-          Σ Rating
+          {i18n.t("battlePanel.statistics.columns.totalRatingDelta")}
           <ArrowUpDown className="ml-2 h-3 w-3" />
         </Button>
       </div>
@@ -184,7 +193,7 @@ export const matchmakingH2HColumns: ColumnDef<HeadToHeadRecord>[] = [
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="h-8"
         >
-          Śr. Rating
+          {i18n.t("battlePanel.statistics.columns.avgRating")}
           <ArrowUpDown className="ml-2 h-3 w-3" />
         </Button>
       </div>
@@ -218,7 +227,7 @@ export const matchmakingH2HColumns: ColumnDef<HeadToHeadRecord>[] = [
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="h-8"
         >
-          Ostatnia walka
+          {i18n.t("battlePanel.statistics.columns.lastBattle")}
           <ArrowUpDown className="ml-2 h-3 w-3" />
         </Button>
       </div>

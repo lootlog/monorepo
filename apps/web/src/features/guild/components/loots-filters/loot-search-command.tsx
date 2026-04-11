@@ -23,6 +23,7 @@ import { motion, Reorder } from "framer-motion";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { useTheme } from "@/hooks/context/use-theme";
 import { FrozenButton } from "@/components/effects/rukia-frost";
+import { useTranslation } from "react-i18next";
 
 export type LootSearchCommandProps = {
   open: boolean;
@@ -58,6 +59,7 @@ export const LootSearchCommand = ({
   open,
   onOpenChange,
 }: LootSearchCommandProps) => {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const { theme } = useTheme();
   const isRukiaTheme = theme === "rukia";
@@ -123,7 +125,7 @@ export const LootSearchCommand = ({
   const dialogContent = (
     <>
       <CommandInput
-        placeholder="Szukaj przedmiotów, potworów, graczy..."
+        placeholder={t("loots.searchCommand.placeholder")}
         value={searchQuery}
         onValueChange={setSearchQuery}
       />
@@ -138,7 +140,7 @@ export const LootSearchCommand = ({
             className="flex flex-col items-center justify-center py-12 text-muted-foreground"
           >
             <Spinner className="mb-2 h-6 w-6" />
-            <span className="text-sm">Wyszukiwanie...</span>
+            <span className="text-sm">{t("loots.searchCommand.loading")}</span>
           </motion.div>
         )}
 
@@ -150,7 +152,7 @@ export const LootSearchCommand = ({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
           >
-            <CommandEmpty>Zacznij wpisywać aby wyszukać...</CommandEmpty>
+            <CommandEmpty>{t("loots.searchCommand.startTyping")}</CommandEmpty>
           </motion.div>
         )}
 
@@ -163,7 +165,7 @@ export const LootSearchCommand = ({
             exit="hidden"
           >
             {hidItem && (
-              <CommandGroup heading="Znaleziony przedmiot (ID)">
+              <CommandGroup heading={t("loots.searchCommand.itemById")}>
                 <CommandItem
                   value={`hid-${hidItem.hid}`}
                   onSelect={() => handleSelectItemByHid(hidItem.hid)}
@@ -179,7 +181,7 @@ export const LootSearchCommand = ({
             )}
 
             {!isHid && searchResults?.npcs && searchResults.npcs.length > 0 && (
-              <CommandGroup heading="Potwory">
+              <CommandGroup heading={t("loots.searchCommand.npcs")}>
                 <Reorder.Group
                   axis="y"
                   values={searchResults.npcs}
@@ -225,7 +227,7 @@ export const LootSearchCommand = ({
             {!isHid &&
               searchResults?.items &&
               searchResults.items.length > 0 && (
-                <CommandGroup heading="Przedmioty">
+                <CommandGroup heading={t("loots.searchCommand.items")}>
                   <Reorder.Group
                     axis="y"
                     values={searchResults.items}
@@ -280,7 +282,7 @@ export const LootSearchCommand = ({
             {!isHid &&
               searchResults?.players &&
               searchResults.players.length > 0 && (
-                <CommandGroup heading="Gracze">
+                <CommandGroup heading={t("loots.searchCommand.players")}>
                   <Reorder.Group
                     axis="y"
                     values={searchResults.players}
@@ -317,7 +319,7 @@ export const LootSearchCommand = ({
                 </CommandGroup>
               )}
             {!hasResults && (
-              <CommandEmpty>Nie znaleziono wyników.</CommandEmpty>
+              <CommandEmpty>{t("loots.searchCommand.noResults")}</CommandEmpty>
             )}
           </motion.div>
         )}

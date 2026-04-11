@@ -29,6 +29,7 @@ import { WarriorSearchFilter } from "@/components/filters";
 import { useBattleCharacters } from "@/hooks/api/battle-log/use-battle-characters";
 import type { Period } from "@/store/battle-filters.store";
 import type { Warrior } from "@/hooks/api/battle-log/use-search-warriors";
+import { useTranslation } from "react-i18next";
 
 type HeadToHeadFiltersMobileProps = {
   characterId?: string;
@@ -49,13 +50,6 @@ type HeadToHeadFiltersMobileProps = {
   onWarriorToggle: (warrior: Warrior) => void;
 };
 
-const periodOptions = [
-  { value: "7d" as const, label: "Ostatnie 7 dni" },
-  { value: "30d" as const, label: "Ostatnie 30 dni" },
-  { value: "90d" as const, label: "Ostatnie 90 dni" },
-  { value: "all" as const, label: "Cały czas" },
-];
-
 export const HeadToHeadFiltersMobile = ({
   characterId,
   period,
@@ -74,7 +68,23 @@ export const HeadToHeadFiltersMobile = ({
   onMatchmakingChange,
   onWarriorToggle,
 }: HeadToHeadFiltersMobileProps) => {
+  const { t } = useTranslation();
   const { data: characters = [] } = useBattleCharacters();
+  const periodOptions = [
+    { value: "7d" as const, label: t("battlePanel.filters.periodOptions.7d") },
+    {
+      value: "30d" as const,
+      label: t("battlePanel.filters.periodOptions.30d"),
+    },
+    {
+      value: "90d" as const,
+      label: t("battlePanel.filters.periodOptions.90d"),
+    },
+    {
+      value: "all" as const,
+      label: t("battlePanel.filters.periodOptions.all"),
+    },
+  ];
 
   return (
     <Drawer shouldScaleBackground={false}>
@@ -82,27 +92,27 @@ export const HeadToHeadFiltersMobile = ({
         <Button className="w-full justify-between">
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4" />
-            <span>Filtry</span>
+            <span>{t("battlePanel.filters.title")}</span>
           </div>
         </Button>
       </DrawerTrigger>
       <DrawerContent className="p-4">
         <DrawerHeader className="mb-4">
-          <DrawerTitle>Filtry bilansów</DrawerTitle>
+          <DrawerTitle>{t("battlePanel.filters.headToHeadTitle")}</DrawerTitle>
         </DrawerHeader>
         <div className="space-y-4 overflow-y-auto">
           <div className="space-y-2">
-            <Label>Szukaj przeciwnika</Label>
+            <Label>{t("battlePanel.filters.searchOpponent")}</Label>
             <WarriorSearchFilter
               selectedWarriors={selectedWarriors}
               onWarriorToggle={onWarriorToggle}
-              placeholder="Szukaj przeciwnika..."
+              placeholder={t("battlePanel.filters.searchOpponent")}
               className="w-full"
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Postać</Label>
+            <Label>{t("battlePanel.filters.character")}</Label>
             <Select
               value={characterId ?? "all"}
               onValueChange={(value) =>
@@ -112,11 +122,15 @@ export const HeadToHeadFiltersMobile = ({
               <SelectTrigger className="w-full">
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4" />
-                  <SelectValue placeholder="Wybierz postać" />
+                  <SelectValue
+                    placeholder={t("battlePanel.filters.selectCharacter")}
+                  />
                 </div>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Wszystkie postacie</SelectItem>
+                <SelectItem value="all">
+                  {t("battlePanel.filters.allCharacters")}
+                </SelectItem>
                 {characters.map((char) => (
                   <SelectItem key={char.id} value={char.id}>
                     {char.name} ({char.world})
@@ -127,7 +141,7 @@ export const HeadToHeadFiltersMobile = ({
           </div>
 
           <div className="space-y-2">
-            <Label>Okres</Label>
+            <Label>{t("battlePanel.filters.period")}</Label>
             <Select value={period} onValueChange={onPeriodChange}>
               <SelectTrigger className="w-full">
                 <div className="flex items-center gap-2">
@@ -146,12 +160,12 @@ export const HeadToHeadFiltersMobile = ({
           </div>
 
           <div className="space-y-2">
-            <Label>Zakres poziomów</Label>
+            <Label>{t("battlePanel.filters.levelRange")}</Label>
             <div className="flex items-center gap-2">
               <div className="flex-1">
                 <Input
                   type="number"
-                  placeholder="Min"
+                  placeholder={t("battlePanel.filters.minPlaceholder")}
                   value={minLevel ?? ""}
                   onChange={(e) => {
                     const value = e.target.value;
@@ -166,7 +180,7 @@ export const HeadToHeadFiltersMobile = ({
               <div className="flex-1">
                 <Input
                   type="number"
-                  placeholder="Max"
+                  placeholder={t("battlePanel.filters.maxPlaceholder")}
                   value={maxLevel ?? ""}
                   onChange={(e) => {
                     const value = e.target.value;
@@ -188,7 +202,7 @@ export const HeadToHeadFiltersMobile = ({
                   htmlFor="ph-filter-h2h-mobile"
                   className="cursor-pointer"
                 >
-                  Punkty Honoru
+                  {t("battlePanel.filters.honorPoints")}
                 </Label>
               </div>
               <Checkbox
@@ -207,7 +221,7 @@ export const HeadToHeadFiltersMobile = ({
                   htmlFor="matchmaking-filter-h2h-mobile"
                   className="cursor-pointer"
                 >
-                  Otchłań
+                  {t("battlePanel.filters.matchmaking")}
                 </Label>
               </div>
               <Checkbox
@@ -223,7 +237,7 @@ export const HeadToHeadFiltersMobile = ({
         <div className="mt-6">
           <DrawerClose asChild>
             <Button variant="outline" className="w-full">
-              Zamknij
+              {t("battlePanel.actions.close")}
             </Button>
           </DrawerClose>
         </div>

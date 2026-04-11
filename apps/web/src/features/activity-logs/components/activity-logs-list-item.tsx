@@ -31,6 +31,7 @@ import type { ActivityLog } from "@/hooks/api/activity-logs/use-activity-logs";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
 import { MARGONEM_GUILD_URL } from "@/constants/margonem";
 
@@ -38,50 +39,49 @@ type Props = {
   activity: ActivityLog;
 };
 
-const ACTIVITY_TYPE_CONFIG = {
-  LOOT_EVENT: {
-    icon: Package,
-    label: "Loot",
-    color: "text-green-500",
-    bgColor: "bg-green-500/10",
-  },
-  TIMER_EVENT: {
-    icon: Clock,
-    label: "Timer",
-    color: "text-blue-500",
-    bgColor: "bg-blue-500/10",
-  },
-  CONNECT_EVENT: {
-    icon: LogIn,
-    label: "Połączenie",
-    color: "text-emerald-500",
-    bgColor: "bg-emerald-500/10",
-  },
-  DISCONNECT_EVENT: {
-    icon: LogOut,
-    label: "Rozłączenie",
-    color: "text-red-500",
-    bgColor: "bg-red-500/10",
-  },
-};
-
-const SOURCE_CONFIG = {
-  GAME: {
-    icon: Gamepad2,
-    label: "Gra",
-  },
-  WEB_APP: {
-    icon: Monitor,
-    label: "Web",
-  },
-};
-
 export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
   const [isOpen, setIsOpen] = useState("");
   const { data: members } = useGuildMembers(true);
+  const { t } = useTranslation();
+  const activityTypeConfig = {
+    LOOT_EVENT: {
+      icon: Package,
+      label: t("activityLogs.list.types.LOOT_EVENT"),
+      color: "text-green-500",
+      bgColor: "bg-green-500/10",
+    },
+    TIMER_EVENT: {
+      icon: Clock,
+      label: t("activityLogs.list.types.TIMER_EVENT"),
+      color: "text-blue-500",
+      bgColor: "bg-blue-500/10",
+    },
+    CONNECT_EVENT: {
+      icon: LogIn,
+      label: t("activityLogs.list.types.CONNECT_EVENT"),
+      color: "text-emerald-500",
+      bgColor: "bg-emerald-500/10",
+    },
+    DISCONNECT_EVENT: {
+      icon: LogOut,
+      label: t("activityLogs.list.types.DISCONNECT_EVENT"),
+      color: "text-red-500",
+      bgColor: "bg-red-500/10",
+    },
+  } as const;
+  const sourceConfigMap = {
+    GAME: {
+      icon: Gamepad2,
+      label: t("activityLogs.list.sources.GAME"),
+    },
+    WEB_APP: {
+      icon: Monitor,
+      label: t("activityLogs.list.sources.WEB_APP"),
+    },
+  } as const;
 
-  const typeConfig = ACTIVITY_TYPE_CONFIG[activity.type];
-  const sourceConfig = SOURCE_CONFIG[activity.source];
+  const typeConfig = activityTypeConfig[activity.type];
+  const sourceConfig = sourceConfigMap[activity.source];
   const TypeIcon = typeConfig.icon;
   const SourceIcon = sourceConfig.icon;
 
@@ -206,14 +206,14 @@ export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
           <div className="flex items-center gap-4 text-xs mb-2 flex-wrap">
             <div className="flex items-center gap-1.5 text-muted-foreground">
               <Hash className="h-3 w-3" />
-              <span>ID: {activity.id}</span>
+              <span>{t("activityLogs.list.id", { id: activity.id })}</span>
             </div>
 
             {activity.discordId && (
               <div className="flex items-center gap-1.5 text-muted-foreground">
                 <Monitor className="h-3 w-3" />
                 <span>
-                  Discord:{" "}
+                  {t("activityLogs.list.discord")}
                   {discordMember ? (
                     <TooltipProvider>
                       <Tooltip delayDuration={100}>
@@ -235,8 +235,8 @@ export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
                               )}
                               <span className="font-medium">
                                 {discordMember.isStale
-                                  ? "Dane nieaktualne"
-                                  : "Dane aktualne"}
+                                  ? t("activityLogs.list.dataStale")
+                                  : t("activityLogs.list.dataFresh")}
                               </span>
                             </div>
                             {discordMember.staleWarning && (
@@ -245,11 +245,12 @@ export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
                               </span>
                             )}
                             <span className="text-xs text-muted-foreground">
-                              Zaktualizowano:{" "}
-                              {format(
-                                new Date(discordMember.updatedAt),
-                                "yyyy-MM-dd HH:mm:ss",
-                              )}
+                              {t("activityLogs.list.updatedAt", {
+                                date: format(
+                                  new Date(discordMember.updatedAt),
+                                  "yyyy-MM-dd HH:mm:ss",
+                                ),
+                              })}
                             </span>
                           </div>
                         </TooltipContent>
@@ -265,9 +266,11 @@ export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
               <div className="flex items-center gap-1.5 text-muted-foreground">
                 <MapPin className="h-3 w-3" />
                 <span>
-                  Świat:{" "}
-                  {activity.world.charAt(0).toUpperCase() +
-                    activity.world.slice(1)}
+                  {t("activityLogs.list.world", {
+                    world:
+                      activity.world.charAt(0).toUpperCase() +
+                      activity.world.slice(1),
+                  })}
                 </span>
               </div>
             )}
@@ -289,7 +292,7 @@ export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
                         <div className="flex items-center gap-2 mb-2">
                           <Package className="h-4 w-4 text-green-500" />
                           <span className="font-semibold text-sm">
-                            Kontekst Loot
+                            {t("activityLogs.list.lootContext")}
                           </span>
                         </div>
                         <div className="space-y-1 text-xs text-muted-foreground">
@@ -300,7 +303,7 @@ export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
                             </span>
                           </div>
                           <div>
-                            Loot ID:{" "}
+                            {t("activityLogs.list.lootId")}
                             <span className="font-mono">
                               {activity.lootContext.lootId}
                             </span>
@@ -314,7 +317,7 @@ export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
                         <div className="flex items-center gap-2 mb-2">
                           <Clock className="h-4 w-4 text-blue-500" />
                           <span className="font-semibold text-sm">
-                            Kontekst Timer
+                            {t("activityLogs.list.timerContext")}
                           </span>
                         </div>
                         <div className="space-y-1 text-xs text-muted-foreground">
@@ -325,7 +328,7 @@ export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
                             </span>
                           </div>
                           <div>
-                            NPC:{" "}
+                            {t("activityLogs.list.npc")}
                             <span className="font-medium">
                               {activity.timerContext.npcName}
                             </span>
@@ -338,7 +341,7 @@ export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
                       Object.keys(activity.details).length > 0 && (
                         <div className="bg-muted/50 p-3 rounded-lg">
                           <div className="font-semibold text-sm mb-2">
-                            Dodatkowe dane
+                            {t("activityLogs.list.additionalData")}
                           </div>
                           <pre className="text-xs overflow-x-auto">
                             {JSON.stringify(activity.details, null, 2)}

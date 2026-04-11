@@ -1,0 +1,40 @@
+{
+  "searchPlaceholder": "Szukaj expowiska...",
+  "view": {
+    "list": "Widok listy",
+    "grid": "Widok siatki"
+  },
+  "schedule": {
+    "header": {
+      "addReservation": "Dodaj rezerwację",
+      "previousWeek": "Poprzedni tydzień",
+      "nextWeek": "Następny tydzień",
+      "weekLabel": "Tydzień {{week}} ({{year}}, {{month}})"
+    },
+    "quickAdd": {
+      "title": "Nowa rezerwacja",
+      "commentPlaceholder": "Komentarz (opcjonalnie)"
+    },
+    "dialog": {
+      "title": "Dodaj rezerwację",
+      "startDate": "Data rozpoczęcia",
+      "startDatePlaceholder": "Wybierz początek rezerwacji",
+      "endDate": "Data zakończenia",
+      "endDatePlaceholder": "Wybierz koniec rezerwacji",
+      "comment": "Komentarz (opcjonalnie)",
+      "commentPlaceholder": "Dodaj krótki komentarz do rezerwacji"
+    },
+    "validation": {
+      "timeRangeRequired": "Wybierz zakres czasowy rezerwacji.",
+      "endAfterStart": "Data zakończenia musi być późniejsza niż rozpoczęcia.",
+      "reservationTypeMissing": "Nie udało się ustalić rodzaju rezerwacji.",
+      "userMissing": "Brak informacji o użytkowniku.",
+      "startTooOld": "Godzina rozpoczęcia rezerwacji nie może być starsza niż 1 godzina od aktualnego czasu.",
+      "minimumDuration": "Rezerwacja musi trwać co najmniej 30 minut."
+    },
+    "toasts": {
+      "created": "Rezerwacja została utworzona.",
+      "createError": "Nie udało się utworzyć rezerwacji."
+    }
+  }
+}

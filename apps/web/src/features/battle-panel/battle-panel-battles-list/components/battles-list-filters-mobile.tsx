@@ -42,17 +42,7 @@ import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
 import type { BattleFilters } from "./battles-list-filters";
 import { WarriorSearchFilter } from "@/components/filters";
 import type { Warrior } from "@/hooks/api/battle-log/use-search-warriors";
-
-const battleTypes = [
-  { value: "solo" as const, label: "Solo" },
-  { value: "group" as const, label: "Grupowe" },
-];
-
-const battleResults = [
-  { value: "won" as const, label: "Zwycięstwa" },
-  { value: "lost" as const, label: "Porażki" },
-  { value: "flee" as const, label: "Ucieczki" },
-];
+import { useTranslation } from "react-i18next";
 
 type BattlesListFiltersMobileProps = {
   filters: BattleFilters;
@@ -99,10 +89,20 @@ export const BattlesListFiltersMobile = ({
   onMatchmakingToggle,
   onWorldChange,
 }: BattlesListFiltersMobileProps) => {
+  const { t } = useTranslation();
   const worldListId = useId();
   const resultListId = useId();
   const characterListId = useId();
   const typeListId = useId();
+  const battleTypes = [
+    { value: "solo" as const, label: t("battlePanel.filters.types.solo") },
+    { value: "group" as const, label: t("battlePanel.filters.types.group") },
+  ];
+  const battleResults = [
+    { value: "won" as const, label: t("battlePanel.filters.results.won") },
+    { value: "lost" as const, label: t("battlePanel.filters.results.lost") },
+    { value: "flee" as const, label: t("battlePanel.filters.results.flee") },
+  ];
 
   return (
     <Drawer shouldScaleBackground={false}>
@@ -110,7 +110,7 @@ export const BattlesListFiltersMobile = ({
         <Button className="w-full justify-between">
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4" />
-            <span>Filtry</span>
+            <span>{t("battlePanel.filters.title")}</span>
           </div>
           {activeFiltersCount > 0 && (
             <Badge variant="secondary" className="ml-2">
@@ -121,11 +121,11 @@ export const BattlesListFiltersMobile = ({
       </DrawerTrigger>
       <DrawerContent className="p-4">
         <DrawerHeader className="mb-4">
-          <DrawerTitle>Filtry walk</DrawerTitle>
+          <DrawerTitle>{t("battlePanel.filters.battlesTitle")}</DrawerTitle>
         </DrawerHeader>
         <div className="space-y-4 overflow-y-auto">
           <div className="space-y-2">
-            <Label>Szukaj wojowników</Label>
+            <Label>{t("battlePanel.filters.searchWarriors")}</Label>
             <WarriorSearchFilter
               selectedWarriors={selectedWarriors}
               onWarriorToggle={onWarriorToggle}
@@ -134,7 +134,7 @@ export const BattlesListFiltersMobile = ({
           </div>
 
           <div className="space-y-2">
-            <Label>Świat</Label>
+            <Label>{t("battlePanel.filters.world")}</Label>
             <Popover
               open={worldOpen}
               onOpenChange={onWorldOpenChange}
@@ -153,7 +153,7 @@ export const BattlesListFiltersMobile = ({
                     <span className="text-sm">
                       {filters.world
                         ? capitalizeFirstLetter(filters.world)
-                        : "Wszystkie światy"}
+                        : t("battlePanel.filters.allWorlds")}
                     </span>
                   </div>
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -166,9 +166,15 @@ export const BattlesListFiltersMobile = ({
                 }}
               >
                 <Command>
-                  <CommandInput placeholder="Szukaj świata..." />
+                  <CommandInput
+                    placeholder={t(
+                      "battlePanel.filters.worldSearchPlaceholder",
+                    )}
+                  />
                   <CommandList id={worldListId}>
-                    <CommandEmpty>Brak światów</CommandEmpty>
+                    <CommandEmpty>
+                      {t("battlePanel.filters.noWorlds")}
+                    </CommandEmpty>
                     <CommandGroup>
                       {worlds.map((world) => (
                         <CommandItem
@@ -195,7 +201,7 @@ export const BattlesListFiltersMobile = ({
           </div>
 
           <div className="space-y-2">
-            <Label>Wynik walki</Label>
+            <Label>{t("battlePanel.filters.battleResult")}</Label>
             <Popover
               open={resultOpen}
               onOpenChange={onResultOpenChange}
@@ -213,8 +219,10 @@ export const BattlesListFiltersMobile = ({
                     <Medal className="h-4 w-4" />
                     <span className="text-sm">
                       {filters.result && filters.result.length > 0
-                        ? `${filters.result.length} wybranych`
-                        : "Wszystkie wyniki"}
+                        ? t("battlePanel.filters.selectedCount", {
+                            count: filters.result.length,
+                          })
+                        : t("battlePanel.filters.allResults")}
                     </span>
                   </div>
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -223,7 +231,9 @@ export const BattlesListFiltersMobile = ({
               <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
                 <Command>
                   <CommandList id={resultListId}>
-                    <CommandEmpty>Brak opcji</CommandEmpty>
+                    <CommandEmpty>
+                      {t("battlePanel.filters.noOptions")}
+                    </CommandEmpty>
                     <CommandGroup>
                       {battleResults.map((result) => (
                         <CommandItem
@@ -250,7 +260,7 @@ export const BattlesListFiltersMobile = ({
           </div>
 
           <div className="space-y-2">
-            <Label>Postać</Label>
+            <Label>{t("battlePanel.filters.character")}</Label>
             <Popover
               open={characterOpen}
               onOpenChange={onCharacterOpenChange}
@@ -268,8 +278,10 @@ export const BattlesListFiltersMobile = ({
                     <User className="h-4 w-4" />
                     <span className="text-sm">
                       {filters.characterId && filters.characterId.length > 0
-                        ? `${filters.characterId.length} wybranych`
-                        : "Wszystkie postacie"}
+                        ? t("battlePanel.filters.selectedCount", {
+                            count: filters.characterId.length,
+                          })
+                        : t("battlePanel.filters.allCharacters")}
                     </span>
                   </div>
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -277,9 +289,15 @@ export const BattlesListFiltersMobile = ({
               </PopoverTrigger>
               <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
                 <Command>
-                  <CommandInput placeholder="Szukaj postaci..." />
+                  <CommandInput
+                    placeholder={t(
+                      "battlePanel.filters.characterSearchPlaceholder",
+                    )}
+                  />
                   <CommandList id={characterListId}>
-                    <CommandEmpty>Brak postaci</CommandEmpty>
+                    <CommandEmpty>
+                      {t("battlePanel.filters.noCharacters")}
+                    </CommandEmpty>
                     <CommandGroup>
                       {characters.map((char) => (
                         <CommandItem
@@ -312,7 +330,7 @@ export const BattlesListFiltersMobile = ({
           </div>
 
           <div className="space-y-2">
-            <Label>Typ walki</Label>
+            <Label>{t("battlePanel.filters.battleType")}</Label>
             <Popover
               open={typeOpen}
               onOpenChange={onTypeOpenChange}
@@ -330,8 +348,10 @@ export const BattlesListFiltersMobile = ({
                     <Users className="h-4 w-4" />
                     <span className="text-sm">
                       {filters.type && filters.type.length > 0
-                        ? `${filters.type.length} wybranych`
-                        : "Wszystkie typy"}
+                        ? t("battlePanel.filters.selectedCount", {
+                            count: filters.type.length,
+                          })
+                        : t("battlePanel.filters.allTypes")}
                     </span>
                   </div>
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -340,7 +360,9 @@ export const BattlesListFiltersMobile = ({
               <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
                 <Command>
                   <CommandList id={typeListId}>
-                    <CommandEmpty>Brak opcji</CommandEmpty>
+                    <CommandEmpty>
+                      {t("battlePanel.filters.noOptions")}
+                    </CommandEmpty>
                     <CommandGroup>
                       {battleTypes.map((type) => (
                         <CommandItem
@@ -370,7 +392,7 @@ export const BattlesListFiltersMobile = ({
             <div className="flex items-center gap-2">
               <Award className="h-4 w-4" />
               <Label htmlFor="ph-checkbox-mobile" className="cursor-pointer">
-                Punkty Honoru
+                {t("battlePanel.filters.honorPoints")}
               </Label>
             </div>
             <Checkbox
@@ -387,7 +409,7 @@ export const BattlesListFiltersMobile = ({
                 htmlFor="matchmaking-checkbox-mobile"
                 className="cursor-pointer"
               >
-                Otchłań
+                {t("battlePanel.filters.matchmaking")}
               </Label>
             </div>
             <Checkbox
@@ -400,7 +422,7 @@ export const BattlesListFiltersMobile = ({
         <div className="mt-6">
           <DrawerClose asChild>
             <Button variant="outline" className="w-full">
-              Zamknij
+              {t("battlePanel.actions.close")}
             </Button>
           </DrawerClose>
         </div>

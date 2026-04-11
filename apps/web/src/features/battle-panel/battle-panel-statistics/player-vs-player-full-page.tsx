@@ -44,10 +44,12 @@ import {
 } from "@lootlog/ui/components/drawer";
 import { useQueryStates } from "nuqs";
 import { battlePanelPlayerVsPlayerSearchParsers } from "@/features/battle-panel/battle-panel-statistics-search";
+import { useTranslation } from "react-i18next";
 
 const PVP_FILTERS_OPEN_KEY = "pvp-filters-open";
 
 export function PlayerVsPlayerFullPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [isFiltersOpen, setIsFiltersOpen] = useLocalStorage(
@@ -122,7 +124,9 @@ export function PlayerVsPlayerFullPage() {
     });
   };
 
-  const opponentName = data?.battles[0]?.opponentWarrior.name || "Przeciwnik";
+  const opponentName =
+    data?.battles[0]?.opponentWarrior.name ||
+    t("battlePanel.statistics.playerVsPlayer.opponentFallback");
   const myCharacter = data?.battles[0]?.userWarrior;
 
   const table = useReactTable({
@@ -134,7 +138,9 @@ export function PlayerVsPlayerFullPage() {
   const filtersContent = (
     <div className="p-4 space-y-4">
       <div className="space-y-2">
-        <Label className="text-xs text-muted-foreground">Okres</Label>
+        <Label className="text-xs text-muted-foreground">
+          {t("battlePanel.filters.period")}
+        </Label>
         <PeriodSelector
           value={period}
           onValueChange={handlePeriodChange}
@@ -145,7 +151,9 @@ export function PlayerVsPlayerFullPage() {
       <Separator />
 
       <div className="space-y-2">
-        <Label className="text-xs text-muted-foreground">Zakres poziomów</Label>
+        <Label className="text-xs text-muted-foreground">
+          {t("battlePanel.filters.levelRange")}
+        </Label>
         <div className="flex items-center gap-2">
           <LevelRangeFilter
             minLevel={minLevel}
@@ -171,7 +179,7 @@ export function PlayerVsPlayerFullPage() {
         >
           <DrawerContent className="p-0 h-[85vh] max-h-[85vh] flex flex-col overflow-hidden">
             <DrawerHeader className="border-b px-4 py-3 shrink-0">
-              <DrawerTitle>Filtry</DrawerTitle>
+              <DrawerTitle>{t("battlePanel.filters.title")}</DrawerTitle>
             </DrawerHeader>
             <div className="flex-1 overflow-hidden">
               <ScrollArea className="h-full">{filtersContent}</ScrollArea>
@@ -196,11 +204,17 @@ export function PlayerVsPlayerFullPage() {
               )}
               <div className="min-w-0 flex-1">
                 <h2 className="text-base font-semibold leading-tight">
-                  {myCharacter?.name || "Twoja postać"} vs {opponentName}
+                  {myCharacter?.name ||
+                    t(
+                      "battlePanel.statistics.playerVsPlayer.characterFallback",
+                    )}{" "}
+                  {t("battleUi.overview.vs")} {opponentName}
                 </h2>
                 {myCharacter && (
                   <p className="text-xs text-muted-foreground">
-                    Poziom {myCharacter.lvl} • Historia walk rankingowych
+                    {t("battlePanel.statistics.playerVsPlayer.subtitle", {
+                      level: myCharacter.lvl,
+                    })}
                   </p>
                 )}
               </div>

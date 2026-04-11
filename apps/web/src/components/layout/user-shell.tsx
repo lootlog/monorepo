@@ -27,7 +27,7 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
 
     if (path === ROUTES.user.dashboard) {
       return {
-        breadcrumbs: [{ label: "Dashboard", path: null }],
+        breadcrumbs: [{ label: t("layout.navigation.dashboard"), path: null }],
         showBack: false,
       };
     }
@@ -37,7 +37,9 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
       path === ROUTES.user.battlePanel.stats
     ) {
       return {
-        breadcrumbs: [{ label: "Panel walk", path: null }],
+        breadcrumbs: [
+          { label: t("layout.navigation.battlePanel"), path: null },
+        ],
         showBack: false,
       };
     }
@@ -45,8 +47,11 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
     if (path === ROUTES.user.battlePanel.statistics) {
       return {
         breadcrumbs: [
-          { label: "Panel walk", path: ROUTES.user.battlePanel.base },
-          { label: "Statystyki", path: null },
+          {
+            label: t("layout.navigation.battlePanel"),
+            path: ROUTES.user.battlePanel.base,
+          },
+          { label: t("layout.breadcrumbs.statistics"), path: null },
         ],
         showBack: true,
         backPath: ROUTES.user.battlePanel.base,
@@ -56,9 +61,15 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
     if (path === ROUTES.user.battlePanel.h2h) {
       return {
         breadcrumbs: [
-          { label: "Panel walk", path: ROUTES.user.battlePanel.base },
-          { label: "Statystyki", path: ROUTES.user.battlePanel.statistics },
-          { label: "Bilans H2H", path: null },
+          {
+            label: t("layout.navigation.battlePanel"),
+            path: ROUTES.user.battlePanel.base,
+          },
+          {
+            label: t("layout.breadcrumbs.statistics"),
+            path: ROUTES.user.battlePanel.statistics,
+          },
+          { label: t("layout.breadcrumbs.headToHead"), path: null },
         ],
         showBack: true,
         backPath: ROUTES.user.battlePanel.statistics,
@@ -68,9 +79,15 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
     if (path === ROUTES.user.battlePanel.matchmakingH2h) {
       return {
         breadcrumbs: [
-          { label: "Panel walk", path: ROUTES.user.battlePanel.base },
-          { label: "Statystyki", path: ROUTES.user.battlePanel.statistics },
-          { label: "Matchmaking H2H", path: null },
+          {
+            label: t("layout.navigation.battlePanel"),
+            path: ROUTES.user.battlePanel.base,
+          },
+          {
+            label: t("layout.breadcrumbs.statistics"),
+            path: ROUTES.user.battlePanel.statistics,
+          },
+          { label: t("layout.breadcrumbs.matchmakingHeadToHead"), path: null },
         ],
         showBack: true,
         backPath: ROUTES.user.battlePanel.statistics,
@@ -82,9 +99,15 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
     ) {
       return {
         breadcrumbs: [
-          { label: "Panel walk", path: ROUTES.user.battlePanel.base },
-          { label: "Statystyki", path: ROUTES.user.battlePanel.statistics },
-          { label: "Gracz vs Gracz", path: null },
+          {
+            label: t("layout.navigation.battlePanel"),
+            path: ROUTES.user.battlePanel.base,
+          },
+          {
+            label: t("layout.breadcrumbs.statistics"),
+            path: ROUTES.user.battlePanel.statistics,
+          },
+          { label: t("layout.breadcrumbs.playerVsPlayer"), path: null },
         ],
         showBack: true,
         backPath: ROUTES.user.battlePanel.statistics,
@@ -97,8 +120,11 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
     if (normalizedPath === battlesPath) {
       return {
         breadcrumbs: [
-          { label: "Panel walk", path: ROUTES.user.battlePanel.base },
-          { label: "Walki", path: null },
+          {
+            label: t("layout.navigation.battlePanel"),
+            path: ROUTES.user.battlePanel.base,
+          },
+          { label: t("layout.breadcrumbs.battles"), path: null },
         ],
         showBack: true,
         backPath: ROUTES.user.battlePanel.base,
@@ -110,9 +136,20 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
       if (battleId && battleId.length > 0) {
         return {
           breadcrumbs: [
-            { label: "Panel walk", path: ROUTES.user.battlePanel.base },
-            { label: "Walki", path: ROUTES.user.battlePanel.battles },
-            { label: `Walka #${battleId}`, path: null },
+            {
+              label: t("layout.navigation.battlePanel"),
+              path: ROUTES.user.battlePanel.base,
+            },
+            {
+              label: t("layout.breadcrumbs.battles"),
+              path: ROUTES.user.battlePanel.battles,
+            },
+            {
+              label: t("battlePanel.navigation.battleFallback", {
+                id: battleId,
+              }),
+              path: null,
+            },
           ],
           showBack: true,
           backPath: ROUTES.user.battlePanel.battles,
@@ -122,7 +159,7 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
 
     if (path.startsWith(ROUTES.user.settings.base)) {
       return {
-        breadcrumbs: [{ label: "Ustawienia", path: null }],
+        breadcrumbs: [{ label: t("layout.navigation.settings"), path: null }],
         showBack: false,
       };
     }
@@ -130,7 +167,7 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
     if (path.startsWith(ROUTES.user.notifications.base)) {
       return {
         breadcrumbs: [
-          { label: t("common.breadcrumbs.notifications"), path: null },
+          { label: t("layout.navigation.notifications"), path: null },
         ],
         showBack: false,
       };
@@ -139,8 +176,11 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
     if (path === "/@me/kills") {
       return {
         breadcrumbs: [
-          { label: "Dashboard", path: ROUTES.user.dashboard },
-          { label: "Ranking NPC", path: null },
+          {
+            label: t("layout.navigation.dashboard"),
+            path: ROUTES.user.dashboard,
+          },
+          { label: t("layout.breadcrumbs.npcRanking"), path: null },
         ],
         showBack: true,
         backPath: ROUTES.user.dashboard,
@@ -148,7 +188,7 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
     }
 
     return {
-      breadcrumbs: [{ label: "Dashboard", path: null }],
+      breadcrumbs: [{ label: t("layout.navigation.dashboard"), path: null }],
       showBack: false,
     };
   };
