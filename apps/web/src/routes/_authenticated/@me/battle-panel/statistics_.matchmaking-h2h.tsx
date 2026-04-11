@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { MatchmakingH2HFullPage } from "@/features/battle-panel/battle-panel-statistics/matchmaking-h2h-full-page";
-import { BattlePanelH2hSkeleton } from "@/features/battle-panel/battle-panel-statistics/battle-panel-h2h-skeleton";
-import { ensureBattlePanelCharacterId } from "@/features/battle-panel/battle-panel-route-loader";
-import { getBattlePanelHeadToHeadSearch } from "@/features/battle-panel/battle-panel-statistics-search";
+import { MatchmakingH2HFullPage } from "@/features/user/battle-panel/battle-panel-statistics/matchmaking-h2h-full-page";
+import { BattlePanelH2hSkeleton } from "@/features/user/battle-panel/battle-panel-statistics/battle-panel-h2h-skeleton";
+import { ensureBattlePanelCharacterId } from "@/features/user/battle-panel/battle-panel-route-loader";
+import { getBattlePanelHeadToHeadSearch } from "@/features/user/battle-panel/battle-panel-statistics-search";
 import { headToHeadQueryOptions } from "@/hooks/api/battle-log/use-head-to-head";
 
 export const Route = createFileRoute(

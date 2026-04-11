@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { EventRouteLayout } from "@/features/events/event-route-layout";
-import { eventOverviewQueryOptions } from "@/features/events/hooks/queries/use-event-overview";
-import { eventRankingQueryOptions } from "@/features/events/hooks/queries/use-event-ranking";
+import { EventRouteLayout } from "@/features/guild/events/event-route-layout";
+import { eventOverviewQueryOptions } from "@/features/guild/events/hooks/queries/use-event-overview";
+import { eventRankingQueryOptions } from "@/features/guild/events/hooks/queries/use-event-ranking";
 import { throwNotFoundIfResponseMatches } from "@/lib/router/route-errors";
 
 export const Route = createFileRoute(

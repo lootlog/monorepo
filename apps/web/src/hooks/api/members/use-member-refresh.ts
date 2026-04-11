@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { GuildMember } from "@/hooks/api/members/use-guild-member";
 import { useContext } from "react";
-import { RefreshStatusContext } from "@/features/guild-settings/members-settings/contexts/refresh-status-context";
+import { RefreshStatusContext } from "@/features/guild/settings/members/contexts/refresh-status-context";
 import { queryKeys } from "@/lib/query-keys";
 
 export type MemberRefreshOptions = {

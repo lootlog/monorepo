@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { reservationSlug } from "@/features/reservations/reservation-slug";
+import { reservationSlug } from "@/features/guild/reservations/reservation-slug";
 import {
   type ApiReservation,
   mapReservationsByAlias,

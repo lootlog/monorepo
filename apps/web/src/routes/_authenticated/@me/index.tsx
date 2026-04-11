@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Home } from "@/features/home/home";
-import { HomePageSkeleton } from "@/features/home/home-page-skeleton";
+import { Dashboard } from "@/features/user/dashboard/dashboard";
+import { DashboardPageSkeleton } from "@/features/user/dashboard/dashboard-page-skeleton";
 
 export const Route = createFileRoute("/_authenticated/@me/")({
-  component: Home,
-  pendingComponent: HomePageSkeleton,
+  component: Dashboard,
+  pendingComponent: DashboardPageSkeleton,
 });

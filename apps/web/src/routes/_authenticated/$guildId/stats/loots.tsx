@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { LootStats } from "@/features/stats/loot-stats";
-import { LootStatsPageSkeleton } from "@/features/stats/loot-stats-page-skeleton";
+import { LootStats } from "@/features/guild/stats/loot-stats";
+import { LootStatsPageSkeleton } from "@/features/guild/stats/loot-stats-page-skeleton";
 
 function LootStatsPage() {
   return (

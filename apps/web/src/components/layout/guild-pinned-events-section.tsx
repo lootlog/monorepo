@@ -1,6 +1,6 @@
 import { startTransition, useEffect, useState } from "react";
-import { useEvents, useEventSettings } from "@/features/events/hooks";
-import { isEventActiveAtTimestamp } from "@/features/events/utils";
+import { useEvents, useEventSettings } from "@/features/guild/events/hooks";
+import { isEventActiveAtTimestamp } from "@/features/guild/events/utils";
 import { PinnedEventsBanner } from "./pinned-events-banner";
 
 export const GuildPinnedEventsSection = ({

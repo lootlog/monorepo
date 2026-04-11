@@ -1,7 +1,7 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import { NpcKillersPage } from "@/features/stats/npc-killers-page";
-import { NpcDetailPageSkeleton } from "@/features/stats/npc-detail-page-skeleton";
-import { npcKillersQueryOptions } from "@/features/stats/hooks/use-npc-killers";
+import { NpcKillersPage } from "@/features/guild/stats/npc-killers-page";
+import { NpcDetailPageSkeleton } from "@/features/guild/stats/npc-detail-page-skeleton";
+import { npcKillersQueryOptions } from "@/features/guild/stats/hooks/use-npc-killers";
 import { guildMembersQueryOptions } from "@/hooks/api/members/use-guild-members-query-options";
 
 export const Route = createFileRoute(

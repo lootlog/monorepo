@@ -1,7 +1,7 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import { MemberStatsPage } from "@/features/stats/member-stats-page";
-import { MemberDetailPageSkeleton } from "@/features/stats/member-detail-page-skeleton";
-import { memberKillsQueryOptions } from "@/features/stats/hooks/use-member-kills";
+import { MemberStatsPage } from "@/features/guild/stats/member-stats-page";
+import { MemberDetailPageSkeleton } from "@/features/guild/stats/member-detail-page-skeleton";
+import { memberKillsQueryOptions } from "@/features/guild/stats/hooks/use-member-kills";
 import { guildMembersQueryOptions } from "@/hooks/api/members/use-guild-members-query-options";
 
 export const Route = createFileRoute(

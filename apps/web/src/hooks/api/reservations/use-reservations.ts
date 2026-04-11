@@ -1,7 +1,7 @@
 import { useQuery, queryOptions } from "@tanstack/react-query";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { apiClient } from "@/lib/api-client/api-client";
-import { reservationSlug } from "@/features/reservations/reservation-slug";
+import { reservationSlug } from "@/features/guild/reservations/reservation-slug";
 import { queryKeys } from "@/lib/query-keys";
 
 export interface ApiReservation {

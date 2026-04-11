@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { BattlePanelStatistics } from "@/features/battle-panel/battle-panel-statistics/battle-panel-statistics";
-import { BattlePanelStatisticsSkeleton } from "@/features/battle-panel/battle-panel-statistics/battle-panel-statistics-skeleton";
-import { ensureBattlePanelCharacterId } from "@/features/battle-panel/battle-panel-route-loader";
-import { getBattlePanelStatisticsSearch } from "@/features/battle-panel/battle-panel-statistics-search";
+import { BattlePanelStatistics } from "@/features/user/battle-panel/battle-panel-statistics/battle-panel-statistics";
+import { BattlePanelStatisticsSkeleton } from "@/features/user/battle-panel/battle-panel-statistics/battle-panel-statistics-skeleton";
+import { ensureBattlePanelCharacterId } from "@/features/user/battle-panel/battle-panel-route-loader";
+import { getBattlePanelStatisticsSearch } from "@/features/user/battle-panel/battle-panel-statistics-search";
 import { professionWinRateQueryOptions } from "@/hooks/api/battle-log/use-profession-win-rate";
 import { headToHeadQueryOptions } from "@/hooks/api/battle-log/use-head-to-head";
 import { battleStreakQueryOptions } from "@/hooks/api/battle-log/use-battle-streak";

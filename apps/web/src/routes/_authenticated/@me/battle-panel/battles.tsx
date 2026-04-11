@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { BattlePanelBattlesList } from "@/features/battle-panel/battle-panel-battles-list/battle-panel-battles-list";
-import { BattlePanelBattlesSkeleton } from "@/features/battle-panel/battle-panel-battles-list/battle-panel-battles-skeleton";
+import { BattlePanelBattlesList } from "@/features/user/battle-panel/battle-panel-battles-list/battle-panel-battles-list";
+import { BattlePanelBattlesSkeleton } from "@/features/user/battle-panel/battle-panel-battles-list/battle-panel-battles-skeleton";
 import { battlesQueryOptions } from "@/hooks/api/battle-log/use-battles";
 import { battleCharactersQueryOptions } from "@/hooks/api/battle-log/use-battle-characters";
 

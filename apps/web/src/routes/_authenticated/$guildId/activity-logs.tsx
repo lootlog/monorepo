@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ActivityLogs } from "@/features/activity-logs/activity-logs";
-import { ActivityLogsPageSkeleton } from "@/features/activity-logs/activity-logs-page-skeleton";
+import { ActivityLogs } from "@/features/guild/activity-logs/activity-logs";
+import { ActivityLogsPageSkeleton } from "@/features/guild/activity-logs/activity-logs-page-skeleton";
 import { activityLogsInfiniteQueryOptions } from "@/hooks/api/activity-logs/use-activity-logs";
 import { activityWorldSuggestionsQueryOptions } from "@/hooks/api/activity-logs/use-activity-world-suggestions";
 

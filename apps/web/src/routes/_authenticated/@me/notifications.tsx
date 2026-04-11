@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { UserNotifications } from "@/features/user-notifications/user-notifications";
-import { UserNotificationsPageSkeleton } from "@/features/user-notifications/user-notifications-page-skeleton";
+import { UserNotifications } from "@/features/user/notifications/notifications";
+import { UserNotificationsPageSkeleton } from "@/features/user/notifications/notifications-page-skeleton";
 import { guildsQueryOptions } from "@/hooks/api/guilds/use-guilds";
 import { userNotificationsQueryOptions } from "@/hooks/api/user/use-user-notifications";
 
