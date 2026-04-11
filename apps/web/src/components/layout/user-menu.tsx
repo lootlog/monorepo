@@ -15,7 +15,6 @@ import { authClient } from "@/lib/auth-client";
 import { useUser } from "@/hooks/api/user/use-user";
 import { useNavigate } from "@tanstack/react-router";
 import { ROUTES } from "@/config/routes";
-import { persister } from "@/lib/query-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 
@@ -28,7 +27,6 @@ export const UserMenu = () => {
   const handleLogout = async () => {
     await authClient.signOut();
     queryClient.clear();
-    await persister.removeClient();
     window.location.replace("/");
   };
 

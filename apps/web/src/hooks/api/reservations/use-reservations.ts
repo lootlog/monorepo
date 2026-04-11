@@ -126,7 +126,6 @@ export const reservationsQueryOptions = (guildId: string) =>
     },
     enabled: !!guildId,
     staleTime: 30_000,
-    meta: { persist: false },
   });
 
 export const useReservations = () => {

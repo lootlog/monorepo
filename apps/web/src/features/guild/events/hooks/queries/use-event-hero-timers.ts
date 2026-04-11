@@ -44,5 +44,4 @@ export const eventHeroTimersQueryOptions = ({
     },
     enabled: !!guildId && !!eventId && !!world,
     staleTime: 15_000,
-    meta: { persist: false },
   });

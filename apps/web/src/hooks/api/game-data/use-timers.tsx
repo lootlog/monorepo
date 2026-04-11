@@ -45,6 +45,5 @@ export const timersQueryOptions = ({
     },
     enabled: !!guildId && !!world && enabled,
     staleTime: 15_000,
-    meta: { persist: false },
   });
 };
