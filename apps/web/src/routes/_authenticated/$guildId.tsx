@@ -6,7 +6,10 @@ import { GuildRouteNotFound } from "@/components/router/guild-route-not-found";
 import { guildQueryOptions } from "@/hooks/api/guilds/use-guild";
 import { guildPermissionsQueryOptions } from "@/hooks/api/guilds/use-guild-permissions";
 import { guildMemberQueryOptions } from "@/hooks/api/members/use-guild-member";
-import { throwNotFoundIfResponseMatches } from "@/lib/router/route-errors";
+import {
+  throwForbiddenRouteError,
+  throwNotFoundIfResponseMatches,
+} from "@/lib/router/route-errors";
 
 export const Route = createFileRoute("/_authenticated/$guildId")({
   component: GuildLayout,
@@ -34,11 +37,7 @@ export const Route = createFileRoute("/_authenticated/$guildId")({
         permissions.includes(Permission.OWNER) || guildMember.active;
 
       if (!canAccessGuild) {
-        const forbiddenError = new Error("FORBIDDEN_GUILD_ACCESS") as Error & {
-          status: number;
-        };
-        forbiddenError.status = 403;
-        throw forbiddenError;
+        throwForbiddenRouteError();
       }
 
       return {
