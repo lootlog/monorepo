@@ -65,9 +65,9 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
     },
   };
   const mergedLabels = {
-    header: { ...defaultLabels.header, ...labels.header },
-    teams: { ...defaultLabels.teams, ...labels.teams },
-    metadata: { ...defaultLabels.metadata, ...labels.metadata },
+    header: { ...defaultLabels.header, ...(labels.header ?? {}) },
+    teams: { ...defaultLabels.teams, ...(labels.teams ?? {}) },
+    metadata: { ...defaultLabels.metadata, ...(labels.metadata ?? {}) },
   };
 
   const attackingTeam = battle.warriors.filter((w: Warrior) => w.team === 1);
