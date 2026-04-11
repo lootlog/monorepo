@@ -39,17 +39,7 @@ import {
 import { PlayerTile } from "@/components/battle";
 import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
 import type { BattleFilters } from "./battles-list-filters";
-
-const battleTypes = [
-  { value: "solo" as const, label: "Solo" },
-  { value: "group" as const, label: "Grupowe" },
-];
-
-const battleResults = [
-  { value: "won" as const, label: "Zwycięstwa" },
-  { value: "lost" as const, label: "Porażki" },
-  { value: "flee" as const, label: "Ucieczki" },
-];
+import { useTranslation } from "react-i18next";
 
 type FiltersSidebarProps = {
   filters: BattleFilters;
@@ -64,10 +54,20 @@ export const FiltersSidebar = ({
   characters = [],
   className,
 }: FiltersSidebarProps) => {
+  const { t } = useTranslation();
   const characterListId = useId();
   const [characterOpen, setCharacterOpen] = useState(false);
 
   const { data: worlds = [] } = useUserWorlds();
+  const battleTypes = [
+    { value: "solo" as const, label: t("battlePanel.filters.types.solo") },
+    { value: "group" as const, label: t("battlePanel.filters.types.group") },
+  ];
+  const battleResults = [
+    { value: "won" as const, label: t("battlePanel.filters.results.won") },
+    { value: "lost" as const, label: t("battlePanel.filters.results.lost") },
+    { value: "flee" as const, label: t("battlePanel.filters.results.flee") },
+  ];
 
   const handleCharacterChange = (value: string) => {
     const currentCharacters = filters.characterId ?? [];
@@ -167,7 +167,9 @@ export const FiltersSidebar = ({
           <ScrollArea className="h-full">
             <div className="p-4 space-y-4">
               <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground">Świat</Label>
+                <Label className="text-xs text-muted-foreground">
+                  {t("battlePanel.filters.world")}
+                </Label>
                 <FilterPopover
                   options={worlds.map((world) => ({
                     value: world,
@@ -175,29 +177,35 @@ export const FiltersSidebar = ({
                   }))}
                   value={filters.world}
                   onValueChange={handleWorldChange}
-                  placeholder="Świat"
+                  placeholder={t("battlePanel.filters.world")}
                   icon={Globe}
                   width="w-full"
-                  searchPlaceholder="Szukaj świata..."
-                  emptyMessage="Brak światów"
+                  searchPlaceholder={t(
+                    "battlePanel.filters.worldSearchPlaceholder",
+                  )}
+                  emptyMessage={t("battlePanel.filters.noWorlds")}
                 />
               </div>
 
               <Separator />
 
               <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground">Wynik</Label>
+                <Label className="text-xs text-muted-foreground">
+                  {t("battlePanel.filters.battleResult")}
+                </Label>
                 <FilterPopover
                   options={battleResults}
                   value={filters.result}
                   onValueChange={handleResultChange}
-                  placeholder="Wynik"
+                  placeholder={t("battlePanel.filters.battleResult")}
                   icon={Medal}
                   width="w-full"
                   multiSelect
                   showSearch={false}
                   renderTriggerLabel={(count) =>
-                    count > 0 ? `${count} wybranych` : "Wynik"
+                    count > 0
+                      ? t("battlePanel.filters.selectedCount", { count })
+                      : t("battlePanel.filters.battleResult")
                   }
                 />
               </div>
@@ -205,7 +213,9 @@ export const FiltersSidebar = ({
               <Separator />
 
               <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground">Postać</Label>
+                <Label className="text-xs text-muted-foreground">
+                  {t("battlePanel.filters.character")}
+                </Label>
                 <Popover open={characterOpen} onOpenChange={setCharacterOpen}>
                   <PopoverTrigger asChild>
                     <Button
@@ -219,8 +229,10 @@ export const FiltersSidebar = ({
                         <User className="h-4 w-4" />
                         <span className="text-sm">
                           {filters.characterId && filters.characterId.length > 0
-                            ? `${filters.characterId.length} wybranych`
-                            : "Postać"}
+                            ? t("battlePanel.filters.selectedCount", {
+                                count: filters.characterId.length,
+                              })
+                            : t("battlePanel.filters.character")}
                         </span>
                       </div>
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -228,9 +240,15 @@ export const FiltersSidebar = ({
                   </PopoverTrigger>
                   <PopoverContent className="w-[280px] p-0">
                     <Command>
-                      <CommandInput placeholder="Szukaj postaci..." />
+                      <CommandInput
+                        placeholder={t(
+                          "battlePanel.filters.characterSearchPlaceholder",
+                        )}
+                      />
                       <CommandList id={characterListId}>
-                        <CommandEmpty>Brak postaci</CommandEmpty>
+                        <CommandEmpty>
+                          {t("battlePanel.filters.noCharacters")}
+                        </CommandEmpty>
                         <CommandGroup>
                           {characters.map((char) => (
                             <CommandItem
@@ -266,19 +284,21 @@ export const FiltersSidebar = ({
 
               <div className="space-y-2">
                 <Label className="text-xs text-muted-foreground">
-                  Typ walki
+                  {t("battlePanel.filters.battleType")}
                 </Label>
                 <FilterPopover
                   options={battleTypes}
                   value={filters.type}
                   onValueChange={handleTypeChange}
-                  placeholder="Typ walki"
+                  placeholder={t("battlePanel.filters.battleType")}
                   icon={Users}
                   width="w-full"
                   multiSelect
                   showSearch={false}
                   renderTriggerLabel={(count) =>
-                    count > 0 ? `${count} wybranych` : "Typ walki"
+                    count > 0
+                      ? t("battlePanel.filters.selectedCount", { count })
+                      : t("battlePanel.filters.battleType")
                   }
                 />
               </div>
@@ -296,7 +316,7 @@ export const FiltersSidebar = ({
                   htmlFor="sidebar-ph-checkbox"
                   className="cursor-pointer text-sm"
                 >
-                  Punkty Honoru
+                  {t("battlePanel.filters.honorPoints")}
                 </Label>
               </div>
 
@@ -311,7 +331,7 @@ export const FiltersSidebar = ({
                   htmlFor="sidebar-matchmaking-checkbox"
                   className="cursor-pointer text-sm"
                 >
-                  Otchłań
+                  {t("battlePanel.filters.matchmaking")}
                 </Label>
               </div>
 
@@ -319,7 +339,7 @@ export const FiltersSidebar = ({
 
               <div className="space-y-2">
                 <Label className="text-xs text-muted-foreground">
-                  Zakres poziomów
+                  {t("battlePanel.filters.levelRange")}
                 </Label>
                 <div className="flex items-center gap-2">
                   <LevelRangeFilter
@@ -353,7 +373,7 @@ export const FiltersSidebar = ({
                   size="sm"
                 >
                   <X className="h-4 w-4 mr-2" />
-                  Wyczyść filtry
+                  {t("loots.filtersPanel.quickFilters.clearButton")}
                 </Button>
               </div>
             </motion.div>

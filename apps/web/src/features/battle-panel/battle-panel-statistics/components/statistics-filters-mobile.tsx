@@ -27,6 +27,7 @@ import {
 import { Input } from "@lootlog/ui/components/input";
 import { useBattleCharacters } from "@/hooks/api/battle-log/use-battle-characters";
 import type { Period } from "@/store/battle-filters.store";
+import { useTranslation } from "react-i18next";
 
 type StatisticsFiltersMobileProps = {
   characterId?: string;
@@ -43,13 +44,6 @@ type StatisticsFiltersMobileProps = {
   onMatchmakingChange: (matchmaking: boolean) => void;
 };
 
-const periodOptions = [
-  { value: "7d" as const, label: "Ostatnie 7 dni" },
-  { value: "30d" as const, label: "Ostatnie 30 dni" },
-  { value: "90d" as const, label: "Ostatnie 90 dni" },
-  { value: "all" as const, label: "Cały czas" },
-];
-
 export const StatisticsFiltersMobile = ({
   characterId,
   period,
@@ -64,7 +58,23 @@ export const StatisticsFiltersMobile = ({
   onPhChange,
   onMatchmakingChange,
 }: StatisticsFiltersMobileProps) => {
+  const { t } = useTranslation();
   const { data: characters = [] } = useBattleCharacters();
+  const periodOptions = [
+    { value: "7d" as const, label: t("battlePanel.filters.periodOptions.7d") },
+    {
+      value: "30d" as const,
+      label: t("battlePanel.filters.periodOptions.30d"),
+    },
+    {
+      value: "90d" as const,
+      label: t("battlePanel.filters.periodOptions.90d"),
+    },
+    {
+      value: "all" as const,
+      label: t("battlePanel.filters.periodOptions.all"),
+    },
+  ];
 
   return (
     <Drawer shouldScaleBackground={false}>
@@ -72,17 +82,17 @@ export const StatisticsFiltersMobile = ({
         <Button className="w-full justify-between">
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4" />
-            <span>Filtry</span>
+            <span>{t("battlePanel.filters.title")}</span>
           </div>
         </Button>
       </DrawerTrigger>
       <DrawerContent className="p-4">
         <DrawerHeader className="mb-4">
-          <DrawerTitle>Filtry statystyk</DrawerTitle>
+          <DrawerTitle>{t("battlePanel.filters.statisticsTitle")}</DrawerTitle>
         </DrawerHeader>
         <div className="space-y-4 overflow-y-auto">
           <div className="space-y-2">
-            <Label>Postać</Label>
+            <Label>{t("battlePanel.filters.character")}</Label>
             <Select
               value={characterId}
               onValueChange={(value) =>
@@ -92,7 +102,9 @@ export const StatisticsFiltersMobile = ({
               <SelectTrigger className="w-full">
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4" />
-                  <SelectValue placeholder="Wybierz postać" />
+                  <SelectValue
+                    placeholder={t("battlePanel.filters.selectCharacter")}
+                  />
                 </div>
               </SelectTrigger>
               <SelectContent>
@@ -106,7 +118,7 @@ export const StatisticsFiltersMobile = ({
           </div>
 
           <div className="space-y-2">
-            <Label>Okres</Label>
+            <Label>{t("battlePanel.filters.period")}</Label>
             <Select value={period} onValueChange={onPeriodChange}>
               <SelectTrigger className="w-full">
                 <div className="flex items-center gap-2">
@@ -125,12 +137,12 @@ export const StatisticsFiltersMobile = ({
           </div>
 
           <div className="space-y-2">
-            <Label>Zakres poziomów</Label>
+            <Label>{t("battlePanel.filters.levelRange")}</Label>
             <div className="flex items-center gap-2">
               <div className="flex-1">
                 <Input
                   type="number"
-                  placeholder="Min"
+                  placeholder={t("battlePanel.filters.minPlaceholder")}
                   value={minLevel ?? ""}
                   onChange={(e) => {
                     const value = e.target.value;
@@ -145,7 +157,7 @@ export const StatisticsFiltersMobile = ({
               <div className="flex-1">
                 <Input
                   type="number"
-                  placeholder="Max"
+                  placeholder={t("battlePanel.filters.maxPlaceholder")}
                   value={maxLevel ?? ""}
                   onChange={(e) => {
                     const value = e.target.value;
@@ -163,7 +175,7 @@ export const StatisticsFiltersMobile = ({
             <div className="flex items-center gap-2">
               <Award className="h-4 w-4" />
               <Label htmlFor="ph-filter-mobile" className="cursor-pointer">
-                Punkty Honoru
+                {t("battlePanel.filters.honorPoints")}
               </Label>
             </div>
             <Checkbox
@@ -180,7 +192,7 @@ export const StatisticsFiltersMobile = ({
                 htmlFor="matchmaking-filter-mobile"
                 className="cursor-pointer"
               >
-                Otchłań
+                {t("battlePanel.filters.matchmaking")}
               </Label>
             </div>
             <Checkbox
@@ -195,7 +207,7 @@ export const StatisticsFiltersMobile = ({
         <div className="mt-6">
           <DrawerClose asChild>
             <Button variant="outline" className="w-full">
-              Zamknij
+              {t("battlePanel.actions.close")}
             </Button>
           </DrawerClose>
         </div>

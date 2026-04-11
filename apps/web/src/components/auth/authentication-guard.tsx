@@ -8,6 +8,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@lootlog/ui/components/dialog";
+import { useTranslation } from "react-i18next";
 
 type Props = {
   children: React.ReactNode;
@@ -15,6 +16,7 @@ type Props = {
 
 export const AuthenticationGuard: React.FC<Props> = ({ children }) => {
   const { data: scopes, isFetched, isError } = useAuthScopes();
+  const { t } = useTranslation();
 
   const hasRequiredScopes = DISCORD_AUTH_SCOPES.every((scope) =>
     scopes?.includes(scope),
@@ -32,14 +34,14 @@ export const AuthenticationGuard: React.FC<Props> = ({ children }) => {
     <>
       <Dialog open={!hasRequiredScopes && isFetched && !isError}>
         <DialogContent className="p-4">
-          <DialogTitle>Wymagane ponowne zalogowanie</DialogTitle>
+          <DialogTitle>{t("auth.reloginRequired.title")}</DialogTitle>
           <DialogDescription>
-            Aby kontynuować korzystanie z Lootloga, musisz ponownie się
-            zalogować i zaakceptować nowe uprawnienia. Kliknij przycisk poniżej,
-            aby przejść do strony logowania.
+            {t("auth.reloginRequired.description")}
             <br />
             <br />
-            <Button onClick={handleLoginAction}>Zaloguj się ponownie</Button>
+            <Button onClick={handleLoginAction}>
+              {t("auth.reloginRequired.button")}
+            </Button>
           </DialogDescription>
         </DialogContent>
       </Dialog>

@@ -17,6 +17,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { cn } from "@lootlog/ui/lib/utils";
 import { useBattleCharacters } from "@/hooks/api/battle-log/use-battle-characters";
 import { PlayerTile } from "@/components/battle";
+import { useTranslation } from "react-i18next";
 
 interface CharacterSelectorProps {
   characterId?: string;
@@ -33,6 +34,7 @@ export function CharacterSelector({
   size = "sm",
   className,
 }: CharacterSelectorProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const { data: characters } = useBattleCharacters();
 
@@ -50,16 +52,18 @@ export function CharacterSelector({
           {selectedCharacter
             ? `${selectedCharacter.name} (${selectedCharacter.world})`
             : allowAllCharacters
-              ? "Wszystkie postacie"
-              : "Wybierz postać"}
+              ? t("battlePanel.filters.allCharacters")
+              : t("battlePanel.filters.selectCharacter")}
           <ChevronsUpDown className="h-4 w-4 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[250px] p-0">
         <Command>
-          <CommandInput placeholder="Szukaj postaci..." />
+          <CommandInput
+            placeholder={t("battlePanel.filters.characterSearchPlaceholder")}
+          />
           <CommandList>
-            <CommandEmpty>Nie znaleziono postaci.</CommandEmpty>
+            <CommandEmpty>{t("ui.characterSelector.empty")}</CommandEmpty>
             <CommandGroup>
               {allowAllCharacters && (
                 <CommandItem
@@ -75,7 +79,7 @@ export function CharacterSelector({
                       !characterId ? "opacity-100" : "opacity-0",
                     )}
                   />
-                  Wszystkie postacie
+                  {t("battlePanel.filters.allCharacters")}
                 </CommandItem>
               )}
               {characters?.map((character) => (

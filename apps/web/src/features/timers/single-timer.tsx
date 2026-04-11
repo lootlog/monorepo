@@ -7,6 +7,7 @@ import { MARGONEM_CDN_NPCS_URL } from "@/constants/margonem";
 import { format } from "date-fns";
 import { ClockArrowDown, ClockArrowUp } from "lucide-react";
 import { useEffect, useState, type FC } from "react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/utils/cn";
 import { parseMsToTime } from "@/utils/date/parse-ms-to-time";
 import { useTimers, type Timer } from "@/hooks/api/game-data/use-timers";
@@ -18,6 +19,7 @@ type SingleTimerProps = {
 const THRESHOLD = 30000;
 
 export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
+  const { t } = useTranslation();
   const maxSpawnTime = new Date(timer.maxSpawnTime).getTime();
   const minSpawnTime = new Date(timer.minSpawnTime).getTime();
 
@@ -81,7 +83,9 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
               </span>
             </TooltipTrigger>
             <TooltipContent className="flex flex-col">
-              <span className="text-sm">Min. czas spawnu:</span>
+              <span className="text-sm">
+                {t("timers.details.minSpawnTime")}
+              </span>
               <span className="text-sm font-semibold">
                 {format(new Date(minSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
               </span>
@@ -104,7 +108,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
             </span>
           </TooltipTrigger>
           <TooltipContent className="flex flex-col">
-            <span className="text-sm">Max. czas spawnu:</span>
+            <span className="text-sm">{t("timers.details.maxSpawnTime")}</span>
             <span className="text-sm font-semibold">
               {format(new Date(maxSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
             </span>

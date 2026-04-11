@@ -9,6 +9,31 @@
     "notifications": "Powiadomienia",
     "info": "Informacje"
   },
+  "roles": {
+    "title": "Ustawienia ról",
+    "description": "Zarządzaj uprawnieniami dla ról Discord",
+    "searchPlaceholder": "Szukaj roli...",
+    "emptyTitle": "Nie znaleziono ról",
+    "emptyDescription": "Spróbuj zmienić kryteria wyszukiwania"
+  },
+  "npcs": {
+    "title": "Ustawienia potworów i NPC",
+    "description": "Jakie przedmioty ma zbierać dla jakiego potwora",
+    "searchPlaceholder": "Szukaj potwora...",
+    "emptyTitle": "Nie znaleziono potworów",
+    "emptyDescription": "Spróbuj zmienić kryteria wyszukiwania"
+  },
+  "members": {
+    "details": "Szczegóły członka",
+    "owner": "Właściciel serwera",
+    "refreshingProgress": "Odświeżanie {{processed}}/{{total}}",
+    "nextRefreshIn": "Kolejne odświeżenie za {{minutes}}:{{seconds}}",
+    "refreshSuccess": "Odświeżono pomyślnie",
+    "refreshError": "Błąd odświeżania",
+    "retry": "Spróbuj ponownie",
+    "refreshAll": "Odśwież wszystkich",
+    "refreshedAt": "Odświeżono {{time}}"
+  },
   "notifications": {
     "title": "Powiadomienia",
     "description": "Zarządzaj kanałami docelowymi, regułami wysyłki i historią dostarczania powiadomień.",

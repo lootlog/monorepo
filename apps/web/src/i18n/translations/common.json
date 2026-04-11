@@ -10,7 +10,21 @@
   },
   "save": "Zapisz",
   "saving": "Zapisywanie...",
+  "close": "Zamknij",
   "unsavedChanges": "Masz niezapisane zmiany",
+  "filterLabels": {
+    "period": "Okres"
+  },
+  "periodOptions": {
+    "24h": "Ostatnie 24 godziny",
+    "3d": "Ostatnie 3 dni",
+    "7d": "Ostatni tydzień",
+    "14d": "Ostatnie 2 tygodnie",
+    "30d": "Ostatni miesiąc",
+    "90d": "Ostatnie 3 miesiące",
+    "180d": "Ostatnie pół roku",
+    "all": "Wszystko"
+  },
   "breadcrumbs": {
     "lootsList": "Lista łupów",
     "timers": "Timery",

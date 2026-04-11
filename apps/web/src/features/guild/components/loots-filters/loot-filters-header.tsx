@@ -15,6 +15,7 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { useTheme } from "@/hooks/context/use-theme";
 import { FrozenButton } from "@/components/effects/rukia-frost";
+import { useTranslation } from "react-i18next";
 
 export type LootFiltersHeaderProps = {
   isFiltersOpen: boolean;
@@ -27,6 +28,7 @@ export const LootFiltersHeader = ({
   hasActiveFilters,
   onToggleFilters,
 }: LootFiltersHeaderProps) => {
+  const { t } = useTranslation();
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [hoveredButton, setHoveredButton] = useState<string | null>(null);
   const isMobile = useIsMobile();
@@ -74,10 +76,12 @@ export const LootFiltersHeader = ({
                 >
                   <Search className="h-4 w-4 mr-2" />
                   <span className="max-w-full truncate">
-                    Szukaj przedmiotów, potworów, graczy...
+                    {t("loots.header.searchPlaceholder")}
                   </span>
                   <kbd className="pointer-events-none absolute right-2 top-[50%] translate-y-[-50%] hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
-                    <span className="text-xs">Ctrl + K</span>
+                    <span className="text-xs">
+                      {t("loots.header.shortcut")}
+                    </span>
                   </kbd>
                   <AnimatePresence>
                     {hasSearchFilters && (
@@ -99,10 +103,10 @@ export const LootFiltersHeader = ({
               >
                 <Search className="h-4 w-4 mr-2" />
                 <span className="max-w-full truncate">
-                  Szukaj przedmiotów, potworów, graczy...
+                  {t("loots.header.searchPlaceholder")}
                 </span>
                 <kbd className="pointer-events-none absolute right-2 top-[50%] translate-y-[-50%] hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
-                  <span className="text-xs">Ctrl + K</span>
+                  <span className="text-xs">{t("loots.header.shortcut")}</span>
                 </kbd>
                 <AnimatePresence>
                   {hasSearchFilters && (
@@ -156,7 +160,7 @@ export const LootFiltersHeader = ({
                     </div>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
-                    <p>Widok listy</p>
+                    <p>{t("loots.header.listView")}</p>
                   </TooltipContent>
                 </Tooltip>
                 <Tooltip>
@@ -192,7 +196,7 @@ export const LootFiltersHeader = ({
                     </div>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
-                    <p>Widok siatki</p>
+                    <p>{t("loots.header.gridView")}</p>
                   </TooltipContent>
                 </Tooltip>
               </div>

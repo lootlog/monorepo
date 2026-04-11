@@ -76,6 +76,12 @@
     "description": "Pełna lista najczęściej bitych potworów",
     "searchPlaceholder": "Szukaj potwora..."
   },
+  "columns": {
+    "name": "Nazwa",
+    "level": "Poziom",
+    "type": "Typ",
+    "kills": "Bicia"
+  },
   "topBossKillers": {
     "title": "Najlepsi zabójcy według typu NPC",
     "titans": "Tytani",

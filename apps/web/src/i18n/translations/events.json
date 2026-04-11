@@ -227,6 +227,9 @@
     "subtitle": "Zarządzanie",
     "description": "Najważniejsze operacje dla eventu „{{name}}”."
   },
+  "common": {
+    "pointsShort": "pkt"
+  },
   "confirmation": {
     "title": "Potwierdź udział",
     "description": "Potwierdź udział w obstawianiu, aby naliczyć punkty za te bicia.",

@@ -6,9 +6,11 @@ import {
 import { Button } from "@lootlog/ui/components/button";
 import { PlusCircleIcon } from "lucide-react";
 import type { FC } from "react";
+import { useTranslation } from "react-i18next";
 import { useGlobalContext } from "@/hooks/context/use-global-context";
 
 export const GuildNavCreate: FC = () => {
+  const { t } = useTranslation();
   const {
     createGuildModal: { dispatch },
   } = useGlobalContext();
@@ -24,7 +26,9 @@ export const GuildNavCreate: FC = () => {
           <PlusCircleIcon />
         </Button>
       </TooltipTrigger>
-      <TooltipContent side="right">Stwórz nowy lootlog</TooltipContent>
+      <TooltipContent side="right">
+        {t("ui.tooltips.createLootlog")}
+      </TooltipContent>
     </Tooltip>
   );
 };

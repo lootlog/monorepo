@@ -12,6 +12,7 @@ import {
 } from "@lootlog/ui/components/alert-dialog";
 import { Copy, Share2, Users, Lock } from "lucide-react";
 import type { FC } from "react";
+import { useTranslation } from "react-i18next";
 
 export type BattleOverviewHeaderProps = {
   isPublic: boolean;
@@ -42,26 +43,29 @@ export const BattleOverviewHeader: FC<BattleOverviewHeaderProps> = ({
   onUnshareClick,
   onDeleteClick,
   showActions = true,
-  labels = {
-    title: "Battle Overview",
-    copyLink: "Copy link",
-    hide: "Hide",
-    share: "Share",
-    delete: "Delete",
-    deleteConfirmTitle: "Are you sure you want to delete this battle?",
-    deleteConfirmDescription:
-      "This action is irreversible. The battle will be completely removed from the system and cannot be restored. It will also not be counted in statistics calculations.",
-    cancel: "Cancel",
-    deleteBattle: "Delete battle",
-  },
+  labels,
 }) => {
+  const { t } = useTranslation();
+  const resolvedLabels = labels ?? {
+    title: t("battleUi.overviewHeader.title"),
+    copyLink: t("battleUi.overviewHeader.copyLink"),
+    hide: t("battleUi.overviewHeader.hide"),
+    share: t("battleUi.overviewHeader.share"),
+    delete: t("battleUi.overviewHeader.delete"),
+    deleteConfirmTitle: t("battleUi.overviewHeader.deleteConfirmTitle"),
+    deleteConfirmDescription: t(
+      "battleUi.overviewHeader.deleteConfirmDescription",
+    ),
+    cancel: t("battleUi.overviewHeader.cancel"),
+    deleteBattle: t("battleUi.overviewHeader.deleteBattle"),
+  };
   return (
     <>
       <div className="sticky top-0 z-10 bg-background border-b">
         <div className="flex items-center justify-between p-4 py-2 h-14 min-h-14">
           <div className="flex items-center gap-2 font-semibold">
             <Users className="h-5 w-5" />
-            {labels.title}
+            {resolvedLabels.title}
           </div>
           {showActions && (
             <div className="flex flex-row gap-2">
@@ -72,14 +76,14 @@ export const BattleOverviewHeader: FC<BattleOverviewHeaderProps> = ({
                     onClick={onCopyClick}
                     disabled={isPending}
                   >
-                    {labels.copyLink} <Copy />
+                    {resolvedLabels.copyLink} <Copy />
                   </Button>
                   <Button
                     variant="outline"
                     onClick={onUnshareClick}
                     disabled={isPending}
                   >
-                    {labels.hide} <Lock />
+                    {resolvedLabels.hide} <Lock />
                   </Button>
                 </>
               ) : (
@@ -88,29 +92,31 @@ export const BattleOverviewHeader: FC<BattleOverviewHeaderProps> = ({
                   onClick={onShareClick}
                   disabled={isPending}
                 >
-                  {labels.share} <Share2 />
+                  {resolvedLabels.share} <Share2 />
                 </Button>
               )}
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive" disabled={isPending}>
-                    {labels.delete}
+                    {resolvedLabels.delete}
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>
-                      {labels.deleteConfirmTitle}
+                      {resolvedLabels.deleteConfirmTitle}
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                      {labels.deleteConfirmDescription}
+                      {resolvedLabels.deleteConfirmDescription}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>{labels.cancel}</AlertDialogCancel>
+                    <AlertDialogCancel>
+                      {resolvedLabels.cancel}
+                    </AlertDialogCancel>
                     <AlertDialogAction asChild>
                       <Button variant="destructive" onClick={onDeleteClick}>
-                        {labels.deleteBattle}
+                        {resolvedLabels.deleteBattle}
                       </Button>
                     </AlertDialogAction>
                   </AlertDialogFooter>

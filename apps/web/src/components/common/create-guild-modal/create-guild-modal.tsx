@@ -20,11 +20,13 @@ import {
 import { cn } from "@lootlog/ui/lib/utils";
 import { useGlobalContext } from "@/hooks/context/use-global-context";
 import { useManageableGuilds } from "@/hooks/api/guilds/use-manageable-guilds";
+import { useTranslation } from "react-i18next";
 
 export const CreateGuildModal: FC = () => {
   const [searchValue, setSearchValue] = useState("");
   const [debouncedValue] = useDebounceValue<string>(searchValue, 200);
   const { createGuildModal } = useGlobalContext();
+  const { t } = useTranslation();
 
   const { data: manageableGuilds } = useManageableGuilds(
     createGuildModal.state.isOpen,
@@ -49,17 +51,14 @@ export const CreateGuildModal: FC = () => {
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nowy lootlog</DialogTitle>
+          <DialogTitle>{t("ui.modals.createLootlog.title")}</DialogTitle>
           <DialogDescription>
-            Utwórz nowy lootlog dla swojego klanu. Jeśli nie widzisz tutaj
-            swojego Discorda, nie masz uprawnień do dodawania bota na serwer lub
-            dopiero założyłeś serwer Discord. Odczekaj proszę do 10 minut i
-            spróbuj ponownie.
+            {t("ui.modals.createLootlog.description")}
           </DialogDescription>
         </DialogHeader>
         <div className="p-4 border-b">
           <SearchInput
-            placeholder="Szukaj serwera..."
+            placeholder={t("ui.modals.createLootlog.searchPlaceholder")}
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
           />
@@ -86,7 +85,7 @@ export const CreateGuildModal: FC = () => {
                     <p className="text-md font-semibold">{guild.name}</p>
                   </div>
                   <Button onClick={() => handleAddToGuild(guild.id)} size="sm">
-                    Dodaj
+                    {t("ui.actions.add")}
                   </Button>
                 </div>
               );

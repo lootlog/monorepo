@@ -43,7 +43,7 @@ export const GuildsSidebarNav: FC = () => {
 
   const menuItems: MenuItem[] = [
     {
-      label: "Lootlog",
+      label: t("layout.navigation.lootlog"),
       icon: <ClipboardList className="mr-1 h-4 w-4" />,
       path: "",
       available: true,
@@ -53,7 +53,7 @@ export const GuildsSidebarNav: FC = () => {
       ),
     },
     {
-      label: "Timery",
+      label: t("layout.navigation.timers"),
       icon: <Clock className="mr-1 h-4 w-4" />,
       path: ROUTE_SEGMENTS.guild.timers,
       available: true,
@@ -63,7 +63,7 @@ export const GuildsSidebarNav: FC = () => {
       ),
     },
     {
-      label: "Rezerwacje",
+      label: t("layout.navigation.reservations"),
       icon: <CalendarClock className="mr-1 h-4 w-4" />,
       path: ROUTE_SEGMENTS.guild.reservations,
       available: true,
@@ -73,7 +73,7 @@ export const GuildsSidebarNav: FC = () => {
       ),
     },
     {
-      label: "Eventy",
+      label: t("layout.navigation.events"),
       icon: (
         <div className="relative mr-1">
           <Trophy
@@ -96,7 +96,7 @@ export const GuildsSidebarNav: FC = () => {
       highlight: hasActiveEvents,
     },
     {
-      label: "Statystyki",
+      label: t("layout.navigation.stats"),
       icon: <BarChart4 className="mr-1 h-4 w-4" />,
       path: ROUTE_SEGMENTS.guild.stats,
       available: true,
@@ -107,21 +107,21 @@ export const GuildsSidebarNav: FC = () => {
     },
     {
       divided: true,
-      label: "Logi aktywności",
+      label: t("layout.navigation.activityLogs"),
       icon: <Logs className="mr-1 h-4 w-4" />,
       path: ROUTE_SEGMENTS.guild.activityLogs,
       available: true,
       enabled: canManageCurrentGuild,
     },
     {
-      label: t("common.breadcrumbs.notifications"),
+      label: t("layout.navigation.notifications"),
       icon: <BellRing className="mr-1 h-4 w-4" />,
       path: ROUTE_SEGMENTS.guild.notifications,
       available: true,
       enabled: canManageCurrentGuild,
     },
     {
-      label: "Ustawienia",
+      label: t("layout.navigation.settings"),
       icon: <Settings className="mr-1 h-4 w-4" />,
       path: ROUTE_SEGMENTS.guild.settings,
       available: true,

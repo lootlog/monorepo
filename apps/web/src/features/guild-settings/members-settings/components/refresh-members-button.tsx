@@ -7,10 +7,12 @@ import { useRefreshStatus } from "@/features/guild-settings/members-settings/con
 import { useCountdown } from "@/hooks/utils/use-countdown";
 import { useBulkMemberRefresh } from "@/hooks/api/members/use-bulk-member-refresh";
 import { useRefreshJob } from "@/hooks/utils/use-refresh-job";
+import { useTranslation } from "react-i18next";
 
 const ADMIN_BULK_REFRESH_RATE_LIMIT = 1000 * 60 * 10; // 10 minutes
 
 export const RefreshMembersButton = () => {
+  const { t } = useTranslation();
   const guildId = useGuildId();
   const { markAsRefreshed, markAsFailed } = useRefreshStatus();
   const {
@@ -76,7 +78,10 @@ export const RefreshMembersButton = () => {
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <RefreshCw className="w-4 h-4 animate-spin" />
           <span>
-            Odświeżanie {displayJob.processedMembers}/{displayJob.totalMembers}
+            {t("settings.members.refreshingProgress", {
+              processed: displayJob.processedMembers,
+              total: displayJob.totalMembers,
+            })}
           </span>
         </div>
         <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden">
@@ -94,8 +99,10 @@ export const RefreshMembersButton = () => {
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Clock className="w-4 h-4" />
         <span>
-          Kolejne odświeżenie za {countdown.minutes}:
-          {countdown.seconds.toString().padStart(2, "0")}
+          {t("settings.members.nextRefreshIn", {
+            minutes: countdown.minutes,
+            seconds: countdown.seconds.toString().padStart(2, "0"),
+          })}
         </span>
       </div>
     );
@@ -105,7 +112,7 @@ export const RefreshMembersButton = () => {
     return (
       <div className="flex items-center gap-2 text-sm text-green-600">
         <RefreshCw className="w-4 h-4" />
-        <span>Odświeżono pomyślnie</span>
+        <span>{t("settings.members.refreshSuccess")}</span>
       </div>
     );
   }
@@ -113,7 +120,9 @@ export const RefreshMembersButton = () => {
   if (displayJob?.status === "FAILED") {
     return (
       <div className="flex items-center gap-2">
-        <span className="text-sm text-red-600">Błąd odświeżania</span>
+        <span className="text-sm text-red-600">
+          {t("settings.members.refreshError")}
+        </span>
         <Button
           size="sm"
           variant="outline"
@@ -123,7 +132,7 @@ export const RefreshMembersButton = () => {
           <RefreshCw
             className={cn("w-4 h-4 mr-2", isPending && "animate-spin")}
           />
-          Spróbuj ponownie
+          {t("settings.members.retry")}
         </Button>
       </div>
     );
@@ -137,7 +146,7 @@ export const RefreshMembersButton = () => {
       disabled={isPending || !countdown.isExpired}
     >
       <RefreshCw className={cn("w-4 h-4 mr-2", isPending && "animate-spin")} />
-      Odśwież wszystkich
+      {t("settings.members.refreshAll")}
     </Button>
   );
 };

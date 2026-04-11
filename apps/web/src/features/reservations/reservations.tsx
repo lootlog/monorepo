@@ -21,10 +21,12 @@ import {
 import { useViewMode } from "@/hooks/use-view-mode";
 import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
 import { ReservationCardSkeleton } from "./reservation-card-skeleton";
+import { useTranslation } from "react-i18next";
 
 export const Reservations: React.FC = () => {
   const { data: guild } = useGuild({});
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [searchValue, setSearchValue] = useState("");
   const { viewMode, setViewMode } = useViewMode("reservations-view-mode");
@@ -101,7 +103,7 @@ export const Reservations: React.FC = () => {
                 <Input
                   value={searchValue}
                   onChange={(event) => setSearchValue(event.target.value)}
-                  placeholder="Szukaj expowiska..."
+                  placeholder={t("reservations.searchPlaceholder")}
                   className="pl-9 w-full"
                   disabled={isLoading}
                 />
@@ -120,7 +122,7 @@ export const Reservations: React.FC = () => {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
-                    <p>Widok listy</p>
+                    <p>{t("reservations.view.list")}</p>
                   </TooltipContent>
                 </Tooltip>
                 <Tooltip>
@@ -135,7 +137,7 @@ export const Reservations: React.FC = () => {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
-                    <p>Widok siatki</p>
+                    <p>{t("reservations.view.grid")}</p>
                   </TooltipContent>
                 </Tooltip>
               </div>

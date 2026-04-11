@@ -21,10 +21,12 @@ import {
 } from "@lootlog/ui/components/drawer";
 import { WarriorSearchFilter } from "@/components/filters";
 import type { Warrior } from "@/hooks/api/battle-log/use-search-warriors";
+import { useTranslation } from "react-i18next";
 
 const FILTERS_OPEN_KEY = "battles-filters-open";
 
 export const BattlePanelBattlesList = () => {
+  const { t } = useTranslation();
   const [queryState, setQueryState] = useQueryStates(battleQueryParsers);
   const pageSize = 20;
   const isMobile = useIsMobile();
@@ -115,7 +117,7 @@ export const BattlePanelBattlesList = () => {
         >
           <DrawerContent className="p-0 h-[85vh] max-h-[85vh] flex flex-col overflow-hidden">
             <DrawerHeader className="border-b px-4 py-3 shrink-0">
-              <DrawerTitle>Filtry walk</DrawerTitle>
+              <DrawerTitle>{t("battlePanel.filters.battlesTitle")}</DrawerTitle>
             </DrawerHeader>
             <div className="flex-1 overflow-hidden">
               <FiltersSidebar

@@ -3,6 +3,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { ArrowUpDown, Crown, Medal, Trophy } from "lucide-react";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { NPC_TYPE_NAMES } from "@/constants/npc";
+import i18n from "@/i18n/config";
 import type { NpcKill } from "../hooks/use-npc-kills";
 
 const getRankIcon = (rank: number) => {
@@ -55,7 +56,7 @@ export const createKillsColumns = (startRank: number): ColumnDef<NpcKill>[] => [
   },
   {
     accessorKey: "npcName",
-    header: "Nazwa",
+    header: i18n.t("kills.columns.name"),
     cell: ({ row }) => (
       <span className="font-medium">{row.original.npcName}</span>
     ),
@@ -71,7 +72,7 @@ export const createKillsColumns = (startRank: number): ColumnDef<NpcKill>[] => [
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="h-8"
         >
-          Poziom
+          {i18n.t("kills.columns.level")}
           <ArrowUpDown className="ml-2 h-3 w-3" />
         </Button>
       </div>
@@ -85,7 +86,9 @@ export const createKillsColumns = (startRank: number): ColumnDef<NpcKill>[] => [
   },
   {
     accessorKey: "npcType",
-    header: () => <div className="text-center">Typ</div>,
+    header: () => (
+      <div className="text-center">{i18n.t("kills.columns.type")}</div>
+    ),
     cell: ({ row }) => (
       <div className="text-center text-muted-foreground text-sm">
         {NPC_TYPE_NAMES[row.original.npcType as keyof typeof NPC_TYPE_NAMES] ??
@@ -104,7 +107,7 @@ export const createKillsColumns = (startRank: number): ColumnDef<NpcKill>[] => [
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="h-8"
         >
-          Bicia
+          {i18n.t("kills.columns.kills")}
           <ArrowUpDown className="ml-2 h-3 w-3" />
         </Button>
       </div>

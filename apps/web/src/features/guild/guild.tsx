@@ -15,10 +15,12 @@ import { useLocalStorage } from "usehooks-ts";
 import { LootDetailsDialog } from "@/features/guild/components/loots-list/loot-details-dialog";
 import { Button } from "@lootlog/ui/components/button";
 import { Filter } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const FILTERS_OPEN_KEY = "loots-filters-open";
 
 export const Guild: React.FC = () => {
+  const { t } = useTranslation();
   const { hasActiveFilters } = useLootsFilters();
   const [isFiltersOpen, setIsFiltersOpen] = useLocalStorage(
     FILTERS_OPEN_KEY,
@@ -48,7 +50,7 @@ export const Guild: React.FC = () => {
         >
           <DrawerContent className="p-0 h-[85vh] max-h-[85vh] flex flex-col overflow-hidden">
             <DrawerHeader className="border-b px-4 py-3 shrink-0">
-              <DrawerTitle>Filtry łupów</DrawerTitle>
+              <DrawerTitle>{t("loots.header.mobileFiltersTitle")}</DrawerTitle>
             </DrawerHeader>
             <div className="flex-1 overflow-hidden">
               <LootsFiltersSidebar className="w-full border-l-0 h-full p-0" />

@@ -25,6 +25,7 @@ import { Card } from "@lootlog/ui/components/card";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 type BattlesListProps = {
   battlesResponse?: GetBattlesResponse;
@@ -49,6 +50,7 @@ export const BattlesList = ({
   isLoading = false,
   enableScrollToTop = false,
 }: BattlesListProps) => {
+  const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
 
   const currentFilters: BattleFilters = {
@@ -158,10 +160,9 @@ export const BattlesList = ({
                 <EmptyMedia variant="icon">
                   <Swords />
                 </EmptyMedia>
-                <EmptyTitle>Brak walk</EmptyTitle>
+                <EmptyTitle>{t("battlePanel.list.empty")}</EmptyTitle>
                 <EmptyDescription>
-                  Nie znaleziono żadnych walk spełniających kryteria
-                  wyszukiwania
+                  {t("battlePanel.list.emptyDescription")}
                 </EmptyDescription>
               </EmptyHeader>
             </Empty>
@@ -187,7 +188,11 @@ export const BattlesList = ({
           <Card className="flex items-center justify-center px-4 py-3 bg-card/60 backdrop-blur-sm border-border relative">
             <div className="absolute left-4 text-sm text-muted-foreground max-w-[30%]">
               {battlesResponse?.pagination?.total && (
-                <span>Łącznie walk: {battlesResponse.pagination.total}</span>
+                <span>
+                  {t("battlePanel.list.totalBattles", {
+                    count: battlesResponse.pagination.total,
+                  })}
+                </span>
               )}
             </div>
             <Pagination>

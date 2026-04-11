@@ -52,12 +52,14 @@ import {
   battlePanelHeadToHeadSearchParsers,
   getSelectedWarriorsFromSearch,
 } from "@/features/battle-panel/battle-panel-statistics-search";
+import { useTranslation } from "react-i18next";
 
 const H2H_FILTERS_OPEN_KEY = "h2h-filters-open";
 
 type SortBy = "wins" | "losses" | "totalBattles" | "winRate" | "lastBattleDate";
 
 export function HeadToHeadFullPage() {
+  const { t } = useTranslation();
   const isMobile = useIsMobile();
   const [isFiltersOpen, setIsFiltersOpen] = useLocalStorage(
     H2H_FILTERS_OPEN_KEY,
@@ -191,7 +193,9 @@ export function HeadToHeadFullPage() {
   const filtersContent = (
     <div className="p-4 space-y-4">
       <div className="space-y-2">
-        <Label className="text-xs text-muted-foreground">Postać</Label>
+        <Label className="text-xs text-muted-foreground">
+          {t("battlePanel.filters.character")}
+        </Label>
         <CharacterSelector
           characterId={currentCharacterId}
           onCharacterChange={handleCharacterChange}
@@ -203,7 +207,9 @@ export function HeadToHeadFullPage() {
       <Separator />
 
       <div className="space-y-2">
-        <Label className="text-xs text-muted-foreground">Okres</Label>
+        <Label className="text-xs text-muted-foreground">
+          {t("battlePanel.filters.period")}
+        </Label>
         <PeriodSelector
           value={period}
           onValueChange={handlePeriodChange}
@@ -221,7 +227,7 @@ export function HeadToHeadFullPage() {
           onCheckedChange={handlePhChange}
         />
         <Label htmlFor="h2h-ph-checkbox" className="cursor-pointer text-sm">
-          Punkty Honoru
+          {t("battlePanel.filters.honorPoints")}
         </Label>
       </div>
 
@@ -236,14 +242,16 @@ export function HeadToHeadFullPage() {
           htmlFor="h2h-matchmaking-checkbox"
           className="cursor-pointer text-sm"
         >
-          Otchłań
+          {t("battlePanel.filters.matchmaking")}
         </Label>
       </div>
 
       <Separator />
 
       <div className="space-y-2">
-        <Label className="text-xs text-muted-foreground">Zakres poziomów</Label>
+        <Label className="text-xs text-muted-foreground">
+          {t("battlePanel.filters.levelRange")}
+        </Label>
         <div className="flex items-center gap-2">
           <LevelRangeFilter
             minLevel={minLevel}
@@ -269,7 +277,7 @@ export function HeadToHeadFullPage() {
         >
           <DrawerContent className="p-0 h-[85vh] max-h-[85vh] flex flex-col overflow-hidden">
             <DrawerHeader className="border-b px-4 py-3 shrink-0">
-              <DrawerTitle>Filtry</DrawerTitle>
+              <DrawerTitle>{t("battlePanel.filters.title")}</DrawerTitle>
             </DrawerHeader>
             <div className="flex-1 overflow-hidden">
               <ScrollArea className="h-full">{filtersContent}</ScrollArea>

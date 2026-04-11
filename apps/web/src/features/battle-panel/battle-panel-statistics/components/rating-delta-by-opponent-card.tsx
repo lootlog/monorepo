@@ -21,6 +21,7 @@ import { ArrowRight } from "lucide-react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ROUTES } from "@/config/routes";
 import type { RatingDeltaByOpponentRecord } from "@/hooks/api/battle-log/use-rating-delta-by-opponent";
+import { useTranslation } from "react-i18next";
 
 type RatingDeltaByOpponentCardSearch = {
   characterId?: string;
@@ -40,6 +41,7 @@ export function RatingDeltaByOpponentCard({
   search,
   isLoading,
 }: RatingDeltaByOpponentCardProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const topData = useMemo(() => data.slice(0, 5), [data]);
 
@@ -77,21 +79,29 @@ export function RatingDeltaByOpponentCard({
       },
       {
         accessorKey: "opponentName",
-        header: "Nazwa",
+        header: t("battlePanel.statistics.columns.name"),
         cell: ({ row }) => (
           <span className="font-medium">{row.original.opponentName}</span>
         ),
       },
       {
         accessorKey: "opponentLvl",
-        header: () => <div className="text-center">Poziom</div>,
+        header: () => (
+          <div className="text-center">
+            {t("battlePanel.statistics.columns.level")}
+          </div>
+        ),
         cell: ({ row }) => (
           <div className="text-center">{row.original.opponentLvl}</div>
         ),
       },
       {
         accessorKey: "opponentProf",
-        header: () => <div className="text-center">Profesja</div>,
+        header: () => (
+          <div className="text-center">
+            {t("battlePanel.statistics.columns.profession")}
+          </div>
+        ),
         cell: ({ row }) => (
           <div className="text-center">
             {getProfessionName(row.original.opponentProf)}
@@ -100,7 +110,11 @@ export function RatingDeltaByOpponentCard({
       },
       {
         id: "record",
-        header: () => <div className="text-center">W - L</div>,
+        header: () => (
+          <div className="text-center">
+            {t("battlePanel.statistics.columns.winLoss")}
+          </div>
+        ),
         cell: ({ row }) => (
           <div className="text-center">
             <span className="text-green-600 font-medium">
@@ -115,7 +129,11 @@ export function RatingDeltaByOpponentCard({
       },
       {
         accessorKey: "totalRatingDelta",
-        header: () => <div className="text-center">Σ Rating</div>,
+        header: () => (
+          <div className="text-center">
+            {t("battlePanel.statistics.columns.totalRatingDelta")}
+          </div>
+        ),
         cell: ({ row }) => {
           const delta = row.original.totalRatingDelta;
           const sign = delta >= 0 ? "+" : "";
@@ -137,7 +155,11 @@ export function RatingDeltaByOpponentCard({
       },
       {
         accessorKey: "avgRatingDelta",
-        header: () => <div className="text-center">Śr. Rating</div>,
+        header: () => (
+          <div className="text-center">
+            {t("battlePanel.statistics.columns.avgRating")}
+          </div>
+        ),
         cell: ({ row }) => {
           const delta = row.original.avgRatingDelta;
           const sign = delta >= 0 ? "+" : "";
@@ -158,7 +180,7 @@ export function RatingDeltaByOpponentCard({
         },
       },
     ],
-    [],
+    [t],
   );
 
   const table = useReactTable({
@@ -169,11 +191,11 @@ export function RatingDeltaByOpponentCard({
 
   return (
     <StatCard
-      title="Bilans walk w Otchłani"
-      description="Największe zmiany ratingu według przeciwników (top 5)"
+      title={t("battlePanel.statistics.matchmaking.title")}
+      description={t("battlePanel.statistics.matchmaking.description")}
       isLoading={isLoading}
       isEmpty={data.length === 0}
-      emptyMessage="Brak danych o walkach w Otchłani"
+      emptyMessage={t("battlePanel.statistics.matchmaking.empty")}
       className="flex flex-col"
     >
       <div className="min-h-72 flex flex-col flex-1">
@@ -221,7 +243,7 @@ export function RatingDeltaByOpponentCard({
               to={ROUTES.user.battlePanel.matchmakingH2h}
               search={search as never}
             >
-              Zobacz pełny bilans Otchłani
+              {t("battlePanel.statistics.matchmaking.link")}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>

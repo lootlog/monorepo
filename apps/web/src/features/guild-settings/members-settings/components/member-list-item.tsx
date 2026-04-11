@@ -69,7 +69,9 @@ export const MemberListItem: FC<MemberListItemProps> = ({
               </div>
             </TooltipTrigger>
             <TooltipContent side="top">
-              <p className="font-semibold text-sm">Właściciel serwera</p>
+              <p className="font-semibold text-sm">
+                {t("settings.members.owner")}
+              </p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -133,7 +135,9 @@ export const MemberListItem: FC<MemberListItemProps> = ({
           {member.name}
         </div>
         <div className="text-xs text-muted-foreground">
-          Odświeżono {getRelativeTime(member.updatedAt)}
+          {t("settings.members.refreshedAt", {
+            time: getRelativeTime(member.updatedAt),
+          })}
         </div>
       </div>
     </SelectableListCard>

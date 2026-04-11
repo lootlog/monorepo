@@ -17,11 +17,13 @@ import { useNavigate } from "@tanstack/react-router";
 import { ROUTES } from "@/config/routes";
 import { persister } from "@/lib/query-client";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 export const UserMenu = () => {
   const { user, isPending } = useUser();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   const handleLogout = async () => {
     await authClient.signOut();
@@ -64,7 +66,7 @@ export const UserMenu = () => {
                   className="text-red-600 focus:text-red-600"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Wyloguj się</span>
+                  <span>{t("ui.actions.logout")}</span>
                 </DropdownMenuItem>
               </div>
             </DropdownMenuContent>

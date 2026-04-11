@@ -17,12 +17,14 @@ import { SearchInput } from "@/components/ui/search-input";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { useViewMode } from "@/hooks/use-view-mode";
+import { useTranslation } from "react-i18next";
 
 export const Timers = () => {
   const { data: timers, isPending } = useTimers();
   const [search, setSearch] = useState("");
   const isMobile = useIsMobile();
   const { viewMode, setViewMode } = useViewMode("timers-view-mode", "list");
+  const { t } = useTranslation();
 
   const filtered = timers?.filter((timer) =>
     timer.npc.name.toLowerCase().includes(search.toLowerCase()),
@@ -49,7 +51,7 @@ export const Timers = () => {
           <Card className="gap-3 border-border bg-card/60 p-4 backdrop-blur-sm">
             <div className="flex items-center gap-3">
               <SearchInput
-                placeholder="Szukaj timerów..."
+                placeholder={t("timers.searchPlaceholder")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="h-9"
@@ -74,7 +76,7 @@ export const Timers = () => {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
-                    <p>Widok listy</p>
+                    <p>{t("timers.view.list")}</p>
                   </TooltipContent>
                 </Tooltip>
                 <Tooltip>
@@ -89,7 +91,7 @@ export const Timers = () => {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
-                    <p>Widok siatki</p>
+                    <p>{t("timers.view.grid")}</p>
                   </TooltipContent>
                 </Tooltip>
               </div>
@@ -105,7 +107,7 @@ export const Timers = () => {
           )}
           {!isPending && timers && timers.length === 0 && (
             <Card className="flex flex-col items-center justify-center gap-3 bg-card/40 py-12 backdrop-blur-sm">
-              <p className="text-muted-foreground">Brak timerów</p>
+              <p className="text-muted-foreground">{t("timers.empty")}</p>
             </Card>
           )}
           {!isPending && timers && timers.length > 0 && (
@@ -115,7 +117,7 @@ export const Timers = () => {
                   <div key={key}>
                     <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground px-1 mb-2">
                       {NPC_TYPE_NAMES[key as keyof typeof NPC_TYPE_NAMES] ??
-                        "Dodane ręcznie"}{" "}
+                        t("timers.npcType.manual")}{" "}
                       ({groups[key]?.length})
                     </p>
                     <div

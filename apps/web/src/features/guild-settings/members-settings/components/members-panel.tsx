@@ -84,7 +84,7 @@ export const MembersPanelContent: FC<MembersPanelContentProps> = ({
                 {selectedMember.name}
               </h2>
               <p className="text-xs text-muted-foreground leading-tight">
-                Szczegóły członka
+                {t("settings.members.details")}
               </p>
             </div>
           </div>
@@ -98,7 +98,9 @@ export const MembersPanelContent: FC<MembersPanelContentProps> = ({
                     </div>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
-                    <p className="font-semibold text-sm">Właściciel serwera</p>
+                    <p className="font-semibold text-sm">
+                      {t("settings.members.owner")}
+                    </p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

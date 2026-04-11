@@ -8,35 +8,37 @@ import {
   TableRow,
 } from "@lootlog/ui/components/table";
 import type { FC } from "react";
+import { useTranslation } from "react-i18next";
 
 interface TurnsBreakdownProps {
   warrior: Warrior;
 }
 
 export const TurnsBreakdown: FC<TurnsBreakdownProps> = ({ warrior }) => {
+  const { t } = useTranslation();
   const turnsBreakdown = [
     {
-      type: "Ogólna liczba tur",
+      type: t("battleUi.breakdowns.turns.totalTurns"),
       value: warrior.turns,
       color: "text-blue-400",
     },
     {
-      type: "Normalne ataki",
+      type: t("battleUi.breakdowns.turns.normalAttacks"),
       value: warrior.normalAttacks,
       color: "text-orange-400",
     },
     {
-      type: "Użyte umiejętności",
+      type: t("battleUi.breakdowns.turns.spellsUsed"),
       value: warrior.spellsUsed,
       color: "text-purple-400",
     },
     {
-      type: "Kroki",
+      type: t("battleUi.breakdowns.turns.steps"),
       value: warrior.steps,
       color: "text-green-400",
     },
     {
-      type: "Utracone tury",
+      type: t("battleUi.breakdowns.turns.turnsLost"),
       value: warrior.turnsLost,
       color: "text-red-400",
     },
@@ -53,7 +55,7 @@ export const TurnsBreakdown: FC<TurnsBreakdownProps> = ({ warrior }) => {
   if (turnsBreakdown.length === 0 && spellBreakdown.length === 0) {
     return (
       <div className="p-4 text-sm text-muted-foreground bg-background hover:bg-background">
-        Brak szczegółowych informacji o turach dla tego wojownika
+        {t("battleUi.breakdowns.turns.empty")}
       </div>
     );
   }
@@ -61,16 +63,18 @@ export const TurnsBreakdown: FC<TurnsBreakdownProps> = ({ warrior }) => {
   return (
     <div className="p-4 bg-background hover:bg-background">
       <h4 className="font-semibold mb-3 text-sm">
-        Szczegółowy podział tur - {warrior.name}
+        {t("battleUi.breakdowns.turns.title", { name: warrior.name })}
       </h4>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div>
           <Table className="text-sm">
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="h-8 text-xs">Typ akcji</TableHead>
+                <TableHead className="h-8 text-xs">
+                  {t("battleUi.breakdowns.headers.actionType")}
+                </TableHead>
                 <TableHead className="h-8 text-xs text-right">
-                  Wartość
+                  {t("battleUi.breakdowns.headers.value")}
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -94,9 +98,11 @@ export const TurnsBreakdown: FC<TurnsBreakdownProps> = ({ warrior }) => {
             <Table className="text-sm">
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="h-8 text-xs">Umiejętność</TableHead>
+                  <TableHead className="h-8 text-xs">
+                    {t("battleUi.breakdowns.headers.skill")}
+                  </TableHead>
                   <TableHead className="h-8 text-xs text-right">
-                    Użycia
+                    {t("battleUi.breakdowns.headers.uses")}
                   </TableHead>
                 </TableRow>
               </TableHeader>

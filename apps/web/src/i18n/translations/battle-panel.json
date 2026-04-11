@@ -1,0 +1,143 @@
+{
+  "navigation": {
+    "title": "Panel walk",
+    "battles": "Walki",
+    "statistics": "Statystyki",
+    "headToHead": "Bilans H2H",
+    "matchmakingHeadToHead": "Matchmaking H2H",
+    "playerVsPlayer": "Gracz vs Gracz",
+    "battleFallback": "Walka #{{id}}"
+  },
+  "filters": {
+    "title": "Filtry",
+    "battlesTitle": "Filtry walk",
+    "statisticsTitle": "Filtry statystyk",
+    "headToHeadTitle": "Filtry bilansów",
+    "searchWarriors": "Szukaj wojowników",
+    "searchOpponent": "Szukaj przeciwnika",
+    "world": "Świat",
+    "battleResult": "Wynik walki",
+    "character": "Postać",
+    "battleType": "Typ walki",
+    "period": "Okres",
+    "levelRange": "Zakres poziomów",
+    "honorPoints": "Punkty Honoru",
+    "matchmaking": "Otchłań",
+    "selectCharacter": "Wybierz postać",
+    "allCharacters": "Wszystkie postacie",
+    "allWorlds": "Wszystkie światy",
+    "allResults": "Wszystkie wyniki",
+    "allTypes": "Wszystkie typy",
+    "selectedCount": "{{count}} wybranych",
+    "worldSearchPlaceholder": "Szukaj świata...",
+    "characterSearchPlaceholder": "Szukaj postaci...",
+    "noWorlds": "Brak światów",
+    "noCharacters": "Brak postaci",
+    "noOptions": "Brak opcji",
+    "minPlaceholder": "Min",
+    "maxPlaceholder": "Max",
+    "types": {
+      "solo": "Solo",
+      "group": "Grupowe"
+    },
+    "results": {
+      "won": "Zwycięstwa",
+      "lost": "Porażki",
+      "flee": "Ucieczki"
+    },
+    "periodOptions": {
+      "7d": "Ostatnie 7 dni",
+      "30d": "Ostatnie 30 dni",
+      "90d": "Ostatnie 90 dni",
+      "all": "Cały czas"
+    }
+  },
+  "actions": {
+    "copyLink": "Skopiuj link",
+    "hide": "Ukryj",
+    "share": "Udostępnij",
+    "delete": "Usuń",
+    "close": "Zamknij"
+  },
+  "toasts": {
+    "battleDeleted": "Walka została usunięta.",
+    "battleDeleteError": "Wystąpił błąd podczas usuwania walki.",
+    "linkCopied": "Link do walki został skopiowany do schowka!",
+    "linkCopyError": "Wystąpił błąd podczas kopiowania linku.",
+    "battleShared": "Walka została udostępniona!",
+    "battleShareError": "Wystąpił błąd podczas udostępniania walki.",
+    "battleHidden": "Walka została ukryta!",
+    "battleHideError": "Wystąpił błąd podczas ukrywania walki."
+  },
+  "dialogs": {
+    "deleteBattle": {
+      "title": "Czy na pewno chcesz usunąć tę walkę?",
+      "description": "Tej operacji nie można cofnąć. Walka zostanie całkowicie usunięta z systemu i nie będzie już uwzględniana w statystykach.",
+      "confirm": "Usuń walkę"
+    }
+  },
+  "list": {
+    "empty": "Brak walk",
+    "emptyDescription": "Nie znaleziono żadnych walk spełniających kryteria wyszukiwania",
+    "savedEmpty": "Brak zapisanych walk",
+    "totalBattles": "Łącznie walk: {{count}}"
+  },
+  "dashboard": {
+    "chartTitle": "Walki",
+    "chartDescription": "Pokazuje statystyki walk dla danej postaci z ostatnich 6 miesięcy",
+    "emptyDescription": "Nie masz jeszcze żadnej zapisanej walki. Aby rozpocząć zbieranie danych o walkach, włącz panel walk w dodatku w grze w ustawieniach w zakładce „Panel walk”.",
+    "chartLabels": {
+      "battles": "Walki",
+      "winrate": "Winrate"
+    }
+  },
+  "statistics": {
+    "loading": "Ładowanie...",
+    "battleDuration": {
+      "title": "Czas trwania walk",
+      "description": "Porównanie średniego czasu walk i ekstrema",
+      "empty": "Brak danych o walkach"
+    },
+    "directMatchups": {
+      "title": "Bilans bezpośrednich starć",
+      "description": "Historia walk z konkretnymi przeciwnikami (top 5)",
+      "link": "Zobacz cały bilans"
+    },
+    "matchmaking": {
+      "title": "Bilans walk w Otchłani",
+      "description": "Największe zmiany ratingu według przeciwników (top 5)",
+      "empty": "Brak danych o walkach w Otchłani",
+      "link": "Zobacz pełny bilans Otchłani"
+    },
+    "playerVsPlayer": {
+      "characterFallback": "Twoja postać",
+      "opponentFallback": "Przeciwnik",
+      "subtitle": "Poziom {{level}} • Historia walk rankingowych"
+    },
+    "cards": {
+      "averageTime": "Średni czas",
+      "fastest": "Najszybsza",
+      "longest": "Najdłuższa"
+    },
+    "columns": {
+      "name": "Nazwa",
+      "nick": "Nick",
+      "level": "Poziom",
+      "profession": "Profesja",
+      "total": "Łącznie",
+      "result": "Wynik",
+      "ratingDelta": "Rating Δ",
+      "yourRating": "Twój Rating",
+      "opponentRating": "Rating przeciwnika",
+      "duration": "Czas trwania",
+      "date": "Data",
+      "winLoss": "W - L",
+      "winRate": "Win %",
+      "lastBattle": "Ostatnia walka",
+      "totalRatingDelta": "Σ Rating",
+      "avgRating": "Śr. Rating",
+      "w": "W",
+      "l": "L"
+    }
+  }
+}

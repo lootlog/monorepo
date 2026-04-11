@@ -13,8 +13,10 @@ import {
 } from "@lootlog/ui/components/empty";
 import { Swords } from "lucide-react";
 import { BattlePanelDashboardSkeleton } from "@/features/battle-panel/battle-panel-dashboard/battle-panel-dashboard-skeleton";
+import { useTranslation } from "react-i18next";
 
 export const BattlePanelDashboard = () => {
+  const { t } = useTranslation();
   const { data: analytics, isLoading } = useBattleAnalytics({ period: "180d" });
 
   if (isLoading) {
@@ -28,11 +30,9 @@ export const BattlePanelDashboard = () => {
           <EmptyMedia variant="icon">
             <Swords />
           </EmptyMedia>
-          <EmptyTitle>Brak zapisanych walk</EmptyTitle>
+          <EmptyTitle>{t("battlePanel.list.savedEmpty")}</EmptyTitle>
           <EmptyDescription>
-            Nie masz jeszcze żadnej zapisanej walki. Aby rozpocząć zbieranie
-            danych o walkach, włącz panel walk w dodatku w grze w ustawieniach w
-            zakładce &ldquo;Panel walk&rdquo;.
+            {t("battlePanel.dashboard.emptyDescription")}
           </EmptyDescription>
         </EmptyHeader>
       </Empty>

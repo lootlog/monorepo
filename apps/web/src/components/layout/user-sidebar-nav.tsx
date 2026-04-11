@@ -11,7 +11,7 @@ export const UserSidebarNav = () => {
   const { t } = useTranslation();
   const menuItems: MenuItem[] = [
     {
-      label: "Dashboard",
+      label: t("layout.navigation.dashboard"),
       icon: <LayoutDashboard className="mr-1 h-4 w-4" />,
       path: "",
       available: true,
@@ -20,7 +20,7 @@ export const UserSidebarNav = () => {
       childPaths: ["/kills"],
     },
     {
-      label: "Panel walk",
+      label: t("layout.navigation.battlePanel"),
       icon: <Swords className="mr-1 h-4 w-4" />,
       path: ROUTE_SEGMENTS.user.battlePanel,
       available: true,
@@ -29,7 +29,7 @@ export const UserSidebarNav = () => {
       badge: { content: "BETA", variant: "default" },
     },
     {
-      label: t("common.breadcrumbs.notifications"),
+      label: t("layout.navigation.notifications"),
       icon: <BellRing className="mr-1 h-4 w-4" />,
       path: ROUTE_SEGMENTS.user.notifications,
       available: true,
@@ -37,7 +37,7 @@ export const UserSidebarNav = () => {
       divided: true,
     },
     {
-      label: t("common.breadcrumbs.settings"),
+      label: t("layout.navigation.settings"),
       icon: <Settings className="mr-1 h-4 w-4" />,
       path: ROUTE_SEGMENTS.user.settings,
       available: true,
