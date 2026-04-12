@@ -1,8 +1,13 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { NpcKillersPage } from "@/features/guild/stats/npc-killers-page";
 import { NpcDetailPageSkeleton } from "@/features/guild/stats/npc-detail-page-skeleton";
-import { npcKillersQueryOptions } from "@/features/guild/stats/hooks/use-npc-killers";
+import { buildNpcKillersParams } from "@/features/guild/stats/utils/build-stats-query-params";
 import { guildMembersQueryOptions } from "@/hooks/api/members/use-guild-members-query-options";
+import { getKillsControllerGetNpcKillersQueryOptions } from "@/lib/api/generated/main/kills/kills";
+import {
+  isRouteLoaderCancelledError,
+  throwNotFoundIfResponseMatches,
+} from "@/lib/router/route-errors";
 
 export const Route = createFileRoute(
   "/_authenticated/$guildId/stats/npcs/$npcId",
@@ -14,22 +19,36 @@ export const Route = createFileRoute(
       throw notFound({ throw: true });
     }
 
-    const [npcKillers] = await Promise.all([
-      context.queryClient.ensureQueryData(
-        npcKillersQueryOptions(params.guildId, npcId, {}),
-      ),
-      context.queryClient.ensureQueryData(
-        guildMembersQueryOptions(params.guildId, {
-          includeInactive: true,
-        }),
-      ),
-    ]);
+    try {
+      const [npcKillers] = await Promise.all([
+        context.queryClient.ensureQueryData(
+          getKillsControllerGetNpcKillersQueryOptions(
+            {
+              guildId: params.guildId,
+              npcId: params.npcId,
+            },
+            buildNpcKillersParams(),
+          ),
+        ),
+        context.queryClient.ensureQueryData(
+          guildMembersQueryOptions(params.guildId, {
+            includeInactive: true,
+          }),
+        ),
+      ]);
 
-    if (!npcKillers.npc) {
-      throw notFound({ throw: true });
+      if (!npcKillers.npc) {
+        throw notFound({ throw: true });
+      }
+
+      return null;
+    } catch (error) {
+      if (isRouteLoaderCancelledError(error)) {
+        return null;
+      }
+
+      throwNotFoundIfResponseMatches(error);
     }
-
-    return null;
   },
   component: NpcKillersPage,
   pendingComponent: NpcDetailPageSkeleton,

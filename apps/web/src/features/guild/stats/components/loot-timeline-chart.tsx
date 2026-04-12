@@ -8,7 +8,8 @@ import {
 } from "@lootlog/ui/components/chart";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts";
 import { useTranslation } from "react-i18next";
-import type { TimelinePoint, Period } from "../hooks/use-loot-stats";
+import type { LootStatsResponseDtoOutputTimelineItem } from "@/lib/api/generated/main/model/loot-stats-response-dto-output-timeline-item";
+import type { LootsControllerGetLootStatsPeriod } from "@/lib/api/generated/main/model/loots-controller-get-loot-stats-period";
 
 const RARITY_COLORS: Record<"LEGENDARY" | "HEROIC", string> = {
   LEGENDARY: "#ef4444",
@@ -27,8 +28,8 @@ const chartConfig: ChartConfig = {
 };
 
 type LootTimelineChartProps = {
-  data?: TimelinePoint[];
-  period?: Period;
+  data?: LootStatsResponseDtoOutputTimelineItem[];
+  period?: LootsControllerGetLootStatsPeriod;
   isLoading?: boolean;
 };
 

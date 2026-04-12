@@ -122,8 +122,8 @@ export const AppearanceSettings: FC = () => {
   const { t } = useTranslation();
 
   return (
-    <ScrollArea className="h-full bg-background/50">
-      <div className="px-3 py-3 flex flex-col gap-4">
+    <ScrollArea className="h-full">
+      <div className="px-3 pb-3 flex flex-col gap-4">
         <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
           <div className="flex items-center gap-3">
             <div className="rounded-xl bg-primary/10 p-2.5 shadow-inner shadow-primary/10">

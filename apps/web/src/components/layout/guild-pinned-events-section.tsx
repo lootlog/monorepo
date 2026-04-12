@@ -6,6 +6,7 @@ import {
   useListEvents,
 } from "@/lib/api/generated/main/events/events";
 import { useEventsSettingsControllerGetSettings } from "@/lib/api/generated/main/event-settings/event-settings";
+import { AnimatePresence, motion } from "framer-motion";
 
 export const GuildPinnedEventsSection = ({
   guildId,
@@ -58,23 +59,27 @@ export const GuildPinnedEventsSection = ({
     )
     .filter((event) => event !== undefined);
 
-  if (isEventsPending || isSettingsPending) {
-    return (
-      <div className="px-2 mb-3 pb-3 border-b border-border">
-        <div className="h-24 rounded-lg border border-yellow-500/20 bg-yellow-500/5" />
-      </div>
-    );
-  }
-
-  if (pinnedActiveEvents.length === 0) {
-    return null;
-  }
+  const isLoading = isEventsPending || isSettingsPending;
+  const hasPinnedEvents = pinnedActiveEvents.length > 0;
 
   return (
-    <PinnedEventsBanner
-      events={pinnedActiveEvents}
-      guildId={guildId}
-      onNavigate={onNavigate}
-    />
+    <AnimatePresence initial={false}>
+      {!isLoading && hasPinnedEvents && (
+        <motion.div
+          key="pinned-events"
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: "auto", opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+          className="overflow-hidden"
+        >
+          <PinnedEventsBanner
+            events={pinnedActiveEvents}
+            guildId={guildId}
+            onNavigate={onNavigate}
+          />
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };

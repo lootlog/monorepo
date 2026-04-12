@@ -3,7 +3,7 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useTranslation } from "react-i18next";
 import { Package, Layers, Crown, Sword } from "lucide-react";
 import { cn } from "@lootlog/ui/lib/utils";
-import type { LootStatsOverview } from "../hooks/use-loot-stats";
+import type { LootStatsResponseDtoOutputOverview } from "@/lib/api/generated/main/model/loot-stats-response-dto-output-overview";
 
 const OVERVIEW_CONFIG = {
   totalLoots: {
@@ -44,7 +44,7 @@ const OVERVIEW_KEYS = [
 ] as const;
 
 type LootOverviewCardsProps = {
-  data?: LootStatsOverview;
+  data?: LootStatsResponseDtoOutputOverview;
   isLoading?: boolean;
 };
 

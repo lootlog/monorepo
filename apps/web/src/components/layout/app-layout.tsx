@@ -1,4 +1,7 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useRef } from "react";
+import { motion } from "framer-motion";
+
+let isFirstAppMount = true;
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { GuildShell } from "@/components/layout/guild-shell";
 import { GuildSidebarNavPlaceholder } from "@/components/layout/guild-sidebar-nav-placeholder";
@@ -30,6 +33,12 @@ const InstallAddonModal = lazy(() =>
 );
 
 export const AppLayout = () => {
+  const shouldAnimate = useRef(isFirstAppMount).current;
+
+  useEffect(() => {
+    isFirstAppMount = false;
+  }, []);
+
   const location = useLocation();
   const guildRouteMatch = useMatches({
     select: (matches) =>
@@ -41,16 +50,31 @@ export const AppLayout = () => {
     guildRouteMatch?.status === "success" &&
     guildRouteMatch.loaderData !== undefined;
 
+  const hasEverResolvedGuild = useRef(false);
+  if (hasResolvedGuildRoute) {
+    hasEverResolvedGuild.current = true;
+  }
+  if (isUserRoute) {
+    hasEverResolvedGuild.current = false;
+  }
+
+  const showGuildNav = hasResolvedGuildRoute || hasEverResolvedGuild.current;
+
   const sidebarNavigation = isUserRoute ? (
     <UserSidebarNav />
-  ) : hasResolvedGuildRoute ? (
+  ) : showGuildNav ? (
     <GuildsSidebarNav />
   ) : (
     <GuildSidebarNavPlaceholder />
   );
 
   return (
-    <div className="flex h-dvh w-full flex-col overflow-hidden">
+    <motion.div
+      className="flex h-dvh w-full flex-col overflow-hidden"
+      initial={shouldAnimate ? { opacity: 0, scale: 0.96 } : false}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+    >
       <Suspense fallback={null}>
         <ThemeAnnouncement />
       </Suspense>
@@ -77,6 +101,6 @@ export const AppLayout = () => {
         <CreateGuildModal />
         <InstallAddonModal />
       </Suspense>
-    </div>
+    </motion.div>
   );
 };

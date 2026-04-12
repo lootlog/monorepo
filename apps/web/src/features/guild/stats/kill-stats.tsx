@@ -5,13 +5,14 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Card } from "@lootlog/ui/components/card";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { WorldSwitcher } from "@/components/common/world-switcher";
-import { useGuildKillStats } from "./hooks/use-guild-kill-stats";
+import { useKillsControllerGetGuildKillStats } from "@/lib/api/generated/main/kills/kills";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { NpcTypeStatsCards } from "./components/kill-stats-overview";
 import { MemberRankingPodiumCard } from "./components/member-ranking-podium-card";
 import { TopNpcsCard } from "./components/top-npcs-card";
 import { LevelFilters } from "./components/level-filters";
 import { StatsOverviewFiltersMobile } from "./components/stats-overview-filters-mobile";
+import { buildGuildKillStatsParams } from "./utils/build-stats-query-params";
 
 export const KillStats: React.FC = () => {
   const { t } = useTranslation();
@@ -24,11 +25,14 @@ export const KillStats: React.FC = () => {
     setMinLvl,
     setMaxLvl,
   } = useStatsSettings("overview");
-  const { data, isLoading } = useGuildKillStats({
-    world: settings.world ?? undefined,
-    minLvl: debouncedMinLvl,
-    maxLvl: debouncedMaxLvl,
-  });
+  const { data, isLoading } = useKillsControllerGetGuildKillStats(
+    { guildId },
+    buildGuildKillStatsParams({
+      world: settings.world ?? undefined,
+      minLvl: debouncedMinLvl,
+      maxLvl: debouncedMaxLvl,
+    }),
+  );
   const isMobile = useIsMobile();
 
   return (

@@ -13,14 +13,14 @@ import {
 } from "@lootlog/ui/components/drawer";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { PeriodSelector } from "@/components/filters/period-selector";
-import type { Period } from "../hooks/use-loot-stats";
+import type { LootsControllerGetLootStatsPeriod } from "@/lib/api/generated/main/model/loots-controller-get-loot-stats-period";
 
 type LootStatsFiltersMobileProps = {
   world: string | null;
-  period: Period;
+  period: LootsControllerGetLootStatsPeriod;
   excludeColossus: boolean;
   onWorldChange: (value: string | null) => void;
-  onPeriodChange: (value: Period) => void;
+  onPeriodChange: (value: LootsControllerGetLootStatsPeriod) => void;
   onExcludeColossusChange: (value: boolean) => void;
 };
 
@@ -62,7 +62,9 @@ export const LootStatsFiltersMobile = ({
             <Label>{t("loots.stats.filters.period")}</Label>
             <PeriodSelector
               value={period}
-              onValueChange={(value) => onPeriodChange(value as Period)}
+              onValueChange={(value) =>
+                onPeriodChange(value as LootsControllerGetLootStatsPeriod)
+              }
               width="w-full"
               className="h-9"
             />
