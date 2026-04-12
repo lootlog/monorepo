@@ -30,12 +30,13 @@ import { NpcTile } from "@/components/tiles/npc-tile";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { cn } from "@lootlog/ui/lib/utils";
-import { useNpcKillers } from "./hooks/use-npc-killers";
+import { useKillsControllerGetNpcKillers } from "@/lib/api/generated/main/kills/kills";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { NpcKillersFiltersMobile } from "./components/npc-killers-filters-mobile";
 import type { GuildMember } from "@/hooks/api/members/use-guild-member.tsx";
+import { buildNpcKillersParams } from "./utils/build-stats-query-params";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -86,9 +87,15 @@ export const NpcKillersPage: React.FC = () => {
   const [cursor, setCursor] = useState(0);
   const [search, setSearch] = useState("");
   const { settings, setWorld } = useStatsSettings("npc-killers");
-  const { data, isLoading } = useNpcKillers(Number.parseInt(npcId, 10), {
-    world: settings.world ?? undefined,
-  });
+  const { data, isLoading } = useKillsControllerGetNpcKillers(
+    {
+      guildId,
+      npcId,
+    },
+    buildNpcKillersParams({
+      world: settings.world ?? undefined,
+    }),
+  );
   const { data: guildMembers } = useGuildMembers(true);
 
   const handleWorldChange = (value: string | null) => {

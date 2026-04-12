@@ -22,12 +22,15 @@ import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import type { GuildMember } from "@/hooks/api/members/use-guild-member.tsx";
-import type { MemberKillRanking, NpcType } from "../hooks/use-guild-kill-stats";
+import type { GuildKillStatsResponseDtoOutputMemberRankingItem } from "@/lib/api/generated/main/model/guild-kill-stats-response-dto-output-member-ranking-item";
+import type { NpcType } from "@/lib/api/generated/main/model/npc-type";
 import { TRACKABLE_NPC_TYPES } from "../constants";
 
 const STORAGE_KEY = "stats-podium-npc-type";
 
-type PodiumMember = MemberKillRanking & { typeParticipations: number };
+type PodiumMember = GuildKillStatsResponseDtoOutputMemberRankingItem & {
+  typeParticipations: number;
+};
 
 type PodiumSlotProps = {
   member?: PodiumMember;
@@ -146,7 +149,7 @@ const PodiumSlot: React.FC<PodiumSlotProps> = ({
 };
 
 type MemberRankingPodiumCardProps = {
-  data?: MemberKillRanking[];
+  data?: GuildKillStatsResponseDtoOutputMemberRankingItem[];
   isLoading?: boolean;
   guildId?: string;
 };

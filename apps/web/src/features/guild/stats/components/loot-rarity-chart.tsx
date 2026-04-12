@@ -10,7 +10,7 @@ import {
 } from "@lootlog/ui/components/chart";
 import { PieChart, Pie, Cell } from "recharts";
 import { useTranslation } from "react-i18next";
-import type { ItemRarity, RarityStats } from "../hooks/use-loot-stats";
+import type { LootStatsResponseDtoOutputByRarity } from "@/lib/api/generated/main/model/loot-stats-response-dto-output-by-rarity";
 
 const RARITY_COLORS: Record<"LEGENDARY" | "HEROIC", string> = {
   LEGENDARY: "#ef4444",
@@ -31,7 +31,7 @@ const chartConfig: ChartConfig = {
 };
 
 type LootRarityChartProps = {
-  data?: Partial<Record<ItemRarity, RarityStats>>;
+  data?: LootStatsResponseDtoOutputByRarity;
   isLoading?: boolean;
 };
 

@@ -12,10 +12,10 @@ import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import type { GuildMember } from "@/hooks/api/members/use-guild-member.tsx";
-import type { TopContributor } from "../hooks/use-loot-stats";
+import type { LootStatsResponseDtoOutputTopContributorsItem } from "@/lib/api/generated/main/model/loot-stats-response-dto-output-top-contributors-item";
 
 type PodiumSlotProps = {
-  contributor?: TopContributor;
+  contributor?: LootStatsResponseDtoOutputTopContributorsItem;
   position: 1 | 2 | 3;
   guildMember?: GuildMember;
 };
@@ -117,7 +117,7 @@ const PodiumSlot: React.FC<PodiumSlotProps> = ({
 };
 
 type LootTopContributorsProps = {
-  data?: TopContributor[];
+  data?: LootStatsResponseDtoOutputTopContributorsItem[];
   isLoading?: boolean;
 };
 

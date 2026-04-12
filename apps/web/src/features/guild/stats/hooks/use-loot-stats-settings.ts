@@ -1,9 +1,9 @@
 import { useLocalStorage } from "usehooks-ts";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import type { Period } from "./use-loot-stats";
+import type { LootsControllerGetLootStatsPeriod } from "@/lib/api/generated/main/model/loots-controller-get-loot-stats-period";
 
 export type LootStatsSettings = {
-  period: Period;
+  period: LootsControllerGetLootStatsPeriod;
   world: string | null;
   excludeColossus: boolean;
 };
@@ -23,7 +23,7 @@ export const useLootStatsSettings = () => {
     DEFAULT_SETTINGS,
   );
 
-  const setPeriod = (period: Period) => {
+  const setPeriod = (period: LootsControllerGetLootStatsPeriod) => {
     setSettings((prev) => {
       if (prev.period === period) return prev;
       return { ...prev, period };

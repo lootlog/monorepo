@@ -15,9 +15,10 @@ import {
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { cn } from "@lootlog/ui/lib/utils";
-import { useGuildTopNpcs } from "../hooks/use-guild-top-npcs";
+import { useKillsControllerGetGuildTopNpcs } from "@/lib/api/generated/main/kills/kills";
+import type { NpcType } from "@/lib/api/generated/main/model/npc-type";
 import { TRACKABLE_NPC_TYPES } from "../constants";
-import type { NpcType } from "../hooks/use-guild-kill-stats";
+import { buildGuildTopNpcsParams } from "../utils/build-stats-query-params";
 
 const STORAGE_KEY = "stats-top-npcs-type";
 
@@ -52,13 +53,16 @@ export const TopNpcsCard: React.FC<TopNpcsCardProps> = ({
     "ELITE2",
   );
 
-  const { data, isLoading } = useGuildTopNpcs({
-    limit: 5,
-    npcType: selectedNpcType,
-    world,
-    minLvl,
-    maxLvl,
-  });
+  const { data, isLoading } = useKillsControllerGetGuildTopNpcs(
+    { guildId: guildId ?? "" },
+    buildGuildTopNpcsParams({
+      limit: 5,
+      npcType: selectedNpcType,
+      world,
+      minLvl,
+      maxLvl,
+    }),
+  );
 
   if (isLoading) {
     return (
@@ -161,7 +165,6 @@ export const TopNpcsCard: React.FC<TopNpcsCardProps> = ({
                     </span>
                     <span className="text-xs text-muted-foreground">
                       {npc.npcLvl}
-                      {npc.npcProf}
                     </span>
                   </div>
                 </div>
