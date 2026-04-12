@@ -5,6 +5,9 @@ import {
   eventsMonitoringControllerGetActiveGapForMap,
   eventsMonitoringControllerGetHeroCoverageGaps,
   eventsMonitoringControllerGetMapCoverageGaps,
+  getEventsMonitoringControllerGetActiveGapForMapQueryKey,
+  getEventsMonitoringControllerGetHeroCoverageGapsQueryKey,
+  getEventsMonitoringControllerGetMapCoverageGapsQueryKey,
 } from "@/lib/api/generated/main/events/events";
 import type {
   CoverageGapResponseDto,
@@ -12,7 +15,6 @@ import type {
   HeroCoverageGapResponseDto,
 } from "@/lib/api/generated/main/model";
 import { formatDurationPadded } from "../../utils";
-import { queryKeys } from "@/lib/query-keys";
 
 export { formatDurationPadded as formatDuration };
 
@@ -35,7 +37,11 @@ export const useMapCoverageTimer = (
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   const { data: activeGap, isLoading } = useQuery<CoverageGap | null>({
-    queryKey: queryKeys.events.mapActiveGap(guildId, eventId, mapId),
+    queryKey: getEventsMonitoringControllerGetActiveGapForMapQueryKey({
+      guildId: guildId ?? "",
+      eventId,
+      mapId,
+    }),
     queryFn: () =>
       eventsMonitoringControllerGetActiveGapForMap({
         guildId: guildId ?? "",
@@ -93,7 +99,11 @@ export const useHeroCoverageGaps = (eventId: string, heroId: string) => {
   const guildId = useGuildId();
 
   return useQuery<HeroCoverageGapResponseDto[]>({
-    queryKey: queryKeys.events.heroCoverageGaps(guildId, eventId, heroId),
+    queryKey: getEventsMonitoringControllerGetHeroCoverageGapsQueryKey({
+      guildId: guildId ?? "",
+      eventId,
+      heroId,
+    }),
     queryFn: () =>
       eventsMonitoringControllerGetHeroCoverageGaps({
         guildId: guildId ?? "",
@@ -108,7 +118,11 @@ export const useMapCoverageGaps = (eventId: string, mapId: string) => {
   const guildId = useGuildId();
 
   return useQuery<CoverageGap[]>({
-    queryKey: queryKeys.events.mapCoverageGaps(guildId, eventId, mapId),
+    queryKey: getEventsMonitoringControllerGetMapCoverageGapsQueryKey({
+      guildId: guildId ?? "",
+      eventId,
+      mapId,
+    }),
     queryFn: () =>
       eventsMonitoringControllerGetMapCoverageGaps({
         guildId: guildId ?? "",

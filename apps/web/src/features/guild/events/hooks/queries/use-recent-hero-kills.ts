@@ -2,8 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import {
   eventsRankingControllerGetEventKillHistory,
   eventsRankingControllerGetHeroKillHistory,
+  getEventsRankingControllerGetEventKillHistoryQueryKey,
+  getEventsRankingControllerGetHeroKillHistoryQueryKey,
 } from "@/lib/api/generated/main/events/events";
-import { queryKeys } from "@/lib/query-keys";
 import type { HeroKill } from "./use-hero-kill-history";
 
 interface UseRecentHeroKillsOptions {
@@ -19,20 +20,30 @@ export const useRecentHeroKills = ({
   heroId,
   limit = 5,
 }: UseRecentHeroKillsOptions) => {
+  const baseParams = { limit: String(limit) };
+
   return useQuery<HeroKill[]>({
-    queryKey: queryKeys.events.recentHeroKills(guildId, eventId, heroId, limit),
+    queryKey: heroId
+      ? getEventsRankingControllerGetHeroKillHistoryQueryKey(
+          { guildId, eventId, heroId },
+          baseParams,
+        )
+      : getEventsRankingControllerGetEventKillHistoryQueryKey(
+          { guildId, eventId },
+          baseParams,
+        ),
     queryFn: async () => {
       if (heroId) {
         const response = await eventsRankingControllerGetHeroKillHistory(
           { guildId, eventId, heroId },
-          { limit: String(limit) },
+          baseParams,
         );
         return response.data;
       }
 
       const response = await eventsRankingControllerGetEventKillHistory(
         { guildId, eventId },
-        { limit: String(limit) },
+        baseParams,
       );
       return response.data;
     },
