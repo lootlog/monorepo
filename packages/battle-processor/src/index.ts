@@ -211,7 +211,7 @@ export class BattleProcessor {
   }
 
   public extractAndParseMoves(events: BattlePayload["events"]): ParsedMove[] {
-    const allMoves = events.flatMap((event) => event.f?.m || []);
+    const allMoves = events.flatMap((event) => event.f?.m ?? []);
 
     return allMoves.map((move) => {
       const [attackerPart, defenderPart, ...actions] = move.split(";");
@@ -274,9 +274,9 @@ export class BattleProcessor {
         if (attacker) {
           attacker.turns++;
           attacker.spellsUsed++;
-          const spellName = tspellAction.param || "unknown";
+          const spellName = tspellAction.param ?? "unknown";
           attacker.spellsUsedMap[spellName] =
-            (attacker.spellsUsedMap[spellName] || 0) + 1;
+            (attacker.spellsUsedMap[spellName] ?? 0) + 1;
         }
       }
 
@@ -747,8 +747,8 @@ export class BattleProcessor {
       throw new Error("No events found in battle data");
     }
 
-    const firstTimestamp = events[0]?.ev || 0;
-    const lastTimestamp = events[events.length - 1]?.ev || 0;
+    const firstTimestamp = events[0]?.ev ?? 0;
+    const lastTimestamp = events[events.length - 1]?.ev ?? 0;
 
     return lastTimestamp - firstTimestamp;
   }
@@ -833,8 +833,11 @@ export class BattleProcessor {
     let winningTeam = getTeamFromNames(winnerNames);
     let losingTeam = getTeamFromNames(loserNames);
 
-    const inferTeam = (team: number | null): number | null =>
-      team === 1 ? 2 : team === 2 ? 1 : null;
+    const inferTeam = (team: number | null): number | null => {
+      if (team === 1) return 2;
+      if (team === 2) return 1;
+      return null;
+    };
 
     if (winningTeam === null && losingTeam !== null) {
       winningTeam = inferTeam(losingTeam);

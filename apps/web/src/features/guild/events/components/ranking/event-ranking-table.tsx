@@ -26,6 +26,7 @@ import {
 } from "@/lib/api/generated/main/events/events";
 import { invalidateRankingQueries } from "../../hooks/mutations/invalidate-ranking-queries";
 import { ManualPointsEditDialog } from "../dialogs/manual-points-edit-dialog";
+import { formatPoints, formatSignedPoints } from "../../utils";
 
 interface EventRankingTableProps {
   rankings: EventRanking[];
@@ -47,18 +48,6 @@ interface RankingRowProps {
   guildId?: string;
   eventId?: string;
 }
-
-const formatPoints = (points: number): string => {
-  return Number.isInteger(points) ? String(points) : points.toFixed(2);
-};
-
-const formatSignedPoints = (points: number): string => {
-  if (points > 0) {
-    return `+${formatPoints(points)}`;
-  }
-
-  return formatPoints(points);
-};
 
 const RankingRow = ({
   ranking,

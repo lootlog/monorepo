@@ -335,14 +335,19 @@ export class EventCatalogService {
           : null;
     }
 
-    const newStartDate =
-      startsAt !== undefined
-        ? startsAt
-          ? new Date(startsAt)
-          : null
-        : event.startsAt;
-    const newEndDate =
-      endsAt !== undefined ? (endsAt ? new Date(endsAt) : null) : event.endsAt;
+    let newStartDate: Date | null;
+    if (startsAt !== undefined) {
+      newStartDate = startsAt ? new Date(startsAt) : null;
+    } else {
+      newStartDate = event.startsAt;
+    }
+
+    let newEndDate: Date | null;
+    if (endsAt !== undefined) {
+      newEndDate = endsAt ? new Date(endsAt) : null;
+    } else {
+      newEndDate = event.endsAt;
+    }
 
     if (newEndDate && newStartDate && newEndDate <= newStartDate) {
       throw new BadRequestException("End date must be after start date");
