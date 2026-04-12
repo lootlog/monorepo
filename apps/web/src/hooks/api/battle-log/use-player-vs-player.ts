@@ -1,9 +1,5 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
-import { useBattleLogApiClient } from "@/hooks/api/battle-log/use-battle-log-api-client";
-import {
-  battlelogApiClient,
-  type ApiRequestConfig,
-} from "@/lib/api-client/api-client";
+import { battlelogApiClient } from "@/lib/api-client/api-client";
 import { queryKeys } from "@/lib/query-keys";
 
 export interface PlayerVsPlayerBattle {
@@ -85,15 +81,12 @@ const buildPlayerVsPlayerSearchParams = (params: UsePlayerVsPlayerParams) => {
 
 export const playerVsPlayerQueryOptions = (params: UsePlayerVsPlayerParams) =>
   queryOptions({
-    queryKey: queryKeys.battleLog.playerVsPlayer({
-      ...params,
-    }),
+    queryKey: queryKeys.battleLog.playerVsPlayer(params),
     queryFn: async () => {
       const searchParams = buildPlayerVsPlayerSearchParams(params);
 
       const response = await battlelogApiClient.get<GetPlayerVsPlayerResponse>(
         `/battles/@me/statistics/player-vs-player?${searchParams.toString()}`,
-        {} as ApiRequestConfig,
       );
       return response;
     },
@@ -102,7 +95,5 @@ export const playerVsPlayerQueryOptions = (params: UsePlayerVsPlayerParams) =>
   });
 
 export function usePlayerVsPlayer(params: UsePlayerVsPlayerParams) {
-  useBattleLogApiClient();
-
   return useQuery(playerVsPlayerQueryOptions(params));
 }

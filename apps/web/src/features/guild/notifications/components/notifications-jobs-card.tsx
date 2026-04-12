@@ -11,7 +11,7 @@ import {
   useCancelGuildNotificationJob,
   type GuildNotificationsResponse,
 } from "@/hooks/api/guilds/use-guild-notifications";
-import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
+import { getApiErrorMessage } from "@/lib/api-client/api-client";
 import {
   getGuildNotificationTargetLabel,
   getJobKindLabel,

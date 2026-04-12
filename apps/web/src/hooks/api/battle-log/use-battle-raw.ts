@@ -1,10 +1,6 @@
-import { useBattleLogApiClient } from "@/hooks/api/battle-log/use-battle-log-api-client";
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
-import {
-  battlelogApiClient,
-  type ApiRequestConfig,
-} from "@/lib/api-client/api-client";
+import { battlelogApiClient } from "@/lib/api-client/api-client";
 
 export type RawBattleParsedEventAction = {
   actionType: string;
@@ -48,10 +44,8 @@ export const battleRawQueryOptions = ({
   return queryOptions({
     queryKey: queryKeys.battleLog.battleRaw(battleId, isPublic),
     queryFn: async () => {
-      const response = await battlelogApiClient.get<GetBattleRawResponse>(
-        endpoint,
-        {} as ApiRequestConfig,
-      );
+      const response =
+        await battlelogApiClient.get<GetBattleRawResponse>(endpoint);
       return response;
     },
     enabled: !!battleId,
@@ -59,7 +53,5 @@ export const battleRawQueryOptions = ({
 };
 
 export const useBattleRaw = (options: UseBattleRawOptions) => {
-  useBattleLogApiClient();
-
   return useQuery(battleRawQueryOptions(options));
 };

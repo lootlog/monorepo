@@ -1,9 +1,5 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
-import { useBattleLogApiClient } from "@/hooks/api/battle-log/use-battle-log-api-client";
-import {
-  battlelogApiClient,
-  type ApiRequestConfig,
-} from "@/lib/api-client/api-client";
+import { battlelogApiClient } from "@/lib/api-client/api-client";
 import { queryKeys } from "@/lib/query-keys";
 
 export interface HeadToHeadRecord {
@@ -100,19 +96,12 @@ const buildHeadToHeadSearchParams = (params?: UseHeadToHeadParams) => {
 
 export const headToHeadQueryOptions = (params?: UseHeadToHeadParams) =>
   queryOptions({
-    queryKey: queryKeys.battleLog.headToHead(
-      params
-        ? {
-            ...params,
-          }
-        : undefined,
-    ),
+    queryKey: queryKeys.battleLog.headToHead(params),
     queryFn: async () => {
       const searchParams = buildHeadToHeadSearchParams(params);
 
       const response = await battlelogApiClient.get<GetHeadToHeadResponse>(
         `/battles/@me/statistics/head-to-head?${searchParams.toString()}`,
-        {} as ApiRequestConfig,
       );
       return response;
     },
@@ -120,7 +109,5 @@ export const headToHeadQueryOptions = (params?: UseHeadToHeadParams) =>
   });
 
 export function useHeadToHead(params?: UseHeadToHeadParams) {
-  useBattleLogApiClient();
-
   return useQuery(headToHeadQueryOptions(params));
 }

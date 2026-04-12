@@ -1,8 +1,5 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
-import {
-  battlelogApiClient,
-  type ApiRequestConfig,
-} from "@/lib/api-client/api-client";
+import { battlelogApiClient } from "@/lib/api-client/api-client";
 import { queryKeys } from "@/lib/query-keys";
 
 interface BattleDurationStats {
@@ -30,16 +27,13 @@ interface UseBattleDurationParams {
 
 export const battleDurationQueryOptions = (params: UseBattleDurationParams) =>
   queryOptions({
-    queryKey: queryKeys.battleLog.duration({
-      ...params,
-    }),
+    queryKey: queryKeys.battleLog.duration(params),
     queryFn: async () => {
-      const requestParams = { ...params };
       const response = await battlelogApiClient.get<BattleDurationStats>(
         "/battles/@me/statistics/duration",
         {
-          params: requestParams,
-        } as ApiRequestConfig,
+          params: { ...params },
+        },
       );
       return response;
     },

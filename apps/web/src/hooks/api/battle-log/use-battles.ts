@@ -1,9 +1,5 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
-import { useBattleLogApiClient } from "@/hooks/api/battle-log/use-battle-log-api-client";
-import {
-  battlelogApiClient,
-  type ApiRequestConfig,
-} from "@/lib/api-client/api-client";
+import { battlelogApiClient } from "@/lib/api-client/api-client";
 import { queryKeys } from "@/lib/query-keys";
 
 export type Warrior = {
@@ -180,19 +176,12 @@ const buildBattlesSearchParams = (params?: UseBattlesParams) => {
 
 export const battlesQueryOptions = (params?: UseBattlesParams) =>
   queryOptions({
-    queryKey: queryKeys.battleLog.battlesList(
-      params
-        ? {
-            ...params,
-          }
-        : undefined,
-    ),
+    queryKey: queryKeys.battleLog.battlesList(params),
     queryFn: async () => {
       const searchParams = buildBattlesSearchParams(params);
 
       const response = await battlelogApiClient.get<GetBattlesResponse>(
         `/battles/@me?${searchParams}`,
-        {} as ApiRequestConfig,
       );
       return response;
     },
@@ -200,7 +189,5 @@ export const battlesQueryOptions = (params?: UseBattlesParams) =>
   });
 
 export const useBattles = (params?: UseBattlesParams) => {
-  useBattleLogApiClient();
-
   return useQuery(battlesQueryOptions(params));
 };

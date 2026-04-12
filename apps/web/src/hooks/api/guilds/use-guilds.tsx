@@ -6,7 +6,7 @@ import { queryKeys } from "@/lib/query-keys";
 export const guildsQueryOptions = () =>
   queryOptions({
     queryKey: queryKeys.guilds.user(),
-    queryFn: () => apiClient.get<Guild[]>(`/guilds/@me`).then((data) => data),
+    queryFn: () => apiClient.get<Guild[]>(`/guilds/@me`),
   });
 
 export const useGuilds = () => {

@@ -1,8 +1,5 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
-import {
-  battlelogApiClient,
-  type ApiRequestConfig,
-} from "@/lib/api-client/api-client";
+import { battlelogApiClient } from "@/lib/api-client/api-client";
 import { queryKeys } from "@/lib/query-keys";
 
 interface Streak {
@@ -28,16 +25,13 @@ interface UseBattleStreakParams {
 
 export const battleStreakQueryOptions = (params: UseBattleStreakParams) =>
   queryOptions({
-    queryKey: queryKeys.battleLog.streak({
-      ...params,
-    }),
+    queryKey: queryKeys.battleLog.streak(params),
     queryFn: async () => {
-      const requestParams = { ...params };
       const response = await battlelogApiClient.get<Streak>(
         "/battles/@me/statistics/streak",
         {
-          params: requestParams,
-        } as ApiRequestConfig,
+          params: { ...params },
+        },
       );
       return response;
     },

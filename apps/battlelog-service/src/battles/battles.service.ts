@@ -8,7 +8,6 @@ import {
   and,
   desc,
   eq,
-  exists,
   gt,
   gte,
   ilike,
@@ -47,6 +46,7 @@ import type {
   IBattlesService,
   RawBattleData,
 } from "./interfaces/battle-service.interface";
+import { warriorExists } from "./utils/warrior-exists";
 
 @Injectable()
 export class BattlesService implements IBattlesService {
@@ -58,18 +58,6 @@ export class BattlesService implements IBattlesService {
     private readonly paginationService: PaginationService,
     private readonly battleAnalyticsService: BattleAnalyticsService,
   ) {}
-
-  private warriorExists(
-    battlesRef: typeof battles,
-    ...conditions: (SQL | undefined)[]
-  ) {
-    return exists(
-      this.drizzle.db
-        .select({ one: eq(battleWarriors.id, battleWarriors.id) })
-        .from(battleWarriors)
-        .where(and(eq(battleWarriors.battleId, battlesRef.id), ...conditions)),
-    );
-  }
 
   async createBattle(params: CreateBattleParams): Promise<CreateBattleResult> {
     const { data, userId } = params;
@@ -433,7 +421,8 @@ export class BattlesService implements IBattlesService {
             for (const team of [1, 2]) {
               resultConditions.push(
                 and(
-                  this.warriorExists(
+                  warriorExists(
+                    this.drizzle,
                     battlesRef,
                     eq(battleWarriors.originalId, charId),
                     eq(battleWarriors.team, team),
@@ -451,7 +440,8 @@ export class BattlesService implements IBattlesService {
             for (const team of [1, 2]) {
               resultConditions.push(
                 and(
-                  this.warriorExists(
+                  warriorExists(
+                    this.drizzle,
                     battlesRef,
                     eq(battleWarriors.originalId, charId),
                     eq(battleWarriors.team, team),
@@ -478,7 +468,9 @@ export class BattlesService implements IBattlesService {
         if (characterIds.length) {
           phConditions.push(inArray(battleWarriors.originalId, characterIds));
         }
-        conditions.push(this.warriorExists(battlesRef, ...phConditions));
+        conditions.push(
+          warriorExists(this.drizzle, battlesRef, ...phConditions),
+        );
       }
 
       if (query.matchmaking === true) {
@@ -487,7 +479,8 @@ export class BattlesService implements IBattlesService {
 
       if (query.search) {
         conditions.push(
-          this.warriorExists(
+          warriorExists(
+            this.drizzle,
             battlesRef,
             ilike(battleWarriors.name, `%${query.search}%`),
           ),
@@ -512,7 +505,9 @@ export class BattlesService implements IBattlesService {
           );
         }
 
-        conditions.push(this.warriorExists(battlesRef, ...levelConditions));
+        conditions.push(
+          warriorExists(this.drizzle, battlesRef, ...levelConditions),
+        );
       }
 
       return conditions.length ? and(...conditions) : undefined;

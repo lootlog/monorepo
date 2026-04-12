@@ -1,5 +1,5 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
-import { and, eq, exists, gt, inArray, isNotNull, type SQL } from "drizzle-orm";
+import { and, eq, gt, inArray, isNotNull, type SQL } from "drizzle-orm";
 import type { QueryBattleAnalyticsDto } from "src/battles/dto/query-battle-analytics.dto";
 import type { QueryBattleStatisticsDto } from "src/battles/dto/query-battle-statistics.dto";
 import type {
@@ -18,6 +18,7 @@ import {
   type battles,
 } from "src/shared/modules/drizzle/schema";
 import { RedisService } from "@lootlog/nest-shared";
+import { warriorExists } from "src/battles/utils/warrior-exists";
 
 @Injectable()
 export class BattleAnalyticsService {
@@ -29,18 +30,6 @@ export class BattleAnalyticsService {
     private readonly drizzle: DrizzleService,
     private readonly redisService: RedisService,
   ) {}
-
-  private warriorExists(
-    battlesRef: typeof battles,
-    ...conditions: (SQL | undefined)[]
-  ) {
-    return exists(
-      this.drizzle.db
-        .select({ one: eq(battleWarriors.id, battleWarriors.id) })
-        .from(battleWarriors)
-        .where(and(eq(battleWarriors.battleId, battlesRef.id), ...conditions)),
-    );
-  }
 
   async getBattleAnalytics(
     query: QueryBattleAnalyticsDto,
@@ -797,7 +786,8 @@ export class BattleAnalyticsService {
             ...(query.matchmaking !== undefined
               ? [eq(table.matchmaking, query.matchmaking)]
               : []),
-            this.warriorExists(
+            warriorExists(
+              this.drizzle,
               table,
               inArray(battleWarriors.originalId, characterIds),
               gt(battleWarriors.ph, 0),
@@ -956,7 +946,9 @@ export class BattleAnalyticsService {
       ...(params.phFilter ? [gt(battleWarriors.ph, 0)] : []),
     ];
 
-    conditions.push(this.warriorExists(battlesRef, ...warriorConditions));
+    conditions.push(
+      warriorExists(this.drizzle, battlesRef, ...warriorConditions),
+    );
 
     return and(...conditions);
   }

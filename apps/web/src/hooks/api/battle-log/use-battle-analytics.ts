@@ -1,10 +1,6 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
-import { useBattleLogApiClient } from "@/hooks/api/battle-log/use-battle-log-api-client";
 import { queryKeys } from "@/lib/query-keys";
-import {
-  battlelogApiClient,
-  type ApiRequestConfig,
-} from "@/lib/api-client/api-client";
+import { battlelogApiClient } from "@/lib/api-client/api-client";
 
 export type BattleAnalytics = {
   totalBattles: number;
@@ -25,16 +21,14 @@ export type GetBattleAnalyticsParams = {
 export const battleAnalyticsQueryOptions = (
   params: GetBattleAnalyticsParams = {},
 ) => {
-  const requestParams = { ...params };
-
   return queryOptions({
-    queryKey: queryKeys.battleLog.analytics(requestParams),
+    queryKey: queryKeys.battleLog.analytics(params),
     queryFn: async () => {
       const response = await battlelogApiClient.get<BattleAnalytics>(
         `/battles/@me/analytics`,
         {
-          params: requestParams,
-        } as ApiRequestConfig,
+          params: { ...params },
+        },
       );
       return response;
     },
@@ -43,7 +37,5 @@ export const battleAnalyticsQueryOptions = (
 };
 
 export const useBattleAnalytics = (params: GetBattleAnalyticsParams = {}) => {
-  useBattleLogApiClient();
-
   return useQuery(battleAnalyticsQueryOptions(params));
 };

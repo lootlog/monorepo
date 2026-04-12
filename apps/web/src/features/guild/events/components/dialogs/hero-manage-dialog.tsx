@@ -20,7 +20,7 @@ import {
   useEventsAssignmentControllerUpdateHero,
 } from "@/lib/api/generated/main/events/events";
 import { invalidateEventDetailQueries } from "../../hooks/mutations/invalidate-event-queries";
-import { getApiErrorMessage } from "../../utils/get-api-error-message";
+import { getApiErrorMessage } from "@/lib/api-client/api-client";
 
 interface HeroManageDialogProps {
   open: boolean;

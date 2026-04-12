@@ -53,11 +53,11 @@ export async function findActiveEventHeroesByNpc(
   return Array.from(uniqueMatches.values()).sort((leftHero, rightHero) => {
     const leftStart =
       leftHero.event.startsAt?.getTime() ??
-      leftHero.event.createdAt?.getTime?.() ??
+      leftHero.event.createdAt?.getTime() ??
       0;
     const rightStart =
       rightHero.event.startsAt?.getTime() ??
-      rightHero.event.createdAt?.getTime?.() ??
+      rightHero.event.createdAt?.getTime() ??
       0;
 
     return rightStart - leftStart;

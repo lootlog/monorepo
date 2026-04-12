@@ -8,7 +8,7 @@ import { motion } from "framer-motion";
 import { useCreateReservation } from "@/hooks/api/reservations/use-create-reservation";
 import { Button } from "@lootlog/ui/components/button";
 import { Textarea } from "@lootlog/ui/components/textarea";
-import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
+import { getApiErrorMessage } from "@/lib/api-client/api-client";
 import { useTranslation } from "react-i18next";
 
 type ReservationQuickAddPopoverProps = {

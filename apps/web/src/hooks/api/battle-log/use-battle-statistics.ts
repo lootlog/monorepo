@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useBattleLogApiClient } from "@/hooks/api/battle-log/use-battle-log-api-client";
+import { battlelogApiClient } from "@/lib/api-client/api-client";
 import { queryKeys } from "@/lib/query-keys";
 
 export interface ProfessionWinRate {
@@ -61,8 +61,6 @@ export interface UseBattleStatisticsParams {
 }
 
 export const useBattleStatistics = (params?: UseBattleStatisticsParams) => {
-  const { client } = useBattleLogApiClient();
-
   const query = useQuery({
     queryKey: queryKeys.battleLog.statistics(params),
     queryFn: () => {
@@ -73,11 +71,10 @@ export const useBattleStatistics = (params?: UseBattleStatisticsParams) => {
       if (params?.world) searchParams.append("world", params.world);
       if (params?.period) searchParams.append("period", params.period);
 
-      return client.get<BattleStatistics>(
+      return battlelogApiClient.get<BattleStatistics>(
         `/battles/@me/statistics?${searchParams}`,
       );
     },
-    select: (data) => data,
     staleTime: 1000 * 60 * 5,
   });
 

@@ -1,10 +1,6 @@
-import { useActivityApiClient } from "@/hooks/api/activity-logs/use-activity-log-api-client";
 import { infiniteQueryOptions, useInfiniteQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
-import {
-  activityApiClient,
-  type ApiRequestConfig,
-} from "@/lib/api-client/api-client";
+import { activityApiClient } from "@/lib/api-client/api-client";
 import {
   createSerializer,
   parseAsInteger,
@@ -126,7 +122,6 @@ export const activityLogsInfiniteQueryOptions = (
 
       return activityApiClient.get<PaginatedActivitiesResponse>(
         `/guilds/${guildId}/activity-logs${queryString}`,
-        {} as ApiRequestConfig,
       );
     },
     enabled: !!guildId,
@@ -139,7 +134,5 @@ export const activityLogsInfiniteQueryOptions = (
 };
 
 export const useActivityLogs = (options: UseActivityLogsOptions) => {
-  useActivityApiClient();
-
   return useInfiniteQuery(activityLogsInfiniteQueryOptions(options));
 };

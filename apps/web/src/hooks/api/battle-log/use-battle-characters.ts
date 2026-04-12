@@ -1,5 +1,4 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
-import { useBattleLogApiClient } from "@/hooks/api/battle-log/use-battle-log-api-client";
 import { queryKeys } from "@/lib/query-keys";
 import { battlelogApiClient } from "@/lib/api-client/api-client";
 
@@ -27,7 +26,5 @@ export const battleCharactersQueryOptions = () =>
   });
 
 export const useBattleCharacters = () => {
-  useBattleLogApiClient();
-
   return useQuery(battleCharactersQueryOptions());
 };

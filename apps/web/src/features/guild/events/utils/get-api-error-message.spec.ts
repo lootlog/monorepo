@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getApiErrorMessage } from "./get-api-error-message";
+import { getApiErrorMessage } from "@/lib/api-client/api-client";
 
 describe("getApiErrorMessage", () => {
   it("returns the first API validation message", () => {
