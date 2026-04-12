@@ -8,6 +8,7 @@ import {
   GUILD_NOTIFICATION_TIMEZONE,
   parseDateTimeLocalInputToIsoString,
 } from "./notification-schedule-time.utils";
+import { parseManualNotificationRuleNpcIds } from "./notification-rule-form-npc.utils";
 
 export const ALL_WORLDS_VALUE = "__all_worlds__";
 
@@ -21,6 +22,8 @@ export const ruleFormSchema = (
       triggerType: z.nativeEnum(NotificationTriggerType),
       world: z.string().optional(),
       npcIds: z.array(z.string()).optional(),
+      manualNpcEntry: z.boolean().optional(),
+      manualNpcIds: z.string().optional(),
       contentTemplate: z
         .string()
         .trim()
@@ -42,6 +45,11 @@ export const ruleFormSchema = (
     })
     .superRefine((data, ctx) => {
       if (data.triggerType === NotificationTriggerType.TIMER_BEFORE_SPAWN) {
+        const manualNpcEntry = data.manualNpcEntry ?? false;
+        const manualNpcIds = parseManualNotificationRuleNpcIds(
+          data.manualNpcIds ?? "",
+        );
+
         if (!data.world || data.world === ALL_WORLDS_VALUE) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
@@ -49,22 +57,55 @@ export const ruleFormSchema = (
             path: ["world"],
           });
         }
-        if (!data.npcIds || data.npcIds.length === 0) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: t("settings.notifications.validation.npcRequired"),
-            path: ["npcIds"],
-          });
+
+        if (manualNpcEntry) {
+          if ((data.manualNpcIds ?? "").trim().length === 0) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: t(
+                "settings.notifications.validation.manualNpcIdsRequired",
+              ),
+              path: ["manualNpcIds"],
+            });
+          } else if (manualNpcIds.invalidTokens.length > 0) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: t(
+                "settings.notifications.validation.manualNpcIdsInvalid",
+              ),
+              path: ["manualNpcIds"],
+            });
+          }
+
+          if (manualNpcIds.ids.length > maxNpcCount) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: t("settings.notifications.validation.maxNpcCount", {
+                count: maxNpcCount,
+              }),
+              path: ["manualNpcIds"],
+            });
+          }
+        } else {
+          if (!data.npcIds || data.npcIds.length === 0) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: t("settings.notifications.validation.npcRequired"),
+              path: ["npcIds"],
+            });
+          }
+
+          if (data.npcIds && data.npcIds.length > maxNpcCount) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: t("settings.notifications.validation.maxNpcCount", {
+                count: maxNpcCount,
+              }),
+              path: ["npcIds"],
+            });
+          }
         }
-        if (data.npcIds && data.npcIds.length > maxNpcCount) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: t("settings.notifications.validation.maxNpcCount", {
-              count: maxNpcCount,
-            }),
-            path: ["npcIds"],
-          });
-        }
+
         if (!data.scheduleAnchor) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,

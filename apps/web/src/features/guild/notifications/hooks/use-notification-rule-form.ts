@@ -38,6 +38,10 @@ import {
   ALL_WORLDS_VALUE,
   type RuleFormValues,
 } from "../utils/notification-rule-form.schema";
+import {
+  buildNotificationRuleNpcFilterPayload,
+  getNotificationRuleNpcIdsForSubmit,
+} from "../utils/notification-rule-form-npc.utils";
 import { ROUTES } from "@/config/routes";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 
@@ -80,6 +84,8 @@ export const useNotificationRuleForm = () => {
       triggerType: NotificationTriggerType.TIMER_BEFORE_SPAWN,
       world: ALL_WORLDS_VALUE,
       npcIds: [],
+      manualNpcEntry: false,
+      manualNpcIds: "",
       contentTemplate: getDefaultGuildNotificationRuleContentTemplate(),
       scheduleAnchor: NotificationScheduleAnchor.MIN_SPAWN,
       scheduleOffsetMinutes: "0",
@@ -103,6 +109,8 @@ export const useNotificationRuleForm = () => {
       triggerType,
       world: rule?.world ?? ALL_WORLDS_VALUE,
       npcIds: rule ? getGuildNotificationRuleNpcIds(rule) : [],
+      manualNpcEntry: false,
+      manualNpcIds: rule ? getGuildNotificationRuleNpcIds(rule).join("\n") : "",
       contentTemplate:
         rule?.contentTemplate ?? getDefaultContentTemplate(triggerType),
       scheduleAnchor:
@@ -169,18 +177,19 @@ export const useNotificationRuleForm = () => {
     isScheduledMessage &&
     watchedIntervalType === NotificationScheduleIntervalType.HOURLY;
   const selectedWorld = form.watch("world");
+  const isManualNpcEntry = form.watch("manualNpcEntry") ?? false;
   const selectedNpcIds = form.watch("npcIds") ?? [];
   const normalizedWorld =
     selectedWorld !== ALL_WORLDS_VALUE ? selectedWorld : undefined;
   const selectedNpcQuery = useNpcs({
     selectedNpcs: selectedNpcIds.join(","),
     world: normalizedWorld,
-    enabled: selectedNpcIds.length > 0,
+    enabled: !isManualNpcEntry && selectedNpcIds.length > 0,
   });
   const searchedNpcQuery = useNpcs({
     search: npcSearch,
     world: normalizedWorld,
-    enabled: npcSearch.trim().length > 0,
+    enabled: !isManualNpcEntry && npcSearch.trim().length > 0,
   });
 
   const npcOptionsMap = new Map<string, { value: string; label: string }>();
@@ -230,6 +239,36 @@ export const useNotificationRuleForm = () => {
     setIsCreateTargetDialogOpen(false);
   };
 
+  const handleManualNpcEntryChange = (enabled: boolean) => {
+    form.setValue("manualNpcEntry", enabled, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+
+    if (!enabled) {
+      return;
+    }
+
+    setNpcSearch("");
+
+    const currentManualNpcIds = (form.getValues("manualNpcIds") ?? "").trim();
+
+    if (currentManualNpcIds.length > 0) {
+      return;
+    }
+
+    const currentSelectedNpcIds = form.getValues("npcIds") ?? [];
+
+    if (currentSelectedNpcIds.length === 0) {
+      return;
+    }
+
+    form.setValue("manualNpcIds", currentSelectedNpcIds.join("\n"), {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  };
+
   const handleSubmit = async (values: RuleFormValues) => {
     const trimmedName = values.name.trim();
     const basePayload = {
@@ -266,13 +305,9 @@ export const useNotificationRuleForm = () => {
             scheduleTimezone: GUILD_NOTIFICATION_TIMEZONE,
           }
         : (() => {
-            const numericNpcIds = (values.npcIds ?? []).map((npcId) =>
-              Number(npcId),
+            const npcFilterPayload = buildNotificationRuleNpcFilterPayload(
+              getNotificationRuleNpcIdsForSubmit(values),
             );
-            const npcFilterPayload =
-              numericNpcIds.length === 1
-                ? { npcId: numericNpcIds[0] }
-                : { npcIds: numericNpcIds };
             return {
               ...basePayload,
               world:
@@ -338,12 +373,14 @@ export const useNotificationRuleForm = () => {
     guildRoles,
     contentTemplate,
     watchedTriggerType,
+    isManualNpcEntry,
     formResetKey,
     isCreateTargetDialogOpen,
     setIsCreateTargetDialogOpen,
     getDefaultContentTemplate,
     navigateBack,
     handleTargetCreated,
+    handleManualNpcEntryChange,
     handleSubmit,
   };
 };
