@@ -11,7 +11,7 @@ import type { Others } from "./others.js";
 import type { WidgetManager } from "./widget-manager.js";
 import type { ServerStorage } from "./server-storage.js";
 import type { ShowEqManager } from "./show-eq-manager.js";
-import type { iframeWindowManager } from "./iframe-window-manager.js";
+import type { IframeWindowManager } from "./iframe-window-manager.js";
 import type { ChatController } from "./chat-controller.js";
 
 export type Engine = {
@@ -28,7 +28,7 @@ export type Engine = {
   widgetManager: WidgetManager;
   serverStorage: ServerStorage;
   showEqManager: ShowEqManager;
-  iframeWindowManager: iframeWindowManager;
+  iframeWindowManager: IframeWindowManager;
   chatController: ChatController;
   party?: {
     getMembers?: () => globalThis.Map<

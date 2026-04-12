@@ -30,19 +30,17 @@ export class RolesService {
       : [];
   }
 
-  async getRolesByGuildId(guildId: string) {
-    const roles = await this.prisma.role.findMany({
+  getRolesByGuildId(guildId: string) {
+    return this.prisma.role.findMany({
       where: { guildId },
       orderBy: { position: "desc" },
     });
-
-    return roles;
   }
 
   bulkCreateRoles(
     guildId: string,
     roles: GuildRoleDto[],
-  ): Promise<Prisma.BatchPayload | undefined> {
+  ): Promise<Prisma.BatchPayload> {
     try {
       return this.prisma.role.createMany({
         skipDuplicates: true,
@@ -62,6 +60,7 @@ export class RolesService {
         guildId,
         error: error instanceof Error ? error.stack : error,
       });
+      throw error;
     }
   }
 
@@ -112,6 +111,7 @@ export class RolesService {
         guildId: data.guildId,
         error: error instanceof Error ? error.stack : error,
       });
+      throw error;
     }
   }
 
@@ -132,6 +132,10 @@ export class RolesService {
     const guild = await this.prisma.guild.findUnique({
       where: { id: guildId },
     });
+
+    if (!guild) {
+      throw new NotFoundException();
+    }
 
     const isOwner = guild.ownerId === discordId;
 

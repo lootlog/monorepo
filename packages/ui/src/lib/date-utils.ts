@@ -6,5 +6,9 @@ export const formatSeconds = (seconds: number): string => {
     return `${remainingSeconds}s`;
   }
 
+  if (remainingSeconds === 0) {
+    return `${minutes}m`;
+  }
+
   return `${minutes}m ${remainingSeconds}s`;
 };

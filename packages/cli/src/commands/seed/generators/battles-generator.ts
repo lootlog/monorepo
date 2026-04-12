@@ -1,6 +1,6 @@
-import { readFile } from "fs/promises";
-import path from "path";
-import { fileURLToPath } from "url";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -45,12 +45,8 @@ export class BattlesGenerator {
     characterId: string,
     accountId: string,
   ): BattlePayload[] {
-    const battles: BattlePayload[] = [];
-
-    for (let i = 0; i < count; i++) {
-      battles.push(this.generateSingle(characterId, accountId));
-    }
-
-    return battles;
+    return Array.from({ length: count }, () =>
+      this.generateSingle(characterId, accountId),
+    );
   }
 }

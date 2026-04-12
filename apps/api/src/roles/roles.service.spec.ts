@@ -189,11 +189,13 @@ describe("RolesService", () => {
       expect(mockRedisService.deleteByPattern).toHaveBeenCalledTimes(1);
     });
 
-    it("should log error and not clear cache when upsert fails", async () => {
+    it("should log error and rethrow when upsert fails", async () => {
       mockPrismaService.role.findUnique.mockResolvedValue(null);
       mockPrismaService.role.upsert.mockRejectedValue(new Error("DB error"));
 
-      await service.createOrUpdateRole(baseRoleData);
+      await expect(service.createOrUpdateRole(baseRoleData)).rejects.toThrow(
+        "DB error",
+      );
 
       expect(mockLogger.log).toHaveBeenCalledWith(
         expect.objectContaining({

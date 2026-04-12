@@ -1,6 +1,6 @@
 import { parse } from "node-html-parser";
 import { v7 as uuidv7 } from "uuid";
-import { writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { SCRAPER_CONFIG } from "../config.js";
 import { fileExists } from "../utils/file-exists.js";
@@ -74,6 +74,9 @@ async function getNumberOfPages(): Promise<number> {
   const url = `${BASE_URL}?name=&minLvl=&maxLvl=&cl=&unique=on&heroic=on&upgraded=on&legendary=on`;
 
   const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch page count: ${response.statusText}`);
+  }
   const html = await response.text();
 
   const parsed = parse(html);
@@ -95,8 +98,7 @@ export async function scrapeItems(
       console.log(`⏭️  Items file already exists at ${fullPath}`);
       console.log("💡 Use --force flag to re-scrape");
 
-      const fs = await import("fs/promises");
-      const existingData = await fs.readFile(fullPath, "utf-8");
+      const existingData = await readFile(fullPath, "utf-8");
       return JSON.parse(existingData);
     }
   }
