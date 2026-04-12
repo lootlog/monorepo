@@ -6,6 +6,8 @@ import { XIcon } from "lucide-react";
 
 import { cn } from "@lootlog/ui/lib/utils";
 import { CatPawOverlay } from "@lootlog/ui/components/cat-paw-overlay";
+import { RukiaFrostCardOverlay } from "@lootlog/ui/components/rukia-frost-card-overlay";
+import { RiasMagicCardOverlay } from "@lootlog/ui/components/rias-magic-card-overlay";
 
 function Dialog({
   ...props
@@ -67,6 +69,8 @@ function DialogContent({
         {...props}
       >
         <CatPawOverlay />
+        <RukiaFrostCardOverlay />
+        <RiasMagicCardOverlay />
         {children}
         {showCloseButton && (
           <DialogPrimitive.Close

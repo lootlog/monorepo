@@ -17,10 +17,10 @@ import {
 import { cn } from "@lootlog/ui/lib/utils";
 import { ItemStack } from "@/features/guild/loots-list/components/loots-list/item-stack";
 import { WatchableItemTile } from "@/components/tiles";
-import { useTheme } from "@/hooks/context/use-theme";
 import { useSelectedLoot } from "@/hooks/use-selected-loot";
 import { useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { useThemeMeta } from "@/themes";
 
 type Props = {
   loot: Loot;
@@ -260,8 +260,7 @@ const LootFooter = ({
 export const LootsListItem = ({ loot }: Props) => {
   const { openLootDetails } = useSelectedLoot();
   const date = timestampToDate(loot.createdAt);
-  const { theme } = useTheme();
-  const isRukiaTheme = theme === "rukia";
+  const { isRukiaTheme } = useThemeMeta();
 
   const { itemsByPlayer, unassignedItems, hasLegendaryItem, sortedPlayers } =
     useLootData(loot);

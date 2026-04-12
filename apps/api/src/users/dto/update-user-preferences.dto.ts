@@ -25,6 +25,7 @@ const UpdateUserPreferencesSchema = z.object({
       "barcelona",
       "waguri",
       "rukia",
+      "rias",
       "cat-pink",
       "cat-purple",
       "cat-blue",

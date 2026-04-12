@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import type { MenuItem } from "./types";
-import { FrozenButton } from "@/components/effects/rukia-frost";
+import { ThemeInteractiveFrame } from "@/themes";
 
 export const SidebarNavItem = ({
   url,
@@ -119,13 +119,9 @@ export const SidebarNavItem = ({
           "hover:cursor-not-allowed": !available,
         })}
       >
-        {isRukiaTheme ? (
-          <FrozenButton isHovered={isHovered} isActive={isActive}>
-            {buttonContent}
-          </FrozenButton>
-        ) : (
-          buttonContent
-        )}
+        <ThemeInteractiveFrame isHovered={isHovered} isActive={isActive}>
+          {buttonContent}
+        </ThemeInteractiveFrame>
       </Link>
     </div>
   );

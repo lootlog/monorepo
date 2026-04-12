@@ -222,6 +222,8 @@
       "scheduleOffsetNonNegative": "Liczba minut musi być nieujemną liczbą całkowitą",
       "targetRequired": "Wybierz przynajmniej jeden kanał docelowy",
       "npcRequired": "Wybierz przynajmniej jednego NPC",
+      "manualNpcIdsRequired": "Podaj przynajmniej jedno ID NPC",
+      "manualNpcIdsInvalid": "ID NPC muszą być dodatnimi liczbami całkowitymi",
       "worldRequired": "Wybierz świat",
       "scheduledAtRequired": "Wybierz datę i godzinę wysyłki",
       "scheduledAtFuture": "Data wysyłki musi być w przyszłości",
@@ -247,6 +249,7 @@
       "scheduledUntil": "Data zakończenia",
       "world": "Świat",
       "npcs": "Filtr NPC",
+      "manualNpcIds": "ID NPC",
       "contentTemplate": "Szablon wiadomości",
       "scheduleAnchor": "Punkt odniesienia",
       "scheduleOffsetMinutes": "Wyprzedzenie (minuty)",
@@ -259,6 +262,7 @@
       "displayName": "np. Herosi",
       "name": "np. Przypomnienie o herosach",
       "npcs": "Wszystkie NPC",
+      "manualNpcIds": "np. 101, 202, 303",
       "searchNpcs": "Szukaj NPC po nazwie lub ID",
       "scheduleOffsetMinutes": "np. 0",
       "scheduledAt": "Wybierz datę i godzinę",
@@ -330,6 +334,11 @@
       "triggerDescription": "Ten widok obsługuje tylko przypomnienia planowane przed spawnem.",
       "triggerDescriptionScheduledMessage": "Wyślij wiadomość jednorazowo lub cyklicznie w określonym czasie.",
       "targetsDescription": "Wybierz jeden lub więcej kanałów docelowych. Możesz też dodać nowy bez opuszczania formularza."
+    },
+    "manualNpcEntry": {
+      "checkbox": "Mój potwór nie pojawia się w wyszukiwarce",
+      "hint": "Przełącz na ręczne wpisanie ID NPC jako alternatywę dla wyszukiwarki.",
+      "fieldHint": "Wpisz jedno lub wiele ID NPC. Możesz rozdzielać je przecinkami, spacjami albo nowymi liniami."
     },
     "quickTargetDialog": {
       "title": "Szybkie dodanie kanału",
@@ -654,6 +663,10 @@
       "rukia": {
         "title": "Rukia Kuchiki",
         "description": "Hakka no Togame - Absolute Zero"
+      },
+      "rias": {
+        "title": "Rias Gremory",
+        "description": "Crimson-Haired Ruin Princess"
       },
       "cat-pink": {
         "title": "Różowy Kociak 🐱",

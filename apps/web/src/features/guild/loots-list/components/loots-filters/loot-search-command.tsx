@@ -21,9 +21,8 @@ import { cn } from "@lootlog/ui/lib/utils";
 import { NPC_TYPE_NAMES, ITEM_RARITY_NAMES } from "@/constants/npc";
 import { motion, Reorder } from "framer-motion";
 import { Spinner } from "@lootlog/ui/components/spinner";
-import { useTheme } from "@/hooks/context/use-theme";
-import { FrozenButton } from "@/components/effects/rukia-frost";
 import { useTranslation } from "react-i18next";
+import { ThemeInteractiveFrame } from "@/themes";
 
 export type LootSearchCommandProps = {
   open: boolean;
@@ -61,9 +60,6 @@ export const LootSearchCommand = ({
 }: LootSearchCommandProps) => {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
-  const { theme } = useTheme();
-  const isRukiaTheme = theme === "rukia";
-
   const [debouncedSearch] = useDebounceValue(searchQuery, 200);
   const { world } = useGuildContext();
   const { setFilters } = useLootsFilters();
@@ -334,13 +330,9 @@ export const LootSearchCommand = ({
       onOpenChange={onOpenChange}
       className="top-[25%] sm:top-[50%]"
     >
-      {isRukiaTheme ? (
-        <FrozenButton isHovered={false} isActive={open} subtle>
-          {dialogContent}
-        </FrozenButton>
-      ) : (
-        dialogContent
-      )}
+      <ThemeInteractiveFrame isHovered={false} isActive={open} subtle>
+        {dialogContent}
+      </ThemeInteractiveFrame>
     </CommandDialog>
   );
 };

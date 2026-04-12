@@ -13,9 +13,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { useTheme } from "@/hooks/context/use-theme";
-import { FrozenButton } from "@/components/effects/rukia-frost";
 import { useTranslation } from "react-i18next";
+import { ThemeInteractiveFrame } from "@/themes";
 
 export type LootFiltersHeaderProps = {
   isFiltersOpen: boolean;
@@ -34,8 +33,6 @@ export const LootFiltersHeader = ({
   const isMobile = useIsMobile();
   const { filters } = useLootsFilters();
   const { viewMode, setViewMode } = useViewMode("loots-view-mode");
-  const { theme } = useTheme();
-  const isRukiaTheme = theme === "rukia";
 
   const hasSearchFilters =
     filters.npcs.length > 0 ||
@@ -63,39 +60,11 @@ export const LootFiltersHeader = ({
             onMouseEnter={() => setHoveredButton("search")}
             onMouseLeave={() => setHoveredButton(null)}
           >
-            {isRukiaTheme ? (
-              <FrozenButton
-                isHovered={hoveredButton === "search"}
-                isActive={false}
-                className="w-full"
-              >
-                <Button
-                  variant="outline"
-                  onClick={() => setIsCommandOpen(true)}
-                  className="relative w-full justify-start text-muted-foreground"
-                >
-                  <Search className="h-4 w-4 mr-2" />
-                  <span className="max-w-full truncate">
-                    {t("loots.header.searchPlaceholder")}
-                  </span>
-                  <kbd className="pointer-events-none absolute right-2 top-[50%] translate-y-[-50%] hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
-                    <span className="text-xs">
-                      {t("loots.header.shortcut")}
-                    </span>
-                  </kbd>
-                  <AnimatePresence>
-                    {hasSearchFilters && (
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        exit={{ scale: 0 }}
-                        className="absolute -top-1 -left-1 w-3 h-3 bg-primary rounded-full border-2 border-background"
-                      />
-                    )}
-                  </AnimatePresence>
-                </Button>
-              </FrozenButton>
-            ) : (
+            <ThemeInteractiveFrame
+              isHovered={hoveredButton === "search"}
+              isActive={false}
+              className="w-full"
+            >
               <Button
                 variant="outline"
                 onClick={() => setIsCommandOpen(true)}
@@ -119,7 +88,7 @@ export const LootFiltersHeader = ({
                   )}
                 </AnimatePresence>
               </Button>
-            )}
+            </ThemeInteractiveFrame>
           </div>
 
           {!isMobile && (
@@ -133,21 +102,10 @@ export const LootFiltersHeader = ({
                       onMouseEnter={() => setHoveredButton("list")}
                       onMouseLeave={() => setHoveredButton(null)}
                     >
-                      {isRukiaTheme ? (
-                        <FrozenButton
-                          isHovered={hoveredButton === "list"}
-                          isActive={viewMode === "list"}
-                        >
-                          <Button
-                            onClick={() => setViewMode("list")}
-                            variant={viewMode === "list" ? "default" : "ghost"}
-                            size="icon"
-                            className="h-8 w-8"
-                          >
-                            <List className="h-4 w-4" />
-                          </Button>
-                        </FrozenButton>
-                      ) : (
+                      <ThemeInteractiveFrame
+                        isHovered={hoveredButton === "list"}
+                        isActive={viewMode === "list"}
+                      >
                         <Button
                           onClick={() => setViewMode("list")}
                           variant={viewMode === "list" ? "default" : "ghost"}
@@ -156,7 +114,7 @@ export const LootFiltersHeader = ({
                         >
                           <List className="h-4 w-4" />
                         </Button>
-                      )}
+                      </ThemeInteractiveFrame>
                     </div>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
@@ -169,21 +127,10 @@ export const LootFiltersHeader = ({
                       onMouseEnter={() => setHoveredButton("grid")}
                       onMouseLeave={() => setHoveredButton(null)}
                     >
-                      {isRukiaTheme ? (
-                        <FrozenButton
-                          isHovered={hoveredButton === "grid"}
-                          isActive={viewMode === "grid"}
-                        >
-                          <Button
-                            onClick={() => setViewMode("grid")}
-                            variant={viewMode === "grid" ? "default" : "ghost"}
-                            size="icon"
-                            className="h-8 w-8"
-                          >
-                            <Grid2X2 className="h-4 w-4" />
-                          </Button>
-                        </FrozenButton>
-                      ) : (
+                      <ThemeInteractiveFrame
+                        isHovered={hoveredButton === "grid"}
+                        isActive={viewMode === "grid"}
+                      >
                         <Button
                           onClick={() => setViewMode("grid")}
                           variant={viewMode === "grid" ? "default" : "ghost"}
@@ -192,7 +139,7 @@ export const LootFiltersHeader = ({
                         >
                           <Grid2X2 className="h-4 w-4" />
                         </Button>
-                      )}
+                      </ThemeInteractiveFrame>
                     </div>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
@@ -205,31 +152,10 @@ export const LootFiltersHeader = ({
                 onMouseEnter={() => setHoveredButton("filter")}
                 onMouseLeave={() => setHoveredButton(null)}
               >
-                {isRukiaTheme ? (
-                  <FrozenButton
-                    isHovered={hoveredButton === "filter"}
-                    isActive={isFiltersOpen}
-                  >
-                    <Button
-                      onClick={onToggleFilters}
-                      variant={isFiltersOpen ? "default" : "outline"}
-                      size="icon"
-                      className="relative shrink-0 h-8 w-8"
-                    >
-                      <Filter className="h-4 w-4" />
-                      <AnimatePresence>
-                        {hasActiveFilters && !isFiltersOpen && (
-                          <motion.div
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            exit={{ scale: 0 }}
-                            className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full border-2 border-background"
-                          />
-                        )}
-                      </AnimatePresence>
-                    </Button>
-                  </FrozenButton>
-                ) : (
+                <ThemeInteractiveFrame
+                  isHovered={hoveredButton === "filter"}
+                  isActive={isFiltersOpen}
+                >
                   <Button
                     onClick={onToggleFilters}
                     variant={isFiltersOpen ? "default" : "outline"}
@@ -248,7 +174,7 @@ export const LootFiltersHeader = ({
                       )}
                     </AnimatePresence>
                   </Button>
-                )}
+                </ThemeInteractiveFrame>
               </div>
             </>
           )}

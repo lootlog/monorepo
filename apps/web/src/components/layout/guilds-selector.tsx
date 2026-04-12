@@ -111,6 +111,7 @@ export const GuildsSelector: FC = () => {
                 dragControls={undefined}
               >
                 <motion.div
+                  className="w-full"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{

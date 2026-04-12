@@ -3,11 +3,10 @@ import { useTranslation } from "react-i18next";
 import { useLocalStorage } from "usehooks-ts";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import { cn } from "@lootlog/ui/lib/utils";
-import { FrostOverlay } from "@/components/effects/rukia-frost";
 import { GuildContext } from "@/contexts/guild.context";
 import { useWorlds } from "@/hooks/api/game-data/use-worlds";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useTheme } from "@/hooks/context/use-theme";
+import { ThemeSurfaceOverlay } from "@/themes";
 
 const ALL_WORLDS_SENTINEL = "__ALL__";
 
@@ -39,8 +38,6 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
   const guildId = useGuildId();
   const storageKey = `lootlog:guild:${guildId ?? "global"}:world-order`;
   const [worldOrder, setWorldOrder] = useLocalStorage<string[]>(storageKey, []);
-  const { theme } = useTheme();
-  const isRukiaTheme = theme === "rukia";
 
   const isControlled = value !== undefined;
   const currentWorld = isControlled ? value : contextWorld;
@@ -95,7 +92,7 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
 
   return (
     <div className="relative">
-      {isRukiaTheme && <FrostOverlay subtle rounded="rounded-md" />}
+      <ThemeSurfaceOverlay subtle rounded="rounded-md" />
       <FilterPopover
         options={options}
         value={displayValue}

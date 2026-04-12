@@ -1,4 +1,6 @@
-export const CatEmptyStateIcon: React.FC<{ className?: string }> = ({
+import type { FC } from "react";
+
+export const CatEmptyStateIcon: FC<{ className?: string }> = ({
   className,
 }) => {
   return (
