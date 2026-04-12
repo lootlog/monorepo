@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { Button } from "@lootlog/ui/components/button";
 import {
@@ -14,11 +15,14 @@ import { Input } from "@lootlog/ui/components/input";
 import { Textarea } from "@lootlog/ui/components/textarea";
 import { Label } from "@lootlog/ui/components/label";
 import { DateTimePicker } from "@lootlog/ui/components/date-time-picker";
-import { useCreateEvent } from "../../hooks/mutations/use-create-event";
 import { toast } from "sonner";
 import { Trophy, Settings, BookOpenText } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { useGuildId } from "@/hooks/context/use-guild-id";
+import {
+  getListEventsQueryKey,
+  useCreateEvent,
+} from "@/lib/api/generated/main/events/events";
 import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
   type EventScoringMode,
@@ -65,7 +69,16 @@ export const EventCreateDialog = ({
   const { t } = useTranslation();
   const guildId = useGuildId();
   const navigate = useNavigate();
-  const { mutate: createEvent, isPending } = useCreateEvent();
+  const queryClient = useQueryClient();
+  const createEvent = useCreateEvent({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: getListEventsQueryKey({ guildId: guildId ?? "" }),
+        });
+      },
+    },
+  });
   const [step, setStep] = useState<1 | 2>(1);
 
   const form = useForm<FormData>({
@@ -109,25 +122,33 @@ export const EventCreateDialog = ({
 
     const normalizedMode = normalizeScoringMode(data.scoringMode);
 
-    createEvent(
+    createEvent.mutate(
       {
-        name: data.name.trim(),
-        world: data.world.trim(),
-        startsAt: data.startsAt?.toISOString(),
-        endsAt: data.endsAt?.toISOString(),
-        participationConfirmationMinutes: Number.isFinite(
-          data.participationConfirmationMinutes,
-        )
-          ? Math.max(0, Math.round(data.participationConfirmationMinutes))
-          : 0,
-        rulebookMarkdown: data.rulebookMarkdown?.trim().length
-          ? data.rulebookMarkdown.trim()
-          : null,
-        scoringMode: normalizedMode,
-        scoringRules:
-          normalizedMode === "ADVANCED"
-            ? normalizeScoringRules(data.scoringRules)
-            : null,
+        pathParams: {
+          guildId: guildId ?? "",
+        },
+        data: {
+          name: data.name.trim(),
+          world: data.world.trim(),
+          startsAt: data.startsAt?.toISOString(),
+          endsAt: data.endsAt?.toISOString(),
+          participationConfirmationMinutes: Number.isFinite(
+            data.participationConfirmationMinutes,
+          )
+            ? Math.max(0, Math.round(data.participationConfirmationMinutes))
+            : 0,
+          scoringMode: normalizedMode,
+          ...(data.rulebookMarkdown?.trim().length
+            ? {
+                rulebookMarkdown: data.rulebookMarkdown.trim(),
+              }
+            : {}),
+          ...(normalizedMode === "ADVANCED"
+            ? {
+                scoringRules: normalizeScoringRules(data.scoringRules),
+              }
+            : {}),
+        },
       },
       {
         onSuccess: (eventData) => {
@@ -348,10 +369,10 @@ export const EventCreateDialog = ({
               type="button"
               size="sm"
               className="flex-1"
-              disabled={isPending}
+              disabled={createEvent.isPending}
               onClick={form.handleSubmit(onSubmit)}
             >
-              {isPending ? (
+              {createEvent.isPending ? (
                 <>
                   <Spinner className="size-3.5 mr-1.5" />
                   {t("events.createDialog.creating")}

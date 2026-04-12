@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { Card } from "@lootlog/ui/components/card";
@@ -22,8 +23,9 @@ import { Users, ChevronDown, Frown, MapPin, Pencil, Info } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/utils/cn";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
+import { useEventsRankingControllerUpdateKillPoint } from "@/lib/api/generated/main/events/events";
 import type { KillDetailParticipant } from "../../hooks/queries/use-kill-detail";
-import { useUpdatePoints } from "../../hooks/mutations/use-update-points";
+import { invalidateKillQueries } from "../../hooks/mutations/invalidate-kill-queries";
 import { ManualPointsEditDialog } from "../dialogs/manual-points-edit-dialog";
 import {
   formatDurationHuman,
@@ -392,9 +394,20 @@ export const KillParticipantsCard = ({
   canEdit = false,
 }: KillParticipantsCardProps) => {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
-  const { updateKillPoint } = useUpdatePoints(guildId ?? "", eventId ?? "");
+  const updateKillPoint = useEventsRankingControllerUpdateKillPoint({
+    mutation: {
+      onSuccess: () => {
+        if (!guildId || !eventId) {
+          return;
+        }
+
+        invalidateKillQueries(queryClient, guildId, eventId);
+      },
+    },
+  });
 
   const sorted = [...participants].sort((a, b) => b.points - a.points);
 
@@ -418,10 +431,16 @@ export const KillParticipantsCard = ({
     if (!killId) return;
     try {
       await updateKillPoint.mutateAsync({
-        killId,
-        killPointId,
-        pointsDelta,
-        comment,
+        pathParams: {
+          guildId: guildId ?? "",
+          eventId: eventId ?? "",
+          killId,
+          killPointId,
+        },
+        data: {
+          pointsDelta,
+          ...(comment ? { comment } : {}),
+        },
       });
       toast.success(t("events.points.editSuccess"));
     } catch (error) {

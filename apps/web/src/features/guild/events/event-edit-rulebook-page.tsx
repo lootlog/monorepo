@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Link, useParams } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -11,9 +12,12 @@ import { Card } from "@lootlog/ui/components/card";
 import { Label } from "@lootlog/ui/components/label";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Textarea } from "@lootlog/ui/components/textarea";
-import { useEventMutations } from "./hooks/mutations/use-event-mutations";
 import type { EventOverviewResponseDto } from "@/lib/api/generated/main/model";
-import { useShowEventOverview } from "@/lib/api/generated/main/events/events";
+import {
+  useShowEventOverview,
+  useUpdateEvent,
+} from "@/lib/api/generated/main/events/events";
+import { invalidateEventDetailQueries } from "./hooks/mutations/invalidate-event-queries";
 
 interface EventRulebookFormData {
   rulebookMarkdown: string;
@@ -35,10 +39,18 @@ export const EventEditRulebookPage = () => {
   };
 
   const { data: event, isLoading, error } = useShowEventOverview(routeParams);
-  const { updateEvent } = useEventMutations(
-    routeParams.guildId,
-    routeParams.eventId,
-  );
+  const queryClient = useQueryClient();
+  const updateEvent = useUpdateEvent({
+    mutation: {
+      onSuccess: () => {
+        invalidateEventDetailQueries(
+          queryClient,
+          routeParams.guildId,
+          routeParams.eventId,
+        );
+      },
+    },
+  });
 
   const form = useForm<EventRulebookFormData>({
     defaultValues: {
@@ -60,10 +72,13 @@ export const EventEditRulebookPage = () => {
 
     try {
       await updateEvent.mutateAsync({
-        rulebookMarkdown:
-          normalizedRulebookMarkdown.length > 0
-            ? normalizedRulebookMarkdown
-            : null,
+        pathParams: routeParams,
+        data: {
+          rulebookMarkdown:
+            normalizedRulebookMarkdown.length > 0
+              ? normalizedRulebookMarkdown
+              : (null as never),
+        },
       });
       form.reset({
         rulebookMarkdown: normalizedRulebookMarkdown,

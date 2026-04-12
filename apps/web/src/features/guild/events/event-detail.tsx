@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { useParams, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
 import { Badge } from "@lootlog/ui/components/badge";
@@ -30,7 +31,6 @@ import { EventActionDialog } from "./components/dialogs/event-action-dialog";
 import { EventRulesDialog } from "./components/dialogs/event-rules-dialog";
 import { EventSummaryDialog } from "./components/dialogs/event-summary-dialog";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
-import { useEventMutations } from "./hooks/mutations/use-event-mutations";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { toast } from "sonner";
 import { Permission } from "@lootlog/types";
@@ -46,12 +46,17 @@ import {
 import { getEventStatusAtTimestamp } from "./utils";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import {
+  getListEventsQueryKey,
+  useDeleteEvent,
+  useEventsAssignmentControllerDeleteHero,
   useEventsRankingControllerGetEventHeroStats,
   useListEventHeroTimers,
   useListEventMaps,
   useListEventRanking,
   useShowEventOverview,
+  useUpdateEvent,
 } from "@/lib/api/generated/main/events/events";
+import { invalidateEventDetailQueries } from "./hooks/mutations/invalidate-event-queries";
 
 type EventDetailHero = EventHeroNpc & {
   locations: EventMapLocation[];
@@ -62,6 +67,7 @@ export const EventDetail = () => {
   const { t } = useTranslation();
   const { guildId, eventId } = useParams({ strict: false });
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
 
   const {
@@ -101,10 +107,41 @@ export const EventDetail = () => {
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   });
-  const { deleteHero, updateEvent, deleteEvent } = useEventMutations(
-    guildId ?? "",
-    eventId ?? "",
-  );
+  const updateEvent = useUpdateEvent({
+    mutation: {
+      onSuccess: () => {
+        if (!guildId || !eventId) {
+          return;
+        }
+
+        invalidateEventDetailQueries(queryClient, guildId, eventId);
+      },
+    },
+  });
+  const deleteHero = useEventsAssignmentControllerDeleteHero({
+    mutation: {
+      onSuccess: () => {
+        if (!guildId || !eventId) {
+          return;
+        }
+
+        invalidateEventDetailQueries(queryClient, guildId, eventId);
+      },
+    },
+  });
+  const deleteEvent = useDeleteEvent({
+    mutation: {
+      onSuccess: () => {
+        if (!guildId) {
+          return;
+        }
+
+        queryClient.invalidateQueries({
+          queryKey: getListEventsQueryKey({ guildId }),
+        });
+      },
+    },
+  });
 
   const [heroDialogOpen, setHeroDialogOpen] = useState(false);
   const [mapDialogOpen, setMapDialogOpen] = useState(false);
@@ -198,7 +235,13 @@ export const EventDetail = () => {
 
   const handleDeleteHero = async (heroId: string) => {
     try {
-      await deleteHero.mutateAsync(heroId);
+      await deleteHero.mutateAsync({
+        pathParams: {
+          guildId: guildId ?? "",
+          eventId: eventId ?? "",
+          heroId,
+        },
+      });
       toast.success(t("events.heroes.deleted"));
     } catch {
       toast.error(t("events.heroes.deleteError"));
@@ -326,7 +369,13 @@ export const EventDetail = () => {
             onConfirm={async () => {
               try {
                 await updateEvent.mutateAsync({
-                  endsAt: new Date().toISOString(),
+                  pathParams: {
+                    guildId: guildId ?? "",
+                    eventId: eventId ?? "",
+                  },
+                  data: {
+                    endsAt: new Date().toISOString(),
+                  },
                 });
                 toast.success(t("events.endSuccess"));
               } catch {
@@ -345,7 +394,13 @@ export const EventDetail = () => {
             onConfirm={async () => {
               try {
                 await updateEvent.mutateAsync({
-                  endsAt: null,
+                  pathParams: {
+                    guildId: guildId ?? "",
+                    eventId: eventId ?? "",
+                  },
+                  data: {
+                    endsAt: null as never,
+                  },
                 });
                 toast.success(t("events.resumeSuccess"));
               } catch {
@@ -366,7 +421,12 @@ export const EventDetail = () => {
             isPending={deleteEvent.isPending}
             onConfirm={async () => {
               try {
-                await deleteEvent.mutateAsync();
+                await deleteEvent.mutateAsync({
+                  pathParams: {
+                    guildId: guildId ?? "",
+                    eventId: eventId ?? "",
+                  },
+                });
                 toast.success(t("events.deleteSuccess"));
                 setDeleteDialogOpen(false);
                 navigate({
