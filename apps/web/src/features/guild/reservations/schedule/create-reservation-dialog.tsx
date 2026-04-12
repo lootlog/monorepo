@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +14,8 @@ import {
   DrawerTitle,
 } from "@lootlog/ui/components/drawer";
 import { Button } from "@lootlog/ui/components/button";
+import { Input } from "@lootlog/ui/components/input";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Textarea } from "@lootlog/ui/components/textarea";
 import { DatePicker } from "../date-picker";
 import { toast } from "sonner";
@@ -27,6 +29,33 @@ type CreateReservationDialogProps = {
   onOpenChange: (open: boolean) => void;
   reservationKey: string;
   currentUserId?: string;
+};
+
+const formatDateTimeLocalValue = (date: Date | undefined) => {
+  if (!date) {
+    return "";
+  }
+
+  const year = String(date.getFullYear()).padStart(4, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
+const parseDateTimeLocalValue = (value: string) => {
+  if (!value) {
+    return undefined;
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return undefined;
+  }
+
+  return date;
 };
 
 export const CreateReservationDialog: React.FC<
@@ -57,7 +86,7 @@ const CreateReservationDialogContent: React.FC<
   const { mutateAsync: createReservation, isPending: isCreating } =
     useCreateReservation();
 
-  const handleCreateReservation = useCallback(async () => {
+  const handleCreateReservation = async () => {
     if (!fromDate || !toDate) {
       toast.error(t("reservations.schedule.validation.timeRangeRequired"), {
         position: "bottom-right",
@@ -125,37 +154,69 @@ const CreateReservationDialogContent: React.FC<
         position: "bottom-right",
       });
     }
-  }, [
-    fromDate,
-    toDate,
-    reservationKey,
-    currentUserId,
-    createReservation,
-    comment,
-    onOpenChange,
-    t,
-  ]);
+  };
 
   const renderFormContent = () => (
-    <div className="space-y-4 px-3 mb-4 mt-3">
-      <DatePicker
-        label={t("reservations.schedule.dialog.startDate")}
-        placeholder={t("reservations.schedule.dialog.startDatePlaceholder")}
-        date={fromDate}
-        setDate={(date) => setFromDate(date)}
-        open={isFromPickerOpen}
-        setOpen={setIsFromPickerOpen}
-        onClear={() => setFromDate(undefined)}
-      />
-      <DatePicker
-        label={t("reservations.schedule.dialog.endDate")}
-        placeholder={t("reservations.schedule.dialog.endDatePlaceholder")}
-        date={toDate}
-        setDate={(date) => setToDate(date)}
-        open={isToPickerOpen}
-        setOpen={setIsToPickerOpen}
-        onClear={() => setToDate(undefined)}
-      />
+    <div className="space-y-4 px-3 py-3">
+      {isMobile ? (
+        <>
+          <div className="flex flex-col gap-1">
+            <label
+              className="text-xs font-semibold text-muted-foreground"
+              htmlFor="reservation-start-date"
+            >
+              {t("reservations.schedule.dialog.startDate")}
+            </label>
+            <Input
+              id="reservation-start-date"
+              type="datetime-local"
+              step={60}
+              value={formatDateTimeLocalValue(fromDate)}
+              onChange={(event) =>
+                setFromDate(parseDateTimeLocalValue(event.target.value))
+              }
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label
+              className="text-xs font-semibold text-muted-foreground"
+              htmlFor="reservation-end-date"
+            >
+              {t("reservations.schedule.dialog.endDate")}
+            </label>
+            <Input
+              id="reservation-end-date"
+              type="datetime-local"
+              step={60}
+              value={formatDateTimeLocalValue(toDate)}
+              onChange={(event) =>
+                setToDate(parseDateTimeLocalValue(event.target.value))
+              }
+            />
+          </div>
+        </>
+      ) : (
+        <>
+          <DatePicker
+            label={t("reservations.schedule.dialog.startDate")}
+            placeholder={t("reservations.schedule.dialog.startDatePlaceholder")}
+            date={fromDate}
+            setDate={(date) => setFromDate(date)}
+            open={isFromPickerOpen}
+            setOpen={setIsFromPickerOpen}
+            onClear={() => setFromDate(undefined)}
+          />
+          <DatePicker
+            label={t("reservations.schedule.dialog.endDate")}
+            placeholder={t("reservations.schedule.dialog.endDatePlaceholder")}
+            date={toDate}
+            setDate={(date) => setToDate(date)}
+            open={isToPickerOpen}
+            setOpen={setIsToPickerOpen}
+            onClear={() => setToDate(undefined)}
+          />
+        </>
+      )}
       <div className="space-y-2">
         <label
           className="text-xs font-semibold text-muted-foreground"
@@ -179,14 +240,20 @@ const CreateReservationDialogContent: React.FC<
     </div>
   );
 
-  const renderFooter = () => (
+  const renderFooter = (fullWidth = false) => (
     <>
-      <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+      <Button
+        variant="outline"
+        size="sm"
+        className={fullWidth ? "flex-1" : undefined}
+        onClick={() => onOpenChange(false)}
+      >
         {t("common.cancel")}
       </Button>
       <Button
         type="button"
         size="sm"
+        className={fullWidth ? "flex-1" : undefined}
         disabled={
           !fromDate ||
           !toDate ||
@@ -204,12 +271,16 @@ const CreateReservationDialogContent: React.FC<
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent>
-          <DrawerHeader>
+        <DrawerContent className="flex h-[85vh] max-h-[85vh] flex-col overflow-hidden p-0">
+          <DrawerHeader className="shrink-0 border-b px-4 py-3">
             <DrawerTitle>{t("reservations.schedule.dialog.title")}</DrawerTitle>
           </DrawerHeader>
-          {renderFormContent()}
-          <DrawerFooter>{renderFooter()}</DrawerFooter>
+          <ScrollArea className="min-h-0 flex-1">
+            {renderFormContent()}
+          </ScrollArea>
+          <DrawerFooter className="shrink-0 flex-row border-t">
+            {renderFooter(true)}
+          </DrawerFooter>
         </DrawerContent>
       </Drawer>
     );
