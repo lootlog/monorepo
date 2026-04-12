@@ -6,7 +6,9 @@ import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Card } from "@lootlog/ui/components/card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
-import { useLootStats, type Period } from "./hooks/use-loot-stats";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useLootsControllerGetLootStats } from "@/lib/api/generated/main/loots/loots";
+import type { LootsControllerGetLootStatsPeriod } from "@/lib/api/generated/main/model/loots-controller-get-loot-stats-period";
 import { useLootStatsSettings } from "./hooks/use-loot-stats-settings";
 import { LootOverviewCards } from "./components/loot-overview-cards";
 import { LootTimelineChart } from "./components/loot-timeline-chart";
@@ -15,17 +17,22 @@ import { LootTopNpcsChart } from "./components/loot-top-npcs-chart";
 import { LootTopContributors } from "./components/loot-top-contributors";
 import { LootTopItems } from "./components/loot-top-items";
 import { LootStatsFiltersMobile } from "./components/loot-stats-filters-mobile";
+import { buildLootStatsParams } from "./utils/build-stats-query-params";
 
 export const LootStats: React.FC = () => {
   const { t } = useTranslation();
+  const guildId = useGuildId();
   const { settings, setPeriod, setWorld, setExcludeColossus } =
     useLootStatsSettings();
   const isMobile = useIsMobile();
-  const { data, isLoading } = useLootStats({
-    period: settings.period,
-    world: settings.world ?? undefined,
-    excludeColossus: settings.excludeColossus,
-  });
+  const { data, isLoading } = useLootsControllerGetLootStats(
+    { guildId: guildId ?? "" },
+    buildLootStatsParams({
+      period: settings.period,
+      world: settings.world ?? undefined,
+      excludeColossus: settings.excludeColossus,
+    }),
+  );
 
   if (!settings.world) {
     return (
@@ -70,7 +77,9 @@ export const LootStats: React.FC = () => {
               <div className="hidden md:flex items-center gap-2 flex-wrap gap-y-4">
                 <PeriodSelector
                   value={settings.period}
-                  onValueChange={(value) => setPeriod(value as Period)}
+                  onValueChange={(value) =>
+                    setPeriod(value as LootsControllerGetLootStatsPeriod)
+                  }
                   width="w-[180px]"
                   className="h-9"
                 />

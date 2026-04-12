@@ -3,10 +3,8 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useTranslation } from "react-i18next";
 import { Flame, Mountain, Shield, Sword } from "lucide-react";
 import { cn } from "@lootlog/ui/lib/utils";
-import type {
-  KillStatsOverview as KillStatsOverviewType,
-  NpcType,
-} from "../hooks/use-guild-kill-stats";
+import type { GuildKillStatsResponseDtoOutputOverview } from "@/lib/api/generated/main/model/guild-kill-stats-response-dto-output-overview";
+import type { NpcType } from "@/lib/api/generated/main/model/npc-type";
 
 const NPC_TYPE_CONFIG: Record<
   string,
@@ -46,7 +44,7 @@ const NPC_TYPE_CONFIG: Record<
 const NPC_TYPES_TO_DISPLAY: NpcType[] = ["TITAN", "COLOSSUS", "HERO", "ELITE2"];
 
 type NpcTypeStatsCardsProps = {
-  data?: KillStatsOverviewType;
+  data?: GuildKillStatsResponseDtoOutputOverview;
   isLoading?: boolean;
 };
 

@@ -20,8 +20,8 @@ import {
   SelectValue,
 } from "@lootlog/ui/components/select";
 import { WorldSwitcher } from "@/components/common/world-switcher";
+import type { NpcType } from "@/lib/api/generated/main/model/npc-type";
 import { TRACKABLE_NPC_TYPES } from "../constants";
-import type { NpcType } from "../hooks/use-guild-kill-stats";
 
 type NpcStatsFiltersMobileProps = {
   world: string | null;

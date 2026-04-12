@@ -28,10 +28,12 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
-import { useGuildKillStats, type NpcType } from "./hooks/use-guild-kill-stats";
+import { useKillsControllerGetGuildKillStats } from "@/lib/api/generated/main/kills/kills";
+import type { NpcType } from "@/lib/api/generated/main/model/npc-type";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { LevelFilters } from "./components/level-filters";
 import { StatsRankingFiltersMobile } from "./components/stats-ranking-filters-mobile";
+import { buildGuildKillStatsParams } from "./utils/build-stats-query-params";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -75,11 +77,14 @@ export const StatsRanking: React.FC = () => {
   } = useStatsSettings("ranking");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data, isLoading } = useGuildKillStats({
-    world: settings.world ?? undefined,
-    minLvl: debouncedMinLvl,
-    maxLvl: debouncedMaxLvl,
-  });
+  const { data, isLoading } = useKillsControllerGetGuildKillStats(
+    { guildId },
+    buildGuildKillStatsParams({
+      world: settings.world ?? undefined,
+      minLvl: debouncedMinLvl,
+      maxLvl: debouncedMaxLvl,
+    }),
+  );
 
   const handleWorldChange = (value: string | null) => {
     setWorld(value);

@@ -1,8 +1,16 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { MemberStatsPage } from "@/features/guild/stats/member-stats-page";
 import { MemberDetailPageSkeleton } from "@/features/guild/stats/member-detail-page-skeleton";
-import { memberKillsQueryOptions } from "@/features/guild/stats/hooks/use-member-kills";
+import {
+  buildMemberKillsParams,
+  DEFAULT_MEMBER_KILLS_LIMIT,
+} from "@/features/guild/stats/utils/build-stats-query-params";
 import { guildMembersQueryOptions } from "@/hooks/api/members/use-guild-members-query-options";
+import { getKillsControllerGetMemberKillsQueryOptions } from "@/lib/api/generated/main/kills/kills";
+import {
+  isRouteLoaderCancelledError,
+  throwNotFoundIfResponseMatches,
+} from "@/lib/router/route-errors";
 
 export const Route = createFileRoute(
   "/_authenticated/$guildId/stats/members/$memberId",
@@ -14,22 +22,38 @@ export const Route = createFileRoute(
       throw notFound({ throw: true });
     }
 
-    const [memberKills] = await Promise.all([
-      context.queryClient.ensureQueryData(
-        memberKillsQueryOptions(params.guildId, memberId, {}),
-      ),
-      context.queryClient.ensureQueryData(
-        guildMembersQueryOptions(params.guildId, {
-          includeInactive: true,
-        }),
-      ),
-    ]);
+    try {
+      const [memberKills] = await Promise.all([
+        context.queryClient.ensureQueryData(
+          getKillsControllerGetMemberKillsQueryOptions(
+            {
+              guildId: params.guildId,
+              memberId: params.memberId,
+            },
+            buildMemberKillsParams({
+              limit: DEFAULT_MEMBER_KILLS_LIMIT,
+            }),
+          ),
+        ),
+        context.queryClient.ensureQueryData(
+          guildMembersQueryOptions(params.guildId, {
+            includeInactive: true,
+          }),
+        ),
+      ]);
 
-    if (!memberKills.member) {
-      throw notFound({ throw: true });
+      if (!memberKills.member) {
+        throw notFound({ throw: true });
+      }
+
+      return null;
+    } catch (error) {
+      if (isRouteLoaderCancelledError(error)) {
+        return null;
+      }
+
+      throwNotFoundIfResponseMatches(error);
     }
-
-    return null;
   },
   component: MemberStatsPage,
   pendingComponent: MemberDetailPageSkeleton,

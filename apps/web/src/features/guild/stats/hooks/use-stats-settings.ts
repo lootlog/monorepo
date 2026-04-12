@@ -1,7 +1,7 @@
 import { useLocalStorage } from "usehooks-ts";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useDebounce } from "@/hooks/use-debounce";
-import type { NpcType } from "./use-guild-kill-stats";
+import type { NpcType } from "@/lib/api/generated/main/model/npc-type";
 
 type StatsSettingsPage =
   | "overview"

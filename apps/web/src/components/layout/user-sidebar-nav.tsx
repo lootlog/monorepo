@@ -48,10 +48,11 @@ export const UserSidebarNav = () => {
 
   const isCatTheme = theme.startsWith("cat-");
   const greeting = isCatTheme ? "🐱" : "👋";
+  const userName = session?.user?.name;
 
   const header = (
-    <span className="ml-3 w-full text-nowrap text-ellipsis overflow-hidden">
-      {t("common.greeting", { name: session?.user?.name })} {greeting}
+    <span className="ml-3 text-sm font-semibold text-nowrap text-ellipsis overflow-hidden">
+      {t("common.greeting", { name: userName })} {greeting}
     </span>
   );
 

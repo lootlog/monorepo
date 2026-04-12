@@ -19,7 +19,7 @@ export const UserSettingsLayout: React.FC = () => {
   ];
 
   return (
-    <div className="w-full h-full flex flex-col min-h-0 bg-background/50">
+    <div className="w-full h-full flex flex-col min-h-0">
       <HorizontalMenu
         items={navElements}
         basePath={ROUTE_SEGMENTS.user.base}

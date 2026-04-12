@@ -31,12 +31,14 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { useDebounce } from "@/hooks/use-debounce";
-import { useGuildTopNpcs, type TopNpc } from "./hooks/use-guild-top-npcs";
+import { useKillsControllerGetGuildTopNpcs } from "@/lib/api/generated/main/kills/kills";
+import type { GuildTopNpcsResponseDtoOutputTopNpcsItem } from "@/lib/api/generated/main/model/guild-top-npcs-response-dto-output-top-npcs-item";
+import type { NpcType } from "@/lib/api/generated/main/model/npc-type";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { TRACKABLE_NPC_TYPES } from "./constants";
 import { LevelFilters } from "./components/level-filters";
 import { NpcStatsFiltersMobile } from "./components/npc-stats-filters-mobile";
-import type { NpcType } from "./hooks/use-guild-kill-stats";
+import { buildGuildTopNpcsParams } from "./utils/build-stats-query-params";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -59,14 +61,17 @@ export const StatsNpcsList: React.FC = () => {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
 
-  const { data, isLoading } = useGuildTopNpcs({
-    limit: 100,
-    npcType: settings.npcType === "ALL" ? undefined : settings.npcType,
-    world: settings.world ?? undefined,
-    search: debouncedSearch || undefined,
-    minLvl: debouncedMinLvl,
-    maxLvl: debouncedMaxLvl,
-  });
+  const { data, isLoading } = useKillsControllerGetGuildTopNpcs(
+    { guildId },
+    buildGuildTopNpcsParams({
+      limit: 100,
+      npcType: settings.npcType === "ALL" ? undefined : settings.npcType,
+      world: settings.world ?? undefined,
+      search: debouncedSearch || undefined,
+      minLvl: debouncedMinLvl,
+      maxLvl: debouncedMaxLvl,
+    }),
+  );
 
   const topNpcs = data?.topNpcs ?? [];
   const total = topNpcs.length;
@@ -74,7 +79,7 @@ export const StatsNpcsList: React.FC = () => {
   const hasNext = cursor + ITEMS_PER_PAGE < total;
   const hasPrev = cursor > 0;
 
-  const handleRowClick = (npc: TopNpc) => {
+  const handleRowClick = (npc: GuildTopNpcsResponseDtoOutputTopNpcsItem) => {
     navigate({
       to: "/$guildId/stats/npcs/$npcId",
       params: { guildId, npcId: String(npc.npcId) },
@@ -280,7 +285,6 @@ export const StatsNpcsList: React.FC = () => {
                               </span>
                               <span className="text-xs text-muted-foreground">
                                 {npc.npcLvl}
-                                {npc.npcProf}
                               </span>
                             </div>
                           </div>

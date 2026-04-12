@@ -2,11 +2,11 @@ import { Card } from "@lootlog/ui/components/card";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useTranslation } from "react-i18next";
 import { ItemImage } from "@/components/tiles/item-image";
-import { ItemRarity } from "@/hooks/api/loots/use-loots";
-import type { TopItem } from "../hooks/use-loot-stats";
+import type { ItemRarity } from "@/hooks/api/loots/use-loots";
+import type { LootStatsResponseDtoOutputTopItemsItem } from "@/lib/api/generated/main/model/loot-stats-response-dto-output-top-items-item";
 
 type LootTopItemsProps = {
-  data?: TopItem[];
+  data?: LootStatsResponseDtoOutputTopItemsItem[];
   isLoading?: boolean;
 };
 
@@ -56,7 +56,7 @@ export const LootTopItems: React.FC<LootTopItemsProps> = ({
       <div className="space-y-2">
         {data.map((item) => (
           <div key={item.itemId} className="flex items-center gap-3">
-            <ItemImage rarity={ItemRarity.LEGENDARY} icon={item.icon} />
+            <ItemImage rarity={item.rarity as ItemRarity} icon={item.icon} />
             <span className="flex-1 truncate text-sm">{item.name}</span>
             <span className="text-muted-foreground tabular-nums text-sm">
               {item.count}x
