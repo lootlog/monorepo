@@ -139,6 +139,10 @@ export default defineConfig({
         replacement: path.resolve(__dirname, "./src/providers"),
       },
       { find: "@/store", replacement: path.resolve(__dirname, "./src/store") },
+      {
+        find: "@/themes",
+        replacement: path.resolve(__dirname, "./src/themes"),
+      },
       { find: "@/types", replacement: path.resolve(__dirname, "./src/types") },
       { find: "@/utils", replacement: path.resolve(__dirname, "./src/utils") },
     ],

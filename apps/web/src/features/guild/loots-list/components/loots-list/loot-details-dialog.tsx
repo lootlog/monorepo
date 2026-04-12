@@ -17,8 +17,6 @@ import { LootDetailsActions } from "@/features/guild/loots-list/components/loots
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { AlertCircle, Calendar, MapPin } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
-import { useTheme } from "@/hooks/context/use-theme";
-import { FrostOverlay } from "@/components/effects/rukia-frost";
 import { useSelectedLoot } from "@/hooks/use-selected-loot";
 import { useLootFromCache } from "@/hooks/use-loot-from-cache";
 import { useLoot } from "@/hooks/api/loots/use-loot";
@@ -27,6 +25,7 @@ import { useIsOwner } from "@/hooks/context/use-is-owner";
 import { Permission } from "@lootlog/types";
 import { LOOT_SHARE_COLOR_PALETTE } from "@/features/guild/loots-list/constants/loot-share-color-palette";
 import { useTranslation } from "react-i18next";
+import { ThemeSurfaceOverlay } from "@/themes";
 
 const MANAGE_LOOTS_PERMISSIONS = [Permission.LOOTLOG_MANAGE, Permission.ADMIN];
 
@@ -83,8 +82,6 @@ const LootDetailsContent: FC<LootDetailsContentProps> = ({
   const { t } = useTranslation();
   const date = timestampToDate(loot.createdAt);
   const isMobile = useIsMobile();
-  const { theme } = useTheme();
-  const isRukiaTheme = theme === "rukia";
   const { playerColorMap, itemOwnerMap } = computeLootMaps(loot);
 
   return (
@@ -96,7 +93,7 @@ const LootDetailsContent: FC<LootDetailsContentProps> = ({
         },
       )}
     >
-      {isRukiaTheme && <FrostOverlay subtle rounded="rounded-lg" />}
+      <ThemeSurfaceOverlay subtle rounded="rounded-lg" />
       <DialogHeader className="border-b border-border/50">
         <DialogTitle className="pb-4 flex flex-col items-start">
           <LootNpcs

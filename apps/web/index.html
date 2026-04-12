@@ -8,21 +8,7 @@
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
     <title>Lootlog.pl</title>
-    <script>
-      (function () {
-        const theme = localStorage.getItem("lootlog-theme") || "default";
-        const colorMode = localStorage.getItem("lootlog-color-mode") || "dark";
-        const root = document.documentElement;
-
-        root.classList.add(colorMode);
-        if (theme === "cat-random") {
-          const variants = ["cat-pink", "cat-purple", "cat-blue"];
-          root.classList.add(variants[Math.floor(Math.random() * 3)]);
-        } else if (theme !== "default") {
-          root.classList.add(theme);
-        }
-      })();
-    </script>
+    <script type="module" src="/src/themes/bootstrap.ts"></script>
   </head>
   <body class="overflow-hidden">
     <div id="root"></div>

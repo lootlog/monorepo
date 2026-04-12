@@ -1,7 +1,5 @@
 import { PageHeader } from "@/components/layout/page-header";
-import { FrozenButton } from "@/components/effects/rukia-frost";
 import { ROUTES } from "@/config/routes";
-import { useTheme } from "@/hooks/context/use-theme";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { SidebarTrigger } from "@lootlog/ui/components/sidebar";
@@ -10,6 +8,7 @@ import { ArrowLeft } from "lucide-react";
 import { useState, type FC, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { AnimatePresence, motion } from "framer-motion";
+import { ThemeInteractiveFrame } from "@/themes";
 
 type UserShellProps = {
   children: ReactNode;
@@ -18,9 +17,7 @@ type UserShellProps = {
 export const UserShell: FC<UserShellProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { theme } = useTheme();
   const { t } = useTranslation();
-  const isRukiaTheme = theme === "rukia";
   const [hoveredButton, setHoveredButton] = useState<string | null>(null);
 
   const getNavigationInfo = () => {
@@ -215,23 +212,10 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
                   onMouseEnter={() => setHoveredButton("back")}
                   onMouseLeave={() => setHoveredButton(null)}
                 >
-                  {isRukiaTheme ? (
-                    <FrozenButton
-                      isHovered={hoveredButton === "back"}
-                      isActive={false}
-                    >
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          navigate({ to: navigationInfo.backPath as string })
-                        }
-                        className="h-8 w-8 p-1 rounded-full hover:bg-muted/50 transition-colors"
-                      >
-                        <ArrowLeft className="h-4 w-4" />
-                      </Button>
-                    </FrozenButton>
-                  ) : (
+                  <ThemeInteractiveFrame
+                    isHovered={hoveredButton === "back"}
+                    isActive={false}
+                  >
                     <Button
                       variant="ghost"
                       size="sm"
@@ -242,7 +226,7 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
                     >
                       <ArrowLeft className="h-4 w-4" />
                     </Button>
-                  )}
+                  </ThemeInteractiveFrame>
                 </div>
               )}
             </div>
@@ -268,24 +252,10 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
                           }
                           onMouseLeave={() => setHoveredButton(null)}
                         >
-                          {isRukiaTheme ? (
-                            <FrozenButton
-                              isHovered={hoveredButton === `crumb-${index}`}
-                              isActive={false}
-                            >
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  navigate({
-                                    to: crumb.path as string,
-                                  })
-                                }
-                                className="text-xs text-muted-foreground/70 hover:text-foreground transition-colors duration-200 whitespace-nowrap cursor-pointer"
-                              >
-                                {crumb.label}
-                              </button>
-                            </FrozenButton>
-                          ) : (
+                          <ThemeInteractiveFrame
+                            isHovered={hoveredButton === `crumb-${index}`}
+                            isActive={false}
+                          >
                             <button
                               type="button"
                               onClick={() =>
@@ -297,7 +267,7 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
                             >
                               {crumb.label}
                             </button>
-                          )}
+                          </ThemeInteractiveFrame>
                         </div>
                       ) : (
                         <span className="truncate text-sm font-bold text-foreground">

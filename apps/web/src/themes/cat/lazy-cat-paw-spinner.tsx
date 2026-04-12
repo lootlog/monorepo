@@ -10,14 +10,12 @@ const CatPawSpinner = lazy(() =>
 export const LazyCatPawSpinner = ({ className }: { className?: string }) => {
   return (
     <Suspense
-      fallback={
-        <div
-          className={cn(
-            "size-14 animate-spin rounded-full border-2 border-current border-t-transparent",
-            className,
-          )}
-        />
-      }
+      fallback=<div
+        className={cn(
+          "size-14 animate-spin rounded-full border-2 border-current border-t-transparent",
+          className,
+        )}
+      />
     >
       <CatPawSpinner className={className} />
     </Suspense>

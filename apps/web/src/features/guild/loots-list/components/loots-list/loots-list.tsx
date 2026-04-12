@@ -15,8 +15,7 @@ import { Frown } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { useRef, type FC } from "react";
 import { useTranslation } from "react-i18next";
-import { useTheme } from "@/hooks/context/use-theme";
-import { CatEmptyStateIcon } from "@/components/ui/cat-empty-state-icon";
+import { ThemeEmptyStateIcon, useThemedKey } from "@/themes";
 
 const LOOTS_PAGE_LIMIT = 20;
 const GRID_COLUMNS = 2;
@@ -54,8 +53,7 @@ const useStableLootCollections = (pages: Loot[][] | undefined) => {
 
 export const LootsList: FC = () => {
   const { t } = useTranslation();
-  const { theme } = useTheme();
-  const isCatTheme = theme.startsWith("cat-");
+  const themedKey = useThemedKey();
   const {
     data: loots,
     fetchNextPage,
@@ -120,17 +118,12 @@ export const LootsList: FC = () => {
   if (!world) {
     return (
       <div className="flex flex-col justify-center gap-8 items-center flex-1 text-muted-foreground">
-        {isCatTheme ? (
-          <CatEmptyStateIcon className="w-[72px] h-[72px] text-muted-foreground/50" />
-        ) : (
-          <Frown size="72" className="text-muted-foreground/50" />
-        )}
+        <ThemeEmptyStateIcon
+          className="w-[72px] h-[72px] text-muted-foreground/50"
+          fallback=<Frown size="72" className="text-muted-foreground/50" />
+        />
         <span className="font-semibold text-foreground">
-          {t(
-            isCatTheme
-              ? "loots.list.noWorldSelectedCat"
-              : "loots.list.noWorldSelected",
-          )}
+          {t(themedKey("loots.list.noWorldSelected"))}
         </span>
       </div>
     );
@@ -139,13 +132,12 @@ export const LootsList: FC = () => {
   if (!isLoading && !hasLoots) {
     return (
       <div className="flex flex-col justify-center gap-8 items-center flex-1 text-muted-foreground">
-        {isCatTheme ? (
-          <CatEmptyStateIcon className="w-[72px] h-[72px] text-muted-foreground/50" />
-        ) : (
-          <Frown size="72" className="text-muted-foreground/50" />
-        )}
+        <ThemeEmptyStateIcon
+          className="w-[72px] h-[72px] text-muted-foreground/50"
+          fallback=<Frown size="72" className="text-muted-foreground/50" />
+        />
         <span className="font-semibold text-foreground">
-          {t(isCatTheme ? "loots.list.emptyCat" : "loots.list.empty")}
+          {t(themedKey("loots.list.empty"))}
         </span>
       </div>
     );
@@ -202,19 +194,13 @@ export const LootsList: FC = () => {
                       <div className="relative flex items-center justify-center gap-3 rounded-xl border border-border/50 bg-card/30 backdrop-blur-md h-16">
                         <Spinner className="h-5 w-5 text-primary" />
                         <span className="text-sm text-muted-foreground font-medium">
-                          {t(
-                            isCatTheme
-                              ? "loots.list.loadingMoreCat"
-                              : "loots.list.loadingMore",
-                          )}
+                          {t(themedKey("loots.list.loadingMore"))}
                         </span>
                       </div>
                     ) : (
                       <div className="flex items-center justify-center rounded-xl border border-border/50 bg-card/30 backdrop-blur-md h-16">
                         <span className="text-xs text-muted-foreground">
-                          {t(
-                            isCatTheme ? "loots.list.endCat" : "loots.list.end",
-                          )}
+                          {t(themedKey("loots.list.end"))}
                         </span>
                       </div>
                     )
@@ -263,19 +249,13 @@ export const LootsList: FC = () => {
                       <div className="relative flex items-center justify-center gap-3 rounded-xl border border-border/50 bg-card/30 backdrop-blur-md h-16">
                         <Spinner className="h-5 w-5 text-primary" />
                         <span className="text-sm text-muted-foreground font-medium">
-                          {t(
-                            isCatTheme
-                              ? "loots.list.loadingMoreCat"
-                              : "loots.list.loadingMore",
-                          )}
+                          {t(themedKey("loots.list.loadingMore"))}
                         </span>
                       </div>
                     ) : (
                       <div className="flex items-center justify-center rounded-xl border border-border/50 bg-card/30 backdrop-blur-md h-16">
                         <span className="text-xs text-muted-foreground">
-                          {t(
-                            isCatTheme ? "loots.list.endCat" : "loots.list.end",
-                          )}
+                          {t(themedKey("loots.list.end"))}
                         </span>
                       </div>
                     )

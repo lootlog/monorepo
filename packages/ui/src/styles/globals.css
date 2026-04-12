@@ -1389,6 +1389,12 @@ body {
   background-color: oklch(0.1 0.025 230);
   filter: brightness(0.15);
   z-index: -1;
+  opacity: 0;
+  transition: opacity 0.8s ease-out;
+}
+
+.dark.rukia.theme-ready body::before {
+  opacity: 1;
 }
 
 .dark.rukia body::after {
@@ -1405,6 +1411,282 @@ body {
   );
   z-index: -1;
   pointer-events: none;
+}
+
+/* ===== RIAS GREMORY: Crimson red / dark purple / blue eye accents ===== */
+.dark.rias {
+  --background: oklch(0.12 0.03 350);
+  --foreground: oklch(0.95 0.01 350);
+  --card: oklch(0.15 0.035 350);
+  --card-foreground: oklch(0.95 0.01 350);
+  --popover: oklch(0.14 0.03 350);
+  --popover-foreground: oklch(0.95 0.01 350);
+  --primary: oklch(0.52 0.22 15);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.2 0.05 330);
+  --secondary-foreground: oklch(0.95 0.01 350);
+  --muted: oklch(0.22 0.04 340);
+  --muted-foreground: oklch(0.68 0.03 350);
+  --accent: oklch(0.4 0.12 330);
+  --accent-foreground: oklch(0.98 0 0);
+  --destructive: oklch(0.55 0.2 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.28 0.05 345);
+  --input: oklch(0.25 0.05 345);
+  --ring: oklch(0.55 0.12 240);
+  --chart-1: oklch(0.52 0.22 15);
+  --chart-2: oklch(0.4 0.12 330);
+  --chart-3: oklch(0.55 0.12 240);
+  --chart-4: oklch(0.6 0.18 10);
+  --chart-5: oklch(0.35 0.1 350);
+  --sidebar: oklch(0.1 0.025 350);
+  --filters-sidebar: var(--sidebar);
+  --sidebar-foreground: oklch(0.95 0.01 350);
+  --sidebar-primary: oklch(0.52 0.22 15);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.2 0.04 340);
+  --sidebar-accent-foreground: oklch(0.95 0.01 350);
+  --sidebar-border: oklch(0.28 0.05 345);
+  --sidebar-ring: oklch(0.55 0.12 240);
+}
+
+.dark.rias body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("/themes/rias-bg.png");
+  background-size: cover;
+  background-attachment: fixed;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: oklch(0.12 0.03 350);
+  filter: brightness(0.15);
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.8s ease-out;
+}
+
+.dark.rias.theme-ready body::before {
+  opacity: 1;
+}
+
+.dark.rias body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(
+      ellipse at 0% 0%,
+      oklch(0.2 0.08 15 / 0.08) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 100% 100%,
+      oklch(0.2 0.08 330 / 0.06) 0%,
+      transparent 50%
+    );
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* ===== RIAS GREMORY: Custom Effects ===== */
+
+/* Selection */
+.dark.rias ::selection {
+  background: oklch(0.45 0.18 15 / 0.4);
+  color: oklch(0.98 0.01 350);
+}
+
+/* Scrollbar */
+.dark.rias .custom-scrollbar {
+  scrollbar-color: oklch(0.4 0.15 15 / 0.4) transparent;
+}
+
+.dark.rias .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: oklch(0.4 0.15 15 / 0.35);
+}
+
+.dark.rias .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: oklch(0.5 0.2 15 / 0.5);
+  box-shadow: 0 0 8px oklch(0.5 0.2 15 / 0.3);
+}
+
+/* Skeleton shimmer */
+.dark.rias [data-slot="skeleton"] {
+  animation: rias-shimmer 2.5s ease-in-out infinite;
+  background: linear-gradient(
+    90deg,
+    oklch(0.15 0.035 350) 0%,
+    oklch(0.2 0.05 15) 40%,
+    oklch(0.25 0.06 15) 50%,
+    oklch(0.2 0.05 15) 60%,
+    oklch(0.15 0.035 350) 100%
+  );
+  background-size: 200% 100%;
+}
+
+@keyframes rias-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Input focus glow */
+.dark.rias input:focus-visible,
+.dark.rias textarea:focus-visible,
+.dark.rias select:focus-visible,
+.dark.rias [role="combobox"]:focus-visible {
+  box-shadow:
+    0 0 0 2px oklch(0.52 0.22 15 / 0.25),
+    0 0 14px oklch(0.45 0.18 15 / 0.2);
+}
+
+/* Tooltip & Popover */
+.dark.rias [data-slot="tooltip-content"] {
+  border-color: oklch(0.4 0.12 15 / 0.5);
+  box-shadow:
+    0 4px 16px oklch(0.3 0.1 15 / 0.25),
+    inset 0 0 0 1px oklch(0.45 0.12 15 / 0.12);
+}
+
+.dark.rias [data-slot="popover-content"] {
+  border-color: oklch(0.4 0.12 15 / 0.5);
+  box-shadow:
+    0 8px 28px oklch(0.3 0.1 15 / 0.3),
+    inset 0 0 0 1px oklch(0.45 0.12 15 / 0.1);
+}
+
+/* ===== RUKIA THEME: Custom Effects ===== */
+
+/* Selection */
+.rukia ::selection {
+  background: oklch(0.75 0.1 230 / 0.35);
+  color: oklch(0.15 0.02 230);
+}
+
+.dark.rukia ::selection {
+  background: oklch(0.55 0.12 220 / 0.4);
+  color: oklch(0.98 0.01 230);
+}
+
+/* Scrollbar */
+.rukia .custom-scrollbar {
+  scrollbar-color: oklch(0.75 0.08 230 / 0.5) transparent;
+}
+
+.rukia .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: oklch(0.75 0.08 230 / 0.4);
+}
+
+.rukia .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: oklch(0.7 0.1 220 / 0.6);
+  box-shadow: 0 0 6px oklch(0.7 0.12 220 / 0.3);
+}
+
+.dark.rukia .custom-scrollbar {
+  scrollbar-color: oklch(0.5 0.1 220 / 0.4) transparent;
+}
+
+.dark.rukia .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: oklch(0.5 0.1 220 / 0.35);
+}
+
+.dark.rukia .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: oklch(0.6 0.12 220 / 0.5);
+  box-shadow: 0 0 8px oklch(0.6 0.14 220 / 0.3);
+}
+
+/* Skeleton shimmer */
+@keyframes rukia-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.rukia [data-slot="skeleton"] {
+  animation: rukia-shimmer 2.5s ease-in-out infinite;
+  background: linear-gradient(
+    90deg,
+    oklch(0.94 0.015 230) 0%,
+    oklch(0.97 0.01 230) 40%,
+    oklch(0.99 0.005 230) 50%,
+    oklch(0.97 0.01 230) 60%,
+    oklch(0.94 0.015 230) 100%
+  );
+  background-size: 200% 100%;
+}
+
+.dark.rukia [data-slot="skeleton"] {
+  animation: rukia-shimmer 2.5s ease-in-out infinite;
+  background: linear-gradient(
+    90deg,
+    oklch(0.18 0.03 230) 0%,
+    oklch(0.22 0.04 220) 40%,
+    oklch(0.28 0.05 220) 50%,
+    oklch(0.22 0.04 220) 60%,
+    oklch(0.18 0.03 230) 100%
+  );
+  background-size: 200% 100%;
+}
+
+/* Input focus glow */
+.rukia input:focus-visible,
+.rukia textarea:focus-visible,
+.rukia select:focus-visible,
+.rukia [role="combobox"]:focus-visible {
+  box-shadow:
+    0 0 0 2px oklch(0.55 0.12 230 / 0.25),
+    0 0 12px oklch(0.7 0.1 220 / 0.15);
+}
+
+.dark.rukia input:focus-visible,
+.dark.rukia textarea:focus-visible,
+.dark.rukia select:focus-visible,
+.dark.rukia [role="combobox"]:focus-visible {
+  box-shadow:
+    0 0 0 2px oklch(0.72 0.14 220 / 0.3),
+    0 0 16px oklch(0.6 0.12 220 / 0.2);
+}
+
+/* Tooltip & Popover frost border */
+.rukia [data-slot="tooltip-content"] {
+  border-color: oklch(0.75 0.08 230 / 0.4);
+  box-shadow:
+    0 4px 12px oklch(0.55 0.1 230 / 0.1),
+    inset 0 0 0 1px oklch(0.85 0.06 230 / 0.15);
+}
+
+.dark.rukia [data-slot="tooltip-content"] {
+  border-color: oklch(0.45 0.08 220 / 0.5);
+  box-shadow:
+    0 4px 16px oklch(0.3 0.08 220 / 0.25),
+    inset 0 0 0 1px oklch(0.5 0.1 220 / 0.15);
+}
+
+.rukia [data-slot="popover-content"] {
+  border-color: oklch(0.75 0.08 230 / 0.4);
+  box-shadow:
+    0 8px 24px oklch(0.55 0.1 230 / 0.1),
+    inset 0 0 0 1px oklch(0.85 0.06 230 / 0.12);
+}
+
+.dark.rukia [data-slot="popover-content"] {
+  border-color: oklch(0.45 0.08 220 / 0.5);
+  box-shadow:
+    0 8px 28px oklch(0.3 0.08 220 / 0.3),
+    inset 0 0 0 1px oklch(0.5 0.1 220 / 0.12);
 }
 
 /* ===== CAT THEME: Różowy Kociak ===== */

@@ -9,37 +9,24 @@ import {
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { useUserPreferences } from "@/hooks/api/user/use-user-preferences";
 import { useUpdateUserPreferences } from "@/hooks/api/user/use-update-user-preferences";
-
-type Theme =
-  | "default"
-  | "cyberpunk"
-  | "pastel"
-  | "fantasy"
-  | "shonen"
-  | "onepiece"
-  | "anime"
-  | "waguri"
-  | "goth"
-  | "halloween"
-  | "realmadrid"
-  | "realmadrid-3rd"
-  | "barcelona"
-  | "rukia"
-  | "cat-pink"
-  | "cat-purple"
-  | "cat-blue"
-  | "cat-random";
-
-const CAT_VARIANTS = ["cat-pink", "cat-purple", "cat-blue"] as const;
-
-const getRandomCatVariant = (): (typeof CAT_VARIANTS)[number] =>
-  CAT_VARIANTS[Math.floor(Math.random() * CAT_VARIANTS.length)] ?? "cat-pink";
-type ColorMode = "light" | "dark";
+import {
+  applyThemeClassToRoot,
+  COLOR_MODE_STORAGE_KEY,
+  DEFAULT_COLOR_MODE,
+  DEFAULT_THEME_ID,
+  getRootResolvedTheme,
+  resolveThemeClass,
+  THEME_STORAGE_KEY,
+  type ColorMode,
+  type ResolvedThemeId,
+  type ThemeId,
+} from "@/themes";
 
 interface ThemeContextType {
-  theme: Theme;
+  theme: ThemeId;
+  resolvedTheme: ResolvedThemeId;
   colorMode: ColorMode;
-  setTheme: (theme: Theme) => void;
+  setTheme: (theme: ThemeId) => void;
   setColorMode: (mode: ColorMode) => void;
   isLoading: boolean;
 }
@@ -47,9 +34,6 @@ interface ThemeContextType {
 export const ThemeContext = createContext<ThemeContextType | undefined>(
   undefined,
 );
-
-const THEME_STORAGE_KEY = "lootlog-theme";
-const COLOR_MODE_STORAGE_KEY = "lootlog-color-mode";
 
 interface ThemeProviderProps {
   children: ReactNode;
@@ -59,22 +43,30 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
   const { data: preferences, isLoading } = useUserPreferences();
   const updatePreferences = useUpdateUserPreferences();
 
-  const [localTheme, setLocalTheme] = useState<Theme>(() => {
-    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) as Theme;
-    return savedTheme ?? "default";
+  const [localTheme, setLocalTheme] = useState<ThemeId>(() => {
+    const savedTheme = localStorage.getItem(
+      THEME_STORAGE_KEY,
+    ) as ThemeId | null;
+    return savedTheme ?? DEFAULT_THEME_ID;
   });
   const [localColorMode, setLocalColorMode] = useState<ColorMode>(() => {
     const savedColorMode = localStorage.getItem(
       COLOR_MODE_STORAGE_KEY,
-    ) as ColorMode;
-    return savedColorMode ?? "dark";
+    ) as ColorMode | null;
+    return savedColorMode ?? DEFAULT_COLOR_MODE;
   });
   const [hasThemeOverride, setHasThemeOverride] = useState(false);
   const [hasColorModeOverride, setHasColorModeOverride] = useState(false);
+  const [resolvedTheme, setResolvedTheme] = useState<ResolvedThemeId>(() =>
+    resolveThemeClass(
+      localTheme,
+      getRootResolvedTheme(document.documentElement),
+    ),
+  );
 
   const theme =
     !isLoading && preferences?.theme && !hasThemeOverride
-      ? (preferences.theme as Theme)
+      ? (preferences.theme as ThemeId)
       : localTheme;
   const colorMode =
     !isLoading && preferences?.colorMode && !hasColorModeOverride
@@ -90,40 +82,23 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
   }, [colorMode]);
 
   useLayoutEffect(() => {
-    const root = document.documentElement;
-
-    root.classList.remove(
-      "light",
-      "dark",
-      "default",
-      "cyberpunk",
-      "pastel",
-      "fantasy",
-      "shonen",
-      "onepiece",
-      "anime",
-      "waguri",
-      "goth",
-      "halloween",
-      "realmadrid",
-      "realmadrid-3rd",
-      "barcelona",
-      "rukia",
-      "cat-pink",
-      "cat-purple",
-      "cat-blue",
+    setResolvedTheme((currentResolvedTheme) =>
+      resolveThemeClass(
+        theme,
+        getRootResolvedTheme(document.documentElement) ?? currentResolvedTheme,
+      ),
     );
+  }, [theme]);
 
-    root.classList.add(colorMode);
-    if (theme === "cat-random") {
-      const existing = CAT_VARIANTS.find((v) => root.classList.contains(v));
-      root.classList.add(existing ?? getRandomCatVariant());
-    } else if (theme !== "default") {
-      root.classList.add(theme);
-    }
-  }, [theme, colorMode]);
+  useLayoutEffect(() => {
+    applyThemeClassToRoot({
+      root: document.documentElement,
+      colorMode,
+      resolvedTheme,
+    });
+  }, [colorMode, resolvedTheme]);
 
-  const setTheme = (newTheme: Theme) => {
+  const setTheme = (newTheme: ThemeId) => {
     setHasThemeOverride(true);
     setLocalTheme(newTheme);
     updatePreferences.mutate({ theme: newTheme });
@@ -137,7 +112,14 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
 
   return (
     <ThemeContext.Provider
-      value={{ theme, colorMode, setTheme, setColorMode, isLoading }}
+      value={{
+        theme,
+        resolvedTheme,
+        colorMode,
+        setTheme,
+        setColorMode,
+        isLoading,
+      }}
     >
       <NextThemesProvider
         attribute="class"
