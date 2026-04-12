@@ -1,6 +1,5 @@
-import { cn } from "@/utils/cn";
 import { motion } from "framer-motion";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 // SVG Frost Filter - creates organic ice texture
 export const FrostFilter = () => (
@@ -210,13 +209,13 @@ export const buttonSnowflakePositions = [
 // Wind streaks that sweep across the screen
 const WindStreaks = () => {
   const streaks = [
-    { y: "15%", duration: 8, delay: 0, width: 200, opacity: 0.08 },
-    { y: "35%", duration: 12, delay: 3, width: 300, opacity: 0.06 },
-    { y: "55%", duration: 10, delay: 6, width: 250, opacity: 0.07 },
-    { y: "75%", duration: 14, delay: 2, width: 180, opacity: 0.05 },
-    { y: "25%", duration: 9, delay: 8, width: 220, opacity: 0.06 },
-    { y: "65%", duration: 11, delay: 5, width: 280, opacity: 0.07 },
-    { y: "85%", duration: 13, delay: 1, width: 160, opacity: 0.05 },
+    { y: "15%", duration: 8, delay: 0, width: 200, opacity: 0.06 },
+    { y: "35%", duration: 12, delay: 3, width: 300, opacity: 0.045 },
+    { y: "55%", duration: 10, delay: 6, width: 250, opacity: 0.05 },
+    { y: "75%", duration: 14, delay: 2, width: 180, opacity: 0.04 },
+    { y: "25%", duration: 9, delay: 8, width: 220, opacity: 0.045 },
+    { y: "65%", duration: 11, delay: 5, width: 280, opacity: 0.05 },
+    { y: "85%", duration: 13, delay: 1, width: 160, opacity: 0.04 },
   ];
 
   return (
@@ -260,9 +259,9 @@ const WindStreaks = () => {
 // Frost mist that drifts across the bottom
 const FrostMist = () => {
   const mistLayers = [
-    { y: "92%", duration: 40, delay: 0, opacity: 0.04 },
-    { y: "95%", duration: 35, delay: 10, opacity: 0.06 },
-    { y: "88%", duration: 45, delay: 20, opacity: 0.03 },
+    { y: "92%", duration: 40, delay: 0, opacity: 0.03 },
+    { y: "95%", duration: 35, delay: 10, opacity: 0.045 },
+    { y: "88%", duration: 45, delay: 20, opacity: 0.02 },
   ];
 
   return (
@@ -331,12 +330,12 @@ const IceSparkles = () => {
             top: `${sparkle.y}%`,
             width: sparkle.size,
             height: sparkle.size,
-            background: "rgba(255, 255, 255, 0.8)",
+            background: "rgba(255, 255, 255, 0.6)",
             boxShadow:
-              "0 0 6px rgba(200, 230, 255, 0.8), 0 0 12px rgba(180, 220, 255, 0.4)",
+              "0 0 5px rgba(200, 230, 255, 0.6), 0 0 10px rgba(180, 220, 255, 0.3)",
           }}
           animate={{
-            opacity: [0, 0.8, 0],
+            opacity: [0, 0.6, 0],
             scale: [0.5, 1.2, 0.5],
           }}
           transition={{
@@ -351,9 +350,87 @@ const IceSparkles = () => {
   );
 };
 
+// Randomly generated frost patches along screen edges — irregular positions and sizes
+const generateFrostPatches = () => {
+  const patches: {
+    x: string;
+    y: string;
+    w: number;
+    h: number;
+    anchorX: string;
+    anchorY: string;
+    opacity: number;
+    scaleX: number;
+    scaleY: number;
+  }[] = [];
+
+  const edges = [
+    { side: "top", axis: "x" },
+    { side: "bottom", axis: "x" },
+    { side: "left", axis: "y" },
+    { side: "right", axis: "y" },
+  ] as const;
+
+  for (const edge of edges) {
+    const count = 2 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < count; i++) {
+      const pos = Math.random() * 100;
+      const size = 80 + Math.random() * 160;
+      const opacity = 0.08 + Math.random() * 0.1;
+      const stretch = 0.5 + Math.random() * 1;
+
+      const isX = edge.axis === "x";
+      const isStart = edge.side === "top" || edge.side === "left";
+
+      patches.push({
+        x: isX ? `${pos}%` : isStart ? "0px" : "auto",
+        y: isX ? (isStart ? "0px" : "auto") : `${pos}%`,
+        w: isX ? size * stretch : size,
+        h: isX ? size : size * stretch,
+        anchorX: isX ? "50%" : isStart ? "0%" : "100%",
+        anchorY: isX ? (isStart ? "0%" : "100%") : "50%",
+        opacity,
+        scaleX: isX ? stretch : 1,
+        scaleY: isX ? 1 : stretch,
+      });
+    }
+  }
+
+  return patches;
+};
+
+const frostPatchConfigs = generateFrostPatches();
+
+const FrostPatches = () => (
+  <>
+    {frostPatchConfigs.map((patch, i) => (
+      <div
+        key={i}
+        className="absolute pointer-events-none"
+        style={{
+          left: patch.x === "auto" ? undefined : patch.x,
+          right: patch.x === "auto" ? "0px" : undefined,
+          top: patch.y === "auto" ? undefined : patch.y,
+          bottom: patch.y === "auto" ? "0px" : undefined,
+          width: patch.w,
+          height: patch.h,
+          transform: `translate(-50%, -50%) scale(${patch.scaleX}, ${patch.scaleY})`,
+          background: `radial-gradient(ellipse at ${patch.anchorX} ${patch.anchorY}, rgba(220, 240, 255, ${patch.opacity}) 0%, transparent 60%)`,
+          filter: "blur(20px)",
+        }}
+      />
+    ))}
+  </>
+);
+
 // Global ambient frost overlay for the entire app
 export const GlobalFrostOverlay = () => (
-  <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+  <motion.div
+    className="fixed inset-0 pointer-events-none z-50 overflow-hidden"
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    transition={{ duration: 2, ease: "easeOut" }}
+  >
     <FrostFilter />
 
     {/* Subtle frost texture on edges */}
@@ -361,42 +438,15 @@ export const GlobalFrostOverlay = () => (
       className="absolute inset-0"
       style={{
         background:
-          "linear-gradient(180deg, rgba(200, 230, 255, 0.08) 0%, transparent 5%), " +
-          "linear-gradient(0deg, rgba(200, 230, 255, 0.08) 0%, transparent 5%), " +
-          "linear-gradient(90deg, rgba(200, 230, 255, 0.06) 0%, transparent 3%), " +
-          "linear-gradient(270deg, rgba(200, 230, 255, 0.06) 0%, transparent 3%)",
+          "linear-gradient(180deg, rgba(200, 230, 255, 0.06) 0%, transparent 5%), " +
+          "linear-gradient(0deg, rgba(200, 230, 255, 0.06) 0%, transparent 5%), " +
+          "linear-gradient(90deg, rgba(200, 230, 255, 0.04) 0%, transparent 3%), " +
+          "linear-gradient(270deg, rgba(200, 230, 255, 0.04) 0%, transparent 3%)",
       }}
     />
 
-    {/* Corner frost accumulation */}
-    <div
-      className="absolute top-0 left-0 w-32 h-32"
-      style={{
-        background:
-          "radial-gradient(ellipse at 0% 0%, rgba(220, 240, 255, 0.12) 0%, transparent 70%)",
-      }}
-    />
-    <div
-      className="absolute top-0 right-0 w-32 h-32"
-      style={{
-        background:
-          "radial-gradient(ellipse at 100% 0%, rgba(220, 240, 255, 0.12) 0%, transparent 70%)",
-      }}
-    />
-    <div
-      className="absolute bottom-0 left-0 w-32 h-32"
-      style={{
-        background:
-          "radial-gradient(ellipse at 0% 100%, rgba(220, 240, 255, 0.10) 0%, transparent 70%)",
-      }}
-    />
-    <div
-      className="absolute bottom-0 right-0 w-32 h-32"
-      style={{
-        background:
-          "radial-gradient(ellipse at 100% 100%, rgba(220, 240, 255, 0.10) 0%, transparent 70%)",
-      }}
-    />
+    {/* Irregular frost accumulation patches along edges */}
+    <FrostPatches />
 
     {/* Wind streaks */}
     <WindStreaks />
@@ -409,7 +459,7 @@ export const GlobalFrostOverlay = () => (
 
     {/* Floating snowflakes across the screen */}
     <FloatingSnowflakes />
-  </div>
+  </motion.div>
 );
 
 // Single falling snowflake with dynamic behavior
@@ -561,10 +611,10 @@ const generateSnowflakes = () => {
       rotationSpeed: 15 + Math.random() * 25,
       rotateDirection: Math.random() > 0.5 ? 360 : -360,
       opacity: isTiny
-        ? 0.15 + Math.random() * 0.15
+        ? 0.1 + Math.random() * 0.1
         : isLarge
-          ? 0.2 + Math.random() * 0.15
-          : 0.18 + Math.random() * 0.12,
+          ? 0.15 + Math.random() * 0.1
+          : 0.12 + Math.random() * 0.08,
       type: (isTiny ? "dot" : Math.random() > 0.6 ? "detailed" : "simple") as
         | "simple"
         | "detailed"
@@ -588,33 +638,81 @@ const FloatingSnowflakes = () => {
   );
 };
 
+// Generate random crystal positions around a circle — stable per mount
+// Crystals stay within the avatar bounds to avoid overflow issues in narrow containers
+const generateCircleCrystals = (count: number, circleSize: number) =>
+  Array.from({ length: count }, (_, i) => {
+    const baseAngle = (i / count) * 360;
+    const jitter = (Math.random() - 0.5) * (360 / count) * 0.6;
+    const angle = baseAngle + jitter;
+    const rad = (angle * Math.PI) / 180;
+    const radiusJitter = 0.85 + Math.random() * 0.15;
+    const radius = (circleSize / 2) * radiusJitter;
+    const x = 50 + Math.cos(rad) * (radius / (circleSize / 100));
+    const y = 50 + Math.sin(rad) * (radius / (circleSize / 100));
+    const starSize = 4 + Math.random() * 4;
+    const rotation = Math.random() * 360;
+    const animDuration = 2 + Math.random() * 3;
+    const animDelay = Math.random() * 2;
+    return { x, y, starSize, rotation, angle, animDuration, animDelay };
+  });
+
+const frozenCircleCrystals = generateCircleCrystals(10, 44);
+
 // Frozen wrapper for circular elements (like avatars)
 export const FrozenCircle = ({
   children,
   isActive,
-  size = 48,
 }: {
   children: ReactNode;
   isActive: boolean;
-  size?: number;
 }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const isAnimating = isActive || isHovered;
+
   return (
-    <div className="relative">
-      {/* Ice ring */}
-      <div
-        className={cn(
-          "absolute inset-0 rounded-xl pointer-events-none opacity-0 transition-[opacity,box-shadow] duration-300 group-hover:opacity-100 group-hover:shadow-[inset_0_0_10px_2px_rgba(200,230,255,0.5),0_0_15px_3px_rgba(180,220,255,0.4)]",
-          isActive &&
-            "opacity-100 shadow-[inset_0_0_10px_2px_rgba(200,230,255,0.5),0_0_15px_3px_rgba(180,220,255,0.4)]",
-        )}
+    <div
+      className="relative"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Pulsing ice glow */}
+      <motion.div
+        className="absolute inset-0 rounded-xl pointer-events-none"
+        animate={
+          isAnimating
+            ? {
+                opacity: 1,
+                boxShadow: [
+                  "0 0 8px 2px rgba(180,220,255,0.3)",
+                  "0 0 16px 4px rgba(180,220,255,0.5)",
+                  "0 0 8px 2px rgba(180,220,255,0.3)",
+                ],
+              }
+            : {
+                opacity: 0,
+                boxShadow: "0 0 0px 0px rgba(180,220,255,0)",
+              }
+        }
+        transition={
+          isAnimating
+            ? {
+                opacity: { duration: 0.3 },
+                boxShadow: {
+                  duration: 2.5,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                },
+              }
+            : { opacity: { duration: 0.3 } }
+        }
       />
 
       {/* Frost overlay */}
-      <div
-        className={cn(
-          "absolute inset-0 rounded-xl pointer-events-none overflow-hidden opacity-0 transition-opacity duration-300 group-hover:opacity-100",
-          isActive && "opacity-100",
-        )}
+      <motion.div
+        className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
+        animate={{ opacity: isAnimating ? 1 : 0 }}
+        transition={{ duration: 0.3 }}
       >
         <div
           className="absolute inset-0"
@@ -623,40 +721,57 @@ export const FrozenCircle = ({
               "radial-gradient(circle, rgba(220, 240, 255, 0.3) 0%, rgba(200, 230, 255, 0.15) 50%, transparent 70%)",
           }}
         />
-      </div>
+      </motion.div>
 
-      {/* Ice crystals around */}
-      {[0, 45, 90, 135, 180, 225, 270, 315].map((angle, i) => {
-        const rad = (angle * Math.PI) / 180;
-        const radius = size / 2 + 4;
-        const x = 50 + Math.cos(rad) * (radius / (size / 100));
-        const y = 50 + Math.sin(rad) * (radius / (size / 100));
-        return (
-          <div
-            key={angle}
-            className={cn(
-              "absolute pointer-events-none opacity-0 scale-75 transition-[opacity,transform] duration-300 group-hover:opacity-80 group-hover:scale-100",
-              isActive && "opacity-80 scale-100",
-            )}
-            style={{
-              left: `${x}%`,
-              top: `${y}%`,
-              transform: `translate(-50%, -50%) rotate(${angle}deg)`,
-              transitionDelay: `${i * 40}ms`,
-            }}
+      {/* Ice crystals — randomly scattered, continuously animated */}
+      {frozenCircleCrystals.map((crystal, i) => (
+        <motion.div
+          key={i}
+          className="absolute pointer-events-none"
+          style={{
+            left: `${crystal.x}%`,
+            top: `${crystal.y}%`,
+          }}
+          animate={
+            isAnimating
+              ? {
+                  opacity: [0.5, 0.9, 0.5],
+                  scale: [0.8, 1.1, 0.8],
+                  rotate: [
+                    crystal.rotation,
+                    crystal.rotation + 180,
+                    crystal.rotation + 360,
+                  ],
+                }
+              : { opacity: 0, scale: 0.75 }
+          }
+          transition={
+            isAnimating
+              ? {
+                  duration: crystal.animDuration,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: crystal.animDelay,
+                }
+              : { duration: 0.3 }
+          }
+        >
+          <svg
+            width={crystal.starSize}
+            height={crystal.starSize}
+            viewBox="0 0 8 8"
+            style={{ transform: "translate(-50%, -50%)" }}
           >
-            <svg width="8" height="8" viewBox="0 0 8 8">
-              <path
-                d="M4 0 L5 3 L8 3 L5.5 5 L6.5 8 L4 6 L1.5 8 L2.5 5 L0 3 L3 3 Z"
-                fill="rgba(220, 240, 255, 0.7)"
-                style={{
-                  filter: "drop-shadow(0 0 1px rgba(180, 220, 255, 0.9))",
-                }}
-              />
-            </svg>
-          </div>
-        );
-      })}
+            <path
+              d="M4 0 L5 3 L8 3 L5.5 5 L6.5 8 L4 6 L1.5 8 L2.5 5 L0 3 L3 3 Z"
+              fill="rgba(220, 240, 255, 0.7)"
+              style={{
+                filter: "drop-shadow(0 0 2px rgba(180, 220, 255, 0.9))",
+              }}
+            />
+          </svg>
+        </motion.div>
+      ))}
 
       {/* Content */}
       <div className="relative z-10">{children}</div>
@@ -664,46 +779,15 @@ export const FrozenCircle = ({
   );
 };
 
-// Ice crystal positions for FrozenButton - reduced for performance (8 instead of 21)
-const frozenButtonCrystals = [
-  // Corners
-  { x: "5%", y: "15%", size: 7, rotation: 0, delay: 0.05 },
-  { x: "95%", y: "20%", size: 8, rotation: 30, delay: 0.08 },
-  { x: "8%", y: "85%", size: 6, rotation: 15, delay: 0.12 },
-  { x: "92%", y: "80%", size: 7, rotation: 45, delay: 0.1 },
-  // Center accents
-  { x: "50%", y: "10%", size: 6, rotation: 20, delay: 0.15 },
-  { x: "50%", y: "90%", size: 6, rotation: 25, delay: 0.18 },
-  { x: "25%", y: "50%", size: 5, rotation: 60, delay: 0.2 },
-  { x: "75%", y: "50%", size: 5, rotation: 40, delay: 0.22 },
-];
-
-// Snowflake positions for FrozenButton - reduced for performance (3 instead of 8)
-const frozenButtonSnowflakes = [
-  { x: "20%", y: "30%", size: 11, delay: 0.2 },
-  { x: "80%", y: "35%", size: 10, delay: 0.25 },
-  { x: "50%", y: "70%", size: 10, delay: 0.3 },
-];
-
-// Frost particle dots - reduced for performance (6 instead of 16)
-const frozenButtonFrostDots = [
-  { x: "12%", y: "30%", size: 2, delay: 0.1 },
-  { x: "88%", y: "35%", size: 2, delay: 0.12 },
-  { x: "32%", y: "70%", size: 3, delay: 0.14 },
-  { x: "68%", y: "25%", size: 3, delay: 0.16 },
-  { x: "50%", y: "50%", size: 2, delay: 0.18 },
-  { x: "50%", y: "15%", size: 2, delay: 0.2 },
-];
-
-// Frozen wrapper for rectangular buttons - optimized for performance
-// Elements are conditionally rendered only when isFrozen=true
+// Frozen wrapper for rectangular buttons — matches RukiaBorderGlow visual style
+// but keeps button text readable by not covering it with opaque overlays
 export const FrozenButton = ({
   children,
   isHovered,
   isActive,
   className = "",
   subtle = false,
-  rounded = "rounded-xl",
+  rounded = "rounded-md",
 }: {
   children: ReactNode;
   isHovered: boolean;
@@ -713,192 +797,139 @@ export const FrozenButton = ({
   rounded?: string;
 }) => {
   const isFrozen = isHovered || isActive;
-  const intensity = subtle ? 0.35 : 1;
 
   return (
     <div
       className={`relative overflow-hidden ${rounded} flex flex-col ${className}`}
     >
-      {/* Only render frost effects when frozen - major performance optimization */}
       {isFrozen && (
         <>
-          {/* Frost overlay */}
-          <motion.div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              background: subtle
-                ? "linear-gradient(135deg, rgba(220, 240, 255, 0.06) 0%, rgba(200, 230, 255, 0.03) 50%, rgba(220, 240, 255, 0.05) 100%)"
-                : "linear-gradient(135deg, rgba(220, 240, 255, 0.2) 0%, rgba(200, 230, 255, 0.1) 50%, rgba(220, 240, 255, 0.15) 100%)",
-            }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-          />
+          <FrostFilter />
 
-          {/* Edge frost */}
-          <motion.div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              background: subtle
-                ? "linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, transparent 30%), " +
-                  "linear-gradient(0deg, rgba(255, 255, 255, 0.03) 0%, transparent 20%), " +
-                  "linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0%, transparent 15%), " +
-                  "linear-gradient(270deg, rgba(255, 255, 255, 0.03) 0%, transparent 15%)"
-                : "linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, transparent 30%), " +
-                  "linear-gradient(0deg, rgba(255, 255, 255, 0.1) 0%, transparent 20%), " +
-                  "linear-gradient(90deg, rgba(255, 255, 255, 0.1) 0%, transparent 15%), " +
-                  "linear-gradient(270deg, rgba(255, 255, 255, 0.1) 0%, transparent 15%)",
-            }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          />
+          {/* Frost texture + edge frost — only on hover, skipped on active to keep text readable */}
+          {!isActive && (
+            <>
+              <motion.div
+                className={`absolute inset-0 ${rounded} pointer-events-none overflow-hidden`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: subtle ? 0.15 : 0.3 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.4 }}
+              >
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    filter: "url(#frost-noise-subtle)",
+                    background: "white",
+                  }}
+                />
+              </motion.div>
 
-          {/* Ice glow border */}
+              <motion.div
+                className={`absolute inset-0 ${rounded} pointer-events-none overflow-hidden`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <motion.div
+                  className="absolute inset-0"
+                  style={{
+                    background:
+                      "linear-gradient(180deg, rgba(200, 230, 255, 0.1) 0%, transparent 25%), " +
+                      "linear-gradient(0deg, rgba(200, 230, 255, 0.1) 0%, transparent 25%), " +
+                      "linear-gradient(90deg, rgba(200, 230, 255, 0.08) 0%, transparent 15%), " +
+                      "linear-gradient(270deg, rgba(200, 230, 255, 0.08) 0%, transparent 15%)",
+                  }}
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.8, opacity: 0 }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                />
+              </motion.div>
+            </>
+          )}
+
+          <IceCracks isVisible />
+
+          {buttonCrystalPositions.map((crystal, index) => (
+            <ScatteredCrystal
+              key={index}
+              x={crystal.x}
+              y={crystal.y}
+              size={crystal.size}
+              rotation={crystal.rotation}
+              isVisible
+              delay={crystal.delay}
+            />
+          ))}
+
+          {buttonSnowflakePositions.map((snowflake, index) => (
+            <Snowflake
+              key={index}
+              x={snowflake.x}
+              y={snowflake.y}
+              size={snowflake.size}
+              isVisible
+              delay={snowflake.delay}
+            />
+          ))}
+
+          {/* Ice glow border — outer glow only, no inset */}
           <motion.div
             className={`absolute inset-0 ${rounded} pointer-events-none`}
             initial={{ opacity: 0 }}
             animate={{
               opacity: 1,
-              boxShadow: subtle
-                ? "inset 0 0 8px 1px rgba(200, 230, 255, 0.15), 0 0 10px 2px rgba(180, 220, 255, 0.08)"
-                : "inset 0 0 8px 1px rgba(200, 230, 255, 0.4), 0 0 10px 2px rgba(180, 220, 255, 0.25)",
+              boxShadow:
+                "inset 0 0 8px 1px rgba(200, 230, 255, 0.25), 0 0 12px 2px rgba(180, 220, 255, 0.2)",
             }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
+            transition={{ duration: 0.3 }}
           />
 
-          {/* Ice crystals - only rendered when frozen */}
-          {frozenButtonCrystals.map((crystal, i) => (
-            <motion.div
-              key={`crystal-${i}`}
-              className="absolute pointer-events-none"
-              style={{
-                left: crystal.x,
-                top: crystal.y,
-                transform: `translate(-50%, -50%) rotate(${crystal.rotation}deg)`,
-              }}
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: 0.7 * intensity, scale: 1 }}
-              exit={{ opacity: 0, scale: 0 }}
-              transition={{ duration: 0.3, delay: crystal.delay }}
-            >
-              <svg width={crystal.size} height={crystal.size} viewBox="0 0 8 8">
-                <path
-                  d="M4 0 L5 3 L8 3 L5.5 5 L6.5 8 L4 6 L1.5 8 L2.5 5 L0 3 L3 3 Z"
-                  fill={`rgba(220, 240, 255, ${0.7 * intensity})`}
+          {/* Active state: shimmer + cyan border */}
+          {isActive && !subtle && (
+            <>
+              <motion.div
+                className={`absolute inset-0 ${rounded} pointer-events-none overflow-hidden`}
+              >
+                <motion.div
+                  className="absolute inset-0"
                   style={{
-                    filter: `drop-shadow(0 0 1px rgba(180, 220, 255, ${0.8 * intensity}))`,
+                    background:
+                      "linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.2) 50%, transparent 60%)",
+                  }}
+                  animate={{ x: ["-200%", "200%"] }}
+                  transition={{
+                    duration: 2.5,
+                    repeat: Infinity,
+                    repeatDelay: 1.5,
+                    ease: "easeInOut",
                   }}
                 />
-              </svg>
-            </motion.div>
-          ))}
+              </motion.div>
+              <motion.div
+                className={`absolute inset-0 ${rounded} pointer-events-none border border-cyan-200/30`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2 }}
+              />
+            </>
+          )}
 
-          {/* Snowflakes - CSS animation instead of framer-motion for rotation */}
-          {frozenButtonSnowflakes.map((sf, i) => (
-            <motion.div
-              key={`snowflake-${i}`}
-              className="absolute pointer-events-none animate-[spin_8s_linear_infinite]"
-              style={{
-                left: sf.x,
-                top: sf.y,
-                transform: "translate(-50%, -50%)",
-              }}
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: 0.5 * intensity, scale: 1 }}
-              exit={{ opacity: 0, scale: 0 }}
-              transition={{ duration: 0.3, delay: sf.delay }}
-            >
-              <svg width={sf.size} height={sf.size} viewBox="0 0 24 24">
-                <g
-                  fill="none"
-                  stroke={`rgba(255, 255, 255, ${0.6 * intensity})`}
-                  strokeWidth="1"
-                >
-                  <line x1="12" y1="2" x2="12" y2="22" />
-                  <line x1="2" y1="12" x2="22" y2="12" />
-                  <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
-                  <line x1="4.93" y1="19.07" x2="19.07" y2="4.93" />
-                </g>
-              </svg>
-            </motion.div>
-          ))}
-
-          {/* Frost particle dots */}
-          {frozenButtonFrostDots.map((dot, i) => (
-            <motion.div
-              key={`dot-${i}`}
-              className="absolute pointer-events-none rounded-full"
-              style={{
-                left: dot.x,
-                top: dot.y,
-                width: dot.size,
-                height: dot.size,
-                background: `rgba(220, 240, 255, ${0.8 * intensity})`,
-                boxShadow: `0 0 3px rgba(200, 230, 255, ${0.6 * intensity})`,
-              }}
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: 0.6 * intensity, scale: 1 }}
-              exit={{ opacity: 0, scale: 0 }}
-              transition={{ duration: 0.2, delay: dot.delay }}
-            />
-          ))}
-
-          {/* Ice crack lines - simplified to 2 paths instead of 4 */}
-          <motion.svg
-            className="absolute inset-0 w-full h-full pointer-events-none"
-            viewBox="0 0 100 100"
-            preserveAspectRatio="none"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: intensity }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <motion.path
-              d="M50 50 L25 25 L15 30 M25 25 L20 15"
-              fill="none"
-              stroke={`rgba(200, 230, 255, ${0.3 * intensity})`}
-              strokeWidth="0.4"
-              strokeLinecap="round"
-              initial={{ pathLength: 0 }}
-              animate={{ pathLength: 1 }}
-              transition={{ duration: 0.5, delay: 0.15 }}
-            />
-            <motion.path
-              d="M50 50 L75 75 L85 70 M75 75 L80 85"
-              fill="none"
-              stroke={`rgba(200, 230, 255, ${0.25 * intensity})`}
-              strokeWidth="0.4"
-              strokeLinecap="round"
-              initial={{ pathLength: 0 }}
-              animate={{ pathLength: 1 }}
-              transition={{ duration: 0.45, delay: 0.2 }}
-            />
-          </motion.svg>
-
-          {/* Active state shimmer */}
+          {/* Active burst (one-shot) */}
           {isActive && !subtle && (
             <motion.div
-              className={`absolute inset-0 pointer-events-none overflow-hidden ${rounded}`}
-            >
-              <motion.div
-                className="absolute inset-0"
-                style={{
-                  background:
-                    "linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.4) 50%, transparent 60%)",
-                }}
-                animate={{ x: ["-200%", "200%"] }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  repeatDelay: 1.5,
-                  ease: "easeInOut",
-                }}
-              />
-            </motion.div>
+              className={`absolute inset-0 ${rounded} pointer-events-none`}
+              style={{
+                background:
+                  "radial-gradient(circle at center, rgba(255, 255, 255, 0.3) 0%, rgba(220, 240, 255, 0.15) 30%, transparent 60%)",
+              }}
+              initial={{ opacity: 1, scale: 0.8 }}
+              animate={{ opacity: 0, scale: 1.3 }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+            />
           )}
         </>
       )}
@@ -910,6 +941,7 @@ export const FrozenButton = ({
 };
 
 // Frost overlay for containers where we don't want to wrap content (e.g., sheets with close buttons)
+// Styled like RukiaBorderGlow but static (always visible)
 export const FrostOverlay = ({
   subtle = false,
   rounded = "rounded-xl",
@@ -921,111 +953,81 @@ export const FrostOverlay = ({
 
   return (
     <>
-      {/* Frost overlay */}
+      <FrostFilter />
+
+      {/* SVG frost texture */}
+      <div
+        className={`absolute inset-0 pointer-events-none ${rounded} overflow-hidden`}
+        style={{ opacity: intensity }}
+      >
+        <div
+          className="absolute inset-0"
+          style={{
+            filter: "url(#frost-noise)",
+            background: "white",
+          }}
+        />
+      </div>
+
+      {/* Multi-gradient overlay */}
       <div
         className={`absolute inset-0 pointer-events-none ${rounded}`}
         style={{
-          background: subtle
-            ? "linear-gradient(135deg, rgba(220, 240, 255, 0.06) 0%, rgba(200, 230, 255, 0.03) 50%, rgba(220, 240, 255, 0.05) 100%)"
-            : "linear-gradient(135deg, rgba(220, 240, 255, 0.2) 0%, rgba(200, 230, 255, 0.1) 50%, rgba(220, 240, 255, 0.15) 100%)",
+          background:
+            `radial-gradient(ellipse at 30% 20%, rgba(255, 255, 255, ${0.25 * intensity}) 0%, transparent 50%), ` +
+            `radial-gradient(ellipse at 70% 80%, rgba(200, 230, 255, ${0.2 * intensity}) 0%, transparent 50%), ` +
+            `linear-gradient(135deg, rgba(220, 240, 255, ${0.15 * intensity}) 0%, rgba(200, 230, 255, ${0.1 * intensity}) 50%, rgba(220, 240, 255, ${0.15 * intensity}) 100%)`,
         }}
       />
 
       {/* Edge frost */}
       <div
-        className={`absolute inset-0 pointer-events-none ${rounded}`}
-        style={{
-          background: subtle
-            ? "linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, transparent 30%), " +
-              "linear-gradient(0deg, rgba(255, 255, 255, 0.03) 0%, transparent 20%), " +
-              "linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0%, transparent 15%), " +
-              "linear-gradient(270deg, rgba(255, 255, 255, 0.03) 0%, transparent 15%)"
-            : "linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, transparent 30%), " +
-              "linear-gradient(0deg, rgba(255, 255, 255, 0.1) 0%, transparent 20%), " +
-              "linear-gradient(90deg, rgba(255, 255, 255, 0.1) 0%, transparent 15%), " +
-              "linear-gradient(270deg, rgba(255, 255, 255, 0.1) 0%, transparent 15%)",
-        }}
-      />
+        className={`absolute inset-0 pointer-events-none ${rounded} overflow-hidden`}
+      >
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              `linear-gradient(180deg, rgba(255, 255, 255, ${0.2 * intensity}) 0%, transparent 40%), ` +
+              `linear-gradient(0deg, rgba(255, 255, 255, ${0.2 * intensity}) 0%, transparent 40%), ` +
+              `linear-gradient(90deg, rgba(255, 255, 255, ${0.15 * intensity}) 0%, transparent 30%), ` +
+              `linear-gradient(270deg, rgba(255, 255, 255, ${0.15 * intensity}) 0%, transparent 30%)`,
+          }}
+        />
+      </div>
+
+      <IceCracks isVisible />
+
+      {buttonCrystalPositions.map((crystal, index) => (
+        <ScatteredCrystal
+          key={index}
+          x={crystal.x}
+          y={crystal.y}
+          size={crystal.size * intensity}
+          rotation={crystal.rotation}
+          isVisible
+          delay={0}
+        />
+      ))}
+
+      {buttonSnowflakePositions.map((snowflake, index) => (
+        <Snowflake
+          key={index}
+          x={snowflake.x}
+          y={snowflake.y}
+          size={snowflake.size * intensity}
+          isVisible
+          delay={0}
+        />
+      ))}
 
       {/* Ice glow border */}
       <div
         className={`absolute inset-0 ${rounded} pointer-events-none`}
         style={{
-          boxShadow: subtle
-            ? "inset 0 0 8px 1px rgba(200, 230, 255, 0.15), 0 0 10px 2px rgba(180, 220, 255, 0.08)"
-            : "inset 0 0 8px 1px rgba(200, 230, 255, 0.4), 0 0 10px 2px rgba(180, 220, 255, 0.25)",
+          boxShadow: `inset 0 0 12px 3px rgba(200, 230, 255, ${0.4 * intensity}), 0 0 15px 3px rgba(180, 220, 255, ${0.3 * intensity})`,
         }}
       />
-
-      {/* Scattered ice crystals */}
-      {frozenButtonCrystals.slice(0, 12).map((crystal, i) => (
-        <div
-          key={`crystal-${i}`}
-          className="absolute pointer-events-none"
-          style={{
-            left: crystal.x,
-            top: crystal.y,
-            transform: `translate(-50%, -50%) rotate(${crystal.rotation}deg)`,
-            opacity: 0.7 * intensity,
-          }}
-        >
-          <svg width={crystal.size} height={crystal.size} viewBox="0 0 8 8">
-            <path
-              d="M4 0 L5 3 L8 3 L5.5 5 L6.5 8 L4 6 L1.5 8 L2.5 5 L0 3 L3 3 Z"
-              fill={`rgba(220, 240, 255, ${0.7 * intensity})`}
-              style={{
-                filter: `drop-shadow(0 0 1px rgba(180, 220, 255, ${0.8 * intensity}))`,
-              }}
-            />
-          </svg>
-        </div>
-      ))}
-
-      {/* Snowflakes */}
-      {frozenButtonSnowflakes.slice(0, 4).map((sf, i) => (
-        <motion.div
-          key={`snowflake-${i}`}
-          className="absolute pointer-events-none"
-          style={{
-            left: sf.x,
-            top: sf.y,
-            transform: "translate(-50%, -50%)",
-            opacity: 0.5 * intensity,
-          }}
-          animate={{ rotate: 360 }}
-          transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-        >
-          <svg width={sf.size} height={sf.size} viewBox="0 0 24 24">
-            <g
-              fill="none"
-              stroke={`rgba(255, 255, 255, ${0.6 * intensity})`}
-              strokeWidth="1"
-            >
-              <line x1="12" y1="2" x2="12" y2="22" />
-              <line x1="2" y1="12" x2="22" y2="12" />
-              <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
-              <line x1="4.93" y1="19.07" x2="19.07" y2="4.93" />
-            </g>
-          </svg>
-        </motion.div>
-      ))}
-
-      {/* Frost particle dots */}
-      {frozenButtonFrostDots.slice(0, 8).map((dot, i) => (
-        <div
-          key={`dot-${i}`}
-          className="absolute pointer-events-none rounded-full"
-          style={{
-            left: dot.x,
-            top: dot.y,
-            width: dot.size,
-            height: dot.size,
-            background: `rgba(220, 240, 255, ${0.8 * intensity})`,
-            boxShadow: `0 0 3px rgba(200, 230, 255, ${0.6 * intensity})`,
-            opacity: 0.6 * intensity,
-          }}
-        />
-      ))}
     </>
   );
 };

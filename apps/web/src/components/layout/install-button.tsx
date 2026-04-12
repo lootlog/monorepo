@@ -20,7 +20,7 @@ export const InstallButton: FC = () => {
       <TooltipTrigger asChild>
         <Button
           variant="ghost"
-          className="size-10"
+          className="size-11"
           onClick={() => dispatch({ type: "OPEN" })}
         >
           <Blocks color="#3E8667" className="!size-6" />

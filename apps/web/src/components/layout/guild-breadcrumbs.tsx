@@ -8,8 +8,9 @@ import {
 } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
-import { ArrowLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { SidebarTrigger } from "@lootlog/ui/components/sidebar";
+import { AnimatePresence, motion } from "framer-motion";
 import { PageHeader } from "@/components/layout/page-header";
 import { getNavigationInfo } from "./get-navigation-info";
 
@@ -94,43 +95,53 @@ export const GuildBreadcrumbs: FC = () => {
               variant="ghost"
               size="sm"
               onClick={() => navigate({ to: navInfo.backPath as string })}
-              className="p-1 h-8 w-8"
+              className="p-1 h-8 w-8 rounded-full hover:bg-muted/50 transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
           )}
         </div>
 
-        <div className="flex flex-1 min-w-0 items-center text-sm md:justify-center">
+        <div className="flex flex-1 min-w-0 items-center text-sm justify-center">
           <div
             ref={mobileBreadcrumbsRef}
             className="flex-1 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden md:overflow-hidden"
           >
-            <div className="inline-flex min-w-max items-center gap-1 pr-1 md:flex md:min-w-0 md:w-full md:justify-center md:pr-0">
-              {navInfo.breadcrumbs.map((crumb, index) => (
-                <div
-                  key={index}
-                  className="flex shrink-0 items-center gap-1 md:min-w-0 md:last:shrink"
-                >
-                  {crumb.path ? (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => navigate({ to: crumb.path as string })}
-                      className="h-auto p-1 text-sm font-semibold whitespace-nowrap hover:bg-accent/50"
+            <div className="inline-flex min-w-max items-center justify-center gap-1.5 pr-1 md:flex md:min-w-0 md:w-full md:pr-0">
+              <AnimatePresence mode="popLayout">
+                {navInfo.breadcrumbs.map((crumb, index) => {
+                  const isLast = index === navInfo.breadcrumbs.length - 1;
+                  return (
+                    <motion.div
+                      key={`${crumb.label}-${crumb.path ?? "current"}`}
+                      className="flex shrink-0 items-center gap-1.5 md:min-w-0 md:last:shrink"
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 8 }}
+                      transition={{ duration: 0.15 }}
                     >
-                      {crumb.label}
-                    </Button>
-                  ) : (
-                    <span className="px-1 font-semibold whitespace-nowrap md:max-w-full md:truncate">
-                      {crumb.label}
-                    </span>
-                  )}
-                  {index < navInfo.breadcrumbs.length - 1 && (
-                    <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground" />
-                  )}
-                </div>
-              ))}
+                      {crumb.path ? (
+                        <button
+                          type="button"
+                          onClick={() => navigate({ to: crumb.path as string })}
+                          className="text-xs text-muted-foreground/70 hover:text-foreground transition-colors duration-200 whitespace-nowrap cursor-pointer"
+                        >
+                          {crumb.label}
+                        </button>
+                      ) : (
+                        <span className="text-sm font-bold text-foreground whitespace-nowrap md:max-w-full md:truncate">
+                          {crumb.label}
+                        </span>
+                      )}
+                      {!isLast && (
+                        <span className="text-xs text-muted-foreground/30 select-none">
+                          /
+                        </span>
+                      )}
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
             </div>
           </div>
         </div>

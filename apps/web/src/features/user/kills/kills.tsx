@@ -197,7 +197,7 @@ export const KillsPage: React.FC = () => {
   const hasPrev = cursor > 0;
 
   return (
-    <div className="flex flex-col h-full min-h-0 bg-background/50">
+    <div className="flex flex-col h-full min-h-0">
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 py-3 flex flex-col gap-4">
           <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">

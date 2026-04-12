@@ -13,7 +13,7 @@ export const GuildShell: FC<GuildShellProps> = ({ children, variant }) => {
   const { t } = useTranslation();
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-row">
+    <div className="flex h-full min-h-0 w-full flex-row bg-background/60">
       <div className="flex h-full min-h-0 w-full flex-col">
         {variant === "ready" ? (
           <GuildBreadcrumbs />
@@ -21,7 +21,7 @@ export const GuildShell: FC<GuildShellProps> = ({ children, variant }) => {
           <PageHeader>
             <div className="flex items-center gap-2">
               <SidebarTrigger />
-              <span className="text-sm font-semibold">
+              <span className="text-sm font-bold text-primary">
                 {t("common.routeErrors.guildShellTitle")}
               </span>
             </div>

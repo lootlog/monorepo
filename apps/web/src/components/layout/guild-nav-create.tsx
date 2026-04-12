@@ -19,7 +19,7 @@ export const GuildNavCreate: FC = () => {
     <Tooltip>
       <TooltipTrigger asChild>
         <Button
-          className="size-10 0"
+          className="size-11 0"
           variant="secondary"
           onClick={() => dispatch({ type: "OPEN" })}
         >
