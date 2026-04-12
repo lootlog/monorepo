@@ -16,8 +16,8 @@ export const RouteSectionLoading = () => {
   }
 
   return (
-    <div className="flex h-screen min-h-0 items-center justify-center bg-background/50">
-      <Spinner className="h-7 w-7" />
+    <div className="flex h-screen min-h-0 items-center justify-center bg-background/50 backdrop-blur-xs">
+      <Spinner className="size-16" />
     </div>
   );
 };

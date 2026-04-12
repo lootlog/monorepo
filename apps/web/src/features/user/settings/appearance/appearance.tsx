@@ -1,14 +1,28 @@
-import type { FC } from "react";
+import { useEffect, type FC } from "react";
 import { useTranslation } from "react-i18next";
+import { useSearch } from "@tanstack/react-router";
 import { Palette } from "lucide-react";
 import { useTheme } from "@/hooks/context/use-theme";
 import { ThemeCard } from "@lootlog/ui/components/theme-card";
 import { Card } from "@lootlog/ui/components/card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { THEME_CATALOG } from "@/themes";
+import { THEME_CATALOG, THEME_IDS, type ThemeId } from "@/themes";
 
 export const AppearanceSettings: FC = () => {
   const { theme, setTheme } = useTheme();
+  const { theme: themeParam } = useSearch({
+    from: "/_authenticated/@me/settings/appearance",
+  });
+
+  useEffect(() => {
+    if (
+      themeParam &&
+      (THEME_IDS as readonly string[]).includes(themeParam) &&
+      themeParam !== theme
+    ) {
+      setTheme(themeParam as ThemeId);
+    }
+  }, [themeParam]);
   const { t } = useTranslation();
 
   return (

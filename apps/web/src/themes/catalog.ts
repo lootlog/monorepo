@@ -13,6 +13,7 @@ export const THEME_IDS = [
   "realmadrid-3rd",
   "barcelona",
   "rukia",
+  "rias",
   "cat-pink",
   "cat-purple",
   "cat-blue",
@@ -34,6 +35,7 @@ export const THEME_CLASS_IDS = [
   "realmadrid-3rd",
   "barcelona",
   "rukia",
+  "rias",
   "cat-pink",
   "cat-purple",
   "cat-blue",
@@ -48,7 +50,7 @@ export const CAT_THEME_VARIANTS = [
 export type ThemeId = (typeof THEME_IDS)[number];
 export type ResolvedThemeId = (typeof THEME_CLASS_IDS)[number];
 export type CatThemeVariant = (typeof CAT_THEME_VARIANTS)[number];
-export type ThemeFamily = "standard" | "rukia" | "cat";
+export type ThemeFamily = "standard" | "rukia" | "rias" | "cat";
 export type ColorMode = "light" | "dark";
 
 export interface ThemePreview {
@@ -161,6 +163,12 @@ export const THEME_CATALOG: ThemePreview[] = [
     colors: ["#E8F4FF", "#B8D4E8", "#9B7BB8"],
     backgroundImage:
       "data:image/svg+xml,%3Csvg width='400' height='300' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='rukiaGrad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23E8F4FF;stop-opacity:0.15' /%3E%3Cstop offset='50%25' style='stop-color:%23B8D4E8;stop-opacity:0.10' /%3E%3Cstop offset='100%25' style='stop-color:%239B7BB8;stop-opacity:0.12' /%3E%3C/linearGradient%3E%3Cpattern id='snowflake' width='80' height='80' patternUnits='userSpaceOnUse'%3E%3Cpath d='M 40 10 L 40 70 M 10 40 L 70 40 M 18 18 L 62 62 M 18 62 L 62 18' stroke='%23B8D4E8' stroke-width='1' opacity='0.08'/%3E%3Ccircle cx='40' cy='40' r='3' fill='%23E8F4FF' opacity='0.1'/%3E%3C/pattern%3E%3Cfilter id='frost'%3E%3CfeGaussianBlur stdDeviation='1' result='blur'/%3E%3CfeMerge%3E%3CfeMergeNode in='blur'/%3E%3CfeMergeNode in='SourceGraphic'/%3E%3C/feMerge%3E%3C/filter%3E%3C/defs%3E%3Crect width='400' height='300' fill='url(%23rukiaGrad)'/%3E%3Crect width='400' height='300' fill='url(%23snowflake)'/%3E%3Ccircle cx='80' cy='60' r='40' fill='%23E8F4FF' opacity='0.06' filter='url(%23frost)'/%3E%3Ccircle cx='320' cy='220' r='50' fill='%239B7BB8' opacity='0.05' filter='url(%23frost)'/%3E%3Cpath d='M 200 80 L 205 95 L 220 95 L 208 105 L 213 120 L 200 110 L 187 120 L 192 105 L 180 95 L 195 95 Z' fill='%23E8F4FF' opacity='0.08'/%3E%3Cpath d='M 120 180 L 123 188 L 132 188 L 125 194 L 128 202 L 120 196 L 112 202 L 115 194 L 108 188 L 117 188 Z' fill='%23B8D4E8' opacity='0.07'/%3E%3C/svg%3E",
+  },
+  {
+    name: "rias",
+    family: "rias",
+    colors: ["#C41E3A", "#5C1A4A", "#1A0A14"],
+    backgroundImage: "/themes/rias-bg.png",
   },
   {
     name: "cat-pink",
