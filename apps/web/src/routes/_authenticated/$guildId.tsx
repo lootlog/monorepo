@@ -7,6 +7,7 @@ import { guildQueryOptions } from "@/hooks/api/guilds/use-guild";
 import { guildPermissionsQueryOptions } from "@/hooks/api/guilds/use-guild-permissions";
 import { guildMemberQueryOptions } from "@/hooks/api/members/use-guild-member";
 import {
+  isRouteLoaderCancelledError,
   throwForbiddenRouteError,
   throwNotFoundIfResponseMatches,
 } from "@/lib/router/route-errors";
@@ -46,6 +47,10 @@ export const Route = createFileRoute("/_authenticated/$guildId")({
         permissions,
       };
     } catch (error) {
+      if (isRouteLoaderCancelledError(error)) {
+        return;
+      }
+
       throwNotFoundIfResponseMatches(error);
     }
   },

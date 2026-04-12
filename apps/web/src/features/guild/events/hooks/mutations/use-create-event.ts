@@ -1,12 +1,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import type { Event } from "../queries/use-events";
-import { queryKeys } from "@/lib/query-keys";
 import type {
   EventScoringMode,
   EventScoringRules,
 } from "../../types/scoring-rules";
+import type { Event } from "../../types/api";
+import { getListEventsQueryKey } from "@/lib/api/generated/main/events/events";
 
 interface CreateEventData {
   name: string;
@@ -34,7 +34,7 @@ export const useCreateEvent = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.events.listByGuild(guildId),
+        queryKey: getListEventsQueryKey({ guildId: guildId ?? "" }),
       });
     },
   });

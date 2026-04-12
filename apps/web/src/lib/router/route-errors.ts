@@ -1,3 +1,4 @@
+import { isCancelledError } from "@tanstack/react-query";
 import { notFound } from "@tanstack/react-router";
 import {
   getApiErrorMessage,
@@ -9,6 +10,10 @@ export const getRouteErrorStatus = (error: unknown) => {
 };
 
 export const getRouteErrorMessage = getApiErrorMessage;
+
+export const isRouteLoaderCancelledError = (error: unknown) => {
+  return isCancelledError(error);
+};
 
 export const throwForbiddenRouteError = (message = ""): never => {
   const forbiddenError = new Error(message) as Error & {

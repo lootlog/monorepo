@@ -6,6 +6,10 @@ import type {
   EventScoringMode,
   EventScoringRules,
 } from "../../types/scoring-rules";
+import {
+  getListEventsQueryKey,
+  getShowEventOverviewQueryKey,
+} from "@/lib/api/generated/main/events/events";
 
 export interface UpdateEventData {
   name?: string;
@@ -47,9 +51,10 @@ interface EventMapMutationResponse {
 export const useEventMutations = (guildId: string, eventId: string) => {
   const { client } = useApiClient();
   const queryClient = useQueryClient();
-  const queryKeyOverview = queryKeys.events.overview(guildId, eventId);
+  const queryKeyOverview = getShowEventOverviewQueryKey({ guildId, eventId });
   const queryKeyMaps = queryKeys.events.maps(guildId, eventId);
   const queryKeyWrapped = queryKeys.events.wrapped(guildId, eventId);
+  const queryKeyEventsList = getListEventsQueryKey({ guildId });
 
   const updateEvent = useMutation({
     mutationFn: async (data: UpdateEventData) => {
@@ -63,9 +68,7 @@ export const useEventMutations = (guildId: string, eventId: string) => {
       queryClient.invalidateQueries({ queryKey: queryKeyOverview });
       queryClient.invalidateQueries({ queryKey: queryKeyMaps });
       queryClient.invalidateQueries({ queryKey: queryKeyWrapped });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.events.listByGuild(guildId),
-      });
+      queryClient.invalidateQueries({ queryKey: queryKeyEventsList });
     },
   });
 
@@ -92,7 +95,7 @@ export const useEventMutations = (guildId: string, eventId: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.events.listByGuild(guildId),
+        queryKey: queryKeyEventsList,
       });
       queryClient.invalidateQueries({ queryKey: queryKeyOverview });
       queryClient.invalidateQueries({ queryKey: queryKeyMaps });
@@ -113,7 +116,7 @@ export const useEventMutations = (guildId: string, eventId: string) => {
       queryClient.invalidateQueries({ queryKey: queryKeyMaps });
       queryClient.invalidateQueries({ queryKey: queryKeyWrapped });
       queryClient.invalidateQueries({
-        queryKey: queryKeys.events.listByGuild(guildId),
+        queryKey: queryKeyEventsList,
       });
     },
   });
@@ -137,7 +140,7 @@ export const useEventMutations = (guildId: string, eventId: string) => {
       queryClient.invalidateQueries({ queryKey: queryKeyMaps });
       queryClient.invalidateQueries({ queryKey: queryKeyWrapped });
       queryClient.invalidateQueries({
-        queryKey: queryKeys.events.listByGuild(guildId),
+        queryKey: queryKeyEventsList,
       });
     },
   });
@@ -154,7 +157,7 @@ export const useEventMutations = (guildId: string, eventId: string) => {
       queryClient.invalidateQueries({ queryKey: queryKeyMaps });
       queryClient.invalidateQueries({ queryKey: queryKeyWrapped });
       queryClient.invalidateQueries({
-        queryKey: queryKeys.events.listByGuild(guildId),
+        queryKey: queryKeyEventsList,
       });
     },
   });

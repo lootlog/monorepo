@@ -1,61 +1,29 @@
 import { useQuery } from "@tanstack/react-query";
-import { useApiClient } from "@/hooks/api/use-api-client";
-import type { KillParticipant, HeroKillHeroNpc } from "./use-hero-kill-history";
-import { queryKeys } from "@/lib/query-keys";
+import { eventsRankingControllerGetKillDetail } from "@/lib/api/generated/main/events/events";
 import type {
-  EventScoringMode,
-  EventScoringRules,
-} from "../../types/scoring-rules";
+  KillDetailResponseDto,
+  KillDetailResponseDtoKill,
+  KillDetailResponseDtoKillHeroNpc,
+  KillDetailResponseDtoKillPointsItem,
+  KillDetailResponseDtoKillTimerCreatedBy,
+} from "@/lib/api/generated/main/model";
+import { queryKeys } from "@/lib/query-keys";
+import type { EventScoringRules } from "../../types/scoring-rules";
+import { normalizeScoringRules } from "../../utils/scoring-rules";
 
-export interface KillDetailMember {
-  id: number;
-  name: string;
-  avatar: string | null;
-  userId: string;
-}
+export type KillDetailMember = KillDetailResponseDtoKillTimerCreatedBy;
+export type KillDetailParticipant = KillDetailResponseDtoKillPointsItem;
+export type KillDetailHeroNpc = KillDetailResponseDtoKillHeroNpc;
+export type KillDetail = KillDetailResponseDtoKill;
 
-export interface KillDetailParticipant extends KillParticipant {
-  member: KillDetailMember & {
-    roles: Array<{
-      position: number | null;
-      color: number | null;
-    }>;
-  };
-}
-
-export interface KillDetailHeroNpc extends HeroKillHeroNpc {
-  event: {
-    id: string;
-    name: string;
-    world: string;
-  };
-}
-
-export interface KillDetail {
-  id: string;
-  heroNpcId: string;
-  killedAt: string;
-  minSpawnTimeAtKill: string;
-  maxSpawnTimeAtKill: string;
-  timerCreatedById: number | null;
-  isManualClose: boolean;
-  respawnDurationSeconds: number | null;
-  windowDurationSeconds: number | null;
-  resolvedAfterMaxSpawnTimeMs: number | null;
-  heroNpc: KillDetailHeroNpc;
-  timerCreatedBy: KillDetailMember | null;
-  points: KillDetailParticipant[];
-}
-
-export interface EventConfig {
-  scoringMode: EventScoringMode;
+export type EventConfig = {
+  scoringMode: KillDetailResponseDto["eventConfig"]["scoringMode"];
   scoringRules: EventScoringRules | null;
-}
+};
 
-export interface KillDetailResponse {
-  kill: KillDetail;
+export type KillDetailResponse = Omit<KillDetailResponseDto, "eventConfig"> & {
   eventConfig: EventConfig;
-}
+};
 
 interface UseKillDetailOptions {
   guildId: string;
@@ -70,15 +38,25 @@ export const useKillDetail = ({
   heroId,
   killId,
 }: UseKillDetailOptions) => {
-  const { client } = useApiClient();
-
   return useQuery({
     queryKey: queryKeys.events.killDetail(guildId, eventId, heroId, killId),
-    queryFn: async (): Promise<KillDetailResponse> => {
-      const response = await client.get<KillDetailResponse>(
-        `/guilds/${guildId}/events/${eventId}/heroes/${heroId}/kills/${killId}`,
-      );
-      return response;
+    queryFn: async () => {
+      const response = await eventsRankingControllerGetKillDetail({
+        guildId,
+        eventId,
+        heroId,
+        killId,
+      });
+
+      return {
+        ...response,
+        eventConfig: {
+          ...response.eventConfig,
+          scoringRules: response.eventConfig.scoringRules
+            ? normalizeScoringRules(response.eventConfig.scoringRules)
+            : null,
+        },
+      } satisfies KillDetailResponse;
     },
     enabled: !!guildId && !!eventId && !!heroId && !!killId,
   });

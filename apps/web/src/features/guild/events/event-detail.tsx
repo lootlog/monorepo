@@ -10,13 +10,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { useEventOverview } from "./hooks/queries/use-event-overview";
-import { useEventMaps } from "./hooks/queries/use-event-maps";
-import type {
-  EventHeroNpc,
-  EventMap,
-  EventMapLocation,
-} from "./hooks/queries/use-events";
+import type { EventHeroNpc, EventMap, EventMapLocation } from "./types/api";
 import { EventRankingPreview } from "./components/ranking/event-ranking-preview";
 import {
   Trophy,
@@ -40,9 +34,6 @@ import { useEventMutations } from "./hooks/mutations/use-event-mutations";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { toast } from "sonner";
 import { Permission } from "@lootlog/types";
-import { useEventHeroTimers } from "./hooks/queries/use-event-hero-timers";
-import { useEventHeroStats } from "./hooks/queries/use-event-hero-stats";
-import { useEventRanking } from "./hooks/queries/use-event-ranking";
 import { EventHeroLoots } from "./components/stats/event-hero-loots";
 import { RecentKillsPreview } from "./components/kills/recent-kills-preview";
 import { HeroCard } from "./components/heroes/hero-card";
@@ -54,6 +45,13 @@ import {
 } from "./utils/scoring-rules";
 import { getEventStatusAtTimestamp } from "./utils";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
+import {
+  useEventsRankingControllerGetEventHeroStats,
+  useListEventHeroTimers,
+  useListEventMaps,
+  useListEventRanking,
+  useShowEventOverview,
+} from "@/lib/api/generated/main/events/events";
 
 type EventDetailHero = EventHeroNpc & {
   locations: EventMapLocation[];
@@ -70,7 +68,7 @@ export const EventDetail = () => {
     data: event,
     isLoading,
     error,
-  } = useEventOverview({
+  } = useShowEventOverview({
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   });
@@ -78,24 +76,28 @@ export const EventDetail = () => {
     data: eventMaps,
     isLoading: isMapsLoading,
     error: mapsError,
-  } = useEventMaps({
+  } = useListEventMaps({
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   });
 
   const { data: permissions } = useGuildPermissions();
 
-  const { data: heroTimers } = useEventHeroTimers({
-    guildId: guildId ?? "",
-    eventId: eventId ?? "",
-    world: event?.world ?? "",
-  });
+  const { data: heroTimers } = useListEventHeroTimers(
+    {
+      guildId: guildId ?? "",
+      eventId: eventId ?? "",
+    },
+    {
+      world: event?.world ?? "",
+    },
+  );
 
-  const { data: heroStats } = useEventHeroStats({
+  const { data: heroStats } = useEventsRankingControllerGetEventHeroStats({
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   });
-  const { data: rankings = [], error: rankingError } = useEventRanking({
+  const { data: rankings = [], error: rankingError } = useListEventRanking({
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   });

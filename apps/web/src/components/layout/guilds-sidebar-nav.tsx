@@ -16,10 +16,10 @@ import { SidebarNav, type MenuItem } from "./sidebar-nav/index";
 import { ROUTE_SEGMENTS } from "@/config/routes";
 import { Permission } from "@lootlog/types";
 import { useTranslation } from "react-i18next";
-import { useEvents } from "@/features/guild/events/hooks";
 import { GuildSidebarHeader } from "./guild-sidebar-header";
 import { GuildPinnedEventsSection } from "./guild-pinned-events-section";
 import { canManageGuild } from "@/lib/guild-permissions";
+import { useListEvents } from "@/lib/api/generated/main/events/events";
 
 export const GuildsSidebarNav: FC = () => {
   const guildId = useGuildId();
@@ -32,12 +32,16 @@ export const GuildsSidebarNav: FC = () => {
     permissions?.includes(Permission.LOOTLOG_EVENTS_READ) ||
     permissions?.includes(Permission.LOOTLOG_EVENTS_MANAGE) ||
     permissions?.includes(Permission.OWNER);
+  const activeEventsGuildId = canViewEvents ? (guildId ?? "") : "";
 
-  const { data: activeEvents } = useEvents({
-    guildId: guildId ?? "",
-    activeOnly: true,
-    enabled: Boolean(canViewEvents),
-  });
+  const { data: activeEvents } = useListEvents(
+    {
+      guildId: activeEventsGuildId,
+    },
+    {
+      activeOnly: "true",
+    },
+  );
   const hasActiveEvents = (activeEvents?.length ?? 0) > 0;
   const activeEventCount = activeEvents?.length ?? 0;
 

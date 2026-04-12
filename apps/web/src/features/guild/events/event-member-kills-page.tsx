@@ -28,14 +28,16 @@ import {
   type EventMemberKill,
   useEventMemberKillHistory,
 } from "./hooks/queries/use-event-member-kill-history";
-import { useEventOverview } from "./hooks/queries/use-event-overview";
-import { useEventRanking } from "./hooks/queries/use-event-ranking";
-import type { EventHeroNpc, EventRanking } from "./hooks/queries/use-events";
 import {
   formatDateTime,
   formatDurationHuman,
   normalizeBonusBreakdown,
 } from "./utils";
+import {
+  useListEventRanking,
+  useShowEventOverview,
+} from "@/lib/api/generated/main/events/events";
+import type { EventHeroNpc, EventRanking } from "./types/api";
 
 const formatPoints = (value: number) => {
   const rounded = Math.round(value * 100) / 100;
@@ -769,7 +771,7 @@ const EventMemberKillsPageContent = ({
     data: event,
     isLoading: eventLoading,
     error: eventError,
-  } = useEventOverview({
+  } = useShowEventOverview({
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   });
@@ -787,7 +789,7 @@ const EventMemberKillsPageContent = ({
     heroId: selectedHeroId,
     limit: 20,
   });
-  const { data: rankings = [] } = useEventRanking({
+  const { data: rankings = [] } = useListEventRanking({
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   });

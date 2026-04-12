@@ -19,7 +19,7 @@ import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { PlayerTile } from "@/components/tiles";
 import { useLocalCoverageTimer } from "../../hooks/utils/use-local-coverage-timer";
 import { useAssignmentCountdown } from "../../hooks/utils/use-assignment-countdown";
-import type { EventMap } from "../../hooks/queries/use-events";
+import type { EventMap } from "../../types/api";
 import type { PlayerPresence } from "../../hooks/socket/use-event-presence";
 import {
   isWindowActive,

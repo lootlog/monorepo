@@ -13,7 +13,7 @@ import {
   Users,
 } from "lucide-react";
 import { useEventLoots } from "../../hooks/queries/use-event-loots";
-import type { EventHeroNpc } from "../../hooks/queries/use-events";
+import type { EventHeroNpc } from "../../types/api";
 import { WatchableItemTile } from "@/components/tiles";
 import { LootNpcs } from "@/features/guild/loots-list/components/loots-list/loot-npcs";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
