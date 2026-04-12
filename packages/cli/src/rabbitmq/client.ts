@@ -35,7 +35,7 @@ class RabbitMQClient {
         durable: true,
       });
 
-      const message = Buffer.from(JSON.stringify(payload, null, 2));
+      const message = Buffer.from(JSON.stringify(payload));
 
       this.channel.publish(exchange, routingKey, message, {
         contentType: "application/json",
