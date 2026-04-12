@@ -86,7 +86,9 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
             className={cn(
               "inline-flex items-center px-6 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap",
               active
-                ? "bg-primary/15 text-primary"
+                ? isRukiaTheme
+                  ? "bg-primary/15 text-white font-semibold"
+                  : "bg-primary/15 text-primary"
                 : "bg-muted/30 text-muted-foreground hover:text-foreground hover:bg-muted/50",
             )}
           >
