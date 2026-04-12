@@ -2370,7 +2370,7 @@ paths:
   /guilds/{guildId}/events:
     post:
       description: Create a new guild event with maps and hero NPCs
-      operationId: EventsCatalogController_createEvent
+      operationId: createEvent
       parameters:
         - name: guildId
           required: true
@@ -2386,6 +2386,10 @@ paths:
       responses:
         "201":
           description: Event created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventMutationResponseDto"
         "403":
           description: Forbidden - insufficient permissions
       security:
@@ -2395,7 +2399,7 @@ paths:
         - events
     get:
       description: Get all events for a guild
-      operationId: EventsCatalogController_getEvents
+      operationId: listEvents
       parameters:
         - name: world
           required: false
@@ -2417,6 +2421,12 @@ paths:
       responses:
         "200":
           description: List of events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EventListItemResponseDto"
       security:
         - bearer: []
       summary: List guild events
@@ -2425,7 +2435,7 @@ paths:
   /guilds/{guildId}/events/{eventId}:
     get:
       description: Get detailed information about a specific event
-      operationId: EventsCatalogController_getEvent
+      operationId: showEvent
       parameters:
         - name: eventId
           required: true
@@ -2441,6 +2451,10 @@ paths:
       responses:
         "200":
           description: Event details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventOverviewResponseDto"
         "404":
           description: Event not found
       security:
@@ -2450,7 +2464,7 @@ paths:
         - events
     patch:
       description: Update an existing event
-      operationId: EventsCatalogController_updateEvent
+      operationId: updateEvent
       parameters:
         - name: eventId
           required: true
@@ -2472,6 +2486,10 @@ paths:
       responses:
         "200":
           description: Event updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventMutationResponseDto"
         "404":
           description: Event not found
       security:
@@ -2481,7 +2499,7 @@ paths:
         - events
     delete:
       description: Delete an event
-      operationId: EventsCatalogController_deleteEvent
+      operationId: deleteEvent
       parameters:
         - name: eventId
           required: true
@@ -2497,6 +2515,10 @@ paths:
       responses:
         "200":
           description: Event deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponseDto_Output"
         "404":
           description: Event not found
       security:
@@ -2509,7 +2531,7 @@ paths:
       description: >-
         Get lightweight event overview for read-only views (without maps and
         rankings)
-      operationId: EventsCatalogController_getEventOverview
+      operationId: showEventOverview
       parameters:
         - name: eventId
           required: true
@@ -2525,6 +2547,10 @@ paths:
       responses:
         "200":
           description: Event overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventOverviewResponseDto"
         "404":
           description: Event not found
       security:
@@ -2537,7 +2563,7 @@ paths:
       description: >-
         Get cached event wrapped summary with loot, coverage and member
         highlights
-      operationId: EventsCatalogController_getWrapped
+      operationId: showEventWrapped
       parameters:
         - name: eventId
           required: true
@@ -2553,6 +2579,10 @@ paths:
       responses:
         "200":
           description: Event wrapped summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventWrappedApiResponseDto_Output"
         "404":
           description: Event not found
       security:
@@ -2565,7 +2595,7 @@ paths:
       description: >-
         Get map assignments grouped by hero for a specific event (read model for
         realtime map updates)
-      operationId: EventsCatalogController_getEventMaps
+      operationId: listEventMaps
       parameters:
         - name: eventId
           required: true
@@ -2581,6 +2611,10 @@ paths:
       responses:
         "200":
           description: Event maps data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventMapsResponseDto_Output"
         "404":
           description: Event not found
       security:
@@ -2591,7 +2625,7 @@ paths:
   /guilds/{guildId}/events/{eventId}/recalculate-points:
     post:
       description: Manually recalculate all event kill points with current rules
-      operationId: EventsCatalogController_recalculatePoints
+      operationId: recalculateEventPoints
       parameters:
         - name: eventId
           required: true
@@ -2607,6 +2641,10 @@ paths:
       responses:
         "200":
           description: Points recalculated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponseDto_Output"
         "404":
           description: Event not found
       security:
@@ -2880,6 +2918,10 @@ paths:
       responses:
         "201":
           description: Map added successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventMapResponseDto_Output"
       security:
         - bearer: []
       summary: Add map to hero
@@ -3154,7 +3196,7 @@ paths:
       description: >-
         Get pending and expired kill participation confirmations for currently
         authenticated member
-      operationId: EventsRankingController_getPendingParticipationConfirmations
+      operationId: listPendingParticipationConfirmations
       parameters:
         - name: eventId
           required: true
@@ -3170,6 +3212,11 @@ paths:
       responses:
         "200":
           description: Participation confirmations
+          content:
+            application/json:
+              schema:
+                $ref: >-
+                  #/components/schemas/PendingParticipationConfirmationsResponseDto
       security:
         - bearer: []
       summary: Get participation confirmations
@@ -3180,7 +3227,7 @@ paths:
       description: >-
         Confirm member participation for a kill within configured confirmation
         window
-      operationId: EventsRankingController_confirmParticipationForKill
+      operationId: confirmParticipationForKill
       parameters:
         - name: eventId
           required: true
@@ -3202,6 +3249,11 @@ paths:
       responses:
         "200":
           description: Participation confirmed
+          content:
+            application/json:
+              schema:
+                $ref: >-
+                  #/components/schemas/ConfirmParticipationForKillResponseDto_Output
       security:
         - bearer: []
       summary: Confirm participation in kill tracking
@@ -3210,7 +3262,7 @@ paths:
   /guilds/{guildId}/events/{eventId}/ranking:
     get:
       description: Get the ranking for an event
-      operationId: EventsRankingController_getRanking
+      operationId: listEventRanking
       parameters:
         - name: eventId
           required: true
@@ -3226,6 +3278,12 @@ paths:
       responses:
         "200":
           description: Event ranking
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EventRankingEntryResponseDto"
         "404":
           description: Event not found
       security:
@@ -3236,7 +3294,7 @@ paths:
   /guilds/{guildId}/events/{eventId}/ranking/{rankingId}:
     patch:
       description: Apply a signed manual points delta to a ranking entry (OWNER/ADMIN only)
-      operationId: EventsRankingController_updateRankingPoints
+      operationId: updateRankingPoints
       parameters:
         - name: eventId
           required: true
@@ -3255,6 +3313,12 @@ paths:
           in: path
           description: Guild ID
           schema: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRankingPointsDto"
       responses:
         "200":
           description: Ranking updated
@@ -3268,7 +3332,7 @@ paths:
   /guilds/{guildId}/events/{eventId}/ranking/{rankingId}/history:
     get:
       description: Get the edit history for a ranking entry (OWNER/ADMIN only)
-      operationId: EventsRankingController_getRankingEditHistory
+      operationId: listRankingEditHistory
       parameters:
         - name: eventId
           required: true
@@ -3290,6 +3354,12 @@ paths:
       responses:
         "200":
           description: Edit history returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RankingEditHistoryEntryResponseDto"
         "404":
           description: Ranking not found
       security:
@@ -3300,7 +3370,7 @@ paths:
   /guilds/{guildId}/events/{eventId}/timers:
     get:
       description: Get timers for all hero NPCs in this event
-      operationId: EventsRankingController_getEventHeroTimers
+      operationId: listEventHeroTimers
       parameters:
         - name: eventId
           required: true
@@ -3322,6 +3392,12 @@ paths:
       responses:
         "200":
           description: List of timers for event heroes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EventTimerResponseDto"
         "404":
           description: Event not found
       security:
@@ -3348,6 +3424,12 @@ paths:
       responses:
         "200":
           description: List of hero stats with kill counts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EventHeroStatsResponseDto"
         "404":
           description: Event not found
       security:
@@ -3394,6 +3476,10 @@ paths:
       responses:
         "200":
           description: Paginated list of kills with participant details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventKillHistoryResponseDto"
         "404":
           description: Event not found
       security:
@@ -3446,6 +3532,10 @@ paths:
       responses:
         "200":
           description: Paginated list of member kills with point breakdown
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventMemberKillHistoryResponseDto"
         "404":
           description: Event or member not found
       security:
@@ -3492,6 +3582,10 @@ paths:
       responses:
         "200":
           description: Paginated list of kills with participant details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventKillHistoryResponseDto"
         "404":
           description: Hero not found
       security:
@@ -3532,6 +3626,10 @@ paths:
       responses:
         "200":
           description: Kill details with participants, event config, and matching loots
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KillDetailResponseDto"
         "404":
           description: Kill not found
       security:
@@ -3569,6 +3667,12 @@ paths:
           in: path
           description: Guild ID
           schema: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateKillPointDto"
       responses:
         "200":
           description: Kill point updated and ranking recalculated
@@ -3612,6 +3716,12 @@ paths:
           description: >-
             Timeline data with map assignments and coverage gaps during spawn
             window
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/KillTimelineMapResponseDto"
         "404":
           description: Kill not found
       security:
@@ -3646,6 +3756,12 @@ paths:
       responses:
         "200":
           description: List of coverage gaps with type, duration, and timestamps
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HeroCoverageGapResponseDto"
       security:
         - bearer: []
       summary: Get hero coverage gaps
@@ -3678,6 +3794,12 @@ paths:
       responses:
         "200":
           description: List of coverage gaps with type, duration, and timestamps
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CoverageGapResponseDto"
       security:
         - bearer: []
       summary: Get map coverage gaps
@@ -3708,6 +3830,10 @@ paths:
       responses:
         "200":
           description: Active gap or null if no gap is currently active
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NullableCoverageGapResponseDto"
       security:
         - bearer: []
       summary: Get active coverage gap for map
@@ -3738,6 +3864,12 @@ paths:
       responses:
         "200":
           description: Array of active gaps for all maps of the hero
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CoverageGapResponseDto"
       security:
         - bearer: []
       summary: Get all active coverage gaps for hero
@@ -3770,6 +3902,10 @@ paths:
           description: >-
             Presence statistics including total coverage time and per-member
             breakdown
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HeroPresenceStatsResponseDto"
       security:
         - bearer: []
       summary: Get presence statistics for hero
@@ -3802,6 +3938,10 @@ paths:
           description: >-
             Respawn configuration including active timer status and default
             times
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HeroRespawnConfigResponseDto"
       security:
         - bearer: []
       summary: Get hero respawn configuration
@@ -7549,6 +7689,971 @@ components:
       required:
         - name
         - world
+    EventMutationResponseDto__schema0:
+      anyOf:
+        - type: string
+        - type: number
+        - type: boolean
+        - type: array
+          items:
+            $ref: "#/components/schemas/EventMutationResponseDto__schema0"
+        - type: object
+          propertyNames:
+            type: string
+          additionalProperties:
+            $ref: "#/components/schemas/EventMutationResponseDto__schema0"
+      nullable: true
+    EventMutationResponseDto:
+      type: object
+      properties:
+        id:
+          type: string
+        guildId:
+          type: string
+        name:
+          type: string
+        world:
+          type: string
+        active:
+          type: boolean
+        startsAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          nullable: true
+        endsAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        basePointsPerKill:
+          type: number
+          nullable: true
+        assignmentTimeoutMinutes:
+          type: number
+          nullable: true
+        participationConfirmationMinutes:
+          type: number
+          nullable: true
+        mapAssignmentCap:
+          type: number
+          nullable: true
+        rulebookMarkdown:
+          type: string
+          nullable: true
+        scoringMode:
+          type: string
+          enum:
+            - SIMPLE
+            - ADVANCED
+        scoringRules:
+          allOf:
+            - $ref: "#/components/schemas/EventMutationResponseDto__schema0"
+          nullable: true
+        heroNpcs:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              npcId:
+                type: number
+                nullable: true
+              npcName:
+                type: string
+              npcIcon:
+                type: string
+                nullable: true
+              npcLvl:
+                type: number
+                nullable: true
+              maps:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    mapId:
+                      type: number
+                    mapName:
+                      type: string
+                    locationId:
+                      type: string
+                      nullable: true
+                    assignedMembers:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: number
+                          name:
+                            type: string
+                          avatar:
+                            type: string
+                            nullable: true
+                          userId:
+                            type: string
+                          roles:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                position:
+                                  type: number
+                                color:
+                                  type: number
+                                  nullable: true
+                              required:
+                                - position
+                                - color
+                        required:
+                          - id
+                          - name
+                          - avatar
+                          - userId
+                          - roles
+                  required:
+                    - id
+                    - mapId
+                    - mapName
+                    - locationId
+                    - assignedMembers
+            required:
+              - id
+              - npcId
+              - npcName
+              - npcIcon
+              - npcLvl
+              - maps
+      required:
+        - id
+        - guildId
+        - name
+        - world
+        - active
+        - startsAt
+        - endsAt
+        - createdAt
+        - updatedAt
+        - scoringMode
+        - scoringRules
+        - heroNpcs
+    EventListItemResponseDto:
+      type: object
+      properties:
+        id:
+          type: string
+        guildId:
+          type: string
+        name:
+          type: string
+        world:
+          type: string
+        active:
+          type: boolean
+        startsAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          nullable: true
+        endsAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        heroNpcs:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              npcId:
+                type: number
+                nullable: true
+              npcName:
+                type: string
+              npcIcon:
+                type: string
+                nullable: true
+              npcLvl:
+                type: number
+                nullable: true
+            required:
+              - id
+              - npcId
+              - npcName
+              - npcIcon
+              - npcLvl
+      required:
+        - id
+        - guildId
+        - name
+        - world
+        - active
+        - startsAt
+        - endsAt
+        - createdAt
+        - updatedAt
+        - heroNpcs
+    EventOverviewResponseDto__schema0:
+      anyOf:
+        - type: string
+        - type: number
+        - type: boolean
+        - type: array
+          items:
+            $ref: "#/components/schemas/EventOverviewResponseDto__schema0"
+        - type: object
+          propertyNames:
+            type: string
+          additionalProperties:
+            $ref: "#/components/schemas/EventOverviewResponseDto__schema0"
+      nullable: true
+    EventOverviewResponseDto:
+      type: object
+      properties:
+        id:
+          type: string
+        guildId:
+          type: string
+        name:
+          type: string
+        world:
+          type: string
+        active:
+          type: boolean
+        startsAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          nullable: true
+        endsAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        basePointsPerKill:
+          type: number
+          nullable: true
+        assignmentTimeoutMinutes:
+          type: number
+          nullable: true
+        participationConfirmationMinutes:
+          type: number
+          nullable: true
+        mapAssignmentCap:
+          type: number
+          nullable: true
+        rulebookMarkdown:
+          type: string
+          nullable: true
+        scoringMode:
+          type: string
+          enum:
+            - SIMPLE
+            - ADVANCED
+        scoringRules:
+          allOf:
+            - $ref: "#/components/schemas/EventOverviewResponseDto__schema0"
+          nullable: true
+        heroNpcs:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              npcId:
+                type: number
+                nullable: true
+              npcName:
+                type: string
+              npcIcon:
+                type: string
+                nullable: true
+              npcLvl:
+                type: number
+                nullable: true
+            required:
+              - id
+              - npcId
+              - npcName
+              - npcIcon
+              - npcLvl
+      required:
+        - id
+        - guildId
+        - name
+        - world
+        - active
+        - startsAt
+        - endsAt
+        - createdAt
+        - updatedAt
+        - scoringMode
+        - scoringRules
+        - heroNpcs
+    EventWrappedApiResponseDto_Output:
+      type: object
+      properties:
+        generatedAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        event:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            world:
+              type: string
+            startsAt:
+              type: string
+              format: date-time
+              pattern: >-
+                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              nullable: true
+            endsAt:
+              type: string
+              format: date-time
+              pattern: >-
+                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              nullable: true
+            heroCount:
+              type: number
+            mapCount:
+              type: number
+            spawnCount:
+              type: number
+          required:
+            - id
+            - name
+            - world
+            - startsAt
+            - endsAt
+            - heroCount
+            - mapCount
+            - spawnCount
+          additionalProperties: false
+        overview:
+          type: object
+          properties:
+            totalKills:
+              type: number
+            participantCount:
+              type: number
+            totalPoints:
+              type: number
+            totalTrackedSeconds:
+              type: number
+            totalAfkSeconds:
+              type: number
+            coveragePercentage:
+              type: number
+            avgMapsPerSpawnWindow:
+              type: number
+            busiestHour:
+              type: number
+              nullable: true
+            busiestHourKills:
+              type: number
+            totalLoots:
+              type: number
+            rarityTotals:
+              type: object
+              properties:
+                unique:
+                  type: number
+                heroic:
+                  type: number
+                legendary:
+                  type: number
+              required:
+                - unique
+                - heroic
+                - legendary
+              additionalProperties: false
+          required:
+            - totalKills
+            - participantCount
+            - totalPoints
+            - totalTrackedSeconds
+            - totalAfkSeconds
+            - coveragePercentage
+            - avgMapsPerSpawnWindow
+            - busiestHour
+            - busiestHourKills
+            - totalLoots
+            - rarityTotals
+          additionalProperties: false
+        leaders:
+          type: object
+          properties:
+            topHunter:
+              type: object
+              properties:
+                memberId:
+                  type: number
+                name:
+                  type: string
+                avatar:
+                  type: string
+                  nullable: true
+                primaryValue:
+                  type: number
+                secondaryValue:
+                  type: number
+                  nullable: true
+              required:
+                - memberId
+                - name
+                - avatar
+                - primaryValue
+              additionalProperties: false
+              nullable: true
+            topScorer:
+              type: object
+              properties:
+                memberId:
+                  type: number
+                name:
+                  type: string
+                avatar:
+                  type: string
+                  nullable: true
+                primaryValue:
+                  type: number
+                secondaryValue:
+                  type: number
+                  nullable: true
+              required:
+                - memberId
+                - name
+                - avatar
+                - primaryValue
+              additionalProperties: false
+              nullable: true
+            longestDuty:
+              type: object
+              properties:
+                memberId:
+                  type: number
+                name:
+                  type: string
+                avatar:
+                  type: string
+                  nullable: true
+                primaryValue:
+                  type: number
+                secondaryValue:
+                  type: number
+                  nullable: true
+              required:
+                - memberId
+                - name
+                - avatar
+                - primaryValue
+              additionalProperties: false
+              nullable: true
+            topAfk:
+              type: object
+              properties:
+                memberId:
+                  type: number
+                name:
+                  type: string
+                avatar:
+                  type: string
+                  nullable: true
+                primaryValue:
+                  type: number
+                secondaryValue:
+                  type: number
+                  nullable: true
+              required:
+                - memberId
+                - name
+                - avatar
+                - primaryValue
+              additionalProperties: false
+              nullable: true
+            mostFlexible:
+              type: object
+              properties:
+                memberId:
+                  type: number
+                name:
+                  type: string
+                avatar:
+                  type: string
+                  nullable: true
+                primaryValue:
+                  type: number
+                secondaryValue:
+                  type: number
+                  nullable: true
+              required:
+                - memberId
+                - name
+                - avatar
+                - primaryValue
+              additionalProperties: false
+              nullable: true
+            topEfficiency:
+              type: object
+              properties:
+                memberId:
+                  type: number
+                name:
+                  type: string
+                avatar:
+                  type: string
+                  nullable: true
+                primaryValue:
+                  type: number
+                secondaryValue:
+                  type: number
+                  nullable: true
+              required:
+                - memberId
+                - name
+                - avatar
+                - primaryValue
+              additionalProperties: false
+              nullable: true
+          required:
+            - topHunter
+            - topScorer
+            - longestDuty
+            - topAfk
+            - mostFlexible
+            - topEfficiency
+          additionalProperties: false
+        coverage:
+          type: object
+          properties:
+            totalWindowCount:
+              type: number
+            totalWindowSeconds:
+              type: number
+            totalCoverageSeconds:
+              type: number
+            totalUncoveredSeconds:
+              type: number
+            totalUnassignedSeconds:
+              type: number
+            coveragePercentage:
+              type: number
+            avgMapsPerSpawnWindow:
+              type: number
+            bestHeroCoverage:
+              type: object
+              properties:
+                heroNpcId:
+                  type: string
+                npcName:
+                  type: string
+                npcIcon:
+                  type: string
+                  nullable: true
+                mapCount:
+                  type: number
+                totalKills:
+                  type: number
+                coveragePercentage:
+                  type: number
+              required:
+                - heroNpcId
+                - npcName
+                - npcIcon
+                - mapCount
+                - totalKills
+                - coveragePercentage
+              additionalProperties: false
+              nullable: true
+            roughestHeroCoverage:
+              type: object
+              properties:
+                heroNpcId:
+                  type: string
+                npcName:
+                  type: string
+                npcIcon:
+                  type: string
+                  nullable: true
+                mapCount:
+                  type: number
+                totalKills:
+                  type: number
+                coveragePercentage:
+                  type: number
+              required:
+                - heroNpcId
+                - npcName
+                - npcIcon
+                - mapCount
+                - totalKills
+                - coveragePercentage
+              additionalProperties: false
+              nullable: true
+          required:
+            - totalWindowCount
+            - totalWindowSeconds
+            - totalCoverageSeconds
+            - totalUncoveredSeconds
+            - totalUnassignedSeconds
+            - coveragePercentage
+            - avgMapsPerSpawnWindow
+            - bestHeroCoverage
+            - roughestHeroCoverage
+          additionalProperties: false
+        heroes:
+          type: array
+          items:
+            type: object
+            properties:
+              heroNpcId:
+                type: string
+              npcId:
+                type: number
+                nullable: true
+              npcName:
+                type: string
+              npcIcon:
+                type: string
+                nullable: true
+              mapCount:
+                type: number
+              totalKills:
+                type: number
+              totalPoints:
+                type: number
+              coveragePercentage:
+                type: number
+              rarityTotals:
+                type: object
+                properties:
+                  unique:
+                    type: number
+                  heroic:
+                    type: number
+                  legendary:
+                    type: number
+                required:
+                  - unique
+                  - heroic
+                  - legendary
+                additionalProperties: false
+              topHunter:
+                type: object
+                properties:
+                  memberId:
+                    type: number
+                  name:
+                    type: string
+                  avatar:
+                    type: string
+                    nullable: true
+                  primaryValue:
+                    type: number
+                  secondaryValue:
+                    type: number
+                    nullable: true
+                required:
+                  - memberId
+                  - name
+                  - avatar
+                  - primaryValue
+                additionalProperties: false
+                nullable: true
+            required:
+              - heroNpcId
+              - npcId
+              - npcName
+              - npcIcon
+              - mapCount
+              - totalKills
+              - totalPoints
+              - coveragePercentage
+              - rarityTotals
+              - topHunter
+            additionalProperties: false
+        loot:
+          type: object
+          properties:
+            totalLoots:
+              type: number
+            rarityTotals:
+              type: object
+              properties:
+                unique:
+                  type: number
+                heroic:
+                  type: number
+                legendary:
+                  type: number
+              required:
+                - unique
+                - heroic
+                - legendary
+              additionalProperties: false
+            heroBreakdown:
+              type: array
+              items:
+                type: object
+                properties:
+                  heroNpcId:
+                    type: string
+                  npcName:
+                    type: string
+                  npcIcon:
+                    type: string
+                    nullable: true
+                  totalLoots:
+                    type: number
+                  rarityTotals:
+                    type: object
+                    properties:
+                      unique:
+                        type: number
+                      heroic:
+                        type: number
+                      legendary:
+                        type: number
+                    required:
+                      - unique
+                      - heroic
+                      - legendary
+                    additionalProperties: false
+                required:
+                  - heroNpcId
+                  - npcName
+                  - npcIcon
+                  - totalLoots
+                  - rarityTotals
+                additionalProperties: false
+          required:
+            - totalLoots
+            - rarityTotals
+            - heroBreakdown
+          additionalProperties: false
+      required:
+        - generatedAt
+        - event
+        - overview
+        - leaders
+        - coverage
+        - heroes
+        - loot
+      additionalProperties: false
+    EventMapsResponseDto_Output:
+      type: object
+      properties:
+        id:
+          type: string
+        heroNpcs:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              npcId:
+                type: number
+                nullable: true
+              npcName:
+                type: string
+              npcIcon:
+                type: string
+                nullable: true
+              npcLvl:
+                type: number
+                nullable: true
+              locations:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+                    order:
+                      type: number
+                    maps:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                          mapId:
+                            type: number
+                          mapName:
+                            type: string
+                          locationId:
+                            type: string
+                            nullable: true
+                          assignedMembers:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                id:
+                                  type: number
+                                name:
+                                  type: string
+                                avatar:
+                                  type: string
+                                  nullable: true
+                                userId:
+                                  type: string
+                                roles:
+                                  type: array
+                                  items:
+                                    type: object
+                                    properties:
+                                      position:
+                                        type: number
+                                      color:
+                                        type: number
+                                        nullable: true
+                                    required:
+                                      - position
+                                      - color
+                                    additionalProperties: false
+                              required:
+                                - id
+                                - name
+                                - avatar
+                                - userId
+                                - roles
+                              additionalProperties: false
+                        required:
+                          - id
+                          - mapId
+                          - mapName
+                          - locationId
+                          - assignedMembers
+                        additionalProperties: false
+                  required:
+                    - id
+                    - name
+                    - order
+                    - maps
+                  additionalProperties: false
+              maps:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    mapId:
+                      type: number
+                    mapName:
+                      type: string
+                    locationId:
+                      type: string
+                      nullable: true
+                    assignedMembers:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: number
+                          name:
+                            type: string
+                          avatar:
+                            type: string
+                            nullable: true
+                          userId:
+                            type: string
+                          roles:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                position:
+                                  type: number
+                                color:
+                                  type: number
+                                  nullable: true
+                              required:
+                                - position
+                                - color
+                              additionalProperties: false
+                        required:
+                          - id
+                          - name
+                          - avatar
+                          - userId
+                          - roles
+                        additionalProperties: false
+                  required:
+                    - id
+                    - mapId
+                    - mapName
+                    - locationId
+                    - assignedMembers
+                  additionalProperties: false
+            required:
+              - id
+              - npcId
+              - npcName
+              - npcIcon
+              - npcLvl
+              - locations
+              - maps
+            additionalProperties: false
+      required:
+        - id
+        - heroNpcs
+      additionalProperties: false
     UpdateEventDto:
       type: object
       properties:
@@ -7770,6 +8875,14 @@ components:
           enum:
             - SIMPLE
             - ADVANCED
+    SuccessResponseDto_Output:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required:
+        - success
+      additionalProperties: false
     AssignMemberDto:
       type: object
       properties:
@@ -7825,6 +8938,60 @@ components:
       required:
         - mapId
         - mapName
+    EventMapResponseDto_Output:
+      type: object
+      properties:
+        id:
+          type: string
+        mapId:
+          type: number
+        mapName:
+          type: string
+        locationId:
+          type: string
+          nullable: true
+        assignedMembers:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: number
+              name:
+                type: string
+              avatar:
+                type: string
+                nullable: true
+              userId:
+                type: string
+              roles:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    position:
+                      type: number
+                    color:
+                      type: number
+                      nullable: true
+                  required:
+                    - position
+                    - color
+                  additionalProperties: false
+            required:
+              - id
+              - name
+              - avatar
+              - userId
+              - roles
+            additionalProperties: false
+      required:
+        - id
+        - mapId
+        - mapName
+        - locationId
+        - assignedMembers
+      additionalProperties: false
     CreateLocationDto:
       type: object
       properties:
@@ -7856,6 +9023,1162 @@ components:
         locationId:
           type: string
           nullable: true
+    PendingParticipationConfirmationsResponseDto:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              killId:
+                type: string
+              killedAt:
+                type: string
+                format: date-time
+                pattern: >-
+                  ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              confirmationDeadlineAt:
+                type: string
+                format: date-time
+                pattern: >-
+                  ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              heroNpc:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  npcId:
+                    type: number
+                    nullable: true
+                  npcName:
+                    type: string
+                  npcIcon:
+                    type: string
+                    nullable: true
+                  npcLvl:
+                    type: number
+                    nullable: true
+                required:
+                  - id
+                  - npcId
+                  - npcName
+                  - npcIcon
+                  - npcLvl
+            required:
+              - killId
+              - killedAt
+              - confirmationDeadlineAt
+              - heroNpc
+        expiredItems:
+          type: array
+          items:
+            type: object
+            properties:
+              killId:
+                type: string
+              killedAt:
+                type: string
+                format: date-time
+                pattern: >-
+                  ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              confirmationDeadlineAt:
+                type: string
+                format: date-time
+                pattern: >-
+                  ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              heroNpc:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  npcId:
+                    type: number
+                    nullable: true
+                  npcName:
+                    type: string
+                  npcIcon:
+                    type: string
+                    nullable: true
+                  npcLvl:
+                    type: number
+                    nullable: true
+                required:
+                  - id
+                  - npcId
+                  - npcName
+                  - npcIcon
+                  - npcLvl
+            required:
+              - killId
+              - killedAt
+              - confirmationDeadlineAt
+              - heroNpc
+      required:
+        - items
+        - expiredItems
+    ConfirmParticipationForKillResponseDto_Output:
+      type: object
+      properties:
+        success:
+          type: boolean
+        confirmedNow:
+          type: boolean
+      required:
+        - success
+        - confirmedNow
+      additionalProperties: false
+    EventRankingEntryResponseDto:
+      type: object
+      properties:
+        id:
+          type: string
+        eventId:
+          type: string
+        memberId:
+          type: number
+        heroNpcName:
+          type: string
+        totalPoints:
+          type: number
+        totalKills:
+          type: number
+        totalTimeSeconds:
+          type: number
+        avgAfkPercentage:
+          type: number
+        pointsModified:
+          type: boolean
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        member:
+          type: object
+          properties:
+            id:
+              type: number
+            name:
+              type: string
+          required:
+            - id
+            - name
+      required:
+        - id
+        - eventId
+        - memberId
+        - heroNpcName
+        - totalPoints
+        - totalKills
+        - totalTimeSeconds
+        - avgAfkPercentage
+        - pointsModified
+        - updatedAt
+        - member
+    UpdateRankingPointsDto:
+      type: object
+      properties:
+        pointsDelta:
+          type: number
+        comment:
+          type: string
+          maxLength: 500
+      required:
+        - pointsDelta
+    RankingEditHistoryEntryResponseDto:
+      type: object
+      properties:
+        id:
+          type: string
+        rankingId:
+          type: string
+        previousPoints:
+          type: number
+        newPoints:
+          type: number
+        deltaPoints:
+          type: number
+        editType:
+          type: string
+          enum:
+            - KILL_POINT
+            - RANKING
+        editedByUserId:
+          type: string
+        editedByName:
+          type: string
+          nullable: true
+        comment:
+          type: string
+          nullable: true
+        editedAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+      required:
+        - id
+        - rankingId
+        - previousPoints
+        - newPoints
+        - deltaPoints
+        - editType
+        - editedByUserId
+        - editedByName
+        - comment
+        - editedAt
+    EventTimerResponseDto:
+      type: object
+      properties:
+        npcId:
+          type: number
+        world:
+          type: string
+        minSpawnTime:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        maxSpawnTime:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        npc:
+          type: object
+          properties:
+            name:
+              type: string
+            icon:
+              type: string
+              nullable: true
+          required:
+            - name
+            - icon
+      required:
+        - npcId
+        - world
+        - minSpawnTime
+        - maxSpawnTime
+        - npc
+    EventHeroStatsResponseDto:
+      type: object
+      properties:
+        heroId:
+          type: string
+        npcId:
+          type: number
+          nullable: true
+        npcName:
+          type: string
+        npcLvl:
+          type: number
+          nullable: true
+        killCount:
+          type: number
+      required:
+        - heroId
+        - npcId
+        - npcName
+        - npcLvl
+        - killCount
+    EventKillHistoryResponseDto__schema0:
+      anyOf:
+        - type: string
+        - type: number
+        - type: boolean
+        - type: array
+          items:
+            $ref: "#/components/schemas/EventKillHistoryResponseDto__schema0"
+        - type: object
+          propertyNames:
+            type: string
+          additionalProperties:
+            $ref: "#/components/schemas/EventKillHistoryResponseDto__schema0"
+      nullable: true
+    EventKillHistoryResponseDto:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              heroNpcId:
+                type: string
+              killedAt:
+                type: string
+                format: date-time
+                pattern: >-
+                  ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              minSpawnTimeAtKill:
+                type: string
+                format: date-time
+                pattern: >-
+                  ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              maxSpawnTimeAtKill:
+                type: string
+                format: date-time
+                pattern: >-
+                  ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              isManualClose:
+                type: boolean
+              heroNpc:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  npcId:
+                    type: number
+                    nullable: true
+                  npcName:
+                    type: string
+                  npcIcon:
+                    type: string
+                    nullable: true
+                  npcLvl:
+                    type: number
+                    nullable: true
+                required:
+                  - id
+                  - npcId
+                  - npcName
+                  - npcIcon
+                  - npcLvl
+              points:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    memberId:
+                      type: number
+                    points:
+                      type: number
+                    basePoints:
+                      type: number
+                    manualAdjustmentPoints:
+                      type: number
+                      nullable: true
+                    trackingDurationSeconds:
+                      type: number
+                      nullable: true
+                    trackingDurationPercentage:
+                      type: number
+                      nullable: true
+                    timeOnMapSeconds:
+                      type: number
+                    afkPercentage:
+                      type: number
+                    wasPresent:
+                      type: boolean
+                    bonusBreakdown:
+                      allOf:
+                        - $ref: >-
+                            #/components/schemas/EventKillHistoryResponseDto__schema0
+                      nullable: true
+                    member:
+                      type: object
+                      properties:
+                        id:
+                          type: number
+                        name:
+                          type: string
+                        avatar:
+                          type: string
+                          nullable: true
+                        userId:
+                          type: string
+                      required:
+                        - id
+                        - name
+                        - avatar
+                        - userId
+                    mapData:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          mapId:
+                            type: string
+                          mapName:
+                            type: string
+                          assignedAt:
+                            type: string
+                            format: date-time
+                            pattern: >-
+                              ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                          unassignedAt:
+                            type: string
+                            format: date-time
+                            pattern: >-
+                              ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                            nullable: true
+                          assignmentDurationSeconds:
+                            type: number
+                          presenceTimeSeconds:
+                            type: number
+                          afkTimeSeconds:
+                            type: number
+                        required:
+                          - mapId
+                          - mapName
+                          - assignedAt
+                          - unassignedAt
+                          - assignmentDurationSeconds
+                          - presenceTimeSeconds
+                          - afkTimeSeconds
+                  required:
+                    - id
+                    - memberId
+                    - points
+                    - basePoints
+                    - trackingDurationSeconds
+                    - trackingDurationPercentage
+                    - timeOnMapSeconds
+                    - afkPercentage
+                    - wasPresent
+                    - member
+            required:
+              - id
+              - heroNpcId
+              - killedAt
+              - minSpawnTimeAtKill
+              - maxSpawnTimeAtKill
+              - isManualClose
+              - heroNpc
+              - points
+        nextCursor:
+          type: string
+          nullable: true
+      required:
+        - data
+        - nextCursor
+    EventMemberKillHistoryResponseDto__schema0:
+      anyOf:
+        - type: string
+        - type: number
+        - type: boolean
+        - type: array
+          items:
+            $ref: "#/components/schemas/EventMemberKillHistoryResponseDto__schema0"
+        - type: object
+          propertyNames:
+            type: string
+          additionalProperties:
+            $ref: "#/components/schemas/EventMemberKillHistoryResponseDto__schema0"
+      nullable: true
+    EventMemberKillHistoryResponseDto:
+      type: object
+      properties:
+        member:
+          type: object
+          properties:
+            id:
+              type: number
+            name:
+              type: string
+            avatar:
+              type: string
+              nullable: true
+            userId:
+              type: string
+          required:
+            - id
+            - name
+            - avatar
+            - userId
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              heroNpcId:
+                type: string
+              killedAt:
+                type: string
+                format: date-time
+                pattern: >-
+                  ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              minSpawnTimeAtKill:
+                type: string
+                format: date-time
+                pattern: >-
+                  ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              maxSpawnTimeAtKill:
+                type: string
+                format: date-time
+                pattern: >-
+                  ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              isManualClose:
+                type: boolean
+              heroNpc:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  npcId:
+                    type: number
+                    nullable: true
+                  npcName:
+                    type: string
+                  npcIcon:
+                    type: string
+                    nullable: true
+                  npcLvl:
+                    type: number
+                    nullable: true
+                required:
+                  - id
+                  - npcId
+                  - npcName
+                  - npcIcon
+                  - npcLvl
+              memberPoint:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  memberId:
+                    type: number
+                  points:
+                    type: number
+                  basePoints:
+                    type: number
+                  manualAdjustmentPoints:
+                    type: number
+                    nullable: true
+                  trackingDurationSeconds:
+                    type: number
+                    nullable: true
+                  trackingDurationPercentage:
+                    type: number
+                    nullable: true
+                  timeOnMapSeconds:
+                    type: number
+                  afkPercentage:
+                    type: number
+                  wasPresent:
+                    type: boolean
+                  bonusBreakdown:
+                    allOf:
+                      - $ref: >-
+                          #/components/schemas/EventMemberKillHistoryResponseDto__schema0
+                    nullable: true
+                  member:
+                    type: object
+                    properties:
+                      id:
+                        type: number
+                      name:
+                        type: string
+                      avatar:
+                        type: string
+                        nullable: true
+                      userId:
+                        type: string
+                    required:
+                      - id
+                      - name
+                      - avatar
+                      - userId
+                  mapData:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        mapId:
+                          type: string
+                        mapName:
+                          type: string
+                        assignedAt:
+                          type: string
+                          format: date-time
+                          pattern: >-
+                            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                        unassignedAt:
+                          type: string
+                          format: date-time
+                          pattern: >-
+                            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                          nullable: true
+                        assignmentDurationSeconds:
+                          type: number
+                        presenceTimeSeconds:
+                          type: number
+                        afkTimeSeconds:
+                          type: number
+                      required:
+                        - mapId
+                        - mapName
+                        - assignedAt
+                        - unassignedAt
+                        - assignmentDurationSeconds
+                        - presenceTimeSeconds
+                        - afkTimeSeconds
+                required:
+                  - id
+                  - memberId
+                  - points
+                  - basePoints
+                  - trackingDurationSeconds
+                  - trackingDurationPercentage
+                  - timeOnMapSeconds
+                  - afkPercentage
+                  - wasPresent
+                  - member
+                nullable: true
+            required:
+              - id
+              - heroNpcId
+              - killedAt
+              - minSpawnTimeAtKill
+              - maxSpawnTimeAtKill
+              - isManualClose
+              - heroNpc
+              - memberPoint
+        nextCursor:
+          type: string
+          nullable: true
+      required:
+        - member
+        - data
+        - nextCursor
+    KillDetailResponseDto__schema0:
+      anyOf:
+        - type: string
+        - type: number
+        - type: boolean
+        - type: array
+          items:
+            $ref: "#/components/schemas/KillDetailResponseDto__schema0"
+        - type: object
+          propertyNames:
+            type: string
+          additionalProperties:
+            $ref: "#/components/schemas/KillDetailResponseDto__schema0"
+      nullable: true
+    KillDetailResponseDto:
+      type: object
+      properties:
+        kill:
+          type: object
+          properties:
+            id:
+              type: string
+            heroNpcId:
+              type: string
+            killedAt:
+              type: string
+              format: date-time
+              pattern: >-
+                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            minSpawnTimeAtKill:
+              type: string
+              format: date-time
+              pattern: >-
+                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            maxSpawnTimeAtKill:
+              type: string
+              format: date-time
+              pattern: >-
+                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            timerCreatedById:
+              type: number
+              nullable: true
+            isManualClose:
+              type: boolean
+            respawnDurationSeconds:
+              type: number
+              nullable: true
+            windowDurationSeconds:
+              type: number
+              nullable: true
+            resolvedAfterMaxSpawnTimeMs:
+              type: number
+              nullable: true
+            heroNpc:
+              type: object
+              properties:
+                id:
+                  type: string
+                npcId:
+                  type: number
+                  nullable: true
+                npcName:
+                  type: string
+                npcIcon:
+                  type: string
+                  nullable: true
+                npcLvl:
+                  type: number
+                  nullable: true
+                event:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+                    world:
+                      type: string
+                  required:
+                    - id
+                    - name
+                    - world
+              required:
+                - id
+                - npcId
+                - npcName
+                - npcIcon
+                - npcLvl
+                - event
+            timerCreatedBy:
+              type: object
+              properties:
+                id:
+                  type: number
+                name:
+                  type: string
+                avatar:
+                  type: string
+                  nullable: true
+                userId:
+                  type: string
+              required:
+                - id
+                - name
+                - avatar
+                - userId
+              nullable: true
+            points:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  memberId:
+                    type: number
+                  points:
+                    type: number
+                  basePoints:
+                    type: number
+                  manualAdjustmentPoints:
+                    type: number
+                    nullable: true
+                  trackingDurationSeconds:
+                    type: number
+                    nullable: true
+                  trackingDurationPercentage:
+                    type: number
+                    nullable: true
+                  timeOnMapSeconds:
+                    type: number
+                  afkPercentage:
+                    type: number
+                  wasPresent:
+                    type: boolean
+                  bonusBreakdown:
+                    allOf:
+                      - $ref: "#/components/schemas/KillDetailResponseDto__schema0"
+                    nullable: true
+                  member:
+                    type: object
+                    properties:
+                      id:
+                        type: number
+                      name:
+                        type: string
+                      avatar:
+                        type: string
+                        nullable: true
+                      userId:
+                        type: string
+                      roles:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            position:
+                              type: number
+                              nullable: true
+                            color:
+                              type: number
+                              nullable: true
+                          required:
+                            - position
+                            - color
+                    required:
+                      - id
+                      - name
+                      - avatar
+                      - userId
+                      - roles
+                  mapData:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        mapId:
+                          type: string
+                        mapName:
+                          type: string
+                        assignedAt:
+                          type: string
+                          format: date-time
+                          pattern: >-
+                            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                        unassignedAt:
+                          type: string
+                          format: date-time
+                          pattern: >-
+                            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                          nullable: true
+                        assignmentDurationSeconds:
+                          type: number
+                        presenceTimeSeconds:
+                          type: number
+                        afkTimeSeconds:
+                          type: number
+                      required:
+                        - mapId
+                        - mapName
+                        - assignedAt
+                        - unassignedAt
+                        - assignmentDurationSeconds
+                        - presenceTimeSeconds
+                        - afkTimeSeconds
+                required:
+                  - id
+                  - memberId
+                  - points
+                  - basePoints
+                  - trackingDurationSeconds
+                  - trackingDurationPercentage
+                  - timeOnMapSeconds
+                  - afkPercentage
+                  - wasPresent
+                  - member
+          required:
+            - id
+            - heroNpcId
+            - killedAt
+            - minSpawnTimeAtKill
+            - maxSpawnTimeAtKill
+            - timerCreatedById
+            - isManualClose
+            - respawnDurationSeconds
+            - windowDurationSeconds
+            - resolvedAfterMaxSpawnTimeMs
+            - heroNpc
+            - timerCreatedBy
+            - points
+        eventConfig:
+          type: object
+          properties:
+            scoringMode:
+              type: string
+              enum:
+                - SIMPLE
+                - ADVANCED
+            scoringRules:
+              allOf:
+                - $ref: "#/components/schemas/KillDetailResponseDto__schema0"
+              nullable: true
+          required:
+            - scoringMode
+            - scoringRules
+      required:
+        - kill
+        - eventConfig
+    UpdateKillPointDto:
+      type: object
+      properties:
+        pointsDelta:
+          type: number
+        comment:
+          type: string
+          maxLength: 500
+      required:
+        - pointsDelta
+    KillTimelineMapResponseDto:
+      type: object
+      properties:
+        mapId:
+          type: string
+        mapName:
+          type: string
+        numericMapId:
+          type: number
+        assignments:
+          type: array
+          items:
+            type: object
+            properties:
+              memberId:
+                type: number
+              memberName:
+                type: string
+              memberAvatar:
+                type: string
+                nullable: true
+              memberUserId:
+                type: string
+              assignedAt:
+                type: string
+                format: date-time
+                pattern: >-
+                  ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              unassignedAt:
+                type: string
+                format: date-time
+                pattern: >-
+                  ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                nullable: true
+            required:
+              - memberId
+              - memberName
+              - memberAvatar
+              - memberUserId
+              - assignedAt
+              - unassignedAt
+        gaps:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              gapType:
+                type: string
+                enum:
+                  - UNASSIGNED
+                  - UNCOVERED
+              startedAt:
+                type: string
+                format: date-time
+                pattern: >-
+                  ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              endedAt:
+                type: string
+                format: date-time
+                pattern: >-
+                  ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                nullable: true
+              durationSeconds:
+                type: number
+                nullable: true
+            required:
+              - id
+              - gapType
+              - startedAt
+              - endedAt
+              - durationSeconds
+      required:
+        - mapId
+        - mapName
+        - numericMapId
+        - assignments
+        - gaps
+    HeroCoverageGapResponseDto:
+      type: object
+      properties:
+        id:
+          type: string
+        mapId:
+          type: string
+        heroNpcId:
+          type: string
+        gapType:
+          type: string
+          enum:
+            - UNASSIGNED
+            - UNCOVERED
+        startedAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        endedAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          nullable: true
+        durationSeconds:
+          type: number
+          nullable: true
+        map:
+          type: object
+          properties:
+            mapName:
+              type: string
+            mapId:
+              type: number
+          required:
+            - mapName
+            - mapId
+      required:
+        - id
+        - mapId
+        - heroNpcId
+        - gapType
+        - startedAt
+        - endedAt
+        - durationSeconds
+        - map
+    CoverageGapResponseDto:
+      type: object
+      properties:
+        id:
+          type: string
+        mapId:
+          type: string
+        heroNpcId:
+          type: string
+        gapType:
+          type: string
+          enum:
+            - UNASSIGNED
+            - UNCOVERED
+        startedAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        endedAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          nullable: true
+        durationSeconds:
+          type: number
+          nullable: true
+      required:
+        - id
+        - mapId
+        - heroNpcId
+        - gapType
+        - startedAt
+        - endedAt
+        - durationSeconds
+    NullableCoverageGapResponseDto:
+      type: object
+      properties:
+        id:
+          type: string
+        mapId:
+          type: string
+        heroNpcId:
+          type: string
+        gapType:
+          type: string
+          enum:
+            - UNASSIGNED
+            - UNCOVERED
+        startedAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        endedAt:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          nullable: true
+        durationSeconds:
+          type: number
+          nullable: true
+      required:
+        - id
+        - mapId
+        - heroNpcId
+        - gapType
+        - startedAt
+        - endedAt
+        - durationSeconds
+      nullable: true
+    HeroPresenceStatsResponseDto:
+      type: object
+      properties:
+        totalCoverageSeconds:
+          type: number
+        totalEventSeconds:
+          type: number
+        presencePercentage:
+          type: number
+        memberStats:
+          type: array
+          items:
+            type: object
+            properties:
+              memberId:
+                type: number
+              memberName:
+                type: string
+              memberAvatar:
+                type: string
+                nullable: true
+              totalTimeSeconds:
+                type: number
+              afkTimeSeconds:
+                type: number
+              afkPercentage:
+                type: number
+            required:
+              - memberId
+              - memberName
+              - memberAvatar
+              - totalTimeSeconds
+              - afkTimeSeconds
+              - afkPercentage
+      required:
+        - totalCoverageSeconds
+        - totalEventSeconds
+        - presencePercentage
+        - memberStats
+    HeroRespawnConfigResponseDto:
+      type: object
+      properties:
+        hasTimer:
+          type: boolean
+        windowStatus:
+          type: string
+          enum:
+            - OPEN
+            - WAITING
+            - OVERDUE
+            - NONE
+        minSpawnTime:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          nullable: true
+        maxSpawnTime:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          nullable: true
+        overdueMs:
+          type: number
+          nullable: true
+      required:
+        - hasTimer
+        - windowStatus
+        - minSpawnTime
+        - maxSpawnTime
+        - overdueMs
     CloseRespawnWindowDto:
       type: object
       properties:

@@ -1,8 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { EventRouteLayout } from "@/features/guild/events/event-route-layout";
-import { eventOverviewQueryOptions } from "@/features/guild/events/hooks/queries/use-event-overview";
-import { eventRankingQueryOptions } from "@/features/guild/events/hooks/queries/use-event-ranking";
-import { throwNotFoundIfResponseMatches } from "@/lib/router/route-errors";
+import {
+  getListEventRankingQueryOptions,
+  getShowEventOverviewQueryOptions,
+} from "@/lib/api/generated/main/events/events";
+import {
+  isRouteLoaderCancelledError,
+  throwNotFoundIfResponseMatches,
+} from "@/lib/router/route-errors";
 
 export const Route = createFileRoute(
   "/_authenticated/$guildId/events_/$eventId_",
@@ -12,13 +17,13 @@ export const Route = createFileRoute(
     try {
       const [event, rankings] = await Promise.all([
         context.queryClient.ensureQueryData(
-          eventOverviewQueryOptions({
+          getShowEventOverviewQueryOptions({
             guildId: params.guildId,
             eventId: params.eventId,
           }),
         ),
         context.queryClient.ensureQueryData(
-          eventRankingQueryOptions({
+          getListEventRankingQueryOptions({
             guildId: params.guildId,
             eventId: params.eventId,
           }),
@@ -30,6 +35,10 @@ export const Route = createFileRoute(
         rankings,
       };
     } catch (error) {
+      if (isRouteLoaderCancelledError(error)) {
+        return;
+      }
+
       throwNotFoundIfResponseMatches(error);
     }
   },

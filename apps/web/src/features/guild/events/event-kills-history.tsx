@@ -5,13 +5,13 @@ import { Card } from "@lootlog/ui/components/card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Tabs, TabsTrigger } from "@lootlog/ui/components/tabs";
 import { AlertCircle, Skull, Swords } from "lucide-react";
-import { useEventOverview } from "./hooks/queries/use-event-overview";
 import { useEventKillHistory } from "./hooks/queries/use-event-kill-history";
 import { KillHistoryCard } from "./components/kills/kill-history-card";
 import { useState } from "react";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { EventScrollableTabsList } from "./components/shared/event-scrollable-tabs-list";
 import { Spinner } from "@lootlog/ui/components/spinner";
+import { useShowEventOverview } from "@/lib/api/generated/main/events/events";
 
 export const EventKillsHistory = () => {
   const { guildId, eventId, heroId: urlHeroId } = useParams({ strict: false });
@@ -40,7 +40,7 @@ const EventKillsHistoryContent = ({
     initialHeroId,
   );
 
-  const { data: event, isLoading: eventLoading } = useEventOverview({
+  const { data: event, isLoading: eventLoading } = useShowEventOverview({
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   });

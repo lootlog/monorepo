@@ -1,5 +1,43 @@
-import type { QueryClient } from "@tanstack/react-query";
-import { queryKeys } from "@/lib/query-keys";
+import type { Query, QueryClient } from "@tanstack/react-query";
+import {
+  getEventsMonitoringControllerGetHeroRespawnConfigQueryKey,
+  getListEventMapsQueryKey,
+} from "@/lib/api/generated/main/events/events";
+
+const getEventTimersPath = (guildId: string, eventId: string) =>
+  `/guilds/${guildId}/events/${eventId}/timers`;
+
+const getEventMapsPathPrefix = (guildId: string, eventId: string) =>
+  `/guilds/${guildId}/events/${eventId}/maps/`;
+
+const getEventHeroesPathPrefix = (guildId: string, eventId: string) =>
+  `/guilds/${guildId}/events/${eventId}/heroes/`;
+
+const isEventRespawnRelatedQuery = (
+  query: Query,
+  guildId: string,
+  eventId: string,
+) => {
+  const [path] = query.queryKey;
+
+  if (typeof path !== "string") {
+    return false;
+  }
+
+  if (path === getEventTimersPath(guildId, eventId)) {
+    return true;
+  }
+
+  if (path.startsWith(getEventMapsPathPrefix(guildId, eventId))) {
+    return path.endsWith("/active-gap") || path.endsWith("/coverage-gaps");
+  }
+
+  if (path.startsWith(getEventHeroesPathPrefix(guildId, eventId))) {
+    return path.endsWith("/active-gaps") || path.endsWith("/coverage-gaps");
+  }
+
+  return false;
+};
 
 export function invalidateRespawnQueries(
   queryClient: QueryClient,
@@ -7,16 +45,21 @@ export function invalidateRespawnQueries(
   eventId: string,
   heroId: string,
 ) {
+  if (!guildId) {
+    return;
+  }
+
   queryClient.invalidateQueries({
-    queryKey: queryKeys.events.heroRespawnConfig(guildId, eventId, heroId),
+    queryKey: getEventsMonitoringControllerGetHeroRespawnConfigQueryKey({
+      guildId,
+      eventId,
+      heroId,
+    }),
   });
   queryClient.invalidateQueries({
-    queryKey: queryKeys.events.heroTimers(guildId, eventId),
+    predicate: (query) => isEventRespawnRelatedQuery(query, guildId, eventId),
   });
   queryClient.invalidateQueries({
-    queryKey: queryKeys.events.maps(guildId, eventId),
-  });
-  queryClient.invalidateQueries({
-    queryKey: queryKeys.events.mapActiveGapRoot(guildId, eventId),
+    queryKey: getListEventMapsQueryKey({ guildId, eventId }),
   });
 }

@@ -1,6 +1,6 @@
 import type { useTranslation } from "react-i18next";
 import { Badge } from "@lootlog/ui/components/badge";
-import type { EventWrapped } from "../../../hooks/queries/use-event-wrapped";
+import type { EventWrapped } from "../../../types/api";
 import { formatDurationHuman } from "../../../utils";
 import { HeroSpotlight } from "./hero-spotlight";
 import { LeaderCard } from "./leader-card";

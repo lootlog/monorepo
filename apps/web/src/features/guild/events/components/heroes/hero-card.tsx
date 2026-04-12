@@ -20,11 +20,10 @@ import { NpcTile } from "@/components/tiles";
 import { HeroTimerDisplay } from "./hero-timer-display";
 import { HeroWindowStatusBadge } from "./hero-window-status-badge";
 import type { TFunction } from "i18next";
-import type { EventTimer } from "../../hooks/queries/use-event-hero-timers";
-import type { EventHeroNpc } from "../../hooks/queries/use-events";
+import type { EventHeroNpc, EventTimer } from "../../types/api";
 
 interface HeroStats {
-  npcId: number;
+  npcId: number | null;
   killCount: number;
 }
 
@@ -101,8 +100,7 @@ export const HeroCard = ({
               <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <HeroWindowStatusBadge
                   eventId={eventId}
-                  heroNpcId={hero.npcId}
-                  heroName={hero.npcName}
+                  heroId={hero.id}
                   className="shrink-0"
                 />
                 <HeroTimerDisplay timer={timer} t={t} className="shrink-0" />
