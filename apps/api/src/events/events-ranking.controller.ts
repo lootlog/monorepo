@@ -20,7 +20,7 @@ import {
 import { UserId } from "@lootlog/nest-shared";
 import { ZodResponse } from "nestjs-zod";
 import { Permission, type Role } from "src/generated/prisma/client";
-import type {
+import {
   UpdateKillPointDto,
   UpdateRankingPointsDto,
 } from "./dto/update-points.dto";

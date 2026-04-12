@@ -1,6 +1,8 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { eventsRankingControllerGetEventKillHistory } from "@/lib/api/generated/main/events/events";
-import { queryKeys } from "@/lib/query-keys";
+import {
+  eventsRankingControllerGetEventKillHistory,
+  getEventsRankingControllerGetEventKillHistoryQueryKey,
+} from "@/lib/api/generated/main/events/events";
 import type { HeroKill, KillHistoryResponse } from "./use-hero-kill-history";
 
 interface UseEventKillHistoryOptions {
@@ -16,14 +18,21 @@ export const useEventKillHistory = ({
   heroId,
   limit = 20,
 }: UseEventKillHistoryOptions) => {
+  const baseParams = {
+    limit: String(limit),
+    ...(heroId ? { heroId } : {}),
+  };
+
   return useInfiniteQuery({
-    queryKey: queryKeys.events.killHistory(guildId, eventId, heroId, limit),
+    queryKey: getEventsRankingControllerGetEventKillHistoryQueryKey(
+      { guildId, eventId },
+      baseParams,
+    ),
     queryFn: ({ pageParam }) =>
       eventsRankingControllerGetEventKillHistory(
         { guildId, eventId },
         {
-          limit: String(limit),
-          heroId,
+          ...baseParams,
           cursor: typeof pageParam === "string" ? pageParam : undefined,
         },
       ) as Promise<KillHistoryResponse>,

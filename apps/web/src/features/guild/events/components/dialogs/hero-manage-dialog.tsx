@@ -1,4 +1,5 @@
 import { useForm } from "react-hook-form";
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
@@ -13,8 +14,12 @@ import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { Swords, Plus, Pencil, Info } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
-import { useEventMutations } from "../../hooks/mutations/use-event-mutations";
 import { toast } from "sonner";
+import {
+  useEventsAssignmentControllerAddHero,
+  useEventsAssignmentControllerUpdateHero,
+} from "@/lib/api/generated/main/events/events";
+import { invalidateEventDetailQueries } from "../../hooks/mutations/invalidate-event-queries";
 import { getApiErrorMessage } from "../../utils/get-api-error-message";
 
 interface HeroManageDialogProps {
@@ -42,7 +47,21 @@ export const HeroManageDialog = ({
   hero,
 }: HeroManageDialogProps) => {
   const { t } = useTranslation();
-  const { addHero, updateHero } = useEventMutations(guildId, eventId);
+  const queryClient = useQueryClient();
+  const addHero = useEventsAssignmentControllerAddHero({
+    mutation: {
+      onSuccess: () => {
+        invalidateEventDetailQueries(queryClient, guildId, eventId);
+      },
+    },
+  });
+  const updateHero = useEventsAssignmentControllerUpdateHero({
+    mutation: {
+      onSuccess: () => {
+        invalidateEventDetailQueries(queryClient, guildId, eventId);
+      },
+    },
+  });
   const isEditing = !!hero;
   // @TODO - temprorarily enable hero name editing
   // const isHeroNameLocked = isEditing && hero?.npcId !== null;
@@ -77,7 +96,11 @@ export const HeroManageDialog = ({
       if (isEditing && hero) {
         const updatedNpcId = data.npcId ? Number(data.npcId) : undefined;
         await updateHero.mutateAsync({
-          heroId: hero.id,
+          pathParams: {
+            guildId,
+            eventId,
+            heroId: hero.id,
+          },
           data: {
             npcName: data.npcName,
             ...(updatedNpcId !== undefined && { npcId: updatedNpcId }),
@@ -87,8 +110,14 @@ export const HeroManageDialog = ({
       } else {
         const npcIdNum = data.npcId ? Number(data.npcId) : undefined;
         await addHero.mutateAsync({
-          ...(npcIdNum && { npcId: npcIdNum }),
-          npcName: data.npcName,
+          pathParams: {
+            guildId,
+            eventId,
+          },
+          data: {
+            ...(npcIdNum ? { npcId: npcIdNum } : {}),
+            npcName: data.npcName,
+          },
         });
         toast.success(t("events.heroes.added"));
       }

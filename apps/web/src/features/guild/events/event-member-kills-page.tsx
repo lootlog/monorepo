@@ -381,7 +381,7 @@ const MemberKillCard = ({
             <p className="text-[15px] leading-none font-bold text-primary">
               {formatPoints(totalPoints)}
               <span className="ml-1 text-xs font-medium">
-                {t("events.common.pointsShort")}
+                {t("events.common.pointsShort", "pkt")}
               </span>
             </p>
             {respawnDuration && (

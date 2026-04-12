@@ -1,5 +1,50 @@
-import type { QueryClient } from "@tanstack/react-query";
-import { queryKeys } from "@/lib/query-keys";
+import type { Query, QueryClient } from "@tanstack/react-query";
+import {
+  getEventsRankingControllerGetEventHeroStatsQueryKey,
+  getListPendingParticipationConfirmationsQueryKey,
+  getShowEventOverviewQueryKey,
+} from "@/lib/api/generated/main/events/events";
+import { invalidateRankingQueries } from "./invalidate-ranking-queries";
+
+const getEventKillsPath = (guildId: string, eventId: string) =>
+  `/guilds/${guildId}/events/${eventId}/kills`;
+
+const getEventMembersPathPrefix = (guildId: string, eventId: string) =>
+  `/guilds/${guildId}/events/${eventId}/members/`;
+
+const getEventHeroesPathPrefix = (guildId: string, eventId: string) =>
+  `/guilds/${guildId}/events/${eventId}/heroes/`;
+
+const isEventKillQuery = (query: Query, guildId: string, eventId: string) => {
+  const [path] = query.queryKey;
+
+  if (typeof path !== "string") {
+    return false;
+  }
+
+  if (path === getEventKillsPath(guildId, eventId)) {
+    return true;
+  }
+
+  if (
+    path.startsWith(getEventMembersPathPrefix(guildId, eventId)) &&
+    path.endsWith("/kills")
+  ) {
+    return true;
+  }
+
+  if (
+    path.startsWith(getEventHeroesPathPrefix(guildId, eventId)) &&
+    path.endsWith("/kills")
+  ) {
+    return true;
+  }
+
+  return (
+    path.startsWith(getEventHeroesPathPrefix(guildId, eventId)) &&
+    path.includes("/kills/")
+  );
+};
 
 export function invalidateKillQueries(
   queryClient: QueryClient,
@@ -7,31 +52,22 @@ export function invalidateKillQueries(
   eventId: string,
 ) {
   queryClient.invalidateQueries({
-    queryKey: queryKeys.events.overview(guildId, eventId),
+    queryKey: getShowEventOverviewQueryKey({ guildId, eventId }),
   });
   queryClient.invalidateQueries({
-    queryKey: queryKeys.events.killDetailRoot(guildId, eventId),
-    exact: false,
+    predicate: (query) => isEventKillQuery(query, guildId, eventId),
   });
   queryClient.invalidateQueries({
-    queryKey: queryKeys.events.killHistoryRoot(guildId, eventId),
+    queryKey: getEventsRankingControllerGetEventHeroStatsQueryKey({
+      guildId,
+      eventId,
+    }),
   });
   queryClient.invalidateQueries({
-    queryKey: queryKeys.events.heroKillHistoryRoot(guildId, eventId),
+    queryKey: getListPendingParticipationConfirmationsQueryKey({
+      guildId,
+      eventId,
+    }),
   });
-  queryClient.invalidateQueries({
-    queryKey: queryKeys.events.memberKillHistoryRoot(guildId, eventId),
-  });
-  queryClient.invalidateQueries({
-    queryKey: queryKeys.events.recentHeroKillsRoot(guildId, eventId),
-  });
-  queryClient.invalidateQueries({
-    queryKey: queryKeys.events.heroStats(guildId, eventId),
-  });
-  queryClient.invalidateQueries({
-    queryKey: queryKeys.events.participationConfirmations(guildId, eventId),
-  });
-  queryClient.invalidateQueries({
-    queryKey: queryKeys.events.ranking(guildId, eventId),
-  });
+  invalidateRankingQueries(queryClient, guildId, eventId);
 }

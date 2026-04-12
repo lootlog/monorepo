@@ -1,4 +1,5 @@
 import { Link, useParams } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -10,7 +11,6 @@ import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
 import { Label } from "@lootlog/ui/components/label";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { useEventMutations } from "./hooks/mutations/use-event-mutations";
 import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
   type EventScoringMode,
@@ -24,7 +24,13 @@ import { getApiErrorMessage } from "./utils/get-api-error-message";
 import { ScoringRulesEditor } from "./components/scoring/scoring-rules-editor";
 import { ScoringModeSelector } from "./components/scoring/scoring-mode-selector";
 import type { EventOverviewResponseDto } from "@/lib/api/generated/main/model";
-import { useShowEventOverview } from "@/lib/api/generated/main/events/events";
+import {
+  useRecalculateEventPoints,
+  useShowEventOverview,
+  useUpdateEvent,
+} from "@/lib/api/generated/main/events/events";
+import { invalidateEventDetailQueries } from "./hooks/mutations/invalidate-event-queries";
+import { invalidateKillQueries } from "./hooks/mutations/invalidate-kill-queries";
 
 interface EventScoringFormData {
   scoringMode: EventScoringMode;
@@ -113,10 +119,34 @@ const EventEditScoringForm = ({
   };
 }) => {
   const { t } = useTranslation();
-  const { updateEvent, recalculatePoints } = useEventMutations(
-    routeParams.guildId,
-    routeParams.eventId,
-  );
+  const queryClient = useQueryClient();
+  const updateEvent = useUpdateEvent({
+    mutation: {
+      onSuccess: () => {
+        invalidateEventDetailQueries(
+          queryClient,
+          routeParams.guildId,
+          routeParams.eventId,
+        );
+      },
+    },
+  });
+  const recalculatePoints = useRecalculateEventPoints({
+    mutation: {
+      onSuccess: () => {
+        invalidateEventDetailQueries(
+          queryClient,
+          routeParams.guildId,
+          routeParams.eventId,
+        );
+        invalidateKillQueries(
+          queryClient,
+          routeParams.guildId,
+          routeParams.eventId,
+        );
+      },
+    },
+  });
   const form = useForm<EventScoringFormData>({
     defaultValues: toScoringDefaults(event),
   });
@@ -138,9 +168,15 @@ const EventEditScoringForm = ({
 
     try {
       await updateEvent.mutateAsync({
-        scoringMode: normalizedMode,
-        scoringRules:
-          normalizedMode === "ADVANCED" ? normalizedScoringRules : null,
+        pathParams: routeParams,
+        data: {
+          scoringMode: normalizedMode,
+          ...(normalizedMode === "ADVANCED"
+            ? {
+                scoringRules: normalizedScoringRules,
+              }
+            : {}),
+        },
       });
       form.reset({
         scoringMode: normalizedMode,
@@ -154,7 +190,9 @@ const EventEditScoringForm = ({
 
   const handleRecalculate = async () => {
     try {
-      await recalculatePoints.mutateAsync();
+      await recalculatePoints.mutateAsync({
+        pathParams: routeParams,
+      });
       toast.success(t("events.scoring.recalculateSuccess"));
     } catch {
       toast.error(t("events.scoring.recalculateError"));

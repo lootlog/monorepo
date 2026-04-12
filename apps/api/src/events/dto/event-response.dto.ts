@@ -109,6 +109,8 @@ export class EventOverviewResponseDto extends createZodDto(
   },
 ) {}
 
+export class EventMapResponseDto extends createZodDto(EventMapResponseSchema) {}
+
 export class EventMutationResponseDto extends createZodDto(
   EventMutationResponseSchema,
   {

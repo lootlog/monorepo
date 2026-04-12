@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useParams, Link } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -22,20 +23,10 @@ import { MemberAssignmentModal } from "./components/dialogs/member-assignment-mo
 import { CloseRespawnWindowDialog } from "./components/dialogs/close-respawn-window-dialog";
 import { OpenRespawnWindowDialog } from "./components/dialogs/open-respawn-window-dialog";
 import {
-  useAssignMember,
-  useUnassignMember,
-  useSelfAssignMember,
-  useSelfUnassignMember,
-} from "./hooks/mutations/use-assign-member";
-import {
   useWindowStatus,
   isWindowActive,
   type WindowStatus,
 } from "./hooks/use-window-status";
-import {
-  useCloseRespawnWindow,
-  useOpenRespawnWindow,
-} from "./hooks/mutations/use-respawn-window";
 import { toast } from "sonner";
 import { useGuildMember } from "@/hooks/api/members/use-guild-member";
 import { useEventPresence } from "./hooks/socket/use-event-presence";
@@ -54,12 +45,21 @@ import { Spinner } from "@lootlog/ui/components/spinner";
 import { findEventHeroTimer } from "./utils/find-event-hero-timer";
 import {
   getListEventHeroTimersQueryKey,
+  useEventsAssignmentControllerAssignMember,
+  useEventsAssignmentControllerSelfAssignMember,
+  useEventsAssignmentControllerSelfUnassignMember,
+  useEventsAssignmentControllerUnassignMember,
   useEventsMonitoringControllerGetActiveGapsForHero,
+  useEventsMonitoringControllerCloseRespawnWindow,
+  useEventsMonitoringControllerOpenRespawnWindow,
   useListEventHeroTimers,
   useListEventMaps,
   useListEventRanking,
   useShowEventOverview,
 } from "@/lib/api/generated/main/events/events";
+import { invalidateKillQueries } from "./hooks/mutations/invalidate-kill-queries";
+import { invalidateMapQueries } from "./hooks/mutations/invalidate-map-queries";
+import { invalidateRespawnQueries } from "./hooks/mutations/invalidate-respawn-queries";
 
 const getWindowStatusConfig = (
   status: WindowStatus,
@@ -93,6 +93,7 @@ const getWindowStatusConfig = (
 export const HeroDetail = () => {
   const { t } = useTranslation();
   const { guildId, eventId, heroId } = useParams({ strict: false });
+  const queryClient = useQueryClient();
   const { data: guild } = useGuild();
   const [mapManageOpen, setMapManageOpen] = useState(false);
   const [assignmentOpen, setAssignmentOpen] = useState(false);
@@ -102,13 +103,84 @@ export const HeroDetail = () => {
 
   const { data: permissions } = useGuildPermissions();
   const { data: currentMember } = useGuildMember();
-  const assignMember = useAssignMember();
-  const unassignMember = useUnassignMember();
-  const selfAssignMember = useSelfAssignMember();
-  const selfUnassignMember = useSelfUnassignMember();
+  const assignMember = useEventsAssignmentControllerAssignMember({
+    mutation: {
+      onSuccess: (_data, variables) => {
+        invalidateMapQueries(
+          queryClient,
+          variables.pathParams.guildId,
+          variables.pathParams.eventId,
+          variables.pathParams.mapId,
+        );
+      },
+    },
+  });
+  const unassignMember = useEventsAssignmentControllerUnassignMember({
+    mutation: {
+      onSuccess: (_data, variables) => {
+        invalidateMapQueries(
+          queryClient,
+          variables.pathParams.guildId,
+          variables.pathParams.eventId,
+          variables.pathParams.mapId,
+        );
+      },
+    },
+  });
+  const selfAssignMember = useEventsAssignmentControllerSelfAssignMember({
+    mutation: {
+      onSuccess: (_data, variables) => {
+        invalidateMapQueries(
+          queryClient,
+          variables.pathParams.guildId,
+          variables.pathParams.eventId,
+          variables.pathParams.mapId,
+        );
+      },
+    },
+  });
+  const selfUnassignMember = useEventsAssignmentControllerSelfUnassignMember({
+    mutation: {
+      onSuccess: (_data, variables) => {
+        invalidateMapQueries(
+          queryClient,
+          variables.pathParams.guildId,
+          variables.pathParams.eventId,
+          variables.pathParams.mapId,
+        );
+      },
+    },
+  });
 
-  const closeRespawnWindow = useCloseRespawnWindow();
-  const openRespawnWindow = useOpenRespawnWindow();
+  const closeRespawnWindow = useEventsMonitoringControllerCloseRespawnWindow({
+    mutation: {
+      onSuccess: (_data, variables) => {
+        invalidateRespawnQueries(
+          queryClient,
+          variables.pathParams.guildId,
+          variables.pathParams.eventId,
+          variables.pathParams.heroId,
+        );
+        invalidateKillQueries(
+          queryClient,
+          variables.pathParams.guildId,
+          variables.pathParams.eventId,
+        );
+      },
+    },
+  });
+  const openRespawnWindow = useEventsMonitoringControllerOpenRespawnWindow({
+    mutation: {
+      onSuccess: (_data, variables) => {
+        invalidateRespawnQueries(
+          queryClient,
+          variables.pathParams.guildId,
+          variables.pathParams.eventId,
+          variables.pathParams.heroId,
+        );
+      },
+    },
+  });
 
   const canManage =
     permissions?.includes(Permission.LOOTLOG_MANAGE) ||
@@ -262,8 +334,11 @@ export const HeroDetail = () => {
         return;
       }
       await selfAssignMember.mutateAsync({
-        eventId,
-        mapId,
+        pathParams: {
+          guildId: guildId ?? "",
+          eventId,
+          mapId,
+        },
       });
       toast.success(t("events.maps.assignSuccess"));
     } catch {
@@ -276,8 +351,11 @@ export const HeroDetail = () => {
 
     try {
       await selfUnassignMember.mutateAsync({
-        eventId,
-        mapId,
+        pathParams: {
+          guildId: guildId ?? "",
+          eventId,
+          mapId,
+        },
       });
       toast.success(t("events.maps.unassignSuccess"));
     } catch {
@@ -299,9 +377,14 @@ export const HeroDetail = () => {
         return;
       }
       await assignMember.mutateAsync({
-        eventId,
-        mapId: selectedMapId,
-        memberId,
+        pathParams: {
+          guildId,
+          eventId,
+          mapId: selectedMapId,
+        },
+        data: {
+          memberId,
+        },
       });
       toast.success(t("events.maps.assignSuccess"));
     } catch {
@@ -314,9 +397,14 @@ export const HeroDetail = () => {
 
     try {
       await unassignMember.mutateAsync({
-        eventId,
-        mapId: selectedMapId,
-        memberId,
+        pathParams: {
+          guildId,
+          eventId,
+          mapId: selectedMapId,
+        },
+        params: {
+          memberId: String(memberId),
+        },
       });
       toast.success(t("events.maps.unassignSuccess"));
     } catch {
@@ -333,8 +421,11 @@ export const HeroDetail = () => {
       await Promise.all(
         allMaps.map((map) =>
           unassignMember.mutateAsync({
-            eventId,
-            mapId: map.id,
+            pathParams: {
+              guildId: guildId ?? "",
+              eventId,
+              mapId: map.id,
+            },
           }),
         ),
       );
@@ -353,9 +444,14 @@ export const HeroDetail = () => {
 
     try {
       await closeRespawnWindow.mutateAsync({
-        eventId,
-        heroId,
-        ...options,
+        pathParams: {
+          guildId: guildId ?? "",
+          eventId,
+          heroId,
+        },
+        data: {
+          ...options,
+        },
       });
       toast.success(t("events.respawn.closeSuccess"));
       setCloseWindowOpen(false);
@@ -372,10 +468,15 @@ export const HeroDetail = () => {
 
     try {
       await openRespawnWindow.mutateAsync({
-        eventId,
-        heroId,
-        minSpawnTime: options.minSpawnTime,
-        maxSpawnTime: options.maxSpawnTime,
+        pathParams: {
+          guildId: guildId ?? "",
+          eventId,
+          heroId,
+        },
+        data: {
+          minSpawnTime: options.minSpawnTime,
+          maxSpawnTime: options.maxSpawnTime,
+        },
       });
       toast.success(t("events.respawn.openSuccess"));
       setOpenWindowOpen(false);

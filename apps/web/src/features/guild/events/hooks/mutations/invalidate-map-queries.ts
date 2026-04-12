@@ -1,5 +1,22 @@
-import type { QueryClient } from "@tanstack/react-query";
-import { queryKeys } from "@/lib/query-keys";
+import type { Query, QueryClient } from "@tanstack/react-query";
+import {
+  getEventsMonitoringControllerGetActiveGapForMapQueryKey,
+  getEventsMonitoringControllerGetMapCoverageGapsQueryKey,
+  getListEventMapsQueryKey,
+} from "@/lib/api/generated/main/events/events";
+
+const getEventHeroPathPrefix = (guildId: string, eventId: string) =>
+  `/guilds/${guildId}/events/${eventId}/heroes/`;
+
+const isHeroGapQuery = (query: Query, guildId: string, eventId: string) => {
+  const [path] = query.queryKey;
+
+  return (
+    typeof path === "string" &&
+    path.startsWith(getEventHeroPathPrefix(guildId, eventId)) &&
+    (path.endsWith("/active-gaps") || path.endsWith("/coverage-gaps"))
+  );
+};
 
 export function invalidateMapQueries(
   queryClient: QueryClient,
@@ -8,7 +25,7 @@ export function invalidateMapQueries(
   mapId: string,
 ) {
   queryClient.invalidateQueries({
-    queryKey: queryKeys.events.maps(guildId, eventId),
+    queryKey: getListEventMapsQueryKey({ guildId, eventId }),
   });
   invalidateGapQueries(queryClient, guildId, eventId, mapId);
 }
@@ -20,11 +37,20 @@ export function invalidateGapQueries(
   mapId: string,
 ) {
   queryClient.invalidateQueries({
-    queryKey: queryKeys.events.mapActiveGap(guildId, eventId, mapId),
+    queryKey: getEventsMonitoringControllerGetActiveGapForMapQueryKey({
+      guildId,
+      eventId,
+      mapId,
+    }),
   });
   queryClient.invalidateQueries({
-    queryKey: queryKeys.events.heroActiveGapsRoot(),
-    predicate: (query) =>
-      query.queryKey[1] === guildId && query.queryKey[2] === eventId,
+    queryKey: getEventsMonitoringControllerGetMapCoverageGapsQueryKey({
+      guildId,
+      eventId,
+      mapId,
+    }),
+  });
+  queryClient.invalidateQueries({
+    predicate: (query) => isHeroGapQuery(query, guildId, eventId),
   });
 }
