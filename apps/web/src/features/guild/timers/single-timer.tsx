@@ -4,6 +4,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { MARGONEM_CDN_NPCS_URL } from "@/constants/margonem";
+import { isAbsoluteIconUrl } from "@/utils/is-absolute-icon-url";
 import { format } from "date-fns";
 import { ClockArrowDown, ClockArrowUp } from "lucide-react";
 import { useEffect, useState, type FC } from "react";
@@ -51,7 +52,9 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
 
   const isMinSpawnTime = minSpawnTime < maxSpawnTime && minTimeLeft <= 0;
   const hasPassedRedThreshold = timeLeft < THRESHOLD;
-  const imageHasDomain = timer.npc.icon?.startsWith("https://"); // @TODO: temporary fix for icons with full URL
+  const imageHasDomain = timer.npc.icon
+    ? isAbsoluteIconUrl(timer.npc.icon)
+    : false;
 
   return (
     <div className="group flex items-center gap-3 rounded-lg border border-border/50 bg-card/40 px-3 py-2.5 hover:bg-card/60 hover:border-primary/50 transition-all cursor-pointer">
