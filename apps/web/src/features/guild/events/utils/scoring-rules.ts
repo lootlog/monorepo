@@ -178,9 +178,7 @@ export const normalizeScoringMode = (value: unknown): EventScoringMode => {
     : "SIMPLE";
 };
 
-export const normalizeScoringRules = (
-  value: Partial<EventScoringRules> | null | undefined,
-): EventScoringRules => {
+export const normalizeScoringRules = (value: unknown): EventScoringRules => {
   if (!isRecord(value)) {
     return cloneDefaultRules();
   }

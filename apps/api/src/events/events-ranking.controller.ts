@@ -10,19 +10,33 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import {
-  ApiBearerAuth,
   ApiOperation,
   ApiParam,
   ApiQuery,
+  ApiBearerAuth,
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
 import { UserId } from "@lootlog/nest-shared";
+import { ZodResponse } from "nestjs-zod";
 import { Permission, type Role } from "src/generated/prisma/client";
-import type {
+import {
   UpdateKillPointDto,
   UpdateRankingPointsDto,
 } from "./dto/update-points.dto";
+import {
+  ConfirmParticipationForKillResponseDto,
+  EventRankingEntryResponseDto,
+  EventTimerResponseDto,
+  PendingParticipationConfirmationsResponseDto,
+  RankingEditHistoryEntryResponseDto,
+} from "./dto/event-response.dto";
+import {
+  EventHeroStatsResponseDto,
+  EventKillHistoryResponseDto,
+  EventMemberKillHistoryResponseDto,
+  KillDetailResponseDto,
+} from "./dto/event-kill-response.dto";
 import { EventsService } from "./events.service";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { GuildMember } from "src/shared/decorators/member.decorator";
@@ -43,15 +57,17 @@ export class EventsRankingController {
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/events/:eventId/participation-confirmations/pending")
   @ApiOperation({
+    operationId: "listPendingParticipationConfirmations",
     summary: "Get participation confirmations",
     description:
       "Get pending and expired kill participation confirmations for currently authenticated member",
   })
   @ApiParam({ name: "guildId", description: "Guild ID" })
   @ApiParam({ name: "eventId", description: "Event ID" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Participation confirmations",
+    type: PendingParticipationConfirmationsResponseDto,
   })
   getPendingParticipationConfirmations(
     @GuildData() guildData: { id: string },
@@ -69,6 +85,7 @@ export class EventsRankingController {
   @UseGuards(PermissionsGuard)
   @Post("/guilds/:guildId/events/:eventId/kills/:killId/confirm-participation")
   @ApiOperation({
+    operationId: "confirmParticipationForKill",
     summary: "Confirm participation in kill tracking",
     description:
       "Confirm member participation for a kill within configured confirmation window",
@@ -76,9 +93,10 @@ export class EventsRankingController {
   @ApiParam({ name: "guildId", description: "Guild ID" })
   @ApiParam({ name: "eventId", description: "Event ID" })
   @ApiParam({ name: "killId", description: "Kill ID" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Participation confirmed",
+    type: ConfirmParticipationForKillResponseDto,
   })
   confirmParticipationForKill(
     @GuildData() guildData: { id: string },
@@ -98,14 +116,16 @@ export class EventsRankingController {
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/events/:eventId/ranking")
   @ApiOperation({
+    operationId: "listEventRanking",
     summary: "Get event ranking",
     description: "Get the ranking for an event",
   })
   @ApiParam({ name: "guildId", description: "Guild ID" })
   @ApiParam({ name: "eventId", description: "Event ID" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Event ranking",
+    type: [EventRankingEntryResponseDto],
   })
   @ApiResponse({ status: 404, description: "Event not found" })
   async getRanking(
@@ -137,6 +157,7 @@ export class EventsRankingController {
   @UseGuards(PermissionsGuard)
   @Patch("/guilds/:guildId/events/:eventId/ranking/:rankingId")
   @ApiOperation({
+    operationId: "updateRankingPoints",
     summary: "Update ranking points",
     description:
       "Apply a signed manual points delta to a ranking entry (OWNER/ADMIN only)",
@@ -170,15 +191,17 @@ export class EventsRankingController {
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/events/:eventId/ranking/:rankingId/history")
   @ApiOperation({
+    operationId: "listRankingEditHistory",
     summary: "Get ranking edit history",
     description: "Get the edit history for a ranking entry (OWNER/ADMIN only)",
   })
   @ApiParam({ name: "guildId", description: "Guild ID" })
   @ApiParam({ name: "eventId", description: "Event ID" })
   @ApiParam({ name: "rankingId", description: "Ranking ID" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Edit history returned",
+    type: [RankingEditHistoryEntryResponseDto],
   })
   @ApiResponse({ status: 404, description: "Ranking not found" })
   getRankingEditHistory(
@@ -197,15 +220,17 @@ export class EventsRankingController {
   @UseGuards(PermissionsGuard)
   @Get("/guilds/:guildId/events/:eventId/timers")
   @ApiOperation({
+    operationId: "listEventHeroTimers",
     summary: "Get event hero timers",
     description: "Get timers for all hero NPCs in this event",
   })
   @ApiParam({ name: "guildId", description: "Guild ID" })
   @ApiParam({ name: "eventId", description: "Event ID" })
   @ApiQuery({ name: "world", description: "World name", required: true })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "List of timers for event heroes",
+    type: [EventTimerResponseDto],
   })
   @ApiResponse({ status: 404, description: "Event not found" })
   async getEventHeroTimers(
@@ -241,9 +266,10 @@ export class EventsRankingController {
   })
   @ApiParam({ name: "guildId", description: "Guild ID" })
   @ApiParam({ name: "eventId", description: "Event ID" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "List of hero stats with kill counts",
+    type: [EventHeroStatsResponseDto],
   })
   @ApiResponse({ status: 404, description: "Event not found" })
   async getEventHeroStats(
@@ -291,9 +317,10 @@ export class EventsRankingController {
     description: "Filter by hero ID (optional)",
     required: false,
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Paginated list of kills with participant details",
+    type: EventKillHistoryResponseDto,
   })
   @ApiResponse({ status: 404, description: "Event not found" })
   async getEventKillHistory(
@@ -361,9 +388,10 @@ export class EventsRankingController {
     description: "Filter by hero ID (optional)",
     required: false,
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Paginated list of member kills with point breakdown",
+    type: EventMemberKillHistoryResponseDto,
   })
   @ApiResponse({ status: 404, description: "Event or member not found" })
   async getMemberKillHistory(
@@ -434,9 +462,10 @@ export class EventsRankingController {
     description: "Cursor for pagination",
     required: false,
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Paginated list of kills with participant details",
+    type: EventKillHistoryResponseDto,
   })
   @ApiResponse({ status: 404, description: "Hero not found" })
   async getHeroKillHistory(
@@ -477,10 +506,11 @@ export class EventsRankingController {
   @ApiParam({ name: "eventId", description: "Event ID" })
   @ApiParam({ name: "heroId", description: "Hero ID" })
   @ApiParam({ name: "killId", description: "Kill ID" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description:
       "Kill details with participants, event config, and matching loots",
+    type: KillDetailResponseDto,
   })
   @ApiResponse({ status: 404, description: "Kill not found" })
   async getKillDetail(

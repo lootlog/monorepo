@@ -1,10 +1,9 @@
 import { useTranslation } from "react-i18next";
 import { Badge } from "@lootlog/ui/components/badge";
 import { cn } from "@lootlog/ui/lib/utils";
-import {
-  useHeroRespawnConfig,
-  type WindowStatus,
-} from "../../hooks/queries/use-hero-respawn-config";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useEventsMonitoringControllerGetHeroRespawnConfig } from "@/lib/api/generated/main/events/events";
+import type { WindowStatus } from "../../types/api";
 
 const getWindowStatusConfig = (
   status: WindowStatus,
@@ -37,23 +36,31 @@ const getWindowStatusConfig = (
 
 interface HeroWindowStatusBadgeProps {
   eventId: string;
-  heroNpcId?: number | null;
-  heroName?: string;
+  heroId: string;
   className?: string;
 }
 
 export const HeroWindowStatusBadge = ({
   eventId,
-  heroNpcId,
-  heroName,
+  heroId,
   className,
 }: HeroWindowStatusBadgeProps) => {
   const { t } = useTranslation();
-  const respawnConfig = useHeroRespawnConfig({
-    eventId,
-    heroNpcId,
-    heroName,
-  });
+  const guildId = useGuildId();
+  const { data: queryData } = useEventsMonitoringControllerGetHeroRespawnConfig(
+    {
+      guildId: guildId ?? "",
+      eventId,
+      heroId,
+    },
+  );
+  const respawnConfig = queryData ?? {
+    hasTimer: false,
+    windowStatus: "NONE" as const,
+    minSpawnTime: null,
+    maxSpawnTime: null,
+    overdueMs: null,
+  };
 
   if (respawnConfig.windowStatus === "NONE") {
     return null;

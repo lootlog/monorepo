@@ -1,27 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { useApiClient } from "@/hooks/api/use-api-client";
-import { queryKeys } from "@/lib/query-keys";
-import type {
-  HeroKill,
-  KillParticipant,
-  HeroKillHeroNpc,
-} from "./use-hero-kill-history";
-
-interface ApiHeroKill {
-  id: string;
-  heroNpcId: string;
-  killedAt: string;
-  minSpawnTimeAtKill: string;
-  maxSpawnTimeAtKill: string;
-  isManualClose: boolean;
-  heroNpc: HeroKillHeroNpc;
-  points: KillParticipant[];
-}
-
-interface ApiKillHistoryResponse {
-  data: ApiHeroKill[];
-  nextCursor: string | null;
-}
+import {
+  eventsRankingControllerGetEventKillHistory,
+  eventsRankingControllerGetHeroKillHistory,
+  getEventsRankingControllerGetEventKillHistoryQueryKey,
+  getEventsRankingControllerGetHeroKillHistoryQueryKey,
+} from "@/lib/api/generated/main/events/events";
+import type { HeroKill } from "./use-hero-kill-history";
 
 interface UseRecentHeroKillsOptions {
   guildId: string;
@@ -36,26 +20,32 @@ export const useRecentHeroKills = ({
   heroId,
   limit = 5,
 }: UseRecentHeroKillsOptions) => {
-  const { client } = useApiClient();
+  const baseParams = { limit: String(limit) };
 
   return useQuery<HeroKill[]>({
-    queryKey: queryKeys.events.recentHeroKills(guildId, eventId, heroId, limit),
+    queryKey: heroId
+      ? getEventsRankingControllerGetHeroKillHistoryQueryKey(
+          { guildId, eventId, heroId },
+          baseParams,
+        )
+      : getEventsRankingControllerGetEventKillHistoryQueryKey(
+          { guildId, eventId },
+          baseParams,
+        ),
     queryFn: async () => {
-      const params = new URLSearchParams();
-      params.set("limit", String(limit));
+      if (heroId) {
+        const response = await eventsRankingControllerGetHeroKillHistory(
+          { guildId, eventId, heroId },
+          baseParams,
+        );
+        return response.data;
+      }
 
-      const endpoint = heroId
-        ? `/guilds/${guildId}/events/${eventId}/heroes/${heroId}/kills`
-        : `/guilds/${guildId}/events/${eventId}/kills`;
-
-      const response = await client.get<ApiKillHistoryResponse>(
-        `${endpoint}?${params.toString()}`,
+      const response = await eventsRankingControllerGetEventKillHistory(
+        { guildId, eventId },
+        baseParams,
       );
-
-      return response.data.map((kill) => ({
-        ...kill,
-        participants: kill.points ?? [],
-      }));
+      return response.data;
     },
     enabled: !!guildId && !!eventId,
     refetchOnMount: "always",

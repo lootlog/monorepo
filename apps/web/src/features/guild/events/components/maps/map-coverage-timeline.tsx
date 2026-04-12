@@ -4,12 +4,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import type { MapGap } from "../../hooks/queries/use-kill-timeline";
 import {
   calculateTimelineSegments,
   formatDurationFromMs,
   formatTime,
 } from "../../utils";
+import type { MapGap } from "../../types/api";
 
 interface MapCoverageTimelineProps {
   startTime: Date;

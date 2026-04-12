@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Trophy, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
-import type { Event } from "@/features/guild/events/hooks";
+import type { Event } from "@/features/guild/events/types/api";
 import { EventTimersList } from "./event-timers-list";
 
 interface PinnedEventsBannerProps {

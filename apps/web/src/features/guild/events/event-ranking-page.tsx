@@ -5,8 +5,6 @@ import { Button } from "@lootlog/ui/components/button";
 import { Tabs, TabsTrigger } from "@lootlog/ui/components/tabs";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Permission } from "@lootlog/types";
-import { useEventOverview } from "./hooks/queries/use-event-overview";
-import { useEventRanking } from "./hooks/queries/use-event-ranking";
 import { EventRankingTable } from "./components/ranking/event-ranking-table";
 import { Trophy, AlertCircle } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
@@ -14,6 +12,10 @@ import { useState } from "react";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { EventScrollableTabsList } from "./components/shared/event-scrollable-tabs-list";
+import {
+  useListEventRanking,
+  useShowEventOverview,
+} from "@/lib/api/generated/main/events/events";
 
 export const EventRankingPage = () => {
   const { t } = useTranslation();
@@ -29,7 +31,7 @@ export const EventRankingPage = () => {
     data: event,
     isLoading: isEventLoading,
     error: eventError,
-  } = useEventOverview({
+  } = useShowEventOverview({
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   });
@@ -37,7 +39,7 @@ export const EventRankingPage = () => {
     data: rankings = [],
     isLoading: isRankingLoading,
     error: rankingError,
-  } = useEventRanking({
+  } = useListEventRanking({
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   });

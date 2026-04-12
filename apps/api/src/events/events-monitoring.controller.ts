@@ -6,9 +6,18 @@ import {
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
+import { ZodResponse } from "nestjs-zod";
 import { Permission, type Role } from "src/generated/prisma/client";
 import { CloseRespawnWindowDto } from "./dto/close-respawn-window.dto";
 import { OpenRespawnWindowDto } from "./dto/open-respawn-window.dto";
+import {
+  CoverageGapResponseDto,
+  HeroCoverageGapResponseDto,
+  HeroPresenceStatsResponseDto,
+  HeroRespawnConfigResponseDto,
+  KillTimelineMapResponseDto,
+  NullableCoverageGapResponseDto,
+} from "./dto/event-monitoring-response.dto";
 import { EventsService } from "./events.service";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";
@@ -36,10 +45,11 @@ export class EventsMonitoringController {
   @ApiParam({ name: "eventId", description: "Event ID" })
   @ApiParam({ name: "heroId", description: "Hero ID" })
   @ApiParam({ name: "killId", description: "Kill ID" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description:
       "Timeline data with map assignments and coverage gaps during spawn window",
+    type: [KillTimelineMapResponseDto],
   })
   @ApiResponse({ status: 404, description: "Kill not found" })
   async getKillTimelineData(
@@ -77,9 +87,10 @@ export class EventsMonitoringController {
   @ApiParam({ name: "guildId", description: "Guild ID" })
   @ApiParam({ name: "eventId", description: "Event ID" })
   @ApiParam({ name: "heroId", description: "Hero ID" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "List of coverage gaps with type, duration, and timestamps",
+    type: [HeroCoverageGapResponseDto],
   })
   async getHeroCoverageGaps(
     @GuildData() guildData: { id: string },
@@ -114,9 +125,10 @@ export class EventsMonitoringController {
   @ApiParam({ name: "guildId", description: "Guild ID" })
   @ApiParam({ name: "eventId", description: "Event ID" })
   @ApiParam({ name: "mapId", description: "Map ID" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "List of coverage gaps with type, duration, and timestamps",
+    type: [CoverageGapResponseDto],
   })
   getMapCoverageGaps(
     @GuildData() guildData: { id: string },
@@ -137,9 +149,10 @@ export class EventsMonitoringController {
   @ApiParam({ name: "guildId", description: "Guild ID" })
   @ApiParam({ name: "eventId", description: "Event ID" })
   @ApiParam({ name: "mapId", description: "Map ID" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Active gap or null if no gap is currently active",
+    type: NullableCoverageGapResponseDto,
   })
   getActiveGapForMap(
     @GuildData() guildData: { id: string },
@@ -160,9 +173,10 @@ export class EventsMonitoringController {
   @ApiParam({ name: "guildId", description: "Guild ID" })
   @ApiParam({ name: "eventId", description: "Event ID" })
   @ApiParam({ name: "heroId", description: "Hero ID" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Array of active gaps for all maps of the hero",
+    type: [CoverageGapResponseDto],
   })
   async getActiveGapsForHero(
     @GuildData() guildData: { id: string },
@@ -197,10 +211,11 @@ export class EventsMonitoringController {
   @ApiParam({ name: "guildId", description: "Guild ID" })
   @ApiParam({ name: "eventId", description: "Event ID" })
   @ApiParam({ name: "heroId", description: "Hero ID" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description:
       "Presence statistics including total coverage time and per-member breakdown",
+    type: HeroPresenceStatsResponseDto,
   })
   async getHeroPresenceStats(
     @GuildData() guildData: { id: string },
@@ -235,10 +250,11 @@ export class EventsMonitoringController {
   @ApiParam({ name: "guildId", description: "Guild ID" })
   @ApiParam({ name: "eventId", description: "Event ID" })
   @ApiParam({ name: "heroId", description: "Hero ID" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description:
       "Respawn configuration including active timer status and default times",
+    type: HeroRespawnConfigResponseDto,
   })
   async getHeroRespawnConfig(
     @GuildData() guildData: { id: string },

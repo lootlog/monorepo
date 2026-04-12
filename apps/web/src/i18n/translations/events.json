@@ -227,6 +227,11 @@
     "subtitle": "Zarządzanie",
     "description": "Najważniejsze operacje dla eventu „{{name}}”."
   },
+  "event": {
+    "common": {
+      "pointsShort": "pkt"
+    }
+  },
   "common": {
     "pointsShort": "pkt"
   },

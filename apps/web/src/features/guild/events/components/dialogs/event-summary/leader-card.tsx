@@ -1,5 +1,5 @@
 import { motion, useReducedMotion } from "framer-motion";
-import type { EventWrappedLeader } from "../../../hooks/queries/use-event-wrapped";
+import type { EventWrappedLeader } from "../../../types/api";
 import { formatMetric } from "./utils";
 
 interface LeaderCardProps {

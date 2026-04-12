@@ -18,12 +18,14 @@ import {
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
+import { ZodResponse } from "nestjs-zod";
 import { Permission, type Role } from "src/generated/prisma/client";
 import { AssignMemberDto } from "./dto/assign-member.dto";
 import { AssignMapLocationDto } from "./dto/assign-map-location.dto";
 import { CreateHeroDto } from "./dto/create-hero.dto";
 import { CreateLocationDto } from "./dto/create-location.dto";
 import { CreateMapDto } from "./dto/create-map.dto";
+import { EventMapResponseDto } from "./dto/event-response.dto";
 import { ReorderLocationsDto } from "./dto/reorder-locations.dto";
 import { UpdateHeroDto } from "./dto/update-hero.dto";
 import { UpdateLocationDto } from "./dto/update-location.dto";
@@ -238,9 +240,10 @@ export class EventsAssignmentController {
   @ApiParam({ name: "guildId", description: "Guild ID" })
   @ApiParam({ name: "eventId", description: "Event ID" })
   @ApiParam({ name: "heroId", description: "Hero ID" })
-  @ApiResponse({
+  @ZodResponse({
     status: 201,
     description: "Map added successfully",
+    type: EventMapResponseDto,
   })
   addMap(
     @GuildData() guildData: { id: string },

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { AlertTriangle, Clock, ShieldCheck } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
@@ -15,9 +16,12 @@ import {
 } from "@lootlog/ui/components/dialog";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { NpcTile } from "@/components/tiles";
+import {
+  useConfirmParticipationForKill,
+  useListPendingParticipationConfirmations,
+} from "@/lib/api/generated/main/events/events";
 import { formatDateTime } from "../../utils";
-import { useEventParticipationConfirmation } from "../../hooks/mutations/use-event-participation-confirmation";
-import { useEventParticipationConfirmations } from "../../hooks/queries/use-event-participation-confirmations";
+import { invalidateKillQueries } from "../../hooks/mutations/invalidate-kill-queries";
 
 interface EventParticipationConfirmationDialogProps {
   guildId?: string;
@@ -46,17 +50,20 @@ const EventParticipationConfirmationDialogContent = ({
   eventId,
 }: Required<EventParticipationConfirmationDialogProps>) => {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [dismissed, setDismissed] = useState(false);
   const [confirmingKillId, setConfirmingKillId] = useState<string | null>(null);
 
-  const { data, isLoading } = useEventParticipationConfirmations({
+  const { data, isLoading } = useListPendingParticipationConfirmations({
     guildId,
     eventId,
-    enabled: true,
   });
-  const confirmParticipation = useEventParticipationConfirmation({
-    guildId,
-    eventId,
+  const confirmParticipation = useConfirmParticipationForKill({
+    mutation: {
+      onSuccess: () => {
+        invalidateKillQueries(queryClient, guildId, eventId);
+      },
+    },
   });
 
   const sortedItems = [...(data?.items ?? [])].sort(
@@ -75,7 +82,13 @@ const EventParticipationConfirmationDialogContent = ({
   const handleConfirm = async (killId: string) => {
     try {
       setConfirmingKillId(killId);
-      await confirmParticipation.mutateAsync(killId);
+      await confirmParticipation.mutateAsync({
+        pathParams: {
+          guildId,
+          eventId,
+          killId,
+        },
+      });
       toast.success(
         t(
           "events.confirmation.success",
