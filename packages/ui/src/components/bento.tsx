@@ -396,7 +396,7 @@ const GlobalSpotlight: React.FC<{
         e.clientY >= rect.top &&
         e.clientY <= rect.bottom;
 
-      isInsideSection.current = mouseInside || false;
+      isInsideSection.current = mouseInside ?? false;
       const cards = gridRef.current.querySelectorAll(".card");
 
       if (!mouseInside) {

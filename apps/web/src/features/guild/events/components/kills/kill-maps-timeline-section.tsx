@@ -48,7 +48,7 @@ export const KillMapsTimelineSection = ({
     );
   }
 
-  if (!mapsTimeline || mapsTimeline.length === 0) {
+  if (!mapsTimeline?.length) {
     return null;
   }
 

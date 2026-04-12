@@ -463,7 +463,7 @@ export class LootQueryService {
   private buildPlayersCondition(
     players: string[],
   ): Prisma.LootWhereInput | null {
-    if (!players || players.length === 0) {
+    if (!players?.length) {
       return null;
     }
 
@@ -481,7 +481,7 @@ export class LootQueryService {
   }
 
   private buildNpcsCondition(npcs: string[]): Prisma.LootWhereInput | null {
-    if (!npcs || npcs.length === 0) {
+    if (!npcs?.length) {
       return null;
     }
 
@@ -515,7 +515,7 @@ export class LootQueryService {
   private buildItemNamesCondition(
     itemNames?: string[],
   ): Prisma.LootWhereInput | null {
-    if (!itemNames || itemNames.length === 0) {
+    if (!itemNames?.length) {
       return null;
     }
 

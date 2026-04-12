@@ -786,8 +786,8 @@ export class EventTrackingService implements OnModuleInit {
 
     const mapIds = hero.maps.map((m) => m.id);
 
-    const eventStart = hero.event.startsAt || hero.event.createdAt;
-    const eventEnd = hero.event.endsAt || new Date();
+    const eventStart = hero.event.startsAt ?? hero.event.createdAt;
+    const eventEnd = hero.event.endsAt ?? new Date();
     const totalEventSeconds = Math.max(
       0,
       Math.round((eventEnd.getTime() - eventStart.getTime()) / 1000),
@@ -847,7 +847,7 @@ export class EventTrackingService implements OnModuleInit {
     let totalCoverageMs = 0;
 
     for (const log of presenceLogs) {
-      const endTime = log.endedAt || now;
+      const endTime = log.endedAt ?? now;
       const duration = Math.max(0, endTime.getTime() - log.startedAt.getTime());
 
       if (!log.isAfk) {

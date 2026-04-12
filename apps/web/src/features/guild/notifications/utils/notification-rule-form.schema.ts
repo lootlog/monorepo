@@ -87,7 +87,7 @@ export const ruleFormSchema = (
             });
           }
         } else {
-          if (!data.npcIds || data.npcIds.length === 0) {
+          if (!data.npcIds?.length) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
               message: t("settings.notifications.validation.npcRequired"),

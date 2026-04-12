@@ -37,10 +37,7 @@ export class RetryService {
   }
 
   getRetryCount(headers: Record<string, unknown>): number {
-    if (
-      headers["x-retry-count"] &&
-      typeof headers["x-retry-count"] === "number"
-    ) {
+    if (typeof headers["x-retry-count"] === "number") {
       return headers["x-retry-count"];
     }
 

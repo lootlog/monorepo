@@ -30,7 +30,7 @@ export const useCreateManualTimer = () => {
       guildIds,
       ...rest
     }: UseCreateManualTimerOptions): Promise<CreateManualTimerResult> => {
-      if (!guildIds || guildIds.length === 0) {
+      if (!guildIds?.length) {
         throw new Error("Brak wybranych gildii");
       }
 

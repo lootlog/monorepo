@@ -174,7 +174,7 @@ export const EventHeroLoots = ({
         </Tabs>
       )}
 
-      {!loots || loots.length === 0 ? (
+      {!loots?.length ? (
         <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
           <Frown className="w-8 h-8 mb-2 opacity-50" />
           <p className="text-sm">{t("events.loots.noLoots")}</p>

@@ -93,7 +93,7 @@ export const getMapStatus = (
   map: EventMap,
   presenceData?: Map<string, PlayerPresence[]>,
 ): MapStatus => {
-  if (!map.assignedMembers || map.assignedMembers.length === 0) {
+  if (!map.assignedMembers?.length) {
     return "UNASSIGNED";
   }
 

@@ -276,7 +276,7 @@ export class BattleProcessor {
           attacker.spellsUsed++;
           const spellName = tspellAction.param || "unknown";
           attacker.spellsUsedMap[spellName] =
-            (attacker.spellsUsedMap[spellName] || 0) + 1;
+            (attacker.spellsUsedMap[spellName] ?? 0) + 1;
         }
       }
 

@@ -155,7 +155,7 @@ export async function createTimerForGuilds({
   timer,
   guildIds,
 }: CreateTimerForGuildsParams): Promise<void> {
-  if (!guildIds || guildIds.length === 0) return;
+  if (!guildIds?.length) return;
 
   const client = getApiClient("default");
 

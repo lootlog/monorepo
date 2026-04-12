@@ -56,7 +56,7 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
   }, [guildId, isFetched, worlds, world, defaultWorld, setWorld]);
 
   const worldGroups = useMemo<ComboboxGroup[]>(() => {
-    if (!worlds || worlds.length === 0) return [];
+    if (!worlds?.length) return [];
 
     const recent =
       recentWorlds

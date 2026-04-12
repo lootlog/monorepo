@@ -32,7 +32,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
   const guildId = guildIdByCharId[characterId];
 
   useEffect(() => {
-    if (!isFetched || !guilds || guilds.length === 0) return;
+    if (!isFetched || !guilds?.length) return;
     const currentValue = value !== undefined ? value : guildId;
     if (allowAll && currentValue === "all") return;
     const exists = guilds.some((guild) => guild.id === currentValue);

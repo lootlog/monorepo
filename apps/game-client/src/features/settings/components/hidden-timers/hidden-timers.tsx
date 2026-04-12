@@ -46,9 +46,7 @@ export const HiddenTimers: FC<HiddenTimersProps> = ({ guildId }) => {
           })}
         </span>
       )}
-      {!hiddenTimersForAccount || hiddenTimersForAccount.length === 0
-        ? "Brak ukrytych timerów."
-        : null}
+      {!hiddenTimersForAccount?.length ? "Brak ukrytych timerów." : null}
     </div>
   );
 };

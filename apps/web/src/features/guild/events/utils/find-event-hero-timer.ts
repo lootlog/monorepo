@@ -9,7 +9,7 @@ export const findEventHeroTimer = (
   timers: EventTimer[] | undefined,
   { heroNpcId, heroName }: FindEventHeroTimerOptions,
 ) => {
-  if (!timers || timers.length === 0) {
+  if (!timers?.length) {
     return undefined;
   }
 

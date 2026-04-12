@@ -64,8 +64,7 @@ export const useCharacterList = () => {
         },
       );
 
-      const isEmptyResponse =
-        !apiResponse.data || apiResponse.data.length === 0;
+      const isEmptyResponse = !apiResponse.data?.length;
 
       if (isEmptyResponse) {
         throw new Error("Empty character list received from API");

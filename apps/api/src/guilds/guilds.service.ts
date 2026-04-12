@@ -87,7 +87,7 @@ export class GuildsService {
           discordId,
         );
 
-        if (!discordGuilds || discordGuilds.length === 0) {
+        if (!discordGuilds?.length) {
           this.logger.log({
             level: "warn",
             message: `No guilds found for user ${userId} with Discord ID ${discordId}`,
@@ -141,7 +141,7 @@ export class GuildsService {
         discordId,
       );
 
-      if (!discordGuilds || discordGuilds.length === 0) {
+      if (!discordGuilds?.length) {
         this.logger.log({
           level: "warn",
           message: `No guilds found for user ${userId} with Discord ID ${discordId}`,
@@ -468,7 +468,7 @@ export class GuildsService {
         discordId,
       );
 
-      if (!discordGuilds || discordGuilds.length === 0) {
+      if (!discordGuilds?.length) {
         return this.toGuildRefreshCandidates(
           await this.getGuildsForRequiredPermissions(discordId, [
             Permission.LOOTLOG_ACCESS,

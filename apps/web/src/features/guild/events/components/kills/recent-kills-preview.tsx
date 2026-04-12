@@ -108,7 +108,7 @@ export const RecentKillsPreview = ({
         </Tabs>
       )}
 
-      {!kills || kills.length === 0 ? (
+      {!kills?.length ? (
         <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
           <Frown className="w-8 h-8 mb-2 opacity-50" />
           <p className="text-sm">{t("events.kills.noKills")}</p>

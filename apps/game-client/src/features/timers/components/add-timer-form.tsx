@@ -180,7 +180,7 @@ export const AddTimerForm: React.FC = () => {
   );
 
   useEffect(() => {
-    if (!characterId || !guilds || guilds.length === 0) return;
+    if (!characterId || !guilds?.length) return;
 
     const savedGuildIds = selectedGuildIdsForTimersByCharId[characterId] || [];
     const savedGuildId = savedGuildIds[0];
@@ -253,7 +253,7 @@ export const AddTimerForm: React.FC = () => {
   };
 
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!npcResults || npcResults.length === 0) return;
+    if (!npcResults?.length) return;
 
     if (e.key === "ArrowDown") {
       e.preventDefault();

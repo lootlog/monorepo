@@ -224,7 +224,7 @@ export class DiscordService implements OnModuleInit {
         throw error;
       }
 
-      if (!guilds || guilds.length === 0) {
+      if (!guilds?.length) {
         this.logger.log({
           level: "warn",
           message: `No guilds found for user: ${userId}`,

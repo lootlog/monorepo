@@ -5,7 +5,7 @@ import { isEmpty, pick } from "@/utils/object-utils";
 export const mapBattleEventsToPayload = (
   events: GameEvent[],
 ): BattleEventPayload[] | null => {
-  if (!events || events.length === 0) return null;
+  if (!events?.length) return null;
 
   const result = events.map((event) => {
     const fightWarriors: W = {} as W;

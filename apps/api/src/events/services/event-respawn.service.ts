@@ -260,7 +260,7 @@ export class EventRespawnService {
 
     const gapResults = await Promise.all(
       heroMaps.map(async (map) => {
-        if (!map.assignedMembers || map.assignedMembers.length === 0) {
+        if (!map.assignedMembers?.length) {
           await this.trackingService.openUnassignedGap(
             map.id,
             heroId,

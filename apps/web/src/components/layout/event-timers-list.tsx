@@ -129,7 +129,7 @@ export const EventTimersList: FC<EventTimersListProps> = ({
   );
 
   useEffect(() => {
-    if (!timers || timers.length === 0) {
+    if (!timers?.length) {
       return undefined;
     }
 
@@ -142,7 +142,7 @@ export const EventTimersList: FC<EventTimersListProps> = ({
     return () => window.clearInterval(intervalId);
   }, [timers]);
 
-  if (!timers || timers.length === 0) return null;
+  if (!timers?.length) return null;
 
   const heroIdByNpcId = new Map(
     event.heroNpcs?.map((heroNpc) => [heroNpc.npcId, heroNpc.id]) ?? [],
