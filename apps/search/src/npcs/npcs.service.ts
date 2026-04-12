@@ -69,12 +69,9 @@ export class NpcsService {
     }
 
     if (validNpcs.length !== data.npcs.length) {
-      const invalidNpcs = data.npcs.filter(
-        (npc) => !npc.world || !npc.id || !npc.name,
-      );
+      const skippedCount = data.npcs.length - validNpcs.length;
       logger.warn(
-        `Skipped ${invalidNpcs.length} npcs due to missing required fields`,
-        { invalidNpcs },
+        `Skipped ${skippedCount} npcs due to missing required fields`,
       );
     }
 

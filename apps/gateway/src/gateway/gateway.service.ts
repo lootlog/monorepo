@@ -24,6 +24,7 @@ import type {
 } from "src/gateway/types/margo-event.types";
 import {
   buildRoomName,
+  buildAllTierRooms,
   getNpcTier,
   checkLevelRange,
   calculateUserRooms,
@@ -102,11 +103,7 @@ export class GatewayService {
   }
 
   handleGuildsTimerDelete(data: DeleteTimerDto) {
-    const rooms = [
-      buildRoomName(data.guildId, "timers", "base"),
-      buildRoomName(data.guildId, "timers", "titans"),
-      buildRoomName(data.guildId, "timers", "heroes"),
-    ];
+    const rooms = buildAllTierRooms(data.guildId, "timers");
     this.gateway.server.to(rooms).emit(GatewayEvent.TIMERS_DELETE, data);
   }
 
@@ -280,11 +277,7 @@ export class GatewayService {
   }
 
   handlePartyGatheringSend(data: SendPartyGatheringDto) {
-    const rooms = [
-      buildRoomName(data.guildId, "notifications", "base"),
-      buildRoomName(data.guildId, "notifications", "titans"),
-      buildRoomName(data.guildId, "notifications", "heroes"),
-    ];
+    const rooms = buildAllTierRooms(data.guildId, "notifications");
     this.gateway.server.to(rooms).emit(GatewayEvent.PARTY_GATHERING_SEND, data);
   }
 
@@ -292,11 +285,7 @@ export class GatewayService {
     guildId: string;
     notificationId: string;
   }) {
-    const rooms = [
-      buildRoomName(data.guildId, "notifications", "base"),
-      buildRoomName(data.guildId, "notifications", "titans"),
-      buildRoomName(data.guildId, "notifications", "heroes"),
-    ];
+    const rooms = buildAllTierRooms(data.guildId, "notifications");
     this.gateway.server.to(rooms).emit(GatewayEvent.PARTY_GATHERING_CANCEL, {
       notificationId: data.notificationId,
     });
@@ -307,11 +296,7 @@ export class GatewayService {
     messageId: string;
     message: string;
   }) {
-    const rooms = [
-      buildRoomName(data.guildId, "chat", "base"),
-      buildRoomName(data.guildId, "chat", "titans"),
-      buildRoomName(data.guildId, "chat", "heroes"),
-    ];
+    const rooms = buildAllTierRooms(data.guildId, "chat");
     this.gateway.server.to(rooms).emit(GatewayEvent.CHAT_MESSAGE_UPDATE, {
       messageId: data.messageId,
       guildId: data.guildId,
@@ -320,11 +305,7 @@ export class GatewayService {
   }
 
   handleChatMessageDelete(data: { guildId: string; messageId: string }) {
-    const rooms = [
-      buildRoomName(data.guildId, "chat", "base"),
-      buildRoomName(data.guildId, "chat", "titans"),
-      buildRoomName(data.guildId, "chat", "heroes"),
-    ];
+    const rooms = buildAllTierRooms(data.guildId, "chat");
     this.gateway.server.to(rooms).emit(GatewayEvent.CHAT_MESSAGE_DELETE, {
       messageId: data.messageId,
       guildId: data.guildId,

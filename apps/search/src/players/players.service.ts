@@ -64,12 +64,9 @@ export class PlayersService {
     }
 
     if (validPlayers.length !== data.players.length) {
-      const invalidPlayers = data.players.filter(
-        (player) => !player.world || !player.id || !player.name,
-      );
+      const skippedCount = data.players.length - validPlayers.length;
       logger.warn(
-        `Skipped ${invalidPlayers.length} players due to missing required fields`,
-        { invalidPlayers },
+        `Skipped ${skippedCount} players due to missing required fields`,
       );
     }
 

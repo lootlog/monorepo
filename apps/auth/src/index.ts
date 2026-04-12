@@ -1,8 +1,10 @@
 import { initHonoObservability } from "@lootlog/instrumentation";
 import "dotenv/config";
 
+const SERVICE_NAME = process.env.SERVICE_NAME || "auth";
+
 initHonoObservability({
-  serviceName: process.env.SERVICE_NAME || "auth",
+  serviceName: SERVICE_NAME,
   otlpEndpoint: process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
   otlpHeaders: process.env.OTEL_EXPORTER_OTLP_HEADERS,
   serviceEnvironment: process.env.ENV,
@@ -32,7 +34,7 @@ const app = new Hono<{
 app.use(
   "*",
   httpInstrumentationMiddleware({
-    serviceName: process.env.SERVICE_NAME || "auth",
+    serviceName: SERVICE_NAME,
     serviceVersion: "1.0.0",
   }),
 );

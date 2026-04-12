@@ -7,6 +7,7 @@ import {
 import { z } from "zod";
 import { createZodDto } from "nestjs-zod";
 import { Error } from "src/notifications/enum/error.enum";
+import { refineNpcIds } from "src/notifications/dto/refinements";
 
 const UpdateNotificationRuleSchema = z
   .object({
@@ -48,20 +49,7 @@ const UpdateNotificationRuleSchema = z
       });
     }
   })
-  .superRefine((data, ctx) => {
-    const hasNpcId = typeof data.npcId === "number";
-    const hasNpcIds = Array.isArray(data.npcIds) && data.npcIds.length > 0;
-
-    if (data.npcId !== undefined || data.npcIds !== undefined) {
-      if (!hasNpcId && !hasNpcIds) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: Error.NOTIFICATION_RULE_MUST_TARGET_AT_LEAST_ONE_NPC,
-          path: ["npcId"],
-        });
-      }
-    }
-  });
+  .superRefine(refineNpcIds);
 
 export class UpdateNotificationRuleDto extends createZodDto(
   UpdateNotificationRuleSchema,

@@ -22,3 +22,6 @@ export const REQUIRED_NOTIFICATION_PERMISSIONS = [
     flag: PermissionsBitField.Flags.ReadMessageHistory,
   },
 ] as const;
+
+export const REQUIRED_NOTIFICATION_PERMISSION_NAMES =
+  REQUIRED_NOTIFICATION_PERMISSIONS.map((permission) => permission.name);

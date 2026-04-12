@@ -25,7 +25,10 @@ import {
 } from "discord.js";
 import { RoutingKey } from "src/bot/enums/routing-key.enum";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import { REQUIRED_NOTIFICATION_PERMISSIONS } from "./constants/required-notification-permissions.constant";
+import {
+  REQUIRED_NOTIFICATION_PERMISSIONS,
+  REQUIRED_NOTIFICATION_PERMISSION_NAMES,
+} from "./constants/required-notification-permissions.constant";
 
 type ChannelPermissionsState = {
   canView: boolean;
@@ -467,13 +470,9 @@ export class DiscordSyncService {
       guildId,
       status: options?.status ?? DiscordGuildSyncStatus.STALE,
       hasRequiredPermissions: false,
-      requiredPermissions: REQUIRED_NOTIFICATION_PERMISSIONS.map(
-        (permission) => permission.name,
-      ),
+      requiredPermissions: REQUIRED_NOTIFICATION_PERMISSION_NAMES,
       grantedPermissions: [],
-      missingPermissions: REQUIRED_NOTIFICATION_PERMISSIONS.map(
-        (permission) => permission.name,
-      ),
+      missingPermissions: REQUIRED_NOTIFICATION_PERMISSION_NAMES,
       channelCount: 0,
       selectableChannelCount: 0,
       lastAttemptAt: options?.lastAttemptAt ?? updatedAt,
@@ -583,9 +582,7 @@ export class DiscordSyncService {
 
     return {
       hasRequiredPermissions: missingPermissions.length === 0,
-      requiredPermissions: REQUIRED_NOTIFICATION_PERMISSIONS.map(
-        (permission) => permission.name,
-      ),
+      requiredPermissions: REQUIRED_NOTIFICATION_PERMISSION_NAMES,
       grantedPermissions,
       missingPermissions,
     };

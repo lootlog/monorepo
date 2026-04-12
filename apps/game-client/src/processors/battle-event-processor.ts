@@ -61,7 +61,7 @@ const extractDeadNpcs = (warriors: BattleWarriorsWithAccountId) => {
         id: Number.parseInt(key, 10),
         name: warrior.name,
         lvl: warrior.lvl,
-        prof: warrior.prof || "",
+        prof: warrior.prof ?? "",
         icon: warrior.icon,
         wt: warrior.wt,
         type: warrior.type,

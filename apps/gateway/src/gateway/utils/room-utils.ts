@@ -39,12 +39,21 @@ const ALL_FEATURE_ROOMS: Array<{ feature: FeatureName; tier: TierName }> = [
   { feature: "notifications", tier: "heroes" },
 ];
 
+const ALL_TIERS: TierName[] = ["base", "titans", "heroes"];
+
 export function buildRoomName(
   guildId: string,
   feature: FeatureName | "admin" | "presence" | "events",
   tier?: TierName,
 ): string {
   return tier ? `${guildId}:${feature}:${tier}` : `${guildId}:${feature}`;
+}
+
+export function buildAllTierRooms(
+  guildId: string,
+  feature: FeatureName,
+): string[] {
+  return ALL_TIERS.map((tier) => buildRoomName(guildId, feature, tier));
 }
 
 export function parseRoomName(

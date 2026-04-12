@@ -27,21 +27,22 @@ export const useChatMessagesListener = (client: AxiosInstance) => {
           };
         },
       );
-      if (!useChatCache.getState().messageCache[data.guildId]) {
+      const cache = useChatCache.getState();
+      if (!cache.messageCache[data.guildId]) {
         fetchChatMessages(client, data.guildId).then((messages) => {
           if (messages.length) {
             useChatCache.getState().setMessageCache(data.guildId, messages);
           }
         });
       }
-      if (!useChatCache.getState().memberCache[data.guildId]) {
+      if (!cache.memberCache[data.guildId]) {
         fetchGuildMembers(client, data.guildId).then((members) => {
           if (members) {
             useChatCache.getState().setMemberCache(data.guildId, members);
           }
         });
       }
-      useChatCache.getState().appendMessage(data.guildId, data);
+      cache.appendMessage(data.guildId, data);
     },
     [queryClient, client],
   );

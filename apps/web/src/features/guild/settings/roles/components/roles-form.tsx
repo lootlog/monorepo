@@ -181,8 +181,8 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      lvlRangeFrom: role.lvlRangeFrom?.toString() || DEFAULT_LVL_RANGE_FROM,
-      lvlRangeTo: role.lvlRangeTo?.toString() || DEFAULT_LVL_RANGE_TO,
+      lvlRangeFrom: role.lvlRangeFrom?.toString() ?? DEFAULT_LVL_RANGE_FROM,
+      lvlRangeTo: role.lvlRangeTo?.toString() ?? DEFAULT_LVL_RANGE_TO,
       ...PERMISSIONS.reduce(
         (acc, p) => ({
           ...acc,
@@ -195,8 +195,8 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
 
   useEffect(() => {
     form.reset({
-      lvlRangeFrom: role.lvlRangeFrom?.toString() || DEFAULT_LVL_RANGE_FROM,
-      lvlRangeTo: role.lvlRangeTo?.toString() || DEFAULT_LVL_RANGE_TO,
+      lvlRangeFrom: role.lvlRangeFrom?.toString() ?? DEFAULT_LVL_RANGE_FROM,
+      lvlRangeTo: role.lvlRangeTo?.toString() ?? DEFAULT_LVL_RANGE_TO,
       ...PERMISSIONS.reduce(
         (acc, p) => ({
           ...acc,
@@ -224,8 +224,8 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
           toast.success("Zaktualizowano ustawienia");
           form.reset({
             lvlRangeFrom:
-              response.lvlRangeFrom?.toString() || DEFAULT_LVL_RANGE_FROM,
-            lvlRangeTo: response.lvlRangeTo?.toString() || DEFAULT_LVL_RANGE_TO,
+              response.lvlRangeFrom?.toString() ?? DEFAULT_LVL_RANGE_FROM,
+            lvlRangeTo: response.lvlRangeTo?.toString() ?? DEFAULT_LVL_RANGE_TO,
             ...PERMISSIONS.reduce(
               (acc, p) => ({
                 ...acc,

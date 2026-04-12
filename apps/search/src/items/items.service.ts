@@ -21,7 +21,7 @@ export class ItemsService {
 
   async getItems({ limit, search, world }: GetItemsDto) {
     const index = this.meilisearch.index<ItemHit>(ITEMS_INDEX);
-    const searchTerm = search || "";
+    const searchTerm = search ?? "";
 
     const query: SearchParams = {
       limit,
