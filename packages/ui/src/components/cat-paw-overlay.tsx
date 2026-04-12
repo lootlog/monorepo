@@ -45,7 +45,7 @@ export function CatPawOverlay() {
   const isCatTheme = useCatTheme();
   const id = React.useId();
 
-  const paws = React.useMemo(() => {
+  const paws = (() => {
     const rand = seededRandom(hashString(id));
 
     for (let i = 0; i < 20; i++) rand();
@@ -103,7 +103,7 @@ export function CatPawOverlay() {
     }
 
     return result;
-  }, [id]);
+  })();
 
   if (!isCatTheme) return null;
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearch, useNavigate } from "@tanstack/react-router";
 import {
@@ -27,7 +27,7 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Card } from "@lootlog/ui/components/card";
 import { Skull } from "lucide-react";
-import { useDebounce } from "@/hooks/use-debounce";
+import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 import {
   KillsFilters,
   type KillsFiltersState,
@@ -91,24 +91,21 @@ export const KillsPage: React.FC = () => {
     sortBy,
   });
 
-  const updateSearchParams = useCallback(
-    (updates: Partial<KillsSearchParams>) => {
-      const newParams = { ...searchParams, ...updates };
+  const updateSearchParams = (updates: Partial<KillsSearchParams>) => {
+    const newParams = { ...searchParams, ...updates };
 
-      const cleanParams = Object.fromEntries(
-        Object.entries(newParams).filter(
-          ([, value]) => value !== undefined && value !== "",
-        ),
-      );
+    const cleanParams = Object.fromEntries(
+      Object.entries(newParams).filter(
+        ([, value]) => value !== undefined && value !== "",
+      ),
+    );
 
-      navigate({
-        to: ".",
-        search: cleanParams,
-        replace: true,
-      });
-    },
-    [navigate, searchParams],
-  );
+    navigate({
+      to: ".",
+      search: cleanParams,
+      replace: true,
+    });
+  };
 
   useEffect(() => {
     if (debouncedSearch !== prevDebouncedSearch.current) {

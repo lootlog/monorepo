@@ -16,6 +16,14 @@ const __dirname = path.dirname(__filename);
 const rootPath = path.join(__dirname, "../../../../../");
 config({ path: path.join(rootPath, ".env") });
 
+const parseCommaSeparatedIds = (raw: string | undefined): string[] =>
+  raw && raw !== "xxx"
+    ? raw
+        .split(",")
+        .map((id) => id.trim())
+        .filter((id) => id.length > 0)
+    : [];
+
 const prisma = new PrismaClient();
 
 // Use separate connection string for battlelog if provided
@@ -65,13 +73,7 @@ async function seedGuilds(count: number) {
   const devGuildIdsRaw = process.env.DISCORD_DEVELOPMENT_GUILD_ID;
   const devUserId = process.env.DISCORD_DEVELOPMENT_USER_ID;
 
-  const devGuildIds =
-    devGuildIdsRaw && devGuildIdsRaw !== "xxx"
-      ? devGuildIdsRaw
-          .split(",")
-          .map((id) => id.trim())
-          .filter((id) => id.length > 0)
-      : [];
+  const devGuildIds = parseCommaSeparatedIds(devGuildIdsRaw);
 
   const totalGuildsToCreate = Math.max(count, devGuildIds.length);
 
@@ -195,13 +197,7 @@ async function seedLoots(count: number, guilds: any[]) {
   const devGuildIdsRaw = process.env.DISCORD_DEVELOPMENT_GUILD_ID;
   const devUserId = process.env.DISCORD_DEVELOPMENT_USER_ID;
 
-  const devGuildIds =
-    devGuildIdsRaw && devGuildIdsRaw !== "xxx"
-      ? devGuildIdsRaw
-          .split(",")
-          .map((id) => id.trim())
-          .filter((id) => id.length > 0)
-      : [];
+  const devGuildIds = parseCommaSeparatedIds(devGuildIdsRaw);
 
   for (const loot of loots) {
     const createdLoot = await prisma.loot.create({
@@ -275,13 +271,7 @@ async function seedTimers(guilds: any[]) {
   const devGuildIdsRaw = process.env.DISCORD_DEVELOPMENT_GUILD_ID;
   const devUserId = process.env.DISCORD_DEVELOPMENT_USER_ID;
 
-  const devGuildIds =
-    devGuildIdsRaw && devGuildIdsRaw !== "xxx"
-      ? devGuildIdsRaw
-          .split(",")
-          .map((id) => id.trim())
-          .filter((id) => id.length > 0)
-      : [];
+  const devGuildIds = parseCommaSeparatedIds(devGuildIdsRaw);
 
   let totalTimers = 0;
 

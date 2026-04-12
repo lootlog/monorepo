@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Grid2X2, List, Search } from "lucide-react";
 import { ReservationCard } from "./reservation-card";
@@ -36,7 +36,7 @@ export const Reservations: React.FC = () => {
   const { data: members } = useGuildMembers(true);
 
   const normalizedSearch = searchValue.trim().toLowerCase();
-  const filteredCards = useMemo(() => {
+  const filteredCards = (() => {
     if (!reservationsCards) {
       return [] as Array<[string, ReservationCardData[]]>;
     }
@@ -50,7 +50,7 @@ export const Reservations: React.FC = () => {
     return entries.filter(([name]) =>
       name.toLowerCase().includes(normalizedSearch),
     );
-  }, [reservationsCards, normalizedSearch]);
+  })();
 
   const isLoading = !guild || !reservations || !reservationsCards;
   const guildPath = guild?.vanityUrl ?? guild?.id;

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@lootlog/ui/components/input";
-import { useDebounce } from "@/hooks/use-debounce";
+import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 import { cn } from "@lootlog/ui/lib/utils";
 
 interface LevelRangeFilterProps {

@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -59,113 +58,110 @@ export function HeadToHeadTable({
   isLoading,
 }: HeadToHeadTableProps) {
   const { t } = useTranslation();
-  const columns: ColumnDef<HeadToHeadRecord>[] = useMemo(
-    () => [
-      {
-        id: "avatar",
-        header: "",
-        cell: ({ row }) => (
-          <PlayerTile
-            player={{
-              name: row.original.opponentName,
-              lvl: row.original.opponentLvl,
-              prof: row.original.opponentProf,
-              icon: row.original.opponentIcon,
-            }}
-            className="scale-75"
-          />
-        ),
-      },
-      {
-        accessorKey: "opponentName",
-        header: t("battlePanel.statistics.columns.name"),
-        cell: ({ row }) => (
-          <span className="font-medium">{row.original.opponentName}</span>
-        ),
-      },
-      {
-        accessorKey: "opponentLvl",
-        header: () => (
-          <div className="text-center">
-            {t("battlePanel.statistics.columns.level")}
-          </div>
-        ),
-        cell: ({ row }) => (
-          <div className="text-center">{row.original.opponentLvl}</div>
-        ),
-      },
-      {
-        accessorKey: "opponentProf",
-        header: () => (
-          <div className="text-center">
-            {t("battlePanel.statistics.columns.profession")}
-          </div>
-        ),
-        cell: ({ row }) => (
-          <div className="text-center">
-            {getProfessionName(row.original.opponentProf)}
-          </div>
-        ),
-      },
-      {
-        id: "record",
-        header: () => (
-          <div className="text-center">
-            {t("battlePanel.statistics.columns.winLoss")}
-          </div>
-        ),
-        cell: ({ row }) => (
-          <div className="text-center">
-            <span className="text-green-600 font-medium">
-              {row.original.wins}
-            </span>
-            &nbsp;-&nbsp;
-            <span className="text-red-600 font-medium">
-              {row.original.losses}
-            </span>
-          </div>
-        ),
-      },
-      {
-        accessorKey: "winRate",
-        header: () => (
-          <div className="text-center">
-            {t("battlePanel.statistics.columns.winRate")}
-          </div>
-        ),
-        cell: ({ row }) => (
-          <div className="text-center">
-            <span
-              className={
-                row.original.winRate >= 50
-                  ? "text-green-600 font-medium"
-                  : "text-red-600 font-medium"
-              }
-            >
-              {row.original.winRate.toFixed(1)}%
-            </span>
-          </div>
-        ),
-      },
-      {
-        accessorKey: "lastBattleDate",
-        header: () => (
-          <div className="text-right">
-            {t("battlePanel.statistics.columns.lastBattle")}
-          </div>
-        ),
-        cell: ({ row }) => (
-          <div className="text-right text-sm text-muted-foreground">
-            {formatDistanceToNow(new Date(row.original.lastBattleDate), {
-              addSuffix: true,
-              locale: pl,
-            })}
-          </div>
-        ),
-      },
-    ],
-    [t],
-  );
+  const columns: ColumnDef<HeadToHeadRecord>[] = [
+    {
+      id: "avatar",
+      header: "",
+      cell: ({ row }) => (
+        <PlayerTile
+          player={{
+            name: row.original.opponentName,
+            lvl: row.original.opponentLvl,
+            prof: row.original.opponentProf,
+            icon: row.original.opponentIcon,
+          }}
+          className="scale-75"
+        />
+      ),
+    },
+    {
+      accessorKey: "opponentName",
+      header: t("battlePanel.statistics.columns.name"),
+      cell: ({ row }) => (
+        <span className="font-medium">{row.original.opponentName}</span>
+      ),
+    },
+    {
+      accessorKey: "opponentLvl",
+      header: () => (
+        <div className="text-center">
+          {t("battlePanel.statistics.columns.level")}
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="text-center">{row.original.opponentLvl}</div>
+      ),
+    },
+    {
+      accessorKey: "opponentProf",
+      header: () => (
+        <div className="text-center">
+          {t("battlePanel.statistics.columns.profession")}
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="text-center">
+          {getProfessionName(row.original.opponentProf)}
+        </div>
+      ),
+    },
+    {
+      id: "record",
+      header: () => (
+        <div className="text-center">
+          {t("battlePanel.statistics.columns.winLoss")}
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="text-center">
+          <span className="text-green-600 font-medium">
+            {row.original.wins}
+          </span>
+          &nbsp;-&nbsp;
+          <span className="text-red-600 font-medium">
+            {row.original.losses}
+          </span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "winRate",
+      header: () => (
+        <div className="text-center">
+          {t("battlePanel.statistics.columns.winRate")}
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="text-center">
+          <span
+            className={
+              row.original.winRate >= 50
+                ? "text-green-600 font-medium"
+                : "text-red-600 font-medium"
+            }
+          >
+            {row.original.winRate.toFixed(1)}%
+          </span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "lastBattleDate",
+      header: () => (
+        <div className="text-right">
+          {t("battlePanel.statistics.columns.lastBattle")}
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="text-right text-sm text-muted-foreground">
+          {formatDistanceToNow(new Date(row.original.lastBattleDate), {
+            addSuffix: true,
+            locale: pl,
+          })}
+        </div>
+      ),
+    },
+  ];
 
   const table = useReactTable({
     data,
