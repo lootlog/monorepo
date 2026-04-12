@@ -19,6 +19,7 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { Switch } from "@lootlog/ui/components/switch";
+import { Textarea } from "@lootlog/ui/components/textarea";
 import {
   Select,
   SelectContent,
@@ -63,12 +64,14 @@ export const NotificationRuleFormPage = () => {
     guildRoles,
     contentTemplate,
     watchedTriggerType,
+    isManualNpcEntry,
     formResetKey,
     isCreateTargetDialogOpen,
     setIsCreateTargetDialogOpen,
     getDefaultContentTemplate,
     navigateBack,
     handleTargetCreated,
+    handleManualNpcEntryChange,
     handleSubmit,
   } = useNotificationRuleForm();
 
@@ -279,45 +282,113 @@ export const NotificationRuleFormPage = () => {
 
                         <FormField
                           control={form.control}
-                          name="npcIds"
+                          name="manualNpcEntry"
                           render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                                {t("settings.notifications.fields.npcs")}
-                              </FormLabel>
-                              <p className="mt-1 text-xs text-muted-foreground">
-                                {t(
-                                  "settings.notifications.validation.maxNpcCount",
-                                  {
-                                    count: maxNpcCount,
-                                  },
-                                )}
-                              </p>
+                            <FormItem className="flex flex-row items-center justify-between rounded-xl border border-border/70 bg-background/30 px-3 py-3">
+                              <div className="pr-3">
+                                <FormLabel className="text-sm font-medium">
+                                  {t(
+                                    "settings.notifications.manualNpcEntry.checkbox",
+                                  )}
+                                </FormLabel>
+                                <p className="text-xs text-muted-foreground">
+                                  {t(
+                                    "settings.notifications.manualNpcEntry.hint",
+                                  )}
+                                </p>
+                              </div>
                               <FormControl>
-                                <MultiSelect
-                                  options={npcOptions}
-                                  value={field.value ?? []}
-                                  onValueChange={field.onChange}
-                                  onClose={field.onChange}
-                                  placeholder={t(
-                                    "settings.notifications.placeholders.npcs",
-                                  )}
-                                  controlledSearch
-                                  searchValue={npcSearch}
-                                  onSearchChange={setNpcSearch}
-                                  loading={searchedNpcQuery.isFetching}
-                                  searchPlaceholder={t(
-                                    "settings.notifications.placeholders.searchNpcs",
-                                  )}
-                                  emptyMessage={t(
-                                    "settings.notifications.empty.npcs",
-                                  )}
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={handleManualNpcEntryChange}
                                 />
                               </FormControl>
-                              <FormMessage />
                             </FormItem>
                           )}
                         />
+
+                        {isManualNpcEntry ? (
+                          <FormField
+                            control={form.control}
+                            name="manualNpcIds"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                                  {t(
+                                    "settings.notifications.fields.manualNpcIds",
+                                  )}
+                                </FormLabel>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                  {t(
+                                    "settings.notifications.validation.maxNpcCount",
+                                    {
+                                      count: maxNpcCount,
+                                    },
+                                  )}
+                                </p>
+                                <FormControl>
+                                  <Textarea
+                                    {...field}
+                                    value={field.value ?? ""}
+                                    rows={4}
+                                    placeholder={t(
+                                      "settings.notifications.placeholders.manualNpcIds",
+                                    )}
+                                    className="font-mono"
+                                  />
+                                </FormControl>
+                                <p className="text-xs text-muted-foreground">
+                                  {t(
+                                    "settings.notifications.manualNpcEntry.fieldHint",
+                                  )}
+                                </p>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        ) : (
+                          <FormField
+                            control={form.control}
+                            name="npcIds"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                                  {t("settings.notifications.fields.npcs")}
+                                </FormLabel>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                  {t(
+                                    "settings.notifications.validation.maxNpcCount",
+                                    {
+                                      count: maxNpcCount,
+                                    },
+                                  )}
+                                </p>
+                                <FormControl>
+                                  <MultiSelect
+                                    options={npcOptions}
+                                    value={field.value ?? []}
+                                    onValueChange={field.onChange}
+                                    onClose={field.onChange}
+                                    placeholder={t(
+                                      "settings.notifications.placeholders.npcs",
+                                    )}
+                                    controlledSearch
+                                    searchValue={npcSearch}
+                                    onSearchChange={setNpcSearch}
+                                    loading={searchedNpcQuery.isFetching}
+                                    searchPlaceholder={t(
+                                      "settings.notifications.placeholders.searchNpcs",
+                                    )}
+                                    emptyMessage={t(
+                                      "settings.notifications.empty.npcs",
+                                    )}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        )}
                       </>
                     ) : null}
 
