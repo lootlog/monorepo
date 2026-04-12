@@ -30,6 +30,7 @@ import { useBattleCharacters } from "@/hooks/api/battle-log/use-battle-character
 import type { Period } from "@/store/battle-filters.store";
 import type { Warrior } from "@/hooks/api/battle-log/use-search-warriors";
 import { useTranslation } from "react-i18next";
+import { getPeriodOptions } from "../constants/period-options";
 
 type HeadToHeadFiltersMobileProps = {
   characterId?: string;
@@ -70,21 +71,7 @@ export const HeadToHeadFiltersMobile = ({
 }: HeadToHeadFiltersMobileProps) => {
   const { t } = useTranslation();
   const { data: characters = [] } = useBattleCharacters();
-  const periodOptions = [
-    { value: "7d" as const, label: t("battlePanel.filters.periodOptions.7d") },
-    {
-      value: "30d" as const,
-      label: t("battlePanel.filters.periodOptions.30d"),
-    },
-    {
-      value: "90d" as const,
-      label: t("battlePanel.filters.periodOptions.90d"),
-    },
-    {
-      value: "all" as const,
-      label: t("battlePanel.filters.periodOptions.all"),
-    },
-  ];
+  const periodOptions = getPeriodOptions(t);
 
   return (
     <Drawer shouldScaleBackground={false}>

@@ -46,6 +46,7 @@ import {
   isLegacyNpcIdIdentifier,
 } from "src/timers/utils/timer-key";
 import { EventTimerHooksService } from "src/events/services/event-timer-hooks.service";
+import { getErrorMessage } from "src/shared/utils/get-error-message";
 
 function parseNpc(npc: unknown): { lvl: number; type: NpcType } | null {
   if (!npc) return null;
@@ -286,7 +287,7 @@ export class TimersService implements OnModuleInit {
         world,
         npcId,
         npcName,
-        error: error instanceof Error ? error.message : error,
+        error: getErrorMessage(error),
       });
       return {
         previousTimer: null,
@@ -788,7 +789,7 @@ export class TimersService implements OnModuleInit {
         .catch((error) => {
           this.logger.error({
             message: "Failed to enqueue event hero kill check",
-            error: error instanceof Error ? error.message : error,
+            error: getErrorMessage(error),
             guildId,
             world: data.world,
             npcId: data.npc.id,

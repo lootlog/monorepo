@@ -19,6 +19,7 @@ import {
   buildGuildKillDedupKey,
   buildUserKillDedupKey,
 } from "./utils/kill-dedup-key";
+import { getErrorMessage } from "src/shared/utils/get-error-message";
 
 const KILL_DEDUP_TTL_SECONDS = 30;
 
@@ -83,7 +84,7 @@ export class KillsService {
     } catch (error) {
       this.logger.error({
         message: "Failed to upsert user kill stats",
-        error: error instanceof Error ? error.message : error,
+        error: getErrorMessage(error),
       });
     }
 
@@ -205,7 +206,7 @@ export class KillsService {
         } catch (error) {
           this.logger.error({
             message: `Failed to upsert kill stats for guildId ${guildId}`,
-            error: error instanceof Error ? error.message : error,
+            error: getErrorMessage(error),
           });
           return null;
         }

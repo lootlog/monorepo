@@ -21,6 +21,7 @@ import {
   WATCHED_ITEM_DROPPED_TITLE,
   watchedItemDroppedMessage,
 } from "src/notifications/constants/notification-messages.constant";
+import { getErrorMessage } from "src/shared/utils/get-error-message";
 
 @Injectable()
 export class NotificationsEventsHandler {
@@ -80,7 +81,7 @@ export class NotificationsEventsHandler {
           );
         } catch (error) {
           this.logger.error(
-            `Failed to rebuild timer jobs for rule ${notificationRule.id}: ${error instanceof Error ? error.message : error}`,
+            `Failed to rebuild timer jobs for rule ${notificationRule.id}: ${getErrorMessage(error)}`,
           );
         }
       }),
@@ -108,7 +109,7 @@ export class NotificationsEventsHandler {
       });
     } catch (error) {
       this.logger.error(
-        `Failed to cancel pending jobs for deleted timer ${event.timerKey}: ${error instanceof Error ? error.message : error}`,
+        `Failed to cancel pending jobs for deleted timer ${event.timerKey}: ${getErrorMessage(error)}`,
       );
     }
   }
@@ -170,25 +171,21 @@ export class NotificationsEventsHandler {
       (event.npcType !== null && event.npcType !== undefined) ||
       (event.npcLvl !== null && event.npcLvl !== undefined);
 
+    const ownerIds = watchedItems
+      .map((watchedItem) => watchedItem.notificationRule?.ownerId)
+      .filter((ownerId): ownerId is string => typeof ownerId === "string");
+
     const membershipsByOwner = hasNpcData
       ? await this.matchingService.getActiveMembershipsWithRoles(
-          watchedItems
-            .map((watchedItem) => watchedItem.notificationRule?.ownerId)
-            .filter(
-              (ownerId): ownerId is string => typeof ownerId === "string",
-            ),
+          ownerIds,
           event.guildIds,
         )
       : null;
 
-    const activeGuildIdsByOwnerId = membershipsByOwner
+    const activeGuildIdsByOwnerId = hasNpcData
       ? null
       : await this.matchingService.getActiveMembershipGuildIdsByOwner(
-          watchedItems
-            .map((watchedItem) => watchedItem.notificationRule?.ownerId)
-            .filter(
-              (ownerId): ownerId is string => typeof ownerId === "string",
-            ),
+          ownerIds,
           event.guildIds,
         );
 
@@ -299,7 +296,7 @@ export class NotificationsEventsHandler {
           );
         } catch (error) {
           this.logger.error(
-            `Failed to process watched item ${watchedItem.id} for loot ${event.lootId}: ${error instanceof Error ? error.message : error}`,
+            `Failed to process watched item ${watchedItem.id} for loot ${event.lootId}: ${getErrorMessage(error)}`,
           );
         }
       }),
@@ -319,7 +316,7 @@ export class NotificationsEventsHandler {
       await this.jobService.handleDeliveryResult(event);
     } catch (error) {
       this.logger.error(
-        `Failed to process notification delivery result for ${event.notificationJobId}: ${error instanceof Error ? error.message : error}`,
+        `Failed to process notification delivery result for ${event.notificationJobId}: ${getErrorMessage(error)}`,
       );
       throw error;
     }
@@ -340,7 +337,7 @@ export class NotificationsEventsHandler {
       await this.targetService.handleGuildChannelDeleted(event);
     } catch (error) {
       this.logger.error(
-        `Failed to handle deleted guild channel ${event.channelId}: ${error instanceof Error ? error.message : error}`,
+        `Failed to handle deleted guild channel ${event.channelId}: ${getErrorMessage(error)}`,
       );
     }
   }

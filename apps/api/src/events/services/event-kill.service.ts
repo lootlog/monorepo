@@ -37,6 +37,7 @@ import {
   findActiveEventHeroesByNpc as findActiveEventHeroMatchesByNpc,
   type ActiveEventHeroMatch,
 } from "../utils/find-active-event-heroes-by-npc";
+import { getErrorMessage } from "src/shared/utils/get-error-message";
 
 const EVENT_KILL_LOCK_TTL_SECONDS = 30;
 const EVENT_KILL_DEDUP_TTL_SECONDS = 120;
@@ -534,7 +535,7 @@ export class EventKillService {
         this.logger.error({
           message: "Failed to release event kill lock",
           lockKey,
-          error: error instanceof Error ? error.message : error,
+          error: getErrorMessage(error),
         });
       });
     }

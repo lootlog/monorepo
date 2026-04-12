@@ -20,8 +20,8 @@ const hasNpcPermission = (npc: NpcData, npcType: NpcType, roles: Role[]) => {
   return roles.some(
     (role) =>
       role.permissions.includes(permission) &&
-      role.lvlRangeFrom <= npc.lvl &&
-      role.lvlRangeTo >= npc.lvl,
+      (role.lvlRangeFrom ?? 0) <= npc.lvl &&
+      (role.lvlRangeTo ?? 500) >= npc.lvl,
   );
 };
 

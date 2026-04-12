@@ -2,13 +2,13 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { question, chalk } from "zx";
 import type { CliOptions, EnvVariable } from "../../types.js";
+import { existsSync } from "node:fs";
 import {
   discoverEnvFiles,
   parseEnvFile,
   buildEnvContent,
   writeEnvFile,
   readEnvFile,
-  envFileExists,
 } from "../../utils/file-utils.js";
 import {
   generateEnvValues,
@@ -41,7 +41,7 @@ const processEnvFile = async (
   sharedValues: Map<string, string>,
   options: CliOptions,
 ): Promise<boolean> => {
-  const exists = envFileExists(envFile.path);
+  const exists = existsSync(envFile.path);
 
   if (exists && options.skipExisting) {
     console.log(chalk.yellow(`⏭️  Skipping ${envFile.name} (already exists)`));

@@ -20,6 +20,7 @@ import { EventTrackingService } from "./event-tracking.service";
 import { EventSummaryService } from "./event-summary.service";
 import { getSyntheticNpcId } from "../utils/get-synthetic-npc-id";
 import { TimersService } from "src/timers/timers.service";
+import { getErrorMessage } from "src/shared/utils/get-error-message";
 
 @Injectable()
 export class EventRespawnService {
@@ -128,7 +129,7 @@ export class EventRespawnService {
           heroId,
           eventId,
           guildId,
-          error: error instanceof Error ? error.message : error,
+          error: getErrorMessage(error),
         });
         throw new InternalServerErrorException(
           "Window auto-closed but cleanup failed. Please contact support.",
@@ -156,7 +157,7 @@ export class EventRespawnService {
           heroId,
           eventId,
           guildId,
-          error: error instanceof Error ? error.message : error,
+          error: getErrorMessage(error),
         });
         throw new InternalServerErrorException(
           "Window closed but failed to record points. Please contact support.",
