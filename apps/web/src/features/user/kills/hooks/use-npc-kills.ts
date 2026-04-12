@@ -45,12 +45,12 @@ export const useNpcKills = (filters: NpcKillsFilters = {}) => {
     world: filters.world || undefined,
     npcType: filters.npcTypes?.join(",") || undefined,
     search: filters.search || undefined,
-    cursor: filters.cursor || undefined,
-    limit: filters.limit || undefined,
+    cursor: filters.cursor ?? undefined,
+    limit: filters.limit ?? undefined,
     sortOrder: filters.sortOrder || undefined,
     sortBy: filters.sortBy || undefined,
-    minLvl: filters.minLvl || undefined,
-    maxLvl: filters.maxLvl || undefined,
+    minLvl: filters.minLvl ?? undefined,
+    maxLvl: filters.maxLvl ?? undefined,
   };
 
   const queryString = stringifyQueryParams(queryParams);

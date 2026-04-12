@@ -73,8 +73,8 @@ const buildLootData = (loot: Loot) => {
   );
 
   const sortedPlayers = [...loot.players].sort((a, b) => {
-    const aItems = itemsByPlayer[a.id]?.length || 0;
-    const bItems = itemsByPlayer[b.id]?.length || 0;
+    const aItems = itemsByPlayer[a.id]?.length ?? 0;
+    const bItems = itemsByPlayer[b.id]?.length ?? 0;
     if (aItems > 0 && bItems === 0) return -1;
     if (aItems === 0 && bItems > 0) return 1;
     return 0;

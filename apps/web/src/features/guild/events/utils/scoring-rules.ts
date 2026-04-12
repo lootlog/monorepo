@@ -221,7 +221,7 @@ export const normalizeScoringRules = (value: unknown): EventScoringRules => {
           return parsedRule;
         })
       : []
-  ).filter((rule) => rule !== null) as EventScoringRules["rules"];
+  ).filter((rule): rule is EventScoringRules["rules"][number] => rule !== null);
 
   return {
     version: 1,
