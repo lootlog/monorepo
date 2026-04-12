@@ -6,13 +6,13 @@ paths:
       operationId: UsersController_deleteAccount
       parameters: []
       responses:
-        "200":
+        '200':
           description: Account deleted
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/StatusOkResponseDto_Output"
-        "503":
+                $ref: '#/components/schemas/StatusOkResponseDto_Output'
+        '503':
           description: Account deletion is temporarily unavailable
       security:
         - bearer: []
@@ -25,12 +25,12 @@ paths:
       operationId: UsersController_getUserPreferences
       parameters: []
       responses:
-        "200":
+        '200':
           description: User preferences
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserPreferencesResponseDto_Output"
+                $ref: '#/components/schemas/UserPreferencesResponseDto_Output'
       security:
         - bearer: []
       summary: Get user preferences
@@ -45,14 +45,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateUserPreferencesDto"
+              $ref: '#/components/schemas/UpdateUserPreferencesDto'
       responses:
-        "200":
+        '200':
           description: Updated user preferences
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserPreferencesResponseDto_Output"
+                $ref: '#/components/schemas/UserPreferencesResponseDto_Output'
       security:
         - bearer: []
       summary: Update user preferences
@@ -71,13 +71,13 @@ paths:
             example: guild_123
             type: string
       responses:
-        "200":
+        '200':
           description: Current member information
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NullableMemberResponseDto"
-        "404":
+                $ref: '#/components/schemas/NullableMemberResponseDto'
+        '404':
           description: Member not found
       security:
         - bearer: []
@@ -97,12 +97,12 @@ paths:
             example: guild_123
             type: string
       responses:
-        "200":
+        '200':
           description: Refreshed member information
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NullableMemberResponseDto"
+                $ref: '#/components/schemas/NullableMemberResponseDto'
       security:
         - bearer: []
       summary: Refresh current member
@@ -127,15 +127,15 @@ paths:
           schema:
             example: guild_123
       responses:
-        "200":
+        '200':
           description: Member refreshed successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MemberResponseDto"
-        "403":
+                $ref: '#/components/schemas/MemberResponseDto'
+        '403':
           description: Forbidden - admin permission required
-        "404":
+        '404':
           description: Member not found
       security:
         - bearer: []
@@ -161,15 +161,15 @@ paths:
           schema:
             example: guild_123
       responses:
-        "200":
+        '200':
           description: Member deactivated successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MemberResponseDto"
-        "403":
+                $ref: '#/components/schemas/MemberResponseDto'
+        '403':
           description: Forbidden - admin permission required
-        "404":
+        '404':
           description: Member not found
       security:
         - bearer: []
@@ -194,15 +194,15 @@ paths:
           schema:
             example: guild_123
       responses:
-        "200":
+        '200':
           description: List of guild members
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/MemberResponseDto"
-        "403":
+                  $ref: '#/components/schemas/MemberResponseDto'
+        '403':
           description: Forbidden - insufficient permissions
       security:
         - bearer: []
@@ -221,13 +221,13 @@ paths:
           schema:
             example: guild_123
       responses:
-        "201":
+        '201':
           description: Bulk refresh job created
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MemberRefreshJobResponseDto"
-        "403":
+                $ref: '#/components/schemas/MemberRefreshJobResponseDto'
+        '403':
           description: Forbidden - admin permission required
       security:
         - bearer: []
@@ -246,15 +246,15 @@ paths:
           schema:
             example: guild_123
       responses:
-        "200":
+        '200':
           description: Latest refresh job
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NullableMemberRefreshJobResponseDto"
-        "403":
+                $ref: '#/components/schemas/NullableMemberRefreshJobResponseDto'
+        '403':
           description: Forbidden - admin permission required
-        "404":
+        '404':
           description: No refresh jobs found
       security:
         - bearer: []
@@ -271,7 +271,7 @@ paths:
           in: path
           description: Refresh job ID
           schema:
-            example: "123"
+            example: '123'
             type: string
         - name: guildId
           required: true
@@ -280,15 +280,15 @@ paths:
           schema:
             example: guild_123
       responses:
-        "200":
+        '200':
           description: Refresh job status
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MemberRefreshJobResponseDto"
-        "403":
+                $ref: '#/components/schemas/MemberRefreshJobResponseDto'
+        '403':
           description: Forbidden - admin permission required
-        "404":
+        '404':
           description: Refresh job not found
       security:
         - bearer: []
@@ -309,14 +309,14 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: List of timers
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/TimerResponseDto"
+                  $ref: '#/components/schemas/TimerResponseDto'
       security:
         - bearer: []
       summary: Get all user timers
@@ -340,15 +340,15 @@ paths:
           schema:
             example: guild_123
       responses:
-        "200":
+        '200':
           description: List of guild timers
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/TimerResponseDto"
-        "403":
+                  $ref: '#/components/schemas/TimerResponseDto'
+        '403':
           description: Forbidden - insufficient permissions
       security:
         - bearer: []
@@ -373,17 +373,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateTimerFromGameClientDto"
+              $ref: '#/components/schemas/CreateTimerFromGameClientDto'
       responses:
-        "201":
+        '201':
           description: Timer created successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TimerResponseDto"
-        "400":
+                $ref: '#/components/schemas/TimerResponseDto'
+        '400':
           description: Validation error (invalid spawn times, wt too low, etc.)
-        "403":
+        '403':
           description: Forbidden - insufficient permissions
       security:
         - bearer: []
@@ -428,15 +428,15 @@ paths:
             default: 10
             type: number
       responses:
-        "200":
+        '200':
           description: List of NPCs with timer metadata
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/SearchTimersNpcResponseDto_Output"
-        "403":
+                  $ref: '#/components/schemas/SearchTimersNpcResponseDto_Output'
+        '403':
           description: Forbidden - insufficient permissions
       security:
         - bearer: []
@@ -467,17 +467,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ResetTimerDto"
+              $ref: '#/components/schemas/ResetTimerDto'
       responses:
-        "200":
+        '200':
           description: Timer reset successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TimerResponseDto"
-        "403":
+                $ref: '#/components/schemas/TimerResponseDto'
+        '403':
           description: Forbidden - insufficient permissions
-        "404":
+        '404':
           description: Timer not found
       security:
         - bearer: []
@@ -510,11 +510,11 @@ paths:
             example: 12345:test boss
             type: string
       responses:
-        "200":
+        '200':
           description: Timer deleted successfully
-        "403":
+        '403':
           description: Forbidden - manage permission required
-        "404":
+        '404':
           description: Timer not found
       security:
         - bearer: []
@@ -538,15 +538,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateManualTimerDto"
+              $ref: '#/components/schemas/CreateManualTimerDto'
       responses:
-        "201":
+        '201':
           description: Manual timer created successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TimerResponseDto"
-        "403":
+                $ref: '#/components/schemas/TimerResponseDto'
+        '403':
           description: Forbidden - insufficient permissions
       security:
         - bearer: []
@@ -565,14 +565,14 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: List of user guilds
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/GuildResponseDto_Output"
+                  $ref: '#/components/schemas/GuildResponseDto_Output'
       security:
         - bearer: []
       summary: Get user guilds
@@ -586,14 +586,14 @@ paths:
       operationId: GuildsController_getUserGuildsWithPermissions
       parameters: []
       responses:
-        "200":
+        '200':
           description: List of user guilds with permissions
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/UserGuildPermissionsDto_Output"
+                  $ref: '#/components/schemas/UserGuildPermissionsDto_Output'
       security:
         - bearer: []
       summary: Get user guilds with permissions
@@ -604,8 +604,8 @@ paths:
       operationId: GuildsController_getManageableUserGuilds
       parameters: []
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       tags:
@@ -621,12 +621,12 @@ paths:
           description: Guild ID
           schema: {}
       responses:
-        "200":
+        '200':
           description: Guild information
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GuildResponseDto_Output"
+                $ref: '#/components/schemas/GuildResponseDto_Output'
       security:
         - bearer: []
       summary: Get guild by ID
@@ -641,14 +641,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateGuildConfigDto"
+              $ref: '#/components/schemas/UpdateGuildConfigDto'
       responses:
-        "200":
+        '200':
           description: Updated guild config
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GuildResponseDto_Output"
+                $ref: '#/components/schemas/GuildResponseDto_Output'
       security:
         - bearer: []
       tags:
@@ -657,12 +657,12 @@ paths:
       operationId: GuildsController_getGuildConfig
       parameters: []
       responses:
-        "200":
+        '200':
           description: Guild config
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GuildResponseDto_Output"
+                $ref: '#/components/schemas/GuildResponseDto_Output'
       security:
         - bearer: []
       tags:
@@ -672,8 +672,8 @@ paths:
       operationId: GuildsController_getWorldsByGuildId
       parameters: []
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       tags:
@@ -683,8 +683,8 @@ paths:
       operationId: GuildsController_getGuildPermissions
       parameters: []
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       tags:
@@ -694,8 +694,8 @@ paths:
       operationId: GuildsController_getGuildDiscordSyncStatus
       parameters: []
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       tags:
@@ -705,8 +705,8 @@ paths:
       operationId: GuildsController_refreshGuildDiscordSync
       parameters: []
       responses:
-        "201":
-          description: ""
+        '201':
+          description: ''
       security:
         - bearer: []
       tags:
@@ -731,15 +731,15 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: List of user guilds with permissions
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/UserGuildPermissionsDto"
-      summary: "[Internal] Get user guilds with permissions"
+                  $ref: '#/components/schemas/UserGuildPermissionsDto'
+      summary: '[Internal] Get user guilds with permissions'
       tags:
         - internal
   /internal/guilds/{idOrVanityUrl}:
@@ -756,13 +756,13 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Resolved guild data
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GuildResponseDto_Output"
-      summary: "[Internal] Get guild by ID or vanity URL"
+                $ref: '#/components/schemas/GuildResponseDto_Output'
+      summary: '[Internal] Get guild by ID or vanity URL'
       tags:
         - internal
   /guilds/{guildId}/roles:
@@ -777,15 +777,15 @@ paths:
           schema:
             example: guild_123
       responses:
-        "200":
+        '200':
           description: List of guild roles
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/RoleResponseDto_Output"
-        "403":
+                  $ref: '#/components/schemas/RoleResponseDto_Output'
+        '403':
           description: Forbidden - admin permission required
       security:
         - bearer: []
@@ -815,17 +815,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateRolePermissionsDto"
+              $ref: '#/components/schemas/UpdateRolePermissionsDto'
       responses:
-        "200":
+        '200':
           description: Role permissions updated successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RoleResponseDto_Output"
-        "403":
+                $ref: '#/components/schemas/RoleResponseDto_Output'
+        '403':
           description: Forbidden - admin permission required
-        "404":
+        '404':
           description: Role not found
       security:
         - bearer: []
@@ -845,14 +845,14 @@ paths:
             example: account_123
             type: string
       responses:
-        "200":
+        '200':
           description: User lootlog configuration
           content:
             application/json:
               schema:
                 $ref: >-
                   #/components/schemas/UserLootlogConfigAccountResponseDto_Output
-        "404":
+        '404':
           description: Configuration not found
       security:
         - bearer: []
@@ -875,14 +875,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateOrUpdateLootlogCharacterConfigDto"
+              $ref: '#/components/schemas/CreateOrUpdateLootlogCharacterConfigDto'
       responses:
-        "200":
+        '200':
           description: Configuration created/updated successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserLootlogConfigResponseDto_Output"
+                $ref: '#/components/schemas/UserLootlogConfigResponseDto_Output'
       security:
         - bearer: []
       summary: Create or update lootlog character configuration
@@ -894,12 +894,12 @@ paths:
       operationId: TimerSettingsController_getGlobalSettings
       parameters: []
       responses:
-        "200":
+        '200':
           description: User global timer settings
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TimerSettingsResponseDto"
+                $ref: '#/components/schemas/TimerSettingsResponseDto'
       security:
         - bearer: []
       summary: Get global timer settings
@@ -914,14 +914,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateTimerSettingsDto"
+              $ref: '#/components/schemas/UpdateTimerSettingsDto'
       responses:
-        "200":
+        '200':
           description: Updated global timer settings
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TimerSettingsResponseDto"
+                $ref: '#/components/schemas/TimerSettingsResponseDto'
       security:
         - bearer: []
       summary: Update global timer settings
@@ -940,12 +940,12 @@ paths:
             example: guild_123
             type: string
       responses:
-        "200":
+        '200':
           description: Guild-specific timer settings
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GuildTimerSettingsResponseDto"
+                $ref: '#/components/schemas/GuildTimerSettingsResponseDto'
       security:
         - bearer: []
       summary: Get guild-specific timer settings
@@ -967,14 +967,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateGuildTimerSettingsDto"
+              $ref: '#/components/schemas/UpdateGuildTimerSettingsDto'
       responses:
-        "200":
+        '200':
           description: Updated guild-specific timer settings
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GuildTimerSettingsResponseDto"
+                $ref: '#/components/schemas/GuildTimerSettingsResponseDto'
       security:
         - bearer: []
       summary: Update guild-specific timer settings
@@ -992,9 +992,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/MigrateTimerSettingsDto"
+              $ref: '#/components/schemas/MigrateTimerSettingsDto'
       responses:
-        "200":
+        '200':
           description: Migration result
       security:
         - bearer: []
@@ -1135,15 +1135,15 @@ paths:
           schema:
             example: guild_123
       responses:
-        "200":
+        '200':
           description: Paginated list of loots
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/LootResponseDto"
-        "403":
+                  $ref: '#/components/schemas/LootResponseDto'
+        '403':
           description: Forbidden - insufficient permissions
       security:
         - bearer: []
@@ -1194,15 +1194,15 @@ paths:
           schema:
             example: guild_123
       responses:
-        "200":
+        '200':
           description: >-
             Loot statistics including overview, timeline, top NPCs, and top
             contributors
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LootStatsResponseDto_Output"
-        "403":
+                $ref: '#/components/schemas/LootStatsResponseDto_Output'
+        '403':
           description: Forbidden - insufficient permissions
       security:
         - bearer: []
@@ -1343,13 +1343,13 @@ paths:
           schema:
             example: guild_123
       responses:
-        "200":
+        '200':
           description: Count of loots matching the filters
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CountResponseDto_Output"
-        "403":
+                $ref: '#/components/schemas/CountResponseDto_Output'
+        '403':
           description: Forbidden - insufficient permissions
       security:
         - bearer: []
@@ -1366,7 +1366,7 @@ paths:
           in: path
           description: Loot ID
           schema:
-            example: "123"
+            example: '123'
             type: number
         - name: guildId
           required: true
@@ -1375,15 +1375,15 @@ paths:
           schema:
             example: guild_123
       responses:
-        "200":
+        '200':
           description: Loot details
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NullableLootResponseDto"
-        "403":
+                $ref: '#/components/schemas/NullableLootResponseDto'
+        '403':
           description: Forbidden - insufficient permissions
-        "404":
+        '404':
           description: Loot not found
       security:
         - bearer: []
@@ -1399,7 +1399,7 @@ paths:
           in: path
           description: Loot ID
           schema:
-            example: "123"
+            example: '123'
             type: number
         - name: guildId
           required: true
@@ -1408,11 +1408,11 @@ paths:
           schema:
             example: guild_123
       responses:
-        "200":
+        '200':
           description: Loot deleted successfully
-        "403":
+        '403':
           description: Forbidden - admin or manage permission required
-        "404":
+        '404':
           description: Loot not found
       security:
         - bearer: []
@@ -1429,14 +1429,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateLootDto"
+              $ref: '#/components/schemas/CreateLootDto'
       responses:
-        "201":
+        '201':
           description: Loot created successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CreateLootResponseDto_Output"
+                $ref: '#/components/schemas/CreateLootResponseDto_Output'
       security:
         - bearer: []
       summary: Create loot
@@ -1452,7 +1452,7 @@ paths:
           in: path
           description: Loot ID
           schema:
-            example: "123"
+            example: '123'
             type: number
         - name: guildId
           required: true
@@ -1461,17 +1461,17 @@ paths:
           schema:
             example: guild_123
       responses:
-        "200":
+        '200':
           description: List of loot comments
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/LootCommentResponseDto"
-        "403":
+                  $ref: '#/components/schemas/LootCommentResponseDto'
+        '403':
           description: Forbidden - insufficient permissions
-        "404":
+        '404':
           description: Loot not found
       security:
         - bearer: []
@@ -1487,7 +1487,7 @@ paths:
           in: path
           description: Loot ID
           schema:
-            example: "123"
+            example: '123'
             type: number
         - name: guildId
           required: true
@@ -1500,17 +1500,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateCommentDto"
+              $ref: '#/components/schemas/CreateCommentDto'
       responses:
-        "201":
+        '201':
           description: Comment created successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LootCommentResponseDto"
-        "403":
+                $ref: '#/components/schemas/LootCommentResponseDto'
+        '403':
           description: Forbidden - insufficient permissions
-        "404":
+        '404':
           description: Loot not found
       security:
         - bearer: []
@@ -1527,22 +1527,22 @@ paths:
           in: path
           description: Loot ID
           schema:
-            example: "123"
+            example: '123'
             type: number
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateLootDto"
+              $ref: '#/components/schemas/UpdateLootDto'
       responses:
-        "200":
+        '200':
           description: Loot updated successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LootShareResponseDto_Output"
-        "404":
+                $ref: '#/components/schemas/LootShareResponseDto_Output'
+        '404':
           description: Loot not found
       security:
         - bearer: []
@@ -1561,15 +1561,15 @@ paths:
           schema:
             example: guild_123
       responses:
-        "200":
+        '200':
           description: Lootlog configuration
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NullableLootlogConfigResponseDto_Output"
-        "403":
+                $ref: '#/components/schemas/NullableLootlogConfigResponseDto_Output'
+        '403':
           description: Forbidden - admin permission required
-        "404":
+        '404':
           description: Configuration not found
       security:
         - bearer: []
@@ -1586,7 +1586,7 @@ paths:
           in: path
           description: NPC configuration ID
           schema:
-            example: "1"
+            example: '1'
             type: string
         - name: guildId
           required: true
@@ -1599,17 +1599,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateLootlogConfigNpcDto"
+              $ref: '#/components/schemas/UpdateLootlogConfigNpcDto'
       responses:
-        "200":
+        '200':
           description: NPC configuration updated successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LootlogConfigNpcResponseDto_Output"
-        "403":
+                $ref: '#/components/schemas/LootlogConfigNpcResponseDto_Output'
+        '403':
           description: Forbidden - admin permission required
-        "404":
+        '404':
           description: NPC configuration not found
       security:
         - bearer: []
@@ -1622,7 +1622,7 @@ paths:
       operationId: HealthzController_healthCheck
       parameters: []
       responses:
-        "200":
+        '200':
           description: API is healthy
       summary: Health check
       tags:
@@ -1639,9 +1639,9 @@ paths:
           schema:
             example: guild_123
       responses:
-        "200":
+        '200':
           description: List of chat messages
-        "403":
+        '403':
           description: Forbidden - insufficient permissions
       security:
         - bearer: []
@@ -1663,11 +1663,11 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/SendMessageDto"
+              $ref: '#/components/schemas/SendMessageDto'
       responses:
-        "201":
+        '201':
           description: Message sent successfully
-        "403":
+        '403':
           description: Forbidden - insufficient permissions
       security:
         - bearer: []
@@ -1697,11 +1697,11 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateMessageDto"
+              $ref: '#/components/schemas/UpdateMessageDto'
       responses:
-        "200":
+        '200':
           description: Message updated successfully
-        "403":
+        '403':
           description: Forbidden - insufficient permissions or not message owner
       security:
         - bearer: []
@@ -1726,9 +1726,9 @@ paths:
           schema:
             example: guild_123
       responses:
-        "200":
+        '200':
           description: Message deleted successfully
-        "403":
+        '403':
           description: Forbidden - insufficient permissions or not message owner
       security:
         - bearer: []
@@ -1747,9 +1747,9 @@ paths:
           schema:
             example: guild_123
       responses:
-        "200":
+        '200':
           description: List of reservations
-        "403":
+        '403':
           description: Forbidden - insufficient permissions
       security:
         - bearer: []
@@ -1771,11 +1771,11 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateReservationDto"
+              $ref: '#/components/schemas/CreateReservationDto'
       responses:
-        "201":
+        '201':
           description: Reservation created successfully
-        "403":
+        '403':
           description: Forbidden - insufficient permissions
       security:
         - bearer: []
@@ -1795,7 +1795,7 @@ paths:
             example: 123
             type: number
       responses:
-        "200":
+        '200':
           description: Reservation deleted successfully
       security:
         - bearer: []
@@ -1808,9 +1808,9 @@ paths:
       operationId: ReservationsController_getReservationsCards
       parameters: []
       responses:
-        "200":
+        '200':
           description: List of reservations cards
-        "403":
+        '403':
           description: Forbidden - insufficient permissions
       security:
         - bearer: []
@@ -1827,9 +1827,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateNotificationDto"
+              $ref: '#/components/schemas/CreateNotificationDto'
       responses:
-        "201":
+        '201':
           description: Notification sent successfully
       security:
         - bearer: []
@@ -1851,9 +1851,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateVolunteerDto"
+              $ref: '#/components/schemas/CreateVolunteerDto'
       responses:
-        "201":
+        '201':
           description: Volunteer request sent successfully
       security:
         - bearer: []
@@ -1870,9 +1870,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreatePartyGatheringDto"
+              $ref: '#/components/schemas/CreatePartyGatheringDto'
       responses:
-        "201":
+        '201':
           description: Party gathering notification sent successfully
       security:
         - bearer: []
@@ -1886,7 +1886,7 @@ paths:
       operationId: MessagingController_cancelPartyGatheringByUser
       parameters: []
       responses:
-        "200":
+        '200':
           description: Party gathering notification cancelled successfully
       security:
         - bearer: []
@@ -1904,11 +1904,11 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Party gathering notification cancelled successfully
-        "204":
+        '204':
           description: Notification already expired or not found (idempotent)
-        "403":
+        '403':
           description: Not the owner of this notification
       security:
         - bearer: []
@@ -1920,8 +1920,8 @@ paths:
       operationId: NotificationsGuildController_getGuildTargets
       parameters: []
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       tags:
@@ -1934,10 +1934,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateNotificationTargetDto"
+              $ref: '#/components/schemas/CreateNotificationTargetDto'
       responses:
-        "201":
-          description: ""
+        '201':
+          description: ''
       security:
         - bearer: []
       tags:
@@ -1947,8 +1947,8 @@ paths:
       operationId: NotificationsGuildController_getAvailableGuildTargets
       parameters: []
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       tags:
@@ -1967,10 +1967,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateNotificationTargetDto"
+              $ref: '#/components/schemas/UpdateNotificationTargetDto'
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       tags:
@@ -1984,8 +1984,8 @@ paths:
           schema:
             type: number
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       tags:
@@ -1995,8 +1995,8 @@ paths:
       operationId: NotificationsGuildController_getGuildRules
       parameters: []
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       tags:
@@ -2009,10 +2009,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateNotificationRuleDto"
+              $ref: '#/components/schemas/CreateNotificationRuleDto'
       responses:
-        "201":
-          description: ""
+        '201':
+          description: ''
       security:
         - bearer: []
       tags:
@@ -2031,10 +2031,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateNotificationRuleDto"
+              $ref: '#/components/schemas/UpdateNotificationRuleDto'
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       tags:
@@ -2048,8 +2048,8 @@ paths:
           schema:
             type: number
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       tags:
@@ -2064,8 +2064,8 @@ paths:
           schema:
             type: number
       responses:
-        "201":
-          description: ""
+        '201':
+          description: ''
       security:
         - bearer: []
       tags:
@@ -2080,8 +2080,8 @@ paths:
           schema:
             type: number
       responses:
-        "201":
-          description: ""
+        '201':
+          description: ''
       security:
         - bearer: []
       tags:
@@ -2091,8 +2091,8 @@ paths:
       operationId: NotificationsGuildController_getGuildJobs
       parameters: []
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       tags:
@@ -2107,8 +2107,8 @@ paths:
           schema:
             type: string
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       tags:
@@ -2118,8 +2118,8 @@ paths:
       operationId: NotificationsUserController_getUserTargets
       parameters: []
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       tags:
@@ -2132,10 +2132,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateNotificationTargetDto"
+              $ref: '#/components/schemas/CreateNotificationTargetDto'
       responses:
-        "201":
-          description: ""
+        '201':
+          description: ''
       security:
         - bearer: []
       tags:
@@ -2154,10 +2154,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateNotificationTargetDto"
+              $ref: '#/components/schemas/UpdateNotificationTargetDto'
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       tags:
@@ -2171,8 +2171,8 @@ paths:
           schema:
             type: number
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       tags:
@@ -2187,8 +2187,8 @@ paths:
           schema:
             type: number
       responses:
-        "201":
-          description: ""
+        '201':
+          description: ''
       security:
         - bearer: []
       tags:
@@ -2198,8 +2198,8 @@ paths:
       operationId: NotificationsUserController_getUserRules
       parameters: []
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       tags:
@@ -2212,10 +2212,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateNotificationRuleDto"
+              $ref: '#/components/schemas/CreateNotificationRuleDto'
       responses:
-        "201":
-          description: ""
+        '201':
+          description: ''
       security:
         - bearer: []
       tags:
@@ -2234,10 +2234,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateNotificationRuleDto"
+              $ref: '#/components/schemas/UpdateNotificationRuleDto'
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       tags:
@@ -2251,8 +2251,8 @@ paths:
           schema:
             type: number
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       tags:
@@ -2262,8 +2262,8 @@ paths:
       operationId: NotificationsUserController_getUserJobs
       parameters: []
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       tags:
@@ -2273,8 +2273,8 @@ paths:
       operationId: NotificationsUserController_getWatchedItems
       parameters: []
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       tags:
@@ -2287,10 +2287,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateWatchedItemDto"
+              $ref: '#/components/schemas/CreateWatchedItemDto'
       responses:
-        "201":
-          description: ""
+        '201':
+          description: ''
       security:
         - bearer: []
       tags:
@@ -2304,10 +2304,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateWatchedItemQuickAddDto"
+              $ref: '#/components/schemas/CreateWatchedItemQuickAddDto'
       responses:
-        "201":
-          description: ""
+        '201':
+          description: ''
       security:
         - bearer: []
       tags:
@@ -2322,8 +2322,8 @@ paths:
           schema:
             type: number
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
       security:
         - bearer: []
       tags:
@@ -2334,12 +2334,12 @@ paths:
       operationId: SoundSettingsController_getSettings
       parameters: []
       responses:
-        "200":
+        '200':
           description: User sound settings
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SoundSettingsResponseDto"
+                $ref: '#/components/schemas/SoundSettingsResponseDto'
       security:
         - bearer: []
       summary: Get sound settings
@@ -2354,14 +2354,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateSoundSettingsDto"
+              $ref: '#/components/schemas/UpdateSoundSettingsDto'
       responses:
-        "200":
+        '200':
           description: Updated sound settings
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SoundSettingsResponseDto"
+                $ref: '#/components/schemas/SoundSettingsResponseDto'
       security:
         - bearer: []
       summary: Update sound settings
@@ -2382,15 +2382,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateEventDto"
+              $ref: '#/components/schemas/CreateEventDto'
       responses:
-        "201":
+        '201':
           description: Event created successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EventMutationResponseDto"
-        "403":
+                $ref: '#/components/schemas/EventMutationResponseDto'
+        '403':
           description: Forbidden - insufficient permissions
       security:
         - bearer: []
@@ -2419,14 +2419,14 @@ paths:
           description: Guild ID
           schema: {}
       responses:
-        "200":
+        '200':
           description: List of events
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/EventListItemResponseDto"
+                  $ref: '#/components/schemas/EventListItemResponseDto'
       security:
         - bearer: []
       summary: List guild events
@@ -2449,13 +2449,13 @@ paths:
           description: Guild ID
           schema: {}
       responses:
-        "200":
+        '200':
           description: Event details
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EventOverviewResponseDto"
-        "404":
+                $ref: '#/components/schemas/EventOverviewResponseDto'
+        '404':
           description: Event not found
       security:
         - bearer: []
@@ -2482,15 +2482,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateEventDto"
+              $ref: '#/components/schemas/UpdateEventDto'
       responses:
-        "200":
+        '200':
           description: Event updated successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EventMutationResponseDto"
-        "404":
+                $ref: '#/components/schemas/EventMutationResponseDto'
+        '404':
           description: Event not found
       security:
         - bearer: []
@@ -2513,13 +2513,13 @@ paths:
           description: Guild ID
           schema: {}
       responses:
-        "200":
+        '200':
           description: Event deleted successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponseDto_Output"
-        "404":
+                $ref: '#/components/schemas/SuccessResponseDto_Output'
+        '404':
           description: Event not found
       security:
         - bearer: []
@@ -2545,13 +2545,13 @@ paths:
           description: Guild ID
           schema: {}
       responses:
-        "200":
+        '200':
           description: Event overview
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EventOverviewResponseDto"
-        "404":
+                $ref: '#/components/schemas/EventOverviewResponseDto'
+        '404':
           description: Event not found
       security:
         - bearer: []
@@ -2577,13 +2577,13 @@ paths:
           description: Guild ID
           schema: {}
       responses:
-        "200":
+        '200':
           description: Event wrapped summary
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EventWrappedApiResponseDto_Output"
-        "404":
+                $ref: '#/components/schemas/EventWrappedApiResponseDto_Output'
+        '404':
           description: Event not found
       security:
         - bearer: []
@@ -2609,13 +2609,13 @@ paths:
           description: Guild ID
           schema: {}
       responses:
-        "200":
+        '200':
           description: Event maps data
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EventMapsResponseDto_Output"
-        "404":
+                $ref: '#/components/schemas/EventMapsResponseDto_Output'
+        '404':
           description: Event not found
       security:
         - bearer: []
@@ -2639,13 +2639,13 @@ paths:
           description: Guild ID
           schema: {}
       responses:
-        "200":
+        '200':
           description: Points recalculated successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponseDto_Output"
-        "404":
+                $ref: '#/components/schemas/SuccessResponseDto_Output'
+        '404':
           description: Event not found
       security:
         - bearer: []
@@ -2679,11 +2679,11 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AssignMemberDto"
+              $ref: '#/components/schemas/AssignMemberDto'
       responses:
-        "200":
+        '200':
           description: Member assigned successfully
-        "404":
+        '404':
           description: Map not found
       security:
         - bearer: []
@@ -2720,9 +2720,9 @@ paths:
           description: Guild ID
           schema: {}
       responses:
-        "200":
+        '200':
           description: Member unassigned successfully
-        "404":
+        '404':
           description: Map not found
       security:
         - bearer: []
@@ -2752,9 +2752,9 @@ paths:
           description: Guild ID
           schema: {}
       responses:
-        "200":
+        '200':
           description: Self-assigned successfully
-        "404":
+        '404':
           description: Map not found
       security:
         - bearer: []
@@ -2783,9 +2783,9 @@ paths:
           description: Guild ID
           schema: {}
       responses:
-        "200":
+        '200':
           description: Self-unassigned successfully
-        "404":
+        '404':
           description: Map not found
       security:
         - bearer: []
@@ -2813,9 +2813,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateHeroDto"
+              $ref: '#/components/schemas/CreateHeroDto'
       responses:
-        "201":
+        '201':
           description: Hero added successfully
       security:
         - bearer: []
@@ -2849,9 +2849,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateHeroDto"
+              $ref: '#/components/schemas/UpdateHeroDto'
       responses:
-        "200":
+        '200':
           description: Hero updated successfully
       security:
         - bearer: []
@@ -2880,7 +2880,7 @@ paths:
           description: Guild ID
           schema: {}
       responses:
-        "200":
+        '200':
           description: Hero deleted successfully
       security:
         - bearer: []
@@ -2914,14 +2914,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateMapDto"
+              $ref: '#/components/schemas/CreateMapDto'
       responses:
-        "201":
+        '201':
           description: Map added successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EventMapResponseDto_Output"
+                $ref: '#/components/schemas/EventMapResponseDto_Output'
       security:
         - bearer: []
       summary: Add map to hero
@@ -2956,7 +2956,7 @@ paths:
           description: Guild ID
           schema: {}
       responses:
-        "200":
+        '200':
           description: Map deleted successfully
       security:
         - bearer: []
@@ -2986,7 +2986,7 @@ paths:
           description: Guild ID
           schema: {}
       responses:
-        "200":
+        '200':
           description: List of locations with maps
       security:
         - bearer: []
@@ -3019,11 +3019,11 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateLocationDto"
+              $ref: '#/components/schemas/CreateLocationDto'
       responses:
-        "201":
+        '201':
           description: Location created successfully
-        "400":
+        '400':
           description: Location with this name already exists
       security:
         - bearer: []
@@ -3063,11 +3063,11 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateLocationDto"
+              $ref: '#/components/schemas/UpdateLocationDto'
       responses:
-        "200":
+        '200':
           description: Location updated successfully
-        "404":
+        '404':
           description: Location not found
       security:
         - bearer: []
@@ -3102,9 +3102,9 @@ paths:
           description: Guild ID
           schema: {}
       responses:
-        "200":
+        '200':
           description: Location deleted successfully
-        "404":
+        '404':
           description: Location not found
       security:
         - bearer: []
@@ -3138,9 +3138,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ReorderLocationsDto"
+              $ref: '#/components/schemas/ReorderLocationsDto'
       responses:
-        "200":
+        '200':
           description: Locations reordered successfully
       security:
         - bearer: []
@@ -3180,11 +3180,11 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AssignMapLocationDto"
+              $ref: '#/components/schemas/AssignMapLocationDto'
       responses:
-        "200":
+        '200':
           description: Map location updated successfully
-        "404":
+        '404':
           description: Map or location not found
       security:
         - bearer: []
@@ -3210,7 +3210,7 @@ paths:
           description: Guild ID
           schema: {}
       responses:
-        "200":
+        '200':
           description: Participation confirmations
           content:
             application/json:
@@ -3247,7 +3247,7 @@ paths:
           description: Guild ID
           schema: {}
       responses:
-        "200":
+        '200':
           description: Participation confirmed
           content:
             application/json:
@@ -3276,15 +3276,15 @@ paths:
           description: Guild ID
           schema: {}
       responses:
-        "200":
+        '200':
           description: Event ranking
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/EventRankingEntryResponseDto"
-        "404":
+                  $ref: '#/components/schemas/EventRankingEntryResponseDto'
+        '404':
           description: Event not found
       security:
         - bearer: []
@@ -3318,11 +3318,11 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateRankingPointsDto"
+              $ref: '#/components/schemas/UpdateRankingPointsDto'
       responses:
-        "200":
+        '200':
           description: Ranking updated
-        "404":
+        '404':
           description: Ranking not found
       security:
         - bearer: []
@@ -3352,15 +3352,15 @@ paths:
           description: Guild ID
           schema: {}
       responses:
-        "200":
+        '200':
           description: Edit history returned
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/RankingEditHistoryEntryResponseDto"
-        "404":
+                  $ref: '#/components/schemas/RankingEditHistoryEntryResponseDto'
+        '404':
           description: Ranking not found
       security:
         - bearer: []
@@ -3390,15 +3390,15 @@ paths:
           description: Guild ID
           schema: {}
       responses:
-        "200":
+        '200':
           description: List of timers for event heroes
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/EventTimerResponseDto"
-        "404":
+                  $ref: '#/components/schemas/EventTimerResponseDto'
+        '404':
           description: Event not found
       security:
         - bearer: []
@@ -3422,15 +3422,15 @@ paths:
           description: Guild ID
           schema: {}
       responses:
-        "200":
+        '200':
           description: List of hero stats with kill counts
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/EventHeroStatsResponseDto"
-        "404":
+                  $ref: '#/components/schemas/EventHeroStatsResponseDto'
+        '404':
           description: Event not found
       security:
         - bearer: []
@@ -3474,13 +3474,13 @@ paths:
           description: Guild ID
           schema: {}
       responses:
-        "200":
+        '200':
           description: Paginated list of kills with participant details
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EventKillHistoryResponseDto"
-        "404":
+                $ref: '#/components/schemas/EventKillHistoryResponseDto'
+        '404':
           description: Event not found
       security:
         - bearer: []
@@ -3530,13 +3530,13 @@ paths:
           description: Guild ID
           schema: {}
       responses:
-        "200":
+        '200':
           description: Paginated list of member kills with point breakdown
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EventMemberKillHistoryResponseDto"
-        "404":
+                $ref: '#/components/schemas/EventMemberKillHistoryResponseDto'
+        '404':
           description: Event or member not found
       security:
         - bearer: []
@@ -3580,13 +3580,13 @@ paths:
           description: Guild ID
           schema: {}
       responses:
-        "200":
+        '200':
           description: Paginated list of kills with participant details
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EventKillHistoryResponseDto"
-        "404":
+                $ref: '#/components/schemas/EventKillHistoryResponseDto'
+        '404':
           description: Hero not found
       security:
         - bearer: []
@@ -3624,13 +3624,13 @@ paths:
           description: Guild ID
           schema: {}
       responses:
-        "200":
+        '200':
           description: Kill details with participants, event config, and matching loots
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/KillDetailResponseDto"
-        "404":
+                $ref: '#/components/schemas/KillDetailResponseDto'
+        '404':
           description: Kill not found
       security:
         - bearer: []
@@ -3672,11 +3672,11 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateKillPointDto"
+              $ref: '#/components/schemas/UpdateKillPointDto'
       responses:
-        "200":
+        '200':
           description: Kill point updated and ranking recalculated
-        "404":
+        '404':
           description: Kill point not found
       security:
         - bearer: []
@@ -3712,7 +3712,7 @@ paths:
           description: Guild ID
           schema: {}
       responses:
-        "200":
+        '200':
           description: >-
             Timeline data with map assignments and coverage gaps during spawn
             window
@@ -3721,8 +3721,8 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/KillTimelineMapResponseDto"
-        "404":
+                  $ref: '#/components/schemas/KillTimelineMapResponseDto'
+        '404':
           description: Kill not found
       security:
         - bearer: []
@@ -3754,14 +3754,14 @@ paths:
           description: Guild ID
           schema: {}
       responses:
-        "200":
+        '200':
           description: List of coverage gaps with type, duration, and timestamps
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/HeroCoverageGapResponseDto"
+                  $ref: '#/components/schemas/HeroCoverageGapResponseDto'
       security:
         - bearer: []
       summary: Get hero coverage gaps
@@ -3792,14 +3792,14 @@ paths:
           description: Guild ID
           schema: {}
       responses:
-        "200":
+        '200':
           description: List of coverage gaps with type, duration, and timestamps
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/CoverageGapResponseDto"
+                  $ref: '#/components/schemas/CoverageGapResponseDto'
       security:
         - bearer: []
       summary: Get map coverage gaps
@@ -3828,12 +3828,12 @@ paths:
           description: Guild ID
           schema: {}
       responses:
-        "200":
+        '200':
           description: Active gap or null if no gap is currently active
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NullableCoverageGapResponseDto"
+                $ref: '#/components/schemas/NullableCoverageGapResponseDto'
       security:
         - bearer: []
       summary: Get active coverage gap for map
@@ -3862,14 +3862,14 @@ paths:
           description: Guild ID
           schema: {}
       responses:
-        "200":
+        '200':
           description: Array of active gaps for all maps of the hero
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/CoverageGapResponseDto"
+                  $ref: '#/components/schemas/CoverageGapResponseDto'
       security:
         - bearer: []
       summary: Get all active coverage gaps for hero
@@ -3898,14 +3898,14 @@ paths:
           description: Guild ID
           schema: {}
       responses:
-        "200":
+        '200':
           description: >-
             Presence statistics including total coverage time and per-member
             breakdown
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HeroPresenceStatsResponseDto"
+                $ref: '#/components/schemas/HeroPresenceStatsResponseDto'
       security:
         - bearer: []
       summary: Get presence statistics for hero
@@ -3934,14 +3934,14 @@ paths:
           description: Guild ID
           schema: {}
       responses:
-        "200":
+        '200':
           description: >-
             Respawn configuration including active timer status and default
             times
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HeroRespawnConfigResponseDto"
+                $ref: '#/components/schemas/HeroRespawnConfigResponseDto'
       security:
         - bearer: []
       summary: Get hero respawn configuration
@@ -3976,13 +3976,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CloseRespawnWindowDto"
+              $ref: '#/components/schemas/CloseRespawnWindowDto'
       responses:
-        "200":
+        '200':
           description: Respawn window closed successfully
-        "400":
+        '400':
           description: Bad request - hero has no NPC ID
-        "404":
+        '404':
           description: Hero not found
       security:
         - bearer: []
@@ -4018,13 +4018,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/OpenRespawnWindowDto"
+              $ref: '#/components/schemas/OpenRespawnWindowDto'
       responses:
-        "200":
+        '200':
           description: Respawn window opened successfully
-        "400":
+        '400':
           description: Bad request - hero has no NPC ID
-        "404":
+        '404':
           description: Hero not found
       security:
         - bearer: []
@@ -4044,12 +4044,12 @@ paths:
             example: guild_123
             type: string
       responses:
-        "200":
+        '200':
           description: Guild event settings
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EventSettingsResponseDto"
+                $ref: '#/components/schemas/EventSettingsResponseDto'
       security:
         - bearer: []
       summary: Get guild event settings
@@ -4071,14 +4071,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateEventSettingsDto"
+              $ref: '#/components/schemas/UpdateEventSettingsDto'
       responses:
-        "200":
+        '200':
           description: Updated guild event settings
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EventSettingsResponseDto"
+                $ref: '#/components/schemas/EventSettingsResponseDto'
       security:
         - bearer: []
       summary: Update guild event settings
@@ -4090,7 +4090,7 @@ paths:
       operationId: MapsController_getMaps
       parameters: []
       responses:
-        "200":
+        '200':
           description: List of maps
       summary: Get all game maps
       tags:
@@ -4106,7 +4106,7 @@ paths:
           description: Guild ID
           schema: {}
       responses:
-        "200":
+        '200':
           description: List of map templates
       security:
         - bearer: []
@@ -4127,9 +4127,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateMapTemplateDto"
+              $ref: '#/components/schemas/CreateMapTemplateDto'
       responses:
-        "201":
+        '201':
           description: Template created successfully
       security:
         - bearer: []
@@ -4153,7 +4153,7 @@ paths:
           description: Guild ID
           schema: {}
       responses:
-        "200":
+        '200':
           description: Template deleted successfully
       security:
         - bearer: []
@@ -4172,15 +4172,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateKillDto"
+              $ref: '#/components/schemas/CreateKillDto'
       responses:
-        "201":
+        '201':
           description: Kill recorded successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CreateKillResponseDto_Output"
-        "400":
+                $ref: '#/components/schemas/CreateKillResponseDto_Output'
+        '400':
           description: Validation error
       security:
         - bearer: []
@@ -4237,13 +4237,13 @@ paths:
           schema:
             example: guild_123
       responses:
-        "200":
+        '200':
           description: Guild kill statistics
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GuildKillStatsResponseDto_Output"
-        "403":
+                $ref: '#/components/schemas/GuildKillStatsResponseDto_Output'
+        '403':
           description: Forbidden - insufficient permissions
       security:
         - bearer: []
@@ -4302,12 +4302,12 @@ paths:
             maximum: 9007199254740991
             type: integer
       responses:
-        "200":
+        '200':
           description: User kill statistics
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserKillStatsResponseDto_Output"
+                $ref: '#/components/schemas/UserKillStatsResponseDto_Output'
       security:
         - bearer: []
       summary: Get personal kill statistics
@@ -4392,12 +4392,12 @@ paths:
             maximum: 500
             type: integer
       responses:
-        "200":
+        '200':
           description: Paginated list of killed NPCs
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserNpcKillsResponseDto_Output"
+                $ref: '#/components/schemas/UserNpcKillsResponseDto_Output'
       security:
         - bearer: []
       summary: Get paginated list of killed NPCs
@@ -4418,7 +4418,7 @@ paths:
           in: query
           description: NPC type filter
           schema:
-            $ref: "#/components/schemas/NpcType"
+            $ref: '#/components/schemas/NpcType'
         - name: world
           required: true
           in: query
@@ -4446,13 +4446,13 @@ paths:
           schema:
             example: guild_123
       responses:
-        "200":
+        '200':
           description: Top killed NPCs
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GuildTopNpcsResponseDto_Output"
-        "403":
+                $ref: '#/components/schemas/GuildTopNpcsResponseDto_Output'
+        '403':
           description: Forbidden - insufficient permissions
       security:
         - bearer: []
@@ -4478,13 +4478,13 @@ paths:
           schema:
             example: guild_123
       responses:
-        "200":
+        '200':
           description: Top killers by NPC type
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GuildTopKillersByTypeResponseDto_Output"
-        "403":
+                $ref: '#/components/schemas/GuildTopKillersByTypeResponseDto_Output'
+        '403':
           description: Forbidden - insufficient permissions
       security:
         - bearer: []
@@ -4503,7 +4503,7 @@ paths:
           in: path
           description: NPC ID
           schema:
-            example: "999"
+            example: '999'
             type: string
         - name: limit
           required: false
@@ -4524,15 +4524,15 @@ paths:
           schema:
             example: guild_123
       responses:
-        "200":
+        '200':
           description: NPC killers ranking
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NpcKillersResponseDto_Output"
-        "403":
+                $ref: '#/components/schemas/NpcKillersResponseDto_Output'
+        '403':
           description: Forbidden - insufficient permissions
-        "404":
+        '404':
           description: NPC not found in guild kill stats
       security:
         - bearer: []
@@ -4551,7 +4551,7 @@ paths:
           in: path
           description: Member ID
           schema:
-            example: "123"
+            example: '123'
             type: string
         - name: minLvl
           required: true
@@ -4615,15 +4615,15 @@ paths:
           schema:
             example: guild_123
       responses:
-        "200":
+        '200':
           description: Member kill statistics
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MemberKillsResponseDto_Output"
-        "403":
+                $ref: '#/components/schemas/MemberKillsResponseDto_Output'
+        '403':
           description: Forbidden - insufficient permissions
-        "404":
+        '404':
           description: Member not found in guild
       security:
         - bearer: []
@@ -4633,7 +4633,7 @@ paths:
 info:
   title: Lootlog API
   description: The Lootlog API documentation
-  version: "1.0"
+  version: '1.0'
   contact: {}
 tags: []
 servers: []
@@ -5037,12 +5037,12 @@ components:
         - type: boolean
         - type: array
           items:
-            $ref: "#/components/schemas/TimerResponseDto__schema0"
+            $ref: '#/components/schemas/TimerResponseDto__schema0'
         - type: object
           propertyNames:
             type: string
           additionalProperties:
-            $ref: "#/components/schemas/TimerResponseDto__schema0"
+            $ref: '#/components/schemas/TimerResponseDto__schema0'
       nullable: true
     TimerResponseDto:
       type: object
@@ -5066,7 +5066,7 @@ components:
           pattern: >-
             ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         npc:
-          $ref: "#/components/schemas/TimerResponseDto__schema0"
+          $ref: '#/components/schemas/TimerResponseDto__schema0'
         wasReset:
           type: boolean
         member:
@@ -5338,7 +5338,7 @@ components:
               type: number
             x:
               type: number
-            "y":
+            'y':
               type: number
           required:
             - id
@@ -5702,12 +5702,12 @@ components:
         - type: boolean
         - type: array
           items:
-            $ref: "#/components/schemas/TimerSettingsResponseDto__schema0"
+            $ref: '#/components/schemas/TimerSettingsResponseDto__schema0'
         - type: object
           propertyNames:
             type: string
           additionalProperties:
-            $ref: "#/components/schemas/TimerSettingsResponseDto__schema0"
+            $ref: '#/components/schemas/TimerSettingsResponseDto__schema0'
       nullable: true
     TimerSettingsResponseDto:
       type: object
@@ -5715,17 +5715,17 @@ components:
         userId:
           type: string
         generalConfig:
-          $ref: "#/components/schemas/TimerSettingsResponseDto__schema0"
+          $ref: '#/components/schemas/TimerSettingsResponseDto__schema0'
         displayConfig:
-          $ref: "#/components/schemas/TimerSettingsResponseDto__schema0"
+          $ref: '#/components/schemas/TimerSettingsResponseDto__schema0'
         customColors:
-          $ref: "#/components/schemas/TimerSettingsResponseDto__schema0"
+          $ref: '#/components/schemas/TimerSettingsResponseDto__schema0'
         timersColors:
-          $ref: "#/components/schemas/TimerSettingsResponseDto__schema0"
+          $ref: '#/components/schemas/TimerSettingsResponseDto__schema0'
         defaultColorNames:
-          $ref: "#/components/schemas/TimerSettingsResponseDto__schema0"
+          $ref: '#/components/schemas/TimerSettingsResponseDto__schema0'
         overriddenDefaultColors:
-          $ref: "#/components/schemas/TimerSettingsResponseDto__schema0"
+          $ref: '#/components/schemas/TimerSettingsResponseDto__schema0'
         hiddenDefaultColors:
           type: array
           items:
@@ -5933,12 +5933,12 @@ components:
         - type: boolean
         - type: array
           items:
-            $ref: "#/components/schemas/LootResponseDto__schema0"
+            $ref: '#/components/schemas/LootResponseDto__schema0'
         - type: object
           propertyNames:
             type: string
           additionalProperties:
-            $ref: "#/components/schemas/LootResponseDto__schema0"
+            $ref: '#/components/schemas/LootResponseDto__schema0'
       nullable: true
     LootResponseDto:
       type: object
@@ -5998,7 +5998,7 @@ components:
             additionalProperties: {}
         lootShare:
           allOf:
-            - $ref: "#/components/schemas/LootResponseDto__schema0"
+            - $ref: '#/components/schemas/LootResponseDto__schema0'
           nullable: true
         createdAt:
           type: string
@@ -6205,12 +6205,12 @@ components:
         - type: boolean
         - type: array
           items:
-            $ref: "#/components/schemas/NullableLootResponseDto__schema0"
+            $ref: '#/components/schemas/NullableLootResponseDto__schema0'
         - type: object
           propertyNames:
             type: string
           additionalProperties:
-            $ref: "#/components/schemas/NullableLootResponseDto__schema0"
+            $ref: '#/components/schemas/NullableLootResponseDto__schema0'
       nullable: true
     NullableLootResponseDto:
       type: object
@@ -6270,7 +6270,7 @@ components:
             additionalProperties: {}
         lootShare:
           allOf:
-            - $ref: "#/components/schemas/NullableLootResponseDto__schema0"
+            - $ref: '#/components/schemas/NullableLootResponseDto__schema0'
           nullable: true
         createdAt:
           type: string
@@ -6360,7 +6360,7 @@ components:
                 type: number
               x:
                 type: number
-              "y":
+              'y':
                 type: number
             required:
               - id
@@ -6651,7 +6651,7 @@ components:
               type: number
             x:
               type: number
-            "y":
+            'y':
               type: number
           required:
             - id
@@ -7194,12 +7194,12 @@ components:
         - type: boolean
         - type: array
           items:
-            $ref: "#/components/schemas/SoundSettingsResponseDto__schema0"
+            $ref: '#/components/schemas/SoundSettingsResponseDto__schema0'
         - type: object
           propertyNames:
             type: string
           additionalProperties:
-            $ref: "#/components/schemas/SoundSettingsResponseDto__schema0"
+            $ref: '#/components/schemas/SoundSettingsResponseDto__schema0'
       nullable: true
     SoundSettingsResponseDto:
       type: object
@@ -7215,11 +7215,11 @@ components:
         timersVolume:
           type: number
         notificationsConfig:
-          $ref: "#/components/schemas/SoundSettingsResponseDto__schema0"
+          $ref: '#/components/schemas/SoundSettingsResponseDto__schema0'
         detectorConfig:
-          $ref: "#/components/schemas/SoundSettingsResponseDto__schema0"
+          $ref: '#/components/schemas/SoundSettingsResponseDto__schema0'
         timersConfig:
-          $ref: "#/components/schemas/SoundSettingsResponseDto__schema0"
+          $ref: '#/components/schemas/SoundSettingsResponseDto__schema0'
         createdAt:
           type: string
           format: date-time
@@ -7273,7 +7273,7 @@ components:
                 soundUrl:
                   anyOf:
                     - type: string
-                      const: ""
+                      const: ''
                     - type: string
                       format: uri
             HERO:
@@ -7286,7 +7286,7 @@ components:
                 soundUrl:
                   anyOf:
                     - type: string
-                      const: ""
+                      const: ''
                     - type: string
                       format: uri
             TITAN:
@@ -7299,7 +7299,7 @@ components:
                 soundUrl:
                   anyOf:
                     - type: string
-                      const: ""
+                      const: ''
                     - type: string
                       format: uri
             COLOSSUS:
@@ -7312,7 +7312,7 @@ components:
                 soundUrl:
                   anyOf:
                     - type: string
-                      const: ""
+                      const: ''
                     - type: string
                       format: uri
             message:
@@ -7325,7 +7325,7 @@ components:
                 soundUrl:
                   anyOf:
                     - type: string
-                      const: ""
+                      const: ''
                     - type: string
                       format: uri
         detectorConfig:
@@ -7341,7 +7341,7 @@ components:
                 soundUrl:
                   anyOf:
                     - type: string
-                      const: ""
+                      const: ''
                     - type: string
                       format: uri
             HERO:
@@ -7354,7 +7354,7 @@ components:
                 soundUrl:
                   anyOf:
                     - type: string
-                      const: ""
+                      const: ''
                     - type: string
                       format: uri
             TITAN:
@@ -7367,7 +7367,7 @@ components:
                 soundUrl:
                   anyOf:
                     - type: string
-                      const: ""
+                      const: ''
                     - type: string
                       format: uri
             COLOSSUS:
@@ -7380,7 +7380,7 @@ components:
                 soundUrl:
                   anyOf:
                     - type: string
-                      const: ""
+                      const: ''
                     - type: string
                       format: uri
             message:
@@ -7393,7 +7393,7 @@ components:
                 soundUrl:
                   anyOf:
                     - type: string
-                      const: ""
+                      const: ''
                     - type: string
                       format: uri
         timersConfig:
@@ -7409,7 +7409,7 @@ components:
                 soundUrl:
                   anyOf:
                     - type: string
-                      const: ""
+                      const: ''
                     - type: string
                       format: uri
             HERO:
@@ -7422,7 +7422,7 @@ components:
                 soundUrl:
                   anyOf:
                     - type: string
-                      const: ""
+                      const: ''
                     - type: string
                       format: uri
             TITAN:
@@ -7435,7 +7435,7 @@ components:
                 soundUrl:
                   anyOf:
                     - type: string
-                      const: ""
+                      const: ''
                     - type: string
                       format: uri
             COLOSSUS:
@@ -7448,7 +7448,7 @@ components:
                 soundUrl:
                   anyOf:
                     - type: string
-                      const: ""
+                      const: ''
                     - type: string
                       format: uri
             message:
@@ -7461,7 +7461,7 @@ components:
                 soundUrl:
                   anyOf:
                     - type: string
-                      const: ""
+                      const: ''
                     - type: string
                       format: uri
     CreateEventDto:
@@ -7551,12 +7551,12 @@ components:
                             operator:
                               type: string
                               enum:
-                                - ">"
-                                - ">="
+                                - '>'
+                                - '>='
                                 - <
                                 - <=
-                                - "=="
-                                - "!="
+                                - '=='
+                                - '!='
                             value:
                               type: number
                           required:
@@ -7616,12 +7616,12 @@ components:
                             operator:
                               type: string
                               enum:
-                                - ">"
-                                - ">="
+                                - '>'
+                                - '>='
                                 - <
                                 - <=
-                                - "=="
-                                - "!="
+                                - '=='
+                                - '!='
                             value:
                               type: number
                           required:
@@ -7697,12 +7697,12 @@ components:
         - type: boolean
         - type: array
           items:
-            $ref: "#/components/schemas/EventMutationResponseDto__schema0"
+            $ref: '#/components/schemas/EventMutationResponseDto__schema0'
         - type: object
           propertyNames:
             type: string
           additionalProperties:
-            $ref: "#/components/schemas/EventMutationResponseDto__schema0"
+            $ref: '#/components/schemas/EventMutationResponseDto__schema0'
       nullable: true
     EventMutationResponseDto:
       type: object
@@ -7761,7 +7761,7 @@ components:
             - ADVANCED
         scoringRules:
           allOf:
-            - $ref: "#/components/schemas/EventMutationResponseDto__schema0"
+            - $ref: '#/components/schemas/EventMutationResponseDto__schema0'
           nullable: true
         heroNpcs:
           type: array
@@ -7931,12 +7931,12 @@ components:
         - type: boolean
         - type: array
           items:
-            $ref: "#/components/schemas/EventOverviewResponseDto__schema0"
+            $ref: '#/components/schemas/EventOverviewResponseDto__schema0'
         - type: object
           propertyNames:
             type: string
           additionalProperties:
-            $ref: "#/components/schemas/EventOverviewResponseDto__schema0"
+            $ref: '#/components/schemas/EventOverviewResponseDto__schema0'
       nullable: true
     EventOverviewResponseDto:
       type: object
@@ -7995,7 +7995,7 @@ components:
             - ADVANCED
         scoringRules:
           allOf:
-            - $ref: "#/components/schemas/EventOverviewResponseDto__schema0"
+            - $ref: '#/components/schemas/EventOverviewResponseDto__schema0'
           nullable: true
         heroNpcs:
           type: array
@@ -8768,12 +8768,12 @@ components:
                             operator:
                               type: string
                               enum:
-                                - ">"
-                                - ">="
+                                - '>'
+                                - '>='
                                 - <
                                 - <=
-                                - "=="
-                                - "!="
+                                - '=='
+                                - '!='
                             value:
                               type: number
                           required:
@@ -8833,12 +8833,12 @@ components:
                             operator:
                               type: string
                               enum:
-                                - ">"
-                                - ">="
+                                - '>'
+                                - '>='
                                 - <
                                 - <=
-                                - "=="
-                                - "!="
+                                - '=='
+                                - '!='
                             value:
                               type: number
                           required:
@@ -9291,12 +9291,12 @@ components:
         - type: boolean
         - type: array
           items:
-            $ref: "#/components/schemas/EventKillHistoryResponseDto__schema0"
+            $ref: '#/components/schemas/EventKillHistoryResponseDto__schema0'
         - type: object
           propertyNames:
             type: string
           additionalProperties:
-            $ref: "#/components/schemas/EventKillHistoryResponseDto__schema0"
+            $ref: '#/components/schemas/EventKillHistoryResponseDto__schema0'
       nullable: true
     EventKillHistoryResponseDto:
       type: object
@@ -9466,12 +9466,12 @@ components:
         - type: boolean
         - type: array
           items:
-            $ref: "#/components/schemas/EventMemberKillHistoryResponseDto__schema0"
+            $ref: '#/components/schemas/EventMemberKillHistoryResponseDto__schema0'
         - type: object
           propertyNames:
             type: string
           additionalProperties:
-            $ref: "#/components/schemas/EventMemberKillHistoryResponseDto__schema0"
+            $ref: '#/components/schemas/EventMemberKillHistoryResponseDto__schema0'
       nullable: true
     EventMemberKillHistoryResponseDto:
       type: object
@@ -9658,12 +9658,12 @@ components:
         - type: boolean
         - type: array
           items:
-            $ref: "#/components/schemas/KillDetailResponseDto__schema0"
+            $ref: '#/components/schemas/KillDetailResponseDto__schema0'
         - type: object
           propertyNames:
             type: string
           additionalProperties:
-            $ref: "#/components/schemas/KillDetailResponseDto__schema0"
+            $ref: '#/components/schemas/KillDetailResponseDto__schema0'
       nullable: true
     KillDetailResponseDto:
       type: object
@@ -9788,7 +9788,7 @@ components:
                     type: boolean
                   bonusBreakdown:
                     allOf:
-                      - $ref: "#/components/schemas/KillDetailResponseDto__schema0"
+                      - $ref: '#/components/schemas/KillDetailResponseDto__schema0'
                     nullable: true
                   member:
                     type: object
@@ -9891,7 +9891,7 @@ components:
                 - ADVANCED
             scoringRules:
               allOf:
-                - $ref: "#/components/schemas/KillDetailResponseDto__schema0"
+                - $ref: '#/components/schemas/KillDetailResponseDto__schema0'
               nullable: true
           required:
             - scoringMode
