@@ -246,11 +246,6 @@ export const queryKeys = {
     current: (guildId: string | undefined) =>
       ["member", guildId, ME_SCOPE] as const,
     detailPrefix: (guildId: string | undefined) => ["member", guildId] as const,
-    kills: (
-      guildId: string,
-      memberId: string | number | undefined,
-      queryString: string,
-    ) => ["member-kills", guildId, memberId, queryString] as const,
     latestRefreshJob: (guildId: string | undefined) =>
       ["latest-refresh-job", guildId] as const,
     list: (guildId: string | undefined, includeInactive?: boolean) =>
@@ -269,35 +264,6 @@ export const queryKeys = {
       ["reservations-cards", guildId] as const,
   },
   stats: {
-    guildKillStats: (guildId: string | undefined, queryString: string) =>
-      ["guild-kill-stats", guildId, queryString] as const,
-    guildTopNpcs: (
-      guildId: string | undefined,
-      limit: number,
-      npcType: string,
-      world: string | undefined,
-      search: string,
-      minLvl: number | undefined,
-      maxLvl: number | undefined,
-    ) =>
-      [
-        "guild-top-npcs",
-        guildId,
-        limit,
-        npcType,
-        world,
-        search,
-        minLvl,
-        maxLvl,
-      ] as const,
-    lootStats: (guildId: string | undefined, queryString: string) =>
-      ["loot-stats", guildId, queryString] as const,
-    npcKillers: (
-      guildId: string | undefined,
-      npcId: string | number | undefined,
-      limit: number,
-      world: string | undefined,
-    ) => ["npc-killers", guildId, npcId, limit, world] as const,
     npcKills: (queryString: string) => ["npc-kills", queryString] as const,
     playerKillStats: (queryString: string) =>
       ["player-kill-stats", queryString] as const,

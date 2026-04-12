@@ -39,16 +39,20 @@ import { NpcTile } from "@/components/tiles/npc-tile";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { cn } from "@lootlog/ui/lib/utils";
-import { useMemberKills } from "./hooks/use-member-kills";
+import { useKillsControllerGetMemberKills } from "@/lib/api/generated/main/kills/kills";
+import type { NpcType } from "@/lib/api/generated/main/model/npc-type";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { TRACKABLE_NPC_TYPES } from "./constants";
 import { LevelFilters } from "./components/level-filters";
 import { NpcStatsFiltersMobile } from "./components/npc-stats-filters-mobile";
-import type { NpcType } from "./hooks/use-guild-kill-stats";
+import {
+  buildMemberKillsParams,
+  DEFAULT_MEMBER_KILLS_LIMIT,
+} from "./utils/build-stats-query-params";
 
-const ITEMS_PER_PAGE = 40;
+const ITEMS_PER_PAGE = DEFAULT_MEMBER_KILLS_LIMIT;
 
 const NPC_TYPE_ORDER: NpcType[] = [
   "TITAN",
@@ -92,18 +96,24 @@ export const MemberStatsPage: React.FC = () => {
     setMaxLvl,
     setNpcType,
   } = useStatsSettings("member");
-  const { data, isLoading } = useMemberKills(Number.parseInt(memberId, 10), {
-    world: settings.world ?? undefined,
-    npcTypes:
-      settings.npcType && settings.npcType !== "ALL"
-        ? [settings.npcType]
-        : undefined,
-    search: debouncedSearch || undefined,
-    limit: ITEMS_PER_PAGE,
-    cursor,
-    minLvl: debouncedMinLvl,
-    maxLvl: debouncedMaxLvl,
-  });
+  const { data, isLoading } = useKillsControllerGetMemberKills(
+    {
+      guildId,
+      memberId,
+    },
+    buildMemberKillsParams({
+      world: settings.world ?? undefined,
+      npcTypes:
+        settings.npcType && settings.npcType !== "ALL"
+          ? [settings.npcType]
+          : undefined,
+      search: debouncedSearch || undefined,
+      limit: ITEMS_PER_PAGE,
+      cursor,
+      minLvl: debouncedMinLvl,
+      maxLvl: debouncedMaxLvl,
+    }),
+  );
   const { data: guildMembers } = useGuildMembers(true);
 
   const handleWorldChange = (value: string | null) => {
