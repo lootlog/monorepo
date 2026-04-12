@@ -1,12 +1,7 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { InjectQueue } from "@nestjs/bullmq";
 import type { Queue } from "bullmq";
-import type {
-  CoverageGapType,
-  Event,
-  EventHeroNpc,
-  Prisma,
-} from "src/generated/prisma/client";
+import type { Event, EventHeroNpc, Prisma } from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared";
 import { EventEmitterService } from "./event-emitter.service";
@@ -15,6 +10,7 @@ import { EventTrackingService } from "./event-tracking.service";
 import { EventSummaryService } from "./event-summary.service";
 import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant";
 import type { AutoCloseRespawnWindowJobData } from "../interfaces/auto-close-respawn-window-job-data";
+import type { GapTimelineEntry } from "../interfaces/gap-timeline-entry.interface";
 import type { KillTimerData } from "../interfaces/kill-timer-data.interface";
 import {
   buildEventHeroKillDedupKey,
@@ -40,15 +36,6 @@ import {
 
 const EVENT_KILL_LOCK_TTL_SECONDS = 30;
 const EVENT_KILL_DEDUP_TTL_SECONDS = 120;
-
-interface GapTimelineEntry {
-  mapId: string;
-  mapName: string;
-  gapType: CoverageGapType;
-  startedAt: Date;
-  endedAt: Date | null;
-  durationSeconds: number;
-}
 
 interface EventTimerNpc {
   name: string;
@@ -474,7 +461,7 @@ export class EventKillService {
           });
 
           const updateData = {
-            ...((eventHero.npcId === null || eventHero.npcId !== npcId) && {
+            ...(eventHero.npcId !== npcId && {
               npcId,
             }),
             ...(eventHero.npcIcon === null && { npcIcon }),

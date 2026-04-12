@@ -22,12 +22,12 @@ const migrationsSchema = "drizzle";
 const migrationsTable = "__drizzle_migrations";
 
 function formatToMillis(dateStr: string): number {
-  const year = parseInt(dateStr.slice(0, 4));
-  const month = parseInt(dateStr.slice(4, 6)) - 1;
-  const day = parseInt(dateStr.slice(6, 8));
-  const hours = parseInt(dateStr.slice(8, 10));
-  const minutes = parseInt(dateStr.slice(10, 12));
-  const seconds = parseInt(dateStr.slice(12, 14));
+  const year = parseInt(dateStr.slice(0, 4), 10);
+  const month = parseInt(dateStr.slice(4, 6), 10) - 1;
+  const day = parseInt(dateStr.slice(6, 8), 10);
+  const hours = parseInt(dateStr.slice(8, 10), 10);
+  const minutes = parseInt(dateStr.slice(10, 12), 10);
+  const seconds = parseInt(dateStr.slice(12, 14), 10);
   return new Date(year, month, day, hours, minutes, seconds).getTime();
 }
 

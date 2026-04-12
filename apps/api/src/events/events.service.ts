@@ -27,7 +27,6 @@ import type {
 import type {
   CloseRespawnWindowOptions,
   OpenRespawnWindowOptions,
-  MapStatus,
 } from "./interfaces/respawn-window.interface";
 import {
   EVENT_HERO_KILL_JOB_NAME,

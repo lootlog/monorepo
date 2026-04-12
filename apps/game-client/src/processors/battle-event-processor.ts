@@ -179,11 +179,7 @@ export class BattleEventProcessor {
       if (battlePanelStore.isBattleCollectionEnabled) {
         const battleTurns = useBattleStore
           .getState()
-          .events.reduce((acc: string[], curr) => {
-            if (!curr.f || !curr.f.m) return acc;
-
-            return [...acc, ...curr.f.m];
-          }, []);
+          .events.flatMap((curr) => curr.f?.m ?? []);
 
         const battleHash = await createSHA256Hash(JSON.stringify(battleTurns));
         const lastBattleHash = useBattleStore.getState().lastBattleHash;

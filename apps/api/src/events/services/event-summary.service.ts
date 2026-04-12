@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { CoverageGapType, type Prisma } from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
+import type { GapTimelineEntry } from "../interfaces/gap-timeline-entry.interface";
 import { clipToWindow } from "../utils/tracking-window.util";
 
 interface MemberStat {
@@ -18,15 +19,6 @@ interface MapStat {
   mapName: string;
   coverageSeconds: number;
   gapSeconds: number;
-}
-
-interface GapTimelineEntry {
-  mapId: string;
-  mapName: string;
-  gapType: CoverageGapType;
-  startedAt: Date;
-  endedAt: Date | null;
-  durationSeconds: number;
 }
 
 @Injectable()

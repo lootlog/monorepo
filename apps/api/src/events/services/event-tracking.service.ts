@@ -576,8 +576,6 @@ export class EventTrackingService implements OnModuleInit {
       },
     });
 
-    const now = referenceTime;
-
     const timerLookups = eventMaps.map((map) => ({
       guildId,
       world: map.heroNpc.event.world,
@@ -587,7 +585,7 @@ export class EventTrackingService implements OnModuleInit {
 
     const activeTimerSet = await this.timersService.getActiveTimerKeys(
       timerLookups,
-      now,
+      referenceTime,
     );
 
     const activeMaps = eventMaps.filter((map) => {
@@ -617,7 +615,7 @@ export class EventTrackingService implements OnModuleInit {
                 memberId: member.id,
                 endedAt: null,
               },
-              data: { endedAt: now },
+              data: { endedAt: referenceTime },
             });
 
             await this.prisma.eventPresenceLog.create({
@@ -647,7 +645,7 @@ export class EventTrackingService implements OnModuleInit {
                 memberId: member.id,
                 endedAt: null,
               },
-              data: { endedAt: now },
+              data: { endedAt: referenceTime },
             });
 
             if (result.count > 0) {

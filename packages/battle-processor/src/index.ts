@@ -335,12 +335,7 @@ export class BattleProcessor {
       : null;
 
     for (const { actionType, param } of move.actions) {
-      if (actionType === "winner") {
-        this.battleOutcome.winner = param;
-        continue;
-      }
-      if (actionType === "loser") {
-        this.battleOutcome.loser = param;
+      if (actionType === "winner" || actionType === "loser") {
         continue;
       }
       if (actionType === "+ph") {
@@ -874,25 +869,25 @@ export class BattleProcessor {
       if (winningTeam === null && losingTeam === null) {
         if (alive1 !== alive2) {
           winningTeam = alive1 > alive2 ? t1 : t2;
-          losingTeam = winningTeam === t1 ? t2 : t1;
+          losingTeam = inferTeam(winningTeam);
         } else if (hp1 !== hp2) {
           winningTeam = hp1 > hp2 ? t1 : t2;
-          losingTeam = winningTeam === t1 ? t2 : t1;
+          losingTeam = inferTeam(winningTeam);
         } else if (dealt1 !== dealt2) {
           winningTeam = dealt1 > dealt2 ? t1 : t2;
-          losingTeam = winningTeam === t1 ? t2 : t1;
+          losingTeam = inferTeam(winningTeam);
         } else if (taken1 !== taken2) {
           winningTeam = taken1 < taken2 ? t1 : t2;
-          losingTeam = winningTeam === t1 ? t2 : t1;
+          losingTeam = inferTeam(winningTeam);
         } else {
           // Deterministic default
           winningTeam = t1;
           losingTeam = t2;
         }
       } else if (winningTeam === null) {
-        winningTeam = losingTeam === t1 ? t2 : t1;
+        winningTeam = inferTeam(losingTeam);
       } else if (losingTeam === null) {
-        losingTeam = winningTeam === t1 ? t2 : t1;
+        losingTeam = inferTeam(winningTeam);
       }
     }
 

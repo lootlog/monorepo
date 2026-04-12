@@ -10,6 +10,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { DEFAULT_COLOR_NAMES } from "@/features/timers/constants/color-names";
 
 const NPC_TYPES_OPTIONS = [
   NpcType.ELITE2,
@@ -19,21 +20,6 @@ const NPC_TYPES_OPTIONS = [
 ];
 const MAX_LVL = 500;
 const MIN_LVL = 0;
-
-const DEFAULT_COLOR_NAMES: Record<string, string> = {
-  red: "Czerwony",
-  orange: "Pomarańczowy",
-  yellow: "Żółty",
-  lime: "Limonkowy",
-  green: "Zielony",
-  teal: "Turkusowy",
-  sky: "Niebieski",
-  blue: "Granatowy",
-  violet: "Fioletowy",
-  purple: "Purpurowy",
-  pink: "Różowy",
-  white: "Biały",
-};
 
 const clampValue = (value: number, min: number, max: number): number => {
   return Math.max(min, Math.min(max, value));

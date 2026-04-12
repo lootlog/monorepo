@@ -77,7 +77,6 @@ export const useBattleStatistics = (params?: UseBattleStatisticsParams) => {
         `/battles/@me/statistics?${searchParams}`,
       );
     },
-    select: (data) => data,
     staleTime: 1000 * 60 * 5,
   });
 

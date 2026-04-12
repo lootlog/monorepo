@@ -39,7 +39,6 @@ export const useSearchAll = ({
       client.get<SearchAllResponse>(
         `${SEARCH_API_URL}/all?${queryParams.toString()}`,
       ),
-    select: (data) => data,
     enabled: enabled && !!search && search.length >= 2,
   });
 };
