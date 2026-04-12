@@ -118,8 +118,9 @@ export class NotificationContentService {
     };
     scheduledFor: Date;
   }) {
-    const ruleName = params.notificationRule.name?.trim().length
-      ? params.notificationRule.name.trim()
+    const trimmedName = params.notificationRule.name?.trim();
+    const ruleName = trimmedName?.length
+      ? trimmedName
       : SCHEDULED_MESSAGE_DEFAULT_NAME;
     const message = scheduledMessageNotification(ruleName);
     const content = this.renderScheduledMessageContent({

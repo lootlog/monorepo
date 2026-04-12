@@ -58,10 +58,6 @@ export const BattlesListEntry: FC<BattlesListEntryProps> = ({
     (w) => w.originalId === battle.characterId,
   );
 
-  const warrior = battle.warriors.find(
-    (w) => w.originalId === battle.characterId,
-  );
-
   const leftTeam = userTeam?.team === 1 ? attackingTeam : defendingTeam;
   const rightTeam = userTeam?.team === 1 ? defendingTeam : attackingTeam;
 
@@ -178,7 +174,7 @@ export const BattlesListEntry: FC<BattlesListEntryProps> = ({
           >
             {capitalizeFirstLetter(battle.world)}
           </Badge>
-          {warrior?.ph !== 0 && warrior?.ph !== undefined && (
+          {userTeam?.ph !== 0 && userTeam?.ph !== undefined && (
             <Badge
               onClick={handlePhClick}
               variant="outline"

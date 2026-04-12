@@ -735,16 +735,18 @@ export class BattleAnalyticsService {
     const avgLossDuration =
       lossCount > 0 ? Math.round(totalLossDuration / lossCount) : 0;
 
-    const fastest = filteredBattles[0]
+    const firstBattle = filteredBattles[0];
+    const fastest = firstBattle
       ? {
-          duration: filteredBattles[0].duration,
-          battleId: filteredBattles[0].id,
+          duration: firstBattle.duration,
+          battleId: firstBattle.id,
         }
       : null;
-    const longest = filteredBattles[filteredBattles.length - 1]
+    const lastBattle = filteredBattles[filteredBattles.length - 1];
+    const longest = lastBattle
       ? {
-          duration: filteredBattles[filteredBattles.length - 1].duration,
-          battleId: filteredBattles[filteredBattles.length - 1].id,
+          duration: lastBattle.duration,
+          battleId: lastBattle.id,
         }
       : null;
 

@@ -9,6 +9,7 @@ export class PlayersService {
   constructor(private readonly amqpConnection: AmqpConnection) {}
 
   bulkIndexPlayers(players: CreatePlayerDto[]) {
+    if (players.length === 0) return;
     this.amqpConnection.publish(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.SEARCH_PLAYERS_INDEX,

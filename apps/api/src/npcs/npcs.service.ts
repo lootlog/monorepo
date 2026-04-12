@@ -9,6 +9,7 @@ export class NpcsService {
   constructor(private readonly amqpConnection: AmqpConnection) {}
 
   bulkIndexNpcs(npcs: CreateNpcDto[]) {
+    if (npcs.length === 0) return;
     this.amqpConnection.publish(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.SEARCH_NPCS_INDEX,

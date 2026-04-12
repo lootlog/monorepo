@@ -5,7 +5,9 @@ const PASSWORD_LENGTH = 32;
 const SECRET_KEY_LENGTH = 64;
 
 const generateRandomString = (length: number): string => {
-  return randomBytes(length).toString("hex").substring(0, length);
+  return randomBytes(Math.ceil(length / 2))
+    .toString("hex")
+    .substring(0, length);
 };
 
 const generatePassword = (): string => {
