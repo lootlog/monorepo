@@ -27,11 +27,19 @@ export const isRukiaTheme = (
   theme: ThemeId | ResolvedThemeId | null | undefined,
 ) => theme === "rukia";
 
+export const isRiasTheme = (
+  theme: ThemeId | ResolvedThemeId | null | undefined,
+) => theme === "rias";
+
 export const getThemeFamily = (
   theme: ThemeId | ResolvedThemeId | null | undefined,
 ): ThemeFamily => {
   if (isRukiaTheme(theme)) {
     return "rukia";
+  }
+
+  if (isRiasTheme(theme)) {
+    return "rias";
   }
 
   if (isCatTheme(theme)) {
@@ -94,5 +102,6 @@ export const getThemeGreetingSuffix = (
 ): string => {
   if (isCatTheme(theme)) return "🐱";
   if (isRukiaTheme(theme)) return "❄️";
+  if (isRiasTheme(theme)) return "♔";
   return "👋";
 };

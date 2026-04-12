@@ -3,6 +3,7 @@ import {
   getThemeFamily,
   getThemeGreetingSuffix,
   isCatTheme,
+  isRiasTheme,
   isRukiaTheme,
 } from "./resolver";
 
@@ -16,6 +17,7 @@ export const useThemeMeta = () => {
     resolvedFamily: getThemeFamily(resolvedTheme),
     isCatTheme: isCatTheme(theme),
     isRukiaTheme: isRukiaTheme(theme),
+    isRiasTheme: isRiasTheme(theme),
     greetingSuffix: getThemeGreetingSuffix(theme),
   };
 };

@@ -1,7 +1,7 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
 import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { useReducedMotion } from "framer-motion";
 import { GlobalContextProvider } from "@/contexts/global-context";
 import { ThemeProvider } from "@/contexts/theme-context";
@@ -11,6 +11,7 @@ import { RootRouteNotFound } from "@/components/router/root-route-not-found";
 import { ThemeRootEffects, ThemeSpinnerProvider } from "@/themes";
 
 import "@lootlog/ui/globals.css";
+import "../scrollbars.css";
 import "@/i18n/config";
 
 const ReactQueryDevtools = lazy(() =>
@@ -22,6 +23,10 @@ const ReactQueryDevtools = lazy(() =>
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const prefersReducedMotion = useReducedMotion();
+
+  useEffect(() => {
+    document.documentElement.classList.add("theme-ready");
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

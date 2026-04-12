@@ -23,7 +23,7 @@ export const GuildSidebarHeader = ({ guildId }: { guildId?: string }) => {
   const { data: guild } = useGuild({ retry: false });
   const { data: member } = useGuildMember();
   const { mutate: refreshMember } = useMemberRefresh();
-  const { isRukiaTheme } = useThemeMeta();
+  const { isRukiaTheme, isRiasTheme } = useThemeMeta();
   const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
 
   useEffect(() => {
@@ -79,7 +79,7 @@ export const GuildSidebarHeader = ({ guildId }: { guildId?: string }) => {
             transition={{ duration: 0.15, delay: 0.03 }}
             className={cn(
               "max-w-36 overflow-hidden text-ellipsis text-nowrap text-sm",
-              isRukiaTheme && "font-semibold",
+              (isRukiaTheme || isRiasTheme) && "font-semibold",
             )}
             style={
               isRukiaTheme
