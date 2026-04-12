@@ -54,11 +54,11 @@ type TimerUpdatedEvent = {
   } | null;
 };
 
-const FINAL_JOB_STATUSES = [
+const FINAL_JOB_STATUSES: DbNotificationJobStatus[] = [
   DbNotificationJobStatus.SENT,
   DbNotificationJobStatus.FAILED,
   DbNotificationJobStatus.CANCELED,
-] as const;
+];
 
 @Injectable()
 export class NotificationJobService {
@@ -416,11 +416,7 @@ export class NotificationJobService {
       return;
     }
 
-    if (
-      (FINAL_JOB_STATUSES as readonly DbNotificationJobStatus[]).includes(
-        notificationJob.status,
-      )
-    ) {
+    if (FINAL_JOB_STATUSES.includes(notificationJob.status)) {
       return;
     }
 
@@ -786,12 +782,7 @@ export class NotificationJobService {
     });
 
     if (
-      currentCycleJobs.some(
-        (job) =>
-          !(FINAL_JOB_STATUSES as readonly DbNotificationJobStatus[]).includes(
-            job.status,
-          ),
-      )
+      currentCycleJobs.some((job) => !FINAL_JOB_STATUSES.includes(job.status))
     ) {
       return;
     }
@@ -961,7 +952,7 @@ export class NotificationJobService {
           ownerType: owner.ownerType,
           ownerId: owner.ownerId,
           status: {
-            in: FINAL_JOB_STATUSES as unknown as DbNotificationJobStatus[],
+            in: FINAL_JOB_STATUSES,
           },
         },
         include: {
@@ -982,7 +973,7 @@ export class NotificationJobService {
         ownerType: owner.ownerType,
         ownerId: owner.ownerId,
         status: {
-          in: FINAL_JOB_STATUSES as unknown as DbNotificationJobStatus[],
+          in: FINAL_JOB_STATUSES,
         },
       },
       orderBy: [{ updatedAt: "desc" }],

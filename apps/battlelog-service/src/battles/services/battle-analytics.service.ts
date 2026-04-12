@@ -52,10 +52,10 @@ export class BattleAnalyticsService {
     winRatio: number;
     totalPH: number;
   }> {
-    const levelFilter = `${query.minLevel || "any"}-${query.maxLevel || "any"}`;
+    const levelFilter = `${query.minLevel ?? "any"}-${query.maxLevel ?? "any"}`;
     const phFilter = query.ph ? "ph" : "all";
     const matchmakingFilter = query.matchmaking ? "matchmaking" : "all";
-    const cacheKey = `${this.ANALYTICS_CACHE_PREFIX}:${userId}:${query.characterId || "all"}:${query.world || "all"}:${query.period || "all"}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
+    const cacheKey = `${this.ANALYTICS_CACHE_PREFIX}:${userId}:${query.characterId ?? "all"}:${query.world ?? "all"}:${query.period ?? "all"}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -180,10 +180,10 @@ export class BattleAnalyticsService {
     query: QueryBattleStatisticsDto,
     userId: string,
   ): Promise<ProfessionWinRateDto[]> {
-    const levelFilter = `${query.minLevel || "any"}-${query.maxLevel || "any"}`;
+    const levelFilter = `${query.minLevel ?? "any"}-${query.maxLevel ?? "any"}`;
     const phFilter = query.ph ? "ph" : "all";
     const matchmakingFilter = query.matchmaking ? "matchmaking" : "all";
-    const cacheKey = `statistics:profession-win-rate:${userId}:${query.characterId || "all"}:${query.world || "all"}:${query.period || "all"}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
+    const cacheKey = `statistics:profession-win-rate:${userId}:${query.characterId ?? "all"}:${query.world ?? "all"}:${query.period ?? "all"}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -238,7 +238,7 @@ export class BattleAnalyticsService {
 
       if (userWarrior && opponentWarrior) {
         const prof = opponentWarrior.prof;
-        const stats = professionStats.get(prof) || { wins: 0, losses: 0 };
+        const stats = professionStats.get(prof) ?? { wins: 0, losses: 0 };
 
         if (userWarrior.team === battle.winningTeam) {
           stats.wins++;
@@ -290,7 +290,7 @@ export class BattleAnalyticsService {
       return {
         records: [],
         pagination: {
-          size: query.size || 20,
+          size: query.size ?? 20,
           hasNext: false,
           hasPrev: false,
         },
@@ -358,7 +358,7 @@ export class BattleAnalyticsService {
 
       if (userWarrior && opponentWarrior) {
         const opponentId = opponentWarrior.originalId;
-        const stats = opponentStats.get(opponentId) || {
+        const stats = opponentStats.get(opponentId) ?? {
           name: opponentWarrior.name,
           icon: opponentWarrior.icon,
           prof: opponentWarrior.prof,
@@ -436,8 +436,8 @@ export class BattleAnalyticsService {
       );
     }
 
-    const sortBy = query.sortBy || "totalBattles";
-    const sortOrder = query.sortOrder || "desc";
+    const sortBy = query.sortBy ?? "totalBattles";
+    const sortOrder = query.sortOrder ?? "desc";
     filteredRecords.sort((a, b) => {
       let compareResult = 0;
 
@@ -487,7 +487,7 @@ export class BattleAnalyticsService {
       }
     }
 
-    const size = query.size || 20;
+    const size = query.size ?? 20;
     const endIndex = startIndex + size;
     const paginatedRecords = filteredRecords.slice(startIndex, endIndex);
 
@@ -527,10 +527,10 @@ export class BattleAnalyticsService {
     query: QueryBattleStatisticsDto,
     userId: string,
   ): Promise<StreakDto> {
-    const levelFilter = `${query.minLevel || "any"}-${query.maxLevel || "any"}`;
+    const levelFilter = `${query.minLevel ?? "any"}-${query.maxLevel ?? "any"}`;
     const phFilter = query.ph ? "ph" : "all";
     const matchmakingFilter = query.matchmaking ? "matchmaking" : "all";
-    const cacheKey = `statistics:streak:${userId}:${query.characterId || "all"}:${query.world || "all"}:${query.period || "all"}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
+    const cacheKey = `statistics:streak:${userId}:${query.characterId ?? "all"}:${query.world ?? "all"}:${query.period ?? "all"}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -647,10 +647,10 @@ export class BattleAnalyticsService {
     query: QueryBattleStatisticsDto,
     userId: string,
   ): Promise<BattleDurationStatsDto> {
-    const levelFilter = `${query.minLevel || "any"}-${query.maxLevel || "any"}`;
+    const levelFilter = `${query.minLevel ?? "any"}-${query.maxLevel ?? "any"}`;
     const phFilter = query.ph ? "ph" : "all";
     const matchmakingFilter = query.matchmaking ? "matchmaking" : "all";
-    const cacheKey = `statistics:duration:${userId}:${query.characterId || "all"}:${query.world || "all"}:${query.period || "all"}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
+    const cacheKey = `statistics:duration:${userId}:${query.characterId ?? "all"}:${query.world ?? "all"}:${query.period ?? "all"}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -768,10 +768,10 @@ export class BattleAnalyticsService {
     query: QueryBattleStatisticsDto,
     userId: string,
   ): Promise<PhGrowthDataPointDto[]> {
-    const levelFilter = `${query.minLevel || "any"}-${query.maxLevel || "any"}`;
+    const levelFilter = `${query.minLevel ?? "any"}-${query.maxLevel ?? "any"}`;
     const phFilter = query.ph ? "ph" : "all";
     const matchmakingFilter = query.matchmaking ? "matchmaking" : "all";
-    const cacheKey = `statistics:ph-growth:${userId}:${query.characterId || "all"}:${query.world || "all"}:${query.period || "all"}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
+    const cacheKey = `statistics:ph-growth:${userId}:${query.characterId ?? "all"}:${query.world ?? "all"}:${query.period ?? "all"}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -965,8 +965,8 @@ export class BattleAnalyticsService {
     query: QueryBattleStatisticsDto,
     userId: string,
   ): Promise<RatingGrowthDataPointDto[]> {
-    const levelFilter = `${query.minLevel || "any"}-${query.maxLevel || "any"}`;
-    const cacheKey = `statistics:rating-growth:${userId}:${query.characterId || "all"}:${query.world || "all"}:${query.period || "all"}:${levelFilter}`;
+    const levelFilter = `${query.minLevel ?? "any"}-${query.maxLevel ?? "any"}`;
+    const cacheKey = `statistics:rating-growth:${userId}:${query.characterId ?? "all"}:${query.world ?? "all"}:${query.period ?? "all"}:${levelFilter}`;
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -1032,8 +1032,8 @@ export class BattleAnalyticsService {
     query: QueryBattleStatisticsDto,
     userId: string,
   ): Promise<RatingDeltaByOpponentDto[]> {
-    const levelFilter = `${query.minLevel || "any"}-${query.maxLevel || "any"}`;
-    const cacheKey = `statistics:rating-delta-by-opponent:${userId}:${query.characterId || "all"}:${query.world || "all"}:${query.period || "all"}:${levelFilter}`;
+    const levelFilter = `${query.minLevel ?? "any"}-${query.maxLevel ?? "any"}`;
+    const cacheKey = `statistics:rating-delta-by-opponent:${userId}:${query.characterId ?? "all"}:${query.world ?? "all"}:${query.period ?? "all"}:${levelFilter}`;
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -1102,7 +1102,7 @@ export class BattleAnalyticsService {
 
       if (userWarrior && opponentWarrior && battle.ratingDelta !== null) {
         const opponentId = opponentWarrior.originalId;
-        const stats = opponentStats.get(opponentId) || {
+        const stats = opponentStats.get(opponentId) ?? {
           name: opponentWarrior.name,
           icon: opponentWarrior.icon,
           prof: opponentWarrior.prof,
@@ -1181,7 +1181,7 @@ export class BattleAnalyticsService {
       return {
         battles: [],
         pagination: {
-          size: query.size || 20,
+          size: query.size ?? 20,
           hasNext: false,
           hasPrev: false,
         },
@@ -1246,7 +1246,7 @@ export class BattleAnalyticsService {
       }
     }
 
-    const size = query.size || 20;
+    const size = query.size ?? 20;
     const endIndex = startIndex + size;
     const paginatedBattles = levelFilteredBattles.slice(startIndex, endIndex);
 

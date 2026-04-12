@@ -390,7 +390,7 @@ export class BattlesService implements IBattlesService {
     query: QueryBattlesDto,
     userId?: string,
   ): Promise<(battlesRef: typeof battles) => SQL | undefined> {
-    let characterIds = query.characterId || [];
+    let characterIds = query.characterId ?? [];
     if (query.result?.length && !characterIds.length && userId) {
       const userChars = await this.drizzle.db.query.userCharacters.findMany({
         where: { userId },
