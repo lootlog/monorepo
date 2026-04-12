@@ -7,7 +7,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { Tabs, TabsTrigger } from "@lootlog/ui/components/tabs";
 import { useRecentHeroKills } from "../../hooks/queries/use-recent-hero-kills";
 import { KillHistoryCard } from "./kill-history-card";
-import type { EventHeroNpc } from "../../hooks/queries/use-events";
+import type { EventHeroNpc } from "../../types/api";
 import { EventScrollableTabsList } from "../shared/event-scrollable-tabs-list";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 

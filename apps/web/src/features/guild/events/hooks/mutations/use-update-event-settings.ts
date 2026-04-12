@@ -4,11 +4,12 @@ import type {
   UserGuildEventSettings,
   UpdateGuildEventSettingsPayload,
 } from "@lootlog/types";
-import { eventSettingsQueryKey } from "../queries/use-event-settings";
+import { getEventsSettingsControllerGetSettingsQueryKey } from "@/lib/api/generated/main/event-settings/event-settings";
 
 export const useUpdateEventSettings = (guildId: string) => {
   const queryClient = useQueryClient();
   const { client } = useApiClient();
+  const queryKey = getEventsSettingsControllerGetSettingsQueryKey({ guildId });
 
   return useMutation<
     UserGuildEventSettings,
@@ -25,13 +26,12 @@ export const useUpdateEventSettings = (guildId: string) => {
     },
     onMutate: async (payload) => {
       await queryClient.cancelQueries({
-        queryKey: eventSettingsQueryKey(guildId),
+        queryKey,
       });
-      const previous = queryClient.getQueryData<UserGuildEventSettings>(
-        eventSettingsQueryKey(guildId),
-      );
+      const previous =
+        queryClient.getQueryData<UserGuildEventSettings>(queryKey);
       queryClient.setQueryData(
-        eventSettingsQueryKey(guildId),
+        queryKey,
         (old: UserGuildEventSettings | undefined) => ({
           ...old,
           pinnedEvents: payload.pinnedEvents,
@@ -41,15 +41,12 @@ export const useUpdateEventSettings = (guildId: string) => {
     },
     onError: (_error, _payload, context) => {
       if (context?.previous) {
-        queryClient.setQueryData(
-          eventSettingsQueryKey(guildId),
-          context.previous,
-        );
+        queryClient.setQueryData(queryKey, context.previous);
       }
     },
     onSettled: () => {
       queryClient.invalidateQueries({
-        queryKey: eventSettingsQueryKey(guildId),
+        queryKey,
       });
     },
   });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { findEventHeroTimer } from "./find-event-hero-timer";
-import type { EventTimer } from "../hooks/queries/use-event-hero-timers";
+import type { EventTimer } from "../types/api";
 
 const baseTimer: EventTimer = {
   npcId: 123,

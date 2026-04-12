@@ -4,14 +4,8 @@ export interface NormalizedBonusBreakdownItem {
   points: number;
 }
 
-interface BonusBreakdownLike {
-  ruleId?: string | null;
-  ruleName?: string | null;
-  points?: number | null;
-}
-
 export const normalizeBonusBreakdown = (
-  bonusBreakdown: BonusBreakdownLike[] | null | undefined,
+  bonusBreakdown: unknown,
 ): NormalizedBonusBreakdownItem[] => {
   if (!Array.isArray(bonusBreakdown)) {
     return [];

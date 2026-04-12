@@ -1776,14 +1776,14 @@ export class EventKillService {
           memberName: assignment.member.name,
           memberAvatar: assignment.member.avatar,
           memberUserId: assignment.member.userId,
-          assignedAt: assignment.assignedAt,
-          unassignedAt: assignment.unassignedAt,
+          assignedAt: assignment.assignedAt.toISOString(),
+          unassignedAt: assignment.unassignedAt?.toISOString() ?? null,
         })),
         gaps: gapsForMap.map((g) => ({
           id: `${g.mapId}-${new Date(g.startedAt).getTime()}`,
           gapType: g.gapType,
-          startedAt: g.startedAt,
-          endedAt: g.endedAt,
+          startedAt: new Date(g.startedAt).toISOString(),
+          endedAt: g.endedAt ? new Date(g.endedAt).toISOString() : null,
           durationSeconds: g.durationSeconds,
         })),
       };

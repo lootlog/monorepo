@@ -21,10 +21,6 @@ import { pl } from "date-fns/locale";
 import { toast } from "sonner";
 import { Permission } from "@lootlog/types";
 import { getApiErrorStatus } from "@/lib/api-client/api-client";
-import {
-  type Event,
-  useEvents,
-} from "@/features/guild/events/hooks/queries/use-events";
 import { useDeleteEvent } from "@/features/guild/events/hooks/mutations/use-delete-event";
 import { useToggleEventPin } from "@/features/guild/events/hooks/mutations/use-toggle-event-pin";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
@@ -32,6 +28,8 @@ import { EventCreateDialog } from "./components/dialogs/event-create-dialog";
 import { EventActionDialog } from "./components/dialogs/event-action-dialog";
 import { getEventStatusAtTimestamp } from "./utils";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { useListEvents } from "@/lib/api/generated/main/events/events";
+import type { Event } from "./types/api";
 
 export const Events = () => {
   const { t } = useTranslation();
@@ -55,10 +53,14 @@ export const Events = () => {
     data: events,
     isLoading,
     error,
-  } = useEvents({
-    guildId: guildId ?? "",
-    activeOnly: false,
-  });
+  } = useListEvents(
+    {
+      guildId: guildId ?? "",
+    },
+    {
+      activeOnly: "false",
+    },
+  );
 
   const canDeleteEvent =
     permissions?.includes(Permission.ADMIN) ||

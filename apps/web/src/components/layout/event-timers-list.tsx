@@ -9,7 +9,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { useEventHeroTimers, type Event } from "@/features/guild/events/hooks";
+import { useListEventHeroTimers } from "@/lib/api/generated/main/events/events";
+import type { Event } from "@/features/guild/events/types/api";
 import { parseMsToTime } from "@/utils/date/parse-ms-to-time";
 import { cn } from "@/utils/cn";
 
@@ -117,11 +118,15 @@ export const EventTimersList: FC<EventTimersListProps> = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
 
-  const { data: timers } = useEventHeroTimers({
-    guildId,
-    eventId: event.id,
-    world: event.world,
-  });
+  const { data: timers } = useListEventHeroTimers(
+    {
+      guildId,
+      eventId: event.id,
+    },
+    {
+      world: event.world,
+    },
+  );
 
   useEffect(() => {
     if (!timers || timers.length === 0) {

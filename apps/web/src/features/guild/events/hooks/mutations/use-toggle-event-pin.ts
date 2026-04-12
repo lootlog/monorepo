@@ -1,8 +1,10 @@
-import { useEventSettings } from "../queries/use-event-settings";
+import { useEventsSettingsControllerGetSettings } from "@/lib/api/generated/main/event-settings/event-settings";
 import { useUpdateEventSettings } from "./use-update-event-settings";
 
 export const useToggleEventPin = (guildId: string) => {
-  const { data: settings } = useEventSettings(guildId);
+  const { data: settings } = useEventsSettingsControllerGetSettings({
+    guildId,
+  });
   const updateSettings = useUpdateEventSettings(guildId);
 
   const togglePin = (eventId: string) => {

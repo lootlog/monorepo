@@ -14,11 +14,8 @@ import { MapCoverageTimeline } from "../maps/map-coverage-timeline";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { cn } from "@/utils/cn";
 import { formatDurationPadded, formatTime, formatTimeShort } from "../../utils";
-import type {
-  MapTimelineData,
-  MapGap,
-} from "../../hooks/queries/use-kill-timeline";
 import type { TFunction } from "i18next";
+import type { MapGap, MapTimelineData } from "../../types/api";
 
 function clipGapToRange(
   gap: MapGap,

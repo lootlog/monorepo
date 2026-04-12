@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { stringify } from "qs";
-import { useApiClient } from "@/hooks/api/use-api-client";
+import { lootsControllerFetchLootsByGuildId } from "@/lib/api/generated/main/loots/loots";
+import type { LootsControllerFetchLootsByGuildIdParams } from "@/lib/api/generated/main/model";
 import type { Loot } from "@/hooks/api/loots/use-loots";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -21,13 +21,11 @@ export const useMatchingLoots = ({
   npcName,
   enabled = true,
 }: UseMatchingLootsParams) => {
-  const { client } = useApiClient();
-
   const isValidParams = !!guildId && !!world && !!killedAt && !!npcName;
 
-  const { createdAtMin, createdAtMax, queryString } = (() => {
+  const { createdAtMin, createdAtMax } = (() => {
     if (!isValidParams) {
-      return { createdAtMin: "", createdAtMax: "", queryString: "" };
+      return { createdAtMin: "", createdAtMax: "" };
     }
 
     const killDate = new Date(killedAt);
@@ -38,27 +36,29 @@ export const useMatchingLoots = ({
       killDate.getTime() + MATCHING_LOOTS_TIME_WINDOW_MS,
     ).toISOString();
 
-    const queryParams = {
-      world,
-      npcs: [npcName],
-      createdAtMin: min,
-      createdAtMax: max,
-      limit: 50,
-    };
-
-    const qs = stringify(queryParams, {
-      arrayFormat: "comma",
-      allowEmptyArrays: false,
-      filter: (_, value) => {
-        if (value === "" || value === undefined || value === null) {
-          return;
-        }
-        return value;
-      },
-    });
-
-    return { createdAtMin: min, createdAtMax: max, queryString: qs };
+    return { createdAtMin: min, createdAtMax: max };
   })();
+
+  const params = {
+    limit: 50,
+    cursor: undefined,
+    npcs: [npcName],
+    players: undefined,
+    rarities: undefined,
+    npcTypes: undefined,
+    world,
+    npcLevelMin: undefined,
+    npcLevelMax: undefined,
+    itemLevelMin: undefined,
+    itemLevelMax: undefined,
+    playerLevelMin: undefined,
+    playerLevelMax: undefined,
+    search: undefined,
+    hid: undefined,
+    itemNames: undefined,
+    createdAtMin,
+    createdAtMax,
+  } as unknown as LootsControllerFetchLootsByGuildIdParams;
 
   return useQuery({
     queryKey: queryKeys.events.matchingLoots(
@@ -67,12 +67,10 @@ export const useMatchingLoots = ({
       createdAtMax,
       npcName,
     ),
-    queryFn: async () => {
-      const response = await client.get<Loot[]>(
-        `/guilds/${guildId}/loots?${queryString}`,
-      );
-      return response;
-    },
+    queryFn: () =>
+      lootsControllerFetchLootsByGuildId({ guildId }, params) as Promise<
+        Loot[]
+      >,
     enabled: enabled && isValidParams,
   });
 };

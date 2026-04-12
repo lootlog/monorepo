@@ -15,9 +15,9 @@ import {
 } from "@lootlog/ui/components/dialog";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { NpcTile } from "@/components/tiles";
+import { useListPendingParticipationConfirmations } from "@/lib/api/generated/main/events/events";
 import { formatDateTime } from "../../utils";
 import { useEventParticipationConfirmation } from "../../hooks/mutations/use-event-participation-confirmation";
-import { useEventParticipationConfirmations } from "../../hooks/queries/use-event-participation-confirmations";
 
 interface EventParticipationConfirmationDialogProps {
   guildId?: string;
@@ -49,10 +49,9 @@ const EventParticipationConfirmationDialogContent = ({
   const [dismissed, setDismissed] = useState(false);
   const [confirmingKillId, setConfirmingKillId] = useState<string | null>(null);
 
-  const { data, isLoading } = useEventParticipationConfirmations({
+  const { data, isLoading } = useListPendingParticipationConfirmations({
     guildId,
     eventId,
-    enabled: true,
   });
   const confirmParticipation = useEventParticipationConfirmation({
     guildId,
