@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { Trophy, Pencil, PenLine, History, ArrowRight } from "lucide-react";
@@ -19,8 +20,11 @@ import {
   PopoverTrigger,
 } from "@lootlog/ui/components/popover";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { useListRankingEditHistory } from "@/lib/api/generated/main/events/events";
-import { useUpdatePoints } from "../../hooks/mutations/use-update-points";
+import {
+  useListRankingEditHistory,
+  useUpdateRankingPoints,
+} from "@/lib/api/generated/main/events/events";
+import { invalidateRankingQueries } from "../../hooks/mutations/invalidate-ranking-queries";
 import { ManualPointsEditDialog } from "../dialogs/manual-points-edit-dialog";
 
 interface EventRankingTableProps {
@@ -280,8 +284,18 @@ export const EventRankingTable = ({
   canEdit = false,
 }: EventRankingTableProps) => {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const updateRankingPoints = useUpdateRankingPoints({
+    mutation: {
+      onSuccess: () => {
+        if (!guildId || !eventId) {
+          return;
+        }
 
-  const { updateRankingPoints } = useUpdatePoints(guildId ?? "", eventId ?? "");
+        invalidateRankingQueries(queryClient, guildId, eventId);
+      },
+    },
+  });
 
   const handleEditPoints = async (
     rankingId: string,
@@ -290,9 +304,15 @@ export const EventRankingTable = ({
   ) => {
     try {
       await updateRankingPoints.mutateAsync({
-        rankingId,
-        pointsDelta,
-        comment,
+        pathParams: {
+          guildId: guildId ?? "",
+          eventId: eventId ?? "",
+          rankingId,
+        },
+        data: {
+          pointsDelta,
+          ...(comment ? { comment } : {}),
+        },
       });
       toast.success(t("events.points.editSuccess"));
     } catch (error) {

@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Link, useParams } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -11,13 +12,16 @@ import { Card } from "@lootlog/ui/components/card";
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { useEventMutations } from "./hooks/mutations/use-event-mutations";
 import {
   fromDateTimeLocalValueToIso,
   toDateTimeLocalValue,
 } from "./utils/date-time-local";
 import type { EventOverviewResponseDto } from "@/lib/api/generated/main/model";
-import { useShowEventOverview } from "@/lib/api/generated/main/events/events";
+import {
+  useShowEventOverview,
+  useUpdateEvent,
+} from "@/lib/api/generated/main/events/events";
+import { invalidateEventDetailQueries } from "./hooks/mutations/invalidate-event-queries";
 
 interface EventSettingsFormData {
   name: string;
@@ -49,10 +53,18 @@ export const EventEditSettingsPage = () => {
   };
 
   const { data: event, isLoading, error } = useShowEventOverview(routeParams);
-  const { updateEvent } = useEventMutations(
-    routeParams.guildId,
-    routeParams.eventId,
-  );
+  const queryClient = useQueryClient();
+  const updateEvent = useUpdateEvent({
+    mutation: {
+      onSuccess: () => {
+        invalidateEventDetailQueries(
+          queryClient,
+          routeParams.guildId,
+          routeParams.eventId,
+        );
+      },
+    },
+  });
 
   const form = useForm<EventSettingsFormData>({
     defaultValues: {
@@ -84,6 +96,12 @@ export const EventEditSettingsPage = () => {
     try {
       const startsAt = fromDateTimeLocalValueToIso(data.startsAt);
       const endsAtIso = fromDateTimeLocalValueToIso(data.endsAt);
+      let normalizedEndsAt: string | undefined;
+      if (data.endsAt) {
+        normalizedEndsAt = endsAtIso;
+      } else if (event.endsAt) {
+        normalizedEndsAt = null as never;
+      }
       const normalizedAssignmentTimeoutMinutes = Number.isFinite(
         data.assignmentTimeoutMinutes,
       )
@@ -100,13 +118,16 @@ export const EventEditSettingsPage = () => {
       const normalizedName = data.name.trim();
 
       await updateEvent.mutateAsync({
-        name: normalizedName,
-        startsAt,
-        endsAt: data.endsAt ? endsAtIso : event.endsAt ? null : undefined,
-        assignmentTimeoutMinutes: normalizedAssignmentTimeoutMinutes,
-        participationConfirmationMinutes:
-          normalizedParticipationConfirmationMinutes,
-        mapAssignmentCap: normalizedMapAssignmentCap,
+        pathParams: routeParams,
+        data: {
+          name: normalizedName,
+          startsAt,
+          endsAt: normalizedEndsAt,
+          assignmentTimeoutMinutes: normalizedAssignmentTimeoutMinutes,
+          participationConfirmationMinutes:
+            normalizedParticipationConfirmationMinutes,
+          mapAssignmentCap: normalizedMapAssignmentCap,
+        },
       });
       form.reset({
         name: normalizedName,

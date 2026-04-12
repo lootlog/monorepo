@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Reorder } from "framer-motion";
@@ -26,8 +27,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@lootlog/ui/components/popover";
-import { useEventMutations } from "../../hooks/mutations/use-event-mutations";
-import { useLocationMutations } from "../../hooks/mutations/use-location-mutations";
 import { toast } from "sonner";
 import {
   MapPin,
@@ -44,7 +43,17 @@ import {
   type MapTemplate,
 } from "@/features/guild/settings/map-templates/hooks/use-map-templates";
 import { getApiErrorStatus } from "@/lib/api-client/api-client";
+import {
+  useEventsAssignmentControllerAddMap,
+  useEventsAssignmentControllerAssignMapToLocation,
+  useEventsAssignmentControllerCreateLocation,
+  useEventsAssignmentControllerDeleteLocation,
+  useEventsAssignmentControllerDeleteMap,
+  useEventsAssignmentControllerReorderLocations,
+  useEventsAssignmentControllerUpdateLocation,
+} from "@/lib/api/generated/main/events/events";
 import type { LocationData } from "./map-manage-dialog.types";
+import { invalidateEventMapStructureQueries } from "../../hooks/mutations/invalidate-event-queries";
 import { LocationItem } from "./location-item";
 import { MapChip } from "./map-chip";
 
@@ -76,14 +85,45 @@ export const MapManageDialog = ({
   hero,
 }: MapManageDialogProps) => {
   const { t } = useTranslation();
-  const { addMap, deleteMap } = useEventMutations(guildId, eventId);
-  const {
-    createLocation,
-    updateLocation,
-    deleteLocation,
-    reorderLocations,
-    assignMapToLocation,
-  } = useLocationMutations(guildId, eventId, hero.id);
+  const queryClient = useQueryClient();
+  const invalidateMapQueries = () => {
+    invalidateEventMapStructureQueries(queryClient, guildId, eventId);
+  };
+  const addMap = useEventsAssignmentControllerAddMap({
+    mutation: {
+      onSuccess: invalidateMapQueries,
+    },
+  });
+  const deleteMap = useEventsAssignmentControllerDeleteMap({
+    mutation: {
+      onSuccess: invalidateMapQueries,
+    },
+  });
+  const createLocation = useEventsAssignmentControllerCreateLocation({
+    mutation: {
+      onSuccess: invalidateMapQueries,
+    },
+  });
+  const updateLocation = useEventsAssignmentControllerUpdateLocation({
+    mutation: {
+      onSuccess: invalidateMapQueries,
+    },
+  });
+  const deleteLocation = useEventsAssignmentControllerDeleteLocation({
+    mutation: {
+      onSuccess: invalidateMapQueries,
+    },
+  });
+  const reorderLocations = useEventsAssignmentControllerReorderLocations({
+    mutation: {
+      onSuccess: invalidateMapQueries,
+    },
+  });
+  const assignMapToLocation = useEventsAssignmentControllerAssignMapToLocation({
+    mutation: {
+      onSuccess: invalidateMapQueries,
+    },
+  });
   const { data: gameMaps } = useGameMaps();
   const { data: templates } = useMapTemplates({ guildId });
   const [searchQuery, setSearchQuery] = useState("");
@@ -109,7 +149,14 @@ export const MapManageDialog = ({
     setIsDragging(false);
     const locationIds = localLocations.map((loc) => loc.id);
     reorderLocations.mutate(
-      { locationIds },
+      {
+        pathParams: {
+          guildId,
+          eventId,
+          heroId: hero.id,
+        },
+        data: { locationIds },
+      },
       {
         onError: () => {
           setLocalLocations(hero.locations ?? []);
@@ -159,13 +206,22 @@ export const MapManageDialog = ({
   const handleAddMapFromGame = async (gameMap: GameMap) => {
     try {
       const result = await addMap.mutateAsync({
-        heroId: hero.id,
+        pathParams: {
+          guildId,
+          eventId,
+          heroId: hero.id,
+        },
         data: { mapId: gameMap.id, mapName: gameMap.name },
       });
 
       if (selectedLocationId) {
         await assignMapToLocation.mutateAsync({
-          mapId: result.id,
+          pathParams: {
+            guildId,
+            eventId,
+            heroId: hero.id,
+            mapId: result.id,
+          },
           data: { locationId: selectedLocationId },
         });
       }
@@ -181,8 +237,12 @@ export const MapManageDialog = ({
   const handleDeleteMap = async (mapId: string) => {
     try {
       await deleteMap.mutateAsync({
-        heroId: hero.id,
-        mapId: mapId,
+        pathParams: {
+          guildId,
+          eventId,
+          heroId: hero.id,
+          mapId,
+        },
       });
     } catch {
       toast.error(t("events.maps.errors.deleteFailed"));
@@ -203,12 +263,21 @@ export const MapManageDialog = ({
     const results = await Promise.allSettled(
       mapsToAdd.map(async (mapItem) => {
         const result = await addMap.mutateAsync({
-          heroId: hero.id,
+          pathParams: {
+            guildId,
+            eventId,
+            heroId: hero.id,
+          },
           data: { mapId: mapItem.id, mapName: mapItem.name },
         });
         if (targetLocationId) {
           await assignMapToLocation.mutateAsync({
-            mapId: result.id,
+            pathParams: {
+              guildId,
+              eventId,
+              heroId: hero.id,
+              mapId: result.id,
+            },
             data: { locationId: targetLocationId },
           });
         }
@@ -230,7 +299,14 @@ export const MapManageDialog = ({
   const handleCreateLocation = async () => {
     if (!newLocationName.trim()) return;
     try {
-      await createLocation.mutateAsync({ name: newLocationName.trim() });
+      await createLocation.mutateAsync({
+        pathParams: {
+          guildId,
+          eventId,
+          heroId: hero.id,
+        },
+        data: { name: newLocationName.trim() },
+      });
       setNewLocationName("");
       toast.success(t("events.locations.createSuccess"));
     } catch (error) {
@@ -246,7 +322,12 @@ export const MapManageDialog = ({
     if (!editingLocation || !editingLocation.name.trim()) return;
     try {
       await updateLocation.mutateAsync({
-        locationId: editingLocation.id,
+        pathParams: {
+          guildId,
+          eventId,
+          heroId: hero.id,
+          locationId: editingLocation.id,
+        },
         data: { name: editingLocation.name.trim() },
       });
       setEditingLocation(null);
@@ -262,7 +343,14 @@ export const MapManageDialog = ({
 
   const handleDeleteLocation = async (locationId: string) => {
     try {
-      await deleteLocation.mutateAsync(locationId);
+      await deleteLocation.mutateAsync({
+        pathParams: {
+          guildId,
+          eventId,
+          heroId: hero.id,
+          locationId,
+        },
+      });
       toast.success(t("events.locations.deleteSuccess"));
     } catch {
       toast.error(t("events.locations.errors.deleteFailed"));
@@ -275,7 +363,12 @@ export const MapManageDialog = ({
   ) => {
     try {
       await assignMapToLocation.mutateAsync({
-        mapId,
+        pathParams: {
+          guildId,
+          eventId,
+          heroId: hero.id,
+          mapId,
+        },
         data: { locationId: newLocationId },
       });
     } catch {
