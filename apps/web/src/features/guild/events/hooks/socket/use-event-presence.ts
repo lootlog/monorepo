@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState } from "react";
+import { useEffect, useState } from "react";
 import { useGateway } from "@/hooks/utils/use-gateway";
 import { GatewayEvent } from "@/config/gateway";
 
@@ -39,57 +39,52 @@ export const useEventPresence = ({
     Map<string, PlayerPresence[]>
   >(new Map());
 
-  const handlePresenceUpdate = useCallback(
-    (payload: PresenceUpdatePayload) => {
-      if (payload.guildId !== guildId) return;
+  const handlePresenceUpdate = (payload: PresenceUpdatePayload) => {
+    if (payload.guildId !== guildId) return;
 
-      setPresenceData((prev) => {
-        const newMap = new Map(prev);
-        const { discordId, sessionId, player, disconnected } = payload;
+    setPresenceData((prev) => {
+      const newMap = new Map(prev);
+      const { discordId, sessionId, player, disconnected } = payload;
 
-        if (disconnected && sessionId) {
+      if (disconnected && sessionId) {
+        const existing = newMap.get(discordId) ?? [];
+        const filtered = existing.filter((p) => p.sessionId !== sessionId);
+        if (filtered.length === 0) {
+          newMap.delete(discordId);
+        } else {
+          newMap.set(discordId, filtered);
+        }
+      } else if (player) {
+        if (world && player.world !== world) {
           const existing = newMap.get(discordId) ?? [];
-          const filtered = existing.filter((p) => p.sessionId !== sessionId);
+          const filtered = existing.filter(
+            (p) => p.sessionId !== player.sessionId,
+          );
           if (filtered.length === 0) {
             newMap.delete(discordId);
           } else {
             newMap.set(discordId, filtered);
           }
-        } else if (player) {
-          if (world && player.world !== world) {
-            const existing = newMap.get(discordId) ?? [];
-            const filtered = existing.filter(
-              (p) => p.sessionId !== player.sessionId,
-            );
-            if (filtered.length === 0) {
-              newMap.delete(discordId);
-            } else {
-              newMap.set(discordId, filtered);
-            }
 
-            return newMap;
-          }
-
-          const existing = newMap.get(discordId) ?? [];
-          const idx = existing.findIndex(
-            (p) => p.sessionId === player.sessionId,
-          );
-          if (idx >= 0) {
-            const updated = [...existing];
-            updated[idx] = player;
-            newMap.set(discordId, updated);
-          } else {
-            newMap.set(discordId, [...existing, player]);
-          }
+          return newMap;
         }
 
-        return newMap;
-      });
-    },
-    [guildId, world],
-  );
+        const existing = newMap.get(discordId) ?? [];
+        const idx = existing.findIndex((p) => p.sessionId === player.sessionId);
+        if (idx >= 0) {
+          const updated = [...existing];
+          updated[idx] = player;
+          newMap.set(discordId, updated);
+        } else {
+          newMap.set(discordId, [...existing, player]);
+        }
+      }
 
-  const fetchInitialPresence = useCallback(() => {
+      return newMap;
+    });
+  };
+
+  const fetchInitialPresence = () => {
     if (!socket || !connected || !joined || !guildId || !world) return;
 
     socket.emit(
@@ -109,7 +104,7 @@ export const useEventPresence = ({
         setPresenceData(newMap);
       },
     );
-  }, [socket, connected, joined, guildId, world]);
+  };
 
   useEffect(() => {
     if (!guildId || !world) {
@@ -129,15 +124,8 @@ export const useEventPresence = ({
     return () => {
       socket.off(GatewayEvent.PRESENCE_UPDATE, handlePresenceUpdate);
     };
-  }, [
-    socket,
-    connected,
-    joined,
-    guildId,
-    world,
-    handlePresenceUpdate,
-    fetchInitialPresence,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- React Compiler auto-memoizes handlePresenceUpdate & fetchInitialPresence
+  }, [socket, connected, joined, guildId, world]);
 
   return { presenceData, refetch: fetchInitialPresence };
 };

@@ -41,7 +41,7 @@ export const BattlesListFilters = ({
   const { data: worlds = [] } = useUserWorlds();
 
   const handleCharacterChange = (value: string) => {
-    const currentCharacters = filters.characterId || [];
+    const currentCharacters = filters.characterId ?? [];
     const newCharacters = currentCharacters.includes(value)
       ? currentCharacters.filter((id) => id !== value)
       : [...currentCharacters, value];
@@ -53,7 +53,7 @@ export const BattlesListFilters = ({
   };
 
   const handleTypeChange = (value: "solo" | "group") => {
-    const currentTypes = filters.type || [];
+    const currentTypes = filters.type ?? [];
     const newTypes = currentTypes.includes(value)
       ? currentTypes.filter((t) => t !== value)
       : [...currentTypes, value];
@@ -65,7 +65,7 @@ export const BattlesListFilters = ({
   };
 
   const handleResultChange = (value: "won" | "lost" | "flee") => {
-    const currentResults = filters.result || [];
+    const currentResults = filters.result ?? [];
     const newResults = currentResults.includes(value)
       ? currentResults.filter((r) => r !== value)
       : [...currentResults, value];
@@ -134,9 +134,9 @@ export const BattlesListFilters = ({
   };
 
   const activeFiltersCount =
-    (filters.characterId?.length || 0) +
-    (filters.type?.length || 0) +
-    (filters.result?.length || 0) +
+    (filters.characterId?.length ?? 0) +
+    (filters.type?.length ?? 0) +
+    (filters.result?.length ?? 0) +
     (filters.world ? 1 : 0) +
     (filters.ph ? 1 : 0) +
     (filters.matchmaking ? 1 : 0) +
@@ -148,7 +148,7 @@ export const BattlesListFilters = ({
   ) => {
     return (open: boolean) => {
       const now = Date.now();
-      const lastChange = lastStateChangeRef.current[key] || 0;
+      const lastChange = lastStateChangeRef.current[key] ?? 0;
       const timeSinceLastChange = now - lastChange;
 
       if (timeSinceLastChange < 100) {

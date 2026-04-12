@@ -42,7 +42,7 @@ const buildLootData = (loot: Loot) => {
   );
 
   const itemOwnerMap: ItemOwnerMap = {};
-  Object.entries(loot.lootShare || {}).forEach(([playerId, itemIds]) => {
+  Object.entries(loot.lootShare ?? {}).forEach(([playerId, itemIds]) => {
     itemIds.forEach((itemId) => {
       itemOwnerMap[itemId] = playerId;
     });
@@ -73,8 +73,8 @@ const buildLootData = (loot: Loot) => {
   );
 
   const sortedPlayers = [...loot.players].sort((a, b) => {
-    const aItems = itemsByPlayer[a.id]?.length || 0;
-    const bItems = itemsByPlayer[b.id]?.length || 0;
+    const aItems = itemsByPlayer[a.id]?.length ?? 0;
+    const bItems = itemsByPlayer[b.id]?.length ?? 0;
     if (aItems > 0 && bItems === 0) return -1;
     if (aItems === 0 && bItems > 0) return 1;
     return 0;
@@ -211,7 +211,7 @@ const LootContent = ({
         <PlayerWithItems
           key={player.id}
           player={player}
-          items={itemsByPlayer[player.id] || []}
+          items={itemsByPlayer[player.id] ?? []}
           watchContext={watchContext}
         />
       ))}

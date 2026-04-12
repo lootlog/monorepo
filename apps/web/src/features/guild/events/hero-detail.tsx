@@ -688,7 +688,7 @@ export const HeroDetail = () => {
           open={assignmentOpen}
           onOpenChange={setAssignmentOpen}
           mapName={selectedMap.mapName}
-          assignedMembers={selectedMap.assignedMembers || []}
+          assignedMembers={selectedMap.assignedMembers ?? []}
           onAssign={handleAssignFromModal}
           onUnassign={handleUnassignFromModal}
           disabled={!assignmentAllowed}

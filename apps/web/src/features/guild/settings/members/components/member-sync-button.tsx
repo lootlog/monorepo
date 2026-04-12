@@ -5,7 +5,7 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { Button } from "@lootlog/ui/components/button";
 import { RefreshCcw } from "lucide-react";
-import { useCallback, type FC } from "react";
+import type { FC } from "react";
 import type { GuildMember } from "@/hooks/api/members/use-guild-member";
 import { useMemberRefresh } from "@/hooks/api/members/use-member-refresh";
 import { getPermissionRefreshInfo } from "@/utils/get-permission-refresh-info";
@@ -17,18 +17,15 @@ export type MemberSyncButtonProps = {
 export const MemberSyncButton: FC<MemberSyncButtonProps> = ({ member }) => {
   const { mutate: refreshMember, isPending } = useMemberRefresh();
 
-  const handleRefresh = useCallback(
-    (memberId: string) => {
-      refreshMember(
-        { memberId },
-        {
-          onSuccess: () => {},
-          onError: () => {},
-        },
-      );
-    },
-    [refreshMember],
-  );
+  const handleRefresh = (memberId: string) => {
+    refreshMember(
+      { memberId },
+      {
+        onSuccess: () => {},
+        onError: () => {},
+      },
+    );
+  };
 
   const canRefresh = Boolean(member.globalUserId);
   const { canTriggerRefresh, canTriggerRefreshText } = getPermissionRefreshInfo(

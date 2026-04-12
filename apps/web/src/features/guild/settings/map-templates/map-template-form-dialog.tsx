@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -97,7 +97,7 @@ export const MapTemplateFormDialog = ({
     }
   }, [open, template, form]);
 
-  const filteredGameMaps = useMemo(() => {
+  const filteredGameMaps = (() => {
     if (!gameMaps) return [];
     const addedMapIds = new Set(maps.map((m) => m.id));
     return gameMaps
@@ -108,7 +108,7 @@ export const MapTemplateFormDialog = ({
             map.id.toString().includes(searchQuery)),
       )
       .slice(0, 50);
-  }, [gameMaps, maps, searchQuery]);
+  })();
 
   const handleClose = (isOpen: boolean) => {
     if (!isOpen) {

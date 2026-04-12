@@ -32,7 +32,7 @@ export class NpcsDetectionProcessor {
     const npcs =
       event.npcs?.reduce<GameNpcWithLocation[]>((acc, npc) => {
         const tpl =
-          getNpcTplFromEvent(event, npc.tpl) || Game.getNpcTpl(npc.tpl);
+          getNpcTplFromEvent(event, npc.tpl) ?? Game.getNpcTpl(npc.tpl);
         if (!tpl) return acc;
 
         const npcType = getNpcTypeByWt(
@@ -114,10 +114,10 @@ export class NpcsDetectionProcessor {
     if (!settings?.detect) return null;
 
     const icon = event
-      ? getNpcIconFromEvent(event, npc.icon.id) ||
-        Game.getNpcIcon(npc.icon.id) ||
-        ""
-      : Game.getNpcIcon(npc.icon.id) || "";
+      ? (getNpcIconFromEvent(event, npc.icon.id) ??
+        Game.getNpcIcon(npc.icon.id) ??
+        "")
+      : (Game.getNpcIcon(npc.icon.id) ?? "");
 
     const autoSendNotification = settings.autoNotifyClan ?? false;
     const guildIds = settings.guildIds ?? [];
@@ -141,7 +141,7 @@ export class NpcsDetectionProcessor {
 
     if (!settings?.detect) return null;
 
-    const icon = Game.getNpcIcon(npc.tpl) || npc.icon || "";
+    const icon = Game.getNpcIcon(npc.tpl) ?? npc.icon ?? "";
 
     const autoSendNotification = settings.autoNotifyClan ?? false;
     const guildIds = settings.guildIds ?? [];

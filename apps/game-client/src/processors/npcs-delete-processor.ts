@@ -29,7 +29,7 @@ export class NpcsDeleteProcessor {
       if (npc.respBaseSeconds < MIN_RESP_BASE_SECONDS) return;
 
       const map = Game.map.id;
-      const elite2Name = SpecialE2[map as keyof typeof SpecialE2] || data.nick;
+      const elite2Name = SpecialE2[map as keyof typeof SpecialE2] ?? data.nick;
       const npcType = getNpcTypeByWt(NpcType, data.wt, data.prof, data.type);
       const npcName = npcType === NpcType.ELITE2 ? elite2Name : data.nick;
 

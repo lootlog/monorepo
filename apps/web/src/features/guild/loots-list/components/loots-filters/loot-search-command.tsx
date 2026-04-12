@@ -70,7 +70,7 @@ export const LootSearchCommand = ({
 
   const { data: searchResults, isLoading } = useSearchAll({
     search: debouncedSearch,
-    world: world || "",
+    world: world ?? "",
   });
 
   const isHid = isItemHid(searchQuery);

@@ -1,5 +1,5 @@
 import { BattleLogAttackActions } from "./actions/battle-log-attack-action";
-import { memo, useMemo, type FC } from "react";
+import type { FC } from "react";
 import { parseActions } from "./utils/battle-actions-parser";
 import { BattleBuffActions } from "./actions/battle-buff-actions";
 import { BattleOutcomeActions } from "./actions/battle-outcome-actions";
@@ -17,63 +17,62 @@ export type BattleEventEntryProps = {
   userTeam?: number;
 };
 
-export const BattleEventEntry: FC<BattleEventEntryProps> = memo(
-  ({ event, attacker, defender, eventIndex, userTeam }) => {
-    const parsedActions = useMemo(
-      () => parseActions(event.actions),
-      [event.actions],
-    );
+export const BattleEventEntry: FC<BattleEventEntryProps> = ({
+  event,
+  attacker,
+  defender,
+  eventIndex,
+  userTeam,
+}) => {
+  const parsedActions = parseActions(event.actions);
 
-    return (
-      <li className="border-b-2 border-transparent">
-        <BattleBuffActions
-          actions={parsedActions.buffActions}
-          attacker={attacker}
-          event={event}
-          eventIndex={eventIndex}
-        />
+  return (
+    <li className="border-b-2 border-transparent">
+      <BattleBuffActions
+        actions={parsedActions.buffActions}
+        attacker={attacker}
+        event={event}
+        eventIndex={eventIndex}
+      />
 
-        <BattleSystemActions
-          actions={parsedActions.systemActions}
-          attacker={attacker}
-          event={event}
-          eventIndex={eventIndex}
-        />
+      <BattleSystemActions
+        actions={parsedActions.systemActions}
+        attacker={attacker}
+        event={event}
+        eventIndex={eventIndex}
+      />
 
-        <BattleSpellActions
-          actions={parsedActions.spellActions}
-          attacker={attacker}
-          defender={defender}
-          event={event}
-          eventIndex={eventIndex}
-          userTeam={userTeam}
-        />
+      <BattleSpellActions
+        actions={parsedActions.spellActions}
+        attacker={attacker}
+        defender={defender}
+        event={event}
+        eventIndex={eventIndex}
+        userTeam={userTeam}
+      />
 
-        <BattleLogAttackActions
-          attacker={attacker}
-          defender={defender}
-          actions={parsedActions.attackActions}
-          event={event}
-          userTeam={userTeam}
-        />
+      <BattleLogAttackActions
+        attacker={attacker}
+        defender={defender}
+        actions={parsedActions.attackActions}
+        event={event}
+        userTeam={userTeam}
+      />
 
-        <BattlePassiveActions
-          actions={parsedActions.passiveActions}
-          attacker={attacker}
-          event={event}
-          eventIndex={eventIndex}
-          userTeam={userTeam}
-        />
+      <BattlePassiveActions
+        actions={parsedActions.passiveActions}
+        attacker={attacker}
+        event={event}
+        eventIndex={eventIndex}
+        userTeam={userTeam}
+      />
 
-        <BattleOutcomeActions
-          actions={parsedActions.outcomeActions}
-          attacker={attacker}
-          event={event}
-          eventIndex={eventIndex}
-        />
-      </li>
-    );
-  },
-);
-
-BattleEventEntry.displayName = "BattleEventEntry";
+      <BattleOutcomeActions
+        actions={parsedActions.outcomeActions}
+        attacker={attacker}
+        event={event}
+        eventIndex={eventIndex}
+      />
+    </li>
+  );
+};

@@ -89,18 +89,18 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
   const { data: playersData, isLoading: playersDataLoading } = useGuildPlayers({
     search: debouncedPlayersSearchValue,
     selectedPlayers: filters.players?.join(","),
-    world: world || "",
+    world: world ?? "",
   });
 
   const { data: npcsData, isLoading: npcsDataLoading } = useNpcs({
     search: debouncedNpcsSearchValue,
     selectedNpcs: filters.npcs?.join(","),
-    world: world || "",
+    world: world ?? "",
   });
 
   const { data: itemsData, isLoading: itemsDataLoading } = useItems({
     search: debouncedItemsSearchValue,
-    world: world || "",
+    world: world ?? "",
     limit: 10,
   });
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearch, useNavigate } from "@tanstack/react-router";
 import {
@@ -73,7 +73,7 @@ export const KillsPage: React.FC = () => {
     npcTypes: searchParams.npcType
       ? (searchParams.npcType.split(",") as NpcType[])
       : undefined,
-    search: debouncedSearch || undefined,
+    search: debouncedSearch ?? undefined,
     minLvl: debouncedMinLvl ? Number(debouncedMinLvl) : undefined,
     maxLvl: debouncedMaxLvl ? Number(debouncedMaxLvl) : undefined,
   };
@@ -91,54 +91,54 @@ export const KillsPage: React.FC = () => {
     sortBy,
   });
 
-  const updateSearchParams = useCallback(
-    (updates: Partial<KillsSearchParams>) => {
-      const newParams = { ...searchParams, ...updates };
+  const updateSearchParams = (updates: Partial<KillsSearchParams>) => {
+    const newParams = { ...searchParams, ...updates };
 
-      const cleanParams = Object.fromEntries(
-        Object.entries(newParams).filter(
-          ([, value]) => value !== undefined && value !== "",
-        ),
-      );
+    const cleanParams = Object.fromEntries(
+      Object.entries(newParams).filter(
+        ([, value]) => value !== undefined && value !== "",
+      ),
+    );
 
-      navigate({
-        to: ".",
-        search: cleanParams,
-        replace: true,
-      });
-    },
-    [navigate, searchParams],
-  );
+    navigate({
+      to: ".",
+      search: cleanParams,
+      replace: true,
+    });
+  };
 
   useEffect(() => {
     if (debouncedSearch !== prevDebouncedSearch.current) {
       prevDebouncedSearch.current = debouncedSearch;
       updateSearchParams({
-        search: debouncedSearch || undefined,
+        search: debouncedSearch ?? undefined,
         cursor: undefined,
       });
     }
-  }, [debouncedSearch, updateSearchParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- React Compiler auto-memoizes updateSearchParams
+  }, [debouncedSearch]);
 
   useEffect(() => {
     if (debouncedMinLvl !== prevDebouncedMinLvl.current) {
       prevDebouncedMinLvl.current = debouncedMinLvl;
       updateSearchParams({
-        minLvl: debouncedMinLvl || undefined,
+        minLvl: debouncedMinLvl ?? undefined,
         cursor: undefined,
       });
     }
-  }, [debouncedMinLvl, updateSearchParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- React Compiler auto-memoizes updateSearchParams
+  }, [debouncedMinLvl]);
 
   useEffect(() => {
     if (debouncedMaxLvl !== prevDebouncedMaxLvl.current) {
       prevDebouncedMaxLvl.current = debouncedMaxLvl;
       updateSearchParams({
-        maxLvl: debouncedMaxLvl || undefined,
+        maxLvl: debouncedMaxLvl ?? undefined,
         cursor: undefined,
       });
     }
-  }, [debouncedMaxLvl, updateSearchParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- React Compiler auto-memoizes updateSearchParams
+  }, [debouncedMaxLvl]);
 
   const handleWorldChange = (world: string | undefined) => {
     updateSearchParams({ world, cursor: undefined });
@@ -183,7 +183,7 @@ export const KillsPage: React.FC = () => {
   const columns = createKillsColumns(cursor);
 
   const table = useReactTable({
-    data: data?.npcs || [],
+    data: data?.npcs ?? [],
     columns,
     state: {
       sorting,

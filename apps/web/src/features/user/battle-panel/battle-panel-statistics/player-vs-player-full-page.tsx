@@ -134,7 +134,7 @@ export function PlayerVsPlayerFullPage() {
   const myCharacter = data?.battles[0]?.userWarrior;
 
   const table = useReactTable({
-    data: data?.battles || [],
+    data: data?.battles ?? [],
     columns: playerVsPlayerColumns,
     getCoreRowModel: getCoreRowModel(),
   });

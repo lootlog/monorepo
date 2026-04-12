@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
@@ -178,20 +178,12 @@ export const MapManageDialog = ({
       ? localLocations
       : heroLocations;
 
-  const allMapsFromLocations = useMemo(
-    () => hero.locations?.flatMap((location) => location.maps) ?? [],
-    [hero.locations],
-  );
-  const allMaps = useMemo(
-    () => [...allMapsFromLocations, ...hero.maps],
-    [allMapsFromLocations, hero.maps],
-  );
-  const addedMapIds = useMemo(
-    () => new Set(allMaps.map((map) => map.mapId)),
-    [allMaps],
-  );
+  const allMapsFromLocations =
+    hero.locations?.flatMap((location) => location.maps) ?? [];
+  const allMaps = [...allMapsFromLocations, ...hero.maps];
+  const addedMapIds = new Set(allMaps.map((map) => map.mapId));
 
-  const filteredGameMaps = useMemo(() => {
+  const filteredGameMaps = (() => {
     if (!gameMaps) return [];
     return gameMaps
       .filter(
@@ -201,7 +193,7 @@ export const MapManageDialog = ({
             map.id.toString().includes(searchQuery)),
       )
       .slice(0, 50);
-  }, [gameMaps, addedMapIds, searchQuery]);
+  })();
 
   const handleAddMapFromGame = async (gameMap: GameMap) => {
     try {

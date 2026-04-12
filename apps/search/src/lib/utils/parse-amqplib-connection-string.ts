@@ -4,15 +4,15 @@ import { parse as parseQuery } from "querystring";
 
 export function parseAmqpConnectionString(uri: string, extraOptions = {}) {
   const parsedUrl = parseUrl(uri);
-  const query = parseQuery(parsedUrl.query || "");
+  const query = parseQuery(parsedUrl.query ?? "");
 
   const options: Options.Connect = {
-    protocol: parsedUrl.protocol?.replace(":", "") || "amqp",
-    hostname: parsedUrl.hostname || "localhost",
+    protocol: parsedUrl.protocol?.replace(":", "") ?? "amqp",
+    hostname: parsedUrl.hostname ?? "localhost",
     port: parsedUrl.port ? parseInt(parsedUrl.port) : 5672,
-    username: decodeURIComponent(parsedUrl.auth?.split(":")[0] || "guest"),
-    password: decodeURIComponent(parsedUrl.auth?.split(":")[1] || "guest"),
-    vhost: decodeURIComponent(parsedUrl.pathname?.slice(1) || "/"),
+    username: decodeURIComponent(parsedUrl.auth?.split(":")[0] ?? "guest"),
+    password: decodeURIComponent(parsedUrl.auth?.split(":")[1] ?? "guest"),
+    vhost: decodeURIComponent(parsedUrl.pathname?.slice(1) ?? "/"),
   };
 
   if (query.heartbeat) {

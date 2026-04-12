@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import type { Reservation } from "@/hooks/api/reservations/use-reservations";
 import type { ReservationSegment } from "./types";
 import { DAYS, HOURS } from "./constants";
@@ -9,22 +8,18 @@ export function useReservationSegments(
 ) {
   const weekStartTimestamp = weekStart.getTime();
 
-  const weekEnd = useMemo(() => {
+  const weekEnd = (() => {
     const end = new Date(weekStart);
     end.setDate(end.getDate() + 7);
     return end;
-  }, [weekStart]);
+  })();
 
-  const reservationsInWeek = useMemo(
-    () =>
-      reservations.filter(
-        (reservation) =>
-          reservation.toDate > weekStart && reservation.fromDate < weekEnd,
-      ),
-    [reservations, weekStart, weekEnd],
+  const reservationsInWeek = reservations.filter(
+    (reservation) =>
+      reservation.toDate > weekStart && reservation.fromDate < weekEnd,
   );
 
-  const segments = useMemo(() => {
+  const segments = (() => {
     const result: ReservationSegment[] = [];
 
     reservationsInWeek.forEach((reservation, reservationIndex) => {
@@ -85,7 +80,7 @@ export function useReservationSegments(
     });
 
     return result;
-  }, [reservationsInWeek, weekStartTimestamp]);
+  })();
 
   return segments;
 }

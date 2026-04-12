@@ -226,7 +226,7 @@ export const MapCard = ({
                   <div className="flex -space-x-1.5 shrink-0">
                     {displayedAssignedMembers.map((member) => {
                       const memberPlayers =
-                        presenceData?.get(member.userId) || [];
+                        presenceData?.get(member.userId) ?? [];
                       const playerOnThisMap = memberPlayers.find(
                         (p) => p.mapName === map.mapName,
                       );

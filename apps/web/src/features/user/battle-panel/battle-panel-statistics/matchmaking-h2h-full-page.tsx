@@ -155,7 +155,7 @@ export function MatchmakingH2HFullPage() {
   };
 
   const table = useReactTable({
-    data: data?.records || [],
+    data: data?.records ?? [],
     columns: matchmakingH2HColumns,
     state: {
       sorting,

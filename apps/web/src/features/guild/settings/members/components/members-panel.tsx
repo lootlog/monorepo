@@ -3,7 +3,7 @@ import type { GuildMember } from "@/hooks/api/members/use-guild-member";
 import { MemberData } from "@/features/guild/settings/members/components/member-data";
 import { MemberSyncButton } from "@/features/guild/settings/members/components/member-sync-button";
 import { ArrowLeft, Crown } from "lucide-react";
-import { useMemo, type FC } from "react";
+import type { FC } from "react";
 import { useSelectorPanel } from "@/components/selector-panel";
 import { Permission } from "@lootlog/types";
 import { PERMISSION_CATEGORIES } from "@/features/guild/settings/roles/constants/permission-categories";
@@ -33,7 +33,7 @@ export const MembersPanelContent: FC<MembersPanelContentProps> = ({
     setSelectedItem: setSelectedMember,
     isMobileDrawerOpen,
   } = useSelectorPanel<GuildMember>();
-  const memberPermissions = useMemo(() => {
+  const memberPermissions = (() => {
     if (!selectedMember) return [];
     const perms = new Set<Permission>();
     for (const role of selectedMember.roles) {
@@ -42,7 +42,7 @@ export const MembersPanelContent: FC<MembersPanelContentProps> = ({
       }
     }
     return Array.from(perms);
-  }, [selectedMember]);
+  })();
 
   const hasAdminPermission = memberPermissions.includes(Permission.ADMIN);
 

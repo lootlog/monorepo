@@ -45,7 +45,7 @@ const computeLootMaps = (loot: Loot) => {
   );
 
   const itemOwnerMap: ItemOwnerMap = {};
-  Object.entries(loot.lootShare || {}).forEach(([playerId, itemIds]) => {
+  Object.entries(loot.lootShare ?? {}).forEach(([playerId, itemIds]) => {
     itemIds.forEach((itemId) => {
       itemOwnerMap[itemId] = playerId;
     });

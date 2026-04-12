@@ -1,17 +1,8 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import type { Prisma } from "src/generated/prisma/client";
 import { PrismaService } from "src/shared/db/prisma.service";
+import { mapActivityDetails } from "src/shared/utils/map-activity-details";
 import type { QueryActivitiesDto } from "../dto/query-activities.dto";
-
-function mapActivityDetails(
-  details: unknown,
-): Record<string, unknown> | undefined {
-  if (!details || typeof details !== "object" || Array.isArray(details)) {
-    return undefined;
-  }
-
-  return details as Record<string, unknown>;
-}
 
 @Injectable()
 export class ActivitiesQueryService {

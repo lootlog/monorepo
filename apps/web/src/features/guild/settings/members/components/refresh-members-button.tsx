@@ -1,7 +1,7 @@
 import { Button } from "@lootlog/ui/components/button";
 import { RefreshCw, Clock } from "lucide-react";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useMemo, useCallback } from "react";
+
 import { cn } from "@/utils/cn";
 import { useRefreshStatus } from "@/features/guild/settings/members/contexts/refresh-status-context";
 import { useCountdown } from "@/hooks/utils/use-countdown";
@@ -22,37 +22,26 @@ export const RefreshMembersButton = () => {
     latestJob,
   } = useBulkMemberRefresh();
 
-  const currentJob = useMemo(() => {
-    return data ?? latestJob;
-  }, [data, latestJob]);
+  const currentJob = data ?? latestJob;
 
-  const nextAvailableAt = useMemo(() => {
+  const nextAvailableAt = (() => {
     if (!currentJob?.createdAt) return null;
     const jobCreatedAt = new Date(currentJob.createdAt).getTime();
     const nextAvailable = jobCreatedAt + ADMIN_BULK_REFRESH_RATE_LIMIT;
     return new Date(nextAvailable).toISOString();
-  }, [currentJob]);
+  })();
 
   const countdown = useCountdown(nextAvailableAt);
 
-  const currentJobId = useMemo(() => {
-    if (countdown.isExpired) return undefined;
-    return currentJob?.id;
-  }, [currentJob?.id, countdown.isExpired]);
+  const currentJobId = countdown.isExpired ? undefined : currentJob?.id;
 
-  const handleRefreshedIds = useCallback(
-    (ids: string[]) => {
-      markAsRefreshed(ids);
-    },
-    [markAsRefreshed],
-  );
+  const handleRefreshedIds = (ids: string[]) => {
+    markAsRefreshed(ids);
+  };
 
-  const handleFailedIds = useCallback(
-    (ids: string[]) => {
-      markAsFailed(ids);
-    },
-    [markAsFailed],
-  );
+  const handleFailedIds = (ids: string[]) => {
+    markAsFailed(ids);
+  };
 
   const { jobStatus } = useRefreshJob(
     guildId,

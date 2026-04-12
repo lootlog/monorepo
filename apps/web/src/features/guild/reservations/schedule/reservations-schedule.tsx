@@ -1,6 +1,6 @@
 import { useParams } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
@@ -53,7 +53,7 @@ export const ReservationsSchedule: React.FC = () => {
     handleNextWeek,
   } = useScheduleNavigation();
 
-  const canModerateReservations = useMemo(() => {
+  const canModerateReservations = (() => {
     if (isOwner) {
       return true;
     }
@@ -66,7 +66,7 @@ export const ReservationsSchedule: React.FC = () => {
       permissions.includes(Permission.LOOTLOG_MANAGE) ||
       permissions.includes(Permission.ADMIN)
     );
-  }, [permissions, isOwner]);
+  })();
 
   const normalizedReservationId = reservationId
     ? reservationSlug(reservationId)
@@ -129,30 +129,30 @@ export const ReservationsSchedule: React.FC = () => {
     };
   }, [connected, guildId, queryClient, socket]);
 
-  const handleDeleteReservation = useCallback(
-    async (reservationRecordId: number, action: "cancel" | "remove") => {
-      const successMessage =
-        action === "cancel"
-          ? "Rezerwacja została anulowana."
-          : "Rezerwacja została usunięta.";
-      const fallbackMessage =
-        action === "cancel"
-          ? "Nie udało się anulować rezerwacji."
-          : "Nie udało się usunąć rezerwacji.";
+  const handleDeleteReservation = async (
+    reservationRecordId: number,
+    action: "cancel" | "remove",
+  ) => {
+    const successMessage =
+      action === "cancel"
+        ? "Rezerwacja została anulowana."
+        : "Rezerwacja została usunięta.";
+    const fallbackMessage =
+      action === "cancel"
+        ? "Nie udało się anulować rezerwacji."
+        : "Nie udało się usunąć rezerwacji.";
 
-      try {
-        await deleteReservation({ reservationRecordId });
-        toast.success(successMessage, { position: "bottom-right" });
-      } catch (error) {
-        toast.error(getApiErrorMessage(error) ?? fallbackMessage, {
-          position: "bottom-right",
-        });
-      }
-    },
-    [deleteReservation],
-  );
+    try {
+      await deleteReservation({ reservationRecordId });
+      toast.success(successMessage, { position: "bottom-right" });
+    } catch (error) {
+      toast.error(getApiErrorMessage(error) ?? fallbackMessage, {
+        position: "bottom-right",
+      });
+    }
+  };
 
-  const membersByUserId = useMemo(() => {
+  const membersByUserId = (() => {
     if (!members) {
       return new Map<string, GuildMember>();
     }
@@ -160,7 +160,7 @@ export const ReservationsSchedule: React.FC = () => {
     return new Map<string, GuildMember>(
       members.map((member) => [member.userId, member]),
     );
-  }, [members]);
+  })();
 
   return (
     <TooltipProvider>

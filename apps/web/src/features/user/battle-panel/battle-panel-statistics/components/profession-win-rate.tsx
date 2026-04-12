@@ -79,7 +79,7 @@ export function ProfessionWinRateChart({
                   labelFormatter={(value, payload) => {
                     const item = payload[0]
                       ?.payload as unknown as ProfessionWinRate;
-                    return `${value} (${item?.totalBattles || 0} walk)`;
+                    return `${value} (${item?.totalBattles ?? 0} walk)`;
                   }}
                   formatter={(value) => [`${value}%`]}
                 />
