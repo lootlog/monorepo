@@ -2,6 +2,7 @@ import type { Meilisearch, SearchParams } from "meilisearch";
 import type { z } from "zod";
 import { meilisearchClient } from "../lib/meilisearch.js";
 import { logger } from "../config/winston.config.js";
+import { validateIndexableItems } from "../lib/utils/validate-indexable-items.js";
 import type { GetNpcsDto } from "./dto/get-npcs.dto.js";
 import { NPCS_INDEX } from "./constants/meilisearch.js";
 import type { IndexNpcsDto } from "./dto/index-npcs.dto.js";
@@ -57,26 +58,8 @@ export class NpcsService {
   async indexNpcs(data: IndexNpcsDto) {
     const index = this.meilisearch.index(NPCS_INDEX);
 
-    const validNpcs = data.npcs.filter(
-      (npc) => npc.world && npc.id && npc.name,
-    );
-
-    if (validNpcs.length === 0) {
-      logger.warn("No valid npcs to index (missing required fields)", {
-        npcs: data.npcs,
-      });
-      return;
-    }
-
-    if (validNpcs.length !== data.npcs.length) {
-      const invalidNpcs = data.npcs.filter(
-        (npc) => !npc.world || !npc.id || !npc.name,
-      );
-      logger.warn(
-        `Skipped ${invalidNpcs.length} npcs due to missing required fields`,
-        { invalidNpcs },
-      );
-    }
+    const validNpcs = validateIndexableItems(data.npcs, "npcs", logger);
+    if (!validNpcs) return;
 
     const npcsWithUid = validNpcs.map((npc) => ({
       ...npc,

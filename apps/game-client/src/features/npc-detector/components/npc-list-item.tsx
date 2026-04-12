@@ -98,7 +98,7 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
         icon: npc.icon,
         type: npc.type,
       },
-      world: world,
+      world,
       guildIds: settingsByNpcType.guildIds,
     };
 

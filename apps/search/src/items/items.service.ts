@@ -2,6 +2,7 @@ import type { Meilisearch, SearchParams } from "meilisearch";
 import type { z } from "zod";
 import { meilisearchClient } from "../lib/meilisearch.js";
 import { logger } from "../config/winston.config.js";
+import { validateIndexableItems } from "../lib/utils/validate-indexable-items.js";
 import type { GetItemsDto } from "./dto/get-items.dto.js";
 import { ITEMS_INDEX } from "./constants/meilisearch.js";
 import type { IndexItemsDto } from "./dto/index-items.dto.js";
@@ -44,20 +45,8 @@ export class ItemsService {
   async indexItems(data: IndexItemsDto) {
     const index = this.meilisearch.index(ITEMS_INDEX);
 
-    const validItems = data.items.filter(
-      (item) => item.world && item.id && item.name,
-    );
-
-    if (validItems.length === 0) {
-      logger.warn("No valid items to index (missing required fields)");
-      return;
-    }
-
-    if (validItems.length !== data.items.length) {
-      logger.warn(
-        `Skipped ${data.items.length - validItems.length} items due to missing required fields`,
-      );
-    }
+    const validItems = validateIndexableItems(data.items, "items", logger);
+    if (!validItems) return;
 
     const itemsWithUid = validItems.map((item) => ({
       ...item,

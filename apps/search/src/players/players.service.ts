@@ -2,6 +2,7 @@ import type { Meilisearch, SearchParams } from "meilisearch";
 import type { z } from "zod";
 import { meilisearchClient } from "../lib/meilisearch.js";
 import { logger } from "../config/winston.config.js";
+import { validateIndexableItems } from "../lib/utils/validate-indexable-items.js";
 import type { GetPlayersDto } from "./dto/get-players.dto.js";
 import { PLAYERS_INDEX } from "./constants/meilisearch.js";
 import type { IndexPlayersDto } from "./dto/index-players.dto.js";
@@ -52,26 +53,12 @@ export class PlayersService {
   async indexPlayers(data: IndexPlayersDto) {
     const index = this.meilisearch.index(PLAYERS_INDEX);
 
-    const validPlayers = data.players.filter(
-      (player) => player.world && player.id && player.name,
+    const validPlayers = validateIndexableItems(
+      data.players,
+      "players",
+      logger,
     );
-
-    if (validPlayers.length === 0) {
-      logger.warn("No valid players to index (missing required fields)", {
-        players: data.players,
-      });
-      return;
-    }
-
-    if (validPlayers.length !== data.players.length) {
-      const invalidPlayers = data.players.filter(
-        (player) => !player.world || !player.id || !player.name,
-      );
-      logger.warn(
-        `Skipped ${invalidPlayers.length} players due to missing required fields`,
-        { invalidPlayers },
-      );
-    }
+    if (!validPlayers) return;
 
     const playersWithUid = validPlayers.map((player) => ({
       ...player,

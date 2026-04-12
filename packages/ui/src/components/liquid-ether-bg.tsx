@@ -136,7 +136,7 @@ export default function LiquidEther({
       clock: THREE.Clock | null = null;
       init(container: HTMLElement) {
         this.container = container;
-        this.pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+        this.pixelRatio = Math.min(window.devicePixelRatio ?? 1, 2);
         this.resize();
         this.renderer = new THREE.WebGLRenderer({
           antialias: true,
@@ -332,8 +332,8 @@ export default function LiquidEther({
         this.manager = manager;
         this.enabled = opts.enabled;
         this.speed = opts.speed;
-        this.resumeDelay = opts.resumeDelay || 3000;
-        this.rampDurationMs = (opts.rampDuration || 0) * 1000;
+        this.resumeDelay = opts.resumeDelay ?? 3000;
+        this.rampDurationMs = (opts.rampDuration ?? 0) * 1000;
         this.pickNewTarget();
       }
       pickNewTarget() {
@@ -577,7 +577,7 @@ export default function LiquidEther({
       plane: THREE.Mesh | null = null;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       constructor(props: any) {
-        this.props = props || {};
+        this.props = props ?? {};
         this.uniforms = this.props.material?.uniforms;
       }
       init() {
@@ -592,7 +592,7 @@ export default function LiquidEther({
       }
       update() {
         if (!Common.renderer || !this.scene || !this.camera) return;
-        Common.renderer.setRenderTarget(this.props.output || null);
+        Common.renderer.setRenderTarget(this.props.output ?? null);
         Common.renderer.render(this.scene, this.camera);
         Common.renderer.setRenderTarget(null);
       }
@@ -646,7 +646,7 @@ export default function LiquidEther({
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       update(...args: any[]) {
-        const { dt, isBounce, BFECC } = (args[0] || {}) as {
+        const { dt, isBounce, BFECC } = (args[0] ?? {}) as {
           dt?: number;
           isBounce?: boolean;
           BFECC?: boolean;
@@ -695,11 +695,11 @@ export default function LiquidEther({
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       update(...args: any[]) {
-        const props = args[0] || {};
-        const forceX = (Mouse.diff.x / 2) * (props.mouse_force || 0);
-        const forceY = (Mouse.diff.y / 2) * (props.mouse_force || 0);
-        const cellScale = props.cellScale || { x: 1, y: 1 };
-        const cursorSize = props.cursor_size || 0;
+        const props = args[0] ?? {};
+        const forceX = (Mouse.diff.x / 2) * (props.mouse_force ?? 0);
+        const forceY = (Mouse.diff.y / 2) * (props.mouse_force ?? 0);
+        const cellScale = props.cellScale ?? { x: 1, y: 1 };
+        const cursorSize = props.cursor_size ?? 0;
         const cursorSizeX = cursorSize * cellScale.x;
         const cursorSizeY = cursorSize * cellScale.y;
         const centerX = Math.min(
