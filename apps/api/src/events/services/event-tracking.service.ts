@@ -786,8 +786,8 @@ export class EventTrackingService implements OnModuleInit {
 
     const mapIds = hero.maps.map((m) => m.id);
 
-    const eventStart = hero.event.startsAt || hero.event.createdAt;
-    const eventEnd = hero.event.endsAt || new Date();
+    const eventStart = hero.event.startsAt ?? hero.event.createdAt;
+    const eventEnd = hero.event.endsAt ?? new Date();
     const totalEventSeconds = Math.max(
       0,
       Math.round((eventEnd.getTime() - eventStart.getTime()) / 1000),

@@ -1,20 +1,6 @@
 import * as React from "react";
-
-function seededRandom(seed: number) {
-  let s = seed;
-  return () => {
-    s = (s * 16807 + 11) % 2147483647;
-    return (s - 1) / 2147483646;
-  };
-}
-
-function hashString(str: string): number {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash * 31 + str.charCodeAt(i)) | 0;
-  }
-  return Math.abs(hash);
-}
+import { hashString, seededRandom } from "../lib/seeded-random";
+import { useThemeClass } from "../lib/use-theme-class";
 
 export const PAW_SVG =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cellipse cx='16' cy='21' rx='6.5' ry='5' fill='white'/%3E%3Ccircle cx='7' cy='11' r='3' fill='white'/%3E%3Ccircle cx='13' cy='7' r='2.8' fill='white'/%3E%3Ccircle cx='19' cy='7' r='2.8' fill='white'/%3E%3Ccircle cx='25' cy='11' r='3' fill='white'/%3E%3C/svg%3E";
@@ -22,23 +8,7 @@ export const PAW_SVG =
 const CAT_CLASSES = ["cat-pink", "cat-purple", "cat-blue"];
 
 export function useCatTheme() {
-  const [isCat, setIsCat] = React.useState(() => {
-    if (typeof document === "undefined") return false;
-    return CAT_CLASSES.some((c) =>
-      document.documentElement.classList.contains(c),
-    );
-  });
-
-  React.useEffect(() => {
-    const root = document.documentElement;
-    const check = () =>
-      setIsCat(CAT_CLASSES.some((c) => root.classList.contains(c)));
-    const observer = new MutationObserver(check);
-    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
-    return () => observer.disconnect();
-  }, []);
-
-  return isCat;
+  return useThemeClass(CAT_CLASSES);
 }
 
 export function CatPawOverlay() {

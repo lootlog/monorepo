@@ -26,8 +26,11 @@ export class RetryService {
   }
 
   getRetryCount(headers: Record<string, unknown>): number {
-    if (headers["x-retry-count"]) {
-      return headers["x-retry-count"] as number;
+    if (
+      headers["x-retry-count"] &&
+      typeof headers["x-retry-count"] === "number"
+    ) {
+      return headers["x-retry-count"];
     }
 
     const xDeath = headers["x-death"];

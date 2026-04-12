@@ -1,38 +1,9 @@
 import * as React from "react";
-
-function seededRandom(seed: number) {
-  let s = seed;
-  return () => {
-    s = (s * 16807 + 11) % 2147483647;
-    return (s - 1) / 2147483646;
-  };
-}
-
-function hashString(str: string): number {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash * 31 + str.charCodeAt(i)) | 0;
-  }
-  return Math.abs(hash);
-}
-
-const RUKIA_CLASS = "rukia";
+import { hashString, seededRandom } from "../lib/seeded-random";
+import { useThemeClass } from "../lib/use-theme-class";
 
 export function useRukiaTheme() {
-  const [isRukia, setIsRukia] = React.useState(() => {
-    if (typeof document === "undefined") return false;
-    return document.documentElement.classList.contains(RUKIA_CLASS);
-  });
-
-  React.useEffect(() => {
-    const root = document.documentElement;
-    const check = () => setIsRukia(root.classList.contains(RUKIA_CLASS));
-    const observer = new MutationObserver(check);
-    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
-    return () => observer.disconnect();
-  }, []);
-
-  return isRukia;
+  return useThemeClass("rukia");
 }
 
 const SNOWFLAKE_SVG =

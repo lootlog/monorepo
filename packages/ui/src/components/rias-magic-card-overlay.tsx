@@ -1,38 +1,9 @@
 import * as React from "react";
-
-function seededRandom(seed: number) {
-  let s = seed;
-  return () => {
-    s = (s * 16807 + 11) % 2147483647;
-    return (s - 1) / 2147483646;
-  };
-}
-
-function hashString(str: string): number {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash * 31 + str.charCodeAt(i)) | 0;
-  }
-  return Math.abs(hash);
-}
-
-const RIAS_CLASS = "rias";
+import { hashString, seededRandom } from "../lib/seeded-random";
+import { useThemeClass } from "../lib/use-theme-class";
 
 export function useRiasTheme() {
-  const [isRias, setIsRias] = React.useState(() => {
-    if (typeof document === "undefined") return false;
-    return document.documentElement.classList.contains(RIAS_CLASS);
-  });
-
-  React.useEffect(() => {
-    const root = document.documentElement;
-    const check = () => setIsRias(root.classList.contains(RIAS_CLASS));
-    const observer = new MutationObserver(check);
-    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
-    return () => observer.disconnect();
-  }, []);
-
-  return isRias;
+  return useThemeClass("rias");
 }
 
 // Magic circle SVG as data URI
