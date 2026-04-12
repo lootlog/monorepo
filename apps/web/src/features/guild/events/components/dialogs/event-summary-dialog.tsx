@@ -17,7 +17,10 @@ import {
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Sparkles, Trophy } from "lucide-react";
 import { cn } from "@/utils/cn";
-import { useShowEventWrapped } from "@/lib/api/generated/main/events/events";
+import {
+  getShowEventWrappedQueryKey,
+  useShowEventWrapped,
+} from "@/lib/api/generated/main/events/events";
 import { buildSteps } from "./event-summary/build-steps";
 import { LoadingState } from "./event-summary/loading-state";
 import { SlideNavButton } from "./event-summary/slide-nav-button";
@@ -43,10 +46,21 @@ export const EventSummaryDialog = ({
   const [currentStep, setCurrentStep] = useState(0);
   const [direction, setDirection] = useState(1);
   const prefersReducedMotion = useReducedMotion();
-  const { data, isLoading, error } = useShowEventWrapped({
-    guildId,
-    eventId,
-  });
+  const { data, isLoading, error } = useShowEventWrapped(
+    {
+      guildId,
+      eventId,
+    },
+    {
+      query: {
+        enabled: open,
+        queryKey: getShowEventWrappedQueryKey({
+          guildId,
+          eventId,
+        }),
+      },
+    },
+  );
 
   useEffect(() => {
     if (!open) {

@@ -1,7 +1,10 @@
 import { startTransition, useEffect, useState } from "react";
 import { isEventActiveAtTimestamp } from "@/features/guild/events/utils";
 import { PinnedEventsBanner } from "./pinned-events-banner";
-import { useListEvents } from "@/lib/api/generated/main/events/events";
+import {
+  getListEventsQueryKey,
+  useListEvents,
+} from "@/lib/api/generated/main/events/events";
 import { useEventsSettingsControllerGetSettings } from "@/lib/api/generated/main/event-settings/event-settings";
 
 export const GuildPinnedEventsSection = ({
@@ -17,6 +20,19 @@ export const GuildPinnedEventsSection = ({
     },
     {
       activeOnly: "true",
+    },
+    {
+      query: {
+        queryKey: getListEventsQueryKey(
+          {
+            guildId,
+          },
+          {
+            activeOnly: "true",
+          },
+        ),
+        refetchInterval: 60_000,
+      },
     },
   );
   const { data: eventSettings, isPending: isSettingsPending } =
