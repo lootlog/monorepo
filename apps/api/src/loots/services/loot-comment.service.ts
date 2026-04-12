@@ -71,7 +71,7 @@ export class LootCommentService {
           connect: {
             memberId: {
               userId: discordId,
-              guildId: guildId,
+              guildId,
             },
           },
         },

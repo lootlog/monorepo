@@ -1,4 +1,4 @@
-import type { Metadata } from "next/dist/lib/metadata/types/metadata-interface";
+import type { Metadata } from "next";
 import type { JSX } from "react";
 import { PolicyLayout } from "@/src/components/policy-layout";
 import TermsOfServiceContent from "@/src/content/terms-of-service.mdx";

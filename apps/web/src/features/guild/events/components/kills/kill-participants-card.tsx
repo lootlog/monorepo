@@ -21,7 +21,7 @@ import {
 import { Button } from "@lootlog/ui/components/button";
 import { Users, ChevronDown, Frown, MapPin, Pencil, Info } from "lucide-react";
 import { toast } from "sonner";
-import { cn } from "@/utils/cn";
+import { cn } from "@lootlog/ui/lib/utils";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { useEventsRankingControllerUpdateKillPoint } from "@/lib/api/generated/main/events/events";
 import type { KillDetailParticipant } from "../../hooks/queries/use-kill-detail";

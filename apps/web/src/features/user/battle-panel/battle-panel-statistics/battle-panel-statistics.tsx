@@ -40,6 +40,7 @@ export function BattlePanelStatistics() {
   const maxLevel = queryState.maxLevel;
   const ph = queryState.ph ?? undefined;
   const matchmaking = queryState.matchmaking ?? undefined;
+  const characterId = currentCharacterId ?? characters?.[0]?.id;
 
   useEffect(() => {
     if (!isLoadingCharacters && characters?.length && !currentCharacterId) {
@@ -54,7 +55,7 @@ export function BattlePanelStatistics() {
 
   const { data: professionData, isLoading: isProfessionLoading } =
     useProfessionWinRate({
-      characterId: currentCharacterId ?? characters?.[0]?.id,
+      characterId,
       period,
       minLevel,
       maxLevel,
@@ -64,7 +65,7 @@ export function BattlePanelStatistics() {
 
   const { data: headToHeadData, isLoading: isHeadToHeadLoading } =
     useHeadToHead({
-      characterId: currentCharacterId ?? characters?.[0]?.id,
+      characterId,
       period,
       minLevel,
       maxLevel,
@@ -74,7 +75,7 @@ export function BattlePanelStatistics() {
     });
 
   const { data: streakData, isLoading: isStreakLoading } = useBattleStreak({
-    characterId: currentCharacterId ?? characters?.[0]?.id,
+    characterId,
     period,
     minLevel,
     maxLevel,
@@ -84,7 +85,7 @@ export function BattlePanelStatistics() {
 
   const { data: durationData, isLoading: isDurationLoading } =
     useBattleDuration({
-      characterId: currentCharacterId ?? characters?.[0]?.id,
+      characterId,
       period,
       minLevel,
       maxLevel,
@@ -93,7 +94,7 @@ export function BattlePanelStatistics() {
     });
 
   const { data: phGrowthData, isLoading: isPhGrowthLoading } = usePhGrowth({
-    characterId: currentCharacterId ?? characters?.[0]?.id,
+    characterId,
     period,
     minLevel,
     maxLevel,
@@ -103,7 +104,7 @@ export function BattlePanelStatistics() {
 
   const { data: ratingGrowthData, isLoading: isRatingGrowthLoading } =
     useRatingGrowth({
-      characterId: currentCharacterId ?? characters?.[0]?.id,
+      characterId,
       period,
       minLevel,
       maxLevel,
@@ -111,7 +112,7 @@ export function BattlePanelStatistics() {
 
   const { data: ratingDeltaData, isLoading: isRatingDeltaLoading } =
     useRatingDeltaByOpponent({
-      characterId: currentCharacterId ?? characters?.[0]?.id,
+      characterId,
       period,
       minLevel,
       maxLevel,

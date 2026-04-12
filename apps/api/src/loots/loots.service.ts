@@ -157,7 +157,7 @@ export class LootsService implements OnModuleInit {
           if (!member) return null;
 
           return {
-            guildId: guildId,
+            guildId,
             memberId: member.id,
           };
         })

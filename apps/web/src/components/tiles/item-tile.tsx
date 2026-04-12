@@ -1,7 +1,7 @@
 import { useSharedTooltip } from "@/components/shared-tooltip/shared-tooltip-provider";
 import { ItemImage } from "@/components/tiles/item-image";
 import { ItemRarity, type Item } from "@/hooks/api/loots/use-loots";
-import { cn } from "@/utils/cn";
+import { cn } from "@lootlog/ui/lib/utils";
 import {
   mapStatsToDisplayValues,
   type ItemDisplayValue,

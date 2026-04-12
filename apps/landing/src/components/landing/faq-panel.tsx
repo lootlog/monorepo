@@ -21,10 +21,10 @@ export function FaqPanel() {
         defaultValue="item-0"
         className="w-full space-y-4"
       >
-        {faqKeys.map((key, index) => (
+        {faqKeys.map((key) => (
           <AccordionItem
-            key={index}
-            value={`item-${index}`}
+            key={key}
+            value={`item-${key}`}
             className="border border-white/[0.06] bg-white/[0.03] rounded-xl px-6 data-[state=open]:bg-white/[0.07] data-[state=open]:border-primary/20 hover:border-white/15 transition-all duration-300"
           >
             <AccordionTrigger className="py-4 text-left hover:no-underline hover:text-primary transition-colors">

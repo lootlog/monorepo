@@ -1,6 +1,6 @@
 import type { Guild } from "@/hooks/api/guilds/use-guild";
 import { useTheme } from "@/hooks/context/use-theme";
-import { cn } from "@/utils/cn";
+import { cn } from "@lootlog/ui/lib/utils";
 import {
   Avatar,
   AvatarFallback,

@@ -119,7 +119,7 @@ authController.post("/idp-token", async (c) => {
     token = await auth.api.getAccessToken({
       body: {
         providerId: "discord",
-        userId: userId,
+        userId,
         accountId: discordId,
       },
     });
