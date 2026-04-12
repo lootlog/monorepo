@@ -14,6 +14,7 @@ import {
 import type { FC } from "react";
 import { Link } from "@tanstack/react-router";
 import { FrozenCircle } from "@/components/effects/rukia-frost";
+import { motion } from "framer-motion";
 
 export type GuildNavItemProps = {
   guild: Guild;
@@ -38,11 +39,11 @@ const GuildNavItemComponent: FC<GuildNavItemProps> = ({
     }
   };
 
-  const avatarContent = (
+  const avatarElement = (
     <Avatar
       className={cn(
-        "size-12 border-solid border-4 transition-all border-transparent box-border rounded-xl hover:rounded-lg",
-        { "border-primary rounded-lg": isActive },
+        "size-11 transition-all duration-200 rounded-lg hover:rounded-lg hover:scale-105",
+        isActive && !isRukiaTheme && "border-[3px] border-primary",
       )}
     >
       <AvatarImage
@@ -59,20 +60,25 @@ const GuildNavItemComponent: FC<GuildNavItemProps> = ({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="w-full flex items-center justify-center mb-1">
+        <div className="relative w-full flex items-center justify-center mb-2">
+          {isActive && !isRukiaTheme && (
+            <motion.div
+              layoutId="guild-active-pill"
+              className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full bg-primary shadow-[0_0_6px_var(--primary)/0.4]"
+              transition={{ type: "spring", stiffness: 350, damping: 30 }}
+            />
+          )}
           <Link
             to={`/${guild.vanityUrl ?? guild.id}` as string}
             draggable={false}
-            className="group block"
+            className="group/guild-item block"
             onClick={handleClick}
             style={{ pointerEvents: isDragging ? "none" : "auto" }}
           >
             {isRukiaTheme ? (
-              <FrozenCircle isActive={isActive} size={48}>
-                {avatarContent}
-              </FrozenCircle>
+              <FrozenCircle isActive={isActive}>{avatarElement}</FrozenCircle>
             ) : (
-              avatarContent
+              avatarElement
             )}
           </Link>
         </div>

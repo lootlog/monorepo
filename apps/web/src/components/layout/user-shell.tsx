@@ -6,9 +6,10 @@ import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { SidebarTrigger } from "@lootlog/ui/components/sidebar";
 import { useLocation, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useState, type FC, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { AnimatePresence, motion } from "framer-motion";
 
 type UserShellProps = {
   children: ReactNode;
@@ -203,7 +204,7 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
     location.pathname === "/@me/kills";
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-row">
+    <div className="flex h-full min-h-0 w-full flex-row bg-background/70">
       <div className="flex h-full min-h-0 w-full flex-col">
         <PageHeader>
           <div className="flex w-full flex-row items-center justify-between gap-2">
@@ -225,7 +226,7 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
                         onClick={() =>
                           navigate({ to: navigationInfo.backPath as string })
                         }
-                        className="h-8 w-8 p-1"
+                        className="h-8 w-8 p-1 rounded-full hover:bg-muted/50 transition-colors"
                       >
                         <ArrowLeft className="h-4 w-4" />
                       </Button>
@@ -237,7 +238,7 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
                       onClick={() =>
                         navigate({ to: navigationInfo.backPath as string })
                       }
-                      className="h-8 w-8 p-1"
+                      className="h-8 w-8 p-1 rounded-full hover:bg-muted/50 transition-colors"
                     >
                       <ArrowLeft className="h-4 w-4" />
                     </Button>
@@ -246,54 +247,72 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
               )}
             </div>
 
-            <div className="flex min-w-0 flex-1 items-center justify-center gap-1 overflow-hidden text-sm">
-              {navigationInfo.breadcrumbs.map((crumb, index) => (
-                <div
-                  key={index}
-                  className="flex min-w-0 shrink-0 items-center gap-1 last:shrink"
-                >
-                  {crumb.path ? (
-                    <div
-                      onMouseEnter={() => setHoveredButton(`crumb-${index}`)}
-                      onMouseLeave={() => setHoveredButton(null)}
+            <div className="flex min-w-0 flex-1 items-center justify-center gap-1.5 overflow-hidden text-sm">
+              <AnimatePresence mode="popLayout">
+                {navigationInfo.breadcrumbs.map((crumb, index) => {
+                  const isLast =
+                    index === navigationInfo.breadcrumbs.length - 1;
+                  return (
+                    <motion.div
+                      key={`${crumb.label}-${crumb.path ?? "current"}`}
+                      className="flex min-w-0 shrink-0 items-center gap-1.5 last:shrink"
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 8 }}
+                      transition={{ duration: 0.15 }}
                     >
-                      {isRukiaTheme ? (
-                        <FrozenButton
-                          isHovered={hoveredButton === `crumb-${index}`}
-                          isActive={false}
+                      {crumb.path ? (
+                        <div
+                          onMouseEnter={() =>
+                            setHoveredButton(`crumb-${index}`)
+                          }
+                          onMouseLeave={() => setHoveredButton(null)}
                         >
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() =>
-                              navigate({ to: crumb.path as string })
-                            }
-                            className="h-auto whitespace-nowrap p-1 text-sm font-semibold hover:bg-accent/50"
-                          >
-                            {crumb.label}
-                          </Button>
-                        </FrozenButton>
+                          {isRukiaTheme ? (
+                            <FrozenButton
+                              isHovered={hoveredButton === `crumb-${index}`}
+                              isActive={false}
+                            >
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  navigate({
+                                    to: crumb.path as string,
+                                  })
+                                }
+                                className="text-xs text-muted-foreground/70 hover:text-foreground transition-colors duration-200 whitespace-nowrap cursor-pointer"
+                              >
+                                {crumb.label}
+                              </button>
+                            </FrozenButton>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                navigate({
+                                  to: crumb.path as string,
+                                })
+                              }
+                              className="text-xs text-muted-foreground/70 hover:text-foreground transition-colors duration-200 whitespace-nowrap cursor-pointer"
+                            >
+                              {crumb.label}
+                            </button>
+                          )}
+                        </div>
                       ) : (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => navigate({ to: crumb.path as string })}
-                          className="h-auto whitespace-nowrap p-1 text-sm font-semibold hover:bg-accent/50"
-                        >
+                        <span className="truncate text-sm font-bold text-foreground">
                           {crumb.label}
-                        </Button>
+                        </span>
                       )}
-                    </div>
-                  ) : (
-                    <span className="truncate px-1 font-semibold">
-                      {crumb.label}
-                    </span>
-                  )}
-                  {index < navigationInfo.breadcrumbs.length - 1 && (
-                    <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground" />
-                  )}
-                </div>
-              ))}
+                      {!isLast && (
+                        <span className="text-xs text-muted-foreground/30 select-none">
+                          /
+                        </span>
+                      )}
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
             </div>
 
             <div className="w-8" />

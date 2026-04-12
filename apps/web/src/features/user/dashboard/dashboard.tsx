@@ -8,7 +8,7 @@ export const Dashboard: React.FC = () => {
   const { filters, updateFilters } = useDashboardFilters();
 
   return (
-    <ScrollArea className="h-full bg-background/50">
+    <ScrollArea className="h-full">
       <div className="px-3 py-3 flex flex-col gap-4">
         <DashboardFiltersBar
           filters={filters}

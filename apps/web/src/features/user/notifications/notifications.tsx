@@ -74,7 +74,7 @@ export const UserNotifications = () => {
 
   return (
     <>
-      <div className="flex h-full min-h-0 flex-col bg-background/50">
+      <div className="flex h-full min-h-0 flex-col">
         <ScrollArea className="min-h-0 flex-1">
           <div className="flex flex-col gap-3 px-3 py-3">
             <PageHeader

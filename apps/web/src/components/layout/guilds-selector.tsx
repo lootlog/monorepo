@@ -3,16 +3,17 @@ import { GuildNavItem } from "@/components/layout/guild-nav-item";
 import { InstallButton } from "@/components/layout/install-button";
 import { UserNavItem } from "@/components/layout/user-nav-item";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Separator } from "@lootlog/ui/components/separator";
 import { useGuilds } from "@/hooks/api/guilds/use-guilds";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { Reorder } from "framer-motion";
+import { Reorder, motion } from "framer-motion";
 import { useState, useEffect, useCallback, useMemo, type FC } from "react";
+import { GuildsSelectorSkeleton } from "@/components/layout/guilds-selector-skeleton";
 import { useUser } from "@/hooks/api/user/use-user";
 import { useUpdateUserPreferences } from "@/hooks/api/user/use-update-user-preferences";
+import { Separator } from "@lootlog/ui/components/separator";
 
 export const GuildsSelector: FC = () => {
-  const { data: guilds } = useGuilds();
+  const { data: guilds, isLoading } = useGuilds();
   const { user } = useUser();
   const currentGuildId = useGuildId();
   const [localGuilds, setLocalGuilds] = useState<typeof guilds>();
@@ -80,47 +81,61 @@ export const GuildsSelector: FC = () => {
       : orderedGuilds;
 
   return (
-    <div className="flex flex-col gap-2 w-16 border-r border-solid pt-2 h-full">
+    <div className="flex flex-col gap-2 w-16 border-r border-solid pt-2 pb-2 h-full overflow-hidden">
       <UserNavItem />
       <Separator className="-mt-[1px]" />
       <ScrollArea className="flex-1 h-24">
-        <Reorder.Group
-          axis="y"
-          values={guildList}
-          onReorder={handleReorder}
-          className="flex flex-col"
-          as="div"
-        >
-          {guildList.map((guild) => (
-            <Reorder.Item
-              key={guild.id}
-              value={guild}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-              className="w-full flex items-center justify-center cursor-grab active:cursor-grabbing"
-              whileDrag={{
-                scale: 1.1,
-                zIndex: 50,
-                transition: { type: "spring", stiffness: 300, damping: 30 },
-              }}
-              dragListener
-              dragControls={undefined}
-            >
-              <GuildNavItem
-                guild={guild}
-                isDragging={isDragging}
-                currentGuildId={currentGuildId}
-              />
-            </Reorder.Item>
-          ))}
-        </Reorder.Group>
+        {isLoading ? (
+          <GuildsSelectorSkeleton />
+        ) : (
+          <Reorder.Group
+            axis="y"
+            values={guildList}
+            onReorder={handleReorder}
+            className="flex flex-col gap-0.5"
+            as="div"
+          >
+            {guildList.map((guild, index) => (
+              <Reorder.Item
+                key={guild.id}
+                value={guild}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                className="w-full flex items-center justify-center cursor-grab active:cursor-grabbing"
+                whileDrag={{
+                  scale: 1.1,
+                  zIndex: 50,
+                  transition: { type: "spring", stiffness: 300, damping: 30 },
+                }}
+                dragListener
+                dragControls={undefined}
+              >
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{
+                    duration: 0.2,
+                    delay: index * 0.03,
+                    ease: "easeOut",
+                  }}
+                >
+                  <GuildNavItem
+                    guild={guild}
+                    isDragging={isDragging}
+                    currentGuildId={currentGuildId}
+                  />
+                </motion.div>
+              </Reorder.Item>
+            ))}
+          </Reorder.Group>
+        )}
       </ScrollArea>
       <Separator />
       <div className="flex items-center justify-center">
         <GuildNavCreate />
       </div>
       <Separator />
-      <div className="flex items-center justify-center pb-2">
+      <div className="flex items-center justify-center">
         <InstallButton />
       </div>
     </div>

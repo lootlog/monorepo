@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import type { MenuItem } from "./types";
-import { RukiaBorderGlow } from "./rukia-border-glow";
+import { FrozenButton } from "@/components/effects/rukia-frost";
 
 export const SidebarNavItem = ({
   url,
@@ -39,7 +39,10 @@ export const SidebarNavItem = ({
       variant={isActive ? "default" : "ghost"}
       size="sm"
       className={cn(
-        "justify-between w-full font-semibold transition relative",
+        "justify-between w-full font-semibold transition-colors duration-200 relative",
+        isActive && "shadow-[0_0_12px_var(--primary)/0.25]",
+        !isActive &&
+          "text-muted-foreground hover:text-primary hover:!bg-primary/10",
         highlight &&
           !isActive && [
             "overflow-hidden",
@@ -47,6 +50,7 @@ export const SidebarNavItem = ({
             "border border-yellow-500/30",
             "shadow-[0_0_12px_rgba(234,179,8,0.3)]",
             "animate-pulse",
+            "text-foreground",
           ],
       )}
       disabled={!available}
@@ -87,10 +91,22 @@ export const SidebarNavItem = ({
 
   return (
     <div
-      className="w-full px-2"
+      className="relative w-full px-2"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
+      <AnimatePresence>
+        {isActive && !isRukiaTheme && (
+          <motion.div
+            layoutId="sidebar-active-glow"
+            className="absolute inset-x-2 inset-y-0 rounded-md bg-primary/5"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ type: "spring", stiffness: 350, damping: 30 }}
+          />
+        )}
+      </AnimatePresence>
       <Link
         to={url}
         key={path}
@@ -104,9 +120,9 @@ export const SidebarNavItem = ({
         })}
       >
         {isRukiaTheme ? (
-          <RukiaBorderGlow isHovered={isHovered} isActive={isActive}>
+          <FrozenButton isHovered={isHovered} isActive={isActive}>
             {buttonContent}
-          </RukiaBorderGlow>
+          </FrozenButton>
         ) : (
           buttonContent
         )}

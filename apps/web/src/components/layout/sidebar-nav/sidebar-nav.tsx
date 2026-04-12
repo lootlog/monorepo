@@ -1,8 +1,8 @@
 import { Separator } from "@lootlog/ui/components/separator";
 import type { ReactNode } from "react";
 import { useLocation } from "@tanstack/react-router";
-import { Fragment } from "react/jsx-runtime";
 import { useTheme } from "@/hooks/context/use-theme";
+import { motion, AnimatePresence } from "framer-motion";
 import type { MenuItem } from "./types";
 import { FrozenSidebarBackground } from "./frozen-sidebar-background";
 import { SidebarNavItem } from "./sidebar-nav-item";
@@ -28,8 +28,10 @@ export const SidebarNav = ({
   const isRukiaTheme = theme === "rukia";
   const isCatTheme = theme.startsWith("cat-");
 
+  let enabledIndex = 0;
+
   return (
-    <div className="relative flex flex-col w-full gap-1 flex-1 overflow-hidden">
+    <div className="relative flex flex-col w-full gap-1.5 flex-1 overflow-hidden">
       {isRukiaTheme && <FrozenSidebarBackground />}
       {header && (
         <div className="relative h-14 min-h-14 flex flex-row items-center justify-between border-b mb-2 px-2 font-semibold">
@@ -37,60 +39,82 @@ export const SidebarNav = ({
         </div>
       )}
       {beforeItems}
-      {items.map(
-        ({
-          divided,
-          icon,
-          path,
-          label,
-          available,
-          enabled,
-          badge,
-          highlight,
-          childPaths,
-        }) => {
-          const url = `${basePath}${path}`;
-          const normalizedPathname = pathname.replace(/\/$/, "");
-          const normalizedUrl = url.replace(/\/$/, "");
-          const isActive =
-            path === ""
-              ? normalizedPathname === normalizedUrl ||
-                (childPaths?.some(
-                  (cp) =>
-                    normalizedPathname === `${normalizedUrl}${cp}` ||
-                    pathname.startsWith(`${normalizedUrl}${cp}/`),
-                ) ??
-                  false)
-              : normalizedPathname === normalizedUrl ||
-                pathname.startsWith(`${normalizedUrl}/`);
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={basePath}
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
+          className="flex flex-col gap-1.5"
+        >
+          {items.map(
+            ({
+              divided,
+              icon,
+              path,
+              label,
+              available,
+              enabled,
+              badge,
+              highlight,
+              childPaths,
+            }) => {
+              if (!enabled) return null;
 
-          return (
-            enabled && (
-              <Fragment key={path}>
-                {divided && <Separator className="my-2" />}
-                <SidebarNavItem
-                  url={url}
-                  path={path}
-                  available={available}
-                  isActive={isActive}
-                  icon={icon}
-                  label={label}
-                  badge={badge}
-                  highlight={highlight}
-                  isRukiaTheme={isRukiaTheme}
-                  isCatTheme={isCatTheme}
-                  onItemClick={(e) => {
-                    const item = items.find((item) => item.path === path);
-                    if (item) {
-                      onItemClick?.(item, e);
-                    }
+              const url = `${basePath}${path}`;
+              const normalizedPathname = pathname.replace(/\/$/, "");
+              const normalizedUrl = url.replace(/\/$/, "");
+              const isActive =
+                path === ""
+                  ? normalizedPathname === normalizedUrl ||
+                    (childPaths?.some(
+                      (cp) =>
+                        normalizedPathname === `${normalizedUrl}${cp}` ||
+                        pathname.startsWith(`${normalizedUrl}${cp}/`),
+                    ) ??
+                      false)
+                  : normalizedPathname === normalizedUrl ||
+                    pathname.startsWith(`${normalizedUrl}/`);
+
+              const staggerIndex = enabledIndex++;
+
+              return (
+                <motion.div
+                  key={path}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{
+                    duration: 0.2,
+                    delay: staggerIndex * 0.03,
+                    ease: "easeOut",
                   }}
-                />
-              </Fragment>
-            )
-          );
-        },
-      )}
+                >
+                  {divided && <Separator className="mb-1.5" />}
+                  <SidebarNavItem
+                    url={url}
+                    path={path}
+                    available={available}
+                    isActive={isActive}
+                    icon={icon}
+                    label={label}
+                    badge={badge}
+                    highlight={highlight}
+                    isRukiaTheme={isRukiaTheme}
+                    isCatTheme={isCatTheme}
+                    onItemClick={(e) => {
+                      const item = items.find((item) => item.path === path);
+                      if (item) {
+                        onItemClick?.(item, e);
+                      }
+                    }}
+                  />
+                </motion.div>
+              );
+            },
+          )}
+        </motion.div>
+      </AnimatePresence>
       {isCatTheme && <SidebarCatAnimation theme={theme} />}
     </div>
   );
