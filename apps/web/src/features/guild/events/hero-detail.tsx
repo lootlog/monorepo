@@ -53,6 +53,7 @@ import { EventParticipationConfirmationDialog } from "./components/dialogs/event
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { findEventHeroTimer } from "./utils/find-event-hero-timer";
 import {
+  getListEventHeroTimersQueryKey,
   useEventsMonitoringControllerGetActiveGapsForHero,
   useListEventHeroTimers,
   useListEventMaps,
@@ -151,6 +152,20 @@ export const HeroDetail = () => {
     },
     {
       world: event?.world ?? "",
+    },
+    {
+      query: {
+        enabled: Boolean(event?.world),
+        queryKey: getListEventHeroTimersQueryKey(
+          {
+            guildId: guildId ?? "",
+            eventId: eventId ?? "",
+          },
+          {
+            world: event?.world ?? "",
+          },
+        ),
+      },
     },
   );
 

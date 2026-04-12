@@ -12,7 +12,14 @@ export const orvalFetch = <TData>(
   path: string,
   requestInit: RequestInit = {},
 ): Promise<TData> => {
-  const baseURL = API_URL ?? window.location.origin;
+  const baseURL =
+    API_URL ??
+    (typeof window !== "undefined" ? window.location.origin : undefined);
+
+  if (!baseURL) {
+    throw new Error("API_URL must be configured when window is unavailable.");
+  }
+
   const requestUrl = buildRequestUrl({
     baseURL,
     path,

@@ -2,8 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
 
-const require = createRequire(import.meta.url);
-const yaml = require("../apps/api/node_modules/js-yaml");
+const requireFromApi = createRequire(path.resolve("apps/api/package.json"));
+const yaml = requireFromApi("js-yaml");
 
 const openApiPath = path.resolve("apps/api/openapi.yaml");
 const openApiDocument = yaml.load(fs.readFileSync(openApiPath, "utf8"));
@@ -88,12 +88,15 @@ const ensurePathParameters = (document) => {
         continue;
       }
 
+      const pathLevelParameters = Array.isArray(pathItem.parameters)
+        ? pathItem.parameters
+        : [];
       const parameters = Array.isArray(operation.parameters)
         ? operation.parameters
         : [];
 
       for (const parameterName of pathParameterNames) {
-        const existingParameter = parameters.find(
+        const existingParameter = [...pathLevelParameters, ...parameters].find(
           (parameter) =>
             parameter &&
             typeof parameter === "object" &&

@@ -10,6 +10,7 @@ export default defineConfig({
       client: "react-query",
       httpClient: "fetch",
       mode: "tags-split",
+      namingConvention: "kebab-case",
       override: {
         fetch: {
           includeHttpResponseReturnType: false,
