@@ -13,15 +13,9 @@ export const guildMembersQueryOptions = (
 ) =>
   queryOptions({
     queryKey: queryKeys.members.list(guildId, includeInactive),
-    queryFn: async () => {
-      const response = await apiClient.get<GuildMember[]>(
-        `/guilds/${guildId}/members`,
-        {
-          params: { includeInactive: includeInactive.toString() },
-        } as ApiRequestConfig,
-      );
-
-      return response;
-    },
+    queryFn: () =>
+      apiClient.get<GuildMember[]>(`/guilds/${guildId}/members`, {
+        params: { includeInactive: includeInactive.toString() },
+      } as ApiRequestConfig),
     enabled: !!guildId,
   });

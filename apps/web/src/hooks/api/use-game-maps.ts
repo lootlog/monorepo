@@ -12,10 +12,7 @@ export const useGameMaps = () => {
 
   return useQuery<GameMap[]>({
     queryKey: queryKeys.gameData.gameMaps(),
-    queryFn: async () => {
-      const response = await client.get<GameMap[]>("/maps");
-      return response;
-    },
+    queryFn: () => client.get<GameMap[]>("/maps"),
     staleTime: 1000 * 60 * 60, // 1 hour (matches backend cache)
   });
 };

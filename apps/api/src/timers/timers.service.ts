@@ -1198,16 +1198,24 @@ export class TimersService implements OnModuleInit {
         const npc = parseNpc(timer.npc);
         if (!npc) return null;
 
+        const npcData = timer.npc as {
+          name?: string;
+          prof?: string;
+          location?: string;
+          wt?: string | number;
+          icon?: string;
+        } | null;
+
         return {
           npcId: timer.npcId,
           timerKey: timer.timerKey,
-          name: (timer.npc as { name?: string })?.name ?? "",
+          name: npcData?.name ?? "",
           lvl: npc.lvl,
           type: npc.type,
-          prof: (timer.npc as { prof?: string })?.prof ?? "",
-          location: (timer.npc as { location?: string })?.location ?? "",
-          wt: (timer.npc as { wt?: string | number })?.wt ?? 0,
-          icon: (timer.npc as { icon?: string })?.icon ?? "",
+          prof: npcData?.prof ?? "",
+          location: npcData?.location ?? "",
+          wt: npcData?.wt ?? 0,
+          icon: npcData?.icon ?? "",
           latestRespBaseSeconds: timer.latestRespBaseSeconds,
           latestRespawnRandomness: timer.latestRespawnRandomness,
         };

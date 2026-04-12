@@ -30,5 +30,8 @@ export {
   formatDateTimeFull,
 } from "./format-date";
 
-export { isEventActiveAtTimestamp } from "./event-activity";
-export { getEventStatusAtTimestamp, type EventStatus } from "./event-activity";
+export {
+  isEventActiveAtTimestamp,
+  getEventStatusAtTimestamp,
+  type EventStatus,
+} from "./event-activity";

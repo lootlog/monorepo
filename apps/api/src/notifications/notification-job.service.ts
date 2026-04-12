@@ -620,11 +620,10 @@ export class NotificationJobService {
     });
 
     const hasRequiredPermissions =
-      notificationRule.ownerType === DbNotificationOwnerType.USER
-        ? true
-        : await this.guildsService.hasRequiredGuildPermissions(
-            notificationRule.ownerId,
-          );
+      notificationRule.ownerType === DbNotificationOwnerType.USER ||
+      (await this.guildsService.hasRequiredGuildPermissions(
+        notificationRule.ownerId,
+      ));
 
     const scheduledFor = this.calculateTimerNotificationSchedule({
       minSpawnTime: event.minSpawnTime,
@@ -660,10 +659,7 @@ export class NotificationJobService {
             maxSpawnTime: new Date(event.maxSpawnTime),
             scheduledFor: effectiveScheduledFor,
           }),
-          forceBlocked:
-            !hasRequiredPermissions ||
-            !relation.target.canSend ||
-            !relation.target.active,
+          forceBlocked: !hasRequiredPermissions,
         });
 
         if (
@@ -714,11 +710,10 @@ export class NotificationJobService {
     }
 
     const hasRequiredPermissions =
-      notificationRule.ownerType === DbNotificationOwnerType.USER
-        ? true
-        : await this.guildsService.hasRequiredGuildPermissions(
-            notificationRule.ownerId,
-          );
+      notificationRule.ownerType === DbNotificationOwnerType.USER ||
+      (await this.guildsService.hasRequiredGuildPermissions(
+        notificationRule.ownerId,
+      ));
 
     await Promise.all(
       notificationRule.targets.map(async (relation) => {
@@ -738,10 +733,7 @@ export class NotificationJobService {
             target: relation.target,
             scheduledFor: scheduledAt,
           }),
-          forceBlocked:
-            !hasRequiredPermissions ||
-            !relation.target.canSend ||
-            !relation.target.active,
+          forceBlocked: !hasRequiredPermissions,
         });
 
         if (
@@ -830,11 +822,10 @@ export class NotificationJobService {
     }
 
     const hasRequiredPermissions =
-      notificationRule.ownerType === DbNotificationOwnerType.USER
-        ? true
-        : await this.guildsService.hasRequiredGuildPermissions(
-            notificationRule.ownerId,
-          );
+      notificationRule.ownerType === DbNotificationOwnerType.USER ||
+      (await this.guildsService.hasRequiredGuildPermissions(
+        notificationRule.ownerId,
+      ));
 
     await Promise.all(
       notificationRule.targets.map(async (relation) => {
@@ -854,10 +845,7 @@ export class NotificationJobService {
             target: relation.target,
             scheduledFor: nextScheduledAt,
           }),
-          forceBlocked:
-            !hasRequiredPermissions ||
-            !relation.target.canSend ||
-            !relation.target.active,
+          forceBlocked: !hasRequiredPermissions,
         });
 
         if (
