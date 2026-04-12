@@ -3,17 +3,17 @@ import { Button } from "@lootlog/ui/components/button";
 import { X, Cat } from "lucide-react";
 import { useLocalStorage } from "usehooks-ts";
 import { useTheme } from "@/hooks/context/use-theme";
+import { DEFAULT_CAT_THEME_VARIANT, useThemeMeta } from "@/themes";
 
 const STORAGE_KEY = "lootlog:theme-announcement:cat:dismissed";
 
 export const ThemeAnnouncement = () => {
   const [isDismissed, setIsDismissed] = useLocalStorage(STORAGE_KEY, false);
-  const { theme, setTheme } = useTheme();
+  const { setTheme } = useTheme();
+  const { isCatTheme } = useThemeMeta();
   const { t } = useTranslation();
 
-  const isAlreadyCat = theme.startsWith("cat-");
-
-  if (isDismissed || isAlreadyCat) {
+  if (isDismissed || isCatTheme) {
     return null;
   }
 
@@ -22,7 +22,7 @@ export const ThemeAnnouncement = () => {
   };
 
   const handleSwitchTheme = () => {
-    setTheme("cat-pink");
+    setTheme(DEFAULT_CAT_THEME_VARIANT);
     setIsDismissed(true);
   };
 

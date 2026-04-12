@@ -12,19 +12,18 @@ import {
 import { useGuildMember } from "@/hooks/api/members/use-guild-member";
 import { useMemberRefresh } from "@/hooks/api/members/use-member-refresh";
 import { useGuild } from "@/hooks/api/guilds/use-guild";
-import { useTheme } from "@/hooks/context/use-theme";
 import { cn } from "@lootlog/ui/lib/utils";
 import { getPermissionRefreshInfo } from "@/utils/get-permission-refresh-info";
 import { RefreshCcw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useThemeMeta } from "@/themes";
 
 export const GuildSidebarHeader = ({ guildId }: { guildId?: string }) => {
   const { data: guild } = useGuild({ retry: false });
   const { data: member } = useGuildMember();
   const { mutate: refreshMember } = useMemberRefresh();
-  const { theme } = useTheme();
-  const isRukiaTheme = theme === "rukia";
+  const { isRukiaTheme } = useThemeMeta();
   const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
 
   useEffect(() => {

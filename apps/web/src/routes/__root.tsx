@@ -6,10 +6,9 @@ import { useReducedMotion } from "framer-motion";
 import { GlobalContextProvider } from "@/contexts/global-context";
 import { ThemeProvider } from "@/contexts/theme-context";
 import type { RouterContext } from "@/App";
-import { CatSpinnerProvider } from "@/contexts/cat-spinner-provider";
-import { ThemedRukiaFrostOverlay } from "@/components/effects/themed-rukia-frost-overlay";
 import { RootRouteError } from "@/components/router/root-route-error";
 import { RootRouteNotFound } from "@/components/router/root-route-not-found";
+import { ThemeRootEffects, ThemeSpinnerProvider } from "@/themes";
 
 import "@lootlog/ui/globals.css";
 import "@/i18n/config";
@@ -27,11 +26,11 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <CatSpinnerProvider>
+        <ThemeSpinnerProvider>
           <NuqsAdapter>
             <GlobalContextProvider>
               <Outlet />
-              {!prefersReducedMotion && <ThemedRukiaFrostOverlay />}
+              {!prefersReducedMotion && <ThemeRootEffects />}
               {import.meta.env.DEV ? (
                 <Suspense fallback={null}>
                   <ReactQueryDevtools initialIsOpen={false} />
@@ -39,7 +38,7 @@ function RootComponent() {
               ) : null}
             </GlobalContextProvider>
           </NuqsAdapter>
-        </CatSpinnerProvider>
+        </ThemeSpinnerProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

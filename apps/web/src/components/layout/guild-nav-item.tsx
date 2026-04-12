@@ -1,5 +1,4 @@
 import type { Guild } from "@/hooks/api/guilds/use-guild";
-import { useTheme } from "@/hooks/context/use-theme";
 import { cn } from "@/utils/cn";
 import {
   Avatar,
@@ -13,8 +12,8 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import type { FC } from "react";
 import { Link } from "@tanstack/react-router";
-import { FrozenCircle } from "@/components/effects/rukia-frost";
 import { motion } from "framer-motion";
+import { ThemeCircularFrame, useThemeMeta } from "@/themes";
 
 export type GuildNavItemProps = {
   guild: Guild;
@@ -27,8 +26,7 @@ const GuildNavItemComponent: FC<GuildNavItemProps> = ({
   isDragging = false,
   currentGuildId,
 }) => {
-  const { theme } = useTheme();
-  const isRukiaTheme = theme === "rukia";
+  const { isRukiaTheme } = useThemeMeta();
   const isActive =
     currentGuildId === guild.id || currentGuildId === guild.vanityUrl;
 
@@ -75,11 +73,9 @@ const GuildNavItemComponent: FC<GuildNavItemProps> = ({
             onClick={handleClick}
             style={{ pointerEvents: isDragging ? "none" : "auto" }}
           >
-            {isRukiaTheme ? (
-              <FrozenCircle isActive={isActive}>{avatarElement}</FrozenCircle>
-            ) : (
-              avatarElement
-            )}
+            <ThemeCircularFrame isActive={isActive}>
+              {avatarElement}
+            </ThemeCircularFrame>
           </Link>
         </div>
       </TooltipTrigger>

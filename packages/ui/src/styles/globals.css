@@ -1407,6 +1407,130 @@ body {
   pointer-events: none;
 }
 
+/* ===== RUKIA THEME: Custom Effects ===== */
+
+/* Selection */
+.rukia ::selection {
+  background: oklch(0.75 0.1 230 / 0.35);
+  color: oklch(0.15 0.02 230);
+}
+
+.dark.rukia ::selection {
+  background: oklch(0.55 0.12 220 / 0.4);
+  color: oklch(0.98 0.01 230);
+}
+
+/* Scrollbar */
+.rukia .custom-scrollbar {
+  scrollbar-color: oklch(0.75 0.08 230 / 0.5) transparent;
+}
+
+.rukia .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: oklch(0.75 0.08 230 / 0.4);
+}
+
+.rukia .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: oklch(0.7 0.1 220 / 0.6);
+  box-shadow: 0 0 6px oklch(0.7 0.12 220 / 0.3);
+}
+
+.dark.rukia .custom-scrollbar {
+  scrollbar-color: oklch(0.5 0.1 220 / 0.4) transparent;
+}
+
+.dark.rukia .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: oklch(0.5 0.1 220 / 0.35);
+}
+
+.dark.rukia .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: oklch(0.6 0.12 220 / 0.5);
+  box-shadow: 0 0 8px oklch(0.6 0.14 220 / 0.3);
+}
+
+/* Skeleton shimmer */
+@keyframes rukia-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.rukia [data-slot="skeleton"] {
+  animation: rukia-shimmer 2.5s ease-in-out infinite;
+  background: linear-gradient(
+    90deg,
+    oklch(0.94 0.015 230) 0%,
+    oklch(0.97 0.01 230) 40%,
+    oklch(0.99 0.005 230) 50%,
+    oklch(0.97 0.01 230) 60%,
+    oklch(0.94 0.015 230) 100%
+  );
+  background-size: 200% 100%;
+}
+
+.dark.rukia [data-slot="skeleton"] {
+  animation: rukia-shimmer 2.5s ease-in-out infinite;
+  background: linear-gradient(
+    90deg,
+    oklch(0.18 0.03 230) 0%,
+    oklch(0.22 0.04 220) 40%,
+    oklch(0.28 0.05 220) 50%,
+    oklch(0.22 0.04 220) 60%,
+    oklch(0.18 0.03 230) 100%
+  );
+  background-size: 200% 100%;
+}
+
+/* Input focus glow */
+.rukia input:focus-visible,
+.rukia textarea:focus-visible,
+.rukia select:focus-visible,
+.rukia [role="combobox"]:focus-visible {
+  box-shadow:
+    0 0 0 2px oklch(0.55 0.12 230 / 0.25),
+    0 0 12px oklch(0.7 0.1 220 / 0.15);
+}
+
+.dark.rukia input:focus-visible,
+.dark.rukia textarea:focus-visible,
+.dark.rukia select:focus-visible,
+.dark.rukia [role="combobox"]:focus-visible {
+  box-shadow:
+    0 0 0 2px oklch(0.72 0.14 220 / 0.3),
+    0 0 16px oklch(0.6 0.12 220 / 0.2);
+}
+
+/* Tooltip & Popover frost border */
+.rukia [data-slot="tooltip-content"] {
+  border-color: oklch(0.75 0.08 230 / 0.4);
+  box-shadow:
+    0 4px 12px oklch(0.55 0.1 230 / 0.1),
+    inset 0 0 0 1px oklch(0.85 0.06 230 / 0.15);
+}
+
+.dark.rukia [data-slot="tooltip-content"] {
+  border-color: oklch(0.45 0.08 220 / 0.5);
+  box-shadow:
+    0 4px 16px oklch(0.3 0.08 220 / 0.25),
+    inset 0 0 0 1px oklch(0.5 0.1 220 / 0.15);
+}
+
+.rukia [data-slot="popover-content"] {
+  border-color: oklch(0.75 0.08 230 / 0.4);
+  box-shadow:
+    0 8px 24px oklch(0.55 0.1 230 / 0.1),
+    inset 0 0 0 1px oklch(0.85 0.06 230 / 0.12);
+}
+
+.dark.rukia [data-slot="popover-content"] {
+  border-color: oklch(0.45 0.08 220 / 0.5);
+  box-shadow:
+    0 8px 28px oklch(0.3 0.08 220 / 0.3),
+    inset 0 0 0 1px oklch(0.5 0.1 220 / 0.12);
+}
+
 /* ===== CAT THEME: Różowy Kociak ===== */
 .dark.cat-pink {
   --background: oklch(0.2 0.03 350);
