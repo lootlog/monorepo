@@ -17,10 +17,7 @@ export type UserPreferences = {
 export const userPreferencesQueryOptions = () =>
   queryOptions({
     queryKey: queryKeys.user.preferences(),
-    queryFn: () =>
-      apiClient
-        .get<UserPreferences>("/users/@me/preferences")
-        .then((data) => data),
+    queryFn: () => apiClient.get<UserPreferences>("/users/@me/preferences"),
     retry: 1,
   });
 

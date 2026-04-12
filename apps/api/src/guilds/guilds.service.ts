@@ -238,7 +238,10 @@ export class GuildsService {
       return this.refreshGuildDiscordSync(guildId);
     }
 
-    const isStale = this.shouldRefreshGuildDiscordSync(cachedSyncState, true);
+    const isStale = this.shouldRefreshGuildDiscordSync(
+      cachedSyncState,
+      refreshIfStale,
+    );
 
     if (forceRefresh || (refreshIfStale && isStale)) {
       try {

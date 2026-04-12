@@ -308,7 +308,6 @@ export const LootSearchCommand = ({
                         >
                           <PlayerSearchTile
                             icon={player.icon}
-                            name={player.name}
                             className="scale-75"
                           />
                           <span className="font-semibold">{player.name}</span>

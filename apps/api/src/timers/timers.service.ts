@@ -133,7 +133,7 @@ export class TimersService implements OnModuleInit {
   }
 
   private getTimersCacheKey(guildId: string, world?: string): string {
-    return `timer:list:${guildId}:${world || "all"}`;
+    return `timer:list:${guildId}:${world ?? "all"}`;
   }
 
   private async invalidateTimersCache(guildId: string): Promise<void> {
@@ -296,18 +296,14 @@ export class TimersService implements OnModuleInit {
     }
   }
 
-  private findTimerAfterLockFailure(
+  private async findTimerAfterLockFailure(
     guildId: string,
     world: string,
     timerKey: string,
   ) {
     const maxAttempts = 10;
 
-    const tryFindTimer = async (
-      attempt: number,
-    ): Promise<Awaited<
-      ReturnType<typeof this.prisma.timer.findUnique>
-    > | null> => {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
       const timer = await this.prisma.timer.findUnique({
         where: { timerId: { guildId, world, timerKey } },
         include: { member: true },
@@ -317,15 +313,12 @@ export class TimersService implements OnModuleInit {
         return timer;
       }
 
-      if (attempt >= maxAttempts - 1) {
-        return null;
+      if (attempt < maxAttempts - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 20));
       }
+    }
 
-      await new Promise((resolve) => setTimeout(resolve, 20));
-      return tryFindTimer(attempt + 1);
-    };
-
-    return tryFindTimer(0);
+    return null;
   }
 
   private async findTimerByIdentifier(
@@ -1175,7 +1168,7 @@ export class TimersService implements OnModuleInit {
     search: string,
     limit = 10,
   ) {
-    const limitNum = Number(limit) || 10;
+    const limitNum = limit;
     const manualTimerType = String(TIMER_TYPES.CUSTOM_MANUAL);
     const timers = await this.prisma.$queryRaw<Timer[]>`
       SELECT DISTINCT ON (t."timerKey")

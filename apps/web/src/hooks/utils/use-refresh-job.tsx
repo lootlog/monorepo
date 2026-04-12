@@ -14,7 +14,7 @@ export const useRefreshJob = (
   const { socket, connected } = useGateway();
 
   const { data: guild } = useGuild({});
-  const currentGuildIdRef = useRef<string | undefined>(null);
+  const currentGuildIdRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
     currentGuildIdRef.current = guild?.id;

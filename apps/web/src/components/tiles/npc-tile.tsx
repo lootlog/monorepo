@@ -43,14 +43,12 @@ export const NpcTile: FC<NpcTileProps> = ({
   );
 
   const npcImage = (
-    <>
-      {/* eslint-disable-next-line eslint-plugin-next/no-img-element */}
-      <img
-        className="relative cursor-pointer rounded-lg max-h-10 max-w-8"
-        src={npcIconSource}
-        alt={name}
-      />
-    </>
+    // eslint-disable-next-line eslint-plugin-next/no-img-element
+    <img
+      className="relative cursor-pointer rounded-lg max-h-10 max-w-8"
+      src={npcIconSource}
+      alt={name}
+    />
   );
 
   if (sharedTooltip) {

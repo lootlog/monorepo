@@ -242,30 +242,26 @@ export class KillsService {
           }
         : {};
 
-    // Fetch member participation stats
-    const memberStats = await this.prisma.npcKillStats.findMany({
-      where: {
-        guildId,
-        ...(npcTypes && { npcType: { in: npcTypes } }),
-        ...(query.world && { world: query.world }),
-        ...npcLvlCondition,
-        ...visibilityCondition,
-      },
-      include: {
-        member: true,
-      },
-    });
+    const killStatsWhere = {
+      guildId,
+      ...(npcTypes && { npcType: { in: npcTypes } }),
+      ...(query.world && { world: query.world }),
+      ...npcLvlCondition,
+      ...visibilityCondition,
+    };
 
-    // Fetch unique guild kills
-    const guildSummary = await this.prisma.guildKillSummary.findMany({
-      where: {
-        guildId,
-        ...(npcTypes && { npcType: { in: npcTypes } }),
-        ...(query.world && { world: query.world }),
-        ...npcLvlCondition,
-        ...visibilityCondition,
-      },
-    });
+    // Fetch member participation stats and unique guild kills in parallel
+    const [memberStats, guildSummary] = await Promise.all([
+      this.prisma.npcKillStats.findMany({
+        where: killStatsWhere,
+        include: {
+          member: true,
+        },
+      }),
+      this.prisma.guildKillSummary.findMany({
+        where: killStatsWhere,
+      }),
+    ]);
 
     // Calculate unique kills from GuildKillSummary
     const uniqueKillsByType: Record<string, number> = {};

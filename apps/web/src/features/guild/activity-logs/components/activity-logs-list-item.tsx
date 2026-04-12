@@ -34,6 +34,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
 import { MARGONEM_GUILD_URL } from "@/constants/margonem";
+import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
 
 type Props = {
   activity: ActivityLog;
@@ -267,9 +268,7 @@ export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
                 <MapPin className="h-3 w-3" />
                 <span>
                   {t("activityLogs.list.world", {
-                    world:
-                      activity.world.charAt(0).toUpperCase() +
-                      activity.world.slice(1),
+                    world: capitalizeFirstLetter(activity.world),
                   })}
                 </span>
               </div>

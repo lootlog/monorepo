@@ -159,8 +159,6 @@ export const MultiSelect = React.forwardRef<
       value ?? defaultValue,
     );
     const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
-    const [isAnimating] = React.useState(false);
-
     React.useEffect(() => {
       if (value !== undefined) {
         setSelectedValues(value);
@@ -257,7 +255,6 @@ export const MultiSelect = React.forwardRef<
                         className={cn(
                           "px-1",
                           "max-w-20",
-                          isAnimating ? "animate-bounce" : "",
                           multiSelectVariants({ variant }),
                         )}
                         style={{ animationDuration: `${animation}s` }}
@@ -280,7 +277,6 @@ export const MultiSelect = React.forwardRef<
                     <Badge
                       className={cn(
                         "bg-transparent max-w-14 px-2 text-foreground border-foreground/1 hover:bg-transparent border border-border",
-                        isAnimating ? "animate-bounce" : "",
                         multiSelectVariants({ variant }),
                       )}
                       style={{ animationDuration: `${animation}s` }}

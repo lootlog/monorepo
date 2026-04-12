@@ -8,6 +8,7 @@ import { GuildContext } from "@/contexts/guild.context";
 import { useWorlds } from "@/hooks/api/game-data/use-worlds";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useTheme } from "@/hooks/context/use-theme";
+import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
 
 const ALL_WORLDS_SENTINEL = "__ALL__";
 
@@ -56,7 +57,7 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
     const worldOptions =
       orderedWorlds?.map((w) => ({
         value: w,
-        label: w.charAt(0).toUpperCase() + w.slice(1),
+        label: capitalizeFirstLetter(w),
       })) ?? [];
 
     if (showAllOption) {

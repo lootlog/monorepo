@@ -174,11 +174,7 @@ function ElectricBorder({
     return () => ro.disconnect();
   }, [updateAnim]);
 
-  const [canRunEffects, setCanRunEffects] = React.useState(true);
-
-  React.useEffect(() => {
-    setCanRunEffects(checkCanRunHeavyEffects());
-  }, []);
+  const [canRunEffects] = React.useState(() => checkCanRunHeavyEffects());
 
   if (!enabled) {
     return <>{children}</>;

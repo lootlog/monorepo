@@ -4,7 +4,6 @@ import type { FC } from "react";
 
 type PlayerSearchTileProps = {
   icon: string;
-  name: string;
   className?: string;
 };
 

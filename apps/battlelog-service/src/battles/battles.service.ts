@@ -369,7 +369,7 @@ export class BattlesService implements IBattlesService {
       );
     }
 
-    return await this.r2Service.getBattleData(battle.id);
+    return this.r2Service.getBattleData(battleId);
   }
 
   analyzeBattle(dto: CreateBattleDto): BattleAnalysis {

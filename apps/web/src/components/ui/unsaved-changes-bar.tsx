@@ -7,7 +7,6 @@ export type UnsavedChangesBarProps = {
   isDirty: boolean;
   isSubmitting: boolean;
   onReset: () => void;
-  onSubmit?: () => void;
   unsavedChangesLabel?: string;
   resetLabel?: string;
   saveLabel?: string;
