@@ -17,8 +17,7 @@ const normalizeAuthScopes = (data: unknown): string[] => {
 export const authScopesQueryOptions = () =>
   queryOptions({
     queryKey: queryKeys.auth.scopes(),
-    queryFn: () =>
-      authApiClient.get<unknown>(`/auth/@me/scopes`).then((data) => data),
+    queryFn: () => authApiClient.get<unknown>(`/auth/@me/scopes`),
     select: normalizeAuthScopes,
   });
 

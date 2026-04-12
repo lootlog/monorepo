@@ -1,6 +1,5 @@
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { queryOptions, useQuery } from "@tanstack/react-query";
-import { useApiClient } from "../use-api-client";
 import { apiClient } from "@/lib/api-client/api-client";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -22,7 +21,6 @@ export const reservationsCardsQueryOptions = (guildId: string) =>
   });
 
 export const useReservationsCards = () => {
-  useApiClient();
   const guildId = useGuildId();
 
   return useQuery(reservationsCardsQueryOptions(guildId ?? ""));

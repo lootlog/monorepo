@@ -21,7 +21,7 @@ import { DatePicker } from "../date-picker";
 import { toast } from "sonner";
 import { useCreateReservation } from "@/hooks/api/reservations/use-create-reservation";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
-import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
+import { getApiErrorMessage } from "@/lib/api-client/api-client";
 import { useTranslation } from "react-i18next";
 
 type CreateReservationDialogProps = {

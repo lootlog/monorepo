@@ -22,7 +22,7 @@ import { ScheduleGrid } from "./schedule-grid";
 import { CreateReservationDialog } from "./create-reservation-dialog";
 import { useScheduleNavigation } from "./use-schedule-navigation";
 import { useReservationSegments } from "./use-reservation-segments";
-import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
+import { getApiErrorMessage } from "@/lib/api-client/api-client";
 import { queryKeys } from "@/lib/query-keys";
 
 export const ReservationsSchedule: React.FC = () => {

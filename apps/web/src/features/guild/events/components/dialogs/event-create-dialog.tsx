@@ -32,7 +32,7 @@ import {
   normalizeScoringMode,
   normalizeScoringRules,
 } from "../../utils/scoring-rules";
-import { getApiErrorMessage } from "../../utils/get-api-error-message";
+import { getApiErrorMessage } from "@/lib/api-client/api-client";
 import { ScoringRulesEditor } from "../scoring/scoring-rules-editor";
 
 interface EventCreateDialogProps {

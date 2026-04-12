@@ -372,9 +372,7 @@ export class GuildsService {
       const permissions =
         discordId === guild.ownerId
           ? allPermissions
-          : member.roles.reduce((acc: Permission[], role) => {
-              return acc.concat(role.permissions);
-            }, []);
+          : member.roles.flatMap((role) => role.permissions);
 
       return { guild, permissions, roles: member.roles };
     });

@@ -78,9 +78,7 @@ export class MemberContextService {
 
     const permissions = isOwner
       ? Object.values(Permission)
-      : member.roles.reduce((acc: Permission[], role) => {
-          return acc.concat(role.permissions);
-        }, []) || [];
+      : member.roles.flatMap((role) => role.permissions);
 
     const uniquePermissions = Array.from(new Set(permissions));
 

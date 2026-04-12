@@ -64,11 +64,8 @@ const generateSmartDefault = (
     }
   }
 
-  if (lowerKey.includes("port")) {
-    const portMatch = originalValue.match(/^\d+$/);
-    if (portMatch) {
-      return originalValue;
-    }
+  if (lowerKey.includes("port") && /^\d+$/.test(originalValue)) {
+    return originalValue;
   }
 
   if (lowerKey.includes("host") && originalValue === "localhost") {
@@ -87,14 +84,6 @@ const generateSmartDefault = (
     lowerKey.includes("db_name") ||
     lowerKey.includes("database") ||
     lowerKey.includes("db_user")
-  ) {
-    return originalValue;
-  }
-
-  if (
-    originalValue === "xxx" ||
-    originalValue === "your_" ||
-    originalValue.startsWith("your_")
   ) {
     return originalValue;
   }

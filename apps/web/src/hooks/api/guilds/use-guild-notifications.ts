@@ -240,20 +240,17 @@ export const guildNotificationsQueryOptions = (guildId: string) =>
         limits: rulesResponse.limits,
       };
     },
-    enabled: guildId.length > 0,
+    enabled: !!guildId,
   });
 
 export const guildNotificationJobsQueryOptions = (guildId: string) =>
   queryOptions({
     queryKey: createGuildNotificationJobsQueryKey(guildId),
-    queryFn: async () => {
-      const response = await apiClient.get<GuildNotificationsResponse["jobs"]>(
+    queryFn: () =>
+      apiClient.get<GuildNotificationsResponse["jobs"]>(
         `/guilds/${guildId}/notifications/jobs`,
-      );
-
-      return response;
-    },
-    enabled: guildId.length > 0,
+      ),
+    enabled: !!guildId,
   });
 
 export const guildAvailableNotificationTargetsQueryOptions = (
@@ -262,15 +259,11 @@ export const guildAvailableNotificationTargetsQueryOptions = (
 ) =>
   queryOptions({
     queryKey: createGuildAvailableNotificationTargetsQueryKey(guildId),
-    queryFn: async () => {
-      const response =
-        await apiClient.get<GuildAvailableNotificationTargetsResponse>(
-          `/guilds/${guildId}/notifications/targets/available`,
-        );
-
-      return response;
-    },
-    enabled: guildId.length > 0 && enabled,
+    queryFn: () =>
+      apiClient.get<GuildAvailableNotificationTargetsResponse>(
+        `/guilds/${guildId}/notifications/targets/available`,
+      ),
+    enabled: !!guildId && enabled,
   });
 
 export const useGuildNotifications = () => {

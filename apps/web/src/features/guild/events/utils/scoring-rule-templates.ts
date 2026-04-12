@@ -1,6 +1,6 @@
 import type { EventScoringRule } from "../types/scoring-rules";
 
-const makeRuleId = () =>
+export const makeRuleId = () =>
   `rule-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 
 export interface ScoringRuleTemplate {

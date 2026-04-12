@@ -4,72 +4,29 @@ type Props = {
   children: React.ReactNode;
 };
 
-type CreateGuildModalAction =
-  | {
-      type: "OPEN";
-    }
-  | { type: "CLOSE" };
+type ModalAction = { type: "OPEN" } | { type: "CLOSE" };
 
-type CreateGuildModalState = {
-  isOpen: boolean;
-};
-
-type InstallAddonModalAction =
-  | {
-      type: "OPEN";
-    }
-  | { type: "CLOSE" };
-
-type InstallAddonModalState = {
+type ModalState = {
   isOpen: boolean;
 };
 
 export type GlobalContextProviderValue = {
   createGuildModal: {
-    state: CreateGuildModalState;
-    dispatch: React.Dispatch<CreateGuildModalAction>;
+    state: ModalState;
+    dispatch: React.Dispatch<ModalAction>;
   };
   installAddonModal: {
-    state: InstallAddonModalState;
-    dispatch: React.Dispatch<InstallAddonModalAction>;
+    state: ModalState;
+    dispatch: React.Dispatch<ModalAction>;
   };
 };
 
-const CREATE_GUILD_MODAL_INITIAL_STATE = {
-  isOpen: false,
-};
-
-const createGuildModalReducer = (
-  state: CreateGuildModalState,
-  action: CreateGuildModalAction,
-): CreateGuildModalState => {
+const modalReducer = (state: ModalState, action: ModalAction): ModalState => {
   switch (action.type) {
     case "OPEN":
-      return {
-        isOpen: true,
-      };
+      return { isOpen: true };
     case "CLOSE":
-      return {
-        isOpen: false,
-      };
-    default:
-      return state;
-  }
-};
-
-const installAddonModalReducer = (
-  state: InstallAddonModalState,
-  action: InstallAddonModalAction,
-): InstallAddonModalState => {
-  switch (action.type) {
-    case "OPEN":
-      return {
-        isOpen: true,
-      };
-    case "CLOSE":
-      return {
-        isOpen: false,
-      };
+      return { isOpen: false };
     default:
       return state;
   }
@@ -77,11 +34,11 @@ const installAddonModalReducer = (
 
 export const GlobalContextProvider: React.FC<Props> = ({ children }) => {
   const [reservationsModalState, reservationsModalDispatch] = useReducer(
-    createGuildModalReducer,
-    CREATE_GUILD_MODAL_INITIAL_STATE,
+    modalReducer,
+    { isOpen: false },
   );
   const [installAddonModalState, installAddonModalDispatch] = useReducer(
-    installAddonModalReducer,
+    modalReducer,
     { isOpen: false },
   );
 
