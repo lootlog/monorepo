@@ -621,7 +621,9 @@ export class EventCatalogService {
         mapName: data.mapName,
       },
       include: {
-        assignedMembers: true,
+        assignedMembers: {
+          select: memberSelectWithTopRole,
+        },
       },
     });
 
