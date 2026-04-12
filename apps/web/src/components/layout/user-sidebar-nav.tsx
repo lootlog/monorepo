@@ -1,13 +1,13 @@
 import { useTranslation } from "react-i18next";
 import { useSession } from "@/hooks/auth/use-session";
-import { useTheme } from "@/hooks/context/use-theme";
 import { BellRing, LayoutDashboard, Settings, Swords } from "lucide-react";
 import { SidebarNav, type MenuItem } from "./sidebar-nav/index";
 import { ROUTE_SEGMENTS } from "@/config/routes";
+import { useThemeMeta } from "@/themes";
 
 export const UserSidebarNav = () => {
   const { data: session } = useSession();
-  const { theme } = useTheme();
+  const { greetingSuffix } = useThemeMeta();
   const { t } = useTranslation();
   const menuItems: MenuItem[] = [
     {
@@ -46,13 +46,11 @@ export const UserSidebarNav = () => {
     },
   ];
 
-  const isCatTheme = theme.startsWith("cat-");
-  const greeting = isCatTheme ? "🐱" : "👋";
   const userName = session?.user?.name;
 
   const header = (
     <span className="ml-3 text-sm font-semibold text-nowrap text-ellipsis overflow-hidden">
-      {t("common.greeting", { name: userName })} {greeting}
+      {t("common.greeting", { name: userName })} {greetingSuffix}
     </span>
   );
 

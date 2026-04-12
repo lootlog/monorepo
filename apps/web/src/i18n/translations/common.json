@@ -84,9 +84,12 @@
     "loadError": "Nie udało się załadować aktywności.",
     "empty": "Nie znaleziono żadnych aktywności.",
     "emptyCat": "Kot śpi... brak aktywności 😴",
+    "emptyRukia": "Lodowa cisza... brak aktywności.",
     "loadingMore": "Ładowanie kolejnych aktywności...",
     "loadingMoreCat": "Kotek szuka dalej... 🐾",
+    "loadingMoreRukia": "Szron odkrywa kolejne aktywności...",
     "end": "To już wszystkie aktywności",
-    "endCat": "Miau, to już wszystko! 😺"
+    "endCat": "Miau, to już wszystko! 😺",
+    "endRukia": "Absolutne zero... to już wszystkie aktywności."
   }
 }

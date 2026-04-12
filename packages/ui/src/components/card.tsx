@@ -3,6 +3,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@lootlog/ui/lib/utils";
 import { CatPawOverlay } from "@lootlog/ui/components/cat-paw-overlay";
+import { RukiaFrostCardOverlay } from "@lootlog/ui/components/rukia-frost-card-overlay";
 
 const cardVariants = cva(
   "bg-card/40 text-card-foreground relative flex flex-col gap-6 overflow-hidden rounded-xl border py-6 shadow-sm",
@@ -32,6 +33,7 @@ function Card({
       {...props}
     >
       <CatPawOverlay />
+      <RukiaFrostCardOverlay />
       {children}
     </div>
   );

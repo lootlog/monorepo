@@ -1,8 +1,7 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { useTheme } from "@/hooks/context/use-theme";
-import { FrozenButton } from "@/components/effects/rukia-frost";
 import { cn } from "@lootlog/ui/lib/utils";
+import { ThemeInteractiveFrame, useThemeMeta } from "@/themes";
 
 interface NavElement {
   id: string;
@@ -24,8 +23,7 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
   className = "",
 }) => {
   const { pathname } = useLocation();
-  const { theme } = useTheme();
-  const isRukiaTheme = theme === "rukia";
+  const { isRukiaTheme } = useThemeMeta();
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -107,13 +105,9 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
             onMouseEnter={() => setHoveredId(item.id)}
             onMouseLeave={() => setHoveredId(null)}
           >
-            {isRukiaTheme ? (
-              <FrozenButton isHovered={isHovered} isActive={active}>
-                {tabContent}
-              </FrozenButton>
-            ) : (
-              tabContent
-            )}
+            <ThemeInteractiveFrame isHovered={isHovered} isActive={active}>
+              {tabContent}
+            </ThemeInteractiveFrame>
           </Link>
         );
       })}

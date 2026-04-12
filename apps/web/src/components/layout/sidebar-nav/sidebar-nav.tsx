@@ -1,12 +1,14 @@
 import { Separator } from "@lootlog/ui/components/separator";
 import type { ReactNode } from "react";
 import { useLocation } from "@tanstack/react-router";
-import { useTheme } from "@/hooks/context/use-theme";
 import { motion, AnimatePresence } from "framer-motion";
 import type { MenuItem } from "./types";
-import { FrozenSidebarBackground } from "./frozen-sidebar-background";
 import { SidebarNavItem } from "./sidebar-nav-item";
-import { SidebarCatAnimation } from "./sidebar-cat-animation";
+import {
+  ThemeSidebarBackground,
+  ThemeSidebarFooterDecoration,
+  useThemeMeta,
+} from "@/themes";
 
 interface SidebarNavProps {
   items: MenuItem[];
@@ -24,15 +26,13 @@ export const SidebarNav = ({
   onItemClick,
 }: SidebarNavProps) => {
   const { pathname } = useLocation();
-  const { theme } = useTheme();
-  const isRukiaTheme = theme === "rukia";
-  const isCatTheme = theme.startsWith("cat-");
+  const { isRukiaTheme, isCatTheme } = useThemeMeta();
 
   let enabledIndex = 0;
 
   return (
     <div className="relative flex flex-col w-full gap-1.5 flex-1 overflow-hidden">
-      {isRukiaTheme && <FrozenSidebarBackground />}
+      <ThemeSidebarBackground />
       {header && (
         <div className="relative h-14 min-h-14 flex flex-row items-center justify-between border-b mb-2 px-2 font-semibold">
           {header}
@@ -115,7 +115,7 @@ export const SidebarNav = ({
           )}
         </motion.div>
       </AnimatePresence>
-      {isCatTheme && <SidebarCatAnimation theme={theme} />}
+      <ThemeSidebarFooterDecoration />
     </div>
   );
 };
