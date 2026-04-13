@@ -336,7 +336,7 @@
       "targetsDescription": "Wybierz jeden lub więcej kanałów docelowych. Możesz też dodać nowy bez opuszczania formularza."
     },
     "manualNpcEntry": {
-      "checkbox": "Mój potwór nie pojawia się w wyszukiwarce",
+      "checkbox": "Mój potwór nie pojawia się w wyszukiwarce lub ma błędne ID",
       "hint": "Przełącz na ręczne wpisanie ID NPC jako alternatywę dla wyszukiwarki.",
       "fieldHint": "Wpisz jedno lub wiele ID NPC. Możesz rozdzielać je przecinkami, spacjami albo nowymi liniami."
     },
