@@ -111,7 +111,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      setJoinedGuilds(data.guilds.map((g) => g.guild.id) || []);
+      setJoinedGuilds(data.guilds.map((g) => g.guild.id));
     };
 
     socket.on(GatewayEvent.CONNECT, handleConnect);

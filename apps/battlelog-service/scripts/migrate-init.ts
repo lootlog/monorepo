@@ -15,7 +15,7 @@ if (!databaseUrl) {
   throw new Error("POSTGRESQL_CONNECTION_URI is required");
 }
 
-// @ts-ignore
+// @ts-expect-error: import.meta.url unavailable in CJS type-checking
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(__dirname, "../drizzle");
 const migrationsSchema = "drizzle";

@@ -57,18 +57,22 @@ export const useCreateManualTimer = () => {
         )
         .map((r) => r.value);
 
-      const failed = results
-        .filter((r): r is PromiseRejectedResult => r.status === "rejected")
-        .map((r, index) => {
-          const reason = r.reason;
-          return {
-            guildId: guildIds[index],
-            error:
-              reason?.response?.data?.message ||
-              reason?.message ||
-              "Unknown error",
-          };
-        });
+      const failed = results.reduce<Array<{ guildId: string; error: string }>>(
+        (acc, r, index) => {
+          if (r.status === "rejected") {
+            const reason = r.reason;
+            acc.push({
+              guildId: guildIds[index],
+              error:
+                reason?.response?.data?.message ||
+                reason?.message ||
+                "Unknown error",
+            });
+          }
+          return acc;
+        },
+        [],
+      );
 
       return {
         successful,

@@ -5,7 +5,7 @@ import { getLanguageVersion } from "@/utils/game/get-language-version";
 import { useQuery } from "@tanstack/react-query";
 import { get } from "@/utils/object-utils";
 
-const MARGONEM_CHARTACTER_LIST_URL =
+const MARGONEM_CHARACTER_LIST_URL =
   "https://public-api.margonem.pl/account/charlist";
 const MARGONEM_CHARACTER_LIST_EN_URL =
   "https://public-api.margonem.com/account/charlist";
@@ -50,7 +50,7 @@ export const useCharacterList = () => {
       const hs3 = window.getCookie?.("hs3");
       const url =
         languageVersion === LanguageVersion.PL
-          ? MARGONEM_CHARTACTER_LIST_URL
+          ? MARGONEM_CHARACTER_LIST_URL
           : MARGONEM_CHARACTER_LIST_EN_URL;
 
       if (!hs3) {

@@ -20,7 +20,7 @@ const prisma = new PrismaClient();
 
 // Use separate connection string for battlelog if provided
 const battlelogConnectionUri =
-  process.env.BATTLELOG_DATABASE_URL || process.env.POSTGRESQL_CONNECTION_URI;
+  process.env.BATTLELOG_DATABASE_URL ?? process.env.POSTGRESQL_CONNECTION_URI;
 
 const battlelogPrisma = new BattlelogPrismaClient({
   datasources: {
@@ -36,6 +36,21 @@ interface SeedOptions {
   playersCount?: number;
   battlesCount?: number;
   clean?: boolean;
+}
+
+function getDevConfig() {
+  const devGuildIdsRaw = process.env.DISCORD_DEVELOPMENT_GUILD_ID;
+  const devUserId = process.env.DISCORD_DEVELOPMENT_USER_ID;
+
+  const devGuildIds =
+    devGuildIdsRaw && devGuildIdsRaw !== "xxx"
+      ? devGuildIdsRaw
+          .split(",")
+          .map((id) => id.trim())
+          .filter((id) => id.length > 0)
+      : [];
+
+  return { devGuildIds, devUserId };
 }
 
 async function cleanDatabase() {
@@ -62,16 +77,7 @@ async function cleanDatabase() {
 async function seedGuilds(count: number) {
   console.log(`🏰 Seeding ${count} guilds...`);
 
-  const devGuildIdsRaw = process.env.DISCORD_DEVELOPMENT_GUILD_ID;
-  const devUserId = process.env.DISCORD_DEVELOPMENT_USER_ID;
-
-  const devGuildIds =
-    devGuildIdsRaw && devGuildIdsRaw !== "xxx"
-      ? devGuildIdsRaw
-          .split(",")
-          .map((id) => id.trim())
-          .filter((id) => id.length > 0)
-      : [];
+  const { devGuildIds, devUserId } = getDevConfig();
 
   const totalGuildsToCreate = Math.max(count, devGuildIds.length);
 
@@ -192,16 +198,7 @@ async function seedLoots(count: number, guilds: any[]) {
   const loots = lootGenerator.generateMultiple(count);
   const createdLoots = [];
 
-  const devGuildIdsRaw = process.env.DISCORD_DEVELOPMENT_GUILD_ID;
-  const devUserId = process.env.DISCORD_DEVELOPMENT_USER_ID;
-
-  const devGuildIds =
-    devGuildIdsRaw && devGuildIdsRaw !== "xxx"
-      ? devGuildIdsRaw
-          .split(",")
-          .map((id) => id.trim())
-          .filter((id) => id.length > 0)
-      : [];
+  const { devGuildIds, devUserId } = getDevConfig();
 
   for (const loot of loots) {
     const createdLoot = await prisma.loot.create({
@@ -272,16 +269,7 @@ async function seedTimers(guilds: any[]) {
     return;
   }
 
-  const devGuildIdsRaw = process.env.DISCORD_DEVELOPMENT_GUILD_ID;
-  const devUserId = process.env.DISCORD_DEVELOPMENT_USER_ID;
-
-  const devGuildIds =
-    devGuildIdsRaw && devGuildIdsRaw !== "xxx"
-      ? devGuildIdsRaw
-          .split(",")
-          .map((id) => id.trim())
-          .filter((id) => id.length > 0)
-      : [];
+  const { devGuildIds, devUserId } = getDevConfig();
 
   let totalTimers = 0;
 

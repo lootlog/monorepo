@@ -43,20 +43,19 @@ async function scrapePage(page: number): Promise<ScrapedItem[]> {
         const json = JSON.parse(itemData);
         const hid = uuidv7();
 
-        return [
-          ...acc,
-          {
-            hid,
-            id: json.id,
-            icon: json.icon,
-            pr: json.pr,
-            prc: "zl",
-            st: 0,
-            stat: json.stat,
-            name: json.name,
-            cl: json.cl,
-          },
-        ];
+        acc.push({
+          hid,
+          id: json.id,
+          icon: json.icon,
+          pr: json.pr,
+          prc: "zl",
+          st: 0,
+          stat: json.stat,
+          name: json.name,
+          cl: json.cl,
+        });
+
+        return acc;
       } catch (error) {
         console.warn(`Failed to parse item data on page ${page}:`, error);
         return acc;
