@@ -24,7 +24,7 @@ import type { Member, Prisma, Role } from "src/generated/prisma/client";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { RoutingKey } from "src/enum/routing-key.enum";
 import { serviceConfig } from "src/config/service.config";
-import { RuntimeEnvironment } from "src/types/runtime.types";
+import { RuntimeEnvironment } from "@lootlog/types";
 import { DiscordService } from "src/discord/discord.service";
 import { RedisService } from "@lootlog/nest-shared";
 import {

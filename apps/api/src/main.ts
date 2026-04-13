@@ -10,7 +10,7 @@ import {
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { cleanupOpenApiDoc } from "nestjs-zod";
 import { WINSTON_MODULE_NEST_PROVIDER } from "nest-winston";
-import { RuntimeEnvironment } from "src/types/runtime.types";
+import { RuntimeEnvironment } from "@lootlog/types";
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(

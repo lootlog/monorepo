@@ -164,15 +164,18 @@ export class ChatService {
     const elements = await this.redisService.lrange(key, 0, -1);
 
     const messageIndex = elements.findIndex((element) => {
-      const parsed = JSON.parse(element);
-      return parsed.id === messageId;
+      try {
+        return JSON.parse(element).id === messageId;
+      } catch {
+        return false;
+      }
     });
 
     if (messageIndex === -1) {
       throw new NotFoundException("Message not found");
     }
 
-    const message = JSON.parse(elements[messageIndex]);
+    const message = JSON.parse(elements[messageIndex]) as ChatMessage;
     if (message.senderId !== discordId) {
       throw new ForbiddenException("Not the owner of this message");
     }
@@ -203,15 +206,18 @@ export class ChatService {
     const elements = await this.redisService.lrange(key, 0, -1);
 
     const targetElement = elements.find((element) => {
-      const parsed = JSON.parse(element);
-      return parsed.id === messageId;
+      try {
+        return JSON.parse(element).id === messageId;
+      } catch {
+        return false;
+      }
     });
 
     if (!targetElement) {
       throw new NotFoundException("Message not found");
     }
 
-    const message = JSON.parse(targetElement);
+    const message = JSON.parse(targetElement) as ChatMessage;
     if (message.senderId !== discordId) {
       throw new ForbiddenException("Not the owner of this message");
     }

@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import type { FC } from "react";
 import type { GuildRole } from "@/hooks/api/guilds/use-guild-roles";
 import { Permission } from "@lootlog/types";
+import { roleColorToHex } from "@/utils/get-color-from-role";
 import {
   Tooltip,
   TooltipContent,
@@ -26,8 +27,7 @@ export const RoleListItem: FC<RoleListItemProps> = ({ role, index }) => {
   const isSelected = selectedItem?.id === role.id;
   const isPanelOpen = selectedItem !== null;
 
-  const color =
-    role.color === 0 ? "FFF" : role.color.toString(16).padStart(6, "0");
+  const color = roleColorToHex(role.color);
 
   const hasAdminPermission = role.permissions.includes(Permission.ADMIN);
 

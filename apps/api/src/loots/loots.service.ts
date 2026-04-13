@@ -98,17 +98,11 @@ export class LootsService implements OnModuleInit {
         throw new ForbiddenException();
       }
 
-      const { filteredGuildIds } = guilds.reduce(
-        (acc, guild) => {
-          const isOnWhitelist =
-            characterConfig?.collectLootWhitelistGuildIds?.includes(guild.id);
-          if (isOnWhitelist) {
-            acc.filteredGuildIds.push(guild.id);
-          }
-          return acc;
-        },
-        { filteredGuildIds: [] as string[] },
-      );
+      const filteredGuildIds = guilds
+        .filter((guild) =>
+          characterConfig?.collectLootWhitelistGuildIds?.includes(guild.id),
+        )
+        .map((guild) => guild.id);
 
       if (filteredGuildIds.length === 0) {
         throw new BadRequestException(
@@ -140,9 +134,12 @@ export class LootsService implements OnModuleInit {
         npcData.highest.type,
       );
 
+      const configByGuildId = new Map(lootlogConfigs.map((c) => [c.id, c]));
+      const memberByGuildId = new Map(members.map((m) => [m.guildId, m]));
+
       const submissionData = filteredGuildIds
         .map((guildId) => {
-          const config = lootlogConfigs.find((c) => c.id === guildId);
+          const config = configByGuildId.get(guildId);
           if (!config) return null;
 
           const calculatedLoot =
@@ -153,11 +150,11 @@ export class LootsService implements OnModuleInit {
             );
           if (calculatedLoot.length === 0) return null;
 
-          const member = members.find((m) => m.guildId === guildId);
+          const member = memberByGuildId.get(guildId);
           if (!member) return null;
 
           return {
-            guildId: guildId,
+            guildId,
             memberId: member.id,
           };
         })
