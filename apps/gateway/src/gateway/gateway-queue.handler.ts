@@ -744,6 +744,10 @@ export class GatewayQueueHandler {
     guildId: string;
     messageId: string;
     message: string;
+    routing: {
+      tier: "base" | "titans" | "heroes";
+      npcLevel?: number;
+    };
   }) {
     await this.gatewayService.handleChatMessageUpdate(data);
   }
@@ -757,7 +761,14 @@ export class GatewayQueueHandler {
       durable: true,
     },
   })
-  async handleDeleteMessage(data: { guildId: string; messageId: string }) {
+  async handleDeleteMessage(data: {
+    guildId: string;
+    messageId: string;
+    routing: {
+      tier: "base" | "titans" | "heroes";
+      npcLevel?: number;
+    };
+  }) {
     await this.gatewayService.handleChatMessageDelete(data);
   }
 
