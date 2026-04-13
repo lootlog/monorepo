@@ -332,6 +332,10 @@ export const STAT_CATEGORIES: StatCategory[] = [
   },
 ];
 
+const ALL_STATS_MAP = new Map<string, StatDefinition>(
+  STAT_CATEGORIES.flatMap((c) => c.stats.map((s) => [s.key, s] as const)),
+);
+
 const formatValue = (
   value: unknown,
   formatter?: (value: unknown) => string,
@@ -371,22 +375,10 @@ export function OneVsOneStatsTable({
     resetToDefaults,
   } = useStatsCustomization(STAT_CATEGORIES);
 
-  const userWarrior = battle.warriors.find(
-    (w) => w.originalId === battle.characterId,
-  );
-  const opponentWarrior = battle.warriors.find(
+  const user = battle.warriors.find((w) => w.originalId === battle.characterId);
+  const opponent = battle.warriors.find(
     (w) => w.originalId !== battle.characterId,
   );
-
-  const user = userWarrior;
-  const opponent = opponentWarrior;
-
-  const allStatsMap = new Map<string, StatDefinition>();
-  for (const category of STAT_CATEGORIES) {
-    for (const stat of category.stats) {
-      allStatsMap.set(stat.key, stat);
-    }
-  }
 
   const visibleStats = config.categoryOrder
     .map((categoryId) => {
@@ -397,7 +389,7 @@ export function OneVsOneStatsTable({
       }
 
       const orderedStats = customization.statOrder
-        .map((statKey) => allStatsMap.get(statKey))
+        .map((statKey) => ALL_STATS_MAP.get(statKey))
         .filter((stat): stat is StatDefinition => stat !== undefined);
 
       const filteredStats =

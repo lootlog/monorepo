@@ -98,17 +98,11 @@ export class LootsService implements OnModuleInit {
         throw new ForbiddenException();
       }
 
-      const { filteredGuildIds } = guilds.reduce(
-        (acc, guild) => {
-          const isOnWhitelist =
-            characterConfig?.collectLootWhitelistGuildIds?.includes(guild.id);
-          if (isOnWhitelist) {
-            acc.filteredGuildIds.push(guild.id);
-          }
-          return acc;
-        },
-        { filteredGuildIds: [] as string[] },
-      );
+      const filteredGuildIds = guilds
+        .filter((guild) =>
+          characterConfig?.collectLootWhitelistGuildIds?.includes(guild.id),
+        )
+        .map((guild) => guild.id);
 
       if (filteredGuildIds.length === 0) {
         throw new BadRequestException(

@@ -133,6 +133,10 @@ export class RolesService {
       where: { id: guildId },
     });
 
+    if (!guild) {
+      throw new NotFoundException();
+    }
+
     const isOwner = guild.ownerId === discordId;
 
     const roleIsAdministrative = PermissionResolver.isAdministrative(

@@ -410,7 +410,7 @@ export class EventWrappedService {
     return response;
   }
 
-  private getEventLoots(params: {
+  private async getEventLoots(params: {
     guild: Guild;
     permissions: Permission[];
     roles: Role[];
@@ -420,7 +420,7 @@ export class EventWrappedService {
     createdAtMax: string;
   }): Promise<LootQueryResult[]> {
     if (params.heroNames.length === 0) {
-      return Promise.resolve([]);
+      return [];
     }
 
     const fetchLootsBatch = async (

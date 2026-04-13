@@ -3,10 +3,10 @@ import type { ItemEvent, LootEvent } from "@lootlog/margonem/game-events";
 import { getItemRarity } from "@/utils/game/get-item-rarity";
 
 export const getLoot = (items: ItemEvent = {}, loot: LootEvent): LootDto[] => {
-  const lootItemKeys = Object.keys(loot.states || {});
+  const lootItemKeys = new Set(Object.keys(loot.states || {}));
 
   const loots = Object.entries(items).reduce((acc: LootDto[], [key, item]) => {
-    if (!lootItemKeys.includes(key)) return acc;
+    if (!lootItemKeys.has(key)) return acc;
 
     const { hid, icon, name, pr, prc, stat, cl, tpl, loc, own } = item;
     const rarity = getItemRarity(stat);

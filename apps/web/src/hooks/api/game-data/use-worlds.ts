@@ -11,7 +11,6 @@ export const useWorlds = () => {
     queryKey: queryKeys.gameData.worlds(guildId),
     queryFn: () => client.get<string[]>(`/guilds/${guildId}/worlds`),
     enabled: !!guildId,
-    select: (data) => data,
   });
 
   return query;

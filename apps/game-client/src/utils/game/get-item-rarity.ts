@@ -1,13 +1,7 @@
 export const getItemRarity = (stat: string): string | undefined => {
   if (!stat) return undefined;
 
-  const statsObj: { [key: string]: string } = {};
-  const stats = stat.split(";");
-
-  stats.forEach((stat: string) => {
-    const [key, value] = stat.split("=");
-    statsObj[key] = value;
-  });
+  const statsObj = Object.fromEntries(stat.split(";").map((s) => s.split("=")));
 
   return statsObj["rarity"];
 };

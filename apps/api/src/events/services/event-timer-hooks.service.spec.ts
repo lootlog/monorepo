@@ -49,9 +49,7 @@ describe("EventTimerHooksService", () => {
         event: { id: "event-1", guildId, world, createdAt: new Date() },
       };
 
-      mockPrismaService.eventHeroNpc.findMany
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([hero]);
+      mockPrismaService.eventHeroNpc.findMany.mockResolvedValueOnce([hero]);
 
       const result = await service.findActiveEventHeroByNpc(
         guildId,
@@ -91,9 +89,10 @@ describe("EventTimerHooksService", () => {
         },
       };
 
-      mockPrismaService.eventHeroNpc.findMany
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([olderHero, newerHero]);
+      mockPrismaService.eventHeroNpc.findMany.mockResolvedValueOnce([
+        olderHero,
+        newerHero,
+      ]);
 
       const result = await service.findActiveEventHeroByNpc(
         guildId,
@@ -119,9 +118,7 @@ describe("EventTimerHooksService", () => {
         },
       };
 
-      mockPrismaService.eventHeroNpc.findMany
-        .mockResolvedValueOnce([hero])
-        .mockResolvedValueOnce([hero]);
+      mockPrismaService.eventHeroNpc.findMany.mockResolvedValueOnce([hero]);
 
       const result = await service.findActiveEventHeroByNpc(
         guildId,
@@ -131,7 +128,7 @@ describe("EventTimerHooksService", () => {
       );
 
       expect(result?.eventHero.id).toBe("hero-1");
-      expect(mockPrismaService.eventHeroNpc.findMany).toHaveBeenCalledTimes(2);
+      expect(mockPrismaService.eventHeroNpc.findMany).toHaveBeenCalledTimes(1);
     });
   });
 });

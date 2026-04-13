@@ -8,7 +8,6 @@ import {
   and,
   desc,
   eq,
-  exists,
   gt,
   gte,
   ilike,
@@ -19,6 +18,7 @@ import {
   or,
   type SQL,
 } from "drizzle-orm";
+import { warriorExists } from "src/battles/utils/warrior-exists";
 import type { CreateBattleDto } from "src/battles/dto/create-battle.dto";
 import type { QueryBattlesDto } from "src/battles/dto/query-battles.dto";
 import type { UpdateBattleDto } from "src/battles/dto/update-battle.dto";
@@ -63,12 +63,7 @@ export class BattlesService implements IBattlesService {
     battlesRef: typeof battles,
     ...conditions: (SQL | undefined)[]
   ) {
-    return exists(
-      this.drizzle.db
-        .select({ one: eq(battleWarriors.id, battleWarriors.id) })
-        .from(battleWarriors)
-        .where(and(eq(battleWarriors.battleId, battlesRef.id), ...conditions)),
-    );
+    return warriorExists(this.drizzle, battlesRef, ...conditions);
   }
 
   async createBattle(params: CreateBattleParams): Promise<CreateBattleResult> {

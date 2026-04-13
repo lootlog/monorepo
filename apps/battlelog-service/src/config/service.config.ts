@@ -11,6 +11,6 @@ export default registerAs("service", (): ServiceConfig => {
 
   return {
     env: ENV,
-    port: PORT || 4000,
+    port: PORT ?? 4000,
   };
 });

@@ -39,7 +39,6 @@ export const useGuildPlayers = ({
           queryParams,
         ).toString()}`,
       ),
-    select: (data) => data,
   });
 
   return query;

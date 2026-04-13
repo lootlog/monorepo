@@ -217,9 +217,9 @@ export class LootMappingService {
         const playerId = parsedPlayers.find((p) => p.name === nick)?.id;
         if (!playerId) return acc;
 
-        const itemIds = (hids as string[])
-          .map((hid) => parsedLoot.find((item) => item.hid === hid)?.hid)
-          .filter(Boolean);
+        const itemIds = (hids as string[]).filter((hid) =>
+          parsedLoot.some((item) => item.hid === hid),
+        );
 
         if (itemIds.length === 0) return acc;
 

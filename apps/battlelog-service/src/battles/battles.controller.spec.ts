@@ -2,7 +2,7 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import { BattlesController } from "./battles.controller";
 import { BattlesService } from "./battles.service";
 import { BattleAnalyticsService } from "./services/battle-analytics.service";
-import { AuthGuard } from "src/shared/guards/auth.guard";
+import { AuthGuard } from "@lootlog/nest-shared";
 import { BattleAccessGuard } from "src/shared/guards/battle-access.guard";
 import { BattleOwnerGuard } from "src/shared/guards/battle-owner.guard";
 

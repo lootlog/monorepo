@@ -33,12 +33,12 @@ export class GuildsInternalController {
     description: "List of user guilds with permissions",
     type: [UserGuildPermissionsDto],
   })
-  getUserPermissions(
+  async getUserPermissions(
     @Query("discordId") discordId: string,
     @Query("userId") userId: string,
   ): Promise<UserGuildPermissionsDto[]> {
     if (!discordId || !userId) {
-      return Promise.resolve([]);
+      return [];
     }
 
     return this.guildsService.getUserGuildsWithPermissions(discordId, userId);

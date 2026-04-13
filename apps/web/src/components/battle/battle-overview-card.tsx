@@ -75,7 +75,7 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
 
   const userTeam = battle.warriors.find(
     (w: Warrior) =>
-      w.originalId === (currentUserCharacterId || battle.characterId),
+      w.originalId === (currentUserCharacterId ?? battle.characterId),
   );
 
   const leftTeam = userTeam?.team === 1 ? attackingTeam : defendingTeam;
@@ -120,7 +120,7 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
               team={leftTeam}
               teamNumber={leftTeamNumber}
               userTeam={userTeam?.team}
-              characterId={currentUserCharacterId || battle.characterId}
+              characterId={currentUserCharacterId ?? battle.characterId}
               cdnBaseUrl={cdnBaseUrl}
               teamLabels={mergedLabels.teams}
             />
@@ -152,7 +152,7 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
               team={rightTeam}
               teamNumber={rightTeamNumber}
               userTeam={userTeam?.team}
-              characterId={currentUserCharacterId || battle.characterId}
+              characterId={currentUserCharacterId ?? battle.characterId}
               cdnBaseUrl={cdnBaseUrl}
               teamLabels={mergedLabels.teams}
             />

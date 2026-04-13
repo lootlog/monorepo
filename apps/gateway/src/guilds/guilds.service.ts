@@ -120,16 +120,21 @@ export class GuildsService {
     }
   }
 
-  private async refreshInBackground(
-    options: GetUserGuildsOptions,
-    cacheKey: string,
-  ): Promise<void> {
-    const guilds = await this.fetchFromHttpWithRetry(options);
-    await this.cacheGuilds(cacheKey, guilds);
-  }
-
   private async getCachedGuilds(
     cacheKey: string,
+  ): Promise<CachedGuildData | null> {
+    return this.readCache(cacheKey, CACHE_TTL.USER_GUILDS);
+  }
+
+  private async getStaleCache(
+    cacheKey: string,
+  ): Promise<CachedGuildData | null> {
+    return this.readCache(cacheKey, CACHE_TTL.MAX_STALE_CACHE_AGE);
+  }
+
+  private async readCache(
+    cacheKey: string,
+    maxAgeSecs: number,
   ): Promise<CachedGuildData | null> {
     try {
       const cached = await this.redis.get(cacheKey);
@@ -138,39 +143,13 @@ export class GuildsService {
       const data: CachedGuildData = JSON.parse(cached);
       const age = Date.now() - data.cachedAt;
 
-      if (age > CACHE_TTL.USER_GUILDS * 1000) {
+      if (age > maxAgeSecs * 1000) {
         return null;
       }
 
       return data;
     } catch (error) {
       this.logger.error(`Cache read error: ${error.message}`);
-      return null;
-    }
-  }
-
-  private async getStaleCache(
-    cacheKey: string,
-  ): Promise<CachedGuildData | null> {
-    try {
-      const cached = await this.redis.get(cacheKey);
-      if (!cached) return null;
-
-      const data: CachedGuildData = JSON.parse(cached);
-      const age = Date.now() - data.cachedAt;
-
-      // Reject stale cache older than MAX_STALE_CACHE_AGE (5 minutes)
-      // This prevents removed users from retaining access via ancient cache
-      if (age > CACHE_TTL.MAX_STALE_CACHE_AGE * 1000) {
-        this.logger.warn(
-          `Stale cache too old (${Math.floor(age / 1000)}s), rejecting`,
-        );
-        return null;
-      }
-
-      return data;
-    } catch (error) {
-      this.logger.error(`Stale cache read error: ${error.message}`);
       return null;
     }
   }

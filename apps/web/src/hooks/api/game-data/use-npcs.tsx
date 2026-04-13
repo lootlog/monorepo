@@ -59,7 +59,6 @@ export const useNpcs = ({
       client.get<Npc[]>(
         `${SEARCH_API_URL}/npcs?${new URLSearchParams(queryParams).toString()}`,
       ),
-    select: (data) => data,
     enabled:
       enabled &&
       (normalizedSearch.length > 0 || normalizedSelectedNpcs.length > 0),

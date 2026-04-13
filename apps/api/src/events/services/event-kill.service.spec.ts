@@ -337,9 +337,9 @@ describe("EventKillService", () => {
         event: { id: "event-1", guildId, world, active: true },
       };
 
-      mockPrismaService.eventHeroNpc.findMany
-        .mockResolvedValueOnce([mockHeroNpc])
-        .mockResolvedValueOnce([]);
+      mockPrismaService.eventHeroNpc.findMany.mockResolvedValueOnce([
+        mockHeroNpc,
+      ]);
 
       const result = await service.findActiveEventHeroByNpc(
         guildId,
@@ -360,9 +360,9 @@ describe("EventKillService", () => {
         event: { id: "event-1", guildId, world, active: true },
       };
 
-      mockPrismaService.eventHeroNpc.findMany
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([mockHeroNpc]);
+      mockPrismaService.eventHeroNpc.findMany.mockResolvedValueOnce([
+        mockHeroNpc,
+      ]);
 
       const result = await service.findActiveEventHeroByNpc(
         guildId,
@@ -372,7 +372,7 @@ describe("EventKillService", () => {
       );
 
       expect(result).not.toBeNull();
-      expect(mockPrismaService.eventHeroNpc.findMany).toHaveBeenCalledTimes(2);
+      expect(mockPrismaService.eventHeroNpc.findMany).toHaveBeenCalledTimes(1);
     });
 
     it("should find hero by name even when stored npcId is incorrect", async () => {
@@ -383,9 +383,9 @@ describe("EventKillService", () => {
         event: { id: "event-1", guildId, world, active: true },
       };
 
-      mockPrismaService.eventHeroNpc.findMany
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([mockHeroNpc]);
+      mockPrismaService.eventHeroNpc.findMany.mockResolvedValueOnce([
+        mockHeroNpc,
+      ]);
 
       const result = await service.findActiveEventHeroByNpc(
         guildId,
@@ -407,9 +407,9 @@ describe("EventKillService", () => {
         event: { id: "event-1", guildId, world, active: true },
       };
 
-      mockPrismaService.eventHeroNpc.findMany
-        .mockResolvedValueOnce([mockHeroNpc])
-        .mockResolvedValueOnce([mockHeroNpc]);
+      mockPrismaService.eventHeroNpc.findMany.mockResolvedValueOnce([
+        mockHeroNpc,
+      ]);
 
       const result = await service.findActiveEventHeroesByNpc(
         guildId,
@@ -423,9 +423,7 @@ describe("EventKillService", () => {
     });
 
     it("should return null if hero not found", async () => {
-      mockPrismaService.eventHeroNpc.findMany
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([]);
+      mockPrismaService.eventHeroNpc.findMany.mockResolvedValueOnce([]);
 
       const result = await service.findActiveEventHeroByNpc(
         guildId,
@@ -491,9 +489,7 @@ describe("EventKillService", () => {
     });
 
     it("should skip if NPC is not an event hero", async () => {
-      mockPrismaService.eventHeroNpc.findMany
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([]);
+      mockPrismaService.eventHeroNpc.findMany.mockResolvedValueOnce([]);
 
       await service.checkAndRecordEventHeroKill(
         guildId,
@@ -520,9 +516,7 @@ describe("EventKillService", () => {
       };
       const updatedHero = { ...mockHero, npcId, npcIcon };
 
-      mockPrismaService.eventHeroNpc.findMany
-        .mockResolvedValueOnce([mockHero])
-        .mockResolvedValueOnce([]);
+      mockPrismaService.eventHeroNpc.findMany.mockResolvedValueOnce([mockHero]);
       mockRedisService.get
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(null);
@@ -574,9 +568,7 @@ describe("EventKillService", () => {
       };
       const updatedHero = { ...mockHero, npcId, npcIcon };
 
-      mockPrismaService.eventHeroNpc.findMany
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([mockHero]);
+      mockPrismaService.eventHeroNpc.findMany.mockResolvedValueOnce([mockHero]);
       mockRedisService.get
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(null);
@@ -627,9 +619,7 @@ describe("EventKillService", () => {
         event: { id: "event-1" },
       };
 
-      mockPrismaService.eventHeroNpc.findMany
-        .mockResolvedValueOnce([mockHero])
-        .mockResolvedValueOnce([mockHero]);
+      mockPrismaService.eventHeroNpc.findMany.mockResolvedValueOnce([mockHero]);
       mockRedisService.get
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(null);
@@ -660,9 +650,7 @@ describe("EventKillService", () => {
         event: { id: "event-1" },
       };
 
-      mockPrismaService.eventHeroNpc.findMany
-        .mockResolvedValueOnce([mockHero])
-        .mockResolvedValueOnce([]);
+      mockPrismaService.eventHeroNpc.findMany.mockResolvedValueOnce([mockHero]);
       mockPrismaService.eventMap.findMany.mockResolvedValue([]);
       const txMock = {
         eventHeroKill: {
@@ -734,9 +722,10 @@ describe("EventKillService", () => {
         event: { id: "event-2" },
       };
 
-      mockPrismaService.eventHeroNpc.findMany
-        .mockResolvedValueOnce([heroA, heroB])
-        .mockResolvedValueOnce([]);
+      mockPrismaService.eventHeroNpc.findMany.mockResolvedValueOnce([
+        heroA,
+        heroB,
+      ]);
       mockRedisService.get.mockResolvedValue(null);
 
       const recordSpy = vi
@@ -768,9 +757,7 @@ describe("EventKillService", () => {
       mockRedisService.get
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(null);
-      mockPrismaService.eventHeroNpc.findMany
-        .mockResolvedValueOnce([mockHero])
-        .mockResolvedValueOnce([]);
+      mockPrismaService.eventHeroNpc.findMany.mockResolvedValueOnce([mockHero]);
       mockPrismaService.eventMap.findMany.mockResolvedValue([]);
       mockPrismaService.$transaction.mockRejectedValue(new Error("boom"));
 
