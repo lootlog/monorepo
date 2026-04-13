@@ -2,14 +2,7 @@ import {
   battleLogStatisticQueryOptions,
   createBattleLogStatistic,
 } from "./create-battle-log-statistic";
-
-export interface ProfessionWinRate {
-  prof: string;
-  wins: number;
-  losses: number;
-  totalBattles: number;
-  winRate: number;
-}
+import type { ProfessionWinRate } from "./use-battle-statistics";
 
 interface UseProfessionWinRateParams {
   characterId?: string;

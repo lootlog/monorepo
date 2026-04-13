@@ -91,7 +91,7 @@ export class LootEventProcessor {
         ?.map((npc) => Game.getNpc(npc.id))
         .filter(
           (npcData): npcData is NonNullable<typeof npcData> =>
-            npcData !== null && npcData !== undefined && !isEmpty(npcData),
+            !isEmpty(npcData),
         )
         .map((npcData) => ({
           icon: npcData.icon,

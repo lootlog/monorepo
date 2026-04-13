@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useBattleLogApiClient } from "@/hooks/api/battle-log/use-battle-log-api-client";
-import { useState, useEffect } from "react";
+import { useDebounce } from "@/hooks/use-debounce";
 import { queryKeys } from "@/lib/query-keys";
 
 export type Warrior = {
@@ -16,17 +16,7 @@ export type SearchWarriorsResponse = {
 
 export const useSearchWarriors = (searchQuery: string, debounceMs = 300) => {
   const { client } = useBattleLogApiClient();
-  const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedQuery(searchQuery);
-    }, debounceMs);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [searchQuery, debounceMs]);
+  const debouncedQuery = useDebounce(searchQuery, debounceMs);
 
   const query = useQuery({
     queryKey: queryKeys.battleLog.searchWarriors(debouncedQuery),

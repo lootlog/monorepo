@@ -45,12 +45,8 @@ export class BattlesGenerator {
     characterId: string,
     accountId: string,
   ): BattlePayload[] {
-    const battles: BattlePayload[] = [];
-
-    for (let i = 0; i < count; i++) {
-      battles.push(this.generateSingle(characterId, accountId));
-    }
-
-    return battles;
+    return Array.from({ length: count }, () =>
+      this.generateSingle(characterId, accountId),
+    );
   }
 }

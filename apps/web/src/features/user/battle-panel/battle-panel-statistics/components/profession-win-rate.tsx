@@ -6,15 +6,8 @@ import {
   type ChartConfig,
 } from "@lootlog/ui/components/chart";
 import { getProfessionName, getProfessionColor } from "@/lib/utils/professions";
+import type { ProfessionWinRate } from "@/hooks/api/battle-log/use-battle-statistics";
 import { StatCard } from "./stat-card";
-
-interface ProfessionWinRate {
-  prof: string;
-  wins: number;
-  losses: number;
-  totalBattles: number;
-  winRate: number;
-}
 
 interface ProfessionWinRateChartProps {
   data: ProfessionWinRate[];

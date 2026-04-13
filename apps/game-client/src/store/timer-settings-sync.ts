@@ -22,17 +22,6 @@ export const registerGlobalSettingsMutation = (mutateFn: MutateGlobalFn) => {
   globalMutateFn = mutateFn;
 };
 
-const registerGuildSettingsMutation = (
-  guildId: string,
-  mutateFn: MutateGuildFn,
-) => {
-  guildMutateFns.set(guildId, mutateFn);
-};
-
-const unregisterGuildSettingsMutation = (guildId: string) => {
-  guildMutateFns.delete(guildId);
-};
-
 export const debouncedSyncGlobalSettings = (
   payload: UpdateTimerSettingsPayload,
 ) => {
@@ -69,7 +58,7 @@ export const debouncedSyncGuildSettings = (
   guildId: string,
   payload: UpdateGuildTimerSettingsPayload,
 ) => {
-  const existingPayload = pendingGuildPayloads.get(guildId) || {};
+  const existingPayload = pendingGuildPayloads.get(guildId) ?? {};
   pendingGuildPayloads.set(guildId, { ...existingPayload, ...payload });
 
   const existingTimeout = guildSyncTimeouts.get(guildId);
@@ -102,18 +91,4 @@ export const debouncedSyncGuildSettings = (
   }, SYNC_DEBOUNCE_MS);
 
   guildSyncTimeouts.set(guildId, timeoutId);
-};
-
-const clearAllSyncTimeouts = () => {
-  if (syncTimeoutId) {
-    clearTimeout(syncTimeoutId);
-    syncTimeoutId = null;
-  }
-  pendingGlobalPayload = {};
-
-  for (const timeoutId of guildSyncTimeouts.values()) {
-    clearTimeout(timeoutId);
-  }
-  guildSyncTimeouts.clear();
-  pendingGuildPayloads.clear();
 };

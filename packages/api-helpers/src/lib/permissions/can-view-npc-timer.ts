@@ -1,3 +1,5 @@
+import { Permission } from "@lootlog/types";
+
 export type NpcPermissionData = {
   lvl: number;
   type: string;
@@ -9,29 +11,21 @@ export type RolePermissionData = {
   lvlRangeTo: number;
 };
 
-const PERMISSION = {
-  LOOTLOG_TIMERS_READ: "LOOTLOG_TIMERS_READ",
-  LOOTLOG_TIMERS_TITANS_READ: "LOOTLOG_TIMERS_TITANS_READ",
-  LOOTLOG_TIMERS_HEROES_READ: "LOOTLOG_TIMERS_HEROES_READ",
-} as const;
-
-type TimerPermission = (typeof PERMISSION)[keyof typeof PERMISSION];
-
 const isNpcLevelWithinRoleRange = (
   role: RolePermissionData,
   npcLevel: number,
 ): boolean => role.lvlRangeFrom <= npcLevel && role.lvlRangeTo >= npcLevel;
 
-const getRequiredTimerPermission = (npcType: string): TimerPermission => {
+const getRequiredTimerPermission = (npcType: string): Permission => {
   if (npcType === "TITAN") {
-    return PERMISSION.LOOTLOG_TIMERS_TITANS_READ;
+    return Permission.LOOTLOG_TIMERS_TITANS_READ;
   }
 
   if (npcType === "HERO" || npcType === "EVENT_HERO") {
-    return PERMISSION.LOOTLOG_TIMERS_HEROES_READ;
+    return Permission.LOOTLOG_TIMERS_HEROES_READ;
   }
 
-  return PERMISSION.LOOTLOG_TIMERS_READ;
+  return Permission.LOOTLOG_TIMERS_READ;
 };
 
 export const canViewNpcTimer = (

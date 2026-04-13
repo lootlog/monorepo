@@ -1,6 +1,6 @@
 import { parse } from "node-html-parser";
 import { v7 as uuidv7 } from "uuid";
-import { writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { SCRAPER_CONFIG } from "../config.js";
 import { fileExists } from "../utils/file-exists.js";
@@ -43,24 +43,22 @@ async function scrapePage(page: number): Promise<ScrapedItem[]> {
         const json = JSON.parse(itemData);
         const hid = uuidv7();
 
-        return [
-          ...acc,
-          {
-            hid,
-            id: json.id,
-            icon: json.icon,
-            pr: json.pr,
-            prc: "zl",
-            st: 0,
-            stat: json.stat,
-            name: json.name,
-            cl: json.cl,
-          },
-        ];
+        acc.push({
+          hid,
+          id: json.id,
+          icon: json.icon,
+          pr: json.pr,
+          prc: "zl",
+          st: 0,
+          stat: json.stat,
+          name: json.name,
+          cl: json.cl,
+        });
       } catch (error) {
         console.warn(`Failed to parse item data on page ${page}:`, error);
-        return acc;
       }
+
+      return acc;
     }, []);
 
     return items;
@@ -95,8 +93,7 @@ export async function scrapeItems(
       console.log(`⏭️  Items file already exists at ${fullPath}`);
       console.log("💡 Use --force flag to re-scrape");
 
-      const fs = await import("fs/promises");
-      const existingData = await fs.readFile(fullPath, "utf-8");
+      const existingData = await readFile(fullPath, "utf-8");
       return JSON.parse(existingData);
     }
   }
