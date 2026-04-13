@@ -106,13 +106,13 @@ export const activityLogsInfiniteQueryOptions = (
     serializeActivityLogsQuery({
       type: types?.length ? types : null,
       source: sources?.length ? sources : null,
-      startDate: startDate || null,
-      endDate: endDate || null,
-      playerName: name || null,
-      clanName: clanName || null,
-      world: world || null,
+      startDate: startDate ?? null,
+      endDate: endDate ?? null,
+      playerName: name ?? null,
+      clanName: clanName ?? null,
+      world: world ?? null,
       limit,
-      cursor: cursor || null,
+      cursor: cursor ?? null,
     });
 
   const baseQueryString = buildQueryString();

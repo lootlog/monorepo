@@ -96,11 +96,11 @@ export const ActivityLogsFiltersSidebar: FC<
         types: mergedFilters.types.length > 0 ? mergedFilters.types : null,
         sources:
           mergedFilters.sources.length > 0 ? mergedFilters.sources : null,
-        startDate: mergedFilters.startDate || null,
-        endDate: mergedFilters.endDate || null,
-        name: mergedFilters.name || null,
-        clanName: mergedFilters.clanName || null,
-        world: mergedFilters.world || null,
+        startDate: mergedFilters.startDate ?? null,
+        endDate: mergedFilters.endDate ?? null,
+        name: mergedFilters.name ?? null,
+        clanName: mergedFilters.clanName ?? null,
+        world: mergedFilters.world ?? null,
       };
     });
   };

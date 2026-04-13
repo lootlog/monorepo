@@ -274,9 +274,9 @@ export class BattleProcessor {
         if (attacker) {
           attacker.turns++;
           attacker.spellsUsed++;
-          const spellName = tspellAction.param || "unknown";
+          const spellName = tspellAction.param ?? "unknown";
           attacker.spellsUsedMap[spellName] =
-            (attacker.spellsUsedMap[spellName] || 0) + 1;
+            (attacker.spellsUsedMap[spellName] ?? 0) + 1;
         }
       }
 
@@ -747,8 +747,8 @@ export class BattleProcessor {
       throw new Error("No events found in battle data");
     }
 
-    const firstTimestamp = events[0]?.ev || 0;
-    const lastTimestamp = events[events.length - 1]?.ev || 0;
+    const firstTimestamp = events[0]?.ev ?? 0;
+    const lastTimestamp = events[events.length - 1]?.ev ?? 0;
 
     return lastTimestamp - firstTimestamp;
   }

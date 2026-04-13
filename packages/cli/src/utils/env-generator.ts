@@ -91,14 +91,6 @@ const generateSmartDefault = (
     return originalValue;
   }
 
-  if (
-    originalValue === "xxx" ||
-    originalValue === "your_" ||
-    originalValue.startsWith("your_")
-  ) {
-    return originalValue;
-  }
-
   return originalValue;
 };
 

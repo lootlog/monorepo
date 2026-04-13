@@ -19,7 +19,7 @@ import { Spinner } from "@lootlog/ui/components/spinner";
 import { ItemImage } from "@/components/tiles";
 import type { GameItem } from "@/hooks/api/game-data/use-items";
 import { ItemRarity } from "@/hooks/api/loots/use-loots";
-import { cn } from "@/utils/cn";
+import { cn } from "@lootlog/ui/lib/utils";
 
 type WatchedItemSelectorProps = {
   disabled?: boolean;

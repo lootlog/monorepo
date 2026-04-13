@@ -135,23 +135,23 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
       };
 
       return {
-        search: mergedFilters.search || null,
+        search: mergedFilters.search ?? null,
         npcTypes:
           mergedFilters.npcTypes.length > 0 ? mergedFilters.npcTypes : null,
         npcs: mergedFilters.npcs.length > 0 ? mergedFilters.npcs : null,
-        npcLevelMin: mergedFilters.npcLevelMin || null,
-        npcLevelMax: mergedFilters.npcLevelMax || null,
+        npcLevelMin: mergedFilters.npcLevelMin ?? null,
+        npcLevelMax: mergedFilters.npcLevelMax ?? null,
         rarities:
           mergedFilters.rarities.length > 0 ? mergedFilters.rarities : null,
-        itemLevelMin: mergedFilters.itemLevelMin || null,
-        itemLevelMax: mergedFilters.itemLevelMax || null,
-        hid: mergedFilters.hid || null,
+        itemLevelMin: mergedFilters.itemLevelMin ?? null,
+        itemLevelMax: mergedFilters.itemLevelMax ?? null,
+        hid: mergedFilters.hid ?? null,
         itemNames:
           mergedFilters.itemNames.length > 0 ? mergedFilters.itemNames : null,
         players:
           mergedFilters.players.length > 0 ? mergedFilters.players : null,
-        playerLevelMin: mergedFilters.playerLevelMin || null,
-        playerLevelMax: mergedFilters.playerLevelMax || null,
+        playerLevelMin: mergedFilters.playerLevelMin ?? null,
+        playerLevelMax: mergedFilters.playerLevelMax ?? null,
       };
     });
   };
@@ -162,13 +162,13 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
       npcs: filters.npcs.length > 0 ? filters.npcs : undefined,
       rarities: filters.rarities.length > 0 ? filters.rarities : undefined,
       npcTypes: filters.npcTypes.length > 0 ? filters.npcTypes : undefined,
-      npcLevelMin: filters.npcLevelMin || undefined,
-      npcLevelMax: filters.npcLevelMax || undefined,
-      itemLevelMin: filters.itemLevelMin || undefined,
-      itemLevelMax: filters.itemLevelMax || undefined,
-      playerLevelMin: filters.playerLevelMin || undefined,
-      playerLevelMax: filters.playerLevelMax || undefined,
-      hid: filters.hid || undefined,
+      npcLevelMin: filters.npcLevelMin ?? undefined,
+      npcLevelMax: filters.npcLevelMax ?? undefined,
+      itemLevelMin: filters.itemLevelMin ?? undefined,
+      itemLevelMax: filters.itemLevelMax ?? undefined,
+      playerLevelMin: filters.playerLevelMin ?? undefined,
+      playerLevelMax: filters.playerLevelMax ?? undefined,
+      hid: filters.hid ?? undefined,
       itemNames: filters.itemNames.length > 0 ? filters.itemNames : undefined,
     };
   };

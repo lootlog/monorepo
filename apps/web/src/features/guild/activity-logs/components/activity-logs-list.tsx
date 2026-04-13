@@ -45,12 +45,12 @@ export const ActivityLogsList = () => {
       filters.sources.length > 0
         ? (filters.sources as ActivitySource[])
         : undefined,
-    startDate: filters.startDate || undefined,
-    endDate: filters.endDate || undefined,
-    name: filters.name || undefined,
-    world: filters.world || undefined,
+    startDate: filters.startDate ?? undefined,
+    endDate: filters.endDate ?? undefined,
+    name: filters.name ?? undefined,
+    world: filters.world ?? undefined,
     limit: ACTIVITY_LOGS_PAGE_LIMIT,
-    clanName: filters.clanName || undefined,
+    clanName: filters.clanName ?? undefined,
   });
 
   const allActivities = activityLogs?.pages.flatMap((page) => page.data) ?? [];

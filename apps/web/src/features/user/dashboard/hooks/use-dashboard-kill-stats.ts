@@ -57,9 +57,9 @@ export const useDashboardKillStats = (
   const { client } = useApiClient();
 
   const queryParams = {
-    world: filters.world || undefined,
-    npcType: filters.npcTypes?.join(",") || undefined,
-    topNpcsLimit: filters.topNpcsLimit || undefined,
+    world: filters.world ?? undefined,
+    npcType: filters.npcTypes?.join(",") ?? undefined,
+    topNpcsLimit: filters.topNpcsLimit ?? undefined,
   };
 
   const queryString = stringifyQueryParams(queryParams);
