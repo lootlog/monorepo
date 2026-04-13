@@ -34,7 +34,6 @@ export const useLootComments = (options: GetLootCommentsOptions) => {
       client.get<GetLootCommentsResponse>(
         `/guilds/${guildId}/loots/${options.lootId}/comments`,
       ),
-    select: (data) => data,
     enabled: !!guildId && !!options.lootId,
   });
 

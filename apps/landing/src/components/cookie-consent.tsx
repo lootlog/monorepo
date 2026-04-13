@@ -48,7 +48,10 @@ export function CookieConsent() {
                 {t("landing.cookieConsent.accept")}
               </Button>
               <Button
-                onClick={() => setIsVisible(false)}
+                onClick={() => {
+                  localStorage.setItem("cookie-consent", "rejected");
+                  setIsVisible(false);
+                }}
                 variant="outline"
                 size="sm"
                 className="border-white/10 hover:bg-white/5 hover:text-foreground"

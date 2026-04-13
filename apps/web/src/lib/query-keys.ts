@@ -191,7 +191,8 @@ export const queryKeys = {
     guildPlayers: (
       search: string | undefined,
       selectedPlayers: string | undefined,
-    ) => ["guild-players", search, selectedPlayers] as const,
+      world: string | undefined,
+    ) => ["guild-players", search, selectedPlayers, world] as const,
     guildTimers: (world: string | undefined, guildId: string | undefined) =>
       ["guild-timers", world, guildId] as const,
     itemByHid: (

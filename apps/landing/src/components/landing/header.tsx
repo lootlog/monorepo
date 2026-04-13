@@ -15,7 +15,7 @@ export function LandingHeader() {
   const isLoading = session.isPending;
 
   const handleLoginAction = async () => {
-    const url = `${window.location.href}@me`;
+    const url = `${window.location.origin}/@me`;
 
     await authClient.signIn.social({
       provider: "discord",

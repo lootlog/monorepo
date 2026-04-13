@@ -181,7 +181,7 @@ function ElectricBorder({
   }, []);
 
   if (!enabled) {
-    return <>{children}</>;
+    return children;
   }
 
   // Fallback for browsers without WebGL/hardware acceleration or weak devices

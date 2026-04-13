@@ -17,9 +17,9 @@ export const PROFESSION_COLORS: Record<string, string> = {
 };
 
 export const getProfessionName = (shortname: string): string => {
-  return PROFESSION_NAMES[shortname.toLowerCase()] || shortname;
+  return PROFESSION_NAMES[shortname.toLowerCase()] ?? shortname;
 };
 
 export const getProfessionColor = (shortname: string): string => {
-  return PROFESSION_COLORS[shortname.toLowerCase()] || "hsl(var(--chart-1))";
+  return PROFESSION_COLORS[shortname.toLowerCase()] ?? "hsl(var(--chart-1))";
 };

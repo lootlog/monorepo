@@ -32,14 +32,13 @@ export const useGuildPlayers = ({
   };
 
   const query = useQuery({
-    queryKey: queryKeys.gameData.guildPlayers(search, selectedPlayers),
+    queryKey: queryKeys.gameData.guildPlayers(search, selectedPlayers, world),
     queryFn: () =>
       client.get<Player[]>(
         `${SEARCH_API_URL}/players?${new URLSearchParams(
           queryParams,
         ).toString()}`,
       ),
-    select: (data) => data,
   });
 
   return query;

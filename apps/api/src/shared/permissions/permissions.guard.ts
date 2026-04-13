@@ -21,8 +21,8 @@ interface RequestWithPermissions {
 @Injectable()
 export class PermissionsGuard implements CanActivate {
   constructor(
-    private reflector: Reflector,
-    private memberContextService: MemberContextService,
+    private readonly reflector: Reflector,
+    private readonly memberContextService: MemberContextService,
   ) {}
 
   canActivate(context: ExecutionContext): Promise<boolean> | boolean {

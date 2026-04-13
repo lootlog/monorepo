@@ -1,11 +1,4 @@
-import {
-  memo,
-  useMemo,
-  useState,
-  startTransition,
-  useEffect,
-  type FC,
-} from "react";
+import { useState, startTransition, useEffect, type FC } from "react";
 import { BattleEventEntry } from "./battle-event-entry";
 import { BattleHeader } from "./battle-header";
 import type { Warrior } from "@/hooks/api/battle-log/use-battles";
@@ -20,50 +13,48 @@ export type BattleLogListProps = {
   userTeam?: number;
 };
 
-export const BattleLogList: FC<BattleLogListProps> = memo(
-  ({ events, warriors, characterId, userTeam }) => {
-    const [showAll, setShowAll] = useState(
-      () => !events || events.length <= INITIAL_RENDER_COUNT,
-    );
+export const BattleLogList: FC<BattleLogListProps> = ({
+  events,
+  warriors,
+  characterId,
+  userTeam,
+}) => {
+  const [showAll, setShowAll] = useState(
+    () => !events || events.length <= INITIAL_RENDER_COUNT,
+  );
 
-    useEffect(() => {
-      if (!showAll) {
-        startTransition(() => {
-          setShowAll(true);
-        });
-      }
-    }, [showAll]);
+  useEffect(() => {
+    if (!showAll) {
+      startTransition(() => {
+        setShowAll(true);
+      });
+    }
+  }, []);
 
-    const warriorsMap = useMemo(
-      () => new Map(warriors.map((w) => [w.originalId, w])),
-      [warriors],
-    );
+  const warriorsMap = new Map(warriors.map((w) => [w.originalId, w]));
 
-    const visibleEvents = showAll
-      ? events
-      : events?.slice(0, INITIAL_RENDER_COUNT);
+  const visibleEvents = showAll
+    ? events
+    : events?.slice(0, INITIAL_RENDER_COUNT);
 
-    return (
-      <ul className="text-sm">
-        <BattleHeader warriors={warriors} characterId={characterId} />
-        {visibleEvents?.map((event, eIndex) => {
-          const attacker = warriorsMap.get(event.attackerId);
-          const defender = warriorsMap.get(event.defenderId);
+  return (
+    <ul className="text-sm">
+      <BattleHeader warriors={warriors} characterId={characterId} />
+      {visibleEvents?.map((event, eIndex) => {
+        const attacker = warriorsMap.get(event.attackerId);
+        const defender = warriorsMap.get(event.defenderId);
 
-          return (
-            <BattleEventEntry
-              key={eIndex}
-              event={event}
-              attacker={attacker}
-              defender={defender}
-              eventIndex={eIndex}
-              userTeam={userTeam}
-            />
-          );
-        })}
-      </ul>
-    );
-  },
-);
-
-BattleLogList.displayName = "BattleLogList";
+        return (
+          <BattleEventEntry
+            key={eIndex}
+            event={event}
+            attacker={attacker}
+            defender={defender}
+            eventIndex={eIndex}
+            userTeam={userTeam}
+          />
+        );
+      })}
+    </ul>
+  );
+};

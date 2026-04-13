@@ -747,8 +747,8 @@ export class BattleProcessor {
       throw new Error("No events found in battle data");
     }
 
-    const firstTimestamp = events[0]?.ev || 0;
-    const lastTimestamp = events[events.length - 1]?.ev || 0;
+    const firstTimestamp = events[0]?.ev ?? 0;
+    const lastTimestamp = events[events.length - 1]?.ev ?? 0;
 
     return lastTimestamp - firstTimestamp;
   }

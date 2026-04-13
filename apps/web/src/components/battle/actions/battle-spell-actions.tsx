@@ -1,6 +1,6 @@
 import type { RawBattleParsedEvent } from "@/hooks/api/battle-log/use-battle-raw";
 import { cn } from "@lootlog/ui/lib/utils";
-import { memo, type FC } from "react";
+import type { FC } from "react";
 import { Trans } from "react-i18next";
 import { generateDynamicValuesAndComponents } from "../utils/dynamic-values-helper";
 import {
@@ -18,51 +18,54 @@ export type BattleSpellActionsProps = {
   userTeam?: number;
 };
 
-export const BattleSpellActions: FC<BattleSpellActionsProps> = memo(
-  ({ actions, attacker, defender, event, eventIndex, userTeam }) => {
-    if (actions.length === 0) return null;
+export const BattleSpellActions: FC<BattleSpellActionsProps> = ({
+  actions,
+  attacker,
+  defender,
+  event,
+  eventIndex,
+  userTeam,
+}) => {
+  if (actions.length === 0) return null;
 
-    const transformValue = (value: string, type: string): string => {
-      if (type === "energy" || type === "mana") {
-        return transformAndRoundEnergyMana(value);
-      }
-      return value;
-    };
+  const transformValue = (value: string, type: string): string => {
+    if (type === "energy" || type === "mana") {
+      return transformAndRoundEnergyMana(value);
+    }
+    return value;
+  };
 
-    const teamColors = {
-      "bg-red-400/10": attacker?.team !== userTeam,
-      "bg-green-400/10": attacker?.team === userTeam,
-    };
+  const teamColors = {
+    "bg-red-400/10": attacker?.team !== userTeam,
+    "bg-green-400/10": attacker?.team === userTeam,
+  };
 
-    return (
-      <div className={cn("px-4 py-1 bg-gray-100/10", teamColors)}>
-        {actions.map((action, sIndex) => {
-          const processedValue = transformValue(action.value, action.type);
-          const dynamicData = generateDynamicValuesAndComponents(action.value);
+  return (
+    <div className={cn("px-4 py-1 bg-gray-100/10", teamColors)}>
+      {actions.map((action, sIndex) => {
+        const processedValue = transformValue(action.value, action.type);
+        const dynamicData = generateDynamicValuesAndComponents(action.value);
 
-          return (
-            <div key={`spellActions-${eventIndex}-${sIndex}`}>
-              <Trans
-                i18nKey={`battle.${action.type}`}
-                values={{
-                  name: attacker?.name,
-                  defenderName: defender?.name,
-                  value: processedValue,
-                  hp: roundHpPercentage(event.attackerHpPercentage),
-                  defenderHp: roundHpPercentage(event.defenderHpPercentage),
-                  ...dynamicData.values,
-                }}
-                components={{
-                  value: <span className="font-semibold" />,
-                  ...dynamicData.components,
-                }}
-              />
-            </div>
-          );
-        })}
-      </div>
-    );
-  },
-);
-
-BattleSpellActions.displayName = "BattleSpellActions";
+        return (
+          <div key={`spellActions-${eventIndex}-${sIndex}`}>
+            <Trans
+              i18nKey={`battle.${action.type}`}
+              values={{
+                name: attacker?.name,
+                defenderName: defender?.name,
+                value: processedValue,
+                hp: roundHpPercentage(event.attackerHpPercentage),
+                defenderHp: roundHpPercentage(event.defenderHpPercentage),
+                ...dynamicData.values,
+              }}
+              components={{
+                value: <span className="font-semibold" />,
+                ...dynamicData.components,
+              }}
+            />
+          </div>
+        );
+      })}
+    </div>
+  );
+};
