@@ -494,7 +494,6 @@ export class MembersService {
                   hasSome: [
                     Permission.OWNER,
                     Permission.ADMIN,
-                    Permission.LOOTLOG_MANAGE,
                     Permission.LOOTLOG_ACCESS,
                   ],
                 },
