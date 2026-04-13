@@ -1,4 +1,4 @@
-import { type FC, Fragment, useMemo } from "react";
+import { type FC, Fragment } from "react";
 import { cn } from "@/lib/utils";
 import { XIcon } from "lucide-react";
 import {
@@ -19,11 +19,11 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { useGuildMembers } from "@/hooks/api/use-guild-members";
 import { useMemberInvalidation } from "@/hooks/api/use-member-invalidation";
-import { useGuilds } from "@/hooks/api/use-guilds";
 import { NpcType } from "@/hooks/api/use-npcs";
 import { Game } from "@/lib/game";
 
 type SingleNotificationProps = {
+  guildNamesById: Record<string, string>;
   notification: NotificationWithServers | PartyGatheringNotification;
   index: number;
   showCloseButton?: boolean;
@@ -37,6 +37,7 @@ const isPartyGatheringNotification = (
 };
 
 export const SingleNotification: FC<SingleNotificationProps> = ({
+  guildNamesById,
   notification,
   index,
   showCloseButton = false,
@@ -45,7 +46,6 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   const { removeNotification, settings } = useNotificationsStore();
   const characterId = String(Game.hero.id);
   const { data: members } = useGuildMembers(notification.guildId);
-  const { data: guilds } = useGuilds();
   const guildMember = members?.[notification.discordId];
   useMemberInvalidation(
     notification.guildId,
@@ -56,7 +56,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
 
   const npcType =
     !isPartyGathering && notification.npc
-      ? getNpcTypeByWt(NpcType, notification.npc.wt!)
+      ? getNpcTypeByWt(NpcType, notification.npc.wt)
       : undefined;
 
   const key = (
@@ -68,25 +68,18 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
     : undefined;
   const autoHideTimeout = settingsByNpcType?.autoHideTimeout ?? 0;
 
-  const createdAtMs = useMemo(
-    () => new Date(notification.createdAt).getTime(),
-    [notification.createdAt],
-  );
-  const secondsLeft = useMemo(() => {
+  const createdAtMs = new Date(notification.createdAt).getTime();
+  const secondsLeft = (() => {
     if (!autoHideTimeout || autoHideTimeout <= 0) return 0;
     const endAt = createdAtMs + autoHideTimeout * 1000;
     const diffMs = endAt - (now ?? Date.now());
     if (diffMs <= 0) return 0;
     return Math.ceil(diffMs / 1000);
-  }, [autoHideTimeout, createdAtMs, now]);
+  })();
 
-  const serverNames = useMemo(
-    () =>
-      notification.servers
-        .map((server) => guilds?.find((g) => g.id === server)?.name ?? "")
-        .filter(Boolean),
-    [notification.servers, guilds],
-  );
+  const serverNames = notification.servers
+    .map((server) => guildNamesById[server] ?? "")
+    .filter(Boolean);
 
   const handleRemoveNotification = () =>
     removeNotification(notification.notificationId);
