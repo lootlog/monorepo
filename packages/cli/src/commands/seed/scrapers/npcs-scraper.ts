@@ -39,8 +39,8 @@ function getWtByType(type: string): number {
 }
 
 function getNpcLevelFromMeta(meta: string): number {
-  const regex = /<\/i>(.*?)lvl<div>/g;
-  const grpRegex = /<\/i>(.*?)lvl,/g;
+  const regex = /<\/i>(.*?)lvl<div>/;
+  const grpRegex = /<\/i>(.*?)lvl,/;
 
   const lvl = regex.exec(meta) ?? grpRegex.exec(meta);
 

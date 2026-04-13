@@ -1,6 +1,7 @@
-import type { Meilisearch, SearchParams } from "meilisearch";
+import type { Meilisearch } from "meilisearch";
 import type { z } from "zod";
 import { meilisearchClient } from "../lib/meilisearch.js";
+import { buildSearchQuery } from "../lib/utils/build-search-query.js";
 import { logger } from "../config/winston.config.js";
 import type { GetPlayersDto } from "./dto/get-players.dto.js";
 import { PLAYERS_INDEX } from "./constants/meilisearch.js";
@@ -20,24 +21,7 @@ export class PlayersService {
 
   async getPlayers({ limit, search, world }: GetPlayersDto) {
     const index = this.meilisearch.index<PlayerHit>(PLAYERS_INDEX);
-    const hasMultipleSearchTerms = Array.isArray(search);
-    const searchTerm = hasMultipleSearchTerms ? "" : search;
-
-    const filters: string[] = [];
-
-    if (hasMultipleSearchTerms) {
-      filters.push(`name IN [${search.map((n) => `"${n}"`).join(", ")}]`);
-    }
-
-    if (world) {
-      filters.push(`world = "${world}"`);
-    }
-
-    const query: SearchParams = {
-      limit,
-      attributesToSearchOn: ["name"],
-      ...(filters.length > 0 && { filter: filters.join(" AND ") }),
-    };
+    const { searchTerm, query } = buildSearchQuery({ search, world, limit });
 
     try {
       const data = await index.search(searchTerm, query);
