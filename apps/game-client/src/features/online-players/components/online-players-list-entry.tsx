@@ -25,7 +25,7 @@ const getCharacterData = (presence: PlayerPresence): MargonemCharacter => {
 };
 
 const getTopRoleColor = (guildMember?: GuildMember): string => {
-  const topRole = guildMember?.roles?.sort(
+  const topRole = guildMember?.roles?.toSorted(
     (a, b) => b.position - a.position,
   )[0];
   const roleColor = topRole?.color;

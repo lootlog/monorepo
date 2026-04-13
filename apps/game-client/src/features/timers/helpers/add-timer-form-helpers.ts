@@ -1,4 +1,3 @@
-import { DEFAULT_RESPAWN_RANDOMNESS } from "@/features/timers/constants/default-respawn-randomness";
 import { MAX_DURATION_SECONDS } from "@/features/timers/constants/max-duration-seconds";
 
 export const parseDurationToSeconds = (input: string): number => {
@@ -12,31 +11,3 @@ export const parseDurationToSeconds = (input: string): number => {
 
   return Math.min(totalSeconds, MAX_DURATION_SECONDS);
 };
-
-function calculateMaxOffsetFromMinOffset(
-  minOffsetSeconds: number,
-  respawnRandomness: number = DEFAULT_RESPAWN_RANDOMNESS,
-): number {
-  const multiplier = respawnRandomness / 100;
-  return Math.round((minOffsetSeconds * (1 + multiplier)) / (1 - multiplier));
-}
-
-function formatSecondsToHHMMSS(seconds: number): string {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-
-  const pad = (n: number) => String(n).padStart(2, "0");
-
-  return `${pad(h)}:${pad(m)}:${pad(s)}`;
-}
-
-function calculateRespBaseSecondsFromMinOffset(
-  minOffsetSeconds: number,
-  respawnRandomness: number = DEFAULT_RESPAWN_RANDOMNESS,
-): number {
-  const multiplier = respawnRandomness / 100;
-  const baseSeconds = minOffsetSeconds / (1 - multiplier);
-
-  return Math.round(baseSeconds);
-}

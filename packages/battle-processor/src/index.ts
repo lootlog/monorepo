@@ -240,8 +240,6 @@ export class BattleProcessor {
     battleMeta: { characterId: string },
   ) {
     for (const move of moves) {
-      this.processOutcome(move);
-
       if (!move.actions.length) {
         this.updateHpTracking(move);
         continue;
@@ -276,7 +274,7 @@ export class BattleProcessor {
           attacker.spellsUsed++;
           const spellName = tspellAction.param || "unknown";
           attacker.spellsUsedMap[spellName] =
-            (attacker.spellsUsedMap[spellName] || 0) + 1;
+            (attacker.spellsUsedMap[spellName] ?? 0) + 1;
         }
       }
 
@@ -747,20 +745,10 @@ export class BattleProcessor {
       throw new Error("No events found in battle data");
     }
 
-    const firstTimestamp = events[0]?.ev || 0;
-    const lastTimestamp = events[events.length - 1]?.ev || 0;
+    const firstTimestamp = events[0]?.ev ?? 0;
+    const lastTimestamp = events[events.length - 1]?.ev ?? 0;
 
     return lastTimestamp - firstTimestamp;
-  }
-
-  private processOutcome(move: ParsedMove) {
-    for (const { actionType, param } of move.actions) {
-      if (actionType === "winner") {
-        this.battleOutcome.winner = param;
-      } else if (actionType === "loser") {
-        this.battleOutcome.loser = param;
-      }
-    }
   }
 
   private determineBattleType() {

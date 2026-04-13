@@ -268,7 +268,7 @@ async function processBatch(db: PrismaClient, loots: Loot[]) {
 
   for (const loot of loots) {
     // 1. Items
-    if (loot.items && loot.items !== null) {
+    if (loot.items) {
       const items = parseJsonField(loot.items) as any[];
       if (Array.isArray(items)) {
         for (const item of items) {
@@ -309,7 +309,7 @@ async function processBatch(db: PrismaClient, loots: Loot[]) {
     }
 
     // 2. Players
-    if (loot.players && loot.players !== null) {
+    if (loot.players) {
       const players = parseJsonField(loot.players) as any[];
       if (Array.isArray(players)) {
         for (const player of players) {
@@ -360,7 +360,7 @@ async function processBatch(db: PrismaClient, loots: Loot[]) {
     }
 
     // 3. Npcs
-    if (loot.npcs && loot.npcs !== null) {
+    if (loot.npcs) {
       const npcs = parseJsonField(loot.npcs) as any[];
       if (Array.isArray(npcs)) {
         for (const npc of npcs) {
