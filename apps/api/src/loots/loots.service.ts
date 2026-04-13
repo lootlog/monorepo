@@ -140,28 +140,27 @@ export class LootsService implements OnModuleInit {
         npcData.highest.type,
       );
 
-      const submissionData = filteredGuildIds
-        .map((guildId) => {
-          const config = lootlogConfigs.find((c) => c.id === guildId);
-          if (!config) return null;
+      const submissionData = filteredGuildIds.flatMap((guildId) => {
+        const config = lootlogConfigs.find((c) => c.id === guildId);
+        if (!config) return [];
 
-          const calculatedLoot =
-            this.lootValidationService.getLootForGivenConfig(
-              body.loots,
-              config.npcs,
-              highestWtNpcType,
-            );
-          if (calculatedLoot.length === 0) return null;
+        const calculatedLoot = this.lootValidationService.getLootForGivenConfig(
+          body.loots,
+          config.npcs,
+          highestWtNpcType,
+        );
+        if (calculatedLoot.length === 0) return [];
 
-          const member = members.find((m) => m.guildId === guildId);
-          if (!member) return null;
+        const member = members.find((m) => m.guildId === guildId);
+        if (!member) return [];
 
-          return {
+        return [
+          {
             guildId: guildId,
             memberId: member.id,
-          };
-        })
-        .filter(Boolean);
+          },
+        ];
+      });
 
       if (submissionData.length === 0) {
         throw new BadRequestException(

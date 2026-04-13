@@ -80,7 +80,7 @@ export class MemberContextService {
       ? Object.values(Permission)
       : member.roles.reduce((acc: Permission[], role) => {
           return acc.concat(role.permissions);
-        }, []) || [];
+        }, []);
 
     const uniquePermissions = Array.from(new Set(permissions));
 

@@ -41,22 +41,16 @@ const loadFixtures = async (): Promise<Map<string, EventFixture>> => {
   return fixtures;
 };
 
-const parseCliArgs = (
-  args: string[],
-): {
+interface ParsedCliArgs {
   event?: string;
   exchange?: string;
   routingKey?: string;
   payload?: string;
   continuous?: boolean;
-} => {
-  const parsed: {
-    event?: string;
-    exchange?: string;
-    routingKey?: string;
-    payload?: string;
-    continuous?: boolean;
-  } = {};
+}
+
+const parseCliArgs = (args: string[]): ParsedCliArgs => {
+  const parsed: ParsedCliArgs = {};
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];

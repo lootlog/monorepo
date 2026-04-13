@@ -126,9 +126,9 @@ export class RetryService {
     identifier: string,
     config: RetryConfig = {},
   ): void {
-    const headers = amqpMsg.properties.headers || {};
+    const headers = amqpMsg.properties.headers ?? {};
     const currentRetryCount = this.getRetryCount(headers);
-    const retryDelayMs = config.retryDelayMs || 30000;
+    const retryDelayMs = config.retryDelayMs ?? 30000;
 
     this.logger.log({
       level: "info",

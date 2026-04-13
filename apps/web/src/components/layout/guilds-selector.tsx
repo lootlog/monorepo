@@ -6,7 +6,7 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useGuilds } from "@/hooks/api/guilds/use-guilds";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { Reorder, motion } from "framer-motion";
-import { useState, useEffect, useCallback, useMemo, type FC } from "react";
+import { useState, useEffect, type FC } from "react";
 import { GuildsSelectorSkeleton } from "@/components/layout/guilds-selector-skeleton";
 import { useUser } from "@/hooks/api/user/use-user";
 import { useUpdateUserPreferences } from "@/hooks/api/user/use-update-user-preferences";
@@ -21,7 +21,7 @@ export const GuildsSelector: FC = () => {
   const [pendingOrder, setPendingOrder] = useState<string[] | null>(null);
   const { mutate: updateUserPreferences } = useUpdateUserPreferences();
 
-  const orderedGuilds = useMemo(() => {
+  const orderedGuilds = (() => {
     if (!guilds?.length) return [];
 
     const savedOrder = user?.preferences?.guildsOrder;
@@ -41,7 +41,7 @@ export const GuildsSelector: FC = () => {
     } catch {
       return guilds;
     }
-  }, [guilds, user?.preferences?.guildsOrder]);
+  })();
 
   useEffect(() => {
     if (!isDragging && pendingOrder) {
@@ -56,22 +56,22 @@ export const GuildsSelector: FC = () => {
     }
   }, [isDragging, orderedGuilds, pendingOrder, updateUserPreferences]);
 
-  const handleReorder = useCallback((newGuilds: typeof guilds) => {
+  const handleReorder = (newGuilds: typeof guilds) => {
     if (!newGuilds) return;
 
     setLocalGuilds(newGuilds);
 
     const orderIds = newGuilds.map((guild) => guild.id);
     setPendingOrder(orderIds);
-  }, []);
+  };
 
-  const handleDragStart = useCallback(() => {
+  const handleDragStart = () => {
     setIsDragging(true);
-  }, []);
+  };
 
-  const handleDragEnd = useCallback(() => {
+  const handleDragEnd = () => {
     setIsDragging(false);
-  }, []);
+  };
 
   const orderedGuildsKey = orderedGuilds.map((guild) => guild.id).join(":");
   const pendingOrderKey = pendingOrder?.join(":");
