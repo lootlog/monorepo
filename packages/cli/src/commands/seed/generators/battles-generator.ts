@@ -30,12 +30,12 @@ export class BattlesGenerator {
     }
 
     const worlds = ["gordion", "classic", "katahha", "aldous", "gefion"];
-    const randomWorld = worlds[Math.floor(Math.random() * worlds.length)];
+    const randomWorld = worlds[Math.floor(Math.random() * worlds.length)]!;
 
     return {
       accountId,
       characterId,
-      world: randomWorld || "gordion",
+      world: randomWorld,
       events: this.samplePayload.events,
     };
   }

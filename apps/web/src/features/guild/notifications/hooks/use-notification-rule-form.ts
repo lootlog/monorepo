@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
+import { getApiErrorMessage } from "@/lib/api-client/api-client";
 import { useNpcs } from "@/hooks/api/game-data/use-npcs";
 import { useWorlds } from "@/hooks/api/game-data/use-worlds";
 import { useGuildRoles } from "@/hooks/api/guilds/use-guild-roles";

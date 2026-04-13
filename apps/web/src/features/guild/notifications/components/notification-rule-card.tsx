@@ -23,7 +23,7 @@ import {
   useTriggerGuildNotificationRuleTest,
   type GuildNotificationRule,
 } from "@/hooks/api/guilds/use-guild-notifications";
-import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
+import { getApiErrorMessage } from "@/lib/api-client/api-client";
 import { ROUTES } from "@/config/routes";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {

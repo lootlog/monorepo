@@ -56,7 +56,7 @@ function parseMeta(meta: string) {
   const type = parsed.querySelector("i")?.textContent ?? "unknown";
   const locationText = parsed
     .querySelector("div div")
-    ?.textContent.replace(/\((.*?)\)/, "")
+    ?.textContent?.replace(/\((.*?)\)/, "")
     .trim();
   const lvl = getNpcLevelFromMeta(meta);
 

@@ -13,7 +13,7 @@ import { useGuilds } from "@/hooks/api/use-guilds";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import { cn } from "@/lib/utils";
 import { useTimersStore } from "@/store/timers.store";
-import { parseMsToTime } from "@/utils/parse-ms-to-time";
+import { parseMsToTime } from "@lootlog/types";
 import { Loader2 } from "lucide-react";
 import type { FC } from "react";
 import { useTimerActions } from "../hooks/use-timer-actions";

@@ -16,7 +16,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { Ban, MessageSquareText, Trash2 } from "lucide-react";
-import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
+import { getDiscordAvatarUrl } from "@lootlog/types";
 import type { GuildMember } from "@/hooks/api/members/use-guild-member";
 import type { ReservationSegment } from "./types";
 import {

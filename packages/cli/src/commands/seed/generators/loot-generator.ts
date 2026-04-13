@@ -155,13 +155,9 @@ export class LootGenerator {
 
     let cumulativeWeight = 0;
     for (let i = 0; i < rarities.length; i++) {
-      const weight = weights[i];
-      const rarity = rarities[i];
-      if (weight !== undefined && rarity !== undefined) {
-        cumulativeWeight += weight;
-        if (random < cumulativeWeight) {
-          return rarity;
-        }
+      cumulativeWeight += weights[i]!;
+      if (random < cumulativeWeight) {
+        return rarities[i]!;
       }
     }
 

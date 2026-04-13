@@ -37,7 +37,7 @@ import {
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { WorldSwitcher } from "@/components/common/world-switcher";
-import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
+import { getDiscordAvatarUrl } from "@lootlog/types";
 import { cn } from "@lootlog/ui/lib/utils";
 import { useKillsControllerGetMemberKills } from "@/lib/api/generated/main/kills/kills";
 import type { NpcType } from "@/lib/api/generated/main/model/npc-type";

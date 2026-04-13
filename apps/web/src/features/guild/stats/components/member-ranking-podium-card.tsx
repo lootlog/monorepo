@@ -18,7 +18,7 @@ import {
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
 import { cn } from "@lootlog/ui/lib/utils";
-import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
+import { getDiscordAvatarUrl } from "@lootlog/types";
 import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import type { GuildMember } from "@/hooks/api/members/use-guild-member.tsx";

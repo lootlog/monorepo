@@ -5,7 +5,7 @@ import { MemberSyncButton } from "@/features/guild/settings/members/components/m
 import { ArrowLeft, Crown } from "lucide-react";
 import { useMemo, type FC } from "react";
 import { useSelectorPanel } from "@/components/selector-panel";
-import { Permission } from "@lootlog/types";
+import { Permission, getDiscordAvatarUrl } from "@lootlog/types";
 import { PERMISSION_CATEGORIES } from "@/features/guild/settings/roles/constants/permission-categories";
 import {
   Tooltip,
@@ -16,7 +16,6 @@ import {
 import { cn } from "@lootlog/ui/lib/utils";
 import { useTranslation } from "react-i18next";
 import { Avatar, AvatarImage } from "@lootlog/ui/components/avatar";
-import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 
 export type MembersPanelContentProps = {
   selectedMemberColor: string | undefined;

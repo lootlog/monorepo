@@ -7,7 +7,7 @@ import {
   HttpStatus,
 } from "@nestjs/common";
 import type { APIGuild } from "discord-api-types/v10";
-import { DiscordGuildSyncStatus } from "@lootlog/types";
+import { DiscordGuildSyncStatus, generateSlug } from "@lootlog/types";
 
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
@@ -28,7 +28,6 @@ import type { UpdateGuildConfigDto } from "src/guilds/dto/update-guild-config.dt
 import { ErrorKey } from "src/guilds/enum/error-key.enum";
 import { MembersService } from "src/members/members.service";
 import { RolesService } from "src/roles/roles.service";
-import { generateSlug } from "src/shared/utils/generate-slug";
 import { RESTRICTED_VANITY_URLS } from "src/guilds/constants/restricted-vanity-urls";
 import { DiscordService } from "src/discord/discord.service";
 import { isDiscordAdministrator, RedisService } from "@lootlog/nest-shared";
@@ -812,7 +811,7 @@ export class GuildsService {
     const guild = await this.prisma.guild.update({
       where: { id: guildId },
       data: {
-        vanityUrl: generateSlug(data.vanityUrl),
+        vanityUrl: generateSlug(data.vanityUrl) ?? null,
       },
     });
 

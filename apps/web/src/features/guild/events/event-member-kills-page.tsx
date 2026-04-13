@@ -21,7 +21,7 @@ import {
   useResetScrollTop,
   useVirtualInfiniteScroll,
 } from "@/hooks/utils/use-virtual-infinite-scroll";
-import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
+import { getDiscordAvatarUrl } from "@lootlog/types";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { EventScrollableTabsList } from "./components/shared/event-scrollable-tabs-list";
 import {

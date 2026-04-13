@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import type { GuildMember } from "@/hooks/api/use-guild-members";
 import { useVolunteer } from "@/hooks/api/use-volunteer";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
-import { getDiscordAvatarUrl } from "@/utils/discord/get-avatar-url";
+import { getDiscordAvatarUrl } from "@lootlog/types";
 import type { FC } from "react";
 import {
   useNotificationsStore,

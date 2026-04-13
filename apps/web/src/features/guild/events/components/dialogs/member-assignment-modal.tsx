@@ -15,7 +15,7 @@ import { Search, X, Users, UserPlus, AlertTriangle } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
 import { cn } from "@lootlog/ui/lib/utils";
-import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
+import { getDiscordAvatarUrl } from "@lootlog/types";
 interface MemberAssignmentModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;

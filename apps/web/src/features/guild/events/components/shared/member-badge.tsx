@@ -1,5 +1,5 @@
 import { useMemberColor } from "@/hooks/discord/use-member-color";
-import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
+import { getDiscordAvatarUrl } from "@lootlog/types";
 import type { Member } from "../../types/api";
 
 interface MemberBadgeProps {

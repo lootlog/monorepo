@@ -8,7 +8,7 @@ import {
   type NotificationWithServers,
 } from "@/store/notifications.store";
 import { useWindowsStore } from "@/store/windows.store";
-import { getDiscordAvatarUrl } from "@/utils/discord/get-avatar-url";
+import { getDiscordAvatarUrl } from "@lootlog/types";
 import type { FC } from "react";
 
 type SingleNotificationNpcProps = {

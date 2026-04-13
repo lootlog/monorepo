@@ -3,12 +3,11 @@ import { Crown } from "lucide-react";
 import { type FC, useMemo } from "react";
 import type { GuildMember } from "@/hooks/api/members/use-guild-member";
 import { getColorFromRole } from "@/utils/get-color-from-role";
-import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
+import { getDiscordAvatarUrl, Permission } from "@lootlog/types";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
 import { Avatar, AvatarImage } from "@lootlog/ui/components/avatar";
 import { useSelectorPanel } from "@/components/selector-panel";
 import { SelectableListCard } from "@/components/selectable-list-card";
-import { Permission } from "@lootlog/types";
 import {
   Tooltip,
   TooltipContent,

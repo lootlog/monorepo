@@ -20,7 +20,7 @@ import {
   normalizeScoringMode,
   normalizeScoringRules,
 } from "./utils/scoring-rules";
-import { getApiErrorMessage } from "./utils/get-api-error-message";
+import { getApiErrorMessage } from "@/lib/api-client/api-client";
 import { ScoringRulesEditor } from "./components/scoring/scoring-rules-editor";
 import { ScoringModeSelector } from "./components/scoring/scoring-mode-selector";
 import type { EventOverviewResponseDto } from "@/lib/api/generated/main/model";

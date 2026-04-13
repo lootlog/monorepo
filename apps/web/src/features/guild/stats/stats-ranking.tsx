@@ -27,7 +27,7 @@ import { Input } from "@lootlog/ui/components/input";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { WorldSwitcher } from "@/components/common/world-switcher";
-import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
+import { getDiscordAvatarUrl } from "@lootlog/types";
 import { useKillsControllerGetGuildKillStats } from "@/lib/api/generated/main/kills/kills";
 import type { NpcType } from "@/lib/api/generated/main/model/npc-type";
 import { useStatsSettings } from "./hooks/use-stats-settings";

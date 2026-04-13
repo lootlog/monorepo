@@ -58,7 +58,7 @@ export class GuildGenerator {
   generateRole(position: number): GeneratedRole {
     const id = uuidv7();
     const name = generate({ exactly: 2, join: " " });
-    const color = ROLE_COLORS[crypto.randomInt(0, ROLE_COLORS.length)];
+    const color = ROLE_COLORS[crypto.randomInt(0, ROLE_COLORS.length)]!;
 
     const permissionCount = crypto.randomInt(1, 6);
     const permissions: Permission[] = [];
@@ -67,8 +67,8 @@ export class GuildGenerator {
       const perm =
         AVAILABLE_PERMISSIONS[
           crypto.randomInt(0, AVAILABLE_PERMISSIONS.length)
-        ];
-      if (perm && !permissions.includes(perm)) {
+        ]!;
+      if (!permissions.includes(perm)) {
         permissions.push(perm);
       }
     }
@@ -79,7 +79,7 @@ export class GuildGenerator {
     return {
       id,
       name,
-      color: color || 0,
+      color,
       position,
       permissions,
       lvlRangeFrom,
@@ -99,8 +99,8 @@ export class GuildGenerator {
 
     for (let i = 0; i < roleCount; i++) {
       const roleId =
-        availableRoleIds[crypto.randomInt(0, availableRoleIds.length)];
-      if (roleId && !roleIds.includes(roleId)) {
+        availableRoleIds[crypto.randomInt(0, availableRoleIds.length)]!;
+      if (!roleIds.includes(roleId)) {
         roleIds.push(roleId);
       }
     }

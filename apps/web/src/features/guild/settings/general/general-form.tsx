@@ -12,7 +12,7 @@ import {
 } from "@lootlog/ui/components/form";
 import { Input } from "@lootlog/ui/components/input";
 import { useGuild } from "@/hooks/api/guilds/use-guild";
-import { generateSlug } from "@/utils/generate-slug";
+import { generateSlug } from "@lootlog/types";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { useUpdateGuild } from "@/hooks/api/guilds/use-update-guild";

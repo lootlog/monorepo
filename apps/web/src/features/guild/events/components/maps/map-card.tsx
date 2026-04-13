@@ -15,7 +15,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { cn } from "@lootlog/ui/lib/utils";
-import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
+import { getDiscordAvatarUrl } from "@lootlog/types";
 import { PlayerTile } from "@/components/tiles";
 import { useLocalCoverageTimer } from "../../hooks/utils/use-local-coverage-timer";
 import { useAssignmentCountdown } from "../../hooks/utils/use-assignment-countdown";

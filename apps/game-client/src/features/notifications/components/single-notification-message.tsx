@@ -1,7 +1,7 @@
 import type { GuildMember } from "@/hooks/api/use-guild-members";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import type { NotificationWithServers } from "@/store/notifications.store";
-import { getDiscordAvatarUrl } from "@/utils/discord/get-avatar-url";
+import { getDiscordAvatarUrl } from "@lootlog/types";
 import type { FC } from "react";
 
 type SingleNotificationMessageProps = {

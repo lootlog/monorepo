@@ -37,7 +37,7 @@ import {
   useUpdateGuildNotificationTarget,
   type GuildNotificationTarget,
 } from "@/hooks/api/guilds/use-guild-notifications";
-import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
+import { getApiErrorMessage } from "@/lib/api-client/api-client";
 
 const targetFormSchema = (t: (key: string) => string, isCreateMode: boolean) =>
   z
