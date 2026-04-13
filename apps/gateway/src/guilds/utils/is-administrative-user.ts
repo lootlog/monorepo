@@ -3,7 +3,6 @@ import type { GuildRole } from "src/guilds/types/guild.types";
 
 const ADMINISTRATIVE_PERMISSIONS = [
   Permission.ADMIN,
-  Permission.LOOTLOG_MANAGE,
   Permission.OWNER,
 ] as const;
 

@@ -1,10 +1,15 @@
-import { NpcTypeEnum, Permission } from "@lootlog/types";
+import {
+  getNpcRoutingTier,
+  Permission,
+  type NpcRoutingData,
+  type NpcRoutingTier,
+} from "@lootlog/types";
 import type { UserGuildData, GuildRole } from "src/guilds/types/guild.types";
-import { isAdministrativeUserFromRoles } from "src/guilds/utils/is-administrative-user";
+import { isOwnerOrAdminFromRoles } from "src/guilds/utils/is-administrative-user";
 import { Platform } from "src/gateway/enums/platform.enum";
 
 export type FeatureName = "chat" | "timers" | "notifications";
-export type TierName = "base" | "titans" | "heroes";
+export type TierName = NpcRoutingTier;
 
 // Features excluded for web app (they don't need chat/notifications)
 const WEB_EXCLUDED_FEATURES: FeatureName[] = ["chat", "notifications"];
@@ -91,7 +96,7 @@ export function calculateUserRooms(
     guildRooms.push(buildRoomName(guild.id, "events"));
 
     // Owner/Admin get all feature rooms + admin room
-    if (isOwner || isAdministrativeUserFromRoles(roles)) {
+    if (isOwner || isOwnerOrAdminFromRoles(roles)) {
       guildRooms.push(buildRoomName(guild.id, "admin"));
 
       for (const { feature, tier } of applicableFeatures) {
@@ -118,16 +123,40 @@ function hasPermission(roles: GuildRole[], permission: Permission): boolean {
   return roles.some((role) => role.permissions.includes(permission));
 }
 
-export function getNpcTier(npc?: { type?: string }): TierName {
-  if (!npc?.type) return "base";
-  if (npc.type === NpcTypeEnum.TITAN) return "titans";
-  if (npc.type === NpcTypeEnum.HERO || npc.type === NpcTypeEnum.EVENT_HERO)
-    return "heroes";
-  return "base";
+export function getFeaturePermission(
+  feature: FeatureName,
+  tier: TierName,
+): Permission {
+  return FEATURE_ROOMS[feature][tier];
+}
+
+export function getNpcTier(npc?: NpcRoutingData): TierName {
+  return getNpcRoutingTier(npc);
 }
 
 export function checkLevelRange(roles: GuildRole[], npcLevel: number): boolean {
   return roles.some(
     (role) => role.lvlRangeFrom <= npcLevel && role.lvlRangeTo >= npcLevel,
   );
+}
+
+export function hasFeatureRoomAccess(
+  roles: GuildRole[],
+  feature: FeatureName,
+  tier: TierName,
+  npcLevel?: number,
+): boolean {
+  const requiredPermission = getFeaturePermission(feature, tier);
+
+  return roles.some((role) => {
+    if (!role.permissions.includes(requiredPermission)) {
+      return false;
+    }
+
+    if (npcLevel === undefined) {
+      return true;
+    }
+
+    return role.lvlRangeFrom <= npcLevel && role.lvlRangeTo >= npcLevel;
+  });
 }
