@@ -16,7 +16,7 @@ import { DiscordService } from "src/discord/discord.service";
 import { DiscordRateLimiterService } from "src/discord/discord-rate-limiter.service";
 import { RedisService } from "@lootlog/nest-shared";
 import { ErrorKey } from "./enum/error-key.enum";
-import { RuntimeEnvironment } from "src/types/runtime.types";
+import { RuntimeEnvironment } from "@lootlog/types";
 import type { APIGuildMember } from "discord-api-types/v10";
 import {
   Permission,

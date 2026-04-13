@@ -1,6 +1,6 @@
 export const generateSlug = (text?: string) => {
   if (!text) {
-    return undefined;
+    return null;
   }
 
   return text

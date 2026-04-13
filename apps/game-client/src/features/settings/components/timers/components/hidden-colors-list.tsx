@@ -3,7 +3,7 @@ import { Tile } from "@/components/ui/tile";
 import type { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
 import { RotateCcw } from "lucide-react";
 import type { FC } from "react";
-import { DEFAULT_COLOR_NAMES } from "./color-utils";
+import { DEFAULT_COLOR_NAMES } from "@/features/timers/constants/color-names";
 
 interface HiddenColorsListProps {
   hiddenColors: string[];

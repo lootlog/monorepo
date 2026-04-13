@@ -1,8 +1,6 @@
 import type { Query, QueryClient } from "@tanstack/react-query";
 import { getListEventRankingQueryKey } from "@/lib/api/generated/main/events/events";
-
-const getEventRankingHistoryPathPrefix = (guildId: string, eventId: string) =>
-  `/guilds/${guildId}/events/${eventId}/ranking/`;
+import { getEventRankingHistoryPathPrefix } from "./event-query-paths";
 
 const isEventRankingHistoryQuery = (
   query: Query,

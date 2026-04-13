@@ -4,7 +4,8 @@ import type { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
 import { Edit2, Trash2 } from "lucide-react";
 import type { FC } from "react";
 import { ColorEditForm } from "./color-edit-form";
-import { DEFAULT_COLOR_NAMES, type ColorEditData } from "./color-utils";
+import { DEFAULT_COLOR_NAMES } from "@/features/timers/constants/color-names";
+import type { ColorEditData } from "./color-utils";
 
 interface DefaultColorItemProps {
   colorId: string;

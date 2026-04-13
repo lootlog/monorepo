@@ -33,8 +33,7 @@ import {
   AuthBadRequestError,
 } from "src/auth/errors";
 import { serviceConfig } from "src/config/service.config";
-import { RuntimeEnvironment } from "src/types/runtime.types";
-import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
+import { RuntimeEnvironment, DISCORD_AUTH_SCOPES } from "@lootlog/types";
 
 @Injectable()
 export class DiscordService implements OnModuleInit {

@@ -3,15 +3,11 @@ import {
   getEventsMonitoringControllerGetHeroRespawnConfigQueryKey,
   getListEventMapsQueryKey,
 } from "@/lib/api/generated/main/events/events";
-
-const getEventTimersPath = (guildId: string, eventId: string) =>
-  `/guilds/${guildId}/events/${eventId}/timers`;
-
-const getEventMapsPathPrefix = (guildId: string, eventId: string) =>
-  `/guilds/${guildId}/events/${eventId}/maps/`;
-
-const getEventHeroesPathPrefix = (guildId: string, eventId: string) =>
-  `/guilds/${guildId}/events/${eventId}/heroes/`;
+import {
+  getEventTimersPath,
+  getEventMapsPathPrefix,
+  getEventHeroesPathPrefix,
+} from "./event-query-paths";
 
 const isEventRespawnRelatedQuery = (
   query: Query,

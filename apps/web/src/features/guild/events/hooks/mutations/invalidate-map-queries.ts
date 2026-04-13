@@ -4,16 +4,14 @@ import {
   getEventsMonitoringControllerGetMapCoverageGapsQueryKey,
   getListEventMapsQueryKey,
 } from "@/lib/api/generated/main/events/events";
-
-const getEventHeroPathPrefix = (guildId: string, eventId: string) =>
-  `/guilds/${guildId}/events/${eventId}/heroes/`;
+import { getEventHeroesPathPrefix } from "./event-query-paths";
 
 const isHeroGapQuery = (query: Query, guildId: string, eventId: string) => {
   const [path] = query.queryKey;
 
   return (
     typeof path === "string" &&
-    path.startsWith(getEventHeroPathPrefix(guildId, eventId)) &&
+    path.startsWith(getEventHeroesPathPrefix(guildId, eventId)) &&
     (path.endsWith("/active-gaps") || path.endsWith("/coverage-gaps"))
   );
 };

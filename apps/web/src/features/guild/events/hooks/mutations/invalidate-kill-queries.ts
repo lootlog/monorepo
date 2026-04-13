@@ -5,15 +5,11 @@ import {
   getShowEventOverviewQueryKey,
 } from "@/lib/api/generated/main/events/events";
 import { invalidateRankingQueries } from "./invalidate-ranking-queries";
-
-const getEventKillsPath = (guildId: string, eventId: string) =>
-  `/guilds/${guildId}/events/${eventId}/kills`;
-
-const getEventMembersPathPrefix = (guildId: string, eventId: string) =>
-  `/guilds/${guildId}/events/${eventId}/members/`;
-
-const getEventHeroesPathPrefix = (guildId: string, eventId: string) =>
-  `/guilds/${guildId}/events/${eventId}/heroes/`;
+import {
+  getEventKillsPath,
+  getEventMembersPathPrefix,
+  getEventHeroesPathPrefix,
+} from "./event-query-paths";
 
 const isEventKillQuery = (query: Query, guildId: string, eventId: string) => {
   const [path] = query.queryKey;

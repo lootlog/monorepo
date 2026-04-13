@@ -16,6 +16,22 @@ const __dirname = path.dirname(__filename);
 const rootPath = path.join(__dirname, "../../../../../");
 config({ path: path.join(rootPath, ".env") });
 
+const PLACEHOLDER_VALUE = "xxx";
+
+function parseDevGuildIds(): string[] {
+  const raw = process.env.DISCORD_DEVELOPMENT_GUILD_ID;
+  if (!raw || raw === PLACEHOLDER_VALUE) return [];
+  return raw
+    .split(",")
+    .map((id) => id.trim())
+    .filter((id) => id.length > 0);
+}
+
+function getDevUserId(): string | undefined {
+  const id = process.env.DISCORD_DEVELOPMENT_USER_ID;
+  return id && id !== PLACEHOLDER_VALUE ? id : undefined;
+}
+
 const prisma = new PrismaClient();
 
 // Use separate connection string for battlelog if provided
@@ -62,16 +78,8 @@ async function cleanDatabase() {
 async function seedGuilds(count: number) {
   console.log(`🏰 Seeding ${count} guilds...`);
 
-  const devGuildIdsRaw = process.env.DISCORD_DEVELOPMENT_GUILD_ID;
-  const devUserId = process.env.DISCORD_DEVELOPMENT_USER_ID;
-
-  const devGuildIds =
-    devGuildIdsRaw && devGuildIdsRaw !== "xxx"
-      ? devGuildIdsRaw
-          .split(",")
-          .map((id) => id.trim())
-          .filter((id) => id.length > 0)
-      : [];
+  const devGuildIds = parseDevGuildIds();
+  const devUserId = getDevUserId();
 
   const totalGuildsToCreate = Math.max(count, devGuildIds.length);
 
@@ -85,7 +93,7 @@ async function seedGuilds(count: number) {
     if (!guild) continue;
 
     const isDevGuild = i < devGuildIds.length;
-    const useDevelopmentIds = isDevGuild && devUserId && devUserId !== "xxx";
+    const useDevelopmentIds = isDevGuild && devUserId;
 
     if (useDevelopmentIds) {
       const devGuildId = devGuildIds[i];
@@ -192,16 +200,8 @@ async function seedLoots(count: number, guilds: any[]) {
   const loots = lootGenerator.generateMultiple(count);
   const createdLoots = [];
 
-  const devGuildIdsRaw = process.env.DISCORD_DEVELOPMENT_GUILD_ID;
-  const devUserId = process.env.DISCORD_DEVELOPMENT_USER_ID;
-
-  const devGuildIds =
-    devGuildIdsRaw && devGuildIdsRaw !== "xxx"
-      ? devGuildIdsRaw
-          .split(",")
-          .map((id) => id.trim())
-          .filter((id) => id.length > 0)
-      : [];
+  const devGuildIds = parseDevGuildIds();
+  const devUserId = getDevUserId();
 
   for (const loot of loots) {
     const createdLoot = await prisma.loot.create({
@@ -225,7 +225,7 @@ async function seedLoots(count: number, guilds: any[]) {
       });
 
       const isDevGuild = devGuildIds.includes(randomGuild.id);
-      if (isDevGuild && devUserId && devUserId !== "xxx") {
+      if (isDevGuild && devUserId) {
         const devMember = await prisma.member.findFirst({
           where: {
             guildId: randomGuild.id,
@@ -272,16 +272,8 @@ async function seedTimers(guilds: any[]) {
     return;
   }
 
-  const devGuildIdsRaw = process.env.DISCORD_DEVELOPMENT_GUILD_ID;
-  const devUserId = process.env.DISCORD_DEVELOPMENT_USER_ID;
-
-  const devGuildIds =
-    devGuildIdsRaw && devGuildIdsRaw !== "xxx"
-      ? devGuildIdsRaw
-          .split(",")
-          .map((id) => id.trim())
-          .filter((id) => id.length > 0)
-      : [];
+  const devGuildIds = parseDevGuildIds();
+  const devUserId = getDevUserId();
 
   let totalTimers = 0;
 
@@ -296,7 +288,7 @@ async function seedTimers(guilds: any[]) {
 
     const isDevGuild = devGuildIds.includes(guild.id);
     let devMember = null;
-    if (isDevGuild && devUserId && devUserId !== "xxx") {
+    if (isDevGuild && devUserId) {
       devMember = await prisma.member.findFirst({
         where: {
           guildId: guild.id,
@@ -352,7 +344,7 @@ async function seedBattles(count: number) {
   console.log(`⚔️  Seeding ${count} battles...`);
 
   const userId = process.env.SEEDING_USER_ID;
-  if (!userId || userId === "xxx") {
+  if (!userId || userId === PLACEHOLDER_VALUE) {
     console.error(
       "❌ SEEDING_USER_ID environment variable is required for battles seeding",
     );

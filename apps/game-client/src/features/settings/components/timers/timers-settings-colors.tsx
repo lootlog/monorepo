@@ -5,12 +5,12 @@ import { DefaultColorItem } from "./components/default-color-item";
 import { CustomColorItem } from "./components/custom-color-item";
 import { AddColorForm } from "./components/add-color-form";
 import { HiddenColorsList } from "./components/hidden-colors-list";
+import { DEFAULT_COLOR_NAMES } from "@/features/timers/constants/color-names";
 import {
   stripAlphaChannel,
   alphaToHex,
   hexToAlpha,
   TAILWIND_TO_HEX,
-  DEFAULT_COLOR_NAMES,
   type ColorEditData,
 } from "./components/color-utils";
 
