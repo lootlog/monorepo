@@ -309,8 +309,8 @@ export const useTimersStore = create<TimersState>()(
           delete newCustomColors[id];
 
           const newTimersColors = { ...state.timersColors };
-          Object.keys(newTimersColors).forEach((npcName) => {
-            if (newTimersColors[npcName] === id) {
+          Object.entries(newTimersColors).forEach(([npcName, colorId]) => {
+            if (colorId === id) {
               newTimersColors[npcName] = undefined;
             }
           });

@@ -304,11 +304,7 @@ export class GatewayService {
   }
 
   handlePartyGatheringSend(data: SendPartyGatheringDto) {
-    const rooms = [
-      buildRoomName(data.guildId, "notifications", "base"),
-      buildRoomName(data.guildId, "notifications", "titans"),
-      buildRoomName(data.guildId, "notifications", "heroes"),
-    ];
+    const rooms = this.getAllNotificationRooms(data.guildId);
     this.gateway.server.to(rooms).emit(GatewayEvent.PARTY_GATHERING_SEND, data);
   }
 
@@ -316,14 +312,16 @@ export class GatewayService {
     guildId: string;
     notificationId: string;
   }) {
-    const rooms = [
-      buildRoomName(data.guildId, "notifications", "base"),
-      buildRoomName(data.guildId, "notifications", "titans"),
-      buildRoomName(data.guildId, "notifications", "heroes"),
-    ];
+    const rooms = this.getAllNotificationRooms(data.guildId);
     this.gateway.server.to(rooms).emit(GatewayEvent.PARTY_GATHERING_CANCEL, {
       notificationId: data.notificationId,
     });
+  }
+
+  private getAllNotificationRooms(guildId: string): string[] {
+    return (["base", "titans", "heroes"] as const).map((tier) =>
+      buildRoomName(guildId, "notifications", tier),
+    );
   }
 
   handleChatMessageUpdate(data: RoutedChatMessageUpdate) {
