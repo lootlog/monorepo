@@ -3,8 +3,8 @@ import { stringify } from "qs";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 import type { Npc } from "@/hooks/api/use-npcs";
 import { API_URL } from "@/config/api";
-import type { GuildMember } from "@/hooks/api/use-guild-members";
 import { queryKeys } from "@/features/public-api/query-keys";
+import type { GuildMember } from "@/types/guild-member";
 
 type UseTimersOptions = {
   world?: string;

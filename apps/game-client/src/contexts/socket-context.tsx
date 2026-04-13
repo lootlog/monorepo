@@ -121,7 +121,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
 
     if (import.meta.env.DEV) {
       socket.onAny((event, ...args) => {
-        console.debug(`[Gateway] Event: ${event}`, args);
+        console.log(`[Gateway] Event: ${event}`, args);
       });
     }
 
