@@ -49,7 +49,11 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   }
 
   private unprefixKey(key: string): string {
-    return this.prefix ? key.replace(`${this.prefix}:`, "") : key;
+    if (!this.prefix) return key;
+    const prefixWithColon = `${this.prefix}:`;
+    return key.startsWith(prefixWithColon)
+      ? key.slice(prefixWithColon.length)
+      : key;
   }
 
   async set(key: string, value: string, ttlSeconds?: number): Promise<void> {

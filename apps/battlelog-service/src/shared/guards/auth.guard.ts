@@ -7,7 +7,7 @@ import {
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  async canActivate(context: ExecutionContext): Promise<boolean> {
+  canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
 
     const discordId = request.headers["x-auth-discord-id"];

@@ -38,7 +38,7 @@ export const ItemImage: FC<ItemImageProps> = ({
           backgroundImage: `url(${MARGONEM_CDN_ITEMS_URL}/${icon})`,
         }}
       />
-      {(shareIndex || shareIndex === 0) && (
+      {shareIndex !== undefined && (
         <div
           className={cn(
             "top-7 -right-1 absolute size-4 rounded-sm box-content text-xs flex items-center justify-center font-medium shadow-sm",

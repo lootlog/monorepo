@@ -1,32 +1,15 @@
-import { useQueryErrorResetBoundary } from "@tanstack/react-query";
 import { Button } from "@lootlog/ui/components/button";
 import { RotateCw } from "lucide-react";
-import {
-  useNavigate,
-  useRouter,
-  type ErrorComponentProps,
-} from "@tanstack/react-router";
+import { useNavigate, type ErrorComponentProps } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import {
-  getRouteErrorMessage,
-  getRouteErrorStatus,
-} from "@/lib/router/route-errors";
+import { getRouteErrorMessage } from "@/lib/router/route-errors";
 import { RouteErrorState } from "./route-error-state";
+import { useRouteError } from "./use-route-error";
 
 export const GuildRouteError = ({ error, reset }: ErrorComponentProps) => {
   const { t } = useTranslation();
-  const router = useRouter();
   const navigate = useNavigate();
-  const queryErrorResetBoundary = useQueryErrorResetBoundary();
-  const status = getRouteErrorStatus(error);
-  const normalizedStatus =
-    status === 401 || status === 403 || status === 404 ? status : 500;
-
-  const handleRetry = () => {
-    queryErrorResetBoundary.reset();
-    reset();
-    void router.invalidate();
-  };
+  const { normalizedStatus, handleRetry } = useRouteError(error, reset);
 
   return (
     <RouteErrorState

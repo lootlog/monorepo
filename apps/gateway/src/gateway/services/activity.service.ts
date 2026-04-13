@@ -50,9 +50,12 @@ export class ActivityService {
             payload,
           );
         } catch (error) {
+          const message =
+            error instanceof Error ? error.message : String(error);
+          const stack = error instanceof Error ? error.stack : undefined;
           this.logger.error(
-            `Failed to publish ${type} for ${discordId} in guild ${guild.id}: ${error.message}`,
-            error.stack,
+            `Failed to publish ${type} for ${discordId} in guild ${guild.id}: ${message}`,
+            stack,
           );
         }
       }),
