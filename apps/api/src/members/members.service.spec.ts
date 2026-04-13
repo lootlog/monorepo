@@ -586,6 +586,9 @@ describe("MembersService", () => {
 
   describe("getGuildMembersSummary", () => {
     it("should return lightweight active members for a guild", async () => {
+      prismaService.guild.findFirst.mockResolvedValue({
+        ownerId: "owner-123",
+      });
       prismaService.member.findMany.mockResolvedValue([
         {
           id: 123,
@@ -626,13 +629,25 @@ describe("MembersService", () => {
           guildId: "guild-123",
           active: true,
           globalUserId: { not: null },
-          roles: {
-            some: {
-              permissions: {
-                has: Permission.LOOTLOG_ACCESS,
+          OR: [
+            {
+              userId: "owner-123",
+            },
+            {
+              roles: {
+                some: {
+                  permissions: {
+                    hasSome: [
+                      Permission.OWNER,
+                      Permission.ADMIN,
+                      Permission.LOOTLOG_MANAGE,
+                      Permission.LOOTLOG_ACCESS,
+                    ],
+                  },
+                },
               },
             },
-          },
+          ],
         },
         select: {
           id: true,
@@ -655,7 +670,19 @@ describe("MembersService", () => {
       });
     });
 
+    it("should return empty array when guild does not exist", async () => {
+      prismaService.guild.findFirst.mockResolvedValue(null);
+
+      const result = await service.getGuildMembersSummary("guild-123");
+
+      expect(result).toEqual([]);
+      expect(prismaService.member.findMany).not.toHaveBeenCalled();
+    });
+
     it("should return empty array when no lightweight members found", async () => {
+      prismaService.guild.findFirst.mockResolvedValue({
+        ownerId: "owner-123",
+      });
       prismaService.member.findMany.mockResolvedValue([]);
 
       const result = await service.getGuildMembersSummary("guild-123");
