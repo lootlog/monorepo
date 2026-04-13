@@ -27,10 +27,10 @@ describe("isAdministrativeUser", () => {
     expect(isAdministrativeUser(permissions)).toBe(true);
   });
 
-  it("should return true for LOOTLOG_MANAGE permission", () => {
+  it("should return false for LOOTLOG_MANAGE permission", () => {
     const permissions = [Permission.LOOTLOG_MANAGE];
 
-    expect(isAdministrativeUser(permissions)).toBe(true);
+    expect(isAdministrativeUser(permissions)).toBe(false);
   });
 
   it("should return false for non-administrative permissions", () => {
@@ -81,10 +81,10 @@ describe("isAdministrativeUserFromRoles", () => {
     expect(isAdministrativeUserFromRoles(roles)).toBe(true);
   });
 
-  it("should return true when role has LOOTLOG_MANAGE permission", () => {
+  it("should return false when role has LOOTLOG_MANAGE permission", () => {
     const roles = [createRole([Permission.LOOTLOG_MANAGE])];
 
-    expect(isAdministrativeUserFromRoles(roles)).toBe(true);
+    expect(isAdministrativeUserFromRoles(roles)).toBe(false);
   });
 
   it("should return false when no administrative permissions", () => {
@@ -117,7 +117,7 @@ describe("isAdministrativeUserFromRoles", () => {
       createRole([
         Permission.LOOTLOG_LOOTS_READ,
         Permission.LOOTLOG_LOOTS_WRITE,
-        Permission.LOOTLOG_MANAGE,
+        Permission.ADMIN,
       ]),
     ];
 
@@ -244,11 +244,11 @@ describe("isOwnerOrAdminFromRoles", () => {
     expect(isOwnerOrAdminFromRoles(roles)).toBe(false);
   });
 
-  it("should correctly distinguish between administrative and owner/admin", () => {
+  it("should treat LOOTLOG_MANAGE as non-administrative in gateway", () => {
     const rolesWithManage = [createRole([Permission.LOOTLOG_MANAGE])];
     const rolesWithAdmin = [createRole([Permission.ADMIN])];
 
-    expect(isAdministrativeUserFromRoles(rolesWithManage)).toBe(true);
+    expect(isAdministrativeUserFromRoles(rolesWithManage)).toBe(false);
     expect(isOwnerOrAdminFromRoles(rolesWithManage)).toBe(false);
 
     expect(isAdministrativeUserFromRoles(rolesWithAdmin)).toBe(true);

@@ -9,6 +9,8 @@ const NpcSchema = z.object({
   prof: z.string().optional(),
   wt: z.number(),
   hpp: z.number().optional(),
+  x: z.number().optional(),
+  y: z.number().optional(),
   icon: z.string().min(1),
   type: z.number(),
 });

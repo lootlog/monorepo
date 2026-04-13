@@ -8,6 +8,8 @@ import { GuildsService } from "src/guilds/guilds.service";
 import { RedisService } from "@lootlog/nest-shared";
 import { RoutingKey } from "src/enum/routing-key.enum";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
+import { NpcType } from "src/generated/prisma/client";
+import { getNpcTypeByWt } from "@lootlog/types";
 
 vi.mock("uuid", () => ({
   v4: () => "mock-uuid",
@@ -45,6 +47,98 @@ describe("MessagingService", () => {
 
     service = module.get<MessagingService>(MessagingService);
     vi.clearAllMocks();
+  });
+
+  describe("sendNotification", () => {
+    const discordId = "123456";
+
+    it("keeps npc coordinates in published payloads", async () => {
+      mockGuildsService.getGuildsForRequiredPermissions.mockResolvedValue([
+        { id: "guild-1" },
+        { id: "guild-2" },
+      ]);
+
+      const result = await service.sendNotification(discordId, {
+        npc: {
+          id: 911169,
+          hpp: 0,
+          location: "Glusza Swistu",
+          name: "Debug Tytan #228",
+          wt: 102,
+          x: 10,
+          y: 10,
+          lvl: 306,
+          prof: "h",
+          icon: "tyt/maddok-tytan2.gif",
+          type: 2,
+        },
+        world: "gordion",
+        guildIds: ["guild-1", "guild-2"],
+      });
+
+      const expectedNpcType = getNpcTypeByWt(NpcType, 102, "h", 2);
+
+      expect(result).toEqual({
+        notificationId: "mock-uuid",
+        guildIds: ["guild-1", "guild-2"],
+      });
+      expect(mockRedisService.set).toHaveBeenCalledWith(
+        "notification:mock-uuid",
+        expect.any(String),
+        1800,
+      );
+      expect(mockAmqpConnection.publish).toHaveBeenCalledTimes(2);
+      expect(mockAmqpConnection.publish).toHaveBeenNthCalledWith(
+        1,
+        DEFAULT_EXCHANGE_NAME,
+        RoutingKey.GUILDS_NOTIFICATIONS_SEND,
+        {
+          createdAt: expect.any(String),
+          discordId,
+          guildId: "guild-1",
+          notificationId: "mock-uuid",
+          npc: {
+            hpp: 0,
+            icon: "tyt/maddok-tytan2.gif",
+            id: 911169,
+            location: "Glusza Swistu",
+            lvl: 306,
+            name: "Debug Tytan #228",
+            prof: "h",
+            type: expectedNpcType,
+            wt: 102,
+            x: 10,
+            y: 10,
+          },
+          world: "gordion",
+        },
+      );
+      expect(mockAmqpConnection.publish).toHaveBeenNthCalledWith(
+        2,
+        DEFAULT_EXCHANGE_NAME,
+        RoutingKey.GUILDS_NOTIFICATIONS_SEND,
+        {
+          createdAt: expect.any(String),
+          discordId,
+          guildId: "guild-2",
+          notificationId: "mock-uuid",
+          npc: {
+            hpp: 0,
+            icon: "tyt/maddok-tytan2.gif",
+            id: 911169,
+            location: "Glusza Swistu",
+            lvl: 306,
+            name: "Debug Tytan #228",
+            prof: "h",
+            type: expectedNpcType,
+            wt: 102,
+            x: 10,
+            y: 10,
+          },
+          world: "gordion",
+        },
+      );
+    });
   });
 
   describe("cancelPartyGathering", () => {
