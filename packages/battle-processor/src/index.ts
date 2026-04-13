@@ -211,7 +211,7 @@ export class BattleProcessor {
   }
 
   public extractAndParseMoves(events: BattlePayload["events"]): ParsedMove[] {
-    const allMoves = events.flatMap((event) => event.f?.m || []);
+    const allMoves = events.flatMap((event) => event.f?.m ?? []);
 
     return allMoves.map((move) => {
       const [attackerPart, defenderPart, ...actions] = move.split(";");
@@ -240,8 +240,6 @@ export class BattleProcessor {
     battleMeta: { characterId: string },
   ) {
     for (const move of moves) {
-      this.processOutcome(move);
-
       if (!move.actions.length) {
         this.updateHpTracking(move);
         continue;
@@ -276,7 +274,7 @@ export class BattleProcessor {
           attacker.spellsUsed++;
           const spellName = tspellAction.param || "unknown";
           attacker.spellsUsedMap[spellName] =
-            (attacker.spellsUsedMap[spellName] || 0) + 1;
+            (attacker.spellsUsedMap[spellName] ?? 0) + 1;
         }
       }
 
@@ -747,20 +745,10 @@ export class BattleProcessor {
       throw new Error("No events found in battle data");
     }
 
-    const firstTimestamp = events[0]?.ev || 0;
-    const lastTimestamp = events[events.length - 1]?.ev || 0;
+    const firstTimestamp = events[0]?.ev ?? 0;
+    const lastTimestamp = events[events.length - 1]?.ev ?? 0;
 
     return lastTimestamp - firstTimestamp;
-  }
-
-  private processOutcome(move: ParsedMove) {
-    for (const { actionType, param } of move.actions) {
-      if (actionType === "winner") {
-        this.battleOutcome.winner = param;
-      } else if (actionType === "loser") {
-        this.battleOutcome.loser = param;
-      }
-    }
   }
 
   private determineBattleType() {
@@ -833,20 +821,18 @@ export class BattleProcessor {
     let winningTeam = getTeamFromNames(winnerNames);
     let losingTeam = getTeamFromNames(loserNames);
 
-    const inferTeam = (team: number | null): number | null =>
-      team === 1 ? 2 : team === 2 ? 1 : null;
+    const otherTeam = (team: number) => 3 - team;
 
     if (winningTeam === null && losingTeam !== null) {
-      winningTeam = inferTeam(losingTeam);
+      winningTeam = otherTeam(losingTeam);
     } else if (losingTeam === null && winningTeam !== null) {
-      losingTeam = inferTeam(winningTeam);
+      losingTeam = otherTeam(winningTeam);
     }
 
     if (winningTeam === null || losingTeam === null) {
       const teams = Array.from(this.warriors.entries()).reduce(
         (acc, [id, w]) => {
-          const hp = this.lastHp.get(id);
-          const hpValue = typeof hp === "number" ? hp : 0;
+          const hpValue = this.lastHp.get(id) ?? 0;
           acc.hpSum[w.team] = (acc.hpSum[w.team] ?? 0) + hpValue;
           acc.alive[w.team] = (acc.alive[w.team] ?? 0) + (hpValue > 0 ? 1 : 0);
           acc.dmgDealt[w.team] = (acc.dmgDealt[w.team] ?? 0) + w.damageDealt;
@@ -874,25 +860,20 @@ export class BattleProcessor {
       if (winningTeam === null && losingTeam === null) {
         if (alive1 !== alive2) {
           winningTeam = alive1 > alive2 ? t1 : t2;
-          losingTeam = winningTeam === t1 ? t2 : t1;
         } else if (hp1 !== hp2) {
           winningTeam = hp1 > hp2 ? t1 : t2;
-          losingTeam = winningTeam === t1 ? t2 : t1;
         } else if (dealt1 !== dealt2) {
           winningTeam = dealt1 > dealt2 ? t1 : t2;
-          losingTeam = winningTeam === t1 ? t2 : t1;
         } else if (taken1 !== taken2) {
           winningTeam = taken1 < taken2 ? t1 : t2;
-          losingTeam = winningTeam === t1 ? t2 : t1;
         } else {
-          // Deterministic default
           winningTeam = t1;
-          losingTeam = t2;
         }
+        losingTeam = otherTeam(winningTeam);
       } else if (winningTeam === null) {
-        winningTeam = losingTeam === t1 ? t2 : t1;
+        winningTeam = otherTeam(losingTeam!);
       } else if (losingTeam === null) {
-        losingTeam = winningTeam === t1 ? t2 : t1;
+        losingTeam = otherTeam(winningTeam);
       }
     }
 

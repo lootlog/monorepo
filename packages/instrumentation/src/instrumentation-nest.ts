@@ -53,8 +53,8 @@ class FilteringSpanProcessor implements SpanProcessor {
 
     if (
       spanName.includes("socket.io") ||
-      spanName.match(/room:[a-zA-Z]+-?\d+/) ||
-      spanName.match(/namespace:[a-zA-Z]+-?\d+/) ||
+      /room:[a-zA-Z]+-?\d+/.test(spanName) ||
+      /namespace:[a-zA-Z]+-?\d+/.test(spanName) ||
       spanName.includes("emit to") ||
       spanName.includes("send to")
     ) {
@@ -64,14 +64,14 @@ class FilteringSpanProcessor implements SpanProcessor {
     const messagingDest = attributes["messaging.destination"]?.toString();
     if (
       messagingDest &&
-      (messagingDest.match(/[a-zA-Z]+:\d+/) ||
+      (/[a-zA-Z]+:\d+/.test(messagingDest) ||
         messagingDest.includes("guild:") ||
         messagingDest.includes("battle:"))
     ) {
       return true;
     }
 
-    if (spanName.match(/[a-zA-Z]+:\d+/)) {
+    if (/[a-zA-Z]+:\d+/.test(spanName)) {
       return true;
     }
 

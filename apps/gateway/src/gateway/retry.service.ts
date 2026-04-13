@@ -26,13 +26,17 @@ export class RetryService {
   }
 
   getRetryCount(headers: Record<string, unknown>): number {
-    if (headers["x-retry-count"]) {
-      return headers["x-retry-count"] as number;
+    if (
+      headers["x-retry-count"] &&
+      typeof headers["x-retry-count"] === "number"
+    ) {
+      return headers["x-retry-count"];
     }
 
     const xDeath = headers["x-death"];
     if (Array.isArray(xDeath) && xDeath.length > 0) {
-      return (xDeath[0].count as number) ?? 0;
+      const count = xDeath[0]?.count;
+      return typeof count === "number" ? count : 0;
     }
 
     return 0;

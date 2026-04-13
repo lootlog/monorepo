@@ -59,7 +59,7 @@ export class RetryService {
     headers: Record<string, unknown> = {},
     config: RetryConfig = {},
   ): Promise<void> {
-    const dlqExchange = config.dlqExchange || DEAD_LETTER_EXCHANGE_NAME;
+    const dlqExchange = config.dlqExchange ?? DEAD_LETTER_EXCHANGE_NAME;
 
     this.logger.log({
       level: "warn",
@@ -89,7 +89,7 @@ export class RetryService {
   getMainQueueOptions(retryRoutingKey: string, config: RetryConfig = {}) {
     return {
       durable: true,
-      deadLetterExchange: config.retryExchange || RETRY_EXCHANGE_NAME,
+      deadLetterExchange: config.retryExchange ?? RETRY_EXCHANGE_NAME,
       deadLetterRoutingKey: retryRoutingKey,
     };
   }
@@ -102,7 +102,7 @@ export class RetryService {
     config: RetryConfig = {},
   ): Promise<boolean> {
     const retryCount = this.getRetryCount(headers);
-    const maxRetries = config.maxRetries || 3;
+    const maxRetries = config.maxRetries ?? 3;
 
     if (!this.shouldRetry(headers, maxRetries)) {
       this.logger.log({
@@ -126,9 +126,9 @@ export class RetryService {
     identifier: string,
     config: RetryConfig = {},
   ): void {
-    const headers = amqpMsg.properties.headers || {};
+    const headers = amqpMsg.properties.headers ?? {};
     const currentRetryCount = this.getRetryCount(headers);
-    const retryDelayMs = config.retryDelayMs || 30000;
+    const retryDelayMs = config.retryDelayMs ?? 30000;
 
     this.logger.log({
       level: "info",
