@@ -464,18 +464,44 @@ export class MembersService {
   }
 
   async getGuildMembersSummary(guildId: string): Promise<MemberSummary[]> {
+    const guild = await this.prisma.guild.findFirst({
+      where: {
+        id: guildId,
+        active: true,
+      },
+      select: {
+        ownerId: true,
+      },
+    });
+
+    if (!guild) {
+      return [];
+    }
+
     const members = await this.prisma.member.findMany({
       where: {
         guildId,
         active: true,
         globalUserId: { not: null },
-        roles: {
-          some: {
-            permissions: {
-              has: Permission.LOOTLOG_ACCESS,
+        OR: [
+          {
+            userId: guild.ownerId,
+          },
+          {
+            roles: {
+              some: {
+                permissions: {
+                  hasSome: [
+                    Permission.OWNER,
+                    Permission.ADMIN,
+                    Permission.LOOTLOG_MANAGE,
+                    Permission.LOOTLOG_ACCESS,
+                  ],
+                },
+              },
             },
           },
-        },
+        ],
       },
       select: {
         id: true,
