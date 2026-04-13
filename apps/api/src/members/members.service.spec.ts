@@ -19,6 +19,7 @@ import { ErrorKey } from "./enum/error-key.enum";
 import { RuntimeEnvironment } from "src/types/runtime.types";
 import type { APIGuildMember } from "discord-api-types/v10";
 import {
+  Permission,
   type Member,
   type Guild,
   MemberType,
@@ -578,6 +579,86 @@ describe("MembersService", () => {
       prismaService.member.findMany.mockResolvedValue([]);
 
       const result = await service.getGuildMembers("guild-123");
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe("getGuildMembersSummary", () => {
+    it("should return lightweight active members for a guild", async () => {
+      prismaService.member.findMany.mockResolvedValue([
+        {
+          id: 123,
+          userId: "discord-123",
+          name: "Alpha",
+          avatar: "avatar.png",
+          roles: [{ color: 123456 }],
+        },
+        {
+          id: 456,
+          userId: "discord-456",
+          name: "Beta",
+          avatar: null,
+          roles: [],
+        },
+      ]);
+
+      const result = await service.getGuildMembersSummary("guild-123");
+
+      expect(result).toEqual([
+        {
+          id: 123,
+          userId: "discord-123",
+          name: "Alpha",
+          avatar: "avatar.png",
+          color: 123456,
+        },
+        {
+          id: 456,
+          userId: "discord-456",
+          name: "Beta",
+          avatar: null,
+          color: null,
+        },
+      ]);
+      expect(prismaService.member.findMany).toHaveBeenCalledWith({
+        where: {
+          guildId: "guild-123",
+          active: true,
+          globalUserId: { not: null },
+          roles: {
+            some: {
+              permissions: {
+                has: Permission.LOOTLOG_ACCESS,
+              },
+            },
+          },
+        },
+        select: {
+          id: true,
+          userId: true,
+          name: true,
+          avatar: true,
+          roles: {
+            select: {
+              color: true,
+            },
+            orderBy: {
+              position: "desc",
+            },
+            take: 1,
+          },
+        },
+        orderBy: {
+          name: "asc",
+        },
+      });
+    });
+
+    it("should return empty array when no lightweight members found", async () => {
+      prismaService.member.findMany.mockResolvedValue([]);
+
+      const result = await service.getGuildMembersSummary("guild-123");
 
       expect(result).toEqual([]);
     });

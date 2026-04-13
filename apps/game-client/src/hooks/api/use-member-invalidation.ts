@@ -1,6 +1,9 @@
 import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useGuildMembers } from "@/hooks/api/use-guild-members";
+import {
+  guildMembersQueryKey,
+  useGuildMembers,
+} from "@/hooks/api/use-guild-members";
 
 export const useMemberInvalidation = (
   guildId: string | undefined,
@@ -26,7 +29,7 @@ export const useMemberInvalidation = (
       if (!member) {
         checkedIdsRef.current.add(checkKey);
         queryClient.invalidateQueries({
-          queryKey: ["guild-members", guildId],
+          queryKey: guildMembersQueryKey(guildId),
         });
       }
     });

@@ -17,6 +17,7 @@ describe("MembersController", () => {
     getGuildMemberById: Mock;
     refreshMember: Mock;
     getGuildMembers: Mock;
+    getGuildMembersSummary: Mock;
     createBulkRefreshJob: Mock;
     getLatestRefreshJob: Mock;
     getRefreshJobStatus: Mock;
@@ -70,6 +71,7 @@ describe("MembersController", () => {
       getGuildMemberById: mockFn(),
       refreshMember: mockFn(),
       getGuildMembers: mockFn(),
+      getGuildMembersSummary: mockFn(),
       createBulkRefreshJob: mockFn(),
       getLatestRefreshJob: mockFn(),
       getRefreshJobStatus: mockFn(),
@@ -197,6 +199,28 @@ describe("MembersController", () => {
       const result = await controller.getGuildMembers(mockGuild);
 
       expect(result).toEqual([]);
+    });
+  });
+
+  describe("getGuildMembersSummary", () => {
+    it("should return lightweight guild members", async () => {
+      const members = [
+        {
+          id: 123,
+          userId: "discord-123",
+          name: "Test User",
+          avatar: "avatar.png",
+          color: 123456,
+        },
+      ];
+      membersService.getGuildMembersSummary.mockResolvedValue(members);
+
+      const result = await controller.getGuildMembersSummary(mockGuild);
+
+      expect(result).toEqual(members);
+      expect(membersService.getGuildMembersSummary).toHaveBeenCalledWith(
+        mockGuild.id,
+      );
     });
   });
 

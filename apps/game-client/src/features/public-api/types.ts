@@ -13,13 +13,13 @@ export type PublicMember = {
   id: number;
   userId: string;
   guildId: string;
-  avatar?: string;
+  avatar?: string | null;
   type: string;
   name: string;
   user?: PublicUser;
   roles?: {
-    position: number;
-    color: number;
+    position: number | null;
+    color: number | null;
   }[];
 };
 

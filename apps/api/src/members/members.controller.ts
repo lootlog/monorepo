@@ -31,6 +31,7 @@ import {
   MemberResponseDto,
   NullableMemberResponseDto,
 } from "src/shared/dto/member-response.dto";
+import { MemberSummaryResponseDto } from "src/shared/dto/member-summary-response.dto";
 
 @ApiTags("members")
 @ApiBearerAuth()
@@ -187,6 +188,28 @@ export class MembersController {
   ) {
     const includeInactiveBool = includeInactive === "true";
     return this.membersService.getGuildMembers(guild.id, includeInactiveBool);
+  }
+
+  @Permissions(Permission.LOOTLOG_ACCESS)
+  @UseGuards(PermissionsGuard)
+  @Get("summary")
+  @ApiOperation({
+    summary: "Get guild members summary",
+    description:
+      "Retrieve lightweight active member data for game-client member lookups",
+  })
+  @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
+  @ZodResponse({
+    status: 200,
+    description: "Lightweight list of guild members",
+    type: [MemberSummaryResponseDto],
+  })
+  @ApiResponse({
+    status: 403,
+    description: "Forbidden - insufficient permissions",
+  })
+  async getGuildMembersSummary(@GuildData() guild: Guild) {
+    return this.membersService.getGuildMembersSummary(guild.id);
   }
 
   @Permissions(Permission.ADMIN, Permission.OWNER)

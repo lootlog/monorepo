@@ -5,6 +5,7 @@ import { useGlobalStore } from "@/store/global.store";
 import { queryKeys } from "../query-keys";
 import type { Guild } from "@/hooks/api/use-guild";
 import type { Timer } from "@/hooks/api/use-timers";
+import { guildMembersQueryKey } from "@/hooks/api/use-guild-members";
 import type { NpcTypeEnum } from "@lootlog/types";
 
 const makeGuild = (overrides?: Partial<Guild>): Guild => ({
@@ -215,7 +216,7 @@ describe("Public API", () => {
       const listener = vi.fn();
       window.lootlogGameClientApi!.subscribe("guilds:changed", listener);
 
-      queryClient.setQueryData(["guild-members", "guild-1"], []);
+      queryClient.setQueryData(guildMembersQueryKey("guild-1"), []);
 
       expect(listener).not.toHaveBeenCalled();
     });

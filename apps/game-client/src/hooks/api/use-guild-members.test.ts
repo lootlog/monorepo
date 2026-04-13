@@ -10,15 +10,12 @@ const guildMembers: GuildMember[] = [
   {
     id: 1,
     userId: "user-1",
-    guildId: "guild-1",
-    type: "member",
     name: "Alpha",
+    color: 111111,
   },
   {
     id: 2,
     userId: "user-2",
-    guildId: "guild-1",
-    type: "leader",
     name: "Beta",
     avatar: "avatar.png",
   },
@@ -41,6 +38,6 @@ describe("useGuildMembers helpers", () => {
       "user-2": guildMembers[1],
     });
 
-    expect(get).toHaveBeenCalledWith("/guilds/guild-1/members");
+    expect(get).toHaveBeenCalledWith("/guilds/guild-1/members/summary");
   });
 });

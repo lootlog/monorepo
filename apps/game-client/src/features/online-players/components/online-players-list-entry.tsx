@@ -5,6 +5,7 @@ import type { MargonemCharacter } from "@/hooks/api/use-character-list";
 import type { GuildMember } from "@/hooks/api/use-guild-members";
 import { cn } from "@/lib/utils";
 import type { FC } from "react";
+import { useMemberColor } from "@/hooks/discord/use-member-color";
 
 type OnlinePlayersListEntryProps = {
   presences: PlayerPresence[];
@@ -24,21 +25,11 @@ const getCharacterData = (presence: PlayerPresence): MargonemCharacter => {
   };
 };
 
-const getTopRoleColor = (guildMember?: GuildMember): string => {
-  const topRole = guildMember?.roles?.sort(
-    (a, b) => b.position - a.position,
-  )[0];
-  const roleColor = topRole?.color;
-  return roleColor === 0
-    ? "FFF"
-    : (roleColor?.toString(16).padStart(6, "0") ?? "FFF");
-};
-
 export const OnlinePlayersListEntry: FC<OnlinePlayersListEntryProps> = ({
   presences,
   guildMember,
 }) => {
-  const color = getTopRoleColor(guildMember);
+  const color = useMemberColor(guildMember);
 
   return (
     <Tile className="ll:px-1 ll:flex ll:flex-row ll:justify-between ll:mb-0.5">
