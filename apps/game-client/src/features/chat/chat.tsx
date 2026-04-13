@@ -1,10 +1,7 @@
 import { DraggableWindow } from "@/components/draggable-window";
 import { AnimatedWindow } from "@/components/animated-window";
-import {
-  type ChatMessage as ChatMessageType,
-  useChatMessages,
-} from "@/hooks/api/use-chat-messages";
-import { useRef, useMemo, useEffect, useLayoutEffect } from "react";
+import { useChatMessages } from "@/hooks/api/use-chat-messages";
+import { useRef, useEffect, useLayoutEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useLocalStorage } from "react-use";
 import { storageKey } from "@/lib/storage-key";
@@ -18,10 +15,15 @@ import { type ChatFilter, useChatStore } from "@/store/chat.store";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 import { ChatMessage } from "./components/chat-message";
 import { OldChatInput } from "@/features/chat/components/old-chat-input";
-import { useGuilds } from "@/hooks/api/use-guilds";
+import { getGuildNamesById, useGuilds } from "@/hooks/api/use-guilds";
 import { ChatWindowActions } from "@/features/chat/components/chat-window-actions";
-import { MessageType } from "@/hooks/api/use-send-chat-message";
 import { cn } from "@/lib/utils";
+import {
+  getCurrentChatMessages,
+  getNextSelectedGuildId,
+  hasVisibleChatMessages,
+  syncSelectedGuildChatCache,
+} from "./chat.helpers";
 
 const chatSelectedGuildKey = (accountId: string, characterId: string) =>
   storageKey(`ll:chat:selected-guild:${accountId}:${characterId}`);
@@ -92,66 +94,24 @@ export const Chat = () => {
   }, [selectedGuildId, chatFilter]);
 
   useEffect(() => {
-    if (!selectedGuildId && guilds && guilds.length > 0) {
-      setSelectedGuildId(guilds[0].id);
+    const nextSelectedGuildId = getNextSelectedGuildId(selectedGuildId, guilds);
+
+    if (nextSelectedGuildId) {
+      setSelectedGuildId(nextSelectedGuildId);
     }
   }, [selectedGuildId, setSelectedGuildId, guilds]);
 
-  const currentMessages = useMemo(() => {
-    let allMessages;
-
-    if (selectedGuildId === "all") {
-      allMessages = Object.values(messageCache)
-        .flat()
-        .filter((m) => !!m.timestamp);
-    } else {
-      allMessages = (messageCache[selectedGuildId ?? ""] ?? [])
-        .flat()
-        .filter((m) => !!m.timestamp);
-    }
-
-    const unique: ChatMessageType[] = [];
-    for (const msg of allMessages) {
-      const ts = new Date(msg.timestamp).getTime();
-      const key = `${msg.message?.trim() ?? ""}_${msg.senderId}_${msg.npc?.id ?? ""}`;
-
-      const duplicate = unique.find(
-        (u) =>
-          `${u.message?.trim() ?? ""}_${u.senderId}_${u.npc?.id ?? ""}` ===
-            key && Math.abs(new Date(u.timestamp).getTime() - ts) <= 200,
-      );
-      if (!duplicate) unique.push(msg);
-    }
-    const sorted = unique.sort(
-      (a, b) =>
-        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
-    );
-
-    if (chatFilter === "all") return sorted;
-
-    return sorted.filter((msg) => {
-      switch (chatFilter) {
-        case "normal":
-          return (
-            msg.type === MessageType.NORMAL ||
-            msg.type === MessageType.NOTIFICATION
-          );
-        case "npc":
-          return msg.type === MessageType.NPC;
-        case "party":
-          return msg.type === MessageType.PARTY_GATHERING;
-        default:
-          return true;
-      }
-    });
-  }, [selectedGuildId, messageCache, chatFilter]);
-
-  const hasVisibleMessages = currentMessages.some((m) => {
-    const members = memberCache[m.guildId] ?? {};
-    const member = members[m.senderId];
-    const guild = guilds?.find((g) => g.id === m.guildId);
-    return m.characterData && member?.name && guild;
-  });
+  const guildNamesById = getGuildNamesById(guilds);
+  const currentMessages = getCurrentChatMessages(
+    messageCache,
+    selectedGuildId,
+    chatFilter,
+  );
+  const hasRenderableMessages = hasVisibleChatMessages(
+    currentMessages,
+    memberCache,
+    guildNamesById,
+  );
 
   useLayoutEffect(() => {
     const viewport = scrollAreaRef.current;
@@ -160,7 +120,7 @@ export const Chat = () => {
     const msgCount = currentMessages.length;
 
     if (scrollPendingRef.current) {
-      if (hasVisibleMessages) {
+      if (hasRenderableMessages) {
         viewport.scrollTo({ top: viewport.scrollHeight, behavior: "instant" });
         scrollPendingRef.current = false;
       }
@@ -173,34 +133,19 @@ export const Chat = () => {
     }
 
     prevMessagesLenRef.current = msgCount;
-  }, [currentMessages, hasVisibleMessages]);
-
-  const currentMembers = useMemo(() => {
-    if (selectedGuildId === "all") {
-      return Object.values(memberCache).flat();
-    }
-    return memberCache[selectedGuildId ?? ""] ?? [];
-  }, [selectedGuildId, memberCache]);
+  }, [currentMessages, hasRenderableMessages]);
 
   useEffect(() => {
-    if (selectedGuildId && selectedGuildId !== "all") {
-      if (!messageCache[selectedGuildId] && messages?.length) {
-        useChatCache.getState().setMessageCache(selectedGuildId, messages);
-      }
-      if (!memberCache[selectedGuildId] && guildMembers) {
-        useChatCache.getState().setMemberCache(selectedGuildId, guildMembers);
-      }
-    }
-  }, [
-    selectedGuildId,
-    memberCache,
-    messageCache,
-    open,
-    messages,
-    guildMembers,
-    currentMessages,
-    currentMembers,
-  ]);
+    syncSelectedGuildChatCache({
+      selectedGuildId,
+      messages,
+      guildMembers,
+      messageCache,
+      memberCache,
+      setMessageCache: useChatCache.getState().setMessageCache,
+      setMemberCache: useChatCache.getState().setMemberCache,
+    });
+  }, [selectedGuildId, messages, guildMembers, messageCache, memberCache]);
 
   if (isIntegratedMode && Game.interface === "ni") {
     return <div />;
@@ -264,11 +209,13 @@ export const Chat = () => {
                 ) : (
                   currentMessages.map((message) => {
                     const members = memberCache[message.guildId] ?? {};
+
                     return (
                       <ChatMessage
                         key={message.id}
                         message={message}
                         all={selectedGuildId === "all"}
+                        guildName={guildNamesById[message.guildId]}
                         member={members[message.senderId]}
                       />
                     );
