@@ -15,7 +15,7 @@ import {
   type Guild,
   type Role,
 } from "src/generated/prisma/client";
-import { getNpcTypeByWt } from "@lootlog/types";
+import { getNpcRoutingTier, getNpcTypeByWt } from "@lootlog/types";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { PrismaService } from "src/db/prisma.service";
 import { getProfByShortname } from "src/shared/utils/get-prof-by-shortname";
@@ -166,6 +166,23 @@ export class TimersService implements OnModuleInit {
       type: getNpcTypeByWt(NpcType, npc.wt, npc.prof ?? "", npc.type),
       icon: npc.icon,
       margonemType: String(npc.type),
+    };
+  }
+
+  private getTimerDeleteRouting(npc: unknown): {
+    tier: "base" | "titans" | "heroes";
+    npcLevel?: number;
+  } {
+    const timerNpc = npc as {
+      lvl?: number;
+      prof?: string;
+      type?: number | string;
+      wt?: number | string;
+    };
+
+    return {
+      tier: getNpcRoutingTier(timerNpc),
+      npcLevel: timerNpc.lvl,
     };
   }
 
@@ -515,6 +532,7 @@ export class TimersService implements OnModuleInit {
         world,
         npcId,
         timerKey,
+        routing: this.getTimerDeleteRouting(timer.npc),
       });
 
       return timer;
@@ -763,6 +781,10 @@ export class TimersService implements OnModuleInit {
           world: data.world,
           npcId: migratedSyntheticNpcId,
           timerKey: migratedSyntheticTimerKey ?? undefined,
+          routing: {
+            tier: getNpcRoutingTier(npcData),
+            npcLevel: npcData.lvl,
+          },
         });
       }
 
@@ -1131,6 +1153,7 @@ export class TimersService implements OnModuleInit {
         timerKey: resolvedTimer.timerKey,
         world,
         guildId,
+        routing: this.getTimerDeleteRouting(resolvedTimer.npc),
       });
     } catch (error) {
       if (
@@ -1156,7 +1179,11 @@ export class TimersService implements OnModuleInit {
     );
   }
 
-  emitDeleteTimer(payload: Partial<Timer>) {
+  emitDeleteTimer(
+    payload: Partial<Timer> & {
+      routing: { tier: "base" | "titans" | "heroes"; npcLevel?: number };
+    },
+  ) {
     this.amqpConnection.publish(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.GUILDS_TIMERS_DELETE,
