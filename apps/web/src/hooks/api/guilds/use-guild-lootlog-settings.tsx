@@ -28,7 +28,6 @@ export const useGuildLootlogConfig = () => {
     queryFn: () =>
       client.get<LootlogConfig>(`/guilds/${guildId}/lootlog-config`),
     enabled: !!guildId,
-    select: (data) => data,
   });
 
   return query;

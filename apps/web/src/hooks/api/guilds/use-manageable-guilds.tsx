@@ -9,7 +9,6 @@ export const useManageableGuilds = (enabled = true) => {
   const query = useQuery({
     queryKey: queryKeys.guilds.manageable(),
     queryFn: () => client.get<Guild[]>(`/guilds/@me/manageable`),
-    select: (data) => data,
     enabled,
     staleTime: 0,
   });

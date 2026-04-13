@@ -18,7 +18,7 @@ import {
 import { EmergencyExitIcon } from "@lootlog/ui/components/emergency-exit-icon";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
-import { formatSeconds } from "@/utils/date/format-seconds";
+import { formatSeconds } from "@lootlog/ui/lib/date-utils";
 import type { Battle } from "@/hooks/api/battle-log/use-battles";
 import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
 import { cn } from "@lootlog/ui/lib/utils";

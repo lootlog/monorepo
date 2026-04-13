@@ -162,7 +162,6 @@ export const ATTACK_ACTION_TYPES = [
   "+of_crit",
   "vamp_time",
   "+oth_dmg",
-  "+critsa_per",
 ] as const;
 
 export const OUTCOME_ACTION_TYPES = ["winner", "loser"] as const;

@@ -240,8 +240,6 @@ export class BattleProcessor {
     battleMeta: { characterId: string },
   ) {
     for (const move of moves) {
-      this.processOutcome(move);
-
       if (!move.actions.length) {
         this.updateHpTracking(move);
         continue;
@@ -753,16 +751,6 @@ export class BattleProcessor {
     return lastTimestamp - firstTimestamp;
   }
 
-  private processOutcome(move: ParsedMove) {
-    for (const { actionType, param } of move.actions) {
-      if (actionType === "winner") {
-        this.battleOutcome.winner = param;
-      } else if (actionType === "loser") {
-        this.battleOutcome.loser = param;
-      }
-    }
-  }
-
   private determineBattleType() {
     const warriors = Array.from(this.warriors.values());
     const team1Count = warriors.filter((w) => w.team === 1).length;
@@ -802,9 +790,8 @@ export class BattleProcessor {
 
     const getTeamFromNames = (names: string[]): number | null => {
       if (names.length === 0) return null;
-      const tokens = names.map((n) => n.trim());
-      const lowerSet = new Set(tokens.map((n) => this.normalize(n)));
-      const idSet = new Set(tokens.filter((t) => /^\d+$/.test(t)));
+      const lowerSet = new Set(names.map((n) => this.normalize(n)));
+      const idSet = new Set(names.filter((t) => /^\d+$/.test(t)));
       const teams: number[] = [];
 
       for (const [id, w] of this.warriors.entries()) {
