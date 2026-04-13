@@ -35,77 +35,39 @@ export function BattleStatsTable({
       ?.team;
   }, [battle.warriors, battle.characterId]);
 
-  const toggleDamageExpansion = (warriorId: string) => {
+  const toggleExpansion = (
+    warriorId: string,
+    mode:
+      | "damage"
+      | "legendary"
+      | "turns"
+      | "blocks"
+      | "details"
+      | "damageDealt",
+  ) => {
     setExpandedRows((prev) => {
       const newMap = new Map(prev);
-      if (newMap.get(warriorId) === "damage") {
+      if (newMap.get(warriorId) === mode) {
         newMap.delete(warriorId);
       } else {
-        newMap.set(warriorId, "damage");
+        newMap.set(warriorId, mode);
       }
       return newMap;
     });
   };
 
-  const toggleLegendaryExpansion = (warriorId: string) => {
-    setExpandedRows((prev) => {
-      const newMap = new Map(prev);
-      if (newMap.get(warriorId) === "legendary") {
-        newMap.delete(warriorId);
-      } else {
-        newMap.set(warriorId, "legendary");
-      }
-      return newMap;
-    });
-  };
-
-  const toggleTurnsExpansion = (warriorId: string) => {
-    setExpandedRows((prev) => {
-      const newMap = new Map(prev);
-      if (newMap.get(warriorId) === "turns") {
-        newMap.delete(warriorId);
-      } else {
-        newMap.set(warriorId, "turns");
-      }
-      return newMap;
-    });
-  };
-
-  const toggleBlocksExpansion = (warriorId: string) => {
-    setExpandedRows((prev) => {
-      const newMap = new Map(prev);
-      if (newMap.get(warriorId) === "blocks") {
-        newMap.delete(warriorId);
-      } else {
-        newMap.set(warriorId, "blocks");
-      }
-      return newMap;
-    });
-  };
-
-  const toggleDetailsExpansion = (warriorId: string) => {
-    setExpandedRows((prev) => {
-      const newMap = new Map(prev);
-      if (newMap.get(warriorId) === "details") {
-        newMap.delete(warriorId);
-      } else {
-        newMap.set(warriorId, "details");
-      }
-      return newMap;
-    });
-  };
-
-  const toggleDamageDealtExpansion = (warriorId: string) => {
-    setExpandedRows((prev) => {
-      const newMap = new Map(prev);
-      if (newMap.get(warriorId) === "damageDealt") {
-        newMap.delete(warriorId);
-      } else {
-        newMap.set(warriorId, "damageDealt");
-      }
-      return newMap;
-    });
-  };
+  const toggleDamageExpansion = (warriorId: string) =>
+    toggleExpansion(warriorId, "damage");
+  const toggleLegendaryExpansion = (warriorId: string) =>
+    toggleExpansion(warriorId, "legendary");
+  const toggleTurnsExpansion = (warriorId: string) =>
+    toggleExpansion(warriorId, "turns");
+  const toggleBlocksExpansion = (warriorId: string) =>
+    toggleExpansion(warriorId, "blocks");
+  const toggleDetailsExpansion = (warriorId: string) =>
+    toggleExpansion(warriorId, "details");
+  const toggleDamageDealtExpansion = (warriorId: string) =>
+    toggleExpansion(warriorId, "damageDealt");
 
   const sortedWarriors = useMemo(() => {
     return [...battle.warriors].sort((a, b) => {

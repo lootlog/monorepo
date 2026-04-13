@@ -194,9 +194,9 @@ export const enhanceVariablesWithDerivedValues = (
     if (!variable.key) return variable;
 
     if (variable.key === "RABBITMQ_URI") {
-      const user = sharedValues.get("RABBITMQ_DEFAULT_USER") || "rabbitmq_user";
+      const user = sharedValues.get("RABBITMQ_DEFAULT_USER") ?? "rabbitmq_user";
       const password =
-        sharedValues.get("RABBITMQ_DEFAULT_PASS") || "rabbitmq_password";
+        sharedValues.get("RABBITMQ_DEFAULT_PASS") ?? "rabbitmq_password";
       return {
         ...variable,
         value: buildRabbitMQUri(user, password),
@@ -215,25 +215,25 @@ export const enhanceVariablesWithDerivedValues = (
         originalValue.includes("battle_log") ||
         originalValue.includes("5434")
       ) {
-        user = sharedValues.get("BATTLE_LOG_DB_USER") || "user";
-        password = sharedValues.get("BATTLE_LOG_DB_PASSWORD") || "password";
-        database = sharedValues.get("BATTLE_LOG_DB_NAME") || "battle_log";
+        user = sharedValues.get("BATTLE_LOG_DB_USER") ?? "user";
+        password = sharedValues.get("BATTLE_LOG_DB_PASSWORD") ?? "password";
+        database = sharedValues.get("BATTLE_LOG_DB_NAME") ?? "battle_log";
         port = "5434";
       } else if (
         originalValue.includes("lootlog") ||
         originalValue.includes("5433")
       ) {
-        user = sharedValues.get("LOOTLOG_DB_USER") || "user";
-        password = sharedValues.get("LOOTLOG_DB_PASSWORD") || "password";
-        database = sharedValues.get("LOOTLOG_DB_NAME") || "lootlog";
+        user = sharedValues.get("LOOTLOG_DB_USER") ?? "user";
+        password = sharedValues.get("LOOTLOG_DB_PASSWORD") ?? "password";
+        database = sharedValues.get("LOOTLOG_DB_NAME") ?? "lootlog";
         port = "5433";
       } else if (
         originalValue.includes("users") ||
         originalValue.includes("5432")
       ) {
-        user = sharedValues.get("USERS_DB_USER") || "user";
-        password = sharedValues.get("USERS_DB_PASSWORD") || "password";
-        database = sharedValues.get("USERS_DB_NAME") || "users";
+        user = sharedValues.get("USERS_DB_USER") ?? "user";
+        password = sharedValues.get("USERS_DB_PASSWORD") ?? "password";
+        database = sharedValues.get("USERS_DB_NAME") ?? "users";
         port = "5432";
       }
 

@@ -6,11 +6,6 @@ const ADMINISTRATIVE_PERMISSIONS = [
   Permission.OWNER,
 ] as const;
 
-const OWNER_OR_ADMIN_PERMISSIONS = [
-  Permission.ADMIN,
-  Permission.OWNER,
-] as const;
-
 const hasAnyPermission = (
   permissions: Permission[],
   requiredPermissions: readonly Permission[],
@@ -33,7 +28,7 @@ export const isAdministrativeUserFromRoles = (roles: GuildRole[]) => {
 };
 
 export const isOwnerOrAdmin = (permissions: Permission[]) => {
-  return hasAnyPermission(permissions, OWNER_OR_ADMIN_PERMISSIONS);
+  return hasAnyPermission(permissions, ADMINISTRATIVE_PERMISSIONS);
 };
 
 export const isOwnerOrAdminFromRoles = (roles: GuildRole[]) => {

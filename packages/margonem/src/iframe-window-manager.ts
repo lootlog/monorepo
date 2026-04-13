@@ -1,3 +1,3 @@
-export type iframeWindowManager = {
+export type IframeWindowManager = {
   newPlayerProfile: (data: unknown) => void;
 };

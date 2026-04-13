@@ -134,9 +134,9 @@ export const BattlesListFilters = ({
   };
 
   const activeFiltersCount =
-    (filters.characterId?.length || 0) +
-    (filters.type?.length || 0) +
-    (filters.result?.length || 0) +
+    (filters.characterId?.length ?? 0) +
+    (filters.type?.length ?? 0) +
+    (filters.result?.length ?? 0) +
     (filters.world ? 1 : 0) +
     (filters.ph ? 1 : 0) +
     (filters.matchmaking ? 1 : 0) +

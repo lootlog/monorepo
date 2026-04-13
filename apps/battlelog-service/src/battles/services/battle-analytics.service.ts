@@ -1,5 +1,5 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
-import { and, eq, exists, gt, inArray, isNotNull, type SQL } from "drizzle-orm";
+import { and, eq, gt, inArray, isNotNull, type SQL } from "drizzle-orm";
 import type { QueryBattleAnalyticsDto } from "src/battles/dto/query-battle-analytics.dto";
 import type { QueryBattleStatisticsDto } from "src/battles/dto/query-battle-statistics.dto";
 import type {
@@ -18,6 +18,7 @@ import {
   type battles,
 } from "src/shared/modules/drizzle/schema";
 import { RedisService } from "@lootlog/nest-shared";
+import { warriorExists } from "../utils/warrior-exists";
 
 @Injectable()
 export class BattleAnalyticsService {
@@ -30,18 +31,6 @@ export class BattleAnalyticsService {
     private readonly redisService: RedisService,
   ) {}
 
-  private warriorExists(
-    battlesRef: typeof battles,
-    ...conditions: (SQL | undefined)[]
-  ) {
-    return exists(
-      this.drizzle.db
-        .select({ one: eq(battleWarriors.id, battleWarriors.id) })
-        .from(battleWarriors)
-        .where(and(eq(battleWarriors.battleId, battlesRef.id), ...conditions)),
-    );
-  }
-
   async getBattleAnalytics(
     query: QueryBattleAnalyticsDto,
     userId: string,
@@ -52,10 +41,10 @@ export class BattleAnalyticsService {
     winRatio: number;
     totalPH: number;
   }> {
-    const levelFilter = `${query.minLevel || "any"}-${query.maxLevel || "any"}`;
+    const levelFilter = `${query.minLevel ?? "any"}-${query.maxLevel ?? "any"}`;
     const phFilter = query.ph ? "ph" : "all";
     const matchmakingFilter = query.matchmaking ? "matchmaking" : "all";
-    const cacheKey = `${this.ANALYTICS_CACHE_PREFIX}:${userId}:${query.characterId || "all"}:${query.world || "all"}:${query.period || "all"}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
+    const cacheKey = `${this.ANALYTICS_CACHE_PREFIX}:${userId}:${query.characterId ?? "all"}:${query.world ?? "all"}:${query.period ?? "all"}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -436,8 +425,8 @@ export class BattleAnalyticsService {
       );
     }
 
-    const sortBy = query.sortBy || "totalBattles";
-    const sortOrder = query.sortOrder || "desc";
+    const sortBy = query.sortBy ?? "totalBattles";
+    const sortOrder = query.sortOrder ?? "desc";
     filteredRecords.sort((a, b) => {
       let compareResult = 0;
 
@@ -797,7 +786,8 @@ export class BattleAnalyticsService {
             ...(query.matchmaking !== undefined
               ? [eq(table.matchmaking, query.matchmaking)]
               : []),
-            this.warriorExists(
+            warriorExists(
+              this.drizzle,
               table,
               inArray(battleWarriors.originalId, characterIds),
               gt(battleWarriors.ph, 0),
@@ -956,7 +946,9 @@ export class BattleAnalyticsService {
       ...(params.phFilter ? [gt(battleWarriors.ph, 0)] : []),
     ];
 
-    conditions.push(this.warriorExists(battlesRef, ...warriorConditions));
+    conditions.push(
+      warriorExists(this.drizzle, battlesRef, ...warriorConditions),
+    );
 
     return and(...conditions);
   }

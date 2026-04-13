@@ -11,8 +11,8 @@ interface BattleDurationStatsCardProps {
 
 const formatDuration = (seconds: number): string => {
   const duration = intervalToDuration({ start: 0, end: seconds * 1000 });
-  const minutes = duration.minutes || 0;
-  const secs = duration.seconds || 0;
+  const minutes = duration.minutes ?? 0;
+  const secs = duration.seconds ?? 0;
   return `${minutes}:${secs.toString().padStart(2, "0")}`;
 };
 
