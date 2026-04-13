@@ -1,7 +1,7 @@
 import type { Guild } from "@/hooks/api/use-guild";
-import type { GuildMember } from "@/hooks/api/use-guild-members";
 import type { Npc } from "@/hooks/api/use-npcs";
 import type { Timer } from "@/hooks/api/use-timers";
+import type { GuildMember } from "@/types/guild-member";
 import type {
   PublicGuild,
   PublicMember,

@@ -1,5 +1,5 @@
-import { NpcType, Permission, type Role } from "src/generated/prisma/client";
-import { getNpcTypeByWt } from "@lootlog/types";
+import { getNpcRoutingTier, type NpcRoutingTier } from "@lootlog/types";
+import { Permission, type Role } from "src/generated/prisma/client";
 import {
   MessageType,
   type SendMessageDto,
@@ -7,15 +7,14 @@ import {
 
 type NpcData = NonNullable<SendMessageDto["npc"]>;
 
-const getNpcPermission = (npcType: NpcType): Permission => {
-  if (npcType === NpcType.TITAN) return Permission.LOOTLOG_CHAT_TITANS_READ;
-  if (npcType === NpcType.HERO || npcType === NpcType.EVENT_HERO)
-    return Permission.LOOTLOG_CHAT_HEROES_READ;
-  return Permission.LOOTLOG_CHAT_READ;
+const NPC_TIER_PERMISSIONS: Record<NpcRoutingTier, Permission> = {
+  base: Permission.LOOTLOG_CHAT_READ,
+  titans: Permission.LOOTLOG_CHAT_TITANS_READ,
+  heroes: Permission.LOOTLOG_CHAT_HEROES_READ,
 };
 
-const hasNpcPermission = (npc: NpcData, npcType: NpcType, roles: Role[]) => {
-  const permission = getNpcPermission(npcType);
+const hasNpcPermission = (npc: NpcData, roles: Role[]) => {
+  const permission = NPC_TIER_PERMISSIONS[getNpcRoutingTier(npc)];
 
   return roles.some(
     (role) =>
@@ -39,8 +38,7 @@ export const canViewChatMessage = (data: SendMessageDto, roles: Role[]) => {
     const npc = data.npc;
     if (!npc) return false;
 
-    const npcType = getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type);
-    return hasNpcPermission(npc, npcType, roles);
+    return hasNpcPermission(npc, roles);
   }
 
   return true;

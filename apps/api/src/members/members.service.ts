@@ -20,7 +20,12 @@ import {
 import type { APIGuildMember } from "discord-api-types/v10";
 import { ErrorKey } from "src/members/enum/error-key.enum";
 import { ErrorKey as GuildErrorKey } from "src/guilds/enum/error-key.enum";
-import type { Member, Prisma, Role } from "src/generated/prisma/client";
+import {
+  Permission,
+  type Member,
+  type Prisma,
+  type Role,
+} from "src/generated/prisma/client";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { RoutingKey } from "src/enum/routing-key.enum";
 import { serviceConfig } from "src/config/service.config";
@@ -54,6 +59,14 @@ type MemberRefreshAttempt = {
 
 type StoredMemberWithRoles = Member & {
   roles: Role[];
+};
+
+type MemberSummary = {
+  id: number;
+  userId: string;
+  name: string;
+  avatar: string | null;
+  color: number | null;
 };
 
 type MemberRemovalNotificationTarget = {
@@ -448,6 +461,71 @@ export class MembersService {
       },
       orderBy: { name: "asc" },
     });
+  }
+
+  async getGuildMembersSummary(guildId: string): Promise<MemberSummary[]> {
+    const guild = await this.prisma.guild.findFirst({
+      where: {
+        id: guildId,
+        active: true,
+      },
+      select: {
+        ownerId: true,
+      },
+    });
+
+    if (!guild) {
+      return [];
+    }
+
+    const members = await this.prisma.member.findMany({
+      where: {
+        guildId,
+        active: true,
+        globalUserId: { not: null },
+        OR: [
+          {
+            userId: guild.ownerId,
+          },
+          {
+            roles: {
+              some: {
+                permissions: {
+                  hasSome: [
+                    Permission.OWNER,
+                    Permission.ADMIN,
+                    Permission.LOOTLOG_ACCESS,
+                  ],
+                },
+              },
+            },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        userId: true,
+        name: true,
+        avatar: true,
+        roles: {
+          select: {
+            color: true,
+          },
+          orderBy: {
+            position: "desc",
+          },
+          take: 1,
+        },
+      },
+      orderBy: {
+        name: "asc",
+      },
+    });
+
+    return members.map(({ roles, ...member }) => ({
+      ...member,
+      color: roles[0]?.color ?? null,
+    }));
   }
 
   isMemberSoftStale(

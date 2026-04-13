@@ -7,10 +7,14 @@ import {
 } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import type { SendMessageDto } from "src/chat/dto/send-message.dto";
+import {
+  MessageType,
+  type SendMessageDto,
+} from "src/chat/dto/send-message.dto";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { RoutingKey } from "src/enum/routing-key.enum";
 import { RedisService } from "@lootlog/nest-shared";
+import { getNpcRoutingTier, type NpcRoutingTier } from "@lootlog/types";
 import { v6 } from "uuid";
 import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
 import { GuildsService } from "src/guilds/guilds.service";
@@ -24,6 +28,11 @@ type ChatMessage = SendMessageDto & {
   senderId: string;
   timestamp: string;
   guildId: string;
+};
+
+type MessageRouting = {
+  tier: NpcRoutingTier;
+  npcLevel?: number;
 };
 
 @Injectable()
@@ -182,6 +191,7 @@ export class ChatService {
       message: newMessage,
       partyGathering: undefined,
     };
+    const routing = this.getMessageRouting(message);
 
     await this.redisService.lset(key, messageIndex, JSON.stringify(updated));
 
@@ -192,6 +202,7 @@ export class ChatService {
         guildId,
         messageId,
         message: newMessage,
+        routing,
       },
     );
 
@@ -215,15 +226,33 @@ export class ChatService {
     if (message.senderId !== discordId) {
       throw new ForbiddenException("Not the owner of this message");
     }
+    const routing = this.getMessageRouting(message);
 
     await this.redisService.lrem(key, 1, targetElement);
 
     this.amqpConnection.publish(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.GUILDS_DELETE_MESSAGE,
-      { guildId, messageId },
+      { guildId, messageId, routing },
     );
 
     return { success: true };
+  }
+
+  private getMessageRouting(
+    message: Pick<SendMessageDto, "type" | "npc">,
+  ): MessageRouting {
+    const hasNpcScopedRouting =
+      message.type === MessageType.NPC ||
+      (message.type === MessageType.PARTY_GATHERING && message.npc);
+
+    if (!hasNpcScopedRouting || !message.npc) {
+      return { tier: "base" };
+    }
+
+    return {
+      tier: getNpcRoutingTier(message.npc),
+      npcLevel: message.npc.lvl,
+    };
   }
 }

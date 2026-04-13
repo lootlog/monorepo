@@ -6,13 +6,13 @@ import type {
   ReservationCreateEventDto,
   ReservationDeleteEventDto,
 } from "src/gateway/dto/reservation-event.dto";
-import { SendMessageDto } from "src/gateway/dto/send-message.dto";
+import { MessageType, SendMessageDto } from "src/gateway/dto/send-message.dto";
 import { SendNotificationDto } from "src/gateway/dto/send-notification.dto";
 import type { SendPartyGatheringDto } from "src/gateway/dto/send-party-gathering.dto";
 import type { VolunteerNotificationDto } from "src/gateway/dto/volunteer-notification.dto";
 import { GatewayEvent } from "src/gateway/enums/gateway-event.enum";
 import { Gateway } from "src/gateway/gateway";
-import { isAdministrativeUserFromRoles } from "src/guilds/utils/is-administrative-user";
+import { isOwnerOrAdminFromRoles } from "src/guilds/utils/is-administrative-user";
 import { RedisService } from "@lootlog/nest-shared";
 import { GuildsService } from "src/guilds/guilds.service";
 import type { UserGuildData } from "src/guilds/types/guild.types";
@@ -24,12 +24,32 @@ import type {
 } from "src/gateway/types/margo-event.types";
 import {
   buildRoomName,
-  getNpcTier,
-  checkLevelRange,
   calculateUserRooms,
+  getNpcTier,
+  hasFeatureRoomAccess,
   type FeatureName,
   type TierName,
 } from "src/gateway/utils/room-utils";
+
+type FeatureRouting = {
+  tier: TierName;
+  npcLevel?: number;
+};
+
+type RoutedDeleteTimerDto = DeleteTimerDto;
+
+type RoutedChatMessageUpdate = {
+  guildId: string;
+  messageId: string;
+  message: string;
+  routing: FeatureRouting;
+};
+
+type RoutedChatMessageDelete = {
+  guildId: string;
+  messageId: string;
+  routing: FeatureRouting;
+};
 
 @Injectable()
 export class GatewayService {
@@ -72,13 +92,14 @@ export class GatewayService {
 
             // Owner/Admin bypass level checks
             const isOwner = guildData.guild.ownerId === socket.data.discordId;
-            if (isOwner || isAdministrativeUserFromRoles(guildData.roles)) {
+            if (isOwner || isOwnerOrAdminFromRoles(guildData.roles)) {
               socket.emit(event, data);
               return;
             }
 
-            // Check level range for regular members
-            if (checkLevelRange(guildData.roles, npcLevel)) {
+            if (
+              hasFeatureRoomAccess(guildData.roles, feature, tier, npcLevel)
+            ) {
               socket.emit(event, data);
             }
           });
@@ -90,24 +111,28 @@ export class GatewayService {
   }
 
   handleGuildsTimerUpdate(data: CreateTimerDto) {
-    const tier = getNpcTier(data.npc);
+    const routing = this.getNpcFeatureRouting(data.npc);
     this.emitToFeatureRoom({
       guildId: data.guildId,
       feature: "timers",
-      tier,
+      tier: routing.tier,
       event: GatewayEvent.TIMERS_CREATE,
       data,
-      npcLevel: data.npc?.lvl,
+      npcLevel: routing.npcLevel,
     });
   }
 
-  handleGuildsTimerDelete(data: DeleteTimerDto) {
-    const rooms = [
-      buildRoomName(data.guildId, "timers", "base"),
-      buildRoomName(data.guildId, "timers", "titans"),
-      buildRoomName(data.guildId, "timers", "heroes"),
-    ];
-    this.gateway.server.to(rooms).emit(GatewayEvent.TIMERS_DELETE, data);
+  handleGuildsTimerDelete(data: RoutedDeleteTimerDto) {
+    const { routing, ...payload } = data;
+
+    this.emitToFeatureRoom({
+      guildId: payload.guildId,
+      feature: "timers",
+      tier: routing.tier,
+      event: GatewayEvent.TIMERS_DELETE,
+      data: payload,
+      npcLevel: routing.npcLevel,
+    });
   }
 
   handleGuildsReservationCreate(data: ReservationCreateEventDto) {
@@ -125,27 +150,26 @@ export class GatewayService {
   }
 
   handleGuildMessageSend(data: SendMessageDto) {
-    // For NPC messages, use npc data; for regular messages, use 'base' tier
-    const tier = getNpcTier(data.npc);
+    const routing = this.getChatMessageRouting(data);
     this.emitToFeatureRoom({
       guildId: data.guildId,
       feature: "chat",
-      tier,
+      tier: routing.tier,
       event: GatewayEvent.CHAT_MESSAGE,
       data,
-      npcLevel: data.npc?.lvl,
+      npcLevel: routing.npcLevel,
     });
   }
 
   handleGuildNotificationSend(data: SendNotificationDto) {
-    const tier = getNpcTier(data.npc);
+    const routing = this.getNpcFeatureRouting(data.npc);
     this.emitToFeatureRoom({
       guildId: data.guildId,
       feature: "notifications",
-      tier,
+      tier: routing.tier,
       event: GatewayEvent.NOTIFICATIONS_SEND,
       data,
-      npcLevel: data.npc?.lvl,
+      npcLevel: routing.npcLevel,
     });
   }
 
@@ -302,32 +326,66 @@ export class GatewayService {
     });
   }
 
-  handleChatMessageUpdate(data: {
-    guildId: string;
-    messageId: string;
-    message: string;
-  }) {
-    const rooms = [
-      buildRoomName(data.guildId, "chat", "base"),
-      buildRoomName(data.guildId, "chat", "titans"),
-      buildRoomName(data.guildId, "chat", "heroes"),
-    ];
-    this.gateway.server.to(rooms).emit(GatewayEvent.CHAT_MESSAGE_UPDATE, {
-      messageId: data.messageId,
-      guildId: data.guildId,
-      message: data.message,
+  handleChatMessageUpdate(data: RoutedChatMessageUpdate) {
+    const { routing, ...payload } = data;
+
+    this.emitToFeatureRoom({
+      guildId: payload.guildId,
+      feature: "chat",
+      tier: routing.tier,
+      event: GatewayEvent.CHAT_MESSAGE_UPDATE,
+      data: {
+        messageId: payload.messageId,
+        guildId: payload.guildId,
+        message: payload.message,
+      },
+      npcLevel: routing.npcLevel,
     });
   }
 
-  handleChatMessageDelete(data: { guildId: string; messageId: string }) {
-    const rooms = [
-      buildRoomName(data.guildId, "chat", "base"),
-      buildRoomName(data.guildId, "chat", "titans"),
-      buildRoomName(data.guildId, "chat", "heroes"),
-    ];
-    this.gateway.server.to(rooms).emit(GatewayEvent.CHAT_MESSAGE_DELETE, {
-      messageId: data.messageId,
-      guildId: data.guildId,
+  handleChatMessageDelete(data: RoutedChatMessageDelete) {
+    const { routing, ...payload } = data;
+
+    this.emitToFeatureRoom({
+      guildId: payload.guildId,
+      feature: "chat",
+      tier: routing.tier,
+      event: GatewayEvent.CHAT_MESSAGE_DELETE,
+      data: {
+        messageId: payload.messageId,
+        guildId: payload.guildId,
+      },
+      npcLevel: routing.npcLevel,
     });
+  }
+
+  private getNpcFeatureRouting(npc?: {
+    lvl?: number;
+    prof?: string;
+    type?: number | string;
+    wt?: number | string;
+  }): FeatureRouting {
+    if (!npc) {
+      return { tier: "base" };
+    }
+
+    return {
+      tier: getNpcTier(npc),
+      npcLevel: npc.lvl,
+    };
+  }
+
+  private getChatMessageRouting(
+    data: Pick<SendMessageDto, "type" | "npc">,
+  ): FeatureRouting {
+    const hasNpcScopedRouting =
+      data.type === MessageType.NPC ||
+      (data.type === MessageType.PARTY_GATHERING && data.npc);
+
+    if (!hasNpcScopedRouting || !data.npc) {
+      return { tier: "base" };
+    }
+
+    return this.getNpcFeatureRouting(data.npc);
   }
 }
