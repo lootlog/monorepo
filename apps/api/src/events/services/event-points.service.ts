@@ -962,7 +962,7 @@ export class EventPointsService {
         timeOnMapSeconds: Math.round(totalTimeMs / 1000),
         afkPercentage: Math.round(afkPercentage * 100) / 100,
         wasPresent: totalTimeMs > 0,
-        mapName: aggregatedStats?.mapName || maps[0]?.mapName || "",
+        mapName: aggregatedStats?.mapName ?? maps[0]?.mapName ?? "",
       };
     });
   }

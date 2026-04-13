@@ -1,7 +1,6 @@
 import { Button } from "@lootlog/ui/components/button";
 import { RefreshCw, Clock } from "lucide-react";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useMemo, useCallback } from "react";
 import { cn } from "@/utils/cn";
 import { useRefreshStatus } from "@/features/guild/settings/members/contexts/refresh-status-context";
 import { useCountdown } from "@/hooks/utils/use-countdown";
@@ -22,43 +21,24 @@ export const RefreshMembersButton = () => {
     latestJob,
   } = useBulkMemberRefresh();
 
-  const currentJob = useMemo(() => {
-    return data ?? latestJob;
-  }, [data, latestJob]);
+  const currentJob = data ?? latestJob;
 
-  const nextAvailableAt = useMemo(() => {
+  const nextAvailableAt = (() => {
     if (!currentJob?.createdAt) return null;
     const jobCreatedAt = new Date(currentJob.createdAt).getTime();
     const nextAvailable = jobCreatedAt + ADMIN_BULK_REFRESH_RATE_LIMIT;
     return new Date(nextAvailable).toISOString();
-  }, [currentJob]);
+  })();
 
   const countdown = useCountdown(nextAvailableAt);
 
-  const currentJobId = useMemo(() => {
-    if (countdown.isExpired) return undefined;
-    return currentJob?.id;
-  }, [currentJob?.id, countdown.isExpired]);
-
-  const handleRefreshedIds = useCallback(
-    (ids: string[]) => {
-      markAsRefreshed(ids);
-    },
-    [markAsRefreshed],
-  );
-
-  const handleFailedIds = useCallback(
-    (ids: string[]) => {
-      markAsFailed(ids);
-    },
-    [markAsFailed],
-  );
+  const currentJobId = countdown.isExpired ? undefined : currentJob?.id;
 
   const { jobStatus } = useRefreshJob(
     guildId,
     currentJobId,
-    handleRefreshedIds,
-    handleFailedIds,
+    (ids: string[]) => markAsRefreshed(ids),
+    (ids: string[]) => markAsFailed(ids),
   );
 
   const displayJob = jobStatus || currentJob;
@@ -104,15 +84,6 @@ export const RefreshMembersButton = () => {
             seconds: countdown.seconds.toString().padStart(2, "0"),
           })}
         </span>
-      </div>
-    );
-  }
-
-  if (displayJob?.status === "COMPLETED" && !countdown.isExpired) {
-    return (
-      <div className="flex items-center gap-2 text-sm text-green-600">
-        <RefreshCw className="w-4 h-4" />
-        <span>{t("settings.members.refreshSuccess")}</span>
       </div>
     );
   }

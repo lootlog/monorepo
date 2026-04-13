@@ -94,13 +94,13 @@ export class MemberContextService {
     if (!member.isStale && !member.refreshQueued) {
       try {
         await this.redisService.set(
-          getPermissionsCacheKey(userId, guild.id),
+          cacheKey,
           JSON.stringify(context),
           PERMISSIONS_CACHE_TTL_SECONDS,
         );
       } catch (error) {
         this.logger.warn({
-          message: `Failed to cache permissions for key ${getPermissionsCacheKey(userId, guild.id)}`,
+          message: `Failed to cache permissions for key ${cacheKey}`,
           error,
         });
       }

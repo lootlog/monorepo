@@ -211,7 +211,7 @@ export class EventSummaryService {
 
       gapsTimeline.push({
         mapId: gap.mapId,
-        mapName: mapNameById.get(gap.mapId) || "Unknown",
+        mapName: mapNameById.get(gap.mapId) ?? "Unknown",
         gapType: gap.gapType,
         startedAt: clippedStart,
         endedAt: clippedEnd,
