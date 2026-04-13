@@ -8,7 +8,7 @@ import { format } from "date-fns";
 import { ClockArrowDown, ClockArrowUp } from "lucide-react";
 import { useEffect, useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
-import { cn } from "@/utils/cn";
+import { cn } from "@lootlog/ui/lib/utils";
 import { parseMsToTime } from "@/utils/date/parse-ms-to-time";
 import { useTimers, type Timer } from "@/hooks/api/game-data/use-timers";
 

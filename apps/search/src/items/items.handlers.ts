@@ -2,8 +2,8 @@ import { z } from "zod";
 import { APP_CONFIG } from "../config/app.config.js";
 import { logger } from "../config/winston.config.js";
 import { channel } from "../lib/rabbitmq.js";
-import { Queue } from "./enum/queue.enum.js";
-import { RoutingKey } from "./enum/routing-key.enum.js";
+import { Queue } from "../shared/enums/queue.enum.js";
+import { RoutingKey } from "../shared/enums/routing-key.enum.js";
 import { ItemsService } from "./items.service.js";
 
 const itemsService = new ItemsService();

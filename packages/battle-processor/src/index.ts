@@ -335,12 +335,7 @@ export class BattleProcessor {
       : null;
 
     for (const { actionType, param } of move.actions) {
-      if (actionType === "winner") {
-        this.battleOutcome.winner = param;
-        continue;
-      }
-      if (actionType === "loser") {
-        this.battleOutcome.loser = param;
+      if (actionType === "winner" || actionType === "loser") {
         continue;
       }
       if (actionType === "+ph") {

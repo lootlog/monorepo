@@ -69,12 +69,8 @@ export class NpcsService {
     }
 
     if (validNpcs.length !== data.npcs.length) {
-      const invalidNpcs = data.npcs.filter(
-        (npc) => !npc.world || !npc.id || !npc.name,
-      );
       logger.warn(
-        `Skipped ${invalidNpcs.length} npcs due to missing required fields`,
-        { invalidNpcs },
+        `Skipped ${data.npcs.length - validNpcs.length} npcs due to missing required fields`,
       );
     }
 
@@ -87,6 +83,7 @@ export class NpcsService {
       return index.addDocuments(npcsWithUid, { primaryKey: "uid" });
     } catch (error) {
       logger.error("Error indexing npcs", { error });
+      return;
     }
   }
 }

@@ -30,6 +30,14 @@ const battlelogPrisma = new BattlelogPrismaClient({
   },
 });
 
+const parseDevGuildIds = (raw: string | undefined): string[] =>
+  raw && raw !== "xxx"
+    ? raw
+        .split(",")
+        .map((id) => id.trim())
+        .filter((id) => id.length > 0)
+    : [];
+
 interface SeedOptions {
   guildsCount?: number;
   lootsCount?: number;
@@ -62,16 +70,10 @@ async function cleanDatabase() {
 async function seedGuilds(count: number) {
   console.log(`🏰 Seeding ${count} guilds...`);
 
-  const devGuildIdsRaw = process.env.DISCORD_DEVELOPMENT_GUILD_ID;
+  const devGuildIds = parseDevGuildIds(
+    process.env.DISCORD_DEVELOPMENT_GUILD_ID,
+  );
   const devUserId = process.env.DISCORD_DEVELOPMENT_USER_ID;
-
-  const devGuildIds =
-    devGuildIdsRaw && devGuildIdsRaw !== "xxx"
-      ? devGuildIdsRaw
-          .split(",")
-          .map((id) => id.trim())
-          .filter((id) => id.length > 0)
-      : [];
 
   const totalGuildsToCreate = Math.max(count, devGuildIds.length);
 
@@ -192,16 +194,10 @@ async function seedLoots(count: number, guilds: any[]) {
   const loots = lootGenerator.generateMultiple(count);
   const createdLoots = [];
 
-  const devGuildIdsRaw = process.env.DISCORD_DEVELOPMENT_GUILD_ID;
+  const devGuildIds = parseDevGuildIds(
+    process.env.DISCORD_DEVELOPMENT_GUILD_ID,
+  );
   const devUserId = process.env.DISCORD_DEVELOPMENT_USER_ID;
-
-  const devGuildIds =
-    devGuildIdsRaw && devGuildIdsRaw !== "xxx"
-      ? devGuildIdsRaw
-          .split(",")
-          .map((id) => id.trim())
-          .filter((id) => id.length > 0)
-      : [];
 
   for (const loot of loots) {
     const createdLoot = await prisma.loot.create({
@@ -272,16 +268,10 @@ async function seedTimers(guilds: any[]) {
     return;
   }
 
-  const devGuildIdsRaw = process.env.DISCORD_DEVELOPMENT_GUILD_ID;
+  const devGuildIds = parseDevGuildIds(
+    process.env.DISCORD_DEVELOPMENT_GUILD_ID,
+  );
   const devUserId = process.env.DISCORD_DEVELOPMENT_USER_ID;
-
-  const devGuildIds =
-    devGuildIdsRaw && devGuildIdsRaw !== "xxx"
-      ? devGuildIdsRaw
-          .split(",")
-          .map((id) => id.trim())
-          .filter((id) => id.length > 0)
-      : [];
 
   let totalTimers = 0;
 
