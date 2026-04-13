@@ -16,6 +16,8 @@ export type CreateNotificationDtoNpc = {
   prof?: string;
   wt: number;
   hpp?: number;
+  x?: number;
+  y?: number;
   /** @minLength 1 */
   icon: string;
   type: number;

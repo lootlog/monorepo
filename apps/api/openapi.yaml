@@ -6808,6 +6808,10 @@ components:
               type: number
             hpp:
               type: number
+            x:
+              type: number
+            "y":
+              type: number
             icon:
               type: string
               minLength: 1
