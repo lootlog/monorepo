@@ -8,3 +8,4 @@ export * from "./common/discord-auth-scopes.js";
 export * from "./common/discord.js";
 export * from "./common/event-settings.types.js";
 export * from "./common/notifications.types.js";
+export * from "./common/scoring-rules.js";

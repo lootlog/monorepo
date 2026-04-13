@@ -15,7 +15,7 @@ import {
   type EventScoringNumericFactor,
   type EventScoringNumericOperator,
   type EventScoringRules,
-} from "../constants/scoring-rules.constant";
+} from "@lootlog/types";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);

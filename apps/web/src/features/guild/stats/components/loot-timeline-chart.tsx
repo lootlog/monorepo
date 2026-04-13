@@ -48,12 +48,6 @@ export const LootTimelineChart: React.FC<LootTimelineChartProps> = ({
         minute: "2-digit",
       });
     }
-    if (period === "7d" || period === "14d" || period === "30d") {
-      return date.toLocaleDateString("pl-PL", {
-        day: "2-digit",
-        month: "2-digit",
-      });
-    }
     return date.toLocaleDateString("pl-PL", {
       day: "2-digit",
       month: "2-digit",

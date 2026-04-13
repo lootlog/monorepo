@@ -6,7 +6,7 @@ import type {
   EventScoringCondition,
   EventScoringNumericOperator,
   EventScoringRules,
-} from "../types/scoring-rules";
+} from "@lootlog/types";
 
 type LocalDate = {
   year: number;

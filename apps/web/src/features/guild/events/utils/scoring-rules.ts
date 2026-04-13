@@ -14,7 +14,7 @@ import {
   type EventScoringNumericFactor,
   type EventScoringNumericOperator,
   type EventScoringRules,
-} from "../types/scoring-rules";
+} from "@lootlog/types";
 
 const CLOCK_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
 const DEFAULT_WINDOW_START = "00:00";

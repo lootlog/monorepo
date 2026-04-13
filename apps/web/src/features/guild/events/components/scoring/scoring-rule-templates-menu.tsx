@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@lootlog/ui/components/dropdown-menu";
 import { LayoutTemplate } from "lucide-react";
-import type { EventScoringRule } from "../../types/scoring-rules";
+import type { EventScoringRule } from "@lootlog/types";
 import { SCORING_RULE_TEMPLATES } from "../../utils/scoring-rule-templates";
 
 interface ScoringRuleTemplatesMenuProps {

@@ -11,7 +11,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { Label } from "@lootlog/ui/components/label";
 import { Separator } from "@lootlog/ui/components/separator";
 import { Plus, ListChecks, FlaskConical } from "lucide-react";
-import type { EventScoringRules } from "../../types/scoring-rules";
+import type { EventScoringRules } from "@lootlog/types";
 import {
   createDefaultScoringAction,
   createDefaultScoringCondition,

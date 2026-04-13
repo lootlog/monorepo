@@ -6,7 +6,7 @@ import {
   EVENT_SCORING_BOOLEAN_FACTORS,
   EVENT_SCORING_NUMERIC_FACTORS,
   EVENT_SCORING_NUMERIC_OPERATORS,
-} from "../constants/scoring-rules.constant";
+} from "@lootlog/types";
 
 const NumericConditionSchema = z
   .object({

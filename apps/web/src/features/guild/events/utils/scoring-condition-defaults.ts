@@ -1,7 +1,4 @@
-import type {
-  EventScoringAction,
-  EventScoringCondition,
-} from "../types/scoring-rules";
+import type { EventScoringAction, EventScoringCondition } from "@lootlog/types";
 
 const FULL_DAY_TIME_RANGE = {
   from: "00:00",

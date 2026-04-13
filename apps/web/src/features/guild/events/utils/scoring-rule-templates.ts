@@ -1,4 +1,4 @@
-import type { EventScoringRule } from "../types/scoring-rules";
+import type { EventScoringRule } from "@lootlog/types";
 
 const makeRuleId = () =>
   `rule-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;

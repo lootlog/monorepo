@@ -6,7 +6,7 @@ import {
   nullableIsoDatetimeCodec,
 } from "src/shared/dto/zod-response-codecs";
 import { z } from "zod";
-import { EVENT_SCORING_MODES } from "../constants/scoring-rules.constant";
+import { EVENT_SCORING_MODES } from "@lootlog/types";
 
 const EventHeroNpcResponseSchema = z.object({
   id: z.string(),

@@ -15,7 +15,7 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Separator } from "@lootlog/ui/components/separator";
 import { CheckCircle2, XCircle, Trophy, Minus } from "lucide-react";
 import { cn } from "@lootlog/ui/lib/utils";
-import type { EventScoringRules } from "../../types/scoring-rules";
+import type { EventScoringRules } from "@lootlog/types";
 import {
   evaluateEventScoring,
   type EvaluationContext,

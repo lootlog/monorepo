@@ -833,8 +833,11 @@ export class BattleProcessor {
     let winningTeam = getTeamFromNames(winnerNames);
     let losingTeam = getTeamFromNames(loserNames);
 
-    const inferTeam = (team: number | null): number | null =>
-      team === 1 ? 2 : team === 2 ? 1 : null;
+    const inferTeam = (team: number | null): number | null => {
+      if (team === 1) return 2;
+      if (team === 2) return 1;
+      return null;
+    };
 
     if (winningTeam === null && losingTeam !== null) {
       winningTeam = inferTeam(losingTeam);
@@ -862,6 +865,7 @@ export class BattleProcessor {
       );
 
       const [t1, t2] = [1, 2];
+      const otherTeam = (team: number) => (team === t1 ? t2 : t1);
       const alive1 = teams.alive[t1] ?? 0;
       const alive2 = teams.alive[t2] ?? 0;
       const hp1 = teams.hpSum[t1] ?? 0;
@@ -874,25 +878,25 @@ export class BattleProcessor {
       if (winningTeam === null && losingTeam === null) {
         if (alive1 !== alive2) {
           winningTeam = alive1 > alive2 ? t1 : t2;
-          losingTeam = winningTeam === t1 ? t2 : t1;
+          losingTeam = otherTeam(winningTeam);
         } else if (hp1 !== hp2) {
           winningTeam = hp1 > hp2 ? t1 : t2;
-          losingTeam = winningTeam === t1 ? t2 : t1;
+          losingTeam = otherTeam(winningTeam);
         } else if (dealt1 !== dealt2) {
           winningTeam = dealt1 > dealt2 ? t1 : t2;
-          losingTeam = winningTeam === t1 ? t2 : t1;
+          losingTeam = otherTeam(winningTeam);
         } else if (taken1 !== taken2) {
           winningTeam = taken1 < taken2 ? t1 : t2;
-          losingTeam = winningTeam === t1 ? t2 : t1;
+          losingTeam = otherTeam(winningTeam);
         } else {
           // Deterministic default
           winningTeam = t1;
           losingTeam = t2;
         }
       } else if (winningTeam === null) {
-        winningTeam = losingTeam === t1 ? t2 : t1;
+        winningTeam = otherTeam(losingTeam);
       } else if (losingTeam === null) {
-        losingTeam = winningTeam === t1 ? t2 : t1;
+        losingTeam = otherTeam(winningTeam);
       }
     }
 

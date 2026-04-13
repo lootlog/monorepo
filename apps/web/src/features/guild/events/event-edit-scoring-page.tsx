@@ -15,7 +15,7 @@ import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
   type EventScoringMode,
   type EventScoringRules,
-} from "./types/scoring-rules";
+} from "@lootlog/types";
 import {
   normalizeScoringMode,
   normalizeScoringRules,

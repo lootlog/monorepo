@@ -3,7 +3,7 @@ import type {
   EventScoringMode,
   EventScoringNumericOperator,
   EventScoringRules,
-} from "../constants/scoring-rules.constant";
+} from "@lootlog/types";
 import {
   calculateLocalWindowOverlapMs,
   isLocalTimeInRange,

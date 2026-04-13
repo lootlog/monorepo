@@ -15,7 +15,7 @@ import { getEventWrappedCacheKey } from "src/shared/constants/cache.constant";
 import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
   type EventScoringMode,
-} from "../constants/scoring-rules.constant";
+} from "@lootlog/types";
 import type { CreateEventDto } from "../dto/create-event.dto";
 import type { CreateHeroDto } from "../dto/create-hero.dto";
 import type { CreateLocationDto } from "../dto/create-location.dto";

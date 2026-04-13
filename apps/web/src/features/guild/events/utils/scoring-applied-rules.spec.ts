@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { EventScoringRules } from "../types/scoring-rules";
+import type { EventScoringRules } from "@lootlog/types";
 import {
   evaluateEventScoring,
   type EvaluationContext,

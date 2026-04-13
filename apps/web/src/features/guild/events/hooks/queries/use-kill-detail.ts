@@ -10,7 +10,7 @@ import type {
   KillDetailResponseDtoKillPointsItem,
   KillDetailResponseDtoKillTimerCreatedBy,
 } from "@/lib/api/generated/main/model";
-import type { EventScoringRules } from "../../types/scoring-rules";
+import type { EventScoringRules } from "@lootlog/types";
 import { normalizeScoringRules } from "../../utils/scoring-rules";
 export type KillDetailMember = KillDetailResponseDtoKillTimerCreatedBy;
 export type KillDetailParticipant = KillDetailResponseDtoKillPointsItem;
