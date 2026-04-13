@@ -1,6 +1,6 @@
 import type { Timer } from "@/hooks/api/use-timers";
-import type { GuildMember } from "@/hooks/api/use-guild-members";
 import { NpcType } from "@/hooks/api/use-npcs";
+import type { GuildMember } from "@/types/guild-member";
 
 export type TimerWithTimeLeft = Timer & {
   maxTimeLeft: number;
