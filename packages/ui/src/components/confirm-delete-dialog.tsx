@@ -42,7 +42,7 @@ export function ConfirmDeleteDialog({
   const [inputValue, setInputValue] = useState("");
   const requiresConfirmation = confirmText !== undefined;
   const isConfirmDisabled =
-    Boolean(disabled) || (requiresConfirmation && inputValue !== confirmText);
+    disabled || (requiresConfirmation && inputValue !== confirmText);
   const resolvedTrigger =
     trigger && isValidElement<{ disabled?: boolean }>(trigger)
       ? cloneElement(trigger, { disabled })

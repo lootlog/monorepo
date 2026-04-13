@@ -1,4 +1,4 @@
-import { cn } from "@/utils/cn";
+import { cn } from "@lootlog/ui/lib/utils";
 import { AnimatedPanel } from "./animated-panel";
 
 export type MetricTone =

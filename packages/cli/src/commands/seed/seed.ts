@@ -9,6 +9,16 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { config } from "dotenv";
 
+function getDevGuildIds(): string[] {
+  const raw = process.env.DISCORD_DEVELOPMENT_GUILD_ID;
+  return raw && raw !== "xxx"
+    ? raw
+        .split(",")
+        .map((id) => id.trim())
+        .filter((id) => id.length > 0)
+    : [];
+}
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -62,16 +72,8 @@ async function cleanDatabase() {
 async function seedGuilds(count: number) {
   console.log(`🏰 Seeding ${count} guilds...`);
 
-  const devGuildIdsRaw = process.env.DISCORD_DEVELOPMENT_GUILD_ID;
   const devUserId = process.env.DISCORD_DEVELOPMENT_USER_ID;
-
-  const devGuildIds =
-    devGuildIdsRaw && devGuildIdsRaw !== "xxx"
-      ? devGuildIdsRaw
-          .split(",")
-          .map((id) => id.trim())
-          .filter((id) => id.length > 0)
-      : [];
+  const devGuildIds = getDevGuildIds();
 
   const totalGuildsToCreate = Math.max(count, devGuildIds.length);
 
@@ -192,16 +194,8 @@ async function seedLoots(count: number, guilds: any[]) {
   const loots = lootGenerator.generateMultiple(count);
   const createdLoots = [];
 
-  const devGuildIdsRaw = process.env.DISCORD_DEVELOPMENT_GUILD_ID;
   const devUserId = process.env.DISCORD_DEVELOPMENT_USER_ID;
-
-  const devGuildIds =
-    devGuildIdsRaw && devGuildIdsRaw !== "xxx"
-      ? devGuildIdsRaw
-          .split(",")
-          .map((id) => id.trim())
-          .filter((id) => id.length > 0)
-      : [];
+  const devGuildIds = getDevGuildIds();
 
   for (const loot of loots) {
     const createdLoot = await prisma.loot.create({
@@ -272,16 +266,8 @@ async function seedTimers(guilds: any[]) {
     return;
   }
 
-  const devGuildIdsRaw = process.env.DISCORD_DEVELOPMENT_GUILD_ID;
   const devUserId = process.env.DISCORD_DEVELOPMENT_USER_ID;
-
-  const devGuildIds =
-    devGuildIdsRaw && devGuildIdsRaw !== "xxx"
-      ? devGuildIdsRaw
-          .split(",")
-          .map((id) => id.trim())
-          .filter((id) => id.length > 0)
-      : [];
+  const devGuildIds = getDevGuildIds();
 
   let totalTimers = 0;
 

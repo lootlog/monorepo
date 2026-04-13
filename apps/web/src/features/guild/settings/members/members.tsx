@@ -1,6 +1,6 @@
 import { SearchInput } from "@/components/ui/search-input";
 import { useState, useMemo, useRef } from "react";
-import { cn } from "@/utils/cn";
+import { cn } from "@lootlog/ui/lib/utils";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Label } from "@lootlog/ui/components/label";
 import { useGuildMembers } from "@/hooks/api/members/use-guild-members";

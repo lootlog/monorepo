@@ -17,7 +17,7 @@ import type { EventHeroNpc } from "../../types/api";
 import { WatchableItemTile } from "@/components/tiles";
 import { LootNpcs } from "@/features/guild/loots-list/components/loots-list/loot-npcs";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
-import { cn } from "@/utils/cn";
+import { cn } from "@lootlog/ui/lib/utils";
 import { ItemRarity, type Loot } from "@/hooks/api/loots/use-loots";
 import { EventScrollableTabsList } from "../shared/event-scrollable-tabs-list";
 import { Spinner } from "@lootlog/ui/components/spinner";

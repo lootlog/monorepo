@@ -1,5 +1,5 @@
 import { motion, useReducedMotion } from "framer-motion";
-import { cn } from "@/utils/cn";
+import { cn } from "@lootlog/ui/lib/utils";
 
 interface AnimatedPanelProps {
   children: React.ReactNode;
