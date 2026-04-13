@@ -9,7 +9,7 @@ import { ContextMenuItem } from "@/components/ui/context-menu";
 import { useGuilds } from "@/hooks/api/use-guilds";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 import type { TimerWithTimeLeft } from "@/features/timers/utils/timers-utils";
-import { cn } from "@/lib/utils";
+import { cn } from "@lootlog/ui/lib/utils";
 import { Permission } from "@lootlog/types";
 
 type DeleteTimerPopoverProps = {

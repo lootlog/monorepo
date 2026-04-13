@@ -1,7 +1,7 @@
 import { NPC_NAMES } from "@/constants/margonem";
 import type { ChatMessage as ChatMessageType } from "@/hooks/api/use-chat-messages";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
-import { cn } from "@/lib/utils";
+import { cn } from "@lootlog/ui/lib/utils";
 import { getTextColor } from "@/utils/notifications-and-detector/background";
 import { format, isYesterday } from "date-fns";
 import type { FC } from "react";

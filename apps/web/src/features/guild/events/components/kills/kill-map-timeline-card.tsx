@@ -12,7 +12,7 @@ import { Badge } from "@lootlog/ui/components/badge";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { MapCoverageTimeline } from "../maps/map-coverage-timeline";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
-import { cn } from "@/utils/cn";
+import { cn } from "@lootlog/ui/lib/utils";
 import { formatDurationPadded, formatTime, formatTimeShort } from "../../utils";
 import type { TFunction } from "i18next";
 import type { MapGap, MapTimelineData } from "../../types/api";

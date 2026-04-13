@@ -6,7 +6,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
-import { cn } from "@/lib/utils";
+import { cn } from "@lootlog/ui/lib/utils";
 
 type ColorStat = {
   color: string;

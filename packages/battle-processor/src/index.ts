@@ -172,6 +172,26 @@ export type BattleAnalysis = {
   matchmaking?: MatchmakingInfo;
 };
 
+const DAMAGE_DEALT_MAP: Record<string, keyof Warrior> = {
+  "+dmgd": "distanceDamage",
+  "+dmg": "meleeDamage",
+  "+dmgo": "auxiliaryDamage",
+  "+dmgf": "fireDamage",
+  "+dmgc": "frostDamage",
+  "+dmgl": "lightningDamage",
+  "+thirdatt": "thirdAttDamage",
+};
+
+const DAMAGE_TAKEN_MAP: Record<string, keyof Warrior> = {
+  "-dmgd": "distanceDamageTaken",
+  "-dmg": "meleeDamageTaken",
+  "-dmgo": "auxiliaryDamageTaken",
+  "-dmgf": "fireDamageTaken",
+  "-dmgc": "frostDamageTaken",
+  "-dmgl": "lightningDamageTaken",
+  "-thirdatt": "thirdAttDamageTaken",
+};
+
 export class BattleProcessor {
   private readonly warriors = new Map<string, Warrior>();
   private readonly lastHp = new Map<string, number>();
@@ -240,8 +260,6 @@ export class BattleProcessor {
     battleMeta: { characterId: string },
   ) {
     for (const move of moves) {
-      this.processOutcome(move);
-
       if (!move.actions.length) {
         this.updateHpTracking(move);
         continue;
@@ -276,7 +294,7 @@ export class BattleProcessor {
           attacker.spellsUsed++;
           const spellName = tspellAction.param || "unknown";
           attacker.spellsUsedMap[spellName] =
-            (attacker.spellsUsedMap[spellName] || 0) + 1;
+            (attacker.spellsUsedMap[spellName] ?? 0) + 1;
         }
       }
 
@@ -371,37 +389,17 @@ export class BattleProcessor {
       const [firstParam] = param.split(",");
       const firstValue = firstParam ? Number.parseInt(firstParam, 10) : 0;
 
-      const damageDealtMap: Record<string, keyof Warrior> = {
-        "+dmgd": "distanceDamage",
-        "+dmg": "meleeDamage",
-        "+dmgo": "auxiliaryDamage",
-        "+dmgf": "fireDamage",
-        "+dmgc": "frostDamage",
-        "+dmgl": "lightningDamage",
-        "+thirdatt": "thirdAttDamage",
-      };
-
-      if (damageDealtMap[actionType]) {
+      if (DAMAGE_DEALT_MAP[actionType]) {
         attacker.damageDealt += value;
-        (attacker[damageDealtMap[actionType]] as number) += value;
+        (attacker[DAMAGE_DEALT_MAP[actionType]] as number) += value;
         continue;
       }
 
-      const damageTakenMap: Record<string, keyof Warrior> = {
-        "-dmgd": "distanceDamageTaken",
-        "-dmg": "meleeDamageTaken",
-        "-dmgo": "auxiliaryDamageTaken",
-        "-dmgf": "fireDamageTaken",
-        "-dmgc": "frostDamageTaken",
-        "-dmgl": "lightningDamageTaken",
-        "-thirdatt": "thirdAttDamageTaken",
-      };
-
-      if (damageTakenMap[actionType]) {
+      if (DAMAGE_TAKEN_MAP[actionType]) {
         attacker.damageDealtAfterDefensive += value;
         if (defender) {
           defender.damageTaken += value;
-          (defender[damageTakenMap[actionType]] as number) += value;
+          (defender[DAMAGE_TAKEN_MAP[actionType]] as number) += value;
           defender.flatDamageTaken += value;
           this.tryCalculateMaxHp(
             move.defenderId!,
@@ -747,20 +745,10 @@ export class BattleProcessor {
       throw new Error("No events found in battle data");
     }
 
-    const firstTimestamp = events[0]?.ev || 0;
-    const lastTimestamp = events[events.length - 1]?.ev || 0;
+    const firstTimestamp = events[0]?.ev ?? 0;
+    const lastTimestamp = events[events.length - 1]?.ev ?? 0;
 
     return lastTimestamp - firstTimestamp;
-  }
-
-  private processOutcome(move: ParsedMove) {
-    for (const { actionType, param } of move.actions) {
-      if (actionType === "winner") {
-        this.battleOutcome.winner = param;
-      } else if (actionType === "loser") {
-        this.battleOutcome.loser = param;
-      }
-    }
   }
 
   private determineBattleType() {

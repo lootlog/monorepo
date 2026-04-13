@@ -1,5 +1,5 @@
 import type { LootComment } from "@/hooks/api/loots/use-loot-comments";
-import { getRelativeTime } from "@/utils/date/get-relative-time";
+import { getRelativeTime } from "@lootlog/ui/lib/date-utils";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { Avatar, AvatarImage } from "@lootlog/ui/components/avatar";
 import type { FC } from "react";

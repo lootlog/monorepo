@@ -3,6 +3,7 @@ import { Cron, CronExpression } from "@nestjs/schedule";
 import { PrismaService } from "src/db/prisma.service";
 import { env } from "src/config/env";
 import { TIMER_TYPES } from "src/timers/constants/timer-limits";
+import { createCutoffDate } from "src/shared/utils/create-cutoff-date";
 
 @Injectable()
 export class TimersCleanupService {
@@ -29,7 +30,7 @@ export class TimersCleanupService {
       return;
     }
 
-    const cutoffDate = this.createCutoffDate(this.retentionDays);
+    const cutoffDate = createCutoffDate(this.retentionDays);
 
     this.logger.log(
       `Starting manual timer cleanup (cutoff: ${cutoffDate}, retention: ${this.retentionDays} days)`,
@@ -61,7 +62,7 @@ export class TimersCleanupService {
   async cleanupExpiredTimersManual(
     retentionDays: number = this.retentionDays,
   ): Promise<number> {
-    const cutoffDate = this.createCutoffDate(retentionDays);
+    const cutoffDate = createCutoffDate(retentionDays);
 
     this.logger.log(
       `Manual cleanup of expired manual timers (cutoff: ${cutoffDate}, retention: ${retentionDays} days)`,
@@ -74,13 +75,6 @@ export class TimersCleanupService {
     );
 
     return deletedTimersCount;
-  }
-
-  private createCutoffDate(retentionDays: number): Date {
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
-
-    return cutoffDate;
   }
 
   private deleteExpiredManualTimers(cutoffDate: Date): Promise<number> {

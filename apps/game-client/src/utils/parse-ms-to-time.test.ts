@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseMsToTime } from "./parse-ms-to-time";
+import { parseMsToTime } from "@lootlog/ui/lib/date-utils";
 
 describe("parseMsToTime", () => {
   it("should convert milliseconds to HH:MM:SS format", () => {

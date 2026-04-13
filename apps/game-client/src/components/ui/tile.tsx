@@ -1,5 +1,5 @@
 import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
-import { cn } from "@/lib/utils";
+import { cn } from "@lootlog/ui/lib/utils";
 import { type FC, useState } from "react";
 
 type TileProps = {

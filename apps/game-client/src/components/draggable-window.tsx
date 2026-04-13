@@ -1,5 +1,5 @@
 import { useDrag } from "@/hooks/ui/use-drag";
-import { cn } from "@/lib/utils";
+import { cn } from "@lootlog/ui/lib/utils";
 import {
   useWindowsStore,
   type WindowId,

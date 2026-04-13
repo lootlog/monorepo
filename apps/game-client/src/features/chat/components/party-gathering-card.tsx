@@ -4,7 +4,7 @@ import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { useVolunteer } from "@/hooks/api/use-volunteer";
 import { CharacterTile } from "@/components/character-tile";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn } from "@lootlog/ui/lib/utils";
 import { Game } from "@/lib/game";
 import { format } from "date-fns";
 import { Loader2 } from "lucide-react";

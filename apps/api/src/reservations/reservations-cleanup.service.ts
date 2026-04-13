@@ -2,6 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { Cron, CronExpression } from "@nestjs/schedule";
 import { PrismaService } from "src/db/prisma.service";
 import { env } from "src/config/env";
+import { createCutoffDate } from "src/shared/utils/create-cutoff-date";
 
 @Injectable()
 export class ReservationsCleanupService {
@@ -27,7 +28,7 @@ export class ReservationsCleanupService {
       return;
     }
 
-    const cutoffDate = this.createCutoffDate(this.retentionDays);
+    const cutoffDate = createCutoffDate(this.retentionDays);
 
     this.logger.log(
       `Starting reservation cleanup (cutoff: ${cutoffDate.toISOString()}, retention: ${this.retentionDays} days)`,
@@ -58,7 +59,7 @@ export class ReservationsCleanupService {
   async cleanupExpiredReservationsManual(
     retentionDays: number = this.retentionDays,
   ): Promise<number> {
-    const cutoffDate = this.createCutoffDate(retentionDays);
+    const cutoffDate = createCutoffDate(retentionDays);
 
     this.logger.log(
       `Manual cleanup of expired reservations (cutoff: ${cutoffDate.toISOString()}, retention: ${retentionDays} days)`,
@@ -73,12 +74,5 @@ export class ReservationsCleanupService {
     this.logger.log(`Manual cleanup deleted ${count} expired reservations`);
 
     return count;
-  }
-
-  private createCutoffDate(retentionDays: number): Date {
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
-
-    return cutoffDate;
   }
 }

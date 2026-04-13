@@ -8,7 +8,7 @@ export const parseDurationToSeconds = (input: string): number => {
 
   const [, hours, minutes, seconds] = match.map(Number);
   const totalSeconds =
-    (hours || 0) * 3600 + (minutes || 0) * 60 + (seconds || 0);
+    (hours ?? 0) * 3600 + (minutes ?? 0) * 60 + (seconds ?? 0);
 
   return Math.min(totalSeconds, MAX_DURATION_SECONDS);
 };

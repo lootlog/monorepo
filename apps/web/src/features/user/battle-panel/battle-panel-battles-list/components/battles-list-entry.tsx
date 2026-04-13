@@ -1,5 +1,5 @@
 import type { Battle } from "@/hooks/api/battle-log/use-battles";
-import { getRelativeTime } from "@/utils/date/get-relative-time";
+import { getRelativeTime } from "@lootlog/ui/lib/date-utils";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { cn } from "@lootlog/ui/lib/utils";

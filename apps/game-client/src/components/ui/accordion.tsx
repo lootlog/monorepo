@@ -2,7 +2,7 @@ import * as React from "react";
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { ChevronDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@lootlog/ui/lib/utils";
 
 const CONTENT_ANIMATION: Variants = {
   initial: {

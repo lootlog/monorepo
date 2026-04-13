@@ -21,7 +21,7 @@ import { OldChatInput } from "@/features/chat/components/old-chat-input";
 import { useGuilds } from "@/hooks/api/use-guilds";
 import { ChatWindowActions } from "@/features/chat/components/chat-window-actions";
 import { MessageType } from "@/hooks/api/use-send-chat-message";
-import { cn } from "@/lib/utils";
+import { cn } from "@lootlog/ui/lib/utils";
 
 const chatSelectedGuildKey = (accountId: string, characterId: string) =>
   storageKey(`ll:chat:selected-guild:${accountId}:${characterId}`);

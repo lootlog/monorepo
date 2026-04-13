@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@lootlog/ui/lib/utils";
 import type { ComponentProps } from "react";
 
 export const Label = ({

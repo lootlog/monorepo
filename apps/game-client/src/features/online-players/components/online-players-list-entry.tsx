@@ -3,7 +3,7 @@ import { Tile } from "@/components/ui/tile";
 import type { PlayerPresence } from "@/features/online-players/hooks/use-players-presence";
 import type { MargonemCharacter } from "@/hooks/api/use-character-list";
 import type { GuildMember } from "@/hooks/api/use-guild-members";
-import { cn } from "@/lib/utils";
+import { cn } from "@lootlog/ui/lib/utils";
 import type { FC } from "react";
 
 type OnlinePlayersListEntryProps = {

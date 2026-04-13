@@ -3,7 +3,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
+import { cn } from "@lootlog/ui/lib/utils";
 import type { FC } from "react";
 import { TIMERS_COLORS } from "../constants/timer-colors";
 import { DEFAULT_COLOR_NAMES } from "../constants/color-names";

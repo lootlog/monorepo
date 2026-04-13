@@ -1,7 +1,7 @@
 import * as React from "react";
 import { ChevronsUpDown } from "lucide-react";
 import { CheckIcon } from "@radix-ui/react-icons";
-import { cn } from "@/lib/utils";
+import { cn } from "@lootlog/ui/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Command,

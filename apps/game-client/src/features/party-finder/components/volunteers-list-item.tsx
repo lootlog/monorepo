@@ -1,7 +1,7 @@
 import { CharacterTile } from "@/components/character-tile";
 import { Button } from "@/components/ui/button";
 import { Tile } from "@/components/ui/tile";
-import { cn } from "@/lib/utils";
+import { cn } from "@lootlog/ui/lib/utils";
 import {
   usePartyFinderStore,
   type PartyFinderVolunteer,

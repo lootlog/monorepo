@@ -1,5 +1,5 @@
 import { type FC, Fragment, useMemo } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@lootlog/ui/lib/utils";
 import { XIcon } from "lucide-react";
 import {
   type PartyGatheringNotification,

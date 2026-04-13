@@ -52,8 +52,7 @@ export const OldChatInput: FC<OldChatInputProps> = ({
     }
 
     const isNotificationEnabled = data.message.charAt(0) === "!";
-    const msg =
-      data.message.indexOf("!") === 0 ? data.message.slice(1) : data.message;
+    const msg = isNotificationEnabled ? data.message.slice(1) : data.message;
 
     if (isNotificationEnabled) {
       createNotification({

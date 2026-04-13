@@ -1,7 +1,7 @@
 import { Combobox, type ComboboxGroup } from "@/components/ui/combobox";
 import { useWorlds } from "@/hooks/api/use-worlds";
 import { Game } from "@/lib/game";
-import { cn } from "@/lib/utils";
+import { cn } from "@lootlog/ui/lib/utils";
 import { useSettingsStore } from "@/store/settings.store";
 import { type FC, useEffect, useMemo } from "react";
 import { useLocalStorage } from "react-use";

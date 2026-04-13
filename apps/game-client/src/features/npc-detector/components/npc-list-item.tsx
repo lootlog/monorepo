@@ -1,6 +1,6 @@
 import { NpcTile } from "@/components/npc-tile";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn } from "@lootlog/ui/lib/utils";
 import {
   type DetectorNpcType,
   type GameNpcWithLocation,

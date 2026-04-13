@@ -7,7 +7,7 @@ import { TimersGrid } from "./timers-grid";
 import { TimersEmptyState } from "./timers-empty-state";
 import { TimersFooter } from "./timers-footer";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
-import { cn } from "@/lib/utils";
+import { cn } from "@lootlog/ui/lib/utils";
 
 type ColorStat = {
   color: string;

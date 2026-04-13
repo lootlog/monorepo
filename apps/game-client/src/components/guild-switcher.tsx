@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@lootlog/ui/lib/utils";
 import { useGuilds } from "@/hooks/api/use-guilds";
 import { useSettingsStore } from "@/store/settings.store";
 import { TooltipProvider } from "@/components/ui/tooltip";

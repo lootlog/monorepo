@@ -69,7 +69,7 @@ export const debouncedSyncGuildSettings = (
   guildId: string,
   payload: UpdateGuildTimerSettingsPayload,
 ) => {
-  const existingPayload = pendingGuildPayloads.get(guildId) || {};
+  const existingPayload = pendingGuildPayloads.get(guildId) ?? {};
   pendingGuildPayloads.set(guildId, { ...existingPayload, ...payload });
 
   const existingTimeout = guildSyncTimeouts.get(guildId);

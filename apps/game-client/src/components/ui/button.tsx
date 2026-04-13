@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@lootlog/ui/lib/utils";
 import type { ComponentProps, FC } from "react";
 
 export const Button: FC<ComponentProps<"button">> = ({
