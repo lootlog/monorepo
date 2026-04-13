@@ -100,13 +100,7 @@ const buildHeadToHeadSearchParams = (params?: UseHeadToHeadParams) => {
 
 export const headToHeadQueryOptions = (params?: UseHeadToHeadParams) =>
   queryOptions({
-    queryKey: queryKeys.battleLog.headToHead(
-      params
-        ? {
-            ...params,
-          }
-        : undefined,
-    ),
+    queryKey: queryKeys.battleLog.headToHead(params),
     queryFn: async () => {
       const searchParams = buildHeadToHeadSearchParams(params);
 

@@ -2,17 +2,8 @@ import { createHash } from "node:crypto";
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { ActivityType, Prisma } from "src/generated/prisma/client";
 import { PrismaService } from "src/shared/db/prisma.service";
+import { mapActivityDetails } from "src/shared/utils/map-activity-details";
 import { CreateActivityDto } from "./dto/create-activity.dto";
-
-function mapActivityDetails(
-  details: unknown,
-): Record<string, unknown> | undefined {
-  if (!details || typeof details !== "object" || Array.isArray(details)) {
-    return undefined;
-  }
-
-  return details as Record<string, unknown>;
-}
 
 @Injectable()
 export class ActivitiesService {

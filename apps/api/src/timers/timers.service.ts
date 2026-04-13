@@ -1202,7 +1202,7 @@ export class TimersService implements OnModuleInit {
     search: string,
     limit = 10,
   ) {
-    const limitNum = Number(limit) || 10;
+    const limitNum = Number(limit) ?? 10;
     const manualTimerType = String(TIMER_TYPES.CUSTOM_MANUAL);
     const timers = await this.prisma.$queryRaw<Timer[]>`
       SELECT DISTINCT ON (t."timerKey")

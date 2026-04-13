@@ -59,7 +59,7 @@ export const useDashboardKillStats = (
   const queryParams = {
     world: filters.world || undefined,
     npcType: filters.npcTypes?.join(",") || undefined,
-    topNpcsLimit: filters.topNpcsLimit || undefined,
+    topNpcsLimit: filters.topNpcsLimit ?? undefined,
   };
 
   const queryString = stringifyQueryParams(queryParams);
