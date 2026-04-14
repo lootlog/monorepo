@@ -357,7 +357,7 @@ describe("DiscordSyncService", () => {
     const { guild } = createGuild();
     mockClient.guilds.cache.set(guild.id, guild);
 
-    const payload = await service.getGuildChannels(guild.id);
+    const payload = await service.loadGuildChannels(guild.id);
 
     expect(guild.channels.fetch).toHaveBeenCalled();
     expect(payload).toEqual(
@@ -412,7 +412,7 @@ describe("DiscordSyncService", () => {
       createDiscordApiError("Missing Access", 50_001),
     );
 
-    const payload = await service.getGuildChannels("guild-123");
+    const payload = await service.loadGuildChannels("guild-123");
 
     expect(payload).toEqual(
       expect.objectContaining({
@@ -431,7 +431,7 @@ describe("DiscordSyncService", () => {
       new Error("Discord unavailable"),
     );
 
-    await expect(service.getGuildChannels("guild-123")).rejects.toThrow(
+    await expect(service.loadGuildChannels("guild-123")).rejects.toThrow(
       "Discord unavailable",
     );
   });

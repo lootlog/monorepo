@@ -32,3 +32,4 @@ export {
 
 export { isEventActiveAtTimestamp } from "./event-activity";
 export { getEventStatusAtTimestamp, type EventStatus } from "./event-activity";
+export { formatPoints, formatSignedPoints } from "./format-points";

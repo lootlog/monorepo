@@ -35,7 +35,7 @@ export class BattlesGenerator {
     return {
       accountId,
       characterId,
-      world: randomWorld || "gordion",
+      world: randomWorld ?? "gordion",
       events: this.samplePayload.events,
     };
   }

@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import type { EventRanking } from "../../types/api";
+import { formatPoints, formatSignedPoints } from "../../utils/format-points";
 import { cn } from "@lootlog/ui/lib/utils";
 import { Button } from "@lootlog/ui/components/button";
 import {
@@ -47,18 +48,6 @@ interface RankingRowProps {
   guildId?: string;
   eventId?: string;
 }
-
-const formatPoints = (points: number): string => {
-  return Number.isInteger(points) ? String(points) : points.toFixed(2);
-};
-
-const formatSignedPoints = (points: number): string => {
-  if (points > 0) {
-    return `+${formatPoints(points)}`;
-  }
-
-  return formatPoints(points);
-};
 
 const RankingRow = ({
   ranking,

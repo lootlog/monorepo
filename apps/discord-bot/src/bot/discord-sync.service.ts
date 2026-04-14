@@ -216,11 +216,7 @@ export class DiscordSyncService {
     });
   }
 
-  async getGuildChannels(guildId: string) {
-    return this.loadGuildChannelsPayload(guildId);
-  }
-
-  async refreshGuildChannels(guildId: string) {
+  async loadGuildChannels(guildId: string) {
     return this.loadGuildChannelsPayload(guildId);
   }
 

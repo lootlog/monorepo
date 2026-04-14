@@ -3,14 +3,13 @@
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useSession } from "@/src/hooks/use-session";
 import { authClient } from "@/src/lib/auth-client";
 import { Button } from "@lootlog/ui/components/button";
 import { links } from "@/src/config/links";
 
 export const PageHeader: React.FC = () => {
   const { t } = useTranslation();
-  const session = useSession();
+  const session = authClient.useSession();
   const isAuthenticated = !!session.data;
   const isLoading = session.isPending;
 

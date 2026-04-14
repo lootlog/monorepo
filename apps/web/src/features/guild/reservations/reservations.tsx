@@ -71,12 +71,12 @@ export const Reservations: React.FC = () => {
         .flatMap(([name, items]) =>
           items.map((item, idx) => {
             const slug = reservationSlug(name);
-            const normalizedKey =
-              slug in reservations
-                ? slug
-                : name in reservations
-                  ? name
-                  : name.toLowerCase();
+            let normalizedKey = name.toLowerCase();
+            if (slug in reservations) {
+              normalizedKey = slug;
+            } else if (name in reservations) {
+              normalizedKey = name;
+            }
             const reservationsForCard =
               reservations[normalizedKey] ?? reservations[slug] ?? [];
 
@@ -86,7 +86,7 @@ export const Reservations: React.FC = () => {
               slug,
               item,
               reservationsForCard,
-              lvl: item.lvl || 0,
+              lvl: item.lvl ?? 0,
             };
           }),
         )

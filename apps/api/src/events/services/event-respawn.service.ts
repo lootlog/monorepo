@@ -350,7 +350,7 @@ export class EventRespawnService {
         hasActiveTimer = true;
       } else if (now < minTime) {
         windowStatus = "WAITING";
-      } else if (now >= maxTime) {
+      } else {
         windowStatus = "OVERDUE";
         hasActiveTimer = true;
         overdueMs = Math.max(0, now.getTime() - maxTime.getTime());

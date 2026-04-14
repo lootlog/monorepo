@@ -731,20 +731,12 @@ export class MembersService {
     members: MemberRemovalNotificationTarget[],
     batchSize = 25,
   ): Promise<void> {
-    const notifyBatch = async (index: number): Promise<void> => {
-      if (index >= members.length) {
-        return;
-      }
-
-      const batch = members.slice(index, index + batchSize);
+    for (let i = 0; i < members.length; i += batchSize) {
+      const batch = members.slice(i, i + batchSize);
       await Promise.all(
         batch.map((member) => this.notifyMemberRemoved(member)),
       );
-
-      await notifyBatch(index + batchSize);
-    };
-
-    await notifyBatch(0);
+    }
   }
 
   async createBulkRefreshJob(guildId: string, requestedBy: string) {
