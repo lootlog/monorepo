@@ -9,7 +9,7 @@ import { ClockArrowDown, ClockArrowUp } from "lucide-react";
 import { useEffect, useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/utils/cn";
-import { parseMsToTime } from "@/utils/date/parse-ms-to-time";
+import { parseMsToTime } from "@lootlog/types";
 import { useTimers, type Timer } from "@/hooks/api/game-data/use-timers";
 
 type SingleTimerProps = {

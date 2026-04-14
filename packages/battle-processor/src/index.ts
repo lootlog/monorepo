@@ -833,8 +833,11 @@ export class BattleProcessor {
     let winningTeam = getTeamFromNames(winnerNames);
     let losingTeam = getTeamFromNames(loserNames);
 
-    const inferTeam = (team: number | null): number | null =>
-      team === 1 ? 2 : team === 2 ? 1 : null;
+    const inferTeam = (team: number | null): number | null => {
+      if (team === 1) return 2;
+      if (team === 2) return 1;
+      return null;
+    };
 
     if (winningTeam === null && losingTeam !== null) {
       winningTeam = inferTeam(losingTeam);

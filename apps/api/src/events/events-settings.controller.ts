@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Patch, Param, UseGuards } from "@nestjs/common";
-import { UserId } from "@lootlog/nest-shared";
+import { AuthGuard, UserId } from "@lootlog/nest-shared";
 import {
   ApiTags,
   ApiBearerAuth,
@@ -7,7 +7,6 @@ import {
   ApiParam,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { AuthGuard } from "src/shared/guards/auth.guard";
 import { EventSettingsService } from "./services/event-settings.service";
 import { UpdateEventSettingsDto } from "./dto/update-event-settings.dto";
 import { EventSettingsResponseDto } from "./dto/event-settings-response.dto";

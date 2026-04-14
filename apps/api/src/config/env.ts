@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { z } from "zod";
 import { createEnv } from "@lootlog/nest-shared";
-import { RuntimeEnvironment } from "src/types/runtime.types";
+import { RuntimeEnvironment } from "@lootlog/types";
 
 export const env = createEnv(
   z.object({

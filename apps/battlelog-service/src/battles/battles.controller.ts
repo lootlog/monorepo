@@ -9,7 +9,7 @@ import {
   Query,
   UseGuards,
 } from "@nestjs/common";
-import { UserId } from "@lootlog/nest-shared";
+import { AuthGuard, UserId } from "@lootlog/nest-shared";
 import { BattlesService } from "src/battles/battles.service";
 import { BattleAnalyticsService } from "src/battles/services/battle-analytics.service";
 import { CreateBattleDto } from "src/battles/dto/create-battle.dto";
@@ -20,7 +20,6 @@ import {
   QueryPlayerVsPlayerDto,
 } from "src/battles/dto/query-battle-statistics.dto";
 import { UpdateBattleDto } from "src/battles/dto/update-battle.dto";
-import { AuthGuard } from "src/shared/guards/auth.guard";
 import { BattleAccessGuard } from "src/shared/guards/battle-access.guard";
 import { BattleOwnerGuard } from "src/shared/guards/battle-owner.guard";
 

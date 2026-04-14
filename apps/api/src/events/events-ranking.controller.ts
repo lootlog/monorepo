@@ -17,7 +17,7 @@ import {
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
-import { UserId } from "@lootlog/nest-shared";
+import { AuthGuard, UserId } from "@lootlog/nest-shared";
 import { ZodResponse } from "nestjs-zod";
 import { Permission, type Role } from "src/generated/prisma/client";
 import {
@@ -42,7 +42,6 @@ import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { GuildMember } from "src/shared/decorators/member.decorator";
 import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";
 import { MemberRoles } from "src/shared/decorators/member-roles.decorator";
-import { AuthGuard } from "src/shared/guards/auth.guard";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 

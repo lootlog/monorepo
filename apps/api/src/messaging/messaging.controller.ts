@@ -7,7 +7,7 @@ import {
   Res,
   UseGuards,
 } from "@nestjs/common";
-import { DiscordId } from "@lootlog/nest-shared";
+import { AuthGuard, DiscordId } from "@lootlog/nest-shared";
 import type { FastifyReply } from "fastify";
 import {
   ApiTags,
@@ -19,7 +19,6 @@ import { CreateNotificationDto } from "src/messaging/dto/create-notification.dto
 import { CreatePartyGatheringDto } from "src/messaging/dto/create-party-gathering.dto";
 import { CreateVolunteerDto } from "src/messaging/dto/create-volunteer.dto";
 import { MessagingService } from "src/messaging/messaging.service";
-import { AuthGuard } from "src/shared/guards/auth.guard";
 
 @ApiTags("messaging")
 @ApiBearerAuth()
