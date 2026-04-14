@@ -366,12 +366,9 @@ export class NotificationRuleService {
     ruleId: number,
     data: UpdateNotificationRuleDto,
   ) {
-    const hasName = Object.prototype.hasOwnProperty.call(data, "name");
-    const hasWorld = Object.prototype.hasOwnProperty.call(data, "world");
-    const hasContentTemplate = Object.prototype.hasOwnProperty.call(
-      data,
-      "contentTemplate",
-    );
+    const hasName = "name" in data;
+    const hasWorld = "world" in data;
+    const hasContentTemplate = "contentTemplate" in data;
     const existingRule = await this.ensureRule({ ownerType, ownerId, ruleId });
     const nextTriggerType =
       (data.triggerType as DbNotificationTriggerType | undefined) ??
@@ -741,14 +738,12 @@ export class NotificationRuleService {
       data.scheduleWeekday ?? existingRule?.scheduleWeekday ?? null;
     const timeOfDay =
       data.scheduleTimeOfDay ?? existingRule?.scheduleTimeOfDay ?? null;
-    const scheduledUntil = Object.prototype.hasOwnProperty.call(
-      data,
-      "scheduledUntil",
-    )
-      ? data.scheduledUntil
-        ? new Date(data.scheduledUntil)
-        : null
-      : (existingRule?.scheduledUntil ?? null);
+    const scheduledUntil =
+      "scheduledUntil" in data
+        ? data.scheduledUntil
+          ? new Date(data.scheduledUntil)
+          : null
+        : (existingRule?.scheduledUntil ?? null);
     const scheduleTimezone = this.resolveNotificationScheduleTimeZone({
       ownerType,
       providedTimeZone: data.scheduleTimezone,

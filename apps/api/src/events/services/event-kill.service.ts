@@ -960,27 +960,7 @@ export class EventKillService {
       },
     });
 
-    const hasMore = kills.length > limit;
-    const paginatedKills = hasMore ? kills.slice(0, limit) : kills;
-    const windowStartByKillId =
-      await this.getEffectiveWindowStartByKillId(paginatedKills);
-    const mapDataByKillMember = await this.buildKillPointMapDataByKillMember(
-      paginatedKills,
-      windowStartByKillId,
-    );
-    const data = paginatedKills.map((kill) => ({
-      ...kill,
-      points: kill.points.map((point) => ({
-        ...point,
-        mapData: mapDataByKillMember.get(`${kill.id}:${point.memberId}`) ?? [],
-      })),
-    }));
-    const nextCursor = hasMore ? data[data.length - 1]?.id : null;
-
-    return {
-      data,
-      nextCursor,
-    };
+    return this.enrichAndPaginateKills(kills, limit);
   }
 
   async getEventKillHistory(
@@ -1034,27 +1014,7 @@ export class EventKillService {
       },
     });
 
-    const hasMore = kills.length > limit;
-    const paginatedKills = hasMore ? kills.slice(0, limit) : kills;
-    const windowStartByKillId =
-      await this.getEffectiveWindowStartByKillId(paginatedKills);
-    const mapDataByKillMember = await this.buildKillPointMapDataByKillMember(
-      paginatedKills,
-      windowStartByKillId,
-    );
-    const data = paginatedKills.map((kill) => ({
-      ...kill,
-      points: kill.points.map((point) => ({
-        ...point,
-        mapData: mapDataByKillMember.get(`${kill.id}:${point.memberId}`) ?? [],
-      })),
-    }));
-    const nextCursor = hasMore ? data[data.length - 1]?.id : null;
-
-    return {
-      data,
-      nextCursor,
-    };
+    return this.enrichAndPaginateKills(kills, limit);
   }
 
   async getMemberKillHistory(
@@ -1587,6 +1547,38 @@ export class EventKillService {
     }
 
     return mapDataByKillMember;
+  }
+
+  private async enrichAndPaginateKills<
+    T extends {
+      id: string;
+      heroNpcId: string;
+      killedAt: Date;
+      minSpawnTimeAtKill: Date;
+      points: Array<{
+        memberId: number;
+        mapPresenceData?: Prisma.JsonValue | null;
+      }>;
+    },
+  >(kills: T[], limit: number) {
+    const hasMore = kills.length > limit;
+    const paginatedKills = hasMore ? kills.slice(0, limit) : kills;
+    const windowStartByKillId =
+      await this.getEffectiveWindowStartByKillId(paginatedKills);
+    const mapDataByKillMember = await this.buildKillPointMapDataByKillMember(
+      paginatedKills,
+      windowStartByKillId,
+    );
+    const data = paginatedKills.map((kill) => ({
+      ...kill,
+      points: kill.points.map((point) => ({
+        ...point,
+        mapData: mapDataByKillMember.get(`${kill.id}:${point.memberId}`) ?? [],
+      })),
+    }));
+    const nextCursor = hasMore ? data[data.length - 1]?.id : null;
+
+    return { data, nextCursor };
   }
 
   private async getEffectiveWindowStartByKillId(

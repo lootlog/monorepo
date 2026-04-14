@@ -42,14 +42,12 @@ export class DiscordService implements OnModuleInit {
 
   private readonly lockTtl = 6000;
 
-  private readonly guildsCacheTtlLocal = 10;
-  private readonly guildsCacheTtlProd = 300;
-  private readonly memberCacheTtlLocal = 10;
-  private readonly memberCacheTtlProd = 300;
-  private readonly errorCacheTtlLocal = 5;
-  private readonly errorCacheTtlProd = 60;
-  private readonly notFoundCacheTtlLocal = 30;
-  private readonly notFoundCacheTtlProd = 300;
+  private readonly cacheTtls = {
+    guilds: { local: 10, prod: 300 },
+    member: { local: 10, prod: 300 },
+    error: { local: 5, prod: 60 },
+    notFound: { local: 30, prod: 300 },
+  };
   private readonly staleCacheTtl = 300;
 
   private readonly restTimeout = 5000;
@@ -72,8 +70,10 @@ export class DiscordService implements OnModuleInit {
     });
   }
 
-  private getCacheTtl(localTtl: number, prodTtl: number): number {
-    return this.isLocal ? localTtl : prodTtl;
+  private getCacheTtl(category: keyof typeof this.cacheTtls): number {
+    return this.isLocal
+      ? this.cacheTtls[category].local
+      : this.cacheTtls[category].prod;
   }
 
   private isNotFoundStatus(error: unknown): boolean {
@@ -142,10 +142,7 @@ export class DiscordService implements OnModuleInit {
   }
 
   async getUserGuilds(userId: string, discordId: string): Promise<APIGuild[]> {
-    const cacheTtl = this.getCacheTtl(
-      this.guildsCacheTtlLocal,
-      this.guildsCacheTtlProd,
-    );
+    const cacheTtl = this.getCacheTtl("guilds");
     const cacheKey = `user:${userId}:discord-guilds:data`;
     const staleCacheKey = `user:${userId}:discord-guilds:stale`;
     const lockKey = `user:${userId}:discord-guilds:lock`;
@@ -265,7 +262,7 @@ export class DiscordService implements OnModuleInit {
         await this.redisService.set(
           cacheKey,
           JSON.stringify([]),
-          this.getCacheTtl(this.errorCacheTtlLocal, this.errorCacheTtlProd),
+          this.getCacheTtl("error"),
         );
         throw error;
       }
@@ -291,10 +288,7 @@ export class DiscordService implements OnModuleInit {
     userId: string;
     discordId: string;
   }): Promise<APIGuildMember | null> {
-    const cacheTtl = this.getCacheTtl(
-      this.memberCacheTtlLocal,
-      this.memberCacheTtlProd,
-    );
+    const cacheTtl = this.getCacheTtl("member");
     const { guildId, userId, discordId } = options;
     const cacheKey = `guild:${guildId}:member:${userId}:data`;
     const staleCacheKey = `guild:${guildId}:member:${userId}:stale`;
@@ -420,10 +414,7 @@ export class DiscordService implements OnModuleInit {
         await this.redisService.set(
           cacheKey,
           JSON.stringify(null),
-          this.getCacheTtl(
-            this.notFoundCacheTtlLocal,
-            this.notFoundCacheTtlProd,
-          ),
+          this.getCacheTtl("notFound"),
         );
         throw new NotFoundException();
       }
@@ -437,7 +428,7 @@ export class DiscordService implements OnModuleInit {
         await this.redisService.set(
           cacheKey,
           JSON.stringify(null),
-          this.getCacheTtl(this.errorCacheTtlLocal, this.errorCacheTtlProd),
+          this.getCacheTtl("error"),
         );
         throw error;
       }

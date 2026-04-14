@@ -118,10 +118,7 @@ export class NotificationTargetService {
     data: UpdateNotificationTargetDto,
   ) {
     await this.ensureTarget(DbNotificationOwnerType.GUILD, guildId, targetId);
-    const hasDisplayName = Object.prototype.hasOwnProperty.call(
-      data,
-      "displayName",
-    );
+    const hasDisplayName = "displayName" in data;
 
     const updated = await this.prisma.notificationTarget.update({
       where: { id: targetId },
@@ -219,10 +216,7 @@ export class NotificationTargetService {
   ) {
     await this.ensureTarget(DbNotificationOwnerType.USER, discordId, targetId);
 
-    const hasDisplayName = Object.prototype.hasOwnProperty.call(
-      data,
-      "displayName",
-    );
+    const hasDisplayName = "displayName" in data;
 
     return this.prisma.notificationTarget.update({
       where: { id: targetId },

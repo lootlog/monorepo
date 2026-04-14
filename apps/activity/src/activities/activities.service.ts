@@ -14,6 +14,16 @@ function mapActivityDetails(
   return details as Record<string, unknown>;
 }
 
+function toActivityResponse(
+  activity: Prisma.ActivityGetPayload<{ include: { actorSnapshot: true } }>,
+) {
+  return {
+    ...activity,
+    actorSnapshot: activity.actorSnapshot ?? undefined,
+    details: mapActivityDetails(activity.details),
+  };
+}
+
 @Injectable()
 export class ActivitiesService {
   private readonly logger = new Logger(ActivitiesService.name);
@@ -49,11 +59,7 @@ export class ActivitiesService {
         },
       });
 
-      return {
-        ...activity,
-        actorSnapshot: activity.actorSnapshot ?? undefined,
-        details: mapActivityDetails(activity.details),
-      };
+      return toActivityResponse(activity);
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -74,11 +80,7 @@ export class ActivitiesService {
           throw error;
         }
 
-        return {
-          ...existing,
-          actorSnapshot: existing.actorSnapshot ?? undefined,
-          details: mapActivityDetails(existing.details),
-        };
+        return toActivityResponse(existing);
       }
 
       throw error;
