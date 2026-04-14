@@ -919,6 +919,7 @@ export class BattleAnalyticsService {
     };
 
     const days = periodMap[period];
+    if (days === undefined) return undefined;
     return new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
   }
 

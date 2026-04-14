@@ -102,7 +102,7 @@ export class RetryService {
     config: RetryConfig = {},
   ): Promise<boolean> {
     const retryCount = this.getRetryCount(headers);
-    const maxRetries = config.maxRetries || 3;
+    const maxRetries = config.maxRetries ?? 3;
 
     if (!this.shouldRetry(headers, maxRetries)) {
       this.logger.log({
@@ -128,7 +128,7 @@ export class RetryService {
   ): void {
     const headers = amqpMsg.properties.headers || {};
     const currentRetryCount = this.getRetryCount(headers);
-    const retryDelayMs = config.retryDelayMs || 30000;
+    const retryDelayMs = config.retryDelayMs ?? 30000;
 
     this.logger.log({
       level: "info",

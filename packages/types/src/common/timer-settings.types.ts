@@ -1,13 +1,6 @@
-export type NpcType =
-  | "COMMON"
-  | "ELITE"
-  | "ELITE2"
-  | "ELITE3"
-  | "HERO"
-  | "EVENT_HERO"
-  | "TITAN"
-  | "COLOSSUS"
-  | "NPC";
+import type { NpcTypeEnum } from "./npc-type.types.js";
+
+export type NpcType = `${NpcTypeEnum}`;
 
 export interface TimersFilters {
   minLvl: number;

@@ -22,11 +22,19 @@ export const setupPlayersHandlers = async () => {
       Queue.SEARCH_PLAYERS_INDEX,
       async (msg) => {
         if (msg) {
-          const messageContent = msg.content.toString();
-          const players = messageContent ? JSON.parse(messageContent) : [];
-          await playersService.indexPlayers({ players });
+          try {
+            const messageContent = msg.content.toString();
+            const players = messageContent ? JSON.parse(messageContent) : [];
+            await playersService.indexPlayers({ players });
 
-          channel?.ack(msg);
+            channel?.ack(msg);
+          } catch (error) {
+            logger.error("Error processing players index message", {
+              error: error instanceof Error ? error.message : error,
+              stack: error instanceof Error ? error.stack : undefined,
+            });
+            channel?.nack(msg, false, false);
+          }
         }
       },
       { noAck: false },

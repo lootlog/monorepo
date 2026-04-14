@@ -35,7 +35,8 @@ class RabbitMQClient {
         durable: true,
       });
 
-      const message = Buffer.from(JSON.stringify(payload, null, 2));
+      const serialized = JSON.stringify(payload, null, 2);
+      const message = Buffer.from(serialized);
 
       this.channel.publish(exchange, routingKey, message, {
         contentType: "application/json",
@@ -45,10 +46,7 @@ class RabbitMQClient {
       console.log(chalk.green("\n✓ Event published successfully!\n"));
       console.log(chalk.gray("Exchange:"), chalk.cyan(exchange));
       console.log(chalk.gray("Routing Key:"), chalk.cyan(routingKey));
-      console.log(
-        chalk.gray("Payload:\n"),
-        chalk.dim(JSON.stringify(payload, null, 2)),
-      );
+      console.log(chalk.gray("Payload:\n"), chalk.dim(serialized));
       console.log();
     } catch (error) {
       throw new Error(

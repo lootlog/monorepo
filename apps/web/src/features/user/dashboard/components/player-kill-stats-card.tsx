@@ -8,6 +8,7 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useTranslation } from "react-i18next";
 import { useDashboardKillStats } from "../hooks/use-dashboard-kill-stats";
 import { Globe, Swords, Target } from "lucide-react";
+import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
 
 const NPC_TYPE_ORDER = [
   "TITAN",
@@ -18,9 +19,6 @@ const NPC_TYPE_ORDER = [
   "ELITE",
   "COMMON",
 ] as const;
-
-const capitalizeFirst = (str: string) =>
-  str.charAt(0).toUpperCase() + str.slice(1);
 
 type PlayerKillStatsCardProps = {
   world?: string;
@@ -142,7 +140,7 @@ export const PlayerKillStatsCard: React.FC<PlayerKillStatsCardProps> = ({
                   <div className="flex items-center gap-2">
                     <Globe className="h-3.5 w-3.5 text-muted-foreground" />
                     <span className="text-sm">
-                      {capitalizeFirst(worldName)}
+                      {capitalizeFirstLetter(worldName)}
                     </span>
                   </div>
                   <span className="text-sm font-semibold tabular-nums">

@@ -7,6 +7,7 @@ import { BattleProcessor } from "@lootlog/battle-processor";
 import { SEED_CONFIG } from "./config.js";
 import path from "path";
 import { fileURLToPath } from "url";
+import { readFile } from "node:fs/promises";
 import { config } from "dotenv";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -38,6 +39,24 @@ interface SeedOptions {
   clean?: boolean;
 }
 
+function getDevConfig() {
+  const devGuildIdsRaw = process.env.DISCORD_DEVELOPMENT_GUILD_ID;
+  const devUserId = process.env.DISCORD_DEVELOPMENT_USER_ID;
+
+  const devGuildIds =
+    devGuildIdsRaw && devGuildIdsRaw !== "xxx"
+      ? devGuildIdsRaw
+          .split(",")
+          .map((id) => id.trim())
+          .filter((id) => id.length > 0)
+      : [];
+
+  return {
+    devGuildIds,
+    devUserId: devUserId && devUserId !== "xxx" ? devUserId : undefined,
+  };
+}
+
 async function cleanDatabase() {
   console.log("🧹 Cleaning database...");
 
@@ -62,16 +81,7 @@ async function cleanDatabase() {
 async function seedGuilds(count: number) {
   console.log(`🏰 Seeding ${count} guilds...`);
 
-  const devGuildIdsRaw = process.env.DISCORD_DEVELOPMENT_GUILD_ID;
-  const devUserId = process.env.DISCORD_DEVELOPMENT_USER_ID;
-
-  const devGuildIds =
-    devGuildIdsRaw && devGuildIdsRaw !== "xxx"
-      ? devGuildIdsRaw
-          .split(",")
-          .map((id) => id.trim())
-          .filter((id) => id.length > 0)
-      : [];
+  const { devGuildIds, devUserId } = getDevConfig();
 
   const totalGuildsToCreate = Math.max(count, devGuildIds.length);
 
@@ -85,7 +95,7 @@ async function seedGuilds(count: number) {
     if (!guild) continue;
 
     const isDevGuild = i < devGuildIds.length;
-    const useDevelopmentIds = isDevGuild && devUserId && devUserId !== "xxx";
+    const useDevelopmentIds = isDevGuild && devUserId;
 
     if (useDevelopmentIds) {
       const devGuildId = devGuildIds[i];
@@ -192,16 +202,7 @@ async function seedLoots(count: number, guilds: any[]) {
   const loots = lootGenerator.generateMultiple(count);
   const createdLoots = [];
 
-  const devGuildIdsRaw = process.env.DISCORD_DEVELOPMENT_GUILD_ID;
-  const devUserId = process.env.DISCORD_DEVELOPMENT_USER_ID;
-
-  const devGuildIds =
-    devGuildIdsRaw && devGuildIdsRaw !== "xxx"
-      ? devGuildIdsRaw
-          .split(",")
-          .map((id) => id.trim())
-          .filter((id) => id.length > 0)
-      : [];
+  const { devGuildIds, devUserId } = getDevConfig();
 
   for (const loot of loots) {
     const createdLoot = await prisma.loot.create({
@@ -225,7 +226,7 @@ async function seedLoots(count: number, guilds: any[]) {
       });
 
       const isDevGuild = devGuildIds.includes(randomGuild.id);
-      if (isDevGuild && devUserId && devUserId !== "xxx") {
+      if (isDevGuild && devUserId) {
         const devMember = await prisma.member.findFirst({
           where: {
             guildId: randomGuild.id,
@@ -264,24 +265,14 @@ async function seedTimers(guilds: any[]) {
 
   let npcs = [];
   try {
-    const fs = await import("fs/promises");
-    const npcsData = await fs.readFile(npcsPath, "utf-8");
+    const npcsData = await readFile(npcsPath, "utf-8");
     npcs = JSON.parse(npcsData);
   } catch (error) {
     console.error("❌ Failed to load NPCs data. Make sure npcs.json exists.");
     return;
   }
 
-  const devGuildIdsRaw = process.env.DISCORD_DEVELOPMENT_GUILD_ID;
-  const devUserId = process.env.DISCORD_DEVELOPMENT_USER_ID;
-
-  const devGuildIds =
-    devGuildIdsRaw && devGuildIdsRaw !== "xxx"
-      ? devGuildIdsRaw
-          .split(",")
-          .map((id) => id.trim())
-          .filter((id) => id.length > 0)
-      : [];
+  const { devGuildIds, devUserId } = getDevConfig();
 
   let totalTimers = 0;
 
@@ -296,7 +287,7 @@ async function seedTimers(guilds: any[]) {
 
     const isDevGuild = devGuildIds.includes(guild.id);
     let devMember = null;
-    if (isDevGuild && devUserId && devUserId !== "xxx") {
+    if (isDevGuild && devUserId) {
       devMember = await prisma.member.findFirst({
         where: {
           guildId: guild.id,
