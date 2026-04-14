@@ -9,7 +9,7 @@ export function parseAmqpConnectionString(uri: string, extraOptions = {}) {
   const options: Options.Connect = {
     protocol: parsedUrl.protocol?.replace(":", "") || "amqp",
     hostname: parsedUrl.hostname || "localhost",
-    port: parsedUrl.port ? parseInt(parsedUrl.port) : 5672,
+    port: parsedUrl.port ? parseInt(parsedUrl.port, 10) : 5672,
     username: decodeURIComponent(parsedUrl.auth?.split(":")[0] || "guest"),
     password: decodeURIComponent(parsedUrl.auth?.split(":")[1] || "guest"),
     vhost: decodeURIComponent(parsedUrl.pathname?.slice(1) || "/"),
@@ -19,7 +19,7 @@ export function parseAmqpConnectionString(uri: string, extraOptions = {}) {
     const heartbeat = Array.isArray(query.heartbeat)
       ? query.heartbeat[0]
       : query.heartbeat;
-    options.heartbeat = parseInt(heartbeat);
+    options.heartbeat = parseInt(heartbeat, 10);
   }
   if (query.locale) {
     options.locale = Array.isArray(query.locale)

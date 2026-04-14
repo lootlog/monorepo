@@ -16,8 +16,8 @@ export const normalizeBonusBreakdown = (
       const points =
         typeof entry?.points === "number" && Number.isFinite(entry.points)
           ? Math.max(0, Math.round(entry.points * 100) / 100)
-          : null;
-      if (points === null || points <= 0) {
+          : 0;
+      if (points <= 0) {
         return null;
       }
 

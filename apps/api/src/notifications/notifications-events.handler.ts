@@ -170,13 +170,13 @@ export class NotificationsEventsHandler {
       (event.npcType !== null && event.npcType !== undefined) ||
       (event.npcLvl !== null && event.npcLvl !== undefined);
 
+    const ownerIds = watchedItems
+      .map((watchedItem) => watchedItem.notificationRule?.ownerId)
+      .filter((ownerId): ownerId is string => typeof ownerId === "string");
+
     const membershipsByOwner = hasNpcData
       ? await this.matchingService.getActiveMembershipsWithRoles(
-          watchedItems
-            .map((watchedItem) => watchedItem.notificationRule?.ownerId)
-            .filter(
-              (ownerId): ownerId is string => typeof ownerId === "string",
-            ),
+          ownerIds,
           event.guildIds,
         )
       : null;
@@ -184,11 +184,7 @@ export class NotificationsEventsHandler {
     const activeGuildIdsByOwnerId = membershipsByOwner
       ? null
       : await this.matchingService.getActiveMembershipGuildIdsByOwner(
-          watchedItems
-            .map((watchedItem) => watchedItem.notificationRule?.ownerId)
-            .filter(
-              (ownerId): ownerId is string => typeof ownerId === "string",
-            ),
+          ownerIds,
           event.guildIds,
         );
 

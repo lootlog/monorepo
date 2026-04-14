@@ -129,8 +129,7 @@ const parseResponseBody = (
   }
 
   const isJsonResponse =
-    contentType?.includes("application/json") === true ||
-    contentType?.includes("+json") === true;
+    contentType?.includes("application/json") || contentType?.includes("+json");
 
   if (!isJsonResponse) {
     return responseText;
