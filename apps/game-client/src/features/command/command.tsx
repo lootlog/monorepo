@@ -18,6 +18,7 @@ import {
 import { useChatStore } from "@/store/chat.store";
 import { GuildMultiSelector } from "@/components/guild-multi-selector";
 import { usePartyCommand } from "./hooks/use-party-command";
+import { getHeroCharacterData } from "@/utils/game/get-hero-character-data";
 
 const FormSchema = z.object({
   message: z.string().min(1).max(120),
@@ -65,6 +66,8 @@ export const CommandWindow = () => {
     const isCommand = data.message.startsWith("!");
     const message = isCommand ? data.message.slice(1) : data.message;
 
+    const characterData = getHeroCharacterData();
+
     if (isCommand) {
       createNotification({
         guildIds: selectedInputGuildIds,
@@ -75,28 +78,14 @@ export const CommandWindow = () => {
         guildIds: selectedInputGuildIds,
         message,
         type: MessageType.NOTIFICATION,
-        characterData: {
-          nick: Game.hero.nick,
-          id: Game.hero.id,
-          acc: Game.hero.account,
-          lvl: Game.hero.lvl,
-          prof: Game.hero.prof,
-          icon: Game.hero.img,
-        },
+        characterData,
       });
     } else {
       sendChatMessage({
         guildIds: selectedInputGuildIds,
         message: data.message,
         type: MessageType.NORMAL,
-        characterData: {
-          nick: Game.hero.nick,
-          id: Game.hero.id,
-          acc: Game.hero.account,
-          lvl: Game.hero.lvl,
-          prof: Game.hero.prof,
-          icon: Game.hero.img,
-        },
+        characterData,
       });
     }
 

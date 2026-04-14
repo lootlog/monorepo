@@ -27,7 +27,6 @@ import {
 
 export interface ObservabilityConfig extends BaseObservabilityConfig {
   enableHostMetrics?: boolean;
-  enableProcessMetrics?: boolean;
 }
 
 let sdkInstance: NodeSDK | null = null;

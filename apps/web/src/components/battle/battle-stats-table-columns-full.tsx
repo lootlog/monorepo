@@ -5,18 +5,18 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { ChevronDown, ChevronRight, Flag, Skull } from "lucide-react";
 import { EmergencyExitIcon } from "@lootlog/ui/components/emergency-exit-icon";
 
+export type ExpansionType =
+  | "damage"
+  | "legendary"
+  | "turns"
+  | "blocks"
+  | "details"
+  | "damageDealt";
+
 export const getBattleStatsTableColumns = (
   _battle: Battle,
-  expandedRows: Map<
-    string,
-    "damage" | "legendary" | "turns" | "blocks" | "details" | "damageDealt"
-  >,
-  toggleDamageExpansion: (warriorId: string) => void,
-  toggleLegendaryExpansion: (warriorId: string) => void,
-  toggleTurnsExpansion: (warriorId: string) => void,
-  toggleBlocksExpansion: (warriorId: string) => void,
-  toggleDetailsExpansion: (warriorId: string) => void,
-  toggleDamageDealtExpansion: (warriorId: string) => void,
+  expandedRows: Map<string, ExpansionType>,
+  toggleExpansion: (warriorId: string, type: ExpansionType) => void,
 ): ColumnDef<Warrior>[] => [
   {
     accessorKey: "name",
@@ -27,7 +27,7 @@ export const getBattleStatsTableColumns = (
       return (
         <div className="flex items-center gap-1">
           <Button
-            onClick={() => toggleDetailsExpansion(warrior.id)}
+            onClick={() => toggleExpansion(warrior.id, "details")}
             className={cn(
               "flex items-center gap-1 bg-transparent p-1 rounded transition-colors",
               {
@@ -61,7 +61,7 @@ export const getBattleStatsTableColumns = (
       return (
         <div className="flex justify-end">
           <Button
-            onClick={() => toggleTurnsExpansion(warrior.id)}
+            onClick={() => toggleExpansion(warrior.id, "turns")}
             className={cn(
               "flex items-center gap-2 bg-transparent p-1 rounded transition-colors",
               {
@@ -92,7 +92,7 @@ export const getBattleStatsTableColumns = (
       return (
         <div className="flex justify-end">
           <Button
-            onClick={() => toggleDamageDealtExpansion(warrior.id)}
+            onClick={() => toggleExpansion(warrior.id, "damageDealt")}
             className={cn(
               "flex items-center gap-2 bg-transparent p-1 rounded transition-colors",
               {
@@ -143,7 +143,7 @@ export const getBattleStatsTableColumns = (
       return (
         <div className="flex justify-end">
           <Button
-            onClick={() => toggleDamageExpansion(warrior.id)}
+            onClick={() => toggleExpansion(warrior.id, "damage")}
             className={cn(
               "flex items-center gap-2 bg-transparent p-1 rounded transition-colors",
               {
@@ -182,7 +182,7 @@ export const getBattleStatsTableColumns = (
       return (
         <div className="flex justify-end">
           <Button
-            onClick={() => toggleBlocksExpansion(warrior.id)}
+            onClick={() => toggleExpansion(warrior.id, "blocks")}
             className={cn(
               "flex items-center gap-2 bg-transparent p-1 rounded transition-colors",
               {
@@ -223,7 +223,7 @@ export const getBattleStatsTableColumns = (
       return (
         <div className="flex justify-end">
           <Button
-            onClick={() => toggleLegendaryExpansion(warrior.id)}
+            onClick={() => toggleExpansion(warrior.id, "legendary")}
             className={cn(
               "flex items-center gap-2 bg-transparent p-1 rounded transition-colors",
               {

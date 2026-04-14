@@ -1,5 +1,5 @@
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import React, { createContext, useState, useCallback } from "react";
+import React, { createContext, useState } from "react";
 
 type Props = {
   children: React.ReactNode;
@@ -43,13 +43,10 @@ const GuildContextProviderContent: React.FC<
     getStoredWorld(guildId),
   );
 
-  const setWorld = useCallback(
-    (newWorld: string) => {
-      setWorldState(newWorld);
-      saveWorld(guildId, newWorld);
-    },
-    [guildId],
-  );
+  const setWorld = (newWorld: string) => {
+    setWorldState(newWorld);
+    saveWorld(guildId, newWorld);
+  };
 
   return (
     <GuildContext.Provider value={{ world, setWorld }}>

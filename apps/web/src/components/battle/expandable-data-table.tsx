@@ -26,16 +26,14 @@ import { BlocksBreakdown } from "./blocks-breakdown";
 import { WarriorDetailsBreakdown } from "./warrior-details-breakdown";
 import { DamageDealtBreakdown } from "./damage-dealt-breakdown";
 import type { Warrior } from "@/hooks/api/battle-log/use-battles";
+import type { ExpansionType } from "./battle-stats-table-columns-full";
 
 interface ExpandableDataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   getRowClassName?: (row: Row<TData>) => string;
   forceHorizontalScroll?: boolean;
-  expandedRows: Map<
-    string,
-    "damage" | "legendary" | "turns" | "blocks" | "details" | "damageDealt"
-  >;
+  expandedRows: Map<string, ExpansionType>;
 }
 
 export function ExpandableDataTable<TData, TValue>({

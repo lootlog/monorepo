@@ -20,6 +20,7 @@ import {
 } from "@/utils/notifications-and-detector/background";
 import { NpcType } from "@/hooks/api/use-npcs";
 import { Game } from "@/lib/game";
+import { getHeroCharacterData } from "@/utils/game/get-hero-character-data";
 import { useEffect, useState } from "react";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import { useWindowsStore } from "@/store/windows.store";
@@ -125,14 +126,7 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
           message: "",
           guildIds: settingsByNpcType.guildIds,
           type: MessageType.NPC,
-          characterData: {
-            nick: Game.hero.nick,
-            id: Game.hero.id,
-            acc: Game.hero.account,
-            lvl: Game.hero.lvl,
-            prof: Game.hero.prof,
-            icon: Game.hero.img,
-          },
+          characterData: getHeroCharacterData(),
           npc: {
             x: npc.x,
             y: npc.y,

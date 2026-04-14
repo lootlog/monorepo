@@ -23,6 +23,7 @@ import {
   MessageType,
 } from "@/services/api.service";
 import { playSound } from "@/lib/sound-playback";
+import { getHeroCharacterData } from "@/utils/game/get-hero-character-data";
 
 export class NpcsDetectionProcessor {
   handle(event: GameEvent): void {
@@ -195,14 +196,7 @@ export class NpcsDetectionProcessor {
         message: "",
         guildIds,
         type: MessageType.NPC,
-        characterData: {
-          nick: Game.hero.nick,
-          id: Game.hero.id,
-          acc: Game.hero.account,
-          lvl: Game.hero.lvl,
-          prof: Game.hero.prof,
-          icon: Game.hero.img,
-        },
+        characterData: getHeroCharacterData(),
         npc: {
           x: composedNpc.x,
           y: composedNpc.y,

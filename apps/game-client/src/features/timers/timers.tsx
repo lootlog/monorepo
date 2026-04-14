@@ -66,9 +66,7 @@ export const Timers = () => {
   const settingsKey = generalConfig.timersGrouping ? "global" : guildId;
   const filters = timersFilters[settingsKey] || DEFAULT_TIMERS_FILTERS;
 
-  useTimers({ world: desiredWorld });
-
-  const rawTimers = timers ? timers : EMPTY_TIMERS;
+  const rawTimers = timers ?? EMPTY_TIMERS;
 
   const deduplicatedTimers = generalConfig.timersGrouping
     ? rawTimers

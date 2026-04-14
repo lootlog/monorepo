@@ -7,6 +7,7 @@ import {
 } from "@/hooks/api/use-send-chat-message";
 import { Game } from "@/lib/game";
 import { usePartyCommand } from "@/features/command/hooks/use-party-command";
+import { getHeroCharacterData } from "@/utils/game/get-hero-character-data";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { FC } from "react";
 import { useForm } from "react-hook-form";
@@ -51,42 +52,28 @@ export const OldChatInput: FC<OldChatInputProps> = ({
       return;
     }
 
-    const isNotificationEnabled = data.message.charAt(0) === "!";
-    const msg =
-      data.message.indexOf("!") === 0 ? data.message.slice(1) : data.message;
+    const isCommand = data.message.startsWith("!");
+    const message = isCommand ? data.message.slice(1) : data.message;
+    const characterData = getHeroCharacterData();
 
-    if (isNotificationEnabled) {
+    if (isCommand) {
       createNotification({
         guildIds: [selectedGuildId],
-        message: msg,
+        message,
         world,
       });
       sendChatMessage({
         guildIds: [selectedGuildId],
-        message: msg,
+        message,
         type: MessageType.NOTIFICATION,
-        characterData: {
-          nick: Game.hero.nick,
-          id: Game.hero.id,
-          acc: Game.hero.account,
-          lvl: Game.hero.lvl,
-          prof: Game.hero.prof,
-          icon: Game.hero.img,
-        },
+        characterData,
       });
     } else {
       sendChatMessage({
         guildIds: [selectedGuildId],
         message: data.message,
         type: MessageType.NORMAL,
-        characterData: {
-          nick: Game.hero.nick,
-          id: Game.hero.id,
-          acc: Game.hero.account,
-          lvl: Game.hero.lvl,
-          prof: Game.hero.prof,
-          icon: Game.hero.img,
-        },
+        characterData,
       });
     }
 
