@@ -59,10 +59,7 @@ export class NpcsDetectionProcessor {
         return acc;
       }, []) ?? [];
 
-    if (npcs.length > 0) {
-      useWindowsStore.getState().setOpen("npc-detector", true);
-      useNpcDetectorStore.getState().addNpc(npcs);
-    }
+    this.openDetectorAndAddNpcs(npcs);
   }
 
   handleInitialDetection(): void {
@@ -96,9 +93,13 @@ export class NpcsDetectionProcessor {
         return acc;
       }, []) ?? [];
 
-    if (calculatedNpcs.length > 0) {
+    this.openDetectorAndAddNpcs(calculatedNpcs);
+  }
+
+  private openDetectorAndAddNpcs(npcs: GameNpcWithLocation[]): void {
+    if (npcs.length > 0) {
       useWindowsStore.getState().setOpen("npc-detector", true);
-      useNpcDetectorStore.getState().addNpc(calculatedNpcs);
+      useNpcDetectorStore.getState().addNpc(npcs);
     }
   }
 

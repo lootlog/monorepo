@@ -1,5 +1,5 @@
 import type { RawBattleParsedEvent } from "@/hooks/api/battle-log/use-battle-raw";
-import { memo, type FC } from "react";
+import type { FC } from "react";
 import { BattleActionItem } from "./battle-action-item";
 import type { Warrior } from "@/hooks/api/battle-log/use-battles";
 
@@ -10,26 +10,27 @@ export type BattleOutcomeActionsProps = {
   eventIndex: number;
 };
 
-export const BattleOutcomeActions: FC<BattleOutcomeActionsProps> = memo(
-  ({ actions, attacker, event, eventIndex }) => {
-    if (actions.length === 0) return null;
+export const BattleOutcomeActions: FC<BattleOutcomeActionsProps> = ({
+  actions,
+  attacker,
+  event,
+  eventIndex,
+}) => {
+  if (actions.length === 0) return null;
 
-    return (
-      <>
-        {actions.map((action, sIndex) => (
-          <BattleActionItem
-            key={`outcomeActions-${eventIndex}-${sIndex}`}
-            action={action}
-            attacker={attacker}
-            event={event}
-            customComponents={{
-              value: <span className="font-semibold" />,
-            }}
-          />
-        ))}
-      </>
-    );
-  },
-);
-
-BattleOutcomeActions.displayName = "BattleOutcomeActions";
+  return (
+    <>
+      {actions.map((action, sIndex) => (
+        <BattleActionItem
+          key={`outcomeActions-${eventIndex}-${sIndex}`}
+          action={action}
+          attacker={attacker}
+          event={event}
+          customComponents={{
+            value: <span className="font-semibold" />,
+          }}
+        />
+      ))}
+    </>
+  );
+};
