@@ -1,4 +1,4 @@
-import { useState, useMemo, type FC } from "react";
+import { useState, type FC } from "react";
 import { useQueries } from "@tanstack/react-query";
 import {
   Popover,
@@ -31,14 +31,10 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
   const { data: guilds } = useGuilds();
   const { client } = useAuthenticatedApiClient();
 
-  const guildEntries = useMemo(
-    () => timer.mergedGuildIds ?? [],
-    [timer.mergedGuildIds],
-  );
+  const guildEntries = timer.mergedGuildIds ?? [];
 
-  const uniqueGuildIds = useMemo(
-    () => Array.from(new Set(guildEntries.map((entry) => entry.guildId))),
-    [guildEntries],
+  const uniqueGuildIds = Array.from(
+    new Set(guildEntries.map((entry) => entry.guildId)),
   );
 
   const permissionsQueries = useQueries({
@@ -50,23 +46,21 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
     })),
   });
 
-  const guildsWithPermissions = useMemo(() => {
-    return uniqueGuildIds
-      .map((guildId, index) => {
-        const permissions = permissionsQueries[index]?.data;
-        const canDelete = REQUIRED_DELETE_PERMISSIONS.some((perm) =>
-          permissions?.includes(perm),
-        );
-        const entry = guildEntries.find((e) => e.guildId === guildId);
-        return {
-          guildId,
-          timerKey: entry?.timerKey ?? "",
-          permissions,
-          canDelete,
-        };
-      })
-      .filter((g) => g.canDelete && g.timerKey !== "");
-  }, [uniqueGuildIds, permissionsQueries, guildEntries]);
+  const guildsWithPermissions = uniqueGuildIds
+    .map((guildId, index) => {
+      const permissions = permissionsQueries[index]?.data;
+      const canDelete = REQUIRED_DELETE_PERMISSIONS.some((perm) =>
+        permissions?.includes(perm),
+      );
+      const entry = guildEntries.find((e) => e.guildId === guildId);
+      return {
+        guildId,
+        timerKey: entry?.timerKey ?? "",
+        permissions,
+        canDelete,
+      };
+    })
+    .filter((g) => g.canDelete && g.timerKey !== "");
 
   if (guildsWithPermissions.length === 0) {
     return null;

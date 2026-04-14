@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Tile } from "@/components/ui/tile";
-import { type FC, useMemo, useState } from "react";
+import { type FC, useState } from "react";
 import { stripAlphaChannel, alphaToHex } from "./color-utils";
 
 interface AddColorFormProps {
@@ -20,10 +20,7 @@ export const AddColorForm: FC<AddColorFormProps> = ({ onAdd }) => {
   const [backgroundColor, setBackgroundColor] = useState("#3b82f6");
   const [backgroundAlpha, setBackgroundAlpha] = useState(20);
 
-  const bgWithAlpha = useMemo(
-    () => `${backgroundColor}${alphaToHex(backgroundAlpha)}`,
-    [backgroundColor, backgroundAlpha],
-  );
+  const bgWithAlpha = `${backgroundColor}${alphaToHex(backgroundAlpha)}`;
 
   const handleAdd = () => {
     if (!name.trim()) return;

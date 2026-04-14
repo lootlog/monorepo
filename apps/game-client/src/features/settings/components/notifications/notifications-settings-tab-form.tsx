@@ -12,7 +12,7 @@ import {
 } from "@/store/notifications.store";
 import { getTextColor } from "@/utils/notifications-and-detector/background";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { type FC, useCallback, useEffect, useMemo, useRef } from "react";
+import { type FC, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useDeepCompareEffect } from "react-use";
 import { z } from "zod";
@@ -63,12 +63,9 @@ export const NotificationsSettingsTabForm: FC<
   const currentSettings: NotificationsSettings =
     (characterId && settings?.[characterId]) || recommendedSettings;
 
-  const defaultValues: FormData = useMemo(
-    () => ({
-      settingsByNpcType: currentSettings,
-    }),
-    [currentSettings],
-  );
+  const defaultValues: FormData = {
+    settingsByNpcType: currentSettings,
+  };
 
   const { register, watch, reset } = useForm<FormData>({
     resolver: zodResolver(FormSchema),
@@ -90,16 +87,13 @@ export const NotificationsSettingsTabForm: FC<
     }
   }, [currentSettings, characterId, reset]);
 
-  const onSubmit = useCallback(
-    (data: FormData) => {
-      if (!characterId) return;
-      setSettings(
-        characterId.toString(),
-        data.settingsByNpcType as NotificationsSettings,
-      );
-    },
-    [characterId, setSettings],
-  );
+  const onSubmit = (data: FormData) => {
+    if (!characterId) return;
+    setSettings(
+      characterId.toString(),
+      data.settingsByNpcType as NotificationsSettings,
+    );
+  };
 
   const watchedData = watch();
   useDeepCompareEffect(() => {

@@ -1,6 +1,6 @@
 import { useLocalStorage } from "usehooks-ts";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useDebounce } from "@/hooks/use-debounce";
+import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 import type { NpcType } from "@/lib/api/generated/main/model/npc-type";
 
 type StatsSettingsPage =

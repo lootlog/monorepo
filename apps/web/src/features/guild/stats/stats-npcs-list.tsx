@@ -30,7 +30,7 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { WorldSwitcher } from "@/components/common/world-switcher";
-import { useDebounce } from "@/hooks/use-debounce";
+import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 import { useKillsControllerGetGuildTopNpcs } from "@/lib/api/generated/main/kills/kills";
 import type { GuildTopNpcsResponseDtoOutputTopNpcsItem } from "@/lib/api/generated/main/model/guild-top-npcs-response-dto-output-top-npcs-item";
 import type { NpcType } from "@/lib/api/generated/main/model/npc-type";

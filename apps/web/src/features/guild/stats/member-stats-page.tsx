@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useParams } from "@tanstack/react-router";
 import { Crown, Medal, Search, Trophy, Users } from "lucide-react";
 import { Card } from "@lootlog/ui/components/card";
-import { useDebounce } from "@/hooks/use-debounce";
+import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 import {
   Avatar,
   AvatarFallback,

@@ -178,7 +178,7 @@ function resolveSimpleRoute(
         {
           label: reservationId
             ? reservationId.charAt(0).toUpperCase() + reservationId.slice(1)
-            : (reservationId ?? ""),
+            : "",
           path: null,
         },
       ],
