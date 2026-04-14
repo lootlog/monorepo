@@ -1,5 +1,10 @@
 import type { FC } from "react";
 import { SingleTimer } from "./single-timer";
+import {
+  getGuildIds,
+  getGuildNamesById,
+  useGuilds,
+} from "@/hooks/api/use-guilds";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 
 type TimersGridProps = {
@@ -15,6 +20,10 @@ export const TimersGrid: FC<TimersGridProps> = ({
   hiddenTimers,
   minColumnWidth,
 }) => {
+  const { data: guilds } = useGuilds();
+  const guildIds = getGuildIds(guilds);
+  const guildNamesById = getGuildNamesById(guilds);
+
   return (
     <span
       className="ll:grid ll:gap-0.5 ll:box-border ll:w-full"
@@ -27,6 +36,8 @@ export const TimersGrid: FC<TimersGridProps> = ({
         return (
           <SingleTimer
             key={`${timer.timerKey}-${timer.guildId}`}
+            guildIds={guildIds}
+            guildNamesById={guildNamesById}
             timer={timer}
             maxTimeLeft={timer.maxTimeLeft}
             minTimeLeft={timer.minTimeLeft}

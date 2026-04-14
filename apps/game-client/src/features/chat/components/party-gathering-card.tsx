@@ -13,7 +13,7 @@ import type { FC } from "react";
 type PartyGatheringCardProps = {
   message: ChatMessageType;
   member: GuildMember;
-  guild: { name: string };
+  guildName: string;
   all: boolean;
   isMsgYesterday: boolean;
 };
@@ -21,7 +21,7 @@ type PartyGatheringCardProps = {
 export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
   message,
   member,
-  guild,
+  guildName,
   all,
   isMsgYesterday,
 }) => {
@@ -49,7 +49,7 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
                 "ll:opacity-50": isMsgYesterday,
               })}
             >
-              [{guild.name}]{" "}
+              [{guildName}]{" "}
             </span>
           )}
           <span
@@ -99,7 +99,7 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
               "ll:opacity-50": isMsgYesterday,
             })}
           >
-            [{guild.name}]{" "}
+            [{guildName}]{" "}
           </span>
         )}
         <span

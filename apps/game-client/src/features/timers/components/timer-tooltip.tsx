@@ -1,5 +1,4 @@
 import type { Timer } from "@/hooks/api/use-timers";
-import type { Guild } from "@/hooks/api/use-guild";
 import { format } from "date-fns";
 import { ClockArrowDown, ClockArrowUp } from "lucide-react";
 import type { FC } from "react";
@@ -10,15 +9,18 @@ import {
 } from "../utils/timer-helpers";
 
 type TimerTooltipProps = {
+  guildNamesById: Record<string, string>;
   timer: Timer;
-  guilds?: Guild[];
 };
 
-export const TimerTooltip: FC<TimerTooltipProps> = ({ timer, guilds }) => {
+export const TimerTooltip: FC<TimerTooltipProps> = ({
+  guildNamesById,
+  timer,
+}) => {
   const levelSuffix = getLevelSuffix(timer.npc);
   const members = getTimerMembers(timer);
   const membersWithGuilds =
-    members.length > 0 ? getMembersWithGuilds(members, guilds) : [];
+    members.length > 0 ? getMembersWithGuilds(members, guildNamesById) : [];
 
   return (
     <div className="ll:flex ll:flex-col ll:gap-1">

@@ -9,7 +9,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useGuilds } from "@/hooks/api/use-guilds";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import { cn } from "@/lib/utils";
 import { useTimersStore } from "@/store/timers.store";
@@ -26,6 +25,8 @@ import { Game } from "@/lib/game";
 import { REQUIRED_RESET_PERMISSIONS } from "@/features/timers/constants/required-reset-permissions";
 
 type SingleTimerProps = {
+  guildIds: string[];
+  guildNamesById: Record<string, string>;
   timer: TimerWithTimeLeft;
   settingsKey: string;
   minTimeLeft?: number;
@@ -34,6 +35,8 @@ type SingleTimerProps = {
 };
 
 export const SingleTimer: FC<SingleTimerProps> = ({
+  guildIds,
+  guildNamesById,
   timer,
   minTimeLeft = 0,
   maxTimeLeft = 0,
@@ -41,7 +44,6 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   isHidden = false,
 }) => {
   const world = Game.getWorldName();
-  const { data: guilds } = useGuilds();
   const {
     customColors,
     defaultColorNames,
@@ -78,7 +80,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
     timer,
     settingsKey,
     world,
-    guilds,
+    guildIds,
     generalConfig.timersGrouping,
   );
 
@@ -196,7 +198,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
       </ContextMenu>
 
       <TooltipContent side="right" className="ll:z-500">
-        <TimerTooltip timer={timer} guilds={guilds} />
+        <TimerTooltip timer={timer} guildNamesById={guildNamesById} />
       </TooltipContent>
     </Tooltip>
   );

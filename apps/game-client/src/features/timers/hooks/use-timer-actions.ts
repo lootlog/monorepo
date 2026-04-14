@@ -2,14 +2,13 @@ import axios from "axios";
 import { useDeleteTimer } from "@/hooks/api/use-delete-timer";
 import { useResetTimer } from "@/hooks/api/use-reset-timer";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
-import type { Guild } from "@/hooks/api/use-guild";
 import { useTimersStore } from "@/store/timers.store";
 
 export const useTimerActions = (
   timer: TimerWithTimeLeft,
   settingsKey: string,
   world: string | undefined,
-  guilds: Guild[] | undefined,
+  guildIds: string[],
   timersGrouping = false,
 ) => {
   const {
@@ -51,10 +50,10 @@ export const useTimerActions = (
   };
 
   const handleHideTimerForAll = () => {
-    if (!settingsKey || !guilds) return;
+    if (!settingsKey || guildIds.length === 0) return;
 
-    guilds.forEach((guild) => {
-      hideTimer(guild.id, timer.npc.name);
+    guildIds.forEach((guildId) => {
+      hideTimer(guildId, timer.npc.name);
     });
 
     hideTimer("global", timer.npc.name);
@@ -66,10 +65,10 @@ export const useTimerActions = (
   };
 
   const handleShowTimerForAll = () => {
-    if (!settingsKey || !guilds) return;
+    if (!settingsKey || guildIds.length === 0) return;
 
-    guilds.forEach((guild) => {
-      revealTimer(guild.id, timer.npc.name);
+    guildIds.forEach((guildId) => {
+      revealTimer(guildId, timer.npc.name);
     });
 
     revealTimer("global", timer.npc.name);
@@ -86,19 +85,19 @@ export const useTimerActions = (
   };
 
   const handlePinTimerForAll = () => {
-    if (!settingsKey || !guilds) return;
+    if (!settingsKey || guildIds.length === 0) return;
 
-    guilds.forEach((guild) => {
-      pinTimer(guild.id, timer.npc.name);
+    guildIds.forEach((guildId) => {
+      pinTimer(guildId, timer.npc.name);
     });
 
     pinTimer("global", timer.npc.name);
   };
 
   const handleUnpinTimerForAll = () => {
-    if (!settingsKey || !guilds) return;
-    guilds.forEach((guild) => {
-      unpinTimer(guild.id, timer.npc.name);
+    if (!settingsKey || guildIds.length === 0) return;
+    guildIds.forEach((guildId) => {
+      unpinTimer(guildId, timer.npc.name);
     });
     unpinTimer("global", timer.npc.name);
   };
