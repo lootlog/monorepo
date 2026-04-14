@@ -185,6 +185,10 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   const zIndex =
     windowZIndex === -1 ? 0 : windowFocusHistory.length - windowZIndex;
 
+  let cursor = "grab";
+  if (isLocked) cursor = "default";
+  else if (isDragging) cursor = "grabbing";
+
   return (
     <div
       className="ll:pointer-events-auto ll:absolute"
@@ -196,7 +200,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
         top: position.y,
         left: position.x,
         zIndex,
-        cursor: isLocked ? "default" : isDragging ? "grabbing" : "grab",
+        cursor,
       }}
       onMouseDownCapture={onMouseDownCapture}
       onTouchStartCapture={onTouchStartCapture}

@@ -12,7 +12,7 @@ import {
 import { useListEventHeroTimers } from "@/lib/api/generated/main/events/events";
 import type { Event } from "@/features/guild/events/types/api";
 import { parseMsToTime } from "@/utils/date/parse-ms-to-time";
-import { cn } from "@/utils/cn";
+import { cn } from "@lootlog/ui/lib/utils";
 
 interface EventTimersListProps {
   event: Event;
