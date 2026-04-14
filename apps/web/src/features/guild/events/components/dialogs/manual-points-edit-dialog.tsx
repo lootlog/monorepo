@@ -13,6 +13,7 @@ import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { Textarea } from "@lootlog/ui/components/textarea";
 import { parseEditablePoints } from "../../utils/parse-editable-points";
+import { formatPoints } from "../../utils";
 
 interface ManualPointsEditDialogProps {
   open: boolean;
@@ -26,10 +27,6 @@ interface ManualPointsEditDialogProps {
     comment?: string;
   }) => Promise<void>;
 }
-
-const formatPoints = (points: number): string => {
-  return Number.isInteger(points) ? String(points) : points.toFixed(2);
-};
 
 export const ManualPointsEditDialog = ({
   open,

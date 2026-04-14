@@ -3,8 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "@lootlog/ui/globals.css";
 import type { JSX, ReactNode } from "react";
 
+import "@/src/i18n/config";
 import { CookieConsent } from "@/src/components/cookie-consent";
-import { I18nProvider } from "@/src/components/i18n-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -77,10 +77,8 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-white`}
       >
-        <I18nProvider>
-          {children}
-          <CookieConsent />
-        </I18nProvider>
+        {children}
+        <CookieConsent />
       </body>
     </html>
   );

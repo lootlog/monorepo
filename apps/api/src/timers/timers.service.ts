@@ -420,6 +420,19 @@ export class TimersService implements OnModuleInit {
       lock = await this.redlock.acquire([lockKey], this.lockTtl);
 
       const windowOpenedAt = new Date();
+      const npc = {
+        id: npcId,
+        name: npcName,
+        prof: "",
+        location: "",
+        wt: "",
+        lvl: 0,
+        type: "hero",
+        icon: npcIcon ?? "",
+        margonemType: isUsingSyntheticId
+          ? String(TIMER_TYPES.CUSTOM_MANUAL)
+          : "0",
+      };
       const timer = await this.prisma.timer.upsert({
         where: {
           timerId: {
@@ -441,38 +454,14 @@ export class TimersService implements OnModuleInit {
           ),
           latestRespawnRandomness: DEFAULT_RESPAWN_RANDOMNESS,
           wasReset: false,
-          npc: {
-            id: npcId,
-            name: npcName,
-            prof: "",
-            location: "",
-            wt: "",
-            lvl: 0,
-            type: "hero",
-            icon: npcIcon ?? "",
-            margonemType: isUsingSyntheticId
-              ? String(TIMER_TYPES.CUSTOM_MANUAL)
-              : "0",
-          },
+          npc,
           windowOpenedAt,
         },
         update: {
           minSpawnTime,
           maxSpawnTime,
           wasReset: false,
-          npc: {
-            id: npcId,
-            name: npcName,
-            prof: "",
-            location: "",
-            wt: "",
-            lvl: 0,
-            type: "hero",
-            icon: npcIcon ?? "",
-            margonemType: isUsingSyntheticId
-              ? String(TIMER_TYPES.CUSTOM_MANUAL)
-              : "0",
-          },
+          npc,
           windowOpenedAt,
         },
         include: { member: true },

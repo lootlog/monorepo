@@ -34,7 +34,6 @@ export const useItems = ({ search, world, limit = 3 }: UseItemsOptions) => {
       client.get<GameItem[]>(
         `${SEARCH_API_URL}/items?${queryParams.toString()}`,
       ),
-    select: (data) => data,
     enabled: !!search && search.length >= 2,
   });
 };
