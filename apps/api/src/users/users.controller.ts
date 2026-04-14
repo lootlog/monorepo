@@ -6,7 +6,7 @@ import {
   Patch,
   UseGuards,
 } from "@nestjs/common";
-import { DiscordId, UserId } from "@lootlog/nest-shared";
+import { AuthGuard, DiscordId, UserId } from "@lootlog/nest-shared";
 import {
   ApiTags,
   ApiBearerAuth,
@@ -14,7 +14,6 @@ import {
   ApiResponse,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { AuthGuard } from "src/shared/guards/auth.guard";
 import { StatusOkResponseDto } from "src/shared/dto/common-response.dto";
 import { UserPreferencesResponseDto } from "src/shared/dto/user-preferences-response.dto";
 import { UpdateUserPreferencesDto } from "src/users/dto/update-user-preferences.dto";

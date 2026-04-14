@@ -16,10 +16,9 @@ import {
   ApiResponse,
   ApiParam,
 } from "@nestjs/swagger";
-import { DiscordId } from "@lootlog/nest-shared";
+import { AuthGuard, DiscordId } from "@lootlog/nest-shared";
 import { type Guild, Permission } from "src/generated/prisma/client";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
-import { AuthGuard } from "src/shared/guards/auth.guard";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 import { ReservationsService } from "./reservations.service";

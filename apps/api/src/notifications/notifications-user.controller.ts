@@ -10,7 +10,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
-import { DiscordId, UserId } from "@lootlog/nest-shared";
+import { AuthGuard, DiscordId, UserId } from "@lootlog/nest-shared";
 import { CreateNotificationRuleDto } from "src/notifications/dto/create-notification-rule.dto";
 import { CreateNotificationTargetDto } from "src/notifications/dto/create-notification-target.dto";
 import { CreateWatchedItemQuickAddDto } from "src/notifications/dto/create-watched-item-quick-add.dto";
@@ -21,7 +21,6 @@ import { NotificationJobService } from "src/notifications/notification-job.servi
 import { NotificationRuleService } from "src/notifications/notification-rule.service";
 import { NotificationTargetService } from "src/notifications/notification-target.service";
 import { WatchedItemService } from "src/notifications/watched-item.service";
-import { AuthGuard } from "src/shared/guards/auth.guard";
 
 @ApiTags("notifications")
 @ApiBearerAuth()

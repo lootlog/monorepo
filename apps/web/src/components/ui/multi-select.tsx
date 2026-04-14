@@ -19,7 +19,7 @@ import {
   CommandList,
 } from "@lootlog/ui/components/command";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { cn } from "@/utils/cn";
+import { cn } from "@lootlog/ui/lib/utils";
 import { Badge } from "@lootlog/ui/components/badge";
 
 /**

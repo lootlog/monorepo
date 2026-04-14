@@ -15,7 +15,7 @@ import {
   ApiParam,
 } from "@nestjs/swagger";
 import { Permission } from "src/generated/prisma/client";
-import { AuthGuard } from "src/shared/guards/auth.guard";
+import { AuthGuard } from "@lootlog/nest-shared";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 import { MapTemplatesService } from "./map-templates.service";

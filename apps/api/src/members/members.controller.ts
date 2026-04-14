@@ -7,7 +7,7 @@ import {
   UseGuards,
   Query,
 } from "@nestjs/common";
-import { DiscordId, UserId } from "@lootlog/nest-shared";
+import { AuthGuard, DiscordId, UserId } from "@lootlog/nest-shared";
 import {
   ApiTags,
   ApiBearerAuth,
@@ -20,7 +20,6 @@ import { ZodResponse } from "nestjs-zod";
 import { MembersService } from "./members.service";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
-import { AuthGuard } from "src/shared/guards/auth.guard";
 import { type Guild, Permission } from "src/generated/prisma/client";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import {

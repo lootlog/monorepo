@@ -327,13 +327,13 @@ export class NotificationContentService {
     triggerType: DbNotificationTriggerType;
     world: string | null;
   }) {
-    const ruleLabel = params.ruleName?.trim().length
-      ? params.ruleName.trim()
-      : params.triggerType === DbNotificationTriggerType.TIMER_BEFORE_SPAWN
+    const ruleLabel =
+      params.ruleName?.trim() ||
+      (params.triggerType === DbNotificationTriggerType.TIMER_BEFORE_SPAWN
         ? TIMER_BEFORE_SPAWN_LABEL
         : params.triggerType === DbNotificationTriggerType.SCHEDULED_MESSAGE
           ? SCHEDULED_MESSAGE_DEFAULT_NAME
-          : GENERIC_NOTIFICATION_TITLE;
+          : GENERIC_NOTIFICATION_TITLE);
 
     if (params.world) {
       return ruleTestWithWorld(ruleLabel, params.world);
@@ -353,9 +353,8 @@ export class NotificationContentService {
     scheduledFor: Date;
   }) {
     const placeholderValues = {
-      ruleName: params.notificationRuleName?.trim().length
-        ? params.notificationRuleName.trim()
-        : SPAWN_NOTIFICATION_FALLBACK_NAME,
+      ruleName:
+        params.notificationRuleName?.trim() || SPAWN_NOTIFICATION_FALLBACK_NAME,
       npcName: params.npcName ?? `NPC #${params.npcId}`,
       npcId: String(params.npcId),
       world: params.world,
@@ -376,9 +375,8 @@ export class NotificationContentService {
     scheduledFor: Date;
   }) {
     const placeholderValues = {
-      ruleName: params.notificationRuleName?.trim().length
-        ? params.notificationRuleName.trim()
-        : SCHEDULED_MESSAGE_DEFAULT_NAME,
+      ruleName:
+        params.notificationRuleName?.trim() || SCHEDULED_MESSAGE_DEFAULT_NAME,
       scheduledFor: this.formatNotificationDate(params.scheduledFor),
     } satisfies Record<string, string>;
 

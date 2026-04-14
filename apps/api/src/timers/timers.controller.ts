@@ -17,14 +17,13 @@ import {
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
-import { DiscordId, UserId } from "@lootlog/nest-shared";
+import { AuthGuard, DiscordId, UserId } from "@lootlog/nest-shared";
 import { ZodResponse } from "nestjs-zod";
 import { type Guild, Permission, type Role } from "src/generated/prisma/client";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";
 import { MemberRoles } from "src/shared/decorators/member-roles.decorator";
 import { TimerResponseDto } from "src/shared/dto/timer-response.dto";
-import { AuthGuard } from "src/shared/guards/auth.guard";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 import { CreateManualTimerDto } from "src/timers/dto/create-manual-timer.dto";

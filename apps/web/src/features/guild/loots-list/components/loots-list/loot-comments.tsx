@@ -56,7 +56,7 @@ export const LootComments: FC<LootCommentProps> = ({ lootId }) => {
       </div>
 
       <h3 className="text-sm font-semibold px-4 pb-2 border-b border-border/50 text-foreground">
-        Komentarze ({comments?.length || 0})
+        Komentarze ({comments?.length ?? 0})
       </h3>
       <ul className="p-0 !m-0">
         {comments?.map((comment) => (

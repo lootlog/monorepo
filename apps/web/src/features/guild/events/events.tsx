@@ -220,7 +220,7 @@ export const Events = () => {
                               <Swords className="w-3 h-3" />
                               <span>
                                 {t("events.heroes.count", {
-                                  count: event.heroNpcs?.length || 0,
+                                  count: event.heroNpcs?.length ?? 0,
                                 })}
                               </span>
                             </div>
