@@ -46,10 +46,9 @@ export class AuthService {
       const response = await firstValueFrom(response$);
 
       if (!response.data) {
-        this.logger.log({
-          level: "error",
-          message: `Empty response from auth service for user ${userId}`,
-        });
+        this.logger.error(
+          `Empty response from auth service for user ${userId}`,
+        );
         throw new AuthServiceUnavailableError(
           "Empty response from auth service",
         );
@@ -62,35 +61,27 @@ export class AuthService {
       }
 
       if (this.isAccountNotFoundError(error)) {
-        this.logger.log({
-          level: "warn",
-          message: `Account not found for user ${userId}`,
-        });
+        this.logger.warn(`Account not found for user ${userId}`);
         throw new AccountNotFoundError();
       }
 
       if (this.isTokenError(error)) {
-        this.logger.log({
-          level: "warn",
-          message: `Token error for user ${userId}`,
-        });
+        this.logger.warn(`Token error for user ${userId}`);
         throw new TokenExpiredError();
       }
 
       if (this.isClientError(error)) {
         const errorMessage = this.getErrorMessage(error);
-        this.logger.log({
-          level: "error",
-          message: `Auth service returned client error for user ${userId}: ${errorMessage}`,
-        });
+        this.logger.error(
+          `Auth service returned client error for user ${userId}: ${errorMessage}`,
+        );
         throw new AuthBadRequestError(errorMessage);
       }
 
       const errorMessage = this.getErrorMessage(error);
-      this.logger.log({
-        level: "error",
-        message: `HTTP request failed for user ${userId}: ${errorMessage}`,
-      });
+      this.logger.error(
+        `HTTP request failed for user ${userId}: ${errorMessage}`,
+      );
       throw new AuthServiceUnavailableError(
         `Failed to connect to auth service: ${errorMessage}`,
       );
@@ -120,17 +111,13 @@ export class AuthService {
           response.error === "TOKEN_NOT_FOUND" ||
           response.error === "TOKEN_EXPIRED"
         ) {
-          this.logger.log({
-            level: "warn",
-            message: `Token error for user ${userId}: ${response.error}`,
-          });
+          this.logger.warn(`Token error for user ${userId}: ${response.error}`);
           throw new TokenExpiredError();
         }
 
-        this.logger.log({
-          level: "error",
-          message: `Unknown error from auth service for user ${userId}: ${response.error}`,
-        });
+        this.logger.error(
+          `Unknown error from auth service for user ${userId}: ${response.error}`,
+        );
         throw new AuthServiceUnavailableError(
           `Auth service error: ${response.error}`,
         );
@@ -155,11 +142,10 @@ export class AuthService {
 
       const errorMessage = this.getErrorMessage(error);
       const errorStack = error instanceof Error ? error.stack : undefined;
-      this.logger.log({
-        level: "error",
-        message: `Failed to fetch IDP token for user ${userId}: ${errorMessage}`,
-        stack: errorStack,
-      });
+      this.logger.error(
+        `Failed to fetch IDP token for user ${userId}: ${errorMessage}`,
+        { stack: errorStack },
+      );
       throw new AuthServiceUnavailableError(
         `Failed to fetch IDP token: ${errorMessage}`,
       );

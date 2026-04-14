@@ -35,9 +35,7 @@ export class PermissionsGuard implements CanActivate {
     const guildId = params?.guildId;
 
     if (!guildId) {
-      this.logger.log({
-        level: "warn",
-        message: "Missing guildId in request params",
+      this.logger.warn("Missing guildId in request params", {
         userId,
         discordId,
       });
@@ -48,9 +46,7 @@ export class PermissionsGuard implements CanActivate {
       await this.permissionsService.resolveGuildId(guildId);
 
     if (!resolvedGuildId) {
-      this.logger.log({
-        level: "warn",
-        message: "Guild could not be resolved from request params",
+      this.logger.warn("Guild could not be resolved from request params", {
         userId,
         discordId,
         guildId,
@@ -72,9 +68,7 @@ export class PermissionsGuard implements CanActivate {
     );
 
     if (!hasPermission) {
-      this.logger.log({
-        level: "warn",
-        message: "User lacks required permissions",
+      this.logger.warn("User lacks required permissions", {
         userId,
         discordId,
         guildId: resolvedGuildId,

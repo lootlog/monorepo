@@ -18,6 +18,19 @@ config({ path: path.join(rootPath, ".env") });
 
 const prisma = new PrismaClient();
 
+function parseDevGuildIds(): string[] {
+  const raw = process.env.DISCORD_DEVELOPMENT_GUILD_ID;
+  if (!raw || raw === "xxx") return [];
+  return raw
+    .split(",")
+    .map((id) => id.trim())
+    .filter((id) => id.length > 0);
+}
+
+function isValidDevUserId(userId: string | undefined): userId is string {
+  return !!userId && userId !== "xxx";
+}
+
 // Use separate connection string for battlelog if provided
 const battlelogConnectionUri =
   process.env.BATTLELOG_DATABASE_URL || process.env.POSTGRESQL_CONNECTION_URI;
@@ -62,16 +75,8 @@ async function cleanDatabase() {
 async function seedGuilds(count: number) {
   console.log(`🏰 Seeding ${count} guilds...`);
 
-  const devGuildIdsRaw = process.env.DISCORD_DEVELOPMENT_GUILD_ID;
+  const devGuildIds = parseDevGuildIds();
   const devUserId = process.env.DISCORD_DEVELOPMENT_USER_ID;
-
-  const devGuildIds =
-    devGuildIdsRaw && devGuildIdsRaw !== "xxx"
-      ? devGuildIdsRaw
-          .split(",")
-          .map((id) => id.trim())
-          .filter((id) => id.length > 0)
-      : [];
 
   const totalGuildsToCreate = Math.max(count, devGuildIds.length);
 
@@ -85,7 +90,7 @@ async function seedGuilds(count: number) {
     if (!guild) continue;
 
     const isDevGuild = i < devGuildIds.length;
-    const useDevelopmentIds = isDevGuild && devUserId && devUserId !== "xxx";
+    const useDevelopmentIds = isDevGuild && isValidDevUserId(devUserId);
 
     if (useDevelopmentIds) {
       const devGuildId = devGuildIds[i];
@@ -192,16 +197,8 @@ async function seedLoots(count: number, guilds: any[]) {
   const loots = lootGenerator.generateMultiple(count);
   const createdLoots = [];
 
-  const devGuildIdsRaw = process.env.DISCORD_DEVELOPMENT_GUILD_ID;
+  const devGuildIds = parseDevGuildIds();
   const devUserId = process.env.DISCORD_DEVELOPMENT_USER_ID;
-
-  const devGuildIds =
-    devGuildIdsRaw && devGuildIdsRaw !== "xxx"
-      ? devGuildIdsRaw
-          .split(",")
-          .map((id) => id.trim())
-          .filter((id) => id.length > 0)
-      : [];
 
   for (const loot of loots) {
     const createdLoot = await prisma.loot.create({
@@ -225,7 +222,7 @@ async function seedLoots(count: number, guilds: any[]) {
       });
 
       const isDevGuild = devGuildIds.includes(randomGuild.id);
-      if (isDevGuild && devUserId && devUserId !== "xxx") {
+      if (isDevGuild && isValidDevUserId(devUserId)) {
         const devMember = await prisma.member.findFirst({
           where: {
             guildId: randomGuild.id,
@@ -272,16 +269,8 @@ async function seedTimers(guilds: any[]) {
     return;
   }
 
-  const devGuildIdsRaw = process.env.DISCORD_DEVELOPMENT_GUILD_ID;
+  const devGuildIds = parseDevGuildIds();
   const devUserId = process.env.DISCORD_DEVELOPMENT_USER_ID;
-
-  const devGuildIds =
-    devGuildIdsRaw && devGuildIdsRaw !== "xxx"
-      ? devGuildIdsRaw
-          .split(",")
-          .map((id) => id.trim())
-          .filter((id) => id.length > 0)
-      : [];
 
   let totalTimers = 0;
 
@@ -296,7 +285,7 @@ async function seedTimers(guilds: any[]) {
 
     const isDevGuild = devGuildIds.includes(guild.id);
     let devMember = null;
-    if (isDevGuild && devUserId && devUserId !== "xxx") {
+    if (isDevGuild && isValidDevUserId(devUserId)) {
       devMember = await prisma.member.findFirst({
         where: {
           guildId: guild.id,
@@ -340,7 +329,7 @@ async function seedTimers(guilds: any[]) {
 
         totalTimers++;
       } catch (error) {
-        console.warn(`Failed to create timer for NPC ${randomNpc.id}`);
+        console.warn(`Failed to create timer for NPC ${randomNpc.id}:`, error);
       }
     }
   }

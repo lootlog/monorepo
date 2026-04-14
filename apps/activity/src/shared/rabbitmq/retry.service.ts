@@ -61,10 +61,7 @@ export class RetryService {
   ): Promise<void> {
     const dlqExchange = config.dlqExchange ?? DEAD_LETTER_EXCHANGE_NAME;
 
-    this.logger.log({
-      level: "warn",
-      message: `Sending message to DLQ: ${dlqRoutingKey}`,
-    });
+    this.logger.warn(`Sending message to DLQ: ${dlqRoutingKey}`);
 
     await this.amqp.publish(dlqExchange, dlqRoutingKey, message, {
       headers: {
@@ -105,18 +102,16 @@ export class RetryService {
     const maxRetries = config.maxRetries ?? 3;
 
     if (!this.shouldRetry(headers, maxRetries)) {
-      this.logger.log({
-        level: "warn",
-        message: `Max retries (${maxRetries}) exceeded for ${identifier}, sending to DLQ`,
-      });
+      this.logger.warn(
+        `Max retries (${maxRetries}) exceeded for ${identifier}, sending to DLQ`,
+      );
       await this.sendToDlq(data, dlqRoutingKey, headers, config);
       return false;
     }
 
-    this.logger.log({
-      level: "info",
-      message: `Processing ${identifier} (attempt ${retryCount + 1}/${maxRetries})`,
-    });
+    this.logger.info(
+      `Processing ${identifier} (attempt ${retryCount + 1}/${maxRetries})`,
+    );
     return true;
   }
 
@@ -130,30 +125,17 @@ export class RetryService {
     const currentRetryCount = this.getRetryCount(headers);
     const retryDelayMs = config.retryDelayMs ?? 30000;
 
-    this.logger.log({
-      level: "info",
-      message: `[RETRY QUEUE] Processing retry for ${identifier}`,
-    });
-    this.logger.log({
-      level: "info",
-      message: `[RETRY QUEUE] Current headers: ${JSON.stringify(headers)}`,
-    });
-    this.logger.log({
-      level: "info",
-      message: `[RETRY QUEUE] Current retry count: ${currentRetryCount}`,
-    });
-    this.logger.log({
-      level: "info",
-      message: `[RETRY QUEUE] TTL: ${retryDelayMs}ms`,
-    });
-
-    this.logger.log({
-      level: "info",
-      message: `[RETRY QUEUE] Message will expire in ${retryDelayMs}ms and return to main queue`,
-    });
-    this.logger.log({
-      level: "info",
-      message: `[RETRY QUEUE] Next attempt will be #${currentRetryCount + 1}`,
-    });
+    this.logger.info(`[RETRY QUEUE] Processing retry for ${identifier}`);
+    this.logger.info(
+      `[RETRY QUEUE] Current headers: ${JSON.stringify(headers)}`,
+    );
+    this.logger.info(`[RETRY QUEUE] Current retry count: ${currentRetryCount}`);
+    this.logger.info(`[RETRY QUEUE] TTL: ${retryDelayMs}ms`);
+    this.logger.info(
+      `[RETRY QUEUE] Message will expire in ${retryDelayMs}ms and return to main queue`,
+    );
+    this.logger.info(
+      `[RETRY QUEUE] Next attempt will be #${currentRetryCount + 1}`,
+    );
   }
 }

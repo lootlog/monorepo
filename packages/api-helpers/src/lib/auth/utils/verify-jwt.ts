@@ -8,15 +8,13 @@ export async function validateToken({
   issuer,
   audience,
 }: VerifyTokenOptions): Promise<VerifyTokenResponse> {
-  const keyset = jwks
-    ? createLocalJWKSet(jwks)
-    : jwksUri
-      ? createRemoteJWKSet(new URL(jwksUri))
-      : undefined;
-
-  if (!keyset) {
+  if (!jwks && !jwksUri) {
     throw new Error("No keyset provided");
   }
+
+  const keyset = jwks
+    ? createLocalJWKSet(jwks)
+    : createRemoteJWKSet(new URL(jwksUri!));
 
   const { payload } = await jwtVerify(token, keyset, {
     issuer,

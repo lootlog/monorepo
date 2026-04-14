@@ -70,9 +70,7 @@ export class PermissionsService {
         return null;
       }
 
-      this.logger.log({
-        level: "error",
-        message: "Error resolving guild ID",
+      this.logger.error("Error resolving guild ID", {
         error: error instanceof Error ? error.message : "Unknown error",
         idOrVanityUrl,
       });
@@ -106,14 +104,15 @@ export class PermissionsService {
           .pipe(
             map((res) => res.data),
             catchError((error) => {
-              this.logger.log({
-                level: "error",
-                message: "Failed to fetch user permissions from API service",
-                error: error.message,
-                stack: error.stack,
-                discordId,
-                userId,
-              });
+              this.logger.error(
+                "Failed to fetch user permissions from API service",
+                {
+                  error: error.message,
+                  stack: error.stack,
+                  discordId,
+                  userId,
+                },
+              );
               throw error;
             }),
           ),
@@ -131,9 +130,7 @@ export class PermissionsService {
 
       return normalizedResponse;
     } catch (error) {
-      this.logger.log({
-        level: "error",
-        message: "Error fetching user permissions",
+      this.logger.error("Error fetching user permissions", {
         error: error instanceof Error ? error.message : "Unknown error",
         discordId,
         userId,
