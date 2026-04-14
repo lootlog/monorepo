@@ -15,6 +15,7 @@ import {
   useSelectorPanel,
 } from "@/components/selector-panel";
 import { useTranslation } from "react-i18next";
+import { formatDiscordColor } from "@/utils/format-discord-color";
 
 const RolesSettingsHeader = () => {
   const { t } = useTranslation();
@@ -60,10 +61,7 @@ const RolesSettingsContent = () => {
       return a.name.localeCompare(b.name);
     });
 
-  const selectedRoleColor =
-    selectedRole?.color === 0
-      ? "FFF"
-      : selectedRole?.color.toString(16).padStart(6, "0");
+  const selectedRoleColor = formatDiscordColor(selectedRole?.color);
 
   return (
     <SelectorPanel<GuildRole>
@@ -107,7 +105,7 @@ const RolesSettingsContent = () => {
           <div
             className="size-4 rounded-full"
             style={{
-              backgroundColor: `#${role.color === 0 ? "FFF" : role.color.toString(16).padStart(6, "0")}`,
+              backgroundColor: `#${formatDiscordColor(role.color)}`,
             }}
           />
           <span>{role.name}</span>

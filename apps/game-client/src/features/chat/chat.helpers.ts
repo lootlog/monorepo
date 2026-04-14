@@ -26,17 +26,19 @@ export const getMessagesForSelectedGuild = (
   );
 };
 
+const getDedupeKey = (message: ChatMessageType): string =>
+  `${message.message?.trim() ?? ""}_${message.senderId}_${message.npc?.id ?? ""}`;
+
 export const deduplicateChatMessages = (messages: ChatMessageType[]) => {
   const unique: ChatMessageType[] = [];
 
   for (const message of messages) {
     const timestamp = new Date(message.timestamp).getTime();
-    const dedupeKey = `${message.message?.trim() ?? ""}_${message.senderId}_${message.npc?.id ?? ""}`;
+    const dedupeKey = getDedupeKey(message);
 
     const duplicate = unique.find(
       (existingMessage) =>
-        `${existingMessage.message?.trim() ?? ""}_${existingMessage.senderId}_${existingMessage.npc?.id ?? ""}` ===
-          dedupeKey &&
+        getDedupeKey(existingMessage) === dedupeKey &&
         Math.abs(new Date(existingMessage.timestamp).getTime() - timestamp) <=
           200,
     );

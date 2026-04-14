@@ -1,3 +1,5 @@
+import { formatDiscordColor } from "@/utils/format-discord-color";
+
 type Role = { position: number | null; color: number | null };
 
 export const useMemberColor = (
@@ -9,9 +11,7 @@ export const useMemberColor = (
     | undefined,
 ) => {
   if (guildMember?.color !== undefined && guildMember.color !== null) {
-    return guildMember.color === 0
-      ? "FFF"
-      : guildMember.color.toString(16).padStart(6, "0");
+    return formatDiscordColor(guildMember.color);
   }
 
   if (!guildMember?.roles?.length) return "FFF";
@@ -20,7 +20,5 @@ export const useMemberColor = (
     (curr.position ?? 0) > (prev.position ?? 0) ? curr : prev,
   );
 
-  return topRole.color === 0
-    ? "FFF"
-    : topRole.color?.toString(16).padStart(6, "0");
+  return formatDiscordColor(topRole.color);
 };

@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { PrismaClient } from "../../../../../apps/api/generated/client/index.js";
 import { PrismaClient as BattlelogPrismaClient } from "../../../../../apps/battlelog-service/generated/client/index.js";
 import { GuildGenerator } from "./generators/guild-generator.js";
@@ -218,10 +219,10 @@ async function seedLoots(count: number, guilds: any[]) {
     });
 
     if (guilds.length > 0) {
-      const randomGuild = guilds[Math.floor(Math.random() * guilds.length)];
+      const randomGuild = guilds[crypto.randomInt(guilds.length)];
       let members = await prisma.member.findMany({
         where: { guildId: randomGuild.id },
-        take: Math.floor(Math.random() * 3) + 1,
+        take: crypto.randomInt(3) + 1,
       });
 
       const isDevGuild = devGuildIds.includes(randomGuild.id);
@@ -306,21 +307,19 @@ async function seedTimers(guilds: any[]) {
     }
 
     for (let i = 0; i < timerCount; i++) {
-      const randomNpc = npcs[Math.floor(Math.random() * npcs.length)];
+      const randomNpc = npcs[crypto.randomInt(npcs.length)];
       const creatorMember =
-        (isDevGuild && devMember) ||
-        members[Math.floor(Math.random() * members.length)];
+        (isDevGuild && devMember) || members[crypto.randomInt(members.length)];
 
       if (!creatorMember || !randomNpc?.id) continue;
 
-      const randomWorld = ["gordion", "classic", "katahha"][
-        Math.floor(Math.random() * 3)
-      ] as string;
+      const worlds = ["gordion", "classic", "katahha"];
+      const randomWorld = worlds[crypto.randomInt(worlds.length)] as string;
 
       const now = new Date();
-      const minSpawnTime = new Date(now.getTime() + Math.random() * 3600000);
+      const minSpawnTime = new Date(now.getTime() + crypto.randomInt(3600000));
       const maxSpawnTime = new Date(
-        minSpawnTime.getTime() + Math.random() * 3600000,
+        minSpawnTime.getTime() + crypto.randomInt(3600000),
       );
 
       try {
@@ -332,8 +331,8 @@ async function seedTimers(guilds: any[]) {
             world: randomWorld,
             minSpawnTime,
             maxSpawnTime,
-            latestRespBaseSeconds: Math.floor(Math.random() * 7200),
-            latestRespawnRandomness: Math.floor(Math.random() * 1800),
+            latestRespBaseSeconds: crypto.randomInt(7200),
+            latestRespawnRandomness: crypto.randomInt(1800),
             npc: randomNpc,
           },
         });
@@ -362,8 +361,8 @@ async function seedBattles(count: number) {
   const battlesGenerator = new BattlesGenerator();
   await battlesGenerator.initialize();
 
-  const accountId = `account-${Math.random().toString(36).substring(2, 11)}`;
-  const characterId = `${Math.floor(Math.random() * 1000)}`;
+  const accountId = `account-${crypto.randomUUID().slice(0, 9)}`;
+  const characterId = `${crypto.randomInt(1000)}`;
 
   const battles = battlesGenerator.generateMultiple(
     count,

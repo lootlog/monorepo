@@ -1,6 +1,6 @@
 import type { GuildMember } from "@/hooks/api/members/use-guild-member";
+import { formatDiscordColor } from "@/utils/format-discord-color";
 
 export const getColorFromRole = (roles: GuildMember["roles"]) => {
-  const color = roles[0]?.color;
-  return color === 0 ? "FFF" : color?.toString(16).padStart(6, "0");
+  return formatDiscordColor(roles[0]?.color);
 };

@@ -4,6 +4,9 @@ import { PrismaClient } from "../../../../apps/api/generated/client/index.js";
 import { Meilisearch } from "meilisearch";
 import "dotenv/config";
 import { z } from "zod";
+import { NPCS_INDEX } from "../npcs/constants/meilisearch.js";
+import { PLAYERS_INDEX } from "../players/constants/meilisearch.js";
+import { ITEMS_INDEX } from "../items/constants/meilisearch.js";
 
 const configSchema = z.object({
   MEILISEARCH_HOST: z.string(),
@@ -25,10 +28,6 @@ const meilisearch = new Meilisearch({
   host: config.MEILISEARCH_HOST,
   apiKey: config.MEILISEARCH_API_KEY,
 });
-
-const NPCS_INDEX = "npcs";
-const PLAYERS_INDEX = "players";
-const ITEMS_INDEX = "items";
 
 const BATCH_SIZE = 1000;
 

@@ -1,5 +1,6 @@
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { Injectable, Logger } from "@nestjs/common";
+import { DEAD_LETTER_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { GatewayConfig } from "./constants/gateway-config.constant";
 
 interface RetryConfig {
@@ -8,8 +9,6 @@ interface RetryConfig {
   retryExchange?: string;
   dlqExchange?: string;
 }
-
-const DEAD_LETTER_EXCHANGE_NAME = "dlx";
 
 @Injectable()
 export class RetryService {

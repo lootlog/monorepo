@@ -13,6 +13,7 @@ import { useTranslation } from "react-i18next";
 import { PERMISSION_CATEGORIES } from "@/features/guild/settings/roles/constants/permission-categories";
 import { useSelectorPanel } from "@/components/selector-panel";
 import { SelectableListCard } from "@/components/selectable-list-card";
+import { formatDiscordColor } from "@/utils/format-discord-color";
 
 export type RoleListItemProps = {
   role: GuildRole;
@@ -26,8 +27,7 @@ export const RoleListItem: FC<RoleListItemProps> = ({ role, index }) => {
   const isSelected = selectedItem?.id === role.id;
   const isPanelOpen = selectedItem !== null;
 
-  const color =
-    role.color === 0 ? "FFF" : role.color.toString(16).padStart(6, "0");
+  const color = formatDiscordColor(role.color);
 
   const hasAdminPermission = role.permissions.includes(Permission.ADMIN);
 
