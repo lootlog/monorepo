@@ -1,15 +1,10 @@
-import { NPC_NAMES } from "@/constants/margonem";
 import type { ChatMessage as ChatMessageType } from "@/hooks/api/use-chat-messages";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { cn } from "@/lib/utils";
-import { getTextColor } from "@/utils/notifications-and-detector/background";
-import { format, isYesterday } from "date-fns";
+import { format } from "date-fns";
 import type { FC } from "react";
 import type { GuildMember } from "@/hooks/api/use-guild-members";
-import { getNpcTypeByWt } from "@lootlog/types";
 import { MessageType } from "@/hooks/api/use-send-chat-message";
-import { NpcType } from "@/hooks/api/use-npcs";
-import { NPCS_WITH_LOCATION } from "@/features/npc-detector/components/npc-list-item";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -22,86 +17,44 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Game } from "@/lib/game";
-import { useGuilds } from "@/hooks/api/use-guilds";
 import { CharacterTile } from "@/components/character-tile";
 import { PartyGatheringCard } from "./party-gathering-card";
+import {
+  getChatMessageBody,
+  isChatMessageYesterdayOrOlder,
+} from "./chat-message.helpers";
 
 type ChatMessageProps = {
   all: boolean;
   message: ChatMessageType;
+  guildName?: string;
   member?: GuildMember;
 };
 
-export const ChatMessage: FC<ChatMessageProps> = ({ all, message, member }) => {
-  const { data: guilds } = useGuilds();
+export const ChatMessage: FC<ChatMessageProps> = ({
+  all,
+  message,
+  guildName,
+  member,
+}) => {
   const memberColor = useMemberColor(member);
-  const msgDate = new Date(message.timestamp);
-  const now = new Date();
-  const isMsgYesterdayOrOlder =
-    msgDate < new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const isMsgYesterday = isYesterday(msgDate) || isMsgYesterdayOrOlder;
-
-  const renderChatMessage = (message: ChatMessageType) => {
-    if (message.type === MessageType.NPC) {
-      const npc = message.npc;
-      if (!npc) return null;
-      const npcType = getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type);
-
-      const shortname = NPC_NAMES[npcType]?.shortname;
-      const color = getTextColor(npcType, true);
-
-      let location = npc.location;
-
-      if (NPCS_WITH_LOCATION.includes(npcType)) {
-        location = `${location} (${npc.x}, ${npc.y})`;
-      }
-
-      return (
-        <span
-          style={{ color }}
-          className={cn("ll:select-text", { "ll:opacity-50": isMsgYesterday })}
-        >
-          [{shortname}] {npc.name} ({npc.lvl}
-          {npc.prof ?? ""}) {location ? `- ${location}` : ""}
-        </span>
-      );
-    }
-
-    if (message.type === MessageType.NOTIFICATION) {
-      const color = getTextColor("message", true);
-
-      return (
-        <span
-          className={cn("ll:select-text", { "ll:opacity-50": isMsgYesterday })}
-          style={{ color }}
-        >
-          [P] {message.message}
-        </span>
-      );
-    }
-
-    return (
-      <span
-        className={cn("ll:select-text", { "ll:opacity-50": isMsgYesterday })}
-      >
-        {message.message}
-      </span>
-    );
-  };
+  const isMsgYesterday = isChatMessageYesterdayOrOlder(message.timestamp);
+  const messageBody = getChatMessageBody(message);
 
   if (!message.characterData) return null;
 
   if (!member?.name) return null;
 
-  const guild = guilds?.find((g) => g.id === message.guildId);
-  if (!guild) return null;
+  if (!guildName) return null;
+
+  if (!messageBody && message.type !== MessageType.PARTY_GATHERING) return null;
 
   if (message.type === MessageType.PARTY_GATHERING) {
     return (
       <PartyGatheringCard
         message={message}
         member={member}
-        guild={guild}
+        guildName={guildName}
         all={all}
         isMsgYesterday={isMsgYesterday}
       />
@@ -131,7 +84,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({ all, message, member }) => {
                       "ll:opacity-50": isMsgYesterday,
                     })}
                   >
-                    [{guild.name}]{" "}
+                    [{guildName}]{" "}
                   </span>
                 )}
                 <span
@@ -150,7 +103,16 @@ export const ChatMessage: FC<ChatMessageProps> = ({ all, message, member }) => {
                   wordBreak: "normal",
                 }}
               >
-                {renderChatMessage(message)}
+                {messageBody && (
+                  <span
+                    className={cn("ll:select-text", {
+                      "ll:opacity-50": isMsgYesterday,
+                    })}
+                    style={{ color: messageBody.color }}
+                  >
+                    {messageBody.text}
+                  </span>
+                )}
               </span>
             </ContextMenuTrigger>
           </TooltipTrigger>

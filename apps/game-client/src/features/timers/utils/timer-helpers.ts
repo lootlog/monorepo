@@ -1,5 +1,4 @@
 import type { Timer } from "@/hooks/api/use-timers";
-import type { Guild } from "@/hooks/api/use-guild";
 import type { GuildMember } from "@/types/guild-member";
 
 export const getLevelSuffix = (npc: Timer["npc"]) => {
@@ -15,7 +14,7 @@ export const getTimerMembers = (timer: Timer): GuildMember[] => {
 
 export const getMembersWithGuilds = (
   members: GuildMember[],
-  guilds?: Guild[],
+  guildNamesById: Record<string, string>,
 ): { id: GuildMember["id"]; label: string }[] => {
   const memberMap = new Map<
     GuildMember["id"],
@@ -24,7 +23,7 @@ export const getMembersWithGuilds = (
 
   for (const member of members) {
     if (!memberMap.has(member.id)) {
-      const guildName = guilds?.find((g) => g.id === member.guildId)?.name;
+      const guildName = guildNamesById[member.guildId];
       memberMap.set(member.id, {
         id: member.id,
         label: guildName ? `${member.name} (${guildName})` : member.name,
