@@ -275,37 +275,7 @@ export class EventTrackingService implements OnModuleInit {
   }
 
   async closeUnassignedGap(mapId: string): Promise<void> {
-    const now = new Date();
-
-    const openGap = await this.prisma.eventMapCoverageGap.findFirst({
-      where: {
-        mapId,
-        gapType: CoverageGapType.UNASSIGNED,
-        endedAt: null,
-      },
-    });
-
-    if (!openGap) {
-      return;
-    }
-
-    const durationSeconds = Math.round(
-      (now.getTime() - openGap.startedAt.getTime()) / 1000,
-    );
-
-    await this.prisma.eventMapCoverageGap.update({
-      where: { id: openGap.id },
-      data: {
-        endedAt: now,
-        durationSeconds,
-      },
-    });
-
-    this.logger.debug({
-      message: "Closed UNASSIGNED gap",
-      mapId,
-      durationSeconds,
-    });
+    return this.closeGap(mapId, CoverageGapType.UNASSIGNED);
   }
 
   async openUncoveredGap(
@@ -342,12 +312,19 @@ export class EventTrackingService implements OnModuleInit {
   }
 
   async closeUncoveredGap(mapId: string): Promise<void> {
+    return this.closeGap(mapId, CoverageGapType.UNCOVERED);
+  }
+
+  private async closeGap(
+    mapId: string,
+    gapType: CoverageGapType,
+  ): Promise<void> {
     const now = new Date();
 
     const openGap = await this.prisma.eventMapCoverageGap.findFirst({
       where: {
         mapId,
-        gapType: CoverageGapType.UNCOVERED,
+        gapType,
         endedAt: null,
       },
     });
@@ -369,7 +346,7 @@ export class EventTrackingService implements OnModuleInit {
     });
 
     this.logger.debug({
-      message: "Closed UNCOVERED gap",
+      message: `Closed ${gapType} gap`,
       mapId,
       durationSeconds,
     });

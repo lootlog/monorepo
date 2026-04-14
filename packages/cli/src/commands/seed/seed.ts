@@ -38,6 +38,15 @@ interface SeedOptions {
   clean?: boolean;
 }
 
+function parseDevGuildIds(raw: string | undefined): string[] {
+  return raw && raw !== "xxx"
+    ? raw
+        .split(",")
+        .map((id) => id.trim())
+        .filter((id) => id.length > 0)
+    : [];
+}
+
 async function cleanDatabase() {
   console.log("🧹 Cleaning database...");
 
@@ -65,13 +74,7 @@ async function seedGuilds(count: number) {
   const devGuildIdsRaw = process.env.DISCORD_DEVELOPMENT_GUILD_ID;
   const devUserId = process.env.DISCORD_DEVELOPMENT_USER_ID;
 
-  const devGuildIds =
-    devGuildIdsRaw && devGuildIdsRaw !== "xxx"
-      ? devGuildIdsRaw
-          .split(",")
-          .map((id) => id.trim())
-          .filter((id) => id.length > 0)
-      : [];
+  const devGuildIds = parseDevGuildIds(devGuildIdsRaw);
 
   const totalGuildsToCreate = Math.max(count, devGuildIds.length);
 
@@ -195,13 +198,7 @@ async function seedLoots(count: number, guilds: any[]) {
   const devGuildIdsRaw = process.env.DISCORD_DEVELOPMENT_GUILD_ID;
   const devUserId = process.env.DISCORD_DEVELOPMENT_USER_ID;
 
-  const devGuildIds =
-    devGuildIdsRaw && devGuildIdsRaw !== "xxx"
-      ? devGuildIdsRaw
-          .split(",")
-          .map((id) => id.trim())
-          .filter((id) => id.length > 0)
-      : [];
+  const devGuildIds = parseDevGuildIds(devGuildIdsRaw);
 
   for (const loot of loots) {
     const createdLoot = await prisma.loot.create({
@@ -275,13 +272,7 @@ async function seedTimers(guilds: any[]) {
   const devGuildIdsRaw = process.env.DISCORD_DEVELOPMENT_GUILD_ID;
   const devUserId = process.env.DISCORD_DEVELOPMENT_USER_ID;
 
-  const devGuildIds =
-    devGuildIdsRaw && devGuildIdsRaw !== "xxx"
-      ? devGuildIdsRaw
-          .split(",")
-          .map((id) => id.trim())
-          .filter((id) => id.length > 0)
-      : [];
+  const devGuildIds = parseDevGuildIds(devGuildIdsRaw);
 
   let totalTimers = 0;
 

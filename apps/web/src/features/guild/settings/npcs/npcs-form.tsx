@@ -15,7 +15,7 @@ import { useEffect, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import type { LootlogConfigNpc } from "@/hooks/api/guilds/use-guild-lootlog-settings";
 import { ItemRarity } from "@/hooks/api/loots/use-loots";
-import { cn } from "@/utils/cn";
+import { cn } from "@lootlog/ui/lib/utils";
 import { toast } from "sonner";
 import { useUpdateGuildLootlogNpc } from "@/hooks/api/guilds/use-update-guild-lootlog-npc";
 import { Card } from "@lootlog/ui/components/card";

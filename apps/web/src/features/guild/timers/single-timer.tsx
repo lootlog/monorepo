@@ -4,11 +4,12 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { MARGONEM_CDN_NPCS_URL } from "@/constants/margonem";
+import { isAbsoluteUrl } from "@/utils/is-absolute-url";
 import { format } from "date-fns";
 import { ClockArrowDown, ClockArrowUp } from "lucide-react";
 import { useEffect, useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
-import { cn } from "@/utils/cn";
+import { cn } from "@lootlog/ui/lib/utils";
 import { parseMsToTime } from "@/utils/date/parse-ms-to-time";
 import { useTimers, type Timer } from "@/hooks/api/game-data/use-timers";
 
@@ -51,7 +52,10 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
 
   const isMinSpawnTime = minSpawnTime < maxSpawnTime && minTimeLeft <= 0;
   const hasPassedRedThreshold = timeLeft < THRESHOLD;
-  const imageHasDomain = timer.npc.icon?.startsWith("https://"); // @TODO: temporary fix for icons with full URL
+  const npcIconSrc =
+    timer.npc.icon && isAbsoluteUrl(timer.npc.icon)
+      ? timer.npc.icon
+      : `${MARGONEM_CDN_NPCS_URL}${timer.npc.icon ?? ""}`;
 
   return (
     <div className="group flex items-center gap-3 rounded-lg border border-border/50 bg-card/40 px-3 py-2.5 hover:bg-card/60 hover:border-primary/50 transition-all cursor-pointer">
@@ -60,7 +64,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
           {/* eslint-disable-next-line eslint-plugin-next/no-img-element */}
           <img
             className="rounded max-h-8 max-w-8"
-            src={`${imageHasDomain ? "" : MARGONEM_CDN_NPCS_URL}${timer.npc.icon}`}
+            src={npcIconSrc}
             alt={timer.npc.name}
           />
         </div>

@@ -166,9 +166,7 @@ function parseCondition(value: unknown): EventScoringCondition | null {
 }
 
 function deepCloneDefaultRules(): EventScoringRules {
-  return JSON.parse(
-    JSON.stringify(DEFAULT_ADVANCED_EVENT_SCORING_RULES),
-  ) as EventScoringRules;
+  return structuredClone(DEFAULT_ADVANCED_EVENT_SCORING_RULES);
 }
 
 export function normalizeEventScoringRules(value: unknown): EventScoringRules {

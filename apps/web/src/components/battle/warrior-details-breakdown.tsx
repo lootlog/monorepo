@@ -1,14 +1,7 @@
 import type { Warrior } from "@/hooks/api/battle-log/use-battles";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@lootlog/ui/components/table";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
+import { BreakdownTable, type BreakdownItem } from "./breakdown-table";
 
 interface WarriorDetailsBreakdownProps {
   warrior: Warrior;
@@ -85,7 +78,7 @@ export const WarriorDetailsBreakdown: FC<WarriorDetailsBreakdownProps> = ({
     },
   ].filter((item) => item.value > 0);
 
-  const sections = [
+  const sections: { title: string; stats: BreakdownItem[] }[] = [
     { title: t("battleUi.breakdowns.details.healing"), stats: healingStats },
     {
       title: t("battleUi.breakdowns.details.offensiveEffects"),
@@ -117,30 +110,11 @@ export const WarriorDetailsBreakdown: FC<WarriorDetailsBreakdownProps> = ({
             <h5 className="font-medium text-xs mb-2 text-muted-foreground">
               {section.title}
             </h5>
-            <Table className="text-sm">
-              <TableHeader>
-                <TableRow className="hover:bg-transparent">
-                  <TableHead className="h-8 text-xs">
-                    {t("battleUi.breakdowns.headers.type")}
-                  </TableHead>
-                  <TableHead className="h-8 text-xs text-right">
-                    {t("battleUi.breakdowns.headers.value")}
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {section.stats.map((item, index) => (
-                  <TableRow key={index} className="h-8 hover:bg-transparent">
-                    <TableCell className={`py-1 ${item.color}`}>
-                      {item.type}
-                    </TableCell>
-                    <TableCell className="py-1 text-right font-medium tabular-nums">
-                      {item.value}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <BreakdownTable
+              items={section.stats}
+              typeHeader={t("battleUi.breakdowns.headers.type")}
+              valueHeader={t("battleUi.breakdowns.headers.value")}
+            />
           </div>
         ))}
       </div>

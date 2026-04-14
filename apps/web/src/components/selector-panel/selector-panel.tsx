@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { cn } from "@/utils/cn";
+import { cn } from "@lootlog/ui/lib/utils";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
   Drawer,

@@ -1,6 +1,7 @@
 import { useSharedTooltip } from "@/components/shared-tooltip/shared-tooltip-provider";
 import { MARGONEM_CDN_NPCS_URL } from "@/constants/margonem";
 import type { Npc } from "@/hooks/api/game-data/use-npcs";
+import { isAbsoluteUrl } from "@/utils/is-absolute-url";
 import { cn } from "@lootlog/ui/lib/utils";
 import {
   Tooltip,
@@ -22,14 +23,10 @@ export const NpcTile: FC<NpcTileProps> = ({
   const { t } = useTranslation();
   const sharedTooltip = useSharedTooltip();
   const tileClassName = cn("relative w-fit", className);
-  const isAbsoluteIconUrl =
-    typeof icon === "string" &&
-    (icon.startsWith("http://") ||
-      icon.startsWith("https://") ||
-      icon.startsWith("//"));
-  const npcIconSource = isAbsoluteIconUrl
-    ? icon
-    : `${MARGONEM_CDN_NPCS_URL}${icon ?? ""}`;
+  const npcIconSource =
+    typeof icon === "string" && isAbsoluteUrl(icon)
+      ? icon
+      : `${MARGONEM_CDN_NPCS_URL}${icon ?? ""}`;
   const tooltipContent = (
     <p className="text-foreground">
       {name}

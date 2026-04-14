@@ -1,14 +1,7 @@
 import type { Warrior } from "@/hooks/api/battle-log/use-battles";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@lootlog/ui/components/table";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
+import { BreakdownTable } from "./breakdown-table";
 
 interface DamageBreakdownProps {
   warrior: Warrior;
@@ -112,30 +105,11 @@ export const DamageBreakdown: FC<DamageBreakdownProps> = ({ warrior }) => {
       <h4 className="font-semibold mb-3 text-sm">
         {t("battleUi.breakdowns.damageTaken.title", { name: warrior.name })}
       </h4>
-      <Table className="text-sm">
-        <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            <TableHead className="h-8 text-xs">
-              {t("battleUi.breakdowns.headers.damageType")}
-            </TableHead>
-            <TableHead className="h-8 text-xs text-right">
-              {t("battleUi.breakdowns.headers.value")}
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {damageBreakdown.map((item, index) => (
-            <TableRow key={index} className="h-8 hover:bg-transparent">
-              <TableCell className={`py-1 ${item.color}`}>
-                {item.type}
-              </TableCell>
-              <TableCell className="py-1 text-right font-medium tabular-nums">
-                {item.value}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <BreakdownTable
+        items={damageBreakdown}
+        typeHeader={t("battleUi.breakdowns.headers.damageType")}
+        valueHeader={t("battleUi.breakdowns.headers.value")}
+      />
     </div>
   );
 };

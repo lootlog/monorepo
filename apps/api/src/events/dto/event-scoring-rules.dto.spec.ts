@@ -2,7 +2,7 @@ import { DEFAULT_ADVANCED_EVENT_SCORING_RULES } from "../constants/scoring-rules
 import { EventScoringRulesSchema } from "./event-scoring-rules.dto";
 
 const cloneRulesPayload = () =>
-  JSON.parse(JSON.stringify(DEFAULT_ADVANCED_EVENT_SCORING_RULES));
+  structuredClone(DEFAULT_ADVANCED_EVENT_SCORING_RULES);
 
 describe("EventScoringRulesDto", () => {
   it("accepts the default advanced ruleset with boolean conditions", () => {
