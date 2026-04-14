@@ -100,5 +100,5 @@ export const buildLootStatsParams = (filters: {
     period: filters.period,
     world: filters.world,
     npcTypes: filters.npcTypes?.join(","),
-    excludeColossus: filters.excludeColossus || undefined,
+    excludeColossus: filters.excludeColossus ?? undefined,
   }) as LootsControllerGetLootStatsParams | undefined;

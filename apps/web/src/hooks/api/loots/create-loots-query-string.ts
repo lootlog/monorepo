@@ -1,4 +1,5 @@
 import { stringify } from "qs";
+import { filterEmptyValues } from "@/lib/stringify-query-params";
 
 type LootsFilters = {
   npcs: string[];
@@ -52,13 +53,7 @@ export const createLootsQueryString = ({
     {
       arrayFormat: "comma",
       allowEmptyArrays: false,
-      filter: (_, value) => {
-        if (value === "" || value === undefined || value === null) {
-          return;
-        }
-
-        return value;
-      },
+      filter: filterEmptyValues,
     },
   );
 };
