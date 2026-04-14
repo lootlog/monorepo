@@ -379,7 +379,7 @@ async function seedBattles(count: number) {
       const analysis = processor.processBattle(battlePayload as any);
 
       const totalPH = analysis.warriors.reduce(
-        (sum, warrior) => sum + (warrior.ph || 0),
+        (sum, warrior) => sum + (warrior.ph ?? 0),
         0,
       );
 

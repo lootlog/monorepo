@@ -72,7 +72,7 @@ export const useVisibleNotifications = ({
       if (s.ignoreOtherWorlds && n.world !== world) return false;
       if (Array.isArray(s.guildIds) && !s.guildIds.includes(n.guildId))
         return false;
-      const timeout = s.autoHideTimeout || 0;
+      const timeout = s.autoHideTimeout ?? 0;
       if (timeout > 0) {
         const createdAtMs = new Date(n.createdAt).getTime();
         if (!Number.isNaN(createdAtMs)) {
