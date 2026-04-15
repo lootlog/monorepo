@@ -27,6 +27,7 @@ import { CreatePartyGathering } from "@/features/party-finder/create-party-gathe
 import { usePartyFinderSocket } from "@/features/party-finder/hooks/use-party-finder-socket";
 import { usePartyGatheringSocket } from "@/features/party-finder/hooks/use-party-gathering-socket";
 import { bootstrapPublicApi } from "@/features/public-api";
+import { useNotificationSettingsSync } from "@/hooks/use-notification-settings-sync";
 
 const THEME_STORAGE_KEY = storageKey("lootlog-theme");
 
@@ -41,6 +42,7 @@ function AppContent() {
   useGameEventHandlers();
   useInit();
   useInitialConfiguration();
+  useNotificationSettingsSync();
   useHotkeys();
   useTimerSettingsMutationsRegistry();
   usePartyFinderSocket();

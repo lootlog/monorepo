@@ -58,6 +58,61 @@ paths:
       summary: Update user preferences
       tags:
         - users
+  /users/@me/game-preferences/accounts/{accountId}:
+    get:
+      description: Retrieve account-scoped game preferences for a specific Margonem account
+      operationId: UsersController_getUserGameAccountPreferences
+      parameters:
+        - name: accountId
+          required: true
+          in: path
+          description: Margonem account ID
+          schema:
+            example: "1234567"
+            type: string
+      responses:
+        "200":
+          description: User game account preferences
+          content:
+            application/json:
+              schema:
+                $ref: >-
+                  #/components/schemas/UserGameAccountPreferencesResponseDto_Output
+      security:
+        - bearer: []
+      summary: Get user game account preferences
+      tags:
+        - users
+    patch:
+      description: Update account-scoped game preferences for a specific Margonem account
+      operationId: UsersController_updateUserGameAccountPreferences
+      parameters:
+        - name: accountId
+          required: true
+          in: path
+          description: Margonem account ID
+          schema:
+            example: "1234567"
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserGameAccountPreferencesDto"
+      responses:
+        "200":
+          description: Updated user game account preferences
+          content:
+            application/json:
+              schema:
+                $ref: >-
+                  #/components/schemas/UserGameAccountPreferencesResponseDto_Output
+      security:
+        - bearer: []
+      summary: Update user game account preferences
+      tags:
+        - users
   /guilds/{guildId}/members/@me:
     get:
       description: Retrieve the authenticated user's member information for this guild
@@ -4735,6 +4790,294 @@ components:
           enum:
             - light
             - dark
+    UserGameAccountPreferencesResponseDto_Output:
+      type: object
+      properties:
+        accountId:
+          type: string
+          minLength: 1
+        notifications:
+          type: object
+          properties:
+            ELITE2:
+              type: object
+              properties:
+                show:
+                  type: boolean
+                highlight:
+                  type: boolean
+                ignoreOtherWorlds:
+                  type: boolean
+                autoHideTimeout:
+                  type: number
+                  minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
+                sound:
+                  type: boolean
+              required:
+                - show
+                - highlight
+                - ignoreOtherWorlds
+                - guildIds
+                - sound
+              additionalProperties: false
+            HERO:
+              type: object
+              properties:
+                show:
+                  type: boolean
+                highlight:
+                  type: boolean
+                ignoreOtherWorlds:
+                  type: boolean
+                autoHideTimeout:
+                  type: number
+                  minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
+                sound:
+                  type: boolean
+              required:
+                - show
+                - highlight
+                - ignoreOtherWorlds
+                - guildIds
+                - sound
+              additionalProperties: false
+            COLOSSUS:
+              type: object
+              properties:
+                show:
+                  type: boolean
+                highlight:
+                  type: boolean
+                ignoreOtherWorlds:
+                  type: boolean
+                autoHideTimeout:
+                  type: number
+                  minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
+                sound:
+                  type: boolean
+              required:
+                - show
+                - highlight
+                - ignoreOtherWorlds
+                - guildIds
+                - sound
+              additionalProperties: false
+            TITAN:
+              type: object
+              properties:
+                show:
+                  type: boolean
+                highlight:
+                  type: boolean
+                ignoreOtherWorlds:
+                  type: boolean
+                autoHideTimeout:
+                  type: number
+                  minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
+                sound:
+                  type: boolean
+              required:
+                - show
+                - highlight
+                - ignoreOtherWorlds
+                - guildIds
+                - sound
+              additionalProperties: false
+            message:
+              type: object
+              properties:
+                show:
+                  type: boolean
+                highlight:
+                  type: boolean
+                ignoreOtherWorlds:
+                  type: boolean
+                autoHideTimeout:
+                  type: number
+                  minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
+                sound:
+                  type: boolean
+              required:
+                - show
+                - highlight
+                - ignoreOtherWorlds
+                - guildIds
+                - sound
+              additionalProperties: false
+            party-gathering:
+              type: object
+              properties:
+                show:
+                  type: boolean
+                highlight:
+                  type: boolean
+                ignoreOtherWorlds:
+                  type: boolean
+                autoHideTimeout:
+                  type: number
+                  minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
+                sound:
+                  type: boolean
+              required:
+                - show
+                - highlight
+                - ignoreOtherWorlds
+                - guildIds
+                - sound
+              additionalProperties: false
+          required:
+            - ELITE2
+            - HERO
+            - COLOSSUS
+            - TITAN
+            - message
+            - party-gathering
+          additionalProperties: false
+        hasStoredPreferences:
+          type: boolean
+      required:
+        - accountId
+        - notifications
+        - hasStoredPreferences
+      additionalProperties: false
+    UpdateUserGameAccountPreferencesDto:
+      type: object
+      properties:
+        notifications:
+          type: object
+          properties:
+            ELITE2:
+              type: object
+              properties:
+                show:
+                  type: boolean
+                highlight:
+                  type: boolean
+                ignoreOtherWorlds:
+                  type: boolean
+                autoHideTimeout:
+                  type: number
+                  minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
+                sound:
+                  type: boolean
+            HERO:
+              type: object
+              properties:
+                show:
+                  type: boolean
+                highlight:
+                  type: boolean
+                ignoreOtherWorlds:
+                  type: boolean
+                autoHideTimeout:
+                  type: number
+                  minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
+                sound:
+                  type: boolean
+            COLOSSUS:
+              type: object
+              properties:
+                show:
+                  type: boolean
+                highlight:
+                  type: boolean
+                ignoreOtherWorlds:
+                  type: boolean
+                autoHideTimeout:
+                  type: number
+                  minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
+                sound:
+                  type: boolean
+            TITAN:
+              type: object
+              properties:
+                show:
+                  type: boolean
+                highlight:
+                  type: boolean
+                ignoreOtherWorlds:
+                  type: boolean
+                autoHideTimeout:
+                  type: number
+                  minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
+                sound:
+                  type: boolean
+            message:
+              type: object
+              properties:
+                show:
+                  type: boolean
+                highlight:
+                  type: boolean
+                ignoreOtherWorlds:
+                  type: boolean
+                autoHideTimeout:
+                  type: number
+                  minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
+                sound:
+                  type: boolean
+            party-gathering:
+              type: object
+              properties:
+                show:
+                  type: boolean
+                highlight:
+                  type: boolean
+                ignoreOtherWorlds:
+                  type: boolean
+                autoHideTimeout:
+                  type: number
+                  minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
+                sound:
+                  type: boolean
     NullableMemberResponseDto:
       type: object
       properties:

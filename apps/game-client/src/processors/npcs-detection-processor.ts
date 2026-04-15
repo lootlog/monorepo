@@ -61,7 +61,9 @@ export class NpcsDetectionProcessor {
 
     if (npcs.length > 0) {
       useWindowsStore.getState().setOpen("npc-detector", true);
-      useNpcDetectorStore.getState().addNpc(npcs);
+      useNpcDetectorStore.getState().addNpc(npcs, {
+        highlightOnExisting: true,
+      });
     }
   }
 

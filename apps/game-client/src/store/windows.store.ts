@@ -1,3 +1,4 @@
+import type { SettingsTabValue } from "@/features/settings/constants/settings-tabs";
 import type { GameNpc } from "@lootlog/margonem";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
@@ -11,6 +12,10 @@ type NpcDetectorWindowState = {
 
 type CreateNotificationState = {
   npc?: GameNpc;
+};
+
+type SettingsWindowState = {
+  activeTab?: SettingsTabValue;
 };
 
 export type WindowId =
@@ -51,7 +56,7 @@ interface WindowData {
 }
 
 interface WindowsState {
-  settings: WindowData;
+  settings: WindowData & { state: SettingsWindowState };
   timers: WindowData;
   chat: WindowData;
   command: WindowData;
@@ -75,6 +80,7 @@ interface WindowsState {
   setLocked: (window: WindowId, locked: boolean) => void;
   toggleOpen: (window: WindowId, autofocus?: boolean) => void;
   setAutofocus: (window: WindowId, autofocus: boolean) => void;
+  setSettingsActiveTab: (activeTab?: SettingsTabValue) => void;
 }
 
 const DEFAULT_OPACITY: WindowOpacity = 4;
@@ -90,6 +96,7 @@ export const useWindowsStore = create<WindowsState>()(
         size: { width: 420, height: 440 },
         opacity: DEFAULT_OPACITY,
         locked: false,
+        state: {},
       },
       timers: {
         open: true,
@@ -207,8 +214,23 @@ export const useWindowsStore = create<WindowsState>()(
           const newHistory = open
             ? [key, ...state.windowFocusHistory.filter((id) => id !== key)]
             : state.windowFocusHistory.filter((id) => id !== key);
+          const currentWindow = state[key];
+          const hasWindowState = "state" in currentWindow;
+
+          const nextState =
+            windowState !== undefined
+              ? windowState
+              : key === "settings" && !open
+                ? {}
+                : hasWindowState
+                  ? currentWindow.state
+                  : undefined;
+
           return {
-            [key]: { ...state[key], open, state: open ? windowState : [] },
+            [key]:
+              nextState === undefined
+                ? { ...currentWindow, open }
+                : { ...currentWindow, open, state: nextState },
             currentWindowFocus: open ? key : undefined,
             windowFocusHistory: newHistory,
           };
@@ -224,6 +246,16 @@ export const useWindowsStore = create<WindowsState>()(
         set((state) => ({ [key]: { ...state[key], locked } })),
       setAutofocus: (key: WindowId, autofocus: boolean) =>
         set((state) => ({ [key]: { ...state[key], autofocus } })),
+      setSettingsActiveTab: (activeTab) =>
+        set((state) => ({
+          settings: {
+            ...state.settings,
+            state: {
+              ...state.settings.state,
+              activeTab,
+            },
+          },
+        })),
       toggleOpen: (key: WindowId, autofocus?: boolean) => {
         const curr = get()[key].open;
         set((state) => {
@@ -267,7 +299,7 @@ export const useWindowsStore = create<WindowsState>()(
         "create-party-gathering": state["create-party-gathering"],
       }),
       storage: createJSONStorage(() => localStorage),
-      version: 2,
+      version: 3,
       migrate: (persisted, version) => {
         const state = persisted as Record<string, unknown>;
         if (version < 2) {
@@ -284,6 +316,18 @@ export const useWindowsStore = create<WindowsState>()(
             state.currentWindowFocus = "command";
           }
         }
+
+        if (version < 3) {
+          const settings = state.settings as
+            | Record<string, unknown>
+            | undefined;
+          state.settings = {
+            ...settings,
+            state:
+              (settings?.state as Record<string, unknown> | undefined) ?? {},
+          };
+        }
+
         return state as unknown as WindowsState;
       },
     },

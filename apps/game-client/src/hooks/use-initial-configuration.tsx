@@ -2,11 +2,6 @@ import { Game } from "@/lib/game";
 import { useGlobalStore } from "@/store/global.store";
 import { useEffect, useRef } from "react";
 import {
-  type NotificationsSettings,
-  recommendedSettings as recommendedNotificationsSettings,
-  useNotificationsStore,
-} from "@/store/notifications.store";
-import {
   recommendedSettings as recommendedDetectorSettings,
   useNpcDetectorStore,
 } from "@/store/npc-detector.store";
@@ -22,52 +17,6 @@ export const useInitialConfiguration = () => {
 
   const { setSettings: setDetectorSettings, settings: detectorSettings } =
     useNpcDetectorStore();
-  const {
-    settings: notificationsSettings,
-    setSettings: setNotificationsSettings,
-  } = useNotificationsStore();
-
-  const initNotificationsConfiguration = () => {
-    const characterId = String(Game.hero.id);
-    const allGuildIds = guilds?.map((guild) => guild.id) || [];
-
-    const currentSettings = notificationsSettings[characterId];
-
-    if (!currentSettings) {
-      const recommendedNotificationsSettingsWithGuilds = Object.entries(
-        recommendedNotificationsSettings,
-      ).reduce((acc, [key, value]) => {
-        acc[key as keyof NotificationsSettings] = {
-          ...value,
-          guildIds: allGuildIds,
-        };
-        return acc;
-      }, {} as NotificationsSettings);
-
-      setNotificationsSettings(
-        characterId,
-        recommendedNotificationsSettingsWithGuilds,
-      );
-      return;
-    }
-
-    const missingKeys = Object.keys(recommendedNotificationsSettings).filter(
-      (key) => !(key in currentSettings),
-    );
-
-    if (missingKeys.length > 0) {
-      const patched = { ...currentSettings };
-      for (const key of missingKeys) {
-        patched[key as keyof NotificationsSettings] = {
-          ...recommendedNotificationsSettings[
-            key as keyof NotificationsSettings
-          ],
-          guildIds: allGuildIds,
-        };
-      }
-      setNotificationsSettings(characterId, patched);
-    }
-  };
 
   const initDetectorConfiguration = () => {
     const characterId = String(Game.hero.id);
@@ -83,7 +32,6 @@ export const useInitialConfiguration = () => {
 
     if (gameInitialized && guilds) {
       if (Game.hero?.id) {
-        initNotificationsConfiguration();
         initDetectorConfiguration();
         configInitialized.current = true;
         return;
@@ -102,7 +50,6 @@ export const useInitialConfiguration = () => {
         }
 
         if (Game.hero?.id) {
-          initNotificationsConfiguration();
           initDetectorConfiguration();
           configInitialized.current = true;
           clearInterval(interval);
@@ -111,10 +58,5 @@ export const useInitialConfiguration = () => {
 
       return () => clearInterval(interval);
     }
-  }, [
-    gameInitialized,
-    guilds,
-    initDetectorConfiguration,
-    initNotificationsConfiguration,
-  ]);
+  }, [gameInitialized, guilds, initDetectorConfiguration]);
 };

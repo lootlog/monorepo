@@ -12,7 +12,17 @@ import { AuthService } from "src/auth/auth.service";
 import { battlelogConfig } from "src/config/battlelog.config";
 import { MembersService } from "src/members/members.service";
 import { RedisService } from "@lootlog/nest-shared";
+import type { Prisma } from "src/generated/prisma/client";
 import { getUserLootlogConfigCachePattern } from "src/shared/constants/cache.constant";
+import {
+  defaultNotificationsSettings,
+  type NotificationSettings,
+  type NotificationType,
+  type NotificationsSettings,
+  type UpdateUserGameAccountPreferencesPayload,
+  type UserGameAccountPreferences,
+} from "@lootlog/types";
+import type { UpdateUserGameAccountPreferencesDto } from "src/users/dto/update-user-account-preferences.dto";
 import type { UpdateUserPreferencesDto } from "src/users/dto/update-user-preferences.dto";
 
 type DeleteAccountParams = {
@@ -40,17 +50,9 @@ export class UsersService {
       where: { userId },
     });
 
-    const settings = userSettings ?? {
-      id: 0,
-      userId,
-      guildsOrder: [],
-      theme: "default",
-      colorMode: "dark",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    const settings = userSettings ?? this.createDefaultUserPreferences(userId);
 
-    return settings;
+    return this.toUserPreferencesResponse(settings);
   }
 
   async deleteAccount({ authUserId, discordId }: DeleteAccountParams) {
@@ -80,6 +82,9 @@ export class UsersService {
         where: { userId: discordId },
       });
       await tx.userSettings.deleteMany({ where: { userId: authUserId } });
+      await tx.userGameAccountSettings.deleteMany({
+        where: { userId: authUserId },
+      });
       await tx.userTimerSettings.deleteMany({ where: { userId: authUserId } });
       await tx.userSoundSettings.deleteMany({ where: { userId: authUserId } });
       await tx.userGuildTimerSettings.deleteMany({
@@ -160,6 +165,232 @@ export class UsersService {
       create: { userId, ...preferences },
     });
 
-    return userSettings;
+    return this.toUserPreferencesResponse(userSettings);
+  }
+
+  async getUserGameAccountPreferences(
+    userId: string,
+    accountId: string,
+  ): Promise<UserGameAccountPreferences> {
+    const gameAccountSettings =
+      await this.prisma.userGameAccountSettings.findUnique({
+        where: {
+          userId_accountId: {
+            userId,
+            accountId,
+          },
+        },
+      });
+    const storedGameAccountSettings = this.getStoredGameAccountSettings(
+      gameAccountSettings?.settings,
+    );
+
+    return {
+      accountId,
+      notifications: this.normalizeNotificationsSettings(
+        storedGameAccountSettings?.notifications,
+      ),
+      hasStoredPreferences: !!storedGameAccountSettings?.notifications,
+    };
+  }
+
+  async updateUserGameAccountPreferences(
+    userId: string,
+    accountId: string,
+    preferences: UpdateUserGameAccountPreferencesDto,
+  ): Promise<UserGameAccountPreferences> {
+    const gameAccountSettings =
+      await this.prisma.userGameAccountSettings.findUnique({
+        where: {
+          userId_accountId: {
+            userId,
+            accountId,
+          },
+        },
+      });
+    const storedGameAccountSettings = this.getStoredGameAccountSettings(
+      gameAccountSettings?.settings,
+    );
+    const currentNotifications = this.normalizeNotificationsSettings(
+      storedGameAccountSettings?.notifications,
+    );
+
+    const nextNotifications = preferences.notifications
+      ? this.mergeNotificationsSettings(currentNotifications, {
+          notifications: preferences.notifications,
+        })
+      : currentNotifications;
+
+    const nextSettings = {
+      ...(storedGameAccountSettings ?? {}),
+      notifications: nextNotifications,
+    };
+
+    await this.prisma.userGameAccountSettings.upsert({
+      where: {
+        userId_accountId: {
+          userId,
+          accountId,
+        },
+      },
+      update: {
+        settings: nextSettings as Prisma.InputJsonValue,
+        updatedAt: new Date(),
+      },
+      create: {
+        userId,
+        accountId,
+        settings: nextSettings as Prisma.InputJsonValue,
+      },
+    });
+
+    return {
+      accountId,
+      notifications: nextNotifications,
+      hasStoredPreferences: true,
+    };
+  }
+
+  private toUserPreferencesResponse(settings: {
+    userId: string;
+    guildsOrder: string[];
+    theme: string;
+    colorMode: string;
+  }) {
+    return {
+      userId: settings.userId,
+      guildsOrder: settings.guildsOrder,
+      theme: settings.theme,
+      colorMode: settings.colorMode,
+    };
+  }
+
+  private createDefaultUserPreferences(userId: string) {
+    return {
+      id: 0,
+      userId,
+      ...this.getDefaultUserPreferencesData(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+  }
+
+  private getDefaultUserPreferencesData() {
+    return {
+      guildsOrder: [],
+      theme: "default",
+      colorMode: "dark",
+    };
+  }
+
+  private getStoredGameAccountSettings(settings: Prisma.JsonValue | undefined) {
+    if (!settings || typeof settings !== "object" || Array.isArray(settings)) {
+      return null;
+    }
+
+    return settings as Prisma.JsonObject & {
+      notifications?: Partial<NotificationsSettings>;
+    };
+  }
+
+  private mergeNotificationsSettings(
+    currentSettings: NotificationsSettings,
+    preferences: UpdateUserGameAccountPreferencesPayload,
+  ): NotificationsSettings {
+    const mergedSettings = this.cloneNotificationsSettings(currentSettings);
+
+    if (!preferences.notifications) {
+      return mergedSettings;
+    }
+
+    const notificationTypes = Object.keys(
+      defaultNotificationsSettings,
+    ) as NotificationType[];
+
+    for (const notificationType of notificationTypes) {
+      const patch = preferences.notifications[notificationType];
+
+      if (!patch) {
+        continue;
+      }
+
+      mergedSettings[notificationType] = this.normalizeNotificationSettings(
+        patch,
+        mergedSettings[notificationType],
+      );
+    }
+
+    return mergedSettings;
+  }
+
+  private normalizeNotificationsSettings(
+    settings: Partial<NotificationsSettings> | undefined,
+  ): NotificationsSettings {
+    const notificationTypes = Object.keys(
+      defaultNotificationsSettings,
+    ) as NotificationType[];
+    const normalizedSettings = this.cloneNotificationsSettings(
+      defaultNotificationsSettings,
+    );
+
+    for (const notificationType of notificationTypes) {
+      normalizedSettings[notificationType] = this.normalizeNotificationSettings(
+        settings?.[notificationType],
+        defaultNotificationsSettings[notificationType],
+      );
+    }
+
+    return normalizedSettings;
+  }
+
+  private normalizeNotificationSettings(
+    settings: Partial<NotificationSettings> | undefined,
+    fallbackSettings: NotificationSettings,
+  ): NotificationSettings {
+    const autoHideTimeout =
+      typeof settings?.autoHideTimeout === "number" &&
+      settings.autoHideTimeout >= 0
+        ? settings.autoHideTimeout
+        : fallbackSettings.autoHideTimeout;
+
+    return {
+      show:
+        typeof settings?.show === "boolean"
+          ? settings.show
+          : fallbackSettings.show,
+      highlight:
+        typeof settings?.highlight === "boolean"
+          ? settings.highlight
+          : fallbackSettings.highlight,
+      ignoreOtherWorlds:
+        typeof settings?.ignoreOtherWorlds === "boolean"
+          ? settings.ignoreOtherWorlds
+          : fallbackSettings.ignoreOtherWorlds,
+      autoHideTimeout,
+      guildIds: Array.isArray(settings?.guildIds)
+        ? settings.guildIds.filter(
+            (guildId): guildId is string => typeof guildId === "string",
+          )
+        : [...fallbackSettings.guildIds],
+      sound:
+        typeof settings?.sound === "boolean"
+          ? settings.sound
+          : fallbackSettings.sound,
+    };
+  }
+
+  private cloneNotificationsSettings(
+    settings: NotificationsSettings,
+  ): NotificationsSettings {
+    const notificationTypes = Object.keys(settings) as NotificationType[];
+
+    return notificationTypes.reduce((acc, notificationType) => {
+      acc[notificationType] = {
+        ...settings[notificationType],
+        guildIds: [...settings[notificationType].guildIds],
+      };
+
+      return acc;
+    }, {} as NotificationsSettings);
   }
 }

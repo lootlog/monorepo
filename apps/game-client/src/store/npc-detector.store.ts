@@ -11,6 +11,10 @@ export type GameNpcWithLocation = GameNpc & {
   notificationSent: boolean;
 };
 
+type AddNpcOptions = {
+  highlightOnExisting?: boolean;
+};
+
 export interface NpcDetectorSettingByNpc {
   detect: boolean;
   notifyWindow: boolean;
@@ -33,14 +37,36 @@ export type NpcDetectorSettings = Pick<
 
 interface NpcDetectorState {
   npcs: GameNpcWithLocation[];
+  activeDetectionAnimations: Record<number, number>;
+  latestDetectionAnimationCycle: number;
   settings: Record<string, NpcDetectorSettings>;
   setState: (game: NpcDetectorState) => void;
   removeNpc: (npcId: number | number[]) => void;
-  addNpc: (npc: GameNpcWithLocation | GameNpcWithLocation[]) => void;
+  addNpc: (
+    npc: GameNpcWithLocation | GameNpcWithLocation[],
+    options?: AddNpcOptions,
+  ) => void;
   clearNpcs: () => void;
   setSettings: (charactedId: string, settings: NpcDetectorSettings) => void;
   setNpcState: (npcId: number, npc: GameNpcWithLocation) => void;
+  clearDetectionAnimation: (npcId: number, cycle: number) => void;
 }
+
+const moveNpcToFront = (
+  npcs: GameNpcWithLocation[],
+  npc: GameNpcWithLocation,
+  indexToRemove?: number,
+) => {
+  if (indexToRemove === undefined) {
+    return [npc, ...npcs];
+  }
+
+  return [
+    npc,
+    ...npcs.slice(0, indexToRemove),
+    ...npcs.slice(indexToRemove + 1),
+  ];
+};
 
 export const recommendedSettings: NpcDetectorSettings = {
   [NpcType.ELITE2]: {
@@ -81,24 +107,83 @@ export const useNpcDetectorStore = create<NpcDetectorState>()(
   persist(
     (set) => ({
       npcs: [],
+      activeDetectionAnimations: {},
+      latestDetectionAnimationCycle: 0,
       settings: {},
-      setState: ({ npcs }) => set({ npcs }),
-      addNpc: (npc) =>
+      setState: ({ npcs }) =>
+        set({
+          npcs,
+          activeDetectionAnimations: {},
+        }),
+      addNpc: (npc, options) =>
         set((state) => {
           const newNpcs = Array.isArray(npc) ? npc : [npc];
-          const existingIds = new Set(state.npcs.map((n) => n.id));
-          const uniqueNpcs = newNpcs.filter((n) => !existingIds.has(n.id));
+          const shouldAnimateIncoming = options?.highlightOnExisting ?? false;
+          const detectionAnimationCycle =
+            shouldAnimateIncoming && newNpcs.length > 0
+              ? state.latestDetectionAnimationCycle + 1
+              : state.latestDetectionAnimationCycle;
+          let nextNpcs = [...state.npcs];
+          const activeDetectionAnimations = shouldAnimateIncoming
+            ? {}
+            : { ...state.activeDetectionAnimations };
+
+          newNpcs.forEach((incomingNpc) => {
+            const existingNpcIndex = nextNpcs.findIndex(
+              (currentNpc) => currentNpc.id === incomingNpc.id,
+            );
+
+            if (existingNpcIndex === -1) {
+              nextNpcs = moveNpcToFront(nextNpcs, incomingNpc);
+              if (shouldAnimateIncoming) {
+                activeDetectionAnimations[incomingNpc.id] =
+                  detectionAnimationCycle;
+              }
+              return;
+            }
+
+            const existingNpc = nextNpcs[existingNpcIndex];
+            const mergedNpc = {
+              ...existingNpc,
+              ...incomingNpc,
+            };
+
+            if (shouldAnimateIncoming) {
+              activeDetectionAnimations[mergedNpc.id] = detectionAnimationCycle;
+            }
+
+            nextNpcs = shouldAnimateIncoming
+              ? moveNpcToFront(nextNpcs, mergedNpc, existingNpcIndex)
+              : nextNpcs.map((currentNpc) =>
+                  currentNpc.id === mergedNpc.id ? mergedNpc : currentNpc,
+                );
+          });
+
           return {
-            npcs: [...state.npcs, ...uniqueNpcs],
+            npcs: nextNpcs,
+            activeDetectionAnimations,
+            latestDetectionAnimationCycle: detectionAnimationCycle,
           };
         }),
       removeNpc: (npcId: number | number[]) =>
-        set((state) => ({
-          npcs: state.npcs.filter((npc) =>
-            Array.isArray(npcId) ? !npcId.includes(npc.id) : npc.id !== npcId,
-          ),
-        })),
-      clearNpcs: () => set({ npcs: [] }),
+        set((state) => {
+          const activeDetectionAnimations = {
+            ...state.activeDetectionAnimations,
+          };
+          const npcIds = Array.isArray(npcId) ? npcId : [npcId];
+
+          npcIds.forEach((currentNpcId) => {
+            delete activeDetectionAnimations[currentNpcId];
+          });
+
+          return {
+            npcs: state.npcs.filter((npc) =>
+              Array.isArray(npcId) ? !npcId.includes(npc.id) : npc.id !== npcId,
+            ),
+            activeDetectionAnimations,
+          };
+        }),
+      clearNpcs: () => set({ npcs: [], activeDetectionAnimations: {} }),
       setSettings: (characterId, settings) =>
         set((state) => ({
           settings: {
@@ -117,6 +202,19 @@ export const useNpcDetectorStore = create<NpcDetectorState>()(
           return { npcs };
         });
       },
+      clearDetectionAnimation: (npcId, cycle) =>
+        set((state) => {
+          if (state.activeDetectionAnimations[npcId] !== cycle) {
+            return {};
+          }
+
+          const activeDetectionAnimations = {
+            ...state.activeDetectionAnimations,
+          };
+          delete activeDetectionAnimations[npcId];
+
+          return { activeDetectionAnimations };
+        }),
     }),
     {
       name: STORAGE_KEY,

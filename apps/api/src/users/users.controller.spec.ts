@@ -10,6 +10,8 @@ describe("UserController", () => {
   const mockUsersService = {
     getUserPreferences: mockFn(),
     updateUserPreferences: mockFn(),
+    getUserGameAccountPreferences: mockFn(),
+    updateUserGameAccountPreferences: mockFn(),
   };
 
   beforeEach(async () => {
@@ -31,5 +33,23 @@ describe("UserController", () => {
 
   it("should be defined", () => {
     expect(controller).toBeDefined();
+  });
+
+  it("delegates account preference reads to the service", async () => {
+    mockUsersService.getUserGameAccountPreferences.mockResolvedValue({
+      accountId: "12345",
+      notifications: {},
+      hasStoredPreferences: false,
+    });
+
+    await controller.getUserGameAccountPreferences(
+      "auth-user-current",
+      "12345",
+    );
+
+    expect(mockUsersService.getUserGameAccountPreferences).toHaveBeenCalledWith(
+      "auth-user-current",
+      "12345",
+    );
   });
 });

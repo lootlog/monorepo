@@ -69,6 +69,7 @@ export const ModelName = {
   Reservation: 'Reservation',
   UserCharactersLootlogSettings: 'UserCharactersLootlogSettings',
   UserSettings: 'UserSettings',
+  UserGameAccountSettings: 'UserGameAccountSettings',
   NotificationTarget: 'NotificationTarget',
   NotificationRule: 'NotificationRule',
   NotificationRuleTarget: 'NotificationRuleTarget',
@@ -366,6 +367,18 @@ export const UserSettingsScalarFieldEnum = {
 } as const
 
 export type UserSettingsScalarFieldEnum = (typeof UserSettingsScalarFieldEnum)[keyof typeof UserSettingsScalarFieldEnum]
+
+
+export const UserGameAccountSettingsScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  accountId: 'accountId',
+  settings: 'settings',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserGameAccountSettingsScalarFieldEnum = (typeof UserGameAccountSettingsScalarFieldEnum)[keyof typeof UserGameAccountSettingsScalarFieldEnum]
 
 
 export const NotificationTargetScalarFieldEnum = {
