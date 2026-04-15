@@ -50,6 +50,7 @@ const createUniqueKillNpcEvent = (): GameEvent => {
 };
 
 type DetectorNpcConfig = {
+  npcId: number;
   name: string;
   wt: number;
   icon: string;
@@ -59,6 +60,7 @@ type DetectorNpcConfig = {
 
 const DETECTOR_NPC_PRESETS: Record<string, DetectorNpcConfig> = {
   titan: {
+    npcId: 123,
     name: "Debug Tytan",
     wt: 102,
     icon: "tyt/maddok-tytan2.gif",
@@ -66,6 +68,7 @@ const DETECTOR_NPC_PRESETS: Record<string, DetectorNpcConfig> = {
     prof: "h",
   },
   hero: {
+    npcId: 124,
     name: "Debug Heros",
     wt: 85,
     icon: "e2/worundriel02.gif",
@@ -73,16 +76,18 @@ const DETECTOR_NPC_PRESETS: Record<string, DetectorNpcConfig> = {
     prof: "b",
   },
   colossus: {
+    npcId: 125,
     name: "Debug Kolos",
     wt: 95,
-    icon: "kol/maddok-kolos.gif",
+    icon: "her/viv_nandin_i3bd1.gif",
     lvl: 200,
     prof: "m",
   },
   elite2: {
+    npcId: 126,
     name: "Debug Elite II",
     wt: 25,
-    icon: "e2/demon-e2.gif",
+    icon: "her/viv_nandin_i3bd1.gif",
     lvl: 120,
     prof: "w",
   },
@@ -90,7 +95,7 @@ const DETECTOR_NPC_PRESETS: Record<string, DetectorNpcConfig> = {
 
 const createDetectorEvent = (preset: DetectorNpcConfig): GameEvent => {
   const uniqueId = Date.now();
-  const npcId = Math.floor(Math.random() * 100000) + 900000;
+  const npcId = preset.npcId;
   const tplId = Math.floor(Math.random() * 10000) + 90000;
   const iconId = Math.floor(Math.random() * 10000) + 90000;
 

@@ -499,6 +499,18 @@ model UserSettings {
   @@index([userId])
 }
 
+model UserGameAccountSettings {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  accountId String
+  settings  Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, accountId])
+  @@index([userId])
+}
+
 model NotificationTarget {
   id                Int             @id @default(autoincrement())
   ownerType         NotificationOwnerType

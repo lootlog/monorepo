@@ -8,35 +8,35 @@ import { useWindowsStore } from "@/store/windows.store";
 
 export const Notifications = () => {
   useNotifications();
+  const open = useWindowsStore((state) => state.notifications.open);
   const setOpen = useWindowsStore((state) => state.setOpen);
   const { clearNotifications } = useNotificationsStore();
-  const { notifications: filteredNotifications, now } = useVisibleNotifications(
-    {
-      autoCleanup: true,
-    },
-  );
+  const { notifications: filteredNotifications } = useVisibleNotifications({
+    autoCleanup: true,
+    tickMs: 100,
+  });
 
   const handleClose = () => {
     setOpen("notifications", false);
     clearNotifications();
   };
 
-  if (filteredNotifications.length === 0) return null;
-
   return (
-    <AnimatedWindow isOpen windowKey="notifications">
+    <AnimatedWindow
+      isOpen={open && filteredNotifications.length > 0}
+      windowKey="notifications"
+    >
       <DraggableWindow
         id="notifications"
         title="Powiadomienia"
         onClose={handleClose}
-        resizable={false}
-        minHeight={200}
-        maxHeight={400}
-        minWidth={360}
-        dynamicHeight
+        resizable
+        minHeight={88}
+        maxHeight={600}
+        minWidth={242}
       >
-        <div className="ll:flex ll:flex-col ll:h-full ll:w-full">
-          <NotificationsList notifications={filteredNotifications} now={now} />
+        <div className="ll:flex ll:h-full ll:w-full ll:flex-col ll:overflow-hidden">
+          <NotificationsList notifications={filteredNotifications} />
         </div>
       </DraggableWindow>
     </AnimatedWindow>

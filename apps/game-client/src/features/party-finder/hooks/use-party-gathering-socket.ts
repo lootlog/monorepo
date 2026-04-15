@@ -1,6 +1,7 @@
 import { GatewayEvent } from "@/config/gateway";
 import { useSocket } from "@/contexts/socket-context";
 import { useSession } from "@/hooks/auth/use-session";
+import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
 import { useSoundPlayback } from "@/hooks/use-sound-playback";
 import { Game } from "@/lib/game";
 import {
@@ -19,9 +20,7 @@ export const usePartyGatheringSocket = () => {
   const removeNotification = useNotificationsStore((s) => s.removeNotification);
   const setOpen = useWindowsStore((s) => s.setOpen);
   const { data: sessionData } = useSession();
-  const { settings: notificationsSettings } = useNotificationsStore();
-  const characterId = Game.hero ? String(Game.hero.id) : null;
-  const settings = characterId ? notificationsSettings[characterId] : undefined;
+  const { settings } = useCurrentGameAccountNotificationSettings();
   const world = Game.hero ? Game.getWorldName() : undefined;
   const { playSound } = useSoundPlayback();
 

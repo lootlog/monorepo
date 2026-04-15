@@ -15,6 +15,8 @@ import { NotificationsSettingsTab } from "@/features/settings/components/notific
 import { HotkeysSettingsTab } from "@/features/settings/components/hotkeys/hotkeys-settings-tab";
 import { SoundsSettingsTab } from "@/features/settings/components/sounds/sounds-settings-tab";
 import { TimersSettingsTab } from "@/features/settings/components/timers/timers-settings-tab";
+import type { SettingsTabValue } from "@/features/settings/constants/settings-tabs";
+import { useWindowsStore } from "@/store/windows.store";
 import {
   Bell,
   Bug,
@@ -32,12 +34,14 @@ import type { FC, ReactNode } from "react";
 
 type SettingsTabsProps = {};
 
-const TABS_LIST: {
-  value: string;
+type SettingsTabDefinition = {
+  value: SettingsTabValue;
   label: string;
   icon: LucideIcon;
   content: ReactNode;
-}[] = [
+};
+
+const BASE_TABS_LIST: SettingsTabDefinition[] = [
   {
     value: "general",
     label: "Ogólne",
@@ -92,30 +96,37 @@ const TABS_LIST: {
     icon: Keyboard,
     content: <HotkeysSettingsTab />,
   },
-  // {
-  //   value: "chat",
-  //   label: "Chat",
-  //   content: <ChatSettingsTab />,
-  // },
-  ...(import.meta.env.DEV
-    ? [
-        {
-          value: "debug",
-          label: "Debug",
-          icon: Bug,
-          content: <DebugTab />,
-        },
-      ]
-    : []),
 ];
+
+const DEBUG_TAB: SettingsTabDefinition = {
+  value: "debug",
+  label: "Debug",
+  icon: Bug,
+  content: <DebugTab />,
+};
+
+const TABS_LIST: SettingsTabDefinition[] = import.meta.env.DEV
+  ? [...BASE_TABS_LIST, DEBUG_TAB]
+  : BASE_TABS_LIST;
 
 const ICON_CLASSES = "ll:size-4 ll:stroke-2";
 
 export const SettingsTabs: FC<SettingsTabsProps> = () => {
+  const activeTab = useWindowsStore((state) => state.settings.state?.activeTab);
+  const setSettingsActiveTab = useWindowsStore(
+    (state) => state.setSettingsActiveTab,
+  );
+  const selectedTab = TABS_LIST.some((tab) => tab.value === activeTab)
+    ? activeTab
+    : "general";
+
   return (
     <div className="ll:h-full ll:flex ll:flex-col ll:pt-2">
       <Tabs
-        defaultValue="general"
+        value={selectedTab}
+        onValueChange={(value) =>
+          setSettingsActiveTab(value as SettingsTabValue)
+        }
         className="ll:flex ll:flex-col ll:h-full ll:w-full"
       >
         <TabsList className="ll:shrink-0 ll:flex-wrap ll:justify-start! ll:justify-items-start ll:gap-1 ll:gap-y-0 ll:flex ll:px-2">

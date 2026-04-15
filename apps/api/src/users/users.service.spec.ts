@@ -46,6 +46,9 @@ describe("UsersService", () => {
     userSettings: {
       deleteMany: mockFn(),
     },
+    userGameAccountSettings: {
+      deleteMany: mockFn(),
+    },
     userTimerSettings: {
       deleteMany: mockFn(),
     },
@@ -69,6 +72,10 @@ describe("UsersService", () => {
       findUnique: mockFn(),
       upsert: mockFn(),
     },
+    userGameAccountSettings: {
+      findUnique: mockFn(),
+      upsert: mockFn(),
+    },
   };
   const mockLogger = { warn: mockFn() };
   const mockAuthService = { invalidateIdpTokenCache: mockFn() };
@@ -88,6 +95,7 @@ describe("UsersService", () => {
     mockTx.npcKillStats.deleteMany.mockResolvedValue({ count: 2 });
     mockTx.userKillStats.deleteMany.mockResolvedValue({ count: 3 });
     mockTx.userSettings.deleteMany.mockResolvedValue({ count: 1 });
+    mockTx.userGameAccountSettings.deleteMany.mockResolvedValue({ count: 2 });
     mockTx.userTimerSettings.deleteMany.mockResolvedValue({ count: 1 });
     mockTx.userSoundSettings.deleteMany.mockResolvedValue({ count: 1 });
     mockTx.userCharactersLootlogSettings.deleteMany.mockResolvedValue({
@@ -138,6 +146,201 @@ describe("UsersService", () => {
     expect(service).toBeDefined();
   });
 
+  it("returns default game account preferences when no account-scoped settings exist", async () => {
+    mockPrismaService.userGameAccountSettings.findUnique.mockResolvedValue(
+      null,
+    );
+
+    const result = await service.getUserGameAccountPreferences(
+      "auth-user-current",
+      "12345",
+    );
+
+    expect(
+      mockPrismaService.userGameAccountSettings.findUnique,
+    ).toHaveBeenCalledWith({
+      where: {
+        userId_accountId: {
+          userId: "auth-user-current",
+          accountId: "12345",
+        },
+      },
+    });
+    expect(result).toEqual({
+      accountId: "12345",
+      hasStoredPreferences: false,
+      notifications: {
+        ELITE2: {
+          autoHideTimeout: 0,
+          guildIds: [],
+          highlight: false,
+          ignoreOtherWorlds: false,
+          show: false,
+          sound: false,
+        },
+        HERO: {
+          autoHideTimeout: 0,
+          guildIds: [],
+          highlight: true,
+          ignoreOtherWorlds: false,
+          show: true,
+          sound: false,
+        },
+        COLOSSUS: {
+          autoHideTimeout: 0,
+          guildIds: [],
+          highlight: true,
+          ignoreOtherWorlds: false,
+          show: true,
+          sound: false,
+        },
+        TITAN: {
+          autoHideTimeout: 0,
+          guildIds: [],
+          highlight: true,
+          ignoreOtherWorlds: false,
+          show: true,
+          sound: false,
+        },
+        message: {
+          autoHideTimeout: 0,
+          guildIds: [],
+          highlight: true,
+          ignoreOtherWorlds: false,
+          show: true,
+          sound: false,
+        },
+        "party-gathering": {
+          autoHideTimeout: 0,
+          guildIds: [],
+          highlight: true,
+          ignoreOtherWorlds: false,
+          show: true,
+          sound: false,
+        },
+      },
+    });
+  });
+
+  it("updates one account bucket without overwriting top-level preferences or other accounts", async () => {
+    mockPrismaService.userGameAccountSettings.findUnique.mockResolvedValue({
+      id: 7,
+      userId: "auth-user-current",
+      accountId: "111",
+      settings: {
+        notifications: {
+          ELITE2: {
+            show: false,
+            highlight: false,
+            ignoreOtherWorlds: false,
+            autoHideTimeout: 0,
+            guildIds: [],
+            sound: false,
+          },
+          HERO: {
+            show: true,
+            highlight: true,
+            ignoreOtherWorlds: false,
+            autoHideTimeout: 0,
+            guildIds: ["guild-1"],
+            sound: false,
+          },
+          COLOSSUS: {
+            show: true,
+            highlight: true,
+            ignoreOtherWorlds: false,
+            autoHideTimeout: 0,
+            guildIds: ["guild-1"],
+            sound: false,
+          },
+          TITAN: {
+            show: true,
+            highlight: true,
+            ignoreOtherWorlds: false,
+            autoHideTimeout: 0,
+            guildIds: ["guild-1"],
+            sound: false,
+          },
+          message: {
+            show: true,
+            highlight: true,
+            ignoreOtherWorlds: false,
+            autoHideTimeout: 0,
+            guildIds: ["guild-1"],
+            sound: false,
+          },
+          "party-gathering": {
+            show: true,
+            highlight: true,
+            ignoreOtherWorlds: false,
+            autoHideTimeout: 0,
+            guildIds: ["guild-1"],
+            sound: false,
+          },
+        },
+      },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    mockPrismaService.userGameAccountSettings.upsert.mockResolvedValue({
+      id: 7,
+      userId: "auth-user-current",
+      accountId: "111",
+      settings: {},
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const result = await service.updateUserGameAccountPreferences(
+      "auth-user-current",
+      "111",
+      {
+        notifications: {
+          HERO: {
+            sound: true,
+            guildIds: ["guild-3"],
+          },
+        },
+      },
+    );
+
+    expect(
+      mockPrismaService.userGameAccountSettings.upsert,
+    ).toHaveBeenCalledWith({
+      where: {
+        userId_accountId: {
+          userId: "auth-user-current",
+          accountId: "111",
+        },
+      },
+      update: {
+        settings: {
+          notifications: expect.objectContaining({
+            HERO: expect.objectContaining({
+              sound: true,
+              guildIds: ["guild-3"],
+            }),
+          }),
+        },
+        updatedAt: expect.any(Date),
+      },
+      create: expect.objectContaining({
+        userId: "auth-user-current",
+        accountId: "111",
+      }),
+    });
+    expect(result).toEqual({
+      accountId: "111",
+      hasStoredPreferences: true,
+      notifications: expect.objectContaining({
+        HERO: expect.objectContaining({
+          sound: true,
+          guildIds: ["guild-3"],
+        }),
+      }),
+    });
+  });
+
   it("deletes auth-owned and discord-owned records with the correct identifiers", async () => {
     await service.deleteAccount({
       authUserId: "auth-user-current",
@@ -173,6 +376,9 @@ describe("UsersService", () => {
     });
 
     expect(mockTx.userSettings.deleteMany).toHaveBeenCalledWith({
+      where: { userId: "auth-user-current" },
+    });
+    expect(mockTx.userGameAccountSettings.deleteMany).toHaveBeenCalledWith({
       where: { userId: "auth-user-current" },
     });
     expect(mockTx.userTimerSettings.deleteMany).toHaveBeenCalledWith({

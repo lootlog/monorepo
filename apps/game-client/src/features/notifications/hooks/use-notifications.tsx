@@ -1,8 +1,10 @@
 import { GatewayEvent } from "@/config/gateway";
 import { useSocket } from "@/contexts/socket-context";
 import { useSession } from "@/hooks/auth/use-session";
+import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
 import { Game } from "@/lib/game";
 import { useNotificationsStore } from "@/store/notifications.store";
+import { useWindowsStore } from "@/store/windows.store";
 import type { GameNpc } from "@lootlog/margonem";
 import { useEffect, useRef } from "react";
 import { getNpcTypeByWt } from "@lootlog/types";
@@ -30,10 +32,9 @@ export const useNotifications = () => {
   const pushNotification = useNotificationsStore(
     (state) => state.pushNotification,
   );
+  const setOpen = useWindowsStore((state) => state.setOpen);
   const { data: sessionData } = useSession();
-  const characterId = String(Game.hero.id);
-  const { settings: notificationsSettings } = useNotificationsStore();
-  const settings = notificationsSettings[characterId];
+  const { settings } = useCurrentGameAccountNotificationSettings();
   const world = Game.getWorldName();
 
   const { playSound } = useSoundPlayback();
@@ -50,19 +51,15 @@ export const useNotifications = () => {
     if (socket?.hasListeners(GatewayEvent.NOTIFICATION) || !connected) return;
 
     socket?.on(GatewayEvent.NOTIFICATION, (data: Notification) => {
-      if (data.discordId === sessionDataRef.current?.user?.discordId) return;
+      // if (data.discordId === sessionDataRef.current?.user?.discordId) return;
 
       const currentSettings = settingsRef.current;
-      if (!currentSettings) {
-        pushNotification({ ...data, servers: [data.guildId] });
-        return;
-      }
-
       const notificationType = getNotificationType(data);
       const typeSettings =
         currentSettings[notificationType as keyof typeof currentSettings];
 
       if (!typeSettings) {
+        setOpen("notifications", true);
         pushNotification({ ...data, servers: [data.guildId] });
         return;
       }
@@ -72,11 +69,12 @@ export const useNotifications = () => {
         return;
       if (!typeSettings.guildIds.includes(data.guildId)) return;
 
+      setOpen("notifications", true);
       pushNotification({ ...data, servers: [data.guildId] });
 
       if (typeSettings.sound) {
         playSound("notifications", notificationType);
       }
     });
-  }, [connected, socket, pushNotification, playSound]);
+  }, [connected, socket, pushNotification, playSound, setOpen]);
 };

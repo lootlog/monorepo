@@ -37,13 +37,12 @@ export const NpcDetector = () => {
         id="npc-detector"
         title="Wykrywacz"
         onClose={handleClose}
-        resizable={false}
-        minHeight={200}
-        maxHeight={400}
-        minWidth={360}
-        dynamicHeight
+        resizable
+        minHeight={88}
+        maxHeight={600}
+        minWidth={242}
       >
-        <div className="ll:flex ll:flex-col ll:h-full ll:w-full">
+        <div className="ll:flex ll:flex-col ll:h-full ll:w-full ll:overflow-hidden">
           <NpcsList npcs={filteredNpcs} />
         </div>
       </DraggableWindow>
