@@ -6,6 +6,8 @@
  * OpenAPI spec version: 1.0
  */
 
-export type EventsAssignmentControllerAddMap201 = {
-  id: string;
+export type EventMapResponseDtoOutputAssignedMembersItemRolesItem = {
+  position: number;
+  /** @nullable */
+  color: number | null;
 };

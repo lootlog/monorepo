@@ -6,8 +6,6 @@
  * OpenAPI spec version: 1.0
  */
 
-export type EventsRankingControllerUpdateKillPointBody = {
-  pointsDelta: number;
-  /** @maxLength 500 */
-  comment?: string;
-};
+export type MembersControllerGetGuildMembersSummaryPathParameters = {
+ guildId: unknown,
+ }

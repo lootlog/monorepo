@@ -30,3 +30,8 @@ export {
   intFromString,
   commaSeparatedArray,
 } from "./validators/query-helpers";
+export {
+  openApiYamlDumpOptions,
+  sanitizeOpenApiDocument,
+  type OpenApiYamlDumpOptions,
+} from "./openapi";
