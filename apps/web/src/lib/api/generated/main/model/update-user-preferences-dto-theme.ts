@@ -24,6 +24,7 @@ export const UpdateUserPreferencesDtoTheme = {
   barcelona: 'barcelona',
   waguri: 'waguri',
   rukia: 'rukia',
+  rias: 'rias',
   'cat-pink': 'cat-pink',
   'cat-purple': 'cat-purple',
   'cat-blue': 'cat-blue',

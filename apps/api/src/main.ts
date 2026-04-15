@@ -10,6 +10,10 @@ import {
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { cleanupOpenApiDoc } from "nestjs-zod";
 import { WINSTON_MODULE_NEST_PROVIDER } from "nest-winston";
+import {
+  openApiYamlDumpOptions,
+  sanitizeOpenApiDocument,
+} from "@lootlog/nest-shared/openapi";
 import { RuntimeEnvironment } from "src/types/runtime.types";
 
 async function bootstrap() {
@@ -29,18 +33,20 @@ async function bootstrap() {
     .addBearerAuth()
     .build();
 
-  const document = cleanupOpenApiDoc(
-    SwaggerModule.createDocument(app, config, {
-      operationIdFactory: (controllerKey, methodKey) =>
-        `${controllerKey}_${methodKey}`,
-    }),
-    { version: "3.0" },
+  const document = sanitizeOpenApiDocument(
+    cleanupOpenApiDoc(
+      SwaggerModule.createDocument(app, config, {
+        operationIdFactory: (controllerKey, methodKey) =>
+          `${controllerKey}_${methodKey}`,
+      }),
+      { version: "3.0" },
+    ),
   );
   SwaggerModule.setup("api/docs", app, document);
 
   if (env.ENV === RuntimeEnvironment.LOCAL) {
     // Export OpenAPI document as YAML
-    const yamlDocument = yaml.dump(document);
+    const yamlDocument = yaml.dump(document, openApiYamlDumpOptions);
     writeFileSync("openapi.yaml", yamlDocument, "utf8");
   }
 

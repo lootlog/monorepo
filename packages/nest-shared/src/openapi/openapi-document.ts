@@ -1,12 +1,11 @@
-import fs from "node:fs";
-import path from "node:path";
-import { createRequire } from "node:module";
+type OpenApiDictionary = Record<string, unknown>;
 
-const requireFromApi = createRequire(path.resolve("apps/api/package.json"));
-const yaml = requireFromApi("js-yaml");
+export type OpenApiYamlDumpOptions = {
+  noRefs: true;
+  lineWidth: -1;
+  quotingType: '"';
+};
 
-const openApiPath = path.resolve("apps/api/openapi.yaml");
-const openApiDocument = yaml.load(fs.readFileSync(openApiPath, "utf8"));
 const httpMethods = new Set([
   "get",
   "post",
@@ -18,55 +17,77 @@ const httpMethods = new Set([
   "trace",
 ]);
 
-const stripTypedObjectAdditionalProperties = (value) => {
-  if (!value || typeof value !== "object") {
-    return;
-  }
+export const openApiYamlDumpOptions = {
+  noRefs: true,
+  lineWidth: -1,
+  quotingType: '"',
+} satisfies OpenApiYamlDumpOptions;
 
+export function sanitizeOpenApiDocument<TDocument>(document: TDocument) {
+  stripTypedObjectAdditionalProperties(document);
+  stripUnsupportedOpenApiKeywords(document);
+  ensurePathParameters(document);
+
+  return document;
+}
+
+function isOpenApiDictionary(value: unknown): value is OpenApiDictionary {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function hasOpenApiProperty(value: OpenApiDictionary, propertyName: string) {
+  return Object.prototype.hasOwnProperty.call(value, propertyName);
+}
+
+function stripTypedObjectAdditionalProperties(value: unknown) {
   if (Array.isArray(value)) {
     value.forEach(stripTypedObjectAdditionalProperties);
     return;
   }
 
+  if (!isOpenApiDictionary(value)) {
+    return;
+  }
+
   if (
-    Object.hasOwn(value, "properties") &&
-    Object.hasOwn(value, "additionalProperties")
+    hasOpenApiProperty(value, "properties") &&
+    hasOpenApiProperty(value, "additionalProperties")
   ) {
     delete value.additionalProperties;
   }
 
   Object.values(value).forEach(stripTypedObjectAdditionalProperties);
-};
+}
 
-const stripUnsupportedOpenApiKeywords = (value) => {
-  if (!value || typeof value !== "object") {
-    return;
-  }
-
+function stripUnsupportedOpenApiKeywords(value: unknown) {
   if (Array.isArray(value)) {
     value.forEach(stripUnsupportedOpenApiKeywords);
     return;
   }
 
-  if (Object.hasOwn(value, "propertyNames")) {
+  if (!isOpenApiDictionary(value)) {
+    return;
+  }
+
+  if (hasOpenApiProperty(value, "propertyNames")) {
     delete value.propertyNames;
   }
 
-  if (Object.hasOwn(value, "const")) {
+  if (hasOpenApiProperty(value, "const")) {
     value.enum = [value.const];
     delete value.const;
   }
 
   Object.values(value).forEach(stripUnsupportedOpenApiKeywords);
-};
+}
 
-const ensurePathParameters = (document) => {
-  if (!document?.paths || typeof document.paths !== "object") {
+function ensurePathParameters(document: unknown) {
+  if (!isOpenApiDictionary(document) || !isOpenApiDictionary(document.paths)) {
     return;
   }
 
   for (const [pathName, pathItem] of Object.entries(document.paths)) {
-    if (!pathItem || typeof pathItem !== "object") {
+    if (!isOpenApiDictionary(pathItem)) {
       continue;
     }
 
@@ -80,11 +101,7 @@ const ensurePathParameters = (document) => {
     }
 
     for (const [methodName, operation] of Object.entries(pathItem)) {
-      if (
-        !httpMethods.has(methodName) ||
-        !operation ||
-        typeof operation !== "object"
-      ) {
+      if (!httpMethods.has(methodName) || !isOpenApiDictionary(operation)) {
         continue;
       }
 
@@ -97,9 +114,8 @@ const ensurePathParameters = (document) => {
 
       for (const parameterName of pathParameterNames) {
         const existingParameter = [...pathLevelParameters, ...parameters].find(
-          (parameter) =>
-            parameter &&
-            typeof parameter === "object" &&
+          (parameter): parameter is OpenApiDictionary =>
+            isOpenApiDictionary(parameter) &&
             parameter.in === "path" &&
             parameter.name === parameterName,
         );
@@ -115,8 +131,7 @@ const ensurePathParameters = (document) => {
         }
 
         if (
-          !existingParameter.schema ||
-          typeof existingParameter.schema !== "object" ||
+          !isOpenApiDictionary(existingParameter.schema) ||
           Object.keys(existingParameter.schema).length === 0
         ) {
           existingParameter.schema = { type: "string" };
@@ -126,13 +141,4 @@ const ensurePathParameters = (document) => {
       operation.parameters = parameters;
     }
   }
-};
-
-stripTypedObjectAdditionalProperties(openApiDocument);
-stripUnsupportedOpenApiKeywords(openApiDocument);
-ensurePathParameters(openApiDocument);
-
-fs.writeFileSync(
-  openApiPath,
-  yaml.dump(openApiDocument, { noRefs: true, lineWidth: -1 }),
-);
+}
