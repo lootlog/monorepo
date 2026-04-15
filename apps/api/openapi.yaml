@@ -379,9 +379,7 @@ paths:
         - members
   /timers:
     get:
-      description: >-
-        Retrieve all timers accessible to the authenticated user across all
-        guilds
+      description: Retrieve all timers accessible to the authenticated user across all guilds
       operationId: TimersController_getAllTimers
       parameters:
         - name: world
@@ -438,9 +436,7 @@ paths:
       tags:
         - timers
     post:
-      description: >-
-        Create a timer submitted by user from game client for a specific guild.
-        Supports custom spawn times.
+      description: Create a timer submitted by user from game client for a specific guild. Supports custom spawn times.
       operationId: TimersController_createTimerFromGameClient
       parameters:
         - name: guildId
@@ -474,9 +470,7 @@ paths:
         - timers
   /guilds/{guildId}/timers/npcs/search:
     get:
-      description: >-
-        Search for NPCs that have been timed in this guild/world, returning
-        their latest respawn configuration
+      description: Search for NPCs that have been timed in this guild/world, returning their latest respawn configuration
       operationId: TimersController_searchNpcsWithTimerData
       parameters:
         - name: guildId
@@ -662,9 +656,7 @@ paths:
         - guilds
   /guilds/@me/permissions:
     get:
-      description: >-
-        Retrieve all guilds with permissions and roles for the authenticated
-        user
+      description: Retrieve all guilds with permissions and roles for the authenticated user
       operationId: GuildsController_getUserGuildsWithPermissions
       parameters: []
       responses:
@@ -701,7 +693,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       responses:
         "200":
           description: Guild information
@@ -717,7 +710,12 @@ paths:
   /guilds/{guildId}/config:
     patch:
       operationId: GuildsController_updateGuildConfig
-      parameters: []
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -737,7 +735,12 @@ paths:
         - guilds
     get:
       operationId: GuildsController_getGuildConfig
-      parameters: []
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: Guild config
@@ -752,7 +755,12 @@ paths:
   /guilds/{guildId}/worlds:
     get:
       operationId: GuildsController_getWorldsByGuildId
-      parameters: []
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: ""
@@ -763,7 +771,12 @@ paths:
   /guilds/{guildId}/permissions:
     get:
       operationId: GuildsController_getGuildPermissions
-      parameters: []
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: ""
@@ -774,7 +787,12 @@ paths:
   /guilds/{guildId}/discord-sync:
     get:
       operationId: GuildsController_getGuildDiscordSyncStatus
-      parameters: []
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: ""
@@ -785,7 +803,12 @@ paths:
   /guilds/{guildId}/discord-sync/refresh:
     post:
       operationId: GuildsController_refreshGuildDiscordSync
-      parameters: []
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         "201":
           description: ""
@@ -795,9 +818,7 @@ paths:
         - guilds
   /internal/guilds/user-permissions:
     get:
-      description: >-
-        Internal endpoint for gateway service to retrieve user guilds with
-        permissions. Does not require authentication.
+      description: Internal endpoint for gateway service to retrieve user guilds with permissions. Does not require authentication.
       operationId: GuildsInternalController_getUserPermissions
       parameters:
         - name: discordId
@@ -826,9 +847,7 @@ paths:
         - internal
   /internal/guilds/{idOrVanityUrl}:
     get:
-      description: >-
-        Internal endpoint for services that need to resolve a guild identifier
-        to its canonical guild data.
+      description: Internal endpoint for services that need to resolve a guild identifier to its canonical guild data.
       operationId: GuildsInternalController_getGuildByIdOrVanityUrl
       parameters:
         - name: idOrVanityUrl
@@ -932,8 +951,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/UserLootlogConfigAccountResponseDto_Output
+                $ref: "#/components/schemas/UserLootlogConfigAccountResponseDto_Output"
         "404":
           description: Configuration not found
       security:
@@ -1064,9 +1082,7 @@ paths:
         - timer-settings
   /timer-settings/migrate:
     post:
-      description: >-
-        Migrate timer settings from localStorage to backend with conflict
-        resolution
+      description: Migrate timer settings from localStorage to backend with conflict resolution
       operationId: TimerSettingsController_migrateSettings
       parameters: []
       requestBody:
@@ -1199,16 +1215,14 @@ paths:
           in: query
           schema:
             format: date-time
-            pattern: >-
-              ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
             type: string
         - name: createdAtMax
           required: false
           in: query
           schema:
             format: date-time
-            pattern: >-
-              ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
             type: string
         - name: guildId
           required: true
@@ -1234,9 +1248,7 @@ paths:
         - loots
   /guilds/{guildId}/loots/stats:
     get:
-      description: >-
-        Retrieve aggregated loot statistics for a guild with optional time
-        period and filters
+      description: Retrieve aggregated loot statistics for a guild with optional time period and filters
       operationId: LootsController_getLootStats
       parameters:
         - name: period
@@ -1277,9 +1289,7 @@ paths:
             example: guild_123
       responses:
         "200":
-          description: >-
-            Loot statistics including overview, timeline, top NPCs, and top
-            contributors
+          description: Loot statistics including overview, timeline, top NPCs, and top contributors
           content:
             application/json:
               schema:
@@ -1407,16 +1417,14 @@ paths:
           in: query
           schema:
             format: date-time
-            pattern: >-
-              ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
             type: string
         - name: createdAtMax
           required: false
           in: query
           schema:
             format: date-time
-            pattern: >-
-              ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
             type: string
         - name: guildId
           required: true
@@ -1876,6 +1884,11 @@ paths:
           schema:
             example: 123
             type: number
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: Reservation deleted successfully
@@ -1888,7 +1901,12 @@ paths:
     get:
       description: Retrieve reservations cards
       operationId: ReservationsController_getReservationsCards
-      parameters: []
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: List of reservations cards
@@ -1962,9 +1980,7 @@ paths:
       tags:
         - messaging
     delete:
-      description: >-
-        Cancel the active party gathering for the current user without requiring
-        a notificationId
+      description: Cancel the active party gathering for the current user without requiring a notificationId
       operationId: MessagingController_cancelPartyGatheringByUser
       parameters: []
       responses:
@@ -2000,7 +2016,12 @@ paths:
   /guilds/{guildId}/notifications/targets:
     get:
       operationId: NotificationsGuildController_getGuildTargets
-      parameters: []
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: ""
@@ -2010,7 +2031,12 @@ paths:
         - notifications
     post:
       operationId: NotificationsGuildController_createGuildTarget
-      parameters: []
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -2027,7 +2053,12 @@ paths:
   /guilds/{guildId}/notifications/targets/available:
     get:
       operationId: NotificationsGuildController_getAvailableGuildTargets
-      parameters: []
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: ""
@@ -2044,6 +2075,11 @@ paths:
           in: path
           schema:
             type: number
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -2065,6 +2101,11 @@ paths:
           in: path
           schema:
             type: number
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: ""
@@ -2075,7 +2116,12 @@ paths:
   /guilds/{guildId}/notifications/rules:
     get:
       operationId: NotificationsGuildController_getGuildRules
-      parameters: []
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: ""
@@ -2085,7 +2131,12 @@ paths:
         - notifications
     post:
       operationId: NotificationsGuildController_createGuildRule
-      parameters: []
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -2108,6 +2159,11 @@ paths:
           in: path
           schema:
             type: number
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -2129,6 +2185,11 @@ paths:
           in: path
           schema:
             type: number
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: ""
@@ -2145,6 +2206,11 @@ paths:
           in: path
           schema:
             type: number
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         "201":
           description: ""
@@ -2161,6 +2227,11 @@ paths:
           in: path
           schema:
             type: number
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         "201":
           description: ""
@@ -2171,7 +2242,12 @@ paths:
   /guilds/{guildId}/notifications/jobs:
     get:
       operationId: NotificationsGuildController_getGuildJobs
-      parameters: []
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: ""
@@ -2186,6 +2262,11 @@ paths:
         - name: jobId
           required: true
           in: path
+          schema:
+            type: string
+        - name: guildId
+          in: path
+          required: true
           schema:
             type: string
       responses:
@@ -2458,7 +2539,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -2499,7 +2581,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       responses:
         "200":
           description: List of events
@@ -2529,7 +2612,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       responses:
         "200":
           description: Event details
@@ -2558,7 +2642,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -2593,7 +2678,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       responses:
         "200":
           description: Event deleted successfully
@@ -2610,9 +2696,7 @@ paths:
         - events
   /guilds/{guildId}/events/{eventId}/overview:
     get:
-      description: >-
-        Get lightweight event overview for read-only views (without maps and
-        rankings)
+      description: Get lightweight event overview for read-only views (without maps and rankings)
       operationId: showEventOverview
       parameters:
         - name: eventId
@@ -2625,7 +2709,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       responses:
         "200":
           description: Event overview
@@ -2642,9 +2727,7 @@ paths:
         - events
   /guilds/{guildId}/events/{eventId}/wrapped:
     get:
-      description: >-
-        Get cached event wrapped summary with loot, coverage and member
-        highlights
+      description: Get cached event wrapped summary with loot, coverage and member highlights
       operationId: showEventWrapped
       parameters:
         - name: eventId
@@ -2657,7 +2740,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       responses:
         "200":
           description: Event wrapped summary
@@ -2674,9 +2758,7 @@ paths:
         - events
   /guilds/{guildId}/events/{eventId}/maps:
     get:
-      description: >-
-        Get map assignments grouped by hero for a specific event (read model for
-        realtime map updates)
+      description: Get map assignments grouped by hero for a specific event (read model for realtime map updates)
       operationId: listEventMaps
       parameters:
         - name: eventId
@@ -2689,7 +2771,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       responses:
         "200":
           description: Event maps data
@@ -2719,7 +2802,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       responses:
         "200":
           description: Points recalculated successfully
@@ -2755,7 +2839,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -2773,9 +2858,7 @@ paths:
       tags:
         - events
     delete:
-      description: >-
-        Remove an assigned member from a map. If memberId is provided, removes
-        specific member; otherwise removes all.
+      description: Remove an assigned member from a map. If memberId is provided, removes specific member; otherwise removes all.
       operationId: EventsAssignmentController_unassignMember
       parameters:
         - name: eventId
@@ -2800,7 +2883,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       responses:
         "200":
           description: Member unassigned successfully
@@ -2832,7 +2916,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       responses:
         "200":
           description: Self-assigned successfully
@@ -2863,7 +2948,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       responses:
         "200":
           description: Self-unassigned successfully
@@ -2889,7 +2975,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -2925,7 +3012,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -2960,7 +3048,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       responses:
         "200":
           description: Hero deleted successfully
@@ -2990,7 +3079,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -3036,7 +3126,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       responses:
         "200":
           description: Map deleted successfully
@@ -3066,7 +3157,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       responses:
         "200":
           description: List of locations with maps
@@ -3095,7 +3187,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -3139,7 +3232,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -3182,7 +3276,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       responses:
         "200":
           description: Location deleted successfully
@@ -3214,7 +3309,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -3256,7 +3352,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -3275,9 +3372,7 @@ paths:
         - events
   /guilds/{guildId}/events/{eventId}/participation-confirmations/pending:
     get:
-      description: >-
-        Get pending and expired kill participation confirmations for currently
-        authenticated member
+      description: Get pending and expired kill participation confirmations for currently authenticated member
       operationId: listPendingParticipationConfirmations
       parameters:
         - name: eventId
@@ -3290,15 +3385,15 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       responses:
         "200":
           description: Participation confirmations
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/PendingParticipationConfirmationsResponseDto
+                $ref: "#/components/schemas/PendingParticipationConfirmationsResponseDto"
       security:
         - bearer: []
       summary: Get participation confirmations
@@ -3306,9 +3401,7 @@ paths:
         - events
   /guilds/{guildId}/events/{eventId}/kills/{killId}/confirm-participation:
     post:
-      description: >-
-        Confirm member participation for a kill within configured confirmation
-        window
+      description: Confirm member participation for a kill within configured confirmation window
       operationId: confirmParticipationForKill
       parameters:
         - name: eventId
@@ -3327,15 +3420,15 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       responses:
         "200":
           description: Participation confirmed
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/ConfirmParticipationForKillResponseDto_Output
+                $ref: "#/components/schemas/ConfirmParticipationForKillResponseDto_Output"
       security:
         - bearer: []
       summary: Confirm participation in kill tracking
@@ -3356,7 +3449,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       responses:
         "200":
           description: Event ranking
@@ -3394,7 +3488,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -3432,7 +3527,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       responses:
         "200":
           description: Edit history returned
@@ -3470,7 +3566,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       responses:
         "200":
           description: List of timers for event heroes
@@ -3502,7 +3599,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       responses:
         "200":
           description: List of hero stats with kill counts
@@ -3521,9 +3619,7 @@ paths:
         - events
   /guilds/{guildId}/events/{eventId}/kills:
     get:
-      description: >-
-        Get paginated kill history for all heroes in an event, with participant
-        point details
+      description: Get paginated kill history for all heroes in an event, with participant point details
       operationId: EventsRankingController_getEventKillHistory
       parameters:
         - name: eventId
@@ -3554,7 +3650,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       responses:
         "200":
           description: Paginated list of kills with participant details
@@ -3571,9 +3668,7 @@ paths:
         - events
   /guilds/{guildId}/events/{eventId}/members/{memberId}/kills:
     get:
-      description: >-
-        Get paginated kill history for a specific member in an event, with
-        detailed point breakdown per kill
+      description: Get paginated kill history for a specific member in an event, with detailed point breakdown per kill
       operationId: EventsRankingController_getMemberKillHistory
       parameters:
         - name: eventId
@@ -3610,7 +3705,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       responses:
         "200":
           description: Paginated list of member kills with point breakdown
@@ -3627,9 +3723,7 @@ paths:
         - events
   /guilds/{guildId}/events/{eventId}/heroes/{heroId}/kills:
     get:
-      description: >-
-        Get paginated kill history for a specific hero, with participant point
-        details
+      description: Get paginated kill history for a specific hero, with participant point details
       operationId: EventsRankingController_getHeroKillHistory
       parameters:
         - name: eventId
@@ -3660,7 +3754,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       responses:
         "200":
           description: Paginated list of kills with participant details
@@ -3677,9 +3772,7 @@ paths:
         - events
   /guilds/{guildId}/events/{eventId}/heroes/{heroId}/kills/{killId}:
     get:
-      description: >-
-        Get detailed information about a specific kill including participants,
-        scoring breakdown, and matching loots
+      description: Get detailed information about a specific kill including participants, scoring breakdown, and matching loots
       operationId: EventsRankingController_getKillDetail
       parameters:
         - name: eventId
@@ -3704,7 +3797,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       responses:
         "200":
           description: Kill details with participants, event config, and matching loots
@@ -3721,9 +3815,7 @@ paths:
         - events
   /guilds/{guildId}/events/{eventId}/kills/{killId}/points/{killPointId}:
     patch:
-      description: >-
-        Apply a signed manual points delta for a specific kill participant
-        (OWNER/ADMIN only). Automatically recalculates ranking.
+      description: Apply a signed manual points delta for a specific kill participant (OWNER/ADMIN only). Automatically recalculates ranking.
       operationId: EventsRankingController_updateKillPoint
       parameters:
         - name: eventId
@@ -3748,7 +3840,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -3792,12 +3885,11 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       responses:
         "200":
-          description: >-
-            Timeline data with map assignments and coverage gaps during spawn
-            window
+          description: Timeline data with map assignments and coverage gaps during spawn window
           content:
             application/json:
               schema:
@@ -3813,9 +3905,7 @@ paths:
         - events
   /guilds/{guildId}/events/{eventId}/heroes/{heroId}/coverage-gaps:
     get:
-      description: >-
-        Get coverage gap history for a specific hero (periods when maps were
-        unassigned or uncovered)
+      description: Get coverage gap history for a specific hero (periods when maps were unassigned or uncovered)
       operationId: EventsMonitoringController_getHeroCoverageGaps
       parameters:
         - name: eventId
@@ -3834,7 +3924,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       responses:
         "200":
           description: List of coverage gaps with type, duration, and timestamps
@@ -3851,9 +3942,7 @@ paths:
         - events
   /guilds/{guildId}/events/{eventId}/maps/{mapId}/coverage-gaps:
     get:
-      description: >-
-        Get coverage gap history for a specific map (periods when the map was
-        unassigned or uncovered)
+      description: Get coverage gap history for a specific map (periods when the map was unassigned or uncovered)
       operationId: EventsMonitoringController_getMapCoverageGaps
       parameters:
         - name: eventId
@@ -3872,7 +3961,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       responses:
         "200":
           description: List of coverage gaps with type, duration, and timestamps
@@ -3908,7 +3998,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       responses:
         "200":
           description: Active gap or null if no gap is currently active
@@ -3942,7 +4033,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       responses:
         "200":
           description: Array of active gaps for all maps of the hero
@@ -3978,12 +4070,11 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       responses:
         "200":
-          description: >-
-            Presence statistics including total coverage time and per-member
-            breakdown
+          description: Presence statistics including total coverage time and per-member breakdown
           content:
             application/json:
               schema:
@@ -4014,12 +4105,11 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       responses:
         "200":
-          description: >-
-            Respawn configuration including active timer status and default
-            times
+          description: Respawn configuration including active timer status and default times
           content:
             application/json:
               schema:
@@ -4031,9 +4121,7 @@ paths:
         - events
   /guilds/{guildId}/events/{eventId}/heroes/{heroId}/close-respawn-window:
     post:
-      description: >-
-        Manually close a respawn window for a hero. Optionally creates a new
-        window with specified or default times.
+      description: Manually close a respawn window for a hero. Optionally creates a new window with specified or default times.
       operationId: EventsMonitoringController_closeRespawnWindow
       parameters:
         - name: eventId
@@ -4052,7 +4140,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -4073,9 +4162,7 @@ paths:
         - events
   /guilds/{guildId}/events/{eventId}/heroes/{heroId}/open-respawn-window:
     post:
-      description: >-
-        Manually open a new respawn window for a hero with specified or default
-        times.
+      description: Manually open a new respawn window for a hero with specified or default times.
       operationId: EventsMonitoringController_openRespawnWindow
       parameters:
         - name: eventId
@@ -4094,7 +4181,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -4186,7 +4274,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       responses:
         "200":
           description: List of map templates
@@ -4203,7 +4292,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -4233,7 +4323,8 @@ paths:
           required: true
           in: path
           description: Guild ID
-          schema: {}
+          schema:
+            type: string
       responses:
         "200":
           description: Template deleted successfully
@@ -4244,9 +4335,7 @@ paths:
         - map-templates
   /kills:
     post:
-      description: >-
-        Records an NPC kill. Guilds are auto-detected from user lootlog config
-        (loot/timer whitelists).
+      description: Records an NPC kill. Guilds are auto-detected from user lootlog config (loot/timer whitelists).
       operationId: KillsController_createKill
       parameters: []
       requestBody:
@@ -4271,9 +4360,7 @@ paths:
         - kills
   /guilds/{guildId}/stats/kills:
     get:
-      description: >-
-        Retrieves kill statistics for a guild including overview and member
-        ranking.
+      description: Retrieves kill statistics for a guild including overview and member ranking.
       operationId: KillsController_getGuildKillStats
       parameters:
         - name: npcTypes
@@ -4334,9 +4421,7 @@ paths:
         - kills
   /users/@me/stats/kills:
     get:
-      description: >-
-        Retrieves kill statistics for the authenticated user across all guilds,
-        deduplicated.
+      description: Retrieves kill statistics for the authenticated user across all guilds, deduplicated.
       operationId: KillsController_getUserKillStats
       parameters:
         - name: npcTypes
@@ -4397,9 +4482,7 @@ paths:
         - kills
   /users/@me/kills/npcs:
     get:
-      description: >-
-        Retrieves a paginated, searchable list of NPCs killed by the
-        authenticated user.
+      description: Retrieves a paginated, searchable list of NPCs killed by the authenticated user.
       operationId: KillsController_getUserNpcKills
       parameters:
         - name: npcTypes
@@ -4543,9 +4626,7 @@ paths:
         - kills
   /guilds/{guildId}/stats/kills/top-killers:
     get:
-      description: >-
-        Retrieves top members by kill count for specific NPC types (TITAN,
-        HERO).
+      description: Retrieves top members by kill count for specific NPC types (TITAN, HERO).
       operationId: KillsController_getGuildTopKillersByType
       parameters:
         - name: limit
@@ -4575,9 +4656,7 @@ paths:
         - kills
   /guilds/{guildId}/stats/kills/npcs/{npcId}/killers:
     get:
-      description: >-
-        Retrieves a ranking of members who killed a specific NPC, sorted by kill
-        count.
+      description: Retrieves a ranking of members who killed a specific NPC, sorted by kill count.
       operationId: KillsController_getNpcKillers
       parameters:
         - name: npcId
@@ -4623,9 +4702,7 @@ paths:
         - kills
   /guilds/{guildId}/stats/kills/members/{memberId}:
     get:
-      description: >-
-        Retrieves kill statistics for a specific member including overview and
-        list of killed NPCs.
+      description: Retrieves kill statistics for a specific member including overview and list of killed NPCs.
       operationId: KillsController_getMemberKills
       parameters:
         - name: memberId
@@ -4735,7 +4812,6 @@ components:
             - OK
       required:
         - status
-      additionalProperties: false
     UserPreferencesResponseDto_Output:
       type: object
       properties:
@@ -4754,7 +4830,6 @@ components:
         - guildsOrder
         - theme
         - colorMode
-      additionalProperties: false
     UpdateUserPreferencesDto:
       type: object
       properties:
@@ -5171,8 +5246,7 @@ components:
         lastDiscordSyncAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
           nullable: true
         isStale:
           type: boolean
@@ -5183,14 +5257,12 @@ components:
         nextRefreshAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
           nullable: true
         updatedAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
       required:
         - id
         - userId
@@ -5293,8 +5365,7 @@ components:
         lastDiscordSyncAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
           nullable: true
         isStale:
           type: boolean
@@ -5305,14 +5376,12 @@ components:
         nextRefreshAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
           nullable: true
         updatedAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
       required:
         - id
         - userId
@@ -5340,7 +5409,6 @@ components:
         - id
         - userId
         - name
-      additionalProperties: false
     MemberRefreshJobResponseDto:
       type: object
       properties:
@@ -5364,13 +5432,11 @@ components:
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         completedAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
           nullable: true
       required:
         - id
@@ -5403,13 +5469,11 @@ components:
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         completedAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
           nullable: true
       required:
         - id
@@ -5429,8 +5493,6 @@ components:
           items:
             $ref: "#/components/schemas/TimerResponseDto__schema0"
         - type: object
-          propertyNames:
-            type: string
           additionalProperties:
             $ref: "#/components/schemas/TimerResponseDto__schema0"
       nullable: true
@@ -5448,13 +5510,11 @@ components:
         minSpawnTime:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         maxSpawnTime:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         npc:
           $ref: "#/components/schemas/TimerResponseDto__schema0"
         wasReset:
@@ -5552,8 +5612,7 @@ components:
             lastDiscordSyncAt:
               type: string
               format: date-time
-              pattern: >-
-                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
               nullable: true
             isStale:
               type: boolean
@@ -5564,14 +5623,12 @@ components:
             nextRefreshAt:
               type: string
               format: date-time
-              pattern: >-
-                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
               nullable: true
             updatedAt:
               type: string
               format: date-time
-              pattern: >-
-                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
           required:
             - id
             - userId
@@ -5583,8 +5640,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
       required:
         - guildId
         - npcId
@@ -5646,7 +5702,6 @@ components:
         - icon
         - latestRespBaseSeconds
         - latestRespawnRandomness
-      additionalProperties: false
     ResetTimerDto:
       type: object
       properties:
@@ -5671,13 +5726,11 @@ components:
         customMinSpawnTime:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         customMaxSpawnTime:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         world:
           type: string
           minLength: 1
@@ -5695,13 +5748,11 @@ components:
         customMinSpawnTime:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         customMaxSpawnTime:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         world:
           type: string
           minLength: 1
@@ -5771,7 +5822,6 @@ components:
         - id
         - name
         - ownerId
-      additionalProperties: false
     UserGuildPermissionsDto_Output:
       type: object
       properties:
@@ -5785,7 +5835,6 @@ components:
           required:
             - id
             - ownerId
-          additionalProperties: false
         roles:
           type: array
           items:
@@ -5835,11 +5884,9 @@ components:
               - lvlRangeFrom
               - lvlRangeTo
               - permissions
-            additionalProperties: false
       required:
         - guild
         - roles
-      additionalProperties: false
     UpdateGuildConfigDto:
       type: object
       properties:
@@ -5970,7 +6017,6 @@ components:
         - guildId
         - name
         - permissions
-      additionalProperties: false
     UpdateRolePermissionsDto:
       type: object
       properties:
@@ -6017,8 +6063,6 @@ components:
         - lvlRangeTo
     UserLootlogConfigAccountResponseDto_Output:
       type: object
-      propertyNames:
-        type: string
       additionalProperties:
         type: object
         properties:
@@ -6042,7 +6086,6 @@ components:
           - characterId
           - collectLootWhitelistGuildIds
           - addTimersWhitelistGuildIds
-        additionalProperties: false
     CreateOrUpdateLootlogCharacterConfigDto:
       type: object
       properties:
@@ -6084,7 +6127,6 @@ components:
         - characterId
         - collectLootWhitelistGuildIds
         - addTimersWhitelistGuildIds
-      additionalProperties: false
     TimerSettingsResponseDto__schema0:
       anyOf:
         - type: string
@@ -6094,8 +6136,6 @@ components:
           items:
             $ref: "#/components/schemas/TimerSettingsResponseDto__schema0"
         - type: object
-          propertyNames:
-            type: string
           additionalProperties:
             $ref: "#/components/schemas/TimerSettingsResponseDto__schema0"
       nullable: true
@@ -6134,13 +6174,11 @@ components:
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         updatedAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
       required:
         - userId
         - generalConfig
@@ -6198,8 +6236,6 @@ components:
                 - row
         customColors:
           type: object
-          propertyNames:
-            type: string
           additionalProperties:
             type: object
             properties:
@@ -6218,20 +6254,14 @@ components:
               - backgroundColor
         timersColors:
           type: object
-          propertyNames:
-            type: string
           additionalProperties:
             type: string
         defaultColorNames:
           type: object
-          propertyNames:
-            type: string
           additionalProperties:
             type: string
         overriddenDefaultColors:
           type: object
-          propertyNames:
-            type: string
           additionalProperties:
             type: object
             properties:
@@ -6275,13 +6305,11 @@ components:
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         updatedAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
       required:
         - userId
         - guildId
@@ -6305,8 +6333,6 @@ components:
       properties:
         localData:
           type: object
-          propertyNames:
-            type: string
           additionalProperties: {}
         conflictResolution:
           type: string
@@ -6325,8 +6351,6 @@ components:
           items:
             $ref: "#/components/schemas/LootResponseDto__schema0"
         - type: object
-          propertyNames:
-            type: string
           additionalProperties:
             $ref: "#/components/schemas/LootResponseDto__schema0"
       nullable: true
@@ -6357,7 +6381,6 @@ components:
               - hid
               - name
               - icon
-            additionalProperties: {}
         players:
           type: array
           items:
@@ -6372,7 +6395,6 @@ components:
             required:
               - id
               - name
-            additionalProperties: {}
         npcs:
           type: array
           items:
@@ -6385,7 +6407,6 @@ components:
             required:
               - id
               - name
-            additionalProperties: {}
         lootShare:
           allOf:
             - $ref: "#/components/schemas/LootResponseDto__schema0"
@@ -6393,8 +6414,7 @@ components:
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         commentsCount:
           type: number
       required:
@@ -6428,11 +6448,8 @@ components:
             - legendaryItems
             - heroicItems
             - avgItemLevel
-          additionalProperties: false
         byRarity:
           type: object
-          propertyNames:
-            type: string
           additionalProperties:
             type: object
             properties:
@@ -6443,7 +6460,6 @@ components:
             required:
               - count
               - percentage
-            additionalProperties: false
         timeline:
           type: array
           items:
@@ -6455,15 +6471,12 @@ components:
                 type: number
               byRarity:
                 type: object
-                propertyNames:
-                  type: string
                 additionalProperties:
                   type: number
             required:
               - date
               - total
               - byRarity
-            additionalProperties: false
         topNpcs:
           type: array
           items:
@@ -6496,8 +6509,6 @@ components:
                 type: number
               byRarity:
                 type: object
-                propertyNames:
-                  type: string
                 additionalProperties:
                   type: number
             required:
@@ -6508,7 +6519,6 @@ components:
               - icon
               - count
               - byRarity
-            additionalProperties: false
         topContributors:
           type: array
           items:
@@ -6527,8 +6537,6 @@ components:
                 type: number
               byRarity:
                 type: object
-                propertyNames:
-                  type: string
                 additionalProperties:
                   type: number
             required:
@@ -6538,7 +6546,6 @@ components:
               - userId
               - count
               - byRarity
-            additionalProperties: false
         topItems:
           type: array
           items:
@@ -6571,7 +6578,6 @@ components:
               - rarity
               - lvl
               - count
-            additionalProperties: false
       required:
         - overview
         - byRarity
@@ -6579,7 +6585,6 @@ components:
         - topNpcs
         - topContributors
         - topItems
-      additionalProperties: false
     CountResponseDto_Output:
       type: object
       properties:
@@ -6587,7 +6592,6 @@ components:
           type: number
       required:
         - count
-      additionalProperties: false
     NullableLootResponseDto__schema0:
       anyOf:
         - type: string
@@ -6597,8 +6601,6 @@ components:
           items:
             $ref: "#/components/schemas/NullableLootResponseDto__schema0"
         - type: object
-          propertyNames:
-            type: string
           additionalProperties:
             $ref: "#/components/schemas/NullableLootResponseDto__schema0"
       nullable: true
@@ -6629,7 +6631,6 @@ components:
               - hid
               - name
               - icon
-            additionalProperties: {}
         players:
           type: array
           items:
@@ -6644,7 +6645,6 @@ components:
             required:
               - id
               - name
-            additionalProperties: {}
         npcs:
           type: array
           items:
@@ -6657,7 +6657,6 @@ components:
             required:
               - id
               - name
-            additionalProperties: {}
         lootShare:
           allOf:
             - $ref: "#/components/schemas/NullableLootResponseDto__schema0"
@@ -6665,8 +6664,7 @@ components:
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         commentsCount:
           type: number
       required:
@@ -6824,7 +6822,6 @@ components:
           type: number
       required:
         - id
-      additionalProperties: false
     LootCommentResponseDto:
       type: object
       properties:
@@ -6858,8 +6855,7 @@ components:
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
       required:
         - id
         - lootId
@@ -6882,8 +6878,6 @@ components:
         - msg
     LootShareResponseDto_Output:
       type: object
-      propertyNames:
-        type: string
       additionalProperties:
         type: array
         items:
@@ -6925,11 +6919,9 @@ components:
               - id
               - npcType
               - allowedRarities
-            additionalProperties: false
       required:
         - id
         - npcs
-      additionalProperties: false
       nullable: true
     UpdateLootlogConfigNpcDto:
       type: object
@@ -6975,7 +6967,6 @@ components:
         - id
         - npcType
         - allowedRarities
-      additionalProperties: false
     SendMessageDto:
       type: object
       properties:
@@ -7102,18 +7093,15 @@ components:
         createdDate:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         fromDate:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         toDate:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         createdBy:
           type: string
           minLength: 1
@@ -7393,8 +7381,7 @@ components:
         scheduledAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
         scheduleIntervalType:
           type: string
           enum:
@@ -7416,8 +7403,7 @@ components:
         scheduledUntil:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
         scheduleTimezone:
           type: string
           maxLength: 50
@@ -7493,8 +7479,7 @@ components:
         scheduledAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
         scheduleIntervalType:
           type: string
           enum:
@@ -7516,8 +7501,7 @@ components:
         scheduledUntil:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
         scheduleTimezone:
           type: string
           maxLength: 50
@@ -7590,8 +7574,6 @@ components:
           items:
             $ref: "#/components/schemas/SoundSettingsResponseDto__schema0"
         - type: object
-          propertyNames:
-            type: string
           additionalProperties:
             $ref: "#/components/schemas/SoundSettingsResponseDto__schema0"
       nullable: true
@@ -7617,13 +7599,11 @@ components:
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         updatedAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
       required:
         - userId
         - masterVolume
@@ -7667,7 +7647,8 @@ components:
                 soundUrl:
                   anyOf:
                     - type: string
-                      const: ""
+                      enum:
+                        - ""
                     - type: string
                       format: uri
             HERO:
@@ -7680,7 +7661,8 @@ components:
                 soundUrl:
                   anyOf:
                     - type: string
-                      const: ""
+                      enum:
+                        - ""
                     - type: string
                       format: uri
             TITAN:
@@ -7693,7 +7675,8 @@ components:
                 soundUrl:
                   anyOf:
                     - type: string
-                      const: ""
+                      enum:
+                        - ""
                     - type: string
                       format: uri
             COLOSSUS:
@@ -7706,7 +7689,8 @@ components:
                 soundUrl:
                   anyOf:
                     - type: string
-                      const: ""
+                      enum:
+                        - ""
                     - type: string
                       format: uri
             message:
@@ -7719,7 +7703,8 @@ components:
                 soundUrl:
                   anyOf:
                     - type: string
-                      const: ""
+                      enum:
+                        - ""
                     - type: string
                       format: uri
         detectorConfig:
@@ -7735,7 +7720,8 @@ components:
                 soundUrl:
                   anyOf:
                     - type: string
-                      const: ""
+                      enum:
+                        - ""
                     - type: string
                       format: uri
             HERO:
@@ -7748,7 +7734,8 @@ components:
                 soundUrl:
                   anyOf:
                     - type: string
-                      const: ""
+                      enum:
+                        - ""
                     - type: string
                       format: uri
             TITAN:
@@ -7761,7 +7748,8 @@ components:
                 soundUrl:
                   anyOf:
                     - type: string
-                      const: ""
+                      enum:
+                        - ""
                     - type: string
                       format: uri
             COLOSSUS:
@@ -7774,7 +7762,8 @@ components:
                 soundUrl:
                   anyOf:
                     - type: string
-                      const: ""
+                      enum:
+                        - ""
                     - type: string
                       format: uri
             message:
@@ -7787,7 +7776,8 @@ components:
                 soundUrl:
                   anyOf:
                     - type: string
-                      const: ""
+                      enum:
+                        - ""
                     - type: string
                       format: uri
         timersConfig:
@@ -7803,7 +7793,8 @@ components:
                 soundUrl:
                   anyOf:
                     - type: string
-                      const: ""
+                      enum:
+                        - ""
                     - type: string
                       format: uri
             HERO:
@@ -7816,7 +7807,8 @@ components:
                 soundUrl:
                   anyOf:
                     - type: string
-                      const: ""
+                      enum:
+                        - ""
                     - type: string
                       format: uri
             TITAN:
@@ -7829,7 +7821,8 @@ components:
                 soundUrl:
                   anyOf:
                     - type: string
-                      const: ""
+                      enum:
+                        - ""
                     - type: string
                       format: uri
             COLOSSUS:
@@ -7842,7 +7835,8 @@ components:
                 soundUrl:
                   anyOf:
                     - type: string
-                      const: ""
+                      enum:
+                        - ""
                     - type: string
                       format: uri
             message:
@@ -7855,7 +7849,8 @@ components:
                 soundUrl:
                   anyOf:
                     - type: string
-                      const: ""
+                      enum:
+                        - ""
                     - type: string
                       format: uri
     CreateEventDto:
@@ -7868,13 +7863,11 @@ components:
         startsAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         endsAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         basePointsPerKill:
           type: integer
           minimum: 0
@@ -7958,7 +7951,6 @@ components:
                             - factor
                             - operator
                             - value
-                          additionalProperties: false
                         - type: object
                           properties:
                             type:
@@ -7977,7 +7969,6 @@ components:
                             - type
                             - factor
                             - value
-                          additionalProperties: false
                         - type: object
                           properties:
                             type:
@@ -7994,7 +7985,6 @@ components:
                             - type
                             - from
                             - to
-                          additionalProperties: false
                         - type: object
                           properties:
                             type:
@@ -8024,7 +8014,6 @@ components:
                             - to
                             - operator
                             - value
-                          additionalProperties: false
                   action:
                     type: object
                     properties:
@@ -8093,8 +8082,6 @@ components:
           items:
             $ref: "#/components/schemas/EventMutationResponseDto__schema0"
         - type: object
-          propertyNames:
-            type: string
           additionalProperties:
             $ref: "#/components/schemas/EventMutationResponseDto__schema0"
       nullable: true
@@ -8114,25 +8101,21 @@ components:
         startsAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
           nullable: true
         endsAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
           nullable: true
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         updatedAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         basePointsPerKill:
           type: number
           nullable: true
@@ -8264,25 +8247,21 @@ components:
         startsAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
           nullable: true
         endsAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
           nullable: true
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         updatedAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         heroNpcs:
           type: array
           items:
@@ -8327,8 +8306,6 @@ components:
           items:
             $ref: "#/components/schemas/EventOverviewResponseDto__schema0"
         - type: object
-          propertyNames:
-            type: string
           additionalProperties:
             $ref: "#/components/schemas/EventOverviewResponseDto__schema0"
       nullable: true
@@ -8348,25 +8325,21 @@ components:
         startsAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
           nullable: true
         endsAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
           nullable: true
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         updatedAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         basePointsPerKill:
           type: number
           nullable: true
@@ -8434,8 +8407,7 @@ components:
         generatedAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         event:
           type: object
           properties:
@@ -8448,14 +8420,12 @@ components:
             startsAt:
               type: string
               format: date-time
-              pattern: >-
-                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
               nullable: true
             endsAt:
               type: string
               format: date-time
-              pattern: >-
-                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
               nullable: true
             heroCount:
               type: number
@@ -8472,7 +8442,6 @@ components:
             - heroCount
             - mapCount
             - spawnCount
-          additionalProperties: false
         overview:
           type: object
           properties:
@@ -8510,7 +8479,6 @@ components:
                 - unique
                 - heroic
                 - legendary
-              additionalProperties: false
           required:
             - totalKills
             - participantCount
@@ -8523,7 +8491,6 @@ components:
             - busiestHourKills
             - totalLoots
             - rarityTotals
-          additionalProperties: false
         leaders:
           type: object
           properties:
@@ -8547,7 +8514,6 @@ components:
                 - name
                 - avatar
                 - primaryValue
-              additionalProperties: false
               nullable: true
             topScorer:
               type: object
@@ -8569,7 +8535,6 @@ components:
                 - name
                 - avatar
                 - primaryValue
-              additionalProperties: false
               nullable: true
             longestDuty:
               type: object
@@ -8591,7 +8556,6 @@ components:
                 - name
                 - avatar
                 - primaryValue
-              additionalProperties: false
               nullable: true
             topAfk:
               type: object
@@ -8613,7 +8577,6 @@ components:
                 - name
                 - avatar
                 - primaryValue
-              additionalProperties: false
               nullable: true
             mostFlexible:
               type: object
@@ -8635,7 +8598,6 @@ components:
                 - name
                 - avatar
                 - primaryValue
-              additionalProperties: false
               nullable: true
             topEfficiency:
               type: object
@@ -8657,7 +8619,6 @@ components:
                 - name
                 - avatar
                 - primaryValue
-              additionalProperties: false
               nullable: true
           required:
             - topHunter
@@ -8666,7 +8627,6 @@ components:
             - topAfk
             - mostFlexible
             - topEfficiency
-          additionalProperties: false
         coverage:
           type: object
           properties:
@@ -8707,7 +8667,6 @@ components:
                 - mapCount
                 - totalKills
                 - coveragePercentage
-              additionalProperties: false
               nullable: true
             roughestHeroCoverage:
               type: object
@@ -8732,7 +8691,6 @@ components:
                 - mapCount
                 - totalKills
                 - coveragePercentage
-              additionalProperties: false
               nullable: true
           required:
             - totalWindowCount
@@ -8744,7 +8702,6 @@ components:
             - avgMapsPerSpawnWindow
             - bestHeroCoverage
             - roughestHeroCoverage
-          additionalProperties: false
         heroes:
           type: array
           items:
@@ -8781,7 +8738,6 @@ components:
                   - unique
                   - heroic
                   - legendary
-                additionalProperties: false
               topHunter:
                 type: object
                 properties:
@@ -8802,7 +8758,6 @@ components:
                   - name
                   - avatar
                   - primaryValue
-                additionalProperties: false
                 nullable: true
             required:
               - heroNpcId
@@ -8815,7 +8770,6 @@ components:
               - coveragePercentage
               - rarityTotals
               - topHunter
-            additionalProperties: false
         loot:
           type: object
           properties:
@@ -8834,7 +8788,6 @@ components:
                 - unique
                 - heroic
                 - legendary
-              additionalProperties: false
             heroBreakdown:
               type: array
               items:
@@ -8862,19 +8815,16 @@ components:
                       - unique
                       - heroic
                       - legendary
-                    additionalProperties: false
                 required:
                   - heroNpcId
                   - npcName
                   - npcIcon
                   - totalLoots
                   - rarityTotals
-                additionalProperties: false
           required:
             - totalLoots
             - rarityTotals
             - heroBreakdown
-          additionalProperties: false
       required:
         - generatedAt
         - event
@@ -8883,7 +8833,6 @@ components:
         - coverage
         - heroes
         - loot
-      additionalProperties: false
     EventMapsResponseDto_Output:
       type: object
       properties:
@@ -8959,27 +8908,23 @@ components:
                                     required:
                                       - position
                                       - color
-                                    additionalProperties: false
                               required:
                                 - id
                                 - name
                                 - avatar
                                 - userId
                                 - roles
-                              additionalProperties: false
                         required:
                           - id
                           - mapId
                           - mapName
                           - locationId
                           - assignedMembers
-                        additionalProperties: false
                   required:
                     - id
                     - name
                     - order
                     - maps
-                  additionalProperties: false
               maps:
                 type: array
                 items:
@@ -9021,21 +8966,18 @@ components:
                               required:
                                 - position
                                 - color
-                              additionalProperties: false
                         required:
                           - id
                           - name
                           - avatar
                           - userId
                           - roles
-                        additionalProperties: false
                   required:
                     - id
                     - mapId
                     - mapName
                     - locationId
                     - assignedMembers
-                  additionalProperties: false
             required:
               - id
               - npcId
@@ -9044,11 +8986,9 @@ components:
               - npcLvl
               - locations
               - maps
-            additionalProperties: false
       required:
         - id
         - heroNpcs
-      additionalProperties: false
     UpdateEventDto:
       type: object
       properties:
@@ -9057,13 +8997,11 @@ components:
         startsAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         endsAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         heroNpcs:
           type: array
           items:
@@ -9175,7 +9113,6 @@ components:
                             - factor
                             - operator
                             - value
-                          additionalProperties: false
                         - type: object
                           properties:
                             type:
@@ -9194,7 +9131,6 @@ components:
                             - type
                             - factor
                             - value
-                          additionalProperties: false
                         - type: object
                           properties:
                             type:
@@ -9211,7 +9147,6 @@ components:
                             - type
                             - from
                             - to
-                          additionalProperties: false
                         - type: object
                           properties:
                             type:
@@ -9241,7 +9176,6 @@ components:
                             - to
                             - operator
                             - value
-                          additionalProperties: false
                   action:
                     type: object
                     properties:
@@ -9277,7 +9211,6 @@ components:
           type: boolean
       required:
         - success
-      additionalProperties: false
     AssignMemberDto:
       type: object
       properties:
@@ -9372,21 +9305,18 @@ components:
                   required:
                     - position
                     - color
-                  additionalProperties: false
             required:
               - id
               - name
               - avatar
               - userId
               - roles
-            additionalProperties: false
       required:
         - id
         - mapId
         - mapName
         - locationId
         - assignedMembers
-      additionalProperties: false
     CreateLocationDto:
       type: object
       properties:
@@ -9431,13 +9361,11 @@ components:
               killedAt:
                 type: string
                 format: date-time
-                pattern: >-
-                  ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
               confirmationDeadlineAt:
                 type: string
                 format: date-time
-                pattern: >-
-                  ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
               heroNpc:
                 type: object
                 properties:
@@ -9475,13 +9403,11 @@ components:
               killedAt:
                 type: string
                 format: date-time
-                pattern: >-
-                  ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
               confirmationDeadlineAt:
                 type: string
                 format: date-time
-                pattern: >-
-                  ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
               heroNpc:
                 type: object
                 properties:
@@ -9522,7 +9448,6 @@ components:
       required:
         - success
         - confirmedNow
-      additionalProperties: false
     EventRankingEntryResponseDto:
       type: object
       properties:
@@ -9547,8 +9472,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         member:
           type: object
           properties:
@@ -9610,8 +9534,7 @@ components:
         editedAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
       required:
         - id
         - rankingId
@@ -9633,13 +9556,11 @@ components:
         minSpawnTime:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         maxSpawnTime:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         npc:
           type: object
           properties:
@@ -9687,8 +9608,6 @@ components:
           items:
             $ref: "#/components/schemas/EventKillHistoryResponseDto__schema0"
         - type: object
-          propertyNames:
-            type: string
           additionalProperties:
             $ref: "#/components/schemas/EventKillHistoryResponseDto__schema0"
       nullable: true
@@ -9707,18 +9626,15 @@ components:
               killedAt:
                 type: string
                 format: date-time
-                pattern: >-
-                  ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
               minSpawnTimeAtKill:
                 type: string
                 format: date-time
-                pattern: >-
-                  ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
               maxSpawnTimeAtKill:
                 type: string
                 format: date-time
-                pattern: >-
-                  ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
               isManualClose:
                 type: boolean
               heroNpc:
@@ -9773,8 +9689,7 @@ components:
                       type: boolean
                     bonusBreakdown:
                       allOf:
-                        - $ref: >-
-                            #/components/schemas/EventKillHistoryResponseDto__schema0
+                        - $ref: "#/components/schemas/EventKillHistoryResponseDto__schema0"
                       nullable: true
                     member:
                       type: object
@@ -9805,13 +9720,11 @@ components:
                           assignedAt:
                             type: string
                             format: date-time
-                            pattern: >-
-                              ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
                           unassignedAt:
                             type: string
                             format: date-time
-                            pattern: >-
-                              ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
                             nullable: true
                           assignmentDurationSeconds:
                             type: number
@@ -9862,8 +9775,6 @@ components:
           items:
             $ref: "#/components/schemas/EventMemberKillHistoryResponseDto__schema0"
         - type: object
-          propertyNames:
-            type: string
           additionalProperties:
             $ref: "#/components/schemas/EventMemberKillHistoryResponseDto__schema0"
       nullable: true
@@ -9899,18 +9810,15 @@ components:
               killedAt:
                 type: string
                 format: date-time
-                pattern: >-
-                  ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
               minSpawnTimeAtKill:
                 type: string
                 format: date-time
-                pattern: >-
-                  ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
               maxSpawnTimeAtKill:
                 type: string
                 format: date-time
-                pattern: >-
-                  ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
               isManualClose:
                 type: boolean
               heroNpc:
@@ -9963,8 +9871,7 @@ components:
                     type: boolean
                   bonusBreakdown:
                     allOf:
-                      - $ref: >-
-                          #/components/schemas/EventMemberKillHistoryResponseDto__schema0
+                      - $ref: "#/components/schemas/EventMemberKillHistoryResponseDto__schema0"
                     nullable: true
                   member:
                     type: object
@@ -9995,13 +9902,11 @@ components:
                         assignedAt:
                           type: string
                           format: date-time
-                          pattern: >-
-                            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
                         unassignedAt:
                           type: string
                           format: date-time
-                          pattern: >-
-                            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
                           nullable: true
                         assignmentDurationSeconds:
                           type: number
@@ -10054,8 +9959,6 @@ components:
           items:
             $ref: "#/components/schemas/KillDetailResponseDto__schema0"
         - type: object
-          propertyNames:
-            type: string
           additionalProperties:
             $ref: "#/components/schemas/KillDetailResponseDto__schema0"
       nullable: true
@@ -10072,18 +9975,15 @@ components:
             killedAt:
               type: string
               format: date-time
-              pattern: >-
-                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
             minSpawnTimeAtKill:
               type: string
               format: date-time
-              pattern: >-
-                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
             maxSpawnTimeAtKill:
               type: string
               format: date-time
-              pattern: >-
-                ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
             timerCreatedById:
               type: number
               nullable: true
@@ -10228,13 +10128,11 @@ components:
                         assignedAt:
                           type: string
                           format: date-time
-                          pattern: >-
-                            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
                         unassignedAt:
                           type: string
                           format: date-time
-                          pattern: >-
-                            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
                           nullable: true
                         assignmentDurationSeconds:
                           type: number
@@ -10329,13 +10227,11 @@ components:
               assignedAt:
                 type: string
                 format: date-time
-                pattern: >-
-                  ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
               unassignedAt:
                 type: string
                 format: date-time
-                pattern: >-
-                  ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
                 nullable: true
             required:
               - memberId
@@ -10359,13 +10255,11 @@ components:
               startedAt:
                 type: string
                 format: date-time
-                pattern: >-
-                  ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
               endedAt:
                 type: string
                 format: date-time
-                pattern: >-
-                  ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
                 nullable: true
               durationSeconds:
                 type: number
@@ -10399,13 +10293,11 @@ components:
         startedAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         endedAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
           nullable: true
         durationSeconds:
           type: number
@@ -10446,13 +10338,11 @@ components:
         startedAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         endedAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
           nullable: true
         durationSeconds:
           type: number
@@ -10482,13 +10372,11 @@ components:
         startedAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         endedAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
           nullable: true
         durationSeconds:
           type: number
@@ -10556,14 +10444,12 @@ components:
         minSpawnTime:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
           nullable: true
         maxSpawnTime:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
           nullable: true
         overdueMs:
           type: number
@@ -10582,13 +10468,11 @@ components:
         newMinSpawnTime:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         newMaxSpawnTime:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
     OpenRespawnWindowDto:
       type: object
       properties:
@@ -10596,14 +10480,12 @@ components:
           type: string
           minLength: 1
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         maxSpawnTime:
           type: string
           minLength: 1
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
       required:
         - minSpawnTime
         - maxSpawnTime
@@ -10621,13 +10503,11 @@ components:
         createdAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         updatedAt:
           type: string
           format: date-time
-          pattern: >-
-            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
       required:
         - userId
         - guildId
@@ -10711,7 +10591,6 @@ components:
           type: boolean
       required:
         - updated
-      additionalProperties: false
     GuildKillStatsResponseDto_Output:
       type: object
       properties:
@@ -10743,8 +10622,6 @@ components:
                   type: number
                 EVENT_HERO:
                   type: number
-              additionalProperties:
-                type: number
             participationsByType:
               type: object
               properties:
@@ -10766,14 +10643,11 @@ components:
                   type: number
                 EVENT_HERO:
                   type: number
-              additionalProperties:
-                type: number
           required:
             - guildUniqueKills
             - totalMemberParticipations
             - killsByType
             - participationsByType
-          additionalProperties: false
         memberRanking:
           type: array
           items:
@@ -10811,8 +10685,6 @@ components:
                     type: number
                   EVENT_HERO:
                     type: number
-                additionalProperties:
-                  type: number
             required:
               - memberId
               - memberName
@@ -10820,11 +10692,9 @@ components:
               - memberUserId
               - totalParticipations
               - participationsByType
-            additionalProperties: false
       required:
         - overview
         - memberRanking
-      additionalProperties: false
     UserKillStatsResponseDto_Output:
       type: object
       properties:
@@ -10854,19 +10724,14 @@ components:
                   type: number
                 EVENT_HERO:
                   type: number
-              additionalProperties:
-                type: number
             killsByWorld:
               type: object
-              propertyNames:
-                type: string
               additionalProperties:
                 type: number
           required:
             - totalKills
             - killsByType
             - killsByWorld
-          additionalProperties: false
         topNpcs:
           type: array
           items:
@@ -10895,11 +10760,9 @@ components:
               - npcLvl
               - npcIcon
               - totalKills
-            additionalProperties: false
       required:
         - overview
         - topNpcs
-      additionalProperties: false
     UserNpcKillsResponseDto_Output:
       type: object
       properties:
@@ -10932,7 +10795,6 @@ components:
               - npcProf
               - npcIcon
               - totalKills
-            additionalProperties: false
         pagination:
           type: object
           properties:
@@ -10949,11 +10811,9 @@ components:
             - cursor
             - limit
             - hasNext
-          additionalProperties: false
       required:
         - npcs
         - pagination
-      additionalProperties: false
     NpcType:
       type: string
       enum:
@@ -10994,10 +10854,8 @@ components:
               - npcLvl
               - npcIcon
               - uniqueKills
-            additionalProperties: false
       required:
         - topNpcs
-      additionalProperties: false
     GuildTopKillersByTypeResponseDto_Output:
       type: object
       properties:
@@ -11023,7 +10881,6 @@ components:
               - memberAvatar
               - memberUserId
               - totalParticipations
-            additionalProperties: false
         HERO:
           type: array
           items:
@@ -11046,7 +10903,6 @@ components:
               - memberAvatar
               - memberUserId
               - totalParticipations
-            additionalProperties: false
         EVENT_HERO:
           type: array
           items:
@@ -11069,8 +10925,6 @@ components:
               - memberAvatar
               - memberUserId
               - totalParticipations
-            additionalProperties: false
-      additionalProperties: false
     NpcKillersResponseDto_Output:
       type: object
       properties:
@@ -11104,7 +10958,6 @@ components:
             - npcIcon
             - uniqueGuildKills
             - totalMemberParticipations
-          additionalProperties: false
           nullable: true
         killers:
           type: array
@@ -11128,11 +10981,9 @@ components:
               - memberAvatar
               - memberUserId
               - participationCount
-            additionalProperties: false
       required:
         - npc
         - killers
-      additionalProperties: false
     MemberKillsResponseDto_Output:
       type: object
       properties:
@@ -11153,7 +11004,6 @@ components:
             - memberName
             - memberAvatar
             - memberUserId
-          additionalProperties: false
           nullable: true
         overview:
           type: object
@@ -11162,14 +11012,11 @@ components:
               type: number
             participationsByType:
               type: object
-              propertyNames:
-                type: string
               additionalProperties:
                 type: number
           required:
             - totalParticipations
             - participationsByType
-          additionalProperties: false
           nullable: true
         npcs:
           type: array
@@ -11200,7 +11047,6 @@ components:
               - npcProf
               - npcIcon
               - totalKills
-            additionalProperties: false
         pagination:
           type: object
           properties:
@@ -11217,11 +11063,9 @@ components:
             - cursor
             - limit
             - hasNext
-          additionalProperties: false
           nullable: true
       required:
         - member
         - overview
         - npcs
         - pagination
-      additionalProperties: false
