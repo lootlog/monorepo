@@ -25,9 +25,11 @@ import type {
 import type {
   MemberRefreshJobResponseDto,
   MemberResponseDto,
+  MemberSummaryResponseDtoOutput,
   MembersControllerDeactivateMemberPathParameters,
   MembersControllerGetGuildMembersParams,
   MembersControllerGetGuildMembersPathParameters,
+  MembersControllerGetGuildMembersSummaryPathParameters,
   MembersControllerGetLatestRefreshJobPathParameters,
   MembersControllerGetMePathParameters,
   MembersControllerGetRefreshJobStatusPathParameters,
@@ -507,6 +509,125 @@ export const useGetMembersControllerGetGuildMembersQueryData = () => {
   return ({ guildId }: MembersControllerGetGuildMembersPathParameters,
     params: MembersControllerGetGuildMembersParams,) =>
     queryClient.getQueryData<Awaited<ReturnType<typeof membersControllerGetGuildMembers>>>(getMembersControllerGetGuildMembersQueryKey({ guildId },params));
+}
+
+
+/**
+ * Retrieve lightweight active member data for game-client member lookups
+ * @summary Get guild members summary
+ */
+export const getMembersControllerGetGuildMembersSummaryUrl = ({ guildId }: MembersControllerGetGuildMembersSummaryPathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/members/summary`
+}
+
+export const membersControllerGetGuildMembersSummary = async ({ guildId }: MembersControllerGetGuildMembersSummaryPathParameters, options?: RequestInit): Promise<MemberSummaryResponseDtoOutput[]> => {
+
+  return orvalFetch<MemberSummaryResponseDtoOutput[]>(getMembersControllerGetGuildMembersSummaryUrl({ guildId }),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getMembersControllerGetGuildMembersSummaryQueryKey = ({ guildId }: MembersControllerGetGuildMembersSummaryPathParameters,) => {
+    return [
+    `/guilds/${guildId}/members/summary`
+    ] as const;
+    }
+
+
+export const getMembersControllerGetGuildMembersSummaryQueryOptions = <TData = Awaited<ReturnType<typeof membersControllerGetGuildMembersSummary>>, TError = ErrorType<void>>({ guildId }: MembersControllerGetGuildMembersSummaryPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof membersControllerGetGuildMembersSummary>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getMembersControllerGetGuildMembersSummaryQueryKey({ guildId });
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof membersControllerGetGuildMembersSummary>>> = ({ signal }) => membersControllerGetGuildMembersSummary({ guildId }, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(guildId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof membersControllerGetGuildMembersSummary>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type MembersControllerGetGuildMembersSummaryQueryResult = NonNullable<Awaited<ReturnType<typeof membersControllerGetGuildMembersSummary>>>
+export type MembersControllerGetGuildMembersSummaryQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get guild members summary
+ */
+
+export function useMembersControllerGetGuildMembersSummary<TData = Awaited<ReturnType<typeof membersControllerGetGuildMembersSummary>>, TError = ErrorType<void>>(
+ { guildId }: MembersControllerGetGuildMembersSummaryPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof membersControllerGetGuildMembersSummary>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getMembersControllerGetGuildMembersSummaryQueryOptions({ guildId },options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get guild members summary
+ */
+export const prefetchMembersControllerGetGuildMembersSummaryQuery = async <TData = Awaited<ReturnType<typeof membersControllerGetGuildMembersSummary>>, TError = ErrorType<void>>(
+ queryClient: QueryClient, { guildId }: MembersControllerGetGuildMembersSummaryPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof membersControllerGetGuildMembersSummary>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getMembersControllerGetGuildMembersSummaryQueryOptions({ guildId },options)
+
+  await queryClient.prefetchQuery(queryOptions);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get guild members summary
+ */
+export const invalidateMembersControllerGetGuildMembersSummary = async (
+ queryClient: QueryClient, { guildId }: MembersControllerGetGuildMembersSummaryPathParameters, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getMembersControllerGetGuildMembersSummaryQueryKey({ guildId }) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get guild members summary
+ */
+export const useSetMembersControllerGetGuildMembersSummaryQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId }: MembersControllerGetGuildMembersSummaryPathParameters,updater: Awaited<ReturnType<typeof membersControllerGetGuildMembersSummary>> | undefined | ((old: Awaited<ReturnType<typeof membersControllerGetGuildMembersSummary>> | undefined) => Awaited<ReturnType<typeof membersControllerGetGuildMembersSummary>> | undefined)) => {
+    queryClient.setQueryData(getMembersControllerGetGuildMembersSummaryQueryKey({ guildId }), updater);
+  };
+}
+
+/**
+ * @summary Get guild members summary
+ */
+export const useGetMembersControllerGetGuildMembersSummaryQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId }: MembersControllerGetGuildMembersSummaryPathParameters,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof membersControllerGetGuildMembersSummary>>>(getMembersControllerGetGuildMembersSummaryQueryKey({ guildId }));
 }
 
 

@@ -6,8 +6,8 @@
  * OpenAPI spec version: 1.0
  */
 
-export type UpdateRankingPointsBody = {
+export interface UpdateKillPointDto {
   pointsDelta: number;
   /** @maxLength 500 */
   comment?: string;
-};
+}
