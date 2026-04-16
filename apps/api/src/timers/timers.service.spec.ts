@@ -16,6 +16,7 @@ import { buildTimerKey } from "src/timers/utils/timer-key";
 import { EventTimerHooksService } from "src/events/services/event-timer-hooks.service";
 import { ErrorKey } from "src/timers/enum/error-key.enum";
 import { ExecutionError } from "redlock";
+import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
 
 describe("TimersService", () => {
   let service: TimersService;
@@ -53,6 +54,10 @@ describe("TimersService", () => {
   const mockEventTimerHooksService = {
     enqueueEventHeroKillCheck: mockFn().mockResolvedValue(undefined),
     findActiveEventHeroByNpc: mockFn().mockResolvedValue(null),
+  };
+
+  const mockUserLootlogConfigService = {
+    getLootlogCharacterConfig: mockFn().mockResolvedValue(null),
   };
 
   const mockLogger = {
@@ -95,6 +100,10 @@ describe("TimersService", () => {
         {
           provide: GuildsService,
           useValue: mockGuildsService,
+        },
+        {
+          provide: UserLootlogConfigService,
+          useValue: mockUserLootlogConfigService,
         },
         {
           provide: RedisService,

@@ -517,6 +517,33 @@ paths:
       summary: Search NPCs with timer data
       tags:
         - timers
+  /timers/auto:
+    post:
+      description: Resolve target guilds from character catching settings and create timers for them
+      operationId: TimersController_createAutoTimer
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTimerFromGameClientDto"
+      responses:
+        "201":
+          description: Automatic timer creation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateAutoTimerResponseDto_Output"
+        "400":
+          description: No guild accepted this timer
+        "403":
+          description: Forbidden
+      security:
+        - bearer: []
+      summary: Create automatic timers
+      tags:
+        - timers
   /guilds/{guildId}/timers/{timerIdentifier}/reset:
     patch:
       description: Reset a timer for a specific NPC in a guild
@@ -6005,41 +6032,6 @@ components:
         - icon
         - latestRespBaseSeconds
         - latestRespawnRandomness
-    ResetTimerDto:
-      type: object
-      properties:
-        world:
-          type: string
-          minLength: 1
-      required:
-        - world
-    CreateManualTimerDto:
-      type: object
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 50
-        minSeconds:
-          type: number
-          minimum: 1
-        maxSeconds:
-          type: number
-          minimum: 1
-        customMinSpawnTime:
-          type: string
-          format: date-time
-          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-        customMaxSpawnTime:
-          type: string
-          format: date-time
-          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-        world:
-          type: string
-          minLength: 1
-      required:
-        - name
-        - world
     CreateTimerFromGameClientDto:
       type: object
       properties:
@@ -6106,6 +6098,77 @@ components:
         - npc
         - characterId
         - accountId
+    CreateAutoTimerResponseDto_Output:
+      type: object
+      properties:
+        submittedGuilds:
+          type: array
+          items:
+            type: object
+            properties:
+              guildId:
+                type: string
+              guildName:
+                type: string
+            required:
+              - guildId
+              - guildName
+        rejectedGuilds:
+          type: array
+          items:
+            type: object
+            properties:
+              guildId:
+                type: string
+              guildName:
+                type: string
+              reason:
+                type: string
+                enum:
+                  - NOT_ON_CATCHING_WHITELIST
+                  - TIMER_CREATE_FAILED
+            required:
+              - guildId
+              - guildName
+              - reason
+      required:
+        - submittedGuilds
+        - rejectedGuilds
+    ResetTimerDto:
+      type: object
+      properties:
+        world:
+          type: string
+          minLength: 1
+      required:
+        - world
+    CreateManualTimerDto:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        minSeconds:
+          type: number
+          minimum: 1
+        maxSeconds:
+          type: number
+          minimum: 1
+        customMinSpawnTime:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        customMaxSpawnTime:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        world:
+          type: string
+          minLength: 1
+      required:
+        - name
+        - world
     GuildResponseDto_Output:
       type: object
       properties:
@@ -6375,11 +6438,7 @@ components:
             type: string
           characterId:
             type: string
-          collectLootWhitelistGuildIds:
-            type: array
-            items:
-              type: string
-          addTimersWhitelistGuildIds:
+          catchingGuildIds:
             type: array
             items:
               type: string
@@ -6387,16 +6446,11 @@ components:
           - userId
           - accountId
           - characterId
-          - collectLootWhitelistGuildIds
-          - addTimersWhitelistGuildIds
+          - catchingGuildIds
     CreateOrUpdateLootlogCharacterConfigDto:
       type: object
       properties:
-        lootGuildIds:
-          type: array
-          items:
-            type: string
-        timerGuildIds:
+        catchingGuildIds:
           type: array
           items:
             type: string
@@ -6404,8 +6458,7 @@ components:
           type: string
           minLength: 1
       required:
-        - lootGuildIds
-        - timerGuildIds
+        - catchingGuildIds
         - characterId
     UserLootlogConfigResponseDto_Output:
       type: object
@@ -6416,11 +6469,7 @@ components:
           type: string
         characterId:
           type: string
-        collectLootWhitelistGuildIds:
-          type: array
-          items:
-            type: string
-        addTimersWhitelistGuildIds:
+        catchingGuildIds:
           type: array
           items:
             type: string
@@ -6428,8 +6477,7 @@ components:
         - userId
         - accountId
         - characterId
-        - collectLootWhitelistGuildIds
-        - addTimersWhitelistGuildIds
+        - catchingGuildIds
     TimerSettingsResponseDto__schema0:
       anyOf:
         - type: string
@@ -7123,8 +7171,42 @@ components:
       properties:
         id:
           type: number
+        submittedGuilds:
+          type: array
+          items:
+            type: object
+            properties:
+              guildId:
+                type: string
+              guildName:
+                type: string
+            required:
+              - guildId
+              - guildName
+        rejectedGuilds:
+          type: array
+          items:
+            type: object
+            properties:
+              guildId:
+                type: string
+              guildName:
+                type: string
+              reason:
+                type: string
+                enum:
+                  - NOT_ON_CHARACTER_WHITELIST
+                  - MISSING_LOOTLOG_CONFIG
+                  - LOOT_NOT_ACCEPTED_BY_CONFIG
+                  - MISSING_MEMBER
+            required:
+              - guildId
+              - guildName
+              - reason
       required:
         - id
+        - submittedGuilds
+        - rejectedGuilds
     LootCommentResponseDto:
       type: object
       properties:

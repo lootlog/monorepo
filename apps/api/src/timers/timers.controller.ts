@@ -28,6 +28,7 @@ import { AuthGuard } from "src/shared/guards/auth.guard";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 import { CreateManualTimerDto } from "src/timers/dto/create-manual-timer.dto";
+import { CreateAutoTimerResponseDto } from "src/timers/dto/create-auto-timer-response.dto";
 import { CreateTimerFromGameClientDto } from "src/timers/dto/create-timer-from-game-client.dto";
 import { ResetTimerDto } from "src/timers/dto/reset-timer.dto";
 import { SearchTimersNpcResponseDto } from "src/timers/dto/search-timers-npcs-response.dto";
@@ -138,6 +139,27 @@ export class TimersController {
       query.search,
       query.limit,
     );
+  }
+
+  @Post("/timers/auto")
+  @ApiOperation({
+    summary: "Create automatic timers",
+    description:
+      "Resolve target guilds from character catching settings and create timers for them",
+  })
+  @ZodResponse({
+    status: 201,
+    description: "Automatic timer creation result",
+    type: CreateAutoTimerResponseDto,
+  })
+  @ApiResponse({ status: 400, description: "No guild accepted this timer" })
+  @ApiResponse({ status: 403, description: "Forbidden" })
+  createAutoTimer(
+    @Body() data: CreateTimerFromGameClientDto,
+    @DiscordId() discordId: string,
+    @UserId() userId: string,
+  ) {
+    return this.timersService.createAutoTimer(discordId, userId, data);
   }
 
   @Permissions(Permission.LOOTLOG_TIMERS_RESET)

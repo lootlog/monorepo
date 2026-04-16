@@ -1,36 +1,278 @@
+import { Button } from "@/components/ui/button";
+import {
+  SETTINGS_SUBTABS_LIST_CLASS_NAME,
+  SETTINGS_SUBTAB_CONTENT_CLASS_NAME,
+  SETTINGS_SUBTAB_TRIGGER_CLASS_NAME,
+} from "@/components/settings/settings-styles";
+import { SettingsSection } from "@/components/settings/settings-section";
+import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  updateLootlogCharactersConfig,
+  type LootlogCharacterConfigResponse,
+} from "@/api";
 import { CharacterTile } from "@/components/character-tile";
+import { useLootlogCharactersConfig } from "@/hooks/api/use-lootlog-character-config";
 import { useCharacterList } from "@/hooks/api/use-character-list";
 
 import { CatchingSettingsForm } from "@/features/settings/components/catching/catching-settings-form";
 import { Game } from "@/lib/game";
+import { Loader2 } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { useEffect, useRef, useState } from "react";
 
 export const CatchingSettings = () => {
+  const queryClient = useQueryClient();
+  const accountId = String(Game.hero.account);
   const { data: characterList } = useCharacterList();
-  const characterId = String(Game.hero.id);
+  const { data: lootlogCharactersConfig } = useLootlogCharactersConfig();
+  const initialCharacterId = String(Game.hero.id);
+  const [selectedCharacterId, setSelectedCharacterId] =
+    useState(initialCharacterId);
+  const [selectionByCharacterId, setSelectionByCharacterId] = useState<
+    Record<string, string[]>
+  >({});
+  const selectionByCharacterIdRef = useRef<Record<string, string[]>>({});
+
+  useEffect(() => {
+    if (!characterList || characterList.length === 0) return;
+
+    const characterExists = characterList.some(
+      (character) => String(character.id) === selectedCharacterId,
+    );
+    if (characterExists) return;
+
+    setSelectedCharacterId(String(characterList[0].id));
+  }, [characterList, selectedCharacterId]);
+
+  const applyToAllMutation = useMutation({
+    mutationKey: ["apply-catching-config-to-all-characters", accountId],
+    mutationFn: async ({
+      catchingGuildIds,
+      targetCharacterIds,
+    }: {
+      catchingGuildIds: string[];
+      targetCharacterIds: string[];
+    }) => {
+      const results = await Promise.allSettled(
+        targetCharacterIds.map(async (characterId) => {
+          await updateLootlogCharactersConfig(accountId, {
+            characterId,
+            catchingGuildIds,
+          });
+
+          return characterId;
+        }),
+      );
+
+      const successCount = results.filter(
+        (result) => result.status === "fulfilled",
+      ).length;
+      const failureCount = results.length - successCount;
+
+      return {
+        failureCount,
+        successCount,
+        totalCount: results.length,
+      };
+    },
+    onMutate: async ({ catchingGuildIds, targetCharacterIds }) => {
+      await queryClient.cancelQueries({
+        queryKey: ["lootlog-characters-config", accountId],
+      });
+
+      const previousSelectionByCharacterId = {
+        ...selectionByCharacterIdRef.current,
+      };
+      const previousData =
+        queryClient.getQueryData<LootlogCharacterConfigResponse>([
+          "lootlog-characters-config",
+          accountId,
+        ]);
+
+      const fallbackConfig = previousData
+        ? Object.values(previousData)[0]
+        : undefined;
+
+      queryClient.setQueryData<LootlogCharacterConfigResponse>(
+        ["lootlog-characters-config", accountId],
+        (currentData) => {
+          const nextData = { ...(currentData ?? {}) };
+
+          targetCharacterIds.forEach((characterId) => {
+            const currentCharacterConfig = nextData[characterId];
+
+            nextData[characterId] = {
+              userId:
+                currentCharacterConfig?.userId ?? fallbackConfig?.userId ?? "",
+              accountId:
+                currentCharacterConfig?.accountId ??
+                fallbackConfig?.accountId ??
+                accountId,
+              characterId,
+              catchingGuildIds,
+            };
+          });
+
+          return nextData;
+        },
+      );
+
+      setSelectionByCharacterId((currentSelections) => {
+        const nextSelections = { ...currentSelections };
+
+        targetCharacterIds.forEach((characterId) => {
+          nextSelections[characterId] = catchingGuildIds;
+        });
+
+        selectionByCharacterIdRef.current = nextSelections;
+        return nextSelections;
+      });
+
+      return {
+        previousData,
+        previousSelectionByCharacterId,
+      };
+    },
+    onSuccess: (
+      { failureCount, successCount, totalCount },
+      _variables,
+      context,
+    ) => {
+      if (failureCount === 0) {
+        toast.success("Ustawienia skopiowane do wszystkich postaci");
+        return;
+      }
+
+      if (context?.previousData) {
+        queryClient.setQueryData(
+          ["lootlog-characters-config", accountId],
+          context.previousData,
+        );
+      }
+
+      if (context?.previousSelectionByCharacterId) {
+        selectionByCharacterIdRef.current =
+          context.previousSelectionByCharacterId;
+        setSelectionByCharacterId(context.previousSelectionByCharacterId);
+      }
+
+      if (successCount === 0) {
+        toast.error("Nie udało się zaktualizować żadnej postaci");
+        return;
+      }
+
+      toast.error(
+        `Zaktualizowano ${successCount}/${totalCount} postaci. Część zmian się nie udała.`,
+      );
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(
+          ["lootlog-characters-config", accountId],
+          context.previousData,
+        );
+      }
+
+      if (context?.previousSelectionByCharacterId) {
+        selectionByCharacterIdRef.current =
+          context.previousSelectionByCharacterId;
+        setSelectionByCharacterId(context.previousSelectionByCharacterId);
+      }
+
+      toast.error("Nie udało się skopiować ustawień do wszystkich postaci");
+    },
+    onSettled: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["lootlog-characters-config", accountId],
+      });
+    },
+  });
+
+  const handleApplyToAllCharacters = () => {
+    if (!characterList || characterList.length <= 1) return;
+
+    const targetCharacterIds = characterList.map((character) =>
+      String(character.id),
+    );
+    const activeCharacterSelection =
+      selectionByCharacterIdRef.current[selectedCharacterId] ??
+      selectionByCharacterId[selectedCharacterId] ??
+      lootlogCharactersConfig?.[selectedCharacterId]?.catchingGuildIds ??
+      [];
+
+    applyToAllMutation.mutate({
+      catchingGuildIds: activeCharacterSelection,
+      targetCharacterIds,
+    });
+  };
 
   return (
-    <div className="ll:w-full ll:pt-2">
-      <h2 className="ll:text-sm">Ustawienia łapania lootu i timerów</h2>
-      <p className=" ll:text-gray-400 ll:mb-2">
-        Skonfiguruj ustawienia dotyczące łapania lootu i timerów w grze dla
-        każdej z postaci.
-      </p>
-      <label className="ll:font-semibold">Wybierz postać:</label>
-      <Tabs defaultValue={characterId} className="ll:w-full">
-        <TabsList>
+    <SettingsTabLayout
+      title="Ustawienia łapania lootu i timerów"
+      description="Skonfiguruj, które gildie mają odbierać looty i timery z każdej postaci."
+    >
+      <SettingsSection
+        title="Postać"
+        description="Wybierz postać, a potem wskaż gildie, które mają odbierać z niej dane."
+      >
+        <Tabs
+          value={selectedCharacterId}
+          onValueChange={setSelectedCharacterId}
+          className="ll:w-full ll:gap-3"
+        >
+          <TabsList className={SETTINGS_SUBTABS_LIST_CLASS_NAME}>
+            {characterList?.map((character) => (
+              <TabsTrigger
+                key={character.id}
+                value={`${character.id}`}
+                className={SETTINGS_SUBTAB_TRIGGER_CLASS_NAME}
+              >
+                <CharacterTile character={character} />
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          {characterList && characterList.length > 1 ? (
+            <div className="ll:flex ll:justify-end">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={handleApplyToAllCharacters}
+                disabled={applyToAllMutation.isPending}
+                className="ll:mt-0 ll:h-7 ll:min-w-44 ll:gap-2 ll:px-3 ll:text-[11px] ll:font-semibold"
+              >
+                {applyToAllMutation.isPending ? (
+                  <Loader2 className="ll:size-3.5 ll:animate-spin" />
+                ) : null}
+                Aplikuj do wszystkich postaci
+              </Button>
+            </div>
+          ) : null}
           {characterList?.map((character) => (
-            <TabsTrigger key={character.id} value={`${character.id}`}>
-              <CharacterTile character={character} />
-            </TabsTrigger>
+            <TabsContent
+              key={character.id}
+              value={`${character.id}`}
+              className={SETTINGS_SUBTAB_CONTENT_CLASS_NAME}
+            >
+              <CatchingSettingsForm
+                characterId={character.id.toString()}
+                disabled={applyToAllMutation.isPending}
+                onSelectionChange={(catchingGuildIds) => {
+                  selectionByCharacterIdRef.current = {
+                    ...selectionByCharacterIdRef.current,
+                    [String(character.id)]: catchingGuildIds,
+                  };
+                  setSelectionByCharacterId((currentSelections) => ({
+                    ...currentSelections,
+                    [String(character.id)]: catchingGuildIds,
+                  }));
+                }}
+              />
+            </TabsContent>
           ))}
-        </TabsList>
-        {characterList?.map((character) => (
-          <TabsContent key={character.id} value={`${character.id}`}>
-            <CatchingSettingsForm characterId={character.id.toString()} />
-          </TabsContent>
-        ))}
-      </Tabs>
-    </div>
+        </Tabs>
+      </SettingsSection>
+    </SettingsTabLayout>
   );
 };

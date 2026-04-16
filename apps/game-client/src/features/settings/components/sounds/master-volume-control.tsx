@@ -1,3 +1,4 @@
+import { SettingsPanel } from "@/components/settings/settings-panel";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -24,7 +25,7 @@ export const MasterVolumeControl: FC<MasterVolumeControlProps> = ({
   const isMuted = volume === 0;
 
   return (
-    <div className="ll:flex ll:items-center ll:gap-3 ll:py-2 ll:px-3 ll:border ll:border-gray-400 ll:rounded-sm">
+    <SettingsPanel className="ll:flex ll:items-center ll:gap-3">
       <Tooltip>
         <TooltipTrigger asChild>
           <span className="ll:flex ll:items-center">
@@ -65,6 +66,6 @@ export const MasterVolumeControl: FC<MasterVolumeControlProps> = ({
       <span className="ll:text-xs ll:text-muted-foreground ll:w-10 ll:text-right">
         {Math.round(volume * 100)}%
       </span>
-    </div>
+    </SettingsPanel>
   );
 };

@@ -1,12 +1,12 @@
-import { GuildSwitcher } from "@/components/guild-switcher";
+import { SettingsControlRow } from "@/components/settings/settings-control-row";
+import { SettingsSection } from "@/components/settings/settings-section";
+import { SettingsGuildSelectionGrid } from "@/features/settings/components/shared/settings-guild-selection-grid";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useGuilds } from "@/hooks/api/use-guilds";
 import { useUpdateUserGameAccountPreferences } from "@/hooks/api/use-user-account-preferences";
 import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
-import { cn } from "@/lib/utils";
 import { getTextColor } from "@/utils/notifications-and-detector/background";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { NotificationSettings, NotificationType } from "@lootlog/types";
@@ -191,22 +191,12 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
           const isHighlightField = field.key === "highlight";
 
           return (
-            <div
+            <SettingsControlRow
               key={field.key}
-              className={cn(
-                "ll:flex ll:items-center ll:justify-between ll:gap-4 ll:rounded-md ll:border ll:px-3 ll:py-2 ll:transition-colors",
-                isDisabled
-                  ? "ll:border-gray-700/80 ll:bg-gray-900/30 ll:opacity-60"
-                  : "ll:border-gray-600 ll:bg-gray-900/70 ll:hover:border-gray-500",
-              )}
+              disabled={isDisabled}
+              label={field.label}
+              labelStyle={isHighlightField ? { color: textColor } : undefined}
             >
-              <Label
-                htmlFor={`${categoryKey}-${field.key}`}
-                className="ll:flex-1 ll:text-[12px] ll:leading-4"
-                style={isHighlightField ? { color: textColor } : undefined}
-              >
-                {field.label}
-              </Label>
               <Controller
                 name={field.key}
                 control={control}
@@ -219,28 +209,20 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
                   />
                 )}
               />
-            </div>
+            </SettingsControlRow>
           );
         })}
-        <div
-          className={cn(
-            "ll:flex ll:items-center ll:justify-between ll:gap-4 ll:rounded-md ll:border ll:px-3 ll:py-2 ll:transition-colors",
-            !watchShow
-              ? "ll:border-gray-700/80 ll:bg-gray-900/30 ll:opacity-60"
-              : "ll:border-gray-600 ll:bg-gray-900/70 ll:hover:border-gray-500",
-          )}
+        <SettingsControlRow
+          disabled={!watchShow}
+          label="Auto ukrywanie"
+          description="Sekundy, 0 = wyłączone."
+          controlClassName="ll:w-12"
         >
-          <Label
-            htmlFor={`${categoryKey}-auto-hide-timeout`}
-            className="ll:flex-1 ll:text-[12px] ll:leading-4"
-          >
-            Auto ukrywanie (sekundy, 0 = wyłączone):
-          </Label>
           <Input
             id={`${categoryKey}-auto-hide-timeout`}
             type="number"
             disabled={!watchShow}
-            className="ll:h-5! ll:w-12! ll:px-1! ll:py-0! ll:text-[11px]! ll:text-center"
+            className="ll:h-5! ll:w-full! ll:px-1! ll:py-0! ll:text-[11px]! ll:text-center"
             placeholder="0"
             onFocus={() => {
               deferredSyncFieldRef.current = "autoHideTimeout";
@@ -260,19 +242,19 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
               },
             })}
           />
-        </div>
+        </SettingsControlRow>
       </div>
 
-      <div className="ll:space-y-3">
-        <Label className="ll:block">Z jakich serwerów:</Label>
-        <GuildSwitcher
-          multiple
-          selectedValues={selectedGuildIds}
+      <SettingsSection title="Serwery">
+        <SettingsGuildSelectionGrid
+          guilds={guilds}
+          selectedGuildIds={selectedGuildIds}
           disabled={!watchShow}
-          className="ll:mt-0"
           onToggle={toggleGuild}
+          emptyStateLabel="Brak gildii do skonfigurowania dla tej kategorii."
+          variant="compact"
         />
-      </div>
+      </SettingsSection>
     </form>
   );
 };

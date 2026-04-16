@@ -1,15 +1,18 @@
+import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
+import { SettingsSection } from "@/components/settings/settings-section";
 import { Button } from "@/components/ui/button";
-import { GuildSwitcher } from "@/components/guild-switcher";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DetectorRoutingRuleCard } from "@/features/settings/components/detector/detector-routing-rule-card";
+import { getDetectorRoutingSettingsTranslations } from "@/features/settings/components/detector/detector-routing-settings-translations";
 import { useGuilds } from "@/hooks/api/use-guilds";
 import { useUpdateUserGameAccountPreferences } from "@/hooks/api/use-user-account-preferences";
 import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { DetectorRoutingRule } from "@lootlog/types";
-import { Plus, Trash2 } from "lucide-react";
-import { type FC, useRef } from "react";
+import { Plus } from "lucide-react";
+import { type FC, useEffect, useRef, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { useDeepCompareEffect } from "react-use";
 import { z } from "zod";
@@ -112,6 +115,22 @@ const isDeferredRoutingSyncField = (fieldName: string | null) => {
   return /^routingRules\.\d+\.(minLevel|maxLevel)$/.test(fieldName);
 };
 
+const toggleOpenRuleId = (
+  currentOpenRuleIds: string[],
+  ruleId: string,
+  open: boolean,
+) => {
+  if (open) {
+    if (currentOpenRuleIds.includes(ruleId)) {
+      return currentOpenRuleIds;
+    }
+
+    return [...currentOpenRuleIds, ruleId];
+  }
+
+  return currentOpenRuleIds.filter((currentRuleId) => currentRuleId !== ruleId);
+};
+
 export const DetectorRoutingSettingsTabForm: FC = () => {
   const {
     accountId,
@@ -121,9 +140,11 @@ export const DetectorRoutingSettingsTabForm: FC = () => {
   const { data: guilds } = useGuilds();
   const updateUserGameAccountPreferences =
     useUpdateUserGameAccountPreferences(accountId);
+  const translations = getDetectorRoutingSettingsTranslations();
 
   const currentRoutingRules = accountSettings.routingRules;
   const deferredSyncFieldRef = useRef<string | null>(null);
+  const [openRuleIds, setOpenRuleIds] = useState<string[]>([]);
   const debouncedUpdate = useDebouncedCallback(
     (
       payload: Parameters<typeof updateUserGameAccountPreferences.mutate>[0],
@@ -166,6 +187,16 @@ export const DetectorRoutingSettingsTabForm: FC = () => {
   const watchedData = watch();
   const routingRules = watchedData.routingRules ?? [];
   const availableGuildIds = guilds?.map((guild) => guild.id) ?? [];
+
+  useEffect(() => {
+    const availableRuleIds = new Set(routingRules.map((rule) => rule.id));
+
+    setOpenRuleIds((currentOpenRuleIds) => {
+      return currentOpenRuleIds.filter((ruleId) =>
+        availableRuleIds.has(ruleId),
+      );
+    });
+  }, [routingRules]);
 
   const syncCurrentValues = () => {
     if (!accountId || !guilds || !isFetched) {
@@ -228,80 +259,87 @@ export const DetectorRoutingSettingsTabForm: FC = () => {
   };
 
   const addRoutingRule = () => {
-    append(createEmptyRoutingRule(), {
+    const nextRule = createEmptyRoutingRule();
+
+    append(nextRule, {
       shouldFocus: false,
     });
+
+    setOpenRuleIds((currentOpenRuleIds) =>
+      toggleOpenRuleId(currentOpenRuleIds, nextRule.id, true),
+    );
   };
 
   return (
-    <form className="ll:flex ll:flex-col ll:gap-3 ll:py-3">
-      <div className="ll:space-y-2.5">
-        <div className="ll:flex ll:items-center ll:justify-between ll:gap-3">
-          <div className="ll:space-y-1">
-            <Label className="ll:block">Routing na serwery</Label>
-            <p className="ll:text-[11px] ll:text-gray-400">
-              Wspolny routing dla calego wykrywacza. Nakladajace sie zakresy
-              wysylaja komunikaty na wszystkie dopasowane serwery. Zakres lvl
-              dotyczy poziomu NPC, nie gracza.
-            </p>
-          </div>
+    <form className="ll:flex ll:flex-col ll:gap-3 ll:py-1">
+      <SettingsSection
+        title={translations.sectionTitle}
+        description={translations.sectionDescription}
+        actions={
           <Button
             type="button"
             onClick={addRoutingRule}
             className="ll:h-7 ll:gap-1.5 ll:px-2.5 ll:text-[11px] ll:font-semibold"
           >
             <Plus size={14} />
-            Dodaj regule
+            {translations.addRuleButton}
           </Button>
-        </div>
-
+        }
+      >
         <div className="ll:grid ll:gap-3">
           {fields.length === 0 && (
-            <div className="ll:rounded-sm ll:border ll:border-gray-700 ll:bg-gray-950/60 ll:px-3 ll:py-2.5 ll:text-[12px] ll:leading-5 ll:text-gray-400">
-              Brak regul routingu. Detector bedzie dzialal lokalnie bez wysylki
-              na Discord.
-            </div>
+            <SettingsEmptyState>{translations.emptyState}</SettingsEmptyState>
           )}
 
           {fields.map((field, index) => {
-            const selectedGuildIds = routingRules[index]?.guildIds ?? [];
+            const rule = routingRules[index];
+            const ruleId = rule?.id ?? field.id;
+            const selectedGuildIds = rule?.guildIds ?? [];
 
             return (
-              <div
+              <DetectorRoutingRuleCard
                 key={field.fieldKey}
-                className="ll:space-y-2 ll:rounded-sm ll:border ll:border-gray-600 ll:bg-gray-900/70 ll:px-2.5 ll:py-2.5 ll:transition-colors"
-              >
-                <input
-                  type="hidden"
-                  {...register(`routingRules.${index}.id`)}
-                />
-                <div className="ll:flex ll:items-center ll:justify-between ll:gap-3">
-                  <span className="ll:text-xs ll:font-semibold">
-                    Regula {index + 1}
-                  </span>
-                  <Button
-                    type="button"
-                    className="ll:size-6 ll:border-gray-700 ll:bg-transparent ll:px-0 ll:hover:bg-gray-800/80"
-                    onClick={() => remove(index)}
-                  >
-                    <Trash2 size={12} />
-                  </Button>
-                </div>
-
-                <div className="ll:grid ll:grid-cols-2 ll:gap-2">
+                fieldIdInput={
+                  <input
+                    type="hidden"
+                    {...register(`routingRules.${index}.id`)}
+                  />
+                }
+                guilds={guilds}
+                index={index}
+                isOpen={openRuleIds.includes(ruleId)}
+                minLevel={rule?.minLevel ?? LEVEL_MIN}
+                maxLevel={rule?.maxLevel ?? LEVEL_MAX}
+                onOpenChange={(open) => {
+                  setOpenRuleIds((currentOpenRuleIds) =>
+                    toggleOpenRuleId(currentOpenRuleIds, ruleId, open),
+                  );
+                }}
+                onRemove={() => {
+                  setOpenRuleIds((currentOpenRuleIds) =>
+                    currentOpenRuleIds.filter(
+                      (currentRuleId) => currentRuleId !== ruleId,
+                    ),
+                  );
+                  remove(index);
+                }}
+                onToggleGuild={(guildId) => toggleGuild(index, guildId)}
+                selectedGuildIds={selectedGuildIds}
+                translations={translations}
+                minLevelField={
                   <div className="ll:space-y-1">
                     <Label
                       htmlFor={`detector-routing-${field.id}-min-level`}
                       className="ll:text-[10px] ll:leading-none"
                     >
-                      Od levela
+                      {translations.minLevelLabel}
                     </Label>
                     <Input
                       id={`detector-routing-${field.id}-min-level`}
                       type="number"
                       min={LEVEL_MIN}
                       max={LEVEL_MAX}
-                      className="ll:h-6 ll:px-1.5 ll:text-[11px]"
+                      className="ll:h-7 ll:px-2 ll:text-[11px]"
                       onFocus={() => {
                         deferredSyncFieldRef.current = `routingRules.${index}.minLevel`;
                       }}
@@ -330,19 +368,21 @@ export const DetectorRoutingSettingsTabForm: FC = () => {
                       })}
                     />
                   </div>
+                }
+                maxLevelField={
                   <div className="ll:space-y-1">
                     <Label
                       htmlFor={`detector-routing-${field.id}-max-level`}
                       className="ll:text-[10px] ll:leading-none"
                     >
-                      Do levela
+                      {translations.maxLevelLabel}
                     </Label>
                     <Input
                       id={`detector-routing-${field.id}-max-level`}
                       type="number"
                       min={LEVEL_MIN}
                       max={LEVEL_MAX}
-                      className="ll:h-6 ll:px-1.5 ll:text-[11px]"
+                      className="ll:h-7 ll:px-2 ll:text-[11px]"
                       onFocus={() => {
                         deferredSyncFieldRef.current = `routingRules.${index}.maxLevel`;
                       }}
@@ -371,24 +411,12 @@ export const DetectorRoutingSettingsTabForm: FC = () => {
                       })}
                     />
                   </div>
-                </div>
-
-                <div className="ll:pt-2">
-                  <Label className="ll:block ll:text-xs ll:leading-none">
-                    Na jakie serwery wysylac
-                  </Label>
-                  <GuildSwitcher
-                    multiple
-                    selectedValues={selectedGuildIds}
-                    className="ll:mt-0"
-                    onToggle={(guildId) => toggleGuild(index, guildId)}
-                  />
-                </div>
-              </div>
+                }
+              />
             );
           })}
         </div>
-      </div>
+      </SettingsSection>
     </form>
   );
 };

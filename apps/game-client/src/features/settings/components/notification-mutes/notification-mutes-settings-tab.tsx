@@ -1,3 +1,11 @@
+import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
+import { SettingsPanel } from "@/components/settings/settings-panel";
+import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
+import {
+  SETTINGS_SUBTABS_LIST_CLASS_NAME,
+  SETTINGS_SUBTAB_CONTENT_CLASS_NAME,
+  SETTINGS_SUBTAB_TRIGGER_CLASS_NAME,
+} from "@/components/settings/settings-styles";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,8 +33,8 @@ export const NotificationMutesSettingsTab = () => {
       );
     })
     .sort((left, right) =>
-    left.displayName.localeCompare(right.displayName, "pl"),
-  );
+      left.displayName.localeCompare(right.displayName, "pl"),
+    );
   const sortedNpcs = [...mutes.npcs]
     .filter((npc) => {
       if (!normalizedNpcSearch) {
@@ -34,29 +42,36 @@ export const NotificationMutesSettingsTab = () => {
       }
 
       return [npc.name, npc.npcType, npc.prof ?? "", String(npc.lvl)].some(
-        (value) =>
-          value.toLocaleLowerCase("pl").includes(normalizedNpcSearch),
+        (value) => value.toLocaleLowerCase("pl").includes(normalizedNpcSearch),
       );
     })
-    .sort((left, right) =>
-    left.name.localeCompare(right.name, "pl"),
-  );
+    .sort((left, right) => left.name.localeCompare(right.name, "pl"));
 
   return (
-    <div className="ll:w-full ll:pt-2 ll:space-y-4">
-      <div className="ll:space-y-1">
-        <h2 className="ll:text-sm ll:font-semibold">Wyciszenia</h2>
-        <p className="ll:mb-2 ll:text-gray-400">
-          Zarządzaj globalną listą wyciszonych graczy i potworów. Te wyciszenia
-          działają na wszystkich kontach.
-        </p>
-      </div>
+    <SettingsTabLayout
+      title="Wyciszenia"
+      description="Zarządzaj globalną listą wyciszonych graczy i potworów. Te wyciszenia działają na wszystkich kontach."
+      contentClassName="ll:gap-3"
+    >
       <Tabs defaultValue="players" className="ll:w-full ll:gap-3">
-        <TabsList className="ll:flex ll:w-full ll:justify-start ll:gap-2">
-          <TabsTrigger value="players">Gracze</TabsTrigger>
-          <TabsTrigger value="npcs">Potwory</TabsTrigger>
+        <TabsList className={SETTINGS_SUBTABS_LIST_CLASS_NAME}>
+          <TabsTrigger
+            value="players"
+            className={SETTINGS_SUBTAB_TRIGGER_CLASS_NAME}
+          >
+            Gracze
+          </TabsTrigger>
+          <TabsTrigger
+            value="npcs"
+            className={SETTINGS_SUBTAB_TRIGGER_CLASS_NAME}
+          >
+            Potwory
+          </TabsTrigger>
         </TabsList>
-        <TabsContent value="players" className="ll:mt-0 ll:space-y-3">
+        <TabsContent
+          value="players"
+          className={`${SETTINGS_SUBTAB_CONTENT_CLASS_NAME} ll:space-y-3`}
+        >
           <Input
             value={playerSearch}
             onChange={(event) => setPlayerSearch(event.target.value)}
@@ -65,14 +80,12 @@ export const NotificationMutesSettingsTab = () => {
           />
           <div className="ll:space-y-2">
             {sortedPlayers.length === 0 ? (
-              <div className="ll:rounded-sm ll:border ll:border-gray-700/80 ll:bg-gray-900/30 ll:px-3 ll:py-2 ll:text-[12px] ll:text-gray-400">
-                Brak wyników dla graczy.
-              </div>
+              <SettingsEmptyState>Brak wyników dla graczy.</SettingsEmptyState>
             ) : (
               sortedPlayers.map((player) => (
-                <div
+                <SettingsPanel
                   key={player.discordId}
-                  className="ll:flex ll:items-center ll:justify-between ll:gap-3 ll:rounded-sm ll:border ll:border-gray-600 ll:bg-gray-900/70 ll:px-3 ll:py-2"
+                  className="ll:flex ll:items-center ll:justify-between ll:gap-3"
                 >
                   <div className="ll:min-w-0 ll:flex-1 ll:flex ll:flex-col">
                     <span className="ll:text-[12px] ll:font-semibold ll:text-white ll:truncate">
@@ -97,12 +110,15 @@ export const NotificationMutesSettingsTab = () => {
                   >
                     Usuń
                   </Button>
-                </div>
+                </SettingsPanel>
               ))
             )}
           </div>
         </TabsContent>
-        <TabsContent value="npcs" className="ll:mt-0 ll:space-y-3">
+        <TabsContent
+          value="npcs"
+          className={`${SETTINGS_SUBTAB_CONTENT_CLASS_NAME} ll:space-y-3`}
+        >
           <Input
             value={npcSearch}
             onChange={(event) => setNpcSearch(event.target.value)}
@@ -111,14 +127,14 @@ export const NotificationMutesSettingsTab = () => {
           />
           <div className="ll:space-y-2">
             {sortedNpcs.length === 0 ? (
-              <div className="ll:rounded-sm ll:border ll:border-gray-700/80 ll:bg-gray-900/30 ll:px-3 ll:py-2 ll:text-[12px] ll:text-gray-400">
+              <SettingsEmptyState>
                 Brak wyników dla potworów.
-              </div>
+              </SettingsEmptyState>
             ) : (
               sortedNpcs.map((npc) => (
-                <div
+                <SettingsPanel
                   key={npc.npcKey}
-                  className="ll:flex ll:items-center ll:justify-between ll:gap-3 ll:rounded-sm ll:border ll:border-gray-600 ll:bg-gray-900/70 ll:px-3 ll:py-2"
+                  className="ll:flex ll:items-center ll:justify-between ll:gap-3"
                 >
                   <div className="ll:min-w-0 ll:flex ll:flex-1 ll:items-center ll:gap-3">
                     {npc.icon ? (
@@ -152,12 +168,12 @@ export const NotificationMutesSettingsTab = () => {
                   >
                     Usuń
                   </Button>
-                </div>
+                </SettingsPanel>
               ))
             )}
           </div>
         </TabsContent>
       </Tabs>
-    </div>
+    </SettingsTabLayout>
   );
 };

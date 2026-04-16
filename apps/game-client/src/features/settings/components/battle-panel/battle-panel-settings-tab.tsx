@@ -1,27 +1,31 @@
-import { Checkbox } from "@/components/ui/checkbox";
+import { SettingsControlRow } from "@/components/settings/settings-control-row";
+import { SettingsSection } from "@/components/settings/settings-section";
+import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
+import { Switch } from "@/components/ui/switch";
 import { useBattlePanelStore } from "@/store/battle-panel.store";
-import { FC } from "react";
+import type { FC } from "react";
 
 export const BattlePanelSettingsTab: FC = () => {
   const { isBattleCollectionEnabled, toggleBattleCollection } =
     useBattlePanelStore();
 
   return (
-    <div className="ll:w-full ll:pt-2">
-      <h2 className="ll:text-sm">Ustawienia panelu walk</h2>
-      <p className="ll:text-gray-400">
-        Skonfiguruj ustawienia dotyczące zbierania danych walk w grze.
-      </p>
-      <div className="ll:mb-4 ll:mt-4">
-        <Checkbox
-          value={isBattleCollectionEnabled ? "1" : "0"}
-          checked={isBattleCollectionEnabled}
-          onChange={toggleBattleCollection}
-          id="battle-collection-enabled"
+    <SettingsTabLayout
+      title="Ustawienia panelu walk"
+      description="Skonfiguruj ustawienia dotyczące zbierania danych walk w grze."
+    >
+      <SettingsSection title="Zbieranie danych">
+        <SettingsControlRow
+          label="Włącz zbieranie walk"
+          description="Rejestruje dane walk używane przez panel."
         >
-          Włącz zbieranie walk
-        </Checkbox>
-      </div>
-    </div>
+          <Switch
+            checked={isBattleCollectionEnabled}
+            onCheckedChange={toggleBattleCollection}
+            id="battle-collection-enabled"
+          />
+        </SettingsControlRow>
+      </SettingsSection>
+    </SettingsTabLayout>
   );
 };

@@ -61,7 +61,7 @@ export const useNotifications = () => {
   settingsRef.current = settings;
   worldRef.current = world;
   processNotificationRef.current = (data: Notification) => {
-    // if (data.discordId === sessionDataRef.current?.user?.discordId) return;
+    if (data.discordId === sessionDataRef.current?.user?.discordId) return;
 
     if (isNotificationMuted(data, mutesRef.current)) {
       return;
@@ -79,7 +79,8 @@ export const useNotifications = () => {
     }
 
     if (!typeSettings.show) return;
-    if (typeSettings.ignoreOtherWorlds && data.world !== worldRef.current) return;
+    if (typeSettings.ignoreOtherWorlds && data.world !== worldRef.current)
+      return;
     if (!typeSettings.guildIds.includes(data.guildId)) return;
 
     setOpen("notifications", true);
@@ -114,7 +115,11 @@ export const useNotifications = () => {
   }, [connected, socket]);
 
   useEffect(() => {
-    if (!isReady || !areMutesReady || pendingNotificationsRef.current.length === 0) {
+    if (
+      !isReady ||
+      !areMutesReady ||
+      pendingNotificationsRef.current.length === 0
+    ) {
       return;
     }
 

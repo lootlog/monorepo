@@ -11,21 +11,17 @@ import {
 import { useWindowsStore } from "@/store/windows.store";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import type { GameNpc } from "@lootlog/margonem";
-import { getNpcTypeByWt } from "@lootlog/types";
 import { NpcType } from "@/hooks/api/use-npcs";
 import { getNpcIconFromEvent } from "@/utils/game/events/get-npc-icon-from-event";
 import { getNpcTplFromEvent } from "@/utils/game/events/get-npc-tpl-from-event";
-import type {
-  DetectorNpcType,
-  DetectorSettings,
-  DetectorTypeSettings,
-  UserGameAccountPreferences,
-} from "@lootlog/types";
 import {
-  sendChatMessage,
-  createNotification,
-  MessageType,
-} from "@/services/api.service";
+  getNpcTypeByWt,
+  type DetectorNpcType,
+  type DetectorSettings,
+  type DetectorTypeSettings,
+  type UserGameAccountPreferences,
+} from "@lootlog/types";
+import { sendChatMessage, createNotification, MessageType } from "@/api";
 import { playSound } from "@/lib/sound-playback";
 import { queryClient } from "@/lib/query-client";
 import {
@@ -40,11 +36,14 @@ type PendingDetection =
       accountId: string;
       type: "event";
       event: GameEvent;
+      queuedAt: number;
     }
   | {
       accountId: string;
       type: "initial";
     };
+
+const PENDING_EVENT_MAX_AGE_MS = 5_000;
 
 export class NpcsDetectionProcessor {
   private static pendingDetections: PendingDetection[] = [];
@@ -52,11 +51,13 @@ export class NpcsDetectionProcessor {
   handle(event: GameEvent): void {
     const accountId = this.getCurrentAccountId();
     if (!accountId) return;
+    this.prunePendingDetections();
     if (!this.isDetectorReady(accountId)) {
       NpcsDetectionProcessor.pendingDetections.push({
         accountId,
         type: "event",
         event,
+        queuedAt: Date.now(),
       });
       return;
     }
@@ -67,6 +68,7 @@ export class NpcsDetectionProcessor {
   handleInitialDetection(): void {
     const accountId = this.getCurrentAccountId();
     if (!accountId) return;
+    this.prunePendingDetections();
     if (!this.isDetectorReady(accountId)) {
       const hasQueuedInitialDetection =
         NpcsDetectionProcessor.pendingDetections.some(
@@ -92,6 +94,9 @@ export class NpcsDetectionProcessor {
       return;
     }
 
+    const now = Date.now();
+    this.prunePendingDetections(now);
+
     const pendingDetections = NpcsDetectionProcessor.pendingDetections.filter(
       (pendingDetection) => pendingDetection.accountId === accountId,
     );
@@ -113,6 +118,17 @@ export class NpcsDetectionProcessor {
 
       this.processEvent(pendingDetection.event);
     });
+  }
+
+  private prunePendingDetections(now = Date.now()): void {
+    NpcsDetectionProcessor.pendingDetections =
+      NpcsDetectionProcessor.pendingDetections.filter((pendingDetection) => {
+        if (pendingDetection.type !== "event") {
+          return true;
+        }
+
+        return now - pendingDetection.queuedAt <= PENDING_EVENT_MAX_AGE_MS;
+      });
   }
 
   private processEvent(event: GameEvent): void {
@@ -277,6 +293,8 @@ export class NpcsDetectionProcessor {
           location: composedNpc.location,
           name: composedNpc.nick,
           wt: composedNpc.wt,
+          x: composedNpc.x,
+          y: composedNpc.y,
           lvl: composedNpc.lvl,
           prof: composedNpc.prof,
           icon: composedNpc.icon,

@@ -69,8 +69,9 @@ export const NotificationMuteMenu: FC<NotificationMuteMenuProps> = ({
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button
+          variant="ghost"
           aria-label="Opcje wyciszenia"
-          className="ll:size-7 ll:border-gray-400/50 ll:bg-transparent ll:px-0 ll:hover:bg-white/8"
+          className="ll:size-7 ll:px-0"
         >
           <BellOff size={12} />
         </Button>

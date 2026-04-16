@@ -1,4 +1,6 @@
 import { Accordion } from "@/components/ui/accordion";
+import { SettingsSection } from "@/components/settings/settings-section";
+import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { NpcType } from "@/hooks/api/use-npcs";
 import React, { useCallback, useState, type FC } from "react";
 import { useSoundPlayback } from "@/hooks/use-sound-playback";
@@ -169,9 +171,9 @@ export const SoundsSettingsTab: FC = () => {
 
   if (isLoading) {
     return (
-      <div className="ll:w-full ll:pt-2 ll:flex ll:items-center ll:justify-center">
-        <p className="ll:text-muted-foreground">Ładowanie ustawień...</p>
-      </div>
+      <SettingsTabLayout title="Ustawienia dźwięków">
+        <p className="ll:text-[12px] ll:text-gray-400">Ładowanie ustawień...</p>
+      </SettingsTabLayout>
     );
   }
 
@@ -207,18 +209,17 @@ export const SoundsSettingsTab: FC = () => {
   ];
 
   return (
-    <div className="ll:w-full ll:pt-2 ll:relative">
+    <SettingsTabLayout
+      title="Ustawienia dźwięków"
+      description="Skonfiguruj dźwięki dla różnych funkcji."
+      className="ll:relative"
+    >
       {isPending && (
         <div className="ll:absolute ll:top-2 ll:right-2">
           <Loader2 className="ll:size-4 ll:animate-spin ll:text-primary" />
         </div>
       )}
-      <h2 className="ll:text-sm">Ustawienia dźwięków</h2>
-      <p className="ll:text-gray-400 ll:mb-4">
-        Skonfiguruj dźwięki dla różnych funkcji.
-      </p>
-
-      <div className="ll:flex ll:flex-col ll:gap-3 ll:pb-6 ll:pr-1">
+      <div className="ll:flex ll:flex-col ll:gap-4 ll:pb-6 ll:pr-1">
         <MasterVolumeControl
           volume={localVolumes.master}
           onVolumeChange={handleMasterVolumeChange}
@@ -226,79 +227,77 @@ export const SoundsSettingsTab: FC = () => {
           onMuteToggle={handleMasterMuteToggle}
         />
 
-        <div className="ll:flex ll:flex-col ll:gap-1 ll:mt-2">
-          <h3 className="ll:text-sm ll:font-medium">Kategorie dźwięków</h3>
-          <p className="ll:text-xs ll:text-muted-foreground ll:mb-2">
-            Dostosuj głośność i dźwięki dla każdej kategorii osobno.
-          </p>
-        </div>
-
-        <Accordion
-          type="single"
-          collapsible
-          className="ll:w-full ll:flex ll:flex-col ll:gap-1"
+        <SettingsSection
+          title="Kategorie dźwięków"
+          description="Dostosuj głośność i dźwięki dla każdej kategorii osobno."
         >
-          {categories.map((category) => {
-            const configKey = `${category.id}Config` as const;
-            const categoryConfig = settings?.[configKey] ?? {};
-            const categoryVolume = localVolumes[category.id];
-            const isMuted =
-              mutedCategories[category.id] || categoryVolume === 0;
+          <Accordion
+            type="single"
+            collapsible
+            className="ll:flex ll:w-full ll:flex-col ll:gap-2"
+          >
+            {categories.map((category) => {
+              const configKey = `${category.id}Config` as const;
+              const categoryConfig = settings?.[configKey] ?? {};
+              const categoryVolume = localVolumes[category.id];
+              const isMuted =
+                mutedCategories[category.id] || categoryVolume === 0;
 
-            return (
-              <CategoryAccordionItem
-                key={category.id}
-                id={category.id}
-                label={category.label}
-                icon={category.icon}
-                volume={categoryVolume}
-                isMuted={isMuted}
-                fields={category.fields}
-                categoryConfig={categoryConfig}
-                urlErrors={urlErrors[category.id] ?? {}}
-                description={category.description}
-                disabled={category.id === "timers"}
-                onVolumeChange={(v) =>
-                  handleCategoryVolumeChange(category.id, v)
-                }
-                onVolumeCommit={(v) =>
-                  handleCategoryVolumeCommit(category.id, v)
-                }
-                onMuteToggle={(e) => handleCategoryMuteToggle(category.id, e)}
-                onMuteKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const currentVolume = localVolumes[category.id];
-                    const isMutedNow =
-                      mutedCategories[category.id] || currentVolume === 0;
-                    const newVolume = isMutedNow ? 0.5 : 0;
-
-                    setLocalVolumes((prev) => ({
-                      ...prev,
-                      [category.id]: newVolume,
-                    }));
-                    setMutedCategories((prev) => ({
-                      ...prev,
-                      [category.id]: !isMutedNow,
-                    }));
-                    updateSettings({
-                      [`${category.id}Volume`]: newVolume,
-                    });
+              return (
+                <CategoryAccordionItem
+                  key={category.id}
+                  id={category.id}
+                  label={category.label}
+                  icon={category.icon}
+                  volume={categoryVolume}
+                  isMuted={isMuted}
+                  fields={category.fields}
+                  categoryConfig={categoryConfig}
+                  urlErrors={urlErrors[category.id] ?? {}}
+                  description={category.description}
+                  disabled={category.id === "timers"}
+                  onVolumeChange={(v) =>
+                    handleCategoryVolumeChange(category.id, v)
                   }
-                }}
-                onSoundUrlChange={(key, value) =>
-                  handleSoundUrlChange(category.id, key, value)
-                }
-                onPlaySound={(key) => {
-                  const soundUrl = categoryConfig[key]?.soundUrl;
-                  playSoundTest(category.id, key, soundUrl);
-                }}
-              />
-            );
-          })}
-        </Accordion>
+                  onVolumeCommit={(v) =>
+                    handleCategoryVolumeCommit(category.id, v)
+                  }
+                  onMuteToggle={(e) => handleCategoryMuteToggle(category.id, e)}
+                  onMuteKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const currentVolume = localVolumes[category.id];
+                      const isMutedNow =
+                        mutedCategories[category.id] || currentVolume === 0;
+                      const newVolume = isMutedNow ? 0.5 : 0;
+
+                      setLocalVolumes((prev) => ({
+                        ...prev,
+                        [category.id]: newVolume,
+                      }));
+                      setMutedCategories((prev) => ({
+                        ...prev,
+                        [category.id]: !isMutedNow,
+                      }));
+                      updateSettings({
+                        [`${category.id}Volume`]: newVolume,
+                      });
+                    }
+                  }}
+                  onSoundUrlChange={(key, value) =>
+                    handleSoundUrlChange(category.id, key, value)
+                  }
+                  onPlaySound={(key) => {
+                    const soundUrl = categoryConfig[key]?.soundUrl;
+                    playSoundTest(category.id, key, soundUrl);
+                  }}
+                />
+              );
+            })}
+          </Accordion>
+        </SettingsSection>
       </div>
-    </div>
+    </SettingsTabLayout>
   );
 };

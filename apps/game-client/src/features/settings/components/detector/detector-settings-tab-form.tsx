@@ -1,13 +1,12 @@
-import { Label } from "@/components/ui/label";
+import { SettingsControlRow } from "@/components/settings/settings-control-row";
 import { Switch } from "@/components/ui/switch";
 import { useUpdateUserGameAccountPreferences } from "@/hooks/api/use-user-account-preferences";
 import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
-import { cn } from "@/lib/utils";
 import { getTextColor } from "@/utils/notifications-and-detector/background";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { DetectorNpcType, DetectorTypeSettings } from "@lootlog/types";
-import { type FC } from "react";
+import type { FC } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useDeepCompareEffect } from "react-use";
 import { z } from "zod";
@@ -103,9 +102,8 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
 
   useDeepCompareEffect(() => {
     const nextFormValues = cloneDetectorTypeSettings(currentCategorySettings);
-    const currentFormSettings = getDetectorTypeSettingsFromFormData(
-      getValues(),
-    );
+    const currentFormSettings =
+      getDetectorTypeSettingsFromFormData(getValues());
 
     if (
       areDetectorTypeSettingsEqual(currentFormSettings, currentCategorySettings)
@@ -127,9 +125,8 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
       return;
     }
 
-    const nextCategorySettings = getDetectorTypeSettingsFromFormData(
-      watchedData,
-    );
+    const nextCategorySettings =
+      getDetectorTypeSettingsFromFormData(watchedData);
 
     if (
       areDetectorTypeSettingsEqual(
@@ -165,22 +162,12 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
           const isHighlightField = field.key === "highlight";
 
           return (
-            <div
+            <SettingsControlRow
               key={field.key}
-              className={cn(
-                "ll:flex ll:items-center ll:justify-between ll:gap-3 ll:rounded-sm ll:border ll:px-2.5 ll:py-1.5 ll:transition-colors",
-                isDisabled
-                  ? "ll:border-gray-700/80 ll:bg-gray-900/30 ll:opacity-60"
-                  : "ll:border-gray-600 ll:bg-gray-900/70 ll:hover:border-gray-500",
-              )}
+              disabled={isDisabled}
+              label={field.label}
+              labelStyle={isHighlightField ? { color: textColor } : undefined}
             >
-              <Label
-                htmlFor={`${categoryKey}-${field.key}`}
-                className="ll:flex-1 ll:text-[12px] ll:leading-4"
-                style={isHighlightField ? { color: textColor } : undefined}
-              >
-                {field.label}
-              </Label>
               <Controller
                 name={field.key}
                 control={control}
@@ -193,7 +180,7 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
                   />
                 )}
               />
-            </div>
+            </SettingsControlRow>
           );
         })}
       </div>

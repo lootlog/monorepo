@@ -1,25 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { API_URL } from "@/config/api";
-import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
+import { fetchUserPreferences, updateUserPreferences } from "@/api";
 import {
   cloneNotificationMutes,
   getUpdateUserPreferencesMutationKey,
   getUserPreferencesQueryKey,
 } from "@/lib/user-preferences";
-import type { UpdateUserPreferencesPayload, UserPreferences } from "@lootlog/types";
+import type {
+  UpdateUserPreferencesPayload,
+  UserPreferences,
+} from "@lootlog/types";
 
 export const useUserPreferences = (enabled = true) => {
-  const { client } = useAuthenticatedApiClient();
-
   return useQuery({
     queryKey: getUserPreferencesQueryKey(),
-    queryFn: async () => {
-      const response = await client.get<UserPreferences>(
-        `${API_URL}/users/@me/preferences`,
-      );
-
-      return response.data;
-    },
+    queryFn: () => fetchUserPreferences(),
     enabled,
     staleTime: 0,
     refetchOnMount: true,
@@ -29,19 +23,12 @@ export const useUserPreferences = (enabled = true) => {
 };
 
 export const useUpdateUserPreferences = () => {
-  const { client } = useAuthenticatedApiClient();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationKey: getUpdateUserPreferencesMutationKey(),
-    mutationFn: async (payload: UpdateUserPreferencesPayload) => {
-      const response = await client.patch<UserPreferences>(
-        `${API_URL}/users/@me/preferences`,
-        payload,
-      );
-
-      return response.data;
-    },
+    mutationFn: (payload: UpdateUserPreferencesPayload) =>
+      updateUserPreferences(payload),
     onMutate: async (payload) => {
       const queryKey = getUserPreferencesQueryKey();
       await queryClient.cancelQueries({ queryKey });
@@ -76,7 +63,10 @@ export const useUpdateUserPreferences = () => {
         return;
       }
 
-      queryClient.setQueryData(getUserPreferencesQueryKey(), context.previousData);
+      queryClient.setQueryData(
+        getUserPreferencesQueryKey(),
+        context.previousData,
+      );
     },
     onSuccess: (data) => {
       queryClient.setQueryData(getUserPreferencesQueryKey(), data);
