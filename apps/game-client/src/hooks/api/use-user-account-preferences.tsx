@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { API_URL } from "@/config/api";
-import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
+import {
+  fetchUserGameAccountPreferences,
+  updateUserGameAccountPreferences,
+} from "@/api";
 import {
   cloneDetectorSettings,
   getUpdateUserGameAccountPreferencesMutationKey,
@@ -17,8 +19,6 @@ export const useUserGameAccountPreferences = (
   accountId: string | null,
   enabled = true,
 ) => {
-  const { client } = useAuthenticatedApiClient();
-
   return useQuery({
     queryKey: accountId
       ? getUserGameAccountPreferencesQueryKey(accountId)
@@ -28,11 +28,7 @@ export const useUserGameAccountPreferences = (
         throw new Error("Account ID is required");
       }
 
-      const response = await client.get<UserGameAccountPreferences>(
-        `${API_URL}/users/@me/game-preferences/accounts/${accountId}`,
-      );
-
-      return response.data;
+      return fetchUserGameAccountPreferences(accountId);
     },
     enabled: enabled && !!accountId,
     staleTime: 0,
@@ -45,7 +41,6 @@ export const useUserGameAccountPreferences = (
 export const useUpdateUserGameAccountPreferences = (
   accountId: string | null,
 ) => {
-  const { client } = useAuthenticatedApiClient();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -57,12 +52,7 @@ export const useUpdateUserGameAccountPreferences = (
         throw new Error("Account ID is required");
       }
 
-      const response = await client.patch<UserGameAccountPreferences>(
-        `${API_URL}/users/@me/game-preferences/accounts/${accountId}`,
-        payload,
-      );
-
-      return response.data;
+      return updateUserGameAccountPreferences(accountId, payload);
     },
     onMutate: async (payload) => {
       if (!accountId) {

@@ -12,7 +12,6 @@ import { GuildSwitcher } from "@/components/guild-switcher";
 import { Game } from "@/lib/game";
 import { useChatCache } from "./hooks/use-chat-cache";
 import { type ChatFilter, useChatStore } from "@/store/chat.store";
-import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 import { ChatMessage } from "./components/chat-message";
 import { OldChatInput } from "@/features/chat/components/old-chat-input";
 import { getGuildNamesById, useGuilds } from "@/hooks/api/use-guilds";
@@ -58,8 +57,7 @@ export const Chat = () => {
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  const { client } = useAuthenticatedApiClient();
-  useChatMessagesListener(client);
+  useChatMessagesListener();
 
   const messageCache = useChatCache((s) => s.messageCache);
   const memberCache = useChatCache((s) => s.memberCache);

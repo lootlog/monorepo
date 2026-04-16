@@ -33,12 +33,9 @@ export const CatchingWhitelistWarning: FC = () => {
     }
 
     const config = lootlogCharactersConfig?.[characterId];
-    const hasLootGuilds =
-      (config?.collectLootWhitelistGuildIds?.length ?? 0) > 0;
-    const hasTimerGuilds =
-      (config?.addTimersWhitelistGuildIds?.length ?? 0) > 0;
+    const hasCatchingGuilds = (config?.catchingGuildIds?.length ?? 0) > 0;
 
-    if (!hasLootGuilds && !hasTimerGuilds) {
+    if (!hasCatchingGuilds) {
       setOpen("catching-whitelist-warning", true);
     }
 

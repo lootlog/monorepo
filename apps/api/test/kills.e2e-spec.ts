@@ -97,8 +97,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           accountId: "11111",
           characterId: "67890",
-          collectLootWhitelistGuildIds: [guild.id],
-          addTimersWhitelistGuildIds: [],
+          catchingGuildIds: [guild.id],
         },
       });
 
@@ -167,8 +166,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           accountId: "11111",
           characterId: "67890",
-          collectLootWhitelistGuildIds: [guild.id],
-          addTimersWhitelistGuildIds: [],
+          catchingGuildIds: [guild.id],
         },
       });
 
@@ -237,8 +235,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           accountId: "11111",
           characterId: "67890",
-          collectLootWhitelistGuildIds: [guild.id],
-          addTimersWhitelistGuildIds: [],
+          catchingGuildIds: [guild.id],
         },
       });
 
@@ -324,8 +321,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
             userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
             accountId: "11111",
             characterId: "1",
-            collectLootWhitelistGuildIds: [guild.id],
-            addTimersWhitelistGuildIds: [],
+            catchingGuildIds: [guild.id],
           },
         }),
         prisma.userCharactersLootlogSettings.create({
@@ -333,8 +329,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
             userId: TEST_USERS_EXTENDED.MEMBER_2.discordId,
             accountId: "22222",
             characterId: "2",
-            collectLootWhitelistGuildIds: [guild.id],
-            addTimersWhitelistGuildIds: [],
+            catchingGuildIds: [guild.id],
           },
         }),
         prisma.userCharactersLootlogSettings.create({
@@ -342,8 +337,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
             userId: TEST_USERS_EXTENDED.MEMBER_3.discordId,
             accountId: "33333",
             characterId: "3",
-            collectLootWhitelistGuildIds: [guild.id],
-            addTimersWhitelistGuildIds: [],
+            catchingGuildIds: [guild.id],
           },
         }),
       ]);
@@ -436,8 +430,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
               userId: user.discordId,
               accountId: user.accountId,
               characterId: user.characterId,
-              collectLootWhitelistGuildIds: [guild.id],
-              addTimersWhitelistGuildIds: [],
+              catchingGuildIds: [guild.id],
             },
           }),
         ),
@@ -503,8 +496,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
             userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
             accountId: "11111",
             characterId: "char1",
-            collectLootWhitelistGuildIds: [guild.id],
-            addTimersWhitelistGuildIds: [],
+            catchingGuildIds: [guild.id],
           },
         }),
         prisma.userCharactersLootlogSettings.create({
@@ -512,8 +504,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
             userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
             accountId: "11111",
             characterId: "char2",
-            collectLootWhitelistGuildIds: [guild.id],
-            addTimersWhitelistGuildIds: [],
+            catchingGuildIds: [guild.id],
           },
         }),
         prisma.userCharactersLootlogSettings.create({
@@ -521,8 +512,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
             userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
             accountId: "11111",
             characterId: "char3",
-            collectLootWhitelistGuildIds: [guild.id],
-            addTimersWhitelistGuildIds: [],
+            catchingGuildIds: [guild.id],
           },
         }),
       ]);
@@ -616,8 +606,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           accountId: "11111",
           characterId: "67890",
-          collectLootWhitelistGuildIds: [guild1.id, guild2.id],
-          addTimersWhitelistGuildIds: [],
+          catchingGuildIds: [guild1.id, guild2.id],
         },
       });
 
@@ -701,8 +690,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
             userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
             accountId: "11111",
             characterId: "1",
-            collectLootWhitelistGuildIds: [guild.id],
-            addTimersWhitelistGuildIds: [],
+            catchingGuildIds: [guild.id],
           },
         }),
         prisma.userCharactersLootlogSettings.create({
@@ -710,8 +698,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
             userId: TEST_USERS_EXTENDED.MEMBER_2.discordId,
             accountId: "22222",
             characterId: "2",
-            collectLootWhitelistGuildIds: [guild.id],
-            addTimersWhitelistGuildIds: [],
+            catchingGuildIds: [guild.id],
           },
         }),
         prisma.userCharactersLootlogSettings.create({
@@ -719,8 +706,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
             userId: TEST_USERS_EXTENDED.MEMBER_3.discordId,
             accountId: "33333",
             characterId: "3",
-            collectLootWhitelistGuildIds: [guild.id],
-            addTimersWhitelistGuildIds: [],
+            catchingGuildIds: [guild.id],
           },
         }),
       ]);
@@ -811,8 +797,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           accountId: "11111",
           characterId: "67890",
-          collectLootWhitelistGuildIds: [guild.id],
-          addTimersWhitelistGuildIds: [],
+          catchingGuildIds: [guild.id],
         },
       });
 
@@ -884,8 +869,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           accountId: "11111",
           characterId: "67890",
-          collectLootWhitelistGuildIds: [guild.id],
-          addTimersWhitelistGuildIds: [],
+          catchingGuildIds: [guild.id],
         },
       });
 
@@ -949,8 +933,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           accountId: "11111",
           characterId: "67890",
-          collectLootWhitelistGuildIds: [guild.id],
-          addTimersWhitelistGuildIds: [],
+          catchingGuildIds: [guild.id],
         },
       });
 
@@ -1004,8 +987,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           accountId: "11111",
           characterId: "67890",
-          collectLootWhitelistGuildIds: [guild.id],
-          addTimersWhitelistGuildIds: [],
+          catchingGuildIds: [guild.id],
         },
       });
 
@@ -1079,8 +1061,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
             userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
             accountId: "11111",
             characterId: "1",
-            collectLootWhitelistGuildIds: [guild.id],
-            addTimersWhitelistGuildIds: [],
+            catchingGuildIds: [guild.id],
           },
         }),
         prisma.userCharactersLootlogSettings.create({
@@ -1088,8 +1069,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
             userId: TEST_USERS_EXTENDED.MEMBER_2.discordId,
             accountId: "22222",
             characterId: "2",
-            collectLootWhitelistGuildIds: [guild.id],
-            addTimersWhitelistGuildIds: [],
+            catchingGuildIds: [guild.id],
           },
         }),
         prisma.userCharactersLootlogSettings.create({
@@ -1097,8 +1077,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
             userId: TEST_USERS_EXTENDED.MEMBER_3.discordId,
             accountId: "33333",
             characterId: "3",
-            collectLootWhitelistGuildIds: [guild.id],
-            addTimersWhitelistGuildIds: [],
+            catchingGuildIds: [guild.id],
           },
         }),
       ]);

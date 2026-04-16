@@ -475,14 +475,13 @@ model Reservation {
 }
 
 model UserCharactersLootlogSettings {
-  id                           Int      @id @default(autoincrement())
-  userId                       String
-  accountId                    String
-  characterId                  String
-  collectLootWhitelistGuildIds String[] @default([])
-  addTimersWhitelistGuildIds   String[] @default([])
-  createdAt                    DateTime @default(now())
-  updatedAt                    DateTime @updatedAt
+  id               Int      @id @default(autoincrement())
+  userId           String
+  accountId        String
+  characterId      String
+  catchingGuildIds String[] @default([])
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   @@unique([userId, accountId, characterId])
 }

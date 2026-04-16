@@ -4198,8 +4198,7 @@ export const UserCharactersLootlogSettingsScalarFieldEnum = {
   userId: 'userId',
   accountId: 'accountId',
   characterId: 'characterId',
-  collectLootWhitelistGuildIds: 'collectLootWhitelistGuildIds',
-  addTimersWhitelistGuildIds: 'addTimersWhitelistGuildIds',
+  catchingGuildIds: 'catchingGuildIds',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

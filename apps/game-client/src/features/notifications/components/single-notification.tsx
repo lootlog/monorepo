@@ -22,7 +22,7 @@ import {
 } from "@/utils/notifications-and-detector/background";
 import { getNpcTypeByWt } from "@lootlog/types";
 import { format } from "date-fns";
-import { XIcon } from "lucide-react";
+import { LoaderCircle, User, XIcon } from "lucide-react";
 import { type FC, type ReactNode, useEffect, useRef } from "react";
 import { NpcType } from "@/hooks/api/use-npcs";
 import { SingleNotificationMessage } from "@/features/notifications/components/single-notification-message";
@@ -31,6 +31,11 @@ import { SingleNotificationPartyGathering } from "@/features/notifications/compo
 
 const AUTO_HIDE_RING_PATH =
   "M 50 0 H 2 A 2 2 0 0 0 0 2 V 38 A 2 2 0 0 0 2 40 H 98 A 2 2 0 0 0 100 38 V 2 A 2 2 0 0 0 98 0 H 50";
+const AUTO_HIDE_BASE_STROKE_WIDTH = 1.5;
+const AUTO_HIDE_PROGRESS_STROKE_WIDTH = 3;
+const DEFAULT_BORDER_STROKE_WIDTH = 2;
+const AUTO_HIDE_BASE_STROKE_OPACITY = 0.45;
+const AUTO_HIDE_PROGRESS_STROKE_OPACITY = 0.95;
 
 type SingleNotificationProps = {
   guildNamesById: Record<string, string>;
@@ -171,6 +176,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   const time = format(new Date(notification.createdAt), "HH:mm");
   const background = getBackgroundColor(key, categorySettings?.highlight);
   const borderColor = getBorderColor(key, categorySettings?.highlight);
+  const hasAutoHideRing = autoHideDurationMs > 0;
   const metaText = `${time}@${serverNames.join(", ")}${notification.world ? ` - ${notification.world}` : ""}`;
   const senderName = guildMember?.name ?? "Nieznany";
 
@@ -192,12 +198,12 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
     clearNotifications();
   };
 
+  const showPartyGatheringAction = isPartyGathering;
+  const showJoinAction = Boolean(regularNotification?.isGatheringParty);
   let actionLabel: string | null = null;
 
-  if (isPartyGathering) {
+  if (showPartyGatheringAction) {
     actionLabel = volunteer.isPending ? "..." : "Dołącz!";
-  } else if (regularNotification?.isGatheringParty) {
-    actionLabel = volunteer.isPending ? "..." : "Idę";
   }
 
   useEffect(() => {
@@ -222,7 +228,8 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
 
     const { width, height } = svg.getBoundingClientRect();
     const totalLength = 2 * (width + height);
-    const deadlineMs = autoHideState?.deadlineMs ?? Date.now() + autoHideDurationMs;
+    const deadlineMs =
+      autoHideState?.deadlineMs ?? Date.now() + autoHideDurationMs;
     const remainingMs =
       autoHideState?.pausedRemainingMs ?? Math.max(0, deadlineMs - Date.now());
     const clampedRemainingMs = Math.min(autoHideDurationMs, remainingMs);
@@ -275,7 +282,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
     <div className="ll:w-full">
       <div
         className={cn(
-          "ll:relative ll:flex ll:items-center ll:gap-2 ll:overflow-hidden ll:px-2 ll:py-1",
+          "ll:relative ll:flex ll:items-center ll:gap-2 ll:overflow-hidden ll:px-2 ll:py-2",
           "ll:rounded-sm",
           "ll:transition-[background-color,border-color] ll:duration-300",
         )}
@@ -287,20 +294,40 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
           preserveAspectRatio="none"
         >
           <path
-            ref={autoHidePathRef}
             d={AUTO_HIDE_RING_PATH}
             fill="none"
             stroke={borderColor}
-            strokeWidth={autoHideDurationMs > 0 ? 3 : 2}
+            strokeWidth={
+              hasAutoHideRing
+                ? AUTO_HIDE_BASE_STROKE_WIDTH
+                : DEFAULT_BORDER_STROKE_WIDTH
+            }
             strokeLinecap="butt"
             strokeLinejoin="round"
             vectorEffect="non-scaling-stroke"
-            opacity={0.95}
+            opacity={
+              hasAutoHideRing
+                ? AUTO_HIDE_BASE_STROKE_OPACITY
+                : AUTO_HIDE_PROGRESS_STROKE_OPACITY
+            }
           />
+          {hasAutoHideRing ? (
+            <path
+              ref={autoHidePathRef}
+              d={AUTO_HIDE_RING_PATH}
+              fill="none"
+              stroke={borderColor}
+              strokeWidth={AUTO_HIDE_PROGRESS_STROKE_WIDTH}
+              strokeLinecap="butt"
+              strokeLinejoin="round"
+              vectorEffect="non-scaling-stroke"
+              opacity={AUTO_HIDE_PROGRESS_STROKE_OPACITY}
+            />
+          ) : null}
         </svg>
         {renderLeadingVisual(notification, avatarUrl)}
         <div className="ll:relative ll:flex ll:min-w-0 ll:flex-1 ll:flex-col">
-          <div className="ll:flex ll:items-center ll:gap-1 ll:overflow-hidden ll:leading-none">
+          <div className="ll:flex ll:items-center ll:gap-1 ll:overflow-hidden ll:leading-none ll:pb-1">
             <span
               className="ll:shrink-0 ll:text-[11px] ll:font-semibold"
               style={{ color: `#${memberColor}` }}
@@ -327,6 +354,21 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
               {actionLabel}
             </Button>
           ) : null}
+          {showJoinAction ? (
+            <Button
+              variant="ghost"
+              aria-label="Idę"
+              className="ll:size-7 ll:px-0"
+              onClick={handleVolunteer}
+              disabled={volunteer.isPending}
+            >
+              {volunteer.isPending ? (
+                <LoaderCircle size={12} className="ll:animate-spin" />
+              ) : (
+                <User size={12} />
+              )}
+            </Button>
+          ) : null}
           <NotificationMuteMenu
             notification={notification}
             senderName={senderName}
@@ -335,8 +377,9 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
           />
           {showCloseButton ? (
             <Button
+              variant="destructive"
               aria-label="Zamknij powiadomienie"
-              className="ll:size-7 ll:border-gray-400/50 ll:bg-transparent ll:px-0 ll:hover:bg-white/8"
+              className="ll:size-7 ll:px-0"
               onClick={handleRemoveNotification}
             >
               <XIcon size={12} />

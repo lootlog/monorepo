@@ -273,13 +273,23 @@ describe("LootsService", () => {
   describe("createLoot", () => {
     const discordId = "discord123";
     const userId = "user123";
+    const expectedSuccessResponse = {
+      id: 1,
+      submittedGuilds: [
+        {
+          guildId: "guild1",
+          guildName: "Test Guild",
+        },
+      ],
+      rejectedGuilds: [],
+    };
 
     beforeEach(() => {
       guildsService.getGuildsForRequiredPermissions.mockResolvedValue([
         mockGuild,
       ]);
       userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue({
-        collectLootWhitelistGuildIds: ["guild1"],
+        catchingGuildIds: ["guild1"],
       } as never);
       lootlogConfigService.getMultipleLootlogConfigs.mockResolvedValue([
         {
@@ -330,7 +340,7 @@ describe("LootsService", () => {
       expect(prismaService.lootSubmission.createMany).toHaveBeenCalled();
       expect(playersService.bulkIndexPlayers).toHaveBeenCalled();
       expect(npcsService.bulkIndexNpcs).toHaveBeenCalled();
-      expect(result).toEqual({ id: mockLoot.id });
+      expect(result).toEqual(expectedSuccessResponse);
     });
 
     it("should return existing loot when it already exists", async () => {
@@ -347,21 +357,31 @@ describe("LootsService", () => {
       expect(prismaService.loot.create).not.toHaveBeenCalled();
       expect(playersService.bulkIndexPlayers).not.toHaveBeenCalled();
       expect(npcsService.bulkIndexNpcs).not.toHaveBeenCalled();
-      expect(result).toEqual({ id: mockLoot.id });
+      expect(result).toEqual(expectedSuccessResponse);
     });
 
     it("should throw BadRequestException when no valid configs found", async () => {
       userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue({
-        collectLootWhitelistGuildIds: ["guild1"],
+        catchingGuildIds: ["guild1"],
       } as never);
       lootlogConfigService.getMultipleLootlogConfigs.mockResolvedValue([]);
       prismaService.loot.findUnique.mockResolvedValue(null);
 
       await expect(
         service.createLoot(discordId, userId, mockCreateLootDto),
-      ).rejects.toThrow(
-        new BadRequestException(ErrorKey.NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT),
-      );
+      ).rejects.toMatchObject({
+        response: {
+          message: ErrorKey.NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT,
+          submittedGuilds: [],
+          rejectedGuilds: [
+            {
+              guildId: "guild1",
+              guildName: "Test Guild",
+              reason: "MISSING_LOOTLOG_CONFIG",
+            },
+          ],
+        },
+      });
 
       expect(prismaService.loot.create).not.toHaveBeenCalled();
       expect(prismaService.lootSubmission.createMany).not.toHaveBeenCalled();
@@ -369,7 +389,7 @@ describe("LootsService", () => {
 
     it("should throw BadRequestException when no guild config accepts the loot", async () => {
       userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue({
-        collectLootWhitelistGuildIds: ["guild1"],
+        catchingGuildIds: ["guild1"],
       } as never);
       lootlogConfigService.getMultipleLootlogConfigs.mockResolvedValue([
         {
@@ -392,9 +412,19 @@ describe("LootsService", () => {
 
       await expect(
         service.createLoot(discordId, userId, mockCreateLootDto),
-      ).rejects.toThrow(
-        new BadRequestException(ErrorKey.NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT),
-      );
+      ).rejects.toMatchObject({
+        response: {
+          message: ErrorKey.NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT,
+          submittedGuilds: [],
+          rejectedGuilds: [
+            {
+              guildId: "guild1",
+              guildName: "Test Guild",
+              reason: "LOOT_NOT_ACCEPTED_BY_CONFIG",
+            },
+          ],
+        },
+      });
 
       expect(prismaService.loot.create).not.toHaveBeenCalled();
       expect(prismaService.lootSubmission.createMany).not.toHaveBeenCalled();
@@ -419,7 +449,7 @@ describe("LootsService", () => {
       ]);
 
       userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue({
-        collectLootWhitelistGuildIds: ["guild1", "guild2"],
+        catchingGuildIds: ["guild1", "guild2"],
       } as never);
 
       lootlogConfigService.getMultipleLootlogConfigs.mockResolvedValue([
@@ -472,7 +502,11 @@ describe("LootsService", () => {
       prismaService.loot.findUnique.mockResolvedValue(null);
       prismaService.loot.create.mockResolvedValue(mockLoot);
 
-      await service.createLoot(discordId, userId, mockCreateLootDto);
+      const result = await service.createLoot(
+        discordId,
+        userId,
+        mockCreateLootDto,
+      );
 
       expect(prismaService.lootSubmission.createMany).toHaveBeenCalledWith({
         data: [
@@ -488,6 +522,20 @@ describe("LootsService", () => {
           },
         ],
         skipDuplicates: true,
+      });
+      expect(result).toEqual({
+        id: mockLoot.id,
+        submittedGuilds: [
+          {
+            guildId: "guild1",
+            guildName: "Test Guild",
+          },
+          {
+            guildId: "guild2",
+            guildName: "Test Guild 2",
+          },
+        ],
+        rejectedGuilds: [],
       });
     });
 
@@ -510,7 +558,7 @@ describe("LootsService", () => {
       ]);
 
       userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue({
-        collectLootWhitelistGuildIds: ["guild1"],
+        catchingGuildIds: ["guild1"],
       } as never);
 
       lootlogConfigService.getMultipleLootlogConfigs.mockResolvedValue([
@@ -543,7 +591,11 @@ describe("LootsService", () => {
       prismaService.loot.findUnique.mockResolvedValue(null);
       prismaService.loot.create.mockResolvedValue(mockLoot);
 
-      await service.createLoot(discordId, userId, mockCreateLootDto);
+      const result = await service.createLoot(
+        discordId,
+        userId,
+        mockCreateLootDto,
+      );
 
       expect(
         lootlogConfigService.getMultipleLootlogConfigs,
@@ -557,6 +609,22 @@ describe("LootsService", () => {
           },
         ],
         skipDuplicates: true,
+      });
+      expect(result).toEqual({
+        id: mockLoot.id,
+        submittedGuilds: [
+          {
+            guildId: "guild1",
+            guildName: "Test Guild",
+          },
+        ],
+        rejectedGuilds: [
+          {
+            guildId: "guild2",
+            guildName: "Test Guild 2",
+            reason: "NOT_ON_CHARACTER_WHITELIST",
+          },
+        ],
       });
     });
 
@@ -579,7 +647,7 @@ describe("LootsService", () => {
       ]);
 
       userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue({
-        collectLootWhitelistGuildIds: ["guild1", "guild2"],
+        catchingGuildIds: ["guild1", "guild2"],
       } as never);
 
       lootlogConfigService.getMultipleLootlogConfigs.mockResolvedValue([
@@ -632,7 +700,11 @@ describe("LootsService", () => {
       prismaService.loot.findUnique.mockResolvedValue(null);
       prismaService.loot.create.mockResolvedValue(mockLoot);
 
-      await service.createLoot(discordId, userId, mockCreateLootDto);
+      const result = await service.createLoot(
+        discordId,
+        userId,
+        mockCreateLootDto,
+      );
 
       expect(prismaService.loot.create).toHaveBeenCalled();
       expect(prismaService.lootSubmission.createMany).toHaveBeenCalledWith({
@@ -644,6 +716,44 @@ describe("LootsService", () => {
           },
         ],
         skipDuplicates: true,
+      });
+      expect(result).toEqual({
+        id: mockLoot.id,
+        submittedGuilds: [
+          {
+            guildId: "guild2",
+            guildName: "Test Guild 2",
+          },
+        ],
+        rejectedGuilds: [
+          {
+            guildId: "guild1",
+            guildName: "Test Guild",
+            reason: "LOOT_NOT_ACCEPTED_BY_CONFIG",
+          },
+        ],
+      });
+    });
+
+    it("should throw detailed whitelist rejection payload when no guild is whitelisted", async () => {
+      userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue({
+        catchingGuildIds: [],
+      } as never);
+
+      await expect(
+        service.createLoot(discordId, userId, mockCreateLootDto),
+      ).rejects.toMatchObject({
+        response: {
+          message: ErrorKey.NO_GUILDS_ON_THE_CHARACTER_WHITELIST,
+          submittedGuilds: [],
+          rejectedGuilds: [
+            {
+              guildId: "guild1",
+              guildName: "Test Guild",
+              reason: "NOT_ON_CHARACTER_WHITELIST",
+            },
+          ],
+        },
       });
     });
   });

@@ -152,7 +152,9 @@ describe("UsersService", () => {
 
   it("returns default user preferences with empty notification mutes", async () => {
     mockPrismaService.userSettings.findUnique.mockResolvedValue(null);
-    mockPrismaService.userGameAccountSettings.findUnique.mockResolvedValue(null);
+    mockPrismaService.userGameAccountSettings.findUnique.mockResolvedValue(
+      null,
+    );
 
     const result = await service.getUserPreferences("auth-user-current");
 
@@ -172,7 +174,9 @@ describe("UsersService", () => {
   });
 
   it("updates global notification mutes without requiring account-scoped preferences", async () => {
-    mockPrismaService.userGameAccountSettings.findUnique.mockResolvedValue(null);
+    mockPrismaService.userGameAccountSettings.findUnique.mockResolvedValue(
+      null,
+    );
     mockPrismaService.userSettings.findUnique.mockResolvedValue(null);
     mockPrismaService.userGameAccountSettings.upsert.mockResolvedValue({
       id: 10,
@@ -218,7 +222,9 @@ describe("UsersService", () => {
       },
     });
 
-    expect(mockPrismaService.userGameAccountSettings.upsert).toHaveBeenCalledWith({
+    expect(
+      mockPrismaService.userGameAccountSettings.upsert,
+    ).toHaveBeenCalledWith({
       where: {
         userId_accountId: {
           userId: "auth-user-current",
@@ -479,16 +485,14 @@ describe("UsersService", () => {
       "222",
       {
         detector: {
-          HERO: {
-            routingRules: [
-              {
-                id: "hero-range-1",
-                minLevel: 100,
-                maxLevel: 200,
-                guildIds: ["guild-2"],
-              },
-            ],
-          },
+          routingRules: [
+            {
+              id: "hero-range-1",
+              minLevel: 100,
+              maxLevel: 200,
+              guildIds: ["guild-2"],
+            },
+          ],
         },
       },
     );
@@ -506,16 +510,14 @@ describe("UsersService", () => {
         settings: {
           notifications: defaultNotificationsSettings,
           detector: expect.objectContaining({
-            HERO: expect.objectContaining({
-              routingRules: [
-                {
-                  id: "hero-range-1",
-                  minLevel: 100,
-                  maxLevel: 200,
-                  guildIds: ["guild-2"],
-                },
-              ],
-            }),
+            routingRules: [
+              {
+                id: "hero-range-1",
+                minLevel: 100,
+                maxLevel: 200,
+                guildIds: ["guild-2"],
+              },
+            ],
           }),
         },
         updatedAt: expect.any(Date),
@@ -528,16 +530,14 @@ describe("UsersService", () => {
     expect(result).toEqual({
       accountId: "222",
       detector: expect.objectContaining({
-        HERO: expect.objectContaining({
-          routingRules: [
-            {
-              id: "hero-range-1",
-              minLevel: 100,
-              maxLevel: 200,
-              guildIds: ["guild-2"],
-            },
-          ],
-        }),
+        routingRules: [
+          {
+            id: "hero-range-1",
+            minLevel: 100,
+            maxLevel: 200,
+            guildIds: ["guild-2"],
+          },
+        ],
       }),
       hasStoredDetector: true,
       hasStoredNotifications: true,
@@ -558,15 +558,15 @@ describe("UsersService", () => {
             notifyWindow: true,
             highlight: true,
             notifySound: false,
-            routingRules: [
-              {
-                id: "",
-                minLevel: 220,
-                maxLevel: 120,
-                guildIds: ["guild-1", 123, "guild-2"],
-              },
-            ],
           },
+          routingRules: [
+            {
+              id: "",
+              minLevel: 220,
+              maxLevel: 120,
+              guildIds: ["guild-1", 123, "guild-2"],
+            },
+          ],
         },
       },
       createdAt: new Date(),
@@ -581,16 +581,14 @@ describe("UsersService", () => {
     expect(result).toEqual({
       accountId: "333",
       detector: expect.objectContaining({
-        HERO: expect.objectContaining({
-          routingRules: [
-            {
-              id: "rule-1",
-              minLevel: 120,
-              maxLevel: 220,
-              guildIds: ["guild-1", "guild-2"],
-            },
-          ],
-        }),
+        routingRules: [
+          {
+            id: "rule-1",
+            minLevel: 120,
+            maxLevel: 220,
+            guildIds: ["guild-1", "guild-2"],
+          },
+        ],
       }),
       hasStoredDetector: true,
       hasStoredNotifications: false,

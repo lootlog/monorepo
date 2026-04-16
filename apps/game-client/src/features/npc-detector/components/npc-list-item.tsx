@@ -9,20 +9,12 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
 import { resolveDetectorGuildIds } from "@/lib/game-account-notification-preferences";
 import { cn } from "@/lib/utils";
-import type { DetectorNpcType } from "@lootlog/types";
+import { getNpcTypeByWt, type DetectorNpcType } from "@lootlog/types";
 import {
   type GameNpcWithLocation,
   useNpcDetectorStore,
 } from "@/store/npc-detector.store";
-import { getNpcTypeByWt } from "@lootlog/types";
-import {
-  AlertTriangle,
-  Check,
-  Loader2,
-  Megaphone,
-  Users,
-  XIcon,
-} from "lucide-react";
+import { AlertTriangle, Loader2, Megaphone, Users, XIcon } from "lucide-react";
 import {
   MessageType,
   useSendChatMessage,
@@ -42,6 +34,10 @@ import type { SettingsTabValue } from "@/features/settings/constants/settings-ta
 
 const BUTTON_UNLOCK_DELAY_MS = 5000;
 const REPEAT_DETECTION_FLASH_DURATION_MS = 1050;
+const MESSAGE_BUTTON_COOLDOWN_RING_RADIUS = 11;
+const MESSAGE_BUTTON_COOLDOWN_RING_CIRCUMFERENCE =
+  2 * Math.PI * MESSAGE_BUTTON_COOLDOWN_RING_RADIUS;
+const ACTION_BUTTON_CLASS_NAME = "ll:size-7 ll:px-0";
 
 type NpcListItemProps = {
   npc: GameNpcWithLocation;
@@ -120,6 +116,14 @@ export const NpcListItem = ({
     isPending: isCreateNotificationPending,
   } = useCreateNotification();
   const [isGatheringPartyPending, setIsGatheringPartyPending] = useState(false);
+  const [messageButtonCooldownEndsAt, setMessageButtonCooldownEndsAt] =
+    useState<number | null>(null);
+  const [
+    messageButtonCooldownSecondsLeft,
+    setMessageButtonCooldownSecondsLeft,
+  ] = useState(0);
+  const [messageButtonCooldownRingOffset, setMessageButtonCooldownRingOffset] =
+    useState(0);
 
   const npcType = getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type);
   const settingsByNpcType = settings[npcType as DetectorNpcType];
@@ -131,6 +135,7 @@ export const NpcListItem = ({
   const repeatDetectionFlashFrames = getRepeatDetectionFlashFrames(key);
 
   const hasActivePartyGathering = partyGathering !== null;
+  const isMessageButtonInCooldown = npc.notificationSent;
 
   useEffect(() => {
     if (!npc.notificationSent) return;
@@ -140,7 +145,57 @@ export const NpcListItem = ({
     }, BUTTON_UNLOCK_DELAY_MS);
 
     return () => clearTimeout(timer);
+  }, [npc, npc.id, npc.notificationSent, setNpcState]);
+
+  useEffect(() => {
+    if (!npc.notificationSent) {
+      setMessageButtonCooldownEndsAt(null);
+      setMessageButtonCooldownSecondsLeft(0);
+      setMessageButtonCooldownRingOffset(0);
+      return;
+    }
+
+    const cooldownEndsAt = Date.now() + BUTTON_UNLOCK_DELAY_MS;
+
+    setMessageButtonCooldownEndsAt(cooldownEndsAt);
+    setMessageButtonCooldownSecondsLeft(
+      Math.ceil(BUTTON_UNLOCK_DELAY_MS / 1000),
+    );
+    setMessageButtonCooldownRingOffset(0);
+
+    const animationFrameId = window.requestAnimationFrame(() => {
+      setMessageButtonCooldownRingOffset(
+        MESSAGE_BUTTON_COOLDOWN_RING_CIRCUMFERENCE,
+      );
+    });
+
+    return () => {
+      window.cancelAnimationFrame(animationFrameId);
+    };
   }, [npc.notificationSent]);
+
+  useEffect(() => {
+    if (messageButtonCooldownEndsAt === null) return;
+
+    const updateCooldownSecondsLeft = () => {
+      const cooldownMsLeft = messageButtonCooldownEndsAt - Date.now();
+
+      if (cooldownMsLeft <= 0) {
+        setMessageButtonCooldownSecondsLeft(0);
+        return;
+      }
+
+      setMessageButtonCooldownSecondsLeft(Math.ceil(cooldownMsLeft / 1000));
+    };
+
+    updateCooldownSecondsLeft();
+
+    const interval = window.setInterval(updateCooldownSecondsLeft, 250);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [messageButtonCooldownEndsAt]);
 
   useEffect(() => {
     if (detectionAnimationCycle === null) return;
@@ -197,7 +252,7 @@ export const NpcListItem = ({
           notificationSent: true,
         });
 
-        setNotification(response.data.notificationId, {
+        setNotification(response.notificationId, {
           id: npc.id,
           name: npc.nick,
           lvl: npc.lvl,
@@ -273,8 +328,8 @@ export const NpcListItem = ({
 
       const notificationResponse = await createNotificationAsync(payload);
 
-      const notificationId = notificationResponse.data.notificationId;
-      const guildIds = notificationResponse.data.guildIds ?? resolvedGuildIds;
+      const notificationId = notificationResponse.notificationId;
+      const guildIds = notificationResponse.guildIds ?? resolvedGuildIds;
       const hero = Game.hero;
 
       setNotification(notificationId, {
@@ -341,8 +396,8 @@ export const NpcListItem = ({
       });
 
       chatResults.forEach((result, index) => {
-        if (result.status === "fulfilled" && result.value?.data?.id) {
-          setChatMessageId(guildIds[index], result.value.data.id);
+        if (result.status === "fulfilled" && result.value?.messageId) {
+          setChatMessageId(guildIds[index], result.value.messageId);
         }
       });
 
@@ -445,13 +500,14 @@ export const NpcListItem = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                className="ll:size-7 ll:px-0 ll:bg-yellow-500/10 ll:hover:bg-yellow-500/18 ll:border-yellow-500/40"
+                variant="ghost"
+                className={`${ACTION_BUTTON_CLASS_NAME} ll:border-yellow-500/40 ll:hover:bg-yellow-500/10`}
                 onClick={handleOpenDetectorSettings}
                 aria-label="Otwórz ustawienia wykrywacza"
               >
                 <AlertTriangle
                   className="ll:stroke-yellow-500 ll:opacity-80"
-                  size={14}
+                  size={12}
                 />
               </Button>
             </TooltipTrigger>
@@ -465,12 +521,48 @@ export const NpcListItem = ({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  className="ll:size-7 ll:px-0"
+                  variant="ghost"
+                  className={`ll:relative ${ACTION_BUTTON_CLASS_NAME}`}
                   disabled={isCreateNotificationPending || npc.notificationSent}
                   onClick={() => handleSendNotification(npc)}
                 >
-                  {npc.notificationSent ? (
-                    <Check size={12} />
+                  {isMessageButtonInCooldown ? (
+                    <>
+                      <svg
+                        className="ll:absolute ll:inset-0 ll:size-full ll:-rotate-90"
+                        viewBox="0 0 28 28"
+                        aria-hidden="true"
+                      >
+                        <circle
+                          cx="14"
+                          cy="14"
+                          r={MESSAGE_BUTTON_COOLDOWN_RING_RADIUS}
+                          className="ll:stroke-white/15"
+                          fill="none"
+                          strokeWidth="2"
+                        />
+                        <circle
+                          cx="14"
+                          cy="14"
+                          r={MESSAGE_BUTTON_COOLDOWN_RING_RADIUS}
+                          className="ll:stroke-white ll:transition-[stroke-dashoffset] ll:ease-linear"
+                          fill="none"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeDasharray={
+                            MESSAGE_BUTTON_COOLDOWN_RING_CIRCUMFERENCE
+                          }
+                          strokeDashoffset={messageButtonCooldownRingOffset}
+                          style={{
+                            transitionDuration: `${BUTTON_UNLOCK_DELAY_MS}ms`,
+                          }}
+                        />
+                      </svg>
+                      <span className="ll:relative ll:text-[10px] ll:font-semibold ll:tabular-nums">
+                        {messageButtonCooldownSecondsLeft ||
+                          Math.ceil(BUTTON_UNLOCK_DELAY_MS / 1000)}
+                      </span>
+                    </>
                   ) : (
                     <Megaphone size={12} />
                   )}
@@ -483,7 +575,8 @@ export const NpcListItem = ({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  className="ll:size-7 ll:px-0"
+                  variant="ghost"
+                  className={ACTION_BUTTON_CLASS_NAME}
                   disabled={isGatheringPartyPending || hasActivePartyGathering}
                   onClick={() => handleGatherParty(npc)}
                 >
@@ -504,14 +597,17 @@ export const NpcListItem = ({
             </Tooltip>
           </>
         )}
+        {npcs.length > 1 && (
+          <Button
+            variant="destructive"
+            aria-label="Usuń NPC z listy"
+            className={ACTION_BUTTON_CLASS_NAME}
+            onClick={() => handleRemoveNpc(npc.id)}
+          >
+            <XIcon size={12} />
+          </Button>
+        )}
       </div>
-      {npcs.length > 1 && (
-        <XIcon
-          className="ll:relative ll-custom-cursor-pointer ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors"
-          size={14}
-          onClick={() => handleRemoveNpc(npc.id)}
-        />
-      )}
     </motion.div>
   );
 };

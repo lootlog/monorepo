@@ -1,3 +1,7 @@
+import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
+import { SettingsPanel } from "@/components/settings/settings-panel";
+import { SettingsSection } from "@/components/settings/settings-section";
+import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Button } from "@/components/ui/button";
 import { gameEventsManager } from "@/lib/game-events-manager";
 import { usePartyStore } from "@/store/party.store";
@@ -321,9 +325,12 @@ export const DebugTab: FC = () => {
   };
 
   return (
-    <div className="ll:flex ll:flex-col ll:gap-4 ll:p-4">
-      <div>
-        <h3 className="ll:text-sm ll:font-semibold ll:mb-2">Event Templates</h3>
+    <SettingsTabLayout
+      title="Debug"
+      description="Narzędzia pomocnicze do ręcznego wywoływania eventów i podglądu stanu klienta."
+      className="ll:px-2 ll:pb-2"
+    >
+      <SettingsSection title="Event Templates">
         <div className="ll:flex ll:flex-wrap ll:gap-1">
           {Object.entries(EVENT_TEMPLATES).map(([key, { label, event }]) => (
             <Button
@@ -343,15 +350,12 @@ export const DebugTab: FC = () => {
             Kill NPC (unique)
           </Button>
         </div>
-      </div>
+      </SettingsSection>
 
-      <div>
-        <h3 className="ll:text-sm ll:font-semibold ll:mb-2">
-          NPC Detector Events
-        </h3>
-        <p className="ll:text-[10px] ll:text-gray-400 ll:mb-2">
-          Triggers NPC detection (requires detector settings enabled)
-        </p>
+      <SettingsSection
+        title="NPC Detector Events"
+        description="Triggers NPC detection (requires detector settings enabled)"
+      >
         <div className="ll:flex ll:flex-wrap ll:gap-1">
           <Button
             onClick={() =>
@@ -398,13 +402,12 @@ export const DebugTab: FC = () => {
             Elite II
           </Button>
         </div>
-      </div>
+      </SettingsSection>
 
-      <div>
-        <h3 className="ll:text-sm ll:font-semibold ll:mb-2">Party Events</h3>
-        <p className="ll:text-[10px] ll:text-gray-400 ll:mb-2">
-          Triggers party member changes
-        </p>
+      <SettingsSection
+        title="Party Events"
+        description="Triggers party member changes"
+      >
         <div className="ll:flex ll:flex-wrap ll:gap-1">
           <Button
             onClick={() => triggerEvent(createPartyJoinEvent(), "Party Join")}
@@ -419,10 +422,9 @@ export const DebugTab: FC = () => {
             Party Leave
           </Button>
         </div>
-      </div>
+      </SettingsSection>
 
-      <div>
-        <h3 className="ll:text-sm ll:font-semibold ll:mb-2">Raw JSON Event</h3>
+      <SettingsSection title="Raw JSON Event">
         <div className="ll:flex ll:flex-wrap ll:gap-1 ll:mb-2">
           {Object.entries(EVENT_TEMPLATES).map(([key, { label }]) => (
             <Button
@@ -434,37 +436,42 @@ export const DebugTab: FC = () => {
             </Button>
           ))}
         </div>
-        <textarea
-          value={rawJson}
-          onChange={(e) => {
-            setRawJson(e.target.value);
-            setJsonError(null);
-          }}
-          onMouseDown={(e) => e.stopPropagation()}
-          className="ll:w-full ll:h-32 ll:bg-gray-800 ll:border ll:border-gray-600 ll:rounded ll:p-2 ll:text-xs ll:font-mono ll:text-white ll:resize-y"
-          spellCheck={false}
-        />
+        <SettingsPanel className="ll:p-2">
+          <textarea
+            value={rawJson}
+            onChange={(e) => {
+              setRawJson(e.target.value);
+              setJsonError(null);
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+            className="ll:h-32 ll:w-full ll:resize-y ll:border-none ll:bg-transparent ll:p-0 ll:text-xs ll:font-mono ll:text-white ll:outline-none"
+            spellCheck={false}
+          />
+        </SettingsPanel>
         {jsonError && (
           <p className="ll:text-red-400 ll:text-xs ll:mt-1">{jsonError}</p>
         )}
         <Button onClick={triggerFromJson} className="ll:mt-2 ll:w-full">
           Trigger Custom Event
         </Button>
-      </div>
+      </SettingsSection>
 
-      <div>
-        <div className="ll:flex ll:items-center ll:justify-between ll:mb-2">
-          <h3 className="ll:text-sm ll:font-semibold">Event Log</h3>
+      <SettingsSection
+        title="Event Log"
+        actions={
           <Button
             onClick={() => setEventLog([])}
             className="ll:px-2 ll:text-[10px] ll:h-4"
           >
             Clear
           </Button>
-        </div>
-        <div className="ll:max-h-24 ll:overflow-y-auto ll:bg-gray-800 ll:border ll:border-gray-600 ll:rounded ll:p-2">
+        }
+      >
+        <SettingsPanel className="ll:max-h-24 ll:overflow-y-auto ll:p-2">
           {eventLog.length === 0 ? (
-            <p className="ll:text-gray-500 ll:text-xs">No events triggered</p>
+            <SettingsEmptyState className="ll:border-none ll:bg-transparent ll:px-0 ll:py-0">
+              No events triggered
+            </SettingsEmptyState>
           ) : (
             eventLog.map((entry) => (
               <div
@@ -485,14 +492,15 @@ export const DebugTab: FC = () => {
               </div>
             ))
           )}
-        </div>
-      </div>
+        </SettingsPanel>
+      </SettingsSection>
 
-      <div>
-        <h3 className="ll:text-sm ll:font-semibold ll:mb-2">Party State</h3>
-        <div className="ll:bg-gray-800 ll:border ll:border-gray-600 ll:rounded ll:p-2">
+      <SettingsSection title="Party State">
+        <SettingsPanel className="ll:p-2">
           {partyMembers.length === 0 ? (
-            <p className="ll:text-gray-500 ll:text-xs">No party members</p>
+            <SettingsEmptyState className="ll:border-none ll:bg-transparent ll:px-0 ll:py-0">
+              No party members
+            </SettingsEmptyState>
           ) : (
             partyMembers.map((member) => (
               <div
@@ -507,18 +515,19 @@ export const DebugTab: FC = () => {
               </div>
             ))
           )}
-        </div>
-      </div>
+        </SettingsPanel>
+      </SettingsSection>
 
-      <div>
-        <h3 className="ll:text-sm ll:font-semibold ll:mb-2">System Info</h3>
-        <p className="ll:text-xs ll:text-gray-400">
-          Zoom Factor: {zoomFactor !== null ? zoomFactor : "N/A"}
-        </p>
-        <p className="ll:text-xs ll:text-gray-400">
-          Mode: {import.meta.env.MODE}
-        </p>
-      </div>
-    </div>
+      <SettingsSection title="System Info">
+        <SettingsPanel className="ll:space-y-1">
+          <p className="ll:text-xs ll:text-gray-400">
+            Zoom Factor: {zoomFactor !== null ? zoomFactor : "N/A"}
+          </p>
+          <p className="ll:text-xs ll:text-gray-400">
+            Mode: {import.meta.env.MODE}
+          </p>
+        </SettingsPanel>
+      </SettingsSection>
+    </SettingsTabLayout>
   );
 };

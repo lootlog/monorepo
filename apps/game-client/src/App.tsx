@@ -27,6 +27,7 @@ import { usePartyFinderSocket } from "@/features/party-finder/hooks/use-party-fi
 import { usePartyGatheringSocket } from "@/features/party-finder/hooks/use-party-gathering-socket";
 import { bootstrapPublicApi } from "@/features/public-api";
 import { useNotificationSettingsSync } from "@/hooks/use-notification-settings-sync";
+import { AppErrorBoundaryFallback } from "@/features/error-boundary/app-error-boundary-fallback";
 
 const THEME_STORAGE_KEY = storageKey("lootlog-theme");
 
@@ -77,8 +78,8 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <SocketProvider>
           <ErrorBoundary
-            fallback={<div>Error loading app</div>}
-            onError={(error, info) => {
+            FallbackComponent={AppErrorBoundaryFallback}
+            onError={(error, _info) => {
               console.error("[ErrorBoundary]", error);
             }}
           >

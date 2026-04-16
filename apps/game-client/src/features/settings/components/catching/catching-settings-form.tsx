@@ -1,3 +1,5 @@
+import { SettingsSection } from "@/components/settings/settings-section";
+import { SettingsGuildSelectionGrid } from "@/features/settings/components/shared/settings-guild-selection-grid";
 import { type FC, useEffect, useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -9,17 +11,20 @@ import { useGuilds } from "@/hooks/api/use-guilds";
 
 type CatchingSettingsFormProps = {
   characterId: string;
+  disabled?: boolean;
+  onSelectionChange?: (catchingGuildIds: string[]) => void;
 };
 
 const FormSchema = z.object({
-  lootGuildIds: z.array(z.string()),
-  timersGuildIds: z.array(z.string()),
+  catchingGuildIds: z.array(z.string()),
 });
 
 type FormData = z.infer<typeof FormSchema>;
 
 export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
   characterId,
+  disabled = false,
+  onSelectionChange,
 }) => {
   const { data: guilds } = useGuilds();
   const { data: lootlogCharactersConfig, isPending: isLootlogConfigLoading } =
@@ -28,11 +33,10 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
     mutate: updateLootlogCharacterConfig,
     isPending: isUpdatingLootlogConfig,
   } = useUpdateLootlogCharactersConfig();
-  const { register, watch, reset } = useForm<FormData>({
+  const { reset, setValue, watch } = useForm<FormData>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      lootGuildIds: [],
-      timersGuildIds: [],
+      catchingGuildIds: [],
     },
   });
   const configByCharacterId = lootlogCharactersConfig?.[characterId];
@@ -40,21 +44,24 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
   const isInitializedRef = useRef(false);
   const isResettingRef = useRef(false);
   const mutateRef = useRef(updateLootlogCharacterConfig);
+  const onSelectionChangeRef = useRef(onSelectionChange);
 
   mutateRef.current = updateLootlogCharacterConfig;
+  onSelectionChangeRef.current = onSelectionChange;
+  const selectedGuildIds = watch("catchingGuildIds") || [];
 
   useEffect(() => {
-    if (guilds && guilds.length > 0) {
-      isResettingRef.current = true;
-      reset({
-        lootGuildIds: configByCharacterId?.collectLootWhitelistGuildIds || [],
-        timersGuildIds: configByCharacterId?.addTimersWhitelistGuildIds || [],
-      });
-      setTimeout(() => {
-        isResettingRef.current = false;
-        isInitializedRef.current = true;
-      }, 0);
-    }
+    const nextCatchingGuildIds = configByCharacterId?.catchingGuildIds || [];
+
+    isResettingRef.current = true;
+    reset({
+      catchingGuildIds: nextCatchingGuildIds,
+    });
+    onSelectionChangeRef.current?.(nextCatchingGuildIds);
+    setTimeout(() => {
+      isResettingRef.current = false;
+      isInitializedRef.current = true;
+    }, 0);
   }, [
     guilds,
     lootlogCharactersConfig,
@@ -72,17 +79,13 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
       }
 
       debounceTimerRef.current = setTimeout(() => {
-        const lootGuildIds = (value.lootGuildIds || []).filter(
-          (id): id is string => typeof id === "string",
-        );
-        const timerGuildIds = (value.timersGuildIds || []).filter(
+        const catchingGuildIds = (value.catchingGuildIds || []).filter(
           (id): id is string => typeof id === "string",
         );
 
         mutateRef.current({
           characterId,
-          lootGuildIds,
-          timerGuildIds,
+          catchingGuildIds,
         });
       }, 500);
     });
@@ -96,49 +99,49 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
   }, [characterId, watch]);
 
   const isPending = isLootlogConfigLoading || isUpdatingLootlogConfig;
+  const isInteractionDisabled = isPending || disabled;
+  const totalGuilds = guilds?.length ?? 0;
+  const selectedCount = selectedGuildIds.length;
+
+  const handleGuildToggle = (guildId: string) => {
+    const isSelected = selectedGuildIds.includes(guildId);
+    const nextSelectedGuildIds = isSelected
+      ? selectedGuildIds.filter((id) => id !== guildId)
+      : [...selectedGuildIds, guildId];
+
+    onSelectionChangeRef.current?.(nextSelectedGuildIds);
+    setValue("catchingGuildIds", nextSelectedGuildIds, {
+      shouldDirty: true,
+      shouldTouch: true,
+    });
+  };
 
   return (
-    <div className="ll:py-4 ll:relative">
-      <div className="ll:flex ll:items-center ll:justify-between ll:mb-2 ll:h-4">
-        <h4>Wybierz serwery na które zbierać dane:</h4>
-        {isPending && (
-          <Loader2 className="ll:size-4 ll:animate-spin ll:text-primary" />
-        )}
-      </div>
-      <div>
-        <div className="ll:grid ll:grid-cols-[repeat(auto-fill,minmax(150px,1fr))] ll:gap-3">
-          {guilds?.map((guild) => (
-            <div
-              key={guild.id}
-              className="ll:border ll:border-gray-600 ll:rounded ll:p-2"
-            >
-              <div className="ll:font-semibold ll:mb-2 ll:text-sm">
-                {guild.name}
-              </div>
-              <div className="ll:flex ll:flex-col ll:gap-1">
-                <div className="checkbox-custom c-checkbox">
-                  <input
-                    id={`${guild.id}-timers`}
-                    type="checkbox"
-                    value={guild.id}
-                    {...register("timersGuildIds")}
-                  />
-                  <label htmlFor={`${guild.id}-timers`}>Łap timery</label>
-                </div>
-                <div className="checkbox-custom c-checkbox">
-                  <input
-                    id={`${guild.id}-loot`}
-                    type="checkbox"
-                    value={guild.id}
-                    {...register("lootGuildIds")}
-                  />
-                  <label htmlFor={`${guild.id}-loot`}>Łap loot</label>
-                </div>
-              </div>
+    <div className="ll:relative ll:py-1">
+      <SettingsSection
+        title="Zakres zbierania"
+        description="Kliknij gildię, aby włączyć lub wyłączyć odbieranie lootów i timerów dla tej postaci."
+        actions={
+          <div className="ll:flex ll:items-center ll:gap-2">
+            <div className="ll:rounded-sm ll:border ll:border-gray-600/80 ll:bg-gray-900/70 ll:px-2 ll:py-1 ll:text-[10px] ll:font-semibold ll:uppercase ll:tracking-[0.08em] ll:text-gray-300">
+              {selectedCount}/{totalGuilds} aktywne
             </div>
-          ))}
-        </div>
-      </div>
+            {isPending ? (
+              <Loader2 className="ll:size-4 ll:animate-spin ll:text-primary" />
+            ) : null}
+          </div>
+        }
+        contentClassName="ll:gap-3"
+      >
+        <SettingsGuildSelectionGrid
+          guilds={guilds}
+          selectedGuildIds={selectedGuildIds}
+          disabled={isInteractionDisabled}
+          onToggle={handleGuildToggle}
+          emptyStateLabel="Brak gildii do skonfigurowania dla tej postaci."
+          variant="compact"
+        />
+      </SettingsSection>
     </div>
   );
 };

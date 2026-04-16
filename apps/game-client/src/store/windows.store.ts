@@ -1,4 +1,8 @@
 import type { SettingsTabValue } from "@/features/settings/constants/settings-tabs";
+import {
+  APP_ERROR_WINDOW_DEFAULT_HEIGHT,
+  APP_ERROR_WINDOW_WIDTH,
+} from "@/features/error-boundary/error-boundary.constants";
 import type { GameNpc } from "@lootlog/margonem";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
@@ -19,6 +23,7 @@ type SettingsWindowState = {
 };
 
 export type WindowId =
+  | "app-error"
   | "settings"
   | "timers"
   | "chat"
@@ -56,6 +61,7 @@ interface WindowData {
 }
 
 interface WindowsState {
+  "app-error": WindowData;
   settings: WindowData & { state: SettingsWindowState };
   timers: WindowData;
   chat: WindowData;
@@ -90,6 +96,16 @@ const DEFAULT_SIZE: WindowSizeState = { width: 242, height: 240 };
 export const useWindowsStore = create<WindowsState>()(
   persist(
     (set, get) => ({
+      "app-error": {
+        open: false,
+        position: DEFAULT_POSITION,
+        size: {
+          width: APP_ERROR_WINDOW_WIDTH,
+          height: APP_ERROR_WINDOW_DEFAULT_HEIGHT,
+        },
+        opacity: DEFAULT_OPACITY,
+        locked: false,
+      },
       settings: {
         open: false,
         position: DEFAULT_POSITION,

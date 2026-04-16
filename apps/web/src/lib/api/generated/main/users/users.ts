@@ -24,8 +24,12 @@ import type {
 
 import type {
   StatusOkResponseDtoOutput,
+  UpdateUserGameAccountPreferencesDto,
   UpdateUserPreferencesDto,
-  UserPreferencesResponseDtoOutput
+  UserGameAccountPreferencesResponseDtoOutput,
+  UserPreferencesResponseDtoOutput,
+  UsersControllerGetUserGameAccountPreferencesPathParameters,
+  UsersControllerUpdateUserGameAccountPreferencesPathParameters
 } from '../model';
 
 import { orvalFetch } from '../../../orval-fetch';
@@ -295,4 +299,195 @@ export const useUsersControllerUpdateUserPreferences = <TError = ErrorType<unkno
         TContext
       > => {
       return useMutation(getUsersControllerUpdateUserPreferencesMutationOptions(options));
+    }
+    /**
+ * Retrieve account-scoped game preferences for a specific Margonem account
+ * @summary Get user game account preferences
+ */
+export const getUsersControllerGetUserGameAccountPreferencesUrl = ({ accountId }: UsersControllerGetUserGameAccountPreferencesPathParameters,) => {
+
+
+
+
+  return `/users/@me/game-preferences/accounts/${accountId}`
+}
+
+export const usersControllerGetUserGameAccountPreferences = async ({ accountId }: UsersControllerGetUserGameAccountPreferencesPathParameters, options?: RequestInit): Promise<UserGameAccountPreferencesResponseDtoOutput> => {
+
+  return orvalFetch<UserGameAccountPreferencesResponseDtoOutput>(getUsersControllerGetUserGameAccountPreferencesUrl({ accountId }),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getUsersControllerGetUserGameAccountPreferencesQueryKey = ({ accountId }: UsersControllerGetUserGameAccountPreferencesPathParameters,) => {
+    return [
+    `/users/@me/game-preferences/accounts/${accountId}`
+    ] as const;
+    }
+
+
+export const getUsersControllerGetUserGameAccountPreferencesQueryOptions = <TData = Awaited<ReturnType<typeof usersControllerGetUserGameAccountPreferences>>, TError = ErrorType<unknown>>({ accountId }: UsersControllerGetUserGameAccountPreferencesPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetUserGameAccountPreferences>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getUsersControllerGetUserGameAccountPreferencesQueryKey({ accountId });
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof usersControllerGetUserGameAccountPreferences>>> = ({ signal }) => usersControllerGetUserGameAccountPreferences({ accountId }, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(accountId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetUserGameAccountPreferences>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type UsersControllerGetUserGameAccountPreferencesQueryResult = NonNullable<Awaited<ReturnType<typeof usersControllerGetUserGameAccountPreferences>>>
+export type UsersControllerGetUserGameAccountPreferencesQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get user game account preferences
+ */
+
+export function useUsersControllerGetUserGameAccountPreferences<TData = Awaited<ReturnType<typeof usersControllerGetUserGameAccountPreferences>>, TError = ErrorType<unknown>>(
+ { accountId }: UsersControllerGetUserGameAccountPreferencesPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetUserGameAccountPreferences>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getUsersControllerGetUserGameAccountPreferencesQueryOptions({ accountId },options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get user game account preferences
+ */
+export const prefetchUsersControllerGetUserGameAccountPreferencesQuery = async <TData = Awaited<ReturnType<typeof usersControllerGetUserGameAccountPreferences>>, TError = ErrorType<unknown>>(
+ queryClient: QueryClient, { accountId }: UsersControllerGetUserGameAccountPreferencesPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetUserGameAccountPreferences>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getUsersControllerGetUserGameAccountPreferencesQueryOptions({ accountId },options)
+
+  await queryClient.prefetchQuery(queryOptions);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get user game account preferences
+ */
+export const invalidateUsersControllerGetUserGameAccountPreferences = async (
+ queryClient: QueryClient, { accountId }: UsersControllerGetUserGameAccountPreferencesPathParameters, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getUsersControllerGetUserGameAccountPreferencesQueryKey({ accountId }) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get user game account preferences
+ */
+export const useSetUsersControllerGetUserGameAccountPreferencesQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ accountId }: UsersControllerGetUserGameAccountPreferencesPathParameters,updater: Awaited<ReturnType<typeof usersControllerGetUserGameAccountPreferences>> | undefined | ((old: Awaited<ReturnType<typeof usersControllerGetUserGameAccountPreferences>> | undefined) => Awaited<ReturnType<typeof usersControllerGetUserGameAccountPreferences>> | undefined)) => {
+    queryClient.setQueryData(getUsersControllerGetUserGameAccountPreferencesQueryKey({ accountId }), updater);
+  };
+}
+
+/**
+ * @summary Get user game account preferences
+ */
+export const useGetUsersControllerGetUserGameAccountPreferencesQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ accountId }: UsersControllerGetUserGameAccountPreferencesPathParameters,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof usersControllerGetUserGameAccountPreferences>>>(getUsersControllerGetUserGameAccountPreferencesQueryKey({ accountId }));
+}
+
+
+/**
+ * Update account-scoped game preferences for a specific Margonem account
+ * @summary Update user game account preferences
+ */
+export const getUsersControllerUpdateUserGameAccountPreferencesUrl = ({ accountId }: UsersControllerUpdateUserGameAccountPreferencesPathParameters,) => {
+
+
+
+
+  return `/users/@me/game-preferences/accounts/${accountId}`
+}
+
+export const usersControllerUpdateUserGameAccountPreferences = async ({ accountId }: UsersControllerUpdateUserGameAccountPreferencesPathParameters,
+    updateUserGameAccountPreferencesDto: UpdateUserGameAccountPreferencesDto, options?: RequestInit): Promise<UserGameAccountPreferencesResponseDtoOutput> => {
+
+  return orvalFetch<UserGameAccountPreferencesResponseDtoOutput>(getUsersControllerUpdateUserGameAccountPreferencesUrl({ accountId }),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      updateUserGameAccountPreferencesDto,)
+  }
+);}
+
+
+
+
+export const getUsersControllerUpdateUserGameAccountPreferencesMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersControllerUpdateUserGameAccountPreferences>>, TError,{pathParams: UsersControllerUpdateUserGameAccountPreferencesPathParameters;data: BodyType<UpdateUserGameAccountPreferencesDto>}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof usersControllerUpdateUserGameAccountPreferences>>, TError,{pathParams: UsersControllerUpdateUserGameAccountPreferencesPathParameters;data: BodyType<UpdateUserGameAccountPreferencesDto>}, TContext> => {
+
+const mutationKey = ['usersControllerUpdateUserGameAccountPreferences'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersControllerUpdateUserGameAccountPreferences>>, {pathParams: UsersControllerUpdateUserGameAccountPreferencesPathParameters;data: BodyType<UpdateUserGameAccountPreferencesDto>}> = (props) => {
+          const {pathParams,data} = props ?? {};
+
+          return  usersControllerUpdateUserGameAccountPreferences(pathParams,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UsersControllerUpdateUserGameAccountPreferencesMutationResult = NonNullable<Awaited<ReturnType<typeof usersControllerUpdateUserGameAccountPreferences>>>
+    export type UsersControllerUpdateUserGameAccountPreferencesMutationBody = BodyType<UpdateUserGameAccountPreferencesDto>
+    export type UsersControllerUpdateUserGameAccountPreferencesMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Update user game account preferences
+ */
+export const useUsersControllerUpdateUserGameAccountPreferences = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersControllerUpdateUserGameAccountPreferences>>, TError,{pathParams: UsersControllerUpdateUserGameAccountPreferencesPathParameters;data: BodyType<UpdateUserGameAccountPreferencesDto>}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof usersControllerUpdateUserGameAccountPreferences>>,
+        TError,
+        {pathParams: UsersControllerUpdateUserGameAccountPreferencesPathParameters;data: BodyType<UpdateUserGameAccountPreferencesDto>},
+        TContext
+      > => {
+      return useMutation(getUsersControllerUpdateUserGameAccountPreferencesMutationOptions(options));
     }

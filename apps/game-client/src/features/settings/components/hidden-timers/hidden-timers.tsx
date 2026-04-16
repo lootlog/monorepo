@@ -1,7 +1,9 @@
+import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
+import { SettingsPanel } from "@/components/settings/settings-panel";
 import { Tile } from "@/components/ui/tile";
 import { useTimersStore } from "@/store/timers.store";
 import { XIcon } from "lucide-react";
-import { FC } from "react";
+import type { FC } from "react";
 
 type HiddenTimersProps = {
   guildId?: string;
@@ -11,7 +13,7 @@ export const HiddenTimers: FC<HiddenTimersProps> = ({ guildId }) => {
   const { hiddenTimers, revealTimer, generalConfig } = useTimersStore();
 
   const key = generalConfig.timersGrouping ? "global" : guildId;
-  const hiddenTimersForAccount = hiddenTimers[key!];
+  const hiddenTimersForAccount = key ? hiddenTimers[key] : undefined;
 
   const handleRemoveTimer = (timer: string) => {
     if (!key) return;
@@ -26,29 +28,33 @@ export const HiddenTimers: FC<HiddenTimersProps> = ({ guildId }) => {
   const uniqueHiddenTimers = Array.from(new Set(sortedHiddenTimers));
 
   return (
-    <div className="ll:py-4">
+    <div className="ll:flex ll:flex-col ll:gap-2">
       {uniqueHiddenTimers && uniqueHiddenTimers.length > 0 && (
-        <span className="ll:grid ll:gap-1 ll:grid-cols-2 ll:w-full ll:box-border">
+        <span className="ll:grid ll:w-full ll:grid-cols-2 ll:gap-2 ll:box-border">
           {sortedHiddenTimers.map((timer) => {
             return (
-              <Tile key={timer}>
-                <span className="ll:flex ll:justify-between ll:items-center ll:w-full ll:px-1 ll:box-border">
-                  {timer}
-                  <XIcon
-                    size="14"
-                    type="button"
-                    className="ll-custom-cursor-pointer ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors ll:-mr-0.5"
-                    onClick={() => handleRemoveTimer(timer)}
-                  />
-                </span>
-              </Tile>
+              <SettingsPanel key={timer} className="ll:px-2 ll:py-1.5">
+                <Tile className="ll:border-none ll:bg-transparent ll:px-0 ll:hover:bg-transparent">
+                  <span className="ll:flex ll:w-full ll:items-center ll:justify-between ll:px-1 ll:box-border">
+                    <span className="ll:min-w-0 ll:truncate ll:text-[12px] ll:text-white">
+                      {timer}
+                    </span>
+                    <XIcon
+                      size="14"
+                      type="button"
+                      className="ll-custom-cursor-pointer ll:shrink-0 ll:stroke-gray-300 ll:transition-colors ll:hover:stroke-gray-100"
+                      onClick={() => handleRemoveTimer(timer)}
+                    />
+                  </span>
+                </Tile>
+              </SettingsPanel>
             );
           })}
         </span>
       )}
-      {!hiddenTimersForAccount || hiddenTimersForAccount.length === 0
-        ? "Brak ukrytych timerów."
-        : null}
+      {!hiddenTimersForAccount || hiddenTimersForAccount.length === 0 ? (
+        <SettingsEmptyState>Brak ukrytych timerów.</SettingsEmptyState>
+      ) : null}
     </div>
   );
 };

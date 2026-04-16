@@ -1,26 +1,30 @@
-import { Checkbox } from "@/components/ui/checkbox";
+import { SettingsControlRow } from "@/components/settings/settings-control-row";
+import { SettingsSection } from "@/components/settings/settings-section";
+import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
+import { Switch } from "@/components/ui/switch";
 import { useSettingsStore } from "@/store/settings.store";
-import { FC } from "react";
+import type { FC } from "react";
 
 export const GeneralSettingsTab: FC = () => {
   const { allowWorldSelection, toggleAllowWorldSelection } = useSettingsStore();
 
   return (
-    <div className="ll:w-full ll:pt-2">
-      <h2 className="ll:text-sm">Ustawienia ogólne</h2>
-      <p className=" ll:text-gray-400">
-        Skonfiguruj ogólne ustawienia dotyczące działania dodatku w grze.
-      </p>
-      <div className="ll:mb-4 ll:mt-4">
-        <Checkbox
-          value={allowWorldSelection ? "1" : "0"}
-          checked={allowWorldSelection}
-          onChange={toggleAllowWorldSelection}
-          id="allow-world-selection"
+    <SettingsTabLayout
+      title="Ustawienia ogólne"
+      description="Skonfiguruj ogólne ustawienia dotyczące działania dodatku w grze."
+    >
+      <SettingsSection title="Zachowanie dodatku">
+        <SettingsControlRow
+          label="Pozwalaj na wybór świata"
+          description="Nie działa na zgrupowanych timerach."
         >
-          Pozwalaj na wybór świata - nie działa na zgrupowanych timerach
-        </Checkbox>
-      </div>
-    </div>
+          <Switch
+            checked={allowWorldSelection}
+            onCheckedChange={toggleAllowWorldSelection}
+            id="allow-world-selection"
+          />
+        </SettingsControlRow>
+      </SettingsSection>
+    </SettingsTabLayout>
   );
 };

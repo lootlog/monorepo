@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
+import { fetchGuildPermissions } from "@/api";
 import type { Permission } from "@lootlog/types";
 
 type UseGuildPermissionsOptions = {
@@ -9,13 +9,10 @@ type UseGuildPermissionsOptions = {
 export const useGuildPermissions = ({
   guildId,
 }: UseGuildPermissionsOptions) => {
-  const { client } = useAuthenticatedApiClient();
-
   const query = useQuery({
     queryKey: ["guild-permissions", guildId],
-    queryFn: () => client.get<Permission[]>(`/guilds/${guildId}/permissions`),
+    queryFn: () => fetchGuildPermissions(guildId as string),
     enabled: !!guildId,
-    select: (response) => response.data,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 

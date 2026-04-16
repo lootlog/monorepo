@@ -1,11 +1,13 @@
 import { useMutation } from "@tanstack/react-query";
-import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
+import { cancelPartyGathering } from "@/api";
+import {
+  getAggregateActionStatus,
+  startLoggedAction,
+} from "@/lib/logs/log-actions";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import { useWindowsStore } from "@/store/windows.store";
-import { cancelPartyGathering } from "./cancel-party-gathering";
 
 export const useCancelPartyGathering = () => {
-  const { client } = useAuthenticatedApiClient();
   const setOpen = useWindowsStore((s) => s.setOpen);
 
   return useMutation({
@@ -18,10 +20,31 @@ export const useCancelPartyGathering = () => {
         throw new Error("No active party gathering");
       }
 
+      const action = startLoggedAction({
+        actionType: "cancel_party_gathering",
+        payload: {
+          partyGathering,
+          chatMessageIds,
+        },
+      });
       const response = await cancelPartyGathering({
-        client,
         partyGathering,
         chatMessageIds,
+        action,
+      });
+
+      action.complete({
+        status: getAggregateActionStatus(
+          response.requestSummary.successCount,
+          response.requestSummary.failureCount,
+        ),
+        details: {
+          endpoint: "/messaging/party-gathering/:notificationId",
+          totalRequests: response.requestSummary.totalRequests,
+          successCount: response.requestSummary.successCount,
+          failureCount: response.requestSummary.failureCount,
+          guildIds: response.guildIds,
+        },
       });
 
       clearPartyFinder();

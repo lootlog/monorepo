@@ -83,8 +83,8 @@ export const CreatePartyGatheringForm = () => {
       },
       {
         onSuccess: async (response) => {
-          const notificationId = response.data.notificationId;
-          const guildIds = response.data.guildIds ?? selectedGuildIds;
+          const notificationId = response.notificationId;
+          const guildIds = response.guildIds ?? selectedGuildIds;
 
           setPartyGathering({
             notificationId,
@@ -131,8 +131,8 @@ export const CreatePartyGatheringForm = () => {
           });
 
           chatResults.forEach((result, index) => {
-            if (result.status === "fulfilled" && result.value?.data?.id) {
-              setChatMessageId(guildIds[index], result.value.data.id);
+            if (result.status === "fulfilled" && result.value?.messageId) {
+              setChatMessageId(guildIds[index], result.value.messageId);
             }
           });
 

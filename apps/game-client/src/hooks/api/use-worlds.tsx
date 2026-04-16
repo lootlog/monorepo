@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
+import { fetchGuildWorlds } from "@/api";
 
 type UseWorldOptions = {
   guildId?: string;
@@ -7,13 +7,10 @@ type UseWorldOptions = {
 };
 
 export const useWorlds = ({ guildId }: UseWorldOptions) => {
-  const { client } = useAuthenticatedApiClient();
-
   const query = useQuery({
     queryKey: ["worlds", guildId],
-    queryFn: () => client.get<string[]>(`/guilds/${guildId}/worlds`),
+    queryFn: () => fetchGuildWorlds(guildId as string),
     enabled: !!guildId,
-    select: (response) => response.data,
   });
 
   return query;
