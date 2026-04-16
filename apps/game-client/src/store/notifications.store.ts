@@ -30,9 +30,16 @@ export type StoredNotification = (
   receivedAtMs: number;
 };
 
+type NotificationAutoHideState = {
+  deadlineMs: number | null;
+  pausedRemainingMs: number | null;
+  durationMs: number;
+};
+
 interface NotificationsState {
   notifications: StoredNotification[];
   activeNotificationAnimations: Record<string, number>;
+  notificationAutoHideByListKey: Record<string, NotificationAutoHideState>;
   latestNotificationAnimationCycle: number;
   pushNotification: (
     notification: NotificationWithServers | PartyGatheringNotification,
@@ -41,6 +48,10 @@ interface NotificationsState {
   removeNotification: (id: string) => void;
   removeNotificationByNpcId: (npcId: number, world?: string) => void;
   clearNotificationAnimation: (listKey: string, cycle: number) => void;
+  setNotificationAutoHide: (listKey: string, durationMs: number) => void;
+  pauseNotificationAutoHide: (listKey: string) => void;
+  resumeNotificationAutoHide: (listKey: string) => void;
+  clearNotificationAutoHide: (listKey: string) => void;
 }
 
 const moveNotificationToFront = (
@@ -62,6 +73,7 @@ const moveNotificationToFront = (
 export const useNotificationsStore = create<NotificationsState>()((set) => ({
   notifications: [],
   activeNotificationAnimations: {},
+  notificationAutoHideByListKey: {},
   latestNotificationAnimationCycle: 0,
   pushNotification: (
     notification: NotificationWithServers | PartyGatheringNotification,
@@ -200,11 +212,15 @@ export const useNotificationsStore = create<NotificationsState>()((set) => ({
     set(() => ({
       notifications: [],
       activeNotificationAnimations: {},
+      notificationAutoHideByListKey: {},
     })),
   removeNotification: (id: string) =>
     set((state) => {
       const activeNotificationAnimations = {
         ...state.activeNotificationAnimations,
+      };
+      const notificationAutoHideByListKey = {
+        ...state.notificationAutoHideByListKey,
       };
       const notificationToRemove = state.notifications.find(
         (notification) => notification.notificationId === id,
@@ -212,6 +228,7 @@ export const useNotificationsStore = create<NotificationsState>()((set) => ({
 
       if (notificationToRemove) {
         delete activeNotificationAnimations[notificationToRemove.listKey];
+        delete notificationAutoHideByListKey[notificationToRemove.listKey];
       }
 
       return {
@@ -219,12 +236,16 @@ export const useNotificationsStore = create<NotificationsState>()((set) => ({
           (notification) => notification.notificationId !== id,
         ),
         activeNotificationAnimations,
+        notificationAutoHideByListKey,
       };
     }),
   removeNotificationByNpcId: (npcId: number, world?: string) =>
     set((state) => {
       const activeNotificationAnimations = {
         ...state.activeNotificationAnimations,
+      };
+      const notificationAutoHideByListKey = {
+        ...state.notificationAutoHideByListKey,
       };
       const notifications = state.notifications.filter((notification) => {
         if ("type" in notification && notification.type === "party-gathering") {
@@ -238,6 +259,7 @@ export const useNotificationsStore = create<NotificationsState>()((set) => ({
 
         if (shouldRemove) {
           delete activeNotificationAnimations[notification.listKey];
+          delete notificationAutoHideByListKey[notification.listKey];
           return false;
         }
 
@@ -247,6 +269,7 @@ export const useNotificationsStore = create<NotificationsState>()((set) => ({
       return {
         notifications,
         activeNotificationAnimations,
+        notificationAutoHideByListKey,
       };
     }),
   clearNotificationAnimation: (listKey, cycle) =>
@@ -261,5 +284,75 @@ export const useNotificationsStore = create<NotificationsState>()((set) => ({
       delete activeNotificationAnimations[listKey];
 
       return { activeNotificationAnimations };
+    }),
+  setNotificationAutoHide: (listKey, durationMs) =>
+    set((state) => {
+      const notificationAutoHideByListKey = {
+        ...state.notificationAutoHideByListKey,
+      };
+
+      if (durationMs <= 0) {
+        delete notificationAutoHideByListKey[listKey];
+        return { notificationAutoHideByListKey };
+      }
+
+      notificationAutoHideByListKey[listKey] = {
+        deadlineMs: Date.now() + durationMs,
+        pausedRemainingMs: null,
+        durationMs,
+      };
+
+      return { notificationAutoHideByListKey };
+    }),
+  pauseNotificationAutoHide: (listKey) =>
+    set((state) => {
+      const currentState = state.notificationAutoHideByListKey[listKey];
+
+      if (!currentState || currentState.deadlineMs === null) {
+        return {};
+      }
+
+      return {
+        notificationAutoHideByListKey: {
+          ...state.notificationAutoHideByListKey,
+          [listKey]: {
+            ...currentState,
+            deadlineMs: null,
+            pausedRemainingMs: Math.max(0, currentState.deadlineMs - Date.now()),
+          },
+        },
+      };
+    }),
+  resumeNotificationAutoHide: (listKey) =>
+    set((state) => {
+      const currentState = state.notificationAutoHideByListKey[listKey];
+
+      if (!currentState || currentState.pausedRemainingMs === null) {
+        return {};
+      }
+
+      return {
+        notificationAutoHideByListKey: {
+          ...state.notificationAutoHideByListKey,
+          [listKey]: {
+            ...currentState,
+            deadlineMs: Date.now() + currentState.pausedRemainingMs,
+            pausedRemainingMs: null,
+          },
+        },
+      };
+    }),
+  clearNotificationAutoHide: (listKey) =>
+    set((state) => {
+      if (!(listKey in state.notificationAutoHideByListKey)) {
+        return {};
+      }
+
+      const notificationAutoHideByListKey = {
+        ...state.notificationAutoHideByListKey,
+      };
+      delete notificationAutoHideByListKey[listKey];
+
+      return { notificationAutoHideByListKey };
     }),
 }));

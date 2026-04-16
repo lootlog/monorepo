@@ -1,6 +1,7 @@
 import { CharacterTile } from "@/components/character-tile";
 import { NpcTile } from "@/components/npc-tile";
 import { Button } from "@/components/ui/button";
+import { NotificationMuteMenu } from "@/features/notifications/components/notification-mute-menu";
 import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
 import { useGuildMembers } from "@/hooks/api/use-guild-members";
 import { useVolunteer } from "@/hooks/api/use-volunteer";
@@ -109,11 +110,26 @@ const renderNotificationContent = ({
 export const SingleNotification: FC<SingleNotificationProps> = ({
   guildNamesById,
   notification,
-  _notificationAnimationCycle,
+  notificationAnimationCycle: _notificationAnimationCycle,
   showCloseButton = false,
 }) => {
   const removeNotification = useNotificationsStore(
     (state) => state.removeNotification,
+  );
+  const autoHideState = useNotificationsStore(
+    (state) => state.notificationAutoHideByListKey[notification.listKey],
+  );
+  const setNotificationAutoHide = useNotificationsStore(
+    (state) => state.setNotificationAutoHide,
+  );
+  const pauseNotificationAutoHide = useNotificationsStore(
+    (state) => state.pauseNotificationAutoHide,
+  );
+  const resumeNotificationAutoHide = useNotificationsStore(
+    (state) => state.resumeNotificationAutoHide,
+  );
+  const clearNotificationAutoHide = useNotificationsStore(
+    (state) => state.clearNotificationAutoHide,
   );
   const clearNotifications = useNotificationsStore(
     (state) => state.clearNotifications,
@@ -185,19 +201,54 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   }
 
   useEffect(() => {
+    if (autoHideDurationMs <= 0) {
+      clearNotificationAutoHide(notification.listKey);
+      return;
+    }
+
+    setNotificationAutoHide(notification.listKey, autoHideDurationMs);
+  }, [
+    autoHideDurationMs,
+    clearNotificationAutoHide,
+    notification.listKey,
+    notification.receivedAtMs,
+    setNotificationAutoHide,
+  ]);
+
+  useEffect(() => {
     const path = autoHidePathRef.current;
     const svg = path?.ownerSVGElement;
     if (!path || !svg || autoHideDurationMs <= 0) return;
 
     const { width, height } = svg.getBoundingClientRect();
-    const screenLength = String(2 * (width + height));
+    const totalLength = 2 * (width + height);
+    const deadlineMs = autoHideState?.deadlineMs ?? Date.now() + autoHideDurationMs;
+    const remainingMs =
+      autoHideState?.pausedRemainingMs ?? Math.max(0, deadlineMs - Date.now());
+    const clampedRemainingMs = Math.min(autoHideDurationMs, remainingMs);
+    const elapsedMs = Math.max(0, autoHideDurationMs - clampedRemainingMs);
+    const initialOffset = (elapsedMs / autoHideDurationMs) * totalLength;
 
-    path.style.strokeDasharray = screenLength;
-    path.style.strokeDashoffset = "0";
+    path.style.strokeDasharray = String(totalLength);
+    path.style.strokeDashoffset = String(initialOffset);
+
+    if (autoHideState?.pausedRemainingMs !== null) {
+      return () => {
+        path.style.strokeDasharray = "";
+        path.style.strokeDashoffset = "";
+      };
+    }
 
     const animation = path.animate(
-      [{ strokeDashoffset: "0" }, { strokeDashoffset: screenLength }],
-      { duration: autoHideDurationMs, easing: "linear", fill: "forwards" },
+      [
+        { strokeDashoffset: String(initialOffset) },
+        { strokeDashoffset: String(totalLength) },
+      ],
+      {
+        duration: clampedRemainingMs,
+        easing: "linear",
+        fill: "forwards",
+      },
     );
 
     return () => {
@@ -205,7 +256,20 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
       path.style.strokeDasharray = "";
       path.style.strokeDashoffset = "";
     };
-  }, [notification.receivedAtMs, autoHideDurationMs]);
+  }, [
+    autoHideDurationMs,
+    autoHideState?.deadlineMs,
+    autoHideState?.pausedRemainingMs,
+  ]);
+
+  const handleMuteMenuOpenChange = (open: boolean) => {
+    if (open) {
+      pauseNotificationAutoHide(notification.listKey);
+      return;
+    }
+
+    resumeNotificationAutoHide(notification.listKey);
+  };
 
   return (
     <div className="ll:w-full">
@@ -263,6 +327,12 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
               {actionLabel}
             </Button>
           ) : null}
+          <NotificationMuteMenu
+            notification={notification}
+            senderName={senderName}
+            onOpenChange={handleMuteMenuOpenChange}
+            onMuted={handleRemoveNotification}
+          />
           {showCloseButton ? (
             <Button
               aria-label="Zamknij powiadomienie"

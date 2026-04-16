@@ -11,6 +11,7 @@ import { DebugTab } from "@/features/settings/components/debug/debug-tab";
 import { DetectorSettingsTab } from "@/features/settings/components/detector/detector-settings-tab";
 import { GeneralSettingsTab } from "@/features/settings/components/general/general-settings-tab";
 import { HiddenTimersTab } from "@/features/settings/components/hidden-timers/hidden-timers-tab";
+import { NotificationMutesSettingsTab } from "@/features/settings/components/notification-mutes/notification-mutes-settings-tab";
 import { NotificationsSettingsTab } from "@/features/settings/components/notifications/notifications-settings-tab";
 import { HotkeysSettingsTab } from "@/features/settings/components/hotkeys/hotkeys-settings-tab";
 import { SoundsSettingsTab } from "@/features/settings/components/sounds/sounds-settings-tab";
@@ -19,6 +20,7 @@ import type { SettingsTabValue } from "@/features/settings/constants/settings-ta
 import { useWindowsStore } from "@/store/windows.store";
 import {
   Bell,
+  BellOff,
   Bug,
   Clock,
   Crosshair,
@@ -77,6 +79,12 @@ const BASE_TABS_LIST: SettingsTabDefinition[] = [
     label: "Powiadomienia",
     icon: Bell,
     content: <NotificationsSettingsTab />,
+  },
+  {
+    value: "notification-mutes",
+    label: "Wyciszenia",
+    icon: BellOff,
+    content: <NotificationMutesSettingsTab />,
   },
   {
     value: "sounds",

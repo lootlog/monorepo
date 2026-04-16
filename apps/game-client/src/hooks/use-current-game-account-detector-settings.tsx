@@ -1,24 +1,24 @@
 import { useMemo } from "react";
 import { useUserGameAccountPreferences } from "@/hooks/api/use-user-account-preferences";
 import {
-  getEffectiveNotificationSettings,
-  isNotificationPreferencesReady,
+  getEffectiveDetectorSettings,
+  isDetectorPreferencesReady,
 } from "@/lib/game-account-notification-preferences";
 import { Game } from "@/lib/game";
 import { useGlobalStore } from "@/store/global.store";
 
-export const useCurrentGameAccountNotificationSettings = () => {
+export const useCurrentGameAccountDetectorSettings = () => {
   const gameInitialized = useGlobalStore(
     (state) => state.gameState.gameInitialized,
   );
   const accountId = Game.hero?.account ? String(Game.hero.account) : null;
   const query = useUserGameAccountPreferences(accountId, gameInitialized);
   const settings = useMemo(
-    () => getEffectiveNotificationSettings(query.data),
+    () => getEffectiveDetectorSettings(query.data),
     [query.data],
   );
   const isReady = useMemo(
-    () => isNotificationPreferencesReady(query.data),
+    () => isDetectorPreferencesReady(query.data),
     [query.data],
   );
 

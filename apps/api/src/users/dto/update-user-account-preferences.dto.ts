@@ -10,6 +10,21 @@ const PartialNotificationSettingsSchema = z.object({
   sound: z.boolean().optional(),
 });
 
+const DetectorRoutingRuleSchema = z.object({
+  id: z.string().min(1),
+  minLevel: z.number().min(0).max(500),
+  maxLevel: z.number().min(0).max(500),
+  guildIds: z.array(z.string()),
+});
+
+const PartialDetectorTypeSettingsSchema = z.object({
+  detect: z.boolean().optional(),
+  autoSend: z.boolean().optional(),
+  notifyWindow: z.boolean().optional(),
+  highlight: z.boolean().optional(),
+  notifySound: z.boolean().optional(),
+});
+
 const UpdateUserGameAccountPreferencesSchema = z.object({
   notifications: z
     .object({
@@ -19,6 +34,15 @@ const UpdateUserGameAccountPreferencesSchema = z.object({
       TITAN: PartialNotificationSettingsSchema.optional(),
       message: PartialNotificationSettingsSchema.optional(),
       "party-gathering": PartialNotificationSettingsSchema.optional(),
+    })
+    .optional(),
+  detector: z
+    .object({
+      routingRules: z.array(DetectorRoutingRuleSchema).optional(),
+      ELITE2: PartialDetectorTypeSettingsSchema.optional(),
+      HERO: PartialDetectorTypeSettingsSchema.optional(),
+      COLOSSUS: PartialDetectorTypeSettingsSchema.optional(),
+      TITAN: PartialDetectorTypeSettingsSchema.optional(),
     })
     .optional(),
 });

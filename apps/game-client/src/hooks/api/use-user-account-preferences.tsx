@@ -2,13 +2,15 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { API_URL } from "@/config/api";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 import {
+  cloneDetectorSettings,
   getUpdateUserGameAccountPreferencesMutationKey,
   getUserGameAccountPreferencesQueryKey,
 } from "@/lib/game-account-notification-preferences";
-import type {
-  NotificationType,
-  UpdateUserGameAccountPreferencesPayload,
-  UserGameAccountPreferences,
+import {
+  DETECTOR_NPC_TYPES,
+  type NotificationType,
+  type UpdateUserGameAccountPreferencesPayload,
+  type UserGameAccountPreferences,
 } from "@lootlog/types";
 
 export const useUserGameAccountPreferences = (
@@ -95,10 +97,45 @@ export const useUpdateUserGameAccountPreferences = (
             } as UserGameAccountPreferences["notifications"],
           )
         : previousData.notifications;
+      const nextDetector = payload.detector
+        ? (() => {
+            const nextSettings = cloneDetectorSettings(previousData.detector);
+
+            if (payload.detector?.routingRules) {
+              nextSettings.routingRules = payload.detector.routingRules.map(
+                (rule) => ({
+                  ...rule,
+                  guildIds: [...rule.guildIds],
+                }),
+              );
+            }
+
+            DETECTOR_NPC_TYPES.forEach((detectorType) => {
+              const patch = payload.detector?.[detectorType];
+
+              if (!patch) {
+                return;
+              }
+
+              nextSettings[detectorType] = {
+                ...nextSettings[detectorType],
+                ...patch,
+              };
+            });
+
+            return nextSettings;
+          })()
+        : previousData.detector;
 
       queryClient.setQueryData<UserGameAccountPreferences>(queryKey, {
         ...previousData,
         notifications: nextNotifications,
+        detector: nextDetector,
+        hasStoredNotifications:
+          previousData.hasStoredNotifications ||
+          payload.notifications !== undefined,
+        hasStoredDetector:
+          previousData.hasStoredDetector || payload.detector !== undefined,
         hasStoredPreferences: true,
       });
 

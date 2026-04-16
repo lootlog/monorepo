@@ -1,5 +1,6 @@
 export * from "./common/services/services.types.js";
 export * from "./common/account-preferences.types.js";
+export * from "./common/user-preferences.types.js";
 export * from "./common/timer-settings.types.js";
 export * from "./common/sound-settings.types.js";
 export * from "./common/permissions.types.js";

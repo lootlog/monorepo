@@ -6,11 +6,14 @@ import {
   useUserGameAccountPreferences,
 } from "@/hooks/api/use-user-account-preferences";
 import {
+  createDetectorSettings,
   createNotificationsSettings,
   getUserGameAccountPreferencesQueryKey,
 } from "@/lib/game-account-notification-preferences";
 import { Game } from "@/lib/game";
+import { npcsDetectionProcessor } from "@/processors/npcs-detection-processor";
 import { useGlobalStore } from "@/store/global.store";
+import type { UserGameAccountPreferences } from "@lootlog/types";
 
 export const useNotificationSettingsSync = () => {
   const gameInitialized = useGlobalStore(
@@ -41,27 +44,43 @@ export const useNotificationSettingsSync = () => {
       return;
     }
 
-    if (!data.hasStoredPreferences) {
+    if (!data.hasStoredNotifications || !data.hasStoredDetector) {
       if (seededAccountsRef.current.has(accountId)) {
         return;
       }
 
       const queryKey = getUserGameAccountPreferencesQueryKey(accountId);
-      const seededSettings = createNotificationsSettings(guildIds);
+      const seededNotifications = data.hasStoredNotifications
+        ? data.notifications
+        : createNotificationsSettings(guildIds);
+      const seededDetector = data.hasStoredDetector
+        ? data.detector
+        : createDetectorSettings();
       seededAccountsRef.current.add(accountId);
-      queryClient.setQueryData(queryKey, {
+      queryClient.setQueryData<UserGameAccountPreferences>(queryKey, {
         accountId,
-        notifications: seededSettings,
+        notifications: seededNotifications,
+        detector: seededDetector,
+        hasStoredNotifications: true,
+        hasStoredDetector: true,
         hasStoredPreferences: true,
       });
       updateUserGameAccountPreferences.mutate(
         {
-          notifications: seededSettings,
+          ...(!data.hasStoredNotifications && {
+            notifications: seededNotifications,
+          }),
+          ...(!data.hasStoredDetector && {
+            detector: seededDetector,
+          }),
         },
         {
           onError: () => {
             seededAccountsRef.current.delete(accountId);
-            queryClient.setQueryData(queryKey, data);
+            queryClient.setQueryData<UserGameAccountPreferences>(
+              queryKey,
+              data,
+            );
           },
         },
       );
@@ -77,4 +96,12 @@ export const useNotificationSettingsSync = () => {
     queryClient,
     updateUserGameAccountPreferences,
   ]);
+
+  useEffect(() => {
+    if (!gameInitialized || !accountId || !data?.hasStoredDetector) {
+      return;
+    }
+
+    npcsDetectionProcessor.flushPending(accountId);
+  }, [accountId, data?.hasStoredDetector, gameInitialized]);
 };

@@ -1,5 +1,11 @@
 import {
+  DETECTOR_NPC_TYPES,
+  defaultDetectorSettings,
   defaultNotificationsSettings,
+  type DetectorRoutingRule,
+  type DetectorSettings,
+  type DetectorTypeSettings,
+  type DetectorNpcType,
   type NotificationsSettings,
   type UserGameAccountPreferences,
 } from "@lootlog/types";
@@ -50,6 +56,29 @@ export const createNotificationsSettings = (guildIds: string[] = []) => {
   }, {} as NotificationsSettings);
 };
 
+export const cloneDetectorSettings = (
+  settings: DetectorSettings,
+): DetectorSettings => {
+  const clonedSettings = {
+    routingRules: settings.routingRules.map((rule) => ({
+      ...rule,
+      guildIds: [...rule.guildIds],
+    })),
+  } as DetectorSettings;
+
+  DETECTOR_NPC_TYPES.forEach((npcType) => {
+    clonedSettings[npcType] = {
+      ...settings[npcType],
+    };
+  });
+
+  return clonedSettings;
+};
+
+export const createDetectorSettings = (): DetectorSettings => {
+  return cloneDetectorSettings(defaultDetectorSettings);
+};
+
 export const getEffectiveNotificationSettings = (
   preferences?: UserGameAccountPreferences | null,
 ) => {
@@ -58,4 +87,52 @@ export const getEffectiveNotificationSettings = (
   }
 
   return cloneNotificationsSettings(preferences.notifications);
+};
+
+export const getEffectiveDetectorSettings = (
+  preferences?: UserGameAccountPreferences | null,
+) => {
+  if (!preferences) {
+    return cloneDetectorSettings(defaultDetectorSettings);
+  }
+
+  return cloneDetectorSettings(preferences.detector);
+};
+
+export const isNotificationPreferencesReady = (
+  preferences?: UserGameAccountPreferences | null,
+) => {
+  return Boolean(preferences?.hasStoredNotifications);
+};
+
+export const isDetectorPreferencesReady = (
+  preferences?: UserGameAccountPreferences | null,
+) => {
+  return Boolean(preferences?.hasStoredDetector);
+};
+
+export const resolveDetectorGuildIds = (
+  routingRules: DetectorRoutingRule[],
+  npcLevel: number,
+) => {
+  const resolvedGuildIds = new Set<string>();
+
+  routingRules.forEach((rule) => {
+    if (npcLevel < rule.minLevel || npcLevel > rule.maxLevel) {
+      return;
+    }
+
+    rule.guildIds.forEach((guildId) => {
+      resolvedGuildIds.add(guildId);
+    });
+  });
+
+  return [...resolvedGuildIds];
+};
+
+export const getDetectorSettingsByNpcType = (
+  detectorSettings: DetectorSettings,
+  npcType: DetectorNpcType,
+): DetectorTypeSettings => {
+  return detectorSettings[npcType];
 };

@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { GuildSwitcher } from "@/components/guild-switcher";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -58,6 +58,19 @@ const areNotificationSettingsEqual = (
   );
 };
 
+const cloneNotificationSettings = (
+  settings: NotificationSettings,
+): NotificationSettings => {
+  return {
+    ...settings,
+    guildIds: [...settings.guildIds],
+  };
+};
+
+const isDeferredNotificationSyncField = (fieldName: string | null) => {
+  return fieldName === "autoHideTimeout";
+};
+
 export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
   categoryKey,
 }) => {
@@ -73,6 +86,7 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
   const currentCategorySettings: NotificationSettings =
     accountSettings[categoryKey];
   const textColor = getTextColor(categoryKey, true);
+  const deferredSyncFieldRef = useRef<string | null>(null);
   const debouncedUpdate = useDebouncedCallback(
     (
       payload: Parameters<typeof updateUserGameAccountPreferences.mutate>[0],
@@ -82,27 +96,37 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
     300,
   );
 
-  const { control, register, watch, reset, setValue, formState } =
+  const { control, register, watch, reset, setValue, formState, getValues } =
     useForm<FormData>({
       resolver: zodResolver(FormSchema),
-      defaultValues: currentCategorySettings,
+      defaultValues: cloneNotificationSettings(currentCategorySettings),
     });
 
-  const lastSettingsRef = useRef<NotificationSettings>(currentCategorySettings);
   useDeepCompareEffect(() => {
-    if (lastSettingsRef.current !== currentCategorySettings) {
-      lastSettingsRef.current = currentCategorySettings;
-      reset(currentCategorySettings);
-    }
-  }, [currentCategorySettings, reset]);
+    const nextFormValues = cloneNotificationSettings(currentCategorySettings);
+    const currentFormSettings = cloneNotificationSettings(getValues());
 
-  const watchedData = watch();
-  useDeepCompareEffect(() => {
-    if (!accountId || !isFetched || !formState.isDirty) {
+    if (
+      areNotificationSettingsEqual(currentFormSettings, currentCategorySettings)
+    ) {
+      reset(nextFormValues, {
+        keepValues: true,
+      });
+
       return;
     }
 
-    const nextCategorySettings = watchedData as NotificationSettings;
+    reset(nextFormValues);
+  }, [currentCategorySettings, getValues, reset]);
+
+  const watchedData = watch();
+
+  const syncCurrentValues = () => {
+    if (!accountId || !isFetched) {
+      return;
+    }
+
+    const nextCategorySettings = getValues() as NotificationSettings;
     if (
       areNotificationSettingsEqual(
         nextCategorySettings,
@@ -117,6 +141,16 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
         [categoryKey]: nextCategorySettings,
       },
     });
+  };
+
+  useDeepCompareEffect(() => {
+    if (
+      !formState.isDirty ||
+      isDeferredNotificationSyncField(deferredSyncFieldRef.current)
+    ) {
+      return;
+    }
+    syncCurrentValues();
   }, [
     accountId,
     categoryKey,
@@ -200,7 +234,7 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
             htmlFor={`${categoryKey}-auto-hide-timeout`}
             className="ll:flex-1 ll:text-[12px] ll:leading-4"
           >
-            Auto ukrywanie: (sekundy)
+            Auto ukrywanie (sekundy, 0 = wyłączone):
           </Label>
           <Input
             id={`${categoryKey}-auto-hide-timeout`}
@@ -208,7 +242,14 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
             disabled={!watchShow}
             className="ll:h-5! ll:w-12! ll:px-1! ll:py-0! ll:text-[11px]! ll:text-center"
             placeholder="0"
+            onFocus={() => {
+              deferredSyncFieldRef.current = "autoHideTimeout";
+            }}
             {...register("autoHideTimeout", {
+              onBlur: () => {
+                deferredSyncFieldRef.current = null;
+                syncCurrentValues();
+              },
               setValueAs: (value) => {
                 if (value === "" || value === null || value === undefined) {
                   return 0;
@@ -224,57 +265,13 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
 
       <div className="ll:space-y-3">
         <Label className="ll:block">Z jakich serwerów:</Label>
-        <div className="ll:grid ll:grid-cols-2 ll:gap-1.5 xl:ll:grid-cols-3 ll:mt-2">
-          {guilds?.map((guild) => {
-            const isSelected = selectedGuildIds.includes(guild.id);
-
-            return (
-              <button
-                key={guild.id}
-                type="button"
-                disabled={!watchShow}
-                aria-pressed={isSelected}
-                onClick={() => toggleGuild(guild.id)}
-                className={cn(
-                  "ll:min-h-9 ll:rounded-md ll:border ll:px-2.5 ll:py-1.5 ll:text-left ll:text-[11px] ll:font-semibold ll:leading-4 ll:transition-all ll-custom-cursor-pointer",
-                  "ll:focus-visible:outline-none ll:focus-visible:ring-1 ll:focus-visible:ring-white/60",
-                  !watchShow &&
-                    "ll:cursor-not-allowed ll:border-gray-800 ll:bg-gray-900/30 ll:text-gray-500 ll:opacity-60",
-                  watchShow &&
-                    !isSelected &&
-                    "ll:border-gray-700 ll:bg-gray-950/70 ll:text-gray-200 ll:hover:border-gray-500 ll:hover:bg-gray-900",
-                  watchShow &&
-                    isSelected &&
-                    "ll:border-white/70 ll:bg-gray-800 ll:text-white ll:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]",
-                )}
-                style={
-                  watchShow && isSelected
-                    ? {
-                        borderColor: textColor,
-                        backgroundColor: "rgba(255,255,255,0.08)",
-                      }
-                    : undefined
-                }
-              >
-                <span className="ll:flex ll:items-center ll:gap-2">
-                  <Avatar className="ll:h-5 ll:w-5 ll:rounded-sm">
-                    <AvatarImage
-                      src={guild.icon ?? undefined}
-                      alt={guild.name}
-                      className="ll:h-full ll:w-full ll:rounded-sm ll:object-cover"
-                    />
-                    <AvatarFallback className="ll:rounded-sm ll:text-[9px] ll:font-semibold ll:text-gray-200">
-                      {guild.name.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="ll:min-w-0 ll:flex-1 ll:truncate">
-                    {guild.name}
-                  </span>
-                </span>
-              </button>
-            );
-          })}
-        </div>
+        <GuildSwitcher
+          multiple
+          selectedValues={selectedGuildIds}
+          disabled={!watchShow}
+          className="ll:mt-0"
+          onToggle={toggleGuild}
+        />
       </div>
     </form>
   );

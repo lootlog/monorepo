@@ -76,8 +76,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/UserGameAccountPreferencesResponseDto_Output
+                $ref: "#/components/schemas/UserGameAccountPreferencesResponseDto_Output"
       security:
         - bearer: []
       summary: Get user game account preferences
@@ -106,8 +105,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/UserGameAccountPreferencesResponseDto_Output
+                $ref: "#/components/schemas/UserGameAccountPreferencesResponseDto_Output"
       security:
         - bearer: []
       summary: Update user game account preferences
@@ -4825,11 +4823,71 @@ components:
           type: string
         colorMode:
           type: string
+        mutes:
+          type: object
+          properties:
+            players:
+              type: array
+              items:
+                type: object
+                properties:
+                  discordId:
+                    type: string
+                    minLength: 1
+                  displayName:
+                    type: string
+                required:
+                  - discordId
+                  - displayName
+            npcs:
+              type: array
+              items:
+                type: object
+                properties:
+                  npcKey:
+                    type: string
+                    minLength: 1
+                  npcId:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+                  name:
+                    type: string
+                    minLength: 1
+                  npcType:
+                    type: string
+                    enum:
+                      - ELITE2
+                      - HERO
+                      - COLOSSUS
+                      - TITAN
+                  lvl:
+                    type: integer
+                    minimum: 1
+                    maximum: 9007199254740991
+                  prof:
+                    type: string
+                    nullable: true
+                  icon:
+                    type: string
+                    nullable: true
+                required:
+                  - npcKey
+                  - npcId
+                  - name
+                  - npcType
+                  - lvl
+                  - prof
+                  - icon
+          required:
+            - players
+            - npcs
       required:
         - userId
         - guildsOrder
         - theme
         - colorMode
+        - mutes
     UpdateUserPreferencesDto:
       type: object
       properties:
@@ -4865,6 +4923,62 @@ components:
           enum:
             - light
             - dark
+        mutes:
+          type: object
+          properties:
+            players:
+              type: array
+              items:
+                type: object
+                properties:
+                  discordId:
+                    type: string
+                    minLength: 1
+                  displayName:
+                    type: string
+                required:
+                  - discordId
+                  - displayName
+            npcs:
+              type: array
+              items:
+                type: object
+                properties:
+                  npcKey:
+                    type: string
+                    minLength: 1
+                  npcId:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+                  name:
+                    type: string
+                    minLength: 1
+                  npcType:
+                    type: string
+                    enum:
+                      - ELITE2
+                      - HERO
+                      - COLOSSUS
+                      - TITAN
+                  lvl:
+                    type: integer
+                    minimum: 1
+                    maximum: 9007199254740991
+                  prof:
+                    type: string
+                    nullable: true
+                  icon:
+                    type: string
+                    nullable: true
+                required:
+                  - npcKey
+                  - npcId
+                  - name
+                  - npcType
+                  - lvl
+                  - prof
+                  - icon
     UserGameAccountPreferencesResponseDto_Output:
       type: object
       properties:
@@ -4898,7 +5012,6 @@ components:
                 - ignoreOtherWorlds
                 - guildIds
                 - sound
-              additionalProperties: false
             HERO:
               type: object
               properties:
@@ -4923,7 +5036,6 @@ components:
                 - ignoreOtherWorlds
                 - guildIds
                 - sound
-              additionalProperties: false
             COLOSSUS:
               type: object
               properties:
@@ -4948,7 +5060,6 @@ components:
                 - ignoreOtherWorlds
                 - guildIds
                 - sound
-              additionalProperties: false
             TITAN:
               type: object
               properties:
@@ -4973,7 +5084,6 @@ components:
                 - ignoreOtherWorlds
                 - guildIds
                 - sound
-              additionalProperties: false
             message:
               type: object
               properties:
@@ -4998,7 +5108,6 @@ components:
                 - ignoreOtherWorlds
                 - guildIds
                 - sound
-              additionalProperties: false
             party-gathering:
               type: object
               properties:
@@ -5023,7 +5132,6 @@ components:
                 - ignoreOtherWorlds
                 - guildIds
                 - sound
-              additionalProperties: false
           required:
             - ELITE2
             - HERO
@@ -5031,14 +5139,129 @@ components:
             - TITAN
             - message
             - party-gathering
-          additionalProperties: false
+        detector:
+          type: object
+          properties:
+            routingRules:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    minLength: 1
+                  minLevel:
+                    type: number
+                    minimum: 0
+                    maximum: 500
+                  maxLevel:
+                    type: number
+                    minimum: 0
+                    maximum: 500
+                  guildIds:
+                    type: array
+                    items:
+                      type: string
+                required:
+                  - id
+                  - minLevel
+                  - maxLevel
+                  - guildIds
+            ELITE2:
+              type: object
+              properties:
+                detect:
+                  type: boolean
+                autoSend:
+                  type: boolean
+                notifyWindow:
+                  type: boolean
+                highlight:
+                  type: boolean
+                notifySound:
+                  type: boolean
+              required:
+                - detect
+                - autoSend
+                - notifyWindow
+                - highlight
+                - notifySound
+            HERO:
+              type: object
+              properties:
+                detect:
+                  type: boolean
+                autoSend:
+                  type: boolean
+                notifyWindow:
+                  type: boolean
+                highlight:
+                  type: boolean
+                notifySound:
+                  type: boolean
+              required:
+                - detect
+                - autoSend
+                - notifyWindow
+                - highlight
+                - notifySound
+            COLOSSUS:
+              type: object
+              properties:
+                detect:
+                  type: boolean
+                autoSend:
+                  type: boolean
+                notifyWindow:
+                  type: boolean
+                highlight:
+                  type: boolean
+                notifySound:
+                  type: boolean
+              required:
+                - detect
+                - autoSend
+                - notifyWindow
+                - highlight
+                - notifySound
+            TITAN:
+              type: object
+              properties:
+                detect:
+                  type: boolean
+                autoSend:
+                  type: boolean
+                notifyWindow:
+                  type: boolean
+                highlight:
+                  type: boolean
+                notifySound:
+                  type: boolean
+              required:
+                - detect
+                - autoSend
+                - notifyWindow
+                - highlight
+                - notifySound
+          required:
+            - routingRules
+            - ELITE2
+            - HERO
+            - COLOSSUS
+            - TITAN
+        hasStoredNotifications:
+          type: boolean
+        hasStoredDetector:
+          type: boolean
         hasStoredPreferences:
           type: boolean
       required:
         - accountId
         - notifications
+        - detector
+        - hasStoredNotifications
+        - hasStoredDetector
         - hasStoredPreferences
-      additionalProperties: false
     UpdateUserGameAccountPreferencesDto:
       type: object
       properties:
@@ -5152,6 +5375,86 @@ components:
                   items:
                     type: string
                 sound:
+                  type: boolean
+        detector:
+          type: object
+          properties:
+            routingRules:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    minLength: 1
+                  minLevel:
+                    type: number
+                    minimum: 0
+                    maximum: 500
+                  maxLevel:
+                    type: number
+                    minimum: 0
+                    maximum: 500
+                  guildIds:
+                    type: array
+                    items:
+                      type: string
+                required:
+                  - id
+                  - minLevel
+                  - maxLevel
+                  - guildIds
+            ELITE2:
+              type: object
+              properties:
+                detect:
+                  type: boolean
+                autoSend:
+                  type: boolean
+                notifyWindow:
+                  type: boolean
+                highlight:
+                  type: boolean
+                notifySound:
+                  type: boolean
+            HERO:
+              type: object
+              properties:
+                detect:
+                  type: boolean
+                autoSend:
+                  type: boolean
+                notifyWindow:
+                  type: boolean
+                highlight:
+                  type: boolean
+                notifySound:
+                  type: boolean
+            COLOSSUS:
+              type: object
+              properties:
+                detect:
+                  type: boolean
+                autoSend:
+                  type: boolean
+                notifyWindow:
+                  type: boolean
+                highlight:
+                  type: boolean
+                notifySound:
+                  type: boolean
+            TITAN:
+              type: object
+              properties:
+                detect:
+                  type: boolean
+                autoSend:
+                  type: boolean
+                notifyWindow:
+                  type: boolean
+                highlight:
+                  type: boolean
+                notifySound:
                   type: boolean
     NullableMemberResponseDto:
       type: object
