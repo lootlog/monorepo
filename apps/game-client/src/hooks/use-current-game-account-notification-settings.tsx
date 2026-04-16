@@ -1,6 +1,9 @@
 import { useMemo } from "react";
 import { useUserGameAccountPreferences } from "@/hooks/api/use-user-account-preferences";
-import { getEffectiveNotificationSettings } from "@/lib/game-account-notification-preferences";
+import {
+  getEffectiveNotificationSettings,
+  isNotificationPreferencesReady,
+} from "@/lib/game-account-notification-preferences";
 import { Game } from "@/lib/game";
 import { useGlobalStore } from "@/store/global.store";
 
@@ -14,10 +17,15 @@ export const useCurrentGameAccountNotificationSettings = () => {
     () => getEffectiveNotificationSettings(query.data),
     [query.data],
   );
+  const isReady = useMemo(
+    () => isNotificationPreferencesReady(query.data),
+    [query.data],
+  );
 
   return {
     ...query,
     accountId,
+    isReady,
     settings,
   };
 };

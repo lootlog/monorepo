@@ -15,12 +15,24 @@ import { RedisService } from "@lootlog/nest-shared";
 import type { Prisma } from "src/generated/prisma/client";
 import { getUserLootlogConfigCachePattern } from "src/shared/constants/cache.constant";
 import {
+  DETECTOR_NPC_TYPES,
+  defaultDetectorSettings,
   defaultNotificationsSettings,
+  type DetectorNpcType,
+  type DetectorRoutingRule,
+  type DetectorSettings,
+  type DetectorSettingsPatch,
+  type DetectorTypeSettings,
+  type DetectorTypeSettingsPatch,
+  type MutedNpcPreference,
+  type MutedPlayerPreference,
+  type NotificationMutes,
   type NotificationSettings,
   type NotificationType,
   type NotificationsSettings,
   type UpdateUserGameAccountPreferencesPayload,
   type UserGameAccountPreferences,
+  type UserPreferences,
 } from "@lootlog/types";
 import type { UpdateUserGameAccountPreferencesDto } from "src/users/dto/update-user-account-preferences.dto";
 import type { UpdateUserPreferencesDto } from "src/users/dto/update-user-preferences.dto";
@@ -29,6 +41,16 @@ type DeleteAccountParams = {
   authUserId: string;
   discordId: string;
 };
+
+const GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID = "__global-notification-mutes__";
+const DETECTOR_LEVEL_MIN = 0;
+const DETECTOR_LEVEL_MAX = 500;
+
+type MutedNpcPreferenceInput = Pick<
+  MutedNpcPreference,
+  "npcKey" | "npcId" | "name" | "npcType" | "lvl"
+> &
+  Partial<Pick<MutedNpcPreference, "prof" | "icon">>;
 
 @Injectable()
 export class UsersService {
@@ -46,13 +68,26 @@ export class UsersService {
   }
 
   async getUserPreferences(userId: string) {
-    const userSettings = await this.prisma.userSettings.findUnique({
-      where: { userId },
-    });
+    const [userSettings, notificationMutesSettings] = await Promise.all([
+      this.prisma.userSettings.findUnique({
+        where: { userId },
+      }),
+      this.prisma.userGameAccountSettings.findUnique({
+        where: {
+          userId_accountId: {
+            userId,
+            accountId: GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID,
+          },
+        },
+      }),
+    ]);
 
     const settings = userSettings ?? this.createDefaultUserPreferences(userId);
+    const mutes = this.getStoredNotificationMutes(
+      notificationMutesSettings?.settings,
+    );
 
-    return this.toUserPreferencesResponse(settings);
+    return this.toUserPreferencesResponse(settings, mutes);
   }
 
   async deleteAccount({ authUserId, discordId }: DeleteAccountParams) {
@@ -159,13 +194,66 @@ export class UsersService {
     userId: string,
     preferences: UpdateUserPreferencesDto,
   ) {
-    const userSettings = await this.prisma.userSettings.upsert({
-      where: { userId },
-      update: { ...preferences, updatedAt: new Date() },
-      create: { userId, ...preferences },
-    });
+    const nextUserSettingsPayload = {
+      guildsOrder: preferences.guildsOrder,
+      theme: preferences.theme,
+      colorMode: preferences.colorMode,
+    };
+    const shouldUpdateUserSettings =
+      nextUserSettingsPayload.guildsOrder !== undefined ||
+      nextUserSettingsPayload.theme !== undefined ||
+      nextUserSettingsPayload.colorMode !== undefined;
+    const currentMutes = await this.getUserNotificationMutes(userId);
+    const nextMutes = preferences.mutes
+      ? this.mergeNotificationMutes(currentMutes, preferences)
+      : currentMutes;
 
-    return this.toUserPreferencesResponse(userSettings);
+    const [userSettings] = await Promise.all([
+      shouldUpdateUserSettings
+        ? this.prisma.userSettings.upsert({
+            where: { userId },
+            update: {
+              ...nextUserSettingsPayload,
+              updatedAt: new Date(),
+            },
+            create: {
+              userId,
+              ...this.getDefaultUserPreferencesData(),
+              ...nextUserSettingsPayload,
+            },
+          })
+        : this.prisma.userSettings.findUnique({
+            where: { userId },
+          }),
+      preferences.mutes
+        ? this.prisma.userGameAccountSettings.upsert({
+            where: {
+              userId_accountId: {
+                userId,
+                accountId: GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID,
+              },
+            },
+            update: {
+              settings: {
+                mutes: nextMutes,
+              } as unknown as Prisma.InputJsonValue,
+              updatedAt: new Date(),
+            },
+            create: {
+              userId,
+              accountId: GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID,
+              settings: {
+                mutes: nextMutes,
+              } as unknown as Prisma.InputJsonValue,
+            },
+          })
+        : Promise.resolve(null),
+    ]);
+
+    return this.toUserPreferencesResponse(
+      userSettings ?? this.createDefaultUserPreferences(userId),
+      nextMutes,
+    );
   }
 
   async getUserGameAccountPreferences(
@@ -184,13 +272,21 @@ export class UsersService {
     const storedGameAccountSettings = this.getStoredGameAccountSettings(
       gameAccountSettings?.settings,
     );
+    const hasStoredNotifications =
+      storedGameAccountSettings?.notifications !== undefined;
+    const hasStoredDetector = storedGameAccountSettings?.detector !== undefined;
 
     return {
       accountId,
       notifications: this.normalizeNotificationsSettings(
         storedGameAccountSettings?.notifications,
       ),
-      hasStoredPreferences: !!storedGameAccountSettings?.notifications,
+      detector: this.normalizeDetectorSettings(
+        storedGameAccountSettings?.detector,
+      ),
+      hasStoredNotifications,
+      hasStoredDetector,
+      hasStoredPreferences: hasStoredNotifications || hasStoredDetector,
     };
   }
 
@@ -214,16 +310,31 @@ export class UsersService {
     const currentNotifications = this.normalizeNotificationsSettings(
       storedGameAccountSettings?.notifications,
     );
+    const currentDetector = this.normalizeDetectorSettings(
+      storedGameAccountSettings?.detector,
+    );
 
     const nextNotifications = preferences.notifications
       ? this.mergeNotificationsSettings(currentNotifications, {
           notifications: preferences.notifications,
         })
       : currentNotifications;
+    const nextDetector = preferences.detector
+      ? this.mergeDetectorSettings(currentDetector, {
+          detector: preferences.detector,
+        })
+      : currentDetector;
+    const hasStoredNotifications =
+      storedGameAccountSettings?.notifications !== undefined ||
+      preferences.notifications !== undefined;
+    const hasStoredDetector =
+      storedGameAccountSettings?.detector !== undefined ||
+      preferences.detector !== undefined;
 
     const nextSettings = {
       ...(storedGameAccountSettings ?? {}),
-      notifications: nextNotifications,
+      ...(hasStoredNotifications ? { notifications: nextNotifications } : {}),
+      ...(hasStoredDetector ? { detector: nextDetector } : {}),
     };
 
     await this.prisma.userGameAccountSettings.upsert({
@@ -247,21 +358,28 @@ export class UsersService {
     return {
       accountId,
       notifications: nextNotifications,
-      hasStoredPreferences: true,
+      detector: nextDetector,
+      hasStoredNotifications,
+      hasStoredDetector,
+      hasStoredPreferences: hasStoredNotifications || hasStoredDetector,
     };
   }
 
-  private toUserPreferencesResponse(settings: {
-    userId: string;
-    guildsOrder: string[];
-    theme: string;
-    colorMode: string;
-  }) {
+  private toUserPreferencesResponse(
+    settings: {
+      userId: string;
+      guildsOrder: string[];
+      theme: string;
+      colorMode: string;
+    },
+    mutes: NotificationMutes,
+  ): UserPreferences {
     return {
       userId: settings.userId,
       guildsOrder: settings.guildsOrder,
       theme: settings.theme,
       colorMode: settings.colorMode,
+      mutes: this.cloneNotificationMutes(mutes),
     };
   }
 
@@ -283,6 +401,34 @@ export class UsersService {
     };
   }
 
+  private async getUserNotificationMutes(userId: string) {
+    const notificationMutesSettings =
+      await this.prisma.userGameAccountSettings.findUnique({
+        where: {
+          userId_accountId: {
+            userId,
+            accountId: GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID,
+          },
+        },
+      });
+
+    return this.getStoredNotificationMutes(notificationMutesSettings?.settings);
+  }
+
+  private getStoredNotificationMutes(
+    settings: Prisma.JsonValue | undefined,
+  ): NotificationMutes {
+    if (!settings || typeof settings !== "object" || Array.isArray(settings)) {
+      return this.cloneNotificationMutes();
+    }
+
+    const settingsObject = settings as Prisma.JsonObject & {
+      mutes?: Partial<NotificationMutes>;
+    };
+
+    return this.normalizeNotificationMutes(settingsObject.mutes);
+  }
+
   private getStoredGameAccountSettings(settings: Prisma.JsonValue | undefined) {
     if (!settings || typeof settings !== "object" || Array.isArray(settings)) {
       return null;
@@ -290,6 +436,7 @@ export class UsersService {
 
     return settings as Prisma.JsonObject & {
       notifications?: Partial<NotificationsSettings>;
+      detector?: Partial<DetectorSettings>;
     };
   }
 
@@ -323,6 +470,38 @@ export class UsersService {
     return mergedSettings;
   }
 
+  private mergeDetectorSettings(
+    currentSettings: DetectorSettings,
+    preferences: UpdateUserGameAccountPreferencesPayload,
+  ): DetectorSettings {
+    const mergedSettings = this.cloneDetectorSettings(currentSettings);
+
+    if (!preferences.detector) {
+      return mergedSettings;
+    }
+
+    if (Array.isArray(preferences.detector.routingRules)) {
+      mergedSettings.routingRules = this.normalizeDetectorRoutingRules(
+        preferences.detector.routingRules,
+      );
+    }
+
+    for (const detectorType of DETECTOR_NPC_TYPES) {
+      const patch = preferences.detector[detectorType];
+
+      if (!patch) {
+        continue;
+      }
+
+      mergedSettings[detectorType] = this.normalizeDetectorTypeSettings(
+        patch,
+        mergedSettings[detectorType],
+      );
+    }
+
+    return mergedSettings;
+  }
+
   private normalizeNotificationsSettings(
     settings: Partial<NotificationsSettings> | undefined,
   ): NotificationsSettings {
@@ -341,6 +520,59 @@ export class UsersService {
     }
 
     return normalizedSettings;
+  }
+
+  private mergeNotificationMutes(
+    currentMutes: NotificationMutes,
+    preferences: Pick<UpdateUserPreferencesDto, "mutes">,
+  ): NotificationMutes {
+    const mergedMutes = this.cloneNotificationMutes(currentMutes);
+
+    if (!preferences.mutes) {
+      return mergedMutes;
+    }
+
+    return {
+      players: preferences.mutes.players
+        ? this.normalizeMutedPlayers(preferences.mutes.players)
+        : mergedMutes.players,
+      npcs: preferences.mutes.npcs
+        ? this.normalizeMutedNpcs(preferences.mutes.npcs)
+        : mergedMutes.npcs,
+    };
+  }
+
+  private normalizeDetectorSettings(
+    settings: DetectorSettingsPatch | Partial<DetectorSettings> | undefined,
+  ): DetectorSettings {
+    const normalizedSettings = this.cloneDetectorSettings(
+      defaultDetectorSettings,
+    );
+
+    normalizedSettings.routingRules = Array.isArray(settings?.routingRules)
+      ? this.normalizeDetectorRoutingRules(settings.routingRules)
+      : defaultDetectorSettings.routingRules.map((rule) => ({
+          ...rule,
+          guildIds: [...rule.guildIds],
+        }));
+
+    for (const detectorType of DETECTOR_NPC_TYPES) {
+      normalizedSettings[detectorType] = this.normalizeDetectorTypeSettings(
+        settings?.[detectorType],
+        defaultDetectorSettings[detectorType],
+      );
+    }
+
+    return normalizedSettings;
+  }
+
+  private normalizeNotificationMutes(
+    mutes: Partial<NotificationMutes> | undefined,
+  ): NotificationMutes {
+    return {
+      players: this.normalizeMutedPlayers(mutes?.players),
+      npcs: this.normalizeMutedNpcs(mutes?.npcs),
+    };
   }
 
   private normalizeNotificationSettings(
@@ -379,6 +611,115 @@ export class UsersService {
     };
   }
 
+  private normalizeMutedPlayers(
+    players: MutedPlayerPreference[] | undefined,
+  ): MutedPlayerPreference[] {
+    if (!Array.isArray(players)) {
+      return [];
+    }
+
+    const dedupedPlayers = new Map<string, MutedPlayerPreference>();
+
+    for (const player of players) {
+      if (!player || typeof player !== "object") {
+        continue;
+      }
+
+      if (typeof player.discordId !== "string" || player.discordId.length === 0) {
+        continue;
+      }
+
+      dedupedPlayers.set(player.discordId, {
+        discordId: player.discordId,
+        displayName:
+          typeof player.displayName === "string" ? player.displayName : "",
+      });
+    }
+
+    return [...dedupedPlayers.values()];
+  }
+
+  private normalizeMutedNpcs(
+    npcs: MutedNpcPreferenceInput[] | undefined,
+  ): MutedNpcPreference[] {
+    if (!Array.isArray(npcs)) {
+      return [];
+    }
+
+    const allowedNpcTypes = new Set<DetectorNpcType>(
+      DETECTOR_NPC_TYPES,
+    );
+    const dedupedNpcs = new Map<string, MutedNpcPreference>();
+
+    for (const npc of npcs) {
+      if (!npc || typeof npc !== "object") {
+        continue;
+      }
+
+      const isValidNpcType =
+        typeof npc.npcType === "string" &&
+        allowedNpcTypes.has(npc.npcType as DetectorNpcType);
+
+      if (
+        typeof npc.npcKey !== "string" ||
+        npc.npcKey.length === 0 ||
+        typeof npc.name !== "string" ||
+        npc.name.length === 0 ||
+        typeof npc.npcId !== "number" ||
+        Number.isNaN(npc.npcId) ||
+        !Number.isInteger(npc.npcId) ||
+        !isValidNpcType ||
+        typeof npc.lvl !== "number" ||
+        Number.isNaN(npc.lvl)
+      ) {
+        continue;
+      }
+
+      dedupedNpcs.set(npc.npcKey, {
+        npcKey: npc.npcKey,
+        npcId: npc.npcId,
+        name: npc.name,
+        npcType: npc.npcType as DetectorNpcType,
+        lvl: Math.max(1, Math.trunc(npc.lvl)),
+        prof: typeof npc.prof === "string" ? npc.prof : null,
+        icon: typeof npc.icon === "string" ? npc.icon : null,
+      });
+    }
+
+    return [...dedupedNpcs.values()];
+  }
+
+  private normalizeDetectorTypeSettings(
+    settings:
+      | DetectorTypeSettingsPatch
+      | Partial<DetectorTypeSettings>
+      | undefined,
+    fallbackSettings: DetectorTypeSettings,
+  ): DetectorTypeSettings {
+    return {
+      detect:
+        typeof settings?.detect === "boolean"
+          ? settings.detect
+          : fallbackSettings.detect,
+      autoSend:
+        typeof settings?.autoSend === "boolean"
+          ? settings.autoSend
+          : fallbackSettings.autoSend,
+      notifyWindow:
+        typeof settings?.notifyWindow === "boolean"
+          ? settings.notifyWindow
+          : fallbackSettings.notifyWindow,
+      highlight:
+        typeof settings?.highlight === "boolean"
+          ? settings.highlight
+          : fallbackSettings.highlight,
+      notifySound:
+        typeof settings?.notifySound === "boolean"
+          ? settings.notifySound
+          : fallbackSettings.notifySound,
+    };
+  }
+
   private cloneNotificationsSettings(
     settings: NotificationsSettings,
   ): NotificationsSettings {
@@ -392,5 +733,82 @@ export class UsersService {
 
       return acc;
     }, {} as NotificationsSettings);
+  }
+
+  private normalizeDetectorRoutingRules(
+    routingRules: DetectorRoutingRule[],
+  ): DetectorRoutingRule[] {
+    return routingRules.reduce<DetectorRoutingRule[]>((acc, rule, index) => {
+      if (!rule || typeof rule !== "object") {
+        return acc;
+      }
+
+      const rawMinLevel =
+        typeof rule.minLevel === "number" ? Math.trunc(rule.minLevel) : null;
+      const rawMaxLevel =
+        typeof rule.maxLevel === "number" ? Math.trunc(rule.maxLevel) : null;
+
+      if (
+        rawMinLevel === null ||
+        rawMaxLevel === null ||
+        Number.isNaN(rawMinLevel) ||
+        Number.isNaN(rawMaxLevel)
+      ) {
+        return acc;
+      }
+
+      const normalizedMinLevel = Math.min(
+        DETECTOR_LEVEL_MAX,
+        Math.max(DETECTOR_LEVEL_MIN, rawMinLevel),
+      );
+      const normalizedMaxLevel = Math.min(
+        DETECTOR_LEVEL_MAX,
+        Math.max(DETECTOR_LEVEL_MIN, rawMaxLevel),
+      );
+      const minLevel = Math.min(normalizedMinLevel, normalizedMaxLevel);
+      const maxLevel = Math.max(normalizedMinLevel, normalizedMaxLevel);
+
+      acc.push({
+        id:
+          typeof rule.id === "string" && rule.id.length > 0
+            ? rule.id
+            : `rule-${index + 1}`,
+        minLevel,
+        maxLevel,
+        guildIds: Array.isArray(rule.guildIds)
+          ? rule.guildIds.filter(
+              (guildId): guildId is string => typeof guildId === "string",
+            )
+          : [],
+      });
+
+      return acc;
+    }, []);
+  }
+
+  private cloneDetectorSettings(settings: DetectorSettings): DetectorSettings {
+    const clonedSettings = {
+      routingRules: settings.routingRules.map((rule) => ({
+        ...rule,
+        guildIds: [...rule.guildIds],
+      })),
+    } as DetectorSettings;
+
+    DETECTOR_NPC_TYPES.forEach((detectorType) => {
+      clonedSettings[detectorType] = {
+        ...settings[detectorType],
+      };
+    });
+
+    return clonedSettings;
+  }
+
+  private cloneNotificationMutes(
+    mutes: NotificationMutes = { players: [], npcs: [] },
+  ): NotificationMutes {
+    return {
+      players: (mutes.players ?? []).map((player) => ({ ...player })),
+      npcs: (mutes.npcs ?? []).map((npc) => ({ ...npc })),
+    };
   }
 }

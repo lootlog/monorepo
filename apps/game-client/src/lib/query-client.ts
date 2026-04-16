@@ -8,6 +8,7 @@ import { QUERY_CLIENT_CACHE_TIME_MS } from "@/constants/query-client";
 import { storageKey } from "@/lib/storage-key";
 import { IS_DEV } from "@/config/app";
 import { USER_GAME_ACCOUNT_PREFERENCES_QUERY_KEY_PREFIX } from "@/lib/game-account-notification-preferences";
+import { USER_PREFERENCES_QUERY_KEY_PREFIX } from "@/lib/user-preferences";
 
 const STORAGE_KEY = storageKey("ll:query-cache");
 
@@ -35,7 +36,8 @@ persistQueryClient({
     shouldDehydrateQuery: (query) => {
       return (
         defaultShouldDehydrateQuery(query) &&
-        query.queryKey[0] !== USER_GAME_ACCOUNT_PREFERENCES_QUERY_KEY_PREFIX
+        query.queryKey[0] !== USER_GAME_ACCOUNT_PREFERENCES_QUERY_KEY_PREFIX &&
+        query.queryKey[0] !== USER_PREFERENCES_QUERY_KEY_PREFIX
       );
     },
   },

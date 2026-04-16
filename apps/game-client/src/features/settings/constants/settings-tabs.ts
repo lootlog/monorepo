@@ -5,6 +5,7 @@ export const SETTINGS_TAB_VALUES = [
   "hidden-timers",
   "npc-detector",
   "notifications",
+  "notification-mutes",
   "sounds",
   "battle-panel",
   "hotkeys",

@@ -4,7 +4,7 @@ import { BattleEventProcessor } from "@/processors/battle-event-processor";
 import { LootEventProcessor } from "@/processors/loot-event-processor";
 import { ChatEventProcessor } from "@/processors/chat-event-processor";
 import { DialogProcessor } from "@/processors/dialog-processor";
-import { NpcsDetectionProcessor } from "@/processors/npcs-detection-processor";
+import { npcsDetectionProcessor } from "@/processors/npcs-detection-processor";
 import { NpcsDeleteProcessor } from "@/processors/npcs-delete-processor";
 import { MapChangeProcessor } from "@/processors/map-change-processor";
 import { AfkProcessor } from "@/processors/afk-processor";
@@ -48,7 +48,7 @@ export class EventDispatcher {
   private loot = new LootEventProcessor();
   private chat = new ChatEventProcessor();
   private dialog = new DialogProcessor();
-  private npcsDetection = new NpcsDetectionProcessor();
+  private npcsDetection = npcsDetectionProcessor;
   private npcsDelete = new NpcsDeleteProcessor();
   private mapChange = new MapChangeProcessor();
   private afk = new AfkProcessor();

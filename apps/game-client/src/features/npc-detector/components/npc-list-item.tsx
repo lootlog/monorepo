@@ -6,9 +6,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { AnimatePresence, motion } from "framer-motion";
+import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
+import { resolveDetectorGuildIds } from "@/lib/game-account-notification-preferences";
 import { cn } from "@/lib/utils";
+import type { DetectorNpcType } from "@lootlog/types";
 import {
-  type DetectorNpcType,
   type GameNpcWithLocation,
   useNpcDetectorStore,
 } from "@/store/npc-detector.store";
@@ -32,7 +34,7 @@ import {
 } from "@/utils/notifications-and-detector/background";
 import { NpcType } from "@/hooks/api/use-npcs";
 import { Game } from "@/lib/game";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { useSession } from "@/hooks/auth/use-session";
@@ -97,8 +99,9 @@ export const NpcListItem = ({
   npc,
   detectionAnimationCycle,
 }: NpcListItemProps) => {
-  const { npcs, removeNpc, settings, setNpcState, clearDetectionAnimation } =
+  const { npcs, removeNpc, setNpcState, clearDetectionAnimation } =
     useNpcDetectorStore();
+  const { settings } = useCurrentGameAccountDetectorSettings();
   const {
     setNotification,
     partyGathering,
@@ -108,7 +111,6 @@ export const NpcListItem = ({
   const setOpen = useWindowsStore((state) => state.setOpen);
   const { data: session } = useSession();
   const discordId = session?.user?.discordId;
-  const characterId = String(Game.hero.id);
   const world = Game.getWorldName();
   const { mutate: sendChatMessage, mutateAsync: sendChatMessageAsync } =
     useSendChatMessage();
@@ -120,7 +122,11 @@ export const NpcListItem = ({
   const [isGatheringPartyPending, setIsGatheringPartyPending] = useState(false);
 
   const npcType = getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type);
-  const settingsByNpcType = settings[characterId][npcType as DetectorNpcType];
+  const settingsByNpcType = settings[npcType as DetectorNpcType];
+  const resolvedGuildIds = useMemo(
+    () => resolveDetectorGuildIds(settings.routingRules, npc.lvl),
+    [npc.lvl, settings.routingRules],
+  );
   const key = npcType;
   const repeatDetectionFlashFrames = getRepeatDetectionFlashFrames(key);
 
@@ -159,8 +165,8 @@ export const NpcListItem = ({
   };
 
   const handleSendNotification = (npc: GameNpcWithLocation) => {
-    if (settingsByNpcType.guildIds?.length === 0) {
-      window.message("Brak ustawionych gildii do wysłania komunikatu.");
+    if (resolvedGuildIds.length === 0) {
+      window.message("Brak pasujacych serwerow dla poziomu tego potwora.");
       return;
     }
 
@@ -181,7 +187,7 @@ export const NpcListItem = ({
         type: npc.type,
       },
       world: world,
-      guildIds: settingsByNpcType.guildIds,
+      guildIds: resolvedGuildIds,
     };
 
     createNotification(payload, {
@@ -205,7 +211,7 @@ export const NpcListItem = ({
 
         sendChatMessage({
           message: "",
-          guildIds: settingsByNpcType.guildIds,
+          guildIds: resolvedGuildIds,
           type: MessageType.NPC,
           characterData: {
             nick: Game.hero.nick,
@@ -236,8 +242,8 @@ export const NpcListItem = ({
   };
 
   const handleGatherParty = async (npc: GameNpcWithLocation) => {
-    if (settingsByNpcType.guildIds?.length === 0) {
-      window.message("Brak ustawionych gildii do zbierania grupy.");
+    if (resolvedGuildIds.length === 0) {
+      window.message("Brak pasujacych serwerow dla poziomu tego potwora.");
       return;
     }
 
@@ -261,15 +267,14 @@ export const NpcListItem = ({
           type: npc.type,
         },
         world: world,
-        guildIds: settingsByNpcType.guildIds,
+        guildIds: resolvedGuildIds,
         isGatheringParty: true,
       };
 
       const notificationResponse = await createNotificationAsync(payload);
 
       const notificationId = notificationResponse.data.notificationId;
-      const guildIds =
-        notificationResponse.data.guildIds ?? settingsByNpcType.guildIds;
+      const guildIds = notificationResponse.data.guildIds ?? resolvedGuildIds;
       const hero = Game.hero;
 
       setNotification(notificationId, {
@@ -436,7 +441,7 @@ export const NpcListItem = ({
         </div>
       </div>
       <div className="ll:relative ll:flex ll:items-center ll:gap-1 ll:shrink-0">
-        {settingsByNpcType.guildIds?.length === 0 && (
+        {resolvedGuildIds.length === 0 && (
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -451,11 +456,11 @@ export const NpcListItem = ({
               </Button>
             </TooltipTrigger>
             <TooltipContent side="top">
-              Brak ustawionych serwerów. Otwórz ustawienia wykrywacza.
+              Brak pasujacych serwerow dla poziomu tego potwora.
             </TooltipContent>
           </Tooltip>
         )}
-        {settingsByNpcType.guildIds?.length > 0 && (
+        {resolvedGuildIds.length > 0 && (
           <>
             <Tooltip>
               <TooltipTrigger asChild>

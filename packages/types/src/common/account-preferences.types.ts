@@ -6,6 +6,14 @@ export type NotificationType =
   | "message"
   | "party-gathering";
 
+export type DetectorNpcType = "ELITE2" | "HERO" | "COLOSSUS" | "TITAN";
+export const DETECTOR_NPC_TYPES = [
+  "ELITE2",
+  "HERO",
+  "COLOSSUS",
+  "TITAN",
+] as const satisfies readonly DetectorNpcType[];
+
 export interface NotificationSettings {
   show: boolean;
   highlight: boolean;
@@ -20,9 +28,45 @@ export type NotificationsSettings = Record<
   NotificationSettings
 >;
 
+export interface DetectorRoutingRule {
+  id: string;
+  minLevel: number;
+  maxLevel: number;
+  guildIds: string[];
+}
+
+export interface DetectorTypeSettings {
+  detect: boolean;
+  autoSend: boolean;
+  notifyWindow: boolean;
+  highlight: boolean;
+  notifySound: boolean;
+}
+
+export interface DetectorSettings {
+  routingRules: DetectorRoutingRule[];
+  ELITE2: DetectorTypeSettings;
+  HERO: DetectorTypeSettings;
+  COLOSSUS: DetectorTypeSettings;
+  TITAN: DetectorTypeSettings;
+}
+
+export type DetectorTypeSettingsPatch = Partial<DetectorTypeSettings>;
+
+export interface DetectorSettingsPatch {
+  routingRules?: DetectorRoutingRule[];
+  ELITE2?: DetectorTypeSettingsPatch;
+  HERO?: DetectorTypeSettingsPatch;
+  COLOSSUS?: DetectorTypeSettingsPatch;
+  TITAN?: DetectorTypeSettingsPatch;
+}
+
 export interface UserGameAccountPreferences {
   accountId: string;
   notifications: NotificationsSettings;
+  detector: DetectorSettings;
+  hasStoredNotifications: boolean;
+  hasStoredDetector: boolean;
   hasStoredPreferences: boolean;
 }
 
@@ -30,6 +74,7 @@ export interface UpdateUserGameAccountPreferencesPayload {
   notifications?: Partial<
     Record<NotificationType, Partial<NotificationSettings>>
   >;
+  detector?: DetectorSettingsPatch;
 }
 
 export const defaultNotificationsSettings: NotificationsSettings = {
@@ -80,5 +125,37 @@ export const defaultNotificationsSettings: NotificationsSettings = {
     autoHideTimeout: 0,
     guildIds: [],
     sound: false,
+  },
+};
+
+export const defaultDetectorSettings: DetectorSettings = {
+  routingRules: [],
+  ELITE2: {
+    detect: false,
+    autoSend: true,
+    notifyWindow: false,
+    highlight: false,
+    notifySound: false,
+  },
+  HERO: {
+    detect: true,
+    autoSend: true,
+    notifyWindow: true,
+    highlight: true,
+    notifySound: false,
+  },
+  COLOSSUS: {
+    detect: true,
+    autoSend: true,
+    notifyWindow: true,
+    highlight: true,
+    notifySound: false,
+  },
+  TITAN: {
+    detect: true,
+    autoSend: true,
+    notifyWindow: true,
+    highlight: true,
+    notifySound: false,
   },
 };

@@ -40,7 +40,8 @@ export const useVisibleNotifications = ({
   autoCleanup = true,
   tickMs = 1000,
 }: UseVisibleNotificationsOptions = {}): UseVisibleNotificationsResult => {
-  const { notifications, removeNotification } = useNotificationsStore();
+  const { notifications, notificationAutoHideByListKey, removeNotification } =
+    useNotificationsStore();
   const { settings } = useCurrentGameAccountNotificationSettings();
   const world = Game.getWorldName();
   const removeRef = useRef(removeNotification);
@@ -49,10 +50,20 @@ export const useVisibleNotifications = ({
   const needsTick = useMemo(() => {
     return notifications.some((n) => {
       const key = getKey(n) as keyof typeof settings;
-      const s = settings[key];
-      return !!s?.autoHideTimeout && s.autoHideTimeout > 0;
-    });
-  }, [notifications, settings]);
+        const s = settings[key];
+        if (!s?.autoHideTimeout || s.autoHideTimeout <= 0) {
+          return false;
+        }
+
+        const autoHideState = notificationAutoHideByListKey[n.listKey];
+
+        if (!autoHideState) {
+          return true;
+        }
+
+        return autoHideState.deadlineMs !== null;
+      });
+  }, [notificationAutoHideByListKey, notifications, settings]);
 
   useEffect(() => {
     if (!autoCleanup || !needsTick) return;
@@ -65,7 +76,10 @@ export const useVisibleNotifications = ({
         const s = settings[key];
         if (!s?.autoHideTimeout) return;
         if (s.autoHideTimeout <= 0) return;
-        const expirationTimeMs = getExpirationTimeMs(n, s.autoHideTimeout);
+        const autoHideState = notificationAutoHideByListKey[n.listKey];
+        if (autoHideState?.pausedRemainingMs !== null) return;
+        const expirationTimeMs =
+          autoHideState?.deadlineMs ?? getExpirationTimeMs(n, s.autoHideTimeout);
         if (expirationTimeMs !== null && currentTimeMs >= expirationTimeMs) {
           removeRef.current(n.notificationId);
         }
@@ -73,7 +87,14 @@ export const useVisibleNotifications = ({
     }, tickMs);
 
     return () => clearInterval(id);
-  }, [autoCleanup, needsTick, notifications, settings, tickMs]);
+  }, [
+    autoCleanup,
+    needsTick,
+    notificationAutoHideByListKey,
+    notifications,
+    settings,
+    tickMs,
+  ]);
 
   const visible = useMemo(() => {
     return notifications.filter((n) => {

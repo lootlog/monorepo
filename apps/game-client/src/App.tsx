@@ -14,7 +14,6 @@ import { useTimerSettingsMutationsRegistry } from "@/hooks/use-timer-settings-mu
 import { CatchingWhitelistWarning } from "@/features/catching-whitelist-warning/catching-whitelist-warning";
 import { useGameEventHandlers } from "@/hooks/game-events/use-game-event-handlers";
 import { useInit } from "@/hooks/use-init";
-import { useInitialConfiguration } from "@/hooks/use-initial-configuration";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/query-client";
 import { storageKey } from "@/lib/storage-key";
@@ -41,7 +40,6 @@ win.__lootlogApiTeardown = bootstrapPublicApi(queryClient);
 function AppContent() {
   useGameEventHandlers();
   useInit();
-  useInitialConfiguration();
   useNotificationSettingsSync();
   useHotkeys();
   useTimerSettingsMutationsRegistry();

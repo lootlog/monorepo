@@ -1,10 +1,10 @@
 import type { Npcs } from "@lootlog/margonem/game-events";
-import type { NpcDetectorSettingByNpc } from "@/store/npc-detector.store";
+import type { DetectorTypeSettings } from "@lootlog/types";
 
 export type EventNpc = Npcs[0];
 
 export interface ProcessedNpcSettings {
-  settings: NpcDetectorSettingByNpc;
+  settings: DetectorTypeSettings;
   icon: string;
   autoSendNotification: boolean;
   guildIds: string[];

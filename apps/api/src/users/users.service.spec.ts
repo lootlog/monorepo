@@ -8,6 +8,10 @@ import { AuthService } from "src/auth/auth.service";
 import { PrismaService } from "src/db/prisma.service";
 import { MembersService } from "src/members/members.service";
 import { getUserLootlogConfigCachePattern } from "src/shared/constants/cache.constant";
+import {
+  defaultDetectorSettings,
+  defaultNotificationsSettings,
+} from "@lootlog/types";
 import { UsersService } from "./users.service";
 
 vi.mock("src/config/battlelog.config", () => ({
@@ -146,6 +150,158 @@ describe("UsersService", () => {
     expect(service).toBeDefined();
   });
 
+  it("returns default user preferences with empty notification mutes", async () => {
+    mockPrismaService.userSettings.findUnique.mockResolvedValue(null);
+    mockPrismaService.userGameAccountSettings.findUnique.mockResolvedValue(null);
+
+    const result = await service.getUserPreferences("auth-user-current");
+
+    expect(mockPrismaService.userSettings.findUnique).toHaveBeenCalledWith({
+      where: { userId: "auth-user-current" },
+    });
+    expect(result).toEqual({
+      userId: "auth-user-current",
+      guildsOrder: [],
+      theme: "default",
+      colorMode: "dark",
+      mutes: {
+        players: [],
+        npcs: [],
+      },
+    });
+  });
+
+  it("updates global notification mutes without requiring account-scoped preferences", async () => {
+    mockPrismaService.userGameAccountSettings.findUnique.mockResolvedValue(null);
+    mockPrismaService.userSettings.findUnique.mockResolvedValue(null);
+    mockPrismaService.userGameAccountSettings.upsert.mockResolvedValue({
+      id: 10,
+      userId: "auth-user-current",
+      accountId: "__global-notification-mutes__",
+      settings: {},
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const result = await service.updateUserPreferences("auth-user-current", {
+      mutes: {
+        players: [
+          {
+            discordId: "discord-1",
+            displayName: "Kamil",
+          },
+          {
+            discordId: "discord-1",
+            displayName: "Kamil 2",
+          },
+        ],
+        npcs: [
+          {
+            npcKey: "npc:123",
+            npcId: 123,
+            name: "Mushita",
+            npcType: "HERO",
+            lvl: 23,
+            prof: "m",
+            icon: "mushita.png",
+          },
+          {
+            npcKey: "npc:123",
+            npcId: 123,
+            name: "Mushita 2",
+            npcType: "HERO",
+            lvl: 24,
+            prof: null,
+            icon: null,
+          },
+        ],
+      },
+    });
+
+    expect(mockPrismaService.userGameAccountSettings.upsert).toHaveBeenCalledWith({
+      where: {
+        userId_accountId: {
+          userId: "auth-user-current",
+          accountId: "__global-notification-mutes__",
+        },
+      },
+      update: {
+        settings: {
+          mutes: {
+            players: [
+              {
+                discordId: "discord-1",
+                displayName: "Kamil 2",
+              },
+            ],
+            npcs: [
+              {
+                npcKey: "npc:123",
+                npcId: 123,
+                name: "Mushita 2",
+                npcType: "HERO",
+                lvl: 24,
+                prof: null,
+                icon: null,
+              },
+            ],
+          },
+        },
+        updatedAt: expect.any(Date),
+      },
+      create: {
+        userId: "auth-user-current",
+        accountId: "__global-notification-mutes__",
+        settings: {
+          mutes: {
+            players: [
+              {
+                discordId: "discord-1",
+                displayName: "Kamil 2",
+              },
+            ],
+            npcs: [
+              {
+                npcKey: "npc:123",
+                npcId: 123,
+                name: "Mushita 2",
+                npcType: "HERO",
+                lvl: 24,
+                prof: null,
+                icon: null,
+              },
+            ],
+          },
+        },
+      },
+    });
+    expect(result).toEqual({
+      userId: "auth-user-current",
+      guildsOrder: [],
+      theme: "default",
+      colorMode: "dark",
+      mutes: {
+        players: [
+          {
+            discordId: "discord-1",
+            displayName: "Kamil 2",
+          },
+        ],
+        npcs: [
+          {
+            npcKey: "npc:123",
+            npcId: 123,
+            name: "Mushita 2",
+            npcType: "HERO",
+            lvl: 24,
+            prof: null,
+            icon: null,
+          },
+        ],
+      },
+    });
+  });
+
   it("returns default game account preferences when no account-scoped settings exist", async () => {
     mockPrismaService.userGameAccountSettings.findUnique.mockResolvedValue(
       null,
@@ -168,57 +324,11 @@ describe("UsersService", () => {
     });
     expect(result).toEqual({
       accountId: "12345",
+      detector: defaultDetectorSettings,
+      hasStoredDetector: false,
+      hasStoredNotifications: false,
       hasStoredPreferences: false,
-      notifications: {
-        ELITE2: {
-          autoHideTimeout: 0,
-          guildIds: [],
-          highlight: false,
-          ignoreOtherWorlds: false,
-          show: false,
-          sound: false,
-        },
-        HERO: {
-          autoHideTimeout: 0,
-          guildIds: [],
-          highlight: true,
-          ignoreOtherWorlds: false,
-          show: true,
-          sound: false,
-        },
-        COLOSSUS: {
-          autoHideTimeout: 0,
-          guildIds: [],
-          highlight: true,
-          ignoreOtherWorlds: false,
-          show: true,
-          sound: false,
-        },
-        TITAN: {
-          autoHideTimeout: 0,
-          guildIds: [],
-          highlight: true,
-          ignoreOtherWorlds: false,
-          show: true,
-          sound: false,
-        },
-        message: {
-          autoHideTimeout: 0,
-          guildIds: [],
-          highlight: true,
-          ignoreOtherWorlds: false,
-          show: true,
-          sound: false,
-        },
-        "party-gathering": {
-          autoHideTimeout: 0,
-          guildIds: [],
-          highlight: true,
-          ignoreOtherWorlds: false,
-          show: true,
-          sound: false,
-        },
-      },
+      notifications: defaultNotificationsSettings,
     });
   });
 
@@ -331,6 +441,9 @@ describe("UsersService", () => {
     });
     expect(result).toEqual({
       accountId: "111",
+      detector: defaultDetectorSettings,
+      hasStoredDetector: false,
+      hasStoredNotifications: true,
       hasStoredPreferences: true,
       notifications: expect.objectContaining({
         HERO: expect.objectContaining({
@@ -338,6 +451,151 @@ describe("UsersService", () => {
           guildIds: ["guild-3"],
         }),
       }),
+    });
+  });
+
+  it("updates detector settings without overwriting stored notifications", async () => {
+    mockPrismaService.userGameAccountSettings.findUnique.mockResolvedValue({
+      id: 8,
+      userId: "auth-user-current",
+      accountId: "222",
+      settings: {
+        notifications: defaultNotificationsSettings,
+      },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    mockPrismaService.userGameAccountSettings.upsert.mockResolvedValue({
+      id: 8,
+      userId: "auth-user-current",
+      accountId: "222",
+      settings: {},
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const result = await service.updateUserGameAccountPreferences(
+      "auth-user-current",
+      "222",
+      {
+        detector: {
+          HERO: {
+            routingRules: [
+              {
+                id: "hero-range-1",
+                minLevel: 100,
+                maxLevel: 200,
+                guildIds: ["guild-2"],
+              },
+            ],
+          },
+        },
+      },
+    );
+
+    expect(
+      mockPrismaService.userGameAccountSettings.upsert,
+    ).toHaveBeenCalledWith({
+      where: {
+        userId_accountId: {
+          userId: "auth-user-current",
+          accountId: "222",
+        },
+      },
+      update: {
+        settings: {
+          notifications: defaultNotificationsSettings,
+          detector: expect.objectContaining({
+            HERO: expect.objectContaining({
+              routingRules: [
+                {
+                  id: "hero-range-1",
+                  minLevel: 100,
+                  maxLevel: 200,
+                  guildIds: ["guild-2"],
+                },
+              ],
+            }),
+          }),
+        },
+        updatedAt: expect.any(Date),
+      },
+      create: expect.objectContaining({
+        userId: "auth-user-current",
+        accountId: "222",
+      }),
+    });
+    expect(result).toEqual({
+      accountId: "222",
+      detector: expect.objectContaining({
+        HERO: expect.objectContaining({
+          routingRules: [
+            {
+              id: "hero-range-1",
+              minLevel: 100,
+              maxLevel: 200,
+              guildIds: ["guild-2"],
+            },
+          ],
+        }),
+      }),
+      hasStoredDetector: true,
+      hasStoredNotifications: true,
+      hasStoredPreferences: true,
+      notifications: defaultNotificationsSettings,
+    });
+  });
+
+  it("normalizes detector routing rules when reading stored account settings", async () => {
+    mockPrismaService.userGameAccountSettings.findUnique.mockResolvedValue({
+      id: 9,
+      userId: "auth-user-current",
+      accountId: "333",
+      settings: {
+        detector: {
+          HERO: {
+            detect: true,
+            notifyWindow: true,
+            highlight: true,
+            notifySound: false,
+            routingRules: [
+              {
+                id: "",
+                minLevel: 220,
+                maxLevel: 120,
+                guildIds: ["guild-1", 123, "guild-2"],
+              },
+            ],
+          },
+        },
+      },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const result = await service.getUserGameAccountPreferences(
+      "auth-user-current",
+      "333",
+    );
+
+    expect(result).toEqual({
+      accountId: "333",
+      detector: expect.objectContaining({
+        HERO: expect.objectContaining({
+          routingRules: [
+            {
+              id: "rule-1",
+              minLevel: 120,
+              maxLevel: 220,
+              guildIds: ["guild-1", "guild-2"],
+            },
+          ],
+        }),
+      }),
+      hasStoredDetector: true,
+      hasStoredNotifications: false,
+      hasStoredPreferences: true,
+      notifications: defaultNotificationsSettings,
     });
   });
 

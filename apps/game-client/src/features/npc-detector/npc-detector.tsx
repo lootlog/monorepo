@@ -1,11 +1,9 @@
 import { DraggableWindow } from "@/components/draggable-window";
 import { AnimatedWindow } from "@/components/animated-window";
 import { NpcsList } from "@/features/npc-detector/components/npcs-list";
-import { Game } from "@/lib/game";
-import {
-  type DetectorNpcType,
-  useNpcDetectorStore,
-} from "@/store/npc-detector.store";
+import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
+import type { DetectorNpcType } from "@lootlog/types";
+import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { getNpcTypeByWt } from "@lootlog/types";
 import { NpcType } from "@/hooks/api/use-npcs";
@@ -13,18 +11,22 @@ import { NpcType } from "@/hooks/api/use-npcs";
 export const NpcDetector = () => {
   const open = useWindowsStore((state) => state["npc-detector"].open);
   const setOpen = useWindowsStore((state) => state.setOpen);
-  const { npcs, clearNpcs, settings } = useNpcDetectorStore();
+  const { npcs, clearNpcs } = useNpcDetectorStore();
+  const { settings } = useCurrentGameAccountDetectorSettings();
 
   const handleClose = () => {
     setOpen("npc-detector", false);
     clearNpcs();
   };
 
-  const characterId = String(Game.hero.id);
-
   const filteredNpcs = npcs.filter((npc) => {
-    const npcType = getNpcTypeByWt(NpcType, npc.wt);
-    const settingsByNpcType = settings[characterId][npcType as DetectorNpcType];
+    const npcType = getNpcTypeByWt(
+      NpcType,
+      npc.wt,
+      npc.prof,
+      npc.type,
+    ) as DetectorNpcType;
+    const settingsByNpcType = settings[npcType];
     return settingsByNpcType?.notifyWindow && settingsByNpcType?.detect;
   });
 

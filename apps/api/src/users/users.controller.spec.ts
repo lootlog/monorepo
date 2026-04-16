@@ -38,6 +38,9 @@ describe("UserController", () => {
   it("delegates account preference reads to the service", async () => {
     mockUsersService.getUserGameAccountPreferences.mockResolvedValue({
       accountId: "12345",
+      detector: {},
+      hasStoredDetector: false,
+      hasStoredNotifications: false,
       notifications: {},
       hasStoredPreferences: false,
     });

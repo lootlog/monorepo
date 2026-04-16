@@ -1,7 +1,9 @@
 import { GatewayEvent } from "@/config/gateway";
 import { useSocket } from "@/contexts/socket-context";
+import { isNotificationMuted } from "@/features/notifications/utils/notification-mutes";
 import { useSession } from "@/hooks/auth/use-session";
 import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
+import { useCurrentUserNotificationMutes } from "@/hooks/use-current-user-notification-mutes";
 import { useSoundPlayback } from "@/hooks/use-sound-playback";
 import { Game } from "@/lib/game";
 import {
@@ -20,61 +22,104 @@ export const usePartyGatheringSocket = () => {
   const removeNotification = useNotificationsStore((s) => s.removeNotification);
   const setOpen = useWindowsStore((s) => s.setOpen);
   const { data: sessionData } = useSession();
-  const { settings } = useCurrentGameAccountNotificationSettings();
+  const { accountId, isReady, settings } =
+    useCurrentGameAccountNotificationSettings();
+  const { isReady: areMutesReady, mutes } = useCurrentUserNotificationMutes();
   const world = Game.hero ? Game.getWorldName() : undefined;
   const { playSound } = useSoundPlayback();
 
+  const isReadyRef = useRef(isReady);
+  const areMutesReadyRef = useRef(areMutesReady);
   const settingsRef = useRef(settings);
+  const mutesRef = useRef(mutes);
   const sessionDataRef = useRef(sessionData);
   const worldRef = useRef(world);
+  const pendingNotificationsRef = useRef<PartyGatheringPayload[]>([]);
+  const cancelledNotificationIdsRef = useRef<Set<string>>(new Set());
+  const processNotificationRef = useRef<(data: PartyGatheringPayload) => void>(
+    () => undefined,
+  );
 
+  isReadyRef.current = isReady;
+  areMutesReadyRef.current = areMutesReady;
   settingsRef.current = settings;
+  mutesRef.current = mutes;
   sessionDataRef.current = sessionData;
   worldRef.current = world;
+  processNotificationRef.current = (data: PartyGatheringPayload) => {
+    if (cancelledNotificationIdsRef.current.has(data.notificationId)) {
+      cancelledNotificationIdsRef.current.delete(data.notificationId);
+      return;
+    }
+
+    if (data.discordId === sessionDataRef.current?.user?.discordId) return;
+    if (isNotificationMuted(data, mutesRef.current)) return;
+
+    const currentSettings = settingsRef.current;
+    const typeSettings = currentSettings?.["party-gathering"];
+
+    if (typeSettings) {
+      if (!typeSettings.show) return;
+      if (typeSettings.ignoreOtherWorlds && data.world !== worldRef.current) {
+        return;
+      }
+      if (
+        Array.isArray(typeSettings.guildIds) &&
+        !typeSettings.guildIds.includes(data.guildId)
+      ) {
+        return;
+      }
+    }
+
+    const notification: PartyGatheringNotification = {
+      notificationId: data.notificationId,
+      guildId: data.guildId,
+      discordId: data.discordId,
+      world: data.world,
+      createdAt: data.createdAt,
+      character: data.character,
+      description: data.description,
+      minLvl: data.minLvl,
+      maxLvl: data.maxLvl,
+      servers: [data.guildId],
+      type: "party-gathering",
+    };
+
+    pushNotification(notification);
+    setOpen("notifications", true);
+
+    if (typeSettings?.sound) {
+      playSound("notifications", "party-gathering");
+    }
+  };
+
+  useEffect(() => {
+    pendingNotificationsRef.current = [];
+    cancelledNotificationIdsRef.current.clear();
+  }, [accountId]);
 
   useEffect(() => {
     if (!socket || !connected) return;
 
     const handler = (data: PartyGatheringPayload) => {
-      if (data.discordId === sessionDataRef.current?.user?.discordId) return;
-
-      const currentSettings = settingsRef.current;
-      const typeSettings = currentSettings?.["party-gathering"];
-
-      if (typeSettings) {
-        if (!typeSettings.show) return;
-        if (typeSettings.ignoreOtherWorlds && data.world !== worldRef.current)
-          return;
-        if (
-          Array.isArray(typeSettings.guildIds) &&
-          !typeSettings.guildIds.includes(data.guildId)
-        )
-          return;
+      if (!isReadyRef.current || !areMutesReadyRef.current) {
+        pendingNotificationsRef.current.push(data);
+        return;
       }
 
-      const notification: PartyGatheringNotification = {
-        notificationId: data.notificationId,
-        guildId: data.guildId,
-        discordId: data.discordId,
-        world: data.world,
-        createdAt: data.createdAt,
-        character: data.character,
-        description: data.description,
-        minLvl: data.minLvl,
-        maxLvl: data.maxLvl,
-        servers: [data.guildId],
-        type: "party-gathering",
-      };
-
-      pushNotification(notification);
-      setOpen("notifications", true);
-
-      if (typeSettings?.sound) {
-        playSound("notifications", "party-gathering");
-      }
+      processNotificationRef.current(data);
     };
 
     const cancelHandler = (data: { notificationId: string }) => {
+      if (!isReadyRef.current || !areMutesReadyRef.current) {
+        cancelledNotificationIdsRef.current.add(data.notificationId);
+        pendingNotificationsRef.current = pendingNotificationsRef.current.filter(
+          (pendingNotification) =>
+            pendingNotification.notificationId !== data.notificationId,
+        );
+        return;
+      }
+
       removeNotification(data.notificationId);
     };
 
@@ -93,4 +138,22 @@ export const usePartyGatheringSocket = () => {
     setOpen,
     playSound,
   ]);
+
+  useEffect(() => {
+    if (!isReady || !areMutesReady || pendingNotificationsRef.current.length === 0) {
+      return;
+    }
+
+    const pendingNotifications = pendingNotificationsRef.current.filter(
+      (notification) =>
+        !cancelledNotificationIdsRef.current.has(notification.notificationId),
+    );
+
+    pendingNotificationsRef.current = [];
+    cancelledNotificationIdsRef.current.clear();
+
+    pendingNotifications.forEach((notification) => {
+      processNotificationRef.current(notification);
+    });
+  }, [areMutesReady, isReady]);
 };
