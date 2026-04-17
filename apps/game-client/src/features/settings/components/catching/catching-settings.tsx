@@ -23,18 +23,10 @@ import { toast } from "sonner";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-const CATCHING_SETTINGS_LOG_PREFIX = "[CatchingSettings]";
-
 export const CatchingSettings = () => {
   const queryClient = useQueryClient();
   const accountId = String(Game.hero.account);
-  const {
-    data: characterList,
-    error: characterListError,
-    isError: isCharacterListError,
-    isFetching: isCharacterListFetching,
-    isPending: isCharacterListPending,
-  } = useCharacterList();
+  const { data: characterList } = useCharacterList();
   const { data: lootlogCharactersConfig } = useLootlogCharactersConfig();
   const initialCharacterId = String(Game.hero.id);
   const [selectedCharacterId, setSelectedCharacterId] =
@@ -46,87 +38,15 @@ export const CatchingSettings = () => {
   const { t } = useTranslation();
 
   useEffect(() => {
-    console.log(`${CATCHING_SETTINGS_LOG_PREFIX} Input state updated`, {
-      accountId,
-      initialCharacterId,
-      selectedCharacterId,
-      characterListState:
-        characterList === undefined
-          ? "unavailable"
-          : characterList.length === 0
-            ? "empty"
-            : "populated",
-      characterListCount: characterList?.length ?? null,
-      characterListSummary:
-        characterList?.map((character) => ({
-          id: String(character.id),
-          world: character.world,
-        })) ?? [],
-      isCharacterListPending,
-      isCharacterListFetching,
-      isCharacterListError,
-      characterListError:
-        characterListError instanceof Error ? characterListError.message : null,
-      lootlogConfigCharacterIds: lootlogCharactersConfig
-        ? Object.keys(lootlogCharactersConfig)
-        : [],
-    });
-  }, [
-    accountId,
-    characterList,
-    characterListError,
-    initialCharacterId,
-    isCharacterListError,
-    isCharacterListFetching,
-    isCharacterListPending,
-    lootlogCharactersConfig,
-    selectedCharacterId,
-  ]);
-
-  useEffect(() => {
-    if (!characterList) {
-      console.log(
-        `${CATCHING_SETTINGS_LOG_PREFIX} Skipping selected character sync because character list is unavailable`,
-        {
-          accountId,
-          selectedCharacterId,
-        },
-      );
-      return;
-    }
-
-    if (characterList.length === 0) {
-      console.log(
-        `${CATCHING_SETTINGS_LOG_PREFIX} Skipping selected character sync because character list is empty`,
-        {
-          accountId,
-          selectedCharacterId,
-        },
-      );
-      return;
-    }
+    if (!characterList || characterList.length === 0) return;
 
     const characterExists = characterList.some(
       (character) => String(character.id) === selectedCharacterId,
     );
     if (characterExists) return;
 
-    const fallbackCharacterId = String(characterList[0].id);
-
-    console.log(
-      `${CATCHING_SETTINGS_LOG_PREFIX} Selected character missing from available characters, applying fallback`,
-      {
-        accountId,
-        selectedCharacterId,
-        fallbackCharacterId,
-        availableCharacterIds: characterList.map((character) =>
-          String(character.id),
-        ),
-      },
-    );
-
-    setSelectedCharacterId(fallbackCharacterId);
-  }, [accountId, characterList, selectedCharacterId]);
+    setSelectedCharacterId(String(characterList[0].id));
+  }, [characterList, selectedCharacterId]);
 
   const applyToAllMutation = useMutation({
     mutationKey: ["apply-catching-config-to-all-characters", accountId],
@@ -276,28 +196,7 @@ export const CatchingSettings = () => {
   });
 
   const handleApplyToAllCharacters = () => {
-    if (!characterList) {
-      console.log(
-        `${CATCHING_SETTINGS_LOG_PREFIX} Skipping apply-to-all because character list is unavailable`,
-        {
-          accountId,
-          selectedCharacterId,
-        },
-      );
-      return;
-    }
-
-    if (characterList.length <= 1) {
-      console.log(
-        `${CATCHING_SETTINGS_LOG_PREFIX} Skipping apply-to-all because there are not enough characters`,
-        {
-          accountId,
-          selectedCharacterId,
-          characterCount: characterList.length,
-        },
-      );
-      return;
-    }
+    if (!characterList || characterList.length <= 1) return;
 
     const targetCharacterIds = characterList.map((character) =>
       String(character.id),
@@ -307,17 +206,6 @@ export const CatchingSettings = () => {
       selectionByCharacterId[selectedCharacterId] ??
       lootlogCharactersConfig?.[selectedCharacterId]?.catchingGuildIds ??
       [];
-
-    console.log(
-      `${CATCHING_SETTINGS_LOG_PREFIX} Applying config to all characters`,
-      {
-        accountId,
-        selectedCharacterId,
-        activeSelectionCount: activeCharacterSelection.length,
-        targetCharacterCount: targetCharacterIds.length,
-        targetCharacterIds,
-      },
-    );
 
     applyToAllMutation.mutate({
       catchingGuildIds: activeCharacterSelection,

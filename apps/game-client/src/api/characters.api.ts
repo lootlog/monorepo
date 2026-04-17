@@ -6,7 +6,6 @@ const MARGONEM_CHARACTER_LIST_URL =
   "https://public-api.margonem.pl/account/charlist";
 const MARGONEM_CHARACTER_LIST_EN_URL =
   "https://public-api.margonem.com/account/charlist";
-const CHARACTER_LIST_LOG_PREFIX = "[CharacterList]";
 
 export type MargonemCharacter = {
   clan?: number;
@@ -211,52 +210,6 @@ export const normalizeCharacterList = (
   );
 };
 
-const logCharacterListDebug = (
-  message: string,
-  details?: Record<string, unknown>,
-) => {
-  if (details) {
-    console.log(`${CHARACTER_LIST_LOG_PREFIX} ${message}`, details);
-    return;
-  }
-
-  console.log(`${CHARACTER_LIST_LOG_PREFIX} ${message}`);
-};
-
-const summarizeCharacterEntry = (character: unknown) => {
-  if (typeof character !== "object" || character === null) {
-    return {
-      entryType: typeof character,
-      isNull: character === null,
-    };
-  }
-
-  const characterData = character as Record<string, unknown>;
-
-  return {
-    keys: Object.keys(characterData),
-    idType: typeof characterData.id,
-    iconType: typeof characterData.icon,
-    lvlType: typeof characterData.lvl,
-    nickType: typeof characterData.nick,
-    profType: typeof characterData.prof,
-    worldType: typeof characterData.world,
-    idPreview: characterData.id,
-    lvlPreview: characterData.lvl,
-    nickPreview: characterData.nick,
-    profPreview: characterData.prof,
-    worldPreview: characterData.world,
-  };
-};
-
-const getCharacterWorldCounts = (characters: MargonemCharacter[]) => {
-  return characters.reduce<Record<string, number>>((worldCounts, character) => {
-    // @ts-expect-error `normalizeCharacterList` guarantees `world` is a string here.
-    worldCounts[character.world] = (worldCounts[character.world] ?? 0) + 1;
-    return worldCounts;
-  }, {});
-};
-
 const filterCharactersByWorld = (
   characters: MargonemCharacter[],
   world: string | undefined,
@@ -283,28 +236,12 @@ export async function fetchCharacterList({
   const margonemEntry = window.localStorage?.getItem("Margonem");
   const accountIdKey = String(accountId);
 
-  logCharacterListDebug("Fetching character list", {
-    accountId,
-    world,
-    languageVersion,
-    hasMargonemEntry: Boolean(margonemEntry),
-  });
-
   let parsed: unknown = null;
 
   if (margonemEntry) {
     try {
       parsed = JSON.parse(margonemEntry);
     } catch (error) {
-      console.warn(
-        `${CHARACTER_LIST_LOG_PREFIX} Failed to parse Margonem cache`,
-        {
-          accountId,
-          world,
-          margonemEntryLength: margonemEntry.length,
-          error,
-        },
-      );
       throw error;
     }
   }
@@ -321,57 +258,8 @@ export async function fetchCharacterList({
   const cached = accountId ? normalizeCharacterList(rawCachedCharacters) : [];
   const filteredCached = filterCharactersByWorld(cached, world);
 
-  logCharacterListDebug("Resolved cached character list", {
-    accountId,
-    world,
-    hasCharlist: Boolean(charlist),
-    rawCachedType:
-      rawCachedCharacters === null ? "missing" : typeof rawCachedCharacters,
-    rawCachedCount: Array.isArray(rawCachedCharacters)
-      ? rawCachedCharacters.length
-      : null,
-    normalizedCachedCount: cached.length,
-    filteredCachedCount: filteredCached.length,
-    cachedWorldCounts: getCharacterWorldCounts(cached),
-  });
-
-  if (
-    Array.isArray(rawCachedCharacters) &&
-    rawCachedCharacters.length > 0 &&
-    cached.length === 0
-  ) {
-    console.warn(
-      `${CHARACTER_LIST_LOG_PREFIX} Cached character entries were rejected by normalization`,
-      {
-        accountId,
-        world,
-        firstCachedEntrySummary: summarizeCharacterEntry(
-          rawCachedCharacters[0],
-        ),
-      },
-    );
-  }
-
   if (filteredCached.length > 0) {
-    logCharacterListDebug("Returning cached character list", {
-      accountId,
-      world,
-      filteredCachedCount: filteredCached.length,
-    });
-
     return filteredCached;
-  }
-
-  if (cached.length > 0) {
-    logCharacterListDebug(
-      "Cached character list does not contain entries for current world, falling back to public API",
-      {
-        accountId,
-        world,
-        normalizedCachedCount: cached.length,
-        filteredCachedCount: filteredCached.length,
-      },
-    );
   }
 
   const hs3 = window.getCookie?.("hs3");
@@ -380,19 +268,7 @@ export async function fetchCharacterList({
       ? MARGONEM_CHARACTER_LIST_URL
       : MARGONEM_CHARACTER_LIST_EN_URL;
 
-  logCharacterListDebug("Cache miss, falling back to public API", {
-    accountId,
-    world,
-    url,
-    hasHs3: Boolean(hs3),
-  });
-
   if (!hs3) {
-    console.warn(`${CHARACTER_LIST_LOG_PREFIX} Missing authentication cookie`, {
-      accountId,
-      world,
-      url,
-    });
     throw new Error("Missing required authentication cookie");
   }
 
@@ -406,39 +282,7 @@ export async function fetchCharacterList({
     world,
   );
 
-  logCharacterListDebug("Received public API character list", {
-    accountId,
-    world,
-    rawApiCount: Array.isArray(response.data) ? response.data.length : null,
-    normalizedApiCount: normalizedCharacters.length,
-    filteredApiCount: filteredCharacters.length,
-    apiWorldCounts: getCharacterWorldCounts(normalizedCharacters),
-  });
-
-  if (
-    Array.isArray(response.data) &&
-    response.data.length > 0 &&
-    normalizedCharacters.length === 0
-  ) {
-    console.warn(
-      `${CHARACTER_LIST_LOG_PREFIX} API character entries were rejected by normalization`,
-      {
-        accountId,
-        world,
-        firstApiEntrySummary: summarizeCharacterEntry(response.data[0]),
-      },
-    );
-  }
-
   if (!response.data || response.data.length === 0) {
-    console.warn(
-      `${CHARACTER_LIST_LOG_PREFIX} Empty character list received from API`,
-      {
-        accountId,
-        world,
-        url,
-      },
-    );
     throw new Error("Empty character list received from API");
   }
 
