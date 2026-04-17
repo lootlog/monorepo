@@ -9,6 +9,7 @@ import type { FC, PropsWithChildren } from "react";
 import { Button } from "@/components/ui/button";
 
 type GuildButtonProps = PropsWithChildren<{
+  className?: string;
   isSelected: boolean;
   disabled: boolean;
   onClick: () => void;
@@ -16,6 +17,7 @@ type GuildButtonProps = PropsWithChildren<{
 }>;
 
 export const GuildButton: FC<GuildButtonProps> = ({
+  className,
   isSelected,
   disabled,
   onClick,
@@ -28,17 +30,21 @@ export const GuildButton: FC<GuildButtonProps> = ({
         type="button"
         onClick={onClick}
         disabled={disabled}
+        aria-pressed={isSelected}
         className={cn(
-          "ll:flex ll:items-center ll:justify-center ll:transition-all ll:border-2 ll:rounded-sm",
+          "ll:relative ll:flex ll:items-center ll:justify-center ll:overflow-visible ll:rounded-sm ll:border-2",
+          "ll:transition-[transform,box-shadow,border-color,background-color,opacity]",
           "hover:ll:scale-105",
           "disabled:ll:opacity-50 disabled:ll:cursor-not-allowed",
           "ll:size-7 ll:p-0 ll:shrink-0",
-          "ll:border-gray-600 ll:bg-gray-800/50 hover:ll:border-muted/20",
+          "ll:border-gray-700/90 ll:bg-gray-900/60 hover:ll:border-gray-500 hover:ll:bg-gray-800/70",
+          "after:ll:pointer-events-none after:ll:absolute after:ll:inset-0 after:ll:rounded-[2px] after:ll:opacity-0 after:ll:transition-opacity",
           !disabled && "ll-custom-cursor-pointer",
           {
-            "ll:border-primary ll:bg-blue-600/20 ll:shadow-primary/50":
+            "ll:border-purple-600 ll:bg-purple-500/12 ll:ring-1 ll:ring-purple-500/75 ll:shadow-[0_0_0_1px_rgba(196,165,250,0.45),0_0_14px_rgba(159,130,246,0.28)] after:ll:bg-purple-300/18 after:ll:opacity-100":
               isSelected,
           },
+          className,
         )}
       >
         <Avatar className="ll:size-full ll:flex ll:items-center ll:justify-center">

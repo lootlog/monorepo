@@ -1,176 +1,195 @@
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useCharacterList } from "@/hooks/api/use-character-list";
-import { useGuilds } from "@/hooks/api/use-guilds";
-import { NpcType } from "@/hooks/api/use-npcs";
-import {
-  type NpcDetectorSettings,
-  recommendedSettings,
-  useNpcDetectorStore,
-} from "@/store/npc-detector.store";
+import { SettingsControlRow } from "@/components/settings/settings-control-row";
+import { Switch } from "@/components/ui/switch";
+import { useUpdateUserGameAccountPreferences } from "@/hooks/api/use-user-account-preferences";
+import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
+import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 import { getTextColor } from "@/utils/notifications-and-detector/background";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { type FC, useCallback, useEffect, useMemo } from "react";
-import { useForm } from "react-hook-form";
+import type { DetectorNpcType, DetectorTypeSettings } from "@lootlog/types";
+import type { FC } from "react";
+import { Controller, useForm } from "react-hook-form";
 import { useDeepCompareEffect } from "react-use";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 
 type DetectorSettingsTabFormProps = {
-  characterId?: number;
+  categoryKey: DetectorNpcType;
 };
 
-const mainFields = [
-  { label: "Elita 2", key: NpcType.ELITE2 },
-  { label: "Heros", key: NpcType.HERO },
-  { label: "Kolos", key: NpcType.COLOSSUS },
-  { label: "Tytan", key: NpcType.TITAN },
-] as const;
-
 const FormSchema = z.object({
-  settingsByNpcType: z.record(
-    z.enum([NpcType.ELITE2, NpcType.HERO, NpcType.COLOSSUS, NpcType.TITAN]),
-    z.object({
-      detect: z.boolean(),
-      notifyWindow: z.boolean(),
-      autoNotifyClan: z.boolean(),
-      notifySound: z.boolean(),
-      highlight: z.boolean(),
-      guildIds: z.array(z.string()),
-    }),
-  ),
+  detect: z.boolean(),
+  autoSend: z.boolean(),
+  notifyWindow: z.boolean(),
+  highlight: z.boolean(),
+  notifySound: z.boolean(),
 });
 
 type FormData = z.infer<typeof FormSchema>;
 
+const cloneDetectorTypeSettings = (
+  settings: DetectorTypeSettings,
+): DetectorTypeSettings => {
+  return {
+    detect: settings.detect,
+    autoSend: settings.autoSend,
+    notifyWindow: settings.notifyWindow,
+    highlight: settings.highlight,
+    notifySound: settings.notifySound,
+  };
+};
+
+const getDetectorTypeSettingsFromFormData = (
+  settings: FormData,
+): DetectorTypeSettings => {
+  return {
+    detect: settings.detect,
+    autoSend: settings.autoSend,
+    notifyWindow: settings.notifyWindow,
+    highlight: settings.highlight,
+    notifySound: settings.notifySound,
+  };
+};
+
+const areDetectorTypeSettingsEqual = (
+  left: DetectorTypeSettings,
+  right: DetectorTypeSettings,
+) => {
+  return (
+    left.detect === right.detect &&
+    left.autoSend === right.autoSend &&
+    left.notifyWindow === right.notifyWindow &&
+    left.highlight === right.highlight &&
+    left.notifySound === right.notifySound
+  );
+};
+
 export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
-  characterId,
+  categoryKey,
 }) => {
-  const { settings, setSettings } = useNpcDetectorStore();
-  const { data: guilds } = useGuilds();
-  const { data: characters } = useCharacterList();
+  const { t } = useTranslation();
+  const {
+    accountId,
+    isFetched,
+    settings: accountSettings,
+  } = useCurrentGameAccountDetectorSettings();
+  const updateUserGameAccountPreferences =
+    useUpdateUserGameAccountPreferences(accountId);
 
-  const currentSettings: NpcDetectorSettings =
-    (characterId && settings?.[characterId]) || recommendedSettings;
-
-  const defaultValues: FormData = useMemo(
-    () => ({
-      settingsByNpcType: currentSettings,
-    }),
-    [currentSettings],
+  const currentCategorySettings = accountSettings[categoryKey];
+  const textColor = getTextColor(categoryKey, true);
+  const toggleFields: Array<{
+    key: keyof DetectorTypeSettings;
+    label: string;
+  }> = [
+    { key: "detect", label: t("settings.detector.toggles.detect") },
+    { key: "autoSend", label: t("settings.detector.toggles.autoSend") },
+    {
+      key: "notifyWindow",
+      label: t("settings.detector.toggles.notifyWindow"),
+    },
+    { key: "highlight", label: t("settings.detector.toggles.highlight") },
+    {
+      key: "notifySound",
+      label: t("settings.detector.toggles.notifySound"),
+    },
+  ];
+  const debouncedUpdate = useDebouncedCallback(
+    (
+      payload: Parameters<typeof updateUserGameAccountPreferences.mutate>[0],
+    ) => {
+      updateUserGameAccountPreferences.mutate(payload);
+    },
+    300,
   );
 
-  const { register, watch, reset } = useForm<FormData>({
+  const { control, watch, reset, formState, getValues } = useForm<FormData>({
     resolver: zodResolver(FormSchema),
-    defaultValues,
+    defaultValues: cloneDetectorTypeSettings(currentCategorySettings),
   });
 
-  useEffect(() => {
-    reset(defaultValues);
-  }, [characterId, reset, defaultValues]);
+  useDeepCompareEffect(() => {
+    const nextFormValues = cloneDetectorTypeSettings(currentCategorySettings);
+    const currentFormSettings =
+      getDetectorTypeSettingsFromFormData(getValues());
 
-  const onSubmit = useCallback(
-    (data: FormData) => {
-      if (!characterId) return;
-      setSettings(
-        characterId?.toString(),
-        data.settingsByNpcType as NpcDetectorSettings,
-      );
-    },
-    [characterId, setSettings],
-  );
+    if (
+      areDetectorTypeSettingsEqual(currentFormSettings, currentCategorySettings)
+    ) {
+      reset(nextFormValues, {
+        keepValues: true,
+      });
+
+      return;
+    }
+
+    reset(nextFormValues);
+  }, [currentCategorySettings, getValues, reset]);
 
   const watchedData = watch();
+
   useDeepCompareEffect(() => {
-    onSubmit(watchedData);
-  }, [watchedData, onSubmit]);
+    if (!accountId || !isFetched || !formState.isDirty) {
+      return;
+    }
 
-  function applyToAll(e: React.MouseEvent<HTMLButtonElement>) {
-    e.preventDefault();
-    const characterIds = characters?.map((c) => c.id.toString()) || [];
-    const data = watchedData.settingsByNpcType;
+    const nextCategorySettings =
+      getDetectorTypeSettingsFromFormData(watchedData);
 
-    characterIds.forEach((characterId) => {
-      setSettings(characterId, data as NpcDetectorSettings);
+    if (
+      areDetectorTypeSettingsEqual(
+        nextCategorySettings,
+        currentCategorySettings,
+      )
+    ) {
+      return;
+    }
+
+    debouncedUpdate({
+      detector: {
+        [categoryKey]: nextCategorySettings,
+      },
     });
-  }
+  }, [
+    accountId,
+    categoryKey,
+    currentCategorySettings,
+    debouncedUpdate,
+    formState.isDirty,
+    isFetched,
+    watchedData,
+  ]);
+
+  const watchDetect = watchedData.detect;
 
   return (
-    <form className="ll:h-full ll:py-4">
-      <div className="ll:flex-1">
-        <div className="ll:pb-2">
-          <Button onClick={applyToAll}>Aplikuj do wszystkich postaci</Button>
-        </div>
-        <span className="ll:grid ll:grid-cols-2 ll:gap-y-6 ll:mb-2">
-          {mainFields.map((field) => {
-            const watchDetect = watch(`settingsByNpcType.${field.key}.detect`);
-            const textColor = getTextColor(field.key, true);
+    <form className="ll:flex ll:flex-col ll:gap-3 ll:py-3">
+      <div className="ll:grid ll:gap-2">
+        {toggleFields.map((field) => {
+          const isDisabled = field.key !== "detect" && !watchDetect;
+          const isHighlightField = field.key === "highlight";
 
-            return (
-              <span key={field.key}>
-                <div className="ll:font-semibold ll:mb-2">{field.label}</div>
-                <Checkbox
-                  id={`${field.key}-detect`}
-                  {...register(`settingsByNpcType.${field.key}.detect`)}
-                >
-                  Wykrywaj
-                </Checkbox>
-                <Checkbox
-                  id={`${field.key}-notifyWindow`}
-                  disabled={!watchDetect}
-                  {...register(`settingsByNpcType.${field.key}.notifyWindow`)}
-                >
-                  Okno powiadomienia
-                </Checkbox>
-                <Checkbox
-                  id={`${field.key}-autoNotifyClan`}
-                  disabled={!watchDetect}
-                  {...register(`settingsByNpcType.${field.key}.autoNotifyClan`)}
-                >
-                  Auto komunikat
-                </Checkbox>
-                <Checkbox
-                  id={`${field.key}-notifySound`}
-                  disabled={!watchDetect}
-                  {...register(`settingsByNpcType.${field.key}.notifySound`)}
-                >
-                  Powiadom dźwiękiem
-                </Checkbox>
-                <Checkbox
-                  id={`${field.key}-highlight`}
-                  disabled={!watchDetect}
-                  labelStyle={{ color: textColor }}
-                  {...register(`settingsByNpcType.${field.key}.highlight`)}
-                >
-                  Podświetlenie
-                </Checkbox>
-                <div className="ll:mt-2">
-                  <span className="ll:font-semibold">
-                    Na jakie serwery wysyłać:
-                  </span>
-                  <div className="ll:mt-2">
-                    {guilds?.map((guild) => {
-                      const id = `${field.key}-${guild.id}`;
-                      return (
-                        <Checkbox
-                          key={id}
-                          id={id}
-                          type="checkbox"
-                          disabled={!watchDetect}
-                          value={guild.id}
-                          {...register(
-                            `settingsByNpcType.${field.key}.guildIds`,
-                          )}
-                        >
-                          {guild.name}
-                        </Checkbox>
-                      );
-                    })}
-                  </div>
-                </div>
-              </span>
-            );
-          })}
-        </span>
+          return (
+            <SettingsControlRow
+              key={field.key}
+              disabled={isDisabled}
+              label={field.label}
+              labelStyle={isHighlightField ? { color: textColor } : undefined}
+            >
+              <Controller
+                name={field.key}
+                control={control}
+                render={({ field: controllerField }) => (
+                  <Switch
+                    id={`${categoryKey}-${field.key}`}
+                    checked={controllerField.value}
+                    disabled={isDisabled}
+                    onCheckedChange={controllerField.onChange}
+                  />
+                )}
+              />
+            </SettingsControlRow>
+          );
+        })}
       </div>
     </form>
   );

@@ -1,4 +1,4 @@
-import type { LootDto } from "@/hooks/api/use-create-loot";
+import type { LootDto } from "@/api";
 import type { ItemEvent, LootEvent } from "@lootlog/margonem/game-events";
 import { getItemRarity } from "@/utils/game/get-item-rarity";
 

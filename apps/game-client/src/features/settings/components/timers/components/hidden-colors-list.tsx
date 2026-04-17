@@ -3,6 +3,7 @@ import { Tile } from "@/components/ui/tile";
 import type { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
 import { RotateCcw } from "lucide-react";
 import type { FC } from "react";
+import { useTranslation } from "react-i18next";
 import { DEFAULT_COLOR_NAMES } from "./color-utils";
 
 interface HiddenColorsListProps {
@@ -16,11 +17,15 @@ export const HiddenColorsList: FC<HiddenColorsListProps> = ({
   colorNames,
   onRestore,
 }) => {
+  const { t } = useTranslation();
+
   if (hiddenColors.length === 0) return null;
 
   return (
     <div className="ll:flex ll:flex-col ll:gap-2 ll:pt-2 ll:border-t ll:border-gray-600">
-      <h3 className="ll:text-sm ll:font-semibold">Usunięte domyślne kolory</h3>
+      <h3 className="ll:text-sm ll:font-semibold">
+        {t("settings.timers.colors.hiddenDefaultsTitle")}
+      </h3>
       <div className="ll:grid ll:grid-cols-2 ll:gap-1.5">
         {hiddenColors.map((colorId) => (
           <div
@@ -36,15 +41,15 @@ export const HiddenColorsList: FC<HiddenColorsListProps> = ({
                 className="ll:h-6 ll:w-full ll:items-center ll:justify-center ll:mt-1"
               >
                 <span className="ll:text-[10px] ll:text-white ll:whitespace-nowrap ll:flex ll:justify-between ll:w-full ll:px-1 ll:items-center ll:h-full">
-                  <span>[T] Tanroth</span>
-                  <span> 00:21:37</span>
+                  <span>{t("settings.common.preview.name")}</span>
+                  <span>{t("settings.common.preview.time")}</span>
                 </span>
               </Tile>
             </div>
             <Button
               onClick={() => onRestore(colorId)}
               className="ll:w-6 ll:h-6 ll:p-0 ll:min-w-6 ll:bg-green-500/30 ll:hover:bg-green-500/50 ll:border-green-500"
-              title="Przywróć kolor"
+              title={t("settings.timers.colors.restoreColorTitle")}
             >
               <RotateCcw className="ll:h-3 ll:w-3" />
             </Button>

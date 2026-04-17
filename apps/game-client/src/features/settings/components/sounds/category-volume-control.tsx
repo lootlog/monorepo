@@ -6,6 +6,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Volume2, VolumeX } from "lucide-react";
 import type { FC, ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 
 interface CategoryVolumeControlProps {
   icon: ReactNode;
@@ -28,6 +29,8 @@ export const CategoryVolumeControl: FC<CategoryVolumeControlProps> = ({
   onMuteToggle,
   onMuteKeyDown,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <div className="ll:flex ll:items-center ll:gap-3 ll:flex-1">
       <Tooltip>
@@ -53,7 +56,11 @@ export const CategoryVolumeControl: FC<CategoryVolumeControlProps> = ({
             )}
           </span>
         </TooltipTrigger>
-        <TooltipContent>{isMuted ? "Włącz dźwięk" : "Wycisz"}</TooltipContent>
+        <TooltipContent>
+          {isMuted
+            ? t("settings.common.actions.unmute")
+            : t("settings.common.actions.mute")}
+        </TooltipContent>
       </Tooltip>
       <div className="ll:flex-1" onClick={(e) => e.stopPropagation()}>
         <Slider

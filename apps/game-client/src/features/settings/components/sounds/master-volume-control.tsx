@@ -1,3 +1,4 @@
+import { SettingsPanel } from "@/components/settings/settings-panel";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -7,6 +8,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Volume2, VolumeX } from "lucide-react";
 import type { FC } from "react";
+import { useTranslation } from "react-i18next";
 
 interface MasterVolumeControlProps {
   volume: number;
@@ -22,18 +24,21 @@ export const MasterVolumeControl: FC<MasterVolumeControlProps> = ({
   onMuteToggle,
 }) => {
   const isMuted = volume === 0;
+  const { t } = useTranslation();
 
   return (
-    <div className="ll:flex ll:items-center ll:gap-3 ll:py-2 ll:px-3 ll:border ll:border-gray-400 ll:rounded-sm">
+    <SettingsPanel className="ll:flex ll:items-center ll:gap-3">
       <Tooltip>
         <TooltipTrigger asChild>
           <span className="ll:flex ll:items-center">
             <Volume2 className="ll:size-4" />
           </span>
         </TooltipTrigger>
-        <TooltipContent>Głośność główna</TooltipContent>
+        <TooltipContent>{t("settings.sounds.masterVolume")}</TooltipContent>
       </Tooltip>
-      <span className="ll:text-sm ll:w-28 ll:text-left">Głośność główna</span>
+      <span className="ll:text-sm ll:w-28 ll:text-left">
+        {t("settings.sounds.masterVolume")}
+      </span>
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
@@ -48,7 +53,11 @@ export const MasterVolumeControl: FC<MasterVolumeControlProps> = ({
             )}
           </Button>
         </TooltipTrigger>
-        <TooltipContent>{isMuted ? "Włącz dźwięk" : "Wycisz"}</TooltipContent>
+        <TooltipContent>
+          {isMuted
+            ? t("settings.common.actions.unmute")
+            : t("settings.common.actions.mute")}
+        </TooltipContent>
       </Tooltip>
       <div className="ll:flex-1">
         <Slider
@@ -65,6 +74,6 @@ export const MasterVolumeControl: FC<MasterVolumeControlProps> = ({
       <span className="ll:text-xs ll:text-muted-foreground ll:w-10 ll:text-right">
         {Math.round(volume * 100)}%
       </span>
-    </div>
+    </SettingsPanel>
   );
 };

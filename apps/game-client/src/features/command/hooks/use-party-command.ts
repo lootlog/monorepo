@@ -38,8 +38,8 @@ export const usePartyCommand = () => {
       },
       {
         onSuccess: async (response) => {
-          const notificationId = response.data.notificationId;
-          const responseGuildIds = response.data.guildIds ?? guildIds;
+          const notificationId = response.notificationId;
+          const responseGuildIds = response.guildIds ?? guildIds;
 
           setPartyGathering({
             notificationId,
@@ -82,8 +82,8 @@ export const usePartyCommand = () => {
           });
 
           chatResults.forEach((result, index) => {
-            if (result.status === "fulfilled" && result.value?.data?.id) {
-              setChatMessageId(responseGuildIds[index], result.value.data.id);
+            if (result.status === "fulfilled" && result.value?.messageId) {
+              setChatMessageId(responseGuildIds[index], result.value.messageId);
             }
           });
 

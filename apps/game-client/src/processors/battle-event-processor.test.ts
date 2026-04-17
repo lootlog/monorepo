@@ -7,10 +7,23 @@ import type { GameEvent } from "@lootlog/margonem/game-events";
 const mockCreateKill = vi.fn().mockResolvedValue({ updated: 1 });
 const mockCreateBattle = vi.fn().mockResolvedValue({ battleId: 1 });
 
-vi.mock("@/services/api.service", () => ({
-  createKill: (...args: unknown[]) => mockCreateKill(...args),
-  createBattle: (...args: unknown[]) => mockCreateBattle(...args),
-}));
+vi.mock("@/api", async (importOriginal) => {
+  const originalModule = await importOriginal<typeof import("@/api")>();
+
+  return {
+    ...originalModule,
+    createKill: (...args: unknown[]) => mockCreateKill(...args),
+    createBattle: (...args: unknown[]) => mockCreateBattle(...args),
+  };
+});
+
+vi.mock("sonner", () => {
+  const toast = Object.assign(vi.fn(), {
+    success: vi.fn(),
+  });
+
+  return { toast };
+});
 
 vi.mock("@/lib/game", () => ({
   Game: {
@@ -303,6 +316,94 @@ describe("BattleEventProcessor", () => {
       await processor.handle(endEvent);
 
       expect(mockCreateBattle).not.toHaveBeenCalled();
+    });
+
+    it("should log warning when battle creation fails", async () => {
+      const consoleWarnSpy = vi
+        .spyOn(console, "warn")
+        .mockImplementation(() => undefined);
+      mockCreateBattle.mockRejectedValueOnce(new Error("battle failed"));
+
+      useBattleStore.setState({
+        battleState: "in-battle",
+        lastBattleHash: "",
+        events: [
+          {
+            f: {
+              w: {
+                "111": {
+                  id: 111,
+                  originalId: 111,
+                  name: "Player1",
+                  team: 1,
+                  hpp: 100,
+                  lvl: 100,
+                  icon: "",
+                  prof: "w",
+                  wt: 0,
+                  type: 0,
+                },
+                "222": {
+                  id: 222,
+                  originalId: 222,
+                  name: "Player2",
+                  team: 2,
+                  hpp: 0,
+                  lvl: 100,
+                  icon: "",
+                  prof: "m",
+                  wt: 0,
+                  type: 0,
+                },
+              },
+              m: ["turn1"],
+            },
+          },
+        ],
+        battleWarriors: {},
+      });
+
+      await processor.handle({
+        f: {
+          w: {
+            "111": {
+              id: 111,
+              originalId: 111,
+              name: "Player1",
+              team: 1,
+              hpp: 100,
+              lvl: 100,
+              icon: "",
+              prof: "w",
+              wt: 0,
+              type: 0,
+            },
+            "222": {
+              id: 222,
+              originalId: 222,
+              name: "Player2",
+              team: 2,
+              hpp: 0,
+              lvl: 100,
+              icon: "",
+              prof: "m",
+              wt: 0,
+              type: 0,
+            },
+          },
+        },
+      });
+
+      await processor.handle({
+        f: { endBattle: 1, m: ["final"] },
+      });
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        "[BattleEventProcessor] Failed to create battle:",
+        expect.any(Error),
+      );
     });
   });
 
@@ -775,6 +876,123 @@ describe("BattleEventProcessor", () => {
       await processor.handle(endEvent);
 
       expect(mockCreateKill).not.toHaveBeenCalled();
+    });
+
+    it("should track kill when npc current hp is sent as string 0", async () => {
+      useBattleStore.setState({
+        battleState: "in-battle",
+        lastBattleHash: "",
+        events: [
+          {
+            f: {
+              m: ["turn1"],
+            },
+          },
+        ],
+        battleWarriors: {
+          "-100": {
+            id: -100,
+            originalId: -100,
+            name: "Boss",
+            team: 2,
+            hp: {
+              cur: "0",
+            },
+            lvl: 300,
+            icon: "boss.gif",
+            prof: "w",
+            wt: 85,
+            type: 2,
+          } as never,
+        },
+      });
+
+      await processor.handle({
+        f: { endBattle: 1, m: ["final"] },
+      });
+
+      expect(mockCreateKill).toHaveBeenCalledTimes(1);
+    });
+
+    it("should ignore npc when hp values cannot be parsed", async () => {
+      useBattleStore.setState({
+        battleState: "in-battle",
+        lastBattleHash: "",
+        events: [
+          {
+            f: {
+              m: ["turn1"],
+            },
+          },
+        ],
+        battleWarriors: {
+          "-100": {
+            id: -100,
+            originalId: -100,
+            name: "Boss",
+            team: 2,
+            hp: {
+              cur: "invalid",
+              hpp: "invalid",
+            },
+            lvl: 300,
+            icon: "boss.gif",
+            prof: "w",
+            wt: 85,
+            type: 2,
+          } as never,
+        },
+      });
+
+      await processor.handle({
+        f: { endBattle: 1, m: ["final"] },
+      });
+
+      expect(mockCreateKill).not.toHaveBeenCalled();
+    });
+
+    it("should log warning when kill creation fails", async () => {
+      const consoleWarnSpy = vi
+        .spyOn(console, "warn")
+        .mockImplementation(() => undefined);
+      mockCreateKill.mockRejectedValueOnce(new Error("kill failed"));
+
+      useBattleStore.setState({
+        battleState: "in-battle",
+        lastBattleHash: "",
+        events: [
+          {
+            f: {
+              m: ["turn1"],
+            },
+          },
+        ],
+        battleWarriors: {
+          "-100": {
+            id: -100,
+            originalId: -100,
+            name: "Boss",
+            team: 2,
+            hpp: 0,
+            lvl: 300,
+            icon: "boss.gif",
+            prof: "w",
+            wt: 85,
+            type: 2,
+          },
+        },
+      });
+
+      await processor.handle({
+        f: { endBattle: 1, m: ["final"] },
+      });
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        "[BattleEventProcessor] Failed to create kill:",
+        expect.any(Error),
+      );
     });
   });
 

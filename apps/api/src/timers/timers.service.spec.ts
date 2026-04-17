@@ -5,6 +5,7 @@ import { TimersService } from "./timers.service";
 import { PrismaService } from "src/db/prisma.service";
 import { GuildsService } from "src/guilds/guilds.service";
 import { BadRequestException, ConflictException } from "@nestjs/common";
+import type { CreateTimerDto } from "src/timers/dto/create-timer.dto";
 import type { CreateTimerFromGameClientDto } from "src/timers/dto/create-timer-from-game-client.dto";
 import { validateAndCalculateSpawnTimes } from "src/timers/utils/validate-spawn-times";
 import { TIMER_LIMITS } from "src/timers/constants/timer-limits";
@@ -16,6 +17,7 @@ import { buildTimerKey } from "src/timers/utils/timer-key";
 import { EventTimerHooksService } from "src/events/services/event-timer-hooks.service";
 import { ErrorKey } from "src/timers/enum/error-key.enum";
 import { ExecutionError } from "redlock";
+import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
 
 describe("TimersService", () => {
   let service: TimersService;
@@ -53,6 +55,10 @@ describe("TimersService", () => {
   const mockEventTimerHooksService = {
     enqueueEventHeroKillCheck: mockFn().mockResolvedValue(undefined),
     findActiveEventHeroByNpc: mockFn().mockResolvedValue(null),
+  };
+
+  const mockUserLootlogConfigService = {
+    getLootlogCharacterConfig: mockFn().mockResolvedValue(null),
   };
 
   const mockLogger = {
@@ -97,6 +103,10 @@ describe("TimersService", () => {
           useValue: mockGuildsService,
         },
         {
+          provide: UserLootlogConfigService,
+          useValue: mockUserLootlogConfigService,
+        },
+        {
           provide: RedisService,
           useValue: mockRedisService,
         },
@@ -123,6 +133,45 @@ describe("TimersService", () => {
 
   it("should be defined", () => {
     expect(service).toBeDefined();
+  });
+
+  describe("createTimer", () => {
+    it("delegates legacy timer creation to createTimerForGuild", async () => {
+      const payload: CreateTimerDto = {
+        respBaseSeconds: 60,
+        respawnRandomness: 10,
+        world: "test-world",
+        npc: {
+          id: 123,
+          name: "Test Boss",
+          prof: "w",
+          location: "Test Location",
+          wt: 25,
+          lvl: 100,
+          type: 1,
+          icon: "icon.png",
+          hpp: 1000,
+        },
+        characterId: "char123",
+        accountId: "acc123",
+      };
+      const createTimerForGuildSpy = vi
+        .spyOn(service, "createTimerForGuild")
+        .mockResolvedValue({
+          guildId: "guild1",
+          world: "test-world",
+          npcId: 123,
+        } as never);
+
+      await service.createTimer("discord123", "user123", "guild1", payload);
+
+      expect(createTimerForGuildSpy).toHaveBeenCalledWith(
+        "discord123",
+        "user123",
+        "guild1",
+        payload,
+      );
+    });
   });
 
   describe("createTimerForGuild", () => {

@@ -127,8 +127,7 @@ describe("Account Deletion E2E", () => {
         userId: deletedUser.discordId,
         accountId: "12345",
         characterId: "67890",
-        collectLootWhitelistGuildIds: [guild.id],
-        addTimersWhitelistGuildIds: [],
+        catchingGuildIds: [guild.id],
       },
     });
 

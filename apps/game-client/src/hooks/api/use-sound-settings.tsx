@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
-import { API_URL } from "@/config/api";
+import { fetchSoundSettings, updateSoundSettings } from "@/api";
 import type {
   UserSoundSettings,
   UpdateSoundSettingsPayload,
@@ -9,12 +8,9 @@ import type {
 const SOUND_SETTINGS_QUERY_KEY = ["sound-settings"];
 
 export const useSoundSettings = (enabled = true) => {
-  const { client } = useAuthenticatedApiClient();
-
   const query = useQuery({
     queryKey: SOUND_SETTINGS_QUERY_KEY,
-    queryFn: () => client.get<UserSoundSettings>(`${API_URL}/sound-settings`),
-    select: (response) => response.data,
+    queryFn: () => fetchSoundSettings(),
     staleTime: 5 * 60 * 1000,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
@@ -26,25 +22,24 @@ export const useSoundSettings = (enabled = true) => {
 };
 
 export const useUpdateSoundSettings = () => {
-  const { client } = useAuthenticatedApiClient();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (payload: UpdateSoundSettingsPayload) =>
-      client.patch<UserSoundSettings>(`${API_URL}/sound-settings`, payload),
+      updateSoundSettings(payload),
     onMutate: async (payload) => {
       await queryClient.cancelQueries({ queryKey: SOUND_SETTINGS_QUERY_KEY });
 
-      const previousSettings = queryClient.getQueryData<{
-        data: UserSoundSettings;
-      }>(SOUND_SETTINGS_QUERY_KEY);
+      const previousSettings = queryClient.getQueryData<UserSoundSettings>(
+        SOUND_SETTINGS_QUERY_KEY,
+      );
 
-      queryClient.setQueryData<{ data: UserSoundSettings }>(
+      queryClient.setQueryData<UserSoundSettings>(
         SOUND_SETTINGS_QUERY_KEY,
         (old) => {
           if (!old) return old;
 
-          const newData = { ...old.data };
+          const newData = { ...old };
 
           if (payload.masterVolume !== undefined) {
             newData.masterVolume = payload.masterVolume;
@@ -60,7 +55,7 @@ export const useUpdateSoundSettings = () => {
           }
 
           if (payload.notificationsConfig) {
-            newData.notificationsConfig = { ...old.data.notificationsConfig };
+            newData.notificationsConfig = { ...old.notificationsConfig };
             Object.entries(payload.notificationsConfig).forEach(
               ([key, partialConfig]) => {
                 newData.notificationsConfig[key] = {
@@ -71,7 +66,7 @@ export const useUpdateSoundSettings = () => {
             );
           }
           if (payload.detectorConfig) {
-            newData.detectorConfig = { ...old.data.detectorConfig };
+            newData.detectorConfig = { ...old.detectorConfig };
             Object.entries(payload.detectorConfig).forEach(
               ([key, partialConfig]) => {
                 newData.detectorConfig[key] = {
@@ -82,7 +77,7 @@ export const useUpdateSoundSettings = () => {
             );
           }
           if (payload.timersConfig) {
-            newData.timersConfig = { ...old.data.timersConfig };
+            newData.timersConfig = { ...old.timersConfig };
             Object.entries(payload.timersConfig).forEach(
               ([key, partialConfig]) => {
                 newData.timersConfig[key] = {
@@ -93,7 +88,7 @@ export const useUpdateSoundSettings = () => {
             );
           }
 
-          return { ...old, data: newData };
+          return newData;
         },
       );
 
