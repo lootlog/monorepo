@@ -40,7 +40,7 @@ describe("migrateWindowsState", () => {
     expect(migrated.settings.position).toEqual({ x: 24, y: 48 });
   });
 
-  it("removes legacy visible item limits for notifications and npc detector", () => {
+  it("keeps max content height for notifications and npc detector", () => {
     const migrated = migrateWindowsState(
       {
         notifications: {
@@ -50,7 +50,7 @@ describe("migrateWindowsState", () => {
           size: { width: 360, height: 300 },
           opacity: 4,
           locked: false,
-          autoHeightVisibleItemsLimit: 3,
+          maxContentHeight: 160,
         },
         "npc-detector": {
           open: true,
@@ -59,22 +59,14 @@ describe("migrateWindowsState", () => {
           size: { width: 300, height: 300 },
           opacity: 4,
           locked: false,
-          autoHeightVisibleItemsLimit: 4,
+          maxContentHeight: 220,
         },
         windowFocusHistory: [],
       },
       5,
     );
 
-    expect(migrated.notifications.maxContentHeight).toBeUndefined();
-    expect(migrated["npc-detector"].maxContentHeight).toBeUndefined();
-    expect(
-      "autoHeightVisibleItemsLimit" in
-        (migrated.notifications as unknown as Record<string, unknown>),
-    ).toBe(false);
-    expect(
-      "autoHeightVisibleItemsLimit" in
-        (migrated["npc-detector"] as unknown as Record<string, unknown>),
-    ).toBe(false);
+    expect(migrated.notifications.maxContentHeight).toBe(160);
+    expect(migrated["npc-detector"].maxContentHeight).toBe(220);
   });
 });
