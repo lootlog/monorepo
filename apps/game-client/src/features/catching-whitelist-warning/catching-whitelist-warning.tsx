@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Game } from "@/lib/game";
 import { storageKey } from "@/lib/storage-key";
 
-const STORAGE_KEY = storageKey("ll-catching-whitelist-warning-dismissed");
+const STORAGE_KEY = storageKey("ll:catching-whitelist-warning-dismissed");
 
 type DismissedCharacters = Record<string, boolean>;
 

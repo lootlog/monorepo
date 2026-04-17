@@ -18,6 +18,7 @@ import { NotificationsSettingsTab } from "@/features/settings/components/notific
 import { SoundsSettingsTab } from "@/features/settings/components/sounds/sounds-settings-tab";
 import { TimersSettingsTab } from "@/features/settings/components/timers/timers-settings-tab";
 import type { SettingsTabValue } from "@/features/settings/constants/settings-tabs";
+import { COMMIT_SHA } from "@/config/app";
 import { useWindowsStore } from "@/store/windows.store";
 import {
   Bell,
@@ -48,6 +49,7 @@ type SettingsTabDefinition = {
 
 const ICON_CLASSES = "ll:size-4 ll:stroke-2";
 const SETTINGS_TABS_COMPACT_WIDTH = 520;
+const SHORT_COMMIT_SHA_LENGTH = 7;
 const SETTINGS_TAB_TRIGGER_BASE_CLASSES =
   "ll:mt-0 ll:flex ll:min-h-8 ll:w-full ll:items-center ll:rounded-md ll:py-1.5 ll:text-gray-200 ll:font-semibold ll:transition-[background-color,border-color,color]";
 const SETTINGS_TAB_TRIGGER_REGULAR_CLASSES =
@@ -143,6 +145,8 @@ export const SettingsTabs: FC<SettingsTabsProps> = () => {
     ? activeTab
     : "general";
   const isCompactSidebar = settingsWidth < SETTINGS_TABS_COMPACT_WIDTH;
+  const shortCommitSha = COMMIT_SHA.slice(0, SHORT_COMMIT_SHA_LENGTH);
+  const hasCommitSha = shortCommitSha.length > 0;
 
   return (
     <div className="ll:h-full ll:flex ll:flex-col ll:pt-2 ll:min-h-0">
@@ -211,11 +215,16 @@ export const SettingsTabs: FC<SettingsTabsProps> = () => {
               })}
             </TabsList>
           </ScrollArea>
-          {!isCompactSidebar ? (
+          {!isCompactSidebar && hasCommitSha ? (
             <div className="ll:mt-2 ll:shrink-0 ll:px-2 ll:pb-1.5">
-              <p className="ll:m-0 ll:text-[10px] ll:font-medium ll:text-gray-400">
-                {t("settings.tabs.commitSha", { sha: "{commitsha}" })}
-              </p>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <p className="ll:m-0 ll:text-[10px] ll:font-medium ll:text-gray-400">
+                    {t("settings.tabs.commitSha", { sha: shortCommitSha })}
+                  </p>
+                </TooltipTrigger>
+                <TooltipContent side="top">{COMMIT_SHA}</TooltipContent>
+              </Tooltip>
             </div>
           ) : null}
         </div>

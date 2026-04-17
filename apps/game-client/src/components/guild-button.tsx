@@ -41,7 +41,7 @@ export const GuildButton: FC<GuildButtonProps> = ({
           "after:ll:pointer-events-none after:ll:absolute after:ll:inset-0 after:ll:rounded-[2px] after:ll:opacity-0 after:ll:transition-opacity",
           !disabled && "ll-custom-cursor-pointer",
           {
-            "ll:border-sky-400 ll:bg-sky-500/12 ll:ring-1 ll:ring-sky-300/75 ll:shadow-[0_0_0_1px_rgba(96,165,250,0.45),0_0_14px_rgba(59,130,246,0.28)] after:ll:bg-sky-300/18 after:ll:opacity-100":
+            "ll:border-purple-600 ll:bg-purple-500/12 ll:ring-1 ll:ring-purple-500/75 ll:shadow-[0_0_0_1px_rgba(196,165,250,0.45),0_0_14px_rgba(159,130,246,0.28)] after:ll:bg-purple-300/18 after:ll:opacity-100":
               isSelected,
           },
           className,
