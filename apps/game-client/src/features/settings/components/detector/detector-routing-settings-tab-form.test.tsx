@@ -90,7 +90,7 @@ describe("DetectorRoutingSettingsTabForm", () => {
     expect(screen.getByText("Od: 20")).toBeInTheDocument();
     expect(screen.getByText("Do: 80")).toBeInTheDocument();
     expect(screen.getByText("Świat: Pandora")).toBeInTheDocument();
-    expect(screen.getByText("+1")).toBeInTheDocument();
+    expect(screen.getByText("+2")).toBeInTheDocument();
 
     await user.hover(screen.getByLabelText("Alpha"));
 
