@@ -19,10 +19,7 @@ describe("use-guild-permissions helpers", () => {
         Permission.LOOTLOG_MANAGE,
         Permission.LOOTLOG_TIMERS_DELETE,
       ]),
-    ).toEqual([
-      Permission.LOOTLOG_MANAGE,
-      Permission.LOOTLOG_TIMERS_DELETE,
-    ]);
+    ).toEqual([Permission.LOOTLOG_MANAGE, Permission.LOOTLOG_TIMERS_DELETE]);
   });
 
   it("drops legacy cached non-array shapes instead of throwing", () => {
@@ -31,5 +28,16 @@ describe("use-guild-permissions helpers", () => {
         data: [Permission.LOOTLOG_MANAGE, Permission.LOOTLOG_TIMERS_DELETE],
       }),
     ).toEqual([]);
+  });
+
+  it("filters out invalid array entries", () => {
+    expect(
+      normalizeGuildPermissions([
+        Permission.LOOTLOG_MANAGE,
+        42,
+        null,
+        undefined,
+      ]),
+    ).toEqual([Permission.LOOTLOG_MANAGE]);
   });
 });

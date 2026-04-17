@@ -38,7 +38,6 @@ type NotificationAutoHideState = {
 
 interface NotificationsState {
   notifications: StoredNotification[];
-  activeNotificationAnimations: Record<string, number>;
   notificationAutoHideByListKey: Record<string, NotificationAutoHideState>;
   latestNotificationAnimationCycle: number;
   pushNotification: (
@@ -47,7 +46,6 @@ interface NotificationsState {
   clearNotifications: () => void;
   removeNotification: (id: string) => void;
   removeNotificationByNpcId: (npcId: number, world?: string) => void;
-  clearNotificationAnimation: (listKey: string, cycle: number) => void;
   setNotificationAutoHide: (listKey: string, durationMs: number) => void;
   pauseNotificationAutoHide: (listKey: string) => void;
   resumeNotificationAutoHide: (listKey: string) => void;
@@ -72,7 +70,6 @@ const moveNotificationToFront = (
 
 export const useNotificationsStore = create<NotificationsState>()((set) => ({
   notifications: [],
-  activeNotificationAnimations: {},
   notificationAutoHideByListKey: {},
   latestNotificationAnimationCycle: 0,
   pushNotification: (
@@ -81,7 +78,6 @@ export const useNotificationsStore = create<NotificationsState>()((set) => ({
     set((state) => {
       const notificationAnimationCycle =
         state.latestNotificationAnimationCycle + 1;
-      const activeNotificationAnimations: Record<string, number> = {};
       const existingNotificationIndex = state.notifications.findIndex(
         (currentNotification) =>
           currentNotification.notificationId === notification.notificationId,
@@ -106,16 +102,12 @@ export const useNotificationsStore = create<NotificationsState>()((set) => ({
           servers: uniqueMembers,
         };
 
-        activeNotificationAnimations[mergedNotification.listKey] =
-          notificationAnimationCycle;
-
         return {
           notifications: moveNotificationToFront(
             state.notifications,
             mergedNotification,
             existingNotificationIndex,
           ),
-          activeNotificationAnimations,
           latestNotificationAnimationCycle: notificationAnimationCycle,
         };
       }
@@ -130,14 +122,11 @@ export const useNotificationsStore = create<NotificationsState>()((set) => ({
         "type" in storedNotification &&
         storedNotification.type === "party-gathering"
       ) {
-        activeNotificationAnimations[storedNotification.listKey] =
-          notificationAnimationCycle;
         return {
           notifications: moveNotificationToFront(
             state.notifications,
             storedNotification,
           ),
-          activeNotificationAnimations,
           latestNotificationAnimationCycle: notificationAnimationCycle,
         };
       }
@@ -145,14 +134,11 @@ export const useNotificationsStore = create<NotificationsState>()((set) => ({
       const regularNotification = storedNotification as NotificationWithServers;
 
       if (regularNotification.message) {
-        activeNotificationAnimations[storedNotification.listKey] =
-          notificationAnimationCycle;
         return {
           notifications: moveNotificationToFront(
             state.notifications,
             storedNotification,
           ),
-          activeNotificationAnimations,
           latestNotificationAnimationCycle: notificationAnimationCycle,
         };
       }
@@ -182,43 +168,31 @@ export const useNotificationsStore = create<NotificationsState>()((set) => ({
             ]),
           ],
         };
-
-        activeNotificationAnimations[mergedNotification.listKey] =
-          notificationAnimationCycle;
         return {
           notifications: moveNotificationToFront(
             state.notifications,
             mergedNotification,
             existingNpcNotificationIndex,
           ),
-          activeNotificationAnimations,
           latestNotificationAnimationCycle: notificationAnimationCycle,
         };
       }
-
-      activeNotificationAnimations[storedNotification.listKey] =
-        notificationAnimationCycle;
 
       return {
         notifications: moveNotificationToFront(
           state.notifications,
           storedNotification,
         ),
-        activeNotificationAnimations,
         latestNotificationAnimationCycle: notificationAnimationCycle,
       };
     }),
   clearNotifications: () =>
     set(() => ({
       notifications: [],
-      activeNotificationAnimations: {},
       notificationAutoHideByListKey: {},
     })),
   removeNotification: (id: string) =>
     set((state) => {
-      const activeNotificationAnimations = {
-        ...state.activeNotificationAnimations,
-      };
       const notificationAutoHideByListKey = {
         ...state.notificationAutoHideByListKey,
       };
@@ -227,7 +201,6 @@ export const useNotificationsStore = create<NotificationsState>()((set) => ({
       );
 
       if (notificationToRemove) {
-        delete activeNotificationAnimations[notificationToRemove.listKey];
         delete notificationAutoHideByListKey[notificationToRemove.listKey];
       }
 
@@ -235,15 +208,11 @@ export const useNotificationsStore = create<NotificationsState>()((set) => ({
         notifications: state.notifications.filter(
           (notification) => notification.notificationId !== id,
         ),
-        activeNotificationAnimations,
         notificationAutoHideByListKey,
       };
     }),
   removeNotificationByNpcId: (npcId: number, world?: string) =>
     set((state) => {
-      const activeNotificationAnimations = {
-        ...state.activeNotificationAnimations,
-      };
       const notificationAutoHideByListKey = {
         ...state.notificationAutoHideByListKey,
       };
@@ -258,7 +227,6 @@ export const useNotificationsStore = create<NotificationsState>()((set) => ({
           (world ? regularNotification.world === world : true);
 
         if (shouldRemove) {
-          delete activeNotificationAnimations[notification.listKey];
           delete notificationAutoHideByListKey[notification.listKey];
           return false;
         }
@@ -268,22 +236,8 @@ export const useNotificationsStore = create<NotificationsState>()((set) => ({
 
       return {
         notifications,
-        activeNotificationAnimations,
         notificationAutoHideByListKey,
       };
-    }),
-  clearNotificationAnimation: (listKey, cycle) =>
-    set((state) => {
-      if (state.activeNotificationAnimations[listKey] !== cycle) {
-        return {};
-      }
-
-      const activeNotificationAnimations = {
-        ...state.activeNotificationAnimations,
-      };
-      delete activeNotificationAnimations[listKey];
-
-      return { activeNotificationAnimations };
     }),
   setNotificationAutoHide: (listKey, durationMs) =>
     set((state) => {

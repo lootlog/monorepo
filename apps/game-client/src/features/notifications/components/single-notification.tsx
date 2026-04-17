@@ -40,7 +40,6 @@ const AUTO_HIDE_PROGRESS_STROKE_OPACITY = 0.95;
 type SingleNotificationProps = {
   guildNamesById: Record<string, string>;
   notification: StoredNotification;
-  notificationAnimationCycle: number | null;
   showCloseButton?: boolean;
 };
 
@@ -115,7 +114,6 @@ const renderNotificationContent = ({
 export const SingleNotification: FC<SingleNotificationProps> = ({
   guildNamesById,
   notification,
-  notificationAnimationCycle: _notificationAnimationCycle,
   showCloseButton = false,
 }) => {
   const removeNotification = useNotificationsStore(
@@ -239,7 +237,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
     path.style.strokeDasharray = String(totalLength);
     path.style.strokeDashoffset = String(initialOffset);
 
-    if (autoHideState?.pausedRemainingMs !== null) {
+    if (autoHideState && autoHideState.pausedRemainingMs !== null) {
       return () => {
         path.style.strokeDasharray = "";
         path.style.strokeDashoffset = "";

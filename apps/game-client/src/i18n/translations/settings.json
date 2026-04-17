@@ -31,6 +31,12 @@
       "saving": "Zapisywanie...",
       "syncing": "Synchronizowanie..."
     },
+    "windowAutoHeight": {
+      "idleTooltip": "Ustaw maksymalną wysokość okna. Kliknij, a potem przeciągnij uchwyt w prawym dolnym rogu.",
+      "armedTooltip": "Przeciągnij uchwyt w prawym dolnym rogu, aby ustawić maksymalną wysokość. Szerokość okna nadal możesz zmieniać tym samym uchwytem.",
+      "maxHeightAria": "Ustaw maksymalną wysokość okna na {{height}} pikseli",
+      "maxHeightLabel": "{{height}} px"
+    },
     "actions": {
       "remove": "Usuń",
       "reset": "Reset",
@@ -54,6 +60,10 @@
       "name": "[T] Tanroth",
       "time": "00:21:37"
     }
+  },
+  "windows": {
+    "notifications": "Powiadomienia",
+    "npcDetector": "Wykrywacz"
   },
   "general": {
     "title": "Ustawienia ogólne",

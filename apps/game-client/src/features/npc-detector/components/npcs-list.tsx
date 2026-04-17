@@ -28,7 +28,7 @@ export const NpcsList: FC<NpcsListProps> = ({ npcs }) => {
   return (
     <ScrollArea
       ref={scrollViewportRef}
-      className="ll:w-full ll:box-border ll:max-h-64"
+      className="ll:w-full ll:box-border ll:h-full"
       type="hover"
     >
       <motion.div layout className="ll:flex ll:flex-col ll:gap-1 ll:pt-1">
