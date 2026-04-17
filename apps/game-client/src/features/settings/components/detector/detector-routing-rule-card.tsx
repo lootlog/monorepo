@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { ChevronDown, Trash2 } from "lucide-react";
 import type { FC, KeyboardEvent, ReactNode } from "react";
 
-const VISIBLE_PREVIEW_GUILDS_COUNT = 4;
+const VISIBLE_PREVIEW_GUILDS_COUNT = 3;
 
 type DetectorRoutingRuleCardProps = {
   fieldIdInput: ReactNode;
