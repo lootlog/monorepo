@@ -1,9 +1,13 @@
 import { Injectable } from "@nestjs/common";
 import { Permission } from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
-import type { CreateOrUpdateLootlogCharacterConfigDto } from "src/user-lootlog-config/dto/create-user-account-config.dto";
+import {
+  resolveCatchingGuildIds,
+  type CreateOrUpdateLootlogCharacterConfigDto,
+} from "src/user-lootlog-config/dto/create-user-account-config.dto";
 import { GuildsService } from "src/guilds/guilds.service";
 import { RedisService } from "@lootlog/nest-shared";
+import { toUserLootlogConfigResponse } from "src/shared/dto/user-lootlog-config-response.dto";
 
 const USER_LOOTLOG_CONFIG_CACHE_TTL_SECONDS = 3600;
 const USER_LOOTLOG_CONFIG_CACHE_KEY_PREFIX = "user-lootlog-config";
@@ -105,13 +109,15 @@ export class UserLootlogConfigService {
       }
 
       const cleanedConfig = {
-        ...config,
         catchingGuildIds: validCatchingGuildIds,
+        userId: config.userId,
+        accountId: config.accountId,
+        characterId,
       };
 
       return {
         ...acc,
-        [characterId]: cleanedConfig,
+        [characterId]: toUserLootlogConfigResponse(cleanedConfig),
       };
     }, {});
 
@@ -184,10 +190,11 @@ export class UserLootlogConfigService {
   ) {
     const userGuildsWithWriteAccess =
       await this.getUserGuildsWithWriteAccess(discordId);
+    const catchingGuildIds = resolveCatchingGuildIds(data);
 
     const validCatchingGuildIds = [
       ...new Set(
-        data.catchingGuildIds.filter((guildId) =>
+        catchingGuildIds.filter((guildId) =>
           userGuildsWithWriteAccess.has(guildId),
         ),
       ),
@@ -214,6 +221,6 @@ export class UserLootlogConfigService {
 
     await this.invalidateUserLootlogConfigCache(discordId, accountId);
 
-    return config;
+    return toUserLootlogConfigResponse(config);
   }
 }
