@@ -5,12 +5,14 @@ import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useTimersStore } from "@/store/timers.store";
 import { type FC, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const MAX_REMOVE_TIMER_AFTER_MS = 120000; // 2 minutes
 
 export const TimersSettingsGeneral: FC = () => {
   const { generalConfig, setGeneralConfig, syncEnabled, setSyncEnabled } =
     useTimersStore();
+  const { t } = useTranslation();
 
   const [inputValue, setInputValue] = useState<string>(
     (generalConfig.removeTimerAfterMs / 1000).toString(),
@@ -47,10 +49,10 @@ export const TimersSettingsGeneral: FC = () => {
 
   return (
     <div className="ll:flex ll:flex-col ll:gap-3">
-      <SettingsSection title="Zachowanie">
+      <SettingsSection title={t("settings.timers.general.behaviorTitle")}>
         <SettingsControlRow
-          label="Synchronizuj ustawienia"
-          description="Synchronizuje ustawienia timerów z serwerem."
+          label={t("settings.timers.general.syncLabel")}
+          description={t("settings.timers.general.syncDescription")}
         >
           <Switch
             checked={syncEnabled ?? true}
@@ -59,8 +61,8 @@ export const TimersSettingsGeneral: FC = () => {
           />
         </SettingsControlRow>
         <SettingsControlRow
-          label="Grupuj timery"
-          description="Łączy timery z różnych lootlogów w jeden zbiorczy."
+          label={t("settings.timers.general.groupingLabel")}
+          description={t("settings.timers.general.groupingDescription")}
         >
           <Switch
             checked={generalConfig.timersGrouping}
@@ -71,8 +73,8 @@ export const TimersSettingsGeneral: FC = () => {
           />
         </SettingsControlRow>
         <SettingsControlRow
-          label="Timery pod torbami"
-          description="Wyświetla timery pod torbami zamiast w osobnym okienku."
+          label={t("settings.timers.general.underBagLabel")}
+          description={t("settings.timers.general.underBagDescription")}
         >
           <Switch
             checked={generalConfig.timersUnderBag}
@@ -83,8 +85,8 @@ export const TimersSettingsGeneral: FC = () => {
           />
         </SettingsControlRow>
         <SettingsControlRow
-          label="Widok kompaktowy"
-          description="Ukrywa nagłówek i stopkę timerów, pokazując tylko zawartość."
+          label={t("settings.timers.general.compactViewLabel")}
+          description={t("settings.timers.general.compactViewDescription")}
         >
           <Switch
             checked={generalConfig.compactView}
@@ -95,10 +97,10 @@ export const TimersSettingsGeneral: FC = () => {
           />
         </SettingsControlRow>
       </SettingsSection>
-      <SettingsSection title="Tryb odliczania">
+      <SettingsSection title={t("settings.timers.general.countdownTitle")}>
         <SettingsControlRow
-          label="Odliczaj do"
-          description="Wybierz, czy licznik ma odliczać do minimalnego czy maksymalnego czasu."
+          label={t("settings.timers.general.countdownLabel")}
+          description={t("settings.timers.general.countdownDescription")}
           controlClassName="ll:w-28"
         >
           <ToggleGroup
@@ -114,17 +116,19 @@ export const TimersSettingsGeneral: FC = () => {
             }}
             value={generalConfig.countdownMode}
           >
-            <ToggleGroupItem value="max">Max</ToggleGroupItem>
+            <ToggleGroupItem value="max">
+              {t("settings.timers.general.countdownMax")}
+            </ToggleGroupItem>
             <ToggleGroupItem value="min" className="ll:text-nowrap">
-              Min
+              {t("settings.timers.general.countdownMin")}
             </ToggleGroupItem>
           </ToggleGroup>
         </SettingsControlRow>
       </SettingsSection>
-      <SettingsSection title="Wygaszanie">
+      <SettingsSection title={t("settings.timers.general.fadeTitle")}>
         <SettingsControlRow
-          label="Czas usunięcia timera po wyzerowaniu"
-          description="W sekundach."
+          label={t("settings.timers.general.removeTimerAfterLabel")}
+          description={t("settings.timers.general.removeTimerAfterDescription")}
           controlClassName="ll:w-10"
         >
           <Input

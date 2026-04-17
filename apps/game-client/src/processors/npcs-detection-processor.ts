@@ -26,7 +26,6 @@ import { playSound } from "@/lib/sound-playback";
 import { queryClient } from "@/lib/query-client";
 import {
   getEffectiveDetectorSettings,
-  isDetectorPreferencesReady,
   getUserGameAccountPreferencesQueryKey,
   resolveDetectorGuildIds,
 } from "@/lib/game-account-notification-preferences";
@@ -36,14 +35,11 @@ type PendingDetection =
       accountId: string;
       type: "event";
       event: GameEvent;
-      queuedAt: number;
     }
   | {
       accountId: string;
       type: "initial";
     };
-
-const PENDING_EVENT_MAX_AGE_MS = 5_000;
 
 export class NpcsDetectionProcessor {
   private static pendingDetections: PendingDetection[] = [];
@@ -51,13 +47,11 @@ export class NpcsDetectionProcessor {
   handle(event: GameEvent): void {
     const accountId = this.getCurrentAccountId();
     if (!accountId) return;
-    this.prunePendingDetections();
     if (!this.isDetectorReady(accountId)) {
       NpcsDetectionProcessor.pendingDetections.push({
         accountId,
         type: "event",
         event,
-        queuedAt: Date.now(),
       });
       return;
     }
@@ -68,7 +62,6 @@ export class NpcsDetectionProcessor {
   handleInitialDetection(): void {
     const accountId = this.getCurrentAccountId();
     if (!accountId) return;
-    this.prunePendingDetections();
     if (!this.isDetectorReady(accountId)) {
       const hasQueuedInitialDetection =
         NpcsDetectionProcessor.pendingDetections.some(
@@ -94,9 +87,6 @@ export class NpcsDetectionProcessor {
       return;
     }
 
-    const now = Date.now();
-    this.prunePendingDetections(now);
-
     const pendingDetections = NpcsDetectionProcessor.pendingDetections.filter(
       (pendingDetection) => pendingDetection.accountId === accountId,
     );
@@ -118,17 +108,6 @@ export class NpcsDetectionProcessor {
 
       this.processEvent(pendingDetection.event);
     });
-  }
-
-  private prunePendingDetections(now = Date.now()): void {
-    NpcsDetectionProcessor.pendingDetections =
-      NpcsDetectionProcessor.pendingDetections.filter((pendingDetection) => {
-        if (pendingDetection.type !== "event") {
-          return true;
-        }
-
-        return now - pendingDetection.queuedAt <= PENDING_EVENT_MAX_AGE_MS;
-      });
   }
 
   private processEvent(event: GameEvent): void {
@@ -369,11 +348,19 @@ export class NpcsDetectionProcessor {
   }
 
   private isDetectorReady(accountId: string) {
-    const preferences = queryClient.getQueryData<UserGameAccountPreferences>(
-      getUserGameAccountPreferencesQueryKey(accountId),
-    );
+    const queryKey = getUserGameAccountPreferencesQueryKey(accountId);
+    const preferences =
+      queryClient.getQueryData<UserGameAccountPreferences>(queryKey);
+    const queryState = queryClient.getQueryState<
+      UserGameAccountPreferences,
+      Error
+    >(queryKey);
 
-    return isDetectorPreferencesReady(preferences);
+    if (preferences) {
+      return true;
+    }
+
+    return queryState?.status === "error";
   }
 }
 

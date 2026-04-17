@@ -10,10 +10,6 @@ import { storageKey } from "@/lib/storage-key";
 
 const STORAGE_KEY = storageKey("ll-windows-state");
 
-type NpcDetectorWindowState = {
-  npcs: GameNpc[];
-};
-
 type CreateNotificationState = {
   npc?: GameNpc;
 };
@@ -36,6 +32,7 @@ export type WindowId =
   | "quick-access"
   | "timer-settings-conflict"
   | "catching-whitelist-warning"
+  | "backend-preferences-warning"
   | "party-finder"
   | "create-party-gathering";
 
@@ -68,12 +65,13 @@ interface WindowsState {
   command: WindowData;
   "online-players": WindowData;
   "add-timer": WindowData;
-  "npc-detector": WindowData & { state: NpcDetectorWindowState };
+  "npc-detector": WindowData;
   notifications: WindowData;
   "create-notification": WindowData & { state: CreateNotificationState };
   "quick-access": WindowData;
   "timer-settings-conflict": WindowData;
   "catching-whitelist-warning": WindowData;
+  "backend-preferences-warning": WindowData;
   "party-finder": WindowData;
   "create-party-gathering": WindowData;
   currentWindowFocus?: WindowId;
@@ -159,7 +157,6 @@ export const useWindowsStore = create<WindowsState>()(
         position: DEFAULT_POSITION,
         size: { width: 300, height: 300 },
         opacity: DEFAULT_OPACITY,
-        state: { npcs: [] },
         locked: false,
       },
       notifications: {
@@ -195,6 +192,13 @@ export const useWindowsStore = create<WindowsState>()(
         open: false,
         position: DEFAULT_POSITION,
         size: { width: 400, height: 240 },
+        opacity: DEFAULT_OPACITY,
+        locked: false,
+      },
+      "backend-preferences-warning": {
+        open: false,
+        position: DEFAULT_POSITION,
+        size: { width: 430, height: 250 },
         opacity: DEFAULT_OPACITY,
         locked: false,
       },
@@ -311,6 +315,7 @@ export const useWindowsStore = create<WindowsState>()(
         "quick-access": state["quick-access"],
         "timer-settings-conflict": state["timer-settings-conflict"],
         "catching-whitelist-warning": state["catching-whitelist-warning"],
+        "backend-preferences-warning": state["backend-preferences-warning"],
         "party-finder": state["party-finder"],
         "create-party-gathering": state["create-party-gathering"],
       }),

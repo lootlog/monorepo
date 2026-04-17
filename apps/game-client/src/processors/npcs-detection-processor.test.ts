@@ -202,7 +202,7 @@ describe("NpcsDetectionProcessor", () => {
     expect(useWindowsStore.getState()["npc-detector"].open).toBe(true);
   });
 
-  it("drops stale queued events before flushing detector notifications", () => {
+  it("keeps queued events until detector preferences become available", () => {
     vi.useFakeTimers();
 
     try {
@@ -214,7 +214,15 @@ describe("NpcsDetectionProcessor", () => {
       readyPreferences();
       processor.flushPending("202");
 
-      expect(useNpcDetectorStore.getState().npcs).toEqual([]);
+      expect(useNpcDetectorStore.getState().npcs).toEqual([
+        expect.objectContaining({
+          id: 500,
+          nick: "Detected npc",
+          icon: "event-icon.gif",
+          location: "Ithan",
+          notificationSent: false,
+        }),
+      ]);
     } finally {
       vi.useRealTimers();
     }

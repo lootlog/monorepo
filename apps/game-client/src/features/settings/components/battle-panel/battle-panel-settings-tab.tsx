@@ -4,20 +4,22 @@ import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Switch } from "@/components/ui/switch";
 import { useBattlePanelStore } from "@/store/battle-panel.store";
 import type { FC } from "react";
+import { useTranslation } from "react-i18next";
 
 export const BattlePanelSettingsTab: FC = () => {
   const { isBattleCollectionEnabled, toggleBattleCollection } =
     useBattlePanelStore();
+  const { t } = useTranslation();
 
   return (
     <SettingsTabLayout
-      title="Ustawienia panelu walk"
-      description="Skonfiguruj ustawienia dotyczące zbierania danych walk w grze."
+      title={t("settings.battlePanel.title")}
+      description={t("settings.battlePanel.description")}
     >
-      <SettingsSection title="Zbieranie danych">
+      <SettingsSection title={t("settings.battlePanel.dataCollectionTitle")}>
         <SettingsControlRow
-          label="Włącz zbieranie walk"
-          description="Rejestruje dane walk używane przez panel."
+          label={t("settings.battlePanel.enableCollectionLabel")}
+          description={t("settings.battlePanel.enableCollectionDescription")}
         >
           <Switch
             checked={isBattleCollectionEnabled}

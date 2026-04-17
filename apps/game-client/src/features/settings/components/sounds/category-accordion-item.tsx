@@ -4,6 +4,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import type { FC, ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { CategoryVolumeControl } from "./category-volume-control";
 import { SoundFieldInput } from "./sound-field-input";
 import { DEFAULT_SOUND_URLS } from "../../config/default-sounds";
@@ -48,6 +49,8 @@ export const CategoryAccordionItem: FC<CategoryAccordionItemProps> = ({
   description,
   disabled = false,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <AccordionItem value={id} disabled={disabled}>
       <AccordionTrigger className="ll:gap-3" disabled={disabled}>
@@ -64,7 +67,7 @@ export const CategoryAccordionItem: FC<CategoryAccordionItemProps> = ({
           />
           {disabled && (
             <span className="ll:text-xs ll:text-muted-foreground ll:ml-auto ll:mr-2">
-              Tymczasowo niedostępne
+              {t("settings.sounds.temporarilyUnavailable")}
             </span>
           )}
         </div>
@@ -90,8 +93,7 @@ export const CategoryAccordionItem: FC<CategoryAccordionItemProps> = ({
             );
           })}
           <p className="ll:text-xs ll:text-muted-foreground ll:mt-1">
-            Obsługiwane formaty: mp3, wav, ogg. Zostaw puste, aby użyć
-            domyślnego dźwięku.
+            {t("settings.sounds.supportedFormats")}
           </p>
         </div>
       </AccordionContent>

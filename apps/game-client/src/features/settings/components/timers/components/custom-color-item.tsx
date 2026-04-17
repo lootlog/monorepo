@@ -3,6 +3,7 @@ import { Tile } from "@/components/ui/tile";
 import type { CustomTimerColor } from "@/store/timers.store";
 import { Edit2, Trash2 } from "lucide-react";
 import type { FC } from "react";
+import { useTranslation } from "react-i18next";
 import { ColorEditForm } from "./color-edit-form";
 import type { ColorEditData } from "./color-utils";
 
@@ -27,6 +28,8 @@ export const CustomColorItem: FC<CustomColorItemProps> = ({
   onDelete,
   onEditDataChange,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <div className="ll:flex ll:items-center ll:gap-2 ll:p-1.5 ll:bg-muted/40 ll:rounded-md ll:border ll:border-solid ll:border-accent-foreground/40">
       <div className="ll:flex-1 ll:flex ll:flex-col ll:justify-between ll:min-w-0 ll:h-full">
@@ -48,8 +51,8 @@ export const CustomColorItem: FC<CustomColorItemProps> = ({
               className="ll:h-6 ll:w-full ll:items-center ll:justify-center"
             >
               <span className="ll:text-[10px] ll:text-white ll:whitespace-nowrap ll:flex ll:justify-between ll:w-full ll:px-1 ll:items-center ll:h-full">
-                <span>[T] Tanroth</span>
-                <span> 00:21:37</span>
+                <span>{t("settings.common.preview.name")}</span>
+                <span>{t("settings.common.preview.time")}</span>
               </span>
             </Tile>
           </>

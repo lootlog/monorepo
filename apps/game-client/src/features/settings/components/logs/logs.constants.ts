@@ -1,39 +1,42 @@
 import type { LogActionType, LogEntryStatus } from "@/store/logs.store";
 
-export const LOG_STATUS_OPTIONS = [
-  { value: "all", label: "Wszystkie statusy" },
-  { value: "success", label: "Sukces" },
-  { value: "partial", label: "Częściowy sukces" },
-  { value: "error", label: "Błąd" },
+export const LOG_STATUS_VALUES = [
+  "all",
+  "success",
+  "partial",
+  "error",
 ] as const;
 
-export const ACTION_TYPE_LABELS: Record<LogActionType, string> = {
-  create_kill: "Dodanie zabicia",
-  create_battle: "Dodanie walki",
-  create_loot: "Dodanie łupu",
-  update_loot: "Aktualizacja łupu",
-  create_timer: "Dodanie timera",
-  create_manual_timer: "Ręczne dodanie timera",
-  delete_timer: "Usunięcie timera",
-  reset_timer: "Reset timera",
-  send_chat_message: "Wysłanie wiadomości",
-  create_notification: "Utworzenie powiadomienia",
-  volunteer: "Zgłoszenie do zbierania",
-  create_party_gathering: "Utworzenie zbierania grupy",
-  cancel_party_gathering: "Zakończenie zbierania grupy",
-  update_timer_settings: "Aktualizacja ustawień timerów",
-  update_guild_timer_settings: "Aktualizacja ustawień timerów gildii",
-  migrate_timer_settings: "Migracja ustawień timerów",
-  update_sound_settings: "Aktualizacja ustawień dźwięków",
-  update_user_preferences: "Aktualizacja preferencji użytkownika",
-  update_user_game_account_preferences: "Aktualizacja preferencji konta gry",
-  update_lootlog_characters_config: "Aktualizacja konfiguracji postaci",
+export type LogStatusFilter = (typeof LOG_STATUS_VALUES)[number];
+
+export const ACTION_TYPE_LABEL_KEYS: Record<LogActionType, string> = {
+  create_kill: "settings.logs.actionTypes.create_kill",
+  create_battle: "settings.logs.actionTypes.create_battle",
+  create_loot: "settings.logs.actionTypes.create_loot",
+  update_loot: "settings.logs.actionTypes.update_loot",
+  create_timer: "settings.logs.actionTypes.create_timer",
+  create_manual_timer: "settings.logs.actionTypes.create_manual_timer",
+  delete_timer: "settings.logs.actionTypes.delete_timer",
+  reset_timer: "settings.logs.actionTypes.reset_timer",
+  send_chat_message: "settings.logs.actionTypes.send_chat_message",
+  create_notification: "settings.logs.actionTypes.create_notification",
+  volunteer: "settings.logs.actionTypes.volunteer",
+  create_party_gathering: "settings.logs.actionTypes.create_party_gathering",
+  cancel_party_gathering: "settings.logs.actionTypes.cancel_party_gathering",
+  update_timer_settings: "settings.logs.actionTypes.update_timer_settings",
+  update_guild_timer_settings:
+    "settings.logs.actionTypes.update_guild_timer_settings",
+  migrate_timer_settings: "settings.logs.actionTypes.migrate_timer_settings",
+  update_sound_settings: "settings.logs.actionTypes.update_sound_settings",
+  update_user_preferences: "settings.logs.actionTypes.update_user_preferences",
+  update_user_game_account_preferences:
+    "settings.logs.actionTypes.update_user_game_account_preferences",
+  update_lootlog_characters_config:
+    "settings.logs.actionTypes.update_lootlog_characters_config",
 };
 
-export const STATUS_LABELS: Record<LogEntryStatus, string> = {
-  success: "Sukces",
-  partial: "Częściowy sukces",
-  error: "Błąd",
+export const STATUS_LABEL_KEYS: Record<LogEntryStatus, string> = {
+  success: "settings.logs.statuses.success",
+  partial: "settings.logs.statuses.partial",
+  error: "settings.logs.statuses.error",
 };
-
-export type LogStatusFilter = (typeof LOG_STATUS_OPTIONS)[number]["value"];

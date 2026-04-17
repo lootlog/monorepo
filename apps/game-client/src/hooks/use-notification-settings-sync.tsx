@@ -25,10 +25,8 @@ export const useNotificationSettingsSync = () => {
   const guildIds = guilds?.map((guild) => guild.id) ?? [];
   const seededAccountsRef = useRef<Set<string>>(new Set());
 
-  const { data, isLoading, isFetching } = useUserGameAccountPreferences(
-    accountId,
-    gameInitialized,
-  );
+  const { data, isLoading, isFetching, isFetched } =
+    useUserGameAccountPreferences(accountId, gameInitialized);
   const updateUserGameAccountPreferences =
     useUpdateUserGameAccountPreferences(accountId);
 
@@ -98,10 +96,10 @@ export const useNotificationSettingsSync = () => {
   ]);
 
   useEffect(() => {
-    if (!gameInitialized || !accountId || !data?.hasStoredDetector) {
+    if (!gameInitialized || !accountId || !isFetched) {
       return;
     }
 
     npcsDetectionProcessor.flushPending(accountId);
-  }, [accountId, data?.hasStoredDetector, gameInitialized]);
+  }, [accountId, gameInitialized, isFetched]);
 };

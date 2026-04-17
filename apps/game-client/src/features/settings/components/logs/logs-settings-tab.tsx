@@ -11,12 +11,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  LOG_STATUS_OPTIONS,
+  LOG_STATUS_VALUES,
   type LogStatusFilter,
 } from "@/features/settings/components/logs/logs.constants";
 import { LogsActionCard } from "@/features/settings/components/logs/logs-action-card";
 import {
   getActionLabel,
+  getStatusLabel,
   matchesActionFilters,
 } from "@/features/settings/components/logs/logs.helpers";
 import {
@@ -26,6 +27,7 @@ import {
 } from "@/store/logs.store";
 import { toast } from "sonner";
 import { type FC, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const getLogsExportFileName = (): string => {
   return `lootlog-logs-${new Date().toISOString().replaceAll(":", "-")}.json`;
@@ -39,9 +41,15 @@ export const LogsSettingsTab: FC = () => {
   const [actionTypeFilter, setActionTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState<LogStatusFilter>("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const { t } = useTranslation();
+  const logStatusOptions = LOG_STATUS_VALUES.map((value) => ({
+    value,
+    label:
+      value === "all" ? t("settings.logs.statuses.all") : getStatusLabel(value),
+  }));
 
   const actionTypeOptions = [
-    { value: "all", label: "Wszystkie akcje" },
+    { value: "all", label: t("settings.logs.allActions") },
     ...Array.from(new Set(actions.map((action) => action.actionType)))
       .sort((left, right) =>
         getActionLabel(left).localeCompare(getActionLabel(right), "pl"),
@@ -66,16 +74,16 @@ export const LogsSettingsTab: FC = () => {
       await navigator.clipboard.writeText(JSON.stringify(log, null, 2));
       toast.success(successMessage);
     } catch {
-      toast.error("Nie udało się skopiować logu");
+      toast.error(t("settings.logs.copyFailed"));
     }
   };
 
   const handleCopyAction = async (action: LoggedAction) => {
-    await copyLog(action, "Akcja skopiowana do schowka");
+    await copyLog(action, t("settings.logs.copyActionSuccess"));
   };
 
   const handleCopyRequest = async (request: LoggedApiRequest) => {
-    await copyLog(request, "Request skopiowany do schowka");
+    await copyLog(request, t("settings.logs.copyRequestSuccess"));
   };
 
   const handleExportLogs = () => {
@@ -102,16 +110,16 @@ export const LogsSettingsTab: FC = () => {
       link.remove();
       window.URL.revokeObjectURL(downloadUrl);
 
-      toast.success("Logi wyeksportowane do pliku");
+      toast.success(t("settings.logs.exportSuccess"));
     } catch {
-      toast.error("Nie udało się wyeksportować logów");
+      toast.error(t("settings.logs.exportFailed"));
     }
   };
 
   return (
     <SettingsTabLayout
-      title="Logi"
-      description="Zapisane akcje użytkownika z rozwijanymi wywołaniami API, payloadem, odpowiedzią i statusem."
+      title={t("settings.logs.title")}
+      description={t("settings.logs.description")}
       actions={
         <div className="ll:flex ll:items-center ll:gap-2">
           <Button
@@ -121,7 +129,7 @@ export const LogsSettingsTab: FC = () => {
             type="button"
             variant="ghost"
           >
-            Eksportuj JSON
+            {t("settings.common.actions.exportJson")}
           </Button>
           <Button
             className="ll:h-6 ll:px-2"
@@ -130,21 +138,21 @@ export const LogsSettingsTab: FC = () => {
             type="button"
             variant="ghost"
           >
-            Wyczyść
+            {t("settings.common.actions.clear")}
           </Button>
         </div>
       }
     >
       <SettingsSection
-        title="Filtry"
-        description="Zawęź wpisy po typie, statusie lub fragmencie treści."
+        title={t("settings.logs.filtersTitle")}
+        description={t("settings.logs.filtersDescription")}
       >
         <div className="ll:grid ll:grid-cols-1 ll:gap-2 ll:sm:grid-cols-[minmax(0,1fr)_minmax(0,9rem)_minmax(0,9rem)] ll:sm:items-center">
           <div className="ll:min-w-0">
             <Input
               className={FILTER_CONTROL_CLASS_NAME}
               onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Szukaj w logach"
+              placeholder={t("settings.logs.searchPlaceholder")}
               value={searchTerm}
             />
           </div>
@@ -154,10 +162,12 @@ export const LogsSettingsTab: FC = () => {
               value={actionTypeFilter}
             >
               <SelectTrigger
-                aria-label="Typ akcji"
+                aria-label={t("settings.logs.actionTypeAria")}
                 className={FILTER_CONTROL_CLASS_NAME}
               >
-                <SelectValue placeholder="Typ akcji" />
+                <SelectValue
+                  placeholder={t("settings.logs.actionTypePlaceholder")}
+                />
               </SelectTrigger>
               <SelectContent>
                 {actionTypeOptions.map((option) => (
@@ -176,13 +186,15 @@ export const LogsSettingsTab: FC = () => {
               value={statusFilter}
             >
               <SelectTrigger
-                aria-label="Status akcji"
+                aria-label={t("settings.logs.statusAria")}
                 className={FILTER_CONTROL_CLASS_NAME}
               >
-                <SelectValue placeholder="Status akcji" />
+                <SelectValue
+                  placeholder={t("settings.logs.statusPlaceholder")}
+                />
               </SelectTrigger>
               <SelectContent>
-                {LOG_STATUS_OPTIONS.map((option) => (
+                {logStatusOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
@@ -194,8 +206,11 @@ export const LogsSettingsTab: FC = () => {
       </SettingsSection>
 
       <SettingsSection
-        title="Lista akcji"
-        description={`Widoczne akcje: ${filteredActions.length} z ${actions.length}.`}
+        title={t("settings.logs.listTitle")}
+        description={t("settings.logs.listDescription", {
+          visibleCount: filteredActions.length,
+          totalCount: actions.length,
+        })}
       >
         {filteredActions.length > 0 ? (
           <div className="ll:flex ll:flex-col ll:gap-2">
@@ -210,7 +225,7 @@ export const LogsSettingsTab: FC = () => {
           </div>
         ) : (
           <SettingsEmptyState>
-            Brak akcji pasujących do aktualnych filtrów.
+            {t("settings.logs.emptyState")}
           </SettingsEmptyState>
         )}
       </SettingsSection>

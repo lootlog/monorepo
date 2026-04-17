@@ -4,19 +4,21 @@ import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Switch } from "@/components/ui/switch";
 import { useSettingsStore } from "@/store/settings.store";
 import type { FC } from "react";
+import { useTranslation } from "react-i18next";
 
 export const GeneralSettingsTab: FC = () => {
   const { allowWorldSelection, toggleAllowWorldSelection } = useSettingsStore();
+  const { t } = useTranslation();
 
   return (
     <SettingsTabLayout
-      title="Ustawienia ogólne"
-      description="Skonfiguruj ogólne ustawienia dotyczące działania dodatku w grze."
+      title={t("settings.general.title")}
+      description={t("settings.general.description")}
     >
-      <SettingsSection title="Zachowanie dodatku">
+      <SettingsSection title={t("settings.general.behaviorTitle")}>
         <SettingsControlRow
-          label="Pozwalaj na wybór świata"
-          description="Nie działa na zgrupowanych timerach."
+          label={t("settings.general.allowWorldSelectionLabel")}
+          description={t("settings.general.allowWorldSelectionDescription")}
         >
           <Switch
             checked={allowWorldSelection}

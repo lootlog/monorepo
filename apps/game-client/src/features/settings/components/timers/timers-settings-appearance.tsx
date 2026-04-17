@@ -5,14 +5,18 @@ import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useTimersStore } from "@/store/timers.store";
 import type { FC } from "react";
+import { useTranslation } from "react-i18next";
 
 export const TimersSettingsAppearance: FC = () => {
   const { displayConfig, setDisplayConfig } = useTimersStore();
+  const { t } = useTranslation();
 
   return (
     <div className="ll:flex ll:flex-col ll:gap-3">
-      <SettingsSection title="Widoczność">
-        <SettingsControlRow label="Wyświetlaj poziom potwora">
+      <SettingsSection title={t("settings.timers.appearance.visibilityTitle")}>
+        <SettingsControlRow
+          label={t("settings.timers.appearance.showLevelLabel")}
+        >
           <Switch
             checked={displayConfig.showLevel}
             onCheckedChange={(checked) => {
@@ -21,7 +25,9 @@ export const TimersSettingsAppearance: FC = () => {
             id="show-level"
           />
         </SettingsControlRow>
-        <SettingsControlRow label="Wyświetlaj typ potwora">
+        <SettingsControlRow
+          label={t("settings.timers.appearance.showTypeLabel")}
+        >
           <Switch
             checked={displayConfig.showType}
             onCheckedChange={(checked) => {
@@ -31,10 +37,12 @@ export const TimersSettingsAppearance: FC = () => {
           />
         </SettingsControlRow>
       </SettingsSection>
-      <SettingsSection title="Układ">
+      <SettingsSection title={t("settings.timers.appearance.layoutTitle")}>
         <SettingsControlRow
-          label="Tryb wyświetlania pojedynczego timera"
-          description="Kolumny wyświetlają czas pod nazwą timera. Wiersze wyświetlają czas obok nazwy timera."
+          label={t("settings.timers.appearance.singleTimerDisplayModeLabel")}
+          description={t(
+            "settings.timers.appearance.singleTimerDisplayModeDescription",
+          )}
           controlClassName="ll:w-40"
         >
           <ToggleGroup
@@ -50,14 +58,18 @@ export const TimersSettingsAppearance: FC = () => {
             }}
             value={displayConfig.singleTimerDisplayMode}
           >
-            <ToggleGroupItem value="column">Kolumny</ToggleGroupItem>
-            <ToggleGroupItem value="row">Wiersze</ToggleGroupItem>
+            <ToggleGroupItem value="column">
+              {t("settings.timers.appearance.singleTimerDisplayModeColumn")}
+            </ToggleGroupItem>
+            <ToggleGroupItem value="row">
+              {t("settings.timers.appearance.singleTimerDisplayModeRow")}
+            </ToggleGroupItem>
           </ToggleGroup>
         </SettingsControlRow>
       </SettingsSection>
-      <SettingsSection title="Skala">
+      <SettingsSection title={t("settings.timers.appearance.scaleTitle")}>
         <SettingsControlRow
-          label="Wielkość czcionki"
+          label={t("settings.timers.appearance.fontSizeLabel")}
           controlClassName="ll:w-40"
         >
           <Slider
@@ -71,7 +83,7 @@ export const TimersSettingsAppearance: FC = () => {
           />
         </SettingsControlRow>
         <SettingsControlRow
-          label="Minimalna szerokość pojedynczego timera"
+          label={t("settings.timers.appearance.minWidthLabel")}
           controlClassName="ll:w-40"
         >
           <Slider

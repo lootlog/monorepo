@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Volume2, VolumeX } from "lucide-react";
 import type { FC } from "react";
+import { useTranslation } from "react-i18next";
 
 interface MasterVolumeControlProps {
   volume: number;
@@ -23,6 +24,7 @@ export const MasterVolumeControl: FC<MasterVolumeControlProps> = ({
   onMuteToggle,
 }) => {
   const isMuted = volume === 0;
+  const { t } = useTranslation();
 
   return (
     <SettingsPanel className="ll:flex ll:items-center ll:gap-3">
@@ -32,9 +34,11 @@ export const MasterVolumeControl: FC<MasterVolumeControlProps> = ({
             <Volume2 className="ll:size-4" />
           </span>
         </TooltipTrigger>
-        <TooltipContent>Głośność główna</TooltipContent>
+        <TooltipContent>{t("settings.sounds.masterVolume")}</TooltipContent>
       </Tooltip>
-      <span className="ll:text-sm ll:w-28 ll:text-left">Głośność główna</span>
+      <span className="ll:text-sm ll:w-28 ll:text-left">
+        {t("settings.sounds.masterVolume")}
+      </span>
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
@@ -49,7 +53,11 @@ export const MasterVolumeControl: FC<MasterVolumeControlProps> = ({
             )}
           </Button>
         </TooltipTrigger>
-        <TooltipContent>{isMuted ? "Włącz dźwięk" : "Wycisz"}</TooltipContent>
+        <TooltipContent>
+          {isMuted
+            ? t("settings.common.actions.unmute")
+            : t("settings.common.actions.mute")}
+        </TooltipContent>
       </Tooltip>
       <div className="ll:flex-1">
         <Slider

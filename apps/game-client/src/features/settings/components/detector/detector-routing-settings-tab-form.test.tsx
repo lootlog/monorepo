@@ -67,7 +67,7 @@ describe("DetectorRoutingSettingsTabForm", () => {
     } as ReturnType<typeof useGuilds>);
     vi.mocked(useUpdateUserGameAccountPreferences).mockReturnValue({
       mutate: mockMutate,
-    } as ReturnType<typeof useUpdateUserGameAccountPreferences>);
+    } as unknown as ReturnType<typeof useUpdateUserGameAccountPreferences>);
     vi.mocked(useCurrentGameAccountDetectorSettings).mockReturnValue({
       accountId: "account-1",
       isFetched: true,

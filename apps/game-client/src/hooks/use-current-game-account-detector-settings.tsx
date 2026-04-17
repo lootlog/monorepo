@@ -1,9 +1,6 @@
 import { useMemo } from "react";
 import { useUserGameAccountPreferences } from "@/hooks/api/use-user-account-preferences";
-import {
-  getEffectiveDetectorSettings,
-  isDetectorPreferencesReady,
-} from "@/lib/game-account-notification-preferences";
+import { getEffectiveDetectorSettings } from "@/lib/game-account-notification-preferences";
 import { Game } from "@/lib/game";
 import { useGlobalStore } from "@/store/global.store";
 
@@ -17,10 +14,7 @@ export const useCurrentGameAccountDetectorSettings = () => {
     () => getEffectiveDetectorSettings(query.data),
     [query.data],
   );
-  const isReady = useMemo(
-    () => isDetectorPreferencesReady(query.data),
-    [query.data],
-  );
+  const isReady = query.isFetched;
 
   return {
     ...query,

@@ -1,29 +1,37 @@
-const DETECTOR_ROUTING_SETTINGS_TRANSLATIONS = {
-  sectionTitle: "Routing na serwery",
-  sectionDescription:
-    "Wspólny routing dla całego wykrywacza. Nakładające się zakresy wysyłają komunikaty na wszystkie dopasowane serwery. Zakres leveli dotyczy poziomu NPC, nie gracza.",
-  addRuleButton: "Dodaj regułę",
-  emptyState:
-    "Brak reguł routingu. Detector będzie działał lokalnie bez wysyłki na Discord.",
-  ruleLabel: (index: number) => `Reguła ${index}`,
-  selectedGuildsBadge: (count: number) => `Serwery ${count}`,
-  minLevelBadge: (level: number) => `Od ${level}`,
-  maxLevelBadge: (level: number) => `Do ${level}`,
-  minLevelLabel: "Od levela",
-  maxLevelLabel: "Do levela",
-  guildSelectionLabel: "Na jakie serwery wysyłać",
-  noGuildsSelected: "Brak serwerów",
-  noGuildsAvailable: "Brak serwerów do wyboru.",
-  deleteRuleLabel: (index: number) => `Usuń regułę ${index}`,
-  toggleRuleLabel: (index: number) => `Przełącz regułę ${index}`,
-  guildOverflowLabel: (count: number) => `+${count}`,
-  guildOverflowTooltip: (count: number) => `${count} kolejnych serwerów`,
-} as const;
+import i18n from "@/i18n/config";
 
-export type DetectorRoutingSettingsTranslations =
-  typeof DETECTOR_ROUTING_SETTINGS_TRANSLATIONS;
+export type DetectorRoutingSettingsTranslations = ReturnType<
+  typeof getDetectorRoutingSettingsTranslations
+>;
 
-export const getDetectorRoutingSettingsTranslations =
-  (): DetectorRoutingSettingsTranslations => {
-    return DETECTOR_ROUTING_SETTINGS_TRANSLATIONS;
+export const getDetectorRoutingSettingsTranslations = () => {
+  return {
+    sectionTitle: i18n.t("settings.detector.routing.sectionTitle"),
+    sectionDescription: i18n.t("settings.detector.routing.sectionDescription"),
+    addRuleButton: i18n.t("settings.detector.routing.addRuleButton"),
+    emptyState: i18n.t("settings.detector.routing.emptyState"),
+    ruleLabel: (index: number) =>
+      i18n.t("settings.detector.routing.ruleLabel", { index }),
+    selectedGuildsBadge: (count: number) =>
+      i18n.t("settings.detector.routing.selectedGuildsBadge", { count }),
+    minLevelBadge: (level: number) =>
+      i18n.t("settings.detector.routing.minLevelBadge", { level }),
+    maxLevelBadge: (level: number) =>
+      i18n.t("settings.detector.routing.maxLevelBadge", { level }),
+    minLevelLabel: i18n.t("settings.detector.routing.minLevelLabel"),
+    maxLevelLabel: i18n.t("settings.detector.routing.maxLevelLabel"),
+    guildSelectionLabel: i18n.t(
+      "settings.detector.routing.guildSelectionLabel",
+    ),
+    noGuildsSelected: i18n.t("settings.detector.routing.noGuildsSelected"),
+    noGuildsAvailable: i18n.t("settings.detector.routing.noGuildsAvailable"),
+    deleteRuleLabel: (index: number) =>
+      i18n.t("settings.detector.routing.deleteRuleLabel", { index }),
+    toggleRuleLabel: (index: number) =>
+      i18n.t("settings.detector.routing.toggleRuleLabel", { index }),
+    guildOverflowLabel: (count: number) =>
+      i18n.t("settings.detector.routing.guildOverflowLabel", { count }),
+    guildOverflowTooltip: (count: number) =>
+      i18n.t("settings.detector.routing.guildOverflowTooltip", { count }),
   };
+};

@@ -28,6 +28,7 @@ import { usePartyGatheringSocket } from "@/features/party-finder/hooks/use-party
 import { bootstrapPublicApi } from "@/features/public-api";
 import { useNotificationSettingsSync } from "@/hooks/use-notification-settings-sync";
 import { AppErrorBoundaryFallback } from "@/features/error-boundary/app-error-boundary-fallback";
+import { BackendPreferencesWarning } from "@/features/backend-preferences-warning/backend-preferences-warning";
 
 const THEME_STORAGE_KEY = storageKey("lootlog-theme");
 
@@ -63,6 +64,7 @@ function AppContent() {
         <Notifications />
         <QuickAccess />
         <CatchingWhitelistWarning />
+        <BackendPreferencesWarning />
         <Toaster />
         <PartyFinder />
         <CreatePartyGathering />
