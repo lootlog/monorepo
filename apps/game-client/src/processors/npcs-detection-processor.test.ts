@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createDetectorSettings,
   getUserGameAccountPreferencesQueryKey,
-} from "@/lib/game-account-notification-preferences";
+} from "@/lib/game-account-preferences";
 import { queryClient } from "@/lib/query-client";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { useWindowsStore } from "@/store/windows.store";

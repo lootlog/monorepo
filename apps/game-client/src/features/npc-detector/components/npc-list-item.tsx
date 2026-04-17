@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/tooltip";
 import { AnimatePresence, motion } from "framer-motion";
 import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
-import { resolveDetectorGuildIds } from "@/lib/game-account-notification-preferences";
+import { resolveDetectorGuildIds } from "@/lib/game-account-preferences";
 import { cn } from "@/lib/utils";
 import { getNpcTypeByWt, type DetectorNpcType } from "@lootlog/types";
 import {

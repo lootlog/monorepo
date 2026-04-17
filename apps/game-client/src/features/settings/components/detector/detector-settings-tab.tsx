@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DetectorRoutingSettingsTabForm } from "@/features/settings/components/detector/detector-routing-settings-tab-form";
 import { DetectorSettingsTabForm } from "@/features/settings/components/detector/detector-settings-tab-form";
 import { NpcType } from "@/hooks/api/use-npcs";
-import { useNotificationSettingsSyncStatus } from "@/hooks/use-notification-settings-sync-status";
+import { useGameAccountPreferencesSyncStatus } from "@/hooks/use-game-account-preferences-sync-status";
 import type { DetectorNpcType } from "@lootlog/types";
 import { useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -18,7 +18,7 @@ import { useTranslation } from "react-i18next";
 const SYNC_INDICATOR_DELAY_MS = 100;
 
 export const DetectorSettingsTab = () => {
-  const syncStatus = useNotificationSettingsSyncStatus();
+  const syncStatus = useGameAccountPreferencesSyncStatus();
   const [visibleStatus, setVisibleStatus] = useState(syncStatus.status);
   const { t } = useTranslation();
   const categoryTabs: Array<{

@@ -6,8 +6,8 @@ import {
   createDetectorSettings,
   createNotificationsSettings,
   getUserGameAccountPreferencesQueryKey,
-} from "@/lib/game-account-notification-preferences";
-import { useNotificationSettingsSync } from "@/hooks/use-notification-settings-sync";
+} from "@/lib/game-account-preferences";
+import { useGameAccountPreferencesSync } from "@/hooks/use-game-account-preferences-sync";
 
 const mockUseGuilds = vi.fn();
 const mockUseUserGameAccountPreferences = vi.fn();
@@ -51,7 +51,7 @@ vi.mock("@/store/global.store", () => ({
     }),
 }));
 
-describe("useNotificationSettingsSync", () => {
+describe("useGameAccountPreferencesSync", () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
@@ -97,7 +97,7 @@ describe("useNotificationSettingsSync", () => {
       isFetched: true,
     });
 
-    renderHook(() => useNotificationSettingsSync(), {
+    renderHook(() => useGameAccountPreferencesSync(), {
       wrapper,
     });
 
@@ -144,7 +144,7 @@ describe("useNotificationSettingsSync", () => {
       isFetched: true,
     });
 
-    renderHook(() => useNotificationSettingsSync(), {
+    renderHook(() => useGameAccountPreferencesSync(), {
       wrapper,
     });
 
@@ -162,7 +162,7 @@ describe("useNotificationSettingsSync", () => {
       isFetched: true,
     });
 
-    renderHook(() => useNotificationSettingsSync(), {
+    renderHook(() => useGameAccountPreferencesSync(), {
       wrapper,
     });
 

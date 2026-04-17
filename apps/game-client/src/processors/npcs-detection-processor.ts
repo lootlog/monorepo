@@ -28,7 +28,7 @@ import {
   getEffectiveDetectorSettings,
   getUserGameAccountPreferencesQueryKey,
   resolveDetectorGuildIds,
-} from "@/lib/game-account-notification-preferences";
+} from "@/lib/game-account-preferences";
 
 type PendingDetection =
   | {

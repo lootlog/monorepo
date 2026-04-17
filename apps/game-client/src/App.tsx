@@ -26,7 +26,7 @@ import { CreatePartyGathering } from "@/features/party-finder/create-party-gathe
 import { usePartyFinderSocket } from "@/features/party-finder/hooks/use-party-finder-socket";
 import { usePartyGatheringSocket } from "@/features/party-finder/hooks/use-party-gathering-socket";
 import { bootstrapPublicApi } from "@/features/public-api";
-import { useNotificationSettingsSync } from "@/hooks/use-notification-settings-sync";
+import { useGameAccountPreferencesSync } from "@/hooks/use-game-account-preferences-sync";
 import { AppErrorBoundaryFallback } from "@/features/error-boundary/app-error-boundary-fallback";
 import { BackendPreferencesWarning } from "@/features/backend-preferences-warning/backend-preferences-warning";
 
@@ -42,7 +42,7 @@ win.__lootlogApiTeardown = bootstrapPublicApi(queryClient);
 function AppContent() {
   useGameEventHandlers();
   useInit();
-  useNotificationSettingsSync();
+  useGameAccountPreferencesSync();
   useHotkeys();
   useTimerSettingsMutationsRegistry();
   usePartyFinderSocket();

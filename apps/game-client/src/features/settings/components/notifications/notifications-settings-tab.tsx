@@ -5,7 +5,7 @@ import {
   SETTINGS_SUBTAB_CONTENT_CLASS_NAME,
   SETTINGS_SUBTAB_TRIGGER_CLASS_NAME,
 } from "@/components/settings/settings-styles";
-import { useNotificationSettingsSyncStatus } from "@/hooks/use-notification-settings-sync-status";
+import { useGameAccountPreferencesSyncStatus } from "@/hooks/use-game-account-preferences-sync-status";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NotificationCategoryForm } from "@/features/settings/components/notifications/notification-category-form";
 import { NpcType } from "@/hooks/api/use-npcs";
@@ -16,7 +16,7 @@ import { useTranslation } from "react-i18next";
 const SYNC_INDICATOR_DELAY_MS = 100;
 
 export const NotificationsSettingsTab = () => {
-  const syncStatus = useNotificationSettingsSyncStatus();
+  const syncStatus = useGameAccountPreferencesSyncStatus();
   const [visibleStatus, setVisibleStatus] = useState(syncStatus.status);
   const { t } = useTranslation();
   const categoryTabs: { label: string; key: NotificationType }[] = [

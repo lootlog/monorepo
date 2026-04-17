@@ -9,13 +9,13 @@ import {
   createDetectorSettings,
   createNotificationsSettings,
   getUserGameAccountPreferencesQueryKey,
-} from "@/lib/game-account-notification-preferences";
+} from "@/lib/game-account-preferences";
 import { Game } from "@/lib/game";
 import { npcsDetectionProcessor } from "@/processors/npcs-detection-processor";
 import { useGlobalStore } from "@/store/global.store";
 import type { UserGameAccountPreferences } from "@lootlog/types";
 
-export const useNotificationSettingsSync = () => {
+export const useGameAccountPreferencesSync = () => {
   const gameInitialized = useGlobalStore(
     (state) => state.gameState.gameInitialized,
   );
