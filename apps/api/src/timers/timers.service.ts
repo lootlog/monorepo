@@ -32,6 +32,7 @@ import { generateUniqueIntId } from "src/shared/utils/generate-unique-int-id";
 import { RoutingKey } from "src/enum/routing-key.enum";
 import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
 import { canViewNpcTimer } from "@lootlog/api-helpers/permissions";
+import type { CreateTimerDto } from "src/timers/dto/create-timer.dto";
 import type { CreateTimerFromGameClientDto } from "src/timers/dto/create-timer-from-game-client.dto";
 import { validateAndCalculateSpawnTimes } from "src/timers/utils/validate-spawn-times";
 import { TIMER_LIMITS, TIMER_TYPES } from "src/timers/constants/timer-limits";
@@ -695,6 +696,20 @@ export class TimersService implements OnModuleInit {
     });
 
     return worlds.map((worldEntry) => worldEntry.world);
+  }
+
+  async createTimer(
+    discordId: string,
+    userId: string,
+    guildId: string,
+    data: CreateTimerDto | CreateTimerFromGameClientDto,
+  ) {
+    return this.createTimerForGuild(
+      discordId,
+      userId,
+      guildId,
+      data as CreateTimerFromGameClientDto,
+    );
   }
 
   async createTimerForGuild(
