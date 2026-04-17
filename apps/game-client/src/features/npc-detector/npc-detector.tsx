@@ -1,18 +1,43 @@
 import { DraggableWindow } from "@/components/draggable-window";
 import { AnimatedWindow } from "@/components/animated-window";
+import { WindowMaxHeightAction } from "@/components/window-max-height-action";
 import { NpcsList } from "@/features/npc-detector/components/npcs-list";
 import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
-import type { DetectorNpcType } from "@lootlog/types";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { useWindowsStore } from "@/store/windows.store";
-import { getNpcTypeByWt } from "@lootlog/types";
+import { getNpcTypeByWt, type DetectorNpcType } from "@lootlog/types";
 import { NpcType } from "@/hooks/api/use-npcs";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export const NpcDetector = () => {
+  const { t } = useTranslation();
   const open = useWindowsStore((state) => state["npc-detector"].open);
+  const defaultWindowHeight = useWindowsStore(
+    (state) => state["npc-detector"].size.height,
+  );
+  const storedMaxContentHeight = useWindowsStore(
+    (state) => state["npc-detector"].maxContentHeight,
+  );
   const setOpen = useWindowsStore((state) => state.setOpen);
+  const setMaxContentHeight = useWindowsStore(
+    (state) => state.setMaxContentHeight,
+  );
   const { npcs, clearNpcs } = useNpcDetectorStore();
   const { settings } = useCurrentGameAccountDetectorSettings();
+  const [isMaxHeightAdjustmentArmed, setIsMaxHeightAdjustmentArmed] =
+    useState(false);
+  const [resolvedMaxContentHeight, setResolvedMaxContentHeight] = useState(
+    storedMaxContentHeight ?? defaultWindowHeight,
+  );
+
+  useEffect(() => {
+    if (storedMaxContentHeight === undefined) {
+      return;
+    }
+
+    setResolvedMaxContentHeight(storedMaxContentHeight);
+  }, [storedMaxContentHeight]);
 
   const handleClose = () => {
     setOpen("npc-detector", false);
@@ -37,10 +62,25 @@ export const NpcDetector = () => {
     >
       <DraggableWindow
         id="npc-detector"
-        title="Wykrywacz"
+        title={t("settings.windows.npcDetector")}
+        actions=<WindowMaxHeightAction
+          currentMaxHeight={resolvedMaxContentHeight}
+          isArmed={isMaxHeightAdjustmentArmed}
+          onClick={() =>
+            setIsMaxHeightAdjustmentArmed((currentValue) => !currentValue)
+          }
+        />
         onClose={handleClose}
+        heightMode="auto-up-to-max"
+        maxContentHeight={storedMaxContentHeight}
+        isMaxHeightAdjustmentArmed={isMaxHeightAdjustmentArmed}
+        onMaxHeightAdjustmentArmedChange={setIsMaxHeightAdjustmentArmed}
+        onMaxContentHeightChange={(nextMaxContentHeight) =>
+          setMaxContentHeight("npc-detector", nextMaxContentHeight)
+        }
+        onResolvedMaxContentHeightChange={setResolvedMaxContentHeight}
         resizable
-        minHeight={88}
+        minHeight={82}
         maxHeight={600}
         minWidth={242}
       >

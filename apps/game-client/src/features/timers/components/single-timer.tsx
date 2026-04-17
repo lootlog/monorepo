@@ -58,7 +58,8 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   const { data: guildPermissions } = useGuildPermissions({
     guildId: timer.guildId,
   });
-  const normalizedGuildPermissions = normalizeGuildPermissions(guildPermissions);
+  const normalizedGuildPermissions =
+    normalizeGuildPermissions(guildPermissions);
 
   const canDelete = REQUIRED_DELETE_PERMISSIONS.some((perm) =>
     normalizedGuildPermissions.includes(perm),

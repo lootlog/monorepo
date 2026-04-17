@@ -81,7 +81,7 @@ export const defaultNotificationsSettings: NotificationsSettings = {
   ELITE2: {
     show: false,
     highlight: false,
-    ignoreOtherWorlds: false,
+    ignoreOtherWorlds: true,
     autoHideTimeout: 0,
     guildIds: [],
     sound: false,
@@ -89,7 +89,7 @@ export const defaultNotificationsSettings: NotificationsSettings = {
   HERO: {
     show: true,
     highlight: true,
-    ignoreOtherWorlds: false,
+    ignoreOtherWorlds: true,
     autoHideTimeout: 0,
     guildIds: [],
     sound: false,
@@ -97,7 +97,7 @@ export const defaultNotificationsSettings: NotificationsSettings = {
   COLOSSUS: {
     show: true,
     highlight: true,
-    ignoreOtherWorlds: false,
+    ignoreOtherWorlds: true,
     autoHideTimeout: 0,
     guildIds: [],
     sound: false,
@@ -105,7 +105,7 @@ export const defaultNotificationsSettings: NotificationsSettings = {
   TITAN: {
     show: true,
     highlight: true,
-    ignoreOtherWorlds: false,
+    ignoreOtherWorlds: true,
     autoHideTimeout: 0,
     guildIds: [],
     sound: false,
@@ -113,7 +113,7 @@ export const defaultNotificationsSettings: NotificationsSettings = {
   message: {
     show: true,
     highlight: true,
-    ignoreOtherWorlds: false,
+    ignoreOtherWorlds: true,
     autoHideTimeout: 0,
     guildIds: [],
     sound: false,
@@ -121,7 +121,7 @@ export const defaultNotificationsSettings: NotificationsSettings = {
   "party-gathering": {
     show: true,
     highlight: true,
-    ignoreOtherWorlds: false,
+    ignoreOtherWorlds: true,
     autoHideTimeout: 0,
     guildIds: [],
     sound: false,

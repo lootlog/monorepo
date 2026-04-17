@@ -56,6 +56,7 @@ interface WindowData {
   opacity: WindowOpacity;
   locked: boolean;
   autofocus?: boolean;
+  maxContentHeight?: number;
 }
 
 interface WindowsState {
@@ -81,6 +82,7 @@ interface WindowsState {
   setOpen: <T = unknown>(window: WindowId, open: boolean, state?: T) => void;
   setPosition: (window: WindowId, pos: WindowPositionState) => void;
   setSize: (window: WindowId, size: WindowSizeState) => void;
+  setMaxContentHeight: (window: WindowId, height: number) => void;
   setOpacity: (window: WindowId, opacity: WindowOpacity) => void;
   setLocked: (window: WindowId, locked: boolean) => void;
   toggleOpen: (window: WindowId, autofocus?: boolean) => void;
@@ -91,6 +93,14 @@ interface WindowsState {
 const DEFAULT_OPACITY: WindowOpacity = 4;
 const DEFAULT_POSITION: WindowPositionState = { x: 0, y: 0 };
 const DEFAULT_SIZE: WindowSizeState = { width: 242, height: 240 };
+
+const sanitizeMaxContentHeight = (height: number) => {
+  if (!Number.isFinite(height)) {
+    return undefined;
+  }
+
+  return Math.max(1, Math.round(height));
+};
 
 const hasNonZeroPosition = (
   position: unknown,
@@ -382,6 +392,21 @@ export const useWindowsStore = create<WindowsState>()(
         })),
       setSize: (key: WindowId, size) =>
         set((state) => ({ [key]: { ...state[key], size } })),
+      setMaxContentHeight: (key: WindowId, height: number) =>
+        set((state) => {
+          const nextMaxContentHeight = sanitizeMaxContentHeight(height);
+
+          if (nextMaxContentHeight === undefined) {
+            return state;
+          }
+
+          return {
+            [key]: {
+              ...state[key],
+              maxContentHeight: nextMaxContentHeight,
+            },
+          };
+        }),
       setOpacity: (key: WindowId, opacity: WindowOpacity) =>
         set((state) => ({ [key]: { ...state[key], opacity } })),
       setLocked: (key: WindowId, locked: boolean) =>
@@ -442,7 +467,7 @@ export const useWindowsStore = create<WindowsState>()(
         "create-party-gathering": state["create-party-gathering"],
       }),
       storage: createJSONStorage(() => localStorage),
-      version: 4,
+      version: 6,
       migrate: migrateWindowsState,
     },
   ),

@@ -19,9 +19,6 @@ export const NotificationsList: FC<NotificationsListProps> = ({
   const guildNamesById = getGuildNamesById(guilds);
   const notificationsCount = notifications?.length ?? 0;
   const scrollViewportRef = useRef<HTMLDivElement | null>(null);
-  const activeNotificationAnimations = useNotificationsStore(
-    (state) => state.activeNotificationAnimations,
-  );
   const latestNotificationAnimationCycle = useNotificationsStore(
     (state) => state.latestNotificationAnimationCycle,
   );
@@ -37,10 +34,7 @@ export const NotificationsList: FC<NotificationsListProps> = ({
       className="ll:h-full ll:w-full ll:box-border"
       type="hover"
     >
-      <motion.div
-        layout
-        className="ll:flex ll:w-full ll:flex-col ll:gap-1 ll:pt-1"
-      >
+      <motion.div className="ll:flex ll:w-full ll:flex-col ll:gap-1 ll:pt-1">
         <AnimatePresence initial={false}>
           {notifications?.map((notification) => {
             return (
@@ -65,9 +59,6 @@ export const NotificationsList: FC<NotificationsListProps> = ({
               >
                 <SingleNotification
                   notification={notification}
-                  notificationAnimationCycle={
-                    activeNotificationAnimations[notification.listKey] ?? null
-                  }
                   guildNamesById={guildNamesById}
                   showCloseButton={notificationsCount > 1}
                 />

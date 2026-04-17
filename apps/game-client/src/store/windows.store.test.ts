@@ -39,4 +39,34 @@ describe("migrateWindowsState", () => {
     expect(migrated.settings.hasDefinedPosition).toBe(true);
     expect(migrated.settings.position).toEqual({ x: 24, y: 48 });
   });
+
+  it("keeps max content height for notifications and npc detector", () => {
+    const migrated = migrateWindowsState(
+      {
+        notifications: {
+          open: true,
+          position: { x: 0, y: 0 },
+          hasDefinedPosition: false,
+          size: { width: 360, height: 300 },
+          opacity: 4,
+          locked: false,
+          maxContentHeight: 160,
+        },
+        "npc-detector": {
+          open: true,
+          position: { x: 0, y: 0 },
+          hasDefinedPosition: false,
+          size: { width: 300, height: 300 },
+          opacity: 4,
+          locked: false,
+          maxContentHeight: 220,
+        },
+        windowFocusHistory: [],
+      },
+      5,
+    );
+
+    expect(migrated.notifications.maxContentHeight).toBe(160);
+    expect(migrated["npc-detector"].maxContentHeight).toBe(220);
+  });
 });

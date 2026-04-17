@@ -69,25 +69,20 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
   const guildId = guildIdByCharId[characterId];
 
   useEffect(() => {
-    const orderedGuildsForSelection = orderGuilds(guilds, guildsOrder);
-
-    if (!isFetched || orderedGuildsForSelection.length === 0) return;
+    if (!isFetched || orderedGuilds.length === 0) return;
     if (multiple) return;
     const currentValue = value !== undefined ? value : guildId;
     if (allowAll && currentValue === "all") return;
-    const exists = orderedGuildsForSelection.some(
-      (guild) => guild.id === currentValue,
-    );
+    const exists = orderedGuilds.some((guild) => guild.id === currentValue);
     if (exists) return;
     if (onChange) {
-      onChange(orderedGuildsForSelection[0].id);
+      onChange(orderedGuilds[0].id);
     } else {
-      setGuildId(characterId, orderedGuildsForSelection[0].id);
+      setGuildId(characterId, orderedGuilds[0].id);
     }
   }, [
     isFetched,
-    guilds,
-    guildsOrder,
+    orderedGuilds,
     guildId,
     value,
     allowAll,
@@ -117,19 +112,34 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
     setGuildId(characterId, newGuildId);
   };
 
-  const handleWheel = (event: React.WheelEvent<HTMLDivElement>) => {
-    if (layout !== "scroll" || event.deltaY === 0) {
+  useEffect(() => {
+    if (layout !== "scroll") {
       return;
     }
 
     const scrollContainer = scrollContainerRef.current;
+
     if (!scrollContainer) {
       return;
     }
 
-    event.preventDefault();
-    scrollContainer.scrollLeft += event.deltaY;
-  };
+    const handleWheel = (event: WheelEvent) => {
+      if (event.deltaY === 0) {
+        return;
+      }
+
+      event.preventDefault();
+      scrollContainer.scrollLeft += event.deltaY;
+    };
+
+    scrollContainer.addEventListener("wheel", handleWheel, {
+      passive: false,
+    });
+
+    return () => {
+      scrollContainer.removeEventListener("wheel", handleWheel);
+    };
+  }, [layout]);
 
   const content = (
     <>
@@ -194,7 +204,6 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
       <ScrollArea
         className={cn("ll:w-full", className)}
         ref={scrollContainerRef}
-        onWheel={handleWheel}
         type="hover"
       >
         <div className="ll:mt-1 ll:flex ll:w-max ll:min-w-full ll:gap-1">
