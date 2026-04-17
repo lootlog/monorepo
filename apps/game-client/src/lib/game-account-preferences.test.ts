@@ -2,9 +2,9 @@ import { defaultDetectorSettings } from "@lootlog/types";
 import {
   getEffectiveDetectorSettings,
   resolveDetectorGuildIds,
-} from "@/lib/game-account-notification-preferences";
+} from "@/lib/game-account-preferences";
 
-describe("game account detector preferences", () => {
+describe("game account preferences helpers", () => {
   it("returns default detector settings when preferences are missing", () => {
     expect(getEffectiveDetectorSettings()).toEqual(defaultDetectorSettings);
   });

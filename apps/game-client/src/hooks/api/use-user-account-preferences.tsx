@@ -7,7 +7,7 @@ import {
   cloneDetectorSettings,
   getUpdateUserGameAccountPreferencesMutationKey,
   getUserGameAccountPreferencesQueryKey,
-} from "@/lib/game-account-notification-preferences";
+} from "@/lib/game-account-preferences";
 import {
   DETECTOR_NPC_TYPES,
   type NotificationType,

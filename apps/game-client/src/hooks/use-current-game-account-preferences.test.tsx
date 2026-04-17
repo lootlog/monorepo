@@ -4,6 +4,7 @@ import {
   defaultDetectorSettings,
   defaultNotificationsSettings,
 } from "@lootlog/types";
+import { useCurrentGameAccountPreferences } from "@/hooks/use-current-game-account-preferences";
 import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
 import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
 
@@ -51,6 +52,22 @@ describe("current game account preference hooks", () => {
     expect(result.current.accountId).toBe("202");
     expect(result.current.isReady).toBe(true);
     expect(result.current.settings).toEqual(defaultNotificationsSettings);
+  });
+
+  it("returns shared account preference query state", () => {
+    mockUseUserGameAccountPreferences.mockReturnValue({
+      data: { accountId: "202" },
+      isFetched: true,
+      isFetching: false,
+      isLoading: false,
+    });
+
+    const { result } = renderHook(() => useCurrentGameAccountPreferences());
+
+    expect(result.current.accountId).toBe("202");
+    expect(result.current.isReady).toBe(true);
+    expect(result.current.data).toEqual({ accountId: "202" });
+    expect(result.current.isFetching).toBe(false);
   });
 
   it("treats fetched detector preferences without data as ready defaults", () => {

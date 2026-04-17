@@ -1,8 +1,8 @@
 import { useIsMutating, useMutationState } from "@tanstack/react-query";
-import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
-import { getUpdateUserGameAccountPreferencesMutationKey } from "@/lib/game-account-notification-preferences";
+import { useCurrentGameAccountPreferences } from "@/hooks/use-current-game-account-preferences";
+import { getUpdateUserGameAccountPreferencesMutationKey } from "@/lib/game-account-preferences";
 
-type NotificationSettingsSyncStatus =
+type GameAccountPreferencesSyncStatus =
   | {
       status: "idle";
       error: null;
@@ -16,10 +16,10 @@ type NotificationSettingsSyncStatus =
       error: Error | null;
     };
 
-export const useNotificationSettingsSyncStatus =
-  (): NotificationSettingsSyncStatus => {
+export const useGameAccountPreferencesSyncStatus =
+  (): GameAccountPreferencesSyncStatus => {
     const { accountId, isLoading, isFetching, isError, error, dataUpdatedAt } =
-      useCurrentGameAccountNotificationSettings();
+      useCurrentGameAccountPreferences();
     const mutationKey = accountId
       ? getUpdateUserGameAccountPreferencesMutationKey(accountId)
       : ["update-user-game-account-preferences", "disabled"];
