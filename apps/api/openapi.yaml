@@ -434,8 +434,9 @@ paths:
       tags:
         - timers
     post:
-      description: Create a timer submitted by user from game client for a specific guild. Supports custom spawn times.
-      operationId: TimersController_createTimerFromGameClient
+      deprecated: true
+      description: Legacy endpoint for creating a timer in a specific guild. Prefer POST /timers/auto for the new rollout path.
+      operationId: TimersController_createTimer
       parameters:
         - name: guildId
           required: true
@@ -446,10 +447,11 @@ paths:
             type: string
       requestBody:
         required: true
+        description: Legacy timer payload kept for backward compatibility with cached clients.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateTimerFromGameClientDto"
+              $ref: "#/components/schemas/CreateTimerDto"
       responses:
         "201":
           description: Timer created successfully
@@ -463,7 +465,7 @@ paths:
           description: Forbidden - insufficient permissions
       security:
         - bearer: []
-      summary: Create timer from game client for specific guild
+      summary: Create timer for specific guild (deprecated)
       tags:
         - timers
   /guilds/{guildId}/timers/npcs/search:
@@ -6169,6 +6171,62 @@ components:
       required:
         - name
         - world
+    CreateTimerDto:
+      type: object
+      properties:
+        respBaseSeconds:
+          type: number
+          minimum: 2
+        respawnRandomness:
+          type: number
+        world:
+          type: string
+          minLength: 1
+        npc:
+          type: object
+          properties:
+            id:
+              type: number
+            name:
+              type: string
+            location:
+              type: string
+            lvl:
+              type: number
+            prof:
+              type: string
+            wt:
+              type: number
+            hpp:
+              type: number
+            icon:
+              type: string
+            type:
+              type: number
+            x:
+              type: number
+            "y":
+              type: number
+          required:
+            - id
+            - name
+            - location
+            - lvl
+            - wt
+            - icon
+            - type
+        characterId:
+          type: string
+          minLength: 1
+        accountId:
+          type: string
+          minLength: 1
+      required:
+        - respBaseSeconds
+        - world
+        - npc
+        - characterId
+        - accountId
     GuildResponseDto_Output:
       type: object
       properties:
