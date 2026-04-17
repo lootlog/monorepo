@@ -19,7 +19,10 @@ import { useTimerActions } from "../hooks/use-timer-actions";
 import { useTimerDisplay } from "../hooks/use-timer-display";
 import { TimerContextMenuContent } from "./timer-context-menu-content";
 import { TimerTooltip } from "./timer-tooltip";
-import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
+import {
+  normalizeGuildPermissions,
+  useGuildPermissions,
+} from "@/hooks/api/use-guild-permissions";
 import { REQUIRED_DELETE_PERMISSIONS } from "../constants/required-delete-permissions";
 import { Game } from "@/lib/game";
 import { REQUIRED_RESET_PERMISSIONS } from "@/features/timers/constants/required-reset-permissions";
@@ -55,13 +58,14 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   const { data: guildPermissions } = useGuildPermissions({
     guildId: timer.guildId,
   });
+  const normalizedGuildPermissions = normalizeGuildPermissions(guildPermissions);
 
   const canDelete = REQUIRED_DELETE_PERMISSIONS.some((perm) =>
-    guildPermissions?.includes(perm),
+    normalizedGuildPermissions.includes(perm),
   );
 
   const canReset = REQUIRED_RESET_PERMISSIONS.some((perm) =>
-    guildPermissions?.includes(perm),
+    normalizedGuildPermissions.includes(perm),
   );
 
   const {
