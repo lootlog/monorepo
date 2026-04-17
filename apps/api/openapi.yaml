@@ -6500,23 +6500,45 @@ components:
             type: array
             items:
               type: string
+          collectLootWhitelistGuildIds:
+            type: array
+            items:
+              type: string
+            description: "DEPRECATED: Use catchingGuildIds instead"
+          addTimersWhitelistGuildIds:
+            type: array
+            items:
+              type: string
+            description: "DEPRECATED: Use catchingGuildIds instead"
         required:
           - userId
           - accountId
           - characterId
           - catchingGuildIds
+          - collectLootWhitelistGuildIds
+          - addTimersWhitelistGuildIds
     CreateOrUpdateLootlogCharacterConfigDto:
       type: object
       properties:
-        catchingGuildIds:
-          type: array
-          items:
-            type: string
         characterId:
           type: string
           minLength: 1
+        catchingGuildIds:
+          description: Guild IDs used for catching-related actions
+          type: array
+          items:
+            type: string
+        lootGuildIds:
+          description: "DEPRECATED: Use catchingGuildIds instead"
+          type: array
+          items:
+            type: string
+        timerGuildIds:
+          description: "DEPRECATED: Use catchingGuildIds instead"
+          type: array
+          items:
+            type: string
       required:
-        - catchingGuildIds
         - characterId
     UserLootlogConfigResponseDto_Output:
       type: object
@@ -6531,11 +6553,23 @@ components:
           type: array
           items:
             type: string
+        collectLootWhitelistGuildIds:
+          type: array
+          items:
+            type: string
+          description: "DEPRECATED: Use catchingGuildIds instead"
+        addTimersWhitelistGuildIds:
+          type: array
+          items:
+            type: string
+          description: "DEPRECATED: Use catchingGuildIds instead"
       required:
         - userId
         - accountId
         - characterId
         - catchingGuildIds
+        - collectLootWhitelistGuildIds
+        - addTimersWhitelistGuildIds
     TimerSettingsResponseDto__schema0:
       anyOf:
         - type: string
