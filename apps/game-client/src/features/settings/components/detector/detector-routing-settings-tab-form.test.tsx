@@ -39,8 +39,10 @@ const guilds: Guild[] = [
 const routingRules: DetectorRoutingRule[] = [
   {
     id: "rule-1",
+    name: "Bossy hero",
     minLevel: 20,
     maxLevel: 80,
+    world: "Pandora",
     guildIds: ["guild-1", "guild-2", "guild-3", "guild-4", "guild-5"],
   },
   {
@@ -83,9 +85,12 @@ describe("DetectorRoutingSettingsTabForm", () => {
     expect(
       screen.queryByText("Na jakie serwery wysyłać"),
     ).not.toBeInTheDocument();
-    expect(screen.getByText("Od 20")).toBeInTheDocument();
-    expect(screen.getByText("Do 80")).toBeInTheDocument();
-    expect(screen.getByText("+1")).toBeInTheDocument();
+    expect(screen.getByText("Bossy hero")).toBeInTheDocument();
+    expect(screen.queryByText("Reguła 1")).not.toBeInTheDocument();
+    expect(screen.getByText("Od: 20")).toBeInTheDocument();
+    expect(screen.getByText("Do: 80")).toBeInTheDocument();
+    expect(screen.getByText("Świat: Pandora")).toBeInTheDocument();
+    expect(screen.getByText("+2")).toBeInTheDocument();
 
     await user.hover(screen.getByLabelText("Alpha"));
 
@@ -97,10 +102,11 @@ describe("DetectorRoutingSettingsTabForm", () => {
 
     render(<DetectorRoutingSettingsTabForm />);
 
-    await user.click(screen.getByText("Reguła 1"));
+    await user.click(screen.getByText("Bossy hero"));
     await user.click(screen.getByText("Reguła 2"));
 
     expect(screen.getAllByText("Na jakie serwery wysyłać")).toHaveLength(2);
+    expect(screen.getAllByLabelText("Nazwa reguły")).toHaveLength(2);
     expect(screen.getAllByLabelText("Od levela")).toHaveLength(2);
     expect(screen.getAllByLabelText("Do levela")).toHaveLength(2);
   });
@@ -110,7 +116,7 @@ describe("DetectorRoutingSettingsTabForm", () => {
 
     render(<DetectorRoutingSettingsTabForm />);
 
-    await user.click(screen.getByText("Reguła 1"));
+    await user.click(screen.getByText("Bossy hero"));
     await user.click(
       screen.getByRole("button", {
         name: "Przełącz gildię Gamma: Włączone",
@@ -123,8 +129,10 @@ describe("DetectorRoutingSettingsTabForm", () => {
           routingRules: [
             {
               id: "rule-1",
+              name: "Bossy hero",
               minLevel: 20,
               maxLevel: 80,
+              world: "Pandora",
               guildIds: ["guild-1", "guild-2", "guild-4", "guild-5"],
             },
             {
@@ -155,5 +163,79 @@ describe("DetectorRoutingSettingsTabForm", () => {
     expect(screen.queryByText("Od 120")).not.toBeInTheDocument();
     expect(screen.queryByText("Do 240")).not.toBeInTheDocument();
     expect(screen.getAllByText("Na jakie serwery wysyłać")).toHaveLength(1);
+  });
+
+  it("updates routing rule name with trimmed value and uses it as card title", async () => {
+    const user = userEvent.setup();
+
+    render(<DetectorRoutingSettingsTabForm />);
+
+    await user.click(screen.getByText("Bossy hero"));
+
+    const nameInput = screen.getByLabelText("Nazwa reguły");
+    await user.clear(nameInput);
+    await user.type(nameInput, "  Gordion hero  ");
+    await user.tab();
+
+    expect(screen.getByText("Gordion hero")).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(mockMutate).toHaveBeenCalledWith({
+        detector: {
+          routingRules: [
+            {
+              id: "rule-1",
+              name: "Gordion hero",
+              minLevel: 20,
+              maxLevel: 80,
+              world: "Pandora",
+              guildIds: ["guild-1", "guild-2", "guild-3", "guild-4", "guild-5"],
+            },
+            {
+              id: "rule-2",
+              minLevel: 120,
+              maxLevel: 240,
+              guildIds: ["guild-2"],
+            },
+          ],
+        },
+      });
+    });
+  });
+
+  it("updates routing rule world with trimmed value", async () => {
+    const user = userEvent.setup();
+
+    render(<DetectorRoutingSettingsTabForm />);
+
+    await user.click(screen.getByText("Bossy hero"));
+
+    const worldInput = screen.getByLabelText("Świat");
+    await user.clear(worldInput);
+    await user.type(worldInput, "  fobos  ");
+    await user.tab();
+
+    await waitFor(() => {
+      expect(mockMutate).toHaveBeenCalledWith({
+        detector: {
+          routingRules: [
+            {
+              id: "rule-1",
+              name: "Bossy hero",
+              minLevel: 20,
+              maxLevel: 80,
+              world: "fobos",
+              guildIds: ["guild-1", "guild-2", "guild-3", "guild-4", "guild-5"],
+            },
+            {
+              id: "rule-2",
+              minLevel: 120,
+              maxLevel: 240,
+              guildIds: ["guild-2"],
+            },
+          ],
+        },
+      });
+    });
   });
 });

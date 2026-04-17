@@ -30,8 +30,10 @@ export type NotificationsSettings = Record<
 
 export interface DetectorRoutingRule {
   id: string;
+  name?: string;
   minLevel: number;
   maxLevel: number;
+  world?: string;
   guildIds: string[];
 }
 

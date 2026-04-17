@@ -9,6 +9,7 @@
 export type UserGameAccountPreferencesResponseDtoOutputDetectorRoutingRulesItem = {
   /** @minLength 1 */
   id: string;
+  name?: string;
   /**
      * @minimum 0
      * @maximum 500
@@ -19,5 +20,6 @@ export type UserGameAccountPreferencesResponseDtoOutputDetectorRoutingRulesItem 
      * @maximum 500
      */
   maxLevel: number;
+  world?: string;
   guildIds: string[];
 };

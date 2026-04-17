@@ -26,8 +26,10 @@ const clampLevel = (value: number) => {
 
 const DetectorRoutingRuleSchema = z.object({
   id: z.string().min(1),
+  name: z.string().optional(),
   minLevel: z.number().min(LEVEL_MIN).max(LEVEL_MAX),
   maxLevel: z.number().min(LEVEL_MIN).max(LEVEL_MAX),
+  world: z.string().optional(),
   guildIds: z.array(z.string()),
 });
 
@@ -47,14 +49,38 @@ const createRoutingRuleId = () => {
 
 const createEmptyRoutingRule = (): DetectorRoutingRule => ({
   id: createRoutingRuleId(),
+  name: "",
   minLevel: LEVEL_MIN,
   maxLevel: LEVEL_MAX,
+  world: "",
   guildIds: [],
 });
+
+const normalizeRoutingRuleName = (name?: string) => {
+  if (typeof name !== "string") {
+    return undefined;
+  }
+
+  const trimmedName = name.trim();
+
+  return trimmedName.length > 0 ? trimmedName : undefined;
+};
+
+const normalizeRoutingRuleWorld = (world?: string) => {
+  if (typeof world !== "string") {
+    return undefined;
+  }
+
+  const trimmedWorld = world.trim();
+
+  return trimmedWorld.length > 0 ? trimmedWorld : undefined;
+};
 
 const cloneRoutingRules = (routingRules: DetectorRoutingRule[]) => {
   return routingRules.map((rule) => ({
     ...rule,
+    name: rule.name,
+    world: rule.world,
     guildIds: [...rule.guildIds],
   }));
 };
@@ -64,10 +90,12 @@ const normalizeRoutingRules = (
   availableGuildIds: string[],
 ) => {
   return routingRules.map((rule) => {
+    const name = normalizeRoutingRuleName(rule.name);
     const normalizedMinLevel = clampLevel(Math.trunc(rule.minLevel));
     const normalizedMaxLevel = clampLevel(Math.trunc(rule.maxLevel));
     const minLevel = Math.min(normalizedMinLevel, normalizedMaxLevel);
     const maxLevel = Math.max(normalizedMinLevel, normalizedMaxLevel);
+    const world = normalizeRoutingRuleWorld(rule.world);
     const normalizedGuildIds = availableGuildIds.filter(
       (guildId, index, ids) => {
         return (
@@ -78,8 +106,10 @@ const normalizeRoutingRules = (
 
     return {
       ...rule,
+      name,
       minLevel,
       maxLevel,
+      world,
       guildIds: normalizedGuildIds,
     };
   });
@@ -96,8 +126,12 @@ const areRoutingRulesEqual = (
 
       return (
         rule.id === comparedRule.id &&
+        normalizeRoutingRuleName(rule.name) ===
+          normalizeRoutingRuleName(comparedRule.name) &&
         rule.minLevel === comparedRule.minLevel &&
         rule.maxLevel === comparedRule.maxLevel &&
+        normalizeRoutingRuleWorld(rule.world) ===
+          normalizeRoutingRuleWorld(comparedRule.world) &&
         rule.guildIds.length === comparedRule.guildIds.length &&
         rule.guildIds.every((guildId, guildIndex) => {
           return guildId === comparedRule.guildIds[guildIndex];
@@ -112,7 +146,7 @@ const isDeferredRoutingSyncField = (fieldName: string | null) => {
     return false;
   }
 
-  return /^routingRules\.\d+\.(minLevel|maxLevel)$/.test(fieldName);
+  return /^routingRules\.\d+\.(name|minLevel|maxLevel|world)$/.test(fieldName);
 };
 
 const toggleOpenRuleId = (
@@ -295,6 +329,9 @@ export const DetectorRoutingSettingsTabForm: FC = () => {
             const rule = routingRules[index];
             const ruleId = rule?.id ?? field.id;
             const selectedGuildIds = rule?.guildIds ?? [];
+            const normalizedName = normalizeRoutingRuleName(rule?.name);
+            const normalizedWorld = normalizeRoutingRuleWorld(rule?.world);
+            const label = normalizedName ?? translations.ruleLabel(index + 1);
 
             return (
               <DetectorRoutingRuleCard
@@ -308,8 +345,10 @@ export const DetectorRoutingSettingsTabForm: FC = () => {
                 guilds={guilds}
                 index={index}
                 isOpen={openRuleIds.includes(ruleId)}
+                label={label}
                 minLevel={rule?.minLevel ?? LEVEL_MIN}
                 maxLevel={rule?.maxLevel ?? LEVEL_MAX}
+                world={normalizedWorld}
                 onOpenChange={(open) => {
                   setOpenRuleIds((currentOpenRuleIds) =>
                     toggleOpenRuleId(currentOpenRuleIds, ruleId, open),
@@ -326,6 +365,30 @@ export const DetectorRoutingSettingsTabForm: FC = () => {
                 onToggleGuild={(guildId) => toggleGuild(index, guildId)}
                 selectedGuildIds={selectedGuildIds}
                 translations={translations}
+                nameField={
+                  <div className="ll:space-y-1">
+                    <Label
+                      htmlFor={`detector-routing-${field.id}-name`}
+                      className="ll:text-[10px] ll:leading-none"
+                    >
+                      {translations.ruleNameLabel}
+                    </Label>
+                    <Input
+                      id={`detector-routing-${field.id}-name`}
+                      type="text"
+                      className="ll:h-7 ll:px-2 ll:text-[11px]"
+                      onFocus={() => {
+                        deferredSyncFieldRef.current = `routingRules.${index}.name`;
+                      }}
+                      {...register(`routingRules.${index}.name`, {
+                        onBlur: () => {
+                          deferredSyncFieldRef.current = null;
+                          syncCurrentValues();
+                        },
+                      })}
+                    />
+                  </div>
+                }
                 minLevelField={
                   <div className="ll:space-y-1">
                     <Label
@@ -407,6 +470,30 @@ export const DetectorRoutingSettingsTabForm: FC = () => {
                           }
 
                           return clampLevel(parsedValue);
+                        },
+                      })}
+                    />
+                  </div>
+                }
+                worldField={
+                  <div className="ll:space-y-1">
+                    <Label
+                      htmlFor={`detector-routing-${field.id}-world`}
+                      className="ll:text-[10px] ll:leading-none"
+                    >
+                      {translations.worldLabel}
+                    </Label>
+                    <Input
+                      id={`detector-routing-${field.id}-world`}
+                      type="text"
+                      className="ll:h-7 ll:px-2 ll:text-[11px]"
+                      onFocus={() => {
+                        deferredSyncFieldRef.current = `routingRules.${index}.world`;
+                      }}
+                      {...register(`routingRules.${index}.world`, {
+                        onBlur: () => {
+                          deferredSyncFieldRef.current = null;
+                          syncCurrentValues();
                         },
                       })}
                     />

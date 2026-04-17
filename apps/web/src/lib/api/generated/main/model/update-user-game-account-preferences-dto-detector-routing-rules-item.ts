@@ -9,6 +9,7 @@
 export type UpdateUserGameAccountPreferencesDtoDetectorRoutingRulesItem = {
   /** @minLength 1 */
   id: string;
+  name?: string;
   /**
      * @minimum 0
      * @maximum 500
@@ -19,5 +20,6 @@ export type UpdateUserGameAccountPreferencesDtoDetectorRoutingRulesItem = {
      * @maximum 500
      */
   maxLevel: number;
+  world?: string;
   guildIds: string[];
 };
