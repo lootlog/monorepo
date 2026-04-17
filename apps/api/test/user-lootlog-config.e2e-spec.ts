@@ -108,8 +108,7 @@ describe("User Lootlog Config E2E Tests", () => {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           accountId: "12345",
           characterId: "1",
-          collectLootWhitelistGuildIds: [guild.id],
-          addTimersWhitelistGuildIds: [guild.id],
+          catchingGuildIds: [guild.id],
         },
       });
 
@@ -124,8 +123,7 @@ describe("User Lootlog Config E2E Tests", () => {
         userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
         accountId: "12345",
         characterId: "1",
-        collectLootWhitelistGuildIds: [guild.id],
-        addTimersWhitelistGuildIds: [guild.id],
+        catchingGuildIds: [guild.id],
       });
     });
 
@@ -161,15 +159,13 @@ describe("User Lootlog Config E2E Tests", () => {
             userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
             accountId: "12345",
             characterId: "1",
-            collectLootWhitelistGuildIds: [guild.id],
-            addTimersWhitelistGuildIds: [],
+            catchingGuildIds: [guild.id],
           },
           {
             userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
             accountId: "12345",
             characterId: "2",
-            collectLootWhitelistGuildIds: [],
-            addTimersWhitelistGuildIds: [guild.id],
+            catchingGuildIds: [guild.id],
           },
         ],
       });
@@ -182,10 +178,8 @@ describe("User Lootlog Config E2E Tests", () => {
 
       expect(response.body).toHaveProperty("1");
       expect(response.body).toHaveProperty("2");
-      expect(response.body["1"].collectLootWhitelistGuildIds).toEqual([
-        guild.id,
-      ]);
-      expect(response.body["2"].addTimersWhitelistGuildIds).toEqual([guild.id]);
+      expect(response.body["1"].catchingGuildIds).toEqual([guild.id]);
+      expect(response.body["2"].catchingGuildIds).toEqual([guild.id]);
     });
 
     it("should filter out guilds where user has no LOOTLOG_WRITE permission", async () => {
@@ -244,8 +238,7 @@ describe("User Lootlog Config E2E Tests", () => {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           accountId: "12345",
           characterId: "1",
-          collectLootWhitelistGuildIds: [guild1.id, guild2.id],
-          addTimersWhitelistGuildIds: [guild1.id, guild2.id],
+          catchingGuildIds: [guild1.id, guild2.id],
         },
       });
 
@@ -255,12 +248,7 @@ describe("User Lootlog Config E2E Tests", () => {
         .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
         .expect(200);
 
-      expect(response.body["1"].collectLootWhitelistGuildIds).toEqual([
-        guild1.id,
-      ]);
-      expect(response.body["1"].addTimersWhitelistGuildIds).toEqual([
-        guild1.id,
-      ]);
+      expect(response.body["1"].catchingGuildIds).toEqual([guild1.id]);
     });
   });
 
@@ -293,8 +281,7 @@ describe("User Lootlog Config E2E Tests", () => {
 
       const payload = {
         characterId: "1",
-        lootGuildIds: [guild.id],
-        timerGuildIds: [guild.id],
+        catchingGuildIds: [guild.id],
       };
 
       const response = await request(app.getHttpServer())
@@ -308,8 +295,7 @@ describe("User Lootlog Config E2E Tests", () => {
         userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
         accountId: "12345",
         characterId: "1",
-        collectLootWhitelistGuildIds: [guild.id],
-        addTimersWhitelistGuildIds: [guild.id],
+        catchingGuildIds: [guild.id],
       });
 
       const dbConfig = await prisma.userCharactersLootlogSettings.findFirst({
@@ -321,8 +307,7 @@ describe("User Lootlog Config E2E Tests", () => {
       });
 
       expect(dbConfig).toBeTruthy();
-      expect(dbConfig?.collectLootWhitelistGuildIds).toEqual([guild.id]);
-      expect(dbConfig?.addTimersWhitelistGuildIds).toEqual([guild.id]);
+      expect(dbConfig?.catchingGuildIds).toEqual([guild.id]);
     });
 
     it("should update existing config for character", async () => {
@@ -402,15 +387,13 @@ describe("User Lootlog Config E2E Tests", () => {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           accountId: "12345",
           characterId: "1",
-          collectLootWhitelistGuildIds: [guild1.id],
-          addTimersWhitelistGuildIds: [],
+          catchingGuildIds: [guild1.id],
         },
       });
 
       const payload = {
         characterId: "1",
-        lootGuildIds: [guild1.id, guild2.id],
-        timerGuildIds: [guild2.id],
+        catchingGuildIds: [guild1.id, guild2.id],
       };
 
       const response = await request(app.getHttpServer())
@@ -420,14 +403,10 @@ describe("User Lootlog Config E2E Tests", () => {
         .send(payload)
         .expect(200);
 
-      expect(response.body.collectLootWhitelistGuildIds).toEqual([
-        guild1.id,
-        guild2.id,
-      ]);
-      expect(response.body.addTimersWhitelistGuildIds).toEqual([guild2.id]);
+      expect(response.body.catchingGuildIds).toEqual([guild1.id, guild2.id]);
     });
 
-    it("should save all guild IDs without filtering during write", async () => {
+    it("should filter out guilds without write access during write", async () => {
       const guild1 = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
@@ -480,8 +459,7 @@ describe("User Lootlog Config E2E Tests", () => {
 
       const payload = {
         characterId: "1",
-        lootGuildIds: [guild1.id, guild2.id],
-        timerGuildIds: [guild1.id, guild2.id],
+        catchingGuildIds: [guild1.id, guild2.id],
       };
 
       const response = await request(app.getHttpServer())
@@ -491,20 +469,12 @@ describe("User Lootlog Config E2E Tests", () => {
         .send(payload)
         .expect(200);
 
-      expect(response.body.collectLootWhitelistGuildIds).toEqual([
-        guild1.id,
-        guild2.id,
-      ]);
-      expect(response.body.addTimersWhitelistGuildIds).toEqual([
-        guild1.id,
-        guild2.id,
-      ]);
+      expect(response.body.catchingGuildIds).toEqual([guild1.id]);
     });
 
     it("should return 400 when characterId is missing", async () => {
       const payload = {
-        lootGuildIds: [],
-        timerGuildIds: [],
+        catchingGuildIds: [],
       };
 
       await request(app.getHttpServer())
@@ -515,26 +485,10 @@ describe("User Lootlog Config E2E Tests", () => {
         .expect(400);
     });
 
-    it("should return 400 when lootGuildIds is not an array", async () => {
+    it("should return 400 when catchingGuildIds is not an array", async () => {
       const payload = {
         characterId: "1",
-        lootGuildIds: "not-an-array",
-        timerGuildIds: [],
-      };
-
-      await request(app.getHttpServer())
-        .put("/users/@me/lootlog-config/accounts/12345")
-        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
-        .send(payload)
-        .expect(400);
-    });
-
-    it("should return 400 when timerGuildIds is not an array", async () => {
-      const payload = {
-        characterId: "1",
-        lootGuildIds: [],
-        timerGuildIds: "not-an-array",
+        catchingGuildIds: "not-an-array",
       };
 
       await request(app.getHttpServer())
@@ -573,8 +527,7 @@ describe("User Lootlog Config E2E Tests", () => {
 
       const payload = {
         characterId: "1",
-        lootGuildIds: [],
-        timerGuildIds: [],
+        catchingGuildIds: [],
       };
 
       const response = await request(app.getHttpServer())
@@ -584,8 +537,7 @@ describe("User Lootlog Config E2E Tests", () => {
         .send(payload)
         .expect(200);
 
-      expect(response.body.collectLootWhitelistGuildIds).toEqual([]);
-      expect(response.body.addTimersWhitelistGuildIds).toEqual([]);
+      expect(response.body.catchingGuildIds).toEqual([]);
     });
   });
 });

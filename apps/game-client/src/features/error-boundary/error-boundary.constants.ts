@@ -1,0 +1,5 @@
+export const APP_ERROR_WINDOW_ID = "app-error";
+export const APP_ERROR_WINDOW_WIDTH = 560;
+export const APP_ERROR_WINDOW_DEFAULT_HEIGHT = 420;
+export const APP_ERROR_WINDOW_MIN_HEIGHT = 360;
+export const APP_ERROR_WINDOW_MAX_HEIGHT = 520;

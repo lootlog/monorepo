@@ -402,6 +402,7 @@ export const ModelName = {
   Reservation: 'Reservation',
   UserCharactersLootlogSettings: 'UserCharactersLootlogSettings',
   UserSettings: 'UserSettings',
+  UserGameAccountSettings: 'UserGameAccountSettings',
   NotificationTarget: 'NotificationTarget',
   NotificationRule: 'NotificationRule',
   NotificationRuleTarget: 'NotificationRuleTarget',
@@ -445,7 +446,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "guild" | "role" | "member" | "timer" | "loot" | "itemSnapshot" | "lootItem" | "playerSnapshot" | "lootPlayer" | "npcSnapshot" | "lootNpc" | "lootSubmission" | "lootComment" | "lootlogConfigNpc" | "lootlogConfig" | "reservation" | "userCharactersLootlogSettings" | "userSettings" | "notificationTarget" | "notificationRule" | "notificationRuleTarget" | "notificationJob" | "watchedItem" | "discordGuildChannelSnapshot" | "discordGuildSyncState" | "memberRefreshJob" | "userTimerSettings" | "userGuildTimerSettings" | "userGuildEventSettings" | "userSoundSettings" | "event" | "eventMapLocation" | "eventMap" | "eventMapCoverageGap" | "eventMapAssignmentHistory" | "eventHeroNpc" | "eventPresenceLog" | "eventHeroKill" | "eventKillPoint" | "eventRanking" | "eventPointsEditHistory" | "eventRespawnWindowSummary" | "mapTemplate" | "npcKillStats" | "userKillStats" | "guildKillSummary"
+    modelProps: "guild" | "role" | "member" | "timer" | "loot" | "itemSnapshot" | "lootItem" | "playerSnapshot" | "lootPlayer" | "npcSnapshot" | "lootNpc" | "lootSubmission" | "lootComment" | "lootlogConfigNpc" | "lootlogConfig" | "reservation" | "userCharactersLootlogSettings" | "userSettings" | "userGameAccountSettings" | "notificationTarget" | "notificationRule" | "notificationRuleTarget" | "notificationJob" | "watchedItem" | "discordGuildChannelSnapshot" | "discordGuildSyncState" | "memberRefreshJob" | "userTimerSettings" | "userGuildTimerSettings" | "userGuildEventSettings" | "userSoundSettings" | "event" | "eventMapLocation" | "eventMap" | "eventMapCoverageGap" | "eventMapAssignmentHistory" | "eventHeroNpc" | "eventPresenceLog" | "eventHeroKill" | "eventKillPoint" | "eventRanking" | "eventPointsEditHistory" | "eventRespawnWindowSummary" | "mapTemplate" | "npcKillStats" | "userKillStats" | "guildKillSummary"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1778,6 +1779,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.UserSettingsCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.UserSettingsCountAggregateOutputType> | number
+        }
+      }
+    }
+    UserGameAccountSettings: {
+      payload: Prisma.$UserGameAccountSettingsPayload<ExtArgs>
+      fields: Prisma.UserGameAccountSettingsFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.UserGameAccountSettingsFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGameAccountSettingsPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.UserGameAccountSettingsFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGameAccountSettingsPayload>
+        }
+        findFirst: {
+          args: Prisma.UserGameAccountSettingsFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGameAccountSettingsPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.UserGameAccountSettingsFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGameAccountSettingsPayload>
+        }
+        findMany: {
+          args: Prisma.UserGameAccountSettingsFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGameAccountSettingsPayload>[]
+        }
+        create: {
+          args: Prisma.UserGameAccountSettingsCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGameAccountSettingsPayload>
+        }
+        createMany: {
+          args: Prisma.UserGameAccountSettingsCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.UserGameAccountSettingsCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGameAccountSettingsPayload>[]
+        }
+        delete: {
+          args: Prisma.UserGameAccountSettingsDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGameAccountSettingsPayload>
+        }
+        update: {
+          args: Prisma.UserGameAccountSettingsUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGameAccountSettingsPayload>
+        }
+        deleteMany: {
+          args: Prisma.UserGameAccountSettingsDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.UserGameAccountSettingsUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.UserGameAccountSettingsUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGameAccountSettingsPayload>[]
+        }
+        upsert: {
+          args: Prisma.UserGameAccountSettingsUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGameAccountSettingsPayload>
+        }
+        aggregate: {
+          args: Prisma.UserGameAccountSettingsAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateUserGameAccountSettings>
+        }
+        groupBy: {
+          args: Prisma.UserGameAccountSettingsGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserGameAccountSettingsGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.UserGameAccountSettingsCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserGameAccountSettingsCountAggregateOutputType> | number
         }
       }
     }
@@ -4123,8 +4198,7 @@ export const UserCharactersLootlogSettingsScalarFieldEnum = {
   userId: 'userId',
   accountId: 'accountId',
   characterId: 'characterId',
-  collectLootWhitelistGuildIds: 'collectLootWhitelistGuildIds',
-  addTimersWhitelistGuildIds: 'addTimersWhitelistGuildIds',
+  catchingGuildIds: 'catchingGuildIds',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -4143,6 +4217,18 @@ export const UserSettingsScalarFieldEnum = {
 } as const
 
 export type UserSettingsScalarFieldEnum = (typeof UserSettingsScalarFieldEnum)[keyof typeof UserSettingsScalarFieldEnum]
+
+
+export const UserGameAccountSettingsScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  accountId: 'accountId',
+  settings: 'settings',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserGameAccountSettingsScalarFieldEnum = (typeof UserGameAccountSettingsScalarFieldEnum)[keyof typeof UserGameAccountSettingsScalarFieldEnum]
 
 
 export const NotificationTargetScalarFieldEnum = {
@@ -5143,6 +5229,7 @@ export type GlobalOmitConfig = {
   reservation?: Prisma.ReservationOmit
   userCharactersLootlogSettings?: Prisma.UserCharactersLootlogSettingsOmit
   userSettings?: Prisma.UserSettingsOmit
+  userGameAccountSettings?: Prisma.UserGameAccountSettingsOmit
   notificationTarget?: Prisma.NotificationTargetOmit
   notificationRule?: Prisma.NotificationRuleOmit
   notificationRuleTarget?: Prisma.NotificationRuleTargetOmit

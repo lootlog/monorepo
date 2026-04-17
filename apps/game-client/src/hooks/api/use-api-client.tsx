@@ -1,27 +1,15 @@
-import { API_URL, BATTLELOG_API_URL, AUTH_API_URL } from "@/config/api";
-import axios from "axios";
-
-const API_URL_MAP = {
-  default: API_URL,
-  battlelog: BATTLELOG_API_URL,
-  auth: AUTH_API_URL,
-};
+import { getApiClient } from "@/lib/api-client";
 
 export const useAuthenticatedApiClient = (
-  api: keyof typeof API_URL_MAP = "default",
+  api: "default" | "battlelog" | "auth" = "default",
 ) => {
-  const client = axios.create({
-    baseURL: API_URL_MAP[api],
-    withCredentials: true,
-  });
+  const client = getApiClient(api);
 
   return { client };
 };
 
 export const useApiClient = () => {
-  const client = axios.create({
-    baseURL: API_URL,
-  });
+  const client = getApiClient("public");
 
   return { client };
 };

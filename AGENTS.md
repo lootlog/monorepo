@@ -15,6 +15,7 @@ This is a pnpm monorepo managed with Turborepo. It contains multiple apps (`apps
 - Prefer `?.` for optional chaining.
 - Prefix unused variables with `_`.
 - Use `import type` for type-only imports.
+- Do not split imports from the same module into separate statements for values and types; prefer a single import using inline `type` specifiers when needed.
 - Avoid nested (chained) ternary expressions — use early returns or `if`/`else if` instead.
 - See `.oxlintrc.md` for the full linting configuration.
 
@@ -43,3 +44,4 @@ This is a pnpm monorepo managed with Turborepo. It contains multiple apps (`apps
 
 - Don't try to run the app, assume it's already running.
 - ABSOLUTELY DON'T assume I need backwards compatibility unless explicitely told.
+- If a sandbox restriction blocks a command needed for the task, immediately ask for approval to run it with elevated permissions instead of silently skipping it.

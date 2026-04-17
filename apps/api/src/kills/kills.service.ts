@@ -95,10 +95,7 @@ export class KillsService {
         data.characterId,
       );
 
-    const targetGuildIds = new Set([
-      ...(config?.collectLootWhitelistGuildIds ?? []),
-      ...(config?.addTimersWhitelistGuildIds ?? []),
-    ]);
+    const targetGuildIds = new Set(config?.catchingGuildIds ?? []);
 
     if (targetGuildIds.size === 0) {
       return { updated: 0 };

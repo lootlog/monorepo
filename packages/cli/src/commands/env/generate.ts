@@ -1,7 +1,7 @@
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { question, chalk } from "zx";
-import type { CliOptions, EnvVariable } from "../../types.js";
+import type { CliOptions, EnvFile, EnvVariable } from "../../types.js";
 import {
   discoverEnvFiles,
   parseEnvFile,
@@ -21,6 +21,15 @@ const __dirname = dirname(__filename);
 
 const ROOT_PATH = join(__dirname, "../../../../..");
 
+interface ProcessEnvFileOptions {
+  useGeneratedSharedValues?: boolean;
+}
+
+interface ProcessEnvFileResult {
+  created: boolean;
+  variables: EnvVariable[];
+}
+
 const parseArguments = (args: string[]): CliOptions => {
   const options: CliOptions = {
     auto: args.includes("--auto") || args.includes("-a"),
@@ -37,15 +46,19 @@ const parseArguments = (args: string[]): CliOptions => {
 };
 
 const processEnvFile = async (
-  envFile: { path: string; samplePath: string; name: string },
+  envFile: EnvFile,
   sharedValues: Map<string, string>,
   options: CliOptions,
-): Promise<boolean> => {
+  processOptions: ProcessEnvFileOptions = {},
+): Promise<ProcessEnvFileResult> => {
   const exists = envFileExists(envFile.path);
 
   if (exists && options.skipExisting) {
     console.log(chalk.yellow(`⏭️  Skipping ${envFile.name} (already exists)`));
-    return false;
+    return {
+      created: false,
+      variables: parseEnvFile(readEnvFile(envFile.path)),
+    };
   }
 
   if (exists && !options.force) {
@@ -56,7 +69,10 @@ const processEnvFile = async (
     );
     if (overwrite.toLowerCase() !== "y") {
       console.log(chalk.gray(`   Skipped ${envFile.name}`));
-      return false;
+      return {
+        created: false,
+        variables: parseEnvFile(readEnvFile(envFile.path)),
+      };
     }
   }
 
@@ -65,7 +81,15 @@ const processEnvFile = async (
 
   if (options.auto) {
     variables = generateEnvValues(variables, sharedValues, true);
-    variables = enhanceVariablesWithDerivedValues(variables, sharedValues);
+    let derivedSharedValues = sharedValues;
+    if (processOptions.useGeneratedSharedValues) {
+      derivedSharedValues = extractSharedValues(variables);
+    }
+    variables = enhanceVariablesWithDerivedValues(
+      variables,
+      derivedSharedValues,
+      envFile.name,
+    );
   } else if (options.interactive) {
     variables = await promptForValues(variables);
   }
@@ -74,7 +98,10 @@ const processEnvFile = async (
   writeEnvFile(envFile.path, envContent);
 
   console.log(chalk.green(`✅ Created ${envFile.name}/.env`));
-  return true;
+  return {
+    created: true,
+    variables,
+  };
 };
 
 const promptForValues = async (
@@ -94,9 +121,12 @@ const promptForValues = async (
       ),
     );
 
+    const inputValue = input.trim();
+    const value = inputValue === "" ? variable.value : inputValue;
+
     updatedVariables.push({
       ...variable,
-      value: input.trim() || variable.value,
+      value,
     });
   }
 
@@ -149,41 +179,41 @@ ${chalk.bold("Note:")}
   let sharedValues = new Map<string, string>();
   let createdCount = 0;
   let skippedCount = 0;
+  const rootEnvFile = envFiles.find((envFile) => envFile.name === "root");
+  const appEnvFiles = envFiles.filter((envFile) => envFile.name !== "root");
 
-  for (const envFile of envFiles) {
-    if (envFile.name === "root") {
-      console.log(chalk.bold(`\n📦 Processing root configuration...\n`));
+  if (rootEnvFile) {
+    console.log(chalk.bold(`\n📦 Processing root configuration...\n`));
 
-      const sampleContent = readEnvFile(envFile.samplePath);
-      let variables = parseEnvFile(sampleContent);
-
-      if (options.auto) {
-        variables = generateEnvValues(variables, new Map(), true);
-      } else if (options.interactive) {
-        variables = await promptForValues(variables);
-      }
-
-      sharedValues = extractSharedValues(variables);
-
-      const created = await processEnvFile(envFile, sharedValues, options);
-      if (created) {
-        createdCount++;
-      } else {
-        skippedCount++;
-      }
-
-      console.log(
-        chalk.gray(
-          `\n✨ Extracted ${sharedValues.size} shared values for apps\n`,
-        ),
-      );
+    const rootResult = await processEnvFile(
+      rootEnvFile,
+      sharedValues,
+      options,
+      {
+        useGeneratedSharedValues: true,
+      },
+    );
+    if (rootResult.created) {
+      createdCount++;
     } else {
-      const created = await processEnvFile(envFile, sharedValues, options);
-      if (created) {
-        createdCount++;
-      } else {
-        skippedCount++;
-      }
+      skippedCount++;
+    }
+
+    sharedValues = extractSharedValues(rootResult.variables);
+
+    console.log(
+      chalk.gray(
+        `\n✨ Extracted ${sharedValues.size} shared values for apps\n`,
+      ),
+    );
+  }
+
+  for (const envFile of appEnvFiles) {
+    const result = await processEnvFile(envFile, sharedValues, options);
+    if (result.created) {
+      createdCount++;
+    } else {
+      skippedCount++;
     }
   }
 
@@ -204,7 +234,11 @@ ${chalk.bold("Note:")}
     );
   }
 
-  console.log(chalk.green(`\n🎉 You can now run: docker compose up -d\n`));
+  console.log(
+    chalk.green(
+      `\n🎉 You can now run local dependencies: docker compose up -d\n`,
+    ),
+  );
 };
 
 // Only run main when this file is executed directly, not when imported

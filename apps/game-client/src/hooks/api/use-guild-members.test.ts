@@ -1,10 +1,17 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AxiosInstance } from "axios";
 import {
   fetchGuildMembers,
   mapGuildMembersByUserId,
   type GuildMember,
-} from "./use-guild-members";
+} from "@/api";
+import { getApiClient } from "@/lib/api-client";
+
+vi.mock("@/lib/api-client", () => ({
+  getApiClient: vi.fn(),
+}));
+
+const getApiClientMock = vi.mocked(getApiClient);
 
 const guildMembers: GuildMember[] = [
   {
@@ -22,6 +29,10 @@ const guildMembers: GuildMember[] = [
 ];
 
 describe("useGuildMembers helpers", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("maps guild members by user id", () => {
     expect(mapGuildMembersByUserId(guildMembers)).toEqual({
       "user-1": guildMembers[0],
@@ -31,13 +42,17 @@ describe("useGuildMembers helpers", () => {
 
   it("fetches guild members and returns the mapped record", async () => {
     const get = vi.fn().mockResolvedValue({ data: guildMembers });
-    const client = { get } as Pick<AxiosInstance, "get"> as AxiosInstance;
+    getApiClientMock.mockReturnValue({ get } as Pick<
+      AxiosInstance,
+      "get"
+    > as AxiosInstance);
 
-    await expect(fetchGuildMembers(client, "guild-1")).resolves.toEqual({
+    await expect(fetchGuildMembers("guild-1")).resolves.toEqual({
       "user-1": guildMembers[0],
       "user-2": guildMembers[1],
     });
 
+    expect(getApiClientMock).toHaveBeenCalledWith("default");
     expect(get).toHaveBeenCalledWith("/guilds/guild-1/members/summary");
   });
 });

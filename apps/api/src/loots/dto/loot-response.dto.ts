@@ -2,13 +2,44 @@ import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
 import { ItemRarity, NpcType } from "src/generated/prisma/client";
 
+const CreateLootSubmittedGuildSchema = z.object({
+  guildId: z.string(),
+  guildName: z.string(),
+});
+
+const CreateLootRejectedGuildReasonSchema = z.enum([
+  "NOT_ON_CHARACTER_WHITELIST",
+  "MISSING_LOOTLOG_CONFIG",
+  "LOOT_NOT_ACCEPTED_BY_CONFIG",
+  "MISSING_MEMBER",
+]);
+
+const CreateLootRejectedGuildSchema = z.object({
+  guildId: z.string(),
+  guildName: z.string(),
+  reason: CreateLootRejectedGuildReasonSchema,
+});
+
 const CreateLootResponseSchema = z.object({
   id: z.number(),
+  submittedGuilds: z.array(CreateLootSubmittedGuildSchema),
+  rejectedGuilds: z.array(CreateLootRejectedGuildSchema),
 });
 
 export class CreateLootResponseDto extends createZodDto(
   CreateLootResponseSchema,
 ) {}
+
+export type CreateLootSubmittedGuild = z.infer<
+  typeof CreateLootSubmittedGuildSchema
+>;
+export type CreateLootRejectedGuildReason = z.infer<
+  typeof CreateLootRejectedGuildReasonSchema
+>;
+export type CreateLootRejectedGuild = z.infer<
+  typeof CreateLootRejectedGuildSchema
+>;
+export type CreateLootResponse = z.infer<typeof CreateLootResponseSchema>;
 
 const LootShareResponseSchema = z.record(z.string(), z.array(z.string()));
 

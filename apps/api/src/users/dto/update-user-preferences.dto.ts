@@ -33,6 +33,31 @@ const UpdateUserPreferencesSchema = z.object({
     ])
     .optional(),
   colorMode: z.enum(["light", "dark"]).optional(),
+  mutes: z
+    .object({
+      players: z
+        .array(
+          z.object({
+            discordId: z.string().min(1),
+            displayName: z.string(),
+          }),
+        )
+        .optional(),
+      npcs: z
+        .array(
+          z.object({
+            npcKey: z.string().min(1),
+            npcId: z.number().int(),
+            name: z.string().min(1),
+            npcType: z.enum(["ELITE2", "HERO", "COLOSSUS", "TITAN"]),
+            lvl: z.number().int().min(1),
+            prof: z.string().nullable(),
+            icon: z.string().nullable(),
+          }),
+        )
+        .optional(),
+    })
+    .optional(),
 });
 
 export class UpdateUserPreferencesDto extends createZodDto(

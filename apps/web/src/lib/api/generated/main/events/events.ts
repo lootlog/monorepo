@@ -38,6 +38,7 @@ import type {
   EventHeroStatsResponseDto,
   EventKillHistoryResponseDto,
   EventListItemResponseDto,
+  EventMapResponseDtoOutput,
   EventMapsResponseDtoOutput,
   EventMemberKillHistoryResponseDto,
   EventMutationResponseDto,
@@ -46,7 +47,6 @@ import type {
   EventTimerResponseDto,
   EventWrappedApiResponseDtoOutput,
   EventsAssignmentControllerAddHeroPathParameters,
-  EventsAssignmentControllerAddMap201,
   EventsAssignmentControllerAddMapPathParameters,
   EventsAssignmentControllerAssignMapToLocationPathParameters,
   EventsAssignmentControllerAssignMemberPathParameters,
@@ -79,7 +79,6 @@ import type {
   EventsRankingControllerGetKillDetailPathParameters,
   EventsRankingControllerGetMemberKillHistoryParams,
   EventsRankingControllerGetMemberKillHistoryPathParameters,
-  EventsRankingControllerUpdateKillPointBody,
   EventsRankingControllerUpdateKillPointPathParameters,
   HeroCoverageGapResponseDto,
   HeroPresenceStatsResponseDto,
@@ -107,8 +106,9 @@ import type {
   UpdateEventDto,
   UpdateEventPathParameters,
   UpdateHeroDto,
+  UpdateKillPointDto,
   UpdateLocationDto,
-  UpdateRankingPointsBody,
+  UpdateRankingPointsDto,
   UpdateRankingPointsPathParameters
 } from '../model';
 
@@ -1533,9 +1533,9 @@ export const getEventsAssignmentControllerAddMapUrl = ({ guildId, eventId, heroI
 }
 
 export const eventsAssignmentControllerAddMap = async ({ guildId, eventId, heroId }: EventsAssignmentControllerAddMapPathParameters,
-    createMapDto: CreateMapDto, options?: RequestInit): Promise<EventsAssignmentControllerAddMap201> => {
+    createMapDto: CreateMapDto, options?: RequestInit): Promise<EventMapResponseDtoOutput> => {
 
-  return orvalFetch<EventsAssignmentControllerAddMap201>(getEventsAssignmentControllerAddMapUrl({ guildId, eventId, heroId }),
+  return orvalFetch<EventMapResponseDtoOutput>(getEventsAssignmentControllerAddMapUrl({ guildId, eventId, heroId }),
   {
     ...options,
     method: 'POST',
@@ -2460,7 +2460,7 @@ export const getUpdateRankingPointsUrl = ({ guildId, eventId, rankingId }: Updat
 }
 
 export const updateRankingPoints = async ({ guildId, eventId, rankingId }: UpdateRankingPointsPathParameters,
-    updateRankingPointsBody: UpdateRankingPointsBody, options?: RequestInit): Promise<void> => {
+    updateRankingPointsDto: UpdateRankingPointsDto, options?: RequestInit): Promise<void> => {
 
   return orvalFetch<void>(getUpdateRankingPointsUrl({ guildId, eventId, rankingId }),
   {
@@ -2468,7 +2468,7 @@ export const updateRankingPoints = async ({ guildId, eventId, rankingId }: Updat
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      updateRankingPointsBody,)
+      updateRankingPointsDto,)
   }
 );}
 
@@ -2476,8 +2476,8 @@ export const updateRankingPoints = async ({ guildId, eventId, rankingId }: Updat
 
 
 export const getUpdateRankingPointsMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRankingPoints>>, TError,{pathParams: UpdateRankingPointsPathParameters;data: BodyType<UpdateRankingPointsBody>}, TContext>, request?: SecondParameter<typeof orvalFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateRankingPoints>>, TError,{pathParams: UpdateRankingPointsPathParameters;data: BodyType<UpdateRankingPointsBody>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRankingPoints>>, TError,{pathParams: UpdateRankingPointsPathParameters;data: BodyType<UpdateRankingPointsDto>}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateRankingPoints>>, TError,{pathParams: UpdateRankingPointsPathParameters;data: BodyType<UpdateRankingPointsDto>}, TContext> => {
 
 const mutationKey = ['updateRankingPoints'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -2489,7 +2489,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateRankingPoints>>, {pathParams: UpdateRankingPointsPathParameters;data: BodyType<UpdateRankingPointsBody>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateRankingPoints>>, {pathParams: UpdateRankingPointsPathParameters;data: BodyType<UpdateRankingPointsDto>}> = (props) => {
           const {pathParams,data} = props ?? {};
 
           return  updateRankingPoints(pathParams,data,requestOptions)
@@ -2503,18 +2503,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type UpdateRankingPointsMutationResult = NonNullable<Awaited<ReturnType<typeof updateRankingPoints>>>
-    export type UpdateRankingPointsMutationBody = BodyType<UpdateRankingPointsBody>
+    export type UpdateRankingPointsMutationBody = BodyType<UpdateRankingPointsDto>
     export type UpdateRankingPointsMutationError = ErrorType<void>
 
     /**
  * @summary Update ranking points
  */
 export const useUpdateRankingPoints = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRankingPoints>>, TError,{pathParams: UpdateRankingPointsPathParameters;data: BodyType<UpdateRankingPointsBody>}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRankingPoints>>, TError,{pathParams: UpdateRankingPointsPathParameters;data: BodyType<UpdateRankingPointsDto>}, TContext>, request?: SecondParameter<typeof orvalFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof updateRankingPoints>>,
         TError,
-        {pathParams: UpdateRankingPointsPathParameters;data: BodyType<UpdateRankingPointsBody>},
+        {pathParams: UpdateRankingPointsPathParameters;data: BodyType<UpdateRankingPointsDto>},
         TContext
       > => {
       return useMutation(getUpdateRankingPointsMutationOptions(options));
@@ -3429,7 +3429,7 @@ export const getEventsRankingControllerUpdateKillPointUrl = ({ guildId, eventId,
 }
 
 export const eventsRankingControllerUpdateKillPoint = async ({ guildId, eventId, killId, killPointId }: EventsRankingControllerUpdateKillPointPathParameters,
-    eventsRankingControllerUpdateKillPointBody: EventsRankingControllerUpdateKillPointBody, options?: RequestInit): Promise<void> => {
+    updateKillPointDto: UpdateKillPointDto, options?: RequestInit): Promise<void> => {
 
   return orvalFetch<void>(getEventsRankingControllerUpdateKillPointUrl({ guildId, eventId, killId, killPointId }),
   {
@@ -3437,7 +3437,7 @@ export const eventsRankingControllerUpdateKillPoint = async ({ guildId, eventId,
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      eventsRankingControllerUpdateKillPointBody,)
+      updateKillPointDto,)
   }
 );}
 
@@ -3445,8 +3445,8 @@ export const eventsRankingControllerUpdateKillPoint = async ({ guildId, eventId,
 
 
 export const getEventsRankingControllerUpdateKillPointMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsRankingControllerUpdateKillPoint>>, TError,{pathParams: EventsRankingControllerUpdateKillPointPathParameters;data: BodyType<EventsRankingControllerUpdateKillPointBody>}, TContext>, request?: SecondParameter<typeof orvalFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof eventsRankingControllerUpdateKillPoint>>, TError,{pathParams: EventsRankingControllerUpdateKillPointPathParameters;data: BodyType<EventsRankingControllerUpdateKillPointBody>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsRankingControllerUpdateKillPoint>>, TError,{pathParams: EventsRankingControllerUpdateKillPointPathParameters;data: BodyType<UpdateKillPointDto>}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof eventsRankingControllerUpdateKillPoint>>, TError,{pathParams: EventsRankingControllerUpdateKillPointPathParameters;data: BodyType<UpdateKillPointDto>}, TContext> => {
 
 const mutationKey = ['eventsRankingControllerUpdateKillPoint'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -3458,7 +3458,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof eventsRankingControllerUpdateKillPoint>>, {pathParams: EventsRankingControllerUpdateKillPointPathParameters;data: BodyType<EventsRankingControllerUpdateKillPointBody>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof eventsRankingControllerUpdateKillPoint>>, {pathParams: EventsRankingControllerUpdateKillPointPathParameters;data: BodyType<UpdateKillPointDto>}> = (props) => {
           const {pathParams,data} = props ?? {};
 
           return  eventsRankingControllerUpdateKillPoint(pathParams,data,requestOptions)
@@ -3472,18 +3472,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type EventsRankingControllerUpdateKillPointMutationResult = NonNullable<Awaited<ReturnType<typeof eventsRankingControllerUpdateKillPoint>>>
-    export type EventsRankingControllerUpdateKillPointMutationBody = BodyType<EventsRankingControllerUpdateKillPointBody>
+    export type EventsRankingControllerUpdateKillPointMutationBody = BodyType<UpdateKillPointDto>
     export type EventsRankingControllerUpdateKillPointMutationError = ErrorType<void>
 
     /**
  * @summary Update kill point
  */
 export const useEventsRankingControllerUpdateKillPoint = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsRankingControllerUpdateKillPoint>>, TError,{pathParams: EventsRankingControllerUpdateKillPointPathParameters;data: BodyType<EventsRankingControllerUpdateKillPointBody>}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsRankingControllerUpdateKillPoint>>, TError,{pathParams: EventsRankingControllerUpdateKillPointPathParameters;data: BodyType<UpdateKillPointDto>}, TContext>, request?: SecondParameter<typeof orvalFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof eventsRankingControllerUpdateKillPoint>>,
         TError,
-        {pathParams: EventsRankingControllerUpdateKillPointPathParameters;data: BodyType<EventsRankingControllerUpdateKillPointBody>},
+        {pathParams: EventsRankingControllerUpdateKillPointPathParameters;data: BodyType<UpdateKillPointDto>},
         TContext
       > => {
       return useMutation(getEventsRankingControllerUpdateKillPointMutationOptions(options));

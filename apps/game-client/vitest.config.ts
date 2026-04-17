@@ -17,6 +17,8 @@ export default defineConfig({
     "import.meta.env.VITE_BATTLELOG_API_URL":
       '"http://localhost/api/battlelog"',
     "import.meta.env.VITE_LOOTLOG_APP_URL": '"http://localhost"',
+    "import.meta.env.VITE_COMMIT_SHA":
+      '"0123456789abcdef0123456789abcdef01234567"',
     "import.meta.env.VITE_GATEWAY_SOCKET_PATH": '"/gateway"',
   },
   test: {

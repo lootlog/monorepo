@@ -3,13 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useSilentCancelPartyGathering } from "./use-silent-cancel-party-gathering";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 
-const mockDelete = vi.fn();
-const mockPatch = vi.fn();
+const mockCancelPartyGathering = vi.fn();
 
-vi.mock("@/hooks/api/use-api-client", () => ({
-  useAuthenticatedApiClient: () => ({
-    client: { delete: mockDelete, patch: mockPatch },
-  }),
+vi.mock("@/api", () => ({
+  cancelPartyGathering: (...args: unknown[]) =>
+    mockCancelPartyGathering(...args),
 }));
 
 vi.mock("@/lib/game", () => ({
@@ -44,22 +42,27 @@ describe("useSilentCancelPartyGathering", () => {
   });
 
   it("updates guild chat messages and clears party finder state", async () => {
-    mockDelete.mockResolvedValue({
-      status: 200,
-      data: { success: true, guildIds: ["guild-1"] },
+    mockCancelPartyGathering.mockResolvedValue({
+      success: true,
+      guildIds: ["guild-1"],
+      requestSummary: {
+        totalRequests: 2,
+        successCount: 2,
+        failureCount: 0,
+      },
     });
-    mockPatch.mockResolvedValue({});
 
     const { result } = renderHook(() => useSilentCancelPartyGathering());
 
     await result.current();
 
-    expect(mockDelete).toHaveBeenCalledWith(
-      "/messaging/party-gathering/notif-123",
-    );
-    expect(mockPatch).toHaveBeenCalledWith(
-      "/guilds/guild-1/chat-messages/msg-1",
-      { message: "TestPlayer zakończył zbieranie grupy" },
+    expect(mockCancelPartyGathering).toHaveBeenCalledWith(
+      expect.objectContaining({
+        partyGathering: expect.objectContaining({
+          notificationId: "notif-123",
+        }),
+        chatMessageIds: { "guild-1": "msg-1" },
+      }),
     );
     expect(usePartyFinderStore.getState().partyGathering).toBeNull();
     expect(usePartyFinderStore.getState().chatMessageIds).toEqual({});
@@ -67,7 +70,7 @@ describe("useSilentCancelPartyGathering", () => {
 
   it("swallows API errors but still clears party finder state", async () => {
     const apiError = new Error("request failed");
-    mockDelete.mockRejectedValue(apiError);
+    mockCancelPartyGathering.mockRejectedValue(apiError);
 
     const { result } = renderHook(() => useSilentCancelPartyGathering());
 

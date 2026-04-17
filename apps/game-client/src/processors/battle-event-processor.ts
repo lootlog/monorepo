@@ -1,5 +1,6 @@
 import { createSHA256Hash } from "@/helpers/create-sha-256-hash";
 import { mapBattleEventsToPayload } from "@/helpers/mappers/battlelog.mappers";
+import { LOOTLOG_APP_URL } from "@/config/app";
 import { getNpcTypeByWt } from "@lootlog/types";
 import { NpcType } from "@/hooks/api/use-npcs";
 import { addAccountIdsToWarriors } from "@/hooks/game-events/helpers/battle.helpers";
@@ -10,7 +11,8 @@ import {
   type BattleWarriorsWithAccountId,
 } from "@/store/game-store/battle.store";
 import type { GameEvent } from "@lootlog/margonem/game-events";
-import { createKill, createBattle } from "@/services/api.service";
+import { createKill, createBattle } from "@/api";
+import { toast } from "sonner";
 
 const TRACKABLE_NPC_TYPES = new Set([
   NpcType.ELITE2,
@@ -19,6 +21,21 @@ const TRACKABLE_NPC_TYPES = new Set([
   NpcType.COLOSSUS,
   NpcType.TITAN,
 ]);
+
+const showBattleCreatedToast = (battleId: number) => {
+  const battleUrl = `${LOOTLOG_APP_URL}/@me/battle-panel/battles/${battleId}`;
+
+  toast("Walka została dodana", {
+    duration: 10000,
+    action: {
+      label: "Kopiuj link",
+      onClick: () => {
+        navigator.clipboard.writeText(battleUrl);
+        toast.success("Link skopiowany do schowka");
+      },
+    },
+  });
+};
 
 const parseNumericValue = (value: unknown) => {
   if (typeof value === "number") return value;
@@ -200,12 +217,16 @@ export class BattleEventProcessor {
               characterId: String(characterId),
               world,
               events,
-            }).catch((error) => {
-              console.warn(
-                "[BattleEventProcessor] Failed to create battle:",
-                error,
-              );
-            });
+            })
+              .then((response) => {
+                showBattleCreatedToast(response.battleId);
+              })
+              .catch((error) => {
+                console.warn(
+                  "[BattleEventProcessor] Failed to create battle:",
+                  error,
+                );
+              });
           }
         }
 

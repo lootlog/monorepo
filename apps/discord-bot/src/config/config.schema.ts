@@ -20,6 +20,6 @@ export const configSchema = Joi.object({
   OTEL_NODE_RESOURCE_DETECTORS: Joi.string().default("env,host,os,process"),
   OTEL_TRACES_EXPORTER: Joi.string().default("otlp"),
   SERVICE_NAMESPACE: Joi.string().default("local"),
-  AXIOM_DATASET: Joi.string(),
-  AXIOM_TOKEN: Joi.string(),
+  AXIOM_DATASET: Joi.string().allow(""),
+  AXIOM_TOKEN: Joi.string().allow(""),
 });
