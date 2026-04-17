@@ -5,13 +5,11 @@ import { createElement, type ReactNode } from "react";
 import { useCancelPartyGathering } from "./use-cancel-party-gathering";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 
-const mockDelete = vi.fn();
-const mockPatch = vi.fn();
+const mockCancelPartyGathering = vi.fn();
 
-vi.mock("@/hooks/api/use-api-client", () => ({
-  useAuthenticatedApiClient: () => ({
-    client: { delete: mockDelete, patch: mockPatch },
-  }),
+vi.mock("@/api", () => ({
+  cancelPartyGathering: (...args: unknown[]) =>
+    mockCancelPartyGathering(...args),
 }));
 
 vi.mock("@/store/windows.store", () => ({
@@ -55,11 +53,15 @@ describe("useCancelPartyGathering", () => {
   });
 
   it("should handle 200 response with guildIds", async () => {
-    mockDelete.mockResolvedValue({
-      status: 200,
-      data: { success: true, guildIds: ["guild-1"] },
+    mockCancelPartyGathering.mockResolvedValue({
+      success: true,
+      guildIds: ["guild-1"],
+      requestSummary: {
+        totalRequests: 2,
+        successCount: 2,
+        failureCount: 0,
+      },
     });
-    mockPatch.mockResolvedValue({});
 
     const { result } = renderHook(() => useCancelPartyGathering(), {
       wrapper: createWrapper(),
@@ -69,19 +71,25 @@ describe("useCancelPartyGathering", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(mockDelete).toHaveBeenCalledWith(
-      "/messaging/party-gathering/notif-123",
-    );
-    expect(mockPatch).toHaveBeenCalledWith(
-      "/guilds/guild-1/chat-messages/msg-1",
-      { message: "TestPlayer zakończył zbieranie grupy" },
+    expect(mockCancelPartyGathering).toHaveBeenCalledWith(
+      expect.objectContaining({
+        partyGathering: expect.objectContaining({
+          notificationId: "notif-123",
+        }),
+        chatMessageIds: { "guild-1": "msg-1" },
+      }),
     );
   });
 
   it("should handle 204 response with no body", async () => {
-    mockDelete.mockResolvedValue({
-      status: 204,
-      data: undefined,
+    mockCancelPartyGathering.mockResolvedValue({
+      success: true,
+      guildIds: [],
+      requestSummary: {
+        totalRequests: 1,
+        successCount: 1,
+        failureCount: 0,
+      },
     });
 
     const { result } = renderHook(() => useCancelPartyGathering(), {
@@ -92,7 +100,6 @@ describe("useCancelPartyGathering", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(mockPatch).not.toHaveBeenCalled();
     expect(usePartyFinderStore.getState().partyGathering).toBeNull();
   });
 });

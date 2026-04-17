@@ -14,7 +14,6 @@ import { useTimerSettingsMutationsRegistry } from "@/hooks/use-timer-settings-mu
 import { CatchingWhitelistWarning } from "@/features/catching-whitelist-warning/catching-whitelist-warning";
 import { useGameEventHandlers } from "@/hooks/game-events/use-game-event-handlers";
 import { useInit } from "@/hooks/use-init";
-import { useInitialConfiguration } from "@/hooks/use-initial-configuration";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/query-client";
 import { storageKey } from "@/lib/storage-key";
@@ -27,6 +26,9 @@ import { CreatePartyGathering } from "@/features/party-finder/create-party-gathe
 import { usePartyFinderSocket } from "@/features/party-finder/hooks/use-party-finder-socket";
 import { usePartyGatheringSocket } from "@/features/party-finder/hooks/use-party-gathering-socket";
 import { bootstrapPublicApi } from "@/features/public-api";
+import { useGameAccountPreferencesSync } from "@/hooks/use-game-account-preferences-sync";
+import { AppErrorBoundaryFallback } from "@/features/error-boundary/app-error-boundary-fallback";
+import { BackendPreferencesWarning } from "@/features/backend-preferences-warning/backend-preferences-warning";
 
 const THEME_STORAGE_KEY = storageKey("lootlog-theme");
 
@@ -40,7 +42,7 @@ win.__lootlogApiTeardown = bootstrapPublicApi(queryClient);
 function AppContent() {
   useGameEventHandlers();
   useInit();
-  useInitialConfiguration();
+  useGameAccountPreferencesSync();
   useHotkeys();
   useTimerSettingsMutationsRegistry();
   usePartyFinderSocket();
@@ -62,6 +64,7 @@ function AppContent() {
         <Notifications />
         <QuickAccess />
         <CatchingWhitelistWarning />
+        <BackendPreferencesWarning />
         <Toaster />
         <PartyFinder />
         <CreatePartyGathering />
@@ -77,8 +80,8 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <SocketProvider>
           <ErrorBoundary
-            fallback={<div>Error loading app</div>}
-            onError={(error, info) => {
+            FallbackComponent={AppErrorBoundaryFallback}
+            onError={(error, _info) => {
               console.error("[ErrorBoundary]", error);
             }}
           >

@@ -1,6 +1,6 @@
 import { getLootDistributionMessage } from "@/hooks/game-events/helpers/chat.helpers";
 import { useLootStore } from "@/store/game-store/loot.store";
-import { updateLoot } from "@/services/api.service";
+import { updateLoot } from "@/api";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 
 export class ChatEventProcessor {

@@ -1,19 +1,12 @@
 import { useMutation } from "@tanstack/react-query";
-import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
+import { resetTimer, type ResetTimerOptions } from "@/api";
 
-type UseResetTimerOptions = {
-  world: string;
-  timerKey: string;
-  guildId: string;
-};
+export type UseResetTimerOptions = ResetTimerOptions;
 
 export const useResetTimer = () => {
-  const { client } = useAuthenticatedApiClient();
-
   const mutation = useMutation({
     mutationKey: ["reset-timer"],
-    mutationFn: ({ guildId, timerKey, ...rest }: UseResetTimerOptions) =>
-      client.patch(`/guilds/${guildId}/timers/${timerKey}/reset`, rest),
+    mutationFn: (options: ResetTimerOptions) => resetTimer(options),
   });
 
   return mutation;

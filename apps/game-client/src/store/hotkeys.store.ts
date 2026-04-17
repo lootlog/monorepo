@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { storageKey } from "@/lib/storage-key";
+import i18n from "@/i18n/config";
 
 const STORAGE_KEY = storageKey("ll:hotkeys:state");
 
@@ -23,58 +24,59 @@ export type HotkeyCategory = "communication" | "windows" | "party";
 
 export type HotkeyActionConfig = {
   action: HotkeyAction;
-  label: string;
-  description: string;
+  labelKey: string;
+  descriptionKey: string;
   category: HotkeyCategory;
   defaultBinding: HotkeyBinding;
 };
 
-export const HOTKEY_CATEGORY_LABELS: Record<HotkeyCategory, string> = {
-  communication: "Komunikacja",
-  windows: "Okna",
-  party: "Grupa",
+export const HOTKEY_CATEGORY_KEYS: Record<HotkeyCategory, string> = {
+  communication: "settings.hotkeys.categories.communication",
+  windows: "settings.hotkeys.categories.windows",
+  party: "settings.hotkeys.categories.party",
 };
 
 export const HOTKEY_ACTIONS: HotkeyActionConfig[] = [
   {
     action: "toggle-command",
-    label: "Konsola",
-    description: "Otwórz/zamknij okno komendy",
+    labelKey: "settings.hotkeys.actions.toggle-command.label",
+    descriptionKey: "settings.hotkeys.actions.toggle-command.description",
     category: "communication",
     defaultBinding: { key: "S", shift: true, ctrl: false, alt: false },
   },
   {
     action: "toggle-chat",
-    label: "Chat",
-    description: "Otwórz/zamknij okno czatu",
+    labelKey: "settings.hotkeys.actions.toggle-chat.label",
+    descriptionKey: "settings.hotkeys.actions.toggle-chat.description",
     category: "communication",
     defaultBinding: { key: "C", shift: true, ctrl: false, alt: false },
   },
   {
     action: "toggle-settings",
-    label: "Ustawienia",
-    description: "Otwórz/zamknij ustawienia",
+    labelKey: "settings.hotkeys.actions.toggle-settings.label",
+    descriptionKey: "settings.hotkeys.actions.toggle-settings.description",
     category: "windows",
     defaultBinding: { key: "O", shift: true, ctrl: false, alt: false },
   },
   {
     action: "toggle-timers",
-    label: "Timery",
-    description: "Otwórz/zamknij okno timerów",
+    labelKey: "settings.hotkeys.actions.toggle-timers.label",
+    descriptionKey: "settings.hotkeys.actions.toggle-timers.description",
     category: "windows",
     defaultBinding: { key: "T", shift: true, ctrl: false, alt: false },
   },
   {
     action: "toggle-online-players",
-    label: "Gracze online",
-    description: "Otwórz/zamknij okno graczy online",
+    labelKey: "settings.hotkeys.actions.toggle-online-players.label",
+    descriptionKey:
+      "settings.hotkeys.actions.toggle-online-players.description",
     category: "windows",
     defaultBinding: { key: "P", shift: true, ctrl: false, alt: false },
   },
   {
     action: "invite-all",
-    label: "Zaproś wszystkich",
-    description: "Zaproś wszystkich z party findera",
+    labelKey: "settings.hotkeys.actions.invite-all.label",
+    descriptionKey: "settings.hotkeys.actions.invite-all.description",
     category: "party",
     defaultBinding: { key: "I", shift: true, ctrl: false, alt: false },
   },
@@ -138,9 +140,9 @@ export const useHotkeysStore = create<HotkeysState>()(
 
 export const formatBinding = (binding: HotkeyBinding): string => {
   const parts: string[] = [];
-  if (binding.ctrl) parts.push("Ctrl");
-  if (binding.alt) parts.push("Alt");
-  if (binding.shift) parts.push("Shift");
+  if (binding.ctrl) parts.push(i18n.t("settings.hotkeys.modifiers.ctrl"));
+  if (binding.alt) parts.push(i18n.t("settings.hotkeys.modifiers.alt"));
+  if (binding.shift) parts.push(i18n.t("settings.hotkeys.modifiers.shift"));
   parts.push(binding.key);
   return parts.join(" + ");
 };

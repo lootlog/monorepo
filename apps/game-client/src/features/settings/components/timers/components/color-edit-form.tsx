@@ -4,6 +4,7 @@ import { Slider } from "@/components/ui/slider";
 import { Tile } from "@/components/ui/tile";
 import { Check, X } from "lucide-react";
 import type { FC } from "react";
+import { useTranslation } from "react-i18next";
 import {
   stripAlphaChannel,
   alphaToHex,
@@ -23,6 +24,8 @@ export const ColorEditForm: FC<ColorEditFormProps> = ({
   onSave,
   onCancel,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <>
       <div className="ll:flex ll:gap-1 ll:items-center ll:mb-1">
@@ -30,7 +33,7 @@ export const ColorEditForm: FC<ColorEditFormProps> = ({
           value={data.name}
           onChange={(e) => onChange({ ...data, name: e.target.value })}
           className="ll:h-5 ll:text-xs"
-          placeholder="Nazwa"
+          placeholder={t("settings.timers.colors.namePlaceholder")}
         />
       </div>
       <div className="ll:grid ll:grid-cols-2 ll:gap-1 ll:mb-1">
@@ -70,8 +73,8 @@ export const ColorEditForm: FC<ColorEditFormProps> = ({
         className="ll:h-6 ll:w-full ll:items-center ll:justify-center ll:mb-2"
       >
         <span className="ll:text-[10px] ll:text-white ll:whitespace-nowrap ll:flex ll:justify-between ll:w-full ll:px-1 ll:items-center ll:h-full">
-          <span>[T] Tanroth</span>
-          <span> 00:21:37</span>
+          <span>{t("settings.common.preview.name")}</span>
+          <span>{t("settings.common.preview.time")}</span>
         </span>
       </Tile>
       <div className="ll:flex ll:gap-1">

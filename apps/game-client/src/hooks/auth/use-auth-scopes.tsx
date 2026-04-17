@@ -1,16 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
+import { fetchAuthScopes } from "@/api";
 
 export const useAuthScopes = () => {
-  const { client } = useAuthenticatedApiClient("auth");
-
   const query = useQuery({
     queryKey: ["auth-scopes"],
-    queryFn: () => client.get<string[]>(`/auth/@me/scopes`),
-    select: (response) => {
-      const data = response.data;
-      return Array.isArray(data) ? data : [];
-    },
+    queryFn: () => fetchAuthScopes(),
   });
 
   return query;

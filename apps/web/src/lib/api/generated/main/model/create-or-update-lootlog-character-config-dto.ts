@@ -7,8 +7,7 @@
  */
 
 export interface CreateOrUpdateLootlogCharacterConfigDto {
-  lootGuildIds: string[];
-  timerGuildIds: string[];
+  catchingGuildIds: string[];
   /** @minLength 1 */
   characterId: string;
 }

@@ -32,6 +32,7 @@ import { generateUniqueIntId } from "src/shared/utils/generate-unique-int-id";
 import { RoutingKey } from "src/enum/routing-key.enum";
 import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
 import { canViewNpcTimer } from "@lootlog/api-helpers/permissions";
+import type { CreateTimerDto } from "src/timers/dto/create-timer.dto";
 import type { CreateTimerFromGameClientDto } from "src/timers/dto/create-timer-from-game-client.dto";
 import { validateAndCalculateSpawnTimes } from "src/timers/utils/validate-spawn-times";
 import { TIMER_LIMITS, TIMER_TYPES } from "src/timers/constants/timer-limits";
@@ -46,6 +47,13 @@ import {
   isLegacyNpcIdIdentifier,
 } from "src/timers/utils/timer-key";
 import { EventTimerHooksService } from "src/events/services/event-timer-hooks.service";
+import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
+import type {
+  CreateAutoTimerRejectedGuild,
+  CreateAutoTimerRejectedGuildReason,
+  CreateAutoTimerResponse,
+  CreateAutoTimerSubmittedGuild,
+} from "src/timers/dto/create-auto-timer-response.dto";
 
 function parseNpc(npc: unknown): { lvl: number; type: NpcType } | null {
   if (!npc) return null;
@@ -98,6 +106,11 @@ interface EventTimerLookupInput {
   npcName: string;
 }
 
+type CreateAutoTimerOutcome = {
+  submittedGuilds: CreateAutoTimerSubmittedGuild[];
+  rejectedGuilds: CreateAutoTimerRejectedGuild[];
+};
+
 @Injectable()
 export class TimersService implements OnModuleInit {
   private redlock: ReturnType<RedlockService["createInstance"]>;
@@ -108,6 +121,7 @@ export class TimersService implements OnModuleInit {
     private readonly prisma: PrismaService,
     private readonly amqpConnection: AmqpConnection,
     private readonly guildsService: GuildsService,
+    private readonly userLootlogConfigService: UserLootlogConfigService,
     private readonly redis: RedisService,
     private readonly eventTimerHooks: EventTimerHooksService,
     private readonly redlockService: RedlockService,
@@ -134,6 +148,37 @@ export class TimersService implements OnModuleInit {
 
   private getTimersCacheKey(guildId: string, world?: string): string {
     return `timer:list:${guildId}:${world || "all"}`;
+  }
+
+  private createAutoTimerRejectedGuild(
+    guild: Pick<Guild, "id" | "name">,
+    reason: CreateAutoTimerRejectedGuildReason,
+  ): CreateAutoTimerRejectedGuild {
+    return {
+      guildId: guild.id,
+      guildName: guild.name,
+      reason,
+    };
+  }
+
+  private createAutoTimerResponse(
+    outcome: CreateAutoTimerOutcome,
+  ): CreateAutoTimerResponse {
+    return {
+      submittedGuilds: outcome.submittedGuilds,
+      rejectedGuilds: outcome.rejectedGuilds,
+    };
+  }
+
+  private throwCreateAutoTimerBadRequest(
+    message: ErrorKey,
+    rejectedGuilds: CreateAutoTimerRejectedGuild[],
+  ): never {
+    throw new BadRequestException({
+      message,
+      submittedGuilds: [],
+      rejectedGuilds,
+    });
   }
 
   private async invalidateTimersCache(guildId: string): Promise<void> {
@@ -653,6 +698,20 @@ export class TimersService implements OnModuleInit {
     return worlds.map((worldEntry) => worldEntry.world);
   }
 
+  async createTimer(
+    discordId: string,
+    userId: string,
+    guildId: string,
+    data: CreateTimerDto | CreateTimerFromGameClientDto,
+  ) {
+    return this.createTimerForGuild(
+      discordId,
+      userId,
+      guildId,
+      data as CreateTimerFromGameClientDto,
+    );
+  }
+
   async createTimerForGuild(
     discordId: string,
     userId: string,
@@ -850,6 +909,96 @@ export class TimersService implements OnModuleInit {
       await mainLock?.release();
       await dedupLock?.release();
     }
+  }
+
+  async createAutoTimer(
+    discordId: string,
+    userId: string,
+    data: CreateTimerFromGameClientDto,
+  ): Promise<CreateAutoTimerResponse> {
+    if (data.npc.wt < TIMER_LIMITS.MIN_NPC_WT_FOR_TIMERS) {
+      throw new BadRequestException({ message: ErrorKey.WT_TOO_LOW });
+    }
+    validateAndCalculateSpawnTimes(data, new Date());
+
+    const [guilds, characterConfig] = await Promise.all([
+      this.guildsService.getGuildsForRequiredPermissions(discordId, [
+        Permission.LOOTLOG_TIMERS_WRITE,
+      ]),
+      this.userLootlogConfigService.getLootlogCharacterConfig(
+        discordId,
+        data.accountId,
+        data.characterId,
+      ),
+    ]);
+
+    if (guilds.length === 0) {
+      throw new ForbiddenException();
+    }
+
+    const catchingGuildIds = new Set(characterConfig?.catchingGuildIds ?? []);
+    const targetGuilds = guilds.filter((guild) =>
+      catchingGuildIds.has(guild.id),
+    );
+    const rejectedGuilds = guilds
+      .filter((guild) => !catchingGuildIds.has(guild.id))
+      .map((guild) =>
+        this.createAutoTimerRejectedGuild(guild, "NOT_ON_CATCHING_WHITELIST"),
+      );
+
+    if (targetGuilds.length === 0) {
+      this.throwCreateAutoTimerBadRequest(
+        ErrorKey.NO_GUILDS_ON_THE_CATCHING_WHITELIST,
+        rejectedGuilds,
+      );
+    }
+
+    const results = await Promise.allSettled(
+      targetGuilds.map(async (guild) => {
+        await this.createTimerForGuild(discordId, userId, guild.id, data);
+        return guild;
+      }),
+    );
+
+    const submittedGuilds: CreateAutoTimerSubmittedGuild[] = [];
+
+    results.forEach((result, index) => {
+      const guild = targetGuilds[index];
+
+      if (result.status === "fulfilled") {
+        submittedGuilds.push({
+          guildId: guild.id,
+          guildName: guild.name,
+        });
+        return;
+      }
+
+      this.logger.warn({
+        message: "Automatic timer creation failed for guild",
+        guildId: guild.id,
+        world: data.world,
+        npcId: data.npc.id,
+        error:
+          result.reason instanceof Error
+            ? result.reason.message
+            : result.reason,
+      });
+      rejectedGuilds.push(
+        this.createAutoTimerRejectedGuild(guild, "TIMER_CREATE_FAILED"),
+      );
+    });
+
+    if (submittedGuilds.length === 0) {
+      this.throwCreateAutoTimerBadRequest(
+        ErrorKey.NO_GUILD_ACCEPTS_THIS_TIMER,
+        rejectedGuilds,
+      );
+    }
+
+    return this.createAutoTimerResponse({
+      submittedGuilds,
+      rejectedGuilds,
+    });
   }
 
   async createManualTimer(
