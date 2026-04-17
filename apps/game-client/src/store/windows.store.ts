@@ -56,6 +56,7 @@ interface WindowData {
   opacity: WindowOpacity;
   locked: boolean;
   autofocus?: boolean;
+  maxContentHeight?: number;
 }
 
 interface WindowsState {
@@ -81,6 +82,7 @@ interface WindowsState {
   setOpen: <T = unknown>(window: WindowId, open: boolean, state?: T) => void;
   setPosition: (window: WindowId, pos: WindowPositionState) => void;
   setSize: (window: WindowId, size: WindowSizeState) => void;
+  setMaxContentHeight: (window: WindowId, height: number) => void;
   setOpacity: (window: WindowId, opacity: WindowOpacity) => void;
   setLocked: (window: WindowId, locked: boolean) => void;
   toggleOpen: (window: WindowId, autofocus?: boolean) => void;
@@ -185,6 +187,60 @@ export const migrateWindowsState = (
     state.settings = {
       ...settings,
       state: (settings?.state as Record<string, unknown> | undefined) ?? {},
+    };
+  }
+
+  if (version < 5) {
+    const notifications = state.notifications as Record<string, unknown> | undefined;
+    state.notifications = {
+      ...notifications,
+      autoHeightVisibleItemsLimit:
+        typeof notifications?.autoHeightVisibleItemsLimit === "number"
+          ? notifications.autoHeightVisibleItemsLimit
+          : 3,
+    };
+
+    const npcDetector = state["npc-detector"] as
+      | Record<string, unknown>
+      | undefined;
+    state["npc-detector"] = {
+      ...npcDetector,
+      autoHeightVisibleItemsLimit:
+        typeof npcDetector?.autoHeightVisibleItemsLimit === "number"
+          ? npcDetector.autoHeightVisibleItemsLimit
+          : 3,
+    };
+  }
+
+  if (version < 6) {
+    const notifications = state.notifications as
+      | Record<string, unknown>
+      | undefined;
+    const {
+      autoHeightVisibleItemsLimit: _notificationsVisibleItemsLimit,
+      ...notificationsRest
+    } = notifications ?? {};
+    state.notifications = {
+      ...notificationsRest,
+      maxContentHeight:
+        typeof notificationsRest.maxContentHeight === "number"
+          ? notificationsRest.maxContentHeight
+          : undefined,
+    };
+
+    const npcDetector = state["npc-detector"] as
+      | Record<string, unknown>
+      | undefined;
+    const {
+      autoHeightVisibleItemsLimit: _npcDetectorVisibleItemsLimit,
+      ...npcDetectorRest
+    } = npcDetector ?? {};
+    state["npc-detector"] = {
+      ...npcDetectorRest,
+      maxContentHeight:
+        typeof npcDetectorRest.maxContentHeight === "number"
+          ? npcDetectorRest.maxContentHeight
+          : undefined,
     };
   }
 
@@ -382,6 +438,13 @@ export const useWindowsStore = create<WindowsState>()(
         })),
       setSize: (key: WindowId, size) =>
         set((state) => ({ [key]: { ...state[key], size } })),
+      setMaxContentHeight: (key: WindowId, height: number) =>
+        set((state) => ({
+          [key]: {
+            ...state[key],
+            maxContentHeight: height,
+          },
+        })),
       setOpacity: (key: WindowId, opacity: WindowOpacity) =>
         set((state) => ({ [key]: { ...state[key], opacity } })),
       setLocked: (key: WindowId, locked: boolean) =>
@@ -442,7 +505,7 @@ export const useWindowsStore = create<WindowsState>()(
         "create-party-gathering": state["create-party-gathering"],
       }),
       storage: createJSONStorage(() => localStorage),
-      version: 4,
+      version: 6,
       migrate: migrateWindowsState,
     },
   ),

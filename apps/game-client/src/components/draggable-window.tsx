@@ -5,7 +5,14 @@ import {
   type WindowId,
   type WindowOpacity,
 } from "@/store/windows.store";
-import { type FC, useCallback, useEffect, useRef, useState } from "react";
+import {
+  type FC,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { useShallow } from "zustand/react/shallow";
 import { WindowTitleBar } from "./window-title-bar";
 import {
@@ -20,11 +27,17 @@ type DraggableWindowProps = {
   title: string;
   onClose?: () => void;
   variant?: "default" | "small";
+  heightMode?: "fixed" | "auto-up-to-max";
   resizable?: boolean;
   minWidth?: number;
   minHeight?: number;
   maxWidth?: number;
   maxHeight?: number;
+  maxContentHeight?: number;
+  isMaxHeightAdjustmentArmed?: boolean;
+  onMaxHeightAdjustmentArmedChange?: (armed: boolean) => void;
+  onMaxContentHeightChange?: (height: number) => void;
+  onResolvedMaxContentHeightChange?: (height: number) => void;
   dynamicHeight?: boolean;
   closable?: boolean;
   disableTitle?: boolean;
@@ -39,11 +52,17 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   title,
   onClose,
   variant = "small",
+  heightMode = "fixed",
   resizable = true,
   minWidth = 242,
   minHeight = 240,
   maxWidth,
   maxHeight,
+  maxContentHeight,
+  isMaxHeightAdjustmentArmed = false,
+  onMaxHeightAdjustmentArmedChange,
+  onMaxContentHeightChange,
+  onResolvedMaxContentHeightChange,
   dynamicHeight = false,
   closable = true,
   disableTitle = false,
@@ -76,18 +95,24 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
     height: resizable ? defaultSize.height : minHeight,
   });
   const [isResizing, setIsResizing] = useState(false);
+  const [autoHeight, setAutoHeight] = useState(minHeight);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const windowBodyRef = useRef<HTMLDivElement>(null);
+  const titleBarRef = useRef<HTMLDivElement>(null);
+  const isAutoHeightMode = heightMode === "auto-up-to-max";
+  const effectiveHeight = isAutoHeightMode ? autoHeight : localSize.height;
 
   const getClampedPosition = useCallback(
     (pos: { x: number; y: number }) => {
       if (typeof window === "undefined") return pos;
       const maxX = window.innerWidth - localSize.width;
-      const maxY = window.innerHeight - localSize.height;
+      const maxY = window.innerHeight - effectiveHeight;
       return {
         x: Math.max(0, Math.min(pos.x, maxX)),
         y: Math.max(0, Math.min(pos.y, maxY)),
       };
     },
-    [localSize.width, localSize.height],
+    [effectiveHeight, localSize.width],
   );
 
   const defaultPosition = isLocked
@@ -118,9 +143,35 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
 
   const handleResize = useCallback(
     (newSize: { width: number; height: number }) => {
+      if (
+        isAutoHeightMode &&
+        isMaxHeightAdjustmentArmed &&
+        onMaxContentHeightChange
+      ) {
+        const windowBody = windowBodyRef.current;
+        const contentElement = contentRef.current;
+
+        if (!windowBody || !contentElement) {
+          return;
+        }
+
+        const chromeHeight = windowBody.offsetHeight - contentElement.clientHeight;
+        const nextMaxContentHeight = Math.max(
+          1,
+          Math.round(newSize.height - chromeHeight),
+        );
+
+        onMaxContentHeightChange(nextMaxContentHeight);
+        return;
+      }
+
       setLocalSize(newSize);
     },
-    [],
+    [
+      isAutoHeightMode,
+      isMaxHeightAdjustmentArmed,
+      onMaxContentHeightChange,
+    ],
   );
 
   const handleResizeStart = useCallback(() => {
@@ -131,7 +182,10 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
 
   const handleResizeEnd = useCallback(() => {
     setIsResizing(false);
-  }, []);
+    if (isMaxHeightAdjustmentArmed) {
+      onMaxHeightAdjustmentArmedChange?.(false);
+    }
+  }, [isMaxHeightAdjustmentArmed, onMaxHeightAdjustmentArmedChange]);
 
   const handleOpacityChange = useCallback(
     (newOpacity: WindowOpacity) => {
@@ -173,9 +227,76 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
     setSizeInStore(id, { height: localSize.height, width: localSize.width });
   }, [localSize.height, localSize.width, isResizing, id, setSizeInStore]);
 
+  useLayoutEffect(() => {
+    if (!isAutoHeightMode) {
+      setAutoHeight(minHeight);
+      return;
+    }
+
+    const updateAutoHeight = () => {
+      const windowBody = windowBodyRef.current;
+      const contentElement = contentRef.current;
+
+      if (!windowBody || !contentElement) {
+        return;
+      }
+
+      const chromeHeight = windowBody.offsetHeight - contentElement.clientHeight;
+      const resolvedMaxContentHeight =
+        maxContentHeight ?? Math.max(0, localSize.height - chromeHeight);
+      onResolvedMaxContentHeightChange?.(Math.round(resolvedMaxContentHeight));
+      const nextAutoHeight = Math.max(
+        minHeight,
+        Math.min(
+          chromeHeight + contentElement.scrollHeight,
+          chromeHeight + resolvedMaxContentHeight,
+        ),
+      );
+
+      setAutoHeight((currentHeight) => {
+        if (Math.abs(currentHeight - nextAutoHeight) < 1) {
+          return currentHeight;
+        }
+
+        return nextAutoHeight;
+      });
+    };
+
+    updateAutoHeight();
+
+    const resizeObserver = new ResizeObserver(updateAutoHeight);
+
+    if (windowBodyRef.current) {
+      resizeObserver.observe(windowBodyRef.current);
+    }
+
+    if (titleBarRef.current) {
+      resizeObserver.observe(titleBarRef.current);
+    }
+
+    if (contentRef.current) {
+      resizeObserver.observe(contentRef.current);
+      const contentRoot = contentRef.current.firstElementChild;
+
+      if (contentRoot instanceof HTMLElement) {
+        resizeObserver.observe(contentRoot);
+      }
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [
+    isAutoHeightMode,
+    localSize.height,
+    maxContentHeight,
+    minHeight,
+    onResolvedMaxContentHeightChange,
+  ]);
+
   const style = dynamicHeight
     ? { height: "auto", width: localSize.width }
-    : { width: localSize.width, height: localSize.height };
+    : { width: localSize.width, height: effectiveHeight };
 
   const handleLockToggle = useCallback(() => {
     setLockedInStore(id, !isLocked);
@@ -217,21 +338,25 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
             "ll:bg-black": opacity === 5,
           },
         )}
+        ref={windowBodyRef}
       >
         {!disableTitle && (
-          <WindowTitleBar
-            title={title}
-            actions={actions}
-            closable={closable}
-            opacity={opacity}
-            isLocked={isLocked}
-            onOpacityChange={handleOpacityChange}
-            onLockToggle={handleLockToggle}
-            onClose={onClose}
-            onTouchStart={onTouchStart}
-          />
+          <div ref={titleBarRef}>
+            <WindowTitleBar
+              title={title}
+              actions={actions}
+              closable={closable}
+              opacity={opacity}
+              isLocked={isLocked}
+              onOpacityChange={handleOpacityChange}
+              onLockToggle={handleLockToggle}
+              onClose={onClose}
+              onTouchStart={onTouchStart}
+            />
+          </div>
         )}
         <div
+          ref={contentRef}
           className={cn(
             "ll:flex-1 ll:overflow-hidden ll:cursor-auto",
             contentClassName,
@@ -243,7 +368,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
         >
           {children}
         </div>
-        {resizable && !isLocked && (
+        {(resizable || isMaxHeightAdjustmentArmed) && !isLocked && (
           <WindowResizeHandle
             minWidth={minWidth}
             minHeight={minHeight}
