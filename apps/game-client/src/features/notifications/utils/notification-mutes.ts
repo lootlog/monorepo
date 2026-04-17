@@ -1,6 +1,9 @@
 import { NpcType } from "@/hooks/api/use-npcs";
 import type { Notification } from "@/features/notifications/hooks/use-notifications";
-import type { PartyGatheringNotification, StoredNotification } from "@/store/notifications.store";
+import type {
+  PartyGatheringNotification,
+  StoredNotification,
+} from "@/store/notifications.store";
 import {
   getNpcTypeByWt,
   type DetectorNpcType,
@@ -59,7 +62,9 @@ const getDetectorNpcType = (
   return npcType;
 };
 
-export const getNotificationNpcMuteKey = (notification: MuteableNotification) => {
+export const getNotificationNpcMuteKey = (
+  notification: MuteableNotification,
+) => {
   if (!("npc" in notification) || !notification.npc) {
     return null;
   }
@@ -118,7 +123,9 @@ export const isNotificationMuted = (
   notification: MuteableNotification,
   mutes: NotificationMutes,
 ) => {
-  if (mutes.players.some((player) => player.discordId === notification.discordId)) {
+  if (
+    mutes.players.some((player) => player.discordId === notification.discordId)
+  ) {
     return true;
   }
 
@@ -135,16 +142,25 @@ export const appendMutedPlayer = (
   mutes: NotificationMutes,
   player: MutedPlayerPreference,
 ) => {
-  if (mutes.players.some((currentPlayer) => currentPlayer.discordId === player.discordId)) {
+  if (
+    mutes.players.some(
+      (currentPlayer) => currentPlayer.discordId === player.discordId,
+    )
+  ) {
     return mutes.players.map((currentPlayer) =>
-      currentPlayer.discordId === player.discordId ? { ...player } : currentPlayer,
+      currentPlayer.discordId === player.discordId
+        ? { ...player }
+        : currentPlayer,
     );
   }
 
   return [...mutes.players, { ...player }];
 };
 
-export const appendMutedNpc = (mutes: NotificationMutes, npc: MutedNpcPreference) => {
+export const appendMutedNpc = (
+  mutes: NotificationMutes,
+  npc: MutedNpcPreference,
+) => {
   if (mutes.npcs.some((currentNpc) => currentNpc.npcKey === npc.npcKey)) {
     return mutes.npcs.map((currentNpc) =>
       currentNpc.npcKey === npc.npcKey ? { ...npc } : currentNpc,

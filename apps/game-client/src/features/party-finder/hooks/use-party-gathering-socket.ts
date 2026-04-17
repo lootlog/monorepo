@@ -113,10 +113,11 @@ export const usePartyGatheringSocket = () => {
     const cancelHandler = (data: { notificationId: string }) => {
       if (!isReadyRef.current || !areMutesReadyRef.current) {
         cancelledNotificationIdsRef.current.add(data.notificationId);
-        pendingNotificationsRef.current = pendingNotificationsRef.current.filter(
-          (pendingNotification) =>
-            pendingNotification.notificationId !== data.notificationId,
-        );
+        pendingNotificationsRef.current =
+          pendingNotificationsRef.current.filter(
+            (pendingNotification) =>
+              pendingNotification.notificationId !== data.notificationId,
+          );
         return;
       }
 
@@ -140,7 +141,11 @@ export const usePartyGatheringSocket = () => {
   ]);
 
   useEffect(() => {
-    if (!isReady || !areMutesReady || pendingNotificationsRef.current.length === 0) {
+    if (
+      !isReady ||
+      !areMutesReady ||
+      pendingNotificationsRef.current.length === 0
+    ) {
       return;
     }
 

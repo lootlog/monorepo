@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 import type { UpdateUserPreferencesDtoColorMode } from './update-user-preferences-dto-color-mode';
+import type { UpdateUserPreferencesDtoMutes } from './update-user-preferences-dto-mutes';
 import type { UpdateUserPreferencesDtoTheme } from './update-user-preferences-dto-theme';
 
 export interface UpdateUserPreferencesDto {
@@ -13,4 +14,5 @@ export interface UpdateUserPreferencesDto {
   guildsOrder?: string[];
   theme?: UpdateUserPreferencesDtoTheme;
   colorMode?: UpdateUserPreferencesDtoColorMode;
+  mutes?: UpdateUserPreferencesDtoMutes;
 }

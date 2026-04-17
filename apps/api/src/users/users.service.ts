@@ -625,7 +625,10 @@ export class UsersService {
         continue;
       }
 
-      if (typeof player.discordId !== "string" || player.discordId.length === 0) {
+      if (
+        typeof player.discordId !== "string" ||
+        player.discordId.length === 0
+      ) {
         continue;
       }
 
@@ -646,9 +649,7 @@ export class UsersService {
       return [];
     }
 
-    const allowedNpcTypes = new Set<DetectorNpcType>(
-      DETECTOR_NPC_TYPES,
-    );
+    const allowedNpcTypes = new Set<DetectorNpcType>(DETECTOR_NPC_TYPES);
     const dedupedNpcs = new Map<string, MutedNpcPreference>();
 
     for (const npc of npcs) {

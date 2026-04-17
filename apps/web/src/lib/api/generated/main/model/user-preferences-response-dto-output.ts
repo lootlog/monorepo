@@ -5,10 +5,12 @@
  * The Lootlog API documentation
  * OpenAPI spec version: 1.0
  */
+import type { UserPreferencesResponseDtoOutputMutes } from './user-preferences-response-dto-output-mutes';
 
 export interface UserPreferencesResponseDtoOutput {
   userId: string;
   guildsOrder: string[];
   theme: string;
   colorMode: string;
+  mutes: UserPreferencesResponseDtoOutputMutes;
 }
