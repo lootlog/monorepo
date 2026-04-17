@@ -40,7 +40,7 @@ const hasTouchIdentifier = (touchList: TouchList, identifier: number) => {
 };
 
 type UseDragConfig = {
-  ref: React.RefObject<HTMLDivElement>;
+  ref: React.RefObject<HTMLDivElement | null>;
   calculateFor?: "topLeft" | "bottomRight";
   defaultState?: { x: number; y: number };
   onDragStop: (position: { x: number; y: number }) => void;

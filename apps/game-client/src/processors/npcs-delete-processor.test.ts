@@ -106,7 +106,6 @@ describe("NpcsDeleteProcessor", () => {
           npc: { id: 500 },
         } as never,
       ],
-      activeNotificationAnimations: { "notification-1": 1 },
       notificationAutoHideByListKey: {
         "notification-1": {
           deadlineMs: null,

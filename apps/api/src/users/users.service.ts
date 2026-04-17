@@ -515,7 +515,12 @@ export class UsersService {
     for (const notificationType of notificationTypes) {
       normalizedSettings[notificationType] = this.normalizeNotificationSettings(
         settings?.[notificationType],
-        defaultNotificationsSettings[notificationType],
+        settings?.[notificationType] === undefined
+          ? defaultNotificationsSettings[notificationType]
+          : {
+              ...defaultNotificationsSettings[notificationType],
+              ignoreOtherWorlds: false,
+            },
       );
     }
 
