@@ -57,6 +57,23 @@ const flushAnimationFrame = async () => {
   });
 };
 
+const mockElementRenderedHeight = (element: HTMLElement, height: number) => {
+  Object.defineProperty(element, "getBoundingClientRect", {
+    configurable: true,
+    value: () => ({
+      width: 0,
+      height,
+      top: 0,
+      right: 0,
+      bottom: height,
+      left: 0,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    }),
+  });
+};
+
 const createScrollAreaChildren = () => (
   <div className="ll:flex ll:h-full ll:w-full ll:flex-col ll:overflow-hidden">
     <div data-radix-scroll-area-viewport="">
@@ -392,6 +409,7 @@ describe("DraggableWindow", () => {
       configurable: true,
       value: 160,
     });
+    mockElementRenderedHeight(viewportContent, 160);
 
     await triggerResizeObservers();
     await flushAnimationFrame();
@@ -449,6 +467,7 @@ describe("DraggableWindow", () => {
       configurable: true,
       value: 160,
     });
+    mockElementRenderedHeight(rerenderedElements.viewportContent, 160);
 
     await triggerMutationObservers();
     await triggerResizeObservers();
@@ -512,6 +531,7 @@ describe("DraggableWindow", () => {
       writable: true,
       value: 160,
     });
+    mockElementRenderedHeight(viewportContent, 160);
 
     await triggerResizeObservers();
     await flushAnimationFrame();
@@ -528,13 +548,14 @@ describe("DraggableWindow", () => {
     Object.defineProperty(viewportContent, "scrollHeight", {
       configurable: true,
       writable: true,
-      value: 60,
+      value: 160,
     });
     Object.defineProperty(viewportElement, "scrollHeight", {
       configurable: true,
       writable: true,
       value: 160,
     });
+    mockElementRenderedHeight(viewportContent, 60);
 
     await triggerResizeObservers();
     await flushAnimationFrame();

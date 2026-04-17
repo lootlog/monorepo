@@ -109,7 +109,8 @@ const getMeasuredContentHeight = (contentElement: HTMLDivElement) => {
         const viewportContent = viewportElement.firstElementChild;
         const nextMeasuredHeight =
           viewportContent instanceof HTMLElement
-            ? viewportContent.scrollHeight
+            ? Math.round(viewportContent.getBoundingClientRect().height) ||
+              viewportContent.scrollHeight
             : viewportElement.scrollHeight;
 
         return Math.max(maxScrollHeight, nextMeasuredHeight);
