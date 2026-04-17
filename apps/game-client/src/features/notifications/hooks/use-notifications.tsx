@@ -64,7 +64,7 @@ export const useNotifications = () => {
   settingsRef.current = settings;
   worldRef.current = world;
   processNotificationRef.current = (data: Notification) => {
-    if (data.discordId === sessionDataRef.current?.user?.discordId) return;
+    // if (data.discordId === sessionDataRef.current?.user?.discordId) return;
 
     if (isNotificationMuted(data, mutesRef.current)) {
       return;
