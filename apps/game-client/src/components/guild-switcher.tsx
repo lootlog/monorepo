@@ -1,13 +1,14 @@
 import { cn } from "@/lib/utils";
 import { useGuilds } from "@/hooks/api/use-guilds";
+import { useUserPreferences } from "@/hooks/api/use-user-preferences";
 import { useSettingsStore } from "@/store/settings.store";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { type FC, useEffect, useRef } from "react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import type { Viewport } from "@radix-ui/react-scroll-area";
 import { Game } from "@/lib/game";
 import { GuildButton } from "@/components/guild-button";
+import type { Guild } from "@/api";
 
 type GuildSwitcherProps = {
   disabled?: boolean;
@@ -23,6 +24,27 @@ type GuildSwitcherProps = {
   value?: string;
 };
 
+const orderGuilds = (guilds: Guild[] | undefined, guildsOrder?: string[]) => {
+  if (!guilds?.length) {
+    return [];
+  }
+
+  if (!guildsOrder?.length) {
+    return guilds;
+  }
+
+  const guildsById = new Map(guilds.map((guild) => [guild.id, guild] as const));
+  const orderedGuilds = guildsOrder
+    .map((guildId) => guildsById.get(guildId))
+    .filter((guild): guild is Guild => guild !== undefined);
+  const orderedGuildIds = new Set(orderedGuilds.map((guild) => guild.id));
+  const remainingGuilds = guilds.filter(
+    (guild) => !orderedGuildIds.has(guild.id),
+  );
+
+  return [...orderedGuilds, ...remainingGuilds];
+};
+
 export const GuildSwitcher: FC<GuildSwitcherProps> = ({
   disabled = false,
   allowAll = false,
@@ -36,31 +58,40 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
   selectedValues,
   value,
 }) => {
-  const scrollContainerRef = useRef<React.ElementRef<typeof Viewport>>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const characterId = String(Game.hero.id);
   const { data: guilds, isFetched } = useGuilds();
+  const { data: userPreferences } = useUserPreferences();
   const { setGuildId, guildIdByCharId } = useSettingsStore();
+  const guildsOrder = userPreferences?.guildsOrder;
+  const orderedGuilds = orderGuilds(guilds, guildsOrder);
 
   const guildId = guildIdByCharId[characterId];
 
   useEffect(() => {
-    if (!isFetched || !guilds || guilds.length === 0) return;
+    const orderedGuildsForSelection = orderGuilds(guilds, guildsOrder);
+
+    if (!isFetched || orderedGuildsForSelection.length === 0) return;
     if (multiple) return;
     const currentValue = value !== undefined ? value : guildId;
     if (allowAll && currentValue === "all") return;
-    const exists = guilds.some((guild) => guild.id === currentValue);
+    const exists = orderedGuildsForSelection.some(
+      (guild) => guild.id === currentValue,
+    );
     if (exists) return;
     if (onChange) {
-      onChange(guilds[0].id);
+      onChange(orderedGuildsForSelection[0].id);
     } else {
-      setGuildId(characterId, guilds[0].id);
+      setGuildId(characterId, orderedGuildsForSelection[0].id);
     }
   }, [
     isFetched,
     guilds,
+    guildsOrder,
     guildId,
     value,
     allowAll,
+    multiple,
     onChange,
     characterId,
     setGuildId,
@@ -86,23 +117,19 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
     setGuildId(characterId, newGuildId);
   };
 
-  useEffect(() => {
-    if (layout !== "scroll") return;
+  const handleWheel = (event: React.WheelEvent<HTMLDivElement>) => {
+    if (layout !== "scroll" || event.deltaY === 0) {
+      return;
+    }
 
     const scrollContainer = scrollContainerRef.current;
-    if (!scrollContainer) return;
+    if (!scrollContainer) {
+      return;
+    }
 
-    const handleWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      scrollContainer.scrollLeft += e.deltaY;
-    };
-
-    scrollContainer.addEventListener("wheel", handleWheel, { passive: false });
-
-    return () => {
-      scrollContainer.removeEventListener("wheel", handleWheel);
-    };
-  }, []);
+    event.preventDefault();
+    scrollContainer.scrollLeft += event.deltaY;
+  };
 
   const content = (
     <>
@@ -120,7 +147,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
           </AvatarFallback>
         </GuildButton>
       )}
-      {guilds?.map((guild) => (
+      {orderedGuilds.map((guild) => (
         <GuildButton
           key={guild.id}
           isSelected={
@@ -167,9 +194,10 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
       <ScrollArea
         className={cn("ll:w-full", className)}
         ref={scrollContainerRef}
+        onWheel={handleWheel}
         type="hover"
       >
-        <div className="ll:flex ll:gap-1 ll:mt-1 ll:overflow-hidden">
+        <div className="ll:mt-1 ll:flex ll:w-max ll:min-w-full ll:gap-1">
           {content}
         </div>
         <ScrollBar
