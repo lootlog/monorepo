@@ -3,7 +3,6 @@ import { fetchGuildWorlds } from "@/api";
 
 type UseWorldOptions = {
   guildId?: string;
-  retry?: boolean;
 };
 
 export const useWorlds = ({ guildId }: UseWorldOptions) => {

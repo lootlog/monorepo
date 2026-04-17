@@ -1,9 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import {
-  fetchGuildMembers,
-  mapGuildMembersByUserId,
-  type GuildMember,
-} from "@/api";
+import { fetchGuildMembers } from "@/api";
 
 export type { GuildMember } from "@/api";
 export { fetchGuildMembers, mapGuildMembersByUserId } from "@/api";
