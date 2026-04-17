@@ -1,27 +1,21 @@
-import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { LootlogCharacterConfigResponse } from "@/hooks/api/use-lootlog-character-config";
+import {
+  updateLootlogCharactersConfig,
+  type LootlogCharacterConfigResponse,
+  type UpdateLootlogCharacterSettings,
+} from "@/api";
 import { Game } from "@/lib/game";
 
-type UseUpdateLootlogCharacterSettings = {
-  characterId: string;
-  lootGuildIds: string[];
-  timerGuildIds: string[];
-};
+export type UseUpdateLootlogCharacterSettings = UpdateLootlogCharacterSettings;
 
 export const useUpdateLootlogCharactersConfig = () => {
-  const { client } = useAuthenticatedApiClient();
   const accountId = String(Game.hero.account);
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationKey: ["update-lootlog-characters-config"],
-    mutationFn: (options: UseUpdateLootlogCharacterSettings) => {
-      return client.put(
-        `/users/@me/lootlog-config/accounts/${accountId}`,
-        options,
-      );
-    },
+    mutationFn: (options: UpdateLootlogCharacterSettings) =>
+      updateLootlogCharactersConfig(accountId, options),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["lootlog-characters-config", accountId],
@@ -32,20 +26,18 @@ export const useUpdateLootlogCharactersConfig = () => {
         queryKey: ["lootlog-characters-config", accountId],
       });
 
-      const previousData = queryClient.getQueryData<{
-        data: LootlogCharacterConfigResponse;
-      }>(["lootlog-characters-config", accountId]);
+      const previousData =
+        queryClient.getQueryData<LootlogCharacterConfigResponse>([
+          "lootlog-characters-config",
+          accountId,
+        ]);
 
-      if (previousData?.data) {
+      if (previousData) {
         const newData = {
           ...previousData,
-          data: {
-            ...previousData.data,
-            [variables.characterId]: {
-              ...previousData.data[variables.characterId],
-              collectLootWhitelistGuildIds: variables.lootGuildIds,
-              addTimersWhitelistGuildIds: variables.timerGuildIds,
-            },
+          [variables.characterId]: {
+            ...previousData[variables.characterId],
+            catchingGuildIds: variables.catchingGuildIds,
           },
         };
 

@@ -36,6 +36,24 @@ import { ExecutionError } from "redlock";
 import { RedlockService } from "src/lib/redlock/redlock.service";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { RoutingKey } from "src/enum/routing-key.enum";
+import type {
+  CreateLootRejectedGuild,
+  CreateLootRejectedGuildReason,
+  CreateLootResponse,
+  CreateLootSubmittedGuild,
+} from "src/loots/dto/loot-response.dto";
+
+type LootSubmissionData = {
+  guildId: string;
+  guildName: string;
+  memberId: number;
+};
+
+type CreateLootOutcome = {
+  submissionData: LootSubmissionData[];
+  submittedGuilds: CreateLootSubmittedGuild[];
+  rejectedGuilds: CreateLootRejectedGuild[];
+};
 
 @Injectable()
 export class LootsService implements OnModuleInit {
@@ -66,7 +84,40 @@ export class LootsService implements OnModuleInit {
     });
   }
 
-  async createLoot(discordId: string, userId: string, body: CreateLootDto) {
+  private createRejectedGuild(
+    guild: Pick<Guild, "id" | "name">,
+    reason: CreateLootRejectedGuildReason,
+  ): CreateLootRejectedGuild {
+    return {
+      guildId: guild.id,
+      guildName: guild.name,
+      reason,
+    };
+  }
+
+  private createCreateLootResponse(
+    id: number,
+    outcome: Omit<CreateLootOutcome, "submissionData">,
+  ): CreateLootResponse {
+    return {
+      id,
+      submittedGuilds: outcome.submittedGuilds,
+      rejectedGuilds: outcome.rejectedGuilds,
+    };
+  }
+
+  private throwCreateLootBadRequest(
+    message: ErrorKey,
+    rejectedGuilds: CreateLootRejectedGuild[],
+  ): never {
+    throw new BadRequestException({
+      message,
+      submittedGuilds: [],
+      rejectedGuilds,
+    });
+  }
+
+  async createLoot(discordId: string, _userId: string, body: CreateLootDto) {
     const uniqueId = this.lootMappingService.createUniqueLootId(
       body.loots,
       body.world,
@@ -98,21 +149,19 @@ export class LootsService implements OnModuleInit {
         throw new ForbiddenException();
       }
 
-      const { filteredGuildIds } = guilds.reduce(
-        (acc, guild) => {
-          const isOnWhitelist =
-            characterConfig?.collectLootWhitelistGuildIds?.includes(guild.id);
-          if (isOnWhitelist) {
-            acc.filteredGuildIds.push(guild.id);
-          }
-          return acc;
-        },
-        { filteredGuildIds: [] as string[] },
+      const whitelistedGuildIds = new Set(
+        characterConfig?.catchingGuildIds ?? [],
       );
+      const filteredGuildIds = guilds
+        .filter((guild) => whitelistedGuildIds.has(guild.id))
+        .map((guild) => guild.id);
 
       if (filteredGuildIds.length === 0) {
-        throw new BadRequestException(
+        this.throwCreateLootBadRequest(
           ErrorKey.NO_GUILDS_ON_THE_CHARACTER_WHITELIST,
+          guilds.map((guild) =>
+            this.createRejectedGuild(guild, "NOT_ON_CHARACTER_WHITELIST"),
+          ),
         );
       }
 
@@ -140,10 +189,29 @@ export class LootsService implements OnModuleInit {
         npcData.highest.type,
       );
 
-      const submissionData = filteredGuildIds
-        .map((guildId) => {
-          const config = lootlogConfigs.find((c) => c.id === guildId);
-          if (!config) return null;
+      const lootlogConfigByGuildId = new Map(
+        lootlogConfigs.map((config) => [config.id, config]),
+      );
+      const memberByGuildId = new Map(
+        members.map((member) => [member.guildId, member]),
+      );
+
+      const outcome = guilds.reduce<CreateLootOutcome>(
+        (acc, guild) => {
+          if (!whitelistedGuildIds.has(guild.id)) {
+            acc.rejectedGuilds.push(
+              this.createRejectedGuild(guild, "NOT_ON_CHARACTER_WHITELIST"),
+            );
+            return acc;
+          }
+
+          const config = lootlogConfigByGuildId.get(guild.id);
+          if (!config) {
+            acc.rejectedGuilds.push(
+              this.createRejectedGuild(guild, "MISSING_LOOTLOG_CONFIG"),
+            );
+            return acc;
+          }
 
           const calculatedLoot =
             this.lootValidationService.getLootForGivenConfig(
@@ -151,33 +219,57 @@ export class LootsService implements OnModuleInit {
               config.npcs,
               highestWtNpcType,
             );
-          if (calculatedLoot.length === 0) return null;
+          if (calculatedLoot.length === 0) {
+            acc.rejectedGuilds.push(
+              this.createRejectedGuild(guild, "LOOT_NOT_ACCEPTED_BY_CONFIG"),
+            );
+            return acc;
+          }
 
-          const member = members.find((m) => m.guildId === guildId);
-          if (!member) return null;
+          const member = memberByGuildId.get(guild.id);
+          if (!member) {
+            acc.rejectedGuilds.push(
+              this.createRejectedGuild(guild, "MISSING_MEMBER"),
+            );
+            return acc;
+          }
 
-          return {
-            guildId: guildId,
+          acc.submissionData.push({
+            guildId: guild.id,
+            guildName: guild.name,
             memberId: member.id,
-          };
-        })
-        .filter(Boolean);
+          });
+          acc.submittedGuilds.push({
+            guildId: guild.id,
+            guildName: guild.name,
+          });
 
-      if (submissionData.length === 0) {
-        throw new BadRequestException(
+          return acc;
+        },
+        {
+          submissionData: [],
+          submittedGuilds: [],
+          rejectedGuilds: [],
+        },
+      );
+
+      if (outcome.submissionData.length === 0) {
+        this.throwCreateLootBadRequest(
           ErrorKey.NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT,
+          outcome.rejectedGuilds,
         );
       }
 
       if (existingLoot) {
         await this.prisma.lootSubmission.createMany({
-          data: submissionData.map((sd) => ({
-            ...sd,
+          data: outcome.submissionData.map((submission) => ({
+            guildId: submission.guildId,
+            memberId: submission.memberId,
             lootId: existingLoot.id,
           })),
           skipDuplicates: true,
         });
-        return { id: existingLoot.id };
+        return this.createCreateLootResponse(existingLoot.id, outcome);
       }
 
       const npcs = npcData.mapped;
@@ -217,8 +309,9 @@ export class LootsService implements OnModuleInit {
       });
 
       await this.prisma.lootSubmission.createMany({
-        data: submissionData.map((sd) => ({
-          ...sd,
+        data: outcome.submissionData.map((submission) => ({
+          guildId: submission.guildId,
+          memberId: submission.memberId,
           lootId: loot.id,
         })),
         skipDuplicates: true,
@@ -253,7 +346,9 @@ export class LootsService implements OnModuleInit {
         {
           lootId: loot.id,
           world: body.world,
-          guildIds: submissionData.map((submission) => submission.guildId),
+          guildIds: outcome.submissionData.map(
+            (submission) => submission.guildId,
+          ),
           itemIds: items.map((item) => item.id),
           itemNames: items.map((item) => item.name),
           npcType: highestWtNpcType,
@@ -261,7 +356,7 @@ export class LootsService implements OnModuleInit {
         },
       );
 
-      return { id: loot.id };
+      return this.createCreateLootResponse(loot.id, outcome);
     } catch (error: unknown) {
       if (error instanceof ExecutionError) {
         this.logger.log({

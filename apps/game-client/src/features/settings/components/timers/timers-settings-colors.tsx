@@ -1,6 +1,8 @@
+import { SettingsSection } from "@/components/settings/settings-section";
 import { useTimersStore, type CustomTimerColor } from "@/store/timers.store";
 import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
-import { FC, useState } from "react";
+import { useState, type FC } from "react";
+import { useTranslation } from "react-i18next";
 import { DefaultColorItem } from "./components/default-color-item";
 import { CustomColorItem } from "./components/custom-color-item";
 import { AddColorForm } from "./components/add-color-form";
@@ -119,11 +121,14 @@ export const TimersSettingsColors: FC = () => {
   const visibleDefaultColors = Object.entries(TIMERS_COLORS).filter(
     ([colorId]) => !hiddenDefaultColors.includes(colorId),
   );
+  const { t } = useTranslation();
 
   return (
     <div className="ll:flex ll:flex-col ll:gap-3">
-      <div className="ll:flex ll:flex-col ll:gap-2">
-        <h3 className="ll:text-sm ll:font-semibold">Lista kolorów</h3>
+      <SettingsSection
+        title={t("settings.timers.colors.listTitle")}
+        titleClassName="ll:text-sm ll:font-semibold ll:text-white ll:normal-case"
+      >
         <div className="ll:grid ll:grid-cols-2 ll:gap-1.5">
           {visibleDefaultColors.map(([colorId]) => (
             <DefaultColorItem
@@ -155,7 +160,7 @@ export const TimersSettingsColors: FC = () => {
             />
           ))}
         </div>
-      </div>
+      </SettingsSection>
 
       <AddColorForm onAdd={handleAddColor} />
 

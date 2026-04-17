@@ -1,6 +1,4 @@
-import type { Guild } from "@/hooks/api/use-guild";
-import type { Npc } from "@/hooks/api/use-npcs";
-import type { Timer } from "@/hooks/api/use-timers";
+import type { Guild, Npc, Timer, User } from "@/api";
 import type { GuildMember } from "@/types/guild-member";
 import type {
   PublicGuild,
@@ -9,7 +7,6 @@ import type {
   PublicTimer,
   PublicUser,
 } from "./types";
-import type { User } from "@/hooks/api/use-user";
 
 const mapUser = (user: User): PublicUser => ({
   avatar: user.avatar,

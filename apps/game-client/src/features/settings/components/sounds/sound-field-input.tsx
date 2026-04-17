@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Play } from "lucide-react";
 import type { FC } from "react";
+import { useTranslation } from "react-i18next";
 
 interface SoundFieldInputProps {
   label: string;
@@ -26,6 +27,8 @@ export const SoundFieldInput: FC<SoundFieldInputProps> = ({
   onSoundUrlChange,
   onPlaySound,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <div className="ll:flex ll:flex-col ll:gap-1">
       <div className="ll:flex ll:items-center ll:gap-3">
@@ -40,7 +43,9 @@ export const SoundFieldInput: FC<SoundFieldInputProps> = ({
               <Play className="ll:size-3" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Odtwórz dźwięk</TooltipContent>
+          <TooltipContent>
+            {t("settings.common.actions.playSound")}
+          </TooltipContent>
         </Tooltip>
         <div className="ll:flex-1 ll:flex ll:flex-col ll:gap-1">
           <Input

@@ -3,7 +3,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Tile } from "@/components/ui/tile";
-import { type FC, useMemo, useState } from "react";
+import { type FC, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { stripAlphaChannel, alphaToHex } from "./color-utils";
 
 interface AddColorFormProps {
@@ -19,11 +20,8 @@ export const AddColorForm: FC<AddColorFormProps> = ({ onAdd }) => {
   const [borderColor, setBorderColor] = useState("#3b82f6");
   const [backgroundColor, setBackgroundColor] = useState("#3b82f6");
   const [backgroundAlpha, setBackgroundAlpha] = useState(20);
-
-  const bgWithAlpha = useMemo(
-    () => `${backgroundColor}${alphaToHex(backgroundAlpha)}`,
-    [backgroundColor, backgroundAlpha],
-  );
+  const { t } = useTranslation();
+  const bgWithAlpha = `${backgroundColor}${alphaToHex(backgroundAlpha)}`;
 
   const handleAdd = () => {
     if (!name.trim()) return;
@@ -36,41 +34,49 @@ export const AddColorForm: FC<AddColorFormProps> = ({ onAdd }) => {
 
   return (
     <div className="ll:pt-2 ll:border-t ll:border-gray-600 ll:space-y-2">
-      <h3 className="ll:text-sm ll:font-semibold">Dodaj kolor</h3>
+      <h3 className="ll:text-sm ll:font-semibold">
+        {t("settings.timers.colors.addTitle")}
+      </h3>
 
       <div className="ll:flex ll:flex-wrap ll:items-center ll:gap-2">
         <div className="ll:flex ll:gap-4 ll:items-center">
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Nazwa"
+            placeholder={t("settings.timers.colors.namePlaceholder")}
             className="ll:text-xs ll:flex-1"
           />
           <div className="ll:flex ll:items-center ll:gap-1">
-            <Label className="ll:text-[11px]">Ramka</Label>
+            <Label className="ll:text-[11px]">
+              {t("settings.timers.colors.borderLabel")}
+            </Label>
             <Input
               type="color"
               value={stripAlphaChannel(borderColor)}
               onChange={(e) => setBorderColor(e.target.value)}
               className="ll:h-8 ll:w-8 ll:p-0 ll:border-0 ll:bg-transparent"
-              aria-label="Kolor ramki"
+              aria-label={t("settings.timers.colors.borderAria")}
             />
           </div>
 
           <div className="ll:flex ll:items-center ll:gap-1">
-            <Label className="ll:text-[11px]">Tło</Label>
+            <Label className="ll:text-[11px]">
+              {t("settings.timers.colors.backgroundLabel")}
+            </Label>
             <Input
               type="color"
               value={stripAlphaChannel(backgroundColor)}
               onChange={(e) => setBackgroundColor(e.target.value)}
               className="ll:h-8 ll:w-8 ll:p-0 ll:border-0 ll:bg-transparent"
-              aria-label="Kolor tła"
+              aria-label={t("settings.timers.colors.backgroundAria")}
             />
           </div>
         </div>
 
         <div className="ll:flex ll:gap-1 ll:flex-col ll:w-full">
-          <Label className="ll:text-[11px]">Przezroczystość</Label>
+          <Label className="ll:text-[11px]">
+            {t("settings.timers.colors.transparencyLabel")}
+          </Label>
           <div className="ll:flex ll:gap-4">
             <div className="ll:w-full">
               <Slider
@@ -80,7 +86,7 @@ export const AddColorForm: FC<AddColorFormProps> = ({ onAdd }) => {
                 value={[backgroundAlpha]}
                 onValueChange={(v) => setBackgroundAlpha(v[0])}
                 className="ll:h-6"
-                aria-label="Przezroczystość tła"
+                aria-label={t("settings.timers.colors.transparencyAria")}
               />
             </div>
             <div className="ll:flex ll:items-center ll:gap-1">
@@ -103,7 +109,9 @@ export const AddColorForm: FC<AddColorFormProps> = ({ onAdd }) => {
 
         <div className="ll:grid ll:grid-cols-2 ll:items-end ll:w-full ll:gap-4">
           <div className="ll:gap-1 ll:flex ll:flex-col">
-            <Label className="ll:text-[11px]">Podgląd</Label>
+            <Label className="ll:text-[11px]">
+              {t("settings.timers.colors.previewLabel")}
+            </Label>
 
             <Tile
               customBorderColor={borderColor}
@@ -111,8 +119,8 @@ export const AddColorForm: FC<AddColorFormProps> = ({ onAdd }) => {
               className="ll:h-6 ll:w-full ll:items-center ll:justify-center"
             >
               <span className="ll:text-[10px] ll:text-white ll:whitespace-nowrap ll:flex ll:justify-between ll:w-full ll:px-1 ll:items-center ll:h-full ll:mt-1">
-                <span>[T] Tanroth</span>
-                <span> 00:21:37</span>
+                <span>{t("settings.common.preview.name")}</span>
+                <span>{t("settings.common.preview.time")}</span>
               </span>
             </Tile>
           </div>
@@ -122,7 +130,7 @@ export const AddColorForm: FC<AddColorFormProps> = ({ onAdd }) => {
             disabled={!name.trim()}
             className="ll:h-6 ll:w-full"
           >
-            Dodaj
+            {t("settings.timers.colors.addButton")}
           </Button>
         </div>
       </div>

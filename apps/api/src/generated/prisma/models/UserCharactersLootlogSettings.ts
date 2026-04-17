@@ -57,8 +57,7 @@ export type UserCharactersLootlogSettingsCountAggregateOutputType = {
   userId: number
   accountId: number
   characterId: number
-  collectLootWhitelistGuildIds: number
-  addTimersWhitelistGuildIds: number
+  catchingGuildIds: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -96,8 +95,7 @@ export type UserCharactersLootlogSettingsCountAggregateInputType = {
   userId?: true
   accountId?: true
   characterId?: true
-  collectLootWhitelistGuildIds?: true
-  addTimersWhitelistGuildIds?: true
+  catchingGuildIds?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -194,8 +192,7 @@ export type UserCharactersLootlogSettingsGroupByOutputType = {
   userId: string
   accountId: string
   characterId: string
-  collectLootWhitelistGuildIds: string[]
-  addTimersWhitelistGuildIds: string[]
+  catchingGuildIds: string[]
   createdAt: Date
   updatedAt: Date
   _count: UserCharactersLootlogSettingsCountAggregateOutputType | null
@@ -228,8 +225,7 @@ export type UserCharactersLootlogSettingsWhereInput = {
   userId?: Prisma.StringFilter<"UserCharactersLootlogSettings"> | string
   accountId?: Prisma.StringFilter<"UserCharactersLootlogSettings"> | string
   characterId?: Prisma.StringFilter<"UserCharactersLootlogSettings"> | string
-  collectLootWhitelistGuildIds?: Prisma.StringNullableListFilter<"UserCharactersLootlogSettings">
-  addTimersWhitelistGuildIds?: Prisma.StringNullableListFilter<"UserCharactersLootlogSettings">
+  catchingGuildIds?: Prisma.StringNullableListFilter<"UserCharactersLootlogSettings">
   createdAt?: Prisma.DateTimeFilter<"UserCharactersLootlogSettings"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"UserCharactersLootlogSettings"> | Date | string
 }
@@ -239,8 +235,7 @@ export type UserCharactersLootlogSettingsOrderByWithRelationInput = {
   userId?: Prisma.SortOrder
   accountId?: Prisma.SortOrder
   characterId?: Prisma.SortOrder
-  collectLootWhitelistGuildIds?: Prisma.SortOrder
-  addTimersWhitelistGuildIds?: Prisma.SortOrder
+  catchingGuildIds?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -254,8 +249,7 @@ export type UserCharactersLootlogSettingsWhereUniqueInput = Prisma.AtLeast<{
   userId?: Prisma.StringFilter<"UserCharactersLootlogSettings"> | string
   accountId?: Prisma.StringFilter<"UserCharactersLootlogSettings"> | string
   characterId?: Prisma.StringFilter<"UserCharactersLootlogSettings"> | string
-  collectLootWhitelistGuildIds?: Prisma.StringNullableListFilter<"UserCharactersLootlogSettings">
-  addTimersWhitelistGuildIds?: Prisma.StringNullableListFilter<"UserCharactersLootlogSettings">
+  catchingGuildIds?: Prisma.StringNullableListFilter<"UserCharactersLootlogSettings">
   createdAt?: Prisma.DateTimeFilter<"UserCharactersLootlogSettings"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"UserCharactersLootlogSettings"> | Date | string
 }, "id" | "userId_accountId_characterId">
@@ -265,8 +259,7 @@ export type UserCharactersLootlogSettingsOrderByWithAggregationInput = {
   userId?: Prisma.SortOrder
   accountId?: Prisma.SortOrder
   characterId?: Prisma.SortOrder
-  collectLootWhitelistGuildIds?: Prisma.SortOrder
-  addTimersWhitelistGuildIds?: Prisma.SortOrder
+  catchingGuildIds?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserCharactersLootlogSettingsCountOrderByAggregateInput
@@ -284,8 +277,7 @@ export type UserCharactersLootlogSettingsScalarWhereWithAggregatesInput = {
   userId?: Prisma.StringWithAggregatesFilter<"UserCharactersLootlogSettings"> | string
   accountId?: Prisma.StringWithAggregatesFilter<"UserCharactersLootlogSettings"> | string
   characterId?: Prisma.StringWithAggregatesFilter<"UserCharactersLootlogSettings"> | string
-  collectLootWhitelistGuildIds?: Prisma.StringNullableListFilter<"UserCharactersLootlogSettings">
-  addTimersWhitelistGuildIds?: Prisma.StringNullableListFilter<"UserCharactersLootlogSettings">
+  catchingGuildIds?: Prisma.StringNullableListFilter<"UserCharactersLootlogSettings">
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"UserCharactersLootlogSettings"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"UserCharactersLootlogSettings"> | Date | string
 }
@@ -294,8 +286,7 @@ export type UserCharactersLootlogSettingsCreateInput = {
   userId: string
   accountId: string
   characterId: string
-  collectLootWhitelistGuildIds?: Prisma.UserCharactersLootlogSettingsCreatecollectLootWhitelistGuildIdsInput | string[]
-  addTimersWhitelistGuildIds?: Prisma.UserCharactersLootlogSettingsCreateaddTimersWhitelistGuildIdsInput | string[]
+  catchingGuildIds?: Prisma.UserCharactersLootlogSettingsCreatecatchingGuildIdsInput | string[]
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -305,8 +296,7 @@ export type UserCharactersLootlogSettingsUncheckedCreateInput = {
   userId: string
   accountId: string
   characterId: string
-  collectLootWhitelistGuildIds?: Prisma.UserCharactersLootlogSettingsCreatecollectLootWhitelistGuildIdsInput | string[]
-  addTimersWhitelistGuildIds?: Prisma.UserCharactersLootlogSettingsCreateaddTimersWhitelistGuildIdsInput | string[]
+  catchingGuildIds?: Prisma.UserCharactersLootlogSettingsCreatecatchingGuildIdsInput | string[]
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -315,8 +305,7 @@ export type UserCharactersLootlogSettingsUpdateInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   accountId?: Prisma.StringFieldUpdateOperationsInput | string
   characterId?: Prisma.StringFieldUpdateOperationsInput | string
-  collectLootWhitelistGuildIds?: Prisma.UserCharactersLootlogSettingsUpdatecollectLootWhitelistGuildIdsInput | string[]
-  addTimersWhitelistGuildIds?: Prisma.UserCharactersLootlogSettingsUpdateaddTimersWhitelistGuildIdsInput | string[]
+  catchingGuildIds?: Prisma.UserCharactersLootlogSettingsUpdatecatchingGuildIdsInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -326,8 +315,7 @@ export type UserCharactersLootlogSettingsUncheckedUpdateInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   accountId?: Prisma.StringFieldUpdateOperationsInput | string
   characterId?: Prisma.StringFieldUpdateOperationsInput | string
-  collectLootWhitelistGuildIds?: Prisma.UserCharactersLootlogSettingsUpdatecollectLootWhitelistGuildIdsInput | string[]
-  addTimersWhitelistGuildIds?: Prisma.UserCharactersLootlogSettingsUpdateaddTimersWhitelistGuildIdsInput | string[]
+  catchingGuildIds?: Prisma.UserCharactersLootlogSettingsUpdatecatchingGuildIdsInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -337,8 +325,7 @@ export type UserCharactersLootlogSettingsCreateManyInput = {
   userId: string
   accountId: string
   characterId: string
-  collectLootWhitelistGuildIds?: Prisma.UserCharactersLootlogSettingsCreatecollectLootWhitelistGuildIdsInput | string[]
-  addTimersWhitelistGuildIds?: Prisma.UserCharactersLootlogSettingsCreateaddTimersWhitelistGuildIdsInput | string[]
+  catchingGuildIds?: Prisma.UserCharactersLootlogSettingsCreatecatchingGuildIdsInput | string[]
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -347,8 +334,7 @@ export type UserCharactersLootlogSettingsUpdateManyMutationInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   accountId?: Prisma.StringFieldUpdateOperationsInput | string
   characterId?: Prisma.StringFieldUpdateOperationsInput | string
-  collectLootWhitelistGuildIds?: Prisma.UserCharactersLootlogSettingsUpdatecollectLootWhitelistGuildIdsInput | string[]
-  addTimersWhitelistGuildIds?: Prisma.UserCharactersLootlogSettingsUpdateaddTimersWhitelistGuildIdsInput | string[]
+  catchingGuildIds?: Prisma.UserCharactersLootlogSettingsUpdatecatchingGuildIdsInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -358,8 +344,7 @@ export type UserCharactersLootlogSettingsUncheckedUpdateManyInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   accountId?: Prisma.StringFieldUpdateOperationsInput | string
   characterId?: Prisma.StringFieldUpdateOperationsInput | string
-  collectLootWhitelistGuildIds?: Prisma.UserCharactersLootlogSettingsUpdatecollectLootWhitelistGuildIdsInput | string[]
-  addTimersWhitelistGuildIds?: Prisma.UserCharactersLootlogSettingsUpdateaddTimersWhitelistGuildIdsInput | string[]
+  catchingGuildIds?: Prisma.UserCharactersLootlogSettingsUpdatecatchingGuildIdsInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -383,8 +368,7 @@ export type UserCharactersLootlogSettingsCountOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   accountId?: Prisma.SortOrder
   characterId?: Prisma.SortOrder
-  collectLootWhitelistGuildIds?: Prisma.SortOrder
-  addTimersWhitelistGuildIds?: Prisma.SortOrder
+  catchingGuildIds?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -415,20 +399,11 @@ export type UserCharactersLootlogSettingsSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
 }
 
-export type UserCharactersLootlogSettingsCreatecollectLootWhitelistGuildIdsInput = {
+export type UserCharactersLootlogSettingsCreatecatchingGuildIdsInput = {
   set: string[]
 }
 
-export type UserCharactersLootlogSettingsCreateaddTimersWhitelistGuildIdsInput = {
-  set: string[]
-}
-
-export type UserCharactersLootlogSettingsUpdatecollectLootWhitelistGuildIdsInput = {
-  set?: string[]
-  push?: string | string[]
-}
-
-export type UserCharactersLootlogSettingsUpdateaddTimersWhitelistGuildIdsInput = {
+export type UserCharactersLootlogSettingsUpdatecatchingGuildIdsInput = {
   set?: string[]
   push?: string | string[]
 }
@@ -440,8 +415,7 @@ export type UserCharactersLootlogSettingsSelect<ExtArgs extends runtime.Types.Ex
   userId?: boolean
   accountId?: boolean
   characterId?: boolean
-  collectLootWhitelistGuildIds?: boolean
-  addTimersWhitelistGuildIds?: boolean
+  catchingGuildIds?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["userCharactersLootlogSettings"]>
@@ -451,8 +425,7 @@ export type UserCharactersLootlogSettingsSelectCreateManyAndReturn<ExtArgs exten
   userId?: boolean
   accountId?: boolean
   characterId?: boolean
-  collectLootWhitelistGuildIds?: boolean
-  addTimersWhitelistGuildIds?: boolean
+  catchingGuildIds?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["userCharactersLootlogSettings"]>
@@ -462,8 +435,7 @@ export type UserCharactersLootlogSettingsSelectUpdateManyAndReturn<ExtArgs exten
   userId?: boolean
   accountId?: boolean
   characterId?: boolean
-  collectLootWhitelistGuildIds?: boolean
-  addTimersWhitelistGuildIds?: boolean
+  catchingGuildIds?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["userCharactersLootlogSettings"]>
@@ -473,13 +445,12 @@ export type UserCharactersLootlogSettingsSelectScalar = {
   userId?: boolean
   accountId?: boolean
   characterId?: boolean
-  collectLootWhitelistGuildIds?: boolean
-  addTimersWhitelistGuildIds?: boolean
+  catchingGuildIds?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserCharactersLootlogSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "accountId" | "characterId" | "collectLootWhitelistGuildIds" | "addTimersWhitelistGuildIds" | "createdAt" | "updatedAt", ExtArgs["result"]["userCharactersLootlogSettings"]>
+export type UserCharactersLootlogSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "accountId" | "characterId" | "catchingGuildIds" | "createdAt" | "updatedAt", ExtArgs["result"]["userCharactersLootlogSettings"]>
 
 export type $UserCharactersLootlogSettingsPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "UserCharactersLootlogSettings"
@@ -489,8 +460,7 @@ export type $UserCharactersLootlogSettingsPayload<ExtArgs extends runtime.Types.
     userId: string
     accountId: string
     characterId: string
-    collectLootWhitelistGuildIds: string[]
-    addTimersWhitelistGuildIds: string[]
+    catchingGuildIds: string[]
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["userCharactersLootlogSettings"]>
@@ -920,8 +890,7 @@ export interface UserCharactersLootlogSettingsFieldRefs {
   readonly userId: Prisma.FieldRef<"UserCharactersLootlogSettings", 'String'>
   readonly accountId: Prisma.FieldRef<"UserCharactersLootlogSettings", 'String'>
   readonly characterId: Prisma.FieldRef<"UserCharactersLootlogSettings", 'String'>
-  readonly collectLootWhitelistGuildIds: Prisma.FieldRef<"UserCharactersLootlogSettings", 'String[]'>
-  readonly addTimersWhitelistGuildIds: Prisma.FieldRef<"UserCharactersLootlogSettings", 'String[]'>
+  readonly catchingGuildIds: Prisma.FieldRef<"UserCharactersLootlogSettings", 'String[]'>
   readonly createdAt: Prisma.FieldRef<"UserCharactersLootlogSettings", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"UserCharactersLootlogSettings", 'DateTime'>
 }

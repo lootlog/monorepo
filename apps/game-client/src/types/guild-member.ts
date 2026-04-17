@@ -1,4 +1,4 @@
-import type { User } from "@/hooks/api/use-user";
+import type { User } from "@/api";
 
 type GuildMemberRole = {
   position: number | null;
