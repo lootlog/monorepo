@@ -1,8 +1,9 @@
 import {
-  ACTION_TYPE_LABELS,
-  STATUS_LABELS,
+  ACTION_TYPE_LABEL_KEYS,
+  STATUS_LABEL_KEYS,
   type LogStatusFilter,
 } from "@/features/settings/components/logs/logs.constants";
+import i18n from "@/i18n/config";
 import type { LoggedAction, SerializableValue } from "@/store/logs.store";
 
 export const stringifyLogValue = (value: SerializableValue): string => {
@@ -21,17 +22,17 @@ export const formatLogTimestamp = (createdAt: string): string => {
 };
 
 export const getActionLabel = (actionType: string): string => {
-  return ACTION_TYPE_LABELS[actionType] ?? actionType;
+  return i18n.t(ACTION_TYPE_LABEL_KEYS[actionType] ?? actionType);
 };
 
 export const getStatusLabel = (
   status: LogStatusFilter | LoggedAction["status"],
 ): string => {
   if (status === "all") {
-    return "Wszystkie statusy";
+    return i18n.t("settings.logs.statuses.all");
   }
 
-  return STATUS_LABELS[status];
+  return i18n.t(STATUS_LABEL_KEYS[status]);
 };
 
 export const getActionRequestSummary = (action: LoggedAction) => {

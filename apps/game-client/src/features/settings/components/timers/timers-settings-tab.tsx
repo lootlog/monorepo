@@ -9,12 +9,15 @@ import type { FC } from "react";
 import { TimersSettingsAppearance } from "@/features/settings/components/timers/timers-settings-appearance";
 import { TimersSettingsGeneral } from "@/features/settings/components/timers/timers-settings-general";
 import { TimersSettingsColors } from "@/features/settings/components/timers/timers-settings-colors";
+import { useTranslation } from "react-i18next";
 
 export const TimersSettingsTab: FC = () => {
+  const { t } = useTranslation();
+
   return (
     <SettingsTabLayout
-      title="Ustawienia timerów"
-      description="Skonfiguruj ustawienia dotyczące wyświetlania i działania timerów."
+      title={t("settings.timers.title")}
+      description={t("settings.timers.description")}
     >
       <Tabs
         defaultValue="general"
@@ -25,19 +28,19 @@ export const TimersSettingsTab: FC = () => {
             value="general"
             className={SETTINGS_SUBTAB_TRIGGER_CLASS_NAME}
           >
-            Ogólne
+            {t("settings.timers.subTabs.general")}
           </TabsTrigger>
           <TabsTrigger
             value="appearance"
             className={SETTINGS_SUBTAB_TRIGGER_CLASS_NAME}
           >
-            Wygląd
+            {t("settings.timers.subTabs.appearance")}
           </TabsTrigger>
           <TabsTrigger
             value="colors"
             className={SETTINGS_SUBTAB_TRIGGER_CLASS_NAME}
           >
-            Kolory
+            {t("settings.timers.subTabs.colors")}
           </TabsTrigger>
         </TabsList>
         <TabsContent

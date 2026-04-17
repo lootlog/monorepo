@@ -5,11 +5,13 @@ import { HiddenTimers } from "@/features/settings/components/hidden-timers/hidde
 import { useGuilds } from "@/hooks/api/use-guilds";
 import { useTimersStore } from "@/store/timers.store";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export const HiddenTimersTab = () => {
   const { generalConfig } = useTimersStore();
   const { data: guilds, isFetched } = useGuilds();
   const [selectedGuildId, setSelectedGuildId] = useState("");
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (generalConfig.timersGrouping || !isFetched) {
@@ -32,15 +34,15 @@ export const HiddenTimersTab = () => {
 
   return (
     <SettingsTabLayout
-      title="Ukryte timery"
-      description="Przywracaj ukryte timery i zarządzaj listą ukrytych wpisów."
+      title={t("settings.hiddenTimers.title")}
+      description={t("settings.hiddenTimers.description")}
     >
       <SettingsSection
-        title="Zakres listy"
+        title={t("settings.hiddenTimers.scopeTitle")}
         description={
           generalConfig.timersGrouping
-            ? "Grupowanie jest włączone, więc ustawienia działają globalnie bez podziału na serwer."
-            : "Wybierz serwer, dla którego chcesz zobaczyć ukryte timery."
+            ? t("settings.hiddenTimers.groupedDescription")
+            : t("settings.hiddenTimers.ungroupedDescription")
         }
       >
         {!generalConfig.timersGrouping ? (
@@ -50,13 +52,13 @@ export const HiddenTimersTab = () => {
               selectedGuildId={selectedGuildId}
               selectionMode="single"
               onSelect={setSelectedGuildId}
-              emptyStateLabel="Brak gildii do wyboru."
+              emptyStateLabel={t("settings.hiddenTimers.emptyGuilds")}
               variant="compact"
             />
           </div>
         ) : null}
       </SettingsSection>
-      <SettingsSection title="Ukryte timery">
+      <SettingsSection title={t("settings.hiddenTimers.listTitle")}>
         <HiddenTimers guildId={selectedGuildId} />
       </SettingsSection>
     </SettingsTabLayout>

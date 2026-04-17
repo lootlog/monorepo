@@ -13,6 +13,7 @@ import type { NotificationSettings, NotificationType } from "@lootlog/types";
 import { type FC, useRef } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useDeepCompareEffect } from "react-use";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 
 type NotificationCategoryFormProps = {
@@ -29,19 +30,6 @@ const FormSchema = z.object({
 });
 
 type FormData = z.infer<typeof FormSchema>;
-
-const TOGGLE_FIELDS: Array<{
-  key: keyof Pick<
-    NotificationSettings,
-    "show" | "ignoreOtherWorlds" | "highlight" | "sound"
-  >;
-  label: string;
-}> = [
-  { key: "show", label: "Wyświetlaj" },
-  { key: "ignoreOtherWorlds", label: "Ignoruj inne światy" },
-  { key: "highlight", label: "Podświetlenie" },
-  { key: "sound", label: "Powiadom dźwiękiem" },
-];
 
 const areNotificationSettingsEqual = (
   left: NotificationSettings,
@@ -74,6 +62,7 @@ const isDeferredNotificationSyncField = (fieldName: string | null) => {
 export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
   categoryKey,
 }) => {
+  const { t } = useTranslation();
   const {
     accountId,
     isFetched,
@@ -86,6 +75,24 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
   const currentCategorySettings: NotificationSettings =
     accountSettings[categoryKey];
   const textColor = getTextColor(categoryKey, true);
+  const toggleFields: Array<{
+    key: keyof Pick<
+      NotificationSettings,
+      "show" | "ignoreOtherWorlds" | "highlight" | "sound"
+    >;
+    label: string;
+  }> = [
+    { key: "show", label: t("settings.notifications.toggles.show") },
+    {
+      key: "ignoreOtherWorlds",
+      label: t("settings.notifications.toggles.ignoreOtherWorlds"),
+    },
+    {
+      key: "highlight",
+      label: t("settings.notifications.toggles.highlight"),
+    },
+    { key: "sound", label: t("settings.notifications.toggles.sound") },
+  ];
   const deferredSyncFieldRef = useRef<string | null>(null);
   const debouncedUpdate = useDebouncedCallback(
     (
@@ -186,7 +193,7 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
   return (
     <form className="ll:flex ll:flex-col ll:gap-4 ll:py-4">
       <div className="ll:grid ll:gap-2">
-        {TOGGLE_FIELDS.map((field) => {
+        {toggleFields.map((field) => {
           const isDisabled = field.key !== "show" && !watchShow;
           const isHighlightField = field.key === "highlight";
 
@@ -214,8 +221,8 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
         })}
         <SettingsControlRow
           disabled={!watchShow}
-          label="Auto ukrywanie"
-          description="Sekundy, 0 = wyłączone."
+          label={t("settings.notifications.autoHideLabel")}
+          description={t("settings.notifications.autoHideDescription")}
           controlClassName="ll:w-12"
         >
           <Input
@@ -245,13 +252,13 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
         </SettingsControlRow>
       </div>
 
-      <SettingsSection title="Serwery">
+      <SettingsSection title={t("settings.notifications.serversTitle")}>
         <SettingsGuildSelectionGrid
           guilds={guilds}
           selectedGuildIds={selectedGuildIds}
           disabled={!watchShow}
           onToggle={toggleGuild}
-          emptyStateLabel="Brak gildii do skonfigurowania dla tej kategorii."
+          emptyStateLabel={t("settings.notifications.emptyGuilds")}
           variant="compact"
         />
       </SettingsSection>

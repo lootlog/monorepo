@@ -4,6 +4,7 @@ import { Tile } from "@/components/ui/tile";
 import { useTimersStore } from "@/store/timers.store";
 import { XIcon } from "lucide-react";
 import type { FC } from "react";
+import { useTranslation } from "react-i18next";
 
 type HiddenTimersProps = {
   guildId?: string;
@@ -11,6 +12,7 @@ type HiddenTimersProps = {
 
 export const HiddenTimers: FC<HiddenTimersProps> = ({ guildId }) => {
   const { hiddenTimers, revealTimer, generalConfig } = useTimersStore();
+  const { t } = useTranslation();
 
   const key = generalConfig.timersGrouping ? "global" : guildId;
   const hiddenTimersForAccount = key ? hiddenTimers[key] : undefined;
@@ -53,7 +55,9 @@ export const HiddenTimers: FC<HiddenTimersProps> = ({ guildId }) => {
         </span>
       )}
       {!hiddenTimersForAccount || hiddenTimersForAccount.length === 0 ? (
-        <SettingsEmptyState>Brak ukrytych timerów.</SettingsEmptyState>
+        <SettingsEmptyState>
+          {t("settings.hiddenTimers.emptyState")}
+        </SettingsEmptyState>
       ) : null}
     </div>
   );

@@ -7,6 +7,7 @@ import { gameEventsManager } from "@/lib/game-events-manager";
 import { usePartyStore } from "@/store/party.store";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import { useState, type FC } from "react";
+import { useTranslation } from "react-i18next";
 
 const createBaseEvent = (): Pick<GameEvent, "d" | "e" | "ev"> => ({
   d: ["", "", ""],
@@ -163,9 +164,8 @@ const createPartyLeaveEvent = (): GameEvent => ({
   },
 });
 
-const EVENT_TEMPLATES: Record<string, { label: string; event: GameEvent }> = {
+const EVENT_TEMPLATES: Record<string, { event: GameEvent }> = {
   npcSpawn: {
-    label: "NPC Spawn",
     event: {
       ...createBaseEvent(),
       npcs: [
@@ -180,14 +180,12 @@ const EVENT_TEMPLATES: Record<string, { label: string; event: GameEvent }> = {
     },
   },
   npcDelete: {
-    label: "NPC Delete",
     event: {
       ...createBaseEvent(),
       npcs_del: [{ id: 999999 }],
     },
   },
   killNpc: {
-    label: "Kill NPC",
     event: {
       ...createBaseEvent(),
       f: {
@@ -223,7 +221,6 @@ const EVENT_TEMPLATES: Record<string, { label: string; event: GameEvent }> = {
     },
   },
   townChange: {
-    label: "Town Change",
     event: {
       ...createBaseEvent(),
       town: {
@@ -242,21 +239,18 @@ const EVENT_TEMPLATES: Record<string, { label: string; event: GameEvent }> = {
     },
   },
   afkOn: {
-    label: "AFK On",
     event: {
       ...createBaseEvent(),
       h: { stasis: 1 },
     },
   },
   afkOff: {
-    label: "AFK Off",
     event: {
       ...createBaseEvent(),
       h: { stasis: 0 },
     },
   },
   lootFight: {
-    label: "Loot (Fight)",
     event: {
       ...createBaseEvent(),
       loot: {
@@ -266,7 +260,6 @@ const EVENT_TEMPLATES: Record<string, { label: string; event: GameEvent }> = {
     },
   },
   lootDialog: {
-    label: "Loot (Dialog)",
     event: {
       ...createBaseEvent(),
       loot: {
@@ -285,6 +278,17 @@ type LogEntry = {
 };
 
 export const DebugTab: FC = () => {
+  const { t } = useTranslation();
+  const eventLabels = {
+    npcSpawn: t("settings.debug.events.npcSpawn"),
+    npcDelete: t("settings.debug.events.npcDelete"),
+    killNpc: t("settings.debug.events.killNpc"),
+    townChange: t("settings.debug.events.townChange"),
+    afkOn: t("settings.debug.events.afkOn"),
+    afkOff: t("settings.debug.events.afkOff"),
+    lootFight: t("settings.debug.events.lootFight"),
+    lootDialog: t("settings.debug.events.lootDialog"),
+  } as const;
   const [rawJson, setRawJson] = useState<string>(
     JSON.stringify(EVENT_TEMPLATES.npcSpawn.event, null, 2),
   );
@@ -310,9 +314,13 @@ export const DebugTab: FC = () => {
       const event = JSON.parse(rawJson) as GameEvent;
       setJsonError(null);
       const success = gameEventsManager.triggerManualEvent(event);
-      addLogEntry("Custom JSON", success);
+      addLogEntry(t("settings.debug.events.customJson"), success);
     } catch (error) {
-      setJsonError(error instanceof Error ? error.message : "Invalid JSON");
+      setJsonError(
+        error instanceof Error
+          ? error.message
+          : t("settings.debug.invalidJson"),
+      );
     }
   };
 
@@ -326,113 +334,133 @@ export const DebugTab: FC = () => {
 
   return (
     <SettingsTabLayout
-      title="Debug"
-      description="Narzędzia pomocnicze do ręcznego wywoływania eventów i podglądu stanu klienta."
+      title={t("settings.debug.title")}
+      description={t("settings.debug.description")}
       className="ll:px-2 ll:pb-2"
     >
-      <SettingsSection title="Event Templates">
+      <SettingsSection title={t("settings.debug.eventTemplatesTitle")}>
         <div className="ll:flex ll:flex-wrap ll:gap-1">
-          {Object.entries(EVENT_TEMPLATES).map(([key, { label, event }]) => (
+          {Object.entries(EVENT_TEMPLATES).map(([key, { event }]) => (
             <Button
               key={key}
-              onClick={() => triggerEvent(event, label)}
+              onClick={() =>
+                triggerEvent(
+                  event,
+                  eventLabels[key as keyof typeof eventLabels],
+                )
+              }
               className="ll:px-2"
             >
-              {label}
+              {eventLabels[key as keyof typeof eventLabels]}
             </Button>
           ))}
           <Button
             onClick={() =>
-              triggerEvent(createUniqueKillNpcEvent(), "Kill NPC (unique)")
+              triggerEvent(
+                createUniqueKillNpcEvent(),
+                t("settings.debug.events.killNpcUnique"),
+              )
             }
             className="ll:px-2 ll:bg-green-700 hover:ll:bg-green-600"
           >
-            Kill NPC (unique)
+            {t("settings.debug.events.killNpcUnique")}
           </Button>
         </div>
       </SettingsSection>
 
       <SettingsSection
-        title="NPC Detector Events"
-        description="Triggers NPC detection (requires detector settings enabled)"
+        title={t("settings.debug.npcDetectorTitle")}
+        description={t("settings.debug.npcDetectorDescription")}
       >
         <div className="ll:flex ll:flex-wrap ll:gap-1">
           <Button
             onClick={() =>
               triggerEvent(
                 createDetectorEvent(DETECTOR_NPC_PRESETS.titan),
-                "Detect Titan",
+                t("settings.debug.events.detectTitan"),
               )
             }
             className="ll:px-2 ll:bg-purple-700 hover:ll:bg-purple-600"
           >
-            Titan
+            {t("settings.npcTypes.titan")}
           </Button>
           <Button
             onClick={() =>
               triggerEvent(
                 createDetectorEvent(DETECTOR_NPC_PRESETS.hero),
-                "Detect Hero",
+                t("settings.debug.events.detectHero"),
               )
             }
             className="ll:px-2 ll:bg-orange-700 hover:ll:bg-orange-600"
           >
-            Hero
+            {t("settings.npcTypes.hero")}
           </Button>
           <Button
             onClick={() =>
               triggerEvent(
                 createDetectorEvent(DETECTOR_NPC_PRESETS.colossus),
-                "Detect Colossus",
+                t("settings.debug.events.detectColossus"),
               )
             }
             className="ll:px-2 ll:bg-blue-700 hover:ll:bg-blue-600"
           >
-            Colossus
+            {t("settings.npcTypes.colossus")}
           </Button>
           <Button
             onClick={() =>
               triggerEvent(
                 createDetectorEvent(DETECTOR_NPC_PRESETS.elite2),
-                "Detect Elite II",
+                t("settings.debug.events.detectElite2"),
               )
             }
             className="ll:px-2 ll:bg-yellow-700 hover:ll:bg-yellow-600"
           >
-            Elite II
+            {t("settings.npcTypes.elite2")}
           </Button>
         </div>
       </SettingsSection>
 
       <SettingsSection
-        title="Party Events"
-        description="Triggers party member changes"
+        title={t("settings.debug.partyEventsTitle")}
+        description={t("settings.debug.partyEventsDescription")}
       >
         <div className="ll:flex ll:flex-wrap ll:gap-1">
           <Button
-            onClick={() => triggerEvent(createPartyJoinEvent(), "Party Join")}
+            onClick={() =>
+              triggerEvent(
+                createPartyJoinEvent(),
+                t("settings.debug.events.partyJoin"),
+              )
+            }
             className="ll:px-2 ll:bg-teal-700 hover:ll:bg-teal-600"
           >
-            Party Join
+            {t("settings.debug.events.partyJoin")}
           </Button>
           <Button
-            onClick={() => triggerEvent(createPartyLeaveEvent(), "Party Leave")}
+            onClick={() =>
+              triggerEvent(
+                createPartyLeaveEvent(),
+                t("settings.debug.events.partyLeave"),
+              )
+            }
             className="ll:px-2 ll:bg-red-700 hover:ll:bg-red-600"
           >
-            Party Leave
+            {t("settings.debug.events.partyLeave")}
           </Button>
         </div>
       </SettingsSection>
 
-      <SettingsSection title="Raw JSON Event">
+      <SettingsSection title={t("settings.debug.rawJsonTitle")}>
         <div className="ll:flex ll:flex-wrap ll:gap-1 ll:mb-2">
-          {Object.entries(EVENT_TEMPLATES).map(([key, { label }]) => (
+          {Object.keys(EVENT_TEMPLATES).map((key) => (
             <Button
               key={key}
               onClick={() => loadTemplate(key)}
               className="ll:px-2 ll:text-[10px] ll:h-4"
             >
-              Load {label}
+              {t("settings.debug.loadTemplate", {
+                label: eventLabels[key as keyof typeof eventLabels],
+              })}
             </Button>
           ))}
         </div>
@@ -452,25 +480,25 @@ export const DebugTab: FC = () => {
           <p className="ll:text-red-400 ll:text-xs ll:mt-1">{jsonError}</p>
         )}
         <Button onClick={triggerFromJson} className="ll:mt-2 ll:w-full">
-          Trigger Custom Event
+          {t("settings.debug.triggerCustomEvent")}
         </Button>
       </SettingsSection>
 
       <SettingsSection
-        title="Event Log"
+        title={t("settings.debug.eventLogTitle")}
         actions={
           <Button
             onClick={() => setEventLog([])}
             className="ll:px-2 ll:text-[10px] ll:h-4"
           >
-            Clear
+            {t("settings.common.actions.clear")}
           </Button>
         }
       >
         <SettingsPanel className="ll:max-h-24 ll:overflow-y-auto ll:p-2">
           {eventLog.length === 0 ? (
             <SettingsEmptyState className="ll:border-none ll:bg-transparent ll:px-0 ll:py-0">
-              No events triggered
+              {t("settings.debug.noEvents")}
             </SettingsEmptyState>
           ) : (
             eventLog.map((entry) => (
@@ -486,7 +514,9 @@ export const DebugTab: FC = () => {
                     entry.success ? "ll:text-green-400" : "ll:text-red-400"
                   }
                 >
-                  {entry.success ? "OK" : "FAIL"}
+                  {entry.success
+                    ? t("settings.debug.statusOk")
+                    : t("settings.debug.statusFail")}
                 </span>
                 <span className="ll:text-white">{entry.eventType}</span>
               </div>
@@ -495,11 +525,11 @@ export const DebugTab: FC = () => {
         </SettingsPanel>
       </SettingsSection>
 
-      <SettingsSection title="Party State">
+      <SettingsSection title={t("settings.debug.partyStateTitle")}>
         <SettingsPanel className="ll:p-2">
           {partyMembers.length === 0 ? (
             <SettingsEmptyState className="ll:border-none ll:bg-transparent ll:px-0 ll:py-0">
-              No party members
+              {t("settings.debug.noPartyMembers")}
             </SettingsEmptyState>
           ) : (
             partyMembers.map((member) => (
@@ -510,7 +540,9 @@ export const DebugTab: FC = () => {
                 <span className="ll:text-white">{member.nick}</span>
                 <span className="ll:text-gray-400">(ID: {member.id})</span>
                 {member.leader && (
-                  <span className="ll:text-yellow-400">Leader</span>
+                  <span className="ll:text-yellow-400">
+                    {t("settings.debug.leader")}
+                  </span>
                 )}
               </div>
             ))
@@ -518,13 +550,18 @@ export const DebugTab: FC = () => {
         </SettingsPanel>
       </SettingsSection>
 
-      <SettingsSection title="System Info">
+      <SettingsSection title={t("settings.debug.systemInfoTitle")}>
         <SettingsPanel className="ll:space-y-1">
           <p className="ll:text-xs ll:text-gray-400">
-            Zoom Factor: {zoomFactor !== null ? zoomFactor : "N/A"}
+            {t("settings.debug.zoomFactor", {
+              value:
+                zoomFactor !== null
+                  ? zoomFactor
+                  : t("settings.debug.notAvailable"),
+            })}
           </p>
           <p className="ll:text-xs ll:text-gray-400">
-            Mode: {import.meta.env.MODE}
+            {t("settings.debug.mode", { mode: import.meta.env.MODE })}
           </p>
         </SettingsPanel>
       </SettingsSection>

@@ -8,6 +8,7 @@ import {
 import type { Guild } from "@/hooks/api/use-guilds";
 import { cn } from "@/lib/utils";
 import type { FC } from "react";
+import { useTranslation } from "react-i18next";
 
 type SettingsGuildSelectionGridSharedProps = {
   className?: string;
@@ -50,28 +51,34 @@ export const SettingsGuildSelectionGrid: FC<
   variant = "default",
   ...selectionProps
 }) => {
+  const { t } = useTranslation();
   if (!guilds || guilds.length === 0) {
     return <SettingsEmptyState>{emptyStateLabel}</SettingsEmptyState>;
   }
 
-  const selectedGuildIds =
+  const selectedGuildIds: string[] =
     selectionMode === "single"
       ? selectionProps.selectedGuildId
         ? [selectionProps.selectedGuildId]
         : []
-      : selectionProps.selectedGuildIds;
+      : (selectionProps.selectedGuildIds ?? []);
 
   const handleSelect = (guildId: string) => {
     if (selectionMode === "single") {
-      if (selectionProps.selectedGuildId === guildId) {
+      const { onSelect, selectedGuildId } =
+        selectionProps as SettingsGuildSelectionGridSingleProps;
+
+      if (selectedGuildId === guildId) {
         return;
       }
 
-      selectionProps.onSelect(guildId);
+      onSelect(guildId);
       return;
     }
 
-    selectionProps.onToggle(guildId);
+    const { onToggle } =
+      selectionProps as SettingsGuildSelectionGridMultipleProps;
+    onToggle(guildId);
   };
 
   return (
@@ -85,7 +92,9 @@ export const SettingsGuildSelectionGrid: FC<
     >
       {guilds.map((guild) => {
         const isSelected = selectedGuildIds.includes(guild.id);
-        const stateLabel = isSelected ? "Włączone" : "Wyłączone";
+        const stateLabel = isSelected
+          ? t("settings.common.guildSelection.enabled")
+          : t("settings.common.guildSelection.disabled");
         const button = (
           <button
             key={guild.id}
@@ -95,8 +104,14 @@ export const SettingsGuildSelectionGrid: FC<
             aria-pressed={isSelected}
             aria-label={
               selectionMode === "single"
-                ? `Wybierz gildię ${guild.name}: ${stateLabel}`
-                : `Przełącz gildię ${guild.name}: ${stateLabel}`
+                ? t("settings.common.guildSelection.selectAria", {
+                    name: guild.name,
+                    state: stateLabel,
+                  })
+                : t("settings.common.guildSelection.toggleAria", {
+                    name: guild.name,
+                    state: stateLabel,
+                  })
             }
             className={cn(
               "ll:group ll:relative ll:overflow-hidden ll:border ll:transition-[transform,border-color,background-color,box-shadow,opacity] ll:duration-200",

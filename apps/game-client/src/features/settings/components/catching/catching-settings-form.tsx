@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react";
 import { useLootlogCharactersConfig } from "@/hooks/api/use-lootlog-character-config";
 import { useUpdateLootlogCharactersConfig } from "@/hooks/api/use-update-lootlog-characters-config";
 import { useGuilds } from "@/hooks/api/use-guilds";
+import { useTranslation } from "react-i18next";
 
 type CatchingSettingsFormProps = {
   characterId: string;
@@ -26,6 +27,7 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
   disabled = false,
   onSelectionChange,
 }) => {
+  const { t } = useTranslation();
   const { data: guilds } = useGuilds();
   const { data: lootlogCharactersConfig, isPending: isLootlogConfigLoading } =
     useLootlogCharactersConfig();
@@ -119,12 +121,15 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
   return (
     <div className="ll:relative ll:py-1">
       <SettingsSection
-        title="Zakres zbierania"
-        description="Kliknij gildię, aby włączyć lub wyłączyć odbieranie lootów i timerów dla tej postaci."
+        title={t("settings.catching.form.collectionRangeTitle")}
+        description={t("settings.catching.form.collectionRangeDescription")}
         actions={
           <div className="ll:flex ll:items-center ll:gap-2">
             <div className="ll:rounded-sm ll:border ll:border-gray-600/80 ll:bg-gray-900/70 ll:px-2 ll:py-1 ll:text-[10px] ll:font-semibold ll:uppercase ll:tracking-[0.08em] ll:text-gray-300">
-              {selectedCount}/{totalGuilds} aktywne
+              {t("settings.catching.form.activeCount", {
+                selectedCount,
+                totalCount: totalGuilds,
+              })}
             </div>
             {isPending ? (
               <Loader2 className="ll:size-4 ll:animate-spin ll:text-primary" />
@@ -138,7 +143,7 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
           selectedGuildIds={selectedGuildIds}
           disabled={isInteractionDisabled}
           onToggle={handleGuildToggle}
-          emptyStateLabel="Brak gildii do skonfigurowania dla tej postaci."
+          emptyStateLabel={t("settings.catching.form.emptyGuilds")}
           variant="compact"
         />
       </SettingsSection>

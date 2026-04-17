@@ -12,12 +12,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUpdateUserPreferences } from "@/hooks/api/use-user-preferences";
 import { useCurrentUserNotificationMutes } from "@/hooks/use-current-user-notification-mutes";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export const NotificationMutesSettingsTab = () => {
-  const { mutes } = useCurrentUserNotificationMutes();
+  const { isReady, mutes } = useCurrentUserNotificationMutes();
   const updateUserPreferences = useUpdateUserPreferences();
   const [playerSearch, setPlayerSearch] = useState("");
   const [npcSearch, setNpcSearch] = useState("");
+  const { t } = useTranslation();
+  const isMutating = updateUserPreferences.isPending;
+  const isActionsDisabled = !isReady || isMutating;
 
   const normalizedPlayerSearch = playerSearch.trim().toLocaleLowerCase("pl");
   const normalizedNpcSearch = npcSearch.trim().toLocaleLowerCase("pl");
@@ -49,8 +53,8 @@ export const NotificationMutesSettingsTab = () => {
 
   return (
     <SettingsTabLayout
-      title="Wyciszenia"
-      description="Zarządzaj globalną listą wyciszonych graczy i potworów. Te wyciszenia działają na wszystkich kontach."
+      title={t("settings.notificationMutes.title")}
+      description={t("settings.notificationMutes.description")}
       contentClassName="ll:gap-3"
     >
       <Tabs defaultValue="players" className="ll:w-full ll:gap-3">
@@ -59,13 +63,13 @@ export const NotificationMutesSettingsTab = () => {
             value="players"
             className={SETTINGS_SUBTAB_TRIGGER_CLASS_NAME}
           >
-            Gracze
+            {t("settings.notificationMutes.tabs.players")}
           </TabsTrigger>
           <TabsTrigger
             value="npcs"
             className={SETTINGS_SUBTAB_TRIGGER_CLASS_NAME}
           >
-            Potwory
+            {t("settings.notificationMutes.tabs.npcs")}
           </TabsTrigger>
         </TabsList>
         <TabsContent
@@ -75,12 +79,16 @@ export const NotificationMutesSettingsTab = () => {
           <Input
             value={playerSearch}
             onChange={(event) => setPlayerSearch(event.target.value)}
-            placeholder="Szukaj gracza..."
+            placeholder={t(
+              "settings.notificationMutes.searchPlayersPlaceholder",
+            )}
             className="ll:h-8 ll:text-[12px]"
           />
           <div className="ll:space-y-2">
             {sortedPlayers.length === 0 ? (
-              <SettingsEmptyState>Brak wyników dla graczy.</SettingsEmptyState>
+              <SettingsEmptyState>
+                {t("settings.notificationMutes.emptyPlayers")}
+              </SettingsEmptyState>
             ) : (
               sortedPlayers.map((player) => (
                 <SettingsPanel
@@ -89,7 +97,8 @@ export const NotificationMutesSettingsTab = () => {
                 >
                   <div className="ll:min-w-0 ll:flex-1 ll:flex ll:flex-col">
                     <span className="ll:text-[12px] ll:font-semibold ll:text-white ll:truncate">
-                      {player.displayName || "Nieznany"}
+                      {player.displayName ||
+                        t("settings.notificationMutes.unknownPlayer")}
                     </span>
                     <span className="ll:text-[11px] ll:text-gray-400 ll:truncate">
                       {player.discordId}
@@ -97,6 +106,7 @@ export const NotificationMutesSettingsTab = () => {
                   </div>
                   <Button
                     className="ll:h-7 ll:px-2.5 ll:text-[11px] ll:font-semibold"
+                    disabled={isActionsDisabled}
                     onClick={() =>
                       updateUserPreferences.mutate({
                         mutes: {
@@ -108,7 +118,7 @@ export const NotificationMutesSettingsTab = () => {
                       })
                     }
                   >
-                    Usuń
+                    {t("settings.common.actions.remove")}
                   </Button>
                 </SettingsPanel>
               ))
@@ -122,13 +132,13 @@ export const NotificationMutesSettingsTab = () => {
           <Input
             value={npcSearch}
             onChange={(event) => setNpcSearch(event.target.value)}
-            placeholder="Szukaj potwora..."
+            placeholder={t("settings.notificationMutes.searchNpcsPlaceholder")}
             className="ll:h-8 ll:text-[12px]"
           />
           <div className="ll:space-y-2">
             {sortedNpcs.length === 0 ? (
               <SettingsEmptyState>
-                Brak wyników dla potworów.
+                {t("settings.notificationMutes.emptyNpcs")}
               </SettingsEmptyState>
             ) : (
               sortedNpcs.map((npc) => (
@@ -149,13 +159,17 @@ export const NotificationMutesSettingsTab = () => {
                         {npc.name}
                       </span>
                       <span className="ll:text-[11px] ll:text-gray-400 ll:truncate">
-                        {npc.npcType} • lvl {npc.lvl}
+                        {npc.npcType} •{" "}
+                        {t("settings.notificationMutes.npcLevel", {
+                          level: npc.lvl,
+                        })}
                         {npc.prof ? ` • ${npc.prof}` : ""}
                       </span>
                     </div>
                   </div>
                   <Button
                     className="ll:h-7 ll:px-2.5 ll:text-[11px] ll:font-semibold"
+                    disabled={isActionsDisabled}
                     onClick={() =>
                       updateUserPreferences.mutate({
                         mutes: {
@@ -166,7 +180,7 @@ export const NotificationMutesSettingsTab = () => {
                       })
                     }
                   >
-                    Usuń
+                    {t("settings.common.actions.remove")}
                   </Button>
                 </SettingsPanel>
               ))

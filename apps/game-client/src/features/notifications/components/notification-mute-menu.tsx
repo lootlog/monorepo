@@ -30,10 +30,11 @@ export const NotificationMuteMenu: FC<NotificationMuteMenuProps> = ({
   onMuted,
 }) => {
   const [open, setOpen] = useState(false);
-  const { mutes } = useCurrentUserNotificationMutes();
+  const { isReady, mutes } = useCurrentUserNotificationMutes();
   const updateUserPreferences = useUpdateUserPreferences();
   const mutedNpc = createMutedNpcPreference(notification);
   const mutedPlayer = createMutedPlayerPreference(notification, senderName);
+  const isDisabled = !isReady || updateUserPreferences.isPending;
 
   const handleOpenChange = (nextOpen: boolean) => {
     setOpen(nextOpen);
@@ -41,6 +42,10 @@ export const NotificationMuteMenu: FC<NotificationMuteMenuProps> = ({
   };
 
   const handleMutePlayer = () => {
+    if (isDisabled) {
+      return;
+    }
+
     updateUserPreferences.mutate({
       mutes: {
         players: appendMutedPlayer(mutes, mutedPlayer),
@@ -51,6 +56,10 @@ export const NotificationMuteMenu: FC<NotificationMuteMenuProps> = ({
   };
 
   const handleMuteNpc = () => {
+    if (isDisabled) {
+      return;
+    }
+
     if (!mutedNpc) {
       handleOpenChange(false);
       return;
@@ -71,6 +80,7 @@ export const NotificationMuteMenu: FC<NotificationMuteMenuProps> = ({
         <Button
           variant="ghost"
           aria-label="Opcje wyciszenia"
+          disabled={isDisabled}
           className="ll:size-7 ll:px-0"
         >
           <BellOff size={12} />
@@ -82,6 +92,7 @@ export const NotificationMuteMenu: FC<NotificationMuteMenuProps> = ({
       >
         <Button
           className="ll:h-auto ll:min-h-8 ll:justify-start ll:px-2 ll:py-1.5 ll:text-left ll:leading-4"
+          disabled={isDisabled}
           onClick={handleMutePlayer}
         >
           Nie otrzymuj powiadomień od tego gracza
@@ -89,6 +100,7 @@ export const NotificationMuteMenu: FC<NotificationMuteMenuProps> = ({
         {mutedNpc ? (
           <Button
             className="ll:h-auto ll:min-h-8 ll:justify-start ll:px-2 ll:py-1.5 ll:text-left ll:leading-4"
+            disabled={isDisabled}
             onClick={handleMuteNpc}
           >
             Nie otrzymuj powiadomień o tym potworze

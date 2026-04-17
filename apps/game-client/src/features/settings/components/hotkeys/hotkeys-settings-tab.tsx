@@ -4,7 +4,7 @@ import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Button } from "@/components/ui/button";
 import {
   HOTKEY_ACTIONS,
-  HOTKEY_CATEGORY_LABELS,
+  HOTKEY_CATEGORY_KEYS,
   formatBinding,
   useHotkeysStore,
   type HotkeyAction,
@@ -13,6 +13,7 @@ import {
   type HotkeyCategory,
 } from "@/store/hotkeys.store";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const groupedActions = HOTKEY_ACTIONS.reduce<
   Record<HotkeyCategory, HotkeyActionConfig[]>
@@ -36,6 +37,7 @@ export const HotkeysSettingsTab = () => {
   const [capturingAction, setCapturingAction] = useState<HotkeyAction | null>(
     null,
   );
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!capturingAction) return;
@@ -71,14 +73,14 @@ export const HotkeysSettingsTab = () => {
 
   return (
     <SettingsTabLayout
-      title="Skróty klawiszowe"
-      description="Skonfiguruj skróty klawiszowe do otwierania okien."
+      title={t("settings.hotkeys.title")}
+      description={t("settings.hotkeys.description")}
     >
       <div className="ll:flex ll:flex-col ll:gap-4">
         {categories.map(([category, actions]) => (
           <SettingsSection
             key={category}
-            title={HOTKEY_CATEGORY_LABELS[category]}
+            title={t(HOTKEY_CATEGORY_KEYS[category])}
           >
             {actions.map((config) => {
               const binding = bindings[config.action];
@@ -87,8 +89,8 @@ export const HotkeysSettingsTab = () => {
               return (
                 <SettingsControlRow
                   key={config.action}
-                  label={config.label}
-                  description={config.description}
+                  label={t(config.labelKey)}
+                  description={t(config.descriptionKey)}
                   controlClassName={HOTKEY_CONTROL_CLASS_NAME}
                 >
                   <div className="ll:flex ll:w-full ll:items-center ll:justify-end ll:gap-1.5">
@@ -104,7 +106,7 @@ export const HotkeysSettingsTab = () => {
                       type="button"
                     >
                       {isCapturing
-                        ? "Naciśnij klawisz..."
+                        ? t("settings.hotkeys.capture")
                         : formatBinding(binding)}
                     </Button>
                     <Button
@@ -113,7 +115,7 @@ export const HotkeysSettingsTab = () => {
                       type="button"
                       variant="ghost"
                     >
-                      Reset
+                      {t("settings.common.actions.reset")}
                     </Button>
                   </div>
                 </SettingsControlRow>
@@ -121,10 +123,10 @@ export const HotkeysSettingsTab = () => {
             })}
           </SettingsSection>
         ))}
-        <SettingsSection title="Reset">
+        <SettingsSection title={t("settings.hotkeys.resetTitle")}>
           <SettingsControlRow
-            label="Przywróć domyślne"
-            description="Usuń własne przypisania i wróć do domyślnej konfiguracji skrótów."
+            label={t("settings.hotkeys.restoreDefaultsLabel")}
+            description={t("settings.hotkeys.restoreDefaultsDescription")}
             controlClassName="ll:w-28"
           >
             <Button
@@ -132,7 +134,7 @@ export const HotkeysSettingsTab = () => {
               className="ll:w-full ll:px-2"
               type="button"
             >
-              Przywróć
+              {t("settings.hotkeys.restoreButton")}
             </Button>
           </SettingsControlRow>
         </SettingsSection>

@@ -21,6 +21,7 @@ import { Loader2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export const CatchingSettings = () => {
   const queryClient = useQueryClient();
@@ -34,6 +35,7 @@ export const CatchingSettings = () => {
     Record<string, string[]>
   >({});
   const selectionByCharacterIdRef = useRef<Record<string, string[]>>({});
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!characterList || characterList.length === 0) return;
@@ -141,7 +143,7 @@ export const CatchingSettings = () => {
       context,
     ) => {
       if (failureCount === 0) {
-        toast.success("Ustawienia skopiowane do wszystkich postaci");
+        toast.success(t("settings.catching.applySuccess"));
         return;
       }
 
@@ -159,12 +161,15 @@ export const CatchingSettings = () => {
       }
 
       if (successCount === 0) {
-        toast.error("Nie udało się zaktualizować żadnej postaci");
+        toast.error(t("settings.catching.applyNoneFailed"));
         return;
       }
 
       toast.error(
-        `Zaktualizowano ${successCount}/${totalCount} postaci. Część zmian się nie udała.`,
+        t("settings.catching.applyPartialFailed", {
+          successCount,
+          totalCount,
+        }),
       );
     },
     onError: (_error, _variables, context) => {
@@ -181,7 +186,7 @@ export const CatchingSettings = () => {
         setSelectionByCharacterId(context.previousSelectionByCharacterId);
       }
 
-      toast.error("Nie udało się skopiować ustawień do wszystkich postaci");
+      toast.error(t("settings.catching.applyFailed"));
     },
     onSettled: async () => {
       await queryClient.invalidateQueries({
@@ -210,12 +215,12 @@ export const CatchingSettings = () => {
 
   return (
     <SettingsTabLayout
-      title="Ustawienia łapania lootu i timerów"
-      description="Skonfiguruj, które gildie mają odbierać looty i timery z każdej postaci."
+      title={t("settings.catching.title")}
+      description={t("settings.catching.description")}
     >
       <SettingsSection
-        title="Postać"
-        description="Wybierz postać, a potem wskaż gildie, które mają odbierać z niej dane."
+        title={t("settings.catching.characterTitle")}
+        description={t("settings.catching.characterDescription")}
       >
         <Tabs
           value={selectedCharacterId}
@@ -245,7 +250,7 @@ export const CatchingSettings = () => {
                 {applyToAllMutation.isPending ? (
                   <Loader2 className="ll:size-3.5 ll:animate-spin" />
                 ) : null}
-                Aplikuj do wszystkich postaci
+                {t("settings.catching.applyToAllButton")}
               </Button>
             </div>
           ) : null}

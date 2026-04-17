@@ -290,6 +290,6 @@ describe("LogsSettingsTab", () => {
 
     expect(copyButton).toBeInTheDocument();
     expect(screen.getByText("Payload")).toBeInTheDocument();
-    expect(screen.getByText("Response")).toBeInTheDocument();
+    expect(screen.getByText("Odpowiedź")).toBeInTheDocument();
   });
 });

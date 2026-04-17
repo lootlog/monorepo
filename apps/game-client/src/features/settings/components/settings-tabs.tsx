@@ -11,10 +11,10 @@ import { DebugTab } from "@/features/settings/components/debug/debug-tab";
 import { DetectorSettingsTab } from "@/features/settings/components/detector/detector-settings-tab";
 import { GeneralSettingsTab } from "@/features/settings/components/general/general-settings-tab";
 import { HiddenTimersTab } from "@/features/settings/components/hidden-timers/hidden-timers-tab";
-import { NotificationMutesSettingsTab } from "@/features/settings/components/notification-mutes/notification-mutes-settings-tab";
-import { NotificationsSettingsTab } from "@/features/settings/components/notifications/notifications-settings-tab";
 import { HotkeysSettingsTab } from "@/features/settings/components/hotkeys/hotkeys-settings-tab";
 import { LogsSettingsTab } from "@/features/settings/components/logs/logs-settings-tab";
+import { NotificationMutesSettingsTab } from "@/features/settings/components/notification-mutes/notification-mutes-settings-tab";
+import { NotificationsSettingsTab } from "@/features/settings/components/notifications/notifications-settings-tab";
 import { SoundsSettingsTab } from "@/features/settings/components/sounds/sounds-settings-tab";
 import { TimersSettingsTab } from "@/features/settings/components/timers/timers-settings-tab";
 import type { SettingsTabValue } from "@/features/settings/constants/settings-tabs";
@@ -35,6 +35,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { FC, ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 
 type SettingsTabsProps = {};
 
@@ -44,87 +45,6 @@ type SettingsTabDefinition = {
   icon: LucideIcon;
   content: ReactNode;
 };
-
-const BASE_TABS_LIST: SettingsTabDefinition[] = [
-  {
-    value: "general",
-    label: "Ogólne",
-    icon: Settings,
-    content: <GeneralSettingsTab />,
-  },
-  {
-    value: "timers",
-    label: "Timery",
-    icon: Clock,
-    content: <TimersSettingsTab />,
-  },
-  {
-    value: "catching",
-    label: "Dodawanie łupów i timerów",
-    icon: Target,
-    content: <CatchingSettings />,
-  },
-  {
-    value: "hidden-timers",
-    label: "Ukryte timery",
-    icon: EyeOff,
-    content: <HiddenTimersTab />,
-  },
-  {
-    value: "npc-detector",
-    label: "Wykrywacz",
-    icon: Crosshair,
-    content: <DetectorSettingsTab />,
-  },
-  {
-    value: "notifications",
-    label: "Powiadomienia",
-    icon: Bell,
-    content: <NotificationsSettingsTab />,
-  },
-  {
-    value: "notification-mutes",
-    label: "Wyciszenia",
-    icon: BellOff,
-    content: <NotificationMutesSettingsTab />,
-  },
-  {
-    value: "sounds",
-    label: "Dźwięki",
-    icon: Volume2,
-    content: <SoundsSettingsTab />,
-  },
-  {
-    value: "battle-panel",
-    label: "Panel walk (beta)",
-    icon: Swords,
-    content: <BattlePanelSettingsTab />,
-  },
-  {
-    value: "hotkeys",
-    label: "Skróty klawiszowe",
-    icon: Keyboard,
-    content: <HotkeysSettingsTab />,
-  },
-];
-
-const DEBUG_TAB: SettingsTabDefinition = {
-  value: "debug",
-  label: "Debug",
-  icon: Bug,
-  content: <DebugTab />,
-};
-
-const LOGS_TAB: SettingsTabDefinition = {
-  value: "logs",
-  label: "Logi",
-  icon: FileText,
-  content: <LogsSettingsTab />,
-};
-
-const TABS_LIST: SettingsTabDefinition[] = import.meta.env.DEV
-  ? [...BASE_TABS_LIST, LOGS_TAB, DEBUG_TAB]
-  : [...BASE_TABS_LIST, LOGS_TAB];
 
 const ICON_CLASSES = "ll:size-4 ll:stroke-2";
 const SETTINGS_TABS_COMPACT_WIDTH = 520;
@@ -141,7 +61,85 @@ export const SettingsTabs: FC<SettingsTabsProps> = () => {
   const setSettingsActiveTab = useWindowsStore(
     (state) => state.setSettingsActiveTab,
   );
-  const selectedTab = TABS_LIST.some((tab) => tab.value === activeTab)
+  const { t } = useTranslation();
+  const baseTabsList: SettingsTabDefinition[] = [
+    {
+      value: "general",
+      label: t("settings.tabs.general"),
+      icon: Settings,
+      content: <GeneralSettingsTab />,
+    },
+    {
+      value: "timers",
+      label: t("settings.tabs.timers"),
+      icon: Clock,
+      content: <TimersSettingsTab />,
+    },
+    {
+      value: "catching",
+      label: t("settings.tabs.catching"),
+      icon: Target,
+      content: <CatchingSettings />,
+    },
+    {
+      value: "hidden-timers",
+      label: t("settings.tabs.hiddenTimers"),
+      icon: EyeOff,
+      content: <HiddenTimersTab />,
+    },
+    {
+      value: "npc-detector",
+      label: t("settings.tabs.detector"),
+      icon: Crosshair,
+      content: <DetectorSettingsTab />,
+    },
+    {
+      value: "notifications",
+      label: t("settings.tabs.notifications"),
+      icon: Bell,
+      content: <NotificationsSettingsTab />,
+    },
+    {
+      value: "notification-mutes",
+      label: t("settings.tabs.notificationMutes"),
+      icon: BellOff,
+      content: <NotificationMutesSettingsTab />,
+    },
+    {
+      value: "sounds",
+      label: t("settings.tabs.sounds"),
+      icon: Volume2,
+      content: <SoundsSettingsTab />,
+    },
+    {
+      value: "battle-panel",
+      label: t("settings.tabs.battlePanel"),
+      icon: Swords,
+      content: <BattlePanelSettingsTab />,
+    },
+    {
+      value: "hotkeys",
+      label: t("settings.tabs.hotkeys"),
+      icon: Keyboard,
+      content: <HotkeysSettingsTab />,
+    },
+  ];
+  const logsTab: SettingsTabDefinition = {
+    value: "logs",
+    label: t("settings.tabs.logs"),
+    icon: FileText,
+    content: <LogsSettingsTab />,
+  };
+  const debugTab: SettingsTabDefinition = {
+    value: "debug",
+    label: t("settings.tabs.debug"),
+    icon: Bug,
+    content: <DebugTab />,
+  };
+  const tabsList: SettingsTabDefinition[] = import.meta.env.DEV
+    ? [...baseTabsList, logsTab, debugTab]
+    : [...baseTabsList, logsTab];
+  const selectedTab = tabsList.some((tab) => tab.value === activeTab)
     ? activeTab
     : "general";
   const isCompactSidebar = settingsWidth < SETTINGS_TABS_COMPACT_WIDTH;
@@ -168,7 +166,7 @@ export const SettingsTabs: FC<SettingsTabsProps> = () => {
             type="hover"
           >
             <TabsList className="ll:flex ll:w-full ll:flex-col ll:items-stretch ll:justify-start ll:gap-1 ll:rounded-none ll:pt-0.5">
-              {TABS_LIST.map((tab) => {
+              {tabsList.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = selectedTab === tab.value;
                 const trigger = (
@@ -216,7 +214,7 @@ export const SettingsTabs: FC<SettingsTabsProps> = () => {
           {!isCompactSidebar ? (
             <div className="ll:mt-2 ll:shrink-0 ll:px-2 ll:pb-1.5">
               <p className="ll:m-0 ll:text-[10px] ll:font-medium ll:text-gray-400">
-                Commit SHA: {"{commitsha}"}
+                {t("settings.tabs.commitSha", { sha: "{commitsha}" })}
               </p>
             </div>
           ) : null}
@@ -226,7 +224,7 @@ export const SettingsTabs: FC<SettingsTabsProps> = () => {
             className="ll:h-full ll:w-full ll:box-border ll:pr-2"
             type="hover"
           >
-            {TABS_LIST.map((tab) => (
+            {tabsList.map((tab) => (
               <TabsContent
                 key={tab.value}
                 value={tab.value}

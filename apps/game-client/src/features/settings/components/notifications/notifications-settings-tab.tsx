@@ -11,21 +11,25 @@ import { NotificationCategoryForm } from "@/features/settings/components/notific
 import { NpcType } from "@/hooks/api/use-npcs";
 import type { NotificationType } from "@lootlog/types";
 import { useEffect, useState } from "react";
-
-const CATEGORY_TABS: { label: string; key: NotificationType }[] = [
-  { label: "Elita 2", key: NpcType.ELITE2 },
-  { label: "Heros", key: NpcType.HERO },
-  { label: "Kolos", key: NpcType.COLOSSUS },
-  { label: "Tytan", key: NpcType.TITAN },
-  { label: "Komunikaty", key: "message" },
-  { label: "Grupa", key: "party-gathering" },
-];
+import { useTranslation } from "react-i18next";
 
 const SYNC_INDICATOR_DELAY_MS = 100;
 
 export const NotificationsSettingsTab = () => {
   const syncStatus = useNotificationSettingsSyncStatus();
   const [visibleStatus, setVisibleStatus] = useState(syncStatus.status);
+  const { t } = useTranslation();
+  const categoryTabs: { label: string; key: NotificationType }[] = [
+    { label: t("settings.npcTypes.elite2"), key: NpcType.ELITE2 },
+    { label: t("settings.npcTypes.hero"), key: NpcType.HERO },
+    { label: t("settings.npcTypes.colossus"), key: NpcType.COLOSSUS },
+    { label: t("settings.npcTypes.titan"), key: NpcType.TITAN },
+    { label: t("settings.npcTypes.message"), key: "message" },
+    {
+      label: t("settings.npcTypes.partyGathering"),
+      key: "party-gathering",
+    },
+  ];
 
   useEffect(() => {
     if (syncStatus.status === "error" || syncStatus.status === "idle") {
@@ -44,13 +48,13 @@ export const NotificationsSettingsTab = () => {
 
   return (
     <SettingsTabLayout
-      title="Ustawienia powiadomień"
-      description="Skonfiguruj ustawienia powiadomień. Możesz dostosować, które typy NPC będą wywoływać powiadomienia oraz jak będą one prezentowane."
+      title={t("settings.notifications.title")}
+      description={t("settings.notifications.description")}
       contentClassName="ll:gap-3"
     >
       <Tabs defaultValue={NpcType.ELITE2} className="ll:w-full ll:gap-3">
         <TabsList className={SETTINGS_SUBTABS_LIST_CLASS_NAME}>
-          {CATEGORY_TABS.map((tab) => (
+          {categoryTabs.map((tab) => (
             <TabsTrigger
               key={tab.key}
               value={tab.key}
@@ -60,7 +64,7 @@ export const NotificationsSettingsTab = () => {
             </TabsTrigger>
           ))}
         </TabsList>
-        {CATEGORY_TABS.map((tab) => (
+        {categoryTabs.map((tab) => (
           <TabsContent
             key={tab.key}
             value={tab.key}
@@ -70,9 +74,9 @@ export const NotificationsSettingsTab = () => {
               <div className="ll:sticky ll:top-0 ll:z-10 ll:flex ll:h-0 ll:justify-end ll:pointer-events-none">
                 <SettingsSyncStatus
                   status={visibleStatus}
-                  errorLabel="Błąd synchronizacji"
-                  savingLabel="Zapisywanie..."
-                  syncingLabel="Synchronizowanie..."
+                  errorLabel={t("settings.common.syncStatus.error")}
+                  savingLabel={t("settings.common.syncStatus.saving")}
+                  syncingLabel={t("settings.common.syncStatus.syncing")}
                 />
               </div>
               <NotificationCategoryForm categoryKey={tab.key} />

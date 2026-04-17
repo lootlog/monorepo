@@ -9,6 +9,7 @@ import type { DetectorNpcType, DetectorTypeSettings } from "@lootlog/types";
 import type { FC } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useDeepCompareEffect } from "react-use";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 
 type DetectorSettingsTabFormProps = {
@@ -24,17 +25,6 @@ const FormSchema = z.object({
 });
 
 type FormData = z.infer<typeof FormSchema>;
-
-const TOGGLE_FIELDS: Array<{
-  key: keyof DetectorTypeSettings;
-  label: string;
-}> = [
-  { key: "detect", label: "Wykrywaj" },
-  { key: "autoSend", label: "Auto wysylanie" },
-  { key: "notifyWindow", label: "Okno powiadomienia" },
-  { key: "highlight", label: "Podswietlenie" },
-  { key: "notifySound", label: "Powiadom dzwiekiem" },
-];
 
 const cloneDetectorTypeSettings = (
   settings: DetectorTypeSettings,
@@ -76,6 +66,7 @@ const areDetectorTypeSettingsEqual = (
 export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
   categoryKey,
 }) => {
+  const { t } = useTranslation();
   const {
     accountId,
     isFetched,
@@ -86,6 +77,22 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
 
   const currentCategorySettings = accountSettings[categoryKey];
   const textColor = getTextColor(categoryKey, true);
+  const toggleFields: Array<{
+    key: keyof DetectorTypeSettings;
+    label: string;
+  }> = [
+    { key: "detect", label: t("settings.detector.toggles.detect") },
+    { key: "autoSend", label: t("settings.detector.toggles.autoSend") },
+    {
+      key: "notifyWindow",
+      label: t("settings.detector.toggles.notifyWindow"),
+    },
+    { key: "highlight", label: t("settings.detector.toggles.highlight") },
+    {
+      key: "notifySound",
+      label: t("settings.detector.toggles.notifySound"),
+    },
+  ];
   const debouncedUpdate = useDebouncedCallback(
     (
       payload: Parameters<typeof updateUserGameAccountPreferences.mutate>[0],
@@ -157,7 +164,7 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
   return (
     <form className="ll:flex ll:flex-col ll:gap-3 ll:py-3">
       <div className="ll:grid ll:gap-2">
-        {TOGGLE_FIELDS.map((field) => {
+        {toggleFields.map((field) => {
           const isDisabled = field.key !== "detect" && !watchDetect;
           const isHighlightField = field.key === "highlight";
 

@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { ChevronDown, Copy } from "lucide-react";
 import type { LoggedAction, LoggedApiRequest } from "@/store/logs.store";
 import { useState, type FC, type KeyboardEvent } from "react";
+import { useTranslation } from "react-i18next";
 
 type LogsActionCardProps = {
   action: LoggedAction;
@@ -37,6 +38,7 @@ export const LogsActionCard: FC<LogsActionCardProps> = ({
 }) => {
   const requestSummary = getActionRequestSummary(action);
   const [isOpen, setIsOpen] = useState(false);
+  const { t } = useTranslation();
   const toggleOpen = () => {
     setIsOpen((currentIsOpen) => !currentIsOpen);
   };
@@ -79,14 +81,24 @@ export const LogsActionCard: FC<LogsActionCardProps> = ({
                 {getStatusLabel(action.status)}
               </span>
               <span className="ll:rounded-sm ll:border ll:border-gray-500/50 ll:bg-black/20 ll:px-1.5 ll:py-0.5 ll:text-[10px] ll:font-medium ll:text-gray-300">
-                Requesty: {requestSummary.totalRequests}
+                {t("settings.logs.requestsCount", {
+                  count: requestSummary.totalRequests,
+                })}
               </span>
             </div>
             <div className="ll:mt-1 ll:flex ll:flex-wrap ll:items-center ll:gap-x-3 ll:gap-y-1 ll:text-[10px] ll:text-gray-400">
               <span>{formatLogTimestamp(action.createdAt)}</span>
               <span>{action.actionType}</span>
-              <span>Sukcesy: {requestSummary.successCount}</span>
-              <span>Błędy: {requestSummary.failureCount}</span>
+              <span>
+                {t("settings.logs.successCount", {
+                  count: requestSummary.successCount,
+                })}
+              </span>
+              <span>
+                {t("settings.logs.errorCount", {
+                  count: requestSummary.failureCount,
+                })}
+              </span>
             </div>
           </div>
         </div>
@@ -94,7 +106,7 @@ export const LogsActionCard: FC<LogsActionCardProps> = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                aria-label="Kopiuj akcję"
+                aria-label={t("settings.common.actions.copyAction")}
                 className="ll:size-7 ll:px-0"
                 onClick={(event) => {
                   event.stopPropagation();
@@ -106,14 +118,16 @@ export const LogsActionCard: FC<LogsActionCardProps> = ({
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom" className="ll:z-500">
-              <p className="ll:text-xs ll:font-semibold">Kopiuj akcję</p>
+              <p className="ll:text-xs ll:font-semibold">
+                {t("settings.common.actions.copyAction")}
+              </p>
             </TooltipContent>
           </Tooltip>
           <Button
             type="button"
             variant="ghost"
             className="ll:size-7 ll:border-gray-600/70 ll:bg-black/20 ll:px-0 ll:hover:bg-white/8"
-            aria-label="Przełącz szczegóły akcji"
+            aria-label={t("settings.logs.toggleActionDetails")}
             onClick={(event) => {
               event.stopPropagation();
               toggleOpen();
@@ -135,7 +149,7 @@ export const LogsActionCard: FC<LogsActionCardProps> = ({
           <div className="ll:grid ll:gap-2 ll:md:grid-cols-2">
             <div className="ll:flex ll:min-w-0 ll:flex-col ll:gap-1">
               <span className="ll:text-[11px] ll:font-semibold ll:text-gray-300">
-                Payload akcji
+                {t("settings.logs.actionPayload")}
               </span>
               <pre className="ll:m-0 ll:max-h-48 ll:overflow-auto ll:rounded-sm ll:border ll:border-gray-700/80 ll:bg-black/30 ll:px-2 ll:py-2 ll:text-[11px] ll:leading-4 ll:text-gray-200">
                 {stringifyLogValue(action.payload)}
@@ -143,7 +157,7 @@ export const LogsActionCard: FC<LogsActionCardProps> = ({
             </div>
             <div className="ll:flex ll:min-w-0 ll:flex-col ll:gap-1">
               <span className="ll:text-[11px] ll:font-semibold ll:text-gray-300">
-                Szczegóły akcji
+                {t("settings.logs.actionDetails")}
               </span>
               <pre className="ll:m-0 ll:max-h-48 ll:overflow-auto ll:rounded-sm ll:border ll:border-gray-700/80 ll:bg-black/30 ll:px-2 ll:py-2 ll:text-[11px] ll:leading-4 ll:text-gray-200">
                 {stringifyLogValue(action.details ?? null)}
@@ -162,7 +176,7 @@ export const LogsActionCard: FC<LogsActionCardProps> = ({
               ))
             ) : (
               <div className="ll:rounded-md ll:border ll:border-dashed ll:border-gray-700 ll:px-3 ll:py-4 ll:text-[11px] ll:text-gray-400">
-                Brak zapisanych requestów dla tej akcji.
+                {t("settings.logs.noRequests")}
               </div>
             )}
           </div>
