@@ -15,6 +15,8 @@ export const useCharacterList = () => {
   const world = Game.getWorldName();
   const languageVersion = getLanguageVersion(window.location.href);
 
+  console.log(accountId, world);
+
   const query = useQuery({
     queryKey: getCharacterListQueryKey(accountId, world),
     queryFn: () =>
