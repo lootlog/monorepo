@@ -37,7 +37,9 @@ export const WindowMaxHeightAction: FC<WindowMaxHeightActionProps> = ({
           )}
           onClick={onClick}
         >
-          {currentMaxHeight}px
+          {t("settings.common.windowAutoHeight.maxHeightLabel", {
+            height: currentMaxHeight,
+          })}
         </Button>
       </TooltipTrigger>
       <TooltipContent side="top">

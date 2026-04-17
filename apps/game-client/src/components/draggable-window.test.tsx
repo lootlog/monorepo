@@ -1,6 +1,6 @@
-import { fireEvent, render, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, waitFor } from "@testing-library/react";
 import { act } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DraggableWindow } from "@/components/draggable-window";
 import { useWindowsStore } from "@/store/windows.store";
 
@@ -122,7 +122,7 @@ const getWindowElements = (
     windowBody,
     titleBarElement,
     contentElement,
-    resizeHandle,
+    resizeHandle: resizeHandle instanceof HTMLDivElement ? resizeHandle : null,
   };
 };
 
@@ -176,6 +176,13 @@ describe("DraggableWindow", () => {
       },
       windowFocusHistory: [],
     }));
+  });
+
+  afterEach(() => {
+    cleanup();
+    resizeObserverCallbacks.length = 0;
+    resizeObserverObservedElements.length = 0;
+    mutationObserverCallbacks.length = 0;
   });
 
   it("caps auto height using the provided content limit", async () => {
@@ -244,6 +251,10 @@ describe("DraggableWindow", () => {
 
     const { windowElement, resizeHandle } = getWindowElements(container);
 
+    if (!(resizeHandle instanceof HTMLDivElement)) {
+      throw new Error("Expected resize handle");
+    }
+
     Object.defineProperty(windowElement, "offsetWidth", {
       configurable: true,
       value: 360,
@@ -296,6 +307,11 @@ describe("DraggableWindow", () => {
       contentElement,
       resizeHandle,
     } = getWindowElements(container);
+
+    if (!(resizeHandle instanceof HTMLDivElement)) {
+      throw new Error("Expected resize handle");
+    }
+
     const contentRoot = contentElement.firstElementChild;
 
     if (!(contentRoot instanceof HTMLDivElement)) {

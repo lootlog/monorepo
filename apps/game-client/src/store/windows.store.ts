@@ -94,6 +94,14 @@ const DEFAULT_OPACITY: WindowOpacity = 4;
 const DEFAULT_POSITION: WindowPositionState = { x: 0, y: 0 };
 const DEFAULT_SIZE: WindowSizeState = { width: 242, height: 240 };
 
+const sanitizeMaxContentHeight = (height: number) => {
+  if (!Number.isFinite(height)) {
+    return undefined;
+  }
+
+  return Math.max(1, Math.round(height));
+};
+
 const hasNonZeroPosition = (
   position: unknown,
 ): position is WindowPositionState =>
@@ -385,12 +393,20 @@ export const useWindowsStore = create<WindowsState>()(
       setSize: (key: WindowId, size) =>
         set((state) => ({ [key]: { ...state[key], size } })),
       setMaxContentHeight: (key: WindowId, height: number) =>
-        set((state) => ({
-          [key]: {
-            ...state[key],
-            maxContentHeight: height,
-          },
-        })),
+        set((state) => {
+          const nextMaxContentHeight = sanitizeMaxContentHeight(height);
+
+          if (nextMaxContentHeight === undefined) {
+            return state;
+          }
+
+          return {
+            [key]: {
+              ...state[key],
+              maxContentHeight: nextMaxContentHeight,
+            },
+          };
+        }),
       setOpacity: (key: WindowId, opacity: WindowOpacity) =>
         set((state) => ({ [key]: { ...state[key], opacity } })),
       setLocked: (key: WindowId, locked: boolean) =>

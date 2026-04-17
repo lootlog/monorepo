@@ -12,7 +12,6 @@ import { Game } from "@/lib/game";
 
 interface UseVisibleNotificationsOptions {
   autoCleanup?: boolean;
-  tickMs?: number;
 }
 
 interface UseVisibleNotificationsResult {
@@ -65,7 +64,7 @@ const getScheduledExpirationTimeMs = ({
 
   const autoHideState = notificationAutoHideByListKey[notification.listKey];
 
-  if (autoHideState?.pausedRemainingMs !== null) {
+  if (autoHideState && autoHideState.pausedRemainingMs !== null) {
     return null;
   }
 
@@ -77,7 +76,6 @@ const getScheduledExpirationTimeMs = ({
 
 export const useVisibleNotifications = ({
   autoCleanup = true,
-  tickMs: _tickMs = 1000,
 }: UseVisibleNotificationsOptions = {}): UseVisibleNotificationsResult => {
   const { notifications, notificationAutoHideByListKey, removeNotification } =
     useNotificationsStore();

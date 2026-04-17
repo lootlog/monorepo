@@ -149,4 +149,35 @@ describe("useVisibleNotifications", () => {
         .notifications.map((notification) => notification.notificationId),
     ).toEqual(["notification-1"]);
   });
+
+  it("falls back to notification timeout when auto-hide state is missing", () => {
+    useNotificationsStore.setState({
+      notifications: [
+        createStoredNotification({
+          notificationId: "notification-1",
+          listKey: "notification-1",
+          receivedAtMs: Date.now(),
+        }),
+      ],
+      notificationAutoHideByListKey: {},
+    });
+
+    renderHook(() => useVisibleNotifications({ autoCleanup: true }));
+
+    act(() => {
+      vi.advanceTimersByTime(29_999);
+    });
+
+    expect(
+      useNotificationsStore
+        .getState()
+        .notifications.map((notification) => notification.notificationId),
+    ).toEqual(["notification-1"]);
+
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+
+    expect(useNotificationsStore.getState().notifications).toEqual([]);
+  });
 });
