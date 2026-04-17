@@ -31,7 +31,6 @@ export const Notifications = () => {
   );
   const { notifications: filteredNotifications } = useVisibleNotifications({
     autoCleanup: true,
-    tickMs: 100,
   });
 
   useEffect(() => {
