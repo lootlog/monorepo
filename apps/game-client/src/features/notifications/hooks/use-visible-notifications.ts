@@ -36,9 +36,48 @@ const getExpirationTimeMs = (
   return notification.receivedAtMs + timeoutSeconds * 1000;
 };
 
+const getScheduledExpirationTimeMs = ({
+  notification,
+  notificationAutoHideByListKey,
+  settings,
+}: {
+  notification: StoredNotification;
+  notificationAutoHideByListKey: Record<
+    string,
+    {
+      deadlineMs: number | null;
+      pausedRemainingMs: number | null;
+      durationMs: number;
+    }
+  >;
+  settings: Record<string, { autoHideTimeout?: number }>;
+}) => {
+  const key = getKey(notification);
+  const notificationSettings = settings[key];
+
+  if (!notificationSettings?.autoHideTimeout) {
+    return null;
+  }
+
+  if (notificationSettings.autoHideTimeout <= 0) {
+    return null;
+  }
+
+  const autoHideState = notificationAutoHideByListKey[notification.listKey];
+
+  if (autoHideState?.pausedRemainingMs !== null) {
+    return null;
+  }
+
+  return (
+    autoHideState?.deadlineMs ??
+    getExpirationTimeMs(notification, notificationSettings.autoHideTimeout)
+  );
+};
+
 export const useVisibleNotifications = ({
   autoCleanup = true,
-  tickMs = 1000,
+  tickMs: _tickMs = 1000,
 }: UseVisibleNotificationsOptions = {}): UseVisibleNotificationsResult => {
   const { notifications, notificationAutoHideByListKey, removeNotification } =
     useNotificationsStore();
@@ -47,55 +86,53 @@ export const useVisibleNotifications = ({
   const removeRef = useRef(removeNotification);
   removeRef.current = removeNotification;
 
-  const needsTick = useMemo(() => {
-    return notifications.some((n) => {
-      const key = getKey(n) as keyof typeof settings;
-      const s = settings[key];
-      if (!s?.autoHideTimeout || s.autoHideTimeout <= 0) {
-        return false;
-      }
-
-      const autoHideState = notificationAutoHideByListKey[n.listKey];
-
-      if (!autoHideState) {
-        return true;
-      }
-
-      return autoHideState.deadlineMs !== null;
-    });
-  }, [notificationAutoHideByListKey, notifications, settings]);
-
   useEffect(() => {
-    if (!autoCleanup || !needsTick) return;
+    if (!autoCleanup) {
+      return;
+    }
 
-    const id = window.setInterval(() => {
-      const currentTimeMs = Date.now();
+    const scheduledExpirations = notifications
+      .map((notification) => ({
+        notification,
+        expirationTimeMs: getScheduledExpirationTimeMs({
+          notification,
+          notificationAutoHideByListKey,
+          settings,
+        }),
+      }))
+      .filter(
+        (
+          entry,
+        ): entry is {
+          notification: StoredNotification;
+          expirationTimeMs: number;
+        } => entry.expirationTimeMs !== null,
+      );
 
-      notifications.forEach((n) => {
-        const key = getKey(n) as keyof typeof settings;
-        const s = settings[key];
-        if (!s?.autoHideTimeout) return;
-        if (s.autoHideTimeout <= 0) return;
-        const autoHideState = notificationAutoHideByListKey[n.listKey];
-        if (autoHideState?.pausedRemainingMs !== null) return;
-        const expirationTimeMs =
-          autoHideState?.deadlineMs ??
-          getExpirationTimeMs(n, s.autoHideTimeout);
-        if (expirationTimeMs !== null && currentTimeMs >= expirationTimeMs) {
-          removeRef.current(n.notificationId);
-        }
-      });
-    }, tickMs);
+    if (scheduledExpirations.length === 0) {
+      return;
+    }
 
-    return () => clearInterval(id);
-  }, [
-    autoCleanup,
-    needsTick,
-    notificationAutoHideByListKey,
-    notifications,
-    settings,
-    tickMs,
-  ]);
+    const nearestExpirationTimeMs = Math.min(
+      ...scheduledExpirations.map((entry) => entry.expirationTimeMs),
+    );
+    const timeoutId = window.setTimeout(
+      () => {
+        const currentTimeMs = Date.now();
+
+        scheduledExpirations.forEach(({ expirationTimeMs, notification }) => {
+          if (currentTimeMs >= expirationTimeMs) {
+            removeRef.current(notification.notificationId);
+          }
+        });
+      },
+      Math.max(0, nearestExpirationTimeMs - Date.now()),
+    );
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [autoCleanup, notificationAutoHideByListKey, notifications, settings]);
 
   const visible = useMemo(() => {
     return notifications.filter((n) => {
