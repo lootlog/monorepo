@@ -5179,6 +5179,8 @@ components:
                   id:
                     type: string
                     minLength: 1
+                  name:
+                    type: string
                   minLevel:
                     type: number
                     minimum: 0
@@ -5187,6 +5189,8 @@ components:
                     type: number
                     minimum: 0
                     maximum: 500
+                  world:
+                    type: string
                   guildIds:
                     type: array
                     items:
@@ -5416,6 +5420,8 @@ components:
                   id:
                     type: string
                     minLength: 1
+                  name:
+                    type: string
                   minLevel:
                     type: number
                     minimum: 0
@@ -5424,6 +5430,8 @@ components:
                     type: number
                     minimum: 0
                     maximum: 500
+                  world:
+                    type: string
                   guildIds:
                     type: array
                     items:

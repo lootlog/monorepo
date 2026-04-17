@@ -10,7 +10,7 @@ import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 import { getTextColor } from "@/utils/notifications-and-detector/background";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { NotificationSettings, NotificationType } from "@lootlog/types";
-import { type FC, useRef } from "react";
+import { type FC, type FormEvent, useRef } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useDeepCompareEffect } from "react-use";
 import { useTranslation } from "react-i18next";
@@ -190,8 +190,15 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
     });
   };
 
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+  };
+
   return (
-    <form className="ll:flex ll:flex-col ll:gap-4 ll:py-4">
+    <form
+      className="ll:flex ll:flex-col ll:gap-4 ll:py-4"
+      onSubmit={handleSubmit}
+    >
       <div className="ll:grid ll:gap-2">
         {toggleFields.map((field) => {
           const isDisabled = field.key !== "show" && !watchShow;

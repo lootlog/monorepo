@@ -101,7 +101,7 @@ export const DetectorSettingsTab = () => {
           ))}
         </Tabs>
 
-        <SettingsSection title={t("settings.detector.routingTitle")}>
+        <SettingsSection>
           <DetectorRoutingSettingsTabForm />
         </SettingsSection>
       </div>
