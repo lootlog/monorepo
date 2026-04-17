@@ -1,4 +1,4 @@
-import { fetchCharacterList, normalizeCharacterList } from "@/api";
+import { fetchCharacterList } from "@/api";
 import { Game } from "@/lib/game";
 import { getLanguageVersion } from "@/utils/game/get-language-version";
 import { useQuery } from "@tanstack/react-query";
@@ -23,7 +23,6 @@ export const useCharacterList = () => {
         world,
         languageVersion,
       }),
-    select: normalizeCharacterList,
     staleTime: 0,
   });
 

@@ -227,7 +227,7 @@ export const queryKeys = {
     notifications: (guildId: string | undefined) =>
       ["guild-notifications", guildId] as const,
     permissions: (guildId: string | undefined) =>
-      ["guild-permissions", guildId] as const,
+      ["guild-permissions-v2", guildId] as const,
     roles: (guildId: string | undefined) => ["guild-roles", guildId] as const,
     user: () => ["user-guilds"] as const,
   },

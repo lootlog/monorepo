@@ -31,7 +31,12 @@ export const normalizeCharacterList = (
     return (
       typeof character === "object" &&
       character !== null &&
-      typeof character.id === "number"
+      typeof character.id === "number" &&
+      typeof character.icon === "string" &&
+      typeof character.lvl === "number" &&
+      typeof character.nick === "string" &&
+      typeof character.prof === "string" &&
+      typeof character.world === "string"
     );
   });
 };

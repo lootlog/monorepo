@@ -79,6 +79,7 @@ describe("notifications.store", () => {
           durationMs: 1000,
         },
       },
+      latestNotificationAnimationCycle: 7,
     });
 
     useNotificationsStore.getState().removeNotificationByNpcId(500, "pandora");
@@ -97,5 +98,8 @@ describe("notifications.store", () => {
         durationMs: 1000,
       },
     });
+    expect(
+      useNotificationsStore.getState().latestNotificationAnimationCycle,
+    ).toBe(7);
   });
 });

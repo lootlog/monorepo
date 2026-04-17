@@ -11,6 +11,24 @@ let resizeSessionCounter = 0;
 let activeResizeSessionId: number | null = null;
 let cancelActiveResizeSession: (() => void) | null = null;
 
+const getResizeCursor = ({
+  allowHorizontalResize,
+  allowVerticalResize,
+}: {
+  allowHorizontalResize: boolean;
+  allowVerticalResize: boolean;
+}) => {
+  if (allowHorizontalResize && allowVerticalResize) {
+    return "se-resize";
+  }
+
+  if (allowHorizontalResize) {
+    return "ew-resize";
+  }
+
+  return "ns-resize";
+};
+
 export const cancelWindowResizeSession = () => {
   if (!cancelActiveResizeSession) return;
   const cancel = cancelActiveResizeSession;
@@ -56,12 +74,10 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
   onResizeEnd,
 }) => {
   const activeTouchIdRef = useRef<number | null>(null);
-  const cursor =
-    allowHorizontalResize && allowVerticalResize
-      ? "se-resize"
-      : allowHorizontalResize
-        ? "ew-resize"
-        : "ns-resize";
+  const cursor = getResizeCursor({
+    allowHorizontalResize,
+    allowVerticalResize,
+  });
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {

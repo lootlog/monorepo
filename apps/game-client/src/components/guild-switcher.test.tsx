@@ -83,7 +83,9 @@ describe("GuildSwitcher", () => {
       "[data-radix-scroll-area-viewport]",
     );
 
-    expect(viewport).not.toBeNull();
+    if (!(viewport instanceof HTMLDivElement)) {
+      throw new Error("Expected scroll area viewport");
+    }
 
     Object.defineProperty(viewport, "scrollLeft", {
       configurable: true,
@@ -91,8 +93,15 @@ describe("GuildSwitcher", () => {
       writable: true,
     });
 
-    fireEvent.wheel(viewport as HTMLElement, { deltaY: 48 });
+    const wheelEvent = new WheelEvent("wheel", {
+      bubbles: true,
+      cancelable: true,
+      deltaY: 48,
+    });
 
-    expect((viewport as HTMLElement).scrollLeft).toBe(48);
+    viewport.dispatchEvent(wheelEvent);
+
+    expect(wheelEvent.defaultPrevented).toBe(true);
+    expect(viewport.scrollLeft).toBe(48);
   });
 });
