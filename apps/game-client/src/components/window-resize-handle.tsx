@@ -37,6 +37,8 @@ interface WindowResizeHandleProps {
   minHeight: number;
   maxWidth?: number;
   maxHeight?: number;
+  allowHorizontalResize?: boolean;
+  allowVerticalResize?: boolean;
   onResize: (size: { width: number; height: number }) => void;
   onResizeStart: () => void;
   onResizeEnd: () => void;
@@ -47,11 +49,19 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
   minHeight,
   maxWidth,
   maxHeight,
+  allowHorizontalResize = true,
+  allowVerticalResize = true,
   onResize,
   onResizeStart,
   onResizeEnd,
 }) => {
   const activeTouchIdRef = useRef<number | null>(null);
+  const cursor =
+    allowHorizontalResize && allowVerticalResize
+      ? "se-resize"
+      : allowHorizontalResize
+        ? "ew-resize"
+        : "ns-resize";
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
@@ -84,14 +94,18 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
         const deltaX = (e.clientX - startX) / scale;
         const deltaY = (e.clientY - startY) / scale;
 
-        const newWidth = Math.max(
-          minWidth,
-          Math.min(maxWidth ?? scaledViewportWidth, startWidth + deltaX),
-        );
-        const newHeight = Math.max(
-          minHeight,
-          Math.min(maxHeight ?? scaledViewportHeight, startHeight + deltaY),
-        );
+        const newWidth = allowHorizontalResize
+          ? Math.max(
+              minWidth,
+              Math.min(maxWidth ?? scaledViewportWidth, startWidth + deltaX),
+            )
+          : startWidth;
+        const newHeight = allowVerticalResize
+          ? Math.max(
+              minHeight,
+              Math.min(maxHeight ?? scaledViewportHeight, startHeight + deltaY),
+            )
+          : startHeight;
         onResize({ width: newWidth, height: newHeight });
       };
 
@@ -124,6 +138,8 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
       minHeight,
       maxWidth,
       maxHeight,
+      allowHorizontalResize,
+      allowVerticalResize,
       onResize,
       onResizeStart,
       onResizeEnd,
@@ -173,14 +189,18 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
         const deltaX = (clientX - startX) * scale;
         const deltaY = (clientY - startY) * scale;
 
-        const newWidth = Math.max(
-          minWidth,
-          Math.min(maxWidth ?? scaledViewportWidth, startWidth + deltaX),
-        );
-        const newHeight = Math.max(
-          minHeight,
-          Math.min(maxHeight ?? scaledViewportHeight, startHeight + deltaY),
-        );
+        const newWidth = allowHorizontalResize
+          ? Math.max(
+              minWidth,
+              Math.min(maxWidth ?? scaledViewportWidth, startWidth + deltaX),
+            )
+          : startWidth;
+        const newHeight = allowVerticalResize
+          ? Math.max(
+              minHeight,
+              Math.min(maxHeight ?? scaledViewportHeight, startHeight + deltaY),
+            )
+          : startHeight;
         onResize({ width: newWidth, height: newHeight });
       };
 
@@ -229,6 +249,8 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
       minHeight,
       maxWidth,
       maxHeight,
+      allowHorizontalResize,
+      allowVerticalResize,
       onResize,
       onResizeStart,
       onResizeEnd,
@@ -237,12 +259,14 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
 
   return (
     <div
-      className="ll:absolute ll:bottom-0 ll:right-0 ll:w-4 ll:h-4 ll:cursor-se-resize ll:bg-transparent touch-none"
+      data-ll-window-resize-handle=""
+      className="ll:absolute ll:bottom-0 ll:right-0 ll:w-4 ll:h-4 ll:bg-transparent touch-none"
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
       style={{
         background:
           "linear-gradient(-45deg, transparent 40%, rgba(255,255,255,0.3) 50%, transparent 60%)",
+        cursor,
         touchAction: "none",
       }}
     >
