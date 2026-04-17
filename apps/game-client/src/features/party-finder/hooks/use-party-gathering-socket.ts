@@ -16,6 +16,9 @@ import type { PartyGatheringSession } from "@/store/party-finder.store";
 
 type PartyGatheringPayload = PartyGatheringSession & { guildId: string };
 
+const MAX_PENDING_NOTIFICATIONS = 100;
+const MAX_PENDING_CANCELLED_NOTIFICATION_IDS = 100;
+
 export const usePartyGatheringSocket = () => {
   const { socket, connected } = useSocket();
   const pushNotification = useNotificationsStore((s) => s.pushNotification);
@@ -36,6 +39,7 @@ export const usePartyGatheringSocket = () => {
   const worldRef = useRef(world);
   const pendingNotificationsRef = useRef<PartyGatheringPayload[]>([]);
   const cancelledNotificationIdsRef = useRef<Set<string>>(new Set());
+  const previousAccountIdRef = useRef<string | null>(accountId);
   const processNotificationRef = useRef<(data: PartyGatheringPayload) => void>(
     () => undefined,
   );
@@ -94,8 +98,15 @@ export const usePartyGatheringSocket = () => {
   };
 
   useEffect(() => {
-    pendingNotificationsRef.current = [];
-    cancelledNotificationIdsRef.current.clear();
+    if (
+      previousAccountIdRef.current !== null &&
+      previousAccountIdRef.current !== accountId
+    ) {
+      pendingNotificationsRef.current = [];
+      cancelledNotificationIdsRef.current.clear();
+    }
+
+    previousAccountIdRef.current = accountId;
   }, [accountId]);
 
   useEffect(() => {
@@ -103,6 +114,12 @@ export const usePartyGatheringSocket = () => {
 
     const handler = (data: PartyGatheringPayload) => {
       if (!isReadyRef.current || !areMutesReadyRef.current) {
+        if (
+          pendingNotificationsRef.current.length >= MAX_PENDING_NOTIFICATIONS
+        ) {
+          pendingNotificationsRef.current.shift();
+        }
+
         pendingNotificationsRef.current.push(data);
         return;
       }
@@ -112,6 +129,19 @@ export const usePartyGatheringSocket = () => {
 
     const cancelHandler = (data: { notificationId: string }) => {
       if (!isReadyRef.current || !areMutesReadyRef.current) {
+        if (
+          cancelledNotificationIdsRef.current.size >=
+          MAX_PENDING_CANCELLED_NOTIFICATION_IDS
+        ) {
+          const oldestNotificationId = cancelledNotificationIdsRef.current
+            .values()
+            .next().value;
+
+          if (oldestNotificationId) {
+            cancelledNotificationIdsRef.current.delete(oldestNotificationId);
+          }
+        }
+
         cancelledNotificationIdsRef.current.add(data.notificationId);
         pendingNotificationsRef.current =
           pendingNotificationsRef.current.filter(
