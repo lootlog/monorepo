@@ -55,15 +55,13 @@ export const Notifications = () => {
       <DraggableWindow
         id="notifications"
         title={t("settings.windows.notifications")}
-        actions={
-          <WindowMaxHeightAction
-            currentMaxHeight={resolvedMaxContentHeight}
-            isArmed={isMaxHeightAdjustmentArmed}
-            onClick={() =>
-              setIsMaxHeightAdjustmentArmed((currentValue) => !currentValue)
-            }
-          />
-        }
+        actions=<WindowMaxHeightAction
+          currentMaxHeight={resolvedMaxContentHeight}
+          isArmed={isMaxHeightAdjustmentArmed}
+          onClick={() =>
+            setIsMaxHeightAdjustmentArmed((currentValue) => !currentValue)
+          }
+        />
         onClose={handleClose}
         heightMode="auto-up-to-max"
         maxContentHeight={storedMaxContentHeight}
@@ -73,8 +71,8 @@ export const Notifications = () => {
           setMaxContentHeight("notifications", nextMaxContentHeight)
         }
         onResolvedMaxContentHeightChange={setResolvedMaxContentHeight}
-        resizable={false}
-        minHeight={88}
+        resizable
+        minHeight={64}
         maxHeight={600}
         minWidth={242}
       >

@@ -45,13 +45,133 @@ type DraggableWindowProps = {
   contentClassName?: string;
 };
 
+const RADIX_SCROLL_AREA_VIEWPORT_SELECTOR = "[data-radix-scroll-area-viewport]";
+const MAX_HEIGHT_PREVIEW_LINE_HEIGHT = 1;
+
+const getDeepestSingleChildElement = (element: HTMLElement) => {
+  let currentElement = element;
+
+  while (currentElement.childElementCount === 1) {
+    const nextElement = currentElement.firstElementChild;
+
+    if (!(nextElement instanceof HTMLElement)) {
+      break;
+    }
+
+    currentElement = nextElement;
+  }
+
+  return currentElement;
+};
+
+const getContentMeasurementElements = (contentElement: HTMLDivElement) => {
+  const measurementElements = new Set<HTMLElement>();
+
+  const scrollAreaViewports = contentElement.querySelectorAll<HTMLElement>(
+    RADIX_SCROLL_AREA_VIEWPORT_SELECTOR,
+  );
+
+  if (scrollAreaViewports.length > 0) {
+    scrollAreaViewports.forEach((viewportElement) => {
+      measurementElements.add(viewportElement);
+
+      const viewportContent = viewportElement.firstElementChild;
+
+      if (viewportContent instanceof HTMLElement) {
+        measurementElements.add(viewportContent);
+      }
+    });
+
+    return Array.from(measurementElements);
+  }
+
+  const contentRoot = contentElement.firstElementChild;
+
+  if (contentRoot instanceof HTMLElement) {
+    measurementElements.add(getDeepestSingleChildElement(contentRoot));
+  }
+
+  if (measurementElements.size === 0) {
+    measurementElements.add(contentElement);
+  }
+
+  return Array.from(measurementElements);
+};
+
+const getMeasuredContentHeight = (contentElement: HTMLDivElement) => {
+  const scrollAreaViewports = contentElement.querySelectorAll<HTMLElement>(
+    RADIX_SCROLL_AREA_VIEWPORT_SELECTOR,
+  );
+
+  if (scrollAreaViewports.length > 0) {
+    return Array.from(scrollAreaViewports).reduce(
+      (maxScrollHeight, viewportElement) => {
+        const viewportContent = viewportElement.firstElementChild;
+        const nextMeasuredHeight =
+          viewportContent instanceof HTMLElement
+            ? viewportContent.scrollHeight
+            : viewportElement.scrollHeight;
+
+        return Math.max(maxScrollHeight, nextMeasuredHeight);
+      },
+      0,
+    );
+  }
+
+  return getContentMeasurementElements(contentElement).reduce(
+    (maxScrollHeight, element) =>
+      Math.max(maxScrollHeight, element.scrollHeight),
+    0,
+  );
+};
+
+const getNumericStyleValue = (
+  styles: CSSStyleDeclaration,
+  propertyName: keyof CSSStyleDeclaration,
+) => {
+  const rawValue = styles[propertyName];
+
+  if (typeof rawValue !== "string") {
+    return 0;
+  }
+
+  const parsedValue = Number.parseFloat(rawValue);
+
+  return Number.isFinite(parsedValue) ? parsedValue : 0;
+};
+
+const getWindowChromeHeight = ({
+  windowBody,
+  titleBar,
+  fallbackContentHeight,
+}: {
+  windowBody: HTMLDivElement;
+  titleBar: HTMLDivElement | null;
+  fallbackContentHeight: number;
+}) => {
+  const styles = window.getComputedStyle(windowBody);
+  const verticalInsets =
+    getNumericStyleValue(styles, "paddingTop") +
+    getNumericStyleValue(styles, "paddingBottom") +
+    getNumericStyleValue(styles, "borderTopWidth") +
+    getNumericStyleValue(styles, "borderBottomWidth");
+  const titleBarHeight = titleBar?.offsetHeight ?? 0;
+  const stableChromeHeight = Math.round(verticalInsets + titleBarHeight);
+
+  if (stableChromeHeight > 0) {
+    return stableChromeHeight;
+  }
+
+  return Math.max(0, windowBody.offsetHeight - fallbackContentHeight);
+};
+
 export const DraggableWindow: FC<DraggableWindowProps> = ({
   children,
   id,
   actions,
   title,
   onClose,
-  variant = "small",
+  variant: _variant = "small",
   heightMode = "fixed",
   resizable = true,
   minWidth = 242,
@@ -96,11 +216,57 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   });
   const [isResizing, setIsResizing] = useState(false);
   const [autoHeight, setAutoHeight] = useState(minHeight);
+  const [previewMaxContentHeight, setPreviewMaxContentHeight] = useState<
+    number | null
+  >(null);
+  const previewMaxContentHeightRef = useRef<number | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const windowBodyRef = useRef<HTMLDivElement>(null);
   const titleBarRef = useRef<HTMLDivElement>(null);
   const isAutoHeightMode = heightMode === "auto-up-to-max";
-  const effectiveHeight = isAutoHeightMode ? autoHeight : localSize.height;
+  const allowsHorizontalResize = resizable;
+  const allowsVerticalResize = !isAutoHeightMode || isMaxHeightAdjustmentArmed;
+  const isAdjustingMaxHeight =
+    isAutoHeightMode &&
+    isMaxHeightAdjustmentArmed &&
+    isResizing &&
+    previewMaxContentHeight !== null;
+  const windowChromeHeight =
+    windowBodyRef.current && contentRef.current
+      ? getWindowChromeHeight({
+          windowBody: windowBodyRef.current,
+          titleBar: titleBarRef.current,
+          fallbackContentHeight: contentRef.current.clientHeight,
+        })
+      : 0;
+  const previewWindowHeight =
+    previewMaxContentHeight === null
+      ? null
+      : Math.max(minHeight, windowChromeHeight + previewMaxContentHeight);
+  const effectiveHeight = isAutoHeightMode
+    ? isAdjustingMaxHeight && previewWindowHeight !== null
+      ? previewWindowHeight
+      : autoHeight
+    : localSize.height;
+
+  const getResolvedMaxContentHeight = useCallback(() => {
+    const windowBody = windowBodyRef.current;
+    const contentElement = contentRef.current;
+
+    if (!windowBody || !contentElement) {
+      return Math.round(maxContentHeight ?? localSize.height);
+    }
+
+    const chromeHeight = getWindowChromeHeight({
+      windowBody,
+      titleBar: titleBarRef.current,
+      fallbackContentHeight: contentElement.clientHeight,
+    });
+
+    return Math.round(
+      maxContentHeight ?? Math.max(0, localSize.height - chromeHeight),
+    );
+  }, [localSize.height, maxContentHeight]);
 
   const getClampedPosition = useCallback(
     (pos: { x: number; y: number }) => {
@@ -119,7 +285,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
     ? rawDefaultPosition
     : getClampedPosition(rawDefaultPosition);
 
-  const draggableRef = useRef<HTMLDivElement>(null!);
+  const draggableRef = useRef<HTMLDivElement>(null);
 
   const onDragStop = useCallback(
     (position: { x: number; y: number }) => {
@@ -143,49 +309,88 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
 
   const handleResize = useCallback(
     (newSize: { width: number; height: number }) => {
-      if (
-        isAutoHeightMode &&
-        isMaxHeightAdjustmentArmed &&
-        onMaxContentHeightChange
-      ) {
-        const windowBody = windowBodyRef.current;
-        const contentElement = contentRef.current;
+      if (isAutoHeightMode) {
+        setLocalSize((currentSize) => {
+          if (Math.abs(currentSize.width - newSize.width) < 1) {
+            return currentSize;
+          }
 
-        if (!windowBody || !contentElement) {
+          return {
+            ...currentSize,
+            width: Math.round(newSize.width),
+          };
+        });
+
+        if (isMaxHeightAdjustmentArmed) {
+          const windowBody = windowBodyRef.current;
+          const contentElement = contentRef.current;
+
+          if (!windowBody || !contentElement) {
+            return;
+          }
+
+          const chromeHeight = getWindowChromeHeight({
+            windowBody,
+            titleBar: titleBarRef.current,
+            fallbackContentHeight: contentElement.clientHeight,
+          });
+          const nextMaxContentHeight = Math.max(
+            1,
+            Math.round(newSize.height - chromeHeight),
+          );
+
+          previewMaxContentHeightRef.current = nextMaxContentHeight;
+          setPreviewMaxContentHeight(nextMaxContentHeight);
           return;
         }
 
-        const chromeHeight = windowBody.offsetHeight - contentElement.clientHeight;
-        const nextMaxContentHeight = Math.max(
-          1,
-          Math.round(newSize.height - chromeHeight),
-        );
-
-        onMaxContentHeightChange(nextMaxContentHeight);
         return;
       }
 
       setLocalSize(newSize);
     },
-    [
-      isAutoHeightMode,
-      isMaxHeightAdjustmentArmed,
-      onMaxContentHeightChange,
-    ],
+    [isAutoHeightMode, isMaxHeightAdjustmentArmed],
   );
 
   const handleResizeStart = useCallback(() => {
     cancelDrag();
     setCurrentWindowFocus(id);
     setIsResizing(true);
-  }, [cancelDrag, id, setCurrentWindowFocus]);
+    if (isAutoHeightMode && isMaxHeightAdjustmentArmed) {
+      const resolvedMaxContentHeight = getResolvedMaxContentHeight();
+
+      previewMaxContentHeightRef.current = resolvedMaxContentHeight;
+      setPreviewMaxContentHeight(resolvedMaxContentHeight);
+    }
+  }, [
+    cancelDrag,
+    getResolvedMaxContentHeight,
+    id,
+    isAutoHeightMode,
+    isMaxHeightAdjustmentArmed,
+    setCurrentWindowFocus,
+  ]);
 
   const handleResizeEnd = useCallback(() => {
     setIsResizing(false);
+    if (
+      isAutoHeightMode &&
+      isMaxHeightAdjustmentArmed &&
+      previewMaxContentHeightRef.current !== null
+    ) {
+      onMaxContentHeightChange?.(previewMaxContentHeightRef.current);
+    }
+    previewMaxContentHeightRef.current = null;
+    setPreviewMaxContentHeight(null);
     if (isMaxHeightAdjustmentArmed) {
       onMaxHeightAdjustmentArmedChange?.(false);
     }
-  }, [isMaxHeightAdjustmentArmed, onMaxHeightAdjustmentArmedChange]);
+  }, [
+    isAutoHeightMode,
+    isMaxHeightAdjustmentArmed,
+    onMaxContentHeightChange,
+    onMaxHeightAdjustmentArmedChange,
+  ]);
 
   const handleOpacityChange = useCallback(
     (newOpacity: WindowOpacity) => {
@@ -227,11 +432,30 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
     setSizeInStore(id, { height: localSize.height, width: localSize.width });
   }, [localSize.height, localSize.width, isResizing, id, setSizeInStore]);
 
+  useEffect(() => {
+    if (!isMaxHeightAdjustmentArmed) {
+      previewMaxContentHeightRef.current = null;
+      setPreviewMaxContentHeight(null);
+    }
+  }, [isMaxHeightAdjustmentArmed]);
+
   useLayoutEffect(() => {
     if (!isAutoHeightMode) {
       setAutoHeight(minHeight);
       return;
     }
+
+    let animationFrameId: number | null = null;
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateObservedContentElements();
+      scheduleAutoHeightUpdate();
+    });
+    const mutationObserver = new MutationObserver(() => {
+      updateObservedContentElements();
+      scheduleAutoHeightUpdate();
+    });
+    let observedContentElements = new Set<HTMLElement>();
 
     const updateAutoHeight = () => {
       const windowBody = windowBodyRef.current;
@@ -241,14 +465,19 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
         return;
       }
 
-      const chromeHeight = windowBody.offsetHeight - contentElement.clientHeight;
+      const chromeHeight = getWindowChromeHeight({
+        windowBody,
+        titleBar: titleBarRef.current,
+        fallbackContentHeight: contentElement.clientHeight,
+      });
+      const measuredContentHeight = getMeasuredContentHeight(contentElement);
       const resolvedMaxContentHeight =
         maxContentHeight ?? Math.max(0, localSize.height - chromeHeight);
       onResolvedMaxContentHeightChange?.(Math.round(resolvedMaxContentHeight));
       const nextAutoHeight = Math.max(
         minHeight,
         Math.min(
-          chromeHeight + contentElement.scrollHeight,
+          chromeHeight + measuredContentHeight,
           chromeHeight + resolvedMaxContentHeight,
         ),
       );
@@ -262,33 +491,76 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
       });
     };
 
+    const scheduleAutoHeightUpdate = () => {
+      if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+      }
+
+      animationFrameId = requestAnimationFrame(() => {
+        animationFrameId = null;
+        updateAutoHeight();
+      });
+    };
+
+    const updateObservedContentElements = () => {
+      const contentElement = contentRef.current;
+
+      if (!contentElement) {
+        observedContentElements.forEach((element) => {
+          resizeObserver.unobserve(element);
+        });
+        observedContentElements = new Set<HTMLElement>();
+        return;
+      }
+
+      const nextObservedContentElements = new Set(
+        getContentMeasurementElements(contentElement),
+      );
+
+      observedContentElements.forEach((element) => {
+        if (!nextObservedContentElements.has(element)) {
+          resizeObserver.unobserve(element);
+        }
+      });
+
+      nextObservedContentElements.forEach((element) => {
+        if (!observedContentElements.has(element)) {
+          resizeObserver.observe(element);
+        }
+      });
+
+      observedContentElements = nextObservedContentElements;
+    };
+
     updateAutoHeight();
-
-    const resizeObserver = new ResizeObserver(updateAutoHeight);
-
-    if (windowBodyRef.current) {
-      resizeObserver.observe(windowBodyRef.current);
-    }
 
     if (titleBarRef.current) {
       resizeObserver.observe(titleBarRef.current);
     }
 
     if (contentRef.current) {
-      resizeObserver.observe(contentRef.current);
-      const contentRoot = contentRef.current.firstElementChild;
-
-      if (contentRoot instanceof HTMLElement) {
-        resizeObserver.observe(contentRoot);
-      }
+      mutationObserver.observe(contentRef.current, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      });
     }
 
+    updateObservedContentElements();
+    updateAutoHeight();
+    scheduleAutoHeightUpdate();
+
     return () => {
+      if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+      }
+      mutationObserver.disconnect();
       resizeObserver.disconnect();
     };
   }, [
     isAutoHeightMode,
     localSize.height,
+    localSize.width,
     maxContentHeight,
     minHeight,
     onResolvedMaxContentHeightChange,
@@ -297,6 +569,32 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   const style = dynamicHeight
     ? { height: "auto", width: localSize.width }
     : { width: localSize.width, height: effectiveHeight };
+  const contentHeight = isAdjustingMaxHeight
+    ? (previewMaxContentHeight ?? 0)
+    : (contentRef.current?.clientHeight ?? 0);
+  const measuredContentHeight = contentRef.current
+    ? getMeasuredContentHeight(contentRef.current)
+    : 0;
+  const previewShadeOffset =
+    previewMaxContentHeight === null
+      ? 0
+      : Math.max(
+          0,
+          Math.min(
+            contentHeight - MAX_HEIGHT_PREVIEW_LINE_HEIGHT,
+            measuredContentHeight,
+          ),
+        );
+  const previewBoundaryOffset =
+    previewMaxContentHeight === null
+      ? 0
+      : Math.max(
+          0,
+          Math.min(
+            contentHeight - MAX_HEIGHT_PREVIEW_LINE_HEIGHT,
+            previewMaxContentHeight - MAX_HEIGHT_PREVIEW_LINE_HEIGHT,
+          ),
+        );
 
   const handleLockToggle = useCallback(() => {
     setLockedInStore(id, !isLocked);
@@ -336,6 +634,8 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
             "ll:bg-black/50": opacity === 3,
             "ll:bg-black/75": opacity === 4,
             "ll:bg-black": opacity === 5,
+            "ll:border-blue-400/80 ll:ring-1 ll:ring-blue-400/60":
+              isMaxHeightAdjustmentArmed,
           },
         )}
         ref={windowBodyRef}
@@ -358,7 +658,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
         <div
           ref={contentRef}
           className={cn(
-            "ll:flex-1 ll:overflow-hidden ll:cursor-auto",
+            "ll:flex-1 ll:overflow-hidden ll:cursor-auto ll:relative",
             contentClassName,
           )}
           onTouchStart={(e) => e.stopPropagation()}
@@ -366,14 +666,38 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
             draggableContent ? onMouseDown : (e) => e.stopPropagation()
           }
         >
+          {isAdjustingMaxHeight && (
+            <div
+              data-ll-max-height-preview=""
+              className="ll:pointer-events-none ll:absolute ll:inset-0 ll:z-10"
+            >
+              <div className="ll:absolute ll:inset-0 ll:bg-blue-500/8" />
+              <div
+                className="ll:absolute ll:left-0 ll:right-0 ll:bg-blue-400/20"
+                style={{
+                  top: previewShadeOffset,
+                  bottom: 0,
+                }}
+              />
+              <div
+                className="ll:absolute ll:left-0 ll:right-0 ll:bg-blue-300/90 ll:shadow-[0_0_0_1px_rgba(147,197,253,0.45)]"
+                style={{
+                  top: previewBoundaryOffset,
+                  height: MAX_HEIGHT_PREVIEW_LINE_HEIGHT,
+                }}
+              />
+            </div>
+          )}
           {children}
         </div>
-        {(resizable || isMaxHeightAdjustmentArmed) && !isLocked && (
+        {(allowsHorizontalResize || allowsVerticalResize) && !isLocked && (
           <WindowResizeHandle
             minWidth={minWidth}
             minHeight={minHeight}
             maxWidth={maxWidth}
             maxHeight={maxHeight}
+            allowHorizontalResize={allowsHorizontalResize}
+            allowVerticalResize={allowsVerticalResize}
             onResize={handleResize}
             onResizeStart={handleResizeStart}
             onResizeEnd={handleResizeEnd}
