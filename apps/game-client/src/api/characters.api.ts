@@ -20,6 +20,22 @@ export type MargonemCharacter = {
   world?: string;
 };
 
+export const normalizeCharacterList = (
+  characters: unknown,
+): MargonemCharacter[] => {
+  if (!Array.isArray(characters)) {
+    return [];
+  }
+
+  return characters.filter((character): character is MargonemCharacter => {
+    return (
+      typeof character === "object" &&
+      character !== null &&
+      typeof character.id === "number"
+    );
+  });
+};
+
 type FetchCharacterListOptions = {
   accountId: number;
   world: string | undefined;
@@ -39,9 +55,11 @@ export async function fetchCharacterList({
     MargonemCharacter[]
   > | null;
 
-  const cached = accountId ? (charlist?.[accountId] ?? null) : null;
+  const cached = accountId
+    ? normalizeCharacterList(charlist?.[accountId] ?? null)
+    : [];
 
-  if (cached) {
+  if (cached.length > 0) {
     return cached
       .filter((character) => character.world === world)
       .sort((a, b) => b.lvl - a.lvl);
@@ -66,7 +84,7 @@ export async function fetchCharacterList({
     throw new Error("Empty character list received from API");
   }
 
-  return response.data
+  return normalizeCharacterList(response.data)
     .filter((character) => character.world === world)
     .sort((a, b) => b.lvl - a.lvl);
 }
