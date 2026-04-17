@@ -52,4 +52,47 @@ describe("game account preferences helpers", () => {
 
     expect(guildIds).toEqual([]);
   });
+
+  it("matches routing rules by world case-insensitively", () => {
+    const guildIds = resolveDetectorGuildIds(
+      [
+        {
+          id: "rule-1",
+          minLevel: 100,
+          maxLevel: 200,
+          world: "  Pandora ",
+          guildIds: ["guild-1"],
+        },
+        {
+          id: "rule-2",
+          minLevel: 100,
+          maxLevel: 200,
+          world: "fobos",
+          guildIds: ["guild-2"],
+        },
+      ],
+      175,
+      "pandora",
+    );
+
+    expect(guildIds).toEqual(["guild-1"]);
+  });
+
+  it("treats blank world as an unset filter", () => {
+    const guildIds = resolveDetectorGuildIds(
+      [
+        {
+          id: "rule-1",
+          minLevel: 100,
+          maxLevel: 200,
+          world: "   ",
+          guildIds: ["guild-1"],
+        },
+      ],
+      175,
+      "tempest",
+    );
+
+    expect(guildIds).toEqual(["guild-1"]);
+  });
 });

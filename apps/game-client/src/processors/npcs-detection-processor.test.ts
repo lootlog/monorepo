@@ -79,6 +79,7 @@ const readyPreferences = (overrides?: {
     id: string;
     minLevel: number;
     maxLevel: number;
+    world?: string;
     guildIds: string[];
   }>;
 }) => {
@@ -462,6 +463,35 @@ describe("NpcsDetectionProcessor", () => {
     expect(consoleWarnSpy).toHaveBeenCalledWith(
       "[NpcsDetectionProcessor] Failed to send chat message:",
       expect.any(Error),
+    );
+  });
+
+  it("does not auto-send when routing rule world does not match current world", async () => {
+    readyPreferences({
+      autoSend: true,
+      routingRules: [
+        {
+          id: "rule-1",
+          minLevel: 200,
+          maxLevel: 260,
+          world: "fobos",
+          guildIds: ["guild-1"],
+        },
+      ],
+    });
+    mockGetNpcTypeByWt.mockReturnValue("HERO");
+
+    processor.handle(createNpcEvent());
+
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(mockCreateNotification).not.toHaveBeenCalled();
+    expect(mockSendChatMessage).not.toHaveBeenCalled();
+    expect(useNpcDetectorStore.getState().npcs[0]).toEqual(
+      expect.objectContaining({
+        notificationSent: false,
+      }),
     );
   });
 });
