@@ -8,11 +8,9 @@ export const useCurrentGameAccountPreferences = () => {
   );
   const accountId = Game.hero?.account ? String(Game.hero.account) : null;
   const query = useUserGameAccountPreferences(accountId, gameInitialized);
-  const isReady = query.isFetched;
 
   return {
     ...query,
     accountId,
-    isReady,
   };
 };
