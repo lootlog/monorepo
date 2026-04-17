@@ -1,10 +1,14 @@
-import { fetchCharacterList } from "@/api";
+import { fetchCharacterList, normalizeCharacterList } from "@/api";
 import { Game } from "@/lib/game";
-import { LanguageVersion } from "@/store/global.store";
 import { getLanguageVersion } from "@/utils/game/get-language-version";
 import { useQuery } from "@tanstack/react-query";
 
 export type { MargonemCharacter } from "@/api";
+
+export const getCharacterListQueryKey = (
+  accountId: number,
+  world: string | undefined,
+) => ["characters-v2", accountId, world] as const;
 
 export const useCharacterList = () => {
   const accountId = Game.hero.account;
@@ -12,13 +16,14 @@ export const useCharacterList = () => {
   const languageVersion = getLanguageVersion(window.location.href);
 
   const query = useQuery({
-    queryKey: ["characters", world],
+    queryKey: getCharacterListQueryKey(accountId, world),
     queryFn: () =>
       fetchCharacterList({
         accountId,
         world,
         languageVersion,
       }),
+    select: normalizeCharacterList,
     staleTime: 0,
   });
 
