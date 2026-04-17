@@ -66,6 +66,9 @@ describe("useNotificationSettingsSync", () => {
     mockUseGuilds.mockReset();
     mockUseGuilds.mockReturnValue({
       data: [{ id: "guild-1" }, { id: "guild-2" }],
+      isFetched: true,
+      isFetching: false,
+      isLoading: false,
     });
     mockUseUserGameAccountPreferences.mockReset();
     mockUseUpdateUserGameAccountPreferences.mockReset();
@@ -118,6 +121,37 @@ describe("useNotificationSettingsSync", () => {
       hasStoredDetector: true,
       hasStoredPreferences: true,
     });
+  });
+
+  it("does not seed defaults before guild membership finishes loading", () => {
+    mockUseGuilds.mockReturnValue({
+      data: [],
+      isFetched: false,
+      isFetching: true,
+      isLoading: true,
+    });
+    mockUseUserGameAccountPreferences.mockReturnValue({
+      data: {
+        accountId: "202",
+        notifications: createNotificationsSettings(),
+        detector: createDetectorSettings(),
+        hasStoredNotifications: false,
+        hasStoredDetector: false,
+        hasStoredPreferences: false,
+      },
+      isLoading: false,
+      isFetching: false,
+      isFetched: true,
+    });
+
+    renderHook(() => useNotificationSettingsSync(), {
+      wrapper,
+    });
+
+    expect(mockMutate).not.toHaveBeenCalled();
+    expect(
+      queryClient.getQueryData(getUserGameAccountPreferencesQueryKey("202")),
+    ).toBeUndefined();
   });
 
   it("flushes queued detector events once the preferences query reaches a terminal state", async () => {

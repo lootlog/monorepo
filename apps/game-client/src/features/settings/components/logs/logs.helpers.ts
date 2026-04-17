@@ -7,7 +7,7 @@ import i18n from "@/i18n/config";
 import type { LoggedAction, SerializableValue } from "@/store/logs.store";
 
 export const stringifyLogValue = (value: SerializableValue): string => {
-  return JSON.stringify(value, null, 2);
+  return JSON.stringify(value, null, 2) ?? "";
 };
 
 export const formatLogTimestamp = (createdAt: string): string => {

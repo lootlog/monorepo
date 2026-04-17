@@ -3,7 +3,7 @@ import { AlertCircle, Loader2 } from "lucide-react";
 import type { FC } from "react";
 
 type SettingsSyncStatusProps = {
-  status: "idle" | "loading" | "saving" | "syncing" | "error";
+  status: "idle" | "loading" | "saving" | "error";
   savingLabel: string;
   syncingLabel: string;
   errorLabel: string;

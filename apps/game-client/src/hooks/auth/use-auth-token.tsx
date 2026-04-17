@@ -7,7 +7,7 @@ export const useAuthToken = () => {
   const sessionToken = session.data?.session.token;
 
   return useQuery({
-    queryKey: ["auth-token"],
+    queryKey: ["auth-token", sessionToken],
     enabled: Boolean(sessionToken),
     queryFn: () => fetchAuthToken(sessionToken as string),
     refetchOnMount: true,

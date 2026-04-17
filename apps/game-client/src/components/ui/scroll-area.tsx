@@ -12,7 +12,7 @@ const ScrollArea = React.forwardRef<
     {...props}
   >
     <ScrollAreaPrimitive.Viewport
-      className="ll:h-full ll:w-full ll:max-h-[inherit] ll:rounded-[inherit] ll:select-text ll:[&>div:first-child]:block!"
+      className="ll:h-full ll:w-full ll:max-h-[inherit] ll:rounded-[inherit] ll:select-text ll:[&>div:first-child]:!block"
       ref={ref}
     >
       {children}

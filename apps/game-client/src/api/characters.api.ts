@@ -2,7 +2,7 @@ import { LanguageVersion } from "@/store/global.store";
 import { get } from "@/utils/object-utils";
 import { getApiClient } from "@/lib/api-client";
 
-const MARGONEM_CHARTACTER_LIST_URL =
+const MARGONEM_CHARACTER_LIST_URL =
   "https://public-api.margonem.pl/account/charlist";
 const MARGONEM_CHARACTER_LIST_EN_URL =
   "https://public-api.margonem.com/account/charlist";
@@ -50,7 +50,7 @@ export async function fetchCharacterList({
   const hs3 = window.getCookie?.("hs3");
   const url =
     languageVersion === LanguageVersion.PL
-      ? MARGONEM_CHARTACTER_LIST_URL
+      ? MARGONEM_CHARACTER_LIST_URL
       : MARGONEM_CHARACTER_LIST_EN_URL;
 
   if (!hs3) {

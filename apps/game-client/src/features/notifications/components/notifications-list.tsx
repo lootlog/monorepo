@@ -17,6 +17,7 @@ export const NotificationsList: FC<NotificationsListProps> = ({
 }) => {
   const { data: guilds } = useGuilds();
   const guildNamesById = getGuildNamesById(guilds);
+  const notificationsCount = notifications?.length ?? 0;
   const scrollViewportRef = useRef<HTMLDivElement | null>(null);
   const activeNotificationAnimations = useNotificationsStore(
     (state) => state.activeNotificationAnimations,
@@ -68,7 +69,7 @@ export const NotificationsList: FC<NotificationsListProps> = ({
                     activeNotificationAnimations[notification.listKey] ?? null
                   }
                   guildNamesById={guildNamesById}
-                  showCloseButton={notifications.length > 1}
+                  showCloseButton={notificationsCount > 1}
                 />
               </motion.div>
             );

@@ -24,6 +24,8 @@ export type Notification = {
   isGatheringParty?: boolean;
 };
 
+const MAX_PENDING_NOTIFICATIONS = 100;
+
 const getNotificationType = (n: Notification) => {
   if (!n.npc || !n.npc.wt) return "message" as const;
   return getNpcTypeByWt(NpcType, n.npc.wt);
@@ -50,6 +52,7 @@ export const useNotifications = () => {
   const sessionDataRef = useRef(sessionData);
   const worldRef = useRef(world);
   const pendingNotificationsRef = useRef<Notification[]>([]);
+  const previousAccountIdRef = useRef<string | null>(accountId);
   const processNotificationRef = useRef<(data: Notification) => void>(
     () => undefined,
   );
@@ -92,7 +95,14 @@ export const useNotifications = () => {
   };
 
   useEffect(() => {
-    pendingNotificationsRef.current = [];
+    if (
+      previousAccountIdRef.current !== null &&
+      previousAccountIdRef.current !== accountId
+    ) {
+      pendingNotificationsRef.current = [];
+    }
+
+    previousAccountIdRef.current = accountId;
   }, [accountId]);
 
   useEffect(() => {
@@ -100,6 +110,12 @@ export const useNotifications = () => {
 
     const handler = (data: Notification) => {
       if (!isReadyRef.current || !areMutesReadyRef.current) {
+        if (
+          pendingNotificationsRef.current.length >= MAX_PENDING_NOTIFICATIONS
+        ) {
+          pendingNotificationsRef.current.shift();
+        }
+
         pendingNotificationsRef.current.push(data);
         return;
       }

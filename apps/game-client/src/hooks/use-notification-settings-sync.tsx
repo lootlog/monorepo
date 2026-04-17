@@ -19,7 +19,12 @@ export const useNotificationSettingsSync = () => {
   const gameInitialized = useGlobalStore(
     (state) => state.gameState.gameInitialized,
   );
-  const { data: guilds } = useGuilds();
+  const {
+    data: guilds,
+    isFetched: areGuildsFetched,
+    isFetching: areGuildsFetching,
+    isLoading: areGuildsLoading,
+  } = useGuilds();
   const queryClient = useQueryClient();
   const accountId = Game.hero?.account ? String(Game.hero.account) : null;
   const guildIds = guilds?.map((guild) => guild.id) ?? [];
@@ -34,7 +39,9 @@ export const useNotificationSettingsSync = () => {
     if (
       !gameInitialized ||
       !accountId ||
-      !guilds ||
+      !areGuildsFetched ||
+      areGuildsLoading ||
+      areGuildsFetching ||
       isLoading ||
       isFetching ||
       !data
@@ -88,7 +95,9 @@ export const useNotificationSettingsSync = () => {
     data,
     gameInitialized,
     guildIds,
-    guilds,
+    areGuildsFetched,
+    areGuildsFetching,
+    areGuildsLoading,
     isFetching,
     isLoading,
     queryClient,

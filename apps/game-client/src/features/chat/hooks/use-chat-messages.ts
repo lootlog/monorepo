@@ -21,18 +21,22 @@ export const useChatMessagesListener = () => {
         },
       );
       if (!useChatCache.getState().messageCache[data.guildId]) {
-        fetchChatMessages(data.guildId).then((messages) => {
-          if (messages.length) {
-            useChatCache.getState().setMessageCache(data.guildId, messages);
-          }
-        });
+        fetchChatMessages(data.guildId)
+          .then((messages) => {
+            if (messages.length) {
+              useChatCache.getState().setMessageCache(data.guildId, messages);
+            }
+          })
+          .catch(() => undefined);
       }
       if (!useChatCache.getState().memberCache[data.guildId]) {
-        fetchGuildMembers(data.guildId).then((members) => {
-          if (members) {
-            useChatCache.getState().setMemberCache(data.guildId, members);
-          }
-        });
+        fetchGuildMembers(data.guildId)
+          .then((members) => {
+            if (members) {
+              useChatCache.getState().setMemberCache(data.guildId, members);
+            }
+          })
+          .catch(() => undefined);
       }
       useChatCache.getState().appendMessage(data.guildId, data);
     },

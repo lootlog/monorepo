@@ -1,6 +1,5 @@
 import { renderHook } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { fetchGuilds } from "@/api";
 import { queryKeys } from "@/features/public-api/query-keys";
 import { getGuildIds, getGuildNamesById, useGuilds } from "./use-guilds";
 
