@@ -23,6 +23,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  CreateAutoTimerResponseDtoOutput,
   CreateManualTimerDto,
   CreateTimerFromGameClientDto,
   ResetTimerDto,
@@ -517,6 +518,77 @@ export const useGetTimersControllerSearchNpcsWithTimerDataQueryData = () => {
 
 
 /**
+ * Resolve target guilds from character catching settings and create timers for them
+ * @summary Create automatic timers
+ */
+export const getTimersControllerCreateAutoTimerUrl = () => {
+
+
+
+
+  return `/timers/auto`
+}
+
+export const timersControllerCreateAutoTimer = async (createTimerFromGameClientDto: CreateTimerFromGameClientDto, options?: RequestInit): Promise<CreateAutoTimerResponseDtoOutput> => {
+
+  return orvalFetch<CreateAutoTimerResponseDtoOutput>(getTimersControllerCreateAutoTimerUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      createTimerFromGameClientDto,)
+  }
+);}
+
+
+
+
+export const getTimersControllerCreateAutoTimerMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof timersControllerCreateAutoTimer>>, TError,{data: BodyType<CreateTimerFromGameClientDto>}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof timersControllerCreateAutoTimer>>, TError,{data: BodyType<CreateTimerFromGameClientDto>}, TContext> => {
+
+const mutationKey = ['timersControllerCreateAutoTimer'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof timersControllerCreateAutoTimer>>, {data: BodyType<CreateTimerFromGameClientDto>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  timersControllerCreateAutoTimer(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type TimersControllerCreateAutoTimerMutationResult = NonNullable<Awaited<ReturnType<typeof timersControllerCreateAutoTimer>>>
+    export type TimersControllerCreateAutoTimerMutationBody = BodyType<CreateTimerFromGameClientDto>
+    export type TimersControllerCreateAutoTimerMutationError = ErrorType<void>
+
+    /**
+ * @summary Create automatic timers
+ */
+export const useTimersControllerCreateAutoTimer = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof timersControllerCreateAutoTimer>>, TError,{data: BodyType<CreateTimerFromGameClientDto>}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof timersControllerCreateAutoTimer>>,
+        TError,
+        {data: BodyType<CreateTimerFromGameClientDto>},
+        TContext
+      > => {
+      return useMutation(getTimersControllerCreateAutoTimerMutationOptions(options));
+    }
+    /**
  * Reset a timer for a specific NPC in a guild
  * @summary Reset timer
  */

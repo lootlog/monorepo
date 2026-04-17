@@ -318,7 +318,10 @@ export const useNotificationsStore = create<NotificationsState>()((set) => ({
           [listKey]: {
             ...currentState,
             deadlineMs: null,
-            pausedRemainingMs: Math.max(0, currentState.deadlineMs - Date.now()),
+            pausedRemainingMs: Math.max(
+              0,
+              currentState.deadlineMs - Date.now(),
+            ),
           },
         },
       };

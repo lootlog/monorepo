@@ -50,19 +50,19 @@ export const useVisibleNotifications = ({
   const needsTick = useMemo(() => {
     return notifications.some((n) => {
       const key = getKey(n) as keyof typeof settings;
-        const s = settings[key];
-        if (!s?.autoHideTimeout || s.autoHideTimeout <= 0) {
-          return false;
-        }
+      const s = settings[key];
+      if (!s?.autoHideTimeout || s.autoHideTimeout <= 0) {
+        return false;
+      }
 
-        const autoHideState = notificationAutoHideByListKey[n.listKey];
+      const autoHideState = notificationAutoHideByListKey[n.listKey];
 
-        if (!autoHideState) {
-          return true;
-        }
+      if (!autoHideState) {
+        return true;
+      }
 
-        return autoHideState.deadlineMs !== null;
-      });
+      return autoHideState.deadlineMs !== null;
+    });
   }, [notificationAutoHideByListKey, notifications, settings]);
 
   useEffect(() => {
@@ -79,7 +79,8 @@ export const useVisibleNotifications = ({
         const autoHideState = notificationAutoHideByListKey[n.listKey];
         if (autoHideState?.pausedRemainingMs !== null) return;
         const expirationTimeMs =
-          autoHideState?.deadlineMs ?? getExpirationTimeMs(n, s.autoHideTimeout);
+          autoHideState?.deadlineMs ??
+          getExpirationTimeMs(n, s.autoHideTimeout);
         if (expirationTimeMs !== null && currentTimeMs >= expirationTimeMs) {
           removeRef.current(n.notificationId);
         }
