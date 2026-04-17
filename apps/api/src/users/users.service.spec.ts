@@ -488,8 +488,10 @@ describe("UsersService", () => {
           routingRules: [
             {
               id: "hero-range-1",
+              name: "Hero route",
               minLevel: 100,
               maxLevel: 200,
+              world: "pandora",
               guildIds: ["guild-2"],
             },
           ],
@@ -513,8 +515,10 @@ describe("UsersService", () => {
             routingRules: [
               {
                 id: "hero-range-1",
+                name: "Hero route",
                 minLevel: 100,
                 maxLevel: 200,
+                world: "pandora",
                 guildIds: ["guild-2"],
               },
             ],
@@ -533,8 +537,10 @@ describe("UsersService", () => {
         routingRules: [
           {
             id: "hero-range-1",
+            name: "Hero route",
             minLevel: 100,
             maxLevel: 200,
+            world: "pandora",
             guildIds: ["guild-2"],
           },
         ],
@@ -564,6 +570,7 @@ describe("UsersService", () => {
               id: "",
               minLevel: 220,
               maxLevel: 120,
+              world: "  Pandora  ",
               guildIds: ["guild-1", 123, "guild-2"],
             },
           ],
@@ -586,7 +593,73 @@ describe("UsersService", () => {
             id: "rule-1",
             minLevel: 120,
             maxLevel: 220,
+            world: "Pandora",
             guildIds: ["guild-1", "guild-2"],
+          },
+        ],
+      }),
+      hasStoredDetector: true,
+      hasStoredNotifications: false,
+      hasStoredPreferences: true,
+      notifications: defaultNotificationsSettings,
+    });
+  });
+
+  it("trims detector routing rule names and keeps old rules without name", async () => {
+    mockPrismaService.userGameAccountSettings.findUnique.mockResolvedValue({
+      id: 10,
+      userId: "auth-user-current",
+      accountId: "444",
+      settings: {
+        detector: {
+          HERO: {
+            detect: true,
+            notifyWindow: true,
+            highlight: true,
+            notifySound: false,
+          },
+          routingRules: [
+            {
+              id: "rule-with-name",
+              name: "  Bossy hero  ",
+              minLevel: 100,
+              maxLevel: 200,
+              guildIds: ["guild-1"],
+            },
+            {
+              id: "rule-without-name",
+              minLevel: 210,
+              maxLevel: 300,
+              guildIds: ["guild-2"],
+            },
+          ],
+        },
+      },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const result = await service.getUserGameAccountPreferences(
+      "auth-user-current",
+      "444",
+    );
+
+    expect(result).toEqual({
+      accountId: "444",
+      detector: expect.objectContaining({
+        routingRules: [
+          {
+            id: "rule-with-name",
+            name: "Bossy hero",
+            minLevel: 100,
+            maxLevel: 200,
+            guildIds: ["guild-1"],
+          },
+          {
+            id: "rule-without-name",
+            minLevel: 210,
+            maxLevel: 300,
+            guildIds: ["guild-2"],
           },
         ],
       }),

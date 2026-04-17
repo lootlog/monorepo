@@ -21,8 +21,10 @@ const NotificationsSettingsSchema = z.object({
 
 const DetectorRoutingRuleSchema = z.object({
   id: z.string().min(1),
+  name: z.string().optional(),
   minLevel: z.number().min(0).max(500),
   maxLevel: z.number().min(0).max(500),
+  world: z.string().optional(),
   guildIds: z.array(z.string()),
 });
 

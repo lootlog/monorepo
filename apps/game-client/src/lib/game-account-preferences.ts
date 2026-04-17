@@ -62,6 +62,7 @@ export const cloneDetectorSettings = (
   const clonedSettings = {
     routingRules: settings.routingRules.map((rule) => ({
       ...rule,
+      world: rule.world,
       guildIds: [...rule.guildIds],
     })),
   } as DetectorSettings;
@@ -114,11 +115,19 @@ export const isDetectorPreferencesReady = (
 export const resolveDetectorGuildIds = (
   routingRules: DetectorRoutingRule[],
   npcLevel: number,
+  currentWorld?: string,
 ) => {
   const resolvedGuildIds = new Set<string>();
+  const normalizedCurrentWorld = currentWorld?.trim().toLowerCase();
 
   routingRules.forEach((rule) => {
     if (npcLevel < rule.minLevel || npcLevel > rule.maxLevel) {
+      return;
+    }
+
+    const normalizedRuleWorld = rule.world?.trim().toLowerCase();
+
+    if (normalizedRuleWorld && normalizedRuleWorld !== normalizedCurrentWorld) {
       return;
     }
 

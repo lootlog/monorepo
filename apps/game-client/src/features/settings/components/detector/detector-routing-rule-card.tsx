@@ -21,10 +21,14 @@ type DetectorRoutingRuleCardProps = {
   guilds: Guild[] | undefined;
   index: number;
   isOpen: boolean;
+  label: string;
   maxLevel: number;
   maxLevelField: ReactNode;
   minLevel: number;
   minLevelField: ReactNode;
+  nameField: ReactNode;
+  world?: string;
+  worldField: ReactNode;
   onOpenChange: (open: boolean) => void;
   onRemove: () => void;
   onToggleGuild: (guildId: string) => void;
@@ -37,10 +41,14 @@ export const DetectorRoutingRuleCard: FC<DetectorRoutingRuleCardProps> = ({
   guilds,
   index,
   isOpen,
+  label,
   maxLevel,
   maxLevelField,
   minLevel,
   minLevelField,
+  nameField,
+  world,
+  worldField,
   onOpenChange,
   onRemove,
   onToggleGuild,
@@ -97,7 +105,7 @@ export const DetectorRoutingRuleCard: FC<DetectorRoutingRuleCardProps> = ({
               <div className="ll:min-w-0 ll:flex-1 ll:flex ll:flex-col ll:gap-3">
                 <div className="ll:flex ll:flex-wrap ll:items-center ll:gap-1.5">
                   <span className="ll:text-[12px] ll:font-semibold ll:text-white">
-                    {translations.ruleLabel(index + 1)}
+                    {label}
                   </span>
                   <span className="ll:rounded-sm ll:border ll:border-sky-300/35 ll:bg-sky-400/10 ll:px-1.5 ll:py-0.5 ll:text-[10px] ll:font-medium ll:text-sky-100">
                     {translations.selectedGuildsBadge(selectedGuildIds.length)}
@@ -110,6 +118,11 @@ export const DetectorRoutingRuleCard: FC<DetectorRoutingRuleCardProps> = ({
                   <span className="ll:rounded-sm ll:border ll:border-gray-600/70 ll:bg-black/20 ll:px-1.5 ll:py-0.5 ll:text-[10px] ll:font-medium ll:text-gray-200">
                     {translations.maxLevelBadge(maxLevel)}
                   </span>
+                  {world ? (
+                    <span className="ll:rounded-sm ll:border ll:border-gray-600/70 ll:bg-black/20 ll:px-1.5 ll:py-0.5 ll:text-[10px] ll:font-medium ll:text-gray-200">
+                      {translations.worldBadge(world)}
+                    </span>
+                  ) : null}
                 </div>
               </div>
 
@@ -189,9 +202,12 @@ export const DetectorRoutingRuleCard: FC<DetectorRoutingRuleCardProps> = ({
 
         <CollapsibleContent className="ll:border-t ll:border-white/10">
           <div className="ll:flex ll:flex-col ll:gap-3">
-            <div className="ll:grid ll:grid-cols-2 ll:gap-2">
+            {nameField}
+
+            <div className="ll:grid ll:grid-cols-3 ll:gap-2">
               {minLevelField}
               {maxLevelField}
+              {worldField}
             </div>
 
             <div className="ll:flex ll:flex-col ll:gap-2">

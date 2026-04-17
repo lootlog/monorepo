@@ -773,14 +773,19 @@ export class UsersService {
       );
       const minLevel = Math.min(normalizedMinLevel, normalizedMaxLevel);
       const maxLevel = Math.max(normalizedMinLevel, normalizedMaxLevel);
+      const name = typeof rule.name === "string" ? rule.name.trim() : undefined;
+      const world =
+        typeof rule.world === "string" ? rule.world.trim() : undefined;
 
       acc.push({
         id:
           typeof rule.id === "string" && rule.id.length > 0
             ? rule.id
             : `rule-${index + 1}`,
+        name: name && name.length > 0 ? name : undefined,
         minLevel,
         maxLevel,
+        world: world && world.length > 0 ? world : undefined,
         guildIds: Array.isArray(rule.guildIds)
           ? rule.guildIds.filter(
               (guildId): guildId is string => typeof guildId === "string",
