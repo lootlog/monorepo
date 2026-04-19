@@ -234,10 +234,12 @@ export class NpcsDetectionProcessor {
     if (!settings?.detect) return null;
 
     const icon = Game.getNpcIcon(npc.tpl) || npc.icon || "";
+    const world = Game.getWorldName();
 
     const guildIds = resolveDetectorGuildIds(
       detectorSettings.routingRules,
       npc.lvl,
+      world,
     );
     const autoSendNotification = settings.autoSend && guildIds.length > 0;
 

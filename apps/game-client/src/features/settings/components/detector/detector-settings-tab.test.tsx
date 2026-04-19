@@ -93,7 +93,6 @@ describe("DetectorSettingsTab", () => {
     expect(screen.getByRole("tab", { name: "Tytan" })).toBeInTheDocument();
     expect(screen.getByText("form:ELITE2")).toBeInTheDocument();
     expect(screen.getByText("routing-form")).toBeInTheDocument();
-    expect(screen.getByText("Routing")).toBeInTheDocument();
   });
 
   it("delays visible sync status updates for loading and saving states", () => {

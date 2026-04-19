@@ -35,6 +35,83 @@ describe("use-character-list helpers", () => {
     ]);
   });
 
+  it("coerces string numeric fields from charlist payloads", () => {
+    expect(
+      normalizeCharacterList([
+        {
+          id: "1",
+          icon: "/icon.gif",
+          lvl: "300",
+          nick: "Hero",
+          prof: "w",
+          world: "fobos",
+          clan: "12",
+          clan_rank: "3",
+          last: "123456",
+        },
+      ]),
+    ).toEqual([
+      {
+        id: 1,
+        icon: "/icon.gif",
+        lvl: 300,
+        nick: "Hero",
+        prof: "w",
+        world: "fobos",
+        clan: 12,
+        clan_rank: 3,
+        last: 123456,
+      },
+    ]);
+  });
+
+  it("normalizes tuple-based character payloads", () => {
+    expect(
+      normalizeCharacterList([
+        [1, "Hero", "fobos", "300", "w", "m", "/icon.gif", "123456", "7", "2"],
+      ]),
+    ).toEqual([
+      {
+        id: 1,
+        nick: "Hero",
+        world: "fobos",
+        lvl: 300,
+        prof: "w",
+        gender: "m",
+        icon: "/icon.gif",
+        last: 123456,
+        clan: 7,
+        clan_rank: 2,
+      },
+    ]);
+  });
+
+  it("normalizes nested payloads with alias field names", () => {
+    expect(
+      normalizeCharacterList([
+        {
+          character: {
+            characterId: "1",
+            nickname: "Hero",
+            serverName: "fobos",
+            level: "300",
+            profession: "w",
+            imageUrl: "/icon.gif",
+          },
+        },
+      ]),
+    ).toEqual([
+      {
+        id: 1,
+        nick: "Hero",
+        world: "fobos",
+        lvl: 300,
+        prof: "w",
+        icon: "/icon.gif",
+      },
+    ]);
+  });
+
   it("drops legacy cached response objects instead of throwing in consumers", () => {
     expect(
       normalizeCharacterList({

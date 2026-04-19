@@ -26,7 +26,7 @@ import {
 } from "@/utils/notifications-and-detector/background";
 import { NpcType } from "@/hooks/api/use-npcs";
 import { Game } from "@/lib/game";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { useSession } from "@/hooks/auth/use-session";
@@ -129,9 +129,10 @@ export const NpcListItem = ({
 
   const npcType = getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type);
   const settingsByNpcType = settings[npcType as DetectorNpcType];
-  const resolvedGuildIds = useMemo(
-    () => resolveDetectorGuildIds(settings.routingRules, npc.lvl),
-    [npc.lvl, settings.routingRules],
+  const resolvedGuildIds = resolveDetectorGuildIds(
+    settings.routingRules,
+    npc.lvl,
+    world,
   );
   const key = npcType;
   const repeatDetectionFlashFrames = getRepeatDetectionFlashFrames(key);

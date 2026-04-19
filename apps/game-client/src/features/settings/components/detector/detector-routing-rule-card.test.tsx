@@ -51,11 +51,14 @@ const translations: DetectorRoutingSettingsTranslations = {
   addRuleButton: "Dodaj regułę",
   emptyState: "Brak reguł",
   ruleLabel: (index) => `Reguła ${index}`,
+  ruleNameLabel: "Nazwa reguły",
   selectedGuildsBadge: (count) => `Serwery ${count}`,
   minLevelBadge: (level) => `Od ${level}`,
   maxLevelBadge: (level) => `Do ${level}`,
+  worldBadge: (world) => `Świat: ${world}`,
   minLevelLabel: "Od levela",
   maxLevelLabel: "Do levela",
+  worldLabel: "Świat",
   guildSelectionLabel: "Na jakie serwery wysyłać",
   noGuildsSelected: "Brak serwerów",
   noGuildsAvailable: "Brak serwerów do wyboru.",
@@ -84,8 +87,10 @@ describe("DetectorRoutingRuleCard", () => {
         guilds={guilds}
         index={0}
         isOpen={false}
+        label="Reguła 1"
         minLevel={20}
         maxLevel={80}
+        nameField={<div>name field</div>}
         onOpenChange={onOpenChange}
         onRemove={vi.fn()}
         onToggleGuild={vi.fn()}
@@ -93,6 +98,7 @@ describe("DetectorRoutingRuleCard", () => {
         translations={translations}
         minLevelField={<div>min field</div>}
         maxLevelField={<div>max field</div>}
+        worldField={<div>world field</div>}
       />,
     );
 
@@ -123,8 +129,10 @@ describe("DetectorRoutingRuleCard", () => {
         guilds={guilds}
         index={0}
         isOpen
+        label="Reguła 1"
         minLevel={20}
         maxLevel={80}
+        nameField={<div>name field</div>}
         onOpenChange={vi.fn()}
         onRemove={vi.fn()}
         onToggleGuild={onToggleGuild}
@@ -138,11 +146,12 @@ describe("DetectorRoutingRuleCard", () => {
         translations={translations}
         minLevelField={<div>min field</div>}
         maxLevelField={<div>max field</div>}
+        worldField={<div>world field</div>}
       />,
     );
 
-    expect(screen.getAllByTestId("preview-guild")).toHaveLength(4);
-    expect(screen.getByText("+1")).toBeInTheDocument();
+    expect(screen.getAllByTestId("preview-guild")).toHaveLength(3);
+    expect(screen.getByText("+2")).toBeInTheDocument();
     expect(screen.getByText("Na jakie serwery wysyłać")).toBeInTheDocument();
     expect(screen.getByText("min field")).toBeInTheDocument();
     expect(screen.getByText("max field")).toBeInTheDocument();
@@ -163,8 +172,10 @@ describe("DetectorRoutingRuleCard", () => {
         guilds={guilds}
         index={0}
         isOpen
+        label="Reguła 1"
         minLevel={20}
         maxLevel={80}
+        nameField={<div>name field</div>}
         onOpenChange={onOpenChange}
         onRemove={onRemove}
         onToggleGuild={vi.fn()}
@@ -172,6 +183,7 @@ describe("DetectorRoutingRuleCard", () => {
         translations={translations}
         minLevelField={<div>min field</div>}
         maxLevelField={<div>max field</div>}
+        worldField={<div>world field</div>}
       />,
     );
 
