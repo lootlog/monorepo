@@ -236,7 +236,7 @@ importers:
         version: 9.0.0(@nestjs/common@11.1.18(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.18)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@lootlog/api-helpers':
         specifier: workspace:*
-        version: file:packages/api-helpers
+        version: link:../../packages/api-helpers
       '@lootlog/instrumentation':
         specifier: workspace:*
         version: link:../../packages/instrumentation
@@ -378,13 +378,13 @@ importers:
         version: 1.6.0
       '@hono/node-server':
         specifier: ^1.19.12
-        version: 1.19.12(hono@4.12.11)
+        version: 1.19.12(hono@4.12.14)
       '@hono/otel':
         specifier: ^1.1.1
-        version: 1.1.1(hono@4.12.11)
+        version: 1.1.1(hono@4.12.14)
       '@lootlog/api-helpers':
         specifier: workspace:*
-        version: file:packages/api-helpers
+        version: link:../../packages/api-helpers
       '@lootlog/instrumentation':
         specifier: workspace:*
         version: link:../../packages/instrumentation
@@ -395,8 +395,8 @@ importers:
         specifier: ^17.4.1
         version: 17.4.1
       hono:
-        specifier: ^4.12.11
-        version: 4.12.11
+        specifier: ^4.12.14
+        version: 4.12.14
       kysely:
         specifier: ^0.28.15
         version: 0.28.15
@@ -1103,19 +1103,19 @@ importers:
         version: 1.6.0
       '@hono/node-server':
         specifier: ^1.19.12
-        version: 1.19.12(hono@4.12.11)
+        version: 1.19.12(hono@4.12.14)
       '@hono/otel':
         specifier: ^1.1.1
-        version: 1.1.1(hono@4.12.11)
+        version: 1.1.1(hono@4.12.14)
       '@hono/swagger-ui':
         specifier: ^0.6.1
-        version: 0.6.1(hono@4.12.11)
+        version: 0.6.1(hono@4.12.14)
       '@hono/zod-openapi':
         specifier: ^1.2.4
-        version: 1.2.4(hono@4.12.11)(zod@4.3.6)
+        version: 1.2.4(hono@4.12.14)(zod@4.3.6)
       '@lootlog/api-helpers':
         specifier: workspace:*
-        version: file:packages/api-helpers
+        version: link:../../packages/api-helpers
       '@lootlog/instrumentation':
         specifier: workspace:*
         version: link:../../packages/instrumentation
@@ -1126,8 +1126,8 @@ importers:
         specifier: ^17.4.1
         version: 17.4.1
       hono:
-        specifier: ^4.12.11
-        version: 4.12.11
+        specifier: ^4.12.14
+        version: 4.12.14
       meilisearch:
         specifier: ^0.57.0
         version: 0.57.0
@@ -1317,8 +1317,8 @@ importers:
   packages/api-helpers:
     dependencies:
       hono:
-        specifier: ^4.12.11
-        version: 4.12.11
+        specifier: ^4.12.14
+        version: 4.12.14
       jose:
         specifier: ^6.2.2
         version: 6.2.2
@@ -3281,9 +3281,6 @@ packages:
     resolution: {integrity: sha512-DplzWnYhfFceGPR+UyDFpZdB287wF/vNOHFuDsBF/nGDdTezvr0Gf60opzyBEF3oXym6p3xTmGygxvO97LZ+vw==}
     peerDependencies:
       yjs: '>=13.5.22'
-
-  '@lootlog/api-helpers@file:packages/api-helpers':
-    resolution: {directory: packages/api-helpers, type: directory}
 
   '@lootlog/nest-shared@file:packages/nest-shared':
     resolution: {directory: packages/nest-shared, type: directory}
@@ -9083,12 +9080,8 @@ packages:
   hermes-parser@0.25.1:
     resolution: {integrity: sha512-6pEjquH3rqaI6cYAXYPcz9MS4rY6R4ngRgrgfDshRptUZIc3lw0MCIJIGDj9++mfySOuPTHB4nrSW99BCvOPIA==}
 
-  hono@4.12.11:
-    resolution: {integrity: sha512-r4xbIa3mGGGoH9nN4A14DOg2wx7y2oQyJEb5O57C/xzETG/qx4c7CVDQ5WMeKHZ7ORk2W0hZ/sQKXTav3cmYBA==}
-    engines: {node: '>=16.9.0'}
-
-  hono@4.12.12:
-    resolution: {integrity: sha512-p1JfQMKaceuCbpJKAPKVqyqviZdS0eUxH9v82oWo1kb9xjQ5wA6iP3FNVAPDFlz5/p7d45lO+BpSk1tuSZMF4Q==}
+  hono@4.12.14:
+    resolution: {integrity: sha512-am5zfg3yu6sqn5yjKBNqhnTX7Cv+m00ox+7jbaKkrLMRJ4rAdldd1xPd/JzbBWspqaQv6RSTrgFN95EsfhC+7w==}
     engines: {node: '>=16.9.0'}
 
   hookified@1.15.1:
@@ -13989,35 +13982,35 @@ snapshots:
     dependencies:
       '@hapi/hoek': 11.0.7
 
-  '@hono/node-server@1.19.11(hono@4.12.12)':
+  '@hono/node-server@1.19.11(hono@4.12.14)':
     dependencies:
-      hono: 4.12.12
+      hono: 4.12.14
 
-  '@hono/node-server@1.19.12(hono@4.12.11)':
+  '@hono/node-server@1.19.12(hono@4.12.14)':
     dependencies:
-      hono: 4.12.11
+      hono: 4.12.14
 
-  '@hono/otel@1.1.1(hono@4.12.11)':
+  '@hono/otel@1.1.1(hono@4.12.14)':
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/semantic-conventions': 1.40.0
-      hono: 4.12.11
+      hono: 4.12.14
 
-  '@hono/swagger-ui@0.6.1(hono@4.12.11)':
+  '@hono/swagger-ui@0.6.1(hono@4.12.14)':
     dependencies:
-      hono: 4.12.11
+      hono: 4.12.14
 
-  '@hono/zod-openapi@1.2.4(hono@4.12.11)(zod@4.3.6)':
+  '@hono/zod-openapi@1.2.4(hono@4.12.14)(zod@4.3.6)':
     dependencies:
       '@asteasolutions/zod-to-openapi': 8.5.0(zod@4.3.6)
-      '@hono/zod-validator': 0.7.6(hono@4.12.11)(zod@4.3.6)
-      hono: 4.12.11
+      '@hono/zod-validator': 0.7.6(hono@4.12.14)(zod@4.3.6)
+      hono: 4.12.14
       openapi3-ts: 4.5.0
       zod: 4.3.6
 
-  '@hono/zod-validator@0.7.6(hono@4.12.11)(zod@4.3.6)':
+  '@hono/zod-validator@0.7.6(hono@4.12.14)(zod@4.3.6)':
     dependencies:
-      hono: 4.12.11
+      hono: 4.12.14
       zod: 4.3.6
 
   '@hookform/resolvers@5.2.2(react-hook-form@7.67.0(react@19.2.4))(zod@4.3.6)':
@@ -14501,11 +14494,6 @@ snapshots:
       '@lexical/selection': 0.42.0
       lexical: 0.42.0
       yjs: 13.6.30
-
-  '@lootlog/api-helpers@file:packages/api-helpers':
-    dependencies:
-      hono: 4.12.12
-      jose: 6.2.2
 
   '@lootlog/nest-shared@file:packages/nest-shared(@nestjs/common@11.1.18(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/config@4.0.3(@nestjs/common@11.1.18(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(rxjs@7.8.2))(@nestjs/core@11.1.18)(ioredis@5.10.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
     dependencies:
@@ -16275,13 +16263,13 @@ snapshots:
       '@electric-sql/pglite': 0.4.1
       '@electric-sql/pglite-socket': 0.1.1(@electric-sql/pglite@0.4.1)
       '@electric-sql/pglite-tools': 0.3.1(@electric-sql/pglite@0.4.1)
-      '@hono/node-server': 1.19.11(hono@4.12.12)
+      '@hono/node-server': 1.19.11(hono@4.12.14)
       '@prisma/get-platform': 7.2.0
       '@prisma/query-plan-executor': 7.2.0
       '@prisma/streams-local': 0.1.2
       foreground-child: 3.3.1
       get-port-please: 3.2.0
-      hono: 4.12.12
+      hono: 4.12.14
       http-status-codes: 2.3.0
       pathe: 2.0.3
       proper-lockfile: 4.1.2
@@ -16298,13 +16286,13 @@ snapshots:
       '@electric-sql/pglite': 0.4.1
       '@electric-sql/pglite-socket': 0.1.1(@electric-sql/pglite@0.4.1)
       '@electric-sql/pglite-tools': 0.3.1(@electric-sql/pglite@0.4.1)
-      '@hono/node-server': 1.19.11(hono@4.12.12)
+      '@hono/node-server': 1.19.11(hono@4.12.14)
       '@prisma/get-platform': 7.2.0
       '@prisma/query-plan-executor': 7.2.0
       '@prisma/streams-local': 0.1.2
       foreground-child: 3.3.1
       get-port-please: 3.2.0
-      hono: 4.12.12
+      hono: 4.12.14
       http-status-codes: 2.3.0
       pathe: 2.0.3
       proper-lockfile: 4.1.2
@@ -20980,9 +20968,7 @@ snapshots:
     dependencies:
       hermes-estree: 0.25.1
 
-  hono@4.12.11: {}
-
-  hono@4.12.12: {}
+  hono@4.12.14: {}
 
   hookified@1.15.1: {}
 
