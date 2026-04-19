@@ -1,0 +1,7 @@
+{
+  "title": "Ustawienia ogólne",
+  "description": "Skonfiguruj ogólne ustawienia dotyczące działania dodatku w grze.",
+  "behaviorTitle": "Zachowanie dodatku",
+  "allowWorldSelectionLabel": "Pozwalaj na wybór świata",
+  "allowWorldSelectionDescription": "Nie działa na zgrupowanych timerach."
+}

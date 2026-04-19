@@ -1,0 +1,151 @@
+{
+  "title": "Ustawienia timerów",
+  "description": "Skonfiguruj ustawienia dotyczące wyświetlania i działania timerów.",
+  "subTabs": {
+    "general": "Ogólne",
+    "appearance": "Wygląd",
+    "colors": "Kolory"
+  },
+  "general": {
+    "behaviorTitle": "Zachowanie",
+    "syncLabel": "Synchronizuj ustawienia",
+    "syncDescription": "Synchronizuje ustawienia timerów z serwerem.",
+    "groupingLabel": "Grupuj timery",
+    "groupingDescription": "Łączy timery z różnych lootlogów w jeden zbiorczy.",
+    "underBagLabel": "Timery pod torbami",
+    "underBagDescription": "Wyświetla timery pod torbami zamiast w osobnym okienku.",
+    "compactViewLabel": "Widok kompaktowy",
+    "compactViewDescription": "Ukrywa nagłówek i stopkę timerów, pokazując tylko zawartość.",
+    "countdownTitle": "Tryb odliczania",
+    "countdownLabel": "Odliczaj do",
+    "countdownDescription": "Wybierz, czy licznik ma odliczać do minimalnego czy maksymalnego czasu.",
+    "countdownMax": "Max",
+    "countdownMin": "Min",
+    "fadeTitle": "Wygaszanie",
+    "removeTimerAfterLabel": "Czas usunięcia timera po wyzerowaniu",
+    "removeTimerAfterDescription": "W sekundach."
+  },
+  "appearance": {
+    "visibilityTitle": "Widoczność",
+    "showLevelLabel": "Wyświetlaj poziom potwora",
+    "showTypeLabel": "Wyświetlaj typ potwora",
+    "layoutTitle": "Układ",
+    "singleTimerDisplayModeLabel": "Tryb wyświetlania pojedynczego timera",
+    "singleTimerDisplayModeDescription": "Kolumny wyświetlają czas pod nazwą timera. Wiersze wyświetlają czas obok nazwy timera.",
+    "singleTimerDisplayModeColumn": "Kolumny",
+    "singleTimerDisplayModeRow": "Wiersze",
+    "scaleTitle": "Skala",
+    "fontSizeLabel": "Wielkość czcionki",
+    "minWidthLabel": "Minimalna szerokość pojedynczego timera"
+  },
+  "colors": {
+    "listTitle": "Lista kolorów",
+    "addTitle": "Dodaj kolor",
+    "namePlaceholder": "Nazwa",
+    "borderLabel": "Ramka",
+    "backgroundLabel": "Tło",
+    "borderAria": "Kolor ramki",
+    "backgroundAria": "Kolor tła",
+    "transparencyLabel": "Przezroczystość",
+    "transparencyAria": "Przezroczystość tła",
+    "previewLabel": "Podgląd",
+    "addButton": "Dodaj",
+    "hiddenDefaultsTitle": "Usunięte domyślne kolory",
+    "restoreColorTitle": "Przywróć kolor",
+    "defaultNames": {
+      "red": "Czerwony",
+      "orange": "Pomarańczowy",
+      "yellow": "Żółty",
+      "lime": "Limonkowy",
+      "green": "Zielony",
+      "teal": "Turkusowy",
+      "sky": "Niebieski",
+      "blue": "Granatowy",
+      "violet": "Fioletowy",
+      "purple": "Purpurowy",
+      "pink": "Różowy",
+      "white": "Biały"
+    }
+  },
+  "actions": {
+    "hideFilters": "Ukryj filtry",
+    "showFilters": "Pokaż filtry",
+    "disableColorFilters": "Wyłącz filtry po kolorze",
+    "enableColorFilters": "Włącz filtry po kolorze",
+    "sortAsc": "Sortuj rosnąco",
+    "sortDesc": "Sortuj malejąco",
+    "hideHiddenTimers": "Ukryj ukryte timery",
+    "showHiddenTimers": "Pokaż ukryte timery"
+  },
+  "contextMenu": {
+    "creating": "Tworzenie timera...",
+    "unpin": "Odepnij",
+    "pin": "Przypnij",
+    "unpinAll": "Odepnij wszędzie",
+    "pinAll": "Przypnij wszędzie",
+    "show": "Pokaż",
+    "hide": "Ukryj",
+    "showAll": "Pokaż wszędzie",
+    "hideAll": "Ukryj wszędzie",
+    "restart": "Odliczaj od początku",
+    "delete": "Usuń timer"
+  },
+  "connectionStatus": {
+    "connected": "Połączono z serwerami:",
+    "disconnected": "Nie połączono z żadnym serwerem"
+  },
+  "emptyState": {
+    "filtered": "Brak timerów dla wybranych filtrów"
+  },
+  "filters": {
+    "searchPlaceholder": "Szukaj...",
+    "minPlaceholder": "Od",
+    "maxPlaceholder": "Do",
+    "unknownType": "mob"
+  },
+  "tooltip": {
+    "addedBy": "Dodane przez:",
+    "reset": "⟳ Timer został zresetowany",
+    "addedAt": "Dodano:",
+    "min": "Min:",
+    "max": "Max:"
+  },
+  "runtime": {
+    "resetEventTimerDenied": "Nie można zresetować okna eventowego z poziomu timerów.",
+    "deleteEventTimerDenied": "Nie można usunąć okna eventowego z poziomu timerów.",
+    "timerReset": "Zresetowano timer {{name}}.",
+    "timerResetFailed": "Nie udało się zresetować timera {{name}}.",
+    "timerDeleted": "Usunięto timer {{name}}.",
+    "timerDeleteFailed": "Nie udało się usunąć timera {{name}}."
+  },
+  "form": {
+    "serverLabel": "Serwer",
+    "serverRequired": "Wybierz serwer",
+    "searchNpcLabel": "Szukaj potwora",
+    "searchNpcPlaceholder": "Wpisz nazwę potwora...",
+    "searchNpcEmpty": "Nie znaleziono potwora",
+    "nameLabel": "Nazwa",
+    "namePlaceholder": "np. Młody Smok",
+    "nameRequired": "Nazwa jest wymagana",
+    "nameTooLong": "Nazwa może mieć maksymalnie {{count}} znaków",
+    "minDurationLabel": "Minimalny czas (max 300h)",
+    "minDurationPlaceholder": "np. 2h 30m 45s",
+    "maxDurationLabel": "Maksymalny czas (max 300h)",
+    "maxDurationPlaceholder": "np. 3h 15m 30s",
+    "customDatesToggle": "Niestandardowe daty spawnu",
+    "startDateLabel": "Data startu",
+    "endDateLabel": "Data końca",
+    "customWindowLabel": "Okno:",
+    "invalidRange": "Nieprawidłowy zakres",
+    "submitPending": "Dodawanie...",
+    "submit": "Dodaj",
+    "durationOrDatesRequired": "Podaj czasy respawnu lub niestandardowe daty",
+    "minDurationRequired": "Minimalny czas jest wymagany",
+    "maxDurationRequired": "Maksymalny czas jest wymagany",
+    "durationPositive": "Czas musi być większy niż 0 sekund",
+    "maxDurationMin": "Maksymalny czas musi być większy lub równy minimalnemu",
+    "startDateRequired": "Data startu jest wymagana",
+    "endDateRequired": "Data końca jest wymagana",
+    "endDateAfterStart": "Data końca musi być późniejsza niż data startu"
+  }
+}

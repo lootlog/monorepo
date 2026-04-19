@@ -1,0 +1,25 @@
+{
+  "title": "Ustawienia dźwięków",
+  "description": "Skonfiguruj dźwięki dla różnych funkcji.",
+  "loading": "Ładowanie ustawień...",
+  "categoriesTitle": "Kategorie dźwięków",
+  "categoriesDescription": "Dostosuj głośność i dźwięki dla każdej kategorii osobno.",
+  "invalidUrl": "Nieprawidłowy URL",
+  "temporarilyUnavailable": "Tymczasowo niedostępne",
+  "supportedFormats": "Obsługiwane formaty: mp3, wav, ogg. Zostaw puste, aby użyć domyślnego dźwięku.",
+  "masterVolume": "Głośność główna",
+  "categories": {
+    "notifications": {
+      "label": "Powiadomienia",
+      "description": "Dźwięki odgrywane są przy różnych powiadomieniach."
+    },
+    "detector": {
+      "label": "Wykrywacz",
+      "description": "Dźwięki odgrywane są, gdy wykrywacz znajdzie NPC."
+    },
+    "timers": {
+      "label": "Timery",
+      "description": "Dźwięki odgrywane są, gdy timer wejdzie na minimalny czas respawnu."
+    }
+  }
+}

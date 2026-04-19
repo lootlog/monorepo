@@ -4,7 +4,7 @@ import type { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
 import { RotateCcw } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
-import { DEFAULT_COLOR_NAMES } from "./color-utils";
+import { getDefaultColorName } from "./color-utils";
 
 interface HiddenColorsListProps {
   hiddenColors: string[];
@@ -34,7 +34,7 @@ export const HiddenColorsList: FC<HiddenColorsListProps> = ({
           >
             <div className="ll:flex-1 ll:flex ll:flex-col ll:justify-between ll:h-full">
               <span className="ll:text-xs ll:font-medium ll:truncate">
-                {colorNames[colorId] || DEFAULT_COLOR_NAMES[colorId]}
+                {colorNames[colorId] || getDefaultColorName(colorId)}
               </span>
               <Tile
                 color={colorId as keyof typeof TIMERS_COLORS}

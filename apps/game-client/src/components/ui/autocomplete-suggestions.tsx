@@ -1,4 +1,5 @@
 import type React from "react";
+import i18n from "@/i18n/config";
 
 interface AutocompleteSuggestionsProps<T> {
   items: T[];
@@ -19,7 +20,7 @@ export const AutocompleteSuggestions = <T,>({
   selectedIndex,
   renderItem,
   keyExtractor,
-  noResultsMessage = "Nie znaleziono wyników",
+  noResultsMessage = i18n.t("settings.command.suggestions.noResults"),
   showNoResults = false,
   className = "",
 }: AutocompleteSuggestionsProps<T>) => {

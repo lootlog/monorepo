@@ -9,6 +9,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Game } from "@/lib/game";
 import { GuildButton } from "@/components/guild-button";
 import type { Guild } from "@/api";
+import { useTranslation } from "react-i18next";
 
 type GuildSwitcherProps = {
   disabled?: boolean;
@@ -58,6 +59,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
   selectedValues,
   value,
 }) => {
+  const { t } = useTranslation();
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const characterId = String(Game.hero.id);
   const { data: guilds, isFetched } = useGuilds();
@@ -149,7 +151,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
           isSelected={"all" === selectedValue}
           disabled={disabled}
           onClick={() => handleChange("all")}
-          tooltipLabel="Wszystkie serwery"
+          tooltipLabel={t("settings.common.guildSelection.allServers")}
           className={resolvedButtonClassName}
         >
           <AvatarFallback className="ll:font-semibold ll:text-xl ll:mt-1.5">

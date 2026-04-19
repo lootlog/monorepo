@@ -1,0 +1,29 @@
+{
+  "windowTitle": "Party finder",
+  "partyLabel": "Grupa:",
+  "invitingAll": "Zapraszanie...",
+  "inviteAll": "Zaproś wszystkich",
+  "finishing": "Kończenie...",
+  "finish": "Zakończ zbieranie grupy",
+  "createForm": {
+    "selectGuild": "Wybierz przynajmniej jedną gildię",
+    "descriptionLabel": "Opis (opcjonalny)",
+    "descriptionPlaceholder": "Np. szukam heala na tytana",
+    "minLevelLabel": "Min lvl",
+    "maxLevelLabel": "Max lvl",
+    "submitPending": "Wysyłanie...",
+    "submit": "Szukaj grupy",
+    "minMaxLevelError": "Min lvl nie może być większy niż max lvl"
+  },
+  "errors": {
+    "default": "Nie udało się utworzyć ogłoszenia",
+    "forbidden": "Brak uprawnień do wysyłania ogłoszeń",
+    "rateLimit": "Zbyt wiele prób. Spróbuj za chwilę.",
+    "invalidData": "Nieprawidłowe dane",
+    "startFailed": "Nie udało się rozpocząć zbierania grupy",
+    "finishFailed": "Nie udało się zakończyć zbierania grupy"
+  },
+  "messages": {
+    "finished": "Zbieranie grupy zakończone"
+  }
+}

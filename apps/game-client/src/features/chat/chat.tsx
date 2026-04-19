@@ -23,18 +23,13 @@ import {
   hasVisibleChatMessages,
   syncSelectedGuildChatCache,
 } from "./chat.helpers";
+import { useTranslation } from "react-i18next";
 
 const chatSelectedGuildKey = (accountId: string, characterId: string) =>
   storageKey(`ll:chat:selected-guild:${accountId}:${characterId}`);
 
-const CHAT_FILTERS: { key: ChatFilter; label: string }[] = [
-  { key: "all", label: "Wszystko" },
-  { key: "normal", label: "Czat" },
-  { key: "npc", label: "NPC" },
-  { key: "party", label: "Grupa" },
-];
-
 export const Chat = () => {
+  const { t } = useTranslation();
   const {
     isIntegratedMode,
     isChatInputEnabled,
@@ -68,6 +63,12 @@ export const Chat = () => {
   const isUserNearBottomRef = useRef(true);
   const scrollPendingRef = useRef(true);
   const prevMessagesLenRef = useRef(0);
+  const chatFilters: { key: ChatFilter; label: string }[] = [
+    { key: "all", label: t("settings.chat.filters.all") },
+    { key: "normal", label: t("settings.chat.filters.normal") },
+    { key: "npc", label: t("settings.chat.filters.npc") },
+    { key: "party", label: t("settings.chat.filters.party") },
+  ];
 
   const handleScroll = () => {
     const viewport = scrollAreaRef.current;
@@ -153,7 +154,7 @@ export const Chat = () => {
     <AnimatedWindow isOpen={open} windowKey="chat">
       <DraggableWindow
         id="chat"
-        title="Chat"
+        title={t("settings.chat.windowTitle")}
         onClose={() => setOpen("chat", false)}
         minHeight={116}
         minWidth={242}
@@ -174,7 +175,7 @@ export const Chat = () => {
           </div>
           {filtersVisible && (
             <div className="ll:shrink-0 ll:flex ll:gap-0.5 ll:px-1 ll:pb-1">
-              {CHAT_FILTERS.map((filter) => (
+              {chatFilters.map((filter) => (
                 <button
                   key={filter.key}
                   type="button"
@@ -202,7 +203,7 @@ export const Chat = () => {
               >
                 {currentMessages?.length === 0 ? (
                   <div className="ll:flex ll:items-center ll:justify-center ll:h-full ll:text-gray-500 ll:text-xs">
-                    Brak wiadomości
+                    {t("settings.chat.emptyState")}
                   </div>
                 ) : (
                   currentMessages.map((message) => {

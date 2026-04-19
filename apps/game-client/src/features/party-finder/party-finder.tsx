@@ -10,8 +10,10 @@ import { VolunteersList } from "@/features/party-finder/components/volunteers-li
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export const PartyFinder = () => {
+  const { t } = useTranslation();
   const open = useWindowsStore((state) => state["party-finder"].open);
   const setOpen = useWindowsStore((state) => state.setOpen);
 
@@ -55,7 +57,7 @@ export const PartyFinder = () => {
     <AnimatedWindow isOpen={open && !!partyGathering} windowKey="party-finder">
       <DraggableWindow
         id="party-finder"
-        title="Party finder"
+        title={t("settings.partyFinder.windowTitle")}
         onClose={() => setOpen("party-finder", false)}
         variant="default"
         minHeight={108}
@@ -63,7 +65,9 @@ export const PartyFinder = () => {
       >
         <div className="ll:flex ll:flex-col ll:h-full">
           <div className="ll:shrink-0 ll:flex ll:items-center ll:justify-center ll:gap-1 ll:py-1.5 ll:border-b ll:border-gray-700">
-            <span className="ll:text-[11px] ll:text-gray-300">Grupa:</span>
+            <span className="ll:text-[11px] ll:text-gray-300">
+              {t("settings.partyFinder.partyLabel")}
+            </span>
             <span
               className={`ll:text-[11px] ll:font-semibold ${partyMembers.length >= 10 ? "ll:text-red-400" : "ll:text-green-400"}`}
             >
@@ -84,10 +88,10 @@ export const PartyFinder = () => {
                   {isInvitingAll ? (
                     <>
                       <Loader2 className="ll:w-3 ll:h-3 ll:animate-spin ll:mr-1" />
-                      Zapraszanie...
+                      {t("settings.partyFinder.invitingAll")}
                     </>
                   ) : (
-                    "Zaproś wszystkich"
+                    t("settings.partyFinder.inviteAll")
                   )}
                 </Button>
               )}
@@ -96,7 +100,9 @@ export const PartyFinder = () => {
                 disabled={isCancelling}
                 className="ll:w-full ll:bg-red-600/30 ll:border-red-500 ll:hover:bg-red-600/50"
               >
-                {isCancelling ? "Kończenie..." : "Zakończ zbieranie grupy"}
+                {isCancelling
+                  ? t("settings.partyFinder.finishing")
+                  : t("settings.partyFinder.finish")}
               </Button>
             </div>
           )}

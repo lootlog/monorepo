@@ -1,0 +1,7 @@
+{
+  "title": "Zmiana ustawień",
+  "summary": "Ustawienia powiadomień i wykrywacza są teraz przechowywane tylko po stronie serwera.",
+  "details": "Poprzednie ustawienia zapisane lokalnie w tej przeglądarce nie zostały zachowane. Sprawdź aktualną konfigurację w ustawieniach.",
+  "close": "Zamknij",
+  "openSettings": "Otwórz ustawienia"
+}
