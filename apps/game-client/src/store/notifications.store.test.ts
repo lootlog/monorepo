@@ -19,8 +19,12 @@ const createMessageNotification = (
 });
 
 const createNpcNotification = (
-  overrides?: Partial<NotificationWithServers>,
-): NotificationWithServers => ({
+  overrides?: Omit<Partial<NotificationWithServers>, "npc"> & {
+    npc?: NonNullable<NotificationWithServers["npc"]>;
+  },
+): NotificationWithServers & {
+  npc: NonNullable<NotificationWithServers["npc"]>;
+} => ({
   notificationId: "notification-1",
   discordId: "discord-1",
   guildId: "guild-1",

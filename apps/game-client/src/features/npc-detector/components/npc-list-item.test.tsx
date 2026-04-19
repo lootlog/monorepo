@@ -357,7 +357,7 @@ describe("NpcListItem", () => {
     fireEvent.click(gatherButton);
 
     await waitFor(() => {
-      expect(globalThis.message).toHaveBeenCalledWith(
+      expect(window.message).toHaveBeenCalledWith(
         "Nie udało się rozpocząć zbierania grupy",
       );
     });

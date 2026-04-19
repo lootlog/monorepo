@@ -63,7 +63,65 @@
   },
   "windows": {
     "notifications": "Powiadomienia",
-    "npcDetector": "Wykrywacz"
+    "npcDetector": "Wykrywacz",
+    "command": "Konsola"
+  },
+  "command": {
+    "characterCount": "{{count}} / {{max}}",
+    "recipients": {
+      "noneSelected": "Brak serwerów",
+      "missingHint": "wybierz co najmniej jedną gildię",
+      "prefix": "Do: {{recipients}}",
+      "selectedCount_one": "1 serwer",
+      "selectedCount_few": "{{count}} serwery",
+      "selectedCount_many": "{{count}} serwerów",
+      "selectedCount_other": "{{count}} serwera",
+      "selectedNamesOverflow": "{{names}} +{{count}}"
+    },
+    "modes": {
+      "normal": {
+        "label": "Wiadomość",
+        "composerLabel": "Wiadomość do gildii",
+        "description": "Zwykła wiadomość wysyłana tylko na czat wybranych gildii.",
+        "placeholder": "Napisz wiadomość do wybranych gildii...",
+        "emptyHint": "Wpisz wiadomość, aby wysłać ją na czat."
+      },
+      "notification": {
+        "label": "Powiadomienie",
+        "composerLabel": "Powiadomienie z prefiksem !",
+        "description": "Powiadomienie wysyła alert i wpis na czat wybranych gildii.",
+        "placeholder": "Wpisz treść powiadomienia po !",
+        "emptyHint": "Dodaj treść powiadomienia po prefiksie !."
+      },
+      "party": {
+        "label": "Szukaj grupy",
+        "composerLabel": "Szukanie grupy z !grp",
+        "description": "Komenda !grp uruchamia szukanie grupy i publikuje je na wybranych gildiach.",
+        "placeholder": "Dodaj opis po !grp",
+        "emptyHint": "Dodaj opis po !grp, aby uruchomić szukanie grupy."
+      }
+    },
+    "suggestions": {
+      "notification": {
+        "label": "Powiadomienie",
+        "description": "Wyślij alert do wybranych gildii i dodaj wpis na czat."
+      },
+      "party": {
+        "label": "Szukaj grupy",
+        "description": "Rozpocznij zbieranie grupy z opcjonalnym opisem."
+      },
+      "noResults": "Dostępne komendy: ! oraz !grp"
+    },
+    "hints": {
+      "selectGuild": "Wybierz co najmniej jedną gildię, zanim wyślesz wiadomość.",
+      "submitReady": "Enter wysyła aktualny komunikat.",
+      "keyboard": "Enter wysyła, Shift+Enter dodaje nową linię, Esc zamyka."
+    },
+    "tooltip": {
+      "title": "Szybkie komendy",
+      "commands": "! wysyła powiadomienie, !grp uruchamia szukanie grupy.",
+      "keyboard": "Enter wysyła, Shift+Enter dodaje nową linię, Esc zamyka okno."
+    }
   },
   "general": {
     "title": "Ustawienia ogólne",
