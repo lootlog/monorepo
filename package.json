@@ -69,17 +69,17 @@
     "prepare": "husky"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.30.0",
+    "@changesets/cli": "^2.31.0",
     "@lootlog/typescript-config": "workspace:*",
     "husky": "^9.1.7",
-    "knip": "^6.3.0",
+    "knip": "^6.4.1",
     "lint-staged": "^16.4.0",
-    "orval": "^8.7.0",
-    "oxfmt": "^0.43.0",
-    "oxlint": "^1.58.0",
+    "orval": "^8.8.0",
+    "oxfmt": "^0.45.0",
+    "oxlint": "^1.60.0",
     "tsx": "^4.21.0",
-    "turbo": "^2.9.3",
-    "typescript": "6.0.2"
+    "turbo": "^2.9.6",
+    "typescript": "6.0.3"
   },
   "engines": {
     "node": ">=24"

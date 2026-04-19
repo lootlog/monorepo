@@ -38,16 +38,16 @@
     "winston": "^3.19.0"
   },
   "devDependencies": {
-    "@nestjs/cli": "^11.0.17",
-    "@nestjs/testing": "^11.1.18",
-    "@swc/cli": "^0.7.8",
-    "@swc/core": "^1.15.24",
-    "@types/node": "^25.5.2",
+    "@nestjs/cli": "^11.0.21",
+    "@nestjs/testing": "^11.1.19",
+    "@swc/cli": "^0.8.1",
+    "@swc/core": "^1.15.30",
+    "@types/node": "^25.6.0",
     "@types/supertest": "^7.2.0",
-    "@vitest/coverage-v8": "^4.1.2",
+    "@vitest/coverage-v8": "^4.1.4",
     "supertest": "^7.2.2",
-    "typescript": "^6.0.2",
+    "typescript": "^6.0.3",
     "unplugin-swc": "^1.5.9",
-    "vitest": "^4.1.2"
+    "vitest": "^4.1.4"
   }
 }
