@@ -32,28 +32,48 @@ const CONTENT_ANIMATION: Variants = {
 const CollapsibleTrigger = React.forwardRef<
   React.ElementRef<typeof CollapsiblePrimitive.CollapsibleTrigger>,
   React.ComponentPropsWithoutRef<typeof CollapsiblePrimitive.CollapsibleTrigger>
->(({ className, children, ...props }, ref) => {
-  const context = React.useContext(CollapsibleContext);
+>(
+  (
+    {
+      className,
+      children,
+      showChevron = true,
+      variant = "default",
+      ...props
+    }: React.ComponentPropsWithoutRef<
+      typeof CollapsiblePrimitive.CollapsibleTrigger
+    > & {
+      showChevron?: boolean;
+      variant?: "default" | "icon";
+    },
+    ref,
+  ) => {
+    const context = React.useContext(CollapsibleContext);
 
-  return (
-    <CollapsiblePrimitive.CollapsibleTrigger
-      ref={ref}
-      className={cn(
-        "ll:flex ll:w-full ll:items-center ll:justify-between ll:py-2 ll:px-3 ll:text-sm ll:font-medium ll:text-white ll:transition-all ll:hover:bg-gray-400/20 ll:border ll:border-gray-400 ll:rounded-sm ll-custom-cursor-pointer ll:bg-transparent",
-        className,
-      )}
-      {...props}
-    >
-      {children}
-      <ChevronDown
+    return (
+      <CollapsiblePrimitive.CollapsibleTrigger
+        ref={ref}
         className={cn(
-          "ll:h-4 ll:w-4 ll:shrink-0 ll:text-white ll:transition-transform ll:duration-200",
-          context?.isOpen && "ll:rotate-180",
+          variant === "icon"
+            ? "ll:inline-flex ll:size-7 ll:shrink-0 ll:items-center ll:justify-center ll:rounded-sm ll:border ll:border-gray-600/70 ll:bg-black/20 ll:px-0 ll:py-0 ll:text-white ll:transition-all ll:hover:bg-white/8 ll-custom-cursor-pointer"
+            : "ll:flex ll:w-full ll:items-center ll:justify-between ll:py-2 ll:px-3 ll:text-sm ll:font-medium ll:text-white ll:transition-all ll:hover:bg-gray-400/20 ll:border ll:border-gray-400 ll:rounded-sm ll-custom-cursor-pointer ll:bg-transparent",
+          className,
         )}
-      />
-    </CollapsiblePrimitive.CollapsibleTrigger>
-  );
-});
+        {...props}
+      >
+        {children}
+        {showChevron ? (
+          <ChevronDown
+            className={cn(
+              "ll:h-4 ll:w-4 ll:shrink-0 ll:text-white ll:transition-transform ll:duration-200",
+              context?.isOpen && "ll:rotate-180",
+            )}
+          />
+        ) : null}
+      </CollapsiblePrimitive.CollapsibleTrigger>
+    );
+  },
+);
 CollapsibleTrigger.displayName =
   CollapsiblePrimitive.CollapsibleTrigger.displayName;
 

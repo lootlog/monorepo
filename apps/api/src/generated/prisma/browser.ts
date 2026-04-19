@@ -108,6 +108,11 @@ export type UserCharactersLootlogSettings = Prisma.UserCharactersLootlogSettings
  */
 export type UserSettings = Prisma.UserSettingsModel
 /**
+ * Model UserGameAccountSettings
+ * 
+ */
+export type UserGameAccountSettings = Prisma.UserGameAccountSettingsModel
+/**
  * Model NotificationTarget
  * 
  */

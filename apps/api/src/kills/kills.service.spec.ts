@@ -194,8 +194,7 @@ describe("KillsService", () => {
 
     it("should save to NpcKillStats and GuildKillSummary for each configured guild", async () => {
       userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue({
-        collectLootWhitelistGuildIds: ["guild1", "guild2"],
-        addTimersWhitelistGuildIds: [],
+        catchingGuildIds: ["guild1", "guild2"],
       });
       prismaService.member.findMany.mockResolvedValue([
         { id: 1, guildId: "guild1" },
@@ -214,8 +213,7 @@ describe("KillsService", () => {
 
     it("should skip guilds where member is not found", async () => {
       userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue({
-        collectLootWhitelistGuildIds: ["guild1", "guild2"],
-        addTimersWhitelistGuildIds: [],
+        catchingGuildIds: ["guild1", "guild2"],
       });
       prismaService.member.findMany.mockResolvedValue([
         { id: 1, guildId: "guild1" },
@@ -229,10 +227,9 @@ describe("KillsService", () => {
       expect(result).toEqual({ updated: 1 });
     });
 
-    it("should deduplicate guilds from loot and timer whitelists", async () => {
+    it("should process each guild only once", async () => {
       userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue({
-        collectLootWhitelistGuildIds: ["guild1", "guild2"],
-        addTimersWhitelistGuildIds: ["guild1", "guild3"],
+        catchingGuildIds: ["guild1", "guild2", "guild3"],
       });
       prismaService.member.findMany.mockResolvedValue([
         { id: 1, guildId: "guild1" },
@@ -263,8 +260,7 @@ describe("KillsService", () => {
 
     it("should handle NpcKillStats upsert errors gracefully", async () => {
       userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue({
-        collectLootWhitelistGuildIds: ["guild1"],
-        addTimersWhitelistGuildIds: [],
+        catchingGuildIds: ["guild1"],
       });
       prismaService.member.findMany.mockResolvedValue([
         { id: 1, guildId: "guild1" },
@@ -299,8 +295,7 @@ describe("KillsService", () => {
 
     it("should not increment GuildKillSummary if guild already reported this kill", async () => {
       userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue({
-        collectLootWhitelistGuildIds: ["guild1"],
-        addTimersWhitelistGuildIds: [],
+        catchingGuildIds: ["guild1"],
       });
       prismaService.member.findMany.mockResolvedValue([
         { id: 1, guildId: "guild1" },

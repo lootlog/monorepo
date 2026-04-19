@@ -7,7 +7,7 @@ import { useNotificationsStore } from "@/store/notifications.store";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import { queryClient } from "@/lib/query-client";
-import { createTimerForGuilds } from "@/services/api.service";
+import { createAutoTimer } from "@/api";
 import type { LootlogCharacterConfigResponse } from "@/hooks/api/use-lootlog-character-config";
 
 export class NpcsDeleteProcessor {
@@ -33,37 +33,33 @@ export class NpcsDeleteProcessor {
       const npcType = getNpcTypeByWt(NpcType, data.wt, data.prof, data.type);
       const npcName = npcType === NpcType.ELITE2 ? elite2Name : data.nick;
 
-      const charactersConfigResponse = queryClient.getQueryData<{
-        data: LootlogCharacterConfigResponse;
-      }>(["lootlog-characters-config", String(accountId)]);
-
-      const charactersConfig = charactersConfigResponse?.data;
+      const charactersConfig =
+        queryClient.getQueryData<LootlogCharacterConfigResponse>([
+          "lootlog-characters-config",
+          String(accountId),
+        ]);
       const characterConfig = charactersConfig?.[String(characterId)];
-      const whitelistedGuildIds =
-        characterConfig?.addTimersWhitelistGuildIds ?? [];
+      const catchingGuildIds = characterConfig?.catchingGuildIds ?? [];
 
-      if (whitelistedGuildIds.length === 0) return;
+      if (catchingGuildIds.length === 0) return;
 
-      createTimerForGuilds({
-        timer: {
-          respawnRandomness: data.resp_rand,
-          respBaseSeconds: npc.respBaseSeconds,
-          characterId: String(characterId),
-          accountId: String(accountId),
-          world,
-          npc: {
-            icon: data.icon,
-            id: data.id,
-            prof: data.prof,
-            wt: data.wt,
-            hpp: 0,
-            type: data.type,
-            lvl: data.lvl,
-            name: npcName,
-            location: Game.map.name,
-          },
+      createAutoTimer({
+        respawnRandomness: data.resp_rand,
+        respBaseSeconds: npc.respBaseSeconds,
+        characterId: String(characterId),
+        accountId: String(accountId),
+        world,
+        npc: {
+          icon: data.icon,
+          id: data.id,
+          prof: data.prof,
+          wt: data.wt,
+          hpp: 0,
+          type: data.type,
+          lvl: data.lvl,
+          name: npcName,
+          location: Game.map.name,
         },
-        guildIds: whitelistedGuildIds,
       }).catch((error) => {
         console.warn("[NpcsDeleteProcessor] Failed to create timer:", error);
       });

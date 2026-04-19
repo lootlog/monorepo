@@ -72,8 +72,7 @@ describe("Loots E2E Tests (Whitelist)", () => {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           accountId: "12345",
           characterId: "1",
-          collectLootWhitelistGuildIds: [guild1.id],
-          addTimersWhitelistGuildIds: [],
+          catchingGuildIds: [guild1.id],
         },
       });
 
@@ -102,6 +101,13 @@ describe("Loots E2E Tests (Whitelist)", () => {
 
       expect(response.body).toHaveProperty("id");
       expect(response.body.id).toBe(1);
+      expect(response.body.submittedGuilds).toEqual([
+        {
+          guildId: guild1.id,
+          guildName: guild1.name,
+        },
+      ]);
+      expect(response.body.rejectedGuilds).toEqual([]);
 
       const lootSubmissions = await prisma.lootSubmission.findMany();
       expect(lootSubmissions).toHaveLength(1);
@@ -164,8 +170,7 @@ describe("Loots E2E Tests (Whitelist)", () => {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           accountId: "12345",
           characterId: "1",
-          collectLootWhitelistGuildIds: [guild1.id],
-          addTimersWhitelistGuildIds: [],
+          catchingGuildIds: [guild1.id],
         },
       });
 
@@ -206,7 +211,22 @@ describe("Loots E2E Tests (Whitelist)", () => {
         .send(lootPayload)
         .expect(201);
 
-      expect(response.body).toHaveProperty("id");
+      expect(response.body).toEqual({
+        id: 1,
+        submittedGuilds: [
+          {
+            guildId: guild1.id,
+            guildName: guild1.name,
+          },
+        ],
+        rejectedGuilds: [
+          {
+            guildId: guild2.id,
+            guildName: guild2.name,
+            reason: "NOT_ON_CHARACTER_WHITELIST",
+          },
+        ],
+      });
 
       const lootSubmissions = await prisma.lootSubmission.findMany();
       expect(lootSubmissions).toHaveLength(1);
@@ -244,19 +264,30 @@ describe("Loots E2E Tests (Whitelist)", () => {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           accountId: "12345",
           characterId: "1",
-          collectLootWhitelistGuildIds: [],
-          addTimersWhitelistGuildIds: [],
+          catchingGuildIds: [],
         },
       });
 
       const lootPayload = createTestLootPayload();
 
-      await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .post("/loots")
         .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
         .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
         .send(lootPayload)
         .expect(400);
+
+      expect(response.body).toEqual({
+        message: "NO_GUILDS_ON_THE_CHARACTER_WHITELIST",
+        submittedGuilds: [],
+        rejectedGuilds: [
+          {
+            guildId: guild1.id,
+            guildName: guild1.name,
+            reason: "NOT_ON_CHARACTER_WHITELIST",
+          },
+        ],
+      });
 
       const lootSubmissions = await prisma.lootSubmission.findMany();
       expect(lootSubmissions).toHaveLength(0);
@@ -290,12 +321,24 @@ describe("Loots E2E Tests (Whitelist)", () => {
 
       const lootPayload = createTestLootPayload();
 
-      await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .post("/loots")
         .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
         .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
         .send(lootPayload)
         .expect(400);
+
+      expect(response.body).toEqual({
+        message: "NO_GUILDS_ON_THE_CHARACTER_WHITELIST",
+        submittedGuilds: [],
+        rejectedGuilds: [
+          {
+            guildId: guild1.id,
+            guildName: guild1.name,
+            reason: "NOT_ON_CHARACTER_WHITELIST",
+          },
+        ],
+      });
 
       const lootSubmissions = await prisma.lootSubmission.findMany();
       expect(lootSubmissions).toHaveLength(0);
@@ -368,8 +411,7 @@ describe("Loots E2E Tests (Whitelist)", () => {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           accountId: "12345",
           characterId: "1",
-          collectLootWhitelistGuildIds: [guild1.id],
-          addTimersWhitelistGuildIds: [],
+          catchingGuildIds: [guild1.id],
         },
       });
 
@@ -403,7 +445,16 @@ describe("Loots E2E Tests (Whitelist)", () => {
 
       responses.forEach((response) => {
         expect(response.status).toBe(201);
-        expect(response.body).toHaveProperty("id");
+        expect(response.body).toEqual({
+          id: responses[0].body.id,
+          submittedGuilds: [
+            {
+              guildId: guild1.id,
+              guildName: guild1.name,
+            },
+          ],
+          rejectedGuilds: [],
+        });
       });
 
       const allSameId = responses.every(

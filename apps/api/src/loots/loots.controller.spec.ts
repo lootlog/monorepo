@@ -183,9 +183,18 @@ describe("LootsController", () => {
   describe("createLoot", () => {
     const discordId = "discord123";
     const userId = "user123";
+    const mockResult = {
+      id: 1,
+      submittedGuilds: [
+        {
+          guildId: "guild1",
+          guildName: "Test Guild",
+        },
+      ],
+      rejectedGuilds: [],
+    };
 
     it("should create a new loot", async () => {
-      const mockResult = { id: 1 };
       service.createLoot.mockResolvedValue(mockResult);
 
       const result = await controller.createLoot(
@@ -213,7 +222,6 @@ describe("LootsController", () => {
     });
 
     it("should handle concurrent requests correctly", async () => {
-      const mockResult = { id: 1 };
       service.createLoot.mockResolvedValue(mockResult);
 
       const requests = Array(5)

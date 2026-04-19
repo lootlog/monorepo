@@ -6,8 +6,12 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ContextMenuItem } from "@/components/ui/context-menu";
+import { fetchGuildPermissions } from "@/api";
 import { useGuilds } from "@/hooks/api/use-guilds";
-import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
+import {
+  getGuildPermissionsQueryKey,
+  normalizeGuildPermissions,
+} from "@/hooks/api/use-guild-permissions";
 import type { TimerWithTimeLeft } from "@/features/timers/utils/timers-utils";
 import { cn } from "@/lib/utils";
 import { Permission } from "@lootlog/types";
@@ -29,7 +33,6 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
 }) => {
   const [open, setOpen] = useState(false);
   const { data: guilds } = useGuilds();
-  const { client } = useAuthenticatedApiClient();
 
   const guildEntries = useMemo(
     () => timer.mergedGuildIds ?? [],
@@ -43,19 +46,20 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
 
   const permissionsQueries = useQueries({
     queries: uniqueGuildIds.map((guildId) => ({
-      queryKey: ["guild-permissions", guildId],
-      queryFn: () => client.get<Permission[]>(`/guilds/${guildId}/permissions`),
+      queryKey: getGuildPermissionsQueryKey(guildId),
+      queryFn: () => fetchGuildPermissions(guildId),
       staleTime: 5 * 60 * 1000,
-      select: (response: { data: Permission[] }) => response.data,
     })),
   });
 
   const guildsWithPermissions = useMemo(() => {
     return uniqueGuildIds
       .map((guildId, index) => {
-        const permissions = permissionsQueries[index]?.data;
+        const permissions = normalizeGuildPermissions(
+          permissionsQueries[index]?.data,
+        );
         const canDelete = REQUIRED_DELETE_PERMISSIONS.some((perm) =>
-          permissions?.includes(perm),
+          permissions.includes(perm),
         );
         const entry = guildEntries.find((e) => e.guildId === guildId);
         return {

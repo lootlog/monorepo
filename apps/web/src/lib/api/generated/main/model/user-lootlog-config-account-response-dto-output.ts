@@ -10,6 +10,5 @@ export interface UserLootlogConfigAccountResponseDtoOutput {[key: string]: {
   userId: string;
   accountId: string;
   characterId: string;
-  collectLootWhitelistGuildIds: string[];
-  addTimersWhitelistGuildIds: string[];
+  catchingGuildIds: string[];
 }}

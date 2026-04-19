@@ -1,0 +1,109 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { GatewayEvent } from "@/config/gateway";
+import { useGlobalStore } from "@/store/global.store";
+import { MapChangeProcessor } from "./map-change-processor";
+import type { GameEvent } from "@lootlog/margonem/game-events";
+
+const mockEmit = vi.fn();
+
+vi.mock("@/lib/socket", () => ({
+  getSocket: () => ({
+    emit: mockEmit,
+  }),
+}));
+
+const createMapChangeEvent = (id: number, name: string): GameEvent =>
+  ({
+    town: {
+      id,
+      name,
+    },
+  }) as GameEvent;
+
+describe("MapChangeProcessor", () => {
+  let processor: MapChangeProcessor;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    processor = new MapChangeProcessor();
+    useGlobalStore.setState({
+      socketState: {
+        connected: false,
+        joined: false,
+        joinedGuilds: [],
+      },
+    });
+  });
+
+  it("ignores events without town data", () => {
+    processor.handle({});
+
+    expect(mockEmit).not.toHaveBeenCalled();
+  });
+
+  it("ignores map changes when socket is not ready", () => {
+    processor.handle(createMapChangeEvent(12, "Torneg"));
+
+    useGlobalStore.setState({
+      socketState: {
+        connected: true,
+        joined: true,
+        joinedGuilds: [],
+      },
+    });
+
+    processor.handle(createMapChangeEvent(13, "Nithal"));
+
+    expect(mockEmit).not.toHaveBeenCalled();
+  });
+
+  it("emits presence update for the first distinct map", () => {
+    useGlobalStore.setState({
+      socketState: {
+        connected: true,
+        joined: true,
+        joinedGuilds: ["guild-1"],
+      },
+    });
+
+    processor.handle(createMapChangeEvent(12, "Torneg"));
+
+    expect(mockEmit).toHaveBeenCalledWith(GatewayEvent.PRESENCE_UPDATE, {
+      mapId: 12,
+      mapName: "Torneg",
+    });
+  });
+
+  it("does not emit for repeated map ids", () => {
+    useGlobalStore.setState({
+      socketState: {
+        connected: true,
+        joined: true,
+        joinedGuilds: ["guild-1"],
+      },
+    });
+
+    processor.handle(createMapChangeEvent(12, "Torneg"));
+    processor.handle(createMapChangeEvent(12, "Torneg"));
+
+    expect(mockEmit).toHaveBeenCalledTimes(1);
+  });
+
+  it("emits again when map id changes", () => {
+    useGlobalStore.setState({
+      socketState: {
+        connected: true,
+        joined: true,
+        joinedGuilds: ["guild-1"],
+      },
+    });
+
+    processor.handle(createMapChangeEvent(12, "Torneg"));
+    processor.handle(createMapChangeEvent(13, "Nithal"));
+
+    expect(mockEmit).toHaveBeenNthCalledWith(2, GatewayEvent.PRESENCE_UPDATE, {
+      mapId: 13,
+      mapName: "Nithal",
+    });
+  });
+});

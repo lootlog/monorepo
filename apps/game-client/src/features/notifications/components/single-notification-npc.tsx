@@ -1,88 +1,37 @@
-import { NpcTile } from "@/components/npc-tile";
-import { Button } from "@/components/ui/button";
-import type { GuildMember } from "@/hooks/api/use-guild-members";
-import { useVolunteer } from "@/hooks/api/use-volunteer";
-import { useMemberColor } from "@/hooks/discord/use-member-color";
-import {
-  useNotificationsStore,
-  type NotificationWithServers,
-} from "@/store/notifications.store";
-import { useWindowsStore } from "@/store/windows.store";
-import { getDiscordAvatarUrl } from "@/utils/discord/get-avatar-url";
 import type { FC } from "react";
+import type { NotificationWithServers } from "@/store/notifications.store";
 
 type SingleNotificationNpcProps = {
   notification: NotificationWithServers;
-  serverNames?: string[];
-  member?: GuildMember;
-  time?: string;
 };
 
 export const SingleNotificationNpc: FC<SingleNotificationNpcProps> = ({
   notification,
-  serverNames = [],
-  member,
-  time,
 }) => {
-  const avatarUrl = getDiscordAvatarUrl(member?.userId, member?.avatar);
-  const color = useMemberColor(member);
-  const volunteer = useVolunteer();
-  const { clearNotifications } = useNotificationsStore();
-  const setOpen = useWindowsStore((state) => state.setOpen);
-
-  const handleClick = () => {
-    volunteer.mutate({
-      notificationId: notification.notificationId,
-      targetDiscordId: notification.discordId,
-      world: notification.world,
-    });
-    setOpen("notifications", false);
-    clearNotifications();
-  };
-
   if (!notification.npc) return null;
 
   return (
-    <div className="ll:flex ll:w-full ll:flex-col ll:gap-1">
-      <div className="ll:flex ll:items-center ll:gap-2">
-        <img
-          src={avatarUrl}
-          alt="Avatar"
-          className="ll:h-7 ll:w-7 ll:rounded-full"
-        />
-        <span className="ll:font-semibold" style={{ color: `#${color}` }}>
-          {member?.name}
+    <div className="ll:flex ll:min-w-0 ll:flex-col">
+      <div className="ll:flex ll:gap-1 ll:overflow-hidden ll:text-xs">
+        <span className="ll:min-w-0 ll:truncate ll:font-semibold">
+          {notification.npc.name}
         </span>
-        <span className="ll:text-[11px] ll:text-gray-300">
-          {time}@{serverNames.join(", ")} - {notification.world}
+        <span className="ll:shrink-0">
+          ({notification.npc.lvl}
+          {notification.npc.prof})
         </span>
       </div>
-
-      <div className="ll:flex ll:gap-4 ll:py-1 ll:px-2">
-        <NpcTile
-          npc={notification.npc}
-          className="ll:max-h-10"
-          containerClassName="ll:w-6"
-        />
-        <div className="ll:flex ll:flex-col">
-          <span>
-            <span className="ll:text-[12px] ll:font-semibold">
-              {notification.npc.name}{" "}
-            </span>
-            <span className="ll:text-[11px]">
-              ({notification.npc.lvl}
-              {notification.npc.prof})
-            </span>
-          </span>
-          <span className="ll:mb-1 ll:text-[11px]">
-            {notification.npc.location} ({notification.npc.x},{" "}
-            {notification.npc.y})
-          </span>
-        </div>
+      <div className="ll:flex ll:gap-1 ll:overflow-hidden ll:text-[11px] ll:text-gray-400">
+        <span className="ll:min-w-0 ll:truncate">
+          {notification.npc.location}
+        </span>
+        <span className="ll:shrink-0">
+          ({notification.npc.x}, {notification.npc.y})
+        </span>
         {notification.isGatheringParty && (
-          <div className="ll:flex ll:items-center ll:justify-center ll:ml-auto ll:mr-4">
-            <Button onClick={handleClick}>Idę</Button>
-          </div>
+          <span className="ll:shrink-0 ll:font-semibold ll:text-purple-300">
+            Zbiera grupę
+          </span>
         )}
       </div>
     </div>

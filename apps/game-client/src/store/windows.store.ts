@@ -1,3 +1,8 @@
+import type { SettingsTabValue } from "@/features/settings/constants/settings-tabs";
+import {
+  APP_ERROR_WINDOW_DEFAULT_HEIGHT,
+  APP_ERROR_WINDOW_WIDTH,
+} from "@/features/error-boundary/error-boundary.constants";
 import type { GameNpc } from "@lootlog/margonem";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
@@ -5,15 +10,16 @@ import { storageKey } from "@/lib/storage-key";
 
 const STORAGE_KEY = storageKey("ll-windows-state");
 
-type NpcDetectorWindowState = {
-  npcs: GameNpc[];
-};
-
 type CreateNotificationState = {
   npc?: GameNpc;
 };
 
+type SettingsWindowState = {
+  activeTab?: SettingsTabValue;
+};
+
 export type WindowId =
+  | "app-error"
   | "settings"
   | "timers"
   | "chat"
@@ -26,6 +32,7 @@ export type WindowId =
   | "quick-access"
   | "timer-settings-conflict"
   | "catching-whitelist-warning"
+  | "backend-preferences-warning"
   | "party-finder"
   | "create-party-gathering";
 
@@ -44,25 +51,29 @@ interface WindowSizeState {
 interface WindowData {
   open: boolean;
   position: WindowPositionState;
+  hasDefinedPosition: boolean;
   size: WindowSizeState;
   opacity: WindowOpacity;
   locked: boolean;
   autofocus?: boolean;
+  maxContentHeight?: number;
 }
 
 interface WindowsState {
-  settings: WindowData;
+  "app-error": WindowData;
+  settings: WindowData & { state: SettingsWindowState };
   timers: WindowData;
   chat: WindowData;
   command: WindowData;
   "online-players": WindowData;
   "add-timer": WindowData;
-  "npc-detector": WindowData & { state: NpcDetectorWindowState };
+  "npc-detector": WindowData;
   notifications: WindowData;
   "create-notification": WindowData & { state: CreateNotificationState };
   "quick-access": WindowData;
   "timer-settings-conflict": WindowData;
   "catching-whitelist-warning": WindowData;
+  "backend-preferences-warning": WindowData;
   "party-finder": WindowData;
   "create-party-gathering": WindowData;
   currentWindowFocus?: WindowId;
@@ -71,29 +82,152 @@ interface WindowsState {
   setOpen: <T = unknown>(window: WindowId, open: boolean, state?: T) => void;
   setPosition: (window: WindowId, pos: WindowPositionState) => void;
   setSize: (window: WindowId, size: WindowSizeState) => void;
+  setMaxContentHeight: (window: WindowId, height: number) => void;
   setOpacity: (window: WindowId, opacity: WindowOpacity) => void;
   setLocked: (window: WindowId, locked: boolean) => void;
   toggleOpen: (window: WindowId, autofocus?: boolean) => void;
   setAutofocus: (window: WindowId, autofocus: boolean) => void;
+  setSettingsActiveTab: (activeTab?: SettingsTabValue) => void;
 }
 
 const DEFAULT_OPACITY: WindowOpacity = 4;
 const DEFAULT_POSITION: WindowPositionState = { x: 0, y: 0 };
 const DEFAULT_SIZE: WindowSizeState = { width: 242, height: 240 };
 
+const sanitizeMaxContentHeight = (height: number) => {
+  if (!Number.isFinite(height)) {
+    return undefined;
+  }
+
+  return Math.max(1, Math.round(height));
+};
+
+const hasNonZeroPosition = (
+  position: unknown,
+): position is WindowPositionState =>
+  typeof position === "object" &&
+  position !== null &&
+  "x" in position &&
+  "y" in position &&
+  typeof position.x === "number" &&
+  typeof position.y === "number" &&
+  (position.x !== 0 || position.y !== 0);
+
+const inferLegacyDefinedPosition = (
+  windowId: WindowId,
+  windowState: unknown,
+) => {
+  if (typeof windowState !== "object" || windowState === null) {
+    return false;
+  }
+
+  const position = (windowState as { position?: unknown }).position;
+
+  if (windowId === "settings") {
+    return hasNonZeroPosition(position);
+  }
+
+  return typeof position === "object" && position !== null;
+};
+
+export const migrateWindowsState = (
+  persisted: unknown,
+  version: number,
+): WindowsState => {
+  const state = persisted as Record<string, unknown>;
+
+  if (version < 2) {
+    if (state["chat-input"]) {
+      state.command = state["chat-input"];
+      delete state["chat-input"];
+    }
+    if (Array.isArray(state.windowFocusHistory)) {
+      state.windowFocusHistory = (state.windowFocusHistory as string[]).map(
+        (id) => (id === "chat-input" ? "command" : id),
+      );
+    }
+    if (state.currentWindowFocus === "chat-input") {
+      state.currentWindowFocus = "command";
+    }
+  }
+
+  if (version < 3) {
+    const settings = state.settings as Record<string, unknown> | undefined;
+    state.settings = {
+      ...settings,
+      state: (settings?.state as Record<string, unknown> | undefined) ?? {},
+    };
+  }
+
+  if (version < 4) {
+    const windowIds: WindowId[] = [
+      "app-error",
+      "settings",
+      "timers",
+      "chat",
+      "command",
+      "online-players",
+      "add-timer",
+      "npc-detector",
+      "notifications",
+      "create-notification",
+      "quick-access",
+      "timer-settings-conflict",
+      "catching-whitelist-warning",
+      "backend-preferences-warning",
+      "party-finder",
+      "create-party-gathering",
+    ];
+
+    windowIds.forEach((windowId) => {
+      const windowState = state[windowId];
+      if (typeof windowState !== "object" || windowState === null) {
+        return;
+      }
+
+      state[windowId] = {
+        ...windowState,
+        hasDefinedPosition: inferLegacyDefinedPosition(windowId, windowState),
+      };
+    });
+
+    const settings = state.settings as Record<string, unknown> | undefined;
+    state.settings = {
+      ...settings,
+      state: (settings?.state as Record<string, unknown> | undefined) ?? {},
+    };
+  }
+
+  return state as unknown as WindowsState;
+};
+
 export const useWindowsStore = create<WindowsState>()(
   persist(
     (set, get) => ({
+      "app-error": {
+        open: false,
+        position: DEFAULT_POSITION,
+        hasDefinedPosition: false,
+        size: {
+          width: APP_ERROR_WINDOW_WIDTH,
+          height: APP_ERROR_WINDOW_DEFAULT_HEIGHT,
+        },
+        opacity: DEFAULT_OPACITY,
+        locked: false,
+      },
       settings: {
         open: false,
         position: DEFAULT_POSITION,
-        size: { width: 420, height: 440 },
+        hasDefinedPosition: false,
+        size: { width: 640, height: 440 },
         opacity: DEFAULT_OPACITY,
         locked: false,
+        state: {},
       },
       timers: {
         open: true,
         position: DEFAULT_POSITION,
+        hasDefinedPosition: false,
         size: DEFAULT_SIZE,
         opacity: DEFAULT_OPACITY,
         locked: false,
@@ -101,25 +235,28 @@ export const useWindowsStore = create<WindowsState>()(
       chat: {
         open: true,
         position: DEFAULT_POSITION,
+        hasDefinedPosition: false,
         size: DEFAULT_SIZE,
         opacity: DEFAULT_OPACITY,
         locked: false,
         autofocus: false,
       },
       command: {
-        open: true,
+        open: false,
         position: {
           x: Math.round((window.innerWidth - 242) / 2),
           y: Math.round((window.innerHeight - 240) / 2),
         },
+        hasDefinedPosition: true,
         size: { width: 242, height: 240 },
         opacity: DEFAULT_OPACITY,
         locked: false,
         autofocus: false,
       },
       "online-players": {
-        open: true,
+        open: false,
         position: DEFAULT_POSITION,
+        hasDefinedPosition: false,
         size: { width: 242, height: 240 },
         opacity: DEFAULT_OPACITY,
         locked: false,
@@ -127,6 +264,7 @@ export const useWindowsStore = create<WindowsState>()(
       "add-timer": {
         open: false,
         position: DEFAULT_POSITION,
+        hasDefinedPosition: false,
         size: { width: 242, height: 300 },
         opacity: DEFAULT_OPACITY,
         locked: false,
@@ -134,14 +272,15 @@ export const useWindowsStore = create<WindowsState>()(
       "npc-detector": {
         open: false,
         position: DEFAULT_POSITION,
+        hasDefinedPosition: false,
         size: { width: 300, height: 300 },
         opacity: DEFAULT_OPACITY,
-        state: { npcs: [] },
         locked: false,
       },
       notifications: {
         open: false,
         position: DEFAULT_POSITION,
+        hasDefinedPosition: false,
         size: { width: 360, height: 300 },
         opacity: DEFAULT_OPACITY,
         locked: false,
@@ -149,6 +288,7 @@ export const useWindowsStore = create<WindowsState>()(
       "create-notification": {
         open: false,
         position: DEFAULT_POSITION,
+        hasDefinedPosition: false,
         size: { width: 242, height: 300 },
         opacity: DEFAULT_OPACITY,
         state: { npcs: [] },
@@ -157,6 +297,7 @@ export const useWindowsStore = create<WindowsState>()(
       "quick-access": {
         open: true,
         position: DEFAULT_POSITION,
+        hasDefinedPosition: false,
         size: { width: 250, height: 56 },
         opacity: DEFAULT_OPACITY,
         locked: false,
@@ -164,6 +305,7 @@ export const useWindowsStore = create<WindowsState>()(
       "timer-settings-conflict": {
         open: false,
         position: DEFAULT_POSITION,
+        hasDefinedPosition: false,
         size: { width: 420, height: 320 },
         opacity: DEFAULT_OPACITY,
         locked: false,
@@ -171,13 +313,23 @@ export const useWindowsStore = create<WindowsState>()(
       "catching-whitelist-warning": {
         open: false,
         position: DEFAULT_POSITION,
+        hasDefinedPosition: false,
         size: { width: 400, height: 240 },
+        opacity: DEFAULT_OPACITY,
+        locked: false,
+      },
+      "backend-preferences-warning": {
+        open: false,
+        position: DEFAULT_POSITION,
+        hasDefinedPosition: false,
+        size: { width: 430, height: 250 },
         opacity: DEFAULT_OPACITY,
         locked: false,
       },
       "party-finder": {
         open: false,
         position: DEFAULT_POSITION,
+        hasDefinedPosition: false,
         size: DEFAULT_SIZE,
         opacity: DEFAULT_OPACITY,
         locked: false,
@@ -185,6 +337,7 @@ export const useWindowsStore = create<WindowsState>()(
       "create-party-gathering": {
         open: false,
         position: DEFAULT_POSITION,
+        hasDefinedPosition: false,
         size: { width: 280, height: 220 },
         opacity: DEFAULT_OPACITY,
         locked: false,
@@ -207,23 +360,69 @@ export const useWindowsStore = create<WindowsState>()(
           const newHistory = open
             ? [key, ...state.windowFocusHistory.filter((id) => id !== key)]
             : state.windowFocusHistory.filter((id) => id !== key);
+          const currentWindow = state[key];
+          const hasWindowState = "state" in currentWindow;
+
+          const nextState =
+            windowState !== undefined
+              ? windowState
+              : key === "settings" && !open
+                ? {}
+                : hasWindowState
+                  ? currentWindow.state
+                  : undefined;
+
           return {
-            [key]: { ...state[key], open, state: open ? windowState : [] },
+            [key]:
+              nextState === undefined
+                ? { ...currentWindow, open }
+                : { ...currentWindow, open, state: nextState },
             currentWindowFocus: open ? key : undefined,
             windowFocusHistory: newHistory,
           };
         });
       },
       setPosition: (key: WindowId, pos) =>
-        set((state) => ({ [key]: { ...state[key], position: pos } })),
+        set((state) => ({
+          [key]: {
+            ...state[key],
+            position: pos,
+            hasDefinedPosition: true,
+          },
+        })),
       setSize: (key: WindowId, size) =>
         set((state) => ({ [key]: { ...state[key], size } })),
+      setMaxContentHeight: (key: WindowId, height: number) =>
+        set((state) => {
+          const nextMaxContentHeight = sanitizeMaxContentHeight(height);
+
+          if (nextMaxContentHeight === undefined) {
+            return state;
+          }
+
+          return {
+            [key]: {
+              ...state[key],
+              maxContentHeight: nextMaxContentHeight,
+            },
+          };
+        }),
       setOpacity: (key: WindowId, opacity: WindowOpacity) =>
         set((state) => ({ [key]: { ...state[key], opacity } })),
       setLocked: (key: WindowId, locked: boolean) =>
         set((state) => ({ [key]: { ...state[key], locked } })),
       setAutofocus: (key: WindowId, autofocus: boolean) =>
         set((state) => ({ [key]: { ...state[key], autofocus } })),
+      setSettingsActiveTab: (activeTab) =>
+        set((state) => ({
+          settings: {
+            ...state.settings,
+            state: {
+              ...state.settings.state,
+              activeTab,
+            },
+          },
+        })),
       toggleOpen: (key: WindowId, autofocus?: boolean) => {
         const curr = get()[key].open;
         set((state) => {
@@ -263,29 +462,13 @@ export const useWindowsStore = create<WindowsState>()(
         "quick-access": state["quick-access"],
         "timer-settings-conflict": state["timer-settings-conflict"],
         "catching-whitelist-warning": state["catching-whitelist-warning"],
+        "backend-preferences-warning": state["backend-preferences-warning"],
         "party-finder": state["party-finder"],
         "create-party-gathering": state["create-party-gathering"],
       }),
       storage: createJSONStorage(() => localStorage),
-      version: 2,
-      migrate: (persisted, version) => {
-        const state = persisted as Record<string, unknown>;
-        if (version < 2) {
-          if (state["chat-input"]) {
-            state.command = state["chat-input"];
-            delete state["chat-input"];
-          }
-          if (Array.isArray(state.windowFocusHistory)) {
-            state.windowFocusHistory = (
-              state.windowFocusHistory as string[]
-            ).map((id) => (id === "chat-input" ? "command" : id));
-          }
-          if (state.currentWindowFocus === "chat-input") {
-            state.currentWindowFocus = "command";
-          }
-        }
-        return state as unknown as WindowsState;
-      },
+      version: 6,
+      migrate: migrateWindowsState,
     },
   ),
 );

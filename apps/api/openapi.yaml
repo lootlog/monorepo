@@ -58,6 +58,59 @@ paths:
       summary: Update user preferences
       tags:
         - users
+  /users/@me/game-preferences/accounts/{accountId}:
+    get:
+      description: Retrieve account-scoped game preferences for a specific Margonem account
+      operationId: UsersController_getUserGameAccountPreferences
+      parameters:
+        - name: accountId
+          required: true
+          in: path
+          description: Margonem account ID
+          schema:
+            example: "1234567"
+            type: string
+      responses:
+        "200":
+          description: User game account preferences
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserGameAccountPreferencesResponseDto_Output"
+      security:
+        - bearer: []
+      summary: Get user game account preferences
+      tags:
+        - users
+    patch:
+      description: Update account-scoped game preferences for a specific Margonem account
+      operationId: UsersController_updateUserGameAccountPreferences
+      parameters:
+        - name: accountId
+          required: true
+          in: path
+          description: Margonem account ID
+          schema:
+            example: "1234567"
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserGameAccountPreferencesDto"
+      responses:
+        "200":
+          description: Updated user game account preferences
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserGameAccountPreferencesResponseDto_Output"
+      security:
+        - bearer: []
+      summary: Update user game account preferences
+      tags:
+        - users
   /guilds/{guildId}/members/@me:
     get:
       description: Retrieve the authenticated user's member information for this guild
@@ -381,8 +434,9 @@ paths:
       tags:
         - timers
     post:
-      description: Create a timer submitted by user from game client for a specific guild. Supports custom spawn times.
-      operationId: TimersController_createTimerFromGameClient
+      deprecated: true
+      description: Legacy endpoint for creating a timer in a specific guild. Prefer POST /timers/auto for the new rollout path.
+      operationId: TimersController_createTimer
       parameters:
         - name: guildId
           required: true
@@ -393,10 +447,11 @@ paths:
             type: string
       requestBody:
         required: true
+        description: Legacy timer payload kept for backward compatibility with cached clients.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateTimerFromGameClientDto"
+              $ref: "#/components/schemas/CreateTimerDto"
       responses:
         "201":
           description: Timer created successfully
@@ -410,7 +465,7 @@ paths:
           description: Forbidden - insufficient permissions
       security:
         - bearer: []
-      summary: Create timer from game client for specific guild
+      summary: Create timer for specific guild (deprecated)
       tags:
         - timers
   /guilds/{guildId}/timers/npcs/search:
@@ -462,6 +517,33 @@ paths:
       security:
         - bearer: []
       summary: Search NPCs with timer data
+      tags:
+        - timers
+  /timers/auto:
+    post:
+      description: Resolve target guilds from character catching settings and create timers for them
+      operationId: TimersController_createAutoTimer
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTimerFromGameClientDto"
+      responses:
+        "201":
+          description: Automatic timer creation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateAutoTimerResponseDto_Output"
+        "400":
+          description: No guild accepted this timer
+        "403":
+          description: Forbidden
+      security:
+        - bearer: []
+      summary: Create automatic timers
       tags:
         - timers
   /guilds/{guildId}/timers/{timerIdentifier}/reset:
@@ -4770,11 +4852,71 @@ components:
           type: string
         colorMode:
           type: string
+        mutes:
+          type: object
+          properties:
+            players:
+              type: array
+              items:
+                type: object
+                properties:
+                  discordId:
+                    type: string
+                    minLength: 1
+                  displayName:
+                    type: string
+                required:
+                  - discordId
+                  - displayName
+            npcs:
+              type: array
+              items:
+                type: object
+                properties:
+                  npcKey:
+                    type: string
+                    minLength: 1
+                  npcId:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+                  name:
+                    type: string
+                    minLength: 1
+                  npcType:
+                    type: string
+                    enum:
+                      - ELITE2
+                      - HERO
+                      - COLOSSUS
+                      - TITAN
+                  lvl:
+                    type: integer
+                    minimum: 1
+                    maximum: 9007199254740991
+                  prof:
+                    type: string
+                    nullable: true
+                  icon:
+                    type: string
+                    nullable: true
+                required:
+                  - npcKey
+                  - npcId
+                  - name
+                  - npcType
+                  - lvl
+                  - prof
+                  - icon
+          required:
+            - players
+            - npcs
       required:
         - userId
         - guildsOrder
         - theme
         - colorMode
+        - mutes
     UpdateUserPreferencesDto:
       type: object
       properties:
@@ -4810,6 +4952,547 @@ components:
           enum:
             - light
             - dark
+        mutes:
+          type: object
+          properties:
+            players:
+              type: array
+              items:
+                type: object
+                properties:
+                  discordId:
+                    type: string
+                    minLength: 1
+                  displayName:
+                    type: string
+                required:
+                  - discordId
+                  - displayName
+            npcs:
+              type: array
+              items:
+                type: object
+                properties:
+                  npcKey:
+                    type: string
+                    minLength: 1
+                  npcId:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+                  name:
+                    type: string
+                    minLength: 1
+                  npcType:
+                    type: string
+                    enum:
+                      - ELITE2
+                      - HERO
+                      - COLOSSUS
+                      - TITAN
+                  lvl:
+                    type: integer
+                    minimum: 1
+                    maximum: 9007199254740991
+                  prof:
+                    type: string
+                    nullable: true
+                  icon:
+                    type: string
+                    nullable: true
+                required:
+                  - npcKey
+                  - npcId
+                  - name
+                  - npcType
+                  - lvl
+                  - prof
+                  - icon
+    UserGameAccountPreferencesResponseDto_Output:
+      type: object
+      properties:
+        accountId:
+          type: string
+          minLength: 1
+        notifications:
+          type: object
+          properties:
+            ELITE2:
+              type: object
+              properties:
+                show:
+                  type: boolean
+                highlight:
+                  type: boolean
+                ignoreOtherWorlds:
+                  type: boolean
+                autoHideTimeout:
+                  type: number
+                  minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
+                sound:
+                  type: boolean
+              required:
+                - show
+                - highlight
+                - ignoreOtherWorlds
+                - guildIds
+                - sound
+            HERO:
+              type: object
+              properties:
+                show:
+                  type: boolean
+                highlight:
+                  type: boolean
+                ignoreOtherWorlds:
+                  type: boolean
+                autoHideTimeout:
+                  type: number
+                  minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
+                sound:
+                  type: boolean
+              required:
+                - show
+                - highlight
+                - ignoreOtherWorlds
+                - guildIds
+                - sound
+            COLOSSUS:
+              type: object
+              properties:
+                show:
+                  type: boolean
+                highlight:
+                  type: boolean
+                ignoreOtherWorlds:
+                  type: boolean
+                autoHideTimeout:
+                  type: number
+                  minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
+                sound:
+                  type: boolean
+              required:
+                - show
+                - highlight
+                - ignoreOtherWorlds
+                - guildIds
+                - sound
+            TITAN:
+              type: object
+              properties:
+                show:
+                  type: boolean
+                highlight:
+                  type: boolean
+                ignoreOtherWorlds:
+                  type: boolean
+                autoHideTimeout:
+                  type: number
+                  minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
+                sound:
+                  type: boolean
+              required:
+                - show
+                - highlight
+                - ignoreOtherWorlds
+                - guildIds
+                - sound
+            message:
+              type: object
+              properties:
+                show:
+                  type: boolean
+                highlight:
+                  type: boolean
+                ignoreOtherWorlds:
+                  type: boolean
+                autoHideTimeout:
+                  type: number
+                  minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
+                sound:
+                  type: boolean
+              required:
+                - show
+                - highlight
+                - ignoreOtherWorlds
+                - guildIds
+                - sound
+            party-gathering:
+              type: object
+              properties:
+                show:
+                  type: boolean
+                highlight:
+                  type: boolean
+                ignoreOtherWorlds:
+                  type: boolean
+                autoHideTimeout:
+                  type: number
+                  minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
+                sound:
+                  type: boolean
+              required:
+                - show
+                - highlight
+                - ignoreOtherWorlds
+                - guildIds
+                - sound
+          required:
+            - ELITE2
+            - HERO
+            - COLOSSUS
+            - TITAN
+            - message
+            - party-gathering
+        detector:
+          type: object
+          properties:
+            routingRules:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    minLength: 1
+                  name:
+                    type: string
+                  minLevel:
+                    type: number
+                    minimum: 0
+                    maximum: 500
+                  maxLevel:
+                    type: number
+                    minimum: 0
+                    maximum: 500
+                  world:
+                    type: string
+                  guildIds:
+                    type: array
+                    items:
+                      type: string
+                required:
+                  - id
+                  - minLevel
+                  - maxLevel
+                  - guildIds
+            ELITE2:
+              type: object
+              properties:
+                detect:
+                  type: boolean
+                autoSend:
+                  type: boolean
+                notifyWindow:
+                  type: boolean
+                highlight:
+                  type: boolean
+                notifySound:
+                  type: boolean
+              required:
+                - detect
+                - autoSend
+                - notifyWindow
+                - highlight
+                - notifySound
+            HERO:
+              type: object
+              properties:
+                detect:
+                  type: boolean
+                autoSend:
+                  type: boolean
+                notifyWindow:
+                  type: boolean
+                highlight:
+                  type: boolean
+                notifySound:
+                  type: boolean
+              required:
+                - detect
+                - autoSend
+                - notifyWindow
+                - highlight
+                - notifySound
+            COLOSSUS:
+              type: object
+              properties:
+                detect:
+                  type: boolean
+                autoSend:
+                  type: boolean
+                notifyWindow:
+                  type: boolean
+                highlight:
+                  type: boolean
+                notifySound:
+                  type: boolean
+              required:
+                - detect
+                - autoSend
+                - notifyWindow
+                - highlight
+                - notifySound
+            TITAN:
+              type: object
+              properties:
+                detect:
+                  type: boolean
+                autoSend:
+                  type: boolean
+                notifyWindow:
+                  type: boolean
+                highlight:
+                  type: boolean
+                notifySound:
+                  type: boolean
+              required:
+                - detect
+                - autoSend
+                - notifyWindow
+                - highlight
+                - notifySound
+          required:
+            - routingRules
+            - ELITE2
+            - HERO
+            - COLOSSUS
+            - TITAN
+        hasStoredNotifications:
+          type: boolean
+        hasStoredDetector:
+          type: boolean
+        hasStoredPreferences:
+          type: boolean
+      required:
+        - accountId
+        - notifications
+        - detector
+        - hasStoredNotifications
+        - hasStoredDetector
+        - hasStoredPreferences
+    UpdateUserGameAccountPreferencesDto:
+      type: object
+      properties:
+        notifications:
+          type: object
+          properties:
+            ELITE2:
+              type: object
+              properties:
+                show:
+                  type: boolean
+                highlight:
+                  type: boolean
+                ignoreOtherWorlds:
+                  type: boolean
+                autoHideTimeout:
+                  type: number
+                  minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
+                sound:
+                  type: boolean
+            HERO:
+              type: object
+              properties:
+                show:
+                  type: boolean
+                highlight:
+                  type: boolean
+                ignoreOtherWorlds:
+                  type: boolean
+                autoHideTimeout:
+                  type: number
+                  minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
+                sound:
+                  type: boolean
+            COLOSSUS:
+              type: object
+              properties:
+                show:
+                  type: boolean
+                highlight:
+                  type: boolean
+                ignoreOtherWorlds:
+                  type: boolean
+                autoHideTimeout:
+                  type: number
+                  minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
+                sound:
+                  type: boolean
+            TITAN:
+              type: object
+              properties:
+                show:
+                  type: boolean
+                highlight:
+                  type: boolean
+                ignoreOtherWorlds:
+                  type: boolean
+                autoHideTimeout:
+                  type: number
+                  minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
+                sound:
+                  type: boolean
+            message:
+              type: object
+              properties:
+                show:
+                  type: boolean
+                highlight:
+                  type: boolean
+                ignoreOtherWorlds:
+                  type: boolean
+                autoHideTimeout:
+                  type: number
+                  minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
+                sound:
+                  type: boolean
+            party-gathering:
+              type: object
+              properties:
+                show:
+                  type: boolean
+                highlight:
+                  type: boolean
+                ignoreOtherWorlds:
+                  type: boolean
+                autoHideTimeout:
+                  type: number
+                  minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
+                sound:
+                  type: boolean
+        detector:
+          type: object
+          properties:
+            routingRules:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    minLength: 1
+                  name:
+                    type: string
+                  minLevel:
+                    type: number
+                    minimum: 0
+                    maximum: 500
+                  maxLevel:
+                    type: number
+                    minimum: 0
+                    maximum: 500
+                  world:
+                    type: string
+                  guildIds:
+                    type: array
+                    items:
+                      type: string
+                required:
+                  - id
+                  - minLevel
+                  - maxLevel
+                  - guildIds
+            ELITE2:
+              type: object
+              properties:
+                detect:
+                  type: boolean
+                autoSend:
+                  type: boolean
+                notifyWindow:
+                  type: boolean
+                highlight:
+                  type: boolean
+                notifySound:
+                  type: boolean
+            HERO:
+              type: object
+              properties:
+                detect:
+                  type: boolean
+                autoSend:
+                  type: boolean
+                notifyWindow:
+                  type: boolean
+                highlight:
+                  type: boolean
+                notifySound:
+                  type: boolean
+            COLOSSUS:
+              type: object
+              properties:
+                detect:
+                  type: boolean
+                autoSend:
+                  type: boolean
+                notifyWindow:
+                  type: boolean
+                highlight:
+                  type: boolean
+                notifySound:
+                  type: boolean
+            TITAN:
+              type: object
+              properties:
+                detect:
+                  type: boolean
+                autoSend:
+                  type: boolean
+                notifyWindow:
+                  type: boolean
+                highlight:
+                  type: boolean
+                notifySound:
+                  type: boolean
     NullableMemberResponseDto:
       type: object
       properties:
@@ -5359,41 +6042,6 @@ components:
         - icon
         - latestRespBaseSeconds
         - latestRespawnRandomness
-    ResetTimerDto:
-      type: object
-      properties:
-        world:
-          type: string
-          minLength: 1
-      required:
-        - world
-    CreateManualTimerDto:
-      type: object
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 50
-        minSeconds:
-          type: number
-          minimum: 1
-        maxSeconds:
-          type: number
-          minimum: 1
-        customMinSpawnTime:
-          type: string
-          format: date-time
-          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-        customMaxSpawnTime:
-          type: string
-          format: date-time
-          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-        world:
-          type: string
-          minLength: 1
-      required:
-        - name
-        - world
     CreateTimerFromGameClientDto:
       type: object
       properties:
@@ -5456,6 +6104,133 @@ components:
         - respBaseSeconds
         - customMinSpawnTime
         - customMaxSpawnTime
+        - world
+        - npc
+        - characterId
+        - accountId
+    CreateAutoTimerResponseDto_Output:
+      type: object
+      properties:
+        submittedGuilds:
+          type: array
+          items:
+            type: object
+            properties:
+              guildId:
+                type: string
+              guildName:
+                type: string
+            required:
+              - guildId
+              - guildName
+        rejectedGuilds:
+          type: array
+          items:
+            type: object
+            properties:
+              guildId:
+                type: string
+              guildName:
+                type: string
+              reason:
+                type: string
+                enum:
+                  - NOT_ON_CATCHING_WHITELIST
+                  - TIMER_CREATE_FAILED
+            required:
+              - guildId
+              - guildName
+              - reason
+      required:
+        - submittedGuilds
+        - rejectedGuilds
+    ResetTimerDto:
+      type: object
+      properties:
+        world:
+          type: string
+          minLength: 1
+      required:
+        - world
+    CreateManualTimerDto:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        minSeconds:
+          type: number
+          minimum: 1
+        maxSeconds:
+          type: number
+          minimum: 1
+        customMinSpawnTime:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        customMaxSpawnTime:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        world:
+          type: string
+          minLength: 1
+      required:
+        - name
+        - world
+    CreateTimerDto:
+      type: object
+      properties:
+        respBaseSeconds:
+          type: number
+          minimum: 2
+        respawnRandomness:
+          type: number
+        world:
+          type: string
+          minLength: 1
+        npc:
+          type: object
+          properties:
+            id:
+              type: number
+            name:
+              type: string
+            location:
+              type: string
+            lvl:
+              type: number
+            prof:
+              type: string
+            wt:
+              type: number
+            hpp:
+              type: number
+            icon:
+              type: string
+            type:
+              type: number
+            x:
+              type: number
+            "y":
+              type: number
+          required:
+            - id
+            - name
+            - location
+            - lvl
+            - wt
+            - icon
+            - type
+        characterId:
+          type: string
+          minLength: 1
+        accountId:
+          type: string
+          minLength: 1
+      required:
+        - respBaseSeconds
         - world
         - npc
         - characterId
@@ -5729,37 +6504,49 @@ components:
             type: string
           characterId:
             type: string
+          catchingGuildIds:
+            type: array
+            items:
+              type: string
           collectLootWhitelistGuildIds:
             type: array
             items:
               type: string
+            description: "DEPRECATED: Use catchingGuildIds instead"
           addTimersWhitelistGuildIds:
             type: array
             items:
               type: string
+            description: "DEPRECATED: Use catchingGuildIds instead"
         required:
           - userId
           - accountId
           - characterId
+          - catchingGuildIds
           - collectLootWhitelistGuildIds
           - addTimersWhitelistGuildIds
     CreateOrUpdateLootlogCharacterConfigDto:
       type: object
       properties:
+        characterId:
+          type: string
+          minLength: 1
+        catchingGuildIds:
+          description: Guild IDs used for catching-related actions
+          type: array
+          items:
+            type: string
         lootGuildIds:
+          description: "DEPRECATED: Use catchingGuildIds instead"
           type: array
           items:
             type: string
         timerGuildIds:
+          description: "DEPRECATED: Use catchingGuildIds instead"
           type: array
           items:
             type: string
-        characterId:
-          type: string
-          minLength: 1
       required:
-        - lootGuildIds
-        - timerGuildIds
         - characterId
     UserLootlogConfigResponseDto_Output:
       type: object
@@ -5770,18 +6557,25 @@ components:
           type: string
         characterId:
           type: string
+        catchingGuildIds:
+          type: array
+          items:
+            type: string
         collectLootWhitelistGuildIds:
           type: array
           items:
             type: string
+          description: "DEPRECATED: Use catchingGuildIds instead"
         addTimersWhitelistGuildIds:
           type: array
           items:
             type: string
+          description: "DEPRECATED: Use catchingGuildIds instead"
       required:
         - userId
         - accountId
         - characterId
+        - catchingGuildIds
         - collectLootWhitelistGuildIds
         - addTimersWhitelistGuildIds
     TimerSettingsResponseDto__schema0:
@@ -6477,8 +7271,42 @@ components:
       properties:
         id:
           type: number
+        submittedGuilds:
+          type: array
+          items:
+            type: object
+            properties:
+              guildId:
+                type: string
+              guildName:
+                type: string
+            required:
+              - guildId
+              - guildName
+        rejectedGuilds:
+          type: array
+          items:
+            type: object
+            properties:
+              guildId:
+                type: string
+              guildName:
+                type: string
+              reason:
+                type: string
+                enum:
+                  - NOT_ON_CHARACTER_WHITELIST
+                  - MISSING_LOOTLOG_CONFIG
+                  - LOOT_NOT_ACCEPTED_BY_CONFIG
+                  - MISSING_MEMBER
+            required:
+              - guildId
+              - guildName
+              - reason
       required:
         - id
+        - submittedGuilds
+        - rejectedGuilds
     LootCommentResponseDto:
       type: object
       properties:

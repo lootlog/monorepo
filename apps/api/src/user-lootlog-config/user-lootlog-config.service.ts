@@ -1,9 +1,13 @@
 import { Injectable } from "@nestjs/common";
 import { Permission } from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
-import type { CreateOrUpdateLootlogCharacterConfigDto } from "src/user-lootlog-config/dto/create-user-account-config.dto";
+import {
+  resolveCatchingGuildIds,
+  type CreateOrUpdateLootlogCharacterConfigDto,
+} from "src/user-lootlog-config/dto/create-user-account-config.dto";
 import { GuildsService } from "src/guilds/guilds.service";
 import { RedisService } from "@lootlog/nest-shared";
+import { toUserLootlogConfigResponse } from "src/shared/dto/user-lootlog-config-response.dto";
 
 const USER_LOOTLOG_CONFIG_CACHE_TTL_SECONDS = 3600;
 const USER_LOOTLOG_CONFIG_CACHE_KEY_PREFIX = "user-lootlog-config";
@@ -84,42 +88,36 @@ export class UserLootlogConfigService {
 
     const configsToUpdate: Array<{
       characterId: string;
-      collectLootWhitelistGuildIds: string[];
-      addTimersWhitelistGuildIds: string[];
+      catchingGuildIds: string[];
     }> = [];
 
     const result = accountConfig.reduce((acc, config) => {
       const { characterId } = config;
 
-      const validLootGuildIds = config.collectLootWhitelistGuildIds.filter(
-        (guildId) => userGuildsWithWriteAccess.has(guildId),
-      );
-      const validTimerGuildIds = config.addTimersWhitelistGuildIds.filter(
-        (guildId) => userGuildsWithWriteAccess.has(guildId),
+      const validCatchingGuildIds = config.catchingGuildIds.filter((guildId) =>
+        userGuildsWithWriteAccess.has(guildId),
       );
 
       const needsUpdate =
-        validLootGuildIds.length !==
-          config.collectLootWhitelistGuildIds.length ||
-        validTimerGuildIds.length !== config.addTimersWhitelistGuildIds.length;
+        validCatchingGuildIds.length !== config.catchingGuildIds.length;
 
       if (needsUpdate) {
         configsToUpdate.push({
           characterId,
-          collectLootWhitelistGuildIds: validLootGuildIds,
-          addTimersWhitelistGuildIds: validTimerGuildIds,
+          catchingGuildIds: validCatchingGuildIds,
         });
       }
 
       const cleanedConfig = {
-        ...config,
-        collectLootWhitelistGuildIds: validLootGuildIds,
-        addTimersWhitelistGuildIds: validTimerGuildIds,
+        catchingGuildIds: validCatchingGuildIds,
+        userId: config.userId,
+        accountId: config.accountId,
+        characterId,
       };
 
       return {
         ...acc,
-        [characterId]: cleanedConfig,
+        [characterId]: toUserLootlogConfigResponse(cleanedConfig),
       };
     }, {});
 
@@ -135,8 +133,7 @@ export class UserLootlogConfigService {
               },
             },
             data: {
-              collectLootWhitelistGuildIds: update.collectLootWhitelistGuildIds,
-              addTimersWhitelistGuildIds: update.addTimersWhitelistGuildIds,
+              catchingGuildIds: update.catchingGuildIds,
             },
           }),
         ),
@@ -193,13 +190,15 @@ export class UserLootlogConfigService {
   ) {
     const userGuildsWithWriteAccess =
       await this.getUserGuildsWithWriteAccess(discordId);
+    const catchingGuildIds = resolveCatchingGuildIds(data);
 
-    const validLootGuildIds = data.lootGuildIds.filter((guildId) =>
-      userGuildsWithWriteAccess.has(guildId),
-    );
-    const validTimerGuildIds = data.timerGuildIds.filter((guildId) =>
-      userGuildsWithWriteAccess.has(guildId),
-    );
+    const validCatchingGuildIds = [
+      ...new Set(
+        catchingGuildIds.filter((guildId) =>
+          userGuildsWithWriteAccess.has(guildId),
+        ),
+      ),
+    ];
 
     const config = await this.prisma.userCharactersLootlogSettings.upsert({
       where: {
@@ -210,20 +209,18 @@ export class UserLootlogConfigService {
         },
       },
       update: {
-        collectLootWhitelistGuildIds: validLootGuildIds,
-        addTimersWhitelistGuildIds: validTimerGuildIds,
+        catchingGuildIds: validCatchingGuildIds,
       },
       create: {
         userId: discordId,
         accountId,
         characterId: data.characterId,
-        collectLootWhitelistGuildIds: validLootGuildIds,
-        addTimersWhitelistGuildIds: validTimerGuildIds,
+        catchingGuildIds: validCatchingGuildIds,
       },
     });
 
     await this.invalidateUserLootlogConfigCache(discordId, accountId);
 
-    return config;
+    return toUserLootlogConfigResponse(config);
   }
 }

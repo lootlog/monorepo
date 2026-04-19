@@ -1,150 +1,390 @@
-import { type FC, Fragment } from "react";
+import { CharacterTile } from "@/components/character-tile";
+import { NpcTile } from "@/components/npc-tile";
+import { Button } from "@/components/ui/button";
+import { NotificationMuteMenu } from "@/features/notifications/components/notification-mute-menu";
+import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
+import { useGuildMembers } from "@/hooks/api/use-guild-members";
+import { useVolunteer } from "@/hooks/api/use-volunteer";
+import { useMemberInvalidation } from "@/hooks/api/use-member-invalidation";
+import { useMemberColor } from "@/hooks/discord/use-member-color";
+import { Game } from "@/lib/game";
 import { cn } from "@/lib/utils";
-import { XIcon } from "lucide-react";
 import {
   type PartyGatheringNotification,
-  type NotificationWithServers,
+  type StoredNotification,
   useNotificationsStore,
 } from "@/store/notifications.store";
-import { Separator } from "@radix-ui/react-select";
-import { getNpcTypeByWt } from "@lootlog/types";
-import { format } from "date-fns";
-import { SingleNotificationNpc } from "@/features/notifications/components/single-notification-npc";
-import { SingleNotificationMessage } from "@/features/notifications/components/single-notification-message";
-import { SingleNotificationPartyGathering } from "@/features/notifications/components/single-notification-party-gathering";
+import { useWindowsStore } from "@/store/windows.store";
+import { getDiscordAvatarUrl } from "@/utils/discord/get-avatar-url";
 import {
   getBackgroundColor,
-  getGradient,
+  getBorderColor,
 } from "@/utils/notifications-and-detector/background";
-import { Progress } from "@/components/ui/progress";
-import { useGuildMembers } from "@/hooks/api/use-guild-members";
-import { useMemberInvalidation } from "@/hooks/api/use-member-invalidation";
+import { getNpcTypeByWt } from "@lootlog/types";
+import { format } from "date-fns";
+import { LoaderCircle, User, XIcon } from "lucide-react";
+import { type FC, type ReactNode, useEffect, useRef } from "react";
 import { NpcType } from "@/hooks/api/use-npcs";
-import { Game } from "@/lib/game";
+import { SingleNotificationMessage } from "@/features/notifications/components/single-notification-message";
+import { SingleNotificationNpc } from "@/features/notifications/components/single-notification-npc";
+import { SingleNotificationPartyGathering } from "@/features/notifications/components/single-notification-party-gathering";
+
+const AUTO_HIDE_RING_PATH =
+  "M 50 0 H 2 A 2 2 0 0 0 0 2 V 38 A 2 2 0 0 0 2 40 H 98 A 2 2 0 0 0 100 38 V 2 A 2 2 0 0 0 98 0 H 50";
+const AUTO_HIDE_BASE_STROKE_WIDTH = 1.5;
+const AUTO_HIDE_PROGRESS_STROKE_WIDTH = 3;
+const DEFAULT_BORDER_STROKE_WIDTH = 2;
+const AUTO_HIDE_BASE_STROKE_OPACITY = 0.45;
+const AUTO_HIDE_PROGRESS_STROKE_OPACITY = 0.95;
 
 type SingleNotificationProps = {
   guildNamesById: Record<string, string>;
-  notification: NotificationWithServers | PartyGatheringNotification;
-  index: number;
+  notification: StoredNotification;
   showCloseButton?: boolean;
-  now?: number;
 };
 
 const isPartyGatheringNotification = (
-  notification: NotificationWithServers | PartyGatheringNotification,
-): notification is PartyGatheringNotification => {
+  notification: StoredNotification,
+): notification is StoredNotification & PartyGatheringNotification => {
   return "type" in notification && notification.type === "party-gathering";
+};
+
+const renderLeadingVisual = (
+  notification: StoredNotification,
+  avatarUrl: string,
+) => {
+  if (isPartyGatheringNotification(notification)) {
+    return (
+      <div className="ll:flex ll:h-10 ll:w-8 ll:shrink-0 ll:items-center ll:justify-center ll:overflow-hidden">
+        <CharacterTile
+          character={{
+            ...notification.character,
+            id: Number(notification.character.characterId),
+          }}
+          className="ll:scale-75 ll:origin-center"
+        />
+      </div>
+    );
+  }
+
+  if (notification.npc) {
+    return (
+      <NpcTile
+        npc={notification.npc}
+        className="ll:w-auto ll:max-w-7 ll:max-h-10 ll:object-contain"
+        containerClassName="ll:w-7 ll:h-10 ll:shrink-0"
+      />
+    );
+  }
+
+  return (
+    <div className="ll:flex ll:h-8 ll:w-8 ll:shrink-0 ll:items-center ll:justify-center">
+      <img
+        src={avatarUrl}
+        alt="Avatar"
+        className="ll:h-8 ll:w-8 ll:rounded-full ll:object-cover"
+      />
+    </div>
+  );
+};
+
+const renderNotificationContent = ({
+  notification,
+  meetsLevelReq,
+}: {
+  notification: StoredNotification;
+  meetsLevelReq: boolean;
+}): ReactNode => {
+  if (isPartyGatheringNotification(notification)) {
+    return (
+      <SingleNotificationPartyGathering
+        notification={notification}
+        meetsLevelReq={meetsLevelReq}
+      />
+    );
+  }
+
+  if (notification.npc) {
+    return <SingleNotificationNpc notification={notification} />;
+  }
+
+  return <SingleNotificationMessage notification={notification} />;
 };
 
 export const SingleNotification: FC<SingleNotificationProps> = ({
   guildNamesById,
   notification,
-  index,
   showCloseButton = false,
-  now,
 }) => {
-  const { removeNotification, settings } = useNotificationsStore();
-  const characterId = String(Game.hero.id);
+  const removeNotification = useNotificationsStore(
+    (state) => state.removeNotification,
+  );
+  const autoHideState = useNotificationsStore(
+    (state) => state.notificationAutoHideByListKey[notification.listKey],
+  );
+  const setNotificationAutoHide = useNotificationsStore(
+    (state) => state.setNotificationAutoHide,
+  );
+  const pauseNotificationAutoHide = useNotificationsStore(
+    (state) => state.pauseNotificationAutoHide,
+  );
+  const resumeNotificationAutoHide = useNotificationsStore(
+    (state) => state.resumeNotificationAutoHide,
+  );
+  const clearNotificationAutoHide = useNotificationsStore(
+    (state) => state.clearNotificationAutoHide,
+  );
+  const clearNotifications = useNotificationsStore(
+    (state) => state.clearNotifications,
+  );
+  const setOpen = useWindowsStore((state) => state.setOpen);
+  const { settings } = useCurrentGameAccountNotificationSettings();
   const { data: members } = useGuildMembers(notification.guildId);
   const guildMember = members?.[notification.discordId];
+  const volunteer = useVolunteer();
+  const autoHidePathRef = useRef<SVGPathElement>(null);
+
   useMemberInvalidation(
     notification.guildId,
     !guildMember ? notification.discordId : undefined,
   );
 
+  const avatarUrl = getDiscordAvatarUrl(
+    guildMember?.userId,
+    guildMember?.avatar,
+  );
+  const memberColor = useMemberColor(guildMember);
   const isPartyGathering = isPartyGatheringNotification(notification);
+  const regularNotification = isPartyGathering ? null : notification;
 
-  const npcType =
-    !isPartyGathering && notification.npc
-      ? getNpcTypeByWt(NpcType, notification.npc.wt)
-      : undefined;
+  const npcType = regularNotification?.npc
+    ? getNpcTypeByWt(NpcType, regularNotification.npc.wt)
+    : undefined;
 
   const key = (
     isPartyGathering ? "party-gathering" : (npcType ?? "message")
-  ) as keyof (typeof settings)[string];
-
-  const settingsByNpcType = characterId
-    ? settings[characterId]?.[key]
-    : undefined;
-  const autoHideTimeout = settingsByNpcType?.autoHideTimeout ?? 0;
-
-  const createdAtMs = new Date(notification.createdAt).getTime();
-  const secondsLeft = (() => {
-    if (!autoHideTimeout || autoHideTimeout <= 0) return 0;
-    const endAt = createdAtMs + autoHideTimeout * 1000;
-    const diffMs = endAt - (now ?? Date.now());
-    if (diffMs <= 0) return 0;
-    return Math.ceil(diffMs / 1000);
-  })();
+  ) as keyof typeof settings;
+  const categorySettings = settings[key];
+  const autoHideTimeout = categorySettings?.autoHideTimeout ?? 0;
+  const autoHideDurationMs = autoHideTimeout > 0 ? autoHideTimeout * 1000 : 0;
 
   const serverNames = notification.servers
     .map((server) => guildNamesById[server] ?? "")
     .filter(Boolean);
+  const time = format(new Date(notification.createdAt), "HH:mm");
+  const background = getBackgroundColor(key, categorySettings?.highlight);
+  const borderColor = getBorderColor(key, categorySettings?.highlight);
+  const hasAutoHideRing = autoHideDurationMs > 0;
+  const metaText = `${time}@${serverNames.join(", ")}${notification.world ? ` - ${notification.world}` : ""}`;
+  const senderName = guildMember?.name ?? "Nieznany";
+
+  const heroLvl = Game.hero.lvl;
+  const minLvl = isPartyGathering ? (notification.minLvl ?? 1) : 1;
+  const maxLvl = isPartyGathering ? (notification.maxLvl ?? 500) : 500;
+  const meetsLevelReq = heroLvl >= minLvl && heroLvl <= maxLvl;
 
   const handleRemoveNotification = () =>
     removeNotification(notification.notificationId);
 
-  const time = format(new Date(notification.createdAt), "HH:mm");
-  const color = getBackgroundColor(key, true);
+  const handleVolunteer = () => {
+    volunteer.mutate({
+      notificationId: notification.notificationId,
+      targetDiscordId: notification.discordId,
+      world: notification.world,
+    });
+    setOpen("notifications", false);
+    clearNotifications();
+  };
 
-  const secondsLeftPercentage =
-    autoHideTimeout > 0 && secondsLeft > 0
-      ? (secondsLeft / autoHideTimeout) * 100
-      : 0;
+  const showPartyGatheringAction = isPartyGathering;
+  const showJoinAction = Boolean(regularNotification?.isGatheringParty);
+  let actionLabel: string | null = null;
+
+  if (showPartyGatheringAction) {
+    actionLabel = volunteer.isPending ? "..." : "Dołącz!";
+  }
+
+  useEffect(() => {
+    if (autoHideDurationMs <= 0) {
+      clearNotificationAutoHide(notification.listKey);
+      return;
+    }
+
+    setNotificationAutoHide(notification.listKey, autoHideDurationMs);
+  }, [
+    autoHideDurationMs,
+    clearNotificationAutoHide,
+    notification.listKey,
+    notification.receivedAtMs,
+    setNotificationAutoHide,
+  ]);
+
+  useEffect(() => {
+    const path = autoHidePathRef.current;
+    const svg = path?.ownerSVGElement;
+    if (!path || !svg || autoHideDurationMs <= 0) return;
+
+    const { width, height } = svg.getBoundingClientRect();
+    const totalLength = 2 * (width + height);
+    const deadlineMs =
+      autoHideState?.deadlineMs ?? Date.now() + autoHideDurationMs;
+    const remainingMs =
+      autoHideState?.pausedRemainingMs ?? Math.max(0, deadlineMs - Date.now());
+    const clampedRemainingMs = Math.min(autoHideDurationMs, remainingMs);
+    const elapsedMs = Math.max(0, autoHideDurationMs - clampedRemainingMs);
+    const initialOffset = (elapsedMs / autoHideDurationMs) * totalLength;
+
+    path.style.strokeDasharray = String(totalLength);
+    path.style.strokeDashoffset = String(initialOffset);
+
+    if (autoHideState && autoHideState.pausedRemainingMs !== null) {
+      return () => {
+        path.style.strokeDasharray = "";
+        path.style.strokeDashoffset = "";
+      };
+    }
+
+    const animation = path.animate(
+      [
+        { strokeDashoffset: String(initialOffset) },
+        { strokeDashoffset: String(totalLength) },
+      ],
+      {
+        duration: clampedRemainingMs,
+        easing: "linear",
+        fill: "forwards",
+      },
+    );
+
+    return () => {
+      animation.cancel();
+      path.style.strokeDasharray = "";
+      path.style.strokeDashoffset = "";
+    };
+  }, [
+    autoHideDurationMs,
+    autoHideState?.deadlineMs,
+    autoHideState?.pausedRemainingMs,
+  ]);
+
+  const handleMuteMenuOpenChange = (open: boolean) => {
+    if (open) {
+      pauseNotificationAutoHide(notification.listKey);
+      return;
+    }
+
+    resumeNotificationAutoHide(notification.listKey);
+  };
 
   return (
-    <Fragment key={notification.notificationId}>
-      <span
-        className={cn("ll:flex ll:gap-4 ll:px-2 ll:py-2")}
-        style={{
-          background:
-            index === 0
-              ? getGradient(key, settingsByNpcType?.highlight)
-              : getBackgroundColor(key, settingsByNpcType?.highlight),
-        }}
+    <div className="ll:w-full">
+      <div
+        className={cn(
+          "ll:relative ll:flex ll:items-center ll:gap-2 ll:overflow-hidden ll:px-2 ll:py-2",
+          "ll:rounded-sm",
+          "ll:transition-[background-color,border-color] ll:duration-300",
+        )}
+        style={{ background }}
       >
-        {isPartyGathering && (
-          <SingleNotificationPartyGathering
+        <svg
+          className="ll:pointer-events-none ll:absolute ll:inset-0 ll:h-full ll:w-full"
+          viewBox="0 0 100 40"
+          preserveAspectRatio="none"
+        >
+          <path
+            d={AUTO_HIDE_RING_PATH}
+            fill="none"
+            stroke={borderColor}
+            strokeWidth={
+              hasAutoHideRing
+                ? AUTO_HIDE_BASE_STROKE_WIDTH
+                : DEFAULT_BORDER_STROKE_WIDTH
+            }
+            strokeLinecap="butt"
+            strokeLinejoin="round"
+            vectorEffect="non-scaling-stroke"
+            opacity={
+              hasAutoHideRing
+                ? AUTO_HIDE_BASE_STROKE_OPACITY
+                : AUTO_HIDE_PROGRESS_STROKE_OPACITY
+            }
+          />
+          {hasAutoHideRing ? (
+            <path
+              ref={autoHidePathRef}
+              d={AUTO_HIDE_RING_PATH}
+              fill="none"
+              stroke={borderColor}
+              strokeWidth={AUTO_HIDE_PROGRESS_STROKE_WIDTH}
+              strokeLinecap="butt"
+              strokeLinejoin="round"
+              vectorEffect="non-scaling-stroke"
+              opacity={AUTO_HIDE_PROGRESS_STROKE_OPACITY}
+            />
+          ) : null}
+        </svg>
+        {renderLeadingVisual(notification, avatarUrl)}
+        <div className="ll:relative ll:flex ll:min-w-0 ll:flex-1 ll:flex-col">
+          <div className="ll:flex ll:items-center ll:gap-1 ll:overflow-hidden ll:leading-none ll:pb-1">
+            <span
+              className="ll:shrink-0 ll:text-[11px] ll:font-semibold"
+              style={{ color: `#${memberColor}` }}
+            >
+              {senderName}
+            </span>
+            <span className="ll:min-w-0 ll:truncate ll:text-[10px] ll:text-gray-400">
+              {metaText}
+            </span>
+          </div>
+          <div className="ll:mt-px">
+            {renderNotificationContent({ notification, meetsLevelReq })}
+          </div>
+        </div>
+        <div className="ll:flex ll:shrink-0 ll:items-center ll:gap-1">
+          {actionLabel ? (
+            <Button
+              className="ll:h-7 ll:px-2.5 ll:text-[11px] ll:font-semibold"
+              onClick={handleVolunteer}
+              disabled={
+                volunteer.isPending || (isPartyGathering && !meetsLevelReq)
+              }
+            >
+              {actionLabel}
+            </Button>
+          ) : null}
+          {showJoinAction ? (
+            <Button
+              variant="ghost"
+              aria-label="Idę"
+              className="ll:size-7 ll:px-0"
+              onClick={handleVolunteer}
+              disabled={volunteer.isPending}
+            >
+              {volunteer.isPending ? (
+                <LoaderCircle size={12} className="ll:animate-spin" />
+              ) : (
+                <User size={12} />
+              )}
+            </Button>
+          ) : null}
+          <NotificationMuteMenu
             notification={notification}
-            member={guildMember}
-            serverNames={serverNames}
-            time={time}
+            senderName={senderName}
+            onOpenChange={handleMuteMenuOpenChange}
+            onMuted={handleRemoveNotification}
           />
-        )}
-        {!isPartyGathering && notification.npc && (
-          <SingleNotificationNpc
-            serverNames={serverNames}
-            member={guildMember}
-            notification={notification}
-            time={time}
-          />
-        )}
-        {!isPartyGathering && notification.message && (
-          <SingleNotificationMessage
-            notification={notification}
-            member={guildMember}
-            serverNames={serverNames}
-            time={time}
-          />
-        )}
-        {showCloseButton && (
-          <XIcon
-            className={cn(
-              "ll-custom-cursor-pointer ll:text-gray-300 ll:hover:text-gray-100 ll:transition-colors",
-            )}
-            size="16"
-            onClick={handleRemoveNotification}
-          />
-        )}
-      </span>
-      <span className="ll:flex ll:flex-col ll:justify-center" />
-      {autoHideTimeout > 0 && secondsLeft > 0 && (
-        <>
-          <Separator className="ll:bg-black/70 ll:h-px" />
-          <Progress value={secondsLeftPercentage} indicatorColor={color} />
-          <Separator className="ll:bg-black/70 ll:h-px" />
-        </>
-      )}
-    </Fragment>
+          {showCloseButton ? (
+            <Button
+              variant="destructive"
+              aria-label="Zamknij powiadomienie"
+              className="ll:size-7 ll:px-0"
+              onClick={handleRemoveNotification}
+            >
+              <XIcon size={12} />
+            </Button>
+          ) : null}
+        </div>
+      </div>
+    </div>
   );
 };

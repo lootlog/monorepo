@@ -5,7 +5,11 @@
  * The Lootlog API documentation
  * OpenAPI spec version: 1.0
  */
+import type { CreateLootResponseDtoOutputRejectedGuildsItem } from './create-loot-response-dto-output-rejected-guilds-item';
+import type { CreateLootResponseDtoOutputSubmittedGuildsItem } from './create-loot-response-dto-output-submitted-guilds-item';
 
 export interface CreateLootResponseDtoOutput {
   id: number;
+  submittedGuilds: CreateLootResponseDtoOutputSubmittedGuildsItem[];
+  rejectedGuilds: CreateLootResponseDtoOutputRejectedGuildsItem[];
 }
