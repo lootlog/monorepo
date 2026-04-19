@@ -377,8 +377,8 @@ importers:
         specifier: ^1.6.0
         version: 1.6.0
       '@hono/node-server':
-        specifier: ^1.19.12
-        version: 1.19.12(hono@4.12.14)
+        specifier: ^1.19.13
+        version: 1.19.13(hono@4.12.14)
       '@hono/otel':
         specifier: ^1.1.1
         version: 1.1.1(hono@4.12.14)
@@ -1102,8 +1102,8 @@ importers:
         specifier: ^1.6.0
         version: 1.6.0
       '@hono/node-server':
-        specifier: ^1.19.12
-        version: 1.19.12(hono@4.12.14)
+        specifier: ^1.19.13
+        version: 1.19.13(hono@4.12.14)
       '@hono/otel':
         specifier: ^1.1.1
         version: 1.1.1(hono@4.12.14)
@@ -2804,8 +2804,8 @@ packages:
     peerDependencies:
       hono: '>=4.12.7'
 
-  '@hono/node-server@1.19.12':
-    resolution: {integrity: sha512-txsUW4SQ1iilgE0l9/e9VQWmELXifEFvmdA1j6WFh/aFPj99hIntrSsq/if0UWyGVkmrRPKA1wCeP+UCr1B9Uw==}
+  '@hono/node-server@1.19.13':
+    resolution: {integrity: sha512-TsQLe4i2gvoTtrHje625ngThGBySOgSK3Xo2XRYOdqGN1teR8+I7vchQC46uLJi8OF62YTYA3AhSpumtkhsaKQ==}
     engines: {node: '>=18.14.1'}
     peerDependencies:
       hono: '>=4.12.7'
@@ -12112,7 +12112,7 @@ packages:
       '@vitest/browser-preview': 4.1.2
       '@vitest/browser-webdriverio': 4.1.2
       '@vitest/ui': 4.1.2
-      happy-dom: '>=20.8.8'
+      happy-dom: '>=20.8.9'
       jsdom: '*'
       vite: ^6.0.0 || ^7.0.0 || ^8.0.0
     peerDependenciesMeta:
@@ -13986,7 +13986,7 @@ snapshots:
     dependencies:
       hono: 4.12.14
 
-  '@hono/node-server@1.19.12(hono@4.12.14)':
+  '@hono/node-server@1.19.13(hono@4.12.14)':
     dependencies:
       hono: 4.12.14
 

@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@axiomhq/winston": "^1.6.0",
-    "@hono/node-server": "^1.19.12",
+    "@hono/node-server": "^1.19.13",
     "@hono/otel": "^1.1.1",
     "@lootlog/api-helpers": "workspace:*",
     "@lootlog/instrumentation": "workspace:*",
