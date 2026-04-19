@@ -12,7 +12,7 @@ import {
   alphaToHex,
   hexToAlpha,
   TAILWIND_TO_HEX,
-  DEFAULT_COLOR_NAMES,
+  getDefaultColorName,
   type ColorEditData,
 } from "./components/color-utils";
 
@@ -65,7 +65,7 @@ export const TimersSettingsColors: FC = () => {
 
     setEditingDefaultColor(colorId);
     setEditingDefaultColorData({
-      name: defaultColorNames[colorId] || DEFAULT_COLOR_NAMES[colorId] || "",
+      name: defaultColorNames[colorId] || getDefaultColorName(colorId) || "",
       borderColor: overridden?.borderColor || defaultColors.border,
       backgroundColor: stripAlphaChannel(bgColor),
       backgroundAlpha: hexToAlpha(bgColor),

@@ -1,0 +1,14 @@
+{
+  "title": "Wyciszenia",
+  "description": "Zarządzaj globalną listą wyciszonych graczy i potworów. Te wyciszenia działają na wszystkich kontach.",
+  "tabs": {
+    "players": "Gracze",
+    "npcs": "Potwory"
+  },
+  "searchPlayersPlaceholder": "Szukaj gracza...",
+  "searchNpcsPlaceholder": "Szukaj potwora...",
+  "emptyPlayers": "Brak wyników dla graczy.",
+  "emptyNpcs": "Brak wyników dla potworów.",
+  "unknownPlayer": "Nieznany",
+  "npcLevel": "lvl {{level}}"
+}

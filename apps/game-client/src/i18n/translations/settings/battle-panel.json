@@ -1,0 +1,12 @@
+{
+  "title": "Ustawienia panelu walk",
+  "description": "Skonfiguruj ustawienia dotyczące zbierania danych walk w grze.",
+  "dataCollectionTitle": "Zbieranie danych",
+  "enableCollectionLabel": "Włącz zbieranie walk",
+  "enableCollectionDescription": "Rejestruje dane walk używane przez panel.",
+  "toasts": {
+    "battleCreated": "Walka została dodana",
+    "copyLink": "Kopiuj link",
+    "linkCopied": "Link skopiowany do schowka"
+  }
+}

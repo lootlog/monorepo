@@ -13,6 +13,7 @@ import {
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import { createKill, createBattle } from "@/api";
 import { toast } from "sonner";
+import i18n from "@/i18n/config";
 
 const TRACKABLE_NPC_TYPES = new Set([
   NpcType.ELITE2,
@@ -25,13 +26,13 @@ const TRACKABLE_NPC_TYPES = new Set([
 const showBattleCreatedToast = (battleId: number) => {
   const battleUrl = `${LOOTLOG_APP_URL}/@me/battle-panel/battles/${battleId}`;
 
-  toast("Walka została dodana", {
+  toast(i18n.t("settings.battlePanel.toasts.battleCreated"), {
     duration: 10000,
     action: {
-      label: "Kopiuj link",
+      label: i18n.t("settings.battlePanel.toasts.copyLink"),
       onClick: () => {
         navigator.clipboard.writeText(battleUrl);
-        toast.success("Link skopiowany do schowka");
+        toast.success(i18n.t("settings.battlePanel.toasts.linkCopied"));
       },
     },
   });

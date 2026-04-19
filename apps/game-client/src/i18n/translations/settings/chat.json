@@ -1,0 +1,27 @@
+{
+  "windowTitle": "Chat",
+  "sendFailed": "Nie udało się wysłać wiadomości na czat",
+  "filters": {
+    "all": "Wszystko",
+    "normal": "Czat",
+    "npc": "NPC",
+    "party": "Grupa"
+  },
+  "emptyState": "Brak wiadomości",
+  "actions": {
+    "hideFilters": "Ukryj filtry",
+    "showFilters": "Pokaż filtry",
+    "hideInput": "Ukryj pole czatu",
+    "showInput": "Pokaż pole czatu"
+  },
+  "input": {
+    "hint": "(! = powiadomienie, !grp = szukaj grupy)",
+    "placeholder": "Wiadomość..."
+  },
+  "partyGathering": {
+    "levelLabel": "Poziom: {{min}} - {{max}}",
+    "pending": "Zgłaszanie...",
+    "requiredLevel": "Wymagany poziom {{min}}-{{max}}",
+    "join": "Dołącz do grupy"
+  }
+}

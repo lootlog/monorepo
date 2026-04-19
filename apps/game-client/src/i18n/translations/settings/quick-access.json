@@ -1,0 +1,17 @@
+{
+  "windowTitle": "Lootlog",
+  "activePartyGathering": "Aktywne zbieranie grupy",
+  "buttons": {
+    "createPartyGathering": "Party finder",
+    "timers": "Timery",
+    "onlinePlayers": "Gracze online",
+    "chat": "Chat",
+    "command": "Konsola",
+    "settings": "Ustawienia"
+  },
+  "popover": {
+    "tooltip": "Strona Lootloga",
+    "dashboard": "Dashboard",
+    "emptyGuilds": "Nie masz żadnych gildii"
+  }
+}

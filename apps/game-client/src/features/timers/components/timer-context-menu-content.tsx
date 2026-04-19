@@ -12,6 +12,7 @@ import {
   Trash2,
 } from "lucide-react";
 import type { FC } from "react";
+import { useTranslation } from "react-i18next";
 import { TimerColorPicker } from "./timer-color-picker";
 
 type CustomColor = {
@@ -75,11 +76,13 @@ export const TimerContextMenuContent: FC<TimerContextMenuContentProps> = ({
   onReset,
   onDelete,
 }) => {
+  const { t } = useTranslation();
+
   if (isPending) {
     return (
       <div className="ll:p-4 ll:text-center ll:text-sm ll:text-gray-400">
         <Loader2 className="ll:h-4 ll:w-4 ll:animate-spin ll:mx-auto ll:mb-2 ll:text-orange-500" />
-        <p>Tworzenie timera...</p>
+        <p>{t("settings.timers.contextMenu.creating")}</p>
       </div>
     );
   }
@@ -100,11 +103,15 @@ export const TimerContextMenuContent: FC<TimerContextMenuContentProps> = ({
         ) : (
           <Pin className="ll:h-4 ll:w-4 ll:mr-2" />
         )}
-        {isPinned ? "Odepnij" : "Przypnij"}
+        {isPinned
+          ? t("settings.timers.contextMenu.unpin")
+          : t("settings.timers.contextMenu.pin")}
       </ContextMenuItem>
       <ContextMenuItem onClick={isPinned ? onUnpinAll : onPinAll}>
         <Globe className="ll:h-4 ll:w-4 ll:mr-2" />
-        {isPinned ? "Odepnij wszędzie" : "Przypnij wszędzie"}
+        {isPinned
+          ? t("settings.timers.contextMenu.unpinAll")
+          : t("settings.timers.contextMenu.pinAll")}
       </ContextMenuItem>
       <ContextMenuItem onClick={isHidden ? onShow : onHide}>
         {isHidden ? (
@@ -112,26 +119,22 @@ export const TimerContextMenuContent: FC<TimerContextMenuContentProps> = ({
         ) : (
           <EyeOff className="ll:h-4 ll:w-4 ll:mr-2" />
         )}
-        {isHidden ? "Pokaż" : "Ukryj"}
+        {isHidden
+          ? t("settings.timers.contextMenu.show")
+          : t("settings.timers.contextMenu.hide")}
       </ContextMenuItem>
       <ContextMenuItem onClick={isHidden ? onShowAll : onHideAll}>
         <Globe className="ll:h-4 ll:w-4 ll:mr-2" />
-        {isHidden ? "Pokaż wszędzie" : "Ukryj wszędzie"}
+        {isHidden
+          ? t("settings.timers.contextMenu.showAll")
+          : t("settings.timers.contextMenu.hideAll")}
       </ContextMenuItem>
       {canReset && (
         <ContextMenuItem onClick={onReset}>
           <RotateCcw className="ll:h-4 ll:w-4 ll:mr-2" />
-          Odliczaj od początku
+          {t("settings.timers.contextMenu.restart")}
         </ContextMenuItem>
       )}
-      {/* <ContextMenuItem onClick={onToggleSound}>
-        {isSoundEnabled ? (
-          <VolumeOff className="ll:h-4 ll:w-4 ll:mr-2" />
-        ) : (
-          <Volume2 className="ll:h-4 ll:w-4 ll:mr-2" />
-        )}
-        {isSoundEnabled ? "Wyłącz dźwięk" : "Włącz dźwięk"}
-      </ContextMenuItem> */}
       {timersGrouping ? (
         <DeleteTimerPopover timer={timer} onDeleteTimer={onDelete} />
       ) : (
@@ -140,7 +143,7 @@ export const TimerContextMenuContent: FC<TimerContextMenuContentProps> = ({
             onClick={() => onDelete(timer.guildId, timer.timerKey)}
           >
             <Trash2 className="ll:h-4 ll:w-4 ll:mr-2" />
-            Usuń timer
+            {t("settings.timers.contextMenu.delete")}
           </ContextMenuItem>
         )
       )}

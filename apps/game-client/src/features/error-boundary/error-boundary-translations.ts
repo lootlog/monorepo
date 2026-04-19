@@ -1,50 +1,23 @@
-const ERROR_BOUNDARY_TRANSLATIONS = {
-  en: {
-    title: "Application error",
-    summary:
-      "The interface crashed. You can copy the error details before closing this window.",
-    detailsHint:
-      "Closing this window hides the fallback only. The crashed part of the interface will not recover automatically.",
-    errorNameLabel: "Error type",
-    errorMessageLabel: "Message",
-    stackLabel: "Stack trace",
-    copyButton: "Copy error",
-    copySuccessButton: "Copied",
-    copyErrorButton: "Copy failed",
-    closeButton: "Close",
-    unknownErrorName: "Unknown error",
-    unknownErrorMessage: "No error message was provided.",
-    missingStack: "Stack trace is unavailable.",
-  },
-  pl: {
-    title: "Błąd aplikacji",
-    summary:
-      "Interfejs się wywalił. Możesz skopiować szczegóły błędu przed zamknięciem tego okna.",
-    detailsHint:
-      "Zamknięcie tego okna ukrywa tylko fallback. Wywalona część interfejsu nie odzyska się automatycznie.",
-    errorNameLabel: "Typ błędu",
-    errorMessageLabel: "Wiadomość",
-    stackLabel: "Stack trace",
-    copyButton: "Kopiuj błąd",
-    copySuccessButton: "Skopiowano",
-    copyErrorButton: "Nie udało się skopiować",
-    closeButton: "Zamknij",
-    unknownErrorName: "Nieznany błąd",
-    unknownErrorMessage: "Brak wiadomości błędu.",
-    missingStack: "Stack trace jest niedostępny.",
-  },
-} as const;
+import i18n from "@/i18n/config";
 
-export type ErrorBoundaryTranslations =
-  (typeof ERROR_BOUNDARY_TRANSLATIONS)[keyof typeof ERROR_BOUNDARY_TRANSLATIONS];
+export type ErrorBoundaryTranslations = ReturnType<
+  typeof getErrorBoundaryTranslations
+>;
 
-export function getErrorBoundaryTranslations(): ErrorBoundaryTranslations {
-  const browserLanguage =
-    typeof navigator === "undefined" ? "pl" : navigator.language.toLowerCase();
-
-  if (browserLanguage.startsWith("en")) {
-    return ERROR_BOUNDARY_TRANSLATIONS.en;
-  }
-
-  return ERROR_BOUNDARY_TRANSLATIONS.pl;
+export function getErrorBoundaryTranslations() {
+  return {
+    title: i18n.t("settings.errorBoundary.title"),
+    summary: i18n.t("settings.errorBoundary.summary"),
+    detailsHint: i18n.t("settings.errorBoundary.detailsHint"),
+    errorNameLabel: i18n.t("settings.errorBoundary.errorNameLabel"),
+    errorMessageLabel: i18n.t("settings.errorBoundary.errorMessageLabel"),
+    stackLabel: i18n.t("settings.errorBoundary.stackLabel"),
+    copyButton: i18n.t("settings.errorBoundary.copyButton"),
+    copySuccessButton: i18n.t("settings.errorBoundary.copySuccessButton"),
+    copyErrorButton: i18n.t("settings.errorBoundary.copyErrorButton"),
+    closeButton: i18n.t("settings.errorBoundary.closeButton"),
+    unknownErrorName: i18n.t("settings.errorBoundary.unknownErrorName"),
+    unknownErrorMessage: i18n.t("settings.errorBoundary.unknownErrorMessage"),
+    missingStack: i18n.t("settings.errorBoundary.missingStack"),
+  };
 }

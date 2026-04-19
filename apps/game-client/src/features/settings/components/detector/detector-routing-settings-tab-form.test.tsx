@@ -165,6 +165,49 @@ describe("DetectorRoutingSettingsTabForm", () => {
     expect(screen.getAllByText("Na jakie serwery wysyłać")).toHaveLength(1);
   });
 
+  it("normalizes level range and removes unavailable guilds after level blur", async () => {
+    const user = userEvent.setup();
+
+    vi.mocked(useCurrentGameAccountDetectorSettings).mockReturnValue({
+      accountId: "account-1",
+      isFetched: true,
+      settings: {
+        routingRules: [
+          {
+            id: "rule-1",
+            minLevel: 20,
+            maxLevel: 80,
+            guildIds: ["guild-2", "guild-missing", "guild-2"],
+          },
+        ],
+      },
+    } as ReturnType<typeof useCurrentGameAccountDetectorSettings>);
+
+    render(<DetectorRoutingSettingsTabForm />);
+
+    await user.click(screen.getByText("Reguła 1"));
+
+    const minLevelInput = screen.getByLabelText("Od levela");
+    await user.clear(minLevelInput);
+    await user.type(minLevelInput, "600");
+    await user.tab();
+
+    await waitFor(() => {
+      expect(mockMutate).toHaveBeenCalledWith({
+        detector: {
+          routingRules: [
+            {
+              id: "rule-1",
+              minLevel: 80,
+              maxLevel: 500,
+              guildIds: ["guild-2"],
+            },
+          ],
+        },
+      });
+    });
+  });
+
   it("updates routing rule name with trimmed value and uses it as card title", async () => {
     const user = userEvent.setup();
 

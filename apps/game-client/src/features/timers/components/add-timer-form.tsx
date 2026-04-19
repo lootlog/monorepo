@@ -24,6 +24,8 @@ import { useGuilds } from "@/hooks/api/use-guilds";
 import { AutocompleteSuggestions } from "@/components/ui/autocomplete-suggestions";
 import { NPC_NAMES } from "@/constants/margonem";
 import { Game } from "@/lib/game";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 
 const SECONDS_IN_HOUR = 3600;
 const SECONDS_IN_MINUTE = 60;
@@ -37,119 +39,123 @@ const formatSecondsToHHMMSS = (seconds: number): string => {
   return `${h}h ${m}m ${s}s`;
 };
 
-const formSchema = z
-  .object({
-    name: z
-      .string()
-      .min(1, "Nazwa jest wymagana")
-      .max(
-        MAX_NPC_NAME_LENGTH,
-        `Nazwa może mieć maksymalnie ${MAX_NPC_NAME_LENGTH} znaków`,
-      ),
-    minDuration: z.string().optional(),
-    maxDuration: z.string().optional(),
-    startDate: z.string().optional(),
-    endDate: z.string().optional(),
-  })
-  .superRefine((data, ctx) => {
-    const hasMinDuration = data.minDuration && data.minDuration.length > 0;
-    const hasMaxDuration = data.maxDuration && data.maxDuration.length > 0;
-    const hasStartDate = data.startDate && data.startDate.length > 0;
-    const hasEndDate = data.endDate && data.endDate.length > 0;
+const getFormSchema = (t: TFunction) =>
+  z
+    .object({
+      name: z
+        .string()
+        .min(1, t("settings.timers.form.nameRequired"))
+        .max(
+          MAX_NPC_NAME_LENGTH,
+          t("settings.timers.form.nameTooLong", {
+            count: MAX_NPC_NAME_LENGTH,
+          }),
+        ),
+      minDuration: z.string().optional(),
+      maxDuration: z.string().optional(),
+      startDate: z.string().optional(),
+      endDate: z.string().optional(),
+    })
+    .superRefine((data, ctx) => {
+      const hasMinDuration = data.minDuration && data.minDuration.length > 0;
+      const hasMaxDuration = data.maxDuration && data.maxDuration.length > 0;
+      const hasStartDate = data.startDate && data.startDate.length > 0;
+      const hasEndDate = data.endDate && data.endDate.length > 0;
 
-    const usingDurations = hasMinDuration || hasMaxDuration;
-    const usingDates = hasStartDate || hasEndDate;
+      const usingDurations = hasMinDuration || hasMaxDuration;
+      const usingDates = hasStartDate || hasEndDate;
 
-    if (!usingDurations && !usingDates) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Podaj czasy respawnu lub niestandardowe daty",
-        path: ["minDuration"],
-      });
-      return;
-    }
-
-    if (usingDurations) {
-      if (!hasMinDuration) {
+      if (!usingDurations && !usingDates) {
         ctx.addIssue({
           code: "custom",
-          message: "Minimalny czas jest wymagany",
+          message: t("settings.timers.form.durationOrDatesRequired"),
           path: ["minDuration"],
         });
-      } else if (data.minDuration) {
-        const minSeconds = parseDurationToSeconds(data.minDuration);
-        if (minSeconds <= 0) {
+        return;
+      }
+
+      if (usingDurations) {
+        if (!hasMinDuration) {
           ctx.addIssue({
             code: "custom",
-            message: "Czas musi być większy niż 0 sekund",
+            message: t("settings.timers.form.minDurationRequired"),
             path: ["minDuration"],
           });
+        } else if (data.minDuration) {
+          const minSeconds = parseDurationToSeconds(data.minDuration);
+          if (minSeconds <= 0) {
+            ctx.addIssue({
+              code: "custom",
+              message: t("settings.timers.form.durationPositive"),
+              path: ["minDuration"],
+            });
+          }
+        }
+
+        if (!hasMaxDuration) {
+          ctx.addIssue({
+            code: "custom",
+            message: t("settings.timers.form.maxDurationRequired"),
+            path: ["maxDuration"],
+          });
+        } else if (data.maxDuration) {
+          const maxSeconds = parseDurationToSeconds(data.maxDuration);
+          if (maxSeconds <= 0) {
+            ctx.addIssue({
+              code: "custom",
+              message: t("settings.timers.form.durationPositive"),
+              path: ["maxDuration"],
+            });
+          }
+
+          if (hasMinDuration && data.minDuration) {
+            const minSeconds = parseDurationToSeconds(data.minDuration);
+            if (maxSeconds < minSeconds) {
+              ctx.addIssue({
+                code: "custom",
+                message: t("settings.timers.form.maxDurationMin"),
+                path: ["maxDuration"],
+              });
+            }
+          }
         }
       }
 
-      if (!hasMaxDuration) {
-        ctx.addIssue({
-          code: "custom",
-          message: "Maksymalny czas jest wymagany",
-          path: ["maxDuration"],
-        });
-      } else if (data.maxDuration) {
-        const maxSeconds = parseDurationToSeconds(data.maxDuration);
-        if (maxSeconds <= 0) {
+      if (usingDates) {
+        if (!hasStartDate) {
           ctx.addIssue({
             code: "custom",
-            message: "Czas musi być większy niż 0 sekund",
-            path: ["maxDuration"],
+            message: t("settings.timers.form.startDateRequired"),
+            path: ["startDate"],
           });
         }
 
-        if (hasMinDuration && data.minDuration) {
-          const minSeconds = parseDurationToSeconds(data.minDuration);
-          if (maxSeconds < minSeconds) {
+        if (!hasEndDate) {
+          ctx.addIssue({
+            code: "custom",
+            message: t("settings.timers.form.endDateRequired"),
+            path: ["endDate"],
+          });
+        }
+
+        if (hasStartDate && hasEndDate && data.startDate && data.endDate) {
+          const startTime = new Date(data.startDate);
+          const endTime = new Date(data.endDate);
+          if (endTime <= startTime) {
             ctx.addIssue({
               code: "custom",
-              message: "Maksymalny czas musi być większy lub równy minimalnemu",
-              path: ["maxDuration"],
+              message: t("settings.timers.form.endDateAfterStart"),
+              path: ["endDate"],
             });
           }
         }
       }
-    }
+    });
 
-    if (usingDates) {
-      if (!hasStartDate) {
-        ctx.addIssue({
-          code: "custom",
-          message: "Data startu jest wymagana",
-          path: ["startDate"],
-        });
-      }
-
-      if (!hasEndDate) {
-        ctx.addIssue({
-          code: "custom",
-          message: "Data końca jest wymagana",
-          path: ["endDate"],
-        });
-      }
-
-      if (hasStartDate && hasEndDate && data.startDate && data.endDate) {
-        const startTime = new Date(data.startDate);
-        const endTime = new Date(data.endDate);
-        if (endTime <= startTime) {
-          ctx.addIssue({
-            code: "custom",
-            message: "Data końca musi być późniejsza niż data startu",
-            path: ["endDate"],
-          });
-        }
-      }
-    }
-  });
-
-type FormValues = z.infer<typeof formSchema>;
+type FormValues = z.infer<ReturnType<typeof getFormSchema>>;
 
 export const AddTimerForm: React.FC = () => {
+  const { t } = useTranslation();
   const { mutate: createManualTimer, isPending } = useCreateManualTimer();
   const world = Game.getWorldName();
   const characterId = String(Game.hero.id);
@@ -215,7 +221,7 @@ export const AddTimerForm: React.FC = () => {
     watch,
     formState: { errors },
   } = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(getFormSchema(t)),
     defaultValues: {
       name: "",
       minDuration: "",
@@ -315,14 +321,16 @@ export const AddTimerForm: React.FC = () => {
       className="ll:flex ll:flex-col ll:h-full ll:box-border ll:overflow-hidden ll:w-full"
     >
       <div className="ll:shrink-0 ll:pt-1 ll:pb-2">
-        <Label>Serwer</Label>
+        <Label>{t("settings.timers.form.serverLabel")}</Label>
         <GuildSwitcher
           value={selectedGuildId}
           onChange={handleGuildSelectionChange}
           disabled={isPending}
         />
         {!selectedGuildId && (
-          <p className="ll:text-xs ll:text-red-500 ll:mt-1">Wybierz serwer</p>
+          <p className="ll:text-xs ll:text-red-500 ll:mt-1">
+            {t("settings.timers.form.serverRequired")}
+          </p>
         )}
       </div>
 
@@ -330,11 +338,13 @@ export const AddTimerForm: React.FC = () => {
         <ScrollArea className="ll:h-full ll:w-full">
           <div className="ll:flex ll:flex-col ll:gap-2 ll:w-full ll:px-1 ll:box-border">
             <div className="ll:relative ll:w-full ll:box-border">
-              <Label htmlFor="npcSearch">Szukaj potwora</Label>
+              <Label htmlFor="npcSearch">
+                {t("settings.timers.form.searchNpcLabel")}
+              </Label>
               <Input
                 id="npcSearch"
                 autoComplete="off"
-                placeholder="Wpisz nazwę potwora..."
+                placeholder={t("settings.timers.form.searchNpcPlaceholder")}
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
@@ -352,7 +362,9 @@ export const AddTimerForm: React.FC = () => {
                 selectedIndex={selectedIndex}
                 keyExtractor={(npc) => npc.npcId}
                 renderItem={(npc, _index, isSelected) => {
-                  const longname = NPC_NAMES[npc.type]?.longname ?? "mob";
+                  const longname =
+                    NPC_NAMES[npc.type]?.longname ??
+                    t("settings.timers.filters.unknownType");
                   const npcDetails =
                     npc.lvl > 0 && npc.prof
                       ? ` ${npc.lvl}${npc.prof.charAt(0).toLowerCase()}`
@@ -375,17 +387,19 @@ export const AddTimerForm: React.FC = () => {
                     </div>
                   );
                 }}
-                noResultsMessage="Nie znaleziono potwora"
+                noResultsMessage={t("settings.timers.form.searchNpcEmpty")}
                 showNoResults={showNoResults}
               />
             </div>
 
             <div className="ll:w-full ll:box-border">
-              <Label htmlFor="name">Nazwa</Label>
+              <Label htmlFor="name">
+                {t("settings.timers.form.nameLabel")}
+              </Label>
               <Input
                 id="name"
                 autoComplete="off"
-                placeholder="np. Młody Smok"
+                placeholder={t("settings.timers.form.namePlaceholder")}
                 maxLength={20}
                 {...register("name")}
               />
@@ -397,10 +411,12 @@ export const AddTimerForm: React.FC = () => {
             </div>
 
             <div className="ll:w-full ll:box-border">
-              <Label htmlFor="minDuration">Minimalny czas (max 300h)</Label>
+              <Label htmlFor="minDuration">
+                {t("settings.timers.form.minDurationLabel")}
+              </Label>
               <Input
                 id="minDuration"
-                placeholder="np. 2h 30m 45s"
+                placeholder={t("settings.timers.form.minDurationPlaceholder")}
                 autoComplete="off"
                 disabled={customDatesEnabled}
                 {...register("minDuration")}
@@ -413,10 +429,12 @@ export const AddTimerForm: React.FC = () => {
             </div>
 
             <div className="ll:w-full ll:box-border">
-              <Label htmlFor="maxDuration">Maksymalny czas (max 300h)</Label>
+              <Label htmlFor="maxDuration">
+                {t("settings.timers.form.maxDurationLabel")}
+              </Label>
               <Input
                 id="maxDuration"
-                placeholder="np. 3h 15m 30s"
+                placeholder={t("settings.timers.form.maxDurationPlaceholder")}
                 autoComplete="off"
                 disabled={customDatesEnabled}
                 {...register("maxDuration")}
@@ -436,14 +454,16 @@ export const AddTimerForm: React.FC = () => {
                   handleCustomDatesToggle(e.currentTarget.checked)
                 }
               >
-                Niestandardowe daty spawnu
+                {t("settings.timers.form.customDatesToggle")}
               </Checkbox>
             </div>
 
             {customDatesEnabled && (
               <div className="ll:flex ll:flex-col ll:gap-2 ll:w-full ll:box-border">
                 <div className="ll:w-full ll:box-border">
-                  <Label htmlFor="startDate">Data startu</Label>
+                  <Label htmlFor="startDate">
+                    {t("settings.timers.form.startDateLabel")}
+                  </Label>
                   <Input
                     id="startDate"
                     type="datetime-local"
@@ -457,7 +477,9 @@ export const AddTimerForm: React.FC = () => {
                   )}
                 </div>
                 <div className="ll:w-full ll:box-border">
-                  <Label htmlFor="endDate">Data końca</Label>
+                  <Label htmlFor="endDate">
+                    {t("settings.timers.form.endDateLabel")}
+                  </Label>
                   <Input
                     id="endDate"
                     type="datetime-local"
@@ -472,12 +494,12 @@ export const AddTimerForm: React.FC = () => {
                 </div>
                 {startDate && endDate && (
                   <p className="ll:text-xs ll:text-gray-400">
-                    Okno:{" "}
+                    {t("settings.timers.form.customWindowLabel")}{" "}
                     {new Date(endDate).getTime() -
                       new Date(startDate).getTime() >
                     0
                       ? `${Math.floor((new Date(endDate).getTime() - new Date(startDate).getTime()) / 60000)}m`
-                      : "Nieprawidłowy zakres"}
+                      : t("settings.timers.form.invalidRange")}
                   </p>
                 )}
               </div>
@@ -492,7 +514,9 @@ export const AddTimerForm: React.FC = () => {
           className="ll:text-[12px] ll:border ll:border-gray-400 ll:bg-gray-400/30 ll:hover:bg-gray-400/50 ll:rounded-sm ll:h-5 ll:text-white ll:px-4"
           disabled={isPending || !selectedGuildId}
         >
-          {isPending ? "Dodawanie..." : "Dodaj"}
+          {isPending
+            ? t("settings.timers.form.submitPending")
+            : t("settings.timers.form.submit")}
         </button>
       </div>
     </form>

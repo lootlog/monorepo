@@ -1,0 +1,21 @@
+{
+  "title": "Ustawienia powiadomień",
+  "description": "Skonfiguruj ustawienia powiadomień. Możesz dostosować, które typy NPC będą wywoływać powiadomienia oraz jak będą one prezentowane.",
+  "toggles": {
+    "show": "Wyświetlaj",
+    "ignoreOtherWorlds": "Ignoruj inne światy",
+    "highlight": "Podświetlenie",
+    "sound": "Powiadom dźwiękiem"
+  },
+  "autoHideLabel": "Auto ukrywanie",
+  "autoHideDescription": "Sekundy, 0 = wyłączone.",
+  "serversTitle": "Serwery",
+  "emptyGuilds": "Brak gildii do skonfigurowania dla tej kategorii.",
+  "runtime": {
+    "unknownSender": "Nieznany",
+    "joinPending": "...",
+    "join": "Dołącz!",
+    "joinAria": "Idę",
+    "closeAria": "Zamknij powiadomienie"
+  }
+}

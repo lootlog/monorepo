@@ -5,6 +5,7 @@ import {
   type SendChatMessageOptions,
 } from "@/api";
 import { QUERY_KEY } from "./use-chat-messages";
+import i18n from "@/i18n/config";
 
 export { MessageType };
 export type {
@@ -20,7 +21,7 @@ export const useSendChatMessage = () => {
     mutationFn: (options: SendChatMessageOptions) => sendChatMessage(options),
     onError: (error) => {
       console.error("Chat message error:", error);
-      window.message("Nie udało się wysłać wiadomości na czat");
+      window.message(i18n.t("settings.chat.sendFailed"));
     },
   });
 

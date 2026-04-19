@@ -1,0 +1,45 @@
+{
+  "title": "Ustawienia wykrywacza",
+  "description": "Skonfiguruj wspólny routing komunikatów oraz lokalne wykrywanie NPC dla każdego typu.",
+  "routingTitle": "Routing",
+  "toggles": {
+    "detect": "Wykrywaj",
+    "autoSend": "Auto wysyłanie",
+    "notifyWindow": "Okno powiadomienia",
+    "highlight": "Podświetlenie",
+    "notifySound": "Powiadom dźwiękiem"
+  },
+  "routing": {
+    "sectionTitle": "Routing na serwery",
+    "sectionDescription": "Wspólny routing dla całego wykrywacza. Nakładające się zakresy wysyłają komunikaty na wszystkie dopasowane serwery. Zakres leveli dotyczy poziomu NPC, nie gracza.",
+    "addRuleButton": "Dodaj regułę",
+    "emptyState": "Brak reguł routingu. Detector będzie działał lokalnie bez wysyłki na Discord.",
+    "ruleLabel": "Reguła {{index}}",
+    "ruleNameLabel": "Nazwa reguły",
+    "selectedGuildsBadge": "Serwery {{count}}",
+    "minLevelBadge": "Od: {{level}}",
+    "maxLevelBadge": "Do: {{level}}",
+    "worldBadge": "Świat: {{world}}",
+    "minLevelLabel": "Od levela",
+    "maxLevelLabel": "Do levela",
+    "worldLabel": "Świat",
+    "guildSelectionLabel": "Na jakie serwery wysyłać",
+    "noGuildsSelected": "Brak serwerów",
+    "noGuildsAvailable": "Brak serwerów do wyboru.",
+    "deleteRuleLabel": "Usuń regułę {{index}}",
+    "toggleRuleLabel": "Przełącz regułę {{index}}",
+    "guildOverflowLabel": "+{{count}}",
+    "guildOverflowTooltip": "{{count}} kolejnych serwerów"
+  },
+  "runtime": {
+    "noMatchingGuilds": "Brak pasujących serwerów dla poziomu tego potwora.",
+    "openSettingsAria": "Otwórz ustawienia wykrywacza",
+    "notificationSent": "Wysłano",
+    "sendNotification": "Komunikat",
+    "gatherPending": "Zbieranie grupy...",
+    "alreadyGathering": "Już zbierasz grupę",
+    "gatherParty": "Zbierz grupę",
+    "removeNpcAria": "Usuń NPC z listy",
+    "gatherFailed": "Nie udało się rozpocząć zbierania grupy"
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "title": "Skróty klawiszowe",
+  "description": "Skonfiguruj skróty klawiszowe do otwierania okien.",
+  "capture": "Naciśnij klawisz...",
+  "modifiers": {
+    "ctrl": "Ctrl",
+    "alt": "Alt",
+    "shift": "Shift"
+  },
+  "resetTitle": "Reset",
+  "restoreDefaultsLabel": "Przywróć domyślne",
+  "restoreDefaultsDescription": "Usuń własne przypisania i wróć do domyślnej konfiguracji skrótów.",
+  "restoreButton": "Przywróć",
+  "categories": {
+    "communication": "Komunikacja",
+    "windows": "Okna",
+    "party": "Grupa"
+  },
+  "actions": {
+    "toggle-command": {
+      "label": "Konsola",
+      "description": "Otwórz/zamknij okno komendy"
+    },
+    "toggle-chat": {
+      "label": "Chat",
+      "description": "Otwórz/zamknij okno czatu"
+    },
+    "toggle-settings": {
+      "label": "Ustawienia",
+      "description": "Otwórz/zamknij ustawienia"
+    },
+    "toggle-timers": {
+      "label": "Timery",
+      "description": "Otwórz/zamknij okno timerów"
+    },
+    "toggle-online-players": {
+      "label": "Gracze online",
+      "description": "Otwórz/zamknij okno graczy online"
+    },
+    "invite-all": {
+      "label": "Zaproś wszystkich",
+      "description": "Zaproś wszystkich z party findera"
+    }
+  }
+}

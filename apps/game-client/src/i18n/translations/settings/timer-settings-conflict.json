@@ -1,0 +1,11 @@
+{
+  "title": "Konflikt ustawień timerów",
+  "summary": "Twoje ustawienia timerów zostały zmodyfikowane na wielu urządzeniach. Którą wersję chcesz zachować?",
+  "localTitle": "Lokalne (To urządzenie)",
+  "remoteTitle": "Zdalne (Serwer)",
+  "updatedAt": "Ostatnia aktualizacja: {{date}}",
+  "unknownDate": "Nieznana",
+  "useLocal": "Użyj ustawień lokalnych",
+  "useRemote": "Użyj ustawień z serwera",
+  "warning": "Uwaga: Wybrane ustawienia nadpiszą drugą wersję."
+}

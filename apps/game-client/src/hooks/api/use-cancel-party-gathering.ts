@@ -6,6 +6,7 @@ import {
 } from "@/lib/logs/log-actions";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import { useWindowsStore } from "@/store/windows.store";
+import i18n from "@/i18n/config";
 
 export const useCancelPartyGathering = () => {
   const setOpen = useWindowsStore((s) => s.setOpen);
@@ -53,11 +54,11 @@ export const useCancelPartyGathering = () => {
     },
     onSuccess: () => {
       setOpen("party-finder", false);
-      window.message("Zbieranie grupy zakończone");
+      window.message(i18n.t("settings.partyFinder.messages.finished"));
     },
     onError: (error) => {
       console.error("Failed to cancel party gathering:", error);
-      window.message("Nie udało się zakończyć zbierania grupy");
+      window.message(i18n.t("settings.partyFinder.errors.finishFailed"));
     },
   });
 };

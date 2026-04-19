@@ -15,8 +15,10 @@ import { LOOTLOG_APP_URL } from "@/config/app";
 import { useGuilds } from "@/hooks/api/use-guilds";
 import { ExternalLink, Loader2, SquareArrowOutUpRight } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export const GuildListPopover = () => {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const { data: guilds, isLoading } = useGuilds();
 
@@ -45,7 +47,7 @@ export const GuildListPopover = () => {
           </PopoverTrigger>
         </TooltipTrigger>
         <TooltipContent>
-          <span>Strona Lootloga</span>
+          <span>{t("settings.quickAccess.popover.tooltip")}</span>
         </TooltipContent>
       </Tooltip>
 
@@ -60,7 +62,9 @@ export const GuildListPopover = () => {
               className="ll:w-full ll:justify-between ll:h-auto ll:py-1 ll:px-1.5 ll-custom-cursor-pointer ll:text-white ll:rounded-sm ll:font-medium ll:bg-gray-500/30 ll:border ll:border-gray-400 ll:hover:bg-gray-400/30 ll:transition-all"
               onClick={handleDashboardClick}
             >
-              <span className="ll:text-xs">Dashboard</span>
+              <span className="ll:text-xs">
+                {t("settings.quickAccess.popover.dashboard")}
+              </span>
               <ExternalLink className="ll:w-3 ll:h-3 ll:text-gray-400" />
             </Button>
 
@@ -101,7 +105,7 @@ export const GuildListPopover = () => {
               </ScrollArea>
             ) : (
               <div className="ll:px-2 ll:py-2 ll:text-center ll:text-xs ll:text-gray-400">
-                Nie masz żadnych gildii
+                {t("settings.quickAccess.popover.emptyGuilds")}
               </div>
             )}
           </div>
