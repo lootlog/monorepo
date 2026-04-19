@@ -56,6 +56,18 @@ export const CommandWindow = () => {
     selectedGuildCount: selectedInputGuildIds.length,
   });
 
+  const getHintKey = () => {
+    if (!commandState.hasRecipients) {
+      return "settings.command.hints.selectGuild";
+    }
+
+    if (commandState.hasContent) {
+      return "settings.command.hints.submitReady";
+    }
+
+    return `settings.command.modes.${commandState.mode}.emptyHint`;
+  };
+
   const suggestions = useCommandSuggestions({
     inputValue: messageValue,
     onSelect: (prefix) => {
@@ -234,13 +246,7 @@ export const CommandWindow = () => {
                       : "ll:text-red-200",
                   )}
                 >
-                  {t(
-                    commandState.hasRecipients
-                      ? commandState.hasContent
-                        ? "settings.command.hints.submitReady"
-                        : `settings.command.modes.${commandState.mode}.emptyHint`
-                      : "settings.command.hints.selectGuild",
-                  )}
+                  {t(getHintKey())}
                 </span>
                 <span className="ll:text-[10px] ll:text-gray-500">
                   {t("settings.command.hints.keyboard")}

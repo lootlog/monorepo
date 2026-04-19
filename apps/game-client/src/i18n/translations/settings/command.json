@@ -29,8 +29,8 @@
       "label": "Szukaj grupy",
       "composerLabel": "Szukanie grupy z !grp",
       "description": "Komenda !grp uruchamia szukanie grupy i publikuje je na wybranych gildiach.",
-      "placeholder": "Dodaj opis po !grp",
-      "emptyHint": "Dodaj opis po !grp, aby uruchomić szukanie grupy."
+      "placeholder": "Opcjonalnie dodaj opis po !grp",
+      "emptyHint": "Naciśnij Enter, aby uruchomić szukanie grupy bez opisu."
     }
   },
   "suggestions": {

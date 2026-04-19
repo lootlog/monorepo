@@ -36,4 +36,39 @@ describe("getCommandState", () => {
       submissionMessage: "szukam tanca",
     });
   });
+
+  it("allows !grp without a description", () => {
+    expect(getCommandState("!grp", { selectedGuildCount: 1 })).toMatchObject({
+      mode: "party",
+      isNotification: true,
+      isPartyCommand: true,
+      hasContent: true,
+      canSubmit: true,
+      submissionMessage: "",
+    });
+  });
+
+  it("allows !grp with only trailing whitespace", () => {
+    expect(getCommandState("!grp ", { selectedGuildCount: 1 })).toMatchObject({
+      mode: "party",
+      isNotification: true,
+      isPartyCommand: true,
+      hasContent: true,
+      canSubmit: true,
+      submissionMessage: "",
+    });
+  });
+
+  it("treats !grpfoo as a notification, not a party command", () => {
+    expect(getCommandState("!grpfoo", { selectedGuildCount: 1 })).toMatchObject(
+      {
+        mode: "notification",
+        isNotification: true,
+        isPartyCommand: false,
+        hasContent: true,
+        canSubmit: true,
+        submissionMessage: "grpfoo",
+      },
+    );
+  });
 });
