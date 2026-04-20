@@ -50,7 +50,7 @@
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-error-boundary": "^6.1.1",
-    "react-hook-form": "7.67.0",
+    "react-hook-form": "7.72.1",
     "react-i18next": "^17.0.4",
     "react-use": "^17.6.0",
     "socket.io-client": "^4.8.3",
