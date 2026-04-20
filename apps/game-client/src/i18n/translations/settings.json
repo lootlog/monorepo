@@ -17,54 +17,6 @@
     "debug": "Debug",
     "commitSha": "Commit SHA: {{sha}}"
   },
-  "npcTypes": {
-    "elite2": "Elita 2",
-    "hero": "Heros",
-    "colossus": "Kolos",
-    "titan": "Tytan",
-    "message": "Komunikaty",
-    "partyGathering": "Grupa"
-  },
-  "common": {
-    "syncStatus": {
-      "error": "Błąd synchronizacji",
-      "saving": "Zapisywanie...",
-      "syncing": "Synchronizowanie..."
-    },
-    "windowAutoHeight": {
-      "idleTooltip": "Ustaw maksymalną wysokość okna. Kliknij, a potem przeciągnij uchwyt w prawym dolnym rogu.",
-      "armedTooltip": "Przeciągnij uchwyt w prawym dolnym rogu, aby ustawić maksymalną wysokość. Szerokość okna nadal możesz zmieniać tym samym uchwytem.",
-      "maxHeightAria": "Ustaw maksymalną wysokość okna na {{height}} pikseli",
-      "maxHeightLabel": "{{height}} px"
-    },
-    "actions": {
-      "remove": "Usuń",
-      "reset": "Reset",
-      "restore": "Przywróć",
-      "clear": "Wyczyść",
-      "add": "Dodaj",
-      "copyAction": "Kopiuj akcję",
-      "copyRequest": "Kopiuj request",
-      "exportJson": "Eksportuj JSON",
-      "playSound": "Odtwórz dźwięk",
-      "mute": "Wycisz",
-      "unmute": "Włącz dźwięk"
-    },
-    "guildSelection": {
-      "enabled": "Włączone",
-      "disabled": "Wyłączone",
-      "toggleAria": "Przełącz gildię {{name}}: {{state}}",
-      "selectAria": "Wybierz gildię {{name}}: {{state}}"
-    },
-    "preview": {
-      "name": "[T] Tanroth",
-      "time": "00:21:37"
-    }
-  },
-  "windows": {
-    "notifications": "Powiadomienia",
-    "npcDetector": "Wykrywacz"
-  },
   "general": {
     "title": "Ustawienia ogólne",
     "description": "Skonfiguruj ogólne ustawienia dotyczące działania dodatku w grze.",

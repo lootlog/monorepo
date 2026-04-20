@@ -1,0 +1,76 @@
+{
+  "syncStatus": {
+    "error": "Błąd synchronizacji",
+    "saving": "Zapisywanie...",
+    "syncing": "Synchronizowanie..."
+  },
+  "windowAutoHeight": {
+    "idleTooltip": "Ustaw maksymalną wysokość okna. Kliknij, a potem przeciągnij uchwyt w prawym dolnym rogu.",
+    "armedTooltip": "Przeciągnij uchwyt w prawym dolnym rogu, aby ustawić maksymalną wysokość. Szerokość okna nadal możesz zmieniać tym samym uchwytem.",
+    "maxHeightAria": "Ustaw maksymalną wysokość okna na {{height}} pikseli",
+    "maxHeightLabel": "{{height}} px"
+  },
+  "actions": {
+    "remove": "Usuń",
+    "reset": "Reset",
+    "restore": "Przywróć",
+    "clear": "Wyczyść",
+    "add": "Dodaj",
+    "close": "Zamknij",
+    "openSettings": "Otwórz ustawienia",
+    "copyAction": "Kopiuj akcję",
+    "copyRequest": "Kopiuj request",
+    "exportJson": "Eksportuj JSON",
+    "playSound": "Odtwórz dźwięk",
+    "mute": "Wycisz",
+    "unmute": "Włącz dźwięk"
+  },
+  "auth": {
+    "notLoggedIn": "Nie jesteś zalogowany, zaloguj się, aby załadować dodatek"
+  },
+  "errors": {
+    "requestFailed": "Błąd żądania",
+    "unknown": "Nieznany błąd"
+  },
+  "guildSelection": {
+    "enabled": "Włączone",
+    "disabled": "Wyłączone",
+    "toggleAria": "Przełącz gildię {{name}}: {{state}}",
+    "selectAria": "Wybierz gildię {{name}}: {{state}}"
+  },
+  "preview": {
+    "name": "[T] Tanroth",
+    "time": "00:21:37"
+  },
+  "npcTypes": {
+    "elite2": "Elita 2",
+    "hero": "Heros",
+    "colossus": "Kolos",
+    "titan": "Tytan",
+    "message": "Komunikaty",
+    "partyGathering": "Grupa"
+  },
+  "windowControls": {
+    "changeOpacity": "Zmień przezroczystość",
+    "unlockWindow": "Odblokuj okno",
+    "lockWindow": "Zablokuj okno",
+    "closeWindow": "Zamknij okno"
+  },
+  "guildSwitcher": {
+    "allServers": "Wszystkie serwery"
+  },
+  "worldSelector": {
+    "recent": "Ostatnio używane",
+    "allWorlds": "Wszystkie światy",
+    "placeholder": "Wybierz świat...",
+    "searchPlaceholder": "Szukaj świata...",
+    "empty": "Nie znaleziono światów."
+  },
+  "autocomplete": {
+    "noResults": "Nie znaleziono wyników"
+  },
+  "states": {
+    "unknown": "Nieznana",
+    "unknownNeutral": "Nieznane"
+  }
+}

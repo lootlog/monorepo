@@ -1,0 +1,128 @@
+{
+  "window": {
+    "title": "Timery",
+    "addTitle": "Dodaj timer",
+    "conflictTitle": "Konflikt ustawień timerów"
+  },
+  "underBag": {
+    "title": "Timery"
+  },
+  "filters": {
+    "searchPlaceholder": "Szukaj...",
+    "minPlaceholder": "Od",
+    "maxPlaceholder": "Do"
+  },
+  "toolbar": {
+    "hideFilters": "Ukryj filtry",
+    "showFilters": "Pokaż filtry",
+    "disableColorFilters": "Wyłącz filtry po kolorze",
+    "enableColorFilters": "Włącz filtry po kolorze",
+    "sortAsc": "Sortuj rosnąco",
+    "sortDesc": "Sortuj malejąco",
+    "hideHiddenTimers": "Ukryj ukryte timery",
+    "showHiddenTimers": "Pokaż ukryte timery"
+  },
+  "tooltip": {
+    "addedBy": "Dodane przez:",
+    "addedAt": "Dodano:",
+    "min": "Min:",
+    "max": "Max:",
+    "reset": "⟳ Timer został zresetowany"
+  },
+  "connection": {
+    "connectedToServers": "Połączono z serwerami:",
+    "notConnected": "Nie połączono z żadnym serwerem"
+  },
+  "emptyState": {
+    "filtered": "Brak timerów dla wybranych filtrów",
+    "none": "----"
+  },
+  "contextMenu": {
+    "creating": "Tworzenie timera...",
+    "unpin": "Odepnij",
+    "pin": "Przypnij",
+    "unpinAll": "Odepnij wszędzie",
+    "pinAll": "Przypnij wszędzie",
+    "show": "Pokaż",
+    "hide": "Ukryj",
+    "showAll": "Pokaż wszędzie",
+    "hideAll": "Ukryj wszędzie",
+    "restart": "Odliczaj od początku",
+    "delete": "Usuń timer",
+    "deleteChooseGuild": "Wybierz serwer do usunięcia timera:"
+  },
+  "messages": {
+    "resetEventWindowForbidden": "Nie można zresetować okna eventowego z poziomu timerów.",
+    "resetFailed": "Nie udało się zresetować timera {{name}}.",
+    "deleteEventWindowForbidden": "Nie można usunąć okna eventowego z poziomu timerów.",
+    "deleteFailed": "Nie udało się usunąć timera {{name}}.",
+    "resetSuccess": "Zresetowano timer {{name}}.",
+    "deleteSuccess": "Usunięto timer {{name}}.",
+    "battleLinkCreated": "Walka została dodana",
+    "copyBattleLink": "Kopiuj link",
+    "battleLinkCopied": "Link skopiowany do schowka"
+  },
+  "colorNames": {
+    "red": "Czerwony",
+    "orange": "Pomarańczowy",
+    "yellow": "Żółty",
+    "lime": "Limonkowy",
+    "green": "Zielony",
+    "teal": "Turkusowy",
+    "sky": "Niebieski",
+    "blue": "Granatowy",
+    "violet": "Fioletowy",
+    "purple": "Purpurowy",
+    "pink": "Różowy",
+    "white": "Biały"
+  },
+  "colorStatistics": {
+    "title": "Statystyki kolorów timerów",
+    "empty": "Brak ustawionych kolorów"
+  },
+  "addForm": {
+    "validation": {
+      "nameRequired": "Nazwa jest wymagana",
+      "nameMax": "Nazwa może mieć maksymalnie {{max}} znaków",
+      "provideRespawnOrDates": "Podaj czasy respawnu lub niestandardowe daty",
+      "minDurationRequired": "Minimalny czas jest wymagany",
+      "maxDurationRequired": "Maksymalny czas jest wymagany",
+      "durationGreaterThanZero": "Czas musi być większy niż 0 sekund",
+      "maxDurationMin": "Maksymalny czas musi być większy lub równy minimalnemu",
+      "startDateRequired": "Data startu jest wymagana",
+      "endDateRequired": "Data końca jest wymagana",
+      "endDateAfterStart": "Data końca musi być późniejsza niż data startu"
+    },
+    "guildLabel": "Serwer",
+    "guildRequired": "Wybierz serwer",
+    "searchNpcLabel": "Szukaj potwora",
+    "searchNpcPlaceholder": "Wpisz nazwę potwora...",
+    "npcNotFound": "Nie znaleziono potwora",
+    "mobFallback": "mob",
+    "nameLabel": "Nazwa",
+    "namePlaceholder": "np. Młody Smok",
+    "minDurationLabel": "Minimalny czas (max 300h)",
+    "minDurationPlaceholder": "np. 2h 30m 45s",
+    "maxDurationLabel": "Maksymalny czas (max 300h)",
+    "maxDurationPlaceholder": "np. 3h 15m 30s",
+    "customDates": "Niestandardowe daty spawnu",
+    "startDateLabel": "Data startu",
+    "endDateLabel": "Data końca",
+    "windowLabel": "Okno:",
+    "invalidRange": "Nieprawidłowy zakres",
+    "submitting": "Dodawanie...",
+    "submit": "Dodaj"
+  },
+  "footer": {
+    "addTimer": "Dodaj timer"
+  },
+  "conflictDialog": {
+    "description": "Twoje ustawienia timerów zostały zmodyfikowane na wielu urządzeniach. Którą wersję chcesz zachować?",
+    "localTitle": "Lokalne (To urządzenie)",
+    "remoteTitle": "Zdalne (Serwer)",
+    "lastUpdated": "Ostatnia aktualizacja: {{date}}",
+    "useLocal": "Użyj ustawień lokalnych",
+    "useRemote": "Użyj ustawień z serwera",
+    "warning": "Uwaga: Wybrane ustawienia nadpiszą drugą wersję."
+  }
+}

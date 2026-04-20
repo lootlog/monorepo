@@ -7,6 +7,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { TimersConnectionStatus } from "@/features/timers/components/timers-connection-status";
+import { useTranslation } from "react-i18next";
 
 type ColorStat = {
   color: string;
@@ -26,6 +27,7 @@ export const TimersFooter: FC<TimersFooterProps> = ({
   colorStatistics,
   onAddTimer,
 }) => {
+  const { t } = useTranslation("timers");
   return (
     <div className="ll:flex ll:items-center ll:pt-1 ll:pb-0.5 ll:px-1 ll:h-6 ll:w-full ll:box-border ll:relative">
       <TimersColorStatistics colorStatistics={colorStatistics} />
@@ -40,7 +42,7 @@ export const TimersFooter: FC<TimersFooterProps> = ({
             +
           </Button>
         </TooltipTrigger>
-        <TooltipContent side="top">Dodaj timer</TooltipContent>
+        <TooltipContent side="top">{t("footer.addTimer")}</TooltipContent>
       </Tooltip>
     </div>
   );

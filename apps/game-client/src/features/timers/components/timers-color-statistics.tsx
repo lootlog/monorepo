@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/tooltip";
 import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 type ColorStat = {
   color: string;
@@ -24,6 +25,8 @@ type TimersColorStatisticsProps = {
 export const TimersColorStatistics: FC<TimersColorStatisticsProps> = ({
   colorStatistics,
 }) => {
+  const { t } = useTranslation("timers");
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -35,11 +38,11 @@ export const TimersColorStatistics: FC<TimersColorStatisticsProps> = ({
       <TooltipContent side="top" className="ll:max-w-xs">
         <div className="ll:flex ll:flex-col ll:gap-1">
           <p className="ll:text-xs ll:font-semibold ll:mb-1">
-            Statystyki kolorów timerów
+            {t("colorStatistics.title")}
           </p>
           {colorStatistics.length === 0 ? (
             <p className="ll:text-xs ll:text-gray-400">
-              Brak ustawionych kolorów
+              {t("colorStatistics.empty")}
             </p>
           ) : (
             colorStatistics.map((stat) => {

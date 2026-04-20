@@ -1,0 +1,9 @@
+{
+  "window": {
+    "title": "Uwaga!"
+  },
+  "content": {
+    "title": "Nie masz wybranych żadnych serwerów do zbierania danych!",
+    "description": "Przejdź do ustawień i wybierz serwery, na których chcesz zbierać timery i loot. Są w zakładce \"Dodawanie łupów i timerów\"."
+  }
+}

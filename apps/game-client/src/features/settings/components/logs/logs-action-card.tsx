@@ -106,7 +106,7 @@ export const LogsActionCard: FC<LogsActionCardProps> = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                aria-label={t("settings.common.actions.copyAction")}
+                aria-label={t("common:actions.copyAction")}
                 className="ll:size-7 ll:px-0"
                 onClick={(event) => {
                   event.stopPropagation();
@@ -119,7 +119,7 @@ export const LogsActionCard: FC<LogsActionCardProps> = ({
             </TooltipTrigger>
             <TooltipContent side="bottom" className="ll:z-500">
               <p className="ll:text-xs ll:font-semibold">
-                {t("settings.common.actions.copyAction")}
+                {t("common:actions.copyAction")}
               </p>
             </TooltipContent>
           </Tooltip>

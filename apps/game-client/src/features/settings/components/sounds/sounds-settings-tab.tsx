@@ -34,7 +34,7 @@ export const SoundsSettingsTab: FC = () => {
   const { data: settings, isLoading } = useSoundSettings();
   const { mutate: updateSettings, isPending } = useUpdateSoundSettings();
   const { playSoundTest } = useSoundPlayback();
-  const { t } = useTranslation();
+  const { t } = useTranslation(["settings", "common"]);
   const [mutedCategories, setMutedCategories] = useState<
     Record<SoundCategory, boolean>
   >({
@@ -52,11 +52,11 @@ export const SoundsSettingsTab: FC = () => {
     Record<string, Record<string, string>>
   >({});
   const notificationNpcTypes = [
-    { label: t("settings.npcTypes.message"), key: "message" },
-    { label: t("settings.npcTypes.elite2"), key: NpcType.ELITE2 },
-    { label: t("settings.npcTypes.hero"), key: NpcType.HERO },
-    { label: t("settings.npcTypes.colossus"), key: NpcType.COLOSSUS },
-    { label: t("settings.npcTypes.titan"), key: NpcType.TITAN },
+    { label: t("common:npcTypes.message"), key: "message" },
+    { label: t("common:npcTypes.elite2"), key: NpcType.ELITE2 },
+    { label: t("common:npcTypes.hero"), key: NpcType.HERO },
+    { label: t("common:npcTypes.colossus"), key: NpcType.COLOSSUS },
+    { label: t("common:npcTypes.titan"), key: NpcType.TITAN },
   ] as const;
   const detectorTimerNpcTypes = notificationNpcTypes.filter(
     (field) => field.key !== "message",

@@ -10,8 +10,10 @@ import { useMemberInvalidation } from "@/hooks/api/use-member-invalidation";
 import { Search } from "lucide-react";
 import { useState, useMemo, type FC } from "react";
 import { Game } from "@/lib/game";
+import { useTranslation } from "react-i18next";
 
 export const OnlinePlayersList: FC = () => {
+  const { t } = useTranslation("onlinePlayers");
   const characterId = String(Game.hero.id);
   const defaultWorld = Game.getWorldName();
 
@@ -58,7 +60,7 @@ export const OnlinePlayersList: FC = () => {
         <div className="ll:pb-1 ll:relative">
           <Input
             type="text"
-            placeholder="Szukaj gracza..."
+            placeholder={t("search.placeholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="ll:pr-7"
@@ -76,7 +78,9 @@ export const OnlinePlayersList: FC = () => {
             ))
           ) : (
             <p className="ll:text-gray-400 ll:w-full ll:flex ll:items-center ll:justify-center ll:mt-6">
-              {searchQuery ? "Nie znaleziono graczy" : "Brak graczy online."}
+              {searchQuery
+                ? t("emptyState.notFound")
+                : t("emptyState.noPlayers")}
             </p>
           )}
         </ScrollArea>

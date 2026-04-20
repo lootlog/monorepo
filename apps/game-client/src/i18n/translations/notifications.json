@@ -1,0 +1,21 @@
+{
+  "window": {
+    "title": "Powiadomienia"
+  },
+  "content": {
+    "gatheringParty": "Zbiera grupę",
+    "lookingForParty": "Szuka grupy",
+    "levelRange": "Poziom: {{min}} - {{max}}"
+  },
+  "actions": {
+    "join": "Dołącz!",
+    "joinAria": "Idę",
+    "closeAria": "Zamknij powiadomienie",
+    "muteOptionsAria": "Opcje wyciszenia",
+    "mutePlayer": "Nie otrzymuj powiadomień od tego gracza",
+    "muteNpc": "Nie otrzymuj powiadomień o tym potworze"
+  },
+  "states": {
+    "unknownSender": "Nieznany"
+  }
+}

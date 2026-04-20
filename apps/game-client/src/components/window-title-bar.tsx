@@ -6,6 +6,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { WindowOpacity } from "@/store/windows.store";
+import { useTranslation } from "react-i18next";
 
 const OPACITY_LEVELS: WindowOpacity[] = [1, 2, 3, 4, 5];
 
@@ -32,6 +33,7 @@ export const WindowTitleBar: FC<WindowTitleBarProps> = ({
   onClose,
   onTouchStart,
 }) => {
+  const { t } = useTranslation("common");
   const handleOpacityChange = useCallback(() => {
     const currentIndex = OPACITY_LEVELS.indexOf(opacity);
     const nextIndex = (currentIndex + 1) % OPACITY_LEVELS.length;
@@ -56,7 +58,7 @@ export const WindowTitleBar: FC<WindowTitleBarProps> = ({
               onClick={handleOpacityChange}
             />
           </TooltipTrigger>
-          <TooltipContent>Zmień przezroczystość</TooltipContent>
+          <TooltipContent>{t("windowControls.changeOpacity")}</TooltipContent>
         </Tooltip>
         {actions}
       </div>
@@ -84,7 +86,9 @@ export const WindowTitleBar: FC<WindowTitleBarProps> = ({
             )}
           </TooltipTrigger>
           <TooltipContent>
-            {isLocked ? "Odblokuj okno" : "Zablokuj okno"}
+            {isLocked
+              ? t("windowControls.unlockWindow")
+              : t("windowControls.lockWindow")}
           </TooltipContent>
         </Tooltip>
       </div>
@@ -99,7 +103,7 @@ export const WindowTitleBar: FC<WindowTitleBarProps> = ({
               onClick={onClose}
             />
           </TooltipTrigger>
-          <TooltipContent>Zamknij okno</TooltipContent>
+          <TooltipContent>{t("windowControls.closeWindow")}</TooltipContent>
         </Tooltip>
       )}
     </div>

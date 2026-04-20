@@ -5,7 +5,7 @@ import { Edit2, Trash2 } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { ColorEditForm } from "./color-edit-form";
-import { DEFAULT_COLOR_NAMES, type ColorEditData } from "./color-utils";
+import { getDefaultColorName, type ColorEditData } from "./color-utils";
 
 interface DefaultColorItemProps {
   colorId: string;
@@ -50,7 +50,7 @@ export const DefaultColorItem: FC<DefaultColorItemProps> = ({
         ) : (
           <>
             <span className="ll:text-xs ll:font-medium ll:truncate ll:h-full ll:flex ll:items-center">
-              {displayName || DEFAULT_COLOR_NAMES[colorId]}
+              {displayName || getDefaultColorName(colorId)}
             </span>
             <Tile
               color={
@@ -61,8 +61,8 @@ export const DefaultColorItem: FC<DefaultColorItemProps> = ({
               className="ll:h-6 ll:w-full ll:items-center ll:justify-center"
             >
               <span className="ll:text-[10px] ll:text-white ll:whitespace-nowrap ll:flex ll:justify-between ll:w-full ll:px-1 ll:items-center ll:h-full">
-                <span>{t("settings.common.preview.name")}</span>
-                <span>{t("settings.common.preview.time")}</span>
+                <span>{t("common:preview.name")}</span>
+                <span>{t("common:preview.time")}</span>
               </span>
             </Tile>
           </>

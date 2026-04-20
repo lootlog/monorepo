@@ -4,6 +4,7 @@ import {
   sendChatMessage,
   type SendChatMessageOptions,
 } from "@/api";
+import { getFixedT } from "@/i18n/get-fixed-t";
 import { QUERY_KEY } from "./use-chat-messages";
 
 export { MessageType };
@@ -15,12 +16,13 @@ export type {
 } from "@/api";
 
 export const useSendChatMessage = () => {
+  const t = getFixedT("chat");
   const mutation = useMutation({
     mutationKey: [QUERY_KEY],
     mutationFn: (options: SendChatMessageOptions) => sendChatMessage(options),
     onError: (error) => {
       console.error("Chat message error:", error);
-      window.message("Nie udało się wysłać wiadomości na czat");
+      window.message(t("errors.sendFailed"));
     },
   });
 

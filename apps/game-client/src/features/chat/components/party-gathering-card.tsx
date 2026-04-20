@@ -9,6 +9,7 @@ import { Game } from "@/lib/game";
 import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
 import type { FC } from "react";
+import { useTranslation } from "react-i18next";
 
 type PartyGatheringCardProps = {
   message: ChatMessageType;
@@ -25,6 +26,7 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
   all,
   isMsgYesterday,
 }) => {
+  const { t } = useTranslation("chat");
   const memberColor = useMemberColor(member);
   const { mutate: volunteer, isPending } = useVolunteer();
 
@@ -144,8 +146,10 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
         )}
         {(partyGathering?.minLvl ?? partyGathering?.maxLvl) && (
           <p className="ll:text-[10px] ll:text-gray-400">
-            Poziom: {partyGathering?.minLvl ?? 1} -{" "}
-            {partyGathering?.maxLvl ?? 500}
+            {t("partyGathering.levelRange", {
+              min: partyGathering?.minLvl ?? 1,
+              max: partyGathering?.maxLvl ?? 500,
+            })}
           </p>
         )}
         {!isOwnMessage &&
@@ -163,12 +167,15 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
                 {isPending ? (
                   <>
                     <Loader2 className="ll:w-3 ll:h-3 ll:animate-spin ll:mr-1" />
-                    Zgłaszanie...
+                    {t("partyGathering.volunteering")}
                   </>
                 ) : !meetsLevelReq ? (
-                  `Wymagany poziom ${minLvl}-${maxLvl}`
+                  t("partyGathering.requiredLevel", {
+                    min: minLvl,
+                    max: maxLvl,
+                  })
                 ) : (
-                  "Dołącz do grupy"
+                  t("partyGathering.joinParty")
                 )}
               </Button>
             );

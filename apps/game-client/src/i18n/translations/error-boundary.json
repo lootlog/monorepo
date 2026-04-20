@@ -1,0 +1,15 @@
+{
+  "title": "Błąd aplikacji",
+  "summary": "Interfejs się wywalił. Możesz skopiować szczegóły błędu przed zamknięciem tego okna.",
+  "detailsHint": "Zamknięcie tego okna ukrywa tylko fallback. Wywalona część interfejsu nie odzyska się automatycznie.",
+  "errorNameLabel": "Typ błędu",
+  "errorMessageLabel": "Wiadomość",
+  "stackLabel": "Stack trace",
+  "copyButton": "Kopiuj błąd",
+  "copySuccessButton": "Skopiowano",
+  "copyErrorButton": "Nie udało się skopiować",
+  "closeButton": "Zamknij",
+  "unknownErrorName": "Nieznany błąd",
+  "unknownErrorMessage": "Brak wiadomości błędu.",
+  "missingStack": "Stack trace jest niedostępny."
+}

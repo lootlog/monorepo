@@ -3,6 +3,7 @@ import { useDeleteTimer } from "@/hooks/api/use-delete-timer";
 import { useResetTimer } from "@/hooks/api/use-reset-timer";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import { useTimersStore } from "@/store/timers.store";
+import { getFixedT } from "@/i18n/get-fixed-t";
 
 export const useTimerActions = (
   timer: TimerWithTimeLeft,
@@ -11,6 +12,7 @@ export const useTimerActions = (
   guildIds: string[],
   timersGrouping = false,
 ) => {
+  const t = getFixedT("timers");
   const {
     hideTimer,
     revealTimer,
@@ -26,20 +28,20 @@ export const useTimerActions = (
       axios.isAxiosError<{ message?: string }>(error) &&
       error.response?.data?.message === "EVENT_TIMER_CANNOT_BE_RESET"
     ) {
-      return "Nie można zresetować okna eventowego z poziomu timerów.";
+      return t("messages.resetEventWindowForbidden");
     }
 
-    return `Nie udało się zresetować timera ${timer.npc.name}.`;
+    return t("messages.resetFailed", { name: timer.npc.name });
   };
   const getDeleteTimerErrorMessage = (error: unknown) => {
     if (
       axios.isAxiosError<{ message?: string }>(error) &&
       error.response?.data?.message === "EVENT_TIMER_MUST_USE_EVENT_CLOSE"
     ) {
-      return "Nie można usunąć okna eventowego z poziomu timerów.";
+      return t("messages.deleteEventWindowForbidden");
     }
 
-    return `Nie udało się usunąć timera ${timer.npc.name}.`;
+    return t("messages.deleteFailed", { name: timer.npc.name });
   };
 
   const isPinned = pinnedTimers[settingsKey]?.includes(timer.npc.name);
@@ -132,7 +134,7 @@ export const useTimerActions = (
         });
       }
 
-      window.message?.(`Zresetowano timer ${timer.npc.name}.`);
+      window.message?.(t("messages.resetSuccess", { name: timer.npc.name }));
     } catch (error) {
       window.message?.(getResetTimerErrorMessage(error));
     }
@@ -149,7 +151,9 @@ export const useTimerActions = (
       },
       {
         onSuccess: () => {
-          window.message?.(`Usunięto timer ${timer.npc.name}.`);
+          window.message?.(
+            t("messages.deleteSuccess", { name: timer.npc.name }),
+          );
         },
         onError: (error) => {
           window.message?.(getDeleteTimerErrorMessage(error));
