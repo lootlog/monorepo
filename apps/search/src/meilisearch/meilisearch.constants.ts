@@ -1,0 +1,1 @@
+export const MEILISEARCH_CLIENT = Symbol("MEILISEARCH_CLIENT");

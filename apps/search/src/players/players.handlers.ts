@@ -1,37 +1,38 @@
-import { APP_CONFIG } from "../config/app.config.js";
-import { logger } from "../config/winston.config.js";
-import { channel } from "../lib/rabbitmq.js";
-import { Queue } from "./enum/queue.enum.js";
-import { RoutingKey } from "./enum/routing-key.enum.js";
-import { PlayersService } from "./players.service.js";
+import { RabbitPayload, RabbitSubscribe } from "@golevelup/nestjs-rabbitmq";
+import { Inject, Injectable } from "@nestjs/common";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import type { Logger } from "winston";
+import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
+import { indexPlayersPayloadSchema } from "./dto/index-players.dto";
+import { Queue } from "./enum/queue.enum";
+import { RoutingKey } from "./enum/routing-key.enum";
+import { PlayersService } from "./players.service";
 
-const playersService = new PlayersService();
+@Injectable()
+export class PlayersHandlers {
+  constructor(
+    private readonly playersService: PlayersService,
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+  ) {}
 
-export const setupPlayersHandlers = async () => {
-  if (!channel) return;
+  @RabbitSubscribe({
+    exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: RoutingKey.SEARCH_PLAYERS_INDEX,
+    queue: Queue.SEARCH_PLAYERS_INDEX,
+    queueOptions: {
+      durable: true,
+    },
+  })
+  async handlePlayersIndex(@RabbitPayload() payload: unknown) {
+    const validationResult = indexPlayersPayloadSchema.safeParse(payload);
 
-  await channel.assertQueue(Queue.SEARCH_PLAYERS_INDEX, { durable: true });
-  await channel.bindQueue(
-    Queue.SEARCH_PLAYERS_INDEX,
-    APP_CONFIG.rabbitmq.exchange,
-    RoutingKey.SEARCH_PLAYERS_INDEX,
-  );
+    if (!validationResult.success) {
+      this.logger.error("Validation error in players index handler", {
+        error: validationResult.error.format(),
+      });
+      return;
+    }
 
-  channel
-    .consume(
-      Queue.SEARCH_PLAYERS_INDEX,
-      async (msg) => {
-        if (msg) {
-          const messageContent = msg.content.toString();
-          const players = messageContent ? JSON.parse(messageContent) : [];
-          await playersService.indexPlayers({ players });
-
-          channel?.ack(msg);
-        }
-      },
-      { noAck: false },
-    )
-    .catch((error) => {
-      logger.error("Error consuming message", { error });
-    });
-};
+    await this.playersService.indexPlayers({ players: validationResult.data });
+  }
+}

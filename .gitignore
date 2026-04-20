@@ -65,6 +65,7 @@ prompts/**
 .claude/skills/context7/.env
 apps/api/scripts/**
 apps/api/src/metadata.ts
+apps/search/src/metadata.ts
 
 # Profiles & Performance
 apps/api/profiles/

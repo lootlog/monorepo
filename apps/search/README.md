@@ -1,12 +1,12 @@
 # @lootlog/search
 
-Hono service for Meilisearch-backed search endpoints.
+NestJS service for Meilisearch-backed search endpoints.
 
 ## Overview
 
 - Exposes search routes for `players`, `npcs`, `items`, and aggregated `all` results.
-- Connects to RabbitMQ during startup and registers queue handlers that keep Meilisearch indexes in sync.
-- Reuses shared auth metadata middleware from `@lootlog/api-helpers` and shared observability bootstrap from `@lootlog/instrumentation`.
+- Registers RabbitMQ subscribers that keep Meilisearch indexes in sync.
+- Reuses shared Nest logging middleware and shared observability bootstrap from `@lootlog/instrumentation`.
 
 ## Routes
 
@@ -32,5 +32,5 @@ pnpm --filter @lootlog/search dev
 
 ## Notes
 
-- Service bootstrap lives in `src/index.ts`.
+- Service bootstrap lives in `src/main.ts`.
 - Seed helpers for local Meilisearch data live under `src/scripts/`.
