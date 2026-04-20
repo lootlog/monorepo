@@ -1,5 +1,6 @@
 import { DraggableWindow } from "@/components/draggable-window";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
 import { useWindowsStore } from "@/store/windows.store";
 import type { FallbackProps } from "react-error-boundary";
 import { useLayoutEffect, useState } from "react";
@@ -11,17 +12,31 @@ import {
   APP_ERROR_WINDOW_WIDTH,
 } from "./error-boundary.constants";
 import { getErrorBoundaryDetails } from "./get-error-boundary-details";
-import { getErrorBoundaryTranslations } from "./error-boundary-translations";
 
 type CopyState = "idle" | "success" | "error";
 
 export const AppErrorBoundaryFallback = ({ error }: FallbackProps) => {
+  const { t } = useTranslation("errorBoundary");
   const setPosition = useWindowsStore((state) => state.setPosition);
   const setOpen = useWindowsStore((state) => state.setOpen);
   const [isVisible, setIsVisible] = useState(true);
   const [isPositionReady, setIsPositionReady] = useState(false);
   const [copyState, setCopyState] = useState<CopyState>("idle");
-  const translations = getErrorBoundaryTranslations();
+  const translations = {
+    title: t("title"),
+    summary: t("summary"),
+    detailsHint: t("detailsHint"),
+    errorNameLabel: t("errorNameLabel"),
+    errorMessageLabel: t("errorMessageLabel"),
+    stackLabel: t("stackLabel"),
+    copyButton: t("copyButton"),
+    copySuccessButton: t("copySuccessButton"),
+    copyErrorButton: t("copyErrorButton"),
+    closeButton: t("closeButton"),
+    unknownErrorName: t("unknownErrorName"),
+    unknownErrorMessage: t("unknownErrorMessage"),
+    missingStack: t("missingStack"),
+  };
   const errorDetails = getErrorBoundaryDetails(error, translations);
 
   useLayoutEffect(() => {

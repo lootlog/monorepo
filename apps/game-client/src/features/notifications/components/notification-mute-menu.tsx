@@ -15,6 +15,7 @@ import { useCurrentUserNotificationMutes } from "@/hooks/use-current-user-notifi
 import type { StoredNotification } from "@/store/notifications.store";
 import { BellOff } from "lucide-react";
 import { type FC, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 type NotificationMuteMenuProps = {
   notification: StoredNotification;
@@ -29,6 +30,7 @@ export const NotificationMuteMenu: FC<NotificationMuteMenuProps> = ({
   onOpenChange,
   onMuted,
 }) => {
+  const { t } = useTranslation("notifications");
   const [open, setOpen] = useState(false);
   const { isReady, mutes } = useCurrentUserNotificationMutes();
   const updateUserPreferences = useUpdateUserPreferences();
@@ -79,7 +81,7 @@ export const NotificationMuteMenu: FC<NotificationMuteMenuProps> = ({
       <PopoverTrigger asChild>
         <Button
           variant="ghost"
-          aria-label="Opcje wyciszenia"
+          aria-label={t("actions.muteOptionsAria")}
           disabled={isDisabled}
           className="ll:size-7 ll:px-0"
         >
@@ -95,7 +97,7 @@ export const NotificationMuteMenu: FC<NotificationMuteMenuProps> = ({
           disabled={isDisabled}
           onClick={handleMutePlayer}
         >
-          Nie otrzymuj powiadomień od tego gracza
+          {t("actions.mutePlayer")}
         </Button>
         {mutedNpc ? (
           <Button
@@ -103,7 +105,7 @@ export const NotificationMuteMenu: FC<NotificationMuteMenuProps> = ({
             disabled={isDisabled}
             onClick={handleMuteNpc}
           >
-            Nie otrzymuj powiadomień o tym potworze
+            {t("actions.muteNpc")}
           </Button>
         ) : null}
       </PopoverContent>

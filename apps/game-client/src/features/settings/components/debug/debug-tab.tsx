@@ -382,7 +382,7 @@ export const DebugTab: FC = () => {
             }
             className="ll:px-2 ll:bg-purple-700 hover:ll:bg-purple-600"
           >
-            {t("settings.npcTypes.titan")}
+            {t("common:npcTypes.titan")}
           </Button>
           <Button
             onClick={() =>
@@ -393,7 +393,7 @@ export const DebugTab: FC = () => {
             }
             className="ll:px-2 ll:bg-orange-700 hover:ll:bg-orange-600"
           >
-            {t("settings.npcTypes.hero")}
+            {t("common:npcTypes.hero")}
           </Button>
           <Button
             onClick={() =>
@@ -404,7 +404,7 @@ export const DebugTab: FC = () => {
             }
             className="ll:px-2 ll:bg-blue-700 hover:ll:bg-blue-600"
           >
-            {t("settings.npcTypes.colossus")}
+            {t("common:npcTypes.colossus")}
           </Button>
           <Button
             onClick={() =>
@@ -415,7 +415,7 @@ export const DebugTab: FC = () => {
             }
             className="ll:px-2 ll:bg-yellow-700 hover:ll:bg-yellow-600"
           >
-            {t("settings.npcTypes.elite2")}
+            {t("common:npcTypes.elite2")}
           </Button>
         </div>
       </SettingsSection>
@@ -491,7 +491,7 @@ export const DebugTab: FC = () => {
             onClick={() => setEventLog([])}
             className="ll:px-2 ll:text-[10px] ll:h-4"
           >
-            {t("settings.common.actions.clear")}
+            {t("common:actions.clear")}
           </Button>
         }
       >

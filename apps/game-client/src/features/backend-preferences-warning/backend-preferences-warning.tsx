@@ -7,12 +7,14 @@ import { useGlobalStore } from "@/store/global.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { useEffect, useState, type FC } from "react";
 import { useLocalStorage } from "react-use";
+import { useTranslation } from "react-i18next";
 
 const STORAGE_KEY = storageKey("ll:backend-preferences-warning-dismissed");
 const WINDOW_WIDTH = 430;
 const WINDOW_HEIGHT = 250;
 
 export const BackendPreferencesWarning: FC = () => {
+  const { t } = useTranslation(["backendPreferencesWarning", "common"]);
   const gameInitialized = useGlobalStore(
     (state) => state.gameState.gameInitialized,
   );
@@ -68,7 +70,7 @@ export const BackendPreferencesWarning: FC = () => {
     <AnimatedWindow isOpen={open} windowKey="backend-preferences-warning">
       <DraggableWindow
         id="backend-preferences-warning"
-        title="Zmiana ustawień"
+        title={t("window.title")}
         onClose={handleClose}
         variant="small"
         resizable={false}
@@ -78,21 +80,15 @@ export const BackendPreferencesWarning: FC = () => {
       >
         <div className="ll:flex ll:flex-col ll:gap-4 ll:p-4">
           <div className="ll:text-sm ll:text-gray-200">
-            <p className="ll:mb-3">
-              Ustawienia powiadomień i wykrywacza są teraz przechowywane tylko
-              po stronie serwera.
-            </p>
-            <p>
-              Poprzednie ustawienia zapisane lokalnie w tej przeglądarce nie
-              zostały zachowane. Sprawdź aktualną konfigurację w ustawieniach.
-            </p>
+            <p className="ll:mb-3">{t("content.title")}</p>
+            <p>{t("content.description")}</p>
           </div>
           <div className="ll:flex ll:justify-end ll:gap-2">
             <Button onClick={handleClose} className="ll:px-3 ll:py-1">
-              Zamknij
+              {t("common:actions.close")}
             </Button>
             <Button onClick={handleOpenSettings} className="ll:px-3 ll:py-1">
-              Otwórz ustawienia
+              {t("common:actions.openSettings")}
             </Button>
           </div>
         </div>

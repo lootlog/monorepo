@@ -19,14 +19,14 @@ export const WindowMaxHeightAction: FC<WindowMaxHeightActionProps> = ({
   isArmed,
   onClick,
 }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation("common");
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <Button
           variant="ghost"
-          aria-label={t("settings.common.windowAutoHeight.maxHeightAria", {
+          aria-label={t("windowAutoHeight.maxHeightAria", {
             height: currentMaxHeight,
           })}
           className={cn(
@@ -37,15 +37,15 @@ export const WindowMaxHeightAction: FC<WindowMaxHeightActionProps> = ({
           )}
           onClick={onClick}
         >
-          {t("settings.common.windowAutoHeight.maxHeightLabel", {
+          {t("windowAutoHeight.maxHeightLabel", {
             height: currentMaxHeight,
           })}
         </Button>
       </TooltipTrigger>
       <TooltipContent side="top">
         {isArmed
-          ? t("settings.common.windowAutoHeight.armedTooltip")
-          : t("settings.common.windowAutoHeight.idleTooltip")}
+          ? t("windowAutoHeight.armedTooltip")
+          : t("windowAutoHeight.idleTooltip")}
       </TooltipContent>
     </Tooltip>
   );

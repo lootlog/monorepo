@@ -118,7 +118,7 @@ export const NotificationMutesSettingsTab = () => {
                       })
                     }
                   >
-                    {t("settings.common.actions.remove")}
+                    {t("common:actions.remove")}
                   </Button>
                 </SettingsPanel>
               ))
@@ -180,7 +180,7 @@ export const NotificationMutesSettingsTab = () => {
                       })
                     }
                   >
-                    {t("settings.common.actions.remove")}
+                    {t("common:actions.remove")}
                   </Button>
                 </SettingsPanel>
               ))

@@ -1,5 +1,6 @@
 import type { FC } from "react";
 import type { NotificationWithServers } from "@/store/notifications.store";
+import { useTranslation } from "react-i18next";
 
 type SingleNotificationNpcProps = {
   notification: NotificationWithServers;
@@ -8,6 +9,7 @@ type SingleNotificationNpcProps = {
 export const SingleNotificationNpc: FC<SingleNotificationNpcProps> = ({
   notification,
 }) => {
+  const { t } = useTranslation("notifications");
   if (!notification.npc) return null;
 
   return (
@@ -30,7 +32,7 @@ export const SingleNotificationNpc: FC<SingleNotificationNpcProps> = ({
         </span>
         {notification.isGatheringParty && (
           <span className="ll:shrink-0 ll:font-semibold ll:text-purple-300">
-            Zbiera grupę
+            {t("content.gatheringParty")}
           </span>
         )}
       </div>

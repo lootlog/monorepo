@@ -57,9 +57,7 @@ export const CategoryVolumeControl: FC<CategoryVolumeControlProps> = ({
           </span>
         </TooltipTrigger>
         <TooltipContent>
-          {isMuted
-            ? t("settings.common.actions.unmute")
-            : t("settings.common.actions.mute")}
+          {isMuted ? t("common:actions.unmute") : t("common:actions.mute")}
         </TooltipContent>
       </Tooltip>
       <div className="ll:flex-1" onClick={(e) => e.stopPropagation()}>

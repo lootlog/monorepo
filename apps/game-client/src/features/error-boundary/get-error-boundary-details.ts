@@ -1,10 +1,17 @@
-import type { ErrorBoundaryTranslations } from "./error-boundary-translations";
-
 type ErrorBoundaryDetails = {
   name: string;
   message: string;
   stack: string;
   clipboardText: string;
+};
+
+type ErrorBoundaryTranslations = {
+  errorNameLabel: string;
+  errorMessageLabel: string;
+  stackLabel: string;
+  unknownErrorName: string;
+  unknownErrorMessage: string;
+  missingStack: string;
 };
 
 function getObjectProperty(

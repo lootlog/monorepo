@@ -1,0 +1,16 @@
+{
+  "window": {
+    "title": "Wykrywacz"
+  },
+  "actions": {
+    "noMatchingGuilds": "Brak pasujących serwerów dla poziomu tego potwora.",
+    "openSettingsAria": "Otwórz ustawienia wykrywacza",
+    "messageSent": "Wysłano",
+    "message": "Komunikat",
+    "gatheringParty": "Zbieranie grupy...",
+    "alreadyGatheringParty": "Już zbierasz grupę",
+    "gatherParty": "Zbierz grupę",
+    "removeNpcAria": "Usuń NPC z listy",
+    "gatherPartyFailed": "Nie udało się rozpocząć zbierania grupy"
+  }
+}

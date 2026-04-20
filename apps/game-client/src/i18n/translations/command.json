@@ -1,0 +1,14 @@
+{
+  "window": {
+    "title": "Konsola"
+  },
+  "input": {
+    "placeholder": "Wiadomość..."
+  },
+  "suggestions": {
+    "partySearchLabel": "Szukaj grupy",
+    "partySearchDescription": "!grp [opis] - Rozpocznij szukanie grupy",
+    "notificationLabel": "Powiadomienie",
+    "notificationDescription": "!wiadomość - Wyślij powiadomienie do klanu"
+  }
+}

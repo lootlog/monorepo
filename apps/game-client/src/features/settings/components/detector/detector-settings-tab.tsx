@@ -20,29 +20,29 @@ const SYNC_INDICATOR_DELAY_MS = 100;
 export const DetectorSettingsTab = () => {
   const syncStatus = useGameAccountPreferencesSyncStatus();
   const [visibleStatus, setVisibleStatus] = useState(syncStatus.status);
-  const { t } = useTranslation();
+  const { t } = useTranslation(["settings", "common"]);
   const categoryTabs: Array<{
     label: string;
     key: DetectorNpcType;
     content: ReactNode;
   }> = [
     {
-      label: t("settings.npcTypes.elite2"),
+      label: t("common:npcTypes.elite2"),
       key: NpcType.ELITE2,
       content: <DetectorSettingsTabForm categoryKey={NpcType.ELITE2} />,
     },
     {
-      label: t("settings.npcTypes.hero"),
+      label: t("common:npcTypes.hero"),
       key: NpcType.HERO,
       content: <DetectorSettingsTabForm categoryKey={NpcType.HERO} />,
     },
     {
-      label: t("settings.npcTypes.colossus"),
+      label: t("common:npcTypes.colossus"),
       key: NpcType.COLOSSUS,
       content: <DetectorSettingsTabForm categoryKey={NpcType.COLOSSUS} />,
     },
     {
-      label: t("settings.npcTypes.titan"),
+      label: t("common:npcTypes.titan"),
       key: NpcType.TITAN,
       content: <DetectorSettingsTabForm categoryKey={NpcType.TITAN} />,
     },
@@ -73,9 +73,9 @@ export const DetectorSettingsTab = () => {
         <div className="ll:sticky ll:top-0 ll:z-10 ll:flex ll:h-0 ll:justify-end ll:pointer-events-none">
           <SettingsSyncStatus
             status={visibleStatus}
-            errorLabel={t("settings.common.syncStatus.error")}
-            savingLabel={t("settings.common.syncStatus.saving")}
-            syncingLabel={t("settings.common.syncStatus.syncing")}
+            errorLabel={t("common:syncStatus.error")}
+            savingLabel={t("common:syncStatus.saving")}
+            syncingLabel={t("common:syncStatus.syncing")}
           />
         </div>
         <Tabs defaultValue={NpcType.ELITE2} className="ll:w-full ll:gap-3">

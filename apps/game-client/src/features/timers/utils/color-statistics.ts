@@ -1,5 +1,5 @@
 import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
-import { DEFAULT_COLOR_NAMES } from "@/features/timers/constants/color-names";
+import { getDefaultColorName } from "@/features/timers/constants/color-names";
 import type { TimerWithTimeLeft } from "./timers-utils";
 
 type ColorStat = {
@@ -44,7 +44,7 @@ export const calculateColorStatistics = (
     stats[color] = {
       total: 0,
       active: 0,
-      name: defaultColorNames[color] || DEFAULT_COLOR_NAMES[color] || color,
+      name: defaultColorNames[color] || getDefaultColorName(color) || color,
       bgColor: overridden?.backgroundColor,
       borderColor: overridden?.borderColor,
     };

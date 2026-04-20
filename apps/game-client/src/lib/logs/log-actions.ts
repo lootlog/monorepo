@@ -4,6 +4,7 @@ import {
   LogEntryStatus,
   SerializableValue,
 } from "@/store/logs.store";
+import { getFixedT } from "@/i18n/get-fixed-t";
 
 type RecordValue = Record<string, unknown>;
 
@@ -121,10 +122,14 @@ export const getErrorStatusCode = (error: unknown): number | null => {
 };
 
 export const getLoggableErrorResponse = (error: unknown): SerializableValue => {
+  const t = getFixedT("common");
+
   if (isRecord(error) && isRecord(error.response)) {
     return serializeLogValue({
       message:
-        typeof error.message === "string" ? error.message : "Request failed",
+        typeof error.message === "string"
+          ? error.message
+          : t("errors.requestFailed"),
       data: "data" in error.response ? (error.response.data ?? null) : null,
     });
   }
@@ -139,6 +144,8 @@ export const getLoggableErrorResponse = (error: unknown): SerializableValue => {
 };
 
 export const getErrorMessage = (error: unknown): string => {
+  const t = getFixedT("common");
+
   if (isRecord(error) && isRecord(error.response)) {
     const responseData = error.response.data;
 
@@ -151,7 +158,7 @@ export const getErrorMessage = (error: unknown): string => {
     return error.message;
   }
 
-  return "Unknown error";
+  return t("errors.unknown");
 };
 
 export const getAggregateActionStatus = (

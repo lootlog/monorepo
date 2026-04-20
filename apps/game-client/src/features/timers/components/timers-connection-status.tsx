@@ -7,8 +7,10 @@ import {
 } from "@/components/ui/tooltip";
 import { useGuilds } from "@/hooks/api/use-guilds";
 import { useSocket } from "@/contexts/socket-context";
+import { useTranslation } from "react-i18next";
 
 export const TimersConnectionStatus: FC = () => {
+  const { t } = useTranslation("timers");
   const { connected, joined, joinedGuilds } = useSocket();
   const { data: guilds } = useGuilds();
 
@@ -31,7 +33,7 @@ export const TimersConnectionStatus: FC = () => {
       <TooltipContent>
         {connectedToServers ? (
           <div className="ll:flex ll:flex-col ll:gap-2">
-            <div>Połączono z serwerami:</div>
+            <div>{t("connection.connectedToServers")}</div>
             <div>
               {joinedGuilds.map((g) => (
                 <div key={g}>
@@ -41,7 +43,7 @@ export const TimersConnectionStatus: FC = () => {
             </div>
           </div>
         ) : (
-          <div>Nie połączono z żadnym serwerem</div>
+          <div>{t("connection.notConnected")}</div>
         )}
       </TooltipContent>
     </Tooltip>

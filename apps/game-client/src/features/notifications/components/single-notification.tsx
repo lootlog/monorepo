@@ -28,6 +28,7 @@ import { NpcType } from "@/hooks/api/use-npcs";
 import { SingleNotificationMessage } from "@/features/notifications/components/single-notification-message";
 import { SingleNotificationNpc } from "@/features/notifications/components/single-notification-npc";
 import { SingleNotificationPartyGathering } from "@/features/notifications/components/single-notification-party-gathering";
+import { useTranslation } from "react-i18next";
 
 const AUTO_HIDE_RING_PATH =
   "M 50 0 H 2 A 2 2 0 0 0 0 2 V 38 A 2 2 0 0 0 2 40 H 98 A 2 2 0 0 0 100 38 V 2 A 2 2 0 0 0 98 0 H 50";
@@ -116,6 +117,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   notification,
   showCloseButton = false,
 }) => {
+  const { t } = useTranslation("notifications");
   const removeNotification = useNotificationsStore(
     (state) => state.removeNotification,
   );
@@ -176,7 +178,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   const borderColor = getBorderColor(key, categorySettings?.highlight);
   const hasAutoHideRing = autoHideDurationMs > 0;
   const metaText = `${time}@${serverNames.join(", ")}${notification.world ? ` - ${notification.world}` : ""}`;
-  const senderName = guildMember?.name ?? "Nieznany";
+  const senderName = guildMember?.name ?? t("states.unknownSender");
 
   const heroLvl = Game.hero.lvl;
   const minLvl = isPartyGathering ? (notification.minLvl ?? 1) : 1;
@@ -201,7 +203,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   let actionLabel: string | null = null;
 
   if (showPartyGatheringAction) {
-    actionLabel = volunteer.isPending ? "..." : "Dołącz!";
+    actionLabel = volunteer.isPending ? "..." : t("actions.join");
   }
 
   useEffect(() => {
@@ -355,7 +357,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
           {showJoinAction ? (
             <Button
               variant="ghost"
-              aria-label="Idę"
+              aria-label={t("actions.joinAria")}
               className="ll:size-7 ll:px-0"
               onClick={handleVolunteer}
               disabled={volunteer.isPending}
@@ -376,7 +378,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
           {showCloseButton ? (
             <Button
               variant="destructive"
-              aria-label="Zamknij powiadomienie"
+              aria-label={t("actions.closeAria")}
               className="ll:size-7 ll:px-0"
               onClick={handleRemoveNotification}
             >

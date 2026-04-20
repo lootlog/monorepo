@@ -43,9 +43,7 @@ export const SoundFieldInput: FC<SoundFieldInputProps> = ({
               <Play className="ll:size-3" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>
-            {t("settings.common.actions.playSound")}
-          </TooltipContent>
+          <TooltipContent>{t("common:actions.playSound")}</TooltipContent>
         </Tooltip>
         <div className="ll:flex-1 ll:flex ll:flex-col ll:gap-1">
           <Input

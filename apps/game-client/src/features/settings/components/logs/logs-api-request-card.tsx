@@ -56,7 +56,7 @@ export const LogsApiRequestCard: FC<LogsApiRequestCardProps> = ({
           onClick={() => onCopy(request)}
           type="button"
         >
-          {t("settings.common.actions.copyRequest")}
+          {t("common:actions.copyRequest")}
         </Button>
       </div>
 

@@ -1,30 +1,31 @@
 import axios from "axios";
+import { getFixedT } from "@/i18n/get-fixed-t";
 
 type CreatePartyGatheringErrorResponse = {
   message?: string;
 };
 
-const DEFAULT_CREATE_PARTY_GATHERING_ERROR_MESSAGE =
-  "Nie udało się utworzyć ogłoszenia";
-
 export const getCreatePartyGatheringErrorMessage = (error: unknown): string => {
+  const t = getFixedT("partyFinder");
+  const defaultMessage = t("errors.defaultCreate");
+
   if (!axios.isAxiosError<CreatePartyGatheringErrorResponse>(error)) {
-    return DEFAULT_CREATE_PARTY_GATHERING_ERROR_MESSAGE;
+    return defaultMessage;
   }
 
   const responseStatus = error.response?.status;
 
   if (responseStatus === 403) {
-    return "Brak uprawnień do wysyłania ogłoszeń";
+    return t("errors.forbidden");
   }
 
   if (responseStatus === 429) {
-    return "Zbyt wiele prób. Spróbuj za chwilę.";
+    return t("errors.tooManyRequests");
   }
 
   if (responseStatus === 400) {
-    return error.response?.data?.message || "Nieprawidłowe dane";
+    return error.response?.data?.message || t("errors.invalidData");
   }
 
-  return DEFAULT_CREATE_PARTY_GATHERING_ERROR_MESSAGE;
+  return defaultMessage;
 };

@@ -1,5 +1,6 @@
 import type { FC } from "react";
 import type { PartyGatheringNotification } from "@/store/notifications.store";
+import { useTranslation } from "react-i18next";
 
 type SingleNotificationPartyGatheringProps = {
   notification: PartyGatheringNotification;
@@ -9,6 +10,7 @@ type SingleNotificationPartyGatheringProps = {
 export const SingleNotificationPartyGathering: FC<
   SingleNotificationPartyGatheringProps
 > = ({ notification, meetsLevelReq }) => {
+  const { t } = useTranslation("notifications");
   return (
     <div className="ll:flex ll:min-w-0 ll:flex-col">
       <div className="ll:flex ll:gap-1 ll:overflow-hidden ll:text-xs">
@@ -20,7 +22,7 @@ export const SingleNotificationPartyGathering: FC<
           {notification.character.prof})
         </span>
         <span className="ll:shrink-0 ll:text-[10px] ll:font-semibold ll:text-purple-300">
-          Szuka grupy
+          {t("content.lookingForParty")}
         </span>
       </div>
       {notification.description && (
@@ -36,7 +38,10 @@ export const SingleNotificationPartyGathering: FC<
               : "ll:text-[10px] ll:text-red-300"
           }
         >
-          Poziom: {notification.minLvl ?? 1} - {notification.maxLvl ?? 500}
+          {t("content.levelRange", {
+            min: notification.minLvl ?? 1,
+            max: notification.maxLvl ?? 500,
+          })}
         </p>
       )}
     </div>

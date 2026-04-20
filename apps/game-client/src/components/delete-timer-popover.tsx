@@ -15,6 +15,7 @@ import {
 import type { TimerWithTimeLeft } from "@/features/timers/utils/timers-utils";
 import { cn } from "@/lib/utils";
 import { Permission } from "@lootlog/types";
+import { useTranslation } from "react-i18next";
 
 type DeleteTimerPopoverProps = {
   timer: TimerWithTimeLeft;
@@ -31,6 +32,7 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
   timer,
   onDeleteTimer,
 }) => {
+  const { t } = useTranslation("timers");
   const [open, setOpen] = useState(false);
   const { data: guilds } = useGuilds();
 
@@ -82,7 +84,7 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
       <ContextMenuItem
         onClick={() => onDeleteTimer(guild.guildId, guild.timerKey)}
       >
-        Usuń timer
+        {t("contextMenu.delete")}
       </ContextMenuItem>
     );
   }
@@ -96,7 +98,7 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
             setOpen(true);
           }}
         >
-          Usuń timer
+          {t("contextMenu.delete")}
         </ContextMenuItem>
       </PopoverTrigger>
       <PopoverContent
@@ -116,7 +118,7 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
       >
         <div className="ll:flex ll:flex-col ll:gap-1">
           <p className="ll:text-xs ll:font-semibold ll:mb-1 ll:text-gray-400">
-            Wybierz serwer do usunięcia timera:
+            {t("contextMenu.deleteChooseGuild")}
           </p>
           {guildsWithPermissions.map((guild) => {
             const guildData = guilds?.find((g) => g.id === guild.guildId);

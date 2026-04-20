@@ -73,8 +73,8 @@ export const ColorEditForm: FC<ColorEditFormProps> = ({
         className="ll:h-6 ll:w-full ll:items-center ll:justify-center ll:mb-2"
       >
         <span className="ll:text-[10px] ll:text-white ll:whitespace-nowrap ll:flex ll:justify-between ll:w-full ll:px-1 ll:items-center ll:h-full">
-          <span>{t("settings.common.preview.name")}</span>
-          <span>{t("settings.common.preview.time")}</span>
+          <span>{t("common:preview.name")}</span>
+          <span>{t("common:preview.time")}</span>
         </span>
       </Tile>
       <div className="ll:flex ll:gap-1">

@@ -6,6 +6,7 @@ import type { GuildMember } from "@/hooks/api/use-guild-members";
 import { cn } from "@/lib/utils";
 import type { FC } from "react";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
+import { getFixedT } from "@/i18n/get-fixed-t";
 
 type OnlinePlayersListEntryProps = {
   presences: PlayerPresence[];
@@ -13,15 +14,17 @@ type OnlinePlayersListEntryProps = {
 };
 
 const getCharacterData = (presence: PlayerPresence): MargonemCharacter => {
+  const t = getFixedT("common");
+
   return {
     id: presence.player?.characterId
       ? Number.parseInt(presence.player?.characterId, 10)
       : 0,
-    nick: presence.player?.name || "Unknown",
+    nick: presence.player?.name || t("states.unknownNeutral"),
     icon: presence.player?.icon || "",
     lvl: presence.player?.lvl || 0,
-    prof: presence.player?.prof || "Unknown",
-    world: presence.player?.world || "Unknown",
+    prof: presence.player?.prof || t("states.unknownNeutral"),
+    world: presence.player?.world || t("states.unknownNeutral"),
   };
 };
 
