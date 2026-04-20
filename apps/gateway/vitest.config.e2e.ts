@@ -1,20 +1,17 @@
-import swc from "unplugin-swc";
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
-import {
-  createNestVitestConfig,
-  nestSwcPluginOptions,
-} from "../../tools/vitest/create-nest-vitest-config";
-
-const swcPluginOptions = nestSwcPluginOptions satisfies Parameters<
-  typeof swc.vite
->[0];
 
 export default defineConfig({
-  ...createNestVitestConfig({
-    rootDir: __dirname,
+  resolve: {
+    alias: {
+      src: fileURLToPath(new URL("./src", import.meta.url)),
+    },
+  },
+  test: {
     include: ["test/**/*.e2e-spec.ts"],
+    environment: "node",
+    globals: true,
     fileParallelism: false,
     setupFiles: ["./vitest.setup.ts"],
-  }),
-  plugins: [swc.vite(swcPluginOptions)],
+  },
 });

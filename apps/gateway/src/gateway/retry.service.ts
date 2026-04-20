@@ -1,6 +1,6 @@
-import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import { Injectable, Logger } from "@nestjs/common";
-import { GatewayConfig } from "./constants/gateway-config.constant";
+import { GatewayConfig } from "./constants/gateway-config.constant.js";
+import { DEAD_LETTER_EXCHANGE_NAME } from "../config/rabbitmq.config.js";
+import type { AmqpPublisher } from "./rabbitmq/amqp-publisher.js";
 
 interface RetryConfig {
   maxRetries?: number;
@@ -9,13 +9,13 @@ interface RetryConfig {
   dlqExchange?: string;
 }
 
-const DEAD_LETTER_EXCHANGE_NAME = "dlx";
-
-@Injectable()
 export class RetryService {
-  private readonly logger = new Logger(RetryService.name);
-
-  constructor(private readonly amqp: AmqpConnection) {}
+  constructor(
+    private readonly amqpPublisher: AmqpPublisher,
+    private readonly logger: {
+      warn(message: string, meta?: Record<string, unknown>): void;
+    },
+  ) {}
 
   shouldRetry(
     headers: Record<string, unknown>,
@@ -46,9 +46,9 @@ export class RetryService {
   ): Promise<void> {
     const dlqExchange = config.dlqExchange ?? DEAD_LETTER_EXCHANGE_NAME;
 
-    this.logger.warn(`Sending message to DLQ: ${dlqRoutingKey}`);
+    this.logger.warn("Sending message to DLQ", { dlqRoutingKey });
 
-    await this.amqp.publish(dlqExchange, dlqRoutingKey, message, {
+    await this.amqpPublisher.publish(dlqExchange, dlqRoutingKey, message, {
       headers: {
         ...headers,
         "x-final-attempt": true,
@@ -67,9 +67,10 @@ export class RetryService {
     const maxRetries = config.maxRetries ?? GatewayConfig.DEFAULT_MAX_RETRIES;
 
     if (!this.shouldRetry(headers, maxRetries)) {
-      this.logger.warn(
-        `Max retries (${maxRetries}) exceeded for ${identifier}, sending to DLQ`,
-      );
+      this.logger.warn("Retry limit exceeded, forwarding message to DLQ", {
+        identifier,
+        maxRetries,
+      });
       await this.sendToDlq(data, dlqRoutingKey, headers, config);
       return false;
     }

@@ -1,5 +1,5 @@
 import { Permission } from "@lootlog/types";
-import type { GuildRole } from "src/guilds/types/guild.types";
+import type { GuildRole } from "../types/guild.types.js";
 
 const ADMINISTRATIVE_PERMISSIONS = [
   Permission.ADMIN,

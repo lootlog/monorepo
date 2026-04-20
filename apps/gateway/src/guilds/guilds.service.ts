@@ -1,37 +1,33 @@
-import { HttpService } from "@nestjs/axios";
-import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { RedisService } from "@lootlog/nest-shared";
 import type {
-  UserGuildData,
-  GetUserGuildsOptions,
   CachedGuildData,
-} from "src/guilds/types/guild.types";
-import {
-  getUserGuildsCacheKey,
-  CACHE_TTL,
-} from "src/guilds/utils/cache-keys.util";
-import { ConfigKey } from "src/config/config-key.enum";
-import type { ApiConfig } from "src/config/api.config";
-import { firstValueFrom } from "rxjs";
+  GetUserGuildsOptions,
+  UserGuildData,
+} from "./types/guild.types.js";
+import { CACHE_TTL, getUserGuildsCacheKey } from "./utils/cache-keys.util.js";
+import { RedisStore } from "../lib/redis/redis-store.js";
 
 const MAX_RETRIES = 3;
 const RETRY_DELAYS = [1000, 2000, 4000];
 const REQUEST_TIMEOUT = 10000;
 
-@Injectable()
 export class GuildsService {
-  private readonly logger = new Logger(GuildsService.name);
   private pendingRequests = new Map<string, Promise<UserGuildData[]>>();
-  private readonly apiUrl: string;
 
   constructor(
-    private readonly httpService: HttpService,
-    private readonly redis: RedisService,
-    private readonly configService: ConfigService,
-  ) {
-    const apiConfig = this.configService.get<ApiConfig>(ConfigKey.API);
-    this.apiUrl = apiConfig.url;
+    private readonly apiUrl: string,
+    private readonly redis: RedisStore,
+    private readonly logger: {
+      error(message: string, meta?: Record<string, unknown>): void;
+      warn(message: string, meta?: Record<string, unknown>): void;
+    },
+  ) {}
+
+  private getErrorMessage(error: unknown) {
+    if (error instanceof Error) {
+      return error.message;
+    }
+
+    return String(error);
   }
 
   async getUserGuilds(options: GetUserGuildsOptions): Promise<UserGuildData[]> {
@@ -77,18 +73,23 @@ export class GuildsService {
       return guilds;
     } catch (error) {
       const duration = Date.now() - startTime;
-      this.logger.error(
-        `Failed to fetch guilds for ${discordId} after ${duration}ms: ${error.message}`,
-      );
+      this.logger.error("Failed to fetch guilds", {
+        discordId,
+        durationMs: duration,
+        error: this.getErrorMessage(error),
+      });
 
       const staleCache = await this.getStaleCache(cacheKey);
       if (staleCache) {
         const age = Math.floor((Date.now() - staleCache.cachedAt) / 1000);
-        this.logger.warn(`Using stale cache for ${discordId} (${age}s old)`);
+        this.logger.warn("Using stale guild cache fallback", {
+          discordId,
+          ageSeconds: age,
+        });
         return staleCache.guilds;
       }
 
-      this.logger.error(`No fallback available for ${discordId}`);
+      this.logger.error("No guild fallback available", { discordId });
       return [];
     }
   }
@@ -98,17 +99,29 @@ export class GuildsService {
     retryCount = 0,
   ): Promise<UserGuildData[]> {
     const { discordId, userId } = options;
+    const url = new URL("/internal/guilds/user-permissions", this.apiUrl);
+    url.searchParams.set("discordId", discordId);
+    url.searchParams.set("userId", userId);
 
     try {
-      const url = `${this.apiUrl}/internal/guilds/user-permissions`;
-      const response = await firstValueFrom(
-        this.httpService.get<UserGuildData[]>(url, {
-          params: { discordId, userId },
-          timeout: REQUEST_TIMEOUT,
-        }),
-      );
+      const abortController = new AbortController();
+      const timeoutId = setTimeout(() => {
+        abortController.abort();
+      }, REQUEST_TIMEOUT);
 
-      return response.data as UserGuildData[];
+      try {
+        const response = await fetch(url, {
+          signal: abortController.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Guild API responded with status ${response.status}`);
+        }
+
+        return (await response.json()) as UserGuildData[];
+      } finally {
+        clearTimeout(timeoutId);
+      }
     } catch (error) {
       if (retryCount < MAX_RETRIES) {
         const delay = RETRY_DELAYS[retryCount];
@@ -118,14 +131,6 @@ export class GuildsService {
 
       throw error;
     }
-  }
-
-  private async refreshInBackground(
-    options: GetUserGuildsOptions,
-    cacheKey: string,
-  ): Promise<void> {
-    const guilds = await this.fetchFromHttpWithRetry(options);
-    await this.cacheGuilds(cacheKey, guilds);
   }
 
   private async getCachedGuilds(
@@ -144,7 +149,9 @@ export class GuildsService {
 
       return data;
     } catch (error) {
-      this.logger.error(`Cache read error: ${error.message}`);
+      this.logger.error("Guild cache read error", {
+        error: this.getErrorMessage(error),
+      });
       return null;
     }
   }
@@ -162,15 +169,17 @@ export class GuildsService {
       // Reject stale cache older than MAX_STALE_CACHE_AGE (5 minutes)
       // This prevents removed users from retaining access via ancient cache
       if (age > CACHE_TTL.MAX_STALE_CACHE_AGE * 1000) {
-        this.logger.warn(
-          `Stale cache too old (${Math.floor(age / 1000)}s), rejecting`,
-        );
+        this.logger.warn("Stale guild cache is too old", {
+          ageSeconds: Math.floor(age / 1000),
+        });
         return null;
       }
 
       return data;
     } catch (error) {
-      this.logger.error(`Stale cache read error: ${error.message}`);
+      this.logger.error("Stale guild cache read error", {
+        error: this.getErrorMessage(error),
+      });
       return null;
     }
   }
@@ -190,7 +199,9 @@ export class GuildsService {
         CACHE_TTL.USER_GUILDS * 2,
       );
     } catch (error) {
-      this.logger.error(`Cache write error: ${error.message}`);
+      this.logger.error("Guild cache write error", {
+        error: this.getErrorMessage(error),
+      });
     }
   }
 
@@ -202,7 +213,11 @@ export class GuildsService {
     try {
       await this.redis.del(cacheKey);
     } catch (error) {
-      this.logger.error(`Cache invalidation error: ${error.message}`);
+      this.logger.error("Guild cache invalidation error", {
+        discordId,
+        userId,
+        error: this.getErrorMessage(error),
+      });
     }
   }
 

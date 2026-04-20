@@ -1,7 +1,6 @@
 import { z } from "zod";
-import { createZodDto } from "nestjs-zod";
 
-const AddMemberRoleSchema = z.object({
+export const AddMemberRoleSchema = z.object({
   id: z.string(),
   discordId: z.string(),
   userId: z.string(),
@@ -9,4 +8,4 @@ const AddMemberRoleSchema = z.object({
   roleId: z.string(),
 });
 
-export class AddMemberRoleDto extends createZodDto(AddMemberRoleSchema) {}
+export type AddMemberRoleDto = z.infer<typeof AddMemberRoleSchema>;

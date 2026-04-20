@@ -1,7 +1,6 @@
 import { z } from "zod";
-import { createZodDto } from "nestjs-zod";
 
-const ReservationRecordSchema = z.object({
+export const ReservationRecordSchema = z.object({
   id: z.number(),
   reservationId: z.string(),
   createdDate: z.string(),
@@ -10,24 +9,22 @@ const ReservationRecordSchema = z.object({
   createdBy: z.string(),
 });
 
-export class ReservationRecordDto extends createZodDto(
-  ReservationRecordSchema,
-) {}
+export type ReservationRecordDto = z.infer<typeof ReservationRecordSchema>;
 
-const ReservationCreateEventSchema = z.object({
+export const ReservationCreateEventSchema = z.object({
   guildId: z.string(),
   reservation: ReservationRecordSchema,
 });
 
-export class ReservationCreateEventDto extends createZodDto(
-  ReservationCreateEventSchema,
-) {}
+export type ReservationCreateEventDto = z.infer<
+  typeof ReservationCreateEventSchema
+>;
 
-const ReservationDeleteEventSchema = z.object({
+export const ReservationDeleteEventSchema = z.object({
   guildId: z.string(),
   reservation: ReservationRecordSchema,
 });
 
-export class ReservationDeleteEventDto extends createZodDto(
-  ReservationDeleteEventSchema,
-) {}
+export type ReservationDeleteEventDto = z.infer<
+  typeof ReservationDeleteEventSchema
+>;

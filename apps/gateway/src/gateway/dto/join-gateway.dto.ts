@@ -1,13 +1,12 @@
 import { z } from "zod";
-import { createZodDto } from "nestjs-zod";
 
-const SocketUserPlayerLocationSchema = z.object({
+export const SocketUserPlayerLocationSchema = z.object({
   x: z.number(),
   y: z.number(),
   map: z.string(),
 });
 
-const SocketUserPlayerSchema = z.object({
+export const SocketUserPlayerSchema = z.object({
   world: z.string(),
   name: z.string(),
   characterId: z.string(),
@@ -20,8 +19,8 @@ const SocketUserPlayerSchema = z.object({
   clanId: z.number().optional(),
 });
 
-const JoinGatewaySchema = z.object({
+export const JoinGatewaySchema = z.object({
   data: SocketUserPlayerSchema,
 });
 
-export class JoinGatewayDto extends createZodDto(JoinGatewaySchema) {}
+export type JoinGatewayDto = z.infer<typeof JoinGatewaySchema>;

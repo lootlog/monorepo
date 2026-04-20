@@ -1,7 +1,6 @@
 import { z } from "zod";
-import { createZodDto } from "nestjs-zod";
 
-const NpcSchema = z.object({
+export const NpcSchema = z.object({
   id: z.number(),
   name: z.string(),
   lvl: z.number(),
@@ -18,10 +17,10 @@ const NpcSchema = z.object({
   lootId: z.number().nullable(),
 });
 
-const SendNotificationSchema = z.object({
+export const SendNotificationSchema = z.object({
   guildId: z.string(),
   npc: NpcSchema,
   isGatheringParty: z.boolean().optional(),
 });
 
-export class SendNotificationDto extends createZodDto(SendNotificationSchema) {}
+export type SendNotificationDto = z.infer<typeof SendNotificationSchema>;

@@ -1,7 +1,6 @@
 import { z } from "zod";
-import { createZodDto } from "nestjs-zod";
 
-const RefreshJobUpdateSchema = z.object({
+export const RefreshJobUpdateSchema = z.object({
   jobId: z.number(),
   guildId: z.string(),
   status: z.enum(["PENDING", "PROCESSING", "COMPLETED", "FAILED"]),
@@ -11,4 +10,4 @@ const RefreshJobUpdateSchema = z.object({
   completedAt: z.coerce.date().optional(),
 });
 
-export class RefreshJobUpdateDto extends createZodDto(RefreshJobUpdateSchema) {}
+export type RefreshJobUpdateDto = z.infer<typeof RefreshJobUpdateSchema>;

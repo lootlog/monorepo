@@ -1,24 +1,13 @@
-import { Test, TestingModule } from "@nestjs/testing";
-import { INestApplication } from "@nestjs/common";
-import request from "supertest";
-import { AppModule } from "./../src/app.module";
+import { describe, expect, it } from "vitest";
+import { createApp } from "../src/app.js";
 
-describe("AppController (e2e)", () => {
-  let app: INestApplication;
+describe("Gateway e2e", () => {
+  it("returns OK from /healthz", async () => {
+    const app = createApp();
 
-  beforeEach(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
+    const response = await app.request("http://localhost/healthz");
 
-    app = moduleFixture.createNestApplication();
-    await app.init();
-  });
-
-  it("/ (GET)", () => {
-    return request(app.getHttpServer())
-      .get("/")
-      .expect(200)
-      .expect("Hello World!");
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe("OK");
   });
 });

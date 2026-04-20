@@ -1,27 +1,21 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { CreateTimerDto } from "src/gateway/dto/create-timer.dto";
-import type { DeleteTimerDto } from "src/gateway/dto/delete-timer.dto";
-import type { RefreshJobUpdateDto } from "src/gateway/dto/refresh-job-update.dto";
+import type { CreateTimerDto } from "./dto/create-timer.dto.js";
+import type { DeleteTimerDto } from "./dto/delete-timer.dto.js";
+import type { RefreshJobUpdateDto } from "./dto/refresh-job-update.dto.js";
 import type {
   ReservationCreateEventDto,
   ReservationDeleteEventDto,
-} from "src/gateway/dto/reservation-event.dto";
-import { MessageType, SendMessageDto } from "src/gateway/dto/send-message.dto";
-import { SendNotificationDto } from "src/gateway/dto/send-notification.dto";
-import type { SendPartyGatheringDto } from "src/gateway/dto/send-party-gathering.dto";
-import type { VolunteerNotificationDto } from "src/gateway/dto/volunteer-notification.dto";
-import { GatewayEvent } from "src/gateway/enums/gateway-event.enum";
-import { Gateway } from "src/gateway/gateway";
-import { isOwnerOrAdminFromRoles } from "src/guilds/utils/is-administrative-user";
-import { RedisService } from "@lootlog/nest-shared";
-import { GuildsService } from "src/guilds/guilds.service";
-import type { UserGuildData } from "src/guilds/types/guild.types";
+} from "./dto/reservation-event.dto.js";
+import { MessageType, type SendMessageDto } from "./dto/send-message.dto.js";
+import type { SendNotificationDto } from "./dto/send-notification.dto.js";
+import type { SendPartyGatheringDto } from "./dto/send-party-gathering.dto.js";
+import type { VolunteerNotificationDto } from "./dto/volunteer-notification.dto.js";
+import { GatewayEvent } from "./enums/gateway-event.enum.js";
 import type {
   EventHeroKilledPayload,
-  EventRankingUpdatePayload,
   EventRespawnWindowPayload,
   EventMapStatusUpdatePayload,
-} from "src/gateway/types/margo-event.types";
+  EventRankingUpdatePayload,
+} from "./types/margo-event.types.js";
 import {
   buildRoomName,
   calculateUserRooms,
@@ -29,7 +23,13 @@ import {
   hasFeatureRoomAccess,
   type FeatureName,
   type TierName,
-} from "src/gateway/utils/room-utils";
+} from "./utils/room-utils.js";
+import { SocketServerRef } from "./socket-server-ref.js";
+import { PresenceService } from "./services/presence.service.js";
+import { GuildsService } from "../guilds/guilds.service.js";
+import type { UserGuildData } from "../guilds/types/guild.types.js";
+import { isOwnerOrAdminFromRoles } from "../guilds/utils/is-administrative-user.js";
+import { RedisStore } from "../lib/redis/redis-store.js";
 
 type FeatureRouting = {
   tier: TierName;
@@ -51,17 +51,18 @@ type RoutedChatMessageDelete = {
   routing: FeatureRouting;
 };
 
-@Injectable()
 export class GatewayService {
-  private readonly logger = new Logger(GatewayService.name);
-
   constructor(
-    private readonly gateway: Gateway,
-    private readonly redis: RedisService,
+    private readonly socketServerRef: SocketServerRef,
+    private readonly redisStore: RedisStore,
     private readonly guildsService: GuildsService,
+    private readonly presenceService: PresenceService,
+    private readonly logger: {
+      error(message: string, meta?: Record<string, unknown>): void;
+    },
   ) {}
 
-  private emitToFeatureRoom({
+  private async emitToFeatureRoom({
     guildId,
     feature,
     tier,
@@ -77,42 +78,39 @@ export class GatewayService {
     npcLevel?: number;
   }) {
     const room = buildRoomName(guildId, feature, tier);
+    const gatewayNamespace = this.socketServerRef.get();
 
     if (npcLevel !== undefined) {
-      // Level filtering required - fetch sockets and filter
-      this.gateway.server
-        .in(room)
-        .fetchSockets()
-        .then((sockets) => {
-          sockets.forEach((socket) => {
-            const guildData = socket.data.guilds?.find(
-              (g: UserGuildData) => g.guild.id === guildId,
-            );
-            if (!guildData) return;
+      const sockets = await gatewayNamespace.in(room).fetchSockets();
 
-            // Owner/Admin bypass level checks
-            const isOwner = guildData.guild.ownerId === socket.data.discordId;
-            if (isOwner || isOwnerOrAdminFromRoles(guildData.roles)) {
-              socket.emit(event, data);
-              return;
-            }
+      for (const socket of sockets) {
+        const guildData = socket.data.guilds?.find(
+          (guild: UserGuildData) => guild.guild.id === guildId,
+        );
+        if (!guildData) {
+          continue;
+        }
 
-            if (
-              hasFeatureRoomAccess(guildData.roles, feature, tier, npcLevel)
-            ) {
-              socket.emit(event, data);
-            }
-          });
-        });
-    } else {
-      // No level filtering - direct room broadcast
-      this.gateway.server.to(room).emit(event, data);
+        const isOwner = guildData.guild.ownerId === socket.data.discordId;
+        if (isOwner || isOwnerOrAdminFromRoles(guildData.roles)) {
+          socket.emit(event, data);
+          continue;
+        }
+
+        if (hasFeatureRoomAccess(guildData.roles, feature, tier, npcLevel)) {
+          socket.emit(event, data);
+        }
+      }
+
+      return;
     }
+
+    gatewayNamespace.to(room).emit(event, data);
   }
 
-  handleGuildsTimerUpdate(data: CreateTimerDto) {
+  async handleGuildsTimerUpdate(data: CreateTimerDto) {
     const routing = this.getNpcFeatureRouting(data.npc);
-    this.emitToFeatureRoom({
+    await this.emitToFeatureRoom({
       guildId: data.guildId,
       feature: "timers",
       tier: routing.tier,
@@ -122,10 +120,10 @@ export class GatewayService {
     });
   }
 
-  handleGuildsTimerDelete(data: RoutedDeleteTimerDto) {
+  async handleGuildsTimerDelete(data: RoutedDeleteTimerDto) {
     const { routing, ...payload } = data;
 
-    this.emitToFeatureRoom({
+    await this.emitToFeatureRoom({
       guildId: payload.guildId,
       feature: "timers",
       tier: routing.tier,
@@ -137,21 +135,23 @@ export class GatewayService {
 
   handleGuildsReservationCreate(data: ReservationCreateEventDto) {
     const eventsRoom = buildRoomName(data.guildId, "events");
-    this.gateway.server
+    this.socketServerRef
+      .get()
       .to(eventsRoom)
       .emit(GatewayEvent.RESERVATIONS_CREATE, data);
   }
 
   handleGuildsReservationDelete(data: ReservationDeleteEventDto) {
     const eventsRoom = buildRoomName(data.guildId, "events");
-    this.gateway.server
+    this.socketServerRef
+      .get()
       .to(eventsRoom)
       .emit(GatewayEvent.RESERVATIONS_DELETE, data);
   }
 
-  handleGuildMessageSend(data: SendMessageDto) {
+  async handleGuildMessageSend(data: SendMessageDto) {
     const routing = this.getChatMessageRouting(data);
-    this.emitToFeatureRoom({
+    await this.emitToFeatureRoom({
       guildId: data.guildId,
       feature: "chat",
       tier: routing.tier,
@@ -161,9 +161,9 @@ export class GatewayService {
     });
   }
 
-  handleGuildNotificationSend(data: SendNotificationDto) {
+  async handleGuildNotificationSend(data: SendNotificationDto) {
     const routing = this.getNpcFeatureRouting(data.npc);
-    this.emitToFeatureRoom({
+    await this.emitToFeatureRoom({
       guildId: data.guildId,
       feature: "notifications",
       tier: routing.tier,
@@ -174,13 +174,13 @@ export class GatewayService {
   }
 
   async invalidatePlayerCache(discordId: string) {
-    await this.redis.del(discordId);
+    await this.redisStore.del(discordId);
   }
 
   handleMembersRefreshJobUpdate(data: RefreshJobUpdateDto) {
-    // Emit directly to admin room - only owner/admin are in this room
     const adminRoom = buildRoomName(data.guildId, "admin");
-    this.gateway.server
+    this.socketServerRef
+      .get()
       .to(adminRoom)
       .emit(GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE, data);
   }
@@ -196,7 +196,7 @@ export class GatewayService {
         userId,
       });
 
-      const sockets = await this.gateway.server.fetchSockets();
+      const sockets = await this.socketServerRef.get().fetchSockets();
       const userSockets = sockets.filter(
         (socket) => socket.data.discordId === discordId,
       );
@@ -239,54 +239,64 @@ export class GatewayService {
         });
       }
     } catch (error) {
-      this.logger.error(
-        `Failed to rebalance socket rooms for user ${discordId}: ${error.message}`,
-        error.stack,
-      );
+      this.logger.error("Failed to rebalance socket rooms", {
+        discordId,
+        userId,
+        error,
+      });
     }
   }
 
   handleEventMapStatusUpdate(data: EventMapStatusUpdatePayload) {
     const eventsRoom = buildRoomName(data.guildId, "events");
-    this.gateway.server
+    this.socketServerRef
+      .get()
       .to(eventsRoom)
       .emit(GatewayEvent.EVENT_MAP_STATUS_UPDATE, data);
   }
 
   async checkPresenceForMap(guildId: string, mapName: string): Promise<void> {
-    await this.gateway.checkPresenceForMap(guildId, mapName);
+    await this.presenceService.checkPresenceForMap(
+      this.socketServerRef.get(),
+      guildId,
+      mapName,
+    );
   }
 
   handleEventHeroKilled(data: EventHeroKilledPayload) {
     const eventsRoom = buildRoomName(data.guildId, "events");
-    this.gateway.server
+    this.socketServerRef
+      .get()
       .to(eventsRoom)
       .emit(GatewayEvent.EVENT_HERO_KILLED, data);
   }
 
   handleEventRankingUpdate(data: EventRankingUpdatePayload) {
     const eventsRoom = buildRoomName(data.guildId, "events");
-    this.gateway.server
+    this.socketServerRef
+      .get()
       .to(eventsRoom)
       .emit(GatewayEvent.EVENT_RANKING_UPDATE, data);
   }
 
   handleEventRespawnWindowOpened(data: EventRespawnWindowPayload) {
     const eventsRoom = buildRoomName(data.guildId, "events");
-    this.gateway.server
+    this.socketServerRef
+      .get()
       .to(eventsRoom)
       .emit(GatewayEvent.EVENT_RESPAWN_WINDOW_OPENED, data);
   }
 
   handleEventRespawnWindowClosed(data: EventRespawnWindowPayload) {
     const eventsRoom = buildRoomName(data.guildId, "events");
-    this.gateway.server
+    this.socketServerRef
+      .get()
       .to(eventsRoom)
       .emit(GatewayEvent.EVENT_RESPAWN_WINDOW_CLOSED, data);
   }
 
   async handleVolunteerNotification(data: VolunteerNotificationDto) {
-    const sockets = await this.gateway.server.fetchSockets();
+    const sockets = await this.socketServerRef.get().fetchSockets();
     const targetSockets = sockets.filter(
       (socket) => socket.data.discordId === data.targetDiscordId,
     );
@@ -309,7 +319,10 @@ export class GatewayService {
       buildRoomName(data.guildId, "notifications", "titans"),
       buildRoomName(data.guildId, "notifications", "heroes"),
     ];
-    this.gateway.server.to(rooms).emit(GatewayEvent.PARTY_GATHERING_SEND, data);
+    this.socketServerRef
+      .get()
+      .to(rooms)
+      .emit(GatewayEvent.PARTY_GATHERING_SEND, data);
   }
 
   handlePartyGatheringCancel(data: {
@@ -321,15 +334,18 @@ export class GatewayService {
       buildRoomName(data.guildId, "notifications", "titans"),
       buildRoomName(data.guildId, "notifications", "heroes"),
     ];
-    this.gateway.server.to(rooms).emit(GatewayEvent.PARTY_GATHERING_CANCEL, {
-      notificationId: data.notificationId,
-    });
+    this.socketServerRef
+      .get()
+      .to(rooms)
+      .emit(GatewayEvent.PARTY_GATHERING_CANCEL, {
+        notificationId: data.notificationId,
+      });
   }
 
-  handleChatMessageUpdate(data: RoutedChatMessageUpdate) {
+  async handleChatMessageUpdate(data: RoutedChatMessageUpdate) {
     const { routing, ...payload } = data;
 
-    this.emitToFeatureRoom({
+    await this.emitToFeatureRoom({
       guildId: payload.guildId,
       feature: "chat",
       tier: routing.tier,
@@ -343,10 +359,10 @@ export class GatewayService {
     });
   }
 
-  handleChatMessageDelete(data: RoutedChatMessageDelete) {
+  async handleChatMessageDelete(data: RoutedChatMessageDelete) {
     const { routing, ...payload } = data;
 
-    this.emitToFeatureRoom({
+    await this.emitToFeatureRoom({
       guildId: payload.guildId,
       feature: "chat",
       tier: routing.tier,

@@ -1,18 +1,19 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import { ActivityType } from "src/gateway/enums/activity-type.enum";
-import { ActivitySource } from "src/gateway/enums/activity-source.enum";
-import { Platform } from "src/gateway/enums/platform.enum";
-import { RoutingKey } from "src/gateway/enums/routing-key.enum";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import type { Socket } from "src/gateway/types/socket-user.type";
-import type { UserGuildData } from "src/guilds/types/guild.types";
+import { DEFAULT_EXCHANGE_NAME } from "../../config/rabbitmq.config.js";
+import { ActivitySource } from "../enums/activity-source.enum.js";
+import { ActivityType } from "../enums/activity-type.enum.js";
+import { Platform } from "../enums/platform.enum.js";
+import { RoutingKey } from "../enums/routing-key.enum.js";
+import type { Socket } from "../types/socket-user.type.js";
+import type { AmqpPublisher } from "../rabbitmq/amqp-publisher.js";
+import type { UserGuildData } from "../../guilds/types/guild.types.js";
 
-@Injectable()
 export class ActivityService {
-  private readonly logger = new Logger(ActivityService.name);
-
-  constructor(private amqpConnection: AmqpConnection) {}
+  constructor(
+    private readonly amqpPublisher: AmqpPublisher,
+    private readonly logger: {
+      error(message: string, meta?: Record<string, unknown>): void;
+    },
+  ) {}
 
   async publishActivityEvent(
     type: ActivityType.CONNECT_EVENT | ActivityType.DISCONNECT_EVENT,
@@ -44,16 +45,18 @@ export class ActivityService {
         });
 
         try {
-          await this.amqpConnection.publish(
+          await this.amqpPublisher.publish(
             DEFAULT_EXCHANGE_NAME,
             RoutingKey.ACTIVITY_LOG_CREATE,
             payload,
           );
         } catch (error) {
-          this.logger.error(
-            `Failed to publish ${type} for ${discordId} in guild ${guild.id}: ${error.message}`,
-            error.stack,
-          );
+          this.logger.error("Failed to publish activity event", {
+            type,
+            discordId,
+            guildId: guild.id,
+            error,
+          });
         }
       }),
     );

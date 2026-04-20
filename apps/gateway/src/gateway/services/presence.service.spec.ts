@@ -1,6 +1,6 @@
-import { buildRoomName } from "src/gateway/utils/room-utils";
-import type { Socket } from "src/gateway/types/socket-user.type";
-import { PresenceService } from "./presence.service";
+import { buildRoomName } from "../utils/room-utils.js";
+import type { Socket } from "../types/socket-user.type.js";
+import { PresenceService } from "./presence.service.js";
 
 const createPresenceSocket = (
   discordId: string,
@@ -29,6 +29,13 @@ const createPresenceSocket = (
 
 describe("PresenceService", () => {
   let service: PresenceService;
+  const publisher = {
+    publish: vi.fn().mockResolvedValue(undefined),
+  };
+  const logger = {
+    error: vi.fn(),
+    warn: vi.fn(),
+  };
 
   const mockFetchSockets = vi.fn();
   const mockServer = {
@@ -39,7 +46,7 @@ describe("PresenceService", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    service = new PresenceService({} as never);
+    service = new PresenceService(publisher, logger);
   });
 
   describe("fetchGuildPresence", () => {

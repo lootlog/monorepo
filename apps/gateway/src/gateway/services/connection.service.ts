@@ -1,7 +1,7 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { Platform } from "src/gateway/enums/platform.enum";
-import { GAME_URL_REGEX } from "src/gateway/constants/game-url-regex.constant";
-import type { Socket, SocketUser } from "src/gateway/types/socket-user.type";
+import type { IncomingMessage } from "node:http";
+import { GAME_URL_REGEX } from "../constants/game-url-regex.constant.js";
+import { Platform } from "../enums/platform.enum.js";
+import type { SocketUser } from "../types/socket-user.type.js";
 
 interface ConnectionMetadata {
   discordId: string | null;
@@ -9,11 +9,14 @@ interface ConnectionMetadata {
   platform: Platform;
 }
 
-@Injectable()
 export class ConnectionService {
-  private readonly logger = new Logger(ConnectionService.name);
+  constructor(
+    private readonly logger: {
+      warn(message: string, meta?: Record<string, unknown>): void;
+    },
+  ) {}
 
-  getConnectionMetadata(request: Socket["request"]): ConnectionMetadata {
+  getConnectionMetadata(request: IncomingMessage): ConnectionMetadata {
     const discordId = (request.headers["x-auth-discord-id"] as string) || null;
     const userId = (request.headers["x-auth-user-id"] as string) || null;
     const platform = this.determineUserPlatform(request.headers.origin);
@@ -47,12 +50,12 @@ export class ConnectionService {
     platform: Platform,
   ): { valid: boolean; reason?: string } {
     if (!discordId) {
-      this.logger.warn("No discordId found in headers, disconnecting client");
+      this.logger.warn("Rejected socket connection without discordId");
       return { valid: false, reason: "No discordId" };
     }
 
     if (platform === Platform.UNKNOWN) {
-      this.logger.warn("Unrecognized platform, disconnecting...");
+      this.logger.warn("Rejected socket connection from unknown platform");
       return { valid: false, reason: "Unknown platform" };
     }
 

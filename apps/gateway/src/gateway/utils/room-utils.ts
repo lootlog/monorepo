@@ -4,9 +4,12 @@ import {
   type NpcRoutingData,
   type NpcRoutingTier,
 } from "@lootlog/types";
-import type { UserGuildData, GuildRole } from "src/guilds/types/guild.types";
-import { isOwnerOrAdminFromRoles } from "src/guilds/utils/is-administrative-user";
-import { Platform } from "src/gateway/enums/platform.enum";
+import type {
+  GuildRole,
+  UserGuildData,
+} from "../../guilds/types/guild.types.js";
+import { isOwnerOrAdminFromRoles } from "../../guilds/utils/is-administrative-user.js";
+import { Platform } from "../enums/platform.enum.js";
 
 export type FeatureName = "chat" | "timers" | "notifications";
 export type TierName = NpcRoutingTier;

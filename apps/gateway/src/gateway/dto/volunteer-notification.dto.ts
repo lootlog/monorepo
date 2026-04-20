@@ -1,14 +1,13 @@
 import { z } from "zod";
-import { createZodDto } from "nestjs-zod";
 
-const ClanSchema = z.object({
+export const ClanSchema = z.object({
   id: z.number().optional(),
   name: z.string().optional(),
 });
 
-export class ClanDto extends createZodDto(ClanSchema) {}
+export type ClanDto = z.infer<typeof ClanSchema>;
 
-const VolunteerCharacterSchema = z.object({
+export const VolunteerCharacterSchema = z.object({
   lvl: z.number(),
   nick: z.string(),
   accountId: z.string(),
@@ -18,11 +17,9 @@ const VolunteerCharacterSchema = z.object({
   clan: ClanSchema.optional(),
 });
 
-export class VolunteerCharacterDto extends createZodDto(
-  VolunteerCharacterSchema,
-) {}
+export type VolunteerCharacterDto = z.infer<typeof VolunteerCharacterSchema>;
 
-const VolunteerNotificationSchema = z.object({
+export const VolunteerNotificationSchema = z.object({
   notificationId: z.string(),
   targetDiscordId: z.string(),
   volunteerDiscordId: z.string(),
@@ -30,6 +27,6 @@ const VolunteerNotificationSchema = z.object({
   character: VolunteerCharacterSchema,
 });
 
-export class VolunteerNotificationDto extends createZodDto(
-  VolunteerNotificationSchema,
-) {}
+export type VolunteerNotificationDto = z.infer<
+  typeof VolunteerNotificationSchema
+>;

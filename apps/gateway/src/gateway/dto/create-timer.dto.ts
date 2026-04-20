@@ -1,7 +1,6 @@
 import { z } from "zod";
-import { createZodDto } from "nestjs-zod";
 
-const NpcSchema = z.object({
+export const NpcSchema = z.object({
   id: z.number(),
   name: z.string(),
   lvl: z.number(),
@@ -18,7 +17,7 @@ const NpcSchema = z.object({
   lootId: z.number().nullable(),
 });
 
-const CreateTimerSchema = z.object({
+export const CreateTimerSchema = z.object({
   guildId: z.string(),
   world: z.string(),
   minSpawnTime: z.number(),
@@ -27,4 +26,4 @@ const CreateTimerSchema = z.object({
   location: z.string(),
 });
 
-export class CreateTimerDto extends createZodDto(CreateTimerSchema) {}
+export type CreateTimerDto = z.infer<typeof CreateTimerSchema>;

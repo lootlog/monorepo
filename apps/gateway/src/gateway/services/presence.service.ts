@@ -1,33 +1,72 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import type { Server } from "socket.io";
-import { omit, groupBy } from "lodash";
-import { GatewayEvent } from "src/gateway/enums/gateway-event.enum";
-import { UserPresenceStatus } from "src/gateway/enums/user-presence-status.enum";
-import { Platform } from "src/gateway/enums/platform.enum";
-import { RoutingKey } from "src/gateway/enums/routing-key.enum";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import { getGuildIds } from "src/gateway/utils/get-guild-ids";
-import { buildRoomName, parseRoomName } from "src/gateway/utils/room-utils";
 import type {
+  GatewayNamespace,
+  PlayerPresence,
   Socket,
   SocketUser,
-  PlayerPresence,
-} from "src/gateway/types/socket-user.type";
-import type { EventPresenceUpdateDto } from "src/gateway/dto/event-presence-update.dto";
+} from "../types/socket-user.type.js";
+import type { EventPresenceUpdateDto } from "../dto/event-presence-update.dto.js";
+import { DEFAULT_EXCHANGE_NAME } from "../../config/rabbitmq.config.js";
+import { GatewayEvent } from "../enums/gateway-event.enum.js";
+import { Platform } from "../enums/platform.enum.js";
+import { RoutingKey } from "../enums/routing-key.enum.js";
+import { UserPresenceStatus } from "../enums/user-presence-status.enum.js";
+import type { AmqpPublisher } from "../rabbitmq/amqp-publisher.js";
+import { getGuildIds } from "../utils/get-guild-ids.js";
+import { buildRoomName, parseRoomName } from "../utils/room-utils.js";
 
-@Injectable()
+type ServerPresenceUser = Omit<
+  Partial<SocketUser>,
+  "sessionId" | "guilds" | "userId"
+>;
+
+const stripSocketUserMeta = (user: Partial<SocketUser>): ServerPresenceUser => {
+  const {
+    sessionId: _sessionId,
+    guilds: _guilds,
+    userId: _userId,
+    ...preparedUser
+  } = user;
+
+  return preparedUser;
+};
+
+const groupUsersByDiscordId = (
+  users: ServerPresenceUser[],
+): Record<string, ServerPresenceUser[]> => {
+  return users.reduce<Record<string, ServerPresenceUser[]>>(
+    (accumulator, user) => {
+      const { discordId } = user;
+
+      if (!discordId) {
+        return accumulator;
+      }
+
+      if (!accumulator[discordId]) {
+        accumulator[discordId] = [];
+      }
+
+      accumulator[discordId].push(user);
+      return accumulator;
+    },
+    {},
+  );
+};
+
 export class PresenceService {
-  private readonly logger = new Logger(PresenceService.name);
-
-  constructor(private amqpConnection: AmqpConnection) {}
+  constructor(
+    private readonly amqpPublisher: AmqpPublisher,
+    private readonly logger: {
+      error(message: string, meta?: Record<string, unknown>): void;
+      warn(message: string, meta?: Record<string, unknown>): void;
+    },
+  ) {}
 
   emitPresenceToRooms(
     client: Socket,
     user: Partial<SocketUser>,
     event: GatewayEvent,
   ): void {
-    const preparedUser = omit(user, ["sessionId", "guilds", "userId"]);
+    const preparedUser = stripSocketUserMeta(user);
 
     client.rooms.forEach((room) => {
       const parsed = parseRoomName(room);
@@ -55,7 +94,7 @@ export class PresenceService {
   }
 
   async broadcastPlayerDisconnect(
-    server: Server,
+    server: GatewayNamespace,
     client: Socket,
   ): Promise<void> {
     if (!client.data?.guilds || !client.data?.playerPresence) return;
@@ -85,11 +124,14 @@ export class PresenceService {
     client: Socket,
     discordId: string,
     data: EventPresenceUpdateDto,
-    server: Server,
+    server: GatewayNamespace,
   ): void {
     if (!client.data?.guilds || !client.data?.player) {
       this.logger.warn(
-        `User ${discordId} tried to update presence without joining first or without player data`,
+        "Skipped presence update for socket without join state",
+        {
+          discordId,
+        },
       );
       return;
     }
@@ -151,7 +193,7 @@ export class PresenceService {
   }
 
   async fetchGuildPresence(
-    server: Server,
+    server: GatewayNamespace,
     client: Socket,
     guildId: string,
     world?: string,
@@ -159,9 +201,10 @@ export class PresenceService {
     const presenceRoom = buildRoomName(guildId, "presence");
 
     if (!client.rooms.has(presenceRoom)) {
-      this.logger.warn(
-        `User ${client.data?.discordId} tried to fetch presence for guild ${guildId} they're not in`,
-      );
+      this.logger.warn("Rejected guild presence fetch for room outsider", {
+        discordId: client.data?.discordId,
+        guildId,
+      });
       return {};
     }
 
@@ -185,7 +228,7 @@ export class PresenceService {
   }
 
   async fetchServerPresence(
-    server: Server,
+    server: GatewayNamespace,
     client: Socket,
     guildId: string,
     world: string,
@@ -209,14 +252,14 @@ export class PresenceService {
     }
 
     const users = filteredSockets
-      .map((s) => omit(s.data, ["sessionId", "userId", "guilds"]))
-      .sort((a, b) => b.player.lvl - a.player.lvl);
+      .map((s) => stripSocketUserMeta(s.data))
+      .sort((a, b) => Number(b.player?.lvl ?? 0) - Number(a.player?.lvl ?? 0));
 
-    return groupBy(users, "discordId");
+    return groupUsersByDiscordId(users);
   }
 
   async checkPresenceForMap(
-    server: Server,
+    server: GatewayNamespace,
     guildId: string,
     mapName: string,
   ): Promise<void> {
@@ -238,7 +281,7 @@ export class PresenceService {
   }
 
   emitInitialPresence(
-    server: Server,
+    server: GatewayNamespace,
     client: Socket,
     discordId: string,
     guildIds: string[],
@@ -280,16 +323,21 @@ export class PresenceService {
     hasPlayer: boolean,
     isAfk?: boolean,
   ): void {
-    this.amqpConnection.publish(
-      DEFAULT_EXCHANGE_NAME,
-      RoutingKey.PRESENCE_COVERAGE_CHECK,
-      {
+    void this.amqpPublisher
+      .publish(DEFAULT_EXCHANGE_NAME, RoutingKey.PRESENCE_COVERAGE_CHECK, {
         guildId,
         mapName,
         discordId,
         hasPlayer,
-        ...(isAfk !== undefined && { isAfk }),
-      },
-    );
+        ...(isAfk !== undefined ? { isAfk } : {}),
+      })
+      .catch((error) => {
+        this.logger.error("Failed to publish presence coverage check", {
+          guildId,
+          mapName,
+          discordId,
+          error,
+        });
+      });
   }
 }

@@ -1,1453 +1,267 @@
-import { Test, type TestingModule } from "@nestjs/testing";
-import { GatewayService } from "./gateway.service";
-import { Gateway } from "./gateway";
-import { RedisService } from "@lootlog/nest-shared";
-import { GuildsService } from "../guilds/guilds.service";
-import { CreateTimerDto } from "./dto/create-timer.dto";
-import type { DeleteTimerDto } from "./dto/delete-timer.dto";
-import { MessageType, SendMessageDto } from "./dto/send-message.dto";
-import { SendNotificationDto } from "./dto/send-notification.dto";
-import type { RefreshJobUpdateDto } from "./dto/refresh-job-update.dto";
-import { NpcType } from "./enums/npc-type.enum";
-import { GatewayEvent } from "./enums/gateway-event.enum";
 import { Permission } from "@lootlog/types";
-import type {
-  ReservationCreateEventDto,
-  ReservationDeleteEventDto,
-} from "./dto/reservation-event.dto";
+import { describe, expect, it, vi, beforeEach } from "vitest";
+import { GatewayEvent } from "./enums/gateway-event.enum.js";
+import { GatewayService } from "./gateway.service.js";
+import { SocketServerRef } from "./socket-server-ref.js";
+import { NpcType } from "./enums/npc-type.enum.js";
+import type { CreateTimerDto } from "./dto/create-timer.dto.js";
+import type { RefreshJobUpdateDto } from "./dto/refresh-job-update.dto.js";
+import type { VolunteerNotificationDto } from "./dto/volunteer-notification.dto.js";
 
 describe("GatewayService", () => {
-  let service: GatewayService;
-
-  const mockSocket = {
-    id: "socket-123",
-    data: {
-      discordId: "discord-123",
-      guilds: [],
-    },
-    emit: vi.fn(),
-    leave: vi.fn(),
-    join: vi.fn(),
-    rooms: new Set(["room-1"]),
+  const logger = {
+    error: vi.fn(),
   };
-
-  const mockServer = {
-    to: vi.fn().mockReturnThis(),
-    in: vi.fn().mockReturnThis(),
-    emit: vi.fn(),
-    fetchSockets: vi.fn(),
-  };
-
-  const mockGateway = {
-    server: mockServer,
-  };
-
-  const mockRedisService = {
+  const redisStore = {
     del: vi.fn(),
   };
-
-  const mockGuildsService = {
-    invalidateUserGuildsCache: vi.fn(),
+  const guildsService = {
     getUserGuilds: vi.fn(),
+    invalidateUserGuildsCache: vi.fn(),
+  };
+  const presenceService = {
+    checkPresenceForMap: vi.fn(),
   };
 
-  beforeEach(async () => {
+  const mockNamespace = {
+    emit: vi.fn(),
+    fetchSockets: vi.fn(),
+    in: vi.fn(),
+    to: vi.fn(),
+  };
+
+  let service: GatewayService;
+
+  beforeEach(() => {
     vi.clearAllMocks();
 
-    // Re-initialize mock return values after clearAllMocks
-    mockServer.to.mockReturnThis();
-    mockServer.in.mockReturnThis();
-    mockServer.emit.mockReturnThis();
+    mockNamespace.in.mockReturnValue({
+      fetchSockets: mockNamespace.fetchSockets,
+    });
+    mockNamespace.to.mockReturnValue({
+      emit: mockNamespace.emit,
+    });
 
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        GatewayService,
-        {
-          provide: Gateway,
-          useValue: mockGateway,
-        },
-        {
-          provide: RedisService,
-          useValue: mockRedisService,
-        },
-        {
-          provide: GuildsService,
-          useValue: mockGuildsService,
-        },
-      ],
-    }).compile();
+    const socketServerRef = new SocketServerRef();
+    socketServerRef.set(mockNamespace as never);
 
-    service = module.get<GatewayService>(GatewayService);
+    service = new GatewayService(
+      socketServerRef,
+      redisStore as never,
+      guildsService as never,
+      presenceService as never,
+      logger,
+    );
   });
 
-  // Helper function to wait for all promises
-  async function flushPromises() {
-    return new Promise((resolve) => setImmediate(resolve));
-  }
-
-  function createGuildRole(
-    permissions: Permission[],
-    lvlRangeFrom = 1,
-    lvlRangeTo = 999,
-  ) {
-    return {
-      id: crypto.randomUUID(),
-      permissions,
-      lvlRangeFrom,
-      lvlRangeTo,
+  it("emits titan timer updates only to sockets that still have room access", async () => {
+    const timerDto: CreateTimerDto = {
+      guildId: "guild-123",
+      world: "alpha",
+      minSpawnTime: 1000,
+      maxSpawnTime: 2000,
+      location: "map",
+      npc: {
+        id: 1,
+        name: "Titan",
+        lvl: 100,
+        x: 1,
+        y: 1,
+        prof: "w",
+        type: NpcType.TITAN,
+        margonemType: "1",
+        location: "map",
+        wt: "1000",
+        icon: "icon",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        lootId: null,
+      },
     };
-  }
-
-  function createSocketForGuild(options: {
-    discordId: string;
-    guildId?: string;
-    ownerId?: string;
-    roles: Array<{
-      permissions: Permission[];
-      lvlRangeFrom?: number;
-      lvlRangeTo?: number;
-    }>;
-  }) {
-    return {
-      ...mockSocket,
+    const allowedSocket = {
       data: {
-        discordId: options.discordId,
+        discordId: "discord-1",
         guilds: [
           {
             guild: {
-              id: options.guildId ?? "guild-123",
-              ownerId: options.ownerId ?? "different-user",
+              id: "guild-123",
+              ownerId: "discord-owner",
             },
-            roles: options.roles.map((role) =>
-              createGuildRole(
-                role.permissions,
-                role.lvlRangeFrom,
-                role.lvlRangeTo,
-              ),
-            ),
+            roles: [
+              {
+                id: "role-1",
+                lvlRangeFrom: 90,
+                lvlRangeTo: 110,
+                permissions: [Permission.LOOTLOG_TIMERS_TITANS_READ],
+              },
+            ],
           },
         ],
       },
       emit: vi.fn(),
     };
-  }
-
-  it("should be defined", () => {
-    expect(service).toBeDefined();
-  });
-
-  describe("handleGuildsTimerUpdate", () => {
-    const npcData = {
-      id: 1,
-      name: "Test NPC",
-      lvl: 100,
-      prof: "warrior",
-      type: NpcType.TITAN,
-      margonemType: "1",
-      location: "test-location",
-      wt: "1000",
-      icon: "icon.png",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      lootId: null,
-      x: 15,
-      y: 15,
+    const deniedSocket = {
+      data: {
+        discordId: "discord-2",
+        guilds: [
+          {
+            guild: {
+              id: "guild-123",
+              ownerId: "discord-owner",
+            },
+            roles: [
+              {
+                id: "role-2",
+                lvlRangeFrom: 1,
+                lvlRangeTo: 50,
+                permissions: [Permission.LOOTLOG_TIMERS_TITANS_READ],
+              },
+            ],
+          },
+        ],
+      },
+      emit: vi.fn(),
     };
 
-    const timerDto = new CreateTimerDto();
-    timerDto.guildId = "guild-123";
-    timerDto.world = "test-world";
-    timerDto.minSpawnTime = 1000;
-    timerDto.maxSpawnTime = 2000;
-    timerDto.npc = npcData;
-    timerDto.location = "test-location";
+    mockNamespace.fetchSockets.mockResolvedValue([allowedSocket, deniedSocket]);
 
-    it("should emit timer update to eligible sockets with TITAN permissions", async () => {
-      const mockSocketWithPermissions = {
-        ...mockSocket,
-        data: {
-          discordId: "discord-123",
-          guilds: [
-            {
-              guild: { id: "guild-123", ownerId: "different-user" },
-              roles: [
-                {
-                  permissions: [Permission.LOOTLOG_TIMERS_TITANS_READ],
-                  lvlRangeFrom: 50,
-                  lvlRangeTo: 150,
-                },
-              ],
-            },
-          ],
-        },
-        emit: vi.fn(),
-      };
+    await service.handleGuildsTimerUpdate(timerDto);
 
-      mockServer.fetchSockets.mockResolvedValue([mockSocketWithPermissions]);
-
-      await service.handleGuildsTimerUpdate(timerDto);
-
-      // Wait for async promise chain to complete
-      // Feature room for titan timers
-      expect(mockServer.in).toHaveBeenCalledWith("guild-123:timers:titans");
-      expect(mockServer.fetchSockets).toHaveBeenCalled();
-      expect(mockSocketWithPermissions.emit).toHaveBeenCalledWith(
-        GatewayEvent.TIMERS_CREATE,
-        timerDto,
-      );
-    });
-
-    it("should not emit to sockets without TITAN permissions (socket not in room)", async () => {
-      // Socket without TITAN permission would not be in the 'guild-123:timers:titans' room
-      // so fetchSockets from that room returns empty
-      mockServer.fetchSockets.mockResolvedValue([]);
-
-      await service.handleGuildsTimerUpdate(timerDto);
-
-      // Feature room for titan timers
-      expect(mockServer.in).toHaveBeenCalledWith("guild-123:timers:titans");
-      expect(mockServer.fetchSockets).toHaveBeenCalled();
-      // No sockets to emit to since none are in the room
-    });
-
-    it("should emit to administrative users regardless of specific permissions", async () => {
-      const mockAdminSocket = {
-        ...mockSocket,
-        data: {
-          discordId: "discord-admin",
-          guilds: [
-            {
-              guild: { id: "guild-123", ownerId: "different-user" },
-              roles: [
-                {
-                  permissions: [Permission.ADMIN],
-                  lvlRangeFrom: 1,
-                  lvlRangeTo: 10,
-                },
-              ],
-            },
-          ],
-        },
-        emit: vi.fn(),
-      };
-
-      mockServer.fetchSockets.mockResolvedValue([mockAdminSocket]);
-
-      await service.handleGuildsTimerUpdate(timerDto);
-
-      // Wait for async promise chain to complete
-      expect(mockAdminSocket.emit).toHaveBeenCalledWith(
-        GatewayEvent.TIMERS_CREATE,
-        timerDto,
-      );
-    });
-
-    it("should not emit to sockets without matching level range", async () => {
-      const mockSocketWrongLevel = {
-        ...mockSocket,
-        data: {
-          discordId: "discord-123",
-          guilds: [
-            {
-              guild: { id: "guild-123", ownerId: "different-user" },
-              roles: [
-                {
-                  permissions: [Permission.LOOTLOG_TIMERS_TITANS_READ],
-                  lvlRangeFrom: 1,
-                  lvlRangeTo: 50,
-                },
-              ],
-            },
-          ],
-        },
-        emit: vi.fn(),
-      };
-
-      mockServer.fetchSockets.mockResolvedValue([mockSocketWrongLevel]);
-
-      await service.handleGuildsTimerUpdate(timerDto);
-
-      // Wait for async promise chain to complete
-      expect(mockSocketWrongLevel.emit).not.toHaveBeenCalled();
-    });
-
-    it("should not emit to sockets without matching guild", async () => {
-      const mockSocketWrongGuild = {
-        ...mockSocket,
-        data: {
-          discordId: "discord-123",
-          guilds: [
-            {
-              guild: { id: "guild-456", ownerId: "different-user" },
-              roles: [
-                {
-                  permissions: [Permission.LOOTLOG_TIMERS_TITANS_READ],
-                  lvlRangeFrom: 50,
-                  lvlRangeTo: 150,
-                },
-              ],
-            },
-          ],
-        },
-        emit: vi.fn(),
-      };
-
-      mockServer.fetchSockets.mockResolvedValue([mockSocketWrongGuild]);
-
-      await service.handleGuildsTimerUpdate(timerDto);
-
-      // Wait for async promise chain to complete
-      expect(mockSocketWrongGuild.emit).not.toHaveBeenCalled();
-    });
+    expect(mockNamespace.in).toHaveBeenCalledWith("guild-123:timers:titans");
+    expect(allowedSocket.emit).toHaveBeenCalledWith(
+      GatewayEvent.TIMERS_CREATE,
+      timerDto,
+    );
+    expect(deniedSocket.emit).not.toHaveBeenCalled();
   });
 
-  describe("handleGuildsTimerDelete", () => {
-    it("should emit timer delete event only to the routed timer room", async () => {
-      const allowedSocket = {
-        ...mockSocket,
-        data: {
-          discordId: "discord-123",
-          guilds: [
-            {
-              guild: { id: "guild-123", ownerId: "different-user" },
-              roles: [
-                {
-                  permissions: [Permission.LOOTLOG_TIMERS_TITANS_READ],
-                  lvlRangeFrom: 250,
-                  lvlRangeTo: 350,
-                },
-              ],
-            },
-          ],
-        },
-        emit: vi.fn(),
-      };
+  it("emits refresh job updates to the admin room", async () => {
+    const payload: RefreshJobUpdateDto = {
+      guildId: "guild-123",
+      jobId: 15,
+      status: "PROCESSING",
+      totalMembers: 20,
+      processedMembers: 10,
+      failedMembers: 1,
+    };
 
-      const deleteDto: DeleteTimerDto = {
-        guildId: "guild-123",
-        world: "world-1",
-        npcId: 1,
-        routing: {
-          tier: "titans",
-          npcLevel: 300,
-        },
-      };
+    await service.handleMembersRefreshJobUpdate(payload);
 
-      mockServer.fetchSockets.mockResolvedValue([allowedSocket]);
-
-      await service.handleGuildsTimerDelete(deleteDto);
-
-      await flushPromises();
-
-      expect(mockServer.in).toHaveBeenCalledWith("guild-123:timers:titans");
-      expect(allowedSocket.emit).toHaveBeenCalledWith(
-        GatewayEvent.TIMERS_DELETE,
-        {
-          guildId: "guild-123",
-          world: "world-1",
-          npcId: 1,
-        },
-      );
-    });
+    expect(mockNamespace.to).toHaveBeenCalledWith("guild-123:admin");
+    expect(mockNamespace.emit).toHaveBeenCalledWith(
+      GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE,
+      payload,
+    );
   });
 
-  describe("handleGuildsReservationCreate", () => {
-    it("should emit reservation create event to events room", () => {
-      const payload: ReservationCreateEventDto = {
-        guildId: "guild-123",
-        reservation: {
-          id: 42,
-          reservationId: "raid",
-          createdDate: new Date().toISOString(),
-          fromDate: new Date().toISOString(),
-          toDate: new Date(Date.now() + 3_600_000).toISOString(),
-          createdBy: "discord-123",
-        },
-      };
+  it("delegates guild cache invalidation to GuildsService", async () => {
+    await service.invalidateUserGuildsCache("discord-123", "user-123");
 
-      service.handleGuildsReservationCreate(payload);
-
-      expect(mockServer.to).toHaveBeenCalledWith("guild-123:events");
-      expect(mockServer.emit).toHaveBeenCalledWith(
-        GatewayEvent.RESERVATIONS_CREATE,
-        payload,
-      );
-    });
+    expect(guildsService.invalidateUserGuildsCache).toHaveBeenCalledWith(
+      "discord-123",
+      "user-123",
+    );
   });
 
-  describe("handleGuildsReservationDelete", () => {
-    it("should emit reservation delete event to events room", () => {
-      const payload: ReservationDeleteEventDto = {
-        guildId: "guild-123",
-        reservation: {
-          id: 43,
-          reservationId: "raid",
-          createdDate: new Date().toISOString(),
-          fromDate: new Date().toISOString(),
-          toDate: new Date(Date.now() + 3_600_000).toISOString(),
-          createdBy: "discord-123",
-        },
-      };
-
-      service.handleGuildsReservationDelete(payload);
-
-      expect(mockServer.to).toHaveBeenCalledWith("guild-123:events");
-      expect(mockServer.emit).toHaveBeenCalledWith(
-        GatewayEvent.RESERVATIONS_DELETE,
-        payload,
-      );
-    });
-  });
-
-  describe("handleGuildMessageSend", () => {
-    it("should broadcast regular chat messages to the base room without socket filtering", async () => {
-      const messageDto = new SendMessageDto();
-      messageDto.id = "message-base";
-      messageDto.guildId = "guild-123";
-      messageDto.message = "Base message";
-      messageDto.senderId = "sender-123";
-      messageDto.timestamp = new Date().toISOString();
-      messageDto.type = MessageType.NORMAL;
-      messageDto.characterData = {
-        nick: "SenderNick",
-        id: 123,
-        acc: 456,
-        lvl: 50,
-        prof: "warrior",
-        icon: "icon.png",
-      };
-
-      service.handleGuildMessageSend(messageDto);
-
-      expect(mockServer.to).toHaveBeenCalledWith("guild-123:chat:base");
-      expect(mockServer.emit).toHaveBeenCalledWith(
-        GatewayEvent.CHAT_MESSAGE,
-        messageDto,
-      );
-      expect(mockServer.fetchSockets).not.toHaveBeenCalled();
-    });
-
-    it("should emit titan chat message to the titan room for numeric NPC payloads", async () => {
-      const messageDto = new SendMessageDto();
-      messageDto.id = "message-123";
-      messageDto.guildId = "guild-123";
-      messageDto.message = "Test message";
-      messageDto.senderId = "sender-123";
-      messageDto.timestamp = new Date().toISOString();
-      messageDto.type = MessageType.NPC;
-      messageDto.npc = {
-        id: 1,
-        name: "Titan NPC",
-        lvl: 200,
-        prof: "mage",
-        type: 2 as unknown as string,
-        margonemType: "2",
-        location: "titan-location",
-        wt: "120",
-        icon: "titan.png",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        lootId: null,
-        x: 15,
-        y: 15,
-      };
-      messageDto.characterData = {
-        nick: "SenderNick",
-        id: 123,
-        acc: 456,
-        lvl: 50,
-        prof: "warrior",
-        icon: "icon.png",
-      };
-
-      const mockSocketWithPermissions = {
-        ...mockSocket,
-        data: {
-          discordId: "discord-123",
-          guilds: [
-            {
-              guild: { id: "guild-123", ownerId: "different-user" },
-              roles: [
-                {
-                  permissions: [Permission.LOOTLOG_CHAT_TITANS_READ],
-                  lvlRangeFrom: 1,
-                  lvlRangeTo: 999,
-                },
-              ],
-            },
-          ],
-        },
-        emit: vi.fn(),
-      };
-
-      mockServer.in.mockReturnValue(mockServer);
-      mockServer.fetchSockets.mockResolvedValue([mockSocketWithPermissions]);
-
-      await service.handleGuildMessageSend(messageDto);
-
-      await flushPromises();
-
-      expect(mockServer.in).toHaveBeenCalledWith("guild-123:chat:titans");
-      expect(mockSocketWithPermissions.emit).toHaveBeenCalledWith(
-        GatewayEvent.CHAT_MESSAGE,
-        messageDto,
-      );
-    });
-
-    it("should emit titan chat messages to owner without tier permission", async () => {
-      const messageDto = new SendMessageDto();
-      messageDto.id = "message-owner";
-      messageDto.guildId = "guild-123";
-      messageDto.message = "Owner message";
-      messageDto.senderId = "sender-123";
-      messageDto.timestamp = new Date().toISOString();
-      messageDto.type = MessageType.NPC;
-      messageDto.npc = {
-        id: 1,
-        name: "Titan NPC",
-        lvl: 320,
-        prof: "mage",
-        type: "TITAN",
-        margonemType: "2",
-        location: "titan-location",
-        wt: "120",
-        icon: "titan.png",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        lootId: null,
-        x: 15,
-        y: 15,
-      };
-      messageDto.characterData = {
-        nick: "SenderNick",
-        id: 123,
-        acc: 456,
-        lvl: 50,
-        prof: "warrior",
-        icon: "icon.png",
-      };
-
-      const ownerSocket = createSocketForGuild({
-        discordId: "discord-owner",
-        ownerId: "discord-owner",
-        roles: [
-          {
-            permissions: [Permission.LOOTLOG_CHAT_READ],
-            lvlRangeFrom: 1,
-            lvlRangeTo: 100,
-          },
-        ],
-      });
-
-      mockServer.fetchSockets.mockResolvedValue([ownerSocket]);
-
-      service.handleGuildMessageSend(messageDto);
-
-      await flushPromises();
-
-      expect(ownerSocket.emit).toHaveBeenCalledWith(
-        GatewayEvent.CHAT_MESSAGE,
-        messageDto,
-      );
-    });
-
-    it("should not emit titan chat messages to LOOTLOG_MANAGE users without tier permission", async () => {
-      const messageDto = new SendMessageDto();
-      messageDto.id = "message-manage";
-      messageDto.guildId = "guild-123";
-      messageDto.message = "Manage message";
-      messageDto.senderId = "sender-123";
-      messageDto.timestamp = new Date().toISOString();
-      messageDto.type = MessageType.NPC;
-      messageDto.npc = {
-        id: 1,
-        name: "Titan NPC",
-        lvl: 320,
-        prof: "mage",
-        type: "TITAN",
-        margonemType: "2",
-        location: "titan-location",
-        wt: "120",
-        icon: "titan.png",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        lootId: null,
-        x: 15,
-        y: 15,
-      };
-      messageDto.characterData = {
-        nick: "SenderNick",
-        id: 123,
-        acc: 456,
-        lvl: 50,
-        prof: "warrior",
-        icon: "icon.png",
-      };
-
-      const manageSocket = createSocketForGuild({
-        discordId: "discord-manage",
-        roles: [
-          {
-            permissions: [Permission.LOOTLOG_MANAGE],
-            lvlRangeFrom: 1,
-            lvlRangeTo: 10,
-          },
-        ],
-      });
-
-      mockServer.fetchSockets.mockResolvedValue([manageSocket]);
-
-      service.handleGuildMessageSend(messageDto);
-
-      await flushPromises();
-
-      expect(manageSocket.emit).not.toHaveBeenCalled();
-    });
-
-    it("should emit titan chat messages to LOOTLOG_MANAGE users when another role explicitly grants the routed permission", async () => {
-      const messageDto = new SendMessageDto();
-      messageDto.id = "message-manage-explicit";
-      messageDto.guildId = "guild-123";
-      messageDto.message = "Manage explicit message";
-      messageDto.senderId = "sender-123";
-      messageDto.timestamp = new Date().toISOString();
-      messageDto.type = MessageType.NPC;
-      messageDto.npc = {
-        id: 1,
-        name: "Titan NPC",
-        lvl: 320,
-        prof: "mage",
-        type: "TITAN",
-        margonemType: "2",
-        location: "titan-location",
-        wt: "120",
-        icon: "titan.png",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        lootId: null,
-        x: 15,
-        y: 15,
-      };
-      messageDto.characterData = {
-        nick: "SenderNick",
-        id: 123,
-        acc: 456,
-        lvl: 50,
-        prof: "warrior",
-        icon: "icon.png",
-      };
-
-      const manageSocket = createSocketForGuild({
-        discordId: "discord-manage",
-        roles: [
-          {
-            permissions: [Permission.LOOTLOG_MANAGE],
-            lvlRangeFrom: 1,
-            lvlRangeTo: 10,
-          },
-          {
-            permissions: [Permission.LOOTLOG_CHAT_TITANS_READ],
-            lvlRangeFrom: 300,
-            lvlRangeTo: 350,
-          },
-        ],
-      });
-
-      mockServer.fetchSockets.mockResolvedValue([manageSocket]);
-
-      service.handleGuildMessageSend(messageDto);
-
-      await flushPromises();
-
-      expect(manageSocket.emit).toHaveBeenCalledWith(
-        GatewayEvent.CHAT_MESSAGE,
-        messageDto,
-      );
-    });
-
-    it("should emit chat messages when one of multiple roles fully matches", async () => {
-      const messageDto = new SendMessageDto();
-      messageDto.id = "message-multi";
-      messageDto.guildId = "guild-123";
-      messageDto.message = "Multi role";
-      messageDto.senderId = "sender-123";
-      messageDto.timestamp = new Date().toISOString();
-      messageDto.type = MessageType.NPC;
-      messageDto.npc = {
-        id: 1,
-        name: "Titan NPC",
-        lvl: 300,
-        prof: "mage",
-        type: "TITAN",
-        margonemType: "2",
-        location: "titan-location",
-        wt: "120",
-        icon: "titan.png",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        lootId: null,
-        x: 15,
-        y: 15,
-      };
-      messageDto.characterData = {
-        nick: "SenderNick",
-        id: 123,
-        acc: 456,
-        lvl: 50,
-        prof: "warrior",
-        icon: "icon.png",
-      };
-
-      const multiRoleSocket = createSocketForGuild({
+  it("rebalances socket rooms after permission changes", async () => {
+    const socket = {
+      data: {
         discordId: "discord-123",
+        platform: "web-app",
+        guilds: [],
+      },
+      emit: vi.fn(),
+      id: "socket-1",
+      join: vi.fn(),
+      leave: vi.fn(),
+      rooms: new Set(["socket-1", "old-room"]),
+    };
+
+    guildsService.getUserGuilds.mockResolvedValue([
+      {
+        guild: {
+          id: "guild-123",
+          ownerId: "discord-owner",
+        },
         roles: [
           {
-            permissions: [Permission.LOOTLOG_CHAT_HEROES_READ],
+            id: "role-1",
             lvlRangeFrom: 1,
-            lvlRangeTo: 100,
-          },
-          {
-            permissions: [Permission.LOOTLOG_CHAT_TITANS_READ],
-            lvlRangeFrom: 250,
-            lvlRangeTo: 350,
+            lvlRangeTo: 999,
+            permissions: [Permission.LOOTLOG_TIMERS_READ],
           },
         ],
-      });
-
-      mockServer.fetchSockets.mockResolvedValue([multiRoleSocket]);
-
-      service.handleGuildMessageSend(messageDto);
-
-      await flushPromises();
-
-      expect(multiRoleSocket.emit).toHaveBeenCalledWith(
-        GatewayEvent.CHAT_MESSAGE,
-        messageDto,
-      );
-    });
-
-    it("should not emit chat messages when permission and matching level are split across roles", async () => {
-      const messageDto = new SendMessageDto();
-      messageDto.id = "message-split";
-      messageDto.guildId = "guild-123";
-      messageDto.message = "Split role";
-      messageDto.senderId = "sender-123";
-      messageDto.timestamp = new Date().toISOString();
-      messageDto.type = MessageType.NPC;
-      messageDto.npc = {
-        id: 1,
-        name: "Titan NPC",
-        lvl: 300,
-        prof: "mage",
-        type: "TITAN",
-        margonemType: "2",
-        location: "titan-location",
-        wt: "120",
-        icon: "titan.png",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        lootId: null,
-        x: 15,
-        y: 15,
-      };
-      messageDto.characterData = {
-        nick: "SenderNick",
-        id: 123,
-        acc: 456,
-        lvl: 50,
-        prof: "warrior",
-        icon: "icon.png",
-      };
-
-      const splitRolesSocket = createSocketForGuild({
-        discordId: "discord-123",
-        roles: [
-          {
-            permissions: [Permission.LOOTLOG_CHAT_TITANS_READ],
-            lvlRangeFrom: 1,
-            lvlRangeTo: 299,
-          },
-          {
-            permissions: [],
-            lvlRangeFrom: 300,
-            lvlRangeTo: 350,
-          },
-        ],
-      });
-
-      mockServer.fetchSockets.mockResolvedValue([splitRolesSocket]);
-
-      service.handleGuildMessageSend(messageDto);
-
-      await flushPromises();
-
-      expect(splitRolesSocket.emit).not.toHaveBeenCalled();
-    });
-  });
-
-  describe("chat message routing events", () => {
-    it("should broadcast base chat updates without socket filtering", () => {
-      service.handleChatMessageUpdate({
-        guildId: "guild-123",
-        messageId: "msg-base",
-        message: "updated",
-        routing: {
-          tier: "base",
-        },
-      });
-
-      expect(mockServer.to).toHaveBeenCalledWith("guild-123:chat:base");
-      expect(mockServer.emit).toHaveBeenCalledWith(
-        GatewayEvent.CHAT_MESSAGE_UPDATE,
-        {
-          guildId: "guild-123",
-          messageId: "msg-base",
-          message: "updated",
-        },
-      );
-      expect(mockServer.fetchSockets).not.toHaveBeenCalled();
-    });
-
-    it("should emit chat updates only to sockets with routed chat permissions", async () => {
-      const allowedSocket = {
-        ...mockSocket,
-        data: {
-          discordId: "discord-allowed",
-          guilds: [
-            {
-              guild: { id: "guild-123", ownerId: "different-user" },
-              roles: [
-                {
-                  permissions: [Permission.LOOTLOG_CHAT_TITANS_READ],
-                  lvlRangeFrom: 250,
-                  lvlRangeTo: 500,
-                },
-              ],
-            },
-          ],
-        },
-        emit: vi.fn(),
-      };
-
-      const disallowedSocket = {
-        ...mockSocket,
-        data: {
-          discordId: "discord-blocked",
-          guilds: [
-            {
-              guild: { id: "guild-123", ownerId: "different-user" },
-              roles: [
-                {
-                  permissions: [Permission.LOOTLOG_CHAT_HEROES_READ],
-                  lvlRangeFrom: 250,
-                  lvlRangeTo: 500,
-                },
-              ],
-            },
-          ],
-        },
-        emit: vi.fn(),
-      };
-
-      mockServer.fetchSockets.mockResolvedValue([
-        allowedSocket,
-        disallowedSocket,
-      ]);
-
-      service.handleChatMessageUpdate({
-        guildId: "guild-123",
-        messageId: "msg-1",
-        message: "updated",
-        routing: {
-          tier: "titans",
-          npcLevel: 300,
-        },
-      });
-
-      await flushPromises();
-
-      expect(mockServer.in).toHaveBeenCalledWith("guild-123:chat:titans");
-      expect(allowedSocket.emit).toHaveBeenCalledWith(
-        GatewayEvent.CHAT_MESSAGE_UPDATE,
-        {
-          guildId: "guild-123",
-          messageId: "msg-1",
-          message: "updated",
-        },
-      );
-      expect(disallowedSocket.emit).not.toHaveBeenCalled();
-    });
-
-    it("should emit chat updates to owner even without matching tier permission", async () => {
-      const ownerSocket = createSocketForGuild({
-        discordId: "discord-owner",
-        ownerId: "discord-owner",
-        roles: [
-          {
-            permissions: [Permission.LOOTLOG_CHAT_READ],
-            lvlRangeFrom: 1,
-            lvlRangeTo: 100,
-          },
-        ],
-      });
-
-      mockServer.fetchSockets.mockResolvedValue([ownerSocket]);
-
-      service.handleChatMessageUpdate({
-        guildId: "guild-123",
-        messageId: "msg-owner",
-        message: "updated",
-        routing: {
-          tier: "titans",
-          npcLevel: 300,
-        },
-      });
-
-      await flushPromises();
-
-      expect(ownerSocket.emit).toHaveBeenCalledWith(
-        GatewayEvent.CHAT_MESSAGE_UPDATE,
-        {
-          guildId: "guild-123",
-          messageId: "msg-owner",
-          message: "updated",
-        },
-      );
-    });
-
-    it("should emit chat deletes only to the routed chat room", async () => {
-      const allowedSocket = {
-        ...mockSocket,
-        data: {
-          discordId: "discord-allowed",
-          guilds: [
-            {
-              guild: { id: "guild-123", ownerId: "different-user" },
-              roles: [
-                {
-                  permissions: [Permission.LOOTLOG_CHAT_TITANS_READ],
-                  lvlRangeFrom: 250,
-                  lvlRangeTo: 500,
-                },
-              ],
-            },
-          ],
-        },
-        emit: vi.fn(),
-      };
-
-      mockServer.fetchSockets.mockResolvedValue([allowedSocket]);
-
-      service.handleChatMessageDelete({
-        guildId: "guild-123",
-        messageId: "msg-1",
-        routing: {
-          tier: "titans",
-          npcLevel: 300,
-        },
-      });
-
-      await flushPromises();
-
-      expect(mockServer.in).toHaveBeenCalledWith("guild-123:chat:titans");
-      expect(allowedSocket.emit).toHaveBeenCalledWith(
-        GatewayEvent.CHAT_MESSAGE_DELETE,
-        {
-          guildId: "guild-123",
-          messageId: "msg-1",
-        },
-      );
-    });
-
-    it("should not emit chat deletes to LOOTLOG_MANAGE users without matching tier permission", async () => {
-      const manageSocket = createSocketForGuild({
-        discordId: "discord-manage",
-        roles: [
-          {
-            permissions: [Permission.LOOTLOG_MANAGE],
-            lvlRangeFrom: 1,
-            lvlRangeTo: 10,
-          },
-        ],
-      });
-
-      mockServer.fetchSockets.mockResolvedValue([manageSocket]);
-
-      service.handleChatMessageDelete({
-        guildId: "guild-123",
-        messageId: "msg-manage",
-        routing: {
-          tier: "titans",
-          npcLevel: 300,
-        },
-      });
-
-      await flushPromises();
-
-      expect(manageSocket.emit).not.toHaveBeenCalled();
-    });
-
-    it("should emit chat deletes to LOOTLOG_MANAGE users when another role explicitly grants the routed permission", async () => {
-      const manageSocket = createSocketForGuild({
-        discordId: "discord-manage",
-        roles: [
-          {
-            permissions: [Permission.LOOTLOG_MANAGE],
-            lvlRangeFrom: 1,
-            lvlRangeTo: 10,
-          },
-          {
-            permissions: [Permission.LOOTLOG_CHAT_TITANS_READ],
-            lvlRangeFrom: 250,
-            lvlRangeTo: 350,
-          },
-        ],
-      });
-
-      mockServer.fetchSockets.mockResolvedValue([manageSocket]);
-
-      service.handleChatMessageDelete({
-        guildId: "guild-123",
-        messageId: "msg-manage-explicit",
-        routing: {
-          tier: "titans",
-          npcLevel: 300,
-        },
-      });
-
-      await flushPromises();
-
-      expect(manageSocket.emit).toHaveBeenCalledWith(
-        GatewayEvent.CHAT_MESSAGE_DELETE,
-        {
-          guildId: "guild-123",
-          messageId: "msg-manage-explicit",
-        },
-      );
-    });
-
-    it("should not emit chat deletes to sockets from another guild", async () => {
-      const wrongGuildSocket = createSocketForGuild({
-        discordId: "discord-other",
-        guildId: "guild-999",
-        roles: [
-          {
-            permissions: [Permission.LOOTLOG_CHAT_TITANS_READ],
-            lvlRangeFrom: 250,
-            lvlRangeTo: 350,
-          },
-        ],
-      });
-
-      mockServer.fetchSockets.mockResolvedValue([wrongGuildSocket]);
-
-      service.handleChatMessageDelete({
-        guildId: "guild-123",
-        messageId: "msg-wrong-guild",
-        routing: {
-          tier: "titans",
-          npcLevel: 300,
-        },
-      });
-
-      await flushPromises();
-
-      expect(wrongGuildSocket.emit).not.toHaveBeenCalled();
-    });
-  });
-
-  describe("handleGuildNotificationSend", () => {
-    it("should emit notification to eligible sockets", async () => {
-      const npcData = {
-        id: 1,
-        name: "Hero NPC",
-        lvl: 200,
-        prof: "mage",
-        type: NpcType.HERO,
-        margonemType: "2",
-        location: "hero-location",
-        wt: "2000",
-        icon: "hero.png",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        lootId: null,
-        x: 15,
-        y: 15,
-      };
-
-      const notificationDto = new SendNotificationDto();
-      notificationDto.guildId = "guild-123";
-      notificationDto.npc = npcData;
-
-      const mockSocketWithHeroPerms = {
-        ...mockSocket,
-        data: {
-          discordId: "discord-123",
-          guilds: [
-            {
-              guild: { id: "guild-123", ownerId: "different-user" },
-              roles: [
-                {
-                  permissions: [Permission.LOOTLOG_NOTIFICATIONS_HEROES_READ],
-                  lvlRangeFrom: 150,
-                  lvlRangeTo: 250,
-                },
-              ],
-            },
-          ],
-        },
-        emit: vi.fn(),
-      };
-
-      mockServer.fetchSockets.mockResolvedValue([mockSocketWithHeroPerms]);
-
-      await service.handleGuildNotificationSend(notificationDto);
-
-      await flushPromises();
-
-      expect(mockSocketWithHeroPerms.emit).toHaveBeenCalledWith(
-        GatewayEvent.NOTIFICATIONS_SEND,
-        notificationDto,
-      );
-    });
-
-    it("should not emit notifications to LOOTLOG_MANAGE users without matching notification permission", async () => {
-      const npcData = {
-        id: 1,
-        name: "Titan NPC",
-        lvl: 320,
-        prof: "mage",
-        type: NpcType.TITAN,
-        margonemType: "2",
-        location: "titan-location",
-        wt: "120",
-        icon: "titan.png",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        lootId: null,
-        x: 15,
-        y: 15,
-      };
-
-      const notificationDto = new SendNotificationDto();
-      notificationDto.guildId = "guild-123";
-      notificationDto.npc = npcData;
-
-      const manageSocket = createSocketForGuild({
-        discordId: "discord-manage",
-        roles: [
-          {
-            permissions: [Permission.LOOTLOG_MANAGE],
-            lvlRangeFrom: 1,
-            lvlRangeTo: 10,
-          },
-        ],
-      });
-
-      mockServer.fetchSockets.mockResolvedValue([manageSocket]);
-
-      service.handleGuildNotificationSend(notificationDto);
-
-      await flushPromises();
-
-      expect(manageSocket.emit).not.toHaveBeenCalled();
-    });
-
-    it("should emit notifications to LOOTLOG_MANAGE users when another role explicitly grants the routed permission", async () => {
-      const npcData = {
-        id: 1,
-        name: "Titan NPC",
-        lvl: 320,
-        prof: "mage",
-        type: NpcType.TITAN,
-        margonemType: "2",
-        location: "titan-location",
-        wt: "120",
-        icon: "titan.png",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        lootId: null,
-        x: 15,
-        y: 15,
-      };
-
-      const notificationDto = new SendNotificationDto();
-      notificationDto.guildId = "guild-123";
-      notificationDto.npc = npcData;
-
-      const manageSocket = createSocketForGuild({
-        discordId: "discord-manage",
-        roles: [
-          {
-            permissions: [Permission.LOOTLOG_MANAGE],
-            lvlRangeFrom: 1,
-            lvlRangeTo: 10,
-          },
-          {
-            permissions: [Permission.LOOTLOG_NOTIFICATIONS_TITANS_READ],
-            lvlRangeFrom: 300,
-            lvlRangeTo: 350,
-          },
-        ],
-      });
-
-      mockServer.fetchSockets.mockResolvedValue([manageSocket]);
-
-      service.handleGuildNotificationSend(notificationDto);
-
-      await flushPromises();
-
-      expect(manageSocket.emit).toHaveBeenCalledWith(
-        GatewayEvent.NOTIFICATIONS_SEND,
-        notificationDto,
-      );
-    });
-  });
-
-  describe("invalidatePlayerCache", () => {
-    it("should delete player cache from Redis", async () => {
-      const discordId = "discord-123";
-
-      await service.invalidatePlayerCache(discordId);
-
-      expect(mockRedisService.del).toHaveBeenCalledWith(discordId);
-    });
-  });
-
-  describe("handleMembersRefreshJobUpdate", () => {
-    it("should emit refresh job update to OWNER/ADMIN users only", async () => {
-      const refreshDto: RefreshJobUpdateDto = {
-        jobId: 1,
-        guildId: "guild-123",
-        status: "PROCESSING",
-        totalMembers: 100,
-        processedMembers: 50,
-        failedMembers: 0,
-      };
-
-      const mockOwnerSocket = {
-        ...mockSocket,
-        data: {
-          discordId: "discord-owner",
-          guilds: [
-            {
-              guild: { id: "guild-123", ownerId: "discord-owner" },
-              roles: [
-                {
-                  permissions: [Permission.OWNER],
-                  lvlRangeFrom: 1,
-                  lvlRangeTo: 999,
-                },
-              ],
-            },
-          ],
-        },
-        emit: vi.fn(),
-      };
-
-      const mockRegularSocket = {
-        ...mockSocket,
-        data: {
-          discordId: "discord-regular",
-          guilds: [
-            {
-              guild: { id: "guild-123", ownerId: "discord-owner" },
-              roles: [
-                {
-                  permissions: [Permission.LOOTLOG_LOOTS_READ],
-                  lvlRangeFrom: 1,
-                  lvlRangeTo: 999,
-                },
-              ],
-            },
-          ],
-        },
-        emit: vi.fn(),
-      };
-
-      mockServer.fetchSockets.mockResolvedValue([
-        mockOwnerSocket,
-        mockRegularSocket,
-      ]);
-
-      await service.handleMembersRefreshJobUpdate(refreshDto);
-
-      // Admin room broadcast
-      expect(mockServer.to).toHaveBeenCalledWith("guild-123:admin");
-    });
-
-    it("should emit to ADMIN users", async () => {
-      const refreshDto: RefreshJobUpdateDto = {
-        jobId: 1,
-        guildId: "guild-123",
-        status: "PROCESSING",
-        totalMembers: 100,
-        processedMembers: 75,
-        failedMembers: 0,
-      };
-
-      const mockAdminSocket = {
-        ...mockSocket,
-        data: {
-          discordId: "discord-admin",
-          guilds: [
-            {
-              guild: { id: "guild-123", ownerId: "different-user" },
-              roles: [
-                {
-                  permissions: [Permission.ADMIN],
-                  lvlRangeFrom: 1,
-                  lvlRangeTo: 999,
-                },
-              ],
-            },
-          ],
-        },
-        emit: vi.fn(),
-      };
-
-      mockServer.fetchSockets.mockResolvedValue([mockAdminSocket]);
-
-      await service.handleMembersRefreshJobUpdate(refreshDto);
-
-      expect(mockServer.to).toHaveBeenCalledWith("guild-123:admin");
-    });
-  });
-
-  describe("invalidateUserGuildsCache", () => {
-    it("should call guildsService to invalidate user guilds cache", async () => {
-      const discordId = "discord-123";
-      const userId = "user-123";
-
-      await service.invalidateUserGuildsCache(discordId, userId);
-
-      expect(mockGuildsService.invalidateUserGuildsCache).toHaveBeenCalledWith(
-        discordId,
-        userId,
-      );
-    });
-  });
-
-  describe("rebalanceUserSocketRooms", () => {
-    it("should rebalance user socket rooms based on updated guilds", async () => {
-      const discordId = "discord-123";
-      const userId = "user-123";
-
-      const updatedGuilds = [
-        {
-          guild: { id: "guild-1", ownerId: "discord-123" },
-          roles: [],
-        },
-        {
-          guild: { id: "guild-2", ownerId: "discord-123" },
-          roles: [],
-        },
-      ];
-
-      const mockUserSocket = {
-        id: "socket-123",
-        data: {
-          discordId: "discord-123",
-        },
-        rooms: new Set([
-          "socket-123",
-          "guild-1:presence",
-          "old-guild:presence",
+      },
+    ]);
+    mockNamespace.fetchSockets.mockResolvedValue([socket]);
+
+    await service.rebalanceUserSocketRooms("discord-123", "user-123");
+
+    expect(socket.leave).toHaveBeenCalledWith("old-room");
+    expect(socket.join).toHaveBeenCalledWith("guild-123:presence");
+    expect(socket.join).toHaveBeenCalledWith("guild-123:events");
+    expect(socket.join).toHaveBeenCalledWith("guild-123:timers:base");
+    expect(socket.emit).toHaveBeenCalledWith(
+      GatewayEvent.PERMISSIONS_UPDATED,
+      expect.objectContaining({
+        guilds: expect.any(Array),
+        featureRooms: expect.arrayContaining([
+          "guild-123:presence",
+          "guild-123:events",
+          "guild-123:timers:base",
         ]),
-        leave: vi.fn(),
-        join: vi.fn(),
-        emit: vi.fn(),
-      };
+      }),
+    );
+  });
 
-      mockGuildsService.getUserGuilds.mockResolvedValue(updatedGuilds);
-      mockServer.fetchSockets.mockResolvedValue([mockUserSocket]);
+  it("sends volunteer notifications only to target sockets", async () => {
+    const targetSocket = {
+      data: {
+        discordId: "discord-target",
+      },
+      emit: vi.fn(),
+    };
+    const otherSocket = {
+      data: {
+        discordId: "discord-other",
+      },
+      emit: vi.fn(),
+    };
+    const payload: VolunteerNotificationDto = {
+      notificationId: "notification-1",
+      targetDiscordId: "discord-target",
+      volunteerDiscordId: "discord-volunteer",
+      world: "alpha",
+      character: {
+        lvl: 100,
+        nick: "Volunteer",
+        accountId: "account-1",
+        characterId: "character-1",
+        prof: "h",
+        icon: "icon",
+      },
+    };
 
-      await service.rebalanceUserSocketRooms(discordId, userId);
+    mockNamespace.fetchSockets.mockResolvedValue([targetSocket, otherSocket]);
 
-      expect(mockGuildsService.getUserGuilds).toHaveBeenCalledWith({
-        discordId,
-        userId,
-      });
-      expect(mockUserSocket.leave).toHaveBeenCalledWith("old-guild:presence");
-      expect(mockUserSocket.join).toHaveBeenCalledWith("guild-2:presence");
-      expect(mockUserSocket.emit).toHaveBeenCalledWith(
-        GatewayEvent.PERMISSIONS_UPDATED,
-        expect.objectContaining({
-          guilds: updatedGuilds,
-          featureRooms: expect.any(Array),
-        }),
-      );
-    });
+    await service.handleVolunteerNotification(payload);
 
-    it("should handle case when user has no active sockets", async () => {
-      const discordId = "discord-123";
-      const userId = "user-123";
-
-      mockGuildsService.getUserGuilds.mockResolvedValue([]);
-      mockServer.fetchSockets.mockResolvedValue([]);
-
-      await service.rebalanceUserSocketRooms(discordId, userId);
-
-      expect(mockGuildsService.getUserGuilds).toHaveBeenCalled();
-    });
-
-    it("should handle errors gracefully", async () => {
-      const discordId = "discord-123";
-      const userId = "user-123";
-
-      const errorMessage = "Database connection failed";
-      mockGuildsService.getUserGuilds.mockRejectedValue(
-        new Error(errorMessage),
-      );
-
-      await expect(
-        service.rebalanceUserSocketRooms(discordId, userId),
-      ).resolves.not.toThrow();
-    });
-
-    it("should only rebalance sockets for specific user", async () => {
-      const discordId = "discord-target";
-      const userId = "user-target";
-
-      const updatedGuilds = [
-        {
-          guild: { id: "guild-1" },
-          roles: [],
+    expect(targetSocket.emit).toHaveBeenCalledWith(
+      GatewayEvent.NOTIFICATIONS_VOLUNTEER,
+      {
+        notificationId: "notification-1",
+        volunteer: {
+          discordId: "discord-volunteer",
+          world: "alpha",
+          lvl: 100,
+          nick: "Volunteer",
+          accountId: "account-1",
+          characterId: "character-1",
+          prof: "h",
+          icon: "icon",
         },
-      ];
-
-      const mockTargetSocket = {
-        id: "socket-target",
-        data: {
-          discordId: "discord-target",
-        },
-        rooms: new Set(["socket-target"]),
-        leave: vi.fn(),
-        join: vi.fn(),
-        emit: vi.fn(),
-      };
-
-      const mockOtherSocket = {
-        id: "socket-other",
-        data: {
-          discordId: "discord-other",
-        },
-        rooms: new Set(["socket-other"]),
-        leave: vi.fn(),
-        join: vi.fn(),
-        emit: vi.fn(),
-      };
-
-      mockGuildsService.getUserGuilds.mockResolvedValue(updatedGuilds);
-      mockServer.fetchSockets.mockResolvedValue([
-        mockTargetSocket,
-        mockOtherSocket,
-      ]);
-
-      await service.rebalanceUserSocketRooms(discordId, userId);
-
-      expect(mockTargetSocket.emit).toHaveBeenCalled();
-      expect(mockOtherSocket.emit).not.toHaveBeenCalled();
-    });
+      },
+    );
+    expect(otherSocket.emit).not.toHaveBeenCalled();
   });
 });

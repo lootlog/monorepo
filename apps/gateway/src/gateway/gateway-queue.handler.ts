@@ -1,68 +1,57 @@
-import {
-  MessageHandlerErrorBehavior,
-  RabbitSubscribe,
-} from "@golevelup/nestjs-rabbitmq";
-import { Injectable, Logger } from "@nestjs/common";
-import type { AddMemberRoleDto } from "src/gateway/dto/add-member-role.dto";
-import type { AddMemberDto } from "src/gateway/dto/add-member.dto";
-import type { CreateTimerDto } from "src/gateway/dto/create-timer.dto";
-import type { DeleteMemberRoleDto } from "src/gateway/dto/delete-member-role.dto";
-import type { DeleteMemberDto } from "src/gateway/dto/delete-member.dto";
-import type { DeleteTimerDto } from "src/gateway/dto/delete-timer.dto";
-import type { RefreshJobUpdateDto } from "src/gateway/dto/refresh-job-update.dto";
+import type { AddMemberRoleDto } from "./dto/add-member-role.dto.js";
+import type { AddMemberDto } from "./dto/add-member.dto.js";
+import type { CreateTimerDto } from "./dto/create-timer.dto.js";
+import type { DeleteMemberRoleDto } from "./dto/delete-member-role.dto.js";
+import type { DeleteMemberDto } from "./dto/delete-member.dto.js";
+import type { DeleteTimerDto } from "./dto/delete-timer.dto.js";
+import type { RefreshJobUpdateDto } from "./dto/refresh-job-update.dto.js";
 import type {
   ReservationCreateEventDto,
   ReservationDeleteEventDto,
-} from "src/gateway/dto/reservation-event.dto";
-import type { SendMessageDto } from "src/gateway/dto/send-message.dto";
-import type { SendNotificationDto } from "src/gateway/dto/send-notification.dto";
-import type { SendPartyGatheringDto } from "src/gateway/dto/send-party-gathering.dto";
-import type { VolunteerNotificationDto } from "src/gateway/dto/volunteer-notification.dto";
+} from "./dto/reservation-event.dto.js";
+import type { SendMessageDto } from "./dto/send-message.dto.js";
+import type { SendNotificationDto } from "./dto/send-notification.dto.js";
+import type { SendPartyGatheringDto } from "./dto/send-party-gathering.dto.js";
+import type { VolunteerNotificationDto } from "./dto/volunteer-notification.dto.js";
+import { RoutingKey } from "./enums/routing-key.enum.js";
+import { GatewayService } from "./gateway.service.js";
+import { RetryService } from "./retry.service.js";
 import type {
-  EventMapStatusUpdatePayload,
   EventHeroKilledPayload,
+  EventMapStatusUpdatePayload,
   EventRankingUpdatePayload,
   EventRespawnWindowPayload,
-} from "src/gateway/types/margo-event.types";
-import { Queue } from "src/gateway/enums/queue.enum";
-import { RoutingKey } from "src/gateway/enums/routing-key.enum";
-import { GatewayService } from "src/gateway/gateway.service";
-import {
-  DEFAULT_EXCHANGE_NAME,
-  DEAD_LETTER_EXCHANGE_NAME,
-  RETRY_EXCHANGE_NAME,
-} from "src/config/rabbitmq.config";
-import { RetryService } from "src/gateway/retry.service";
+} from "./types/margo-event.types.js";
 
-interface AmqpMessage {
+export interface AmqpMessage {
   properties: {
     headers?: Record<string, unknown>;
   };
 }
 
-@Injectable()
-export class GatewayQueueHandler {
-  private readonly logger = new Logger(GatewayQueueHandler.name);
+type LoggerLike = {
+  error(message: string, meta?: Record<string, unknown>): void;
+};
 
+export class GatewayQueueHandler {
   constructor(
     private readonly gatewayService: GatewayService,
     private readonly retryService: RetryService,
+    private readonly logger: LoggerLike,
   ) {}
 
-  @RabbitSubscribe({
-    exchange: DEFAULT_EXCHANGE_NAME,
-    routingKey: RoutingKey.GUILDS_TIMERS_UPDATE,
-    queue: Queue.GUILDS_TIMERS_UPDATE,
-    errorBehavior: MessageHandlerErrorBehavior.NACK,
-    queueOptions: {
-      durable: true,
-      deadLetterExchange: RETRY_EXCHANGE_NAME,
-      deadLetterRoutingKey: RoutingKey.GUILDS_TIMERS_UPDATE_RETRY,
-    },
-  })
-  async handleGuildsTimerUpdate(data: CreateTimerDto, amqpMsg: AmqpMessage) {
-    const headers = amqpMsg.properties.headers || {};
+  private logDlqMessage(kind: string, data: unknown, amqpMsg: AmqpMessage) {
+    this.logger.error(`Message sent to DLQ - ${kind}`, {
+      data,
+      retryCount: this.retryService.getRetryCount(
+        amqpMsg.properties.headers ?? {},
+      ),
+      headers: amqpMsg.properties.headers,
+    });
+  }
 
+  async handleGuildsTimerUpdate(data: CreateTimerDto, amqpMsg: AmqpMessage) {
+    const headers = amqpMsg.properties.headers ?? {};
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
       headers,
@@ -70,27 +59,13 @@ export class GatewayQueueHandler {
       `timer update: ${data.guildId}`,
     );
 
-    if (!shouldContinue) {
-      return;
+    if (shouldContinue) {
+      await this.gatewayService.handleGuildsTimerUpdate(data);
     }
-
-    await this.gatewayService.handleGuildsTimerUpdate(data);
   }
 
-  @RabbitSubscribe({
-    exchange: DEFAULT_EXCHANGE_NAME,
-    routingKey: RoutingKey.GUILDS_TIMERS_DELETE,
-    queue: Queue.GUILDS_TIMERS_DELETE,
-    errorBehavior: MessageHandlerErrorBehavior.NACK,
-    queueOptions: {
-      durable: true,
-      deadLetterExchange: RETRY_EXCHANGE_NAME,
-      deadLetterRoutingKey: RoutingKey.GUILDS_TIMERS_DELETE_RETRY,
-    },
-  })
   async handleGuildsTimerDelete(data: DeleteTimerDto, amqpMsg: AmqpMessage) {
-    const headers = amqpMsg.properties.headers || {};
-
+    const headers = amqpMsg.properties.headers ?? {};
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
       headers,
@@ -98,30 +73,16 @@ export class GatewayQueueHandler {
       `timer delete: ${data.guildId}`,
     );
 
-    if (!shouldContinue) {
-      return;
+    if (shouldContinue) {
+      await this.gatewayService.handleGuildsTimerDelete(data);
     }
-
-    await this.gatewayService.handleGuildsTimerDelete(data);
   }
 
-  @RabbitSubscribe({
-    exchange: DEFAULT_EXCHANGE_NAME,
-    routingKey: RoutingKey.GUILDS_RESERVATIONS_CREATE,
-    queue: Queue.GUILDS_RESERVATIONS_CREATE,
-    errorBehavior: MessageHandlerErrorBehavior.NACK,
-    queueOptions: {
-      durable: true,
-      deadLetterExchange: RETRY_EXCHANGE_NAME,
-      deadLetterRoutingKey: RoutingKey.GUILDS_RESERVATIONS_CREATE_RETRY,
-    },
-  })
   async handleGuildsReservationCreate(
     data: ReservationCreateEventDto,
     amqpMsg: AmqpMessage,
   ) {
-    const headers = amqpMsg.properties.headers || {};
-
+    const headers = amqpMsg.properties.headers ?? {};
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
       headers,
@@ -129,30 +90,16 @@ export class GatewayQueueHandler {
       `reservation create: ${data.guildId}`,
     );
 
-    if (!shouldContinue) {
-      return;
+    if (shouldContinue) {
+      await this.gatewayService.handleGuildsReservationCreate(data);
     }
-
-    await this.gatewayService.handleGuildsReservationCreate(data);
   }
 
-  @RabbitSubscribe({
-    exchange: DEFAULT_EXCHANGE_NAME,
-    routingKey: RoutingKey.GUILDS_RESERVATIONS_DELETE,
-    queue: Queue.GUILDS_RESERVATIONS_DELETE,
-    errorBehavior: MessageHandlerErrorBehavior.NACK,
-    queueOptions: {
-      durable: true,
-      deadLetterExchange: RETRY_EXCHANGE_NAME,
-      deadLetterRoutingKey: RoutingKey.GUILDS_RESERVATIONS_DELETE_RETRY,
-    },
-  })
   async handleGuildsReservationDelete(
     data: ReservationDeleteEventDto,
     amqpMsg: AmqpMessage,
   ) {
-    const headers = amqpMsg.properties.headers || {};
-
+    const headers = amqpMsg.properties.headers ?? {};
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
       headers,
@@ -160,27 +107,13 @@ export class GatewayQueueHandler {
       `reservation delete: ${data.guildId}`,
     );
 
-    if (!shouldContinue) {
-      return;
+    if (shouldContinue) {
+      await this.gatewayService.handleGuildsReservationDelete(data);
     }
-
-    await this.gatewayService.handleGuildsReservationDelete(data);
   }
 
-  @RabbitSubscribe({
-    exchange: DEFAULT_EXCHANGE_NAME,
-    routingKey: RoutingKey.GUILDS_SEND_MESSAGE,
-    queue: Queue.GUILDS_SEND_MESSAGE,
-    errorBehavior: MessageHandlerErrorBehavior.NACK,
-    queueOptions: {
-      durable: true,
-      deadLetterExchange: RETRY_EXCHANGE_NAME,
-      deadLetterRoutingKey: RoutingKey.GUILDS_SEND_MESSAGE_RETRY,
-    },
-  })
   async handleGuildMessageSend(data: SendMessageDto, amqpMsg: AmqpMessage) {
-    const headers = amqpMsg.properties.headers || {};
-
+    const headers = amqpMsg.properties.headers ?? {};
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
       headers,
@@ -188,27 +121,13 @@ export class GatewayQueueHandler {
       `send message: ${data.guildId}`,
     );
 
-    if (!shouldContinue) {
-      return;
+    if (shouldContinue) {
+      await this.gatewayService.handleGuildMessageSend(data);
     }
-
-    await this.gatewayService.handleGuildMessageSend(data);
   }
 
-  @RabbitSubscribe({
-    exchange: DEFAULT_EXCHANGE_NAME,
-    routingKey: RoutingKey.GUILDS_MEMBERS_ADD,
-    queue: Queue.GUILDS_MEMBERS_ADD,
-    errorBehavior: MessageHandlerErrorBehavior.NACK,
-    queueOptions: {
-      durable: true,
-      deadLetterExchange: RETRY_EXCHANGE_NAME,
-      deadLetterRoutingKey: RoutingKey.GUILDS_MEMBERS_ADD_RETRY,
-    },
-  })
   async handleAddMember(data: AddMemberDto, amqpMsg: AmqpMessage) {
-    const headers = amqpMsg.properties.headers || {};
-
+    const headers = amqpMsg.properties.headers ?? {};
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
       headers,
@@ -216,27 +135,13 @@ export class GatewayQueueHandler {
       `member add cache invalidation: ${data.id}`,
     );
 
-    if (!shouldContinue) {
-      return;
+    if (shouldContinue) {
+      await this.gatewayService.invalidatePlayerCache(data.id);
     }
-
-    await this.gatewayService.invalidatePlayerCache(data.id);
   }
 
-  @RabbitSubscribe({
-    exchange: DEFAULT_EXCHANGE_NAME,
-    routingKey: RoutingKey.GUILDS_MEMBERS_UPDATE,
-    queue: Queue.GUILDS_MEMBERS_UPDATE,
-    errorBehavior: MessageHandlerErrorBehavior.NACK,
-    queueOptions: {
-      durable: true,
-      deadLetterExchange: RETRY_EXCHANGE_NAME,
-      deadLetterRoutingKey: RoutingKey.GUILDS_MEMBERS_UPDATE_RETRY,
-    },
-  })
   async handleUpdateMember(data: AddMemberDto, amqpMsg: AmqpMessage) {
-    const headers = amqpMsg.properties.headers || {};
-
+    const headers = amqpMsg.properties.headers ?? {};
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
       headers,
@@ -244,34 +149,23 @@ export class GatewayQueueHandler {
       `member permissions update: ${data.discordId}`,
     );
 
-    if (!shouldContinue) {
-      return;
+    if (shouldContinue) {
+      await Promise.all([
+        this.gatewayService.invalidatePlayerCache(data.id),
+        this.gatewayService.invalidateUserGuildsCache(
+          data.discordId,
+          data.userId,
+        ),
+        this.gatewayService.rebalanceUserSocketRooms(
+          data.discordId,
+          data.userId,
+        ),
+      ]);
     }
-
-    await Promise.all([
-      this.gatewayService.invalidatePlayerCache(data.id),
-      this.gatewayService.invalidateUserGuildsCache(
-        data.discordId,
-        data.userId,
-      ),
-      this.gatewayService.rebalanceUserSocketRooms(data.discordId, data.userId),
-    ]);
   }
 
-  @RabbitSubscribe({
-    exchange: DEFAULT_EXCHANGE_NAME,
-    routingKey: RoutingKey.GUILDS_MEMBERS_REMOVE,
-    queue: Queue.GUILDS_MEMBERS_REMOVE,
-    errorBehavior: MessageHandlerErrorBehavior.NACK,
-    queueOptions: {
-      durable: true,
-      deadLetterExchange: RETRY_EXCHANGE_NAME,
-      deadLetterRoutingKey: RoutingKey.GUILDS_MEMBERS_REMOVE_RETRY,
-    },
-  })
   async handleDeleteMember(data: DeleteMemberDto, amqpMsg: AmqpMessage) {
-    const headers = amqpMsg.properties.headers || {};
-
+    const headers = amqpMsg.properties.headers ?? {};
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
       headers,
@@ -279,34 +173,23 @@ export class GatewayQueueHandler {
       `member remove cache invalidation: ${data.id}`,
     );
 
-    if (!shouldContinue) {
-      return;
+    if (shouldContinue) {
+      await Promise.all([
+        this.gatewayService.invalidatePlayerCache(data.id),
+        this.gatewayService.invalidateUserGuildsCache(
+          data.discordId,
+          data.userId,
+        ),
+        this.gatewayService.rebalanceUserSocketRooms(
+          data.discordId,
+          data.userId,
+        ),
+      ]);
     }
-
-    await Promise.all([
-      this.gatewayService.invalidatePlayerCache(data.id),
-      this.gatewayService.invalidateUserGuildsCache(
-        data.discordId,
-        data.userId,
-      ),
-      this.gatewayService.rebalanceUserSocketRooms(data.discordId, data.userId),
-    ]);
   }
 
-  @RabbitSubscribe({
-    exchange: DEFAULT_EXCHANGE_NAME,
-    routingKey: RoutingKey.GUILDS_MEMBERS_ADD_ROLE,
-    queue: Queue.GUILDS_MEMBERS_ADD_ROLE,
-    errorBehavior: MessageHandlerErrorBehavior.NACK,
-    queueOptions: {
-      durable: true,
-      deadLetterExchange: RETRY_EXCHANGE_NAME,
-      deadLetterRoutingKey: RoutingKey.GUILDS_MEMBERS_ADD_ROLE_RETRY,
-    },
-  })
   async handleAddMemberRole(data: AddMemberRoleDto, amqpMsg: AmqpMessage) {
-    const headers = amqpMsg.properties.headers || {};
-
+    const headers = amqpMsg.properties.headers ?? {};
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
       headers,
@@ -314,37 +197,26 @@ export class GatewayQueueHandler {
       `member add role cache invalidation: ${data.id}`,
     );
 
-    if (!shouldContinue) {
-      return;
+    if (shouldContinue) {
+      await Promise.all([
+        this.gatewayService.invalidatePlayerCache(data.id),
+        this.gatewayService.invalidateUserGuildsCache(
+          data.discordId,
+          data.userId,
+        ),
+        this.gatewayService.rebalanceUserSocketRooms(
+          data.discordId,
+          data.userId,
+        ),
+      ]);
     }
-
-    await Promise.all([
-      this.gatewayService.invalidatePlayerCache(data.id),
-      this.gatewayService.invalidateUserGuildsCache(
-        data.discordId,
-        data.userId,
-      ),
-      this.gatewayService.rebalanceUserSocketRooms(data.discordId, data.userId),
-    ]);
   }
 
-  @RabbitSubscribe({
-    exchange: DEFAULT_EXCHANGE_NAME,
-    routingKey: RoutingKey.GUILDS_MEMBERS_REMOVE_ROLE,
-    queue: Queue.GUILDS_MEMBERS_REMOVE_ROLE,
-    errorBehavior: MessageHandlerErrorBehavior.NACK,
-    queueOptions: {
-      durable: true,
-      deadLetterExchange: RETRY_EXCHANGE_NAME,
-      deadLetterRoutingKey: RoutingKey.GUILDS_MEMBERS_REMOVE_ROLE_RETRY,
-    },
-  })
   async handleDeleteMemberRole(
     data: DeleteMemberRoleDto,
     amqpMsg: AmqpMessage,
   ) {
-    const headers = amqpMsg.properties.headers || {};
-
+    const headers = amqpMsg.properties.headers ?? {};
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
       headers,
@@ -352,37 +224,26 @@ export class GatewayQueueHandler {
       `member remove role cache invalidation: ${data.id}`,
     );
 
-    if (!shouldContinue) {
-      return;
+    if (shouldContinue) {
+      await Promise.all([
+        this.gatewayService.invalidatePlayerCache(data.id),
+        this.gatewayService.invalidateUserGuildsCache(
+          data.discordId,
+          data.userId,
+        ),
+        this.gatewayService.rebalanceUserSocketRooms(
+          data.discordId,
+          data.userId,
+        ),
+      ]);
     }
-
-    await Promise.all([
-      this.gatewayService.invalidatePlayerCache(data.id),
-      this.gatewayService.invalidateUserGuildsCache(
-        data.discordId,
-        data.userId,
-      ),
-      this.gatewayService.rebalanceUserSocketRooms(data.discordId, data.userId),
-    ]);
   }
 
-  @RabbitSubscribe({
-    exchange: DEFAULT_EXCHANGE_NAME,
-    routingKey: RoutingKey.GUILDS_NOTIFICATIONS_SEND,
-    queue: Queue.GUILDS_SEND_NOTIFICATION,
-    errorBehavior: MessageHandlerErrorBehavior.NACK,
-    queueOptions: {
-      durable: true,
-      deadLetterExchange: RETRY_EXCHANGE_NAME,
-      deadLetterRoutingKey: RoutingKey.GUILDS_NOTIFICATIONS_SEND_RETRY,
-    },
-  })
   async handleSendNotification(
     data: SendNotificationDto,
     amqpMsg: AmqpMessage,
   ) {
-    const headers = amqpMsg.properties.headers || {};
-
+    const headers = amqpMsg.properties.headers ?? {};
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
       headers,
@@ -390,247 +251,66 @@ export class GatewayQueueHandler {
       `send notification: ${data.guildId}`,
     );
 
-    if (!shouldContinue) {
-      return;
+    if (shouldContinue) {
+      await this.gatewayService.handleGuildNotificationSend(data);
     }
-
-    await this.gatewayService.handleGuildNotificationSend(data);
   }
 
-  // DLQ Handlers
-  @RabbitSubscribe({
-    exchange: DEAD_LETTER_EXCHANGE_NAME,
-    routingKey: RoutingKey.GUILDS_TIMERS_UPDATE_DLQ,
-    queue: Queue.GUILDS_TIMERS_UPDATE_DLQ,
-    queueOptions: {
-      durable: true,
-    },
-  })
   handleTimerUpdateDLQ(data: CreateTimerDto, amqpMsg: AmqpMessage) {
-    this.logger.error("Message sent to DLQ - Timer Update:", {
-      data,
-      retryCount: this.retryService.getRetryCount(
-        amqpMsg.properties.headers || {},
-      ),
-      headers: amqpMsg.properties.headers,
-    });
+    this.logDlqMessage("Timer Update", data, amqpMsg);
   }
 
-  @RabbitSubscribe({
-    exchange: DEAD_LETTER_EXCHANGE_NAME,
-    routingKey: RoutingKey.GUILDS_TIMERS_DELETE_DLQ,
-    queue: Queue.GUILDS_TIMERS_DELETE_DLQ,
-    queueOptions: {
-      durable: true,
-    },
-  })
   handleTimerDeleteDLQ(data: DeleteTimerDto, amqpMsg: AmqpMessage) {
-    this.logger.error("Message sent to DLQ - Timer Delete:", {
-      data,
-      retryCount: this.retryService.getRetryCount(
-        amqpMsg.properties.headers || {},
-      ),
-      headers: amqpMsg.properties.headers,
-    });
+    this.logDlqMessage("Timer Delete", data, amqpMsg);
   }
 
-  @RabbitSubscribe({
-    exchange: DEAD_LETTER_EXCHANGE_NAME,
-    routingKey: RoutingKey.GUILDS_RESERVATIONS_CREATE_DLQ,
-    queue: Queue.GUILDS_RESERVATIONS_CREATE_DLQ,
-    queueOptions: {
-      durable: true,
-    },
-  })
   handleReservationCreateDLQ(
     data: ReservationCreateEventDto,
     amqpMsg: AmqpMessage,
   ) {
-    this.logger.error("Message sent to DLQ - Reservation Create:", {
-      data,
-      retryCount: this.retryService.getRetryCount(
-        amqpMsg.properties.headers || {},
-      ),
-      headers: amqpMsg.properties.headers,
-    });
+    this.logDlqMessage("Reservation Create", data, amqpMsg);
   }
 
-  @RabbitSubscribe({
-    exchange: DEAD_LETTER_EXCHANGE_NAME,
-    routingKey: RoutingKey.GUILDS_RESERVATIONS_DELETE_DLQ,
-    queue: Queue.GUILDS_RESERVATIONS_DELETE_DLQ,
-    queueOptions: {
-      durable: true,
-    },
-  })
   handleReservationDeleteDLQ(
     data: ReservationDeleteEventDto,
     amqpMsg: AmqpMessage,
   ) {
-    this.logger.error("Message sent to DLQ - Reservation Delete:", {
-      data,
-      retryCount: this.retryService.getRetryCount(
-        amqpMsg.properties.headers || {},
-      ),
-      headers: amqpMsg.properties.headers,
-    });
+    this.logDlqMessage("Reservation Delete", data, amqpMsg);
   }
 
-  @RabbitSubscribe({
-    exchange: DEAD_LETTER_EXCHANGE_NAME,
-    routingKey: RoutingKey.GUILDS_SEND_MESSAGE_DLQ,
-    queue: Queue.GUILDS_SEND_MESSAGE_DLQ,
-    queueOptions: {
-      durable: true,
-    },
-  })
   handleSendMessageDLQ(data: SendMessageDto, amqpMsg: AmqpMessage) {
-    this.logger.error("Message sent to DLQ - Send Message:", {
-      data,
-      retryCount: this.retryService.getRetryCount(
-        amqpMsg.properties.headers || {},
-      ),
-      headers: amqpMsg.properties.headers,
-    });
+    this.logDlqMessage("Send Message", data, amqpMsg);
   }
 
-  @RabbitSubscribe({
-    exchange: DEAD_LETTER_EXCHANGE_NAME,
-    routingKey: RoutingKey.GUILDS_MEMBERS_ADD_DLQ,
-    queue: Queue.GUILDS_MEMBERS_ADD_DLQ,
-    queueOptions: {
-      durable: true,
-    },
-  })
   handleAddMemberDLQ(data: AddMemberDto, amqpMsg: AmqpMessage) {
-    this.logger.error("Message sent to DLQ - Add Member Cache Invalidation:", {
-      data,
-      retryCount: this.retryService.getRetryCount(
-        amqpMsg.properties.headers || {},
-      ),
-      headers: amqpMsg.properties.headers,
-    });
+    this.logDlqMessage("Add Member Cache Invalidation", data, amqpMsg);
   }
 
-  @RabbitSubscribe({
-    exchange: DEAD_LETTER_EXCHANGE_NAME,
-    routingKey: RoutingKey.GUILDS_MEMBERS_UPDATE_DLQ,
-    queue: Queue.GUILDS_MEMBERS_UPDATE_DLQ,
-    queueOptions: {
-      durable: true,
-    },
-  })
   handleUpdateMemberDLQ(data: AddMemberDto, amqpMsg: AmqpMessage) {
-    this.logger.error(
-      "Message sent to DLQ - Update Member Cache Invalidation:",
-      {
-        data,
-        retryCount: this.retryService.getRetryCount(
-          amqpMsg.properties.headers || {},
-        ),
-        headers: amqpMsg.properties.headers,
-      },
-    );
+    this.logDlqMessage("Update Member Cache Invalidation", data, amqpMsg);
   }
 
-  @RabbitSubscribe({
-    exchange: DEAD_LETTER_EXCHANGE_NAME,
-    routingKey: RoutingKey.GUILDS_MEMBERS_REMOVE_DLQ,
-    queue: Queue.GUILDS_MEMBERS_REMOVE_DLQ,
-    queueOptions: {
-      durable: true,
-    },
-  })
   handleDeleteMemberDLQ(data: DeleteMemberDto, amqpMsg: AmqpMessage) {
-    this.logger.error(
-      "Message sent to DLQ - Delete Member Cache Invalidation:",
-      {
-        data,
-        retryCount: this.retryService.getRetryCount(
-          amqpMsg.properties.headers || {},
-        ),
-        headers: amqpMsg.properties.headers,
-      },
-    );
+    this.logDlqMessage("Delete Member Cache Invalidation", data, amqpMsg);
   }
 
-  @RabbitSubscribe({
-    exchange: DEAD_LETTER_EXCHANGE_NAME,
-    routingKey: RoutingKey.GUILDS_MEMBERS_ADD_ROLE_DLQ,
-    queue: Queue.GUILDS_MEMBERS_ADD_ROLE_DLQ,
-    queueOptions: {
-      durable: true,
-    },
-  })
   handleAddMemberRoleDLQ(data: AddMemberRoleDto, amqpMsg: AmqpMessage) {
-    this.logger.error(
-      "Message sent to DLQ - Add Member Role Cache Invalidation:",
-      {
-        data,
-        retryCount: this.retryService.getRetryCount(
-          amqpMsg.properties.headers || {},
-        ),
-        headers: amqpMsg.properties.headers,
-      },
-    );
+    this.logDlqMessage("Add Member Role Cache Invalidation", data, amqpMsg);
   }
 
-  @RabbitSubscribe({
-    exchange: DEAD_LETTER_EXCHANGE_NAME,
-    routingKey: RoutingKey.GUILDS_MEMBERS_REMOVE_ROLE_DLQ,
-    queue: Queue.GUILDS_MEMBERS_REMOVE_ROLE_DLQ,
-    queueOptions: {
-      durable: true,
-    },
-  })
   handleDeleteMemberRoleDLQ(data: DeleteMemberRoleDto, amqpMsg: AmqpMessage) {
-    this.logger.error(
-      "Message sent to DLQ - Delete Member Role Cache Invalidation:",
-      {
-        data,
-        retryCount: this.retryService.getRetryCount(
-          amqpMsg.properties.headers || {},
-        ),
-        headers: amqpMsg.properties.headers,
-      },
-    );
+    this.logDlqMessage("Delete Member Role Cache Invalidation", data, amqpMsg);
   }
 
-  @RabbitSubscribe({
-    exchange: DEAD_LETTER_EXCHANGE_NAME,
-    routingKey: RoutingKey.GUILDS_NOTIFICATIONS_SEND_DLQ,
-    queue: Queue.GUILDS_SEND_NOTIFICATION_DLQ,
-    queueOptions: {
-      durable: true,
-    },
-  })
   handleSendNotificationDLQ(data: SendNotificationDto, amqpMsg: AmqpMessage) {
-    this.logger.error("Message sent to DLQ - Send Notification:", {
-      data,
-      retryCount: this.retryService.getRetryCount(
-        amqpMsg.properties.headers || {},
-      ),
-      headers: amqpMsg.properties.headers,
-    });
+    this.logDlqMessage("Send Notification", data, amqpMsg);
   }
 
-  @RabbitSubscribe({
-    exchange: DEFAULT_EXCHANGE_NAME,
-    routingKey: RoutingKey.GUILDS_NOTIFICATIONS_VOLUNTEER,
-    queue: Queue.GUILDS_NOTIFICATIONS_VOLUNTEER,
-    errorBehavior: MessageHandlerErrorBehavior.NACK,
-    queueOptions: {
-      durable: true,
-      deadLetterExchange: RETRY_EXCHANGE_NAME,
-      deadLetterRoutingKey: RoutingKey.GUILDS_NOTIFICATIONS_VOLUNTEER_RETRY,
-    },
-  })
   async handleVolunteerNotification(
     data: VolunteerNotificationDto,
     amqpMsg: AmqpMessage,
   ) {
-    const headers = amqpMsg.properties.headers || {};
-
+    const headers = amqpMsg.properties.headers ?? {};
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
       headers,
@@ -638,51 +318,23 @@ export class GatewayQueueHandler {
       `volunteer notification: ${data.notificationId}`,
     );
 
-    if (!shouldContinue) {
-      return;
+    if (shouldContinue) {
+      await this.gatewayService.handleVolunteerNotification(data);
     }
-
-    await this.gatewayService.handleVolunteerNotification(data);
   }
 
-  @RabbitSubscribe({
-    exchange: DEAD_LETTER_EXCHANGE_NAME,
-    routingKey: RoutingKey.GUILDS_NOTIFICATIONS_VOLUNTEER_DLQ,
-    queue: Queue.GUILDS_NOTIFICATIONS_VOLUNTEER_DLQ,
-    queueOptions: {
-      durable: true,
-    },
-  })
   handleVolunteerNotificationDLQ(
     data: VolunteerNotificationDto,
     amqpMsg: AmqpMessage,
   ) {
-    this.logger.error("Message sent to DLQ - Volunteer Notification:", {
-      data,
-      retryCount: this.retryService.getRetryCount(
-        amqpMsg.properties.headers || {},
-      ),
-      headers: amqpMsg.properties.headers,
-    });
+    this.logDlqMessage("Volunteer Notification", data, amqpMsg);
   }
 
-  @RabbitSubscribe({
-    exchange: DEFAULT_EXCHANGE_NAME,
-    routingKey: RoutingKey.GUILDS_PARTY_GATHERING,
-    queue: Queue.GUILDS_PARTY_GATHERING,
-    errorBehavior: MessageHandlerErrorBehavior.NACK,
-    queueOptions: {
-      durable: true,
-      deadLetterExchange: RETRY_EXCHANGE_NAME,
-      deadLetterRoutingKey: RoutingKey.GUILDS_PARTY_GATHERING_RETRY,
-    },
-  })
   async handlePartyGathering(
     data: SendPartyGatheringDto,
     amqpMsg: AmqpMessage,
   ) {
-    const headers = amqpMsg.properties.headers || {};
-
+    const headers = amqpMsg.properties.headers ?? {};
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
       headers,
@@ -690,40 +342,15 @@ export class GatewayQueueHandler {
       `party gathering: ${data.notificationId}`,
     );
 
-    if (!shouldContinue) {
-      return;
+    if (shouldContinue) {
+      await this.gatewayService.handlePartyGatheringSend(data);
     }
-
-    await this.gatewayService.handlePartyGatheringSend(data);
   }
 
-  @RabbitSubscribe({
-    exchange: DEAD_LETTER_EXCHANGE_NAME,
-    routingKey: RoutingKey.GUILDS_PARTY_GATHERING_DLQ,
-    queue: Queue.GUILDS_PARTY_GATHERING_DLQ,
-    queueOptions: {
-      durable: true,
-    },
-  })
   handlePartyGatheringDLQ(data: SendPartyGatheringDto, amqpMsg: AmqpMessage) {
-    this.logger.error("Message sent to DLQ - Party Gathering:", {
-      data,
-      retryCount: this.retryService.getRetryCount(
-        amqpMsg.properties.headers || {},
-      ),
-      headers: amqpMsg.properties.headers,
-    });
+    this.logDlqMessage("Party Gathering", data, amqpMsg);
   }
 
-  @RabbitSubscribe({
-    exchange: DEFAULT_EXCHANGE_NAME,
-    routingKey: RoutingKey.GUILDS_PARTY_GATHERING_CANCEL,
-    queue: Queue.GUILDS_PARTY_GATHERING_CANCEL,
-    errorBehavior: MessageHandlerErrorBehavior.NACK,
-    queueOptions: {
-      durable: true,
-    },
-  })
   async handlePartyGatheringCancel(data: {
     guildId: string;
     notificationId: string;
@@ -731,15 +358,6 @@ export class GatewayQueueHandler {
     await this.gatewayService.handlePartyGatheringCancel(data);
   }
 
-  @RabbitSubscribe({
-    exchange: DEFAULT_EXCHANGE_NAME,
-    routingKey: RoutingKey.GUILDS_UPDATE_MESSAGE,
-    queue: Queue.GUILDS_UPDATE_MESSAGE,
-    errorBehavior: MessageHandlerErrorBehavior.NACK,
-    queueOptions: {
-      durable: true,
-    },
-  })
   async handleUpdateMessage(data: {
     guildId: string;
     messageId: string;
@@ -752,15 +370,6 @@ export class GatewayQueueHandler {
     await this.gatewayService.handleChatMessageUpdate(data);
   }
 
-  @RabbitSubscribe({
-    exchange: DEFAULT_EXCHANGE_NAME,
-    routingKey: RoutingKey.GUILDS_DELETE_MESSAGE,
-    queue: Queue.GUILDS_DELETE_MESSAGE,
-    errorBehavior: MessageHandlerErrorBehavior.NACK,
-    queueOptions: {
-      durable: true,
-    },
-  })
   async handleDeleteMessage(data: {
     guildId: string;
     messageId: string;
@@ -772,93 +381,30 @@ export class GatewayQueueHandler {
     await this.gatewayService.handleChatMessageDelete(data);
   }
 
-  @RabbitSubscribe({
-    exchange: DEFAULT_EXCHANGE_NAME,
-    routingKey: RoutingKey.GUILDS_MEMBERS_REFRESH_JOB_UPDATE,
-    queue: Queue.GUILDS_MEMBERS_REFRESH_JOB_UPDATE,
-    errorBehavior: MessageHandlerErrorBehavior.NACK,
-    queueOptions: {
-      durable: true,
-    },
-  })
   async handleMembersRefreshJobUpdate(data: RefreshJobUpdateDto) {
     await this.gatewayService.handleMembersRefreshJobUpdate(data);
   }
 
-  @RabbitSubscribe({
-    exchange: DEFAULT_EXCHANGE_NAME,
-    routingKey: RoutingKey.EVENT_MAP_STATUS_UPDATE,
-    queue: Queue.EVENT_MAP_STATUS_UPDATE,
-    errorBehavior: MessageHandlerErrorBehavior.NACK,
-    queueOptions: {
-      durable: true,
-    },
-  })
-  handleEventMapStatusUpdate(data: EventMapStatusUpdatePayload) {
+  async handleEventMapStatusUpdate(data: EventMapStatusUpdatePayload) {
     this.gatewayService.handleEventMapStatusUpdate(data);
   }
 
-  @RabbitSubscribe({
-    exchange: DEFAULT_EXCHANGE_NAME,
-    routingKey: RoutingKey.EVENT_HERO_KILLED,
-    queue: Queue.EVENT_HERO_KILLED,
-    errorBehavior: MessageHandlerErrorBehavior.NACK,
-    queueOptions: {
-      durable: true,
-    },
-  })
   async handleEventHeroKilled(data: EventHeroKilledPayload) {
     this.gatewayService.handleEventHeroKilled(data);
   }
 
-  @RabbitSubscribe({
-    exchange: DEFAULT_EXCHANGE_NAME,
-    routingKey: RoutingKey.EVENT_RANKING_UPDATE,
-    queue: Queue.EVENT_RANKING_UPDATE,
-    errorBehavior: MessageHandlerErrorBehavior.NACK,
-    queueOptions: {
-      durable: true,
-    },
-  })
   async handleEventRankingUpdate(data: EventRankingUpdatePayload) {
     this.gatewayService.handleEventRankingUpdate(data);
   }
 
-  @RabbitSubscribe({
-    exchange: DEFAULT_EXCHANGE_NAME,
-    routingKey: RoutingKey.EVENT_RESPAWN_WINDOW_OPENED,
-    queue: Queue.EVENT_RESPAWN_WINDOW_OPENED,
-    errorBehavior: MessageHandlerErrorBehavior.NACK,
-    queueOptions: {
-      durable: true,
-    },
-  })
   async handleEventRespawnWindowOpened(data: EventRespawnWindowPayload) {
     this.gatewayService.handleEventRespawnWindowOpened(data);
   }
 
-  @RabbitSubscribe({
-    exchange: DEFAULT_EXCHANGE_NAME,
-    routingKey: RoutingKey.EVENT_RESPAWN_WINDOW_CLOSED,
-    queue: Queue.EVENT_RESPAWN_WINDOW_CLOSED,
-    errorBehavior: MessageHandlerErrorBehavior.NACK,
-    queueOptions: {
-      durable: true,
-    },
-  })
   async handleEventRespawnWindowClosed(data: EventRespawnWindowPayload) {
     this.gatewayService.handleEventRespawnWindowClosed(data);
   }
 
-  @RabbitSubscribe({
-    exchange: DEFAULT_EXCHANGE_NAME,
-    routingKey: RoutingKey.PRESENCE_CHECK_REQUEST,
-    queue: Queue.PRESENCE_CHECK_REQUEST,
-    errorBehavior: MessageHandlerErrorBehavior.NACK,
-    queueOptions: {
-      durable: true,
-    },
-  })
   async handlePresenceCheckRequest(data: { guildId: string; mapName: string }) {
     await this.gatewayService.checkPresenceForMap(data.guildId, data.mapName);
   }

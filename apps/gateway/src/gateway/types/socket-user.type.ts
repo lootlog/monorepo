@@ -1,7 +1,7 @@
-import type { Platform } from "src/gateway/enums/platform.enum";
-import type { UserPresenceStatus } from "src/gateway/enums/user-presence-status.enum";
-import type { Socket as SocketIOSocket } from "socket.io";
-import type { UserGuildData } from "src/guilds/types/guild.types";
+import type { Namespace, Socket as SocketIOSocket } from "socket.io";
+import type { Platform } from "../enums/platform.enum.js";
+import type { UserPresenceStatus } from "../enums/user-presence-status.enum.js";
+import type { UserGuildData } from "../../guilds/types/guild.types.js";
 
 export type SocketUserPlayerLocation = {
   x: number;
@@ -45,7 +45,7 @@ export type PlayerPresence = {
 export type SocketUser = {
   discordId: string;
   sessionId: string;
-  userId: string;
+  userId?: string;
   platform: Platform;
   player?: SocketUserPlayer;
   status?: UserPresenceStatus;
@@ -53,4 +53,5 @@ export type SocketUser = {
   playerPresence?: PlayerPresence;
 };
 
-export type Socket = SocketIOSocket & { data: SocketUser };
+export type Socket = SocketIOSocket & { data: Partial<SocketUser> };
+export type GatewayNamespace = Namespace;

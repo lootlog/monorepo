@@ -1,21 +1,20 @@
-import { Injectable, Logger } from "@nestjs/common";
-import type { Server } from "socket.io";
-import { GatewayEvent } from "src/gateway/enums/gateway-event.enum";
-import { ResponseStatus } from "src/gateway/enums/response-status.enum";
-import { Platform } from "src/gateway/enums/platform.enum";
-import { ErrorMessages } from "src/gateway/constants/error-messages.constant";
-import { buildUser } from "src/gateway/utils/build-user";
-import { getGuildIds } from "src/gateway/utils/get-guild-ids";
-import { calculateUserRooms } from "src/gateway/utils/room-utils";
-import { GuildsService } from "src/guilds/guilds.service";
-import { PresenceService } from "./presence.service";
-import { ActivityService } from "./activity.service";
-import { ActivityType } from "src/gateway/enums/activity-type.enum";
+import { ErrorMessages } from "../constants/error-messages.constant.js";
+import { GatewayEvent } from "../enums/gateway-event.enum.js";
+import { Platform } from "../enums/platform.enum.js";
+import { ResponseStatus } from "../enums/response-status.enum.js";
+import { ActivityType } from "../enums/activity-type.enum.js";
 import type {
+  GatewayNamespace,
   Socket,
   SocketUserPlayer,
-} from "src/gateway/types/socket-user.type";
-import type { UserGuildData } from "src/guilds/types/guild.types";
+} from "../types/socket-user.type.js";
+import { buildUser } from "../utils/build-user.js";
+import { getGuildIds } from "../utils/get-guild-ids.js";
+import { calculateUserRooms } from "../utils/room-utils.js";
+import { GuildsService } from "../../guilds/guilds.service.js";
+import { PresenceService } from "./presence.service.js";
+import { ActivityService } from "./activity.service.js";
+import type { UserGuildData } from "../../guilds/types/guild.types.js";
 
 interface JoinResult {
   status: ResponseStatus;
@@ -25,18 +24,19 @@ interface JoinResult {
   featureRooms?: string[];
 }
 
-@Injectable()
 export class SubscriptionService {
-  private readonly logger = new Logger(SubscriptionService.name);
-
   constructor(
-    private guildsService: GuildsService,
-    private presenceService: PresenceService,
-    private activityService: ActivityService,
+    private readonly guildsService: GuildsService,
+    private readonly presenceService: PresenceService,
+    private readonly activityService: ActivityService,
+    private readonly logger: {
+      error(message: string, meta?: Record<string, unknown>): void;
+      warn(message: string, meta?: Record<string, unknown>): void;
+    },
   ) {}
 
   async handleJoin(
-    server: Server,
+    server: GatewayNamespace,
     client: Socket,
     discordId: string,
     userId: string,
@@ -49,9 +49,7 @@ export class SubscriptionService {
       });
 
       if (guilds.length === 0) {
-        this.logger.warn(
-          `No guilds found for user ${discordId}. User may not have LOOTLOG_READ permission in any guild.`,
-        );
+        this.logger.warn("User has no gateway guild access", { discordId });
         return {
           status: ResponseStatus.ERROR,
           message: ErrorMessages.NO_GUILDS_FOUND,
@@ -100,10 +98,10 @@ export class SubscriptionService {
         featureRooms,
       };
     } catch (error) {
-      this.logger.error(
-        `Failed to join gateway for user ${discordId}: ${error.message}`,
-        error.stack,
-      );
+      this.logger.error("Failed to join gateway socket", {
+        discordId,
+        error,
+      });
 
       return {
         status: ResponseStatus.ERROR,

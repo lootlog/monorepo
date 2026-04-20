@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { createZodDto } from "nestjs-zod";
 
 export enum MessageType {
   NORMAL = "NORMAL",
@@ -8,7 +7,7 @@ export enum MessageType {
   PARTY_GATHERING = "PARTY_GATHERING",
 }
 
-const NpcSchema = z.object({
+export const NpcSchema = z.object({
   id: z.number(),
   name: z.string(),
   lvl: z.number(),
@@ -25,7 +24,7 @@ const NpcSchema = z.object({
   lootId: z.number().nullable(),
 });
 
-const PartyGatheringDataSchema = z.object({
+export const PartyGatheringDataSchema = z.object({
   notificationId: z.string(),
   discordId: z.string(),
   description: z.string().optional(),
@@ -34,7 +33,7 @@ const PartyGatheringDataSchema = z.object({
   world: z.string(),
 });
 
-const ChatCharacterDataSchema = z.object({
+export const ChatCharacterDataSchema = z.object({
   nick: z.string(),
   id: z.number(),
   acc: z.number(),
@@ -43,7 +42,7 @@ const ChatCharacterDataSchema = z.object({
   icon: z.string(),
 });
 
-const SendMessageSchema = z.object({
+export const SendMessageSchema = z.object({
   id: z.string(),
   guildId: z.string(),
   message: z.string(),
@@ -55,4 +54,4 @@ const SendMessageSchema = z.object({
   partyGathering: PartyGatheringDataSchema.optional(),
 });
 
-export class SendMessageDto extends createZodDto(SendMessageSchema) {}
+export type SendMessageDto = z.infer<typeof SendMessageSchema>;
