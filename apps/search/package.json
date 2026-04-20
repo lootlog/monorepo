@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "exports": "./dist/index.mjs",
+  "exports": "./dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "start": "node dist/index.mjs",
-    "build": "pkgroll",
+    "start": "node dist/index.js",
+    "build": "tsc -p tsconfig.build.json",
     "seed": "tsx src/scripts/seed.ts"
   },
   "dependencies": {
@@ -30,7 +30,6 @@
     "@lootlog/typescript-config": "workspace:*",
     "@types/amqplib": "^0.10.8",
     "@types/node": "^25.6.0",
-    "pkgroll": "^2.27.0",
     "tsx": "^4.21.0"
   }
 }

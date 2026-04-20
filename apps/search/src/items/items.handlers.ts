@@ -10,7 +10,7 @@ const itemsService = new ItemsService();
 
 const itemSchema = z.object({
   id: z.number(),
-  hid: z.string().optional(),
+  hid: z.string().default(""),
   name: z.string(),
   icon: z.string(),
   lvl: z.number(),

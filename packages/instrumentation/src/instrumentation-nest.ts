@@ -246,7 +246,7 @@ export function initObservability(config: ObservabilityConfig): void {
     "@opentelemetry/instrumentation-aws-sdk": { enabled: false },
     "@opentelemetry/instrumentation-socket.io": { enabled: false },
     "@opentelemetry/instrumentation-amqplib": { enabled: false },
-  });
+  } as Parameters<typeof getNodeAutoInstrumentations>[0]);
 
   const nestInstrumentation = new NestInstrumentation();
 

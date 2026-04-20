@@ -214,9 +214,10 @@ export class BattleProcessor {
     const allMoves = events.flatMap((event) => event.f?.m || []);
 
     return allMoves.map((move) => {
-      const [attackerPart, defenderPart, ...actions] = move.split(";");
-      const [attackerId, attackerHp] = attackerPart.split("=");
-      const [defenderId, defenderHp] = defenderPart.split("=");
+      const [attackerPart = "", defenderPart = "", ...actions] =
+        move.split(";");
+      const [attackerId = "0", attackerHp] = attackerPart.split("=");
+      const [defenderId = "0", defenderHp] = defenderPart.split("=");
 
       return {
         attackerId: attackerId !== "0" ? attackerId : null,
@@ -228,7 +229,7 @@ export class BattleProcessor {
           ? Number.parseInt(defenderHp, 10)
           : null,
         actions: actions.map((action) => {
-          const [actionType, param = ""] = action.split("=");
+          const [actionType = "", param = ""] = action.split("=");
           return { actionType, param };
         }),
       };
@@ -613,10 +614,12 @@ export class BattleProcessor {
 
     const parts = param.split(",");
     if (parts.length >= 3) {
-      const targetNameWithHp = parts[2].trim();
+      const targetNameWithHp = parts[2]?.trim();
+      if (!targetNameWithHp) return;
+
       const hpMatch = targetNameWithHp.match(/\((\d+)%\)$/);
-      const targetHp = hpMatch ? Number.parseInt(hpMatch[1], 10) : null;
-      const targetName = targetNameWithHp.split("(")[0].trim();
+      const targetHp = hpMatch?.[1] ? Number.parseInt(hpMatch[1], 10) : null;
+      const targetName = (targetNameWithHp.split("(")[0] ?? "").trim();
 
       const found = this.findWarrior(targetName, true);
       if (found) {
@@ -824,7 +827,9 @@ export class BattleProcessor {
         return acc;
       }, {});
       const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-      return Number(sorted[0][0]);
+      const mostCommonTeam = sorted[0]?.[0];
+
+      return mostCommonTeam ? Number(mostCommonTeam) : null;
     };
 
     const winnerNames = splitNames(this.battleOutcome.winner);

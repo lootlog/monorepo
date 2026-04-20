@@ -1,19 +1,16 @@
 {
   "name": "@lootlog/instrumentation",
   "version": "0.0.0",
-  "type": "module",
   "main": "dist/index.js",
-  "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "default": "./dist/index.js"
     }
   },
   "scripts": {
-    "build": "pkgroll"
+    "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.1",
@@ -31,7 +28,6 @@
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
     "@types/node": "^25.6.0",
-    "pkgroll": "^2.27.0",
     "typescript": "^6.0.3"
   }
 }

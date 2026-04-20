@@ -1,1 +1,1 @@
-export * from "./lib/permissions/can-view-npc-timer";
+export * from "./lib/permissions/can-view-npc-timer.js";

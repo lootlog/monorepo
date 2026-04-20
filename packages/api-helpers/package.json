@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "main": "dist/index.js",
-  "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "typesVersions": {
     "*": {
@@ -15,24 +14,21 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "default": "./dist/index.js"
     },
     "./permissions": {
       "types": "./dist/permissions.d.ts",
-      "import": "./dist/permissions.mjs",
-      "require": "./dist/permissions.js"
+      "default": "./dist/permissions.js"
     }
   },
   "scripts": {
-    "build": "pkgroll"
+    "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
     "hono": "^4.12.14",
     "jose": "^6.2.2"
   },
   "devDependencies": {
-    "@lootlog/typescript-config": "workspace:*",
-    "pkgroll": "^2.27.0"
+    "@lootlog/typescript-config": "workspace:*"
   }
 }
