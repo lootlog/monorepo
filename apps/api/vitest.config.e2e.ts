@@ -14,8 +14,8 @@ export default defineConfig({
     rootDir: __dirname,
     include: ["test/**/*.e2e-spec.ts"],
     alias: {
-      "@lootlog/api-helpers/permissions":
-        "../../packages/api-helpers/src/permissions.ts",
+      "@lootlog/hono-shared/permissions":
+        "../../packages/hono-shared/src/permissions.ts",
       "prisma/generated/client": "./prisma/generated/client.ts",
     },
     fileParallelism: false,

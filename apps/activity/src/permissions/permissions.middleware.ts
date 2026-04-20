@@ -1,7 +1,6 @@
 import type { Permission } from "@lootlog/types";
 import { createMiddleware } from "hono/factory";
 import type { AppVariables } from "../lib/hono.types.js";
-import { ForbiddenError } from "../lib/errors/http-errors.js";
 import type { GuildPermissions } from "./guild-permissions.js";
 
 export const requireGuildPermission = (
@@ -15,17 +14,17 @@ export const requireGuildPermission = (
     const guildId = c.req.param("guildId");
 
     if (!guildId) {
-      throw new ForbiddenError("Guild ID is required");
+      return c.json({ message: "Guild ID is required" }, 403);
     }
 
     if (!userId || !discordId) {
-      throw new ForbiddenError("Missing authenticated user metadata");
+      return c.json({ message: "Missing authenticated user metadata" }, 403);
     }
 
     const resolvedGuildId = await guildPermissions.resolveGuildId(guildId);
 
     if (!resolvedGuildId) {
-      throw new ForbiddenError();
+      return c.json({ message: "Insufficient permissions" }, 403);
     }
 
     const userPermissions = await guildPermissions.getUserGuildPermissions(
@@ -39,7 +38,7 @@ export const requireGuildPermission = (
     );
 
     if (!hasPermission) {
-      throw new ForbiddenError();
+      return c.json({ message: "Insufficient permissions" }, 403);
     }
 
     c.set("guildId", resolvedGuildId);

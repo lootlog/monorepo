@@ -4,6 +4,7 @@ export type Jwks = {
   kid: string;
   x: string;
 };
+
 export type JwksKeys = {
   keys: Jwks[];
 };

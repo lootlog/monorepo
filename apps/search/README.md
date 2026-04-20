@@ -6,7 +6,7 @@ Hono service for Meilisearch-backed search endpoints.
 
 - Exposes search routes for `players`, `npcs`, `items`, and aggregated `all` results.
 - Connects to RabbitMQ during startup and registers queue handlers that keep Meilisearch indexes in sync.
-- Reuses shared auth metadata middleware from `@lootlog/api-helpers` and shared observability bootstrap from `@lootlog/instrumentation`.
+- Reuses shared auth metadata middleware from `@lootlog/hono-shared` and shared observability bootstrap from `@lootlog/instrumentation`.
 
 ## Routes
 

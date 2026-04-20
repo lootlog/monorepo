@@ -31,7 +31,7 @@ import type { CreateManualTimerDto } from "src/timers/dto/create-manual-timer.dt
 import { generateUniqueIntId } from "src/shared/utils/generate-unique-int-id";
 import { RoutingKey } from "src/enum/routing-key.enum";
 import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
-import { canViewNpcTimer } from "@lootlog/api-helpers/permissions";
+import { canViewNpcTimer } from "@lootlog/hono-shared/permissions";
 import type { CreateTimerDto } from "src/timers/dto/create-timer.dto";
 import type { CreateTimerFromGameClientDto } from "src/timers/dto/create-timer-from-game-client.dto";
 import { validateAndCalculateSpawnTimes } from "src/timers/utils/validate-spawn-times";
@@ -698,7 +698,7 @@ export class TimersService implements OnModuleInit {
     return worlds.map((worldEntry) => worldEntry.world);
   }
 
-  async createTimer(
+  createTimer(
     discordId: string,
     userId: string,
     guildId: string,

@@ -1,5 +1,5 @@
-import { Hono } from "hono";
+import { createServiceApp } from "@lootlog/hono-shared";
 
-export const healthzRoutes = new Hono({ strict: false });
+export const healthzRoutes = createServiceApp();
 
 healthzRoutes.get("/", (c) => c.text("OK"));

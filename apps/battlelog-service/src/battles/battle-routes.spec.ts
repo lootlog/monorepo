@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { AppError } from "../lib/errors/http-errors.js";
+import { isAppError } from "@lootlog/hono-shared";
 import { createBattleRoutes } from "./battle-routes.js";
 
 describe("battleRoutes", () => {
@@ -49,7 +49,7 @@ describe("battleRoutes", () => {
   );
 
   app.onError((error, c) => {
-    if (error instanceof AppError) {
+    if (isAppError(error)) {
       return c.json(
         { message: error.message },
         error.status as 400 | 401 | 403 | 404 | 500,

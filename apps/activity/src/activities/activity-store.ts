@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import type { Logger } from "winston";
 import { Prisma, type ActivityType } from "../generated/prisma/client.js";
-import { NotFoundError } from "../lib/errors/http-errors.js";
+import { NotFoundError } from "@lootlog/hono-shared";
 import { PrismaDatabase } from "../shared/prisma/prisma-database.js";
 import type { CreateActivitySchema } from "./schemas/create-activity.schema.js";
 

@@ -1,7 +1,11 @@
-import { OpenAPIHono, z } from "@hono/zod-openapi";
+import { z } from "@hono/zod-openapi";
+import {
+  ForbiddenError,
+  NotFoundError,
+  createOpenApiServiceApp,
+} from "@lootlog/hono-shared";
 import { validator } from "hono/validator";
 import type { AppVariables } from "../../lib/hono.types.js";
-import { ForbiddenError, NotFoundError } from "../../lib/errors/http-errors.js";
 import type { BattleAnalytics } from "../battle-analytics.js";
 import type { BattleStore } from "../battle-store.js";
 import type { DrizzleDatabase } from "../../shared/drizzle/drizzle-database.js";
@@ -33,9 +37,9 @@ export const errorResponseSchema = z.object({
 });
 
 export function createBattleRouteGroup() {
-  return new OpenAPIHono<{
+  return createOpenApiServiceApp<{
     Variables: AppVariables;
-  }>({ strict: false });
+  }>();
 }
 
 export const ensureBattleAccess = (drizzleDatabase: DrizzleDatabase) =>

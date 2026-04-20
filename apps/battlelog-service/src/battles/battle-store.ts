@@ -26,7 +26,7 @@ import type { UpdateBattleInput } from "./schemas/update-battle.schema.js";
 import type { PaginationOptions } from "./types/pagination.types.js";
 import { BattleAnalytics } from "./battle-analytics.js";
 import { BattlePagination } from "./battle-pagination.js";
-import { ForbiddenError, NotFoundError } from "../lib/errors/http-errors.js";
+import { ForbiddenError, NotFoundError } from "@lootlog/hono-shared";
 import { DrizzleDatabase } from "../shared/drizzle/drizzle-database.js";
 import {
   battles,
@@ -89,14 +89,19 @@ export class BattleStore {
         battleId: battle.id,
       };
     } catch (error) {
-      this.loggerWithContext.error("Failed to create battle", { userId, error });
+      this.loggerWithContext.error("Failed to create battle", {
+        userId,
+        error,
+      });
       throw new Error(
         `Battle creation failed: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }
 
-  async getPublicBattles(query: QueryBattlesQuery): Promise<GetAllBattlesResult> {
+  async getPublicBattles(
+    query: QueryBattlesQuery,
+  ): Promise<GetAllBattlesResult> {
     try {
       const filterBuilder = await this.buildFilterConditions(query);
 
@@ -114,7 +119,9 @@ export class BattleStore {
         },
       };
     } catch (error) {
-      this.loggerWithContext.error("Failed to retrieve public battles", { error });
+      this.loggerWithContext.error("Failed to retrieve public battles", {
+        error,
+      });
       throw new Error(
         `Failed to retrieve public battles: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
@@ -185,7 +192,9 @@ export class BattleStore {
 
       return { characters };
     } catch (error) {
-      this.loggerWithContext.error("Failed to retrieve user characters", { error });
+      this.loggerWithContext.error("Failed to retrieve user characters", {
+        error,
+      });
       throw new Error(
         `Failed to retrieve user characters: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
@@ -727,7 +736,9 @@ export class BattleStore {
 
       return battle;
     } catch (error) {
-      this.loggerWithContext.error("Failed to store battle in database", { error });
+      this.loggerWithContext.error("Failed to store battle in database", {
+        error,
+      });
       throw new Error(
         `Database storage failed: ${error instanceof Error ? error.message : "Unknown error"}`,
       );

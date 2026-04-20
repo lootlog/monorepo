@@ -1,5 +1,9 @@
 import { serve } from "@hono/node-server";
 import {
+  closeNodeServer,
+  registerGracefulShutdown,
+} from "@lootlog/hono-shared";
+import {
   initHonoObservability,
   shutdownHonoObservability,
 } from "@lootlog/instrumentation";
@@ -28,17 +32,12 @@ const server = serve({
   port: APP_CONFIG.port,
 });
 
-const shutdown = async (signal: string) => {
-  logger.info(`Shutting down battlelog-service after ${signal}`);
-  server.close();
-  await appContext.close();
-  await shutdownHonoObservability();
-  process.exit(0);
-};
-
-process.on("SIGINT", () => {
-  void shutdown("SIGINT");
-});
-process.on("SIGTERM", () => {
-  void shutdown("SIGTERM");
+registerGracefulShutdown({
+  logger,
+  message: "Shutting down battlelog-service",
+  onShutdown: async () => {
+    await closeNodeServer(server);
+    await appContext.close();
+    await shutdownHonoObservability();
+  },
 });

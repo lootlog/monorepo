@@ -93,7 +93,7 @@ apps/
 packages/
   ui/                   - Shared UI components
   types/                - Shared TypeScript types
-  api-helpers/          - JWT/JWKS utilities
+  hono-shared/          - Shared Hono, auth, and permission utilities
   cli/                  - Environment configuration CLI
   instrumentation/      - Shared observability helpers
   nest-shared/          - Shared NestJS decorators and guards

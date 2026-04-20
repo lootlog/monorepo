@@ -1,5 +1,8 @@
-import { VerifyTokenOptions, VerifyTokenResponse } from "./verify-jwt.types.js";
-import { jwtVerify, createRemoteJWKSet, createLocalJWKSet } from "jose";
+import { createLocalJWKSet, createRemoteJWKSet, jwtVerify } from "jose";
+import type {
+  VerifyTokenOptions,
+  VerifyTokenResponse,
+} from "./verify-jwt.types.js";
 
 export async function validateToken({
   token,

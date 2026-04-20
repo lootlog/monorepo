@@ -1,4 +1,5 @@
-import { OpenAPIHono, z } from "@hono/zod-openapi";
+import { z } from "@hono/zod-openapi";
+import { createOpenApiServiceApp } from "@lootlog/hono-shared";
 import { Permission } from "@lootlog/types";
 import type { MiddlewareHandler } from "hono";
 import type { AppVariables } from "../../lib/hono.types.js";
@@ -46,9 +47,9 @@ export const errorResponseSchema = z.object({
 });
 
 export function createActivityRouteGroup() {
-  return new OpenAPIHono<{
+  return createOpenApiServiceApp<{
     Variables: AppVariables;
-  }>({ strict: false });
+  }>();
 }
 
 export function createGuildPermissionMiddleware(

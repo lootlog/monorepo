@@ -1,5 +1,6 @@
 import { statfs } from "node:fs/promises";
-import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import { createRoute, z } from "@hono/zod-openapi";
+import { createOpenApiServiceApp } from "@lootlog/hono-shared";
 import type { PrismaDatabase } from "../shared/prisma/prisma-database.js";
 
 const healthzResponseSchema = z.object({
@@ -43,7 +44,7 @@ export function createHealthzRoutes({
   apiServiceUrl,
   prismaDatabase,
 }: HealthzRoutesDependencies) {
-  const healthzRoutes = new OpenAPIHono({ strict: false });
+  const healthzRoutes = createOpenApiServiceApp();
 
   healthzRoutes.openapi(healthzRoute, async (c) => {
     const info: Record<string, unknown> = {};

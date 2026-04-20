@@ -19,7 +19,7 @@ import { httpInstrumentationMiddleware } from "@hono/otel";
 import { APP_CONFIG } from "./config/app.config.js";
 import { players } from "./players/players.controller.js";
 import { logger as winstonLogger } from "./config/winston.config.js";
-import { userMetadataFromHeaders } from "@lootlog/api-helpers";
+import { userMetadataFromHeaders } from "@lootlog/hono-shared";
 import { setupAMQP } from "./lib/rabbitmq.js";
 import { setupPlayersHandlers } from "./players/players.handlers.js";
 import { npcs } from "./npcs/npcs.controller.js";

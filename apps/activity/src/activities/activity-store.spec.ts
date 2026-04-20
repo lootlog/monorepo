@@ -1,5 +1,5 @@
 import { ActivityType } from "../generated/prisma/client.js";
-import { NotFoundError } from "../lib/errors/http-errors.js";
+import { NotFoundError } from "@lootlog/hono-shared";
 import { ActivityStore } from "./activity-store.js";
 
 describe("ActivityStore", () => {

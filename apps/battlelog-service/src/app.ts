@@ -1,6 +1,10 @@
-import { OpenAPIHono } from "@hono/zod-openapi";
-import { swaggerUI } from "@hono/swagger-ui";
-import { httpInstrumentationMiddleware } from "@hono/otel";
+import {
+  createJsonErrorHandler,
+  createOpenApiServiceApp,
+  createSafeHttpInstrumentationMiddleware,
+  createRequestLoggingMiddleware,
+  registerOpenApiDocs,
+} from "@lootlog/hono-shared";
 import type { Queue, Worker } from "bullmq";
 import { APP_CONFIG } from "./config/env.js";
 import { logger } from "./config/winston.config.js";
@@ -15,7 +19,6 @@ import { BattleAnalytics } from "./battles/battle-analytics.js";
 import { BattlePagination } from "./battles/battle-pagination.js";
 import { BattleStore } from "./battles/battle-store.js";
 import { healthzRoutes } from "./healthz/healthz.routes.js";
-import { AppError } from "./lib/errors/http-errors.js";
 import { userMetadataFromHeaders } from "./lib/middleware/auth.middleware.js";
 import type { AppVariables } from "./lib/hono.types.js";
 import { DrizzleDatabase } from "./shared/drizzle/drizzle-database.js";
@@ -43,23 +46,24 @@ export function createApp({
   drizzleDatabase,
   deleteUserBattlesQueue,
 }: BattlelogAppDependencies) {
-  const app = new OpenAPIHono<{
+  const app = createOpenApiServiceApp<{
     Variables: AppVariables;
-  }>({ strict: false });
+  }>();
 
   app.use(
     "*",
-    httpInstrumentationMiddleware({
+    createSafeHttpInstrumentationMiddleware({
       serviceName: APP_CONFIG.serviceName,
       serviceVersion: "1.0.0",
     }),
   );
-  app.use("*", async (c, next) => {
-    const start = Date.now();
-    await next();
-    const duration = Date.now() - start;
-    logger.info(`${c.req.method} ${c.req.path} ${c.res.status} ${duration}ms`);
-  });
+  app.use(
+    "*",
+    createRequestLoggingMiddleware({
+      logger,
+      skipPaths: ["/healthz"],
+    }),
+  );
   app.use("*", userMetadataFromHeaders);
 
   app.route("/healthz", healthzRoutes);
@@ -73,32 +77,21 @@ export function createApp({
   );
   app.route("/internal", createInternalRoutes({ deleteUserBattlesQueue }));
 
-  app.doc("/doc", {
-    openapi: "3.1.0",
+  registerOpenApiDocs(app, {
     info: {
       title: "Battle Log API",
       version: "1.0.0",
       description: "Battle log storage, dashboards, and player analytics API",
     },
   });
-  app.get("/docs", swaggerUI({ url: "/doc" }));
 
   app.notFound((c) => c.json({ message: "Not Found" }, 404));
-  app.onError((error, c) => {
-    if (error instanceof AppError) {
-      return c.json(
-        { message: error.message },
-        error.status as 400 | 401 | 403 | 404 | 500,
-      );
-    }
-
-    logger.error("Unhandled battlelog error", {
-      path: c.req.path,
-      method: c.req.method,
-      error,
-    });
-    return c.json({ message: "Internal Server Error" }, 500);
-  });
+  app.onError(
+    createJsonErrorHandler({
+      logger,
+      logMessage: "Unhandled battlelog error",
+    }),
+  );
 
   return app;
 }
@@ -114,10 +107,7 @@ export async function createAppContext(): Promise<BattlelogAppContext> {
   redisCache.connect();
 
   const battleArchive = new BattleArchive(APP_CONFIG.r2, redisCache, logger);
-  const battleAnalytics = new BattleAnalytics(
-    drizzleDatabase,
-    redisCache,
-  );
+  const battleAnalytics = new BattleAnalytics(drizzleDatabase, redisCache);
   const battlePagination = new BattlePagination(drizzleDatabase);
   const battleStore = new BattleStore(
     drizzleDatabase,

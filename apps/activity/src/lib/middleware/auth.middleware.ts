@@ -1,6 +1,5 @@
 import { createMiddleware } from "hono/factory";
 import type { AppVariables } from "../hono.types.js";
-import { UnauthorizedError } from "../errors/http-errors.js";
 
 export const userMetadataFromHeaders = createMiddleware<{
   Variables: AppVariables;
@@ -16,7 +15,7 @@ export const requireAuth = createMiddleware<{
   Variables: AppVariables;
 }>(async (c, next) => {
   if (!c.var.userId || !c.var.discordId) {
-    throw new UnauthorizedError();
+    return c.json({ message: "Unauthorized" }, 401);
   }
 
   await next();

@@ -224,7 +224,7 @@ apps/
 packages/
 ├── ui/                     - Shared Radix UI + Tailwind components
 ├── types/                  - Shared TypeScript types
-├── api-helpers/            - JWT/JWKS authentication utilities
+├── hono-shared/            - Shared Hono, auth, and permission utilities
 ├── cli/                    - Environment configuration CLI
 ├── instrumentation/        - Shared observability helpers
 ├── nest-shared/            - Shared NestJS decorators and guards
@@ -238,7 +238,7 @@ packages/
 
 1. User authenticates via Auth service (Discord OAuth or email/password)
 2. Auth returns JWT with user claims
-3. Other services validate JWT using JWKS from `packages/api-helpers`
+3. Other services validate JWT using JWKS from `packages/hono-shared`
 4. Clients include `Authorization: Bearer <token>` header
 
 **Event-Driven Communication (RabbitMQ)**

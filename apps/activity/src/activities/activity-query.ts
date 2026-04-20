@@ -1,5 +1,5 @@
 import type { Prisma } from "../generated/prisma/client.js";
-import { NotFoundError } from "../lib/errors/http-errors.js";
+import { NotFoundError } from "@lootlog/hono-shared";
 import { PrismaDatabase } from "../shared/prisma/prisma-database.js";
 import type { QueryActivitiesSchema } from "./schemas/query-activities.schema.js";
 

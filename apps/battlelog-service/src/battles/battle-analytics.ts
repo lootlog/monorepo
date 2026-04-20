@@ -21,12 +21,9 @@ import type {
   RatingDeltaByOpponent,
   PlayerVsPlayerPaginatedResponse,
 } from "./schemas/battle-statistics-response.schema.js";
-import { NotFoundError } from "../lib/errors/http-errors.js";
+import { NotFoundError } from "@lootlog/hono-shared";
 import { DrizzleDatabase } from "../shared/drizzle/drizzle-database.js";
-import {
-  battleWarriors,
-  type battles,
-} from "../shared/drizzle/schema.js";
+import { battleWarriors, type battles } from "../shared/drizzle/schema.js";
 import { RedisCache } from "../shared/redis/redis-cache.js";
 
 export class BattleAnalytics {

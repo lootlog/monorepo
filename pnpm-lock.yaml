@@ -109,9 +109,6 @@ importers:
       '@hono/node-server':
         specifier: ^1.19.14
         version: 1.19.14(hono@4.12.14)
-      '@hono/otel':
-        specifier: ^1.1.1
-        version: 1.1.1(hono@4.12.14)
       '@hono/swagger-ui':
         specifier: ^0.6.1
         version: 0.6.1(hono@4.12.14)
@@ -121,6 +118,9 @@ importers:
       '@keyv/redis':
         specifier: ^5.1.6
         version: 5.1.6(@opentelemetry/api@1.9.1)(keyv@5.6.0)
+      '@lootlog/hono-shared':
+        specifier: workspace:*
+        version: link:../../packages/hono-shared
       '@lootlog/instrumentation':
         specifier: workspace:*
         version: link:../../packages/instrumentation
@@ -191,9 +191,9 @@ importers:
       '@golevelup/nestjs-rabbitmq':
         specifier: ^9.0.0
         version: 9.0.0(@nestjs/common@11.1.19(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.19)(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      '@lootlog/api-helpers':
+      '@lootlog/hono-shared':
         specifier: workspace:*
-        version: link:../../packages/api-helpers
+        version: link:../../packages/hono-shared
       '@lootlog/instrumentation':
         specifier: workspace:*
         version: link:../../packages/instrumentation
@@ -339,9 +339,9 @@ importers:
       '@hono/otel':
         specifier: ^1.1.1
         version: 1.1.1(hono@4.12.14)
-      '@lootlog/api-helpers':
+      '@lootlog/hono-shared':
         specifier: workspace:*
-        version: link:../../packages/api-helpers
+        version: link:../../packages/hono-shared
       '@lootlog/instrumentation':
         specifier: workspace:*
         version: link:../../packages/instrumentation
@@ -394,9 +394,6 @@ importers:
       '@hono/node-server':
         specifier: ^1.19.14
         version: 1.19.14(hono@4.12.14)
-      '@hono/otel':
-        specifier: ^1.1.1
-        version: 1.1.1(hono@4.12.14)
       '@hono/swagger-ui':
         specifier: ^0.6.1
         version: 0.6.1(hono@4.12.14)
@@ -406,6 +403,9 @@ importers:
       '@lootlog/battle-processor':
         specifier: workspace:*
         version: link:../../packages/battle-processor
+      '@lootlog/hono-shared':
+        specifier: workspace:*
+        version: link:../../packages/hono-shared
       '@lootlog/instrumentation':
         specifier: workspace:*
         version: link:../../packages/instrumentation
@@ -1004,9 +1004,9 @@ importers:
       '@hono/zod-openapi':
         specifier: ^1.3.0
         version: 1.3.0(hono@4.12.14)(zod@4.3.6)
-      '@lootlog/api-helpers':
+      '@lootlog/hono-shared':
         specifier: workspace:*
-        version: link:../../packages/api-helpers
+        version: link:../../packages/hono-shared
       '@lootlog/instrumentation':
         specifier: workspace:*
         version: link:../../packages/instrumentation
@@ -1202,19 +1202,6 @@ importers:
         specifier: ^4.1.4
         version: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@25.6.0)(@vitest/coverage-v8@4.1.4)(@vitest/ui@4.1.4)(happy-dom@20.9.0)(jsdom@29.0.1(@noble/hashes@2.2.0))(vite@8.0.8(@types/node@25.6.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
 
-  packages/api-helpers:
-    dependencies:
-      hono:
-        specifier: ^4.12.14
-        version: 4.12.14
-      jose:
-        specifier: ^6.2.2
-        version: 6.2.2
-    devDependencies:
-      '@lootlog/typescript-config':
-        specifier: workspace:*
-        version: link:../typescript-config
-
   packages/battle-processor:
     devDependencies:
       '@lootlog/typescript-config':
@@ -1260,6 +1247,31 @@ importers:
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
+
+  packages/hono-shared:
+    dependencies:
+      '@hono/otel':
+        specifier: ^1.1.1
+        version: 1.1.1(hono@4.12.14)
+      '@hono/swagger-ui':
+        specifier: ^0.6.1
+        version: 0.6.1(hono@4.12.14)
+      '@hono/zod-openapi':
+        specifier: ^1.3.0
+        version: 1.3.0(hono@4.12.14)(zod@4.3.6)
+      hono:
+        specifier: ^4.12.14
+        version: 4.12.14
+      jose:
+        specifier: ^6.2.2
+        version: 6.2.2
+    devDependencies:
+      '@lootlog/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/node':
+        specifier: ^25.6.0
+        version: 25.6.0
 
   packages/instrumentation:
     dependencies:
@@ -14366,7 +14378,7 @@ snapshots:
       tslib: 2.8.1
       uid: 2.0.2
     optionalDependencies:
-      '@nestjs/microservices': 11.1.19(@grpc/grpc-js@1.14.3)(@nestjs/common@11.1.19(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.19)(@nestjs/websockets@11.1.19)(amqp-connection-manager@5.0.0(amqplib@1.0.3))(amqplib@1.0.3)(cache-manager@7.2.8)(ioredis@5.10.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/microservices': 11.1.19(@grpc/grpc-js@1.14.3)(@nestjs/common@11.1.19(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.19)(@nestjs/websockets@11.1.19)(amqp-connection-manager@5.0.0(amqplib@0.10.9))(amqplib@0.10.9)(cache-manager@7.2.8)(ioredis@5.10.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/platform-express': 11.1.19(@nestjs/common@11.1.19(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.19)
       '@nestjs/websockets': 11.1.19(@nestjs/common@11.1.19(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.19)(@nestjs/platform-socket.io@11.1.19)(reflect-metadata@0.2.2)(rxjs@7.8.2)
 
@@ -16446,7 +16458,7 @@ snapshots:
     optionalDependencies:
       '@opentelemetry/api': 1.9.1
 
-  '@reduxjs/toolkit@2.11.2(react-redux@9.2.0(@types/react@19.2.14)(react@19.2.5))(react@19.2.5)':
+  '@reduxjs/toolkit@2.11.2(react-redux@9.2.0(@types/react@19.2.14)(react@19.2.5)(redux@5.0.1))(react@19.2.5)':
     dependencies:
       '@standard-schema/spec': 1.1.0
       '@standard-schema/utils': 0.3.0
@@ -22323,7 +22335,7 @@ snapshots:
 
   recharts@3.8.1(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react-is@18.3.1)(react@19.2.5)(redux@5.0.1):
     dependencies:
-      '@reduxjs/toolkit': 2.11.2(react-redux@9.2.0(@types/react@19.2.14)(react@19.2.5))(react@19.2.5)
+      '@reduxjs/toolkit': 2.11.2(react-redux@9.2.0(@types/react@19.2.14)(react@19.2.5)(redux@5.0.1))(react@19.2.5)
       clsx: 2.1.1
       decimal.js-light: 2.5.1
       es-toolkit: 1.45.1

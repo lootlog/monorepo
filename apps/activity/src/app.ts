@@ -1,13 +1,16 @@
-import { OpenAPIHono } from "@hono/zod-openapi";
-import { httpInstrumentationMiddleware } from "@hono/otel";
-import { swaggerUI } from "@hono/swagger-ui";
+import {
+  createJsonErrorHandler,
+  createOpenApiServiceApp,
+  createSafeHttpInstrumentationMiddleware,
+  createRequestLoggingMiddleware,
+  registerOpenApiDocs,
+} from "@lootlog/hono-shared";
 import { APP_CONFIG } from "./config/env.js";
 import { logger } from "./config/winston.config.js";
 import { ActivityQuery } from "./activities/activity-query.js";
 import { createActivityRoutes } from "./activities/activity-routes.js";
 import { ActivityStore } from "./activities/activity-store.js";
 import { createHealthzRoutes } from "./healthz/healthz.routes.js";
-import { AppError } from "./lib/errors/http-errors.js";
 import { userMetadataFromHeaders } from "./lib/middleware/auth.middleware.js";
 import type { AppVariables } from "./lib/hono.types.js";
 import { GuildPermissions } from "./permissions/guild-permissions.js";
@@ -34,32 +37,25 @@ export function createApp({
   guildPermissions,
   prismaDatabase,
 }: ActivityAppDependencies) {
-  const app = new OpenAPIHono<{
+  const app = createOpenApiServiceApp<{
     Variables: AppVariables;
-  }>({ strict: false });
+  }>();
 
   app.use(
     "*",
-    httpInstrumentationMiddleware({
+    createSafeHttpInstrumentationMiddleware({
       serviceName: APP_CONFIG.serviceName,
       serviceVersion: APP_CONFIG.appVersion,
     }),
   );
-  app.use("*", async (c, next) => {
-    const startedAt = Date.now();
-    await next();
-
-    if (c.req.path === "/healthz") {
-      return;
-    }
-
-    logger.info("Activity request completed", {
-      method: c.req.method,
-      path: c.req.path,
-      status: c.res.status,
-      durationMs: Date.now() - startedAt,
-    });
-  });
+  app.use(
+    "*",
+    createRequestLoggingMiddleware({
+      logger,
+      logMessage: "Activity request completed",
+      skipPaths: ["/healthz"],
+    }),
+  );
   app.use("*", userMetadataFromHeaders);
 
   app.route(
@@ -78,40 +74,21 @@ export function createApp({
     }),
   );
 
-  app.doc("/doc", {
-    openapi: "3.1.0",
+  registerOpenApiDocs(app, {
     info: {
       title: "Activity Logger API",
       version: APP_CONFIG.appVersion,
       description: "Guild activity logs, suggestions, and ingestion API",
     },
   });
-  app.get("/docs", swaggerUI({ url: "/doc" }));
 
   app.notFound((c) => c.json({ message: "Not Found" }, 404));
-  app.onError((error, c) => {
-    if (error instanceof AppError) {
-      return c.json(
-        {
-          message: error.message,
-        },
-        error.status as 400 | 401 | 403 | 404 | 500,
-      );
-    }
-
-    logger.error("Unhandled activity error", {
-      method: c.req.method,
-      path: c.req.path,
-      error,
-    });
-
-    return c.json(
-      {
-        message: "Internal Server Error",
-      },
-      500,
-    );
-  });
+  app.onError(
+    createJsonErrorHandler({
+      logger,
+      logMessage: "Unhandled activity error",
+    }),
+  );
 
   return app;
 }

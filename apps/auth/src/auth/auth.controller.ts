@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { APIError } from "better-auth/api";
 import { auth } from "../lib/auth.js";
 import { APP_CONFIG } from "../config/app.config.js";
-import { type JwksKeys, validateToken } from "@lootlog/api-helpers";
+import { type JwksKeys, validateToken } from "@lootlog/hono-shared";
 
 const authController = new Hono<{
   Variables: {

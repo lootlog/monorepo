@@ -38,7 +38,9 @@ export const canViewNpcTimer = (
   npc: NpcPermissionData | null,
   roles: RolePermissionData[],
 ): boolean => {
-  if (!npc) return false;
+  if (!npc) {
+    return false;
+  }
 
   const requiredTimerPermission = getRequiredTimerPermission(npc.type);
 

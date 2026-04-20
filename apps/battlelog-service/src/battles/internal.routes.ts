@@ -1,5 +1,6 @@
 import { Queue } from "bullmq";
-import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import { createRoute, z } from "@hono/zod-openapi";
+import { createOpenApiServiceApp } from "@lootlog/hono-shared";
 import type { DeleteUserBattlesJobData } from "./delete-user-battles.job.js";
 
 const deleteUserDataSchema = z.object({
@@ -43,7 +44,7 @@ const deleteUserDataRoute = createRoute({
 export function createInternalRoutes({
   deleteUserBattlesQueue,
 }: InternalRoutesDependencies) {
-  const internal = new OpenAPIHono({ strict: false });
+  const internal = createOpenApiServiceApp();
 
   internal.openapi(deleteUserDataRoute, async (c) => {
     const body = c.req.valid("json");

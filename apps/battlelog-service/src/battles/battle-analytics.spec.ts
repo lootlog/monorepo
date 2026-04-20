@@ -1,6 +1,6 @@
 import type { Mock, Mocked } from "vitest";
 import { BattleAnalytics } from "./battle-analytics.js";
-import { NotFoundError } from "../lib/errors/http-errors.js";
+import { NotFoundError } from "@lootlog/hono-shared";
 
 describe("BattleAnalytics", () => {
   let service: BattleAnalytics;
