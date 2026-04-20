@@ -79,7 +79,7 @@
     "rollup-plugin-visualizer": "^7.0.1",
     "terser": "^5.46.1",
     "typescript": "^6.0.3",
-    "vite": "^8.0.8",
+    "vite": "^8.0.9",
     "vite-plugin-monkey": "^7.1.9",
     "vitest": "^4.1.4"
   }
