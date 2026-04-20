@@ -18,10 +18,10 @@
     }
   },
   "scripts": {
-    "build": "pkgroll"
+    "build": "tsdown"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
-    "pkgroll": "^2.27.0"
+    "tsdown": "^0.21.9"
   }
 }

@@ -25,14 +25,14 @@
     }
   },
   "scripts": {
-    "build": "pkgroll"
+    "build": "tsdown"
   },
   "dependencies": {
-    "hono": "^4.12.11",
+    "hono": "^4.12.14",
     "jose": "^6.2.2"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
-    "pkgroll": "^2.27.0"
+    "tsdown": "^0.21.9"
   }
 }

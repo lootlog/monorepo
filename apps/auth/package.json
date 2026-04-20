@@ -7,29 +7,29 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.mjs",
-    "build": "pkgroll",
+    "build": "tsdown",
     "auth:migrate:dev": "pnpm dlx @better-auth/cli migrate",
     "auth:migrate:prod": "pnpm dlx @better-auth/cli migrate --y"
   },
   "dependencies": {
     "@axiomhq/winston": "^1.6.0",
-    "@hono/node-server": "^1.19.12",
+    "@hono/node-server": "^1.19.14",
     "@hono/otel": "^1.1.1",
     "@lootlog/api-helpers": "workspace:*",
     "@lootlog/instrumentation": "workspace:*",
-    "better-auth": "^1.6.0",
-    "dotenv": "^17.4.1",
-    "hono": "^4.12.11",
-    "kysely": "^0.28.15",
+    "@lootlog/types": "workspace:*",
+    "better-auth": "^1.6.5",
+    "dotenv": "^17.4.2",
+    "hono": "^4.12.14",
+    "kysely": "^0.28.16",
     "pg": "^8.20.0",
     "winston": "^3.19.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@lootlog/types": "workspace:*",
     "@lootlog/typescript-config": "workspace:*",
     "@types/pg": "^8.20.0",
-    "pkgroll": "^2.27.0",
+    "tsdown": "^0.21.9",
     "tsx": "^4.21.0"
   }
 }
