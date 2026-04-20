@@ -27,6 +27,12 @@ vi.mock("./better-auth", () => ({
   },
 }));
 
+vi.mock("src/config/env", () => ({
+  env: {
+    APP_URL: "http://localhost:3000",
+  },
+}));
+
 describe("AuthService", () => {
   let service: AuthService;
 
