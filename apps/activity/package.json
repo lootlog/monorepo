@@ -35,7 +35,7 @@
     "@lootlog/types": "workspace:*",
     "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.7.0",
-    "amqplib": "^0.10.9",
+    "amqplib": "^1.0.3",
     "dotenv": "^17.4.2",
     "hono": "^4.12.14",
     "keyv": "^5.6.0",

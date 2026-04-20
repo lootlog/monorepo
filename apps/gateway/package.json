@@ -29,7 +29,7 @@
     "@lootlog/types": "workspace:*",
     "@socket.io/redis-adapter": "^8.3.0",
     "amqp-connection-manager": "^5.0.0",
-    "amqplib": "^0.10.9",
+    "amqplib": "^1.0.3",
     "dotenv": "^17.4.2",
     "hono": "^4.12.14",
     "ioredis": "^5.10.1",
