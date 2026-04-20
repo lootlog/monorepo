@@ -9,7 +9,7 @@ import {
   Query,
   UseGuards,
 } from "@nestjs/common";
-import { UserId } from "@lootlog/nest-shared";
+import { UserId } from "@lootlog/nest-shared/decorators";
 import { BattlesService } from "src/battles/battles.service";
 import { BattleAnalyticsService } from "src/battles/services/battle-analytics.service";
 import { CreateBattleDto } from "src/battles/dto/create-battle.dto";

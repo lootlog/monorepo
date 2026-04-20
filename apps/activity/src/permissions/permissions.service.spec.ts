@@ -1,27 +1,16 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { HttpService } from "@nestjs/axios";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
-import { ConfigService } from "@nestjs/config";
 import { of, throwError } from "rxjs";
 import { Permission } from "@lootlog/types";
-import { ConfigKey } from "src/config/config-key.enum";
 import { PermissionsService } from "./permissions.service";
+import { apiServiceConfig } from "src/config/api-service.config";
 
 describe("PermissionsService", () => {
   let service: PermissionsService;
 
   const mockHttpService = {
     get: vi.fn(),
-  };
-
-  const mockConfigService = {
-    get: vi.fn().mockImplementation((key: string) => {
-      if (key === ConfigKey.API_SERVICE) {
-        return { url: "http://api-service:3000" };
-      }
-
-      return undefined;
-    }),
   };
 
   const mockCacheManager = {
@@ -39,10 +28,6 @@ describe("PermissionsService", () => {
         {
           provide: HttpService,
           useValue: mockHttpService,
-        },
-        {
-          provide: ConfigService,
-          useValue: mockConfigService,
         },
         {
           provide: CACHE_MANAGER,
@@ -82,7 +67,7 @@ describe("PermissionsService", () => {
         "guild-1",
       );
       expect(mockHttpService.get).toHaveBeenCalledWith(
-        "http://api-service:3000/internal/guilds/guild-one",
+        `${apiServiceConfig.url}/internal/guilds/guild-one`,
       );
       expect(mockCacheManager.set).toHaveBeenCalledWith(
         "guild-id:guild-one",

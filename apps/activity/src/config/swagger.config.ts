@@ -1,5 +1,4 @@
-import { registerAs } from "@nestjs/config";
-import { ConfigKey } from "src/config/config-key.enum";
+import { env } from "src/config/env";
 
 export interface SwaggerConfig {
   path: string;
@@ -8,13 +7,9 @@ export interface SwaggerConfig {
   version: string;
 }
 
-export default registerAs(ConfigKey.SWAGGER, (): SwaggerConfig => {
-  const { APP_VERSION } = process.env;
-
-  return {
-    path: "docs",
-    title: "Activity Logger API",
-    description: "The Activity Logger API documentation",
-    version: APP_VERSION,
-  };
-});
+export const swaggerConfig: SwaggerConfig = {
+  path: "docs",
+  title: "Activity Logger API",
+  description: "The Activity Logger API documentation",
+  version: env.APP_VERSION,
+};

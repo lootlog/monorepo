@@ -11,7 +11,7 @@ import {
   type DiscordGuildSyncState,
   type DiscordGuildSyncStateUpdatedEvent,
 } from "@lootlog/types";
-import { isDiscordAdministrator } from "@lootlog/nest-shared";
+import { isDiscordAdministrator } from "@lootlog/nest-shared/utils";
 import {
   ChannelType,
   Client,

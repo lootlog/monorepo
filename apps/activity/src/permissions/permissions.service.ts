@@ -1,11 +1,9 @@
 import { HttpService } from "@nestjs/axios";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Inject, Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
 import { catchError, firstValueFrom, map } from "rxjs";
 import { Permission, type UserGuildPermissionsDto } from "@lootlog/types";
-import { ApiServiceConfig } from "src/config/api-service.config";
-import { ConfigKey } from "src/config/config-key.enum";
+import { apiServiceConfig } from "src/config/api-service.config";
 import type { Cache } from "cache-manager";
 
 type ResolvedGuildDto = {
@@ -20,12 +18,8 @@ export class PermissionsService {
 
   constructor(
     private readonly httpService: HttpService,
-    private readonly configService: ConfigService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {
-    const apiServiceConfig = this.configService.get<ApiServiceConfig>(
-      ConfigKey.API_SERVICE,
-    );
     this.apiServiceUrl = apiServiceConfig.url;
   }
 

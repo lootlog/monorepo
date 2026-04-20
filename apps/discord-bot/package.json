@@ -24,18 +24,17 @@
     "@lootlog/nest-shared": "workspace:*",
     "@lootlog/types": "workspace:*",
     "@nestjs/common": "^11.1.19",
-    "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.1.19",
     "@nestjs/microservices": "^11.1.19",
     "@nestjs/platform-express": "^11.1.19",
     "discord.js": "^14.26.3",
     "dotenv": "^17.4.2",
-    "joi": "^18.1.2",
     "necord": "^6.12.4",
     "nest-winston": "^1.10.2",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
-    "winston": "^3.19.0"
+    "winston": "^3.19.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.21",

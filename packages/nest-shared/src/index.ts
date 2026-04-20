@@ -10,11 +10,6 @@ export {
 } from "./decorators/required-permissions.decorator";
 export { GuildId } from "./decorators/guild-id.decorator";
 export {
-  default as redisConfig,
-  REDIS_CONFIG_KEY,
-  type RedisConfig,
-} from "./config/redis.config";
-export {
   createWinstonConfig,
   type WinstonConfigOptions,
 } from "./config/winston.config";

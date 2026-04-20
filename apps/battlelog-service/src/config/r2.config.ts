@@ -1,5 +1,4 @@
-import { registerAs } from "@nestjs/config";
-import { ConfigKey } from "./config-key.enum";
+import { env } from "src/config/env";
 
 export interface R2Config {
   accessKeyId: string;
@@ -9,13 +8,10 @@ export interface R2Config {
   bucketName: string;
 }
 
-export default registerAs(
-  ConfigKey.R2,
-  (): R2Config => ({
-    accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
-    endpoint: process.env.R2_ENDPOINT!,
-    region: process.env.R2_REGION || "auto",
-    bucketName: process.env.R2_BUCKET_NAME!,
-  }),
-);
+export const r2Config: R2Config = {
+  accessKeyId: env.R2_ACCESS_KEY_ID,
+  secretAccessKey: env.R2_SECRET_ACCESS_KEY,
+  endpoint: env.R2_ENDPOINT,
+  region: env.R2_REGION,
+  bucketName: env.R2_BUCKET_NAME,
+};
