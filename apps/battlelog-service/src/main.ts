@@ -1,7 +1,5 @@
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
-import { ConfigService } from "@nestjs/config";
-import type { ServiceConfig } from "src/config/service.config";
 import {
   FastifyAdapter,
   type NestFastifyApplication,
@@ -9,6 +7,7 @@ import {
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { cleanupOpenApiDoc } from "nestjs-zod";
 import { WINSTON_MODULE_NEST_PROVIDER } from "nest-winston";
+import { serviceConfig } from "src/config/service.config";
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -18,11 +17,6 @@ async function bootstrap() {
   );
 
   app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
-  const configService = app.get<ConfigService>(ConfigService);
-
-  const { port } = configService.get<ServiceConfig>("service", {
-    infer: true,
-  });
 
   const config = new DocumentBuilder()
     .setTitle("Battle Log API")
@@ -35,6 +29,6 @@ async function bootstrap() {
   SwaggerModule.setup("docs", app, document);
 
   await app.startAllMicroservices();
-  await app.listen(port, "0.0.0.0");
+  await app.listen(serviceConfig.port, "0.0.0.0");
 }
 bootstrap();

@@ -1,17 +1,12 @@
-import { RuntimeEnvironment } from "@lootlog/types";
-import { registerAs } from "@nestjs/config";
-import { ConfigKey } from "src/config/config-key.enum";
+import { env } from "src/config/env";
+import type { RuntimeEnvironment } from "@lootlog/types";
 
 export interface ServiceConfig {
   env: RuntimeEnvironment;
   port: number;
 }
 
-export default registerAs(ConfigKey.SERVICE, (): ServiceConfig => {
-  const { ENV, PORT } = process.env;
-
-  return {
-    env: ENV,
-    port: PORT ? Number.parseInt(PORT, 10) : 4000,
-  };
-});
+export const serviceConfig: ServiceConfig = {
+  env: env.ENV,
+  port: env.PORT,
+};

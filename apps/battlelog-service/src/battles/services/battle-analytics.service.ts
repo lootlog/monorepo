@@ -17,7 +17,7 @@ import {
   battleWarriors,
   type battles,
 } from "src/shared/modules/drizzle/schema";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 
 @Injectable()
 export class BattleAnalyticsService {

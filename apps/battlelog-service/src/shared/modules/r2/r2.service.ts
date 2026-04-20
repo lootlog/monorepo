@@ -5,11 +5,9 @@ import {
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { ConfigKey } from "src/config/config-key.enum";
-import type { R2Config } from "src/config/r2.config";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 import { gzipSync, gunzipSync } from "node:zlib";
+import { r2Config, type R2Config } from "src/config/r2.config";
 
 @Injectable()
 export class R2Service {
@@ -22,11 +20,8 @@ export class R2Service {
   private readonly MAX_CACHE_SIZE = 1000;
   private readonly CACHE_TTL = 24 * 60 * 60; // 24 hours
 
-  constructor(
-    private readonly configService: ConfigService,
-    private readonly redisService: RedisService,
-  ) {
-    this.config = this.configService.get<R2Config>(ConfigKey.R2)!;
+  constructor(private readonly redisService: RedisService) {
+    this.config = r2Config;
 
     this.client = new S3Client({
       region: this.config.region,

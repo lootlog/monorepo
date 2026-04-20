@@ -1,14 +1,9 @@
-import { registerAs } from "@nestjs/config";
-import { ConfigKey } from "src/config/config-key.enum";
+import { env } from "src/config/env";
 
 export interface ApiServiceConfig {
   url: string;
 }
 
-export default registerAs(ConfigKey.API_SERVICE, (): ApiServiceConfig => {
-  const { API_SERVICE_URL } = process.env;
-
-  return {
-    url: API_SERVICE_URL,
-  };
-});
+export const apiServiceConfig: ApiServiceConfig = {
+  url: env.API_SERVICE_URL,
+};

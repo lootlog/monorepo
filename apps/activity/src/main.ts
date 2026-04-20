@@ -3,15 +3,13 @@ import {
   FastifyAdapter,
   type NestFastifyApplication,
 } from "@nestjs/platform-fastify";
-import { ConfigService } from "@nestjs/config";
 import { WINSTON_MODULE_NEST_PROVIDER } from "nest-winston";
 
 import { AppModule } from "./app.module";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { cleanupOpenApiDoc } from "nestjs-zod";
-import { ServiceConfig } from "src/config/service.config";
-import { ConfigKey } from "src/config/config-key.enum";
-import { SwaggerConfig } from "src/config/swagger.config";
+import { serviceConfig } from "src/config/service.config";
+import { swaggerConfig } from "src/config/swagger.config";
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -21,13 +19,8 @@ async function bootstrap() {
   );
 
   app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
-  const configService = app.get<ConfigService>(ConfigService);
-
-  const { port } = configService.get<ServiceConfig>(ConfigKey.SERVICE, {
-    infer: true,
-  });
-  const { path, title, description, version } =
-    configService.get<SwaggerConfig>(ConfigKey.SWAGGER, { infer: true });
+  const { port } = serviceConfig;
+  const { path, title, description, version } = swaggerConfig;
 
   const swaggerDocument = new DocumentBuilder()
     .setTitle(title)
