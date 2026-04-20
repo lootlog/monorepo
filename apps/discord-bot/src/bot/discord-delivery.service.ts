@@ -1,23 +1,19 @@
-// oxlint-disable-next-line consistent-type-imports
-import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import { Inject, Injectable, Logger } from "@nestjs/common";
 import {
   NotificationTargetType,
   type DiscordNotificationDeliveryResultEvent,
   type DiscordNotificationSendCommand,
 } from "@lootlog/types";
 import { ChannelType, Client, DiscordAPIError } from "discord.js";
-import { RoutingKey } from "src/bot/enums/routing-key.enum";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import { NON_RETRYABLE_DISCORD_ERROR_CODES } from "./constants/non-retryable-discord-error-codes.constant";
+import { logger } from "../config/winston.config.js";
+import type { EventPublisher } from "../lib/rabbitmq.js";
+import { DEFAULT_EXCHANGE_NAME } from "../config/rabbitmq.config.js";
+import { RoutingKey } from "./enums/routing-key.enum.js";
+import { NON_RETRYABLE_DISCORD_ERROR_CODES } from "./constants/non-retryable-discord-error-codes.constant.js";
 
-@Injectable()
 export class DiscordDeliveryService {
-  private readonly logger = new Logger(DiscordDeliveryService.name);
-
   constructor(
-    private readonly amqpConnection: AmqpConnection,
-    @Inject(Client) private readonly client: Client,
+    private readonly eventPublisher: EventPublisher,
+    private readonly client: Client,
   ) {}
 
   async sendNotification(command: DiscordNotificationSendCommand) {
@@ -35,8 +31,8 @@ export class DiscordDeliveryService {
         deliveredAt: new Date().toISOString(),
       });
     } catch (error) {
-      this.logger.error(
-        `Failed to send Discord notification ${command.notificationJobId}: ${error instanceof Error ? error.message : error}`,
+      logger.error(
+        `Failed to send Discord notification ${command.notificationJobId}: ${error instanceof Error ? error.message : String(error)}`,
       );
 
       await this.publishDeliveryResult({
@@ -105,7 +101,7 @@ export class DiscordDeliveryService {
   private async publishDeliveryResult(
     payload: DiscordNotificationDeliveryResultEvent,
   ) {
-    await this.amqpConnection.publish(
+    await this.eventPublisher.publish(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.NOTIFICATIONS_DELIVERY_RESULT,
       payload,

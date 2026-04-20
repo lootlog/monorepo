@@ -1,20 +1,18 @@
 import type { Mock } from "vitest";
-import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import {
   NotificationOwnerType,
   NotificationProvider,
   NotificationTargetType,
   type DiscordNotificationSendCommand,
 } from "@lootlog/types";
-import { Test, type TestingModule } from "@nestjs/testing";
 import { ChannelType, Client, DiscordAPIError } from "discord.js";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import { DiscordDeliveryService } from "./discord-delivery.service";
-import { RoutingKey } from "./enums/routing-key.enum";
+import { DEFAULT_EXCHANGE_NAME } from "../config/rabbitmq.config.js";
+import { DiscordDeliveryService } from "./discord-delivery.service.js";
+import { RoutingKey } from "./enums/routing-key.enum.js";
 
 describe("DiscordDeliveryService", () => {
   let service: DiscordDeliveryService;
-  let amqpConnection: { publish: Mock };
+  let eventPublisher: { publish: Mock };
   let mockClient: {
     users: {
       fetch: Mock;
@@ -57,7 +55,7 @@ describe("DiscordDeliveryService", () => {
   };
 
   beforeEach(async () => {
-    amqpConnection = {
+    eventPublisher = {
       publish: vi.fn().mockResolvedValue(undefined),
     };
     mockClient = {
@@ -69,21 +67,10 @@ describe("DiscordDeliveryService", () => {
       },
     };
 
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        DiscordDeliveryService,
-        {
-          provide: Client,
-          useValue: mockClient,
-        },
-        {
-          provide: AmqpConnection,
-          useValue: amqpConnection,
-        },
-      ],
-    }).compile();
-
-    service = module.get<DiscordDeliveryService>(DiscordDeliveryService);
+    service = new DiscordDeliveryService(
+      eventPublisher,
+      mockClient as unknown as Client,
+    );
   });
 
   it("sends a direct message and publishes success result", async () => {
@@ -104,7 +91,7 @@ describe("DiscordDeliveryService", () => {
     expect(send).toHaveBeenCalledWith({
       content: "**Boss alert**\nTanroth spawned",
     });
-    expect(amqpConnection.publish).toHaveBeenCalledWith(
+    expect(eventPublisher.publish).toHaveBeenCalledWith(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.NOTIFICATIONS_DELIVERY_RESULT,
       expect.objectContaining({
@@ -138,7 +125,7 @@ describe("DiscordDeliveryService", () => {
     expect(send).toHaveBeenCalledWith({
       content: "Tanroth spawned",
     });
-    expect(amqpConnection.publish).toHaveBeenCalledWith(
+    expect(eventPublisher.publish).toHaveBeenCalledWith(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.NOTIFICATIONS_DELIVERY_RESULT,
       expect.objectContaining({
@@ -218,7 +205,7 @@ describe("DiscordDeliveryService", () => {
       createCommand(NotificationTargetType.CHANNEL),
     );
 
-    expect(amqpConnection.publish).toHaveBeenCalledWith(
+    expect(eventPublisher.publish).toHaveBeenCalledWith(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.NOTIFICATIONS_DELIVERY_RESULT,
       expect.objectContaining({
@@ -240,7 +227,7 @@ describe("DiscordDeliveryService", () => {
       createCommand(NotificationTargetType.CHANNEL),
     );
 
-    expect(amqpConnection.publish).toHaveBeenCalledWith(
+    expect(eventPublisher.publish).toHaveBeenCalledWith(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.NOTIFICATIONS_DELIVERY_RESULT,
       expect.objectContaining({

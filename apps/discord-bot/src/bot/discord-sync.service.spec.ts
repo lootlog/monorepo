@@ -1,7 +1,5 @@
 import type { Mock } from "vitest";
-import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { DiscordGuildSyncStatus } from "@lootlog/types";
-import { Test, type TestingModule } from "@nestjs/testing";
 import {
   ChannelType,
   Client,
@@ -12,9 +10,9 @@ import {
   type GuildBasedChannel,
   type Role,
 } from "discord.js";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import { DiscordSyncService } from "./discord-sync.service";
-import { RoutingKey } from "./enums/routing-key.enum";
+import { DEFAULT_EXCHANGE_NAME } from "../config/rabbitmq.config.js";
+import { DiscordSyncService } from "./discord-sync.service.js";
+import { RoutingKey } from "./enums/routing-key.enum.js";
 
 const REQUIRED_NOTIFICATION_PERMISSION_FLAGS = [
   PermissionsBitField.Flags.ViewChannel,
@@ -26,7 +24,7 @@ const REQUIRED_NOTIFICATION_PERMISSION_FLAGS = [
 
 describe("DiscordSyncService", () => {
   let service: DiscordSyncService;
-  let amqpConnection: { publish: Mock };
+  let eventPublisher: { publish: Mock };
   let mockClient: {
     guilds: {
       cache: Collection<string, Guild>;
@@ -163,7 +161,7 @@ describe("DiscordSyncService", () => {
   };
 
   beforeEach(async () => {
-    amqpConnection = {
+    eventPublisher = {
       publish: vi.fn().mockResolvedValue(undefined),
     };
     mockClient = {
@@ -173,21 +171,10 @@ describe("DiscordSyncService", () => {
       },
     };
 
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        DiscordSyncService,
-        {
-          provide: Client,
-          useValue: mockClient,
-        },
-        {
-          provide: AmqpConnection,
-          useValue: amqpConnection,
-        },
-      ],
-    }).compile();
-
-    service = module.get<DiscordSyncService>(DiscordSyncService);
+    service = new DiscordSyncService(
+      eventPublisher,
+      mockClient as unknown as Client,
+    );
   });
 
   it("publishes guild create without racing sync-state publish", async () => {
@@ -195,7 +182,7 @@ describe("DiscordSyncService", () => {
 
     await service.handleGuildCreate(guild);
 
-    expect(amqpConnection.publish).toHaveBeenNthCalledWith(
+    expect(eventPublisher.publish).toHaveBeenNthCalledWith(
       1,
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.GUILDS_CREATE,
@@ -222,7 +209,7 @@ describe("DiscordSyncService", () => {
         ],
       },
     );
-    expect(amqpConnection.publish).toHaveBeenCalledTimes(1);
+    expect(eventPublisher.publish).toHaveBeenCalledTimes(1);
   });
 
   it("does not publish sync updates on client ready", async () => {
@@ -238,7 +225,7 @@ describe("DiscordSyncService", () => {
 
     await service.handleClientReady(readyClient);
 
-    expect(amqpConnection.publish).not.toHaveBeenCalled();
+    expect(eventPublisher.publish).not.toHaveBeenCalled();
   });
 
   it("publishes a stale sync-state update after role changes", async () => {
@@ -267,7 +254,7 @@ describe("DiscordSyncService", () => {
 
     await service.handleGuildRoleUpdate(oldRole, newRole);
 
-    expect(amqpConnection.publish).toHaveBeenNthCalledWith(
+    expect(eventPublisher.publish).toHaveBeenNthCalledWith(
       1,
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.GUILDS_UPDATE_ROLE,
@@ -280,7 +267,7 @@ describe("DiscordSyncService", () => {
         admin: true,
       },
     );
-    expect(amqpConnection.publish).toHaveBeenNthCalledWith(
+    expect(eventPublisher.publish).toHaveBeenNthCalledWith(
       2,
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.DISCORD_GUILD_SYNC_STATE_UPDATED,
@@ -304,7 +291,7 @@ describe("DiscordSyncService", () => {
 
     await service.handleChannelCreate(channel);
 
-    expect(amqpConnection.publish).toHaveBeenCalledWith(
+    expect(eventPublisher.publish).toHaveBeenCalledWith(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.DISCORD_GUILD_CHANNEL_UPSERTED,
       expect.objectContaining({
@@ -337,7 +324,7 @@ describe("DiscordSyncService", () => {
 
     await service.handleChannelDelete(channel);
 
-    expect(amqpConnection.publish).toHaveBeenCalledWith(
+    expect(eventPublisher.publish).toHaveBeenCalledWith(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.DISCORD_GUILD_CHANNEL_DELETED,
       expect.objectContaining({

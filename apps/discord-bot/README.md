@@ -1,12 +1,12 @@
 # @lootlog/discord-bot
 
-Discord integration service built with NestJS and Necord.
+Discord integration service built with Hono and discord.js.
 
 ## Overview
 
 - Boots the Lootlog bot client and handles Discord-driven workflows from the `bot` module.
+- Serves internal HTTP endpoints through Hono on Node.js.
 - Integrates with RabbitMQ for cross-service communication and event-driven automation.
-- Keeps a dedicated health check module alongside bot-specific configuration and event handlers.
 
 ## Development
 
@@ -26,5 +26,5 @@ pnpm --filter @lootlog/discord-bot dev
 
 ## Notes
 
-- Discord and RabbitMQ configuration is wired through `src/config/*`.
-- Production start imports the generated observability bootstrap from `dist/instrumentation.js`.
+- Discord, RabbitMQ, logging, and observability are wired through `src/config/*`.
+- Production start runs `dist/index.js`, which initializes observability, Discord, RabbitMQ, and HTTP in a single process.

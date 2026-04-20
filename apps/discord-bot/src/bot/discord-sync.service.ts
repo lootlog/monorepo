@@ -1,7 +1,5 @@
-// oxlint-disable-next-line consistent-type-imports
-import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import { Inject, Injectable, Logger } from "@nestjs/common";
 import {
+  DISCORD_ADMINISTRATOR_PERMISSION,
   DiscordGuildSyncStatus,
   type DiscordGuildChannelDeletedEvent,
   type DiscordGuildChannelSnapshot,
@@ -11,7 +9,6 @@ import {
   type DiscordGuildSyncState,
   type DiscordGuildSyncStateUpdatedEvent,
 } from "@lootlog/types";
-import { isDiscordAdministrator } from "@lootlog/nest-shared";
 import {
   ChannelType,
   Client,
@@ -23,9 +20,11 @@ import {
   type GuildMember,
   type Role,
 } from "discord.js";
-import { RoutingKey } from "src/bot/enums/routing-key.enum";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import { REQUIRED_NOTIFICATION_PERMISSIONS } from "./constants/required-notification-permissions.constant";
+import { logger } from "../config/winston.config.js";
+import type { EventPublisher } from "../lib/rabbitmq.js";
+import { DEFAULT_EXCHANGE_NAME } from "../config/rabbitmq.config.js";
+import { RoutingKey } from "./enums/routing-key.enum.js";
+import { REQUIRED_NOTIFICATION_PERMISSIONS } from "./constants/required-notification-permissions.constant.js";
 
 type ChannelPermissionsState = {
   canView: boolean;
@@ -64,21 +63,27 @@ type ResolveGuildResult =
       lastError: string;
     };
 
-@Injectable()
-export class DiscordSyncService {
-  private readonly logger = new Logger(DiscordSyncService.name);
+function isDiscordAdministrator(permissionsBitfield: bigint) {
+  return (
+    (permissionsBitfield & DISCORD_ADMINISTRATOR_PERMISSION) ===
+    DISCORD_ADMINISTRATOR_PERMISSION
+  );
+}
 
+export class DiscordSyncService {
   constructor(
-    private readonly amqpConnection: AmqpConnection,
-    @Inject(Client) private readonly client: Client,
+    private readonly eventPublisher: EventPublisher,
+    private readonly client: Client,
   ) {}
 
   async handleClientReady(client: Client) {
-    this.logger.log(`Bot is ready and logged in as ${client.user.username}`);
+    logger.info(
+      `Bot is ready and logged in as ${client.user?.username ?? "unknown-user"}`,
+    );
   }
 
   async handleGuildCreate(guild: Guild) {
-    this.logger.log(
+    logger.info(
       `handleGuildCreate called for guild ${guild.id} (${guild.name}), owner: ${guild.ownerId}`,
     );
 
@@ -88,15 +93,13 @@ export class DiscordSyncService {
   }
 
   async handleGuildUpdate(oldGuild: Guild, newGuild: Guild) {
-    this.logger.log(
-      `Guild ${oldGuild.name} has been updated to ${newGuild.name}`,
-    );
+    logger.info(`Guild ${oldGuild.name} has been updated to ${newGuild.name}`);
 
     await this.publishGuildUpdated(newGuild);
   }
 
   async handleGuildDelete(guild: Guild) {
-    this.logger.log(`Bot has been removed from guild ${guild.name}`);
+    logger.info(`Bot has been removed from guild ${guild.name}`);
 
     await this.publishGuildDeleted(guild.id);
 
@@ -115,21 +118,21 @@ export class DiscordSyncService {
   }
 
   async handleGuildRoleCreate(role: Role) {
-    this.logger.log(`Role ${role.name} has been created.`);
+    logger.info(`Role ${role.name} has been created.`);
 
     await this.publishGuildRoleCreated(role);
     await this.publishStaleGuildSyncState(role.guild);
   }
 
   async handleGuildRoleUpdate(oldRole: Role, newRole: Role) {
-    this.logger.log(`Role ${oldRole.name} has been updated to ${newRole.name}`);
+    logger.info(`Role ${oldRole.name} has been updated to ${newRole.name}`);
 
     await this.publishGuildRoleUpdated(newRole);
     await this.publishStaleGuildSyncState(newRole.guild);
   }
 
   async handleGuildRoleDelete(role: Role) {
-    this.logger.log(`Role ${role.name} has been deleted.`);
+    logger.info(`Role ${role.name} has been deleted.`);
 
     await this.publishGuildRoleDeleted(role);
     await this.publishStaleGuildSyncState(role.guild);
@@ -609,7 +612,7 @@ export class DiscordSyncService {
   private async publishGuildChannelUpserted(
     payload: DiscordGuildChannelUpsertedEvent,
   ) {
-    await this.amqpConnection.publish(
+    await this.eventPublisher.publish(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.DISCORD_GUILD_CHANNEL_UPSERTED,
       payload,
@@ -619,7 +622,7 @@ export class DiscordSyncService {
   private async publishGuildChannelDeleted(
     payload: DiscordGuildChannelDeletedEvent,
   ) {
-    await this.amqpConnection.publish(
+    await this.eventPublisher.publish(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.DISCORD_GUILD_CHANNEL_DELETED,
       payload,
@@ -629,7 +632,7 @@ export class DiscordSyncService {
   private async publishGuildSyncStateUpdated(
     payload: DiscordGuildSyncStateUpdatedEvent,
   ) {
-    await this.amqpConnection.publish(
+    await this.eventPublisher.publish(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.DISCORD_GUILD_SYNC_STATE_UPDATED,
       payload,
@@ -639,7 +642,7 @@ export class DiscordSyncService {
   private async publishGuildChannelsSyncFailed(
     payload: DiscordGuildChannelsSyncFailedEvent,
   ) {
-    await this.amqpConnection.publish(
+    await this.eventPublisher.publish(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.DISCORD_GUILD_CHANNELS_SYNC_FAILED,
       payload,
@@ -650,7 +653,7 @@ export class DiscordSyncService {
     guild: Guild,
     roles: Awaited<ReturnType<Guild["roles"]["fetch"]>>,
   ) {
-    await this.amqpConnection.publish(
+    await this.eventPublisher.publish(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.GUILDS_CREATE,
       {
@@ -670,7 +673,7 @@ export class DiscordSyncService {
   }
 
   private async publishGuildUpdated(guild: Guild) {
-    await this.amqpConnection.publish(
+    await this.eventPublisher.publish(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.GUILDS_UPDATE,
       {
@@ -683,7 +686,7 @@ export class DiscordSyncService {
   }
 
   private async publishGuildDeleted(guildId: string) {
-    await this.amqpConnection.publish(
+    await this.eventPublisher.publish(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.GUILDS_DELETE,
       {
@@ -693,7 +696,7 @@ export class DiscordSyncService {
   }
 
   private async publishGuildRoleCreated(role: Role) {
-    await this.amqpConnection.publish(
+    await this.eventPublisher.publish(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.GUILDS_CREATE_ROLE,
       {
@@ -708,7 +711,7 @@ export class DiscordSyncService {
   }
 
   private async publishGuildRoleUpdated(role: Role) {
-    await this.amqpConnection.publish(
+    await this.eventPublisher.publish(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.GUILDS_UPDATE_ROLE,
       {
@@ -723,7 +726,7 @@ export class DiscordSyncService {
   }
 
   private async publishGuildRoleDeleted(role: Role) {
-    await this.amqpConnection.publish(
+    await this.eventPublisher.publish(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.GUILDS_DELETE_ROLE,
       {

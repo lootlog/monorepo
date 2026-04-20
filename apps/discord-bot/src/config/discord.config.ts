@@ -1,37 +1,12 @@
-import { registerAs, type ConfigService } from "@nestjs/config";
-import { ServiceConfig } from "./service.config";
-import type { NecordModuleOptions } from "necord";
-import { IntentsBitField } from "discord.js";
-import { ConfigKey } from "./config-key.enum";
-import { RuntimeEnvironment } from "src/types/common.types";
+import { Client, GatewayIntentBits } from "discord.js";
+import { APP_CONFIG } from "./app.config.js";
 
-interface DiscordConfig {
-  discordBotToken: string;
-  discordDevelopmentGuildId?: string;
+export function createDiscordClient() {
+  return new Client({
+    intents: [GatewayIntentBits.Guilds],
+  });
 }
 
-export default registerAs(ConfigKey.DISCORD, (): DiscordConfig => {
-  const { DISCORD_BOT_TOKEN, DISCORD_DEVELOPMENT_GUILD_ID } = process.env;
-
-  return {
-    discordBotToken: DISCORD_BOT_TOKEN,
-    discordDevelopmentGuildId: DISCORD_DEVELOPMENT_GUILD_ID,
-  };
-});
-
-export const discordConfigFactory = (
-  configService: ConfigService,
-): NecordModuleOptions => {
-  const { discordBotToken, discordDevelopmentGuildId } =
-    configService.get<DiscordConfig>(ConfigKey.DISCORD);
-  const { env } = configService.get<ServiceConfig>(ConfigKey.SERVICE);
-
-  return {
-    token: discordBotToken,
-    development:
-      discordDevelopmentGuildId && env === RuntimeEnvironment.LOCAL
-        ? [discordDevelopmentGuildId]
-        : undefined,
-    intents: [IntentsBitField.Flags.Guilds],
-  };
-};
+export function getDiscordBotToken() {
+  return APP_CONFIG.discord.botToken;
+}
