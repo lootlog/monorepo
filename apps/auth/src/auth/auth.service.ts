@@ -1,4 +1,11 @@
-import { Injectable } from "@nestjs/common";
+import {
+  BadRequestException,
+  HttpException,
+  Injectable,
+  InternalServerErrorException,
+  UnauthorizedException,
+} from "@nestjs/common";
+import { APIError } from "better-auth/api";
 import { type JwksKeys, validateToken } from "@lootlog/api-helpers";
 import { fromNodeHeaders } from "better-auth/node";
 import type { IncomingHttpHeaders } from "node:http";
@@ -14,6 +21,14 @@ type AccessTokenRequest = {
   userId: string;
   discordId: string;
 };
+
+type IdpTokenResponse = {
+  accessToken: string;
+  expiresIn: number;
+  scopes: string[];
+};
+
+type AccessTokenPayload = Awaited<ReturnType<typeof auth.api.getAccessToken>>;
 
 @Injectable()
 export class AuthService {
@@ -78,6 +93,110 @@ export class AuthService {
     }
   }
 
+  async verifyRequestIdentity({
+    headers,
+    authorizationHeader,
+    authDiscordId,
+    authUserId,
+  }: {
+    headers: IncomingHttpHeaders;
+    authorizationHeader?: string;
+    authDiscordId?: string;
+    authUserId?: string;
+  }): Promise<VerifiedIdentity> {
+    if (authDiscordId || authUserId) {
+      throw new UnauthorizedException();
+    }
+
+    const session = await this.getSession(headers);
+    const verifiedIdentity = await this.buildVerifiedIdentityFromRequest(
+      session,
+      authorizationHeader,
+    );
+
+    if (!verifiedIdentity) {
+      throw new UnauthorizedException();
+    }
+
+    return verifiedIdentity;
+  }
+
+  async getCurrentUserScopes(headers: IncomingHttpHeaders): Promise<string[]> {
+    const session = await this.getRequiredSession(headers);
+
+    try {
+      const token = await this.getDiscordAccessTokenOrThrow(
+        {
+          userId: session.user.id,
+          discordId: session.user.discordId,
+        },
+        {
+          missingException: new BadRequestException({
+            error: "Failed to retrieve IDP token",
+          }),
+          expiredException: new UnauthorizedException({
+            error: "IDP token has expired. Please reconnect your account.",
+          }),
+        },
+      );
+
+      return this.normalizeScopes(token.scopes);
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      if (error instanceof APIError) {
+        throw new HttpException(
+          { error: error.message },
+          this.getHttpStatus(error.status, 500),
+        );
+      }
+
+      throw new InternalServerErrorException({
+        error: "Failed to retrieve IDP token",
+      });
+    }
+  }
+
+  async getIdpTokenResponse({
+    userId,
+    discordId,
+  }: AccessTokenRequest): Promise<IdpTokenResponse> {
+    try {
+      const token = await this.getDiscordAccessTokenOrThrow(
+        { userId, discordId },
+        {
+          missingException: new BadRequestException({
+            error: "TOKEN_NOT_FOUND",
+          }),
+          expiredException: new UnauthorizedException({
+            error: "TOKEN_EXPIRED",
+          }),
+        },
+      );
+
+      return {
+        accessToken: token.accessToken,
+        expiresIn: this.getExpiresInSeconds(token.accessTokenExpiresAt),
+        scopes: this.normalizeScopes(token.scopes),
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      if (error instanceof APIError) {
+        throw new HttpException(
+          { error: "ACCOUNT_NOT_FOUND" },
+          this.getHttpStatus(error.status, 400),
+        );
+      }
+
+      throw new InternalServerErrorException({ error: "INTERNAL_ERROR" });
+    }
+  }
+
   getDiscordAccessToken({ userId, discordId }: AccessTokenRequest) {
     return auth.api.getAccessToken({
       body: {
@@ -102,6 +221,45 @@ export class AuthService {
     }
 
     return Math.floor((expiresAt.getTime() - Date.now()) / 1000);
+  }
+
+  private async getRequiredSession(
+    headers: IncomingHttpHeaders,
+  ): Promise<AppUserSession> {
+    const session = await this.getSession(headers);
+
+    if (!session) {
+      throw new UnauthorizedException();
+    }
+
+    return session;
+  }
+
+  private async getDiscordAccessTokenOrThrow(
+    request: AccessTokenRequest,
+    {
+      missingException,
+      expiredException,
+    }: {
+      missingException: HttpException;
+      expiredException: HttpException;
+    },
+  ): Promise<AccessTokenPayload & { accessToken: string }> {
+    const token = await this.getDiscordAccessToken(request);
+
+    if (!token?.accessToken) {
+      throw missingException;
+    }
+
+    if (this.isAccessTokenExpired(token.accessTokenExpiresAt)) {
+      throw expiredException;
+    }
+
+    return token as AccessTokenPayload & { accessToken: string };
+  }
+
+  private getHttpStatus(status: string | number | undefined, fallback: number) {
+    return typeof status === "number" ? status : fallback;
   }
 
   private parseExpiresAt(accessTokenExpiresAt: unknown): Date | null {

@@ -7,11 +7,15 @@ import { betterAuthSchema, db } from "src/database/drizzle";
 
 export const auth = betterAuth({
   appName: "@lootlog/auth",
+  baseURL: env.APP_URL,
   basePath: "/idp",
   database: drizzleAdapter(db, {
     provider: "pg",
     schema: betterAuthSchema,
   }),
+  account: {
+    encryptOAuthTokens: true,
+  },
   user: {
     additionalFields: {
       discordId: {
@@ -29,17 +33,15 @@ export const auth = betterAuth({
     cookieCache: {
       enabled: true,
       maxAge: 5 * 60,
+      strategy: "compact",
     },
-    expiresIn: 60 * 60 * 24 * 365,
-    updateAge: 60 * 60 * 24 * 30,
-    freshAge: 0,
-  },
-  emailAndPassword: {
-    enabled: true,
-    minPasswordLength: 1,
+    expiresIn: 60 * 60 * 24 * 30,
+    updateAge: 60 * 60 * 24,
+    freshAge: 60 * 60 * 24,
   },
   trustedOrigins: env.TRUSTED_ORIGINS,
   advanced: {
+    useSecureCookies: true,
     defaultCookieAttributes: {
       sameSite: "none",
       secure: true,
@@ -58,7 +60,7 @@ export const auth = betterAuth({
       jwt: {
         issuer: env.APP_URL,
         audience: env.APP_URL,
-        expirationTime: "365d",
+        expirationTime: "1h",
         definePayload: ({ user }) => ({
           id: user.id,
           email: user.email,
