@@ -2,7 +2,7 @@ import { Permission } from "@lootlog/types";
 import { createApp } from "../app.js";
 import type { ActivityQuery } from "./activity-query.js";
 import type { ActivityStore } from "./activity-store.js";
-import type { PermissionsService } from "../permissions/permissions-service.js";
+import type { GuildPermissions } from "../permissions/guild-permissions.js";
 
 describe("createActivityRoutes", () => {
   const activityQuery = {
@@ -18,10 +18,10 @@ describe("createActivityRoutes", () => {
     deleteOne: vi.fn(),
   } as unknown as ActivityStore;
 
-  const permissionsService = {
+  const guildPermissions = {
     resolveGuildId: vi.fn(),
     getUserGuildPermissions: vi.fn(),
-  } as unknown as PermissionsService;
+  } as unknown as GuildPermissions;
 
   const prismaDatabase = {
     ping: vi.fn(),
@@ -31,7 +31,7 @@ describe("createActivityRoutes", () => {
     createApp({
       activityQuery,
       activityStore,
-      permissionsService,
+      guildPermissions,
       prismaDatabase: prismaDatabase as never,
     });
 
@@ -45,8 +45,8 @@ describe("createActivityRoutes", () => {
   });
 
   it("resolves guild id and returns guild activities", async () => {
-    vi.mocked(permissionsService.resolveGuildId).mockResolvedValue("guild-1");
-    vi.mocked(permissionsService.getUserGuildPermissions).mockResolvedValue([
+    vi.mocked(guildPermissions.resolveGuildId).mockResolvedValue("guild-1");
+    vi.mocked(guildPermissions.getUserGuildPermissions).mockResolvedValue([
       Permission.ADMIN,
     ]);
     vi.mocked(activityQuery.findByGuild).mockResolvedValue({
@@ -66,8 +66,8 @@ describe("createActivityRoutes", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(permissionsService.resolveGuildId).toHaveBeenCalledWith("guild-one");
-    expect(permissionsService.getUserGuildPermissions).toHaveBeenCalledWith(
+    expect(guildPermissions.resolveGuildId).toHaveBeenCalledWith("guild-one");
+    expect(guildPermissions.getUserGuildPermissions).toHaveBeenCalledWith(
       "discord-1",
       "user-1",
       "guild-1",
@@ -78,8 +78,8 @@ describe("createActivityRoutes", () => {
   });
 
   it("returns 403 when user lacks required permissions", async () => {
-    vi.mocked(permissionsService.resolveGuildId).mockResolvedValue("guild-1");
-    vi.mocked(permissionsService.getUserGuildPermissions).mockResolvedValue([]);
+    vi.mocked(guildPermissions.resolveGuildId).mockResolvedValue("guild-1");
+    vi.mocked(guildPermissions.getUserGuildPermissions).mockResolvedValue([]);
 
     const app = createTestApp();
     const response = await app.request("/guilds/guild-one/activity-logs", {
@@ -97,8 +97,8 @@ describe("createActivityRoutes", () => {
   });
 
   it("requires OWNER permission for deleting an activity", async () => {
-    vi.mocked(permissionsService.resolveGuildId).mockResolvedValue("guild-1");
-    vi.mocked(permissionsService.getUserGuildPermissions).mockResolvedValue([
+    vi.mocked(guildPermissions.resolveGuildId).mockResolvedValue("guild-1");
+    vi.mocked(guildPermissions.getUserGuildPermissions).mockResolvedValue([
       Permission.OWNER,
     ]);
     vi.mocked(activityStore.deleteOne).mockResolvedValue(1);

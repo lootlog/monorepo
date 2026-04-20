@@ -1,7 +1,7 @@
 import { Permission } from "@lootlog/types";
-import { PermissionsService } from "./permissions-service.js";
+import { GuildPermissions } from "./guild-permissions.js";
 
-describe("PermissionsService", () => {
+describe("GuildPermissions", () => {
   const cacheStore = {
     get: vi.fn(),
     set: vi.fn(),
@@ -14,7 +14,7 @@ describe("PermissionsService", () => {
     error: vi.fn(),
   };
 
-  const permissionsService = new PermissionsService(
+  const guildPermissions = new GuildPermissions(
     cacheStore as never,
     logger as never,
   );
@@ -26,7 +26,7 @@ describe("PermissionsService", () => {
   it("returns a cached guild id when available", async () => {
     cacheStore.get.mockResolvedValue("guild-1");
 
-    await expect(permissionsService.resolveGuildId("guild-one")).resolves.toBe(
+    await expect(guildPermissions.resolveGuildId("guild-one")).resolves.toBe(
       "guild-1",
     );
     expect(fetch).not.toHaveBeenCalled();
@@ -38,7 +38,7 @@ describe("PermissionsService", () => {
       new Response(JSON.stringify({ id: "guild-1" }), { status: 200 }),
     );
 
-    await expect(permissionsService.resolveGuildId("guild-one")).resolves.toBe(
+    await expect(guildPermissions.resolveGuildId("guild-one")).resolves.toBe(
       "guild-1",
     );
     expect(cacheStore.set).toHaveBeenCalledWith(
@@ -53,7 +53,7 @@ describe("PermissionsService", () => {
     vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 404 }));
 
     await expect(
-      permissionsService.resolveGuildId("missing-guild"),
+      guildPermissions.resolveGuildId("missing-guild"),
     ).resolves.toBeNull();
   });
 
@@ -88,7 +88,7 @@ describe("PermissionsService", () => {
     );
 
     await expect(
-      permissionsService.getUserGuildPermissions(
+      guildPermissions.getUserGuildPermissions(
         "discord-2",
         "user-2",
         "guild-1",

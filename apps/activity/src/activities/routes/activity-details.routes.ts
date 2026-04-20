@@ -71,14 +71,14 @@ const deleteActivityRoute = createRoute({
 export function createActivityDetailsRoutes({
   activityQuery,
   activityStore,
-  permissionsService,
+  guildPermissions,
 }: ActivityRoutesDependencies) {
   const routes = createActivityRouteGroup();
 
   routes.openapi(
     {
       ...getActivityRoute,
-      middleware: createGuildPermissionMiddleware(permissionsService, [
+      middleware: createGuildPermissionMiddleware(guildPermissions, [
         Permission.ADMIN,
       ]),
     },
@@ -94,7 +94,7 @@ export function createActivityDetailsRoutes({
   routes.openapi(
     {
       ...deleteActivityRoute,
-      middleware: createGuildPermissionMiddleware(permissionsService, [
+      middleware: createGuildPermissionMiddleware(guildPermissions, [
         Permission.OWNER,
       ]),
     },

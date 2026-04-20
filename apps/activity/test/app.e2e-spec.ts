@@ -5,7 +5,7 @@ describe("activity app", () => {
     const app = createApp({
       activityQuery: {} as never,
       activityStore: {} as never,
-      permissionsService: {} as never,
+      guildPermissions: {} as never,
       prismaDatabase: {
         ping: vi.fn(),
       } as never,

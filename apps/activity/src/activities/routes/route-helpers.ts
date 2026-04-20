@@ -3,7 +3,7 @@ import { Permission } from "@lootlog/types";
 import type { MiddlewareHandler } from "hono";
 import type { AppVariables } from "../../lib/hono.types.js";
 import { requireAuth } from "../../lib/middleware/auth.middleware.js";
-import type { PermissionsService } from "../../permissions/permissions-service.js";
+import type { GuildPermissions } from "../../permissions/guild-permissions.js";
 import { requireGuildPermission } from "../../permissions/permissions.middleware.js";
 import type { ActivityQuery } from "../activity-query.js";
 import type { ActivityStore } from "../activity-store.js";
@@ -11,7 +11,7 @@ import type { ActivityStore } from "../activity-store.js";
 export type ActivityRoutesDependencies = {
   activityQuery: ActivityQuery;
   activityStore: ActivityStore;
-  permissionsService: PermissionsService;
+  guildPermissions: GuildPermissions;
 };
 
 export const guildIdParamsSchema = z.object({
@@ -52,11 +52,11 @@ export function createActivityRouteGroup() {
 }
 
 export function createGuildPermissionMiddleware(
-  permissionsService: PermissionsService,
+  guildPermissions: GuildPermissions,
   requiredPermissions: Permission[],
 ): MiddlewareHandler[] {
   return [
     requireAuth,
-    requireGuildPermission(permissionsService, requiredPermissions),
+    requireGuildPermission(guildPermissions, requiredPermissions),
   ];
 }

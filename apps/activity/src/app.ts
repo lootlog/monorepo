@@ -10,7 +10,7 @@ import { createHealthzRoutes } from "./healthz/healthz.routes.js";
 import { AppError } from "./lib/errors/http-errors.js";
 import { userMetadataFromHeaders } from "./lib/middleware/auth.middleware.js";
 import type { AppVariables } from "./lib/hono.types.js";
-import { PermissionsService } from "./permissions/permissions-service.js";
+import { GuildPermissions } from "./permissions/guild-permissions.js";
 import { CacheStore } from "./shared/cache/cache-store.js";
 import { PrismaDatabase } from "./shared/prisma/prisma-database.js";
 import { ActivityRabbitConsumer } from "./shared/rabbitmq/activity-rabbit-consumer.js";
@@ -18,7 +18,7 @@ import { ActivityRabbitConsumer } from "./shared/rabbitmq/activity-rabbit-consum
 export interface ActivityAppDependencies {
   activityQuery: ActivityQuery;
   activityStore: ActivityStore;
-  permissionsService: PermissionsService;
+  guildPermissions: GuildPermissions;
   prismaDatabase: PrismaDatabase;
 }
 
@@ -31,7 +31,7 @@ export interface ActivityAppContext extends ActivityAppDependencies {
 export function createApp({
   activityQuery,
   activityStore,
-  permissionsService,
+  guildPermissions,
   prismaDatabase,
 }: ActivityAppDependencies) {
   const app = new OpenAPIHono<{
@@ -74,7 +74,7 @@ export function createApp({
     createActivityRoutes({
       activityQuery,
       activityStore,
-      permissionsService,
+      guildPermissions,
     }),
   );
 
@@ -124,7 +124,7 @@ export async function createAppContext(): Promise<ActivityAppContext> {
   await prismaDatabase.connect();
 
   const cacheStore = new CacheStore(APP_CONFIG);
-  const permissionsService = new PermissionsService(cacheStore, logger);
+  const guildPermissions = new GuildPermissions(cacheStore, logger);
   const activityQuery = new ActivityQuery(prismaDatabase);
   const activityStore = new ActivityStore(prismaDatabase, logger);
   const rabbitConsumer = new ActivityRabbitConsumer(
@@ -137,7 +137,7 @@ export async function createAppContext(): Promise<ActivityAppContext> {
   return {
     prismaDatabase,
     cacheStore,
-    permissionsService,
+    guildPermissions,
     activityQuery,
     activityStore,
     rabbitConsumer,

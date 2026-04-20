@@ -87,10 +87,10 @@ const getUserActivitiesRoute = createRoute({
 
 export function createActivityListRoutes({
   activityQuery,
-  permissionsService,
-}: Pick<ActivityRoutesDependencies, "activityQuery" | "permissionsService">) {
+  guildPermissions,
+}: Pick<ActivityRoutesDependencies, "activityQuery" | "guildPermissions">) {
   const routes = createActivityRouteGroup();
-  const adminMiddleware = createGuildPermissionMiddleware(permissionsService, [
+  const adminMiddleware = createGuildPermissionMiddleware(guildPermissions, [
     Permission.ADMIN,
   ]);
 

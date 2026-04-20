@@ -82,10 +82,10 @@ const clanNameSuggestionsRoute = createRoute({
 
 export function createActivitySuggestionsRoutes({
   activityQuery,
-  permissionsService,
-}: Pick<ActivityRoutesDependencies, "activityQuery" | "permissionsService">) {
+  guildPermissions,
+}: Pick<ActivityRoutesDependencies, "activityQuery" | "guildPermissions">) {
   const routes = createActivityRouteGroup();
-  const adminMiddleware = createGuildPermissionMiddleware(permissionsService, [
+  const adminMiddleware = createGuildPermissionMiddleware(guildPermissions, [
     Permission.ADMIN,
   ]);
 

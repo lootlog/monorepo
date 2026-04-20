@@ -2,10 +2,10 @@ import type { Permission } from "@lootlog/types";
 import { createMiddleware } from "hono/factory";
 import type { AppVariables } from "../lib/hono.types.js";
 import { ForbiddenError } from "../lib/errors/http-errors.js";
-import type { PermissionsService } from "./permissions-service.js";
+import type { GuildPermissions } from "./guild-permissions.js";
 
 export const requireGuildPermission = (
-  permissionsService: PermissionsService,
+  guildPermissions: GuildPermissions,
   requiredPermissions: Permission[],
 ) =>
   createMiddleware<{
@@ -22,13 +22,13 @@ export const requireGuildPermission = (
       throw new ForbiddenError("Missing authenticated user metadata");
     }
 
-    const resolvedGuildId = await permissionsService.resolveGuildId(guildId);
+    const resolvedGuildId = await guildPermissions.resolveGuildId(guildId);
 
     if (!resolvedGuildId) {
       throw new ForbiddenError();
     }
 
-    const userPermissions = await permissionsService.getUserGuildPermissions(
+    const userPermissions = await guildPermissions.getUserGuildPermissions(
       discordId,
       userId,
       resolvedGuildId,

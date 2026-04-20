@@ -7,7 +7,7 @@ type ResolvedGuildDto = {
   id: string;
 };
 
-export class PermissionsService {
+export class GuildPermissions {
   private readonly permissionsCacheTtlMs = 5 * 60 * 1000;
 
   constructor(

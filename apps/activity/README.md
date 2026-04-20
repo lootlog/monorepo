@@ -27,5 +27,5 @@ pnpm --filter @lootlog/activity dev
 
 ## Notes
 
-- HTTP routes are implemented in `src/activities/activity-routes.ts`.
+- HTTP routes are implemented under `src/activities/routes/`.
 - Prisma schema and generated client live under `prisma/`.

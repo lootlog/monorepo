@@ -4,14 +4,20 @@ import amqp, {
   type ConsumeMessage,
 } from "amqplib";
 import type { Logger } from "winston";
+import {
+  ACTIVITY_LOG_CREATE_DLQ_QUEUE,
+  ACTIVITY_LOG_CREATE_DLQ_ROUTING_KEY,
+  ACTIVITY_LOG_CREATE_QUEUE,
+  ACTIVITY_LOG_CREATE_RETRY_QUEUE,
+  ACTIVITY_LOG_CREATE_RETRY_ROUTING_KEY,
+  ACTIVITY_LOG_CREATE_ROUTING_KEY,
+  ACTIVITY_RETRY_DELAY_MS,
+  DEAD_LETTER_EXCHANGE_NAME,
+  DEFAULT_EXCHANGE_NAME,
+  RETRY_EXCHANGE_NAME,
+} from "../../activities/constants/activity-events.constants.js";
 import { createActivitySchema } from "../../activities/schemas/create-activity.schema.js";
 import type { ActivityStore } from "../../activities/activity-store.js";
-import { Queue } from "../../enum/queue.enum.js";
-import { RoutingKey } from "../../enum/routing-key.enum.js";
-
-export const DEFAULT_EXCHANGE_NAME = "default";
-export const DEAD_LETTER_EXCHANGE_NAME = "dlx";
-export const RETRY_EXCHANGE_NAME = "retry";
 
 type Headers = Record<string, unknown>;
 
@@ -40,7 +46,7 @@ export class ActivityRabbitConsumer {
     await this.setupTopology(dlqChannel);
 
     await mainChannel.consume(
-      Queue.ACTIVITY_LOG_CREATE,
+      ACTIVITY_LOG_CREATE_QUEUE,
       async (message) => {
         await this.handleActivityCreate(message);
       },
@@ -50,7 +56,7 @@ export class ActivityRabbitConsumer {
     );
 
     await dlqChannel.consume(
-      Queue.ACTIVITY_LOG_CREATE_DLQ,
+      ACTIVITY_LOG_CREATE_DLQ_QUEUE,
       async (message) => {
         await this.handleDlqMessage(message);
       },
@@ -79,36 +85,36 @@ export class ActivityRabbitConsumer {
       durable: true,
     });
 
-    await channel.assertQueue(Queue.ACTIVITY_LOG_CREATE, {
+    await channel.assertQueue(ACTIVITY_LOG_CREATE_QUEUE, {
       durable: true,
       deadLetterExchange: RETRY_EXCHANGE_NAME,
-      deadLetterRoutingKey: RoutingKey.ACTIVITY_LOG_CREATE_RETRY,
+      deadLetterRoutingKey: ACTIVITY_LOG_CREATE_RETRY_ROUTING_KEY,
     });
     await channel.bindQueue(
-      Queue.ACTIVITY_LOG_CREATE,
+      ACTIVITY_LOG_CREATE_QUEUE,
       DEFAULT_EXCHANGE_NAME,
-      RoutingKey.ACTIVITY_LOG_CREATE,
+      ACTIVITY_LOG_CREATE_ROUTING_KEY,
     );
 
-    await channel.assertQueue(Queue.ACTIVITY_LOG_CREATE_RETRY, {
+    await channel.assertQueue(ACTIVITY_LOG_CREATE_RETRY_QUEUE, {
       durable: true,
-      messageTtl: 30000,
+      messageTtl: ACTIVITY_RETRY_DELAY_MS,
       deadLetterExchange: DEFAULT_EXCHANGE_NAME,
-      deadLetterRoutingKey: RoutingKey.ACTIVITY_LOG_CREATE,
+      deadLetterRoutingKey: ACTIVITY_LOG_CREATE_ROUTING_KEY,
     });
     await channel.bindQueue(
-      Queue.ACTIVITY_LOG_CREATE_RETRY,
+      ACTIVITY_LOG_CREATE_RETRY_QUEUE,
       RETRY_EXCHANGE_NAME,
-      RoutingKey.ACTIVITY_LOG_CREATE_RETRY,
+      ACTIVITY_LOG_CREATE_RETRY_ROUTING_KEY,
     );
 
-    await channel.assertQueue(Queue.ACTIVITY_LOG_CREATE_DLQ, {
+    await channel.assertQueue(ACTIVITY_LOG_CREATE_DLQ_QUEUE, {
       durable: true,
     });
     await channel.bindQueue(
-      Queue.ACTIVITY_LOG_CREATE_DLQ,
+      ACTIVITY_LOG_CREATE_DLQ_QUEUE,
       DEAD_LETTER_EXCHANGE_NAME,
-      RoutingKey.ACTIVITY_LOG_CREATE_DLQ,
+      ACTIVITY_LOG_CREATE_DLQ_ROUTING_KEY,
     );
   }
 
@@ -123,7 +129,7 @@ export class ActivityRabbitConsumer {
     if (payload === undefined) {
       await this.sendToDlq(
         message.content.toString("utf8"),
-        RoutingKey.ACTIVITY_LOG_CREATE_DLQ,
+        ACTIVITY_LOG_CREATE_DLQ_ROUTING_KEY,
         {
           "x-validation-error": "Malformed JSON payload",
           "x-error-type": "permanent",
@@ -144,7 +150,7 @@ export class ActivityRabbitConsumer {
         })),
       });
 
-      await this.sendToDlq(payload, RoutingKey.ACTIVITY_LOG_CREATE_DLQ, {
+      await this.sendToDlq(payload, ACTIVITY_LOG_CREATE_DLQ_ROUTING_KEY, {
         "x-validation-error": "Validation failed",
         "x-error-type": "permanent",
       });
@@ -163,7 +169,7 @@ export class ActivityRabbitConsumer {
 
       await this.sendToDlq(
         payload,
-        RoutingKey.ACTIVITY_LOG_CREATE_DLQ,
+        ACTIVITY_LOG_CREATE_DLQ_ROUTING_KEY,
         headers,
       );
       this.mainChannel.ack(message);
