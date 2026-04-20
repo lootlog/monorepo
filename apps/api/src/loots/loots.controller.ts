@@ -17,7 +17,7 @@ import {
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
-import { DiscordId, UserId } from "@lootlog/nest-shared";
+import { DiscordId, UserId } from "@lootlog/nest-shared/decorators";
 import { ZodResponse } from "nestjs-zod";
 import { type Guild, Permission, type Role } from "src/generated/prisma/client";
 import { CreateCommentDto } from "src/loots/dto/create-comment-dto";

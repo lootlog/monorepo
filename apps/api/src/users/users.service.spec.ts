@@ -1,7 +1,7 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "src/test/mock-fn";
 import { HttpService } from "@nestjs/axios";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 import { of } from "rxjs";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { AuthService } from "src/auth/auth.service";

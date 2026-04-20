@@ -17,7 +17,7 @@ import type { CreateVolunteerDto } from "src/messaging/dto/create-volunteer.dto"
 import { Error } from "src/messaging/enum/error.enum";
 import { v4 as uuid } from "uuid";
 import { RoutingKey } from "src/enum/routing-key.enum";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 
 const NOTIFICATION_TTL_SECONDS = 1800; // 30 minutes
 

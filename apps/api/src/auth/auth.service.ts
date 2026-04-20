@@ -11,7 +11,7 @@ import {
   AuthBadRequestError,
 } from "src/auth/errors";
 import { authConfig } from "src/config/auth.config";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 import {
   getAuthTokenCacheKey,
   AUTH_TOKEN_CACHE_TTL_SECONDS,

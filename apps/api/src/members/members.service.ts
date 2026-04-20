@@ -31,7 +31,7 @@ import { RoutingKey } from "src/enum/routing-key.enum";
 import { serviceConfig } from "src/config/service.config";
 import { RuntimeEnvironment } from "src/types/runtime.types";
 import { DiscordService } from "src/discord/discord.service";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 import {
   getPermissionsCacheKey,
   getUserLootlogConfigCachePattern,

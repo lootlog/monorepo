@@ -4,7 +4,7 @@ import type { Job, Queue as BullQueue } from "bullmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { DiscordRateLimiterService } from "src/discord/discord-rate-limiter.service";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 import { MEMBER_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant";
 
 export interface MemberRefreshJobData {

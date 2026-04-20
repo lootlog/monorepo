@@ -17,7 +17,7 @@ import {
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
-import { UserId } from "@lootlog/nest-shared";
+import { UserId } from "@lootlog/nest-shared/decorators";
 import { ZodResponse } from "nestjs-zod";
 import { Permission, type Role } from "src/generated/prisma/client";
 import {

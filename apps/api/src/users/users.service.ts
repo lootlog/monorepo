@@ -11,7 +11,7 @@ import { PrismaService } from "src/db/prisma.service";
 import { AuthService } from "src/auth/auth.service";
 import { battlelogConfig } from "src/config/battlelog.config";
 import { MembersService } from "src/members/members.service";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 import type { Prisma } from "src/generated/prisma/client";
 import { getUserLootlogConfigCachePattern } from "src/shared/constants/cache.constant";
 import {

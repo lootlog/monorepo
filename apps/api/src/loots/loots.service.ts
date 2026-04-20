@@ -31,7 +31,7 @@ import { LootMappingService } from "./services/loot-mapping.service";
 import { LootValidationService } from "./services/loot-validation.service";
 import { LootQueryService } from "./services/loot-query.service";
 import { LootCommentService } from "./services/loot-comment.service";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 import { ExecutionError } from "redlock";
 import { RedlockService } from "src/lib/redlock/redlock.service";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";

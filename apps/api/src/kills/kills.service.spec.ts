@@ -4,7 +4,7 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { KillsService } from "./kills.service";
 import { PrismaService } from "src/db/prisma.service";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
 import { Permission, NpcType, type Role } from "src/generated/prisma/client";
 import type { CreateKillDto } from "./dto/create-kill.dto";
