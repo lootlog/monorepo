@@ -2,7 +2,7 @@ import { HttpService } from "@nestjs/axios";
 import { type INestApplication } from "@nestjs/common";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { Test } from "@nestjs/testing";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 import { of } from "rxjs";
 import request from "supertest";
 import { NpcType } from "../prisma/generated/client";

@@ -8,7 +8,7 @@ import type {
   Prisma,
 } from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 import { EventEmitterService } from "./event-emitter.service";
 import { EventPointsService } from "./event-points.service";
 import { EventTrackingService } from "./event-tracking.service";

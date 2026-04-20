@@ -9,7 +9,7 @@ import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { ExecutionError } from "redlock";
 import { CoverageGapType } from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 import { RedlockService } from "src/lib/redlock/redlock.service";
 import { EventEmitterService } from "./event-emitter.service";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";

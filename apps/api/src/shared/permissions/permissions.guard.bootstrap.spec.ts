@@ -2,7 +2,7 @@ import { Controller, Get, Module, UseGuards } from "@nestjs/common";
 import { mockFn } from "src/test/mock-fn";
 import { MODULE_METADATA } from "@nestjs/common/constants";
 import { Test } from "@nestjs/testing";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { Permission } from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";

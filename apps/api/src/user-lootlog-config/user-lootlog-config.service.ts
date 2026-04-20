@@ -6,7 +6,7 @@ import {
   type CreateOrUpdateLootlogCharacterConfigDto,
 } from "src/user-lootlog-config/dto/create-user-account-config.dto";
 import { GuildsService } from "src/guilds/guilds.service";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 import { toUserLootlogConfigResponse } from "src/shared/dto/user-lootlog-config-response.dto";
 
 const USER_LOOTLOG_CONFIG_CACHE_TTL_SECONDS = 3600;

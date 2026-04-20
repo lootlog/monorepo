@@ -10,7 +10,7 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { RateLimitError } from "@discordjs/rest";
 import { DiscordService } from "./discord.service";
 import { AuthService } from "src/auth/auth.service";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 import { DiscordRateLimiterService } from "./discord-rate-limiter.service";
 import { RedlockService } from "src/lib/redlock/redlock.service";
 import {

@@ -1,5 +1,5 @@
 import { Module } from "@nestjs/common";
-import { RedisModule as SharedRedisModule } from "@lootlog/nest-shared";
+import { RedisModule as SharedRedisModule } from "@lootlog/nest-shared/redis";
 import { env } from "src/config/env";
 
 @Module({

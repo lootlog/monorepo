@@ -3,7 +3,7 @@ import { mockFn } from "src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { DiscordRateLimiterService } from "./discord-rate-limiter.service";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 
 describe("DiscordRateLimiterService", () => {
   let service: DiscordRateLimiterService;

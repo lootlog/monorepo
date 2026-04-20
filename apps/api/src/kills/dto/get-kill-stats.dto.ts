@@ -1,6 +1,9 @@
 import { z } from "zod";
 import { createZodDto } from "nestjs-zod";
-import { commaSeparatedArray, intFromString } from "@lootlog/nest-shared";
+import {
+  commaSeparatedArray,
+  intFromString,
+} from "@lootlog/nest-shared/validators";
 import { NpcType } from "src/generated/prisma/client";
 
 const GetGuildKillStatsSchema = z

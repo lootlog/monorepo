@@ -8,7 +8,7 @@ import {
   Post,
   UseGuards,
 } from "@nestjs/common";
-import { DiscordId } from "@lootlog/nest-shared";
+import { DiscordId } from "@lootlog/nest-shared/decorators";
 import {
   ApiTags,
   ApiBearerAuth,
