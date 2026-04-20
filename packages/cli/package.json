@@ -19,7 +19,7 @@
     "amqplib": "^1.0.3",
     "node-html-parser": "^7.1.0",
     "random-words": "^2.0.1",
-    "uuid": "^13.0.0",
+    "uuid": "^14.0.0",
     "zx": "^8.8.5"
   },
   "devDependencies": {
