@@ -81,9 +81,10 @@ export class PlayersService {
     }));
 
     try {
-      return index.addDocuments(playersWithUid, { primaryKey: "uid" });
+      return await index.addDocuments(playersWithUid, { primaryKey: "uid" });
     } catch (error) {
       this.logger.error("Error indexing players", { error });
+      return;
     }
   }
 }

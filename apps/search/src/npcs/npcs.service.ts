@@ -44,11 +44,15 @@ export class NpcsService {
     try {
       const data = await index.search(searchTerm, query);
 
-      const uniqueHits = Array.from(
-        new Map(
-          data.hits.map((npc) => [`${npc.name}_${npc.type}`, npc]),
-        ).values(),
-      );
+      const uniqueHits = data.hits.filter((npc, index) => {
+        const npcKey = `${npc.name}_${npc.type}`;
+
+        return (
+          data.hits.findIndex(
+            (candidate) => `${candidate.name}_${candidate.type}` === npcKey,
+          ) === index
+        );
+      });
       return uniqueHits;
     } catch (error) {
       this.logger.error("NPC search error", { error });
@@ -86,9 +90,10 @@ export class NpcsService {
     }));
 
     try {
-      return index.addDocuments(npcsWithUid, { primaryKey: "uid" });
+      return await index.addDocuments(npcsWithUid, { primaryKey: "uid" });
     } catch (error) {
       this.logger.error("Error indexing npcs", { error });
+      return;
     }
   }
 }

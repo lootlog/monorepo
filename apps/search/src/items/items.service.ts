@@ -65,7 +65,7 @@ export class ItemsService {
     }));
 
     try {
-      return index.addDocuments(itemsWithUid, { primaryKey: "uid" });
+      return await index.addDocuments(itemsWithUid, { primaryKey: "uid" });
     } catch (error) {
       this.logger.error("Error indexing items", { error });
       return;

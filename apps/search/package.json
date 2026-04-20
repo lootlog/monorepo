@@ -6,7 +6,11 @@
     "build": "nest build",
     "dev": "nest start --watch",
     "start": "node --import ./dist/src/instrumentation.js dist/src/main.js",
-    "seed": "tsx src/scripts/seed.ts"
+    "seed": "tsx src/scripts/seed.ts",
+    "test": "vitest run --config ./vitest.config.ts",
+    "test:watch": "vitest --config ./vitest.config.ts",
+    "test:cov": "vitest run --config ./vitest.config.ts --coverage",
+    "test:debug": "vitest --config ./vitest.config.ts --inspect-brk --no-file-parallelism"
   },
   "dependencies": {
     "@golevelup/nestjs-rabbitmq": "^9.0.0",
@@ -30,11 +34,14 @@
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.21",
+    "@nestjs/testing": "^11.1.19",
     "@swc/cli": "^0.7.10",
     "@swc/core": "^1.15.30",
     "@types/node": "^25.6.0",
+    "@vitest/coverage-v8": "^4.1.4",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3",
-    "unplugin-swc": "^1.5.9"
+    "unplugin-swc": "^1.5.9",
+    "vitest": "^4.1.4"
   }
 }

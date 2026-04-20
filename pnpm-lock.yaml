@@ -823,7 +823,7 @@ importers:
         version: 1.15.1
       better-auth:
         specifier: ^1.6.5
-        version: 1.6.5(7b803184683a4d16cc207e51e28ceeb5)
+        version: 1.6.5(1305bc1f8b5b958357e8c2377d4865b6)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -1083,7 +1083,7 @@ importers:
         version: 2.0.13
       better-auth:
         specifier: ^1.6.5
-        version: 1.6.5(7b803184683a4d16cc207e51e28ceeb5)
+        version: 1.6.5(1305bc1f8b5b958357e8c2377d4865b6)
       framer-motion:
         specifier: ^12.38.0
         version: 12.38.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -1141,7 +1141,7 @@ importers:
         version: 11.1.19(@nestjs/common@11.1.19(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@11.1.19)(@nestjs/platform-express@11.1.19)(@nestjs/websockets@11.1.19)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/microservices':
         specifier: ^11.1.19
-        version: 11.1.19(@grpc/grpc-js@1.14.3)(@nestjs/common@11.1.19(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.19)(@nestjs/websockets@11.1.19)(amqp-connection-manager@5.0.0(amqplib@1.0.3))(amqplib@1.0.3)(cache-manager@7.2.8)(ioredis@5.10.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        version: 11.1.19(@grpc/grpc-js@1.14.3)(@nestjs/common@11.1.19(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.19)(@nestjs/websockets@11.1.19)(amqp-connection-manager@5.0.0(amqplib@0.10.9))(amqplib@0.10.9)(cache-manager@7.2.8)(ioredis@5.10.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/platform-fastify':
         specifier: ^11.1.19
         version: 11.1.19(@fastify/static@9.1.2)(@nestjs/common@11.1.19(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.19)
@@ -1178,7 +1178,10 @@ importers:
     devDependencies:
       '@nestjs/cli':
         specifier: ^11.0.21
-        version: 11.0.21(@swc/cli@0.7.10(@swc/core@1.15.30)(chokidar@4.0.3))(@swc/core@1.15.30)(@types/node@25.6.0)(prettier@3.8.3)
+        version: 11.0.21(@swc/cli@0.7.10(@swc/core@1.15.30)(chokidar@4.0.3))(@swc/core@1.15.30)(@types/node@25.6.0)(esbuild@0.28.0)(prettier@3.8.3)
+      '@nestjs/testing':
+        specifier: ^11.1.19
+        version: 11.1.19(@nestjs/common@11.1.19(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.19)(@nestjs/microservices@11.1.19)(@nestjs/platform-express@11.1.19)
       '@swc/cli':
         specifier: ^0.7.10
         version: 0.7.10(@swc/core@1.15.30)(chokidar@4.0.3)
@@ -1188,6 +1191,9 @@ importers:
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0
+      '@vitest/coverage-v8':
+        specifier: ^4.1.4
+        version: 4.1.4(vitest@4.1.4)
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -1197,6 +1203,9 @@ importers:
       unplugin-swc:
         specifier: ^1.5.9
         version: 1.5.9(@swc/core@1.15.30)(rollup@4.60.2)
+      vitest:
+        specifier: ^4.1.4
+        version: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@25.6.0)(@vitest/coverage-v8@4.1.4)(@vitest/ui@4.1.4)(happy-dom@20.9.0)(jsdom@29.0.1(@noble/hashes@2.2.0))(vite@8.0.9(@types/node@25.6.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
 
   apps/web:
     dependencies:
@@ -1238,7 +1247,7 @@ importers:
         version: 3.13.24(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       better-auth:
         specifier: ^1.6.5
-        version: 1.6.5(7b803184683a4d16cc207e51e28ceeb5)
+        version: 1.6.5(1305bc1f8b5b958357e8c2377d4865b6)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -1541,7 +1550,7 @@ importers:
         version: link:../typescript-config
       tsdown:
         specifier: ^0.21.9
-        version: 0.21.9(oxc-resolver@11.19.1(@emnapi/core@1.9.2)(@emnapi/runtime@1.10.0))(typescript@6.0.3)
+        version: 0.21.9(oxc-resolver@11.19.1(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2))(typescript@6.0.3)
 
   packages/typescript-config: {}
 
@@ -14779,36 +14788,6 @@ snapshots:
       - uglify-js
       - webpack-cli
 
-  '@nestjs/cli@11.0.21(@swc/cli@0.7.10(@swc/core@1.15.30)(chokidar@4.0.3))(@swc/core@1.15.30)(@types/node@25.6.0)(prettier@3.8.3)':
-    dependencies:
-      '@angular-devkit/core': 19.2.24(chokidar@4.0.3)
-      '@angular-devkit/schematics': 19.2.24(chokidar@4.0.3)
-      '@angular-devkit/schematics-cli': 19.2.24(@types/node@25.6.0)(chokidar@4.0.3)
-      '@inquirer/prompts': 7.10.1(@types/node@25.6.0)
-      '@nestjs/schematics': 11.1.0(chokidar@4.0.3)(prettier@3.8.3)(typescript@5.9.3)
-      ansis: 4.2.0
-      chokidar: 4.0.3
-      cli-table3: 0.6.5
-      commander: 4.1.1
-      fork-ts-checker-webpack-plugin: 9.1.0(typescript@5.9.3)(webpack@5.106.0(@swc/core@1.15.30))
-      glob: 13.0.6
-      node-emoji: 1.11.0
-      ora: 5.4.1
-      tsconfig-paths: 4.2.0
-      tsconfig-paths-webpack-plugin: 4.2.0
-      typescript: 5.9.3
-      webpack: 5.106.0(@swc/core@1.15.30)
-      webpack-node-externals: 3.0.0
-    optionalDependencies:
-      '@swc/cli': 0.7.10(@swc/core@1.15.30)(chokidar@4.0.3)
-      '@swc/core': 1.15.30
-    transitivePeerDependencies:
-      - '@types/node'
-      - esbuild
-      - prettier
-      - uglify-js
-      - webpack-cli
-
   '@nestjs/common@11.1.19(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
     dependencies:
       file-type: 21.3.4
@@ -14863,7 +14842,6 @@ snapshots:
       amqplib: 0.10.9
       cache-manager: 7.2.8
       ioredis: 5.10.1
-    optional: true
 
   '@nestjs/microservices@11.1.19(@grpc/grpc-js@1.14.3)(@nestjs/common@11.1.19(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.19)(@nestjs/websockets@11.1.19)(amqp-connection-manager@5.0.0(amqplib@1.0.3))(amqplib@1.0.3)(cache-manager@7.2.8)(ioredis@5.10.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
     dependencies:
@@ -14982,7 +14960,7 @@ snapshots:
       '@grpc/grpc-js': 1.14.3
       '@grpc/proto-loader': 0.8.0
       '@nestjs/axios': 4.0.1(@nestjs/common@11.1.19(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.15.1)(rxjs@7.8.2)
-      '@nestjs/microservices': 11.1.19(@grpc/grpc-js@1.14.3)(@nestjs/common@11.1.19(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.19)(@nestjs/websockets@11.1.19)(amqp-connection-manager@5.0.0(amqplib@0.10.9))(amqplib@0.10.9)(cache-manager@7.2.8)(ioredis@5.10.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/microservices': 11.1.19(@grpc/grpc-js@1.14.3)(@nestjs/common@11.1.19(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.19)(@nestjs/websockets@11.1.19)(amqp-connection-manager@5.0.0(amqplib@1.0.3))(amqplib@1.0.3)(cache-manager@7.2.8)(ioredis@5.10.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@prisma/client': 7.7.0(prisma@7.7.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.3))(typescript@6.0.3)
 
   '@nestjs/testing@11.1.19(@nestjs/common@11.1.19(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.19)(@nestjs/microservices@11.1.19)(@nestjs/platform-express@11.1.19)':
@@ -15996,6 +15974,14 @@ snapshots:
       - '@emnapi/runtime'
     optional: true
 
+  '@oxc-resolver/binding-wasm32-wasi@11.19.1(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)':
+    dependencies:
+      '@napi-rs/wasm-runtime': 1.1.4(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)
+    transitivePeerDependencies:
+      - '@emnapi/core'
+      - '@emnapi/runtime'
+    optional: true
+
   '@oxc-resolver/binding-win32-arm64-msvc@11.19.1':
     optional: true
 
@@ -16946,7 +16932,7 @@ snapshots:
     optionalDependencies:
       '@opentelemetry/api': 1.9.1
 
-  '@reduxjs/toolkit@2.11.2(react-redux@9.2.0(@types/react@19.2.14)(react@19.2.5)(redux@5.0.1))(react@19.2.5)':
+  '@reduxjs/toolkit@2.11.2(react-redux@9.2.0(@types/react@19.2.14)(react@19.2.5))(react@19.2.5)':
     dependencies:
       '@standard-schema/spec': 1.1.0
       '@standard-schema/utils': 0.3.0
@@ -18944,6 +18930,42 @@ snapshots:
     dependencies:
       tweetnacl: 0.14.5
 
+  better-auth@1.6.5(1305bc1f8b5b958357e8c2377d4865b6):
+    dependencies:
+      '@better-auth/core': 1.6.5(@better-auth/utils@0.4.0)(@better-fetch/fetch@1.1.21)(@opentelemetry/api@1.9.1)(better-call@1.3.5(zod@4.3.6))(jose@6.2.2)(kysely@0.28.16)(nanostores@1.3.0)
+      '@better-auth/drizzle-adapter': 1.6.5(@better-auth/core@1.6.5(@better-auth/utils@0.4.0)(@better-fetch/fetch@1.1.21)(@opentelemetry/api@1.9.1)(better-call@1.3.5(zod@4.3.6))(jose@6.2.2)(kysely@0.28.16)(nanostores@1.3.0))(@better-auth/utils@0.4.0)(drizzle-orm@0.45.2(@electric-sql/pglite@0.4.1)(@opentelemetry/api@1.9.1)(@prisma/client@7.7.0(prisma@7.7.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.3))(typescript@6.0.3))(@types/pg@8.20.0)(kysely@0.28.16)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.7.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.3)))
+      '@better-auth/kysely-adapter': 1.6.5(@better-auth/core@1.6.5(@better-auth/utils@0.4.0)(@better-fetch/fetch@1.1.21)(@opentelemetry/api@1.9.1)(better-call@1.3.5(zod@4.3.6))(jose@6.2.2)(kysely@0.28.16)(nanostores@1.3.0))(@better-auth/utils@0.4.0)(kysely@0.28.16)
+      '@better-auth/memory-adapter': 1.6.5(@better-auth/core@1.6.5(@better-auth/utils@0.4.0)(@better-fetch/fetch@1.1.21)(@opentelemetry/api@1.9.1)(better-call@1.3.5(zod@4.3.6))(jose@6.2.2)(kysely@0.28.16)(nanostores@1.3.0))(@better-auth/utils@0.4.0)
+      '@better-auth/mongo-adapter': 1.6.5(@better-auth/core@1.6.5(@better-auth/utils@0.4.0)(@better-fetch/fetch@1.1.21)(@opentelemetry/api@1.9.1)(better-call@1.3.5(zod@4.3.6))(jose@6.2.2)(kysely@0.28.16)(nanostores@1.3.0))(@better-auth/utils@0.4.0)(mongodb@7.1.0)
+      '@better-auth/prisma-adapter': 1.6.5(@better-auth/core@1.6.5(@better-auth/utils@0.4.0)(@better-fetch/fetch@1.1.21)(@opentelemetry/api@1.9.1)(better-call@1.3.5(zod@4.3.6))(jose@6.2.2)(kysely@0.28.16)(nanostores@1.3.0))(@better-auth/utils@0.4.0)(@prisma/client@7.7.0(prisma@7.7.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.3))(typescript@6.0.3))(prisma@7.7.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.3))
+      '@better-auth/telemetry': 1.6.5(@better-auth/core@1.6.5(@better-auth/utils@0.4.0)(@better-fetch/fetch@1.1.21)(@opentelemetry/api@1.9.1)(better-call@1.3.5(zod@4.3.6))(jose@6.2.2)(kysely@0.28.16)(nanostores@1.3.0))(@better-auth/utils@0.4.0)(@better-fetch/fetch@1.1.21)
+      '@better-auth/utils': 0.4.0
+      '@better-fetch/fetch': 1.1.21
+      '@noble/ciphers': 2.2.0
+      '@noble/hashes': 2.2.0
+      better-call: 1.3.5(zod@4.3.6)
+      defu: 6.1.7
+      jose: 6.2.2
+      kysely: 0.28.16
+      nanostores: 1.3.0
+      zod: 4.3.6
+    optionalDependencies:
+      '@prisma/client': 7.7.0(prisma@7.7.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.3))(typescript@6.0.3)
+      '@tanstack/react-start': 1.167.42(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(vite@8.0.9(@types/node@25.6.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(webpack@5.106.0(esbuild@0.28.0))
+      drizzle-kit: 0.31.10
+      drizzle-orm: 0.45.2(@electric-sql/pglite@0.4.1)(@opentelemetry/api@1.9.1)(@prisma/client@7.7.0(prisma@7.7.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.3))(typescript@6.0.3))(@types/pg@8.20.0)(kysely@0.28.16)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.7.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.3))
+      mongodb: 7.1.0
+      mysql2: 3.15.3
+      next: 16.2.4(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      pg: 8.20.0
+      prisma: 7.7.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.3)
+      react: 19.2.5
+      react-dom: 19.2.5(react@19.2.5)
+      vitest: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@25.6.0)(@vitest/coverage-v8@4.1.4)(@vitest/ui@4.1.4)(happy-dom@20.9.0)(jsdom@29.0.1(@noble/hashes@2.2.0))(vite@8.0.9(@types/node@25.6.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+    transitivePeerDependencies:
+      - '@cloudflare/workers-types'
+      - '@opentelemetry/api'
+
   better-auth@1.6.5(70ce61b952a9b3efbec3d6c1ae8e0db6):
     dependencies:
       '@better-auth/core': 1.6.5(@better-auth/utils@0.4.0)(@better-fetch/fetch@1.1.21)(@opentelemetry/api@1.9.1)(better-call@1.3.5(zod@4.3.6))(jose@6.2.2)(kysely@0.28.16)(nanostores@1.3.0)
@@ -18966,42 +18988,6 @@ snapshots:
     optionalDependencies:
       '@prisma/client': 7.7.0(prisma@7.7.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.3))(typescript@6.0.3)
       '@tanstack/react-start': 1.167.42(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(vite@8.0.9(@types/node@25.6.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(webpack@5.106.0(@swc/core@1.15.30)(esbuild@0.28.0))
-      drizzle-kit: 0.31.10
-      drizzle-orm: 0.45.2(@electric-sql/pglite@0.4.1)(@opentelemetry/api@1.9.1)(@prisma/client@7.7.0(prisma@7.7.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.3))(typescript@6.0.3))(@types/pg@8.20.0)(kysely@0.28.16)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.7.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.3))
-      mongodb: 7.1.0
-      mysql2: 3.15.3
-      next: 16.2.4(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
-      pg: 8.20.0
-      prisma: 7.7.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.3)
-      react: 19.2.5
-      react-dom: 19.2.5(react@19.2.5)
-      vitest: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@25.6.0)(@vitest/coverage-v8@4.1.4)(@vitest/ui@4.1.4)(happy-dom@20.9.0)(jsdom@29.0.1(@noble/hashes@2.2.0))(vite@8.0.9(@types/node@25.6.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
-    transitivePeerDependencies:
-      - '@cloudflare/workers-types'
-      - '@opentelemetry/api'
-
-  better-auth@1.6.5(7b803184683a4d16cc207e51e28ceeb5):
-    dependencies:
-      '@better-auth/core': 1.6.5(@better-auth/utils@0.4.0)(@better-fetch/fetch@1.1.21)(@opentelemetry/api@1.9.1)(better-call@1.3.5(zod@4.3.6))(jose@6.2.2)(kysely@0.28.16)(nanostores@1.3.0)
-      '@better-auth/drizzle-adapter': 1.6.5(@better-auth/core@1.6.5(@better-auth/utils@0.4.0)(@better-fetch/fetch@1.1.21)(@opentelemetry/api@1.9.1)(better-call@1.3.5(zod@4.3.6))(jose@6.2.2)(kysely@0.28.16)(nanostores@1.3.0))(@better-auth/utils@0.4.0)(drizzle-orm@0.45.2(@electric-sql/pglite@0.4.1)(@opentelemetry/api@1.9.1)(@prisma/client@7.7.0(prisma@7.7.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.3))(typescript@6.0.3))(@types/pg@8.20.0)(kysely@0.28.16)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.7.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.3)))
-      '@better-auth/kysely-adapter': 1.6.5(@better-auth/core@1.6.5(@better-auth/utils@0.4.0)(@better-fetch/fetch@1.1.21)(@opentelemetry/api@1.9.1)(better-call@1.3.5(zod@4.3.6))(jose@6.2.2)(kysely@0.28.16)(nanostores@1.3.0))(@better-auth/utils@0.4.0)(kysely@0.28.16)
-      '@better-auth/memory-adapter': 1.6.5(@better-auth/core@1.6.5(@better-auth/utils@0.4.0)(@better-fetch/fetch@1.1.21)(@opentelemetry/api@1.9.1)(better-call@1.3.5(zod@4.3.6))(jose@6.2.2)(kysely@0.28.16)(nanostores@1.3.0))(@better-auth/utils@0.4.0)
-      '@better-auth/mongo-adapter': 1.6.5(@better-auth/core@1.6.5(@better-auth/utils@0.4.0)(@better-fetch/fetch@1.1.21)(@opentelemetry/api@1.9.1)(better-call@1.3.5(zod@4.3.6))(jose@6.2.2)(kysely@0.28.16)(nanostores@1.3.0))(@better-auth/utils@0.4.0)(mongodb@7.1.0)
-      '@better-auth/prisma-adapter': 1.6.5(@better-auth/core@1.6.5(@better-auth/utils@0.4.0)(@better-fetch/fetch@1.1.21)(@opentelemetry/api@1.9.1)(better-call@1.3.5(zod@4.3.6))(jose@6.2.2)(kysely@0.28.16)(nanostores@1.3.0))(@better-auth/utils@0.4.0)(@prisma/client@7.7.0(prisma@7.7.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.3))(typescript@6.0.3))(prisma@7.7.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.3))
-      '@better-auth/telemetry': 1.6.5(@better-auth/core@1.6.5(@better-auth/utils@0.4.0)(@better-fetch/fetch@1.1.21)(@opentelemetry/api@1.9.1)(better-call@1.3.5(zod@4.3.6))(jose@6.2.2)(kysely@0.28.16)(nanostores@1.3.0))(@better-auth/utils@0.4.0)(@better-fetch/fetch@1.1.21)
-      '@better-auth/utils': 0.4.0
-      '@better-fetch/fetch': 1.1.21
-      '@noble/ciphers': 2.2.0
-      '@noble/hashes': 2.2.0
-      better-call: 1.3.5(zod@4.3.6)
-      defu: 6.1.7
-      jose: 6.2.2
-      kysely: 0.28.16
-      nanostores: 1.3.0
-      zod: 4.3.6
-    optionalDependencies:
-      '@prisma/client': 7.7.0(prisma@7.7.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.3))(typescript@6.0.3)
-      '@tanstack/react-start': 1.167.42(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(vite@8.0.9(@types/node@25.6.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(webpack@5.106.0(esbuild@0.28.0))
       drizzle-kit: 0.31.10
       drizzle-orm: 0.45.2(@electric-sql/pglite@0.4.1)(@opentelemetry/api@1.9.1)(@prisma/client@7.7.0(prisma@7.7.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.3))(typescript@6.0.3))(@types/pg@8.20.0)(kysely@0.28.16)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.7.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.3))
       mongodb: 7.1.0
@@ -19805,6 +19791,10 @@ snapshots:
     optionalDependencies:
       oxc-resolver: 11.19.1(@emnapi/core@1.9.2)(@emnapi/runtime@1.10.0)
 
+  dts-resolver@2.1.3(oxc-resolver@11.19.1(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)):
+    optionalDependencies:
+      oxc-resolver: 11.19.1(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)
+
   dunder-proto@1.0.1:
     dependencies:
       call-bind-apply-helpers: 1.0.2
@@ -20432,23 +20422,6 @@ snapshots:
       tapable: 2.3.2
       typescript: 5.9.3
       webpack: 5.106.0(@swc/core@1.15.30)(esbuild@0.28.0)
-
-  fork-ts-checker-webpack-plugin@9.1.0(typescript@5.9.3)(webpack@5.106.0(@swc/core@1.15.30)):
-    dependencies:
-      '@babel/code-frame': 7.29.0
-      chalk: 4.1.2
-      chokidar: 4.0.3
-      cosmiconfig: 8.3.6(typescript@5.9.3)
-      deepmerge: 4.3.1
-      fs-extra: 10.1.0
-      memfs: 3.5.3
-      minimatch: 10.2.5
-      node-abort-controller: 3.1.1
-      schema-utils: 3.3.0
-      semver: 7.7.4
-      tapable: 2.3.2
-      typescript: 5.9.3
-      webpack: 5.106.0(@swc/core@1.15.30)
 
   form-data-encoder@2.1.4: {}
 
@@ -22462,6 +22435,33 @@ snapshots:
       - '@emnapi/core'
       - '@emnapi/runtime'
 
+  oxc-resolver@11.19.1(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2):
+    optionalDependencies:
+      '@oxc-resolver/binding-android-arm-eabi': 11.19.1
+      '@oxc-resolver/binding-android-arm64': 11.19.1
+      '@oxc-resolver/binding-darwin-arm64': 11.19.1
+      '@oxc-resolver/binding-darwin-x64': 11.19.1
+      '@oxc-resolver/binding-freebsd-x64': 11.19.1
+      '@oxc-resolver/binding-linux-arm-gnueabihf': 11.19.1
+      '@oxc-resolver/binding-linux-arm-musleabihf': 11.19.1
+      '@oxc-resolver/binding-linux-arm64-gnu': 11.19.1
+      '@oxc-resolver/binding-linux-arm64-musl': 11.19.1
+      '@oxc-resolver/binding-linux-ppc64-gnu': 11.19.1
+      '@oxc-resolver/binding-linux-riscv64-gnu': 11.19.1
+      '@oxc-resolver/binding-linux-riscv64-musl': 11.19.1
+      '@oxc-resolver/binding-linux-s390x-gnu': 11.19.1
+      '@oxc-resolver/binding-linux-x64-gnu': 11.19.1
+      '@oxc-resolver/binding-linux-x64-musl': 11.19.1
+      '@oxc-resolver/binding-openharmony-arm64': 11.19.1
+      '@oxc-resolver/binding-wasm32-wasi': 11.19.1(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)
+      '@oxc-resolver/binding-win32-arm64-msvc': 11.19.1
+      '@oxc-resolver/binding-win32-ia32-msvc': 11.19.1
+      '@oxc-resolver/binding-win32-x64-msvc': 11.19.1
+    transitivePeerDependencies:
+      - '@emnapi/core'
+      - '@emnapi/runtime'
+    optional: true
+
   oxfmt@0.43.0:
     dependencies:
       tinypool: 2.1.0
@@ -23039,7 +23039,7 @@ snapshots:
 
   recharts@3.8.1(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react-is@18.3.1)(react@19.2.5)(redux@5.0.1):
     dependencies:
-      '@reduxjs/toolkit': 2.11.2(react-redux@9.2.0(@types/react@19.2.14)(react@19.2.5)(redux@5.0.1))(react@19.2.5)
+      '@reduxjs/toolkit': 2.11.2(react-redux@9.2.0(@types/react@19.2.14)(react@19.2.5))(react@19.2.5)
       clsx: 2.1.1
       decimal.js-light: 2.5.1
       es-toolkit: 1.45.1
@@ -23243,6 +23243,24 @@ snapshots:
       ast-kit: 3.0.0-beta.1
       birpc: 4.0.0
       dts-resolver: 2.1.3(oxc-resolver@11.19.1(@emnapi/core@1.9.2)(@emnapi/runtime@1.10.0))
+      get-tsconfig: 4.14.0
+      obug: 2.1.1
+      picomatch: 4.0.4
+      rolldown: 1.0.0-rc.16
+    optionalDependencies:
+      typescript: 6.0.3
+    transitivePeerDependencies:
+      - oxc-resolver
+
+  rolldown-plugin-dts@0.23.2(oxc-resolver@11.19.1(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2))(rolldown@1.0.0-rc.16)(typescript@6.0.3):
+    dependencies:
+      '@babel/generator': 8.0.0-rc.3
+      '@babel/helper-validator-identifier': 8.0.0-rc.3
+      '@babel/parser': 8.0.0-rc.3
+      '@babel/types': 8.0.0-rc.3
+      ast-kit: 3.0.0-beta.1
+      birpc: 4.0.0
+      dts-resolver: 2.1.3(oxc-resolver@11.19.1(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2))
       get-tsconfig: 4.14.0
       obug: 2.1.1
       picomatch: 4.0.4
@@ -23924,16 +23942,6 @@ snapshots:
       '@swc/core': 1.15.30
       esbuild: 0.28.0
 
-  terser-webpack-plugin@5.4.0(@swc/core@1.15.30)(webpack@5.106.0(@swc/core@1.15.30)):
-    dependencies:
-      '@jridgewell/trace-mapping': 0.3.31
-      jest-worker: 27.5.1
-      schema-utils: 4.3.3
-      terser: 5.46.1
-      webpack: 5.106.0(@swc/core@1.15.30)
-    optionalDependencies:
-      '@swc/core': 1.15.30
-
   terser-webpack-plugin@5.4.0(esbuild@0.28.0)(webpack@5.106.0(esbuild@0.28.0)):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
@@ -24092,6 +24100,33 @@ snapshots:
       picomatch: 4.0.4
       rolldown: 1.0.0-rc.16
       rolldown-plugin-dts: 0.23.2(oxc-resolver@11.19.1(@emnapi/core@1.9.2)(@emnapi/runtime@1.10.0))(rolldown@1.0.0-rc.16)(typescript@6.0.3)
+      semver: 7.7.4
+      tinyexec: 1.1.1
+      tinyglobby: 0.2.16
+      tree-kill: 1.2.2
+      unconfig-core: 7.5.0
+      unrun: 0.2.36
+    optionalDependencies:
+      typescript: 6.0.3
+    transitivePeerDependencies:
+      - '@ts-macro/tsc'
+      - '@typescript/native-preview'
+      - oxc-resolver
+      - synckit
+      - vue-tsc
+
+  tsdown@0.21.9(oxc-resolver@11.19.1(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2))(typescript@6.0.3):
+    dependencies:
+      ansis: 4.2.0
+      cac: 7.0.0
+      defu: 6.1.7
+      empathic: 2.0.0
+      hookable: 6.1.1
+      import-without-cache: 0.3.3
+      obug: 2.1.1
+      picomatch: 4.0.4
+      rolldown: 1.0.0-rc.16
+      rolldown-plugin-dts: 0.23.2(oxc-resolver@11.19.1(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2))(rolldown@1.0.0-rc.16)(typescript@6.0.3)
       semver: 7.7.4
       tinyexec: 1.1.1
       tinyglobby: 0.2.16
@@ -24475,38 +24510,6 @@ snapshots:
   webpack-sources@3.3.4: {}
 
   webpack-virtual-modules@0.6.2: {}
-
-  webpack@5.106.0(@swc/core@1.15.30):
-    dependencies:
-      '@types/eslint-scope': 3.7.7
-      '@types/estree': 1.0.8
-      '@types/json-schema': 7.0.15
-      '@webassemblyjs/ast': 1.14.1
-      '@webassemblyjs/wasm-edit': 1.14.1
-      '@webassemblyjs/wasm-parser': 1.14.1
-      acorn: 8.16.0
-      acorn-import-phases: 1.0.4(acorn@8.16.0)
-      browserslist: 4.28.2
-      chrome-trace-event: 1.0.4
-      enhanced-resolve: 5.20.1
-      es-module-lexer: 2.0.0
-      eslint-scope: 5.1.1
-      events: 3.3.0
-      glob-to-regexp: 0.4.1
-      graceful-fs: 4.2.11
-      json-parse-even-better-errors: 2.3.1
-      loader-runner: 4.3.1
-      mime-types: 2.1.35
-      neo-async: 2.6.2
-      schema-utils: 4.3.3
-      tapable: 2.3.2
-      terser-webpack-plugin: 5.4.0(@swc/core@1.15.30)(webpack@5.106.0(@swc/core@1.15.30))
-      watchpack: 2.5.1
-      webpack-sources: 3.3.4
-    transitivePeerDependencies:
-      - '@swc/core'
-      - esbuild
-      - uglify-js
 
   webpack@5.106.0(@swc/core@1.15.30)(esbuild@0.28.0):
     dependencies:
