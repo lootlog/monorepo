@@ -1,17 +1,23 @@
-import { Test, TestingModule } from "@nestjs/testing";
-import { INestApplication } from "@nestjs/common";
-import { App } from "supertest/types";
-import { AppModule } from "./../src/app.module";
+import { createApp } from "../src/app.js";
 
-describe("AppController (e2e)", () => {
-  let app: INestApplication<App>;
+describe("activity app", () => {
+  it("serves the generated OpenAPI document", async () => {
+    const app = createApp({
+      activityQuery: {} as never,
+      activityStore: {} as never,
+      permissionsService: {} as never,
+      prismaDatabase: {
+        ping: vi.fn(),
+      } as never,
+    });
 
-  beforeEach(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
+    const response = await app.request("/doc");
 
-    app = moduleFixture.createNestApplication();
-    await app.init();
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      info: {
+        title: "Activity Logger API",
+      },
+    });
   });
 });

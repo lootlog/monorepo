@@ -1,11 +1,10 @@
 {
-  "extends": "@lootlog/typescript-config/nestjs.json",
+  "extends": "@lootlog/typescript-config/hono.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": ".",
-    "strict": true,
-    "paths": {
-      "src/*": ["./src/*"]
-    }
-  }
+    "rootDir": "./src",
+    "declaration": false,
+    "declarationMap": false
+  },
+  "include": ["src"]
 }

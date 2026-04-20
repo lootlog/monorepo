@@ -1,12 +1,12 @@
 # @lootlog/activity
 
-NestJS service for guild activity logs and related admin queries.
+Hono service for guild activity logs and related admin queries.
 
 ## Overview
 
 - Stores and serves activity log data grouped by guild and user.
 - Provides suggestion endpoints for actor names, clan names, and worlds to power admin filters.
-- Uses Prisma, shared auth guards, and permission checks for protected endpoints.
+- Uses Prisma, Hono middleware, and permission checks for protected endpoints.
 
 ## Development
 
@@ -27,5 +27,5 @@ pnpm --filter @lootlog/activity dev
 
 ## Notes
 
-- HTTP routes are implemented in `src/activities/activities.controller.ts`.
+- HTTP routes are implemented in `src/activities/activity-routes.ts`.
 - Prisma schema and generated client live under `prisma/`.

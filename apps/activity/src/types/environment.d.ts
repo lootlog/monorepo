@@ -21,6 +21,11 @@ declare global {
       REDIS_USERNAME: string;
 
       API_SERVICE_URL: string;
+      OTEL_EXPORTER_OTLP_ENDPOINT?: string;
+      OTEL_EXPORTER_OTLP_HEADERS?: string;
+      OTEL_NODE_RESOURCE_DETECTORS?: string;
+      OTEL_TRACES_EXPORTER?: string;
+      SERVICE_NAMESPACE?: string;
     }
   }
 }

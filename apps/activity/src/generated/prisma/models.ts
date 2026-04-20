@@ -8,6 +8,6 @@
  *
  * 🟢 You can import this file directly.
  */
-export type * from './models/Activity'
-export type * from './models/ActivityActorSnapshot'
-export type * from './commonInputTypes'
+export type * from './models/Activity.js'
+export type * from './models/ActivityActorSnapshot.js'
+export type * from './commonInputTypes.js'
