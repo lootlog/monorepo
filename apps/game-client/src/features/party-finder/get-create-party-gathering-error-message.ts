@@ -1,11 +1,14 @@
 import axios from "axios";
+import i18n from "@/i18n/config";
 
 type CreatePartyGatheringErrorResponse = {
   message?: string;
 };
 
-const DEFAULT_CREATE_PARTY_GATHERING_ERROR_MESSAGE =
-  "Nie udało się utworzyć ogłoszenia";
+const DEFAULT_CREATE_PARTY_GATHERING_ERROR_MESSAGE = i18n.t(
+  "errors.defaultCreate",
+  { ns: "party-finder" },
+);
 
 export const getCreatePartyGatheringErrorMessage = (error: unknown): string => {
   if (!axios.isAxiosError<CreatePartyGatheringErrorResponse>(error)) {
@@ -15,15 +18,20 @@ export const getCreatePartyGatheringErrorMessage = (error: unknown): string => {
   const responseStatus = error.response?.status;
 
   if (responseStatus === 403) {
-    return "Brak uprawnień do wysyłania ogłoszeń";
+    return i18n.t("errors.missingPermissions", {
+      ns: "party-finder",
+    });
   }
 
   if (responseStatus === 429) {
-    return "Zbyt wiele prób. Spróbuj za chwilę.";
+    return i18n.t("errors.rateLimited", { ns: "party-finder" });
   }
 
   if (responseStatus === 400) {
-    return error.response?.data?.message || "Nieprawidłowe dane";
+    return (
+      error.response?.data?.message ||
+      i18n.t("errors.invalidData", { ns: "party-finder" })
+    );
   }
 
   return DEFAULT_CREATE_PARTY_GATHERING_ERROR_MESSAGE;

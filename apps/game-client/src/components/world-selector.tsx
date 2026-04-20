@@ -6,6 +6,7 @@ import { useSettingsStore } from "@/store/settings.store";
 import { type FC, useEffect, useMemo } from "react";
 import { useLocalStorage } from "react-use";
 import { storageKey } from "@/lib/storage-key";
+import { useTranslation } from "react-i18next";
 
 const recentWorldsKey = (accountId: string, characterId: string) =>
   storageKey(`ll:recent-worlds:${accountId}:${characterId}`);
@@ -21,6 +22,7 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
   disabled = false,
   className = "",
 }) => {
+  const { t } = useTranslation("common");
   const characterId = String(Game.hero.id);
   const accountId = String(Game.hero.account);
   const defaultWorld = Game.getWorldName();
@@ -77,15 +79,18 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
     const groups: ComboboxGroup[] = [];
 
     if (recent.length > 0) {
-      groups.push({ label: "Ostatnio używane", options: recent });
+      groups.push({ label: t("common.worldSelector.recent"), options: recent });
     }
 
     if (rest.length > 0) {
-      groups.push({ label: "Wszystkie światy", options: rest });
+      groups.push({
+        label: t("common.worldSelector.allWorlds"),
+        options: rest,
+      });
     }
 
     return groups;
-  }, [worlds, recentWorlds]);
+  }, [recentWorlds, t, worlds]);
 
   const handleWorldChange = (newWorld: string) => {
     if (!guildId) return;
@@ -106,9 +111,9 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
       value={world}
       onValueChange={handleWorldChange}
       groups={worldGroups}
-      placeholder="Wybierz świat..."
-      searchPlaceholder="Szukaj świata..."
-      emptyText="Nie znaleziono światów."
+      placeholder={t("common.worldSelector.placeholder")}
+      searchPlaceholder={t("common.worldSelector.searchPlaceholder")}
+      emptyText={t("common.worldSelector.empty")}
       disabled={disabled}
       triggerClassName={cn(
         "ll:text-white ll:text-xs ll:border-gray-400 ll:rounded-xs ll:h-6 ll:mb-1 ll-custom-cursor-pointer ll:w-full",

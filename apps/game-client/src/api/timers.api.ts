@@ -1,5 +1,6 @@
 import { stringify } from "qs";
 import { getApiClient } from "@/lib/api-client";
+import i18n from "@/i18n/config";
 import {
   getAggregateActionStatus,
   getErrorMessage,
@@ -196,7 +197,7 @@ export async function createManualTimer({
       },
     });
 
-    throw new Error("Brak wybranych gildii");
+    throw new Error(i18n.t("timers.addForm.guildRequired"));
   }
 
   const client = getApiClient("default");

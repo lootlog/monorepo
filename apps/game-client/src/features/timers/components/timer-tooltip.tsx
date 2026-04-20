@@ -2,6 +2,7 @@ import type { Timer } from "@/hooks/api/use-timers";
 import { format } from "date-fns";
 import { ClockArrowDown, ClockArrowUp } from "lucide-react";
 import type { FC } from "react";
+import { useTranslation } from "react-i18next";
 import {
   getLevelSuffix,
   getTimerMembers,
@@ -17,6 +18,7 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
   guildNamesById,
   timer,
 }) => {
+  const { t } = useTranslation();
   const levelSuffix = getLevelSuffix(timer.npc);
   const members = getTimerMembers(timer);
   const membersWithGuilds =
@@ -32,7 +34,9 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
 
       {membersWithGuilds.length > 0 && (
         <div className="ll:text-xs ll:text-gray-300">
-          <span className="ll:text-gray-400">Dodane przez:</span>
+          <span className="ll:text-gray-400">
+            {t("timers.tooltip.addedBy")}
+          </span>
           <div className="ll:mt-0.5 ll:flex ll:flex-col ll:gap-0.5">
             {membersWithGuilds.map(({ id, label }) => (
               <span className="ll:font-semibold ll:wrap-break-word" key={id}>
@@ -45,13 +49,15 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
 
       {timer.wasReset && (
         <div className="ll:text-xs ll:text-orange-400 ll:flex ll:items-center ll:gap-1">
-          <span className="ll:font-semibold">⟳ Timer został zresetowany</span>
+          <span className="ll:font-semibold">{t("timers.tooltip.reset")}</span>
         </div>
       )}
 
       {timer.updatedAt && (
         <div className="ll:text-xs ll:text-gray-400">
-          <span className="ll:text-gray-500">Dodano:</span>{" "}
+          <span className="ll:text-gray-500">
+            {t("timers.tooltip.addedAt")}
+          </span>{" "}
           <span className="ll:text-gray-300">
             {format(new Date(timer.updatedAt), "dd.MM.yyyy - HH:mm:ss")}
           </span>
@@ -61,14 +67,18 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
       <div className="ll:flex ll:flex-col ll:gap-0.5 ll:text-xs">
         <div className="ll:flex ll:items-center ll:gap-1.5">
           <ClockArrowDown size={14} className="ll:text-green-400" />
-          <span className="ll:text-gray-400 ll:w-8">Min:</span>
+          <span className="ll:text-gray-400 ll:w-8">
+            {t("timers.tooltip.min")}
+          </span>
           <span className="ll:text-gray-200">
             {format(new Date(timer.minSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
           </span>
         </div>
         <div className="ll:flex ll:items-center ll:gap-1.5">
           <ClockArrowUp size={14} className="ll:text-red-400" />
-          <span className="ll:text-gray-400 ll:w-8">Max:</span>
+          <span className="ll:text-gray-400 ll:w-8">
+            {t("timers.tooltip.max")}
+          </span>
           <span className="ll:text-gray-200">
             {format(new Date(timer.maxSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
           </span>

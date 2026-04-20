@@ -1,4 +1,5 @@
 import type React from "react";
+import { useTranslation } from "react-i18next";
 
 interface AutocompleteSuggestionsProps<T> {
   items: T[];
@@ -19,11 +20,14 @@ export const AutocompleteSuggestions = <T,>({
   selectedIndex,
   renderItem,
   keyExtractor,
-  noResultsMessage = "Nie znaleziono wyników",
+  noResultsMessage,
   showNoResults = false,
   className = "",
 }: AutocompleteSuggestionsProps<T>) => {
+  const { t } = useTranslation("common");
   const hasResults = items.length > 0;
+  const resolvedNoResultsMessage =
+    noResultsMessage ?? t("common.autocomplete.noResults");
 
   if (!isOpen && !showNoResults) {
     return null;
@@ -35,7 +39,7 @@ export const AutocompleteSuggestions = <T,>({
         className={`ll:absolute ll:z-50 ll:w-full ll:mt-1 ll:bg-black/95 ll:border ll:border-gray-400 ll:rounded-sm ${className}`}
       >
         <p className="ll:text-xs ll:text-gray-400 ll:text-center ll:px-3 ll:py-2">
-          {noResultsMessage}
+          {resolvedNoResultsMessage}
         </p>
       </div>
     );

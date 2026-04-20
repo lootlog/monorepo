@@ -19,6 +19,7 @@ import {
 import { Game } from "@/lib/game";
 import { CharacterTile } from "@/components/character-tile";
 import { PartyGatheringCard } from "./party-gathering-card";
+import { useTranslation } from "react-i18next";
 import {
   getChatMessageBody,
   isChatMessageYesterdayOrOlder,
@@ -37,6 +38,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({
   guildName,
   member,
 }) => {
+  const { t } = useTranslation();
   const memberColor = useMemberColor(member);
   const isMsgYesterday = isChatMessageYesterdayOrOlder(message.timestamp);
   const messageBody = getChatMessageBody(message);
@@ -93,7 +95,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({
                   })}
                   style={{ color: `#${memberColor}` }}
                 >
-                  {member?.name || "Nieznany"}:
+                  {member?.name || t("common.labels.unknown")}:
                 </span>
               </span>{" "}
               <span
@@ -139,7 +141,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({
                   .setPrivateMessageProcedure(message.characterData.nick);
               }}
             >
-              Wyślij wiadomość
+              {t("chat.message.sendPrivate")}
             </ContextMenuItem>
           )}
           {Game.interface === "ni" && (
@@ -155,7 +157,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({
                 });
               }}
             >
-              Pokaż ekwipunek
+              {t("chat.message.showEquipment")}
             </ContextMenuItem>
           )}
           {message.characterData.nick !== Game.hero.nick && (
@@ -167,7 +169,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({
                 );
               }}
             >
-              Zaproś do przyjaciół
+              {t("chat.message.inviteFriend")}
             </ContextMenuItem>
           )}
           {message.characterData.nick !== Game.hero.nick && (
@@ -176,7 +178,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({
                 window._g("party&a=inv&id=" + message.characterData.id);
               }}
             >
-              Zaproś do drużyny
+              {t("chat.message.inviteParty")}
             </ContextMenuItem>
           )}
           {Game.interface === "ni" && (
@@ -188,7 +190,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({
                 });
               }}
             >
-              Pokaż profil
+              {t("chat.message.showProfile")}
             </ContextMenuItem>
           )}
         </ContextMenuContent>

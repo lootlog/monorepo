@@ -1,6 +1,7 @@
 import { createSHA256Hash } from "@/helpers/create-sha-256-hash";
 import { mapBattleEventsToPayload } from "@/helpers/mappers/battlelog.mappers";
 import { LOOTLOG_APP_URL } from "@/config/app";
+import i18n from "@/i18n/config";
 import { getNpcTypeByWt } from "@lootlog/types";
 import { NpcType } from "@/hooks/api/use-npcs";
 import { addAccountIdsToWarriors } from "@/hooks/game-events/helpers/battle.helpers";
@@ -25,13 +26,13 @@ const TRACKABLE_NPC_TYPES = new Set([
 const showBattleCreatedToast = (battleId: number) => {
   const battleUrl = `${LOOTLOG_APP_URL}/@me/battle-panel/battles/${battleId}`;
 
-  toast("Walka została dodana", {
+  toast(i18n.t("common.battle.created"), {
     duration: 10000,
     action: {
-      label: "Kopiuj link",
+      label: i18n.t("common.actions.copyLink"),
       onClick: () => {
         navigator.clipboard.writeText(battleUrl);
-        toast.success("Link skopiowany do schowka");
+        toast.success(i18n.t("common.battle.linkCopied"));
       },
     },
   });

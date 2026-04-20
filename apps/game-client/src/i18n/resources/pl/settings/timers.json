@@ -1,0 +1,56 @@
+{
+  "title": "Ustawienia timerów",
+  "description": "Skonfiguruj ustawienia dotyczące wyświetlania i działania timerów.",
+  "subTabs": {
+    "general": "Ogólne",
+    "appearance": "Wygląd",
+    "colors": "Kolory"
+  },
+  "general": {
+    "behaviorTitle": "Zachowanie",
+    "syncLabel": "Synchronizuj ustawienia",
+    "syncDescription": "Synchronizuje ustawienia timerów z serwerem.",
+    "groupingLabel": "Grupuj timery",
+    "groupingDescription": "Łączy timery z różnych lootlogów w jeden zbiorczy.",
+    "underBagLabel": "Timery pod torbami",
+    "underBagDescription": "Wyświetla timery pod torbami zamiast w osobnym okienku.",
+    "compactViewLabel": "Widok kompaktowy",
+    "compactViewDescription": "Ukrywa nagłówek i stopkę timerów, pokazując tylko zawartość.",
+    "countdownTitle": "Tryb odliczania",
+    "countdownLabel": "Odliczaj do",
+    "countdownDescription": "Wybierz, czy licznik ma odliczać do minimalnego czy maksymalnego czasu.",
+    "countdownMax": "Max",
+    "countdownMin": "Min",
+    "fadeTitle": "Wygaszanie",
+    "removeTimerAfterLabel": "Czas usunięcia timera po wyzerowaniu",
+    "removeTimerAfterDescription": "W sekundach."
+  },
+  "appearance": {
+    "visibilityTitle": "Widoczność",
+    "showLevelLabel": "Wyświetlaj poziom potwora",
+    "showTypeLabel": "Wyświetlaj typ potwora",
+    "layoutTitle": "Układ",
+    "singleTimerDisplayModeLabel": "Tryb wyświetlania pojedynczego timera",
+    "singleTimerDisplayModeDescription": "Kolumny wyświetlają czas pod nazwą timera. Wiersze wyświetlają czas obok nazwy timera.",
+    "singleTimerDisplayModeColumn": "Kolumny",
+    "singleTimerDisplayModeRow": "Wiersze",
+    "scaleTitle": "Skala",
+    "fontSizeLabel": "Wielkość czcionki",
+    "minWidthLabel": "Minimalna szerokość pojedynczego timera"
+  },
+  "colors": {
+    "listTitle": "Lista kolorów",
+    "addTitle": "Dodaj kolor",
+    "namePlaceholder": "Nazwa",
+    "borderLabel": "Ramka",
+    "backgroundLabel": "Tło",
+    "borderAria": "Kolor ramki",
+    "backgroundAria": "Kolor tła",
+    "transparencyLabel": "Przezroczystość",
+    "transparencyAria": "Przezroczystość tła",
+    "previewLabel": "Podgląd",
+    "addButton": "Dodaj",
+    "hiddenDefaultsTitle": "Usunięte domyślne kolory",
+    "restoreColorTitle": "Przywróć kolor"
+  }
+}

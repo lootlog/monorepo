@@ -1,0 +1,38 @@
+{
+  "chat": {
+    "window": {
+      "title": "Chat",
+      "empty": "Brak wiadomości"
+    },
+    "filters": {
+      "all": "Wszystko",
+      "normal": "Czat",
+      "npc": "NPC",
+      "party": "Grupa",
+      "hide": "Ukryj filtry",
+      "show": "Pokaż filtry"
+    },
+    "input": {
+      "hide": "Ukryj pole czatu",
+      "show": "Pokaż pole czatu",
+      "placeholder": "Wiadomość...",
+      "hint": "(! = powiadomienie, !grp = szukaj grupy)"
+    },
+    "message": {
+      "sendPrivate": "Wyślij wiadomość",
+      "showEquipment": "Pokaż ekwipunek",
+      "inviteFriend": "Zaproś do przyjaciół",
+      "inviteParty": "Zaproś do drużyny",
+      "showProfile": "Pokaż profil"
+    },
+    "partyGathering": {
+      "level": "Poziom: {{minLvl}} - {{maxLvl}}",
+      "volunteering": "Zgłaszanie...",
+      "requiredLevel": "Wymagany poziom {{minLvl}}-{{maxLvl}}",
+      "join": "Dołącz do grupy"
+    },
+    "errors": {
+      "sendMessage": "Nie udało się wysłać wiadomości na czat"
+    }
+  }
+}

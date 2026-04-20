@@ -1,0 +1,9 @@
+{
+  "catching-whitelist-warning": {
+    "title": "Uwaga!",
+    "paragraphs": {
+      "noServers": "Nie masz wybranych żadnych serwerów do zbierania danych!",
+      "instructions": "Przejdź do ustawień i wybierz serwery, na których chcesz zbierać timery i loot. Są w zakładce „Dodawanie łupów i timerów”."
+    }
+  }
+}

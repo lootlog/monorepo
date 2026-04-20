@@ -1,0 +1,79 @@
+{
+  "window": {
+    "title": "Ustawienia"
+  },
+  "tabs": {
+    "general": "Ogólne",
+    "timers": "Timery",
+    "catching": "Dodawanie łupów i timerów",
+    "hiddenTimers": "Ukryte timery",
+    "detector": "Wykrywacz",
+    "notifications": "Powiadomienia",
+    "notificationMutes": "Wyciszenia",
+    "sounds": "Dźwięki",
+    "battlePanel": "Panel walk (beta)",
+    "hotkeys": "Skróty klawiszowe",
+    "logs": "Logi",
+    "debug": "Debug",
+    "commitSha": "Commit SHA: {{sha}}"
+  },
+  "npcTypes": {
+    "elite2": "Elita 2",
+    "hero": "Heros",
+    "colossus": "Kolos",
+    "titan": "Tytan",
+    "message": "Komunikaty",
+    "partyGathering": "Grupa"
+  },
+  "common": {
+    "syncStatus": {
+      "error": "Błąd synchronizacji",
+      "saving": "Zapisywanie...",
+      "syncing": "Synchronizowanie..."
+    },
+    "windowAutoHeight": {
+      "idleTooltip": "Ustaw maksymalną wysokość okna. Kliknij, a potem przeciągnij uchwyt w prawym dolnym rogu.",
+      "armedTooltip": "Przeciągnij uchwyt w prawym dolnym rogu, aby ustawić maksymalną wysokość. Szerokość okna nadal możesz zmieniać tym samym uchwytem.",
+      "maxHeightAria": "Ustaw maksymalną wysokość okna na {{height}} pikseli",
+      "maxHeightLabel": "{{height}} px"
+    },
+    "actions": {
+      "remove": "Usuń",
+      "reset": "Reset",
+      "restore": "Przywróć",
+      "clear": "Wyczyść",
+      "add": "Dodaj",
+      "copyAction": "Kopiuj akcję",
+      "copyRequest": "Kopiuj request",
+      "exportJson": "Eksportuj JSON",
+      "playSound": "Odtwórz dźwięk",
+      "mute": "Wycisz",
+      "unmute": "Włącz dźwięk"
+    },
+    "guildSelection": {
+      "enabled": "Włączone",
+      "disabled": "Wyłączone",
+      "toggleAria": "Przełącz gildię {{name}}: {{state}}",
+      "selectAria": "Wybierz gildię {{name}}: {{state}}"
+    },
+    "preview": {
+      "name": "[T] Tanroth",
+      "time": "00:21:37"
+    }
+  },
+  "windows": {
+    "notifications": "Powiadomienia",
+    "npcDetector": "Wykrywacz"
+  },
+  "timerSettingsConflictDialog": {
+    "title": "Konflikt ustawień timerów",
+    "summary": "Twoje ustawienia timerów zostały zmodyfikowane na wielu urządzeniach. Którą wersję chcesz zachować?",
+    "localTitle": "Lokalne (To urządzenie)",
+    "remoteTitle": "Zdalne (Serwer)",
+    "lastUpdated": "Ostatnia aktualizacja: {{date}}",
+    "useLocal": "Użyj ustawień lokalnych",
+    "useRemote": "Użyj ustawień z serwera",
+    "warning": "Uwaga: Wybrane ustawienia nadpiszą drugą wersję.",
+    "unknownDate": "Nieznana"
+  }
+}

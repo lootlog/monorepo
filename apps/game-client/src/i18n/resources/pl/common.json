@@ -1,0 +1,36 @@
+{
+  "common": {
+    "actions": {
+      "close": "Zamknij",
+      "openSettings": "Otwórz ustawienia",
+      "dashboard": "Dashboard",
+      "copyLink": "Kopiuj link"
+    },
+    "labels": {
+      "unknown": "Nieznany"
+    },
+    "autocomplete": {
+      "noResults": "Nie znaleziono wyników"
+    },
+    "worldSelector": {
+      "recent": "Ostatnio używane",
+      "allWorlds": "Wszystkie światy",
+      "placeholder": "Wybierz świat...",
+      "searchPlaceholder": "Szukaj świata...",
+      "empty": "Nie znaleziono światów."
+    },
+    "windowTitleBar": {
+      "changeOpacity": "Zmień przezroczystość",
+      "unlockWindow": "Odblokuj okno",
+      "lockWindow": "Zablokuj okno",
+      "closeWindow": "Zamknij okno"
+    },
+    "auth": {
+      "loginRequired": "Nie jesteś zalogowany, zaloguj się, aby załadować dodatek"
+    },
+    "battle": {
+      "created": "Walka została dodana",
+      "linkCopied": "Link skopiowany do schowka"
+    }
+  }
+}

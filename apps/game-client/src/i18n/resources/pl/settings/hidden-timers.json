@@ -1,0 +1,10 @@
+{
+  "title": "Ukryte timery",
+  "description": "Przywracaj ukryte timery i zarządzaj listą ukrytych wpisów.",
+  "scopeTitle": "Zakres listy",
+  "groupedDescription": "Grupowanie jest włączone, więc ustawienia działają globalnie bez podziału na serwer.",
+  "ungroupedDescription": "Wybierz serwer, dla którego chcesz zobaczyć ukryte timery.",
+  "emptyGuilds": "Brak gildii do wyboru.",
+  "listTitle": "Ukryte timery",
+  "emptyState": "Brak ukrytych timerów."
+}

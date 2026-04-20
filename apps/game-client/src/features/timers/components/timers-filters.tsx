@@ -4,12 +4,14 @@ import { NpcType } from "@/hooks/api/use-npcs";
 import { cn } from "@/lib/utils";
 import { DEFAULT_TIMERS_FILTERS, useTimersStore } from "@/store/timers.store";
 import type { FC } from "react";
+import { useTranslation } from "react-i18next";
 import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { DEFAULT_COLOR_NAMES } from "@/features/timers/constants/color-names";
 
 const NPC_TYPES_OPTIONS = [
   NpcType.ELITE2,
@@ -20,21 +22,6 @@ const NPC_TYPES_OPTIONS = [
 const MAX_LVL = 500;
 const MIN_LVL = 0;
 
-const DEFAULT_COLOR_NAMES: Record<string, string> = {
-  red: "Czerwony",
-  orange: "Pomarańczowy",
-  yellow: "Żółty",
-  lime: "Limonkowy",
-  green: "Zielony",
-  teal: "Turkusowy",
-  sky: "Niebieski",
-  blue: "Granatowy",
-  violet: "Fioletowy",
-  purple: "Purpurowy",
-  pink: "Różowy",
-  white: "Biały",
-};
-
 const clampValue = (value: number, min: number, max: number): number => {
   return Math.max(min, Math.min(max, value));
 };
@@ -44,6 +31,7 @@ type TimersFiltersProps = {
 };
 
 export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
+  const { t } = useTranslation();
   const {
     timerFiltersSearchText,
     setTimerFiltersSearchText,
@@ -109,13 +97,13 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
     <div className="ll:flex ll:flex-col ll:gap-1 ll:mb-1">
       <div className="ll:flex ll:flex-row ll:gap-1 ll:flex-nowrap">
         <Input
-          placeholder="Szukaj..."
+          placeholder={t("timers.filters.searchPlaceholder")}
           value={timerFiltersSearchText}
           onChange={handleSearchChange}
         />
         <div className="ll:w-18">
           <Input
-            placeholder="Od"
+            placeholder={t("timers.filters.minPlaceholder")}
             value={filters.minLvl.toString()}
             onChange={handleMinLvlChange}
             className="ll:w-8 input-no-spinner"
@@ -127,7 +115,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
         </div>
         <div className="ll:w-18">
           <Input
-            placeholder="Do"
+            placeholder={t("timers.filters.maxPlaceholder")}
             value={filters.maxLvl.toString()}
             onChange={handleMaxLvlChange}
             className="ll:w-8 input-no-spinner"

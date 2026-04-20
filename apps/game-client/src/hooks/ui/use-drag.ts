@@ -365,7 +365,7 @@ export const useDrag = ({
     };
   }, [isDragging, cancelDrag, ref]);
 
-  // Usunięto clampowanie pozycji i setFinalPosition z efektu mount/ref
+  // Position clamping and initial setFinalPosition were removed from mount/ref effect.
 
   const recalculate = (width: number, height: number) => {
     const { current } = ref;

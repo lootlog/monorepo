@@ -27,6 +27,7 @@ import {
 import { NpcType } from "@/hooks/api/use-npcs";
 import { Game } from "@/lib/game";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { useSession } from "@/hooks/auth/use-session";
@@ -95,6 +96,7 @@ export const NpcListItem = ({
   npc,
   detectionAnimationCycle,
 }: NpcListItemProps) => {
+  const { t } = useTranslation();
   const { npcs, removeNpc, setNpcState, clearDetectionAnimation } =
     useNpcDetectorStore();
   const { settings } = useCurrentGameAccountDetectorSettings();
@@ -222,7 +224,7 @@ export const NpcListItem = ({
 
   const handleSendNotification = (npc: GameNpcWithLocation) => {
     if (resolvedGuildIds.length === 0) {
-      window.message("Brak pasujacych serwerow dla poziomu tego potwora.");
+      window.message(t("npc-detector.noMatchingServers"));
       return;
     }
 
@@ -299,7 +301,7 @@ export const NpcListItem = ({
 
   const handleGatherParty = async (npc: GameNpcWithLocation) => {
     if (resolvedGuildIds.length === 0) {
-      window.message("Brak pasujacych serwerow dla poziomu tego potwora.");
+      window.message(t("npc-detector.noMatchingServers"));
       return;
     }
 
@@ -410,7 +412,7 @@ export const NpcListItem = ({
       setOpen("party-finder", true);
     } catch (error) {
       console.error("Failed to gather party:", error);
-      window.message("Nie udało się rozpocząć zbierania grupy");
+      window.message(t("npc-detector.errors.gatherPartyFailed"));
     } finally {
       setIsGatheringPartyPending(false);
     }
@@ -504,7 +506,7 @@ export const NpcListItem = ({
                 variant="ghost"
                 className={`${ACTION_BUTTON_CLASS_NAME} ll:border-yellow-500/40 ll:hover:bg-yellow-500/10`}
                 onClick={handleOpenDetectorSettings}
-                aria-label="Otwórz ustawienia wykrywacza"
+                aria-label={t("npc-detector.actions.openSettingsAria")}
               >
                 <AlertTriangle
                   className="ll:stroke-yellow-500 ll:opacity-80"
@@ -513,7 +515,7 @@ export const NpcListItem = ({
               </Button>
             </TooltipTrigger>
             <TooltipContent side="top">
-              Brak pasujacych serwerow dla poziomu tego potwora.
+              {t("npc-detector.noMatchingServers")}
             </TooltipContent>
           </Tooltip>
         )}
@@ -570,7 +572,9 @@ export const NpcListItem = ({
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="top">
-                {npc.notificationSent ? "Wysłano" : "Komunikat"}
+                {npc.notificationSent
+                  ? t("npc-detector.actions.notificationSent")
+                  : t("npc-detector.actions.notification")}
               </TooltipContent>
             </Tooltip>
             <Tooltip>
@@ -590,10 +594,10 @@ export const NpcListItem = ({
               </TooltipTrigger>
               <TooltipContent side="top">
                 {isGatheringPartyPending
-                  ? "Zbieranie grupy..."
+                  ? t("npc-detector.actions.gatheringPending")
                   : hasActivePartyGathering
-                    ? "Już zbierasz grupę"
-                    : "Zbierz grupę"}
+                    ? t("npc-detector.actions.gatheringAlreadyActive")
+                    : t("npc-detector.actions.gatherParty")}
               </TooltipContent>
             </Tooltip>
           </>
@@ -601,7 +605,7 @@ export const NpcListItem = ({
         {npcs.length > 1 && (
           <Button
             variant="destructive"
-            aria-label="Usuń NPC z listy"
+            aria-label={t("npc-detector.actions.removeNpcAria")}
             className={ACTION_BUTTON_CLASS_NAME}
             onClick={() => handleRemoveNpc(npc.id)}
           >

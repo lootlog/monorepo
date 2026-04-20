@@ -1,4 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
+import i18n from "@/i18n/config";
 import {
   MessageType,
   sendChatMessage,
@@ -20,7 +21,7 @@ export const useSendChatMessage = () => {
     mutationFn: (options: SendChatMessageOptions) => sendChatMessage(options),
     onError: (error) => {
       console.error("Chat message error:", error);
-      window.message("Nie udało się wysłać wiadomości na czat");
+      window.message(i18n.t("chat.errors.sendMessage"));
     },
   });
 

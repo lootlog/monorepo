@@ -18,6 +18,7 @@ import {
 import { useChatStore } from "@/store/chat.store";
 import { GuildMultiSelector } from "@/components/guild-multi-selector";
 import { usePartyCommand } from "./hooks/use-party-command";
+import { useTranslation } from "react-i18next";
 
 const FormSchema = z.object({
   message: z.string().min(1).max(120),
@@ -25,6 +26,7 @@ const FormSchema = z.object({
 type FormData = z.infer<typeof FormSchema>;
 
 export const CommandWindow = () => {
+  const { t } = useTranslation("command");
   const { selectedInputGuildIds, setSelectedInputGuildIds } = useChatStore();
 
   const characterId = String(Game.hero.id);
@@ -108,7 +110,7 @@ export const CommandWindow = () => {
     <AnimatedWindow isOpen={open} windowKey="command">
       <DraggableWindow
         id="command"
-        title="Konsola"
+        title={t("command.window.title")}
         onClose={() => setOpen("command", false)}
         minHeight={116}
         minWidth={242}
@@ -152,7 +154,7 @@ export const CommandWindow = () => {
                       e.currentTarget.form?.requestSubmit();
                     }
                   }}
-                  placeholder="Wiadomość..."
+                  placeholder={t("command.window.placeholder")}
                   autoFocus={autofocus}
                   value={messageValue}
                   onChange={(e) => setValue("message", e.target.value)}

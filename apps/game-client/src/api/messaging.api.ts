@@ -1,4 +1,5 @@
 import { Game } from "@/lib/game";
+import i18n from "@/i18n/config";
 import { getApiClient } from "@/lib/api-client";
 import {
   runLoggedRequest,
@@ -171,7 +172,7 @@ export async function cancelPartyGathering({
 
       const endpoint = `/guilds/${guildId}/chat-messages/${messageId}`;
       const payload = {
-        message: `${heroNick} zakończył zbieranie grupy`,
+        message: i18n.t("party-finder.messages.endedChatMessage", { heroNick }),
       };
 
       return runLoggedRequest({

@@ -1,24 +1,12 @@
 import { AutocompleteSuggestions } from "@/components/ui/autocomplete-suggestions";
 import { useState, type FC } from "react";
+import { useTranslation } from "react-i18next";
 
 type CommandSuggestion = {
   prefix: string;
   label: string;
   description: string;
 };
-
-const COMMAND_SUGGESTIONS: CommandSuggestion[] = [
-  {
-    prefix: "!grp",
-    label: "Szukaj grupy",
-    description: "!grp [opis] - Rozpocznij szukanie grupy",
-  },
-  {
-    prefix: "!",
-    label: "Powiadomienie",
-    description: "!wiadomość - Wyślij powiadomienie do klanu",
-  },
-];
 
 type CommandSuggestionsProps = {
   inputValue: string;
@@ -32,10 +20,23 @@ export const useCommandSuggestions = ({
   inputValue,
   onSelect,
 }: CommandSuggestionsProps) => {
+  const { t } = useTranslation("command");
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const commandSuggestions: CommandSuggestion[] = [
+    {
+      prefix: "!grp",
+      label: t("command.suggestions.partySearch.label"),
+      description: t("command.suggestions.partySearch.description"),
+    },
+    {
+      prefix: "!",
+      label: t("command.suggestions.notification.label"),
+      description: t("command.suggestions.notification.description"),
+    },
+  ];
 
   const isOpen = inputValue.startsWith("!") && inputValue.length <= 4;
-  const filtered = COMMAND_SUGGESTIONS.filter((s) =>
+  const filtered = commandSuggestions.filter((s) =>
     s.prefix.startsWith(inputValue),
   );
 

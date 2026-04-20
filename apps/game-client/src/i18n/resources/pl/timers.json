@@ -1,0 +1,117 @@
+{
+  "timers": {
+    "window": {
+      "title": "Timery",
+      "addTitle": "Dodaj timer"
+    },
+    "actions": {
+      "hideFilters": "Ukryj filtry",
+      "showFilters": "Pokaż filtry",
+      "disableColorFilters": "Wyłącz filtry po kolorze",
+      "enableColorFilters": "Włącz filtry po kolorze",
+      "sortAsc": "Sortuj rosnąco",
+      "sortDesc": "Sortuj malejąco",
+      "hideHidden": "Ukryj ukryte timery",
+      "showHidden": "Pokaż ukryte timery",
+      "addTimer": "Dodaj timer"
+    },
+    "colorNames": {
+      "red": "Czerwony",
+      "orange": "Pomarańczowy",
+      "yellow": "Żółty",
+      "lime": "Limonkowy",
+      "green": "Zielony",
+      "teal": "Turkusowy",
+      "sky": "Niebieski",
+      "blue": "Granatowy",
+      "violet": "Fioletowy",
+      "purple": "Purpurowy",
+      "pink": "Różowy",
+      "white": "Biały"
+    },
+    "filters": {
+      "searchPlaceholder": "Szukaj...",
+      "minPlaceholder": "Od",
+      "maxPlaceholder": "Do"
+    },
+    "connectionStatus": {
+      "connected": "Połączono z serwerami:",
+      "disconnected": "Nie połączono z żadnym serwerem"
+    },
+    "tooltip": {
+      "addedBy": "Dodane przez:",
+      "reset": "⟳ Timer został zresetowany",
+      "addedAt": "Dodano:",
+      "min": "Min:",
+      "max": "Max:"
+    },
+    "emptyState": {
+      "filtered": "Brak timerów dla wybranych filtrów",
+      "placeholder": "----"
+    },
+    "contextMenu": {
+      "creating": "Tworzenie timera...",
+      "unpin": "Odepnij",
+      "pin": "Przypnij",
+      "unpinAll": "Odepnij wszędzie",
+      "pinAll": "Przypnij wszędzie",
+      "show": "Pokaż",
+      "hide": "Ukryj",
+      "showAll": "Pokaż wszędzie",
+      "hideAll": "Ukryj wszędzie",
+      "countFromStart": "Odliczaj od początku",
+      "disableSound": "Wyłącz dźwięk",
+      "enableSound": "Włącz dźwięk",
+      "deleteTimer": "Usuń timer"
+    },
+    "deleteTimerPopover": {
+      "deleteTimer": "Usuń timer",
+      "selectGuild": "Wybierz serwer do usunięcia timera:"
+    },
+    "addForm": {
+      "guildLabel": "Serwer",
+      "guildRequired": "Wybierz serwer",
+      "npcSearchLabel": "Szukaj potwora",
+      "npcSearchPlaceholder": "Wpisz nazwę potwora...",
+      "npcSearchEmpty": "Nie znaleziono potwora",
+      "nameLabel": "Nazwa",
+      "namePlaceholder": "np. Młody Smok",
+      "minDurationLabel": "Minimalny czas (max 300h)",
+      "minDurationPlaceholder": "np. 2h 30m 45s",
+      "maxDurationLabel": "Maksymalny czas (max 300h)",
+      "maxDurationPlaceholder": "np. 3h 15m 30s",
+      "customDates": "Niestandardowe daty spawnu",
+      "startDateLabel": "Data startu",
+      "endDateLabel": "Data końca",
+      "window": "Okno:",
+      "invalidRange": "Nieprawidłowy zakres",
+      "adding": "Dodawanie...",
+      "submit": "Dodaj",
+      "npcFallbackType": "mob"
+    },
+    "validation": {
+      "nameRequired": "Nazwa jest wymagana",
+      "nameTooLong": "Nazwa może mieć maksymalnie {{count}} znaków",
+      "respawnOrDates": "Podaj czasy respawnu lub niestandardowe daty",
+      "minDurationRequired": "Minimalny czas jest wymagany",
+      "durationGreaterThanZero": "Czas musi być większy niż 0 sekund",
+      "maxDurationRequired": "Maksymalny czas jest wymagany",
+      "maxDurationAtLeastMin": "Maksymalny czas musi być większy lub równy minimalnemu",
+      "startDateRequired": "Data startu jest wymagana",
+      "endDateRequired": "Data końca jest wymagana",
+      "endDateAfterStart": "Data końca musi być późniejsza niż data startu"
+    },
+    "messages": {
+      "cannotResetEventWindow": "Nie można zresetować okna eventowego z poziomu timerów.",
+      "cannotDeleteEventWindow": "Nie można usunąć okna eventowego z poziomu timerów.",
+      "resetTimerFailed": "Nie udało się zresetować timera {{name}}.",
+      "deleteTimerFailed": "Nie udało się usunąć timera {{name}}.",
+      "timerReset": "Zresetowano timer {{name}}.",
+      "timerDeleted": "Usunięto timer {{name}}."
+    },
+    "statistics": {
+      "title": "Statystyki kolorów timerów",
+      "empty": "Brak ustawionych kolorów"
+    }
+  }
+}

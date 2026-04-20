@@ -1,0 +1,17 @@
+{
+  "npc-detector": {
+    "noMatchingServers": "Brak pasujących serwerów dla poziomu tego potwora.",
+    "actions": {
+      "openSettingsAria": "Otwórz ustawienia wykrywacza",
+      "notificationSent": "Wysłano",
+      "notification": "Komunikat",
+      "gatheringPending": "Zbieranie grupy...",
+      "gatheringAlreadyActive": "Już zbierasz grupę",
+      "gatherParty": "Zbierz grupę",
+      "removeNpcAria": "Usuń NPC z listy"
+    },
+    "errors": {
+      "gatherPartyFailed": "Nie udało się rozpocząć zbierania grupy"
+    }
+  }
+}

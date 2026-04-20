@@ -1,4 +1,5 @@
 import axios from "axios";
+import i18n from "@/i18n/config";
 import { useDeleteTimer } from "@/hooks/api/use-delete-timer";
 import { useResetTimer } from "@/hooks/api/use-reset-timer";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
@@ -26,20 +27,22 @@ export const useTimerActions = (
       axios.isAxiosError<{ message?: string }>(error) &&
       error.response?.data?.message === "EVENT_TIMER_CANNOT_BE_RESET"
     ) {
-      return "Nie można zresetować okna eventowego z poziomu timerów.";
+      return i18n.t("timers.messages.cannotResetEventWindow");
     }
 
-    return `Nie udało się zresetować timera ${timer.npc.name}.`;
+    return i18n.t("timers.messages.resetTimerFailed", { name: timer.npc.name });
   };
   const getDeleteTimerErrorMessage = (error: unknown) => {
     if (
       axios.isAxiosError<{ message?: string }>(error) &&
       error.response?.data?.message === "EVENT_TIMER_MUST_USE_EVENT_CLOSE"
     ) {
-      return "Nie można usunąć okna eventowego z poziomu timerów.";
+      return i18n.t("timers.messages.cannotDeleteEventWindow");
     }
 
-    return `Nie udało się usunąć timera ${timer.npc.name}.`;
+    return i18n.t("timers.messages.deleteTimerFailed", {
+      name: timer.npc.name,
+    });
   };
 
   const isPinned = pinnedTimers[settingsKey]?.includes(timer.npc.name);
@@ -132,7 +135,9 @@ export const useTimerActions = (
         });
       }
 
-      window.message?.(`Zresetowano timer ${timer.npc.name}.`);
+      window.message?.(
+        i18n.t("timers.messages.timerReset", { name: timer.npc.name }),
+      );
     } catch (error) {
       window.message?.(getResetTimerErrorMessage(error));
     }
@@ -149,7 +154,9 @@ export const useTimerActions = (
       },
       {
         onSuccess: () => {
-          window.message?.(`Usunięto timer ${timer.npc.name}.`);
+          window.message?.(
+            i18n.t("timers.messages.timerDeleted", { name: timer.npc.name }),
+          );
         },
         onError: (error) => {
           window.message?.(getDeleteTimerErrorMessage(error));

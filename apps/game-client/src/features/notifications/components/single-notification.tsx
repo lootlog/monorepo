@@ -25,6 +25,7 @@ import { format } from "date-fns";
 import { LoaderCircle, User, XIcon } from "lucide-react";
 import { type FC, type ReactNode, useEffect, useRef } from "react";
 import { NpcType } from "@/hooks/api/use-npcs";
+import { useTranslation } from "react-i18next";
 import { SingleNotificationMessage } from "@/features/notifications/components/single-notification-message";
 import { SingleNotificationNpc } from "@/features/notifications/components/single-notification-npc";
 import { SingleNotificationPartyGathering } from "@/features/notifications/components/single-notification-party-gathering";
@@ -52,6 +53,7 @@ const isPartyGatheringNotification = (
 const renderLeadingVisual = (
   notification: StoredNotification,
   avatarUrl: string,
+  avatarAlt: string,
 ) => {
   if (isPartyGatheringNotification(notification)) {
     return (
@@ -81,7 +83,7 @@ const renderLeadingVisual = (
     <div className="ll:flex ll:h-8 ll:w-8 ll:shrink-0 ll:items-center ll:justify-center">
       <img
         src={avatarUrl}
-        alt="Avatar"
+        alt={avatarAlt}
         className="ll:h-8 ll:w-8 ll:rounded-full ll:object-cover"
       />
     </div>
@@ -116,6 +118,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   notification,
   showCloseButton = false,
 }) => {
+  const { t } = useTranslation();
   const removeNotification = useNotificationsStore(
     (state) => state.removeNotification,
   );
@@ -176,7 +179,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   const borderColor = getBorderColor(key, categorySettings?.highlight);
   const hasAutoHideRing = autoHideDurationMs > 0;
   const metaText = `${time}@${serverNames.join(", ")}${notification.world ? ` - ${notification.world}` : ""}`;
-  const senderName = guildMember?.name ?? "Nieznany";
+  const senderName = guildMember?.name ?? t("common.labels.unknown");
 
   const heroLvl = Game.hero.lvl;
   const minLvl = isPartyGathering ? (notification.minLvl ?? 1) : 1;
@@ -201,7 +204,9 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   let actionLabel: string | null = null;
 
   if (showPartyGatheringAction) {
-    actionLabel = volunteer.isPending ? "..." : "Dołącz!";
+    actionLabel = volunteer.isPending
+      ? t("notifications.single.joinPending")
+      : t("notifications.single.join");
   }
 
   useEffect(() => {
@@ -323,7 +328,11 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
             />
           ) : null}
         </svg>
-        {renderLeadingVisual(notification, avatarUrl)}
+        {renderLeadingVisual(
+          notification,
+          avatarUrl,
+          t("notifications.single.avatarAlt"),
+        )}
         <div className="ll:relative ll:flex ll:min-w-0 ll:flex-1 ll:flex-col">
           <div className="ll:flex ll:items-center ll:gap-1 ll:overflow-hidden ll:leading-none ll:pb-1">
             <span
@@ -355,7 +364,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
           {showJoinAction ? (
             <Button
               variant="ghost"
-              aria-label="Idę"
+              aria-label={t("notifications.single.joinAria")}
               className="ll:size-7 ll:px-0"
               onClick={handleVolunteer}
               disabled={volunteer.isPending}
@@ -376,7 +385,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
           {showCloseButton ? (
             <Button
               variant="destructive"
-              aria-label="Zamknij powiadomienie"
+              aria-label={t("notifications.single.closeAria")}
               className="ll:size-7 ll:px-0"
               onClick={handleRemoveNotification}
             >

@@ -1,4 +1,5 @@
 import { authClient } from "@/lib/auth-client";
+import i18n from "@/i18n/config";
 
 let messageSent = false;
 
@@ -7,7 +8,7 @@ export const useSession = () => {
 
   if (!session.data && !session.isPending && !messageSent) {
     messageSent = true;
-    window.message("Nie jesteś zalogowany, zaloguj się, aby załadować dodatek");
+    window.message(i18n.t("common.auth.loginRequired"));
   }
 
   return session;

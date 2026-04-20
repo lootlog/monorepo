@@ -14,31 +14,18 @@ import { getCreatePartyGatheringErrorMessage } from "@/features/party-finder/get
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { Game } from "@/lib/game";
 
-const FormSchema = z
-  .object({
-    description: z.string().max(200).optional(),
-    minLvl: z.coerce.number().min(1).max(500).optional().or(z.literal("")),
-    maxLvl: z.coerce.number().min(1).max(500).optional().or(z.literal("")),
-  })
-  .refine(
-    (data) => {
-      if (data.minLvl && data.maxLvl) {
-        return Number(data.minLvl) <= Number(data.maxLvl);
-      }
-      return true;
-    },
-    {
-      message: "Min lvl nie może być większy niż max lvl",
-      path: ["minLvl"],
-    },
-  );
-
-type FormData = z.infer<typeof FormSchema>;
+type FormData = {
+  description?: string;
+  minLvl?: number | "";
+  maxLvl?: number | "";
+};
 
 export const CreatePartyGatheringForm = () => {
+  const { t } = useTranslation();
   const [selectedGuildIds, setSelectedGuildIds] = useState<string[]>([]);
   const { mutate: createPartyGathering, isPending } = useCreatePartyGathering();
   const silentCancel = useSilentCancelPartyGathering();
@@ -55,7 +42,37 @@ export const CreatePartyGatheringForm = () => {
     formState: { errors },
     reset,
   } = useForm<FormData>({
-    resolver: zodResolver(FormSchema) as never,
+    resolver: zodResolver(
+      z
+        .object({
+          description: z.string().max(200).optional(),
+          minLvl: z.coerce
+            .number()
+            .min(1)
+            .max(500)
+            .optional()
+            .or(z.literal("")),
+          maxLvl: z.coerce
+            .number()
+            .min(1)
+            .max(500)
+            .optional()
+            .or(z.literal("")),
+        })
+        .refine(
+          (formData) => {
+            if (formData.minLvl && formData.maxLvl) {
+              return Number(formData.minLvl) <= Number(formData.maxLvl);
+            }
+
+            return true;
+          },
+          {
+            message: t("party-finder.validation.minGreaterThanMax"),
+            path: ["minLvl"],
+          },
+        ),
+    ) as never,
     defaultValues: {
       description: "",
       minLvl: "",
@@ -65,7 +82,7 @@ export const CreatePartyGatheringForm = () => {
 
   const onSubmit = async (data: FormData) => {
     if (selectedGuildIds.length === 0) {
-      window.message("Wybierz przynajmniej jedną gildię");
+      window.message(t("party-finder.validation.selectGuild"));
       return;
     }
 
@@ -159,11 +176,11 @@ export const CreatePartyGatheringForm = () => {
 
       <div>
         <label className="ll:text-[11px] ll:text-gray-300 ll:mb-1 ll:block">
-          Opis (opcjonalny)
+          {t("party-finder.form.descriptionLabel")}
         </label>
         <Input
           {...register("description")}
-          placeholder="Np. szukam heala na tytana"
+          placeholder={t("party-finder.form.descriptionPlaceholder")}
           maxLength={200}
         />
         {errors.description && (
@@ -176,7 +193,7 @@ export const CreatePartyGatheringForm = () => {
       <div className="ll:flex ll:gap-2">
         <div className="ll:flex-1">
           <label className="ll:text-[11px] ll:text-gray-300 ll:mb-1 ll:block">
-            Min lvl
+            {t("party-finder.form.minLevelLabel")}
           </label>
           <Input
             {...register("minLvl")}
@@ -188,7 +205,7 @@ export const CreatePartyGatheringForm = () => {
         </div>
         <div className="ll:flex-1">
           <label className="ll:text-[11px] ll:text-gray-300 ll:mb-1 ll:block">
-            Max lvl
+            {t("party-finder.form.maxLevelLabel")}
           </label>
           <Input
             {...register("maxLvl")}
@@ -206,7 +223,9 @@ export const CreatePartyGatheringForm = () => {
       )}
 
       <Button type="submit" disabled={isPending} className="ll:mt-2">
-        {isPending ? "Wysyłanie..." : "Szukaj grupy"}
+        {isPending
+          ? t("party-finder.actions.creating")
+          : t("party-finder.actions.create")}
       </Button>
     </form>
   );

@@ -6,12 +6,14 @@ import { useLootlogCharactersConfig } from "@/hooks/api/use-lootlog-character-co
 import { Button } from "@/components/ui/button";
 import { Game } from "@/lib/game";
 import { storageKey } from "@/lib/storage-key";
+import { useTranslation } from "react-i18next";
 
 const STORAGE_KEY = storageKey("ll:catching-whitelist-warning-dismissed");
 
 type DismissedCharacters = Record<string, boolean>;
 
 export const CatchingWhitelistWarning: FC = () => {
+  const { t } = useTranslation();
   const windowState = useWindowsStore(
     (state) => state["catching-whitelist-warning"],
   );
@@ -69,7 +71,7 @@ export const CatchingWhitelistWarning: FC = () => {
   return (
     <DraggableWindow
       id="catching-whitelist-warning"
-      title="Uwaga!"
+      title={t("catching-whitelist-warning.title")}
       onClose={handleClose}
       variant="small"
       resizable={false}
@@ -80,20 +82,18 @@ export const CatchingWhitelistWarning: FC = () => {
       <div className="ll:p-4 ll:flex ll:flex-col ll:gap-4">
         <div className="ll:text-sm ll:text-gray-200">
           <p className="ll:mb-3">
-            Nie masz wybranych żadnych serwerów do zbierania danych!
+            {t("catching-whitelist-warning.paragraphs.noServers")}
           </p>
           <p className="ll:mb-3">
-            Przejdź do ustawień i wybierz serwery, na których chcesz zbierać
-            timery i loot. Są w zakładce &ldquo;Dodawanie łupów i
-            timerów&ldquo;.
+            {t("catching-whitelist-warning.paragraphs.instructions")}
           </p>
         </div>
         <div className="ll:flex ll:gap-2 ll:justify-end">
           <Button onClick={handleClose} className="ll:px-3 ll:py-1">
-            Zamknij
+            {t("common.actions.close")}
           </Button>
           <Button onClick={handleOpenSettings} className="ll:px-3 ll:py-1">
-            Otwórz ustawienia
+            {t("common.actions.openSettings")}
           </Button>
         </div>
       </div>

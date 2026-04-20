@@ -1,0 +1,20 @@
+{
+  "quick-access": {
+    "window": {
+      "title": "Lootlog"
+    },
+    "buttons": {
+      "create-party-gathering": "Party finder",
+      "timers": "Timery",
+      "online-players": "Gracze online",
+      "chat": "Chat",
+      "command": "Konsola",
+      "settings": "Ustawienia",
+      "party-finder-active": "Aktywne zbieranie grupy"
+    },
+    "guildPopover": {
+      "site": "Strona Lootloga",
+      "noGuilds": "Nie masz żadnych gildii"
+    }
+  }
+}

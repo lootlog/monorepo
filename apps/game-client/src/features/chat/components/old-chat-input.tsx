@@ -10,6 +10,7 @@ import { usePartyCommand } from "@/features/command/hooks/use-party-command";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { FC } from "react";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 
 type OldChatInputProps = {
@@ -27,6 +28,7 @@ export const OldChatInput: FC<OldChatInputProps> = ({
   selectedGuildId,
   autofocus,
 }) => {
+  const { t } = useTranslation();
   const world = Game.getWorldName();
   const { mutate: sendChatMessage } = useSendChatMessage();
   const { mutate: createNotification } = useCreateNotification();
@@ -99,11 +101,11 @@ export const OldChatInput: FC<OldChatInputProps> = ({
       className="ll:flex ll:justify-center ll:flex-col ll:mt-1"
     >
       <Label className="ll:text-[9px] ll:text-gray-400">
-        (! = powiadomienie, !grp = szukaj grupy)
+        {t("chat.input.hint")}
       </Label>
       <Input
         autoComplete="off"
-        placeholder="Wiadomość..."
+        placeholder={t("chat.input.placeholder")}
         autoFocus={autofocus}
         value={messageValue}
         onChange={(e) => setValue("message", e.target.value)}

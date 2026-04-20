@@ -1,0 +1,19 @@
+{
+  "notifications": {
+    "npc": {
+      "gatheringParty": "Zbiera grupę"
+    },
+    "muteMenu": {
+      "optionsAria": "Opcje wyciszenia",
+      "mutePlayer": "Nie otrzymuj powiadomień od tego gracza",
+      "muteNpc": "Nie otrzymuj powiadomień o tym potworze"
+    },
+    "single": {
+      "joinPending": "...",
+      "join": "Dołącz!",
+      "joinAria": "Idę",
+      "closeAria": "Zamknij powiadomienie",
+      "avatarAlt": "Avatar"
+    }
+  }
+}
