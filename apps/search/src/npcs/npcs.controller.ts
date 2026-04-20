@@ -1,42 +1,23 @@
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
-import { getNpcsQuerySchema } from "./dto/get-npcs.dto.js";
-import { npcHitSchema } from "./dto/npc-hit.schema.js";
-import { NpcsService } from "./npcs.service.js";
+import { Controller, Get, Query } from "@nestjs/common";
+import { ApiOperation, ApiTags } from "@nestjs/swagger";
+import { ZodResponse } from "nestjs-zod";
+import { GetNpcsDto } from "./dto/get-npcs.dto";
+import { NpcHitDto } from "./dto/npc-hit.schema";
+import { NpcsService } from "./npcs.service";
 
-const npcsService = new NpcsService();
+@ApiTags("NPCs")
+@Controller("npcs")
+export class NpcsController {
+  constructor(private readonly npcsService: NpcsService) {}
 
-const getNpcsRoute = createRoute({
-  method: "get",
-  path: "/",
-  tags: ["NPCs"],
-  summary: "Search NPCs by name",
-  request: {
-    query: getNpcsQuerySchema,
-  },
-  responses: {
-    200: {
-      content: {
-        "application/json": {
-          schema: z.array(npcHitSchema),
-        },
-      },
-      description: "List of matching NPCs",
-    },
-  },
-});
-
-const npcs = new OpenAPIHono<{
-  Variables: {
-    userId: string | null;
-    discordId: string | null;
-  };
-}>();
-
-npcs.openapi(getNpcsRoute, async (c) => {
-  const { limit, search, world } = c.req.valid("query");
-  const res = await npcsService.getNpcs({ limit, search, world });
-
-  return c.json(res, 200);
-});
-
-export { npcs };
+  @Get()
+  @ApiOperation({ summary: "Search NPCs by name" })
+  @ZodResponse({
+    status: 200,
+    type: [NpcHitDto],
+    description: "List of matching NPCs",
+  })
+  getNpcs(@Query() query: GetNpcsDto) {
+    return this.npcsService.getNpcs(query);
+  }
+}

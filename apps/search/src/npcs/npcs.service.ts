@@ -1,32 +1,34 @@
-import type { Meilisearch, SearchParams } from "meilisearch";
+import { Inject, Injectable } from "@nestjs/common";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import type { Logger } from "winston";
+import { Meilisearch, type SearchParams } from "meilisearch";
 import type { z } from "zod";
-import { meilisearchClient } from "../lib/meilisearch.js";
-import { logger } from "../config/winston.config.js";
-import type { GetNpcsDto } from "./dto/get-npcs.dto.js";
-import { NPCS_INDEX } from "./constants/meilisearch.js";
-import type { IndexNpcsDto } from "./dto/index-npcs.dto.js";
-import type { npcHitSchema } from "./dto/npc-hit.schema.js";
+import { MEILISEARCH_CLIENT } from "src/meilisearch/meilisearch.constants";
+import type { GetNpcsDto } from "./dto/get-npcs.dto";
+import { NPCS_INDEX } from "./constants/meilisearch";
+import type { IndexNpcsDto } from "./dto/index-npcs.dto";
+import type { npcHitSchema } from "./dto/npc-hit.schema";
 
 type NpcHit = z.infer<typeof npcHitSchema>;
 
+@Injectable()
 export class NpcsService {
-  meilisearch: Meilisearch;
-
-  constructor() {
-    this.meilisearch = meilisearchClient;
-    const index = this.meilisearch.index(NPCS_INDEX);
-    index.updateFilterableAttributes(["name", "type", "world"]);
-  }
+  constructor(
+    @Inject(MEILISEARCH_CLIENT) private readonly meilisearch: Meilisearch,
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+  ) {}
 
   async getNpcs({ limit, search, world }: GetNpcsDto) {
     const index = this.meilisearch.index<NpcHit>(NPCS_INDEX);
     const hasMultipleSearchTerms = Array.isArray(search);
-    const searchTerm = hasMultipleSearchTerms ? "" : search;
+    const searchTerm = hasMultipleSearchTerms ? "" : (search ?? "");
 
     const filters: string[] = [];
 
     if (hasMultipleSearchTerms) {
-      filters.push(`name IN [${search.map((n) => `"${n}"`).join(", ")}]`);
+      filters.push(
+        `name IN [${search.map((name) => JSON.stringify(name)).join(", ")}]`,
+      );
     }
 
     if (world) {
@@ -49,7 +51,7 @@ export class NpcsService {
       );
       return uniqueHits;
     } catch (error) {
-      logger.error("NPC search error", { error });
+      this.logger.error("NPC search error", { error });
       return [];
     }
   }
@@ -62,7 +64,7 @@ export class NpcsService {
     );
 
     if (validNpcs.length === 0) {
-      logger.warn("No valid npcs to index (missing required fields)", {
+      this.logger.warn("No valid npcs to index (missing required fields)", {
         npcs: data.npcs,
       });
       return;
@@ -72,7 +74,7 @@ export class NpcsService {
       const invalidNpcs = data.npcs.filter(
         (npc) => !npc.world || !npc.id || !npc.name,
       );
-      logger.warn(
+      this.logger.warn(
         `Skipped ${invalidNpcs.length} npcs due to missing required fields`,
         { invalidNpcs },
       );
@@ -86,7 +88,7 @@ export class NpcsService {
     try {
       return index.addDocuments(npcsWithUid, { primaryKey: "uid" });
     } catch (error) {
-      logger.error("Error indexing npcs", { error });
+      this.logger.error("Error indexing npcs", { error });
     }
   }
 }
