@@ -4,43 +4,43 @@ import { httpInstrumentationMiddleware } from "@hono/otel";
 import type { Queue, Worker } from "bullmq";
 import { APP_CONFIG } from "./config/env.js";
 import { logger } from "./config/winston.config.js";
-import { createBattlesController } from "./battles/battles.controller.js";
+import { createBattleRoutes } from "./battles/battle-routes.js";
 import {
   createDeleteUserBattlesQueue,
   createDeleteUserBattlesWorker,
   type DeleteUserBattlesJobData,
-} from "./battles/delete-user-battles.processor.js";
-import { createInternalController } from "./battles/internal.controller.js";
-import { BattleAnalyticsService } from "./battles/services/battle-analytics.service.js";
-import { PaginationService } from "./battles/services/pagination.service.js";
-import { BattlesService } from "./battles/battles.service.js";
-import { healthzController } from "./healthz/healthz.controller.js";
+} from "./battles/delete-user-battles.job.js";
+import { createInternalRoutes } from "./battles/internal.routes.js";
+import { BattleAnalytics } from "./battles/battle-analytics.js";
+import { BattlePagination } from "./battles/battle-pagination.js";
+import { BattleStore } from "./battles/battle-store.js";
+import { healthzRoutes } from "./healthz/healthz.routes.js";
 import { AppError } from "./lib/errors/http-errors.js";
 import { userMetadataFromHeaders } from "./lib/middleware/auth.middleware.js";
 import type { AppVariables } from "./lib/hono.types.js";
-import { DrizzleService } from "./shared/modules/drizzle/drizzle.service.js";
-import { R2Service } from "./shared/modules/r2/r2.service.js";
-import { RedisService } from "./shared/modules/redis/redis.service.js";
+import { DrizzleDatabase } from "./shared/drizzle/drizzle-database.js";
+import { BattleArchive } from "./shared/r2/battle-archive.js";
+import { RedisCache } from "./shared/redis/redis-cache.js";
 
 export interface BattlelogAppDependencies {
-  battlesService: BattlesService;
-  battleAnalyticsService: BattleAnalyticsService;
-  drizzleService: DrizzleService;
+  battleStore: BattleStore;
+  battleAnalytics: BattleAnalytics;
+  drizzleDatabase: DrizzleDatabase;
   deleteUserBattlesQueue: Queue<DeleteUserBattlesJobData>;
 }
 
 export interface BattlelogAppContext extends BattlelogAppDependencies {
-  drizzleService: DrizzleService;
-  redisService: RedisService;
-  r2Service: R2Service;
+  drizzleDatabase: DrizzleDatabase;
+  redisCache: RedisCache;
+  battleArchive: BattleArchive;
   deleteUserBattlesWorker: Worker;
   close(): Promise<void>;
 }
 
 export function createApp({
-  battlesService,
-  battleAnalyticsService,
-  drizzleService,
+  battleStore,
+  battleAnalytics,
+  drizzleDatabase,
   deleteUserBattlesQueue,
 }: BattlelogAppDependencies) {
   const app = new OpenAPIHono<{
@@ -62,16 +62,16 @@ export function createApp({
   });
   app.use("*", userMetadataFromHeaders);
 
-  app.route("/healthz", healthzController);
+  app.route("/healthz", healthzRoutes);
   app.route(
     "/battles",
-    createBattlesController({
-      battlesService,
-      battleAnalyticsService,
-      drizzleService,
+    createBattleRoutes({
+      battleStore,
+      battleAnalytics,
+      drizzleDatabase,
     }),
   );
-  app.route("/internal", createInternalController({ deleteUserBattlesQueue }));
+  app.route("/internal", createInternalRoutes({ deleteUserBattlesQueue }));
 
   app.doc("/doc", {
     openapi: "3.1.0",
@@ -104,48 +104,48 @@ export function createApp({
 }
 
 export async function createAppContext(): Promise<BattlelogAppContext> {
-  const drizzleService = new DrizzleService(
+  const drizzleDatabase = new DrizzleDatabase(
     APP_CONFIG.postgresConnectionUri,
     logger,
   );
-  await drizzleService.connect();
+  await drizzleDatabase.connect();
 
-  const redisService = new RedisService(APP_CONFIG.redis);
-  redisService.connect();
+  const redisCache = new RedisCache(APP_CONFIG.redis);
+  redisCache.connect();
 
-  const r2Service = new R2Service(APP_CONFIG.r2, redisService, logger);
-  const battleAnalyticsService = new BattleAnalyticsService(
-    drizzleService,
-    redisService,
+  const battleArchive = new BattleArchive(APP_CONFIG.r2, redisCache, logger);
+  const battleAnalytics = new BattleAnalytics(
+    drizzleDatabase,
+    redisCache,
   );
-  const paginationService = new PaginationService(drizzleService);
-  const battlesService = new BattlesService(
-    drizzleService,
-    r2Service,
-    paginationService,
-    battleAnalyticsService,
+  const battlePagination = new BattlePagination(drizzleDatabase);
+  const battleStore = new BattleStore(
+    drizzleDatabase,
+    battleArchive,
+    battlePagination,
+    battleAnalytics,
   );
 
   const deleteUserBattlesQueue = createDeleteUserBattlesQueue(APP_CONFIG.redis);
   const deleteUserBattlesWorker = createDeleteUserBattlesWorker(
     APP_CONFIG.redis,
-    battlesService,
+    battleStore,
   );
 
   return {
-    drizzleService,
-    redisService,
-    r2Service,
-    battlesService,
-    battleAnalyticsService,
+    drizzleDatabase,
+    redisCache,
+    battleArchive,
+    battleStore,
+    battleAnalytics,
     deleteUserBattlesQueue,
     deleteUserBattlesWorker,
     async close() {
       await Promise.allSettled([
         deleteUserBattlesWorker.close(),
         deleteUserBattlesQueue.close(),
-        redisService.close(),
-        drizzleService.close(),
+        redisCache.close(),
+        drizzleDatabase.close(),
       ]);
     },
   };

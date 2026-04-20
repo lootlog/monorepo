@@ -1,5 +1,5 @@
 import { BattleProcessor } from "@lootlog/battle-processor";
-import type { CreateBattleDto } from "./dto/create-battle.dto.js";
+import type { CreateBattleInput } from "./schemas/create-battle.schema.js";
 
 describe("BattleProcessor", () => {
   let processor: BattleProcessor;
@@ -10,7 +10,7 @@ describe("BattleProcessor", () => {
 
   describe("calculateBattleDuration", () => {
     it("should calculate battle duration correctly", () => {
-      const battleData: CreateBattleDto = {
+      const battleData: CreateBattleInput = {
         accountId: "test-account",
         characterId: "char-1",
         world: "test-world",
@@ -31,7 +31,7 @@ describe("BattleProcessor", () => {
     });
 
     it("should throw error when no events provided", () => {
-      const battleData: CreateBattleDto = {
+      const battleData: CreateBattleInput = {
         accountId: "test-account",
         characterId: "char-1",
         world: "test-world",
@@ -116,7 +116,7 @@ describe("BattleProcessor", () => {
 
   describe("processBattle", () => {
     it("should process a simple 1v1 battle", () => {
-      const battleData: CreateBattleDto = {
+      const battleData: CreateBattleInput = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",
@@ -175,7 +175,7 @@ describe("BattleProcessor", () => {
     });
 
     it("should track critical hits and armor pierces", () => {
-      const battleData: CreateBattleDto = {
+      const battleData: CreateBattleInput = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",
@@ -218,7 +218,7 @@ describe("BattleProcessor", () => {
     });
 
     it("should track evasions and blocks", () => {
-      const battleData: CreateBattleDto = {
+      const battleData: CreateBattleInput = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",
@@ -266,7 +266,7 @@ describe("BattleProcessor", () => {
     });
 
     it("should track spell usage", () => {
-      const battleData: CreateBattleDto = {
+      const battleData: CreateBattleInput = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",
@@ -312,7 +312,7 @@ describe("BattleProcessor", () => {
     });
 
     it("should handle flee correctly", () => {
-      const battleData: CreateBattleDto = {
+      const battleData: CreateBattleInput = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",
@@ -354,7 +354,7 @@ describe("BattleProcessor", () => {
     });
 
     it("should calculate battle statistics", () => {
-      const battleData: CreateBattleDto = {
+      const battleData: CreateBattleInput = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",
@@ -407,7 +407,7 @@ describe("BattleProcessor", () => {
 
   describe("battle type determination", () => {
     it("should determine 2v2 battle type", () => {
-      const battleData: CreateBattleDto = {
+      const battleData: CreateBattleInput = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",
@@ -461,7 +461,7 @@ describe("BattleProcessor", () => {
 
   describe("damage calculations", () => {
     it("should track different damage types separately", () => {
-      const battleData: CreateBattleDto = {
+      const battleData: CreateBattleInput = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",
@@ -511,7 +511,7 @@ describe("BattleProcessor", () => {
     });
 
     it("should calculate damage dealt after defensive percentage", () => {
-      const battleData: CreateBattleDto = {
+      const battleData: CreateBattleInput = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",
@@ -554,7 +554,7 @@ describe("BattleProcessor", () => {
 
   describe("turn tracking", () => {
     it("should track normal attacks and spell casts separately", () => {
-      const battleData: CreateBattleDto = {
+      const battleData: CreateBattleInput = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",
@@ -600,7 +600,7 @@ describe("BattleProcessor", () => {
     });
 
     it("should track steps", () => {
-      const battleData: CreateBattleDto = {
+      const battleData: CreateBattleInput = {
         accountId: "test-account",
         characterId: "1",
         world: "test-world",

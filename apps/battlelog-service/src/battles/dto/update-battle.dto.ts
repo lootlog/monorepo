@@ -1,7 +1,0 @@
-import { z } from "@hono/zod-openapi";
-
-export const updateBattleSchema = z.object({
-  public: z.boolean(),
-});
-
-export type UpdateBattleDto = z.infer<typeof updateBattleSchema>;
