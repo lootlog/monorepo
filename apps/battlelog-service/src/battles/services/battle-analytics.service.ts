@@ -1,7 +1,16 @@
-import { Injectable, Logger, NotFoundException } from "@nestjs/common";
-import { and, eq, exists, gt, inArray, isNotNull, type SQL } from "drizzle-orm";
-import type { QueryBattleAnalyticsDto } from "src/battles/dto/query-battle-analytics.dto";
-import type { QueryBattleStatisticsDto } from "src/battles/dto/query-battle-statistics.dto";
+import {
+  and,
+  eq,
+  exists,
+  gt,
+  inArray,
+  isNotNull,
+  sql,
+  type SQL,
+} from "drizzle-orm";
+import { logger } from "../../config/winston.config.js";
+import type { QueryBattleAnalyticsDto } from "../dto/query-battle-analytics.dto.js";
+import type { QueryBattleStatisticsDto } from "../dto/query-battle-statistics.dto.js";
 import type {
   ProfessionWinRateDto,
   HeadToHeadPaginatedResponseDto,
@@ -11,17 +20,19 @@ import type {
   RatingGrowthDataPointDto,
   RatingDeltaByOpponentDto,
   PlayerVsPlayerPaginatedResponseDto,
-} from "src/battles/dto/battle-statistics-response.dto";
-import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
+} from "../dto/battle-statistics-response.dto.js";
+import { NotFoundError } from "../../lib/errors/http-errors.js";
+import { DrizzleService } from "../../shared/modules/drizzle/drizzle.service.js";
 import {
   battleWarriors,
   type battles,
-} from "src/shared/modules/drizzle/schema";
-import { RedisService } from "@lootlog/nest-shared";
+} from "../../shared/modules/drizzle/schema.js";
+import { RedisService } from "../../shared/modules/redis/redis.service.js";
 
-@Injectable()
 export class BattleAnalyticsService {
-  private readonly logger = new Logger(BattleAnalyticsService.name);
+  private readonly serviceLogger = logger.child({
+    context: BattleAnalyticsService.name,
+  });
   private readonly ANALYTICS_CACHE_PREFIX = "analytics";
   private readonly ANALYTICS_CACHE_TTL = 5 * 60;
 
@@ -75,7 +86,7 @@ export class BattleAnalyticsService {
         });
 
       if (!userCharacter) {
-        throw new NotFoundException(
+        throw new NotFoundError(
           `Character ${query.characterId} not found for user`,
         );
       }
@@ -117,7 +128,7 @@ export class BattleAnalyticsService {
     const fetchedBattles = await this.drizzle.db.query.battles.findMany({
       where: {
         RAW: (table: typeof battles) =>
-          this.buildAnalyticsWhere(table, analyticsParams),
+          this.analyticsWhereOrTrue(table, analyticsParams),
       },
       with: { warriors: true },
     });
@@ -201,7 +212,7 @@ export class BattleAnalyticsService {
     const fetchedBattles = await this.drizzle.db.query.battles.findMany({
       where: {
         RAW: (table: typeof battles) =>
-          this.buildAnalyticsWhere(table, {
+          this.analyticsWhereOrTrue(table, {
             userId,
             world: query.world,
             startDate,
@@ -307,7 +318,7 @@ export class BattleAnalyticsService {
     const fetchedBattles = await this.drizzle.db.query.battles.findMany({
       where: {
         RAW: (table: typeof battles) =>
-          this.buildAnalyticsWhere(table, {
+          this.analyticsWhereOrTrue(table, {
             userId,
             world: query.world,
             startDate,
@@ -551,7 +562,7 @@ export class BattleAnalyticsService {
     const fetchedBattles = await this.drizzle.db.query.battles.findMany({
       where: {
         RAW: (table: typeof battles) =>
-          this.buildAnalyticsWhere(table, {
+          this.analyticsWhereOrTrue(table, {
             userId,
             world: query.world,
             startDate,
@@ -673,7 +684,7 @@ export class BattleAnalyticsService {
     const fetchedBattles = await this.drizzle.db.query.battles.findMany({
       where: {
         RAW: (table: typeof battles) =>
-          this.buildAnalyticsWhere(table, {
+          this.analyticsWhereOrTrue(table, {
             userId,
             world: query.world,
             startDate,
@@ -803,7 +814,7 @@ export class BattleAnalyticsService {
               gt(battleWarriors.ph, 0),
             ),
           ];
-          return and(...conditions);
+          return and(...conditions) ?? sql`true`;
         },
       },
       with: { warriors: true },
@@ -863,10 +874,10 @@ export class BattleAnalyticsService {
         }
       }
     } catch (error) {
-      this.logger.warn(
-        `Failed to invalidate analytics cache for user ${userId}:`,
+      this.serviceLogger.warn("Failed to invalidate analytics cache", {
+        userId,
         error,
-      );
+      });
     }
   }
 
@@ -885,7 +896,7 @@ export class BattleAnalyticsService {
         });
 
       if (!userCharacter) {
-        throw new NotFoundException(
+        throw new NotFoundError(
           `Character ${query.characterId} not found for user`,
         );
       }
@@ -961,6 +972,23 @@ export class BattleAnalyticsService {
     return and(...conditions);
   }
 
+  private analyticsWhereOrTrue(
+    battlesRef: typeof battles,
+    params: {
+      userId: string;
+      world?: string;
+      startDate?: Date;
+      matchmaking?: boolean;
+      characterIds: string[];
+      phFilter?: boolean;
+      hasFlee?: boolean;
+      ratingNotNull?: boolean;
+      ratingDeltaNotNull?: boolean;
+    },
+  ): SQL {
+    return this.buildAnalyticsWhere(battlesRef, params) ?? sql`true`;
+  }
+
   async getRatingGrowthTimeSeries(
     query: QueryBattleStatisticsDto,
     userId: string,
@@ -984,7 +1012,7 @@ export class BattleAnalyticsService {
     const fetchedBattles = await this.drizzle.db.query.battles.findMany({
       where: {
         RAW: (table: typeof battles) =>
-          this.buildAnalyticsWhere(table, {
+          this.analyticsWhereOrTrue(table, {
             userId,
             world: query.world,
             startDate,
@@ -1051,7 +1079,7 @@ export class BattleAnalyticsService {
     const fetchedBattles = await this.drizzle.db.query.battles.findMany({
       where: {
         RAW: (table: typeof battles) =>
-          this.buildAnalyticsWhere(table, {
+          this.analyticsWhereOrTrue(table, {
             userId,
             world: query.world,
             startDate,
@@ -1198,7 +1226,7 @@ export class BattleAnalyticsService {
     const fetchedBattles = await this.drizzle.db.query.battles.findMany({
       where: {
         RAW: (table: typeof battles) =>
-          this.buildAnalyticsWhere(table, {
+          this.analyticsWhereOrTrue(table, {
             userId,
             world: query.world,
             startDate,

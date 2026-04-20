@@ -1,19 +1,7 @@
-import { Controller, Get } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
-import { HealthzService } from "src/healthz/healthz.service";
+import { Hono } from "hono";
 
-@ApiTags("health")
-@Controller("healthz")
-export class HealthzController {
-  constructor(private readonly healthzService: HealthzService) {}
+const healthz = new Hono({ strict: false });
 
-  @Get()
-  @ApiOperation({
-    summary: "Health check",
-    description: "Check the health status of the API",
-  })
-  @ApiResponse({ status: 200, description: "API is healthy" })
-  healthCheck() {
-    return this.healthzService.healthCheck();
-  }
-}
+healthz.get("/", (c) => c.text("OK"));
+
+export { healthz as healthzController };

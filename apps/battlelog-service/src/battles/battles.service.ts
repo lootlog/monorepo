@@ -1,10 +1,4 @@
 import {
-  Injectable,
-  Logger,
-  NotFoundException,
-  ForbiddenException,
-} from "@nestjs/common";
-import {
   and,
   desc,
   eq,
@@ -19,25 +13,27 @@ import {
   or,
   type SQL,
 } from "drizzle-orm";
-import type { CreateBattleDto } from "src/battles/dto/create-battle.dto";
-import type { QueryBattlesDto } from "src/battles/dto/query-battles.dto";
-import type { UpdateBattleDto } from "src/battles/dto/update-battle.dto";
-import type { PaginationOptions } from "src/battles/interfaces/pagination.interface";
-import { BattleAnalyticsService } from "src/battles/services/battle-analytics.service";
-import { PaginationService } from "src/battles/services/pagination.service";
-import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
+import {
+  BattleProcessor,
+  type BattleAnalysis,
+  type ParsedMove,
+  type Warrior,
+} from "@lootlog/battle-processor";
+import { logger } from "../config/winston.config.js";
+import type { CreateBattleDto } from "./dto/create-battle.dto.js";
+import type { QueryBattlesDto } from "./dto/query-battles.dto.js";
+import type { UpdateBattleDto } from "./dto/update-battle.dto.js";
+import type { PaginationOptions } from "./interfaces/pagination.interface.js";
+import { BattleAnalyticsService } from "./services/battle-analytics.service.js";
+import { PaginationService } from "./services/pagination.service.js";
+import { ForbiddenError, NotFoundError } from "../lib/errors/http-errors.js";
+import { DrizzleService } from "../shared/modules/drizzle/drizzle.service.js";
 import {
   battles,
   battleWarriors,
   userCharacters,
-} from "src/shared/modules/drizzle/schema";
-import { R2Service } from "src/shared/modules/r2/r2.service";
-import {
-  BattleProcessor,
-  type Warrior,
-  type BattleAnalysis,
-  type ParsedMove,
-} from "@lootlog/battle-processor";
+} from "../shared/modules/drizzle/schema.js";
+import { R2Service } from "../shared/modules/r2/r2.service.js";
 import type {
   BattleWithRelations,
   CreateBattleParams,
@@ -46,11 +42,12 @@ import type {
   GetAllBattlesResult,
   IBattlesService,
   RawBattleData,
-} from "./interfaces/battle-service.interface";
+} from "./interfaces/battle-service.interface.js";
 
-@Injectable()
 export class BattlesService implements IBattlesService {
-  private readonly logger = new Logger(BattlesService.name);
+  private readonly serviceLogger = logger.child({
+    context: BattlesService.name,
+  });
 
   constructor(
     private readonly drizzle: DrizzleService,
@@ -93,7 +90,7 @@ export class BattlesService implements IBattlesService {
         battleId: battle.id,
       };
     } catch (error) {
-      this.logger.error(`Failed to create battle for user ${userId}:`, error);
+      this.serviceLogger.error("Failed to create battle", { userId, error });
       throw new Error(
         `Battle creation failed: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
@@ -118,7 +115,7 @@ export class BattlesService implements IBattlesService {
         },
       };
     } catch (error) {
-      this.logger.error("Failed to retrieve public battles:", error);
+      this.serviceLogger.error("Failed to retrieve public battles", { error });
       throw new Error(
         `Failed to retrieve public battles: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
@@ -151,7 +148,9 @@ export class BattlesService implements IBattlesService {
         },
       };
     } catch (error) {
-      this.logger.error("Failed to retrieve dashboard battles:", error);
+      this.serviceLogger.error("Failed to retrieve dashboard battles", {
+        error,
+      });
       throw new Error(
         `Failed to retrieve dashboard battles: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
@@ -187,7 +186,7 @@ export class BattlesService implements IBattlesService {
 
       return { characters };
     } catch (error) {
-      this.logger.error("Failed to retrieve user characters:", error);
+      this.serviceLogger.error("Failed to retrieve user characters", { error });
       throw new Error(
         `Failed to retrieve user characters: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
@@ -208,7 +207,7 @@ export class BattlesService implements IBattlesService {
 
       return { worlds };
     } catch (error) {
-      this.logger.error("Failed to retrieve user worlds:", error);
+      this.serviceLogger.error("Failed to retrieve user worlds", { error });
       throw new Error(
         `Failed to retrieve user worlds: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
@@ -224,13 +223,14 @@ export class BattlesService implements IBattlesService {
         await this.checkBattleAccess(battleId, requestingUserId);
       }
 
-      const rawData = await this.r2Service.getBattleData(battleId);
+      const rawData =
+        await this.r2Service.getBattleData<RawBattleData>(battleId);
       return rawData;
     } catch (error) {
-      this.logger.error(
-        `Failed to retrieve raw data for battle ${battleId}:`,
+      this.serviceLogger.error("Failed to retrieve raw battle data", {
+        battleId,
         error,
-      );
+      });
       throw error;
     }
   }
@@ -249,7 +249,7 @@ export class BattlesService implements IBattlesService {
     });
 
     if (!battle) {
-      throw new NotFoundException(`Battle with ID ${battleId} not found`);
+      throw new NotFoundError(`Battle with ID ${battleId} not found`);
     }
 
     return battle;
@@ -269,7 +269,7 @@ export class BattlesService implements IBattlesService {
       .returning();
 
     if (updated.length === 0) {
-      throw new NotFoundException(`Battle with ID ${battleId} not found`);
+      throw new NotFoundError(`Battle with ID ${battleId} not found`);
     }
 
     const battle = await this.drizzle.db.query.battles.findFirst({
@@ -278,7 +278,7 @@ export class BattlesService implements IBattlesService {
     });
 
     if (!battle) {
-      throw new NotFoundException(`Battle with ID ${battleId} not found`);
+      throw new NotFoundError(`Battle with ID ${battleId} not found`);
     }
 
     return battle;
@@ -309,13 +309,17 @@ export class BattlesService implements IBattlesService {
     try {
       await this.r2Service.deleteBattleDataBatch(battleIds);
     } catch (error) {
-      this.logger.warn(
-        `Failed to delete R2 data for user ${userId}: ${battleIds.length} battles`,
+      this.serviceLogger.warn("Failed to delete user R2 battle data", {
+        userId,
+        battleCount: battleIds.length,
         error,
-      );
+      });
     }
 
-    this.logger.log(`Deleted ${battleIds.length} battles for user ${userId}`);
+    this.serviceLogger.info("Deleted user battles", {
+      userId,
+      battleCount: battleIds.length,
+    });
 
     return { deletedCount: battleIds.length };
   }
@@ -327,16 +331,16 @@ export class BattlesService implements IBattlesService {
       .returning({ id: battles.id });
 
     if (deleted.length === 0) {
-      throw new NotFoundException(`Battle with ID ${battleId} not found`);
+      throw new NotFoundError(`Battle with ID ${battleId} not found`);
     }
 
     try {
       await this.r2Service.deleteBattleData(battleId);
     } catch (error) {
-      this.logger.warn(
-        `Failed to delete R2 data for battle ${battleId}`,
+      this.serviceLogger.warn("Failed to delete battle R2 data", {
+        battleId,
         error,
-      );
+      });
     }
 
     return { message: "Battle deleted successfully" };
@@ -349,9 +353,7 @@ export class BattlesService implements IBattlesService {
     });
 
     if (!battle) {
-      throw new NotFoundException(
-        `Public battle with ID ${battleId} not found`,
-      );
+      throw new NotFoundError(`Public battle with ID ${battleId} not found`);
     }
 
     return battle;
@@ -364,9 +366,7 @@ export class BattlesService implements IBattlesService {
     });
 
     if (!battle) {
-      throw new NotFoundException(
-        `Public battle with ID ${battleId} not found`,
-      );
+      throw new NotFoundError(`Public battle with ID ${battleId} not found`);
     }
 
     return await this.r2Service.getBattleData(battle.id);
@@ -379,7 +379,7 @@ export class BattlesService implements IBattlesService {
 
       return analysis;
     } catch (error) {
-      this.logger.error("Failed to analyze battle data:", error);
+      this.serviceLogger.error("Failed to analyze battle data", { error });
       throw new Error(
         `Battle analysis failed: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
@@ -538,11 +538,11 @@ export class BattlesService implements IBattlesService {
     });
 
     if (!battle) {
-      throw new NotFoundException(`Battle with ID ${battleId} not found`);
+      throw new NotFoundError(`Battle with ID ${battleId} not found`);
     }
 
     if (!battle.public && battle.userId !== requestingUserId) {
-      throw new ForbiddenException("Access denied: Battle is private");
+      throw new ForbiddenError("Access denied: Battle is private");
     }
   }
 
@@ -573,10 +573,11 @@ export class BattlesService implements IBattlesService {
           set: { name, icon, lastSeenAt: new Date(), updatedAt: new Date() },
         });
     } catch (error) {
-      this.logger.warn(
-        `Failed to upsert character ${characterId} for user ${userId}`,
+      this.serviceLogger.warn("Failed to upsert character", {
+        characterId,
+        userId,
         error,
-      );
+      });
     }
   }
 
@@ -727,7 +728,7 @@ export class BattlesService implements IBattlesService {
 
       return battle;
     } catch (error) {
-      this.logger.error("Failed to store battle in database:", error);
+      this.serviceLogger.error("Failed to store battle in database", { error });
       throw new Error(
         `Database storage failed: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
@@ -749,10 +750,10 @@ export class BattlesService implements IBattlesService {
 
       await this.r2Service.uploadBattleData(battleId, rawBattleData);
     } catch (error) {
-      this.logger.error(
-        `Failed to store raw battle data for ${battleId}:`,
+      this.serviceLogger.error("Failed to store raw battle data", {
+        battleId,
         error,
-      );
+      });
       throw new Error(
         `R2 storage failed: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
@@ -790,7 +791,7 @@ export class BattlesService implements IBattlesService {
 
       return { warriors: results };
     } catch (error) {
-      this.logger.error("Failed to search warriors:", error);
+      this.serviceLogger.error("Failed to search warriors", { error });
       throw error;
     }
   }

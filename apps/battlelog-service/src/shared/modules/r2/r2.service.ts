@@ -1,33 +1,28 @@
 import {
-  S3Client,
-  PutObjectCommand,
-  GetObjectCommand,
   DeleteObjectCommand,
+  GetObjectCommand,
+  PutObjectCommand,
+  S3Client,
 } from "@aws-sdk/client-s3";
-import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { ConfigKey } from "src/config/config-key.enum";
-import type { R2Config } from "src/config/r2.config";
-import { RedisService } from "@lootlog/nest-shared";
-import { gzipSync, gunzipSync } from "node:zlib";
+import { gunzipSync, gzipSync } from "node:zlib";
+import type { Logger } from "winston";
+import type { BattlelogAppConfig } from "../../../config/env.js";
+import { RedisService } from "../redis/redis.service.js";
 
-@Injectable()
+type R2Config = BattlelogAppConfig["r2"];
+
 export class R2Service {
-  private readonly logger = new Logger(R2Service.name);
   private readonly client: S3Client;
-  private readonly config: R2Config;
-
   private readonly CACHE_PREFIX = "battle:raw";
   private readonly LRU_KEY = "battle:raw:lru";
   private readonly MAX_CACHE_SIZE = 1000;
-  private readonly CACHE_TTL = 24 * 60 * 60; // 24 hours
+  private readonly CACHE_TTL = 24 * 60 * 60;
 
   constructor(
-    private readonly configService: ConfigService,
+    private readonly config: R2Config,
     private readonly redisService: RedisService,
+    private readonly winstonLogger: Logger,
   ) {
-    this.config = this.configService.get<R2Config>(ConfigKey.R2)!;
-
     this.client = new S3Client({
       region: this.config.region,
       endpoint: this.config.endpoint,
@@ -37,60 +32,62 @@ export class R2Service {
       },
     });
 
-    this.logger.log(
-      `R2 client initialized for bucket: ${this.config.bucketName}`,
-    );
+    this.winstonLogger.info("R2 client initialized", {
+      bucketName: this.config.bucketName,
+    });
   }
 
-  async uploadBattleData(battleId: string, data: any): Promise<void> {
+  async uploadBattleData(battleId: string, data: unknown): Promise<void> {
     try {
       const key = `battles/${battleId}.json`;
       const jsonString = JSON.stringify(data);
       const compressedData = gzipSync(jsonString);
 
-      const command = new PutObjectCommand({
-        Bucket: this.config.bucketName,
-        Key: key,
-        Body: compressedData,
-        ContentType: "application/json",
-        ContentEncoding: "gzip",
-        Metadata: {
-          "battle-id": battleId,
-          "uploaded-at": new Date().toISOString(),
-          compressed: "gzip",
-        },
-      });
-
-      await this.client.send(command);
-      this.logger.log(
-        `Battle data uploaded successfully for battle ${battleId} (compressed: ${jsonString.length} -> ${compressedData.length} bytes)`,
+      await this.client.send(
+        new PutObjectCommand({
+          Bucket: this.config.bucketName,
+          Key: key,
+          Body: compressedData,
+          ContentType: "application/json",
+          ContentEncoding: "gzip",
+          Metadata: {
+            "battle-id": battleId,
+            "uploaded-at": new Date().toISOString(),
+            compressed: "gzip",
+          },
+        }),
       );
+
+      this.winstonLogger.info("Battle data uploaded successfully", {
+        battleId,
+        compressedBytes: compressedData.length,
+        originalBytes: jsonString.length,
+      });
     } catch (error) {
-      this.logger.error(`Failed to upload battle data for ${battleId}:`, error);
+      this.winstonLogger.error("Failed to upload battle data", {
+        battleId,
+        error,
+      });
       throw error;
     }
   }
 
-  async getBattleData(battleId: string): Promise<any> {
+  async getBattleData<T>(battleId: string): Promise<T> {
     try {
       const cacheKey = `${this.CACHE_PREFIX}:${battleId}`;
-
       const cachedData = await this.redisService.get(cacheKey);
+
       if (cachedData) {
-        this.logger.debug(`Cache hit for battle ${battleId}`);
         await this.updateLRU(battleId);
-        return JSON.parse(cachedData);
+        return JSON.parse(cachedData) as T;
       }
 
-      this.logger.debug(`Cache miss for battle ${battleId}, fetching from R2`);
-      const key = `battles/${battleId}.json`;
-
-      const command = new GetObjectCommand({
-        Bucket: this.config.bucketName,
-        Key: key,
-      });
-
-      const response = await this.client.send(command);
+      const response = await this.client.send(
+        new GetObjectCommand({
+          Bucket: this.config.bucketName,
+          Key: `battles/${battleId}.json`,
+        }),
+      );
 
       if (!response.Body) {
         throw new Error(`No data found for battle ${battleId}`);
@@ -100,76 +97,66 @@ export class R2Service {
         response.Metadata?.compressed === "gzip" ||
         response.ContentEncoding === "gzip";
 
-      let decompressedData: string;
+      const payload = isCompressed
+        ? gunzipSync(await response.Body.transformToByteArray()).toString(
+            "utf-8",
+          )
+        : await response.Body.transformToString();
 
-      if (isCompressed) {
-        const compressedBuffer = await response.Body.transformToByteArray();
-        const decompressedBuffer = gunzipSync(compressedBuffer);
-        decompressedData = decompressedBuffer.toString("utf-8");
-        this.logger.debug(`Decompressed battle ${battleId} data`);
-      } else {
-        decompressedData = await response.Body.transformToString();
-        this.logger.debug(
-          `Battle ${battleId} data is not compressed (legacy format)`,
-        );
-      }
+      await this.cacheData(battleId, payload);
 
-      const parsedData = JSON.parse(decompressedData);
-
-      await this.cacheData(battleId, decompressedData);
-      this.logger.log(
-        `Battle data retrieved from R2 and cached for battle ${battleId}`,
-      );
-
-      return parsedData;
+      return JSON.parse(payload) as T;
     } catch (error) {
-      this.logger.error(
-        `Failed to retrieve battle data for ${battleId}:`,
+      this.winstonLogger.error("Failed to retrieve battle data", {
+        battleId,
         error,
-      );
+      });
       throw error;
     }
   }
 
   async deleteBattleData(battleId: string): Promise<void> {
     try {
-      const key = `battles/${battleId}.json`;
-
-      const command = new DeleteObjectCommand({
-        Bucket: this.config.bucketName,
-        Key: key,
-      });
-
-      await this.client.send(command);
-      await this.deleteCachedData(battleId);
-      this.logger.log(
-        `Battle data deleted successfully for battle ${battleId}`,
+      await this.client.send(
+        new DeleteObjectCommand({
+          Bucket: this.config.bucketName,
+          Key: `battles/${battleId}.json`,
+        }),
       );
+
+      await this.deleteCachedData(battleId);
+      this.winstonLogger.info("Battle data deleted successfully", { battleId });
     } catch (error) {
-      this.logger.error(`Failed to delete battle data for ${battleId}:`, error);
+      this.winstonLogger.error("Failed to delete battle data", {
+        battleId,
+        error,
+      });
       throw error;
     }
   }
 
   async deleteBattleDataBatch(battleIds: string[]): Promise<void> {
-    if (battleIds.length === 0) return;
+    if (battleIds.length === 0) {
+      return;
+    }
 
     const results = await Promise.allSettled(
       battleIds.map(async (battleId) => {
-        const key = `battles/${battleId}.json`;
-        const command = new DeleteObjectCommand({
-          Bucket: this.config.bucketName,
-          Key: key,
-        });
-        await this.client.send(command);
+        await this.client.send(
+          new DeleteObjectCommand({
+            Bucket: this.config.bucketName,
+            Key: `battles/${battleId}.json`,
+          }),
+        );
       }),
     );
 
-    const failed = results.filter((r) => r.status === "rejected");
+    const failed = results.filter((result) => result.status === "rejected");
     if (failed.length > 0) {
-      this.logger.warn(
-        `Failed to delete ${failed.length}/${battleIds.length} R2 objects`,
-      );
+      this.winstonLogger.warn("Failed to delete some R2 objects", {
+        failedCount: failed.length,
+        totalCount: battleIds.length,
+      });
     }
 
     const redis = this.redisService.getClient();
@@ -179,38 +166,37 @@ export class R2Service {
       pipeline.zrem(this.LRU_KEY, battleId);
     }
     await pipeline.exec();
-
-    this.logger.log(
-      `Batch deleted ${battleIds.length - failed.length}/${battleIds.length} battle files from R2`,
-    );
   }
 
   private async cacheData(battleId: string, data: string): Promise<void> {
     try {
-      const cacheKey = `${this.CACHE_PREFIX}:${battleId}`;
-      const timestamp = Date.now();
-
       const redis = this.redisService.getClient();
       const pipeline = redis.pipeline();
+      const cacheKey = `${this.CACHE_PREFIX}:${battleId}`;
 
       pipeline.set(cacheKey, data, "EX", this.CACHE_TTL);
-      pipeline.zadd(this.LRU_KEY, timestamp, battleId);
+      pipeline.zadd(this.LRU_KEY, Date.now(), battleId);
 
       await pipeline.exec();
-
       await this.enforceLRULimit();
     } catch (error) {
-      this.logger.warn(`Failed to cache data for battle ${battleId}:`, error);
+      this.winstonLogger.warn("Failed to cache battle data", {
+        battleId,
+        error,
+      });
     }
   }
 
   private async updateLRU(battleId: string): Promise<void> {
     try {
-      const timestamp = Date.now();
-      const redis = this.redisService.getClient();
-      await redis.zadd(this.LRU_KEY, timestamp, battleId);
+      await this.redisService
+        .getClient()
+        .zadd(this.LRU_KEY, Date.now(), battleId);
     } catch (error) {
-      this.logger.warn(`Failed to update LRU for battle ${battleId}:`, error);
+      this.winstonLogger.warn("Failed to update R2 LRU cache", {
+        battleId,
+        error,
+      });
     }
   }
 
@@ -219,47 +205,42 @@ export class R2Service {
       const redis = this.redisService.getClient();
       const count = await redis.zcard(this.LRU_KEY);
 
-      if (count > this.MAX_CACHE_SIZE) {
-        const toRemove = count - this.MAX_CACHE_SIZE;
-        const oldestBattles = await redis.zrange(this.LRU_KEY, 0, toRemove - 1);
-
-        if (oldestBattles.length > 0) {
-          const pipeline = redis.pipeline();
-
-          for (const battleId of oldestBattles) {
-            const cacheKey = `${this.CACHE_PREFIX}:${battleId}`;
-            pipeline.del(cacheKey);
-          }
-
-          pipeline.zremrangebyrank(this.LRU_KEY, 0, toRemove - 1);
-          await pipeline.exec();
-
-          this.logger.log(
-            `Evicted ${oldestBattles.length} battles from cache (LRU limit: ${this.MAX_CACHE_SIZE})`,
-          );
-        }
+      if (count <= this.MAX_CACHE_SIZE) {
+        return;
       }
+
+      const toRemove = count - this.MAX_CACHE_SIZE;
+      const oldestBattles = await redis.zrange(this.LRU_KEY, 0, toRemove - 1);
+
+      if (oldestBattles.length === 0) {
+        return;
+      }
+
+      const pipeline = redis.pipeline();
+      for (const battleId of oldestBattles) {
+        pipeline.del(`${this.CACHE_PREFIX}:${battleId}`);
+      }
+      pipeline.zremrangebyrank(this.LRU_KEY, 0, toRemove - 1);
+      await pipeline.exec();
     } catch (error) {
-      this.logger.warn("Failed to enforce LRU limit:", error);
+      this.winstonLogger.warn("Failed to enforce R2 cache LRU limit", {
+        error,
+      });
     }
   }
 
   private async deleteCachedData(battleId: string): Promise<void> {
     try {
-      const cacheKey = `${this.CACHE_PREFIX}:${battleId}`;
       const redis = this.redisService.getClient();
       const pipeline = redis.pipeline();
-
-      pipeline.del(cacheKey);
+      pipeline.del(`${this.CACHE_PREFIX}:${battleId}`);
       pipeline.zrem(this.LRU_KEY, battleId);
-
       await pipeline.exec();
-      this.logger.debug(`Removed battle ${battleId} from cache`);
     } catch (error) {
-      this.logger.warn(
-        `Failed to delete cached data for battle ${battleId}:`,
+      this.winstonLogger.warn("Failed to delete cached battle data", {
+        battleId,
         error,
-      );
+      });
     }
   }
 }

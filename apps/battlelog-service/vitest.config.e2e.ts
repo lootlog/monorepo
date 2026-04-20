@@ -1,24 +1,20 @@
-import swc from "unplugin-swc";
+import path from "node:path";
 import { defineConfig } from "vitest/config";
-import {
-  createNestVitestConfig,
-  nestSwcPluginOptions,
-} from "../../tools/vitest/create-nest-vitest-config";
-
-const swcPluginOptions = nestSwcPluginOptions satisfies Parameters<
-  typeof swc.vite
->[0];
 
 export default defineConfig({
-  ...createNestVitestConfig({
-    rootDir: __dirname,
-    include: ["test/**/*.e2e-spec.ts"],
+  resolve: {
     alias: {
-      "@lootlog/battle-processor":
+      "@lootlog/battle-processor": path.resolve(
+        __dirname,
         "../../packages/battle-processor/src/index.ts",
+      ),
     },
+  },
+  test: {
+    include: ["test/**/*.e2e-spec.ts"],
+    environment: "node",
     fileParallelism: false,
+    globals: true,
     setupFiles: ["./vitest.setup.ts"],
-  }),
-  plugins: [swc.vite(swcPluginOptions)],
+  },
 });

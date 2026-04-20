@@ -1,5 +1,5 @@
 import { BattleProcessor } from "@lootlog/battle-processor";
-import type { CreateBattleDto } from "./dto/create-battle.dto";
+import type { CreateBattleDto } from "./dto/create-battle.dto.js";
 
 describe("BattleProcessor", () => {
   let processor: BattleProcessor;

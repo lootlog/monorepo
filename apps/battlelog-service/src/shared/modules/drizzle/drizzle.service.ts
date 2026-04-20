@@ -1,52 +1,37 @@
-import {
-  Inject,
-  Injectable,
-  Logger,
-  type OnModuleDestroy,
-  type OnModuleInit,
-} from "@nestjs/common";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import pg from "pg";
+import { drizzle } from "drizzle-orm/node-postgres";
+import type { Logger } from "winston";
+import { relations } from "./relations.js";
 
-import { relations } from "./relations";
-
-@Injectable()
-export class DrizzleService implements OnModuleInit, OnModuleDestroy {
-  private readonly logger = new Logger(DrizzleService.name);
-  private pool: pg.Pool;
-  public db;
+export class DrizzleService {
+  private readonly pool: pg.Pool;
+  public readonly db;
 
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly winstonLogger: Logger,
+    connectionString: string,
+    private readonly winstonLogger: Logger,
   ) {
-    this.pool = new pg.Pool({
-      connectionString: process.env.POSTGRESQL_CONNECTION_URI,
-    });
+    this.pool = new pg.Pool({ connectionString });
     this.pool.on("error", (error) => {
-      this.winstonLogger.error(
-        "Unexpected idle PostgreSQL client error",
-        error.stack,
-      );
+      this.winstonLogger.error("Unexpected idle PostgreSQL client error", {
+        error: error.stack,
+      });
     });
     this.db = drizzle({ client: this.pool, relations });
   }
 
-  async onModuleInit() {
+  async connect() {
     try {
       const client = await this.pool.connect();
       client.release();
-      this.logger.log("Database connection established");
+      this.winstonLogger.info("Database connection established");
     } catch (error) {
-      this.winstonLogger.log(
-        "error",
-        `Failed to connect to database: ${error}`,
-      );
+      this.winstonLogger.error("Failed to connect to database", { error });
       throw error;
     }
   }
 
-  async onModuleDestroy() {
+  async close() {
     await this.pool.end();
   }
 }

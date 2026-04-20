@@ -1,12 +1,12 @@
-import { Injectable, Logger } from "@nestjs/common";
 import { and, count, gt, lt, or, eq, sql, type SQL } from "drizzle-orm";
-import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
-import { battles } from "src/shared/modules/drizzle/schema";
+import { logger } from "../../config/winston.config.js";
+import { DrizzleService } from "../../shared/modules/drizzle/drizzle.service.js";
+import { battles } from "../../shared/modules/drizzle/schema.js";
 import type {
   CursorPagination,
   PaginationOptions,
   PaginationResult,
-} from "../interfaces/pagination.interface";
+} from "../interfaces/pagination.interface.js";
 
 type WhereBuilder = (table: typeof battles) => SQL | undefined;
 
@@ -15,9 +15,10 @@ interface DecodedCursor {
   id: string;
 }
 
-@Injectable()
 export class PaginationService {
-  private readonly logger = new Logger(PaginationService.name);
+  private readonly serviceLogger = logger.child({
+    context: PaginationService.name,
+  });
 
   constructor(private readonly drizzle: DrizzleService) {}
 
@@ -52,7 +53,9 @@ export class PaginationService {
       where: {
         RAW: (table: typeof battles) => {
           const base = whereBuilder(table);
-          return this.buildCursorWhere(table, base, cursor, options);
+          return (
+            this.buildCursorWhere(table, base, cursor, options) ?? sql`true`
+          );
         },
       },
       limit: size + 1,
@@ -110,7 +113,7 @@ export class PaginationService {
 
     const decoded = this.decodeCursor(cursor);
     if (!decoded) {
-      this.logger.warn(`Invalid cursor format: ${cursor}`);
+      this.serviceLogger.warn("Invalid cursor format", { cursor });
       return where;
     }
 
@@ -142,7 +145,9 @@ export class PaginationService {
         .where(where);
       return result[0]?.count ?? 0;
     } catch (error) {
-      this.logger.warn("Failed to get estimated count, falling back", error);
+      this.serviceLogger.warn("Failed to get estimated count, falling back", {
+        error,
+      });
       const result = await this.drizzle.db
         .select({ count: count() })
         .from(battles)

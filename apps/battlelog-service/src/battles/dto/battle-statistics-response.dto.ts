@@ -1,135 +1,184 @@
-export interface ProfessionWinRateDto {
-  prof: string;
-  wins: number;
-  losses: number;
-  totalBattles: number;
-  winRate: number;
-}
+import { z } from "@hono/zod-openapi";
 
-export interface HeadToHeadRecordDto {
-  opponentId: string;
-  opponentName: string;
-  opponentIcon: string;
-  opponentProf: string;
-  opponentLvl: number;
-  wins: number;
-  losses: number;
-  totalBattles: number;
-  winRate: number;
-  lastBattleDate: string;
-  totalRatingDelta?: number;
-  avgRatingDelta?: number;
-}
+export const professionWinRateSchema = z
+  .object({
+    prof: z.string(),
+    wins: z.number(),
+    losses: z.number(),
+    totalBattles: z.number(),
+    winRate: z.number(),
+  })
+  .openapi("ProfessionWinRate");
 
-export interface StreakDto {
-  current: {
-    type: "wins" | "losses" | "none";
-    count: number;
-  };
-  longest: {
-    wins: number;
-    losses: number;
-  };
-}
+export const headToHeadRecordSchema = z
+  .object({
+    opponentId: z.string(),
+    opponentName: z.string(),
+    opponentIcon: z.string(),
+    opponentProf: z.string(),
+    opponentLvl: z.number(),
+    wins: z.number(),
+    losses: z.number(),
+    totalBattles: z.number(),
+    winRate: z.number(),
+    lastBattleDate: z.string(),
+    totalRatingDelta: z.number().optional(),
+    avgRatingDelta: z.number().optional(),
+  })
+  .openapi("HeadToHeadRecord");
 
-export interface BattleDurationStatsDto {
-  avgWinDuration: number;
-  avgLossDuration: number;
-  fastest: {
-    duration: number;
-    battleId: string;
-  } | null;
-  longest: {
-    duration: number;
-    battleId: string;
-  } | null;
-}
+export const streakSchema = z
+  .object({
+    current: z.object({
+      type: z.enum(["wins", "losses", "none"]),
+      count: z.number(),
+    }),
+    longest: z.object({
+      wins: z.number(),
+      losses: z.number(),
+    }),
+  })
+  .openapi("Streak");
 
-export interface PhGrowthDataPointDto {
-  date: string;
-  ph: number;
-  cumulativePh: number;
-  battleId: string;
-}
+export const battleDurationStatsSchema = z
+  .object({
+    avgWinDuration: z.number(),
+    avgLossDuration: z.number(),
+    fastest: z
+      .object({
+        duration: z.number(),
+        battleId: z.string(),
+      })
+      .nullable(),
+    longest: z
+      .object({
+        duration: z.number(),
+        battleId: z.string(),
+      })
+      .nullable(),
+  })
+  .openapi("BattleDurationStats");
 
-export interface HeadToHeadPaginatedResponseDto {
-  records: HeadToHeadRecordDto[];
-  pagination: {
-    size: number;
-    hasNext: boolean;
-    hasPrev: boolean;
-    nextCursor?: string;
-    previousCursor?: string;
-    total?: number;
-  };
-  meta: {
-    performance: {
-      queryTime: number;
-      countTime?: number;
-      totalItems?: number;
-      estimatedTotal?: boolean;
-    };
-  };
-}
+export const phGrowthDataPointSchema = z
+  .object({
+    date: z.string(),
+    ph: z.number(),
+    cumulativePh: z.number(),
+    battleId: z.string(),
+  })
+  .openapi("PhGrowthDataPoint");
 
-export interface RatingGrowthDataPointDto {
-  date: string;
-  ratingDelta: number;
-  rating: number;
-  battleId: string;
-}
+export const paginationPerformanceSchema = z.object({
+  queryTime: z.number(),
+  countTime: z.number().optional(),
+  totalItems: z.number().optional(),
+  estimatedTotal: z.boolean().optional(),
+});
 
-export interface RatingDeltaByOpponentDto {
-  opponentId: string;
-  opponentName: string;
-  opponentIcon: string;
-  opponentProf: string;
-  opponentLvl: number;
-  totalRatingDelta: number;
-  wins: number;
-  losses: number;
-  totalBattles: number;
-  avgRatingDelta: number;
-  lastBattleDate: string;
-}
+export const headToHeadPaginatedResponseSchema = z
+  .object({
+    records: z.array(headToHeadRecordSchema),
+    pagination: z.object({
+      size: z.number(),
+      hasNext: z.boolean(),
+      hasPrev: z.boolean(),
+      nextCursor: z.string().optional(),
+      previousCursor: z.string().optional(),
+      total: z.number().optional(),
+    }),
+    meta: z.object({
+      performance: paginationPerformanceSchema,
+    }),
+  })
+  .openapi("HeadToHeadPaginatedResponse");
 
-export interface PlayerVsPlayerBattleDto {
-  battleId: string;
-  createdAt: string;
-  duration: number;
-  winner: string;
-  loser: string;
-  ratingDelta: number;
-  userRating: number;
-  opponentRating: number;
-  userWarrior: {
-    name: string;
-    lvl: number;
-    prof: string;
-    icon: string;
-  };
-  opponentWarrior: {
-    name: string;
-    lvl: number;
-    prof: string;
-    icon: string;
-  };
-}
+export const ratingGrowthDataPointSchema = z
+  .object({
+    date: z.string(),
+    ratingDelta: z.number(),
+    rating: z.number(),
+    battleId: z.string(),
+  })
+  .openapi("RatingGrowthDataPoint");
 
-export interface PlayerVsPlayerPaginatedResponseDto {
-  battles: PlayerVsPlayerBattleDto[];
-  pagination: {
-    size: number;
-    hasNext: boolean;
-    hasPrev: boolean;
-    nextCursor?: string;
-    previousCursor?: string;
-    total?: number;
-  };
-  meta: {
-    performance: {
-      queryTime: number;
-      totalItems?: number;
-    };
-  };
-}
+export const ratingDeltaByOpponentSchema = z
+  .object({
+    opponentId: z.string(),
+    opponentName: z.string(),
+    opponentIcon: z.string(),
+    opponentProf: z.string(),
+    opponentLvl: z.number(),
+    totalRatingDelta: z.number(),
+    wins: z.number(),
+    losses: z.number(),
+    totalBattles: z.number(),
+    avgRatingDelta: z.number(),
+    lastBattleDate: z.string(),
+  })
+  .openapi("RatingDeltaByOpponent");
+
+export const playerVsPlayerBattleSchema = z
+  .object({
+    battleId: z.string(),
+    createdAt: z.string(),
+    duration: z.number(),
+    winner: z.string(),
+    loser: z.string(),
+    ratingDelta: z.number(),
+    userRating: z.number(),
+    opponentRating: z.number(),
+    userWarrior: z.object({
+      name: z.string(),
+      lvl: z.number(),
+      prof: z.string(),
+      icon: z.string(),
+    }),
+    opponentWarrior: z.object({
+      name: z.string(),
+      lvl: z.number(),
+      prof: z.string(),
+      icon: z.string(),
+    }),
+  })
+  .openapi("PlayerVsPlayerBattle");
+
+export const playerVsPlayerPaginatedResponseSchema = z
+  .object({
+    battles: z.array(playerVsPlayerBattleSchema),
+    pagination: z.object({
+      size: z.number(),
+      hasNext: z.boolean(),
+      hasPrev: z.boolean(),
+      nextCursor: z.string().optional(),
+      previousCursor: z.string().optional(),
+      total: z.number().optional(),
+    }),
+    meta: z.object({
+      performance: z.object({
+        queryTime: z.number(),
+        totalItems: z.number().optional(),
+      }),
+    }),
+  })
+  .openapi("PlayerVsPlayerPaginatedResponse");
+
+export type ProfessionWinRateDto = z.infer<typeof professionWinRateSchema>;
+export type HeadToHeadRecordDto = z.infer<typeof headToHeadRecordSchema>;
+export type StreakDto = z.infer<typeof streakSchema>;
+export type BattleDurationStatsDto = z.infer<typeof battleDurationStatsSchema>;
+export type PhGrowthDataPointDto = z.infer<typeof phGrowthDataPointSchema>;
+export type HeadToHeadPaginatedResponseDto = z.infer<
+  typeof headToHeadPaginatedResponseSchema
+>;
+export type RatingGrowthDataPointDto = z.infer<
+  typeof ratingGrowthDataPointSchema
+>;
+export type RatingDeltaByOpponentDto = z.infer<
+  typeof ratingDeltaByOpponentSchema
+>;
+export type PlayerVsPlayerBattleDto = z.infer<
+  typeof playerVsPlayerBattleSchema
+>;
+export type PlayerVsPlayerPaginatedResponseDto = z.infer<
+  typeof playerVsPlayerPaginatedResponseSchema
+>;

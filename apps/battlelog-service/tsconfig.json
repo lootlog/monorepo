@@ -1,19 +1,10 @@
 {
-  "extends": "@lootlog/typescript-config/nestjs.json",
+  "extends": "@lootlog/typescript-config/hono.json",
   "compilerOptions": {
-    "module": "nodenext",
-    "moduleResolution": "nodenext",
-    "resolvePackageJsonExports": true,
-    "isolatedModules": true,
-    "target": "ES2023",
-    "outDir": "./dist",
     "declaration": false,
-    "rootDir": ".",
-    "strictNullChecks": true,
-    "forceConsistentCasingInFileNames": true,
-    "paths": {
-      "src/*": ["./src/*"]
-    }
+    "declarationMap": false,
+    "outDir": "./dist",
+    "rootDir": "./src"
   },
   "include": ["src", "vitest.d.ts"]
 }

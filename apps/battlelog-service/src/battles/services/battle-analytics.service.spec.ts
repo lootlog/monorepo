@@ -1,14 +1,15 @@
 import type { Mock, Mocked } from "vitest";
-import { Test, type TestingModule } from "@nestjs/testing";
-import { NotFoundException } from "@nestjs/common";
-import { BattleAnalyticsService } from "./battle-analytics.service";
-import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
-import { RedisService } from "@lootlog/nest-shared";
+import { BattleAnalyticsService } from "./battle-analytics.service.js";
+import { NotFoundError } from "../../lib/errors/http-errors.js";
 
 describe("BattleAnalyticsService", () => {
   let service: BattleAnalyticsService;
   let drizzleService: { db: any };
-  let redisService: Mocked<RedisService>;
+  let redisService: Mocked<{
+    get: Mock;
+    set: Mock;
+    getClient: Mock;
+  }>;
 
   const mockUserId = "user-123";
   const mockCharacterId = "char-123";
@@ -99,23 +100,12 @@ describe("BattleAnalyticsService", () => {
       getClient: vi.fn(),
     };
 
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        BattleAnalyticsService,
-        {
-          provide: DrizzleService,
-          useValue: mockDrizzleService,
-        },
-        {
-          provide: RedisService,
-          useValue: mockRedisService,
-        },
-      ],
-    }).compile();
-
-    service = module.get<BattleAnalyticsService>(BattleAnalyticsService);
-    drizzleService = module.get(DrizzleService);
-    redisService = module.get(RedisService) as Mocked<RedisService>;
+    service = new BattleAnalyticsService(
+      mockDrizzleService as never,
+      mockRedisService as never,
+    );
+    drizzleService = mockDrizzleService;
+    redisService = mockRedisService;
   });
 
   afterEach(() => {
@@ -161,13 +151,13 @@ describe("BattleAnalyticsService", () => {
       expect(redisService.set).toHaveBeenCalled();
     });
 
-    it("should throw NotFoundException when character not found", async () => {
+    it("should throw NotFoundError when character not found", async () => {
       redisService.get.mockResolvedValue(null);
       drizzleService.db.query.userCharacters.findFirst.mockResolvedValue(null);
 
       await expect(
         service.getBattleAnalytics({ characterId: "nonexistent" }, mockUserId),
-      ).rejects.toThrow(NotFoundException);
+      ).rejects.toThrow(NotFoundError);
     });
 
     it("should return zeros when no characters found", async () => {

@@ -1,8 +1,7 @@
-import { z } from "zod";
-import { createZodDto } from "nestjs-zod";
+import { z } from "@hono/zod-openapi";
 
-const UpdateBattleSchema = z.object({
+export const updateBattleSchema = z.object({
   public: z.boolean(),
 });
 
-export class UpdateBattleDto extends createZodDto(UpdateBattleSchema) {}
+export type UpdateBattleDto = z.infer<typeof updateBattleSchema>;

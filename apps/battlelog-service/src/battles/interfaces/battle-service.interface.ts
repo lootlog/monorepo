@@ -1,9 +1,12 @@
-import type { Battle, BattleWarrior } from "src/shared/modules/drizzle/schema";
-import type { QueryBattlesDto } from "../dto/query-battles.dto";
-import type { UpdateBattleDto } from "../dto/update-battle.dto";
-import type { CreateBattleDto } from "../dto/create-battle.dto";
-import type { PaginationResult } from "./pagination.interface";
+import type {
+  Battle,
+  BattleWarrior,
+} from "../../shared/modules/drizzle/schema.js";
+import type { QueryBattlesDto } from "../dto/query-battles.dto.js";
+import type { UpdateBattleDto } from "../dto/update-battle.dto.js";
+import type { CreateBattleDto } from "../dto/create-battle.dto.js";
 import type { BattleAnalysis, ParsedMove } from "@lootlog/battle-processor";
+import type { PaginationResult } from "./pagination.interface.js";
 
 // Complete battle with all relations
 export interface BattleWithRelations extends Battle {

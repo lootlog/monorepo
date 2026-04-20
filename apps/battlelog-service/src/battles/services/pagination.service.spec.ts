@@ -1,6 +1,4 @@
-import { Test, type TestingModule } from "@nestjs/testing";
-import { PaginationService } from "./pagination.service";
-import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
+import { PaginationService } from "./pagination.service.js";
 
 describe("PaginationService", () => {
   let service: PaginationService;
@@ -46,18 +44,8 @@ describe("PaginationService", () => {
       },
     };
 
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        PaginationService,
-        {
-          provide: DrizzleService,
-          useValue: mockDrizzleService,
-        },
-      ],
-    }).compile();
-
-    service = module.get<PaginationService>(PaginationService);
-    drizzleService = module.get(DrizzleService);
+    service = new PaginationService(mockDrizzleService as never);
+    drizzleService = mockDrizzleService;
   });
 
   describe("cursor pagination", () => {

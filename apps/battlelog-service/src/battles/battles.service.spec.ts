@@ -1,10 +1,6 @@
-import { Test, type TestingModule } from "@nestjs/testing";
-import { BattlesService } from "./battles.service";
-import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
-import { R2Service } from "src/shared/modules/r2/r2.service";
-import { PaginationService } from "./services/pagination.service";
-import { BattleAnalyticsService } from "./services/battle-analytics.service";
-import { RedisService } from "@lootlog/nest-shared";
+import { BattlesService } from "./battles.service.js";
+import { PaginationService } from "./services/pagination.service.js";
+import { BattleAnalyticsService } from "./services/battle-analytics.service.js";
 
 describe("BattlesService", () => {
   let service: BattlesService;
@@ -73,40 +69,12 @@ describe("BattlesService", () => {
       getPhGrowthTimeSeries: vi.fn(),
     };
 
-    const mockRedisService = {
-      get: vi.fn(),
-      set: vi.fn(),
-      del: vi.fn(),
-      deleteByPattern: vi.fn(),
-    };
-
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        BattlesService,
-        {
-          provide: DrizzleService,
-          useValue: mockDrizzleService,
-        },
-        {
-          provide: R2Service,
-          useValue: mockR2Service,
-        },
-        {
-          provide: PaginationService,
-          useValue: mockPaginationService,
-        },
-        {
-          provide: BattleAnalyticsService,
-          useValue: mockBattleAnalyticsService,
-        },
-        {
-          provide: RedisService,
-          useValue: mockRedisService,
-        },
-      ],
-    }).compile();
-
-    service = module.get<BattlesService>(BattlesService);
+    service = new BattlesService(
+      mockDrizzleService as never,
+      mockR2Service as never,
+      mockPaginationService as PaginationService,
+      mockBattleAnalyticsService as BattleAnalyticsService,
+    );
   });
 
   it("should be defined", () => {

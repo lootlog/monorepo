@@ -1,27 +1,62 @@
-import { Body, Controller, Post } from "@nestjs/common";
-import { InjectQueue } from "@nestjs/bullmq";
-import type { Queue } from "bullmq";
-import { z } from "zod";
-import { createZodDto } from "nestjs-zod";
-import { DELETE_USER_BATTLES_QUEUE } from "./constants/delete-user-battles-queue.constant";
-import type { DeleteUserBattlesJobData } from "./delete-user-battles.processor";
+import { Queue } from "bullmq";
+import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 
-const DeleteUserDataSchema = z.object({ userId: z.string() });
-class DeleteUserDataDto extends createZodDto(DeleteUserDataSchema) {}
+const deleteUserDataSchema = z.object({
+  userId: z.string(),
+});
 
-@Controller("internal")
-export class InternalController {
-  constructor(
-    @InjectQueue(DELETE_USER_BATTLES_QUEUE)
-    private readonly deleteUserBattlesQueue: Queue<DeleteUserBattlesJobData>,
-  ) {}
+const deleteUserDataResponseSchema = z.object({
+  status: z.literal("ACCEPTED"),
+});
 
-  @Post("/delete-user-data")
-  async deleteUserData(@Body() body: DeleteUserDataDto) {
-    await this.deleteUserBattlesQueue.add("delete-user-battles", {
+type DeleteUserBattlesJobData = {
+  userId: string;
+};
+
+type InternalControllerDependencies = {
+  deleteUserBattlesQueue: Queue<DeleteUserBattlesJobData>;
+};
+
+const deleteUserDataRoute = createRoute({
+  method: "post",
+  path: "/delete-user-data",
+  tags: ["Internal"],
+  summary: "Enqueue deletion of all battles for a user",
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: deleteUserDataSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: deleteUserDataResponseSchema,
+        },
+      },
+      description: "Deletion job enqueued",
+    },
+  },
+});
+
+export function createInternalController({
+  deleteUserBattlesQueue,
+}: InternalControllerDependencies) {
+  const internal = new OpenAPIHono({ strict: false });
+
+  internal.openapi(deleteUserDataRoute, async (c) => {
+    const body = c.req.valid("json");
+
+    await deleteUserBattlesQueue.add("delete-user-battles", {
       userId: body.userId,
     });
 
-    return { status: "ACCEPTED" };
-  }
+    return c.json({ status: "ACCEPTED" }, 200);
+  });
+
+  return internal;
 }

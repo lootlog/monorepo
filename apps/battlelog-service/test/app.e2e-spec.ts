@@ -1,25 +1,10 @@
-import { Test, TestingModule } from "@nestjs/testing";
-import { INestApplication } from "@nestjs/common";
-import request from "supertest";
-import { App } from "supertest/types";
-import { AppModule } from "./../src/app.module";
+import { healthzController } from "../src/healthz/healthz.controller.js";
 
-describe("AppController (e2e)", () => {
-  let app: INestApplication<App>;
+describe("Battlelog service (e2e)", () => {
+  it("returns OK on /healthz", async () => {
+    const response = await healthzController.request("http://localhost/");
 
-  beforeEach(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    await app.init();
-  });
-
-  it("/ (GET)", () => {
-    return request(app.getHttpServer())
-      .get("/")
-      .expect(200)
-      .expect("Hello World!");
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe("OK");
   });
 });
