@@ -1,9 +1,9 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router";
 import {
-  guildNotificationJobsQueryOptions,
-  guildNotificationRulesQueryOptions,
-  guildNotificationTargetsQueryOptions,
-} from "@/features/guild/notifications/notifications-api";
+  getNotificationsGuildControllerGetGuildJobsQueryOptions,
+  getNotificationsGuildControllerGetGuildRulesQueryOptions,
+  getNotificationsGuildControllerGetGuildTargetsQueryOptions,
+} from "@/lib/api/generated/main/notifications/notifications";
 import { getGuildsControllerGetGuildDiscordSyncStatusQueryOptions } from "@/lib/api/generated/main/guilds/guilds";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 
@@ -24,13 +24,19 @@ export const Route = createFileRoute("/_authenticated/$guildId/notifications")({
 
       await Promise.all([
         context.queryClient.ensureQueryData(
-          guildNotificationTargetsQueryOptions(params.guildId),
+          getNotificationsGuildControllerGetGuildTargetsQueryOptions({
+            guildId: params.guildId,
+          }),
         ),
         context.queryClient.ensureQueryData(
-          guildNotificationRulesQueryOptions(params.guildId),
+          getNotificationsGuildControllerGetGuildRulesQueryOptions({
+            guildId: params.guildId,
+          }),
         ),
         context.queryClient.ensureQueryData(
-          guildNotificationJobsQueryOptions(params.guildId),
+          getNotificationsGuildControllerGetGuildJobsQueryOptions({
+            guildId: params.guildId,
+          }),
         ),
         context.queryClient.ensureQueryData(
           getGuildsControllerGetGuildDiscordSyncStatusQueryOptions({

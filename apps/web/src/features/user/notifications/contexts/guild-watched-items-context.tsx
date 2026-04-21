@@ -1,4 +1,8 @@
 import {
+  getNotificationsUserControllerGetUserTargetsQueryKey,
+  getNotificationsUserControllerGetWatchedItemsQueryKey,
+  invalidateNotificationsUserControllerGetUserTargets,
+  invalidateNotificationsUserControllerGetWatchedItems,
   useNotificationsUserControllerGetUserTargets,
   useNotificationsUserControllerGetWatchedItems,
   useNotificationsUserControllerQuickAddWatchedItem,
@@ -8,11 +12,6 @@ import type {
   WatchedItemResponseDto,
 } from "@/lib/api/generated/main/model";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  invalidateUserNotificationQueries,
-  userNotificationTargetsQueryKey,
-  userWatchedItemsQueryKey,
-} from "../user-notifications-api";
 import { createContext, type PropsWithChildren } from "react";
 import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
 import { useGuildId } from "@/hooks/context/use-guild-id";
@@ -43,16 +42,21 @@ GuildWatchedItemsContext.displayName = "GuildWatchedItemsContext";
 export const GuildWatchedItemsProvider = ({ children }: PropsWithChildren) => {
   const queryClient = useQueryClient();
   const targetsQuery = useNotificationsUserControllerGetUserTargets({
-    query: { queryKey: userNotificationTargetsQueryKey() },
+    query: { queryKey: getNotificationsUserControllerGetUserTargetsQueryKey() },
   });
   const watchedItemsQuery = useNotificationsUserControllerGetWatchedItems({
-    query: { queryKey: userWatchedItemsQueryKey() },
+    query: {
+      queryKey: getNotificationsUserControllerGetWatchedItemsQueryKey(),
+    },
   });
   const quickAddWatchedItemMutation =
     useNotificationsUserControllerQuickAddWatchedItem({
       mutation: {
         onSuccess: async () => {
-          await invalidateUserNotificationQueries(queryClient);
+          await Promise.all([
+            invalidateNotificationsUserControllerGetUserTargets(queryClient),
+            invalidateNotificationsUserControllerGetWatchedItems(queryClient),
+          ]);
         },
       },
     });

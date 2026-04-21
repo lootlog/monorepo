@@ -7,10 +7,13 @@ import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialo
 import { ItemImage, ItemTile } from "@/components/tiles";
 import { getUserNotificationsErrorMessage } from "@/features/user/notifications/utils/get-user-notifications-error-message";
 import { useQueryClient } from "@tanstack/react-query";
-import { useNotificationsUserControllerDeleteWatchedItem } from "@/lib/api/generated/main/notifications/notifications";
+import {
+  invalidateNotificationsUserControllerGetUserTargets,
+  invalidateNotificationsUserControllerGetWatchedItems,
+  useNotificationsUserControllerDeleteWatchedItem,
+} from "@/lib/api/generated/main/notifications/notifications";
 import type { WatchedItemResponseDto } from "@/lib/api/generated/main/model";
 import { ItemRarity } from "@/lib/loots/loot-types";
-import { invalidateUserNotificationQueries } from "../user-notifications-api";
 
 type WatchedItemCardProps = {
   watchedItem: WatchedItemResponseDto;
@@ -28,7 +31,10 @@ export const WatchedItemCard = ({
   const deleteWatchedItem = useNotificationsUserControllerDeleteWatchedItem({
     mutation: {
       onSuccess: async () => {
-        await invalidateUserNotificationQueries(queryClient);
+        await Promise.all([
+          invalidateNotificationsUserControllerGetUserTargets(queryClient),
+          invalidateNotificationsUserControllerGetWatchedItems(queryClient),
+        ]);
       },
     },
   });

@@ -13,12 +13,15 @@ import {
   ContextMenuTrigger,
 } from "@lootlog/ui/components/context-menu";
 import { useQueryClient } from "@tanstack/react-query";
-import { useNotificationsUserControllerDeleteWatchedItem } from "@/lib/api/generated/main/notifications/notifications";
+import {
+  invalidateNotificationsUserControllerGetUserTargets,
+  invalidateNotificationsUserControllerGetWatchedItems,
+  useNotificationsUserControllerDeleteWatchedItem,
+} from "@/lib/api/generated/main/notifications/notifications";
 import { useNavigate } from "@tanstack/react-router";
 import { Bell, BellOff, LoaderCircle, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { invalidateUserNotificationQueries } from "@/features/user/notifications/user-notifications-api";
 
 type WatchableItemTileProps = ItemTileProps & {
   watchContext: WatchedItemScope;
@@ -48,7 +51,10 @@ export const WatchableItemTile = ({
   const deleteWatchedItem = useNotificationsUserControllerDeleteWatchedItem({
     mutation: {
       onSuccess: async () => {
-        await invalidateUserNotificationQueries(queryClient);
+        await Promise.all([
+          invalidateNotificationsUserControllerGetUserTargets(queryClient),
+          invalidateNotificationsUserControllerGetWatchedItems(queryClient),
+        ]);
       },
     },
   });

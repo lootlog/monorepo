@@ -1,8 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { lootsControllerFetchLootsByGuildId } from "@/lib/api/generated/main/loots/loots";
+import {
+  getLootsControllerFetchLootsByGuildIdQueryKey,
+  lootsControllerFetchLootsByGuildId,
+} from "@/lib/api/generated/main/loots/loots";
 import type { LootsControllerFetchLootsByGuildIdParams } from "@/lib/api/generated/main/model";
 import type { Loot } from "@/lib/loots/loot-types";
-import { queryKeys } from "@/lib/query-keys";
 
 const MATCHING_LOOTS_TIME_WINDOW_MS = 5 * 60 * 1000;
 
@@ -48,11 +50,9 @@ export const useMatchingLoots = ({
   } satisfies LootsControllerFetchLootsByGuildIdParams;
 
   return useQuery({
-    queryKey: queryKeys.events.matchingLoots(
-      guildId,
-      createdAtMin,
-      createdAtMax,
-      npcName,
+    queryKey: getLootsControllerFetchLootsByGuildIdQueryKey(
+      { guildId },
+      params,
     ),
     queryFn: () =>
       lootsControllerFetchLootsByGuildId({ guildId }, params) as Promise<

@@ -1,13 +1,14 @@
 import { reservationSlug } from "./reservation-slug";
 import {
+  getReservationsControllerGetReservationsCardsQueryKey,
   getReservationsControllerGetReservationsCardsQueryOptions,
+  getReservationsControllerGetReservationsQueryKey,
   getReservationsControllerGetReservationsQueryOptions,
 } from "@/lib/api/generated/main/reservations/reservations";
 import type {
   ReservationResponseDto,
   ReservationsResponseDto,
 } from "@/lib/api/generated/main/model";
-import { queryKeys } from "@/lib/query-keys";
 
 export const mapReservationsByAlias = (
   reservationsByKey: ReservationsResponseDto | undefined,
@@ -68,7 +69,9 @@ export const reservationsQueryOptions = (guildId: string) =>
     { guildId },
     {
       query: {
-        queryKey: queryKeys.reservations.all(guildId),
+        queryKey: getReservationsControllerGetReservationsQueryKey({
+          guildId,
+        }),
         select: mapReservationsByAlias,
         staleTime: 30_000,
       },
@@ -80,7 +83,9 @@ export const reservationsCardsQueryOptions = (guildId: string) =>
     { guildId },
     {
       query: {
-        queryKey: queryKeys.reservations.cards(guildId),
+        queryKey: getReservationsControllerGetReservationsCardsQueryKey({
+          guildId,
+        }),
         staleTime: 30_000,
       },
     },

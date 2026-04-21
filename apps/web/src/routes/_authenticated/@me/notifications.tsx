@@ -2,9 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { UserNotifications } from "@/features/user/notifications/notifications";
 import { UserNotificationsPageSkeleton } from "@/features/user/notifications/notifications-page-skeleton";
 import {
-  userNotificationTargetsQueryOptions,
-  userWatchedItemsQueryOptions,
-} from "@/features/user/notifications/user-notifications-api";
+  getNotificationsUserControllerGetUserTargetsQueryOptions,
+  getNotificationsUserControllerGetWatchedItemsQueryOptions,
+} from "@/lib/api/generated/main/notifications/notifications";
 import { getGuildsControllerGetUserGuildsQueryOptions } from "@/lib/api/generated/main/guilds/guilds";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 
@@ -22,9 +22,11 @@ export const Route = createFileRoute("/_authenticated/@me/notifications")({
           getGuildsControllerGetUserGuildsQueryOptions(),
         ),
         context.queryClient.ensureQueryData(
-          userNotificationTargetsQueryOptions(),
+          getNotificationsUserControllerGetUserTargetsQueryOptions(),
         ),
-        context.queryClient.ensureQueryData(userWatchedItemsQueryOptions()),
+        context.queryClient.ensureQueryData(
+          getNotificationsUserControllerGetWatchedItemsQueryOptions(),
+        ),
       ]);
 
       return null;

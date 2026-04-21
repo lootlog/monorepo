@@ -16,25 +16,23 @@ import { UserNotificationsInfoDialog } from "@/features/user/notifications/compo
 import { WatchFormDialog } from "@/features/user/notifications/components/watch-item-form-dialog";
 import { WatchedItemsList } from "@/features/user/notifications/components/watched-items-list";
 import {
+  getNotificationsUserControllerGetUserTargetsQueryKey,
+  getNotificationsUserControllerGetWatchedItemsQueryKey,
   useNotificationsUserControllerGetUserTargets,
   useNotificationsUserControllerGetWatchedItems,
 } from "@/lib/api/generated/main/notifications/notifications";
 import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@/lib/api/generated/main/users/users";
-import {
-  userNotificationTargetsQueryKey,
-  userWatchedItemsQueryKey,
-} from "./user-notifications-api";
 
 export const UserNotifications = () => {
   const { t } = useTranslation();
   const targetsQuery = useNotificationsUserControllerGetUserTargets({
     query: {
-      queryKey: userNotificationTargetsQueryKey(),
+      queryKey: getNotificationsUserControllerGetUserTargetsQueryKey(),
     },
   });
   const watchedItemsQuery = useNotificationsUserControllerGetWatchedItems({
     query: {
-      queryKey: userWatchedItemsQueryKey(),
+      queryKey: getNotificationsUserControllerGetWatchedItemsQueryKey(),
     },
   });
   const { data: guilds = [] } =

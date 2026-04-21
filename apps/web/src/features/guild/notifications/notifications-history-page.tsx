@@ -15,8 +15,10 @@ import { NotificationJobDetailDialog } from "./components/notification-job-detai
 import { History } from "lucide-react";
 import { PageHeader } from "@/components/common/page-header";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { guildNotificationJobsQueryKey } from "./notifications-api";
-import { useNotificationsGuildControllerGetGuildJobs } from "@/lib/api/generated/main/notifications/notifications";
+import {
+  getNotificationsGuildControllerGetGuildJobsQueryKey,
+  useNotificationsGuildControllerGetGuildJobs,
+} from "@/lib/api/generated/main/notifications/notifications";
 import type { NotificationJobsResponseDto } from "@/lib/api/generated/main/model";
 
 export const NotificationsHistoryPage = () => {
@@ -26,7 +28,9 @@ export const NotificationsHistoryPage = () => {
     { guildId: guildId ?? "" },
     {
       query: {
-        queryKey: guildNotificationJobsQueryKey(guildId ?? ""),
+        queryKey: getNotificationsGuildControllerGetGuildJobsQueryKey({
+          guildId: guildId ?? "",
+        }),
       },
     },
   );

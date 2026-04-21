@@ -19,9 +19,9 @@ import { CreateReservationDialog } from "./create-reservation-dialog";
 import { useScheduleNavigation } from "./use-schedule-navigation";
 import { useReservationSegments } from "./use-reservation-segments";
 import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
-import { queryKeys } from "@/lib/query-keys";
 import { normalizeReservation } from "./normalize-reservation";
 import {
+  getReservationsControllerGetReservationsQueryKey,
   useReservationsControllerDeleteReservation,
   useReservationsControllerGetReservations,
 } from "@/lib/api/generated/main/reservations/reservations";
@@ -138,7 +138,9 @@ export const ReservationsSchedule: React.FC = () => {
       }
 
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.reservations.all(guildId),
+        queryKey: getReservationsControllerGetReservationsQueryKey({
+          guildId,
+        }),
       });
     };
 

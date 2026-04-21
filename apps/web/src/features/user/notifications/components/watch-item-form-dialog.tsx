@@ -29,14 +29,17 @@ import { WatchedItemSelector } from "@/features/user/notifications/components/wa
 import { getUserNotificationsErrorMessage } from "@/features/user/notifications/utils/get-user-notifications-error-message";
 import { useQueries, useQueryClient } from "@tanstack/react-query";
 import { getGuildsControllerGetWorldsByGuildIdQueryOptions } from "@/lib/api/generated/main/guilds/guilds";
-import { useNotificationsUserControllerCreateWatchedItem } from "@/lib/api/generated/main/notifications/notifications";
+import {
+  invalidateNotificationsUserControllerGetUserTargets,
+  invalidateNotificationsUserControllerGetWatchedItems,
+  useNotificationsUserControllerCreateWatchedItem,
+} from "@/lib/api/generated/main/notifications/notifications";
 import {
   getItemsControllerGetItemsQueryKey,
   useItemsControllerGetItems,
 } from "@/lib/api/generated/search/items/items";
 import type { ItemHitDtoOutput } from "@/lib/api/generated/search/model";
 import type { WatchedItemResponseDto } from "@/lib/api/generated/main/model";
-import { invalidateUserNotificationQueries } from "../user-notifications-api";
 
 const watchFormSchema = z
   .object({
@@ -112,7 +115,10 @@ export const WatchFormDialog = ({
   const createWatchedItem = useNotificationsUserControllerCreateWatchedItem({
     mutation: {
       onSuccess: async () => {
-        await invalidateUserNotificationQueries(queryClient);
+        await Promise.all([
+          invalidateNotificationsUserControllerGetUserTargets(queryClient),
+          invalidateNotificationsUserControllerGetWatchedItems(queryClient),
+        ]);
       },
     },
   });

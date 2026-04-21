@@ -12,11 +12,11 @@ import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useQueryClient } from "@tanstack/react-query";
 import { RefreshStatusContext } from "@/features/guild/settings/members/contexts/refresh-status-context";
 import { toast } from "sonner";
+import { getLootsControllerFetchLootsByGuildIdQueryKey } from "@/lib/api/generated/main/loots/loots";
 import {
   getMembersControllerGetGuildMembersQueryKey,
   useMembersControllerRefreshMember,
 } from "@/lib/api/generated/main/members/members";
-import { queryKeys } from "@/lib/query-keys";
 import { useTranslation } from "react-i18next";
 
 export type MemberSyncButtonProps = {
@@ -68,7 +68,9 @@ export const MemberSyncButton: FC<MemberSyncButtonProps> = ({ member }) => {
               }),
             }),
             queryClient.invalidateQueries({
-              queryKey: queryKeys.loots.listByGuild(currentGuildId),
+              queryKey: getLootsControllerFetchLootsByGuildIdQueryKey({
+                guildId: currentGuildId,
+              }),
             }),
           ]);
         },
