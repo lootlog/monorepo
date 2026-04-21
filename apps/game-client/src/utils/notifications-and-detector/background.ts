@@ -18,21 +18,6 @@ const BACKGROUND_COLORS_BY_KEY: Record<string, string> = {
   "party-gathering": "rgba(147, 51, 234, 0.4)",
 };
 
-const BASE_BACKGROUND_GRADIENT_BY_NPC_TYPE: Record<string, string> = {
-  [NpcType.COLOSSUS]: `linear-gradient(to top, ${BACKGROUND_COLORS_BY_KEY[NpcType.COLOSSUS]}, transparent)`,
-  [NpcType.HERO]: `linear-gradient(to top, ${BACKGROUND_COLORS_BY_KEY[NpcType.HERO]}, transparent)`,
-  [NpcType.ELITE2]: `linear-gradient(to top, ${BACKGROUND_COLORS_BY_KEY[NpcType.ELITE2]}, transparent)`,
-  [NpcType.TITAN]: `linear-gradient(to top, ${BACKGROUND_COLORS_BY_KEY[NpcType.TITAN]}, transparent)`,
-  message: `linear-gradient(to top, ${BACKGROUND_COLORS_BY_KEY["message"]}, transparent)`,
-  "party-gathering": `linear-gradient(to top, ${BACKGROUND_COLORS_BY_KEY["party-gathering"]}, transparent)`,
-};
-
-export const getGradient = (key?: string, highlight?: boolean) => {
-  if (!highlight || !key || !(key in BASE_BACKGROUND_GRADIENT_BY_NPC_TYPE))
-    return "transparent";
-  return BASE_BACKGROUND_GRADIENT_BY_NPC_TYPE[key];
-};
-
 export const getBackgroundColor = (key?: string, highlight?: boolean) => {
   if (!highlight || !key || !(key in BACKGROUND_COLORS_BY_KEY))
     return "transparent";

@@ -21,7 +21,7 @@ const TIMER_SETTINGS_QUERY_KEY =
 const GUILD_TIMER_SETTINGS_QUERY_KEY = (guildId: string) =>
   getTimerSettingsControllerGetGuildSettingsQueryKey({ guildId });
 
-export const toUpdateTimerSettingsDto = (
+const toUpdateTimerSettingsDto = (
   payload: UpdateTimerSettingsPayload,
 ): UpdateTimerSettingsDto => {
   const { timersColors, ...rest } = payload;
@@ -62,33 +62,6 @@ export const useUpdateTimerSettings = () => {
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: TIMER_SETTINGS_QUERY_KEY });
-    },
-  });
-};
-
-export const useGuildTimerSettings = (guildId: string) => {
-  return useTimerSettingsControllerGetGuildSettings(
-    { guildId },
-    {
-      query: {
-        queryKey: GUILD_TIMER_SETTINGS_QUERY_KEY(guildId),
-        enabled: !!guildId,
-        staleTime: 5 * 60 * 1000,
-      },
-    },
-  );
-};
-
-export const useUpdateGuildTimerSettings = (guildId: string) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (payload: UpdateGuildTimerSettingsDto) =>
-      timerSettingsControllerUpdateGuildSettings({ guildId }, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: GUILD_TIMER_SETTINGS_QUERY_KEY(guildId),
-      });
     },
   });
 };
