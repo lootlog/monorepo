@@ -11,7 +11,8 @@ import {
   Trophy,
 } from "lucide-react";
 import type { FC } from "react";
-import { SidebarNav, type MenuItem } from "./sidebar-nav/index";
+import { SidebarNav } from "./sidebar-nav/sidebar-nav";
+import type { MenuItem } from "./sidebar-nav/types";
 import { ROUTE_SEGMENTS } from "@/config/routes";
 import { useTranslation } from "react-i18next";
 import { GuildSidebarHeader } from "./guild-sidebar-header";

@@ -11,7 +11,7 @@ export const getRouteErrorStatus = (error: unknown) => {
 
 export const getRouteErrorMessage = getApiErrorMessage;
 
-export const isRouteLoaderCancelledError = (error: unknown) => {
+const isRouteLoaderCancelledError = (error: unknown) => {
   return isCancelledError(error);
 };
 

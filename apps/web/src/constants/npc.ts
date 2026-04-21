@@ -21,13 +21,6 @@ export const NPC_TYPE_SORT_ORDER = [
   NpcType.ELITE,
 ];
 
-export const SPECIAL_NPC_TYPES = [
-  NpcType.TITAN,
-  NpcType.COLOSSUS,
-  NpcType.HERO,
-  NpcType.EVENT_HERO,
-] as const;
-
 export const ITEM_RARITY_NAMES: Record<string, string> = {
   LEGENDARY: "Legendarny",
   HEROIC: "Heroiczny",

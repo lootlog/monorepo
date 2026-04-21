@@ -7,7 +7,7 @@ import type { LootsControllerGetLootStatsPeriod } from "@/lib/api/generated/main
 import type { NpcType } from "@/lib/api/generated/main/model/npc-type";
 
 export const DEFAULT_MEMBER_KILLS_LIMIT = 40;
-export const DEFAULT_NPC_KILLERS_LIMIT = 50;
+const DEFAULT_NPC_KILLERS_LIMIT = 50;
 
 const withDefinedEntries = <T extends Record<string, unknown>>(params: T) => {
   const definedEntries = Object.entries(params).filter(

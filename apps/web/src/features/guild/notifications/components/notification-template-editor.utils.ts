@@ -141,7 +141,7 @@ export const serializeTemplateEditorValue = () =>
     })
     .join("\n");
 
-export const $isTemplateTokenNode = (node: LexicalNode | null | undefined) =>
+const $isTemplateTokenNode = (node: LexicalNode | null | undefined) =>
   $isNotificationTemplateRoleNode(node) ||
   $isNotificationTemplateVariableNode(node);
 
