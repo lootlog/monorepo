@@ -7,7 +7,7 @@ import { betterAuthSchema, db } from "src/database/drizzle";
 
 export const auth = betterAuth({
   appName: "@lootlog/auth",
-  baseURL: env.APP_URL,
+  // baseURL: env.APP_URL,
   basePath: "/idp",
   database: drizzleAdapter(db, {
     provider: "pg",
@@ -41,7 +41,6 @@ export const auth = betterAuth({
   },
   trustedOrigins: env.TRUSTED_ORIGINS,
   advanced: {
-    useSecureCookies: true,
     defaultCookieAttributes: {
       sameSite: "none",
       secure: true,
