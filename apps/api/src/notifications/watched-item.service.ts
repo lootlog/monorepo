@@ -407,6 +407,7 @@ export class WatchedItemService {
 
   private mapWatchedItem<
     T extends {
+      itemSnapshot?: unknown | null;
       notificationRule: {
         filters: unknown;
       } | null;
@@ -414,6 +415,7 @@ export class WatchedItemService {
   >(watchedItem: T) {
     return {
       ...watchedItem,
+      itemSnapshot: watchedItem.itemSnapshot ?? null,
       notificationRule: watchedItem.notificationRule
         ? this.mapNotificationRule(watchedItem.notificationRule)
         : null,

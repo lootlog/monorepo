@@ -1,8 +1,6 @@
 import {
   getNotificationsUserControllerGetUserTargetsQueryOptions,
   getNotificationsUserControllerGetWatchedItemsQueryOptions,
-  invalidateNotificationsUserControllerGetUserTargets,
-  invalidateNotificationsUserControllerGetWatchedItems,
 } from "@/lib/api/generated/main/notifications/notifications";
 import { queryKeys } from "@/lib/query-keys";
 import type { QueryClient } from "@tanstack/react-query";
@@ -31,7 +29,11 @@ export const invalidateUserNotificationQueries = async (
   queryClient: QueryClient,
 ) => {
   await Promise.all([
-    invalidateNotificationsUserControllerGetUserTargets(queryClient),
-    invalidateNotificationsUserControllerGetWatchedItems(queryClient),
+    queryClient.invalidateQueries({
+      queryKey: userNotificationTargetsQueryKey(),
+    }),
+    queryClient.invalidateQueries({
+      queryKey: userWatchedItemsQueryKey(),
+    }),
   ]);
 };
