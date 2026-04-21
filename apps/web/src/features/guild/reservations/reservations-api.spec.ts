@@ -1,13 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { reservationSlug } from "@/features/guild/reservations/reservation-slug";
-import {
-  type ApiReservation,
-  mapReservationsByAlias,
-} from "./use-reservations";
+import type { ReservationResponseDtoOutput } from "@/lib/api/generated/main/model";
+import { mapReservationsByAlias } from "./reservations-api";
 
 const createApiReservation = (
-  overrides: Partial<ApiReservation> = {},
-): ApiReservation => ({
+  overrides: Partial<ReservationResponseDtoOutput> = {},
+): ReservationResponseDtoOutput => ({
   id: 1,
   reservationId: "reservation-1",
   createdDate: "2026-01-03T10:00:00.000Z",
@@ -19,7 +17,7 @@ const createApiReservation = (
 });
 
 describe("mapReservationsByAlias", () => {
-  it("normalizes dates and shares the same list across aliases", () => {
+  it("shares the same list across aliases", () => {
     const worldName = "Zażółć Gęślą";
     const result = mapReservationsByAlias({
       [worldName]: [createApiReservation()],
@@ -28,7 +26,7 @@ describe("mapReservationsByAlias", () => {
     expect(result[worldName]).toHaveLength(1);
     expect(result[worldName.toLowerCase()]).toBe(result[worldName]);
     expect(result[reservationSlug(worldName)]).toBe(result[worldName]);
-    expect(result[worldName]?.[0]?.fromDate).toBeInstanceOf(Date);
+    expect(result[worldName]?.[0]?.fromDate).toBe("2026-01-04T10:00:00.000Z");
     expect(result[worldName]?.[0]?.comment).toBe("note");
   });
 
@@ -56,11 +54,11 @@ describe("mapReservationsByAlias", () => {
     expect(result.example?.[0]?.comment).toBe("note");
   });
 
-  it("normalizes missing comments to null", () => {
+  it("preserves missing comments as undefined", () => {
     const result = mapReservationsByAlias({
       test: [createApiReservation({ comment: undefined })],
     });
 
-    expect(result.test?.[0]?.comment).toBeNull();
+    expect(result.test?.[0]?.comment).toBeUndefined();
   });
 });

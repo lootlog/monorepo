@@ -1,10 +1,10 @@
 import { useMemo } from "react";
-import type { Reservation } from "@/hooks/api/reservations/use-reservations";
+import type { NormalizedReservation } from "./normalize-reservation";
 import type { ReservationSegment } from "./types";
 import { DAYS, HOURS } from "./constants";
 
 export function useReservationSegments(
-  reservations: Reservation[],
+  reservations: NormalizedReservation[],
   weekStart: Date,
 ) {
   const weekStartTimestamp = weekStart.getTime();

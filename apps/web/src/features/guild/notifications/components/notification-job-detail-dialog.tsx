@@ -9,7 +9,7 @@ import {
 } from "@lootlog/ui/components/dialog";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Separator } from "@lootlog/ui/components/separator";
-import type { GuildNotificationJob } from "@/hooks/api/guilds/use-guild-notifications";
+import type { NotificationJobsResponseDtoOutput } from "@/lib/api/generated/main/model";
 import {
   getJobKindLabel,
   getJobStatusBadgeProps,
@@ -20,7 +20,7 @@ import {
 import { NotificationJobDetailRow } from "./notification-job-detail-row";
 
 type NotificationJobDetailDialogProps = {
-  job: GuildNotificationJob | null;
+  job: NotificationJobsResponseDtoOutput["pending"][number] | null;
   onOpenChange: (open: boolean) => void;
 };
 

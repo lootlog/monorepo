@@ -1,8 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { UserNotifications } from "@/features/user/notifications/notifications";
 import { UserNotificationsPageSkeleton } from "@/features/user/notifications/notifications-page-skeleton";
+import {
+  userNotificationTargetsQueryOptions,
+  userWatchedItemsQueryOptions,
+} from "@/features/user/notifications/user-notifications-api";
 import { guildsQueryOptions } from "@/hooks/api/guilds/use-guilds";
-import { userNotificationsQueryOptions } from "@/hooks/api/user/use-user-notifications";
 
 export const Route = createFileRoute("/_authenticated/@me/notifications")({
   component: UserNotifications,
@@ -14,7 +17,10 @@ export const Route = createFileRoute("/_authenticated/@me/notifications")({
 
     await Promise.all([
       context.queryClient.ensureQueryData(guildsQueryOptions()),
-      context.queryClient.ensureQueryData(userNotificationsQueryOptions()),
+      context.queryClient.ensureQueryData(
+        userNotificationTargetsQueryOptions(),
+      ),
+      context.queryClient.ensureQueryData(userWatchedItemsQueryOptions()),
     ]);
 
     return null;

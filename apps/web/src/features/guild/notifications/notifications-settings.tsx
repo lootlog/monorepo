@@ -19,40 +19,77 @@ import { NotificationsRulesCard } from "./components/notifications-rules-card";
 import { NotificationsTargetsCard } from "./components/notifications-targets-card";
 import { NotificationTargetDialog } from "./components/notification-target-dialog";
 import { NotificationsInfoDialog } from "./components/notifications-info-dialog";
+import {
+  guildNotificationJobsQueryKey,
+  guildNotificationRulesQueryKey,
+  guildNotificationTargetsQueryKey,
+} from "./notifications-api";
 import { hasConfirmedGuildDiscordPermissions } from "@/features/guild/settings/utils/has-confirmed-guild-discord-permissions";
 import { useGuildDiscordSync } from "@/hooks/api/guilds/use-guild-discord-sync";
-import {
-  useGuildNotifications,
-  useGuildNotificationJobs,
-  type GuildNotificationTarget,
-} from "@/hooks/api/guilds/use-guild-notifications";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { buildDiscordBotInstallUrl } from "@/utils/build-discord-bot-install-url";
 import { isSupportedGuildNotificationTrigger } from "./utils/notification-settings.utils";
+import {
+  useNotificationsGuildControllerGetGuildJobs,
+  useNotificationsGuildControllerGetGuildRules,
+  useNotificationsGuildControllerGetGuildTargets,
+} from "@/lib/api/generated/main/notifications/notifications";
+import type { NotificationTargetResponseDtoOutput } from "@/lib/api/generated/main/model";
 
 export const NotificationsSettings = () => {
   const { t } = useTranslation();
   const guildId = useGuildId();
   const { data: syncState } = useGuildDiscordSync();
-  const { data, isLoading } = useGuildNotifications();
-  const { data: jobsData } = useGuildNotificationJobs({
-    pollPendingJobs: true,
-  });
+  const targetsQuery = useNotificationsGuildControllerGetGuildTargets(
+    { guildId: guildId ?? "" },
+    {
+      query: {
+        queryKey: guildNotificationTargetsQueryKey(guildId ?? ""),
+      },
+    },
+  );
+  const rulesQuery = useNotificationsGuildControllerGetGuildRules(
+    { guildId: guildId ?? "" },
+    {
+      query: {
+        queryKey: guildNotificationRulesQueryKey(guildId ?? ""),
+      },
+    },
+  );
+  const jobsQuery = useNotificationsGuildControllerGetGuildJobs(
+    { guildId: guildId ?? "" },
+    {
+      query: {
+        queryKey: guildNotificationJobsQueryKey(guildId ?? ""),
+        refetchInterval: (query) => {
+          const jobs = query.state.data;
+
+          if (!jobs || jobs.pending.length === 0) {
+            return false;
+          }
+
+          return 5000;
+        },
+      },
+    },
+  );
   const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
   const [isCreateTargetDialogOpen, setIsCreateTargetDialogOpen] =
     useState(false);
   const [editedTarget, setEditedTarget] = useState<
-    GuildNotificationTarget | undefined
+    NotificationTargetResponseDtoOutput | undefined
   >();
   const missingPermissions = syncState?.missingPermissions ?? [];
   const hasRequiredPermissions = hasConfirmedGuildDiscordPermissions(syncState);
   const installUrl = guildId ? buildDiscordBotInstallUrl(guildId) : "#";
-  const targets = data?.targets ?? [];
-  const notificationLimits = data?.limits;
+  const targets = targetsQuery.data ?? [];
+  const notificationLimits = rulesQuery.data?.limits;
   const visibleRules =
-    data?.rules.filter((rule) =>
+    rulesQuery.data?.items.filter((rule) =>
       isSupportedGuildNotificationTrigger(rule.triggerType),
     ) ?? [];
+  const jobsData = jobsQuery.data;
+  const isLoading = targetsQuery.isLoading || rulesQuery.isLoading;
   const isRuleLimitReached =
     notificationLimits !== undefined &&
     notificationLimits.ruleCount >= notificationLimits.ruleLimit;

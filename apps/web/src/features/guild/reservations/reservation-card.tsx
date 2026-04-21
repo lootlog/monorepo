@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { cn } from "@lootlog/ui/lib/utils";
 import { Card } from "@lootlog/ui/components/card";
 import { NpcSearchTile } from "@/components/tiles";
-import type { Reservation } from "@/hooks/api/reservations/use-reservations";
+import type { ReservationResponseDtoOutput } from "@/lib/api/generated/main/model";
 import type { GuildMember } from "@/hooks/api/members/use-guild-member";
 
 export interface ReservationCardProps {
@@ -11,15 +11,15 @@ export interface ReservationCardProps {
   title: string;
   size: string;
   images?: string[];
-  reservations: Reservation[];
+  reservations: ReservationResponseDtoOutput[];
   members?: GuildMember[];
   onClick: () => void;
   viewMode?: "list" | "grid";
 }
 
 const getCurrentOccupant = (
-  reservations: Reservation[],
-): Reservation | null => {
+  reservations: ReservationResponseDtoOutput[],
+): ReservationResponseDtoOutput | null => {
   const now = new Date();
   return (
     reservations.find(
@@ -29,8 +29,8 @@ const getCurrentOccupant = (
 };
 
 const getNextReservation = (
-  reservations: Reservation[],
-): Reservation | null => {
+  reservations: ReservationResponseDtoOutput[],
+): ReservationResponseDtoOutput | null => {
   const now = new Date();
   const futureReservations = reservations
     .filter((r) => new Date(r.fromDate) > now)
@@ -40,12 +40,16 @@ const getNextReservation = (
   return futureReservations[0] ?? null;
 };
 
-const getActiveReservationsCount = (reservations: Reservation[]): number => {
+const getActiveReservationsCount = (
+  reservations: ReservationResponseDtoOutput[],
+): number => {
   const now = new Date();
   return reservations.filter((r) => new Date(r.toDate) >= now).length;
 };
 
-const formatReservationTime = (reservation: Reservation): string => {
+const formatReservationTime = (
+  reservation: ReservationResponseDtoOutput,
+): string => {
   const from = new Date(reservation.fromDate);
   const to = new Date(reservation.toDate);
   return `${format(from, "dd.MM HH:mm")} - ${format(to, "HH:mm")}`;

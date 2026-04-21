@@ -6,8 +6,7 @@ import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { TooltipProvider } from "@lootlog/ui/components/tooltip";
 import type { GuildMember } from "@/hooks/api/members/use-guild-member";
-import { useReservations } from "@/hooks/api/reservations/use-reservations";
-import { useDeleteReservation } from "@/hooks/api/reservations/use-delete-reservation";
+import { reservationsQueryOptions } from "../reservations-api";
 import { useSession } from "@/hooks/auth/use-session";
 import { useIsOwner } from "@/hooks/context/use-is-owner";
 import { useGuildId } from "@/hooks/context/use-guild-id";
@@ -24,6 +23,11 @@ import { useScheduleNavigation } from "./use-schedule-navigation";
 import { useReservationSegments } from "./use-reservation-segments";
 import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
 import { queryKeys } from "@/lib/query-keys";
+import { normalizeReservation } from "./normalize-reservation";
+import {
+  useReservationsControllerDeleteReservation,
+  useReservationsControllerGetReservations,
+} from "@/lib/api/generated/main/reservations/reservations";
 
 export const ReservationsSchedule: React.FC = () => {
   const { reservationId } = useParams({
@@ -37,9 +41,18 @@ export const ReservationsSchedule: React.FC = () => {
   const { socket, connected } = useGateway();
   const queryClient = useQueryClient();
 
-  const { data: reservations } = useReservations();
-  const { mutateAsync: deleteReservation, isPending: isDeleting } =
-    useDeleteReservation();
+  const { data: reservations } = useReservationsControllerGetReservations(
+    { guildId: guildId ?? "" },
+    {
+      query: {
+        ...reservationsQueryOptions(guildId ?? ""),
+      },
+    },
+  );
+  const deleteReservationMutation =
+    useReservationsControllerDeleteReservation();
+  const deleteReservation = deleteReservationMutation.mutateAsync;
+  const isDeleting = deleteReservationMutation.isPending;
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const currentUserId = session?.user?.discordId;
@@ -96,7 +109,12 @@ export const ReservationsSchedule: React.FC = () => {
     ? (reservations?.[reservationKey] ?? [])
     : [];
 
-  const segments = useReservationSegments(selectedReservations, weekStart);
+  const normalizedReservations = useMemo(
+    () => selectedReservations.map(normalizeReservation),
+    [selectedReservations],
+  );
+
+  const segments = useReservationSegments(normalizedReservations, weekStart);
 
   type ReservationGatewayPayload = {
     guildId: string;
@@ -141,7 +159,13 @@ export const ReservationsSchedule: React.FC = () => {
           : "Nie udało się usunąć rezerwacji.";
 
       try {
-        await deleteReservation({ reservationRecordId });
+        if (!guildId) {
+          throw new Error("Missing guild id when deleting reservation.");
+        }
+
+        await deleteReservation({
+          pathParams: { guildId, reservationRecordId },
+        });
         toast.success(successMessage, { position: "bottom-right" });
       } catch (error) {
         toast.error(getApiErrorMessage(error) ?? fallbackMessage, {

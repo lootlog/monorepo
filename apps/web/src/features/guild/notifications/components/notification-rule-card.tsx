@@ -17,19 +17,14 @@ import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
-import {
-  useDeleteGuildNotificationRule,
-  useRebuildGuildNotificationRuleJobs,
-  useTriggerGuildNotificationRuleTest,
-  type GuildNotificationRule,
-} from "@/hooks/api/guilds/use-guild-notifications";
+import { useQueryClient } from "@tanstack/react-query";
 import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
 import { ROUTES } from "@/config/routes";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
-  NotificationScheduleIntervalType,
-  NotificationTriggerType,
-} from "@lootlog/types";
+  CreateNotificationRuleDtoScheduleIntervalType as NotificationScheduleIntervalType,
+  CreateNotificationRuleDtoTriggerType as NotificationTriggerType,
+} from "@/lib/api/generated/main/model";
 import {
   getGuildNotificationRuleNpcCount,
   getGuildNotificationRuleScheduleTranslationKey,
@@ -37,9 +32,16 @@ import {
   getNotificationTriggerTranslationKey,
 } from "../utils/notification-settings.utils";
 import { formatNotificationDateInTimeZone } from "../utils/notification-schedule-time.utils";
+import { invalidateGuildNotificationQueries } from "../notifications-api";
+import {
+  useNotificationsGuildControllerDeleteGuildRule,
+  useNotificationsGuildControllerRebuildGuildRuleJobs,
+  useNotificationsGuildControllerTriggerGuildRuleTest,
+} from "@/lib/api/generated/main/notifications/notifications";
+import type { GuildNotificationRulesResponseDtoOutput } from "@/lib/api/generated/main/model";
 
 type NotificationRuleCardProps = {
-  rule: GuildNotificationRule;
+  rule: GuildNotificationRulesResponseDtoOutput["items"][number];
   actionsDisabled: boolean;
 };
 
@@ -49,9 +51,40 @@ export const NotificationRuleCard = ({
 }: NotificationRuleCardProps) => {
   const { t } = useTranslation();
   const guildId = useGuildId();
-  const deleteRule = useDeleteGuildNotificationRule();
-  const rebuildRuleJobs = useRebuildGuildNotificationRuleJobs();
-  const triggerRuleTest = useTriggerGuildNotificationRuleTest();
+  const queryClient = useQueryClient();
+  const deleteRule = useNotificationsGuildControllerDeleteGuildRule({
+    mutation: {
+      onSuccess: async () => {
+        if (!guildId) {
+          return;
+        }
+
+        await invalidateGuildNotificationQueries(queryClient, guildId);
+      },
+    },
+  });
+  const rebuildRuleJobs = useNotificationsGuildControllerRebuildGuildRuleJobs({
+    mutation: {
+      onSuccess: async () => {
+        if (!guildId) {
+          return;
+        }
+
+        await invalidateGuildNotificationQueries(queryClient, guildId);
+      },
+    },
+  });
+  const triggerRuleTest = useNotificationsGuildControllerTriggerGuildRuleTest({
+    mutation: {
+      onSuccess: async () => {
+        if (!guildId) {
+          return;
+        }
+
+        await invalidateGuildNotificationQueries(queryClient, guildId);
+      },
+    },
+  });
   const targetLabels = rule.targets.map(({ target }) => {
     const label = getGuildNotificationTargetLabel(target);
     if (!target.active) {
@@ -71,7 +104,13 @@ export const NotificationRuleCard = ({
 
   const handleRebuildJobs = async () => {
     try {
-      await rebuildRuleJobs.mutateAsync({ ruleId: rule.id });
+      if (!guildId) {
+        throw new Error("Missing guild id.");
+      }
+
+      await rebuildRuleJobs.mutateAsync({
+        pathParams: { guildId, ruleId: rule.id },
+      });
       toast.success(t("settings.notifications.toasts.ruleJobsRebuilt"));
     } catch (error) {
       toast.error(
@@ -83,7 +122,13 @@ export const NotificationRuleCard = ({
 
   const handleTriggerTest = async () => {
     try {
-      await triggerRuleTest.mutateAsync({ ruleId: rule.id });
+      if (!guildId) {
+        throw new Error("Missing guild id.");
+      }
+
+      await triggerRuleTest.mutateAsync({
+        pathParams: { guildId, ruleId: rule.id },
+      });
       toast.success(t("settings.notifications.toasts.ruleTestTriggered"));
     } catch (error) {
       toast.error(
@@ -95,7 +140,13 @@ export const NotificationRuleCard = ({
 
   const handleDelete = async () => {
     try {
-      await deleteRule.mutateAsync({ ruleId: rule.id });
+      if (!guildId) {
+        throw new Error("Missing guild id.");
+      }
+
+      await deleteRule.mutateAsync({
+        pathParams: { guildId, ruleId: rule.id },
+      });
       toast.success(t("settings.notifications.toasts.ruleDeleted"));
     } catch (error) {
       toast.error(
