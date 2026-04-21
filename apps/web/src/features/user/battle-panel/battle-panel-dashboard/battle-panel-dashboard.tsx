@@ -1,4 +1,3 @@
-// import { BattlesChart } from "@/features/user/battle-panel/battle-panel-dashboard/components/battles-chart";
 import { RecentBattles } from "@/features/user/battle-panel/battle-panel-dashboard/components/recent-battles";
 import { StatsOverview } from "@/features/user/battle-panel/battle-panel-dashboard/components/stats-overview";
 import { useBattlesControllerGetBattleAnalytics } from "@/lib/api/generated/battlelog/battles/battles";

@@ -1,15 +1,5 @@
 const ME_SCOPE = "@me" as const;
 export const queryKeys = {
-  activity: {
-    logs: (guildId: string | undefined, baseQueryString: string) =>
-      ["activity-logs", guildId, baseQueryString] as const,
-    suggestions: (
-      endpoint: string,
-      guildId: string | undefined,
-      search: string,
-      limit: number,
-    ) => [endpoint, guildId, search, limit] as const,
-  },
   auth: {
     scopes: () => ["auth-scopes"] as const,
     session: () => ["session"] as const,

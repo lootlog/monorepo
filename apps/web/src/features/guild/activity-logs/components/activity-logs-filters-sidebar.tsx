@@ -17,16 +17,26 @@ import { cn } from "@lootlog/ui/lib/utils";
 import { ActorNameSelector } from "./actor-name-selector";
 import { DateTimePicker } from "@lootlog/ui/components/date-time-picker";
 import type {
-  ActivityType,
-  ActivitySource,
-} from "@/hooks/api/activity-logs/use-activity-logs";
+  ActivitiesControllerFindByGuildSourceItem,
+  ActivitiesControllerFindByGuildTypeItem,
+} from "@/lib/api/generated/activity/model";
 import { isAfter, isBefore, startOfDay, subDays } from "date-fns";
 import { useActivityLogsFilters } from "@/hooks/use-activity-logs-filters";
-import { useActivityActorNameSuggestions } from "@/hooks/api/activity-logs/use-activity-actor-name-suggestions";
-import { useActivityClanNameSuggestions } from "@/hooks/api/activity-logs/use-activity-clan-name-suggestions";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useGuildsControllerGetGuildById } from "@/lib/api/generated/main/guilds/guilds";
+import { useQuery } from "@tanstack/react-query";
+import {
+  getActivityLogSources,
+  getActivityLogTypes,
+} from "../activity-logs.queries";
+import {
+  getActivitiesControllerSuggestActorNamesQueryKey,
+  getActivitiesControllerSuggestActorNamesQueryOptions,
+  getActivitiesControllerSuggestClanNamesQueryKey,
+  getActivitiesControllerSuggestClanNamesQueryOptions,
+} from "@/lib/api/generated/activity/guilds/guilds";
 import { useTranslation } from "react-i18next";
+import { useDebounceValue } from "usehooks-ts";
 
 type ActivityLogsFiltersSidebarProps = {
   className?: string;
@@ -39,19 +49,47 @@ export const ActivityLogsFiltersSidebar: FC<
   const { filters, setFilters, clearFilters, hasActiveFilters } =
     useActivityLogsFilters();
   const guildId = useGuildId();
+  const [debouncedNameSearch] = useDebounceValue(filters.name ?? "", 300);
+  const [debouncedClanSearch] = useDebounceValue(filters.clanName ?? "", 300);
+  const trimmedNameSearch = debouncedNameSearch.trim();
+  const trimmedClanSearch = debouncedClanSearch.trim();
   const { data: guild } = useGuildsControllerGetGuildById({
     guildId: guildId ?? "",
   });
-  const { data: nameSuggestions = [] } = useActivityActorNameSuggestions({
-    guildId: guild?.id,
-    search: filters.name ?? "",
-    debounceMs: 300,
-  });
-  const { data: clanNameSuggestions = [] } = useActivityClanNameSuggestions({
-    guildId: guild?.id,
-    search: filters.clanName ?? "",
-    debounceMs: 300,
-  });
+  const { data: nameSuggestionsResponse } = useQuery(
+    getActivitiesControllerSuggestActorNamesQueryOptions(
+      { guildId: guild?.id ?? "" },
+      { search: trimmedNameSearch || undefined, limit: 8 },
+      {
+        query: {
+          enabled: Boolean(guild?.id && trimmedNameSearch.length >= 1),
+          queryKey: getActivitiesControllerSuggestActorNamesQueryKey(
+            { guildId: guild?.id ?? "" },
+            { search: trimmedNameSearch || undefined, limit: 8 },
+          ),
+          staleTime: 5 * 60 * 1000,
+        },
+      },
+    ),
+  );
+  const { data: clanNameSuggestionsResponse } = useQuery(
+    getActivitiesControllerSuggestClanNamesQueryOptions(
+      { guildId: guild?.id ?? "" },
+      { search: trimmedClanSearch || undefined, limit: 8 },
+      {
+        query: {
+          enabled: Boolean(guild?.id && trimmedClanSearch.length >= 1),
+          queryKey: getActivitiesControllerSuggestClanNamesQueryKey(
+            { guildId: guild?.id ?? "" },
+            { search: trimmedClanSearch || undefined, limit: 8 },
+          ),
+          staleTime: 5 * 60 * 1000,
+        },
+      },
+    ),
+  );
+  const nameSuggestions = nameSuggestionsResponse?.suggestions ?? [];
+  const clanNameSuggestions = clanNameSuggestionsResponse?.suggestions ?? [];
 
   const startDateValue = filters.startDate
     ? new Date(filters.startDate)
@@ -97,9 +135,14 @@ export const ActivityLogsFiltersSidebar: FC<
       };
 
       return {
-        types: mergedFilters.types.length > 0 ? mergedFilters.types : null,
-        sources:
-          mergedFilters.sources.length > 0 ? mergedFilters.sources : null,
+        types: (() => {
+          const nextTypes = getActivityLogTypes(mergedFilters.types);
+          return nextTypes.length > 0 ? nextTypes : null;
+        })(),
+        sources: (() => {
+          const nextSources = getActivityLogSources(mergedFilters.sources);
+          return nextSources.length > 0 ? nextSources : null;
+        })(),
         startDate: mergedFilters.startDate || null,
         endDate: mergedFilters.endDate || null,
         name: mergedFilters.name || null,
@@ -108,7 +151,10 @@ export const ActivityLogsFiltersSidebar: FC<
       };
     });
   };
-  const activityTypes: { value: ActivityType; label: string }[] = [
+  const activityTypes: {
+    value: ActivitiesControllerFindByGuildTypeItem;
+    label: string;
+  }[] = [
     {
       value: "CONNECT_EVENT",
       label: t("activityLogs.filters.types.CONNECT_EVENT"),
@@ -118,7 +164,10 @@ export const ActivityLogsFiltersSidebar: FC<
       label: t("activityLogs.filters.types.DISCONNECT_EVENT"),
     },
   ];
-  const activitySources: { value: ActivitySource; label: string }[] = [
+  const activitySources: {
+    value: ActivitiesControllerFindByGuildSourceItem;
+    label: string;
+  }[] = [
     { value: "GAME", label: t("activityLogs.filters.sources.GAME") },
     {
       value: "WEB_APP",
@@ -206,13 +255,13 @@ export const ActivityLogsFiltersSidebar: FC<
                         >
                           <Checkbox
                             id={`type-${type.value}`}
-                            checked={filters.types.includes(
-                              type.value as string,
-                            )}
+                            checked={filters.types.includes(type.value)}
                             onCheckedChange={(checked) => {
-                              const currentTypes = filters.types;
+                              const currentTypes = getActivityLogTypes(
+                                filters.types,
+                              );
                               const newTypes = checked
-                                ? [...currentTypes, type.value as string]
+                                ? [...currentTypes, type.value]
                                 : currentTypes.filter((t) => t !== type.value);
                               updateFilters({ types: newTypes });
                             }}
@@ -244,13 +293,13 @@ export const ActivityLogsFiltersSidebar: FC<
                         >
                           <Checkbox
                             id={`source-${source.value}`}
-                            checked={filters.sources.includes(
-                              source.value as string,
-                            )}
+                            checked={filters.sources.includes(source.value)}
                             onCheckedChange={(checked) => {
-                              const currentSources = filters.sources;
+                              const currentSources = getActivityLogSources(
+                                filters.sources,
+                              );
                               const newSources = checked
-                                ? [...currentSources, source.value as string]
+                                ? [...currentSources, source.value]
                                 : currentSources.filter(
                                     (s) => s !== source.value,
                                   );
