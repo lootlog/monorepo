@@ -418,7 +418,7 @@ export const AddTimerForm: React.FC = () => {
                 id="name"
                 autoComplete="off"
                 placeholder={t("addForm.namePlaceholder")}
-                maxLength={20}
+                maxLength={MAX_NPC_NAME_LENGTH}
                 {...register("name")}
               />
               {errors.name && (

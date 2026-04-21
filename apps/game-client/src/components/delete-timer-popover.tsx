@@ -15,20 +15,14 @@ import {
   useUsersControllerGetCurrentUserAccessibleGuilds,
 } from "@/lib/api/generated/main/users/users";
 import type { TimerWithTimeLeft } from "@/features/timers/utils/timers-utils";
+import { REQUIRED_DELETE_PERMISSIONS } from "@/features/timers/constants/required-delete-permissions";
 import { cn } from "@/lib/utils";
-import { Permission } from "@lootlog/types";
 import { useTranslation } from "react-i18next";
 
 type DeleteTimerPopoverProps = {
   timer: TimerWithTimeLeft;
   onDeleteTimer: (guildId: string, timerKey: string) => void;
 };
-
-const REQUIRED_DELETE_PERMISSIONS = [
-  Permission.LOOTLOG_MANAGE,
-  Permission.OWNER,
-  Permission.ADMIN,
-];
 
 export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
   timer,

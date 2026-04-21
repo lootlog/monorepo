@@ -35,7 +35,7 @@
   },
   "emptyState": {
     "filtered": "Brak timerów dla wybranych filtrów",
-    "none": "----"
+    "none": "Brak timerów"
   },
   "contextMenu": {
     "creating": "Tworzenie timera...",
