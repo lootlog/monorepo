@@ -31,7 +31,6 @@ import { EventActionDialog } from "./components/dialogs/event-action-dialog";
 import { EventRulesDialog } from "./components/dialogs/event-rules-dialog";
 import { EventSummaryDialog } from "./components/dialogs/event-summary-dialog";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
-import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { toast } from "sonner";
 import { Permission } from "@lootlog/types";
 import { EventHeroLoots } from "./components/stats/event-hero-loots";
@@ -56,6 +55,10 @@ import {
   useShowEventOverview,
   useUpdateEvent,
 } from "@/lib/api/generated/main/events/events";
+import {
+  getGuildsControllerGetGuildPermissionsQueryKey,
+  useGuildsControllerGetGuildPermissions,
+} from "@/lib/api/generated/main/guilds/guilds";
 import { invalidateEventDetailQueries } from "./hooks/mutations/invalidate-event-queries";
 
 type EventDetailHero = EventHeroNpc & {
@@ -87,7 +90,17 @@ export const EventDetail = () => {
     eventId: eventId ?? "",
   });
 
-  const { data: permissions } = useGuildPermissions();
+  const { data: permissions } = useGuildsControllerGetGuildPermissions(
+    { guildId: guildId ?? "" },
+    {
+      query: {
+        queryKey: getGuildsControllerGetGuildPermissionsQueryKey({
+          guildId: guildId ?? "",
+        }),
+        staleTime: 30_000,
+      },
+    },
+  );
 
   const { data: heroTimers } = useListEventHeroTimers(
     {

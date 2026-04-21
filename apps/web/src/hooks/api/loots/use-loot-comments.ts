@@ -1,5 +1,5 @@
 import { useApiClient } from "@/hooks/api/use-api-client";
-import type { GuildMember } from "@/hooks/api/members/use-guild-member";
+import type { MemberResponseDto as GuildMember } from "@/lib/api/generated/main/model";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";

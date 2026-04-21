@@ -5,8 +5,8 @@ import {
   buildMemberKillsParams,
   DEFAULT_MEMBER_KILLS_LIMIT,
 } from "@/features/guild/stats/utils/build-stats-query-params";
-import { guildMembersQueryOptions } from "@/hooks/api/members/use-guild-members-query-options";
 import { getKillsControllerGetMemberKillsQueryOptions } from "@/lib/api/generated/main/kills/kills";
+import { getMembersControllerGetGuildMembersQueryOptions } from "@/lib/api/generated/main/members/members";
 import {
   isRouteLoaderCancelledError,
   throwNotFoundIfResponseMatches,
@@ -36,9 +36,12 @@ export const Route = createFileRoute(
           ),
         ),
         context.queryClient.ensureQueryData(
-          guildMembersQueryOptions(params.guildId, {
-            includeInactive: true,
-          }),
+          getMembersControllerGetGuildMembersQueryOptions(
+            { guildId: params.guildId },
+            {
+              includeInactive: true,
+            },
+          ),
         ),
       ]);
 

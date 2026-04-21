@@ -16,7 +16,7 @@ const MemberResponseSchema = z.object({
   avatar: z.string().nullable().optional(),
   banner: z.string().nullable().optional(),
   active: z.boolean(),
-  roles: z.array(RoleResponseDto.schema).optional(),
+  roles: z.array(RoleResponseDto.schema),
   globalUserId: z.string().nullable().optional(),
   lastDiscordSyncAt: nullableIsoDatetimeCodec.optional(),
   isStale: z.boolean().optional(),

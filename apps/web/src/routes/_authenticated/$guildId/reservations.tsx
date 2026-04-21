@@ -4,7 +4,7 @@ import {
   reservationsCardsQueryOptions,
   reservationsQueryOptions,
 } from "@/features/guild/reservations/reservations-api";
-import { guildMembersQueryOptions } from "@/hooks/api/members/use-guild-members-query-options";
+import { getMembersControllerGetGuildMembersQueryOptions } from "@/lib/api/generated/main/members/members";
 
 export const Route = createFileRoute("/_authenticated/$guildId/reservations")({
   loader: async ({ context, params, preload }) => {
@@ -20,9 +20,12 @@ export const Route = createFileRoute("/_authenticated/$guildId/reservations")({
         reservationsCardsQueryOptions(params.guildId),
       ),
       context.queryClient.ensureQueryData(
-        guildMembersQueryOptions(params.guildId, {
-          includeInactive: true,
-        }),
+        getMembersControllerGetGuildMembersQueryOptions(
+          { guildId: params.guildId },
+          {
+            includeInactive: true,
+          },
+        ),
       ),
     ]);
 

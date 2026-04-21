@@ -2,11 +2,13 @@ import { cn } from "@lootlog/ui/lib/utils";
 import { motion } from "framer-motion";
 import { Crown, Swords, Sparkles, type LucideIcon } from "lucide-react";
 import type { FC } from "react";
-import type { LootlogConfigNpc } from "@/hooks/api/guilds/use-guild-lootlog-settings";
+import type {
+  LootlogConfigNpcResponseDtoOutput as LootlogConfigNpc,
+  LootlogConfigNpcResponseDtoOutputAllowedRaritiesItem as LootlogConfigNpcAllowedRarity,
+} from "@/lib/api/generated/main/model";
 import { useTranslation } from "react-i18next";
 import { useSelectorPanel } from "@/components/selector-panel";
 import { SelectableListCard } from "@/components/selectable-list-card";
-import { ItemRarity } from "@/hooks/api/loots/use-loots";
 import {
   Tooltip,
   TooltipContent,
@@ -15,28 +17,28 @@ import {
 } from "@lootlog/ui/components/tooltip";
 
 const RARITY_CONFIG: {
-  key: ItemRarity;
+  key: LootlogConfigNpcAllowedRarity;
   color: string;
   bgColor: string;
   icon: LucideIcon;
   label: string;
 }[] = [
   {
-    key: ItemRarity.LEGENDARY,
+    key: "LEGENDARY",
     color: "text-amber-700",
     bgColor: "bg-amber-700/10",
     icon: Crown,
     label: "Legendarny",
   },
   {
-    key: ItemRarity.HEROIC,
+    key: "HEROIC",
     color: "text-blue-500",
     bgColor: "bg-blue-500/10",
     icon: Swords,
     label: "Heroiczny",
   },
   {
-    key: ItemRarity.UNIQUE,
+    key: "UNIQUE",
     color: "text-amber-300",
     bgColor: "bg-amber-300/10",
     icon: Sparkles,

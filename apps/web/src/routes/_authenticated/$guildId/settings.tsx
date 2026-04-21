@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SettingsLayout } from "@/components/layout/settings-layout";
-import { guildPermissionsQueryOptions } from "@/hooks/api/guilds/use-guild-permissions";
+import {
+  getGuildsControllerGetGuildPermissionsQueryKey,
+  getGuildsControllerGetGuildPermissionsQueryOptions,
+} from "@/lib/api/generated/main/guilds/guilds";
 import { canManageGuild } from "@/lib/guild-permissions";
 import { throwForbiddenRouteError } from "@/lib/router/route-errors";
 
@@ -11,7 +14,17 @@ export const Route = createFileRoute("/_authenticated/$guildId/settings")({
     }
 
     const permissions = await context.queryClient.ensureQueryData(
-      guildPermissionsQueryOptions(params.guildId),
+      getGuildsControllerGetGuildPermissionsQueryOptions(
+        { guildId: params.guildId },
+        {
+          query: {
+            queryKey: getGuildsControllerGetGuildPermissionsQueryKey({
+              guildId: params.guildId,
+            }),
+            staleTime: 30_000,
+          },
+        },
+      ),
     );
 
     if (!canManageGuild(permissions)) {

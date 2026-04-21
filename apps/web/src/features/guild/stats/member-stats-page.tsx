@@ -42,11 +42,11 @@ import { cn } from "@lootlog/ui/lib/utils";
 import { useKillsControllerGetMemberKills } from "@/lib/api/generated/main/kills/kills";
 import type { NpcType } from "@/lib/api/generated/main/model/npc-type";
 import { useStatsSettings } from "./hooks/use-stats-settings";
-import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { TRACKABLE_NPC_TYPES } from "./constants";
 import { LevelFilters } from "./components/level-filters";
 import { NpcStatsFiltersMobile } from "./components/npc-stats-filters-mobile";
+import { useMembersControllerGetGuildMembers } from "@/lib/api/generated/main/members/members";
 import {
   buildMemberKillsParams,
   DEFAULT_MEMBER_KILLS_LIMIT,
@@ -114,7 +114,12 @@ export const MemberStatsPage: React.FC = () => {
       maxLvl: debouncedMaxLvl,
     }),
   );
-  const { data: guildMembers } = useGuildMembers(true);
+  const { data: guildMembers } = useMembersControllerGetGuildMembers(
+    { guildId },
+    {
+      includeInactive: true,
+    },
+  );
 
   const handleWorldChange = (value: string | null) => {
     setWorld(value);

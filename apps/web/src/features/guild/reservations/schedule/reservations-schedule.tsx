@@ -2,10 +2,7 @@ import { useParams } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
-import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { TooltipProvider } from "@lootlog/ui/components/tooltip";
-import type { GuildMember } from "@/hooks/api/members/use-guild-member";
 import { reservationsQueryOptions } from "../reservations-api";
 import { useSession } from "@/hooks/auth/use-session";
 import { useIsOwner } from "@/hooks/context/use-is-owner";
@@ -28,16 +25,23 @@ import {
   useReservationsControllerDeleteReservation,
   useReservationsControllerGetReservations,
 } from "@/lib/api/generated/main/reservations/reservations";
+import { useGuildsControllerGetGuildPermissions } from "@/lib/api/generated/main/guilds/guilds";
+import { useMembersControllerGetGuildMembers } from "@/lib/api/generated/main/members/members";
+import type { MemberResponseDto as GuildMember } from "@/lib/api/generated/main/model";
 
 export const ReservationsSchedule: React.FC = () => {
   const { reservationId } = useParams({
     from: "/_authenticated/$guildId/reservations/$reservationId",
   });
-  const { data: members } = useGuildMembers(false);
   const { data: session } = useSession();
-  const { data: permissions } = useGuildPermissions();
   const isOwner = useIsOwner();
   const guildId = useGuildId();
+  const { data: members } = useMembersControllerGetGuildMembers({
+    guildId: guildId ?? "",
+  });
+  const { data: permissions } = useGuildsControllerGetGuildPermissions({
+    guildId: guildId ?? "",
+  });
   const { socket, connected } = useGateway();
   const queryClient = useQueryClient();
 

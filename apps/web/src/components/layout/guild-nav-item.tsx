@@ -1,4 +1,4 @@
-import type { Guild } from "@/hooks/api/guilds/use-guild";
+import type { GuildResponseDtoOutput as Guild } from "@/lib/api/generated/main/model";
 import { cn } from "@/utils/cn";
 import {
   Avatar,
@@ -11,6 +11,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import type { FC } from "react";
+import type React from "react";
 import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { ThemeCircularFrame, useThemeMeta } from "@/themes";

@@ -1,5 +1,4 @@
 import { useSidebar } from "@lootlog/ui/components/sidebar";
-import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   BarChart4,
@@ -14,24 +13,37 @@ import {
 import type { FC } from "react";
 import { SidebarNav, type MenuItem } from "./sidebar-nav/index";
 import { ROUTE_SEGMENTS } from "@/config/routes";
-import { Permission } from "@lootlog/types";
 import { useTranslation } from "react-i18next";
 import { GuildSidebarHeader } from "./guild-sidebar-header";
 import { GuildPinnedEventsSection } from "./guild-pinned-events-section";
 import { canManageGuild } from "@/lib/guild-permissions";
 import { useListEvents } from "@/lib/api/generated/main/events/events";
+import {
+  getGuildsControllerGetGuildPermissionsQueryKey,
+  useGuildsControllerGetGuildPermissions,
+} from "@/lib/api/generated/main/guilds/guilds";
 
 export const GuildsSidebarNav: FC = () => {
   const guildId = useGuildId();
-  const { data: permissions } = useGuildPermissions();
+  const { data: permissions } = useGuildsControllerGetGuildPermissions(
+    { guildId: guildId ?? "" },
+    {
+      query: {
+        queryKey: getGuildsControllerGetGuildPermissionsQueryKey({
+          guildId: guildId ?? "",
+        }),
+        staleTime: 30_000,
+      },
+    },
+  );
   const { setOpenMobile } = useSidebar();
   const { t } = useTranslation();
   const canManageCurrentGuild = canManageGuild(permissions);
 
   const canViewEvents =
-    permissions?.includes(Permission.LOOTLOG_EVENTS_READ) ||
-    permissions?.includes(Permission.LOOTLOG_EVENTS_MANAGE) ||
-    permissions?.includes(Permission.OWNER);
+    permissions?.includes("LOOTLOG_EVENTS_READ") ||
+    permissions?.includes("LOOTLOG_EVENTS_MANAGE") ||
+    permissions?.includes("OWNER");
   const activeEventsGuildId = canViewEvents ? (guildId ?? "") : "";
 
   const { data: activeEvents } = useListEvents(
@@ -52,8 +64,8 @@ export const GuildsSidebarNav: FC = () => {
       path: "",
       available: true,
       enabled: Boolean(
-        permissions?.includes(Permission.LOOTLOG_LOOTS_READ) ||
-        permissions?.includes(Permission.OWNER),
+        permissions?.includes("LOOTLOG_LOOTS_READ") ||
+        permissions?.includes("OWNER"),
       ),
     },
     {
@@ -62,8 +74,8 @@ export const GuildsSidebarNav: FC = () => {
       path: ROUTE_SEGMENTS.guild.timers,
       available: true,
       enabled: Boolean(
-        permissions?.includes(Permission.LOOTLOG_TIMERS_READ) ||
-        permissions?.includes(Permission.OWNER),
+        permissions?.includes("LOOTLOG_TIMERS_READ") ||
+        permissions?.includes("OWNER"),
       ),
     },
     {
@@ -72,8 +84,8 @@ export const GuildsSidebarNav: FC = () => {
       path: ROUTE_SEGMENTS.guild.reservations,
       available: true,
       enabled: Boolean(
-        permissions?.includes(Permission.LOOTLOG_RESERVATIONS_READ) ||
-        permissions?.includes(Permission.OWNER),
+        permissions?.includes("LOOTLOG_RESERVATIONS_READ") ||
+        permissions?.includes("OWNER"),
       ),
     },
     {
@@ -105,8 +117,8 @@ export const GuildsSidebarNav: FC = () => {
       path: ROUTE_SEGMENTS.guild.stats,
       available: true,
       enabled: Boolean(
-        permissions?.includes(Permission.LOOTLOG_LOOTS_READ) ||
-        permissions?.includes(Permission.OWNER),
+        permissions?.includes("LOOTLOG_LOOTS_READ") ||
+        permissions?.includes("OWNER"),
       ),
     },
     {

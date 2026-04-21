@@ -1,11 +1,11 @@
 import { useMemo } from "react";
 
-type Role = { position: number; color: number | null };
+type Role = { position: number; color?: number | null };
 
 export const useMemberColor = (guildMember: { roles?: Role[] } | undefined) =>
   useMemo(() => {
     if (!guildMember?.roles?.length) return "inherit";
-    const topRole = guildMember.roles.reduce((prev: Role, curr: Role) =>
+    const topRole = guildMember.roles.reduce((prev, curr) =>
       (curr.position ?? 0) > (prev.position ?? 0) ? curr : prev,
     );
     return !topRole.color

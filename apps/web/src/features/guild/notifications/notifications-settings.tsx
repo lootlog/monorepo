@@ -25,7 +25,6 @@ import {
   guildNotificationTargetsQueryKey,
 } from "./notifications-api";
 import { hasConfirmedGuildDiscordPermissions } from "@/features/guild/settings/utils/has-confirmed-guild-discord-permissions";
-import { useGuildDiscordSync } from "@/hooks/api/guilds/use-guild-discord-sync";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { buildDiscordBotInstallUrl } from "@/utils/build-discord-bot-install-url";
 import { isSupportedGuildNotificationTrigger } from "./utils/notification-settings.utils";
@@ -35,11 +34,14 @@ import {
   useNotificationsGuildControllerGetGuildTargets,
 } from "@/lib/api/generated/main/notifications/notifications";
 import type { NotificationTargetResponseDtoOutput } from "@/lib/api/generated/main/model";
+import { useGuildsControllerGetGuildDiscordSyncStatus } from "@/lib/api/generated/main/guilds/guilds";
 
 export const NotificationsSettings = () => {
   const { t } = useTranslation();
   const guildId = useGuildId();
-  const { data: syncState } = useGuildDiscordSync();
+  const { data: syncState } = useGuildsControllerGetGuildDiscordSyncStatus({
+    guildId: guildId ?? "",
+  });
   const targetsQuery = useNotificationsGuildControllerGetGuildTargets(
     { guildId: guildId ?? "" },
     {

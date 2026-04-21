@@ -3,7 +3,6 @@ import { GuildNavItem } from "@/components/layout/guild-nav-item";
 import { InstallButton } from "@/components/layout/install-button";
 import { UserNavItem } from "@/components/layout/user-nav-item";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { useGuilds } from "@/hooks/api/guilds/use-guilds";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { Reorder, motion } from "framer-motion";
 import { useState, useEffect, useCallback, useMemo, type FC } from "react";
@@ -11,9 +10,10 @@ import { GuildsSelectorSkeleton } from "@/components/layout/guilds-selector-skel
 import { useUser } from "@/hooks/api/user/use-user";
 import { useUpdateUserPreferences } from "@/hooks/api/user/use-update-user-preferences";
 import { Separator } from "@lootlog/ui/components/separator";
+import { useGuildsControllerGetUserGuilds } from "@/lib/api/generated/main/guilds/guilds";
 
 export const GuildsSelector: FC = () => {
-  const { data: guilds, isLoading } = useGuilds();
+  const { data: guilds, isLoading } = useGuildsControllerGetUserGuilds();
   const { user } = useUser();
   const currentGuildId = useGuildId();
   const [localGuilds, setLocalGuilds] = useState<typeof guilds>();

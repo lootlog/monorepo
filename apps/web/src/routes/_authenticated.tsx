@@ -4,7 +4,7 @@ import { AppLayout } from "@/components/layout/app-layout";
 import { GatewayProvider } from "@/contexts/gateway-context";
 import { sessionQueryOptions } from "@/hooks/auth/use-session-query";
 import { authScopesQueryOptions } from "@/hooks/api/use-auth-scopes";
-import { guildsQueryOptions } from "@/hooks/api/guilds/use-guilds";
+import { getGuildsControllerGetUserGuildsQueryOptions } from "@/lib/api/generated/main/guilds/guilds";
 import { userPreferencesQueryOptions } from "@/hooks/api/user/use-user-preferences";
 
 function AuthenticatedLayout() {
@@ -40,7 +40,9 @@ export const Route = createFileRoute("/_authenticated")({
   loader: async ({ context }) => {
     await Promise.all([
       context.queryClient.ensureQueryData(authScopesQueryOptions()),
-      context.queryClient.ensureQueryData(guildsQueryOptions()),
+      context.queryClient.ensureQueryData(
+        getGuildsControllerGetUserGuildsQueryOptions(),
+      ),
       context.queryClient.ensureQueryData(userPreferencesQueryOptions()),
     ]);
 

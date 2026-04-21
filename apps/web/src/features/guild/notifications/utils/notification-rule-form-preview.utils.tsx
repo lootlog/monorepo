@@ -1,6 +1,6 @@
 import { defaultUrlTransform, type Components } from "react-markdown";
 import { getGuildRoleHexColor } from "../components/notification-template-editor.utils";
-import type { GuildRole } from "@/hooks/api/guilds/use-guild-roles";
+import type { RoleResponseDtoOutput as GuildRole } from "@/lib/api/generated/main/model";
 
 export const ROLE_LINK_PREFIX = "role:";
 

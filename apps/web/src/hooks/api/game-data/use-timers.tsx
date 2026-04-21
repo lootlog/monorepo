@@ -1,6 +1,6 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import type { Npc } from "@/hooks/api/game-data/use-npcs";
-import type { GuildMember } from "@/hooks/api/members/use-guild-member";
+import type { MemberResponseDto as GuildMember } from "@/lib/api/generated/main/model";
 import { stringify } from "qs";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useGuildContext } from "@/hooks/context/use-guild-context";

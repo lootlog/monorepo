@@ -7,7 +7,6 @@ import { useNavigate, useParams } from "@tanstack/react-router";
 import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
 import { useNpcs } from "@/hooks/api/game-data/use-npcs";
 import { useWorlds } from "@/hooks/api/game-data/use-worlds";
-import { useGuildRoles } from "@/hooks/api/guilds/use-guild-roles";
 import {
   CreateNotificationRuleDtoScheduleAnchor as NotificationScheduleAnchor,
   CreateNotificationRuleDtoScheduleIntervalType as NotificationScheduleIntervalType,
@@ -52,6 +51,7 @@ import {
   useNotificationsGuildControllerGetGuildTargets,
   useNotificationsGuildControllerUpdateGuildRule,
 } from "@/lib/api/generated/main/notifications/notifications";
+import { useRolesControllerGetGuildRoles } from "@/lib/api/generated/main/roles/roles";
 
 export const useNotificationRuleForm = () => {
   const { t } = useTranslation();
@@ -107,7 +107,9 @@ export const useNotificationRuleForm = () => {
     },
   });
   const { data: worlds = [] } = useWorlds();
-  const { data: guildRoles = [] } = useGuildRoles();
+  const { data: guildRoles = [] } = useRolesControllerGetGuildRoles({
+    guildId: guildId ?? "",
+  });
   const [npcSearch, setNpcSearch] = useState("");
   const [extraTargets, setExtraTargets] = useState<
     NotificationTargetResponseDtoOutput[]

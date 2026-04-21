@@ -706,7 +706,13 @@ paths:
       parameters: []
       responses:
         "200":
-          description: ""
+          description: List of manageable user guilds
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GuildResponseDto_Output"
       security:
         - bearer: []
       tags:
@@ -806,7 +812,42 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: List of member permissions in the guild
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  enum:
+                    - OWNER
+                    - ADMIN
+                    - LOOTLOG_MANAGE
+                    - LOOTLOG_ACCESS
+                    - LOOTLOG_LOOTS_READ
+                    - LOOTLOG_LOOTS_WRITE
+                    - LOOTLOG_LOOTS_TITANS_READ
+                    - LOOTLOG_LOOTS_HEROES_READ
+                    - LOOTLOG_TIMERS_READ
+                    - LOOTLOG_TIMERS_WRITE
+                    - LOOTLOG_TIMERS_RESET
+                    - LOOTLOG_TIMERS_DELETE
+                    - LOOTLOG_TIMERS_TITANS_READ
+                    - LOOTLOG_TIMERS_HEROES_READ
+                    - LOOTLOG_RESERVATIONS_READ
+                    - LOOTLOG_RESERVATIONS_WRITE
+                    - LOOTLOG_MEMBERS_READ
+                    - LOOTLOG_CHAT_READ
+                    - LOOTLOG_CHAT_WRITE
+                    - LOOTLOG_CHAT_TITANS_READ
+                    - LOOTLOG_CHAT_HEROES_READ
+                    - LOOTLOG_NOTIFICATIONS_READ
+                    - LOOTLOG_NOTIFICATIONS_SEND
+                    - LOOTLOG_NOTIFICATIONS_TITANS_READ
+                    - LOOTLOG_NOTIFICATIONS_HEROES_READ
+                    - LOOTLOG_EVENTS_MANAGE
+                    - LOOTLOG_EVENTS_READ
+                    - LOOTLOG_EVENTS_WRITE
       security:
         - bearer: []
       tags:
@@ -822,7 +863,11 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Guild Discord sync state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiscordGuildSyncStateResponseDto_Output"
       security:
         - bearer: []
       tags:
@@ -838,7 +883,11 @@ paths:
             type: string
       responses:
         "201":
-          description: ""
+          description: Refreshed guild Discord sync state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiscordGuildSyncStateResponseDto_Output"
       security:
         - bearer: []
       tags:
@@ -5830,6 +5879,7 @@ components:
               - id
               - guildId
               - name
+              - color
               - permissions
         globalUserId:
           type: string
@@ -5861,6 +5911,7 @@ components:
         - type
         - name
         - active
+        - roles
         - updatedAt
     MemberSummaryResponseDto_Output:
       type: object
@@ -6580,6 +6631,7 @@ components:
         - id
         - guildId
         - name
+        - color
         - permissions
     UpdateRolePermissionsDto:
       type: object

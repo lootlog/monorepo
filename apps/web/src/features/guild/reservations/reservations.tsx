@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Grid2X2, List, Search } from "lucide-react";
 import { ReservationCard } from "./reservation-card";
-import { useGuild } from "@/hooks/api/guilds/use-guild";
 import { reservationSlug } from "./reservation-slug";
 import {
   reservationsCardsQueryOptions,
@@ -23,16 +22,19 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { useViewMode } from "@/hooks/use-view-mode";
-import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
 import { ReservationCardSkeleton } from "./reservation-card-skeleton";
 import { useTranslation } from "react-i18next";
 import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useGuildsControllerGetGuildById } from "@/lib/api/generated/main/guilds/guilds";
+import { useMembersControllerGetGuildMembers } from "@/lib/api/generated/main/members/members";
 
 export const Reservations: React.FC = () => {
-  const { data: guild } = useGuild({});
   const navigate = useNavigate();
   const { t } = useTranslation();
   const guildId = useGuildId();
+  const { data: guild } = useGuildsControllerGetGuildById({
+    guildId: guildId ?? "",
+  });
 
   const [searchValue, setSearchValue] = useState("");
   const { viewMode, setViewMode } = useViewMode("reservations-view-mode");
@@ -54,7 +56,12 @@ export const Reservations: React.FC = () => {
         },
       },
     );
-  const { data: members } = useGuildMembers(true);
+  const { data: members } = useMembersControllerGetGuildMembers(
+    { guildId: guildId ?? "" },
+    {
+      includeInactive: true,
+    },
+  );
 
   const normalizedSearch = searchValue.trim().toLowerCase();
   const filteredCards = useMemo(() => {

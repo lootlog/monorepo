@@ -32,8 +32,9 @@ import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
 import { MARGONEM_GUILD_URL } from "@/constants/margonem";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useMembersControllerGetGuildMembers } from "@/lib/api/generated/main/members/members";
 
 type Props = {
   activity: ActivityLog;
@@ -41,7 +42,11 @@ type Props = {
 
 export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
   const [isOpen, setIsOpen] = useState("");
-  const { data: members } = useGuildMembers(true);
+  const guildId = useGuildId();
+  const { data: members } = useMembersControllerGetGuildMembers(
+    { guildId: guildId ?? "" },
+    { includeInactive: true },
+  );
   const { t } = useTranslation();
   const activityTypeConfig = {
     LOOT_EVENT: {
