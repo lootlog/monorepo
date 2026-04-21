@@ -1,11 +1,11 @@
 import { type NotificationMutes, type UserPreferences } from "@lootlog/types";
+import { getUsersControllerGetUserPreferencesQueryKey } from "@/lib/api/generated/main/users/users";
 
-export const USER_PREFERENCES_QUERY_KEY_PREFIX = "user-preferences";
 export const UPDATE_USER_PREFERENCES_MUTATION_KEY_PREFIX =
   "update-user-preferences";
 
 export const getUserPreferencesQueryKey = () =>
-  [USER_PREFERENCES_QUERY_KEY_PREFIX] as const;
+  getUsersControllerGetUserPreferencesQueryKey();
 
 export const getUpdateUserPreferencesMutationKey = () =>
   [UPDATE_USER_PREFERENCES_MUTATION_KEY_PREFIX] as const;
