@@ -1,8 +1,12 @@
-import { useGuild } from "@/hooks/api/guilds/use-guild";
 import { useSession } from "@/hooks/auth/use-session";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useGuildsControllerGetGuildById } from "@/lib/api/generated/main/guilds/guilds";
 
 export const useIsOwner = () => {
-  const { data: guild } = useGuild({});
+  const guildId = useGuildId();
+  const { data: guild } = useGuildsControllerGetGuildById({
+    guildId: guildId ?? "",
+  });
   const { data: session } = useSession();
 
   return guild?.ownerId === session?.user?.discordId;

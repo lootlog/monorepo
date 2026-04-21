@@ -1,7 +1,6 @@
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
 import {
-  DiscordGuildSyncStatus,
   NotificationJobKind,
   NotificationJobStatus,
   NotificationOwnerType,
@@ -17,6 +16,10 @@ import {
   jsonValueSchema,
   nullableIsoDatetimeCodec,
 } from "src/shared/dto/zod-response-codecs";
+import {
+  DiscordGuildChannelSnapshotResponseDto,
+  DiscordGuildSyncStateResponseDto,
+} from "src/shared/dto/discord-guild-sync-response.dto";
 
 const NotificationTestTriggerUsageResponseSchema = z.object({
   limit: z.number().int(),
@@ -222,59 +225,9 @@ export class NotificationJobsResponseDto extends createZodDto(
   },
 ) {}
 
-const DiscordGuildChannelSnapshotResponseSchema = z.object({
-  id: z.number().int(),
-  guildId: z.string(),
-  channelId: z.string(),
-  name: z.string(),
-  channelType: z.string(),
-  parentId: z.string().nullable(),
-  position: z.number().int(),
-  active: z.boolean(),
-  canView: z.boolean(),
-  canSend: z.boolean(),
-  hasRequiredPermissions: z.boolean(),
-  requiredPermissions: z.array(z.string()),
-  grantedPermissions: z.array(z.string()),
-  missingPermissions: z.array(z.string()),
-  lastSyncedAt: isoDatetimeCodec,
-  createdAt: isoDatetimeCodec,
-  updatedAt: isoDatetimeCodec,
-});
-
-export class DiscordGuildChannelSnapshotResponseDto extends createZodDto(
-  DiscordGuildChannelSnapshotResponseSchema,
-  {
-    codec: true,
-  },
-) {}
-
-const DiscordGuildSyncStateResponseSchema = z.object({
-  guildId: z.string(),
-  status: z.nativeEnum(DiscordGuildSyncStatus),
-  hasRequiredPermissions: z.boolean(),
-  requiredPermissions: z.array(z.string()),
-  grantedPermissions: z.array(z.string()),
-  missingPermissions: z.array(z.string()),
-  channelCount: z.number().int(),
-  selectableChannelCount: z.number().int(),
-  lastAttemptAt: nullableIsoDatetimeCodec,
-  lastSuccessAt: nullableIsoDatetimeCodec,
-  lastError: z.string().nullable(),
-  createdAt: isoDatetimeCodec,
-  updatedAt: isoDatetimeCodec,
-});
-
-export class DiscordGuildSyncStateResponseDto extends createZodDto(
-  DiscordGuildSyncStateResponseSchema,
-  {
-    codec: true,
-  },
-) {}
-
 const GuildAvailableNotificationTargetsResponseSchema = z.object({
-  channels: z.array(DiscordGuildChannelSnapshotResponseSchema),
-  syncState: DiscordGuildSyncStateResponseSchema.nullable(),
+  channels: z.array(DiscordGuildChannelSnapshotResponseDto.schema),
+  syncState: DiscordGuildSyncStateResponseDto.schema.nullable(),
 });
 
 export class GuildAvailableNotificationTargetsResponseDto extends createZodDto(

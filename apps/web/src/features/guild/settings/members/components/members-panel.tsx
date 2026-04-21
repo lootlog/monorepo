@@ -1,5 +1,5 @@
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import type { GuildMember } from "@/hooks/api/members/use-guild-member";
+import type { MemberResponseDto as GuildMember } from "@/lib/api/generated/main/model";
 import { MemberData } from "@/features/guild/settings/members/components/member-data";
 import { MemberSyncButton } from "@/features/guild/settings/members/components/member-sync-button";
 import { ArrowLeft, Crown } from "lucide-react";
@@ -38,7 +38,7 @@ export const MembersPanelContent: FC<MembersPanelContentProps> = ({
     const perms = new Set<Permission>();
     for (const role of selectedMember.roles) {
       for (const perm of role.permissions) {
-        perms.add(perm);
+        perms.add(perm as Permission);
       }
     }
     return Array.from(perms);

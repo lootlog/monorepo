@@ -1,7 +1,3 @@
-import {
-  useGuildDiscordSync,
-  useRefreshGuildDiscordSync,
-} from "@/hooks/api/guilds/use-guild-discord-sync";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { hasConfirmedGuildDiscordPermissions } from "@/features/guild/settings/utils/has-confirmed-guild-discord-permissions";
 import { buildDiscordBotInstallUrl } from "@/utils/build-discord-bot-install-url";
@@ -13,12 +9,42 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { format } from "date-fns";
 import { Info, RefreshCcw, ShieldAlert, ShieldCheck } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  invalidateGuildsControllerGetGuildDiscordSyncStatus,
+  useGuildsControllerGetGuildDiscordSyncStatus,
+  useGuildsControllerRefreshGuildDiscordSync,
+} from "@/lib/api/generated/main/guilds/guilds";
+import { invalidateNotificationsGuildControllerGetAvailableGuildTargets } from "@/lib/api/generated/main/notifications/notifications";
 
 export const InfoSettings = () => {
   const { t } = useTranslation();
   const guildId = useGuildId();
-  const { data, isLoading } = useGuildDiscordSync();
-  const refreshMutation = useRefreshGuildDiscordSync();
+  const queryClient = useQueryClient();
+  const { data, isLoading } = useGuildsControllerGetGuildDiscordSyncStatus({
+    guildId: guildId ?? "",
+  });
+  const refreshMutation = useGuildsControllerRefreshGuildDiscordSync({
+    mutation: {
+      onSuccess: async (_, variables) => {
+        const currentGuildId = variables?.pathParams.guildId;
+
+        if (!currentGuildId) {
+          return;
+        }
+
+        await Promise.all([
+          invalidateGuildsControllerGetGuildDiscordSyncStatus(queryClient, {
+            guildId: currentGuildId,
+          }),
+          invalidateNotificationsGuildControllerGetAvailableGuildTargets(
+            queryClient,
+            { guildId: currentGuildId },
+          ),
+        ]);
+      },
+    },
+  });
 
   const installUrl = guildId ? buildDiscordBotInstallUrl(guildId) : "#";
   const missingPermissions = data?.missingPermissions ?? [];
@@ -45,7 +71,9 @@ export const InfoSettings = () => {
               </div>
               <Button
                 size="sm"
-                onClick={() => refreshMutation.mutate()}
+                onClick={() =>
+                  guildId && refreshMutation.mutate({ pathParams: { guildId } })
+                }
                 disabled={refreshMutation.isPending}
               >
                 <RefreshCcw className="mr-2 size-3.5" />

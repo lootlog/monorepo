@@ -11,7 +11,7 @@ import type { ReservationSegment } from "./types";
 import { ReservationSegmentCard } from "./reservation-segment-card";
 import { NowIndicator } from "./now-indicator";
 import { ReservationQuickAddPopover } from "./reservation-quick-add-popover";
-import type { GuildMember } from "@/hooks/api/members/use-guild-member";
+import type { MemberResponseDto as GuildMember } from "@/lib/api/generated/main/model";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { cn } from "@lootlog/ui/lib/utils";
 

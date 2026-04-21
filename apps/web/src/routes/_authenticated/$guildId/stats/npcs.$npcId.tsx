@@ -2,8 +2,8 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { NpcKillersPage } from "@/features/guild/stats/npc-killers-page";
 import { NpcDetailPageSkeleton } from "@/features/guild/stats/npc-detail-page-skeleton";
 import { buildNpcKillersParams } from "@/features/guild/stats/utils/build-stats-query-params";
-import { guildMembersQueryOptions } from "@/hooks/api/members/use-guild-members-query-options";
 import { getKillsControllerGetNpcKillersQueryOptions } from "@/lib/api/generated/main/kills/kills";
+import { getMembersControllerGetGuildMembersQueryOptions } from "@/lib/api/generated/main/members/members";
 import {
   isRouteLoaderCancelledError,
   throwNotFoundIfResponseMatches,
@@ -31,9 +31,12 @@ export const Route = createFileRoute(
           ),
         ),
         context.queryClient.ensureQueryData(
-          guildMembersQueryOptions(params.guildId, {
-            includeInactive: true,
-          }),
+          getMembersControllerGetGuildMembersQueryOptions(
+            { guildId: params.guildId },
+            {
+              includeInactive: true,
+            },
+          ),
         ),
       ]);
 

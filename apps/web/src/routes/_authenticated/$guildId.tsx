@@ -3,9 +3,16 @@ import { createFileRoute } from "@tanstack/react-router";
 import { GuildRouteProviders } from "@/components/layout/guild-route-providers";
 import { GuildRouteError } from "@/components/router/guild-route-error";
 import { GuildRouteNotFound } from "@/components/router/guild-route-not-found";
-import { guildQueryOptions } from "@/hooks/api/guilds/use-guild";
-import { guildPermissionsQueryOptions } from "@/hooks/api/guilds/use-guild-permissions";
-import { guildMemberQueryOptions } from "@/hooks/api/members/use-guild-member";
+import {
+  getGuildsControllerGetGuildByIdQueryOptions,
+  getGuildsControllerGetGuildByIdQueryKey,
+  getGuildsControllerGetGuildPermissionsQueryKey,
+  getGuildsControllerGetGuildPermissionsQueryOptions,
+} from "@/lib/api/generated/main/guilds/guilds";
+import {
+  getMembersControllerGetMeQueryKey,
+  getMembersControllerGetMeQueryOptions,
+} from "@/lib/api/generated/main/members/members";
 import {
   isRouteLoaderCancelledError,
   throwForbiddenRouteError,
@@ -22,20 +29,50 @@ export const Route = createFileRoute("/_authenticated/$guildId")({
   loader: async ({ context, params }) => {
     try {
       const guild = await context.queryClient.ensureQueryData(
-        guildQueryOptions(params.guildId),
+        getGuildsControllerGetGuildByIdQueryOptions(
+          { guildId: params.guildId },
+          {
+            query: {
+              queryKey: getGuildsControllerGetGuildByIdQueryKey({
+                guildId: params.guildId,
+              }),
+              retry: true,
+            },
+          },
+        ),
       );
 
       const [guildMember, permissions] = await Promise.all([
         context.queryClient.ensureQueryData(
-          guildMemberQueryOptions(params.guildId),
+          getMembersControllerGetMeQueryOptions(
+            { guildId: params.guildId },
+            {
+              query: {
+                queryKey: getMembersControllerGetMeQueryKey({
+                  guildId: params.guildId,
+                }),
+                staleTime: 30_000,
+              },
+            },
+          ),
         ),
         context.queryClient.ensureQueryData(
-          guildPermissionsQueryOptions(params.guildId),
+          getGuildsControllerGetGuildPermissionsQueryOptions(
+            { guildId: params.guildId },
+            {
+              query: {
+                queryKey: getGuildsControllerGetGuildPermissionsQueryKey({
+                  guildId: params.guildId,
+                }),
+                staleTime: 30_000,
+              },
+            },
+          ),
         ),
       ]);
 
       const canAccessGuild =
-        permissions.includes(Permission.OWNER) || guildMember.active;
+        permissions.includes(Permission.OWNER) || Boolean(guildMember?.active);
 
       if (!canAccessGuild) {
         throwForbiddenRouteError();

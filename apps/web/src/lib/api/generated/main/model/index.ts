@@ -200,6 +200,7 @@ export * from './guilds-controller-get-guild-by-id-path-parameters';
 export * from './guilds-controller-get-guild-config-path-parameters';
 export * from './guilds-controller-get-guild-discord-sync-status-path-parameters';
 export * from './guilds-controller-get-guild-permissions-path-parameters';
+export * from './guilds-controller-get-guild-permissions200-item';
 export * from './guilds-controller-get-user-guilds-params';
 export * from './guilds-controller-get-worlds-by-guild-id-path-parameters';
 export * from './guilds-controller-refresh-guild-discord-sync-path-parameters';

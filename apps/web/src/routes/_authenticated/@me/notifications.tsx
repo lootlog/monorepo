@@ -5,7 +5,7 @@ import {
   userNotificationTargetsQueryOptions,
   userWatchedItemsQueryOptions,
 } from "@/features/user/notifications/user-notifications-api";
-import { guildsQueryOptions } from "@/hooks/api/guilds/use-guilds";
+import { getGuildsControllerGetUserGuildsQueryOptions } from "@/lib/api/generated/main/guilds/guilds";
 
 export const Route = createFileRoute("/_authenticated/@me/notifications")({
   component: UserNotifications,
@@ -16,7 +16,9 @@ export const Route = createFileRoute("/_authenticated/@me/notifications")({
     }
 
     await Promise.all([
-      context.queryClient.ensureQueryData(guildsQueryOptions()),
+      context.queryClient.ensureQueryData(
+        getGuildsControllerGetUserGuildsQueryOptions(),
+      ),
       context.queryClient.ensureQueryData(
         userNotificationTargetsQueryOptions(),
       ),

@@ -15,8 +15,8 @@ import {
 } from "../user-notifications-api";
 import { createContext, type PropsWithChildren } from "react";
 import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
-import { useGuild } from "@/hooks/api/guilds/use-guild";
 import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useGuildsControllerGetGuildById } from "@/lib/api/generated/main/guilds/guilds";
 
 type GuildWatchedItemsContextValue = {
   state: "loading" | "error" | "ready";
@@ -57,7 +57,9 @@ export const GuildWatchedItemsProvider = ({ children }: PropsWithChildren) => {
       },
     });
   const currentGuildId = useGuildId();
-  const guildQuery = useGuild();
+  const guildQuery = useGuildsControllerGetGuildById({
+    guildId: currentGuildId ?? "",
+  });
   const resolvedGuildId = guildQuery.data?.id;
 
   const resolveGuildId = (guildId: string): string => {

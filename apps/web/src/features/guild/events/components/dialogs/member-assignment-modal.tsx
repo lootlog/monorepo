@@ -13,9 +13,10 @@ import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Search, X, Users, UserPlus, AlertTriangle } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
-import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
 import { cn } from "@lootlog/ui/lib/utils";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useMembersControllerGetGuildMembers } from "@/lib/api/generated/main/members/members";
 interface MemberAssignmentModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -46,7 +47,10 @@ export const MemberAssignmentModal = ({
 }: MemberAssignmentModalProps) => {
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
-  const { data: members, isLoading } = useGuildMembers();
+  const guildId = useGuildId();
+  const { data: members, isLoading } = useMembersControllerGetGuildMembers({
+    guildId: guildId ?? "",
+  });
 
   const filteredMembers = members?.filter((member) =>
     member.name.toLowerCase().includes(search.toLowerCase()),

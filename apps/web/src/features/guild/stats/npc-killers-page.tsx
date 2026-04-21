@@ -32,11 +32,11 @@ import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { cn } from "@lootlog/ui/lib/utils";
 import { useKillsControllerGetNpcKillers } from "@/lib/api/generated/main/kills/kills";
 import { useStatsSettings } from "./hooks/use-stats-settings";
-import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { NpcKillersFiltersMobile } from "./components/npc-killers-filters-mobile";
-import type { GuildMember } from "@/hooks/api/members/use-guild-member.tsx";
 import { buildNpcKillersParams } from "./utils/build-stats-query-params";
+import { useMembersControllerGetGuildMembers } from "@/lib/api/generated/main/members/members";
+import type { MemberResponseDto as GuildMember } from "@/lib/api/generated/main/model";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -96,7 +96,12 @@ export const NpcKillersPage: React.FC = () => {
       world: settings.world ?? undefined,
     }),
   );
-  const { data: guildMembers } = useGuildMembers(true);
+  const { data: guildMembers } = useMembersControllerGetGuildMembers(
+    { guildId },
+    {
+      includeInactive: true,
+    },
+  );
 
   const handleWorldChange = (value: string | null) => {
     setWorld(value);

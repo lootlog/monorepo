@@ -24,7 +24,8 @@ import { isAfter, isBefore, startOfDay, subDays } from "date-fns";
 import { useActivityLogsFilters } from "@/hooks/use-activity-logs-filters";
 import { useActivityActorNameSuggestions } from "@/hooks/api/activity-logs/use-activity-actor-name-suggestions";
 import { useActivityClanNameSuggestions } from "@/hooks/api/activity-logs/use-activity-clan-name-suggestions";
-import { useGuild } from "@/hooks/api/guilds/use-guild";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useGuildsControllerGetGuildById } from "@/lib/api/generated/main/guilds/guilds";
 import { useTranslation } from "react-i18next";
 
 type ActivityLogsFiltersSidebarProps = {
@@ -37,7 +38,10 @@ export const ActivityLogsFiltersSidebar: FC<
   const { t } = useTranslation();
   const { filters, setFilters, clearFilters, hasActiveFilters } =
     useActivityLogsFilters();
-  const { data: guild } = useGuild();
+  const guildId = useGuildId();
+  const { data: guild } = useGuildsControllerGetGuildById({
+    guildId: guildId ?? "",
+  });
   const { data: nameSuggestions = [] } = useActivityActorNameSuggestions({
     guildId: guild?.id,
     search: filters.name ?? "",

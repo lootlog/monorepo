@@ -3,7 +3,7 @@ import type { Npc } from "@/hooks/api/game-data/use-npcs";
 import { DEFAULT_PAGE_LIMIT } from "@/constants/pagination";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useApiClient } from "@/hooks/api/use-api-client";
-import type { GuildMember } from "@/hooks/api/members/use-guild-member";
+import type { MemberResponseDto as GuildMember } from "@/lib/api/generated/main/model";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
 import type { Player } from "@/hooks/api/game-data/use-guild-players";
 import { useLootsFilters } from "@/hooks/use-loots-filters";

@@ -1,7 +1,7 @@
 import { cn } from "@lootlog/ui/lib/utils";
 import { motion } from "framer-motion";
 import type { FC } from "react";
-import type { GuildRole } from "@/hooks/api/guilds/use-guild-roles";
+import type { RoleResponseDtoOutput as GuildRole } from "@/lib/api/generated/main/model";
 import { Permission } from "@lootlog/types";
 import {
   Tooltip,
@@ -26,8 +26,9 @@ export const RoleListItem: FC<RoleListItemProps> = ({ role, index }) => {
   const isSelected = selectedItem?.id === role.id;
   const isPanelOpen = selectedItem !== null;
 
+  const roleColor = role.color ?? 0;
   const color =
-    role.color === 0 ? "FFF" : role.color.toString(16).padStart(6, "0");
+    roleColor === 0 ? "FFF" : roleColor.toString(16).padStart(6, "0");
 
   const hasAdminPermission = role.permissions.includes(Permission.ADMIN);
 

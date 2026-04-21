@@ -13,39 +13,47 @@ import {
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { useEffect, type FC } from "react";
 import { useTranslation } from "react-i18next";
-import type { LootlogConfigNpc } from "@/hooks/api/guilds/use-guild-lootlog-settings";
-import { ItemRarity } from "@/hooks/api/loots/use-loots";
+import type {
+  LootlogConfigNpcResponseDtoOutput as LootlogConfigNpc,
+  LootlogConfigNpcResponseDtoOutputAllowedRaritiesItem as LootlogConfigNpcAllowedRarity,
+  UpdateLootlogConfigNpcDtoAllowedRaritiesItem,
+} from "@/lib/api/generated/main/model";
 import { cn } from "@/utils/cn";
 import { toast } from "sonner";
-import { useUpdateGuildLootlogNpc } from "@/hooks/api/guilds/use-update-guild-lootlog-npc";
 import { Card } from "@lootlog/ui/components/card";
 import { Crown, Swords, Sparkles, type LucideIcon } from "lucide-react";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  invalidateLootlogConfigControllerGetLootlogConfig,
+  useLootlogConfigControllerUpdateNpc,
+} from "@/lib/api/generated/main/lootlog-config/lootlog-config";
 
 type NpcsFormProps = {
   npc: LootlogConfigNpc;
 };
 
 const RARITY_CONFIG: {
-  key: ItemRarity;
+  key: LootlogConfigNpcAllowedRarity;
   color: string;
   bgColor: string;
   icon: LucideIcon;
 }[] = [
   {
-    key: ItemRarity.LEGENDARY,
+    key: "LEGENDARY",
     color: "text-amber-700",
     bgColor: "bg-amber-700/10",
     icon: Crown,
   },
   {
-    key: ItemRarity.HEROIC,
+    key: "HEROIC",
     color: "text-blue-500",
     bgColor: "bg-blue-500/10",
     icon: Swords,
   },
   {
-    key: ItemRarity.UNIQUE,
+    key: "UNIQUE",
     color: "text-amber-300",
     bgColor: "bg-amber-300/10",
     icon: Sparkles,
@@ -59,23 +67,26 @@ const formSchema = z.object({
 });
 
 export const NpcsForm: FC<NpcsFormProps> = ({ npc }) => {
-  const { mutate: updateGuildLootlogNpc } = useUpdateGuildLootlogNpc();
+  const guildId = useGuildId();
+  const queryClient = useQueryClient();
+  const { mutate: updateGuildLootlogNpc } =
+    useLootlogConfigControllerUpdateNpc();
   const { t } = useTranslation();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      LEGENDARY: npc.allowedRarities.includes(ItemRarity.LEGENDARY),
-      HEROIC: npc.allowedRarities.includes(ItemRarity.HEROIC),
-      UNIQUE: npc.allowedRarities.includes(ItemRarity.UNIQUE),
+      LEGENDARY: npc.allowedRarities.includes("LEGENDARY"),
+      HEROIC: npc.allowedRarities.includes("HEROIC"),
+      UNIQUE: npc.allowedRarities.includes("UNIQUE"),
     },
   });
 
   useEffect(() => {
     form.reset({
-      LEGENDARY: npc.allowedRarities.includes(ItemRarity.LEGENDARY),
-      HEROIC: npc.allowedRarities.includes(ItemRarity.HEROIC),
-      UNIQUE: npc.allowedRarities.includes(ItemRarity.UNIQUE),
+      LEGENDARY: npc.allowedRarities.includes("LEGENDARY"),
+      HEROIC: npc.allowedRarities.includes("HEROIC"),
+      UNIQUE: npc.allowedRarities.includes("UNIQUE"),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [npc]);
@@ -83,13 +94,24 @@ export const NpcsForm: FC<NpcsFormProps> = ({ npc }) => {
   function onSubmit(values: z.infer<typeof formSchema>) {
     updateGuildLootlogNpc(
       {
-        allowedRarities: Object.keys(values).filter(
-          (key) => values[key as keyof typeof values],
-        ) as ItemRarity[],
-        npcId: npc.id,
+        pathParams: { guildId: guildId ?? "", npcId: npc.id.toString() },
+        data: {
+          allowedRarities: Object.entries(values)
+            .filter(([_rarity, isEnabled]) => isEnabled)
+            .map(
+              ([rarity]) =>
+                rarity as UpdateLootlogConfigNpcDtoAllowedRaritiesItem,
+            ),
+        },
       },
       {
-        onSuccess: () => {
+        onSuccess: async () => {
+          if (guildId) {
+            await invalidateLootlogConfigControllerGetLootlogConfig(
+              queryClient,
+              { guildId },
+            );
+          }
           toast.success("Zaktualizowano ustawienia");
           form.reset(values);
         },

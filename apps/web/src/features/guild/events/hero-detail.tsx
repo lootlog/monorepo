@@ -15,7 +15,6 @@ import {
   X,
   Timer,
 } from "lucide-react";
-import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { Permission } from "@lootlog/types";
 import { useState } from "react";
 import { MapManageDialog } from "./components/dialogs/map-manage-dialog";
@@ -28,7 +27,6 @@ import {
   type WindowStatus,
 } from "./hooks/use-window-status";
 import { toast } from "sonner";
-import { useGuildMember } from "@/hooks/api/members/use-guild-member";
 import { useEventPresence } from "./hooks/socket/use-event-presence";
 import { RecentKillsPreview } from "./components/kills/recent-kills-preview";
 import { EventHeroLoots } from "./components/stats/event-hero-loots";
@@ -39,10 +37,18 @@ import { MemberBadge } from "./components/shared/member-badge";
 import { getMapStatus } from "./components/maps/map-card";
 import { Badge } from "@lootlog/ui/components/badge";
 import { cn } from "@lootlog/ui/lib/utils";
-import { useGuild } from "@/hooks/api/guilds/use-guild";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { findEventHeroTimer } from "./utils/find-event-hero-timer";
+import {
+  getGuildsControllerGetGuildPermissionsQueryKey,
+  useGuildsControllerGetGuildById,
+  useGuildsControllerGetGuildPermissions,
+} from "@/lib/api/generated/main/guilds/guilds";
+import {
+  getMembersControllerGetMeQueryKey,
+  useMembersControllerGetMe,
+} from "@/lib/api/generated/main/members/members";
 import {
   getListEventHeroTimersQueryKey,
   useEventsAssignmentControllerAssignMember,
@@ -94,15 +100,37 @@ export const HeroDetail = () => {
   const { t } = useTranslation();
   const { guildId, eventId, heroId } = useParams({ strict: false });
   const queryClient = useQueryClient();
-  const { data: guild } = useGuild();
+  const { data: guild } = useGuildsControllerGetGuildById({
+    guildId: guildId ?? "",
+  });
   const [mapManageOpen, setMapManageOpen] = useState(false);
   const [assignmentOpen, setAssignmentOpen] = useState(false);
   const [selectedMapId, setSelectedMapId] = useState<string | null>(null);
   const [closeWindowOpen, setCloseWindowOpen] = useState(false);
   const [openWindowOpen, setOpenWindowOpen] = useState(false);
 
-  const { data: permissions } = useGuildPermissions();
-  const { data: currentMember } = useGuildMember();
+  const { data: permissions } = useGuildsControllerGetGuildPermissions(
+    { guildId: guildId ?? "" },
+    {
+      query: {
+        queryKey: getGuildsControllerGetGuildPermissionsQueryKey({
+          guildId: guildId ?? "",
+        }),
+        staleTime: 30_000,
+      },
+    },
+  );
+  const { data: currentMember } = useMembersControllerGetMe(
+    { guildId: guildId ?? "" },
+    {
+      query: {
+        queryKey: getMembersControllerGetMeQueryKey({
+          guildId: guildId ?? "",
+        }),
+        staleTime: 30_000,
+      },
+    },
+  );
   const assignMember = useEventsAssignmentControllerAssignMember({
     mutation: {
       onSuccess: (_data, variables) => {

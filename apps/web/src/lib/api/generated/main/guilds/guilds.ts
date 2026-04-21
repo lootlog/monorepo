@@ -23,10 +23,12 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  DiscordGuildSyncStateResponseDtoOutput,
   GuildResponseDtoOutput,
   GuildsControllerGetGuildByIdPathParameters,
   GuildsControllerGetGuildConfigPathParameters,
   GuildsControllerGetGuildDiscordSyncStatusPathParameters,
+  GuildsControllerGetGuildPermissions200Item,
   GuildsControllerGetGuildPermissionsPathParameters,
   GuildsControllerGetUserGuildsParams,
   GuildsControllerGetWorldsByGuildIdPathParameters,
@@ -297,9 +299,9 @@ export const getGuildsControllerGetManageableUserGuildsUrl = () => {
   return `/guilds/@me/manageable`
 }
 
-export const guildsControllerGetManageableUserGuilds = async ( options?: RequestInit): Promise<void> => {
+export const guildsControllerGetManageableUserGuilds = async ( options?: RequestInit): Promise<GuildResponseDtoOutput[]> => {
 
-  return orvalFetch<void>(getGuildsControllerGetManageableUserGuildsUrl(),
+  return orvalFetch<GuildResponseDtoOutput[]>(getGuildsControllerGetManageableUserGuildsUrl(),
   {
     ...options,
     method: 'GET'
@@ -781,9 +783,9 @@ export const getGuildsControllerGetGuildPermissionsUrl = ({ guildId }: GuildsCon
   return `/guilds/${guildId}/permissions`
 }
 
-export const guildsControllerGetGuildPermissions = async ({ guildId }: GuildsControllerGetGuildPermissionsPathParameters, options?: RequestInit): Promise<void> => {
+export const guildsControllerGetGuildPermissions = async ({ guildId }: GuildsControllerGetGuildPermissionsPathParameters, options?: RequestInit): Promise<GuildsControllerGetGuildPermissions200Item[]> => {
 
-  return orvalFetch<void>(getGuildsControllerGetGuildPermissionsUrl({ guildId }),
+  return orvalFetch<GuildsControllerGetGuildPermissions200Item[]>(getGuildsControllerGetGuildPermissionsUrl({ guildId }),
   {
     ...options,
     method: 'GET'
@@ -881,9 +883,9 @@ export const getGuildsControllerGetGuildDiscordSyncStatusUrl = ({ guildId }: Gui
   return `/guilds/${guildId}/discord-sync`
 }
 
-export const guildsControllerGetGuildDiscordSyncStatus = async ({ guildId }: GuildsControllerGetGuildDiscordSyncStatusPathParameters, options?: RequestInit): Promise<void> => {
+export const guildsControllerGetGuildDiscordSyncStatus = async ({ guildId }: GuildsControllerGetGuildDiscordSyncStatusPathParameters, options?: RequestInit): Promise<DiscordGuildSyncStateResponseDtoOutput> => {
 
-  return orvalFetch<void>(getGuildsControllerGetGuildDiscordSyncStatusUrl({ guildId }),
+  return orvalFetch<DiscordGuildSyncStateResponseDtoOutput>(getGuildsControllerGetGuildDiscordSyncStatusUrl({ guildId }),
   {
     ...options,
     method: 'GET'
@@ -981,9 +983,9 @@ export const getGuildsControllerRefreshGuildDiscordSyncUrl = ({ guildId }: Guild
   return `/guilds/${guildId}/discord-sync/refresh`
 }
 
-export const guildsControllerRefreshGuildDiscordSync = async ({ guildId }: GuildsControllerRefreshGuildDiscordSyncPathParameters, options?: RequestInit): Promise<void> => {
+export const guildsControllerRefreshGuildDiscordSync = async ({ guildId }: GuildsControllerRefreshGuildDiscordSyncPathParameters, options?: RequestInit): Promise<DiscordGuildSyncStateResponseDtoOutput> => {
 
-  return orvalFetch<void>(getGuildsControllerRefreshGuildDiscordSyncUrl({ guildId }),
+  return orvalFetch<DiscordGuildSyncStateResponseDtoOutput>(getGuildsControllerRefreshGuildDiscordSyncUrl({ guildId }),
   {
     ...options,
     method: 'POST'

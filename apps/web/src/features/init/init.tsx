@@ -1,24 +1,40 @@
 import { FullScreenLoading } from "@/components/ui/full-screen-loading";
-import { useGuild } from "@/hooks/api/guilds/use-guild";
 import { useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { ROUTES } from "@/config/routes";
 import { useQueryClient } from "@tanstack/react-query";
-import { queryKeys } from "@/lib/query-keys";
+import {
+  getGuildsControllerGetGuildByIdQueryKey,
+  invalidateGuildsControllerGetUserGuilds,
+  useGuildsControllerGetGuildById,
+} from "@/lib/api/generated/main/guilds/guilds";
+import { useGuildId } from "@/hooks/context/use-guild-id";
 
 export const Init: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { data: guildData } = useGuild({
-    retry: true,
-  });
+  const guildId = useGuildId();
+  const { data: guildData } = useGuildsControllerGetGuildById(
+    { guildId: guildId ?? "" },
+    {
+      query: {
+        queryKey: getGuildsControllerGetGuildByIdQueryKey({
+          guildId: guildId ?? "",
+        }),
+        retry: true,
+      },
+    },
+  );
 
   useEffect(() => {
-    if (guildData) {
-      queryClient.invalidateQueries({ queryKey: queryKeys.guilds.user() });
-      navigate({ to: ROUTES.guild.base(guildData.id) });
+    if (!guildData) {
+      return;
     }
-  }, [navigate, guildData, queryClient]);
+
+    void invalidateGuildsControllerGetUserGuilds(queryClient).then(() => {
+      navigate({ to: ROUTES.guild.base(guildData.id) });
+    });
+  }, [guildData, navigate, queryClient]);
 
   return (
     <div className="h-full flex flex-col">

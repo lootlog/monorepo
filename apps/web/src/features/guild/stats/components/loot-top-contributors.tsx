@@ -9,10 +9,11 @@ import {
 } from "@lootlog/ui/components/avatar";
 import { cn } from "@lootlog/ui/lib/utils";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
-import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
-import type { GuildMember } from "@/hooks/api/members/use-guild-member.tsx";
 import type { LootStatsResponseDtoOutputTopContributorsItem } from "@/lib/api/generated/main/model/loot-stats-response-dto-output-top-contributors-item";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useMembersControllerGetGuildMembers } from "@/lib/api/generated/main/members/members";
+import type { MemberResponseDto as GuildMember } from "@/lib/api/generated/main/model";
 
 type PodiumSlotProps = {
   contributor?: LootStatsResponseDtoOutputTopContributorsItem;
@@ -126,7 +127,13 @@ export const LootTopContributors: React.FC<LootTopContributorsProps> = ({
   isLoading,
 }) => {
   const { t } = useTranslation();
-  const { data: guildMembers } = useGuildMembers(true);
+  const guildId = useGuildId();
+  const { data: guildMembers } = useMembersControllerGetGuildMembers(
+    { guildId: guildId ?? "" },
+    {
+      includeInactive: true,
+    },
+  );
 
   const membersMap = new Map(guildMembers?.map((m) => [m.userId, m]) ?? []);
 

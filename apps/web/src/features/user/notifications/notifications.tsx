@@ -19,7 +19,7 @@ import {
   useNotificationsUserControllerGetUserTargets,
   useNotificationsUserControllerGetWatchedItems,
 } from "@/lib/api/generated/main/notifications/notifications";
-import { useGuilds } from "@/hooks/api/guilds/use-guilds";
+import { useGuildsControllerGetUserGuilds } from "@/lib/api/generated/main/guilds/guilds";
 import {
   userNotificationTargetsQueryKey,
   userWatchedItemsQueryKey,
@@ -37,7 +37,7 @@ export const UserNotifications = () => {
       queryKey: userWatchedItemsQueryKey(),
     },
   });
-  const { data: guilds = [] } = useGuilds();
+  const { data: guilds = [] } = useGuildsControllerGetUserGuilds();
   const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
   const [isWatchFormOpen, setIsWatchFormOpen] = useState(false);
 

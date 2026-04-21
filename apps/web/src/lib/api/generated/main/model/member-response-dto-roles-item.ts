@@ -12,7 +12,7 @@ export type MemberResponseDtoRolesItem = {
   guildId: string;
   name: string;
   /** @nullable */
-  color?: number | null;
+  color: number | null;
   /** @nullable */
   position?: number | null;
   permissions: MemberResponseDtoRolesItemPermissionsItem[];

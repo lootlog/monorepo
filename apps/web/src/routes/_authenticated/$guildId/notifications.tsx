@@ -4,7 +4,7 @@ import {
   guildNotificationRulesQueryOptions,
   guildNotificationTargetsQueryOptions,
 } from "@/features/guild/notifications/notifications-api";
-import { guildDiscordSyncQueryOptions } from "@/hooks/api/guilds/use-guild-discord-sync";
+import { getGuildsControllerGetGuildDiscordSyncStatusQueryOptions } from "@/lib/api/generated/main/guilds/guilds";
 
 function GuildNotificationsLayout() {
   return (
@@ -31,7 +31,9 @@ export const Route = createFileRoute("/_authenticated/$guildId/notifications")({
         guildNotificationJobsQueryOptions(params.guildId),
       ),
       context.queryClient.ensureQueryData(
-        guildDiscordSyncQueryOptions(params.guildId),
+        getGuildsControllerGetGuildDiscordSyncStatusQueryOptions({
+          guildId: params.guildId,
+        }),
       ),
     ]);
 

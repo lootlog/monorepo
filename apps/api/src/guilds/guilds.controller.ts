@@ -24,6 +24,7 @@ import { UserGuildPermissionsDto } from "src/guilds/dto/user-guild-permissions.d
 import { GuildsService } from "src/guilds/guilds.service";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";
+import { DiscordGuildSyncStateResponseDto } from "src/shared/dto/discord-guild-sync-response.dto";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
@@ -79,6 +80,16 @@ export class GuildsController {
   }
 
   @Get("/@me/manageable")
+  @ApiOperation({
+    summary: "Get manageable user guilds",
+    description:
+      "Retrieve guilds where the authenticated user has Discord administrator permissions",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "List of manageable user guilds",
+    type: [GuildResponseDto],
+  })
   getManageableUserGuilds(
     @DiscordId() discordId: string,
     @UserId() userId: string,
@@ -144,6 +155,22 @@ export class GuildsController {
   @Permissions(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
   @Get(":guildId/permissions")
+  @ApiOperation({
+    summary: "Get guild permissions",
+    description:
+      "Retrieve resolved permissions for the current member in a guild",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "List of member permissions in the guild",
+    schema: {
+      type: "array",
+      items: {
+        type: "string",
+        enum: Object.values(Permission),
+      },
+    },
+  })
   getGuildPermissions(@MemberPermissions() permissions: Permission[]) {
     return permissions;
   }
@@ -151,6 +178,16 @@ export class GuildsController {
   @Permissions(Permission.OWNER, Permission.ADMIN)
   @UseGuards(PermissionsGuard)
   @Get(":guildId/discord-sync")
+  @ApiOperation({
+    summary: "Get guild Discord sync status",
+    description:
+      "Retrieve the current Discord channel synchronization state for a guild",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Guild Discord sync state",
+    type: DiscordGuildSyncStateResponseDto,
+  })
   getGuildDiscordSyncStatus(@GuildData() guild: Guild) {
     return this.guildsService.getGuildDiscordSyncStatus(guild.id);
   }
@@ -158,6 +195,16 @@ export class GuildsController {
   @Permissions(Permission.OWNER, Permission.ADMIN)
   @UseGuards(PermissionsGuard)
   @Post(":guildId/discord-sync/refresh")
+  @ApiOperation({
+    summary: "Refresh guild Discord sync",
+    description:
+      "Trigger a refresh of the guild Discord channel synchronization state",
+  })
+  @ApiResponse({
+    status: 201,
+    description: "Refreshed guild Discord sync state",
+    type: DiscordGuildSyncStateResponseDto,
+  })
   refreshGuildDiscordSync(@GuildData() guild: Guild) {
     return this.guildsService.refreshGuildDiscordSync(guild.id);
   }

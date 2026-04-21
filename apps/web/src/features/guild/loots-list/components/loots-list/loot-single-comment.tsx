@@ -14,10 +14,9 @@ export const LootSingleComment: FC<LootSingleCommentProps> = ({ comment }) => {
     comment.member.avatar,
   );
   const relativeTime = getRelativeTime(comment.createdAt);
+  const roleColor = comment.member.roles?.[0]?.color ?? 0;
   const color =
-    comment.member.roles?.[0]?.color === 0
-      ? "FFF"
-      : comment.member.roles?.[0]?.color.toString(16).padStart(6, "0");
+    roleColor === 0 ? "FFF" : roleColor.toString(16).padStart(6, "0");
 
   return (
     <li className="text-sm border-b border-border/50 px-4 py-3 flex flex-row gap-3 bg-card/10 hover:bg-card/30 transition-colors">

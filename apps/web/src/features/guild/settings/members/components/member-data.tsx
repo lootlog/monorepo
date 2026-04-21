@@ -1,4 +1,4 @@
-import type { GuildMember } from "@/hooks/api/members/use-guild-member";
+import type { MemberResponseDto as GuildMember } from "@/lib/api/generated/main/model";
 import { Permission } from "@lootlog/types";
 import { useTranslation } from "react-i18next";
 import { Card } from "@lootlog/ui/components/card";
@@ -35,11 +35,12 @@ export const MemberData = ({ member }: MemberDataProps) => {
   return (
     <div className="p-3 space-y-3">
       {member.roles.map((role) => {
+        const roleColor = role.color ?? 0;
         const color =
-          role.color === 0 ? "FFF" : role.color.toString(16).padStart(6, "0");
+          roleColor === 0 ? "FFF" : roleColor.toString(16).padStart(6, "0");
         const filteredPermissions = role.permissions.filter(
-          (p) => p !== Permission.OWNER,
-        );
+          (permission) => permission !== "OWNER",
+        ) as Permission[];
 
         return (
           <Card

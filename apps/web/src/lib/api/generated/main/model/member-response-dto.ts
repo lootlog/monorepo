@@ -19,7 +19,7 @@ export interface MemberResponseDto {
   /** @nullable */
   banner?: string | null;
   active: boolean;
-  roles?: MemberResponseDtoRolesItem[];
+  roles: MemberResponseDtoRolesItem[];
   /** @nullable */
   globalUserId?: string | null;
   /**

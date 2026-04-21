@@ -3,12 +3,9 @@ import { useState, useMemo, useRef } from "react";
 import { cn } from "@/utils/cn";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Label } from "@lootlog/ui/components/label";
-import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
-import type { GuildMember } from "@/hooks/api/members/use-guild-member";
 import { MembersPanelContent } from "@/features/guild/settings/members/components/members-panel";
 import { RefreshMembersButton } from "@/features/guild/settings/members/components/refresh-members-button";
 import { getColorFromRole } from "@/utils/get-color-from-role";
-import { useGuild } from "@/hooks/api/guilds/use-guild";
 import { RefreshStatusProvider } from "@/features/guild/settings/members/contexts/refresh-status-context";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Users } from "lucide-react";
@@ -26,6 +23,10 @@ import {
   useSelectorPanel,
 } from "@/components/selector-panel";
 import { MemberListItem } from "@/features/guild/settings/members/components/member-list-item";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useGuildsControllerGetGuildById } from "@/lib/api/generated/main/guilds/guilds";
+import { useMembersControllerGetGuildMembers } from "@/lib/api/generated/main/members/members";
+import type { MemberResponseDto as GuildMember } from "@/lib/api/generated/main/model";
 
 const MembersSettingsHeader = () => (
   <Card className="mx-3 mt-3 gap-4 border-border bg-card/60 p-4 backdrop-blur-sm shrink-0">
@@ -49,9 +50,17 @@ const MembersSettingsHeader = () => (
 const MembersSettingsContent = () => {
   const [showInactive, setShowInactive] = useState(false);
   const showInactiveCheckboxId = "show-inactive-members";
-  const { data: members } = useGuildMembers(showInactive);
+  const guildId = useGuildId();
+  const { data: members } = useMembersControllerGetGuildMembers(
+    { guildId: guildId ?? "" },
+    {
+      includeInactive: showInactive,
+    },
+  );
   const [searchValue, setSearchValue] = useState("");
-  const { data: guild } = useGuild({});
+  const { data: guild } = useGuildsControllerGetGuildById({
+    guildId: guildId ?? "",
+  });
   const {
     selectedItem: selectedMember,
     setSelectedItem: setSelectedMember,

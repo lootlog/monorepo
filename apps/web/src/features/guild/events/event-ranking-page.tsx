@@ -9,9 +9,12 @@ import { EventRankingTable } from "./components/ranking/event-ranking-table";
 import { Trophy, AlertCircle } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { useState } from "react";
-import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { EventScrollableTabsList } from "./components/shared/event-scrollable-tabs-list";
+import {
+  getGuildsControllerGetGuildPermissionsQueryKey,
+  useGuildsControllerGetGuildPermissions,
+} from "@/lib/api/generated/main/guilds/guilds";
 import {
   useListEventRanking,
   useShowEventOverview,
@@ -22,7 +25,17 @@ export const EventRankingPage = () => {
   const { guildId, eventId } = useParams({ strict: false });
   const [selectedHeroName, setSelectedHeroName] = useState<string | null>(null);
 
-  const { data: permissions } = useGuildPermissions();
+  const { data: permissions } = useGuildsControllerGetGuildPermissions(
+    { guildId: guildId ?? "" },
+    {
+      query: {
+        queryKey: getGuildsControllerGetGuildPermissionsQueryKey({
+          guildId: guildId ?? "",
+        }),
+        staleTime: 30_000,
+      },
+    },
+  );
   const canEditPoints =
     permissions?.includes(Permission.OWNER) ||
     permissions?.includes(Permission.ADMIN);

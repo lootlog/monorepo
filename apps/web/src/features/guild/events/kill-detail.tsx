@@ -14,7 +14,6 @@ import { MultipliersCard } from "./components/stats/multipliers-card";
 import { LootsListItem } from "@/features/guild/loots-list/components/loots-list/loots-list-item";
 import { KillMapsTimelineSection } from "./components/kills/kill-maps-timeline-section";
 import { NpcTile } from "@/components/tiles/npc-tile";
-import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useSession } from "@/hooks/auth/use-session";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
@@ -22,6 +21,10 @@ import { getAppliedRuleIdsForParticipant } from "./utils/scoring-applied-rules";
 import { formatDurationHuman } from "./utils/format-duration";
 import { normalizeBonusBreakdown } from "./utils/normalize-bonus-breakdown";
 import { KillDetailStatsCard } from "./components/kills/kill-detail-stats-card";
+import {
+  getGuildsControllerGetGuildPermissionsQueryKey,
+  useGuildsControllerGetGuildPermissions,
+} from "@/lib/api/generated/main/guilds/guilds";
 
 const formatRespawnWindow = (minSpawn: string, maxSpawn: string): string => {
   const minDate = new Date(minSpawn);
@@ -35,7 +38,17 @@ export const KillDetail = () => {
   const { guildId, eventId, heroId, killId } = useParams({ strict: false });
   const { data: session } = useSession();
 
-  const { data: permissions } = useGuildPermissions();
+  const { data: permissions } = useGuildsControllerGetGuildPermissions(
+    { guildId: guildId ?? "" },
+    {
+      query: {
+        queryKey: getGuildsControllerGetGuildPermissionsQueryKey({
+          guildId: guildId ?? "",
+        }),
+        staleTime: 30_000,
+      },
+    },
+  );
   const canEditPoints =
     permissions?.includes(Permission.OWNER) ||
     permissions?.includes(Permission.ADMIN);
