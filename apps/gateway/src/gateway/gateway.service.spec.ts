@@ -10,6 +10,7 @@ import { SendNotificationDto } from "./dto/send-notification.dto";
 import type { RefreshJobUpdateDto } from "./dto/refresh-job-update.dto";
 import { NpcType } from "./enums/npc-type.enum";
 import { GatewayEvent } from "./enums/gateway-event.enum";
+import { Platform } from "./enums/platform.enum";
 import { Permission } from "@lootlog/types";
 import type {
   ReservationCreateEventDto,
@@ -1448,6 +1449,135 @@ describe("GatewayService", () => {
 
       expect(mockTargetSocket.emit).toHaveBeenCalled();
       expect(mockOtherSocket.emit).not.toHaveBeenCalled();
+    });
+
+    it("should grant admin and all feature rooms after promotion to admin", async () => {
+      const discordId = "discord-123";
+      const userId = "user-123";
+
+      const updatedGuilds = [
+        {
+          guild: { id: "guild-1", ownerId: "owner-1" },
+          roles: [createGuildRole([Permission.ADMIN])],
+        },
+      ];
+
+      const mockUserSocket = {
+        id: "socket-123",
+        data: {
+          discordId,
+          platform: Platform.GAME,
+        },
+        rooms: new Set(["socket-123", "guild-1:presence", "guild-1:events"]),
+        leave: vi.fn(),
+        join: vi.fn(),
+        emit: vi.fn(),
+      };
+
+      mockGuildsService.getUserGuilds.mockResolvedValue(updatedGuilds);
+      mockServer.fetchSockets.mockResolvedValue([mockUserSocket]);
+
+      await service.rebalanceUserSocketRooms(discordId, userId);
+
+      expect(mockUserSocket.join).toHaveBeenCalledWith("guild-1:admin");
+      expect(mockUserSocket.join).toHaveBeenCalledWith("guild-1:chat:base");
+      expect(mockUserSocket.join).toHaveBeenCalledWith(
+        "guild-1:notifications:heroes",
+      );
+    });
+
+    it("should remove admin and chat rooms when admin access is revoked", async () => {
+      const discordId = "discord-123";
+      const userId = "user-123";
+
+      const updatedGuilds = [
+        {
+          guild: { id: "guild-1", ownerId: "owner-1" },
+          roles: [],
+        },
+      ];
+
+      const mockUserSocket = {
+        id: "socket-123",
+        data: {
+          discordId,
+          platform: Platform.GAME,
+        },
+        rooms: new Set([
+          "socket-123",
+          "guild-1:presence",
+          "guild-1:events",
+          "guild-1:admin",
+          "guild-1:chat:base",
+        ]),
+        leave: vi.fn(),
+        join: vi.fn(),
+        emit: vi.fn(),
+      };
+
+      mockGuildsService.getUserGuilds.mockResolvedValue(updatedGuilds);
+      mockServer.fetchSockets.mockResolvedValue([mockUserSocket]);
+
+      await service.rebalanceUserSocketRooms(discordId, userId);
+
+      expect(mockUserSocket.leave).toHaveBeenCalledWith("guild-1:admin");
+      expect(mockUserSocket.leave).toHaveBeenCalledWith("guild-1:chat:base");
+    });
+
+    it("should recalculate rooms per socket platform for the same user", async () => {
+      const discordId = "discord-123";
+      const userId = "user-123";
+
+      const updatedGuilds = [
+        {
+          guild: { id: "guild-1", ownerId: "owner-1" },
+          roles: [
+            createGuildRole([
+              Permission.LOOTLOG_CHAT_READ,
+              Permission.LOOTLOG_TIMERS_READ,
+              Permission.LOOTLOG_NOTIFICATIONS_READ,
+            ]),
+          ],
+        },
+      ];
+
+      const gameSocket = {
+        id: "socket-game",
+        data: {
+          discordId,
+          platform: Platform.GAME,
+        },
+        rooms: new Set(["socket-game"]),
+        leave: vi.fn(),
+        join: vi.fn(),
+        emit: vi.fn(),
+      };
+      const webSocket = {
+        id: "socket-web",
+        data: {
+          discordId,
+          platform: Platform.WEB_APP,
+        },
+        rooms: new Set(["socket-web"]),
+        leave: vi.fn(),
+        join: vi.fn(),
+        emit: vi.fn(),
+      };
+
+      mockGuildsService.getUserGuilds.mockResolvedValue(updatedGuilds);
+      mockServer.fetchSockets.mockResolvedValue([gameSocket, webSocket]);
+
+      await service.rebalanceUserSocketRooms(discordId, userId);
+
+      expect(gameSocket.join).toHaveBeenCalledWith("guild-1:chat:base");
+      expect(gameSocket.join).toHaveBeenCalledWith(
+        "guild-1:notifications:base",
+      );
+      expect(webSocket.join).toHaveBeenCalledWith("guild-1:timers:base");
+      expect(webSocket.join).not.toHaveBeenCalledWith("guild-1:chat:base");
+      expect(webSocket.join).not.toHaveBeenCalledWith(
+        "guild-1:notifications:base",
+      );
     });
   });
 });
