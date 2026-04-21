@@ -1,16 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { normalizeCharacterList } from "@/api";
-import { getCharacterListQueryKey } from "./use-character-list";
 
 describe("use-character-list helpers", () => {
-  it("uses a versioned query key for persisted character list data", () => {
-    expect(getCharacterListQueryKey(123, "fobos")).toEqual([
-      "characters-v2",
-      123,
-      "fobos",
-    ]);
-  });
-
   it("keeps valid character entries", () => {
     expect(
       normalizeCharacterList([

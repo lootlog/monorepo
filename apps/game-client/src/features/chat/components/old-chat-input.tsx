@@ -1,9 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  MessageType,
-  useSendChatMessage,
-} from "@/hooks/api/use-send-chat-message";
+import { MessageType } from "@/api/chat.api";
+import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
 import { useMessagingControllerSendNotification } from "@/lib/api/generated/main/messaging/messaging";
 import { Game } from "@/lib/game";
 import { usePartyCommand } from "@/features/command/hooks/use-party-command";

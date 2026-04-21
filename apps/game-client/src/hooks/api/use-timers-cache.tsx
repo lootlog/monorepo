@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import type { Timer } from "@/hooks/api/use-timers";
+import type { Timer } from "@/api/timers.api";
 import { queryKeys } from "@/features/public-api/query-keys";
 
 type TimerIdentity = Pick<Timer, "world" | "timerKey" | "guildId">;

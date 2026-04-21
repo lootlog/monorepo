@@ -2,10 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  useCreateManualTimer,
-  type UseCreateManualTimerOptions,
-} from "@/hooks/api/use-create-manual-timer";
+import type { CreateManualTimerOptions } from "@/api/timers.api";
+import { useCreateManualTimer } from "@/hooks/api/use-create-manual-timer";
 import { useWindowsStore } from "@/store/windows.store";
 import { parseDurationToSeconds } from "@/features/timers/helpers/add-timer-form-helpers";
 import { DEFAULT_RESPAWN_RANDOMNESS } from "@/features/timers/constants/default-respawn-randomness";
@@ -312,7 +310,7 @@ export const AddTimerForm: React.FC = () => {
   const onSubmit = (data: FormValues) => {
     if (!world || !selectedGuildId) return;
 
-    const timerData: UseCreateManualTimerOptions = {
+    const timerData: CreateManualTimerOptions = {
       name: data.name,
       world,
       guildIds: [selectedGuildId],

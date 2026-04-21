@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import type { ChatMessage as ChatMessageType } from "@/hooks/api/use-chat-messages";
-import { MessageType } from "@/hooks/api/use-send-chat-message";
+import {
+  type ChatMessage as ChatMessageType,
+  MessageType,
+} from "@/api/chat.api";
 import {
   getChatMessageBody,
   isChatMessageYesterdayOrOlder,
@@ -10,7 +12,7 @@ vi.mock("@/features/npc-detector/components/npc-list-item", () => ({
   NPCS_WITH_LOCATION: ["hero"],
 }));
 
-vi.mock("@/hooks/api/use-npcs", () => ({
+vi.mock("@/api/npcs.api", () => ({
   NpcType: {
     HERO: "hero",
   },

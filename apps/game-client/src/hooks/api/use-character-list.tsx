@@ -3,9 +3,7 @@ import { Game } from "@/lib/game";
 import { getLanguageVersion } from "@/utils/game/get-language-version";
 import { useQuery } from "@tanstack/react-query";
 
-export type { MargonemCharacter } from "@/api";
-
-export const getCharacterListQueryKey = (
+const getCharacterListQueryKey = (
   accountId: number,
   world: string | undefined,
 ) => ["characters-v2", accountId, world] as const;

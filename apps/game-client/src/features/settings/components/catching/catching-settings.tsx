@@ -9,10 +9,10 @@ import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey,
+  useUserLootlogConfigControllerGetUserLootlogConfigByAccountId,
   userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig,
 } from "@/lib/api/generated/main/user-lootlog-config/user-lootlog-config";
 import { CharacterTile } from "@/components/character-tile";
-import { useLootlogCharactersConfig } from "@/hooks/api/use-lootlog-character-config";
 import { useCharacterList } from "@/hooks/api/use-character-list";
 
 import { CatchingSettingsForm } from "@/features/settings/components/catching/catching-settings-form";
@@ -32,7 +32,18 @@ export const CatchingSettings = () => {
       accountId,
     });
   const { data: characterList } = useCharacterList();
-  const { data: lootlogCharactersConfig } = useLootlogCharactersConfig();
+  const { data: lootlogCharactersConfig } =
+    useUserLootlogConfigControllerGetUserLootlogConfigByAccountId(
+      { accountId },
+      {
+        query: {
+          queryKey,
+          refetchOnMount: true,
+          refetchOnWindowFocus: true,
+          staleTime: 0,
+        },
+      },
+    );
   const initialCharacterId = String(Game.hero.id);
   const [selectedCharacterId, setSelectedCharacterId] =
     useState(initialCharacterId);

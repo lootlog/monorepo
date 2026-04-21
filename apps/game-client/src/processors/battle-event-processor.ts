@@ -2,7 +2,7 @@ import { createSHA256Hash } from "@/helpers/create-sha-256-hash";
 import { mapBattleEventsToPayload } from "@/helpers/mappers/battlelog.mappers";
 import { LOOTLOG_APP_URL } from "@/config/app";
 import { getNpcTypeByWt } from "@lootlog/types";
-import { NpcType } from "@/hooks/api/use-npcs";
+import { NpcType } from "@/api/npcs.api";
 import { addAccountIdsToWarriors } from "@/hooks/game-events/helpers/battle.helpers";
 import { Game } from "@/lib/game";
 import { useBattlePanelStore } from "@/store/battle-panel.store";

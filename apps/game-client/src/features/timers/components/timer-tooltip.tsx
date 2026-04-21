@@ -1,4 +1,4 @@
-import type { Timer } from "@/hooks/api/use-timers";
+import type { Timer } from "@/api/timers.api";
 import { format } from "date-fns";
 import { ClockArrowDown, ClockArrowUp } from "lucide-react";
 import type { FC } from "react";

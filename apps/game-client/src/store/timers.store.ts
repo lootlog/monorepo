@@ -1,4 +1,4 @@
-import { NpcType } from "@/hooks/api/use-npcs";
+import { NpcType } from "@/api/npcs.api";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { storageKey } from "@/lib/storage-key";

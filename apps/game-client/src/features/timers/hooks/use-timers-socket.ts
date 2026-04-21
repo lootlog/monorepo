@@ -1,5 +1,5 @@
 import { useEffect, useEffectEvent } from "react";
-import type { Timer } from "@/hooks/api/use-timers";
+import type { Timer } from "@/api/timers.api";
 import { GatewayEvent } from "@/config/gateway";
 import { useSocket } from "@/contexts/socket-context";
 import { useTimersCache } from "@/hooks/api/use-timers-cache";

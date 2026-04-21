@@ -1,11 +1,9 @@
 import { DraggableWindow } from "@/components/draggable-window";
 import { AnimatedWindow } from "@/components/animated-window";
 import { useWindowsStore } from "@/store/windows.store";
+import { MessageType } from "@/api/chat.api";
 import { Game } from "@/lib/game";
-import {
-  MessageType,
-  useSendChatMessage,
-} from "@/hooks/api/use-send-chat-message";
+import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
 import { useMessagingControllerSendNotification } from "@/lib/api/generated/main/messaging/messaging";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";

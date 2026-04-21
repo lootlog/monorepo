@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { DraggableWindow } from "@/components/draggable-window";
 import { AnimatedWindow } from "@/components/animated-window";
-import { type Timer, useTimers } from "@/hooks/api/use-timers";
+import type { Timer } from "@/api/timers.api";
+import { useTimers } from "@/hooks/api/use-timers";
 import { DEFAULT_TIMERS_FILTERS, useTimersStore } from "@/store/timers.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { UnderBagTimers } from "@/features/timers/under-bag-timers";

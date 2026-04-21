@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { MessageType } from "@/hooks/api/use-send-chat-message";
+import { MessageType } from "@/api/chat.api";
 import type {
   ChatMessageResponseDtoOutput as ChatMessageType,
   MemberSummaryResponseDtoOutput as GuildMember,
@@ -54,7 +54,7 @@ vi.mock("@/features/npc-detector/components/npc-list-item", () => ({
   NPCS_WITH_LOCATION: ["hero"],
 }));
 
-vi.mock("@/hooks/api/use-npcs", () => ({
+vi.mock("@/api/npcs.api", () => ({
   NpcType: {
     HERO: "hero",
   },

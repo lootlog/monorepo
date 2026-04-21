@@ -1,5 +1,7 @@
 import { NpcTile } from "@/components/npc-tile";
 import { Button } from "@/components/ui/button";
+import { MessageType } from "@/api/chat.api";
+import { NpcType } from "@/api/npcs.api";
 import {
   Tooltip,
   TooltipContent,
@@ -15,15 +17,11 @@ import {
   useNpcDetectorStore,
 } from "@/store/npc-detector.store";
 import { AlertTriangle, Loader2, Megaphone, Users, XIcon } from "lucide-react";
-import {
-  MessageType,
-  useSendChatMessage,
-} from "@/hooks/api/use-send-chat-message";
+import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
 import {
   getBackgroundColor,
   getBorderColor,
 } from "@/utils/notifications-and-detector/background";
-import { NpcType } from "@/hooks/api/use-npcs";
 import { Game } from "@/lib/game";
 import { useEffect, useState } from "react";
 import { usePartyFinderStore } from "@/store/party-finder.store";

@@ -2,11 +2,14 @@ import { type FC, useEffect, useState } from "react";
 import { useLocalStorage } from "react-use";
 import { DraggableWindow } from "@/components/draggable-window";
 import { useWindowsStore } from "@/store/windows.store";
-import { useLootlogCharactersConfig } from "@/hooks/api/use-lootlog-character-config";
 import { Button } from "@/components/ui/button";
 import { Game } from "@/lib/game";
 import { storageKey } from "@/lib/storage-key";
 import { useTranslation } from "react-i18next";
+import {
+  getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey,
+  useUserLootlogConfigControllerGetUserLootlogConfigByAccountId,
+} from "@/lib/api/generated/main/user-lootlog-config/user-lootlog-config";
 
 const STORAGE_KEY = storageKey("ll:catching-whitelist-warning-dismissed");
 
@@ -14,12 +17,27 @@ type DismissedCharacters = Record<string, boolean>;
 
 export const CatchingWhitelistWarning: FC = () => {
   const { t } = useTranslation(["catchingWhitelistWarning", "common"]);
+  const accountId = String(Game.hero.account);
+  const queryKey =
+    getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
+      accountId,
+    });
   const windowState = useWindowsStore(
     (state) => state["catching-whitelist-warning"],
   );
   const setOpen = useWindowsStore((state) => state.setOpen);
   const { data: lootlogCharactersConfig, isSuccess } =
-    useLootlogCharactersConfig();
+    useUserLootlogConfigControllerGetUserLootlogConfigByAccountId(
+      { accountId },
+      {
+        query: {
+          queryKey,
+          refetchOnMount: true,
+          refetchOnWindowFocus: true,
+          staleTime: 0,
+        },
+      },
+    );
   const characterId = String(Game.hero.id);
   const [dismissedCharacters, setDismissedCharacters] =
     useLocalStorage<DismissedCharacters>(STORAGE_KEY, {});

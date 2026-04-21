@@ -6,7 +6,7 @@ import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { getNpcTypeByWt, type DetectorNpcType } from "@lootlog/types";
-import { NpcType } from "@/hooks/api/use-npcs";
+import { NpcType } from "@/api/npcs.api";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 

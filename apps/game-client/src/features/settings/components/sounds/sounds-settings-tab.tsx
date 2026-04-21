@@ -2,7 +2,7 @@ import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Accordion } from "@/components/ui/accordion";
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
-import { NpcType } from "@/hooks/api/use-npcs";
+import { NpcType } from "@/api/npcs.api";
 import {
   useSoundSettings,
   useUpdateSoundSettings,

@@ -9,7 +9,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DetectorRoutingSettingsTabForm } from "@/features/settings/components/detector/detector-routing-settings-tab-form";
 import { DetectorSettingsTabForm } from "@/features/settings/components/detector/detector-settings-tab-form";
-import { NpcType } from "@/hooks/api/use-npcs";
+import { NpcType } from "@/api/npcs.api";
 import { useGameAccountPreferencesSyncStatus } from "@/hooks/use-game-account-preferences-sync-status";
 import type { DetectorNpcType } from "@lootlog/types";
 import { useEffect, useState, type ReactNode } from "react";

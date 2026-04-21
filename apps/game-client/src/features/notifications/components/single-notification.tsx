@@ -31,7 +31,7 @@ import { getNpcTypeByWt } from "@lootlog/types";
 import { format } from "date-fns";
 import { LoaderCircle, User, XIcon } from "lucide-react";
 import { type FC, type ReactNode, useEffect, useRef } from "react";
-import { NpcType } from "@/hooks/api/use-npcs";
+import { NpcType } from "@/api/npcs.api";
 import { SingleNotificationMessage } from "@/features/notifications/components/single-notification-message";
 import { SingleNotificationNpc } from "@/features/notifications/components/single-notification-npc";
 import { SingleNotificationPartyGathering } from "@/features/notifications/components/single-notification-party-gathering";
