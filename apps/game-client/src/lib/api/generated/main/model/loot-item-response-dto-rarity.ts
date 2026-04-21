@@ -9,13 +9,12 @@
 /**
  * @nullable
  */
-export type LootResponseDtoItemsItemRarity = typeof LootResponseDtoItemsItemRarity[keyof typeof LootResponseDtoItemsItemRarity] | null;
+export type LootItemResponseDtoRarity = typeof LootItemResponseDtoRarity[keyof typeof LootItemResponseDtoRarity] | null;
 
 
-export const LootResponseDtoItemsItemRarity = {
-  COMMON: 'COMMON',
-  UPGRADED: 'UPGRADED',
+export const LootItemResponseDtoRarity = {
   UNIQUE: 'UNIQUE',
   HEROIC: 'HEROIC',
   LEGENDARY: 'LEGENDARY',
+  UPGRADED: 'UPGRADED',
 } as const;

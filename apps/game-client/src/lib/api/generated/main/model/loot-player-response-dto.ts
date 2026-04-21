@@ -5,15 +5,15 @@
  * The Lootlog API documentation
  * OpenAPI spec version: 1.0
  */
-import type { LootResponseDtoPlayersItemProf } from './loot-response-dto-players-item-prof';
+import type { LootPlayerResponseDtoProf } from './loot-player-response-dto-prof';
 
-export type LootResponseDtoPlayersItem = {
+export interface LootPlayerResponseDto {
   id: string | number;
   name: string;
   /** @nullable */
   lvl: number | null;
   /** @nullable */
-  prof: LootResponseDtoPlayersItemProf;
+  prof: LootPlayerResponseDtoProf;
   /** @nullable */
   icon: string | null;
   /** @nullable */
@@ -22,4 +22,4 @@ export type LootResponseDtoPlayersItem = {
   accountId: number | null;
   /** @nullable */
   hpp: number | null;
-};
+}

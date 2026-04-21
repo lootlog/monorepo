@@ -9,10 +9,10 @@
 /**
  * @nullable
  */
-export type LootResponseDtoNpcsItemType = typeof LootResponseDtoNpcsItemType[keyof typeof LootResponseDtoNpcsItemType] | null;
+export type LootNpcResponseDtoType = typeof LootNpcResponseDtoType[keyof typeof LootNpcResponseDtoType] | null;
 
 
-export const LootResponseDtoNpcsItemType = {
+export const LootNpcResponseDtoType = {
   COMMON: 'COMMON',
   ELITE: 'ELITE',
   ELITE2: 'ELITE2',

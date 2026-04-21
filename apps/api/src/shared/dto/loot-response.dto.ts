@@ -20,7 +20,8 @@ const LootItemResponseSchema = z
     lvl: z.number(),
     prof: z.array(z.nativeEnum(Profession)),
   })
-  .strict();
+  .strict()
+  .meta({ id: "LootItemResponseDto" });
 
 const LootPlayerResponseSchema = z
   .object({
@@ -33,7 +34,8 @@ const LootPlayerResponseSchema = z
     accountId: z.number().nullable(),
     hpp: z.number().nullable(),
   })
-  .strict();
+  .strict()
+  .meta({ id: "LootPlayerResponseDto" });
 
 const LootNpcResponseSchema = z
   .object({
@@ -46,26 +48,34 @@ const LootNpcResponseSchema = z
     type: z.nativeEnum(NpcType).nullable(),
     margonemType: z.number().nullable(),
   })
-  .strict();
+  .strict()
+  .meta({ id: "LootNpcResponseDto" });
 
-const LootSubmissionMemberResponseSchema = z.object({
-  name: z.string(),
-  avatar: z.string().nullable().optional(),
-  userId: z.string(),
-});
+const LootSubmissionMemberResponseSchema = z
+  .object({
+    name: z.string(),
+    avatar: z.string().nullable().optional(),
+    userId: z.string(),
+  })
+  .meta({ id: "LootSubmissionMemberResponseDto" });
 
-const LootSubmissionResponseSchema = z.object({
-  guildId: z.string(),
-  memberId: z.number(),
-  lootId: z.number(),
-  member: LootSubmissionMemberResponseSchema,
-});
+const LootSubmissionResponseSchema = z
+  .object({
+    guildId: z.string(),
+    memberId: z.number(),
+    lootId: z.number(),
+    member: LootSubmissionMemberResponseSchema,
+  })
+  .meta({ id: "LootSubmissionResponseDto" });
 
-export const LootShareResponseSchema = z.record(
-  z.string(),
-  z.array(z.string()),
-);
+export const LootShareResponseSchema = z
+  .record(z.string(), z.array(z.string()))
+  .meta({ id: "LootShareResponseDto" });
 export type LootShare = z.infer<typeof LootShareResponseSchema>;
+
+export class LootShareResponseDto extends createZodDto(
+  LootShareResponseSchema,
+) {}
 
 const LootResponseSchema = z.object({
   id: z.number(),

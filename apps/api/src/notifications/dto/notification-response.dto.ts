@@ -181,12 +181,14 @@ export class GuildNotificationRulesResponseDto extends createZodDto(
   },
 ) {}
 
-const NotificationAllowedMentionsResponseSchema = z.object({
-  parse: z.enum(["roles", "users", "everyone"]).array().optional(),
-  roles: z.array(z.string()).optional(),
-  users: z.array(z.string()).optional(),
-  repliedUser: z.boolean().optional(),
-});
+const NotificationAllowedMentionsResponseSchema = z
+  .object({
+    parse: z.enum(["roles", "users", "everyone"]).array().optional(),
+    roles: z.array(z.string()).optional(),
+    users: z.array(z.string()).optional(),
+    repliedUser: z.boolean().optional(),
+  })
+  .meta({ id: "NotificationAllowedMentionsResponseDto" });
 
 export class NotificationAllowedMentionsResponseDto extends createZodDto(
   NotificationAllowedMentionsResponseSchema,
@@ -225,7 +227,8 @@ const NotificationJobPayloadSnapshotResponseSchema = z
       .nullable()
       .optional(),
   })
-  .nullable();
+  .nullable()
+  .meta({ id: "NotificationJobPayloadSnapshotResponseDto" });
 
 export class NotificationJobPayloadSnapshotResponseDto extends createZodDto(
   NotificationJobPayloadSnapshotResponseSchema,

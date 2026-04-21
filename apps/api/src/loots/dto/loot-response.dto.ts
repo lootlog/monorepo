@@ -41,12 +41,6 @@ export type CreateLootRejectedGuild = z.infer<
 >;
 export type CreateLootResponse = z.infer<typeof CreateLootResponseSchema>;
 
-const LootShareResponseSchema = z.record(z.string(), z.array(z.string()));
-
-export class LootShareResponseDto extends createZodDto(
-  LootShareResponseSchema,
-) {}
-
 const LootStatsOverviewResponseSchema = z.object({
   totalLoots: z.number(),
   totalItems: z.number(),
