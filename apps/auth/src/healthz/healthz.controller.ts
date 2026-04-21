@@ -1,6 +1,8 @@
 import { Controller, Get, Inject } from "@nestjs/common";
+import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { HealthzService } from "./healthz.service";
 
+@ApiTags("health")
 @Controller("healthz")
 export class HealthzController {
   constructor(
@@ -9,6 +11,8 @@ export class HealthzController {
   ) {}
 
   @Get()
+  @ApiOperation({ summary: "Health check" })
+  @ApiResponse({ status: 200, description: "Auth service is healthy" })
   healthCheck() {
     return this.healthzService.healthCheck();
   }

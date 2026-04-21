@@ -10,6 +10,7 @@
     "format": "oxfmt src test",
     "start": "node --import ./dist/src/instrumentation.js dist/src/main.js",
     "dev": "nest start --watch",
+    "openapi:generate": "OPENAPI_GENERATION=true pnpm build && OPENAPI_GENERATION=true node --import ./dist/src/instrumentation.js dist/src/openapi/generate-openapi.js",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node --import ./dist/src/instrumentation.js dist/src/main.js",
     "lint": "oxlint src",

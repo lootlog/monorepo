@@ -10,6 +10,7 @@
     "build": "nest build",
     "format": "oxfmt src test",
     "dev": "APP_VERSION=$(node -p \"require('./package.json').version\") nest start --watch",
+    "openapi:generate": "OPENAPI_GENERATION=true APP_VERSION=$(node -p \"require('./package.json').version\") pnpm build && OPENAPI_GENERATION=true APP_VERSION=$(node -p \"require('./package.json').version\") node dist/src/openapi/generate-openapi.js",
     "start:debug": "nest start --debug --watch",
     "start": "APP_VERSION=$(node -p \"require('./package.json').version\") node dist/src/main.js",
     "lint": "oxlint src",

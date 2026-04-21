@@ -1,0 +1,1768 @@
+{
+  "openapi": "3.0.0",
+  "paths":
+    {
+      "/healthz":
+        {
+          "get":
+            {
+              "description": "Check the health status of the API",
+              "operationId": "HealthzController_healthCheck",
+              "parameters": [],
+              "responses": { "200": { "description": "API is healthy" } },
+              "summary": "Health check",
+              "tags": ["health"],
+            },
+        },
+      "/battles":
+        {
+          "post":
+            {
+              "operationId": "BattlesController_createBattle",
+              "parameters": [],
+              "requestBody":
+                {
+                  "required": true,
+                  "content":
+                    {
+                      "application/json":
+                        {
+                          "schema":
+                            { "$ref": "#/components/schemas/CreateBattleDto" },
+                        },
+                    },
+                },
+              "responses": { "201": { "description": "" } },
+              "tags": ["Battles"],
+            },
+        },
+      "/battles/@me":
+        {
+          "get":
+            {
+              "operationId": "BattlesController_getDashboardBattles",
+              "parameters":
+                [
+                  {
+                    "name": "cursor",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "size",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 100,
+                        "default": 20,
+                        "type": "number",
+                      },
+                  },
+                  {
+                    "name": "sortOrder",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "default": "desc",
+                        "type": "string",
+                        "enum": ["asc", "desc"],
+                      },
+                  },
+                  {
+                    "name": "includeTotal",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "boolean" },
+                  },
+                  {
+                    "name": "world",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "type",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "type": "array",
+                        "items":
+                          { "type": "string", "enum": ["solo", "group"] },
+                      },
+                  },
+                  {
+                    "name": "userId",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "public",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "boolean" },
+                  },
+                  {
+                    "name": "characterId",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      { "type": "array", "items": { "type": "string" } },
+                  },
+                  {
+                    "name": "search",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "result",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "type": "array",
+                        "items":
+                          { "type": "string", "enum": ["won", "lost", "flee"] },
+                      },
+                  },
+                  {
+                    "name": "ph",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "boolean" },
+                  },
+                  {
+                    "name": "matchmaking",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "boolean" },
+                  },
+                  {
+                    "name": "minLevel",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      { "minimum": 1, "maximum": 1000, "type": "number" },
+                  },
+                  {
+                    "name": "maxLevel",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      { "minimum": 1, "maximum": 1000, "type": "number" },
+                  },
+                ],
+              "responses": { "200": { "description": "" } },
+              "tags": ["Battles"],
+            },
+        },
+      "/battles/@me/characters":
+        {
+          "get":
+            {
+              "operationId": "BattlesController_getUserCharacters",
+              "parameters": [],
+              "responses": { "200": { "description": "" } },
+              "tags": ["Battles"],
+            },
+        },
+      "/battles/@me/analytics":
+        {
+          "get":
+            {
+              "operationId": "BattlesController_getBattleAnalytics",
+              "parameters":
+                [
+                  {
+                    "name": "characterId",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "world",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "period",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "type": "string",
+                        "enum":
+                          ["24h", "3d", "7d", "14d", "30d", "90d", "180d"],
+                      },
+                  },
+                  {
+                    "name": "minLevel",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "type": "integer",
+                      },
+                  },
+                  {
+                    "name": "maxLevel",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "type": "integer",
+                      },
+                  },
+                  {
+                    "name": "ph",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "boolean" },
+                  },
+                  {
+                    "name": "matchmaking",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "boolean" },
+                  },
+                ],
+              "responses": { "200": { "description": "" } },
+              "tags": ["Battles"],
+            },
+        },
+      "/battles/@me/statistics/profession-win-rate":
+        {
+          "get":
+            {
+              "operationId": "BattlesController_getProfessionWinRate",
+              "parameters":
+                [
+                  {
+                    "name": "characterId",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "world",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "period",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "type": "string",
+                        "enum":
+                          [
+                            "24h",
+                            "3d",
+                            "7d",
+                            "14d",
+                            "30d",
+                            "90d",
+                            "180d",
+                            "all",
+                          ],
+                      },
+                  },
+                  {
+                    "name": "minLevel",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "type": "integer",
+                      },
+                  },
+                  {
+                    "name": "maxLevel",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "type": "integer",
+                      },
+                  },
+                  {
+                    "name": "cursor",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "size",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "type": "integer",
+                      },
+                  },
+                  {
+                    "name": "sortBy",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "default": "totalBattles",
+                        "type": "string",
+                        "enum":
+                          [
+                            "wins",
+                            "losses",
+                            "totalBattles",
+                            "winRate",
+                            "lastBattleDate",
+                            "totalRatingDelta",
+                            "avgRatingDelta",
+                          ],
+                      },
+                  },
+                  {
+                    "name": "sortOrder",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "default": "desc",
+                        "type": "string",
+                        "enum": ["asc", "desc"],
+                      },
+                  },
+                  {
+                    "name": "includeTotal",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "boolean" },
+                  },
+                  {
+                    "name": "search",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "minBattles",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "type": "integer",
+                      },
+                  },
+                  {
+                    "name": "ph",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "boolean" },
+                  },
+                  {
+                    "name": "matchmaking",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "boolean" },
+                  },
+                ],
+              "responses": { "200": { "description": "" } },
+              "tags": ["Battles"],
+            },
+        },
+      "/battles/@me/statistics/head-to-head":
+        {
+          "get":
+            {
+              "operationId": "BattlesController_getHeadToHead",
+              "parameters":
+                [
+                  {
+                    "name": "characterId",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "world",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "period",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "type": "string",
+                        "enum":
+                          [
+                            "24h",
+                            "3d",
+                            "7d",
+                            "14d",
+                            "30d",
+                            "90d",
+                            "180d",
+                            "all",
+                          ],
+                      },
+                  },
+                  {
+                    "name": "minLevel",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "type": "integer",
+                      },
+                  },
+                  {
+                    "name": "maxLevel",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "type": "integer",
+                      },
+                  },
+                  {
+                    "name": "cursor",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "size",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "type": "integer",
+                      },
+                  },
+                  {
+                    "name": "sortBy",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "default": "totalBattles",
+                        "type": "string",
+                        "enum":
+                          [
+                            "wins",
+                            "losses",
+                            "totalBattles",
+                            "winRate",
+                            "lastBattleDate",
+                            "totalRatingDelta",
+                            "avgRatingDelta",
+                          ],
+                      },
+                  },
+                  {
+                    "name": "sortOrder",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "default": "desc",
+                        "type": "string",
+                        "enum": ["asc", "desc"],
+                      },
+                  },
+                  {
+                    "name": "includeTotal",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "boolean" },
+                  },
+                  {
+                    "name": "search",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "minBattles",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "type": "integer",
+                      },
+                  },
+                  {
+                    "name": "ph",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "boolean" },
+                  },
+                  {
+                    "name": "matchmaking",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "boolean" },
+                  },
+                ],
+              "responses": { "200": { "description": "" } },
+              "tags": ["Battles"],
+            },
+        },
+      "/battles/@me/statistics/streak":
+        {
+          "get":
+            {
+              "operationId": "BattlesController_getCurrentStreak",
+              "parameters":
+                [
+                  {
+                    "name": "characterId",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "world",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "period",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "type": "string",
+                        "enum":
+                          [
+                            "24h",
+                            "3d",
+                            "7d",
+                            "14d",
+                            "30d",
+                            "90d",
+                            "180d",
+                            "all",
+                          ],
+                      },
+                  },
+                  {
+                    "name": "minLevel",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "type": "integer",
+                      },
+                  },
+                  {
+                    "name": "maxLevel",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "type": "integer",
+                      },
+                  },
+                  {
+                    "name": "cursor",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "size",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "type": "integer",
+                      },
+                  },
+                  {
+                    "name": "sortBy",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "default": "totalBattles",
+                        "type": "string",
+                        "enum":
+                          [
+                            "wins",
+                            "losses",
+                            "totalBattles",
+                            "winRate",
+                            "lastBattleDate",
+                            "totalRatingDelta",
+                            "avgRatingDelta",
+                          ],
+                      },
+                  },
+                  {
+                    "name": "sortOrder",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "default": "desc",
+                        "type": "string",
+                        "enum": ["asc", "desc"],
+                      },
+                  },
+                  {
+                    "name": "includeTotal",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "boolean" },
+                  },
+                  {
+                    "name": "search",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "minBattles",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "type": "integer",
+                      },
+                  },
+                  {
+                    "name": "ph",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "boolean" },
+                  },
+                  {
+                    "name": "matchmaking",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "boolean" },
+                  },
+                ],
+              "responses": { "200": { "description": "" } },
+              "tags": ["Battles"],
+            },
+        },
+      "/battles/@me/statistics/duration":
+        {
+          "get":
+            {
+              "operationId": "BattlesController_getBattleDuration",
+              "parameters":
+                [
+                  {
+                    "name": "characterId",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "world",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "period",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "type": "string",
+                        "enum":
+                          [
+                            "24h",
+                            "3d",
+                            "7d",
+                            "14d",
+                            "30d",
+                            "90d",
+                            "180d",
+                            "all",
+                          ],
+                      },
+                  },
+                  {
+                    "name": "minLevel",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "type": "integer",
+                      },
+                  },
+                  {
+                    "name": "maxLevel",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "type": "integer",
+                      },
+                  },
+                  {
+                    "name": "cursor",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "size",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "type": "integer",
+                      },
+                  },
+                  {
+                    "name": "sortBy",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "default": "totalBattles",
+                        "type": "string",
+                        "enum":
+                          [
+                            "wins",
+                            "losses",
+                            "totalBattles",
+                            "winRate",
+                            "lastBattleDate",
+                            "totalRatingDelta",
+                            "avgRatingDelta",
+                          ],
+                      },
+                  },
+                  {
+                    "name": "sortOrder",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "default": "desc",
+                        "type": "string",
+                        "enum": ["asc", "desc"],
+                      },
+                  },
+                  {
+                    "name": "includeTotal",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "boolean" },
+                  },
+                  {
+                    "name": "search",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "minBattles",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "type": "integer",
+                      },
+                  },
+                  {
+                    "name": "ph",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "boolean" },
+                  },
+                  {
+                    "name": "matchmaking",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "boolean" },
+                  },
+                ],
+              "responses": { "200": { "description": "" } },
+              "tags": ["Battles"],
+            },
+        },
+      "/battles/@me/statistics/ph-growth":
+        {
+          "get":
+            {
+              "operationId": "BattlesController_getPhGrowth",
+              "parameters":
+                [
+                  {
+                    "name": "characterId",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "world",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "period",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "type": "string",
+                        "enum":
+                          [
+                            "24h",
+                            "3d",
+                            "7d",
+                            "14d",
+                            "30d",
+                            "90d",
+                            "180d",
+                            "all",
+                          ],
+                      },
+                  },
+                  {
+                    "name": "minLevel",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "type": "integer",
+                      },
+                  },
+                  {
+                    "name": "maxLevel",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "type": "integer",
+                      },
+                  },
+                  {
+                    "name": "cursor",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "size",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "type": "integer",
+                      },
+                  },
+                  {
+                    "name": "sortBy",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "default": "totalBattles",
+                        "type": "string",
+                        "enum":
+                          [
+                            "wins",
+                            "losses",
+                            "totalBattles",
+                            "winRate",
+                            "lastBattleDate",
+                            "totalRatingDelta",
+                            "avgRatingDelta",
+                          ],
+                      },
+                  },
+                  {
+                    "name": "sortOrder",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "default": "desc",
+                        "type": "string",
+                        "enum": ["asc", "desc"],
+                      },
+                  },
+                  {
+                    "name": "includeTotal",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "boolean" },
+                  },
+                  {
+                    "name": "search",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "minBattles",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "type": "integer",
+                      },
+                  },
+                  {
+                    "name": "ph",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "boolean" },
+                  },
+                  {
+                    "name": "matchmaking",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "boolean" },
+                  },
+                ],
+              "responses": { "200": { "description": "" } },
+              "tags": ["Battles"],
+            },
+        },
+      "/battles/@me/statistics/rating-growth":
+        {
+          "get":
+            {
+              "operationId": "BattlesController_getRatingGrowth",
+              "parameters":
+                [
+                  {
+                    "name": "characterId",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "world",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "period",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "type": "string",
+                        "enum":
+                          [
+                            "24h",
+                            "3d",
+                            "7d",
+                            "14d",
+                            "30d",
+                            "90d",
+                            "180d",
+                            "all",
+                          ],
+                      },
+                  },
+                  {
+                    "name": "minLevel",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "type": "integer",
+                      },
+                  },
+                  {
+                    "name": "maxLevel",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "type": "integer",
+                      },
+                  },
+                  {
+                    "name": "cursor",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "size",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "type": "integer",
+                      },
+                  },
+                  {
+                    "name": "sortBy",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "default": "totalBattles",
+                        "type": "string",
+                        "enum":
+                          [
+                            "wins",
+                            "losses",
+                            "totalBattles",
+                            "winRate",
+                            "lastBattleDate",
+                            "totalRatingDelta",
+                            "avgRatingDelta",
+                          ],
+                      },
+                  },
+                  {
+                    "name": "sortOrder",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "default": "desc",
+                        "type": "string",
+                        "enum": ["asc", "desc"],
+                      },
+                  },
+                  {
+                    "name": "includeTotal",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "boolean" },
+                  },
+                  {
+                    "name": "search",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "minBattles",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "type": "integer",
+                      },
+                  },
+                  {
+                    "name": "ph",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "boolean" },
+                  },
+                  {
+                    "name": "matchmaking",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "boolean" },
+                  },
+                ],
+              "responses": { "200": { "description": "" } },
+              "tags": ["Battles"],
+            },
+        },
+      "/battles/@me/statistics/rating-delta-by-opponent":
+        {
+          "get":
+            {
+              "operationId": "BattlesController_getRatingDeltaByOpponent",
+              "parameters":
+                [
+                  {
+                    "name": "characterId",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "world",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "period",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "type": "string",
+                        "enum":
+                          [
+                            "24h",
+                            "3d",
+                            "7d",
+                            "14d",
+                            "30d",
+                            "90d",
+                            "180d",
+                            "all",
+                          ],
+                      },
+                  },
+                  {
+                    "name": "minLevel",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "type": "integer",
+                      },
+                  },
+                  {
+                    "name": "maxLevel",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "type": "integer",
+                      },
+                  },
+                  {
+                    "name": "cursor",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "size",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "type": "integer",
+                      },
+                  },
+                  {
+                    "name": "sortBy",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "default": "totalBattles",
+                        "type": "string",
+                        "enum":
+                          [
+                            "wins",
+                            "losses",
+                            "totalBattles",
+                            "winRate",
+                            "lastBattleDate",
+                            "totalRatingDelta",
+                            "avgRatingDelta",
+                          ],
+                      },
+                  },
+                  {
+                    "name": "sortOrder",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "default": "desc",
+                        "type": "string",
+                        "enum": ["asc", "desc"],
+                      },
+                  },
+                  {
+                    "name": "includeTotal",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "boolean" },
+                  },
+                  {
+                    "name": "search",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "minBattles",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "type": "integer",
+                      },
+                  },
+                  {
+                    "name": "ph",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "boolean" },
+                  },
+                  {
+                    "name": "matchmaking",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "boolean" },
+                  },
+                ],
+              "responses": { "200": { "description": "" } },
+              "tags": ["Battles"],
+            },
+        },
+      "/battles/@me/statistics/player-vs-player":
+        {
+          "get":
+            {
+              "operationId": "BattlesController_getPlayerVsPlayerBattles",
+              "parameters":
+                [
+                  {
+                    "name": "characterId",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "world",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "period",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "type": "string",
+                        "enum":
+                          [
+                            "24h",
+                            "3d",
+                            "7d",
+                            "14d",
+                            "30d",
+                            "90d",
+                            "180d",
+                            "all",
+                          ],
+                      },
+                  },
+                  {
+                    "name": "minLevel",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "type": "integer",
+                      },
+                  },
+                  {
+                    "name": "maxLevel",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "type": "integer",
+                      },
+                  },
+                  {
+                    "name": "cursor",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "size",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "type": "integer",
+                      },
+                  },
+                  {
+                    "name": "sortBy",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "default": "totalBattles",
+                        "type": "string",
+                        "enum":
+                          [
+                            "wins",
+                            "losses",
+                            "totalBattles",
+                            "winRate",
+                            "lastBattleDate",
+                            "totalRatingDelta",
+                            "avgRatingDelta",
+                          ],
+                      },
+                  },
+                  {
+                    "name": "sortOrder",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "default": "desc",
+                        "type": "string",
+                        "enum": ["asc", "desc"],
+                      },
+                  },
+                  {
+                    "name": "includeTotal",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "boolean" },
+                  },
+                  {
+                    "name": "search",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                  {
+                    "name": "minBattles",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "type": "integer",
+                      },
+                  },
+                  {
+                    "name": "ph",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "boolean" },
+                  },
+                  {
+                    "name": "matchmaking",
+                    "required": false,
+                    "in": "query",
+                    "schema": { "type": "boolean" },
+                  },
+                  {
+                    "name": "opponentId",
+                    "required": true,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                ],
+              "responses": { "200": { "description": "" } },
+              "tags": ["Battles"],
+            },
+        },
+      "/battles/@me/warriors/search":
+        {
+          "get":
+            {
+              "operationId": "BattlesController_searchWarriors",
+              "parameters":
+                [
+                  {
+                    "name": "q",
+                    "required": true,
+                    "in": "query",
+                    "schema": { "type": "string" },
+                  },
+                ],
+              "responses": { "200": { "description": "" } },
+              "tags": ["Battles"],
+            },
+        },
+      "/battles/@me/worlds":
+        {
+          "get":
+            {
+              "operationId": "BattlesController_getUserWorlds",
+              "parameters": [],
+              "responses": { "200": { "description": "" } },
+              "tags": ["Battles"],
+            },
+        },
+      "/battles/{battleId}":
+        {
+          "get":
+            {
+              "operationId": "BattlesController_getBattle",
+              "parameters":
+                [
+                  {
+                    "name": "battleId",
+                    "required": true,
+                    "in": "path",
+                    "schema": { "type": "string" },
+                  },
+                ],
+              "responses": { "200": { "description": "" } },
+              "tags": ["Battles"],
+            },
+          "patch":
+            {
+              "operationId": "BattlesController_updateBattle",
+              "parameters":
+                [
+                  {
+                    "name": "battleId",
+                    "required": true,
+                    "in": "path",
+                    "schema": { "type": "string" },
+                  },
+                ],
+              "requestBody":
+                {
+                  "required": true,
+                  "content":
+                    {
+                      "application/json":
+                        {
+                          "schema":
+                            { "$ref": "#/components/schemas/UpdateBattleDto" },
+                        },
+                    },
+                },
+              "responses": { "200": { "description": "" } },
+              "tags": ["Battles"],
+            },
+          "delete":
+            {
+              "operationId": "BattlesController_deleteBattle",
+              "parameters":
+                [
+                  {
+                    "name": "battleId",
+                    "required": true,
+                    "in": "path",
+                    "schema": { "type": "string" },
+                  },
+                ],
+              "responses": { "200": { "description": "" } },
+              "tags": ["Battles"],
+            },
+        },
+      "/battles/{battleId}/raw":
+        {
+          "get":
+            {
+              "operationId": "BattlesController_getBattleRawData",
+              "parameters":
+                [
+                  {
+                    "name": "battleId",
+                    "required": true,
+                    "in": "path",
+                    "schema": { "type": "string" },
+                  },
+                ],
+              "responses": { "200": { "description": "" } },
+              "tags": ["Battles"],
+            },
+        },
+      "/battles/public/{battleId}":
+        {
+          "get":
+            {
+              "operationId": "PublicBattlesController_getPublicBattle",
+              "parameters":
+                [
+                  {
+                    "name": "battleId",
+                    "required": true,
+                    "in": "path",
+                    "schema": { "type": "string" },
+                  },
+                ],
+              "responses": { "200": { "description": "" } },
+              "tags": ["PublicBattles"],
+            },
+        },
+      "/battles/public/{battleId}/raw":
+        {
+          "get":
+            {
+              "operationId": "PublicBattlesController_getPublicBattleRaw",
+              "parameters":
+                [
+                  {
+                    "name": "battleId",
+                    "required": true,
+                    "in": "path",
+                    "schema": { "type": "string" },
+                  },
+                ],
+              "responses": { "200": { "description": "" } },
+              "tags": ["PublicBattles"],
+            },
+        },
+      "/internal/delete-user-data":
+        {
+          "post":
+            {
+              "operationId": "InternalController_deleteUserData",
+              "parameters": [],
+              "requestBody":
+                {
+                  "required": true,
+                  "content":
+                    {
+                      "application/json":
+                        {
+                          "schema":
+                            {
+                              "$ref": "#/components/schemas/DeleteUserDataDto",
+                            },
+                        },
+                    },
+                },
+              "responses": { "201": { "description": "" } },
+              "tags": ["Internal"],
+            },
+        },
+    },
+  "info":
+    {
+      "title": "Battle Log API",
+      "description": "The Battle Log API documentation",
+      "version": "1.0",
+      "contact": {},
+    },
+  "tags": [],
+  "servers": [],
+  "components":
+    {
+      "securitySchemes":
+        {
+          "bearer":
+            { "scheme": "bearer", "bearerFormat": "JWT", "type": "http" },
+        },
+      "schemas":
+        {
+          "CreateBattleDto":
+            {
+              "type": "object",
+              "properties":
+                {
+                  "accountId": { "type": "string" },
+                  "characterId": { "type": "string" },
+                  "world": { "type": "string" },
+                  "matchmaking": { "type": "boolean" },
+                  "events":
+                    {
+                      "minItems": 1,
+                      "type": "array",
+                      "items":
+                        {
+                          "type": "object",
+                          "properties":
+                            {
+                              "party":
+                                {
+                                  "type": "object",
+                                  "properties":
+                                    {
+                                      "members":
+                                        {
+                                          "type": "object",
+                                          "additionalProperties":
+                                            {
+                                              "type": "object",
+                                              "properties":
+                                                {
+                                                  "id": { "type": "number" },
+                                                  "account":
+                                                    { "type": "number" },
+                                                  "nick": { "type": "string" },
+                                                  "icon": { "type": "string" },
+                                                  "commander":
+                                                    { "type": "number" },
+                                                },
+                                              "required":
+                                                [
+                                                  "id",
+                                                  "account",
+                                                  "nick",
+                                                  "icon",
+                                                ],
+                                            },
+                                        },
+                                    },
+                                  "required": ["members"],
+                                },
+                              "f":
+                                {
+                                  "type": "object",
+                                  "properties":
+                                    {
+                                      "m":
+                                        {
+                                          "type": "array",
+                                          "items": { "type": "string" },
+                                        },
+                                      "endBattle": { "type": "number" },
+                                      "init": { "type": "string" },
+                                      "auto": { "type": "string" },
+                                      "w":
+                                        {
+                                          "type": "object",
+                                          "additionalProperties":
+                                            {
+                                              "type": "object",
+                                              "properties":
+                                                {
+                                                  "originalId":
+                                                    { "type": "number" },
+                                                  "name": { "type": "string" },
+                                                  "lvl": { "type": "number" },
+                                                  "prof": { "type": "string" },
+                                                  "icon": { "type": "string" },
+                                                  "team": { "type": "number" },
+                                                },
+                                              "required":
+                                                [
+                                                  "originalId",
+                                                  "name",
+                                                  "lvl",
+                                                  "prof",
+                                                  "icon",
+                                                  "team",
+                                                ],
+                                            },
+                                        },
+                                    },
+                                },
+                              "ev": { "type": "number" },
+                              "match_summary":
+                                {
+                                  "type": "object",
+                                  "properties":
+                                    {
+                                      "difficulty_rank": { "type": "number" },
+                                      "result": { "type": "number" },
+                                      "rating_delta": { "type": "number" },
+                                      "opponent_lvl": { "type": "number" },
+                                      "opponent_oplvl": { "type": "number" },
+                                      "opponent_rating": { "type": "number" },
+                                      "rating": { "type": "number" },
+                                      "status": { "type": "number" },
+                                    },
+                                  "required":
+                                    [
+                                      "difficulty_rank",
+                                      "result",
+                                      "rating_delta",
+                                      "opponent_lvl",
+                                      "opponent_oplvl",
+                                      "opponent_rating",
+                                      "rating",
+                                      "status",
+                                    ],
+                                },
+                            },
+                          "required": ["f", "ev"],
+                        },
+                    },
+                },
+              "required": ["accountId", "characterId", "world", "events"],
+            },
+          "UpdateBattleDto":
+            {
+              "type": "object",
+              "properties": { "public": { "type": "boolean" } },
+              "required": ["public"],
+            },
+          "DeleteUserDataDto":
+            {
+              "type": "object",
+              "properties": { "userId": { "type": "string" } },
+              "required": ["userId"],
+            },
+        },
+    },
+}

@@ -33,6 +33,8 @@ import { MapTemplatesModule } from "src/map-templates/map-templates.module";
 import { KillsModule } from "src/kills/kills.module";
 import { MemberContextModule } from "src/shared/permissions/member-context.module";
 
+const isOpenApiGeneration = process.env.OPENAPI_GENERATION === "true";
+
 @Module({
   imports: [
     WinstonModule.forRoot(winstonConfig),
@@ -44,6 +46,7 @@ import { MemberContextModule } from "src/shared/permissions/member-context.modul
         username: env.REDIS_USERNAME,
         maxRetriesPerRequest: null,
         enableReadyCheck: false,
+        ...(isOpenApiGeneration ? { lazyConnect: true } : {}),
       },
       prefix: "{bull}",
     }),

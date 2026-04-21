@@ -2,6 +2,7 @@ import type { RabbitMQConfig } from "@golevelup/nestjs-rabbitmq";
 import { env } from "src/config/env";
 
 export const DEFAULT_EXCHANGE_NAME = "default";
+const isOpenApiGeneration = process.env.OPENAPI_GENERATION === "true";
 
 export const rabbitmqConfig: RabbitMQConfig = {
   uri: env.RABBITMQ_URI,
@@ -12,5 +13,14 @@ export const rabbitmqConfig: RabbitMQConfig = {
       default: true,
     },
   },
-  connectionInitOptions: {},
+  connectionInitOptions: isOpenApiGeneration
+    ? {
+        wait: false,
+        reject: false,
+        skipConnectionFailedLogging: true,
+        skipDisconnectFailedLogging: true,
+      }
+    : {},
+  registerHandlers: !isOpenApiGeneration,
+  enableControllerDiscovery: !isOpenApiGeneration,
 };
