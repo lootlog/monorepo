@@ -18,6 +18,7 @@ import { PrismaService } from "src/db/prisma.service";
 import { GuildsService } from "src/guilds/guilds.service";
 import { GUILD_NOTIFICATION_TIMEZONE } from "src/notifications/constants/notification-schedule-timezone.constant";
 import { NotificationContentService } from "src/notifications/notification-content.service";
+import { NotificationFiltersResponseDto } from "src/notifications/dto/notification-response.dto";
 import { NotificationJobService } from "src/notifications/notification-job.service";
 import { NotificationTargetService } from "src/notifications/notification-target.service";
 import { Error } from "src/notifications/enum/error.enum";
@@ -92,7 +93,10 @@ export class NotificationRuleService {
           ruleTargetIds,
           targetUsage,
         );
-        return { ...rule, testTrigger };
+        return {
+          ...this.mapRuleResponse(rule),
+          testTrigger,
+        };
       }),
       limits: {
         ruleLimit: guildSettings?.notificationRuleLimit ?? 20,
@@ -262,20 +266,22 @@ export class NotificationRuleService {
   // ── User Rules ───────────────────────────────────────────────────────
 
   listUserRules(discordId: string) {
-    return this.prisma.notificationRule.findMany({
-      where: {
-        ownerType: DbNotificationOwnerType.USER,
-        ownerId: discordId,
-      },
-      include: {
-        targets: {
-          include: {
-            target: true,
+    return this.prisma.notificationRule
+      .findMany({
+        where: {
+          ownerType: DbNotificationOwnerType.USER,
+          ownerId: discordId,
+        },
+        include: {
+          targets: {
+            include: {
+              target: true,
+            },
           },
         },
-      },
-      orderBy: [{ enabled: "desc" }, { updatedAt: "desc" }],
-    });
+        orderBy: [{ enabled: "desc" }, { updatedAt: "desc" }],
+      })
+      .then((rules) => rules.map((rule) => this.mapRuleResponse(rule)));
   }
 
   async createUserRule(discordId: string, data: CreateNotificationRuleDto) {
@@ -851,5 +857,24 @@ export class NotificationRuleService {
     }
 
     return getWorstTestTriggerUsage(targetUsage, targetIds) ?? defaultUsage;
+  }
+
+  private mapRuleResponse<
+    T extends {
+      filters: Prisma.JsonValue | null;
+    },
+  >(rule: T) {
+    return {
+      ...rule,
+      filters: this.parseNotificationFilters(rule.filters),
+    };
+  }
+
+  private parseNotificationFilters(filters: Prisma.JsonValue | null) {
+    if (filters === null) {
+      return null;
+    }
+
+    return NotificationFiltersResponseDto.schema.parse(filters);
   }
 }
