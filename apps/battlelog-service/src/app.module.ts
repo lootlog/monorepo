@@ -12,6 +12,8 @@ import { BattlesModule } from "./battles/battles.module";
 import { winstonConfig } from "src/config/winston.config";
 import { redisConfig } from "src/config/redis.config";
 
+const isOpenApiGeneration = process.env.OPENAPI_GENERATION === "true";
+
 @Module({
   imports: [
     HealthzModule,
@@ -21,6 +23,7 @@ import { redisConfig } from "src/config/redis.config";
         ...redisConfig,
         maxRetriesPerRequest: null,
         enableReadyCheck: false,
+        ...(isOpenApiGeneration ? { lazyConnect: true } : {}),
       },
       prefix: "{bull}",
     }),

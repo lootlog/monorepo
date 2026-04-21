@@ -5,6 +5,7 @@
   "scripts": {
     "build": "nest build",
     "dev": "nest start --watch",
+    "openapi:generate": "OPENAPI_GENERATION=true pnpm build && OPENAPI_GENERATION=true node --import ./dist/src/instrumentation.js dist/src/openapi/generate-openapi.js",
     "start": "node --import ./dist/src/instrumentation.js dist/src/main.js",
     "start:debug": "nest start --debug --watch",
     "lint": "oxlint src",
@@ -24,6 +25,7 @@
     "@nestjs/common": "^11.1.19",
     "@nestjs/core": "^11.1.19",
     "@nestjs/platform-fastify": "^11.1.19",
+    "@nestjs/swagger": "^11.3.2",
     "better-auth": "^1.6.5",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",

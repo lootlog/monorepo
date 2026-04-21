@@ -1,3 +1,5 @@
+import { writeFileSync } from "node:fs";
+
 type OpenApiDictionary = Record<string, unknown>;
 
 export type OpenApiYamlDumpOptions = {
@@ -22,6 +24,15 @@ export const openApiYamlDumpOptions = {
   lineWidth: -1,
   quotingType: '"',
 } satisfies OpenApiYamlDumpOptions;
+
+export function writeOpenApiDocumentToYamlFile(
+  document: unknown,
+  outputPath: string,
+) {
+  const yamlDocument = `${JSON.stringify(document, null, 2)}\n`;
+
+  writeFileSync(outputPath, yamlDocument, "utf8");
+}
 
 export function sanitizeOpenApiDocument<TDocument>(document: TDocument) {
   stripTypedObjectAdditionalProperties(document);

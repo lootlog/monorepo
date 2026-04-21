@@ -6,6 +6,7 @@ import { RoutingKey } from "src/enum/routing-key.enum";
 export const DEFAULT_EXCHANGE_NAME = "default";
 export const DEAD_LETTER_EXCHANGE_NAME = "dlx";
 export const RETRY_EXCHANGE_NAME = "retry";
+const isOpenApiGeneration = process.env.OPENAPI_GENERATION === "true";
 
 const DEFAULT_TTL = 30000; // 30 seconds
 
@@ -41,5 +42,14 @@ export const rabbitmqConfig: RabbitMQConfig = {
       default: true,
     },
   },
-  connectionInitOptions: {},
+  connectionInitOptions: isOpenApiGeneration
+    ? {
+        wait: false,
+        reject: false,
+        skipConnectionFailedLogging: true,
+        skipDisconnectFailedLogging: true,
+      }
+    : {},
+  registerHandlers: !isOpenApiGeneration,
+  enableControllerDiscovery: !isOpenApiGeneration,
 };

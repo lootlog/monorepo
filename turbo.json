@@ -73,6 +73,11 @@
     "start": {
       "dependsOn": ["^build"]
     },
+    "openapi:generate": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "outputs": ["openapi.yaml"]
+    },
     "api:migrate:dev": {
       "cache": false,
       "interactive": true

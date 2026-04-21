@@ -18,22 +18,31 @@ export interface RedisModuleOptions {
 
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
-  private client: Redis;
+  private client?: Redis;
   private readonly prefix: string;
+  private readonly isOpenApiGeneration: boolean;
 
   constructor(
     @Inject(REDIS_MODULE_OPTIONS)
     private readonly options: RedisModuleOptions,
   ) {
     this.prefix = options.prefix ?? "";
+    this.isOpenApiGeneration = process.env.OPENAPI_GENERATION === "true";
   }
 
   onModuleInit() {
     const { prefix: _, ...redisOptions } = this.options;
-    this.client = new Redis(redisOptions);
+    this.client = new Redis({
+      ...redisOptions,
+      ...(this.isOpenApiGeneration ? { lazyConnect: true } : {}),
+    });
   }
 
   async onModuleDestroy() {
+    if (!this.client) {
+      return;
+    }
+
     await this.client.quit();
   }
 
