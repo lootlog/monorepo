@@ -12,7 +12,10 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { LOOTLOG_APP_URL } from "@/config/app";
-import { useGuilds } from "@/hooks/api/use-guilds";
+import {
+  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
+  useUsersControllerGetCurrentUserAccessibleGuilds,
+} from "@/lib/api/generated/main/users/users";
 import { ExternalLink, Loader2, SquareArrowOutUpRight } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -20,7 +23,14 @@ import { useTranslation } from "react-i18next";
 export const GuildListPopover = () => {
   const { t } = useTranslation("quickAccess");
   const [open, setOpen] = useState(false);
-  const { data: guilds, isLoading } = useGuilds();
+  const { data: guilds, isLoading } =
+    useUsersControllerGetCurrentUserAccessibleGuilds({
+      query: {
+        queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
+        refetchOnMount: false,
+        staleTime: 1000 * 60 * 5,
+      },
+    });
 
   const handleGuildClick = (guildId: string) => {
     window.open(`${LOOTLOG_APP_URL}/${guildId}`, "_blank");

@@ -1,5 +1,4 @@
 import { cn } from "@/lib/utils";
-import { useGuilds } from "@/hooks/api/use-guilds";
 import { useUserPreferences } from "@/hooks/api/use-user-preferences";
 import { useSettingsStore } from "@/store/settings.store";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,7 +7,11 @@ import { type FC, useEffect, useRef } from "react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Game } from "@/lib/game";
 import { GuildButton } from "@/components/guild-button";
-import type { Guild } from "@/api";
+import type { GuildResponseDtoOutput } from "@/lib/api/generated/main/model";
+import {
+  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
+  useUsersControllerGetCurrentUserAccessibleGuilds,
+} from "@/lib/api/generated/main/users/users";
 import { useTranslation } from "react-i18next";
 
 type GuildSwitcherProps = {
@@ -25,7 +28,10 @@ type GuildSwitcherProps = {
   value?: string;
 };
 
-const orderGuilds = (guilds: Guild[] | undefined, guildsOrder?: string[]) => {
+const orderGuilds = (
+  guilds: GuildResponseDtoOutput[] | undefined,
+  guildsOrder?: string[],
+) => {
   if (!guilds?.length) {
     return [];
   }
@@ -37,7 +43,7 @@ const orderGuilds = (guilds: Guild[] | undefined, guildsOrder?: string[]) => {
   const guildsById = new Map(guilds.map((guild) => [guild.id, guild] as const));
   const orderedGuilds = guildsOrder
     .map((guildId) => guildsById.get(guildId))
-    .filter((guild): guild is Guild => guild !== undefined);
+    .filter((guild): guild is GuildResponseDtoOutput => guild !== undefined);
   const orderedGuildIds = new Set(orderedGuilds.map((guild) => guild.id));
   const remainingGuilds = guilds.filter(
     (guild) => !orderedGuildIds.has(guild.id),
@@ -62,7 +68,14 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
   const { t } = useTranslation("common");
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const characterId = String(Game.hero.id);
-  const { data: guilds, isFetched } = useGuilds();
+  const { data: guilds, isFetched } =
+    useUsersControllerGetCurrentUserAccessibleGuilds({
+      query: {
+        queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
+        refetchOnMount: false,
+        staleTime: 1000 * 60 * 5,
+      },
+    });
   const { data: userPreferences } = useUserPreferences();
   const { setGuildId, guildIdByCharId } = useSettingsStore();
   const guildsOrder = userPreferences?.guildsOrder;

@@ -3,10 +3,17 @@ import { NpcTile } from "@/components/npc-tile";
 import { Button } from "@/components/ui/button";
 import { NotificationMuteMenu } from "@/features/notifications/components/notification-mute-menu";
 import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
-import { useGuildMembers } from "@/hooks/api/use-guild-members";
-import { useVolunteer } from "@/hooks/api/use-volunteer";
 import { useMemberInvalidation } from "@/hooks/api/use-member-invalidation";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
+import {
+  getMembersControllerGetGuildMembersSummaryQueryKey,
+  useMembersControllerGetGuildMembersSummary,
+} from "@/lib/api/generated/main/members/members";
+import { useMessagingControllerVolunteer } from "@/lib/api/generated/main/messaging/messaging";
+import {
+  buildCurrentCharacterPayload,
+  mapGuildMembersByUserId,
+} from "@/lib/api/generated-helpers";
 import { Game } from "@/lib/game";
 import { cn } from "@/lib/utils";
 import {
@@ -141,9 +148,21 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   );
   const setOpen = useWindowsStore((state) => state.setOpen);
   const { settings } = useCurrentGameAccountNotificationSettings();
-  const { data: members } = useGuildMembers(notification.guildId);
-  const guildMember = members?.[notification.discordId];
-  const volunteer = useVolunteer();
+  const { data: membersData } = useMembersControllerGetGuildMembersSummary(
+    { guildId: notification.guildId },
+    {
+      query: {
+        queryKey: getMembersControllerGetGuildMembersSummaryQueryKey({
+          guildId: notification.guildId,
+        }),
+        gcTime: Infinity,
+        staleTime: 5 * 60 * 1000,
+      },
+    },
+  );
+  const members = mapGuildMembersByUserId(membersData);
+  const guildMember = members[notification.discordId];
+  const volunteer = useMessagingControllerVolunteer();
   const autoHidePathRef = useRef<SVGPathElement>(null);
 
   useMemberInvalidation(
@@ -190,9 +209,14 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
 
   const handleVolunteer = () => {
     volunteer.mutate({
-      notificationId: notification.notificationId,
-      targetDiscordId: notification.discordId,
-      world: notification.world,
+      pathParams: {
+        notificationId: notification.notificationId,
+      },
+      data: {
+        targetDiscordId: notification.discordId,
+        world: notification.world,
+        character: buildCurrentCharacterPayload(),
+      },
     });
     setOpen("notifications", false);
     clearNotifications();

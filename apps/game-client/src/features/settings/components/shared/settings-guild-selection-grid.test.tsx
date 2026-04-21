@@ -1,12 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import type { Guild } from "@/hooks/api/use-guilds";
+import type { GuildResponseDtoOutput as Guild } from "@/lib/api/generated/main/model";
 import { SettingsGuildSelectionGrid } from "./settings-guild-selection-grid";
 
 const guilds: Guild[] = [
-  { id: "guild-1", name: "Alpha", icon: null },
-  { id: "guild-2", name: "Beta", icon: null },
+  { id: "guild-1", name: "Alpha", icon: null, ownerId: "owner-1" },
+  { id: "guild-2", name: "Beta", icon: null, ownerId: "owner-2" },
 ];
 
 describe("SettingsGuildSelectionGrid", () => {

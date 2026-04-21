@@ -3,16 +3,19 @@ import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { bootstrapPublicApi } from "../index";
 import { useGlobalStore } from "@/store/global.store";
 import { queryKeys } from "../query-keys";
-import type { Guild } from "@/hooks/api/use-guild";
-import type { Timer } from "@/hooks/api/use-timers";
-import { guildMembersQueryKey } from "@/hooks/api/use-guild-members";
 import type { NpcTypeEnum } from "@lootlog/types";
+import { getMembersControllerGetGuildMembersSummaryQueryKey } from "@/lib/api/generated/main/members/members";
+import type { GuildResponseDtoOutput } from "@/lib/api/generated/main/model";
+import type { Timer } from "@/api";
 
-const makeGuild = (overrides?: Partial<Guild>): Guild => ({
+const makeGuild = (
+  overrides?: Partial<GuildResponseDtoOutput>,
+): GuildResponseDtoOutput => ({
   id: "guild-1",
   name: "Test Guild",
   icon: "icon.png",
   vanityUrl: "test-guild",
+  ownerId: "owner-1",
   ...overrides,
 });
 
@@ -22,6 +25,10 @@ const makeMember = () => ({
   guildId: "guild-1",
   type: "member",
   name: "Tester",
+  avatar: null,
+  active: true,
+  roles: [],
+  updatedAt: "2026-01-01T11:00:00.000Z",
 });
 
 const makeNpc = () => ({
@@ -43,9 +50,10 @@ const makeTimer = (overrides?: Partial<Timer>): Timer => ({
   member: makeMember(),
   world: "tempest",
   guildId: "guild-1",
-  minSpawnTime: new Date("2026-01-01T12:00:00Z"),
-  maxSpawnTime: new Date("2026-01-01T13:00:00Z"),
-  updatedAt: new Date("2026-01-01T11:00:00Z"),
+  minSpawnTime: "2026-01-01T12:00:00.000Z",
+  maxSpawnTime: "2026-01-01T13:00:00.000Z",
+  updatedAt: "2026-01-01T11:00:00.000Z",
+  wasReset: false,
   ...overrides,
 });
 
@@ -216,7 +224,12 @@ describe("Public API", () => {
       const listener = vi.fn();
       window.lootlogGameClientApi!.subscribe("guilds:changed", listener);
 
-      queryClient.setQueryData(guildMembersQueryKey("guild-1"), []);
+      queryClient.setQueryData(
+        getMembersControllerGetGuildMembersSummaryQueryKey({
+          guildId: "guild-1",
+        }),
+        [],
+      );
 
       expect(listener).not.toHaveBeenCalled();
     });

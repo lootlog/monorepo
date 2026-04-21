@@ -2,15 +2,15 @@ import { CharacterTile } from "@/components/character-tile";
 import { Tile } from "@/components/ui/tile";
 import type { PlayerPresence } from "@/features/online-players/hooks/use-players-presence";
 import type { MargonemCharacter } from "@/hooks/api/use-character-list";
-import type { GuildMember } from "@/hooks/api/use-guild-members";
 import { cn } from "@/lib/utils";
 import type { FC } from "react";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { getFixedT } from "@/i18n/get-fixed-t";
+import type { MemberSummaryResponseDtoOutput } from "@/lib/api/generated/main/model";
 
 type OnlinePlayersListEntryProps = {
   presences: PlayerPresence[];
-  guildMember?: GuildMember;
+  guildMember?: MemberSummaryResponseDtoOutput;
 };
 
 const getCharacterData = (presence: PlayerPresence): MargonemCharacter => {

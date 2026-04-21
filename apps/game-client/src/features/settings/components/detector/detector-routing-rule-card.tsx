@@ -9,7 +9,7 @@ import {
 import { DetectorRoutingGuildPreviewTile } from "@/features/settings/components/detector/detector-routing-guild-preview-tile";
 import { SettingsGuildSelectionGrid } from "@/features/settings/components/shared/settings-guild-selection-grid";
 import type { DetectorRoutingSettingsTranslations } from "@/features/settings/components/detector/detector-routing-settings-translations";
-import type { Guild } from "@/hooks/api/use-guilds";
+import type { GuildResponseDtoOutput as Guild } from "@/lib/api/generated/main/model";
 import { cn } from "@/lib/utils";
 import { ChevronDown, Trash2 } from "lucide-react";
 import type { FC, KeyboardEvent, ReactNode } from "react";

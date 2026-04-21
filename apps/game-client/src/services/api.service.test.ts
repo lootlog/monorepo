@@ -8,14 +8,37 @@ import {
 } from "@/api";
 import { LOGS_STORAGE_KEY, useLogsStore } from "@/store/logs.store";
 
-const mockPost = vi.fn();
-const mockPatch = vi.fn();
+const {
+  mockPost,
+  mockPatch,
+  mockSendNotification,
+  mockSendChatMessage,
+  mockCreateTimer,
+} = vi.hoisted(() => ({
+  mockPost: vi.fn(),
+  mockPatch: vi.fn(),
+  mockSendNotification: vi.fn(),
+  mockSendChatMessage: vi.fn(),
+  mockCreateTimer: vi.fn(),
+}));
 
 vi.mock("@/lib/api-client", () => ({
   getApiClient: () => ({
     post: mockPost,
     patch: mockPatch,
   }),
+}));
+
+vi.mock("@/lib/api/generated/main/messaging/messaging", () => ({
+  messagingControllerSendNotification: mockSendNotification,
+}));
+
+vi.mock("@/lib/api/generated/main/chat/chat", () => ({
+  chatControllerSendChatMessage: mockSendChatMessage,
+}));
+
+vi.mock("@/lib/api/generated/main/timers/timers", () => ({
+  timersControllerCreateTimer: mockCreateTimer,
 }));
 
 describe("api.service logging", () => {
@@ -108,12 +131,9 @@ describe("api.service logging", () => {
 
   it("logs createLoot error responses and marks the action as failed", async () => {
     const apiError = {
-      isAxiosError: true,
       message: "Request failed",
-      response: {
-        status: 500,
-        data: { message: "boom" },
-      },
+      status: 500,
+      data: { message: "boom" },
     };
 
     mockPost.mockRejectedValueOnce(apiError);
@@ -151,12 +171,9 @@ describe("api.service logging", () => {
   });
 
   it("logs createNotification action and returns created notification", async () => {
-    mockPost.mockResolvedValueOnce({
-      status: 201,
-      data: {
-        notificationId: "notification-1",
-        guildIds: ["guild-1"],
-      },
+    mockSendNotification.mockResolvedValueOnce({
+      notificationId: "notification-1",
+      guildIds: ["guild-1"],
     });
 
     const response = await createNotification({
@@ -183,7 +200,7 @@ describe("api.service logging", () => {
             notificationId: "notification-1",
             guildIds: ["guild-1"],
           },
-          statusCode: 201,
+          statusCode: null,
           status: "success",
         }),
       ],
@@ -191,18 +208,12 @@ describe("api.service logging", () => {
   });
 
   it("logs sendChatMessage partial success and returns message ids", async () => {
-    mockPost
-      .mockResolvedValueOnce({
-        status: 201,
-        data: { id: "message-1" },
-      })
+    mockSendChatMessage
+      .mockResolvedValueOnce({ id: "message-1" })
       .mockRejectedValueOnce({
-        isAxiosError: true,
         message: "Guild request failed",
-        response: {
-          status: 500,
-          data: { message: "boom" },
-        },
+        status: 500,
+        data: { message: "boom" },
       });
 
     const results = await sendChatMessage({
@@ -248,7 +259,7 @@ describe("api.service logging", () => {
           endpoint: "/guilds/guild-1/chat-messages",
           method: "POST",
           response: { id: "message-1" },
-          statusCode: 201,
+          statusCode: null,
           status: "success",
         }),
         expect.objectContaining({
@@ -262,19 +273,11 @@ describe("api.service logging", () => {
   });
 
   it("logs one timer action with one request per guild", async () => {
-    mockPost
-      .mockResolvedValueOnce({
-        status: 201,
-        data: { id: 1 },
-      })
-      .mockRejectedValueOnce({
-        isAxiosError: true,
-        message: "Guild request failed",
-        response: {
-          status: 409,
-          data: { message: "conflict" },
-        },
-      });
+    mockCreateTimer.mockResolvedValueOnce({ id: 1 }).mockRejectedValueOnce({
+      message: "Guild request failed",
+      status: 409,
+      data: { message: "conflict" },
+    });
 
     await createTimerForGuilds({
       timer: {
@@ -328,13 +331,10 @@ describe("api.service logging", () => {
   });
 
   it("marks timer action as failed and throws when all requests fail", async () => {
-    mockPost.mockRejectedValue({
-      isAxiosError: true,
+    mockCreateTimer.mockRejectedValue({
       message: "Request failed",
-      response: {
-        status: 500,
-        data: { message: "boom" },
-      },
+      status: 500,
+      data: { message: "boom" },
     });
 
     await expect(

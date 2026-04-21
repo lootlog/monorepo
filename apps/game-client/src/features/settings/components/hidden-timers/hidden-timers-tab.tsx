@@ -2,14 +2,15 @@ import { SettingsGuildSelectionGrid } from "@/features/settings/components/share
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { HiddenTimers } from "@/features/settings/components/hidden-timers/hidden-timers";
-import { useGuilds } from "@/hooks/api/use-guilds";
 import { useTimersStore } from "@/store/timers.store";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@/lib/api/generated/main/users/users";
 
 export const HiddenTimersTab = () => {
   const { generalConfig } = useTimersStore();
-  const { data: guilds, isFetched } = useGuilds();
+  const { data: guilds, isFetched } =
+    useUsersControllerGetCurrentUserAccessibleGuilds();
   const [selectedGuildId, setSelectedGuildId] = useState("");
   const { t } = useTranslation();
 

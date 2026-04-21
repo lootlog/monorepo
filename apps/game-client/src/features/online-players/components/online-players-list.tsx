@@ -5,8 +5,12 @@ import { WorldSelector } from "@/components/world-selector";
 import { OnlinePlayersListEntry } from "@/features/online-players/components/online-players-list-entry";
 import { usePlayersPresence } from "@/features/online-players/hooks/use-players-presence";
 import { useSettingsStore } from "@/store/settings.store";
-import { useGuildMembers } from "@/hooks/api/use-guild-members";
 import { useMemberInvalidation } from "@/hooks/api/use-member-invalidation";
+import { mapGuildMembersByUserId } from "@/lib/api/generated-helpers";
+import {
+  getMembersControllerGetGuildMembersSummaryQueryKey,
+  useMembersControllerGetGuildMembersSummary,
+} from "@/lib/api/generated/main/members/members";
 import { Search } from "lucide-react";
 import { useState, useMemo, type FC } from "react";
 import { Game } from "@/lib/game";
@@ -22,7 +26,20 @@ export const OnlinePlayersList: FC = () => {
   const guildId = guildIdByCharId[characterId];
   const world = guildId ? worldByGuildId[guildId] : undefined;
   const [onlinePlayers] = usePlayersPresence(guildId, world || defaultWorld);
-  const { data: guildMembers } = useGuildMembers(guildId);
+  const { data: guildMembers } = useMembersControllerGetGuildMembersSummary(
+    { guildId: guildId ?? "" },
+    {
+      query: {
+        queryKey: getMembersControllerGetGuildMembersSummaryQueryKey({
+          guildId: guildId ?? "",
+        }),
+        enabled: !!guildId && guildId !== "all",
+        gcTime: Infinity,
+        staleTime: 5 * 60 * 1000,
+        select: mapGuildMembersByUserId,
+      },
+    },
+  );
   const [searchQuery, setSearchQuery] = useState("");
 
   const missingMemberIds = useMemo(() => {

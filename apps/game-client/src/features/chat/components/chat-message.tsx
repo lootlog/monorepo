@@ -1,10 +1,12 @@
-import type { ChatMessage as ChatMessageType } from "@/hooks/api/use-chat-messages";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import type { FC } from "react";
-import type { GuildMember } from "@/hooks/api/use-guild-members";
 import { MessageType } from "@/hooks/api/use-send-chat-message";
+import type {
+  ChatMessageResponseDtoOutput as ChatMessageType,
+  MemberSummaryResponseDtoOutput as GuildMember,
+} from "@/lib/api/generated/main/model";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -16,8 +18,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Game } from "@/lib/game";
 import { CharacterTile } from "@/components/character-tile";
+import { Game } from "@/lib/game";
 import { PartyGatheringCard } from "./party-gathering-card";
 import {
   getChatMessageBody,

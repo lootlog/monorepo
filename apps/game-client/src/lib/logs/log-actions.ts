@@ -42,11 +42,6 @@ export type LoggedActionController = {
   logRequestError: (input: LoggedRequestErrorInput) => void;
 };
 
-type MaybeHttpResponse = {
-  status?: unknown;
-  data?: unknown;
-};
-
 type RunLoggedRequestInput<TResponse> = LoggedRequestInput & {
   action: LoggedActionController;
   request: () => Promise<TResponse>;
@@ -112,7 +107,15 @@ export const getResponseBody = (response: unknown): unknown => {
 };
 
 export const getErrorStatusCode = (error: unknown): number | null => {
-  if (!isRecord(error) || !isRecord(error.response)) {
+  if (!isRecord(error)) {
+    return null;
+  }
+
+  if (typeof error.status === "number") {
+    return error.status;
+  }
+
+  if (!isRecord(error.response)) {
     return null;
   }
 
@@ -123,6 +126,16 @@ export const getErrorStatusCode = (error: unknown): number | null => {
 
 export const getLoggableErrorResponse = (error: unknown): SerializableValue => {
   const t = getFixedT("common");
+
+  if (isRecord(error) && ("status" in error || "data" in error)) {
+    return serializeLogValue({
+      message:
+        typeof error.message === "string"
+          ? error.message
+          : t("errors.requestFailed"),
+      data: "data" in error ? (error.data ?? null) : null,
+    });
+  }
 
   if (isRecord(error) && isRecord(error.response)) {
     return serializeLogValue({
@@ -145,6 +158,14 @@ export const getLoggableErrorResponse = (error: unknown): SerializableValue => {
 
 export const getErrorMessage = (error: unknown): string => {
   const t = getFixedT("common");
+
+  if (isRecord(error) && isRecord(error.data)) {
+    const responseData = error.data;
+
+    if (typeof responseData.message === "string") {
+      return responseData.message;
+    }
+  }
 
   if (isRecord(error) && isRecord(error.response)) {
     const responseData = error.response.data;

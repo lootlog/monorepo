@@ -1,39 +1,41 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchUserPreferences, updateUserPreferences } from "@/api";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { cloneNotificationMutes } from "@/lib/user-preferences";
 import {
-  cloneNotificationMutes,
-  getUpdateUserPreferencesMutationKey,
-  getUserPreferencesQueryKey,
-} from "@/lib/user-preferences";
+  getUsersControllerGetUserPreferencesQueryKey,
+  useUsersControllerGetUserPreferences,
+  usersControllerUpdateUserPreferences,
+} from "@/lib/api/generated/main/users/users";
 import type {
-  UpdateUserPreferencesPayload,
-  UserPreferences,
-} from "@lootlog/types";
+  UpdateUserPreferencesDto,
+  UserPreferencesResponseDtoOutput,
+} from "@/lib/api/generated/main/model";
 
 export const useUserPreferences = (enabled = true) => {
-  return useQuery({
-    queryKey: getUserPreferencesQueryKey(),
-    queryFn: () => fetchUserPreferences(),
-    enabled,
-    staleTime: 0,
-    refetchOnMount: true,
-    refetchOnWindowFocus: false,
-    retry: false,
+  return useUsersControllerGetUserPreferences({
+    query: {
+      queryKey: getUsersControllerGetUserPreferencesQueryKey(),
+      enabled,
+      staleTime: 0,
+      refetchOnMount: true,
+      refetchOnWindowFocus: false,
+      retry: false,
+    },
   });
 };
 
 export const useUpdateUserPreferences = () => {
   const queryClient = useQueryClient();
+  const queryKey = getUsersControllerGetUserPreferencesQueryKey();
 
   return useMutation({
-    mutationKey: getUpdateUserPreferencesMutationKey(),
-    mutationFn: (payload: UpdateUserPreferencesPayload) =>
-      updateUserPreferences(payload),
+    mutationKey: ["usersControllerUpdateUserPreferences"],
+    mutationFn: (payload: UpdateUserPreferencesDto) =>
+      usersControllerUpdateUserPreferences(payload),
     onMutate: async (payload) => {
-      const queryKey = getUserPreferencesQueryKey();
       await queryClient.cancelQueries({ queryKey });
 
-      const previousData = queryClient.getQueryData<UserPreferences>(queryKey);
+      const previousData =
+        queryClient.getQueryData<UserPreferencesResponseDtoOutput>(queryKey);
 
       if (!previousData) {
         return { previousData };
@@ -51,7 +53,7 @@ export const useUpdateUserPreferences = () => {
           }
         : previousData.mutes;
 
-      queryClient.setQueryData<UserPreferences>(queryKey, {
+      queryClient.setQueryData<UserPreferencesResponseDtoOutput>(queryKey, {
         ...previousData,
         ...payload,
         mutes: nextMutes,
@@ -64,18 +66,13 @@ export const useUpdateUserPreferences = () => {
         return;
       }
 
-      queryClient.setQueryData(
-        getUserPreferencesQueryKey(),
-        context.previousData,
-      );
+      queryClient.setQueryData(queryKey, context.previousData);
     },
     onSuccess: (data) => {
-      queryClient.setQueryData(getUserPreferencesQueryKey(), data);
+      queryClient.setQueryData(queryKey, data);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: getUserPreferencesQueryKey(),
-      });
+      queryClient.invalidateQueries({ queryKey });
     },
   });
 };

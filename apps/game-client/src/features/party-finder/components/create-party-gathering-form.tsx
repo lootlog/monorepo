@@ -1,12 +1,16 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GuildMultiSelector } from "@/components/guild-multi-selector";
-import { useCreatePartyGathering } from "@/hooks/api/use-create-party-gathering";
 import { useSilentCancelPartyGathering } from "@/hooks/api/use-silent-cancel-party-gathering";
 import {
   useSendChatMessage,
   MessageType,
 } from "@/hooks/api/use-send-chat-message";
+import { useMessagingControllerCreatePartyGathering } from "@/lib/api/generated/main/messaging/messaging";
+import {
+  buildCurrentCharacterPayload,
+  buildChatCharacterData,
+} from "@/lib/api/generated-helpers";
 import { useSession } from "@/hooks/auth/use-session";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import { useWindowsStore } from "@/store/windows.store";
@@ -45,7 +49,8 @@ type FormData = z.infer<ReturnType<typeof createFormSchema>>;
 export const CreatePartyGatheringForm = () => {
   const { t } = useTranslation("partyFinder");
   const [selectedGuildIds, setSelectedGuildIds] = useState<string[]>([]);
-  const { mutate: createPartyGathering, isPending } = useCreatePartyGathering();
+  const { mutate: createPartyGathering, isPending } =
+    useMessagingControllerCreatePartyGathering();
   const silentCancel = useSilentCancelPartyGathering();
   const { mutateAsync: sendChatMessage } = useSendChatMessage();
   const setPartyGathering = usePartyFinderStore((s) => s.setPartyGathering);
@@ -81,10 +86,14 @@ export const CreatePartyGatheringForm = () => {
 
     createPartyGathering(
       {
-        guildIds: selectedGuildIds,
-        description: data.description || undefined,
-        minLvl: data.minLvl ? Number(data.minLvl) : undefined,
-        maxLvl: data.maxLvl ? Number(data.maxLvl) : undefined,
+        data: {
+          guildIds: selectedGuildIds,
+          world,
+          character: buildCurrentCharacterPayload(),
+          description: data.description || undefined,
+          minLvl: data.minLvl ? Number(data.minLvl) : undefined,
+          maxLvl: data.maxLvl ? Number(data.maxLvl) : undefined,
+        },
       },
       {
         onSuccess: async (response) => {
@@ -117,14 +126,7 @@ export const CreatePartyGatheringForm = () => {
             message: hero.nick,
             guildIds,
             type: MessageType.PARTY_GATHERING,
-            characterData: {
-              nick: hero.nick,
-              id: hero.id,
-              acc: hero.account,
-              lvl: hero.lvl,
-              prof: hero.prof,
-              icon: hero.img,
-            },
+            characterData: buildChatCharacterData(),
             partyGathering: {
               notificationId,
               discordId: discordId || "",

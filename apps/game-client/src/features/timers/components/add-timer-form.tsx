@@ -14,13 +14,17 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  useSearchNpcs,
-  type NpcSearchResult,
-} from "@/hooks/api/use-search-npcs";
 import { useDebounce } from "@/hooks/use-debounce";
 import { GuildSwitcher } from "@/components/guild-switcher";
-import { useGuilds } from "@/hooks/api/use-guilds";
+import type { SearchTimersNpcResponseDtoOutput } from "@/lib/api/generated/main/model";
+import {
+  getTimersControllerSearchNpcsWithTimerDataQueryKey,
+  useTimersControllerSearchNpcsWithTimerData,
+} from "@/lib/api/generated/main/timers/timers";
+import {
+  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
+  useUsersControllerGetCurrentUserAccessibleGuilds,
+} from "@/lib/api/generated/main/users/users";
 import { AutocompleteSuggestions } from "@/components/ui/autocomplete-suggestions";
 import { NPC_NAMES } from "@/constants/margonem";
 import { Game } from "@/lib/game";
@@ -164,7 +168,13 @@ export const AddTimerForm: React.FC = () => {
     guildIdByCharId,
   } = useSettingsStore();
   const setOpen = useWindowsStore((state) => state.setOpen);
-  const { data: guilds } = useGuilds();
+  const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds({
+    query: {
+      queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
+      refetchOnMount: false,
+      staleTime: 1000 * 60 * 5,
+    },
+  });
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -177,11 +187,27 @@ export const AddTimerForm: React.FC = () => {
 
   const searchGuildId = selectedGuildId || currentGuildId || "";
 
-  const { data: npcResults } = useSearchNpcs(
-    searchGuildId,
-    world ?? "",
-    debouncedSearch,
-    debouncedSearch.length >= 2 && !!searchGuildId,
+  const { data: npcResults } = useTimersControllerSearchNpcsWithTimerData(
+    { guildId: searchGuildId },
+    {
+      limit: 10,
+      search: debouncedSearch,
+      world: world ?? "",
+    },
+    {
+      query: {
+        queryKey: getTimersControllerSearchNpcsWithTimerDataQueryKey(
+          { guildId: searchGuildId },
+          {
+            world: world ?? "",
+            search: debouncedSearch,
+            limit: 10,
+          },
+        ),
+        enabled: debouncedSearch.length >= 2 && !!searchGuildId,
+        staleTime: 60000,
+      },
+    },
   );
 
   useEffect(() => {
@@ -230,8 +256,8 @@ export const AddTimerForm: React.FC = () => {
     },
   });
 
-  const handleNpcSelect = (npc: NpcSearchResult) => {
-    const baseSeconds = npc.latestRespBaseSeconds;
+  const handleNpcSelect = (npc: SearchTimersNpcResponseDtoOutput) => {
+    const baseSeconds = npc.latestRespBaseSeconds ?? 0;
     const respawnRandomness =
       npc.latestRespawnRandomness ?? DEFAULT_RESPAWN_RANDOMNESS;
     const variance = Math.round((baseSeconds * respawnRandomness) / 100);
@@ -352,7 +378,7 @@ export const AddTimerForm: React.FC = () => {
                   setTimeout(() => setShowSuggestions(false), 200);
                 }}
               />
-              <AutocompleteSuggestions<NpcSearchResult>
+              <AutocompleteSuggestions<SearchTimersNpcResponseDtoOutput>
                 items={npcResults ?? []}
                 isOpen={showSuggestions && !!hasSearchResults}
                 onSelect={handleNpcSelect}

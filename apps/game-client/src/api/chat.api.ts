@@ -1,75 +1,34 @@
-import { getApiClient } from "@/lib/api-client";
+import {
+  chatControllerGetChatMessages,
+  chatControllerSendChatMessage,
+} from "@/lib/api/generated/main/chat/chat";
+import {
+  type ChatMessageResponseDtoOutput,
+  SendMessageDtoType,
+  type SendMessageDtoCharacterData,
+  type SendMessageDtoNpc,
+  type SendMessageDtoPartyGathering,
+} from "@/lib/api/generated/main/model";
 import {
   getAggregateActionStatus,
+  getErrorMessage,
   runLoggedRequest,
   startLoggedAction,
 } from "@/lib/logs/log-actions";
 
-export enum MessageType {
-  NORMAL = "NORMAL",
-  NOTIFICATION = "NOTIFICATION",
-  NPC = "NPC",
-  PARTY_GATHERING = "PARTY_GATHERING",
-}
+export const MessageType = SendMessageDtoType;
 
-export type PartyGatheringChatData = {
-  notificationId: string;
-  discordId: string;
-  description?: string;
-  minLvl?: number;
-  maxLvl?: number;
-  world: string;
-};
-
-export type ChatCharacterData = {
-  nick: string;
-  id: number;
-  acc: number;
-  lvl: number;
-  prof: string;
-  icon: string;
-};
-
-export type ChatNpc = {
-  icon: string;
-  id: number;
-  x: number;
-  y: number;
-  hpp: number;
-  name: string;
-  prof: string;
-  location: string;
-  type: number;
-  wt: number;
-  lvl: number;
-};
-
-export type ChatMessage = {
-  id: string;
-  guildId: string;
-  message: string;
-  senderId: string;
-  timestamp: string;
-  type: MessageType;
-  characterData: ChatCharacterData;
-  npc?: ChatNpc;
-  partyGathering?: PartyGatheringChatData;
-};
+export type MessageType = (typeof MessageType)[keyof typeof MessageType];
+export type ChatCharacterData = SendMessageDtoCharacterData;
+export type ChatNpc = SendMessageDtoNpc;
+export type PartyGatheringChatData = SendMessageDtoPartyGathering;
+export type ChatMessage = ChatMessageResponseDtoOutput;
 
 export async function fetchChatMessages(
   guildId: string,
 ): Promise<ChatMessage[]> {
-  const client = getApiClient("default");
-  const response = await client.get<ChatMessage[]>(
-    `/guilds/${guildId}/chat-messages`,
-  );
-
-  return response.data;
+  return chatControllerGetChatMessages({ guildId });
 }
-
-type SendChatMessageResponse = {
-  id: string;
-};
 
 export type SendChatMessageOptions = {
   message: string;
@@ -96,7 +55,6 @@ export async function sendChatMessage({
   npc,
   partyGathering,
 }: SendChatMessageOptions): Promise<SendChatMessageResult[]> {
-  const client = getApiClient("default");
   const action = startLoggedAction({
     actionType: "send_chat_message",
     payload: {
@@ -125,10 +83,10 @@ export async function sendChatMessage({
         method: "POST",
         endpoint,
         payload,
-        request: () => client.post<SendChatMessageResponse>(endpoint, payload),
+        request: () => chatControllerSendChatMessage({ guildId }, payload),
       });
 
-      return { guildId, messageId: response.data.id };
+      return { guildId, messageId: response.id };
     }),
   );
 

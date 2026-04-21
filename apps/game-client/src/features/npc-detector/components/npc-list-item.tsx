@@ -19,7 +19,6 @@ import {
   MessageType,
   useSendChatMessage,
 } from "@/hooks/api/use-send-chat-message";
-import { useCreateNotification } from "@/hooks/api/use-create-notification";
 import {
   getBackgroundColor,
   getBorderColor,
@@ -32,6 +31,7 @@ import { useWindowsStore } from "@/store/windows.store";
 import { useSession } from "@/hooks/auth/use-session";
 import type { SettingsTabValue } from "@/features/settings/constants/settings-tabs";
 import { useTranslation } from "react-i18next";
+import { useMessagingControllerSendNotification } from "@/lib/api/generated/main/messaging/messaging";
 
 const BUTTON_UNLOCK_DELAY_MS = 5000;
 const REPEAT_DETECTION_FLASH_DURATION_MS = 1050;
@@ -116,7 +116,7 @@ export const NpcListItem = ({
     mutate: createNotification,
     mutateAsync: createNotificationAsync,
     isPending: isCreateNotificationPending,
-  } = useCreateNotification();
+  } = useMessagingControllerSendNotification();
   const [isGatheringPartyPending, setIsGatheringPartyPending] = useState(false);
   const [messageButtonCooldownEndsAt, setMessageButtonCooldownEndsAt] =
     useState<number | null>(null);
@@ -248,55 +248,58 @@ export const NpcListItem = ({
       guildIds: resolvedGuildIds,
     };
 
-    createNotification(payload, {
-      onSuccess: (response) => {
-        setNpcState(npc.id, {
-          ...npc,
-          notificationSent: true,
-        });
+    createNotification(
+      { data: payload },
+      {
+        onSuccess: (response) => {
+          setNpcState(npc.id, {
+            ...npc,
+            notificationSent: true,
+          });
 
-        setNotification(response.notificationId, {
-          id: npc.id,
-          name: npc.nick,
-          lvl: npc.lvl,
-          prof: npc.prof,
-          location: npc.location,
-          world: world,
-          icon: npc.icon,
-          x: npc.x,
-          y: npc.y,
-        });
-
-        sendChatMessage({
-          message: "",
-          guildIds: resolvedGuildIds,
-          type: MessageType.NPC,
-          characterData: {
-            nick: Game.hero.nick,
-            id: Game.hero.id,
-            acc: Game.hero.account,
-            lvl: Game.hero.lvl,
-            prof: Game.hero.prof,
-            icon: Game.hero.img,
-          },
-          npc: {
-            x: npc.x,
-            y: npc.y,
-            icon: npc.icon,
+          setNotification(response.notificationId, {
             id: npc.id,
             name: npc.nick,
-            hpp: 0,
-            location: npc.location,
             lvl: npc.lvl,
             prof: npc.prof,
-            type: npc.type,
-            wt: npc.wt,
-          },
-        });
+            location: npc.location,
+            world: world,
+            icon: npc.icon,
+            x: npc.x,
+            y: npc.y,
+          });
 
-        setOpen("party-finder", true);
+          sendChatMessage({
+            message: "",
+            guildIds: resolvedGuildIds,
+            type: MessageType.NPC,
+            characterData: {
+              nick: Game.hero.nick,
+              id: Game.hero.id,
+              acc: Game.hero.account,
+              lvl: Game.hero.lvl,
+              prof: Game.hero.prof,
+              icon: Game.hero.img,
+            },
+            npc: {
+              x: npc.x,
+              y: npc.y,
+              icon: npc.icon,
+              id: npc.id,
+              name: npc.nick,
+              hpp: 0,
+              location: npc.location,
+              lvl: npc.lvl,
+              prof: npc.prof,
+              type: npc.type,
+              wt: npc.wt,
+            },
+          });
+
+          setOpen("party-finder", true);
+        },
       },
-    });
+    );
   };
 
   const handleGatherParty = async (npc: GameNpcWithLocation) => {
@@ -329,7 +332,9 @@ export const NpcListItem = ({
         isGatheringParty: true,
       };
 
-      const notificationResponse = await createNotificationAsync(payload);
+      const notificationResponse = await createNotificationAsync({
+        data: payload,
+      });
 
       const notificationId = notificationResponse.notificationId;
       const guildIds = notificationResponse.guildIds ?? resolvedGuildIds;

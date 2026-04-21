@@ -1,45 +1,51 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchSoundSettings, updateSoundSettings } from "@/api";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  getSoundSettingsControllerGetSettingsQueryKey,
+  useSoundSettingsControllerGetSettings,
+  soundSettingsControllerUpdateSettings,
+} from "@/lib/api/generated/main/sound-settings/sound-settings";
 import type {
-  UserSoundSettings,
-  UpdateSoundSettingsPayload,
-} from "@lootlog/types";
+  SoundSettingsResponseDto,
+  UpdateSoundSettingsDto,
+} from "@/lib/api/generated/main/model";
+import { normalizeSoundSettings } from "@/lib/api/generated-helpers";
 
-const SOUND_SETTINGS_QUERY_KEY = ["sound-settings"];
+const SOUND_SETTINGS_QUERY_KEY =
+  getSoundSettingsControllerGetSettingsQueryKey();
 
 export const useSoundSettings = (enabled = true) => {
-  const query = useQuery({
-    queryKey: SOUND_SETTINGS_QUERY_KEY,
-    queryFn: () => fetchSoundSettings(),
-    staleTime: 5 * 60 * 1000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    retry: false,
-    enabled,
+  return useSoundSettingsControllerGetSettings({
+    query: {
+      queryKey: SOUND_SETTINGS_QUERY_KEY,
+      staleTime: 5 * 60 * 1000,
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+      retry: false,
+      enabled,
+    },
   });
-
-  return query;
 };
 
 export const useUpdateSoundSettings = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: UpdateSoundSettingsPayload) =>
-      updateSoundSettings(payload),
+    mutationFn: (payload: UpdateSoundSettingsDto) =>
+      soundSettingsControllerUpdateSettings(payload),
     onMutate: async (payload) => {
       await queryClient.cancelQueries({ queryKey: SOUND_SETTINGS_QUERY_KEY });
 
-      const previousSettings = queryClient.getQueryData<UserSoundSettings>(
-        SOUND_SETTINGS_QUERY_KEY,
-      );
+      const previousSettings =
+        queryClient.getQueryData<SoundSettingsResponseDto>(
+          SOUND_SETTINGS_QUERY_KEY,
+        );
 
-      queryClient.setQueryData<UserSoundSettings>(
+      queryClient.setQueryData<SoundSettingsResponseDto>(
         SOUND_SETTINGS_QUERY_KEY,
         (old) => {
           if (!old) return old;
 
-          const newData = { ...old };
+          const newData = normalizeSoundSettings(old);
 
           if (payload.masterVolume !== undefined) {
             newData.masterVolume = payload.masterVolume;
@@ -55,7 +61,7 @@ export const useUpdateSoundSettings = () => {
           }
 
           if (payload.notificationsConfig) {
-            newData.notificationsConfig = { ...old.notificationsConfig };
+            newData.notificationsConfig = { ...newData.notificationsConfig };
             Object.entries(payload.notificationsConfig).forEach(
               ([key, partialConfig]) => {
                 newData.notificationsConfig[key] = {
@@ -66,7 +72,7 @@ export const useUpdateSoundSettings = () => {
             );
           }
           if (payload.detectorConfig) {
-            newData.detectorConfig = { ...old.detectorConfig };
+            newData.detectorConfig = { ...newData.detectorConfig };
             Object.entries(payload.detectorConfig).forEach(
               ([key, partialConfig]) => {
                 newData.detectorConfig[key] = {
@@ -77,7 +83,7 @@ export const useUpdateSoundSettings = () => {
             );
           }
           if (payload.timersConfig) {
-            newData.timersConfig = { ...old.timersConfig };
+            newData.timersConfig = { ...newData.timersConfig };
             Object.entries(payload.timersConfig).forEach(
               ([key, partialConfig]) => {
                 newData.timersConfig[key] = {
@@ -88,7 +94,7 @@ export const useUpdateSoundSettings = () => {
             );
           }
 
-          return newData;
+          return newData as unknown as SoundSettingsResponseDto;
         },
       );
 
