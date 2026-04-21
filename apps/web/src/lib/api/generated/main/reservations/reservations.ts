@@ -24,13 +24,13 @@ import type {
 
 import type {
   CreateReservationDto,
-  ReservationResponseDtoOutput,
-  ReservationsCardsResponseDto,
+  ReservationResponseDto,
+  ReservationsCardsResponseDtoOutput,
   ReservationsControllerCreateReservationPathParameters,
   ReservationsControllerDeleteReservationPathParameters,
   ReservationsControllerGetReservationsCardsPathParameters,
   ReservationsControllerGetReservationsPathParameters,
-  ReservationsResponseDtoOutput
+  ReservationsResponseDto
 } from '../model';
 
 import { orvalFetch } from '../../../orval-fetch';
@@ -53,9 +53,9 @@ export const getReservationsControllerGetReservationsUrl = ({ guildId }: Reserva
   return `/guilds/${guildId}/reservations`
 }
 
-export const reservationsControllerGetReservations = async ({ guildId }: ReservationsControllerGetReservationsPathParameters, options?: RequestInit): Promise<ReservationsResponseDtoOutput> => {
+export const reservationsControllerGetReservations = async ({ guildId }: ReservationsControllerGetReservationsPathParameters, options?: RequestInit): Promise<ReservationsResponseDto> => {
 
-  return orvalFetch<ReservationsResponseDtoOutput>(getReservationsControllerGetReservationsUrl({ guildId }),
+  return orvalFetch<ReservationsResponseDto>(getReservationsControllerGetReservationsUrl({ guildId }),
   {
     ...options,
     method: 'GET'
@@ -173,9 +173,9 @@ export const getReservationsControllerCreateReservationUrl = ({ guildId }: Reser
 }
 
 export const reservationsControllerCreateReservation = async ({ guildId }: ReservationsControllerCreateReservationPathParameters,
-    createReservationDto: CreateReservationDto, options?: RequestInit): Promise<ReservationResponseDtoOutput> => {
+    createReservationDto: CreateReservationDto, options?: RequestInit): Promise<ReservationResponseDto> => {
 
-  return orvalFetch<ReservationResponseDtoOutput>(getReservationsControllerCreateReservationUrl({ guildId }),
+  return orvalFetch<ReservationResponseDto>(getReservationsControllerCreateReservationUrl({ guildId }),
   {
     ...options,
     method: 'POST',
@@ -244,9 +244,9 @@ export const getReservationsControllerDeleteReservationUrl = ({ guildId, reserva
   return `/guilds/${guildId}/reservations/${reservationRecordId}`
 }
 
-export const reservationsControllerDeleteReservation = async ({ guildId, reservationRecordId }: ReservationsControllerDeleteReservationPathParameters, options?: RequestInit): Promise<ReservationResponseDtoOutput> => {
+export const reservationsControllerDeleteReservation = async ({ guildId, reservationRecordId }: ReservationsControllerDeleteReservationPathParameters, options?: RequestInit): Promise<ReservationResponseDto> => {
 
-  return orvalFetch<ReservationResponseDtoOutput>(getReservationsControllerDeleteReservationUrl({ guildId, reservationRecordId }),
+  return orvalFetch<ReservationResponseDto>(getReservationsControllerDeleteReservationUrl({ guildId, reservationRecordId }),
   {
     ...options,
     method: 'DELETE'
@@ -314,9 +314,9 @@ export const getReservationsControllerGetReservationsCardsUrl = ({ guildId }: Re
   return `/guilds/${guildId}/reservations/cards`
 }
 
-export const reservationsControllerGetReservationsCards = async ({ guildId }: ReservationsControllerGetReservationsCardsPathParameters, options?: RequestInit): Promise<ReservationsCardsResponseDto> => {
+export const reservationsControllerGetReservationsCards = async ({ guildId }: ReservationsControllerGetReservationsCardsPathParameters, options?: RequestInit): Promise<ReservationsCardsResponseDtoOutput> => {
 
-  return orvalFetch<ReservationsCardsResponseDto>(getReservationsControllerGetReservationsCardsUrl({ guildId }),
+  return orvalFetch<ReservationsCardsResponseDtoOutput>(getReservationsControllerGetReservationsCardsUrl({ guildId }),
   {
     ...options,
     method: 'GET'

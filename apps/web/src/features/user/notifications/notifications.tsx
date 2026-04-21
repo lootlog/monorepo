@@ -19,7 +19,7 @@ import {
   useNotificationsUserControllerGetUserTargets,
   useNotificationsUserControllerGetWatchedItems,
 } from "@/lib/api/generated/main/notifications/notifications";
-import { useGuildsControllerGetUserGuilds } from "@/lib/api/generated/main/guilds/guilds";
+import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@/lib/api/generated/main/users/users";
 import {
   userNotificationTargetsQueryKey,
   userWatchedItemsQueryKey,
@@ -37,7 +37,8 @@ export const UserNotifications = () => {
       queryKey: userWatchedItemsQueryKey(),
     },
   });
-  const { data: guilds = [] } = useGuildsControllerGetUserGuilds();
+  const { data: guilds = [] } =
+    useUsersControllerGetCurrentUserAccessibleGuilds();
   const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
   const [isWatchFormOpen, setIsWatchFormOpen] = useState(false);
 

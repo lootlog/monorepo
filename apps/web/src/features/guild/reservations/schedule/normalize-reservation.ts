@@ -1,7 +1,7 @@
-import type { ReservationResponseDtoOutput } from "@/lib/api/generated/main/model";
+import type { ReservationResponseDto } from "@/lib/api/generated/main/model";
 
 export type NormalizedReservation = Omit<
-  ReservationResponseDtoOutput,
+  ReservationResponseDto,
   "createdDate" | "fromDate" | "toDate"
 > & {
   createdDate: Date;
@@ -10,7 +10,7 @@ export type NormalizedReservation = Omit<
 };
 
 export const normalizeReservation = (
-  reservation: ReservationResponseDtoOutput,
+  reservation: ReservationResponseDto,
 ): NormalizedReservation => ({
   ...reservation,
   createdDate: new Date(reservation.createdDate),

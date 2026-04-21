@@ -18,9 +18,11 @@ import {
 import { ZodResponse } from "nestjs-zod";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { StatusOkResponseDto } from "src/shared/dto/common-response.dto";
+import { GuildResponseDto } from "src/shared/dto/guild-response.dto";
 import { UserGameAccountPreferencesResponseDto } from "src/shared/dto/user-account-preferences-response.dto";
 import { UserPreferencesResponseDto } from "src/shared/dto/user-preferences-response.dto";
 import { UpdateUserGameAccountPreferencesDto } from "src/users/dto/update-user-account-preferences.dto";
+import { UserCurrentGuildResponseDto } from "src/users/dto/user-current-guild-response.dto";
 import { UpdateUserPreferencesDto } from "src/users/dto/update-user-preferences.dto";
 import { UsersService } from "src/users/users.service";
 
@@ -65,6 +67,42 @@ export class UsersController {
   })
   async getUserPreferences(@UserId() userId: string) {
     return this.usersService.getUserPreferences(userId);
+  }
+
+  @Get("/@me/guilds")
+  @ApiOperation({
+    summary: "Get current user guilds",
+    description:
+      "Retrieve the authenticated user's Discord guilds that also exist in Lootlog, together with Lootlog access status",
+  })
+  @ZodResponse({
+    status: 200,
+    description: "Current user guilds with Lootlog access metadata",
+    type: [UserCurrentGuildResponseDto],
+  })
+  async getCurrentUserGuilds(
+    @DiscordId() discordId: string,
+    @UserId() userId: string,
+  ) {
+    return this.usersService.getCurrentUserGuilds(discordId, userId);
+  }
+
+  @Get("/@me/guilds/accessible")
+  @ApiOperation({
+    summary: "Get accessible current user guilds",
+    description:
+      "Retrieve the authenticated user's Lootlog guilds where the cached or refreshed member data indicates access",
+  })
+  @ZodResponse({
+    status: 200,
+    description: "Accessible current user guilds",
+    type: [GuildResponseDto],
+  })
+  async getCurrentUserAccessibleGuilds(
+    @DiscordId() discordId: string,
+    @UserId() userId: string,
+  ) {
+    return this.usersService.getCurrentUserAccessibleGuilds(discordId, userId);
   }
 
   @Patch("/@me/preferences")

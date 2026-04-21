@@ -23,7 +23,8 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  DiscordGuildSyncStateResponseDtoOutput,
+  DiscordGuildSyncStateResponseDto,
+  GuildResponseDto,
   GuildResponseDtoOutput,
   GuildsControllerGetGuildByIdPathParameters,
   GuildsControllerGetGuildConfigPathParameters,
@@ -47,8 +48,9 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
- * Retrieve all guilds for the authenticated user
- * @summary Get user guilds
+ * Legacy endpoint for listing the authenticated user's guilds. Prefer /users/@me/guilds or /users/@me/guilds/accessible.
+ * @deprecated
+ * @summary Get user guilds (deprecated)
  */
 export const getGuildsControllerGetUserGuildsUrl = (params?: GuildsControllerGetUserGuildsParams,) => {
   const normalizedParams = new URLSearchParams();
@@ -110,7 +112,8 @@ export type GuildsControllerGetUserGuildsQueryError = ErrorType<unknown>
 
 
 /**
- * @summary Get user guilds
+ * @deprecated
+ * @summary Get user guilds (deprecated)
  */
 
 export function useGuildsControllerGetUserGuilds<TData = Awaited<ReturnType<typeof guildsControllerGetUserGuilds>>, TError = ErrorType<unknown>>(
@@ -126,7 +129,8 @@ export function useGuildsControllerGetUserGuilds<TData = Awaited<ReturnType<type
 }
 
 /**
- * @summary Get user guilds
+ * @deprecated
+ * @summary Get user guilds (deprecated)
  */
 export const prefetchGuildsControllerGetUserGuildsQuery = async <TData = Awaited<ReturnType<typeof guildsControllerGetUserGuilds>>, TError = ErrorType<unknown>>(
  queryClient: QueryClient, params?: GuildsControllerGetUserGuildsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetUserGuilds>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
@@ -141,7 +145,8 @@ export const prefetchGuildsControllerGetUserGuildsQuery = async <TData = Awaited
 }
 
 /**
- * @summary Get user guilds
+ * @deprecated
+ * @summary Get user guilds (deprecated)
  */
 export const invalidateGuildsControllerGetUserGuilds = async (
  queryClient: QueryClient, params?: GuildsControllerGetUserGuildsParams, options?: InvalidateOptions
@@ -153,7 +158,8 @@ export const invalidateGuildsControllerGetUserGuilds = async (
 }
 
 /**
- * @summary Get user guilds
+ * @deprecated
+ * @summary Get user guilds (deprecated)
  */
 export const useSetGuildsControllerGetUserGuildsQueryData = () => {
   const queryClient = useQueryClient();
@@ -163,7 +169,8 @@ export const useSetGuildsControllerGetUserGuildsQueryData = () => {
 }
 
 /**
- * @summary Get user guilds
+ * @deprecated
+ * @summary Get user guilds (deprecated)
  */
 export const useGetGuildsControllerGetUserGuildsQueryData = () => {
   const queryClient = useQueryClient();
@@ -173,8 +180,9 @@ export const useGetGuildsControllerGetUserGuildsQueryData = () => {
 
 
 /**
- * Retrieve all guilds with permissions and roles for the authenticated user
- * @summary Get user guilds with permissions
+ * Legacy endpoint for listing the authenticated user's accessible guilds with role metadata. Prefer /users/@me/guilds for new integrations.
+ * @deprecated
+ * @summary Get user guilds with permissions (deprecated)
  */
 export const getGuildsControllerGetUserGuildsWithPermissionsUrl = () => {
 
@@ -229,7 +237,8 @@ export type GuildsControllerGetUserGuildsWithPermissionsQueryError = ErrorType<u
 
 
 /**
- * @summary Get user guilds with permissions
+ * @deprecated
+ * @summary Get user guilds with permissions (deprecated)
  */
 
 export function useGuildsControllerGetUserGuildsWithPermissions<TData = Awaited<ReturnType<typeof guildsControllerGetUserGuildsWithPermissions>>, TError = ErrorType<unknown>>(
@@ -245,7 +254,8 @@ export function useGuildsControllerGetUserGuildsWithPermissions<TData = Awaited<
 }
 
 /**
- * @summary Get user guilds with permissions
+ * @deprecated
+ * @summary Get user guilds with permissions (deprecated)
  */
 export const prefetchGuildsControllerGetUserGuildsWithPermissionsQuery = async <TData = Awaited<ReturnType<typeof guildsControllerGetUserGuildsWithPermissions>>, TError = ErrorType<unknown>>(
  queryClient: QueryClient,  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetUserGuildsWithPermissions>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
@@ -260,7 +270,8 @@ export const prefetchGuildsControllerGetUserGuildsWithPermissionsQuery = async <
 }
 
 /**
- * @summary Get user guilds with permissions
+ * @deprecated
+ * @summary Get user guilds with permissions (deprecated)
  */
 export const invalidateGuildsControllerGetUserGuildsWithPermissions = async (
  queryClient: QueryClient,  options?: InvalidateOptions
@@ -272,7 +283,8 @@ export const invalidateGuildsControllerGetUserGuildsWithPermissions = async (
 }
 
 /**
- * @summary Get user guilds with permissions
+ * @deprecated
+ * @summary Get user guilds with permissions (deprecated)
  */
 export const useSetGuildsControllerGetUserGuildsWithPermissionsQueryData = () => {
   const queryClient = useQueryClient();
@@ -282,7 +294,8 @@ export const useSetGuildsControllerGetUserGuildsWithPermissionsQueryData = () =>
 }
 
 /**
- * @summary Get user guilds with permissions
+ * @deprecated
+ * @summary Get user guilds with permissions (deprecated)
  */
 export const useGetGuildsControllerGetUserGuildsWithPermissionsQueryData = () => {
   const queryClient = useQueryClient();
@@ -291,6 +304,10 @@ export const useGetGuildsControllerGetUserGuildsWithPermissionsQueryData = () =>
 }
 
 
+/**
+ * Retrieve guilds where the authenticated user has Discord administrator permissions
+ * @summary Get manageable user guilds
+ */
 export const getGuildsControllerGetManageableUserGuildsUrl = () => {
 
 
@@ -299,9 +316,9 @@ export const getGuildsControllerGetManageableUserGuildsUrl = () => {
   return `/guilds/@me/manageable`
 }
 
-export const guildsControllerGetManageableUserGuilds = async ( options?: RequestInit): Promise<GuildResponseDtoOutput[]> => {
+export const guildsControllerGetManageableUserGuilds = async ( options?: RequestInit): Promise<GuildResponseDto[]> => {
 
-  return orvalFetch<GuildResponseDtoOutput[]>(getGuildsControllerGetManageableUserGuildsUrl(),
+  return orvalFetch<GuildResponseDto[]>(getGuildsControllerGetManageableUserGuildsUrl(),
   {
     ...options,
     method: 'GET'
@@ -343,6 +360,9 @@ export type GuildsControllerGetManageableUserGuildsQueryResult = NonNullable<Awa
 export type GuildsControllerGetManageableUserGuildsQueryError = ErrorType<unknown>
 
 
+/**
+ * @summary Get manageable user guilds
+ */
 
 export function useGuildsControllerGetManageableUserGuilds<TData = Awaited<ReturnType<typeof guildsControllerGetManageableUserGuilds>>, TError = ErrorType<unknown>>(
   options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetManageableUserGuilds>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
@@ -356,6 +376,9 @@ export function useGuildsControllerGetManageableUserGuilds<TData = Awaited<Retur
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
+/**
+ * @summary Get manageable user guilds
+ */
 export const prefetchGuildsControllerGetManageableUserGuildsQuery = async <TData = Awaited<ReturnType<typeof guildsControllerGetManageableUserGuilds>>, TError = ErrorType<unknown>>(
  queryClient: QueryClient,  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetManageableUserGuilds>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
 
@@ -368,6 +391,9 @@ export const prefetchGuildsControllerGetManageableUserGuildsQuery = async <TData
   return queryClient;
 }
 
+/**
+ * @summary Get manageable user guilds
+ */
 export const invalidateGuildsControllerGetManageableUserGuilds = async (
  queryClient: QueryClient,  options?: InvalidateOptions
   ): Promise<QueryClient> => {
@@ -377,6 +403,9 @@ export const invalidateGuildsControllerGetManageableUserGuilds = async (
   return queryClient;
 }
 
+/**
+ * @summary Get manageable user guilds
+ */
 export const useSetGuildsControllerGetManageableUserGuildsQueryData = () => {
   const queryClient = useQueryClient();
   return (updater: Awaited<ReturnType<typeof guildsControllerGetManageableUserGuilds>> | undefined | ((old: Awaited<ReturnType<typeof guildsControllerGetManageableUserGuilds>> | undefined) => Awaited<ReturnType<typeof guildsControllerGetManageableUserGuilds>> | undefined)) => {
@@ -384,6 +413,9 @@ export const useSetGuildsControllerGetManageableUserGuildsQueryData = () => {
   };
 }
 
+/**
+ * @summary Get manageable user guilds
+ */
 export const useGetGuildsControllerGetManageableUserGuildsQueryData = () => {
   const queryClient = useQueryClient();
   return () =>
@@ -775,6 +807,10 @@ export const useGetGuildsControllerGetWorldsByGuildIdQueryData = () => {
 }
 
 
+/**
+ * Retrieve resolved permissions for the current member in a guild
+ * @summary Get guild permissions
+ */
 export const getGuildsControllerGetGuildPermissionsUrl = ({ guildId }: GuildsControllerGetGuildPermissionsPathParameters,) => {
 
 
@@ -827,6 +863,9 @@ export type GuildsControllerGetGuildPermissionsQueryResult = NonNullable<Awaited
 export type GuildsControllerGetGuildPermissionsQueryError = ErrorType<unknown>
 
 
+/**
+ * @summary Get guild permissions
+ */
 
 export function useGuildsControllerGetGuildPermissions<TData = Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError = ErrorType<unknown>>(
  { guildId }: GuildsControllerGetGuildPermissionsPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
@@ -840,6 +879,9 @@ export function useGuildsControllerGetGuildPermissions<TData = Awaited<ReturnTyp
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
+/**
+ * @summary Get guild permissions
+ */
 export const prefetchGuildsControllerGetGuildPermissionsQuery = async <TData = Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError = ErrorType<unknown>>(
  queryClient: QueryClient, { guildId }: GuildsControllerGetGuildPermissionsPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
 
@@ -852,6 +894,9 @@ export const prefetchGuildsControllerGetGuildPermissionsQuery = async <TData = A
   return queryClient;
 }
 
+/**
+ * @summary Get guild permissions
+ */
 export const invalidateGuildsControllerGetGuildPermissions = async (
  queryClient: QueryClient, { guildId }: GuildsControllerGetGuildPermissionsPathParameters, options?: InvalidateOptions
   ): Promise<QueryClient> => {
@@ -861,6 +906,9 @@ export const invalidateGuildsControllerGetGuildPermissions = async (
   return queryClient;
 }
 
+/**
+ * @summary Get guild permissions
+ */
 export const useSetGuildsControllerGetGuildPermissionsQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId }: GuildsControllerGetGuildPermissionsPathParameters,updater: Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>> | undefined | ((old: Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>> | undefined) => Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>> | undefined)) => {
@@ -868,6 +916,9 @@ export const useSetGuildsControllerGetGuildPermissionsQueryData = () => {
   };
 }
 
+/**
+ * @summary Get guild permissions
+ */
 export const useGetGuildsControllerGetGuildPermissionsQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId }: GuildsControllerGetGuildPermissionsPathParameters,) =>
@@ -875,6 +926,10 @@ export const useGetGuildsControllerGetGuildPermissionsQueryData = () => {
 }
 
 
+/**
+ * Retrieve the current Discord channel synchronization state for a guild
+ * @summary Get guild Discord sync status
+ */
 export const getGuildsControllerGetGuildDiscordSyncStatusUrl = ({ guildId }: GuildsControllerGetGuildDiscordSyncStatusPathParameters,) => {
 
 
@@ -883,9 +938,9 @@ export const getGuildsControllerGetGuildDiscordSyncStatusUrl = ({ guildId }: Gui
   return `/guilds/${guildId}/discord-sync`
 }
 
-export const guildsControllerGetGuildDiscordSyncStatus = async ({ guildId }: GuildsControllerGetGuildDiscordSyncStatusPathParameters, options?: RequestInit): Promise<DiscordGuildSyncStateResponseDtoOutput> => {
+export const guildsControllerGetGuildDiscordSyncStatus = async ({ guildId }: GuildsControllerGetGuildDiscordSyncStatusPathParameters, options?: RequestInit): Promise<DiscordGuildSyncStateResponseDto> => {
 
-  return orvalFetch<DiscordGuildSyncStateResponseDtoOutput>(getGuildsControllerGetGuildDiscordSyncStatusUrl({ guildId }),
+  return orvalFetch<DiscordGuildSyncStateResponseDto>(getGuildsControllerGetGuildDiscordSyncStatusUrl({ guildId }),
   {
     ...options,
     method: 'GET'
@@ -927,6 +982,9 @@ export type GuildsControllerGetGuildDiscordSyncStatusQueryResult = NonNullable<A
 export type GuildsControllerGetGuildDiscordSyncStatusQueryError = ErrorType<unknown>
 
 
+/**
+ * @summary Get guild Discord sync status
+ */
 
 export function useGuildsControllerGetGuildDiscordSyncStatus<TData = Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>>, TError = ErrorType<unknown>>(
  { guildId }: GuildsControllerGetGuildDiscordSyncStatusPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
@@ -940,6 +998,9 @@ export function useGuildsControllerGetGuildDiscordSyncStatus<TData = Awaited<Ret
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
+/**
+ * @summary Get guild Discord sync status
+ */
 export const prefetchGuildsControllerGetGuildDiscordSyncStatusQuery = async <TData = Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>>, TError = ErrorType<unknown>>(
  queryClient: QueryClient, { guildId }: GuildsControllerGetGuildDiscordSyncStatusPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
 
@@ -952,6 +1013,9 @@ export const prefetchGuildsControllerGetGuildDiscordSyncStatusQuery = async <TDa
   return queryClient;
 }
 
+/**
+ * @summary Get guild Discord sync status
+ */
 export const invalidateGuildsControllerGetGuildDiscordSyncStatus = async (
  queryClient: QueryClient, { guildId }: GuildsControllerGetGuildDiscordSyncStatusPathParameters, options?: InvalidateOptions
   ): Promise<QueryClient> => {
@@ -961,6 +1025,9 @@ export const invalidateGuildsControllerGetGuildDiscordSyncStatus = async (
   return queryClient;
 }
 
+/**
+ * @summary Get guild Discord sync status
+ */
 export const useSetGuildsControllerGetGuildDiscordSyncStatusQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId }: GuildsControllerGetGuildDiscordSyncStatusPathParameters,updater: Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>> | undefined | ((old: Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>> | undefined) => Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>> | undefined)) => {
@@ -968,6 +1035,9 @@ export const useSetGuildsControllerGetGuildDiscordSyncStatusQueryData = () => {
   };
 }
 
+/**
+ * @summary Get guild Discord sync status
+ */
 export const useGetGuildsControllerGetGuildDiscordSyncStatusQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId }: GuildsControllerGetGuildDiscordSyncStatusPathParameters,) =>
@@ -975,6 +1045,10 @@ export const useGetGuildsControllerGetGuildDiscordSyncStatusQueryData = () => {
 }
 
 
+/**
+ * Trigger a refresh of the guild Discord channel synchronization state
+ * @summary Refresh guild Discord sync
+ */
 export const getGuildsControllerRefreshGuildDiscordSyncUrl = ({ guildId }: GuildsControllerRefreshGuildDiscordSyncPathParameters,) => {
 
 
@@ -983,9 +1057,9 @@ export const getGuildsControllerRefreshGuildDiscordSyncUrl = ({ guildId }: Guild
   return `/guilds/${guildId}/discord-sync/refresh`
 }
 
-export const guildsControllerRefreshGuildDiscordSync = async ({ guildId }: GuildsControllerRefreshGuildDiscordSyncPathParameters, options?: RequestInit): Promise<DiscordGuildSyncStateResponseDtoOutput> => {
+export const guildsControllerRefreshGuildDiscordSync = async ({ guildId }: GuildsControllerRefreshGuildDiscordSyncPathParameters, options?: RequestInit): Promise<DiscordGuildSyncStateResponseDto> => {
 
-  return orvalFetch<DiscordGuildSyncStateResponseDtoOutput>(getGuildsControllerRefreshGuildDiscordSyncUrl({ guildId }),
+  return orvalFetch<DiscordGuildSyncStateResponseDto>(getGuildsControllerRefreshGuildDiscordSyncUrl({ guildId }),
   {
     ...options,
     method: 'POST'
@@ -1028,7 +1102,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type GuildsControllerRefreshGuildDiscordSyncMutationError = ErrorType<unknown>
 
-    export const useGuildsControllerRefreshGuildDiscordSync = <TError = ErrorType<unknown>,
+    /**
+ * @summary Refresh guild Discord sync
+ */
+export const useGuildsControllerRefreshGuildDiscordSync = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof guildsControllerRefreshGuildDiscordSync>>, TError,{pathParams: GuildsControllerRefreshGuildDiscordSyncPathParameters}, TContext>, request?: SecondParameter<typeof orvalFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof guildsControllerRefreshGuildDiscordSync>>,

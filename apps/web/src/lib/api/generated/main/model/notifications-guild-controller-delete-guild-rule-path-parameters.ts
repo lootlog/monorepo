@@ -7,6 +7,6 @@
  */
 
 export type NotificationsGuildControllerDeleteGuildRulePathParameters = {
- guildId: string,
+ guildId: unknown,
     ruleId: number,
  }

@@ -17,7 +17,7 @@ import { PageHeader } from "@/components/common/page-header";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { guildNotificationJobsQueryKey } from "./notifications-api";
 import { useNotificationsGuildControllerGetGuildJobs } from "@/lib/api/generated/main/notifications/notifications";
-import type { NotificationJobsResponseDtoOutput } from "@/lib/api/generated/main/model";
+import type { NotificationJobsResponseDto } from "@/lib/api/generated/main/model";
 
 export const NotificationsHistoryPage = () => {
   const { t } = useTranslation();
@@ -31,12 +31,12 @@ export const NotificationsHistoryPage = () => {
     },
   );
   const [selectedJob, setSelectedJob] = useState<
-    NotificationJobsResponseDtoOutput["history"][number] | null
+    NotificationJobsResponseDto["history"][number] | null
   >(null);
 
   const historyJobs = data?.history ?? [];
   const openJobDetails = (
-    job: NotificationJobsResponseDtoOutput["history"][number],
+    job: NotificationJobsResponseDto["history"][number],
   ) => {
     setSelectedJob(job);
   };

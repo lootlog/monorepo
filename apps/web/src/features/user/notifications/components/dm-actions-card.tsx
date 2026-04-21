@@ -17,7 +17,7 @@ import {
   useNotificationsUserControllerTriggerUserTargetTest,
   useNotificationsUserControllerUpdateUserTarget,
 } from "@/lib/api/generated/main/notifications/notifications";
-import type { NotificationTargetWithTestTriggerResponseDtoOutput } from "@/lib/api/generated/main/model";
+import type { NotificationTargetWithTestTriggerResponseDto } from "@/lib/api/generated/main/model";
 import { useQueryClient } from "@tanstack/react-query";
 import { invalidateUserNotificationQueries } from "../user-notifications-api";
 import {
@@ -29,7 +29,7 @@ import { getUserNotificationsErrorMessage } from "@/features/user/notifications/
 import { NotificationTargetType } from "@lootlog/types";
 
 type DmActionsCardProps = {
-  dmTarget: NotificationTargetWithTestTriggerResponseDtoOutput | null;
+  dmTarget: NotificationTargetWithTestTriggerResponseDto | null;
   onAddWatch: () => void;
 };
 

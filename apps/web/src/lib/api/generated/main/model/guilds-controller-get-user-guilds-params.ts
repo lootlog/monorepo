@@ -8,7 +8,7 @@
 
 export type GuildsControllerGetUserGuildsParams = {
 /**
- * Source of the request
+ * Legacy source selector kept for backward compatibility
  */
 source?: string;
 };

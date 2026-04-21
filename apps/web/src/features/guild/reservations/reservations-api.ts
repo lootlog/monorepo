@@ -4,22 +4,22 @@ import {
   getReservationsControllerGetReservationsQueryOptions,
 } from "@/lib/api/generated/main/reservations/reservations";
 import type {
-  ReservationResponseDtoOutput,
-  ReservationsResponseDtoOutput,
+  ReservationResponseDto,
+  ReservationsResponseDto,
 } from "@/lib/api/generated/main/model";
 import { queryKeys } from "@/lib/query-keys";
 
 export const mapReservationsByAlias = (
-  reservationsByKey: ReservationsResponseDtoOutput | undefined,
-): Record<string, ReservationResponseDtoOutput[]> => {
+  reservationsByKey: ReservationsResponseDto | undefined,
+): Record<string, ReservationResponseDto[]> => {
   const reservationBuckets = new Map<
     string,
     {
-      reservations: ReservationResponseDtoOutput[];
+      reservations: ReservationResponseDto[];
       reservationIds: Set<number>;
     }
   >();
-  const reservationsByAlias: Record<string, ReservationResponseDtoOutput[]> =
+  const reservationsByAlias: Record<string, ReservationResponseDto[]> =
     Object.create(null);
 
   for (const [rawKey, reservations] of Object.entries(

@@ -7,5 +7,5 @@
  */
 
 export type NotificationsGuildControllerGetGuildTargetsPathParameters = {
- guildId: string,
+ guildId: unknown,
  }

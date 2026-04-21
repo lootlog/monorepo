@@ -7,6 +7,6 @@
  */
 
 export type NotificationsGuildControllerRebuildGuildRuleJobsPathParameters = {
- guildId: string,
+ guildId: unknown,
     ruleId: number,
  }

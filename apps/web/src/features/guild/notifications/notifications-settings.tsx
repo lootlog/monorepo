@@ -33,7 +33,7 @@ import {
   useNotificationsGuildControllerGetGuildRules,
   useNotificationsGuildControllerGetGuildTargets,
 } from "@/lib/api/generated/main/notifications/notifications";
-import type { NotificationTargetResponseDtoOutput } from "@/lib/api/generated/main/model";
+import type { NotificationTargetResponseDto } from "@/lib/api/generated/main/model";
 import { useGuildsControllerGetGuildDiscordSyncStatus } from "@/lib/api/generated/main/guilds/guilds";
 
 export const NotificationsSettings = () => {
@@ -79,7 +79,7 @@ export const NotificationsSettings = () => {
   const [isCreateTargetDialogOpen, setIsCreateTargetDialogOpen] =
     useState(false);
   const [editedTarget, setEditedTarget] = useState<
-    NotificationTargetResponseDtoOutput | undefined
+    NotificationTargetResponseDto | undefined
   >();
   const missingPermissions = syncState?.missingPermissions ?? [];
   const hasRequiredPermissions = hasConfirmedGuildDiscordPermissions(syncState);

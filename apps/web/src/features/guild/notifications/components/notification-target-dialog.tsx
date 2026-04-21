@@ -44,7 +44,7 @@ import {
   useNotificationsGuildControllerUpdateGuildTarget,
 } from "@/lib/api/generated/main/notifications/notifications";
 import { NotificationTargetType } from "@lootlog/types";
-import type { NotificationTargetResponseDtoOutput } from "@/lib/api/generated/main/model";
+import type { NotificationTargetResponseDto } from "@/lib/api/generated/main/model";
 
 const targetFormSchema = (t: (key: string) => string, isCreateMode: boolean) =>
   z
@@ -68,10 +68,10 @@ type TargetFormValues = z.infer<ReturnType<typeof targetFormSchema>>;
 type NotificationTargetDialogProps = {
   open: boolean;
   mode: "create" | "edit";
-  target?: NotificationTargetResponseDtoOutput;
-  existingTargets: NotificationTargetResponseDtoOutput[];
+  target?: NotificationTargetResponseDto;
+  existingTargets: NotificationTargetResponseDto[];
   onOpenChange: (open: boolean) => void;
-  onCreated?: (target: NotificationTargetResponseDtoOutput) => void;
+  onCreated?: (target: NotificationTargetResponseDto) => void;
 };
 
 export const NotificationTargetDialog = ({

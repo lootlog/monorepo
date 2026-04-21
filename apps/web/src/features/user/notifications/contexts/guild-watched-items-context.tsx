@@ -5,7 +5,7 @@ import {
 } from "@/lib/api/generated/main/notifications/notifications";
 import type {
   CreateWatchedItemQuickAddDto,
-  WatchedItemResponseDtoOutput,
+  WatchedItemResponseDto,
 } from "@/lib/api/generated/main/model";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -25,14 +25,14 @@ type GuildWatchedItemsContextValue = {
   watchedItemsCount: number;
   quickAddWatchedItem: (
     data: CreateWatchedItemQuickAddDto,
-  ) => Promise<WatchedItemResponseDtoOutput>;
+  ) => Promise<WatchedItemResponseDto>;
   hasWatchedItem: (itemId: number, world: string) => boolean;
   isItemWatchedInScope: (itemId: number, scope: WatchedItemScope) => boolean;
   getWatchedItemId: (itemId: number, scope: WatchedItemScope) => number | null;
 };
 
 const getWatchedItemGuildIds = (
-  watchedItem: WatchedItemResponseDtoOutput,
+  watchedItem: WatchedItemResponseDto,
 ): string[] => watchedItem.notificationRule?.filters?.guildIds ?? [];
 
 export const GuildWatchedItemsContext =

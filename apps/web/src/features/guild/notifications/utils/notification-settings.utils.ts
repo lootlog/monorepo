@@ -2,20 +2,19 @@ import type { BadgeProps } from "@lootlog/ui/components/badge";
 import type {
   CreateNotificationRuleDtoScheduleAnchor,
   CreateNotificationRuleDtoTriggerType,
-  GuildNotificationRulesResponseDtoOutput,
-  NotificationJobsResponseDtoOutput,
-  NotificationTargetResponseDtoOutput,
+  GuildNotificationRulesResponseDto,
+  NotificationJobsResponseDto,
+  NotificationTargetResponseDto,
 } from "@/lib/api/generated/main/model";
 import {
   CreateNotificationRuleDtoScheduleAnchor as NotificationScheduleAnchor,
   CreateNotificationRuleDtoTriggerType as NotificationTriggerType,
 } from "@/lib/api/generated/main/model";
 
-type GuildNotificationTarget = NotificationTargetResponseDtoOutput;
-type GuildNotificationRule =
-  GuildNotificationRulesResponseDtoOutput["items"][number];
+type GuildNotificationTarget = NotificationTargetResponseDto;
+type GuildNotificationRule = GuildNotificationRulesResponseDto["items"][number];
 export type GuildNotificationJob =
-  NotificationJobsResponseDtoOutput["pending"][number];
+  NotificationJobsResponseDto["pending"][number];
 
 export const getJobStatusBadgeProps = (
   status: string,

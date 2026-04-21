@@ -13,7 +13,7 @@ import {
   CreateNotificationRuleDtoScheduleStrategy as NotificationScheduleStrategy,
   CreateNotificationRuleDtoTriggerType as NotificationTriggerType,
   type CreateNotificationRuleDtoTriggerType,
-  type NotificationTargetResponseDtoOutput,
+  type NotificationTargetResponseDto,
 } from "@/lib/api/generated/main/model";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -112,7 +112,7 @@ export const useNotificationRuleForm = () => {
   });
   const [npcSearch, setNpcSearch] = useState("");
   const [extraTargets, setExtraTargets] = useState<
-    NotificationTargetResponseDtoOutput[]
+    NotificationTargetResponseDto[]
   >([]);
   const [formResetKey, setFormResetKey] = useState(0);
   const [isCreateTargetDialogOpen, setIsCreateTargetDialogOpen] =
@@ -275,7 +275,7 @@ export const useNotificationRuleForm = () => {
   };
 
   const handleTargetCreated = (
-    createdTarget: NotificationTargetResponseDtoOutput,
+    createdTarget: NotificationTargetResponseDto,
   ) => {
     setExtraTargets((currentTargets) => [...currentTargets, createdTarget]);
     form.setValue(

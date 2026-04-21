@@ -7,6 +7,6 @@
  */
 
 export type NotificationsGuildControllerCancelGuildJobPathParameters = {
- guildId: string,
+ guildId: unknown,
     jobId: string,
  }

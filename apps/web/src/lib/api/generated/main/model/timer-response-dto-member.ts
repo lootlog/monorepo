@@ -19,7 +19,7 @@ export type TimerResponseDtoMember = {
   /** @nullable */
   banner?: string | null;
   active: boolean;
-  roles?: TimerResponseDtoMemberRolesItem[];
+  roles: TimerResponseDtoMemberRolesItem[];
   /** @nullable */
   globalUserId?: string | null;
   /**

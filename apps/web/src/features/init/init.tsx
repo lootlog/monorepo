@@ -5,10 +5,10 @@ import { ROUTES } from "@/config/routes";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   getGuildsControllerGetGuildByIdQueryKey,
-  invalidateGuildsControllerGetUserGuilds,
   useGuildsControllerGetGuildById,
 } from "@/lib/api/generated/main/guilds/guilds";
 import { useGuildId } from "@/hooks/context/use-guild-id";
+import { invalidateUsersControllerGetCurrentUserAccessibleGuilds } from "@/lib/api/generated/main/users/users";
 
 export const Init: React.FC = () => {
   const navigate = useNavigate();
@@ -31,7 +31,9 @@ export const Init: React.FC = () => {
       return;
     }
 
-    void invalidateGuildsControllerGetUserGuilds(queryClient).then(() => {
+    void invalidateUsersControllerGetCurrentUserAccessibleGuilds(
+      queryClient,
+    ).then(() => {
       navigate({ to: ROUTES.guild.base(guildData.id) });
     });
   }, [guildData, navigate, queryClient]);

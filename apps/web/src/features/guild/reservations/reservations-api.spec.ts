@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { reservationSlug } from "@/features/guild/reservations/reservation-slug";
-import type { ReservationResponseDtoOutput } from "@/lib/api/generated/main/model";
+import type { ReservationResponseDto } from "@/lib/api/generated/main/model";
 import { mapReservationsByAlias } from "./reservations-api";
 
 const createApiReservation = (
-  overrides: Partial<ReservationResponseDtoOutput> = {},
-): ReservationResponseDtoOutput => ({
+  overrides: Partial<ReservationResponseDto> = {},
+): ReservationResponseDto => ({
   id: 1,
   reservationId: "reservation-1",
   createdDate: "2026-01-03T10:00:00.000Z",
