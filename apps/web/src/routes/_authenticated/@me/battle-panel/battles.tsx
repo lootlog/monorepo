@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { BattlePanelBattlesList } from "@/features/user/battle-panel/battle-panel-battles-list/battle-panel-battles-list";
 import { BattlePanelBattlesSkeleton } from "@/features/user/battle-panel/battle-panel-battles-list/battle-panel-battles-skeleton";
-import { battlesQueryOptions } from "@/hooks/api/battle-log/use-battles";
-import { battleCharactersQueryOptions } from "@/hooks/api/battle-log/use-battle-characters";
+import {
+  getBattlesControllerGetDashboardBattlesQueryOptions,
+  getBattlesControllerGetUserCharactersQueryOptions,
+} from "@/lib/api/generated/battlelog/battles/battles";
 import { loadBattlePanelBattlesSearch } from "@/features/user/battle-panel/battle-panel-battles-list/battle-query-parsers";
 
 export const Route = createFileRoute(
@@ -12,9 +14,11 @@ export const Route = createFileRoute(
     const search = loadBattlePanelBattlesSearch(location.searchStr);
 
     await Promise.all([
-      context.queryClient.ensureQueryData(battleCharactersQueryOptions()),
       context.queryClient.ensureQueryData(
-        battlesQueryOptions({
+        getBattlesControllerGetUserCharactersQueryOptions(),
+      ),
+      context.queryClient.ensureQueryData(
+        getBattlesControllerGetDashboardBattlesQueryOptions({
           cursor: search.cursor ?? undefined,
           size: 20,
           includeTotal: true,

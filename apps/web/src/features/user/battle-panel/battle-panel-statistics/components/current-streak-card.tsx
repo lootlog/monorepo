@@ -1,5 +1,5 @@
 import { Flame, Snowflake, TrendingUp, TrendingDown } from "lucide-react";
-import type { Streak } from "@/hooks/api/battle-log/use-battle-statistics";
+import type { Streak } from "@/lib/api/battlelog-types";
 import { StatCard } from "./stat-card";
 
 interface CurrentStreakCardProps {

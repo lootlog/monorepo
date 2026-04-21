@@ -7,7 +7,7 @@ import {
   loadBattlePanelPlayerVsPlayerSearch,
   normalizeBattlePanelCharacterId,
 } from "@/features/user/battle-panel/battle-panel-statistics-search";
-import { playerVsPlayerQueryOptions } from "@/hooks/api/battle-log/use-player-vs-player";
+import { getBattlesControllerGetPlayerVsPlayerBattlesQueryOptions } from "@/lib/api/generated/battlelog/battles/battles";
 
 export const Route = createFileRoute(
   "/_authenticated/@me/battle-panel/statistics_/player-vs-player/$myId/$opponentId",
@@ -23,7 +23,7 @@ export const Route = createFileRoute(
       })) ?? params.myId;
 
     await context.queryClient.ensureQueryData(
-      playerVsPlayerQueryOptions({
+      getBattlesControllerGetPlayerVsPlayerBattlesQueryOptions({
         cursor: search.cursor ?? undefined,
         characterId,
         opponentId: params.opponentId,

@@ -19,6 +19,8 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  BattleRawResponseDtoOutput,
+  BattleResponseDtoOutput,
   PublicBattlesControllerGetPublicBattlePathParameters,
   PublicBattlesControllerGetPublicBattleRawPathParameters
 } from '../model';
@@ -31,6 +33,9 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 
+/**
+ * @summary Get a public battle
+ */
 export const getPublicBattlesControllerGetPublicBattleUrl = ({ battleId }: PublicBattlesControllerGetPublicBattlePathParameters,) => {
 
 
@@ -39,9 +44,9 @@ export const getPublicBattlesControllerGetPublicBattleUrl = ({ battleId }: Publi
   return `/battles/public/${battleId}`
 }
 
-export const publicBattlesControllerGetPublicBattle = async ({ battleId }: PublicBattlesControllerGetPublicBattlePathParameters, options?: RequestInit): Promise<void> => {
+export const publicBattlesControllerGetPublicBattle = async ({ battleId }: PublicBattlesControllerGetPublicBattlePathParameters, options?: RequestInit): Promise<BattleResponseDtoOutput> => {
 
-  return orvalFetchBattlelog<void>(getPublicBattlesControllerGetPublicBattleUrl({ battleId }),
+  return orvalFetchBattlelog<BattleResponseDtoOutput>(getPublicBattlesControllerGetPublicBattleUrl({ battleId }),
   {
     ...options,
     method: 'GET'
@@ -61,7 +66,7 @@ export const getPublicBattlesControllerGetPublicBattleQueryKey = ({ battleId }: 
     }
 
 
-export const getPublicBattlesControllerGetPublicBattleQueryOptions = <TData = Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattle>>, TError = ErrorType<unknown>>({ battleId }: PublicBattlesControllerGetPublicBattlePathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattle>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
+export const getPublicBattlesControllerGetPublicBattleQueryOptions = <TData = Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattle>>, TError = ErrorType<void>>({ battleId }: PublicBattlesControllerGetPublicBattlePathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattle>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -80,11 +85,14 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type PublicBattlesControllerGetPublicBattleQueryResult = NonNullable<Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattle>>>
-export type PublicBattlesControllerGetPublicBattleQueryError = ErrorType<unknown>
+export type PublicBattlesControllerGetPublicBattleQueryError = ErrorType<void>
 
 
+/**
+ * @summary Get a public battle
+ */
 
-export function usePublicBattlesControllerGetPublicBattle<TData = Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattle>>, TError = ErrorType<unknown>>(
+export function usePublicBattlesControllerGetPublicBattle<TData = Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattle>>, TError = ErrorType<void>>(
  { battleId }: PublicBattlesControllerGetPublicBattlePathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattle>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
@@ -96,7 +104,10 @@ export function usePublicBattlesControllerGetPublicBattle<TData = Awaited<Return
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
-export const prefetchPublicBattlesControllerGetPublicBattleQuery = async <TData = Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattle>>, TError = ErrorType<unknown>>(
+/**
+ * @summary Get a public battle
+ */
+export const prefetchPublicBattlesControllerGetPublicBattleQuery = async <TData = Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattle>>, TError = ErrorType<void>>(
  queryClient: QueryClient, { battleId }: PublicBattlesControllerGetPublicBattlePathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattle>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
 
   ): Promise<QueryClient> => {
@@ -108,6 +119,9 @@ export const prefetchPublicBattlesControllerGetPublicBattleQuery = async <TData 
   return queryClient;
 }
 
+/**
+ * @summary Get a public battle
+ */
 export const invalidatePublicBattlesControllerGetPublicBattle = async (
  queryClient: QueryClient, { battleId }: PublicBattlesControllerGetPublicBattlePathParameters, options?: InvalidateOptions
   ): Promise<QueryClient> => {
@@ -117,6 +131,9 @@ export const invalidatePublicBattlesControllerGetPublicBattle = async (
   return queryClient;
 }
 
+/**
+ * @summary Get a public battle
+ */
 export const useSetPublicBattlesControllerGetPublicBattleQueryData = () => {
   const queryClient = useQueryClient();
   return ({ battleId }: PublicBattlesControllerGetPublicBattlePathParameters,updater: Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattle>> | undefined | ((old: Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattle>> | undefined) => Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattle>> | undefined)) => {
@@ -124,6 +141,9 @@ export const useSetPublicBattlesControllerGetPublicBattleQueryData = () => {
   };
 }
 
+/**
+ * @summary Get a public battle
+ */
 export const useGetPublicBattlesControllerGetPublicBattleQueryData = () => {
   const queryClient = useQueryClient();
   return ({ battleId }: PublicBattlesControllerGetPublicBattlePathParameters,) =>
@@ -131,6 +151,9 @@ export const useGetPublicBattlesControllerGetPublicBattleQueryData = () => {
 }
 
 
+/**
+ * @summary Get raw payload for a public battle
+ */
 export const getPublicBattlesControllerGetPublicBattleRawUrl = ({ battleId }: PublicBattlesControllerGetPublicBattleRawPathParameters,) => {
 
 
@@ -139,9 +162,9 @@ export const getPublicBattlesControllerGetPublicBattleRawUrl = ({ battleId }: Pu
   return `/battles/public/${battleId}/raw`
 }
 
-export const publicBattlesControllerGetPublicBattleRaw = async ({ battleId }: PublicBattlesControllerGetPublicBattleRawPathParameters, options?: RequestInit): Promise<void> => {
+export const publicBattlesControllerGetPublicBattleRaw = async ({ battleId }: PublicBattlesControllerGetPublicBattleRawPathParameters, options?: RequestInit): Promise<BattleRawResponseDtoOutput> => {
 
-  return orvalFetchBattlelog<void>(getPublicBattlesControllerGetPublicBattleRawUrl({ battleId }),
+  return orvalFetchBattlelog<BattleRawResponseDtoOutput>(getPublicBattlesControllerGetPublicBattleRawUrl({ battleId }),
   {
     ...options,
     method: 'GET'
@@ -161,7 +184,7 @@ export const getPublicBattlesControllerGetPublicBattleRawQueryKey = ({ battleId 
     }
 
 
-export const getPublicBattlesControllerGetPublicBattleRawQueryOptions = <TData = Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattleRaw>>, TError = ErrorType<unknown>>({ battleId }: PublicBattlesControllerGetPublicBattleRawPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattleRaw>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
+export const getPublicBattlesControllerGetPublicBattleRawQueryOptions = <TData = Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattleRaw>>, TError = ErrorType<void>>({ battleId }: PublicBattlesControllerGetPublicBattleRawPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattleRaw>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -180,11 +203,14 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type PublicBattlesControllerGetPublicBattleRawQueryResult = NonNullable<Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattleRaw>>>
-export type PublicBattlesControllerGetPublicBattleRawQueryError = ErrorType<unknown>
+export type PublicBattlesControllerGetPublicBattleRawQueryError = ErrorType<void>
 
 
+/**
+ * @summary Get raw payload for a public battle
+ */
 
-export function usePublicBattlesControllerGetPublicBattleRaw<TData = Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattleRaw>>, TError = ErrorType<unknown>>(
+export function usePublicBattlesControllerGetPublicBattleRaw<TData = Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattleRaw>>, TError = ErrorType<void>>(
  { battleId }: PublicBattlesControllerGetPublicBattleRawPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattleRaw>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
@@ -196,7 +222,10 @@ export function usePublicBattlesControllerGetPublicBattleRaw<TData = Awaited<Ret
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
-export const prefetchPublicBattlesControllerGetPublicBattleRawQuery = async <TData = Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattleRaw>>, TError = ErrorType<unknown>>(
+/**
+ * @summary Get raw payload for a public battle
+ */
+export const prefetchPublicBattlesControllerGetPublicBattleRawQuery = async <TData = Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattleRaw>>, TError = ErrorType<void>>(
  queryClient: QueryClient, { battleId }: PublicBattlesControllerGetPublicBattleRawPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattleRaw>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
 
   ): Promise<QueryClient> => {
@@ -208,6 +237,9 @@ export const prefetchPublicBattlesControllerGetPublicBattleRawQuery = async <TDa
   return queryClient;
 }
 
+/**
+ * @summary Get raw payload for a public battle
+ */
 export const invalidatePublicBattlesControllerGetPublicBattleRaw = async (
  queryClient: QueryClient, { battleId }: PublicBattlesControllerGetPublicBattleRawPathParameters, options?: InvalidateOptions
   ): Promise<QueryClient> => {
@@ -217,6 +249,9 @@ export const invalidatePublicBattlesControllerGetPublicBattleRaw = async (
   return queryClient;
 }
 
+/**
+ * @summary Get raw payload for a public battle
+ */
 export const useSetPublicBattlesControllerGetPublicBattleRawQueryData = () => {
   const queryClient = useQueryClient();
   return ({ battleId }: PublicBattlesControllerGetPublicBattleRawPathParameters,updater: Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattleRaw>> | undefined | ((old: Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattleRaw>> | undefined) => Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattleRaw>> | undefined)) => {
@@ -224,6 +259,9 @@ export const useSetPublicBattlesControllerGetPublicBattleRawQueryData = () => {
   };
 }
 
+/**
+ * @summary Get raw payload for a public battle
+ */
 export const useGetPublicBattlesControllerGetPublicBattleRawQueryData = () => {
   const queryClient = useQueryClient();
   return ({ battleId }: PublicBattlesControllerGetPublicBattleRawPathParameters,) =>

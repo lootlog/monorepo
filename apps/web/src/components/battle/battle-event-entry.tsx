@@ -6,8 +6,10 @@ import { BattleOutcomeActions } from "./actions/battle-outcome-actions";
 import { BattlePassiveActions } from "./actions/battle-passive-actions";
 import { BattleSpellActions } from "./actions/battle-spell-actions";
 import { BattleSystemActions } from "./actions/battle-system-actions";
-import type { Warrior } from "@/hooks/api/battle-log/use-battles";
-import type { RawBattleParsedEvent } from "@/hooks/api/battle-log/use-battle-raw";
+import type {
+  BattleWarrior as Warrior,
+  RawBattleParsedEvent,
+} from "@/lib/api/battlelog-types";
 
 export type BattleEventEntryProps = {
   event: RawBattleParsedEvent;

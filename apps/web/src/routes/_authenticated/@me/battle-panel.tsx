@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { BattlePanelLayout } from "@/features/user/battle-panel/battle-panel-layout/battle-panel-layout";
-import { battleCharactersQueryOptions } from "@/hooks/api/battle-log/use-battle-characters";
+import { getBattlesControllerGetUserCharactersQueryOptions } from "@/lib/api/generated/battlelog/battles/battles";
 
 export const Route = createFileRoute("/_authenticated/@me/battle-panel")({
   loader: async ({ context, preload }) => {
@@ -8,7 +8,9 @@ export const Route = createFileRoute("/_authenticated/@me/battle-panel")({
       return null;
     }
 
-    await context.queryClient.ensureQueryData(battleCharactersQueryOptions());
+    await context.queryClient.ensureQueryData(
+      getBattlesControllerGetUserCharactersQueryOptions(),
+    );
 
     return null;
   },

@@ -6,7 +6,7 @@ import {
   loadBattlePanelStatisticsSearch,
   normalizeBattlePanelCharacterId,
 } from "@/features/user/battle-panel/battle-panel-statistics-search";
-import { battleAnalyticsQueryOptions } from "@/hooks/api/battle-log/use-battle-analytics";
+import { getBattlesControllerGetBattleAnalyticsQueryOptions } from "@/lib/api/generated/battlelog/battles/battles";
 
 export const Route = createFileRoute("/_authenticated/@me/battle-panel/")({
   validateSearch: battlePanelStatisticsSearchSchema,
@@ -18,7 +18,7 @@ export const Route = createFileRoute("/_authenticated/@me/battle-panel/")({
     const search = loadBattlePanelStatisticsSearch(location.searchStr);
 
     await context.queryClient.ensureQueryData(
-      battleAnalyticsQueryOptions({
+      getBattlesControllerGetBattleAnalyticsQueryOptions({
         characterId: normalizeBattlePanelCharacterId(search.characterId),
         period: "180d",
         minLevel: search.minLevel,

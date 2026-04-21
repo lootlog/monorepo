@@ -26,9 +26,9 @@ import {
 } from "@lootlog/ui/components/select";
 import { Input } from "@lootlog/ui/components/input";
 import { WarriorSearchFilter } from "@/components/filters";
-import { useBattleCharacters } from "@/hooks/api/battle-log/use-battle-characters";
+import { useBattlesControllerGetUserCharacters } from "@/lib/api/generated/battlelog/battles/battles";
 import type { Period } from "@/store/battle-filters.store";
-import type { Warrior } from "@/hooks/api/battle-log/use-search-warriors";
+import type { SearchWarrior as Warrior } from "@/lib/api/battlelog-types";
 import { useTranslation } from "react-i18next";
 
 type HeadToHeadFiltersMobileProps = {
@@ -69,7 +69,8 @@ export const HeadToHeadFiltersMobile = ({
   onWarriorToggle,
 }: HeadToHeadFiltersMobileProps) => {
   const { t } = useTranslation();
-  const { data: characters = [] } = useBattleCharacters();
+  const { data: charactersResponse } = useBattlesControllerGetUserCharacters();
+  const characters = charactersResponse?.characters ?? [];
   const periodOptions = [
     { value: "7d" as const, label: t("battlePanel.filters.periodOptions.7d") },
     {

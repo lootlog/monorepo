@@ -1,4 +1,4 @@
-import type { BattleDurationStats } from "@/hooks/api/battle-log/use-battle-statistics";
+import type { BattleDurationStats } from "@/lib/api/battlelog-types";
 import { intervalToDuration } from "date-fns";
 import { Clock, Zap, Hourglass } from "lucide-react";
 import { useTranslation } from "react-i18next";

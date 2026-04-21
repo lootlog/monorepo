@@ -7,13 +7,15 @@ import {
   loadBattlePanelStatisticsSearch,
   normalizeBattlePanelCharacterId,
 } from "@/features/user/battle-panel/battle-panel-statistics-search";
-import { professionWinRateQueryOptions } from "@/hooks/api/battle-log/use-profession-win-rate";
-import { headToHeadQueryOptions } from "@/hooks/api/battle-log/use-head-to-head";
-import { battleStreakQueryOptions } from "@/hooks/api/battle-log/use-battle-streak";
-import { battleDurationQueryOptions } from "@/hooks/api/battle-log/use-battle-duration";
-import { phGrowthQueryOptions } from "@/hooks/api/battle-log/use-ph-growth";
-import { ratingGrowthQueryOptions } from "@/hooks/api/battle-log/use-rating-growth";
-import { ratingDeltaByOpponentQueryOptions } from "@/hooks/api/battle-log/use-rating-delta-by-opponent";
+import {
+  getBattlesControllerGetBattleDurationQueryOptions,
+  getBattlesControllerGetCurrentStreakQueryOptions,
+  getBattlesControllerGetHeadToHeadQueryOptions,
+  getBattlesControllerGetPhGrowthQueryOptions,
+  getBattlesControllerGetProfessionWinRateQueryOptions,
+  getBattlesControllerGetRatingDeltaByOpponentQueryOptions,
+  getBattlesControllerGetRatingGrowthQueryOptions,
+} from "@/lib/api/generated/battlelog/battles/battles";
 
 export const Route = createFileRoute(
   "/_authenticated/@me/battle-panel/statistics",
@@ -39,21 +41,25 @@ export const Route = createFileRoute(
 
     await Promise.all([
       context.queryClient.ensureQueryData(
-        professionWinRateQueryOptions(baseParams),
+        getBattlesControllerGetProfessionWinRateQueryOptions(baseParams),
       ),
       context.queryClient.ensureQueryData(
-        headToHeadQueryOptions({
+        getBattlesControllerGetHeadToHeadQueryOptions({
           ...baseParams,
           size: 5,
         }),
       ),
-      context.queryClient.ensureQueryData(battleStreakQueryOptions(baseParams)),
       context.queryClient.ensureQueryData(
-        battleDurationQueryOptions(baseParams),
+        getBattlesControllerGetCurrentStreakQueryOptions(baseParams),
       ),
-      context.queryClient.ensureQueryData(phGrowthQueryOptions(baseParams)),
       context.queryClient.ensureQueryData(
-        ratingGrowthQueryOptions({
+        getBattlesControllerGetBattleDurationQueryOptions(baseParams),
+      ),
+      context.queryClient.ensureQueryData(
+        getBattlesControllerGetPhGrowthQueryOptions(baseParams),
+      ),
+      context.queryClient.ensureQueryData(
+        getBattlesControllerGetRatingGrowthQueryOptions({
           characterId,
           period: baseParams.period,
           minLevel: baseParams.minLevel,
@@ -61,7 +67,7 @@ export const Route = createFileRoute(
         }),
       ),
       context.queryClient.ensureQueryData(
-        ratingDeltaByOpponentQueryOptions({
+        getBattlesControllerGetRatingDeltaByOpponentQueryOptions({
           characterId,
           period: baseParams.period,
           minLevel: baseParams.minLevel,

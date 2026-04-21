@@ -5,8 +5,10 @@ import {
 } from "@/components/battle";
 import { STAT_CATEGORIES } from "@/components/battle/one-vs-one-stats-table";
 import { BattleOverview } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-overview";
-import { useBattle } from "@/hooks/api/battle-log/use-battle";
-import { useBattleRaw } from "@/hooks/api/battle-log/use-battle-raw";
+import {
+  useBattlesControllerGetBattle,
+  useBattlesControllerGetBattleRawData,
+} from "@/lib/api/generated/battlelog/battles/battles";
 import { useStatsCustomization } from "@/hooks/use-stats-customization";
 import { useParams } from "@tanstack/react-router";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -19,8 +21,10 @@ export const BattlePanelSingleBattle = () => {
   const { battleId } = useParams({
     from: "/_authenticated/@me/battle-panel/battles_/$battleId",
   });
-  const { data: battle } = useBattle({ battleId });
-  const { data: rawBattle } = useBattleRaw({ battleId });
+  const { data: battle } = useBattlesControllerGetBattle({ battleId });
+  const { data: rawBattle } = useBattlesControllerGetBattleRawData({
+    battleId,
+  });
   const [hideZeros, setHideZeros] = useState(true);
 
   const {

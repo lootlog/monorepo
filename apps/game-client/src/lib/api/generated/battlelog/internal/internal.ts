@@ -15,6 +15,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  BattleAcceptedResponseDtoOutput,
   DeleteUserDataDto
 } from '../model';
 
@@ -26,6 +27,9 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 
+/**
+ * @summary Queue battle data deletion for a user
+ */
 export const getInternalControllerDeleteUserDataUrl = () => {
 
 
@@ -34,9 +38,9 @@ export const getInternalControllerDeleteUserDataUrl = () => {
   return `/internal/delete-user-data`
 }
 
-export const internalControllerDeleteUserData = async (deleteUserDataDto: DeleteUserDataDto, options?: RequestInit): Promise<void> => {
+export const internalControllerDeleteUserData = async (deleteUserDataDto: DeleteUserDataDto, options?: RequestInit): Promise<BattleAcceptedResponseDtoOutput> => {
 
-  return orvalFetchBattlelog<void>(getInternalControllerDeleteUserDataUrl(),
+  return orvalFetchBattlelog<BattleAcceptedResponseDtoOutput>(getInternalControllerDeleteUserDataUrl(),
   {
     ...options,
     method: 'POST',
@@ -80,7 +84,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type InternalControllerDeleteUserDataMutationBody = BodyType<DeleteUserDataDto>
     export type InternalControllerDeleteUserDataMutationError = ErrorType<unknown>
 
-    export const useInternalControllerDeleteUserData = <TError = ErrorType<unknown>,
+    /**
+ * @summary Queue battle data deletion for a user
+ */
+export const useInternalControllerDeleteUserData = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof internalControllerDeleteUserData>>, TError,{data: BodyType<DeleteUserDataDto>}, TContext>, request?: SecondParameter<typeof orvalFetchBattlelog>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof internalControllerDeleteUserData>>,

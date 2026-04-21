@@ -7,7 +7,7 @@ import {
   loadBattlePanelHeadToHeadSearch,
   normalizeBattlePanelCharacterId,
 } from "@/features/user/battle-panel/battle-panel-statistics-search";
-import { headToHeadQueryOptions } from "@/hooks/api/battle-log/use-head-to-head";
+import { getBattlesControllerGetHeadToHeadQueryOptions } from "@/lib/api/generated/battlelog/battles/battles";
 
 export const Route = createFileRoute(
   "/_authenticated/@me/battle-panel/statistics_/matchmaking-h2h",
@@ -21,7 +21,7 @@ export const Route = createFileRoute(
     });
 
     await context.queryClient.ensureQueryData(
-      headToHeadQueryOptions({
+      getBattlesControllerGetHeadToHeadQueryOptions({
         cursor: search.cursor ?? undefined,
         characterId,
         period: search.period,

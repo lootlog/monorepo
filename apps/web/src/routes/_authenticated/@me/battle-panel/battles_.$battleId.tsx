@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { BattlePanelSingleBattle } from "@/features/user/battle-panel/battle-panel-single-battle/battle-panel-single-battle";
 import { BattlePanelSingleBattleSkeleton } from "@/features/user/battle-panel/battle-panel-single-battle/battle-panel-single-battle-skeleton";
-import { battleQueryOptions } from "@/hooks/api/battle-log/use-battle";
-import { battleRawQueryOptions } from "@/hooks/api/battle-log/use-battle-raw";
+import {
+  getBattlesControllerGetBattleQueryOptions,
+  getBattlesControllerGetBattleRawDataQueryOptions,
+} from "@/lib/api/generated/battlelog/battles/battles";
 import { throwNotFoundIfResponseMatches } from "@/lib/router/route-errors";
 
 export const Route = createFileRoute(
@@ -12,12 +14,12 @@ export const Route = createFileRoute(
     try {
       await Promise.all([
         context.queryClient.ensureQueryData(
-          battleQueryOptions({
+          getBattlesControllerGetBattleQueryOptions({
             battleId: params.battleId,
           }),
         ),
         context.queryClient.ensureQueryData(
-          battleRawQueryOptions({
+          getBattlesControllerGetBattleRawDataQueryOptions({
             battleId: params.battleId,
           }),
         ),

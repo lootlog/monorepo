@@ -1,7 +1,7 @@
 import { cn } from "@lootlog/ui/lib/utils";
 import type { FC } from "react";
 import { PlayerTile } from "./player-tile";
-import type { Warrior } from "@/hooks/api/battle-log/use-battles";
+import type { BattleWarrior as Warrior } from "@/lib/api/battlelog-types";
 
 export type TeamDisplayProps = {
   team: Warrior[];

@@ -1,7 +1,4 @@
 const ME_SCOPE = "@me" as const;
-const PUBLIC_SCOPE = "public" as const;
-const PRIVATE_SCOPE = "private" as const;
-
 export const queryKeys = {
   activity: {
     logs: (guildId: string | undefined, baseQueryString: string) =>
@@ -17,36 +14,6 @@ export const queryKeys = {
     scopes: () => ["auth-scopes"] as const,
     session: () => ["session"] as const,
     token: () => ["auth-token"] as const,
-  },
-  battleLog: {
-    analytics: (requestParams: unknown) =>
-      ["battle-analytics", ME_SCOPE, requestParams] as const,
-    battle: (battleId: string | undefined, isPublic: boolean) =>
-      ["battles", battleId, isPublic ? PUBLIC_SCOPE : PRIVATE_SCOPE] as const,
-    battlePrefix: (battleId: string | number) => ["battles", battleId] as const,
-    battles: () => ["battles"] as const,
-    battlesList: (params?: unknown) => ["battles", ME_SCOPE, params] as const,
-    battlesMine: () => ["battles", ME_SCOPE] as const,
-    battleRaw: (battleId: string | undefined, isPublic: boolean) =>
-      [
-        "battles",
-        "raw",
-        battleId,
-        isPublic ? PUBLIC_SCOPE : PRIVATE_SCOPE,
-      ] as const,
-    characters: () => ["battle-characters", ME_SCOPE] as const,
-    duration: (params: unknown) => ["battle-duration", params] as const,
-    headToHead: (params?: unknown) => ["head-to-head", params] as const,
-    playerVsPlayer: (params: unknown) => ["player-vs-player", params] as const,
-    ratingDeltaByOpponent: (params: unknown) =>
-      ["rating-delta-by-opponent", params] as const,
-    searchWarriors: (query: string) => ["warriors-search", query] as const,
-    statistic: (queryKey: string, requestParams: unknown) =>
-      [queryKey, requestParams] as const,
-    statistics: (params: unknown) =>
-      ["battle-statistics", ME_SCOPE, params] as const,
-    streak: (params: unknown) => ["battle-streak", params] as const,
-    userWorlds: () => ["user-worlds", ME_SCOPE] as const,
   },
   events: {
     heroActiveGaps: (
