@@ -18,10 +18,13 @@ import {
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { cn } from "@lootlog/ui/lib/utils";
 import {
-  useDashboardKillStats,
   TRACKABLE_NPC_TYPES,
   type NpcType,
-} from "../hooks/use-dashboard-kill-stats";
+} from "@/features/user/kills/npc-types";
+import {
+  getKillsControllerGetUserKillStatsQueryKey,
+  useKillsControllerGetUserKillStats,
+} from "@/lib/api/generated/main/kills/kills";
 
 const getRankIcon = (index: number) => {
   switch (index) {
@@ -48,10 +51,19 @@ export const TopKilledNpcsCard: React.FC<TopKilledNpcsCardProps> = ({
   onNpcTypeChange,
 }) => {
   const { t } = useTranslation();
-  const { data, isLoading } = useDashboardKillStats({
+  const killStatsParams = {
     world,
     npcTypes: [npcType],
-  });
+  };
+  const { data, isLoading } = useKillsControllerGetUserKillStats(
+    killStatsParams,
+    {
+      query: {
+        queryKey: getKillsControllerGetUserKillStatsQueryKey(killStatsParams),
+        staleTime: 30_000,
+      },
+    },
+  );
 
   if (isLoading) {
     return (

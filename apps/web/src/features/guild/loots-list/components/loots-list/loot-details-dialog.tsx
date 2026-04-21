@@ -1,5 +1,4 @@
 import type { FC } from "react";
-import type { Loot } from "@/hooks/api/loots/use-loots";
 import {
   Dialog,
   DialogContent,
@@ -19,16 +18,20 @@ import { AlertCircle, Calendar, MapPin } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { useSelectedLoot } from "@/hooks/use-selected-loot";
 import { useLootFromCache } from "@/hooks/use-loot-from-cache";
-import { useLoot } from "@/hooks/api/loots/use-loot";
 import { useIsOwner } from "@/hooks/context/use-is-owner";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { LOOT_SHARE_COLOR_PALETTE } from "@/features/guild/loots-list/constants/loot-share-color-palette";
 import { useTranslation } from "react-i18next";
 import { ThemeSurfaceOverlay } from "@/themes";
+import type { Loot } from "@/lib/loots/loot-types";
 import {
   getGuildsControllerGetGuildPermissionsQueryKey,
   useGuildsControllerGetGuildPermissions,
 } from "@/lib/api/generated/main/guilds/guilds";
+import {
+  getLootsControllerFetchLootByIdQueryKey,
+  useLootsControllerFetchLootById,
+} from "@/lib/api/generated/main/loots/loots";
 
 const MANAGE_LOOTS_PERMISSIONS = ["LOOTLOG_MANAGE", "ADMIN"] as const;
 
@@ -163,10 +166,19 @@ export const LootDetailsDialog: FC = () => {
     data: fetchedLoot,
     isLoading,
     isError,
-  } = useLoot({
-    lootId: selectedLootId,
-    enabled: isOpen && !cachedLoot && !!selectedLootId,
-  });
+  } = useLootsControllerFetchLootById(
+    { guildId: guildId ?? "", lootId: selectedLootId ?? 0 },
+    {
+      query: {
+        enabled: isOpen && !cachedLoot && !!guildId && !!selectedLootId,
+        queryKey: getLootsControllerFetchLootByIdQueryKey({
+          guildId: guildId ?? "",
+          lootId: selectedLootId ?? 0,
+        }),
+        staleTime: 60_000,
+      },
+    },
+  );
 
   const loot = cachedLoot ?? fetchedLoot;
 

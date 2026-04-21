@@ -6,16 +6,22 @@ import {
   CommandItem,
   CommandList,
 } from "@lootlog/ui/components/command";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useDebounceValue } from "usehooks-ts";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
+import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useSearchAll } from "@/hooks/api/game-data/use-search-all";
-import { useItemByHid } from "@/hooks/api/game-data/use-item-by-hid";
-import { isItemHid } from "@/lib/utils/hid-detection";
+import {
+  getLootsControllerFetchLootsByGuildIdQueryKey,
+  lootsControllerFetchLootsByGuildId,
+} from "@/lib/api/generated/main/loots/loots";
+import type { LootsControllerFetchLootsByGuildIdParams } from "@/lib/api/generated/main/model";
+import { ItemRarity } from "@/lib/loots/loot-types";
+import { parseItemHid } from "@/lib/utils/hid-detection";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
 import type { Npc } from "@/hooks/api/game-data/use-npcs";
 import type { GameItem } from "@/hooks/api/game-data/use-items";
-import { ItemRarity } from "@/hooks/api/loots/use-loots";
 import { ItemImage, NpcSearchTile, PlayerSearchTile } from "@/components/tiles";
 import { cn } from "@lootlog/ui/lib/utils";
 import { NPC_TYPE_NAMES, ITEM_RARITY_NAMES } from "@/constants/npc";
@@ -62,6 +68,7 @@ export const LootSearchCommand = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch] = useDebounceValue(searchQuery, 200);
   const { world } = useGuildContext();
+  const guildId = useGuildId();
   const { setFilters } = useLootsFilters();
 
   const { data: searchResults, isLoading } = useSearchAll({
@@ -69,8 +76,45 @@ export const LootSearchCommand = ({
     world: world || "",
   });
 
-  const isHid = isItemHid(searchQuery);
-  const { data: hidItem } = useItemByHid(searchQuery.trim(), isHid);
+  const parsedHid = parseItemHid(searchQuery.trim());
+  const isHid = !!parsedHid;
+  const hidLootQueryParams:
+    | LootsControllerFetchLootsByGuildIdParams
+    | undefined = parsedHid
+    ? {
+        hid: parsedHid.hid,
+        world: parsedHid.world,
+        limit: 1,
+      }
+    : undefined;
+  const { data: hidItem } = useQuery({
+    queryKey: hidLootQueryParams
+      ? getLootsControllerFetchLootsByGuildIdQueryKey(
+          { guildId: guildId ?? "" },
+          hidLootQueryParams,
+        )
+      : ["loot-search", "hid-item"],
+    queryFn: async () => {
+      if (!guildId || !hidLootQueryParams) {
+        return null;
+      }
+
+      const response = await lootsControllerFetchLootsByGuildId(
+        {
+          guildId,
+        },
+        hidLootQueryParams,
+      );
+      const firstLoot = response[0];
+
+      return (
+        firstLoot?.items.find((item) => item.hid === hidLootQueryParams.hid) ??
+        null
+      );
+    },
+    enabled: !!guildId && !!hidLootQueryParams,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const handleSelectNpc = (npc: Npc) => {
     setFilters({ npcs: [npc.name] });
@@ -167,7 +211,10 @@ export const LootSearchCommand = ({
                   onSelect={() => handleSelectItemByHid(hidItem.hid)}
                   className="p-2! px-2!"
                 >
-                  <ItemImage icon={hidItem.icon} rarity={hidItem.rarity} />
+                  <ItemImage
+                    icon={hidItem.icon}
+                    rarity={hidItem.rarity ?? ItemRarity.COMMON}
+                  />
                   <span>{hidItem.name}</span>
                   <span className="ml-auto text-xs text-muted-foreground">
                     Lvl {hidItem.lvl}

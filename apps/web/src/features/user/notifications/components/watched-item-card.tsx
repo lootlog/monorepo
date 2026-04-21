@@ -9,7 +9,7 @@ import { getUserNotificationsErrorMessage } from "@/features/user/notifications/
 import { useQueryClient } from "@tanstack/react-query";
 import { useNotificationsUserControllerDeleteWatchedItem } from "@/lib/api/generated/main/notifications/notifications";
 import type { WatchedItemResponseDto } from "@/lib/api/generated/main/model";
-import { ItemRarity } from "@/hooks/api/loots/use-loots";
+import { ItemRarity } from "@/lib/loots/loot-types";
 import { invalidateUserNotificationQueries } from "../user-notifications-api";
 
 type WatchedItemCardProps = {

@@ -1,7 +1,6 @@
 import { useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import type { Loot } from "@/hooks/api/loots/use-loots";
-import { queryKeys } from "@/lib/query-keys";
+import type { Loot } from "@/lib/loots/loot-types";
 
 export const useLootFromCache = (lootId: number | null): Loot | null => {
   const queryClient = useQueryClient();
@@ -12,7 +11,7 @@ export const useLootFromCache = (lootId: number | null): Loot | null => {
   const queries = queryClient.getQueriesData<
     InfiniteData<Loot[] | { data?: Loot[] }>
   >({
-    queryKey: queryKeys.loots.listByGuild(guildId),
+    queryKey: [`/guilds/${guildId}/loots`],
     exact: false,
   });
 

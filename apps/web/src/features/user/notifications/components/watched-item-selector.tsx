@@ -18,7 +18,7 @@ import {
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { ItemImage } from "@/components/tiles";
 import type { GameItem } from "@/hooks/api/game-data/use-items";
-import { ItemRarity } from "@/hooks/api/loots/use-loots";
+import { ItemRarity } from "@/lib/loots/loot-types";
 import { cn } from "@/utils/cn";
 
 type WatchedItemSelectorProps = {

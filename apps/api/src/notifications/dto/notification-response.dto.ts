@@ -181,6 +181,56 @@ export class GuildNotificationRulesResponseDto extends createZodDto(
   },
 ) {}
 
+const NotificationAllowedMentionsResponseSchema = z.object({
+  parse: z.enum(["roles", "users", "everyone"]).array().optional(),
+  roles: z.array(z.string()).optional(),
+  users: z.array(z.string()).optional(),
+  repliedUser: z.boolean().optional(),
+});
+
+export class NotificationAllowedMentionsResponseDto extends createZodDto(
+  NotificationAllowedMentionsResponseSchema,
+) {}
+
+const NotificationJobPayloadSnapshotResponseSchema = z
+  .object({
+    title: z.string().nullable().optional(),
+    message: z.string().nullable().optional(),
+    content: z.string().nullable().optional(),
+    allowedMentions:
+      NotificationAllowedMentionsResponseSchema.nullable().optional(),
+    ruleId: z.number().int().nullable().optional(),
+    ruleName: z.string().nullable().optional(),
+    triggerType: z.nativeEnum(NotificationTriggerType).nullable().optional(),
+    world: z.string().nullable().optional(),
+    npcId: z.number().int().nullable().optional(),
+    npcName: z.string().nullable().optional(),
+    timerKey: z.string().nullable().optional(),
+    minSpawnTime: z.string().datetime({ offset: true }).nullable().optional(),
+    maxSpawnTime: z.string().datetime({ offset: true }).nullable().optional(),
+    scheduledFor: z.string().datetime({ offset: true }).nullable().optional(),
+    scheduleStrategy: z
+      .nativeEnum(NotificationScheduleStrategy)
+      .nullable()
+      .optional(),
+    scheduleAnchor: z
+      .nativeEnum(NotificationScheduleAnchor)
+      .nullable()
+      .optional(),
+    scheduleOffsetMinutes: z.number().int().nullable().optional(),
+    contentTemplate: z.string().nullable().optional(),
+    testTriggeredAt: z
+      .string()
+      .datetime({ offset: true })
+      .nullable()
+      .optional(),
+  })
+  .nullable();
+
+export class NotificationJobPayloadSnapshotResponseDto extends createZodDto(
+  NotificationJobPayloadSnapshotResponseSchema,
+) {}
+
 const NotificationJobResponseSchema = z.object({
   id: z.string(),
   ruleId: z.number().int(),
@@ -194,7 +244,7 @@ const NotificationJobResponseSchema = z.object({
   sourceEntityType: z.string().nullable(),
   sourceEntityId: z.string().nullable(),
   sourceEventId: z.string().nullable(),
-  payloadSnapshot: jsonValueSchema,
+  payloadSnapshot: NotificationJobPayloadSnapshotResponseSchema,
   attemptCount: z.number().int(),
   lastError: z.string().nullable(),
   blockedReason: z.string().nullable(),

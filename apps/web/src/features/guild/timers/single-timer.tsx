@@ -10,20 +10,25 @@ import { useEffect, useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/utils/cn";
 import { parseMsToTime } from "@/utils/date/parse-ms-to-time";
-import { useTimers, type Timer } from "@/hooks/api/game-data/use-timers";
+import { useGuildContext } from "@/hooks/context/use-guild-context";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import type { TimerResponseDto } from "@/lib/api/generated/main/model";
+import { invalidateTimersControllerGetTimers } from "@/lib/api/generated/main/timers/timers";
+import { useQueryClient } from "@tanstack/react-query";
 
 type SingleTimerProps = {
-  timer: Timer;
+  timer: TimerResponseDto;
 };
 
 const THRESHOLD = 30000;
 
 export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
   const { t } = useTranslation();
+  const guildId = useGuildId();
+  const { world } = useGuildContext();
+  const queryClient = useQueryClient();
   const maxSpawnTime = new Date(timer.maxSpawnTime).getTime();
   const minSpawnTime = new Date(timer.minSpawnTime).getTime();
-
-  const { refetch } = useTimers();
   const [timeLeft, setTimeLeft] = useState(() => maxSpawnTime - Date.now());
   const [minTimeLeft, setMinTimeLeft] = useState(
     () => minSpawnTime - Date.now(),
@@ -37,7 +42,13 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
       if (time <= 0) {
         clearInterval(interval);
         setTimeLeft(0);
-        refetch();
+        if (guildId) {
+          void invalidateTimersControllerGetTimers(
+            queryClient,
+            { guildId },
+            { world },
+          );
+        }
 
         return;
       }
@@ -47,30 +58,30 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [maxSpawnTime, minSpawnTime, refetch]);
+  }, [maxSpawnTime, minSpawnTime, queryClient, guildId, world]);
 
   const isMinSpawnTime = minSpawnTime < maxSpawnTime && minTimeLeft <= 0;
   const hasPassedRedThreshold = timeLeft < THRESHOLD;
-  const imageHasDomain = timer.npc.icon?.startsWith("https://"); // @TODO: temporary fix for icons with full URL
+  const npcName = timer.npc?.name ?? "";
+  const npcIcon = timer.npc?.icon ?? null;
+  const imageHasDomain = npcIcon?.startsWith("https://"); // @TODO: temporary fix for icons with full URL
 
   return (
     <div className="group flex items-center gap-3 rounded-lg border border-border/50 bg-card/40 px-3 py-2.5 hover:bg-card/60 hover:border-primary/50 transition-all cursor-pointer">
-      {timer.npc.icon && (
+      {npcIcon && (
         <div className="size-8 shrink-0 flex items-center justify-center">
           {/* eslint-disable-next-line eslint-plugin-next/no-img-element */}
           <img
             className="rounded max-h-8 max-w-8"
-            src={`${imageHasDomain ? "" : MARGONEM_CDN_NPCS_URL}${timer.npc.icon}`}
-            alt={timer.npc.name}
+            src={`${imageHasDomain ? "" : MARGONEM_CDN_NPCS_URL}${npcIcon}`}
+            alt={npcName}
           />
         </div>
       )}
       <div className="flex-1 min-w-0">
-        <span className="text-sm font-medium truncate block">
-          {timer.npc.name}
-        </span>
+        <span className="text-sm font-medium truncate block">{npcName}</span>
         <span className="text-muted-foreground text-xs truncate block">
-          {timer.member.name}
+          {timer.member?.name ?? ""}
         </span>
       </div>
       <div className="flex items-center gap-3 shrink-0">

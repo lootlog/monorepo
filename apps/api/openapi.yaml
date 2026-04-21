@@ -548,6 +548,7 @@ paths:
         - guilds
   /guilds/{guildId}/worlds:
     get:
+      description: Retrieve the list of worlds configured for a guild
       operationId: GuildsController_getWorldsByGuildId
       parameters:
         - name: guildId
@@ -557,7 +558,7 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: List of guild worlds
           content:
             application/json:
               schema:
@@ -566,6 +567,7 @@ paths:
                   type: string
       security:
         - bearer: []
+      summary: Get guild worlds
       tags:
         - guilds
   /guilds/{guildId}/permissions:
@@ -4655,6 +4657,12 @@ paths:
       responses:
         "200":
           description: List of maps
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GameMapResponseDto_Output"
       summary: Get all game maps
       tags:
         - maps
@@ -4672,6 +4680,12 @@ paths:
       responses:
         "200":
           description: List of map templates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MapTemplateResponseDto"
       security:
         - bearer: []
       summary: Get map templates
@@ -4696,12 +4710,50 @@ paths:
       responses:
         "201":
           description: Template created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MapTemplateResponseDto"
       security:
         - bearer: []
       summary: Create map template
       tags:
         - map-templates
   /guilds/{guildId}/map-templates/{templateId}:
+    put:
+      description: Update an existing reusable map template
+      operationId: MapTemplatesController_updateTemplate
+      parameters:
+        - name: templateId
+          required: true
+          in: path
+          description: Template ID
+          schema:
+            type: string
+        - name: guildId
+          required: true
+          in: path
+          description: Guild ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMapTemplateDto"
+      responses:
+        "200":
+          description: Template updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MapTemplateResponseDto"
+      security:
+        - bearer: []
+      summary: Update map template
+      tags:
+        - map-templates
     delete:
       description: Delete a map template
       operationId: MapTemplatesController_deleteTemplate
@@ -4721,6 +4773,10 @@ paths:
       responses:
         "200":
           description: Template deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusOkResponseDto_Output"
       security:
         - bearer: []
       summary: Delete map template
@@ -6567,18 +6623,6 @@ components:
         - permissions
         - lvlRangeFrom
         - lvlRangeTo
-    TimerResponseDto__schema0:
-      anyOf:
-        - type: string
-        - type: number
-        - type: boolean
-        - type: array
-          items:
-            $ref: "#/components/schemas/TimerResponseDto__schema0"
-        - type: object
-          additionalProperties:
-            $ref: "#/components/schemas/TimerResponseDto__schema0"
-      nullable: true
     TimerResponseDto:
       type: object
       properties:
@@ -6599,7 +6643,48 @@ components:
           format: date-time
           pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         npc:
-          $ref: "#/components/schemas/TimerResponseDto__schema0"
+          type: object
+          properties:
+            id:
+              type: number
+            name:
+              type: string
+            prof:
+              type: string
+            location:
+              type: string
+            wt:
+              type: string
+            lvl:
+              type: number
+            type:
+              type: string
+              enum:
+                - COMMON
+                - ELITE
+                - ELITE2
+                - ELITE3
+                - HERO
+                - EVENT_HERO
+                - TITAN
+                - COLOSSUS
+                - NPC
+            icon:
+              type: string
+              nullable: true
+            margonemType:
+              type: string
+          required:
+            - id
+            - name
+            - prof
+            - location
+            - wt
+            - lvl
+            - type
+            - icon
+            - margonemType
+          nullable: true
         wasReset:
           type: boolean
         member:
@@ -7280,25 +7365,21 @@ components:
             - merge
       required:
         - localData
-    LootResponseDto__schema0:
-      anyOf:
-        - type: string
-        - type: number
-        - type: boolean
-        - type: array
-          items:
-            $ref: "#/components/schemas/LootResponseDto__schema0"
-        - type: object
-          additionalProperties:
-            $ref: "#/components/schemas/LootResponseDto__schema0"
-      nullable: true
     LootResponseDto:
       type: object
       properties:
         id:
           type: number
+        uniqueId:
+          type: string
         world:
           type: string
+        source:
+          type: string
+          enum:
+            - LOOTBOX
+            - DIALOG
+            - FIGHT
         location:
           type: string
         items:
@@ -7314,11 +7395,42 @@ components:
                 type: string
               icon:
                 type: string
+              stat:
+                type: string
+              type:
+                type: string
+                nullable: true
+              rarity:
+                type: string
+                enum:
+                  - UNIQUE
+                  - HEROIC
+                  - LEGENDARY
+                  - UPGRADED
+                nullable: true
+              lvl:
+                type: number
+              prof:
+                type: array
+                items:
+                  type: string
+                  enum:
+                    - WARRIOR
+                    - PALADIN
+                    - HUNTER
+                    - MAGE
+                    - BLADE_DANCER
+                    - TRACKER
             required:
               - id
               - hid
               - name
               - icon
+              - stat
+              - type
+              - rarity
+              - lvl
+              - prof
         players:
           type: array
           items:
@@ -7330,9 +7442,40 @@ components:
                   - type: number
               name:
                 type: string
+              lvl:
+                type: number
+                nullable: true
+              prof:
+                type: string
+                enum:
+                  - WARRIOR
+                  - PALADIN
+                  - HUNTER
+                  - MAGE
+                  - BLADE_DANCER
+                  - TRACKER
+                nullable: true
+              icon:
+                type: string
+                nullable: true
+              characterId:
+                type: number
+                nullable: true
+              accountId:
+                type: number
+                nullable: true
+              hpp:
+                type: number
+                nullable: true
             required:
               - id
               - name
+              - lvl
+              - prof
+              - icon
+              - characterId
+              - accountId
+              - hpp
         npcs:
           type: array
           items:
@@ -7342,27 +7485,107 @@ components:
                 type: number
               name:
                 type: string
+              wt:
+                type: number
+                nullable: true
+              lvl:
+                type: number
+                nullable: true
+              prof:
+                type: string
+                enum:
+                  - WARRIOR
+                  - PALADIN
+                  - HUNTER
+                  - MAGE
+                  - BLADE_DANCER
+                  - TRACKER
+                nullable: true
+              icon:
+                type: string
+                nullable: true
+              type:
+                type: string
+                enum:
+                  - COMMON
+                  - ELITE
+                  - ELITE2
+                  - ELITE3
+                  - HERO
+                  - EVENT_HERO
+                  - TITAN
+                  - COLOSSUS
+                  - NPC
+                nullable: true
+              margonemType:
+                type: number
+                nullable: true
             required:
               - id
               - name
+              - wt
+              - lvl
+              - prof
+              - icon
+              - type
+              - margonemType
         lootShare:
-          allOf:
-            - $ref: "#/components/schemas/LootResponseDto__schema0"
-          nullable: true
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
         createdAt:
           type: string
           format: date-time
           pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        submissions:
+          type: array
+          items:
+            type: object
+            properties:
+              guildId:
+                type: string
+              memberId:
+                type: number
+              lootId:
+                type: number
+              member:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  avatar:
+                    type: string
+                    nullable: true
+                  userId:
+                    type: string
+                required:
+                  - name
+                  - userId
+            required:
+              - guildId
+              - memberId
+              - lootId
+              - member
         commentsCount:
           type: number
       required:
         - id
+        - uniqueId
         - world
+        - source
         - location
         - items
         - players
         - npcs
+        - lootShare
         - createdAt
+        - updatedAt
         - commentsCount
     LootStatsResponseDto_Output:
       type: object
@@ -7530,25 +7753,21 @@ components:
           type: number
       required:
         - count
-    NullableLootResponseDto__schema0:
-      anyOf:
-        - type: string
-        - type: number
-        - type: boolean
-        - type: array
-          items:
-            $ref: "#/components/schemas/NullableLootResponseDto__schema0"
-        - type: object
-          additionalProperties:
-            $ref: "#/components/schemas/NullableLootResponseDto__schema0"
-      nullable: true
     NullableLootResponseDto:
       type: object
       properties:
         id:
           type: number
+        uniqueId:
+          type: string
         world:
           type: string
+        source:
+          type: string
+          enum:
+            - LOOTBOX
+            - DIALOG
+            - FIGHT
         location:
           type: string
         items:
@@ -7564,11 +7783,42 @@ components:
                 type: string
               icon:
                 type: string
+              stat:
+                type: string
+              type:
+                type: string
+                nullable: true
+              rarity:
+                type: string
+                enum:
+                  - UNIQUE
+                  - HEROIC
+                  - LEGENDARY
+                  - UPGRADED
+                nullable: true
+              lvl:
+                type: number
+              prof:
+                type: array
+                items:
+                  type: string
+                  enum:
+                    - WARRIOR
+                    - PALADIN
+                    - HUNTER
+                    - MAGE
+                    - BLADE_DANCER
+                    - TRACKER
             required:
               - id
               - hid
               - name
               - icon
+              - stat
+              - type
+              - rarity
+              - lvl
+              - prof
         players:
           type: array
           items:
@@ -7580,9 +7830,40 @@ components:
                   - type: number
               name:
                 type: string
+              lvl:
+                type: number
+                nullable: true
+              prof:
+                type: string
+                enum:
+                  - WARRIOR
+                  - PALADIN
+                  - HUNTER
+                  - MAGE
+                  - BLADE_DANCER
+                  - TRACKER
+                nullable: true
+              icon:
+                type: string
+                nullable: true
+              characterId:
+                type: number
+                nullable: true
+              accountId:
+                type: number
+                nullable: true
+              hpp:
+                type: number
+                nullable: true
             required:
               - id
               - name
+              - lvl
+              - prof
+              - icon
+              - characterId
+              - accountId
+              - hpp
         npcs:
           type: array
           items:
@@ -7592,27 +7873,107 @@ components:
                 type: number
               name:
                 type: string
+              wt:
+                type: number
+                nullable: true
+              lvl:
+                type: number
+                nullable: true
+              prof:
+                type: string
+                enum:
+                  - WARRIOR
+                  - PALADIN
+                  - HUNTER
+                  - MAGE
+                  - BLADE_DANCER
+                  - TRACKER
+                nullable: true
+              icon:
+                type: string
+                nullable: true
+              type:
+                type: string
+                enum:
+                  - COMMON
+                  - ELITE
+                  - ELITE2
+                  - ELITE3
+                  - HERO
+                  - EVENT_HERO
+                  - TITAN
+                  - COLOSSUS
+                  - NPC
+                nullable: true
+              margonemType:
+                type: number
+                nullable: true
             required:
               - id
               - name
+              - wt
+              - lvl
+              - prof
+              - icon
+              - type
+              - margonemType
         lootShare:
-          allOf:
-            - $ref: "#/components/schemas/NullableLootResponseDto__schema0"
-          nullable: true
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
         createdAt:
           type: string
           format: date-time
           pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        submissions:
+          type: array
+          items:
+            type: object
+            properties:
+              guildId:
+                type: string
+              memberId:
+                type: number
+              lootId:
+                type: number
+              member:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  avatar:
+                    type: string
+                    nullable: true
+                  userId:
+                    type: string
+                required:
+                  - name
+                  - userId
+            required:
+              - guildId
+              - memberId
+              - lootId
+              - member
         commentsCount:
           type: number
       required:
         - id
+        - uniqueId
         - world
+        - source
         - location
         - items
         - players
         - npcs
+        - lootShare
         - createdAt
+        - updatedAt
         - commentsCount
       nullable: true
     CreateLootDto:
@@ -7801,6 +8162,8 @@ components:
           type: number
         lootId:
           type: number
+        guildId:
+          type: string
         content:
           type: string
         member:
@@ -7828,11 +8191,18 @@ components:
           type: string
           format: date-time
           pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
       required:
         - id
         - lootId
+        - guildId
         - content
+        - member
         - createdAt
+        - updatedAt
     CreateCommentDto:
       type: object
       properties:
@@ -7939,6 +8309,131 @@ components:
         - id
         - npcType
         - allowedRarities
+    ChatMessageResponseDto_Output:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 1
+        guildId:
+          type: string
+          minLength: 1
+        message:
+          type: string
+          maxLength: 128
+        senderId:
+          type: string
+          minLength: 1
+        timestamp:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        type:
+          type: string
+          enum:
+            - NORMAL
+            - NOTIFICATION
+            - NPC
+            - PARTY_GATHERING
+        characterData:
+          type: object
+          properties:
+            nick:
+              type: string
+              minLength: 1
+            id:
+              type: number
+            acc:
+              type: number
+            lvl:
+              type: number
+            prof:
+              type: string
+              minLength: 1
+            icon:
+              type: string
+              minLength: 1
+          required:
+            - nick
+            - id
+            - acc
+            - lvl
+            - prof
+            - icon
+        npc:
+          type: object
+          properties:
+            id:
+              type: number
+            name:
+              type: string
+              minLength: 1
+            location:
+              type: string
+              minLength: 1
+            lvl:
+              type: number
+            prof:
+              type: string
+              minLength: 1
+            wt:
+              type: number
+            hpp:
+              type: number
+            icon:
+              type: string
+              minLength: 1
+            type:
+              type: number
+            x:
+              type: number
+            "y":
+              type: number
+          required:
+            - id
+            - name
+            - location
+            - lvl
+            - prof
+            - wt
+            - icon
+            - type
+        partyGathering:
+          type: object
+          properties:
+            notificationId:
+              type: string
+              minLength: 1
+            discordId:
+              type: string
+              minLength: 1
+            description:
+              type: string
+              maxLength: 200
+            minLvl:
+              type: number
+              minimum: 1
+              maximum: 500
+            maxLvl:
+              type: number
+              minimum: 1
+              maximum: 500
+            world:
+              type: string
+              minLength: 1
+              maxLength: 50
+          required:
+            - notificationId
+            - discordId
+            - world
+      required:
+        - id
+        - guildId
+        - message
+        - senderId
+        - timestamp
+        - type
+        - characterData
     SendMessageDto:
       type: object
       properties:
@@ -8056,6 +8551,13 @@ components:
           maxLength: 128
       required:
         - message
+    ChatMessageActionResponseDto_Output:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required:
+        - success
     ReservationsResponseDto:
       type: object
       additionalProperties:
@@ -8239,6 +8741,20 @@ components:
       required:
         - guildIds
         - world
+    NotificationResponseDto_Output:
+      type: object
+      properties:
+        notificationId:
+          type: string
+          minLength: 1
+        guildIds:
+          type: array
+          items:
+            type: string
+            minLength: 1
+      required:
+        - notificationId
+        - guildIds
     CreateVolunteerDto:
       type: object
       properties:
@@ -8363,6 +8879,19 @@ components:
         - guildIds
         - world
         - character
+    CancelPartyGatheringResponseDto_Output:
+      type: object
+      properties:
+        success:
+          type: boolean
+        guildIds:
+          type: array
+          items:
+            type: string
+            minLength: 1
+      required:
+        - success
+        - guildIds
     NotificationTargetResponseDto__schema0:
       anyOf:
         - type: string
@@ -9496,7 +10025,110 @@ components:
                 type: string
                 nullable: true
               payloadSnapshot:
-                $ref: "#/components/schemas/NotificationJobsResponseDto__schema0"
+                type: object
+                properties:
+                  title:
+                    type: string
+                    nullable: true
+                  message:
+                    type: string
+                    nullable: true
+                  content:
+                    type: string
+                    nullable: true
+                  allowedMentions:
+                    type: object
+                    properties:
+                      parse:
+                        type: array
+                        items:
+                          type: string
+                          enum:
+                            - roles
+                            - users
+                            - everyone
+                      roles:
+                        type: array
+                        items:
+                          type: string
+                      users:
+                        type: array
+                        items:
+                          type: string
+                      repliedUser:
+                        type: boolean
+                    nullable: true
+                  ruleId:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+                    nullable: true
+                  ruleName:
+                    type: string
+                    nullable: true
+                  triggerType:
+                    type: string
+                    enum:
+                      - TIMER_BEFORE_SPAWN
+                      - NPC_SPAWNED
+                      - WATCHED_ITEM_DROPPED
+                      - SCHEDULED_MESSAGE
+                    nullable: true
+                  world:
+                    type: string
+                    nullable: true
+                  npcId:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+                    nullable: true
+                  npcName:
+                    type: string
+                    nullable: true
+                  timerKey:
+                    type: string
+                    nullable: true
+                  minSpawnTime:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+                    nullable: true
+                  maxSpawnTime:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+                    nullable: true
+                  scheduledFor:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+                    nullable: true
+                  scheduleStrategy:
+                    type: string
+                    enum:
+                      - SPAWN_WINDOW_RELATIVE
+                      - FIXED_DATETIME
+                    nullable: true
+                  scheduleAnchor:
+                    type: string
+                    enum:
+                      - MIN_SPAWN
+                      - MAX_SPAWN
+                    nullable: true
+                  scheduleOffsetMinutes:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+                    nullable: true
+                  contentTemplate:
+                    type: string
+                    nullable: true
+                  testTriggeredAt:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+                    nullable: true
+                nullable: true
               attemptCount:
                 type: integer
                 minimum: -9007199254740991
@@ -9830,7 +10462,110 @@ components:
                 type: string
                 nullable: true
               payloadSnapshot:
-                $ref: "#/components/schemas/NotificationJobsResponseDto__schema0"
+                type: object
+                properties:
+                  title:
+                    type: string
+                    nullable: true
+                  message:
+                    type: string
+                    nullable: true
+                  content:
+                    type: string
+                    nullable: true
+                  allowedMentions:
+                    type: object
+                    properties:
+                      parse:
+                        type: array
+                        items:
+                          type: string
+                          enum:
+                            - roles
+                            - users
+                            - everyone
+                      roles:
+                        type: array
+                        items:
+                          type: string
+                      users:
+                        type: array
+                        items:
+                          type: string
+                      repliedUser:
+                        type: boolean
+                    nullable: true
+                  ruleId:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+                    nullable: true
+                  ruleName:
+                    type: string
+                    nullable: true
+                  triggerType:
+                    type: string
+                    enum:
+                      - TIMER_BEFORE_SPAWN
+                      - NPC_SPAWNED
+                      - WATCHED_ITEM_DROPPED
+                      - SCHEDULED_MESSAGE
+                    nullable: true
+                  world:
+                    type: string
+                    nullable: true
+                  npcId:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+                    nullable: true
+                  npcName:
+                    type: string
+                    nullable: true
+                  timerKey:
+                    type: string
+                    nullable: true
+                  minSpawnTime:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+                    nullable: true
+                  maxSpawnTime:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+                    nullable: true
+                  scheduledFor:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+                    nullable: true
+                  scheduleStrategy:
+                    type: string
+                    enum:
+                      - SPAWN_WINDOW_RELATIVE
+                      - FIXED_DATETIME
+                    nullable: true
+                  scheduleAnchor:
+                    type: string
+                    enum:
+                      - MIN_SPAWN
+                      - MAX_SPAWN
+                    nullable: true
+                  scheduleOffsetMinutes:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+                    nullable: true
+                  contentTemplate:
+                    type: string
+                    nullable: true
+                  testTriggeredAt:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+                    nullable: true
+                nullable: true
               attemptCount:
                 type: integer
                 minimum: -9007199254740991
@@ -13573,6 +14308,49 @@ components:
           type: array
           items:
             type: string
+    GameMapResponseDto_Output:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+      required:
+        - id
+        - name
+    MapTemplateResponseDto:
+      type: object
+      properties:
+        id:
+          type: string
+        guildId:
+          type: string
+        name:
+          type: string
+        maps:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                minimum: -9007199254740991
+                maximum: 9007199254740991
+              name:
+                type: string
+            required:
+              - id
+              - name
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+      required:
+        - id
+        - guildId
+        - name
+        - maps
+        - createdAt
     CreateMapTemplateDto:
       type: object
       properties:
@@ -14121,161 +14899,3 @@ components:
         - overview
         - npcs
         - pagination
-    ChatMessageResponseDto_Output:
-      type: object
-      properties:
-        id:
-          type: string
-          minLength: 1
-        guildId:
-          type: string
-          minLength: 1
-        message:
-          type: string
-          maxLength: 128
-        senderId:
-          type: string
-          minLength: 1
-        timestamp:
-          type: string
-          format: date-time
-        type:
-          type: string
-          enum:
-            - NORMAL
-            - NOTIFICATION
-            - NPC
-            - PARTY_GATHERING
-        characterData:
-          type: object
-          properties:
-            nick:
-              type: string
-              minLength: 1
-            id:
-              type: number
-            acc:
-              type: number
-            lvl:
-              type: number
-            prof:
-              type: string
-              minLength: 1
-            icon:
-              type: string
-              minLength: 1
-          required:
-            - nick
-            - id
-            - acc
-            - lvl
-            - prof
-            - icon
-        npc:
-          type: object
-          properties:
-            id:
-              type: number
-            name:
-              type: string
-              minLength: 1
-            location:
-              type: string
-              minLength: 1
-            lvl:
-              type: number
-            prof:
-              type: string
-              minLength: 1
-            wt:
-              type: number
-            hpp:
-              type: number
-            icon:
-              type: string
-              minLength: 1
-            type:
-              type: number
-            x:
-              type: number
-            "y":
-              type: number
-          required:
-            - id
-            - name
-            - location
-            - lvl
-            - prof
-            - wt
-            - icon
-            - type
-        partyGathering:
-          type: object
-          properties:
-            notificationId:
-              type: string
-              minLength: 1
-            discordId:
-              type: string
-              minLength: 1
-            description:
-              type: string
-              maxLength: 200
-            minLvl:
-              type: number
-              minimum: 1
-              maximum: 500
-            maxLvl:
-              type: number
-              minimum: 1
-              maximum: 500
-            world:
-              type: string
-              minLength: 1
-              maxLength: 50
-          required:
-            - notificationId
-            - discordId
-            - world
-      required:
-        - id
-        - guildId
-        - message
-        - senderId
-        - timestamp
-        - type
-        - characterData
-    ChatMessageActionResponseDto_Output:
-      type: object
-      properties:
-        success:
-          type: boolean
-      required:
-        - success
-    NotificationResponseDto_Output:
-      type: object
-      properties:
-        notificationId:
-          type: string
-          minLength: 1
-        guildIds:
-          type: array
-          items:
-            type: string
-            minLength: 1
-      required:
-        - notificationId
-        - guildIds
-    CancelPartyGatheringResponseDto_Output:
-      type: object
-      properties:
-        success:
-          type: boolean
-        guildIds:
-          type: array
-          items:
-            type: string
-            minLength: 1
-      required:
-        - success
-        - guildIds

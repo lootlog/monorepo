@@ -28,8 +28,8 @@ import { USER_WATCHED_ITEMS_LIMIT } from "@/features/user/notifications/constant
 import { WatchedItemSelector } from "@/features/user/notifications/components/watched-item-selector";
 import { getUserNotificationsErrorMessage } from "@/features/user/notifications/utils/get-user-notifications-error-message";
 import { useItems, type GameItem } from "@/hooks/api/game-data/use-items";
-import { useGuildsWorlds } from "@/hooks/api/game-data/use-guilds-worlds";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueries, useQueryClient } from "@tanstack/react-query";
+import { getGuildsControllerGetWorldsByGuildIdQueryOptions } from "@/lib/api/generated/main/guilds/guilds";
 import { useNotificationsUserControllerCreateWatchedItem } from "@/lib/api/generated/main/notifications/notifications";
 import type { WatchedItemResponseDto } from "@/lib/api/generated/main/model";
 import { invalidateUserNotificationQueries } from "../user-notifications-api";
@@ -129,7 +129,14 @@ export const WatchFormDialog = ({
   const selectedItem = form.watch("item");
   const isManualEntry = form.watch("manualEntry");
 
-  const { worlds: worldOptions } = useGuildsWorlds(selectedGuildIds);
+  const worldQueries = useQueries({
+    queries: selectedGuildIds.map((guildId) =>
+      getGuildsControllerGetWorldsByGuildIdQueryOptions({ guildId }),
+    ),
+  });
+  const worldOptions = [
+    ...new Set(worldQueries.flatMap((query) => query.data ?? [])),
+  ].sort();
   const { data: itemSearchResults = [], isFetching: isItemsLoading } = useItems(
     {
       search: itemSearchValue,

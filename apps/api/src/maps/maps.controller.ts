@@ -1,5 +1,7 @@
 import { Controller, Get } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
+import { ApiTags, ApiOperation } from "@nestjs/swagger";
+import { ZodResponse } from "nestjs-zod";
+import { GameMapResponseDto } from "src/shared/dto/game-map-response.dto";
 import { MapsService } from "./maps.service";
 
 @ApiTags("maps")
@@ -13,9 +15,10 @@ export class MapsController {
     description:
       "Returns a list of all game maps from Margonem, cached for 1 hour",
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "List of maps",
+    type: [GameMapResponseDto],
   })
   getMaps() {
     return this.mapsService.getMaps();

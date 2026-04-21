@@ -1,5 +1,5 @@
 import { NpcType } from "@/hooks/api/game-data/use-npcs";
-import { ItemRarity } from "@/hooks/api/loots/use-loots";
+import { ItemRarity } from "@/lib/loots/loot-types";
 import { useTranslation } from "react-i18next";
 
 type LootQuickFilter = {

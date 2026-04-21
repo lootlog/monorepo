@@ -16,7 +16,7 @@ limit: number;
  * @minimum -9007199254740991
  * @maximum 9007199254740991
  */
-cursor: number;
+cursor?: number;
 npcs?: string[];
 players?: string[];
 rarities?: string[];
@@ -26,32 +26,32 @@ world?: string;
  * @minimum 0
  * @maximum 500
  */
-npcLevelMin: number;
+npcLevelMin?: number;
 /**
  * @minimum 0
  * @maximum 500
  */
-npcLevelMax: number;
+npcLevelMax?: number;
 /**
  * @minimum 0
  * @maximum 500
  */
-itemLevelMin: number;
+itemLevelMin?: number;
 /**
  * @minimum 0
  * @maximum 500
  */
-itemLevelMax: number;
+itemLevelMax?: number;
 /**
  * @minimum 0
  * @maximum 500
  */
-playerLevelMin: number;
+playerLevelMin?: number;
 /**
  * @minimum 0
  * @maximum 500
  */
-playerLevelMax: number;
+playerLevelMax?: number;
 search?: string;
 hid?: string;
 itemNames?: string[];

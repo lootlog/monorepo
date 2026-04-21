@@ -16,9 +16,11 @@ const LootCommentMemberResponseSchema = z.object({
 const LootCommentResponseSchema = z.object({
   id: z.number(),
   lootId: z.number(),
+  guildId: z.string(),
   content: z.string(),
-  member: LootCommentMemberResponseSchema.optional(),
+  member: LootCommentMemberResponseSchema,
   createdAt: isoDatetimeCodec,
+  updatedAt: isoDatetimeCodec,
 });
 
 export class LootCommentResponseDto extends createZodDto(

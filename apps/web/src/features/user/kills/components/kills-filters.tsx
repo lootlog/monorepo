@@ -10,9 +10,12 @@ import {
 } from "@lootlog/ui/components/select";
 import {
   TRACKABLE_NPC_TYPES,
-  useDashboardKillStats,
   type NpcType,
-} from "@/features/user/dashboard/hooks/use-dashboard-kill-stats";
+} from "@/features/user/kills/npc-types";
+import {
+  getKillsControllerGetUserKillStatsQueryKey,
+  useKillsControllerGetUserKillStats,
+} from "@/lib/api/generated/main/kills/kills";
 
 export type KillsFiltersState = {
   world?: string;
@@ -40,7 +43,12 @@ export const KillsFilters: React.FC<KillsFiltersProps> = ({
   onMaxLvlChange,
 }) => {
   const { t } = useTranslation();
-  const { data } = useDashboardKillStats();
+  const { data } = useKillsControllerGetUserKillStats(undefined, {
+    query: {
+      queryKey: getKillsControllerGetUserKillStatsQueryKey(),
+      staleTime: 30_000,
+    },
+  });
 
   const worlds = data?.overview.killsByWorld
     ? Object.keys(data.overview.killsByWorld).sort()

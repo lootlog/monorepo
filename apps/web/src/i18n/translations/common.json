@@ -3,7 +3,9 @@
   "noResults": "Brak wyników",
   "cancel": "Anuluj",
   "reset": "Resetuj",
+  "delete": "Usuń",
   "levelShort": "Lvl {{level}}",
+  "avatarAlt": "Avatar",
   "stats": {
     "kills": "Statystyki killi",
     "loots": "Statystyki lootów"

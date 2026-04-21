@@ -33,8 +33,12 @@ import {
   type KillsFiltersState,
 } from "./components/kills-filters";
 import { createKillsColumns } from "./components/kills-columns";
-import { useNpcKills } from "./hooks/use-npc-kills";
-import type { NpcType } from "@/features/user/dashboard/hooks/use-dashboard-kill-stats";
+import type { NpcType } from "@/features/user/kills/npc-types";
+import type { KillsControllerGetUserNpcKillsParams } from "@/lib/api/generated/main/model";
+import {
+  getKillsControllerGetUserNpcKillsQueryKey,
+  useKillsControllerGetUserNpcKills,
+} from "@/lib/api/generated/main/kills/kills";
 
 type KillsSearchParams = {
   world?: string;
@@ -79,17 +83,27 @@ export const KillsPage: React.FC = () => {
   };
 
   const cursor = searchParams.cursor ? Number(searchParams.cursor) : 0;
-  const sortOrder = sorting[0]?.desc === false ? "asc" : "desc";
-  const sortBy =
-    sorting[0]?.id === "npcLvl" ? "level" : ("kills" as "kills" | "level");
-
-  const { data, isLoading } = useNpcKills({
+  const sortOrder: KillsControllerGetUserNpcKillsParams["sortOrder"] =
+    sorting[0]?.desc === false ? "asc" : "desc";
+  const sortBy: KillsControllerGetUserNpcKillsParams["sortBy"] =
+    sorting[0]?.id === "npcLvl" ? "level" : "kills";
+  const npcKillsParams: KillsControllerGetUserNpcKillsParams = {
     ...filters,
     cursor,
     limit: ITEMS_PER_PAGE,
     sortOrder,
     sortBy,
-  });
+  };
+
+  const { data, isLoading } = useKillsControllerGetUserNpcKills(
+    npcKillsParams,
+    {
+      query: {
+        queryKey: getKillsControllerGetUserNpcKillsQueryKey(npcKillsParams),
+        staleTime: 30_000,
+      },
+    },
+  );
 
   const updateSearchParams = useCallback(
     (updates: Partial<KillsSearchParams>) => {

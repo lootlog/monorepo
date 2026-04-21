@@ -5,8 +5,21 @@
  * The Lootlog API documentation
  * OpenAPI spec version: 1.0
  */
+import type { LootResponseDtoPlayersItemProf } from './loot-response-dto-players-item-prof';
 
 export type LootResponseDtoPlayersItem = {
   id: string | number;
   name: string;
+  /** @nullable */
+  lvl: number | null;
+  /** @nullable */
+  prof: LootResponseDtoPlayersItemProf;
+  /** @nullable */
+  icon: string | null;
+  /** @nullable */
+  characterId: number | null;
+  /** @nullable */
+  accountId: number | null;
+  /** @nullable */
+  hpp: number | null;
 };

@@ -11,7 +11,7 @@ import {
   useReservationsControllerGetReservations,
   useReservationsControllerGetReservationsCards,
 } from "@/lib/api/generated/main/reservations/reservations";
-import type { ReservationCardResponseDto } from "@/lib/api/generated/main/model";
+import type { ReservationsCardsResponseDtoOutputItem } from "@/lib/api/generated/main/model";
 import { Input } from "@lootlog/ui/components/input";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
@@ -66,11 +66,11 @@ export const Reservations: React.FC = () => {
   const normalizedSearch = searchValue.trim().toLowerCase();
   const filteredCards = useMemo(() => {
     if (!reservationsCards) {
-      return [] as Array<[string, ReservationCardResponseDto[]]>;
+      return [] as Array<[string, ReservationsCardsResponseDtoOutputItem[]]>;
     }
 
     const entries = Object.entries(reservationsCards) as Array<
-      [string, ReservationCardResponseDto[]]
+      [string, ReservationsCardsResponseDtoOutputItem[]]
     >;
 
     if (!normalizedSearch) {

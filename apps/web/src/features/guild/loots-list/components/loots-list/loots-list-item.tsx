@@ -1,4 +1,4 @@
-import { ItemRarity, type Loot, type Item } from "@/hooks/api/loots/use-loots";
+import { ItemRarity, type Loot, type Item } from "@/lib/loots/loot-types";
 import { PlayerTile } from "@/features/guild/loots-list/components/loots-list/player-tile";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { LOOT_SHARE_COLOR_PALETTE } from "@/features/guild/loots-list/constants/loot-share-color-palette";

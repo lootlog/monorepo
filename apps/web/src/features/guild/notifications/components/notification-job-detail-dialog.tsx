@@ -35,10 +35,10 @@ export const NotificationJobDetailDialog = ({
   }
 
   const payload = job.payloadSnapshot;
-  const world = (payload?.world as string) ?? job.rule.world;
-  const npcName = payload?.npcName as string | undefined;
-  const message = payload?.message as string | undefined;
-  const title = payload?.title as string | undefined;
+  const world = payload?.world ?? job.rule.world;
+  const npcName = payload?.npcName ?? undefined;
+  const message = payload?.message ?? payload?.content ?? undefined;
+  const title = payload?.title ?? undefined;
 
   const hasDeliveryDetails =
     job.attemptCount > 0 || job.providerMessageId || job.sourceEntityType;
