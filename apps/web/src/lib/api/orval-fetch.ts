@@ -43,14 +43,12 @@ const executeOrvalFetch = <TData>({
   fallbackToWindowOrigin = false,
   path,
   requestInit = {},
-  requestInitOverride,
 }: {
   baseURL: string | undefined;
   envVarName: string;
   fallbackToWindowOrigin?: boolean;
   path: string;
   requestInit?: RequestInit;
-  requestInitOverride?: (requestInit: RequestInit) => RequestInit;
 }): Promise<TData> => {
   const resolvedBaseUrl = resolveBaseUrl({
     baseURL,
@@ -58,9 +56,6 @@ const executeOrvalFetch = <TData>({
     fallbackToWindowOrigin,
   });
 
-  const normalizedRequestInit = requestInitOverride
-    ? requestInitOverride(requestInit)
-    : requestInit;
   const requestUrl = buildRequestUrl({
     baseURL: resolvedBaseUrl,
     path,
@@ -68,8 +63,8 @@ const executeOrvalFetch = <TData>({
 
   return executeApiRequest<TData>({
     url: requestUrl,
-    method: normalizedRequestInit.method ?? "GET",
-    requestInit: normalizedRequestInit,
+    method: requestInit.method ?? "GET",
+    requestInit,
   });
 };
 
@@ -119,10 +114,6 @@ export function orvalFetchSearch<TData>(
     envVarName: "VITE_SEARCH_API_URL",
     path,
     requestInit,
-    requestInitOverride: (currentRequestInit) => ({
-      ...currentRequestInit,
-      credentials: currentRequestInit.credentials ?? "omit",
-    }),
   });
 }
 
