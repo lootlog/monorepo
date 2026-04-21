@@ -35,7 +35,7 @@ import {
 } from "@/lib/api/generated/main/map-templates/map-templates";
 import { useMapsControllerGetMaps } from "@/lib/api/generated/main/maps/maps";
 import type {
-  GameMapResponseDto,
+  GameMapResponseDtoOutput,
   MapTemplateResponseDto,
   MapTemplateResponseDtoMapsItem,
 } from "@/lib/api/generated/main/model";
@@ -151,7 +151,10 @@ export const MapTemplateFormDialog = ({
     onOpenChange(isOpen);
   };
 
-  const handleToggleMap = (gameMap: GameMapResponseDto, checked: boolean) => {
+  const handleToggleMap = (
+    gameMap: GameMapResponseDtoOutput,
+    checked: boolean,
+  ) => {
     const currentMaps = form.getValues("maps");
     if (checked) {
       form.setValue("maps", [
