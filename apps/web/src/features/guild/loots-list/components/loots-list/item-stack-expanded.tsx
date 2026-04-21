@@ -1,6 +1,6 @@
 import { WatchableItemTile } from "@/components/tiles";
 import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
-import type { Item } from "@/hooks/api/loots/use-loots";
+import type { Item } from "@/lib/loots/loot-types";
 import { motion } from "framer-motion";
 import { createPortal } from "react-dom";
 import type { FC } from "react";

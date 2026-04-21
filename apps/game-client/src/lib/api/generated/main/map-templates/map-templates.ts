@@ -24,9 +24,12 @@ import type {
 
 import type {
   CreateMapTemplateDto,
+  MapTemplateResponseDto,
   MapTemplatesControllerCreateTemplatePathParameters,
   MapTemplatesControllerDeleteTemplatePathParameters,
-  MapTemplatesControllerGetTemplatesPathParameters
+  MapTemplatesControllerGetTemplatesPathParameters,
+  MapTemplatesControllerUpdateTemplatePathParameters,
+  StatusOkResponseDtoOutput
 } from '../model';
 
 import { orvalFetch } from '../../../orval-fetch';
@@ -49,9 +52,9 @@ export const getMapTemplatesControllerGetTemplatesUrl = ({ guildId }: MapTemplat
   return `/guilds/${guildId}/map-templates`
 }
 
-export const mapTemplatesControllerGetTemplates = async ({ guildId }: MapTemplatesControllerGetTemplatesPathParameters, options?: RequestInit): Promise<void> => {
+export const mapTemplatesControllerGetTemplates = async ({ guildId }: MapTemplatesControllerGetTemplatesPathParameters, options?: RequestInit): Promise<MapTemplateResponseDto[]> => {
 
-  return orvalFetch<void>(getMapTemplatesControllerGetTemplatesUrl({ guildId }),
+  return orvalFetch<MapTemplateResponseDto[]>(getMapTemplatesControllerGetTemplatesUrl({ guildId }),
   {
     ...options,
     method: 'GET'
@@ -169,9 +172,9 @@ export const getMapTemplatesControllerCreateTemplateUrl = ({ guildId }: MapTempl
 }
 
 export const mapTemplatesControllerCreateTemplate = async ({ guildId }: MapTemplatesControllerCreateTemplatePathParameters,
-    createMapTemplateDto: CreateMapTemplateDto, options?: RequestInit): Promise<void> => {
+    createMapTemplateDto: CreateMapTemplateDto, options?: RequestInit): Promise<MapTemplateResponseDto> => {
 
-  return orvalFetch<void>(getMapTemplatesControllerCreateTemplateUrl({ guildId }),
+  return orvalFetch<MapTemplateResponseDto>(getMapTemplatesControllerCreateTemplateUrl({ guildId }),
   {
     ...options,
     method: 'POST',
@@ -229,6 +232,78 @@ export const useMapTemplatesControllerCreateTemplate = <TError = ErrorType<unkno
       return useMutation(getMapTemplatesControllerCreateTemplateMutationOptions(options));
     }
     /**
+ * Update an existing reusable map template
+ * @summary Update map template
+ */
+export const getMapTemplatesControllerUpdateTemplateUrl = ({ guildId, templateId }: MapTemplatesControllerUpdateTemplatePathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/map-templates/${templateId}`
+}
+
+export const mapTemplatesControllerUpdateTemplate = async ({ guildId, templateId }: MapTemplatesControllerUpdateTemplatePathParameters,
+    createMapTemplateDto: CreateMapTemplateDto, options?: RequestInit): Promise<MapTemplateResponseDto> => {
+
+  return orvalFetch<MapTemplateResponseDto>(getMapTemplatesControllerUpdateTemplateUrl({ guildId, templateId }),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      createMapTemplateDto,)
+  }
+);}
+
+
+
+
+export const getMapTemplatesControllerUpdateTemplateMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mapTemplatesControllerUpdateTemplate>>, TError,{pathParams: MapTemplatesControllerUpdateTemplatePathParameters;data: BodyType<CreateMapTemplateDto>}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof mapTemplatesControllerUpdateTemplate>>, TError,{pathParams: MapTemplatesControllerUpdateTemplatePathParameters;data: BodyType<CreateMapTemplateDto>}, TContext> => {
+
+const mutationKey = ['mapTemplatesControllerUpdateTemplate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof mapTemplatesControllerUpdateTemplate>>, {pathParams: MapTemplatesControllerUpdateTemplatePathParameters;data: BodyType<CreateMapTemplateDto>}> = (props) => {
+          const {pathParams,data} = props ?? {};
+
+          return  mapTemplatesControllerUpdateTemplate(pathParams,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MapTemplatesControllerUpdateTemplateMutationResult = NonNullable<Awaited<ReturnType<typeof mapTemplatesControllerUpdateTemplate>>>
+    export type MapTemplatesControllerUpdateTemplateMutationBody = BodyType<CreateMapTemplateDto>
+    export type MapTemplatesControllerUpdateTemplateMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Update map template
+ */
+export const useMapTemplatesControllerUpdateTemplate = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mapTemplatesControllerUpdateTemplate>>, TError,{pathParams: MapTemplatesControllerUpdateTemplatePathParameters;data: BodyType<CreateMapTemplateDto>}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof mapTemplatesControllerUpdateTemplate>>,
+        TError,
+        {pathParams: MapTemplatesControllerUpdateTemplatePathParameters;data: BodyType<CreateMapTemplateDto>},
+        TContext
+      > => {
+      return useMutation(getMapTemplatesControllerUpdateTemplateMutationOptions(options));
+    }
+    /**
  * Delete a map template
  * @summary Delete map template
  */
@@ -240,9 +315,9 @@ export const getMapTemplatesControllerDeleteTemplateUrl = ({ guildId, templateId
   return `/guilds/${guildId}/map-templates/${templateId}`
 }
 
-export const mapTemplatesControllerDeleteTemplate = async ({ guildId, templateId }: MapTemplatesControllerDeleteTemplatePathParameters, options?: RequestInit): Promise<void> => {
+export const mapTemplatesControllerDeleteTemplate = async ({ guildId, templateId }: MapTemplatesControllerDeleteTemplatePathParameters, options?: RequestInit): Promise<StatusOkResponseDtoOutput> => {
 
-  return orvalFetch<void>(getMapTemplatesControllerDeleteTemplateUrl({ guildId, templateId }),
+  return orvalFetch<StatusOkResponseDtoOutput>(getMapTemplatesControllerDeleteTemplateUrl({ guildId, templateId }),
   {
     ...options,
     method: 'DELETE'

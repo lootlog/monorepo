@@ -8,7 +8,10 @@ import {
   SelectValue,
 } from "@lootlog/ui/components/select";
 import type { DashboardFilters } from "../hooks/use-dashboard-filters";
-import { useDashboardKillStats } from "../hooks/use-dashboard-kill-stats";
+import {
+  getKillsControllerGetUserKillStatsQueryKey,
+  useKillsControllerGetUserKillStats,
+} from "@/lib/api/generated/main/kills/kills";
 
 type DashboardFiltersProps = {
   filters: DashboardFilters;
@@ -20,7 +23,12 @@ export const DashboardFiltersBar: React.FC<DashboardFiltersProps> = ({
   onWorldChange,
 }) => {
   const { t } = useTranslation();
-  const { data } = useDashboardKillStats();
+  const { data } = useKillsControllerGetUserKillStats(undefined, {
+    query: {
+      queryKey: getKillsControllerGetUserKillStatsQueryKey(),
+      staleTime: 30_000,
+    },
+  });
 
   const worlds = data?.overview.killsByWorld
     ? Object.keys(data.overview.killsByWorld).sort()

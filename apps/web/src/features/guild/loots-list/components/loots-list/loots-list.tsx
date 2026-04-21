@@ -3,13 +3,20 @@ import { LootsListItem } from "@/features/guild/loots-list/components/loots-list
 import { LootsListItemSkeleton } from "@/features/guild/loots-list/components/loots-list/loots-list-item-skeleton";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { type Loot, useLoots } from "@/hooks/api/loots/use-loots";
 import { useViewMode } from "@/hooks/use-view-mode";
+import { useLootsFilters } from "@/hooks/use-loots-filters";
 import {
   useResetScrollTop,
   useVirtualInfiniteScroll,
 } from "@/hooks/utils/use-virtual-infinite-scroll";
+import type { Loot } from "@/lib/loots/loot-types";
+import {
+  getLootsControllerFetchLootsByGuildIdQueryKey,
+  lootsControllerFetchLootsByGuildId,
+} from "@/lib/api/generated/main/loots/loots";
+import type { LootsControllerFetchLootsByGuildIdParams } from "@/lib/api/generated/main/model";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Frown } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
@@ -21,6 +28,9 @@ const LOOTS_PAGE_LIMIT = 20;
 const GRID_COLUMNS = 2;
 const EMPTY_LOOTS: Loot[] = [];
 const EMPTY_GRID_ROWS: Loot[][] = [];
+
+const parseOptionalNumber = (value: string) =>
+  value.length > 0 ? Number(value) : undefined;
 
 const useStableLootCollections = (pages: Loot[][] | undefined) => {
   const collectionsRef = useRef<{
@@ -54,16 +64,65 @@ const useStableLootCollections = (pages: Loot[][] | undefined) => {
 export const LootsList: FC = () => {
   const { t } = useTranslation();
   const themedKey = useThemedKey();
+  const guildId = useGuildId();
+  const { world } = useGuildContext();
+  const { filters } = useLootsFilters();
+  const lootQueryParams: LootsControllerFetchLootsByGuildIdParams = {
+    limit: LOOTS_PAGE_LIMIT,
+    npcs: filters.npcs.length > 0 ? filters.npcs : undefined,
+    npcTypes: filters.npcTypes.length > 0 ? filters.npcTypes : undefined,
+    rarities: filters.rarities.length > 0 ? filters.rarities : undefined,
+    players: filters.players.length > 0 ? filters.players : undefined,
+    npcLevelMin: parseOptionalNumber(filters.npcLevelMin),
+    npcLevelMax: parseOptionalNumber(filters.npcLevelMax),
+    itemLevelMin: parseOptionalNumber(filters.itemLevelMin),
+    itemLevelMax: parseOptionalNumber(filters.itemLevelMax),
+    playerLevelMin: parseOptionalNumber(filters.playerLevelMin),
+    playerLevelMax: parseOptionalNumber(filters.playerLevelMax),
+    search: filters.search || undefined,
+    hid: filters.hid || undefined,
+    itemNames: filters.itemNames.length > 0 ? filters.itemNames : undefined,
+    world: world || undefined,
+  };
   const {
     data: loots,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
     isLoading,
-  } = useLoots({ limit: LOOTS_PAGE_LIMIT });
+  } = useInfiniteQuery({
+    queryKey: guildId
+      ? getLootsControllerFetchLootsByGuildIdQueryKey(
+          { guildId },
+          lootQueryParams,
+        )
+      : ["loots", "missing-guild"],
+    queryFn: ({ pageParam }) => {
+      if (!guildId) {
+        return Promise.resolve([] as Loot[]);
+      }
 
-  const { world } = useGuildContext();
-  const guildId = useGuildId();
+      return lootsControllerFetchLootsByGuildId(
+        { guildId },
+        {
+          ...lootQueryParams,
+          cursor:
+            typeof pageParam === "number" && pageParam > 0
+              ? pageParam
+              : undefined,
+        },
+      ) as Promise<Loot[]>;
+    },
+    getNextPageParam: (lastPage) =>
+      lastPage.length === LOOTS_PAGE_LIMIT
+        ? lastPage[lastPage.length - 1]?.id
+        : undefined,
+    initialPageParam: 0,
+    enabled: !!guildId && !!world,
+    refetchOnMount: "always",
+    staleTime: 0,
+  });
+
   const scrollElementRef = useRef<HTMLDivElement>(null);
   const { viewMode } = useViewMode("loots-view-mode");
   const { allLoots, gridRows } = useStableLootCollections(loots?.pages);
@@ -120,7 +179,7 @@ export const LootsList: FC = () => {
       <div className="flex flex-col justify-center gap-8 items-center flex-1 text-muted-foreground">
         <ThemeEmptyStateIcon
           className="w-[72px] h-[72px] text-muted-foreground/50"
-          fallback=<Frown size="72" className="text-muted-foreground/50" />
+          fallback={<Frown size="72" className="text-muted-foreground/50" />}
         />
         <span className="font-semibold text-foreground">
           {t(themedKey("loots.list.noWorldSelected"))}
@@ -134,7 +193,7 @@ export const LootsList: FC = () => {
       <div className="flex flex-col justify-center gap-8 items-center flex-1 text-muted-foreground">
         <ThemeEmptyStateIcon
           className="w-[72px] h-[72px] text-muted-foreground/50"
-          fallback=<Frown size="72" className="text-muted-foreground/50" />
+          fallback={<Frown size="72" className="text-muted-foreground/50" />}
         />
         <span className="font-semibold text-foreground">
           {t(themedKey("loots.list.empty"))}

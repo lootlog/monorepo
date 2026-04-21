@@ -5,10 +5,19 @@
  * The Lootlog API documentation
  * OpenAPI spec version: 1.0
  */
+import type { LootResponseDtoItemsItemProfItem } from './loot-response-dto-items-item-prof-item';
+import type { LootResponseDtoItemsItemRarity } from './loot-response-dto-items-item-rarity';
 
 export type LootResponseDtoItemsItem = {
   id: number;
   hid: string;
   name: string;
   icon: string;
+  stat: string;
+  /** @nullable */
+  type: string | null;
+  /** @nullable */
+  rarity: LootResponseDtoItemsItemRarity;
+  lvl: number;
+  prof: LootResponseDtoItemsItemProfItem[];
 };

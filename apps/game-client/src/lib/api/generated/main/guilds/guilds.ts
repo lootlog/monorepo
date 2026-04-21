@@ -707,6 +707,10 @@ export const useGetGuildsControllerGetGuildConfigQueryData = () => {
 }
 
 
+/**
+ * Retrieve the list of worlds configured for a guild
+ * @summary Get guild worlds
+ */
 export const getGuildsControllerGetWorldsByGuildIdUrl = ({ guildId }: GuildsControllerGetWorldsByGuildIdPathParameters,) => {
 
 
@@ -759,6 +763,9 @@ export type GuildsControllerGetWorldsByGuildIdQueryResult = NonNullable<Awaited<
 export type GuildsControllerGetWorldsByGuildIdQueryError = ErrorType<unknown>
 
 
+/**
+ * @summary Get guild worlds
+ */
 
 export function useGuildsControllerGetWorldsByGuildId<TData = Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>>, TError = ErrorType<unknown>>(
  { guildId }: GuildsControllerGetWorldsByGuildIdPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
@@ -772,6 +779,9 @@ export function useGuildsControllerGetWorldsByGuildId<TData = Awaited<ReturnType
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
+/**
+ * @summary Get guild worlds
+ */
 export const prefetchGuildsControllerGetWorldsByGuildIdQuery = async <TData = Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>>, TError = ErrorType<unknown>>(
  queryClient: QueryClient, { guildId }: GuildsControllerGetWorldsByGuildIdPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
 
@@ -784,6 +794,9 @@ export const prefetchGuildsControllerGetWorldsByGuildIdQuery = async <TData = Aw
   return queryClient;
 }
 
+/**
+ * @summary Get guild worlds
+ */
 export const invalidateGuildsControllerGetWorldsByGuildId = async (
  queryClient: QueryClient, { guildId }: GuildsControllerGetWorldsByGuildIdPathParameters, options?: InvalidateOptions
   ): Promise<QueryClient> => {
@@ -793,6 +806,9 @@ export const invalidateGuildsControllerGetWorldsByGuildId = async (
   return queryClient;
 }
 
+/**
+ * @summary Get guild worlds
+ */
 export const useSetGuildsControllerGetWorldsByGuildIdQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId }: GuildsControllerGetWorldsByGuildIdPathParameters,updater: Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>> | undefined | ((old: Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>> | undefined) => Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>> | undefined)) => {
@@ -800,6 +816,9 @@ export const useSetGuildsControllerGetWorldsByGuildIdQueryData = () => {
   };
 }
 
+/**
+ * @summary Get guild worlds
+ */
 export const useGetGuildsControllerGetWorldsByGuildIdQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId }: GuildsControllerGetWorldsByGuildIdPathParameters,) =>

@@ -131,6 +131,11 @@
     "copyError": "Nie udało się skopiować ID. Spróbuj ponownie.",
     "notFound": "Nie znaleziono łupu",
     "obtainedAt": "Zdobyto {{date}}",
+    "comments": {
+      "title": "Komentarze ({{count}})",
+      "placeholder": "Dodaj komentarz...",
+      "submit": "Dodaj komentarz"
+    },
     "showLess": "Pokaż mniej",
     "showMore": "Pokaż więcej ({{count}})"
   }

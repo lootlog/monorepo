@@ -24,6 +24,28 @@ export class MapTemplatesService {
     });
   }
 
+  async updateTemplate(
+    guildId: string,
+    templateId: string,
+    data: CreateMapTemplateDto,
+  ) {
+    const template = await this.prisma.mapTemplate.findFirst({
+      where: { id: templateId, guildId },
+    });
+
+    if (!template) {
+      throw new NotFoundException("Template not found");
+    }
+
+    return this.prisma.mapTemplate.update({
+      where: { id: templateId },
+      data: {
+        name: data.name,
+        maps: data.maps as unknown as Prisma.InputJsonValue,
+      },
+    });
+  }
+
   async deleteTemplate(guildId: string, templateId: string) {
     const template = await this.prisma.mapTemplate.findFirst({
       where: { id: templateId, guildId },
@@ -37,6 +59,6 @@ export class MapTemplatesService {
       where: { id: templateId },
     });
 
-    return { success: true };
+    return { status: "OK" as const };
   }
 }

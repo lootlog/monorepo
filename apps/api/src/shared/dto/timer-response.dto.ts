@@ -1,7 +1,8 @@
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
 import { MemberResponseDto } from "./member-response.dto";
-import { isoDatetimeCodec, jsonValueSchema } from "./zod-response-codecs";
+import { TimerNpcResponseDto } from "./timer-npc-response.dto";
+import { isoDatetimeCodec } from "./zod-response-codecs";
 
 const TimerResponseSchema = z.object({
   guildId: z.string(),
@@ -10,7 +11,7 @@ const TimerResponseSchema = z.object({
   world: z.string(),
   minSpawnTime: isoDatetimeCodec,
   maxSpawnTime: isoDatetimeCodec,
-  npc: jsonValueSchema,
+  npc: TimerNpcResponseDto.schema.nullable(),
   wasReset: z.boolean(),
   member: MemberResponseDto.schema.optional(),
   updatedAt: isoDatetimeCodec,

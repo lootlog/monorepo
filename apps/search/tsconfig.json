@@ -7,7 +7,7 @@
     "strict": true,
     "baseUrl": ".",
     "ignoreDeprecations": "6.0",
-    "types": ["node"],
+    "types": ["node", "vitest/globals"],
     "paths": {
       "src/*": ["./src/*"]
     }

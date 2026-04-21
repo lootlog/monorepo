@@ -6,8 +6,11 @@ import {
 } from "@lootlog/ui/components/card";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useTranslation } from "react-i18next";
-import { useDashboardKillStats } from "../hooks/use-dashboard-kill-stats";
 import { Globe, Swords, Target } from "lucide-react";
+import {
+  getKillsControllerGetUserKillStatsQueryKey,
+  useKillsControllerGetUserKillStats,
+} from "@/lib/api/generated/main/kills/kills";
 
 const NPC_TYPE_ORDER = [
   "TITAN",
@@ -30,7 +33,16 @@ export const PlayerKillStatsCard: React.FC<PlayerKillStatsCardProps> = ({
   world,
 }) => {
   const { t } = useTranslation();
-  const { data, isLoading } = useDashboardKillStats({ world });
+  const killStatsParams = { world };
+  const { data, isLoading } = useKillsControllerGetUserKillStats(
+    killStatsParams,
+    {
+      query: {
+        queryKey: getKillsControllerGetUserKillStatsQueryKey(killStatsParams),
+        staleTime: 30_000,
+      },
+    },
+  );
 
   if (isLoading) {
     return (

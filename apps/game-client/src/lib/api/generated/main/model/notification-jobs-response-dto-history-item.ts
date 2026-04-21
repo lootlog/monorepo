@@ -5,12 +5,12 @@
  * The Lootlog API documentation
  * OpenAPI spec version: 1.0
  */
+import type { NotificationJobPayloadSnapshotResponseDto } from './notification-job-payload-snapshot-response-dto';
 import type { NotificationJobsResponseDtoHistoryItemJobKind } from './notification-jobs-response-dto-history-item-job-kind';
 import type { NotificationJobsResponseDtoHistoryItemOwnerType } from './notification-jobs-response-dto-history-item-owner-type';
 import type { NotificationJobsResponseDtoHistoryItemRule } from './notification-jobs-response-dto-history-item-rule';
 import type { NotificationJobsResponseDtoHistoryItemStatus } from './notification-jobs-response-dto-history-item-status';
 import type { NotificationJobsResponseDtoHistoryItemTarget } from './notification-jobs-response-dto-history-item-target';
-import type { NotificationJobsResponseDtoSchema0 } from './notification-jobs-response-dto-schema0';
 
 export type NotificationJobsResponseDtoHistoryItem = {
   id: string;
@@ -37,7 +37,7 @@ export type NotificationJobsResponseDtoHistoryItem = {
   sourceEntityId: string | null;
   /** @nullable */
   sourceEventId: string | null;
-  payloadSnapshot: NotificationJobsResponseDtoSchema0 | null;
+  payloadSnapshot: NotificationJobPayloadSnapshotResponseDto | null;
   /**
      * @minimum -9007199254740991
      * @maximum 9007199254740991

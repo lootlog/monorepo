@@ -1,5 +1,5 @@
 import { useLocalStorage } from "usehooks-ts";
-import type { NpcType } from "./use-dashboard-kill-stats";
+import type { NpcType } from "@/features/user/kills/npc-types";
 
 const DASHBOARD_FILTERS_STORAGE_KEY = "lootlog-home-filters";
 

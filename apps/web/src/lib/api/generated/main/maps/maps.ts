@@ -18,6 +18,10 @@ import type {
   UseQueryResult
 } from '@tanstack/react-query';
 
+import type {
+  GameMapResponseDto
+} from '../model';
+
 import { orvalFetch } from '../../../orval-fetch';
 import type { ErrorType } from '../../../orval-fetch';
 
@@ -38,9 +42,9 @@ export const getMapsControllerGetMapsUrl = () => {
   return `/maps`
 }
 
-export const mapsControllerGetMaps = async ( options?: RequestInit): Promise<void> => {
+export const mapsControllerGetMaps = async ( options?: RequestInit): Promise<GameMapResponseDto[]> => {
 
-  return orvalFetch<void>(getMapsControllerGetMapsUrl(),
+  return orvalFetch<GameMapResponseDto[]>(getMapsControllerGetMapsUrl(),
   {
     ...options,
     method: 'GET'

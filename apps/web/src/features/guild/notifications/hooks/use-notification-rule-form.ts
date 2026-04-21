@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
 import { useNpcs } from "@/hooks/api/game-data/use-npcs";
-import { useWorlds } from "@/hooks/api/game-data/use-worlds";
 import {
   CreateNotificationRuleDtoScheduleAnchor as NotificationScheduleAnchor,
   CreateNotificationRuleDtoScheduleIntervalType as NotificationScheduleIntervalType,
@@ -52,6 +51,7 @@ import {
   useNotificationsGuildControllerUpdateGuildRule,
 } from "@/lib/api/generated/main/notifications/notifications";
 import { useRolesControllerGetGuildRoles } from "@/lib/api/generated/main/roles/roles";
+import { useGuildsControllerGetWorldsByGuildId } from "@/lib/api/generated/main/guilds/guilds";
 
 export const useNotificationRuleForm = () => {
   const { t } = useTranslation();
@@ -106,7 +106,9 @@ export const useNotificationRuleForm = () => {
       },
     },
   });
-  const { data: worlds = [] } = useWorlds();
+  const { data: worlds = [] } = useGuildsControllerGetWorldsByGuildId({
+    guildId: guildId ?? "",
+  });
   const { data: guildRoles = [] } = useRolesControllerGetGuildRoles({
     guildId: guildId ?? "",
   });
