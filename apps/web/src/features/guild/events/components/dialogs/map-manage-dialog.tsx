@@ -50,7 +50,7 @@ import {
 import { useMapTemplatesControllerGetTemplates } from "@/lib/api/generated/main/map-templates/map-templates";
 import { useMapsControllerGetMaps } from "@/lib/api/generated/main/maps/maps";
 import type {
-  GameMapResponseDto,
+  GameMapResponseDtoOutput,
   MapTemplateResponseDto,
 } from "@/lib/api/generated/main/model";
 import type { LocationData } from "./map-manage-dialog.types";
@@ -206,7 +206,7 @@ export const MapManageDialog = ({
       .slice(0, 50);
   }, [gameMaps, addedMapIds, searchQuery]);
 
-  const handleAddMapFromGame = async (gameMap: GameMapResponseDto) => {
+  const handleAddMapFromGame = async (gameMap: GameMapResponseDtoOutput) => {
     try {
       const result = await addMap.mutateAsync({
         pathParams: {

@@ -15,8 +15,11 @@ export type LootNpc = LootNpcResponseDto;
 export type LootPlayer = LootPlayerResponseDto;
 export type LootComment = LootCommentResponseDto;
 export type LootShare = LootShareResponseDto;
-export type ItemRarity = NonNullable<LootItemResponseDtoRarity>;
+export type ItemRarity = NonNullable<LootItemResponseDtoRarity> | "COMMON";
 export type LootSource = LootResponseDtoSource;
 
-export const ItemRarity = LootItemResponseDtoRarity;
+export const ItemRarity = {
+  ...LootItemResponseDtoRarity,
+  COMMON: "COMMON",
+} as const satisfies Record<ItemRarity, ItemRarity>;
 export const LootSource = LootResponseDtoSource;

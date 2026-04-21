@@ -49,6 +49,7 @@ export const WatchedItemCard = ({
 
   const snapshot = watchedItem.itemSnapshot;
   const rarity = (snapshot?.rarity as ItemRarity | null) ?? ItemRarity.COMMON;
+  const apiRarity = rarity === ItemRarity.COMMON ? null : rarity;
   const displayName = snapshot?.name ?? watchedItem.itemName;
   const displayIcon = snapshot?.icon ?? null;
 
@@ -61,7 +62,7 @@ export const WatchedItemCard = ({
             hid: "",
             name: displayName,
             icon: displayIcon,
-            rarity,
+            rarity: apiRarity,
             lvl: snapshot.lvl ?? 0,
             type: snapshot.type ?? "",
             stat: snapshot.stat,
