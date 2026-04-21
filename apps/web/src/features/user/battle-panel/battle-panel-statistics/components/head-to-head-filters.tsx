@@ -1,5 +1,5 @@
 import type { Period } from "@/store/battle-filters.store";
-import type { Warrior } from "@/hooks/api/battle-log/use-search-warriors";
+import type { SearchWarrior as Warrior } from "@/lib/api/battlelog-types";
 import { HeadToHeadFiltersMobile } from "./head-to-head-filters-mobile";
 import { HeadToHeadFiltersDesktop } from "./head-to-head-filters-desktop";
 

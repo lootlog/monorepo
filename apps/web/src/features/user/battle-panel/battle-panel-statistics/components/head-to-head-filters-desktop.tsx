@@ -8,7 +8,7 @@ import { Label } from "@lootlog/ui/components/label";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Swords, Award } from "lucide-react";
 import type { Period } from "@/store/battle-filters.store";
-import type { Warrior } from "@/hooks/api/battle-log/use-search-warriors";
+import type { SearchWarrior as Warrior } from "@/lib/api/battlelog-types";
 
 type HeadToHeadFiltersDesktopProps = {
   characterId?: string;

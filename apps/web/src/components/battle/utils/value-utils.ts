@@ -51,7 +51,13 @@ export const roundValueWithSign = (value: string): string => {
   return roundValue(trimmed);
 };
 
-export const roundHpPercentage = (value: string | number): string => {
+export const roundHpPercentage = (
+  value: string | number | null | undefined,
+): string => {
+  if (value == null) {
+    return "-";
+  }
+
   const strValue = String(value);
   const hasPercent = strValue.includes("%");
   const numericValue = strValue.replace("%", "");

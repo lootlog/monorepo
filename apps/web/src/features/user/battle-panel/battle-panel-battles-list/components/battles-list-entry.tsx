@@ -1,4 +1,4 @@
-import type { Battle } from "@/hooks/api/battle-log/use-battles";
+import type { Battle } from "@/lib/api/battlelog-types";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
@@ -27,7 +27,7 @@ import {
 import { ROUTES } from "@/config/routes";
 import { PlayerTile } from "@/features/guild/loots-list/components/loots-list/player-tile";
 import { useBattleSharing } from "@/features/user/battle-panel/battle-panel-single-battle/hooks/use-battle-sharing";
-import { useDeleteBattle } from "@/hooks/api/battle-log/use-delete-battle";
+import { useBattlesControllerDeleteBattle } from "@/lib/api/generated/battlelog/battles/battles";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 
@@ -49,7 +49,7 @@ export const BattlesListEntry: FC<BattlesListEntryProps> = ({
   const { t } = useTranslation();
   const { handleShare, handleCopyLink, handleUnshare, isPending } =
     useBattleSharing();
-  const { mutate: deleteBattle } = useDeleteBattle();
+  const { mutate: deleteBattle } = useBattlesControllerDeleteBattle();
 
   const attackingTeam = battle.warriors.filter((w) => w.team === 1);
   const defendingTeam = battle.warriors.filter((w) => w.team === 2);
@@ -122,7 +122,11 @@ export const BattlesListEntry: FC<BattlesListEntryProps> = ({
     e.preventDefault();
     e.stopPropagation();
     deleteBattle(
-      { battleId: battle.id },
+      {
+        pathParams: {
+          battleId: battle.id,
+        },
+      },
       {
         onSuccess: () => {
           toast.success(t("battlePanel.toasts.battleDeleted"), {

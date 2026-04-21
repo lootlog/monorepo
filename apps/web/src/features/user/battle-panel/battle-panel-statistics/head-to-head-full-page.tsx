@@ -23,10 +23,10 @@ import {
 import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
 import { Card } from "@lootlog/ui/components/card";
 import { SectionHeader } from "@/components/layout/section-header";
-import { useHeadToHead } from "@/hooks/api/battle-log/use-head-to-head";
+import { useBattlesControllerGetHeadToHead } from "@/lib/api/generated/battlelog/battles/battles";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { Swords } from "lucide-react";
-import type { Warrior } from "@/hooks/api/battle-log/use-search-warriors";
+import type { SearchWarrior } from "@/lib/api/battlelog-types";
 import { HeadToHeadFilters } from "./components/head-to-head-filters";
 import { headToHeadColumns } from "./components/head-to-head-columns";
 import { cn } from "@lootlog/ui/lib/utils";
@@ -61,22 +61,24 @@ export function HeadToHeadFullPage() {
   const selectedWarriors = getSelectedWarriorsFromSearch(search);
   const sorting: SortingState = [{ id: sortBy, desc: sortOrder === "desc" }];
 
-  const { data, isLoading, isError, error } = useHeadToHead({
-    cursor,
-    size: 20,
-    sortBy,
-    sortOrder,
-    characterId: currentCharacterId,
-    period,
-    search,
-    minLevel,
-    maxLevel,
-    ph,
-    matchmaking,
-    includeTotal: true,
-  });
+  const { data, isLoading, isError, error } = useBattlesControllerGetHeadToHead(
+    {
+      cursor,
+      size: 20,
+      sortBy,
+      sortOrder,
+      characterId: currentCharacterId,
+      period,
+      search,
+      minLevel,
+      maxLevel,
+      ph,
+      matchmaking,
+      includeTotal: true,
+    },
+  );
 
-  const handleWarriorToggle = (warrior: Warrior) => {
+  const handleWarriorToggle = (warrior: SearchWarrior) => {
     const isSelected = selectedWarriors.some(
       (item) => item.name === warrior.name,
     );

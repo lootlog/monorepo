@@ -6,8 +6,10 @@ import {
   type DynamicValuesConfig,
 } from "../utils/dynamic-values-helper";
 import { roundHpPercentage, roundValue } from "../utils/value-utils";
-import type { Warrior } from "@/hooks/api/battle-log/use-battles";
-import type { RawBattleParsedEvent } from "@/hooks/api/battle-log/use-battle-raw";
+import type {
+  BattleWarrior as Warrior,
+  RawBattleParsedEvent,
+} from "@/lib/api/battlelog-types";
 
 export type BattleActionItemProps = {
   action: { type: string; value: string };

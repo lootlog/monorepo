@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Search, ChevronsUpDown, Check } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import {
@@ -18,14 +18,15 @@ import { cn } from "@lootlog/ui/lib/utils";
 import { PlayerTile } from "@/components/battle";
 import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
 import {
-  useSearchWarriors,
-  type Warrior,
-} from "@/hooks/api/battle-log/use-search-warriors";
+  getBattlesControllerSearchWarriorsQueryKey,
+  useBattlesControllerSearchWarriors,
+} from "@/lib/api/generated/battlelog/battles/battles";
+import type { SearchWarrior } from "@/lib/api/battlelog-types";
 import { useTranslation } from "react-i18next";
 
 type WarriorSearchFilterProps = {
-  selectedWarriors: Warrior[];
-  onWarriorToggle: (warrior: Warrior) => void;
+  selectedWarriors: SearchWarrior[];
+  onWarriorToggle: (warrior: SearchWarrior) => void;
   placeholder?: string;
   className?: string;
 };
@@ -38,11 +39,33 @@ export const WarriorSearchFilter = ({
 }: WarriorSearchFilterProps) => {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const resultsListId = useId();
   const { t } = useTranslation();
 
-  const { data: searchResults = [], isFetching } =
-    useSearchWarriors(searchQuery);
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, 300);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [searchQuery]);
+
+  const { data: searchResponse, isFetching } =
+    useBattlesControllerSearchWarriors(
+      { q: debouncedQuery },
+      {
+        query: {
+          enabled: debouncedQuery.length >= 2,
+          queryKey: getBattlesControllerSearchWarriorsQueryKey({
+            q: debouncedQuery,
+          }),
+        },
+      },
+    );
+  const searchResults = searchResponse?.warriors ?? [];
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

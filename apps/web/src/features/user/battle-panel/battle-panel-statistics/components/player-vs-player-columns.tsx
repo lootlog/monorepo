@@ -4,7 +4,7 @@ import { pl } from "date-fns/locale";
 import { PlayerTile } from "@/components/battle";
 import { getProfessionName } from "@/lib/utils/professions";
 import { cn } from "@lootlog/ui/lib/utils";
-import type { PlayerVsPlayerBattle } from "@/hooks/api/battle-log/use-player-vs-player";
+import type { PlayerVsPlayerBattle } from "@/lib/api/battlelog-types";
 import i18n from "@/i18n/config";
 
 export const playerVsPlayerColumns: ColumnDef<PlayerVsPlayerBattle>[] = [

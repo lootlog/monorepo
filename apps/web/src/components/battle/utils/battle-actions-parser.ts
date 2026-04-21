@@ -1,4 +1,4 @@
-import type { RawBattleParsedEvent } from "@/hooks/api/battle-log/use-battle-raw";
+import type { RawBattleParsedEvent } from "@/lib/api/battlelog-types";
 import {
   ATTACK_ACTIONS_SORT_ORDER,
   isAttackActionInContext,

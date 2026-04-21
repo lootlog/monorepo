@@ -3,8 +3,10 @@ import { FiltersSidebar } from "@/features/user/battle-panel/battle-panel-battle
 import { useQueryStates } from "nuqs";
 import type { BattleFilters } from "./components/battles-list-filters";
 import { getSelectedWarriorsFromSearch } from "@/features/user/battle-panel/battle-panel-statistics-search";
-import { useBattles } from "@/hooks/api/battle-log/use-battles";
-import { useBattleCharacters } from "@/hooks/api/battle-log/use-battle-characters";
+import {
+  useBattlesControllerGetDashboardBattles,
+  useBattlesControllerGetUserCharacters,
+} from "@/lib/api/generated/battlelog/battles/battles";
 import { battleQueryParsers } from "./battle-query-parsers";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -20,7 +22,7 @@ import {
   DrawerTitle,
 } from "@lootlog/ui/components/drawer";
 import { WarriorSearchFilter } from "@/components/filters";
-import type { Warrior } from "@/hooks/api/battle-log/use-search-warriors";
+import type { SearchWarrior } from "@/lib/api/battlelog-types";
 import { useTranslation } from "react-i18next";
 
 const FILTERS_OPEN_KEY = "battles-filters-open";
@@ -39,21 +41,23 @@ export const BattlePanelBattlesList = () => {
     queryState.search ?? undefined,
   );
 
-  const { data: battlesResponse, isLoading: isBattlesLoading } = useBattles({
-    cursor: queryState.cursor ?? undefined,
-    size: pageSize,
-    includeTotal: true,
-    world: queryState.world ?? undefined,
-    type: queryState.type ?? undefined,
-    search: queryState.search ?? undefined,
-    result: queryState.result ?? undefined,
-    ph: queryState.ph ?? undefined,
-    matchmaking: queryState.matchmaking ?? undefined,
-    characterId: queryState.characterId ?? undefined,
-    minLevel: queryState.minLevel,
-    maxLevel: queryState.maxLevel,
-  });
-  const { data: characters } = useBattleCharacters();
+  const { data: battlesResponse, isLoading: isBattlesLoading } =
+    useBattlesControllerGetDashboardBattles({
+      cursor: queryState.cursor ?? undefined,
+      size: pageSize,
+      includeTotal: true,
+      world: queryState.world ?? undefined,
+      type: queryState.type ?? undefined,
+      search: queryState.search ?? undefined,
+      result: queryState.result ?? undefined,
+      ph: queryState.ph ?? undefined,
+      matchmaking: queryState.matchmaking ?? undefined,
+      characterId: queryState.characterId ?? undefined,
+      minLevel: queryState.minLevel,
+      maxLevel: queryState.maxLevel,
+    });
+  const { data: charactersResponse } = useBattlesControllerGetUserCharacters();
+  const characters = charactersResponse?.characters;
 
   const filters: BattleFilters = {
     world: queryState.world ?? undefined,
@@ -86,7 +90,7 @@ export const BattlePanelBattlesList = () => {
     });
   };
 
-  const handleWarriorToggle = (warrior: Warrior) => {
+  const handleWarriorToggle = (warrior: SearchWarrior) => {
     const isSelected = selectedWarriors.some((w) => w.name === warrior.name);
     const newSelectedWarriors = isSelected
       ? selectedWarriors.filter((w) => w.name !== warrior.name)

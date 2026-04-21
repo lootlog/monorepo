@@ -23,6 +23,15 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  BattleAnalyticsResponseDtoOutput,
+  BattleCharactersResponseDtoOutput,
+  BattleCreatedResponseDtoOutput,
+  BattleDeletedResponseDtoOutput,
+  BattleDurationStatsResponseDtoOutput,
+  BattleRawResponseDtoOutput,
+  BattleResponseDtoOutput,
+  BattleUserWorldsResponseDtoOutput,
+  BattleWarriorsSearchResponseDtoOutput,
   BattlesControllerDeleteBattlePathParameters,
   BattlesControllerGetBattleAnalyticsParams,
   BattlesControllerGetBattleDurationParams,
@@ -38,7 +47,15 @@ import type {
   BattlesControllerGetRatingGrowthParams,
   BattlesControllerSearchWarriorsParams,
   BattlesControllerUpdateBattlePathParameters,
+  BattlesListResponseDtoOutput,
   CreateBattleDto,
+  HeadToHeadPaginatedResponseDtoOutput,
+  PhGrowthDataPointResponseDtoOutput,
+  PlayerVsPlayerPaginatedResponseDtoOutput,
+  ProfessionWinRateResponseDtoOutput,
+  RatingDeltaByOpponentResponseDtoOutput,
+  RatingGrowthDataPointResponseDtoOutput,
+  StreakResponseDtoOutput,
   UpdateBattleDto
 } from '../model';
 
@@ -50,6 +67,9 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 
+/**
+ * @summary Create a battle
+ */
 export const getBattlesControllerCreateBattleUrl = () => {
 
 
@@ -58,9 +78,9 @@ export const getBattlesControllerCreateBattleUrl = () => {
   return `/battles`
 }
 
-export const battlesControllerCreateBattle = async (createBattleDto: CreateBattleDto, options?: RequestInit): Promise<void> => {
+export const battlesControllerCreateBattle = async (createBattleDto: CreateBattleDto, options?: RequestInit): Promise<BattleCreatedResponseDtoOutput> => {
 
-  return orvalFetchBattlelog<void>(getBattlesControllerCreateBattleUrl(),
+  return orvalFetchBattlelog<BattleCreatedResponseDtoOutput>(getBattlesControllerCreateBattleUrl(),
   {
     ...options,
     method: 'POST',
@@ -104,7 +124,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type BattlesControllerCreateBattleMutationBody = BodyType<CreateBattleDto>
     export type BattlesControllerCreateBattleMutationError = ErrorType<unknown>
 
-    export const useBattlesControllerCreateBattle = <TError = ErrorType<unknown>,
+    /**
+ * @summary Create a battle
+ */
+export const useBattlesControllerCreateBattle = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof battlesControllerCreateBattle>>, TError,{data: BodyType<CreateBattleDto>}, TContext>, request?: SecondParameter<typeof orvalFetchBattlelog>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof battlesControllerCreateBattle>>,
@@ -114,7 +137,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
       return useMutation(getBattlesControllerCreateBattleMutationOptions(options));
     }
-    export const getBattlesControllerGetDashboardBattlesUrl = (params?: BattlesControllerGetDashboardBattlesParams,) => {
+    /**
+ * @summary Get authenticated user battles
+ */
+export const getBattlesControllerGetDashboardBattlesUrl = (params?: BattlesControllerGetDashboardBattlesParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -129,9 +155,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return stringifiedParams.length > 0 ? `/battles/@me?${stringifiedParams}` : `/battles/@me`
 }
 
-export const battlesControllerGetDashboardBattles = async (params?: BattlesControllerGetDashboardBattlesParams, options?: RequestInit): Promise<void> => {
+export const battlesControllerGetDashboardBattles = async (params?: BattlesControllerGetDashboardBattlesParams, options?: RequestInit): Promise<BattlesListResponseDtoOutput> => {
 
-  return orvalFetchBattlelog<void>(getBattlesControllerGetDashboardBattlesUrl(params),
+  return orvalFetchBattlelog<BattlesListResponseDtoOutput>(getBattlesControllerGetDashboardBattlesUrl(params),
   {
     ...options,
     method: 'GET'
@@ -173,6 +199,9 @@ export type BattlesControllerGetDashboardBattlesQueryResult = NonNullable<Awaite
 export type BattlesControllerGetDashboardBattlesQueryError = ErrorType<unknown>
 
 
+/**
+ * @summary Get authenticated user battles
+ */
 
 export function useBattlesControllerGetDashboardBattles<TData = Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>>, TError = ErrorType<unknown>>(
  params?: BattlesControllerGetDashboardBattlesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
@@ -186,6 +215,9 @@ export function useBattlesControllerGetDashboardBattles<TData = Awaited<ReturnTy
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
+/**
+ * @summary Get authenticated user battles
+ */
 export const prefetchBattlesControllerGetDashboardBattlesQuery = async <TData = Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>>, TError = ErrorType<unknown>>(
  queryClient: QueryClient, params?: BattlesControllerGetDashboardBattlesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
 
@@ -198,6 +230,9 @@ export const prefetchBattlesControllerGetDashboardBattlesQuery = async <TData = 
   return queryClient;
 }
 
+/**
+ * @summary Get authenticated user battles
+ */
 export const invalidateBattlesControllerGetDashboardBattles = async (
  queryClient: QueryClient, params?: BattlesControllerGetDashboardBattlesParams, options?: InvalidateOptions
   ): Promise<QueryClient> => {
@@ -207,6 +242,9 @@ export const invalidateBattlesControllerGetDashboardBattles = async (
   return queryClient;
 }
 
+/**
+ * @summary Get authenticated user battles
+ */
 export const useSetBattlesControllerGetDashboardBattlesQueryData = () => {
   const queryClient = useQueryClient();
   return (params: BattlesControllerGetDashboardBattlesParams,updater: Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>> | undefined)) => {
@@ -214,6 +252,9 @@ export const useSetBattlesControllerGetDashboardBattlesQueryData = () => {
   };
 }
 
+/**
+ * @summary Get authenticated user battles
+ */
 export const useGetBattlesControllerGetDashboardBattlesQueryData = () => {
   const queryClient = useQueryClient();
   return (params: BattlesControllerGetDashboardBattlesParams,) =>
@@ -221,6 +262,9 @@ export const useGetBattlesControllerGetDashboardBattlesQueryData = () => {
 }
 
 
+/**
+ * @summary Get authenticated user battle characters
+ */
 export const getBattlesControllerGetUserCharactersUrl = () => {
 
 
@@ -229,9 +273,9 @@ export const getBattlesControllerGetUserCharactersUrl = () => {
   return `/battles/@me/characters`
 }
 
-export const battlesControllerGetUserCharacters = async ( options?: RequestInit): Promise<void> => {
+export const battlesControllerGetUserCharacters = async ( options?: RequestInit): Promise<BattleCharactersResponseDtoOutput> => {
 
-  return orvalFetchBattlelog<void>(getBattlesControllerGetUserCharactersUrl(),
+  return orvalFetchBattlelog<BattleCharactersResponseDtoOutput>(getBattlesControllerGetUserCharactersUrl(),
   {
     ...options,
     method: 'GET'
@@ -273,6 +317,9 @@ export type BattlesControllerGetUserCharactersQueryResult = NonNullable<Awaited<
 export type BattlesControllerGetUserCharactersQueryError = ErrorType<unknown>
 
 
+/**
+ * @summary Get authenticated user battle characters
+ */
 
 export function useBattlesControllerGetUserCharacters<TData = Awaited<ReturnType<typeof battlesControllerGetUserCharacters>>, TError = ErrorType<unknown>>(
   options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetUserCharacters>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
@@ -286,6 +333,9 @@ export function useBattlesControllerGetUserCharacters<TData = Awaited<ReturnType
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
+/**
+ * @summary Get authenticated user battle characters
+ */
 export const prefetchBattlesControllerGetUserCharactersQuery = async <TData = Awaited<ReturnType<typeof battlesControllerGetUserCharacters>>, TError = ErrorType<unknown>>(
  queryClient: QueryClient,  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetUserCharacters>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
 
@@ -298,6 +348,9 @@ export const prefetchBattlesControllerGetUserCharactersQuery = async <TData = Aw
   return queryClient;
 }
 
+/**
+ * @summary Get authenticated user battle characters
+ */
 export const invalidateBattlesControllerGetUserCharacters = async (
  queryClient: QueryClient,  options?: InvalidateOptions
   ): Promise<QueryClient> => {
@@ -307,6 +360,9 @@ export const invalidateBattlesControllerGetUserCharacters = async (
   return queryClient;
 }
 
+/**
+ * @summary Get authenticated user battle characters
+ */
 export const useSetBattlesControllerGetUserCharactersQueryData = () => {
   const queryClient = useQueryClient();
   return (updater: Awaited<ReturnType<typeof battlesControllerGetUserCharacters>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetUserCharacters>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetUserCharacters>> | undefined)) => {
@@ -314,6 +370,9 @@ export const useSetBattlesControllerGetUserCharactersQueryData = () => {
   };
 }
 
+/**
+ * @summary Get authenticated user battle characters
+ */
 export const useGetBattlesControllerGetUserCharactersQueryData = () => {
   const queryClient = useQueryClient();
   return () =>
@@ -321,6 +380,9 @@ export const useGetBattlesControllerGetUserCharactersQueryData = () => {
 }
 
 
+/**
+ * @summary Get authenticated user battle analytics
+ */
 export const getBattlesControllerGetBattleAnalyticsUrl = (params?: BattlesControllerGetBattleAnalyticsParams,) => {
   const normalizedParams = new URLSearchParams();
 
@@ -336,9 +398,9 @@ export const getBattlesControllerGetBattleAnalyticsUrl = (params?: BattlesContro
   return stringifiedParams.length > 0 ? `/battles/@me/analytics?${stringifiedParams}` : `/battles/@me/analytics`
 }
 
-export const battlesControllerGetBattleAnalytics = async (params?: BattlesControllerGetBattleAnalyticsParams, options?: RequestInit): Promise<void> => {
+export const battlesControllerGetBattleAnalytics = async (params?: BattlesControllerGetBattleAnalyticsParams, options?: RequestInit): Promise<BattleAnalyticsResponseDtoOutput> => {
 
-  return orvalFetchBattlelog<void>(getBattlesControllerGetBattleAnalyticsUrl(params),
+  return orvalFetchBattlelog<BattleAnalyticsResponseDtoOutput>(getBattlesControllerGetBattleAnalyticsUrl(params),
   {
     ...options,
     method: 'GET'
@@ -380,6 +442,9 @@ export type BattlesControllerGetBattleAnalyticsQueryResult = NonNullable<Awaited
 export type BattlesControllerGetBattleAnalyticsQueryError = ErrorType<unknown>
 
 
+/**
+ * @summary Get authenticated user battle analytics
+ */
 
 export function useBattlesControllerGetBattleAnalytics<TData = Awaited<ReturnType<typeof battlesControllerGetBattleAnalytics>>, TError = ErrorType<unknown>>(
  params?: BattlesControllerGetBattleAnalyticsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetBattleAnalytics>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
@@ -393,6 +458,9 @@ export function useBattlesControllerGetBattleAnalytics<TData = Awaited<ReturnTyp
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
+/**
+ * @summary Get authenticated user battle analytics
+ */
 export const prefetchBattlesControllerGetBattleAnalyticsQuery = async <TData = Awaited<ReturnType<typeof battlesControllerGetBattleAnalytics>>, TError = ErrorType<unknown>>(
  queryClient: QueryClient, params?: BattlesControllerGetBattleAnalyticsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetBattleAnalytics>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
 
@@ -405,6 +473,9 @@ export const prefetchBattlesControllerGetBattleAnalyticsQuery = async <TData = A
   return queryClient;
 }
 
+/**
+ * @summary Get authenticated user battle analytics
+ */
 export const invalidateBattlesControllerGetBattleAnalytics = async (
  queryClient: QueryClient, params?: BattlesControllerGetBattleAnalyticsParams, options?: InvalidateOptions
   ): Promise<QueryClient> => {
@@ -414,6 +485,9 @@ export const invalidateBattlesControllerGetBattleAnalytics = async (
   return queryClient;
 }
 
+/**
+ * @summary Get authenticated user battle analytics
+ */
 export const useSetBattlesControllerGetBattleAnalyticsQueryData = () => {
   const queryClient = useQueryClient();
   return (params: BattlesControllerGetBattleAnalyticsParams,updater: Awaited<ReturnType<typeof battlesControllerGetBattleAnalytics>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetBattleAnalytics>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetBattleAnalytics>> | undefined)) => {
@@ -421,6 +495,9 @@ export const useSetBattlesControllerGetBattleAnalyticsQueryData = () => {
   };
 }
 
+/**
+ * @summary Get authenticated user battle analytics
+ */
 export const useGetBattlesControllerGetBattleAnalyticsQueryData = () => {
   const queryClient = useQueryClient();
   return (params: BattlesControllerGetBattleAnalyticsParams,) =>
@@ -428,6 +505,9 @@ export const useGetBattlesControllerGetBattleAnalyticsQueryData = () => {
 }
 
 
+/**
+ * @summary Get profession win rate statistics
+ */
 export const getBattlesControllerGetProfessionWinRateUrl = (params?: BattlesControllerGetProfessionWinRateParams,) => {
   const normalizedParams = new URLSearchParams();
 
@@ -443,9 +523,9 @@ export const getBattlesControllerGetProfessionWinRateUrl = (params?: BattlesCont
   return stringifiedParams.length > 0 ? `/battles/@me/statistics/profession-win-rate?${stringifiedParams}` : `/battles/@me/statistics/profession-win-rate`
 }
 
-export const battlesControllerGetProfessionWinRate = async (params?: BattlesControllerGetProfessionWinRateParams, options?: RequestInit): Promise<void> => {
+export const battlesControllerGetProfessionWinRate = async (params?: BattlesControllerGetProfessionWinRateParams, options?: RequestInit): Promise<ProfessionWinRateResponseDtoOutput[]> => {
 
-  return orvalFetchBattlelog<void>(getBattlesControllerGetProfessionWinRateUrl(params),
+  return orvalFetchBattlelog<ProfessionWinRateResponseDtoOutput[]>(getBattlesControllerGetProfessionWinRateUrl(params),
   {
     ...options,
     method: 'GET'
@@ -487,6 +567,9 @@ export type BattlesControllerGetProfessionWinRateQueryResult = NonNullable<Await
 export type BattlesControllerGetProfessionWinRateQueryError = ErrorType<unknown>
 
 
+/**
+ * @summary Get profession win rate statistics
+ */
 
 export function useBattlesControllerGetProfessionWinRate<TData = Awaited<ReturnType<typeof battlesControllerGetProfessionWinRate>>, TError = ErrorType<unknown>>(
  params?: BattlesControllerGetProfessionWinRateParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetProfessionWinRate>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
@@ -500,6 +583,9 @@ export function useBattlesControllerGetProfessionWinRate<TData = Awaited<ReturnT
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
+/**
+ * @summary Get profession win rate statistics
+ */
 export const prefetchBattlesControllerGetProfessionWinRateQuery = async <TData = Awaited<ReturnType<typeof battlesControllerGetProfessionWinRate>>, TError = ErrorType<unknown>>(
  queryClient: QueryClient, params?: BattlesControllerGetProfessionWinRateParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetProfessionWinRate>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
 
@@ -512,6 +598,9 @@ export const prefetchBattlesControllerGetProfessionWinRateQuery = async <TData =
   return queryClient;
 }
 
+/**
+ * @summary Get profession win rate statistics
+ */
 export const invalidateBattlesControllerGetProfessionWinRate = async (
  queryClient: QueryClient, params?: BattlesControllerGetProfessionWinRateParams, options?: InvalidateOptions
   ): Promise<QueryClient> => {
@@ -521,6 +610,9 @@ export const invalidateBattlesControllerGetProfessionWinRate = async (
   return queryClient;
 }
 
+/**
+ * @summary Get profession win rate statistics
+ */
 export const useSetBattlesControllerGetProfessionWinRateQueryData = () => {
   const queryClient = useQueryClient();
   return (params: BattlesControllerGetProfessionWinRateParams,updater: Awaited<ReturnType<typeof battlesControllerGetProfessionWinRate>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetProfessionWinRate>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetProfessionWinRate>> | undefined)) => {
@@ -528,6 +620,9 @@ export const useSetBattlesControllerGetProfessionWinRateQueryData = () => {
   };
 }
 
+/**
+ * @summary Get profession win rate statistics
+ */
 export const useGetBattlesControllerGetProfessionWinRateQueryData = () => {
   const queryClient = useQueryClient();
   return (params: BattlesControllerGetProfessionWinRateParams,) =>
@@ -535,6 +630,9 @@ export const useGetBattlesControllerGetProfessionWinRateQueryData = () => {
 }
 
 
+/**
+ * @summary Get head-to-head statistics
+ */
 export const getBattlesControllerGetHeadToHeadUrl = (params?: BattlesControllerGetHeadToHeadParams,) => {
   const normalizedParams = new URLSearchParams();
 
@@ -550,9 +648,9 @@ export const getBattlesControllerGetHeadToHeadUrl = (params?: BattlesControllerG
   return stringifiedParams.length > 0 ? `/battles/@me/statistics/head-to-head?${stringifiedParams}` : `/battles/@me/statistics/head-to-head`
 }
 
-export const battlesControllerGetHeadToHead = async (params?: BattlesControllerGetHeadToHeadParams, options?: RequestInit): Promise<void> => {
+export const battlesControllerGetHeadToHead = async (params?: BattlesControllerGetHeadToHeadParams, options?: RequestInit): Promise<HeadToHeadPaginatedResponseDtoOutput> => {
 
-  return orvalFetchBattlelog<void>(getBattlesControllerGetHeadToHeadUrl(params),
+  return orvalFetchBattlelog<HeadToHeadPaginatedResponseDtoOutput>(getBattlesControllerGetHeadToHeadUrl(params),
   {
     ...options,
     method: 'GET'
@@ -594,6 +692,9 @@ export type BattlesControllerGetHeadToHeadQueryResult = NonNullable<Awaited<Retu
 export type BattlesControllerGetHeadToHeadQueryError = ErrorType<unknown>
 
 
+/**
+ * @summary Get head-to-head statistics
+ */
 
 export function useBattlesControllerGetHeadToHead<TData = Awaited<ReturnType<typeof battlesControllerGetHeadToHead>>, TError = ErrorType<unknown>>(
  params?: BattlesControllerGetHeadToHeadParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetHeadToHead>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
@@ -607,6 +708,9 @@ export function useBattlesControllerGetHeadToHead<TData = Awaited<ReturnType<typ
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
+/**
+ * @summary Get head-to-head statistics
+ */
 export const prefetchBattlesControllerGetHeadToHeadQuery = async <TData = Awaited<ReturnType<typeof battlesControllerGetHeadToHead>>, TError = ErrorType<unknown>>(
  queryClient: QueryClient, params?: BattlesControllerGetHeadToHeadParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetHeadToHead>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
 
@@ -619,6 +723,9 @@ export const prefetchBattlesControllerGetHeadToHeadQuery = async <TData = Awaite
   return queryClient;
 }
 
+/**
+ * @summary Get head-to-head statistics
+ */
 export const invalidateBattlesControllerGetHeadToHead = async (
  queryClient: QueryClient, params?: BattlesControllerGetHeadToHeadParams, options?: InvalidateOptions
   ): Promise<QueryClient> => {
@@ -628,6 +735,9 @@ export const invalidateBattlesControllerGetHeadToHead = async (
   return queryClient;
 }
 
+/**
+ * @summary Get head-to-head statistics
+ */
 export const useSetBattlesControllerGetHeadToHeadQueryData = () => {
   const queryClient = useQueryClient();
   return (params: BattlesControllerGetHeadToHeadParams,updater: Awaited<ReturnType<typeof battlesControllerGetHeadToHead>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetHeadToHead>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetHeadToHead>> | undefined)) => {
@@ -635,6 +745,9 @@ export const useSetBattlesControllerGetHeadToHeadQueryData = () => {
   };
 }
 
+/**
+ * @summary Get head-to-head statistics
+ */
 export const useGetBattlesControllerGetHeadToHeadQueryData = () => {
   const queryClient = useQueryClient();
   return (params: BattlesControllerGetHeadToHeadParams,) =>
@@ -642,6 +755,9 @@ export const useGetBattlesControllerGetHeadToHeadQueryData = () => {
 }
 
 
+/**
+ * @summary Get current battle streak statistics
+ */
 export const getBattlesControllerGetCurrentStreakUrl = (params?: BattlesControllerGetCurrentStreakParams,) => {
   const normalizedParams = new URLSearchParams();
 
@@ -657,9 +773,9 @@ export const getBattlesControllerGetCurrentStreakUrl = (params?: BattlesControll
   return stringifiedParams.length > 0 ? `/battles/@me/statistics/streak?${stringifiedParams}` : `/battles/@me/statistics/streak`
 }
 
-export const battlesControllerGetCurrentStreak = async (params?: BattlesControllerGetCurrentStreakParams, options?: RequestInit): Promise<void> => {
+export const battlesControllerGetCurrentStreak = async (params?: BattlesControllerGetCurrentStreakParams, options?: RequestInit): Promise<StreakResponseDtoOutput> => {
 
-  return orvalFetchBattlelog<void>(getBattlesControllerGetCurrentStreakUrl(params),
+  return orvalFetchBattlelog<StreakResponseDtoOutput>(getBattlesControllerGetCurrentStreakUrl(params),
   {
     ...options,
     method: 'GET'
@@ -701,6 +817,9 @@ export type BattlesControllerGetCurrentStreakQueryResult = NonNullable<Awaited<R
 export type BattlesControllerGetCurrentStreakQueryError = ErrorType<unknown>
 
 
+/**
+ * @summary Get current battle streak statistics
+ */
 
 export function useBattlesControllerGetCurrentStreak<TData = Awaited<ReturnType<typeof battlesControllerGetCurrentStreak>>, TError = ErrorType<unknown>>(
  params?: BattlesControllerGetCurrentStreakParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetCurrentStreak>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
@@ -714,6 +833,9 @@ export function useBattlesControllerGetCurrentStreak<TData = Awaited<ReturnType<
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
+/**
+ * @summary Get current battle streak statistics
+ */
 export const prefetchBattlesControllerGetCurrentStreakQuery = async <TData = Awaited<ReturnType<typeof battlesControllerGetCurrentStreak>>, TError = ErrorType<unknown>>(
  queryClient: QueryClient, params?: BattlesControllerGetCurrentStreakParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetCurrentStreak>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
 
@@ -726,6 +848,9 @@ export const prefetchBattlesControllerGetCurrentStreakQuery = async <TData = Awa
   return queryClient;
 }
 
+/**
+ * @summary Get current battle streak statistics
+ */
 export const invalidateBattlesControllerGetCurrentStreak = async (
  queryClient: QueryClient, params?: BattlesControllerGetCurrentStreakParams, options?: InvalidateOptions
   ): Promise<QueryClient> => {
@@ -735,6 +860,9 @@ export const invalidateBattlesControllerGetCurrentStreak = async (
   return queryClient;
 }
 
+/**
+ * @summary Get current battle streak statistics
+ */
 export const useSetBattlesControllerGetCurrentStreakQueryData = () => {
   const queryClient = useQueryClient();
   return (params: BattlesControllerGetCurrentStreakParams,updater: Awaited<ReturnType<typeof battlesControllerGetCurrentStreak>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetCurrentStreak>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetCurrentStreak>> | undefined)) => {
@@ -742,6 +870,9 @@ export const useSetBattlesControllerGetCurrentStreakQueryData = () => {
   };
 }
 
+/**
+ * @summary Get current battle streak statistics
+ */
 export const useGetBattlesControllerGetCurrentStreakQueryData = () => {
   const queryClient = useQueryClient();
   return (params: BattlesControllerGetCurrentStreakParams,) =>
@@ -749,6 +880,9 @@ export const useGetBattlesControllerGetCurrentStreakQueryData = () => {
 }
 
 
+/**
+ * @summary Get battle duration statistics
+ */
 export const getBattlesControllerGetBattleDurationUrl = (params?: BattlesControllerGetBattleDurationParams,) => {
   const normalizedParams = new URLSearchParams();
 
@@ -764,9 +898,9 @@ export const getBattlesControllerGetBattleDurationUrl = (params?: BattlesControl
   return stringifiedParams.length > 0 ? `/battles/@me/statistics/duration?${stringifiedParams}` : `/battles/@me/statistics/duration`
 }
 
-export const battlesControllerGetBattleDuration = async (params?: BattlesControllerGetBattleDurationParams, options?: RequestInit): Promise<void> => {
+export const battlesControllerGetBattleDuration = async (params?: BattlesControllerGetBattleDurationParams, options?: RequestInit): Promise<BattleDurationStatsResponseDtoOutput> => {
 
-  return orvalFetchBattlelog<void>(getBattlesControllerGetBattleDurationUrl(params),
+  return orvalFetchBattlelog<BattleDurationStatsResponseDtoOutput>(getBattlesControllerGetBattleDurationUrl(params),
   {
     ...options,
     method: 'GET'
@@ -808,6 +942,9 @@ export type BattlesControllerGetBattleDurationQueryResult = NonNullable<Awaited<
 export type BattlesControllerGetBattleDurationQueryError = ErrorType<unknown>
 
 
+/**
+ * @summary Get battle duration statistics
+ */
 
 export function useBattlesControllerGetBattleDuration<TData = Awaited<ReturnType<typeof battlesControllerGetBattleDuration>>, TError = ErrorType<unknown>>(
  params?: BattlesControllerGetBattleDurationParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetBattleDuration>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
@@ -821,6 +958,9 @@ export function useBattlesControllerGetBattleDuration<TData = Awaited<ReturnType
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
+/**
+ * @summary Get battle duration statistics
+ */
 export const prefetchBattlesControllerGetBattleDurationQuery = async <TData = Awaited<ReturnType<typeof battlesControllerGetBattleDuration>>, TError = ErrorType<unknown>>(
  queryClient: QueryClient, params?: BattlesControllerGetBattleDurationParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetBattleDuration>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
 
@@ -833,6 +973,9 @@ export const prefetchBattlesControllerGetBattleDurationQuery = async <TData = Aw
   return queryClient;
 }
 
+/**
+ * @summary Get battle duration statistics
+ */
 export const invalidateBattlesControllerGetBattleDuration = async (
  queryClient: QueryClient, params?: BattlesControllerGetBattleDurationParams, options?: InvalidateOptions
   ): Promise<QueryClient> => {
@@ -842,6 +985,9 @@ export const invalidateBattlesControllerGetBattleDuration = async (
   return queryClient;
 }
 
+/**
+ * @summary Get battle duration statistics
+ */
 export const useSetBattlesControllerGetBattleDurationQueryData = () => {
   const queryClient = useQueryClient();
   return (params: BattlesControllerGetBattleDurationParams,updater: Awaited<ReturnType<typeof battlesControllerGetBattleDuration>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetBattleDuration>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetBattleDuration>> | undefined)) => {
@@ -849,6 +995,9 @@ export const useSetBattlesControllerGetBattleDurationQueryData = () => {
   };
 }
 
+/**
+ * @summary Get battle duration statistics
+ */
 export const useGetBattlesControllerGetBattleDurationQueryData = () => {
   const queryClient = useQueryClient();
   return (params: BattlesControllerGetBattleDurationParams,) =>
@@ -856,6 +1005,9 @@ export const useGetBattlesControllerGetBattleDurationQueryData = () => {
 }
 
 
+/**
+ * @summary Get PH growth statistics
+ */
 export const getBattlesControllerGetPhGrowthUrl = (params?: BattlesControllerGetPhGrowthParams,) => {
   const normalizedParams = new URLSearchParams();
 
@@ -871,9 +1023,9 @@ export const getBattlesControllerGetPhGrowthUrl = (params?: BattlesControllerGet
   return stringifiedParams.length > 0 ? `/battles/@me/statistics/ph-growth?${stringifiedParams}` : `/battles/@me/statistics/ph-growth`
 }
 
-export const battlesControllerGetPhGrowth = async (params?: BattlesControllerGetPhGrowthParams, options?: RequestInit): Promise<void> => {
+export const battlesControllerGetPhGrowth = async (params?: BattlesControllerGetPhGrowthParams, options?: RequestInit): Promise<PhGrowthDataPointResponseDtoOutput[]> => {
 
-  return orvalFetchBattlelog<void>(getBattlesControllerGetPhGrowthUrl(params),
+  return orvalFetchBattlelog<PhGrowthDataPointResponseDtoOutput[]>(getBattlesControllerGetPhGrowthUrl(params),
   {
     ...options,
     method: 'GET'
@@ -915,6 +1067,9 @@ export type BattlesControllerGetPhGrowthQueryResult = NonNullable<Awaited<Return
 export type BattlesControllerGetPhGrowthQueryError = ErrorType<unknown>
 
 
+/**
+ * @summary Get PH growth statistics
+ */
 
 export function useBattlesControllerGetPhGrowth<TData = Awaited<ReturnType<typeof battlesControllerGetPhGrowth>>, TError = ErrorType<unknown>>(
  params?: BattlesControllerGetPhGrowthParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetPhGrowth>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
@@ -928,6 +1083,9 @@ export function useBattlesControllerGetPhGrowth<TData = Awaited<ReturnType<typeo
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
+/**
+ * @summary Get PH growth statistics
+ */
 export const prefetchBattlesControllerGetPhGrowthQuery = async <TData = Awaited<ReturnType<typeof battlesControllerGetPhGrowth>>, TError = ErrorType<unknown>>(
  queryClient: QueryClient, params?: BattlesControllerGetPhGrowthParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetPhGrowth>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
 
@@ -940,6 +1098,9 @@ export const prefetchBattlesControllerGetPhGrowthQuery = async <TData = Awaited<
   return queryClient;
 }
 
+/**
+ * @summary Get PH growth statistics
+ */
 export const invalidateBattlesControllerGetPhGrowth = async (
  queryClient: QueryClient, params?: BattlesControllerGetPhGrowthParams, options?: InvalidateOptions
   ): Promise<QueryClient> => {
@@ -949,6 +1110,9 @@ export const invalidateBattlesControllerGetPhGrowth = async (
   return queryClient;
 }
 
+/**
+ * @summary Get PH growth statistics
+ */
 export const useSetBattlesControllerGetPhGrowthQueryData = () => {
   const queryClient = useQueryClient();
   return (params: BattlesControllerGetPhGrowthParams,updater: Awaited<ReturnType<typeof battlesControllerGetPhGrowth>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetPhGrowth>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetPhGrowth>> | undefined)) => {
@@ -956,6 +1120,9 @@ export const useSetBattlesControllerGetPhGrowthQueryData = () => {
   };
 }
 
+/**
+ * @summary Get PH growth statistics
+ */
 export const useGetBattlesControllerGetPhGrowthQueryData = () => {
   const queryClient = useQueryClient();
   return (params: BattlesControllerGetPhGrowthParams,) =>
@@ -963,6 +1130,9 @@ export const useGetBattlesControllerGetPhGrowthQueryData = () => {
 }
 
 
+/**
+ * @summary Get rating growth statistics
+ */
 export const getBattlesControllerGetRatingGrowthUrl = (params?: BattlesControllerGetRatingGrowthParams,) => {
   const normalizedParams = new URLSearchParams();
 
@@ -978,9 +1148,9 @@ export const getBattlesControllerGetRatingGrowthUrl = (params?: BattlesControlle
   return stringifiedParams.length > 0 ? `/battles/@me/statistics/rating-growth?${stringifiedParams}` : `/battles/@me/statistics/rating-growth`
 }
 
-export const battlesControllerGetRatingGrowth = async (params?: BattlesControllerGetRatingGrowthParams, options?: RequestInit): Promise<void> => {
+export const battlesControllerGetRatingGrowth = async (params?: BattlesControllerGetRatingGrowthParams, options?: RequestInit): Promise<RatingGrowthDataPointResponseDtoOutput[]> => {
 
-  return orvalFetchBattlelog<void>(getBattlesControllerGetRatingGrowthUrl(params),
+  return orvalFetchBattlelog<RatingGrowthDataPointResponseDtoOutput[]>(getBattlesControllerGetRatingGrowthUrl(params),
   {
     ...options,
     method: 'GET'
@@ -1022,6 +1192,9 @@ export type BattlesControllerGetRatingGrowthQueryResult = NonNullable<Awaited<Re
 export type BattlesControllerGetRatingGrowthQueryError = ErrorType<unknown>
 
 
+/**
+ * @summary Get rating growth statistics
+ */
 
 export function useBattlesControllerGetRatingGrowth<TData = Awaited<ReturnType<typeof battlesControllerGetRatingGrowth>>, TError = ErrorType<unknown>>(
  params?: BattlesControllerGetRatingGrowthParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetRatingGrowth>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
@@ -1035,6 +1208,9 @@ export function useBattlesControllerGetRatingGrowth<TData = Awaited<ReturnType<t
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
+/**
+ * @summary Get rating growth statistics
+ */
 export const prefetchBattlesControllerGetRatingGrowthQuery = async <TData = Awaited<ReturnType<typeof battlesControllerGetRatingGrowth>>, TError = ErrorType<unknown>>(
  queryClient: QueryClient, params?: BattlesControllerGetRatingGrowthParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetRatingGrowth>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
 
@@ -1047,6 +1223,9 @@ export const prefetchBattlesControllerGetRatingGrowthQuery = async <TData = Awai
   return queryClient;
 }
 
+/**
+ * @summary Get rating growth statistics
+ */
 export const invalidateBattlesControllerGetRatingGrowth = async (
  queryClient: QueryClient, params?: BattlesControllerGetRatingGrowthParams, options?: InvalidateOptions
   ): Promise<QueryClient> => {
@@ -1056,6 +1235,9 @@ export const invalidateBattlesControllerGetRatingGrowth = async (
   return queryClient;
 }
 
+/**
+ * @summary Get rating growth statistics
+ */
 export const useSetBattlesControllerGetRatingGrowthQueryData = () => {
   const queryClient = useQueryClient();
   return (params: BattlesControllerGetRatingGrowthParams,updater: Awaited<ReturnType<typeof battlesControllerGetRatingGrowth>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetRatingGrowth>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetRatingGrowth>> | undefined)) => {
@@ -1063,6 +1245,9 @@ export const useSetBattlesControllerGetRatingGrowthQueryData = () => {
   };
 }
 
+/**
+ * @summary Get rating growth statistics
+ */
 export const useGetBattlesControllerGetRatingGrowthQueryData = () => {
   const queryClient = useQueryClient();
   return (params: BattlesControllerGetRatingGrowthParams,) =>
@@ -1070,6 +1255,9 @@ export const useGetBattlesControllerGetRatingGrowthQueryData = () => {
 }
 
 
+/**
+ * @summary Get rating delta by opponent statistics
+ */
 export const getBattlesControllerGetRatingDeltaByOpponentUrl = (params?: BattlesControllerGetRatingDeltaByOpponentParams,) => {
   const normalizedParams = new URLSearchParams();
 
@@ -1085,9 +1273,9 @@ export const getBattlesControllerGetRatingDeltaByOpponentUrl = (params?: Battles
   return stringifiedParams.length > 0 ? `/battles/@me/statistics/rating-delta-by-opponent?${stringifiedParams}` : `/battles/@me/statistics/rating-delta-by-opponent`
 }
 
-export const battlesControllerGetRatingDeltaByOpponent = async (params?: BattlesControllerGetRatingDeltaByOpponentParams, options?: RequestInit): Promise<void> => {
+export const battlesControllerGetRatingDeltaByOpponent = async (params?: BattlesControllerGetRatingDeltaByOpponentParams, options?: RequestInit): Promise<RatingDeltaByOpponentResponseDtoOutput[]> => {
 
-  return orvalFetchBattlelog<void>(getBattlesControllerGetRatingDeltaByOpponentUrl(params),
+  return orvalFetchBattlelog<RatingDeltaByOpponentResponseDtoOutput[]>(getBattlesControllerGetRatingDeltaByOpponentUrl(params),
   {
     ...options,
     method: 'GET'
@@ -1129,6 +1317,9 @@ export type BattlesControllerGetRatingDeltaByOpponentQueryResult = NonNullable<A
 export type BattlesControllerGetRatingDeltaByOpponentQueryError = ErrorType<unknown>
 
 
+/**
+ * @summary Get rating delta by opponent statistics
+ */
 
 export function useBattlesControllerGetRatingDeltaByOpponent<TData = Awaited<ReturnType<typeof battlesControllerGetRatingDeltaByOpponent>>, TError = ErrorType<unknown>>(
  params?: BattlesControllerGetRatingDeltaByOpponentParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetRatingDeltaByOpponent>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
@@ -1142,6 +1333,9 @@ export function useBattlesControllerGetRatingDeltaByOpponent<TData = Awaited<Ret
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
+/**
+ * @summary Get rating delta by opponent statistics
+ */
 export const prefetchBattlesControllerGetRatingDeltaByOpponentQuery = async <TData = Awaited<ReturnType<typeof battlesControllerGetRatingDeltaByOpponent>>, TError = ErrorType<unknown>>(
  queryClient: QueryClient, params?: BattlesControllerGetRatingDeltaByOpponentParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetRatingDeltaByOpponent>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
 
@@ -1154,6 +1348,9 @@ export const prefetchBattlesControllerGetRatingDeltaByOpponentQuery = async <TDa
   return queryClient;
 }
 
+/**
+ * @summary Get rating delta by opponent statistics
+ */
 export const invalidateBattlesControllerGetRatingDeltaByOpponent = async (
  queryClient: QueryClient, params?: BattlesControllerGetRatingDeltaByOpponentParams, options?: InvalidateOptions
   ): Promise<QueryClient> => {
@@ -1163,6 +1360,9 @@ export const invalidateBattlesControllerGetRatingDeltaByOpponent = async (
   return queryClient;
 }
 
+/**
+ * @summary Get rating delta by opponent statistics
+ */
 export const useSetBattlesControllerGetRatingDeltaByOpponentQueryData = () => {
   const queryClient = useQueryClient();
   return (params: BattlesControllerGetRatingDeltaByOpponentParams,updater: Awaited<ReturnType<typeof battlesControllerGetRatingDeltaByOpponent>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetRatingDeltaByOpponent>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetRatingDeltaByOpponent>> | undefined)) => {
@@ -1170,6 +1370,9 @@ export const useSetBattlesControllerGetRatingDeltaByOpponentQueryData = () => {
   };
 }
 
+/**
+ * @summary Get rating delta by opponent statistics
+ */
 export const useGetBattlesControllerGetRatingDeltaByOpponentQueryData = () => {
   const queryClient = useQueryClient();
   return (params: BattlesControllerGetRatingDeltaByOpponentParams,) =>
@@ -1177,6 +1380,9 @@ export const useGetBattlesControllerGetRatingDeltaByOpponentQueryData = () => {
 }
 
 
+/**
+ * @summary Get player-vs-player battles
+ */
 export const getBattlesControllerGetPlayerVsPlayerBattlesUrl = (params: BattlesControllerGetPlayerVsPlayerBattlesParams,) => {
   const normalizedParams = new URLSearchParams();
 
@@ -1192,9 +1398,9 @@ export const getBattlesControllerGetPlayerVsPlayerBattlesUrl = (params: BattlesC
   return stringifiedParams.length > 0 ? `/battles/@me/statistics/player-vs-player?${stringifiedParams}` : `/battles/@me/statistics/player-vs-player`
 }
 
-export const battlesControllerGetPlayerVsPlayerBattles = async (params: BattlesControllerGetPlayerVsPlayerBattlesParams, options?: RequestInit): Promise<void> => {
+export const battlesControllerGetPlayerVsPlayerBattles = async (params: BattlesControllerGetPlayerVsPlayerBattlesParams, options?: RequestInit): Promise<PlayerVsPlayerPaginatedResponseDtoOutput> => {
 
-  return orvalFetchBattlelog<void>(getBattlesControllerGetPlayerVsPlayerBattlesUrl(params),
+  return orvalFetchBattlelog<PlayerVsPlayerPaginatedResponseDtoOutput>(getBattlesControllerGetPlayerVsPlayerBattlesUrl(params),
   {
     ...options,
     method: 'GET'
@@ -1236,6 +1442,9 @@ export type BattlesControllerGetPlayerVsPlayerBattlesQueryResult = NonNullable<A
 export type BattlesControllerGetPlayerVsPlayerBattlesQueryError = ErrorType<unknown>
 
 
+/**
+ * @summary Get player-vs-player battles
+ */
 
 export function useBattlesControllerGetPlayerVsPlayerBattles<TData = Awaited<ReturnType<typeof battlesControllerGetPlayerVsPlayerBattles>>, TError = ErrorType<unknown>>(
  params: BattlesControllerGetPlayerVsPlayerBattlesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetPlayerVsPlayerBattles>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
@@ -1249,6 +1458,9 @@ export function useBattlesControllerGetPlayerVsPlayerBattles<TData = Awaited<Ret
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
+/**
+ * @summary Get player-vs-player battles
+ */
 export const prefetchBattlesControllerGetPlayerVsPlayerBattlesQuery = async <TData = Awaited<ReturnType<typeof battlesControllerGetPlayerVsPlayerBattles>>, TError = ErrorType<unknown>>(
  queryClient: QueryClient, params: BattlesControllerGetPlayerVsPlayerBattlesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetPlayerVsPlayerBattles>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
 
@@ -1261,6 +1473,9 @@ export const prefetchBattlesControllerGetPlayerVsPlayerBattlesQuery = async <TDa
   return queryClient;
 }
 
+/**
+ * @summary Get player-vs-player battles
+ */
 export const invalidateBattlesControllerGetPlayerVsPlayerBattles = async (
  queryClient: QueryClient, params: BattlesControllerGetPlayerVsPlayerBattlesParams, options?: InvalidateOptions
   ): Promise<QueryClient> => {
@@ -1270,6 +1485,9 @@ export const invalidateBattlesControllerGetPlayerVsPlayerBattles = async (
   return queryClient;
 }
 
+/**
+ * @summary Get player-vs-player battles
+ */
 export const useSetBattlesControllerGetPlayerVsPlayerBattlesQueryData = () => {
   const queryClient = useQueryClient();
   return (params: BattlesControllerGetPlayerVsPlayerBattlesParams,updater: Awaited<ReturnType<typeof battlesControllerGetPlayerVsPlayerBattles>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetPlayerVsPlayerBattles>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetPlayerVsPlayerBattles>> | undefined)) => {
@@ -1277,6 +1495,9 @@ export const useSetBattlesControllerGetPlayerVsPlayerBattlesQueryData = () => {
   };
 }
 
+/**
+ * @summary Get player-vs-player battles
+ */
 export const useGetBattlesControllerGetPlayerVsPlayerBattlesQueryData = () => {
   const queryClient = useQueryClient();
   return (params: BattlesControllerGetPlayerVsPlayerBattlesParams,) =>
@@ -1284,6 +1505,9 @@ export const useGetBattlesControllerGetPlayerVsPlayerBattlesQueryData = () => {
 }
 
 
+/**
+ * @summary Search warriors for authenticated user
+ */
 export const getBattlesControllerSearchWarriorsUrl = (params: BattlesControllerSearchWarriorsParams,) => {
   const normalizedParams = new URLSearchParams();
 
@@ -1299,9 +1523,9 @@ export const getBattlesControllerSearchWarriorsUrl = (params: BattlesControllerS
   return stringifiedParams.length > 0 ? `/battles/@me/warriors/search?${stringifiedParams}` : `/battles/@me/warriors/search`
 }
 
-export const battlesControllerSearchWarriors = async (params: BattlesControllerSearchWarriorsParams, options?: RequestInit): Promise<void> => {
+export const battlesControllerSearchWarriors = async (params: BattlesControllerSearchWarriorsParams, options?: RequestInit): Promise<BattleWarriorsSearchResponseDtoOutput> => {
 
-  return orvalFetchBattlelog<void>(getBattlesControllerSearchWarriorsUrl(params),
+  return orvalFetchBattlelog<BattleWarriorsSearchResponseDtoOutput>(getBattlesControllerSearchWarriorsUrl(params),
   {
     ...options,
     method: 'GET'
@@ -1343,6 +1567,9 @@ export type BattlesControllerSearchWarriorsQueryResult = NonNullable<Awaited<Ret
 export type BattlesControllerSearchWarriorsQueryError = ErrorType<unknown>
 
 
+/**
+ * @summary Search warriors for authenticated user
+ */
 
 export function useBattlesControllerSearchWarriors<TData = Awaited<ReturnType<typeof battlesControllerSearchWarriors>>, TError = ErrorType<unknown>>(
  params: BattlesControllerSearchWarriorsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerSearchWarriors>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
@@ -1356,6 +1583,9 @@ export function useBattlesControllerSearchWarriors<TData = Awaited<ReturnType<ty
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
+/**
+ * @summary Search warriors for authenticated user
+ */
 export const prefetchBattlesControllerSearchWarriorsQuery = async <TData = Awaited<ReturnType<typeof battlesControllerSearchWarriors>>, TError = ErrorType<unknown>>(
  queryClient: QueryClient, params: BattlesControllerSearchWarriorsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerSearchWarriors>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
 
@@ -1368,6 +1598,9 @@ export const prefetchBattlesControllerSearchWarriorsQuery = async <TData = Await
   return queryClient;
 }
 
+/**
+ * @summary Search warriors for authenticated user
+ */
 export const invalidateBattlesControllerSearchWarriors = async (
  queryClient: QueryClient, params: BattlesControllerSearchWarriorsParams, options?: InvalidateOptions
   ): Promise<QueryClient> => {
@@ -1377,6 +1610,9 @@ export const invalidateBattlesControllerSearchWarriors = async (
   return queryClient;
 }
 
+/**
+ * @summary Search warriors for authenticated user
+ */
 export const useSetBattlesControllerSearchWarriorsQueryData = () => {
   const queryClient = useQueryClient();
   return (params: BattlesControllerSearchWarriorsParams,updater: Awaited<ReturnType<typeof battlesControllerSearchWarriors>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerSearchWarriors>> | undefined) => Awaited<ReturnType<typeof battlesControllerSearchWarriors>> | undefined)) => {
@@ -1384,6 +1620,9 @@ export const useSetBattlesControllerSearchWarriorsQueryData = () => {
   };
 }
 
+/**
+ * @summary Search warriors for authenticated user
+ */
 export const useGetBattlesControllerSearchWarriorsQueryData = () => {
   const queryClient = useQueryClient();
   return (params: BattlesControllerSearchWarriorsParams,) =>
@@ -1391,6 +1630,9 @@ export const useGetBattlesControllerSearchWarriorsQueryData = () => {
 }
 
 
+/**
+ * @summary Get worlds used by authenticated user battles
+ */
 export const getBattlesControllerGetUserWorldsUrl = () => {
 
 
@@ -1399,9 +1641,9 @@ export const getBattlesControllerGetUserWorldsUrl = () => {
   return `/battles/@me/worlds`
 }
 
-export const battlesControllerGetUserWorlds = async ( options?: RequestInit): Promise<void> => {
+export const battlesControllerGetUserWorlds = async ( options?: RequestInit): Promise<BattleUserWorldsResponseDtoOutput> => {
 
-  return orvalFetchBattlelog<void>(getBattlesControllerGetUserWorldsUrl(),
+  return orvalFetchBattlelog<BattleUserWorldsResponseDtoOutput>(getBattlesControllerGetUserWorldsUrl(),
   {
     ...options,
     method: 'GET'
@@ -1443,6 +1685,9 @@ export type BattlesControllerGetUserWorldsQueryResult = NonNullable<Awaited<Retu
 export type BattlesControllerGetUserWorldsQueryError = ErrorType<unknown>
 
 
+/**
+ * @summary Get worlds used by authenticated user battles
+ */
 
 export function useBattlesControllerGetUserWorlds<TData = Awaited<ReturnType<typeof battlesControllerGetUserWorlds>>, TError = ErrorType<unknown>>(
   options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetUserWorlds>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
@@ -1456,6 +1701,9 @@ export function useBattlesControllerGetUserWorlds<TData = Awaited<ReturnType<typ
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
+/**
+ * @summary Get worlds used by authenticated user battles
+ */
 export const prefetchBattlesControllerGetUserWorldsQuery = async <TData = Awaited<ReturnType<typeof battlesControllerGetUserWorlds>>, TError = ErrorType<unknown>>(
  queryClient: QueryClient,  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetUserWorlds>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
 
@@ -1468,6 +1716,9 @@ export const prefetchBattlesControllerGetUserWorldsQuery = async <TData = Awaite
   return queryClient;
 }
 
+/**
+ * @summary Get worlds used by authenticated user battles
+ */
 export const invalidateBattlesControllerGetUserWorlds = async (
  queryClient: QueryClient,  options?: InvalidateOptions
   ): Promise<QueryClient> => {
@@ -1477,6 +1728,9 @@ export const invalidateBattlesControllerGetUserWorlds = async (
   return queryClient;
 }
 
+/**
+ * @summary Get worlds used by authenticated user battles
+ */
 export const useSetBattlesControllerGetUserWorldsQueryData = () => {
   const queryClient = useQueryClient();
   return (updater: Awaited<ReturnType<typeof battlesControllerGetUserWorlds>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetUserWorlds>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetUserWorlds>> | undefined)) => {
@@ -1484,6 +1738,9 @@ export const useSetBattlesControllerGetUserWorldsQueryData = () => {
   };
 }
 
+/**
+ * @summary Get worlds used by authenticated user battles
+ */
 export const useGetBattlesControllerGetUserWorldsQueryData = () => {
   const queryClient = useQueryClient();
   return () =>
@@ -1491,6 +1748,9 @@ export const useGetBattlesControllerGetUserWorldsQueryData = () => {
 }
 
 
+/**
+ * @summary Get a single battle
+ */
 export const getBattlesControllerGetBattleUrl = ({ battleId }: BattlesControllerGetBattlePathParameters,) => {
 
 
@@ -1499,9 +1759,9 @@ export const getBattlesControllerGetBattleUrl = ({ battleId }: BattlesController
   return `/battles/${battleId}`
 }
 
-export const battlesControllerGetBattle = async ({ battleId }: BattlesControllerGetBattlePathParameters, options?: RequestInit): Promise<void> => {
+export const battlesControllerGetBattle = async ({ battleId }: BattlesControllerGetBattlePathParameters, options?: RequestInit): Promise<BattleResponseDtoOutput> => {
 
-  return orvalFetchBattlelog<void>(getBattlesControllerGetBattleUrl({ battleId }),
+  return orvalFetchBattlelog<BattleResponseDtoOutput>(getBattlesControllerGetBattleUrl({ battleId }),
   {
     ...options,
     method: 'GET'
@@ -1521,7 +1781,7 @@ export const getBattlesControllerGetBattleQueryKey = ({ battleId }: BattlesContr
     }
 
 
-export const getBattlesControllerGetBattleQueryOptions = <TData = Awaited<ReturnType<typeof battlesControllerGetBattle>>, TError = ErrorType<unknown>>({ battleId }: BattlesControllerGetBattlePathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetBattle>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
+export const getBattlesControllerGetBattleQueryOptions = <TData = Awaited<ReturnType<typeof battlesControllerGetBattle>>, TError = ErrorType<void>>({ battleId }: BattlesControllerGetBattlePathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetBattle>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -1540,11 +1800,14 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type BattlesControllerGetBattleQueryResult = NonNullable<Awaited<ReturnType<typeof battlesControllerGetBattle>>>
-export type BattlesControllerGetBattleQueryError = ErrorType<unknown>
+export type BattlesControllerGetBattleQueryError = ErrorType<void>
 
 
+/**
+ * @summary Get a single battle
+ */
 
-export function useBattlesControllerGetBattle<TData = Awaited<ReturnType<typeof battlesControllerGetBattle>>, TError = ErrorType<unknown>>(
+export function useBattlesControllerGetBattle<TData = Awaited<ReturnType<typeof battlesControllerGetBattle>>, TError = ErrorType<void>>(
  { battleId }: BattlesControllerGetBattlePathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetBattle>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
@@ -1556,7 +1819,10 @@ export function useBattlesControllerGetBattle<TData = Awaited<ReturnType<typeof 
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
-export const prefetchBattlesControllerGetBattleQuery = async <TData = Awaited<ReturnType<typeof battlesControllerGetBattle>>, TError = ErrorType<unknown>>(
+/**
+ * @summary Get a single battle
+ */
+export const prefetchBattlesControllerGetBattleQuery = async <TData = Awaited<ReturnType<typeof battlesControllerGetBattle>>, TError = ErrorType<void>>(
  queryClient: QueryClient, { battleId }: BattlesControllerGetBattlePathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetBattle>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
 
   ): Promise<QueryClient> => {
@@ -1568,6 +1834,9 @@ export const prefetchBattlesControllerGetBattleQuery = async <TData = Awaited<Re
   return queryClient;
 }
 
+/**
+ * @summary Get a single battle
+ */
 export const invalidateBattlesControllerGetBattle = async (
  queryClient: QueryClient, { battleId }: BattlesControllerGetBattlePathParameters, options?: InvalidateOptions
   ): Promise<QueryClient> => {
@@ -1577,6 +1846,9 @@ export const invalidateBattlesControllerGetBattle = async (
   return queryClient;
 }
 
+/**
+ * @summary Get a single battle
+ */
 export const useSetBattlesControllerGetBattleQueryData = () => {
   const queryClient = useQueryClient();
   return ({ battleId }: BattlesControllerGetBattlePathParameters,updater: Awaited<ReturnType<typeof battlesControllerGetBattle>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetBattle>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetBattle>> | undefined)) => {
@@ -1584,6 +1856,9 @@ export const useSetBattlesControllerGetBattleQueryData = () => {
   };
 }
 
+/**
+ * @summary Get a single battle
+ */
 export const useGetBattlesControllerGetBattleQueryData = () => {
   const queryClient = useQueryClient();
   return ({ battleId }: BattlesControllerGetBattlePathParameters,) =>
@@ -1591,6 +1866,9 @@ export const useGetBattlesControllerGetBattleQueryData = () => {
 }
 
 
+/**
+ * @summary Update battle visibility
+ */
 export const getBattlesControllerUpdateBattleUrl = ({ battleId }: BattlesControllerUpdateBattlePathParameters,) => {
 
 
@@ -1600,9 +1878,9 @@ export const getBattlesControllerUpdateBattleUrl = ({ battleId }: BattlesControl
 }
 
 export const battlesControllerUpdateBattle = async ({ battleId }: BattlesControllerUpdateBattlePathParameters,
-    updateBattleDto: UpdateBattleDto, options?: RequestInit): Promise<void> => {
+    updateBattleDto: UpdateBattleDto, options?: RequestInit): Promise<BattleResponseDtoOutput> => {
 
-  return orvalFetchBattlelog<void>(getBattlesControllerUpdateBattleUrl({ battleId }),
+  return orvalFetchBattlelog<BattleResponseDtoOutput>(getBattlesControllerUpdateBattleUrl({ battleId }),
   {
     ...options,
     method: 'PATCH',
@@ -1615,7 +1893,7 @@ export const battlesControllerUpdateBattle = async ({ battleId }: BattlesControl
 
 
 
-export const getBattlesControllerUpdateBattleMutationOptions = <TError = ErrorType<unknown>,
+export const getBattlesControllerUpdateBattleMutationOptions = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof battlesControllerUpdateBattle>>, TError,{pathParams: BattlesControllerUpdateBattlePathParameters;data: BodyType<UpdateBattleDto>}, TContext>, request?: SecondParameter<typeof orvalFetchBattlelog>}
 ): UseMutationOptions<Awaited<ReturnType<typeof battlesControllerUpdateBattle>>, TError,{pathParams: BattlesControllerUpdateBattlePathParameters;data: BodyType<UpdateBattleDto>}, TContext> => {
 
@@ -1644,9 +1922,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type BattlesControllerUpdateBattleMutationResult = NonNullable<Awaited<ReturnType<typeof battlesControllerUpdateBattle>>>
     export type BattlesControllerUpdateBattleMutationBody = BodyType<UpdateBattleDto>
-    export type BattlesControllerUpdateBattleMutationError = ErrorType<unknown>
+    export type BattlesControllerUpdateBattleMutationError = ErrorType<void>
 
-    export const useBattlesControllerUpdateBattle = <TError = ErrorType<unknown>,
+    /**
+ * @summary Update battle visibility
+ */
+export const useBattlesControllerUpdateBattle = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof battlesControllerUpdateBattle>>, TError,{pathParams: BattlesControllerUpdateBattlePathParameters;data: BodyType<UpdateBattleDto>}, TContext>, request?: SecondParameter<typeof orvalFetchBattlelog>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof battlesControllerUpdateBattle>>,
@@ -1656,7 +1937,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
       return useMutation(getBattlesControllerUpdateBattleMutationOptions(options));
     }
-    export const getBattlesControllerDeleteBattleUrl = ({ battleId }: BattlesControllerDeleteBattlePathParameters,) => {
+    /**
+ * @summary Delete a battle
+ */
+export const getBattlesControllerDeleteBattleUrl = ({ battleId }: BattlesControllerDeleteBattlePathParameters,) => {
 
 
 
@@ -1664,9 +1948,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return `/battles/${battleId}`
 }
 
-export const battlesControllerDeleteBattle = async ({ battleId }: BattlesControllerDeleteBattlePathParameters, options?: RequestInit): Promise<void> => {
+export const battlesControllerDeleteBattle = async ({ battleId }: BattlesControllerDeleteBattlePathParameters, options?: RequestInit): Promise<BattleDeletedResponseDtoOutput> => {
 
-  return orvalFetchBattlelog<void>(getBattlesControllerDeleteBattleUrl({ battleId }),
+  return orvalFetchBattlelog<BattleDeletedResponseDtoOutput>(getBattlesControllerDeleteBattleUrl({ battleId }),
   {
     ...options,
     method: 'DELETE'
@@ -1678,7 +1962,7 @@ export const battlesControllerDeleteBattle = async ({ battleId }: BattlesControl
 
 
 
-export const getBattlesControllerDeleteBattleMutationOptions = <TError = ErrorType<unknown>,
+export const getBattlesControllerDeleteBattleMutationOptions = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof battlesControllerDeleteBattle>>, TError,{pathParams: BattlesControllerDeleteBattlePathParameters}, TContext>, request?: SecondParameter<typeof orvalFetchBattlelog>}
 ): UseMutationOptions<Awaited<ReturnType<typeof battlesControllerDeleteBattle>>, TError,{pathParams: BattlesControllerDeleteBattlePathParameters}, TContext> => {
 
@@ -1707,9 +1991,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type BattlesControllerDeleteBattleMutationResult = NonNullable<Awaited<ReturnType<typeof battlesControllerDeleteBattle>>>
 
-    export type BattlesControllerDeleteBattleMutationError = ErrorType<unknown>
+    export type BattlesControllerDeleteBattleMutationError = ErrorType<void>
 
-    export const useBattlesControllerDeleteBattle = <TError = ErrorType<unknown>,
+    /**
+ * @summary Delete a battle
+ */
+export const useBattlesControllerDeleteBattle = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof battlesControllerDeleteBattle>>, TError,{pathParams: BattlesControllerDeleteBattlePathParameters}, TContext>, request?: SecondParameter<typeof orvalFetchBattlelog>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof battlesControllerDeleteBattle>>,
@@ -1719,7 +2006,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
       return useMutation(getBattlesControllerDeleteBattleMutationOptions(options));
     }
-    export const getBattlesControllerGetBattleRawDataUrl = ({ battleId }: BattlesControllerGetBattleRawDataPathParameters,) => {
+    /**
+ * @summary Get raw battle payload
+ */
+export const getBattlesControllerGetBattleRawDataUrl = ({ battleId }: BattlesControllerGetBattleRawDataPathParameters,) => {
 
 
 
@@ -1727,9 +2017,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return `/battles/${battleId}/raw`
 }
 
-export const battlesControllerGetBattleRawData = async ({ battleId }: BattlesControllerGetBattleRawDataPathParameters, options?: RequestInit): Promise<void> => {
+export const battlesControllerGetBattleRawData = async ({ battleId }: BattlesControllerGetBattleRawDataPathParameters, options?: RequestInit): Promise<BattleRawResponseDtoOutput> => {
 
-  return orvalFetchBattlelog<void>(getBattlesControllerGetBattleRawDataUrl({ battleId }),
+  return orvalFetchBattlelog<BattleRawResponseDtoOutput>(getBattlesControllerGetBattleRawDataUrl({ battleId }),
   {
     ...options,
     method: 'GET'
@@ -1749,7 +2039,7 @@ export const getBattlesControllerGetBattleRawDataQueryKey = ({ battleId }: Battl
     }
 
 
-export const getBattlesControllerGetBattleRawDataQueryOptions = <TData = Awaited<ReturnType<typeof battlesControllerGetBattleRawData>>, TError = ErrorType<unknown>>({ battleId }: BattlesControllerGetBattleRawDataPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetBattleRawData>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
+export const getBattlesControllerGetBattleRawDataQueryOptions = <TData = Awaited<ReturnType<typeof battlesControllerGetBattleRawData>>, TError = ErrorType<void>>({ battleId }: BattlesControllerGetBattleRawDataPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetBattleRawData>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -1768,11 +2058,14 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type BattlesControllerGetBattleRawDataQueryResult = NonNullable<Awaited<ReturnType<typeof battlesControllerGetBattleRawData>>>
-export type BattlesControllerGetBattleRawDataQueryError = ErrorType<unknown>
+export type BattlesControllerGetBattleRawDataQueryError = ErrorType<void>
 
 
+/**
+ * @summary Get raw battle payload
+ */
 
-export function useBattlesControllerGetBattleRawData<TData = Awaited<ReturnType<typeof battlesControllerGetBattleRawData>>, TError = ErrorType<unknown>>(
+export function useBattlesControllerGetBattleRawData<TData = Awaited<ReturnType<typeof battlesControllerGetBattleRawData>>, TError = ErrorType<void>>(
  { battleId }: BattlesControllerGetBattleRawDataPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetBattleRawData>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
@@ -1784,7 +2077,10 @@ export function useBattlesControllerGetBattleRawData<TData = Awaited<ReturnType<
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
-export const prefetchBattlesControllerGetBattleRawDataQuery = async <TData = Awaited<ReturnType<typeof battlesControllerGetBattleRawData>>, TError = ErrorType<unknown>>(
+/**
+ * @summary Get raw battle payload
+ */
+export const prefetchBattlesControllerGetBattleRawDataQuery = async <TData = Awaited<ReturnType<typeof battlesControllerGetBattleRawData>>, TError = ErrorType<void>>(
  queryClient: QueryClient, { battleId }: BattlesControllerGetBattleRawDataPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetBattleRawData>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
 
   ): Promise<QueryClient> => {
@@ -1796,6 +2092,9 @@ export const prefetchBattlesControllerGetBattleRawDataQuery = async <TData = Awa
   return queryClient;
 }
 
+/**
+ * @summary Get raw battle payload
+ */
 export const invalidateBattlesControllerGetBattleRawData = async (
  queryClient: QueryClient, { battleId }: BattlesControllerGetBattleRawDataPathParameters, options?: InvalidateOptions
   ): Promise<QueryClient> => {
@@ -1805,6 +2104,9 @@ export const invalidateBattlesControllerGetBattleRawData = async (
   return queryClient;
 }
 
+/**
+ * @summary Get raw battle payload
+ */
 export const useSetBattlesControllerGetBattleRawDataQueryData = () => {
   const queryClient = useQueryClient();
   return ({ battleId }: BattlesControllerGetBattleRawDataPathParameters,updater: Awaited<ReturnType<typeof battlesControllerGetBattleRawData>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetBattleRawData>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetBattleRawData>> | undefined)) => {
@@ -1812,6 +2114,9 @@ export const useSetBattlesControllerGetBattleRawDataQueryData = () => {
   };
 }
 
+/**
+ * @summary Get raw battle payload
+ */
 export const useGetBattlesControllerGetBattleRawDataQueryData = () => {
   const queryClient = useQueryClient();
   return ({ battleId }: BattlesControllerGetBattleRawDataPathParameters,) =>

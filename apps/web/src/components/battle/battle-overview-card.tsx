@@ -5,7 +5,10 @@ import { BattleTeamSection } from "./battle-team-section";
 import { AnimatedTrophy } from "./animated-trophy";
 import { BattleMetadata } from "./battle-metadata";
 import type { BattleLabels } from "./battle-labels";
-import type { Battle, Warrior } from "@/hooks/api/battle-log/use-battles";
+import type {
+  Battle,
+  BattleWarrior as Warrior,
+} from "@/lib/api/battlelog-types";
 import { useTranslation } from "react-i18next";
 
 export type BattleOverviewCardProps = {

@@ -6,7 +6,10 @@ import { ChartArea } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
 import { cn } from "@lootlog/ui/lib/utils";
-import type { Battle, Warrior } from "@/hooks/api/battle-log/use-battles";
+import type {
+  Battle,
+  BattleWarrior as Warrior,
+} from "@/lib/api/battlelog-types";
 
 interface BattleStatsTableProps {
   battle: Battle;

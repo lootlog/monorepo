@@ -15,7 +15,7 @@ import {
 } from "@lootlog/ui/components/command";
 import { Button } from "@lootlog/ui/components/button";
 import { cn } from "@lootlog/ui/lib/utils";
-import { useBattleCharacters } from "@/hooks/api/battle-log/use-battle-characters";
+import { useBattlesControllerGetUserCharacters } from "@/lib/api/generated/battlelog/battles/battles";
 import { PlayerTile } from "@/components/battle";
 import { useTranslation } from "react-i18next";
 
@@ -35,8 +35,9 @@ export function CharacterSelector({
   className,
 }: CharacterSelectorProps) {
   const [open, setOpen] = useState(false);
-  const { data: characters } = useBattleCharacters();
+  const { data: charactersResponse } = useBattlesControllerGetUserCharacters();
   const { t } = useTranslation();
+  const characters = charactersResponse?.characters;
 
   const selectedCharacter = characters?.find((c) => c.id === characterId);
 

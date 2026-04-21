@@ -1,7 +1,7 @@
 // import { BattlesChart } from "@/features/user/battle-panel/battle-panel-dashboard/components/battles-chart";
 import { RecentBattles } from "@/features/user/battle-panel/battle-panel-dashboard/components/recent-battles";
 import { StatsOverview } from "@/features/user/battle-panel/battle-panel-dashboard/components/stats-overview";
-import { useBattleAnalytics } from "@/hooks/api/battle-log/use-battle-analytics";
+import { useBattlesControllerGetBattleAnalytics } from "@/lib/api/generated/battlelog/battles/battles";
 
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
@@ -17,7 +17,9 @@ import { useTranslation } from "react-i18next";
 
 export const BattlePanelDashboard = () => {
   const { t } = useTranslation();
-  const { data: analytics, isLoading } = useBattleAnalytics({ period: "180d" });
+  const { data: analytics, isLoading } = useBattlesControllerGetBattleAnalytics(
+    { period: "180d" },
+  );
 
   if (isLoading) {
     return <BattlePanelDashboardSkeleton />;

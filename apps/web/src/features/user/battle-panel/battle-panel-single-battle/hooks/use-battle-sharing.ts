@@ -1,11 +1,21 @@
-import { useEditBattle } from "@/hooks/api/battle-log/use-edit-battle";
+import {
+  invalidateBattlesControllerGetBattle,
+  invalidateBattlesControllerGetDashboardBattles,
+  useBattlesControllerUpdateBattle,
+} from "@/lib/api/generated/battlelog/battles/battles";
+import {
+  invalidatePublicBattlesControllerGetPublicBattle,
+  invalidatePublicBattlesControllerGetPublicBattleRaw,
+} from "@/lib/api/generated/battlelog/public-battles/public-battles";
 import { BATTLELOG_PUBLIC_URL } from "@/config/addon";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCopyToClipboard } from "usehooks-ts";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 
 export const useBattleSharing = () => {
-  const { mutate: editBattle, isPending } = useEditBattle();
+  const queryClient = useQueryClient();
+  const { mutate: editBattle, isPending } = useBattlesControllerUpdateBattle();
   const [, copy] = useCopyToClipboard();
   const { t } = useTranslation();
 
@@ -28,9 +38,22 @@ export const useBattleSharing = () => {
 
   const handleShare = (battleId: string) => {
     editBattle(
-      { battleId, data: { public: true } },
       {
-        onSuccess: (response) => {
+        pathParams: { battleId },
+        data: { public: true },
+      },
+      {
+        onSuccess: async (response) => {
+          await Promise.all([
+            invalidateBattlesControllerGetBattle(queryClient, { battleId }),
+            invalidateBattlesControllerGetDashboardBattles(queryClient),
+            invalidatePublicBattlesControllerGetPublicBattle(queryClient, {
+              battleId,
+            }),
+            invalidatePublicBattlesControllerGetPublicBattleRaw(queryClient, {
+              battleId,
+            }),
+          ]);
           const battleUrl = composeBattleUrl(response.id);
           toast.success(t("battlePanel.toasts.battleShared"), {
             duration: 3000,
@@ -53,9 +76,22 @@ export const useBattleSharing = () => {
 
   const handleUnshare = (battleId: string) => {
     editBattle(
-      { battleId, data: { public: false } },
       {
-        onSuccess: () => {
+        pathParams: { battleId },
+        data: { public: false },
+      },
+      {
+        onSuccess: async () => {
+          await Promise.all([
+            invalidateBattlesControllerGetBattle(queryClient, { battleId }),
+            invalidateBattlesControllerGetDashboardBattles(queryClient),
+            invalidatePublicBattlesControllerGetPublicBattle(queryClient, {
+              battleId,
+            }),
+            invalidatePublicBattlesControllerGetPublicBattleRaw(queryClient, {
+              battleId,
+            }),
+          ]);
           toast.success(t("battlePanel.toasts.battleHidden"), {
             duration: 3000,
           });
