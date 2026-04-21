@@ -637,7 +637,7 @@ export class MembersService {
   async deactivateMember(options: {
     discordId: string;
     guildId: string;
-  }): Promise<Member | null> {
+  }): Promise<MemberWithRoles> {
     const { discordId, guildId } = options;
 
     const member = await this.prisma.member.findUnique({
@@ -661,6 +661,7 @@ export class MembersService {
         lastDiscordStatus: "MANUALLY_DEACTIVATED",
         roles: { set: [] },
       },
+      include: { roles: true },
     });
 
     await this.notifyMemberRemoved({

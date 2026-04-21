@@ -11,6 +11,7 @@ import {
 import { PrismaService } from "src/db/prisma.service";
 import { GuildsService } from "src/guilds/guilds.service";
 import { NotificationJobService } from "src/notifications/notification-job.service";
+import { NotificationFiltersResponseDto } from "src/notifications/dto/notification-response.dto";
 import { NotificationMatchingService } from "src/notifications/notification-matching.service";
 import { NotificationTargetService } from "src/notifications/notification-target.service";
 import { Error as NotificationError } from "src/notifications/enum/error.enum";
@@ -85,6 +86,9 @@ export class WatchedItemService {
 
       return {
         ...item,
+        notificationRule: item.notificationRule
+          ? this.mapNotificationRule(item.notificationRule)
+          : null,
         itemSnapshot: snapshot
           ? {
               name: snapshot.name,
@@ -246,38 +250,40 @@ export class WatchedItemService {
         },
       });
 
-      return tx.watchedItem.upsert({
-        where: {
-          userId_itemId_world: {
+      return tx.watchedItem
+        .upsert({
+          where: {
+            userId_itemId_world: {
+              userId: discordId,
+              itemId: params.itemId,
+              world: params.world,
+            },
+          },
+          create: {
             userId: discordId,
             itemId: params.itemId,
+            itemName: params.itemName,
             world: params.world,
+            notificationRuleId: notificationRule.id,
           },
-        },
-        create: {
-          userId: discordId,
-          itemId: params.itemId,
-          itemName: params.itemName,
-          world: params.world,
-          notificationRuleId: notificationRule.id,
-        },
-        update: {
-          enabled: true,
-          itemName: params.itemName,
-          notificationRuleId: notificationRule.id,
-        },
-        include: {
-          notificationRule: {
-            include: {
-              targets: {
-                include: {
-                  target: true,
+          update: {
+            enabled: true,
+            itemName: params.itemName,
+            notificationRuleId: notificationRule.id,
+          },
+          include: {
+            notificationRule: {
+              include: {
+                targets: {
+                  include: {
+                    target: true,
+                  },
                 },
               },
             },
           },
-        },
-      });
+        })
+        .then((watchedItem) => this.mapWatchedItem(watchedItem));
     });
   }
 
@@ -373,25 +379,57 @@ export class WatchedItemService {
     itemId: number;
     world: string;
   }) {
-    return this.prisma.watchedItem.findUnique({
-      where: {
-        userId_itemId_world: {
-          userId: params.discordId,
-          itemId: params.itemId,
-          world: params.world,
+    return this.prisma.watchedItem
+      .findUnique({
+        where: {
+          userId_itemId_world: {
+            userId: params.discordId,
+            itemId: params.itemId,
+            world: params.world,
+          },
         },
-      },
-      include: {
-        notificationRule: {
-          include: {
-            targets: {
-              include: {
-                target: true,
+        include: {
+          notificationRule: {
+            include: {
+              targets: {
+                include: {
+                  target: true,
+                },
               },
             },
           },
         },
-      },
-    });
+      })
+      .then((watchedItem) =>
+        watchedItem ? this.mapWatchedItem(watchedItem) : null,
+      );
+  }
+
+  private mapWatchedItem<
+    T extends {
+      notificationRule: {
+        filters: unknown;
+      } | null;
+    },
+  >(watchedItem: T) {
+    return {
+      ...watchedItem,
+      notificationRule: watchedItem.notificationRule
+        ? this.mapNotificationRule(watchedItem.notificationRule)
+        : null,
+    };
+  }
+
+  private mapNotificationRule<
+    T extends {
+      filters: unknown;
+    },
+  >(notificationRule: T) {
+    return {
+      ...notificationRule,
+      filters: NotificationFiltersResponseDto.schema.parse(
+        notificationRule.filters,
+      ),
+    };
   }
 }

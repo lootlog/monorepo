@@ -32,6 +32,10 @@ import {
   NOTIFICATIONS_HISTORY_RETENTION_LIMIT,
 } from "src/notifications/constants/notifications-history.constant";
 import { NotificationContentService } from "src/notifications/notification-content.service";
+import {
+  NotificationFiltersResponseDto,
+  NotificationJobPayloadSnapshotResponseDto,
+} from "src/notifications/dto/notification-response.dto";
 import { NotificationMatchingService } from "src/notifications/notification-matching.service";
 import { Error } from "src/notifications/enum/error.enum";
 import type { NotificationDispatchJobData } from "src/notifications/notifications-dispatch.processor";
@@ -78,7 +82,10 @@ export class NotificationJobService {
     return this.getJobsForOwner({
       ownerType: DbNotificationOwnerType.GUILD,
       ownerId: guildId,
-    });
+    }).then(({ pending, history }) => ({
+      pending: pending.map((job) => this.mapJobResponse(job)),
+      history: history.map((job) => this.mapJobResponse(job)),
+    }));
   }
 
   async cancelGuildJob(guildId: string, jobId: string) {
@@ -91,7 +98,10 @@ export class NotificationJobService {
     return this.getJobsForOwner({
       ownerType: DbNotificationOwnerType.USER,
       ownerId: discordId,
-    });
+    }).then(({ pending, history }) => ({
+      pending: pending.map((job) => this.mapJobResponse(job)),
+      history: history.map((job) => this.mapJobResponse(job)),
+    }));
   }
 
   async cancelPendingJobs(filters: {
@@ -872,16 +882,18 @@ export class NotificationJobService {
   }
 
   getRuleById(ruleId: number) {
-    return this.prisma.notificationRule.findUnique({
-      where: { id: ruleId },
-      include: {
-        targets: {
-          include: {
-            target: true,
+    return this.prisma.notificationRule
+      .findUnique({
+        where: { id: ruleId },
+        include: {
+          targets: {
+            include: {
+              target: true,
+            },
           },
         },
-      },
-    });
+      })
+      .then((rule) => (rule ? this.mapRuleResponse(rule) : null));
   }
 
   getTimerSourceEntityId(
@@ -1027,5 +1039,45 @@ export class NotificationJobService {
     }
 
     return notificationJob;
+  }
+
+  private mapJobResponse<
+    T extends {
+      payloadSnapshot: Prisma.JsonValue | null;
+      rule: {
+        filters: Prisma.JsonValue | null;
+      };
+    },
+  >(job: T) {
+    return {
+      ...job,
+      payloadSnapshot: this.parsePayloadSnapshot(job.payloadSnapshot),
+      rule: this.mapRuleResponse(job.rule),
+    };
+  }
+
+  private mapRuleResponse<
+    T extends {
+      filters: Prisma.JsonValue | null;
+    },
+  >(rule: T) {
+    return {
+      ...rule,
+      filters: this.parseNotificationFilters(rule.filters),
+    };
+  }
+
+  private parseNotificationFilters(filters: Prisma.JsonValue | null) {
+    if (filters === null) {
+      return null;
+    }
+
+    return NotificationFiltersResponseDto.schema.parse(filters);
+  }
+
+  private parsePayloadSnapshot(payloadSnapshot: Prisma.JsonValue | null) {
+    return NotificationJobPayloadSnapshotResponseDto.schema.parse(
+      payloadSnapshot,
+    );
   }
 }

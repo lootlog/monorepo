@@ -61,7 +61,11 @@ const LootSubmissionResponseSchema = z.object({
   member: LootSubmissionMemberResponseSchema,
 });
 
-const LootShareResponseSchema = z.record(z.string(), z.array(z.string()));
+export const LootShareResponseSchema = z.record(
+  z.string(),
+  z.array(z.string()),
+);
+export type LootShare = z.infer<typeof LootShareResponseSchema>;
 
 const LootResponseSchema = z.object({
   id: z.number(),

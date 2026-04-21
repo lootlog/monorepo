@@ -824,6 +824,7 @@ describe("MembersService", () => {
           lastDiscordStatus: "MANUALLY_DEACTIVATED",
           roles: { set: [] },
         }),
+        include: { roles: true },
       });
       expect(amqpConnection.publish).toHaveBeenCalledWith(
         DEFAULT_EXCHANGE_NAME,

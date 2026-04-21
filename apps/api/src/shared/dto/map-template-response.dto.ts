@@ -6,12 +6,16 @@ const MapTemplateMapItemResponseSchema = z.object({
   id: z.number().int(),
   name: z.string(),
 });
+export const MapTemplateMapsResponseSchema = z.array(
+  MapTemplateMapItemResponseSchema,
+);
+export type MapTemplateMaps = z.infer<typeof MapTemplateMapsResponseSchema>;
 
 const MapTemplateResponseSchema = z.object({
   id: z.string(),
   guildId: z.string(),
   name: z.string(),
-  maps: z.array(MapTemplateMapItemResponseSchema),
+  maps: MapTemplateMapsResponseSchema,
   createdAt: isoDatetimeCodec,
 });
 
