@@ -8,6 +8,7 @@ import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import { queryClient } from "@/lib/query-client";
 import { createAutoTimer } from "@/api";
+import { getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey } from "@/lib/api/generated/main/user-lootlog-config/user-lootlog-config";
 import type { LootlogCharacterConfigResponse } from "@/hooks/api/use-lootlog-character-config";
 
 export class NpcsDeleteProcessor {
@@ -24,24 +25,33 @@ export class NpcsDeleteProcessor {
       const characterId = Game.hero.id;
       const accountId = Game.hero.account;
 
-      if (!data || !npc.respBaseSeconds || data.wt < MIN_NPC_WT) return;
+      if (!data || !npc.respBaseSeconds || data.wt < MIN_NPC_WT) {
+        return;
+      }
 
-      if (npc.respBaseSeconds < MIN_RESP_BASE_SECONDS) return;
+      if (npc.respBaseSeconds < MIN_RESP_BASE_SECONDS) {
+        return;
+      }
 
       const map = Game.map.id;
       const elite2Name = SpecialE2[map as keyof typeof SpecialE2] || data.nick;
       const npcType = getNpcTypeByWt(NpcType, data.wt, data.prof, data.type);
       const npcName = npcType === NpcType.ELITE2 ? elite2Name : data.nick;
+      const lootlogCharacterConfigQueryKey =
+        getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
+          accountId: String(accountId),
+        });
 
       const charactersConfig =
-        queryClient.getQueryData<LootlogCharacterConfigResponse>([
-          "lootlog-characters-config",
-          String(accountId),
-        ]);
+        queryClient.getQueryData<LootlogCharacterConfigResponse>(
+          lootlogCharacterConfigQueryKey,
+        );
       const characterConfig = charactersConfig?.[String(characterId)];
       const catchingGuildIds = characterConfig?.catchingGuildIds ?? [];
 
-      if (catchingGuildIds.length === 0) return;
+      if (catchingGuildIds.length === 0) {
+        return;
+      }
 
       createAutoTimer({
         respawnRandomness: data.resp_rand,
