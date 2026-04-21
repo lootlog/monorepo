@@ -1,4 +1,4 @@
-import type { Mock, Mocked } from "vitest";
+import type { Mocked } from "vitest";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { NotFoundException } from "@nestjs/common";
 import { BattleAnalyticsService } from "./battle-analytics.service";
