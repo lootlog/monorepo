@@ -41,7 +41,7 @@
     "knip:fix": "knip --fix",
     "api:migrate:dev": "turbo run api:migrate:dev",
     "api:generate": "turbo run api:generate",
-    "api:client:generate": "turbo run openapi:generate --filter=@lootlog/api && tsx ./scripts/sanitize-openapi.ts && orval --config ./orval.config.ts",
+    "api:client:generate": "pnpm openapi:generate && tsx ./scripts/sanitize-openapi.ts && orval --config ./orval.config.ts",
     "api:studio": "turbo run api:studio",
     "battlelog:migrate": "turbo run battlelog:migrate",
     "battlelog:migrate:init": "turbo run battlelog:migrate:init",

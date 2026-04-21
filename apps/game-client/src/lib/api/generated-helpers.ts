@@ -3,10 +3,10 @@ import type {
   CreatePartyGatheringDtoCharacter,
   GuildResponseDtoOutput,
   MemberSummaryResponseDtoOutput,
+  MemberResponseDto,
+  MemberResponseDtoRolesItem,
   SoundSettingsResponseDto,
   TimerResponseDto,
-  TimerResponseDtoMember,
-  TimerResponseDtoMemberRolesItem,
 } from "@/lib/api/generated/main/model";
 import type { Guild } from "@/api/guilds.api";
 import type { Npc } from "@/api/npcs.api";
@@ -72,9 +72,7 @@ export const mapGuildMembersByUserId = (
   );
 };
 
-export const normalizeTimerMemberRole = (
-  role: TimerResponseDtoMemberRolesItem,
-) => {
+export const normalizeTimerMemberRole = (role: MemberResponseDtoRolesItem) => {
   return {
     position: role.position ?? null,
     color: role.color ?? null,
@@ -82,7 +80,7 @@ export const normalizeTimerMemberRole = (
 };
 
 export const normalizeTimerMember = (
-  member?: TimerResponseDtoMember,
+  member?: MemberResponseDto,
 ): GuildMember | undefined => {
   if (!member) {
     return undefined;
@@ -100,7 +98,7 @@ export const normalizeTimerMember = (
 };
 
 export const normalizeTimerNpc = (npc: TimerResponseDto["npc"]): Npc => {
-  const data = isRecord(npc) ? npc : {};
+  const data: Record<string, unknown> = isRecord(npc) ? npc : {};
 
   return {
     id: getNumber(data.id),
