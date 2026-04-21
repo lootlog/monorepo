@@ -1,7 +1,4 @@
-import {
-  chatControllerGetChatMessages,
-  chatControllerSendChatMessage,
-} from "@/lib/api/generated/main/chat/chat";
+import { chatControllerSendChatMessage } from "@/lib/api/generated/main/chat/chat";
 import {
   type ChatMessageResponseDtoOutput,
   SendMessageDtoType,
@@ -11,7 +8,6 @@ import {
 } from "@/lib/api/generated/main/model";
 import {
   getAggregateActionStatus,
-  getErrorMessage,
   runLoggedRequest,
   startLoggedAction,
 } from "@/lib/logs/log-actions";
@@ -23,12 +19,6 @@ export type ChatCharacterData = SendMessageDtoCharacterData;
 export type ChatNpc = SendMessageDtoNpc;
 export type PartyGatheringChatData = SendMessageDtoPartyGathering;
 export type ChatMessage = ChatMessageResponseDtoOutput;
-
-export async function fetchChatMessages(
-  guildId: string,
-): Promise<ChatMessage[]> {
-  return chatControllerGetChatMessages({ guildId });
-}
 
 export type SendChatMessageOptions = {
   message: string;

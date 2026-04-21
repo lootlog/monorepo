@@ -1,11 +1,14 @@
 import { GatewayEvent } from "@/config/gateway";
-import { type ChatMessage, fetchChatMessages } from "@/api/chat.api";
+import { type ChatMessage } from "@/api/chat.api";
 import { fetchGuildMembers } from "@/api/guilds.api";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef } from "react";
 import { useChatCache } from "./use-chat-cache";
 import { useSocket } from "@/contexts/socket-context";
-import { getChatControllerGetChatMessagesQueryKey } from "@/lib/api/generated/main/chat/chat";
+import {
+  chatControllerGetChatMessages,
+  getChatControllerGetChatMessagesQueryKey,
+} from "@/lib/api/generated/main/chat/chat";
 
 export const useChatMessagesListener = () => {
   const queryClient = useQueryClient();
@@ -22,7 +25,7 @@ export const useChatMessagesListener = () => {
         },
       );
       if (!useChatCache.getState().messageCache[data.guildId]) {
-        fetchChatMessages(data.guildId)
+        chatControllerGetChatMessages({ guildId: data.guildId })
           .then((messages) => {
             if (messages.length) {
               useChatCache.getState().setMessageCache(data.guildId, messages);
