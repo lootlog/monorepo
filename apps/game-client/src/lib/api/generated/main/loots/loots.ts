@@ -29,7 +29,7 @@ import type {
   CreateLootResponseDtoOutput,
   LootCommentResponseDto,
   LootResponseDto,
-  LootShareResponseDtoOutput,
+  LootShareResponseDto,
   LootStatsResponseDtoOutput,
   LootsControllerCountLootsByGuildIdParams,
   LootsControllerCountLootsByGuildIdPathParameters,
@@ -923,9 +923,9 @@ export const getLootsControllerUpdateLootUrl = ({ id }: LootsControllerUpdateLoo
 }
 
 export const lootsControllerUpdateLoot = async ({ id }: LootsControllerUpdateLootPathParameters,
-    updateLootDto: UpdateLootDto, options?: RequestInit): Promise<LootShareResponseDtoOutput> => {
+    updateLootDto: UpdateLootDto, options?: RequestInit): Promise<LootShareResponseDto> => {
 
-  return orvalFetch<LootShareResponseDtoOutput>(getLootsControllerUpdateLootUrl({ id }),
+  return orvalFetch<LootShareResponseDto>(getLootsControllerUpdateLootUrl({ id }),
   {
     ...options,
     method: 'PATCH',

@@ -1244,7 +1244,7 @@ paths:
             maximum: 100
             type: integer
         - name: cursor
-          required: true
+          required: false
           in: query
           schema:
             minimum: -9007199254740991
@@ -1284,42 +1284,42 @@ paths:
           schema:
             type: string
         - name: npcLevelMin
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
             maximum: 500
             type: integer
         - name: npcLevelMax
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
             maximum: 500
             type: integer
         - name: itemLevelMin
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
             maximum: 500
             type: integer
         - name: itemLevelMax
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
             maximum: 500
             type: integer
         - name: playerLevelMin
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
             maximum: 500
             type: integer
         - name: playerLevelMax
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
@@ -1446,7 +1446,7 @@ paths:
             maximum: 100
             type: integer
         - name: cursor
-          required: true
+          required: false
           in: query
           schema:
             minimum: -9007199254740991
@@ -1486,42 +1486,42 @@ paths:
           schema:
             type: string
         - name: npcLevelMin
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
             maximum: 500
             type: integer
         - name: npcLevelMax
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
             maximum: 500
             type: integer
         - name: itemLevelMin
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
             maximum: 500
             type: integer
         - name: itemLevelMax
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
             maximum: 500
             type: integer
         - name: playerLevelMin
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
             maximum: 500
             type: integer
         - name: playerLevelMax
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
@@ -1763,7 +1763,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LootShareResponseDto_Output"
+                $ref: "#/components/schemas/LootShareResponseDto"
         "404":
           description: Loot not found
       security:
@@ -6623,6 +6623,48 @@ components:
         - permissions
         - lvlRangeFrom
         - lvlRangeTo
+    TimerNpcResponseDto:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        prof:
+          type: string
+        location:
+          type: string
+        wt:
+          type: string
+        lvl:
+          type: number
+        type:
+          type: string
+          enum:
+            - COMMON
+            - ELITE
+            - ELITE2
+            - ELITE3
+            - HERO
+            - EVENT_HERO
+            - TITAN
+            - COLOSSUS
+            - NPC
+        icon:
+          type: string
+          nullable: true
+        margonemType:
+          type: string
+      required:
+        - id
+        - name
+        - prof
+        - location
+        - wt
+        - lvl
+        - type
+        - icon
+        - margonemType
     TimerResponseDto:
       type: object
       properties:
@@ -6643,47 +6685,8 @@ components:
           format: date-time
           pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         npc:
-          type: object
-          properties:
-            id:
-              type: number
-            name:
-              type: string
-            prof:
-              type: string
-            location:
-              type: string
-            wt:
-              type: string
-            lvl:
-              type: number
-            type:
-              type: string
-              enum:
-                - COMMON
-                - ELITE
-                - ELITE2
-                - ELITE3
-                - HERO
-                - EVENT_HERO
-                - TITAN
-                - COLOSSUS
-                - NPC
-            icon:
-              type: string
-              nullable: true
-            margonemType:
-              type: string
-          required:
-            - id
-            - name
-            - prof
-            - location
-            - wt
-            - lvl
-            - type
-            - icon
-            - margonemType
+          allOf:
+            - $ref: "#/components/schemas/TimerNpcResponseDto"
           nullable: true
         wasReset:
           type: boolean
@@ -7365,6 +7368,182 @@ components:
             - merge
       required:
         - localData
+    LootItemResponseDto:
+      type: object
+      properties:
+        id:
+          type: number
+        hid:
+          type: string
+        name:
+          type: string
+        icon:
+          type: string
+        stat:
+          type: string
+        type:
+          type: string
+          nullable: true
+        rarity:
+          type: string
+          enum:
+            - UNIQUE
+            - HEROIC
+            - LEGENDARY
+            - UPGRADED
+          nullable: true
+        lvl:
+          type: number
+        prof:
+          type: array
+          items:
+            type: string
+            enum:
+              - WARRIOR
+              - PALADIN
+              - HUNTER
+              - MAGE
+              - BLADE_DANCER
+              - TRACKER
+      required:
+        - id
+        - hid
+        - name
+        - icon
+        - stat
+        - type
+        - rarity
+        - lvl
+        - prof
+    LootPlayerResponseDto:
+      type: object
+      properties:
+        id:
+          anyOf:
+            - type: string
+            - type: number
+        name:
+          type: string
+        lvl:
+          type: number
+          nullable: true
+        prof:
+          type: string
+          enum:
+            - WARRIOR
+            - PALADIN
+            - HUNTER
+            - MAGE
+            - BLADE_DANCER
+            - TRACKER
+          nullable: true
+        icon:
+          type: string
+          nullable: true
+        characterId:
+          type: number
+          nullable: true
+        accountId:
+          type: number
+          nullable: true
+        hpp:
+          type: number
+          nullable: true
+      required:
+        - id
+        - name
+        - lvl
+        - prof
+        - icon
+        - characterId
+        - accountId
+        - hpp
+    LootNpcResponseDto:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        wt:
+          type: number
+          nullable: true
+        lvl:
+          type: number
+          nullable: true
+        prof:
+          type: string
+          enum:
+            - WARRIOR
+            - PALADIN
+            - HUNTER
+            - MAGE
+            - BLADE_DANCER
+            - TRACKER
+          nullable: true
+        icon:
+          type: string
+          nullable: true
+        type:
+          type: string
+          enum:
+            - COMMON
+            - ELITE
+            - ELITE2
+            - ELITE3
+            - HERO
+            - EVENT_HERO
+            - TITAN
+            - COLOSSUS
+            - NPC
+          nullable: true
+        margonemType:
+          type: number
+          nullable: true
+      required:
+        - id
+        - name
+        - wt
+        - lvl
+        - prof
+        - icon
+        - type
+        - margonemType
+    LootShareResponseDto:
+      type: object
+      additionalProperties:
+        type: array
+        items:
+          type: string
+    LootSubmissionResponseDto:
+      type: object
+      properties:
+        guildId:
+          type: string
+        memberId:
+          type: number
+        lootId:
+          type: number
+        member:
+          $ref: "#/components/schemas/LootSubmissionMemberResponseDto"
+      required:
+        - guildId
+        - memberId
+        - lootId
+        - member
+    LootSubmissionMemberResponseDto:
+      type: object
+      properties:
+        name:
+          type: string
+        avatar:
+          type: string
+          nullable: true
+        userId:
+          type: string
+      required:
+        - name
+        - userId
     LootResponseDto:
       type: object
       properties:
@@ -7385,156 +7564,17 @@ components:
         items:
           type: array
           items:
-            type: object
-            properties:
-              id:
-                type: number
-              hid:
-                type: string
-              name:
-                type: string
-              icon:
-                type: string
-              stat:
-                type: string
-              type:
-                type: string
-                nullable: true
-              rarity:
-                type: string
-                enum:
-                  - UNIQUE
-                  - HEROIC
-                  - LEGENDARY
-                  - UPGRADED
-                nullable: true
-              lvl:
-                type: number
-              prof:
-                type: array
-                items:
-                  type: string
-                  enum:
-                    - WARRIOR
-                    - PALADIN
-                    - HUNTER
-                    - MAGE
-                    - BLADE_DANCER
-                    - TRACKER
-            required:
-              - id
-              - hid
-              - name
-              - icon
-              - stat
-              - type
-              - rarity
-              - lvl
-              - prof
+            $ref: "#/components/schemas/LootItemResponseDto"
         players:
           type: array
           items:
-            type: object
-            properties:
-              id:
-                anyOf:
-                  - type: string
-                  - type: number
-              name:
-                type: string
-              lvl:
-                type: number
-                nullable: true
-              prof:
-                type: string
-                enum:
-                  - WARRIOR
-                  - PALADIN
-                  - HUNTER
-                  - MAGE
-                  - BLADE_DANCER
-                  - TRACKER
-                nullable: true
-              icon:
-                type: string
-                nullable: true
-              characterId:
-                type: number
-                nullable: true
-              accountId:
-                type: number
-                nullable: true
-              hpp:
-                type: number
-                nullable: true
-            required:
-              - id
-              - name
-              - lvl
-              - prof
-              - icon
-              - characterId
-              - accountId
-              - hpp
+            $ref: "#/components/schemas/LootPlayerResponseDto"
         npcs:
           type: array
           items:
-            type: object
-            properties:
-              id:
-                type: number
-              name:
-                type: string
-              wt:
-                type: number
-                nullable: true
-              lvl:
-                type: number
-                nullable: true
-              prof:
-                type: string
-                enum:
-                  - WARRIOR
-                  - PALADIN
-                  - HUNTER
-                  - MAGE
-                  - BLADE_DANCER
-                  - TRACKER
-                nullable: true
-              icon:
-                type: string
-                nullable: true
-              type:
-                type: string
-                enum:
-                  - COMMON
-                  - ELITE
-                  - ELITE2
-                  - ELITE3
-                  - HERO
-                  - EVENT_HERO
-                  - TITAN
-                  - COLOSSUS
-                  - NPC
-                nullable: true
-              margonemType:
-                type: number
-                nullable: true
-            required:
-              - id
-              - name
-              - wt
-              - lvl
-              - prof
-              - icon
-              - type
-              - margonemType
+            $ref: "#/components/schemas/LootNpcResponseDto"
         lootShare:
-          type: object
-          additionalProperties:
-            type: array
-            items:
-              type: string
+          $ref: "#/components/schemas/LootShareResponseDto"
         createdAt:
           type: string
           format: date-time
@@ -7546,32 +7586,7 @@ components:
         submissions:
           type: array
           items:
-            type: object
-            properties:
-              guildId:
-                type: string
-              memberId:
-                type: number
-              lootId:
-                type: number
-              member:
-                type: object
-                properties:
-                  name:
-                    type: string
-                  avatar:
-                    type: string
-                    nullable: true
-                  userId:
-                    type: string
-                required:
-                  - name
-                  - userId
-            required:
-              - guildId
-              - memberId
-              - lootId
-              - member
+            $ref: "#/components/schemas/LootSubmissionResponseDto"
         commentsCount:
           type: number
       required:
@@ -7773,156 +7788,17 @@ components:
         items:
           type: array
           items:
-            type: object
-            properties:
-              id:
-                type: number
-              hid:
-                type: string
-              name:
-                type: string
-              icon:
-                type: string
-              stat:
-                type: string
-              type:
-                type: string
-                nullable: true
-              rarity:
-                type: string
-                enum:
-                  - UNIQUE
-                  - HEROIC
-                  - LEGENDARY
-                  - UPGRADED
-                nullable: true
-              lvl:
-                type: number
-              prof:
-                type: array
-                items:
-                  type: string
-                  enum:
-                    - WARRIOR
-                    - PALADIN
-                    - HUNTER
-                    - MAGE
-                    - BLADE_DANCER
-                    - TRACKER
-            required:
-              - id
-              - hid
-              - name
-              - icon
-              - stat
-              - type
-              - rarity
-              - lvl
-              - prof
+            $ref: "#/components/schemas/LootItemResponseDto"
         players:
           type: array
           items:
-            type: object
-            properties:
-              id:
-                anyOf:
-                  - type: string
-                  - type: number
-              name:
-                type: string
-              lvl:
-                type: number
-                nullable: true
-              prof:
-                type: string
-                enum:
-                  - WARRIOR
-                  - PALADIN
-                  - HUNTER
-                  - MAGE
-                  - BLADE_DANCER
-                  - TRACKER
-                nullable: true
-              icon:
-                type: string
-                nullable: true
-              characterId:
-                type: number
-                nullable: true
-              accountId:
-                type: number
-                nullable: true
-              hpp:
-                type: number
-                nullable: true
-            required:
-              - id
-              - name
-              - lvl
-              - prof
-              - icon
-              - characterId
-              - accountId
-              - hpp
+            $ref: "#/components/schemas/LootPlayerResponseDto"
         npcs:
           type: array
           items:
-            type: object
-            properties:
-              id:
-                type: number
-              name:
-                type: string
-              wt:
-                type: number
-                nullable: true
-              lvl:
-                type: number
-                nullable: true
-              prof:
-                type: string
-                enum:
-                  - WARRIOR
-                  - PALADIN
-                  - HUNTER
-                  - MAGE
-                  - BLADE_DANCER
-                  - TRACKER
-                nullable: true
-              icon:
-                type: string
-                nullable: true
-              type:
-                type: string
-                enum:
-                  - COMMON
-                  - ELITE
-                  - ELITE2
-                  - ELITE3
-                  - HERO
-                  - EVENT_HERO
-                  - TITAN
-                  - COLOSSUS
-                  - NPC
-                nullable: true
-              margonemType:
-                type: number
-                nullable: true
-            required:
-              - id
-              - name
-              - wt
-              - lvl
-              - prof
-              - icon
-              - type
-              - margonemType
+            $ref: "#/components/schemas/LootNpcResponseDto"
         lootShare:
-          type: object
-          additionalProperties:
-            type: array
-            items:
-              type: string
+          $ref: "#/components/schemas/LootShareResponseDto"
         createdAt:
           type: string
           format: date-time
@@ -7934,32 +7810,7 @@ components:
         submissions:
           type: array
           items:
-            type: object
-            properties:
-              guildId:
-                type: string
-              memberId:
-                type: number
-              lootId:
-                type: number
-              member:
-                type: object
-                properties:
-                  name:
-                    type: string
-                  avatar:
-                    type: string
-                    nullable: true
-                  userId:
-                    type: string
-                required:
-                  - name
-                  - userId
-            required:
-              - guildId
-              - memberId
-              - lootId
-              - member
+            $ref: "#/components/schemas/LootSubmissionResponseDto"
         commentsCount:
           type: number
       required:
@@ -8218,12 +8069,6 @@ components:
           type: string
       required:
         - msg
-    LootShareResponseDto_Output:
-      type: object
-      additionalProperties:
-        type: array
-        items:
-          type: string
     NullableLootlogConfigResponseDto_Output:
       type: object
       properties:
@@ -8892,18 +8737,6 @@ components:
       required:
         - success
         - guildIds
-    NotificationTargetResponseDto__schema0:
-      anyOf:
-        - type: string
-        - type: number
-        - type: boolean
-        - type: array
-          items:
-            $ref: "#/components/schemas/NotificationTargetResponseDto__schema0"
-        - type: object
-          additionalProperties:
-            $ref: "#/components/schemas/NotificationTargetResponseDto__schema0"
-      nullable: true
     NotificationTargetResponseDto:
       type: object
       properties:
@@ -8937,7 +8770,7 @@ components:
           nullable: true
         metadata:
           allOf:
-            - $ref: "#/components/schemas/NotificationTargetResponseDto__schema0"
+            - $ref: "#/components/schemas/JsonValue"
           nullable: true
         active:
           type: boolean
@@ -9957,6 +9790,114 @@ components:
             maximum: 9007199254740991
         enabled:
           type: boolean
+    NotificationJobPayloadSnapshotResponseDto:
+      type: object
+      properties:
+        title:
+          type: string
+          nullable: true
+        message:
+          type: string
+          nullable: true
+        content:
+          type: string
+          nullable: true
+        allowedMentions:
+          allOf:
+            - $ref: "#/components/schemas/NotificationAllowedMentionsResponseDto"
+          nullable: true
+        ruleId:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          nullable: true
+        ruleName:
+          type: string
+          nullable: true
+        triggerType:
+          type: string
+          enum:
+            - TIMER_BEFORE_SPAWN
+            - NPC_SPAWNED
+            - WATCHED_ITEM_DROPPED
+            - SCHEDULED_MESSAGE
+          nullable: true
+        world:
+          type: string
+          nullable: true
+        npcId:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          nullable: true
+        npcName:
+          type: string
+          nullable: true
+        timerKey:
+          type: string
+          nullable: true
+        minSpawnTime:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+          nullable: true
+        maxSpawnTime:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+          nullable: true
+        scheduledFor:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+          nullable: true
+        scheduleStrategy:
+          type: string
+          enum:
+            - SPAWN_WINDOW_RELATIVE
+            - FIXED_DATETIME
+          nullable: true
+        scheduleAnchor:
+          type: string
+          enum:
+            - MIN_SPAWN
+            - MAX_SPAWN
+          nullable: true
+        scheduleOffsetMinutes:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          nullable: true
+        contentTemplate:
+          type: string
+          nullable: true
+        testTriggeredAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+          nullable: true
+      nullable: true
+    NotificationAllowedMentionsResponseDto:
+      type: object
+      properties:
+        parse:
+          type: array
+          items:
+            type: string
+            enum:
+              - roles
+              - users
+              - everyone
+        roles:
+          type: array
+          items:
+            type: string
+        users:
+          type: array
+          items:
+            type: string
+        repliedUser:
+          type: boolean
     NotificationJobsResponseDto__schema0:
       anyOf:
         - type: string
@@ -10025,110 +9966,7 @@ components:
                 type: string
                 nullable: true
               payloadSnapshot:
-                type: object
-                properties:
-                  title:
-                    type: string
-                    nullable: true
-                  message:
-                    type: string
-                    nullable: true
-                  content:
-                    type: string
-                    nullable: true
-                  allowedMentions:
-                    type: object
-                    properties:
-                      parse:
-                        type: array
-                        items:
-                          type: string
-                          enum:
-                            - roles
-                            - users
-                            - everyone
-                      roles:
-                        type: array
-                        items:
-                          type: string
-                      users:
-                        type: array
-                        items:
-                          type: string
-                      repliedUser:
-                        type: boolean
-                    nullable: true
-                  ruleId:
-                    type: integer
-                    minimum: -9007199254740991
-                    maximum: 9007199254740991
-                    nullable: true
-                  ruleName:
-                    type: string
-                    nullable: true
-                  triggerType:
-                    type: string
-                    enum:
-                      - TIMER_BEFORE_SPAWN
-                      - NPC_SPAWNED
-                      - WATCHED_ITEM_DROPPED
-                      - SCHEDULED_MESSAGE
-                    nullable: true
-                  world:
-                    type: string
-                    nullable: true
-                  npcId:
-                    type: integer
-                    minimum: -9007199254740991
-                    maximum: 9007199254740991
-                    nullable: true
-                  npcName:
-                    type: string
-                    nullable: true
-                  timerKey:
-                    type: string
-                    nullable: true
-                  minSpawnTime:
-                    type: string
-                    format: date-time
-                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
-                    nullable: true
-                  maxSpawnTime:
-                    type: string
-                    format: date-time
-                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
-                    nullable: true
-                  scheduledFor:
-                    type: string
-                    format: date-time
-                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
-                    nullable: true
-                  scheduleStrategy:
-                    type: string
-                    enum:
-                      - SPAWN_WINDOW_RELATIVE
-                      - FIXED_DATETIME
-                    nullable: true
-                  scheduleAnchor:
-                    type: string
-                    enum:
-                      - MIN_SPAWN
-                      - MAX_SPAWN
-                    nullable: true
-                  scheduleOffsetMinutes:
-                    type: integer
-                    minimum: -9007199254740991
-                    maximum: 9007199254740991
-                    nullable: true
-                  contentTemplate:
-                    type: string
-                    nullable: true
-                  testTriggeredAt:
-                    type: string
-                    format: date-time
-                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
-                    nullable: true
-                nullable: true
+                $ref: "#/components/schemas/NotificationJobPayloadSnapshotResponseDto"
               attemptCount:
                 type: integer
                 minimum: -9007199254740991
@@ -10462,110 +10300,7 @@ components:
                 type: string
                 nullable: true
               payloadSnapshot:
-                type: object
-                properties:
-                  title:
-                    type: string
-                    nullable: true
-                  message:
-                    type: string
-                    nullable: true
-                  content:
-                    type: string
-                    nullable: true
-                  allowedMentions:
-                    type: object
-                    properties:
-                      parse:
-                        type: array
-                        items:
-                          type: string
-                          enum:
-                            - roles
-                            - users
-                            - everyone
-                      roles:
-                        type: array
-                        items:
-                          type: string
-                      users:
-                        type: array
-                        items:
-                          type: string
-                      repliedUser:
-                        type: boolean
-                    nullable: true
-                  ruleId:
-                    type: integer
-                    minimum: -9007199254740991
-                    maximum: 9007199254740991
-                    nullable: true
-                  ruleName:
-                    type: string
-                    nullable: true
-                  triggerType:
-                    type: string
-                    enum:
-                      - TIMER_BEFORE_SPAWN
-                      - NPC_SPAWNED
-                      - WATCHED_ITEM_DROPPED
-                      - SCHEDULED_MESSAGE
-                    nullable: true
-                  world:
-                    type: string
-                    nullable: true
-                  npcId:
-                    type: integer
-                    minimum: -9007199254740991
-                    maximum: 9007199254740991
-                    nullable: true
-                  npcName:
-                    type: string
-                    nullable: true
-                  timerKey:
-                    type: string
-                    nullable: true
-                  minSpawnTime:
-                    type: string
-                    format: date-time
-                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
-                    nullable: true
-                  maxSpawnTime:
-                    type: string
-                    format: date-time
-                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
-                    nullable: true
-                  scheduledFor:
-                    type: string
-                    format: date-time
-                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
-                    nullable: true
-                  scheduleStrategy:
-                    type: string
-                    enum:
-                      - SPAWN_WINDOW_RELATIVE
-                      - FIXED_DATETIME
-                    nullable: true
-                  scheduleAnchor:
-                    type: string
-                    enum:
-                      - MIN_SPAWN
-                      - MAX_SPAWN
-                    nullable: true
-                  scheduleOffsetMinutes:
-                    type: integer
-                    minimum: -9007199254740991
-                    maximum: 9007199254740991
-                    nullable: true
-                  contentTemplate:
-                    type: string
-                    nullable: true
-                  testTriggeredAt:
-                    type: string
-                    format: date-time
-                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
-                    nullable: true
-                nullable: true
+                $ref: "#/components/schemas/NotificationJobPayloadSnapshotResponseDto"
               attemptCount:
                 type: integer
                 minimum: -9007199254740991
@@ -14899,3 +14634,15 @@ components:
         - overview
         - npcs
         - pagination
+    JsonValue:
+      anyOf:
+        - type: string
+        - type: number
+        - type: boolean
+        - type: array
+          items:
+            $ref: "#/components/schemas/JsonValue"
+        - type: object
+          additionalProperties:
+            $ref: "#/components/schemas/JsonValue"
+      nullable: true

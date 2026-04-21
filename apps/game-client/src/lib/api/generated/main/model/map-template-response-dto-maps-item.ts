@@ -7,6 +7,10 @@
  */
 
 export type MapTemplateResponseDtoMapsItem = {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
   id: number;
   name: string;
 };

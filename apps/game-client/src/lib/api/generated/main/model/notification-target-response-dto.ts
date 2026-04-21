@@ -5,9 +5,9 @@
  * The Lootlog API documentation
  * OpenAPI spec version: 1.0
  */
+import type { JsonValue } from './json-value';
 import type { NotificationTargetResponseDtoOwnerType } from './notification-target-response-dto-owner-type';
 import type { NotificationTargetResponseDtoProvider } from './notification-target-response-dto-provider';
-import type { NotificationTargetResponseDtoSchema0 } from './notification-target-response-dto-schema0';
 import type { NotificationTargetResponseDtoTargetType } from './notification-target-response-dto-target-type';
 
 export interface NotificationTargetResponseDto {
@@ -25,7 +25,7 @@ export interface NotificationTargetResponseDto {
   displayName: string | null;
   /** @nullable */
   guildName: string | null;
-  metadata: (NotificationTargetResponseDtoSchema0 | null) | null;
+  metadata: (JsonValue | null) | null;
   active: boolean;
   canSend: boolean;
   /**

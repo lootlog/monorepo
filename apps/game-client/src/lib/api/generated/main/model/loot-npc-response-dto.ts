@@ -5,10 +5,10 @@
  * The Lootlog API documentation
  * OpenAPI spec version: 1.0
  */
-import type { LootResponseDtoNpcsItemProf } from './loot-response-dto-npcs-item-prof';
-import type { LootResponseDtoNpcsItemType } from './loot-response-dto-npcs-item-type';
+import type { LootNpcResponseDtoProf } from './loot-npc-response-dto-prof';
+import type { LootNpcResponseDtoType } from './loot-npc-response-dto-type';
 
-export type LootResponseDtoNpcsItem = {
+export interface LootNpcResponseDto {
   id: number;
   name: string;
   /** @nullable */
@@ -16,11 +16,11 @@ export type LootResponseDtoNpcsItem = {
   /** @nullable */
   lvl: number | null;
   /** @nullable */
-  prof: LootResponseDtoNpcsItemProf;
+  prof: LootNpcResponseDtoProf;
   /** @nullable */
   icon: string | null;
   /** @nullable */
-  type: LootResponseDtoNpcsItemType;
+  type: LootNpcResponseDtoType;
   /** @nullable */
   margonemType: number | null;
-};
+}

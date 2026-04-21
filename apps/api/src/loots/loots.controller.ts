@@ -25,7 +25,6 @@ import { CreateLootDto } from "src/loots/dto/create-loot.dto";
 import { FetchLootsParamsDto } from "src/loots/dto/fetch-loots-params.dto";
 import {
   CreateLootResponseDto,
-  LootShareResponseDto,
   LootStatsResponseDto,
 } from "src/loots/dto/loot-response.dto";
 import { LootStatsQueryDto } from "src/loots/dto/loot-stats.dto";
@@ -38,6 +37,7 @@ import { MemberRoles } from "src/shared/decorators/member-roles.decorator";
 import { CountResponseDto } from "src/shared/dto/common-response.dto";
 import { LootCommentResponseDto } from "src/shared/dto/loot-comment-response.dto";
 import {
+  LootShareResponseDto,
   LootResponseDto,
   NullableLootResponseDto,
 } from "src/shared/dto/loot-response.dto";

@@ -6,4 +6,9 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface LootShareResponseDtoOutput {[key: string]: string[]}
+export interface LootSubmissionMemberResponseDto {
+  name: string;
+  /** @nullable */
+  avatar?: string | null;
+  userId: string;
+}

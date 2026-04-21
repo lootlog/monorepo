@@ -5,12 +5,12 @@
  * The Lootlog API documentation
  * OpenAPI spec version: 1.0
  */
-import type { LootResponseDtoItemsItem } from './loot-response-dto-items-item';
-import type { LootResponseDtoNpcsItem } from './loot-response-dto-npcs-item';
-import type { LootResponseDtoPlayersItem } from './loot-response-dto-players-item';
+import type { LootItemResponseDto } from './loot-item-response-dto';
+import type { LootNpcResponseDto } from './loot-npc-response-dto';
+import type { LootPlayerResponseDto } from './loot-player-response-dto';
 import type { LootResponseDtoSource } from './loot-response-dto-source';
-import type { LootResponseDtoSubmissionsItem } from './loot-response-dto-submissions-item';
 import type { LootShareResponseDto } from './loot-share-response-dto';
+import type { LootSubmissionResponseDto } from './loot-submission-response-dto';
 
 export interface LootResponseDto {
   id: number;
@@ -18,12 +18,14 @@ export interface LootResponseDto {
   world: string;
   source: LootResponseDtoSource;
   location: string;
-  items: LootResponseDtoItemsItem[];
-  players: LootResponseDtoPlayersItem[];
-  npcs: LootResponseDtoNpcsItem[];
+  items: LootItemResponseDto[];
+  players: LootPlayerResponseDto[];
+  npcs: LootNpcResponseDto[];
   lootShare: LootShareResponseDto;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
   createdAt: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
   updatedAt: string;
-  submissions?: LootResponseDtoSubmissionsItem[];
+  submissions?: LootSubmissionResponseDto[];
   commentsCount: number;
 }
