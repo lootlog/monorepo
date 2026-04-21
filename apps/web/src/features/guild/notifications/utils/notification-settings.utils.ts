@@ -38,7 +38,7 @@ export const getJobStatusBadgeProps = (
   }
 };
 
-export const SUPPORTED_GUILD_NOTIFICATION_TRIGGER_TYPES = [
+const SUPPORTED_GUILD_NOTIFICATION_TRIGGER_TYPES = [
   NotificationTriggerType.TIMER_BEFORE_SPAWN,
   NotificationTriggerType.SCHEDULED_MESSAGE,
 ] as const;

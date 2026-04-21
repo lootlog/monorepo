@@ -15,7 +15,7 @@ import type {
   BattleWarrior as Warrior,
 } from "@/lib/api/battlelog-types";
 import { useStatsCustomization } from "@/hooks/use-stats-customization";
-import { StatsCustomizationModal } from "./stats-customization";
+import { StatsCustomizationModal } from "./stats-customization/stats-customization-modal";
 
 interface OneVsOneStatsTableProps {
   battle: Battle;

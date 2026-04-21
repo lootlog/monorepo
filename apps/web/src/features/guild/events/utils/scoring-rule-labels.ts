@@ -26,7 +26,7 @@ export const getScoringFactorDescription = (
   t: TFunction,
 ) => t(`events.scoring.factorHint.${factor}`);
 
-export const getScoringBooleanValueLabel = (value: boolean, t: TFunction) =>
+const getScoringBooleanValueLabel = (value: boolean, t: TFunction) =>
   t(`events.scoring.booleanValue.${value}`, value ? "tak" : "nie");
 
 export const formatScoringCondition = (

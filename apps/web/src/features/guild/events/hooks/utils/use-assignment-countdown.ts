@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { formatDurationCompact } from "../../utils";
 
-export const formatTimeRemaining = (targetDate: Date): string => {
+const formatTimeRemaining = (targetDate: Date): string => {
   const now = new Date();
   const diffMs = targetDate.getTime() - now.getTime();
   if (diffMs <= 0) return "0:00";

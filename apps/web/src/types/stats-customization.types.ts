@@ -10,7 +10,7 @@ export interface StatsCustomizationConfig {
   categories: Record<string, CategoryCustomization>;
 }
 
-export const DEFAULT_CATEGORY_IDS = [
+const DEFAULT_CATEGORY_IDS = [
   "turns",
   "damageDealt",
   "damageTaken",

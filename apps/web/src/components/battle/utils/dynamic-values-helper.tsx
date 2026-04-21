@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { roundValue } from "./value-utils";
 
-export const generateDynamicValues = (
+const generateDynamicValues = (
   value: string,
   prefix: string = "v",
 ): Record<string, string> => {
@@ -15,7 +15,7 @@ export const generateDynamicValues = (
   return dynamicValues;
 };
 
-export const generateDynamicComponents = (
+const generateDynamicComponents = (
   value: string,
   prefix: string = "v",
   component: ReactNode = <span className="font-semibold" />,

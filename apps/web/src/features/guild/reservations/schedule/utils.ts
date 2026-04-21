@@ -1,6 +1,6 @@
 import type { ReservationSegment } from "./types";
 
-export const formatTime = (date: Date) =>
+const formatTime = (date: Date) =>
   `${date.getHours().toString().padStart(2, "0")}:${date
     .getMinutes()
     .toString()

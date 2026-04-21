@@ -23,18 +23,18 @@ export type ActivityLogsQueryOptions = {
   name?: string;
 };
 
-export const activityLogTypeValues = Object.values(
+const activityLogTypeValues = Object.values(
   ActivitiesControllerFindByGuildTypeItem,
 );
 
-export const activityLogSourceValues = Object.values(
+const activityLogSourceValues = Object.values(
   ActivitiesControllerFindByGuildSourceItem,
 );
 
-export const isActivityLogType = (value: string): value is ActivityType =>
+const isActivityLogType = (value: string): value is ActivityType =>
   activityLogTypeValues.includes(value as ActivityType);
 
-export const isActivityLogSource = (value: string): value is ActivitySource =>
+const isActivityLogSource = (value: string): value is ActivitySource =>
   activityLogSourceValues.includes(value as ActivitySource);
 
 export const getActivityLogTypes = (values: string[]): ActivityType[] =>
@@ -43,7 +43,7 @@ export const getActivityLogTypes = (values: string[]): ActivityType[] =>
 export const getActivityLogSources = (values: string[]): ActivitySource[] =>
   values.filter(isActivityLogSource);
 
-export const createActivityLogsQueryParams = ({
+const createActivityLogsQueryParams = ({
   types,
   sources,
   startDate,

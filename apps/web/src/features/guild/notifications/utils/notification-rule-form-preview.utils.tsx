@@ -2,7 +2,7 @@ import { defaultUrlTransform, type Components } from "react-markdown";
 import { getGuildRoleHexColor } from "../components/notification-template-editor.utils";
 import type { RoleResponseDtoOutput as GuildRole } from "@/lib/api/generated/main/model";
 
-export const ROLE_LINK_PREFIX = "role:";
+const ROLE_LINK_PREFIX = "role:";
 
 export const replaceRoleMentions = (text: string, roles: GuildRole[]) => {
   const roleById = new Map(roles.map((role) => [role.id, role] as const));
