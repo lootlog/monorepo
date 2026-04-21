@@ -1,6 +1,7 @@
 import { buildRoomName } from "src/gateway/utils/room-utils";
 import type { Socket } from "src/gateway/types/socket-user.type";
 import { PresenceService } from "./presence.service";
+import { Platform } from "src/gateway/enums/platform.enum";
 
 const createPresenceSocket = (
   discordId: string,
@@ -112,6 +113,102 @@ describe("PresenceService", () => {
 
       expect(result).toEqual({});
       expect(mockServer.in).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("fetchServerPresence", () => {
+    it("returns empty object when client is not in guild presence room", async () => {
+      const result = await service.fetchServerPresence(
+        mockServer as never,
+        {
+          rooms: new Set(["guild-2:presence"]),
+          data: {
+            discordId: "viewer",
+            platform: Platform.GAME,
+          },
+        } as Socket,
+        "guild-1",
+        "alpha",
+      );
+
+      expect(result).toEqual({});
+      expect(mockServer.in).not.toHaveBeenCalled();
+    });
+
+    it("filters server presence by world and hides web app sockets from game clients", async () => {
+      const guildId = "guild-1";
+      const presenceRoom = buildRoomName(guildId, "presence");
+      const gameSocket = {
+        data: {
+          discordId: "discord-game",
+          platform: Platform.GAME,
+          player: {
+            world: "alpha",
+            lvl: "200",
+          },
+          sessionId: "session-game",
+          userId: "user-game",
+          guilds: [],
+        },
+      };
+      const webSocket = {
+        data: {
+          discordId: "discord-web",
+          platform: Platform.WEB_APP,
+          player: {
+            world: "alpha",
+            lvl: "150",
+          },
+          sessionId: "session-web",
+          userId: "user-web",
+          guilds: [],
+        },
+      };
+      const otherWorldSocket = {
+        data: {
+          discordId: "discord-other",
+          platform: Platform.GAME,
+          player: {
+            world: "beta",
+            lvl: "250",
+          },
+          sessionId: "session-other",
+          userId: "user-other",
+          guilds: [],
+        },
+      };
+
+      mockFetchSockets.mockResolvedValue([
+        gameSocket,
+        webSocket,
+        otherWorldSocket,
+      ]);
+
+      const result = await service.fetchServerPresence(
+        mockServer as never,
+        {
+          rooms: new Set([presenceRoom]),
+          data: {
+            discordId: "viewer",
+            platform: Platform.GAME,
+          },
+        } as Socket,
+        guildId,
+        "alpha",
+      );
+
+      expect(result).toEqual({
+        "discord-game": [
+          {
+            discordId: "discord-game",
+            platform: Platform.GAME,
+            player: {
+              world: "alpha",
+              lvl: "200",
+            },
+          },
+        ],
+      });
     });
   });
 });
