@@ -14,7 +14,6 @@ import type { EventPresenceUpdateDto } from "src/gateway/dto/event-presence-upda
 import type { RequestPlayerPresenceDto } from "src/gateway/dto/request-player-presence.dto";
 import { GatewayEvent } from "src/gateway/enums/gateway-event.enum";
 import { GatewayConfig } from "src/gateway/constants/gateway-config.constant";
-import { RuntimeEnvironment } from "src/types/common.types";
 import { WsDiscordId, WsUserId } from "src/shared/decorators/user-id.decorator";
 import type {
   Socket,
@@ -27,8 +26,6 @@ import {
 } from "./services";
 
 @WebSocketGateway({
-  namespace:
-    process.env.ENV === RuntimeEnvironment.LOCAL ? "/gateway" : undefined,
   pingInterval: GatewayConfig.SOCKET_PING_INTERVAL_MS,
   pingTimeout: GatewayConfig.SOCKET_PING_TIMEOUT_MS,
 })
