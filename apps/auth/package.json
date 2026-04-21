@@ -41,7 +41,7 @@
     "@lootlog/typescript-config": "workspace:*",
     "@nestjs/cli": "^11.0.21",
     "@nestjs/testing": "^11.1.19",
-    "@swc/cli": "^0.7.10",
+    "@swc/cli": "^0.8.1",
     "@swc/core": "^1.15.30",
     "@types/node": "^25.6.0",
     "@types/pg": "^8.20.0",
