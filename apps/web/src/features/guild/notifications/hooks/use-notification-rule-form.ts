@@ -39,16 +39,14 @@ import {
 import { ROUTES } from "@/config/routes";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
-  guildNotificationRulesQueryKey,
-  guildNotificationTargetsQueryKey,
-  invalidateGuildNotificationQueries,
-} from "../notifications-api";
-import {
+  getNotificationsGuildControllerGetGuildRulesQueryKey,
+  getNotificationsGuildControllerGetGuildTargetsQueryKey,
   useNotificationsGuildControllerCreateGuildRule,
   useNotificationsGuildControllerGetGuildRules,
   useNotificationsGuildControllerGetGuildTargets,
   useNotificationsGuildControllerUpdateGuildRule,
 } from "@/lib/api/generated/main/notifications/notifications";
+import { invalidateGuildNotificationQueries } from "../notifications-api";
 import { useRolesControllerGetGuildRoles } from "@/lib/api/generated/main/roles/roles";
 import { useGuildsControllerGetWorldsByGuildId } from "@/lib/api/generated/main/guilds/guilds";
 import {
@@ -69,7 +67,9 @@ export const useNotificationRuleForm = () => {
     { guildId: guildId ?? "" },
     {
       query: {
-        queryKey: guildNotificationTargetsQueryKey(guildId ?? ""),
+        queryKey: getNotificationsGuildControllerGetGuildTargetsQueryKey({
+          guildId: guildId ?? "",
+        }),
       },
     },
   );
@@ -77,7 +77,9 @@ export const useNotificationRuleForm = () => {
     { guildId: guildId ?? "" },
     {
       query: {
-        queryKey: guildNotificationRulesQueryKey(guildId ?? ""),
+        queryKey: getNotificationsGuildControllerGetGuildRulesQueryKey({
+          guildId: guildId ?? "",
+        }),
       },
     },
   );

@@ -35,14 +35,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
-  guildAvailableNotificationTargetsQueryOptions,
-  invalidateGuildNotificationQueries,
-} from "../notifications-api";
-import {
+  getNotificationsGuildControllerGetAvailableGuildTargetsQueryKey,
+  getNotificationsGuildControllerGetAvailableGuildTargetsQueryOptions,
   useNotificationsGuildControllerCreateGuildTarget,
   useNotificationsGuildControllerGetAvailableGuildTargets,
   useNotificationsGuildControllerUpdateGuildTarget,
 } from "@/lib/api/generated/main/notifications/notifications";
+import { invalidateGuildNotificationQueries } from "../notifications-api";
 import { NotificationTargetType } from "@lootlog/types";
 import type { NotificationTargetResponseDto } from "@/lib/api/generated/main/model";
 
@@ -112,12 +111,21 @@ export const NotificationTargetDialog = ({
     useNotificationsGuildControllerGetAvailableGuildTargets(
       { guildId: guildId ?? "" },
       {
-        query: {
-          ...guildAvailableNotificationTargetsQueryOptions(
-            guildId ?? "",
-            open && isCreateMode && Boolean(guildId),
+        query:
+          getNotificationsGuildControllerGetAvailableGuildTargetsQueryOptions(
+            { guildId: guildId ?? "" },
+            {
+              query: {
+                enabled: open && isCreateMode && Boolean(guildId),
+                queryKey:
+                  getNotificationsGuildControllerGetAvailableGuildTargetsQueryKey(
+                    {
+                      guildId: guildId ?? "",
+                    },
+                  ),
+              },
+            },
           ),
-        },
       },
     );
   const form = useForm<TargetFormValues>({

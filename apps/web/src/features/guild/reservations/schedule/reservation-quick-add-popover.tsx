@@ -11,8 +11,10 @@ import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-
 import { useTranslation } from "react-i18next";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useQueryClient } from "@tanstack/react-query";
-import { useReservationsControllerCreateReservation } from "@/lib/api/generated/main/reservations/reservations";
-import { queryKeys } from "@/lib/query-keys";
+import {
+  invalidateReservationsControllerGetReservations,
+  useReservationsControllerCreateReservation,
+} from "@/lib/api/generated/main/reservations/reservations";
 
 type ReservationQuickAddPopoverProps = {
   start: Date;
@@ -37,8 +39,8 @@ export const ReservationQuickAddPopover: React.FC<
           return;
         }
 
-        await queryClient.invalidateQueries({
-          queryKey: queryKeys.reservations.all(guildId),
+        await invalidateReservationsControllerGetReservations(queryClient, {
+          guildId,
         });
       },
     },

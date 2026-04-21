@@ -15,6 +15,7 @@ import { RefreshCcw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useThemeMeta } from "@/themes";
+import { getLootsControllerFetchLootsByGuildIdQueryKey } from "@/lib/api/generated/main/loots/loots";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   getGuildsControllerGetGuildByIdQueryKey,
@@ -27,7 +28,6 @@ import {
   useMembersControllerGetMe,
   useMembersControllerRefreshMe,
 } from "@/lib/api/generated/main/members/members";
-import { queryKeys } from "@/lib/query-keys";
 
 export const GuildSidebarHeader = ({ guildId }: { guildId?: string }) => {
   const queryClient = useQueryClient();
@@ -68,7 +68,9 @@ export const GuildSidebarHeader = ({ guildId }: { guildId?: string }) => {
             guildId: variables.pathParams.guildId,
           }),
           queryClient.invalidateQueries({
-            queryKey: queryKeys.loots.listByGuild(variables.pathParams.guildId),
+            queryKey: getLootsControllerFetchLootsByGuildIdQueryKey({
+              guildId: variables.pathParams.guildId,
+            }),
           }),
         ]);
       },

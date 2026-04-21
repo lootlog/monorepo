@@ -13,13 +13,14 @@ import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
 import {
+  invalidateNotificationsUserControllerGetUserTargets,
+  invalidateNotificationsUserControllerGetWatchedItems,
   useNotificationsUserControllerCreateUserTarget,
   useNotificationsUserControllerTriggerUserTargetTest,
   useNotificationsUserControllerUpdateUserTarget,
 } from "@/lib/api/generated/main/notifications/notifications";
 import type { NotificationTargetWithTestTriggerResponseDto } from "@/lib/api/generated/main/model";
 import { useQueryClient } from "@tanstack/react-query";
-import { invalidateUserNotificationQueries } from "../user-notifications-api";
 import {
   Tooltip,
   TooltipContent,
@@ -39,14 +40,20 @@ export const DmActionsCard = ({ dmTarget, onAddWatch }: DmActionsCardProps) => {
   const createUserTarget = useNotificationsUserControllerCreateUserTarget({
     mutation: {
       onSuccess: async () => {
-        await invalidateUserNotificationQueries(queryClient);
+        await Promise.all([
+          invalidateNotificationsUserControllerGetUserTargets(queryClient),
+          invalidateNotificationsUserControllerGetWatchedItems(queryClient),
+        ]);
       },
     },
   });
   const updateUserTarget = useNotificationsUserControllerUpdateUserTarget({
     mutation: {
       onSuccess: async () => {
-        await invalidateUserNotificationQueries(queryClient);
+        await Promise.all([
+          invalidateNotificationsUserControllerGetUserTargets(queryClient),
+          invalidateNotificationsUserControllerGetWatchedItems(queryClient),
+        ]);
       },
     },
   });
@@ -54,7 +61,10 @@ export const DmActionsCard = ({ dmTarget, onAddWatch }: DmActionsCardProps) => {
     useNotificationsUserControllerTriggerUserTargetTest({
       mutation: {
         onSuccess: async () => {
-          await invalidateUserNotificationQueries(queryClient);
+          await Promise.all([
+            invalidateNotificationsUserControllerGetUserTargets(queryClient),
+            invalidateNotificationsUserControllerGetWatchedItems(queryClient),
+          ]);
         },
       },
     });
