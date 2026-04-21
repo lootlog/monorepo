@@ -6,7 +6,7 @@ import {
   MessageType,
   useSendChatMessage,
 } from "@/hooks/api/use-send-chat-message";
-import { useCreateNotification } from "@/hooks/api/use-create-notification";
+import { useMessagingControllerSendNotification } from "@/lib/api/generated/main/messaging/messaging";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -36,7 +36,8 @@ export const CommandWindow = () => {
   const autofocus = useWindowsStore((state) => state.command.autofocus);
   const setOpen = useWindowsStore((state) => state.setOpen);
   const { mutate: sendChatMessage } = useSendChatMessage();
-  const { mutate: createNotification } = useCreateNotification();
+  const { mutate: createNotification } =
+    useMessagingControllerSendNotification();
   const { handlePartyCommand } = usePartyCommand();
 
   const { watch, setValue, handleSubmit } = useForm<FormData>({
@@ -69,9 +70,11 @@ export const CommandWindow = () => {
 
     if (isCommand) {
       createNotification({
-        guildIds: selectedInputGuildIds,
-        message,
-        world,
+        data: {
+          guildIds: selectedInputGuildIds,
+          message,
+          world,
+        },
       });
       sendChatMessage({
         guildIds: selectedInputGuildIds,

@@ -16,7 +16,12 @@ import {
   ApiResponse,
   ApiParam,
 } from "@nestjs/swagger";
+import { ZodResponse } from "nestjs-zod";
 import { ChatService } from "src/chat/chat.service";
+import {
+  ChatMessageActionResponseDto,
+  ChatMessageResponseDto,
+} from "src/chat/dto/chat-message-response.dto";
 import { SendMessageDto } from "src/chat/dto/send-message.dto";
 import { UpdateMessageDto } from "src/chat/dto/update-message.dto";
 import { type Guild, Permission } from "src/generated/prisma/client";
@@ -40,9 +45,10 @@ export class ChatController {
     description: "Retrieve chat messages for a guild",
   })
   @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "List of chat messages",
+    type: [ChatMessageResponseDto],
   })
   @ApiResponse({
     status: 403,
@@ -60,9 +66,10 @@ export class ChatController {
     description: "Send a new chat message to a guild",
   })
   @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
-  @ApiResponse({
+  @ZodResponse({
     status: 201,
     description: "Message sent successfully",
+    type: ChatMessageResponseDto,
   })
   @ApiResponse({
     status: 403,
@@ -89,9 +96,10 @@ export class ChatController {
     description: "Message ID",
     example: "msg_123",
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Message updated successfully",
+    type: ChatMessageActionResponseDto,
   })
   @ApiResponse({
     status: 403,
@@ -124,9 +132,10 @@ export class ChatController {
     description: "Message ID",
     example: "msg_123",
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Message deleted successfully",
+    type: ChatMessageActionResponseDto,
   })
   @ApiResponse({
     status: 403,

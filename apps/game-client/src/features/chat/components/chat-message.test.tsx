@@ -1,8 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import type { ChatMessage as ChatMessageType } from "@/hooks/api/use-chat-messages";
-import type { GuildMember } from "@/hooks/api/use-guild-members";
 import { MessageType } from "@/hooks/api/use-send-chat-message";
+import type {
+  ChatMessageResponseDtoOutput as ChatMessageType,
+  MemberSummaryResponseDtoOutput as GuildMember,
+} from "@/lib/api/generated/main/model";
 import { ChatMessage } from "./chat-message";
 
 vi.mock("@/hooks/discord/use-member-color", () => ({

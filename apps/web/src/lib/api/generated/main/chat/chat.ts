@@ -27,6 +27,8 @@ import type {
   ChatControllerGetChatMessagesPathParameters,
   ChatControllerSendChatMessagePathParameters,
   ChatControllerUpdateChatMessagePathParameters,
+  ChatMessageActionResponseDtoOutput,
+  ChatMessageResponseDtoOutput,
   SendMessageDto,
   UpdateMessageDto
 } from '../model';
@@ -51,9 +53,9 @@ export const getChatControllerGetChatMessagesUrl = ({ guildId }: ChatControllerG
   return `/guilds/${guildId}/chat-messages`
 }
 
-export const chatControllerGetChatMessages = async ({ guildId }: ChatControllerGetChatMessagesPathParameters, options?: RequestInit): Promise<void> => {
+export const chatControllerGetChatMessages = async ({ guildId }: ChatControllerGetChatMessagesPathParameters, options?: RequestInit): Promise<ChatMessageResponseDtoOutput[]> => {
 
-  return orvalFetch<void>(getChatControllerGetChatMessagesUrl({ guildId }),
+  return orvalFetch<ChatMessageResponseDtoOutput[]>(getChatControllerGetChatMessagesUrl({ guildId }),
   {
     ...options,
     method: 'GET'
@@ -171,9 +173,9 @@ export const getChatControllerSendChatMessageUrl = ({ guildId }: ChatControllerS
 }
 
 export const chatControllerSendChatMessage = async ({ guildId }: ChatControllerSendChatMessagePathParameters,
-    sendMessageDto: SendMessageDto, options?: RequestInit): Promise<void> => {
+    sendMessageDto: SendMessageDto, options?: RequestInit): Promise<ChatMessageResponseDtoOutput> => {
 
-  return orvalFetch<void>(getChatControllerSendChatMessageUrl({ guildId }),
+  return orvalFetch<ChatMessageResponseDtoOutput>(getChatControllerSendChatMessageUrl({ guildId }),
   {
     ...options,
     method: 'POST',
@@ -243,9 +245,9 @@ export const getChatControllerUpdateChatMessageUrl = ({ guildId, messageId }: Ch
 }
 
 export const chatControllerUpdateChatMessage = async ({ guildId, messageId }: ChatControllerUpdateChatMessagePathParameters,
-    updateMessageDto: UpdateMessageDto, options?: RequestInit): Promise<void> => {
+    updateMessageDto: UpdateMessageDto, options?: RequestInit): Promise<ChatMessageActionResponseDtoOutput> => {
 
-  return orvalFetch<void>(getChatControllerUpdateChatMessageUrl({ guildId, messageId }),
+  return orvalFetch<ChatMessageActionResponseDtoOutput>(getChatControllerUpdateChatMessageUrl({ guildId, messageId }),
   {
     ...options,
     method: 'PATCH',
@@ -314,9 +316,9 @@ export const getChatControllerDeleteChatMessageUrl = ({ guildId, messageId }: Ch
   return `/guilds/${guildId}/chat-messages/${messageId}`
 }
 
-export const chatControllerDeleteChatMessage = async ({ guildId, messageId }: ChatControllerDeleteChatMessagePathParameters, options?: RequestInit): Promise<void> => {
+export const chatControllerDeleteChatMessage = async ({ guildId, messageId }: ChatControllerDeleteChatMessagePathParameters, options?: RequestInit): Promise<ChatMessageActionResponseDtoOutput> => {
 
-  return orvalFetch<void>(getChatControllerDeleteChatMessageUrl({ guildId, messageId }),
+  return orvalFetch<ChatMessageActionResponseDtoOutput>(getChatControllerDeleteChatMessageUrl({ guildId, messageId }),
   {
     ...options,
     method: 'DELETE'

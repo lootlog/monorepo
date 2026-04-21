@@ -1,20 +1,34 @@
 import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  guildMembersQueryKey,
-  useGuildMembers,
-} from "@/hooks/api/use-guild-members";
+  getMembersControllerGetGuildMembersSummaryQueryKey,
+  useMembersControllerGetGuildMembersSummary,
+} from "@/lib/api/generated/main/members/members";
+import { mapGuildMembersByUserId } from "@/lib/api/generated-helpers";
 
 export const useMemberInvalidation = (
   guildId: string | undefined,
   memberIds: string | string[] | undefined,
 ) => {
   const queryClient = useQueryClient();
-  const { data: guildMembers } = useGuildMembers(guildId);
+  const { data } = useMembersControllerGetGuildMembersSummary(
+    { guildId: guildId ?? "" },
+    {
+      query: {
+        queryKey: getMembersControllerGetGuildMembersSummaryQueryKey({
+          guildId: guildId ?? "",
+        }),
+        enabled: !!guildId,
+        gcTime: Infinity,
+        staleTime: 5 * 60 * 1000,
+      },
+    },
+  );
+  const guildMembers = mapGuildMembersByUserId(data);
   const checkedIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    if (!guildId || !memberIds || !guildMembers) return;
+    if (!guildId || !memberIds || !data) return;
 
     const idsToCheck = Array.isArray(memberIds) ? memberIds : [memberIds];
 
@@ -29,9 +43,11 @@ export const useMemberInvalidation = (
       if (!member) {
         checkedIdsRef.current.add(checkKey);
         queryClient.invalidateQueries({
-          queryKey: guildMembersQueryKey(guildId),
+          queryKey: getMembersControllerGetGuildMembersSummaryQueryKey({
+            guildId,
+          }),
         });
       }
     });
-  }, [guildId, memberIds, guildMembers, queryClient]);
+  }, [data, guildId, guildMembers, memberIds, queryClient]);
 };

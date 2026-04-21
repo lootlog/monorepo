@@ -1,61 +1,34 @@
-import { Game } from "@/lib/game";
-import { getApiClient } from "@/lib/api-client";
+import { chatControllerUpdateChatMessage } from "@/lib/api/generated/main/chat/chat";
+import {
+  messagingControllerCancelPartyGathering,
+  messagingControllerCancelPartyGatheringByUser,
+  messagingControllerCreatePartyGathering,
+  messagingControllerSendNotification,
+  messagingControllerVolunteer,
+} from "@/lib/api/generated/main/messaging/messaging";
+import type {
+  CancelPartyGatheringResponseDtoOutput,
+  CreateNotificationDto,
+  CreatePartyGatheringDto,
+  CreateVolunteerDto,
+  NotificationResponseDtoOutput,
+} from "@/lib/api/generated/main/model";
+import { buildCurrentCharacterPayload } from "@/lib/api/generated-helpers";
 import {
   runLoggedRequest,
   runSingleLoggedAction,
   type LoggedActionController,
 } from "@/lib/logs/log-actions";
-import type { Npc } from "@/utils/game/get-battle-participants";
 import type { PartyGatheringSession } from "@/store/party-finder.store";
+import { Game } from "@/lib/game";
 
-type MessagingCharacter = {
-  lvl: number;
-  nick: string;
-  accountId: string;
-  characterId: string;
-  prof: string;
-  icon: string;
-  clan?: {
-    id: number;
-    name: string;
-  };
-};
-
-const getCurrentCharacterPayload = (): MessagingCharacter => {
-  const hero = Game.hero;
-
-  return {
-    lvl: hero.lvl,
-    nick: hero.nick,
-    accountId: String(hero.account),
-    characterId: String(hero.id),
-    prof: hero.prof,
-    icon: hero.img,
-    clan: hero.clan ? { id: hero.clan.id, name: hero.clan.name } : undefined,
-  };
-};
-
-export type CreateNotificationOptions = {
-  npc?: Npc & {
-    x?: number;
-    y?: number;
-  };
-  guildIds: string[];
-  world: string;
-  message?: string;
-  isGatheringParty?: boolean;
-};
-
-export type CreateNotificationResponse = {
-  notificationId: string;
-  guildIds?: string[];
-};
+export type CreateNotificationOptions = CreateNotificationDto;
+export type CreateNotificationResponse = NotificationResponseDtoOutput;
 
 export async function createNotification(
   options: CreateNotificationOptions,
 ): Promise<CreateNotificationResponse> {
-  const client = getApiClient("default");
-  const response = await runSingleLoggedAction({
+  return runSingleLoggedAction({
     actionType: "create_notification",
     actionPayload: options,
     request: {
@@ -63,39 +36,30 @@ export async function createNotification(
       endpoint: "/messaging",
       payload: options,
     },
-    execute: () =>
-      client.post<CreateNotificationResponse>("/messaging", options),
+    execute: () => messagingControllerSendNotification(options),
   });
-
-  return response.data;
 }
 
-export type CreatePartyGatheringOptions = {
-  guildIds: string[];
-  description?: string;
-  minLvl?: number;
-  maxLvl?: number;
-};
+export type CreatePartyGatheringOptions = Omit<
+  CreatePartyGatheringDto,
+  "world" | "character"
+>;
 
-export type CreatePartyGatheringResponse = {
-  notificationId: string;
-  guildIds?: string[];
-};
+export type CreatePartyGatheringResponse = NotificationResponseDtoOutput;
 
 export async function createPartyGathering(
   options: CreatePartyGatheringOptions,
 ): Promise<CreatePartyGatheringResponse> {
-  const client = getApiClient("default");
-  const payload = {
+  const payload: CreatePartyGatheringDto = {
     guildIds: options.guildIds,
     world: Game.getWorldName(),
-    character: getCurrentCharacterPayload(),
+    character: buildCurrentCharacterPayload(),
     description: options.description,
     minLvl: options.minLvl,
     maxLvl: options.maxLvl,
   };
 
-  const response = await runSingleLoggedAction({
+  return runSingleLoggedAction({
     actionType: "create_party_gathering",
     actionPayload: options,
     request: {
@@ -103,28 +67,18 @@ export async function createPartyGathering(
       endpoint: "/messaging/party-gathering",
       payload,
     },
-    execute: () =>
-      client.post<CreatePartyGatheringResponse>(
-        "/messaging/party-gathering",
-        payload,
-      ),
+    execute: () => messagingControllerCreatePartyGathering(payload),
   });
-
-  return response.data;
 }
 
-type CancelPartyGatheringResponse = {
-  success: boolean;
-  guildIds: string[];
-};
-
-export type CancelPartyGatheringResult = CancelPartyGatheringResponse & {
-  requestSummary: {
-    totalRequests: number;
-    successCount: number;
-    failureCount: number;
+export type CancelPartyGatheringResult =
+  CancelPartyGatheringResponseDtoOutput & {
+    requestSummary: {
+      totalRequests: number;
+      successCount: number;
+      failureCount: number;
+    };
   };
-};
 
 type CancelPartyGatheringOptions = {
   partyGathering: PartyGatheringSession;
@@ -132,35 +86,32 @@ type CancelPartyGatheringOptions = {
   action: LoggedActionController;
 };
 
-const PARTY_GATHERING_ENDPOINT = "/messaging/party-gathering";
-
-const getPartyGatheringCancellationPath = (
-  notificationId: string | undefined,
-) =>
-  notificationId
-    ? `${PARTY_GATHERING_ENDPOINT}/${notificationId}`
-    : PARTY_GATHERING_ENDPOINT;
-
 export async function cancelPartyGathering({
   partyGathering,
   chatMessageIds,
   action,
 }: CancelPartyGatheringOptions): Promise<CancelPartyGatheringResult> {
-  const client = getApiClient("default");
-  const deleteEndpoint = getPartyGatheringCancellationPath(
-    partyGathering.notificationId,
-  );
-  const response = await runLoggedRequest({
+  const responseData = await runLoggedRequest({
     action,
     method: "DELETE",
-    endpoint: deleteEndpoint,
+    endpoint: partyGathering.notificationId
+      ? `/messaging/party-gathering/${partyGathering.notificationId}`
+      : "/messaging/party-gathering",
     payload: {
       notificationId: partyGathering.notificationId,
     },
-    request: () => client.delete<CancelPartyGatheringResponse>(deleteEndpoint),
+    request: () =>
+      partyGathering.notificationId
+        ? messagingControllerCancelPartyGathering({
+            notificationId: partyGathering.notificationId,
+          })
+        : messagingControllerCancelPartyGatheringByUser(),
   });
-  const responseData = response.data ?? { success: true, guildIds: [] };
-  const canceledGuildIds = new Set(responseData.guildIds);
+  const normalizedResponseData = responseData ?? {
+    success: true,
+    guildIds: [],
+  };
+  const canceledGuildIds = new Set(normalizedResponseData.guildIds);
   const heroNick = Game.hero.nick;
 
   const updateMessagePromises = Object.entries(chatMessageIds).map(
@@ -179,7 +130,8 @@ export async function cancelPartyGathering({
         method: "PATCH",
         endpoint,
         payload,
-        request: () => client.patch(endpoint, payload),
+        request: () =>
+          chatControllerUpdateChatMessage({ guildId, messageId }, payload),
       })
         .then(() => ({ status: "fulfilled" as const }))
         .catch((error) => {
@@ -204,7 +156,7 @@ export async function cancelPartyGathering({
     successfulMessageUpdates + failedMessageUpdates;
 
   return {
-    ...responseData,
+    ...normalizedResponseData,
     requestSummary: {
       totalRequests: 1 + attemptedMessageUpdates,
       successCount: 1 + successfulMessageUpdates,
@@ -213,20 +165,18 @@ export async function cancelPartyGathering({
   };
 }
 
-export type VolunteerOptions = {
+export type VolunteerOptions = Omit<CreateVolunteerDto, "character"> & {
   notificationId: string;
-  targetDiscordId: string;
-  world: string;
 };
 
-export async function volunteer(options: VolunteerOptions): Promise<unknown> {
-  const client = getApiClient("default");
-  const payload = {
+export async function volunteer(options: VolunteerOptions): Promise<void> {
+  const payload: CreateVolunteerDto = {
     world: options.world,
     targetDiscordId: options.targetDiscordId,
-    character: getCurrentCharacterPayload(),
+    character: buildCurrentCharacterPayload(),
   };
-  const response = await runSingleLoggedAction({
+
+  await runSingleLoggedAction({
     actionType: "volunteer",
     actionPayload: options,
     request: {
@@ -235,8 +185,9 @@ export async function volunteer(options: VolunteerOptions): Promise<unknown> {
       payload,
     },
     execute: () =>
-      client.post(`/messaging/${options.notificationId}/volunteer`, payload),
+      messagingControllerVolunteer(
+        { notificationId: options.notificationId },
+        payload,
+      ),
   });
-
-  return response.data;
 }

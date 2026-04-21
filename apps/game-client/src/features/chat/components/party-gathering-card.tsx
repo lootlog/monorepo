@@ -1,19 +1,22 @@
-import type { ChatMessage as ChatMessageType } from "@/hooks/api/use-chat-messages";
-import type { GuildMember } from "@/hooks/api/use-guild-members";
+import type {
+  ChatMessageResponseDtoOutput,
+  MemberSummaryResponseDtoOutput,
+} from "@/lib/api/generated/main/model";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
-import { useVolunteer } from "@/hooks/api/use-volunteer";
+import { useMessagingControllerVolunteer } from "@/lib/api/generated/main/messaging/messaging";
 import { CharacterTile } from "@/components/character-tile";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Game } from "@/lib/game";
+import { buildCurrentCharacterPayload } from "@/lib/api/generated-helpers";
 import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
 type PartyGatheringCardProps = {
-  message: ChatMessageType;
-  member: GuildMember;
+  message: ChatMessageResponseDtoOutput;
+  member: MemberSummaryResponseDtoOutput;
   guildName: string;
   all: boolean;
   isMsgYesterday: boolean;
@@ -28,7 +31,7 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
 }) => {
   const { t } = useTranslation("chat");
   const memberColor = useMemberColor(member);
-  const { mutate: volunteer, isPending } = useVolunteer();
+  const { mutate: volunteer, isPending } = useMessagingControllerVolunteer();
 
   const heroLvl = Game.hero.lvl;
   const isOwnMessage = message.characterData.nick === Game.hero.nick;
@@ -79,9 +82,14 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
 
   const handleVolunteer = () => {
     volunteer({
-      notificationId: partyGathering!.notificationId,
-      targetDiscordId: partyGathering!.discordId,
-      world: partyGathering!.world,
+      pathParams: {
+        notificationId: partyGathering!.notificationId,
+      },
+      data: {
+        targetDiscordId: partyGathering!.discordId,
+        world: partyGathering!.world,
+        character: buildCurrentCharacterPayload(),
+      },
     });
   };
 

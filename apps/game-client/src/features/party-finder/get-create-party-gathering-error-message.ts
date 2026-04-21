@@ -1,19 +1,22 @@
-import axios from "axios";
 import { getFixedT } from "@/i18n/get-fixed-t";
-
-type CreatePartyGatheringErrorResponse = {
-  message?: string;
-};
+import { isApiError } from "@/lib/api-client";
 
 export const getCreatePartyGatheringErrorMessage = (error: unknown): string => {
   const t = getFixedT("partyFinder");
   const defaultMessage = t("errors.defaultCreate");
 
-  if (!axios.isAxiosError<CreatePartyGatheringErrorResponse>(error)) {
+  if (!isApiError(error)) {
     return defaultMessage;
   }
 
-  const responseStatus = error.response?.status;
+  const responseStatus = error.status;
+  const errorMessage =
+    typeof error.data === "object" &&
+    error.data !== null &&
+    "message" in error.data &&
+    typeof error.data.message === "string"
+      ? error.data.message
+      : undefined;
 
   if (responseStatus === 403) {
     return t("errors.forbidden");
@@ -24,7 +27,7 @@ export const getCreatePartyGatheringErrorMessage = (error: unknown): string => {
   }
 
   if (responseStatus === 400) {
-    return error.response?.data?.message || t("errors.invalidData");
+    return errorMessage || t("errors.invalidData");
   }
 
   return defaultMessage;

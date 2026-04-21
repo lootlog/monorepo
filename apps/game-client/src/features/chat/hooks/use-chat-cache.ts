@@ -1,5 +1,7 @@
-import type { ChatMessage } from "@/hooks/api/use-chat-messages";
-import type { GuildMember } from "@/hooks/api/use-guild-members";
+import type {
+  ChatMessageResponseDtoOutput as ChatMessage,
+  MemberSummaryResponseDtoOutput as GuildMember,
+} from "@/lib/api/generated/main/model";
 import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 

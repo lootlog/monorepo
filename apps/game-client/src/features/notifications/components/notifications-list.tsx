@@ -1,6 +1,10 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SingleNotification } from "@/features/notifications/components/single-notification";
-import { getGuildNamesById, useGuilds } from "@/hooks/api/use-guilds";
+import { getGuildNamesById } from "@/lib/api/generated-helpers";
+import {
+  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
+  useUsersControllerGetCurrentUserAccessibleGuilds,
+} from "@/lib/api/generated/main/users/users";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   type StoredNotification,
@@ -15,7 +19,13 @@ type NotificationsListProps = {
 export const NotificationsList: FC<NotificationsListProps> = ({
   notifications,
 }) => {
-  const { data: guilds } = useGuilds();
+  const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds({
+    query: {
+      queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
+      refetchOnMount: false,
+      staleTime: 1000 * 60 * 5,
+    },
+  });
   const guildNamesById = getGuildNamesById(guilds);
   const notificationsCount = notifications?.length ?? 0;
   const scrollViewportRef = useRef<HTMLDivElement | null>(null);

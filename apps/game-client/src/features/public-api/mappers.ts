@@ -1,5 +1,6 @@
 import type { Guild, Npc, Timer, User } from "@/api";
 import type { GuildMember } from "@/types/guild-member";
+import type { GuildResponseDtoOutput } from "@/lib/api/generated/main/model";
 import type {
   PublicGuild,
   PublicMember,
@@ -45,32 +46,44 @@ const toIso = (value: Date | string | undefined | null): string | null => {
   return new Date(value).toISOString();
 };
 
-const mapTimer = (timer: Timer): PublicTimer => ({
-  timerKey: timer.timerKey,
-  npcId: timer.npcId,
-  npc: mapNpc(timer.npc),
-  member: mapMember(timer.member),
-  members: timer.members?.map(mapMember),
-  world: timer.world,
-  guildId: timer.guildId,
-  minSpawnTime: new Date(timer.minSpawnTime).toISOString(),
-  maxSpawnTime: new Date(timer.maxSpawnTime).toISOString(),
-  updatedAt: toIso(timer.updatedAt),
-  isCustomTime: timer.isCustomTime,
-  isPending: timer.isPending,
-  wasReset: timer.wasReset,
-});
+const mapTimer = (timer: Timer): PublicTimer => {
+  const primaryMember = timer.member ?? timer.members?.[0];
+
+  return {
+    timerKey: timer.timerKey,
+    npcId: timer.npcId,
+    npc: mapNpc(timer.npc),
+    member: primaryMember
+      ? mapMember(primaryMember)
+      : {
+          id: 0,
+          userId: "",
+          guildId: timer.guildId,
+          type: "unknown",
+          name: "",
+        },
+    members: timer.members?.map(mapMember),
+    world: timer.world,
+    guildId: timer.guildId,
+    minSpawnTime: new Date(timer.minSpawnTime).toISOString(),
+    maxSpawnTime: new Date(timer.maxSpawnTime).toISOString(),
+    updatedAt: toIso(timer.updatedAt),
+    isCustomTime: timer.isCustomTime,
+    isPending: timer.isPending,
+    wasReset: timer.wasReset,
+  };
+};
 
 export const mapGuilds = (
-  data: Guild[] | undefined,
+  data: Array<Guild | GuildResponseDtoOutput> | undefined,
 ): PublicGuild[] | undefined => {
   if (!data) return undefined;
   return data.map(
     (g): PublicGuild => ({
       id: g.id,
       name: g.name,
-      icon: g.icon,
-      vanityUrl: g.vanityUrl,
+      icon: g.icon ?? null,
+      vanityUrl: g.vanityUrl ?? undefined,
     }),
   );
 };

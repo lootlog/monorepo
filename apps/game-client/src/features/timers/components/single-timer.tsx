@@ -20,9 +20,9 @@ import { useTimerDisplay } from "../hooks/use-timer-display";
 import { TimerContextMenuContent } from "./timer-context-menu-content";
 import { TimerTooltip } from "./timer-tooltip";
 import {
-  normalizeGuildPermissions,
-  useGuildPermissions,
-} from "@/hooks/api/use-guild-permissions";
+  getGuildsControllerGetGuildPermissionsQueryKey,
+  useGuildsControllerGetGuildPermissions,
+} from "@/lib/api/generated/main/guilds/guilds";
 import { REQUIRED_DELETE_PERMISSIONS } from "../constants/required-delete-permissions";
 import { Game } from "@/lib/game";
 import { REQUIRED_RESET_PERMISSIONS } from "@/features/timers/constants/required-reset-permissions";
@@ -55,18 +55,25 @@ export const SingleTimer: FC<SingleTimerProps> = ({
     generalConfig,
   } = useTimersStore();
 
-  const { data: guildPermissions } = useGuildPermissions({
-    guildId: timer.guildId,
-  });
-  const normalizedGuildPermissions =
-    normalizeGuildPermissions(guildPermissions);
+  const { data: guildPermissions = [] } =
+    useGuildsControllerGetGuildPermissions(
+      { guildId: timer.guildId },
+      {
+        query: {
+          queryKey: getGuildsControllerGetGuildPermissionsQueryKey({
+            guildId: timer.guildId,
+          }),
+          staleTime: 5 * 60 * 1000,
+        },
+      },
+    );
 
   const canDelete = REQUIRED_DELETE_PERMISSIONS.some((perm) =>
-    normalizedGuildPermissions.includes(perm),
+    guildPermissions.includes(perm),
   );
 
   const canReset = REQUIRED_RESET_PERMISSIONS.some((perm) =>
-    normalizedGuildPermissions.includes(perm),
+    guildPermissions.includes(perm),
   );
 
   const {

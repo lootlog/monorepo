@@ -1,5 +1,7 @@
-import type { ChatMessage as ChatMessageType } from "@/hooks/api/use-chat-messages";
-import type { GuildMember } from "@/hooks/api/use-guild-members";
+import type {
+  ChatMessageResponseDtoOutput as ChatMessageType,
+  MemberSummaryResponseDtoOutput as GuildMember,
+} from "@/lib/api/generated/main/model";
 import type { ChatFilter } from "@/store/chat.store";
 import { MessageType } from "@/hooks/api/use-send-chat-message";
 

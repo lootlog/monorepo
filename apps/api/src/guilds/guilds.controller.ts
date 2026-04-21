@@ -152,6 +152,20 @@ export class GuildsController {
   @Permissions(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
   @Get(":guildId/worlds")
+  @ApiOperation({
+    summary: "Get guild worlds",
+    description: "Retrieve the list of worlds configured for a guild",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "List of guild worlds",
+    schema: {
+      type: "array",
+      items: {
+        type: "string",
+      },
+    },
+  })
   getWorldsByGuildId(@GuildData() guild: Guild) {
     return this.guildsService.getWorldsByGuildId(guild.id);
   }

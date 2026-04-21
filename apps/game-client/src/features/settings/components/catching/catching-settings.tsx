@@ -8,9 +8,9 @@ import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  updateLootlogCharactersConfig,
-  type LootlogCharacterConfigResponse,
-} from "@/api";
+  getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey,
+  userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig,
+} from "@/lib/api/generated/main/user-lootlog-config/user-lootlog-config";
 import { CharacterTile } from "@/components/character-tile";
 import { useLootlogCharactersConfig } from "@/hooks/api/use-lootlog-character-config";
 import { useCharacterList } from "@/hooks/api/use-character-list";
@@ -22,10 +22,15 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { UserLootlogConfigAccountResponseDtoOutput } from "@/lib/api/generated/main/model";
 
 export const CatchingSettings = () => {
   const queryClient = useQueryClient();
   const accountId = String(Game.hero.account);
+  const queryKey =
+    getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
+      accountId,
+    });
   const { data: characterList } = useCharacterList();
   const { data: lootlogCharactersConfig } = useLootlogCharactersConfig();
   const initialCharacterId = String(Game.hero.id);
@@ -59,10 +64,13 @@ export const CatchingSettings = () => {
     }) => {
       const results = await Promise.allSettled(
         targetCharacterIds.map(async (characterId) => {
-          await updateLootlogCharactersConfig(accountId, {
-            characterId,
-            catchingGuildIds,
-          });
+          await userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig(
+            { accountId },
+            {
+              characterId,
+              catchingGuildIds,
+            },
+          );
 
           return characterId;
         }),
@@ -80,25 +88,22 @@ export const CatchingSettings = () => {
       };
     },
     onMutate: async ({ catchingGuildIds, targetCharacterIds }) => {
-      await queryClient.cancelQueries({
-        queryKey: ["lootlog-characters-config", accountId],
-      });
+      await queryClient.cancelQueries({ queryKey });
 
       const previousSelectionByCharacterId = {
         ...selectionByCharacterIdRef.current,
       };
       const previousData =
-        queryClient.getQueryData<LootlogCharacterConfigResponse>([
-          "lootlog-characters-config",
-          accountId,
-        ]);
+        queryClient.getQueryData<UserLootlogConfigAccountResponseDtoOutput>(
+          queryKey,
+        );
 
       const fallbackConfig = previousData
         ? Object.values(previousData)[0]
         : undefined;
 
-      queryClient.setQueryData<LootlogCharacterConfigResponse>(
-        ["lootlog-characters-config", accountId],
+      queryClient.setQueryData<UserLootlogConfigAccountResponseDtoOutput>(
+        queryKey,
         (currentData) => {
           const nextData = { ...(currentData ?? {}) };
 
@@ -114,6 +119,8 @@ export const CatchingSettings = () => {
                 accountId,
               characterId,
               catchingGuildIds,
+              collectLootWhitelistGuildIds: catchingGuildIds,
+              addTimersWhitelistGuildIds: catchingGuildIds,
             };
           });
 
@@ -148,10 +155,7 @@ export const CatchingSettings = () => {
       }
 
       if (context?.previousData) {
-        queryClient.setQueryData(
-          ["lootlog-characters-config", accountId],
-          context.previousData,
-        );
+        queryClient.setQueryData(queryKey, context.previousData);
       }
 
       if (context?.previousSelectionByCharacterId) {
@@ -174,10 +178,7 @@ export const CatchingSettings = () => {
     },
     onError: (_error, _variables, context) => {
       if (context?.previousData) {
-        queryClient.setQueryData(
-          ["lootlog-characters-config", accountId],
-          context.previousData,
-        );
+        queryClient.setQueryData(queryKey, context.previousData);
       }
 
       if (context?.previousSelectionByCharacterId) {
@@ -189,9 +190,7 @@ export const CatchingSettings = () => {
       toast.error(t("settings.catching.applyFailed"));
     },
     onSettled: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ["lootlog-characters-config", accountId],
-      });
+      await queryClient.invalidateQueries({ queryKey });
     },
   });
 

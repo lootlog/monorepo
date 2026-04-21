@@ -3,10 +3,10 @@ import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsGuildSelectionGrid } from "@/features/settings/components/shared/settings-guild-selection-grid";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { useGuilds } from "@/hooks/api/use-guilds";
 import { useUpdateUserGameAccountPreferences } from "@/hooks/api/use-user-account-preferences";
 import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
+import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@/lib/api/generated/main/users/users";
 import { getTextColor } from "@/utils/notifications-and-detector/background";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { NotificationSettings, NotificationType } from "@lootlog/types";
@@ -68,7 +68,7 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
     isFetched,
     settings: accountSettings,
   } = useCurrentGameAccountNotificationSettings();
-  const { data: guilds } = useGuilds();
+  const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds();
   const updateUserGameAccountPreferences =
     useUpdateUserGameAccountPreferences(accountId);
 

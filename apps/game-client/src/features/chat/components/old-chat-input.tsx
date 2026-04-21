@@ -1,10 +1,10 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useCreateNotification } from "@/hooks/api/use-create-notification";
 import {
   MessageType,
   useSendChatMessage,
 } from "@/hooks/api/use-send-chat-message";
+import { useMessagingControllerSendNotification } from "@/lib/api/generated/main/messaging/messaging";
 import { Game } from "@/lib/game";
 import { usePartyCommand } from "@/features/command/hooks/use-party-command";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -31,7 +31,8 @@ export const OldChatInput: FC<OldChatInputProps> = ({
   const { t } = useTranslation("chat");
   const world = Game.getWorldName();
   const { mutate: sendChatMessage } = useSendChatMessage();
-  const { mutate: createNotification } = useCreateNotification();
+  const { mutate: createNotification } =
+    useMessagingControllerSendNotification();
   const { handlePartyCommand } = usePartyCommand();
 
   const { watch, setValue, handleSubmit } = useForm<FormData>({
@@ -59,9 +60,11 @@ export const OldChatInput: FC<OldChatInputProps> = ({
 
     if (isNotificationEnabled) {
       createNotification({
-        guildIds: [selectedGuildId],
-        message: msg,
-        world,
+        data: {
+          guildIds: [selectedGuildId],
+          message: msg,
+          world,
+        },
       });
       sendChatMessage({
         guildIds: [selectedGuildId],

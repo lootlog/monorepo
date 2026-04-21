@@ -1,9 +1,13 @@
-import { useCreatePartyGathering } from "@/hooks/api/use-create-party-gathering";
 import { useSilentCancelPartyGathering } from "@/hooks/api/use-silent-cancel-party-gathering";
 import {
   MessageType,
   useSendChatMessage,
 } from "@/hooks/api/use-send-chat-message";
+import { useMessagingControllerCreatePartyGathering } from "@/lib/api/generated/main/messaging/messaging";
+import {
+  buildCurrentCharacterPayload,
+  buildChatCharacterData,
+} from "@/lib/api/generated-helpers";
 import { useSession } from "@/hooks/auth/use-session";
 import { Game } from "@/lib/game";
 import { usePartyFinderStore } from "@/store/party-finder.store";
@@ -11,7 +15,8 @@ import { useWindowsStore } from "@/store/windows.store";
 import { getCreatePartyGatheringErrorMessage } from "@/features/party-finder/get-create-party-gathering-error-message";
 
 export const usePartyCommand = () => {
-  const { mutate: createPartyGathering } = useCreatePartyGathering();
+  const { mutate: createPartyGathering } =
+    useMessagingControllerCreatePartyGathering();
   const { mutateAsync: sendChatMessageAsync } = useSendChatMessage();
   const { data: session } = useSession();
   const discordId = session?.user?.discordId;
@@ -33,8 +38,12 @@ export const usePartyCommand = () => {
 
     createPartyGathering(
       {
-        guildIds,
-        description,
+        data: {
+          guildIds,
+          world,
+          character: buildCurrentCharacterPayload(),
+          description,
+        },
       },
       {
         onSuccess: async (response) => {
@@ -65,14 +74,7 @@ export const usePartyCommand = () => {
             message: hero.nick,
             guildIds: responseGuildIds,
             type: MessageType.PARTY_GATHERING,
-            characterData: {
-              nick: hero.nick,
-              id: hero.id,
-              acc: hero.account,
-              lvl: hero.lvl,
-              prof: hero.prof,
-              icon: hero.img,
-            },
+            characterData: buildChatCharacterData(),
             partyGathering: {
               notificationId,
               discordId: discordId || "",

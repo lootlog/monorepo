@@ -715,9 +715,9 @@ export const getGuildsControllerGetWorldsByGuildIdUrl = ({ guildId }: GuildsCont
   return `/guilds/${guildId}/worlds`
 }
 
-export const guildsControllerGetWorldsByGuildId = async ({ guildId }: GuildsControllerGetWorldsByGuildIdPathParameters, options?: RequestInit): Promise<void> => {
+export const guildsControllerGetWorldsByGuildId = async ({ guildId }: GuildsControllerGetWorldsByGuildIdPathParameters, options?: RequestInit): Promise<string[]> => {
 
-  return orvalFetch<void>(getGuildsControllerGetWorldsByGuildIdUrl({ guildId }),
+  return orvalFetch<string[]>(getGuildsControllerGetWorldsByGuildIdUrl({ guildId }),
   {
     ...options,
     method: 'GET'

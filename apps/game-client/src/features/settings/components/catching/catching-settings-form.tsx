@@ -7,8 +7,8 @@ import { z } from "zod";
 import { Loader2 } from "lucide-react";
 import { useLootlogCharactersConfig } from "@/hooks/api/use-lootlog-character-config";
 import { useUpdateLootlogCharactersConfig } from "@/hooks/api/use-update-lootlog-characters-config";
-import { useGuilds } from "@/hooks/api/use-guilds";
 import { useTranslation } from "react-i18next";
+import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@/lib/api/generated/main/users/users";
 
 type CatchingSettingsFormProps = {
   characterId: string;
@@ -28,7 +28,7 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
   onSelectionChange,
 }) => {
   const { t } = useTranslation();
-  const { data: guilds } = useGuilds();
+  const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds();
   const { data: lootlogCharactersConfig, isPending: isLootlogConfigLoading } =
     useLootlogCharactersConfig();
   const {

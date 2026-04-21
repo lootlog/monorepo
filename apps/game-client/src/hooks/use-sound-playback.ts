@@ -3,26 +3,31 @@ import { useSoundSettings } from "@/hooks/api/use-sound-settings";
 import { DEFAULT_SOUND_URLS } from "@/features/settings/config/default-sounds";
 import { useQueryClient } from "@tanstack/react-query";
 import type { UserSoundSettings } from "@lootlog/types";
+import { normalizeSoundSettings } from "@/lib/api/generated-helpers";
+import { getSoundSettingsControllerGetSettingsQueryKey } from "@/lib/api/generated/main/sound-settings/sound-settings";
+import type { SoundSettingsResponseDto } from "@/lib/api/generated/main/model";
 
 type SoundCategory = "notifications" | "detector" | "timers";
 
+const SOUND_SETTINGS_QUERY_KEY =
+  getSoundSettingsControllerGetSettingsQueryKey();
+
 export const useSoundPlayback = () => {
-  const { data: soundSettings } = useSoundSettings();
+  const { data: soundSettingsData } = useSoundSettings();
   const queryClient = useQueryClient();
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const testAudioRef = useRef<HTMLAudioElement | null>(null);
+  const soundSettings = soundSettingsData
+    ? normalizeSoundSettings(soundSettingsData)
+    : undefined;
 
   const getLatestSettings = useCallback((): UserSoundSettings | undefined => {
-    const cached = queryClient.getQueryData<
-      UserSoundSettings | { data: UserSoundSettings }
-    >(["sound-settings"]);
+    const cached = queryClient.getQueryData<SoundSettingsResponseDto>(
+      SOUND_SETTINGS_QUERY_KEY,
+    );
 
-    if (cached && "masterVolume" in cached) {
-      return cached;
-    }
-
-    if (cached && "data" in cached) {
-      return cached.data;
+    if (cached) {
+      return normalizeSoundSettings(cached);
     }
 
     return soundSettings;

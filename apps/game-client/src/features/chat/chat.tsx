@@ -1,20 +1,33 @@
 import { DraggableWindow } from "@/components/draggable-window";
 import { AnimatedWindow } from "@/components/animated-window";
-import { useChatMessages } from "@/hooks/api/use-chat-messages";
 import { useRef, useEffect, useLayoutEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useLocalStorage } from "react-use";
 import { storageKey } from "@/lib/storage-key";
 import { useWindowsStore } from "@/store/windows.store";
 import { useChatMessagesListener } from "@/features/chat/hooks/use-chat-messages";
-import { useGuildMembers } from "@/hooks/api/use-guild-members";
 import { GuildSwitcher } from "@/components/guild-switcher";
 import { Game } from "@/lib/game";
+import {
+  getChatControllerGetChatMessagesQueryKey,
+  useChatControllerGetChatMessages,
+} from "@/lib/api/generated/main/chat/chat";
+import {
+  getMembersControllerGetGuildMembersSummaryQueryKey,
+  useMembersControllerGetGuildMembersSummary,
+} from "@/lib/api/generated/main/members/members";
+import {
+  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
+  useUsersControllerGetCurrentUserAccessibleGuilds,
+} from "@/lib/api/generated/main/users/users";
+import {
+  getGuildNamesById,
+  mapGuildMembersByUserId,
+} from "@/lib/api/generated-helpers";
 import { useChatCache } from "./hooks/use-chat-cache";
 import { type ChatFilter, useChatStore } from "@/store/chat.store";
 import { ChatMessage } from "./components/chat-message";
 import { OldChatInput } from "@/features/chat/components/old-chat-input";
-import { getGuildNamesById, useGuilds } from "@/hooks/api/use-guilds";
 import { ChatWindowActions } from "@/features/chat/components/chat-window-actions";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
@@ -48,7 +61,13 @@ export const Chat = () => {
     chatSelectedGuildKey(accountId, characterId),
     "",
   );
-  const { data: guilds } = useGuilds();
+  const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds({
+    query: {
+      queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
+      refetchOnMount: false,
+      staleTime: 1000 * 60 * 5,
+    },
+  });
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -57,8 +76,33 @@ export const Chat = () => {
   const messageCache = useChatCache((s) => s.messageCache);
   const memberCache = useChatCache((s) => s.memberCache);
 
-  const { data: messages } = useChatMessages(selectedGuildId);
-  const { data: guildMembers } = useGuildMembers(selectedGuildId);
+  const { data: messages } = useChatControllerGetChatMessages(
+    { guildId: selectedGuildId ?? "" },
+    {
+      query: {
+        queryKey: getChatControllerGetChatMessagesQueryKey({
+          guildId: selectedGuildId ?? "",
+        }),
+        enabled: !!selectedGuildId && selectedGuildId !== "all",
+        gcTime: Infinity,
+        staleTime: 5 * 60 * 1000,
+      },
+    },
+  );
+  const { data: guildMembers } = useMembersControllerGetGuildMembersSummary(
+    { guildId: selectedGuildId ?? "" },
+    {
+      query: {
+        queryKey: getMembersControllerGetGuildMembersSummaryQueryKey({
+          guildId: selectedGuildId ?? "",
+        }),
+        enabled: !!selectedGuildId && selectedGuildId !== "all",
+        gcTime: Infinity,
+        staleTime: 5 * 60 * 1000,
+        select: mapGuildMembersByUserId,
+      },
+    },
+  );
 
   const isUserNearBottomRef = useRef(true);
   const scrollPendingRef = useRef(true);

@@ -8,6 +8,7 @@ import {
   useUpdateSoundSettings,
 } from "@/hooks/api/use-sound-settings";
 import { useSoundPlayback } from "@/hooks/use-sound-playback";
+import { normalizeSoundSettings } from "@/lib/api/generated-helpers";
 import type { SoundCategory } from "@/features/settings/components/sounds/types";
 import { Bell, Clock, Crosshair, Loader2 } from "lucide-react";
 import { useEffect, useState, type FC, type ReactNode } from "react";
@@ -31,10 +32,13 @@ const isValidUrl = (url: string): boolean => {
 };
 
 export const SoundsSettingsTab: FC = () => {
-  const { data: settings, isLoading } = useSoundSettings();
+  const { data: soundSettings, isLoading } = useSoundSettings();
   const { mutate: updateSettings, isPending } = useUpdateSoundSettings();
   const { playSoundTest } = useSoundPlayback();
   const { t } = useTranslation(["settings", "common"]);
+  const settings = soundSettings
+    ? normalizeSoundSettings(soundSettings)
+    : undefined;
   const [mutedCategories, setMutedCategories] = useState<
     Record<SoundCategory, boolean>
   >({

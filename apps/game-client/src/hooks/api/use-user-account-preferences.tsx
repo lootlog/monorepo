@@ -1,69 +1,72 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { cloneDetectorSettings } from "@/lib/game-account-preferences";
+import { DETECTOR_NPC_TYPES, type NotificationType } from "@lootlog/types";
 import {
-  fetchUserGameAccountPreferences,
-  updateUserGameAccountPreferences,
-} from "@/api";
-import {
-  cloneDetectorSettings,
-  getUpdateUserGameAccountPreferencesMutationKey,
-  getUserGameAccountPreferencesQueryKey,
-} from "@/lib/game-account-preferences";
-import {
-  DETECTOR_NPC_TYPES,
-  type NotificationType,
-  type UpdateUserGameAccountPreferencesPayload,
-  type UserGameAccountPreferences,
-} from "@lootlog/types";
+  getUsersControllerGetUserGameAccountPreferencesQueryKey,
+  useUsersControllerGetUserGameAccountPreferences,
+  usersControllerUpdateUserGameAccountPreferences,
+} from "@/lib/api/generated/main/users/users";
+import type {
+  UpdateUserGameAccountPreferencesDto,
+  UserGameAccountPreferencesResponseDtoOutput,
+} from "@/lib/api/generated/main/model";
 
 export const useUserGameAccountPreferences = (
   accountId: string | null,
   enabled = true,
 ) => {
-  return useQuery({
-    queryKey: accountId
-      ? getUserGameAccountPreferencesQueryKey(accountId)
-      : ["user-game-account-preferences", "disabled"],
-    queryFn: async () => {
-      if (!accountId) {
-        throw new Error("Account ID is required");
-      }
+  const resolvedAccountId = accountId ?? "";
 
-      return fetchUserGameAccountPreferences(accountId);
+  return useUsersControllerGetUserGameAccountPreferences(
+    { accountId: resolvedAccountId },
+    {
+      query: {
+        queryKey: getUsersControllerGetUserGameAccountPreferencesQueryKey({
+          accountId: resolvedAccountId,
+        }),
+        enabled: enabled && !!accountId,
+        staleTime: 0,
+        refetchOnMount: true,
+        refetchOnWindowFocus: false,
+        retry: false,
+      },
     },
-    enabled: enabled && !!accountId,
-    staleTime: 0,
-    refetchOnMount: true,
-    refetchOnWindowFocus: false,
-    retry: false,
-  });
+  );
 };
 
 export const useUpdateUserGameAccountPreferences = (
   accountId: string | null,
 ) => {
   const queryClient = useQueryClient();
+  const queryKey = accountId
+    ? getUsersControllerGetUserGameAccountPreferencesQueryKey({ accountId })
+    : ["usersControllerGetUserGameAccountPreferences", "disabled"];
 
   return useMutation({
     mutationKey: accountId
-      ? getUpdateUserGameAccountPreferencesMutationKey(accountId)
-      : ["update-user-game-account-preferences", "disabled"],
-    mutationFn: async (payload: UpdateUserGameAccountPreferencesPayload) => {
+      ? ["usersControllerUpdateUserGameAccountPreferences", accountId]
+      : ["usersControllerUpdateUserGameAccountPreferences", "disabled"],
+    mutationFn: async (payload: UpdateUserGameAccountPreferencesDto) => {
       if (!accountId) {
         throw new Error("Account ID is required");
       }
 
-      return updateUserGameAccountPreferences(accountId, payload);
+      return usersControllerUpdateUserGameAccountPreferences(
+        { accountId },
+        payload,
+      );
     },
     onMutate: async (payload) => {
       if (!accountId) {
         return { previousData: undefined };
       }
 
-      const queryKey = getUserGameAccountPreferencesQueryKey(accountId);
       await queryClient.cancelQueries({ queryKey });
 
       const previousData =
-        queryClient.getQueryData<UserGameAccountPreferences>(queryKey);
+        queryClient.getQueryData<UserGameAccountPreferencesResponseDtoOutput>(
+          queryKey,
+        );
 
       if (!previousData) {
         return { previousData };
@@ -84,14 +87,14 @@ export const useUpdateUserGameAccountPreferences = (
             },
             {
               ...previousData.notifications,
-            } as UserGameAccountPreferences["notifications"],
+            } as UserGameAccountPreferencesResponseDtoOutput["notifications"],
           )
         : previousData.notifications;
       const nextDetector = payload.detector
         ? (() => {
             const nextSettings = cloneDetectorSettings(previousData.detector);
 
-            if (payload.detector?.routingRules) {
+            if (payload.detector.routingRules) {
               nextSettings.routingRules = payload.detector.routingRules.map(
                 (rule) => ({
                   ...rule,
@@ -117,17 +120,20 @@ export const useUpdateUserGameAccountPreferences = (
           })()
         : previousData.detector;
 
-      queryClient.setQueryData<UserGameAccountPreferences>(queryKey, {
-        ...previousData,
-        notifications: nextNotifications,
-        detector: nextDetector,
-        hasStoredNotifications:
-          previousData.hasStoredNotifications ||
-          payload.notifications !== undefined,
-        hasStoredDetector:
-          previousData.hasStoredDetector || payload.detector !== undefined,
-        hasStoredPreferences: true,
-      });
+      queryClient.setQueryData<UserGameAccountPreferencesResponseDtoOutput>(
+        queryKey,
+        {
+          ...previousData,
+          notifications: nextNotifications,
+          detector: nextDetector,
+          hasStoredNotifications:
+            previousData.hasStoredNotifications ||
+            payload.notifications !== undefined,
+          hasStoredDetector:
+            previousData.hasStoredDetector || payload.detector !== undefined,
+          hasStoredPreferences: true,
+        },
+      );
 
       return { previousData };
     },
@@ -136,29 +142,21 @@ export const useUpdateUserGameAccountPreferences = (
         return;
       }
 
-      queryClient.setQueryData(
-        getUserGameAccountPreferencesQueryKey(accountId),
-        context.previousData,
-      );
+      queryClient.setQueryData(queryKey, context.previousData);
     },
     onSuccess: (data) => {
       if (!accountId) {
         return;
       }
 
-      queryClient.setQueryData(
-        getUserGameAccountPreferencesQueryKey(accountId),
-        data,
-      );
+      queryClient.setQueryData(queryKey, data);
     },
     onSettled: () => {
       if (!accountId) {
         return;
       }
 
-      queryClient.invalidateQueries({
-        queryKey: getUserGameAccountPreferencesQueryKey(accountId),
-      });
+      queryClient.invalidateQueries({ queryKey });
     },
   });
 };

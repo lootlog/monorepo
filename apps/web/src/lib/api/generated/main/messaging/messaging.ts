@@ -15,11 +15,13 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  CancelPartyGatheringResponseDtoOutput,
   CreateNotificationDto,
   CreatePartyGatheringDto,
   CreateVolunteerDto,
   MessagingControllerCancelPartyGatheringPathParameters,
-  MessagingControllerVolunteerPathParameters
+  MessagingControllerVolunteerPathParameters,
+  NotificationResponseDtoOutput
 } from '../model';
 
 import { orvalFetch } from '../../../orval-fetch';
@@ -42,9 +44,9 @@ export const getMessagingControllerSendNotificationUrl = () => {
   return `/messaging`
 }
 
-export const messagingControllerSendNotification = async (createNotificationDto: CreateNotificationDto, options?: RequestInit): Promise<void> => {
+export const messagingControllerSendNotification = async (createNotificationDto: CreateNotificationDto, options?: RequestInit): Promise<NotificationResponseDtoOutput> => {
 
-  return orvalFetch<void>(getMessagingControllerSendNotificationUrl(),
+  return orvalFetch<NotificationResponseDtoOutput>(getMessagingControllerSendNotificationUrl(),
   {
     ...options,
     method: 'POST',
@@ -185,9 +187,9 @@ export const getMessagingControllerCreatePartyGatheringUrl = () => {
   return `/messaging/party-gathering`
 }
 
-export const messagingControllerCreatePartyGathering = async (createPartyGatheringDto: CreatePartyGatheringDto, options?: RequestInit): Promise<void> => {
+export const messagingControllerCreatePartyGathering = async (createPartyGatheringDto: CreatePartyGatheringDto, options?: RequestInit): Promise<NotificationResponseDtoOutput> => {
 
-  return orvalFetch<void>(getMessagingControllerCreatePartyGatheringUrl(),
+  return orvalFetch<NotificationResponseDtoOutput>(getMessagingControllerCreatePartyGatheringUrl(),
   {
     ...options,
     method: 'POST',
@@ -256,9 +258,9 @@ export const getMessagingControllerCancelPartyGatheringByUserUrl = () => {
   return `/messaging/party-gathering`
 }
 
-export const messagingControllerCancelPartyGatheringByUser = async ( options?: RequestInit): Promise<void> => {
+export const messagingControllerCancelPartyGatheringByUser = async ( options?: RequestInit): Promise<CancelPartyGatheringResponseDtoOutput> => {
 
-  return orvalFetch<void>(getMessagingControllerCancelPartyGatheringByUserUrl(),
+  return orvalFetch<CancelPartyGatheringResponseDtoOutput>(getMessagingControllerCancelPartyGatheringByUserUrl(),
   {
     ...options,
     method: 'DELETE'
@@ -326,9 +328,9 @@ export const getMessagingControllerCancelPartyGatheringUrl = ({ notificationId }
   return `/messaging/party-gathering/${notificationId}`
 }
 
-export const messagingControllerCancelPartyGathering = async ({ notificationId }: MessagingControllerCancelPartyGatheringPathParameters, options?: RequestInit): Promise<void> => {
+export const messagingControllerCancelPartyGathering = async ({ notificationId }: MessagingControllerCancelPartyGatheringPathParameters, options?: RequestInit): Promise<CancelPartyGatheringResponseDtoOutput | void> => {
 
-  return orvalFetch<void>(getMessagingControllerCancelPartyGatheringUrl({ notificationId }),
+  return orvalFetch<CancelPartyGatheringResponseDtoOutput | void>(getMessagingControllerCancelPartyGatheringUrl({ notificationId }),
   {
     ...options,
     method: 'DELETE'
