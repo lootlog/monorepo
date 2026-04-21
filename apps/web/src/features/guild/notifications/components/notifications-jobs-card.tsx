@@ -58,6 +58,7 @@ export const NotificationsPendingJobsCard = ({
         getApiErrorMessage(error) ??
           t("settings.notifications.toasts.jobCancelError"),
       );
+      throw error;
     }
   };
 

@@ -63,6 +63,7 @@ export const NotificationTargetCard = ({
         getApiErrorMessage(error) ??
           t("settings.notifications.toasts.targetDeleteError"),
       );
+      throw error;
     }
   };
 

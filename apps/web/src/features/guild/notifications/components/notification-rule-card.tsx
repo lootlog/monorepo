@@ -153,6 +153,7 @@ export const NotificationRuleCard = ({
         getApiErrorMessage(error) ??
           t("settings.notifications.toasts.ruleDeleteError"),
       );
+      throw error;
     }
   };
 

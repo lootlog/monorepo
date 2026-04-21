@@ -15,6 +15,20 @@ export const isRouteLoaderCancelledError = (error: unknown) => {
   return isCancelledError(error);
 };
 
+export const withRouteLoaderCancellation = async <T>(
+  loader: () => Promise<T>,
+) => {
+  try {
+    return await loader();
+  } catch (error) {
+    if (isRouteLoaderCancelledError(error)) {
+      return undefined;
+    }
+
+    throw error;
+  }
+};
+
 export const throwForbiddenRouteError = (message = ""): never => {
   const forbiddenError = new Error(message) as Error & {
     status: number;

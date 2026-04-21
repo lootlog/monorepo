@@ -6,25 +6,27 @@ import {
   userWatchedItemsQueryOptions,
 } from "@/features/user/notifications/user-notifications-api";
 import { getGuildsControllerGetUserGuildsQueryOptions } from "@/lib/api/generated/main/guilds/guilds";
+import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 
 export const Route = createFileRoute("/_authenticated/@me/notifications")({
   component: UserNotifications,
   pendingComponent: UserNotificationsPageSkeleton,
-  loader: async ({ context, preload }) => {
-    if (preload) {
+  loader: ({ context, preload }) =>
+    withRouteLoaderCancellation(async () => {
+      if (preload) {
+        return null;
+      }
+
+      await Promise.all([
+        context.queryClient.ensureQueryData(
+          getGuildsControllerGetUserGuildsQueryOptions(),
+        ),
+        context.queryClient.ensureQueryData(
+          userNotificationTargetsQueryOptions(),
+        ),
+        context.queryClient.ensureQueryData(userWatchedItemsQueryOptions()),
+      ]);
+
       return null;
-    }
-
-    await Promise.all([
-      context.queryClient.ensureQueryData(
-        getGuildsControllerGetUserGuildsQueryOptions(),
-      ),
-      context.queryClient.ensureQueryData(
-        userNotificationTargetsQueryOptions(),
-      ),
-      context.queryClient.ensureQueryData(userWatchedItemsQueryOptions()),
-    ]);
-
-    return null;
-  },
+    }),
 });

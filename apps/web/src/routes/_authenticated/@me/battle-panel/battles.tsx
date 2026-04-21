@@ -6,37 +6,39 @@ import {
   getBattlesControllerGetUserCharactersQueryOptions,
 } from "@/lib/api/generated/battlelog/battles/battles";
 import { loadBattlePanelBattlesSearch } from "@/features/user/battle-panel/battle-panel-battles-list/battle-query-parsers";
+import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 
 export const Route = createFileRoute(
   "/_authenticated/@me/battle-panel/battles",
 )({
-  loader: async ({ context, location }) => {
-    const search = loadBattlePanelBattlesSearch(location.searchStr);
+  loader: ({ context, location }) =>
+    withRouteLoaderCancellation(async () => {
+      const search = loadBattlePanelBattlesSearch(location.searchStr);
 
-    await Promise.all([
-      context.queryClient.ensureQueryData(
-        getBattlesControllerGetUserCharactersQueryOptions(),
-      ),
-      context.queryClient.ensureQueryData(
-        getBattlesControllerGetDashboardBattlesQueryOptions({
-          cursor: search.cursor ?? undefined,
-          size: 20,
-          includeTotal: true,
-          world: search.world ?? undefined,
-          type: search.type ?? undefined,
-          search: search.search ?? undefined,
-          result: search.result ?? undefined,
-          ph: search.ph ?? undefined,
-          matchmaking: search.matchmaking ?? undefined,
-          characterId: search.characterId ?? undefined,
-          minLevel: search.minLevel,
-          maxLevel: search.maxLevel,
-        }),
-      ),
-    ]);
+      await Promise.all([
+        context.queryClient.ensureQueryData(
+          getBattlesControllerGetUserCharactersQueryOptions(),
+        ),
+        context.queryClient.ensureQueryData(
+          getBattlesControllerGetDashboardBattlesQueryOptions({
+            cursor: search.cursor ?? undefined,
+            size: 20,
+            includeTotal: true,
+            world: search.world ?? undefined,
+            type: search.type ?? undefined,
+            search: search.search ?? undefined,
+            result: search.result ?? undefined,
+            ph: search.ph ?? undefined,
+            matchmaking: search.matchmaking ?? undefined,
+            characterId: search.characterId ?? undefined,
+            minLevel: search.minLevel,
+            maxLevel: search.maxLevel,
+          }),
+        ),
+      ]);
 
-    return null;
-  },
+      return null;
+    }),
   component: BattlePanelBattlesList,
   pendingComponent: BattlePanelBattlesSkeleton,
 });

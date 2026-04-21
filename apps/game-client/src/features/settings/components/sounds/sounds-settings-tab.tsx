@@ -74,24 +74,24 @@ export const SoundsSettingsTab: FC = () => {
   }[] = [
     {
       id: "notifications",
-      label: t("settings.sounds.categories.notifications.label"),
+      label: t("sounds.categories.notifications.label"),
       icon: <Bell className="ll:size-4" />,
       fields: notificationNpcTypes,
-      description: t("settings.sounds.categories.notifications.description"),
+      description: t("sounds.categories.notifications.description"),
     },
     {
       id: "detector",
-      label: t("settings.sounds.categories.detector.label"),
+      label: t("sounds.categories.detector.label"),
       icon: <Crosshair className="ll:size-4" />,
       fields: detectorTimerNpcTypes,
-      description: t("settings.sounds.categories.detector.description"),
+      description: t("sounds.categories.detector.description"),
     },
     {
       id: "timers",
-      label: t("settings.sounds.categories.timers.label"),
+      label: t("sounds.categories.timers.label"),
       icon: <Clock className="ll:size-4" />,
       fields: detectorTimerNpcTypes,
-      description: t("settings.sounds.categories.timers.description"),
+      description: t("sounds.categories.timers.description"),
     },
   ];
   const debouncedUpdate = useDebouncedCallback(
@@ -102,32 +102,35 @@ export const SoundsSettingsTab: FC = () => {
   );
 
   useEffect(() => {
-    if (!settings) {
+    if (!soundSettings) {
       return;
     }
 
     setLocalVolumes({
-      master: settings.masterVolume ?? 0.5,
-      notifications: settings.notificationsVolume ?? 0.5,
-      detector: settings.detectorVolume ?? 0.5,
-      timers: settings.timersVolume ?? 0.5,
+      master: soundSettings.masterVolume ?? 0.5,
+      notifications: soundSettings.notificationsVolume ?? 0.5,
+      detector: soundSettings.detectorVolume ?? 0.5,
+      timers: soundSettings.timersVolume ?? 0.5,
     });
-  }, [settings]);
+  }, [
+    soundSettings?.masterVolume,
+    soundSettings?.notificationsVolume,
+    soundSettings?.detectorVolume,
+    soundSettings?.timersVolume,
+  ]);
 
   if (isLoading) {
     return (
-      <SettingsTabLayout title={t("settings.sounds.title")}>
-        <p className="ll:text-[12px] ll:text-gray-400">
-          {t("settings.sounds.loading")}
-        </p>
+      <SettingsTabLayout title={t("sounds.title")}>
+        <p className="ll:text-[12px] ll:text-gray-400">{t("sounds.loading")}</p>
       </SettingsTabLayout>
     );
   }
 
   return (
     <SettingsTabLayout
-      title={t("settings.sounds.title")}
-      description={t("settings.sounds.description")}
+      title={t("sounds.title")}
+      description={t("sounds.description")}
       className="ll:relative"
     >
       {isPending ? (
@@ -153,8 +156,8 @@ export const SoundsSettingsTab: FC = () => {
         />
 
         <SettingsSection
-          title={t("settings.sounds.categoriesTitle")}
-          description={t("settings.sounds.categoriesDescription")}
+          title={t("sounds.categoriesTitle")}
+          description={t("sounds.categoriesDescription")}
         >
           <Accordion
             type="single"
@@ -244,7 +247,7 @@ export const SoundsSettingsTab: FC = () => {
                         ...prev,
                         [category.id]: {
                           ...prev[category.id],
-                          [key]: t("settings.sounds.invalidUrl"),
+                          [key]: t("sounds.invalidUrl"),
                         },
                       }));
                       return;

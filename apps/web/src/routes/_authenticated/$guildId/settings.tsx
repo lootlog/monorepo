@@ -5,33 +5,37 @@ import {
   getGuildsControllerGetGuildPermissionsQueryOptions,
 } from "@/lib/api/generated/main/guilds/guilds";
 import { canManageGuild } from "@/lib/guild-permissions";
-import { throwForbiddenRouteError } from "@/lib/router/route-errors";
+import {
+  throwForbiddenRouteError,
+  withRouteLoaderCancellation,
+} from "@/lib/router/route-errors";
 
 export const Route = createFileRoute("/_authenticated/$guildId/settings")({
-  loader: async ({ context, params, preload }) => {
-    if (preload) {
-      return null;
-    }
+  loader: ({ context, params, preload }) =>
+    withRouteLoaderCancellation(async () => {
+      if (preload) {
+        return null;
+      }
 
-    const permissions = await context.queryClient.ensureQueryData(
-      getGuildsControllerGetGuildPermissionsQueryOptions(
-        { guildId: params.guildId },
-        {
-          query: {
-            queryKey: getGuildsControllerGetGuildPermissionsQueryKey({
-              guildId: params.guildId,
-            }),
-            staleTime: 30_000,
+      const permissions = await context.queryClient.ensureQueryData(
+        getGuildsControllerGetGuildPermissionsQueryOptions(
+          { guildId: params.guildId },
+          {
+            query: {
+              queryKey: getGuildsControllerGetGuildPermissionsQueryKey({
+                guildId: params.guildId,
+              }),
+              staleTime: 30_000,
+            },
           },
-        },
-      ),
-    );
+        ),
+      );
 
-    if (!canManageGuild(permissions)) {
-      throwForbiddenRouteError();
-    }
+      if (!canManageGuild(permissions)) {
+        throwForbiddenRouteError();
+      }
 
-    return null;
-  },
+      return null;
+    }),
   component: SettingsLayout,
 });

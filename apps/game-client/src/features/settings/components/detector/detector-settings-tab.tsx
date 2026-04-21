@@ -65,8 +65,8 @@ export const DetectorSettingsTab = () => {
 
   return (
     <SettingsTabLayout
-      title={t("settings.detector.title")}
-      description={t("settings.detector.description")}
+      title={t("detector.title")}
+      description={t("detector.description")}
       contentClassName="ll:gap-3"
     >
       <div className="ll:relative">
