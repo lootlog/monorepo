@@ -9,6 +9,7 @@ import { GuildsService } from "src/guilds/guilds.service";
 import { NOTIFICATIONS_DISPATCH_QUEUE } from "src/notifications/constants/notifications-dispatch-queue.constant";
 import { Error as NotificationError } from "src/notifications/enum/error.enum";
 import { ChannelsService } from "src/channels/channels.service";
+import { WatchedItemResponseDto } from "src/notifications/dto/notification-response.dto";
 import { NotificationContentService } from "./notification-content.service";
 import { NotificationJobService } from "./notification-job.service";
 import { NotificationMatchingService } from "./notification-matching.service";
@@ -23,6 +24,59 @@ describe("Notification Services", () => {
   let jobService: NotificationJobService;
   let eventsHandler: NotificationsEventsHandler;
   let watchedItemService: WatchedItemService;
+
+  const watchedItemTimestamp = new Date("2026-04-21T10:00:00.000Z");
+  const createMockNotificationRule = (
+    filters: Prisma.JsonValue = {
+      itemId: 123,
+      guildIds: ["guild-1"],
+    },
+    overrides: Record<string, unknown> = {},
+  ) => ({
+    id: 91,
+    ownerType: "USER",
+    ownerId: "user-1",
+    triggerType: "WATCHED_ITEM_DROPPED",
+    guildId: null,
+    world: "berufs",
+    name: null,
+    filters,
+    contentTemplate: null,
+    scheduleStrategy: null,
+    scheduleAnchor: null,
+    scheduleOffsetMinutes: null,
+    scheduledAt: null,
+    scheduleIntervalType: null,
+    scheduleIntervalValue: null,
+    scheduleWeekday: null,
+    scheduleTimeOfDay: null,
+    scheduledUntil: null,
+    scheduleTimezone: null,
+    enabled: true,
+    dedupeWindowSeconds: 0,
+    createdAt: watchedItemTimestamp,
+    updatedAt: watchedItemTimestamp,
+    targets: [],
+    ...overrides,
+  });
+  const createMockWatchedItem = (
+    notificationRule: ReturnType<
+      typeof createMockNotificationRule
+    > | null = createMockNotificationRule(),
+    overrides: Record<string, unknown> = {},
+  ) => ({
+    id: 1,
+    userId: "user-1",
+    itemId: 123,
+    itemName: "Legendarny Miecz",
+    world: "berufs",
+    enabled: true,
+    notificationRuleId: notificationRule ? 91 : null,
+    createdAt: watchedItemTimestamp,
+    updatedAt: watchedItemTimestamp,
+    notificationRule,
+    ...overrides,
+  });
 
   const mockPrisma = {
     $transaction: mockFn(),
@@ -140,27 +194,7 @@ describe("Notification Services", () => {
     mockPrisma.watchedItem.findMany.mockResolvedValue([]);
     mockPrisma.watchedItem.findUnique.mockResolvedValue(null);
     mockPrisma.watchedItem.update.mockResolvedValue(undefined);
-    mockPrisma.watchedItem.upsert.mockResolvedValue({
-      id: 1,
-      userId: "user-1",
-      itemId: 123,
-      itemName: "Legendarny Miecz",
-      world: "berufs",
-      enabled: true,
-      notificationRuleId: 91,
-      notificationRule: {
-        id: 91,
-        ownerType: "USER",
-        ownerId: "user-1",
-        world: "berufs",
-        enabled: true,
-        filters: {
-          itemId: 123,
-          guildIds: ["guild-1"],
-        },
-        targets: [],
-      },
-    });
+    mockPrisma.watchedItem.upsert.mockResolvedValue(createMockWatchedItem());
     mockPrisma.notificationRuleTarget.createMany.mockResolvedValue({
       count: 0,
     });
@@ -544,58 +578,54 @@ describe("Notification Services", () => {
     expect(mockPrisma.watchedItem.upsert).not.toHaveBeenCalled();
   });
 
+  it("returns a valid watched item response when creating a watched item", async () => {
+    const result = await watchedItemService.createWatchedItem(
+      "discord-user-1",
+      "user-1",
+      {
+        itemId: 123,
+        itemName: "Legendarny Miecz",
+        world: "berufs",
+        guildIds: ["guild-1"],
+      },
+    );
+
+    expect(WatchedItemResponseDto.schema.encode(result)).toMatchObject({
+      itemSnapshot: null,
+      notificationRule: {
+        filters: {
+          itemId: 123,
+          guildIds: ["guild-1"],
+        },
+      },
+    });
+  });
+
   it("quick add merges the current guild into an existing watched item scope", async () => {
     mockPrisma.watchedItem.findUnique
-      .mockResolvedValueOnce({
-        id: 1,
-        userId: "user-1",
-        itemId: 123,
-        itemName: "Legendarny Miecz",
-        world: "berufs",
-        enabled: true,
-        notificationRuleId: 91,
-        notificationRule: {
-          id: 91,
-          ownerType: "USER",
-          ownerId: "user-1",
-          world: "berufs",
-          enabled: true,
-          filters: {
-            itemId: 123,
-            guildIds: ["guild-1"],
-          },
-        },
-      })
-      .mockResolvedValueOnce({
-        id: 1,
-        userId: "user-1",
-        itemId: 123,
-        itemName: "Legendarny Miecz",
-        world: "berufs",
-        enabled: true,
-        notificationRuleId: 91,
-        notificationRule: {
-          id: 91,
-          ownerType: "USER",
-          ownerId: "user-1",
-          world: "berufs",
-          enabled: true,
-          filters: {
+      .mockResolvedValueOnce(createMockWatchedItem())
+      .mockResolvedValueOnce(
+        createMockWatchedItem(
+          createMockNotificationRule({
             itemId: 123,
             guildIds: ["guild-1", "guild-2"],
-          },
-          targets: [],
-        },
-      });
+          }),
+        ),
+      );
 
-    await expect(
-      watchedItemService.quickAddWatchedItem("discord-user-1", "user-1", {
+    const result = await watchedItemService.quickAddWatchedItem(
+      "discord-user-1",
+      "user-1",
+      {
         itemId: 123,
         itemName: "Legendarny Miecz",
         world: "berufs",
         guildId: "guild-2",
-      }),
-    ).resolves.toMatchObject({
+      },
+    );
+
+    expect(WatchedItemResponseDto.schema.encode(result)).toMatchObject({
+      itemSnapshot: null,
       notificationRule: {
         filters: {
           guildIds: ["guild-1", "guild-2"],
@@ -611,6 +641,29 @@ describe("Notification Services", () => {
         filters: {
           itemId: 123,
           guildIds: ["guild-1", "guild-2"],
+        },
+      },
+    });
+  });
+
+  it("returns a valid watched item response when quick add creates a new watched item", async () => {
+    const result = await watchedItemService.quickAddWatchedItem(
+      "discord-user-1",
+      "user-1",
+      {
+        itemId: 123,
+        itemName: "Legendarny Miecz",
+        world: "berufs",
+        guildId: "guild-1",
+      },
+    );
+
+    expect(WatchedItemResponseDto.schema.encode(result)).toMatchObject({
+      itemSnapshot: null,
+      notificationRule: {
+        filters: {
+          itemId: 123,
+          guildIds: ["guild-1"],
         },
       },
     });
