@@ -1,8 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ActivityLogs } from "@/features/guild/activity-logs/activity-logs";
 import { ActivityLogsPageSkeleton } from "@/features/guild/activity-logs/activity-logs-page-skeleton";
-import { activityLogsInfiniteQueryOptions } from "@/hooks/api/activity-logs/use-activity-logs";
-import { activityWorldSuggestionsQueryOptions } from "@/hooks/api/activity-logs/use-activity-world-suggestions";
+import { prefetchActivitiesControllerSuggestWorldsQuery } from "@/lib/api/generated/activity/guilds/guilds";
+import {
+  activityLogsInfiniteQueryOptions,
+  getActivityLogSources,
+  getActivityLogTypes,
+} from "@/features/guild/activity-logs/activity-logs.queries";
 
 const getSearchParamValues = (searchParams: URLSearchParams, key: string) => {
   const values = searchParams.getAll(key).filter(Boolean);
@@ -26,12 +30,12 @@ export const Route = createFileRoute("/_authenticated/$guildId/activity-logs")({
       context.queryClient.fetchInfiniteQuery(
         activityLogsInfiniteQueryOptions({
           guildId: params.guildId,
-          types: getSearchParamValues(searchParams, "types") as
-            | Array<"CONNECT_EVENT" | "DISCONNECT_EVENT">
-            | undefined,
-          sources: getSearchParamValues(searchParams, "sources") as
-            | Array<"GAME" | "WEB_APP">
-            | undefined,
+          types: getActivityLogTypes(
+            getSearchParamValues(searchParams, "types") ?? [],
+          ),
+          sources: getActivityLogSources(
+            getSearchParamValues(searchParams, "sources") ?? [],
+          ),
           startDate,
           endDate,
           name,
@@ -40,11 +44,10 @@ export const Route = createFileRoute("/_authenticated/$guildId/activity-logs")({
           limit: 20,
         }),
       ),
-      context.queryClient.ensureQueryData(
-        activityWorldSuggestionsQueryOptions({
-          guildId: params.guildId,
-          limit: 20,
-        }),
+      prefetchActivitiesControllerSuggestWorldsQuery(
+        context.queryClient,
+        { guildId: params.guildId },
+        { limit: 20 },
       ),
     ]);
 

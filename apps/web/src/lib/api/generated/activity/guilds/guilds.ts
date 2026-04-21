@@ -55,7 +55,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary Get activities for a specific guild
  */
 export const getActivitiesControllerFindByGuildUrl = ({ guildId }: ActivitiesControllerFindByGuildPathParameters,
-    params: ActivitiesControllerFindByGuildParams,) => {
+    params?: ActivitiesControllerFindByGuildParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -71,7 +71,7 @@ export const getActivitiesControllerFindByGuildUrl = ({ guildId }: ActivitiesCon
 }
 
 export const activitiesControllerFindByGuild = async ({ guildId }: ActivitiesControllerFindByGuildPathParameters,
-    params: ActivitiesControllerFindByGuildParams, options?: RequestInit): Promise<PaginatedActivitiesResponseDto> => {
+    params?: ActivitiesControllerFindByGuildParams, options?: RequestInit): Promise<PaginatedActivitiesResponseDto> => {
 
   return orvalFetchActivity<PaginatedActivitiesResponseDto>(getActivitiesControllerFindByGuildUrl({ guildId },params),
   {
@@ -95,7 +95,7 @@ export const getActivitiesControllerFindByGuildQueryKey = ({ guildId }: Activiti
 
 
 export const getActivitiesControllerFindByGuildQueryOptions = <TData = Awaited<ReturnType<typeof activitiesControllerFindByGuild>>, TError = ErrorType<unknown>>({ guildId }: ActivitiesControllerFindByGuildPathParameters,
-    params: ActivitiesControllerFindByGuildParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindByGuild>>, TError, TData>, request?: SecondParameter<typeof orvalFetchActivity>}
+    params?: ActivitiesControllerFindByGuildParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindByGuild>>, TError, TData>, request?: SecondParameter<typeof orvalFetchActivity>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -123,7 +123,7 @@ export type ActivitiesControllerFindByGuildQueryError = ErrorType<unknown>
 
 export function useActivitiesControllerFindByGuild<TData = Awaited<ReturnType<typeof activitiesControllerFindByGuild>>, TError = ErrorType<unknown>>(
  { guildId }: ActivitiesControllerFindByGuildPathParameters,
-    params: ActivitiesControllerFindByGuildParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindByGuild>>, TError, TData>, request?: SecondParameter<typeof orvalFetchActivity>}
+    params?: ActivitiesControllerFindByGuildParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindByGuild>>, TError, TData>, request?: SecondParameter<typeof orvalFetchActivity>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
@@ -139,7 +139,7 @@ export function useActivitiesControllerFindByGuild<TData = Awaited<ReturnType<ty
  */
 export const prefetchActivitiesControllerFindByGuildQuery = async <TData = Awaited<ReturnType<typeof activitiesControllerFindByGuild>>, TError = ErrorType<unknown>>(
  queryClient: QueryClient, { guildId }: ActivitiesControllerFindByGuildPathParameters,
-    params: ActivitiesControllerFindByGuildParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindByGuild>>, TError, TData>, request?: SecondParameter<typeof orvalFetchActivity>}
+    params?: ActivitiesControllerFindByGuildParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindByGuild>>, TError, TData>, request?: SecondParameter<typeof orvalFetchActivity>}
 
   ): Promise<QueryClient> => {
 
@@ -155,7 +155,7 @@ export const prefetchActivitiesControllerFindByGuildQuery = async <TData = Await
  */
 export const invalidateActivitiesControllerFindByGuild = async (
  queryClient: QueryClient, { guildId }: ActivitiesControllerFindByGuildPathParameters,
-    params: ActivitiesControllerFindByGuildParams, options?: InvalidateOptions
+    params?: ActivitiesControllerFindByGuildParams, options?: InvalidateOptions
   ): Promise<QueryClient> => {
 
   await queryClient.invalidateQueries({ queryKey: getActivitiesControllerFindByGuildQueryKey({ guildId },params) }, options);
@@ -591,7 +591,7 @@ export const useGetActivitiesControllerSuggestClanNamesQueryData = () => {
  * @summary Get activities for a specific user in a guild
  */
 export const getActivitiesControllerFindByUserUrl = ({ guildId, userId }: ActivitiesControllerFindByUserPathParameters,
-    params: ActivitiesControllerFindByUserParams,) => {
+    params?: ActivitiesControllerFindByUserParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -607,7 +607,7 @@ export const getActivitiesControllerFindByUserUrl = ({ guildId, userId }: Activi
 }
 
 export const activitiesControllerFindByUser = async ({ guildId, userId }: ActivitiesControllerFindByUserPathParameters,
-    params: ActivitiesControllerFindByUserParams, options?: RequestInit): Promise<PaginatedActivitiesResponseDto> => {
+    params?: ActivitiesControllerFindByUserParams, options?: RequestInit): Promise<PaginatedActivitiesResponseDto> => {
 
   return orvalFetchActivity<PaginatedActivitiesResponseDto>(getActivitiesControllerFindByUserUrl({ guildId, userId },params),
   {
@@ -631,7 +631,7 @@ export const getActivitiesControllerFindByUserQueryKey = ({ guildId, userId }: A
 
 
 export const getActivitiesControllerFindByUserQueryOptions = <TData = Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError = ErrorType<unknown>>({ guildId, userId }: ActivitiesControllerFindByUserPathParameters,
-    params: ActivitiesControllerFindByUserParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError, TData>, request?: SecondParameter<typeof orvalFetchActivity>}
+    params?: ActivitiesControllerFindByUserParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError, TData>, request?: SecondParameter<typeof orvalFetchActivity>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -659,7 +659,7 @@ export type ActivitiesControllerFindByUserQueryError = ErrorType<unknown>
 
 export function useActivitiesControllerFindByUser<TData = Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError = ErrorType<unknown>>(
  { guildId, userId }: ActivitiesControllerFindByUserPathParameters,
-    params: ActivitiesControllerFindByUserParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError, TData>, request?: SecondParameter<typeof orvalFetchActivity>}
+    params?: ActivitiesControllerFindByUserParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError, TData>, request?: SecondParameter<typeof orvalFetchActivity>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
@@ -675,7 +675,7 @@ export function useActivitiesControllerFindByUser<TData = Awaited<ReturnType<typ
  */
 export const prefetchActivitiesControllerFindByUserQuery = async <TData = Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError = ErrorType<unknown>>(
  queryClient: QueryClient, { guildId, userId }: ActivitiesControllerFindByUserPathParameters,
-    params: ActivitiesControllerFindByUserParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError, TData>, request?: SecondParameter<typeof orvalFetchActivity>}
+    params?: ActivitiesControllerFindByUserParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError, TData>, request?: SecondParameter<typeof orvalFetchActivity>}
 
   ): Promise<QueryClient> => {
 
@@ -691,7 +691,7 @@ export const prefetchActivitiesControllerFindByUserQuery = async <TData = Awaite
  */
 export const invalidateActivitiesControllerFindByUser = async (
  queryClient: QueryClient, { guildId, userId }: ActivitiesControllerFindByUserPathParameters,
-    params: ActivitiesControllerFindByUserParams, options?: InvalidateOptions
+    params?: ActivitiesControllerFindByUserParams, options?: InvalidateOptions
   ): Promise<QueryClient> => {
 
   await queryClient.invalidateQueries({ queryKey: getActivitiesControllerFindByUserQueryKey({ guildId, userId },params) }, options);

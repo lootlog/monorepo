@@ -1,4 +1,5 @@
 import { writeFileSync } from "node:fs";
+import yaml from "js-yaml";
 
 type OpenApiDictionary = Record<string, unknown>;
 
@@ -29,7 +30,7 @@ export function writeOpenApiDocumentToYamlFile(
   document: unknown,
   outputPath: string,
 ) {
-  const yamlDocument = `${JSON.stringify(document, null, 2)}\n`;
+  const yamlDocument = yaml.dump(document, openApiYamlDumpOptions);
 
   writeFileSync(outputPath, yamlDocument, "utf8");
 }

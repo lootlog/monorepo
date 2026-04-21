@@ -1,16 +1,12 @@
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import {
-  type ActivitySource,
-  type ActivityType,
-  useActivityLogs,
-} from "@/hooks/api/activity-logs/use-activity-logs";
 import { useActivityLogsFilters } from "@/hooks/use-activity-logs-filters";
 import { ActivityLogsListItem } from "./activity-logs-list-item";
 import { AlertCircle, Frown } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { useRef } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import {
   useResetScrollTop,
   useVirtualInfiniteScroll,
@@ -18,6 +14,11 @@ import {
 import { useTranslation } from "react-i18next";
 import { useParams } from "@tanstack/react-router";
 import { ThemeEmptyStateIcon, useThemedKey } from "@/themes";
+import {
+  activityLogsInfiniteQueryOptions,
+  getActivityLogSources,
+  getActivityLogTypes,
+} from "../activity-logs.queries";
 
 const ACTIVITY_LOGS_PAGE_LIMIT = 20;
 
@@ -37,21 +38,25 @@ export const ActivityLogsList = () => {
     isFetchingNextPage,
     isLoading,
     error,
-  } = useActivityLogs({
-    guildId,
-    types:
-      filters.types.length > 0 ? (filters.types as ActivityType[]) : undefined,
-    sources:
-      filters.sources.length > 0
-        ? (filters.sources as ActivitySource[])
-        : undefined,
-    startDate: filters.startDate || undefined,
-    endDate: filters.endDate || undefined,
-    name: filters.name || undefined,
-    world: filters.world || undefined,
-    limit: ACTIVITY_LOGS_PAGE_LIMIT,
-    clanName: filters.clanName || undefined,
-  });
+  } = useInfiniteQuery(
+    activityLogsInfiniteQueryOptions({
+      guildId,
+      types:
+        getActivityLogTypes(filters.types).length > 0
+          ? getActivityLogTypes(filters.types)
+          : undefined,
+      sources:
+        getActivityLogSources(filters.sources).length > 0
+          ? getActivityLogSources(filters.sources)
+          : undefined,
+      startDate: filters.startDate || undefined,
+      endDate: filters.endDate || undefined,
+      name: filters.name || undefined,
+      world: filters.world || undefined,
+      limit: ACTIVITY_LOGS_PAGE_LIMIT,
+      clanName: filters.clanName || undefined,
+    }),
+  );
 
   const allActivities = activityLogs?.pages.flatMap((page) => page.data) ?? [];
   const totalCount = allActivities.length;

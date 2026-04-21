@@ -9,10 +9,8 @@ import type { ActivitiesControllerFindByGuildSourceItem } from './activities-con
 import type { ActivitiesControllerFindByGuildTypeItem } from './activities-controller-find-by-guild-type-item';
 
 export type ActivitiesControllerFindByGuildParams = {
-userId?: string;
-guildId?: string;
-type: ActivitiesControllerFindByGuildTypeItem[];
-source: ActivitiesControllerFindByGuildSourceItem[];
+type?: ActivitiesControllerFindByGuildTypeItem[];
+source?: ActivitiesControllerFindByGuildSourceItem[];
 playerName?: string;
 clanName?: string;
 world?: string;

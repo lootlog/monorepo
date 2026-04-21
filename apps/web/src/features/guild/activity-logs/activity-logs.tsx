@@ -12,10 +12,14 @@ import {
 } from "@lootlog/ui/components/drawer";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { useLocalStorage } from "usehooks-ts";
-import { useActivityWorldSuggestions } from "@/hooks/api/activity-logs/use-activity-world-suggestions";
 import { Button } from "@lootlog/ui/components/button";
 import { Filter } from "lucide-react";
 import { useParams } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import {
+  getActivitiesControllerSuggestWorldsQueryKey,
+  getActivitiesControllerSuggestWorldsQueryOptions,
+} from "@/lib/api/generated/activity/guilds/guilds";
 import { useTranslation } from "react-i18next";
 
 const FILTERS_OPEN_KEY = "activity-logs-filters-open";
@@ -33,9 +37,22 @@ export const ActivityLogs: FC = () => {
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const isMobile = useIsMobile();
 
-  const { data: worldSuggestions = [] } = useActivityWorldSuggestions({
-    guildId,
-  });
+  const { data: worldSuggestionsResponse } = useQuery(
+    getActivitiesControllerSuggestWorldsQueryOptions(
+      { guildId: guildId ?? "" },
+      { limit: 20 },
+      {
+        query: {
+          queryKey: getActivitiesControllerSuggestWorldsQueryKey(
+            { guildId: guildId ?? "" },
+            { limit: 20 },
+          ),
+          staleTime: 5 * 60 * 1000,
+        },
+      },
+    ),
+  );
+  const worldSuggestions = worldSuggestionsResponse?.worlds ?? [];
 
   const handleOpenSidebar = () => {
     if (isMobile) {
