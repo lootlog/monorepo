@@ -2,7 +2,7 @@ import { Permission } from "src/generated/prisma/client";
 
 /**
  * Utility class for resolving permissions with implicit grants.
- * Handles permission expansion (OWNER/ADMIN → all, LOOTLOG_MANAGE → ACCESS).
+ * Handles permission expansion (OWNER/ADMIN → all).
  */
 export class PermissionResolver {
   private static readonly ADMIN_PERMISSIONS: Permission[] = [
@@ -16,19 +16,11 @@ export class PermissionResolver {
    * Resolves permissions with implicit grants
    */
   static resolve(permissions: Permission[]): Permission[] {
-    const resolved = new Set<Permission>(permissions);
-
-    // OWNER and ADMIN have all permissions
     if (this.isAdministrative(permissions)) {
       return this.ALL_PERMISSIONS;
     }
 
-    // LOOTLOG_MANAGE implies LOOTLOG_ACCESS
-    if (resolved.has(Permission.LOOTLOG_MANAGE)) {
-      resolved.add(Permission.LOOTLOG_ACCESS);
-    }
-
-    return Array.from(resolved);
+    return Array.from(new Set(permissions));
   }
 
   /**
@@ -37,8 +29,7 @@ export class PermissionResolver {
   static hasAccess(permissions: Permission[]): boolean {
     return (
       this.isAdministrative(permissions) ||
-      permissions.includes(Permission.LOOTLOG_ACCESS) ||
-      permissions.includes(Permission.LOOTLOG_MANAGE)
+      permissions.includes(Permission.LOOTLOG_ACCESS)
     );
   }
 
