@@ -28,23 +28,6 @@ export type NpcSearchResult = {
   latestRespawnRandomness: number;
 };
 
-export async function fetchNpcs(
-  token: string,
-  search?: string,
-): Promise<Npc[]> {
-  const client = getApiClient("default");
-  const queryString = new URLSearchParams({
-    search: search ?? "",
-  }).toString();
-  const response = await client.get<Npc[]>(`/npcs?${queryString}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  return response.data;
-}
-
 export async function searchNpcs(
   guildId: string,
   world: string,
