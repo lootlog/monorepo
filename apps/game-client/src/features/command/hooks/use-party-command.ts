@@ -1,8 +1,6 @@
 import { useSilentCancelPartyGathering } from "@/hooks/api/use-silent-cancel-party-gathering";
-import {
-  MessageType,
-  useSendChatMessage,
-} from "@/hooks/api/use-send-chat-message";
+import { MessageType } from "@/api/chat.api";
+import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
 import { useMessagingControllerCreatePartyGathering } from "@/lib/api/generated/main/messaging/messaging";
 import {
   buildCurrentCharacterPayload,

@@ -3,7 +3,7 @@ import type {
   MemberSummaryResponseDtoOutput as GuildMember,
 } from "@/lib/api/generated/main/model";
 import type { ChatFilter } from "@/store/chat.store";
-import { MessageType } from "@/hooks/api/use-send-chat-message";
+import { MessageType } from "@/api/chat.api";
 
 export const getNextSelectedGuildId = (
   selectedGuildId: string | undefined,

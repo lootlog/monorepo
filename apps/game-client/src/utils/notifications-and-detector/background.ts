@@ -1,4 +1,4 @@
-import { NpcType } from "@/hooks/api/use-npcs";
+import { NpcType } from "@/api/npcs.api";
 
 const TEXT_COLORS_BY_KEY: Record<string, string> = {
   [NpcType.COLOSSUS]: "rgba(33, 131, 128, 1)",

@@ -8,7 +8,7 @@ import {
 import { useGameAccountPreferencesSyncStatus } from "@/hooks/use-game-account-preferences-sync-status";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NotificationCategoryForm } from "@/features/settings/components/notifications/notification-category-form";
-import { NpcType } from "@/hooks/api/use-npcs";
+import { NpcType } from "@/api/npcs.api";
 import type { NotificationType } from "@lootlog/types";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";

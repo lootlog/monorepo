@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { MessageType } from "@/hooks/api/use-send-chat-message";
+import { MessageType } from "@/api/chat.api";
 import type {
   ChatMessageResponseDtoOutput as ChatMessageType,
   MemberSummaryResponseDtoOutput as GuildMember,

@@ -2,7 +2,7 @@ import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import type { FC } from "react";
-import { MessageType } from "@/hooks/api/use-send-chat-message";
+import { MessageType } from "@/api/chat.api";
 import type {
   ChatMessageResponseDtoOutput as ChatMessageType,
   MemberSummaryResponseDtoOutput as GuildMember,

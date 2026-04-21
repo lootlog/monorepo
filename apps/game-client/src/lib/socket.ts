@@ -3,11 +3,11 @@ import {
   GATEWAY_URL,
   type GatewayEvent,
 } from "@/config/gateway";
-import type { Timer } from "@/hooks/api/use-timers";
+import type { ChatMessage } from "@/api/chat.api";
+import type { Timer } from "@/api/timers.api";
 import type { Notification } from "@/features/notifications/hooks/use-notifications";
 import { io, type Socket } from "socket.io-client";
 import type { PlayerPresence } from "@/features/online-players/hooks/use-players-presence";
-import type { ChatMessage } from "@/hooks/api/use-chat-messages";
 import { msgpackParser } from "@lootlog/socket-parser";
 import type {
   PartyFinderVolunteer,

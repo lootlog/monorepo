@@ -7,7 +7,7 @@ import {
 import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
 import { getNpcTypeByWt } from "@lootlog/types";
 import type { Notification } from "@/features/notifications/hooks/use-notifications";
-import { NpcType } from "@/hooks/api/use-npcs";
+import { NpcType } from "@/api/npcs.api";
 import { Game } from "@/lib/game";
 
 interface UseVisibleNotificationsOptions {

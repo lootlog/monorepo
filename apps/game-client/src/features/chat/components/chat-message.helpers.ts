@@ -1,10 +1,12 @@
 import { NPC_NAMES } from "@/constants/margonem";
-import type { ChatMessage as ChatMessageType } from "@/hooks/api/use-chat-messages";
+import {
+  type ChatMessage as ChatMessageType,
+  MessageType,
+} from "@/api/chat.api";
 import { getTextColor } from "@/utils/notifications-and-detector/background";
 import { isYesterday } from "date-fns";
 import { getNpcTypeByWt } from "@lootlog/types";
-import { MessageType } from "@/hooks/api/use-send-chat-message";
-import { NpcType } from "@/hooks/api/use-npcs";
+import { NpcType } from "@/api/npcs.api";
 import { NPCS_WITH_LOCATION } from "@/features/npc-detector/components/npc-list-item";
 
 export const isChatMessageYesterdayOrOlder = (

@@ -1,7 +1,7 @@
 import { CharacterTile } from "@/components/character-tile";
 import { Tile } from "@/components/ui/tile";
+import type { MargonemCharacter } from "@/api/characters.api";
 import type { PlayerPresence } from "@/features/online-players/hooks/use-players-presence";
-import type { MargonemCharacter } from "@/hooks/api/use-character-list";
 import { cn } from "@/lib/utils";
 import type { FC } from "react";
 import { useMemberColor } from "@/hooks/discord/use-member-color";

@@ -10,7 +10,7 @@ import { useWindowsStore } from "@/store/windows.store";
 import type { GameNpc } from "@lootlog/margonem";
 import { useEffect, useRef } from "react";
 import { getNpcTypeByWt } from "@lootlog/types";
-import { NpcType } from "@/hooks/api/use-npcs";
+import { NpcType } from "@/api/npcs.api";
 import { useSoundPlayback } from "@/hooks/use-sound-playback";
 
 export type Notification = {

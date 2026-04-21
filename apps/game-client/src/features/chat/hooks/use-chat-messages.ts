@@ -1,10 +1,11 @@
 import { GatewayEvent } from "@/config/gateway";
-import { type ChatMessage, fetchChatMessages, fetchGuildMembers } from "@/api";
+import { type ChatMessage, fetchChatMessages } from "@/api/chat.api";
+import { fetchGuildMembers } from "@/api/guilds.api";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef } from "react";
 import { useChatCache } from "./use-chat-cache";
 import { useSocket } from "@/contexts/socket-context";
-import { QUERY_KEY } from "@/hooks/api/use-chat-messages";
+import { getChatControllerGetChatMessagesQueryKey } from "@/lib/api/generated/main/chat/chat";
 
 export const useChatMessagesListener = () => {
   const queryClient = useQueryClient();
@@ -13,7 +14,7 @@ export const useChatMessagesListener = () => {
   const handleChatMessage = useCallback(
     (data: ChatMessage) => {
       queryClient.setQueryData(
-        [QUERY_KEY, data.guildId],
+        getChatControllerGetChatMessagesQueryKey({ guildId: data.guildId }),
         (old: ChatMessage[]) => {
           if (!old) return [data];
 
@@ -46,7 +47,7 @@ export const useChatMessagesListener = () => {
   const handleChatMessageDelete = useCallback(
     (data: { guildId: string; messageId: string }) => {
       queryClient.setQueryData(
-        [QUERY_KEY, data.guildId],
+        getChatControllerGetChatMessagesQueryKey({ guildId: data.guildId }),
         (old: ChatMessage[]) => {
           if (!old) return old;
 
@@ -61,7 +62,7 @@ export const useChatMessagesListener = () => {
   const handleChatMessageUpdate = useCallback(
     (data: { guildId: string; messageId: string; message: string }) => {
       queryClient.setQueryData(
-        [QUERY_KEY, data.guildId],
+        getChatControllerGetChatMessagesQueryKey({ guildId: data.guildId }),
         (old: ChatMessage[]) => {
           if (!old) return old;
 

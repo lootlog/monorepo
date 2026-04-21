@@ -1,11 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GuildMultiSelector } from "@/components/guild-multi-selector";
+import { MessageType } from "@/api/chat.api";
 import { useSilentCancelPartyGathering } from "@/hooks/api/use-silent-cancel-party-gathering";
-import {
-  useSendChatMessage,
-  MessageType,
-} from "@/hooks/api/use-send-chat-message";
+import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
 import { useMessagingControllerCreatePartyGathering } from "@/lib/api/generated/main/messaging/messaging";
 import {
   buildCurrentCharacterPayload,

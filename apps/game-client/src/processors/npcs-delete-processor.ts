@@ -1,6 +1,6 @@
 import { MIN_NPC_WT, MIN_RESP_BASE_SECONDS } from "@/constants/margonem";
 import { SpecialE2 } from "@/constants/special-e2";
-import { NpcType } from "@/hooks/api/use-npcs";
+import { NpcType } from "@/api/npcs.api";
 import { getNpcTypeByWt } from "@lootlog/types";
 import { Game } from "@/lib/game";
 import { useNotificationsStore } from "@/store/notifications.store";
@@ -9,7 +9,7 @@ import type { GameEvent } from "@lootlog/margonem/game-events";
 import { queryClient } from "@/lib/query-client";
 import { createAutoTimer } from "@/api";
 import { getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey } from "@/lib/api/generated/main/user-lootlog-config/user-lootlog-config";
-import type { LootlogCharacterConfigResponse } from "@/hooks/api/use-lootlog-character-config";
+import type { UserLootlogConfigAccountResponseDtoOutput } from "@/lib/api/generated/main/model";
 
 export class NpcsDeleteProcessor {
   handle(event: GameEvent): void {
@@ -43,7 +43,7 @@ export class NpcsDeleteProcessor {
         });
 
       const charactersConfig =
-        queryClient.getQueryData<LootlogCharacterConfigResponse>(
+        queryClient.getQueryData<UserLootlogConfigAccountResponseDtoOutput>(
           lootlogCharacterConfigQueryKey,
         );
       const characterConfig = charactersConfig?.[String(characterId)];
