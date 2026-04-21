@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
-import { useNpcs } from "@/hooks/api/game-data/use-npcs";
 import {
   CreateNotificationRuleDtoScheduleAnchor as NotificationScheduleAnchor,
   CreateNotificationRuleDtoScheduleIntervalType as NotificationScheduleIntervalType,
@@ -52,6 +51,10 @@ import {
 } from "@/lib/api/generated/main/notifications/notifications";
 import { useRolesControllerGetGuildRoles } from "@/lib/api/generated/main/roles/roles";
 import { useGuildsControllerGetWorldsByGuildId } from "@/lib/api/generated/main/guilds/guilds";
+import {
+  getNpcsControllerGetNpcsQueryKey,
+  useNpcsControllerGetNpcs,
+} from "@/lib/api/generated/search/npcs/npcs";
 
 export const useNotificationRuleForm = () => {
   const { t } = useTranslation();
@@ -231,15 +234,25 @@ export const useNotificationRuleForm = () => {
   const selectedNpcIds = form.watch("npcIds") ?? [];
   const normalizedWorld =
     selectedWorld !== ALL_WORLDS_VALUE ? selectedWorld : undefined;
-  const selectedNpcQuery = useNpcs({
-    selectedNpcs: selectedNpcIds.join(","),
+  const selectedNpcSearchParams = {
+    ids: selectedNpcIds.map((npcId) => Number(npcId)),
     world: normalizedWorld,
-    enabled: !isManualNpcEntry && selectedNpcIds.length > 0,
+  };
+  const selectedNpcQuery = useNpcsControllerGetNpcs(selectedNpcSearchParams, {
+    query: {
+      queryKey: getNpcsControllerGetNpcsQueryKey(selectedNpcSearchParams),
+      enabled: !isManualNpcEntry && selectedNpcIds.length > 0,
+    },
   });
-  const searchedNpcQuery = useNpcs({
+  const searchedNpcSearchParams = {
     search: npcSearch,
     world: normalizedWorld,
-    enabled: !isManualNpcEntry && npcSearch.trim().length > 0,
+  };
+  const searchedNpcQuery = useNpcsControllerGetNpcs(searchedNpcSearchParams, {
+    query: {
+      queryKey: getNpcsControllerGetNpcsQueryKey(searchedNpcSearchParams),
+      enabled: !isManualNpcEntry && npcSearch.trim().length > 0,
+    },
   });
 
   const npcOptionsMap = new Map<string, { value: string; label: string }>();

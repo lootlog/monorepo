@@ -182,16 +182,6 @@ export const queryKeys = {
   },
   gameData: {
     gameMaps: () => ["game-maps"] as const,
-    guildNpcs: (
-      normalizedSearch: string,
-      normalizedSelectedNpcs: string,
-      world: string,
-    ) =>
-      ["guild-npcs", normalizedSearch, normalizedSelectedNpcs, world] as const,
-    guildPlayers: (
-      search: string | undefined,
-      selectedPlayers: string | undefined,
-    ) => ["guild-players", search, selectedPlayers] as const,
     guildTimers: (world: string | undefined, guildId: string | undefined) =>
       ["guild-timers", world, guildId] as const,
     itemByHid: (
@@ -199,16 +189,6 @@ export const queryKeys = {
       world: string | undefined,
       guildId: string | undefined,
     ) => ["item-by-hid", hid, world, guildId] as const,
-    items: (
-      search: string | undefined,
-      world: string | undefined,
-      limit: number,
-    ) => ["items", search, world, limit] as const,
-    searchAll: (
-      search: string | undefined,
-      world: string | undefined,
-      limit: number,
-    ) => ["search-all", search, world, limit] as const,
     worlds: (guildId: string | undefined) => ["guild-worlds", guildId] as const,
   },
   guilds: {

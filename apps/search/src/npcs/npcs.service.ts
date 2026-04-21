@@ -1,3 +1,4 @@
+import { NpcTypeEnum, getNpcTypeByWt } from "@lootlog/types";
 import { Inject, Injectable } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
@@ -18,7 +19,7 @@ export class NpcsService {
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
   ) {}
 
-  async getNpcs({ limit, search, world }: GetNpcsDto) {
+  async getNpcs({ ids, limit, search, world }: GetNpcsDto) {
     const index = this.meilisearch.index<NpcHit>(NPCS_INDEX);
     const hasMultipleSearchTerms = Array.isArray(search);
     const searchTerm = hasMultipleSearchTerms ? "" : (search ?? "");
@@ -29,6 +30,10 @@ export class NpcsService {
       filters.push(
         `name IN [${search.map((name) => JSON.stringify(name)).join(", ")}]`,
       );
+    }
+
+    if (ids && ids.length > 0) {
+      filters.push(`id IN [${ids.join(", ")}]`);
     }
 
     if (world) {
@@ -43,6 +48,10 @@ export class NpcsService {
 
     try {
       const data = await index.search(searchTerm, query);
+
+      if (ids && ids.length > 0) {
+        return data.hits;
+      }
 
       const uniqueHits = data.hits.filter((npc, index) => {
         const npcKey = `${npc.name}_${npc.type}`;
@@ -86,7 +95,8 @@ export class NpcsService {
 
     const npcsWithUid = validNpcs.map((npc) => ({
       ...npc,
-      uid: `${npc.id}_${npc.type}_${npc.world}`,
+      type: getNpcTypeByWt(NpcTypeEnum, npc.wt, npc.prof, npc.margonemType),
+      uid: `${npc.id}_${npc.margonemType}_${npc.world}`,
     }));
 
     try {

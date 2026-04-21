@@ -1,4 +1,4 @@
-import { NpcType } from "@/hooks/api/game-data/use-npcs";
+import { NpcType } from "@/lib/api/generated/main/model";
 
 export const NPC_TYPE_NAMES: Record<NpcType, string> = {
   [NpcType.TITAN]: "Tytan",

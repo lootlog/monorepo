@@ -1,3 +1,4 @@
+import { NpcTypeEnum } from "@lootlog/types";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { MEILISEARCH_CLIENT } from "src/meilisearch/meilisearch.constants";
@@ -55,7 +56,7 @@ describe("NpcsService", () => {
           name: "Tanroth",
           lvl: 300,
           wt: 300,
-          type: "titan",
+          type: NpcTypeEnum.TITAN,
           margonemType: 10,
           world: "Berufs",
         },
@@ -86,7 +87,7 @@ describe("NpcsService", () => {
         name: "Tanroth",
         lvl: 300,
         wt: 300,
-        type: "titan",
+        type: NpcTypeEnum.TITAN,
         margonemType: 10,
         world: "Berufs",
       };
@@ -97,7 +98,7 @@ describe("NpcsService", () => {
         name: "Mushita",
         lvl: 250,
         wt: 250,
-        type: "hero",
+        type: NpcTypeEnum.HERO,
         margonemType: 11,
         world: "Berufs",
       };
@@ -131,6 +132,49 @@ describe("NpcsService", () => {
         error,
       });
     });
+
+    it("should search npcs by ids without deduplicating exact matches", async () => {
+      const hits = [
+        {
+          id: 1,
+          prof: "w",
+          icon: "npc.png",
+          name: "Tanroth",
+          lvl: 300,
+          wt: 300,
+          type: NpcTypeEnum.TITAN,
+          margonemType: 10,
+          world: "Berufs",
+        },
+        {
+          id: 99,
+          prof: "w",
+          icon: "npc2.png",
+          name: "Tanroth",
+          lvl: 300,
+          wt: 300,
+          type: NpcTypeEnum.TITAN,
+          margonemType: 10,
+          world: "Berufs",
+        },
+      ];
+
+      indexMock.search.mockResolvedValue({ hits });
+
+      await expect(
+        service.getNpcs({
+          ids: [1, 99],
+          limit: 10,
+          world: "Berufs",
+        }),
+      ).resolves.toEqual(hits);
+
+      expect(indexMock.search).toHaveBeenCalledWith("", {
+        limit: 10,
+        attributesToSearchOn: ["name"],
+        filter: 'id IN [1, 99] AND world = "Berufs"',
+      });
+    });
   });
 
   describe("indexNpcs", () => {
@@ -158,7 +202,8 @@ describe("NpcsService", () => {
         [
           {
             ...npcs[0],
-            uid: "1_titan_Berufs",
+            type: NpcTypeEnum.TITAN,
+            uid: "1_10_Berufs",
           },
         ],
         { primaryKey: "uid" },
@@ -203,7 +248,8 @@ describe("NpcsService", () => {
         [
           {
             ...npcs[0],
-            uid: "1_titan_Berufs",
+            type: NpcTypeEnum.TITAN,
+            uid: "1_10_Berufs",
           },
         ],
         { primaryKey: "uid" },

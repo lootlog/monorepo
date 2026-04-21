@@ -11,17 +11,22 @@ import { useState } from "react";
 import { useDebounceValue } from "usehooks-ts";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useSearchAll } from "@/hooks/api/game-data/use-search-all";
 import {
   getLootsControllerFetchLootsByGuildIdQueryKey,
   lootsControllerFetchLootsByGuildId,
 } from "@/lib/api/generated/main/loots/loots";
 import type { LootsControllerFetchLootsByGuildIdParams } from "@/lib/api/generated/main/model";
+import {
+  getAllControllerSearchAllQueryKey,
+  useAllControllerSearchAll,
+} from "@/lib/api/generated/search/all/all";
+import type {
+  ItemHitDtoOutput,
+  NpcHitDtoOutput,
+} from "@/lib/api/generated/search/model";
 import { ItemRarity } from "@/lib/loots/loot-types";
 import { parseItemHid } from "@/lib/utils/hid-detection";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
-import type { Npc } from "@/hooks/api/game-data/use-npcs";
-import type { GameItem } from "@/hooks/api/game-data/use-items";
 import { ItemImage, NpcSearchTile, PlayerSearchTile } from "@/components/tiles";
 import { cn } from "@lootlog/ui/lib/utils";
 import { NPC_TYPE_NAMES, ITEM_RARITY_NAMES } from "@/constants/npc";
@@ -71,10 +76,23 @@ export const LootSearchCommand = ({
   const guildId = useGuildId();
   const { setFilters } = useLootsFilters();
 
-  const { data: searchResults, isLoading } = useSearchAll({
-    search: debouncedSearch,
-    world: world || "",
-  });
+  const searchResultsQuery = useAllControllerSearchAll(
+    {
+      search: debouncedSearch,
+      world: world || "",
+    },
+    {
+      query: {
+        queryKey: getAllControllerSearchAllQueryKey({
+          search: debouncedSearch,
+          world: world || "",
+        }),
+        enabled: debouncedSearch.length >= 2,
+      },
+    },
+  );
+  const searchResults = searchResultsQuery.data;
+  const isLoading = searchResultsQuery.isLoading;
 
   const parsedHid = parseItemHid(searchQuery.trim());
   const isHid = !!parsedHid;
@@ -116,13 +134,13 @@ export const LootSearchCommand = ({
     staleTime: 5 * 60 * 1000,
   });
 
-  const handleSelectNpc = (npc: Npc) => {
+  const handleSelectNpc = (npc: NpcHitDtoOutput) => {
     setFilters({ npcs: [npc.name] });
     onOpenChange(false);
     setSearchQuery("");
   };
 
-  const handleSelectItem = (item: GameItem) => {
+  const handleSelectItem = (item: ItemHitDtoOutput) => {
     setFilters({ itemNames: [item.name] });
     onOpenChange(false);
     setSearchQuery("");
