@@ -48,8 +48,8 @@ export const NotificationsSettingsTab = () => {
 
   return (
     <SettingsTabLayout
-      title={t("settings.notifications.title")}
-      description={t("settings.notifications.description")}
+      title={t("notifications.title")}
+      description={t("notifications.description")}
       contentClassName="ll:gap-3"
     >
       <Tabs defaultValue={NpcType.ELITE2} className="ll:w-full ll:gap-3">

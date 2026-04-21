@@ -5,31 +5,33 @@ import {
   reservationsQueryOptions,
 } from "@/features/guild/reservations/reservations-api";
 import { getMembersControllerGetGuildMembersQueryOptions } from "@/lib/api/generated/main/members/members";
+import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 
 export const Route = createFileRoute("/_authenticated/$guildId/reservations")({
-  loader: async ({ context, params, preload }) => {
-    if (preload) {
-      return null;
-    }
+  loader: ({ context, params, preload }) =>
+    withRouteLoaderCancellation(async () => {
+      if (preload) {
+        return null;
+      }
 
-    await Promise.all([
-      context.queryClient.ensureQueryData(
-        reservationsQueryOptions(params.guildId),
-      ),
-      context.queryClient.ensureQueryData(
-        reservationsCardsQueryOptions(params.guildId),
-      ),
-      context.queryClient.ensureQueryData(
-        getMembersControllerGetGuildMembersQueryOptions(
-          { guildId: params.guildId },
-          {
-            includeInactive: true,
-          },
+      await Promise.all([
+        context.queryClient.ensureQueryData(
+          reservationsQueryOptions(params.guildId),
         ),
-      ),
-    ]);
+        context.queryClient.ensureQueryData(
+          reservationsCardsQueryOptions(params.guildId),
+        ),
+        context.queryClient.ensureQueryData(
+          getMembersControllerGetGuildMembersQueryOptions(
+            { guildId: params.guildId },
+            {
+              includeInactive: true,
+            },
+          ),
+        ),
+      ]);
 
-    return null;
-  },
+      return null;
+    }),
   component: ReservationsLayout,
 });

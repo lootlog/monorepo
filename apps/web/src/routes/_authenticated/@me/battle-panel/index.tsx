@@ -7,27 +7,29 @@ import {
   normalizeBattlePanelCharacterId,
 } from "@/features/user/battle-panel/battle-panel-statistics-search";
 import { getBattlesControllerGetBattleAnalyticsQueryOptions } from "@/lib/api/generated/battlelog/battles/battles";
+import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 
 export const Route = createFileRoute("/_authenticated/@me/battle-panel/")({
   validateSearch: battlePanelStatisticsSearchSchema,
-  loader: async ({ context, location, preload }) => {
-    if (preload) {
+  loader: ({ context, location, preload }) =>
+    withRouteLoaderCancellation(async () => {
+      if (preload) {
+        return null;
+      }
+
+      const search = loadBattlePanelStatisticsSearch(location.searchStr);
+
+      await context.queryClient.ensureQueryData(
+        getBattlesControllerGetBattleAnalyticsQueryOptions({
+          characterId: normalizeBattlePanelCharacterId(search.characterId),
+          period: "180d",
+          minLevel: search.minLevel,
+          maxLevel: search.maxLevel,
+        }),
+      );
+
       return null;
-    }
-
-    const search = loadBattlePanelStatisticsSearch(location.searchStr);
-
-    await context.queryClient.ensureQueryData(
-      getBattlesControllerGetBattleAnalyticsQueryOptions({
-        characterId: normalizeBattlePanelCharacterId(search.characterId),
-        period: "180d",
-        minLevel: search.minLevel,
-        maxLevel: search.maxLevel,
-      }),
-    );
-
-    return null;
-  },
+    }),
   component: BattlePanelDashboard,
   pendingComponent: BattlePanelDashboardSkeleton,
 });

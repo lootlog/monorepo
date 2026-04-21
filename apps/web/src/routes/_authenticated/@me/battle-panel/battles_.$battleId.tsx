@@ -5,31 +5,35 @@ import {
   getBattlesControllerGetBattleQueryOptions,
   getBattlesControllerGetBattleRawDataQueryOptions,
 } from "@/lib/api/generated/battlelog/battles/battles";
-import { throwNotFoundIfResponseMatches } from "@/lib/router/route-errors";
+import {
+  throwNotFoundIfResponseMatches,
+  withRouteLoaderCancellation,
+} from "@/lib/router/route-errors";
 
 export const Route = createFileRoute(
   "/_authenticated/@me/battle-panel/battles_/$battleId",
 )({
-  loader: async ({ context, params }) => {
-    try {
-      await Promise.all([
-        context.queryClient.ensureQueryData(
-          getBattlesControllerGetBattleQueryOptions({
-            battleId: params.battleId,
-          }),
-        ),
-        context.queryClient.ensureQueryData(
-          getBattlesControllerGetBattleRawDataQueryOptions({
-            battleId: params.battleId,
-          }),
-        ),
-      ]);
+  loader: ({ context, params }) =>
+    withRouteLoaderCancellation(async () => {
+      try {
+        await Promise.all([
+          context.queryClient.ensureQueryData(
+            getBattlesControllerGetBattleQueryOptions({
+              battleId: params.battleId,
+            }),
+          ),
+          context.queryClient.ensureQueryData(
+            getBattlesControllerGetBattleRawDataQueryOptions({
+              battleId: params.battleId,
+            }),
+          ),
+        ]);
 
-      return null;
-    } catch (error) {
-      throwNotFoundIfResponseMatches(error);
-    }
-  },
+        return null;
+      } catch (error) {
+        throwNotFoundIfResponseMatches(error);
+      }
+    }),
   component: BattlePanelSingleBattle,
   pendingComponent: BattlePanelSingleBattleSkeleton,
 });

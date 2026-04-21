@@ -5,41 +5,38 @@ import {
   getShowEventOverviewQueryOptions,
 } from "@/lib/api/generated/main/events/events";
 import {
-  isRouteLoaderCancelledError,
   throwNotFoundIfResponseMatches,
+  withRouteLoaderCancellation,
 } from "@/lib/router/route-errors";
 
 export const Route = createFileRoute(
   "/_authenticated/$guildId/events_/$eventId_",
 )({
   component: EventRouteLayout,
-  loader: async ({ context, params }) => {
-    try {
-      const [event, rankings] = await Promise.all([
-        context.queryClient.ensureQueryData(
-          getShowEventOverviewQueryOptions({
-            guildId: params.guildId,
-            eventId: params.eventId,
-          }),
-        ),
-        context.queryClient.ensureQueryData(
-          getListEventRankingQueryOptions({
-            guildId: params.guildId,
-            eventId: params.eventId,
-          }),
-        ),
-      ]);
+  loader: ({ context, params }) =>
+    withRouteLoaderCancellation(async () => {
+      try {
+        const [event, rankings] = await Promise.all([
+          context.queryClient.ensureQueryData(
+            getShowEventOverviewQueryOptions({
+              guildId: params.guildId,
+              eventId: params.eventId,
+            }),
+          ),
+          context.queryClient.ensureQueryData(
+            getListEventRankingQueryOptions({
+              guildId: params.guildId,
+              eventId: params.eventId,
+            }),
+          ),
+        ]);
 
-      return {
-        event,
-        rankings,
-      };
-    } catch (error) {
-      if (isRouteLoaderCancelledError(error)) {
-        return;
+        return {
+          event,
+          rankings,
+        };
+      } catch (error) {
+        throwNotFoundIfResponseMatches(error);
       }
-
-      throwNotFoundIfResponseMatches(error);
-    }
-  },
+    }),
 });
