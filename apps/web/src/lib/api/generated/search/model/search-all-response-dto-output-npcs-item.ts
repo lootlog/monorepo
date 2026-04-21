@@ -5,6 +5,7 @@
  * Meilisearch-powered search microservice
  * OpenAPI spec version: 1.0
  */
+import type { SearchAllResponseDtoOutputNpcsItemType } from './search-all-response-dto-output-npcs-item-type';
 
 /**
  * NPC search hit
@@ -16,7 +17,7 @@ export type SearchAllResponseDtoOutputNpcsItem = {
   name: string;
   lvl: number;
   wt: number;
-  type: string;
+  type: SearchAllResponseDtoOutputNpcsItemType;
   margonemType: number;
   world: string;
 };

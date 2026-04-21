@@ -27,10 +27,14 @@ import { MultiSelect } from "@/components/ui/multi-select";
 import { USER_WATCHED_ITEMS_LIMIT } from "@/features/user/notifications/constants/user-watched-items-limit";
 import { WatchedItemSelector } from "@/features/user/notifications/components/watched-item-selector";
 import { getUserNotificationsErrorMessage } from "@/features/user/notifications/utils/get-user-notifications-error-message";
-import { useItems, type GameItem } from "@/hooks/api/game-data/use-items";
 import { useQueries, useQueryClient } from "@tanstack/react-query";
 import { getGuildsControllerGetWorldsByGuildIdQueryOptions } from "@/lib/api/generated/main/guilds/guilds";
 import { useNotificationsUserControllerCreateWatchedItem } from "@/lib/api/generated/main/notifications/notifications";
+import {
+  getItemsControllerGetItemsQueryKey,
+  useItemsControllerGetItems,
+} from "@/lib/api/generated/search/items/items";
+import type { ItemHitDtoOutput } from "@/lib/api/generated/search/model";
 import type { WatchedItemResponseDto } from "@/lib/api/generated/main/model";
 import { invalidateUserNotificationQueries } from "../user-notifications-api";
 
@@ -94,6 +98,8 @@ type WatchFormDialogProps = {
   guildOptions: Array<{ value: string; label: string }>;
 };
 
+type GameItem = ItemHitDtoOutput;
+
 export const WatchFormDialog = ({
   open,
   onOpenChange,
@@ -137,13 +143,19 @@ export const WatchFormDialog = ({
   const worldOptions = [
     ...new Set(worldQueries.flatMap((query) => query.data ?? [])),
   ].sort();
-  const { data: itemSearchResults = [], isFetching: isItemsLoading } = useItems(
-    {
-      search: itemSearchValue,
-      world: selectedWorld || undefined,
-      limit: 10,
+  const itemSearchParams = {
+    limit: 10,
+    search: itemSearchValue,
+    world: selectedWorld || undefined,
+  };
+  const itemSearchQuery = useItemsControllerGetItems(itemSearchParams, {
+    query: {
+      queryKey: getItemsControllerGetItemsQueryKey(itemSearchParams),
+      enabled: itemSearchValue.length >= 2,
     },
-  );
+  });
+  const itemSearchResults = itemSearchQuery.data ?? [];
+  const isItemsLoading = itemSearchQuery.isFetching;
 
   const resolvedItemId = isManualEntry
     ? Number(form.watch("manualItemId")) || null

@@ -10,10 +10,12 @@ import {
 } from "@/components/selector-panel";
 import { useTranslation } from "react-i18next";
 import { NpcListItem } from "@/features/guild/settings/npcs/components/npc-list-item";
-import { NpcType } from "@/hooks/api/game-data/use-npcs";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useLootlogConfigControllerGetLootlogConfig } from "@/lib/api/generated/main/lootlog-config/lootlog-config";
-import type { LootlogConfigNpcResponseDtoOutput as LootlogConfigNpc } from "@/lib/api/generated/main/model";
+import {
+  NpcType,
+  type LootlogConfigNpcResponseDtoOutput as LootlogConfigNpc,
+} from "@/lib/api/generated/main/model";
 
 const NpcsHeader = () => {
   const { t } = useTranslation();

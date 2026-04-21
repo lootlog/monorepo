@@ -25,9 +25,6 @@ import { X, Plus, Bookmark } from "lucide-react";
 import { useState, type FC } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { FilterCombobox } from "./filter-combobox";
-import { useNpcs } from "@/hooks/api/game-data/use-npcs";
-import { useGuildPlayers } from "@/hooks/api/game-data/use-guild-players";
-import { useItems } from "@/hooks/api/game-data/use-items";
 import { useLootFilterOptions } from "./use-loot-filter-options";
 import { useDebounceValue, useLocalStorage } from "usehooks-ts";
 import { cn } from "@lootlog/ui/lib/utils";
@@ -38,6 +35,18 @@ import {
   getLootsControllerFetchLootsByGuildIdQueryKey,
   lootsControllerFetchLootsByGuildId,
 } from "@/lib/api/generated/main/loots/loots";
+import {
+  getItemsControllerGetItemsQueryKey,
+  useItemsControllerGetItems,
+} from "@/lib/api/generated/search/items/items";
+import {
+  getNpcsControllerGetNpcsQueryKey,
+  useNpcsControllerGetNpcs,
+} from "@/lib/api/generated/search/npcs/npcs";
+import {
+  getPlayersControllerGetPlayersQueryKey,
+  usePlayersControllerGetPlayers,
+} from "@/lib/api/generated/search/players/players";
 import { ItemRarity } from "@/lib/loots/loot-types";
 import type { LootsControllerFetchLootsByGuildIdParams } from "@/lib/api/generated/main/model";
 import { formatItemHid, parseItemHid } from "@/lib/utils/hid-detection";
@@ -93,23 +102,48 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
     useDebounceValue("", DEFAULT_DEBOUNCE_MS);
   const [debouncedItemsSearchValue, setDebouncedItemsSearchValue] =
     useDebounceValue("", DEFAULT_DEBOUNCE_MS);
-
-  const { data: playersData, isLoading: playersDataLoading } = useGuildPlayers({
-    search: debouncedPlayersSearchValue,
-    selectedPlayers: filters.players?.join(","),
-    world: world || "",
-  });
-
-  const { data: npcsData, isLoading: npcsDataLoading } = useNpcs({
-    search: debouncedNpcsSearchValue,
-    selectedNpcs: filters.npcs?.join(","),
-    world: world || "",
-  });
-
-  const { data: itemsData, isLoading: itemsDataLoading } = useItems({
+  const selectedPlayerNames = filters.players.join(",");
+  const selectedNpcNames = filters.npcs.join(",");
+  const playersSearchParams =
+    debouncedPlayersSearchValue.length > 0
+      ? { search: debouncedPlayersSearchValue, world: world || "" }
+      : selectedPlayerNames.length > 0
+        ? { search: selectedPlayerNames.split(","), world: world || "" }
+        : undefined;
+  const npcsSearchParams =
+    debouncedNpcsSearchValue.length > 0
+      ? { search: debouncedNpcsSearchValue, world: world || "" }
+      : selectedNpcNames.length > 0
+        ? { search: selectedNpcNames.split(","), world: world || "" }
+        : undefined;
+  const itemsSearchParams = {
+    limit: 10,
     search: debouncedItemsSearchValue,
     world: world || "",
-    limit: 10,
+  };
+
+  const playersQuery = usePlayersControllerGetPlayers(playersSearchParams, {
+    query: {
+      queryKey: getPlayersControllerGetPlayersQueryKey(playersSearchParams),
+      enabled:
+        debouncedPlayersSearchValue.length > 0 ||
+        selectedPlayerNames.length > 0,
+    },
+  });
+
+  const npcsQuery = useNpcsControllerGetNpcs(npcsSearchParams, {
+    query: {
+      queryKey: getNpcsControllerGetNpcsQueryKey(npcsSearchParams),
+      enabled:
+        debouncedNpcsSearchValue.length > 0 || selectedNpcNames.length > 0,
+    },
+  });
+
+  const itemsQuery = useItemsControllerGetItems(itemsSearchParams, {
+    query: {
+      queryKey: getItemsControllerGetItemsQueryKey(itemsSearchParams),
+      enabled: debouncedItemsSearchValue.length >= 2,
+    },
   });
 
   const parsedHid = parseItemHid(
@@ -152,19 +186,19 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
   });
 
   const playersOptions =
-    playersData?.map((player) => ({
+    playersQuery.data?.map((player) => ({
       value: player.name,
       label: player.name,
     })) ?? [];
 
   const npcsOptions =
-    npcsData?.map((npc) => ({
+    npcsQuery.data?.map((npc) => ({
       value: npc.name,
       label: npc.name,
     })) ?? [];
 
   const itemsOptions =
-    itemsData?.map((item) => ({
+    itemsQuery.data?.map((item) => ({
       value: item.name,
       label: item.name,
     })) ?? [];
@@ -425,7 +459,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                           controlledSearch
                           onSearchChange={setDebouncedNpcsSearchValue}
                           searchValue={debouncedNpcsSearchValue}
-                          loading={npcsDataLoading}
+                          loading={npcsQuery.isLoading}
                         />
                       </div>
 
@@ -527,7 +561,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                           controlledSearch
                           onSearchChange={setDebouncedItemsSearchValue}
                           searchValue={debouncedItemsSearchValue}
-                          loading={itemsDataLoading}
+                          loading={itemsQuery.isLoading}
                         />
                       </div>
 
@@ -626,7 +660,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                           controlledSearch
                           onSearchChange={setDebouncedPlayersSearchValue}
                           searchValue={debouncedPlayersSearchValue}
-                          loading={playersDataLoading}
+                          loading={playersQuery.isLoading}
                         />
                       </div>
 

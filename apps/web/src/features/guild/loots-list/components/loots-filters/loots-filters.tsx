@@ -1,9 +1,15 @@
-import { useNpcs } from "@/hooks/api/game-data/use-npcs";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { FilterCombobox } from "@/features/guild/loots-list/components/loots-filters/filter-combobox";
 import { useLootFilterOptions } from "@/features/guild/loots-list/components/loots-filters/use-loot-filter-options";
 import { useDebounceValue } from "usehooks-ts";
-import { useGuildPlayers } from "@/hooks/api/game-data/use-guild-players";
+import {
+  getNpcsControllerGetNpcsQueryKey,
+  useNpcsControllerGetNpcs,
+} from "@/lib/api/generated/search/npcs/npcs";
+import {
+  getPlayersControllerGetPlayersQueryKey,
+  usePlayersControllerGetPlayers,
+} from "@/lib/api/generated/search/players/players";
 
 const DEFAULT_DEBOUNCE_MS = 500;
 
@@ -13,17 +19,40 @@ export const LootsFilters: React.FC = () => {
     useLootFilterOptions();
   const searchParams = useSearch({ strict: false }) as Record<string, string>;
   const { players, npcs, rarities, npcTypes } = searchParams;
+  const selectedPlayerNames =
+    players?.split(",").filter((value) => value.length > 0) ?? [];
+  const selectedNpcNames =
+    npcs?.split(",").filter((value) => value.length > 0) ?? [];
   const [debouncedPlayersSearchValue, setDebouncedPlayersSearchValue] =
     useDebounceValue("", DEFAULT_DEBOUNCE_MS);
   const [debouncedNpcsSearchValue, setDebouncedNpcsSearchValue] =
     useDebounceValue("", DEFAULT_DEBOUNCE_MS);
-  const { data: playersData, isLoading: playersDataLoading } = useGuildPlayers({
-    search: debouncedPlayersSearchValue,
-    selectedPlayers: players,
+  const playersSearchParams =
+    debouncedPlayersSearchValue.length > 0
+      ? { search: debouncedPlayersSearchValue }
+      : selectedPlayerNames.length > 0
+        ? { search: selectedPlayerNames }
+        : undefined;
+  const npcsSearchParams =
+    debouncedNpcsSearchValue.length > 0
+      ? { search: debouncedNpcsSearchValue }
+      : selectedNpcNames.length > 0
+        ? { search: selectedNpcNames }
+        : undefined;
+  const playersQuery = usePlayersControllerGetPlayers(playersSearchParams, {
+    query: {
+      queryKey: getPlayersControllerGetPlayersQueryKey(playersSearchParams),
+      enabled:
+        debouncedPlayersSearchValue.length > 0 ||
+        selectedPlayerNames.length > 0,
+    },
   });
-  const { data: npcsData, isLoading: npcsDataLoading } = useNpcs({
-    search: debouncedNpcsSearchValue,
-    selectedNpcs: npcs,
+  const npcsQuery = useNpcsControllerGetNpcs(npcsSearchParams, {
+    query: {
+      queryKey: getNpcsControllerGetNpcsQueryKey(npcsSearchParams),
+      enabled:
+        debouncedNpcsSearchValue.length > 0 || selectedNpcNames.length > 0,
+    },
   });
 
   const handleSelect = (name: string, options: string[]) => {
@@ -44,13 +73,13 @@ export const LootsFilters: React.FC = () => {
   };
 
   const playersOptions =
-    playersData?.map((player) => ({
+    playersQuery.data?.map((player) => ({
       value: player.name,
       label: player.name,
     })) ?? [];
 
   const npcsOptions =
-    npcsData?.map((npc) => ({
+    npcsQuery.data?.map((npc) => ({
       value: npc.name,
       label: npc.name,
     })) ?? [];
@@ -67,7 +96,7 @@ export const LootsFilters: React.FC = () => {
         controlledSearch
         onSearchChange={setDebouncedPlayersSearchValue}
         searchValue={debouncedPlayersSearchValue}
-        loading={playersDataLoading}
+        loading={playersQuery.isLoading}
       />
       <FilterCombobox
         name="npcs"
@@ -79,7 +108,7 @@ export const LootsFilters: React.FC = () => {
         controlledSearch
         onSearchChange={setDebouncedNpcsSearchValue}
         searchValue={debouncedNpcsSearchValue}
-        loading={npcsDataLoading}
+        loading={npcsQuery.isLoading}
       />
       <FilterCombobox
         name="rarities"

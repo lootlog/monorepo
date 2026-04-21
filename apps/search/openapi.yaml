@@ -81,6 +81,21 @@
               "parameters":
                 [
                   {
+                    "name": "ids",
+                    "required": false,
+                    "in": "query",
+                    "schema":
+                      {
+                        "type": "array",
+                        "items":
+                          {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                          },
+                      },
+                  },
+                  {
                     "name": "limit",
                     "required": false,
                     "in": "query",
@@ -281,7 +296,22 @@
                   "name": { "type": "string" },
                   "lvl": { "type": "number" },
                   "wt": { "type": "number" },
-                  "type": { "type": "string" },
+                  "type":
+                    {
+                      "type": "string",
+                      "enum":
+                        [
+                          "COMMON",
+                          "ELITE",
+                          "ELITE2",
+                          "ELITE3",
+                          "HERO",
+                          "EVENT_HERO",
+                          "COLOSSUS",
+                          "TITAN",
+                          "NPC",
+                        ],
+                    },
                   "margonemType": { "type": "number" },
                   "world": { "type": "string" },
                 },
@@ -398,7 +428,22 @@
                               "name": { "type": "string" },
                               "lvl": { "type": "number" },
                               "wt": { "type": "number" },
-                              "type": { "type": "string" },
+                              "type":
+                                {
+                                  "type": "string",
+                                  "enum":
+                                    [
+                                      "COMMON",
+                                      "ELITE",
+                                      "ELITE2",
+                                      "ELITE3",
+                                      "HERO",
+                                      "EVENT_HERO",
+                                      "COLOSSUS",
+                                      "TITAN",
+                                      "NPC",
+                                    ],
+                                },
                               "margonemType": { "type": "number" },
                               "world": { "type": "string" },
                             },

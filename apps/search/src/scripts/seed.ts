@@ -1,5 +1,6 @@
 /* eslint-disable no-console */
 /* eslint-disable no-await-in-loop */
+import { NpcTypeEnum, getNpcTypeByWt } from "@lootlog/types";
 import { PrismaClient } from "../../../../apps/api/generated/client/index.js";
 import { Meilisearch } from "meilisearch";
 import "dotenv/config";
@@ -173,14 +174,19 @@ async function seedNpcs() {
     const npcsForIndex = batch.map((npc: NpcSnapshotWithWorld) => ({
       id: npc.npcId,
       name: npc.name,
-      type: npc.type ?? "",
+      type: getNpcTypeByWt(
+        NpcTypeEnum,
+        npc.wt ?? 0,
+        npc.prof ?? "",
+        npc.margonemType ?? undefined,
+      ),
       lvl: npc.lvl ?? 0,
       icon: npc.icon ?? "",
       wt: npc.wt ?? 0,
       margonemType: npc.margonemType ?? 0,
       prof: npc.prof ?? "",
       world: npc.world,
-      uid: `${npc.npcId}_${npc.type ?? ""}_${npc.world}`,
+      uid: `${npc.npcId}_${npc.margonemType ?? 0}_${npc.world}`,
     }));
 
     const task = await npcsIndex.addDocuments(npcsForIndex, {

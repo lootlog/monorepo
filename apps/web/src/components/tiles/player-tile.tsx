@@ -8,10 +8,10 @@ import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
 import { cn } from "@lootlog/ui/lib/utils";
 
 import type { FC } from "react";
-import type { Player } from "@/hooks/api/game-data/use-guild-players";
+import type { PlayerHitDtoOutput } from "@/lib/api/generated/search/model";
 
 type PlayerTileProps = {
-  player: Partial<Player>;
+  player: Partial<PlayerHitDtoOutput>;
   idx?: number;
   color?: string;
   className?: string;

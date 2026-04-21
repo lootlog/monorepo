@@ -1,3 +1,4 @@
+import { NpcTypeEnum } from "@lootlog/types";
 import { createZodDto, type ZodDto } from "nestjs-zod";
 import { z } from "zod";
 
@@ -9,7 +10,7 @@ export const npcHitSchema = z
     name: z.string(),
     lvl: z.number(),
     wt: z.number(),
-    type: z.string(),
+    type: z.nativeEnum(NpcTypeEnum),
     margonemType: z.number(),
     world: z.string(),
   })

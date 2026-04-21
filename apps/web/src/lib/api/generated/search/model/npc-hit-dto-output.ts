@@ -5,6 +5,7 @@
  * Meilisearch-powered search microservice
  * OpenAPI spec version: 1.0
  */
+import type { NpcHitDtoOutputType } from './npc-hit-dto-output-type';
 
 /**
  * NPC search hit
@@ -16,7 +17,7 @@ export interface NpcHitDtoOutput {
   name: string;
   lvl: number;
   wt: number;
-  type: string;
+  type: NpcHitDtoOutputType;
   margonemType: number;
   world: string;
 }

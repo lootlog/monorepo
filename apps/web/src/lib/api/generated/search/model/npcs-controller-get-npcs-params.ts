@@ -7,6 +7,7 @@
  */
 
 export type NpcsControllerGetNpcsParams = {
+ids?: number[];
 limit?: number;
 search?: string | string[];
 world?: string;
