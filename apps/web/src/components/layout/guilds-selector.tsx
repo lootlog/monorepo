@@ -10,10 +10,11 @@ import { GuildsSelectorSkeleton } from "@/components/layout/guilds-selector-skel
 import { useUser } from "@/hooks/api/user/use-user";
 import { useUpdateUserPreferences } from "@/hooks/api/user/use-update-user-preferences";
 import { Separator } from "@lootlog/ui/components/separator";
-import { useGuildsControllerGetUserGuilds } from "@/lib/api/generated/main/guilds/guilds";
+import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@/lib/api/generated/main/users/users";
 
 export const GuildsSelector: FC = () => {
-  const { data: guilds, isLoading } = useGuildsControllerGetUserGuilds();
+  const { data: guilds, isLoading } =
+    useUsersControllerGetCurrentUserAccessibleGuilds();
   const { user } = useUser();
   const currentGuildId = useGuildId();
   const [localGuilds, setLocalGuilds] = useState<typeof guilds>();

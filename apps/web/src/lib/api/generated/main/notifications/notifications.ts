@@ -27,12 +27,12 @@ import type {
   CreateNotificationTargetDto,
   CreateWatchedItemDto,
   CreateWatchedItemQuickAddDto,
-  GuildAvailableNotificationTargetsResponseDtoOutput,
-  GuildNotificationRulesResponseDtoOutput,
-  NotificationJobsResponseDtoOutput,
-  NotificationRuleResponseDtoOutput,
-  NotificationTargetResponseDtoOutput,
-  NotificationTargetWithTestTriggerResponseDtoOutput,
+  GuildAvailableNotificationTargetsResponseDto,
+  GuildNotificationRulesResponseDto,
+  NotificationJobsResponseDto,
+  NotificationRuleResponseDto,
+  NotificationTargetResponseDto,
+  NotificationTargetWithTestTriggerResponseDto,
   NotificationsGuildControllerCancelGuildJobPathParameters,
   NotificationsGuildControllerCreateGuildRulePathParameters,
   NotificationsGuildControllerCreateGuildTargetPathParameters,
@@ -55,7 +55,7 @@ import type {
   SuccessResponseDtoOutput,
   UpdateNotificationRuleDto,
   UpdateNotificationTargetDto,
-  WatchedItemResponseDtoOutput
+  WatchedItemResponseDto
 } from '../model';
 
 import { orvalFetch } from '../../../orval-fetch';
@@ -66,6 +66,10 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 
+/**
+ * Retrieve configured notification targets for a guild
+ * @summary Get guild notification targets
+ */
 export const getNotificationsGuildControllerGetGuildTargetsUrl = ({ guildId }: NotificationsGuildControllerGetGuildTargetsPathParameters,) => {
 
 
@@ -74,9 +78,9 @@ export const getNotificationsGuildControllerGetGuildTargetsUrl = ({ guildId }: N
   return `/guilds/${guildId}/notifications/targets`
 }
 
-export const notificationsGuildControllerGetGuildTargets = async ({ guildId }: NotificationsGuildControllerGetGuildTargetsPathParameters, options?: RequestInit): Promise<NotificationTargetResponseDtoOutput[]> => {
+export const notificationsGuildControllerGetGuildTargets = async ({ guildId }: NotificationsGuildControllerGetGuildTargetsPathParameters, options?: RequestInit): Promise<NotificationTargetResponseDto[]> => {
 
-  return orvalFetch<NotificationTargetResponseDtoOutput[]>(getNotificationsGuildControllerGetGuildTargetsUrl({ guildId }),
+  return orvalFetch<NotificationTargetResponseDto[]>(getNotificationsGuildControllerGetGuildTargetsUrl({ guildId }),
   {
     ...options,
     method: 'GET'
@@ -118,6 +122,9 @@ export type NotificationsGuildControllerGetGuildTargetsQueryResult = NonNullable
 export type NotificationsGuildControllerGetGuildTargetsQueryError = ErrorType<unknown>
 
 
+/**
+ * @summary Get guild notification targets
+ */
 
 export function useNotificationsGuildControllerGetGuildTargets<TData = Awaited<ReturnType<typeof notificationsGuildControllerGetGuildTargets>>, TError = ErrorType<unknown>>(
  { guildId }: NotificationsGuildControllerGetGuildTargetsPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof notificationsGuildControllerGetGuildTargets>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
@@ -131,6 +138,9 @@ export function useNotificationsGuildControllerGetGuildTargets<TData = Awaited<R
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
+/**
+ * @summary Get guild notification targets
+ */
 export const prefetchNotificationsGuildControllerGetGuildTargetsQuery = async <TData = Awaited<ReturnType<typeof notificationsGuildControllerGetGuildTargets>>, TError = ErrorType<unknown>>(
  queryClient: QueryClient, { guildId }: NotificationsGuildControllerGetGuildTargetsPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof notificationsGuildControllerGetGuildTargets>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
 
@@ -143,6 +153,9 @@ export const prefetchNotificationsGuildControllerGetGuildTargetsQuery = async <T
   return queryClient;
 }
 
+/**
+ * @summary Get guild notification targets
+ */
 export const invalidateNotificationsGuildControllerGetGuildTargets = async (
  queryClient: QueryClient, { guildId }: NotificationsGuildControllerGetGuildTargetsPathParameters, options?: InvalidateOptions
   ): Promise<QueryClient> => {
@@ -152,6 +165,9 @@ export const invalidateNotificationsGuildControllerGetGuildTargets = async (
   return queryClient;
 }
 
+/**
+ * @summary Get guild notification targets
+ */
 export const useSetNotificationsGuildControllerGetGuildTargetsQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId }: NotificationsGuildControllerGetGuildTargetsPathParameters,updater: Awaited<ReturnType<typeof notificationsGuildControllerGetGuildTargets>> | undefined | ((old: Awaited<ReturnType<typeof notificationsGuildControllerGetGuildTargets>> | undefined) => Awaited<ReturnType<typeof notificationsGuildControllerGetGuildTargets>> | undefined)) => {
@@ -159,6 +175,9 @@ export const useSetNotificationsGuildControllerGetGuildTargetsQueryData = () => 
   };
 }
 
+/**
+ * @summary Get guild notification targets
+ */
 export const useGetNotificationsGuildControllerGetGuildTargetsQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId }: NotificationsGuildControllerGetGuildTargetsPathParameters,) =>
@@ -166,6 +185,10 @@ export const useGetNotificationsGuildControllerGetGuildTargetsQueryData = () => 
 }
 
 
+/**
+ * Create or reactivate a guild notification target
+ * @summary Create guild notification target
+ */
 export const getNotificationsGuildControllerCreateGuildTargetUrl = ({ guildId }: NotificationsGuildControllerCreateGuildTargetPathParameters,) => {
 
 
@@ -175,9 +198,9 @@ export const getNotificationsGuildControllerCreateGuildTargetUrl = ({ guildId }:
 }
 
 export const notificationsGuildControllerCreateGuildTarget = async ({ guildId }: NotificationsGuildControllerCreateGuildTargetPathParameters,
-    createNotificationTargetDto: CreateNotificationTargetDto, options?: RequestInit): Promise<NotificationTargetResponseDtoOutput> => {
+    createNotificationTargetDto: CreateNotificationTargetDto, options?: RequestInit): Promise<NotificationTargetResponseDto> => {
 
-  return orvalFetch<NotificationTargetResponseDtoOutput>(getNotificationsGuildControllerCreateGuildTargetUrl({ guildId }),
+  return orvalFetch<NotificationTargetResponseDto>(getNotificationsGuildControllerCreateGuildTargetUrl({ guildId }),
   {
     ...options,
     method: 'POST',
@@ -221,7 +244,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type NotificationsGuildControllerCreateGuildTargetMutationBody = BodyType<CreateNotificationTargetDto>
     export type NotificationsGuildControllerCreateGuildTargetMutationError = ErrorType<unknown>
 
-    export const useNotificationsGuildControllerCreateGuildTarget = <TError = ErrorType<unknown>,
+    /**
+ * @summary Create guild notification target
+ */
+export const useNotificationsGuildControllerCreateGuildTarget = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerCreateGuildTarget>>, TError,{pathParams: NotificationsGuildControllerCreateGuildTargetPathParameters;data: BodyType<CreateNotificationTargetDto>}, TContext>, request?: SecondParameter<typeof orvalFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof notificationsGuildControllerCreateGuildTarget>>,
@@ -231,7 +257,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
       return useMutation(getNotificationsGuildControllerCreateGuildTargetMutationOptions(options));
     }
-    export const getNotificationsGuildControllerGetAvailableGuildTargetsUrl = ({ guildId }: NotificationsGuildControllerGetAvailableGuildTargetsPathParameters,) => {
+    /**
+ * Retrieve selectable Discord channels for guild notifications
+ * @summary Get available guild notification targets
+ */
+export const getNotificationsGuildControllerGetAvailableGuildTargetsUrl = ({ guildId }: NotificationsGuildControllerGetAvailableGuildTargetsPathParameters,) => {
 
 
 
@@ -239,9 +269,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return `/guilds/${guildId}/notifications/targets/available`
 }
 
-export const notificationsGuildControllerGetAvailableGuildTargets = async ({ guildId }: NotificationsGuildControllerGetAvailableGuildTargetsPathParameters, options?: RequestInit): Promise<GuildAvailableNotificationTargetsResponseDtoOutput> => {
+export const notificationsGuildControllerGetAvailableGuildTargets = async ({ guildId }: NotificationsGuildControllerGetAvailableGuildTargetsPathParameters, options?: RequestInit): Promise<GuildAvailableNotificationTargetsResponseDto> => {
 
-  return orvalFetch<GuildAvailableNotificationTargetsResponseDtoOutput>(getNotificationsGuildControllerGetAvailableGuildTargetsUrl({ guildId }),
+  return orvalFetch<GuildAvailableNotificationTargetsResponseDto>(getNotificationsGuildControllerGetAvailableGuildTargetsUrl({ guildId }),
   {
     ...options,
     method: 'GET'
@@ -283,6 +313,9 @@ export type NotificationsGuildControllerGetAvailableGuildTargetsQueryResult = No
 export type NotificationsGuildControllerGetAvailableGuildTargetsQueryError = ErrorType<unknown>
 
 
+/**
+ * @summary Get available guild notification targets
+ */
 
 export function useNotificationsGuildControllerGetAvailableGuildTargets<TData = Awaited<ReturnType<typeof notificationsGuildControllerGetAvailableGuildTargets>>, TError = ErrorType<unknown>>(
  { guildId }: NotificationsGuildControllerGetAvailableGuildTargetsPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof notificationsGuildControllerGetAvailableGuildTargets>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
@@ -296,6 +329,9 @@ export function useNotificationsGuildControllerGetAvailableGuildTargets<TData = 
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
+/**
+ * @summary Get available guild notification targets
+ */
 export const prefetchNotificationsGuildControllerGetAvailableGuildTargetsQuery = async <TData = Awaited<ReturnType<typeof notificationsGuildControllerGetAvailableGuildTargets>>, TError = ErrorType<unknown>>(
  queryClient: QueryClient, { guildId }: NotificationsGuildControllerGetAvailableGuildTargetsPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof notificationsGuildControllerGetAvailableGuildTargets>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
 
@@ -308,6 +344,9 @@ export const prefetchNotificationsGuildControllerGetAvailableGuildTargetsQuery =
   return queryClient;
 }
 
+/**
+ * @summary Get available guild notification targets
+ */
 export const invalidateNotificationsGuildControllerGetAvailableGuildTargets = async (
  queryClient: QueryClient, { guildId }: NotificationsGuildControllerGetAvailableGuildTargetsPathParameters, options?: InvalidateOptions
   ): Promise<QueryClient> => {
@@ -317,6 +356,9 @@ export const invalidateNotificationsGuildControllerGetAvailableGuildTargets = as
   return queryClient;
 }
 
+/**
+ * @summary Get available guild notification targets
+ */
 export const useSetNotificationsGuildControllerGetAvailableGuildTargetsQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId }: NotificationsGuildControllerGetAvailableGuildTargetsPathParameters,updater: Awaited<ReturnType<typeof notificationsGuildControllerGetAvailableGuildTargets>> | undefined | ((old: Awaited<ReturnType<typeof notificationsGuildControllerGetAvailableGuildTargets>> | undefined) => Awaited<ReturnType<typeof notificationsGuildControllerGetAvailableGuildTargets>> | undefined)) => {
@@ -324,6 +366,9 @@ export const useSetNotificationsGuildControllerGetAvailableGuildTargetsQueryData
   };
 }
 
+/**
+ * @summary Get available guild notification targets
+ */
 export const useGetNotificationsGuildControllerGetAvailableGuildTargetsQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId }: NotificationsGuildControllerGetAvailableGuildTargetsPathParameters,) =>
@@ -331,6 +376,10 @@ export const useGetNotificationsGuildControllerGetAvailableGuildTargetsQueryData
 }
 
 
+/**
+ * Update a guild notification target
+ * @summary Update guild notification target
+ */
 export const getNotificationsGuildControllerUpdateGuildTargetUrl = ({ guildId, targetId }: NotificationsGuildControllerUpdateGuildTargetPathParameters,) => {
 
 
@@ -340,9 +389,9 @@ export const getNotificationsGuildControllerUpdateGuildTargetUrl = ({ guildId, t
 }
 
 export const notificationsGuildControllerUpdateGuildTarget = async ({ guildId, targetId }: NotificationsGuildControllerUpdateGuildTargetPathParameters,
-    updateNotificationTargetDto: UpdateNotificationTargetDto, options?: RequestInit): Promise<NotificationTargetResponseDtoOutput> => {
+    updateNotificationTargetDto: UpdateNotificationTargetDto, options?: RequestInit): Promise<NotificationTargetResponseDto> => {
 
-  return orvalFetch<NotificationTargetResponseDtoOutput>(getNotificationsGuildControllerUpdateGuildTargetUrl({ guildId, targetId }),
+  return orvalFetch<NotificationTargetResponseDto>(getNotificationsGuildControllerUpdateGuildTargetUrl({ guildId, targetId }),
   {
     ...options,
     method: 'PATCH',
@@ -386,7 +435,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type NotificationsGuildControllerUpdateGuildTargetMutationBody = BodyType<UpdateNotificationTargetDto>
     export type NotificationsGuildControllerUpdateGuildTargetMutationError = ErrorType<unknown>
 
-    export const useNotificationsGuildControllerUpdateGuildTarget = <TError = ErrorType<unknown>,
+    /**
+ * @summary Update guild notification target
+ */
+export const useNotificationsGuildControllerUpdateGuildTarget = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerUpdateGuildTarget>>, TError,{pathParams: NotificationsGuildControllerUpdateGuildTargetPathParameters;data: BodyType<UpdateNotificationTargetDto>}, TContext>, request?: SecondParameter<typeof orvalFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof notificationsGuildControllerUpdateGuildTarget>>,
@@ -396,7 +448,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
       return useMutation(getNotificationsGuildControllerUpdateGuildTargetMutationOptions(options));
     }
-    export const getNotificationsGuildControllerDeleteGuildTargetUrl = ({ guildId, targetId }: NotificationsGuildControllerDeleteGuildTargetPathParameters,) => {
+    /**
+ * Delete a guild notification target
+ * @summary Delete guild notification target
+ */
+export const getNotificationsGuildControllerDeleteGuildTargetUrl = ({ guildId, targetId }: NotificationsGuildControllerDeleteGuildTargetPathParameters,) => {
 
 
 
@@ -449,7 +505,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type NotificationsGuildControllerDeleteGuildTargetMutationError = ErrorType<unknown>
 
-    export const useNotificationsGuildControllerDeleteGuildTarget = <TError = ErrorType<unknown>,
+    /**
+ * @summary Delete guild notification target
+ */
+export const useNotificationsGuildControllerDeleteGuildTarget = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerDeleteGuildTarget>>, TError,{pathParams: NotificationsGuildControllerDeleteGuildTargetPathParameters}, TContext>, request?: SecondParameter<typeof orvalFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof notificationsGuildControllerDeleteGuildTarget>>,
@@ -459,7 +518,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
       return useMutation(getNotificationsGuildControllerDeleteGuildTargetMutationOptions(options));
     }
-    export const getNotificationsGuildControllerGetGuildRulesUrl = ({ guildId }: NotificationsGuildControllerGetGuildRulesPathParameters,) => {
+    /**
+ * Retrieve configured notification rules for a guild
+ * @summary Get guild notification rules
+ */
+export const getNotificationsGuildControllerGetGuildRulesUrl = ({ guildId }: NotificationsGuildControllerGetGuildRulesPathParameters,) => {
 
 
 
@@ -467,9 +530,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return `/guilds/${guildId}/notifications/rules`
 }
 
-export const notificationsGuildControllerGetGuildRules = async ({ guildId }: NotificationsGuildControllerGetGuildRulesPathParameters, options?: RequestInit): Promise<GuildNotificationRulesResponseDtoOutput> => {
+export const notificationsGuildControllerGetGuildRules = async ({ guildId }: NotificationsGuildControllerGetGuildRulesPathParameters, options?: RequestInit): Promise<GuildNotificationRulesResponseDto> => {
 
-  return orvalFetch<GuildNotificationRulesResponseDtoOutput>(getNotificationsGuildControllerGetGuildRulesUrl({ guildId }),
+  return orvalFetch<GuildNotificationRulesResponseDto>(getNotificationsGuildControllerGetGuildRulesUrl({ guildId }),
   {
     ...options,
     method: 'GET'
@@ -511,6 +574,9 @@ export type NotificationsGuildControllerGetGuildRulesQueryResult = NonNullable<A
 export type NotificationsGuildControllerGetGuildRulesQueryError = ErrorType<unknown>
 
 
+/**
+ * @summary Get guild notification rules
+ */
 
 export function useNotificationsGuildControllerGetGuildRules<TData = Awaited<ReturnType<typeof notificationsGuildControllerGetGuildRules>>, TError = ErrorType<unknown>>(
  { guildId }: NotificationsGuildControllerGetGuildRulesPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof notificationsGuildControllerGetGuildRules>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
@@ -524,6 +590,9 @@ export function useNotificationsGuildControllerGetGuildRules<TData = Awaited<Ret
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
+/**
+ * @summary Get guild notification rules
+ */
 export const prefetchNotificationsGuildControllerGetGuildRulesQuery = async <TData = Awaited<ReturnType<typeof notificationsGuildControllerGetGuildRules>>, TError = ErrorType<unknown>>(
  queryClient: QueryClient, { guildId }: NotificationsGuildControllerGetGuildRulesPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof notificationsGuildControllerGetGuildRules>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
 
@@ -536,6 +605,9 @@ export const prefetchNotificationsGuildControllerGetGuildRulesQuery = async <TDa
   return queryClient;
 }
 
+/**
+ * @summary Get guild notification rules
+ */
 export const invalidateNotificationsGuildControllerGetGuildRules = async (
  queryClient: QueryClient, { guildId }: NotificationsGuildControllerGetGuildRulesPathParameters, options?: InvalidateOptions
   ): Promise<QueryClient> => {
@@ -545,6 +617,9 @@ export const invalidateNotificationsGuildControllerGetGuildRules = async (
   return queryClient;
 }
 
+/**
+ * @summary Get guild notification rules
+ */
 export const useSetNotificationsGuildControllerGetGuildRulesQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId }: NotificationsGuildControllerGetGuildRulesPathParameters,updater: Awaited<ReturnType<typeof notificationsGuildControllerGetGuildRules>> | undefined | ((old: Awaited<ReturnType<typeof notificationsGuildControllerGetGuildRules>> | undefined) => Awaited<ReturnType<typeof notificationsGuildControllerGetGuildRules>> | undefined)) => {
@@ -552,6 +627,9 @@ export const useSetNotificationsGuildControllerGetGuildRulesQueryData = () => {
   };
 }
 
+/**
+ * @summary Get guild notification rules
+ */
 export const useGetNotificationsGuildControllerGetGuildRulesQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId }: NotificationsGuildControllerGetGuildRulesPathParameters,) =>
@@ -559,6 +637,10 @@ export const useGetNotificationsGuildControllerGetGuildRulesQueryData = () => {
 }
 
 
+/**
+ * Create a guild notification rule
+ * @summary Create guild notification rule
+ */
 export const getNotificationsGuildControllerCreateGuildRuleUrl = ({ guildId }: NotificationsGuildControllerCreateGuildRulePathParameters,) => {
 
 
@@ -568,9 +650,9 @@ export const getNotificationsGuildControllerCreateGuildRuleUrl = ({ guildId }: N
 }
 
 export const notificationsGuildControllerCreateGuildRule = async ({ guildId }: NotificationsGuildControllerCreateGuildRulePathParameters,
-    createNotificationRuleDto: CreateNotificationRuleDto, options?: RequestInit): Promise<NotificationRuleResponseDtoOutput> => {
+    createNotificationRuleDto: CreateNotificationRuleDto, options?: RequestInit): Promise<NotificationRuleResponseDto> => {
 
-  return orvalFetch<NotificationRuleResponseDtoOutput>(getNotificationsGuildControllerCreateGuildRuleUrl({ guildId }),
+  return orvalFetch<NotificationRuleResponseDto>(getNotificationsGuildControllerCreateGuildRuleUrl({ guildId }),
   {
     ...options,
     method: 'POST',
@@ -614,7 +696,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type NotificationsGuildControllerCreateGuildRuleMutationBody = BodyType<CreateNotificationRuleDto>
     export type NotificationsGuildControllerCreateGuildRuleMutationError = ErrorType<unknown>
 
-    export const useNotificationsGuildControllerCreateGuildRule = <TError = ErrorType<unknown>,
+    /**
+ * @summary Create guild notification rule
+ */
+export const useNotificationsGuildControllerCreateGuildRule = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerCreateGuildRule>>, TError,{pathParams: NotificationsGuildControllerCreateGuildRulePathParameters;data: BodyType<CreateNotificationRuleDto>}, TContext>, request?: SecondParameter<typeof orvalFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof notificationsGuildControllerCreateGuildRule>>,
@@ -624,7 +709,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
       return useMutation(getNotificationsGuildControllerCreateGuildRuleMutationOptions(options));
     }
-    export const getNotificationsGuildControllerUpdateGuildRuleUrl = ({ guildId, ruleId }: NotificationsGuildControllerUpdateGuildRulePathParameters,) => {
+    /**
+ * Update a guild notification rule
+ * @summary Update guild notification rule
+ */
+export const getNotificationsGuildControllerUpdateGuildRuleUrl = ({ guildId, ruleId }: NotificationsGuildControllerUpdateGuildRulePathParameters,) => {
 
 
 
@@ -633,9 +722,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 }
 
 export const notificationsGuildControllerUpdateGuildRule = async ({ guildId, ruleId }: NotificationsGuildControllerUpdateGuildRulePathParameters,
-    updateNotificationRuleDto: UpdateNotificationRuleDto, options?: RequestInit): Promise<NotificationRuleResponseDtoOutput> => {
+    updateNotificationRuleDto: UpdateNotificationRuleDto, options?: RequestInit): Promise<NotificationRuleResponseDto> => {
 
-  return orvalFetch<NotificationRuleResponseDtoOutput>(getNotificationsGuildControllerUpdateGuildRuleUrl({ guildId, ruleId }),
+  return orvalFetch<NotificationRuleResponseDto>(getNotificationsGuildControllerUpdateGuildRuleUrl({ guildId, ruleId }),
   {
     ...options,
     method: 'PATCH',
@@ -679,7 +768,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type NotificationsGuildControllerUpdateGuildRuleMutationBody = BodyType<UpdateNotificationRuleDto>
     export type NotificationsGuildControllerUpdateGuildRuleMutationError = ErrorType<unknown>
 
-    export const useNotificationsGuildControllerUpdateGuildRule = <TError = ErrorType<unknown>,
+    /**
+ * @summary Update guild notification rule
+ */
+export const useNotificationsGuildControllerUpdateGuildRule = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerUpdateGuildRule>>, TError,{pathParams: NotificationsGuildControllerUpdateGuildRulePathParameters;data: BodyType<UpdateNotificationRuleDto>}, TContext>, request?: SecondParameter<typeof orvalFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof notificationsGuildControllerUpdateGuildRule>>,
@@ -689,7 +781,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
       return useMutation(getNotificationsGuildControllerUpdateGuildRuleMutationOptions(options));
     }
-    export const getNotificationsGuildControllerDeleteGuildRuleUrl = ({ guildId, ruleId }: NotificationsGuildControllerDeleteGuildRulePathParameters,) => {
+    /**
+ * Delete a guild notification rule
+ * @summary Delete guild notification rule
+ */
+export const getNotificationsGuildControllerDeleteGuildRuleUrl = ({ guildId, ruleId }: NotificationsGuildControllerDeleteGuildRulePathParameters,) => {
 
 
 
@@ -742,7 +838,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type NotificationsGuildControllerDeleteGuildRuleMutationError = ErrorType<unknown>
 
-    export const useNotificationsGuildControllerDeleteGuildRule = <TError = ErrorType<unknown>,
+    /**
+ * @summary Delete guild notification rule
+ */
+export const useNotificationsGuildControllerDeleteGuildRule = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerDeleteGuildRule>>, TError,{pathParams: NotificationsGuildControllerDeleteGuildRulePathParameters}, TContext>, request?: SecondParameter<typeof orvalFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof notificationsGuildControllerDeleteGuildRule>>,
@@ -752,7 +851,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
       return useMutation(getNotificationsGuildControllerDeleteGuildRuleMutationOptions(options));
     }
-    export const getNotificationsGuildControllerRebuildGuildRuleJobsUrl = ({ guildId, ruleId }: NotificationsGuildControllerRebuildGuildRuleJobsPathParameters,) => {
+    /**
+ * Rebuild pending jobs for a guild notification rule
+ * @summary Rebuild guild notification jobs
+ */
+export const getNotificationsGuildControllerRebuildGuildRuleJobsUrl = ({ guildId, ruleId }: NotificationsGuildControllerRebuildGuildRuleJobsPathParameters,) => {
 
 
 
@@ -805,7 +908,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type NotificationsGuildControllerRebuildGuildRuleJobsMutationError = ErrorType<unknown>
 
-    export const useNotificationsGuildControllerRebuildGuildRuleJobs = <TError = ErrorType<unknown>,
+    /**
+ * @summary Rebuild guild notification jobs
+ */
+export const useNotificationsGuildControllerRebuildGuildRuleJobs = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerRebuildGuildRuleJobs>>, TError,{pathParams: NotificationsGuildControllerRebuildGuildRuleJobsPathParameters}, TContext>, request?: SecondParameter<typeof orvalFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof notificationsGuildControllerRebuildGuildRuleJobs>>,
@@ -815,7 +921,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
       return useMutation(getNotificationsGuildControllerRebuildGuildRuleJobsMutationOptions(options));
     }
-    export const getNotificationsGuildControllerTriggerGuildRuleTestUrl = ({ guildId, ruleId }: NotificationsGuildControllerTriggerGuildRuleTestPathParameters,) => {
+    /**
+ * Trigger a test notification for a guild rule
+ * @summary Trigger guild notification rule test
+ */
+export const getNotificationsGuildControllerTriggerGuildRuleTestUrl = ({ guildId, ruleId }: NotificationsGuildControllerTriggerGuildRuleTestPathParameters,) => {
 
 
 
@@ -868,7 +978,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type NotificationsGuildControllerTriggerGuildRuleTestMutationError = ErrorType<unknown>
 
-    export const useNotificationsGuildControllerTriggerGuildRuleTest = <TError = ErrorType<unknown>,
+    /**
+ * @summary Trigger guild notification rule test
+ */
+export const useNotificationsGuildControllerTriggerGuildRuleTest = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerTriggerGuildRuleTest>>, TError,{pathParams: NotificationsGuildControllerTriggerGuildRuleTestPathParameters}, TContext>, request?: SecondParameter<typeof orvalFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof notificationsGuildControllerTriggerGuildRuleTest>>,
@@ -878,7 +991,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
       return useMutation(getNotificationsGuildControllerTriggerGuildRuleTestMutationOptions(options));
     }
-    export const getNotificationsGuildControllerGetGuildJobsUrl = ({ guildId }: NotificationsGuildControllerGetGuildJobsPathParameters,) => {
+    /**
+ * Retrieve pending and recent notification jobs for a guild
+ * @summary Get guild notification jobs
+ */
+export const getNotificationsGuildControllerGetGuildJobsUrl = ({ guildId }: NotificationsGuildControllerGetGuildJobsPathParameters,) => {
 
 
 
@@ -886,9 +1003,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return `/guilds/${guildId}/notifications/jobs`
 }
 
-export const notificationsGuildControllerGetGuildJobs = async ({ guildId }: NotificationsGuildControllerGetGuildJobsPathParameters, options?: RequestInit): Promise<NotificationJobsResponseDtoOutput> => {
+export const notificationsGuildControllerGetGuildJobs = async ({ guildId }: NotificationsGuildControllerGetGuildJobsPathParameters, options?: RequestInit): Promise<NotificationJobsResponseDto> => {
 
-  return orvalFetch<NotificationJobsResponseDtoOutput>(getNotificationsGuildControllerGetGuildJobsUrl({ guildId }),
+  return orvalFetch<NotificationJobsResponseDto>(getNotificationsGuildControllerGetGuildJobsUrl({ guildId }),
   {
     ...options,
     method: 'GET'
@@ -930,6 +1047,9 @@ export type NotificationsGuildControllerGetGuildJobsQueryResult = NonNullable<Aw
 export type NotificationsGuildControllerGetGuildJobsQueryError = ErrorType<unknown>
 
 
+/**
+ * @summary Get guild notification jobs
+ */
 
 export function useNotificationsGuildControllerGetGuildJobs<TData = Awaited<ReturnType<typeof notificationsGuildControllerGetGuildJobs>>, TError = ErrorType<unknown>>(
  { guildId }: NotificationsGuildControllerGetGuildJobsPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof notificationsGuildControllerGetGuildJobs>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
@@ -943,6 +1063,9 @@ export function useNotificationsGuildControllerGetGuildJobs<TData = Awaited<Retu
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
+/**
+ * @summary Get guild notification jobs
+ */
 export const prefetchNotificationsGuildControllerGetGuildJobsQuery = async <TData = Awaited<ReturnType<typeof notificationsGuildControllerGetGuildJobs>>, TError = ErrorType<unknown>>(
  queryClient: QueryClient, { guildId }: NotificationsGuildControllerGetGuildJobsPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof notificationsGuildControllerGetGuildJobs>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
 
@@ -955,6 +1078,9 @@ export const prefetchNotificationsGuildControllerGetGuildJobsQuery = async <TDat
   return queryClient;
 }
 
+/**
+ * @summary Get guild notification jobs
+ */
 export const invalidateNotificationsGuildControllerGetGuildJobs = async (
  queryClient: QueryClient, { guildId }: NotificationsGuildControllerGetGuildJobsPathParameters, options?: InvalidateOptions
   ): Promise<QueryClient> => {
@@ -964,6 +1090,9 @@ export const invalidateNotificationsGuildControllerGetGuildJobs = async (
   return queryClient;
 }
 
+/**
+ * @summary Get guild notification jobs
+ */
 export const useSetNotificationsGuildControllerGetGuildJobsQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId }: NotificationsGuildControllerGetGuildJobsPathParameters,updater: Awaited<ReturnType<typeof notificationsGuildControllerGetGuildJobs>> | undefined | ((old: Awaited<ReturnType<typeof notificationsGuildControllerGetGuildJobs>> | undefined) => Awaited<ReturnType<typeof notificationsGuildControllerGetGuildJobs>> | undefined)) => {
@@ -971,6 +1100,9 @@ export const useSetNotificationsGuildControllerGetGuildJobsQueryData = () => {
   };
 }
 
+/**
+ * @summary Get guild notification jobs
+ */
 export const useGetNotificationsGuildControllerGetGuildJobsQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId }: NotificationsGuildControllerGetGuildJobsPathParameters,) =>
@@ -978,6 +1110,10 @@ export const useGetNotificationsGuildControllerGetGuildJobsQueryData = () => {
 }
 
 
+/**
+ * Cancel a pending or blocked guild notification job
+ * @summary Cancel guild notification job
+ */
 export const getNotificationsGuildControllerCancelGuildJobUrl = ({ guildId, jobId }: NotificationsGuildControllerCancelGuildJobPathParameters,) => {
 
 
@@ -1000,7 +1136,7 @@ export const notificationsGuildControllerCancelGuildJob = async ({ guildId, jobI
 
 
 
-export const getNotificationsGuildControllerCancelGuildJobMutationOptions = <TError = ErrorType<unknown>,
+export const getNotificationsGuildControllerCancelGuildJobMutationOptions = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerCancelGuildJob>>, TError,{pathParams: NotificationsGuildControllerCancelGuildJobPathParameters}, TContext>, request?: SecondParameter<typeof orvalFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerCancelGuildJob>>, TError,{pathParams: NotificationsGuildControllerCancelGuildJobPathParameters}, TContext> => {
 
@@ -1029,9 +1165,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type NotificationsGuildControllerCancelGuildJobMutationResult = NonNullable<Awaited<ReturnType<typeof notificationsGuildControllerCancelGuildJob>>>
 
-    export type NotificationsGuildControllerCancelGuildJobMutationError = ErrorType<unknown>
+    export type NotificationsGuildControllerCancelGuildJobMutationError = ErrorType<void>
 
-    export const useNotificationsGuildControllerCancelGuildJob = <TError = ErrorType<unknown>,
+    /**
+ * @summary Cancel guild notification job
+ */
+export const useNotificationsGuildControllerCancelGuildJob = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerCancelGuildJob>>, TError,{pathParams: NotificationsGuildControllerCancelGuildJobPathParameters}, TContext>, request?: SecondParameter<typeof orvalFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof notificationsGuildControllerCancelGuildJob>>,
@@ -1041,7 +1180,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
       return useMutation(getNotificationsGuildControllerCancelGuildJobMutationOptions(options));
     }
-    export const getNotificationsUserControllerGetUserTargetsUrl = () => {
+    /**
+ * Retrieve configured notification targets for the authenticated user
+ * @summary Get user notification targets
+ */
+export const getNotificationsUserControllerGetUserTargetsUrl = () => {
 
 
 
@@ -1049,9 +1192,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return `/users/@me/notifications/targets`
 }
 
-export const notificationsUserControllerGetUserTargets = async ( options?: RequestInit): Promise<NotificationTargetWithTestTriggerResponseDtoOutput[]> => {
+export const notificationsUserControllerGetUserTargets = async ( options?: RequestInit): Promise<NotificationTargetWithTestTriggerResponseDto[]> => {
 
-  return orvalFetch<NotificationTargetWithTestTriggerResponseDtoOutput[]>(getNotificationsUserControllerGetUserTargetsUrl(),
+  return orvalFetch<NotificationTargetWithTestTriggerResponseDto[]>(getNotificationsUserControllerGetUserTargetsUrl(),
   {
     ...options,
     method: 'GET'
@@ -1093,6 +1236,9 @@ export type NotificationsUserControllerGetUserTargetsQueryResult = NonNullable<A
 export type NotificationsUserControllerGetUserTargetsQueryError = ErrorType<unknown>
 
 
+/**
+ * @summary Get user notification targets
+ */
 
 export function useNotificationsUserControllerGetUserTargets<TData = Awaited<ReturnType<typeof notificationsUserControllerGetUserTargets>>, TError = ErrorType<unknown>>(
   options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof notificationsUserControllerGetUserTargets>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
@@ -1106,6 +1252,9 @@ export function useNotificationsUserControllerGetUserTargets<TData = Awaited<Ret
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
+/**
+ * @summary Get user notification targets
+ */
 export const prefetchNotificationsUserControllerGetUserTargetsQuery = async <TData = Awaited<ReturnType<typeof notificationsUserControllerGetUserTargets>>, TError = ErrorType<unknown>>(
  queryClient: QueryClient,  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof notificationsUserControllerGetUserTargets>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
 
@@ -1118,6 +1267,9 @@ export const prefetchNotificationsUserControllerGetUserTargetsQuery = async <TDa
   return queryClient;
 }
 
+/**
+ * @summary Get user notification targets
+ */
 export const invalidateNotificationsUserControllerGetUserTargets = async (
  queryClient: QueryClient,  options?: InvalidateOptions
   ): Promise<QueryClient> => {
@@ -1127,6 +1279,9 @@ export const invalidateNotificationsUserControllerGetUserTargets = async (
   return queryClient;
 }
 
+/**
+ * @summary Get user notification targets
+ */
 export const useSetNotificationsUserControllerGetUserTargetsQueryData = () => {
   const queryClient = useQueryClient();
   return (updater: Awaited<ReturnType<typeof notificationsUserControllerGetUserTargets>> | undefined | ((old: Awaited<ReturnType<typeof notificationsUserControllerGetUserTargets>> | undefined) => Awaited<ReturnType<typeof notificationsUserControllerGetUserTargets>> | undefined)) => {
@@ -1134,6 +1289,9 @@ export const useSetNotificationsUserControllerGetUserTargetsQueryData = () => {
   };
 }
 
+/**
+ * @summary Get user notification targets
+ */
 export const useGetNotificationsUserControllerGetUserTargetsQueryData = () => {
   const queryClient = useQueryClient();
   return () =>
@@ -1141,6 +1299,10 @@ export const useGetNotificationsUserControllerGetUserTargetsQueryData = () => {
 }
 
 
+/**
+ * Create or reactivate a notification target for the authenticated user
+ * @summary Create user notification target
+ */
 export const getNotificationsUserControllerCreateUserTargetUrl = () => {
 
 
@@ -1149,9 +1311,9 @@ export const getNotificationsUserControllerCreateUserTargetUrl = () => {
   return `/users/@me/notifications/targets`
 }
 
-export const notificationsUserControllerCreateUserTarget = async (createNotificationTargetDto: CreateNotificationTargetDto, options?: RequestInit): Promise<NotificationTargetResponseDtoOutput> => {
+export const notificationsUserControllerCreateUserTarget = async (createNotificationTargetDto: CreateNotificationTargetDto, options?: RequestInit): Promise<NotificationTargetResponseDto> => {
 
-  return orvalFetch<NotificationTargetResponseDtoOutput>(getNotificationsUserControllerCreateUserTargetUrl(),
+  return orvalFetch<NotificationTargetResponseDto>(getNotificationsUserControllerCreateUserTargetUrl(),
   {
     ...options,
     method: 'POST',
@@ -1195,7 +1357,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type NotificationsUserControllerCreateUserTargetMutationBody = BodyType<CreateNotificationTargetDto>
     export type NotificationsUserControllerCreateUserTargetMutationError = ErrorType<unknown>
 
-    export const useNotificationsUserControllerCreateUserTarget = <TError = ErrorType<unknown>,
+    /**
+ * @summary Create user notification target
+ */
+export const useNotificationsUserControllerCreateUserTarget = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerCreateUserTarget>>, TError,{data: BodyType<CreateNotificationTargetDto>}, TContext>, request?: SecondParameter<typeof orvalFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof notificationsUserControllerCreateUserTarget>>,
@@ -1205,7 +1370,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
       return useMutation(getNotificationsUserControllerCreateUserTargetMutationOptions(options));
     }
-    export const getNotificationsUserControllerUpdateUserTargetUrl = ({ targetId }: NotificationsUserControllerUpdateUserTargetPathParameters,) => {
+    /**
+ * Update a user notification target
+ * @summary Update user notification target
+ */
+export const getNotificationsUserControllerUpdateUserTargetUrl = ({ targetId }: NotificationsUserControllerUpdateUserTargetPathParameters,) => {
 
 
 
@@ -1214,9 +1383,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 }
 
 export const notificationsUserControllerUpdateUserTarget = async ({ targetId }: NotificationsUserControllerUpdateUserTargetPathParameters,
-    updateNotificationTargetDto: UpdateNotificationTargetDto, options?: RequestInit): Promise<NotificationTargetResponseDtoOutput> => {
+    updateNotificationTargetDto: UpdateNotificationTargetDto, options?: RequestInit): Promise<NotificationTargetResponseDto> => {
 
-  return orvalFetch<NotificationTargetResponseDtoOutput>(getNotificationsUserControllerUpdateUserTargetUrl({ targetId }),
+  return orvalFetch<NotificationTargetResponseDto>(getNotificationsUserControllerUpdateUserTargetUrl({ targetId }),
   {
     ...options,
     method: 'PATCH',
@@ -1260,7 +1429,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type NotificationsUserControllerUpdateUserTargetMutationBody = BodyType<UpdateNotificationTargetDto>
     export type NotificationsUserControllerUpdateUserTargetMutationError = ErrorType<unknown>
 
-    export const useNotificationsUserControllerUpdateUserTarget = <TError = ErrorType<unknown>,
+    /**
+ * @summary Update user notification target
+ */
+export const useNotificationsUserControllerUpdateUserTarget = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerUpdateUserTarget>>, TError,{pathParams: NotificationsUserControllerUpdateUserTargetPathParameters;data: BodyType<UpdateNotificationTargetDto>}, TContext>, request?: SecondParameter<typeof orvalFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof notificationsUserControllerUpdateUserTarget>>,
@@ -1270,7 +1442,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
       return useMutation(getNotificationsUserControllerUpdateUserTargetMutationOptions(options));
     }
-    export const getNotificationsUserControllerDeleteUserTargetUrl = ({ targetId }: NotificationsUserControllerDeleteUserTargetPathParameters,) => {
+    /**
+ * Delete a user notification target
+ * @summary Delete user notification target
+ */
+export const getNotificationsUserControllerDeleteUserTargetUrl = ({ targetId }: NotificationsUserControllerDeleteUserTargetPathParameters,) => {
 
 
 
@@ -1323,7 +1499,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type NotificationsUserControllerDeleteUserTargetMutationError = ErrorType<unknown>
 
-    export const useNotificationsUserControllerDeleteUserTarget = <TError = ErrorType<unknown>,
+    /**
+ * @summary Delete user notification target
+ */
+export const useNotificationsUserControllerDeleteUserTarget = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerDeleteUserTarget>>, TError,{pathParams: NotificationsUserControllerDeleteUserTargetPathParameters}, TContext>, request?: SecondParameter<typeof orvalFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof notificationsUserControllerDeleteUserTarget>>,
@@ -1333,7 +1512,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
       return useMutation(getNotificationsUserControllerDeleteUserTargetMutationOptions(options));
     }
-    export const getNotificationsUserControllerTriggerUserTargetTestUrl = ({ targetId }: NotificationsUserControllerTriggerUserTargetTestPathParameters,) => {
+    /**
+ * Trigger a test notification for a user target
+ * @summary Trigger user notification target test
+ */
+export const getNotificationsUserControllerTriggerUserTargetTestUrl = ({ targetId }: NotificationsUserControllerTriggerUserTargetTestPathParameters,) => {
 
 
 
@@ -1355,7 +1538,7 @@ export const notificationsUserControllerTriggerUserTargetTest = async ({ targetI
 
 
 
-export const getNotificationsUserControllerTriggerUserTargetTestMutationOptions = <TError = ErrorType<unknown>,
+export const getNotificationsUserControllerTriggerUserTargetTestMutationOptions = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerTriggerUserTargetTest>>, TError,{pathParams: NotificationsUserControllerTriggerUserTargetTestPathParameters}, TContext>, request?: SecondParameter<typeof orvalFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerTriggerUserTargetTest>>, TError,{pathParams: NotificationsUserControllerTriggerUserTargetTestPathParameters}, TContext> => {
 
@@ -1384,9 +1567,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type NotificationsUserControllerTriggerUserTargetTestMutationResult = NonNullable<Awaited<ReturnType<typeof notificationsUserControllerTriggerUserTargetTest>>>
 
-    export type NotificationsUserControllerTriggerUserTargetTestMutationError = ErrorType<unknown>
+    export type NotificationsUserControllerTriggerUserTargetTestMutationError = ErrorType<void>
 
-    export const useNotificationsUserControllerTriggerUserTargetTest = <TError = ErrorType<unknown>,
+    /**
+ * @summary Trigger user notification target test
+ */
+export const useNotificationsUserControllerTriggerUserTargetTest = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerTriggerUserTargetTest>>, TError,{pathParams: NotificationsUserControllerTriggerUserTargetTestPathParameters}, TContext>, request?: SecondParameter<typeof orvalFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof notificationsUserControllerTriggerUserTargetTest>>,
@@ -1396,7 +1582,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
       return useMutation(getNotificationsUserControllerTriggerUserTargetTestMutationOptions(options));
     }
-    export const getNotificationsUserControllerGetUserRulesUrl = () => {
+    /**
+ * Retrieve configured notification rules for the authenticated user
+ * @summary Get user notification rules
+ */
+export const getNotificationsUserControllerGetUserRulesUrl = () => {
 
 
 
@@ -1404,9 +1594,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return `/users/@me/notifications/rules`
 }
 
-export const notificationsUserControllerGetUserRules = async ( options?: RequestInit): Promise<NotificationRuleResponseDtoOutput[]> => {
+export const notificationsUserControllerGetUserRules = async ( options?: RequestInit): Promise<NotificationRuleResponseDto[]> => {
 
-  return orvalFetch<NotificationRuleResponseDtoOutput[]>(getNotificationsUserControllerGetUserRulesUrl(),
+  return orvalFetch<NotificationRuleResponseDto[]>(getNotificationsUserControllerGetUserRulesUrl(),
   {
     ...options,
     method: 'GET'
@@ -1448,6 +1638,9 @@ export type NotificationsUserControllerGetUserRulesQueryResult = NonNullable<Awa
 export type NotificationsUserControllerGetUserRulesQueryError = ErrorType<unknown>
 
 
+/**
+ * @summary Get user notification rules
+ */
 
 export function useNotificationsUserControllerGetUserRules<TData = Awaited<ReturnType<typeof notificationsUserControllerGetUserRules>>, TError = ErrorType<unknown>>(
   options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof notificationsUserControllerGetUserRules>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
@@ -1461,6 +1654,9 @@ export function useNotificationsUserControllerGetUserRules<TData = Awaited<Retur
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
+/**
+ * @summary Get user notification rules
+ */
 export const prefetchNotificationsUserControllerGetUserRulesQuery = async <TData = Awaited<ReturnType<typeof notificationsUserControllerGetUserRules>>, TError = ErrorType<unknown>>(
  queryClient: QueryClient,  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof notificationsUserControllerGetUserRules>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
 
@@ -1473,6 +1669,9 @@ export const prefetchNotificationsUserControllerGetUserRulesQuery = async <TData
   return queryClient;
 }
 
+/**
+ * @summary Get user notification rules
+ */
 export const invalidateNotificationsUserControllerGetUserRules = async (
  queryClient: QueryClient,  options?: InvalidateOptions
   ): Promise<QueryClient> => {
@@ -1482,6 +1681,9 @@ export const invalidateNotificationsUserControllerGetUserRules = async (
   return queryClient;
 }
 
+/**
+ * @summary Get user notification rules
+ */
 export const useSetNotificationsUserControllerGetUserRulesQueryData = () => {
   const queryClient = useQueryClient();
   return (updater: Awaited<ReturnType<typeof notificationsUserControllerGetUserRules>> | undefined | ((old: Awaited<ReturnType<typeof notificationsUserControllerGetUserRules>> | undefined) => Awaited<ReturnType<typeof notificationsUserControllerGetUserRules>> | undefined)) => {
@@ -1489,6 +1691,9 @@ export const useSetNotificationsUserControllerGetUserRulesQueryData = () => {
   };
 }
 
+/**
+ * @summary Get user notification rules
+ */
 export const useGetNotificationsUserControllerGetUserRulesQueryData = () => {
   const queryClient = useQueryClient();
   return () =>
@@ -1496,6 +1701,10 @@ export const useGetNotificationsUserControllerGetUserRulesQueryData = () => {
 }
 
 
+/**
+ * Create a user notification rule
+ * @summary Create user notification rule
+ */
 export const getNotificationsUserControllerCreateUserRuleUrl = () => {
 
 
@@ -1504,9 +1713,9 @@ export const getNotificationsUserControllerCreateUserRuleUrl = () => {
   return `/users/@me/notifications/rules`
 }
 
-export const notificationsUserControllerCreateUserRule = async (createNotificationRuleDto: CreateNotificationRuleDto, options?: RequestInit): Promise<NotificationRuleResponseDtoOutput> => {
+export const notificationsUserControllerCreateUserRule = async (createNotificationRuleDto: CreateNotificationRuleDto, options?: RequestInit): Promise<NotificationRuleResponseDto> => {
 
-  return orvalFetch<NotificationRuleResponseDtoOutput>(getNotificationsUserControllerCreateUserRuleUrl(),
+  return orvalFetch<NotificationRuleResponseDto>(getNotificationsUserControllerCreateUserRuleUrl(),
   {
     ...options,
     method: 'POST',
@@ -1550,7 +1759,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type NotificationsUserControllerCreateUserRuleMutationBody = BodyType<CreateNotificationRuleDto>
     export type NotificationsUserControllerCreateUserRuleMutationError = ErrorType<unknown>
 
-    export const useNotificationsUserControllerCreateUserRule = <TError = ErrorType<unknown>,
+    /**
+ * @summary Create user notification rule
+ */
+export const useNotificationsUserControllerCreateUserRule = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerCreateUserRule>>, TError,{data: BodyType<CreateNotificationRuleDto>}, TContext>, request?: SecondParameter<typeof orvalFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof notificationsUserControllerCreateUserRule>>,
@@ -1560,7 +1772,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
       return useMutation(getNotificationsUserControllerCreateUserRuleMutationOptions(options));
     }
-    export const getNotificationsUserControllerUpdateUserRuleUrl = ({ ruleId }: NotificationsUserControllerUpdateUserRulePathParameters,) => {
+    /**
+ * Update a user notification rule
+ * @summary Update user notification rule
+ */
+export const getNotificationsUserControllerUpdateUserRuleUrl = ({ ruleId }: NotificationsUserControllerUpdateUserRulePathParameters,) => {
 
 
 
@@ -1569,9 +1785,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 }
 
 export const notificationsUserControllerUpdateUserRule = async ({ ruleId }: NotificationsUserControllerUpdateUserRulePathParameters,
-    updateNotificationRuleDto: UpdateNotificationRuleDto, options?: RequestInit): Promise<NotificationRuleResponseDtoOutput> => {
+    updateNotificationRuleDto: UpdateNotificationRuleDto, options?: RequestInit): Promise<NotificationRuleResponseDto> => {
 
-  return orvalFetch<NotificationRuleResponseDtoOutput>(getNotificationsUserControllerUpdateUserRuleUrl({ ruleId }),
+  return orvalFetch<NotificationRuleResponseDto>(getNotificationsUserControllerUpdateUserRuleUrl({ ruleId }),
   {
     ...options,
     method: 'PATCH',
@@ -1615,7 +1831,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type NotificationsUserControllerUpdateUserRuleMutationBody = BodyType<UpdateNotificationRuleDto>
     export type NotificationsUserControllerUpdateUserRuleMutationError = ErrorType<unknown>
 
-    export const useNotificationsUserControllerUpdateUserRule = <TError = ErrorType<unknown>,
+    /**
+ * @summary Update user notification rule
+ */
+export const useNotificationsUserControllerUpdateUserRule = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerUpdateUserRule>>, TError,{pathParams: NotificationsUserControllerUpdateUserRulePathParameters;data: BodyType<UpdateNotificationRuleDto>}, TContext>, request?: SecondParameter<typeof orvalFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof notificationsUserControllerUpdateUserRule>>,
@@ -1625,7 +1844,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
       return useMutation(getNotificationsUserControllerUpdateUserRuleMutationOptions(options));
     }
-    export const getNotificationsUserControllerDeleteUserRuleUrl = ({ ruleId }: NotificationsUserControllerDeleteUserRulePathParameters,) => {
+    /**
+ * Delete a user notification rule
+ * @summary Delete user notification rule
+ */
+export const getNotificationsUserControllerDeleteUserRuleUrl = ({ ruleId }: NotificationsUserControllerDeleteUserRulePathParameters,) => {
 
 
 
@@ -1678,7 +1901,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type NotificationsUserControllerDeleteUserRuleMutationError = ErrorType<unknown>
 
-    export const useNotificationsUserControllerDeleteUserRule = <TError = ErrorType<unknown>,
+    /**
+ * @summary Delete user notification rule
+ */
+export const useNotificationsUserControllerDeleteUserRule = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerDeleteUserRule>>, TError,{pathParams: NotificationsUserControllerDeleteUserRulePathParameters}, TContext>, request?: SecondParameter<typeof orvalFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof notificationsUserControllerDeleteUserRule>>,
@@ -1688,7 +1914,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
       return useMutation(getNotificationsUserControllerDeleteUserRuleMutationOptions(options));
     }
-    export const getNotificationsUserControllerGetUserJobsUrl = () => {
+    /**
+ * Retrieve pending and recent notification jobs for the authenticated user
+ * @summary Get user notification jobs
+ */
+export const getNotificationsUserControllerGetUserJobsUrl = () => {
 
 
 
@@ -1696,9 +1926,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return `/users/@me/notifications/jobs`
 }
 
-export const notificationsUserControllerGetUserJobs = async ( options?: RequestInit): Promise<NotificationJobsResponseDtoOutput> => {
+export const notificationsUserControllerGetUserJobs = async ( options?: RequestInit): Promise<NotificationJobsResponseDto> => {
 
-  return orvalFetch<NotificationJobsResponseDtoOutput>(getNotificationsUserControllerGetUserJobsUrl(),
+  return orvalFetch<NotificationJobsResponseDto>(getNotificationsUserControllerGetUserJobsUrl(),
   {
     ...options,
     method: 'GET'
@@ -1740,6 +1970,9 @@ export type NotificationsUserControllerGetUserJobsQueryResult = NonNullable<Awai
 export type NotificationsUserControllerGetUserJobsQueryError = ErrorType<unknown>
 
 
+/**
+ * @summary Get user notification jobs
+ */
 
 export function useNotificationsUserControllerGetUserJobs<TData = Awaited<ReturnType<typeof notificationsUserControllerGetUserJobs>>, TError = ErrorType<unknown>>(
   options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof notificationsUserControllerGetUserJobs>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
@@ -1753,6 +1986,9 @@ export function useNotificationsUserControllerGetUserJobs<TData = Awaited<Return
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
+/**
+ * @summary Get user notification jobs
+ */
 export const prefetchNotificationsUserControllerGetUserJobsQuery = async <TData = Awaited<ReturnType<typeof notificationsUserControllerGetUserJobs>>, TError = ErrorType<unknown>>(
  queryClient: QueryClient,  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof notificationsUserControllerGetUserJobs>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
 
@@ -1765,6 +2001,9 @@ export const prefetchNotificationsUserControllerGetUserJobsQuery = async <TData 
   return queryClient;
 }
 
+/**
+ * @summary Get user notification jobs
+ */
 export const invalidateNotificationsUserControllerGetUserJobs = async (
  queryClient: QueryClient,  options?: InvalidateOptions
   ): Promise<QueryClient> => {
@@ -1774,6 +2013,9 @@ export const invalidateNotificationsUserControllerGetUserJobs = async (
   return queryClient;
 }
 
+/**
+ * @summary Get user notification jobs
+ */
 export const useSetNotificationsUserControllerGetUserJobsQueryData = () => {
   const queryClient = useQueryClient();
   return (updater: Awaited<ReturnType<typeof notificationsUserControllerGetUserJobs>> | undefined | ((old: Awaited<ReturnType<typeof notificationsUserControllerGetUserJobs>> | undefined) => Awaited<ReturnType<typeof notificationsUserControllerGetUserJobs>> | undefined)) => {
@@ -1781,6 +2023,9 @@ export const useSetNotificationsUserControllerGetUserJobsQueryData = () => {
   };
 }
 
+/**
+ * @summary Get user notification jobs
+ */
 export const useGetNotificationsUserControllerGetUserJobsQueryData = () => {
   const queryClient = useQueryClient();
   return () =>
@@ -1788,6 +2033,10 @@ export const useGetNotificationsUserControllerGetUserJobsQueryData = () => {
 }
 
 
+/**
+ * Retrieve watched items for the authenticated user
+ * @summary Get watched items
+ */
 export const getNotificationsUserControllerGetWatchedItemsUrl = () => {
 
 
@@ -1796,9 +2045,9 @@ export const getNotificationsUserControllerGetWatchedItemsUrl = () => {
   return `/users/@me/notifications/watched-items`
 }
 
-export const notificationsUserControllerGetWatchedItems = async ( options?: RequestInit): Promise<WatchedItemResponseDtoOutput[]> => {
+export const notificationsUserControllerGetWatchedItems = async ( options?: RequestInit): Promise<WatchedItemResponseDto[]> => {
 
-  return orvalFetch<WatchedItemResponseDtoOutput[]>(getNotificationsUserControllerGetWatchedItemsUrl(),
+  return orvalFetch<WatchedItemResponseDto[]>(getNotificationsUserControllerGetWatchedItemsUrl(),
   {
     ...options,
     method: 'GET'
@@ -1840,6 +2089,9 @@ export type NotificationsUserControllerGetWatchedItemsQueryResult = NonNullable<
 export type NotificationsUserControllerGetWatchedItemsQueryError = ErrorType<unknown>
 
 
+/**
+ * @summary Get watched items
+ */
 
 export function useNotificationsUserControllerGetWatchedItems<TData = Awaited<ReturnType<typeof notificationsUserControllerGetWatchedItems>>, TError = ErrorType<unknown>>(
   options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof notificationsUserControllerGetWatchedItems>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
@@ -1853,6 +2105,9 @@ export function useNotificationsUserControllerGetWatchedItems<TData = Awaited<Re
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
+/**
+ * @summary Get watched items
+ */
 export const prefetchNotificationsUserControllerGetWatchedItemsQuery = async <TData = Awaited<ReturnType<typeof notificationsUserControllerGetWatchedItems>>, TError = ErrorType<unknown>>(
  queryClient: QueryClient,  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof notificationsUserControllerGetWatchedItems>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
 
@@ -1865,6 +2120,9 @@ export const prefetchNotificationsUserControllerGetWatchedItemsQuery = async <TD
   return queryClient;
 }
 
+/**
+ * @summary Get watched items
+ */
 export const invalidateNotificationsUserControllerGetWatchedItems = async (
  queryClient: QueryClient,  options?: InvalidateOptions
   ): Promise<QueryClient> => {
@@ -1874,6 +2132,9 @@ export const invalidateNotificationsUserControllerGetWatchedItems = async (
   return queryClient;
 }
 
+/**
+ * @summary Get watched items
+ */
 export const useSetNotificationsUserControllerGetWatchedItemsQueryData = () => {
   const queryClient = useQueryClient();
   return (updater: Awaited<ReturnType<typeof notificationsUserControllerGetWatchedItems>> | undefined | ((old: Awaited<ReturnType<typeof notificationsUserControllerGetWatchedItems>> | undefined) => Awaited<ReturnType<typeof notificationsUserControllerGetWatchedItems>> | undefined)) => {
@@ -1881,6 +2142,9 @@ export const useSetNotificationsUserControllerGetWatchedItemsQueryData = () => {
   };
 }
 
+/**
+ * @summary Get watched items
+ */
 export const useGetNotificationsUserControllerGetWatchedItemsQueryData = () => {
   const queryClient = useQueryClient();
   return () =>
@@ -1888,6 +2152,10 @@ export const useGetNotificationsUserControllerGetWatchedItemsQueryData = () => {
 }
 
 
+/**
+ * Create or reactivate a watched item for the authenticated user
+ * @summary Create watched item
+ */
 export const getNotificationsUserControllerCreateWatchedItemUrl = () => {
 
 
@@ -1896,9 +2164,9 @@ export const getNotificationsUserControllerCreateWatchedItemUrl = () => {
   return `/users/@me/notifications/watched-items`
 }
 
-export const notificationsUserControllerCreateWatchedItem = async (createWatchedItemDto: CreateWatchedItemDto, options?: RequestInit): Promise<WatchedItemResponseDtoOutput> => {
+export const notificationsUserControllerCreateWatchedItem = async (createWatchedItemDto: CreateWatchedItemDto, options?: RequestInit): Promise<WatchedItemResponseDto> => {
 
-  return orvalFetch<WatchedItemResponseDtoOutput>(getNotificationsUserControllerCreateWatchedItemUrl(),
+  return orvalFetch<WatchedItemResponseDto>(getNotificationsUserControllerCreateWatchedItemUrl(),
   {
     ...options,
     method: 'POST',
@@ -1942,7 +2210,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type NotificationsUserControllerCreateWatchedItemMutationBody = BodyType<CreateWatchedItemDto>
     export type NotificationsUserControllerCreateWatchedItemMutationError = ErrorType<unknown>
 
-    export const useNotificationsUserControllerCreateWatchedItem = <TError = ErrorType<unknown>,
+    /**
+ * @summary Create watched item
+ */
+export const useNotificationsUserControllerCreateWatchedItem = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerCreateWatchedItem>>, TError,{data: BodyType<CreateWatchedItemDto>}, TContext>, request?: SecondParameter<typeof orvalFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof notificationsUserControllerCreateWatchedItem>>,
@@ -1952,7 +2223,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
       return useMutation(getNotificationsUserControllerCreateWatchedItemMutationOptions(options));
     }
-    export const getNotificationsUserControllerQuickAddWatchedItemUrl = () => {
+    /**
+ * Add a guild scope to a watched item for the authenticated user
+ * @summary Quick add watched item
+ */
+export const getNotificationsUserControllerQuickAddWatchedItemUrl = () => {
 
 
 
@@ -1960,9 +2235,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return `/users/@me/notifications/watched-items/quick-add`
 }
 
-export const notificationsUserControllerQuickAddWatchedItem = async (createWatchedItemQuickAddDto: CreateWatchedItemQuickAddDto, options?: RequestInit): Promise<WatchedItemResponseDtoOutput> => {
+export const notificationsUserControllerQuickAddWatchedItem = async (createWatchedItemQuickAddDto: CreateWatchedItemQuickAddDto, options?: RequestInit): Promise<WatchedItemResponseDto> => {
 
-  return orvalFetch<WatchedItemResponseDtoOutput>(getNotificationsUserControllerQuickAddWatchedItemUrl(),
+  return orvalFetch<WatchedItemResponseDto>(getNotificationsUserControllerQuickAddWatchedItemUrl(),
   {
     ...options,
     method: 'POST',
@@ -2006,7 +2281,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type NotificationsUserControllerQuickAddWatchedItemMutationBody = BodyType<CreateWatchedItemQuickAddDto>
     export type NotificationsUserControllerQuickAddWatchedItemMutationError = ErrorType<unknown>
 
-    export const useNotificationsUserControllerQuickAddWatchedItem = <TError = ErrorType<unknown>,
+    /**
+ * @summary Quick add watched item
+ */
+export const useNotificationsUserControllerQuickAddWatchedItem = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerQuickAddWatchedItem>>, TError,{data: BodyType<CreateWatchedItemQuickAddDto>}, TContext>, request?: SecondParameter<typeof orvalFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof notificationsUserControllerQuickAddWatchedItem>>,
@@ -2016,7 +2294,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
       return useMutation(getNotificationsUserControllerQuickAddWatchedItemMutationOptions(options));
     }
-    export const getNotificationsUserControllerDeleteWatchedItemUrl = ({ watchedItemId }: NotificationsUserControllerDeleteWatchedItemPathParameters,) => {
+    /**
+ * Delete a watched item for the authenticated user
+ * @summary Delete watched item
+ */
+export const getNotificationsUserControllerDeleteWatchedItemUrl = ({ watchedItemId }: NotificationsUserControllerDeleteWatchedItemPathParameters,) => {
 
 
 
@@ -2069,7 +2351,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type NotificationsUserControllerDeleteWatchedItemMutationError = ErrorType<unknown>
 
-    export const useNotificationsUserControllerDeleteWatchedItem = <TError = ErrorType<unknown>,
+    /**
+ * @summary Delete watched item
+ */
+export const useNotificationsUserControllerDeleteWatchedItem = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerDeleteWatchedItem>>, TError,{pathParams: NotificationsUserControllerDeleteWatchedItemPathParameters}, TContext>, request?: SecondParameter<typeof orvalFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof notificationsUserControllerDeleteWatchedItem>>,

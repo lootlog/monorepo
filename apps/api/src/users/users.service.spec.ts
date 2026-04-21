@@ -6,6 +6,7 @@ import { of } from "rxjs";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { AuthService } from "src/auth/auth.service";
 import { PrismaService } from "src/db/prisma.service";
+import { GuildsService } from "src/guilds/guilds.service";
 import { MembersService } from "src/members/members.service";
 import { getUserLootlogConfigCachePattern } from "src/shared/constants/cache.constant";
 import {
@@ -86,6 +87,10 @@ describe("UsersService", () => {
   const mockMembersService = { notifyMembersRemoved: mockFn() };
   const mockRedisService = { deleteByPattern: mockFn() };
   const mockHttpService = { post: mockFn() };
+  const mockGuildsService = {
+    getCurrentUserGuildAccessSummaries: mockFn(),
+    getCurrentUserAccessibleGuilds: mockFn(),
+  };
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -140,6 +145,10 @@ describe("UsersService", () => {
           provide: HttpService,
           useValue: mockHttpService,
         },
+        {
+          provide: GuildsService,
+          useValue: mockGuildsService,
+        },
       ],
     }).compile();
 
@@ -171,6 +180,40 @@ describe("UsersService", () => {
         npcs: [],
       },
     });
+  });
+
+  it("delegates current-user guild lookup to GuildsService", async () => {
+    mockGuildsService.getCurrentUserGuildAccessSummaries.mockResolvedValue([
+      {
+        id: "guild-1",
+        name: "Alpha",
+        icon: null,
+        vanityUrl: null,
+        ownerId: "owner-1",
+        hasLootlogAccess: true,
+        isAccessDataStale: false,
+      },
+    ]);
+
+    const result = await service.getCurrentUserGuilds(
+      "discord-user-current",
+      "auth-user-current",
+    );
+
+    expect(
+      mockGuildsService.getCurrentUserGuildAccessSummaries,
+    ).toHaveBeenCalledWith("discord-user-current", "auth-user-current");
+    expect(result).toEqual([
+      {
+        id: "guild-1",
+        name: "Alpha",
+        icon: null,
+        vanityUrl: null,
+        ownerId: "owner-1",
+        hasLootlogAccess: true,
+        isAccessDataStale: false,
+      },
+    ]);
   });
 
   it("updates global notification mutes without requiring account-scoped preferences", async () => {

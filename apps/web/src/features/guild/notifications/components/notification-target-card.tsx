@@ -15,14 +15,14 @@ import { invalidateGuildNotificationQueries } from "../notifications-api";
 import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
 import { getGuildNotificationTargetLabel } from "../utils/notification-settings.utils";
 import { useNotificationsGuildControllerDeleteGuildTarget } from "@/lib/api/generated/main/notifications/notifications";
-import type { NotificationTargetResponseDtoOutput } from "@/lib/api/generated/main/model";
+import type { NotificationTargetResponseDto } from "@/lib/api/generated/main/model";
 
 type NotificationTargetCardProps = {
-  target: NotificationTargetResponseDtoOutput;
+  target: NotificationTargetResponseDto;
   usageCount: number;
   orphanedRuleCount: number;
   actionsDisabled: boolean;
-  onEdit: (target: NotificationTargetResponseDtoOutput) => void;
+  onEdit: (target: NotificationTargetResponseDto) => void;
 };
 
 export const NotificationTargetCard = ({

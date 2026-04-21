@@ -7,5 +7,5 @@
  */
 
 export type NotificationsGuildControllerGetGuildRulesPathParameters = {
- guildId: string,
+ guildId: unknown,
  }

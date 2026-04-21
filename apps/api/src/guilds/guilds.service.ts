@@ -46,6 +46,14 @@ interface GuildRefreshCandidate {
   hasDiscordAdmin: boolean;
 }
 
+export type CurrentUserGuildAccessSummary = Pick<
+  Guild,
+  "id" | "name" | "icon" | "vanityUrl" | "ownerId"
+> & {
+  hasLootlogAccess: boolean;
+  isAccessDataStale: boolean;
+};
+
 type GetGuildDiscordSyncStateOptions = {
   forceRefresh?: boolean;
   refreshIfStale?: boolean;
@@ -69,70 +77,89 @@ export class GuildsService {
   }
 
   async getUserGuilds(discordId: string, userId: string, source?: string) {
-    const userPreferences = await this.prisma.userSettings.findUnique({
-      where: { userId },
-      select: { guildsOrder: true },
-    });
-
-    let guilds: Guild[] = [];
     if (source === "game") {
-      guilds = await this.getFreshenedGuildsForRequiredPermissions(
+      return this.getCurrentUserAccessibleGuilds(discordId, userId);
+    }
+
+    const guildCandidates = await this.getDiscordLootlogGuildCandidates(
+      discordId,
+      userId,
+    );
+
+    return this.sortGuildEntriesByUserPreferences(
+      userId,
+      guildCandidates.map(({ guild }) => guild),
+    );
+  }
+
+  async getCurrentUserGuildAccessSummaries(
+    discordId: string,
+    userId: string,
+  ): Promise<CurrentUserGuildAccessSummary[]> {
+    const requiredPermissions = [Permission.LOOTLOG_ACCESS];
+    const guildCandidates = await this.getDiscordLootlogGuildCandidates(
+      discordId,
+      userId,
+    );
+
+    if (guildCandidates.length === 0) {
+      return [];
+    }
+
+    const members = await this.refreshGuildCandidatesWithinBudget({
+      discordId,
+      userId,
+      guildCandidates,
+      members: await this.getGuildMembersForPermissions(
         discordId,
-        userId,
-        Permission.LOOTLOG_ACCESS,
+        guildCandidates.map((candidate) => candidate.guild.id),
+      ),
+      requiredPermissions,
+      maxImmediateRefreshes: 2,
+    });
+    const memberByGuildId = new Map(
+      members.map((member) => [member.guildId, member] as const),
+    );
+
+    return this.sortGuildEntriesByUserPreferences(
+      userId,
+      guildCandidates.map(({ guild }) => {
+        const member = memberByGuildId.get(guild.id);
+        const isOwner = guild.ownerId === discordId;
+
+        return {
+          id: guild.id,
+          name: guild.name,
+          icon: guild.icon,
+          vanityUrl: guild.vanityUrl,
+          ownerId: guild.ownerId,
+          hasLootlogAccess:
+            isOwner ||
+            this.memberHasRequiredPermissions(member, requiredPermissions),
+          isAccessDataStale:
+            !isOwner &&
+            (member === undefined ||
+              this.membersService.isMemberSoftStale(member)),
+        };
+      }),
+    );
+  }
+
+  async getCurrentUserAccessibleGuilds(discordId: string, userId: string) {
+    const guilds = await this.getCurrentUserGuildAccessSummaries(
+      discordId,
+      userId,
+    );
+
+    return guilds
+      .filter((guild) => guild.hasLootlogAccess)
+      .map(
+        ({
+          hasLootlogAccess: _hasLootlogAccess,
+          isAccessDataStale: _isAccessDataStale,
+          ...guild
+        }) => guild,
       );
-    } else {
-      try {
-        const discordGuilds = await this.discordService.getUserGuilds(
-          userId,
-          discordId,
-        );
-
-        if (!discordGuilds || discordGuilds.length === 0) {
-          this.logger.log({
-            level: "warn",
-            message: `No guilds found for user ${userId} with Discord ID ${discordId}`,
-          });
-          return [];
-        }
-
-        const discordGuildIds = discordGuilds.map((guild) => guild.id);
-
-        guilds = await this.prisma.guild.findMany({
-          where: {
-            id: { in: discordGuildIds },
-            active: true,
-          },
-        });
-      } catch (error) {
-        if (
-          error instanceof HttpException &&
-          error.getStatus() === HttpStatus.UNAUTHORIZED
-        ) {
-          this.logger.log({
-            level: "warn",
-            message: `User authentication failed for userId: ${userId}, returning empty guilds`,
-          });
-          return [];
-        }
-        throw error;
-      }
-    }
-
-    if (userPreferences?.guildsOrder) {
-      const guildOrderMap = new Map<string, number>(
-        userPreferences.guildsOrder.map(
-          (id: string, idx: number) => [id, idx] as const,
-        ),
-      );
-      guilds.sort((a, b) => {
-        const aIdx = guildOrderMap.get(a.id) ?? Number.MAX_SAFE_INTEGER;
-        const bIdx = guildOrderMap.get(b.id) ?? Number.MAX_SAFE_INTEGER;
-        return aIdx - bIdx;
-      });
-    }
-
-    return guilds;
   }
 
   async getManageableUserGuilds(discordId: string, userId: string) {
@@ -423,42 +450,6 @@ export class GuildsService {
     );
   }
 
-  private async getFreshenedGuildsForRequiredPermissions(
-    discordId: string,
-    userId: string,
-    requiredPermission: Permission,
-  ): Promise<Guild[]> {
-    const requiredPermissions = [requiredPermission];
-    const guildCandidates = await this.getCandidateGuildsForUser(
-      discordId,
-      userId,
-    );
-    const guilds = guildCandidates.map((candidate) => candidate.guild);
-
-    if (guilds.length === 0) {
-      return [];
-    }
-
-    const members = await this.refreshGuildCandidatesWithinBudget({
-      discordId,
-      userId,
-      guildCandidates,
-      members: await this.getGuildMembersForPermissions(
-        discordId,
-        guilds.map((guild) => guild.id),
-      ),
-      requiredPermissions,
-      maxImmediateRefreshes: 2,
-    });
-
-    return this.filterGuildsByPermissions(
-      discordId,
-      guilds,
-      members,
-      requiredPermissions,
-    );
-  }
-
   private async getCandidateGuildsForUser(
     discordId: string,
     userId: string,
@@ -516,6 +507,64 @@ export class GuildsService {
           Permission.LOOTLOG_ACCESS,
         ]),
       );
+    }
+  }
+
+  private async getDiscordLootlogGuildCandidates(
+    discordId: string,
+    userId: string,
+  ): Promise<GuildRefreshCandidate[]> {
+    try {
+      const discordGuilds = await this.discordService.getUserGuilds(
+        userId,
+        discordId,
+      );
+
+      if (!discordGuilds || discordGuilds.length === 0) {
+        this.logger.log({
+          level: "warn",
+          message: `No guilds found for user ${userId} with Discord ID ${discordId}`,
+        });
+        return [];
+      }
+
+      const discordGuildIds = discordGuilds.map((guild) => guild.id);
+      const discordGuildMap = new Map(
+        discordGuilds.map((guild) => [guild.id, guild] as const),
+      );
+      const guilds = await this.prisma.guild.findMany({
+        where: {
+          id: { in: discordGuildIds },
+          active: true,
+        },
+      });
+
+      return guilds.map((guild) => {
+        const discordGuild = discordGuildMap.get(guild.id);
+
+        return {
+          guild,
+          isDiscordOwner: discordGuild
+            ? this.isDiscordOwnerGuild(discordGuild, discordId)
+            : false,
+          hasDiscordAdmin: discordGuild
+            ? this.hasDiscordAdministratorAccess(discordGuild)
+            : false,
+        };
+      });
+    } catch (error) {
+      if (
+        error instanceof HttpException &&
+        error.getStatus() === HttpStatus.UNAUTHORIZED
+      ) {
+        this.logger.log({
+          level: "warn",
+          message: `User authentication failed for userId: ${userId}, returning empty guilds`,
+        });
+        return [];
+      }
+
+      throw error;
     }
   }
 
@@ -768,6 +817,35 @@ export class GuildsService {
         requiredPermissions.includes(permission),
       ),
     );
+  }
+
+  private async sortGuildEntriesByUserPreferences<T extends { id: string }>(
+    userId: string,
+    entries: T[],
+  ): Promise<T[]> {
+    const userPreferences = await this.prisma.userSettings.findUnique({
+      where: { userId },
+      select: { guildsOrder: true },
+    });
+
+    if (!userPreferences?.guildsOrder) {
+      return entries;
+    }
+
+    const guildOrderMap = new Map<string, number>(
+      userPreferences.guildsOrder.map(
+        (guildId: string, index: number) => [guildId, index] as const,
+      ),
+    );
+
+    return [...entries].sort((leftEntry, rightEntry) => {
+      const leftIndex =
+        guildOrderMap.get(leftEntry.id) ?? Number.MAX_SAFE_INTEGER;
+      const rightIndex =
+        guildOrderMap.get(rightEntry.id) ?? Number.MAX_SAFE_INTEGER;
+
+      return leftIndex - rightIndex;
+    });
   }
 
   private toGuildRefreshCandidates(guilds: Guild[]): GuildRefreshCandidate[] {

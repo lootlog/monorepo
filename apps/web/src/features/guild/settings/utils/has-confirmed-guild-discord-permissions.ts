@@ -1,7 +1,7 @@
-import type { DiscordGuildSyncStateResponseDtoOutput } from "@/lib/api/generated/main/model";
+import type { DiscordGuildSyncStateResponseDto } from "@/lib/api/generated/main/model";
 
 export const hasConfirmedGuildDiscordPermissions = (
-  syncState: DiscordGuildSyncStateResponseDtoOutput | undefined,
+  syncState: DiscordGuildSyncStateResponseDto | undefined,
 ) => {
   if (!syncState) {
     return false;

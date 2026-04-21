@@ -22,10 +22,10 @@ import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   invalidateGuildsControllerGetGuildById,
-  invalidateGuildsControllerGetUserGuilds,
   useGuildsControllerGetGuildById,
   useGuildsControllerUpdateGuildConfig,
 } from "@/lib/api/generated/main/guilds/guilds";
+import { invalidateUsersControllerGetCurrentUserAccessibleGuilds } from "@/lib/api/generated/main/users/users";
 
 const RESTRICTED_NAMES = ["@me"];
 
@@ -77,7 +77,9 @@ export const GeneralForm = () => {
           if (guildId) {
             await Promise.all([
               invalidateGuildsControllerGetGuildById(queryClient, { guildId }),
-              invalidateGuildsControllerGetUserGuilds(queryClient),
+              invalidateUsersControllerGetCurrentUserAccessibleGuilds(
+                queryClient,
+              ),
             ]);
           }
           toast.success("Zaktualizowano konfigurację lootloga");

@@ -8,12 +8,12 @@ import { ItemImage, ItemTile } from "@/components/tiles";
 import { getUserNotificationsErrorMessage } from "@/features/user/notifications/utils/get-user-notifications-error-message";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNotificationsUserControllerDeleteWatchedItem } from "@/lib/api/generated/main/notifications/notifications";
-import type { WatchedItemResponseDtoOutput } from "@/lib/api/generated/main/model";
+import type { WatchedItemResponseDto } from "@/lib/api/generated/main/model";
 import { ItemRarity } from "@/hooks/api/loots/use-loots";
 import { invalidateUserNotificationQueries } from "../user-notifications-api";
 
 type WatchedItemCardProps = {
-  watchedItem: WatchedItemResponseDtoOutput;
+  watchedItem: WatchedItemResponseDto;
   guildLabels: string[];
   missingGuildIds: string[];
 };

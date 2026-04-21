@@ -324,6 +324,212 @@ describe("GuildsService", () => {
     });
   });
 
+  describe("getCurrentUserGuildAccessSummaries", () => {
+    it("returns guild access metadata and keeps stale entries when refresh stays queued", async () => {
+      mockDiscordService.getUserGuilds.mockResolvedValue([
+        {
+          id: "guild-access",
+          permissions: "0",
+          owner: false,
+          owner_id: "owner-1",
+        },
+        {
+          id: "guild-stale",
+          permissions: "0",
+          owner: false,
+          owner_id: "owner-2",
+        },
+      ]);
+      mockPrismaService.guild.findMany.mockResolvedValue([
+        createGuild({ id: "guild-access", ownerId: "owner-1", name: "Access" }),
+        createGuild({ id: "guild-stale", ownerId: "owner-2", name: "Stale" }),
+      ]);
+      mockPrismaService.member.findMany
+        .mockResolvedValueOnce([
+          {
+            guildId: "guild-access",
+            active: true,
+            globalUserId: "user-123",
+            lastDiscordSyncAt: new Date("2026-01-01T00:00:00.000Z"),
+            updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+            roles: [
+              {
+                id: "role-access",
+                lvlRangeFrom: null,
+                lvlRangeTo: null,
+                permissions: [Permission.LOOTLOG_ACCESS],
+              },
+            ],
+          },
+        ])
+        .mockResolvedValueOnce([
+          {
+            guildId: "guild-access",
+            active: true,
+            globalUserId: "user-123",
+            lastDiscordSyncAt: new Date("2026-01-01T00:00:00.000Z"),
+            updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+            roles: [
+              {
+                id: "role-access",
+                lvlRangeFrom: null,
+                lvlRangeTo: null,
+                permissions: [Permission.LOOTLOG_ACCESS],
+              },
+            ],
+          },
+        ]);
+      mockPrismaService.userSettings.findUnique.mockResolvedValue({
+        guildsOrder: ["guild-stale", "guild-access"],
+      });
+      mockMembersService.refreshGuildMemberWithinBudget.mockResolvedValue({
+        member: null,
+        refreshQueued: true,
+        nextRefreshAt: null,
+      });
+      mockMembersService.isMemberSoftStale.mockImplementation((member) => {
+        return member?.guildId === "guild-stale";
+      });
+
+      const result = await service.getCurrentUserGuildAccessSummaries(
+        "discord-123",
+        "user-123",
+      );
+
+      expect(result).toEqual([
+        {
+          id: "guild-stale",
+          name: "Stale",
+          icon: null,
+          vanityUrl: null,
+          ownerId: "owner-2",
+          hasLootlogAccess: false,
+          isAccessDataStale: true,
+        },
+        {
+          id: "guild-access",
+          name: "Access",
+          icon: null,
+          vanityUrl: null,
+          ownerId: "owner-1",
+          hasLootlogAccess: true,
+          isAccessDataStale: false,
+        },
+      ]);
+    });
+
+    it("filters rich guild entries down to accessible guilds", async () => {
+      const getCurrentUserGuildAccessSummariesSpy = vi
+        .spyOn(service, "getCurrentUserGuildAccessSummaries")
+        .mockResolvedValue([
+          {
+            id: "guild-access",
+            name: "Access",
+            icon: null,
+            vanityUrl: null,
+            ownerId: "owner-1",
+            hasLootlogAccess: true,
+            isAccessDataStale: false,
+          },
+          {
+            id: "guild-denied",
+            name: "Denied",
+            icon: null,
+            vanityUrl: null,
+            ownerId: "owner-2",
+            hasLootlogAccess: false,
+            isAccessDataStale: true,
+          },
+        ]);
+
+      const result = await service.getCurrentUserAccessibleGuilds(
+        "discord-123",
+        "user-123",
+      );
+
+      expect(getCurrentUserGuildAccessSummariesSpy).toHaveBeenCalledWith(
+        "discord-123",
+        "user-123",
+      );
+      expect(result).toEqual([
+        {
+          id: "guild-access",
+          name: "Access",
+          icon: null,
+          vanityUrl: null,
+          ownerId: "owner-1",
+        },
+      ]);
+    });
+  });
+
+  describe("getUserGuilds", () => {
+    it("keeps the legacy game source on plain guild output by delegating to accessible guilds", async () => {
+      const getCurrentUserAccessibleGuildsSpy = vi
+        .spyOn(service, "getCurrentUserAccessibleGuilds")
+        .mockResolvedValue([
+          {
+            id: "guild-access",
+            name: "Access",
+            icon: null,
+            vanityUrl: null,
+            ownerId: "owner-1",
+          },
+        ]);
+
+      const result = await service.getUserGuilds(
+        "discord-123",
+        "user-123",
+        "game",
+      );
+
+      expect(getCurrentUserAccessibleGuildsSpy).toHaveBeenCalledWith(
+        "discord-123",
+        "user-123",
+      );
+      expect(result).toEqual([
+        {
+          id: "guild-access",
+          name: "Access",
+          icon: null,
+          vanityUrl: null,
+          ownerId: "owner-1",
+        },
+      ]);
+    });
+
+    it("returns sorted plain guilds for the legacy default path", async () => {
+      mockDiscordService.getUserGuilds.mockResolvedValue([
+        {
+          id: "guild-a",
+          permissions: "0",
+          owner: false,
+          owner_id: "owner-a",
+        },
+        {
+          id: "guild-b",
+          permissions: "0",
+          owner: false,
+          owner_id: "owner-b",
+        },
+      ]);
+      mockPrismaService.guild.findMany.mockResolvedValue([
+        createGuild({ id: "guild-a", name: "Alpha", ownerId: "owner-a" }),
+        createGuild({ id: "guild-b", name: "Beta", ownerId: "owner-b" }),
+      ]);
+      mockPrismaService.userSettings.findUnique.mockResolvedValue({
+        guildsOrder: ["guild-b", "guild-a"],
+      });
+
+      const result = await service.getUserGuilds("discord-123", "user-123");
+
+      expect(result).toEqual([
+        createGuild({ id: "guild-b", name: "Beta", ownerId: "owner-b" }),
+        createGuild({ id: "guild-a", name: "Alpha", ownerId: "owner-a" }),
+      ]);
+    });
+  });
+
   describe("refreshGuildCandidatesWithinBudget", () => {
     it("should prioritize repair cases before Discord admin guilds", async () => {
       const testService = service as unknown as {

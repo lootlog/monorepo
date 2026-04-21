@@ -9,6 +9,12 @@ export type Guild = {
   vanityUrl?: string;
 };
 
+export type CurrentUserGuild = Guild & {
+  hasLootlogAccess: boolean;
+  isAccessDataStale: boolean;
+  ownerId: string;
+};
+
 export async function fetchGuild(guildId: string): Promise<Guild> {
   const client = getApiClient("default");
   const response = await client.get<Guild>(`/guilds/${guildId}`);
@@ -18,7 +24,16 @@ export async function fetchGuild(guildId: string): Promise<Guild> {
 
 export async function fetchGuilds(): Promise<Guild[]> {
   const client = getApiClient("default");
-  const response = await client.get<Guild[]>("/guilds/@me?source=game", {
+  const response = await client.get<Guild[]>("/users/@me/guilds/accessible", {
+    withCredentials: true,
+  });
+
+  return response.data;
+}
+
+export async function fetchCurrentUserGuilds(): Promise<CurrentUserGuild[]> {
+  const client = getApiClient("default");
+  const response = await client.get<CurrentUserGuild[]>("/users/@me/guilds", {
     withCredentials: true,
   });
 

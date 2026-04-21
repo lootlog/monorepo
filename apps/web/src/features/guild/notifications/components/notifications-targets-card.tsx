@@ -4,8 +4,8 @@ import { Badge } from "@lootlog/ui/components/badge";
 import { Card } from "@lootlog/ui/components/card";
 import { NotificationTargetCard } from "./notification-target-card";
 import type {
-  GuildNotificationRulesResponseDtoOutput,
-  NotificationTargetResponseDtoOutput,
+  GuildNotificationRulesResponseDto,
+  NotificationTargetResponseDto,
 } from "@/lib/api/generated/main/model";
 import {
   getGuildNotificationTargetUsageCount,
@@ -13,10 +13,10 @@ import {
 } from "../utils/notification-settings.utils";
 
 type NotificationsTargetsCardProps = {
-  targets: NotificationTargetResponseDtoOutput[];
-  rules: GuildNotificationRulesResponseDtoOutput["items"];
+  targets: NotificationTargetResponseDto[];
+  rules: GuildNotificationRulesResponseDto["items"];
   actionsDisabled: boolean;
-  onEditTarget: (target: NotificationTargetResponseDtoOutput) => void;
+  onEditTarget: (target: NotificationTargetResponseDto) => void;
 };
 
 export const NotificationsTargetsCard = ({

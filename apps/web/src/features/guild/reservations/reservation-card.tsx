@@ -5,7 +5,7 @@ import { Card } from "@lootlog/ui/components/card";
 import { NpcSearchTile } from "@/components/tiles";
 import type {
   MemberResponseDto as GuildMember,
-  ReservationResponseDtoOutput,
+  ReservationResponseDto,
 } from "@/lib/api/generated/main/model";
 
 export interface ReservationCardProps {
@@ -13,15 +13,15 @@ export interface ReservationCardProps {
   title: string;
   size: string;
   images?: string[];
-  reservations: ReservationResponseDtoOutput[];
+  reservations: ReservationResponseDto[];
   members?: GuildMember[];
   onClick: () => void;
   viewMode?: "list" | "grid";
 }
 
 const getCurrentOccupant = (
-  reservations: ReservationResponseDtoOutput[],
-): ReservationResponseDtoOutput | null => {
+  reservations: ReservationResponseDto[],
+): ReservationResponseDto | null => {
   const now = new Date();
   return (
     reservations.find(
@@ -31,8 +31,8 @@ const getCurrentOccupant = (
 };
 
 const getNextReservation = (
-  reservations: ReservationResponseDtoOutput[],
-): ReservationResponseDtoOutput | null => {
+  reservations: ReservationResponseDto[],
+): ReservationResponseDto | null => {
   const now = new Date();
   const futureReservations = reservations
     .filter((r) => new Date(r.fromDate) > now)
@@ -43,15 +43,13 @@ const getNextReservation = (
 };
 
 const getActiveReservationsCount = (
-  reservations: ReservationResponseDtoOutput[],
+  reservations: ReservationResponseDto[],
 ): number => {
   const now = new Date();
   return reservations.filter((r) => new Date(r.toDate) >= now).length;
 };
 
-const formatReservationTime = (
-  reservation: ReservationResponseDtoOutput,
-): string => {
+const formatReservationTime = (reservation: ReservationResponseDto): string => {
   const from = new Date(reservation.fromDate);
   const to = new Date(reservation.toDate);
   return `${format(from, "dd.MM HH:mm")} - ${format(to, "HH:mm")}`;

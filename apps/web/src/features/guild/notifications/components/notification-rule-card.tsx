@@ -38,10 +38,10 @@ import {
   useNotificationsGuildControllerRebuildGuildRuleJobs,
   useNotificationsGuildControllerTriggerGuildRuleTest,
 } from "@/lib/api/generated/main/notifications/notifications";
-import type { GuildNotificationRulesResponseDtoOutput } from "@/lib/api/generated/main/model";
+import type { GuildNotificationRulesResponseDto } from "@/lib/api/generated/main/model";
 
 type NotificationRuleCardProps = {
-  rule: GuildNotificationRulesResponseDtoOutput["items"][number];
+  rule: GuildNotificationRulesResponseDto["items"][number];
   actionsDisabled: boolean;
 };
 

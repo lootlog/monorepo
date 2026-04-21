@@ -31,7 +31,7 @@ import { useItems, type GameItem } from "@/hooks/api/game-data/use-items";
 import { useGuildsWorlds } from "@/hooks/api/game-data/use-guilds-worlds";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNotificationsUserControllerCreateWatchedItem } from "@/lib/api/generated/main/notifications/notifications";
-import type { WatchedItemResponseDtoOutput } from "@/lib/api/generated/main/model";
+import type { WatchedItemResponseDto } from "@/lib/api/generated/main/model";
 import { invalidateUserNotificationQueries } from "../user-notifications-api";
 
 const watchFormSchema = z
@@ -90,7 +90,7 @@ type WatchFormDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   hasActiveDm: boolean;
-  watchedItems: WatchedItemResponseDtoOutput[];
+  watchedItems: WatchedItemResponseDto[];
   guildOptions: Array<{ value: string; label: string }>;
 };
 

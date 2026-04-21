@@ -23,9 +23,11 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  GuildResponseDtoOutput,
   StatusOkResponseDtoOutput,
   UpdateUserGameAccountPreferencesDto,
   UpdateUserPreferencesDto,
+  UserCurrentGuildResponseDtoOutput,
   UserGameAccountPreferencesResponseDtoOutput,
   UserPreferencesResponseDtoOutput,
   UsersControllerGetUserGameAccountPreferencesPathParameters,
@@ -301,6 +303,244 @@ export const useUsersControllerUpdateUserPreferences = <TError = ErrorType<unkno
       return useMutation(getUsersControllerUpdateUserPreferencesMutationOptions(options));
     }
     /**
+ * Retrieve the authenticated user's Discord guilds that also exist in Lootlog, together with Lootlog access status
+ * @summary Get current user guilds
+ */
+export const getUsersControllerGetCurrentUserGuildsUrl = () => {
+
+
+
+
+  return `/users/@me/guilds`
+}
+
+export const usersControllerGetCurrentUserGuilds = async ( options?: RequestInit): Promise<UserCurrentGuildResponseDtoOutput[]> => {
+
+  return orvalFetch<UserCurrentGuildResponseDtoOutput[]>(getUsersControllerGetCurrentUserGuildsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getUsersControllerGetCurrentUserGuildsQueryKey = () => {
+    return [
+    `/users/@me/guilds`
+    ] as const;
+    }
+
+
+export const getUsersControllerGetCurrentUserGuildsQueryOptions = <TData = Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getUsersControllerGetCurrentUserGuildsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>> = ({ signal }) => usersControllerGetCurrentUserGuilds({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type UsersControllerGetCurrentUserGuildsQueryResult = NonNullable<Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>>
+export type UsersControllerGetCurrentUserGuildsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get current user guilds
+ */
+
+export function useUsersControllerGetCurrentUserGuilds<TData = Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getUsersControllerGetCurrentUserGuildsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get current user guilds
+ */
+export const prefetchUsersControllerGetCurrentUserGuildsQuery = async <TData = Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>, TError = ErrorType<unknown>>(
+ queryClient: QueryClient,  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getUsersControllerGetCurrentUserGuildsQueryOptions(options)
+
+  await queryClient.prefetchQuery(queryOptions);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get current user guilds
+ */
+export const invalidateUsersControllerGetCurrentUserGuilds = async (
+ queryClient: QueryClient,  options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getUsersControllerGetCurrentUserGuildsQueryKey() }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get current user guilds
+ */
+export const useSetUsersControllerGetCurrentUserGuildsQueryData = () => {
+  const queryClient = useQueryClient();
+  return (updater: Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>> | undefined | ((old: Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>> | undefined) => Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>> | undefined)) => {
+    queryClient.setQueryData(getUsersControllerGetCurrentUserGuildsQueryKey(), updater);
+  };
+}
+
+/**
+ * @summary Get current user guilds
+ */
+export const useGetUsersControllerGetCurrentUserGuildsQueryData = () => {
+  const queryClient = useQueryClient();
+  return () =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>>(getUsersControllerGetCurrentUserGuildsQueryKey());
+}
+
+
+/**
+ * Retrieve the authenticated user's Lootlog guilds where the cached or refreshed member data indicates access
+ * @summary Get accessible current user guilds
+ */
+export const getUsersControllerGetCurrentUserAccessibleGuildsUrl = () => {
+
+
+
+
+  return `/users/@me/guilds/accessible`
+}
+
+export const usersControllerGetCurrentUserAccessibleGuilds = async ( options?: RequestInit): Promise<GuildResponseDtoOutput[]> => {
+
+  return orvalFetch<GuildResponseDtoOutput[]>(getUsersControllerGetCurrentUserAccessibleGuildsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getUsersControllerGetCurrentUserAccessibleGuildsQueryKey = () => {
+    return [
+    `/users/@me/guilds/accessible`
+    ] as const;
+    }
+
+
+export const getUsersControllerGetCurrentUserAccessibleGuildsQueryOptions = <TData = Awaited<ReturnType<typeof usersControllerGetCurrentUserAccessibleGuilds>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetCurrentUserAccessibleGuilds>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getUsersControllerGetCurrentUserAccessibleGuildsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof usersControllerGetCurrentUserAccessibleGuilds>>> = ({ signal }) => usersControllerGetCurrentUserAccessibleGuilds({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetCurrentUserAccessibleGuilds>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type UsersControllerGetCurrentUserAccessibleGuildsQueryResult = NonNullable<Awaited<ReturnType<typeof usersControllerGetCurrentUserAccessibleGuilds>>>
+export type UsersControllerGetCurrentUserAccessibleGuildsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get accessible current user guilds
+ */
+
+export function useUsersControllerGetCurrentUserAccessibleGuilds<TData = Awaited<ReturnType<typeof usersControllerGetCurrentUserAccessibleGuilds>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetCurrentUserAccessibleGuilds>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getUsersControllerGetCurrentUserAccessibleGuildsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get accessible current user guilds
+ */
+export const prefetchUsersControllerGetCurrentUserAccessibleGuildsQuery = async <TData = Awaited<ReturnType<typeof usersControllerGetCurrentUserAccessibleGuilds>>, TError = ErrorType<unknown>>(
+ queryClient: QueryClient,  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetCurrentUserAccessibleGuilds>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getUsersControllerGetCurrentUserAccessibleGuildsQueryOptions(options)
+
+  await queryClient.prefetchQuery(queryOptions);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get accessible current user guilds
+ */
+export const invalidateUsersControllerGetCurrentUserAccessibleGuilds = async (
+ queryClient: QueryClient,  options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey() }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get accessible current user guilds
+ */
+export const useSetUsersControllerGetCurrentUserAccessibleGuildsQueryData = () => {
+  const queryClient = useQueryClient();
+  return (updater: Awaited<ReturnType<typeof usersControllerGetCurrentUserAccessibleGuilds>> | undefined | ((old: Awaited<ReturnType<typeof usersControllerGetCurrentUserAccessibleGuilds>> | undefined) => Awaited<ReturnType<typeof usersControllerGetCurrentUserAccessibleGuilds>> | undefined)) => {
+    queryClient.setQueryData(getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(), updater);
+  };
+}
+
+/**
+ * @summary Get accessible current user guilds
+ */
+export const useGetUsersControllerGetCurrentUserAccessibleGuildsQueryData = () => {
+  const queryClient = useQueryClient();
+  return () =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof usersControllerGetCurrentUserAccessibleGuilds>>>(getUsersControllerGetCurrentUserAccessibleGuildsQueryKey());
+}
+
+
+/**
  * Retrieve account-scoped game preferences for a specific Margonem account
  * @summary Get user game account preferences
  */

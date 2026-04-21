@@ -19,10 +19,10 @@ import { NotificationJobCountdown } from "./notification-job-countdown";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { invalidateGuildNotificationQueries } from "../notifications-api";
 import { useNotificationsGuildControllerCancelGuildJob } from "@/lib/api/generated/main/notifications/notifications";
-import type { NotificationJobsResponseDtoOutput } from "@/lib/api/generated/main/model";
+import type { NotificationJobsResponseDto } from "@/lib/api/generated/main/model";
 
 type NotificationsPendingJobsCardProps = {
-  pendingJobs: NotificationJobsResponseDtoOutput["pending"];
+  pendingJobs: NotificationJobsResponseDto["pending"];
 };
 
 export const NotificationsPendingJobsCard = ({

@@ -41,8 +41,10 @@ export class GuildsController {
   @UseInterceptors(MemberSyncInterceptor)
   @Get("/@me")
   @ApiOperation({
-    summary: "Get user guilds",
-    description: "Retrieve all guilds for the authenticated user",
+    summary: "Get user guilds (deprecated)",
+    description:
+      "Legacy endpoint for listing the authenticated user's guilds. Prefer /users/@me/guilds or /users/@me/guilds/accessible.",
+    deprecated: true,
   })
   @ZodResponse({
     status: 200,
@@ -52,21 +54,22 @@ export class GuildsController {
   @ApiQuery({
     name: "source",
     required: false,
-    description: "Source of the request",
+    description: "Legacy source selector kept for backward compatibility",
   })
   async getUserGuilds(
     @DiscordId() discordId: string,
     @UserId() userId: string,
-    @Query("source") source: string,
+    @Query("source") source?: string,
   ) {
     return this.guildsService.getUserGuilds(discordId, userId, source);
   }
 
   @Get("/@me/permissions")
   @ApiOperation({
-    summary: "Get user guilds with permissions",
+    summary: "Get user guilds with permissions (deprecated)",
     description:
-      "Retrieve all guilds with permissions and roles for the authenticated user",
+      "Legacy endpoint for listing the authenticated user's accessible guilds with role metadata. Prefer /users/@me/guilds for new integrations.",
+    deprecated: true,
   })
   @ZodResponse({
     status: 200,
@@ -75,8 +78,9 @@ export class GuildsController {
   })
   getUserGuildsWithPermissions(
     @DiscordId() discordId: string,
+    @UserId() userId: string,
   ): Promise<UserGuildPermissionsDto[]> {
-    return this.guildsService.getUserGuildsWithPermissions(discordId);
+    return this.guildsService.getUserGuildsWithPermissions(discordId, userId);
   }
 
   @Get("/@me/manageable")

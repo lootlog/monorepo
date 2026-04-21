@@ -3,11 +3,11 @@ import { useTranslation } from "react-i18next";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Card } from "@lootlog/ui/components/card";
 import { NotificationRuleCard } from "./notification-rule-card";
-import type { GuildNotificationRulesResponseDtoOutput } from "@/lib/api/generated/main/model";
+import type { GuildNotificationRulesResponseDto } from "@/lib/api/generated/main/model";
 
 type NotificationsRulesCardProps = {
-  rules: GuildNotificationRulesResponseDtoOutput["items"];
-  limits: GuildNotificationRulesResponseDtoOutput["limits"] | undefined;
+  rules: GuildNotificationRulesResponseDto["items"];
+  limits: GuildNotificationRulesResponseDto["limits"] | undefined;
   actionsDisabled: boolean;
 };
 
