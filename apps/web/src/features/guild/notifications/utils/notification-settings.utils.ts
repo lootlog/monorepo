@@ -1,12 +1,21 @@
 import type { BadgeProps } from "@lootlog/ui/components/badge";
 import type {
-  GuildNotificationRule,
-  GuildNotificationTarget,
-} from "@/hooks/api/guilds/use-guild-notifications";
+  CreateNotificationRuleDtoScheduleAnchor,
+  CreateNotificationRuleDtoTriggerType,
+  GuildNotificationRulesResponseDtoOutput,
+  NotificationJobsResponseDtoOutput,
+  NotificationTargetResponseDtoOutput,
+} from "@/lib/api/generated/main/model";
 import {
-  NotificationScheduleAnchor,
-  NotificationTriggerType,
-} from "@lootlog/types";
+  CreateNotificationRuleDtoScheduleAnchor as NotificationScheduleAnchor,
+  CreateNotificationRuleDtoTriggerType as NotificationTriggerType,
+} from "@/lib/api/generated/main/model";
+
+type GuildNotificationTarget = NotificationTargetResponseDtoOutput;
+type GuildNotificationRule =
+  GuildNotificationRulesResponseDtoOutput["items"][number];
+export type GuildNotificationJob =
+  NotificationJobsResponseDtoOutput["pending"][number];
 
 export const getJobStatusBadgeProps = (
   status: string,
@@ -36,7 +45,7 @@ export const SUPPORTED_GUILD_NOTIFICATION_TRIGGER_TYPES = [
 ] as const;
 
 export const getNotificationTriggerTranslationKey = (
-  triggerType: NotificationTriggerType,
+  triggerType: CreateNotificationRuleDtoTriggerType,
 ) => {
   switch (triggerType) {
     case NotificationTriggerType.TIMER_BEFORE_SPAWN:
@@ -51,7 +60,7 @@ export const getNotificationTriggerTranslationKey = (
 };
 
 export const isSupportedGuildNotificationTrigger = (
-  triggerType: NotificationTriggerType,
+  triggerType: CreateNotificationRuleDtoTriggerType,
 ) =>
   SUPPORTED_GUILD_NOTIFICATION_TRIGGER_TYPES.includes(
     triggerType as (typeof SUPPORTED_GUILD_NOTIFICATION_TRIGGER_TYPES)[number],
@@ -141,13 +150,17 @@ export const getGuildNotificationRuleScheduleTranslationKey = (
   rule: Pick<GuildNotificationRule, "scheduleAnchor" | "scheduleOffsetMinutes">,
 ) => {
   if (
-    rule.scheduleAnchor === NotificationScheduleAnchor.MAX_SPAWN &&
+    rule.scheduleAnchor ===
+      (NotificationScheduleAnchor.MAX_SPAWN as CreateNotificationRuleDtoScheduleAnchor) &&
     rule.scheduleOffsetMinutes === 0
   ) {
     return "settings.notifications.schedule.maxSpawnExact";
   }
 
-  if (rule.scheduleAnchor === NotificationScheduleAnchor.MAX_SPAWN) {
+  if (
+    rule.scheduleAnchor ===
+    (NotificationScheduleAnchor.MAX_SPAWN as CreateNotificationRuleDtoScheduleAnchor)
+  ) {
     return "settings.notifications.schedule.maxSpawnBefore";
   }
 

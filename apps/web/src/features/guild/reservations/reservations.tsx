@@ -3,12 +3,16 @@ import { useNavigate } from "@tanstack/react-router";
 import { Grid2X2, List, Search } from "lucide-react";
 import { ReservationCard } from "./reservation-card";
 import { useGuild } from "@/hooks/api/guilds/use-guild";
-import { useReservations } from "@/hooks/api/reservations/use-reservations";
 import { reservationSlug } from "./reservation-slug";
 import {
-  useReservationsCards,
-  type ReservationCard as ReservationCardData,
-} from "@/hooks/api/reservations/use-reservations-cards";
+  reservationsCardsQueryOptions,
+  reservationsQueryOptions,
+} from "./reservations-api";
+import {
+  useReservationsControllerGetReservations,
+  useReservationsControllerGetReservationsCards,
+} from "@/lib/api/generated/main/reservations/reservations";
+import type { ReservationCardResponseDto } from "@/lib/api/generated/main/model";
 import { Input } from "@lootlog/ui/components/input";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
@@ -22,26 +26,45 @@ import { useViewMode } from "@/hooks/use-view-mode";
 import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
 import { ReservationCardSkeleton } from "./reservation-card-skeleton";
 import { useTranslation } from "react-i18next";
+import { useGuildId } from "@/hooks/context/use-guild-id";
 
 export const Reservations: React.FC = () => {
   const { data: guild } = useGuild({});
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const guildId = useGuildId();
 
   const [searchValue, setSearchValue] = useState("");
   const { viewMode, setViewMode } = useViewMode("reservations-view-mode");
 
-  const { data: reservations } = useReservations();
-  const { data: reservationsCards } = useReservationsCards();
+  const { data: reservations } = useReservationsControllerGetReservations(
+    { guildId: guildId ?? "" },
+    {
+      query: {
+        ...reservationsQueryOptions(guildId ?? ""),
+      },
+    },
+  );
+  const { data: reservationsCards } =
+    useReservationsControllerGetReservationsCards(
+      { guildId: guildId ?? "" },
+      {
+        query: {
+          ...reservationsCardsQueryOptions(guildId ?? ""),
+        },
+      },
+    );
   const { data: members } = useGuildMembers(true);
 
   const normalizedSearch = searchValue.trim().toLowerCase();
   const filteredCards = useMemo(() => {
     if (!reservationsCards) {
-      return [] as Array<[string, ReservationCardData[]]>;
+      return [] as Array<[string, ReservationCardResponseDto[]]>;
     }
 
-    const entries = Object.entries(reservationsCards);
+    const entries = Object.entries(reservationsCards) as Array<
+      [string, ReservationCardResponseDto[]]
+    >;
 
     if (!normalizedSearch) {
       return entries;

@@ -1,7 +1,7 @@
-import type { Reservation } from "@/hooks/api/reservations/use-reservations";
+import type { NormalizedReservation } from "./normalize-reservation";
 
 export type ReservationSegment = {
-  reservation: Reservation;
+  reservation: NormalizedReservation;
   id: string;
   dayIdx: number;
   startHour: number;

@@ -9,17 +9,14 @@ import { useNpcs } from "@/hooks/api/game-data/use-npcs";
 import { useWorlds } from "@/hooks/api/game-data/use-worlds";
 import { useGuildRoles } from "@/hooks/api/guilds/use-guild-roles";
 import {
-  useCreateGuildNotificationRule,
-  useGuildNotifications,
-  useUpdateGuildNotificationRule,
-  type GuildNotificationTarget,
-} from "@/hooks/api/guilds/use-guild-notifications";
-import {
-  NotificationScheduleAnchor,
-  NotificationScheduleIntervalType,
-  NotificationScheduleStrategy,
-  NotificationTriggerType,
-} from "@lootlog/types";
+  CreateNotificationRuleDtoScheduleAnchor as NotificationScheduleAnchor,
+  CreateNotificationRuleDtoScheduleIntervalType as NotificationScheduleIntervalType,
+  CreateNotificationRuleDtoScheduleStrategy as NotificationScheduleStrategy,
+  CreateNotificationRuleDtoTriggerType as NotificationTriggerType,
+  type CreateNotificationRuleDtoTriggerType,
+  type NotificationTargetResponseDtoOutput,
+} from "@/lib/api/generated/main/model";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   getDefaultGuildNotificationRuleContentTemplate,
   getDefaultScheduledMessageContentTemplate,
@@ -44,35 +41,84 @@ import {
 } from "../utils/notification-rule-form-npc.utils";
 import { ROUTES } from "@/config/routes";
 import { useGuildId } from "@/hooks/context/use-guild-id";
+import {
+  guildNotificationRulesQueryKey,
+  guildNotificationTargetsQueryKey,
+  invalidateGuildNotificationQueries,
+} from "../notifications-api";
+import {
+  useNotificationsGuildControllerCreateGuildRule,
+  useNotificationsGuildControllerGetGuildRules,
+  useNotificationsGuildControllerGetGuildTargets,
+  useNotificationsGuildControllerUpdateGuildRule,
+} from "@/lib/api/generated/main/notifications/notifications";
 
 export const useNotificationRuleForm = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const guildId = useGuildId();
+  const queryClient = useQueryClient();
   const params = useParams({ strict: false });
   const ruleId = (params as { ruleId?: string }).ruleId;
   const isCreateMode = ruleId === undefined;
 
-  const { data, isLoading, isError } = useGuildNotifications();
-  const targets = data?.targets ?? [];
-  const maxNpcCount = data?.limits?.maxNpcsPerRule ?? 5;
+  const targetsQuery = useNotificationsGuildControllerGetGuildTargets(
+    { guildId: guildId ?? "" },
+    {
+      query: {
+        queryKey: guildNotificationTargetsQueryKey(guildId ?? ""),
+      },
+    },
+  );
+  const rulesQuery = useNotificationsGuildControllerGetGuildRules(
+    { guildId: guildId ?? "" },
+    {
+      query: {
+        queryKey: guildNotificationRulesQueryKey(guildId ?? ""),
+      },
+    },
+  );
+  const targets = targetsQuery.data ?? [];
+  const maxNpcCount = rulesQuery.data?.limits?.maxNpcsPerRule ?? 5;
   const rule = isCreateMode
     ? undefined
-    : data?.rules.find((r) => String(r.id) === ruleId);
+    : rulesQuery.data?.items.find((r) => String(r.id) === ruleId);
 
-  const createRule = useCreateGuildNotificationRule();
-  const updateRule = useUpdateGuildNotificationRule();
+  const createRule = useNotificationsGuildControllerCreateGuildRule({
+    mutation: {
+      onSuccess: async () => {
+        if (!guildId) {
+          return;
+        }
+
+        await invalidateGuildNotificationQueries(queryClient, guildId);
+      },
+    },
+  });
+  const updateRule = useNotificationsGuildControllerUpdateGuildRule({
+    mutation: {
+      onSuccess: async () => {
+        if (!guildId) {
+          return;
+        }
+
+        await invalidateGuildNotificationQueries(queryClient, guildId);
+      },
+    },
+  });
   const { data: worlds = [] } = useWorlds();
   const { data: guildRoles = [] } = useGuildRoles();
   const [npcSearch, setNpcSearch] = useState("");
-  const [extraTargets, setExtraTargets] = useState<GuildNotificationTarget[]>(
-    [],
-  );
+  const [extraTargets, setExtraTargets] = useState<
+    NotificationTargetResponseDtoOutput[]
+  >([]);
   const [formResetKey, setFormResetKey] = useState(0);
   const [isCreateTargetDialogOpen, setIsCreateTargetDialogOpen] =
     useState(false);
 
-  const getDefaultContentTemplate = (triggerType: NotificationTriggerType) =>
+  const getDefaultContentTemplate = (
+    triggerType: CreateNotificationRuleDtoTriggerType,
+  ) =>
     triggerType === NotificationTriggerType.SCHEDULED_MESSAGE
       ? getDefaultScheduledMessageContentTemplate()
       : getDefaultGuildNotificationRuleContentTemplate();
@@ -217,6 +263,8 @@ export const useNotificationRuleForm = () => {
   }
 
   const isSubmitting = createRule.isPending || updateRule.isPending;
+  const isLoading = targetsQuery.isLoading || rulesQuery.isLoading;
+  const isError = targetsQuery.isError || rulesQuery.isError;
 
   const navigateBack = () => {
     if (guildId) {
@@ -224,7 +272,9 @@ export const useNotificationRuleForm = () => {
     }
   };
 
-  const handleTargetCreated = (createdTarget: GuildNotificationTarget) => {
+  const handleTargetCreated = (
+    createdTarget: NotificationTargetResponseDtoOutput,
+  ) => {
     setExtraTargets((currentTargets) => [...currentTargets, createdTarget]);
     form.setValue(
       "targetIds",
@@ -312,8 +362,8 @@ export const useNotificationRuleForm = () => {
               ...basePayload,
               world:
                 values.world !== ALL_WORLDS_VALUE
-                  ? (values.world ?? null)
-                  : null,
+                  ? (values.world ?? undefined)
+                  : undefined,
               scheduleStrategy:
                 NotificationScheduleStrategy.SPAWN_WINDOW_RELATIVE,
               scheduleAnchor:
@@ -325,12 +375,23 @@ export const useNotificationRuleForm = () => {
 
     try {
       if (isCreateMode) {
-        await createRule.mutateAsync(payload);
+        if (!guildId) {
+          throw new Error("Missing guild id.");
+        }
+
+        await createRule.mutateAsync({
+          pathParams: { guildId },
+          data: payload,
+        });
         toast.success(t("settings.notifications.toasts.ruleCreated"));
       } else if (rule) {
+        if (!guildId) {
+          throw new Error("Missing guild id.");
+        }
+
         await updateRule.mutateAsync({
-          ruleId: rule.id,
-          ...payload,
+          pathParams: { guildId, ruleId: rule.id },
+          data: payload,
         });
         toast.success(t("settings.notifications.toasts.ruleUpdated"));
       }

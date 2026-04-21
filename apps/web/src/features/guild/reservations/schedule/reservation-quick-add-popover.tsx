@@ -5,11 +5,14 @@ import { toast } from "sonner";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { motion } from "framer-motion";
 
-import { useCreateReservation } from "@/hooks/api/reservations/use-create-reservation";
 import { Button } from "@lootlog/ui/components/button";
 import { Textarea } from "@lootlog/ui/components/textarea";
 import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
 import { useTranslation } from "react-i18next";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useQueryClient } from "@tanstack/react-query";
+import { useReservationsControllerCreateReservation } from "@/lib/api/generated/main/reservations/reservations";
+import { queryKeys } from "@/lib/query-keys";
 
 type ReservationQuickAddPopoverProps = {
   start: Date;
@@ -25,21 +28,43 @@ export const ReservationQuickAddPopover: React.FC<
 > = ({ start, end, reservationKey, currentUserId, onClose, onSuccess }) => {
   const [comment, setComment] = useState("");
   const { t } = useTranslation();
-  const { mutateAsync: createReservation, isPending: isCreating } =
-    useCreateReservation();
+  const guildId = useGuildId();
+  const queryClient = useQueryClient();
+  const createReservationMutation = useReservationsControllerCreateReservation({
+    mutation: {
+      onSuccess: async () => {
+        if (!guildId) {
+          return;
+        }
+
+        await queryClient.invalidateQueries({
+          queryKey: queryKeys.reservations.all(guildId),
+        });
+      },
+    },
+  });
+  const createReservation = createReservationMutation.mutateAsync;
+  const isCreating = createReservationMutation.isPending;
 
   const handleCreate = async () => {
     if (!currentUserId || !reservationKey) return;
 
     try {
       const normalizedComment = comment.trim();
+      if (!guildId) {
+        throw new Error("Missing guild id when creating reservation.");
+      }
+
       await createReservation({
-        reservationId: reservationKey,
-        createdDate: new Date(),
-        fromDate: start,
-        toDate: end,
-        createdBy: currentUserId,
-        comment: normalizedComment.length > 0 ? normalizedComment : undefined,
+        pathParams: { guildId },
+        data: {
+          reservationId: reservationKey,
+          createdDate: new Date().toISOString(),
+          fromDate: start.toISOString(),
+          toDate: end.toISOString(),
+          createdBy: currentUserId,
+          comment: normalizedComment.length > 0 ? normalizedComment : undefined,
+        },
       });
 
       toast.success(t("reservations.schedule.toasts.created"));

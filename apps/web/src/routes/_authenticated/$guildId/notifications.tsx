@@ -1,9 +1,10 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router";
-import { guildDiscordSyncQueryOptions } from "@/hooks/api/guilds/use-guild-discord-sync";
 import {
   guildNotificationJobsQueryOptions,
-  guildNotificationsQueryOptions,
-} from "@/hooks/api/guilds/use-guild-notifications";
+  guildNotificationRulesQueryOptions,
+  guildNotificationTargetsQueryOptions,
+} from "@/features/guild/notifications/notifications-api";
+import { guildDiscordSyncQueryOptions } from "@/hooks/api/guilds/use-guild-discord-sync";
 
 function GuildNotificationsLayout() {
   return (
@@ -21,7 +22,10 @@ export const Route = createFileRoute("/_authenticated/$guildId/notifications")({
 
     await Promise.all([
       context.queryClient.ensureQueryData(
-        guildNotificationsQueryOptions(params.guildId),
+        guildNotificationTargetsQueryOptions(params.guildId),
+      ),
+      context.queryClient.ensureQueryData(
+        guildNotificationRulesQueryOptions(params.guildId),
       ),
       context.queryClient.ensureQueryData(
         guildNotificationJobsQueryOptions(params.guildId),

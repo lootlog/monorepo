@@ -1866,6 +1866,10 @@ paths:
       responses:
         "200":
           description: List of reservations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReservationsResponseDto_Output"
         "403":
           description: Forbidden - insufficient permissions
       security:
@@ -1892,6 +1896,10 @@ paths:
       responses:
         "201":
           description: Reservation created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReservationResponseDto_Output"
         "403":
           description: Forbidden - insufficient permissions
       security:
@@ -1919,6 +1927,10 @@ paths:
       responses:
         "200":
           description: Reservation deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReservationResponseDto_Output"
       security:
         - bearer: []
       summary: Delete reservation
@@ -1937,6 +1949,10 @@ paths:
       responses:
         "200":
           description: List of reservations cards
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReservationsCardsResponseDto"
         "403":
           description: Forbidden - insufficient permissions
       security:
@@ -2051,7 +2067,13 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: List of guild notification targets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NotificationTargetResponseDto_Output"
       security:
         - bearer: []
       tags:
@@ -2072,7 +2094,11 @@ paths:
               $ref: "#/components/schemas/CreateNotificationTargetDto"
       responses:
         "201":
-          description: ""
+          description: Guild notification target created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationTargetResponseDto_Output"
       security:
         - bearer: []
       tags:
@@ -2088,7 +2114,11 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Available guild notification targets
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuildAvailableNotificationTargetsResponseDto_Output"
       security:
         - bearer: []
       tags:
@@ -2115,7 +2145,11 @@ paths:
               $ref: "#/components/schemas/UpdateNotificationTargetDto"
       responses:
         "200":
-          description: ""
+          description: Guild notification target updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationTargetResponseDto_Output"
       security:
         - bearer: []
       tags:
@@ -2135,7 +2169,11 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Guild notification target deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponseDto_Output"
       security:
         - bearer: []
       tags:
@@ -2151,7 +2189,11 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Guild notification rules and limits
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuildNotificationRulesResponseDto_Output"
       security:
         - bearer: []
       tags:
@@ -2172,7 +2214,11 @@ paths:
               $ref: "#/components/schemas/CreateNotificationRuleDto"
       responses:
         "201":
-          description: ""
+          description: Guild notification rule created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationRuleResponseDto_Output"
       security:
         - bearer: []
       tags:
@@ -2199,7 +2245,11 @@ paths:
               $ref: "#/components/schemas/UpdateNotificationRuleDto"
       responses:
         "200":
-          description: ""
+          description: Guild notification rule updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationRuleResponseDto_Output"
       security:
         - bearer: []
       tags:
@@ -2219,7 +2269,11 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Guild notification rule deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponseDto_Output"
       security:
         - bearer: []
       tags:
@@ -2240,7 +2294,11 @@ paths:
             type: string
       responses:
         "201":
-          description: ""
+          description: Guild notification jobs rebuilt successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponseDto_Output"
       security:
         - bearer: []
       tags:
@@ -2261,7 +2319,11 @@ paths:
             type: string
       responses:
         "201":
-          description: ""
+          description: Guild notification rule test triggered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponseDto_Output"
       security:
         - bearer: []
       tags:
@@ -2277,7 +2339,11 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Guild notification jobs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationJobsResponseDto_Output"
       security:
         - bearer: []
       tags:
@@ -2298,7 +2364,11 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Guild notification job canceled successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponseDto_Output"
       security:
         - bearer: []
       tags:
@@ -2309,7 +2379,13 @@ paths:
       parameters: []
       responses:
         "200":
-          description: ""
+          description: List of user notification targets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NotificationTargetWithTestTriggerResponseDto_Output"
       security:
         - bearer: []
       tags:
@@ -2325,7 +2401,11 @@ paths:
               $ref: "#/components/schemas/CreateNotificationTargetDto"
       responses:
         "201":
-          description: ""
+          description: User notification target created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationTargetResponseDto_Output"
       security:
         - bearer: []
       tags:
@@ -2347,7 +2427,11 @@ paths:
               $ref: "#/components/schemas/UpdateNotificationTargetDto"
       responses:
         "200":
-          description: ""
+          description: User notification target updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationTargetResponseDto_Output"
       security:
         - bearer: []
       tags:
@@ -2362,7 +2446,11 @@ paths:
             type: number
       responses:
         "200":
-          description: ""
+          description: User notification target deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponseDto_Output"
       security:
         - bearer: []
       tags:
@@ -2378,7 +2466,11 @@ paths:
             type: number
       responses:
         "201":
-          description: ""
+          description: User notification target test triggered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponseDto_Output"
       security:
         - bearer: []
       tags:
@@ -2389,7 +2481,13 @@ paths:
       parameters: []
       responses:
         "200":
-          description: ""
+          description: List of user notification rules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NotificationRuleResponseDto_Output"
       security:
         - bearer: []
       tags:
@@ -2405,7 +2503,11 @@ paths:
               $ref: "#/components/schemas/CreateNotificationRuleDto"
       responses:
         "201":
-          description: ""
+          description: User notification rule created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationRuleResponseDto_Output"
       security:
         - bearer: []
       tags:
@@ -2427,7 +2529,11 @@ paths:
               $ref: "#/components/schemas/UpdateNotificationRuleDto"
       responses:
         "200":
-          description: ""
+          description: User notification rule updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationRuleResponseDto_Output"
       security:
         - bearer: []
       tags:
@@ -2442,7 +2548,11 @@ paths:
             type: number
       responses:
         "200":
-          description: ""
+          description: User notification rule deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponseDto_Output"
       security:
         - bearer: []
       tags:
@@ -2453,7 +2563,11 @@ paths:
       parameters: []
       responses:
         "200":
-          description: ""
+          description: User notification jobs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationJobsResponseDto_Output"
       security:
         - bearer: []
       tags:
@@ -2464,7 +2578,13 @@ paths:
       parameters: []
       responses:
         "200":
-          description: ""
+          description: List of watched items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WatchedItemResponseDto_Output"
       security:
         - bearer: []
       tags:
@@ -2480,7 +2600,11 @@ paths:
               $ref: "#/components/schemas/CreateWatchedItemDto"
       responses:
         "201":
-          description: ""
+          description: Watched item created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WatchedItemResponseDto_Output"
       security:
         - bearer: []
       tags:
@@ -2497,7 +2621,11 @@ paths:
               $ref: "#/components/schemas/CreateWatchedItemQuickAddDto"
       responses:
         "201":
-          description: ""
+          description: Watched item updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WatchedItemResponseDto_Output"
       security:
         - bearer: []
       tags:
@@ -2513,7 +2641,11 @@ paths:
             type: number
       responses:
         "200":
-          description: ""
+          description: Watched item deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponseDto_Output"
       security:
         - bearer: []
       tags:
@@ -11554,3 +11686,753 @@ components:
         - overview
         - npcs
         - pagination
+    ReservationResponseDto_Output:
+      type: object
+      properties:
+        id:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        reservationId:
+          type: string
+        createdDate:
+          type: string
+          format: date-time
+        fromDate:
+          type: string
+          format: date-time
+        toDate:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        comment:
+          type: string
+          nullable: true
+      required:
+        - id
+        - reservationId
+        - createdDate
+        - fromDate
+        - toDate
+        - createdBy
+        - comment
+    ReservationsResponseDto_Output:
+      type: object
+      additionalProperties:
+        type: array
+        items:
+          $ref: "#/components/schemas/ReservationResponseDto_Output"
+    ReservationCardResponseDto:
+      type: object
+      properties:
+        lvl:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        images:
+          type: array
+          items:
+            type: string
+        maps:
+          type: array
+          items:
+            type: string
+      required:
+        - lvl
+        - images
+        - maps
+    ReservationsCardsResponseDto:
+      type: object
+      additionalProperties:
+        type: array
+        items:
+          $ref: "#/components/schemas/ReservationCardResponseDto"
+    NotificationTestTriggerUsageResponseDto:
+      type: object
+      properties:
+        limit:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        used:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        remaining:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        windowSeconds:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        nextAvailableAt:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+        - limit
+        - used
+        - remaining
+        - windowSeconds
+        - nextAvailableAt
+    NotificationFiltersResponseDto:
+      type: object
+      properties:
+        guildIds:
+          type: array
+          items:
+            type: string
+        world:
+          type: string
+        npcId:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          nullable: true
+        npcIds:
+          type: array
+          items:
+            type: integer
+            minimum: -9007199254740991
+            maximum: 9007199254740991
+        itemId:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          nullable: true
+        itemIds:
+          type: array
+          items:
+            type: integer
+            minimum: -9007199254740991
+            maximum: 9007199254740991
+    NotificationTargetResponseDto_Output:
+      type: object
+      properties:
+        id:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        ownerType:
+          type: string
+          enum:
+            - GUILD
+            - USER
+        ownerId:
+          type: string
+        provider:
+          type: string
+          enum:
+            - DISCORD
+        targetType:
+          type: string
+          enum:
+            - CHANNEL
+            - DM
+        externalId:
+          type: string
+        displayName:
+          type: string
+          nullable: true
+        guildName:
+          type: string
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+        active:
+          type: boolean
+        canSend:
+          type: boolean
+        lastSyncedAt:
+          type: string
+          format: date-time
+          nullable: true
+        lastDeliveryAt:
+          type: string
+          format: date-time
+          nullable: true
+        lastDeliveryError:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - ownerType
+        - ownerId
+        - provider
+        - targetType
+        - externalId
+        - displayName
+        - guildName
+        - metadata
+        - active
+        - canSend
+        - lastSyncedAt
+        - lastDeliveryAt
+        - lastDeliveryError
+        - createdAt
+        - updatedAt
+    NotificationTargetWithTestTriggerResponseDto_Output:
+      allOf:
+        - $ref: "#/components/schemas/NotificationTargetResponseDto_Output"
+        - type: object
+          properties:
+            testTrigger:
+              $ref: "#/components/schemas/NotificationTestTriggerUsageResponseDto"
+          required:
+            - testTrigger
+    NotificationRuleTargetResponseDto_Output:
+      type: object
+      properties:
+        ruleId:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        targetId:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        createdAt:
+          type: string
+          format: date-time
+        target:
+          $ref: "#/components/schemas/NotificationTargetResponseDto_Output"
+      required:
+        - ruleId
+        - targetId
+        - createdAt
+        - target
+    NotificationRuleSummaryResponseDto_Output:
+      type: object
+      properties:
+        id:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        ownerType:
+          type: string
+          enum:
+            - GUILD
+            - USER
+        ownerId:
+          type: string
+        triggerType:
+          type: string
+          enum:
+            - TIMER_BEFORE_SPAWN
+            - NPC_SPAWNED
+            - WATCHED_ITEM_DROPPED
+            - SCHEDULED_MESSAGE
+        guildId:
+          type: string
+          nullable: true
+        world:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        filters:
+          allOf:
+            - $ref: "#/components/schemas/NotificationFiltersResponseDto"
+          nullable: true
+        contentTemplate:
+          type: string
+          nullable: true
+        scheduleStrategy:
+          type: string
+          enum:
+            - SPAWN_WINDOW_RELATIVE
+            - FIXED_DATETIME
+          nullable: true
+        scheduleAnchor:
+          type: string
+          enum:
+            - MIN_SPAWN
+            - MAX_SPAWN
+          nullable: true
+        scheduleOffsetMinutes:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          nullable: true
+        scheduledAt:
+          type: string
+          format: date-time
+          nullable: true
+        scheduleIntervalType:
+          type: string
+          enum:
+            - ONCE
+            - HOURLY
+            - DAILY
+            - WEEKLY
+          nullable: true
+        scheduleIntervalValue:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          nullable: true
+        scheduleWeekday:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          nullable: true
+        scheduleTimeOfDay:
+          type: string
+          nullable: true
+        scheduledUntil:
+          type: string
+          format: date-time
+          nullable: true
+        scheduleTimezone:
+          type: string
+          nullable: true
+        enabled:
+          type: boolean
+        dedupeWindowSeconds:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - ownerType
+        - ownerId
+        - triggerType
+        - guildId
+        - world
+        - name
+        - filters
+        - contentTemplate
+        - scheduleStrategy
+        - scheduleAnchor
+        - scheduleOffsetMinutes
+        - scheduledAt
+        - scheduleIntervalType
+        - scheduleIntervalValue
+        - scheduleWeekday
+        - scheduleTimeOfDay
+        - scheduledUntil
+        - scheduleTimezone
+        - enabled
+        - dedupeWindowSeconds
+        - createdAt
+        - updatedAt
+    NotificationRuleResponseDto_Output:
+      allOf:
+        - $ref: "#/components/schemas/NotificationRuleSummaryResponseDto_Output"
+        - type: object
+          properties:
+            targets:
+              type: array
+              items:
+                $ref: "#/components/schemas/NotificationRuleTargetResponseDto_Output"
+          required:
+            - targets
+    NotificationRuleWithTestTriggerResponseDto_Output:
+      allOf:
+        - $ref: "#/components/schemas/NotificationRuleResponseDto_Output"
+        - type: object
+          properties:
+            testTrigger:
+              $ref: "#/components/schemas/NotificationTestTriggerUsageResponseDto"
+          required:
+            - testTrigger
+    NotificationRuleLimitsResponseDto:
+      type: object
+      properties:
+        ruleLimit:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        ruleCount:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        maxNpcsPerRule:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        testTriggerLimit:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        testTriggerWindowSeconds:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+      required:
+        - ruleLimit
+        - ruleCount
+        - maxNpcsPerRule
+        - testTriggerLimit
+        - testTriggerWindowSeconds
+    GuildNotificationRulesResponseDto_Output:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationRuleWithTestTriggerResponseDto_Output"
+        limits:
+          $ref: "#/components/schemas/NotificationRuleLimitsResponseDto"
+      required:
+        - items
+        - limits
+    NotificationJobResponseDto_Output:
+      type: object
+      properties:
+        id:
+          type: string
+        ruleId:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        targetId:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        ownerType:
+          type: string
+          enum:
+            - GUILD
+            - USER
+        ownerId:
+          type: string
+        jobKind:
+          type: string
+          enum:
+            - SCHEDULED
+            - INSTANT
+            - TEST
+        scheduledFor:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+            - PENDING
+            - PROCESSING
+            - SENT
+            - FAILED
+            - BLOCKED
+            - CANCELED
+        idempotencyKey:
+          type: string
+        sourceEntityType:
+          type: string
+          nullable: true
+        sourceEntityId:
+          type: string
+          nullable: true
+        sourceEventId:
+          type: string
+          nullable: true
+        payloadSnapshot:
+          type: object
+          additionalProperties: true
+        attemptCount:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        lastError:
+          type: string
+          nullable: true
+        blockedReason:
+          type: string
+          nullable: true
+        providerMessageId:
+          type: string
+          nullable: true
+        processedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        rule:
+          $ref: "#/components/schemas/NotificationRuleSummaryResponseDto_Output"
+        target:
+          $ref: "#/components/schemas/NotificationTargetResponseDto_Output"
+      required:
+        - id
+        - ruleId
+        - targetId
+        - ownerType
+        - ownerId
+        - jobKind
+        - scheduledFor
+        - status
+        - idempotencyKey
+        - sourceEntityType
+        - sourceEntityId
+        - sourceEventId
+        - payloadSnapshot
+        - attemptCount
+        - lastError
+        - blockedReason
+        - providerMessageId
+        - processedAt
+        - createdAt
+        - updatedAt
+        - rule
+        - target
+    NotificationJobsResponseDto_Output:
+      type: object
+      properties:
+        pending:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationJobResponseDto_Output"
+        history:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationJobResponseDto_Output"
+      required:
+        - pending
+        - history
+    DiscordGuildChannelSnapshotResponseDto_Output:
+      type: object
+      properties:
+        id:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        guildId:
+          type: string
+        channelId:
+          type: string
+        name:
+          type: string
+        channelType:
+          type: string
+        parentId:
+          type: string
+          nullable: true
+        position:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        active:
+          type: boolean
+        canView:
+          type: boolean
+        canSend:
+          type: boolean
+        hasRequiredPermissions:
+          type: boolean
+        requiredPermissions:
+          type: array
+          items:
+            type: string
+        grantedPermissions:
+          type: array
+          items:
+            type: string
+        missingPermissions:
+          type: array
+          items:
+            type: string
+        lastSyncedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - guildId
+        - channelId
+        - name
+        - channelType
+        - parentId
+        - position
+        - active
+        - canView
+        - canSend
+        - hasRequiredPermissions
+        - requiredPermissions
+        - grantedPermissions
+        - missingPermissions
+        - lastSyncedAt
+        - createdAt
+        - updatedAt
+    DiscordGuildSyncStateResponseDto_Output:
+      type: object
+      properties:
+        guildId:
+          type: string
+        status:
+          type: string
+          enum:
+            - SYNCED
+            - SYNCING
+            - FAILED
+            - STALE
+            - NOT_FOUND
+        hasRequiredPermissions:
+          type: boolean
+        requiredPermissions:
+          type: array
+          items:
+            type: string
+        grantedPermissions:
+          type: array
+          items:
+            type: string
+        missingPermissions:
+          type: array
+          items:
+            type: string
+        channelCount:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        selectableChannelCount:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        lastAttemptAt:
+          type: string
+          format: date-time
+          nullable: true
+        lastSuccessAt:
+          type: string
+          format: date-time
+          nullable: true
+        lastError:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - guildId
+        - status
+        - hasRequiredPermissions
+        - requiredPermissions
+        - grantedPermissions
+        - missingPermissions
+        - channelCount
+        - selectableChannelCount
+        - lastAttemptAt
+        - lastSuccessAt
+        - lastError
+        - createdAt
+        - updatedAt
+    GuildAvailableNotificationTargetsResponseDto_Output:
+      type: object
+      properties:
+        channels:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiscordGuildChannelSnapshotResponseDto_Output"
+        syncState:
+          allOf:
+            - $ref: "#/components/schemas/DiscordGuildSyncStateResponseDto_Output"
+          nullable: true
+      required:
+        - channels
+        - syncState
+    WatchedItemSnapshotResponseDto:
+      type: object
+      properties:
+        name:
+          type: string
+        icon:
+          type: string
+        rarity:
+          type: string
+          nullable: true
+        lvl:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          nullable: true
+        type:
+          type: string
+          nullable: true
+        stat:
+          type: string
+      required:
+        - name
+        - icon
+        - rarity
+        - lvl
+        - type
+        - stat
+    WatchedItemResponseDto_Output:
+      type: object
+      properties:
+        id:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        userId:
+          type: string
+        itemId:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        itemName:
+          type: string
+        world:
+          type: string
+        enabled:
+          type: boolean
+        notificationRuleId:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        itemSnapshot:
+          allOf:
+            - $ref: "#/components/schemas/WatchedItemSnapshotResponseDto"
+          nullable: true
+        notificationRule:
+          allOf:
+            - $ref: "#/components/schemas/NotificationRuleResponseDto_Output"
+          nullable: true
+      required:
+        - id
+        - userId
+        - itemId
+        - itemName
+        - world
+        - enabled
+        - notificationRuleId
+        - createdAt
+        - updatedAt
+        - itemSnapshot
+        - notificationRule

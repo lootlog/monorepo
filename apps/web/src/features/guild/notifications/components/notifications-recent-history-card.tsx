@@ -6,7 +6,7 @@ import { Link } from "@tanstack/react-router";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
-import type { GuildNotificationJob } from "@/hooks/api/guilds/use-guild-notifications";
+import type { NotificationJobsResponseDtoOutput } from "@/lib/api/generated/main/model";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { ROUTES } from "@/config/routes";
 import {
@@ -20,7 +20,7 @@ import { NotificationJobDetailDialog } from "./notification-job-detail-dialog";
 const RECENT_HISTORY_PREVIEW_COUNT = 5;
 
 type NotificationsRecentHistoryCardProps = {
-  historyJobs: GuildNotificationJob[];
+  historyJobs: NotificationJobsResponseDtoOutput["history"];
 };
 
 export const NotificationsRecentHistoryCard = ({
@@ -28,12 +28,14 @@ export const NotificationsRecentHistoryCard = ({
 }: NotificationsRecentHistoryCardProps) => {
   const { t } = useTranslation();
   const guildId = useGuildId();
-  const [selectedJob, setSelectedJob] = useState<GuildNotificationJob | null>(
-    null,
-  );
+  const [selectedJob, setSelectedJob] = useState<
+    NotificationJobsResponseDtoOutput["history"][number] | null
+  >(null);
   const recentJobs = historyJobs.slice(0, RECENT_HISTORY_PREVIEW_COUNT);
 
-  const openJobDetails = (job: GuildNotificationJob) => {
+  const openJobDetails = (
+    job: NotificationJobsResponseDtoOutput["history"][number],
+  ) => {
     setSelectedJob(job);
   };
 

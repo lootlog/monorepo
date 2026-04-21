@@ -1,11 +1,18 @@
 import {
-  useQuickAddWatchedItem,
-  type QuickAddWatchedItemData,
-} from "@/hooks/api/user/use-quick-add-watched-item";
+  useNotificationsUserControllerGetUserTargets,
+  useNotificationsUserControllerGetWatchedItems,
+  useNotificationsUserControllerQuickAddWatchedItem,
+} from "@/lib/api/generated/main/notifications/notifications";
+import type {
+  CreateWatchedItemQuickAddDto,
+  WatchedItemResponseDtoOutput,
+} from "@/lib/api/generated/main/model";
+import { useQueryClient } from "@tanstack/react-query";
 import {
-  useUserNotifications,
-  type UserWatchedItem,
-} from "@/hooks/api/user/use-user-notifications";
+  invalidateUserNotificationQueries,
+  userNotificationTargetsQueryKey,
+  userWatchedItemsQueryKey,
+} from "../user-notifications-api";
 import { createContext, type PropsWithChildren } from "react";
 import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
 import { useGuild } from "@/hooks/api/guilds/use-guild";
@@ -17,15 +24,16 @@ type GuildWatchedItemsContextValue = {
   isQuickAddPending: boolean;
   watchedItemsCount: number;
   quickAddWatchedItem: (
-    data: QuickAddWatchedItemData,
-  ) => Promise<UserWatchedItem>;
+    data: CreateWatchedItemQuickAddDto,
+  ) => Promise<WatchedItemResponseDtoOutput>;
   hasWatchedItem: (itemId: number, world: string) => boolean;
   isItemWatchedInScope: (itemId: number, scope: WatchedItemScope) => boolean;
   getWatchedItemId: (itemId: number, scope: WatchedItemScope) => number | null;
 };
 
-const getWatchedItemGuildIds = (watchedItem: UserWatchedItem): string[] =>
-  watchedItem.notificationRule?.filters?.guildIds ?? [];
+const getWatchedItemGuildIds = (
+  watchedItem: WatchedItemResponseDtoOutput,
+): string[] => watchedItem.notificationRule?.filters?.guildIds ?? [];
 
 export const GuildWatchedItemsContext =
   createContext<GuildWatchedItemsContextValue | null>(null);
@@ -33,8 +41,21 @@ export const GuildWatchedItemsContext =
 GuildWatchedItemsContext.displayName = "GuildWatchedItemsContext";
 
 export const GuildWatchedItemsProvider = ({ children }: PropsWithChildren) => {
-  const notificationsQuery = useUserNotifications();
-  const quickAddWatchedItemMutation = useQuickAddWatchedItem();
+  const queryClient = useQueryClient();
+  const targetsQuery = useNotificationsUserControllerGetUserTargets({
+    query: { queryKey: userNotificationTargetsQueryKey() },
+  });
+  const watchedItemsQuery = useNotificationsUserControllerGetWatchedItems({
+    query: { queryKey: userWatchedItemsQueryKey() },
+  });
+  const quickAddWatchedItemMutation =
+    useNotificationsUserControllerQuickAddWatchedItem({
+      mutation: {
+        onSuccess: async () => {
+          await invalidateUserNotificationQueries(queryClient);
+        },
+      },
+    });
   const currentGuildId = useGuildId();
   const guildQuery = useGuild();
   const resolvedGuildId = guildQuery.data?.id;
@@ -47,15 +68,13 @@ export const GuildWatchedItemsProvider = ({ children }: PropsWithChildren) => {
   };
 
   const dmTarget =
-    notificationsQuery.data?.targets.find(
-      (target) => target.targetType === "DM",
-    ) ?? null;
+    targetsQuery.data?.find((target) => target.targetType === "DM") ?? null;
   const hasActiveDm = Boolean(dmTarget?.active && dmTarget.canSend);
-  const watchedItems = notificationsQuery.data?.watchedItems ?? [];
+  const watchedItems = watchedItemsQuery.data ?? [];
   const state =
-    notificationsQuery.data !== undefined
+    targetsQuery.data !== undefined && watchedItemsQuery.data !== undefined
       ? "ready"
-      : notificationsQuery.isError
+      : targetsQuery.isError || watchedItemsQuery.isError
         ? "error"
         : "loading";
 
@@ -66,7 +85,8 @@ export const GuildWatchedItemsProvider = ({ children }: PropsWithChildren) => {
         hasActiveDm,
         isQuickAddPending: quickAddWatchedItemMutation.isPending,
         watchedItemsCount: watchedItems.length,
-        quickAddWatchedItem: quickAddWatchedItemMutation.mutateAsync,
+        quickAddWatchedItem: (data) =>
+          quickAddWatchedItemMutation.mutateAsync({ data }),
         hasWatchedItem: (itemId, world) =>
           watchedItems.some(
             (watchedItem) =>

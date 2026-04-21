@@ -6,12 +6,14 @@ import { Button } from "@lootlog/ui/components/button";
 import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
 import { ItemImage, ItemTile } from "@/components/tiles";
 import { getUserNotificationsErrorMessage } from "@/features/user/notifications/utils/get-user-notifications-error-message";
-import { useDeleteWatchedItem } from "@/hooks/api/user/use-delete-watched-item";
-import type { UserWatchedItem } from "@/hooks/api/user/use-user-notifications";
+import { useQueryClient } from "@tanstack/react-query";
+import { useNotificationsUserControllerDeleteWatchedItem } from "@/lib/api/generated/main/notifications/notifications";
+import type { WatchedItemResponseDtoOutput } from "@/lib/api/generated/main/model";
 import { ItemRarity } from "@/hooks/api/loots/use-loots";
+import { invalidateUserNotificationQueries } from "../user-notifications-api";
 
 type WatchedItemCardProps = {
-  watchedItem: UserWatchedItem;
+  watchedItem: WatchedItemResponseDtoOutput;
   guildLabels: string[];
   missingGuildIds: string[];
 };
@@ -22,11 +24,20 @@ export const WatchedItemCard = ({
   missingGuildIds,
 }: WatchedItemCardProps) => {
   const { t } = useTranslation();
-  const deleteWatchedItem = useDeleteWatchedItem();
+  const queryClient = useQueryClient();
+  const deleteWatchedItem = useNotificationsUserControllerDeleteWatchedItem({
+    mutation: {
+      onSuccess: async () => {
+        await invalidateUserNotificationQueries(queryClient);
+      },
+    },
+  });
 
   const handleDelete = async () => {
     try {
-      await deleteWatchedItem.mutateAsync({ watchedItemId: watchedItem.id });
+      await deleteWatchedItem.mutateAsync({
+        pathParams: { watchedItemId: watchedItem.id },
+      });
       toast.success(t("settings.userNotifications.toasts.watchDeleted"));
     } catch (error) {
       toast.error(

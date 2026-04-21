@@ -19,10 +19,13 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Textarea } from "@lootlog/ui/components/textarea";
 import { DatePicker } from "../date-picker";
 import { toast } from "sonner";
-import { useCreateReservation } from "@/hooks/api/reservations/use-create-reservation";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
 import { useTranslation } from "react-i18next";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useQueryClient } from "@tanstack/react-query";
+import { useReservationsControllerCreateReservation } from "@/lib/api/generated/main/reservations/reservations";
+import { queryKeys } from "@/lib/query-keys";
 
 type CreateReservationDialogProps = {
   open: boolean;
@@ -77,14 +80,29 @@ const CreateReservationDialogContent: React.FC<
 > = ({ open, onOpenChange, reservationKey, currentUserId }) => {
   const isMobile = useIsMobile();
   const { t } = useTranslation();
+  const guildId = useGuildId();
+  const queryClient = useQueryClient();
   const [fromDate, setFromDate] = useState<Date | undefined>();
   const [toDate, setToDate] = useState<Date | undefined>();
   const [isFromPickerOpen, setIsFromPickerOpen] = useState(false);
   const [isToPickerOpen, setIsToPickerOpen] = useState(false);
   const [comment, setComment] = useState("");
 
-  const { mutateAsync: createReservation, isPending: isCreating } =
-    useCreateReservation();
+  const createReservationMutation = useReservationsControllerCreateReservation({
+    mutation: {
+      onSuccess: async () => {
+        if (!guildId) {
+          return;
+        }
+
+        await queryClient.invalidateQueries({
+          queryKey: queryKeys.reservations.all(guildId),
+        });
+      },
+    },
+  });
+  const createReservation = createReservationMutation.mutateAsync;
+  const isCreating = createReservationMutation.isPending;
 
   const handleCreateReservation = async () => {
     if (!fromDate || !toDate) {
@@ -136,13 +154,20 @@ const CreateReservationDialogContent: React.FC<
 
     try {
       const normalizedComment = comment.trim();
+      if (!guildId) {
+        throw new Error("Missing guild id when creating reservation.");
+      }
+
       await createReservation({
-        reservationId: reservationKey,
-        createdDate: new Date(),
-        fromDate,
-        toDate,
-        createdBy: currentUserId,
-        comment: normalizedComment.length > 0 ? normalizedComment : undefined,
+        pathParams: { guildId },
+        data: {
+          reservationId: reservationKey,
+          createdDate: new Date().toISOString(),
+          fromDate: fromDate.toISOString(),
+          toDate: toDate.toISOString(),
+          createdBy: currentUserId,
+          comment: normalizedComment.length > 0 ? normalizedComment : undefined,
+        },
       });
       toast.success(t("reservations.schedule.toasts.created"), {
         position: "bottom-right",

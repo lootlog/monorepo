@@ -19,7 +19,10 @@ import {
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useTranslation } from "react-i18next";
-import { NotificationTriggerType } from "@lootlog/types";
+import {
+  CreateNotificationRuleDtoTriggerType as NotificationTriggerType,
+  type CreateNotificationRuleDtoTriggerType,
+} from "@/lib/api/generated/main/model";
 import {
   TIMER_PRESET_SIMPLE,
   TIMER_PRESET_DETAILED,
@@ -66,7 +69,7 @@ import {
 type NotificationTemplateEditorProps = {
   value: string;
   roles: GuildRole[];
-  triggerType?: NotificationTriggerType;
+  triggerType?: CreateNotificationRuleDtoTriggerType;
   disabled?: boolean;
   previewButtonClassName?: string;
   onChange: (value: string) => void;

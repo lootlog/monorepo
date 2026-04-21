@@ -29,8 +29,10 @@ import { WatchedItemSelector } from "@/features/user/notifications/components/wa
 import { getUserNotificationsErrorMessage } from "@/features/user/notifications/utils/get-user-notifications-error-message";
 import { useItems, type GameItem } from "@/hooks/api/game-data/use-items";
 import { useGuildsWorlds } from "@/hooks/api/game-data/use-guilds-worlds";
-import { useCreateWatchedItem } from "@/hooks/api/user/use-create-watched-item";
-import type { UserWatchedItem } from "@/hooks/api/user/use-user-notifications";
+import { useQueryClient } from "@tanstack/react-query";
+import { useNotificationsUserControllerCreateWatchedItem } from "@/lib/api/generated/main/notifications/notifications";
+import type { WatchedItemResponseDtoOutput } from "@/lib/api/generated/main/model";
+import { invalidateUserNotificationQueries } from "../user-notifications-api";
 
 const watchFormSchema = z
   .object({
@@ -88,7 +90,7 @@ type WatchFormDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   hasActiveDm: boolean;
-  watchedItems: UserWatchedItem[];
+  watchedItems: WatchedItemResponseDtoOutput[];
   guildOptions: Array<{ value: string; label: string }>;
 };
 
@@ -100,7 +102,14 @@ export const WatchFormDialog = ({
   guildOptions,
 }: WatchFormDialogProps) => {
   const { t } = useTranslation();
-  const createWatchedItem = useCreateWatchedItem();
+  const queryClient = useQueryClient();
+  const createWatchedItem = useNotificationsUserControllerCreateWatchedItem({
+    mutation: {
+      onSuccess: async () => {
+        await invalidateUserNotificationQueries(queryClient);
+      },
+    },
+  });
   const [itemSearchValue, setItemSearchValue] = useState("");
 
   const form = useForm<WatchFormValues>({
@@ -210,10 +219,12 @@ export const WatchFormDialog = ({
 
     try {
       await createWatchedItem.mutateAsync({
-        itemId,
-        itemName,
-        world: values.world,
-        guildIds: values.guildIds,
+        data: {
+          itemId,
+          itemName,
+          world: values.world,
+          guildIds: values.guildIds,
+        },
       });
       toast.success(
         t("settings.userNotifications.toasts.watchCreated", {

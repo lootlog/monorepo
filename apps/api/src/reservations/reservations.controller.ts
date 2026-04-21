@@ -16,14 +16,20 @@ import {
   ApiResponse,
   ApiParam,
 } from "@nestjs/swagger";
+import { ZodResponse } from "nestjs-zod";
 import { DiscordId } from "@lootlog/nest-shared/decorators";
 import { type Guild, Permission } from "src/generated/prisma/client";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
-import { ReservationsService } from "./reservations.service";
 import { CreateReservationDto } from "./dto/create-reservation.dto";
+import {
+  ReservationResponseDto,
+  ReservationsCardsResponseDto,
+  ReservationsResponseDto,
+} from "./dto/reservation-response.dto";
+import { ReservationsService } from "./reservations.service";
 
 @ApiTags("reservations")
 @ApiBearerAuth()
@@ -40,9 +46,10 @@ export class ReservationsController {
     description: "Retrieve reservations for a guild",
   })
   @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "List of reservations",
+    type: ReservationsResponseDto,
   })
   @ApiResponse({
     status: 403,
@@ -60,9 +67,10 @@ export class ReservationsController {
     description: "Create a new reservation to a guild",
   })
   @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
-  @ApiResponse({
+  @ZodResponse({
     status: 201,
     description: "Reservation created successfully",
+    type: ReservationResponseDto,
   })
   @ApiResponse({
     status: 403,
@@ -87,9 +95,10 @@ export class ReservationsController {
     description: "Reservation record identifier",
     example: 123,
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Reservation deleted successfully",
+    type: ReservationResponseDto,
   })
   deleteReservation(
     @Param("reservationRecordId", ParseIntPipe) reservationRecordId: number,
@@ -113,9 +122,10 @@ export class ReservationsController {
     summary: "Get reservations cards",
     description: "Retrieve reservations cards",
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "List of reservations cards",
+    type: ReservationsCardsResponseDto,
   })
   @ApiResponse({
     status: 403,
