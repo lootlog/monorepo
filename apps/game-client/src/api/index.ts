@@ -1,4 +1,3 @@
-export * from "./auth.api";
 export * from "./battle.api";
 export * from "./characters.api";
 export * from "./chat.api";

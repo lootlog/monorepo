@@ -90,7 +90,7 @@ export const serializeLogValue = (value: unknown): SerializableValue => {
   return String(value);
 };
 
-export const getResponseStatusCode = (response: unknown): number | null => {
+const getResponseStatusCode = (response: unknown): number | null => {
   if (!isRecord(response) || typeof response.status !== "number") {
     return null;
   }
@@ -98,7 +98,7 @@ export const getResponseStatusCode = (response: unknown): number | null => {
   return response.status;
 };
 
-export const getResponseBody = (response: unknown): unknown => {
+const getResponseBody = (response: unknown): unknown => {
   if (!isRecord(response) || !("data" in response)) {
     return response ?? null;
   }
@@ -106,7 +106,7 @@ export const getResponseBody = (response: unknown): unknown => {
   return response.data ?? null;
 };
 
-export const getErrorStatusCode = (error: unknown): number | null => {
+const getErrorStatusCode = (error: unknown): number | null => {
   if (!isRecord(error)) {
     return null;
   }
@@ -124,7 +124,7 @@ export const getErrorStatusCode = (error: unknown): number | null => {
     : null;
 };
 
-export const getLoggableErrorResponse = (error: unknown): SerializableValue => {
+const getLoggableErrorResponse = (error: unknown): SerializableValue => {
   const t = getFixedT("common");
 
   if (isRecord(error) && ("status" in error || "data" in error)) {
