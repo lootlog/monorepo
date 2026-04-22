@@ -15,7 +15,7 @@ export const useCancelPartyGathering = () => {
   return useMutation({
     mutationKey: ["cancel-party-gathering"],
     mutationFn: async () => {
-      const { partyGathering, chatMessageIds, clearPartyFinder } =
+      const { partyGathering, clearPartyFinder } =
         usePartyFinderStore.getState();
 
       if (!partyGathering) {
@@ -26,12 +26,10 @@ export const useCancelPartyGathering = () => {
         actionType: "cancel_party_gathering",
         payload: {
           partyGathering,
-          chatMessageIds,
         },
       });
       const response = await cancelPartyGathering({
         partyGathering,
-        chatMessageIds,
         action,
       });
 

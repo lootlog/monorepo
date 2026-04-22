@@ -24,7 +24,7 @@ import { RoleResponseDto } from "src/shared/dto/role-response.dto";
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
 
-  @Permissions(Permission.ADMIN)
+  @Permissions(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
   @Get()
   @ApiOperation({
@@ -39,7 +39,7 @@ export class RolesController {
   })
   @ApiResponse({
     status: 403,
-    description: "Forbidden - admin permission required",
+    description: "Forbidden - insufficient permissions",
   })
   async getGuildRoles(@GuildData() guild: Guild) {
     return this.rolesService.getRolesByGuildId(guild.id);

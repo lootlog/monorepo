@@ -52,7 +52,6 @@ export const CreatePartyGatheringForm = () => {
   const silentCancel = useSilentCancelPartyGathering();
   const { mutateAsync: sendChatMessage } = useSendChatMessage();
   const setPartyGathering = usePartyFinderStore((s) => s.setPartyGathering);
-  const setChatMessageId = usePartyFinderStore((s) => s.setChatMessageId);
   const setOpen = useWindowsStore((state) => state.setOpen);
   const { data: session } = useSession();
   const discordId = session?.user?.discordId;
@@ -120,7 +119,7 @@ export const CreatePartyGatheringForm = () => {
             guildIds,
           });
 
-          const chatResults = await sendChatMessage({
+          await sendChatMessage({
             message: hero.nick,
             guildIds,
             type: MessageType.PARTY_GATHERING,
@@ -133,12 +132,6 @@ export const CreatePartyGatheringForm = () => {
               maxLvl: data.maxLvl ? Number(data.maxLvl) : undefined,
               world,
             },
-          });
-
-          chatResults.forEach((result, index) => {
-            if (result.status === "fulfilled" && result.value?.messageId) {
-              setChatMessageId(guildIds[index], result.value.messageId);
-            }
           });
 
           setOpen("create-party-gathering", false);

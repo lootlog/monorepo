@@ -102,12 +102,8 @@ export const NpcListItem = ({
   const { npcs, removeNpc, setNpcState, clearDetectionAnimation } =
     useNpcDetectorStore();
   const { settings } = useCurrentGameAccountDetectorSettings();
-  const {
-    setNotification,
-    partyGathering,
-    setPartyGathering,
-    setChatMessageId,
-  } = usePartyFinderStore();
+  const { setNotification, partyGathering, setPartyGathering } =
+    usePartyFinderStore();
   const setOpen = useWindowsStore((state) => state.setOpen);
   const { data: session } = useSession();
   const discordId = session?.user?.discordId;
@@ -319,7 +315,7 @@ export const NpcListItem = ({
         guildIds,
       });
 
-      const chatResults = await sendChatMessageAsync(
+      await sendChatMessageAsync(
         buildNpcChatMessagePayload({
           npc,
           guildIds,
@@ -332,12 +328,6 @@ export const NpcListItem = ({
           },
         }),
       );
-
-      chatResults.forEach((result, index) => {
-        if (result.status === "fulfilled" && result.value?.messageId) {
-          setChatMessageId(guildIds[index], result.value.messageId);
-        }
-      });
 
       setNpcState(npc.id, {
         ...npc,

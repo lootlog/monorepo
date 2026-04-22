@@ -10,6 +10,7 @@ import { RoutingKey } from "src/enum/routing-key.enum";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { NpcType } from "src/generated/prisma/client";
 import { getNpcTypeByWt } from "@lootlog/types";
+import { ChatService } from "src/chat/chat.service";
 
 vi.mock("uuid", () => ({
   v4: () => "mock-uuid",
@@ -34,6 +35,10 @@ describe("MessagingService", () => {
     del: mockFn(),
   };
 
+  const mockChatService = {
+    endPartyGatheringMessages: mockFn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -42,6 +47,7 @@ describe("MessagingService", () => {
         { provide: AmqpConnection, useValue: mockAmqpConnection },
         { provide: GuildsService, useValue: mockGuildsService },
         { provide: RedisService, useValue: mockRedisService },
+        { provide: ChatService, useValue: mockChatService },
       ],
     }).compile();
 
@@ -168,6 +174,10 @@ describe("MessagingService", () => {
       expect(mockRedisService.del).toHaveBeenCalledWith(
         `party-gathering:user:${discordId}`,
       );
+      expect(mockChatService.endPartyGatheringMessages).toHaveBeenCalledWith(
+        notificationId,
+        ["guild-1", "guild-2"],
+      );
       expect(mockAmqpConnection.publish).toHaveBeenCalledTimes(2);
       expect(mockAmqpConnection.publish).toHaveBeenCalledWith(
         DEFAULT_EXCHANGE_NAME,
@@ -197,6 +207,7 @@ describe("MessagingService", () => {
         `party-gathering:user:${discordId}`,
       );
       expect(mockAmqpConnection.publish).not.toHaveBeenCalled();
+      expect(mockChatService.endPartyGatheringMessages).not.toHaveBeenCalled();
     });
 
     it("should throw ForbiddenException when user is not the owner", async () => {
@@ -213,6 +224,7 @@ describe("MessagingService", () => {
 
       expect(mockRedisService.del).not.toHaveBeenCalled();
       expect(mockAmqpConnection.publish).not.toHaveBeenCalled();
+      expect(mockChatService.endPartyGatheringMessages).not.toHaveBeenCalled();
     });
   });
 });

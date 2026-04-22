@@ -6,6 +6,17 @@ export type NotificationWithServers = Notification & {
   servers: string[];
 };
 
+export type MentionNotification = {
+  type: "chat-mention";
+  notificationId: string;
+  discordId: string;
+  guildId: string;
+  world: string;
+  createdAt: string;
+  message: string;
+  servers: string[];
+};
+
 export type PartyGatheringCharacter = PartyGatheringCharacterBase;
 
 export type PartyGatheringNotification = {
@@ -24,6 +35,7 @@ export type PartyGatheringNotification = {
 
 export type StoredNotification = (
   | NotificationWithServers
+  | MentionNotification
   | PartyGatheringNotification
 ) & {
   listKey: string;
@@ -41,7 +53,10 @@ interface NotificationsState {
   notificationAutoHideByListKey: Record<string, NotificationAutoHideState>;
   latestNotificationAnimationCycle: number;
   pushNotification: (
-    notification: NotificationWithServers | PartyGatheringNotification,
+    notification:
+      | NotificationWithServers
+      | MentionNotification
+      | PartyGatheringNotification,
   ) => void;
   clearNotifications: () => void;
   removeNotification: (id: string) => void;
@@ -73,7 +88,10 @@ export const useNotificationsStore = create<NotificationsState>()((set) => ({
   notificationAutoHideByListKey: {},
   latestNotificationAnimationCycle: 0,
   pushNotification: (
-    notification: NotificationWithServers | PartyGatheringNotification,
+    notification:
+      | NotificationWithServers
+      | MentionNotification
+      | PartyGatheringNotification,
   ) =>
     set((state) => {
       const notificationAnimationCycle =

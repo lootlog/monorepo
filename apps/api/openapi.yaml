@@ -8326,6 +8326,28 @@ components:
             - notificationId
             - discordId
             - world
+        replyTo:
+          type: object
+          properties:
+            messageId:
+              type: string
+              minLength: 1
+            senderNick:
+              type: string
+              minLength: 1
+            message:
+              type: string
+              maxLength: 128
+            type:
+              type: string
+              enum:
+                - NORMAL
+                - NOTIFICATION
+          required:
+            - messageId
+            - senderNick
+            - message
+            - type
         canEdit:
           type: boolean
         canDelete:
@@ -8444,6 +8466,28 @@ components:
             - notificationId
             - discordId
             - world
+        replyTo:
+          type: object
+          properties:
+            messageId:
+              type: string
+              minLength: 1
+            senderNick:
+              type: string
+              minLength: 1
+            message:
+              type: string
+              maxLength: 128
+            type:
+              type: string
+              enum:
+                - NORMAL
+                - NOTIFICATION
+          required:
+            - messageId
+            - senderNick
+            - message
+            - type
       required:
         - message
         - type

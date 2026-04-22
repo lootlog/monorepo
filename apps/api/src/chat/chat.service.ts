@@ -56,6 +56,7 @@ export class ChatService {
       npc: data.npc ? { ...data.npc } : undefined,
       characterData: data.characterData,
       partyGathering: data.partyGathering,
+      replyTo: data.replyTo,
     };
 
     await this.redisService.rpush(key, JSON.stringify(msg));
@@ -222,6 +223,45 @@ export class ChatService {
     );
 
     return { success: true };
+  }
+
+  async endPartyGatheringMessages(notificationId: string, guildIds: string[]) {
+    for (const guildId of guildIds) {
+      const key = this.getChatMessagesKey(guildId);
+      const elements = await this.redisService.lrange(key, 0, -1);
+
+      for (const [messageIndex, element] of elements.entries()) {
+        const message = JSON.parse(element) as ChatStoredMessage;
+
+        if (message.partyGathering?.notificationId !== notificationId) {
+          continue;
+        }
+
+        const updatedMessage = {
+          ...message,
+          message: `${message.characterData.nick} zakonczyl zbieranie grupy`,
+          partyGathering: undefined,
+        };
+        const routing = this.getMessageRouting(message);
+
+        await this.redisService.lset(
+          key,
+          messageIndex,
+          JSON.stringify(updatedMessage),
+        );
+
+        this.amqpConnection.publish(
+          DEFAULT_EXCHANGE_NAME,
+          RoutingKey.GUILDS_UPDATE_MESSAGE,
+          {
+            guildId,
+            messageId: message.id,
+            message: updatedMessage.message,
+            routing,
+          },
+        );
+      }
+    }
   }
 
   private getMessageRouting(

@@ -4,8 +4,7 @@ import { usePartyFinderStore } from "@/store/party-finder.store";
 
 export const useSilentCancelPartyGathering = () => {
   const silentCancel = async () => {
-    const { partyGathering, chatMessageIds, clearPartyFinder } =
-      usePartyFinderStore.getState();
+    const { partyGathering, clearPartyFinder } = usePartyFinderStore.getState();
 
     if (!partyGathering) return;
 
@@ -13,7 +12,6 @@ export const useSilentCancelPartyGathering = () => {
       actionType: "cancel_party_gathering",
       payload: {
         partyGathering,
-        chatMessageIds,
         mode: "silent",
       },
     });
@@ -21,7 +19,6 @@ export const useSilentCancelPartyGathering = () => {
     try {
       await cancelPartyGathering({
         partyGathering,
-        chatMessageIds,
         action,
       });
 

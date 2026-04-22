@@ -4,6 +4,7 @@ import {
   ChatCharacterDataDto,
   MessageType,
   PartyGatheringDataDto,
+  ReplyToMessageDto,
 } from "src/chat/dto/send-message.dto";
 
 const ChatNpcResponseSchema = z.object({
@@ -30,6 +31,7 @@ const ChatMessageResponseSchema = z.object({
   characterData: ChatCharacterDataDto.schema,
   npc: ChatNpcResponseSchema.optional(),
   partyGathering: PartyGatheringDataDto.schema.optional(),
+  replyTo: ReplyToMessageDto.schema.optional(),
   canEdit: z.boolean(),
   canDelete: z.boolean(),
 });

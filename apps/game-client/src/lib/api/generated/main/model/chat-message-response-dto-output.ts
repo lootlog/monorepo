@@ -8,6 +8,7 @@
 import type { ChatMessageResponseDtoOutputCharacterData } from './chat-message-response-dto-output-character-data';
 import type { ChatMessageResponseDtoOutputNpc } from './chat-message-response-dto-output-npc';
 import type { ChatMessageResponseDtoOutputPartyGathering } from './chat-message-response-dto-output-party-gathering';
+import type { ChatMessageResponseDtoOutputReplyTo } from './chat-message-response-dto-output-reply-to';
 import type { ChatMessageResponseDtoOutputType } from './chat-message-response-dto-output-type';
 
 export interface ChatMessageResponseDtoOutput {
@@ -25,6 +26,7 @@ export interface ChatMessageResponseDtoOutput {
   characterData: ChatMessageResponseDtoOutputCharacterData;
   npc?: ChatMessageResponseDtoOutputNpc;
   partyGathering?: ChatMessageResponseDtoOutputPartyGathering;
+  replyTo?: ChatMessageResponseDtoOutputReplyTo;
   canEdit: boolean;
   canDelete: boolean;
 }

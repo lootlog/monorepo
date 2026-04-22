@@ -6,6 +6,8 @@ import { useSocket } from "@/contexts/socket-context";
 import { getChatControllerGetChatMessagesQueryKey } from "@/lib/api/generated/main/chat/chat";
 import {
   getMembersControllerGetGuildMembersSummaryQueryKey,
+  getMembersControllerGetMeQueryKey,
+  membersControllerGetMe,
   membersControllerGetGuildMembersSummary,
 } from "@/lib/api/generated/main/members/members";
 import {
@@ -13,10 +15,28 @@ import {
   updateChatMessage,
   upsertChatMessage,
 } from "@/features/chat/chat.helpers";
+import {
+  getChatMentionNotificationId,
+  getCurrentUserMentionNames,
+  getCurrentUserMentionRoleNames,
+  hasChatMentionToken,
+  hasCurrentUserMention,
+} from "@/features/chat/chat-mentions.helpers";
+import { useSession } from "@/hooks/auth/use-session";
+import { Game } from "@/lib/game";
+import { useNotificationsStore } from "@/store/notifications.store";
+import { useWindowsStore } from "@/store/windows.store";
 
 export const useChatMessagesListener = () => {
   const queryClient = useQueryClient();
   const { connected, socket } = useSocket();
+  const { data: sessionData } = useSession();
+  const pushNotification = useNotificationsStore(
+    (state) => state.pushNotification,
+  );
+  const setOpen = useWindowsStore((state) => state.setOpen);
+  const sessionDiscordIdRef = useRef(sessionData?.user?.discordId);
+  sessionDiscordIdRef.current = sessionData?.user?.discordId;
 
   const handlerRef = useRef<(data: ChatMessage) => void>(() => undefined);
   handlerRef.current = (data) => {
@@ -37,6 +57,61 @@ export const useChatMessagesListener = () => {
           membersControllerGetGuildMembersSummary({ guildId: data.guildId }),
         staleTime: 5 * 60 * 1000,
       });
+    }
+  };
+  const mentionNotificationRef = useRef<
+    (data: ChatMessage) => void | Promise<void>
+  >(() => undefined);
+  mentionNotificationRef.current = async (data) => {
+    try {
+      if (!data.message || !hasChatMentionToken(data.message)) {
+        return;
+      }
+
+      if (
+        data.senderId === sessionDiscordIdRef.current ||
+        data.characterData.nick === Game.hero.nick
+      ) {
+        return;
+      }
+
+      const currentMember = await queryClient.fetchQuery({
+        queryKey: getMembersControllerGetMeQueryKey({ guildId: data.guildId }),
+        queryFn: () => membersControllerGetMe({ guildId: data.guildId }),
+        staleTime: 5 * 60 * 1000,
+      });
+      const currentUserNames = getCurrentUserMentionNames({
+        currentCharacterNick: Game.hero.nick,
+        currentMember,
+      });
+      const currentUserRoleNames =
+        getCurrentUserMentionRoleNames(currentMember);
+
+      if (
+        !hasCurrentUserMention(data.message, {
+          currentUserNames,
+          currentUserRoleNames,
+        })
+      ) {
+        return;
+      }
+
+      setOpen("notifications", true);
+      pushNotification({
+        type: "chat-mention",
+        notificationId: getChatMentionNotificationId({
+          guildId: data.guildId,
+          messageId: data.id,
+        }),
+        discordId: data.senderId,
+        guildId: data.guildId,
+        world: Game.getWorldName() ?? "",
+        createdAt: data.timestamp,
+        message: data.message,
+        servers: [data.guildId],
+      });
+    } catch {
+      return;
     }
   };
 
@@ -65,7 +140,10 @@ export const useChatMessagesListener = () => {
   useEffect(() => {
     if (socket?.hasListeners(GatewayEvent.CHAT_MESSAGE) || !connected) return;
 
-    const onChatMessage = (data: ChatMessage) => handlerRef.current(data);
+    const onChatMessage = (data: ChatMessage) => {
+      handlerRef.current(data);
+      void mentionNotificationRef.current(data);
+    };
 
     socket?.on(GatewayEvent.CHAT_MESSAGE, onChatMessage);
 

@@ -8,6 +8,7 @@
 import type { SendMessageDtoCharacterData } from './send-message-dto-character-data';
 import type { SendMessageDtoNpc } from './send-message-dto-npc';
 import type { SendMessageDtoPartyGathering } from './send-message-dto-party-gathering';
+import type { SendMessageDtoReplyTo } from './send-message-dto-reply-to';
 import type { SendMessageDtoType } from './send-message-dto-type';
 
 export interface SendMessageDto {
@@ -17,4 +18,5 @@ export interface SendMessageDto {
   characterData: SendMessageDtoCharacterData;
   npc?: SendMessageDtoNpc;
   partyGathering?: SendMessageDtoPartyGathering;
+  replyTo?: SendMessageDtoReplyTo;
 }

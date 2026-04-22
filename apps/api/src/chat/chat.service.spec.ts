@@ -362,6 +362,12 @@ describe("ChatService", () => {
           prof: "w",
           icon: "icon.png",
         },
+        replyTo: {
+          messageId: "message-0",
+          senderNick: "Other",
+          message: "previous",
+          type: MessageType.NOTIFICATION,
+        },
       });
 
       expect(result).toEqual(
@@ -369,6 +375,12 @@ describe("ChatService", () => {
           guildId: "guild-1",
           senderId: "discord-1",
           message: "hello",
+          replyTo: {
+            messageId: "message-0",
+            senderNick: "Other",
+            message: "previous",
+            type: MessageType.NOTIFICATION,
+          },
           canEdit: true,
           canDelete: true,
         }),
@@ -670,6 +682,67 @@ describe("ChatService", () => {
       await expect(
         service.deleteMessage("discord-admin", "guild-1", "msg-3"),
       ).resolves.toEqual({ success: true });
+    });
+  });
+
+  describe("endPartyGatheringMessages", () => {
+    it("updates matching party gathering messages and publishes chat updates", async () => {
+      redisService.lrange.mockResolvedValue([
+        JSON.stringify(
+          createStoredMessage({
+            id: "msg-1",
+            senderId: "discord-1",
+            message: "old",
+            type: MessageType.PARTY_GATHERING,
+            partyGathering: {
+              notificationId: "notif-1",
+              discordId: "discord-1",
+              world: "tempest",
+            },
+          }),
+        ),
+        JSON.stringify(
+          createStoredMessage({
+            id: "msg-2",
+            senderId: "discord-2",
+            message: "keep",
+            type: MessageType.PARTY_GATHERING,
+            partyGathering: {
+              notificationId: "notif-2",
+              discordId: "discord-2",
+              world: "tempest",
+            },
+          }),
+        ),
+      ]);
+      redisService.lset.mockResolvedValue(1);
+
+      await service.endPartyGatheringMessages("notif-1", ["guild-1"]);
+
+      expect(redisService.lset).toHaveBeenCalledWith(
+        "guild:guild-1:messages",
+        0,
+        expect.any(String),
+      );
+      const [, , updatedMessagePayload] = redisService.lset.mock.calls[0] ?? [];
+      const updatedMessage = JSON.parse(updatedMessagePayload);
+
+      expect(updatedMessage).toEqual(
+        expect.objectContaining({
+          id: "msg-1",
+          message: "Tester zakonczyl zbieranie grupy",
+        }),
+      );
+      expect(updatedMessage).not.toHaveProperty("partyGathering");
+      expect(amqpConnection.publish).toHaveBeenCalledWith(
+        DEFAULT_EXCHANGE_NAME,
+        RoutingKey.GUILDS_UPDATE_MESSAGE,
+        expect.objectContaining({
+          guildId: "guild-1",
+          messageId: "msg-1",
+          message: "Tester zakonczyl zbieranie grupy",
+        }),
+      );
     });
   });
 });
