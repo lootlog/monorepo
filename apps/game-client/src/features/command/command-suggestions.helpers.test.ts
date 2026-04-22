@@ -1,6 +1,7 @@
 import type { TFunction } from "i18next";
 import { describe, expect, it } from "vitest";
 import {
+  type CommandSuggestion,
   filterCommandSuggestions,
   getCommandSuggestionInsertValue,
   getCommandSuggestions,
@@ -59,5 +60,14 @@ describe("command-suggestions.helpers", () => {
     expect(getCommandSuggestionInsertValue(filteredSuggestions[0]!)).toBe(
       "/grp ",
     );
+  });
+
+  it("returns an empty list for non-array runtime input", () => {
+    expect(
+      filterCommandSuggestions({
+        inputValue: "/g",
+        suggestions: "broken" as unknown as CommandSuggestion[],
+      }),
+    ).toEqual([]);
   });
 });

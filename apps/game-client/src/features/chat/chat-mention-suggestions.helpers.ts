@@ -32,8 +32,9 @@ const sortMentionSuggestionEntries = ({
   query: string;
 }) => {
   const normalizedQuery = normalizeChatMentionName(query);
+  const sortableEntries = Array.isArray(entries) ? entries : [];
 
-  return entries.toSorted((left, right) => {
+  return sortableEntries.toSorted((left, right) => {
     if (!normalizedQuery) {
       return left.label.localeCompare(right.label);
     }
@@ -64,8 +65,9 @@ const getMentionSuggestionEntries = <T>({
     string,
     ChatMentionSuggestionEntry
   >();
+  const iterableValues = Array.isArray(values) ? values : [];
 
-  values.forEach((value) => {
+  iterableValues.forEach((value) => {
     const label = getLabel(value);
     const normalizedLabel = normalizeChatMentionName(label);
 
