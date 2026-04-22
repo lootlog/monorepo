@@ -17,6 +17,7 @@ import type {
   ReservationDeleteEventDto,
 } from "./dto/reservation-event.dto";
 import type { ChatMessageEnvelopeDto } from "./dto/chat-message-envelope.dto";
+import type { ChatMessagesClearDto } from "./dto/chat-messages-clear.dto";
 
 describe("GatewayService", () => {
   let service: GatewayService;
@@ -310,6 +311,26 @@ describe("GatewayService", () => {
 
       // Wait for async promise chain to complete
       expect(mockSocketWrongGuild.emit).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("handleChatMessagesClear", () => {
+    it("broadcasts guild-wide chat clear to every chat room tier", async () => {
+      const payload: ChatMessagesClearDto = {
+        guildId: "guild-123",
+      };
+
+      service.handleChatMessagesClear(payload);
+
+      expect(mockServer.to).toHaveBeenCalledWith([
+        "guild-123:chat:base",
+        "guild-123:chat:titans",
+        "guild-123:chat:heroes",
+      ]);
+      expect(mockServer.emit).toHaveBeenCalledWith(
+        GatewayEvent.CHAT_MESSAGES_CLEAR,
+        { guildId: "guild-123" },
+      );
     });
   });
 

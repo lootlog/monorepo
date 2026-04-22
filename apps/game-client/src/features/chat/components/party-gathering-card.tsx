@@ -41,8 +41,11 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
 
   if (isEnded) {
     return (
-      <div className="ll:text-white ll:text-xs ll:w-full ll:select-text ll:cursor-text ll:flex ll:items-center ll:gap-1">
-        <span className="ll:inline-block ll:select-text">
+      <div className="ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:box-border ll:items-center ll:gap-1 ll:text-white ll:text-xs ll:select-text ll:cursor-text">
+        <span
+          className="ll:inline-block ll:max-w-full ll:select-text"
+          style={{ overflowWrap: "anywhere" }}
+        >
           <span
             className={cn("ll:text-[11px] ll:select-text", {
               "ll:opacity-50": isMsgYesterday,
@@ -60,17 +63,13 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
             </span>
           )}
           <span
-            className={cn("ll:font-bold ll:select-text", {
-              "ll:opacity-50": isMsgYesterday,
-            })}
+            className="ll:font-bold ll:select-text"
             style={{ color: `#${memberColor}` }}
           >
             {senderName}:
           </span>{" "}
           <span
-            className={cn("ll:font-bold ll:select-text", {
-              "ll:opacity-50": isMsgYesterday,
-            })}
+            className="ll:font-bold ll:select-text"
             style={{ color: "#9CA3AF" }}
           >
             [G] {message.message}
@@ -96,8 +95,11 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
   };
 
   return (
-    <div className="ll:text-white ll:text-xs ll:w-full ll:select-text ll:cursor-text">
-      <div className="ll:mb-0.5">
+    <div className="ll:w-full ll:min-w-0 ll:max-w-full ll:box-border ll:text-white ll:text-xs ll:select-text ll:cursor-text">
+      <div
+        className="ll:mb-0.5 ll:min-w-0 ll:max-w-full"
+        style={{ overflowWrap: "anywhere" }}
+      >
         <span
           className={cn("ll:text-[11px] ll:select-text", {
             "ll:opacity-50": isMsgYesterday,
@@ -128,34 +130,34 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
         </span>
       </div>
       <div
-        className="ll:px-2 ll:py-1.5 ll:flex ll:flex-col ll:items-start ll:gap-1 ll:border-l-2 ll:border-solid ll:rounded-sm ll:bg-gray-500/30"
+        className="ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:box-border ll:flex-col ll:items-stretch ll:gap-1 ll:overflow-hidden ll:rounded-sm ll:border-l-2 ll:border-solid ll:bg-gray-500/30 ll:px-2 ll:py-1.5"
         style={{ borderColor: "#FF8C00" }}
       >
-        <div className="ll:flex ll:items-center ll:gap-1.5">
+        <div className="ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:items-center ll:gap-1.5 ll:overflow-hidden">
           <CharacterTile
             character={message.characterData}
-            className="ll:scale-75 ll:max-h-6 ll:-mt-1 ll:-ml-1"
+            className="ll:shrink-0 ll:scale-75 ll:max-h-6 ll:-mt-1 ll:-ml-1"
           />
-          <span className="ll:font-bold ll:text-[11px] ll:text-white">
+          <span className="ll:flex-1 ll:min-w-0 ll:max-w-full ll:truncate ll:font-bold ll:text-[11px] ll:text-white">
             {message.characterData.nick} ({message.characterData.lvl}
             {message.characterData.prof})
           </span>
         </div>
         {message.npc && (
-          <div className="ll:flex ll:items-center ll:gap-1.5">
-            <span className="ll:text-[11px] ll:text-amber-300 ll:font-semibold">
+          <div className="ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:items-center ll:gap-1.5 ll:overflow-hidden">
+            <span className="ll:flex-1 ll:min-w-0 ll:max-w-full ll:truncate ll:text-[11px] ll:text-amber-300 ll:font-semibold">
               {message.npc.name} ({message.npc.lvl}
               {message.npc.prof ?? ""})
             </span>
           </div>
         )}
         {partyGathering?.description && (
-          <p className="ll:text-[11px] ll:text-gray-300 ll:italic">
+          <p className="ll:w-full ll:min-w-0 ll:max-w-full ll:break-words ll:text-[11px] ll:text-gray-300 ll:italic">
             "{partyGathering.description}"
           </p>
         )}
         {(partyGathering?.minLvl ?? partyGathering?.maxLvl) && (
-          <p className="ll:text-[10px] ll:text-gray-400">
+          <p className="ll:w-full ll:min-w-0 ll:max-w-full ll:break-words ll:text-[10px] ll:text-gray-400">
             {t("partyGathering.levelRange", {
               min: partyGathering?.minLvl ?? 1,
               max: partyGathering?.maxLvl ?? 500,
@@ -172,7 +174,7 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
               <Button
                 onClick={handleVolunteer}
                 disabled={isPending || !meetsLevelReq}
-                className="ll:w-full ll:mt-0.5 ll:text-[11px] ll:h-6 ll:font-semibold ll:border-[#FF8C00] ll:text-[#FF8C00] ll:hover:bg-[#FF8C00]/20"
+                className="ll:box-border ll:w-full ll:min-w-0 ll:max-w-full ll:mt-0.5 ll:text-[11px] ll:h-6 ll:font-semibold ll:border-[#FF8C00] ll:text-[#FF8C00] ll:hover:bg-[#FF8C00]/20"
               >
                 {isPending ? (
                   <>

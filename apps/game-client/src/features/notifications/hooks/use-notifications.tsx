@@ -4,11 +4,12 @@ import { isNotificationMuted } from "@/features/notifications/utils/notification
 import { useSession } from "@/hooks/auth/use-session";
 import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
 import { useCurrentUserNotificationMutes } from "@/hooks/use-current-user-notification-mutes";
+import { useBufferedSocketIngress } from "@/hooks/use-buffered-socket-ingress";
 import { Game } from "@/lib/game";
 import { useNotificationsStore } from "@/store/notifications.store";
 import { useWindowsStore } from "@/store/windows.store";
 import type { GameNpc } from "@lootlog/margonem";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { getNpcTypeByWt } from "@lootlog/types";
 import { NpcType } from "@/api/npcs.api";
 import { useSoundPlayback } from "@/hooks/use-sound-playback";
@@ -23,8 +24,6 @@ export type Notification = {
   createdAt: string;
   isGatheringParty?: boolean;
 };
-
-const MAX_PENDING_NOTIFICATIONS = 100;
 
 const getNotificationType = (n: Notification) => {
   if (!n.npc || !n.npc.wt) return "message" as const;
@@ -42,25 +41,17 @@ export const useNotifications = () => {
     useCurrentGameAccountNotificationSettings();
   const { isReady: areMutesReady, mutes } = useCurrentUserNotificationMutes();
   const world = Game.getWorldName();
-
   const { playSound } = useSoundPlayback();
-
   const settingsRef = useRef(settings);
-  const isReadyRef = useRef(isReady);
   const mutesRef = useRef(mutes);
-  const areMutesReadyRef = useRef(areMutesReady);
   const sessionDataRef = useRef(sessionData);
   const worldRef = useRef(world);
-  const pendingNotificationsRef = useRef<Notification[]>([]);
-  const previousAccountIdRef = useRef<string | null>(accountId);
   const processNotificationRef = useRef<(data: Notification) => void>(
     () => undefined,
   );
 
   sessionDataRef.current = sessionData;
-  isReadyRef.current = isReady;
   mutesRef.current = mutes;
-  areMutesReadyRef.current = areMutesReady;
   settingsRef.current = settings;
   worldRef.current = world;
   processNotificationRef.current = (data: Notification) => {
@@ -94,56 +85,12 @@ export const useNotifications = () => {
     }
   };
 
-  useEffect(() => {
-    if (
-      previousAccountIdRef.current !== null &&
-      previousAccountIdRef.current !== accountId
-    ) {
-      pendingNotificationsRef.current = [];
-    }
-
-    previousAccountIdRef.current = accountId;
-  }, [accountId]);
-
-  useEffect(() => {
-    if (!socket || !connected) return;
-
-    const handler = (data: Notification) => {
-      if (!isReadyRef.current || !areMutesReadyRef.current) {
-        if (
-          pendingNotificationsRef.current.length >= MAX_PENDING_NOTIFICATIONS
-        ) {
-          pendingNotificationsRef.current.shift();
-        }
-
-        pendingNotificationsRef.current.push(data);
-        return;
-      }
-
-      processNotificationRef.current(data);
-    };
-
-    socket.on(GatewayEvent.NOTIFICATION, handler);
-
-    return () => {
-      socket.off(GatewayEvent.NOTIFICATION, handler);
-    };
-  }, [connected, socket]);
-
-  useEffect(() => {
-    if (
-      !isReady ||
-      !areMutesReady ||
-      pendingNotificationsRef.current.length === 0
-    ) {
-      return;
-    }
-
-    const pendingNotifications = [...pendingNotificationsRef.current];
-    pendingNotificationsRef.current = [];
-
-    pendingNotifications.forEach((notification) => {
-      processNotificationRef.current(notification);
-    });
-  }, [areMutesReady, isReady]);
+  useBufferedSocketIngress({
+    socket,
+    connected,
+    accountId,
+    isReady: isReady && areMutesReady,
+    event: GatewayEvent.NOTIFICATION,
+    onProcess: (data: Notification) => processNotificationRef.current(data),
+  });
 };

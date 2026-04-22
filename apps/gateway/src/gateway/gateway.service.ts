@@ -2,6 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { CreateTimerDto } from "src/gateway/dto/create-timer.dto";
 import type { ChatMessageDeleteDto } from "src/gateway/dto/chat-message-delete.dto";
 import type { ChatMessageEnvelopeDto } from "src/gateway/dto/chat-message-envelope.dto";
+import type { ChatMessagesClearDto } from "src/gateway/dto/chat-messages-clear.dto";
 import type { ChatMessageUpdateDto } from "src/gateway/dto/chat-message-update.dto";
 import type { DeleteTimerDto } from "src/gateway/dto/delete-timer.dto";
 import type { RefreshJobUpdateDto } from "src/gateway/dto/refresh-job-update.dto";
@@ -380,6 +381,18 @@ export class GatewayService {
         guildId: payload.guildId,
       },
       npcLevel: routing.npcLevel,
+    });
+  }
+
+  handleChatMessagesClear(data: ChatMessagesClearDto) {
+    const rooms = [
+      buildRoomName(data.guildId, "chat", "base"),
+      buildRoomName(data.guildId, "chat", "titans"),
+      buildRoomName(data.guildId, "chat", "heroes"),
+    ];
+
+    this.gateway.server.to(rooms).emit(GatewayEvent.CHAT_MESSAGES_CLEAR, {
+      guildId: data.guildId,
     });
   }
 

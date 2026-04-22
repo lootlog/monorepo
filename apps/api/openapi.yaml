@@ -772,7 +772,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/RoleResponseDto_Output"
         "403":
-          description: Forbidden - admin permission required
+          description: Forbidden - insufficient permissions
       security:
         - bearer: []
       summary: Get guild roles
@@ -1938,6 +1938,30 @@ paths:
       security:
         - bearer: []
       summary: Send chat message
+      tags:
+        - chat
+    delete:
+      description: Clear all chat messages from a guild
+      operationId: ChatController_clearChatMessages
+      parameters:
+        - name: guildId
+          required: true
+          in: path
+          description: Guild ID
+          schema:
+            example: guild_123
+      responses:
+        "200":
+          description: Chat cleared successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMessageActionResponseDto_Output"
+        "403":
+          description: Forbidden - only OWNER or ADMIN can clear chat
+      security:
+        - bearer: []
+      summary: Clear chat messages
       tags:
         - chat
   /guilds/{guildId}/chat-messages/{messageId}:

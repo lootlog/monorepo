@@ -23,6 +23,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  ChatControllerClearChatMessagesPathParameters,
   ChatControllerDeleteChatMessagePathParameters,
   ChatControllerGetChatMessagesPathParameters,
   ChatControllerSendChatMessagePathParameters,
@@ -231,6 +232,76 @@ export const useChatControllerSendChatMessage = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getChatControllerSendChatMessageMutationOptions(options));
+    }
+    /**
+ * Clear all chat messages from a guild
+ * @summary Clear chat messages
+ */
+export const getChatControllerClearChatMessagesUrl = ({ guildId }: ChatControllerClearChatMessagesPathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/chat-messages`
+}
+
+export const chatControllerClearChatMessages = async ({ guildId }: ChatControllerClearChatMessagesPathParameters, options?: RequestInit): Promise<ChatMessageActionResponseDtoOutput> => {
+
+  return orvalFetch<ChatMessageActionResponseDtoOutput>(getChatControllerClearChatMessagesUrl({ guildId }),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getChatControllerClearChatMessagesMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof chatControllerClearChatMessages>>, TError,{pathParams: ChatControllerClearChatMessagesPathParameters}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof chatControllerClearChatMessages>>, TError,{pathParams: ChatControllerClearChatMessagesPathParameters}, TContext> => {
+
+const mutationKey = ['chatControllerClearChatMessages'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof chatControllerClearChatMessages>>, {pathParams: ChatControllerClearChatMessagesPathParameters}> = (props) => {
+          const {pathParams} = props ?? {};
+
+          return  chatControllerClearChatMessages(pathParams,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ChatControllerClearChatMessagesMutationResult = NonNullable<Awaited<ReturnType<typeof chatControllerClearChatMessages>>>
+
+    export type ChatControllerClearChatMessagesMutationError = ErrorType<void>
+
+    /**
+ * @summary Clear chat messages
+ */
+export const useChatControllerClearChatMessages = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof chatControllerClearChatMessages>>, TError,{pathParams: ChatControllerClearChatMessagesPathParameters}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof chatControllerClearChatMessages>>,
+        TError,
+        {pathParams: ChatControllerClearChatMessagesPathParameters},
+        TContext
+      > => {
+      return useMutation(getChatControllerClearChatMessagesMutationOptions(options));
     }
     /**
  * Update the content of a chat message

@@ -18,6 +18,7 @@ import {
   useMembersControllerRefreshMember,
 } from "@/lib/api/generated/main/members/members";
 import { useTranslation } from "react-i18next";
+import { cn } from "@lootlog/ui/lib/utils";
 
 export type MemberSyncButtonProps = {
   member: GuildMember;
@@ -99,7 +100,7 @@ export const MemberSyncButton: FC<MemberSyncButtonProps> = ({ member }) => {
       <TooltipTrigger asChild>
         <span>
           <Button
-            className="size-8 rounded-full"
+            className="justify-center"
             size="sm"
             variant="secondary"
             disabled={isPending || !canRefresh || !canTriggerRefresh}
@@ -117,7 +118,8 @@ export const MemberSyncButton: FC<MemberSyncButtonProps> = ({ member }) => {
               });
             }}
           >
-            <RefreshCcw />
+            <RefreshCcw className={cn("size-4", isPending && "animate-spin")} />
+            {t("settings.members.refreshPermissions")}
           </Button>
         </span>
       </TooltipTrigger>

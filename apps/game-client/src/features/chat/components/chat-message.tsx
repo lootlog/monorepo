@@ -25,16 +25,17 @@ import {
   getChatMessageBody,
   isChatMessageYesterdayOrOlder,
 } from "./chat-message.helpers";
+import { ChatNpcMessage } from "@/features/chat/components/chat-npc-message";
 import { canReplyToChatMessage } from "@/features/chat/chat-reply.helpers";
 import {
   getChatMentionSegments,
   type ChatMentionContext,
 } from "@/features/chat/chat-mentions.helpers";
+import { ChatMentionText } from "@/features/chat/components/chat-mention-text";
 import { Input } from "@/components/ui/input";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  getChatControllerGetChatMessagesQueryKey,
   useChatControllerDeleteChatMessage,
   useChatControllerUpdateChatMessage,
 } from "@/lib/api/generated/main/chat/chat";
@@ -43,6 +44,8 @@ import {
   updateChatMessage,
 } from "@/features/chat/chat.helpers";
 import { ChatReplyPreview } from "@/features/chat/components/chat-reply-preview";
+import { Button } from "@/components/ui/button";
+import { updateChatMessagesCache } from "@/features/chat/chat-query-cache.helpers";
 
 type ChatMessageProps = {
   all: boolean;
@@ -51,6 +54,8 @@ type ChatMessageProps = {
   member?: GuildMember;
   mentionContext?: ChatMentionContext;
   onReply?: () => void;
+  senderMapName?: string;
+  senderPresenceStatus?: "online" | "offline";
 };
 
 export const ChatMessage: FC<ChatMessageProps> = ({
@@ -60,6 +65,8 @@ export const ChatMessage: FC<ChatMessageProps> = ({
   member,
   mentionContext,
   onReply,
+  senderMapName,
+  senderPresenceStatus,
 }) => {
   const { t } = useTranslation("chat");
   const queryClient = useQueryClient();
@@ -72,15 +79,14 @@ export const ChatMessage: FC<ChatMessageProps> = ({
     useChatControllerUpdateChatMessage({
       mutation: {
         onSuccess: () => {
-          queryClient.setQueryData(
-            getChatControllerGetChatMessagesQueryKey({
-              guildId: message.guildId,
-            }),
-            (old: ChatMessageType[] | undefined) =>
+          updateChatMessagesCache({
+            guildId: message.guildId,
+            queryClient,
+            updater: (old: ChatMessageType[] | undefined) =>
               old
                 ? updateChatMessage(old, message.id, draftMessage.trim())
                 : old,
-          );
+          });
           setIsEditing(false);
         },
       },
@@ -89,13 +95,12 @@ export const ChatMessage: FC<ChatMessageProps> = ({
     useChatControllerDeleteChatMessage({
       mutation: {
         onSuccess: () => {
-          queryClient.setQueryData(
-            getChatControllerGetChatMessagesQueryKey({
-              guildId: message.guildId,
-            }),
-            (old: ChatMessageType[] | undefined) =>
+          updateChatMessagesCache({
+            guildId: message.guildId,
+            queryClient,
+            updater: (old: ChatMessageType[] | undefined) =>
               old ? removeChatMessage(old, message.id) : old,
-          );
+          });
         },
       },
     });
@@ -126,6 +131,17 @@ export const ChatMessage: FC<ChatMessageProps> = ({
     );
   }
 
+  if (message.type === MessageType.NPC) {
+    return (
+      <ChatNpcMessage
+        all={all}
+        guildName={guildName}
+        member={member}
+        message={message}
+      />
+    );
+  }
+
   const scrollToOriginalMessage = () => {
     if (!message.replyTo?.messageId) {
       return;
@@ -138,6 +154,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({
     originalMessage?.scrollIntoView({
       behavior: "smooth",
       block: "center",
+      inline: "nearest",
     });
   };
 
@@ -145,140 +162,135 @@ export const ChatMessage: FC<ChatMessageProps> = ({
     <div
       key={`${message.id}-${message.guildId}`}
       data-chat-message-id={message.id}
-      className="ll:text-white ll:text-xs ll:w-full ll:select-text ll:cursor-text"
+      className="ll:w-full ll:min-w-0 ll:max-w-full ll:box-border ll:text-white ll:text-xs ll:select-text ll:cursor-text ll:rounded-sm ll:transition-colors ll:hover:bg-gray-500/20"
     >
       <ContextMenu>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <ContextMenuTrigger>
-              <span className="ll:inline-block ll:select-text">
+        <ContextMenuTrigger>
+          <span
+            className="ll:inline-block ll:max-w-full ll:select-text"
+            style={{ overflowWrap: "anywhere" }}
+          >
+            <span
+              className={cn("ll:text-[11px] ll:select-text", {
+                "ll:opacity-50": isMsgYesterday,
+              })}
+            >
+              [{format(new Date(message.timestamp), "HH:mm")}]
+            </span>{" "}
+            {all && (
+              <span
+                className={cn("ll:font-bold ll:mr-0.5 ll:select-text", {
+                  "ll:opacity-50": isMsgYesterday,
+                })}
+              >
+                [{guildName}]{" "}
+              </span>
+            )}
+            <Tooltip>
+              <TooltipTrigger asChild>
                 <span
-                  className={cn("ll:text-[11px] ll:select-text", {
-                    "ll:opacity-50": isMsgYesterday,
-                  })}
-                >
-                  [{format(new Date(message.timestamp), "HH:mm")}]
-                </span>{" "}
-                {all && (
-                  <span
-                    className={cn("ll:font-bold ll:mr-0.5 ll:select-text", {
-                      "ll:opacity-50": isMsgYesterday,
-                    })}
-                  >
-                    [{guildName}]{" "}
-                  </span>
-                )}
-                <span
-                  className={cn("ll:font-bold ll:mr-0.5 ll:select-text", {
-                    "ll:opacity-50": isMsgYesterday,
-                  })}
+                  className={cn(
+                    "ll:inline-block ll:font-bold ll:mr-0.5 ll:select-text",
+                  )}
                   style={{ color: `#${memberColor}` }}
                 >
                   {senderName}:
                 </span>
-              </span>{" "}
-              {isEditing ? (
-                <form
-                  className="ll:inline-flex ll:w-full ll:max-w-full ll:items-center ll:gap-1"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    updateChatMessageMutation({
-                      pathParams: {
-                        guildId: message.guildId,
-                        messageId: message.id,
-                      },
-                      data: {
-                        message: draftMessage.trim(),
-                      },
-                    });
-                  }}
-                >
-                  <Input
-                    value={draftMessage}
-                    disabled={isUpdating}
-                    maxLength={128}
-                    onChange={(event) => setDraftMessage(event.target.value)}
-                    className="ll:h-5 ll:flex-1"
+              </TooltipTrigger>
+              <TooltipContent className="ll:bg-black ll:px-1.5 ll:py-1">
+                <div className="ll:flex ll:items-center ll:gap-1">
+                  <CharacterTile
+                    character={message.characterData}
+                    className="ll:max-h-6 ll:origin-left ll:scale-75 ll:-my-1 ll:-ml-1"
                   />
-                  <button
-                    type="submit"
-                    disabled={isUpdating || draftMessage.trim().length === 0}
-                    className="ll:text-[10px] ll:text-blue-300 ll:hover:text-blue-200 ll:disabled:opacity-50"
-                  >
-                    {t("edit.save")}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={isUpdating}
-                    className="ll:text-[10px] ll:text-gray-400 ll:hover:text-gray-300 ll:disabled:opacity-50"
-                    onClick={() => {
-                      setDraftMessage(message.message);
-                      setIsEditing(false);
-                    }}
-                  >
-                    {t("edit.cancel")}
-                  </button>
-                </form>
-              ) : (
+                  <div className="ll:flex ll:flex-col ll:leading-tight">
+                    <div className="ll:font-semibold ll:text-[11px]">
+                      {message.characterData.nick} ({message.characterData.lvl}
+                      {message.characterData.prof})
+                    </div>
+                    {senderPresenceStatus === "offline" ? (
+                      <div className="ll:flex ll:items-center ll:gap-1 ll:text-[10px] ll:text-red-300">
+                        <span className="ll:h-1.5 ll:w-1.5 ll:rounded-full ll:bg-red-400" />
+                        <span>{t("presence.offline")}</span>
+                      </div>
+                    ) : senderMapName ? (
+                      <div className="ll:text-[10px] ll:text-gray-300">
+                        {senderMapName}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </span>{" "}
+          {isEditing ? (
+            <form
+              className="ll:inline-flex ll:w-full ll:max-w-full ll:items-center ll:gap-1"
+              onSubmit={(event) => {
+                event.preventDefault();
+                updateChatMessageMutation({
+                  pathParams: {
+                    guildId: message.guildId,
+                    messageId: message.id,
+                  },
+                  data: {
+                    message: draftMessage.trim(),
+                  },
+                });
+              }}
+            >
+              <Input
+                value={draftMessage}
+                disabled={isUpdating}
+                maxLength={128}
+                onChange={(event) => setDraftMessage(event.target.value)}
+                className="ll:h-5 ll:flex-1"
+              />
+              <Button
+                type="submit"
+                disabled={isUpdating || draftMessage.trim().length === 0}
+              >
+                {t("edit.save")}
+              </Button>
+              <Button
+                type="button"
+                disabled={isUpdating}
+                onClick={() => {
+                  setDraftMessage(message.message);
+                  setIsEditing(false);
+                }}
+              >
+                {t("edit.cancel")}
+              </Button>
+            </form>
+          ) : (
+            <span
+              className="ll:whitespace-pre-wrap ll:select-text"
+              style={{
+                overflowWrap: "anywhere",
+                wordBreak: "normal",
+              }}
+            >
+              {message.replyTo && (
+                <ChatReplyPreview
+                  reply={message.replyTo}
+                  onClick={scrollToOriginalMessage}
+                  className="ll:mb-1 ll:max-w-[24rem]"
+                />
+              )}
+              {messageBody && (
                 <span
-                  className="ll:whitespace-pre-wrap ll:select-text"
-                  style={{
-                    overflowWrap: "anywhere",
-                    wordBreak: "normal",
-                  }}
+                  className={cn("ll:select-text", {
+                    "ll:text-gray-200": isMsgYesterday,
+                  })}
+                  style={{ color: messageBody.color }}
                 >
-                  {message.replyTo && (
-                    <ChatReplyPreview
-                      reply={message.replyTo}
-                      onClick={scrollToOriginalMessage}
-                      className="ll:mb-1 ll:max-w-[24rem]"
-                    />
-                  )}
-                  {messageBody && (
-                    <span
-                      className={cn("ll:select-text", {
-                        "ll:opacity-50": isMsgYesterday,
-                      })}
-                      style={{ color: messageBody.color }}
-                    >
-                      {mentionSegments.map((segment, index) => {
-                        if (!segment.isMention) {
-                          return <span key={index}>{segment.text}</span>;
-                        }
-
-                        return (
-                          <span
-                            key={index}
-                            className={cn(
-                              "ll:rounded-sm ll:px-0.5 ll:font-semibold",
-                              segment.isCurrentUserTarget
-                                ? "ll:bg-yellow-400/20 ll:text-yellow-200"
-                                : "ll:bg-white/10",
-                            )}
-                          >
-                            {segment.text}
-                          </span>
-                        );
-                      })}
-                    </span>
-                  )}
+                  <ChatMentionText segments={mentionSegments} />
                 </span>
               )}
-            </ContextMenuTrigger>
-          </TooltipTrigger>
-          <TooltipContent className="ll:bg-black ll:p-2">
-            <div className="ll:flex ll:items-center ll:gap-2">
-              <CharacterTile
-                character={message.characterData}
-                className="ll:scale-75 ll:p-0"
-              />
-              <div className="ll:font-semibold ll:text-[11px]">
-                {message.characterData.nick} ({message.characterData.lvl}
-                {message.characterData.prof})
-              </div>
-            </div>
-          </TooltipContent>
-        </Tooltip>
+            </span>
+          )}
+        </ContextMenuTrigger>
 
         <ContextMenuContent className="ll:w-48 ll:flex ll:flex-col">
           {message.characterData.nick !== Game.hero.nick && (

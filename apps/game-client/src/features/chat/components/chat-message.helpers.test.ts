@@ -4,6 +4,8 @@ import {
   MessageType,
 } from "@/api/chat.api";
 import {
+  getChatNpcLocation,
+  getChatNpcTextColor,
   getChatMessageBody,
   isChatMessageYesterdayOrOlder,
 } from "./chat-message.helpers";
@@ -20,14 +22,6 @@ vi.mock("@/api/npcs.api", () => ({
 
 vi.mock("@lootlog/types", () => ({
   getNpcTypeByWt: () => "hero",
-}));
-
-vi.mock("@/constants/margonem", () => ({
-  NPC_NAMES: {
-    hero: {
-      shortname: "H",
-    },
-  },
 }));
 
 const makeChatMessage = (
@@ -69,29 +63,53 @@ describe("chat-message helpers", () => {
     ).toBe(false);
   });
 
-  it("builds the NPC body text with location coordinates", () => {
+  it("formats the NPC location with coordinates when available", () => {
+    expect(
+      getChatNpcLocation({
+        id: 10,
+        name: "Hydra",
+        icon: "npc.png",
+        x: 7,
+        y: 9,
+        hpp: 100,
+        location: "Swamp",
+        lvl: 250,
+        prof: "m",
+        type: 1,
+        wt: 100,
+      }),
+    ).toBe("Swamp (7, 9)");
+  });
+
+  it("returns NPC highlight color based on its category", () => {
+    expect(
+      getChatNpcTextColor({
+        id: 10,
+        name: "Hydra",
+        icon: "npc.png",
+        x: 7,
+        y: 9,
+        hpp: 100,
+        location: "Swamp",
+        lvl: 250,
+        prof: "m",
+        type: 1,
+        wt: 100,
+      }),
+    ).toEqual(expect.any(String));
+  });
+
+  it("builds the notification body text", () => {
     expect(
       getChatMessageBody(
         makeChatMessage({
-          type: MessageType.NPC,
-          npc: {
-            id: 10,
-            name: "Hydra",
-            icon: "npc.png",
-            x: 7,
-            y: 9,
-            hpp: 100,
-            location: "Swamp",
-            lvl: 250,
-            prof: "m",
-            type: 1,
-            wt: 100,
-          },
+          type: MessageType.NOTIFICATION,
+          message: "Ping",
         }),
       ),
     ).toEqual({
       color: expect.any(String),
-      text: "[H] Hydra (250m) - Swamp (7, 9)",
+      text: "[P] Ping",
     });
   });
 });

@@ -685,6 +685,57 @@ describe("ChatService", () => {
     });
   });
 
+  describe("clearMessages", () => {
+    it("clears chat and publishes a guild-wide clear event for administrative users", async () => {
+      guildsService.getMultipleGuildsPermissions.mockResolvedValue([
+        {
+          guild: { id: "guild-1" },
+          permissions: [Permission.ADMIN],
+          roles: [],
+        },
+      ]);
+
+      await expect(
+        service.clearMessages("discord-admin", "guild-1"),
+      ).resolves.toEqual({ success: true });
+
+      expect(redisService.del).toHaveBeenCalledWith("guild:guild-1:messages");
+      expect(amqpConnection.publish).toHaveBeenCalledWith(
+        DEFAULT_EXCHANGE_NAME,
+        RoutingKey.GUILDS_CLEAR_MESSAGES,
+        { guildId: "guild-1" },
+      );
+    });
+
+    it("allows OWNER users to clear chat", async () => {
+      guildsService.getMultipleGuildsPermissions.mockResolvedValue([
+        {
+          guild: { id: "guild-1" },
+          permissions: [Permission.OWNER],
+          roles: [],
+        },
+      ]);
+
+      await expect(
+        service.clearMessages("discord-owner", "guild-1"),
+      ).resolves.toEqual({ success: true });
+    });
+
+    it("rejects clear for non-administrative users", async () => {
+      guildsService.getMultipleGuildsPermissions.mockResolvedValue([
+        {
+          guild: { id: "guild-1" },
+          permissions: [Permission.LOOTLOG_CHAT_READ],
+          roles: [createRole([Permission.LOOTLOG_CHAT_READ], 1, 500)],
+        },
+      ]);
+
+      await expect(
+        service.clearMessages("discord-user", "guild-1"),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+  });
+
   describe("endPartyGatheringMessages", () => {
     it("updates matching party gathering messages and publishes chat updates", async () => {
       redisService.lrange.mockResolvedValue([

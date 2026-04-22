@@ -1,20 +1,18 @@
 import { AutocompleteSuggestions } from "@/components/ui/autocomplete-suggestions";
+import {
+  filterCommandSuggestions,
+  getCommandSuggestionInsertValue,
+  getCommandSuggestions,
+  isCommandSuggestionsInput,
+  type CommandSuggestion,
+} from "@/features/command/command-suggestions.helpers";
 import { useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
-
-type CommandSuggestion = {
-  prefix: string;
-  label: string;
-  description: string;
-};
 
 type CommandSuggestionsProps = {
   inputValue: string;
   onSelect: (prefix: string) => void;
 };
-
-const selectItem = (item: CommandSuggestion) =>
-  item.prefix === "!" ? "!" : `${item.prefix} `;
 
 export const useCommandSuggestions = ({
   inputValue,
@@ -22,23 +20,12 @@ export const useCommandSuggestions = ({
 }: CommandSuggestionsProps) => {
   const { t } = useTranslation("command");
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  const commandSuggestions: CommandSuggestion[] = [
-    {
-      prefix: "!grp",
-      label: t("suggestions.partySearchLabel"),
-      description: t("suggestions.partySearchDescription"),
-    },
-    {
-      prefix: "!",
-      label: t("suggestions.notificationLabel"),
-      description: t("suggestions.notificationDescription"),
-    },
-  ];
-
-  const isOpen = inputValue.startsWith("!") && inputValue.length <= 4;
-  const filtered = commandSuggestions.filter((s) =>
-    s.prefix.startsWith(inputValue),
-  );
+  const commandSuggestions = getCommandSuggestions(t);
+  const isOpen = isCommandSuggestionsInput(inputValue);
+  const filtered = filterCommandSuggestions({
+    inputValue,
+    suggestions: commandSuggestions,
+  });
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!isOpen || filtered.length === 0) return false;
@@ -57,7 +44,7 @@ export const useCommandSuggestions = ({
 
     if (e.key === "Enter" && selectedIndex >= 0) {
       e.preventDefault();
-      onSelect(selectItem(filtered[selectedIndex]));
+      onSelect(getCommandSuggestionInsertValue(filtered[selectedIndex]));
       setSelectedIndex(-1);
       return true;
     }
@@ -78,7 +65,7 @@ export const CommandSuggestions: FC<{
     <AutocompleteSuggestions
       items={filtered}
       isOpen={isOpen}
-      onSelect={(item) => onSelect(selectItem(item))}
+      onSelect={(item) => onSelect(getCommandSuggestionInsertValue(item))}
       selectedIndex={selectedIndex}
       keyExtractor={(item) => item.prefix}
       renderItem={(item, _, isSelected) => (

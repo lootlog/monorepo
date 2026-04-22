@@ -54,18 +54,18 @@ export const CommandWindow = () => {
   const onSubmit = async (data: FormData) => {
     if (!characterId || !world || selectedInputGuildIds.length <= 0) return;
 
-    if (data.message.startsWith("!grp")) {
-      const description = data.message.slice("!grp".length).trim() || undefined;
+    if (data.message.startsWith("/grp")) {
+      const description = data.message.slice("/grp".length).trim() || undefined;
       await handlePartyCommand(description, selectedInputGuildIds);
       setValue("message", "");
       setOpen("command", false);
       return;
     }
 
-    const isCommand = data.message.startsWith("!");
-    const message = isCommand ? data.message.slice(1) : data.message;
+    const isNotification = data.message.startsWith("!");
+    const message = isNotification ? data.message.slice(1) : data.message;
 
-    if (isCommand) {
+    if (isNotification) {
       try {
         await startNotificationMessage({
           guildIds: selectedInputGuildIds,

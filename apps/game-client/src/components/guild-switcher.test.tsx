@@ -114,4 +114,20 @@ describe("GuildSwitcher", () => {
     expect(wheelEvent.defaultPrevented).toBe(true);
     expect(viewport.scrollLeft).toBe(48);
   });
+
+  it("renders unread badges for guilds and clamps them to 9+", () => {
+    render(
+      <GuildSwitcher
+        allowAll
+        value="guild-3"
+        unreadCountByGuildId={{
+          "guild-1": 3,
+          "guild-2": 14,
+        }}
+      />,
+    );
+
+    expect(screen.getByText("3")).toBeInTheDocument();
+    expect(screen.getByText("9+")).toBeInTheDocument();
+  });
 });

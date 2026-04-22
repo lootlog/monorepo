@@ -12,29 +12,41 @@ export type ChatMentionContext = {
   roleNames?: string[];
   currentUserNames?: string[];
   currentUserRoleNames?: string[];
+  memberColorsByName?: Record<string, string | null>;
+  roleColorsByName?: Record<string, string | null>;
 };
 
 export type ChatMentionSegment = {
   text: string;
   isMention: boolean;
   isCurrentUserTarget: boolean;
+  kind?: "member" | "role";
+  color?: string | null;
+  normalizedName?: string;
 };
 
 type MentionEntity = {
   name: string;
   normalizedName: string;
   isCurrentUserTarget: boolean;
+  kind: "member" | "role";
+  color: string | null;
 };
 
-const normalizeMentionName = (value: string) => {
+type NamedMentionValue = {
+  name?: string | null;
+  color?: number | null;
+};
+
+export const normalizeChatMentionName = (value: string) => {
   return value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
 };
 
-const getUniqueMentionNames = (values: string[]) => {
+export const getUniqueChatMentionNames = (values: string[]) => {
   const normalizedValues = new Set<string>();
 
   return values.filter((value) => {
-    const normalizedValue = normalizeMentionName(value);
+    const normalizedValue = normalizeChatMentionName(value);
 
     if (!normalizedValue || normalizedValues.has(normalizedValue)) {
       return false;
@@ -45,15 +57,63 @@ const getUniqueMentionNames = (values: string[]) => {
   });
 };
 
-const isMentionBoundary = (value?: string) => {
+export const isChatMentionBoundary = (value?: string) => {
   return value === undefined || MENTION_BOUNDARY_PATTERN.test(value);
+};
+
+export const getDiscordColorHex = (color?: number | null) => {
+  if (color === undefined || color === null || color === 0) {
+    return null;
+  }
+
+  return color.toString(16).padStart(6, "0");
+};
+
+const getNormalizedMentionColorsByName = <T extends NamedMentionValue>(
+  values?: T[],
+) => {
+  return (values ?? []).reduce<Record<string, string | null>>(
+    (result, value) => {
+      const normalizedName = normalizeChatMentionName(value.name ?? "");
+
+      if (!normalizedName || normalizedName in result) {
+        return result;
+      }
+
+      result[normalizedName] = getDiscordColorHex(value.color);
+      return result;
+    },
+    {},
+  );
+};
+
+export const getChatMentionMemberColorsByName = (
+  members?: MemberSummaryResponseDtoOutput[],
+) => {
+  return getNormalizedMentionColorsByName(members);
+};
+
+export const getChatMentionRoleColorsByName = (
+  roles?: RoleResponseDtoOutput[],
+) => {
+  return getNormalizedMentionColorsByName(roles);
 };
 
 const getMentionEntities = (context?: ChatMentionContext): MentionEntity[] => {
   const entitiesByName = new Map<string, MentionEntity>();
 
-  const upsertEntity = (name: string, isCurrentUserTarget: boolean) => {
-    const normalizedName = normalizeMentionName(name);
+  const upsertEntity = ({
+    name,
+    isCurrentUserTarget,
+    kind,
+    color,
+  }: {
+    name: string;
+    isCurrentUserTarget: boolean;
+    kind: "member" | "role";
+    color: string | null;
+  }) => {
+    const normalizedName = normalizeChatMentionName(name);
 
     if (!normalizedName) {
       return;
@@ -64,6 +124,7 @@ const getMentionEntities = (context?: ChatMentionContext): MentionEntity[] => {
     if (existingEntity) {
       existingEntity.isCurrentUserTarget =
         existingEntity.isCurrentUserTarget || isCurrentUserTarget;
+      existingEntity.color = existingEntity.color ?? color;
       return;
     }
 
@@ -71,13 +132,45 @@ const getMentionEntities = (context?: ChatMentionContext): MentionEntity[] => {
       name,
       normalizedName,
       isCurrentUserTarget,
+      kind,
+      color,
     });
   };
 
-  context?.memberNames?.forEach((name) => upsertEntity(name, false));
-  context?.roleNames?.forEach((name) => upsertEntity(name, false));
-  context?.currentUserNames?.forEach((name) => upsertEntity(name, true));
-  context?.currentUserRoleNames?.forEach((name) => upsertEntity(name, true));
+  context?.memberNames?.forEach((name) =>
+    upsertEntity({
+      name,
+      isCurrentUserTarget: false,
+      kind: "member",
+      color:
+        context.memberColorsByName?.[normalizeChatMentionName(name)] ?? null,
+    }),
+  );
+  context?.roleNames?.forEach((name) =>
+    upsertEntity({
+      name,
+      isCurrentUserTarget: false,
+      kind: "role",
+      color: context.roleColorsByName?.[normalizeChatMentionName(name)] ?? null,
+    }),
+  );
+  context?.currentUserNames?.forEach((name) =>
+    upsertEntity({
+      name,
+      isCurrentUserTarget: true,
+      kind: "member",
+      color:
+        context.memberColorsByName?.[normalizeChatMentionName(name)] ?? null,
+    }),
+  );
+  context?.currentUserRoleNames?.forEach((name) =>
+    upsertEntity({
+      name,
+      isCurrentUserTarget: true,
+      kind: "role",
+      color: context.roleColorsByName?.[normalizeChatMentionName(name)] ?? null,
+    }),
+  );
 
   return [...entitiesByName.values()].sort((left, right) => {
     return right.name.length - left.name.length;
@@ -101,7 +194,7 @@ const matchMentionAt = ({
 
   const previousCharacter = message[index - 1];
 
-  if (index > 0 && !isMentionBoundary(previousCharacter)) {
+  if (index > 0 && !isChatMentionBoundary(previousCharacter)) {
     return null;
   }
 
@@ -116,7 +209,7 @@ const matchMentionAt = ({
 
     const nextCharacter = message[mentionEnd];
 
-    if (!isMentionBoundary(nextCharacter)) {
+    if (!isChatMentionBoundary(nextCharacter)) {
       continue;
     }
 
@@ -124,6 +217,9 @@ const matchMentionAt = ({
       end: mentionEnd,
       text: message.slice(index, mentionEnd),
       isCurrentUserTarget: entity.isCurrentUserTarget,
+      kind: entity.kind,
+      color: entity.color,
+      normalizedName: entity.normalizedName,
     };
   }
 
@@ -146,6 +242,7 @@ export const getChatMentionSegments = (
         text: message,
         isMention: false,
         isCurrentUserTarget: false,
+        color: null,
       },
     ];
   }
@@ -162,6 +259,7 @@ export const getChatMentionSegments = (
         text: message.slice(cursor),
         isMention: false,
         isCurrentUserTarget: false,
+        color: null,
       });
       break;
     }
@@ -171,6 +269,7 @@ export const getChatMentionSegments = (
         text: message.slice(cursor, nextMentionIndex),
         isMention: false,
         isCurrentUserTarget: false,
+        color: null,
       });
     }
 
@@ -186,6 +285,7 @@ export const getChatMentionSegments = (
         text: message[nextMentionIndex] ?? "",
         isMention: false,
         isCurrentUserTarget: false,
+        color: null,
       });
       cursor = nextMentionIndex + 1;
       continue;
@@ -195,6 +295,9 @@ export const getChatMentionSegments = (
       text: mentionMatch.text,
       isMention: true,
       isCurrentUserTarget: mentionMatch.isCurrentUserTarget,
+      kind: mentionMatch.kind,
+      color: mentionMatch.color,
+      normalizedName: mentionMatch.normalizedName,
     });
     cursor = mentionMatch.end;
   }
@@ -221,7 +324,7 @@ export const getChatMentionMemberNames = ({
   members?: MemberSummaryResponseDtoOutput[];
   messages?: ChatMessageResponseDtoOutput[];
 }) => {
-  return getUniqueMentionNames([
+  return getUniqueChatMentionNames([
     ...(members?.map((member) => member.name) ?? []),
     ...(messages
       ?.map((message) => message.characterData?.nick)
@@ -230,7 +333,7 @@ export const getChatMentionMemberNames = ({
 };
 
 export const getChatMentionRoleNames = (roles?: RoleResponseDtoOutput[]) => {
-  return getUniqueMentionNames((roles ?? []).map((role) => role.name));
+  return getUniqueChatMentionNames((roles ?? []).map((role) => role.name));
 };
 
 export const getCurrentUserMentionNames = ({
@@ -240,7 +343,7 @@ export const getCurrentUserMentionNames = ({
   currentCharacterNick: string;
   currentMember?: NullableMemberResponseDto | null;
 }) => {
-  return getUniqueMentionNames([
+  return getUniqueChatMentionNames([
     currentCharacterNick,
     currentMember?.name ?? "",
   ]);
@@ -249,9 +352,38 @@ export const getCurrentUserMentionNames = ({
 export const getCurrentUserMentionRoleNames = (
   currentMember?: NullableMemberResponseDto | null,
 ) => {
-  return getUniqueMentionNames(
+  return getUniqueChatMentionNames(
     (currentMember?.roles ?? []).map((role) => role.name),
   );
+};
+
+export const buildChatMentionContext = ({
+  currentCharacterNick,
+  currentMember,
+  members,
+  messages,
+  roles,
+}: {
+  currentCharacterNick: string;
+  currentMember?: NullableMemberResponseDto | null;
+  members?: MemberSummaryResponseDtoOutput[];
+  messages?: ChatMessageResponseDtoOutput[];
+  roles?: RoleResponseDtoOutput[];
+}): ChatMentionContext => {
+  const memberColorsByName = getChatMentionMemberColorsByName(members);
+  const roleColorsByName = getChatMentionRoleColorsByName(roles);
+
+  return {
+    memberNames: getChatMentionMemberNames({ members, messages }),
+    roleNames: getChatMentionRoleNames(roles),
+    currentUserNames: getCurrentUserMentionNames({
+      currentCharacterNick,
+      currentMember,
+    }),
+    currentUserRoleNames: getCurrentUserMentionRoleNames(currentMember),
+    memberColorsByName,
+    roleColorsByName,
+  };
 };
 
 export const getChatMentionNotificationId = ({

@@ -121,6 +121,27 @@ export class ChatController {
 
   @Permissions(Permission.LOOTLOG_CHAT_WRITE)
   @UseGuards(PermissionsGuard)
+  @Delete()
+  @ApiOperation({
+    summary: "Clear chat messages",
+    description: "Clear all chat messages from a guild",
+  })
+  @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
+  @ZodResponse({
+    status: 200,
+    description: "Chat cleared successfully",
+    type: ChatMessageActionResponseDto,
+  })
+  @ApiResponse({
+    status: 403,
+    description: "Forbidden - only OWNER or ADMIN can clear chat",
+  })
+  clearChatMessages(@GuildData() guild: Guild, @DiscordId() discordId: string) {
+    return this.chatService.clearMessages(discordId, guild.id);
+  }
+
+  @Permissions(Permission.LOOTLOG_CHAT_WRITE)
+  @UseGuards(PermissionsGuard)
   @Delete(":messageId")
   @ApiOperation({
     summary: "Delete chat message",
