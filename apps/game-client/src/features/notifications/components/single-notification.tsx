@@ -2,13 +2,10 @@ import { CharacterTile } from "@/components/character-tile";
 import { NpcTile } from "@/components/npc-tile";
 import { Button } from "@/components/ui/button";
 import { NotificationMuteMenu } from "@/features/notifications/components/notification-mute-menu";
+import { useGuildMembersSummary } from "@/hooks/api/guild-members-summary-query";
 import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
 import { useMemberInvalidation } from "@/hooks/api/use-member-invalidation";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
-import {
-  getMembersControllerGetGuildMembersSummaryQueryKey,
-  useMembersControllerGetGuildMembersSummary,
-} from "@/lib/api/generated/main/members/members";
 import { useMessagingControllerVolunteer } from "@/lib/api/generated/main/messaging/messaging";
 import {
   buildCurrentCharacterPayload,
@@ -165,18 +162,9 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   );
   const setOpen = useWindowsStore((state) => state.setOpen);
   const { settings } = useCurrentGameAccountNotificationSettings();
-  const { data: membersData } = useMembersControllerGetGuildMembersSummary(
-    { guildId: notification.guildId },
-    {
-      query: {
-        queryKey: getMembersControllerGetGuildMembersSummaryQueryKey({
-          guildId: notification.guildId,
-        }),
-        gcTime: Infinity,
-        staleTime: 5 * 60 * 1000,
-      },
-    },
-  );
+  const { data: membersData } = useGuildMembersSummary({
+    guildId: notification.guildId,
+  });
   const members = mapGuildMembersByUserId(membersData);
   const guildMember = members[notification.discordId];
   const volunteer = useMessagingControllerVolunteer();

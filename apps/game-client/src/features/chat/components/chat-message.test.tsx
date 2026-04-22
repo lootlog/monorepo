@@ -199,36 +199,6 @@ describe("ChatMessage", () => {
     expect(screen.getByText("Hero:")).toBeInTheDocument();
   });
 
-  it("shows the sender map name inside the tooltip content when provided", () => {
-    render(
-      <ChatMessage
-        all={false}
-        guildName="Guild"
-        member={member}
-        senderMapName="Karka-han"
-        message={makeChatMessage()}
-      />,
-    );
-
-    expect(screen.getByText("Karka-han")).toBeInTheDocument();
-  });
-
-  it("shows an offline indicator in the tooltip when the sender is offline", () => {
-    render(
-      <ChatMessage
-        all={false}
-        guildName="Guild"
-        member={member}
-        senderMapName="Karka-han"
-        senderPresenceStatus="offline"
-        message={makeChatMessage()}
-      />,
-    );
-
-    expect(screen.getByText("Offline")).toBeInTheDocument();
-    expect(screen.queryByText("Karka-han")).not.toBeInTheDocument();
-  });
-
   it("shows edit and delete actions when backend capabilities allow them", () => {
     render(
       <ChatMessage

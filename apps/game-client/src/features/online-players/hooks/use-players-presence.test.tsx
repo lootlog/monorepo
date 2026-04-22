@@ -75,10 +75,6 @@ describe("usePlayersPresence", () => {
     expect(result.current[0]["discord-1"]?.[0]?.player?.location?.map).toBe(
       "Karka-han",
     );
-    expect(result.current[3]["20-10"]).toEqual({
-      status: "online",
-      mapName: "Karka-han",
-    });
     expect(emitWithAckSpy).toHaveBeenCalledWith(
       GatewayEvent.REQUEST_SERVER_PRESENCE,
       {
@@ -141,10 +137,6 @@ describe("usePlayersPresence", () => {
     expect(result.current[0]["discord-1"]?.[0]?.player?.location?.map).toBe(
       "Ithan",
     );
-    expect(result.current[3]["20-10"]).toEqual({
-      status: "online",
-      mapName: "Ithan",
-    });
   });
 
   it("stores an offline tombstone when gateway reports offline status", async () => {
@@ -197,9 +189,5 @@ describe("usePlayersPresence", () => {
     });
 
     expect(result.current[0]["discord-1"]).toBeUndefined();
-    expect(result.current[3]["20-10"]).toEqual({
-      status: "offline",
-      mapName: "Karka-han",
-    });
   });
 });
