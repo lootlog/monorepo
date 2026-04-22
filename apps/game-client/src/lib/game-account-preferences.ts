@@ -4,8 +4,6 @@ import {
   defaultNotificationsSettings,
   type DetectorRoutingRule,
   type DetectorSettings,
-  type DetectorTypeSettings,
-  type DetectorNpcType,
   type NotificationsSettings,
   type UserGameAccountPreferences,
 } from "@lootlog/types";

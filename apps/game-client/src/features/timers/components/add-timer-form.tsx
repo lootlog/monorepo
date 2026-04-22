@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -179,6 +179,7 @@ export const AddTimerForm: React.FC = () => {
   const [customDatesEnabled, setCustomDatesEnabled] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [selectedGuildId, setSelectedGuildId] = useState<string>("");
+  const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const debouncedSearch = useDebounce(searchQuery, 300);
 
   const currentGuildId = characterId ? guildIdByCharId[characterId] : undefined;
@@ -307,6 +308,14 @@ export const AddTimerForm: React.FC = () => {
     setSelectedIndex(-1);
   }, [debouncedSearch]);
 
+  useEffect(() => {
+    return () => {
+      if (blurTimeoutRef.current) {
+        clearTimeout(blurTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const onSubmit = (data: FormValues) => {
     if (!world || !selectedGuildId) return;
 
@@ -373,7 +382,14 @@ export const AddTimerForm: React.FC = () => {
                 }}
                 onKeyDown={handleSearchKeyDown}
                 onBlur={() => {
-                  setTimeout(() => setShowSuggestions(false), 200);
+                  if (blurTimeoutRef.current) {
+                    clearTimeout(blurTimeoutRef.current);
+                  }
+
+                  blurTimeoutRef.current = setTimeout(() => {
+                    setShowSuggestions(false);
+                    blurTimeoutRef.current = null;
+                  }, 200);
                 }}
               />
               <AutocompleteSuggestions<SearchTimersNpcResponseDtoOutput>

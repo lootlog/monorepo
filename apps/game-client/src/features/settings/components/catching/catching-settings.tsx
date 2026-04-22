@@ -130,8 +130,6 @@ export const CatchingSettings = () => {
                 accountId,
               characterId,
               catchingGuildIds,
-              collectLootWhitelistGuildIds: catchingGuildIds,
-              addTimersWhitelistGuildIds: catchingGuildIds,
             };
           });
 

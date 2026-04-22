@@ -1,7 +1,6 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { PrismaService } from "src/db/prisma.service";
 import { mockFn } from "src/test/mock-fn";
-import type { CreateOrUpdateLootlogCharacterConfigDto } from "src/user-lootlog-config/dto/create-user-account-config.dto";
 import { UserLootlogConfigService } from "./user-lootlog-config.service";
 
 describe("UserLootlogConfigService", () => {
@@ -33,7 +32,7 @@ describe("UserLootlogConfigService", () => {
   });
 
   describe("getLootlogAccountConfig", () => {
-    it("returns deprecated aliases without pruning stored guild IDs", async () => {
+    it("returns stored catching guild IDs without pruning them", async () => {
       mockPrismaService.userCharactersLootlogSettings.findMany.mockResolvedValue(
         [
           {
@@ -56,8 +55,6 @@ describe("UserLootlogConfigService", () => {
           accountId: "account1",
           characterId: "character1",
           catchingGuildIds: ["guild1", "guild4", "guild2"],
-          collectLootWhitelistGuildIds: ["guild1", "guild4", "guild2"],
-          addTimersWhitelistGuildIds: ["guild1", "guild4", "guild2"],
         },
       });
 
@@ -68,9 +65,9 @@ describe("UserLootlogConfigService", () => {
   });
 
   describe("createOrUpdateLootlogCharacterConfig", () => {
-    it("accepts deprecated payload fields and normalizes them into catchingGuildIds", async () => {
+    it("deduplicates catchingGuildIds before persisting", async () => {
       mockPrismaService.userCharactersLootlogSettings.upsert.mockImplementation(
-        async ({ create }: { create: { catchingGuildIds: string[] } }) => ({
+        ({ create }: { create: { catchingGuildIds: string[] } }) => ({
           userId: "discord1",
           accountId: "account1",
           characterId: "character1",
@@ -83,9 +80,8 @@ describe("UserLootlogConfigService", () => {
         "account1",
         {
           characterId: "character1",
-          lootGuildIds: ["guild1", "guild4", "guild2"],
-          timerGuildIds: ["guild2", "guild3", "guild4"],
-        } as CreateOrUpdateLootlogCharacterConfigDto,
+          catchingGuildIds: ["guild1", "guild4", "guild2", "guild2", "guild3"],
+        },
       );
 
       expect(
@@ -114,52 +110,6 @@ describe("UserLootlogConfigService", () => {
         accountId: "account1",
         characterId: "character1",
         catchingGuildIds: ["guild1", "guild4", "guild2", "guild3"],
-        collectLootWhitelistGuildIds: ["guild1", "guild4", "guild2", "guild3"],
-        addTimersWhitelistGuildIds: ["guild1", "guild4", "guild2", "guild3"],
-      });
-    });
-
-    it("prefers catchingGuildIds when both new and deprecated fields are provided", async () => {
-      mockPrismaService.userCharactersLootlogSettings.upsert.mockImplementation(
-        async ({ create }: { create: { catchingGuildIds: string[] } }) => ({
-          userId: "discord1",
-          accountId: "account1",
-          characterId: "character1",
-          catchingGuildIds: create.catchingGuildIds,
-        }),
-      );
-
-      const result = await service.createOrUpdateLootlogCharacterConfig(
-        "discord1",
-        "account1",
-        {
-          characterId: "character1",
-          catchingGuildIds: ["guild2", "guild4", "guild2"],
-          lootGuildIds: ["guild1"],
-          timerGuildIds: ["guild3"],
-        } as CreateOrUpdateLootlogCharacterConfigDto,
-      );
-
-      expect(
-        mockPrismaService.userCharactersLootlogSettings.upsert,
-      ).toHaveBeenCalledWith(
-        expect.objectContaining({
-          update: {
-            catchingGuildIds: ["guild2", "guild4"],
-          },
-          create: expect.objectContaining({
-            catchingGuildIds: ["guild2", "guild4"],
-          }),
-        }),
-      );
-
-      expect(result).toEqual({
-        userId: "discord1",
-        accountId: "account1",
-        characterId: "character1",
-        catchingGuildIds: ["guild2", "guild4"],
-        collectLootWhitelistGuildIds: ["guild2", "guild4"],
-        addTimersWhitelistGuildIds: ["guild2", "guild4"],
       });
     });
   });
