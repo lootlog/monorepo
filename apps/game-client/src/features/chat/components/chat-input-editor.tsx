@@ -35,6 +35,22 @@ type ChatInputEditorProps = {
   onKeyDown?: (event: KeyboardEvent<HTMLDivElement>) => void;
 };
 
+const CARET_SCROLL_PADDING = 8;
+
+const isNodeInsideEditor = ({
+  editor,
+  node,
+}: {
+  editor: HTMLDivElement;
+  node: Node | null;
+}) => {
+  if (!node) {
+    return false;
+  }
+
+  return node === editor || editor.contains(node);
+};
+
 export const ChatInputEditor: FC<ChatInputEditorProps> = ({
   autoFocus,
   caretIndex,
@@ -52,6 +68,79 @@ export const ChatInputEditor: FC<ChatInputEditorProps> = ({
   const hasAutoFocusedRef = useRef(false);
   const mentionSegments = getChatMentionSegments(message, mentionContext);
 
+  const syncEditorScrollToCaret = ({
+    editor,
+    currentCaretIndex,
+  }: {
+    editor: HTMLDivElement;
+    currentCaretIndex: number;
+  }) => {
+    const maxScrollLeft = Math.max(0, editor.scrollWidth - editor.clientWidth);
+
+    if (maxScrollLeft === 0) {
+      editor.scrollLeft = 0;
+      return;
+    }
+
+    const selection = editor.ownerDocument.getSelection();
+
+    if (!selection || selection.rangeCount === 0) {
+      return;
+    }
+
+    const selectionRange = selection.getRangeAt(0);
+
+    if (
+      !isNodeInsideEditor({
+        editor,
+        node: selectionRange.startContainer,
+      }) ||
+      !isNodeInsideEditor({
+        editor,
+        node: selectionRange.endContainer,
+      })
+    ) {
+      return;
+    }
+
+    const caretRange = selectionRange.cloneRange();
+    caretRange.collapse(false);
+
+    const caretRect =
+      caretRange.getClientRects()[0] ?? caretRange.getBoundingClientRect();
+
+    if (caretRect.width === 0 && caretRect.left === 0 && caretRect.right === 0) {
+      if (currentCaretIndex <= 0) {
+        editor.scrollLeft = 0;
+        return;
+      }
+
+      if (currentCaretIndex >= message.length) {
+        editor.scrollLeft = maxScrollLeft;
+      }
+
+      return;
+    }
+
+    const editorRect = editor.getBoundingClientRect();
+    const overflowRight =
+      caretRect.right - (editorRect.right - CARET_SCROLL_PADDING);
+    const overflowLeft =
+      editorRect.left + CARET_SCROLL_PADDING - caretRect.left;
+
+    if (overflowRight > 0) {
+      editor.scrollLeft = Math.min(
+        maxScrollLeft,
+        editor.scrollLeft + overflowRight,
+      );
+      return;
+    }
+
+    if (overflowLeft > 0) {
+      editor.scrollLeft = Math.max(0, editor.scrollLeft - overflowLeft);
+    }
+  };
+
   const syncSelectionOffsets = () => {
     const editor = editorRef.current;
 
@@ -65,6 +154,10 @@ export const ChatInputEditor: FC<ChatInputEditorProps> = ({
       return null;
     }
 
+    syncEditorScrollToCaret({
+      editor,
+      currentCaretIndex: selectionOffsets.end,
+    });
     onCaretChange(selectionOffsets.end);
     return selectionOffsets;
   };
@@ -128,6 +221,10 @@ export const ChatInputEditor: FC<ChatInputEditorProps> = ({
       root: editor,
       start: message.length,
     });
+    syncEditorScrollToCaret({
+      editor,
+      currentCaretIndex: message.length,
+    });
     onCaretChange(message.length);
     hasAutoFocusedRef.current = true;
   }, [autoFocus, disabled, editorRef, message.length, onCaretChange]);
@@ -158,6 +255,10 @@ export const ChatInputEditor: FC<ChatInputEditorProps> = ({
     restoreChatEditorSelection({
       root: editor,
       start: caretIndex,
+    });
+    syncEditorScrollToCaret({
+      editor,
+      currentCaretIndex: caretIndex,
     });
   }, [caretIndex, editorRef, message]);
 
@@ -294,7 +395,7 @@ export const ChatInputEditor: FC<ChatInputEditorProps> = ({
         tabIndex={disabled ? -1 : 0}
         data-slot="chat-input"
         className={cn(
-          "ll:box-border ll:block ll:h-full ll:w-full ll:min-w-0 ll:overflow-x-auto ll:overflow-y-hidden ll:px-1 ll:py-1 ll:text-xs ll:leading-[14px] ll:text-white ll:outline-none ll:whitespace-pre [&::-webkit-scrollbar]:ll:hidden [scrollbar-width:none]",
+          "ll:box-border ll:block ll:h-full ll:w-full ll:min-w-0 ll:overflow-x-hidden ll:overflow-y-hidden ll:px-1 ll:py-1 ll:text-xs ll:leading-[14px] ll:text-white ll:outline-none ll:whitespace-pre",
           disabled && "ll:cursor-not-allowed ll:opacity-50",
         )}
         onMouseDown={(event) => {
