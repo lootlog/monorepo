@@ -4,7 +4,6 @@ import { useWindowsStore } from "@/store/windows.store";
 import { MessageType } from "@/api/chat.api";
 import { Game } from "@/lib/game";
 import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
-import { useMessagingControllerSendNotification } from "@/lib/api/generated/main/messaging/messaging";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -17,6 +16,7 @@ import { useChatStore } from "@/store/chat.store";
 import { GuildMultiSelector } from "@/components/guild-multi-selector";
 import { usePartyCommand } from "./hooks/use-party-command";
 import { useTranslation } from "react-i18next";
+import { useNotificationChatOrchestration } from "@/features/chat/hooks/use-notification-chat-orchestration";
 
 const FormSchema = z.object({
   message: z.string().min(1).max(120),
@@ -33,9 +33,8 @@ export const CommandWindow = () => {
   const open = useWindowsStore((state) => state.command.open);
   const autofocus = useWindowsStore((state) => state.command.autofocus);
   const setOpen = useWindowsStore((state) => state.setOpen);
-  const { mutate: sendChatMessage } = useSendChatMessage();
-  const { mutate: createNotification } =
-    useMessagingControllerSendNotification();
+  const { mutateAsync: sendChatMessageAsync } = useSendChatMessage();
+  const { startNotificationMessage } = useNotificationChatOrchestration();
   const { handlePartyCommand } = usePartyCommand();
 
   const { watch, setValue, handleSubmit } = useForm<FormData>({
@@ -52,12 +51,12 @@ export const CommandWindow = () => {
     onSelect: (prefix) => setValue("message", prefix),
   });
 
-  const onSubmit = (data: FormData) => {
+  const onSubmit = async (data: FormData) => {
     if (!characterId || !world || selectedInputGuildIds.length <= 0) return;
 
     if (data.message.startsWith("!grp")) {
       const description = data.message.slice("!grp".length).trim() || undefined;
-      handlePartyCommand(description, selectedInputGuildIds);
+      await handlePartyCommand(description, selectedInputGuildIds);
       setValue("message", "");
       setOpen("command", false);
       return;
@@ -67,40 +66,47 @@ export const CommandWindow = () => {
     const message = isCommand ? data.message.slice(1) : data.message;
 
     if (isCommand) {
-      createNotification({
-        data: {
+      try {
+        await startNotificationMessage({
           guildIds: selectedInputGuildIds,
-          message,
           world,
-        },
-      });
-      sendChatMessage({
-        guildIds: selectedInputGuildIds,
-        message,
-        type: MessageType.NOTIFICATION,
-        characterData: {
-          nick: Game.hero.nick,
-          id: Game.hero.id,
-          acc: Game.hero.account,
-          lvl: Game.hero.lvl,
-          prof: Game.hero.prof,
-          icon: Game.hero.img,
-        },
-      });
+          message,
+          sendChatMessage: (resolvedGuildIds) =>
+            sendChatMessageAsync({
+              guildIds: resolvedGuildIds,
+              message,
+              type: MessageType.NOTIFICATION,
+              characterData: {
+                nick: Game.hero.nick,
+                id: Game.hero.id,
+                acc: Game.hero.account,
+                lvl: Game.hero.lvl,
+                prof: Game.hero.prof,
+                icon: Game.hero.img,
+              },
+            }),
+        });
+      } catch {
+        return;
+      }
     } else {
-      sendChatMessage({
-        guildIds: selectedInputGuildIds,
-        message: data.message,
-        type: MessageType.NORMAL,
-        characterData: {
-          nick: Game.hero.nick,
-          id: Game.hero.id,
-          acc: Game.hero.account,
-          lvl: Game.hero.lvl,
-          prof: Game.hero.prof,
-          icon: Game.hero.img,
-        },
-      });
+      try {
+        await sendChatMessageAsync({
+          guildIds: selectedInputGuildIds,
+          message: data.message,
+          type: MessageType.NORMAL,
+          characterData: {
+            nick: Game.hero.nick,
+            id: Game.hero.id,
+            acc: Game.hero.account,
+            lvl: Game.hero.lvl,
+            prof: Game.hero.prof,
+            icon: Game.hero.img,
+          },
+        });
+      } catch {
+        return;
+      }
     }
 
     setValue("message", "");
