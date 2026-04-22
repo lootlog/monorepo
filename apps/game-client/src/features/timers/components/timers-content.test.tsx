@@ -50,7 +50,6 @@ vi.mock("./timers-footer", () => ({
 import { TimersContent } from "./timers-content";
 
 const timer = {
-  id: "timer-1",
   guildId: "guild-1",
   timerKey: "timer-1",
   world: "pandora",

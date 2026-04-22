@@ -45,7 +45,6 @@ import { useTimerActions } from "./use-timer-actions";
 const createTimer = (
   overrides?: Partial<TimerWithTimeLeft>,
 ): TimerWithTimeLeft => ({
-  id: "timer-1",
   guildId: overrides?.guildId ?? "guild-1",
   timerKey: overrides?.timerKey ?? "timer-1",
   world: overrides?.world ?? "pandora",

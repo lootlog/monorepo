@@ -250,6 +250,7 @@ describe("AddTimerForm", () => {
     mockNpcResults = [
       {
         npcId: 500,
+        timerKey: "npc-500",
         name: "Tanroth",
         lvl: 120,
         type: "hero" as never,

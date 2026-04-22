@@ -6,7 +6,6 @@ import { useTimersStore } from "@/store/timers.store";
 import { useTimerDisplay } from "./use-timer-display";
 
 const createTimer = (overrides?: Partial<Timer>): Timer => ({
-  id: "timer-1",
   guildId: "guild-1",
   timerKey: "timer-1",
   world: "pandora",

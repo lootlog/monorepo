@@ -27,6 +27,32 @@ vi.mock("@/hooks/api/use-timers-cache", () => ({
 
 import { useTimersSocket } from "./use-timers-socket";
 
+const createTimer = (overrides?: Partial<Timer>): Timer => ({
+  guildId: overrides?.guildId ?? "guild-1",
+  timerKey: overrides?.timerKey ?? "tanroth",
+  world: overrides?.world ?? "pandora",
+  npcId: overrides?.npcId ?? 10,
+  minSpawnTime: overrides?.minSpawnTime ?? "2026-04-22T10:00:00.000Z",
+  maxSpawnTime: overrides?.maxSpawnTime ?? "2026-04-22T10:05:00.000Z",
+  updatedAt: overrides?.updatedAt ?? "2026-04-22T09:59:00.000Z",
+  wasReset: overrides?.wasReset ?? false,
+  npc: {
+    id: overrides?.npc?.id ?? 10,
+    name: overrides?.npc?.name ?? "Tanroth",
+    lvl: overrides?.npc?.lvl ?? 120,
+    prof: overrides?.npc?.prof ?? "W",
+    icon: overrides?.npc?.icon ?? "icon.gif",
+    wt: overrides?.npc?.wt ?? 10,
+    type: overrides?.npc?.type ?? "hero",
+    margonemType: overrides?.npc?.margonemType ?? 4,
+    location: overrides?.npc?.location ?? "Ruins",
+  } as never,
+  member: overrides?.member,
+  members: overrides?.members,
+  isCustomTime: overrides?.isCustomTime ?? false,
+  isPending: overrides?.isPending ?? false,
+});
+
 describe("useTimersSocket", () => {
   beforeEach(() => {
     mockOn.mockReset();
@@ -66,12 +92,7 @@ describe("useTimersSocket", () => {
       ([eventName]) => eventName === GatewayEvent.TIMERS_DELETE,
     )?.[1] as (data: Timer) => void;
 
-    const timer = {
-      id: "timer-1",
-      timerKey: "tanroth",
-      guildId: "guild-1",
-      world: "pandora",
-    } as Timer;
+    const timer = createTimer();
 
     createHandler(timer);
     deleteHandler(timer);

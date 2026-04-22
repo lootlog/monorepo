@@ -7,7 +7,6 @@ import { queryKeys } from "@/features/public-api/query-keys";
 import { useTimersCache } from "./use-timers-cache";
 
 const createTimer = (overrides?: Partial<Timer>): Timer => ({
-  id: "timer-1",
   guildId: overrides?.guildId ?? "guild-1",
   timerKey: overrides?.timerKey ?? "timer-1",
   world: overrides?.world ?? "pandora",
