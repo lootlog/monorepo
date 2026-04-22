@@ -1,5 +1,5 @@
 import { Readable } from "node:stream";
-import { buildBetterAuthRequest } from "./app.factory";
+import { buildBetterAuthRequest } from "./app.factory.helpers";
 
 type MockRawRequest = Readable & {
   headers: Record<string, string>;
