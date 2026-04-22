@@ -22,6 +22,28 @@ const itemFilterableAttributes = [
   "statsKeys",
 ];
 
+const indexPrimaryKeys = {
+  [NPCS_INDEX]: "uid",
+  [PLAYERS_INDEX]: "uid",
+  [ITEMS_INDEX]: "uid",
+} as const;
+
+function getMeilisearchErrorCode(error: unknown) {
+  if (
+    error &&
+    typeof error === "object" &&
+    "cause" in error &&
+    error.cause &&
+    typeof error.cause === "object" &&
+    "code" in error.cause &&
+    typeof error.cause.code === "string"
+  ) {
+    return error.cause.code;
+  }
+
+  return null;
+}
+
 @Injectable()
 export class MeilisearchIndexesService implements OnApplicationBootstrap {
   constructor(
@@ -31,6 +53,12 @@ export class MeilisearchIndexesService implements OnApplicationBootstrap {
 
   async onApplicationBootstrap() {
     try {
+      await Promise.all(
+        Object.entries(indexPrimaryKeys).map(([indexName, primaryKey]) =>
+          this.ensureIndex(indexName, primaryKey),
+        ),
+      );
+
       await Promise.all([
         this.meilisearch
           .index(NPCS_INDEX)
@@ -55,6 +83,18 @@ export class MeilisearchIndexesService implements OnApplicationBootstrap {
       ]);
     } catch (error) {
       this.logger.error("Failed to configure Meilisearch indexes", { error });
+    }
+  }
+
+  private async ensureIndex(indexName: string, primaryKey: string) {
+    try {
+      await this.meilisearch.getIndex(indexName);
+    } catch (error) {
+      if (getMeilisearchErrorCode(error) !== "index_not_found") {
+        throw error;
+      }
+
+      await this.meilisearch.createIndex(indexName, { primaryKey }).waitTask();
     }
   }
 }

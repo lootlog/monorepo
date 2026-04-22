@@ -11,6 +11,28 @@ import type { itemHitSchema } from "./dto/item-hit.schema";
 import { createItemSearchFields } from "./utils/create-item-search-fields";
 
 type ItemHit = z.infer<typeof itemHitSchema>;
+type SearchItemsResponse = {
+  estimatedTotalHits: number;
+  facetDistribution: Record<string, Record<string, number>>;
+  facetStats: Record<string, { max: number; min: number }>;
+  hits: ItemHit[];
+};
+
+function getMeilisearchErrorCode(error: unknown) {
+  if (
+    error &&
+    typeof error === "object" &&
+    "cause" in error &&
+    error.cause &&
+    typeof error.cause === "object" &&
+    "code" in error.cause &&
+    typeof error.cause.code === "string"
+  ) {
+    return error.cause.code;
+  }
+
+  return null;
+}
 
 @Injectable()
 export class ItemsService {
@@ -30,8 +52,16 @@ export class ItemsService {
   }: GetItemsDto) {
     const index = this.meilisearch.index<ItemHit>(ITEMS_INDEX);
     const searchTerm = search ?? "";
+    let incomingFilters: string[] = [];
+
+    if (Array.isArray(filter)) {
+      incomingFilters = filter;
+    } else if (filter) {
+      incomingFilters = [filter];
+    }
+
     const filters = [
-      ...(Array.isArray(filter) ? filter : filter ? [filter] : []),
+      ...incomingFilters,
       ...(world ? [`world = ${JSON.stringify(world)}`] : []),
     ];
 
@@ -46,23 +76,32 @@ export class ItemsService {
 
     try {
       const data = await index.search(searchTerm, query);
-      return {
-        hits: data.hits,
-        estimatedTotalHits:
-          "estimatedTotalHits" in data
-            ? data.estimatedTotalHits
-            : (data.totalHits ?? data.hits.length),
-        facetDistribution: data.facetDistribution ?? {},
-        facetStats: data.facetStats ?? {},
-      };
+      return this.mapSearchResponse(data);
     } catch (error) {
+      if (
+        getMeilisearchErrorCode(error) ===
+        "invalid_search_attributes_to_search_on"
+      ) {
+        this.logger.warn(
+          "Items index settings are stale, retrying search without stat attribute",
+          { error },
+        );
+
+        try {
+          const fallbackData = await index.search(searchTerm, {
+            ...query,
+            attributesToSearchOn: ["name"],
+          });
+
+          return this.mapSearchResponse(fallbackData);
+        } catch (fallbackError) {
+          this.logger.error("Items search error", { error: fallbackError });
+          return this.getEmptySearchResponse();
+        }
+      }
+
       this.logger.error("Items search error", { error });
-      return {
-        hits: [],
-        estimatedTotalHits: 0,
-        facetDistribution: {},
-        facetStats: {},
-      };
+      return this.getEmptySearchResponse();
     }
   }
 
@@ -112,5 +151,32 @@ export class ItemsService {
       this.logger.error("Error indexing items", { error });
       return;
     }
+  }
+
+  private getEmptySearchResponse(): SearchItemsResponse {
+    return {
+      hits: [],
+      estimatedTotalHits: 0,
+      facetDistribution: {},
+      facetStats: {},
+    };
+  }
+
+  private mapSearchResponse(data: {
+    estimatedTotalHits?: number;
+    facetDistribution?: Record<string, Record<string, number>>;
+    facetStats?: Record<string, { max: number; min: number }>;
+    hits: ItemHit[];
+    totalHits?: number;
+  }): SearchItemsResponse {
+    return {
+      hits: data.hits,
+      estimatedTotalHits:
+        "estimatedTotalHits" in data
+          ? (data.estimatedTotalHits ?? data.totalHits ?? data.hits.length)
+          : (data.totalHits ?? data.hits.length),
+      facetDistribution: data.facetDistribution ?? {},
+      facetStats: data.facetStats ?? {},
+    };
   }
 }

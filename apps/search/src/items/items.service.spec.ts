@@ -155,6 +155,48 @@ describe("ItemsService", () => {
         facetStats: {},
       });
     });
+
+    it("should retry search without stat attribute when index settings are stale", async () => {
+      indexMock.search
+        .mockRejectedValueOnce({
+          cause: { code: "invalid_search_attributes_to_search_on" },
+        })
+        .mockResolvedValueOnce({
+          hits: [{ id: 1, name: "Sword", stat: "lvl=10" }],
+        });
+
+      await expect(
+        service.searchItems({
+          limit: 10,
+          offset: 0,
+          search: "sword",
+        }),
+      ).resolves.toEqual({
+        hits: [{ id: 1, name: "Sword", stat: "lvl=10" }],
+        estimatedTotalHits: 1,
+        facetDistribution: {},
+        facetStats: {},
+      });
+
+      expect(indexMock.search).toHaveBeenNthCalledWith(1, "sword", {
+        limit: 10,
+        offset: 0,
+        attributesToSearchOn: ["name", "stat"],
+      });
+      expect(indexMock.search).toHaveBeenNthCalledWith(2, "sword", {
+        limit: 10,
+        offset: 0,
+        attributesToSearchOn: ["name"],
+      });
+      expect(loggerMock.warn).toHaveBeenCalledWith(
+        "Items index settings are stale, retrying search without stat attribute",
+        {
+          error: {
+            cause: { code: "invalid_search_attributes_to_search_on" },
+          },
+        },
+      );
+    });
   });
 
   describe("indexItems", () => {
