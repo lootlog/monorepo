@@ -34,6 +34,7 @@ import {
   type CommandSuggestion,
 } from "@/features/command/command-suggestions.helpers";
 import { usePartyCommand } from "@/features/command/hooks/use-party-command";
+import { useGuildMembersSummary } from "@/hooks/api/guild-members-summary-query";
 import {
   getGuildsControllerGetGuildPermissionsQueryKey,
   useGuildsControllerGetGuildPermissions,
@@ -45,8 +46,6 @@ import {
 import {
   getMembersControllerGetMeQueryKey,
   useMembersControllerGetMe,
-  getMembersControllerGetGuildMembersSummaryQueryKey,
-  useMembersControllerGetGuildMembersSummary,
 } from "@/lib/api/generated/main/members/members";
 import type { ChatMessageResponseDtoOutput } from "@/lib/api/generated/main/model";
 import {
@@ -145,16 +144,11 @@ export const ChatInput: FC<ChatInputProps> = ({
       },
     );
   const { data: guildMembers = [], isFetching: isFetchingMemberNames } =
-    useMembersControllerGetGuildMembersSummary(
+    useGuildMembersSummary(
       { guildId: selectedGuildId ?? "" },
       {
         query: {
-          queryKey: getMembersControllerGetGuildMembersSummaryQueryKey({
-            guildId: selectedGuildId ?? "",
-          }),
           enabled: shouldLoadMentionData,
-          gcTime: Infinity,
-          staleTime: 5 * 60 * 1000,
         },
       },
     );

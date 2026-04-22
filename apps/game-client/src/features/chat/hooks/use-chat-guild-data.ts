@@ -1,12 +1,11 @@
 import { useQueries } from "@tanstack/react-query";
+import { getGuildMembersSummaryQueryOptions } from "@/hooks/api/guild-members-summary-query";
 import {
   chatControllerGetChatMessages,
   getChatControllerGetChatMessagesQueryKey,
 } from "@/lib/api/generated/main/chat/chat";
 import {
-  getMembersControllerGetGuildMembersSummaryQueryKey,
   getMembersControllerGetMeQueryKey,
-  membersControllerGetGuildMembersSummary,
   membersControllerGetMe,
 } from "@/lib/api/generated/main/members/members";
 import {
@@ -63,13 +62,9 @@ export const useChatGuildData = ({
     })),
   });
   const memberQueries = useQueries({
-    queries: guildIdsToLoad.map((guildId) => ({
-      queryKey: getMembersControllerGetGuildMembersSummaryQueryKey({ guildId }),
-      queryFn: () => membersControllerGetGuildMembersSummary({ guildId }),
-      enabled: Boolean(guildId),
-      gcTime: Infinity,
-      staleTime: 5 * 60 * 1000,
-    })),
+    queries: guildIdsToLoad.map((guildId) =>
+      getGuildMembersSummaryQueryOptions({ guildId }),
+    ),
   });
   const hasMentionCandidatesByGuildId = guildIdsToLoad.reduce<
     Record<string, boolean>

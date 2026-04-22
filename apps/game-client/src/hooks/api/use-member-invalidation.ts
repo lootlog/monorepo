@@ -1,9 +1,9 @@
 import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  getMembersControllerGetGuildMembersSummaryQueryKey,
-  useMembersControllerGetGuildMembersSummary,
-} from "@/lib/api/generated/main/members/members";
+  getGuildMembersSummaryQueryKey,
+  useGuildMembersSummary,
+} from "@/hooks/api/guild-members-summary-query";
 import { mapGuildMembersByUserId } from "@/lib/api/generated-helpers";
 
 export const useMemberInvalidation = (
@@ -11,16 +11,11 @@ export const useMemberInvalidation = (
   memberIds: string | string[] | undefined,
 ) => {
   const queryClient = useQueryClient();
-  const { data } = useMembersControllerGetGuildMembersSummary(
+  const { data } = useGuildMembersSummary(
     { guildId: guildId ?? "" },
     {
       query: {
-        queryKey: getMembersControllerGetGuildMembersSummaryQueryKey({
-          guildId: guildId ?? "",
-        }),
         enabled: !!guildId,
-        gcTime: Infinity,
-        staleTime: 5 * 60 * 1000,
       },
     },
   );
@@ -43,7 +38,7 @@ export const useMemberInvalidation = (
       if (!member) {
         checkedIdsRef.current.add(checkKey);
         queryClient.invalidateQueries({
-          queryKey: getMembersControllerGetGuildMembersSummaryQueryKey({
+          queryKey: getGuildMembersSummaryQueryKey({
             guildId,
           }),
         });
