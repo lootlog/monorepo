@@ -97,7 +97,7 @@ export class GuildsService {
     userId: string,
   ): Promise<CurrentUserGuildAccessSummary[]> {
     const requiredPermissions = [Permission.LOOTLOG_ACCESS];
-    const guildCandidates = await this.getDiscordLootlogGuildCandidates(
+    const guildCandidates = await this.getCandidateGuildsForUser(
       discordId,
       userId,
     );

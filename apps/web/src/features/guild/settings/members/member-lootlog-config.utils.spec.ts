@@ -48,13 +48,29 @@ describe("getMemberLootlogProfileTarget", () => {
     ).toBeNull();
   });
 
-  it("returns null when the world is missing", () => {
+  it("falls back to the account profile when the world is missing", () => {
     expect(
       getMemberLootlogProfileTarget({
         accountId: "123",
         characterId: "456",
         world: null,
       }),
-    ).toBeNull();
+    ).toEqual({
+      accountId: 123,
+      href: "https://www.margonem.pl/profile/view,123",
+    });
+  });
+
+  it("falls back to the account profile when the character ref is invalid", () => {
+    expect(
+      getMemberLootlogProfileTarget({
+        accountId: "123",
+        characterId: "abc",
+        world: "Berufs",
+      }),
+    ).toEqual({
+      accountId: 123,
+      href: "https://www.margonem.pl/profile/view,123",
+    });
   });
 });

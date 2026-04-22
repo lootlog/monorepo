@@ -97,6 +97,9 @@ export const MemberLootlogConfigCard = ({
               ? t(metadataTranslationKey)
               : (character.world ??
                 t("settings.members.lootlogWorldUnavailable"));
+            const hasCharacterProfileTarget = Boolean(
+              profileTarget?.characterId && profileTarget.world,
+            );
 
             return (
               <div
@@ -110,9 +113,19 @@ export const MemberLootlogConfigCard = ({
                     icon: character.icon,
                   }}
                   className="shrink-0 scale-[0.82]"
-                  accountId={profileTarget?.accountId}
-                  characterId={profileTarget?.characterId}
-                  world={profileTarget?.world}
+                  accountId={
+                    hasCharacterProfileTarget
+                      ? profileTarget.accountId
+                      : undefined
+                  }
+                  characterId={
+                    hasCharacterProfileTarget
+                      ? profileTarget.characterId
+                      : undefined
+                  }
+                  world={
+                    hasCharacterProfileTarget ? profileTarget.world : undefined
+                  }
                 />
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-1.5">
