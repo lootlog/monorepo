@@ -13,6 +13,7 @@
     "test:watch": "vitest --config ./vitest.config.ts",
     "test:cov": "vitest run --config ./vitest.config.ts --coverage",
     "auth:generate": "drizzle-kit generate",
+    "auth:migrate:init": "pnpm exec tsx --tsconfig ./tsconfig.json scripts/migrate-init.ts",
     "auth:migrate:dev": "drizzle-kit push --force",
     "auth:migrate:prod": "drizzle-kit migrate"
   },
