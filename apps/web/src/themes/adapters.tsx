@@ -8,7 +8,6 @@ import { RukiaEmptyStateIcon } from "./rukia/rukia-empty-state-icon";
 import { LazyRiasMagicSpinner } from "./rias/lazy-rias-magic-spinner";
 import { RiasEmptyStateIcon } from "./rias/rias-empty-state-icon";
 import { RiasSidebarBackground } from "./rias/rias-sidebar-background";
-import { RiasBatSeparator } from "./rias/rias-bat-separator";
 import { SidebarMagicCircle } from "./rias/sidebar-magic-circle";
 import {
   GremoryButton,
@@ -208,10 +207,4 @@ export const ThemeEmptyStateIcon = ({
   if (isRukiaTheme) return <RukiaEmptyStateIcon className={className} />;
   if (isRiasTheme) return <RiasEmptyStateIcon className={className} />;
   return <>{fallback}</>;
-};
-
-export const ThemeSeparator = ({ className }: { className?: string }) => {
-  const { isRiasTheme } = useThemeMeta();
-
-  return isRiasTheme ? <RiasBatSeparator className={className} /> : null;
 };

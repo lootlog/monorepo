@@ -5,10 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DetectorRoutingRuleCard } from "@/features/settings/components/detector/detector-routing-rule-card";
 import { getDetectorRoutingSettingsTranslations } from "@/features/settings/components/detector/detector-routing-settings-translations";
-import { useGuilds } from "@/hooks/api/use-guilds";
 import { useUpdateUserGameAccountPreferences } from "@/hooks/api/use-user-account-preferences";
 import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
+import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@/lib/api/generated/main/users/users";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { DetectorRoutingRule } from "@lootlog/types";
 import { Plus } from "lucide-react";
@@ -171,7 +171,7 @@ export const DetectorRoutingSettingsTabForm: FC = () => {
     isFetched,
     settings: accountSettings,
   } = useCurrentGameAccountDetectorSettings();
-  const { data: guilds } = useGuilds();
+  const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds();
   const updateUserGameAccountPreferences =
     useUpdateUserGameAccountPreferences(accountId);
   const translations = getDetectorRoutingSettingsTranslations();

@@ -11,7 +11,7 @@ import {
 import { useWindowsStore } from "@/store/windows.store";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import type { GameNpc } from "@lootlog/margonem";
-import { NpcType } from "@/hooks/api/use-npcs";
+import { NpcType } from "@/api/npcs.api";
 import { getNpcIconFromEvent } from "@/utils/game/events/get-npc-icon-from-event";
 import { getNpcTplFromEvent } from "@/utils/game/events/get-npc-tpl-from-event";
 import {
@@ -22,12 +22,16 @@ import {
   type UserGameAccountPreferences,
 } from "@lootlog/types";
 import { sendChatMessage, createNotification, MessageType } from "@/api";
+import {
+  buildNpcChatMessagePayload,
+  buildNpcNotificationPayload,
+  resolveNpcNotificationRouting,
+} from "@/utils/notifications-and-detector/npc-notification";
 import { playSound } from "@/lib/sound-playback";
 import { queryClient } from "@/lib/query-client";
 import {
   getEffectiveDetectorSettings,
   getUserGameAccountPreferencesQueryKey,
-  resolveDetectorGuildIds,
 } from "@/lib/game-account-preferences";
 
 type PendingDetection =
@@ -210,10 +214,10 @@ export class NpcsDetectionProcessor {
         ""
       : Game.getNpcIcon(npc.icon.id) || "";
 
-    const guildIds = resolveDetectorGuildIds(
-      detectorSettings.routingRules,
+    const { guildIds } = resolveNpcNotificationRouting({
+      routingRules: detectorSettings.routingRules,
       npcLevel,
-    );
+    });
     const autoSendNotification = settings.autoSend && guildIds.length > 0;
 
     return {
@@ -234,13 +238,10 @@ export class NpcsDetectionProcessor {
     if (!settings?.detect) return null;
 
     const icon = Game.getNpcIcon(npc.tpl) || npc.icon || "";
-    const world = Game.getWorldName();
-
-    const guildIds = resolveDetectorGuildIds(
-      detectorSettings.routingRules,
-      npc.lvl,
-      world,
-    );
+    const { guildIds } = resolveNpcNotificationRouting({
+      routingRules: detectorSettings.routingRules,
+      npcLevel: npc.lvl,
+    });
     const autoSendNotification = settings.autoSend && guildIds.length > 0;
 
     return {
@@ -265,70 +266,52 @@ export class NpcsDetectionProcessor {
     detectorSettings: DetectorTypeSettings;
   }): void {
     if (autoSendNotification) {
-      const world = Game.getWorldName();
-
-      createNotification({
-        npc: {
-          id: composedNpc.id,
-          hpp: 0,
-          location: composedNpc.location,
-          name: composedNpc.nick,
-          wt: composedNpc.wt,
-          x: composedNpc.x,
-          y: composedNpc.y,
-          lvl: composedNpc.lvl,
-          prof: composedNpc.prof,
-          icon: composedNpc.icon,
-          type: composedNpc.type,
-        },
-        world,
-        guildIds,
-      }).catch((error) => {
-        console.warn(
-          "[NpcsDetectionProcessor] Failed to send notification:",
-          error,
-        );
-      });
-
-      sendChatMessage({
-        message: "",
-        guildIds,
-        type: MessageType.NPC,
-        characterData: {
-          nick: Game.hero.nick,
-          id: Game.hero.id,
-          acc: Game.hero.account,
-          lvl: Game.hero.lvl,
-          prof: Game.hero.prof,
-          icon: Game.hero.img,
-        },
-        npc: {
-          x: composedNpc.x,
-          y: composedNpc.y,
-          icon: composedNpc.icon,
-          id: composedNpc.id,
-          name: composedNpc.nick,
-          lvl: composedNpc.lvl,
-          prof: composedNpc.prof,
-          type: composedNpc.type,
-          hpp: 0,
-          location: composedNpc.location,
-          wt: composedNpc.wt,
-        },
-      })
-        .then(() => {
-          useWindowsStore.getState().setOpen("npc-detector", true);
-        })
-        .catch((error) => {
-          console.warn(
-            "[NpcsDetectionProcessor] Failed to send chat message:",
-            error,
-          );
-        });
+      void this.autoSendNpcNotification(composedNpc, guildIds);
     }
 
     if (detectorSettings.notifySound) {
       playSound("detector", npcType);
+    }
+  }
+
+  private async autoSendNpcNotification(
+    npc: GameNpcWithLocation,
+    guildIds: string[],
+  ): Promise<void> {
+    try {
+      const notificationResponse = await createNotification(
+        buildNpcNotificationPayload({
+          npc,
+          guildIds,
+        }),
+      );
+      const resolvedGuildIds = notificationResponse?.guildIds ?? guildIds;
+
+      useNpcDetectorStore.getState().setNpcState(npc.id, {
+        ...npc,
+        notificationSent: true,
+      });
+
+      try {
+        await sendChatMessage(
+          buildNpcChatMessagePayload({
+            npc,
+            guildIds: resolvedGuildIds,
+            messageType: MessageType.NPC,
+          }),
+        );
+        useWindowsStore.getState().setOpen("npc-detector", true);
+      } catch (error) {
+        console.warn(
+          "[NpcsDetectionProcessor] Failed to send chat message:",
+          error,
+        );
+      }
+    } catch (error) {
+      console.warn(
+        "[NpcsDetectionProcessor] Failed to send notification:",
+        error,
+      );
     }
   }
 

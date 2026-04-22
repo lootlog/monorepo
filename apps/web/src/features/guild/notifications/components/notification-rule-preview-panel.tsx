@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Card } from "@lootlog/ui/components/card";
-import type { GuildRole } from "@/hooks/api/guilds/use-guild-roles";
+import type { RoleResponseDtoOutput as GuildRole } from "@/lib/api/generated/main/model";
 import {
   createPreviewTemplateValues,
   renderTemplatePreview,

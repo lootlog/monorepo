@@ -70,7 +70,7 @@ const WINDOW_CLOSED_STYLE = {
   dot: "bg-muted-foreground/50",
 };
 
-export const getPlayersOnMap = (
+const getPlayersOnMap = (
   mapName: string,
   presenceData?: Map<string, PlayerPresence[]>,
 ): (PlayerPresence & { discordId: string })[] => {

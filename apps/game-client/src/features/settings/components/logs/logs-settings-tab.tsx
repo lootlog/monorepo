@@ -129,7 +129,7 @@ export const LogsSettingsTab: FC = () => {
             type="button"
             variant="ghost"
           >
-            {t("settings.common.actions.exportJson")}
+            {t("common:actions.exportJson")}
           </Button>
           <Button
             className="ll:h-6 ll:px-2"
@@ -138,7 +138,7 @@ export const LogsSettingsTab: FC = () => {
             type="button"
             variant="ghost"
           >
-            {t("settings.common.actions.clear")}
+            {t("common:actions.clear")}
           </Button>
         </div>
       }

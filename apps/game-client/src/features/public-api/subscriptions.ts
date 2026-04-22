@@ -1,11 +1,11 @@
 import type { QueryClient } from "@tanstack/react-query";
-import type { Guild } from "@/hooks/api/use-guild";
-import type { Timer } from "@/hooks/api/use-timers";
 import { useGlobalStore } from "@/store/global.store";
 import { queryKeys } from "./query-keys";
 import { mapGuilds, mapTimers, groupTimersByGuild } from "./mappers";
 import type { ApiEventMap } from "./types";
 import type { Emitter } from "./emitter";
+import type { GuildResponseDtoOutput } from "@/lib/api/generated/main/model";
+import type { Timer } from "@/api";
 
 export function setupSubscriptions(
   queryClient: QueryClient,
@@ -20,7 +20,9 @@ export function setupSubscriptions(
     const key = event.query.queryKey;
 
     if (key[0] === queryKeys.guilds()[0]) {
-      const data = event.query.state.data as Guild[] | undefined;
+      const data = event.query.state.data as
+        | GuildResponseDtoOutput[]
+        | undefined;
       const mapped = mapGuilds(data);
       const json = JSON.stringify(mapped);
       if (json !== lastGuildsJson) {
@@ -30,11 +32,15 @@ export function setupSubscriptions(
     }
 
     if (key[0] === queryKeys.timers()[0]) {
-      const world = key[1] as string;
+      const params =
+        key[1] && typeof key[1] === "object"
+          ? (key[1] as { world?: string })
+          : undefined;
+      const world = params?.world;
       const data = event.query.state.data as Timer[] | undefined;
       const mapped = mapTimers(data);
 
-      if (!mapped) return;
+      if (!mapped || !world) return;
 
       const grouped = groupTimersByGuild(mapped);
 

@@ -1,5 +1,5 @@
-import type { Timer } from "@/hooks/api/use-timers";
-import { NpcType } from "@/hooks/api/use-npcs";
+import { NpcType } from "@/api/npcs.api";
+import type { Timer } from "@/api/timers.api";
 import type { GuildMember } from "@/types/guild-member";
 
 export type TimerWithTimeLeft = Timer & {

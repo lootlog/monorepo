@@ -1,12 +1,9 @@
 import { DraggableWindow } from "@/components/draggable-window";
 import { AnimatedWindow } from "@/components/animated-window";
 import { useWindowsStore } from "@/store/windows.store";
+import { MessageType } from "@/api/chat.api";
 import { Game } from "@/lib/game";
-import {
-  MessageType,
-  useSendChatMessage,
-} from "@/hooks/api/use-send-chat-message";
-import { useCreateNotification } from "@/hooks/api/use-create-notification";
+import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -18,6 +15,8 @@ import {
 import { useChatStore } from "@/store/chat.store";
 import { GuildMultiSelector } from "@/components/guild-multi-selector";
 import { usePartyCommand } from "./hooks/use-party-command";
+import { useTranslation } from "react-i18next";
+import { useNotificationChatOrchestration } from "@/features/chat/hooks/use-notification-chat-orchestration";
 
 const FormSchema = z.object({
   message: z.string().min(1).max(120),
@@ -25,6 +24,7 @@ const FormSchema = z.object({
 type FormData = z.infer<typeof FormSchema>;
 
 export const CommandWindow = () => {
+  const { t } = useTranslation("command");
   const { selectedInputGuildIds, setSelectedInputGuildIds } = useChatStore();
 
   const characterId = String(Game.hero.id);
@@ -33,8 +33,8 @@ export const CommandWindow = () => {
   const open = useWindowsStore((state) => state.command.open);
   const autofocus = useWindowsStore((state) => state.command.autofocus);
   const setOpen = useWindowsStore((state) => state.setOpen);
-  const { mutate: sendChatMessage } = useSendChatMessage();
-  const { mutate: createNotification } = useCreateNotification();
+  const { mutateAsync: sendChatMessageAsync } = useSendChatMessage();
+  const { startNotificationMessage } = useNotificationChatOrchestration();
   const { handlePartyCommand } = usePartyCommand();
 
   const { watch, setValue, handleSubmit } = useForm<FormData>({
@@ -51,53 +51,62 @@ export const CommandWindow = () => {
     onSelect: (prefix) => setValue("message", prefix),
   });
 
-  const onSubmit = (data: FormData) => {
+  const onSubmit = async (data: FormData) => {
     if (!characterId || !world || selectedInputGuildIds.length <= 0) return;
 
-    if (data.message.startsWith("!grp")) {
-      const description = data.message.slice("!grp".length).trim() || undefined;
-      handlePartyCommand(description, selectedInputGuildIds);
+    if (data.message.startsWith("/grp")) {
+      const description = data.message.slice("/grp".length).trim() || undefined;
+      await handlePartyCommand(description, selectedInputGuildIds);
       setValue("message", "");
       setOpen("command", false);
       return;
     }
 
-    const isCommand = data.message.startsWith("!");
-    const message = isCommand ? data.message.slice(1) : data.message;
+    const isNotification = data.message.startsWith("!");
+    const message = isNotification ? data.message.slice(1) : data.message;
 
-    if (isCommand) {
-      createNotification({
-        guildIds: selectedInputGuildIds,
-        message,
-        world,
-      });
-      sendChatMessage({
-        guildIds: selectedInputGuildIds,
-        message,
-        type: MessageType.NOTIFICATION,
-        characterData: {
-          nick: Game.hero.nick,
-          id: Game.hero.id,
-          acc: Game.hero.account,
-          lvl: Game.hero.lvl,
-          prof: Game.hero.prof,
-          icon: Game.hero.img,
-        },
-      });
+    if (isNotification) {
+      try {
+        await startNotificationMessage({
+          guildIds: selectedInputGuildIds,
+          world,
+          message,
+          sendChatMessage: (resolvedGuildIds) =>
+            sendChatMessageAsync({
+              guildIds: resolvedGuildIds,
+              message,
+              type: MessageType.NOTIFICATION,
+              characterData: {
+                nick: Game.hero.nick,
+                id: Game.hero.id,
+                acc: Game.hero.account,
+                lvl: Game.hero.lvl,
+                prof: Game.hero.prof,
+                icon: Game.hero.img,
+              },
+            }),
+        });
+      } catch {
+        return;
+      }
     } else {
-      sendChatMessage({
-        guildIds: selectedInputGuildIds,
-        message: data.message,
-        type: MessageType.NORMAL,
-        characterData: {
-          nick: Game.hero.nick,
-          id: Game.hero.id,
-          acc: Game.hero.account,
-          lvl: Game.hero.lvl,
-          prof: Game.hero.prof,
-          icon: Game.hero.img,
-        },
-      });
+      try {
+        await sendChatMessageAsync({
+          guildIds: selectedInputGuildIds,
+          message: data.message,
+          type: MessageType.NORMAL,
+          characterData: {
+            nick: Game.hero.nick,
+            id: Game.hero.id,
+            acc: Game.hero.account,
+            lvl: Game.hero.lvl,
+            prof: Game.hero.prof,
+            icon: Game.hero.img,
+          },
+        });
+      } catch {
+        return;
+      }
     }
 
     setValue("message", "");
@@ -108,7 +117,7 @@ export const CommandWindow = () => {
     <AnimatedWindow isOpen={open} windowKey="command">
       <DraggableWindow
         id="command"
-        title="Konsola"
+        title={t("window.title")}
         onClose={() => setOpen("command", false)}
         minHeight={116}
         minWidth={242}
@@ -152,7 +161,7 @@ export const CommandWindow = () => {
                       e.currentTarget.form?.requestSubmit();
                     }
                   }}
-                  placeholder="Wiadomość..."
+                  placeholder={t("input.placeholder")}
                   autoFocus={autofocus}
                   value={messageValue}
                   onChange={(e) => setValue("message", e.target.value)}

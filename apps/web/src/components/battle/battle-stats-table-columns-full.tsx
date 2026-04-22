@@ -1,4 +1,7 @@
-import type { Battle, Warrior } from "@/hooks/api/battle-log/use-battles";
+import type {
+  Battle,
+  BattleWarrior as Warrior,
+} from "@/lib/api/battlelog-types";
 import { Button } from "@lootlog/ui/components/button";
 import { cn } from "@lootlog/ui/lib/utils";
 import type { ColumnDef } from "@tanstack/react-table";

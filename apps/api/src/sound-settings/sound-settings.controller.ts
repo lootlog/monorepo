@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Patch, UseGuards } from "@nestjs/common";
-import { UserId } from "@lootlog/nest-shared";
+import { UserId } from "@lootlog/nest-shared/decorators";
 import { ApiTags, ApiBearerAuth, ApiOperation } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
 import { AuthGuard } from "src/shared/guards/auth.guard";

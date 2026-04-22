@@ -37,11 +37,6 @@ import {
   Settings,
 } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
-import { useGameMaps, type GameMap } from "@/hooks/api/use-game-maps";
-import {
-  useMapTemplates,
-  type MapTemplate,
-} from "@/features/guild/settings/map-templates/hooks/use-map-templates";
 import { getApiErrorStatus } from "@/lib/api-client/api-client";
 import {
   useEventsAssignmentControllerAddMap,
@@ -52,6 +47,12 @@ import {
   useEventsAssignmentControllerReorderLocations,
   useEventsAssignmentControllerUpdateLocation,
 } from "@/lib/api/generated/main/events/events";
+import { useMapTemplatesControllerGetTemplates } from "@/lib/api/generated/main/map-templates/map-templates";
+import { useMapsControllerGetMaps } from "@/lib/api/generated/main/maps/maps";
+import type {
+  GameMapResponseDtoOutput,
+  MapTemplateResponseDto,
+} from "@/lib/api/generated/main/model";
 import type { LocationData } from "./map-manage-dialog.types";
 import { invalidateEventMapStructureQueries } from "../../hooks/mutations/invalidate-event-queries";
 import { LocationItem } from "./location-item";
@@ -124,8 +125,10 @@ export const MapManageDialog = ({
       onSuccess: invalidateMapQueries,
     },
   });
-  const { data: gameMaps } = useGameMaps();
-  const { data: templates } = useMapTemplates({ guildId });
+  const { data: gameMaps } = useMapsControllerGetMaps();
+  const { data: templates } = useMapTemplatesControllerGetTemplates({
+    guildId,
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [newLocationName, setNewLocationName] = useState("");
   const [editingLocation, setEditingLocation] = useState<{
@@ -203,7 +206,7 @@ export const MapManageDialog = ({
       .slice(0, 50);
   }, [gameMaps, addedMapIds, searchQuery]);
 
-  const handleAddMapFromGame = async (gameMap: GameMap) => {
+  const handleAddMapFromGame = async (gameMap: GameMapResponseDtoOutput) => {
     try {
       const result = await addMap.mutateAsync({
         pathParams: {
@@ -250,7 +253,7 @@ export const MapManageDialog = ({
   };
 
   const handleLoadTemplate = async (
-    template: MapTemplate,
+    template: MapTemplateResponseDto,
     targetLocationId: string | null,
   ) => {
     const mapsToAdd = template.maps.filter((m) => !addedMapIds.has(m.id));

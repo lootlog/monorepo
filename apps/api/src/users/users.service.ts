@@ -11,7 +11,7 @@ import { PrismaService } from "src/db/prisma.service";
 import { AuthService } from "src/auth/auth.service";
 import { battlelogConfig } from "src/config/battlelog.config";
 import { MembersService } from "src/members/members.service";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 import type { Prisma } from "src/generated/prisma/client";
 import { getUserLootlogConfigCachePattern } from "src/shared/constants/cache.constant";
 import {
@@ -34,6 +34,10 @@ import {
   type UserGameAccountPreferences,
   type UserPreferences,
 } from "@lootlog/types";
+import {
+  GuildsService,
+  type CurrentUserGuildAccessSummary,
+} from "src/guilds/guilds.service";
 import type { UpdateUserGameAccountPreferencesDto } from "src/users/dto/update-user-account-preferences.dto";
 import type { UpdateUserPreferencesDto } from "src/users/dto/update-user-preferences.dto";
 
@@ -63,6 +67,7 @@ export class UsersService {
     private readonly membersService: MembersService,
     private readonly redisService: RedisService,
     private readonly httpService: HttpService,
+    private readonly guildsService: GuildsService,
   ) {
     this.battlelogServiceUrl = battlelogConfig.serviceUrl;
   }
@@ -88,6 +93,20 @@ export class UsersService {
     );
 
     return this.toUserPreferencesResponse(settings, mutes);
+  }
+
+  async getCurrentUserGuilds(
+    discordId: string,
+    userId: string,
+  ): Promise<CurrentUserGuildAccessSummary[]> {
+    return this.guildsService.getCurrentUserGuildAccessSummaries(
+      discordId,
+      userId,
+    );
+  }
+
+  async getCurrentUserAccessibleGuilds(discordId: string, userId: string) {
+    return this.guildsService.getCurrentUserAccessibleGuilds(discordId, userId);
   }
 
   async deleteAccount({ authUserId, discordId }: DeleteAccountParams) {

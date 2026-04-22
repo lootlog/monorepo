@@ -1,4 +1,4 @@
-import { createRequiredRequestValueDecorator } from "@lootlog/nest-shared";
+import { createRequiredRequestValueDecorator } from "@lootlog/nest-shared/decorators";
 import { ForbiddenException } from "@nestjs/common";
 import type { Guild } from "src/generated/prisma/client";
 

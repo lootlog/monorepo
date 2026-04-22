@@ -1,4 +1,4 @@
-import type { Loot } from "@/hooks/api/loots/use-loots";
+import type { Loot } from "@/lib/loots/loot-types";
 import { Button } from "@lootlog/ui/components/button";
 import { Input } from "@lootlog/ui/components/input";
 import { Copy } from "lucide-react";

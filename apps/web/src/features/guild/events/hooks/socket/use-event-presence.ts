@@ -23,6 +23,7 @@ interface PresenceUpdatePayload {
   sessionId?: string;
   player?: PlayerPresence;
   disconnected?: boolean;
+  status?: "online" | "offline";
 }
 
 interface UseEventPresenceOptions {
@@ -45,11 +46,15 @@ export const useEventPresence = ({
 
       setPresenceData((prev) => {
         const newMap = new Map(prev);
-        const { discordId, sessionId, player, disconnected } = payload;
+        const { discordId, sessionId, player, disconnected, status } = payload;
 
-        if (disconnected && sessionId) {
+        const disconnectedSessionId = sessionId ?? player?.sessionId;
+
+        if ((disconnected || status === "offline") && disconnectedSessionId) {
           const existing = newMap.get(discordId) ?? [];
-          const filtered = existing.filter((p) => p.sessionId !== sessionId);
+          const filtered = existing.filter(
+            (presence) => presence.sessionId !== disconnectedSessionId,
+          );
           if (filtered.length === 0) {
             newMap.delete(discordId);
           } else {
@@ -124,9 +129,11 @@ export const useEventPresence = ({
 
     fetchInitialPresence();
 
+    socket.on(GatewayEvent.UPDATE_SERVER_PRESENCE, handlePresenceUpdate);
     socket.on(GatewayEvent.PRESENCE_UPDATE, handlePresenceUpdate);
 
     return () => {
+      socket.off(GatewayEvent.UPDATE_SERVER_PRESENCE, handlePresenceUpdate);
       socket.off(GatewayEvent.PRESENCE_UPDATE, handlePresenceUpdate);
     };
   }, [

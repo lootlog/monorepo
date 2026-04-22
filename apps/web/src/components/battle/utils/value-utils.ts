@@ -12,46 +12,13 @@ export const roundValue = (value: string | number): string => {
   return Math.round(numValue).toString();
 };
 
-const isCommaSeparatedValues = (value: string): boolean => {
-  const parts = value.split(",");
-  if (parts.length <= 1) return false;
-
-  if (parts.length > 2) return true;
-
-  if (parts.length === 2) {
-    const secondPart = parts?.[1]?.trim() ?? "";
-    return secondPart.length > 3 || !secondPart.match(/^\d{1,3}$/);
+export const roundHpPercentage = (
+  value: string | number | null | undefined,
+): string => {
+  if (value == null) {
+    return "-";
   }
 
-  return false;
-};
-
-export const roundCommaSeparatedValues = (value: string): string => {
-  if (!isCommaSeparatedValues(value)) {
-    return roundValue(value);
-  }
-
-  return value
-    .split(",")
-    .map((val) => roundValue(val.trim()))
-    .join(",");
-};
-
-export const roundValueWithSign = (value: string): string => {
-  const trimmed = value.trim();
-  const hasPlus = trimmed.startsWith("+");
-  const hasMinus = trimmed.startsWith("-");
-
-  if (hasPlus || hasMinus) {
-    const numericPart = trimmed.slice(1);
-    const rounded = roundValue(numericPart);
-    return (hasPlus ? "+" : "-") + rounded;
-  }
-
-  return roundValue(trimmed);
-};
-
-export const roundHpPercentage = (value: string | number): string => {
   const strValue = String(value);
   const hasPercent = strValue.includes("%");
   const numericValue = strValue.replace("%", "");

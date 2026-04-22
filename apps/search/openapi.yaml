@@ -1,0 +1,385 @@
+openapi: 3.0.0
+paths:
+  /healthz:
+    get:
+      description: Check the health status of the search service
+      operationId: HealthzController_healthCheck
+      parameters: []
+      responses:
+        "200":
+          description: Search service is healthy
+      summary: Health check
+      tags:
+        - health
+  /players:
+    get:
+      operationId: PlayersController_getPlayers
+      parameters:
+        - name: limit
+          required: false
+          in: query
+          schema:
+            default: 10
+            type: number
+        - name: search
+          required: false
+          in: query
+          schema:
+            anyOf:
+              - type: string
+              - type: array
+                items:
+                  type: string
+        - name: world
+          required: false
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of matching players
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PlayerHitDto_Output"
+      summary: Search players by name
+      tags:
+        - Players
+  /npcs:
+    get:
+      operationId: NpcsController_getNpcs
+      parameters:
+        - name: ids
+          required: false
+          in: query
+          schema:
+            type: array
+            items:
+              type: integer
+              minimum: -9007199254740991
+              maximum: 9007199254740991
+        - name: limit
+          required: false
+          in: query
+          schema:
+            default: 10
+            type: number
+        - name: search
+          required: false
+          in: query
+          schema:
+            anyOf:
+              - type: string
+              - type: array
+                items:
+                  type: string
+        - name: world
+          required: false
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of matching NPCs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NpcHitDto_Output"
+      summary: Search NPCs by name
+      tags:
+        - NPCs
+  /items:
+    get:
+      operationId: ItemsController_getItems
+      parameters:
+        - name: limit
+          required: false
+          in: query
+          schema:
+            default: 3
+            type: number
+        - name: search
+          required: false
+          in: query
+          schema:
+            type: string
+        - name: world
+          required: false
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of matching items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ItemHitDto_Output"
+      summary: Search items by name
+      tags:
+        - Items
+  /all:
+    get:
+      operationId: AllController_searchAll
+      parameters:
+        - name: limit
+          required: false
+          in: query
+          schema:
+            default: 10
+            type: number
+        - name: search
+          required: false
+          in: query
+          schema:
+            type: string
+        - name: world
+          required: false
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Aggregated search results across items, players, and NPCs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchAllResponseDto_Output"
+      summary: Search across all categories
+      tags:
+        - All
+info:
+  title: Search API
+  description: Meilisearch-powered search microservice
+  version: "1.0"
+  contact: {}
+tags: []
+servers: []
+components:
+  schemas:
+    PlayerHitDto_Output:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        lvl:
+          type: number
+        prof:
+          type: string
+        icon:
+          type: string
+        characterId:
+          type: number
+        accountId:
+          type: number
+        world:
+          type: string
+      required:
+        - id
+        - name
+        - lvl
+        - prof
+        - icon
+        - characterId
+        - accountId
+        - world
+      description: Player search hit
+    NpcHitDto_Output:
+      type: object
+      properties:
+        id:
+          type: number
+        prof:
+          type: string
+        icon:
+          type: string
+        name:
+          type: string
+        lvl:
+          type: number
+        wt:
+          type: number
+        type:
+          type: string
+          enum:
+            - COMMON
+            - ELITE
+            - ELITE2
+            - ELITE3
+            - HERO
+            - EVENT_HERO
+            - COLOSSUS
+            - TITAN
+            - NPC
+        margonemType:
+          type: number
+        world:
+          type: string
+      required:
+        - id
+        - prof
+        - icon
+        - name
+        - lvl
+        - wt
+        - type
+        - margonemType
+        - world
+      description: NPC search hit
+    ItemHitDto_Output:
+      type: object
+      properties:
+        id:
+          type: number
+        hid:
+          type: string
+          default: ""
+        name:
+          type: string
+        icon:
+          type: string
+        lvl:
+          type: number
+        rarity:
+          type: string
+          nullable: true
+        type:
+          type: string
+          nullable: true
+        world:
+          type: string
+      required:
+        - id
+        - hid
+        - name
+        - icon
+        - lvl
+        - rarity
+        - type
+        - world
+      description: Item search hit
+    SearchAllResponseDto_Output:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: number
+              hid:
+                default: ""
+                type: string
+              name:
+                type: string
+              icon:
+                type: string
+              lvl:
+                type: number
+              rarity:
+                type: string
+                nullable: true
+              type:
+                type: string
+                nullable: true
+              world:
+                type: string
+            required:
+              - id
+              - hid
+              - name
+              - icon
+              - lvl
+              - rarity
+              - type
+              - world
+            description: Item search hit
+        players:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              lvl:
+                type: number
+              prof:
+                type: string
+              icon:
+                type: string
+              characterId:
+                type: number
+              accountId:
+                type: number
+              world:
+                type: string
+            required:
+              - id
+              - name
+              - lvl
+              - prof
+              - icon
+              - characterId
+              - accountId
+              - world
+            description: Player search hit
+        npcs:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: number
+              prof:
+                type: string
+              icon:
+                type: string
+              name:
+                type: string
+              lvl:
+                type: number
+              wt:
+                type: number
+              type:
+                type: string
+                enum:
+                  - COMMON
+                  - ELITE
+                  - ELITE2
+                  - ELITE3
+                  - HERO
+                  - EVENT_HERO
+                  - COLOSSUS
+                  - TITAN
+                  - NPC
+              margonemType:
+                type: number
+              world:
+                type: string
+            required:
+              - id
+              - prof
+              - icon
+              - name
+              - lvl
+              - wt
+              - type
+              - margonemType
+              - world
+            description: NPC search hit
+      required:
+        - items
+        - players
+        - npcs
+      description: Aggregated search results

@@ -1,19 +1,13 @@
-import { z } from "@hono/zod-openapi";
+import { createZodDto, type ZodDto } from "nestjs-zod";
+import { z } from "zod";
 
 export const searchAllQuerySchema = z.object({
-  limit: z.coerce
-    .number()
-    .optional()
-    .default(10)
-    .openapi({ param: { name: "limit", in: "query" }, example: 10 }),
-  search: z
-    .string()
-    .optional()
-    .openapi({ param: { name: "search", in: "query" }, example: "sword" }),
-  world: z
-    .string()
-    .optional()
-    .openapi({ param: { name: "world", in: "query" }, example: "tempest" }),
+  limit: z.coerce.number().optional().default(10),
+  search: z.string().optional(),
+  world: z.string().optional(),
 });
 
-export type SearchAllDto = z.infer<typeof searchAllQuerySchema>;
+const SearchAllDtoBase: ZodDto<typeof searchAllQuerySchema> =
+  createZodDto(searchAllQuerySchema);
+
+export class SearchAllDto extends SearchAllDtoBase {}

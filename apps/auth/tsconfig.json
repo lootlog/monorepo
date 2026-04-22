@@ -1,3 +1,21 @@
 {
-  "extends": "@lootlog/typescript-config/base.json"
+  "extends": "@lootlog/typescript-config/nestjs.json",
+  "compilerOptions": {
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "resolvePackageJsonExports": true,
+    "isolatedModules": true,
+    "target": "ES2023",
+    "outDir": "./dist",
+    "declaration": false,
+    "rootDir": ".",
+    "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
+    "strictNullChecks": true,
+    "forceConsistentCasingInFileNames": true,
+    "paths": {
+      "src/*": ["./src/*"]
+    }
+  },
+  "include": ["src", "vitest.d.ts"]
 }

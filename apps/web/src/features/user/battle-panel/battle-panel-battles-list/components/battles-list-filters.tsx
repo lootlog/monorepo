@@ -1,8 +1,8 @@
 import { useState, useRef } from "react";
-import { useUserWorlds } from "@/hooks/api/battle-log/use-user-worlds";
+import { useBattlesControllerGetUserWorlds } from "@/lib/api/generated/battlelog/battles/battles";
 import { BattlesListFiltersMobile } from "./battles-list-filters-mobile";
 import { BattlesListFiltersDesktop } from "./battles-list-filters-desktop";
-import type { Warrior } from "@/hooks/api/battle-log/use-search-warriors";
+import type { SearchWarrior } from "@/lib/api/battlelog-types";
 
 export type BattleFilters = {
   world?: string;
@@ -34,11 +34,12 @@ export const BattlesListFilters = ({
 
   const [characterOpenDesktop, setCharacterOpenDesktop] = useState(false);
 
-  const [selectedWarriors, setSelectedWarriors] = useState<Warrior[]>([]);
+  const [selectedWarriors, setSelectedWarriors] = useState<SearchWarrior[]>([]);
 
   const lastStateChangeRef = useRef<Record<string, number>>({});
 
-  const { data: worlds = [] } = useUserWorlds();
+  const { data: worldsResponse } = useBattlesControllerGetUserWorlds();
+  const worlds = worldsResponse?.worlds ?? [];
 
   const handleCharacterChange = (value: string) => {
     const currentCharacters = filters.characterId || [];
@@ -76,7 +77,7 @@ export const BattlesListFilters = ({
     });
   };
 
-  const handleWarriorToggle = (warrior: Warrior) => {
+  const handleWarriorToggle = (warrior: SearchWarrior) => {
     const isSelected = selectedWarriors.some((w) => w.name === warrior.name);
     let newSelectedWarriors;
 

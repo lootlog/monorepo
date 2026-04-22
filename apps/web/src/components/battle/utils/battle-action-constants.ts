@@ -48,9 +48,9 @@ export const ATTACK_ACTIONS_SORT_ORDER = [
   "-dmgd",
 ] as const;
 
-export const SYSTEM_ACTION_TYPES = ["txt", "step", "+ph"] as const;
+const SYSTEM_ACTION_TYPES = ["txt", "step", "+ph"] as const;
 
-export const SPELL_ACTION_TYPES = [
+const SPELL_ACTION_TYPES = [
   "tspell",
   "aura-resall",
   "aura-ac_per",
@@ -79,14 +79,14 @@ export const SPELL_ACTION_TYPES = [
   "resfrost_per",
 ] as const;
 
-export const BUFF_ACTION_TYPES = [
+const BUFF_ACTION_TYPES = [
   "hp_per-allies",
   "poison_lowdmg_per-enemies",
   "heal_per-enemies",
   "heal_per-allies",
 ] as const;
 
-export const PASSIVE_ACTION_TYPES = [
+const PASSIVE_ACTION_TYPES = [
   "heal",
   "injure",
   "wound",
@@ -99,7 +99,7 @@ export const PASSIVE_ACTION_TYPES = [
   "anguish",
 ] as const;
 
-export const ATTACK_ACTION_TYPES = [
+const ATTACK_ACTION_TYPES = [
   "+dmgd",
   "+dmgf",
   "+dmgl",
@@ -165,9 +165,9 @@ export const ATTACK_ACTION_TYPES = [
   "+critsa_per",
 ] as const;
 
-export const OUTCOME_ACTION_TYPES = ["winner", "loser"] as const;
+const OUTCOME_ACTION_TYPES = ["winner", "loser"] as const;
 
-export const IGNORED_ACTION_TYPES = ["skillId", "+exp"] as const;
+const IGNORED_ACTION_TYPES = ["skillId", "+exp"] as const;
 
 export type SystemActionType = (typeof SYSTEM_ACTION_TYPES)[number];
 export type SpellActionType = (typeof SPELL_ACTION_TYPES)[number];
@@ -191,9 +191,7 @@ export const isSystemAction = (
 ): actionType is SystemActionType =>
   SYSTEM_ACTION_TYPES.includes(actionType as SystemActionType);
 
-export const isSpellAction = (
-  actionType: string,
-): actionType is SpellActionType =>
+const isSpellAction = (actionType: string): actionType is SpellActionType =>
   SPELL_ACTION_TYPES.includes(actionType as SpellActionType);
 
 export const isBuffAction = (
@@ -201,36 +199,16 @@ export const isBuffAction = (
 ): actionType is BuffActionType =>
   BUFF_ACTION_TYPES.includes(actionType as BuffActionType);
 
-export const isPassiveAction = (
-  actionType: string,
-): actionType is PassiveActionType =>
+const isPassiveAction = (actionType: string): actionType is PassiveActionType =>
   PASSIVE_ACTION_TYPES.includes(actionType as PassiveActionType);
 
-export const isAttackAction = (
-  actionType: string,
-): actionType is AttackActionType =>
+const isAttackAction = (actionType: string): actionType is AttackActionType =>
   ATTACK_ACTION_TYPES.includes(actionType as AttackActionType);
 
 export const isOutcomeAction = (
   actionType: string,
 ): actionType is OutcomeActionType =>
   OUTCOME_ACTION_TYPES.includes(actionType as OutcomeActionType);
-
-export const isIgnoredAction = (
-  actionType: string,
-): actionType is IgnoredActionType =>
-  IGNORED_ACTION_TYPES.includes(actionType as IgnoredActionType);
-
-export const isKnownAction = (
-  actionType: string,
-): actionType is KnownActionType =>
-  isSystemAction(actionType) ||
-  isSpellAction(actionType) ||
-  isBuffAction(actionType) ||
-  isPassiveAction(actionType) ||
-  isAttackAction(actionType) ||
-  isOutcomeAction(actionType) ||
-  isIgnoredAction(actionType);
 
 export const isSpellActionInContext = (
   actionType: string,

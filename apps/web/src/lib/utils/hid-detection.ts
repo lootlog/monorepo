@@ -1,4 +1,4 @@
-export const ITEM_HID_PATTERN = /^ITEM#(.+)\.(\w+)$/;
+const ITEM_HID_PATTERN = /^ITEM#(.+)\.(\w+)$/;
 
 const getTrimmedItemHid = (value: string): string => value.trim();
 

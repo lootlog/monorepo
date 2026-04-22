@@ -3,13 +3,20 @@ import { createFileRoute } from "@tanstack/react-router";
 import { GuildRouteProviders } from "@/components/layout/guild-route-providers";
 import { GuildRouteError } from "@/components/router/guild-route-error";
 import { GuildRouteNotFound } from "@/components/router/guild-route-not-found";
-import { guildQueryOptions } from "@/hooks/api/guilds/use-guild";
-import { guildPermissionsQueryOptions } from "@/hooks/api/guilds/use-guild-permissions";
-import { guildMemberQueryOptions } from "@/hooks/api/members/use-guild-member";
 import {
-  isRouteLoaderCancelledError,
+  getGuildsControllerGetGuildByIdQueryOptions,
+  getGuildsControllerGetGuildByIdQueryKey,
+  getGuildsControllerGetGuildPermissionsQueryKey,
+  getGuildsControllerGetGuildPermissionsQueryOptions,
+} from "@/lib/api/generated/main/guilds/guilds";
+import {
+  getMembersControllerGetMeQueryKey,
+  getMembersControllerGetMeQueryOptions,
+} from "@/lib/api/generated/main/members/members";
+import {
   throwForbiddenRouteError,
   throwNotFoundIfResponseMatches,
+  withRouteLoaderCancellation,
 } from "@/lib/router/route-errors";
 
 export const Route = createFileRoute("/_authenticated/$guildId")({
@@ -19,41 +26,69 @@ export const Route = createFileRoute("/_authenticated/$guildId")({
       guildId: params.guildId,
     };
   },
-  loader: async ({ context, params }) => {
-    try {
-      const guild = await context.queryClient.ensureQueryData(
-        guildQueryOptions(params.guildId),
-      );
+  loader: ({ context, params }) =>
+    withRouteLoaderCancellation(async () => {
+      try {
+        const guild = await context.queryClient.ensureQueryData(
+          getGuildsControllerGetGuildByIdQueryOptions(
+            { guildId: params.guildId },
+            {
+              query: {
+                queryKey: getGuildsControllerGetGuildByIdQueryKey({
+                  guildId: params.guildId,
+                }),
+                retry: true,
+              },
+            },
+          ),
+        );
 
-      const [guildMember, permissions] = await Promise.all([
-        context.queryClient.ensureQueryData(
-          guildMemberQueryOptions(params.guildId),
-        ),
-        context.queryClient.ensureQueryData(
-          guildPermissionsQueryOptions(params.guildId),
-        ),
-      ]);
+        const [guildMember, permissions] = await Promise.all([
+          context.queryClient.ensureQueryData(
+            getMembersControllerGetMeQueryOptions(
+              { guildId: params.guildId },
+              {
+                query: {
+                  queryKey: getMembersControllerGetMeQueryKey({
+                    guildId: params.guildId,
+                  }),
+                  staleTime: 30_000,
+                },
+              },
+            ),
+          ),
+          context.queryClient.ensureQueryData(
+            getGuildsControllerGetGuildPermissionsQueryOptions(
+              { guildId: params.guildId },
+              {
+                query: {
+                  queryKey: getGuildsControllerGetGuildPermissionsQueryKey({
+                    guildId: params.guildId,
+                  }),
+                  staleTime: 30_000,
+                },
+              },
+            ),
+          ),
+        ]);
 
-      const canAccessGuild =
-        permissions.includes(Permission.OWNER) || guildMember.active;
+        const canAccessGuild =
+          permissions.includes(Permission.OWNER) ||
+          Boolean(guildMember?.active);
 
-      if (!canAccessGuild) {
-        throwForbiddenRouteError();
+        if (!canAccessGuild) {
+          throwForbiddenRouteError();
+        }
+
+        return {
+          guild,
+          guildMember,
+          permissions,
+        };
+      } catch (error) {
+        throwNotFoundIfResponseMatches(error);
       }
-
-      return {
-        guild,
-        guildMember,
-        permissions,
-      };
-    } catch (error) {
-      if (isRouteLoaderCancelledError(error)) {
-        return;
-      }
-
-      throwNotFoundIfResponseMatches(error);
-    }
-  },
+    }),
   errorComponent: GuildRouteError,
   notFoundComponent: GuildRouteNotFound,
 });

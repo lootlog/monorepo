@@ -3,8 +3,23 @@ import { createZodDto, type ZodDto } from "nestjs-zod";
 import { ActivityType, ActivitySource } from "src/generated/prisma/client";
 
 const singleToArray = (val: unknown) => {
-  if (Array.isArray(val)) return val;
+  if (Array.isArray(val)) {
+    return val.flatMap((item) =>
+      typeof item === "string"
+        ? item
+            .split(",")
+            .map((part) => part.trim())
+            .filter(Boolean)
+        : [item],
+    );
+  }
   if (val === undefined || val === null) return undefined;
+  if (typeof val === "string") {
+    return val
+      .split(",")
+      .map((part) => part.trim())
+      .filter(Boolean);
+  }
   return [val];
 };
 

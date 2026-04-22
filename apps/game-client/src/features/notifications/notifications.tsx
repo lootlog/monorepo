@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 export const Notifications = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation("notifications");
   useNotifications();
   const open = useWindowsStore((state) => state.notifications.open);
   const defaultWindowHeight = useWindowsStore(
@@ -53,7 +53,7 @@ export const Notifications = () => {
     >
       <DraggableWindow
         id="notifications"
-        title={t("settings.windows.notifications")}
+        title={t("window.title")}
         actions=<WindowMaxHeightAction
           currentMaxHeight={resolvedMaxContentHeight}
           isArmed={isMaxHeightAdjustmentArmed}

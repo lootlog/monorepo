@@ -1,5 +1,4 @@
 const USER_BASE = "/@me";
-const GUILD_BASE_PARAM = ":guildId";
 
 const ROUTES = {
   signin: "/signin",
@@ -103,4 +102,4 @@ const ROUTE_SEGMENTS = {
   },
 } as const;
 
-export { ROUTES, ROUTE_SEGMENTS, USER_BASE, GUILD_BASE_PARAM };
+export { ROUTES, ROUTE_SEGMENTS };

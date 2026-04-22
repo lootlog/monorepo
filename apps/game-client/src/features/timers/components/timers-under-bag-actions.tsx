@@ -5,6 +5,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useTranslation } from "react-i18next";
 
 type TimersUnderBagActionsProps = {
   timerFiltersEnabled: boolean;
@@ -27,6 +28,7 @@ export const TimersUnderBagActions: FC<TimersUnderBagActionsProps> = ({
   showHiddenTimers,
   setShowHiddenTimers,
 }) => {
+  const { t } = useTranslation("timers");
   return (
     <div className="ll:flex ll:gap-1">
       <Tooltip>
@@ -39,7 +41,9 @@ export const TimersUnderBagActions: FC<TimersUnderBagActionsProps> = ({
           />
         </TooltipTrigger>
         <TooltipContent side="top">
-          {timerFiltersEnabled ? "Ukryj filtry" : "Pokaż filtry"}
+          {timerFiltersEnabled
+            ? t("toolbar.hideFilters")
+            : t("toolbar.showFilters")}
         </TooltipContent>
       </Tooltip>
       <Tooltip>
@@ -57,8 +61,8 @@ export const TimersUnderBagActions: FC<TimersUnderBagActionsProps> = ({
         </TooltipTrigger>
         <TooltipContent side="top">
           {colorFiltersEnabled
-            ? "Wyłącz filtry po kolorze"
-            : "Włącz filtry po kolorze"}
+            ? t("toolbar.disableColorFilters")
+            : t("toolbar.enableColorFilters")}
         </TooltipContent>
       </Tooltip>
       {timersSortOrder === "desc" ? (
@@ -71,7 +75,7 @@ export const TimersUnderBagActions: FC<TimersUnderBagActionsProps> = ({
               onClick={() => setTimersSortOrder("asc")}
             />
           </TooltipTrigger>
-          <TooltipContent side="top">Sortuj rosnąco</TooltipContent>
+          <TooltipContent side="top">{t("toolbar.sortAsc")}</TooltipContent>
         </Tooltip>
       ) : (
         <Tooltip>
@@ -83,7 +87,7 @@ export const TimersUnderBagActions: FC<TimersUnderBagActionsProps> = ({
               onClick={() => setTimersSortOrder("desc")}
             />
           </TooltipTrigger>
-          <TooltipContent side="top">Sortuj malejąco</TooltipContent>
+          <TooltipContent side="top">{t("toolbar.sortDesc")}</TooltipContent>
         </Tooltip>
       )}
       {showHiddenTimers ? (
@@ -96,7 +100,9 @@ export const TimersUnderBagActions: FC<TimersUnderBagActionsProps> = ({
               onClick={() => setShowHiddenTimers(false)}
             />
           </TooltipTrigger>
-          <TooltipContent side="top">Ukryj ukryte timery</TooltipContent>
+          <TooltipContent side="top">
+            {t("toolbar.hideHiddenTimers")}
+          </TooltipContent>
         </Tooltip>
       ) : (
         <Tooltip>
@@ -108,7 +114,9 @@ export const TimersUnderBagActions: FC<TimersUnderBagActionsProps> = ({
               onClick={() => setShowHiddenTimers(true)}
             />
           </TooltipTrigger>
-          <TooltipContent side="top">Pokaż ukryte timery</TooltipContent>
+          <TooltipContent side="top">
+            {t("toolbar.showHiddenTimers")}
+          </TooltipContent>
         </Tooltip>
       )}
     </div>

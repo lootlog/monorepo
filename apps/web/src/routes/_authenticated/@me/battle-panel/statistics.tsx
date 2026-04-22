@@ -7,71 +7,79 @@ import {
   loadBattlePanelStatisticsSearch,
   normalizeBattlePanelCharacterId,
 } from "@/features/user/battle-panel/battle-panel-statistics-search";
-import { professionWinRateQueryOptions } from "@/hooks/api/battle-log/use-profession-win-rate";
-import { headToHeadQueryOptions } from "@/hooks/api/battle-log/use-head-to-head";
-import { battleStreakQueryOptions } from "@/hooks/api/battle-log/use-battle-streak";
-import { battleDurationQueryOptions } from "@/hooks/api/battle-log/use-battle-duration";
-import { phGrowthQueryOptions } from "@/hooks/api/battle-log/use-ph-growth";
-import { ratingGrowthQueryOptions } from "@/hooks/api/battle-log/use-rating-growth";
-import { ratingDeltaByOpponentQueryOptions } from "@/hooks/api/battle-log/use-rating-delta-by-opponent";
+import {
+  getBattlesControllerGetBattleDurationQueryOptions,
+  getBattlesControllerGetCurrentStreakQueryOptions,
+  getBattlesControllerGetHeadToHeadQueryOptions,
+  getBattlesControllerGetPhGrowthQueryOptions,
+  getBattlesControllerGetProfessionWinRateQueryOptions,
+  getBattlesControllerGetRatingDeltaByOpponentQueryOptions,
+  getBattlesControllerGetRatingGrowthQueryOptions,
+} from "@/lib/api/generated/battlelog/battles/battles";
+import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 
 export const Route = createFileRoute(
   "/_authenticated/@me/battle-panel/statistics",
 )({
   validateSearch: battlePanelStatisticsSearchSchema,
-  loader: async ({ context, location }) => {
-    const search = loadBattlePanelStatisticsSearch(location.searchStr);
-    const normalizedCharacterId = normalizeBattlePanelCharacterId(
-      search.characterId,
-    );
-    const characterId = await ensureBattlePanelCharacterId({
-      queryClient: context.queryClient,
-      characterId: normalizedCharacterId,
-    });
-    const baseParams = {
-      characterId,
-      period: search.period,
-      minLevel: search.minLevel,
-      maxLevel: search.maxLevel,
-      ph: search.ph ?? undefined,
-      matchmaking: search.matchmaking ?? undefined,
-    };
+  loader: ({ context, location }) =>
+    withRouteLoaderCancellation(async () => {
+      const search = loadBattlePanelStatisticsSearch(location.searchStr);
+      const normalizedCharacterId = normalizeBattlePanelCharacterId(
+        search.characterId,
+      );
+      const characterId = await ensureBattlePanelCharacterId({
+        queryClient: context.queryClient,
+        characterId: normalizedCharacterId,
+      });
+      const baseParams = {
+        characterId,
+        period: search.period,
+        minLevel: search.minLevel,
+        maxLevel: search.maxLevel,
+        ph: search.ph ?? undefined,
+        matchmaking: search.matchmaking ?? undefined,
+      };
 
-    await Promise.all([
-      context.queryClient.ensureQueryData(
-        professionWinRateQueryOptions(baseParams),
-      ),
-      context.queryClient.ensureQueryData(
-        headToHeadQueryOptions({
-          ...baseParams,
-          size: 5,
-        }),
-      ),
-      context.queryClient.ensureQueryData(battleStreakQueryOptions(baseParams)),
-      context.queryClient.ensureQueryData(
-        battleDurationQueryOptions(baseParams),
-      ),
-      context.queryClient.ensureQueryData(phGrowthQueryOptions(baseParams)),
-      context.queryClient.ensureQueryData(
-        ratingGrowthQueryOptions({
-          characterId,
-          period: baseParams.period,
-          minLevel: baseParams.minLevel,
-          maxLevel: baseParams.maxLevel,
-        }),
-      ),
-      context.queryClient.ensureQueryData(
-        ratingDeltaByOpponentQueryOptions({
-          characterId,
-          period: baseParams.period,
-          minLevel: baseParams.minLevel,
-          maxLevel: baseParams.maxLevel,
-        }),
-      ),
-    ]);
+      await Promise.all([
+        context.queryClient.ensureQueryData(
+          getBattlesControllerGetProfessionWinRateQueryOptions(baseParams),
+        ),
+        context.queryClient.ensureQueryData(
+          getBattlesControllerGetHeadToHeadQueryOptions({
+            ...baseParams,
+            size: 5,
+          }),
+        ),
+        context.queryClient.ensureQueryData(
+          getBattlesControllerGetCurrentStreakQueryOptions(baseParams),
+        ),
+        context.queryClient.ensureQueryData(
+          getBattlesControllerGetBattleDurationQueryOptions(baseParams),
+        ),
+        context.queryClient.ensureQueryData(
+          getBattlesControllerGetPhGrowthQueryOptions(baseParams),
+        ),
+        context.queryClient.ensureQueryData(
+          getBattlesControllerGetRatingGrowthQueryOptions({
+            characterId,
+            period: baseParams.period,
+            minLevel: baseParams.minLevel,
+            maxLevel: baseParams.maxLevel,
+          }),
+        ),
+        context.queryClient.ensureQueryData(
+          getBattlesControllerGetRatingDeltaByOpponentQueryOptions({
+            characterId,
+            period: baseParams.period,
+            minLevel: baseParams.minLevel,
+            maxLevel: baseParams.maxLevel,
+          }),
+        ),
+      ]);
 
-    return null;
-  },
+      return null;
+    }),
   component: BattlePanelStatistics,
   pendingComponent: BattlePanelStatisticsSkeleton,
 });

@@ -1,4 +1,4 @@
-import { createRequiredRequestValueDecorator } from "@lootlog/nest-shared";
+import { createRequiredRequestValueDecorator } from "@lootlog/nest-shared/decorators";
 import { ForbiddenException } from "@nestjs/common";
 import type { Role } from "src/generated/prisma/client";
 

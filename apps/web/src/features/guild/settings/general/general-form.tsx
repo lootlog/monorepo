@@ -11,15 +11,21 @@ import {
   FormMessage,
 } from "@lootlog/ui/components/form";
 import { Input } from "@lootlog/ui/components/input";
-import { useGuild } from "@/hooks/api/guilds/use-guild";
 import { generateSlug } from "@/utils/generate-slug";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { useUpdateGuild } from "@/hooks/api/guilds/use-update-guild";
 import { Card } from "@lootlog/ui/components/card";
 import { Link2 } from "lucide-react";
 import { useEffect } from "react";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  invalidateGuildsControllerGetGuildById,
+  useGuildsControllerGetGuildById,
+  useGuildsControllerUpdateGuildConfig,
+} from "@/lib/api/generated/main/guilds/guilds";
+import { invalidateUsersControllerGetCurrentUserAccessibleGuilds } from "@/lib/api/generated/main/users/users";
 
 const RESTRICTED_NAMES = ["@me"];
 
@@ -28,9 +34,12 @@ const formSchema = z.object({
 });
 
 export const GeneralForm = () => {
-  const { data: guild } = useGuild({});
-
-  const { mutate: updateGuildConfig } = useUpdateGuild();
+  const guildId = useGuildId();
+  const queryClient = useQueryClient();
+  const { data: guild } = useGuildsControllerGetGuildById({
+    guildId: guildId ?? "",
+  });
+  const { mutate: updateGuildConfig } = useGuildsControllerUpdateGuildConfig();
   const navigate = useNavigate();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -57,9 +66,22 @@ export const GeneralForm = () => {
     }
 
     updateGuildConfig(
-      { vanityUrl: values.vanityUrl.length > 0 ? values.vanityUrl : null },
       {
-        onSuccess: (data) => {
+        pathParams: { guildId: guildId ?? "" },
+        data: {
+          vanityUrl: values.vanityUrl.length > 0 ? values.vanityUrl : undefined,
+        },
+      },
+      {
+        onSuccess: async (data) => {
+          if (guildId) {
+            await Promise.all([
+              invalidateGuildsControllerGetGuildById(queryClient, { guildId }),
+              invalidateUsersControllerGetCurrentUserAccessibleGuilds(
+                queryClient,
+              ),
+            ]);
+          }
           toast.success("Zaktualizowano konfigurację lootloga");
           navigate({ to: `/${data.vanityUrl ?? data.id}/settings` as string });
           form.reset({ vanityUrl: data.vanityUrl ?? "" });

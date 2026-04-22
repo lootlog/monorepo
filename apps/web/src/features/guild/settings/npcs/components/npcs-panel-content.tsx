@@ -1,5 +1,4 @@
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import type { LootlogConfigNpc } from "@/hooks/api/guilds/use-guild-lootlog-settings";
 import {
   ArrowLeft,
   Crown,
@@ -11,7 +10,10 @@ import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { NpcsForm } from "@/features/guild/settings/npcs/npcs-form";
 import { useSelectorPanel } from "@/components/selector-panel";
-import { ItemRarity } from "@/hooks/api/loots/use-loots";
+import type {
+  LootlogConfigNpcResponseDtoOutput as LootlogConfigNpc,
+  LootlogConfigNpcResponseDtoOutputAllowedRaritiesItem as LootlogConfigNpcAllowedRarity,
+} from "@/lib/api/generated/main/model";
 import {
   Tooltip,
   TooltipContent,
@@ -21,28 +23,28 @@ import {
 import { cn } from "@lootlog/ui/lib/utils";
 
 const RARITY_CONFIG: {
-  key: ItemRarity;
+  key: LootlogConfigNpcAllowedRarity;
   color: string;
   bgColor: string;
   icon: LucideIcon;
   label: string;
 }[] = [
   {
-    key: ItemRarity.LEGENDARY,
+    key: "LEGENDARY",
     color: "text-amber-700",
     bgColor: "bg-amber-700/10",
     icon: Crown,
     label: "Legendarny",
   },
   {
-    key: ItemRarity.HEROIC,
+    key: "HEROIC",
     color: "text-blue-500",
     bgColor: "bg-blue-500/10",
     icon: Swords,
     label: "Heroiczny",
   },
   {
-    key: ItemRarity.UNIQUE,
+    key: "UNIQUE",
     color: "text-amber-300",
     bgColor: "bg-amber-300/10",
     icon: Sparkles,

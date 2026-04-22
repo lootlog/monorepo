@@ -20,7 +20,7 @@ describe("GuildsController", () => {
   };
 
   const mockMemberSyncInterceptor = {
-    intercept: (context: ExecutionContext, next: CallHandler) => next.handle(),
+    intercept: (_context: ExecutionContext, next: CallHandler) => next.handle(),
   };
 
   beforeEach(async () => {
@@ -46,5 +46,35 @@ describe("GuildsController", () => {
 
   it("should be defined", () => {
     expect(controller).toBeDefined();
+  });
+
+  it("delegates deprecated /guilds/@me requests to the guild list service", async () => {
+    mockGuildsService.getUserGuilds.mockResolvedValue([]);
+
+    await controller.getUserGuilds(
+      "discord-user-current",
+      "auth-user-current",
+      "game",
+    );
+
+    expect(mockGuildsService.getUserGuilds).toHaveBeenCalledWith(
+      "discord-user-current",
+      "auth-user-current",
+      "game",
+    );
+  });
+
+  it("delegates deprecated /guilds/@me/permissions requests to the permissions service", async () => {
+    mockGuildsService.getUserGuildsWithPermissions.mockResolvedValue([]);
+
+    await controller.getUserGuildsWithPermissions(
+      "discord-user-current",
+      "auth-user-current",
+    );
+
+    expect(mockGuildsService.getUserGuildsWithPermissions).toHaveBeenCalledWith(
+      "discord-user-current",
+      "auth-user-current",
+    );
   });
 });

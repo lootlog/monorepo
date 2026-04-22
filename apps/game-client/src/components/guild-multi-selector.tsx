@@ -1,5 +1,4 @@
 import { cn } from "@/lib/utils";
-import { useGuilds } from "@/hooks/api/use-guilds";
 import {
   Tooltip,
   TooltipContent,
@@ -11,6 +10,7 @@ import { type FC, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import type { Viewport } from "@radix-ui/react-scroll-area";
+import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@/lib/api/generated/main/users/users";
 
 type GuildMultiSelectorProps = {
   disabled?: boolean;
@@ -26,7 +26,7 @@ export const GuildMultiSelector: FC<GuildMultiSelectorProps> = ({
   value,
 }) => {
   const scrollContainerRef = useRef<React.ElementRef<typeof Viewport>>(null);
-  const { data: guilds } = useGuilds();
+  const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds();
 
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;

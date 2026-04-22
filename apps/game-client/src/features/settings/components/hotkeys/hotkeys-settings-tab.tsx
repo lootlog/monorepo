@@ -115,7 +115,7 @@ export const HotkeysSettingsTab = () => {
                       type="button"
                       variant="ghost"
                     >
-                      {t("settings.common.actions.reset")}
+                      {t("common:actions.reset")}
                     </Button>
                   </div>
                 </SettingsControlRow>

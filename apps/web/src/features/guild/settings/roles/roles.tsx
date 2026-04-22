@@ -1,8 +1,4 @@
 import { SearchInput } from "@/components/ui/search-input";
-import {
-  useGuildRoles,
-  type GuildRole,
-} from "@/hooks/api/guilds/use-guild-roles";
 import { useState } from "react";
 import { Shield } from "lucide-react";
 import { Card } from "@lootlog/ui/components/card";
@@ -15,6 +11,9 @@ import {
   useSelectorPanel,
 } from "@/components/selector-panel";
 import { useTranslation } from "react-i18next";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useRolesControllerGetGuildRoles } from "@/lib/api/generated/main/roles/roles";
+import type { RoleResponseDtoOutput as GuildRole } from "@/lib/api/generated/main/model";
 
 const RolesSettingsHeader = () => {
   const { t } = useTranslation();
@@ -40,7 +39,10 @@ const RolesSettingsHeader = () => {
 
 const RolesSettingsContent = () => {
   const { t } = useTranslation();
-  const { data: roles } = useGuildRoles();
+  const guildId = useGuildId();
+  const { data: roles } = useRolesControllerGetGuildRoles({
+    guildId: guildId ?? "",
+  });
   const [searchValue, setSearchValue] = useState("");
   const { selectedItem: selectedRole } = useSelectorPanel<GuildRole>();
 
@@ -61,9 +63,9 @@ const RolesSettingsContent = () => {
     });
 
   const selectedRoleColor =
-    selectedRole?.color === 0
+    (selectedRole?.color ?? 0) === 0
       ? "FFF"
-      : selectedRole?.color.toString(16).padStart(6, "0");
+      : (selectedRole?.color ?? 0).toString(16).padStart(6, "0");
 
   return (
     <SelectorPanel<GuildRole>
@@ -107,7 +109,7 @@ const RolesSettingsContent = () => {
           <div
             className="size-4 rounded-full"
             style={{
-              backgroundColor: `#${role.color === 0 ? "FFF" : role.color.toString(16).padStart(6, "0")}`,
+              backgroundColor: `#${(role.color ?? 0) === 0 ? "FFF" : (role.color ?? 0).toString(16).padStart(6, "0")}`,
             }}
           />
           <span>{role.name}</span>

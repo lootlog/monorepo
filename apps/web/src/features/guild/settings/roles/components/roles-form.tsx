@@ -14,11 +14,9 @@ import {
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { useEffect, type FC } from "react";
 import { useTranslation } from "react-i18next";
-import type { GuildRole } from "@/hooks/api/guilds/use-guild-roles";
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { toast } from "sonner";
-import { useUpdateGuildRole } from "@/hooks/api/guilds/use-update-guild-role";
 import { Permission } from "@lootlog/types";
 import {
   Accordion,
@@ -40,6 +38,13 @@ import {
 import { cn } from "@lootlog/ui/lib/utils";
 import { Card } from "@lootlog/ui/components/card";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  invalidateRolesControllerGetGuildRoles,
+  useRolesControllerUpdateGuildRole,
+} from "@/lib/api/generated/main/roles/roles";
+import type { RoleResponseDtoOutput as GuildRole } from "@/lib/api/generated/main/model";
 
 const PERMISSION_GROUPS = [
   {
@@ -175,7 +180,9 @@ type RolesFormProps = {
 };
 
 export const RolesForm: FC<RolesFormProps> = ({ role }) => {
-  const { mutate: updateGuildRole } = useUpdateGuildRole();
+  const guildId = useGuildId();
+  const queryClient = useQueryClient();
+  const { mutate: updateGuildRole } = useRolesControllerUpdateGuildRole();
   const { t } = useTranslation();
 
   const form = useForm<FormSchemaType>({
@@ -211,16 +218,25 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
   function onSubmit(values: FormSchemaType) {
     updateGuildRole(
       {
-        permissions: PERMISSIONS.filter(
-          (p) =>
-            values[p as unknown as keyof FormSchemaType] as unknown as boolean,
-        ),
-        roleId: role.id,
-        lvlRangeFrom: Number(values.lvlRangeFrom),
-        lvlRangeTo: Number(values.lvlRangeTo),
+        pathParams: { guildId: guildId ?? "", roleId: role.id },
+        data: {
+          permissions: PERMISSIONS.filter(
+            (p) =>
+              values[
+                p as unknown as keyof FormSchemaType
+              ] as unknown as boolean,
+          ),
+          lvlRangeFrom: Number(values.lvlRangeFrom),
+          lvlRangeTo: Number(values.lvlRangeTo),
+        },
       },
       {
-        onSuccess: (response) => {
+        onSuccess: async (response) => {
+          if (guildId) {
+            await invalidateRolesControllerGetGuildRoles(queryClient, {
+              guildId,
+            });
+          }
           toast.success("Zaktualizowano ustawienia");
           form.reset({
             lvlRangeFrom:

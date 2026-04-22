@@ -1,4 +1,4 @@
 {
-  "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}": "oxlint",
-  "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,json,md,css,html,yml,yaml}": "oxfmt"
+  "!apps/{web,game-client}/src/lib/api/generated/**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}": "oxlint",
+  "!apps/{web,game-client}/src/lib/api/generated/**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,json,md,css,html,yml,yaml}": "oxfmt"
 }

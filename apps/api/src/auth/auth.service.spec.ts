@@ -3,7 +3,7 @@ import { mockFn } from "src/test/mock-fn";
 import { AuthService } from "./auth.service";
 import { HttpService } from "@nestjs/axios";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 
 vi.mock("src/config/auth.config", () => ({
   authConfig: { serviceUrl: "http://localhost:3001" },

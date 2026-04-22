@@ -7,18 +7,45 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
 import { authClient } from "@/lib/auth-client";
 import { useUser } from "@/hooks/api/user/use-user";
-import { useDeleteAccount } from "@/hooks/api/user/use-delete-account";
 import { useQueryClient } from "@tanstack/react-query";
+import { useUsersControllerDeleteAccount } from "@/lib/api/generated/main/users/users";
 
 export const AccountSettings: FC = () => {
   const { t } = useTranslation();
   const { user, isPending } = useUser();
-  const deleteAccount = useDeleteAccount();
+  const deleteAccount = useUsersControllerDeleteAccount();
   const queryClient = useQueryClient();
   const isDeleteDisabled = isPending || !user?.name || deleteAccount.isPending;
 
   const handleLogout = async () => {
     await authClient.signOut();
+    queryClient.clear();
+    window.location.replace("/");
+  };
+
+  const handleDeleteAccount = async () => {
+    await deleteAccount.mutateAsync();
+
+    const deleteUserResponse = await authClient.deleteUser();
+
+    if (
+      typeof deleteUserResponse === "object" &&
+      deleteUserResponse !== null &&
+      "error" in deleteUserResponse &&
+      deleteUserResponse.error
+    ) {
+      const error = deleteUserResponse.error;
+      const errorMessage =
+        typeof error === "object" &&
+        error !== null &&
+        "message" in error &&
+        typeof error.message === "string"
+          ? error.message
+          : "Failed to delete auth account";
+
+      throw new Error(errorMessage);
+    }
+
     queryClient.clear();
     window.location.replace("/");
   };
@@ -82,7 +109,7 @@ export const AccountSettings: FC = () => {
             </div>
           </div>
           <ConfirmDeleteDialog
-            onConfirm={() => deleteAccount.mutateAsync()}
+            onConfirm={handleDeleteAccount}
             title={t("settings.account.dangerZone.deleteConfirmTitle")}
             description={t(
               "settings.account.dangerZone.deleteConfirmDescription",

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { NpcType } from "@/hooks/api/use-npcs";
+import { NpcType } from "@/api/npcs.api";
 import { queryClient } from "@/lib/query-client";
+import { getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey } from "@/lib/api/generated/main/user-lootlog-config/user-lootlog-config";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { useNotificationsStore } from "@/store/notifications.store";
 import { NpcsDeleteProcessor } from "./npcs-delete-processor";
@@ -81,6 +82,10 @@ const createGameNpc = (
 
 describe("NpcsDeleteProcessor", () => {
   let processor: NpcsDeleteProcessor;
+  const lootlogCharacterConfigQueryKey =
+    getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
+      accountId: "202",
+    });
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -171,7 +176,7 @@ describe("NpcsDeleteProcessor", () => {
       resp_rand: 15,
     });
     mockGetNpcTypeByWt.mockReturnValue(NpcType.HERO);
-    queryClient.setQueryData(["lootlog-characters-config", "202"], {
+    queryClient.setQueryData(lootlogCharacterConfigQueryKey, {
       "101": {
         catchingGuildIds: [],
       },
@@ -190,7 +195,7 @@ describe("NpcsDeleteProcessor", () => {
       resp_rand: 15,
     });
     mockGetNpcTypeByWt.mockReturnValue(NpcType.HERO);
-    queryClient.setQueryData(["lootlog-characters-config", "202"], {
+    queryClient.setQueryData(lootlogCharacterConfigQueryKey, {
       "101": {
         catchingGuildIds: ["guild-1", "guild-2"],
       },
@@ -228,7 +233,7 @@ describe("NpcsDeleteProcessor", () => {
       resp_rand: 15,
     });
     mockGetNpcTypeByWt.mockReturnValue(NpcType.ELITE2);
-    queryClient.setQueryData(["lootlog-characters-config", "202"], {
+    queryClient.setQueryData(lootlogCharacterConfigQueryKey, {
       "101": {
         catchingGuildIds: ["guild-1"],
       },
@@ -256,7 +261,7 @@ describe("NpcsDeleteProcessor", () => {
       resp_rand: 15,
     });
     mockGetNpcTypeByWt.mockReturnValue(NpcType.ELITE2);
-    queryClient.setQueryData(["lootlog-characters-config", "202"], {
+    queryClient.setQueryData(lootlogCharacterConfigQueryKey, {
       "101": {
         catchingGuildIds: ["guild-1"],
       },
@@ -285,7 +290,7 @@ describe("NpcsDeleteProcessor", () => {
       resp_rand: 15,
     });
     mockGetNpcTypeByWt.mockReturnValue(NpcType.HERO);
-    queryClient.setQueryData(["lootlog-characters-config", "202"], {
+    queryClient.setQueryData(lootlogCharacterConfigQueryKey, {
       "101": {
         catchingGuildIds: ["guild-1"],
       },

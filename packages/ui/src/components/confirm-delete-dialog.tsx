@@ -39,17 +39,44 @@ export function ConfirmDeleteDialog({
   confirmButtonLabel = "Usuń",
   cancelButtonLabel = "Anuluj",
 }: ConfirmDeleteDialogProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const requiresConfirmation = confirmText !== undefined;
   const isConfirmDisabled =
-    Boolean(disabled) || (requiresConfirmation && inputValue !== confirmText);
+    Boolean(disabled || isSubmitting) ||
+    (requiresConfirmation && inputValue !== confirmText);
   const resolvedTrigger =
     trigger && isValidElement<{ disabled?: boolean }>(trigger)
       ? cloneElement(trigger, { disabled })
       : trigger;
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    setIsOpen(nextOpen);
+
+    if (!nextOpen) {
+      setInputValue("");
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleConfirm = async () => {
+    if (isConfirmDisabled) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      await onConfirm();
+      handleOpenChange(false);
+    } catch {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
-    <AlertDialog onOpenChange={() => setInputValue("")}>
+    <AlertDialog open={isOpen} onOpenChange={handleOpenChange}>
       <AlertDialogTrigger asChild>
         {resolvedTrigger || (
           <Button variant="ghost" size="icon" disabled={disabled}>
@@ -76,11 +103,13 @@ export function ConfirmDeleteDialog({
           </div>
         )}
         <AlertDialogFooter>
-          <AlertDialogCancel>{cancelButtonLabel}</AlertDialogCancel>
+          <AlertDialogCancel disabled={isSubmitting}>
+            {cancelButtonLabel}
+          </AlertDialogCancel>
           <AlertDialogAction
             onClick={(e) => {
               e.preventDefault();
-              void onConfirm();
+              void handleConfirm();
             }}
             disabled={isConfirmDisabled}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

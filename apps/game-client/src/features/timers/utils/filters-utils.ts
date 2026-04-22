@@ -1,5 +1,5 @@
 import { DEFAULT_TIMERS_FILTERS } from "@/store/timers.store";
-import type { NpcType } from "@/hooks/api/use-npcs";
+import type { NpcType } from "@/api/npcs.api";
 
 type FiltersConfig = {
   minLvl: number;

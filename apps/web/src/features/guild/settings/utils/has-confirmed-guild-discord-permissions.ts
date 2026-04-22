@@ -1,16 +1,13 @@
-import {
-  DiscordGuildSyncStatus,
-  type DiscordGuildSyncState,
-} from "@lootlog/types";
+import type { DiscordGuildSyncStateResponseDto } from "@/lib/api/generated/main/model";
 
 export const hasConfirmedGuildDiscordPermissions = (
-  syncState: DiscordGuildSyncState | undefined,
+  syncState: DiscordGuildSyncStateResponseDto | undefined,
 ) => {
   if (!syncState) {
     return false;
   }
 
-  if (syncState.status === DiscordGuildSyncStatus.FAILED) {
+  if (syncState.status === "FAILED") {
     return false;
   }
 

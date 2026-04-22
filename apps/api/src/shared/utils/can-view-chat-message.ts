@@ -1,11 +1,9 @@
 import { getNpcRoutingTier, type NpcRoutingTier } from "@lootlog/types";
 import { Permission, type Role } from "src/generated/prisma/client";
-import {
-  MessageType,
-  type SendMessageDto,
-} from "src/chat/dto/send-message.dto";
+import { MessageType } from "src/chat/dto/send-message.dto";
+import type { ChatStoredMessage } from "src/chat/types/chat-stored-message.type";
 
-type NpcData = NonNullable<SendMessageDto["npc"]>;
+type NpcData = NonNullable<ChatStoredMessage["npc"]>;
 
 const NPC_TIER_PERMISSIONS: Record<NpcRoutingTier, Permission> = {
   base: Permission.LOOTLOG_CHAT_READ,
@@ -24,7 +22,7 @@ const hasNpcPermission = (npc: NpcData, roles: Role[]) => {
   );
 };
 
-export const canViewChatMessage = (data: SendMessageDto, roles: Role[]) => {
+export const canViewChatMessage = (data: ChatStoredMessage, roles: Role[]) => {
   if (!data) return false;
   const canReadChatMessages = roles.some((role) =>
     role.permissions.includes(Permission.LOOTLOG_CHAT_READ),

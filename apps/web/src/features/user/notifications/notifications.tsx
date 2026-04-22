@@ -15,19 +15,35 @@ import { DmActionsCard } from "@/features/user/notifications/components/dm-actio
 import { UserNotificationsInfoDialog } from "@/features/user/notifications/components/user-notifications-info-dialog";
 import { WatchFormDialog } from "@/features/user/notifications/components/watch-item-form-dialog";
 import { WatchedItemsList } from "@/features/user/notifications/components/watched-items-list";
-import { useGuilds } from "@/hooks/api/guilds/use-guilds";
-import { useUserNotifications } from "@/hooks/api/user/use-user-notifications";
+import {
+  getNotificationsUserControllerGetUserTargetsQueryKey,
+  getNotificationsUserControllerGetWatchedItemsQueryKey,
+  useNotificationsUserControllerGetUserTargets,
+  useNotificationsUserControllerGetWatchedItems,
+} from "@/lib/api/generated/main/notifications/notifications";
+import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@/lib/api/generated/main/users/users";
 
 export const UserNotifications = () => {
   const { t } = useTranslation();
-  const { data, isLoading } = useUserNotifications();
-  const { data: guilds = [] } = useGuilds();
+  const targetsQuery = useNotificationsUserControllerGetUserTargets({
+    query: {
+      queryKey: getNotificationsUserControllerGetUserTargetsQueryKey(),
+    },
+  });
+  const watchedItemsQuery = useNotificationsUserControllerGetWatchedItems({
+    query: {
+      queryKey: getNotificationsUserControllerGetWatchedItemsQueryKey(),
+    },
+  });
+  const { data: guilds = [] } =
+    useUsersControllerGetCurrentUserAccessibleGuilds();
   const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
   const [isWatchFormOpen, setIsWatchFormOpen] = useState(false);
 
-  const dmTarget = data?.targets[0] ?? null;
+  const dmTarget = targetsQuery.data?.[0] ?? null;
   const hasActiveDm = Boolean(dmTarget?.active && dmTarget.canSend);
-  const watchedItems = data?.watchedItems ?? [];
+  const watchedItems = watchedItemsQuery.data ?? [];
+  const isLoading = targetsQuery.isLoading || watchedItemsQuery.isLoading;
   const guildOptions = guilds.map((guild) => ({
     value: guild.id,
     label: guild.name,

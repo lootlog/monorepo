@@ -23,11 +23,14 @@ import { toast } from "sonner";
 import { Permission } from "@lootlog/types";
 import { getApiErrorStatus } from "@/lib/api-client/api-client";
 import { useToggleEventPin } from "@/features/guild/events/hooks/mutations/use-toggle-event-pin";
-import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { EventCreateDialog } from "./components/dialogs/event-create-dialog";
 import { EventActionDialog } from "./components/dialogs/event-action-dialog";
 import { getEventStatusAtTimestamp } from "./utils";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
+import {
+  getGuildsControllerGetGuildPermissionsQueryKey,
+  useGuildsControllerGetGuildPermissions,
+} from "@/lib/api/generated/main/guilds/guilds";
 import {
   getListEventsQueryKey,
   useDeleteEvent,
@@ -42,7 +45,17 @@ export const Events = () => {
   const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
   const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
   const queryClient = useQueryClient();
-  const { data: permissions } = useGuildPermissions();
+  const { data: permissions } = useGuildsControllerGetGuildPermissions(
+    { guildId: guildId ?? "" },
+    {
+      query: {
+        queryKey: getGuildsControllerGetGuildPermissionsQueryKey({
+          guildId: guildId ?? "",
+        }),
+        staleTime: 30_000,
+      },
+    },
+  );
   const deleteEvent = useDeleteEvent({
     mutation: {
       onSuccess: () => {

@@ -4,7 +4,7 @@ import {
   commaSeparatedArray,
   intFromString,
   optionalFromQuery,
-} from "@lootlog/nest-shared";
+} from "@lootlog/nest-shared/validators";
 import { NpcType } from "src/generated/prisma/client";
 
 const GetMemberKillsSchema = z.object({

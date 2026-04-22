@@ -36,11 +36,13 @@
     "format:check": "oxfmt --check .",
     "test": "turbo test",
     "test:e2e": "turbo test:e2e",
+    "openapi:generate": "turbo run openapi:generate --filter=@lootlog/api --filter=@lootlog/search --filter=@lootlog/activity --filter=@lootlog/battlelog-service --filter=@lootlog/auth",
+    "openapi:check": "tsx ./scripts/check-openapi.ts",
     "knip": "knip",
     "knip:fix": "knip --fix",
     "api:migrate:dev": "turbo run api:migrate:dev",
     "api:generate": "turbo run api:generate",
-    "api:client:generate": "tsx ./scripts/sanitize-openapi.ts && orval --config ./orval.config.ts --project mainApi",
+    "api:client:generate": "pnpm openapi:generate && pnpm openapi:check && tsx ./scripts/sanitize-openapi.ts && orval --config ./orval.config.ts",
     "api:studio": "turbo run api:studio",
     "battlelog:migrate": "turbo run battlelog:migrate",
     "battlelog:migrate:init": "turbo run battlelog:migrate:init",
@@ -50,8 +52,8 @@
     "activity:migrate:dev": "turbo run activity:migrate:dev",
     "activity:generate": "turbo run activity:generate",
     "activity:studio": "turbo run activity:studio",
-    "auth:migrate:dev": "turbo run auth:migrate:dev -- --config ./src/lib/auth.ts",
-    "auth:migrate:prod": "turbo run auth:migrate:prod -- --config ./src/lib/auth.ts",
+    "auth:migrate:dev": "turbo run auth:migrate:dev",
+    "auth:migrate:prod": "turbo run auth:migrate:prod",
     "env:generate": "turbo run env:generate",
     "seed": "tsx packages/cli/src/index.ts seed",
     "seed:setup": "tsx packages/cli/src/index.ts seed setup",
@@ -69,16 +71,16 @@
     "prepare": "husky"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.30.0",
+    "@changesets/cli": "^2.31.0",
     "@lootlog/typescript-config": "workspace:*",
     "husky": "^9.1.7",
-    "knip": "^6.3.0",
+    "knip": "^6.5.0",
     "lint-staged": "^16.4.0",
-    "orval": "^8.7.0",
+    "orval": "^8.8.1",
     "oxfmt": "^0.43.0",
-    "oxlint": "^1.58.0",
+    "oxlint": "^1.61.0",
     "tsx": "^4.21.0",
-    "turbo": "^2.9.3",
+    "turbo": "^2.9.6",
     "typescript": "6.0.2"
   },
   "engines": {
@@ -138,7 +140,9 @@
       "happy-dom@>=15.10.0 <=20.8.7": ">=20.8.8",
       "lodash@>=4.0.0 <=4.17.23": ">=4.18.0",
       "lodash@<=4.17.23": ">=4.18.0",
-      "defu@<=6.1.4": ">=6.1.5"
+      "defu@<=6.1.4": ">=6.1.5",
+      "@hono/node-server@<1.19.13": ">=1.19.13",
+      "fastify@>=5.3.2 <=5.8.4": ">=5.8.5"
     },
     "packageExtensions": {
       "@hookform/resolvers": {

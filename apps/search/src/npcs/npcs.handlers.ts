@@ -1,37 +1,38 @@
-import { APP_CONFIG } from "../config/app.config.js";
-import { logger } from "../config/winston.config.js";
-import { channel } from "../lib/rabbitmq.js";
-import { Queue } from "./enum/queue.enum.js";
-import { RoutingKey } from "./enum/routing-key.enum.js";
-import { NpcsService } from "./npcs.service.js";
+import { RabbitPayload, RabbitSubscribe } from "@golevelup/nestjs-rabbitmq";
+import { Inject, Injectable } from "@nestjs/common";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import type { Logger } from "winston";
+import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
+import { indexNpcsPayloadSchema } from "./dto/index-npcs.dto";
+import { Queue } from "./enum/queue.enum";
+import { RoutingKey } from "./enum/routing-key.enum";
+import { NpcsService } from "./npcs.service";
 
-const npcsService = new NpcsService();
+@Injectable()
+export class NpcsHandlers {
+  constructor(
+    private readonly npcsService: NpcsService,
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+  ) {}
 
-export const setupNpcsHandlers = async () => {
-  if (!channel) return;
+  @RabbitSubscribe({
+    exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: RoutingKey.SEARCH_NPCS_INDEX,
+    queue: Queue.SEARCH_NPCS_INDEX,
+    queueOptions: {
+      durable: true,
+    },
+  })
+  async handleNpcsIndex(@RabbitPayload() payload: unknown) {
+    const validationResult = indexNpcsPayloadSchema.safeParse(payload);
 
-  await channel.assertQueue(Queue.SEARCH_NPCS_INDEX, { durable: true });
-  await channel.bindQueue(
-    Queue.SEARCH_NPCS_INDEX,
-    APP_CONFIG.rabbitmq.exchange,
-    RoutingKey.SEARCH_NPCS_INDEX,
-  );
+    if (!validationResult.success) {
+      this.logger.error("Validation error in npcs index handler", {
+        error: validationResult.error.format(),
+      });
+      return;
+    }
 
-  channel
-    .consume(
-      Queue.SEARCH_NPCS_INDEX,
-      async (msg) => {
-        if (msg) {
-          const messageContent = msg.content.toString();
-          const npcs = messageContent ? JSON.parse(messageContent) : [];
-          await npcsService.indexNpcs({ npcs });
-
-          channel?.ack(msg);
-        }
-      },
-      { noAck: false },
-    )
-    .catch((error) => {
-      logger.error("Error consuming message", { error });
-    });
-};
+    await this.npcsService.indexNpcs({ npcs: validationResult.data });
+  }
+}

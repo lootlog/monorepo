@@ -5,7 +5,7 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { Permission } from "src/generated/prisma/client";
 import { RolesService } from "./roles.service";
 import { PrismaService } from "src/db/prisma.service";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 
 describe("RolesService", () => {
   let service: RolesService;

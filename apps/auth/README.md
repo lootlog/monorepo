@@ -1,12 +1,12 @@
 # @lootlog/auth
 
-Hono-based authentication service for Lootlog.
+NestJS-based authentication service for Lootlog.
 
 ## Overview
 
 - Wraps Better Auth for session handling, JWT issuance, JWKS exposure, and provider integrations.
-- Supports Discord OAuth and email/password auth as configured in `src/lib/auth.ts`.
-- Exposes service-specific routes under `/auth/*` and delegates Better Auth handlers under `/idp/*`.
+- Supports Discord OAuth and email/password auth as configured in `src/auth/better-auth.ts`.
+- Exposes service-specific routes under `/auth/*` and delegates Better Auth handlers under `/idp/*` through Nest/Fastify.
 
 ## Routes
 
@@ -32,5 +32,5 @@ pnpm --filter @lootlog/auth dev
 
 ## Notes
 
-- Database access is configured with Kysely and PostgreSQL in `src/lib/auth.ts`.
-- Observability is initialized at process startup in `src/index.ts`.
+- Database access is configured with Drizzle and PostgreSQL in `src/database/drizzle.ts`.
+- Observability is initialized at process startup in `src/instrumentation.ts`.

@@ -9,7 +9,7 @@ import type { CreateTimerDto } from "src/timers/dto/create-timer.dto";
 import type { CreateTimerFromGameClientDto } from "src/timers/dto/create-timer-from-game-client.dto";
 import { validateAndCalculateSpawnTimes } from "src/timers/utils/validate-spawn-times";
 import { TIMER_LIMITS } from "src/timers/constants/timer-limits";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { RedlockService } from "src/lib/redlock/redlock.service";
 import { getSyntheticNpcId } from "src/events/utils/get-synthetic-npc-id";

@@ -1,7 +1,7 @@
 import { WatchableItemTile } from "@/components/tiles";
 import { ItemImage } from "@/components/tiles/item-image";
 import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
-import { ItemRarity, type Item } from "@/hooks/api/loots/use-loots";
+import { ItemRarity, type Item } from "@/lib/loots/loot-types";
 import { cn } from "@lootlog/ui/lib/utils";
 import { AnimatePresence } from "framer-motion";
 import { useEffect, useRef, useState, type FC } from "react";
@@ -19,7 +19,8 @@ const RARITY_PRIORITY: Record<ItemRarity, number> = {
 const sortByRarity = (items: Item[]): Item[] =>
   [...items].sort(
     (a, b) =>
-      (RARITY_PRIORITY[b.rarity] ?? 0) - (RARITY_PRIORITY[a.rarity] ?? 0),
+      (RARITY_PRIORITY[b.rarity ?? ItemRarity.COMMON] ?? 0) -
+      (RARITY_PRIORITY[a.rarity ?? ItemRarity.COMMON] ?? 0),
   );
 
 type Props = {
@@ -82,7 +83,10 @@ export const ItemStack: FC<Props> = ({ items, watchContext }) => {
           <div className="absolute inset-0 translate-x-[2px] translate-y-[2px] rounded-md border-2 border-muted-foreground/30 bg-muted/60 w-[32px] h-[32px]" />
         )}
         <div className="relative">
-          <ItemImage rarity={topItem.rarity} icon={topItem.icon} />
+          <ItemImage
+            rarity={topItem.rarity ?? ItemRarity.COMMON}
+            icon={topItem.icon}
+          />
         </div>
         <ItemStackBadge count={remainingCount} />
       </div>

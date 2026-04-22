@@ -9,19 +9,20 @@ import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
-import {
-  useDeleteGuildNotificationTarget,
-  type GuildNotificationTarget,
-} from "@/hooks/api/guilds/use-guild-notifications";
+import { useQueryClient } from "@tanstack/react-query";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import { invalidateGuildNotificationQueries } from "../notifications-api";
 import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
 import { getGuildNotificationTargetLabel } from "../utils/notification-settings.utils";
+import { useNotificationsGuildControllerDeleteGuildTarget } from "@/lib/api/generated/main/notifications/notifications";
+import type { NotificationTargetResponseDto } from "@/lib/api/generated/main/model";
 
 type NotificationTargetCardProps = {
-  target: GuildNotificationTarget;
+  target: NotificationTargetResponseDto;
   usageCount: number;
   orphanedRuleCount: number;
   actionsDisabled: boolean;
-  onEdit: (target: GuildNotificationTarget) => void;
+  onEdit: (target: NotificationTargetResponseDto) => void;
 };
 
 export const NotificationTargetCard = ({
@@ -32,18 +33,37 @@ export const NotificationTargetCard = ({
   onEdit,
 }: NotificationTargetCardProps) => {
   const { t } = useTranslation();
-  const deleteTarget = useDeleteGuildNotificationTarget();
+  const guildId = useGuildId();
+  const queryClient = useQueryClient();
+  const deleteTarget = useNotificationsGuildControllerDeleteGuildTarget({
+    mutation: {
+      onSuccess: async () => {
+        if (!guildId) {
+          return;
+        }
+
+        await invalidateGuildNotificationQueries(queryClient, guildId);
+      },
+    },
+  });
   const isActionDisabled = actionsDisabled || deleteTarget.isPending;
 
   const handleDelete = async () => {
     try {
-      await deleteTarget.mutateAsync({ targetId: target.id });
+      if (!guildId) {
+        throw new Error("Missing guild id.");
+      }
+
+      await deleteTarget.mutateAsync({
+        pathParams: { guildId, targetId: target.id },
+      });
       toast.success(t("settings.notifications.toasts.targetDeleted"));
     } catch (error) {
       toast.error(
         getApiErrorMessage(error) ??
           t("settings.notifications.toasts.targetDeleteError"),
       );
+      throw error;
     }
   };
 

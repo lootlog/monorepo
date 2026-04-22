@@ -1,6 +1,15 @@
-import axios from "axios";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { ApiError } from "@/lib/api-client";
 import { getCreatePartyGatheringErrorMessage } from "./get-create-party-gathering-error-message";
+
+const createApiError = (status?: number, data?: unknown) =>
+  new ApiError({
+    status,
+    data,
+    url: "https://lootlog.local/messaging/party-gathering",
+    method: "POST",
+    message: "Request failed",
+  });
 
 describe("getCreatePartyGatheringErrorMessage", () => {
   afterEach(() => {
@@ -8,41 +17,26 @@ describe("getCreatePartyGatheringErrorMessage", () => {
   });
 
   it("returns the forbidden message for 403 responses", () => {
-    vi.spyOn(axios, "isAxiosError").mockReturnValue(true);
-
-    expect(
-      getCreatePartyGatheringErrorMessage({
-        response: { status: 403 },
-      } as never),
-    ).toBe("Brak uprawnień do wysyłania ogłoszeń");
+    expect(getCreatePartyGatheringErrorMessage(createApiError(403))).toBe(
+      "Brak uprawnień do wysyłania ogłoszeń",
+    );
   });
 
   it("returns the rate-limit message for 429 responses", () => {
-    vi.spyOn(axios, "isAxiosError").mockReturnValue(true);
-
-    expect(
-      getCreatePartyGatheringErrorMessage({
-        response: { status: 429 },
-      } as never),
-    ).toBe("Zbyt wiele prób. Spróbuj za chwilę.");
+    expect(getCreatePartyGatheringErrorMessage(createApiError(429))).toBe(
+      "Zbyt wiele prób. Spróbuj za chwilę.",
+    );
   });
 
   it("returns the backend message for 400 responses when available", () => {
-    vi.spyOn(axios, "isAxiosError").mockReturnValue(true);
-
     expect(
-      getCreatePartyGatheringErrorMessage({
-        response: {
-          status: 400,
-          data: { message: "Opis jest za długi" },
-        },
-      } as never),
+      getCreatePartyGatheringErrorMessage(
+        createApiError(400, { message: "Opis jest za długi" }),
+      ),
     ).toBe("Opis jest za długi");
   });
 
-  it("falls back to the default message for non-Axios errors", () => {
-    vi.spyOn(axios, "isAxiosError").mockReturnValue(false);
-
+  it("falls back to the default message for non-API errors", () => {
     expect(getCreatePartyGatheringErrorMessage(new Error("boom"))).toBe(
       "Nie udało się utworzyć ogłoszenia",
     );

@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { useState, type ReactNode } from "react";
 
 // SVG filter for destruction energy glow
-export const DestructionFilter = () => (
+const DestructionFilter = () => (
   <svg width="0" height="0" className="absolute">
     <defs>
       <filter
@@ -50,7 +50,7 @@ export const DestructionFilter = () => (
 );
 
 // Destruction energy particle
-export const DestructionParticle = ({
+const DestructionParticle = ({
   x,
   y,
   size,
@@ -97,7 +97,7 @@ export const DestructionParticle = ({
 );
 
 // Small magic circle SVG element
-export const MagicCircle = ({
+const MagicCircle = ({
   x,
   y,
   size,

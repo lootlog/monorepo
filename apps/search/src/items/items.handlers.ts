@@ -1,69 +1,38 @@
-import { z } from "zod";
-import { APP_CONFIG } from "../config/app.config.js";
-import { logger } from "../config/winston.config.js";
-import { channel } from "../lib/rabbitmq.js";
-import { Queue } from "./enum/queue.enum.js";
-import { RoutingKey } from "./enum/routing-key.enum.js";
-import { ItemsService } from "./items.service.js";
+import { RabbitPayload, RabbitSubscribe } from "@golevelup/nestjs-rabbitmq";
+import { Inject, Injectable } from "@nestjs/common";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import type { Logger } from "winston";
+import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
+import { indexItemsPayloadSchema } from "./dto/index-items.dto";
+import { Queue } from "./enum/queue.enum";
+import { RoutingKey } from "./enum/routing-key.enum";
+import { ItemsService } from "./items.service";
 
-const itemsService = new ItemsService();
+@Injectable()
+export class ItemsHandlers {
+  constructor(
+    private readonly itemsService: ItemsService,
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+  ) {}
 
-const itemSchema = z.object({
-  id: z.number(),
-  hid: z.string().optional(),
-  name: z.string(),
-  icon: z.string(),
-  lvl: z.number(),
-  rarity: z.string().nullable(),
-  type: z.string().nullable(),
-  world: z.string(),
-});
+  @RabbitSubscribe({
+    exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: RoutingKey.SEARCH_ITEMS_INDEX,
+    queue: Queue.SEARCH_ITEMS_INDEX,
+    queueOptions: {
+      durable: true,
+    },
+  })
+  async handleItemsIndex(@RabbitPayload() payload: unknown) {
+    const validationResult = indexItemsPayloadSchema.safeParse(payload);
 
-const indexItemsPayloadSchema = z.array(itemSchema);
+    if (!validationResult.success) {
+      this.logger.error("Validation error in items index handler", {
+        error: validationResult.error.format(),
+      });
+      return;
+    }
 
-export const setupItemsHandlers = async () => {
-  if (!channel) return;
-
-  await channel.assertQueue(Queue.SEARCH_ITEMS_INDEX, { durable: true });
-  await channel.bindQueue(
-    Queue.SEARCH_ITEMS_INDEX,
-    APP_CONFIG.rabbitmq.exchange,
-    RoutingKey.SEARCH_ITEMS_INDEX,
-  );
-
-  channel
-    .consume(
-      Queue.SEARCH_ITEMS_INDEX,
-      async (msg) => {
-        if (msg) {
-          try {
-            const messageContent = msg.content.toString();
-            const parsed = messageContent ? JSON.parse(messageContent) : [];
-            const validationResult = indexItemsPayloadSchema.safeParse(parsed);
-
-            if (!validationResult.success) {
-              logger.error("Validation error in items index handler", {
-                error: validationResult.error.format(),
-                messageContent: messageContent.slice(0, 500),
-              });
-              channel?.nack(msg, false, false);
-              return;
-            }
-
-            await itemsService.indexItems({ items: validationResult.data });
-            channel?.ack(msg);
-          } catch (error) {
-            logger.error("Error processing items index message", {
-              error: error instanceof Error ? error.message : error,
-              stack: error instanceof Error ? error.stack : undefined,
-            });
-            channel?.nack(msg, false, false);
-          }
-        }
-      },
-      { noAck: false },
-    )
-    .catch((error) => {
-      logger.error("Error consuming message", { error });
-    });
-};
+    await this.itemsService.indexItems({ items: validationResult.data });
+  }
+}

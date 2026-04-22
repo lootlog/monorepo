@@ -8,7 +8,7 @@ import {
 import { useGameAccountPreferencesSyncStatus } from "@/hooks/use-game-account-preferences-sync-status";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NotificationCategoryForm } from "@/features/settings/components/notifications/notification-category-form";
-import { NpcType } from "@/hooks/api/use-npcs";
+import { NpcType } from "@/api/npcs.api";
 import type { NotificationType } from "@lootlog/types";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -18,15 +18,15 @@ const SYNC_INDICATOR_DELAY_MS = 100;
 export const NotificationsSettingsTab = () => {
   const syncStatus = useGameAccountPreferencesSyncStatus();
   const [visibleStatus, setVisibleStatus] = useState(syncStatus.status);
-  const { t } = useTranslation();
+  const { t } = useTranslation(["settings", "common"]);
   const categoryTabs: { label: string; key: NotificationType }[] = [
-    { label: t("settings.npcTypes.elite2"), key: NpcType.ELITE2 },
-    { label: t("settings.npcTypes.hero"), key: NpcType.HERO },
-    { label: t("settings.npcTypes.colossus"), key: NpcType.COLOSSUS },
-    { label: t("settings.npcTypes.titan"), key: NpcType.TITAN },
-    { label: t("settings.npcTypes.message"), key: "message" },
+    { label: t("common:npcTypes.elite2"), key: NpcType.ELITE2 },
+    { label: t("common:npcTypes.hero"), key: NpcType.HERO },
+    { label: t("common:npcTypes.colossus"), key: NpcType.COLOSSUS },
+    { label: t("common:npcTypes.titan"), key: NpcType.TITAN },
+    { label: t("common:npcTypes.message"), key: "message" },
     {
-      label: t("settings.npcTypes.partyGathering"),
+      label: t("common:npcTypes.partyGathering"),
       key: "party-gathering",
     },
   ];
@@ -48,8 +48,8 @@ export const NotificationsSettingsTab = () => {
 
   return (
     <SettingsTabLayout
-      title={t("settings.notifications.title")}
-      description={t("settings.notifications.description")}
+      title={t("notifications.title")}
+      description={t("notifications.description")}
       contentClassName="ll:gap-3"
     >
       <Tabs defaultValue={NpcType.ELITE2} className="ll:w-full ll:gap-3">
@@ -74,9 +74,9 @@ export const NotificationsSettingsTab = () => {
               <div className="ll:sticky ll:top-0 ll:z-10 ll:flex ll:h-0 ll:justify-end ll:pointer-events-none">
                 <SettingsSyncStatus
                   status={visibleStatus}
-                  errorLabel={t("settings.common.syncStatus.error")}
-                  savingLabel={t("settings.common.syncStatus.saving")}
-                  syncingLabel={t("settings.common.syncStatus.syncing")}
+                  errorLabel={t("common:syncStatus.error")}
+                  savingLabel={t("common:syncStatus.saving")}
+                  syncingLabel={t("common:syncStatus.syncing")}
                 />
               </div>
               <NotificationCategoryForm categoryKey={tab.key} />

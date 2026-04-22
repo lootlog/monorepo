@@ -1,9 +1,10 @@
-import { z } from "@hono/zod-openapi";
+import { createZodDto, type ZodDto } from "nestjs-zod";
+import { z } from "zod";
 
 export const itemHitSchema = z
   .object({
     id: z.number(),
-    hid: z.string(),
+    hid: z.string().default(""),
     name: z.string(),
     icon: z.string(),
     lvl: z.number(),
@@ -11,4 +12,16 @@ export const itemHitSchema = z
     type: z.string().nullable(),
     world: z.string(),
   })
-  .openapi("ItemHit");
+  .describe("Item search hit");
+
+const ItemHitDtoBase: ZodDto<typeof itemHitSchema, false> =
+  createZodDto(itemHitSchema);
+
+export class ItemHitDto extends ItemHitDtoBase {}
+
+const GetItemsResponseSchema = z.array(itemHitSchema);
+
+const GetItemsResponseDtoBase: ZodDto<typeof GetItemsResponseSchema, false> =
+  createZodDto(GetItemsResponseSchema);
+
+export class GetItemsResponseDto extends GetItemsResponseDtoBase {}

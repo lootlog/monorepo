@@ -1,7 +1,7 @@
 import { cn } from "@lootlog/ui/lib/utils";
 import { Crown } from "lucide-react";
 import { type FC, useMemo } from "react";
-import type { GuildMember } from "@/hooks/api/members/use-guild-member";
+import type { MemberResponseDto as GuildMember } from "@/lib/api/generated/main/model";
 import { getColorFromRole } from "@/utils/get-color-from-role";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
@@ -39,7 +39,7 @@ export const MemberListItem: FC<MemberListItemProps> = ({
     const perms = new Set<Permission>();
     for (const role of member.roles) {
       for (const perm of role.permissions) {
-        perms.add(perm);
+        perms.add(perm as Permission);
       }
     }
     return Array.from(perms);

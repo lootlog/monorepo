@@ -7,7 +7,7 @@ import {
   Res,
   UseGuards,
 } from "@nestjs/common";
-import { DiscordId } from "@lootlog/nest-shared";
+import { DiscordId } from "@lootlog/nest-shared/decorators";
 import type { FastifyReply } from "fastify";
 import {
   ApiTags,
@@ -15,9 +15,14 @@ import {
   ApiOperation,
   ApiResponse,
 } from "@nestjs/swagger";
+import { ZodResponse } from "nestjs-zod";
 import { CreateNotificationDto } from "src/messaging/dto/create-notification.dto";
 import { CreatePartyGatheringDto } from "src/messaging/dto/create-party-gathering.dto";
 import { CreateVolunteerDto } from "src/messaging/dto/create-volunteer.dto";
+import {
+  CancelPartyGatheringResponseDto,
+  NotificationResponseDto,
+} from "src/messaging/dto/messaging-response.dto";
 import { MessagingService } from "src/messaging/messaging.service";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 
@@ -33,9 +38,10 @@ export class MessagingController {
     summary: "Send notification",
     description: "Send a notification to the user",
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 201,
     description: "Notification sent successfully",
+    type: NotificationResponseDto,
   })
   sendNotification(
     @DiscordId() discordId: string,
@@ -66,9 +72,10 @@ export class MessagingController {
     summary: "Create party gathering notification",
     description: "Send a party gathering (LFG) notification to guild members",
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 201,
     description: "Party gathering notification sent successfully",
+    type: NotificationResponseDto,
   })
   createPartyGathering(
     @DiscordId() discordId: string,
@@ -83,9 +90,10 @@ export class MessagingController {
     description:
       "Cancel the active party gathering for the current user without requiring a notificationId",
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Party gathering notification cancelled successfully",
+    type: CancelPartyGatheringResponseDto,
   })
   cancelPartyGatheringByUser(@DiscordId() discordId: string) {
     return this.messagingService.cancelPartyGatheringByUser(discordId);
@@ -96,9 +104,10 @@ export class MessagingController {
     summary: "Cancel party gathering notification",
     description: "Cancel an active party gathering notification",
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Party gathering notification cancelled successfully",
+    type: CancelPartyGatheringResponseDto,
   })
   @ApiResponse({
     status: 204,

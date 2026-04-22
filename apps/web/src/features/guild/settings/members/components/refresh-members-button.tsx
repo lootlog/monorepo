@@ -5,22 +5,75 @@ import { useMemo, useCallback } from "react";
 import { cn } from "@/utils/cn";
 import { useRefreshStatus } from "@/features/guild/settings/members/contexts/refresh-status-context";
 import { useCountdown } from "@/hooks/utils/use-countdown";
-import { useBulkMemberRefresh } from "@/hooks/api/members/use-bulk-member-refresh";
 import { useRefreshJob } from "@/hooks/utils/use-refresh-job";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
+import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
+import {
+  getMembersControllerGetGuildMembersQueryKey,
+  getMembersControllerGetLatestRefreshJobQueryKey,
+  useMembersControllerGetLatestRefreshJob,
+  useMembersControllerRefreshAllMembers,
+} from "@/lib/api/generated/main/members/members";
+import { useQueryClient } from "@tanstack/react-query";
 
 const ADMIN_BULK_REFRESH_RATE_LIMIT = 1000 * 60 * 10; // 10 minutes
 
 export const RefreshMembersButton = () => {
   const { t } = useTranslation();
   const guildId = useGuildId();
+  const queryClient = useQueryClient();
   const { markAsRefreshed, markAsFailed } = useRefreshStatus();
-  const {
-    mutate: startRefresh,
-    isPending,
-    data,
-    latestJob,
-  } = useBulkMemberRefresh();
+  const latestRefreshJobQuery = useMembersControllerGetLatestRefreshJob(
+    { guildId: guildId ?? "" },
+    {
+      query: {
+        queryKey: getMembersControllerGetLatestRefreshJobQueryKey({
+          guildId: guildId ?? "",
+        }),
+        staleTime: 60_000,
+      },
+    },
+  );
+  const refreshAllMembersMutation = useMembersControllerRefreshAllMembers({
+    mutation: {
+      onSuccess: (_data, variables) => {
+        const currentGuildId = variables?.pathParams.guildId;
+
+        toast.success("Rozpoczęto odświeżanie wszystkich członków.");
+
+        if (!currentGuildId) {
+          return;
+        }
+
+        void Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: getMembersControllerGetGuildMembersQueryKey({
+              guildId: currentGuildId,
+            }),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: getMembersControllerGetLatestRefreshJobQueryKey({
+              guildId: currentGuildId,
+            }),
+          }),
+        ]);
+      },
+      onError: (error) => {
+        const message = getApiErrorMessage(error);
+        if (message === "BULK_REFRESH_RATE_LIMIT_ACTIVE") {
+          toast.error("Musisz poczekać przed kolejnym odświeżeniem.");
+          return;
+        }
+
+        toast.error("Wystąpił błąd podczas rozpoczynania odświeżania.");
+      },
+    },
+  });
+
+  const latestJob = latestRefreshJobQuery.data;
+  const isPending = refreshAllMembersMutation.isPending;
+  const data = refreshAllMembersMutation.data;
 
   const currentJob = useMemo(() => {
     return data ?? latestJob;
@@ -69,7 +122,13 @@ export const RefreshMembersButton = () => {
     : 0;
 
   const handleRefresh = () => {
-    startRefresh();
+    if (!guildId) {
+      return;
+    }
+
+    refreshAllMembersMutation.mutate({
+      pathParams: { guildId },
+    });
   };
 
   if (isRefreshing && displayJob) {

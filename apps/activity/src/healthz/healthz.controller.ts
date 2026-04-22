@@ -1,5 +1,4 @@
 import { Controller, Get } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
 import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
 import {
   HealthCheckService,
@@ -10,8 +9,7 @@ import {
   HealthCheck,
 } from "@nestjs/terminus";
 import { PrismaService } from "src/shared/db/prisma.service";
-import { ConfigKey } from "src/config/config-key.enum";
-import type { ApiServiceConfig } from "src/config/api-service.config";
+import { apiServiceConfig } from "src/config/api-service.config";
 
 @ApiTags("health")
 @Controller("healthz")
@@ -23,7 +21,6 @@ export class HealthzController {
     private readonly prisma: PrismaService,
     private readonly memory: MemoryHealthIndicator,
     private readonly disk: DiskHealthIndicator,
-    private readonly configService: ConfigService,
   ) {}
 
   @Get()
@@ -42,10 +39,6 @@ export class HealthzController {
     description: "Service is unhealthy",
   })
   check() {
-    const apiServiceConfig = this.configService.get<ApiServiceConfig>(
-      ConfigKey.API_SERVICE,
-    );
-
     return this.health.check([
       () => this.prismaHealth.pingCheck("database", this.prisma),
       () =>

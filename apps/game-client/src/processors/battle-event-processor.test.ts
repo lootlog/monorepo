@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { BattleEventProcessor } from "./battle-event-processor";
 import { useBattleStore } from "@/store/game-store/battle.store";
-import { NpcType } from "@/hooks/api/use-npcs";
+import { NpcType } from "@/api/npcs.api";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 
 const mockCreateKill = vi.fn().mockResolvedValue({ updated: 1 });

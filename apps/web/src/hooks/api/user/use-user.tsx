@@ -1,10 +1,12 @@
 import {
-  useUserPreferences,
-  type UserPreferences,
-} from "@/hooks/api/user/use-user-preferences";
+  getUsersControllerGetUserPreferencesQueryKey,
+  useUsersControllerGetUserPreferences,
+  type UsersControllerGetUserPreferencesQueryResult,
+} from "@/lib/api/generated/main/users/users";
 import { useSession, type SessionData } from "@/hooks/auth/use-session";
 
 export type SessionUser = NonNullable<SessionData>["user"];
+export type UserPreferences = UsersControllerGetUserPreferencesQueryResult;
 
 export type User = SessionUser & {
   preferences?: UserPreferences;
@@ -13,7 +15,13 @@ export type User = SessionUser & {
 export const useUser = () => {
   const { data: session, isPending: sessionPending } = useSession();
   const { data: preferences, isLoading: preferencesLoading } =
-    useUserPreferences();
+    useUsersControllerGetUserPreferences({
+      query: {
+        enabled: !!session?.user,
+        queryKey: getUsersControllerGetUserPreferencesQueryKey(),
+        retry: 1,
+      },
+    });
 
   const user: User | undefined = session?.user
     ? {

@@ -9,9 +9,7 @@ export type MapStatus =
   | "ASSIGNED_AFK"
   | "UNASSIGNED";
 
-export const getGapTypeFromStatus = (
-  status: MapStatus,
-): CoverageGapType | null => {
+const getGapTypeFromStatus = (status: MapStatus): CoverageGapType | null => {
   if (status === "ASSIGNED_PRESENT") return null;
   if (status === "UNASSIGNED") return "UNASSIGNED";
   return "UNCOVERED";

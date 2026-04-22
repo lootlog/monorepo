@@ -6,12 +6,17 @@ import { Button } from "@lootlog/ui/components/button";
 import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
 import { ItemImage, ItemTile } from "@/components/tiles";
 import { getUserNotificationsErrorMessage } from "@/features/user/notifications/utils/get-user-notifications-error-message";
-import { useDeleteWatchedItem } from "@/hooks/api/user/use-delete-watched-item";
-import type { UserWatchedItem } from "@/hooks/api/user/use-user-notifications";
-import { ItemRarity } from "@/hooks/api/loots/use-loots";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  invalidateNotificationsUserControllerGetUserTargets,
+  invalidateNotificationsUserControllerGetWatchedItems,
+  useNotificationsUserControllerDeleteWatchedItem,
+} from "@/lib/api/generated/main/notifications/notifications";
+import type { WatchedItemResponseDto } from "@/lib/api/generated/main/model";
+import { ItemRarity } from "@/lib/loots/loot-types";
 
 type WatchedItemCardProps = {
-  watchedItem: UserWatchedItem;
+  watchedItem: WatchedItemResponseDto;
   guildLabels: string[];
   missingGuildIds: string[];
 };
@@ -22,11 +27,23 @@ export const WatchedItemCard = ({
   missingGuildIds,
 }: WatchedItemCardProps) => {
   const { t } = useTranslation();
-  const deleteWatchedItem = useDeleteWatchedItem();
+  const queryClient = useQueryClient();
+  const deleteWatchedItem = useNotificationsUserControllerDeleteWatchedItem({
+    mutation: {
+      onSuccess: async () => {
+        await Promise.all([
+          invalidateNotificationsUserControllerGetUserTargets(queryClient),
+          invalidateNotificationsUserControllerGetWatchedItems(queryClient),
+        ]);
+      },
+    },
+  });
 
   const handleDelete = async () => {
     try {
-      await deleteWatchedItem.mutateAsync({ watchedItemId: watchedItem.id });
+      await deleteWatchedItem.mutateAsync({
+        pathParams: { watchedItemId: watchedItem.id },
+      });
       toast.success(t("settings.userNotifications.toasts.watchDeleted"));
     } catch (error) {
       toast.error(
@@ -38,6 +55,7 @@ export const WatchedItemCard = ({
 
   const snapshot = watchedItem.itemSnapshot;
   const rarity = (snapshot?.rarity as ItemRarity | null) ?? ItemRarity.COMMON;
+  const apiRarity = rarity === ItemRarity.COMMON ? null : rarity;
   const displayName = snapshot?.name ?? watchedItem.itemName;
   const displayIcon = snapshot?.icon ?? null;
 
@@ -50,7 +68,7 @@ export const WatchedItemCard = ({
             hid: "",
             name: displayName,
             icon: displayIcon,
-            rarity,
+            rarity: apiRarity,
             lvl: snapshot.lvl ?? 0,
             type: snapshot.type ?? "",
             stat: snapshot.stat,

@@ -5,19 +5,27 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createDetectorSettings,
   createNotificationsSettings,
-  getUserGameAccountPreferencesQueryKey,
 } from "@/lib/game-account-preferences";
 import { useGameAccountPreferencesSync } from "@/hooks/use-game-account-preferences-sync";
+import { getUsersControllerGetUserGameAccountPreferencesQueryKey } from "@/lib/api/generated/main/users/users";
 
-const mockUseGuilds = vi.fn();
+const mockUseAccessibleGuilds = vi.fn();
 const mockUseUserGameAccountPreferences = vi.fn();
 const mockUseUpdateUserGameAccountPreferences = vi.fn();
 const mockFlushPending = vi.fn();
 const mockMutate = vi.fn();
 
-vi.mock("@/hooks/api/use-guilds", () => ({
-  useGuilds: () => mockUseGuilds(),
-}));
+vi.mock("@/lib/api/generated/main/users/users", async () => {
+  const actual = await vi.importActual<
+    typeof import("@/lib/api/generated/main/users/users")
+  >("@/lib/api/generated/main/users/users");
+
+  return {
+    ...actual,
+    useUsersControllerGetCurrentUserAccessibleGuilds: () =>
+      mockUseAccessibleGuilds(),
+  };
+});
 
 vi.mock("@/hooks/api/use-user-account-preferences", () => ({
   useUserGameAccountPreferences: (...args: unknown[]) =>
@@ -63,8 +71,8 @@ describe("useGameAccountPreferencesSync", () => {
       },
     });
 
-    mockUseGuilds.mockReset();
-    mockUseGuilds.mockReturnValue({
+    mockUseAccessibleGuilds.mockReset();
+    mockUseAccessibleGuilds.mockReturnValue({
       data: [{ id: "guild-1" }, { id: "guild-2" }],
       isFetched: true,
       isFetching: false,
@@ -107,12 +115,18 @@ describe("useGameAccountPreferencesSync", () => {
           notifications: createNotificationsSettings(["guild-1", "guild-2"]),
           detector: createDetectorSettings(),
         },
-        expect.any(Object),
+        expect.objectContaining({
+          onError: expect.any(Function),
+        }),
       );
     });
 
     expect(
-      queryClient.getQueryData(getUserGameAccountPreferencesQueryKey("202")),
+      queryClient.getQueryData(
+        getUsersControllerGetUserGameAccountPreferencesQueryKey({
+          accountId: "202",
+        }),
+      ),
     ).toEqual({
       accountId: "202",
       notifications: createNotificationsSettings(["guild-1", "guild-2"]),
@@ -124,7 +138,7 @@ describe("useGameAccountPreferencesSync", () => {
   });
 
   it("does not seed defaults before guild membership finishes loading", () => {
-    mockUseGuilds.mockReturnValue({
+    mockUseAccessibleGuilds.mockReturnValue({
       data: [],
       isFetched: false,
       isFetching: true,
@@ -150,7 +164,11 @@ describe("useGameAccountPreferencesSync", () => {
 
     expect(mockMutate).not.toHaveBeenCalled();
     expect(
-      queryClient.getQueryData(getUserGameAccountPreferencesQueryKey("202")),
+      queryClient.getQueryData(
+        getUsersControllerGetUserGameAccountPreferencesQueryKey({
+          accountId: "202",
+        }),
+      ),
     ).toBeUndefined();
   });
 

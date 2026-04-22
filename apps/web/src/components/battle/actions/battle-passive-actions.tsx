@@ -1,8 +1,10 @@
-import type { RawBattleParsedEvent } from "@/hooks/api/battle-log/use-battle-raw";
+import type {
+  BattleWarrior as Warrior,
+  RawBattleParsedEvent,
+} from "@/lib/api/battlelog-types";
 import { memo, type FC } from "react";
 import { BattleActionItem } from "./battle-action-item";
 import { cn } from "@lootlog/ui/lib/utils";
-import type { Warrior } from "@/hooks/api/battle-log/use-battles";
 
 export type BattlePassiveActionsProps = {
   actions: { type: string; value: string }[];

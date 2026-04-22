@@ -1,153 +1,109 @@
-import { Hono } from "hono";
-import { APIError } from "better-auth/api";
-import { auth } from "../lib/auth.js";
-import { APP_CONFIG } from "../config/app.config.js";
-import { type JwksKeys, validateToken } from "@lootlog/api-helpers";
+import {
+  Body,
+  Controller,
+  Get,
+  Headers,
+  Inject,
+  Post,
+  Req,
+  Res,
+} from "@nestjs/common";
+import type { FastifyReply, FastifyRequest } from "fastify";
+import {
+  ApiBody,
+  ApiHeader,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from "@nestjs/swagger";
+import { ZodSchemaValidationPipe } from "src/common/pipes/zod-schema-validation.pipe";
+import { AuthService } from "./auth.service";
+import {
+  type IdpTokenRequestDto,
+  idpTokenRequestSchema,
+} from "./dto/idp-token-request.dto";
 
-const authController = new Hono<{
-  Variables: {
-    user: typeof auth.$Infer.Session.user | null;
-    session: typeof auth.$Infer.Session.session | null;
-  };
-}>();
+@ApiTags("auth")
+@Controller("auth")
+export class AuthController {
+  constructor(@Inject(AuthService) private readonly authService: AuthService) {}
 
-const normalizeScopes = (scopes: unknown): string[] => {
-  if (Array.isArray(scopes)) {
-    return scopes.filter((scope): scope is string => typeof scope === "string");
-  }
-
-  if (typeof scopes === "string") {
-    return scopes.split(/\s+/).filter(Boolean);
-  }
-
-  return [];
-};
-
-authController.get("/verify", async (c) => {
-  if (
-    c.req.raw.headers.has("X-Auth-Discord-Id") ||
-    c.req.raw.headers.has("X-Auth-User-Id")
+  @Get("verify")
+  @ApiOperation({ summary: "Verify request identity" })
+  @ApiHeader({ name: "authorization", required: false })
+  @ApiHeader({ name: "x-auth-discord-id", required: false })
+  @ApiHeader({ name: "x-auth-user-id", required: false })
+  @ApiOkResponse({
+    schema: {
+      type: "object",
+      properties: {
+        status: { type: "string", enum: ["OK"] },
+      },
+      required: ["status"],
+    },
+  })
+  async verify(
+    @Req() request: FastifyRequest,
+    @Headers("authorization") authorizationHeader: string | undefined,
+    @Headers("x-auth-discord-id") authDiscordId: string | undefined,
+    @Headers("x-auth-user-id") authUserId: string | undefined,
+    @Res({ passthrough: true }) reply: FastifyReply,
   ) {
-    return c.body(null, 401);
-  }
-
-  const user = c.get("user");
-
-  if (user) {
-    c.res.headers.set("X-Auth-Discord-Id", user.discordId);
-    c.res.headers.set("X-Auth-User-Id", user.id);
-
-    return c.json({ status: "OK" });
-  }
-
-  const authorizationHeader = c.req.raw.headers.get("authorization");
-
-  if (!authorizationHeader) return c.body(null, 401);
-
-  const token = authorizationHeader.replace("Bearer ", "");
-  const jwks = (await auth.api.getJwks()) as JwksKeys;
-
-  let discordId, userId;
-
-  try {
-    ({ discordId, userId } = await validateToken({
-      token,
-      jwks,
-      issuer: APP_CONFIG.appUrl,
-      audience: APP_CONFIG.appUrl,
-    }));
-  } catch {
-    return c.body(null, 401);
-  }
-
-  if (!userId || !discordId) return c.body(null, 401);
-
-  c.res.headers.set("X-Auth-Discord-Id", discordId);
-  c.res.headers.set("X-Auth-User-Id", userId);
-
-  return c.json({ status: "OK" });
-});
-
-authController.get("/@me/scopes", async (c) => {
-  const user = c.get("user");
-
-  if (!user) return c.body(null, 401);
-
-  let token;
-  try {
-    token = await auth.api.getAccessToken({
-      body: {
-        providerId: "discord",
-        userId: user.id,
-        accountId: user.discordId,
-      },
+    const verifiedIdentity = await this.authService.verifyRequestIdentity({
+      headers: request.headers,
+      authorizationHeader,
+      authDiscordId,
+      authUserId,
     });
-  } catch (error) {
-    if (error instanceof APIError) {
-      return c.json({ error: error.message }, error.status as 400 | 500);
-    }
-    return c.json({ error: "Failed to retrieve IDP token" }, 500);
+
+    reply.header("X-Auth-Discord-Id", verifiedIdentity.discordId);
+    reply.header("X-Auth-User-Id", verifiedIdentity.userId);
+
+    return { status: "OK" };
   }
 
-  if (!token || !token.accessToken) {
-    return c.json({ error: "Failed to retrieve IDP token" }, 400);
+  @Get("@me/scopes")
+  @ApiOperation({ summary: "Get scopes for the current user" })
+  @ApiOkResponse({
+    schema: {
+      type: "array",
+      items: { type: "string" },
+    },
+  })
+  getScopes(@Req() request: FastifyRequest) {
+    return this.authService.getCurrentUserScopes(request.headers);
   }
 
-  const expiresAt = token.accessTokenExpiresAt
-    ? new Date(token.accessTokenExpiresAt)
-    : null;
-  if (expiresAt && expiresAt < new Date()) {
-    return c.json(
-      { error: "IDP token has expired. Please reconnect your account." },
-      401,
-    );
-  }
-
-  return c.json(normalizeScopes(token.scopes));
-});
-
-authController.post("/idp-token", async (c) => {
-  const body = await c.req.json();
-  const { userId, discordId } = body;
-
-  if (!userId || !discordId) {
-    return c.json({ error: "INVALID_REQUEST" }, 400);
-  }
-
-  let token;
-  try {
-    token = await auth.api.getAccessToken({
-      body: {
-        providerId: "discord",
-        userId: userId,
-        accountId: discordId,
+  @Post("idp-token")
+  @ApiOperation({ summary: "Issue an IDP token for a user account" })
+  @ApiBody({
+    schema: {
+      type: "object",
+      properties: {
+        userId: { type: "string" },
+        discordId: { type: "string" },
       },
-    });
-  } catch (error) {
-    if (error instanceof APIError) {
-      return c.json({ error: "ACCOUNT_NOT_FOUND" }, error.status as 400 | 500);
-    }
-    return c.json({ error: "INTERNAL_ERROR" }, 500);
+      required: ["userId", "discordId"],
+    },
+  })
+  @ApiOkResponse({
+    schema: {
+      type: "object",
+      properties: {
+        accessToken: { type: "string" },
+        expiresIn: { type: "number" },
+        scopes: {
+          type: "array",
+          items: { type: "string" },
+        },
+      },
+      required: ["accessToken", "expiresIn", "scopes"],
+    },
+  })
+  getIdpToken(
+    @Body(new ZodSchemaValidationPipe(idpTokenRequestSchema))
+    body: IdpTokenRequestDto,
+  ) {
+    return this.authService.getIdpTokenResponse(body);
   }
-
-  if (!token || !token.accessToken) {
-    return c.json({ error: "TOKEN_NOT_FOUND" }, 400);
-  }
-
-  const expiresAt = token.accessTokenExpiresAt
-    ? new Date(token.accessTokenExpiresAt)
-    : null;
-  if (expiresAt && expiresAt < new Date()) {
-    return c.json({ error: "TOKEN_EXPIRED" }, 401);
-  }
-
-  return c.json({
-    accessToken: token.accessToken,
-    expiresIn: expiresAt
-      ? Math.floor((expiresAt.getTime() - Date.now()) / 1000)
-      : 0,
-    scopes: normalizeScopes(token.scopes),
-  });
-});
-
-export { authController };
+}

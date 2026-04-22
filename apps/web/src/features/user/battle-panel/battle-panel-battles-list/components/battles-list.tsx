@@ -1,8 +1,8 @@
 import type {
-  GetBattlesResponse,
-  UseBattlesParams,
-} from "@/hooks/api/battle-log/use-battles";
-import type { BattleCharacter } from "@/hooks/api/battle-log/use-battle-characters";
+  BattleCharacter,
+  BattleListParams as UseBattlesParams,
+  BattleListResponse as GetBattlesResponse,
+} from "@/lib/api/battlelog-types";
 import { BattlesListEntry } from "@/features/user/battle-panel/battle-panel-battles-list/components/battles-list-entry";
 import {
   Pagination,

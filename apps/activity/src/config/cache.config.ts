@@ -1,42 +1,27 @@
-import { CacheModuleAsyncOptions } from "@nestjs/cache-manager";
-import { ConfigService } from "@nestjs/config";
+import type { CacheModuleOptions } from "@nestjs/cache-manager";
 import { Keyv } from "keyv";
 import KeyvRedis from "@keyv/redis";
 import { CacheableMemory } from "cacheable";
 import { RuntimeEnvironment } from "@lootlog/types";
-import type { RedisConfig } from "@lootlog/nest-shared";
-import { ConfigKey } from "./config-key.enum";
-import { ServiceConfig } from "./service.config";
+import { redisConfig } from "src/config/redis.config";
+import { serviceConfig } from "src/config/service.config";
 
-export const cacheConfig: CacheModuleAsyncOptions = {
+const isLocal = serviceConfig.env === RuntimeEnvironment.LOCAL;
+
+export const cacheConfig: CacheModuleOptions = {
   isGlobal: true,
-  inject: [ConfigService],
-  useFactory: async (configService: ConfigService) => {
-    const serviceConfig = configService.get<ServiceConfig>(ConfigKey.SERVICE);
-    const isLocal = serviceConfig.env === RuntimeEnvironment.LOCAL;
-
-    if (isLocal) {
-      return {
-        stores: [
-          new Keyv({
-            store: new CacheableMemory({ ttl: 0, lruSize: 0 }),
-          }),
-        ],
-        ttl: 0,
-      };
-    }
-
-    const redisConfig = configService.get<RedisConfig>(ConfigKey.REDIS);
-
-    const redisUrl = `redis://${redisConfig.username}:${redisConfig.password}@${redisConfig.host}:${redisConfig.port}`;
-
-    return {
-      stores: [
+  stores: isLocal
+    ? [
         new Keyv({
-          store: new KeyvRedis(redisUrl),
+          store: new CacheableMemory({ ttl: 0, lruSize: 0 }),
+        }),
+      ]
+    : [
+        new Keyv({
+          store: new KeyvRedis(
+            `redis://${redisConfig.username}:${redisConfig.password}@${redisConfig.host}:${redisConfig.port}`,
+          ),
         }),
       ],
-      ttl: 60000 * 5,
-    };
-  },
+  ttl: isLocal ? 0 : 60000 * 5,
 };

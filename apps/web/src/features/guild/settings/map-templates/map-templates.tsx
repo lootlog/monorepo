@@ -11,22 +11,43 @@ import { FileText, MapPin, Trash2, Pencil, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
-import { useMapTemplates, type MapTemplate } from "./hooks/use-map-templates";
-import { useDeleteMapTemplate } from "./hooks/use-map-template-mutations";
 import { MapTemplatesHeader } from "./map-templates-header";
 import { MapTemplateFormDialog } from "./map-template-form-dialog";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { useQueryClient } from "@tanstack/react-query";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import {
+  invalidateMapTemplatesControllerGetTemplates,
+  useMapTemplatesControllerDeleteTemplate,
+  useMapTemplatesControllerGetTemplates,
+} from "@/lib/api/generated/main/map-templates/map-templates";
+import type { MapTemplateResponseDto } from "@/lib/api/generated/main/model";
 
 export const MapTemplatesSettings = () => {
   const { t } = useTranslation();
-  const { data: templates, isLoading } = useMapTemplates();
-  const deleteTemplate = useDeleteMapTemplate();
+  const guildId = useGuildId();
+  const queryClient = useQueryClient();
+  const { data: templates, isLoading } = useMapTemplatesControllerGetTemplates({
+    guildId: guildId ?? "",
+  });
+  const deleteTemplate = useMapTemplatesControllerDeleteTemplate({
+    mutation: {
+      onSuccess: async () => {
+        if (!guildId) {
+          return;
+        }
+
+        await invalidateMapTemplatesControllerGetTemplates(queryClient, {
+          guildId,
+        });
+      },
+    },
+  });
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<MapTemplate | null>(
-    null,
-  );
+  const [editingTemplate, setEditingTemplate] =
+    useState<MapTemplateResponseDto | null>(null);
   const [expandedTemplates, setExpandedTemplates] = useState<
     Record<string, boolean>
   >({});
@@ -38,15 +59,24 @@ export const MapTemplatesSettings = () => {
     }));
   };
 
-  const handleEdit = (template: MapTemplate, e: React.MouseEvent) => {
+  const handleEdit = (
+    template: MapTemplateResponseDto,
+    e: React.MouseEvent,
+  ) => {
     e.stopPropagation();
     setEditingTemplate(template);
     setEditDialogOpen(true);
   };
 
   const handleDelete = async (templateId: string) => {
+    if (!guildId) {
+      return;
+    }
+
     try {
-      await deleteTemplate.mutateAsync(templateId);
+      await deleteTemplate.mutateAsync({
+        pathParams: { guildId, templateId },
+      });
       toast.success(t("settings.mapTemplates.toasts.deleted"));
     } catch {
       toast.error(t("settings.mapTemplates.toasts.deleteError"));
@@ -83,7 +113,7 @@ export const MapTemplatesSettings = () => {
               </p>
             </Card>
           ) : (
-            templates?.map((template: MapTemplate) => (
+            templates?.map((template: MapTemplateResponseDto) => (
               <Collapsible
                 key={template.id}
                 open={expandedTemplates[template.id]}

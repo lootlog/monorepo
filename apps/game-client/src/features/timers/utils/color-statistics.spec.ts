@@ -12,8 +12,8 @@ describe("color-statistics", () => {
       };
 
       const sortedTimers: TimerWithTimeLeft[] = [
-        { npc: { id: 1, name: "Boss1" } } as TimerWithTimeLeft,
-        { npc: { id: 2, name: "Boss2" } } as TimerWithTimeLeft,
+        { npc: { id: 1, name: "Boss1" } } as unknown as TimerWithTimeLeft,
+        { npc: { id: 2, name: "Boss2" } } as unknown as TimerWithTimeLeft,
       ];
 
       const result = calculateColorStatistics(
@@ -39,7 +39,7 @@ describe("color-statistics", () => {
       };
 
       const sortedTimers: TimerWithTimeLeft[] = [
-        { npc: { id: 1, name: "Boss1" } } as TimerWithTimeLeft,
+        { npc: { id: 1, name: "Boss1" } } as unknown as TimerWithTimeLeft,
       ];
 
       const customColors = {
@@ -74,7 +74,7 @@ describe("color-statistics", () => {
       };
 
       const sortedTimers: TimerWithTimeLeft[] = [
-        { npc: { id: 1, name: "Boss1" } } as TimerWithTimeLeft,
+        { npc: { id: 1, name: "Boss1" } } as unknown as TimerWithTimeLeft,
       ];
 
       const defaultColorNames = {
@@ -100,7 +100,7 @@ describe("color-statistics", () => {
       };
 
       const sortedTimers: TimerWithTimeLeft[] = [
-        { npc: { id: 1, name: "Boss1" } } as TimerWithTimeLeft,
+        { npc: { id: 1, name: "Boss1" } } as unknown as TimerWithTimeLeft,
       ];
 
       const overriddenDefaultColors = {
@@ -130,7 +130,7 @@ describe("color-statistics", () => {
       };
 
       const sortedTimers: TimerWithTimeLeft[] = [
-        { npc: { id: 1, name: "Boss1" } } as TimerWithTimeLeft,
+        { npc: { id: 1, name: "Boss1" } } as unknown as TimerWithTimeLeft,
       ];
 
       const result = calculateColorStatistics(
@@ -152,7 +152,7 @@ describe("color-statistics", () => {
       };
 
       const sortedTimers: TimerWithTimeLeft[] = [
-        { npc: { id: 1, name: "Boss1" } } as TimerWithTimeLeft,
+        { npc: { id: 1, name: "Boss1" } } as unknown as TimerWithTimeLeft,
       ];
 
       const result = calculateColorStatistics(

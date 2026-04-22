@@ -6,33 +6,37 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ContextMenuItem } from "@/components/ui/context-menu";
-import { fetchGuildPermissions } from "@/api";
-import { useGuilds } from "@/hooks/api/use-guilds";
 import {
-  getGuildPermissionsQueryKey,
-  normalizeGuildPermissions,
-} from "@/hooks/api/use-guild-permissions";
+  getGuildsControllerGetGuildPermissionsQueryKey,
+  guildsControllerGetGuildPermissions,
+} from "@/lib/api/generated/main/guilds/guilds";
+import {
+  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
+  useUsersControllerGetCurrentUserAccessibleGuilds,
+} from "@/lib/api/generated/main/users/users";
 import type { TimerWithTimeLeft } from "@/features/timers/utils/timers-utils";
+import { REQUIRED_DELETE_PERMISSIONS } from "@/features/timers/constants/required-delete-permissions";
 import { cn } from "@/lib/utils";
-import { Permission } from "@lootlog/types";
+import { useTranslation } from "react-i18next";
 
 type DeleteTimerPopoverProps = {
   timer: TimerWithTimeLeft;
   onDeleteTimer: (guildId: string, timerKey: string) => void;
 };
 
-const REQUIRED_DELETE_PERMISSIONS = [
-  Permission.LOOTLOG_MANAGE,
-  Permission.OWNER,
-  Permission.ADMIN,
-];
-
 export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
   timer,
   onDeleteTimer,
 }) => {
+  const { t } = useTranslation("timers");
   const [open, setOpen] = useState(false);
-  const { data: guilds } = useGuilds();
+  const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds({
+    query: {
+      queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
+      refetchOnMount: false,
+      staleTime: 1000 * 60 * 5,
+    },
+  });
 
   const guildEntries = useMemo(
     () => timer.mergedGuildIds ?? [],
@@ -46,8 +50,8 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
 
   const permissionsQueries = useQueries({
     queries: uniqueGuildIds.map((guildId) => ({
-      queryKey: getGuildPermissionsQueryKey(guildId),
-      queryFn: () => fetchGuildPermissions(guildId),
+      queryKey: getGuildsControllerGetGuildPermissionsQueryKey({ guildId }),
+      queryFn: () => guildsControllerGetGuildPermissions({ guildId }),
       staleTime: 5 * 60 * 1000,
     })),
   });
@@ -55,9 +59,7 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
   const guildsWithPermissions = useMemo(() => {
     return uniqueGuildIds
       .map((guildId, index) => {
-        const permissions = normalizeGuildPermissions(
-          permissionsQueries[index]?.data,
-        );
+        const permissions = permissionsQueries[index]?.data ?? [];
         const canDelete = REQUIRED_DELETE_PERMISSIONS.some((perm) =>
           permissions.includes(perm),
         );
@@ -82,7 +84,7 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
       <ContextMenuItem
         onClick={() => onDeleteTimer(guild.guildId, guild.timerKey)}
       >
-        Usuń timer
+        {t("contextMenu.delete")}
       </ContextMenuItem>
     );
   }
@@ -96,7 +98,7 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
             setOpen(true);
           }}
         >
-          Usuń timer
+          {t("contextMenu.delete")}
         </ContextMenuItem>
       </PopoverTrigger>
       <PopoverContent
@@ -116,7 +118,7 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
       >
         <div className="ll:flex ll:flex-col ll:gap-1">
           <p className="ll:text-xs ll:font-semibold ll:mb-1 ll:text-gray-400">
-            Wybierz serwer do usunięcia timera:
+            {t("contextMenu.deleteChooseGuild")}
           </p>
           {guildsWithPermissions.map((guild) => {
             const guildData = guilds?.find((g) => g.id === guild.guildId);

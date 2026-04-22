@@ -1,20 +1,13 @@
-import { z } from "@hono/zod-openapi";
+import { createZodDto, type ZodDto } from "nestjs-zod";
+import { z } from "zod";
 
 export const getItemsQuerySchema = z.object({
-  limit: z
-    .string()
-    .optional()
-    .default("3")
-    .transform(Number)
-    .openapi({ param: { name: "limit", in: "query" }, example: "3" }),
-  search: z
-    .string()
-    .optional()
-    .openapi({ param: { name: "search", in: "query" }, example: "sword" }),
-  world: z
-    .string()
-    .optional()
-    .openapi({ param: { name: "world", in: "query" }, example: "tempest" }),
+  limit: z.coerce.number().optional().default(3),
+  search: z.string().optional(),
+  world: z.string().optional(),
 });
 
-export type GetItemsDto = z.infer<typeof getItemsQuerySchema>;
+const GetItemsDtoBase: ZodDto<typeof getItemsQuerySchema> =
+  createZodDto(getItemsQuerySchema);
+
+export class GetItemsDto extends GetItemsDtoBase {}

@@ -11,8 +11,22 @@ export const getRouteErrorStatus = (error: unknown) => {
 
 export const getRouteErrorMessage = getApiErrorMessage;
 
-export const isRouteLoaderCancelledError = (error: unknown) => {
+const isRouteLoaderCancelledError = (error: unknown) => {
   return isCancelledError(error);
+};
+
+export const withRouteLoaderCancellation = async <T>(
+  loader: () => Promise<T>,
+) => {
+  try {
+    return await loader();
+  } catch (error) {
+    if (isRouteLoaderCancelledError(error)) {
+      return undefined;
+    }
+
+    throw error;
+  }
 };
 
 export const throwForbiddenRouteError = (message = ""): never => {

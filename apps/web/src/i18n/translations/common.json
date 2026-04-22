@@ -3,7 +3,9 @@
   "noResults": "Brak wyników",
   "cancel": "Anuluj",
   "reset": "Resetuj",
+  "delete": "Usuń",
   "levelShort": "Lvl {{level}}",
+  "avatarAlt": "Avatar",
   "stats": {
     "kills": "Statystyki killi",
     "loots": "Statystyki lootów"
@@ -93,6 +95,6 @@
     "end": "To już wszystkie aktywności",
     "endCat": "Miau, to już wszystko! 😺",
     "endRukia": "Absolutne zero... to już wszystkie aktywności.",
-    "endRias": "Król zadecydował... to już wszystkie aktywności."
+    "endRias": "Królowa zadecydowała... to już wszystkie aktywności."
   }
 }

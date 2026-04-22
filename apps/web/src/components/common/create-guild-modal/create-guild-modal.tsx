@@ -19,8 +19,11 @@ import {
 } from "@lootlog/ui/components/avatar";
 import { cn } from "@lootlog/ui/lib/utils";
 import { useGlobalContext } from "@/hooks/context/use-global-context";
-import { useManageableGuilds } from "@/hooks/api/guilds/use-manageable-guilds";
 import { useTranslation } from "react-i18next";
+import {
+  getGuildsControllerGetManageableUserGuildsQueryKey,
+  useGuildsControllerGetManageableUserGuilds,
+} from "@/lib/api/generated/main/guilds/guilds";
 
 export const CreateGuildModal: FC = () => {
   const [searchValue, setSearchValue] = useState("");
@@ -28,8 +31,14 @@ export const CreateGuildModal: FC = () => {
   const { createGuildModal } = useGlobalContext();
   const { t } = useTranslation();
 
-  const { data: manageableGuilds } = useManageableGuilds(
-    createGuildModal.state.isOpen,
+  const { data: manageableGuilds } = useGuildsControllerGetManageableUserGuilds(
+    {
+      query: {
+        queryKey: getGuildsControllerGetManageableUserGuildsQueryKey(),
+        enabled: createGuildModal.state.isOpen,
+        staleTime: 0,
+      },
+    },
   );
 
   const handleAddToGuild = (guildId: string) => {
@@ -66,7 +75,7 @@ export const CreateGuildModal: FC = () => {
         <ScrollArea className="min-h-80 max-h-80">
           <div className="flex flex-col">
             {filteredGuilds?.map((guild, index) => {
-              const avatarSrc = getGuildIconById(guild.id, guild.icon);
+              const avatarSrc = getGuildIconById(guild.id, guild.icon ?? null);
               return (
                 <div
                   key={guild.id}

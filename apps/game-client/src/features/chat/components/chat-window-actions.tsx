@@ -5,6 +5,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Filter, Pencil } from "lucide-react";
 import type { FC } from "react";
+import { useTranslation } from "react-i18next";
 
 type ChatWindowActionsProps = {
   chatInputEnabled: boolean;
@@ -19,6 +20,7 @@ export const ChatWindowActions: FC<ChatWindowActionsProps> = ({
   filtersVisible,
   toggleFiltersVisible,
 }) => {
+  const { t } = useTranslation("chat");
   return (
     <>
       <Tooltip key="filters-tooltip">
@@ -35,7 +37,7 @@ export const ChatWindowActions: FC<ChatWindowActionsProps> = ({
           />
         </TooltipTrigger>
         <TooltipContent side="top">
-          {filtersVisible ? "Ukryj filtry" : "Pokaż filtry"}
+          {filtersVisible ? t("actions.hideFilters") : t("actions.showFilters")}
         </TooltipContent>
       </Tooltip>
       <Tooltip key="chat-input-tooltip">
@@ -52,7 +54,7 @@ export const ChatWindowActions: FC<ChatWindowActionsProps> = ({
           />
         </TooltipTrigger>
         <TooltipContent side="top">
-          {chatInputEnabled ? "Ukryj pole czatu" : "Pokaż pole czatu"}
+          {chatInputEnabled ? t("actions.hideInput") : t("actions.showInput")}
         </TooltipContent>
       </Tooltip>
     </>

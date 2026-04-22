@@ -4,7 +4,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { Guild } from "@/hooks/api/use-guilds";
+import type { GuildResponseDtoOutput as Guild } from "@/lib/api/generated/main/model";
 import { cn } from "@/lib/utils";
 import type { FC } from "react";
 

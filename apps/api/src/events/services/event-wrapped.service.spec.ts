@@ -2,7 +2,7 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "src/test/mock-fn";
 import type { Guild } from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 import { LootsService } from "src/loots/loots.service";
 import { EventWrappedService } from "./event-wrapped.service";
 

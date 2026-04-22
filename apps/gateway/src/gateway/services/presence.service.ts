@@ -12,6 +12,7 @@ import { buildRoomName, parseRoomName } from "src/gateway/utils/room-utils";
 import type {
   Socket,
   SocketUser,
+  SocketUserPlayer,
   PlayerPresence,
 } from "src/gateway/types/socket-user.type";
 import type { EventPresenceUpdateDto } from "src/gateway/dto/event-presence-update.dto";
@@ -24,7 +25,9 @@ export class PresenceService {
 
   emitPresenceToRooms(
     client: Socket,
-    user: Partial<SocketUser>,
+    user: Partial<Omit<SocketUser, "player">> & {
+      player?: SocketUser["player"] | PlayerPresence;
+    },
     event: GatewayEvent,
   ): void {
     const preparedUser = omit(user, ["sessionId", "guilds", "userId"]);
@@ -41,14 +44,19 @@ export class PresenceService {
   }
 
   emitDisconnectPresence(client: Socket): void {
-    if (!client.data) return;
+    if (!client.data?.player) return;
 
     this.emitPresenceToRooms(
       client,
       {
         discordId: client.data.discordId,
-        player: client.data.player,
+        player: this.buildPlayerPresence(
+          client.data.player,
+          client.id,
+          client.data.playerPresence,
+        ),
         status: UserPresenceStatus.OFFLINE,
+        sessionId: client.data.sessionId,
       },
       GatewayEvent.UPDATE_SERVER_PRESENCE,
     );
@@ -61,13 +69,20 @@ export class PresenceService {
     if (!client.data?.guilds || !client.data?.playerPresence) return;
 
     const guildIds = getGuildIds(client.data.guilds);
+    const playerPresence = this.buildPlayerPresence(
+      client.data.player,
+      client.id,
+      client.data.playerPresence,
+    );
+
     for (const guildId of guildIds) {
       const presenceRoom = buildRoomName(guildId, "presence");
-      server.to(presenceRoom).emit(GatewayEvent.PRESENCE_UPDATE, {
+      server.to(presenceRoom).emit(GatewayEvent.UPDATE_SERVER_PRESENCE, {
         guildId,
         discordId: client.data.discordId,
         sessionId: client.data.sessionId,
-        disconnected: true,
+        status: UserPresenceStatus.OFFLINE,
+        player: playerPresence,
       });
 
       if (client.data.playerPresence.mapName) {
@@ -95,29 +110,19 @@ export class PresenceService {
     }
 
     const guildIds = getGuildIds(client.data.guilds);
-    const { player } = client.data;
-
     const existingPresence = client.data.playerPresence;
-    const playerPresence: PlayerPresence = {
-      world: player.world,
-      name: player.name,
-      characterId: player.characterId,
-      accountId: player.accountId,
-      icon: player.icon,
-      lvl: player.lvl,
-      prof: player.prof,
-      mapId: data.mapId ?? existingPresence?.mapId,
-      mapName: data.mapName ?? existingPresence?.mapName,
-      isAfk: data.isAfk ?? existingPresence?.isAfk ?? false,
-      updatedAt: Date.now(),
-      sessionId: client.id,
-    };
+    const playerPresence = this.buildPlayerPresence(
+      client.data.player,
+      client.id,
+      existingPresence,
+      data,
+    );
 
     client.data.playerPresence = playerPresence;
 
     for (const guildId of guildIds) {
       const presenceRoom = buildRoomName(guildId, "presence");
-      server.to(presenceRoom).emit(GatewayEvent.PRESENCE_UPDATE, {
+      server.to(presenceRoom).emit(GatewayEvent.UPDATE_SERVER_PRESENCE, {
         guildId,
         discordId,
         player: playerPresence,
@@ -246,7 +251,27 @@ export class PresenceService {
     const player = client.data.player;
     if (!player || client.data.platform !== Platform.GAME) return;
 
-    const playerPresence: PlayerPresence = {
+    const playerPresence = this.buildPlayerPresence(player, client.id);
+
+    client.data.playerPresence = playerPresence;
+
+    for (const guildId of guildIds) {
+      const presenceRoom = buildRoomName(guildId, "presence");
+      server.to(presenceRoom).emit(GatewayEvent.UPDATE_SERVER_PRESENCE, {
+        guildId,
+        discordId,
+        player: playerPresence,
+      });
+    }
+  }
+
+  private buildPlayerPresence(
+    player: SocketUserPlayer,
+    sessionId: string,
+    existingPresence?: PlayerPresence,
+    data?: EventPresenceUpdateDto,
+  ): PlayerPresence {
+    return {
       world: player.world,
       name: player.name,
       characterId: player.characterId,
@@ -254,23 +279,13 @@ export class PresenceService {
       icon: player.icon,
       lvl: player.lvl,
       prof: player.prof,
-      mapId: undefined,
-      mapName: player.location?.map,
-      isAfk: false,
+      mapId: data?.mapId ?? existingPresence?.mapId,
+      mapName:
+        data?.mapName ?? existingPresence?.mapName ?? player.location?.map,
+      isAfk: data?.isAfk ?? existingPresence?.isAfk ?? false,
       updatedAt: Date.now(),
-      sessionId: client.id,
+      sessionId,
     };
-
-    client.data.playerPresence = playerPresence;
-
-    for (const guildId of guildIds) {
-      const presenceRoom = buildRoomName(guildId, "presence");
-      server.to(presenceRoom).emit(GatewayEvent.PRESENCE_UPDATE, {
-        guildId,
-        discordId,
-        player: playerPresence,
-      });
-    }
   }
 
   private publishCoverageCheck(

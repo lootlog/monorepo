@@ -1,12 +1,18 @@
-import type { GuildMember } from "@/hooks/api/members/use-guild-member";
+import type { MemberResponseDto as GuildMember } from "@/lib/api/generated/main/model";
 import { Permission } from "@lootlog/types";
 import { useTranslation } from "react-i18next";
 import { Card } from "@lootlog/ui/components/card";
 import { cn } from "@lootlog/ui/lib/utils";
 import { PERMISSION_CATEGORIES } from "@/features/guild/settings/roles/constants/permission-categories";
+import { Badge } from "@lootlog/ui/components/badge";
+import { MemberLootlogConfigCard } from "@/features/guild/settings/members/components/member-lootlog-config-card";
+import { MemberSyncButton } from "@/features/guild/settings/members/components/member-sync-button";
+import { MemberDeactivationButton } from "@/features/guild/settings/members/components/member-deactivation-button";
+import { useSelectorPanel } from "@/components/selector-panel";
 
 export type MemberDataProps = {
   member: GuildMember;
+  canManageMembers: boolean;
 };
 const getPermissionStyle = (permission: Permission) => {
   const category = PERMISSION_CATEGORIES.find((cat) =>
@@ -17,29 +23,75 @@ const getPermissionStyle = (permission: Permission) => {
     : null;
 };
 
-export const MemberData = ({ member }: MemberDataProps) => {
+export const MemberData = ({ member, canManageMembers }: MemberDataProps) => {
   const { t } = useTranslation();
-
-  if (member.roles.length === 0) {
-    return (
-      <div className="p-3">
-        <Card className="bg-card/50 backdrop-blur-sm border-border p-4">
-          <p className="text-muted-foreground text-sm">
-            Brak przypisanych ról - może być potrzebna synchronizacja
-          </p>
-        </Card>
-      </div>
-    );
-  }
+  const { setSelectedItem } = useSelectorPanel<GuildMember>();
 
   return (
     <div className="p-3 space-y-3">
+      <Card className="bg-card/50 backdrop-blur-sm border-border p-4 gap-4">
+        <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+          <div className="min-w-0 space-y-3">
+            <div className="space-y-1">
+              <h3 className="text-sm font-semibold">
+                {t("settings.members.actionsTitle")}
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                {member.active
+                  ? t("settings.members.statusActiveDescription")
+                  : t("settings.members.statusInactiveDescription")}
+              </p>
+            </div>
+            <div>
+              <Badge variant={member.active ? "green" : "outline"}>
+                {member.active
+                  ? t("settings.members.statusActive")
+                  : t("settings.members.statusInactive")}
+              </Badge>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center justify-end gap-2 sm:self-start">
+            <MemberSyncButton member={member} />
+            {canManageMembers && (
+              <MemberDeactivationButton
+                member={member}
+                onDeactivated={(updatedMember) =>
+                  setSelectedItem(updatedMember)
+                }
+              />
+            )}
+          </div>
+        </div>
+        {!member.active && (
+          <p className="text-xs text-muted-foreground">
+            {t("settings.members.reactivateHint")}
+          </p>
+        )}
+      </Card>
+
+      <MemberLootlogConfigCard
+        member={member}
+        canManageMembers={canManageMembers}
+      />
+
+      <Card className="bg-card/50 backdrop-blur-sm border-border p-4 gap-1">
+        <h3 className="text-sm font-semibold">
+          {t("settings.members.rolesTitle")}
+        </h3>
+        {member.roles.length === 0 && (
+          <p className="text-xs text-muted-foreground">
+            {t("settings.members.noRoles")}
+          </p>
+        )}
+      </Card>
+
       {member.roles.map((role) => {
+        const roleColor = role.color ?? 0;
         const color =
-          role.color === 0 ? "FFF" : role.color.toString(16).padStart(6, "0");
+          roleColor === 0 ? "FFF" : roleColor.toString(16).padStart(6, "0");
         const filteredPermissions = role.permissions.filter(
-          (p) => p !== Permission.OWNER,
-        );
+          (permission) => permission !== "OWNER",
+        ) as Permission[];
 
         return (
           <Card
@@ -71,7 +123,9 @@ export const MemberData = ({ member }: MemberDataProps) => {
                   </div>
                   {filteredPermissions.length > 0 && (
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {filteredPermissions.length} uprawnień
+                      {t("settings.members.permissionsCount", {
+                        count: filteredPermissions.length,
+                      })}
                     </p>
                   )}
                 </div>

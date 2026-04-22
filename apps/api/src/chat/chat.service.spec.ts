@@ -44,6 +44,16 @@ function createStoredMessage(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function withCapabilities(
+  message: ReturnType<typeof createStoredMessage>,
+  capabilities: { canEdit: boolean; canDelete: boolean },
+) {
+  return {
+    ...message,
+    ...capabilities,
+  };
+}
+
 describe("ChatService", () => {
   const amqpConnection = {
     publish: vi.fn(),
@@ -86,16 +96,20 @@ describe("ChatService", () => {
       await expect(
         service.getMessages("discord-1", "guild-1"),
       ).resolves.toEqual([]);
-      expect(
-        guildsService.getGuildsForRequiredPermissions,
-      ).not.toHaveBeenCalled();
+      expect(guildsService.getMultipleGuildsPermissions).not.toHaveBeenCalled();
     });
 
     it("returns empty array when user has no guild with base chat permission", async () => {
       redisService.lrange.mockResolvedValue([
         JSON.stringify(createStoredMessage()),
       ]);
-      guildsService.getGuildsForRequiredPermissions.mockResolvedValue([]);
+      guildsService.getMultipleGuildsPermissions.mockResolvedValue([
+        {
+          guild: { id: "guild-1" },
+          permissions: [],
+          roles: [],
+        },
+      ]);
 
       await expect(
         service.getMessages("discord-1", "guild-1"),
@@ -105,9 +119,6 @@ describe("ChatService", () => {
     it("returns empty array when requested guild is not present in permissions result", async () => {
       redisService.lrange.mockResolvedValue([
         JSON.stringify(createStoredMessage()),
-      ]);
-      guildsService.getGuildsForRequiredPermissions.mockResolvedValue([
-        { id: "guild-1" },
       ]);
       guildsService.getMultipleGuildsPermissions.mockResolvedValue([
         {
@@ -144,9 +155,6 @@ describe("ChatService", () => {
       redisService.lrange.mockResolvedValue(
         messages.map((message) => JSON.stringify(message)),
       );
-      guildsService.getGuildsForRequiredPermissions.mockResolvedValue([
-        { id: "guild-1" },
-      ]);
       guildsService.getMultipleGuildsPermissions.mockResolvedValue([
         {
           guild: { id: "guild-1" },
@@ -157,7 +165,11 @@ describe("ChatService", () => {
 
       await expect(
         service.getMessages("discord-1", "guild-1"),
-      ).resolves.toEqual(messages);
+      ).resolves.toEqual(
+        messages.map((message) =>
+          withCapabilities(message, { canEdit: true, canDelete: true }),
+        ),
+      );
     });
 
     it("returns all messages for OWNER users", async () => {
@@ -182,9 +194,6 @@ describe("ChatService", () => {
       redisService.lrange.mockResolvedValue(
         messages.map((message) => JSON.stringify(message)),
       );
-      guildsService.getGuildsForRequiredPermissions.mockResolvedValue([
-        { id: "guild-1" },
-      ]);
       guildsService.getMultipleGuildsPermissions.mockResolvedValue([
         {
           guild: { id: "guild-1" },
@@ -195,7 +204,11 @@ describe("ChatService", () => {
 
       await expect(
         service.getMessages("discord-1", "guild-1"),
-      ).resolves.toEqual(messages);
+      ).resolves.toEqual(
+        messages.map((message) =>
+          withCapabilities(message, { canEdit: true, canDelete: true }),
+        ),
+      );
     });
 
     it("filters history for regular users based on NPC permissions and levels", async () => {
@@ -250,9 +263,6 @@ describe("ChatService", () => {
       redisService.lrange.mockResolvedValue(
         messages.map((message) => JSON.stringify(message)),
       );
-      guildsService.getGuildsForRequiredPermissions.mockResolvedValue([
-        { id: "guild-1" },
-      ]);
       guildsService.getMultipleGuildsPermissions.mockResolvedValue([
         {
           guild: { id: "guild-1" },
@@ -269,7 +279,10 @@ describe("ChatService", () => {
 
       await expect(
         service.getMessages("discord-1", "guild-1"),
-      ).resolves.toEqual([messages[0], messages[1]]);
+      ).resolves.toEqual([
+        withCapabilities(messages[0], { canEdit: true, canDelete: true }),
+        withCapabilities(messages[1], { canEdit: true, canDelete: true }),
+      ]);
     });
 
     it("deletes corrupted redis key on WRONGTYPE errors", async () => {
@@ -290,9 +303,6 @@ describe("ChatService", () => {
         "not-json",
         JSON.stringify(validMessage),
       ]);
-      guildsService.getGuildsForRequiredPermissions.mockResolvedValue([
-        { id: "guild-1" },
-      ]);
       guildsService.getMultipleGuildsPermissions.mockResolvedValue([
         {
           guild: { id: "guild-1" },
@@ -303,11 +313,76 @@ describe("ChatService", () => {
 
       await expect(
         service.getMessages("discord-1", "guild-1"),
-      ).resolves.toEqual([validMessage]);
+      ).resolves.toEqual([
+        withCapabilities(validMessage, { canEdit: true, canDelete: true }),
+      ]);
       expect(logger.log).toHaveBeenCalledWith(
         expect.objectContaining({
           level: "error",
           message: "Failed to parse chat message from Redis",
+        }),
+      );
+    });
+
+    it("returns canEdit and canDelete as false for visible messages from other users", async () => {
+      const visibleMessage = createStoredMessage({
+        senderId: "discord-owner",
+        id: "msg-other",
+      });
+      redisService.lrange.mockResolvedValue([JSON.stringify(visibleMessage)]);
+      guildsService.getMultipleGuildsPermissions.mockResolvedValue([
+        {
+          guild: { id: "guild-1" },
+          permissions: [Permission.LOOTLOG_CHAT_READ],
+          roles: [createRole([Permission.LOOTLOG_CHAT_READ], 1, 500)],
+        },
+      ]);
+
+      await expect(
+        service.getMessages("discord-1", "guild-1"),
+      ).resolves.toEqual([
+        withCapabilities(visibleMessage, { canEdit: false, canDelete: false }),
+      ]);
+    });
+  });
+
+  describe("sendMessage", () => {
+    it("returns the full message envelope for the sender", async () => {
+      redisService.rpush.mockResolvedValue(1);
+      redisService.ltrim.mockResolvedValue("OK");
+
+      const result = await service.sendMessage("discord-1", "guild-1", {
+        message: "hello",
+        type: MessageType.NORMAL,
+        characterData: {
+          nick: "Tester",
+          id: 1,
+          acc: 2,
+          lvl: 100,
+          prof: "w",
+          icon: "icon.png",
+        },
+        replyTo: {
+          messageId: "message-0",
+          senderNick: "Other",
+          message: "previous",
+          type: MessageType.NOTIFICATION,
+        },
+      });
+
+      expect(result).toEqual(
+        expect.objectContaining({
+          guildId: "guild-1",
+          senderId: "discord-1",
+          message: "hello",
+          replyTo: {
+            messageId: "message-0",
+            senderNick: "Other",
+            message: "previous",
+            type: MessageType.NOTIFICATION,
+          },
+          canEdit: true,
+          canDelete: true,
         }),
       );
     });
@@ -334,6 +409,13 @@ describe("ChatService", () => {
         ),
       ]);
       redisService.lset.mockResolvedValue(1);
+      guildsService.getMultipleGuildsPermissions.mockResolvedValue([
+        {
+          guild: { id: "guild-1" },
+          permissions: [Permission.LOOTLOG_CHAT_READ],
+          roles: [createRole([Permission.LOOTLOG_CHAT_READ], 1, 500)],
+        },
+      ]);
 
       await service.updateMessage("discord-1", "guild-1", "msg-1", "updated");
 
@@ -377,6 +459,13 @@ describe("ChatService", () => {
         ),
       ]);
       redisService.lset.mockResolvedValue(1);
+      guildsService.getMultipleGuildsPermissions.mockResolvedValue([
+        {
+          guild: { id: "guild-1" },
+          permissions: [Permission.LOOTLOG_CHAT_READ],
+          roles: [createRole([Permission.LOOTLOG_CHAT_READ], 1, 500)],
+        },
+      ]);
 
       await service.updateMessage("discord-1", "guild-1", "msg-1", "updated");
 
@@ -407,6 +496,13 @@ describe("ChatService", () => {
         ),
       ]);
       redisService.lset.mockResolvedValue(1);
+      guildsService.getMultipleGuildsPermissions.mockResolvedValue([
+        {
+          guild: { id: "guild-1" },
+          permissions: [Permission.LOOTLOG_CHAT_READ],
+          roles: [createRole([Permission.LOOTLOG_CHAT_READ], 1, 500)],
+        },
+      ]);
 
       await service.updateMessage("discord-1", "guild-1", "msg-1", "updated");
 
@@ -433,10 +529,35 @@ describe("ChatService", () => {
       redisService.lrange.mockResolvedValue([
         JSON.stringify(createStoredMessage({ senderId: "discord-owner" })),
       ]);
+      guildsService.getMultipleGuildsPermissions.mockResolvedValue([
+        {
+          guild: { id: "guild-1" },
+          permissions: [Permission.LOOTLOG_CHAT_READ],
+          roles: [createRole([Permission.LOOTLOG_CHAT_READ], 1, 500)],
+        },
+      ]);
 
       await expect(
         service.updateMessage("discord-other", "guild-1", "msg-1", "updated"),
       ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
+    it("allows updates from administrative users for other users messages", async () => {
+      redisService.lrange.mockResolvedValue([
+        JSON.stringify(createStoredMessage({ senderId: "discord-owner" })),
+      ]);
+      redisService.lset.mockResolvedValue(1);
+      guildsService.getMultipleGuildsPermissions.mockResolvedValue([
+        {
+          guild: { id: "guild-1" },
+          permissions: [Permission.ADMIN],
+          roles: [],
+        },
+      ]);
+
+      await expect(
+        service.updateMessage("discord-admin", "guild-1", "msg-1", "updated"),
+      ).resolves.toEqual({ success: true });
     });
   });
 
@@ -448,6 +569,13 @@ describe("ChatService", () => {
         ),
       ]);
       redisService.lrem.mockResolvedValue(1);
+      guildsService.getMultipleGuildsPermissions.mockResolvedValue([
+        {
+          guild: { id: "guild-1" },
+          permissions: [Permission.LOOTLOG_CHAT_READ],
+          roles: [createRole([Permission.LOOTLOG_CHAT_READ], 1, 500)],
+        },
+      ]);
 
       await service.deleteMessage("discord-2", "guild-1", "msg-2");
 
@@ -485,6 +613,13 @@ describe("ChatService", () => {
         ),
       ]);
       redisService.lrem.mockResolvedValue(1);
+      guildsService.getMultipleGuildsPermissions.mockResolvedValue([
+        {
+          guild: { id: "guild-1" },
+          permissions: [Permission.LOOTLOG_CHAT_READ],
+          roles: [createRole([Permission.LOOTLOG_CHAT_READ], 1, 500)],
+        },
+      ]);
 
       await service.deleteMessage("discord-2", "guild-1", "msg-2");
 
@@ -516,10 +651,149 @@ describe("ChatService", () => {
           createStoredMessage({ senderId: "discord-owner", id: "msg-3" }),
         ),
       ]);
+      guildsService.getMultipleGuildsPermissions.mockResolvedValue([
+        {
+          guild: { id: "guild-1" },
+          permissions: [Permission.LOOTLOG_CHAT_READ],
+          roles: [createRole([Permission.LOOTLOG_CHAT_READ], 1, 500)],
+        },
+      ]);
 
       await expect(
         service.deleteMessage("discord-other", "guild-1", "msg-3"),
       ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
+    it("allows deletes from administrative users for other users messages", async () => {
+      redisService.lrange.mockResolvedValue([
+        JSON.stringify(
+          createStoredMessage({ senderId: "discord-owner", id: "msg-3" }),
+        ),
+      ]);
+      redisService.lrem.mockResolvedValue(1);
+      guildsService.getMultipleGuildsPermissions.mockResolvedValue([
+        {
+          guild: { id: "guild-1" },
+          permissions: [Permission.ADMIN],
+          roles: [],
+        },
+      ]);
+
+      await expect(
+        service.deleteMessage("discord-admin", "guild-1", "msg-3"),
+      ).resolves.toEqual({ success: true });
+    });
+  });
+
+  describe("clearMessages", () => {
+    it("clears chat and publishes a guild-wide clear event for administrative users", async () => {
+      guildsService.getMultipleGuildsPermissions.mockResolvedValue([
+        {
+          guild: { id: "guild-1" },
+          permissions: [Permission.ADMIN],
+          roles: [],
+        },
+      ]);
+
+      await expect(
+        service.clearMessages("discord-admin", "guild-1"),
+      ).resolves.toEqual({ success: true });
+
+      expect(redisService.del).toHaveBeenCalledWith("guild:guild-1:messages");
+      expect(amqpConnection.publish).toHaveBeenCalledWith(
+        DEFAULT_EXCHANGE_NAME,
+        RoutingKey.GUILDS_CLEAR_MESSAGES,
+        { guildId: "guild-1" },
+      );
+    });
+
+    it("allows OWNER users to clear chat", async () => {
+      guildsService.getMultipleGuildsPermissions.mockResolvedValue([
+        {
+          guild: { id: "guild-1" },
+          permissions: [Permission.OWNER],
+          roles: [],
+        },
+      ]);
+
+      await expect(
+        service.clearMessages("discord-owner", "guild-1"),
+      ).resolves.toEqual({ success: true });
+    });
+
+    it("rejects clear for non-administrative users", async () => {
+      guildsService.getMultipleGuildsPermissions.mockResolvedValue([
+        {
+          guild: { id: "guild-1" },
+          permissions: [Permission.LOOTLOG_CHAT_READ],
+          roles: [createRole([Permission.LOOTLOG_CHAT_READ], 1, 500)],
+        },
+      ]);
+
+      await expect(
+        service.clearMessages("discord-user", "guild-1"),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+  });
+
+  describe("endPartyGatheringMessages", () => {
+    it("updates matching party gathering messages and publishes chat updates", async () => {
+      redisService.lrange.mockResolvedValue([
+        JSON.stringify(
+          createStoredMessage({
+            id: "msg-1",
+            senderId: "discord-1",
+            message: "old",
+            type: MessageType.PARTY_GATHERING,
+            partyGathering: {
+              notificationId: "notif-1",
+              discordId: "discord-1",
+              world: "tempest",
+            },
+          }),
+        ),
+        JSON.stringify(
+          createStoredMessage({
+            id: "msg-2",
+            senderId: "discord-2",
+            message: "keep",
+            type: MessageType.PARTY_GATHERING,
+            partyGathering: {
+              notificationId: "notif-2",
+              discordId: "discord-2",
+              world: "tempest",
+            },
+          }),
+        ),
+      ]);
+      redisService.lset.mockResolvedValue(1);
+
+      await service.endPartyGatheringMessages("notif-1", ["guild-1"]);
+
+      expect(redisService.lset).toHaveBeenCalledWith(
+        "guild:guild-1:messages",
+        0,
+        expect.any(String),
+      );
+      const [, , updatedMessagePayload] = redisService.lset.mock.calls[0] ?? [];
+      const updatedMessage = JSON.parse(updatedMessagePayload);
+
+      expect(updatedMessage).toEqual(
+        expect.objectContaining({
+          id: "msg-1",
+          message: "Tester zakonczyl zbieranie grupy",
+        }),
+      );
+      expect(updatedMessage).not.toHaveProperty("partyGathering");
+      expect(amqpConnection.publish).toHaveBeenCalledWith(
+        DEFAULT_EXCHANGE_NAME,
+        RoutingKey.GUILDS_UPDATE_MESSAGE,
+        expect.objectContaining({
+          guildId: "guild-1",
+          messageId: "msg-1",
+          message: "Tester zakonczyl zbieranie grupy",
+        }),
+      );
     });
   });
 });

@@ -1,6 +1,6 @@
 import { useSharedTooltip } from "@/components/shared-tooltip/shared-tooltip-provider";
 import { ItemImage } from "@/components/tiles/item-image";
-import { ItemRarity, type Item } from "@/hooks/api/loots/use-loots";
+import { ItemRarity, type Item } from "@/lib/loots/loot-types";
 import { cn } from "@/utils/cn";
 import {
   mapStatsToDisplayValues,
@@ -164,18 +164,19 @@ export const ItemTile: FC<ItemTileProps> = ({
   shareNickname,
 }) => {
   const sharedTooltip = useSharedTooltip();
+  const normalizedRarity = rarity ?? ItemRarity.COMMON;
   const triggerClassName = "w-fit appearance-none border-0 bg-transparent p-0";
   const tooltipBorderCn = cn("w-80 p-3 pb-0 bg-popover/95 backdrop-blur-md", {
-    "border-2 border-orange-600/80": rarity === ItemRarity.LEGENDARY,
-    "border-2 border-blue-500/80": rarity === ItemRarity.HEROIC,
-    "border-2 border-amber-300/80": rarity === ItemRarity.UNIQUE,
-    "border-2 border-primary/40": rarity === ItemRarity.UPGRADED,
-    "border border-border/50": rarity === ItemRarity.COMMON,
+    "border-2 border-orange-600/80": normalizedRarity === ItemRarity.LEGENDARY,
+    "border-2 border-blue-500/80": normalizedRarity === ItemRarity.HEROIC,
+    "border-2 border-amber-300/80": normalizedRarity === ItemRarity.UNIQUE,
+    "border-2 border-primary/40": normalizedRarity === ItemRarity.UPGRADED,
+    "border border-border/50": normalizedRarity === ItemRarity.COMMON,
   });
 
   const itemImage = (
     <ItemImage
-      rarity={rarity}
+      rarity={normalizedRarity}
       icon={icon}
       color={color}
       shareIndex={shareIndex}
@@ -185,10 +186,10 @@ export const ItemTile: FC<ItemTileProps> = ({
   const tooltipContent = (
     <ItemTileTooltipBody
       name={name}
-      rarity={rarity}
+      rarity={normalizedRarity}
       icon={icon}
       stat={stat}
-      type={type}
+      type={type ?? ""}
       color={color}
       shareNickname={shareNickname}
     />

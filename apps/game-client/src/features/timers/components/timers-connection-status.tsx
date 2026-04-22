@@ -5,12 +5,23 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useGuilds } from "@/hooks/api/use-guilds";
+import {
+  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
+  useUsersControllerGetCurrentUserAccessibleGuilds,
+} from "@/lib/api/generated/main/users/users";
 import { useSocket } from "@/contexts/socket-context";
+import { useTranslation } from "react-i18next";
 
 export const TimersConnectionStatus: FC = () => {
+  const { t } = useTranslation("timers");
   const { connected, joined, joinedGuilds } = useSocket();
-  const { data: guilds } = useGuilds();
+  const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds({
+    query: {
+      queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
+      refetchOnMount: false,
+      staleTime: 1000 * 60 * 5,
+    },
+  });
 
   const connectedToServers =
     connected && joined && joinedGuilds && joinedGuilds.length > 0;
@@ -31,7 +42,7 @@ export const TimersConnectionStatus: FC = () => {
       <TooltipContent>
         {connectedToServers ? (
           <div className="ll:flex ll:flex-col ll:gap-2">
-            <div>Połączono z serwerami:</div>
+            <div>{t("connection.connectedToServers")}</div>
             <div>
               {joinedGuilds.map((g) => (
                 <div key={g}>
@@ -41,7 +52,7 @@ export const TimersConnectionStatus: FC = () => {
             </div>
           </div>
         ) : (
-          <div>Nie połączono z żadnym serwerem</div>
+          <div>{t("connection.notConnected")}</div>
         )}
       </TooltipContent>
     </Tooltip>

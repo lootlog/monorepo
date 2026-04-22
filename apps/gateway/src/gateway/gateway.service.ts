@@ -1,5 +1,9 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { CreateTimerDto } from "src/gateway/dto/create-timer.dto";
+import type { ChatMessageDeleteDto } from "src/gateway/dto/chat-message-delete.dto";
+import type { ChatMessageEnvelopeDto } from "src/gateway/dto/chat-message-envelope.dto";
+import type { ChatMessagesClearDto } from "src/gateway/dto/chat-messages-clear.dto";
+import type { ChatMessageUpdateDto } from "src/gateway/dto/chat-message-update.dto";
 import type { DeleteTimerDto } from "src/gateway/dto/delete-timer.dto";
 import type { RefreshJobUpdateDto } from "src/gateway/dto/refresh-job-update.dto";
 import type {
@@ -13,7 +17,7 @@ import type { VolunteerNotificationDto } from "src/gateway/dto/volunteer-notific
 import { GatewayEvent } from "src/gateway/enums/gateway-event.enum";
 import { Gateway } from "src/gateway/gateway";
 import { isOwnerOrAdminFromRoles } from "src/guilds/utils/is-administrative-user";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 import { GuildsService } from "src/guilds/guilds.service";
 import type { UserGuildData } from "src/guilds/types/guild.types";
 import type {
@@ -37,19 +41,6 @@ type FeatureRouting = {
 };
 
 type RoutedDeleteTimerDto = DeleteTimerDto;
-
-type RoutedChatMessageUpdate = {
-  guildId: string;
-  messageId: string;
-  message: string;
-  routing: FeatureRouting;
-};
-
-type RoutedChatMessageDelete = {
-  guildId: string;
-  messageId: string;
-  routing: FeatureRouting;
-};
 
 @Injectable()
 export class GatewayService {
@@ -151,14 +142,48 @@ export class GatewayService {
 
   handleGuildMessageSend(data: SendMessageDto) {
     const routing = this.getChatMessageRouting(data);
-    this.emitToFeatureRoom({
-      guildId: data.guildId,
-      feature: "chat",
-      tier: routing.tier,
-      event: GatewayEvent.CHAT_MESSAGE,
-      data,
-      npcLevel: routing.npcLevel,
-    });
+    const room = buildRoomName(data.guildId, "chat", routing.tier);
+
+    this.gateway.server
+      .in(room)
+      .fetchSockets()
+      .then((sockets) => {
+        sockets.forEach((socket) => {
+          const guildData = socket.data.guilds?.find(
+            (guild) => guild.guild.id === data.guildId,
+          );
+
+          if (!guildData) {
+            return;
+          }
+
+          const isOwner = guildData.guild.ownerId === socket.data.discordId;
+          const isOwnerOrAdmin =
+            isOwner || isOwnerOrAdminFromRoles(guildData.roles);
+
+          if (
+            routing.npcLevel !== undefined &&
+            !isOwnerOrAdmin &&
+            !hasFeatureRoomAccess(
+              guildData.roles,
+              "chat",
+              routing.tier,
+              routing.npcLevel,
+            )
+          ) {
+            return;
+          }
+
+          socket.emit(
+            GatewayEvent.CHAT_MESSAGE,
+            this.toChatMessageEnvelope(
+              data,
+              socket.data.discordId,
+              isOwnerOrAdmin,
+            ),
+          );
+        });
+      });
   }
 
   handleGuildNotificationSend(data: SendNotificationDto) {
@@ -326,7 +351,7 @@ export class GatewayService {
     });
   }
 
-  handleChatMessageUpdate(data: RoutedChatMessageUpdate) {
+  handleChatMessageUpdate(data: ChatMessageUpdateDto) {
     const { routing, ...payload } = data;
 
     this.emitToFeatureRoom({
@@ -343,7 +368,7 @@ export class GatewayService {
     });
   }
 
-  handleChatMessageDelete(data: RoutedChatMessageDelete) {
+  handleChatMessageDelete(data: ChatMessageDeleteDto) {
     const { routing, ...payload } = data;
 
     this.emitToFeatureRoom({
@@ -356,6 +381,18 @@ export class GatewayService {
         guildId: payload.guildId,
       },
       npcLevel: routing.npcLevel,
+    });
+  }
+
+  handleChatMessagesClear(data: ChatMessagesClearDto) {
+    const rooms = [
+      buildRoomName(data.guildId, "chat", "base"),
+      buildRoomName(data.guildId, "chat", "titans"),
+      buildRoomName(data.guildId, "chat", "heroes"),
+    ];
+
+    this.gateway.server.to(rooms).emit(GatewayEvent.CHAT_MESSAGES_CLEAR, {
+      guildId: data.guildId,
     });
   }
 
@@ -387,5 +424,20 @@ export class GatewayService {
     }
 
     return this.getNpcFeatureRouting(data.npc);
+  }
+
+  private toChatMessageEnvelope(
+    message: SendMessageDto,
+    viewerDiscordId: string,
+    isOwnerOrAdmin: boolean,
+  ): ChatMessageEnvelopeDto {
+    const canManageMessage =
+      viewerDiscordId === message.senderId || isOwnerOrAdmin;
+
+    return {
+      ...message,
+      canEdit: canManageMessage,
+      canDelete: canManageMessage,
+    };
   }
 }

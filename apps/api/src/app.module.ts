@@ -3,7 +3,7 @@ import { APP_INTERCEPTOR, APP_PIPE } from "@nestjs/core";
 import { ZodSerializerInterceptor, ZodValidationPipe } from "nestjs-zod";
 import { WinstonModule } from "nest-winston";
 import { BullModule } from "@nestjs/bullmq";
-import { LoggerMiddleware } from "@lootlog/nest-shared";
+import { LoggerMiddleware } from "@lootlog/nest-shared/middleware";
 import { env } from "src/config/env";
 import { winstonConfig } from "src/config/winston.config";
 import { UsersModule } from "./users/users.module";
@@ -33,6 +33,8 @@ import { MapTemplatesModule } from "src/map-templates/map-templates.module";
 import { KillsModule } from "src/kills/kills.module";
 import { MemberContextModule } from "src/shared/permissions/member-context.module";
 
+const isOpenApiGeneration = process.env.OPENAPI_GENERATION === "true";
+
 @Module({
   imports: [
     WinstonModule.forRoot(winstonConfig),
@@ -44,6 +46,7 @@ import { MemberContextModule } from "src/shared/permissions/member-context.modul
         username: env.REDIS_USERNAME,
         maxRetriesPerRequest: null,
         enableReadyCheck: false,
+        ...(isOpenApiGeneration ? { lazyConnect: true } : {}),
       },
       prefix: "{bull}",
     }),

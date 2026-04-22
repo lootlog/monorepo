@@ -11,6 +11,12 @@ import {
 import { PrismaService } from "src/db/prisma.service";
 import { GuildsService } from "src/guilds/guilds.service";
 import { NotificationJobService } from "src/notifications/notification-job.service";
+import {
+  NotificationFiltersResponseDto,
+  NotificationRuleResponseDto,
+  WatchedItemResponseDto,
+  WatchedItemSnapshotResponseDto,
+} from "src/notifications/dto/notification-response.dto";
 import { NotificationMatchingService } from "src/notifications/notification-matching.service";
 import { NotificationTargetService } from "src/notifications/notification-target.service";
 import { Error as NotificationError } from "src/notifications/enum/error.enum";
@@ -19,6 +25,21 @@ import type { CreateWatchedItemQuickAddDto } from "src/notifications/dto/create-
 import type { CreateWatchedItemDto } from "src/notifications/dto/create-watched-item.dto";
 
 const USER_WATCHED_ITEM_LIMIT = 20;
+
+type NotificationRuleWithUnknownFilters = Omit<
+  typeof NotificationRuleResponseDto.schema._output,
+  "filters"
+> & {
+  filters: unknown;
+};
+
+type WatchedItemWithUnknownSnapshot = Omit<
+  typeof WatchedItemResponseDto.schema._output,
+  "itemSnapshot" | "notificationRule"
+> & {
+  itemSnapshot?: unknown | null;
+  notificationRule: NotificationRuleWithUnknownFilters | null;
+};
 
 @Injectable()
 export class WatchedItemService {
@@ -85,16 +106,21 @@ export class WatchedItemService {
 
       return {
         ...item,
-        itemSnapshot: snapshot
-          ? {
-              name: snapshot.name,
-              icon: snapshot.icon,
-              rarity: snapshot.rarity,
-              lvl: snapshot.lvl,
-              type: snapshot.itemType,
-              stat: snapshot.statRaw,
-            }
+        notificationRule: item.notificationRule
+          ? this.mapNotificationRule(item.notificationRule)
           : null,
+        itemSnapshot: this.mapWatchedItemSnapshot(
+          snapshot
+            ? {
+                name: snapshot.name,
+                icon: snapshot.icon,
+                rarity: snapshot.rarity,
+                lvl: snapshot.lvl,
+                type: snapshot.itemType,
+                stat: snapshot.statRaw,
+              }
+            : null,
+        ),
       };
     });
   }
@@ -246,38 +272,40 @@ export class WatchedItemService {
         },
       });
 
-      return tx.watchedItem.upsert({
-        where: {
-          userId_itemId_world: {
+      return tx.watchedItem
+        .upsert({
+          where: {
+            userId_itemId_world: {
+              userId: discordId,
+              itemId: params.itemId,
+              world: params.world,
+            },
+          },
+          create: {
             userId: discordId,
             itemId: params.itemId,
+            itemName: params.itemName,
             world: params.world,
+            notificationRuleId: notificationRule.id,
           },
-        },
-        create: {
-          userId: discordId,
-          itemId: params.itemId,
-          itemName: params.itemName,
-          world: params.world,
-          notificationRuleId: notificationRule.id,
-        },
-        update: {
-          enabled: true,
-          itemName: params.itemName,
-          notificationRuleId: notificationRule.id,
-        },
-        include: {
-          notificationRule: {
-            include: {
-              targets: {
-                include: {
-                  target: true,
+          update: {
+            enabled: true,
+            itemName: params.itemName,
+            notificationRuleId: notificationRule.id,
+          },
+          include: {
+            notificationRule: {
+              include: {
+                targets: {
+                  include: {
+                    target: true,
+                  },
                 },
               },
             },
           },
-        },
-      });
+        })
+        .then((watchedItem) => this.mapWatchedItem(watchedItem));
     });
   }
 
@@ -373,25 +401,62 @@ export class WatchedItemService {
     itemId: number;
     world: string;
   }) {
-    return this.prisma.watchedItem.findUnique({
-      where: {
-        userId_itemId_world: {
-          userId: params.discordId,
-          itemId: params.itemId,
-          world: params.world,
+    return this.prisma.watchedItem
+      .findUnique({
+        where: {
+          userId_itemId_world: {
+            userId: params.discordId,
+            itemId: params.itemId,
+            world: params.world,
+          },
         },
-      },
-      include: {
-        notificationRule: {
-          include: {
-            targets: {
-              include: {
-                target: true,
+        include: {
+          notificationRule: {
+            include: {
+              targets: {
+                include: {
+                  target: true,
+                },
               },
             },
           },
         },
-      },
-    });
+      })
+      .then((watchedItem) =>
+        watchedItem ? this.mapWatchedItem(watchedItem) : null,
+      );
+  }
+
+  private mapWatchedItem(
+    watchedItem: WatchedItemWithUnknownSnapshot,
+  ): typeof WatchedItemResponseDto.schema._output {
+    return {
+      ...watchedItem,
+      itemSnapshot: this.mapWatchedItemSnapshot(watchedItem.itemSnapshot),
+      notificationRule: watchedItem.notificationRule
+        ? this.mapNotificationRule(watchedItem.notificationRule)
+        : null,
+    };
+  }
+
+  private mapWatchedItemSnapshot(
+    itemSnapshot: unknown | null | undefined,
+  ): typeof WatchedItemSnapshotResponseDto.schema._output | null {
+    if (!itemSnapshot) {
+      return null;
+    }
+
+    return WatchedItemSnapshotResponseDto.schema.parse(itemSnapshot);
+  }
+
+  private mapNotificationRule(
+    notificationRule: NotificationRuleWithUnknownFilters,
+  ): typeof NotificationRuleResponseDto.schema._output {
+    return {
+      ...notificationRule,
+      filters: NotificationFiltersResponseDto.schema.parse(
+        notificationRule.filters,
+      ),
+    };
   }
 }

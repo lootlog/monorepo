@@ -1,36 +1,55 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { UpdateTimerSettingsPayload } from "@lootlog/types";
 import {
-  fetchGuildTimerSettings,
-  fetchTimerSettings,
-  migrateTimerSettings,
-  updateGuildTimerSettings,
-  updateTimerSettings,
-} from "@/api";
+  getTimerSettingsControllerGetGlobalSettingsQueryKey,
+  getTimerSettingsControllerGetGuildSettingsQueryKey,
+  timerSettingsControllerMigrateSettings,
+  timerSettingsControllerUpdateGlobalSettings,
+  timerSettingsControllerUpdateGuildSettings,
+  useTimerSettingsControllerGetGlobalSettings,
+  useTimerSettingsControllerGetGuildSettings,
+} from "@/lib/api/generated/main/timer-settings/timer-settings";
 import type {
-  UserTimerSettings,
-  UserGuildTimerSettings,
-  UpdateTimerSettingsPayload,
-  UpdateGuildTimerSettingsPayload,
-  MigrateTimerSettingsPayload,
-} from "@lootlog/types";
+  MigrateTimerSettingsDto,
+  UpdateGuildTimerSettingsDto,
+  UpdateTimerSettingsDto,
+} from "@/lib/api/generated/main/model";
 
-const TIMER_SETTINGS_QUERY_KEY = ["timer-settings"];
-const GUILD_TIMER_SETTINGS_QUERY_KEY = (guildId: string) => [
-  "timer-settings",
-  "guild",
-  guildId,
-];
+const TIMER_SETTINGS_QUERY_KEY =
+  getTimerSettingsControllerGetGlobalSettingsQueryKey();
+
+const GUILD_TIMER_SETTINGS_QUERY_KEY = (guildId: string) =>
+  getTimerSettingsControllerGetGuildSettingsQueryKey({ guildId });
+
+const toUpdateTimerSettingsDto = (
+  payload: UpdateTimerSettingsPayload,
+): UpdateTimerSettingsDto => {
+  const { timersColors, ...rest } = payload;
+  const normalizedTimersColors = timersColors
+    ? Object.fromEntries(
+        Object.entries(timersColors).filter(
+          (entry): entry is [string, string] => entry[1] !== undefined,
+        ),
+      )
+    : undefined;
+
+  return {
+    ...rest,
+    ...(normalizedTimersColors && {
+      timersColors: normalizedTimersColors,
+    }),
+  };
+};
 
 export const useTimerSettings = (enabled = true) => {
-  const query = useQuery({
-    queryKey: TIMER_SETTINGS_QUERY_KEY,
-    queryFn: () => fetchTimerSettings(),
-    staleTime: 5 * 60 * 1000,
-    refetchOnMount: "always",
-    enabled,
+  return useTimerSettingsControllerGetGlobalSettings({
+    query: {
+      queryKey: TIMER_SETTINGS_QUERY_KEY,
+      staleTime: 5 * 60 * 1000,
+      refetchOnMount: "always",
+      enabled,
+    },
   });
-
-  return query;
 };
 
 export const useUpdateTimerSettings = () => {
@@ -38,34 +57,11 @@ export const useUpdateTimerSettings = () => {
 
   return useMutation({
     mutationFn: (payload: UpdateTimerSettingsPayload) =>
-      updateTimerSettings(payload),
+      timerSettingsControllerUpdateGlobalSettings(
+        toUpdateTimerSettingsDto(payload),
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: TIMER_SETTINGS_QUERY_KEY });
-    },
-  });
-};
-
-const useGuildTimerSettings = (guildId: string) => {
-  const query = useQuery({
-    queryKey: GUILD_TIMER_SETTINGS_QUERY_KEY(guildId),
-    queryFn: () => fetchGuildTimerSettings(guildId),
-    enabled: !!guildId,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  return query;
-};
-
-const useUpdateGuildTimerSettings = (guildId: string) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (payload: UpdateGuildTimerSettingsPayload) =>
-      updateGuildTimerSettings(guildId, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: GUILD_TIMER_SETTINGS_QUERY_KEY(guildId),
-      });
     },
   });
 };
@@ -74,12 +70,14 @@ export const useMigrateTimerSettings = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: MigrateTimerSettingsPayload) =>
-      migrateTimerSettings(payload),
+    mutationFn: (payload: MigrateTimerSettingsDto) =>
+      timerSettingsControllerMigrateSettings(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: TIMER_SETTINGS_QUERY_KEY });
       queryClient.invalidateQueries({
-        queryKey: ["timer-settings", "guild"],
+        predicate: ({ queryKey }) =>
+          typeof queryKey[0] === "string" &&
+          queryKey[0].startsWith("/timer-settings/guilds/"),
       });
     },
   });

@@ -12,7 +12,12 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from "@lootlog/ui/components/context-menu";
-import { useDeleteWatchedItem } from "@/hooks/api/user/use-delete-watched-item";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  invalidateNotificationsUserControllerGetUserTargets,
+  invalidateNotificationsUserControllerGetWatchedItems,
+  useNotificationsUserControllerDeleteWatchedItem,
+} from "@/lib/api/generated/main/notifications/notifications";
 import { useNavigate } from "@tanstack/react-router";
 import { Bell, BellOff, LoaderCircle, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -31,6 +36,7 @@ export const WatchableItemTile = ({
 }: WatchableItemTileProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const currentGuildId = useGuildId();
   const {
     state,
@@ -42,7 +48,16 @@ export const WatchableItemTile = ({
     isItemWatchedInScope,
     getWatchedItemId,
   } = useGuildWatchedItems();
-  const deleteWatchedItem = useDeleteWatchedItem();
+  const deleteWatchedItem = useNotificationsUserControllerDeleteWatchedItem({
+    mutation: {
+      onSuccess: async () => {
+        await Promise.all([
+          invalidateNotificationsUserControllerGetUserTargets(queryClient),
+          invalidateNotificationsUserControllerGetWatchedItems(queryClient),
+        ]);
+      },
+    },
+  });
   const effectiveGuildId = watchContext.guildId || currentGuildId || "";
   const effectiveWatchContext = {
     guildId: effectiveGuildId,
@@ -76,7 +91,10 @@ export const WatchableItemTile = ({
     );
 
     try {
-      await deleteWatchedItem.mutateAsync({ watchedItemId });
+      await deleteWatchedItem.mutateAsync({
+        pathParams: { watchedItemId },
+      });
+
       toast.success(
         t("settings.userNotifications.quickAdd.toasts.removed", {
           itemName: item.name,

@@ -31,13 +31,19 @@ import {
   SelectValue,
 } from "@lootlog/ui/components/select";
 import { Switch } from "@lootlog/ui/components/switch";
-import {
-  useCreateGuildNotificationTarget,
-  useGuildAvailableNotificationTargets,
-  useUpdateGuildNotificationTarget,
-  type GuildNotificationTarget,
-} from "@/hooks/api/guilds/use-guild-notifications";
+import { useQueryClient } from "@tanstack/react-query";
 import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import {
+  getNotificationsGuildControllerGetAvailableGuildTargetsQueryKey,
+  getNotificationsGuildControllerGetAvailableGuildTargetsQueryOptions,
+  useNotificationsGuildControllerCreateGuildTarget,
+  useNotificationsGuildControllerGetAvailableGuildTargets,
+  useNotificationsGuildControllerUpdateGuildTarget,
+} from "@/lib/api/generated/main/notifications/notifications";
+import { invalidateGuildNotificationQueries } from "../notifications-api";
+import { NotificationTargetType } from "@lootlog/types";
+import type { NotificationTargetResponseDto } from "@/lib/api/generated/main/model";
 
 const targetFormSchema = (t: (key: string) => string, isCreateMode: boolean) =>
   z
@@ -61,10 +67,10 @@ type TargetFormValues = z.infer<ReturnType<typeof targetFormSchema>>;
 type NotificationTargetDialogProps = {
   open: boolean;
   mode: "create" | "edit";
-  target?: GuildNotificationTarget;
-  existingTargets: GuildNotificationTarget[];
+  target?: NotificationTargetResponseDto;
+  existingTargets: NotificationTargetResponseDto[];
   onOpenChange: (open: boolean) => void;
-  onCreated?: (target: GuildNotificationTarget) => void;
+  onCreated?: (target: NotificationTargetResponseDto) => void;
 };
 
 export const NotificationTargetDialog = ({
@@ -76,11 +82,52 @@ export const NotificationTargetDialog = ({
   onCreated,
 }: NotificationTargetDialogProps) => {
   const { t } = useTranslation();
-  const createTarget = useCreateGuildNotificationTarget();
-  const updateTarget = useUpdateGuildNotificationTarget();
+  const guildId = useGuildId();
+  const queryClient = useQueryClient();
+  const createTarget = useNotificationsGuildControllerCreateGuildTarget({
+    mutation: {
+      onSuccess: async () => {
+        if (!guildId) {
+          return;
+        }
+
+        await invalidateGuildNotificationQueries(queryClient, guildId);
+      },
+    },
+  });
+  const updateTarget = useNotificationsGuildControllerUpdateGuildTarget({
+    mutation: {
+      onSuccess: async () => {
+        if (!guildId) {
+          return;
+        }
+
+        await invalidateGuildNotificationQueries(queryClient, guildId);
+      },
+    },
+  });
   const isCreateMode = mode === "create";
   const { data: availableChannelsResponse, isLoading: isLoadingChannels } =
-    useGuildAvailableNotificationTargets(open && isCreateMode);
+    useNotificationsGuildControllerGetAvailableGuildTargets(
+      { guildId: guildId ?? "" },
+      {
+        query:
+          getNotificationsGuildControllerGetAvailableGuildTargetsQueryOptions(
+            { guildId: guildId ?? "" },
+            {
+              query: {
+                enabled: open && isCreateMode && Boolean(guildId),
+                queryKey:
+                  getNotificationsGuildControllerGetAvailableGuildTargetsQueryKey(
+                    {
+                      guildId: guildId ?? "",
+                    },
+                  ),
+              },
+            },
+          ),
+      },
+    );
   const form = useForm<TargetFormValues>({
     resolver: zodResolver(targetFormSchema(t, isCreateMode)),
     defaultValues: {
@@ -124,19 +171,33 @@ export const NotificationTargetDialog = ({
 
     try {
       if (isCreateMode) {
+        if (!guildId) {
+          throw new Error("Missing guild id.");
+        }
+
         const createdTarget = await createTarget.mutateAsync({
-          externalId: values.externalId,
-          displayName:
-            trimmedDisplayName.length > 0 ? trimmedDisplayName : undefined,
+          pathParams: { guildId },
+          data: {
+            targetType: NotificationTargetType.CHANNEL,
+            externalId: values.externalId,
+            displayName:
+              trimmedDisplayName.length > 0 ? trimmedDisplayName : undefined,
+          },
         });
         toast.success(t("settings.notifications.toasts.targetCreated"));
         onCreated?.(createdTarget);
       } else if (target) {
+        if (!guildId) {
+          throw new Error("Missing guild id.");
+        }
+
         await updateTarget.mutateAsync({
-          targetId: target.id,
-          displayName:
-            trimmedDisplayName.length > 0 ? trimmedDisplayName : null,
-          active: values.active,
+          pathParams: { guildId, targetId: target.id },
+          data: {
+            displayName:
+              trimmedDisplayName.length > 0 ? trimmedDisplayName : null,
+            active: values.active,
+          },
         });
         toast.success(t("settings.notifications.toasts.targetUpdated"));
       }

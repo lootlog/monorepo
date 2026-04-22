@@ -76,6 +76,23 @@ export class LootCommentService {
           },
         },
       },
+      include: {
+        member: {
+          select: {
+            name: true,
+            avatar: true,
+            userId: true,
+            roles: {
+              select: {
+                color: true,
+              },
+              orderBy: {
+                position: "desc",
+              },
+            },
+          },
+        },
+      },
     });
 
     return comment;

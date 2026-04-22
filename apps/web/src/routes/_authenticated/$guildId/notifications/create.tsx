@@ -1,18 +1,22 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { NotificationRuleFormPage } from "@/features/guild/notifications/notification-rule-form-page";
 import { NotificationCreateSkeleton } from "@/features/guild/notifications/notification-create-skeleton";
-import { guildRolesQueryOptions } from "@/hooks/api/guilds/use-guild-roles";
+import { getRolesControllerGetGuildRolesQueryOptions } from "@/lib/api/generated/main/roles/roles";
+import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 
 export const Route = createFileRoute(
   "/_authenticated/$guildId/notifications/create",
 )({
   component: NotificationRuleFormPage,
   pendingComponent: NotificationCreateSkeleton,
-  loader: async ({ context, params }) => {
-    await context.queryClient.ensureQueryData(
-      guildRolesQueryOptions(params.guildId),
-    );
+  loader: ({ context, params }) =>
+    withRouteLoaderCancellation(async () => {
+      await context.queryClient.ensureQueryData(
+        getRolesControllerGetGuildRolesQueryOptions({
+          guildId: params.guildId,
+        }),
+      );
 
-    return null;
-  },
+      return null;
+    }),
 });

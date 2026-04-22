@@ -1,75 +1,78 @@
-import type { Loot } from "@/hooks/api/loots/use-loots";
-import { NpcType } from "@/hooks/api/game-data/use-npcs";
+import type { LootNpc } from "@/lib/loots/loot-types";
 import { cn } from "@lootlog/ui/lib/utils";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
 export type LootNpcsProps = {
-  npcs: Loot["npcs"];
+  npcs: LootNpc[];
   className?: string;
 };
 
 // NPC type priority for sorting (higher = more important)
-const NPC_TYPE_PRIORITY: Record<NpcType, number> = {
-  [NpcType.TITAN]: 8,
-  [NpcType.COLOSSUS]: 7,
-  [NpcType.HERO]: 6,
-  [NpcType.EVENT_HERO]: 5,
-  [NpcType.ELITE3]: 4,
-  [NpcType.ELITE2]: 3,
-  [NpcType.ELITE]: 2,
-  [NpcType.NPC]: 1,
-  [NpcType.COMMON]: 0,
+const NPC_TYPE_PRIORITY = {
+  TITAN: 8,
+  COLOSSUS: 7,
+  HERO: 6,
+  EVENT_HERO: 5,
+  ELITE3: 4,
+  ELITE2: 3,
+  ELITE: 2,
+  NPC: 1,
+  COMMON: 0,
 };
 
 // NPC types that get special badges
-const SPECIAL_NPC_TYPES = [
-  NpcType.TITAN,
-  NpcType.COLOSSUS,
-  NpcType.HERO,
-  NpcType.EVENT_HERO,
-] as const;
+const SPECIAL_NPC_TYPES = ["TITAN", "COLOSSUS", "HERO", "EVENT_HERO"] as const;
+const DEFAULT_NPC_TYPE = "COMMON";
+type LootNpcType = keyof typeof NPC_TYPE_PRIORITY;
 
 // Get badge styling based on NPC type
-const getNpcBadgeStyle = (type: NpcType) => {
+const getNpcBadgeStyle = (type: LootNpcType) => {
   switch (type) {
-    case NpcType.TITAN:
+    case "TITAN":
       return "bg-primary/10 text-primary border-primary/20";
-    case NpcType.COLOSSUS:
+    case "COLOSSUS":
       return "bg-purple-500/10 text-purple-500 border-purple-500/20";
-    case NpcType.HERO:
+    case "HERO":
       return "bg-destructive/10 text-destructive border-destructive/20";
-    case NpcType.EVENT_HERO:
+    case "EVENT_HERO":
       return "bg-orange-500/10 text-orange-500 border-orange-500/20";
     default:
       return "";
   }
 };
 
+const normalizeNpcType = (type: LootNpc["type"]): LootNpcType =>
+  type && type in NPC_TYPE_PRIORITY ? type : DEFAULT_NPC_TYPE;
+
+const isSpecialNpcType = (
+  type: LootNpcType,
+): type is (typeof SPECIAL_NPC_TYPES)[number] =>
+  SPECIAL_NPC_TYPES.includes(type as (typeof SPECIAL_NPC_TYPES)[number]);
+
 export const LootNpcs: FC<LootNpcsProps> = ({ npcs, className }) => {
   const { t } = useTranslation();
   const sortedNpcs = [...npcs].sort(
     (a, b) =>
-      (NPC_TYPE_PRIORITY[b.type] ?? 0) - (NPC_TYPE_PRIORITY[a.type] ?? 0),
+      NPC_TYPE_PRIORITY[normalizeNpcType(b.type)] -
+      NPC_TYPE_PRIORITY[normalizeNpcType(a.type)],
   );
 
   const firstNpc = sortedNpcs[0];
-  const isFirstSpecial =
-    firstNpc &&
-    SPECIAL_NPC_TYPES.includes(
-      firstNpc.type as (typeof SPECIAL_NPC_TYPES)[number],
-    );
+  const firstNpcType = firstNpc ? normalizeNpcType(firstNpc.type) : undefined;
+  const specialNpcType =
+    firstNpcType && isSpecialNpcType(firstNpcType) ? firstNpcType : undefined;
 
   return (
     <div className={cn("leading-none flex flex-row gap-2", className)}>
-      {isFirstSpecial && (
+      {specialNpcType && (
         <span
           className={cn(
             "inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold border w-fit",
-            getNpcBadgeStyle(firstNpc.type),
+            getNpcBadgeStyle(specialNpcType),
           )}
         >
-          {t(`npcType.${firstNpc.type}`)}
+          {t(`npcType.${specialNpcType}`)}
         </span>
       )}
       {firstNpc && (

@@ -1,4 +1,4 @@
-import type { RawBattleParsedEvent } from "@/hooks/api/battle-log/use-battle-raw";
+import type { RawBattleParsedEvent } from "@/lib/api/battlelog-types";
 import {
   ATTACK_ACTIONS_SORT_ORDER,
   isAttackActionInContext,
@@ -94,37 +94,4 @@ export const parseActions = (
   parsedActions.attackActions = sortAttackActions(parsedActions.attackActions);
 
   return parsedActions;
-};
-
-export const hasAnyActions = (parsedActions: ParsedActions): boolean => {
-  return (
-    parsedActions.systemActions.length > 0 ||
-    parsedActions.buffActions.length > 0 ||
-    parsedActions.debuffActions.length > 0 ||
-    parsedActions.passiveActions.length > 0 ||
-    parsedActions.spellActions.length > 0 ||
-    parsedActions.attackActions.length > 0 ||
-    parsedActions.defendActions.length > 0 ||
-    parsedActions.outcomeActions.length > 0
-  );
-};
-
-export const getActionsCount = (parsedActions: ParsedActions): number => {
-  return (
-    parsedActions.systemActions.length +
-    parsedActions.buffActions.length +
-    parsedActions.debuffActions.length +
-    parsedActions.passiveActions.length +
-    parsedActions.spellActions.length +
-    parsedActions.attackActions.length +
-    parsedActions.defendActions.length +
-    parsedActions.outcomeActions.length
-  );
-};
-
-export const getActionsByCategory = (
-  parsedActions: ParsedActions,
-  category: keyof ParsedActions,
-): ParsedAction[] => {
-  return parsedActions[category];
 };

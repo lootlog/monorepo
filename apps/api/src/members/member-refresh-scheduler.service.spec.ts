@@ -4,7 +4,7 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import { getQueueToken } from "@nestjs/bullmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { DiscordRateLimiterService } from "src/discord/discord-rate-limiter.service";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 import { MEMBER_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant";
 import {
   type MemberRefreshJobData,

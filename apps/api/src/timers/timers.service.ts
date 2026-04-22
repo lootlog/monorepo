@@ -11,6 +11,7 @@ import {
   NpcType,
   Permission,
   Prisma,
+  type Member,
   type Timer,
   type Guild,
   type Role,
@@ -36,7 +37,7 @@ import type { CreateTimerDto } from "src/timers/dto/create-timer.dto";
 import type { CreateTimerFromGameClientDto } from "src/timers/dto/create-timer-from-game-client.dto";
 import { validateAndCalculateSpawnTimes } from "src/timers/utils/validate-spawn-times";
 import { TIMER_LIMITS, TIMER_TYPES } from "src/timers/constants/timer-limits";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { ExecutionError } from "redlock";
@@ -48,6 +49,7 @@ import {
 } from "src/timers/utils/timer-key";
 import { EventTimerHooksService } from "src/events/services/event-timer-hooks.service";
 import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
+import { MemberResponseDto } from "src/shared/dto/member-response.dto";
 import type {
   CreateAutoTimerRejectedGuild,
   CreateAutoTimerRejectedGuildReason,
@@ -73,6 +75,15 @@ function extractNpcName(npc: unknown): string {
 
 const DEDUP_TTL_SECONDS = 10;
 const CACHE_TTL_SECONDS = 2;
+const NPC_TYPE_VALUES = new Set<string>(Object.values(NpcType));
+
+type TimerMember = Member & {
+  roles?: Role[];
+};
+
+type TimerWithOptionalMember = Timer & {
+  member?: TimerMember | null;
+};
 
 interface NpcData {
   [key: string]: string | number;
@@ -211,6 +222,82 @@ export class TimersService implements OnModuleInit {
       type: getNpcTypeByWt(NpcType, npc.wt, npc.prof ?? "", npc.type),
       icon: npc.icon,
       margonemType: String(npc.type),
+    };
+  }
+
+  private toDate(value: Date | string | null | undefined) {
+    if (!value) {
+      return null;
+    }
+
+    return value instanceof Date ? value : new Date(value);
+  }
+
+  private mapTimerMember(member: TimerMember | null | undefined) {
+    if (!member) {
+      return undefined;
+    }
+
+    return {
+      id: member.id,
+      userId: member.userId,
+      guildId: member.guildId,
+      type: member.type,
+      name: member.name,
+      avatar: member.avatar,
+      banner: member.banner,
+      active: member.active,
+      roles: member.roles ?? [],
+      globalUserId: member.globalUserId,
+      lastDiscordSyncAt: this.toDate(member.lastDiscordSyncAt),
+      updatedAt: this.toDate(member.updatedAt) ?? new Date(),
+    } satisfies typeof MemberResponseDto.schema._output;
+  }
+
+  private mapTimerNpc(npc: unknown) {
+    if (!npc || typeof npc !== "object" || Array.isArray(npc)) {
+      return null;
+    }
+
+    const timerNpc = npc as Record<string, unknown>;
+    const rawType =
+      typeof timerNpc.type === "string" ? timerNpc.type.toUpperCase() : null;
+    const normalizedType =
+      rawType && NPC_TYPE_VALUES.has(rawType)
+        ? (rawType as NpcType)
+        : NpcType.NPC;
+
+    return {
+      id: typeof timerNpc.id === "number" ? timerNpc.id : 0,
+      name: typeof timerNpc.name === "string" ? timerNpc.name : "",
+      prof: typeof timerNpc.prof === "string" ? timerNpc.prof : "",
+      location: typeof timerNpc.location === "string" ? timerNpc.location : "",
+      wt:
+        typeof timerNpc.wt === "string"
+          ? timerNpc.wt
+          : String(timerNpc.wt ?? ""),
+      lvl: typeof timerNpc.lvl === "number" ? timerNpc.lvl : 0,
+      type: normalizedType,
+      icon: typeof timerNpc.icon === "string" ? timerNpc.icon : null,
+      margonemType:
+        typeof timerNpc.margonemType === "string"
+          ? timerNpc.margonemType
+          : String(timerNpc.margonemType ?? ""),
+    };
+  }
+
+  private mapTimerResponse(timer: TimerWithOptionalMember) {
+    return {
+      guildId: timer.guildId,
+      npcId: timer.npcId,
+      timerKey: timer.timerKey,
+      world: timer.world,
+      minSpawnTime: this.toDate(timer.minSpawnTime) ?? new Date(),
+      maxSpawnTime: this.toDate(timer.maxSpawnTime) ?? new Date(),
+      npc: this.mapTimerNpc(timer.npc),
+      wasReset: timer.wasReset,
+      member: this.mapTimerMember(timer.member),
+      updatedAt: this.toDate(timer.updatedAt) ?? new Date(),
     };
   }
 
@@ -732,7 +819,9 @@ export class TimersService implements OnModuleInit {
         level: "debug",
         message: `Deduplication hit for ${dedupKey}`,
       });
-      return JSON.parse(cached) as Timer;
+      return this.mapTimerResponse(
+        JSON.parse(cached) as TimerWithOptionalMember,
+      );
     }
 
     const dedupLockKey = `${dedupKey}:lock`;
@@ -751,7 +840,9 @@ export class TimersService implements OnModuleInit {
           level: "debug",
           message: `Deduplication hit after lock for ${dedupKey}`,
         });
-        return JSON.parse(cachedAfterLock) as Timer;
+        return this.mapTimerResponse(
+          JSON.parse(cachedAfterLock) as TimerWithOptionalMember,
+        );
       }
 
       mainLock = await this.redlock.acquire([lockKey], this.lockTtl);
@@ -805,7 +896,7 @@ export class TimersService implements OnModuleInit {
           minSpawnTime: previousTimer.minSpawnTime,
         });
 
-        return duplicateTimer as Timer;
+        return this.mapTimerResponse(duplicateTimer as TimerWithOptionalMember);
       }
 
       const timerData = {
@@ -876,7 +967,7 @@ export class TimersService implements OnModuleInit {
           });
         });
 
-      return newTimer;
+      return this.mapTimerResponse(newTimer);
     } catch (error) {
       if (error instanceof ExecutionError) {
         const existingTimer = await this.findTimerAfterLockFailure(
@@ -892,7 +983,7 @@ export class TimersService implements OnModuleInit {
             npcId: data.npc.id,
             world: data.world,
           });
-          return existingTimer;
+          return this.mapTimerResponse(existingTimer);
         }
 
         this.logger.log({
@@ -1005,7 +1096,7 @@ export class TimersService implements OnModuleInit {
     discordId: string,
     guildId: string,
     data: CreateManualTimerDto,
-  ): Promise<Timer> {
+  ) {
     const now = new Date();
 
     let minSpawnTime: Date;
@@ -1069,7 +1160,7 @@ export class TimersService implements OnModuleInit {
 
     await this.invalidateTimersCache(guildId);
     this.emitUpdateTimer(newTimer);
-    return newTimer;
+    return this.mapTimerResponse(newTimer);
   }
 
   async getTimers(
@@ -1085,12 +1176,12 @@ export class TimersService implements OnModuleInit {
 
     if (cached) {
       this.logger.log({ level: "debug", message: `Cache hit for ${cacheKey}` });
-      const cachedTimers = JSON.parse(cached) as Timer[];
+      const cachedTimers = JSON.parse(cached) as TimerWithOptionalMember[];
       return this.filterTimersByPermissions(
         cachedTimers,
         administrativeUser,
         roles,
-      );
+      ).map((timer) => this.mapTimerResponse(timer));
     }
 
     const timers = await this.prisma.timer.findMany({
@@ -1104,14 +1195,18 @@ export class TimersService implements OnModuleInit {
     });
 
     await this.redis.set(cacheKey, JSON.stringify(timers), CACHE_TTL_SECONDS);
-    return this.filterTimersByPermissions(timers, administrativeUser, roles);
+    return this.filterTimersByPermissions(
+      timers,
+      administrativeUser,
+      roles,
+    ).map((timer) => this.mapTimerResponse(timer));
   }
 
   private filterTimersByPermissions(
-    timers: Timer[],
+    timers: TimerWithOptionalMember[],
     administrativeUser: boolean,
     roles: Role[],
-  ): Timer[] {
+  ): TimerWithOptionalMember[] {
     if (administrativeUser) return timers;
     return timers.filter((timer) => {
       const npc = parseNpc(timer.npc);
@@ -1142,13 +1237,12 @@ export class TimersService implements OnModuleInit {
       this.guildsService.getMultipleGuildsPermissions(discordId, guildIds),
     ]);
 
-    const timersByGuild = timers.reduce<Record<string, Timer[]>>(
-      (acc, timer) => {
-        (acc[timer.guildId] ??= []).push(timer);
-        return acc;
-      },
-      {},
-    );
+    const timersByGuild = timers.reduce<
+      Record<string, TimerWithOptionalMember[]>
+    >((acc, timer) => {
+      (acc[timer.guildId] ??= []).push(timer);
+      return acc;
+    }, {});
 
     return guilds.flatMap((guild) => {
       const guildPermissionsAndRoles = permissionsPerGuild.find(
@@ -1164,7 +1258,7 @@ export class TimersService implements OnModuleInit {
         guildTimers,
         administrativeUser,
         roles,
-      );
+      ).map((timer) => this.mapTimerResponse(timer));
     });
   }
 
@@ -1247,7 +1341,7 @@ export class TimersService implements OnModuleInit {
 
       await this.invalidateTimersCache(guildId);
       this.emitUpdateTimer(updatedTimer);
-      return updatedTimer;
+      return this.mapTimerResponse(updatedTimer);
     } catch (error) {
       if (error instanceof ExecutionError) {
         this.logger.log({

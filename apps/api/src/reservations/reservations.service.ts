@@ -10,7 +10,7 @@ import type { CreateReservationDto } from "./dto/create-reservation.dto";
 import { Permission, type Prisma } from "src/generated/prisma/client";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { RoutingKey } from "src/enum/routing-key.enum";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 import { HttpService } from "@nestjs/axios";
 import { env } from "src/config/env";
 import { lastValueFrom } from "rxjs";

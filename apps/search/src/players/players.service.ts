@@ -1,32 +1,34 @@
-import type { Meilisearch, SearchParams } from "meilisearch";
+import { Inject, Injectable } from "@nestjs/common";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import type { Logger } from "winston";
+import { Meilisearch, type SearchParams } from "meilisearch";
 import type { z } from "zod";
-import { meilisearchClient } from "../lib/meilisearch.js";
-import { logger } from "../config/winston.config.js";
-import type { GetPlayersDto } from "./dto/get-players.dto.js";
-import { PLAYERS_INDEX } from "./constants/meilisearch.js";
-import type { IndexPlayersDto } from "./dto/index-players.dto.js";
-import type { playerHitSchema } from "./dto/player-hit.schema.js";
+import { MEILISEARCH_CLIENT } from "src/meilisearch/meilisearch.constants";
+import type { GetPlayersDto } from "./dto/get-players.dto";
+import { PLAYERS_INDEX } from "./constants/meilisearch";
+import type { IndexPlayersDto } from "./dto/index-players.dto";
+import type { playerHitSchema } from "./dto/player-hit.schema";
 
 type PlayerHit = z.infer<typeof playerHitSchema>;
 
+@Injectable()
 export class PlayersService {
-  meilisearch: Meilisearch;
-
-  constructor() {
-    this.meilisearch = meilisearchClient;
-    const index = this.meilisearch.index(PLAYERS_INDEX);
-    index.updateFilterableAttributes(["name", "world"]);
-  }
+  constructor(
+    @Inject(MEILISEARCH_CLIENT) private readonly meilisearch: Meilisearch,
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+  ) {}
 
   async getPlayers({ limit, search, world }: GetPlayersDto) {
     const index = this.meilisearch.index<PlayerHit>(PLAYERS_INDEX);
     const hasMultipleSearchTerms = Array.isArray(search);
-    const searchTerm = hasMultipleSearchTerms ? "" : search;
+    const searchTerm = hasMultipleSearchTerms ? "" : (search ?? "");
 
     const filters: string[] = [];
 
     if (hasMultipleSearchTerms) {
-      filters.push(`name IN [${search.map((n) => `"${n}"`).join(", ")}]`);
+      filters.push(
+        `name IN [${search.map((name) => JSON.stringify(name)).join(", ")}]`,
+      );
     }
 
     if (world) {
@@ -44,7 +46,7 @@ export class PlayersService {
 
       return data.hits;
     } catch (error) {
-      logger.error("Players search error", { error });
+      this.logger.error("Players search error", { error });
       return [];
     }
   }
@@ -57,7 +59,7 @@ export class PlayersService {
     );
 
     if (validPlayers.length === 0) {
-      logger.warn("No valid players to index (missing required fields)", {
+      this.logger.warn("No valid players to index (missing required fields)", {
         players: data.players,
       });
       return;
@@ -67,7 +69,7 @@ export class PlayersService {
       const invalidPlayers = data.players.filter(
         (player) => !player.world || !player.id || !player.name,
       );
-      logger.warn(
+      this.logger.warn(
         `Skipped ${invalidPlayers.length} players due to missing required fields`,
         { invalidPlayers },
       );
@@ -79,9 +81,10 @@ export class PlayersService {
     }));
 
     try {
-      return index.addDocuments(playersWithUid, { primaryKey: "uid" });
+      return await index.addDocuments(playersWithUid, { primaryKey: "uid" });
     } catch (error) {
-      logger.error("Error indexing players", { error });
+      this.logger.error("Error indexing players", { error });
+      return;
     }
   }
 }

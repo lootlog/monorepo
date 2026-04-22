@@ -5,13 +5,19 @@ import { WorldSelector } from "@/components/world-selector";
 import { OnlinePlayersListEntry } from "@/features/online-players/components/online-players-list-entry";
 import { usePlayersPresence } from "@/features/online-players/hooks/use-players-presence";
 import { useSettingsStore } from "@/store/settings.store";
-import { useGuildMembers } from "@/hooks/api/use-guild-members";
 import { useMemberInvalidation } from "@/hooks/api/use-member-invalidation";
+import { mapGuildMembersByUserId } from "@/lib/api/generated-helpers";
+import {
+  getMembersControllerGetGuildMembersSummaryQueryKey,
+  useMembersControllerGetGuildMembersSummary,
+} from "@/lib/api/generated/main/members/members";
 import { Search } from "lucide-react";
 import { useState, useMemo, type FC } from "react";
 import { Game } from "@/lib/game";
+import { useTranslation } from "react-i18next";
 
 export const OnlinePlayersList: FC = () => {
+  const { t } = useTranslation("onlinePlayers");
   const characterId = String(Game.hero.id);
   const defaultWorld = Game.getWorldName();
 
@@ -20,7 +26,20 @@ export const OnlinePlayersList: FC = () => {
   const guildId = guildIdByCharId[characterId];
   const world = guildId ? worldByGuildId[guildId] : undefined;
   const [onlinePlayers] = usePlayersPresence(guildId, world || defaultWorld);
-  const { data: guildMembers } = useGuildMembers(guildId);
+  const { data: guildMembers } = useMembersControllerGetGuildMembersSummary(
+    { guildId: guildId ?? "" },
+    {
+      query: {
+        queryKey: getMembersControllerGetGuildMembersSummaryQueryKey({
+          guildId: guildId ?? "",
+        }),
+        enabled: !!guildId && guildId !== "all",
+        gcTime: Infinity,
+        staleTime: 5 * 60 * 1000,
+        select: mapGuildMembersByUserId,
+      },
+    },
+  );
   const [searchQuery, setSearchQuery] = useState("");
 
   const missingMemberIds = useMemo(() => {
@@ -58,7 +77,7 @@ export const OnlinePlayersList: FC = () => {
         <div className="ll:pb-1 ll:relative">
           <Input
             type="text"
-            placeholder="Szukaj gracza..."
+            placeholder={t("search.placeholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="ll:pr-7"
@@ -76,7 +95,9 @@ export const OnlinePlayersList: FC = () => {
             ))
           ) : (
             <p className="ll:text-gray-400 ll:w-full ll:flex ll:items-center ll:justify-center ll:mt-6">
-              {searchQuery ? "Nie znaleziono graczy" : "Brak graczy online."}
+              {searchQuery
+                ? t("emptyState.notFound")
+                : t("emptyState.noPlayers")}
             </p>
           )}
         </ScrollArea>

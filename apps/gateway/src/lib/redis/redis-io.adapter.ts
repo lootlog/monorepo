@@ -3,24 +3,17 @@ import { createAdapter } from "@socket.io/redis-adapter";
 import { Redis } from "ioredis";
 import type { INestApplication } from "@nestjs/common";
 import type { ServerOptions } from "socket.io";
-import { ConfigService } from "@nestjs/config";
-import { ConfigKey } from "src/config/config-key.enum";
-import type { RedisConfig } from "@lootlog/nest-shared";
 import { msgpackParser } from "@lootlog/socket-parser";
+import { redisConfig } from "src/config/redis.config";
 
 export class RedisIoAdapter extends IoAdapter {
   private adapterConstructor: ReturnType<typeof createAdapter>;
 
-  constructor(
-    app: INestApplication,
-    private readonly configService: ConfigService,
-  ) {
+  constructor(app: INestApplication) {
     super(app);
   }
 
   async connectToRedis(): Promise<void> {
-    const redisConfig = this.configService.get<RedisConfig>(ConfigKey.REDIS);
-
     const pubClient = new Redis({
       host: redisConfig.host,
       port: redisConfig.port,

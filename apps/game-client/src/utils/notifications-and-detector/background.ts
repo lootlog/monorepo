@@ -1,4 +1,4 @@
-import { NpcType } from "@/hooks/api/use-npcs";
+import { NpcType } from "@/api/npcs.api";
 
 const TEXT_COLORS_BY_KEY: Record<string, string> = {
   [NpcType.COLOSSUS]: "rgba(33, 131, 128, 1)",
@@ -16,21 +16,6 @@ const BACKGROUND_COLORS_BY_KEY: Record<string, string> = {
   [NpcType.TITAN]: "rgba(25, 72, 148, 0.4)",
   message: "rgba(219, 39, 99, 0.4)",
   "party-gathering": "rgba(147, 51, 234, 0.4)",
-};
-
-const BASE_BACKGROUND_GRADIENT_BY_NPC_TYPE: Record<string, string> = {
-  [NpcType.COLOSSUS]: `linear-gradient(to top, ${BACKGROUND_COLORS_BY_KEY[NpcType.COLOSSUS]}, transparent)`,
-  [NpcType.HERO]: `linear-gradient(to top, ${BACKGROUND_COLORS_BY_KEY[NpcType.HERO]}, transparent)`,
-  [NpcType.ELITE2]: `linear-gradient(to top, ${BACKGROUND_COLORS_BY_KEY[NpcType.ELITE2]}, transparent)`,
-  [NpcType.TITAN]: `linear-gradient(to top, ${BACKGROUND_COLORS_BY_KEY[NpcType.TITAN]}, transparent)`,
-  message: `linear-gradient(to top, ${BACKGROUND_COLORS_BY_KEY["message"]}, transparent)`,
-  "party-gathering": `linear-gradient(to top, ${BACKGROUND_COLORS_BY_KEY["party-gathering"]}, transparent)`,
-};
-
-export const getGradient = (key?: string, highlight?: boolean) => {
-  if (!highlight || !key || !(key in BASE_BACKGROUND_GRADIENT_BY_NPC_TYPE))
-    return "transparent";
-  return BASE_BACKGROUND_GRADIENT_BY_NPC_TYPE[key];
 };
 
 export const getBackgroundColor = (key?: string, highlight?: boolean) => {

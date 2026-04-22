@@ -180,4 +180,35 @@ describe("useVisibleNotifications", () => {
 
     expect(useNotificationsStore.getState().notifications).toEqual([]);
   });
+
+  it("keeps mention notifications visible even when message notifications are hidden", () => {
+    mockUseCurrentGameAccountNotificationSettings.mockReturnValue({
+      settings: {
+        message: {
+          show: false,
+          ignoreOtherWorlds: false,
+          guildIds: ["guild-1"],
+          autoHideTimeout: 30,
+        },
+      },
+    });
+    useNotificationsStore.setState({
+      notifications: [
+        createStoredNotification({
+          notificationId: "mention-1",
+          listKey: "mention-1",
+          type: "chat-mention",
+        }),
+      ],
+    });
+
+    const { result } = renderHook(() => useVisibleNotifications());
+
+    expect(result.current.notifications).toEqual([
+      expect.objectContaining({
+        notificationId: "mention-1",
+        type: "chat-mention",
+      }),
+    ]);
+  });
 });

@@ -4,15 +4,12 @@ import {
   defaultNotificationsSettings,
   type DetectorRoutingRule,
   type DetectorSettings,
-  type DetectorTypeSettings,
-  type DetectorNpcType,
   type NotificationsSettings,
   type UserGameAccountPreferences,
 } from "@lootlog/types";
+import { getUsersControllerGetUserGameAccountPreferencesQueryKey } from "@/lib/api/generated/main/users/users";
 
-export const USER_GAME_ACCOUNT_PREFERENCES_QUERY_KEY_PREFIX =
-  "user-game-account-preferences";
-export const UPDATE_USER_GAME_ACCOUNT_PREFERENCES_MUTATION_KEY_PREFIX =
+const UPDATE_USER_GAME_ACCOUNT_PREFERENCES_MUTATION_KEY_PREFIX =
   "update-user-game-account-preferences";
 
 const notificationSettingTypes = Object.keys(
@@ -20,7 +17,7 @@ const notificationSettingTypes = Object.keys(
 ) as Array<keyof NotificationsSettings>;
 
 export const getUserGameAccountPreferencesQueryKey = (accountId: string) =>
-  [USER_GAME_ACCOUNT_PREFERENCES_QUERY_KEY_PREFIX, accountId] as const;
+  getUsersControllerGetUserGameAccountPreferencesQueryKey({ accountId });
 
 export const getUpdateUserGameAccountPreferencesMutationKey = (
   accountId: string,
@@ -30,7 +27,7 @@ export const getUpdateUserGameAccountPreferencesMutationKey = (
     accountId,
   ] as const;
 
-export const cloneNotificationsSettings = (
+const cloneNotificationsSettings = (
   settings: NotificationsSettings,
 ): NotificationsSettings => {
   return notificationSettingTypes.reduce((acc, notificationType) => {
@@ -137,11 +134,4 @@ export const resolveDetectorGuildIds = (
   });
 
   return [...resolvedGuildIds];
-};
-
-export const getDetectorSettingsByNpcType = (
-  detectorSettings: DetectorSettings,
-  npcType: DetectorNpcType,
-): DetectorTypeSettings => {
-  return detectorSettings[npcType];
 };

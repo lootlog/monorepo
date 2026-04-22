@@ -23,10 +23,10 @@ import {
 import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
 import { Card } from "@lootlog/ui/components/card";
 import { SectionHeader } from "@/components/layout/section-header";
-import { useHeadToHead } from "@/hooks/api/battle-log/use-head-to-head";
+import { useBattlesControllerGetHeadToHead } from "@/lib/api/generated/battlelog/battles/battles";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { Swords } from "lucide-react";
-import type { Warrior } from "@/hooks/api/battle-log/use-search-warriors";
+import type { SearchWarrior } from "@/lib/api/battlelog-types";
 import { HeadToHeadFilters } from "./components/head-to-head-filters";
 import { matchmakingH2HColumns } from "./components/matchmaking-h2h-columns";
 import { cn } from "@lootlog/ui/lib/utils";
@@ -83,7 +83,7 @@ export function MatchmakingH2HFullPage() {
     });
   };
 
-  const { data, isLoading } = useHeadToHead({
+  const { data, isLoading } = useBattlesControllerGetHeadToHead({
     cursor,
     size: 20,
     sortBy,
@@ -97,7 +97,7 @@ export function MatchmakingH2HFullPage() {
     includeTotal: true,
   });
 
-  const handleWarriorToggle = (warrior: Warrior) => {
+  const handleWarriorToggle = (warrior: SearchWarrior) => {
     const isSelected = selectedWarriors.some(
       (item) => item.name === warrior.name,
     );

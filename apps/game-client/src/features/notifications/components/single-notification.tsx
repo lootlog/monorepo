@@ -3,14 +3,23 @@ import { NpcTile } from "@/components/npc-tile";
 import { Button } from "@/components/ui/button";
 import { NotificationMuteMenu } from "@/features/notifications/components/notification-mute-menu";
 import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
-import { useGuildMembers } from "@/hooks/api/use-guild-members";
-import { useVolunteer } from "@/hooks/api/use-volunteer";
 import { useMemberInvalidation } from "@/hooks/api/use-member-invalidation";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
+import {
+  getMembersControllerGetGuildMembersSummaryQueryKey,
+  useMembersControllerGetGuildMembersSummary,
+} from "@/lib/api/generated/main/members/members";
+import { useMessagingControllerVolunteer } from "@/lib/api/generated/main/messaging/messaging";
+import {
+  buildCurrentCharacterPayload,
+  mapGuildMembersByUserId,
+} from "@/lib/api/generated-helpers";
 import { Game } from "@/lib/game";
 import { cn } from "@/lib/utils";
 import {
+  type MentionNotification,
   type PartyGatheringNotification,
+  type NotificationWithServers,
   type StoredNotification,
   useNotificationsStore,
 } from "@/store/notifications.store";
@@ -24,10 +33,11 @@ import { getNpcTypeByWt } from "@lootlog/types";
 import { format } from "date-fns";
 import { LoaderCircle, User, XIcon } from "lucide-react";
 import { type FC, type ReactNode, useEffect, useRef } from "react";
-import { NpcType } from "@/hooks/api/use-npcs";
+import { NpcType } from "@/api/npcs.api";
 import { SingleNotificationMessage } from "@/features/notifications/components/single-notification-message";
 import { SingleNotificationNpc } from "@/features/notifications/components/single-notification-npc";
 import { SingleNotificationPartyGathering } from "@/features/notifications/components/single-notification-party-gathering";
+import { useTranslation } from "react-i18next";
 
 const AUTO_HIDE_RING_PATH =
   "M 50 0 H 2 A 2 2 0 0 0 0 2 V 38 A 2 2 0 0 0 2 40 H 98 A 2 2 0 0 0 100 38 V 2 A 2 2 0 0 0 98 0 H 50";
@@ -49,6 +59,21 @@ const isPartyGatheringNotification = (
   return "type" in notification && notification.type === "party-gathering";
 };
 
+const isMentionNotification = (
+  notification: StoredNotification,
+): notification is StoredNotification & MentionNotification => {
+  return "type" in notification && notification.type === "chat-mention";
+};
+
+const isRegularNotification = (
+  notification: StoredNotification,
+): notification is StoredNotification & NotificationWithServers => {
+  return (
+    !isPartyGatheringNotification(notification) &&
+    !isMentionNotification(notification)
+  );
+};
+
 const renderLeadingVisual = (
   notification: StoredNotification,
   avatarUrl: string,
@@ -67,7 +92,7 @@ const renderLeadingVisual = (
     );
   }
 
-  if (notification.npc) {
+  if (isRegularNotification(notification) && notification.npc) {
     return (
       <NpcTile
         npc={notification.npc}
@@ -104,7 +129,7 @@ const renderNotificationContent = ({
     );
   }
 
-  if (notification.npc) {
+  if (isRegularNotification(notification) && notification.npc) {
     return <SingleNotificationNpc notification={notification} />;
   }
 
@@ -116,6 +141,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   notification,
   showCloseButton = false,
 }) => {
+  const { t } = useTranslation("notifications");
   const removeNotification = useNotificationsStore(
     (state) => state.removeNotification,
   );
@@ -139,9 +165,21 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   );
   const setOpen = useWindowsStore((state) => state.setOpen);
   const { settings } = useCurrentGameAccountNotificationSettings();
-  const { data: members } = useGuildMembers(notification.guildId);
-  const guildMember = members?.[notification.discordId];
-  const volunteer = useVolunteer();
+  const { data: membersData } = useMembersControllerGetGuildMembersSummary(
+    { guildId: notification.guildId },
+    {
+      query: {
+        queryKey: getMembersControllerGetGuildMembersSummaryQueryKey({
+          guildId: notification.guildId,
+        }),
+        gcTime: Infinity,
+        staleTime: 5 * 60 * 1000,
+      },
+    },
+  );
+  const members = mapGuildMembersByUserId(membersData);
+  const guildMember = members[notification.discordId];
+  const volunteer = useMessagingControllerVolunteer();
   const autoHidePathRef = useRef<SVGPathElement>(null);
 
   useMemberInvalidation(
@@ -155,7 +193,10 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   );
   const memberColor = useMemberColor(guildMember);
   const isPartyGathering = isPartyGatheringNotification(notification);
-  const regularNotification = isPartyGathering ? null : notification;
+  const regularNotification =
+    !isPartyGathering && !isMentionNotification(notification)
+      ? notification
+      : null;
 
   const npcType = regularNotification?.npc
     ? getNpcTypeByWt(NpcType, regularNotification.npc.wt)
@@ -176,7 +217,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   const borderColor = getBorderColor(key, categorySettings?.highlight);
   const hasAutoHideRing = autoHideDurationMs > 0;
   const metaText = `${time}@${serverNames.join(", ")}${notification.world ? ` - ${notification.world}` : ""}`;
-  const senderName = guildMember?.name ?? "Nieznany";
+  const senderName = guildMember?.name ?? t("states.unknownSender");
 
   const heroLvl = Game.hero.lvl;
   const minLvl = isPartyGathering ? (notification.minLvl ?? 1) : 1;
@@ -188,9 +229,14 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
 
   const handleVolunteer = () => {
     volunteer.mutate({
-      notificationId: notification.notificationId,
-      targetDiscordId: notification.discordId,
-      world: notification.world,
+      pathParams: {
+        notificationId: notification.notificationId,
+      },
+      data: {
+        targetDiscordId: notification.discordId,
+        world: notification.world,
+        character: buildCurrentCharacterPayload(),
+      },
     });
     setOpen("notifications", false);
     clearNotifications();
@@ -201,7 +247,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   let actionLabel: string | null = null;
 
   if (showPartyGatheringAction) {
-    actionLabel = volunteer.isPending ? "..." : "Dołącz!";
+    actionLabel = volunteer.isPending ? "..." : t("actions.join");
   }
 
   useEffect(() => {
@@ -355,7 +401,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
           {showJoinAction ? (
             <Button
               variant="ghost"
-              aria-label="Idę"
+              aria-label={t("actions.joinAria")}
               className="ll:size-7 ll:px-0"
               onClick={handleVolunteer}
               disabled={volunteer.isPending}
@@ -376,7 +422,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
           {showCloseButton ? (
             <Button
               variant="destructive"
-              aria-label="Zamknij powiadomienie"
+              aria-label={t("actions.closeAria")}
               className="ll:size-7 ll:px-0"
               onClick={handleRemoveNotification}
             >

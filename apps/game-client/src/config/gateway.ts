@@ -36,6 +36,7 @@ export enum GatewayEvent {
   PARTY_GATHERING_CANCEL = "party-gathering-cancel",
   CHAT_MESSAGE_DELETE = "chat-message-delete",
   CHAT_MESSAGE_UPDATE = "chat-message-update",
+  CHAT_MESSAGES_CLEAR = "chat-messages-clear",
 
   // members
   MEMBERS_REFRESH_JOB_UPDATE = "members-refresh-job-update",

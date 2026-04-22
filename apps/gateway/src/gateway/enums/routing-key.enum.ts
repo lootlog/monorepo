@@ -54,6 +54,7 @@ export enum RoutingKey {
 
   GUILDS_DELETE_MESSAGE = "guilds.delete.message",
   GUILDS_UPDATE_MESSAGE = "guilds.update.message",
+  GUILDS_CLEAR_MESSAGES = "guilds.clear.messages",
 
   GUILDS_MEMBERS_REFRESH_JOB_UPDATE = "guilds.members.refresh.job.update",
 

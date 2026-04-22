@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 import Redlock from "redlock";
 
 interface RedlockOptions {

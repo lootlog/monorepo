@@ -9,20 +9,73 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { useGuildMember } from "@/hooks/api/members/use-guild-member";
-import { useMemberRefresh } from "@/hooks/api/members/use-member-refresh";
-import { useGuild } from "@/hooks/api/guilds/use-guild";
 import { cn } from "@lootlog/ui/lib/utils";
 import { getPermissionRefreshInfo } from "@/utils/get-permission-refresh-info";
 import { RefreshCcw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useThemeMeta } from "@/themes";
+import { getLootsControllerFetchLootsByGuildIdQueryKey } from "@/lib/api/generated/main/loots/loots";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  getGuildsControllerGetGuildByIdQueryKey,
+  invalidateGuildsControllerGetGuildPermissions,
+  useGuildsControllerGetGuildById,
+} from "@/lib/api/generated/main/guilds/guilds";
+import {
+  getMembersControllerGetMeQueryKey,
+  invalidateMembersControllerGetMe,
+  useMembersControllerGetMe,
+  useMembersControllerRefreshMe,
+} from "@/lib/api/generated/main/members/members";
 
 export const GuildSidebarHeader = ({ guildId }: { guildId?: string }) => {
-  const { data: guild } = useGuild({ retry: false });
-  const { data: member } = useGuildMember();
-  const { mutate: refreshMember } = useMemberRefresh();
+  const queryClient = useQueryClient();
+  const { data: guild } = useGuildsControllerGetGuildById(
+    { guildId: guildId ?? "" },
+    {
+      query: {
+        queryKey: getGuildsControllerGetGuildByIdQueryKey({
+          guildId: guildId ?? "",
+        }),
+        retry: false,
+      },
+    },
+  );
+  const { data: member } = useMembersControllerGetMe(
+    { guildId: guildId ?? "" },
+    {
+      query: {
+        queryKey: getMembersControllerGetMeQueryKey({
+          guildId: guildId ?? "",
+        }),
+        staleTime: 30_000,
+      },
+    },
+  );
+  const refreshMember = useMembersControllerRefreshMe({
+    mutation: {
+      onSuccess: async (_, variables) => {
+        if (!variables?.pathParams.guildId) {
+          return;
+        }
+
+        await Promise.all([
+          invalidateMembersControllerGetMe(queryClient, {
+            guildId: variables.pathParams.guildId,
+          }),
+          invalidateGuildsControllerGetGuildPermissions(queryClient, {
+            guildId: variables.pathParams.guildId,
+          }),
+          queryClient.invalidateQueries({
+            queryKey: getLootsControllerFetchLootsByGuildIdQueryKey({
+              guildId: variables.pathParams.guildId,
+            }),
+          }),
+        ]);
+      },
+    },
+  });
   const { isRukiaTheme, isRiasTheme } = useThemeMeta();
   const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
 
@@ -44,7 +97,9 @@ export const GuildSidebarHeader = ({ guildId }: { guildId?: string }) => {
       return;
     }
 
-    refreshMember({ memberId: "@me" });
+    refreshMember.mutate({
+      pathParams: { guildId },
+    });
   };
 
   return (
@@ -107,7 +162,7 @@ export const GuildSidebarHeader = ({ guildId }: { guildId?: string }) => {
               size="icon"
               className="size-7 text-muted-foreground hover:text-foreground"
               onClick={handleRefreshPermissions}
-              disabled={!canTriggerRefresh}
+              disabled={!canTriggerRefresh || refreshMember.isPending}
             >
               <RefreshCcw className="size-3.5" />
             </Button>

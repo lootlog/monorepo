@@ -19,7 +19,10 @@ import {
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useTranslation } from "react-i18next";
-import { NotificationTriggerType } from "@lootlog/types";
+import {
+  CreateNotificationRuleDtoTriggerType as NotificationTriggerType,
+  type CreateNotificationRuleDtoTriggerType,
+} from "@/lib/api/generated/main/model";
 import {
   TIMER_PRESET_SIMPLE,
   TIMER_PRESET_DETAILED,
@@ -27,7 +30,6 @@ import {
   SCHEDULED_PRESET_SIMPLE,
   SCHEDULED_PRESET_MINIMAL,
 } from "../utils/notification-settings.utils";
-import type { GuildRole } from "@/hooks/api/guilds/use-guild-roles";
 import { Button } from "@lootlog/ui/components/button";
 import {
   Command,
@@ -62,11 +64,12 @@ import {
   removeTemplateTokenNode,
   SCHEDULED_MESSAGE_VARIABLE_KEYS,
 } from "./notification-template-editor.utils";
+import type { RoleResponseDtoOutput as GuildRole } from "@/lib/api/generated/main/model";
 
 type NotificationTemplateEditorProps = {
   value: string;
   roles: GuildRole[];
-  triggerType?: NotificationTriggerType;
+  triggerType?: CreateNotificationRuleDtoTriggerType;
   disabled?: boolean;
   previewButtonClassName?: string;
   onChange: (value: string) => void;

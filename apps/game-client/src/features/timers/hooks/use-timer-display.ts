@@ -1,5 +1,5 @@
 import { NPC_NAMES } from "@/constants/margonem";
-import type { Timer } from "@/hooks/api/use-timers";
+import type { Timer } from "@/api/timers.api";
 import { useTimersStore } from "@/store/timers.store";
 import { calculateTimeLeft, getTimerColorConfig } from "../utils/timer-helpers";
 

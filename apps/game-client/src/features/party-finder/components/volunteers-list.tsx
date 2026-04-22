@@ -2,8 +2,10 @@ import { VolunteersListItem } from "@/features/party-finder/components/volunteer
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import { usePartyStore } from "@/store/party.store";
 import type { FC } from "react";
+import { useTranslation } from "react-i18next";
 
 export const VolunteersList: FC = () => {
+  const { t } = useTranslation("partyFinder");
   const volunteers = usePartyFinderStore((s) => s.volunteers);
   const partyMembers = usePartyStore((s) => s.members);
 
@@ -14,7 +16,7 @@ export const VolunteersList: FC = () => {
   if (visibleVolunteers.length === 0) {
     return (
       <div className="ll:text-center ll:text-gray-400 ll:text-[11px] ll:py-2">
-        Oczekiwanie na graczy...
+        {t("list.waiting")}
       </div>
     );
   }

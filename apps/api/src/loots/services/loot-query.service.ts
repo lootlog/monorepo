@@ -13,6 +13,7 @@ import type { FetchLootsParamsDto } from "src/loots/dto/fetch-loots-params.dto";
 import type { LootItemDto } from "src/loots/dto/loot-item.dto";
 import type { LootNpcDto } from "src/loots/dto/loot-npc.dto";
 import type { LootQueryResult } from "src/loots/dto/loot-query-result.dto";
+import { LootShareResponseSchema } from "src/shared/dto/loot-response.dto";
 import { DEFAULT_PAGE_LIMIT } from "../config/pagination";
 import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
 import { getProfByShortname } from "src/shared/utils/get-prof-by-shortname";
@@ -129,7 +130,7 @@ export class LootQueryService {
       world: loot.world,
       source: loot.source,
       location: loot.location,
-      lootShare: loot.lootShare,
+      lootShare: this.parseLootShare(loot.lootShare),
       createdAt: loot.createdAt,
       updatedAt: loot.updatedAt,
       items: this.mapItems(loot.lootItems as unknown as LootItemWithSnapshot[]),
@@ -256,7 +257,7 @@ export class LootQueryService {
       world: loot.world,
       source: loot.source,
       location: loot.location,
-      lootShare: loot.lootShare,
+      lootShare: this.parseLootShare(loot.lootShare),
       createdAt: loot.createdAt,
       updatedAt: loot.updatedAt,
       items: this.mapItems(loot.lootItems),
@@ -378,6 +379,10 @@ export class LootQueryService {
     }
 
     return baseWhere;
+  }
+
+  private parseLootShare(lootShare: Prisma.JsonValue) {
+    return LootShareResponseSchema.parse(lootShare);
   }
 
   private buildLevelRangesCondition(
