@@ -188,7 +188,6 @@ vi.mock("@/features/timers/components/timers-content", () => ({
 import { Timers } from "./timers";
 
 const createTimer = (overrides?: Partial<Timer>): Timer => ({
-  id: `timer-${overrides?.timerKey ?? "1"}`,
   guildId: overrides?.guildId ?? "guild-1",
   timerKey: overrides?.timerKey ?? "timer-1",
   world: overrides?.world ?? "pandora",

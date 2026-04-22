@@ -4,7 +4,6 @@ import type { Timer } from "@/api/timers.api";
 import { TimerTooltip } from "./timer-tooltip";
 
 const createTimer = (overrides?: Partial<Timer>): Timer => ({
-  id: "timer-1",
   guildId: "guild-1",
   timerKey: "timer-1",
   world: "pandora",

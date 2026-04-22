@@ -6,7 +6,6 @@ import { useTimersFiltering } from "./use-timers-filtering";
 const createTimer = (
   overrides?: Partial<TimerWithTimeLeft>,
 ): TimerWithTimeLeft => ({
-  id: `timer-${overrides?.timerKey ?? "1"}`,
   guildId: overrides?.guildId ?? "guild-1",
   timerKey: overrides?.timerKey ?? "timer-1",
   world: overrides?.world ?? "pandora",
