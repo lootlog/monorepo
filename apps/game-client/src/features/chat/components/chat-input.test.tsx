@@ -93,7 +93,9 @@ const getEditorForRange = (range: Range) => {
       ? (range.endContainer as Element)
       : range.endContainer.parentElement;
 
-  return container?.closest("[data-slot='chat-input']") as HTMLDivElement | null;
+  return container?.closest(
+    "[data-slot='chat-input']",
+  ) as HTMLDivElement | null;
 };
 
 const getRangeTextOffset = ({
@@ -237,6 +239,20 @@ vi.mock("@/lib/api/generated/main/members/members", () => ({
   }: {
     guildId: string;
   }) => ["members", guildId],
+  getMembersControllerGetGuildMembersSummaryQueryOptions: (
+    { guildId }: { guildId: string },
+    options?: {
+      query?: {
+        enabled?: boolean;
+        select?: (members: MemberSummaryResponseDtoOutput[]) => unknown;
+      };
+    },
+  ) => ({
+    queryKey: ["members", guildId],
+    queryFn: () => Promise.resolve(mockGuildMembers),
+    enabled: options?.query?.enabled ?? true,
+    ...options?.query,
+  }),
   useMembersControllerGetGuildMembersSummary: (
     _: { guildId: string },
     options?: {
@@ -576,7 +592,10 @@ describe("ChatInput", () => {
     });
 
     await user.click(editor);
-    await user.type(editor, "to-jest-bardzo-dluga-wiadomosc-ktora-ma-przesunac-kursor");
+    await user.type(
+      editor,
+      "to-jest-bardzo-dluga-wiadomosc-ktora-ma-przesunac-kursor",
+    );
 
     expect(editor.scrollLeft).toBeGreaterThan(0);
 
