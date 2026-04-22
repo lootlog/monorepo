@@ -47,7 +47,7 @@ describe("ItemsService", () => {
 
   describe("getItems", () => {
     it("should search items with world filter", async () => {
-      const hits = [{ id: 1, name: "Sword" }];
+      const hits = [{ id: 1, name: "Sword", stat: "lvl=10" }];
       indexMock.search.mockResolvedValue({ hits });
 
       await expect(
@@ -61,8 +61,63 @@ describe("ItemsService", () => {
       expect(meilisearchMock.index).toHaveBeenCalledWith(ITEMS_INDEX);
       expect(indexMock.search).toHaveBeenCalledWith("sword", {
         limit: 3,
-        attributesToSearchOn: ["name"],
+        offset: 0,
+        attributesToSearchOn: ["name", "stat"],
         filter: 'world = "Berufs"',
+      });
+    });
+
+    it("should expose facets, sort and estimated total hits for item search", async () => {
+      indexMock.search.mockResolvedValue({
+        hits: [{ id: 1, name: "Sword", stat: "dmg=50" }],
+        estimatedTotalHits: 25,
+        facetDistribution: {
+          rarity: {
+            UNIQUE: 10,
+          },
+        },
+        facetStats: {
+          "numericStats.dmg": {
+            min: 10,
+            max: 50,
+          },
+        },
+      });
+
+      await expect(
+        service.searchItems({
+          limit: 10,
+          offset: 20,
+          search: "sword",
+          world: "Berufs",
+          filter: ["numericStats.dmg >= 40", 'requiredProfessions = "w"'],
+          facets: ["rarity", "requiredProfessions"],
+          sort: ["lvl:desc"],
+        }),
+      ).resolves.toEqual({
+        hits: [{ id: 1, name: "Sword", stat: "dmg=50" }],
+        estimatedTotalHits: 25,
+        facetDistribution: {
+          rarity: {
+            UNIQUE: 10,
+          },
+        },
+        facetStats: {
+          "numericStats.dmg": {
+            min: 10,
+            max: 50,
+          },
+        },
+      });
+
+      expect(indexMock.search).toHaveBeenCalledWith("sword", {
+        limit: 10,
+        offset: 20,
+        attributesToSearchOn: ["name", "stat"],
+        filter:
+          'numericStats.dmg >= 40 AND requiredProfessions = "w" AND world = "Berufs"',
+        facets: ["rarity", "requiredProfessions"],
+        sort: ["lvl:desc"],
       });
     });
 
@@ -82,6 +137,24 @@ describe("ItemsService", () => {
         error,
       });
     });
+
+    it("should return an empty search response when meilisearch search fails", async () => {
+      const error = new Error("search failed");
+      indexMock.search.mockRejectedValue(error);
+
+      await expect(
+        service.searchItems({
+          limit: 10,
+          offset: 0,
+          search: "sword",
+        }),
+      ).resolves.toEqual({
+        hits: [],
+        estimatedTotalHits: 0,
+        facetDistribution: {},
+        facetStats: {},
+      });
+    });
   });
 
   describe("indexItems", () => {
@@ -91,6 +164,7 @@ describe("ItemsService", () => {
           id: 1,
           name: "Sword",
           icon: "sword.png",
+          stat: "lvl=10",
           lvl: 10,
           rarity: "heroic",
           type: "weapon",
@@ -107,6 +181,14 @@ describe("ItemsService", () => {
         [
           {
             ...items[0],
+            stats: {
+              lvl: 10,
+            },
+            numericStats: {
+              lvl: 10,
+            },
+            statsKeys: ["lvl"],
+            requiredProfessions: ["w", "p", "h", "m", "b", "t"],
             hid: "",
             uid: "1_Berufs",
           },
@@ -121,6 +203,7 @@ describe("ItemsService", () => {
           id: 1,
           name: "Sword",
           icon: "sword.png",
+          stat: "lvl=10",
           lvl: 10,
           rarity: "heroic",
           type: "weapon",
@@ -130,6 +213,7 @@ describe("ItemsService", () => {
           id: 2,
           name: "",
           icon: "broken.png",
+          stat: "lvl=1",
           lvl: 1,
           rarity: null,
           type: null,
@@ -146,6 +230,14 @@ describe("ItemsService", () => {
         [
           {
             ...items[0],
+            stats: {
+              lvl: 10,
+            },
+            numericStats: {
+              lvl: 10,
+            },
+            statsKeys: ["lvl"],
+            requiredProfessions: ["w", "p", "h", "m", "b", "t"],
             hid: "",
             uid: "1_Berufs",
           },
@@ -160,6 +252,7 @@ describe("ItemsService", () => {
           id: 1,
           name: "",
           icon: "broken.png",
+          stat: "lvl=1",
           lvl: 1,
           rarity: null,
           type: null,
@@ -182,6 +275,7 @@ describe("ItemsService", () => {
           hid: "hid-1",
           name: "Sword",
           icon: "sword.png",
+          stat: "lvl=10",
           lvl: 10,
           rarity: "heroic",
           type: "weapon",

@@ -340,6 +340,18 @@ describe("LootsService", () => {
       expect(prismaService.lootSubmission.createMany).toHaveBeenCalled();
       expect(playersService.bulkIndexPlayers).toHaveBeenCalled();
       expect(npcsService.bulkIndexNpcs).toHaveBeenCalled();
+      expect(_itemsService.bulkIndexItems).toHaveBeenCalledWith([
+        {
+          id: 1,
+          name: "Test Item",
+          icon: "item.png",
+          stat: "lvl=50;rarity=UNIQUE",
+          lvl: 50,
+          rarity: ItemRarity.UNIQUE,
+          type: "ONE_HAND_WEAPON",
+          world: "testworld",
+        },
+      ]);
       expect(result).toEqual(expectedSuccessResponse);
     });
 

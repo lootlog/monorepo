@@ -8,6 +8,7 @@ import type { GetItemsDto } from "./dto/get-items.dto";
 import { ITEMS_INDEX } from "./constants/meilisearch";
 import type { IndexItemsDto } from "./dto/index-items.dto";
 import type { itemHitSchema } from "./dto/item-hit.schema";
+import { createItemSearchFields } from "./utils/create-item-search-fields";
 
 type ItemHit = z.infer<typeof itemHitSchema>;
 
@@ -18,26 +19,66 @@ export class ItemsService {
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
   ) {}
 
-  async getItems({ limit, search, world }: GetItemsDto) {
+  async searchItems({
+    facets,
+    filter,
+    limit,
+    offset,
+    search,
+    sort,
+    world,
+  }: GetItemsDto) {
     const index = this.meilisearch.index<ItemHit>(ITEMS_INDEX);
     const searchTerm = search ?? "";
+    const filters = [
+      ...(Array.isArray(filter) ? filter : filter ? [filter] : []),
+      ...(world ? [`world = ${JSON.stringify(world)}`] : []),
+    ];
 
     const query: SearchParams = {
       limit,
-      attributesToSearchOn: ["name"],
+      offset,
+      attributesToSearchOn: ["name", "stat"],
+      ...(facets && facets.length > 0 ? { facets } : {}),
+      ...(filters.length > 0 ? { filter: filters.join(" AND ") } : {}),
+      ...(sort && sort.length > 0 ? { sort } : {}),
     };
-
-    if (world) {
-      query.filter = `world = "${world}"`;
-    }
 
     try {
       const data = await index.search(searchTerm, query);
-      return data.hits;
+      return {
+        hits: data.hits,
+        estimatedTotalHits:
+          "estimatedTotalHits" in data
+            ? data.estimatedTotalHits
+            : (data.totalHits ?? data.hits.length),
+        facetDistribution: data.facetDistribution ?? {},
+        facetStats: data.facetStats ?? {},
+      };
     } catch (error) {
       this.logger.error("Items search error", { error });
-      return [];
+      return {
+        hits: [],
+        estimatedTotalHits: 0,
+        facetDistribution: {},
+        facetStats: {},
+      };
     }
+  }
+
+  async getItems({
+    limit,
+    search,
+    world,
+  }: Pick<GetItemsDto, "limit" | "search" | "world">) {
+    const response = await this.searchItems({
+      limit,
+      offset: 0,
+      search,
+      world,
+    });
+
+    return response.hits;
   }
 
   async indexItems(data: IndexItemsDto) {
@@ -60,6 +101,7 @@ export class ItemsService {
 
     const itemsWithUid = validItems.map((item) => ({
       ...item,
+      ...createItemSearchFields(item.stat),
       hid: item.hid ?? "",
       uid: `${item.id}_${item.world}`,
     }));

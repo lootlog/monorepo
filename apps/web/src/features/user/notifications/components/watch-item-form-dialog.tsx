@@ -160,7 +160,7 @@ export const WatchFormDialog = ({
       enabled: itemSearchValue.length >= 2,
     },
   });
-  const itemSearchResults = itemSearchQuery.data ?? [];
+  const itemSearchResults = itemSearchQuery.data?.hits ?? [];
   const isItemsLoading = itemSearchQuery.isFetching;
 
   const resolvedItemId = isManualEntry

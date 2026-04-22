@@ -11,6 +11,17 @@ import { NPCS_INDEX } from "src/npcs/constants/meilisearch";
 import { PLAYERS_INDEX } from "src/players/constants/meilisearch";
 import { MEILISEARCH_CLIENT } from "./meilisearch.constants";
 
+const itemFilterableAttributes = [
+  "world",
+  "type",
+  "rarity",
+  "lvl",
+  "stats",
+  "numericStats",
+  "requiredProfessions",
+  "statsKeys",
+];
+
 @Injectable()
 export class MeilisearchIndexesService implements OnApplicationBootstrap {
   constructor(
@@ -31,11 +42,15 @@ export class MeilisearchIndexesService implements OnApplicationBootstrap {
           .waitTask(),
         this.meilisearch
           .index(ITEMS_INDEX)
-          .updateFilterableAttributes(["name", "world"])
+          .updateFilterableAttributes(itemFilterableAttributes)
           .waitTask(),
         this.meilisearch
           .index(ITEMS_INDEX)
-          .updateSearchableAttributes(["name"])
+          .updateSearchableAttributes(["name", "stat"])
+          .waitTask(),
+        this.meilisearch
+          .index(ITEMS_INDEX)
+          .updateSortableAttributes(["name", "lvl", "rarity", "type"])
           .waitTask(),
       ]);
     } catch (error) {

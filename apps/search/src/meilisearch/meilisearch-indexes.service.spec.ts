@@ -29,6 +29,10 @@ describe("MeilisearchIndexesService", () => {
     waitTask: vi.fn(),
   };
 
+  const itemsSortTask = {
+    waitTask: vi.fn(),
+  };
+
   const npcsIndexMock = {
     updateFilterableAttributes: vi.fn(),
   };
@@ -40,6 +44,7 @@ describe("MeilisearchIndexesService", () => {
   const itemsIndexMock = {
     updateFilterableAttributes: vi.fn(),
     updateSearchableAttributes: vi.fn(),
+    updateSortableAttributes: vi.fn(),
   };
 
   const meilisearchMock = {
@@ -51,6 +56,7 @@ describe("MeilisearchIndexesService", () => {
     playersFilterTask.waitTask.mockResolvedValue(undefined);
     itemsFilterTask.waitTask.mockResolvedValue(undefined);
     itemsSearchTask.waitTask.mockResolvedValue(undefined);
+    itemsSortTask.waitTask.mockResolvedValue(undefined);
 
     npcsIndexMock.updateFilterableAttributes.mockReturnValue(npcsFilterTask);
     playersIndexMock.updateFilterableAttributes.mockReturnValue(
@@ -58,6 +64,7 @@ describe("MeilisearchIndexesService", () => {
     );
     itemsIndexMock.updateFilterableAttributes.mockReturnValue(itemsFilterTask);
     itemsIndexMock.updateSearchableAttributes.mockReturnValue(itemsSearchTask);
+    itemsIndexMock.updateSortableAttributes.mockReturnValue(itemsSortTask);
 
     meilisearchMock.index.mockImplementation((indexName: string) => {
       if (indexName === NPCS_INDEX) {
@@ -110,11 +117,24 @@ describe("MeilisearchIndexesService", () => {
         "world",
       ]);
       expect(itemsIndexMock.updateFilterableAttributes).toHaveBeenCalledWith([
-        "name",
         "world",
+        "type",
+        "rarity",
+        "lvl",
+        "stats",
+        "numericStats",
+        "requiredProfessions",
+        "statsKeys",
       ]);
       expect(itemsIndexMock.updateSearchableAttributes).toHaveBeenCalledWith([
         "name",
+        "stat",
+      ]);
+      expect(itemsIndexMock.updateSortableAttributes).toHaveBeenCalledWith([
+        "name",
+        "lvl",
+        "rarity",
+        "type",
       ]);
       expect(loggerMock.error).not.toHaveBeenCalled();
     });
