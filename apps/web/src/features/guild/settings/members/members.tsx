@@ -24,30 +24,39 @@ import {
 } from "@/components/selector-panel";
 import { MemberListItem } from "@/features/guild/settings/members/components/member-list-item";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useGuildsControllerGetGuildById } from "@/lib/api/generated/main/guilds/guilds";
+import {
+  useGuildsControllerGetGuildById,
+  useGuildsControllerGetGuildPermissions,
+} from "@/lib/api/generated/main/guilds/guilds";
 import { useMembersControllerGetGuildMembers } from "@/lib/api/generated/main/members/members";
 import type { MemberResponseDto as GuildMember } from "@/lib/api/generated/main/model";
+import { useTranslation } from "react-i18next";
 
-const MembersSettingsHeader = () => (
-  <Card className="mx-3 mt-3 gap-4 border-border bg-card/60 p-4 backdrop-blur-sm shrink-0">
-    <div className="flex items-center gap-3 flex-1 min-w-0">
-      <div className="p-2.5 rounded-xl bg-primary/10 shadow-inner shadow-primary/10">
-        <Users className="size-4 text-primary" />
+const MembersSettingsHeader = () => {
+  const { t } = useTranslation();
+
+  return (
+    <Card className="mx-3 mt-3 gap-4 border-border bg-card/60 p-4 backdrop-blur-sm shrink-0">
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        <div className="p-2.5 rounded-xl bg-primary/10 shadow-inner shadow-primary/10">
+          <Users className="size-4 text-primary" />
+        </div>
+        <div>
+          <h2 className="text-base font-semibold leading-tight">
+            {t("settings.members.title")}
+          </h2>
+          <p className="text-xs text-muted-foreground leading-tight">
+            {t("settings.members.description")}
+          </p>
+        </div>
       </div>
-      <div>
-        <h2 className="text-base font-semibold leading-tight">
-          Ustawienia członków
-        </h2>
-        <p className="text-xs text-muted-foreground leading-tight">
-          Zarządzaj członkami lootloga
-        </p>
-      </div>
-    </div>
-    <RefreshMembersButton />
-  </Card>
-);
+      <RefreshMembersButton />
+    </Card>
+  );
+};
 
 const MembersSettingsContent = () => {
+  const { t } = useTranslation();
   const [showInactive, setShowInactive] = useState(false);
   const showInactiveCheckboxId = "show-inactive-members";
   const guildId = useGuildId();
@@ -61,6 +70,9 @@ const MembersSettingsContent = () => {
   const { data: guild } = useGuildsControllerGetGuildById({
     guildId: guildId ?? "",
   });
+  const { data: permissions } = useGuildsControllerGetGuildPermissions({
+    guildId: guildId ?? "",
+  });
   const {
     selectedItem: selectedMember,
     setSelectedItem: setSelectedMember,
@@ -68,6 +80,10 @@ const MembersSettingsContent = () => {
     setIsMobileDrawerOpen,
     isMobile,
   } = useSelectorPanel<GuildMember>();
+  const canManageMembers = Boolean(
+    permissions?.includes(Permission.ADMIN) ||
+    permissions?.includes(Permission.OWNER),
+  );
 
   const filteredMembers = useMemo(() => {
     if (!members || !guild) return [];
@@ -139,6 +155,7 @@ const MembersSettingsContent = () => {
                 <MembersPanelContent
                   selectedMemberColor={selectedMemberColor}
                   isOwner={selectedMember.userId === guild?.ownerId}
+                  canManageMembers={canManageMembers}
                 />
               )}
             </div>
@@ -151,7 +168,7 @@ const MembersSettingsContent = () => {
         <Card className="mx-3 mt-3 mb-3 shrink-0 border-border bg-card/40 p-3 backdrop-blur-sm flex gap-3 items-center flex-row">
           <SearchInput
             onChange={(e) => setSearchValue(e.target.value)}
-            placeholder="Szukaj członka..."
+            placeholder={t("settings.members.searchPlaceholder")}
             className="h-9"
             wrapperClassName="flex-1"
           />
@@ -164,7 +181,7 @@ const MembersSettingsContent = () => {
               checked={showInactive}
               onCheckedChange={(checked) => setShowInactive(checked === true)}
             />
-            Nieaktywni
+            {t("settings.members.showInactive")}
           </Label>
         </Card>
 
@@ -215,10 +232,10 @@ const MembersSettingsContent = () => {
                   <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                     <Users className="size-12 mb-4 opacity-30" />
                     <p className="text-sm font-medium">
-                      Nie znaleziono członków
+                      {t("settings.members.emptyTitle")}
                     </p>
                     <p className="text-xs mt-1">
-                      Spróbuj zmienić kryteria wyszukiwania
+                      {t("settings.members.emptyDescription")}
                     </p>
                   </div>
                 )}
@@ -232,6 +249,7 @@ const MembersSettingsContent = () => {
                 <MembersPanelContent
                   selectedMemberColor={selectedMemberColor}
                   isOwner={selectedMember.userId === guild?.ownerId}
+                  canManageMembers={canManageMembers}
                 />
               </div>
             </div>

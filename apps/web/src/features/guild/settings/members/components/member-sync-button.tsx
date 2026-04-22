@@ -92,7 +92,7 @@ export const MemberSyncButton: FC<MemberSyncButtonProps> = ({ member }) => {
   );
   const tooltipText = canRefresh
     ? canTriggerRefreshText
-    : t("settings.members.refreshError");
+    : t("settings.members.refreshUnavailable");
 
   return (
     <Tooltip>

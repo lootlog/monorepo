@@ -11,8 +11,4 @@ export interface UserLootlogConfigResponseDtoOutput {
   accountId: string;
   characterId: string;
   catchingGuildIds: string[];
-  /** DEPRECATED: Use catchingGuildIds instead */
-  collectLootWhitelistGuildIds: string[];
-  /** DEPRECATED: Use catchingGuildIds instead */
-  addTimersWhitelistGuildIds: string[];
 }

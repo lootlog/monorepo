@@ -32,6 +32,7 @@ import {
   NullableMemberResponseDto,
 } from "src/shared/dto/member-response.dto";
 import { MemberSummaryResponseDto } from "src/shared/dto/member-summary-response.dto";
+import { MemberLootlogConfigSummaryResponseDto } from "src/shared/dto/member-lootlog-config-summary-response.dto";
 
 @ApiTags("members")
 @ApiBearerAuth()
@@ -154,6 +155,40 @@ export class MembersController {
     @GuildData() guild: Guild,
   ) {
     return this.membersService.deactivateMember({
+      discordId,
+      guildId: guild.id,
+    });
+  }
+
+  @Permissions(Permission.ADMIN, Permission.OWNER)
+  @UseGuards(PermissionsGuard)
+  @Get("/:discordId/lootlog-config-summary")
+  @ApiOperation({
+    summary: "Get member lootlog config summary",
+    description:
+      "Retrieve guild-scoped lootlog configuration summary for a specific member (admin only)",
+  })
+  @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
+  @ApiParam({
+    name: "discordId",
+    description: "Discord user ID",
+    example: "user_123",
+  })
+  @ZodResponse({
+    status: 200,
+    description: "Member lootlog configuration summary",
+    type: MemberLootlogConfigSummaryResponseDto,
+  })
+  @ApiResponse({
+    status: 403,
+    description: "Forbidden - admin permission required",
+  })
+  @ApiResponse({ status: 404, description: "Member not found" })
+  async getMemberLootlogConfigSummary(
+    @Param("discordId") discordId: string,
+    @GuildData() guild: Guild,
+  ) {
+    return this.membersService.getMemberLootlogConfigSummary({
       discordId,
       guildId: guild.id,
     });

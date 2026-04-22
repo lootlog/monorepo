@@ -10,9 +10,5 @@ export interface CreateOrUpdateLootlogCharacterConfigDto {
   /** @minLength 1 */
   characterId: string;
   /** Guild IDs used for catching-related actions */
-  catchingGuildIds?: string[];
-  /** DEPRECATED: Use catchingGuildIds instead */
-  lootGuildIds?: string[];
-  /** DEPRECATED: Use catchingGuildIds instead */
-  timerGuildIds?: string[];
+  catchingGuildIds: string[];
 }

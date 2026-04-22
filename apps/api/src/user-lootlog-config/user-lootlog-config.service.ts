@@ -1,9 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "src/db/prisma.service";
-import {
-  resolveCatchingGuildIds,
-  type CreateOrUpdateLootlogCharacterConfigDto,
-} from "src/user-lootlog-config/dto/create-user-account-config.dto";
+import type { CreateOrUpdateLootlogCharacterConfigDto } from "src/user-lootlog-config/dto/create-user-account-config.dto";
 import { toUserLootlogConfigResponse } from "src/shared/dto/user-lootlog-config-response.dto";
 
 @Injectable()
@@ -36,7 +33,7 @@ export class UserLootlogConfigService {
     }, {});
   }
 
-  async getLootlogCharacterConfig(
+  getLootlogCharacterConfig(
     discordId: string,
     accountId: string,
     characterId: string,
@@ -58,8 +55,7 @@ export class UserLootlogConfigService {
     accountId: string,
     data: CreateOrUpdateLootlogCharacterConfigDto,
   ) {
-    const catchingGuildIds = resolveCatchingGuildIds(data);
-    const normalizedCatchingGuildIds = [...new Set(catchingGuildIds)];
+    const normalizedCatchingGuildIds = [...new Set(data.catchingGuildIds)];
 
     const config = await this.prisma.userCharactersLootlogSettings.upsert({
       where: {

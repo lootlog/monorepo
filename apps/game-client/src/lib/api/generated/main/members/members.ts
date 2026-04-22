@@ -23,6 +23,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  MemberLootlogConfigSummaryResponseDtoOutput,
   MemberRefreshJobResponseDto,
   MemberResponseDto,
   MemberSummaryResponseDtoOutput,
@@ -32,6 +33,7 @@ import type {
   MembersControllerGetGuildMembersSummaryPathParameters,
   MembersControllerGetLatestRefreshJobPathParameters,
   MembersControllerGetMePathParameters,
+  MembersControllerGetMemberLootlogConfigSummaryPathParameters,
   MembersControllerGetRefreshJobStatusPathParameters,
   MembersControllerRefreshAllMembersPathParameters,
   MembersControllerRefreshMePathParameters,
@@ -378,6 +380,125 @@ export const useMembersControllerDeactivateMember = <TError = ErrorType<void>,
       return useMutation(getMembersControllerDeactivateMemberMutationOptions(options));
     }
     /**
+ * Retrieve guild-scoped lootlog configuration summary for a specific member (admin only)
+ * @summary Get member lootlog config summary
+ */
+export const getMembersControllerGetMemberLootlogConfigSummaryUrl = ({ guildId, discordId }: MembersControllerGetMemberLootlogConfigSummaryPathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/members/${discordId}/lootlog-config-summary`
+}
+
+export const membersControllerGetMemberLootlogConfigSummary = async ({ guildId, discordId }: MembersControllerGetMemberLootlogConfigSummaryPathParameters, options?: RequestInit): Promise<MemberLootlogConfigSummaryResponseDtoOutput> => {
+
+  return orvalFetch<MemberLootlogConfigSummaryResponseDtoOutput>(getMembersControllerGetMemberLootlogConfigSummaryUrl({ guildId, discordId }),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getMembersControllerGetMemberLootlogConfigSummaryQueryKey = ({ guildId, discordId }: MembersControllerGetMemberLootlogConfigSummaryPathParameters,) => {
+    return [
+    `/guilds/${guildId}/members/${discordId}/lootlog-config-summary`
+    ] as const;
+    }
+
+
+export const getMembersControllerGetMemberLootlogConfigSummaryQueryOptions = <TData = Awaited<ReturnType<typeof membersControllerGetMemberLootlogConfigSummary>>, TError = ErrorType<void>>({ guildId, discordId }: MembersControllerGetMemberLootlogConfigSummaryPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof membersControllerGetMemberLootlogConfigSummary>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getMembersControllerGetMemberLootlogConfigSummaryQueryKey({ guildId, discordId });
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof membersControllerGetMemberLootlogConfigSummary>>> = ({ signal }) => membersControllerGetMemberLootlogConfigSummary({ guildId, discordId }, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(guildId && discordId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof membersControllerGetMemberLootlogConfigSummary>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type MembersControllerGetMemberLootlogConfigSummaryQueryResult = NonNullable<Awaited<ReturnType<typeof membersControllerGetMemberLootlogConfigSummary>>>
+export type MembersControllerGetMemberLootlogConfigSummaryQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get member lootlog config summary
+ */
+
+export function useMembersControllerGetMemberLootlogConfigSummary<TData = Awaited<ReturnType<typeof membersControllerGetMemberLootlogConfigSummary>>, TError = ErrorType<void>>(
+ { guildId, discordId }: MembersControllerGetMemberLootlogConfigSummaryPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof membersControllerGetMemberLootlogConfigSummary>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getMembersControllerGetMemberLootlogConfigSummaryQueryOptions({ guildId, discordId },options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get member lootlog config summary
+ */
+export const prefetchMembersControllerGetMemberLootlogConfigSummaryQuery = async <TData = Awaited<ReturnType<typeof membersControllerGetMemberLootlogConfigSummary>>, TError = ErrorType<void>>(
+ queryClient: QueryClient, { guildId, discordId }: MembersControllerGetMemberLootlogConfigSummaryPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof membersControllerGetMemberLootlogConfigSummary>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getMembersControllerGetMemberLootlogConfigSummaryQueryOptions({ guildId, discordId },options)
+
+  await queryClient.prefetchQuery(queryOptions);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get member lootlog config summary
+ */
+export const invalidateMembersControllerGetMemberLootlogConfigSummary = async (
+ queryClient: QueryClient, { guildId, discordId }: MembersControllerGetMemberLootlogConfigSummaryPathParameters, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getMembersControllerGetMemberLootlogConfigSummaryQueryKey({ guildId, discordId }) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get member lootlog config summary
+ */
+export const useSetMembersControllerGetMemberLootlogConfigSummaryQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId, discordId }: MembersControllerGetMemberLootlogConfigSummaryPathParameters,updater: Awaited<ReturnType<typeof membersControllerGetMemberLootlogConfigSummary>> | undefined | ((old: Awaited<ReturnType<typeof membersControllerGetMemberLootlogConfigSummary>> | undefined) => Awaited<ReturnType<typeof membersControllerGetMemberLootlogConfigSummary>> | undefined)) => {
+    queryClient.setQueryData(getMembersControllerGetMemberLootlogConfigSummaryQueryKey({ guildId, discordId }), updater);
+  };
+}
+
+/**
+ * @summary Get member lootlog config summary
+ */
+export const useGetMembersControllerGetMemberLootlogConfigSummaryQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId, discordId }: MembersControllerGetMemberLootlogConfigSummaryPathParameters,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof membersControllerGetMemberLootlogConfigSummary>>>(getMembersControllerGetMemberLootlogConfigSummaryQueryKey({ guildId, discordId }));
+}
+
+
+/**
  * Retrieve all members for a guild
  * @summary Get guild members
  */

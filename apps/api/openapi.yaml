@@ -267,6 +267,40 @@ paths:
       summary: Deactivate member
       tags:
         - members
+  /guilds/{guildId}/members/{discordId}/lootlog-config-summary:
+    get:
+      description: Retrieve guild-scoped lootlog configuration summary for a specific member (admin only)
+      operationId: MembersController_getMemberLootlogConfigSummary
+      parameters:
+        - name: discordId
+          required: true
+          in: path
+          description: Discord user ID
+          schema:
+            example: user_123
+            type: string
+        - name: guildId
+          required: true
+          in: path
+          description: Guild ID
+          schema:
+            example: guild_123
+      responses:
+        "200":
+          description: Member lootlog configuration summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemberLootlogConfigSummaryResponseDto_Output"
+        "403":
+          description: Forbidden - admin permission required
+        "404":
+          description: Member not found
+      security:
+        - bearer: []
+      summary: Get member lootlog config summary
+      tags:
+        - members
   /guilds/{guildId}/members:
     get:
       description: Retrieve all members for a guild
@@ -6200,6 +6234,60 @@ components:
         - active
         - roles
         - updatedAt
+    MemberLootlogConfigSummaryResponseDto_Output:
+      type: object
+      properties:
+        memberUserId:
+          type: string
+        guildId:
+          type: string
+        isActive:
+          type: boolean
+        configuredCharacterCount:
+          type: number
+        enabledCharacterCount:
+          type: number
+        characters:
+          type: array
+          items:
+            type: object
+            properties:
+              accountId:
+                type: string
+              characterId:
+                type: string
+              enabledForGuild:
+                type: boolean
+              characterName:
+                type: string
+                nullable: true
+              world:
+                type: string
+                nullable: true
+              icon:
+                type: string
+                nullable: true
+              metadataStatus:
+                type: string
+                enum:
+                  - resolved
+                  - missing_snapshot
+                  - invalid_character_ref
+            required:
+              - accountId
+              - characterId
+              - enabledForGuild
+              - characterName
+              - world
+              - icon
+              - metadataStatus
+      required:
+        - memberUserId
+        - guildId
+        - isActive
+        - configuredCharacterCount
+        - enabledCharacterCount
+        - characters
     MemberSummaryResponseDto_Output:
       type: object
       properties:
@@ -7083,23 +7171,11 @@ components:
             type: array
             items:
               type: string
-          collectLootWhitelistGuildIds:
-            type: array
-            items:
-              type: string
-            description: "DEPRECATED: Use catchingGuildIds instead"
-          addTimersWhitelistGuildIds:
-            type: array
-            items:
-              type: string
-            description: "DEPRECATED: Use catchingGuildIds instead"
         required:
           - userId
           - accountId
           - characterId
           - catchingGuildIds
-          - collectLootWhitelistGuildIds
-          - addTimersWhitelistGuildIds
     CreateOrUpdateLootlogCharacterConfigDto:
       type: object
       properties:
@@ -7107,22 +7183,13 @@ components:
           type: string
           minLength: 1
         catchingGuildIds:
+          type: array
+          items:
+            type: string
           description: Guild IDs used for catching-related actions
-          type: array
-          items:
-            type: string
-        lootGuildIds:
-          description: "DEPRECATED: Use catchingGuildIds instead"
-          type: array
-          items:
-            type: string
-        timerGuildIds:
-          description: "DEPRECATED: Use catchingGuildIds instead"
-          type: array
-          items:
-            type: string
       required:
         - characterId
+        - catchingGuildIds
     UserLootlogConfigResponseDto_Output:
       type: object
       properties:
@@ -7136,23 +7203,11 @@ components:
           type: array
           items:
             type: string
-        collectLootWhitelistGuildIds:
-          type: array
-          items:
-            type: string
-          description: "DEPRECATED: Use catchingGuildIds instead"
-        addTimersWhitelistGuildIds:
-          type: array
-          items:
-            type: string
-          description: "DEPRECATED: Use catchingGuildIds instead"
       required:
         - userId
         - accountId
         - characterId
         - catchingGuildIds
-        - collectLootWhitelistGuildIds
-        - addTimersWhitelistGuildIds
     TimerSettingsResponseDto__schema0:
       anyOf:
         - type: string

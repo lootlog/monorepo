@@ -1,7 +1,6 @@
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import type { MemberResponseDto as GuildMember } from "@/lib/api/generated/main/model";
 import { MemberData } from "@/features/guild/settings/members/components/member-data";
-import { MemberSyncButton } from "@/features/guild/settings/members/components/member-sync-button";
 import { ArrowLeft, Crown } from "lucide-react";
 import { useMemo, type FC } from "react";
 import { useSelectorPanel } from "@/components/selector-panel";
@@ -21,11 +20,13 @@ import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 export type MembersPanelContentProps = {
   selectedMemberColor: string | undefined;
   isOwner?: boolean;
+  canManageMembers: boolean;
 };
 
 export const MembersPanelContent: FC<MembersPanelContentProps> = ({
   selectedMemberColor,
   isOwner = false,
+  canManageMembers,
 }) => {
   const { t } = useTranslation();
   const {
@@ -143,14 +144,14 @@ export const MembersPanelContent: FC<MembersPanelContentProps> = ({
                 );
               })}
             </TooltipProvider>
-            <div className="ml-2">
-              <MemberSyncButton member={selectedMember} />
-            </div>
           </div>
         </div>
       )}
       <ScrollArea className="flex-1 min-h-0 overflow-hidden">
-        <MemberData member={selectedMember} />
+        <MemberData
+          member={selectedMember}
+          canManageMembers={canManageMembers}
+        />
       </ScrollArea>
     </div>
   );
