@@ -1,7 +1,4 @@
-import type {
-  ChatMessageResponseDtoOutput as ChatMessageType,
-  MemberSummaryResponseDtoOutput as GuildMember,
-} from "@/lib/api/generated/main/model";
+import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@/lib/api/generated/main/model";
 import type { ChatFilter } from "@/store/chat.store";
 import { MessageType } from "@/api/chat.api";
 
@@ -93,50 +90,49 @@ export const getCurrentChatMessages = (
 
 export const hasVisibleChatMessages = (
   messages: ChatMessageType[],
-  memberCache: Record<string, Record<string, GuildMember>>,
   guildNamesById: Record<string, string>,
 ) => {
   return messages.some((message) => {
-    const members = memberCache[message.guildId] ?? {};
-    const member = members[message.senderId];
-
-    return (
-      !!message.characterData &&
-      !!member?.name &&
-      !!guildNamesById[message.guildId]
-    );
+    return !!message.characterData && !!guildNamesById[message.guildId];
   });
 };
 
-type SyncChatCacheOptions = {
-  selectedGuildId?: string;
-  messages?: ChatMessageType[];
-  guildMembers?: Record<string, GuildMember>;
-  messageCache: Record<string, ChatMessageType[]>;
-  memberCache: Record<string, Record<string, GuildMember>>;
-  setMessageCache: (guildId: string, messages: ChatMessageType[]) => void;
-  setMemberCache: (
-    guildId: string,
-    members: Record<string, GuildMember>,
-  ) => void;
+export const upsertChatMessage = (
+  messages: ChatMessageType[] = [],
+  nextMessage: ChatMessageType,
+) => {
+  const existingMessageIndex = messages.findIndex(
+    (message) => message.id === nextMessage.id,
+  );
+
+  if (existingMessageIndex === -1) {
+    return [...messages, nextMessage];
+  }
+
+  return messages.map((message) =>
+    message.id === nextMessage.id ? nextMessage : message,
+  );
 };
 
-export const syncSelectedGuildChatCache = ({
-  selectedGuildId,
-  messages,
-  guildMembers,
-  messageCache,
-  memberCache,
-  setMessageCache,
-  setMemberCache,
-}: SyncChatCacheOptions) => {
-  if (!selectedGuildId || selectedGuildId === "all") return;
+export const removeChatMessage = (
+  messages: ChatMessageType[] = [],
+  messageId: string,
+) => {
+  return messages.filter((message) => message.id !== messageId);
+};
 
-  if (!messageCache[selectedGuildId] && messages?.length) {
-    setMessageCache(selectedGuildId, messages);
-  }
-
-  if (!memberCache[selectedGuildId] && guildMembers) {
-    setMemberCache(selectedGuildId, guildMembers);
-  }
+export const updateChatMessage = (
+  messages: ChatMessageType[] = [],
+  messageId: string,
+  messageBody: string,
+) => {
+  return messages.map((message) =>
+    message.id === messageId
+      ? {
+          ...message,
+          message: messageBody,
+          partyGathering: undefined,
+        }
+      : message,
+  );
 };

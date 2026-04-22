@@ -1,7 +1,7 @@
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import type { FC } from "react";
+import { useState, type FC } from "react";
 import { MessageType } from "@/api/chat.api";
 import type {
   ChatMessageResponseDtoOutput as ChatMessageType,
@@ -25,6 +25,19 @@ import {
   getChatMessageBody,
   isChatMessageYesterdayOrOlder,
 } from "./chat-message.helpers";
+import { Input } from "@/components/ui/input";
+import { useTranslation } from "react-i18next";
+import { useSession } from "@/hooks/auth/use-session";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  getChatControllerGetChatMessagesQueryKey,
+  useChatControllerDeleteChatMessage,
+  useChatControllerUpdateChatMessage,
+} from "@/lib/api/generated/main/chat/chat";
+import {
+  removeChatMessage,
+  updateChatMessage,
+} from "@/features/chat/chat.helpers";
 
 type ChatMessageProps = {
   all: boolean;
@@ -39,13 +52,54 @@ export const ChatMessage: FC<ChatMessageProps> = ({
   guildName,
   member,
 }) => {
+  const { t } = useTranslation("chat");
+  const { data: session } = useSession();
+  const queryClient = useQueryClient();
   const memberColor = useMemberColor(member);
   const isMsgYesterday = isChatMessageYesterdayOrOlder(message.timestamp);
   const messageBody = getChatMessageBody(message);
+  const [isEditing, setIsEditing] = useState(false);
+  const [draftMessage, setDraftMessage] = useState(message.message);
+  const { mutate: updateChatMessageMutation, isPending: isUpdating } =
+    useChatControllerUpdateChatMessage({
+      mutation: {
+        onSuccess: () => {
+          queryClient.setQueryData(
+            getChatControllerGetChatMessagesQueryKey({
+              guildId: message.guildId,
+            }),
+            (old: ChatMessageType[] | undefined) =>
+              old
+                ? updateChatMessage(old, message.id, draftMessage.trim())
+                : old,
+          );
+          setIsEditing(false);
+        },
+      },
+    });
+  const { mutate: deleteChatMessageMutation, isPending: isDeleting } =
+    useChatControllerDeleteChatMessage({
+      mutation: {
+        onSuccess: () => {
+          queryClient.setQueryData(
+            getChatControllerGetChatMessagesQueryKey({
+              guildId: message.guildId,
+            }),
+            (old: ChatMessageType[] | undefined) =>
+              old ? removeChatMessage(old, message.id) : old,
+          );
+        },
+      },
+    });
+  const isOwnMessage = session?.user?.discordId === message.senderId;
+  const canManageMessage =
+    isOwnMessage &&
+    (message.type === MessageType.NORMAL ||
+      message.type === MessageType.NOTIFICATION);
+  const senderName =
+    member?.name ?? message.characterData?.nick ?? t("contextMenu.unknownUser");
 
   if (!message.characterData) return null;
-
-  if (!member?.name) return null;
 
   if (!guildName) return null;
 
@@ -95,27 +149,71 @@ export const ChatMessage: FC<ChatMessageProps> = ({
                   })}
                   style={{ color: `#${memberColor}` }}
                 >
-                  {member?.name || "Nieznany"}:
+                  {senderName}:
                 </span>
               </span>{" "}
-              <span
-                className="ll:whitespace-pre-wrap ll:select-text"
-                style={{
-                  overflowWrap: "anywhere",
-                  wordBreak: "normal",
-                }}
-              >
-                {messageBody && (
-                  <span
-                    className={cn("ll:select-text", {
-                      "ll:opacity-50": isMsgYesterday,
-                    })}
-                    style={{ color: messageBody.color }}
+              {isEditing ? (
+                <form
+                  className="ll:inline-flex ll:w-full ll:max-w-full ll:items-center ll:gap-1"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    updateChatMessageMutation({
+                      pathParams: {
+                        guildId: message.guildId,
+                        messageId: message.id,
+                      },
+                      data: {
+                        message: draftMessage.trim(),
+                      },
+                    });
+                  }}
+                >
+                  <Input
+                    value={draftMessage}
+                    disabled={isUpdating}
+                    maxLength={128}
+                    onChange={(event) => setDraftMessage(event.target.value)}
+                    className="ll:h-5 ll:flex-1"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isUpdating || draftMessage.trim().length === 0}
+                    className="ll:text-[10px] ll:text-blue-300 ll:hover:text-blue-200 ll:disabled:opacity-50"
                   >
-                    {messageBody.text}
-                  </span>
-                )}
-              </span>
+                    {t("edit.save")}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isUpdating}
+                    className="ll:text-[10px] ll:text-gray-400 ll:hover:text-gray-300 ll:disabled:opacity-50"
+                    onClick={() => {
+                      setDraftMessage(message.message);
+                      setIsEditing(false);
+                    }}
+                  >
+                    {t("edit.cancel")}
+                  </button>
+                </form>
+              ) : (
+                <span
+                  className="ll:whitespace-pre-wrap ll:select-text"
+                  style={{
+                    overflowWrap: "anywhere",
+                    wordBreak: "normal",
+                  }}
+                >
+                  {messageBody && (
+                    <span
+                      className={cn("ll:select-text", {
+                        "ll:opacity-50": isMsgYesterday,
+                      })}
+                      style={{ color: messageBody.color }}
+                    >
+                      {messageBody.text}
+                    </span>
+                  )}
+                </span>
+              )}
             </ContextMenuTrigger>
           </TooltipTrigger>
           <TooltipContent className="ll:bg-black ll:p-2">
@@ -141,7 +239,33 @@ export const ChatMessage: FC<ChatMessageProps> = ({
                   .setPrivateMessageProcedure(message.characterData.nick);
               }}
             >
-              Wyślij wiadomość
+              {t("contextMenu.sendMessage")}
+            </ContextMenuItem>
+          )}
+          {canManageMessage && (
+            <ContextMenuItem
+              disabled={isUpdating || isDeleting}
+              onClick={() => {
+                setDraftMessage(message.message);
+                setIsEditing(true);
+              }}
+            >
+              {t("contextMenu.edit")}
+            </ContextMenuItem>
+          )}
+          {canManageMessage && (
+            <ContextMenuItem
+              disabled={isUpdating || isDeleting}
+              onClick={() => {
+                deleteChatMessageMutation({
+                  pathParams: {
+                    guildId: message.guildId,
+                    messageId: message.id,
+                  },
+                });
+              }}
+            >
+              {t("contextMenu.delete")}
             </ContextMenuItem>
           )}
           {Game.interface === "ni" && (
@@ -157,7 +281,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({
                 });
               }}
             >
-              Pokaż ekwipunek
+              {t("contextMenu.showEquipment")}
             </ContextMenuItem>
           )}
           {message.characterData.nick !== Game.hero.nick && (
@@ -169,7 +293,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({
                 );
               }}
             >
-              Zaproś do przyjaciół
+              {t("contextMenu.inviteFriends")}
             </ContextMenuItem>
           )}
           {message.characterData.nick !== Game.hero.nick && (
@@ -178,7 +302,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({
                 window._g("party&a=inv&id=" + message.characterData.id);
               }}
             >
-              Zaproś do drużyny
+              {t("contextMenu.inviteParty")}
             </ContextMenuItem>
           )}
           {Game.interface === "ni" && (
@@ -190,7 +314,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({
                 });
               }}
             >
-              Pokaż profil
+              {t("contextMenu.showProfile")}
             </ContextMenuItem>
           )}
         </ContextMenuContent>

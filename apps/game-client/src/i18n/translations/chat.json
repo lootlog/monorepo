@@ -21,6 +21,20 @@
     "hideInput": "Ukryj pole czatu",
     "showInput": "Pokaż pole czatu"
   },
+  "edit": {
+    "save": "Zapisz",
+    "cancel": "Anuluj"
+  },
+  "contextMenu": {
+    "unknownUser": "Nieznany",
+    "sendMessage": "Wyślij wiadomość",
+    "edit": "Edytuj",
+    "delete": "Usuń",
+    "showEquipment": "Pokaż ekwipunek",
+    "inviteFriends": "Zaproś do przyjaciół",
+    "inviteParty": "Zaproś do drużyny",
+    "showProfile": "Pokaż profil"
+  },
   "partyGathering": {
     "levelRange": "Poziom: {{min}} - {{max}}",
     "volunteering": "Zgłaszanie...",

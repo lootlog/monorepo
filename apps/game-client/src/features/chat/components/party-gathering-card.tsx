@@ -16,7 +16,7 @@ import { useTranslation } from "react-i18next";
 
 type PartyGatheringCardProps = {
   message: ChatMessageResponseDtoOutput;
-  member: MemberSummaryResponseDtoOutput;
+  member?: MemberSummaryResponseDtoOutput;
   guildName: string;
   all: boolean;
   isMsgYesterday: boolean;
@@ -32,6 +32,8 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
   const { t } = useTranslation("chat");
   const memberColor = useMemberColor(member);
   const { mutate: volunteer, isPending } = useMessagingControllerVolunteer();
+  const senderName =
+    member?.name ?? message.characterData?.nick ?? t("contextMenu.unknownUser");
 
   const heroLvl = Game.hero.lvl;
   const isOwnMessage = message.characterData.nick === Game.hero.nick;
@@ -63,7 +65,7 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
             })}
             style={{ color: `#${memberColor}` }}
           >
-            {member.name}:
+            {senderName}:
           </span>{" "}
           <span
             className={cn("ll:font-bold ll:select-text", {
@@ -116,7 +118,7 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
           className="ll:font-bold ll:select-text"
           style={{ color: `#${memberColor}` }}
         >
-          {member.name}:
+          {senderName}:
         </span>{" "}
         <span
           className="ll:font-bold ll:select-text"

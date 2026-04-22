@@ -1,96 +1,66 @@
 import { GatewayEvent } from "@/config/gateway";
-import { type ChatMessage } from "@/api/chat.api";
-import { fetchGuildMembers } from "@/api/guilds.api";
+import type { ChatMessage } from "@/api/chat.api";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useRef } from "react";
-import { useChatCache } from "./use-chat-cache";
+import { useEffect, useRef } from "react";
 import { useSocket } from "@/contexts/socket-context";
+import { getChatControllerGetChatMessagesQueryKey } from "@/lib/api/generated/main/chat/chat";
 import {
-  chatControllerGetChatMessages,
-  getChatControllerGetChatMessagesQueryKey,
-} from "@/lib/api/generated/main/chat/chat";
+  getMembersControllerGetGuildMembersSummaryQueryKey,
+  membersControllerGetGuildMembersSummary,
+} from "@/lib/api/generated/main/members/members";
+import {
+  removeChatMessage,
+  updateChatMessage,
+  upsertChatMessage,
+} from "@/features/chat/chat.helpers";
 
 export const useChatMessagesListener = () => {
   const queryClient = useQueryClient();
   const { connected, socket } = useSocket();
 
-  const handleChatMessage = useCallback(
-    (data: ChatMessage) => {
-      queryClient.setQueryData(
-        getChatControllerGetChatMessagesQueryKey({ guildId: data.guildId }),
-        (old: ChatMessage[]) => {
-          if (!old) return [data];
+  const handlerRef = useRef<(data: ChatMessage) => void>(() => undefined);
+  handlerRef.current = (data) => {
+    queryClient.setQueryData(
+      getChatControllerGetChatMessagesQueryKey({ guildId: data.guildId }),
+      (old: ChatMessage[] | undefined) => upsertChatMessage(old, data),
+    );
 
-          return [...old, data];
-        },
-      );
-      if (!useChatCache.getState().messageCache[data.guildId]) {
-        chatControllerGetChatMessages({ guildId: data.guildId })
-          .then((messages) => {
-            if (messages.length) {
-              useChatCache.getState().setMessageCache(data.guildId, messages);
-            }
-          })
-          .catch(() => undefined);
-      }
-      if (!useChatCache.getState().memberCache[data.guildId]) {
-        fetchGuildMembers(data.guildId)
-          .then((members) => {
-            if (members) {
-              useChatCache.getState().setMemberCache(data.guildId, members);
-            }
-          })
-          .catch(() => undefined);
-      }
-      useChatCache.getState().appendMessage(data.guildId, data);
-    },
-    [queryClient],
-  );
+    const membersQueryKey = getMembersControllerGetGuildMembersSummaryQueryKey({
+      guildId: data.guildId,
+    });
+    const cachedMembers = queryClient.getQueryData(membersQueryKey);
 
-  const handleChatMessageDelete = useCallback(
-    (data: { guildId: string; messageId: string }) => {
-      queryClient.setQueryData(
-        getChatControllerGetChatMessagesQueryKey({ guildId: data.guildId }),
-        (old: ChatMessage[]) => {
-          if (!old) return old;
+    if (!cachedMembers) {
+      void queryClient.prefetchQuery({
+        queryKey: membersQueryKey,
+        queryFn: () =>
+          membersControllerGetGuildMembersSummary({ guildId: data.guildId }),
+        staleTime: 5 * 60 * 1000,
+      });
+    }
+  };
 
-          return old.filter((message) => message.id !== data.messageId);
-        },
-      );
-      useChatCache.getState().removeMessage(data.guildId, data.messageId);
-    },
-    [queryClient],
-  );
+  const deleteHandlerRef = useRef<
+    (data: { guildId: string; messageId: string }) => void
+  >(() => undefined);
+  deleteHandlerRef.current = (data) => {
+    queryClient.setQueryData(
+      getChatControllerGetChatMessagesQueryKey({ guildId: data.guildId }),
+      (old: ChatMessage[] | undefined) =>
+        old ? removeChatMessage(old, data.messageId) : old,
+    );
+  };
 
-  const handleChatMessageUpdate = useCallback(
-    (data: { guildId: string; messageId: string; message: string }) => {
-      queryClient.setQueryData(
-        getChatControllerGetChatMessagesQueryKey({ guildId: data.guildId }),
-        (old: ChatMessage[]) => {
-          if (!old) return old;
-
-          return old.map((message) =>
-            message.id === data.messageId
-              ? { ...message, message: data.message, partyGathering: undefined }
-              : message,
-          );
-        },
-      );
-      useChatCache
-        .getState()
-        .updateMessage(data.guildId, data.messageId, data.message);
-    },
-    [queryClient],
-  );
-
-  const handlerRef = useRef(handleChatMessage);
-  handlerRef.current = handleChatMessage;
-
-  const deleteHandlerRef = useRef(handleChatMessageDelete);
-  deleteHandlerRef.current = handleChatMessageDelete;
-
-  const updateHandlerRef = useRef(handleChatMessageUpdate);
-  updateHandlerRef.current = handleChatMessageUpdate;
+  const updateHandlerRef = useRef<
+    (data: { guildId: string; messageId: string; message: string }) => void
+  >(() => undefined);
+  updateHandlerRef.current = (data) => {
+    queryClient.setQueryData(
+      getChatControllerGetChatMessagesQueryKey({ guildId: data.guildId }),
+      (old: ChatMessage[] | undefined) =>
+        old ? updateChatMessage(old, data.messageId, data.message) : old,
+    );
+  };
 
   useEffect(() => {
     if (socket?.hasListeners(GatewayEvent.CHAT_MESSAGE) || !connected) return;
