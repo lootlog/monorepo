@@ -7,6 +7,7 @@ type IndexItemDto = {
   id: number;
   name: string;
   icon: string;
+  stat: string;
   lvl: number;
   rarity: string | null;
   type: string | null;

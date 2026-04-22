@@ -44,6 +44,7 @@ describe("ItemsHandlers", () => {
           hid: "hid-1",
           name: "Sword",
           icon: "sword.png",
+          stat: "lvl=10",
           lvl: 10,
           rarity: "heroic",
           type: "weapon",

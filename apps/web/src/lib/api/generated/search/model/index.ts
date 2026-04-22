@@ -19,3 +19,4 @@ export * from './search-all-response-dto-output-npcs-item-type';
 export * from './search-all-response-dto-output-npcs-item';
 export * from './search-all-response-dto-output-players-item';
 export * from './search-all-response-dto-output';
+export * from './search-items-response-dto-output';

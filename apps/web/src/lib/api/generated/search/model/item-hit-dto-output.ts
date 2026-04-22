@@ -14,6 +14,15 @@ export interface ItemHitDtoOutput {
   hid: string;
   name: string;
   icon: string;
+  stat: string;
+  stats: {
+    [key: string]: string | number | boolean | string[];
+  };
+  numericStats: {
+    [key: string]: number;
+  };
+  statsKeys: string[];
+  requiredProfessions: string[];
   lvl: number;
   /** @nullable */
   rarity: string | null;

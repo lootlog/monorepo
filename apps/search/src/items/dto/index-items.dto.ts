@@ -5,6 +5,7 @@ const indexItemSchema = z.object({
   hid: z.string().optional(),
   name: z.string(),
   icon: z.string(),
+  stat: z.string(),
   lvl: z.number(),
   rarity: z.string().nullable(),
   type: z.string().nullable(),
