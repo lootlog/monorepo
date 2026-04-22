@@ -54,8 +54,6 @@ type ChatMessageProps = {
   member?: GuildMember;
   mentionContext?: ChatMentionContext;
   onReply?: () => void;
-  senderMapName?: string;
-  senderPresenceStatus?: "online" | "offline";
 };
 
 export const ChatMessage: FC<ChatMessageProps> = ({
@@ -65,8 +63,6 @@ export const ChatMessage: FC<ChatMessageProps> = ({
   member,
   mentionContext,
   onReply,
-  senderMapName,
-  senderPresenceStatus,
 }) => {
   const { t } = useTranslation("chat");
   const queryClient = useQueryClient();
@@ -203,21 +199,11 @@ export const ChatMessage: FC<ChatMessageProps> = ({
                     character={message.characterData}
                     className="ll:max-h-6 ll:origin-left ll:scale-75 ll:-my-1 ll:-ml-1"
                   />
-                  <div className="ll:flex ll:flex-col ll:leading-tight">
+                  <div className="ll:leading-tight">
                     <div className="ll:font-semibold ll:text-[11px]">
                       {message.characterData.nick} ({message.characterData.lvl}
                       {message.characterData.prof})
                     </div>
-                    {senderPresenceStatus === "offline" ? (
-                      <div className="ll:flex ll:items-center ll:gap-1 ll:text-[10px] ll:text-red-300">
-                        <span className="ll:h-1.5 ll:w-1.5 ll:rounded-full ll:bg-red-400" />
-                        <span>{t("presence.offline")}</span>
-                      </div>
-                    ) : senderMapName ? (
-                      <div className="ll:text-[10px] ll:text-gray-300">
-                        {senderMapName}
-                      </div>
-                    ) : null}
                   </div>
                 </div>
               </TooltipContent>
