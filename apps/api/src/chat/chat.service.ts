@@ -16,19 +16,15 @@ import { RoutingKey } from "src/enum/routing-key.enum";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { getNpcRoutingTier, type NpcRoutingTier } from "@lootlog/types";
 import { v6 } from "uuid";
-import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
 import { GuildsService } from "src/guilds/guilds.service";
 import { Permission, type Role } from "src/generated/prisma/client";
 import { canViewChatMessage } from "src/shared/utils/can-view-chat-message";
+import type { ChatStoredMessage } from "src/chat/types/chat-stored-message.type";
+import type { ChatMessageViewer } from "src/chat/types/chat-message-viewer.type";
+import { canManageChatMessage } from "src/chat/chat-message-permissions";
+import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
 
 const MAX_MESSAGES = 100;
-
-type ChatMessage = SendMessageDto & {
-  id: string;
-  senderId: string;
-  timestamp: string;
-  guildId: string;
-};
 
 type MessageRouting = {
   tier: NpcRoutingTier;
@@ -50,7 +46,7 @@ export class ChatService {
 
   async sendMessage(discordId: string, guildId: string, data: SendMessageDto) {
     const key = this.getChatMessagesKey(guildId);
-    const msg = {
+    const msg: ChatStoredMessage = {
       id: v6(),
       message: data.message,
       senderId: discordId,
@@ -66,10 +62,14 @@ export class ChatService {
     await this.redisService.ltrim(key, -MAX_MESSAGES, -1);
     this.emitMessage(msg);
 
-    return msg;
+    return this.toChatMessageEnvelope(msg, {
+      discordId,
+      permissions: [],
+      roles: [],
+    });
   }
 
-  private async getRawMessages(guildId: string): Promise<ChatMessage[]> {
+  private async getRawMessages(guildId: string): Promise<ChatStoredMessage[]> {
     const key = this.getChatMessagesKey(guildId);
     let elements: string[];
 
@@ -87,7 +87,7 @@ export class ChatService {
       throw error;
     }
 
-    return elements.reduce<ChatMessage[]>((acc, element) => {
+    return elements.reduce<ChatStoredMessage[]>((acc, element) => {
       try {
         acc.push(JSON.parse(element));
       } catch (error) {
@@ -109,45 +109,26 @@ export class ChatService {
       return [];
     }
 
-    const guilds = await this.guildsService.getGuildsForRequiredPermissions(
-      discordId,
-      [Permission.LOOTLOG_CHAT_READ],
-    );
+    const viewer = await this.getChatMessageViewer(discordId, guildId);
 
-    if (guilds.length === 0) return [];
-
-    const guildIds = guilds.map((guild) => guild.id);
-    const guildsWithPermissions =
-      await this.guildsService.getMultipleGuildsPermissions(
-        discordId,
-        guildIds,
-      );
-
-    const guild = guildsWithPermissions.find((g) => g.guild.id === guildId);
-
-    if (!guild) {
+    if (!viewer) {
       return [];
     }
 
-    const permissions = guild.permissions ?? [];
-    const roles = guild.roles ?? [];
+    const visibleMessages = isAdministrativeUser(viewer.permissions)
+      ? messages
+      : this.filterMessagesByPermissions(messages, viewer.roles);
 
-    const isAdministrative = isAdministrativeUser(permissions);
-
-    if (isAdministrative) {
-      return messages;
-    }
-
-    return this.filterMessagesByPermissions(messages, roles);
+    return visibleMessages.map((message) =>
+      this.toChatMessageEnvelope(message, viewer),
+    );
   }
 
   private filterMessagesByPermissions(
-    messages: ChatMessage[],
+    messages: ChatStoredMessage[],
     roles: Role[],
-  ): ChatMessage[] {
-    return messages.filter((message) =>
-      canViewChatMessage(message as SendMessageDto, roles),
-    );
+  ): ChatStoredMessage[] {
+    return messages.filter((message) => canViewChatMessage(message, roles));
   }
 
   async clearMessages(guildId: string) {
@@ -155,7 +136,7 @@ export class ChatService {
     await this.redisService.del(key);
   }
 
-  emitMessage(msg: ChatMessage) {
+  emitMessage(msg: ChatStoredMessage) {
     this.amqpConnection.publish(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.GUILDS_SEND_MESSAGE,
@@ -181,9 +162,11 @@ export class ChatService {
       throw new NotFoundException("Message not found");
     }
 
-    const message = JSON.parse(elements[messageIndex]);
-    if (message.senderId !== discordId) {
-      throw new ForbiddenException("Not the owner of this message");
+    const message = JSON.parse(elements[messageIndex]) as ChatStoredMessage;
+    const viewer = await this.getChatMessageViewer(discordId, guildId);
+
+    if (!viewer || !canManageChatMessage(viewer, message)) {
+      throw new ForbiddenException("Not allowed to manage this message");
     }
 
     const updated = {
@@ -222,9 +205,11 @@ export class ChatService {
       throw new NotFoundException("Message not found");
     }
 
-    const message = JSON.parse(targetElement);
-    if (message.senderId !== discordId) {
-      throw new ForbiddenException("Not the owner of this message");
+    const message = JSON.parse(targetElement) as ChatStoredMessage;
+    const viewer = await this.getChatMessageViewer(discordId, guildId);
+
+    if (!viewer || !canManageChatMessage(viewer, message)) {
+      throw new ForbiddenException("Not allowed to manage this message");
     }
     const routing = this.getMessageRouting(message);
 
@@ -253,6 +238,54 @@ export class ChatService {
     return {
       tier: getNpcRoutingTier(message.npc),
       npcLevel: message.npc.lvl,
+    };
+  }
+
+  private toChatMessageEnvelope(
+    message: ChatStoredMessage,
+    viewer: ChatMessageViewer,
+  ) {
+    const canManageMessage = canManageChatMessage(viewer, message);
+
+    return {
+      ...message,
+      canEdit: canManageMessage,
+      canDelete: canManageMessage,
+    };
+  }
+
+  private async getChatMessageViewer(
+    discordId: string,
+    guildId: string,
+  ): Promise<ChatMessageViewer | null> {
+    const guildsWithPermissions =
+      await this.guildsService.getMultipleGuildsPermissions(discordId, [
+        guildId,
+      ]);
+    const guildViewer = guildsWithPermissions.find(
+      (g) => g.guild.id === guildId,
+    );
+
+    if (!guildViewer) {
+      return null;
+    }
+
+    const permissions = guildViewer.permissions ?? [];
+    const roles = guildViewer.roles ?? [];
+    const canReadChatMessages =
+      isAdministrativeUser(permissions) ||
+      roles.some((role) =>
+        role.permissions.includes(Permission.LOOTLOG_CHAT_READ),
+      );
+
+    if (!canReadChatMessages) {
+      return null;
+    }
+
+    return {
+      discordId,
+      permissions,
+      roles,
     };
   }
 }

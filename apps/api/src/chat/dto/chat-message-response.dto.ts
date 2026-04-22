@@ -30,6 +30,8 @@ const ChatMessageResponseSchema = z.object({
   characterData: ChatCharacterDataDto.schema,
   npc: ChatNpcResponseSchema.optional(),
   partyGathering: PartyGatheringDataDto.schema.optional(),
+  canEdit: z.boolean(),
+  canDelete: z.boolean(),
 });
 
 const ChatMessageActionResponseSchema = z.object({

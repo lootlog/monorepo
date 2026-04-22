@@ -5,6 +5,8 @@ import {
 import { Injectable, Logger } from "@nestjs/common";
 import type { AddMemberRoleDto } from "src/gateway/dto/add-member-role.dto";
 import type { AddMemberDto } from "src/gateway/dto/add-member.dto";
+import type { ChatMessageDeleteDto } from "src/gateway/dto/chat-message-delete.dto";
+import type { ChatMessageUpdateDto } from "src/gateway/dto/chat-message-update.dto";
 import type { CreateTimerDto } from "src/gateway/dto/create-timer.dto";
 import type { DeleteMemberRoleDto } from "src/gateway/dto/delete-member-role.dto";
 import type { DeleteMemberDto } from "src/gateway/dto/delete-member.dto";
@@ -740,15 +742,7 @@ export class GatewayQueueHandler {
       durable: true,
     },
   })
-  async handleUpdateMessage(data: {
-    guildId: string;
-    messageId: string;
-    message: string;
-    routing: {
-      tier: "base" | "titans" | "heroes";
-      npcLevel?: number;
-    };
-  }) {
+  async handleUpdateMessage(data: ChatMessageUpdateDto) {
     await this.gatewayService.handleChatMessageUpdate(data);
   }
 
@@ -761,14 +755,7 @@ export class GatewayQueueHandler {
       durable: true,
     },
   })
-  async handleDeleteMessage(data: {
-    guildId: string;
-    messageId: string;
-    routing: {
-      tier: "base" | "titans" | "heroes";
-      npcLevel?: number;
-    };
-  }) {
+  async handleDeleteMessage(data: ChatMessageDeleteDto) {
     await this.gatewayService.handleChatMessageDelete(data);
   }
 

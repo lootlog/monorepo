@@ -8326,6 +8326,10 @@ components:
             - notificationId
             - discordId
             - world
+        canEdit:
+          type: boolean
+        canDelete:
+          type: boolean
       required:
         - id
         - guildId
@@ -8334,6 +8338,8 @@ components:
         - timestamp
         - type
         - characterData
+        - canEdit
+        - canDelete
     SendMessageDto:
       type: object
       properties:
