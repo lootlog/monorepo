@@ -45,6 +45,7 @@ import { useChatGuildData } from "./hooks/use-chat-guild-data";
 
 const chatSelectedGuildKey = (accountId: string, characterId: string) =>
   storageKey(`ll:chat:selected-guild:${accountId}:${characterId}`);
+const CHAT_AUTOSCROLL_THRESHOLD_PX = 100;
 
 export const Chat = () => {
   const { t } = useTranslation("chat");
@@ -128,20 +129,41 @@ export const Chat = () => {
     const scrollPos = viewport.scrollTop + viewport.clientHeight;
     const scrollHeight = viewport.scrollHeight;
 
-    isUserNearBottomRef.current = scrollHeight - scrollPos < 100;
+    isUserNearBottomRef.current =
+      scrollHeight - scrollPos <= CHAT_AUTOSCROLL_THRESHOLD_PX;
   };
 
   useEffect(() => {
+    if (!open) {
+      return;
+    }
+
     const viewport = scrollAreaRef.current;
-    if (!viewport) return;
+    if (!viewport) {
+      return;
+    }
+
     viewport.addEventListener("scroll", handleScroll);
+    handleScroll();
+
     return () => viewport.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [open]);
 
   useEffect(() => {
     scrollPendingRef.current = true;
     prevRenderSignatureRef.current = "";
+    isUserNearBottomRef.current = true;
   }, [selectedGuildId, chatFilter]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    scrollPendingRef.current = true;
+    prevRenderSignatureRef.current = "";
+    isUserNearBottomRef.current = true;
+  }, [open]);
 
   useEffect(() => {
     const nextSelectedGuildId = getNextSelectedGuildId(selectedGuildId, guilds);
@@ -210,13 +232,20 @@ export const Chat = () => {
   };
 
   useLayoutEffect(() => {
+    if (!open) {
+      return;
+    }
+
     const viewport = scrollAreaRef.current;
-    if (!viewport) return;
+    if (!viewport) {
+      return;
+    }
 
     if (scrollPendingRef.current) {
       if (hasRenderableMessages) {
         viewport.scrollTo({ top: viewport.scrollHeight, behavior: "instant" });
         scrollPendingRef.current = false;
+        isUserNearBottomRef.current = true;
       }
       prevRenderSignatureRef.current = currentRenderSignature;
       return;
@@ -227,10 +256,12 @@ export const Chat = () => {
       isUserNearBottomRef.current
     ) {
       viewport.scrollTo({ top: viewport.scrollHeight });
+      isUserNearBottomRef.current = true;
     }
 
     prevRenderSignatureRef.current = currentRenderSignature;
   }, [
+    open,
     currentRenderSignature,
     currentRenderableMessages,
     hasRenderableMessages,

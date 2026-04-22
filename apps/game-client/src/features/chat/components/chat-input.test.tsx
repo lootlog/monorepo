@@ -9,6 +9,7 @@ import type {
   RoleResponseDtoOutput,
 } from "@/lib/api/generated/main/model";
 import { MessageType } from "@/api/chat.api";
+import { restoreChatEditorSelection } from "@/features/chat/chat-editor-selection.helpers";
 import { ChatInput } from "./chat-input";
 
 const mockSendChatMessage = vi.fn();
@@ -61,6 +62,105 @@ let mockCurrentMember: NullableMemberResponseDto = {
   updatedAt: "2026-01-01T10:00:00.000Z",
 };
 let mockGuildPermissions: Permission[] = [];
+
+const createDomRect = ({
+  height = 0,
+  left = 0,
+  top = 0,
+  width = 0,
+}: {
+  height?: number;
+  left?: number;
+  top?: number;
+  width?: number;
+}) => {
+  return {
+    x: left,
+    y: top,
+    top,
+    left,
+    width,
+    height,
+    right: left + width,
+    bottom: top + height,
+    toJSON: () => ({}),
+  } as DOMRect;
+};
+
+const getEditorForRange = (range: Range) => {
+  const container =
+    range.endContainer.nodeType === Node.ELEMENT_NODE
+      ? (range.endContainer as Element)
+      : range.endContainer.parentElement;
+
+  return container?.closest("[data-slot='chat-input']") as HTMLDivElement | null;
+};
+
+const getRangeTextOffset = ({
+  editor,
+  range,
+}: {
+  editor: HTMLDivElement;
+  range: Range;
+}) => {
+  const measurementRange = editor.ownerDocument.createRange();
+  measurementRange.selectNodeContents(editor);
+  measurementRange.setEnd(range.endContainer, range.endOffset);
+
+  return measurementRange.toString().length;
+};
+
+const createDomRectList = (rect: DOMRect) => {
+  return {
+    0: rect,
+    length: 1,
+    item: (index: number) => {
+      return index === 0 ? rect : null;
+    },
+    [Symbol.iterator]: function* iterator() {
+      yield rect;
+    },
+  } as unknown as DOMRectList;
+};
+
+const setEditorScrollMetrics = ({
+  clientWidth,
+  editor,
+  left = 0,
+  scrollWidth,
+}: {
+  clientWidth: number;
+  editor: HTMLDivElement;
+  left?: number;
+  scrollWidth: number;
+}) => {
+  let currentScrollLeft = 0;
+
+  Object.defineProperty(editor, "clientWidth", {
+    configurable: true,
+    value: clientWidth,
+  });
+  Object.defineProperty(editor, "scrollWidth", {
+    configurable: true,
+    value: scrollWidth,
+  });
+  Object.defineProperty(editor, "scrollLeft", {
+    configurable: true,
+    get: () => currentScrollLeft,
+    set: (value: number) => {
+      currentScrollLeft = value;
+    },
+  });
+
+  vi.spyOn(editor, "getBoundingClientRect").mockReturnValue(
+    createDomRect({
+      left,
+      top: 0,
+      width: clientWidth,
+      height: 20,
+    }),
+  );
+};
 
 const createSentMessageResponse = (): ChatMessageResponseDtoOutput => ({
   id: "message-sent-1",
@@ -235,6 +335,36 @@ describe("ChatInput", () => {
   beforeEach(() => {
     vi.spyOn(HTMLElement.prototype, "scrollIntoView").mockImplementation(
       mockScrollIntoView,
+    );
+    vi.spyOn(Range.prototype, "getBoundingClientRect").mockImplementation(
+      function mockRangeBoundingClientRect(this: Range) {
+        const editor = getEditorForRange(this);
+
+        if (!editor) {
+          return createDomRect({});
+        }
+
+        const textOffset = getRangeTextOffset({
+          editor,
+          range: this,
+        });
+        const editorRect = editor.getBoundingClientRect();
+        const characterWidth = 7;
+        const caretLeft =
+          editorRect.left + 4 + textOffset * characterWidth - editor.scrollLeft;
+
+        return createDomRect({
+          left: caretLeft,
+          top: editorRect.top + 3,
+          width: 1,
+          height: 14,
+        });
+      },
+    );
+    vi.spyOn(Range.prototype, "getClientRects").mockImplementation(
+      function mockRangeClientRects(this: Range) {
+        return createDomRectList(this.getBoundingClientRect());
+      },
     );
     mockSendChatMessage.mockReset();
     mockStartNotificationMessage.mockReset();
@@ -432,6 +562,31 @@ describe("ChatInput", () => {
     await user.paste("linia 1\nlinia 2");
 
     expect(editor.textContent).toBe("linia 1 linia 2");
+  });
+
+  it("scrolls the single-line editor horizontally to keep the caret visible", async () => {
+    const user = userEvent.setup();
+    render(<ChatInput selectedGuildId="guild-1" />);
+
+    const editor = getEditor() as HTMLDivElement;
+    setEditorScrollMetrics({
+      editor,
+      clientWidth: 80,
+      scrollWidth: 840,
+    });
+
+    await user.click(editor);
+    await user.type(editor, "to-jest-bardzo-dluga-wiadomosc-ktora-ma-przesunac-kursor");
+
+    expect(editor.scrollLeft).toBeGreaterThan(0);
+
+    restoreChatEditorSelection({
+      root: editor,
+      start: 0,
+    });
+    fireEvent(document, new Event("selectionchange"));
+
+    expect(editor.scrollLeft).toBe(0);
   });
 
   it("shows the placeholder again after deleting the editor content to zero", async () => {
