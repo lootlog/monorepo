@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/tooltip";
 import { AnimatePresence, motion } from "framer-motion";
 import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
-import { resolveDetectorGuildIds } from "@/lib/game-account-preferences";
+import { buildCurrentCharacterPayload } from "@/lib/api/generated-helpers";
 import { cn } from "@/lib/utils";
 import { getNpcTypeByWt, type DetectorNpcType } from "@lootlog/types";
 import {
@@ -22,7 +22,11 @@ import {
   getBackgroundColor,
   getBorderColor,
 } from "@/utils/notifications-and-detector/background";
-import { Game } from "@/lib/game";
+import {
+  buildNpcChatMessagePayload,
+  buildNpcNotificationPayload,
+  resolveNpcNotificationRouting,
+} from "@/utils/notifications-and-detector/npc-notification";
 import { useEffect, useState } from "react";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import { useWindowsStore } from "@/store/windows.store";
@@ -107,7 +111,6 @@ export const NpcListItem = ({
   const setOpen = useWindowsStore((state) => state.setOpen);
   const { data: session } = useSession();
   const discordId = session?.user?.discordId;
-  const world = Game.getWorldName();
   const { mutate: sendChatMessage, mutateAsync: sendChatMessageAsync } =
     useSendChatMessage();
   const {
@@ -127,11 +130,10 @@ export const NpcListItem = ({
 
   const npcType = getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type);
   const settingsByNpcType = settings[npcType as DetectorNpcType];
-  const resolvedGuildIds = resolveDetectorGuildIds(
-    settings.routingRules,
-    npc.lvl,
-    world,
-  );
+  const { guildIds: resolvedGuildIds, world } = resolveNpcNotificationRouting({
+    routingRules: settings.routingRules,
+    npcLevel: npc.lvl,
+  });
   const key = npcType;
   const repeatDetectionFlashFrames = getRepeatDetectionFlashFrames(key);
 
@@ -228,28 +230,18 @@ export const NpcListItem = ({
 
     if (!npc || !world) return;
 
-    const payload = {
-      npc: {
-        id: npc.id,
-        hpp: 0,
-        location: npc.location,
-        name: npc.nick,
-        wt: npc.wt,
-        x: npc.x,
-        y: npc.y,
-        lvl: npc.lvl,
-        prof: npc.prof,
-        icon: npc.icon,
-        type: npc.type,
-      },
-      world: world,
-      guildIds: resolvedGuildIds,
-    };
-
     createNotification(
-      { data: payload },
+      {
+        data: buildNpcNotificationPayload({
+          npc,
+          guildIds: resolvedGuildIds,
+          world,
+        }),
+      },
       {
         onSuccess: (response) => {
+          const guildIds = response.guildIds ?? resolvedGuildIds;
+
           setNpcState(npc.id, {
             ...npc,
             notificationSent: true,
@@ -267,32 +259,13 @@ export const NpcListItem = ({
             y: npc.y,
           });
 
-          sendChatMessage({
-            message: "",
-            guildIds: resolvedGuildIds,
-            type: MessageType.NPC,
-            characterData: {
-              nick: Game.hero.nick,
-              id: Game.hero.id,
-              acc: Game.hero.account,
-              lvl: Game.hero.lvl,
-              prof: Game.hero.prof,
-              icon: Game.hero.img,
-            },
-            npc: {
-              x: npc.x,
-              y: npc.y,
-              icon: npc.icon,
-              id: npc.id,
-              name: npc.nick,
-              hpp: 0,
-              location: npc.location,
-              lvl: npc.lvl,
-              prof: npc.prof,
-              type: npc.type,
-              wt: npc.wt,
-            },
-          });
+          sendChatMessage(
+            buildNpcChatMessagePayload({
+              npc,
+              guildIds,
+              messageType: MessageType.NPC,
+            }),
+          );
 
           setOpen("party-finder", true);
         },
@@ -311,32 +284,17 @@ export const NpcListItem = ({
     setIsGatheringPartyPending(true);
 
     try {
-      const payload = {
-        npc: {
-          id: npc.id,
-          hpp: 0,
-          location: npc.location,
-          name: npc.nick,
-          wt: npc.wt,
-          x: npc.x,
-          y: npc.y,
-          lvl: npc.lvl,
-          prof: npc.prof,
-          icon: npc.icon,
-          type: npc.type,
-        },
-        world: world,
-        guildIds: resolvedGuildIds,
-        isGatheringParty: true,
-      };
-
       const notificationResponse = await createNotificationAsync({
-        data: payload,
+        data: buildNpcNotificationPayload({
+          npc,
+          guildIds: resolvedGuildIds,
+          world,
+          isGatheringParty: true,
+        }),
       });
 
       const notificationId = notificationResponse.notificationId;
       const guildIds = notificationResponse.guildIds ?? resolvedGuildIds;
-      const hero = Game.hero;
 
       setNotification(notificationId, {
         id: npc.id,
@@ -354,52 +312,26 @@ export const NpcListItem = ({
         notificationId,
         discordId,
         character: {
-          nick: hero.nick,
-          lvl: hero.lvl,
-          prof: hero.prof,
-          characterId: String(hero.id),
-          accountId: String(hero.account),
-          icon: hero.img,
-          clan: hero.clan
-            ? { id: hero.clan.id, name: hero.clan.name }
-            : undefined,
+          ...buildCurrentCharacterPayload(),
         },
         world,
         createdAt: new Date().toISOString(),
         guildIds,
       });
 
-      const chatResults = await sendChatMessageAsync({
-        message: `${npc.nick} (${npc.lvl}${npc.prof ?? ""})`,
-        guildIds,
-        type: MessageType.PARTY_GATHERING,
-        characterData: {
-          nick: hero.nick,
-          id: hero.id,
-          acc: hero.account,
-          lvl: hero.lvl,
-          prof: hero.prof,
-          icon: hero.img,
-        },
-        npc: {
-          x: npc.x,
-          y: npc.y,
-          icon: npc.icon,
-          id: npc.id,
-          name: npc.nick,
-          hpp: 0,
-          location: npc.location,
-          lvl: npc.lvl,
-          prof: npc.prof,
-          type: npc.type,
-          wt: npc.wt,
-        },
-        partyGathering: {
-          notificationId,
-          discordId,
-          world,
-        },
-      });
+      const chatResults = await sendChatMessageAsync(
+        buildNpcChatMessagePayload({
+          npc,
+          guildIds,
+          messageType: MessageType.PARTY_GATHERING,
+          message: `${npc.nick} (${npc.lvl}${npc.prof ?? ""})`,
+          partyGathering: {
+            notificationId,
+            discordId,
+            world,
+          },
+        }),
+      );
 
       chatResults.forEach((result, index) => {
         if (result.status === "fulfilled" && result.value?.messageId) {

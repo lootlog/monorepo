@@ -373,8 +373,11 @@ describe("NpcsDetectionProcessor", () => {
       ],
     });
     mockGetNpcTypeByWt.mockReturnValue("HERO");
-    mockCreateNotification.mockResolvedValue(undefined);
-    mockSendChatMessage.mockResolvedValue(undefined);
+    mockCreateNotification.mockResolvedValue({
+      notificationId: "notification-1",
+      guildIds: ["guild-1", "guild-2"],
+    });
+    mockSendChatMessage.mockResolvedValue([]);
 
     processor.handle(createNpcEvent());
 
@@ -431,7 +434,96 @@ describe("NpcsDetectionProcessor", () => {
     );
   });
 
-  it("logs warnings when auto-send side effects fail", async () => {
+  it("auto-sends event detections when routing rule world matches current world", async () => {
+    readyPreferences({
+      autoSend: true,
+      routingRules: [
+        {
+          id: "rule-1",
+          minLevel: 200,
+          maxLevel: 260,
+          world: "pandora",
+          guildIds: ["guild-1"],
+        },
+      ],
+    });
+    mockGetNpcTypeByWt.mockReturnValue("HERO");
+    mockCreateNotification.mockResolvedValue({
+      notificationId: "notification-1",
+      guildIds: ["guild-1"],
+    });
+    mockSendChatMessage.mockResolvedValue([]);
+
+    processor.handle(createNpcEvent());
+
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(mockCreateNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        world: "pandora",
+        guildIds: ["guild-1"],
+      }),
+    );
+    expect(mockSendChatMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        guildIds: ["guild-1"],
+      }),
+    );
+    expect(useNpcDetectorStore.getState().npcs[0]).toEqual(
+      expect.objectContaining({
+        notificationSent: true,
+      }),
+    );
+  });
+
+  it("flushes queued event detections with the same world-specific routing", async () => {
+    mockGetNpcTypeByWt.mockReturnValue("HERO");
+
+    processor.handle(createNpcEvent());
+
+    readyPreferences({
+      autoSend: true,
+      routingRules: [
+        {
+          id: "rule-1",
+          minLevel: 200,
+          maxLevel: 260,
+          world: "pandora",
+          guildIds: ["guild-1"],
+        },
+      ],
+    });
+    mockCreateNotification.mockResolvedValue({
+      notificationId: "notification-1",
+      guildIds: ["guild-1"],
+    });
+    mockSendChatMessage.mockResolvedValue([]);
+
+    processor.flushPending("202");
+
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(mockCreateNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        world: "pandora",
+        guildIds: ["guild-1"],
+      }),
+    );
+    expect(mockSendChatMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        guildIds: ["guild-1"],
+      }),
+    );
+    expect(useNpcDetectorStore.getState().npcs[0]).toEqual(
+      expect.objectContaining({
+        notificationSent: true,
+      }),
+    );
+  });
+
+  it("logs a warning and skips chat when notification creation fails", async () => {
     const consoleWarnSpy = vi
       .spyOn(console, "warn")
       .mockImplementation(() => undefined);
@@ -449,7 +541,6 @@ describe("NpcsDetectionProcessor", () => {
     });
     mockGetNpcTypeByWt.mockReturnValue("HERO");
     mockCreateNotification.mockRejectedValue(new Error("notify failed"));
-    mockSendChatMessage.mockRejectedValue(new Error("chat failed"));
 
     processor.handle(createNpcEvent());
 
@@ -460,6 +551,37 @@ describe("NpcsDetectionProcessor", () => {
       "[NpcsDetectionProcessor] Failed to send notification:",
       expect.any(Error),
     );
+    expect(mockSendChatMessage).not.toHaveBeenCalled();
+  });
+
+  it("logs a warning when chat sending fails after notification creation succeeds", async () => {
+    const consoleWarnSpy = vi
+      .spyOn(console, "warn")
+      .mockImplementation(() => undefined);
+
+    readyPreferences({
+      autoSend: true,
+      routingRules: [
+        {
+          id: "rule-1",
+          minLevel: 200,
+          maxLevel: 260,
+          guildIds: ["guild-1"],
+        },
+      ],
+    });
+    mockGetNpcTypeByWt.mockReturnValue("HERO");
+    mockCreateNotification.mockResolvedValue({
+      notificationId: "notification-1",
+      guildIds: ["guild-1"],
+    });
+    mockSendChatMessage.mockRejectedValue(new Error("chat failed"));
+
+    processor.handle(createNpcEvent());
+
+    await Promise.resolve();
+    await Promise.resolve();
+
     expect(consoleWarnSpy).toHaveBeenCalledWith(
       "[NpcsDetectionProcessor] Failed to send chat message:",
       expect.any(Error),
