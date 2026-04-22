@@ -29,32 +29,38 @@ export const MemberData = ({ member, canManageMembers }: MemberDataProps) => {
 
   return (
     <div className="p-3 space-y-3">
-      <Card className="bg-card/50 backdrop-blur-sm border-border p-4 gap-3">
-        <div className="space-y-1">
-          <h3 className="text-sm font-semibold">
-            {t("settings.members.actionsTitle")}
-          </h3>
-          <p className="text-xs text-muted-foreground">
-            {member.active
-              ? t("settings.members.statusActiveDescription")
-              : t("settings.members.statusInactiveDescription")}
-          </p>
-        </div>
-        <div>
-          <Badge variant={member.active ? "green" : "outline"}>
-            {member.active
-              ? t("settings.members.statusActive")
-              : t("settings.members.statusInactive")}
-          </Badge>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <MemberSyncButton member={member} />
-          {canManageMembers && (
-            <MemberDeactivationButton
-              member={member}
-              onDeactivated={(updatedMember) => setSelectedItem(updatedMember)}
-            />
-          )}
+      <Card className="bg-card/50 backdrop-blur-sm border-border p-4 gap-4">
+        <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+          <div className="min-w-0 space-y-3">
+            <div className="space-y-1">
+              <h3 className="text-sm font-semibold">
+                {t("settings.members.actionsTitle")}
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                {member.active
+                  ? t("settings.members.statusActiveDescription")
+                  : t("settings.members.statusInactiveDescription")}
+              </p>
+            </div>
+            <div>
+              <Badge variant={member.active ? "green" : "outline"}>
+                {member.active
+                  ? t("settings.members.statusActive")
+                  : t("settings.members.statusInactive")}
+              </Badge>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center justify-end gap-2 sm:self-start">
+            <MemberSyncButton member={member} />
+            {canManageMembers && (
+              <MemberDeactivationButton
+                member={member}
+                onDeactivated={(updatedMember) =>
+                  setSelectedItem(updatedMember)
+                }
+              />
+            )}
+          </div>
         </div>
         {!member.active && (
           <p className="text-xs text-muted-foreground">

@@ -9,6 +9,7 @@
 export * from './assign-map-location-dto';
 export * from './assign-member-dto';
 export * from './cancel-party-gathering-response-dto-output';
+export * from './chat-controller-clear-chat-messages-path-parameters';
 export * from './chat-controller-delete-chat-message-path-parameters';
 export * from './chat-controller-get-chat-messages-path-parameters';
 export * from './chat-controller-send-chat-message-path-parameters';

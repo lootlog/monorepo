@@ -132,9 +132,23 @@ export class ChatService {
     return messages.filter((message) => canViewChatMessage(message, roles));
   }
 
-  async clearMessages(guildId: string) {
+  async clearMessages(discordId: string, guildId: string) {
+    const viewer = await this.getChatMessageViewer(discordId, guildId);
+
+    if (!viewer || !isAdministrativeUser(viewer.permissions)) {
+      throw new ForbiddenException("Only OWNER or ADMIN can clear chat");
+    }
+
     const key = this.getChatMessagesKey(guildId);
     await this.redisService.del(key);
+
+    this.amqpConnection.publish(
+      DEFAULT_EXCHANGE_NAME,
+      RoutingKey.GUILDS_CLEAR_MESSAGES,
+      { guildId },
+    );
+
+    return { success: true };
   }
 
   emitMessage(msg: ChatStoredMessage) {

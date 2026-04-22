@@ -6,6 +6,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import type { AddMemberRoleDto } from "src/gateway/dto/add-member-role.dto";
 import type { AddMemberDto } from "src/gateway/dto/add-member.dto";
 import type { ChatMessageDeleteDto } from "src/gateway/dto/chat-message-delete.dto";
+import type { ChatMessagesClearDto } from "src/gateway/dto/chat-messages-clear.dto";
 import type { ChatMessageUpdateDto } from "src/gateway/dto/chat-message-update.dto";
 import type { CreateTimerDto } from "src/gateway/dto/create-timer.dto";
 import type { DeleteMemberRoleDto } from "src/gateway/dto/delete-member-role.dto";
@@ -757,6 +758,19 @@ export class GatewayQueueHandler {
   })
   async handleDeleteMessage(data: ChatMessageDeleteDto) {
     await this.gatewayService.handleChatMessageDelete(data);
+  }
+
+  @RabbitSubscribe({
+    exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: RoutingKey.GUILDS_CLEAR_MESSAGES,
+    queue: Queue.GUILDS_CLEAR_MESSAGES,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+    queueOptions: {
+      durable: true,
+    },
+  })
+  async handleClearMessages(data: ChatMessagesClearDto) {
+    await this.gatewayService.handleChatMessagesClear(data);
   }
 
   @RabbitSubscribe({

@@ -6,6 +6,7 @@ describe("ChatController", () => {
   const mockChatService = {
     getMessages: vi.fn(),
     sendMessage: vi.fn(),
+    clearMessages: vi.fn(),
     updateMessage: vi.fn(),
     deleteMessage: vi.fn(),
   };
@@ -44,6 +45,7 @@ describe("ChatController", () => {
       "message-1",
       { message: "updated" } as never,
     );
+    controller.clearChatMessages({ id: "guild-1" } as never, "discord-1");
     controller.deleteChatMessage(
       { id: "guild-1" } as never,
       "discord-1",
@@ -60,6 +62,10 @@ describe("ChatController", () => {
       "guild-1",
       "message-1",
       "updated",
+    );
+    expect(mockChatService.clearMessages).toHaveBeenCalledWith(
+      "discord-1",
+      "guild-1",
     );
     expect(mockChatService.deleteMessage).toHaveBeenCalledWith(
       "discord-1",

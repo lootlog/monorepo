@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { MessageType } from "@/api/chat.api";
 import type {
@@ -15,6 +15,10 @@ vi.mock("@/components/character-tile", () => ({
   CharacterTile: ({ character }: { character: { nick: string } }) => (
     <div>{character.nick}</div>
   ),
+}));
+
+vi.mock("@/components/npc-tile", () => ({
+  NpcTile: ({ npc }: { npc: { nick: string } }) => <div>{npc.nick} tile</div>,
 }));
 
 vi.mock("@/components/ui/context-menu", () => ({
@@ -195,6 +199,36 @@ describe("ChatMessage", () => {
     expect(screen.getByText("Hero:")).toBeInTheDocument();
   });
 
+  it("shows the sender map name inside the tooltip content when provided", () => {
+    render(
+      <ChatMessage
+        all={false}
+        guildName="Guild"
+        member={member}
+        senderMapName="Karka-han"
+        message={makeChatMessage()}
+      />,
+    );
+
+    expect(screen.getByText("Karka-han")).toBeInTheDocument();
+  });
+
+  it("shows an offline indicator in the tooltip when the sender is offline", () => {
+    render(
+      <ChatMessage
+        all={false}
+        guildName="Guild"
+        member={member}
+        senderMapName="Karka-han"
+        senderPresenceStatus="offline"
+        message={makeChatMessage()}
+      />,
+    );
+
+    expect(screen.getByText("Offline")).toBeInTheDocument();
+    expect(screen.queryByText("Karka-han")).not.toBeInTheDocument();
+  });
+
   it("shows edit and delete actions when backend capabilities allow them", () => {
     render(
       <ChatMessage
@@ -233,6 +267,43 @@ describe("ChatMessage", () => {
     expect(screen.getByText("quoted message")).toBeInTheDocument();
   });
 
+  it("scrolls to the replied message without forcing horizontal movement", () => {
+    const originalMessage = document.createElement("div");
+    const scrollIntoView = vi.fn();
+    originalMessage.scrollIntoView = scrollIntoView;
+
+    const querySelector = vi
+      .spyOn(document, "querySelector")
+      .mockReturnValue(originalMessage);
+
+    render(
+      <ChatMessage
+        all={false}
+        guildName="Guild"
+        member={member}
+        message={makeChatMessage({
+          replyTo: {
+            messageId: "message-0",
+            senderNick: "QuotedHero",
+            message: "quoted message",
+            type: MessageType.NORMAL,
+          },
+        })}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("quoted message"));
+
+    expect(querySelector).toHaveBeenCalledWith(
+      `[data-chat-message-id="message-0"]`,
+    );
+    expect(scrollIntoView).toHaveBeenCalledWith({
+      behavior: "smooth",
+      block: "center",
+      inline: "nearest",
+    });
+  });
+
   it("highlights targeted mentions in the message body", () => {
     render(
       <ChatMessage
@@ -240,6 +311,9 @@ describe("ChatMessage", () => {
         guildName="Guild"
         member={member}
         mentionContext={{
+          memberColorsByName: {
+            hero: "12ab34",
+          },
           currentUserNames: ["Hero"],
           currentUserRoleNames: ["Raid Team"],
         }}
@@ -249,7 +323,29 @@ describe("ChatMessage", () => {
       />,
     );
 
-    expect(screen.getByText("@Hero")).toHaveClass("ll:text-yellow-200");
+    expect(screen.getByText("@Hero")).toHaveStyle({ color: "#12ab34" });
+    expect(screen.getByText("@Hero")).toHaveClass("ll:ring-1");
+  });
+
+  it("uses discord colors for role mentions in the message body", () => {
+    render(
+      <ChatMessage
+        all={false}
+        guildName="Guild"
+        member={member}
+        mentionContext={{
+          roleNames: ["Raid Team"],
+          roleColorsByName: {
+            "raid team": "ff8800",
+          },
+        }}
+        message={makeChatMessage({
+          message: "hej @Raid Team",
+        })}
+      />,
+    );
+
+    expect(screen.getByText("@Raid Team")).toHaveStyle({ color: "#ff8800" });
   });
 
   it("shows the reply action only for replyable message types", () => {

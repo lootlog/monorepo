@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { type FC, useEffect, useRef } from "react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { formatChatUnreadBadge } from "@/features/chat/chat-unread.helpers";
 import { Game } from "@/lib/game";
 import { GuildButton } from "@/components/guild-button";
 import type { GuildResponseDtoOutput } from "@/lib/api/generated/main/model";
@@ -25,6 +26,7 @@ type GuildSwitcherProps = {
   onChange?: (guildId: string) => void;
   onToggle?: (guildId: string) => void;
   selectedValues?: string[];
+  unreadCountByGuildId?: Record<string, number>;
   value?: string;
 };
 
@@ -63,6 +65,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
   onChange,
   onToggle,
   selectedValues,
+  unreadCountByGuildId,
   value,
 }) => {
   const { t } = useTranslation("common");
@@ -166,6 +169,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
           onClick={() => handleChange("all")}
           tooltipLabel={t("guildSwitcher.allServers")}
           className={resolvedButtonClassName}
+          unreadBadge={null}
         >
           <AvatarFallback className="ll:font-semibold ll:text-xl ll:mt-1.5">
             *
@@ -184,6 +188,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
           onClick={() => handleChange(guild.id)}
           tooltipLabel={guild.name}
           className={resolvedButtonClassName}
+          unreadBadge={formatChatUnreadBadge(unreadCountByGuildId?.[guild.id])}
         >
           <AvatarImage
             src={guild.icon ?? undefined}

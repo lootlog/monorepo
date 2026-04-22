@@ -4,8 +4,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useTranslation } from "react-i18next";
 
 export const CommandActions = () => {
+  const { t } = useTranslation("command");
+
   return [
     <Tooltip key="command-info-tooltip">
       <TooltipTrigger asChild>
@@ -14,9 +17,7 @@ export const CommandActions = () => {
           size="14"
         />
       </TooltipTrigger>
-      <TooltipContent side="top">
-        ! = powiadomienie, !grp = szukaj grupy
-      </TooltipContent>
+      <TooltipContent side="top">{t("actions.infoTooltip")}</TooltipContent>
     </Tooltip>,
   ];
 };

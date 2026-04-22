@@ -50,9 +50,13 @@ export const useHotkeys = () => {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      const isInputActive = ["TEXTAREA", "MAGIC_INPUT", "INPUT"].includes(
-        window.document.activeElement?.tagName ?? "",
-      );
+      const activeElement = window.document.activeElement;
+      const isInputActive =
+        activeElement instanceof HTMLElement &&
+        (["TEXTAREA", "MAGIC_INPUT", "INPUT"].includes(activeElement.tagName) ||
+          activeElement.isContentEditable ||
+          activeElement.getAttribute("role") === "textbox");
+
       if (isInputActive) return;
 
       for (const [action, binding] of Object.entries(bindings)) {
