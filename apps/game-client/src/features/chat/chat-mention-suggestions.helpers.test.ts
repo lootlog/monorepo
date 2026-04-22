@@ -185,6 +185,12 @@ describe("chat mention suggestions helpers", () => {
     ).toHaveLength(10);
   });
 
+  it("returns an empty member suggestion list for non-array runtime input", () => {
+    expect(
+      getChatMentionMemberSuggestions("broken" as unknown as never[]),
+    ).toEqual([]);
+  });
+
   it("replaces the full active token and keeps the caret after the inserted mention", () => {
     expect(
       applyChatMentionSuggestion({
