@@ -1,5 +1,7 @@
-import { useBattle } from "@/hooks/api/battle-log/use-battle";
-import { useBattleRaw } from "@/hooks/api/battle-log/use-battle-raw";
+import {
+  usePublicBattlesControllerGetPublicBattle,
+  usePublicBattlesControllerGetPublicBattleRaw,
+} from "@/lib/api/generated/battlelog/public-battles/public-battles";
 import { useParams } from "@tanstack/react-router";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
@@ -14,15 +16,14 @@ const CDN_BASE_URL = "https://micc.garmory-cdn.cloud/obrazki/postacie";
 
 export const PublicBattle = () => {
   const { id: battleId } = useParams({ from: "/battles/$id" });
-  const battleQueryOptions = { battleId, isPublic: true };
 
   const {
     data: battle,
     isLoading: isBattleLoading,
     error: battleError,
-  } = useBattle(battleQueryOptions);
+  } = usePublicBattlesControllerGetPublicBattle({ battleId });
   const { data: rawBattle, isLoading: isRawBattleLoading } =
-    useBattleRaw(battleQueryOptions);
+    usePublicBattlesControllerGetPublicBattleRaw({ battleId });
 
   const isLoading = isBattleLoading || isRawBattleLoading;
 

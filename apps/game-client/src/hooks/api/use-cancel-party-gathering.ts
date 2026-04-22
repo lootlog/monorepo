@@ -6,14 +6,16 @@ import {
 } from "@/lib/logs/log-actions";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import { useWindowsStore } from "@/store/windows.store";
+import { getFixedT } from "@/i18n/get-fixed-t";
 
 export const useCancelPartyGathering = () => {
+  const t = getFixedT("partyFinder");
   const setOpen = useWindowsStore((s) => s.setOpen);
 
   return useMutation({
     mutationKey: ["cancel-party-gathering"],
     mutationFn: async () => {
-      const { partyGathering, chatMessageIds, clearPartyFinder } =
+      const { partyGathering, clearPartyFinder } =
         usePartyFinderStore.getState();
 
       if (!partyGathering) {
@@ -24,12 +26,10 @@ export const useCancelPartyGathering = () => {
         actionType: "cancel_party_gathering",
         payload: {
           partyGathering,
-          chatMessageIds,
         },
       });
       const response = await cancelPartyGathering({
         partyGathering,
-        chatMessageIds,
         action,
       });
 
@@ -53,11 +53,11 @@ export const useCancelPartyGathering = () => {
     },
     onSuccess: () => {
       setOpen("party-finder", false);
-      window.message("Zbieranie grupy zakończone");
+      window.message(t("messages.cancelSuccess"));
     },
     onError: (error) => {
       console.error("Failed to cancel party gathering:", error);
-      window.message("Nie udało się zakończyć zbierania grupy");
+      window.message(t("messages.cancelFailed"));
     },
   });
 };

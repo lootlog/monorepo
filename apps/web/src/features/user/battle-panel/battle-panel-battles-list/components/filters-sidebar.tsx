@@ -21,7 +21,7 @@ import {
 import { cn } from "@lootlog/ui/lib/utils";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import { LevelRangeFilter } from "@/components/filters";
-import { useUserWorlds } from "@/hooks/api/battle-log/use-user-worlds";
+import { useBattlesControllerGetUserWorlds } from "@/lib/api/generated/battlelog/battles/battles";
 import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
 import {
   Popover,
@@ -58,7 +58,8 @@ export const FiltersSidebar = ({
   const characterListId = useId();
   const [characterOpen, setCharacterOpen] = useState(false);
 
-  const { data: worlds = [] } = useUserWorlds();
+  const { data: worldsResponse } = useBattlesControllerGetUserWorlds();
+  const worlds = worldsResponse?.worlds ?? [];
   const battleTypes = [
     { value: "solo" as const, label: t("battlePanel.filters.types.solo") },
     { value: "group" as const, label: t("battlePanel.filters.types.group") },

@@ -16,8 +16,10 @@ describe("MembersController", () => {
   let membersService: {
     getGuildMemberById: Mock;
     refreshMember: Mock;
+    deactivateMember: Mock;
     getGuildMembers: Mock;
     getGuildMembersSummary: Mock;
+    getMemberLootlogConfigSummary: Mock;
     createBulkRefreshJob: Mock;
     getLatestRefreshJob: Mock;
     getRefreshJobStatus: Mock;
@@ -70,8 +72,10 @@ describe("MembersController", () => {
     const mockMembersService = {
       getGuildMemberById: mockFn(),
       refreshMember: mockFn(),
+      deactivateMember: mockFn(),
       getGuildMembers: mockFn(),
       getGuildMembersSummary: mockFn(),
+      getMemberLootlogConfigSummary: mockFn(),
       createBulkRefreshJob: mockFn(),
       getLatestRefreshJob: mockFn(),
       getRefreshJobStatus: mockFn(),
@@ -199,6 +203,61 @@ describe("MembersController", () => {
       const result = await controller.getGuildMembers(mockGuild);
 
       expect(result).toEqual([]);
+    });
+  });
+
+  describe("deactivateMember", () => {
+    it("should deactivate member", async () => {
+      const deactivatedMember = { ...mockMember, active: false };
+      membersService.deactivateMember.mockResolvedValue(deactivatedMember);
+
+      const result = await controller.deactivateMember(
+        "discord-456",
+        mockGuild,
+      );
+
+      expect(result).toEqual(deactivatedMember);
+      expect(membersService.deactivateMember).toHaveBeenCalledWith({
+        discordId: "discord-456",
+        guildId: mockGuild.id,
+      });
+    });
+  });
+
+  describe("getMemberLootlogConfigSummary", () => {
+    it("should return guild-scoped lootlog config summary", async () => {
+      const summary = {
+        memberUserId: "discord-123",
+        guildId: "guild-123",
+        isActive: true,
+        configuredCharacterCount: 1,
+        enabledCharacterCount: 1,
+        characters: [
+          {
+            accountId: "123",
+            characterId: "456",
+            enabledForGuild: true,
+            characterName: "Rhay",
+            world: "Berufs",
+            icon: "icon.png",
+            metadataStatus: "resolved" as const,
+          },
+        ],
+      };
+      membersService.getMemberLootlogConfigSummary.mockResolvedValue(summary);
+
+      const result = await controller.getMemberLootlogConfigSummary(
+        "discord-123",
+        mockGuild,
+      );
+
+      expect(result).toEqual(summary);
+      expect(membersService.getMemberLootlogConfigSummary).toHaveBeenCalledWith(
+        {
+          discordId: "discord-123",
+          guildId: mockGuild.id,
+        },
+      );
     });
   });
 

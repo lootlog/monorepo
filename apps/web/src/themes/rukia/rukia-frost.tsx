@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { useState, type ReactNode } from "react";
 
 // SVG Frost Filter - creates organic ice texture
-export const FrostFilter = () => (
+const FrostFilter = () => (
   <svg width="0" height="0" className="absolute">
     <defs>
       <filter id="frost-noise" x="0%" y="0%" width="100%" height="100%">
@@ -38,7 +38,7 @@ export const FrostFilter = () => (
 );
 
 // Scattered ice crystal - can be placed anywhere
-export const ScatteredCrystal = ({
+const ScatteredCrystal = ({
   x,
   y,
   size,
@@ -84,7 +84,7 @@ export const ScatteredCrystal = ({
 );
 
 // Snowflake component
-export const Snowflake = ({
+const Snowflake = ({
   x,
   y,
   size,
@@ -132,7 +132,7 @@ export const Snowflake = ({
 );
 
 // Ice crack lines
-export const IceCracks = ({ isVisible }: { isVisible: boolean }) => (
+const IceCracks = ({ isVisible }: { isVisible: boolean }) => (
   <motion.svg
     className="absolute inset-0 w-full h-full pointer-events-none"
     viewBox="0 0 100 100"
@@ -185,7 +185,7 @@ export const IceCracks = ({ isVisible }: { isVisible: boolean }) => (
 );
 
 // Crystal positions for buttons
-export const buttonCrystalPositions = [
+const buttonCrystalPositions = [
   { x: "10%", y: "20%", size: 10, rotation: 0, delay: 0.1 },
   { x: "85%", y: "25%", size: 12, rotation: 30, delay: 0.15 },
   { x: "20%", y: "75%", size: 11, rotation: 60, delay: 0.2 },
@@ -199,7 +199,7 @@ export const buttonCrystalPositions = [
 ];
 
 // Snowflake positions for buttons
-export const buttonSnowflakePositions = [
+const buttonSnowflakePositions = [
   { x: "25%", y: "30%", size: 14, delay: 0.4 },
   { x: "75%", y: "65%", size: 12, delay: 0.5 },
   { x: "60%", y: "20%", size: 10, delay: 0.45 },

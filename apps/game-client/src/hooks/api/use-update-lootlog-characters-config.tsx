@@ -1,36 +1,44 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  updateLootlogCharactersConfig,
-  type LootlogCharacterConfigResponse,
-  type UpdateLootlogCharacterSettings,
-} from "@/api";
 import { Game } from "@/lib/game";
+import {
+  getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey,
+  userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig,
+} from "@/lib/api/generated/main/user-lootlog-config/user-lootlog-config";
+import type {
+  CreateOrUpdateLootlogCharacterConfigDto,
+  UserLootlogConfigAccountResponseDtoOutput,
+} from "@/lib/api/generated/main/model";
 
-export type UseUpdateLootlogCharacterSettings = UpdateLootlogCharacterSettings;
+export type UseUpdateLootlogCharacterSettings =
+  CreateOrUpdateLootlogCharacterConfigDto;
 
 export const useUpdateLootlogCharactersConfig = () => {
   const accountId = String(Game.hero.account);
   const queryClient = useQueryClient();
+  const queryKey =
+    getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
+      accountId,
+    });
 
-  const mutation = useMutation({
-    mutationKey: ["update-lootlog-characters-config"],
-    mutationFn: (options: UpdateLootlogCharacterSettings) =>
-      updateLootlogCharactersConfig(accountId, options),
+  return useMutation({
+    mutationKey: [
+      "userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig",
+    ],
+    mutationFn: (options: CreateOrUpdateLootlogCharacterConfigDto) =>
+      userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig(
+        { accountId },
+        options,
+      ),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ["lootlog-characters-config", accountId],
-      });
+      await queryClient.invalidateQueries({ queryKey });
     },
     onMutate: async (variables) => {
-      await queryClient.cancelQueries({
-        queryKey: ["lootlog-characters-config", accountId],
-      });
+      await queryClient.cancelQueries({ queryKey });
 
       const previousData =
-        queryClient.getQueryData<LootlogCharacterConfigResponse>([
-          "lootlog-characters-config",
-          accountId,
-        ]);
+        queryClient.getQueryData<UserLootlogConfigAccountResponseDtoOutput>(
+          queryKey,
+        );
 
       if (previousData) {
         const newData = {
@@ -41,23 +49,15 @@ export const useUpdateLootlogCharactersConfig = () => {
           },
         };
 
-        queryClient.setQueryData(
-          ["lootlog-characters-config", accountId],
-          newData,
-        );
+        queryClient.setQueryData(queryKey, newData);
       }
 
       return { previousData };
     },
     onError: (_err, _variables, context) => {
       if (context?.previousData) {
-        queryClient.setQueryData(
-          ["lootlog-characters-config", accountId],
-          context.previousData,
-        );
+        queryClient.setQueryData(queryKey, context.previousData);
       }
     },
   });
-
-  return mutation;
 };

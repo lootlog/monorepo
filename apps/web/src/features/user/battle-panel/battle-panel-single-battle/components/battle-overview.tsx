@@ -1,7 +1,17 @@
-import type { Battle } from "@/hooks/api/battle-log/use-battles";
 import type { FC } from "react";
 import { useBattleSharing } from "../hooks/use-battle-sharing";
-import { useDeleteBattle } from "@/hooks/api/battle-log/use-delete-battle";
+import {
+  invalidateBattlesControllerGetBattle,
+  invalidateBattlesControllerGetBattleRawData,
+  invalidateBattlesControllerGetDashboardBattles,
+  useBattlesControllerDeleteBattle,
+} from "@/lib/api/generated/battlelog/battles/battles";
+import {
+  invalidatePublicBattlesControllerGetPublicBattle,
+  invalidatePublicBattlesControllerGetPublicBattleRaw,
+} from "@/lib/api/generated/battlelog/public-battles/public-battles";
+import type { Battle } from "@/lib/api/battlelog-types";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
 import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
@@ -20,7 +30,8 @@ export const BattleOverview: FC<BattleOverviewProps> = ({
   const { t } = useTranslation();
   const { handleShare, handleCopyLink, handleUnshare, isPending } =
     useBattleSharing();
-  const { mutate: deleteBattle } = useDeleteBattle();
+  const queryClient = useQueryClient();
+  const { mutate: deleteBattle } = useBattlesControllerDeleteBattle();
   const navigate = useNavigate();
 
   const handleShareClick = () => {
@@ -37,9 +48,28 @@ export const BattleOverview: FC<BattleOverviewProps> = ({
 
   const handleDeleteClick = () => {
     deleteBattle(
-      { battleId: battle.id },
       {
-        onSuccess: () => {
+        pathParams: {
+          battleId: battle.id,
+        },
+      },
+      {
+        onSuccess: async () => {
+          await Promise.all([
+            invalidateBattlesControllerGetDashboardBattles(queryClient),
+            invalidateBattlesControllerGetBattle(queryClient, {
+              battleId: battle.id,
+            }),
+            invalidateBattlesControllerGetBattleRawData(queryClient, {
+              battleId: battle.id,
+            }),
+            invalidatePublicBattlesControllerGetPublicBattle(queryClient, {
+              battleId: battle.id,
+            }),
+            invalidatePublicBattlesControllerGetPublicBattleRaw(queryClient, {
+              battleId: battle.id,
+            }),
+          ]);
           toast.success(t("battlePanel.toasts.battleDeleted"), {
             duration: 3000,
           });

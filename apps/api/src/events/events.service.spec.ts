@@ -3,7 +3,7 @@ import { mockFn } from "src/test/mock-fn";
 import { getQueueToken } from "@nestjs/bullmq";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "src/db/prisma.service";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 import { EventsService } from "./events.service";
 import { EventAccessService } from "./services/event-access.service";
 import { EventCatalogService } from "./services/event-catalog.service";

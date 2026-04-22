@@ -18,7 +18,7 @@ import { WatchableItemTile } from "@/components/tiles";
 import { LootNpcs } from "@/features/guild/loots-list/components/loots-list/loot-npcs";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { cn } from "@/utils/cn";
-import { ItemRarity, type Loot } from "@/hooks/api/loots/use-loots";
+import { ItemRarity, type Loot } from "@/lib/loots/loot-types";
 import { EventScrollableTabsList } from "../shared/event-scrollable-tabs-list";
 import { Spinner } from "@lootlog/ui/components/spinner";
 

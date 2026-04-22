@@ -8,7 +8,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from "@nestjs/common";
-import { DiscordId, UserId } from "@lootlog/nest-shared";
+import { DiscordId, UserId } from "@lootlog/nest-shared/decorators";
 import {
   ApiTags,
   ApiBearerAuth,
@@ -24,6 +24,7 @@ import { UserGuildPermissionsDto } from "src/guilds/dto/user-guild-permissions.d
 import { GuildsService } from "src/guilds/guilds.service";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";
+import { DiscordGuildSyncStateResponseDto } from "src/shared/dto/discord-guild-sync-response.dto";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
@@ -40,8 +41,10 @@ export class GuildsController {
   @UseInterceptors(MemberSyncInterceptor)
   @Get("/@me")
   @ApiOperation({
-    summary: "Get user guilds",
-    description: "Retrieve all guilds for the authenticated user",
+    summary: "Get user guilds (deprecated)",
+    description:
+      "Legacy endpoint for listing the authenticated user's guilds. Prefer /users/@me/guilds or /users/@me/guilds/accessible.",
+    deprecated: true,
   })
   @ZodResponse({
     status: 200,
@@ -51,21 +54,22 @@ export class GuildsController {
   @ApiQuery({
     name: "source",
     required: false,
-    description: "Source of the request",
+    description: "Legacy source selector kept for backward compatibility",
   })
   async getUserGuilds(
     @DiscordId() discordId: string,
     @UserId() userId: string,
-    @Query("source") source: string,
+    @Query("source") source?: string,
   ) {
     return this.guildsService.getUserGuilds(discordId, userId, source);
   }
 
   @Get("/@me/permissions")
   @ApiOperation({
-    summary: "Get user guilds with permissions",
+    summary: "Get user guilds with permissions (deprecated)",
     description:
-      "Retrieve all guilds with permissions and roles for the authenticated user",
+      "Legacy endpoint for listing the authenticated user's accessible guilds with role metadata. Prefer /users/@me/guilds for new integrations.",
+    deprecated: true,
   })
   @ZodResponse({
     status: 200,
@@ -74,11 +78,22 @@ export class GuildsController {
   })
   getUserGuildsWithPermissions(
     @DiscordId() discordId: string,
+    @UserId() userId: string,
   ): Promise<UserGuildPermissionsDto[]> {
-    return this.guildsService.getUserGuildsWithPermissions(discordId);
+    return this.guildsService.getUserGuildsWithPermissions(discordId, userId);
   }
 
   @Get("/@me/manageable")
+  @ApiOperation({
+    summary: "Get manageable user guilds",
+    description:
+      "Retrieve guilds where the authenticated user has Discord administrator permissions",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "List of manageable user guilds",
+    type: [GuildResponseDto],
+  })
   getManageableUserGuilds(
     @DiscordId() discordId: string,
     @UserId() userId: string,
@@ -137,6 +152,20 @@ export class GuildsController {
   @Permissions(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
   @Get(":guildId/worlds")
+  @ApiOperation({
+    summary: "Get guild worlds",
+    description: "Retrieve the list of worlds configured for a guild",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "List of guild worlds",
+    schema: {
+      type: "array",
+      items: {
+        type: "string",
+      },
+    },
+  })
   getWorldsByGuildId(@GuildData() guild: Guild) {
     return this.guildsService.getWorldsByGuildId(guild.id);
   }
@@ -144,6 +173,22 @@ export class GuildsController {
   @Permissions(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
   @Get(":guildId/permissions")
+  @ApiOperation({
+    summary: "Get guild permissions",
+    description:
+      "Retrieve resolved permissions for the current member in a guild",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "List of member permissions in the guild",
+    schema: {
+      type: "array",
+      items: {
+        type: "string",
+        enum: Object.values(Permission),
+      },
+    },
+  })
   getGuildPermissions(@MemberPermissions() permissions: Permission[]) {
     return permissions;
   }
@@ -151,6 +196,16 @@ export class GuildsController {
   @Permissions(Permission.OWNER, Permission.ADMIN)
   @UseGuards(PermissionsGuard)
   @Get(":guildId/discord-sync")
+  @ApiOperation({
+    summary: "Get guild Discord sync status",
+    description:
+      "Retrieve the current Discord channel synchronization state for a guild",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Guild Discord sync state",
+    type: DiscordGuildSyncStateResponseDto,
+  })
   getGuildDiscordSyncStatus(@GuildData() guild: Guild) {
     return this.guildsService.getGuildDiscordSyncStatus(guild.id);
   }
@@ -158,6 +213,16 @@ export class GuildsController {
   @Permissions(Permission.OWNER, Permission.ADMIN)
   @UseGuards(PermissionsGuard)
   @Post(":guildId/discord-sync/refresh")
+  @ApiOperation({
+    summary: "Refresh guild Discord sync",
+    description:
+      "Trigger a refresh of the guild Discord channel synchronization state",
+  })
+  @ApiResponse({
+    status: 201,
+    description: "Refreshed guild Discord sync state",
+    type: DiscordGuildSyncStateResponseDto,
+  })
   refreshGuildDiscordSync(@GuildData() guild: Guild) {
     return this.guildsService.refreshGuildDiscordSync(guild.id);
   }

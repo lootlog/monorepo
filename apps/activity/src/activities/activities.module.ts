@@ -9,12 +9,12 @@ import { RetryService } from "src/shared/rabbitmq/retry.service";
 import { PermissionsModule } from "src/permissions/permissions.module";
 import { PrismaService } from "src/shared/db/prisma.service";
 import { cacheConfig } from "src/config/cache.config";
-import { rabbitmqModuleConfig } from "src/config/rabbitmq.module.config";
+import { rabbitmqConfig } from "src/config/rabbitmq.config";
 
 @Module({
   imports: [
-    CacheModule.registerAsync(cacheConfig),
-    RabbitMQModule.forRootAsync(rabbitmqModuleConfig),
+    CacheModule.register(cacheConfig),
+    RabbitMQModule.forRoot(rabbitmqConfig),
     PermissionsModule,
   ],
   controllers: [ActivitiesController],

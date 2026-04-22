@@ -1,9 +1,9 @@
 import * as z from "zod";
 import {
-  NotificationScheduleAnchor,
-  NotificationScheduleIntervalType,
-  NotificationTriggerType,
-} from "@lootlog/types";
+  CreateNotificationRuleDtoScheduleAnchor as NotificationScheduleAnchor,
+  CreateNotificationRuleDtoScheduleIntervalType as NotificationScheduleIntervalType,
+  CreateNotificationRuleDtoTriggerType as NotificationTriggerType,
+} from "@/lib/api/generated/main/model";
 import {
   GUILD_NOTIFICATION_TIMEZONE,
   parseDateTimeLocalInputToIsoString,

@@ -1,18 +1,16 @@
-import { ItemsService } from "../items/items.service.js";
-import { PlayersService } from "../players/players.service.js";
-import { NpcsService } from "../npcs/npcs.service.js";
-import type { SearchAllDto } from "./dto/search-all.dto.js";
+import { Injectable } from "@nestjs/common";
+import { ItemsService } from "src/items/items.service";
+import { NpcsService } from "src/npcs/npcs.service";
+import { PlayersService } from "src/players/players.service";
+import type { SearchAllDto } from "./dto/search-all.dto";
 
+@Injectable()
 export class AllService {
-  private itemsService: ItemsService;
-  private playersService: PlayersService;
-  private npcsService: NpcsService;
-
-  constructor() {
-    this.itemsService = new ItemsService();
-    this.playersService = new PlayersService();
-    this.npcsService = new NpcsService();
-  }
+  constructor(
+    private readonly itemsService: ItemsService,
+    private readonly playersService: PlayersService,
+    private readonly npcsService: NpcsService,
+  ) {}
 
   async searchAll({ limit, search, world }: SearchAllDto) {
     const [items, players, npcs] = await Promise.all([

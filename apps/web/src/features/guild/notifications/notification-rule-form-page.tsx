@@ -1,9 +1,10 @@
 import { MultiSelect } from "@/components/ui/multi-select";
 import {
-  NotificationScheduleAnchor,
-  NotificationScheduleIntervalType,
-  NotificationTriggerType,
-} from "@lootlog/types";
+  CreateNotificationRuleDtoScheduleAnchor as NotificationScheduleAnchor,
+  CreateNotificationRuleDtoScheduleIntervalType as NotificationScheduleIntervalType,
+  CreateNotificationRuleDtoTriggerType as NotificationTriggerType,
+  type CreateNotificationRuleDtoTriggerType,
+} from "@/lib/api/generated/main/model";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
 import {
@@ -149,7 +150,8 @@ export const NotificationRuleFormPage = () => {
                             onValueChange={(value) => {
                               if (!value) return;
                               field.onChange(value);
-                              const nextType = value as NotificationTriggerType;
+                              const nextType =
+                                value as CreateNotificationRuleDtoTriggerType;
                               form.setValue(
                                 "contentTemplate",
                                 getDefaultContentTemplate(nextType),

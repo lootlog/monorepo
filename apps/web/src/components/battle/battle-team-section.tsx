@@ -3,7 +3,7 @@ import { Sword } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { TeamDisplay } from "./team-display";
-import type { Warrior } from "@/hooks/api/battle-log/use-battles";
+import type { BattleWarrior as Warrior } from "@/lib/api/battlelog-types";
 
 export type BattleTeamSectionProps = {
   team: Warrior[];

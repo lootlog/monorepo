@@ -250,4 +250,61 @@ describe("usePartyGatheringSocket", () => {
       }),
     );
   });
+
+  it("drops queued party gathering notifications that were cancelled before readiness", () => {
+    const { rerender } = renderHook(() => usePartyGatheringSocket());
+    const sendHandler = mockOn.mock.calls.find(
+      ([eventName]) => eventName === GatewayEvent.PARTY_GATHERING_SEND,
+    )?.[1] as (data: {
+      notificationId: string;
+      guildId: string;
+      discordId: string;
+      world: string;
+      createdAt: string;
+      character: {
+        nick: string;
+        lvl: number;
+        prof: string;
+        characterId: string;
+        accountId: string;
+        icon: string;
+      };
+    }) => void;
+    const cancelHandler = mockOn.mock.calls.find(
+      ([eventName]) => eventName === GatewayEvent.PARTY_GATHERING_CANCEL,
+    )?.[1] as (data: { notificationId: string }) => void;
+
+    sendHandler({
+      notificationId: "notification-1",
+      guildId: "guild-1",
+      discordId: "other-discord-id",
+      world: "pandora",
+      createdAt: "2026-04-17T10:00:00.000Z",
+      character: {
+        nick: "Hero",
+        lvl: 100,
+        prof: "w",
+        characterId: "10",
+        accountId: "20",
+        icon: "hero.gif",
+      },
+    });
+    cancelHandler({
+      notificationId: "notification-1",
+    });
+
+    notificationSettingsState = {
+      ...notificationSettingsState,
+      accountId: "202",
+      isReady: true,
+    };
+    notificationMutesState = {
+      ...notificationMutesState,
+      isReady: true,
+    };
+    rerender();
+
+    expect(mockPushNotification).not.toHaveBeenCalled();
+    expect(mockRemoveNotification).not.toHaveBeenCalled();
+  });
 });

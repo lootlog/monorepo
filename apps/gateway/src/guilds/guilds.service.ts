@@ -1,7 +1,6 @@
 import { HttpService } from "@nestjs/axios";
 import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 import type {
   UserGuildData,
   GetUserGuildsOptions,
@@ -11,9 +10,8 @@ import {
   getUserGuildsCacheKey,
   CACHE_TTL,
 } from "src/guilds/utils/cache-keys.util";
-import { ConfigKey } from "src/config/config-key.enum";
-import type { ApiConfig } from "src/config/api.config";
 import { firstValueFrom } from "rxjs";
+import { apiConfig } from "src/config/api.config";
 
 const MAX_RETRIES = 3;
 const RETRY_DELAYS = [1000, 2000, 4000];
@@ -28,9 +26,7 @@ export class GuildsService {
   constructor(
     private readonly httpService: HttpService,
     private readonly redis: RedisService,
-    private readonly configService: ConfigService,
   ) {
-    const apiConfig = this.configService.get<ApiConfig>(ConfigKey.API);
     this.apiUrl = apiConfig.url;
   }
 

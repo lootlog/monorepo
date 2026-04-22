@@ -1,8 +1,11 @@
-import type { NotificationWithServers } from "@/store/notifications.store";
+import type {
+  MentionNotification,
+  NotificationWithServers,
+} from "@/store/notifications.store";
 import type { FC } from "react";
 
 type SingleNotificationMessageProps = {
-  notification: NotificationWithServers;
+  notification: MentionNotification | NotificationWithServers;
 };
 
 export const SingleNotificationMessage: FC<SingleNotificationMessageProps> = ({

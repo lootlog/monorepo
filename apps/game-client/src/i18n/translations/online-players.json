@@ -1,0 +1,12 @@
+{
+  "window": {
+    "title": "Gracze online"
+  },
+  "search": {
+    "placeholder": "Szukaj gracza..."
+  },
+  "emptyState": {
+    "notFound": "Nie znaleziono graczy",
+    "noPlayers": "Brak graczy online."
+  }
+}

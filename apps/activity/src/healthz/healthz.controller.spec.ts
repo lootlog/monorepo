@@ -1,5 +1,4 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { ConfigService } from "@nestjs/config";
 import {
   HealthCheckService,
   HttpHealthIndicator,
@@ -36,10 +35,6 @@ describe("HealthzController", () => {
 
   const mockPrismaService = {};
 
-  const mockConfigService = {
-    get: vi.fn().mockReturnValue({ url: "http://localhost:3000" }),
-  };
-
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [HealthzController],
@@ -67,10 +62,6 @@ describe("HealthzController", () => {
         {
           provide: PrismaService,
           useValue: mockPrismaService,
-        },
-        {
-          provide: ConfigService,
-          useValue: mockConfigService,
         },
       ],
     }).compile();

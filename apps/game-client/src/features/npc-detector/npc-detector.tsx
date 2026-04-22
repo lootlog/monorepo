@@ -6,12 +6,12 @@ import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { getNpcTypeByWt, type DetectorNpcType } from "@lootlog/types";
-import { NpcType } from "@/hooks/api/use-npcs";
+import { NpcType } from "@/api/npcs.api";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 export const NpcDetector = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation("npcDetector");
   const open = useWindowsStore((state) => state["npc-detector"].open);
   const defaultWindowHeight = useWindowsStore(
     (state) => state["npc-detector"].size.height,
@@ -62,7 +62,7 @@ export const NpcDetector = () => {
     >
       <DraggableWindow
         id="npc-detector"
-        title={t("settings.windows.npcDetector")}
+        title={t("window.title")}
         actions=<WindowMaxHeightAction
           currentMaxHeight={resolvedMaxContentHeight}
           isArmed={isMaxHeightAdjustmentArmed}

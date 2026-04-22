@@ -6,7 +6,7 @@ import {
   parseAsString,
   parseAsStringLiteral,
 } from "nuqs";
-import type { Warrior } from "@/hooks/api/battle-log/use-search-warriors";
+import type { SearchWarrior } from "@/lib/api/battlelog-types";
 import type { Period } from "@/store/battle-filters.store";
 
 const PERIOD_VALUES = [
@@ -101,7 +101,7 @@ export const normalizeBattlePanelCharacterId = (
 
 export const getSelectedWarriorsFromSearch = (
   search: string | undefined,
-): Warrior[] => {
+): SearchWarrior[] => {
   if (!search) return [];
 
   return search

@@ -1,12 +1,14 @@
 import { useEffect } from "react";
-import { useBattleCharacters } from "@/hooks/api/battle-log/use-battle-characters";
-import { useProfessionWinRate } from "@/hooks/api/battle-log/use-profession-win-rate";
-import { useHeadToHead } from "@/hooks/api/battle-log/use-head-to-head";
-import { useBattleStreak } from "@/hooks/api/battle-log/use-battle-streak";
-import { useBattleDuration } from "@/hooks/api/battle-log/use-battle-duration";
-import { usePhGrowth } from "@/hooks/api/battle-log/use-ph-growth";
-import { useRatingGrowth } from "@/hooks/api/battle-log/use-rating-growth";
-import { useRatingDeltaByOpponent } from "@/hooks/api/battle-log/use-rating-delta-by-opponent";
+import {
+  useBattlesControllerGetBattleDuration,
+  useBattlesControllerGetCurrentStreak,
+  useBattlesControllerGetHeadToHead,
+  useBattlesControllerGetPhGrowth,
+  useBattlesControllerGetProfessionWinRate,
+  useBattlesControllerGetRatingDeltaByOpponent,
+  useBattlesControllerGetRatingGrowth,
+  useBattlesControllerGetUserCharacters,
+} from "@/lib/api/generated/battlelog/battles/battles";
 import { StatisticsFilters } from "./components/statistics-filters";
 import { ProfessionWinRateChart } from "./components/profession-win-rate";
 import { HeadToHeadTable } from "./components/head-to-head-table";
@@ -24,10 +26,10 @@ import {
   battlePanelStatisticsSearchParsers,
   normalizeBattlePanelCharacterId,
 } from "@/features/user/battle-panel/battle-panel-statistics-search";
-
 export function BattlePanelStatistics() {
-  const { data: characters, isLoading: isLoadingCharacters } =
-    useBattleCharacters();
+  const { data: charactersResponse, isLoading: isLoadingCharacters } =
+    useBattlesControllerGetUserCharacters();
+  const characters = charactersResponse?.characters;
   const [queryState, setQueryState] = useQueryStates(
     battlePanelStatisticsSearchParsers,
   );
@@ -53,7 +55,7 @@ export function BattlePanelStatistics() {
   }, [characters, currentCharacterId, isLoadingCharacters, setQueryState]);
 
   const { data: professionData, isLoading: isProfessionLoading } =
-    useProfessionWinRate({
+    useBattlesControllerGetProfessionWinRate({
       characterId: currentCharacterId ?? characters?.[0]?.id,
       period,
       minLevel,
@@ -63,7 +65,7 @@ export function BattlePanelStatistics() {
     });
 
   const { data: headToHeadData, isLoading: isHeadToHeadLoading } =
-    useHeadToHead({
+    useBattlesControllerGetHeadToHead({
       characterId: currentCharacterId ?? characters?.[0]?.id,
       period,
       minLevel,
@@ -73,17 +75,8 @@ export function BattlePanelStatistics() {
       size: 5,
     });
 
-  const { data: streakData, isLoading: isStreakLoading } = useBattleStreak({
-    characterId: currentCharacterId ?? characters?.[0]?.id,
-    period,
-    minLevel,
-    maxLevel,
-    ph,
-    matchmaking,
-  });
-
-  const { data: durationData, isLoading: isDurationLoading } =
-    useBattleDuration({
+  const { data: streakData, isLoading: isStreakLoading } =
+    useBattlesControllerGetCurrentStreak({
       characterId: currentCharacterId ?? characters?.[0]?.id,
       period,
       minLevel,
@@ -92,17 +85,28 @@ export function BattlePanelStatistics() {
       matchmaking,
     });
 
-  const { data: phGrowthData, isLoading: isPhGrowthLoading } = usePhGrowth({
-    characterId: currentCharacterId ?? characters?.[0]?.id,
-    period,
-    minLevel,
-    maxLevel,
-    ph,
-    matchmaking,
-  });
+  const { data: durationData, isLoading: isDurationLoading } =
+    useBattlesControllerGetBattleDuration({
+      characterId: currentCharacterId ?? characters?.[0]?.id,
+      period,
+      minLevel,
+      maxLevel,
+      ph,
+      matchmaking,
+    });
+
+  const { data: phGrowthData, isLoading: isPhGrowthLoading } =
+    useBattlesControllerGetPhGrowth({
+      characterId: currentCharacterId ?? characters?.[0]?.id,
+      period,
+      minLevel,
+      maxLevel,
+      ph,
+      matchmaking,
+    });
 
   const { data: ratingGrowthData, isLoading: isRatingGrowthLoading } =
-    useRatingGrowth({
+    useBattlesControllerGetRatingGrowth({
       characterId: currentCharacterId ?? characters?.[0]?.id,
       period,
       minLevel,
@@ -110,7 +114,7 @@ export function BattlePanelStatistics() {
     });
 
   const { data: ratingDeltaData, isLoading: isRatingDeltaLoading } =
-    useRatingDeltaByOpponent({
+    useBattlesControllerGetRatingDeltaByOpponent({
       characterId: currentCharacterId ?? characters?.[0]?.id,
       period,
       minLevel,

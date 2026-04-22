@@ -1,9 +1,9 @@
-import type { Mock, Mocked } from "vitest";
+import type { Mocked } from "vitest";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { NotFoundException } from "@nestjs/common";
 import { BattleAnalyticsService } from "./battle-analytics.service";
 import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 
 describe("BattleAnalyticsService", () => {
   let service: BattleAnalyticsService;

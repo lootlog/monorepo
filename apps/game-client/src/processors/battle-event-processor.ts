@@ -2,7 +2,7 @@ import { createSHA256Hash } from "@/helpers/create-sha-256-hash";
 import { mapBattleEventsToPayload } from "@/helpers/mappers/battlelog.mappers";
 import { LOOTLOG_APP_URL } from "@/config/app";
 import { getNpcTypeByWt } from "@lootlog/types";
-import { NpcType } from "@/hooks/api/use-npcs";
+import { NpcType } from "@/api/npcs.api";
 import { addAccountIdsToWarriors } from "@/hooks/game-events/helpers/battle.helpers";
 import { Game } from "@/lib/game";
 import { useBattlePanelStore } from "@/store/battle-panel.store";
@@ -13,6 +13,7 @@ import {
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import { createKill, createBattle } from "@/api";
 import { toast } from "sonner";
+import { getFixedT } from "@/i18n/get-fixed-t";
 
 const TRACKABLE_NPC_TYPES = new Set([
   NpcType.ELITE2,
@@ -23,15 +24,16 @@ const TRACKABLE_NPC_TYPES = new Set([
 ]);
 
 const showBattleCreatedToast = (battleId: number) => {
+  const t = getFixedT("timers");
   const battleUrl = `${LOOTLOG_APP_URL}/@me/battle-panel/battles/${battleId}`;
 
-  toast("Walka została dodana", {
+  toast(t("messages.battleLinkCreated"), {
     duration: 10000,
     action: {
-      label: "Kopiuj link",
+      label: t("messages.copyBattleLink"),
       onClick: () => {
         navigator.clipboard.writeText(battleUrl);
-        toast.success("Link skopiowany do schowka");
+        toast.success(t("messages.battleLinkCopied"));
       },
     },
   });

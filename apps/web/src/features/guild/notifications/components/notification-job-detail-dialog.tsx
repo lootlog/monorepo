@@ -9,7 +9,7 @@ import {
 } from "@lootlog/ui/components/dialog";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Separator } from "@lootlog/ui/components/separator";
-import type { GuildNotificationJob } from "@/hooks/api/guilds/use-guild-notifications";
+import type { NotificationJobsResponseDto } from "@/lib/api/generated/main/model";
 import {
   getJobKindLabel,
   getJobStatusBadgeProps,
@@ -20,7 +20,7 @@ import {
 import { NotificationJobDetailRow } from "./notification-job-detail-row";
 
 type NotificationJobDetailDialogProps = {
-  job: GuildNotificationJob | null;
+  job: NotificationJobsResponseDto["pending"][number] | null;
   onOpenChange: (open: boolean) => void;
 };
 
@@ -35,10 +35,10 @@ export const NotificationJobDetailDialog = ({
   }
 
   const payload = job.payloadSnapshot;
-  const world = (payload?.world as string) ?? job.rule.world;
-  const npcName = payload?.npcName as string | undefined;
-  const message = payload?.message as string | undefined;
-  const title = payload?.title as string | undefined;
+  const world = payload?.world ?? job.rule.world;
+  const npcName = payload?.npcName ?? undefined;
+  const message = payload?.message ?? payload?.content ?? undefined;
+  const title = payload?.title ?? undefined;
 
   const hasDeliveryDetails =
     job.attemptCount > 0 || job.providerMessageId || job.sourceEntityType;

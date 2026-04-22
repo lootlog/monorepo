@@ -6,7 +6,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { FC } from "react";
 import { TIMERS_COLORS } from "../constants/timer-colors";
-import { DEFAULT_COLOR_NAMES } from "../constants/color-names";
+import { getDefaultColorName } from "../constants/color-names";
 
 type CustomColor = {
   id: string;
@@ -68,7 +68,7 @@ export const TimerColorPicker: FC<TimerColorPickerProps> = ({
                 />
               </TooltipTrigger>
               <TooltipContent side="top" className="ll:text-xs">
-                {defaultColorNames[id] || DEFAULT_COLOR_NAMES[id]}
+                {defaultColorNames[id] || getDefaultColorName(id)}
               </TooltipContent>
             </Tooltip>
           );

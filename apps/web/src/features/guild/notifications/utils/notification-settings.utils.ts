@@ -1,12 +1,20 @@
 import type { BadgeProps } from "@lootlog/ui/components/badge";
 import type {
-  GuildNotificationRule,
-  GuildNotificationTarget,
-} from "@/hooks/api/guilds/use-guild-notifications";
+  CreateNotificationRuleDtoScheduleAnchor,
+  CreateNotificationRuleDtoTriggerType,
+  GuildNotificationRulesResponseDto,
+  NotificationJobsResponseDto,
+  NotificationTargetResponseDto,
+} from "@/lib/api/generated/main/model";
 import {
-  NotificationScheduleAnchor,
-  NotificationTriggerType,
-} from "@lootlog/types";
+  CreateNotificationRuleDtoScheduleAnchor as NotificationScheduleAnchor,
+  CreateNotificationRuleDtoTriggerType as NotificationTriggerType,
+} from "@/lib/api/generated/main/model";
+
+type GuildNotificationTarget = NotificationTargetResponseDto;
+type GuildNotificationRule = GuildNotificationRulesResponseDto["items"][number];
+export type GuildNotificationJob =
+  NotificationJobsResponseDto["pending"][number];
 
 export const getJobStatusBadgeProps = (
   status: string,
@@ -30,13 +38,13 @@ export const getJobStatusBadgeProps = (
   }
 };
 
-export const SUPPORTED_GUILD_NOTIFICATION_TRIGGER_TYPES = [
+const SUPPORTED_GUILD_NOTIFICATION_TRIGGER_TYPES = [
   NotificationTriggerType.TIMER_BEFORE_SPAWN,
   NotificationTriggerType.SCHEDULED_MESSAGE,
 ] as const;
 
 export const getNotificationTriggerTranslationKey = (
-  triggerType: NotificationTriggerType,
+  triggerType: CreateNotificationRuleDtoTriggerType,
 ) => {
   switch (triggerType) {
     case NotificationTriggerType.TIMER_BEFORE_SPAWN:
@@ -51,7 +59,7 @@ export const getNotificationTriggerTranslationKey = (
 };
 
 export const isSupportedGuildNotificationTrigger = (
-  triggerType: NotificationTriggerType,
+  triggerType: CreateNotificationRuleDtoTriggerType,
 ) =>
   SUPPORTED_GUILD_NOTIFICATION_TRIGGER_TYPES.includes(
     triggerType as (typeof SUPPORTED_GUILD_NOTIFICATION_TRIGGER_TYPES)[number],
@@ -141,13 +149,17 @@ export const getGuildNotificationRuleScheduleTranslationKey = (
   rule: Pick<GuildNotificationRule, "scheduleAnchor" | "scheduleOffsetMinutes">,
 ) => {
   if (
-    rule.scheduleAnchor === NotificationScheduleAnchor.MAX_SPAWN &&
+    rule.scheduleAnchor ===
+      (NotificationScheduleAnchor.MAX_SPAWN as CreateNotificationRuleDtoScheduleAnchor) &&
     rule.scheduleOffsetMinutes === 0
   ) {
     return "settings.notifications.schedule.maxSpawnExact";
   }
 
-  if (rule.scheduleAnchor === NotificationScheduleAnchor.MAX_SPAWN) {
+  if (
+    rule.scheduleAnchor ===
+    (NotificationScheduleAnchor.MAX_SPAWN as CreateNotificationRuleDtoScheduleAnchor)
+  ) {
     return "settings.notifications.schedule.maxSpawnBefore";
   }
 

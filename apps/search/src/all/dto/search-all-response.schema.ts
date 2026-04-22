@@ -1,7 +1,8 @@
-import { z } from "@hono/zod-openapi";
-import { itemHitSchema } from "../../items/dto/item-hit.schema.js";
-import { npcHitSchema } from "../../npcs/dto/npc-hit.schema.js";
-import { playerHitSchema } from "../../players/dto/player-hit.schema.js";
+import { createZodDto, type ZodDto } from "nestjs-zod";
+import { z } from "zod";
+import { itemHitSchema } from "../../items/dto/item-hit.schema";
+import { npcHitSchema } from "../../npcs/dto/npc-hit.schema";
+import { playerHitSchema } from "../../players/dto/player-hit.schema";
 
 export const searchAllResponseSchema = z
   .object({
@@ -9,4 +10,9 @@ export const searchAllResponseSchema = z
     players: z.array(playerHitSchema),
     npcs: z.array(npcHitSchema),
   })
-  .openapi("SearchAllResponse");
+  .describe("Aggregated search results");
+
+const SearchAllResponseDtoBase: ZodDto<typeof searchAllResponseSchema, false> =
+  createZodDto(searchAllResponseSchema);
+
+export class SearchAllResponseDto extends SearchAllResponseDtoBase {}

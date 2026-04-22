@@ -9,6 +9,8 @@ describe("UserController", () => {
 
   const mockUsersService = {
     getUserPreferences: mockFn(),
+    getCurrentUserGuilds: mockFn(),
+    getCurrentUserAccessibleGuilds: mockFn(),
     updateUserPreferences: mockFn(),
     getUserGameAccountPreferences: mockFn(),
     updateUserGameAccountPreferences: mockFn(),
@@ -53,6 +55,20 @@ describe("UserController", () => {
     expect(mockUsersService.getUserGameAccountPreferences).toHaveBeenCalledWith(
       "auth-user-current",
       "12345",
+    );
+  });
+
+  it("delegates current-user guild reads to the service", async () => {
+    mockUsersService.getCurrentUserGuilds.mockResolvedValue([]);
+
+    await controller.getCurrentUserGuilds(
+      "discord-user-current",
+      "auth-user-current",
+    );
+
+    expect(mockUsersService.getCurrentUserGuilds).toHaveBeenCalledWith(
+      "discord-user-current",
+      "auth-user-current",
     );
   });
 });

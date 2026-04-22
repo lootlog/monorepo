@@ -12,7 +12,7 @@ import {
 
 const CAT_THEME_VARIANT_SET = new Set<CatThemeVariant>(CAT_THEME_VARIANTS);
 
-export const isResolvedCatTheme = (
+const isResolvedCatTheme = (
   theme: ResolvedThemeId | null | undefined,
 ): theme is CatThemeVariant =>
   theme !== null &&
@@ -49,7 +49,7 @@ export const getThemeFamily = (
   return "standard";
 };
 
-export const getRandomCatVariant = (): CatThemeVariant =>
+const getRandomCatVariant = (): CatThemeVariant =>
   CAT_THEME_VARIANTS[Math.floor(Math.random() * CAT_THEME_VARIANTS.length)] ??
   DEFAULT_CAT_THEME_VARIANT;
 

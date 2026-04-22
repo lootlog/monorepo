@@ -2,16 +2,24 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { DetectorRoutingRule } from "@lootlog/types";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { useGuilds, type Guild } from "@/hooks/api/use-guilds";
 import { useUpdateUserGameAccountPreferences } from "@/hooks/api/use-user-account-preferences";
 import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
 import { DetectorRoutingSettingsTabForm } from "./detector-routing-settings-tab-form";
+import type { GuildResponseDtoOutput } from "@/lib/api/generated/main/model";
+import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@/lib/api/generated/main/users/users";
 
 const mockMutate = vi.fn();
 
-vi.mock("@/hooks/api/use-guilds", () => ({
-  useGuilds: vi.fn(),
-}));
+vi.mock("@/lib/api/generated/main/users/users", async () => {
+  const actual = await vi.importActual<
+    typeof import("@/lib/api/generated/main/users/users")
+  >("@/lib/api/generated/main/users/users");
+
+  return {
+    ...actual,
+    useUsersControllerGetCurrentUserAccessibleGuilds: vi.fn(),
+  };
+});
 
 vi.mock("@/hooks/api/use-user-account-preferences", () => ({
   useUpdateUserGameAccountPreferences: vi.fn(),
@@ -27,13 +35,13 @@ vi.mock("@/hooks/use-debounced-callback", () => ({
   }),
 }));
 
-const guilds: Guild[] = [
-  { id: "guild-1", name: "Alpha", icon: null },
-  { id: "guild-2", name: "Beta", icon: null },
-  { id: "guild-3", name: "Gamma", icon: null },
-  { id: "guild-4", name: "Delta", icon: null },
-  { id: "guild-5", name: "Epsilon", icon: null },
-  { id: "guild-6", name: "Zeta", icon: null },
+const guilds: GuildResponseDtoOutput[] = [
+  { id: "guild-1", name: "Alpha", icon: null, ownerId: "owner-1" },
+  { id: "guild-2", name: "Beta", icon: null, ownerId: "owner-1" },
+  { id: "guild-3", name: "Gamma", icon: null, ownerId: "owner-1" },
+  { id: "guild-4", name: "Delta", icon: null, ownerId: "owner-1" },
+  { id: "guild-5", name: "Epsilon", icon: null, ownerId: "owner-1" },
+  { id: "guild-6", name: "Zeta", icon: null, ownerId: "owner-1" },
 ];
 
 const routingRules: DetectorRoutingRule[] = [
@@ -64,9 +72,11 @@ describe("DetectorRoutingSettingsTabForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    vi.mocked(useGuilds).mockReturnValue({
-      data: guilds,
-    } as ReturnType<typeof useGuilds>);
+    vi.mocked(useUsersControllerGetCurrentUserAccessibleGuilds).mockReturnValue(
+      {
+        data: guilds,
+      } as ReturnType<typeof useUsersControllerGetCurrentUserAccessibleGuilds>,
+    );
     vi.mocked(useUpdateUserGameAccountPreferences).mockReturnValue({
       mutate: mockMutate,
     } as unknown as ReturnType<typeof useUpdateUserGameAccountPreferences>);

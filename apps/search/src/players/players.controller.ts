@@ -1,42 +1,23 @@
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
-import { getPlayersQuerySchema } from "./dto/get-players.dto.js";
-import { playerHitSchema } from "./dto/player-hit.schema.js";
-import { PlayersService } from "./players.service.js";
+import { Controller, Get, Query } from "@nestjs/common";
+import { ApiOperation, ApiTags } from "@nestjs/swagger";
+import { ZodResponse } from "nestjs-zod";
+import { GetPlayersDto } from "./dto/get-players.dto";
+import { PlayerHitDto } from "./dto/player-hit.schema";
+import { PlayersService } from "./players.service";
 
-const playersService = new PlayersService();
+@ApiTags("Players")
+@Controller("players")
+export class PlayersController {
+  constructor(private readonly playersService: PlayersService) {}
 
-const getPlayersRoute = createRoute({
-  method: "get",
-  path: "/",
-  tags: ["Players"],
-  summary: "Search players by name",
-  request: {
-    query: getPlayersQuerySchema,
-  },
-  responses: {
-    200: {
-      content: {
-        "application/json": {
-          schema: z.array(playerHitSchema),
-        },
-      },
-      description: "List of matching players",
-    },
-  },
-});
-
-const players = new OpenAPIHono<{
-  Variables: {
-    userId: string | null;
-    discordId: string | null;
-  };
-}>();
-
-players.openapi(getPlayersRoute, async (c) => {
-  const { limit, search, world } = c.req.valid("query");
-  const res = await playersService.getPlayers({ limit, search, world });
-
-  return c.json(res, 200);
-});
-
-export { players };
+  @Get()
+  @ApiOperation({ summary: "Search players by name" })
+  @ZodResponse({
+    status: 200,
+    type: [PlayerHitDto],
+    description: "List of matching players",
+  })
+  getPlayers(@Query() query: GetPlayersDto) {
+    return this.playersService.getPlayers(query);
+  }
+}

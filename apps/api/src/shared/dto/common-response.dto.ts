@@ -12,3 +12,9 @@ const StatusOkResponseSchema = z.object({
 });
 
 export class StatusOkResponseDto extends createZodDto(StatusOkResponseSchema) {}
+
+const SuccessResponseSchema = z.object({
+  success: z.boolean(),
+});
+
+export class SuccessResponseDto extends createZodDto(SuccessResponseSchema) {}

@@ -8,7 +8,7 @@ import {
   Post,
   UseGuards,
 } from "@nestjs/common";
-import { DiscordId } from "@lootlog/nest-shared";
+import { DiscordId } from "@lootlog/nest-shared/decorators";
 import {
   ApiTags,
   ApiBearerAuth,
@@ -16,7 +16,12 @@ import {
   ApiResponse,
   ApiParam,
 } from "@nestjs/swagger";
+import { ZodResponse } from "nestjs-zod";
 import { ChatService } from "src/chat/chat.service";
+import {
+  ChatMessageActionResponseDto,
+  ChatMessageResponseDto,
+} from "src/chat/dto/chat-message-response.dto";
 import { SendMessageDto } from "src/chat/dto/send-message.dto";
 import { UpdateMessageDto } from "src/chat/dto/update-message.dto";
 import { type Guild, Permission } from "src/generated/prisma/client";
@@ -40,9 +45,10 @@ export class ChatController {
     description: "Retrieve chat messages for a guild",
   })
   @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "List of chat messages",
+    type: [ChatMessageResponseDto],
   })
   @ApiResponse({
     status: 403,
@@ -60,9 +66,10 @@ export class ChatController {
     description: "Send a new chat message to a guild",
   })
   @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
-  @ApiResponse({
+  @ZodResponse({
     status: 201,
     description: "Message sent successfully",
+    type: ChatMessageResponseDto,
   })
   @ApiResponse({
     status: 403,
@@ -89,9 +96,10 @@ export class ChatController {
     description: "Message ID",
     example: "msg_123",
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Message updated successfully",
+    type: ChatMessageActionResponseDto,
   })
   @ApiResponse({
     status: 403,
@@ -113,6 +121,27 @@ export class ChatController {
 
   @Permissions(Permission.LOOTLOG_CHAT_WRITE)
   @UseGuards(PermissionsGuard)
+  @Delete()
+  @ApiOperation({
+    summary: "Clear chat messages",
+    description: "Clear all chat messages from a guild",
+  })
+  @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
+  @ZodResponse({
+    status: 200,
+    description: "Chat cleared successfully",
+    type: ChatMessageActionResponseDto,
+  })
+  @ApiResponse({
+    status: 403,
+    description: "Forbidden - only OWNER or ADMIN can clear chat",
+  })
+  clearChatMessages(@GuildData() guild: Guild, @DiscordId() discordId: string) {
+    return this.chatService.clearMessages(discordId, guild.id);
+  }
+
+  @Permissions(Permission.LOOTLOG_CHAT_WRITE)
+  @UseGuards(PermissionsGuard)
   @Delete(":messageId")
   @ApiOperation({
     summary: "Delete chat message",
@@ -124,9 +153,10 @@ export class ChatController {
     description: "Message ID",
     example: "msg_123",
   })
-  @ApiResponse({
+  @ZodResponse({
     status: 200,
     description: "Message deleted successfully",
+    type: ChatMessageActionResponseDto,
   })
   @ApiResponse({
     status: 403,

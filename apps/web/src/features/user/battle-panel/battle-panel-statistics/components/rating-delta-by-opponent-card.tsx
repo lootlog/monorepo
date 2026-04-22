@@ -19,7 +19,7 @@ import { getProfessionName } from "@/lib/utils/professions";
 import { Button } from "@lootlog/ui/components/button";
 import { ArrowRight } from "lucide-react";
 import { ROUTES } from "@/config/routes";
-import type { RatingDeltaByOpponentRecord } from "@/hooks/api/battle-log/use-rating-delta-by-opponent";
+import type { RatingDeltaByOpponentRecord } from "@/lib/api/battlelog-types";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { Period } from "@/store/battle-filters.store";

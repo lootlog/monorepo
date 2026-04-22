@@ -1,10 +1,10 @@
 import type { FC } from "react";
 import { SingleTimer } from "./single-timer";
+import { getGuildIds, getGuildNamesById } from "@/lib/api/generated-helpers";
 import {
-  getGuildIds,
-  getGuildNamesById,
-  useGuilds,
-} from "@/hooks/api/use-guilds";
+  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
+  useUsersControllerGetCurrentUserAccessibleGuilds,
+} from "@/lib/api/generated/main/users/users";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 
 type TimersGridProps = {
@@ -20,7 +20,13 @@ export const TimersGrid: FC<TimersGridProps> = ({
   hiddenTimers,
   minColumnWidth,
 }) => {
-  const { data: guilds } = useGuilds();
+  const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds({
+    query: {
+      queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
+      refetchOnMount: false,
+      staleTime: 1000 * 60 * 5,
+    },
+  });
   const guildIds = getGuildIds(guilds);
   const guildNamesById = getGuildNamesById(guilds);
 

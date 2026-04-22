@@ -1,11 +1,12 @@
-import { NPC_NAMES } from "@/constants/margonem";
-import type { ChatMessage as ChatMessageType } from "@/hooks/api/use-chat-messages";
+import {
+  type ChatMessage as ChatMessageType,
+  MessageType,
+} from "@/api/chat.api";
+import type { ChatMessageResponseDtoOutputNpc as ChatNpc } from "@/lib/api/generated/main/model";
 import { getTextColor } from "@/utils/notifications-and-detector/background";
 import { isYesterday } from "date-fns";
 import { getNpcTypeByWt } from "@lootlog/types";
-import { MessageType } from "@/hooks/api/use-send-chat-message";
-import { NpcType } from "@/hooks/api/use-npcs";
-import { NPCS_WITH_LOCATION } from "@/features/npc-detector/components/npc-list-item";
+import { NpcType } from "@/api/npcs.api";
 
 export const isChatMessageYesterdayOrOlder = (
   timestamp: string,
@@ -22,26 +23,41 @@ type ChatMessageBody = {
   text: string;
 };
 
+export const getChatNpcLocation = (npc: ChatNpc) => {
+  const normalizedLocation = getChatNpcLocationName(npc);
+
+  if (!normalizedLocation) {
+    return "";
+  }
+
+  const coordinatesLabel = getChatNpcCoordinatesLabel(npc);
+
+  if (!coordinatesLabel) {
+    return normalizedLocation;
+  }
+
+  return `${normalizedLocation} ${coordinatesLabel}`;
+};
+
+export const getChatNpcLocationName = (npc: ChatNpc) => npc.location.trim();
+
+export const getChatNpcCoordinatesLabel = (npc: ChatNpc) => {
+  if (npc.x === undefined || npc.y === undefined) {
+    return "";
+  }
+
+  return `(${npc.x}, ${npc.y})`;
+};
+
+export const getChatNpcTextColor = (npc: ChatNpc) => {
+  const npcType = getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type);
+
+  return getTextColor(npcType, true);
+};
+
 export const getChatMessageBody = (
   message: ChatMessageType,
 ): ChatMessageBody | null => {
-  if (message.type === MessageType.NPC) {
-    const npc = message.npc;
-    if (!npc) return null;
-
-    const npcType = getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type);
-    const shortname = NPC_NAMES[npcType]?.shortname;
-    const color = getTextColor(npcType, true);
-    const location = NPCS_WITH_LOCATION.includes(npcType)
-      ? `${npc.location} (${npc.x}, ${npc.y})`
-      : npc.location;
-
-    return {
-      color,
-      text: `[${shortname}] ${npc.name} (${npc.lvl}${npc.prof ?? ""})${location ? ` - ${location}` : ""}`,
-    };
-  }
-
   if (message.type === MessageType.NOTIFICATION) {
     return {
       color: getTextColor("message", true),

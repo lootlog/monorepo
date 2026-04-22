@@ -1,7 +1,8 @@
 import type { Prisma } from "src/generated/prisma/client";
 import type { LootItemDto } from "./loot-item.dto";
-import type { LootPlayerDto } from "./loot-player.dto";
 import type { LootNpcDto } from "./loot-npc.dto";
+import type { LootPlayerDto } from "./loot-player.dto";
+import type { LootShare } from "src/shared/dto/loot-response.dto";
 
 export type SubmissionWithMember = Prisma.LootSubmissionGetPayload<{
   include: {
@@ -28,7 +29,10 @@ export type LootSelection = Prisma.LootGetPayload<{
   };
 }>;
 
-export type LootQueryResult = LootSelection & {
+type LootQueryBase = Omit<LootSelection, "lootShare">;
+
+export type LootQueryResult = LootQueryBase & {
+  lootShare: LootShare;
   items: LootItemDto[];
   players: LootPlayerDto[];
   npcs: LootNpcDto[];

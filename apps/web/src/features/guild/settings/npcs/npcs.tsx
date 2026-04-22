@@ -1,8 +1,4 @@
 import { SearchInput } from "@/components/ui/search-input";
-import {
-  useGuildLootlogConfig,
-  type LootlogConfigNpc,
-} from "@/hooks/api/guilds/use-guild-lootlog-settings";
 import { useState } from "react";
 import { Settings2 } from "lucide-react";
 import { Card } from "@lootlog/ui/components/card";
@@ -14,7 +10,12 @@ import {
 } from "@/components/selector-panel";
 import { useTranslation } from "react-i18next";
 import { NpcListItem } from "@/features/guild/settings/npcs/components/npc-list-item";
-import { NpcType } from "@/hooks/api/game-data/use-npcs";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useLootlogConfigControllerGetLootlogConfig } from "@/lib/api/generated/main/lootlog-config/lootlog-config";
+import {
+  NpcType,
+  type LootlogConfigNpcResponseDtoOutput as LootlogConfigNpc,
+} from "@/lib/api/generated/main/model";
 
 const NpcsHeader = () => {
   const { t } = useTranslation();
@@ -39,7 +40,10 @@ const NpcsHeader = () => {
 };
 
 const NpcsContent = () => {
-  const { data: config } = useGuildLootlogConfig();
+  const guildId = useGuildId();
+  const { data: config } = useLootlogConfigControllerGetLootlogConfig({
+    guildId: guildId ?? "",
+  });
   const [searchValue, setSearchValue] = useState("");
   const { t } = useTranslation();
   const { selectedItem: selectedNpc } = useSelectorPanel<LootlogConfigNpc>();

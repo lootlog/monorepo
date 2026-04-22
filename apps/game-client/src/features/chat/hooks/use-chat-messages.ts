@@ -1,97 +1,178 @@
 import { GatewayEvent } from "@/config/gateway";
-import { type ChatMessage, fetchChatMessages, fetchGuildMembers } from "@/api";
+import type { ChatMessage } from "@/api/chat.api";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useRef } from "react";
-import { useChatCache } from "./use-chat-cache";
+import { useEffect, useRef } from "react";
 import { useSocket } from "@/contexts/socket-context";
-import { QUERY_KEY } from "@/hooks/api/use-chat-messages";
+import {
+  getMembersControllerGetGuildMembersSummaryQueryKey,
+  getMembersControllerGetMeQueryKey,
+  membersControllerGetMe,
+  membersControllerGetGuildMembersSummary,
+} from "@/lib/api/generated/main/members/members";
+import {
+  removeChatMessage,
+  updateChatMessage,
+  upsertChatMessage,
+} from "@/features/chat/chat.helpers";
+import {
+  getChatMentionNotificationId,
+  getCurrentUserMentionNames,
+  getCurrentUserMentionRoleNames,
+  hasChatMentionToken,
+  hasCurrentUserMention,
+} from "@/features/chat/chat-mentions.helpers";
+import { useSession } from "@/hooks/auth/use-session";
+import { Game } from "@/lib/game";
+import { useNotificationsStore } from "@/store/notifications.store";
+import { useWindowsStore } from "@/store/windows.store";
+import { updateChatMessagesCache } from "@/features/chat/chat-query-cache.helpers";
 
-export const useChatMessagesListener = () => {
+type UseChatMessagesListenerOptions = {
+  onRemoteMessage?: (data: ChatMessage) => void;
+};
+
+export const useChatMessagesListener = (
+  options?: UseChatMessagesListenerOptions,
+) => {
   const queryClient = useQueryClient();
   const { connected, socket } = useSocket();
+  const { data: sessionData } = useSession();
+  const pushNotification = useNotificationsStore(
+    (state) => state.pushNotification,
+  );
+  const setOpen = useWindowsStore((state) => state.setOpen);
+  const sessionDiscordIdRef = useRef(sessionData?.user?.discordId);
+  const onRemoteMessageRef = useRef(options?.onRemoteMessage);
+  sessionDiscordIdRef.current = sessionData?.user?.discordId;
+  onRemoteMessageRef.current = options?.onRemoteMessage;
 
-  const handleChatMessage = useCallback(
-    (data: ChatMessage) => {
-      queryClient.setQueryData(
-        [QUERY_KEY, data.guildId],
-        (old: ChatMessage[]) => {
-          if (!old) return [data];
+  const handlerRef = useRef<(data: ChatMessage) => void>(() => undefined);
+  handlerRef.current = (data) => {
+    updateChatMessagesCache({
+      guildId: data.guildId,
+      queryClient,
+      updater: (old: ChatMessage[] | undefined) => upsertChatMessage(old, data),
+    });
 
-          return [...old, data];
-        },
-      );
-      if (!useChatCache.getState().messageCache[data.guildId]) {
-        fetchChatMessages(data.guildId)
-          .then((messages) => {
-            if (messages.length) {
-              useChatCache.getState().setMessageCache(data.guildId, messages);
-            }
-          })
-          .catch(() => undefined);
+    const membersQueryKey = getMembersControllerGetGuildMembersSummaryQueryKey({
+      guildId: data.guildId,
+    });
+    const cachedMembers = queryClient.getQueryData(membersQueryKey);
+
+    if (!cachedMembers) {
+      void queryClient.prefetchQuery({
+        queryKey: membersQueryKey,
+        queryFn: () =>
+          membersControllerGetGuildMembersSummary({ guildId: data.guildId }),
+        staleTime: 5 * 60 * 1000,
+      });
+    }
+  };
+  const mentionNotificationRef = useRef<
+    (data: ChatMessage) => void | Promise<void>
+  >(() => undefined);
+  mentionNotificationRef.current = async (data) => {
+    try {
+      if (!data.message || !hasChatMentionToken(data.message)) {
+        return;
       }
-      if (!useChatCache.getState().memberCache[data.guildId]) {
-        fetchGuildMembers(data.guildId)
-          .then((members) => {
-            if (members) {
-              useChatCache.getState().setMemberCache(data.guildId, members);
-            }
-          })
-          .catch(() => undefined);
+
+      if (
+        data.senderId === sessionDiscordIdRef.current ||
+        data.characterData.nick === Game.hero.nick
+      ) {
+        return;
       }
-      useChatCache.getState().appendMessage(data.guildId, data);
-    },
-    [queryClient],
+
+      const currentMember = await queryClient.fetchQuery({
+        queryKey: getMembersControllerGetMeQueryKey({ guildId: data.guildId }),
+        queryFn: () => membersControllerGetMe({ guildId: data.guildId }),
+        staleTime: 5 * 60 * 1000,
+      });
+      const currentUserNames = getCurrentUserMentionNames({
+        currentCharacterNick: Game.hero.nick,
+        currentMember,
+      });
+      const currentUserRoleNames =
+        getCurrentUserMentionRoleNames(currentMember);
+
+      if (
+        !hasCurrentUserMention(data.message, {
+          currentUserNames,
+          currentUserRoleNames,
+        })
+      ) {
+        return;
+      }
+
+      setOpen("notifications", true);
+      pushNotification({
+        type: "chat-mention",
+        notificationId: getChatMentionNotificationId({
+          guildId: data.guildId,
+          messageId: data.id,
+        }),
+        discordId: data.senderId,
+        guildId: data.guildId,
+        world: Game.getWorldName() ?? "",
+        createdAt: data.timestamp,
+        message: data.message,
+        servers: [data.guildId],
+      });
+    } catch {
+      return;
+    }
+  };
+
+  const deleteHandlerRef = useRef<
+    (data: { guildId: string; messageId: string }) => void
+  >(() => undefined);
+  deleteHandlerRef.current = (data) => {
+    updateChatMessagesCache({
+      guildId: data.guildId,
+      queryClient,
+      updater: (old: ChatMessage[] | undefined) =>
+        old ? removeChatMessage(old, data.messageId) : old,
+    });
+  };
+
+  const updateHandlerRef = useRef<
+    (data: { guildId: string; messageId: string; message: string }) => void
+  >(() => undefined);
+  updateHandlerRef.current = (data) => {
+    updateChatMessagesCache({
+      guildId: data.guildId,
+      queryClient,
+      updater: (old: ChatMessage[] | undefined) =>
+        old ? updateChatMessage(old, data.messageId, data.message) : old,
+    });
+  };
+  const clearHandlerRef = useRef<(data: { guildId: string }) => void>(
+    () => undefined,
   );
-
-  const handleChatMessageDelete = useCallback(
-    (data: { guildId: string; messageId: string }) => {
-      queryClient.setQueryData(
-        [QUERY_KEY, data.guildId],
-        (old: ChatMessage[]) => {
-          if (!old) return old;
-
-          return old.filter((message) => message.id !== data.messageId);
-        },
-      );
-      useChatCache.getState().removeMessage(data.guildId, data.messageId);
-    },
-    [queryClient],
-  );
-
-  const handleChatMessageUpdate = useCallback(
-    (data: { guildId: string; messageId: string; message: string }) => {
-      queryClient.setQueryData(
-        [QUERY_KEY, data.guildId],
-        (old: ChatMessage[]) => {
-          if (!old) return old;
-
-          return old.map((message) =>
-            message.id === data.messageId
-              ? { ...message, message: data.message, partyGathering: undefined }
-              : message,
-          );
-        },
-      );
-      useChatCache
-        .getState()
-        .updateMessage(data.guildId, data.messageId, data.message);
-    },
-    [queryClient],
-  );
-
-  const handlerRef = useRef(handleChatMessage);
-  handlerRef.current = handleChatMessage;
-
-  const deleteHandlerRef = useRef(handleChatMessageDelete);
-  deleteHandlerRef.current = handleChatMessageDelete;
-
-  const updateHandlerRef = useRef(handleChatMessageUpdate);
-  updateHandlerRef.current = handleChatMessageUpdate;
+  clearHandlerRef.current = (data) => {
+    updateChatMessagesCache({
+      guildId: data.guildId,
+      queryClient,
+      updater: [],
+    });
+  };
 
   useEffect(() => {
     if (socket?.hasListeners(GatewayEvent.CHAT_MESSAGE) || !connected) return;
 
-    const onChatMessage = (data: ChatMessage) => handlerRef.current(data);
+    const onChatMessage = (data: ChatMessage) => {
+      handlerRef.current(data);
+
+      if (
+        data.senderId !== sessionDiscordIdRef.current &&
+        data.characterData.nick !== Game.hero.nick
+      ) {
+        onRemoteMessageRef.current?.(data);
+      }
+
+      void mentionNotificationRef.current(data);
+    };
 
     socket?.on(GatewayEvent.CHAT_MESSAGE, onChatMessage);
 
@@ -130,6 +211,20 @@ export const useChatMessagesListener = () => {
 
     return () => {
       socket?.off(GatewayEvent.CHAT_MESSAGE_UPDATE, onChatMessageUpdate);
+    };
+  }, [connected, socket]);
+
+  useEffect(() => {
+    if (socket?.hasListeners(GatewayEvent.CHAT_MESSAGES_CLEAR) || !connected)
+      return;
+
+    const onChatMessagesClear = (data: { guildId: string }) =>
+      clearHandlerRef.current(data);
+
+    socket?.on(GatewayEvent.CHAT_MESSAGES_CLEAR, onChatMessagesClear);
+
+    return () => {
+      socket?.off(GatewayEvent.CHAT_MESSAGES_CLEAR, onChatMessagesClear);
     };
   }, [connected, socket]);
 };

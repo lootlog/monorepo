@@ -8,7 +8,7 @@ import {
   $isTextNode,
   type LexicalNode,
 } from "lexical";
-import type { GuildRole } from "@/hooks/api/guilds/use-guild-roles";
+import type { RoleResponseDtoOutput as GuildRole } from "@/lib/api/generated/main/model";
 import {
   $createNotificationTemplateRoleNode,
   $isNotificationTemplateRoleNode,
@@ -50,7 +50,7 @@ export const renderTemplatePreview = (
   );
 
 export const getGuildRoleHexColor = (role: GuildRole) =>
-  role.color === 0
+  role.color == null || role.color === 0
     ? null
     : `#${role.color.toString(16).padStart(6, "0").toUpperCase()}`;
 
@@ -141,7 +141,7 @@ export const serializeTemplateEditorValue = () =>
     })
     .join("\n");
 
-export const $isTemplateTokenNode = (node: LexicalNode | null | undefined) =>
+const $isTemplateTokenNode = (node: LexicalNode | null | undefined) =>
   $isNotificationTemplateRoleNode(node) ||
   $isNotificationTemplateVariableNode(node);
 

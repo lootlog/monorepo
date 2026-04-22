@@ -1,6 +1,6 @@
 import { useSharedTooltip } from "@/components/shared-tooltip/shared-tooltip-provider";
 import { MARGONEM_CDN_NPCS_URL } from "@/constants/margonem";
-import type { Npc } from "@/hooks/api/game-data/use-npcs";
+import type { NpcHitDtoOutput } from "@/lib/api/generated/search/model";
 import { cn } from "@lootlog/ui/lib/utils";
 import {
   Tooltip,
@@ -11,7 +11,7 @@ import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
 type NpcTileProps = {
-  npc: Partial<Npc>;
+  npc: Partial<NpcHitDtoOutput>;
   className?: string;
 };
 

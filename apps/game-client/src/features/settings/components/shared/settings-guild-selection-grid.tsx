@@ -5,10 +5,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { Guild } from "@/hooks/api/use-guilds";
 import { cn } from "@/lib/utils";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
+import type { GuildResponseDtoOutput as Guild } from "@/lib/api/generated/main/model";
 
 type SettingsGuildSelectionGridSharedProps = {
   className?: string;
@@ -51,7 +51,7 @@ export const SettingsGuildSelectionGrid: FC<
   variant = "default",
   ...selectionProps
 }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation("common");
   if (!guilds || guilds.length === 0) {
     return <SettingsEmptyState>{emptyStateLabel}</SettingsEmptyState>;
   }
@@ -93,8 +93,8 @@ export const SettingsGuildSelectionGrid: FC<
       {guilds.map((guild) => {
         const isSelected = selectedGuildIds.includes(guild.id);
         const stateLabel = isSelected
-          ? t("settings.common.guildSelection.enabled")
-          : t("settings.common.guildSelection.disabled");
+          ? t("guildSelection.enabled")
+          : t("guildSelection.disabled");
         const button = (
           <button
             key={guild.id}
@@ -104,11 +104,11 @@ export const SettingsGuildSelectionGrid: FC<
             aria-pressed={isSelected}
             aria-label={
               selectionMode === "single"
-                ? t("settings.common.guildSelection.selectAria", {
+                ? t("guildSelection.selectAria", {
                     name: guild.name,
                     state: stateLabel,
                   })
-                : t("settings.common.guildSelection.toggleAria", {
+                : t("guildSelection.toggleAria", {
                     name: guild.name,
                     state: stateLabel,
                   })

@@ -1,14 +1,23 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { Guild } from "@/api";
+import type { GuildResponseDtoOutput } from "@/lib/api/generated/main/model";
+import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@/lib/api/generated/main/users/users";
 import { GuildSwitcher } from "./guild-switcher";
 
-const mockUseGuilds = vi.fn();
+const mockUseAccessibleGuilds = vi.fn();
 const mockUseUserPreferences = vi.fn();
 
-vi.mock("@/hooks/api/use-guilds", () => ({
-  useGuilds: () => mockUseGuilds(),
-}));
+vi.mock("@/lib/api/generated/main/users/users", async () => {
+  const actual = await vi.importActual<
+    typeof import("@/lib/api/generated/main/users/users")
+  >("@/lib/api/generated/main/users/users");
+
+  return {
+    ...actual,
+    useUsersControllerGetCurrentUserAccessibleGuilds: () =>
+      mockUseAccessibleGuilds(),
+  };
+});
 
 vi.mock("@/hooks/api/use-user-preferences", () => ({
   useUserPreferences: () => mockUseUserPreferences(),
@@ -22,17 +31,18 @@ vi.mock("@/lib/game", () => ({
   },
 }));
 
-const createGuild = (id: string, name: string): Guild => ({
+const createGuild = (id: string, name: string): GuildResponseDtoOutput => ({
   id,
   name,
   icon: null,
+  ownerId: "owner-1",
 });
 
 describe("GuildSwitcher", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    mockUseGuilds.mockReturnValue({
+    mockUseAccessibleGuilds.mockReturnValue({
       data: [
         createGuild("guild-1", "Alpha"),
         createGuild("guild-2", "Beta"),
@@ -103,5 +113,21 @@ describe("GuildSwitcher", () => {
 
     expect(wheelEvent.defaultPrevented).toBe(true);
     expect(viewport.scrollLeft).toBe(48);
+  });
+
+  it("renders unread badges for guilds and clamps them to 9+", () => {
+    render(
+      <GuildSwitcher
+        allowAll
+        value="guild-3"
+        unreadCountByGuildId={{
+          "guild-1": 3,
+          "guild-2": 14,
+        }}
+      />,
+    );
+
+    expect(screen.getByText("3")).toBeInTheDocument();
+    expect(screen.getByText("9+")).toBeInTheDocument();
   });
 });

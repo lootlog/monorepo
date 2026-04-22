@@ -6,24 +6,26 @@ import {
   loadBattlePanelStatisticsSearch,
   normalizeBattlePanelCharacterId,
 } from "@/features/user/battle-panel/battle-panel-statistics-search";
-import { battleAnalyticsQueryOptions } from "@/hooks/api/battle-log/use-battle-analytics";
+import { getBattlesControllerGetBattleAnalyticsQueryOptions } from "@/lib/api/generated/battlelog/battles/battles";
+import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 
 export const Route = createFileRoute("/_authenticated/@me/battle-panel/stats")({
   validateSearch: battlePanelStatisticsSearchSchema,
-  loader: async ({ context, location }) => {
-    const search = loadBattlePanelStatisticsSearch(location.searchStr);
+  loader: ({ context, location }) =>
+    withRouteLoaderCancellation(async () => {
+      const search = loadBattlePanelStatisticsSearch(location.searchStr);
 
-    await context.queryClient.ensureQueryData(
-      battleAnalyticsQueryOptions({
-        characterId: normalizeBattlePanelCharacterId(search.characterId),
-        period: "180d",
-        minLevel: search.minLevel,
-        maxLevel: search.maxLevel,
-      }),
-    );
+      await context.queryClient.ensureQueryData(
+        getBattlesControllerGetBattleAnalyticsQueryOptions({
+          characterId: normalizeBattlePanelCharacterId(search.characterId),
+          period: "180d",
+          minLevel: search.minLevel,
+          maxLevel: search.maxLevel,
+        }),
+      );
 
-    return null;
-  },
+      return null;
+    }),
   component: BattlePanelDashboard,
   pendingComponent: BattlePanelDashboardSkeleton,
 });

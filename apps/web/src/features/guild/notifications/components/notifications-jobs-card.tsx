@@ -7,10 +7,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { toast } from "sonner";
-import {
-  useCancelGuildNotificationJob,
-  type GuildNotificationsResponse,
-} from "@/hooks/api/guilds/use-guild-notifications";
+import { useQueryClient } from "@tanstack/react-query";
 import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
 import {
   getGuildNotificationTargetLabel,
@@ -19,26 +16,49 @@ import {
   getNotificationTriggerTranslationKey,
 } from "../utils/notification-settings.utils";
 import { NotificationJobCountdown } from "./notification-job-countdown";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import { invalidateGuildNotificationQueries } from "../notifications-api";
+import { useNotificationsGuildControllerCancelGuildJob } from "@/lib/api/generated/main/notifications/notifications";
+import type { NotificationJobsResponseDto } from "@/lib/api/generated/main/model";
 
 type NotificationsPendingJobsCardProps = {
-  pendingJobs: GuildNotificationsResponse["jobs"]["pending"];
+  pendingJobs: NotificationJobsResponseDto["pending"];
 };
 
 export const NotificationsPendingJobsCard = ({
   pendingJobs,
 }: NotificationsPendingJobsCardProps) => {
   const { t } = useTranslation();
-  const cancelGuildJob = useCancelGuildNotificationJob();
+  const guildId = useGuildId();
+  const queryClient = useQueryClient();
+  const cancelGuildJob = useNotificationsGuildControllerCancelGuildJob({
+    mutation: {
+      onSuccess: async () => {
+        if (!guildId) {
+          return;
+        }
+
+        await invalidateGuildNotificationQueries(queryClient, guildId);
+      },
+    },
+  });
 
   const handleCancelJob = async (jobId: string) => {
     try {
-      await cancelGuildJob.mutateAsync({ jobId });
+      if (!guildId) {
+        throw new Error("Missing guild id.");
+      }
+
+      await cancelGuildJob.mutateAsync({
+        pathParams: { guildId, jobId },
+      });
       toast.success(t("settings.notifications.toasts.jobCanceled"));
     } catch (error) {
       toast.error(
         getApiErrorMessage(error) ??
           t("settings.notifications.toasts.jobCancelError"),
       );
+      throw error;
     }
   };
 

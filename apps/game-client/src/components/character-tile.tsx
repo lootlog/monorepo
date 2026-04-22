@@ -1,5 +1,5 @@
 import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
-import type { MargonemCharacter } from "@/hooks/api/use-character-list";
+import type { MargonemCharacter } from "@/api/characters.api";
 import { cn } from "@/lib/utils";
 import {
   Tooltip,

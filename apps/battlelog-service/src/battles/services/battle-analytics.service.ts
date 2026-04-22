@@ -4,20 +4,20 @@ import type { QueryBattleAnalyticsDto } from "src/battles/dto/query-battle-analy
 import type { QueryBattleStatisticsDto } from "src/battles/dto/query-battle-statistics.dto";
 import type {
   ProfessionWinRateDto,
-  HeadToHeadPaginatedResponseDto,
+  HeadToHeadPaginatedResponse,
   StreakDto,
   BattleDurationStatsDto,
   PhGrowthDataPointDto,
   RatingGrowthDataPointDto,
   RatingDeltaByOpponentDto,
-  PlayerVsPlayerPaginatedResponseDto,
+  PlayerVsPlayerPaginatedResponse,
 } from "src/battles/dto/battle-statistics-response.dto";
 import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
 import {
   battleWarriors,
   type battles,
 } from "src/shared/modules/drizzle/schema";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 
 @Injectable()
 export class BattleAnalyticsService {
@@ -278,7 +278,7 @@ export class BattleAnalyticsService {
   async getHeadToHead(
     query: QueryBattleStatisticsDto,
     userId: string,
-  ): Promise<HeadToHeadPaginatedResponseDto> {
+  ): Promise<HeadToHeadPaginatedResponse> {
     const startTime = Date.now();
 
     const characterIds = await this.getCharacterIds(userId, {
@@ -1169,7 +1169,7 @@ export class BattleAnalyticsService {
   async getPlayerVsPlayerBattles(
     query: QueryBattleStatisticsDto & { opponentId: string },
     userId: string,
-  ): Promise<PlayerVsPlayerPaginatedResponseDto> {
+  ): Promise<PlayerVsPlayerPaginatedResponse> {
     const startTime = Date.now();
 
     const characterIds = await this.getCharacterIds(userId, {

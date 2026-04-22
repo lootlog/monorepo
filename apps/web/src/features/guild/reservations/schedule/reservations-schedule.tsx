@@ -2,12 +2,8 @@ import { useParams } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
-import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { TooltipProvider } from "@lootlog/ui/components/tooltip";
-import type { GuildMember } from "@/hooks/api/members/use-guild-member";
-import { useReservations } from "@/hooks/api/reservations/use-reservations";
-import { useDeleteReservation } from "@/hooks/api/reservations/use-delete-reservation";
+import { reservationsQueryOptions } from "../reservations-api";
 import { useSession } from "@/hooks/auth/use-session";
 import { useIsOwner } from "@/hooks/context/use-is-owner";
 import { useGuildId } from "@/hooks/context/use-guild-id";
@@ -23,23 +19,44 @@ import { CreateReservationDialog } from "./create-reservation-dialog";
 import { useScheduleNavigation } from "./use-schedule-navigation";
 import { useReservationSegments } from "./use-reservation-segments";
 import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
-import { queryKeys } from "@/lib/query-keys";
+import { normalizeReservation } from "./normalize-reservation";
+import {
+  getReservationsControllerGetReservationsQueryKey,
+  useReservationsControllerDeleteReservation,
+  useReservationsControllerGetReservations,
+} from "@/lib/api/generated/main/reservations/reservations";
+import { useGuildsControllerGetGuildPermissions } from "@/lib/api/generated/main/guilds/guilds";
+import { useMembersControllerGetGuildMembers } from "@/lib/api/generated/main/members/members";
+import type { MemberResponseDto as GuildMember } from "@/lib/api/generated/main/model";
 
 export const ReservationsSchedule: React.FC = () => {
   const { reservationId } = useParams({
     from: "/_authenticated/$guildId/reservations/$reservationId",
   });
-  const { data: members } = useGuildMembers(false);
   const { data: session } = useSession();
-  const { data: permissions } = useGuildPermissions();
   const isOwner = useIsOwner();
   const guildId = useGuildId();
+  const { data: members } = useMembersControllerGetGuildMembers({
+    guildId: guildId ?? "",
+  });
+  const { data: permissions } = useGuildsControllerGetGuildPermissions({
+    guildId: guildId ?? "",
+  });
   const { socket, connected } = useGateway();
   const queryClient = useQueryClient();
 
-  const { data: reservations } = useReservations();
-  const { mutateAsync: deleteReservation, isPending: isDeleting } =
-    useDeleteReservation();
+  const { data: reservations } = useReservationsControllerGetReservations(
+    { guildId: guildId ?? "" },
+    {
+      query: {
+        ...reservationsQueryOptions(guildId ?? ""),
+      },
+    },
+  );
+  const deleteReservationMutation =
+    useReservationsControllerDeleteReservation();
+  const deleteReservation = deleteReservationMutation.mutateAsync;
+  const isDeleting = deleteReservationMutation.isPending;
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const currentUserId = session?.user?.discordId;
@@ -96,7 +113,12 @@ export const ReservationsSchedule: React.FC = () => {
     ? (reservations?.[reservationKey] ?? [])
     : [];
 
-  const segments = useReservationSegments(selectedReservations, weekStart);
+  const normalizedReservations = useMemo(
+    () => selectedReservations.map(normalizeReservation),
+    [selectedReservations],
+  );
+
+  const segments = useReservationSegments(normalizedReservations, weekStart);
 
   type ReservationGatewayPayload = {
     guildId: string;
@@ -116,7 +138,9 @@ export const ReservationsSchedule: React.FC = () => {
       }
 
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.reservations.all(guildId),
+        queryKey: getReservationsControllerGetReservationsQueryKey({
+          guildId,
+        }),
       });
     };
 
@@ -141,7 +165,13 @@ export const ReservationsSchedule: React.FC = () => {
           : "Nie udało się usunąć rezerwacji.";
 
       try {
-        await deleteReservation({ reservationRecordId });
+        if (!guildId) {
+          throw new Error("Missing guild id when deleting reservation.");
+        }
+
+        await deleteReservation({
+          pathParams: { guildId, reservationRecordId },
+        });
         toast.success(successMessage, { position: "bottom-right" });
       } catch (error) {
         toast.error(getApiErrorMessage(error) ?? fallbackMessage, {

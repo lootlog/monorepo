@@ -1,5 +1,23 @@
-import { stringify } from "qs";
-import { getApiClient } from "@/lib/api-client";
+import {
+  timersControllerCreateManualTimer,
+  timersControllerCreateTimer,
+  timersControllerCreateAutoTimer,
+  timersControllerDeleteTimer,
+  timersControllerGetAllTimers,
+  timersControllerResetTimer,
+} from "@/lib/api/generated/main/timers/timers";
+import type {
+  CreateAutoTimerResponseDtoOutput,
+  CreateManualTimerDto,
+  CreateTimerDto,
+  CreateTimerFromGameClientDto,
+  TimerResponseDto,
+} from "@/lib/api/generated/main/model";
+import {
+  normalizeTimerMember,
+  normalizeTimerNpc,
+} from "@/lib/api/generated-helpers";
+import type { GuildMember } from "@/types/guild-member";
 import {
   getAggregateActionStatus,
   getErrorMessage,
@@ -7,20 +25,8 @@ import {
   runSingleLoggedAction,
   startLoggedAction,
 } from "@/lib/logs/log-actions";
-import type { GuildMember } from "@/types/guild-member";
-import type { Npc } from "./npcs.api";
 
-type CreateTimerNpc = {
-  id: number;
-  name: string;
-  icon: string;
-  prof: string;
-  type: number;
-  lvl: number;
-  location: string;
-  hpp: number;
-  wt: number;
-};
+type CreateTimerNpc = NonNullable<CreateTimerDto["npc"]>;
 
 type CreateTimerOptions = {
   respawnRandomness?: number;
@@ -38,14 +44,7 @@ export type CreateTimerForGuildsParams = {
   guildIds: string[];
 };
 
-export type CreateAutoTimerResponse = {
-  submittedGuilds: Array<{ guildId: string; guildName: string }>;
-  rejectedGuilds: Array<{
-    guildId: string;
-    guildName: string;
-    reason: "NOT_ON_CATCHING_WHITELIST" | "TIMER_CREATE_FAILED";
-  }>;
-};
+export type CreateAutoTimerResponse = CreateAutoTimerResponseDtoOutput;
 
 export async function createTimerForGuilds({
   timer,
@@ -71,11 +70,10 @@ export async function createTimerForGuilds({
     return;
   }
 
-  const client = getApiClient("default");
   const results = await Promise.allSettled(
     guildIds.map(async (guildId) => {
       const endpoint = `/guilds/${guildId}/timers`;
-      const payload = {
+      const payload: CreateTimerDto = {
         respBaseSeconds: timer.respBaseSeconds,
         respawnRandomness: timer.respawnRandomness,
         world: timer.world,
@@ -95,7 +93,7 @@ export async function createTimerForGuilds({
         method: "POST",
         endpoint,
         payload,
-        request: () => client.post(endpoint, payload),
+        request: () => timersControllerCreateTimer({ guildId }, payload),
       });
 
       return { guildId };
@@ -126,10 +124,11 @@ export async function createTimerForGuilds({
 export async function createAutoTimer(
   timer: CreateTimerOptions,
 ): Promise<CreateAutoTimerResponse> {
-  const client = getApiClient("default");
   const payload = {
     respBaseSeconds: timer.respBaseSeconds,
-    respawnRandomness: timer.respawnRandomness,
+    ...(timer.respawnRandomness !== undefined && {
+      respawnRandomness: timer.respawnRandomness,
+    }),
     world: timer.world,
     npc: timer.npc,
     characterId: timer.characterId,
@@ -140,9 +139,9 @@ export async function createAutoTimer(
     ...(timer.customMaxSpawnTime && {
       customMaxSpawnTime: timer.customMaxSpawnTime.toISOString(),
     }),
-  };
+  } as Partial<CreateTimerFromGameClientDto> as CreateTimerFromGameClientDto;
 
-  const response = await runSingleLoggedAction({
+  return runSingleLoggedAction({
     actionType: "create_timer",
     actionPayload: timer,
     request: {
@@ -150,11 +149,8 @@ export async function createAutoTimer(
       endpoint: "/timers/auto",
       payload,
     },
-    execute: () =>
-      client.post<CreateAutoTimerResponse>("/timers/auto", payload),
+    execute: () => timersControllerCreateAutoTimer(payload),
   });
-
-  return response.data;
 }
 
 export type CreateManualTimerOptions = {
@@ -199,11 +195,17 @@ export async function createManualTimer({
     throw new Error("Brak wybranych gildii");
   }
 
-  const client = getApiClient("default");
   const results = await Promise.allSettled(
     guildIds.map(async (guildId) => {
-      const payload = {
-        ...rest,
+      const payload: CreateManualTimerDto = {
+        name: rest.name,
+        ...(rest.minSeconds !== undefined && {
+          minSeconds: rest.minSeconds,
+        }),
+        ...(rest.maxSeconds !== undefined && {
+          maxSeconds: rest.maxSeconds,
+        }),
+        world: rest.world,
         ...(rest.customMinSpawnTime && {
           customMinSpawnTime: rest.customMinSpawnTime.toISOString(),
         }),
@@ -217,7 +219,7 @@ export async function createManualTimer({
         method: "POST",
         endpoint: `/guilds/${guildId}/timers/manual`,
         payload,
-        request: () => client.post(`/guilds/${guildId}/timers/manual`, payload),
+        request: () => timersControllerCreateManualTimer({ guildId }, payload),
       });
 
       return { guildId };
@@ -259,28 +261,26 @@ export async function createManualTimer({
   };
 }
 
-export type Timer = {
-  minSpawnTime: Date;
-  maxSpawnTime: Date;
-  npc: Npc;
-  npcId: number;
-  timerKey: string;
-  member: GuildMember;
+export type Timer = Omit<TimerResponseDto, "npc" | "member"> & {
+  npc: ReturnType<typeof normalizeTimerNpc>;
+  member?: GuildMember;
   members?: GuildMember[];
-  world: string;
-  guildId: string;
   isCustomTime?: boolean;
   isPending?: boolean;
-  wasReset?: boolean;
-  updatedAt?: Date;
+};
+
+const normalizeTimer = (timer: TimerResponseDto): Timer => {
+  return {
+    ...timer,
+    npc: normalizeTimerNpc(timer.npc),
+    member: normalizeTimerMember(timer.member),
+  };
 };
 
 export async function fetchTimers(world: string): Promise<Timer[]> {
-  const client = getApiClient("default");
-  const queryString = stringify({ world });
-  const response = await client.get<Timer[]>(`/timers?${queryString}`);
+  const timers = await timersControllerGetAllTimers({ world });
 
-  return response.data;
+  return timers.map(normalizeTimer);
 }
 
 export type DeleteTimerOptions = {
@@ -294,7 +294,6 @@ export async function deleteTimer({
   timerKey,
   world,
 }: DeleteTimerOptions): Promise<void> {
-  const client = getApiClient("default");
   const endpoint = `/guilds/${guildId}/timers/${timerKey}?world=${world}`;
 
   await runSingleLoggedAction({
@@ -305,7 +304,11 @@ export async function deleteTimer({
       endpoint,
       payload: { guildId, timerKey, world },
     },
-    execute: () => client.delete(endpoint),
+    execute: () =>
+      timersControllerDeleteTimer(
+        { guildId, timerIdentifier: timerKey },
+        world ? { world } : undefined,
+      ),
   });
 }
 
@@ -319,11 +322,10 @@ export async function resetTimer({
   guildId,
   timerKey,
   ...rest
-}: ResetTimerOptions): Promise<void> {
-  const client = getApiClient("default");
+}: ResetTimerOptions): Promise<Timer> {
   const endpoint = `/guilds/${guildId}/timers/${timerKey}/reset`;
 
-  await runSingleLoggedAction({
+  return runSingleLoggedAction({
     actionType: "reset_timer",
     actionPayload: { guildId, timerKey, ...rest },
     request: {
@@ -331,6 +333,12 @@ export async function resetTimer({
       endpoint,
       payload: rest,
     },
-    execute: () => client.patch(endpoint, rest),
+    execute: async () =>
+      normalizeTimer(
+        await timersControllerResetTimer(
+          { guildId, timerIdentifier: timerKey },
+          rest,
+        ),
+      ),
   });
 }

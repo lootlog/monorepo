@@ -19,12 +19,12 @@ import {
 } from "@lootlog/ui/components/avatar";
 import { cn } from "@lootlog/ui/lib/utils";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
-import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
-import type { GuildMember } from "@/hooks/api/members/use-guild-member.tsx";
 import type { GuildKillStatsResponseDtoOutputMemberRankingItem } from "@/lib/api/generated/main/model/guild-kill-stats-response-dto-output-member-ranking-item";
 import type { NpcType } from "@/lib/api/generated/main/model/npc-type";
 import { TRACKABLE_NPC_TYPES } from "../constants";
+import { useMembersControllerGetGuildMembers } from "@/lib/api/generated/main/members/members";
+import type { MemberResponseDto as GuildMember } from "@/lib/api/generated/main/model";
 
 const STORAGE_KEY = "stats-podium-npc-type";
 
@@ -162,7 +162,12 @@ export const MemberRankingPodiumCard: React.FC<
     STORAGE_KEY,
     "ELITE2",
   );
-  const { data: guildMembers } = useGuildMembers(true);
+  const { data: guildMembers } = useMembersControllerGetGuildMembers(
+    { guildId: guildId ?? "" },
+    {
+      includeInactive: true,
+    },
+  );
 
   const membersMap = new Map(guildMembers?.map((m) => [m.userId, m]) ?? []);
 

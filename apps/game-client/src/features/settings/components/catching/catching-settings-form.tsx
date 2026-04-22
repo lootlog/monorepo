@@ -5,10 +5,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Loader2 } from "lucide-react";
-import { useLootlogCharactersConfig } from "@/hooks/api/use-lootlog-character-config";
 import { useUpdateLootlogCharactersConfig } from "@/hooks/api/use-update-lootlog-characters-config";
-import { useGuilds } from "@/hooks/api/use-guilds";
 import { useTranslation } from "react-i18next";
+import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@/lib/api/generated/main/users/users";
+import {
+  getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey,
+  useUserLootlogConfigControllerGetUserLootlogConfigByAccountId,
+} from "@/lib/api/generated/main/user-lootlog-config/user-lootlog-config";
+import { Game } from "@/lib/game";
 
 type CatchingSettingsFormProps = {
   characterId: string;
@@ -28,9 +32,24 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
   onSelectionChange,
 }) => {
   const { t } = useTranslation();
-  const { data: guilds } = useGuilds();
+  const accountId = String(Game.hero.account);
+  const queryKey =
+    getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
+      accountId,
+    });
+  const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds();
   const { data: lootlogCharactersConfig, isPending: isLootlogConfigLoading } =
-    useLootlogCharactersConfig();
+    useUserLootlogConfigControllerGetUserLootlogConfigByAccountId(
+      { accountId },
+      {
+        query: {
+          queryKey,
+          refetchOnMount: true,
+          refetchOnWindowFocus: true,
+          staleTime: 0,
+        },
+      },
+    );
   const {
     mutate: updateLootlogCharacterConfig,
     isPending: isUpdatingLootlogConfig,

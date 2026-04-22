@@ -7,8 +7,8 @@ import React, {
 import type { Socket } from "socket.io-client";
 import { GatewayEvent } from "@/config/gateway";
 import { socket } from "@/lib/gateway-client";
-import { useGuilds } from "@/hooks/api/guilds/use-guilds";
 import { useUser } from "@/hooks/api/user/use-user";
+import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@/lib/api/generated/main/users/users";
 
 export type GatewayProviderValue = {
   connected: boolean;
@@ -31,7 +31,7 @@ GatewayContext.displayName = "GatewayContext";
 
 export const GatewayProvider: React.FC<Props> = ({ children }) => {
   const { user } = useUser();
-  const { data: guilds } = useGuilds();
+  const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds();
   const [connected, setConnected] = useState(socket.connected);
   const [joined, setJoined] = useState(false);
 

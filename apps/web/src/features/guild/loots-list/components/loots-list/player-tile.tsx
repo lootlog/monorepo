@@ -11,10 +11,17 @@ import { cn } from "@lootlog/ui/lib/utils";
 import { useSharedTooltip } from "@/components/shared-tooltip/shared-tooltip-provider";
 
 import type { FC } from "react";
-import type { Player } from "@/hooks/api/game-data/use-guild-players";
+
+type PlayerTilePlayer = {
+  id?: string | number;
+  name?: string;
+  lvl?: number | null;
+  prof?: string | null;
+  icon?: string | null;
+};
 
 type PlayerTileProps = {
-  player: Partial<Player>;
+  player: PlayerTilePlayer;
   idx?: number;
   color?: string;
   className?: string;
@@ -74,7 +81,11 @@ export const PlayerTile: FC<PlayerTileProps> = ({
 
   const handleMouseEnter = (e: React.MouseEvent<HTMLElement>) => {
     sharedTooltip?.showTooltip(
-      <PlayerTooltipContent name={name} lvl={lvl} prof={prof} />,
+      <PlayerTooltipContent
+        name={name}
+        lvl={lvl ?? undefined}
+        prof={prof ?? undefined}
+      />,
       e.currentTarget.getBoundingClientRect(),
       {
         contentClassName: "bg-popover/95 backdrop-blur-md border-border/50",
@@ -126,7 +137,11 @@ export const PlayerTile: FC<PlayerTileProps> = ({
         )}
       </TooltipTrigger>
       <TooltipContent className="bg-popover/95 backdrop-blur-md border-border/50">
-        <PlayerTooltipContent name={name} lvl={lvl} prof={prof} />
+        <PlayerTooltipContent
+          name={name}
+          lvl={lvl ?? undefined}
+          prof={prof ?? undefined}
+        />
       </TooltipContent>
     </Tooltip>
   );

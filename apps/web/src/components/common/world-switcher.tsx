@@ -4,8 +4,8 @@ import { useLocalStorage } from "usehooks-ts";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import { cn } from "@lootlog/ui/lib/utils";
 import { GuildContext } from "@/contexts/guild.context";
-import { useWorlds } from "@/hooks/api/game-data/use-worlds";
 import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useGuildsControllerGetWorldsByGuildId } from "@/lib/api/generated/main/guilds/guilds";
 import { ThemeSurfaceOverlay } from "@/themes";
 
 const ALL_WORLDS_SENTINEL = "__ALL__";
@@ -30,12 +30,14 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
   worlds: externalWorlds,
 }) => {
   const { t } = useTranslation();
-  const { data: fetchedWorlds } = useWorlds();
+  const guildId = useGuildId();
+  const { data: fetchedWorlds } = useGuildsControllerGetWorldsByGuildId({
+    guildId: guildId ?? "",
+  });
   const worlds = externalWorlds ?? fetchedWorlds;
   const guildContext = useContext(GuildContext);
   const contextWorld = guildContext?.world ?? "";
   const setContextWorld = guildContext?.setWorld;
-  const guildId = useGuildId();
   const storageKey = `lootlog:guild:${guildId ?? "global"}:world-order`;
   const [worldOrder, setWorldOrder] = useLocalStorage<string[]>(storageKey, []);
 

@@ -1,4 +1,4 @@
-import type { Warrior } from "@/hooks/api/battle-log/use-battles";
+import type { BattleWarrior as Warrior } from "@/lib/api/battlelog-types";
 import {
   Table,
   TableBody,

@@ -58,6 +58,44 @@ paths:
       summary: Update user preferences
       tags:
         - users
+  /users/@me/guilds:
+    get:
+      description: Retrieve the authenticated user's Discord guilds that also exist in Lootlog, together with Lootlog access status
+      operationId: UsersController_getCurrentUserGuilds
+      parameters: []
+      responses:
+        "200":
+          description: Current user guilds with Lootlog access metadata
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserCurrentGuildResponseDto_Output"
+      security:
+        - bearer: []
+      summary: Get current user guilds
+      tags:
+        - users
+  /users/@me/guilds/accessible:
+    get:
+      description: Retrieve the authenticated user's Lootlog guilds where the cached or refreshed member data indicates access
+      operationId: UsersController_getCurrentUserAccessibleGuilds
+      parameters: []
+      responses:
+        "200":
+          description: Accessible current user guilds
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GuildResponseDto_Output"
+      security:
+        - bearer: []
+      summary: Get accessible current user guilds
+      tags:
+        - users
   /users/@me/game-preferences/accounts/{accountId}:
     get:
       description: Retrieve account-scoped game preferences for a specific Margonem account
@@ -229,6 +267,40 @@ paths:
       summary: Deactivate member
       tags:
         - members
+  /guilds/{guildId}/members/{discordId}/lootlog-config-summary:
+    get:
+      description: Retrieve guild-scoped lootlog configuration summary for a specific member (admin only)
+      operationId: MembersController_getMemberLootlogConfigSummary
+      parameters:
+        - name: discordId
+          required: true
+          in: path
+          description: Discord user ID
+          schema:
+            example: user_123
+            type: string
+        - name: guildId
+          required: true
+          in: path
+          description: Guild ID
+          schema:
+            example: guild_123
+      responses:
+        "200":
+          description: Member lootlog configuration summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemberLootlogConfigSummaryResponseDto_Output"
+        "403":
+          description: Forbidden - admin permission required
+        "404":
+          description: Member not found
+      security:
+        - bearer: []
+      summary: Get member lootlog config summary
+      tags:
+        - members
   /guilds/{guildId}/members:
     get:
       description: Retrieve all members for a guild
@@ -375,6 +447,377 @@ paths:
       summary: Get refresh job status
       tags:
         - members
+  /guilds/@me:
+    get:
+      deprecated: true
+      description: Legacy endpoint for listing the authenticated user's guilds. Prefer /users/@me/guilds or /users/@me/guilds/accessible.
+      operationId: GuildsController_getUserGuilds
+      parameters:
+        - name: source
+          required: false
+          in: query
+          description: Legacy source selector kept for backward compatibility
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of user guilds
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GuildResponseDto_Output"
+      security:
+        - bearer: []
+      summary: Get user guilds (deprecated)
+      tags:
+        - guilds
+  /guilds/@me/permissions:
+    get:
+      deprecated: true
+      description: Legacy endpoint for listing the authenticated user's accessible guilds with role metadata. Prefer /users/@me/guilds for new integrations.
+      operationId: GuildsController_getUserGuildsWithPermissions
+      parameters: []
+      responses:
+        "200":
+          description: List of user guilds with permissions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserGuildPermissionsDto_Output"
+      security:
+        - bearer: []
+      summary: Get user guilds with permissions (deprecated)
+      tags:
+        - guilds
+  /guilds/@me/manageable:
+    get:
+      description: Retrieve guilds where the authenticated user has Discord administrator permissions
+      operationId: GuildsController_getManageableUserGuilds
+      parameters: []
+      responses:
+        "200":
+          description: List of manageable user guilds
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GuildResponseDto"
+      security:
+        - bearer: []
+      summary: Get manageable user guilds
+      tags:
+        - guilds
+  /guilds/{guildId}:
+    get:
+      description: Retrieve guild information by guild ID
+      operationId: GuildsController_getGuildById
+      parameters:
+        - name: guildId
+          required: true
+          in: path
+          description: Guild ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Guild information
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuildResponseDto_Output"
+      security:
+        - bearer: []
+      summary: Get guild by ID
+      tags:
+        - guilds
+  /guilds/{guildId}/config:
+    patch:
+      operationId: GuildsController_updateGuildConfig
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateGuildConfigDto"
+      responses:
+        "200":
+          description: Updated guild config
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuildResponseDto_Output"
+      security:
+        - bearer: []
+      tags:
+        - guilds
+    get:
+      operationId: GuildsController_getGuildConfig
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Guild config
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuildResponseDto_Output"
+      security:
+        - bearer: []
+      tags:
+        - guilds
+  /guilds/{guildId}/worlds:
+    get:
+      description: Retrieve the list of worlds configured for a guild
+      operationId: GuildsController_getWorldsByGuildId
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of guild worlds
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+      security:
+        - bearer: []
+      summary: Get guild worlds
+      tags:
+        - guilds
+  /guilds/{guildId}/permissions:
+    get:
+      description: Retrieve resolved permissions for the current member in a guild
+      operationId: GuildsController_getGuildPermissions
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of member permissions in the guild
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  enum:
+                    - OWNER
+                    - ADMIN
+                    - LOOTLOG_MANAGE
+                    - LOOTLOG_ACCESS
+                    - LOOTLOG_LOOTS_READ
+                    - LOOTLOG_LOOTS_WRITE
+                    - LOOTLOG_LOOTS_TITANS_READ
+                    - LOOTLOG_LOOTS_HEROES_READ
+                    - LOOTLOG_TIMERS_READ
+                    - LOOTLOG_TIMERS_WRITE
+                    - LOOTLOG_TIMERS_RESET
+                    - LOOTLOG_TIMERS_DELETE
+                    - LOOTLOG_TIMERS_TITANS_READ
+                    - LOOTLOG_TIMERS_HEROES_READ
+                    - LOOTLOG_RESERVATIONS_READ
+                    - LOOTLOG_RESERVATIONS_WRITE
+                    - LOOTLOG_MEMBERS_READ
+                    - LOOTLOG_CHAT_READ
+                    - LOOTLOG_CHAT_WRITE
+                    - LOOTLOG_CHAT_TITANS_READ
+                    - LOOTLOG_CHAT_HEROES_READ
+                    - LOOTLOG_NOTIFICATIONS_READ
+                    - LOOTLOG_NOTIFICATIONS_SEND
+                    - LOOTLOG_NOTIFICATIONS_TITANS_READ
+                    - LOOTLOG_NOTIFICATIONS_HEROES_READ
+                    - LOOTLOG_EVENTS_MANAGE
+                    - LOOTLOG_EVENTS_READ
+                    - LOOTLOG_EVENTS_WRITE
+      security:
+        - bearer: []
+      summary: Get guild permissions
+      tags:
+        - guilds
+  /guilds/{guildId}/discord-sync:
+    get:
+      description: Retrieve the current Discord channel synchronization state for a guild
+      operationId: GuildsController_getGuildDiscordSyncStatus
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Guild Discord sync state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiscordGuildSyncStateResponseDto"
+      security:
+        - bearer: []
+      summary: Get guild Discord sync status
+      tags:
+        - guilds
+  /guilds/{guildId}/discord-sync/refresh:
+    post:
+      description: Trigger a refresh of the guild Discord channel synchronization state
+      operationId: GuildsController_refreshGuildDiscordSync
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description: Refreshed guild Discord sync state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiscordGuildSyncStateResponseDto"
+      security:
+        - bearer: []
+      summary: Refresh guild Discord sync
+      tags:
+        - guilds
+  /internal/guilds/user-permissions:
+    get:
+      description: Internal endpoint for gateway service to retrieve user guilds with permissions. Does not require authentication.
+      operationId: GuildsInternalController_getUserPermissions
+      parameters:
+        - name: discordId
+          required: true
+          in: query
+          description: Discord user ID
+          schema:
+            type: string
+        - name: userId
+          required: true
+          in: query
+          description: User ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of user guilds with permissions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserGuildPermissionsDto"
+      summary: "[Internal] Get user guilds with permissions"
+      tags:
+        - internal
+  /internal/guilds/{idOrVanityUrl}:
+    get:
+      description: Internal endpoint for services that need to resolve a guild identifier to its canonical guild data.
+      operationId: GuildsInternalController_getGuildByIdOrVanityUrl
+      parameters:
+        - name: idOrVanityUrl
+          required: true
+          in: path
+          description: Guild ID or vanity URL
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Resolved guild data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuildResponseDto_Output"
+      summary: "[Internal] Get guild by ID or vanity URL"
+      tags:
+        - internal
+  /guilds/{guildId}/roles:
+    get:
+      description: Retrieve all roles for a guild
+      operationId: RolesController_getGuildRoles
+      parameters:
+        - name: guildId
+          required: true
+          in: path
+          description: Guild ID
+          schema:
+            example: guild_123
+      responses:
+        "200":
+          description: List of guild roles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RoleResponseDto_Output"
+        "403":
+          description: Forbidden - insufficient permissions
+      security:
+        - bearer: []
+      summary: Get guild roles
+      tags:
+        - roles
+  /guilds/{guildId}/roles/{roleId}/permissions:
+    patch:
+      description: Update permissions for a specific role
+      operationId: RolesController_updateGuildRole
+      parameters:
+        - name: roleId
+          required: true
+          in: path
+          description: Role ID
+          schema:
+            example: role_123
+            type: string
+        - name: guildId
+          required: true
+          in: path
+          description: Guild ID
+          schema:
+            example: guild_123
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRolePermissionsDto"
+      responses:
+        "200":
+          description: Role permissions updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleResponseDto_Output"
+        "403":
+          description: Forbidden - admin permission required
+        "404":
+          description: Role not found
+      security:
+        - bearer: []
+      summary: Update role permissions
+      tags:
+        - roles
   /timers:
     get:
       description: Retrieve all timers accessible to the authenticated user across all guilds
@@ -656,310 +1099,6 @@ paths:
       summary: Create manual timer
       tags:
         - timers
-  /guilds/@me:
-    get:
-      description: Retrieve all guilds for the authenticated user
-      operationId: GuildsController_getUserGuilds
-      parameters:
-        - name: source
-          required: false
-          in: query
-          description: Source of the request
-          schema:
-            type: string
-      responses:
-        "200":
-          description: List of user guilds
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/GuildResponseDto_Output"
-      security:
-        - bearer: []
-      summary: Get user guilds
-      tags:
-        - guilds
-  /guilds/@me/permissions:
-    get:
-      description: Retrieve all guilds with permissions and roles for the authenticated user
-      operationId: GuildsController_getUserGuildsWithPermissions
-      parameters: []
-      responses:
-        "200":
-          description: List of user guilds with permissions
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/UserGuildPermissionsDto_Output"
-      security:
-        - bearer: []
-      summary: Get user guilds with permissions
-      tags:
-        - guilds
-  /guilds/@me/manageable:
-    get:
-      operationId: GuildsController_getManageableUserGuilds
-      parameters: []
-      responses:
-        "200":
-          description: ""
-      security:
-        - bearer: []
-      tags:
-        - guilds
-  /guilds/{guildId}:
-    get:
-      description: Retrieve guild information by guild ID
-      operationId: GuildsController_getGuildById
-      parameters:
-        - name: guildId
-          required: true
-          in: path
-          description: Guild ID
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Guild information
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/GuildResponseDto_Output"
-      security:
-        - bearer: []
-      summary: Get guild by ID
-      tags:
-        - guilds
-  /guilds/{guildId}/config:
-    patch:
-      operationId: GuildsController_updateGuildConfig
-      parameters:
-        - name: guildId
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateGuildConfigDto"
-      responses:
-        "200":
-          description: Updated guild config
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/GuildResponseDto_Output"
-      security:
-        - bearer: []
-      tags:
-        - guilds
-    get:
-      operationId: GuildsController_getGuildConfig
-      parameters:
-        - name: guildId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Guild config
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/GuildResponseDto_Output"
-      security:
-        - bearer: []
-      tags:
-        - guilds
-  /guilds/{guildId}/worlds:
-    get:
-      operationId: GuildsController_getWorldsByGuildId
-      parameters:
-        - name: guildId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: ""
-      security:
-        - bearer: []
-      tags:
-        - guilds
-  /guilds/{guildId}/permissions:
-    get:
-      operationId: GuildsController_getGuildPermissions
-      parameters:
-        - name: guildId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: ""
-      security:
-        - bearer: []
-      tags:
-        - guilds
-  /guilds/{guildId}/discord-sync:
-    get:
-      operationId: GuildsController_getGuildDiscordSyncStatus
-      parameters:
-        - name: guildId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: ""
-      security:
-        - bearer: []
-      tags:
-        - guilds
-  /guilds/{guildId}/discord-sync/refresh:
-    post:
-      operationId: GuildsController_refreshGuildDiscordSync
-      parameters:
-        - name: guildId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "201":
-          description: ""
-      security:
-        - bearer: []
-      tags:
-        - guilds
-  /internal/guilds/user-permissions:
-    get:
-      description: Internal endpoint for gateway service to retrieve user guilds with permissions. Does not require authentication.
-      operationId: GuildsInternalController_getUserPermissions
-      parameters:
-        - name: discordId
-          required: true
-          in: query
-          description: Discord user ID
-          schema:
-            type: string
-        - name: userId
-          required: true
-          in: query
-          description: User ID
-          schema:
-            type: string
-      responses:
-        "200":
-          description: List of user guilds with permissions
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/UserGuildPermissionsDto"
-      summary: "[Internal] Get user guilds with permissions"
-      tags:
-        - internal
-  /internal/guilds/{idOrVanityUrl}:
-    get:
-      description: Internal endpoint for services that need to resolve a guild identifier to its canonical guild data.
-      operationId: GuildsInternalController_getGuildByIdOrVanityUrl
-      parameters:
-        - name: idOrVanityUrl
-          required: true
-          in: path
-          description: Guild ID or vanity URL
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Resolved guild data
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/GuildResponseDto_Output"
-      summary: "[Internal] Get guild by ID or vanity URL"
-      tags:
-        - internal
-  /guilds/{guildId}/roles:
-    get:
-      description: Retrieve all roles for a guild
-      operationId: RolesController_getGuildRoles
-      parameters:
-        - name: guildId
-          required: true
-          in: path
-          description: Guild ID
-          schema:
-            example: guild_123
-      responses:
-        "200":
-          description: List of guild roles
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/RoleResponseDto_Output"
-        "403":
-          description: Forbidden - admin permission required
-      security:
-        - bearer: []
-      summary: Get guild roles
-      tags:
-        - roles
-  /guilds/{guildId}/roles/{roleId}/permissions:
-    patch:
-      description: Update permissions for a specific role
-      operationId: RolesController_updateGuildRole
-      parameters:
-        - name: roleId
-          required: true
-          in: path
-          description: Role ID
-          schema:
-            example: role_123
-            type: string
-        - name: guildId
-          required: true
-          in: path
-          description: Guild ID
-          schema:
-            example: guild_123
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateRolePermissionsDto"
-      responses:
-        "200":
-          description: Role permissions updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/RoleResponseDto_Output"
-        "403":
-          description: Forbidden - admin permission required
-        "404":
-          description: Role not found
-      security:
-        - bearer: []
-      summary: Update role permissions
-      tags:
-        - roles
   /users/@me/lootlog-config/accounts/{accountId}:
     get:
       description: Retrieve lootlog configuration for a specific account
@@ -1139,7 +1278,7 @@ paths:
             maximum: 100
             type: integer
         - name: cursor
-          required: true
+          required: false
           in: query
           schema:
             minimum: -9007199254740991
@@ -1179,42 +1318,42 @@ paths:
           schema:
             type: string
         - name: npcLevelMin
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
             maximum: 500
             type: integer
         - name: npcLevelMax
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
             maximum: 500
             type: integer
         - name: itemLevelMin
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
             maximum: 500
             type: integer
         - name: itemLevelMax
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
             maximum: 500
             type: integer
         - name: playerLevelMin
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
             maximum: 500
             type: integer
         - name: playerLevelMax
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
@@ -1341,7 +1480,7 @@ paths:
             maximum: 100
             type: integer
         - name: cursor
-          required: true
+          required: false
           in: query
           schema:
             minimum: -9007199254740991
@@ -1381,42 +1520,42 @@ paths:
           schema:
             type: string
         - name: npcLevelMin
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
             maximum: 500
             type: integer
         - name: npcLevelMax
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
             maximum: 500
             type: integer
         - name: itemLevelMin
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
             maximum: 500
             type: integer
         - name: itemLevelMax
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
             maximum: 500
             type: integer
         - name: playerLevelMin
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
             maximum: 500
             type: integer
         - name: playerLevelMax
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
@@ -1658,7 +1797,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LootShareResponseDto_Output"
+                $ref: "#/components/schemas/LootShareResponseDto"
         "404":
           description: Loot not found
       security:
@@ -1758,6 +1897,12 @@ paths:
       responses:
         "200":
           description: List of chat messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChatMessageResponseDto_Output"
         "403":
           description: Forbidden - insufficient permissions
       security:
@@ -1784,11 +1929,39 @@ paths:
       responses:
         "201":
           description: Message sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMessageResponseDto_Output"
         "403":
           description: Forbidden - insufficient permissions
       security:
         - bearer: []
       summary: Send chat message
+      tags:
+        - chat
+    delete:
+      description: Clear all chat messages from a guild
+      operationId: ChatController_clearChatMessages
+      parameters:
+        - name: guildId
+          required: true
+          in: path
+          description: Guild ID
+          schema:
+            example: guild_123
+      responses:
+        "200":
+          description: Chat cleared successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMessageActionResponseDto_Output"
+        "403":
+          description: Forbidden - only OWNER or ADMIN can clear chat
+      security:
+        - bearer: []
+      summary: Clear chat messages
       tags:
         - chat
   /guilds/{guildId}/chat-messages/{messageId}:
@@ -1818,6 +1991,10 @@ paths:
       responses:
         "200":
           description: Message updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMessageActionResponseDto_Output"
         "403":
           description: Forbidden - insufficient permissions or not message owner
       security:
@@ -1845,6 +2022,10 @@ paths:
       responses:
         "200":
           description: Message deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMessageActionResponseDto_Output"
         "403":
           description: Forbidden - insufficient permissions or not message owner
       security:
@@ -1866,6 +2047,10 @@ paths:
       responses:
         "200":
           description: List of reservations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReservationsResponseDto"
         "403":
           description: Forbidden - insufficient permissions
       security:
@@ -1892,6 +2077,10 @@ paths:
       responses:
         "201":
           description: Reservation created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReservationResponseDto"
         "403":
           description: Forbidden - insufficient permissions
       security:
@@ -1919,6 +2108,10 @@ paths:
       responses:
         "200":
           description: Reservation deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReservationResponseDto"
       security:
         - bearer: []
       summary: Delete reservation
@@ -1937,6 +2130,10 @@ paths:
       responses:
         "200":
           description: List of reservations cards
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReservationsCardsResponseDto_Output"
         "403":
           description: Forbidden - insufficient permissions
       security:
@@ -1958,6 +2155,10 @@ paths:
       responses:
         "201":
           description: Notification sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationResponseDto_Output"
       security:
         - bearer: []
       summary: Send notification
@@ -2001,6 +2202,10 @@ paths:
       responses:
         "201":
           description: Party gathering notification sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationResponseDto_Output"
       security:
         - bearer: []
       summary: Create party gathering notification
@@ -2013,6 +2218,10 @@ paths:
       responses:
         "200":
           description: Party gathering notification cancelled successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CancelPartyGatheringResponseDto_Output"
       security:
         - bearer: []
       summary: Cancel party gathering by user
@@ -2031,6 +2240,10 @@ paths:
       responses:
         "200":
           description: Party gathering notification cancelled successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CancelPartyGatheringResponseDto_Output"
         "204":
           description: Notification already expired or not found (idempotent)
         "403":
@@ -2042,28 +2255,39 @@ paths:
         - messaging
   /guilds/{guildId}/notifications/targets:
     get:
+      description: Retrieve configured notification targets for a guild
       operationId: NotificationsGuildController_getGuildTargets
       parameters:
         - name: guildId
-          in: path
           required: true
+          in: path
+          description: Guild ID
           schema:
-            type: string
+            example: guild_123
       responses:
         "200":
-          description: ""
+          description: List of guild notification targets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NotificationTargetResponseDto"
       security:
         - bearer: []
+      summary: Get guild notification targets
       tags:
         - notifications
     post:
+      description: Create or reactivate a guild notification target
       operationId: NotificationsGuildController_createGuildTarget
       parameters:
         - name: guildId
-          in: path
           required: true
+          in: path
+          description: Guild ID
           schema:
-            type: string
+            example: guild_123
       requestBody:
         required: true
         content:
@@ -2072,41 +2296,57 @@ paths:
               $ref: "#/components/schemas/CreateNotificationTargetDto"
       responses:
         "201":
-          description: ""
+          description: Guild notification target created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationTargetResponseDto"
       security:
         - bearer: []
+      summary: Create guild notification target
       tags:
         - notifications
   /guilds/{guildId}/notifications/targets/available:
     get:
+      description: Retrieve selectable Discord channels for guild notifications
       operationId: NotificationsGuildController_getAvailableGuildTargets
       parameters:
         - name: guildId
-          in: path
           required: true
+          in: path
+          description: Guild ID
           schema:
-            type: string
+            example: guild_123
       responses:
         "200":
-          description: ""
+          description: Available guild notification targets
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuildAvailableNotificationTargetsResponseDto"
       security:
         - bearer: []
+      summary: Get available guild notification targets
       tags:
         - notifications
   /guilds/{guildId}/notifications/targets/{targetId}:
     patch:
+      description: Update a guild notification target
       operationId: NotificationsGuildController_updateGuildTarget
       parameters:
         - name: targetId
           required: true
           in: path
+          description: Target ID
           schema:
+            example: 1
             type: number
         - name: guildId
-          in: path
           required: true
+          in: path
+          description: Guild ID
           schema:
-            type: string
+            example: guild_123
       requestBody:
         required: true
         content:
@@ -2115,55 +2355,78 @@ paths:
               $ref: "#/components/schemas/UpdateNotificationTargetDto"
       responses:
         "200":
-          description: ""
+          description: Guild notification target updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationTargetResponseDto"
       security:
         - bearer: []
+      summary: Update guild notification target
       tags:
         - notifications
     delete:
+      description: Delete a guild notification target
       operationId: NotificationsGuildController_deleteGuildTarget
       parameters:
         - name: targetId
           required: true
           in: path
+          description: Target ID
           schema:
+            example: 1
             type: number
         - name: guildId
-          in: path
           required: true
+          in: path
+          description: Guild ID
           schema:
-            type: string
+            example: guild_123
       responses:
         "200":
-          description: ""
+          description: Guild notification target deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponseDto_Output"
       security:
         - bearer: []
+      summary: Delete guild notification target
       tags:
         - notifications
   /guilds/{guildId}/notifications/rules:
     get:
+      description: Retrieve configured notification rules for a guild
       operationId: NotificationsGuildController_getGuildRules
       parameters:
         - name: guildId
-          in: path
           required: true
+          in: path
+          description: Guild ID
           schema:
-            type: string
+            example: guild_123
       responses:
         "200":
-          description: ""
+          description: Guild notification rules and limits
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuildNotificationRulesResponseDto"
       security:
         - bearer: []
+      summary: Get guild notification rules
       tags:
         - notifications
     post:
+      description: Create a guild notification rule
       operationId: NotificationsGuildController_createGuildRule
       parameters:
         - name: guildId
-          in: path
           required: true
+          in: path
+          description: Guild ID
           schema:
-            type: string
+            example: guild_123
       requestBody:
         required: true
         content:
@@ -2172,25 +2435,34 @@ paths:
               $ref: "#/components/schemas/CreateNotificationRuleDto"
       responses:
         "201":
-          description: ""
+          description: Guild notification rule created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationRuleResponseDto"
       security:
         - bearer: []
+      summary: Create guild notification rule
       tags:
         - notifications
   /guilds/{guildId}/notifications/rules/{ruleId}:
     patch:
+      description: Update a guild notification rule
       operationId: NotificationsGuildController_updateGuildRule
       parameters:
         - name: ruleId
           required: true
           in: path
+          description: Rule ID
           schema:
+            example: 1
             type: number
         - name: guildId
-          in: path
           required: true
+          in: path
+          description: Guild ID
           schema:
-            type: string
+            example: guild_123
       requestBody:
         required: true
         content:
@@ -2199,122 +2471,181 @@ paths:
               $ref: "#/components/schemas/UpdateNotificationRuleDto"
       responses:
         "200":
-          description: ""
+          description: Guild notification rule updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationRuleResponseDto"
       security:
         - bearer: []
+      summary: Update guild notification rule
       tags:
         - notifications
     delete:
+      description: Delete a guild notification rule
       operationId: NotificationsGuildController_deleteGuildRule
       parameters:
         - name: ruleId
           required: true
           in: path
+          description: Rule ID
           schema:
+            example: 1
             type: number
         - name: guildId
-          in: path
           required: true
+          in: path
+          description: Guild ID
           schema:
-            type: string
+            example: guild_123
       responses:
         "200":
-          description: ""
+          description: Guild notification rule deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponseDto_Output"
       security:
         - bearer: []
+      summary: Delete guild notification rule
       tags:
         - notifications
   /guilds/{guildId}/notifications/rules/{ruleId}/rebuild-jobs:
     post:
+      description: Rebuild pending jobs for a guild notification rule
       operationId: NotificationsGuildController_rebuildGuildRuleJobs
       parameters:
         - name: ruleId
           required: true
           in: path
+          description: Rule ID
           schema:
+            example: 1
             type: number
         - name: guildId
-          in: path
           required: true
+          in: path
+          description: Guild ID
           schema:
-            type: string
+            example: guild_123
       responses:
         "201":
-          description: ""
+          description: Guild notification jobs rebuilt successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponseDto_Output"
       security:
         - bearer: []
+      summary: Rebuild guild notification jobs
       tags:
         - notifications
   /guilds/{guildId}/notifications/rules/{ruleId}/test:
     post:
+      description: Trigger a test notification for a guild rule
       operationId: NotificationsGuildController_triggerGuildRuleTest
       parameters:
         - name: ruleId
           required: true
           in: path
+          description: Rule ID
           schema:
+            example: 1
             type: number
         - name: guildId
-          in: path
           required: true
+          in: path
+          description: Guild ID
           schema:
-            type: string
+            example: guild_123
       responses:
         "201":
-          description: ""
+          description: Guild notification rule test triggered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponseDto_Output"
       security:
         - bearer: []
+      summary: Trigger guild notification rule test
       tags:
         - notifications
   /guilds/{guildId}/notifications/jobs:
     get:
+      description: Retrieve pending and recent notification jobs for a guild
       operationId: NotificationsGuildController_getGuildJobs
       parameters:
         - name: guildId
-          in: path
           required: true
+          in: path
+          description: Guild ID
           schema:
-            type: string
+            example: guild_123
       responses:
         "200":
-          description: ""
+          description: Guild notification jobs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationJobsResponseDto"
       security:
         - bearer: []
+      summary: Get guild notification jobs
       tags:
         - notifications
   /guilds/{guildId}/notifications/jobs/{jobId}:
     delete:
+      description: Cancel a pending or blocked guild notification job
       operationId: NotificationsGuildController_cancelGuildJob
       parameters:
         - name: jobId
           required: true
           in: path
+          description: Job ID
           schema:
+            example: job_123
             type: string
         - name: guildId
-          in: path
           required: true
+          in: path
+          description: Guild ID
           schema:
-            type: string
+            example: guild_123
       responses:
         "200":
-          description: ""
+          description: Guild notification job canceled successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponseDto_Output"
+        "400":
+          description: Bad request - only pending or blocked jobs can be canceled
       security:
         - bearer: []
+      summary: Cancel guild notification job
       tags:
         - notifications
   /users/@me/notifications/targets:
     get:
+      description: Retrieve configured notification targets for the authenticated user
       operationId: NotificationsUserController_getUserTargets
       parameters: []
       responses:
         "200":
-          description: ""
+          description: List of user notification targets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NotificationTargetWithTestTriggerResponseDto"
       security:
         - bearer: []
+      summary: Get user notification targets
       tags:
         - notifications
     post:
+      description: Create or reactivate a notification target for the authenticated user
       operationId: NotificationsUserController_createUserTarget
       parameters: []
       requestBody:
@@ -2325,19 +2656,27 @@ paths:
               $ref: "#/components/schemas/CreateNotificationTargetDto"
       responses:
         "201":
-          description: ""
+          description: User notification target created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationTargetResponseDto"
       security:
         - bearer: []
+      summary: Create user notification target
       tags:
         - notifications
   /users/@me/notifications/targets/{targetId}:
     patch:
+      description: Update a user notification target
       operationId: NotificationsUserController_updateUserTarget
       parameters:
         - name: targetId
           required: true
           in: path
+          description: Target ID
           schema:
+            example: 1
             type: number
       requestBody:
         required: true
@@ -2347,54 +2686,86 @@ paths:
               $ref: "#/components/schemas/UpdateNotificationTargetDto"
       responses:
         "200":
-          description: ""
+          description: User notification target updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationTargetResponseDto"
       security:
         - bearer: []
+      summary: Update user notification target
       tags:
         - notifications
     delete:
+      description: Delete a user notification target
       operationId: NotificationsUserController_deleteUserTarget
       parameters:
         - name: targetId
           required: true
           in: path
+          description: Target ID
           schema:
+            example: 1
             type: number
       responses:
         "200":
-          description: ""
+          description: User notification target deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponseDto_Output"
       security:
         - bearer: []
+      summary: Delete user notification target
       tags:
         - notifications
   /users/@me/notifications/targets/{targetId}/test:
     post:
+      description: Trigger a test notification for a user target
       operationId: NotificationsUserController_triggerUserTargetTest
       parameters:
         - name: targetId
           required: true
           in: path
+          description: Target ID
           schema:
+            example: 1
             type: number
       responses:
         "201":
-          description: ""
+          description: User notification target test triggered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponseDto_Output"
+        "409":
+          description: Conflict - target is not sendable or test limit was reached
       security:
         - bearer: []
+      summary: Trigger user notification target test
       tags:
         - notifications
   /users/@me/notifications/rules:
     get:
+      description: Retrieve configured notification rules for the authenticated user
       operationId: NotificationsUserController_getUserRules
       parameters: []
       responses:
         "200":
-          description: ""
+          description: List of user notification rules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NotificationRuleResponseDto"
       security:
         - bearer: []
+      summary: Get user notification rules
       tags:
         - notifications
     post:
+      description: Create a user notification rule
       operationId: NotificationsUserController_createUserRule
       parameters: []
       requestBody:
@@ -2405,19 +2776,27 @@ paths:
               $ref: "#/components/schemas/CreateNotificationRuleDto"
       responses:
         "201":
-          description: ""
+          description: User notification rule created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationRuleResponseDto"
       security:
         - bearer: []
+      summary: Create user notification rule
       tags:
         - notifications
   /users/@me/notifications/rules/{ruleId}:
     patch:
+      description: Update a user notification rule
       operationId: NotificationsUserController_updateUserRule
       parameters:
         - name: ruleId
           required: true
           in: path
+          description: Rule ID
           schema:
+            example: 1
             type: number
       requestBody:
         required: true
@@ -2427,49 +2806,77 @@ paths:
               $ref: "#/components/schemas/UpdateNotificationRuleDto"
       responses:
         "200":
-          description: ""
+          description: User notification rule updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationRuleResponseDto"
       security:
         - bearer: []
+      summary: Update user notification rule
       tags:
         - notifications
     delete:
+      description: Delete a user notification rule
       operationId: NotificationsUserController_deleteUserRule
       parameters:
         - name: ruleId
           required: true
           in: path
+          description: Rule ID
           schema:
+            example: 1
             type: number
       responses:
         "200":
-          description: ""
+          description: User notification rule deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponseDto_Output"
       security:
         - bearer: []
+      summary: Delete user notification rule
       tags:
         - notifications
   /users/@me/notifications/jobs:
     get:
+      description: Retrieve pending and recent notification jobs for the authenticated user
       operationId: NotificationsUserController_getUserJobs
       parameters: []
       responses:
         "200":
-          description: ""
+          description: User notification jobs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationJobsResponseDto"
       security:
         - bearer: []
+      summary: Get user notification jobs
       tags:
         - notifications
   /users/@me/notifications/watched-items:
     get:
+      description: Retrieve watched items for the authenticated user
       operationId: NotificationsUserController_getWatchedItems
       parameters: []
       responses:
         "200":
-          description: ""
+          description: List of watched items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WatchedItemResponseDto"
       security:
         - bearer: []
+      summary: Get watched items
       tags:
         - notifications
     post:
+      description: Create or reactivate a watched item for the authenticated user
       operationId: NotificationsUserController_createWatchedItem
       parameters: []
       requestBody:
@@ -2480,13 +2887,19 @@ paths:
               $ref: "#/components/schemas/CreateWatchedItemDto"
       responses:
         "201":
-          description: ""
+          description: Watched item created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WatchedItemResponseDto"
       security:
         - bearer: []
+      summary: Create watched item
       tags:
         - notifications
   /users/@me/notifications/watched-items/quick-add:
     post:
+      description: Add a guild scope to a watched item for the authenticated user
       operationId: NotificationsUserController_quickAddWatchedItem
       parameters: []
       requestBody:
@@ -2497,25 +2910,38 @@ paths:
               $ref: "#/components/schemas/CreateWatchedItemQuickAddDto"
       responses:
         "201":
-          description: ""
+          description: Watched item updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WatchedItemResponseDto"
       security:
         - bearer: []
+      summary: Quick add watched item
       tags:
         - notifications
   /users/@me/notifications/watched-items/{watchedItemId}:
     delete:
+      description: Delete a watched item for the authenticated user
       operationId: NotificationsUserController_deleteWatchedItem
       parameters:
         - name: watchedItemId
           required: true
           in: path
+          description: Watched item ID
           schema:
+            example: 1
             type: number
       responses:
         "200":
-          description: ""
+          description: Watched item deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponseDto_Output"
       security:
         - bearer: []
+      summary: Delete watched item
       tags:
         - notifications
   /sound-settings:
@@ -4289,6 +4715,12 @@ paths:
       responses:
         "200":
           description: List of maps
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GameMapResponseDto_Output"
       summary: Get all game maps
       tags:
         - maps
@@ -4306,6 +4738,12 @@ paths:
       responses:
         "200":
           description: List of map templates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MapTemplateResponseDto"
       security:
         - bearer: []
       summary: Get map templates
@@ -4330,12 +4768,50 @@ paths:
       responses:
         "201":
           description: Template created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MapTemplateResponseDto"
       security:
         - bearer: []
       summary: Create map template
       tags:
         - map-templates
   /guilds/{guildId}/map-templates/{templateId}:
+    put:
+      description: Update an existing reusable map template
+      operationId: MapTemplatesController_updateTemplate
+      parameters:
+        - name: templateId
+          required: true
+          in: path
+          description: Template ID
+          schema:
+            type: string
+        - name: guildId
+          required: true
+          in: path
+          description: Guild ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMapTemplateDto"
+      responses:
+        "200":
+          description: Template updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MapTemplateResponseDto"
+      security:
+        - bearer: []
+      summary: Update map template
+      tags:
+        - map-templates
     delete:
       description: Delete a map template
       operationId: MapTemplatesController_deleteTemplate
@@ -4355,6 +4831,10 @@ paths:
       responses:
         "200":
           description: Template deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusOkResponseDto_Output"
       security:
         - bearer: []
       summary: Delete map template
@@ -4917,6 +5397,50 @@ components:
         - theme
         - colorMode
         - mutes
+    UserCurrentGuildResponseDto_Output:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        icon:
+          type: string
+          nullable: true
+        vanityUrl:
+          type: string
+          nullable: true
+        ownerId:
+          type: string
+        hasLootlogAccess:
+          type: boolean
+        isAccessDataStale:
+          type: boolean
+      required:
+        - id
+        - name
+        - ownerId
+        - hasLootlogAccess
+        - isAccessDataStale
+    GuildResponseDto_Output:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        icon:
+          type: string
+          nullable: true
+        vanityUrl:
+          type: string
+          nullable: true
+        ownerId:
+          type: string
+      required:
+        - id
+        - name
+        - ownerId
     UpdateUserPreferencesDto:
       type: object
       properties:
@@ -5579,6 +6103,7 @@ components:
               - id
               - guildId
               - name
+              - color
               - permissions
         globalUserId:
           type: string
@@ -5610,6 +6135,7 @@ components:
         - type
         - name
         - active
+        - roles
         - updatedAt
       nullable: true
     MemberResponseDto:
@@ -5698,6 +6224,7 @@ components:
               - id
               - guildId
               - name
+              - color
               - permissions
         globalUserId:
           type: string
@@ -5729,7 +6256,62 @@ components:
         - type
         - name
         - active
+        - roles
         - updatedAt
+    MemberLootlogConfigSummaryResponseDto_Output:
+      type: object
+      properties:
+        memberUserId:
+          type: string
+        guildId:
+          type: string
+        isActive:
+          type: boolean
+        configuredCharacterCount:
+          type: number
+        enabledCharacterCount:
+          type: number
+        characters:
+          type: array
+          items:
+            type: object
+            properties:
+              accountId:
+                type: string
+              characterId:
+                type: string
+              enabledForGuild:
+                type: boolean
+              characterName:
+                type: string
+                nullable: true
+              world:
+                type: string
+                nullable: true
+              icon:
+                type: string
+                nullable: true
+              metadataStatus:
+                type: string
+                enum:
+                  - resolved
+                  - missing_snapshot
+                  - invalid_character_ref
+            required:
+              - accountId
+              - characterId
+              - enabledForGuild
+              - characterName
+              - world
+              - icon
+              - metadataStatus
+      required:
+        - memberUserId
+        - guildId
+        - isActive
+        - configuredCharacterCount
+        - enabledCharacterCount
+        - characters
     MemberSummaryResponseDto_Output:
       type: object
       properties:
@@ -5824,18 +6406,377 @@ components:
         - failedMembers
         - createdAt
       nullable: true
-    TimerResponseDto__schema0:
-      anyOf:
-        - type: string
-        - type: number
-        - type: boolean
-        - type: array
+    UserGuildPermissionsDto_Output:
+      type: object
+      properties:
+        guild:
+          type: object
+          properties:
+            id:
+              type: string
+            ownerId:
+              type: string
+          required:
+            - id
+            - ownerId
+        roles:
+          type: array
           items:
-            $ref: "#/components/schemas/TimerResponseDto__schema0"
-        - type: object
-          additionalProperties:
-            $ref: "#/components/schemas/TimerResponseDto__schema0"
-      nullable: true
+            type: object
+            properties:
+              id:
+                type: string
+              lvlRangeFrom:
+                type: number
+              lvlRangeTo:
+                type: number
+              permissions:
+                type: array
+                items:
+                  type: string
+                  enum:
+                    - OWNER
+                    - ADMIN
+                    - LOOTLOG_MANAGE
+                    - LOOTLOG_ACCESS
+                    - LOOTLOG_LOOTS_READ
+                    - LOOTLOG_LOOTS_WRITE
+                    - LOOTLOG_LOOTS_TITANS_READ
+                    - LOOTLOG_LOOTS_HEROES_READ
+                    - LOOTLOG_TIMERS_READ
+                    - LOOTLOG_TIMERS_WRITE
+                    - LOOTLOG_TIMERS_RESET
+                    - LOOTLOG_TIMERS_DELETE
+                    - LOOTLOG_TIMERS_TITANS_READ
+                    - LOOTLOG_TIMERS_HEROES_READ
+                    - LOOTLOG_RESERVATIONS_READ
+                    - LOOTLOG_RESERVATIONS_WRITE
+                    - LOOTLOG_MEMBERS_READ
+                    - LOOTLOG_CHAT_READ
+                    - LOOTLOG_CHAT_WRITE
+                    - LOOTLOG_CHAT_TITANS_READ
+                    - LOOTLOG_CHAT_HEROES_READ
+                    - LOOTLOG_NOTIFICATIONS_READ
+                    - LOOTLOG_NOTIFICATIONS_SEND
+                    - LOOTLOG_NOTIFICATIONS_TITANS_READ
+                    - LOOTLOG_NOTIFICATIONS_HEROES_READ
+                    - LOOTLOG_EVENTS_MANAGE
+                    - LOOTLOG_EVENTS_READ
+                    - LOOTLOG_EVENTS_WRITE
+            required:
+              - id
+              - lvlRangeFrom
+              - lvlRangeTo
+              - permissions
+      required:
+        - guild
+        - roles
+    GuildResponseDto:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        icon:
+          type: string
+          nullable: true
+        vanityUrl:
+          type: string
+          nullable: true
+        ownerId:
+          type: string
+      required:
+        - id
+        - name
+        - ownerId
+    UpdateGuildConfigDto:
+      type: object
+      properties:
+        vanityUrl:
+          type: string
+          minLength: 1
+    DiscordGuildSyncStateResponseDto:
+      type: object
+      properties:
+        guildId:
+          type: string
+        status:
+          type: string
+          enum:
+            - SYNCED
+            - SYNCING
+            - FAILED
+            - STALE
+            - NOT_FOUND
+        hasRequiredPermissions:
+          type: boolean
+        requiredPermissions:
+          type: array
+          items:
+            type: string
+        grantedPermissions:
+          type: array
+          items:
+            type: string
+        missingPermissions:
+          type: array
+          items:
+            type: string
+        channelCount:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        selectableChannelCount:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        lastAttemptAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          nullable: true
+        lastSuccessAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          nullable: true
+        lastError:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+      required:
+        - guildId
+        - status
+        - hasRequiredPermissions
+        - requiredPermissions
+        - grantedPermissions
+        - missingPermissions
+        - channelCount
+        - selectableChannelCount
+        - lastAttemptAt
+        - lastSuccessAt
+        - lastError
+        - createdAt
+        - updatedAt
+    UserGuildPermissionsDto:
+      type: object
+      properties:
+        guild:
+          type: object
+          properties:
+            id:
+              type: string
+            ownerId:
+              type: string
+          required:
+            - id
+            - ownerId
+        roles:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              lvlRangeFrom:
+                type: number
+              lvlRangeTo:
+                type: number
+              permissions:
+                type: array
+                items:
+                  type: string
+                  enum:
+                    - OWNER
+                    - ADMIN
+                    - LOOTLOG_MANAGE
+                    - LOOTLOG_ACCESS
+                    - LOOTLOG_LOOTS_READ
+                    - LOOTLOG_LOOTS_WRITE
+                    - LOOTLOG_LOOTS_TITANS_READ
+                    - LOOTLOG_LOOTS_HEROES_READ
+                    - LOOTLOG_TIMERS_READ
+                    - LOOTLOG_TIMERS_WRITE
+                    - LOOTLOG_TIMERS_RESET
+                    - LOOTLOG_TIMERS_DELETE
+                    - LOOTLOG_TIMERS_TITANS_READ
+                    - LOOTLOG_TIMERS_HEROES_READ
+                    - LOOTLOG_RESERVATIONS_READ
+                    - LOOTLOG_RESERVATIONS_WRITE
+                    - LOOTLOG_MEMBERS_READ
+                    - LOOTLOG_CHAT_READ
+                    - LOOTLOG_CHAT_WRITE
+                    - LOOTLOG_CHAT_TITANS_READ
+                    - LOOTLOG_CHAT_HEROES_READ
+                    - LOOTLOG_NOTIFICATIONS_READ
+                    - LOOTLOG_NOTIFICATIONS_SEND
+                    - LOOTLOG_NOTIFICATIONS_TITANS_READ
+                    - LOOTLOG_NOTIFICATIONS_HEROES_READ
+                    - LOOTLOG_EVENTS_MANAGE
+                    - LOOTLOG_EVENTS_READ
+                    - LOOTLOG_EVENTS_WRITE
+            required:
+              - id
+              - lvlRangeFrom
+              - lvlRangeTo
+              - permissions
+      required:
+        - guild
+        - roles
+    RoleResponseDto_Output:
+      type: object
+      properties:
+        id:
+          type: string
+        guildId:
+          type: string
+        name:
+          type: string
+        color:
+          type: number
+          nullable: true
+        position:
+          type: number
+          nullable: true
+        permissions:
+          type: array
+          items:
+            type: string
+            enum:
+              - OWNER
+              - ADMIN
+              - LOOTLOG_MANAGE
+              - LOOTLOG_ACCESS
+              - LOOTLOG_LOOTS_READ
+              - LOOTLOG_LOOTS_WRITE
+              - LOOTLOG_LOOTS_TITANS_READ
+              - LOOTLOG_LOOTS_HEROES_READ
+              - LOOTLOG_TIMERS_READ
+              - LOOTLOG_TIMERS_WRITE
+              - LOOTLOG_TIMERS_RESET
+              - LOOTLOG_TIMERS_DELETE
+              - LOOTLOG_TIMERS_TITANS_READ
+              - LOOTLOG_TIMERS_HEROES_READ
+              - LOOTLOG_RESERVATIONS_READ
+              - LOOTLOG_RESERVATIONS_WRITE
+              - LOOTLOG_MEMBERS_READ
+              - LOOTLOG_CHAT_READ
+              - LOOTLOG_CHAT_WRITE
+              - LOOTLOG_CHAT_TITANS_READ
+              - LOOTLOG_CHAT_HEROES_READ
+              - LOOTLOG_NOTIFICATIONS_READ
+              - LOOTLOG_NOTIFICATIONS_SEND
+              - LOOTLOG_NOTIFICATIONS_TITANS_READ
+              - LOOTLOG_NOTIFICATIONS_HEROES_READ
+              - LOOTLOG_EVENTS_MANAGE
+              - LOOTLOG_EVENTS_READ
+              - LOOTLOG_EVENTS_WRITE
+        lvlRangeFrom:
+          type: number
+          nullable: true
+        lvlRangeTo:
+          type: number
+          nullable: true
+      required:
+        - id
+        - guildId
+        - name
+        - color
+        - permissions
+    UpdateRolePermissionsDto:
+      type: object
+      properties:
+        permissions:
+          type: array
+          items:
+            type: string
+            enum:
+              - OWNER
+              - ADMIN
+              - LOOTLOG_MANAGE
+              - LOOTLOG_ACCESS
+              - LOOTLOG_LOOTS_READ
+              - LOOTLOG_LOOTS_WRITE
+              - LOOTLOG_LOOTS_TITANS_READ
+              - LOOTLOG_LOOTS_HEROES_READ
+              - LOOTLOG_TIMERS_READ
+              - LOOTLOG_TIMERS_WRITE
+              - LOOTLOG_TIMERS_RESET
+              - LOOTLOG_TIMERS_DELETE
+              - LOOTLOG_TIMERS_TITANS_READ
+              - LOOTLOG_TIMERS_HEROES_READ
+              - LOOTLOG_RESERVATIONS_READ
+              - LOOTLOG_RESERVATIONS_WRITE
+              - LOOTLOG_MEMBERS_READ
+              - LOOTLOG_CHAT_READ
+              - LOOTLOG_CHAT_WRITE
+              - LOOTLOG_CHAT_TITANS_READ
+              - LOOTLOG_CHAT_HEROES_READ
+              - LOOTLOG_NOTIFICATIONS_READ
+              - LOOTLOG_NOTIFICATIONS_SEND
+              - LOOTLOG_NOTIFICATIONS_TITANS_READ
+              - LOOTLOG_NOTIFICATIONS_HEROES_READ
+              - LOOTLOG_EVENTS_MANAGE
+              - LOOTLOG_EVENTS_READ
+              - LOOTLOG_EVENTS_WRITE
+        lvlRangeFrom:
+          type: number
+        lvlRangeTo:
+          type: number
+      required:
+        - permissions
+        - lvlRangeFrom
+        - lvlRangeTo
+    TimerNpcResponseDto:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        prof:
+          type: string
+        location:
+          type: string
+        wt:
+          type: string
+        lvl:
+          type: number
+        type:
+          type: string
+          enum:
+            - COMMON
+            - ELITE
+            - ELITE2
+            - ELITE3
+            - HERO
+            - EVENT_HERO
+            - TITAN
+            - COLOSSUS
+            - NPC
+        icon:
+          type: string
+          nullable: true
+        margonemType:
+          type: string
+      required:
+        - id
+        - name
+        - prof
+        - location
+        - wt
+        - lvl
+        - type
+        - icon
+        - margonemType
     TimerResponseDto:
       type: object
       properties:
@@ -5856,7 +6797,9 @@ components:
           format: date-time
           pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         npc:
-          $ref: "#/components/schemas/TimerResponseDto__schema0"
+          allOf:
+            - $ref: "#/components/schemas/TimerNpcResponseDto"
+          nullable: true
         wasReset:
           type: boolean
         member:
@@ -5945,6 +6888,7 @@ components:
                   - id
                   - guildId
                   - name
+                  - color
                   - permissions
             globalUserId:
               type: string
@@ -5976,6 +6920,7 @@ components:
             - type
             - name
             - active
+            - roles
             - updatedAt
         updatedAt:
           type: string
@@ -6235,264 +7180,6 @@ components:
         - npc
         - characterId
         - accountId
-    GuildResponseDto_Output:
-      type: object
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        icon:
-          type: string
-          nullable: true
-        vanityUrl:
-          type: string
-          nullable: true
-        ownerId:
-          type: string
-      required:
-        - id
-        - name
-        - ownerId
-    UserGuildPermissionsDto_Output:
-      type: object
-      properties:
-        guild:
-          type: object
-          properties:
-            id:
-              type: string
-            ownerId:
-              type: string
-          required:
-            - id
-            - ownerId
-        roles:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: string
-              lvlRangeFrom:
-                type: number
-              lvlRangeTo:
-                type: number
-              permissions:
-                type: array
-                items:
-                  type: string
-                  enum:
-                    - OWNER
-                    - ADMIN
-                    - LOOTLOG_MANAGE
-                    - LOOTLOG_ACCESS
-                    - LOOTLOG_LOOTS_READ
-                    - LOOTLOG_LOOTS_WRITE
-                    - LOOTLOG_LOOTS_TITANS_READ
-                    - LOOTLOG_LOOTS_HEROES_READ
-                    - LOOTLOG_TIMERS_READ
-                    - LOOTLOG_TIMERS_WRITE
-                    - LOOTLOG_TIMERS_RESET
-                    - LOOTLOG_TIMERS_DELETE
-                    - LOOTLOG_TIMERS_TITANS_READ
-                    - LOOTLOG_TIMERS_HEROES_READ
-                    - LOOTLOG_RESERVATIONS_READ
-                    - LOOTLOG_RESERVATIONS_WRITE
-                    - LOOTLOG_MEMBERS_READ
-                    - LOOTLOG_CHAT_READ
-                    - LOOTLOG_CHAT_WRITE
-                    - LOOTLOG_CHAT_TITANS_READ
-                    - LOOTLOG_CHAT_HEROES_READ
-                    - LOOTLOG_NOTIFICATIONS_READ
-                    - LOOTLOG_NOTIFICATIONS_SEND
-                    - LOOTLOG_NOTIFICATIONS_TITANS_READ
-                    - LOOTLOG_NOTIFICATIONS_HEROES_READ
-                    - LOOTLOG_EVENTS_MANAGE
-                    - LOOTLOG_EVENTS_READ
-                    - LOOTLOG_EVENTS_WRITE
-            required:
-              - id
-              - lvlRangeFrom
-              - lvlRangeTo
-              - permissions
-      required:
-        - guild
-        - roles
-    UpdateGuildConfigDto:
-      type: object
-      properties:
-        vanityUrl:
-          type: string
-          minLength: 1
-    UserGuildPermissionsDto:
-      type: object
-      properties:
-        guild:
-          type: object
-          properties:
-            id:
-              type: string
-            ownerId:
-              type: string
-          required:
-            - id
-            - ownerId
-        roles:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: string
-              lvlRangeFrom:
-                type: number
-              lvlRangeTo:
-                type: number
-              permissions:
-                type: array
-                items:
-                  type: string
-                  enum:
-                    - OWNER
-                    - ADMIN
-                    - LOOTLOG_MANAGE
-                    - LOOTLOG_ACCESS
-                    - LOOTLOG_LOOTS_READ
-                    - LOOTLOG_LOOTS_WRITE
-                    - LOOTLOG_LOOTS_TITANS_READ
-                    - LOOTLOG_LOOTS_HEROES_READ
-                    - LOOTLOG_TIMERS_READ
-                    - LOOTLOG_TIMERS_WRITE
-                    - LOOTLOG_TIMERS_RESET
-                    - LOOTLOG_TIMERS_DELETE
-                    - LOOTLOG_TIMERS_TITANS_READ
-                    - LOOTLOG_TIMERS_HEROES_READ
-                    - LOOTLOG_RESERVATIONS_READ
-                    - LOOTLOG_RESERVATIONS_WRITE
-                    - LOOTLOG_MEMBERS_READ
-                    - LOOTLOG_CHAT_READ
-                    - LOOTLOG_CHAT_WRITE
-                    - LOOTLOG_CHAT_TITANS_READ
-                    - LOOTLOG_CHAT_HEROES_READ
-                    - LOOTLOG_NOTIFICATIONS_READ
-                    - LOOTLOG_NOTIFICATIONS_SEND
-                    - LOOTLOG_NOTIFICATIONS_TITANS_READ
-                    - LOOTLOG_NOTIFICATIONS_HEROES_READ
-                    - LOOTLOG_EVENTS_MANAGE
-                    - LOOTLOG_EVENTS_READ
-                    - LOOTLOG_EVENTS_WRITE
-            required:
-              - id
-              - lvlRangeFrom
-              - lvlRangeTo
-              - permissions
-      required:
-        - guild
-        - roles
-    RoleResponseDto_Output:
-      type: object
-      properties:
-        id:
-          type: string
-        guildId:
-          type: string
-        name:
-          type: string
-        color:
-          type: number
-          nullable: true
-        position:
-          type: number
-          nullable: true
-        permissions:
-          type: array
-          items:
-            type: string
-            enum:
-              - OWNER
-              - ADMIN
-              - LOOTLOG_MANAGE
-              - LOOTLOG_ACCESS
-              - LOOTLOG_LOOTS_READ
-              - LOOTLOG_LOOTS_WRITE
-              - LOOTLOG_LOOTS_TITANS_READ
-              - LOOTLOG_LOOTS_HEROES_READ
-              - LOOTLOG_TIMERS_READ
-              - LOOTLOG_TIMERS_WRITE
-              - LOOTLOG_TIMERS_RESET
-              - LOOTLOG_TIMERS_DELETE
-              - LOOTLOG_TIMERS_TITANS_READ
-              - LOOTLOG_TIMERS_HEROES_READ
-              - LOOTLOG_RESERVATIONS_READ
-              - LOOTLOG_RESERVATIONS_WRITE
-              - LOOTLOG_MEMBERS_READ
-              - LOOTLOG_CHAT_READ
-              - LOOTLOG_CHAT_WRITE
-              - LOOTLOG_CHAT_TITANS_READ
-              - LOOTLOG_CHAT_HEROES_READ
-              - LOOTLOG_NOTIFICATIONS_READ
-              - LOOTLOG_NOTIFICATIONS_SEND
-              - LOOTLOG_NOTIFICATIONS_TITANS_READ
-              - LOOTLOG_NOTIFICATIONS_HEROES_READ
-              - LOOTLOG_EVENTS_MANAGE
-              - LOOTLOG_EVENTS_READ
-              - LOOTLOG_EVENTS_WRITE
-        lvlRangeFrom:
-          type: number
-          nullable: true
-        lvlRangeTo:
-          type: number
-          nullable: true
-      required:
-        - id
-        - guildId
-        - name
-        - permissions
-    UpdateRolePermissionsDto:
-      type: object
-      properties:
-        permissions:
-          type: array
-          items:
-            type: string
-            enum:
-              - OWNER
-              - ADMIN
-              - LOOTLOG_MANAGE
-              - LOOTLOG_ACCESS
-              - LOOTLOG_LOOTS_READ
-              - LOOTLOG_LOOTS_WRITE
-              - LOOTLOG_LOOTS_TITANS_READ
-              - LOOTLOG_LOOTS_HEROES_READ
-              - LOOTLOG_TIMERS_READ
-              - LOOTLOG_TIMERS_WRITE
-              - LOOTLOG_TIMERS_RESET
-              - LOOTLOG_TIMERS_DELETE
-              - LOOTLOG_TIMERS_TITANS_READ
-              - LOOTLOG_TIMERS_HEROES_READ
-              - LOOTLOG_RESERVATIONS_READ
-              - LOOTLOG_RESERVATIONS_WRITE
-              - LOOTLOG_MEMBERS_READ
-              - LOOTLOG_CHAT_READ
-              - LOOTLOG_CHAT_WRITE
-              - LOOTLOG_CHAT_TITANS_READ
-              - LOOTLOG_CHAT_HEROES_READ
-              - LOOTLOG_NOTIFICATIONS_READ
-              - LOOTLOG_NOTIFICATIONS_SEND
-              - LOOTLOG_NOTIFICATIONS_TITANS_READ
-              - LOOTLOG_NOTIFICATIONS_HEROES_READ
-              - LOOTLOG_EVENTS_MANAGE
-              - LOOTLOG_EVENTS_READ
-              - LOOTLOG_EVENTS_WRITE
-        lvlRangeFrom:
-          type: number
-        lvlRangeTo:
-          type: number
-      required:
-        - permissions
-        - lvlRangeFrom
-        - lvlRangeTo
     UserLootlogConfigAccountResponseDto_Output:
       type: object
       additionalProperties:
@@ -6508,23 +7195,11 @@ components:
             type: array
             items:
               type: string
-          collectLootWhitelistGuildIds:
-            type: array
-            items:
-              type: string
-            description: "DEPRECATED: Use catchingGuildIds instead"
-          addTimersWhitelistGuildIds:
-            type: array
-            items:
-              type: string
-            description: "DEPRECATED: Use catchingGuildIds instead"
         required:
           - userId
           - accountId
           - characterId
           - catchingGuildIds
-          - collectLootWhitelistGuildIds
-          - addTimersWhitelistGuildIds
     CreateOrUpdateLootlogCharacterConfigDto:
       type: object
       properties:
@@ -6532,22 +7207,13 @@ components:
           type: string
           minLength: 1
         catchingGuildIds:
+          type: array
+          items:
+            type: string
           description: Guild IDs used for catching-related actions
-          type: array
-          items:
-            type: string
-        lootGuildIds:
-          description: "DEPRECATED: Use catchingGuildIds instead"
-          type: array
-          items:
-            type: string
-        timerGuildIds:
-          description: "DEPRECATED: Use catchingGuildIds instead"
-          type: array
-          items:
-            type: string
       required:
         - characterId
+        - catchingGuildIds
     UserLootlogConfigResponseDto_Output:
       type: object
       properties:
@@ -6561,23 +7227,11 @@ components:
           type: array
           items:
             type: string
-        collectLootWhitelistGuildIds:
-          type: array
-          items:
-            type: string
-          description: "DEPRECATED: Use catchingGuildIds instead"
-        addTimersWhitelistGuildIds:
-          type: array
-          items:
-            type: string
-          description: "DEPRECATED: Use catchingGuildIds instead"
       required:
         - userId
         - accountId
         - characterId
         - catchingGuildIds
-        - collectLootWhitelistGuildIds
-        - addTimersWhitelistGuildIds
     TimerSettingsResponseDto__schema0:
       anyOf:
         - type: string
@@ -6793,89 +7447,239 @@ components:
             - merge
       required:
         - localData
-    LootResponseDto__schema0:
-      anyOf:
-        - type: string
-        - type: number
-        - type: boolean
-        - type: array
+    LootItemResponseDto:
+      type: object
+      properties:
+        id:
+          type: number
+        hid:
+          type: string
+        name:
+          type: string
+        icon:
+          type: string
+        stat:
+          type: string
+        type:
+          type: string
+          nullable: true
+        rarity:
+          type: string
+          enum:
+            - UNIQUE
+            - HEROIC
+            - LEGENDARY
+            - UPGRADED
+          nullable: true
+        lvl:
+          type: number
+        prof:
+          type: array
           items:
-            $ref: "#/components/schemas/LootResponseDto__schema0"
-        - type: object
-          additionalProperties:
-            $ref: "#/components/schemas/LootResponseDto__schema0"
-      nullable: true
+            type: string
+            enum:
+              - WARRIOR
+              - PALADIN
+              - HUNTER
+              - MAGE
+              - BLADE_DANCER
+              - TRACKER
+      required:
+        - id
+        - hid
+        - name
+        - icon
+        - stat
+        - type
+        - rarity
+        - lvl
+        - prof
+    LootPlayerResponseDto:
+      type: object
+      properties:
+        id:
+          anyOf:
+            - type: string
+            - type: number
+        name:
+          type: string
+        lvl:
+          type: number
+          nullable: true
+        prof:
+          type: string
+          enum:
+            - WARRIOR
+            - PALADIN
+            - HUNTER
+            - MAGE
+            - BLADE_DANCER
+            - TRACKER
+          nullable: true
+        icon:
+          type: string
+          nullable: true
+        characterId:
+          type: number
+          nullable: true
+        accountId:
+          type: number
+          nullable: true
+        hpp:
+          type: number
+          nullable: true
+      required:
+        - id
+        - name
+        - lvl
+        - prof
+        - icon
+        - characterId
+        - accountId
+        - hpp
+    LootNpcResponseDto:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        wt:
+          type: number
+          nullable: true
+        lvl:
+          type: number
+          nullable: true
+        prof:
+          type: string
+          enum:
+            - WARRIOR
+            - PALADIN
+            - HUNTER
+            - MAGE
+            - BLADE_DANCER
+            - TRACKER
+          nullable: true
+        icon:
+          type: string
+          nullable: true
+        type:
+          type: string
+          enum:
+            - COMMON
+            - ELITE
+            - ELITE2
+            - ELITE3
+            - HERO
+            - EVENT_HERO
+            - TITAN
+            - COLOSSUS
+            - NPC
+          nullable: true
+        margonemType:
+          type: number
+          nullable: true
+      required:
+        - id
+        - name
+        - wt
+        - lvl
+        - prof
+        - icon
+        - type
+        - margonemType
+    LootShareResponseDto:
+      type: object
+      additionalProperties:
+        type: array
+        items:
+          type: string
+    LootSubmissionResponseDto:
+      type: object
+      properties:
+        guildId:
+          type: string
+        memberId:
+          type: number
+        lootId:
+          type: number
+        member:
+          $ref: "#/components/schemas/LootSubmissionMemberResponseDto"
+      required:
+        - guildId
+        - memberId
+        - lootId
+        - member
+    LootSubmissionMemberResponseDto:
+      type: object
+      properties:
+        name:
+          type: string
+        avatar:
+          type: string
+          nullable: true
+        userId:
+          type: string
+      required:
+        - name
+        - userId
     LootResponseDto:
       type: object
       properties:
         id:
           type: number
+        uniqueId:
+          type: string
         world:
           type: string
+        source:
+          type: string
+          enum:
+            - LOOTBOX
+            - DIALOG
+            - FIGHT
         location:
           type: string
         items:
           type: array
           items:
-            type: object
-            properties:
-              id:
-                type: number
-              hid:
-                type: string
-              name:
-                type: string
-              icon:
-                type: string
-            required:
-              - id
-              - hid
-              - name
-              - icon
+            $ref: "#/components/schemas/LootItemResponseDto"
         players:
           type: array
           items:
-            type: object
-            properties:
-              id:
-                anyOf:
-                  - type: string
-                  - type: number
-              name:
-                type: string
-            required:
-              - id
-              - name
+            $ref: "#/components/schemas/LootPlayerResponseDto"
         npcs:
           type: array
           items:
-            type: object
-            properties:
-              id:
-                type: number
-              name:
-                type: string
-            required:
-              - id
-              - name
+            $ref: "#/components/schemas/LootNpcResponseDto"
         lootShare:
-          allOf:
-            - $ref: "#/components/schemas/LootResponseDto__schema0"
-          nullable: true
+          $ref: "#/components/schemas/LootShareResponseDto"
         createdAt:
           type: string
           format: date-time
           pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        submissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/LootSubmissionResponseDto"
         commentsCount:
           type: number
       required:
         - id
+        - uniqueId
         - world
+        - source
         - location
         - items
         - players
         - npcs
+        - lootShare
         - createdAt
+        - updatedAt
         - commentsCount
     LootStatsResponseDto_Output:
       type: object
@@ -7043,89 +7847,63 @@ components:
           type: number
       required:
         - count
-    NullableLootResponseDto__schema0:
-      anyOf:
-        - type: string
-        - type: number
-        - type: boolean
-        - type: array
-          items:
-            $ref: "#/components/schemas/NullableLootResponseDto__schema0"
-        - type: object
-          additionalProperties:
-            $ref: "#/components/schemas/NullableLootResponseDto__schema0"
-      nullable: true
     NullableLootResponseDto:
       type: object
       properties:
         id:
           type: number
+        uniqueId:
+          type: string
         world:
           type: string
+        source:
+          type: string
+          enum:
+            - LOOTBOX
+            - DIALOG
+            - FIGHT
         location:
           type: string
         items:
           type: array
           items:
-            type: object
-            properties:
-              id:
-                type: number
-              hid:
-                type: string
-              name:
-                type: string
-              icon:
-                type: string
-            required:
-              - id
-              - hid
-              - name
-              - icon
+            $ref: "#/components/schemas/LootItemResponseDto"
         players:
           type: array
           items:
-            type: object
-            properties:
-              id:
-                anyOf:
-                  - type: string
-                  - type: number
-              name:
-                type: string
-            required:
-              - id
-              - name
+            $ref: "#/components/schemas/LootPlayerResponseDto"
         npcs:
           type: array
           items:
-            type: object
-            properties:
-              id:
-                type: number
-              name:
-                type: string
-            required:
-              - id
-              - name
+            $ref: "#/components/schemas/LootNpcResponseDto"
         lootShare:
-          allOf:
-            - $ref: "#/components/schemas/NullableLootResponseDto__schema0"
-          nullable: true
+          $ref: "#/components/schemas/LootShareResponseDto"
         createdAt:
           type: string
           format: date-time
           pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        submissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/LootSubmissionResponseDto"
         commentsCount:
           type: number
       required:
         - id
+        - uniqueId
         - world
+        - source
         - location
         - items
         - players
         - npcs
+        - lootShare
         - createdAt
+        - updatedAt
         - commentsCount
       nullable: true
     CreateLootDto:
@@ -7314,6 +8092,8 @@ components:
           type: number
         lootId:
           type: number
+        guildId:
+          type: string
         content:
           type: string
         member:
@@ -7341,11 +8121,18 @@ components:
           type: string
           format: date-time
           pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
       required:
         - id
         - lootId
+        - guildId
         - content
+        - member
         - createdAt
+        - updatedAt
     CreateCommentDto:
       type: object
       properties:
@@ -7361,12 +8148,6 @@ components:
           type: string
       required:
         - msg
-    LootShareResponseDto_Output:
-      type: object
-      additionalProperties:
-        type: array
-        items:
-          type: string
     NullableLootlogConfigResponseDto_Output:
       type: object
       properties:
@@ -7452,6 +8233,159 @@ components:
         - id
         - npcType
         - allowedRarities
+    ChatMessageResponseDto_Output:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 1
+        guildId:
+          type: string
+          minLength: 1
+        message:
+          type: string
+          maxLength: 128
+        senderId:
+          type: string
+          minLength: 1
+        timestamp:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        type:
+          type: string
+          enum:
+            - NORMAL
+            - NOTIFICATION
+            - NPC
+            - PARTY_GATHERING
+        characterData:
+          type: object
+          properties:
+            nick:
+              type: string
+              minLength: 1
+            id:
+              type: number
+            acc:
+              type: number
+            lvl:
+              type: number
+            prof:
+              type: string
+              minLength: 1
+            icon:
+              type: string
+              minLength: 1
+          required:
+            - nick
+            - id
+            - acc
+            - lvl
+            - prof
+            - icon
+        npc:
+          type: object
+          properties:
+            id:
+              type: number
+            name:
+              type: string
+              minLength: 1
+            location:
+              type: string
+              minLength: 1
+            lvl:
+              type: number
+            prof:
+              type: string
+              minLength: 1
+            wt:
+              type: number
+            hpp:
+              type: number
+            icon:
+              type: string
+              minLength: 1
+            type:
+              type: number
+            x:
+              type: number
+            "y":
+              type: number
+          required:
+            - id
+            - name
+            - location
+            - lvl
+            - prof
+            - wt
+            - icon
+            - type
+        partyGathering:
+          type: object
+          properties:
+            notificationId:
+              type: string
+              minLength: 1
+            discordId:
+              type: string
+              minLength: 1
+            description:
+              type: string
+              maxLength: 200
+            minLvl:
+              type: number
+              minimum: 1
+              maximum: 500
+            maxLvl:
+              type: number
+              minimum: 1
+              maximum: 500
+            world:
+              type: string
+              minLength: 1
+              maxLength: 50
+          required:
+            - notificationId
+            - discordId
+            - world
+        replyTo:
+          type: object
+          properties:
+            messageId:
+              type: string
+              minLength: 1
+            senderNick:
+              type: string
+              minLength: 1
+            message:
+              type: string
+              maxLength: 128
+            type:
+              type: string
+              enum:
+                - NORMAL
+                - NOTIFICATION
+          required:
+            - messageId
+            - senderNick
+            - message
+            - type
+        canEdit:
+          type: boolean
+        canDelete:
+          type: boolean
+      required:
+        - id
+        - guildId
+        - message
+        - senderId
+        - timestamp
+        - type
+        - characterData
+        - canEdit
+        - canDelete
     SendMessageDto:
       type: object
       properties:
@@ -7556,6 +8490,28 @@ components:
             - notificationId
             - discordId
             - world
+        replyTo:
+          type: object
+          properties:
+            messageId:
+              type: string
+              minLength: 1
+            senderNick:
+              type: string
+              minLength: 1
+            message:
+              type: string
+              maxLength: 128
+            type:
+              type: string
+              enum:
+                - NORMAL
+                - NOTIFICATION
+          required:
+            - messageId
+            - senderNick
+            - message
+            - type
       required:
         - message
         - type
@@ -7569,6 +8525,51 @@ components:
           maxLength: 128
       required:
         - message
+    ChatMessageActionResponseDto_Output:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required:
+        - success
+    ReservationsResponseDto:
+      type: object
+      additionalProperties:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: integer
+              minimum: -9007199254740991
+              maximum: 9007199254740991
+            reservationId:
+              type: string
+            createdDate:
+              type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            fromDate:
+              type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            toDate:
+              type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            createdBy:
+              type: string
+            comment:
+              type: string
+              nullable: true
+          required:
+            - id
+            - reservationId
+            - createdDate
+            - fromDate
+            - toDate
+            - createdBy
+            - comment
     CreateReservationDto:
       type: object
       properties:
@@ -7599,6 +8600,63 @@ components:
         - fromDate
         - toDate
         - createdBy
+    ReservationResponseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        reservationId:
+          type: string
+        createdDate:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        fromDate:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        toDate:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        createdBy:
+          type: string
+        comment:
+          type: string
+          nullable: true
+      required:
+        - id
+        - reservationId
+        - createdDate
+        - fromDate
+        - toDate
+        - createdBy
+        - comment
+    ReservationsCardsResponseDto_Output:
+      type: object
+      additionalProperties:
+        type: array
+        items:
+          type: object
+          properties:
+            lvl:
+              type: integer
+              minimum: -9007199254740991
+              maximum: 9007199254740991
+            images:
+              type: array
+              items:
+                type: string
+            maps:
+              type: array
+              items:
+                type: string
+          required:
+            - lvl
+            - images
+            - maps
     CreateNotificationDto:
       type: object
       properties:
@@ -7657,6 +8715,20 @@ components:
       required:
         - guildIds
         - world
+    NotificationResponseDto_Output:
+      type: object
+      properties:
+        notificationId:
+          type: string
+          minLength: 1
+        guildIds:
+          type: array
+          items:
+            type: string
+            minLength: 1
+      required:
+        - notificationId
+        - guildIds
     CreateVolunteerDto:
       type: object
       properties:
@@ -7781,6 +8853,247 @@ components:
         - guildIds
         - world
         - character
+    CancelPartyGatheringResponseDto_Output:
+      type: object
+      properties:
+        success:
+          type: boolean
+        guildIds:
+          type: array
+          items:
+            type: string
+            minLength: 1
+      required:
+        - success
+        - guildIds
+    NotificationTargetResponseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        ownerType:
+          type: string
+          enum:
+            - GUILD
+            - USER
+        ownerId:
+          type: string
+        provider:
+          type: string
+          enum:
+            - DISCORD
+        targetType:
+          type: string
+          enum:
+            - CHANNEL
+            - DM
+        externalId:
+          type: string
+        displayName:
+          type: string
+          nullable: true
+        guildName:
+          type: string
+          nullable: true
+        metadata:
+          allOf:
+            - $ref: "#/components/schemas/JsonValue"
+          nullable: true
+        active:
+          type: boolean
+        canSend:
+          type: boolean
+        lastSyncedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          nullable: true
+        lastDeliveryAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          nullable: true
+        lastDeliveryError:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+      required:
+        - id
+        - ownerType
+        - ownerId
+        - provider
+        - targetType
+        - externalId
+        - displayName
+        - guildName
+        - metadata
+        - active
+        - canSend
+        - lastSyncedAt
+        - lastDeliveryAt
+        - lastDeliveryError
+        - createdAt
+        - updatedAt
+    GuildAvailableNotificationTargetsResponseDto:
+      type: object
+      properties:
+        channels:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                minimum: -9007199254740991
+                maximum: 9007199254740991
+              guildId:
+                type: string
+              channelId:
+                type: string
+              name:
+                type: string
+              channelType:
+                type: string
+              parentId:
+                type: string
+                nullable: true
+              position:
+                type: integer
+                minimum: -9007199254740991
+                maximum: 9007199254740991
+              active:
+                type: boolean
+              canView:
+                type: boolean
+              canSend:
+                type: boolean
+              hasRequiredPermissions:
+                type: boolean
+              requiredPermissions:
+                type: array
+                items:
+                  type: string
+              grantedPermissions:
+                type: array
+                items:
+                  type: string
+              missingPermissions:
+                type: array
+                items:
+                  type: string
+              lastSyncedAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              createdAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              updatedAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            required:
+              - id
+              - guildId
+              - channelId
+              - name
+              - channelType
+              - parentId
+              - position
+              - active
+              - canView
+              - canSend
+              - hasRequiredPermissions
+              - requiredPermissions
+              - grantedPermissions
+              - missingPermissions
+              - lastSyncedAt
+              - createdAt
+              - updatedAt
+        syncState:
+          type: object
+          properties:
+            guildId:
+              type: string
+            status:
+              type: string
+              enum:
+                - SYNCED
+                - SYNCING
+                - FAILED
+                - STALE
+                - NOT_FOUND
+            hasRequiredPermissions:
+              type: boolean
+            requiredPermissions:
+              type: array
+              items:
+                type: string
+            grantedPermissions:
+              type: array
+              items:
+                type: string
+            missingPermissions:
+              type: array
+              items:
+                type: string
+            channelCount:
+              type: integer
+              minimum: -9007199254740991
+              maximum: 9007199254740991
+            selectableChannelCount:
+              type: integer
+              minimum: -9007199254740991
+              maximum: 9007199254740991
+            lastAttemptAt:
+              type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              nullable: true
+            lastSuccessAt:
+              type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              nullable: true
+            lastError:
+              type: string
+              nullable: true
+            createdAt:
+              type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            updatedAt:
+              type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          required:
+            - guildId
+            - status
+            - hasRequiredPermissions
+            - requiredPermissions
+            - grantedPermissions
+            - missingPermissions
+            - channelCount
+            - selectableChannelCount
+            - lastAttemptAt
+            - lastSuccessAt
+            - lastError
+            - createdAt
+            - updatedAt
+          nullable: true
+      required:
+        - channels
+        - syncState
     CreateNotificationTargetDto:
       type: object
       properties:
@@ -7806,6 +9119,347 @@ components:
           nullable: true
         active:
           type: boolean
+    SuccessResponseDto_Output:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required:
+        - success
+    GuildNotificationRulesResponseDto__schema0:
+      anyOf:
+        - type: string
+        - type: number
+        - type: boolean
+        - type: array
+          items:
+            $ref: "#/components/schemas/GuildNotificationRulesResponseDto__schema0"
+        - type: object
+          additionalProperties:
+            $ref: "#/components/schemas/GuildNotificationRulesResponseDto__schema0"
+      nullable: true
+    GuildNotificationRulesResponseDto:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                minimum: -9007199254740991
+                maximum: 9007199254740991
+              ownerType:
+                type: string
+                enum:
+                  - GUILD
+                  - USER
+              ownerId:
+                type: string
+              triggerType:
+                type: string
+                enum:
+                  - TIMER_BEFORE_SPAWN
+                  - NPC_SPAWNED
+                  - WATCHED_ITEM_DROPPED
+                  - SCHEDULED_MESSAGE
+              guildId:
+                type: string
+                nullable: true
+              world:
+                type: string
+                nullable: true
+              name:
+                type: string
+                nullable: true
+              filters:
+                type: object
+                properties:
+                  guildIds:
+                    type: array
+                    items:
+                      type: string
+                  world:
+                    type: string
+                  npcId:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+                    nullable: true
+                  npcIds:
+                    type: array
+                    items:
+                      type: integer
+                      minimum: -9007199254740991
+                      maximum: 9007199254740991
+                  itemId:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+                    nullable: true
+                  itemIds:
+                    type: array
+                    items:
+                      type: integer
+                      minimum: -9007199254740991
+                      maximum: 9007199254740991
+                nullable: true
+              contentTemplate:
+                type: string
+                nullable: true
+              scheduleStrategy:
+                type: string
+                enum:
+                  - SPAWN_WINDOW_RELATIVE
+                  - FIXED_DATETIME
+                nullable: true
+              scheduleAnchor:
+                type: string
+                enum:
+                  - MIN_SPAWN
+                  - MAX_SPAWN
+                nullable: true
+              scheduleOffsetMinutes:
+                type: integer
+                minimum: -9007199254740991
+                maximum: 9007199254740991
+                nullable: true
+              scheduledAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                nullable: true
+              scheduleIntervalType:
+                type: string
+                enum:
+                  - ONCE
+                  - HOURLY
+                  - DAILY
+                  - WEEKLY
+                nullable: true
+              scheduleIntervalValue:
+                type: integer
+                minimum: -9007199254740991
+                maximum: 9007199254740991
+                nullable: true
+              scheduleWeekday:
+                type: integer
+                minimum: -9007199254740991
+                maximum: 9007199254740991
+                nullable: true
+              scheduleTimeOfDay:
+                type: string
+                nullable: true
+              scheduledUntil:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                nullable: true
+              scheduleTimezone:
+                type: string
+                nullable: true
+              enabled:
+                type: boolean
+              dedupeWindowSeconds:
+                type: integer
+                minimum: -9007199254740991
+                maximum: 9007199254740991
+              createdAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              updatedAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              targets:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    ruleId:
+                      type: integer
+                      minimum: -9007199254740991
+                      maximum: 9007199254740991
+                    targetId:
+                      type: integer
+                      minimum: -9007199254740991
+                      maximum: 9007199254740991
+                    createdAt:
+                      type: string
+                      format: date-time
+                      pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                    target:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          minimum: -9007199254740991
+                          maximum: 9007199254740991
+                        ownerType:
+                          type: string
+                          enum:
+                            - GUILD
+                            - USER
+                        ownerId:
+                          type: string
+                        provider:
+                          type: string
+                          enum:
+                            - DISCORD
+                        targetType:
+                          type: string
+                          enum:
+                            - CHANNEL
+                            - DM
+                        externalId:
+                          type: string
+                        displayName:
+                          type: string
+                          nullable: true
+                        guildName:
+                          type: string
+                          nullable: true
+                        metadata:
+                          allOf:
+                            - $ref: "#/components/schemas/GuildNotificationRulesResponseDto__schema0"
+                          nullable: true
+                        active:
+                          type: boolean
+                        canSend:
+                          type: boolean
+                        lastSyncedAt:
+                          type: string
+                          format: date-time
+                          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                          nullable: true
+                        lastDeliveryAt:
+                          type: string
+                          format: date-time
+                          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                          nullable: true
+                        lastDeliveryError:
+                          type: string
+                          nullable: true
+                        createdAt:
+                          type: string
+                          format: date-time
+                          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                        updatedAt:
+                          type: string
+                          format: date-time
+                          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                      required:
+                        - id
+                        - ownerType
+                        - ownerId
+                        - provider
+                        - targetType
+                        - externalId
+                        - displayName
+                        - guildName
+                        - metadata
+                        - active
+                        - canSend
+                        - lastSyncedAt
+                        - lastDeliveryAt
+                        - lastDeliveryError
+                        - createdAt
+                        - updatedAt
+                  required:
+                    - ruleId
+                    - targetId
+                    - createdAt
+                    - target
+              testTrigger:
+                type: object
+                properties:
+                  limit:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+                  used:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+                  remaining:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+                  windowSeconds:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+                  nextAvailableAt:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+                    nullable: true
+                required:
+                  - limit
+                  - used
+                  - remaining
+                  - windowSeconds
+                  - nextAvailableAt
+            required:
+              - id
+              - ownerType
+              - ownerId
+              - triggerType
+              - guildId
+              - world
+              - name
+              - filters
+              - contentTemplate
+              - scheduleStrategy
+              - scheduleAnchor
+              - scheduleOffsetMinutes
+              - scheduledAt
+              - scheduleIntervalType
+              - scheduleIntervalValue
+              - scheduleWeekday
+              - scheduleTimeOfDay
+              - scheduledUntil
+              - scheduleTimezone
+              - enabled
+              - dedupeWindowSeconds
+              - createdAt
+              - updatedAt
+              - targets
+              - testTrigger
+        limits:
+          type: object
+          properties:
+            ruleLimit:
+              type: integer
+              minimum: -9007199254740991
+              maximum: 9007199254740991
+            ruleCount:
+              type: integer
+              minimum: -9007199254740991
+              maximum: 9007199254740991
+            maxNpcsPerRule:
+              type: integer
+              minimum: -9007199254740991
+              maximum: 9007199254740991
+            testTriggerLimit:
+              type: integer
+              minimum: -9007199254740991
+              maximum: 9007199254740991
+            testTriggerWindowSeconds:
+              type: integer
+              minimum: -9007199254740991
+              maximum: 9007199254740991
+          required:
+            - ruleLimit
+            - ruleCount
+            - maxNpcsPerRule
+            - testTriggerLimit
+            - testTriggerWindowSeconds
+      required:
+        - items
+        - limits
     CreateNotificationRuleDto:
       type: object
       properties:
@@ -7904,6 +9558,272 @@ components:
       required:
         - triggerType
         - targetIds
+    NotificationRuleResponseDto__schema0:
+      anyOf:
+        - type: string
+        - type: number
+        - type: boolean
+        - type: array
+          items:
+            $ref: "#/components/schemas/NotificationRuleResponseDto__schema0"
+        - type: object
+          additionalProperties:
+            $ref: "#/components/schemas/NotificationRuleResponseDto__schema0"
+      nullable: true
+    NotificationRuleResponseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        ownerType:
+          type: string
+          enum:
+            - GUILD
+            - USER
+        ownerId:
+          type: string
+        triggerType:
+          type: string
+          enum:
+            - TIMER_BEFORE_SPAWN
+            - NPC_SPAWNED
+            - WATCHED_ITEM_DROPPED
+            - SCHEDULED_MESSAGE
+        guildId:
+          type: string
+          nullable: true
+        world:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        filters:
+          type: object
+          properties:
+            guildIds:
+              type: array
+              items:
+                type: string
+            world:
+              type: string
+            npcId:
+              type: integer
+              minimum: -9007199254740991
+              maximum: 9007199254740991
+              nullable: true
+            npcIds:
+              type: array
+              items:
+                type: integer
+                minimum: -9007199254740991
+                maximum: 9007199254740991
+            itemId:
+              type: integer
+              minimum: -9007199254740991
+              maximum: 9007199254740991
+              nullable: true
+            itemIds:
+              type: array
+              items:
+                type: integer
+                minimum: -9007199254740991
+                maximum: 9007199254740991
+          nullable: true
+        contentTemplate:
+          type: string
+          nullable: true
+        scheduleStrategy:
+          type: string
+          enum:
+            - SPAWN_WINDOW_RELATIVE
+            - FIXED_DATETIME
+          nullable: true
+        scheduleAnchor:
+          type: string
+          enum:
+            - MIN_SPAWN
+            - MAX_SPAWN
+          nullable: true
+        scheduleOffsetMinutes:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          nullable: true
+        scheduledAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          nullable: true
+        scheduleIntervalType:
+          type: string
+          enum:
+            - ONCE
+            - HOURLY
+            - DAILY
+            - WEEKLY
+          nullable: true
+        scheduleIntervalValue:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          nullable: true
+        scheduleWeekday:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          nullable: true
+        scheduleTimeOfDay:
+          type: string
+          nullable: true
+        scheduledUntil:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          nullable: true
+        scheduleTimezone:
+          type: string
+          nullable: true
+        enabled:
+          type: boolean
+        dedupeWindowSeconds:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        targets:
+          type: array
+          items:
+            type: object
+            properties:
+              ruleId:
+                type: integer
+                minimum: -9007199254740991
+                maximum: 9007199254740991
+              targetId:
+                type: integer
+                minimum: -9007199254740991
+                maximum: 9007199254740991
+              createdAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              target:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+                  ownerType:
+                    type: string
+                    enum:
+                      - GUILD
+                      - USER
+                  ownerId:
+                    type: string
+                  provider:
+                    type: string
+                    enum:
+                      - DISCORD
+                  targetType:
+                    type: string
+                    enum:
+                      - CHANNEL
+                      - DM
+                  externalId:
+                    type: string
+                  displayName:
+                    type: string
+                    nullable: true
+                  guildName:
+                    type: string
+                    nullable: true
+                  metadata:
+                    allOf:
+                      - $ref: "#/components/schemas/NotificationRuleResponseDto__schema0"
+                    nullable: true
+                  active:
+                    type: boolean
+                  canSend:
+                    type: boolean
+                  lastSyncedAt:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                    nullable: true
+                  lastDeliveryAt:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                    nullable: true
+                  lastDeliveryError:
+                    type: string
+                    nullable: true
+                  createdAt:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                  updatedAt:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                required:
+                  - id
+                  - ownerType
+                  - ownerId
+                  - provider
+                  - targetType
+                  - externalId
+                  - displayName
+                  - guildName
+                  - metadata
+                  - active
+                  - canSend
+                  - lastSyncedAt
+                  - lastDeliveryAt
+                  - lastDeliveryError
+                  - createdAt
+                  - updatedAt
+            required:
+              - ruleId
+              - targetId
+              - createdAt
+              - target
+      required:
+        - id
+        - ownerType
+        - ownerId
+        - triggerType
+        - guildId
+        - world
+        - name
+        - filters
+        - contentTemplate
+        - scheduleStrategy
+        - scheduleAnchor
+        - scheduleOffsetMinutes
+        - scheduledAt
+        - scheduleIntervalType
+        - scheduleIntervalValue
+        - scheduleWeekday
+        - scheduleTimeOfDay
+        - scheduledUntil
+        - scheduleTimezone
+        - enabled
+        - dedupeWindowSeconds
+        - createdAt
+        - updatedAt
+        - targets
     UpdateNotificationRuleDto:
       type: object
       properties:
@@ -7999,6 +9919,1259 @@ components:
             maximum: 9007199254740991
         enabled:
           type: boolean
+    NotificationJobPayloadSnapshotResponseDto:
+      type: object
+      properties:
+        title:
+          type: string
+          nullable: true
+        message:
+          type: string
+          nullable: true
+        content:
+          type: string
+          nullable: true
+        allowedMentions:
+          allOf:
+            - $ref: "#/components/schemas/NotificationAllowedMentionsResponseDto"
+          nullable: true
+        ruleId:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          nullable: true
+        ruleName:
+          type: string
+          nullable: true
+        triggerType:
+          type: string
+          enum:
+            - TIMER_BEFORE_SPAWN
+            - NPC_SPAWNED
+            - WATCHED_ITEM_DROPPED
+            - SCHEDULED_MESSAGE
+          nullable: true
+        world:
+          type: string
+          nullable: true
+        npcId:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          nullable: true
+        npcName:
+          type: string
+          nullable: true
+        timerKey:
+          type: string
+          nullable: true
+        minSpawnTime:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+          nullable: true
+        maxSpawnTime:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+          nullable: true
+        scheduledFor:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+          nullable: true
+        scheduleStrategy:
+          type: string
+          enum:
+            - SPAWN_WINDOW_RELATIVE
+            - FIXED_DATETIME
+          nullable: true
+        scheduleAnchor:
+          type: string
+          enum:
+            - MIN_SPAWN
+            - MAX_SPAWN
+          nullable: true
+        scheduleOffsetMinutes:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          nullable: true
+        contentTemplate:
+          type: string
+          nullable: true
+        testTriggeredAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+          nullable: true
+      nullable: true
+    NotificationAllowedMentionsResponseDto:
+      type: object
+      properties:
+        parse:
+          type: array
+          items:
+            type: string
+            enum:
+              - roles
+              - users
+              - everyone
+        roles:
+          type: array
+          items:
+            type: string
+        users:
+          type: array
+          items:
+            type: string
+        repliedUser:
+          type: boolean
+    NotificationJobsResponseDto__schema0:
+      anyOf:
+        - type: string
+        - type: number
+        - type: boolean
+        - type: array
+          items:
+            $ref: "#/components/schemas/NotificationJobsResponseDto__schema0"
+        - type: object
+          additionalProperties:
+            $ref: "#/components/schemas/NotificationJobsResponseDto__schema0"
+      nullable: true
+    NotificationJobsResponseDto:
+      type: object
+      properties:
+        pending:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              ruleId:
+                type: integer
+                minimum: -9007199254740991
+                maximum: 9007199254740991
+              targetId:
+                type: integer
+                minimum: -9007199254740991
+                maximum: 9007199254740991
+              ownerType:
+                type: string
+                enum:
+                  - GUILD
+                  - USER
+              ownerId:
+                type: string
+              jobKind:
+                type: string
+                enum:
+                  - SCHEDULED
+                  - INSTANT
+                  - TEST
+              scheduledFor:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              status:
+                type: string
+                enum:
+                  - PENDING
+                  - PROCESSING
+                  - SENT
+                  - FAILED
+                  - BLOCKED
+                  - CANCELED
+              idempotencyKey:
+                type: string
+              sourceEntityType:
+                type: string
+                nullable: true
+              sourceEntityId:
+                type: string
+                nullable: true
+              sourceEventId:
+                type: string
+                nullable: true
+              payloadSnapshot:
+                $ref: "#/components/schemas/NotificationJobPayloadSnapshotResponseDto"
+              attemptCount:
+                type: integer
+                minimum: -9007199254740991
+                maximum: 9007199254740991
+              lastError:
+                type: string
+                nullable: true
+              blockedReason:
+                type: string
+                nullable: true
+              providerMessageId:
+                type: string
+                nullable: true
+              processedAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                nullable: true
+              createdAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              updatedAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              rule:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+                  ownerType:
+                    type: string
+                    enum:
+                      - GUILD
+                      - USER
+                  ownerId:
+                    type: string
+                  triggerType:
+                    type: string
+                    enum:
+                      - TIMER_BEFORE_SPAWN
+                      - NPC_SPAWNED
+                      - WATCHED_ITEM_DROPPED
+                      - SCHEDULED_MESSAGE
+                  guildId:
+                    type: string
+                    nullable: true
+                  world:
+                    type: string
+                    nullable: true
+                  name:
+                    type: string
+                    nullable: true
+                  filters:
+                    type: object
+                    properties:
+                      guildIds:
+                        type: array
+                        items:
+                          type: string
+                      world:
+                        type: string
+                      npcId:
+                        type: integer
+                        minimum: -9007199254740991
+                        maximum: 9007199254740991
+                        nullable: true
+                      npcIds:
+                        type: array
+                        items:
+                          type: integer
+                          minimum: -9007199254740991
+                          maximum: 9007199254740991
+                      itemId:
+                        type: integer
+                        minimum: -9007199254740991
+                        maximum: 9007199254740991
+                        nullable: true
+                      itemIds:
+                        type: array
+                        items:
+                          type: integer
+                          minimum: -9007199254740991
+                          maximum: 9007199254740991
+                    nullable: true
+                  contentTemplate:
+                    type: string
+                    nullable: true
+                  scheduleStrategy:
+                    type: string
+                    enum:
+                      - SPAWN_WINDOW_RELATIVE
+                      - FIXED_DATETIME
+                    nullable: true
+                  scheduleAnchor:
+                    type: string
+                    enum:
+                      - MIN_SPAWN
+                      - MAX_SPAWN
+                    nullable: true
+                  scheduleOffsetMinutes:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+                    nullable: true
+                  scheduledAt:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                    nullable: true
+                  scheduleIntervalType:
+                    type: string
+                    enum:
+                      - ONCE
+                      - HOURLY
+                      - DAILY
+                      - WEEKLY
+                    nullable: true
+                  scheduleIntervalValue:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+                    nullable: true
+                  scheduleWeekday:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+                    nullable: true
+                  scheduleTimeOfDay:
+                    type: string
+                    nullable: true
+                  scheduledUntil:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                    nullable: true
+                  scheduleTimezone:
+                    type: string
+                    nullable: true
+                  enabled:
+                    type: boolean
+                  dedupeWindowSeconds:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+                  createdAt:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                  updatedAt:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                required:
+                  - id
+                  - ownerType
+                  - ownerId
+                  - triggerType
+                  - guildId
+                  - world
+                  - name
+                  - filters
+                  - contentTemplate
+                  - scheduleStrategy
+                  - scheduleAnchor
+                  - scheduleOffsetMinutes
+                  - scheduledAt
+                  - scheduleIntervalType
+                  - scheduleIntervalValue
+                  - scheduleWeekday
+                  - scheduleTimeOfDay
+                  - scheduledUntil
+                  - scheduleTimezone
+                  - enabled
+                  - dedupeWindowSeconds
+                  - createdAt
+                  - updatedAt
+              target:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+                  ownerType:
+                    type: string
+                    enum:
+                      - GUILD
+                      - USER
+                  ownerId:
+                    type: string
+                  provider:
+                    type: string
+                    enum:
+                      - DISCORD
+                  targetType:
+                    type: string
+                    enum:
+                      - CHANNEL
+                      - DM
+                  externalId:
+                    type: string
+                  displayName:
+                    type: string
+                    nullable: true
+                  guildName:
+                    type: string
+                    nullable: true
+                  metadata:
+                    allOf:
+                      - $ref: "#/components/schemas/NotificationJobsResponseDto__schema0"
+                    nullable: true
+                  active:
+                    type: boolean
+                  canSend:
+                    type: boolean
+                  lastSyncedAt:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                    nullable: true
+                  lastDeliveryAt:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                    nullable: true
+                  lastDeliveryError:
+                    type: string
+                    nullable: true
+                  createdAt:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                  updatedAt:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                required:
+                  - id
+                  - ownerType
+                  - ownerId
+                  - provider
+                  - targetType
+                  - externalId
+                  - displayName
+                  - guildName
+                  - metadata
+                  - active
+                  - canSend
+                  - lastSyncedAt
+                  - lastDeliveryAt
+                  - lastDeliveryError
+                  - createdAt
+                  - updatedAt
+            required:
+              - id
+              - ruleId
+              - targetId
+              - ownerType
+              - ownerId
+              - jobKind
+              - scheduledFor
+              - status
+              - idempotencyKey
+              - sourceEntityType
+              - sourceEntityId
+              - sourceEventId
+              - payloadSnapshot
+              - attemptCount
+              - lastError
+              - blockedReason
+              - providerMessageId
+              - processedAt
+              - createdAt
+              - updatedAt
+              - rule
+              - target
+        history:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              ruleId:
+                type: integer
+                minimum: -9007199254740991
+                maximum: 9007199254740991
+              targetId:
+                type: integer
+                minimum: -9007199254740991
+                maximum: 9007199254740991
+              ownerType:
+                type: string
+                enum:
+                  - GUILD
+                  - USER
+              ownerId:
+                type: string
+              jobKind:
+                type: string
+                enum:
+                  - SCHEDULED
+                  - INSTANT
+                  - TEST
+              scheduledFor:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              status:
+                type: string
+                enum:
+                  - PENDING
+                  - PROCESSING
+                  - SENT
+                  - FAILED
+                  - BLOCKED
+                  - CANCELED
+              idempotencyKey:
+                type: string
+              sourceEntityType:
+                type: string
+                nullable: true
+              sourceEntityId:
+                type: string
+                nullable: true
+              sourceEventId:
+                type: string
+                nullable: true
+              payloadSnapshot:
+                $ref: "#/components/schemas/NotificationJobPayloadSnapshotResponseDto"
+              attemptCount:
+                type: integer
+                minimum: -9007199254740991
+                maximum: 9007199254740991
+              lastError:
+                type: string
+                nullable: true
+              blockedReason:
+                type: string
+                nullable: true
+              providerMessageId:
+                type: string
+                nullable: true
+              processedAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                nullable: true
+              createdAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              updatedAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              rule:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+                  ownerType:
+                    type: string
+                    enum:
+                      - GUILD
+                      - USER
+                  ownerId:
+                    type: string
+                  triggerType:
+                    type: string
+                    enum:
+                      - TIMER_BEFORE_SPAWN
+                      - NPC_SPAWNED
+                      - WATCHED_ITEM_DROPPED
+                      - SCHEDULED_MESSAGE
+                  guildId:
+                    type: string
+                    nullable: true
+                  world:
+                    type: string
+                    nullable: true
+                  name:
+                    type: string
+                    nullable: true
+                  filters:
+                    type: object
+                    properties:
+                      guildIds:
+                        type: array
+                        items:
+                          type: string
+                      world:
+                        type: string
+                      npcId:
+                        type: integer
+                        minimum: -9007199254740991
+                        maximum: 9007199254740991
+                        nullable: true
+                      npcIds:
+                        type: array
+                        items:
+                          type: integer
+                          minimum: -9007199254740991
+                          maximum: 9007199254740991
+                      itemId:
+                        type: integer
+                        minimum: -9007199254740991
+                        maximum: 9007199254740991
+                        nullable: true
+                      itemIds:
+                        type: array
+                        items:
+                          type: integer
+                          minimum: -9007199254740991
+                          maximum: 9007199254740991
+                    nullable: true
+                  contentTemplate:
+                    type: string
+                    nullable: true
+                  scheduleStrategy:
+                    type: string
+                    enum:
+                      - SPAWN_WINDOW_RELATIVE
+                      - FIXED_DATETIME
+                    nullable: true
+                  scheduleAnchor:
+                    type: string
+                    enum:
+                      - MIN_SPAWN
+                      - MAX_SPAWN
+                    nullable: true
+                  scheduleOffsetMinutes:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+                    nullable: true
+                  scheduledAt:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                    nullable: true
+                  scheduleIntervalType:
+                    type: string
+                    enum:
+                      - ONCE
+                      - HOURLY
+                      - DAILY
+                      - WEEKLY
+                    nullable: true
+                  scheduleIntervalValue:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+                    nullable: true
+                  scheduleWeekday:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+                    nullable: true
+                  scheduleTimeOfDay:
+                    type: string
+                    nullable: true
+                  scheduledUntil:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                    nullable: true
+                  scheduleTimezone:
+                    type: string
+                    nullable: true
+                  enabled:
+                    type: boolean
+                  dedupeWindowSeconds:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+                  createdAt:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                  updatedAt:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                required:
+                  - id
+                  - ownerType
+                  - ownerId
+                  - triggerType
+                  - guildId
+                  - world
+                  - name
+                  - filters
+                  - contentTemplate
+                  - scheduleStrategy
+                  - scheduleAnchor
+                  - scheduleOffsetMinutes
+                  - scheduledAt
+                  - scheduleIntervalType
+                  - scheduleIntervalValue
+                  - scheduleWeekday
+                  - scheduleTimeOfDay
+                  - scheduledUntil
+                  - scheduleTimezone
+                  - enabled
+                  - dedupeWindowSeconds
+                  - createdAt
+                  - updatedAt
+              target:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+                  ownerType:
+                    type: string
+                    enum:
+                      - GUILD
+                      - USER
+                  ownerId:
+                    type: string
+                  provider:
+                    type: string
+                    enum:
+                      - DISCORD
+                  targetType:
+                    type: string
+                    enum:
+                      - CHANNEL
+                      - DM
+                  externalId:
+                    type: string
+                  displayName:
+                    type: string
+                    nullable: true
+                  guildName:
+                    type: string
+                    nullable: true
+                  metadata:
+                    allOf:
+                      - $ref: "#/components/schemas/NotificationJobsResponseDto__schema0"
+                    nullable: true
+                  active:
+                    type: boolean
+                  canSend:
+                    type: boolean
+                  lastSyncedAt:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                    nullable: true
+                  lastDeliveryAt:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                    nullable: true
+                  lastDeliveryError:
+                    type: string
+                    nullable: true
+                  createdAt:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                  updatedAt:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                required:
+                  - id
+                  - ownerType
+                  - ownerId
+                  - provider
+                  - targetType
+                  - externalId
+                  - displayName
+                  - guildName
+                  - metadata
+                  - active
+                  - canSend
+                  - lastSyncedAt
+                  - lastDeliveryAt
+                  - lastDeliveryError
+                  - createdAt
+                  - updatedAt
+            required:
+              - id
+              - ruleId
+              - targetId
+              - ownerType
+              - ownerId
+              - jobKind
+              - scheduledFor
+              - status
+              - idempotencyKey
+              - sourceEntityType
+              - sourceEntityId
+              - sourceEventId
+              - payloadSnapshot
+              - attemptCount
+              - lastError
+              - blockedReason
+              - providerMessageId
+              - processedAt
+              - createdAt
+              - updatedAt
+              - rule
+              - target
+      required:
+        - pending
+        - history
+    NotificationTargetWithTestTriggerResponseDto__schema0:
+      anyOf:
+        - type: string
+        - type: number
+        - type: boolean
+        - type: array
+          items:
+            $ref: "#/components/schemas/NotificationTargetWithTestTriggerResponseDto__schema0"
+        - type: object
+          additionalProperties:
+            $ref: "#/components/schemas/NotificationTargetWithTestTriggerResponseDto__schema0"
+      nullable: true
+    NotificationTargetWithTestTriggerResponseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        ownerType:
+          type: string
+          enum:
+            - GUILD
+            - USER
+        ownerId:
+          type: string
+        provider:
+          type: string
+          enum:
+            - DISCORD
+        targetType:
+          type: string
+          enum:
+            - CHANNEL
+            - DM
+        externalId:
+          type: string
+        displayName:
+          type: string
+          nullable: true
+        guildName:
+          type: string
+          nullable: true
+        metadata:
+          allOf:
+            - $ref: "#/components/schemas/NotificationTargetWithTestTriggerResponseDto__schema0"
+          nullable: true
+        active:
+          type: boolean
+        canSend:
+          type: boolean
+        lastSyncedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          nullable: true
+        lastDeliveryAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          nullable: true
+        lastDeliveryError:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        testTrigger:
+          type: object
+          properties:
+            limit:
+              type: integer
+              minimum: -9007199254740991
+              maximum: 9007199254740991
+            used:
+              type: integer
+              minimum: -9007199254740991
+              maximum: 9007199254740991
+            remaining:
+              type: integer
+              minimum: -9007199254740991
+              maximum: 9007199254740991
+            windowSeconds:
+              type: integer
+              minimum: -9007199254740991
+              maximum: 9007199254740991
+            nextAvailableAt:
+              type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+              nullable: true
+          required:
+            - limit
+            - used
+            - remaining
+            - windowSeconds
+            - nextAvailableAt
+      required:
+        - id
+        - ownerType
+        - ownerId
+        - provider
+        - targetType
+        - externalId
+        - displayName
+        - guildName
+        - metadata
+        - active
+        - canSend
+        - lastSyncedAt
+        - lastDeliveryAt
+        - lastDeliveryError
+        - createdAt
+        - updatedAt
+        - testTrigger
+    WatchedItemResponseDto__schema0:
+      anyOf:
+        - type: string
+        - type: number
+        - type: boolean
+        - type: array
+          items:
+            $ref: "#/components/schemas/WatchedItemResponseDto__schema0"
+        - type: object
+          additionalProperties:
+            $ref: "#/components/schemas/WatchedItemResponseDto__schema0"
+      nullable: true
+    WatchedItemResponseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        userId:
+          type: string
+        itemId:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        itemName:
+          type: string
+        world:
+          type: string
+        enabled:
+          type: boolean
+        notificationRuleId:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        itemSnapshot:
+          type: object
+          properties:
+            name:
+              type: string
+            icon:
+              type: string
+            rarity:
+              type: string
+              nullable: true
+            lvl:
+              type: integer
+              minimum: -9007199254740991
+              maximum: 9007199254740991
+              nullable: true
+            type:
+              type: string
+              nullable: true
+            stat:
+              type: string
+          required:
+            - name
+            - icon
+            - rarity
+            - lvl
+            - type
+            - stat
+          nullable: true
+        notificationRule:
+          type: object
+          properties:
+            id:
+              type: integer
+              minimum: -9007199254740991
+              maximum: 9007199254740991
+            ownerType:
+              type: string
+              enum:
+                - GUILD
+                - USER
+            ownerId:
+              type: string
+            triggerType:
+              type: string
+              enum:
+                - TIMER_BEFORE_SPAWN
+                - NPC_SPAWNED
+                - WATCHED_ITEM_DROPPED
+                - SCHEDULED_MESSAGE
+            guildId:
+              type: string
+              nullable: true
+            world:
+              type: string
+              nullable: true
+            name:
+              type: string
+              nullable: true
+            filters:
+              type: object
+              properties:
+                guildIds:
+                  type: array
+                  items:
+                    type: string
+                world:
+                  type: string
+                npcId:
+                  type: integer
+                  minimum: -9007199254740991
+                  maximum: 9007199254740991
+                  nullable: true
+                npcIds:
+                  type: array
+                  items:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+                itemId:
+                  type: integer
+                  minimum: -9007199254740991
+                  maximum: 9007199254740991
+                  nullable: true
+                itemIds:
+                  type: array
+                  items:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+              nullable: true
+            contentTemplate:
+              type: string
+              nullable: true
+            scheduleStrategy:
+              type: string
+              enum:
+                - SPAWN_WINDOW_RELATIVE
+                - FIXED_DATETIME
+              nullable: true
+            scheduleAnchor:
+              type: string
+              enum:
+                - MIN_SPAWN
+                - MAX_SPAWN
+              nullable: true
+            scheduleOffsetMinutes:
+              type: integer
+              minimum: -9007199254740991
+              maximum: 9007199254740991
+              nullable: true
+            scheduledAt:
+              type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              nullable: true
+            scheduleIntervalType:
+              type: string
+              enum:
+                - ONCE
+                - HOURLY
+                - DAILY
+                - WEEKLY
+              nullable: true
+            scheduleIntervalValue:
+              type: integer
+              minimum: -9007199254740991
+              maximum: 9007199254740991
+              nullable: true
+            scheduleWeekday:
+              type: integer
+              minimum: -9007199254740991
+              maximum: 9007199254740991
+              nullable: true
+            scheduleTimeOfDay:
+              type: string
+              nullable: true
+            scheduledUntil:
+              type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              nullable: true
+            scheduleTimezone:
+              type: string
+              nullable: true
+            enabled:
+              type: boolean
+            dedupeWindowSeconds:
+              type: integer
+              minimum: -9007199254740991
+              maximum: 9007199254740991
+            createdAt:
+              type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            updatedAt:
+              type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            targets:
+              type: array
+              items:
+                type: object
+                properties:
+                  ruleId:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+                  targetId:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+                  createdAt:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                  target:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        minimum: -9007199254740991
+                        maximum: 9007199254740991
+                      ownerType:
+                        type: string
+                        enum:
+                          - GUILD
+                          - USER
+                      ownerId:
+                        type: string
+                      provider:
+                        type: string
+                        enum:
+                          - DISCORD
+                      targetType:
+                        type: string
+                        enum:
+                          - CHANNEL
+                          - DM
+                      externalId:
+                        type: string
+                      displayName:
+                        type: string
+                        nullable: true
+                      guildName:
+                        type: string
+                        nullable: true
+                      metadata:
+                        allOf:
+                          - $ref: "#/components/schemas/WatchedItemResponseDto__schema0"
+                        nullable: true
+                      active:
+                        type: boolean
+                      canSend:
+                        type: boolean
+                      lastSyncedAt:
+                        type: string
+                        format: date-time
+                        pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                        nullable: true
+                      lastDeliveryAt:
+                        type: string
+                        format: date-time
+                        pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                        nullable: true
+                      lastDeliveryError:
+                        type: string
+                        nullable: true
+                      createdAt:
+                        type: string
+                        format: date-time
+                        pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                      updatedAt:
+                        type: string
+                        format: date-time
+                        pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                    required:
+                      - id
+                      - ownerType
+                      - ownerId
+                      - provider
+                      - targetType
+                      - externalId
+                      - displayName
+                      - guildName
+                      - metadata
+                      - active
+                      - canSend
+                      - lastSyncedAt
+                      - lastDeliveryAt
+                      - lastDeliveryError
+                      - createdAt
+                      - updatedAt
+                required:
+                  - ruleId
+                  - targetId
+                  - createdAt
+                  - target
+          required:
+            - id
+            - ownerType
+            - ownerId
+            - triggerType
+            - guildId
+            - world
+            - name
+            - filters
+            - contentTemplate
+            - scheduleStrategy
+            - scheduleAnchor
+            - scheduleOffsetMinutes
+            - scheduledAt
+            - scheduleIntervalType
+            - scheduleIntervalValue
+            - scheduleWeekday
+            - scheduleTimeOfDay
+            - scheduledUntil
+            - scheduleTimezone
+            - enabled
+            - dedupeWindowSeconds
+            - createdAt
+            - updatedAt
+            - targets
+          nullable: true
+      required:
+        - id
+        - userId
+        - itemId
+        - itemName
+        - world
+        - enabled
+        - notificationRuleId
+        - createdAt
+        - updatedAt
+        - itemSnapshot
+        - notificationRule
     CreateWatchedItemDto:
       type: object
       properties:
@@ -9689,13 +12862,6 @@ components:
           enum:
             - SIMPLE
             - ADVANCED
-    SuccessResponseDto_Output:
-      type: object
-      properties:
-        success:
-          type: boolean
-      required:
-        - success
     AssignMemberDto:
       type: object
       properties:
@@ -11006,6 +14172,49 @@ components:
           type: array
           items:
             type: string
+    GameMapResponseDto_Output:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+      required:
+        - id
+        - name
+    MapTemplateResponseDto:
+      type: object
+      properties:
+        id:
+          type: string
+        guildId:
+          type: string
+        name:
+          type: string
+        maps:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                minimum: -9007199254740991
+                maximum: 9007199254740991
+              name:
+                type: string
+            required:
+              - id
+              - name
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+      required:
+        - id
+        - guildId
+        - name
+        - maps
+        - createdAt
     CreateMapTemplateDto:
       type: object
       properties:
@@ -11554,3 +14763,15 @@ components:
         - overview
         - npcs
         - pagination
+    JsonValue:
+      anyOf:
+        - type: string
+        - type: number
+        - type: boolean
+        - type: array
+          items:
+            $ref: "#/components/schemas/JsonValue"
+        - type: object
+          additionalProperties:
+            $ref: "#/components/schemas/JsonValue"
+      nullable: true

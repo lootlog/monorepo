@@ -8,8 +8,10 @@ import {
 } from "react";
 import { BattleEventEntry } from "./battle-event-entry";
 import { BattleHeader } from "./battle-header";
-import type { Warrior } from "@/hooks/api/battle-log/use-battles";
-import type { RawBattleParsedEvent } from "@/hooks/api/battle-log/use-battle-raw";
+import type {
+  BattleWarrior as Warrior,
+  RawBattleParsedEvent,
+} from "@/lib/api/battlelog-types";
 
 const INITIAL_RENDER_COUNT = 30;
 
@@ -47,8 +49,14 @@ export const BattleLogList: FC<BattleLogListProps> = memo(
       <ul className="text-sm">
         <BattleHeader warriors={warriors} characterId={characterId} />
         {visibleEvents?.map((event, eIndex) => {
-          const attacker = warriorsMap.get(event.attackerId);
-          const defender = warriorsMap.get(event.defenderId);
+          const attacker =
+            event.attackerId == null
+              ? undefined
+              : warriorsMap.get(event.attackerId);
+          const defender =
+            event.defenderId == null
+              ? undefined
+              : warriorsMap.get(event.defenderId);
 
           return (
             <BattleEventEntry

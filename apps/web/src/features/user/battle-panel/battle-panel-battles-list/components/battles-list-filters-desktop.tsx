@@ -32,7 +32,7 @@ import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
 import type { BattleFilters } from "./battles-list-filters";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import { LevelRangeFilter, WarriorSearchFilter } from "@/components/filters";
-import type { Warrior } from "@/hooks/api/battle-log/use-search-warriors";
+import type { SearchWarrior as Warrior } from "@/lib/api/battlelog-types";
 import { useTranslation } from "react-i18next";
 
 type BattlesListFiltersDesktopProps = {

@@ -13,19 +13,19 @@
   },
   "dependencies": {
     "@types/mdx": "^2.0.13",
-    "fumadocs-core": "^16.7.10",
-    "fumadocs-mdx": "^14.2.11",
-    "fumadocs-ui": "^16.7.10",
-    "next": "^16.2.2",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "fumadocs-core": "^16.8.1",
+    "fumadocs-mdx": "^14.3.1",
+    "fumadocs-ui": "^16.8.1",
+    "next": "^16.2.4",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
-    "@tailwindcss/postcss": "^4.2.2",
-    "@types/node": "^25.5.2",
+    "@tailwindcss/postcss": "^4.2.3",
+    "@types/node": "^25.6.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.3"
   }
 }

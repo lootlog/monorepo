@@ -6,10 +6,6 @@ import { Card } from "@lootlog/ui/components/card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import {
-  useGuildNotificationJobs,
-  type GuildNotificationJob,
-} from "@/hooks/api/guilds/use-guild-notifications";
-import {
   getJobKindLabel,
   getJobStatusBadgeProps,
   getJobStatusLabel,
@@ -18,16 +14,34 @@ import {
 import { NotificationJobDetailDialog } from "./components/notification-job-detail-dialog";
 import { History } from "lucide-react";
 import { PageHeader } from "@/components/common/page-header";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import {
+  getNotificationsGuildControllerGetGuildJobsQueryKey,
+  useNotificationsGuildControllerGetGuildJobs,
+} from "@/lib/api/generated/main/notifications/notifications";
+import type { NotificationJobsResponseDto } from "@/lib/api/generated/main/model";
 
 export const NotificationsHistoryPage = () => {
   const { t } = useTranslation();
-  const { data, isLoading } = useGuildNotificationJobs();
-  const [selectedJob, setSelectedJob] = useState<GuildNotificationJob | null>(
-    null,
+  const guildId = useGuildId();
+  const { data, isLoading } = useNotificationsGuildControllerGetGuildJobs(
+    { guildId: guildId ?? "" },
+    {
+      query: {
+        queryKey: getNotificationsGuildControllerGetGuildJobsQueryKey({
+          guildId: guildId ?? "",
+        }),
+      },
+    },
   );
+  const [selectedJob, setSelectedJob] = useState<
+    NotificationJobsResponseDto["history"][number] | null
+  >(null);
 
   const historyJobs = data?.history ?? [];
-  const openJobDetails = (job: GuildNotificationJob) => {
+  const openJobDetails = (
+    job: NotificationJobsResponseDto["history"][number],
+  ) => {
     setSelectedJob(job);
   };
 

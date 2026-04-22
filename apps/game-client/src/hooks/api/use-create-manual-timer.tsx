@@ -2,8 +2,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createManualTimer, type CreateManualTimerOptions } from "@/api";
 import { queryKeys } from "@/features/public-api/query-keys";
 
-export type { CreateManualTimerOptions as UseCreateManualTimerOptions } from "@/api";
-
 export const useCreateManualTimer = () => {
   const queryClient = useQueryClient();
 

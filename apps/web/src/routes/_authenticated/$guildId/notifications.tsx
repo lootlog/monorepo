@@ -1,9 +1,11 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router";
-import { guildDiscordSyncQueryOptions } from "@/hooks/api/guilds/use-guild-discord-sync";
 import {
-  guildNotificationJobsQueryOptions,
-  guildNotificationsQueryOptions,
-} from "@/hooks/api/guilds/use-guild-notifications";
+  getNotificationsGuildControllerGetGuildJobsQueryOptions,
+  getNotificationsGuildControllerGetGuildRulesQueryOptions,
+  getNotificationsGuildControllerGetGuildTargetsQueryOptions,
+} from "@/lib/api/generated/main/notifications/notifications";
+import { getGuildsControllerGetGuildDiscordSyncStatusQueryOptions } from "@/lib/api/generated/main/guilds/guilds";
+import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 
 function GuildNotificationsLayout() {
   return (
@@ -14,24 +16,36 @@ function GuildNotificationsLayout() {
 }
 
 export const Route = createFileRoute("/_authenticated/$guildId/notifications")({
-  loader: async ({ context, params, preload }) => {
-    if (preload) {
+  loader: ({ context, params, preload }) =>
+    withRouteLoaderCancellation(async () => {
+      if (preload) {
+        return null;
+      }
+
+      await Promise.all([
+        context.queryClient.ensureQueryData(
+          getNotificationsGuildControllerGetGuildTargetsQueryOptions({
+            guildId: params.guildId,
+          }),
+        ),
+        context.queryClient.ensureQueryData(
+          getNotificationsGuildControllerGetGuildRulesQueryOptions({
+            guildId: params.guildId,
+          }),
+        ),
+        context.queryClient.ensureQueryData(
+          getNotificationsGuildControllerGetGuildJobsQueryOptions({
+            guildId: params.guildId,
+          }),
+        ),
+        context.queryClient.ensureQueryData(
+          getGuildsControllerGetGuildDiscordSyncStatusQueryOptions({
+            guildId: params.guildId,
+          }),
+        ),
+      ]);
+
       return null;
-    }
-
-    await Promise.all([
-      context.queryClient.ensureQueryData(
-        guildNotificationsQueryOptions(params.guildId),
-      ),
-      context.queryClient.ensureQueryData(
-        guildNotificationJobsQueryOptions(params.guildId),
-      ),
-      context.queryClient.ensureQueryData(
-        guildDiscordSyncQueryOptions(params.guildId),
-      ),
-    ]);
-
-    return null;
-  },
+    }),
   component: GuildNotificationsLayout,
 });

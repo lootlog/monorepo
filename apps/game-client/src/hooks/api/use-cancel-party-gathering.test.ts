@@ -48,7 +48,6 @@ describe("useCancelPartyGathering", () => {
         world: "pandora",
         createdAt: new Date().toISOString(),
       },
-      chatMessageIds: { "guild-1": "msg-1" },
     });
   });
 
@@ -76,7 +75,6 @@ describe("useCancelPartyGathering", () => {
         partyGathering: expect.objectContaining({
           notificationId: "notif-123",
         }),
-        chatMessageIds: { "guild-1": "msg-1" },
       }),
     );
   });

@@ -1,4 +1,4 @@
-export const PROFESSION_NAMES: Record<string, string> = {
+const PROFESSION_NAMES: Record<string, string> = {
   b: "Tancerz Ostrzy",
   h: "Łowca",
   m: "Mag",
@@ -7,7 +7,7 @@ export const PROFESSION_NAMES: Record<string, string> = {
   w: "Wojownik",
 };
 
-export const PROFESSION_COLORS: Record<string, string> = {
+const PROFESSION_COLORS: Record<string, string> = {
   w: "hsl(0, 72%, 51%)", // red
   p: "hsl(45, 100%, 51%)", // gold
   h: "hsl(142, 61%, 45%)", // green

@@ -10,7 +10,7 @@ import { type Guild, Permission } from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
 import { MembersService } from "src/members/members.service";
 import { ErrorKey } from "src/guilds/enum/error-key.enum";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 import {
   getPermissionsCacheKey,
   getGuildCacheKey,

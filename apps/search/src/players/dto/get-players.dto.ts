@@ -1,32 +1,31 @@
-import { z } from "@hono/zod-openapi";
+import { createZodDto, type ZodDto } from "nestjs-zod";
+import { z } from "zod";
+
+function parseSearchQuery(value: unknown) {
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  if (!value.includes(",")) {
+    return value;
+  }
+
+  return value
+    .split(",")
+    .map((searchTerm) => searchTerm.trim())
+    .filter(Boolean);
+}
 
 export const getPlayersQuerySchema = z.object({
-  limit: z
-    .string()
-    .optional()
-    .default("10")
-    .transform(Number)
-    .openapi({ param: { name: "limit", in: "query" }, example: "10" }),
+  limit: z.coerce.number().optional().default(10),
   search: z
-    .string()
-    .optional()
-    .transform((val) => {
-      if (val?.includes(",")) {
-        return val.split(",").map((s) => s.trim());
-      }
-
-      return val;
-    })
-    .openapi({
-      param: { name: "search", in: "query" },
-      example: "player1,player2",
-      description:
-        "Search term. Comma-separated for multiple exact name matches.",
-    }),
-  world: z
-    .string()
-    .optional()
-    .openapi({ param: { name: "world", in: "query" }, example: "tempest" }),
+    .preprocess(parseSearchQuery, z.union([z.string(), z.array(z.string())]))
+    .optional(),
+  world: z.string().optional(),
 });
 
-export type GetPlayersDto = z.infer<typeof getPlayersQuerySchema>;
+const GetPlayersDtoBase: ZodDto<typeof getPlayersQuerySchema> = createZodDto(
+  getPlayersQuerySchema,
+);
+
+export class GetPlayersDto extends GetPlayersDtoBase {}

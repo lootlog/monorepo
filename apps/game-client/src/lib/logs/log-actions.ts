@@ -4,6 +4,7 @@ import {
   LogEntryStatus,
   SerializableValue,
 } from "@/store/logs.store";
+import { getFixedT } from "@/i18n/get-fixed-t";
 
 type RecordValue = Record<string, unknown>;
 
@@ -39,11 +40,6 @@ export type LoggedActionController = {
   complete: (input: CompleteLoggedActionInput) => void;
   logRequestSuccess: (input: LoggedRequestSuccessInput) => void;
   logRequestError: (input: LoggedRequestErrorInput) => void;
-};
-
-type MaybeHttpResponse = {
-  status?: unknown;
-  data?: unknown;
 };
 
 type RunLoggedRequestInput<TResponse> = LoggedRequestInput & {
@@ -94,7 +90,7 @@ export const serializeLogValue = (value: unknown): SerializableValue => {
   return String(value);
 };
 
-export const getResponseStatusCode = (response: unknown): number | null => {
+const getResponseStatusCode = (response: unknown): number | null => {
   if (!isRecord(response) || typeof response.status !== "number") {
     return null;
   }
@@ -102,7 +98,7 @@ export const getResponseStatusCode = (response: unknown): number | null => {
   return response.status;
 };
 
-export const getResponseBody = (response: unknown): unknown => {
+const getResponseBody = (response: unknown): unknown => {
   if (!isRecord(response) || !("data" in response)) {
     return response ?? null;
   }
@@ -110,8 +106,16 @@ export const getResponseBody = (response: unknown): unknown => {
   return response.data ?? null;
 };
 
-export const getErrorStatusCode = (error: unknown): number | null => {
-  if (!isRecord(error) || !isRecord(error.response)) {
+const getErrorStatusCode = (error: unknown): number | null => {
+  if (!isRecord(error)) {
+    return null;
+  }
+
+  if (typeof error.status === "number") {
+    return error.status;
+  }
+
+  if (!isRecord(error.response)) {
     return null;
   }
 
@@ -120,11 +124,25 @@ export const getErrorStatusCode = (error: unknown): number | null => {
     : null;
 };
 
-export const getLoggableErrorResponse = (error: unknown): SerializableValue => {
+const getLoggableErrorResponse = (error: unknown): SerializableValue => {
+  const t = getFixedT("common");
+
+  if (isRecord(error) && ("status" in error || "data" in error)) {
+    return serializeLogValue({
+      message:
+        typeof error.message === "string"
+          ? error.message
+          : t("errors.requestFailed"),
+      data: "data" in error ? (error.data ?? null) : null,
+    });
+  }
+
   if (isRecord(error) && isRecord(error.response)) {
     return serializeLogValue({
       message:
-        typeof error.message === "string" ? error.message : "Request failed",
+        typeof error.message === "string"
+          ? error.message
+          : t("errors.requestFailed"),
       data: "data" in error.response ? (error.response.data ?? null) : null,
     });
   }
@@ -139,6 +157,16 @@ export const getLoggableErrorResponse = (error: unknown): SerializableValue => {
 };
 
 export const getErrorMessage = (error: unknown): string => {
+  const t = getFixedT("common");
+
+  if (isRecord(error) && isRecord(error.data)) {
+    const responseData = error.data;
+
+    if (typeof responseData.message === "string") {
+      return responseData.message;
+    }
+  }
+
   if (isRecord(error) && isRecord(error.response)) {
     const responseData = error.response.data;
 
@@ -151,7 +179,7 @@ export const getErrorMessage = (error: unknown): string => {
     return error.message;
   }
 
-  return "Unknown error";
+  return t("errors.unknown");
 };
 
 export const getAggregateActionStatus = (

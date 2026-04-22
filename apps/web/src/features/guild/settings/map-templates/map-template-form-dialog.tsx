@@ -26,12 +26,19 @@ import { FileText, Pencil, X, MapPin, Search } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { toast } from "sonner";
 import { getApiErrorStatus } from "@/lib/api-client/api-client";
+import { useQueryClient } from "@tanstack/react-query";
+import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
-  useCreateMapTemplate,
-  useUpdateMapTemplate,
-} from "./hooks/use-map-template-mutations";
-import { useGameMaps, type GameMap } from "@/hooks/api/use-game-maps";
-import type { MapItem, MapTemplate } from "./hooks/use-map-templates";
+  invalidateMapTemplatesControllerGetTemplates,
+  useMapTemplatesControllerCreateTemplate,
+  useMapTemplatesControllerUpdateTemplate,
+} from "@/lib/api/generated/main/map-templates/map-templates";
+import { useMapsControllerGetMaps } from "@/lib/api/generated/main/maps/maps";
+import type {
+  GameMapResponseDtoOutput,
+  MapTemplateResponseDto,
+  MapTemplateResponseDtoMapsItem,
+} from "@/lib/api/generated/main/model";
 
 type MapTemplateFormDialogProps =
   | {
@@ -44,7 +51,7 @@ type MapTemplateFormDialogProps =
       mode: "edit";
       open: boolean;
       onOpenChange: (open: boolean) => void;
-      template: MapTemplate;
+      template: MapTemplateResponseDto;
     };
 
 const createFormSchema = (t: (key: string) => string) =>
@@ -64,11 +71,37 @@ export const MapTemplateFormDialog = ({
   template,
 }: MapTemplateFormDialogProps) => {
   const { t } = useTranslation();
-  const { data: gameMaps } = useGameMaps();
+  const guildId = useGuildId();
+  const queryClient = useQueryClient();
+  const { data: gameMaps } = useMapsControllerGetMaps();
   const { mutate: createTemplate, isPending: isCreating } =
-    useCreateMapTemplate();
+    useMapTemplatesControllerCreateTemplate({
+      mutation: {
+        onSuccess: async () => {
+          if (!guildId) {
+            return;
+          }
+
+          await invalidateMapTemplatesControllerGetTemplates(queryClient, {
+            guildId,
+          });
+        },
+      },
+    });
   const { mutate: updateTemplate, isPending: isUpdating } =
-    useUpdateMapTemplate();
+    useMapTemplatesControllerUpdateTemplate({
+      mutation: {
+        onSuccess: async () => {
+          if (!guildId) {
+            return;
+          }
+
+          await invalidateMapTemplatesControllerGetTemplates(queryClient, {
+            guildId,
+          });
+        },
+      },
+    });
 
   const isPending = mode === "create" ? isCreating : isUpdating;
   const isCreate = mode === "create";
@@ -118,7 +151,10 @@ export const MapTemplateFormDialog = ({
     onOpenChange(isOpen);
   };
 
-  const handleToggleMap = (gameMap: GameMap, checked: boolean) => {
+  const handleToggleMap = (
+    gameMap: GameMapResponseDtoOutput,
+    checked: boolean,
+  ) => {
     const currentMaps = form.getValues("maps");
     if (checked) {
       form.setValue("maps", [
@@ -157,17 +193,30 @@ export const MapTemplateFormDialog = ({
       }
     };
 
+    if (!guildId) {
+      return;
+    }
+
     if (isCreate) {
-      createTemplate(payload, {
-        onSuccess: () => {
-          toast.success(t("settings.mapTemplates.toasts.created"));
-          handleClose(false);
+      createTemplate(
+        {
+          pathParams: { guildId },
+          data: payload,
         },
-        onError: errorHandler,
-      });
+        {
+          onSuccess: () => {
+            toast.success(t("settings.mapTemplates.toasts.created"));
+            handleClose(false);
+          },
+          onError: errorHandler,
+        },
+      );
     } else {
       updateTemplate(
-        { templateId: template.id, ...payload },
+        {
+          pathParams: { guildId, templateId: template.id },
+          data: payload,
+        },
         {
           onSuccess: () => {
             toast.success(t("settings.mapTemplates.toasts.updated"));
@@ -247,7 +296,7 @@ export const MapTemplateFormDialog = ({
                       {maps.length > 0 && (
                         <ScrollArea className="max-h-[120px]">
                           <div className="flex flex-wrap gap-1.5 pr-3">
-                            {maps.map((map: MapItem) => (
+                            {maps.map((map: MapTemplateResponseDtoMapsItem) => (
                               <div
                                 key={map.id}
                                 className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 rounded border border-primary/20 max-w-[calc(50%-3px)]"
@@ -297,7 +346,8 @@ export const MapTemplateFormDialog = ({
                           >
                             <Checkbox
                               checked={maps.some(
-                                (m: MapItem) => m.id === gameMap.id,
+                                (selectedMap: MapTemplateResponseDtoMapsItem) =>
+                                  selectedMap.id === gameMap.id,
                               )}
                               onCheckedChange={(checked) =>
                                 handleToggleMap(gameMap, checked === true)

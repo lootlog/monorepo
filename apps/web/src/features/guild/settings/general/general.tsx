@@ -1,8 +1,9 @@
 import { GeneralForm } from "@/features/guild/settings/general/general-form";
-import { useGuild } from "@/hooks/api/guilds/use-guild";
 import { Settings } from "lucide-react";
 import { Card } from "@lootlog/ui/components/card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useGuildsControllerGetGuildById } from "@/lib/api/generated/main/guilds/guilds";
 
 const GeneralHeader = () => (
   <Card className="mx-3 mt-3 gap-4 border-border bg-card/60 p-4 backdrop-blur-sm shrink-0">
@@ -23,7 +24,10 @@ const GeneralHeader = () => (
 );
 
 export const GeneralSettings = () => {
-  const { data: guild } = useGuild({});
+  const guildId = useGuildId();
+  const { data: guild } = useGuildsControllerGetGuildById({
+    guildId: guildId ?? "",
+  });
 
   return (
     <div className="flex flex-col h-full min-h-0">

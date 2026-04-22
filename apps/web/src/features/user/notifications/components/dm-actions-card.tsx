@@ -13,26 +13,61 @@ import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
 import {
+  invalidateNotificationsUserControllerGetUserTargets,
+  invalidateNotificationsUserControllerGetWatchedItems,
+  useNotificationsUserControllerCreateUserTarget,
+  useNotificationsUserControllerTriggerUserTargetTest,
+  useNotificationsUserControllerUpdateUserTarget,
+} from "@/lib/api/generated/main/notifications/notifications";
+import type { NotificationTargetWithTestTriggerResponseDto } from "@/lib/api/generated/main/model";
+import { useQueryClient } from "@tanstack/react-query";
+import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { getUserNotificationsErrorMessage } from "@/features/user/notifications/utils/get-user-notifications-error-message";
-import type { UserNotificationTarget } from "@/hooks/api/user/use-user-notifications";
-import { useCreateUserNotificationTarget } from "@/hooks/api/user/use-create-user-notification-target";
-import { useTriggerUserNotificationTargetTest } from "@/hooks/api/user/use-trigger-user-notification-target-test";
-import { useUpdateUserNotificationTarget } from "@/hooks/api/user/use-update-user-notification-target";
+import { NotificationTargetType } from "@lootlog/types";
 
 type DmActionsCardProps = {
-  dmTarget: UserNotificationTarget | null;
+  dmTarget: NotificationTargetWithTestTriggerResponseDto | null;
   onAddWatch: () => void;
 };
 
 export const DmActionsCard = ({ dmTarget, onAddWatch }: DmActionsCardProps) => {
   const { t } = useTranslation();
-  const createUserTarget = useCreateUserNotificationTarget();
-  const updateUserTarget = useUpdateUserNotificationTarget();
-  const triggerUserTargetTest = useTriggerUserNotificationTargetTest();
+  const queryClient = useQueryClient();
+  const createUserTarget = useNotificationsUserControllerCreateUserTarget({
+    mutation: {
+      onSuccess: async () => {
+        await Promise.all([
+          invalidateNotificationsUserControllerGetUserTargets(queryClient),
+          invalidateNotificationsUserControllerGetWatchedItems(queryClient),
+        ]);
+      },
+    },
+  });
+  const updateUserTarget = useNotificationsUserControllerUpdateUserTarget({
+    mutation: {
+      onSuccess: async () => {
+        await Promise.all([
+          invalidateNotificationsUserControllerGetUserTargets(queryClient),
+          invalidateNotificationsUserControllerGetWatchedItems(queryClient),
+        ]);
+      },
+    },
+  });
+  const triggerUserTargetTest =
+    useNotificationsUserControllerTriggerUserTargetTest({
+      mutation: {
+        onSuccess: async () => {
+          await Promise.all([
+            invalidateNotificationsUserControllerGetUserTargets(queryClient),
+            invalidateNotificationsUserControllerGetWatchedItems(queryClient),
+          ]);
+        },
+      },
+    });
 
   const hasDmTarget = dmTarget !== null;
   const hasActiveDm = Boolean(dmTarget?.active && dmTarget.canSend);
@@ -45,11 +80,13 @@ export const DmActionsCard = ({ dmTarget, onAddWatch }: DmActionsCardProps) => {
     try {
       if (dmTarget) {
         await updateUserTarget.mutateAsync({
-          targetId: dmTarget.id,
-          active: true,
+          pathParams: { targetId: dmTarget.id },
+          data: { active: true },
         });
       } else {
-        await createUserTarget.mutateAsync({});
+        await createUserTarget.mutateAsync({
+          data: { targetType: NotificationTargetType.DM },
+        });
       }
 
       toast.success(t("settings.userNotifications.toasts.dmEnabled"));
@@ -68,8 +105,8 @@ export const DmActionsCard = ({ dmTarget, onAddWatch }: DmActionsCardProps) => {
 
     try {
       await updateUserTarget.mutateAsync({
-        targetId: dmTarget.id,
-        active: false,
+        pathParams: { targetId: dmTarget.id },
+        data: { active: false },
       });
       toast.success(t("settings.userNotifications.toasts.dmDisabled"));
     } catch (error) {
@@ -87,7 +124,7 @@ export const DmActionsCard = ({ dmTarget, onAddWatch }: DmActionsCardProps) => {
 
     try {
       await triggerUserTargetTest.mutateAsync({
-        targetId: dmTarget.id,
+        pathParams: { targetId: dmTarget.id },
       });
       toast.success(t("settings.userNotifications.toasts.dmTestTriggered"));
     } catch (error) {

@@ -1,8 +1,10 @@
 import { Swords, Trophy, Award, ChevronRight } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import { SectionHeader } from "@/components/layout/section-header";
-import { useBattleCharacters } from "@/hooks/api/battle-log/use-battle-characters";
-import { useBattleAnalytics } from "@/hooks/api/battle-log/use-battle-analytics";
+import {
+  useBattlesControllerGetBattleAnalytics,
+  useBattlesControllerGetUserCharacters,
+} from "@/lib/api/generated/battlelog/battles/battles";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { Card } from "@lootlog/ui/components/card";
 import CountUp from "@lootlog/ui/components/count-up";
@@ -66,21 +68,21 @@ export function StatsOverview() {
   const minLevel = queryState.minLevel;
   const maxLevel = queryState.maxLevel;
 
-  const { data: characters = [], isLoading: isLoadingCharacters } =
-    useBattleCharacters();
+  const { data: charactersResponse, isLoading: isLoadingCharacters } =
+    useBattlesControllerGetUserCharacters();
+  const characters = charactersResponse?.characters ?? [];
   const currentCharacterId = normalizeBattlePanelCharacterId(
     queryState.characterId,
   );
   const defaultCharacterId = currentCharacterId ?? characters[0]?.id;
 
-  const { data: analytics, isLoading: isLoadingAnalytics } = useBattleAnalytics(
-    {
+  const { data: analytics, isLoading: isLoadingAnalytics } =
+    useBattlesControllerGetBattleAnalytics({
       characterId: currentCharacterId,
       period: selectedPeriod,
       minLevel,
       maxLevel,
-    },
-  );
+    });
 
   const handlePeriodChange = (period: Period) => {
     const dashboardPeriod =

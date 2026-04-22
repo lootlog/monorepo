@@ -1,8 +1,4 @@
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import {
-  useGuildRoles,
-  type GuildRole,
-} from "@/hooks/api/guilds/use-guild-roles";
 import { RolesForm } from "@/features/guild/settings/roles/components/roles-form";
 import { ArrowLeft } from "lucide-react";
 import type { FC } from "react";
@@ -17,6 +13,9 @@ import { cn } from "@lootlog/ui/lib/utils";
 import { useTranslation } from "react-i18next";
 import { PERMISSION_CATEGORIES } from "@/features/guild/settings/roles/constants/permission-categories";
 import { useSelectorPanel } from "@/components/selector-panel";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useRolesControllerGetGuildRoles } from "@/lib/api/generated/main/roles/roles";
+import type { RoleResponseDtoOutput as GuildRole } from "@/lib/api/generated/main/model";
 
 export type RolePanelContentProps = {
   selectedRoleColor: string | undefined;
@@ -26,7 +25,10 @@ export const RolePanelContent: FC<RolePanelContentProps> = ({
   selectedRoleColor,
 }) => {
   const { t } = useTranslation();
-  const { data: roles } = useGuildRoles();
+  const guildId = useGuildId();
+  const { data: roles } = useRolesControllerGetGuildRoles({
+    guildId: guildId ?? "",
+  });
   const {
     selectedItem: selectedRole,
     setSelectedItem: setSelectedRole,

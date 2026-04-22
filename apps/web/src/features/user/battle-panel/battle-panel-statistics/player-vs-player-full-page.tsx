@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Period } from "@/store/battle-filters.store";
-import { usePlayerVsPlayer } from "@/hooks/api/battle-log/use-player-vs-player";
+import { useBattlesControllerGetPlayerVsPlayerBattles } from "@/lib/api/generated/battlelog/battles/battles";
 import {
   useReactTable,
   getCoreRowModel,
@@ -98,7 +98,7 @@ export function PlayerVsPlayerFullPage() {
     });
   };
 
-  const { data, isLoading } = usePlayerVsPlayer({
+  const { data, isLoading } = useBattlesControllerGetPlayerVsPlayerBattles({
     cursor,
     size: 20,
     characterId: currentCharacterId ?? params.myId,

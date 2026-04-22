@@ -1,7 +1,7 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { GatewayService } from "./gateway.service";
 import { Gateway } from "./gateway";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 import { GuildsService } from "../guilds/guilds.service";
 import { CreateTimerDto } from "./dto/create-timer.dto";
 import type { DeleteTimerDto } from "./dto/delete-timer.dto";
@@ -10,11 +10,14 @@ import { SendNotificationDto } from "./dto/send-notification.dto";
 import type { RefreshJobUpdateDto } from "./dto/refresh-job-update.dto";
 import { NpcType } from "./enums/npc-type.enum";
 import { GatewayEvent } from "./enums/gateway-event.enum";
+import { Platform } from "./enums/platform.enum";
 import { Permission } from "@lootlog/types";
 import type {
   ReservationCreateEventDto,
   ReservationDeleteEventDto,
 } from "./dto/reservation-event.dto";
+import type { ChatMessageEnvelopeDto } from "./dto/chat-message-envelope.dto";
+import type { ChatMessagesClearDto } from "./dto/chat-messages-clear.dto";
 
 describe("GatewayService", () => {
   let service: GatewayService;
@@ -129,6 +132,16 @@ describe("GatewayService", () => {
         ],
       },
       emit: vi.fn(),
+    };
+  }
+
+  function createChatMessageEnvelope(
+    message: SendMessageDto,
+    capabilities: Pick<ChatMessageEnvelopeDto, "canEdit" | "canDelete">,
+  ): ChatMessageEnvelopeDto {
+    return {
+      ...message,
+      ...capabilities,
     };
   }
 
@@ -301,6 +314,26 @@ describe("GatewayService", () => {
     });
   });
 
+  describe("handleChatMessagesClear", () => {
+    it("broadcasts guild-wide chat clear to every chat room tier", async () => {
+      const payload: ChatMessagesClearDto = {
+        guildId: "guild-123",
+      };
+
+      service.handleChatMessagesClear(payload);
+
+      expect(mockServer.to).toHaveBeenCalledWith([
+        "guild-123:chat:base",
+        "guild-123:chat:titans",
+        "guild-123:chat:heroes",
+      ]);
+      expect(mockServer.emit).toHaveBeenCalledWith(
+        GatewayEvent.CHAT_MESSAGES_CLEAR,
+        { guildId: "guild-123" },
+      );
+    });
+  });
+
   describe("handleGuildsTimerDelete", () => {
     it("should emit timer delete event only to the routed timer room", async () => {
       const allowedSocket = {
@@ -400,7 +433,7 @@ describe("GatewayService", () => {
   });
 
   describe("handleGuildMessageSend", () => {
-    it("should broadcast regular chat messages to the base room without socket filtering", async () => {
+    it("should emit regular chat messages with backend capabilities for each base-room viewer", async () => {
       const messageDto = new SendMessageDto();
       messageDto.id = "message-base";
       messageDto.guildId = "guild-123";
@@ -416,15 +449,45 @@ describe("GatewayService", () => {
         prof: "warrior",
         icon: "icon.png",
       };
+      const authorSocket = createSocketForGuild({
+        discordId: "sender-123",
+        roles: [
+          {
+            permissions: [Permission.LOOTLOG_CHAT_READ],
+          },
+        ],
+      });
+      const viewerSocket = createSocketForGuild({
+        discordId: "discord-viewer",
+        roles: [
+          {
+            permissions: [Permission.LOOTLOG_CHAT_READ],
+          },
+        ],
+      });
+
+      mockServer.fetchSockets.mockResolvedValue([authorSocket, viewerSocket]);
 
       service.handleGuildMessageSend(messageDto);
 
-      expect(mockServer.to).toHaveBeenCalledWith("guild-123:chat:base");
-      expect(mockServer.emit).toHaveBeenCalledWith(
+      await flushPromises();
+
+      expect(mockServer.in).toHaveBeenCalledWith("guild-123:chat:base");
+      expect(mockServer.fetchSockets).toHaveBeenCalled();
+      expect(authorSocket.emit).toHaveBeenCalledWith(
         GatewayEvent.CHAT_MESSAGE,
-        messageDto,
+        createChatMessageEnvelope(messageDto, {
+          canEdit: true,
+          canDelete: true,
+        }),
       );
-      expect(mockServer.fetchSockets).not.toHaveBeenCalled();
+      expect(viewerSocket.emit).toHaveBeenCalledWith(
+        GatewayEvent.CHAT_MESSAGE,
+        createChatMessageEnvelope(messageDto, {
+          canEdit: false,
+          canDelete: false,
+        }),
+      );
     });
 
     it("should emit titan chat message to the titan room for numeric NPC payloads", async () => {
@@ -490,7 +553,10 @@ describe("GatewayService", () => {
       expect(mockServer.in).toHaveBeenCalledWith("guild-123:chat:titans");
       expect(mockSocketWithPermissions.emit).toHaveBeenCalledWith(
         GatewayEvent.CHAT_MESSAGE,
-        messageDto,
+        createChatMessageEnvelope(messageDto, {
+          canEdit: false,
+          canDelete: false,
+        }),
       );
     });
 
@@ -547,7 +613,10 @@ describe("GatewayService", () => {
 
       expect(ownerSocket.emit).toHaveBeenCalledWith(
         GatewayEvent.CHAT_MESSAGE,
-        messageDto,
+        createChatMessageEnvelope(messageDto, {
+          canEdit: true,
+          canDelete: true,
+        }),
       );
     });
 
@@ -661,7 +730,10 @@ describe("GatewayService", () => {
 
       expect(manageSocket.emit).toHaveBeenCalledWith(
         GatewayEvent.CHAT_MESSAGE,
-        messageDto,
+        createChatMessageEnvelope(messageDto, {
+          canEdit: false,
+          canDelete: false,
+        }),
       );
     });
 
@@ -722,7 +794,10 @@ describe("GatewayService", () => {
 
       expect(multiRoleSocket.emit).toHaveBeenCalledWith(
         GatewayEvent.CHAT_MESSAGE,
-        messageDto,
+        createChatMessageEnvelope(messageDto, {
+          canEdit: false,
+          canDelete: false,
+        }),
       );
     });
 
@@ -1448,6 +1523,135 @@ describe("GatewayService", () => {
 
       expect(mockTargetSocket.emit).toHaveBeenCalled();
       expect(mockOtherSocket.emit).not.toHaveBeenCalled();
+    });
+
+    it("should grant admin and all feature rooms after promotion to admin", async () => {
+      const discordId = "discord-123";
+      const userId = "user-123";
+
+      const updatedGuilds = [
+        {
+          guild: { id: "guild-1", ownerId: "owner-1" },
+          roles: [createGuildRole([Permission.ADMIN])],
+        },
+      ];
+
+      const mockUserSocket = {
+        id: "socket-123",
+        data: {
+          discordId,
+          platform: Platform.GAME,
+        },
+        rooms: new Set(["socket-123", "guild-1:presence", "guild-1:events"]),
+        leave: vi.fn(),
+        join: vi.fn(),
+        emit: vi.fn(),
+      };
+
+      mockGuildsService.getUserGuilds.mockResolvedValue(updatedGuilds);
+      mockServer.fetchSockets.mockResolvedValue([mockUserSocket]);
+
+      await service.rebalanceUserSocketRooms(discordId, userId);
+
+      expect(mockUserSocket.join).toHaveBeenCalledWith("guild-1:admin");
+      expect(mockUserSocket.join).toHaveBeenCalledWith("guild-1:chat:base");
+      expect(mockUserSocket.join).toHaveBeenCalledWith(
+        "guild-1:notifications:heroes",
+      );
+    });
+
+    it("should remove admin and chat rooms when admin access is revoked", async () => {
+      const discordId = "discord-123";
+      const userId = "user-123";
+
+      const updatedGuilds = [
+        {
+          guild: { id: "guild-1", ownerId: "owner-1" },
+          roles: [],
+        },
+      ];
+
+      const mockUserSocket = {
+        id: "socket-123",
+        data: {
+          discordId,
+          platform: Platform.GAME,
+        },
+        rooms: new Set([
+          "socket-123",
+          "guild-1:presence",
+          "guild-1:events",
+          "guild-1:admin",
+          "guild-1:chat:base",
+        ]),
+        leave: vi.fn(),
+        join: vi.fn(),
+        emit: vi.fn(),
+      };
+
+      mockGuildsService.getUserGuilds.mockResolvedValue(updatedGuilds);
+      mockServer.fetchSockets.mockResolvedValue([mockUserSocket]);
+
+      await service.rebalanceUserSocketRooms(discordId, userId);
+
+      expect(mockUserSocket.leave).toHaveBeenCalledWith("guild-1:admin");
+      expect(mockUserSocket.leave).toHaveBeenCalledWith("guild-1:chat:base");
+    });
+
+    it("should recalculate rooms per socket platform for the same user", async () => {
+      const discordId = "discord-123";
+      const userId = "user-123";
+
+      const updatedGuilds = [
+        {
+          guild: { id: "guild-1", ownerId: "owner-1" },
+          roles: [
+            createGuildRole([
+              Permission.LOOTLOG_CHAT_READ,
+              Permission.LOOTLOG_TIMERS_READ,
+              Permission.LOOTLOG_NOTIFICATIONS_READ,
+            ]),
+          ],
+        },
+      ];
+
+      const gameSocket = {
+        id: "socket-game",
+        data: {
+          discordId,
+          platform: Platform.GAME,
+        },
+        rooms: new Set(["socket-game"]),
+        leave: vi.fn(),
+        join: vi.fn(),
+        emit: vi.fn(),
+      };
+      const webSocket = {
+        id: "socket-web",
+        data: {
+          discordId,
+          platform: Platform.WEB_APP,
+        },
+        rooms: new Set(["socket-web"]),
+        leave: vi.fn(),
+        join: vi.fn(),
+        emit: vi.fn(),
+      };
+
+      mockGuildsService.getUserGuilds.mockResolvedValue(updatedGuilds);
+      mockServer.fetchSockets.mockResolvedValue([gameSocket, webSocket]);
+
+      await service.rebalanceUserSocketRooms(discordId, userId);
+
+      expect(gameSocket.join).toHaveBeenCalledWith("guild-1:chat:base");
+      expect(gameSocket.join).toHaveBeenCalledWith(
+        "guild-1:notifications:base",
+      );
+      expect(webSocket.join).toHaveBeenCalledWith("guild-1:timers:base");
+      expect(webSocket.join).not.toHaveBeenCalledWith("guild-1:chat:base");
+      expect(webSocket.join).not.toHaveBeenCalledWith(
+        "guild-1:notifications:base",
+      );
     });
   });
 });

@@ -1,0 +1,72 @@
+{
+  "window": {
+    "title": "Chat"
+  },
+  "filters": {
+    "all": "Wszystko",
+    "normal": "Czat",
+    "npc": "NPC",
+    "party": "Grupa"
+  },
+  "emptyState": {
+    "noMessages": "Brak wiadomości"
+  },
+  "dateDividers": {
+    "today": "Dzisiaj",
+    "yesterday": "Wczoraj"
+  },
+  "input": {
+    "hint": "(! = powiadomienie, /grp = szukaj grupy)",
+    "placeholder": "Wiadomość...",
+    "clearChatConfirm": {
+      "title": "Wyczyścić czat?",
+      "description": "Ta operacja usunie historię czatu dla wszystkich członków gildii.",
+      "confirm": "Wyczyść",
+      "cancel": "Anuluj"
+    },
+    "commandSuggestions": {
+      "noResults": "Brak pasujących komend"
+    },
+    "mentionSuggestions": {
+      "roles": "Role",
+      "members": "Nicki",
+      "noResults": "Brak pasujących mentionów"
+    }
+  },
+  "actions": {
+    "hideFilters": "Ukryj filtry",
+    "showFilters": "Pokaż filtry",
+    "hideInput": "Ukryj pole czatu",
+    "showInput": "Pokaż pole czatu"
+  },
+  "edit": {
+    "save": "Zapisz",
+    "cancel": "Anuluj"
+  },
+  "reply": {
+    "replyingTo": "Odpowiedź"
+  },
+  "presence": {
+    "offline": "Offline"
+  },
+  "contextMenu": {
+    "unknownUser": "Nieznany",
+    "sendMessage": "Wyślij wiadomość",
+    "reply": "Odpowiedz",
+    "edit": "Edytuj",
+    "delete": "Usuń",
+    "showEquipment": "Pokaż ekwipunek",
+    "inviteFriends": "Zaproś do przyjaciół",
+    "inviteParty": "Zaproś do drużyny",
+    "showProfile": "Pokaż profil"
+  },
+  "partyGathering": {
+    "levelRange": "Poziom: {{min}} - {{max}}",
+    "volunteering": "Zgłaszanie...",
+    "requiredLevel": "Wymagany poziom {{min}}-{{max}}",
+    "joinParty": "Dołącz do grupy"
+  },
+  "errors": {
+    "sendFailed": "Nie udało się wysłać wiadomości na czat"
+  }
+}

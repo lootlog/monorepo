@@ -1,4 +1,4 @@
-import type { Timer } from "@/hooks/api/use-timers";
+import type { Timer } from "@/api/timers.api";
 import type { GuildMember } from "@/types/guild-member";
 
 export const getLevelSuffix = (npc: Timer["npc"]) => {

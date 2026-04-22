@@ -11,23 +11,43 @@ import groupBy from "lodash/groupBy";
 import { Grid2X2, List } from "lucide-react";
 import { useState } from "react";
 import { SingleTimer } from "./single-timer";
-import { useTimers } from "@/hooks/api/game-data/use-timers";
 import { NPC_TYPE_NAMES, NPC_TYPE_SORT_ORDER } from "@/constants/npc";
 import { SearchInput } from "@/components/ui/search-input";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { useViewMode } from "@/hooks/use-view-mode";
 import { useTranslation } from "react-i18next";
+import { useGuildContext } from "@/hooks/context/use-guild-context";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import {
+  getTimersControllerGetTimersQueryKey,
+  useTimersControllerGetTimers,
+} from "@/lib/api/generated/main/timers/timers";
 
 export const Timers = () => {
-  const { data: timers, isPending } = useTimers();
+  const guildId = useGuildId();
+  const { world } = useGuildContext();
+  const { data: timers, isPending } = useTimersControllerGetTimers(
+    { guildId: guildId ?? "" },
+    { world },
+    {
+      query: {
+        enabled: !!guildId && !!world,
+        queryKey: getTimersControllerGetTimersQueryKey(
+          { guildId: guildId ?? "" },
+          { world },
+        ),
+        staleTime: 15_000,
+      },
+    },
+  );
   const [search, setSearch] = useState("");
   const isMobile = useIsMobile();
   const { viewMode, setViewMode } = useViewMode("timers-view-mode", "list");
   const { t } = useTranslation();
 
   const filtered = timers?.filter((timer) =>
-    timer.npc.name.toLowerCase().includes(search.toLowerCase()),
+    timer.npc?.name.toLowerCase().includes(search.toLowerCase()),
   );
 
   const sortedByTime = filtered?.sort((a, b) => {
@@ -37,12 +57,16 @@ export const Timers = () => {
   });
   const sorted = sortedByTime?.sort((a, b) => {
     return (
-      NPC_TYPE_SORT_ORDER.indexOf(a.npc.type) -
-      NPC_TYPE_SORT_ORDER.indexOf(b.npc.type)
+      NPC_TYPE_SORT_ORDER.indexOf(
+        a.npc?.type as (typeof NPC_TYPE_SORT_ORDER)[number],
+      ) -
+      NPC_TYPE_SORT_ORDER.indexOf(
+        b.npc?.type as (typeof NPC_TYPE_SORT_ORDER)[number],
+      )
     );
   });
 
-  const groups = groupBy(sorted, "npc.type");
+  const groups = groupBy(sorted, (timer) => timer.npc?.type ?? "");
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background/50">
@@ -128,7 +152,12 @@ export const Timers = () => {
                       }
                     >
                       {groups[key]?.map((timer) => {
-                        return <SingleTimer key={timer.npc.id} timer={timer} />;
+                        return (
+                          <SingleTimer
+                            key={timer.npc?.id ?? timer.timerKey}
+                            timer={timer}
+                          />
+                        );
                       })}
                     </div>
                   </div>

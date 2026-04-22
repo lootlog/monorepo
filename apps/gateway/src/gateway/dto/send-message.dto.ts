@@ -43,6 +43,13 @@ const ChatCharacterDataSchema = z.object({
   icon: z.string(),
 });
 
+const ReplyToMessageSchema = z.object({
+  messageId: z.string(),
+  senderNick: z.string(),
+  message: z.string(),
+  type: z.enum([MessageType.NORMAL, MessageType.NOTIFICATION]),
+});
+
 const SendMessageSchema = z.object({
   id: z.string(),
   guildId: z.string(),
@@ -53,6 +60,7 @@ const SendMessageSchema = z.object({
   characterData: ChatCharacterDataSchema,
   npc: NpcSchema.optional(),
   partyGathering: PartyGatheringDataSchema.optional(),
+  replyTo: ReplyToMessageSchema.optional(),
 });
 
 export class SendMessageDto extends createZodDto(SendMessageSchema) {}

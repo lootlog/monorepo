@@ -3,11 +3,11 @@ import {
   GATEWAY_URL,
   type GatewayEvent,
 } from "@/config/gateway";
-import type { Timer } from "@/hooks/api/use-timers";
+import type { ChatMessage } from "@/api/chat.api";
+import type { Timer } from "@/api/timers.api";
 import type { Notification } from "@/features/notifications/hooks/use-notifications";
 import { io, type Socket } from "socket.io-client";
 import type { PlayerPresence } from "@/features/online-players/hooks/use-players-presence";
-import type { ChatMessage } from "@/hooks/api/use-chat-messages";
 import { msgpackParser } from "@lootlog/socket-parser";
 import type {
   PartyFinderVolunteer,
@@ -34,7 +34,29 @@ type ServerToClientEvents = {
 
   [GatewayEvent.CHAT_MESSAGE]: (data: ChatMessage) => void;
 
-  [GatewayEvent.UPDATE_SERVER_PRESENCE]: (data: PlayerPresence) => void;
+  [GatewayEvent.UPDATE_SERVER_PRESENCE]: (data: {
+    discordId: string;
+    guildId?: string;
+    sessionId?: string;
+    platform?: PlayerPresence["platform"];
+    status?: PlayerPresence["status"];
+    player?: {
+      world?: string;
+      name?: string;
+      lvl?: number | string;
+      icon?: string;
+      characterId?: string;
+      accountId?: string;
+      prof?: string;
+      mapName?: string;
+      sessionId?: string;
+      location?: {
+        x?: number;
+        y?: number;
+        map?: string;
+      };
+    };
+  }) => void;
 
   [GatewayEvent.NOTIFICATION]: (data: Notification) => void;
   [GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE]: (data: {
@@ -60,6 +82,7 @@ type ServerToClientEvents = {
     messageId: string;
     message: string;
   }) => void;
+  [GatewayEvent.CHAT_MESSAGES_CLEAR]: (data: { guildId: string }) => void;
 };
 
 type ClientToServerEvents = {
@@ -78,7 +101,10 @@ type ClientToServerEvents = {
     };
   }) => void;
 
-  [GatewayEvent.REQUEST_SERVER_PRESENCE]: () => void;
+  [GatewayEvent.REQUEST_SERVER_PRESENCE]: (data: {
+    guildId: string;
+    world: string;
+  }) => void;
 
   [GatewayEvent.PRESENCE_UPDATE]: (data: {
     isAfk?: boolean;

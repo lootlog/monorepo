@@ -3,18 +3,22 @@ import { Button } from "@lootlog/ui/components/button";
 import { SectionHeader } from "@/components/layout/section-header";
 import { ChevronRight, Swords } from "lucide-react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useBattles } from "@/hooks/api/battle-log/use-battles";
-import { useBattleCharacters } from "@/hooks/api/battle-log/use-battle-characters";
+import {
+  useBattlesControllerGetDashboardBattles,
+  useBattlesControllerGetUserCharacters,
+} from "@/lib/api/generated/battlelog/battles/battles";
 import type { BattleFilters } from "@/features/user/battle-panel/battle-panel-battles-list/components/battles-list-filters";
 import { serializeBattlePanelBattlesSearch } from "@/features/user/battle-panel/battle-panel-battles-list/battle-query-parsers";
 import { ROUTES } from "@/config/routes";
 
 export const RecentBattles = () => {
   const navigate = useNavigate();
-  const { data: battlesResponse, isLoading } = useBattles({
-    size: 10,
-  });
-  const { data: characters } = useBattleCharacters();
+  const { data: battlesResponse, isLoading } =
+    useBattlesControllerGetDashboardBattles({
+      size: 10,
+    });
+  const { data: charactersResponse } = useBattlesControllerGetUserCharacters();
+  const characters = charactersResponse?.characters;
 
   const handleFiltersChange = (filters: BattleFilters) => {
     const queryString = serializeBattlePanelBattlesSearch({

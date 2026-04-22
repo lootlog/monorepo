@@ -13,47 +13,48 @@ import {
   Timer,
   Users,
 } from "lucide-react";
-
-const BUTTONS: QuickAccessButtonProps[] = [
-  {
-    id: "create-party-gathering",
-    title: "Party finder",
-    icon: <Swords size="16" />,
-  },
-  {
-    id: "timers",
-    title: "Timery",
-    icon: <Timer size="16" />,
-  },
-  {
-    id: "online-players",
-    title: "Gracze online",
-    icon: <Users size="16" />,
-  },
-  {
-    id: "chat",
-    title: "Chat",
-    icon: <MessagesSquare size="16" />,
-  },
-  {
-    id: "command",
-    title: "Konsola",
-    icon: <Terminal size="16" />,
-  },
-  {
-    id: "settings",
-    title: "Ustawienia",
-    icon: <Settings size="16" />,
-  },
-];
+import { useTranslation } from "react-i18next";
 
 export const QuickAccess = () => {
+  const { t } = useTranslation("quickAccess");
   const partyGathering = usePartyFinderStore((s) => s.partyGathering);
+  const buttons: QuickAccessButtonProps[] = [
+    {
+      id: "create-party-gathering",
+      title: t("buttons.partyFinder"),
+      icon: <Swords size="16" />,
+    },
+    {
+      id: "timers",
+      title: t("buttons.timers"),
+      icon: <Timer size="16" />,
+    },
+    {
+      id: "online-players",
+      title: t("buttons.onlinePlayers"),
+      icon: <Users size="16" />,
+    },
+    {
+      id: "chat",
+      title: t("buttons.chat"),
+      icon: <MessagesSquare size="16" />,
+    },
+    {
+      id: "command",
+      title: t("buttons.command"),
+      icon: <Terminal size="16" />,
+    },
+    {
+      id: "settings",
+      title: t("buttons.settings"),
+      icon: <Settings size="16" />,
+    },
+  ];
 
   return (
     <DraggableWindow
       id="quick-access"
-      title="Lootlog"
+      title={t("window.title")}
       minHeight={56}
       minWidth={250}
       closable={false}
@@ -62,11 +63,11 @@ export const QuickAccess = () => {
         {partyGathering && (
           <QuickAccessButton
             id="party-finder"
-            title="Aktywne zbieranie grupy"
+            title={t("buttons.activePartyGathering")}
             icon=<Swords size="16" className="ll:text-green-500" />
           />
         )}
-        {BUTTONS.map((button) => (
+        {buttons.map((button) => (
           <QuickAccessButton
             key={button.id}
             id={button.id}

@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { MapPin, ChevronDown, ChevronRight } from "lucide-react";
 import { useState } from "react";
-import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { Permission } from "@lootlog/types";
 import { cn } from "@lootlog/ui/lib/utils";
 import type { EventMap, EventMapLocation } from "../../types/api";
@@ -12,6 +11,11 @@ import {
 } from "../../hooks/use-window-status";
 import type { CoverageGap } from "../../hooks/queries/use-map-coverage-timer";
 import { MapCard, getMapStatus, STATUS_STYLES } from "./map-card";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import {
+  getGuildsControllerGetGuildPermissionsQueryKey,
+  useGuildsControllerGetGuildPermissions,
+} from "@/lib/api/generated/main/guilds/guilds";
 
 interface EventMapGridProps {
   locations?: EventMapLocation[];
@@ -173,7 +177,18 @@ export const EventMapGrid = ({
   vertical = false,
 }: EventMapGridProps) => {
   const { t } = useTranslation();
-  const { data: permissions } = useGuildPermissions();
+  const guildId = useGuildId();
+  const { data: permissions } = useGuildsControllerGetGuildPermissions(
+    { guildId: guildId ?? "" },
+    {
+      query: {
+        queryKey: getGuildsControllerGetGuildPermissionsQueryKey({
+          guildId: guildId ?? "",
+        }),
+        staleTime: 30_000,
+      },
+    },
+  );
 
   const canManage =
     permissions?.includes(Permission.LOOTLOG_MANAGE) ||

@@ -1,5 +1,4 @@
 import type { FC } from "react";
-import type { Loot } from "@/hooks/api/loots/use-loots";
 import {
   Dialog,
   DialogContent,
@@ -19,15 +18,22 @@ import { AlertCircle, Calendar, MapPin } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { useSelectedLoot } from "@/hooks/use-selected-loot";
 import { useLootFromCache } from "@/hooks/use-loot-from-cache";
-import { useLoot } from "@/hooks/api/loots/use-loot";
-import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { useIsOwner } from "@/hooks/context/use-is-owner";
-import { Permission } from "@lootlog/types";
+import { useGuildId } from "@/hooks/context/use-guild-id";
 import { LOOT_SHARE_COLOR_PALETTE } from "@/features/guild/loots-list/constants/loot-share-color-palette";
 import { useTranslation } from "react-i18next";
 import { ThemeSurfaceOverlay } from "@/themes";
+import type { Loot } from "@/lib/loots/loot-types";
+import {
+  getGuildsControllerGetGuildPermissionsQueryKey,
+  useGuildsControllerGetGuildPermissions,
+} from "@/lib/api/generated/main/guilds/guilds";
+import {
+  getLootsControllerFetchLootByIdQueryKey,
+  useLootsControllerFetchLootById,
+} from "@/lib/api/generated/main/loots/loots";
 
-const MANAGE_LOOTS_PERMISSIONS = [Permission.LOOTLOG_MANAGE, Permission.ADMIN];
+const MANAGE_LOOTS_PERMISSIONS = ["LOOTLOG_MANAGE", "ADMIN"] as const;
 
 type PlayerColorMap = Record<string, { color: string; idx: number }>;
 type ItemOwnerMap = Record<string, string | undefined>;
@@ -142,22 +148,46 @@ const LootDetailsContent: FC<LootDetailsContentProps> = ({
 export const LootDetailsDialog: FC = () => {
   const { selectedLootId, closeLootDetails, isOpen } = useSelectedLoot();
   const cachedLoot = useLootFromCache(selectedLootId);
-  const { data: permissions } = useGuildPermissions();
+  const guildId = useGuildId();
+  const { data: permissions } = useGuildsControllerGetGuildPermissions(
+    { guildId: guildId ?? "" },
+    {
+      query: {
+        queryKey: getGuildsControllerGetGuildPermissionsQueryKey({
+          guildId: guildId ?? "",
+        }),
+        staleTime: 30_000,
+      },
+    },
+  );
   const isOwner = useIsOwner();
 
   const {
     data: fetchedLoot,
     isLoading,
     isError,
-  } = useLoot({
-    lootId: selectedLootId,
-    enabled: isOpen && !cachedLoot && !!selectedLootId,
-  });
+  } = useLootsControllerFetchLootById(
+    { guildId: guildId ?? "", lootId: selectedLootId ?? 0 },
+    {
+      query: {
+        enabled: isOpen && !cachedLoot && !!guildId && !!selectedLootId,
+        queryKey: getLootsControllerFetchLootByIdQueryKey({
+          guildId: guildId ?? "",
+          lootId: selectedLootId ?? 0,
+        }),
+        staleTime: 60_000,
+      },
+    },
+  );
 
   const loot = cachedLoot ?? fetchedLoot;
 
   const canManageLoots =
-    permissions?.some((p) => MANAGE_LOOTS_PERMISSIONS.includes(p)) || isOwner;
+    permissions?.some((permission) =>
+      MANAGE_LOOTS_PERMISSIONS.includes(
+        permission as (typeof MANAGE_LOOTS_PERMISSIONS)[number],
+      ),
+    ) || isOwner;
 
   const renderContent = () => {
     if (loot) {

@@ -1,73 +1,125 @@
 import { DraggableWindow } from "@/components/draggable-window";
 import { AnimatedWindow } from "@/components/animated-window";
-import { useChatMessages } from "@/hooks/api/use-chat-messages";
-import { useRef, useEffect, useLayoutEffect } from "react";
+import { useRef, useEffect, useLayoutEffect, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useLocalStorage } from "react-use";
 import { storageKey } from "@/lib/storage-key";
 import { useWindowsStore } from "@/store/windows.store";
 import { useChatMessagesListener } from "@/features/chat/hooks/use-chat-messages";
-import { useGuildMembers } from "@/hooks/api/use-guild-members";
 import { GuildSwitcher } from "@/components/guild-switcher";
 import { Game } from "@/lib/game";
-import { useChatCache } from "./hooks/use-chat-cache";
+import {
+  getPlayerPresenceCharacterKey,
+  usePlayersPresence,
+} from "@/features/online-players/hooks/use-players-presence";
+import {
+  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
+  useUsersControllerGetCurrentUserAccessibleGuilds,
+} from "@/lib/api/generated/main/users/users";
+import { getGuildNamesById } from "@/lib/api/generated-helpers";
 import { type ChatFilter, useChatStore } from "@/store/chat.store";
+import { ChatDateDivider } from "./components/chat-date-divider";
 import { ChatMessage } from "./components/chat-message";
-import { OldChatInput } from "@/features/chat/components/old-chat-input";
-import { getGuildNamesById, useGuilds } from "@/hooks/api/use-guilds";
+import { ChatNpcMessage } from "./components/chat-npc-message";
+import { ChatInput } from "@/features/chat/components/chat-input";
 import { ChatWindowActions } from "@/features/chat/components/chat-window-actions";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 import {
   getCurrentChatMessages,
+  getChatRenderableMessages,
+  getChatRenderableMessagesSignature,
   getNextSelectedGuildId,
   hasVisibleChatMessages,
-  syncSelectedGuildChatCache,
 } from "./chat.helpers";
+import { canReplyToChatMessage } from "./chat-reply.helpers";
+import {
+  clearAllChatUnreadCounts,
+  clearChatUnreadCount,
+  incrementChatUnreadCount,
+  type ChatUnreadCountByGuildId,
+} from "./chat-unread.helpers";
+import { useSettingsStore } from "@/store/settings.store";
+import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@/lib/api/generated/main/model";
+import { useChatGuildData } from "./hooks/use-chat-guild-data";
 
 const chatSelectedGuildKey = (accountId: string, characterId: string) =>
   storageKey(`ll:chat:selected-guild:${accountId}:${characterId}`);
 
-const CHAT_FILTERS: { key: ChatFilter; label: string }[] = [
-  { key: "all", label: "Wszystko" },
-  { key: "normal", label: "Czat" },
-  { key: "npc", label: "NPC" },
-  { key: "party", label: "Grupa" },
-];
-
 export const Chat = () => {
+  const { t } = useTranslation("chat");
   const {
     isIntegratedMode,
     isChatInputEnabled,
+    setChatInputEnabled,
     toggleChatInputEnabled,
     chatFilter,
     setChatFilter,
     filtersVisible,
     toggleFiltersVisible,
+    setReplyDraft,
   } = useChatStore();
 
   const characterId = String(Game.hero.id);
   const accountId = String(Game.hero.account);
+  const defaultWorld = Game.getWorldName();
+  const worldByGuildId = useSettingsStore((state) => state.worldByGuildId);
   const open = useWindowsStore((state) => state.chat.open);
   const setOpen = useWindowsStore((state) => state.setOpen);
   const [selectedGuildId, setSelectedGuildId] = useLocalStorage(
     chatSelectedGuildKey(accountId, characterId),
     "",
   );
-  const { data: guilds } = useGuilds();
+  const [unreadCountByGuildId, setUnreadCountByGuildId] =
+    useState<ChatUnreadCountByGuildId>({});
+  const selectedPresenceGuildId =
+    selectedGuildId && selectedGuildId !== "all" ? selectedGuildId : undefined;
+  const selectedPresenceWorld = selectedPresenceGuildId
+    ? (worldByGuildId[selectedPresenceGuildId] ?? defaultWorld)
+    : undefined;
+  const [, , , presenceInfoByCharacterKey] = usePlayersPresence(
+    selectedPresenceGuildId,
+    selectedPresenceWorld,
+  );
+  const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds({
+    query: {
+      queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
+      refetchOnMount: false,
+      staleTime: 1000 * 60 * 5,
+    },
+  });
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  useChatMessagesListener();
+  useChatMessagesListener({
+    onRemoteMessage: (message) => {
+      if (!selectedGuildId || selectedGuildId === "all") {
+        return;
+      }
 
-  const messageCache = useChatCache((s) => s.messageCache);
-  const memberCache = useChatCache((s) => s.memberCache);
+      if (message.guildId === selectedGuildId) {
+        return;
+      }
 
-  const { data: messages } = useChatMessages(selectedGuildId);
-  const { data: guildMembers } = useGuildMembers(selectedGuildId);
+      setUnreadCountByGuildId((currentUnreadCountByGuildId) =>
+        incrementChatUnreadCount({
+          unreadCountByGuildId: currentUnreadCountByGuildId,
+          guildId: message.guildId,
+        }),
+      );
+    },
+  });
+
+  const { membersByGuildId, mentionContextsByGuildId, messagesByGuildId } =
+    useChatGuildData({
+      currentCharacterNick: Game.hero.nick,
+      guilds,
+      selectedGuildId,
+    });
 
   const isUserNearBottomRef = useRef(true);
   const scrollPendingRef = useRef(true);
-  const prevMessagesLenRef = useRef(0);
+  const prevRenderSignatureRef = useRef("");
 
   const handleScroll = () => {
     const viewport = scrollAreaRef.current;
@@ -88,7 +140,7 @@ export const Chat = () => {
 
   useEffect(() => {
     scrollPendingRef.current = true;
-    prevMessagesLenRef.current = 0;
+    prevRenderSignatureRef.current = "";
   }, [selectedGuildId, chatFilter]);
 
   useEffect(() => {
@@ -99,51 +151,90 @@ export const Chat = () => {
     }
   }, [selectedGuildId, setSelectedGuildId, guilds]);
 
+  useEffect(() => {
+    if (!selectedGuildId) {
+      return;
+    }
+
+    if (selectedGuildId === "all") {
+      setUnreadCountByGuildId(clearAllChatUnreadCounts());
+      return;
+    }
+
+    setUnreadCountByGuildId((currentUnreadCountByGuildId) =>
+      clearChatUnreadCount({
+        unreadCountByGuildId: currentUnreadCountByGuildId,
+        guildId: selectedGuildId,
+      }),
+    );
+  }, [selectedGuildId]);
+
   const guildNamesById = getGuildNamesById(guilds);
+  const chatFilters: { key: ChatFilter; label: string }[] = [
+    { key: "all", label: t("filters.all") },
+    { key: "normal", label: t("filters.normal") },
+    { key: "npc", label: t("filters.npc") },
+    { key: "party", label: t("filters.party") },
+  ];
   const currentMessages = getCurrentChatMessages(
-    messageCache,
+    messagesByGuildId,
     selectedGuildId,
     chatFilter,
   );
+  const currentRenderableMessages = getChatRenderableMessages(currentMessages);
+  const currentRenderSignature = getChatRenderableMessagesSignature(
+    currentRenderableMessages,
+  );
   const hasRenderableMessages = hasVisibleChatMessages(
     currentMessages,
-    memberCache,
     guildNamesById,
   );
+
+  const handleReplyToMessage = (message: ChatMessageType) => {
+    if (!canReplyToChatMessage(message)) {
+      return;
+    }
+
+    setReplyDraft({
+      guildId: message.guildId,
+      messageId: message.id,
+      senderNick: message.characterData.nick,
+      message: message.message,
+      type: message.type,
+    });
+    setChatInputEnabled(true);
+
+    if (selectedGuildId === "all") {
+      setSelectedGuildId(message.guildId);
+    }
+  };
 
   useLayoutEffect(() => {
     const viewport = scrollAreaRef.current;
     if (!viewport) return;
-
-    const msgCount = currentMessages.length;
 
     if (scrollPendingRef.current) {
       if (hasRenderableMessages) {
         viewport.scrollTo({ top: viewport.scrollHeight, behavior: "instant" });
         scrollPendingRef.current = false;
       }
-      prevMessagesLenRef.current = msgCount;
+      prevRenderSignatureRef.current = currentRenderSignature;
       return;
     }
 
-    if (msgCount > prevMessagesLenRef.current && isUserNearBottomRef.current) {
+    if (
+      currentRenderSignature !== prevRenderSignatureRef.current &&
+      isUserNearBottomRef.current
+    ) {
       viewport.scrollTo({ top: viewport.scrollHeight });
     }
 
-    prevMessagesLenRef.current = msgCount;
-  }, [currentMessages, hasRenderableMessages]);
-
-  useEffect(() => {
-    syncSelectedGuildChatCache({
-      selectedGuildId,
-      messages,
-      guildMembers,
-      messageCache,
-      memberCache,
-      setMessageCache: useChatCache.getState().setMessageCache,
-      setMemberCache: useChatCache.getState().setMemberCache,
-    });
-  }, [selectedGuildId, messages, guildMembers, messageCache, memberCache]);
+    prevRenderSignatureRef.current = currentRenderSignature;
+  }, [
+    currentRenderSignature,
+    currentRenderableMessages,
+    hasRenderableMessages,
+  ]);
 
   if (isIntegratedMode && Game.interface === "ni") {
     return <div />;
@@ -153,7 +244,7 @@ export const Chat = () => {
     <AnimatedWindow isOpen={open} windowKey="chat">
       <DraggableWindow
         id="chat"
-        title="Chat"
+        title={t("window.title")}
         onClose={() => setOpen("chat", false)}
         minHeight={116}
         minWidth={242}
@@ -170,11 +261,12 @@ export const Chat = () => {
               allowAll
               value={selectedGuildId}
               onChange={setSelectedGuildId}
+              unreadCountByGuildId={unreadCountByGuildId}
             />
           </div>
           {filtersVisible && (
             <div className="ll:shrink-0 ll:flex ll:gap-0.5 ll:px-1 ll:pb-1">
-              {CHAT_FILTERS.map((filter) => (
+              {chatFilters.map((filter) => (
                 <button
                   key={filter.key}
                   type="button"
@@ -194,27 +286,77 @@ export const Chat = () => {
           <div className="ll:flex-1 ll:overflow-hidden">
             <ScrollArea
               ref={scrollAreaRef}
-              className="ll:h-full ll:w-full ll:box-border ll:border ll:rounded-sm ll:border-gray-400"
+              className="ll:h-full ll:w-full ll:box-border ll:border ll:rounded-sm ll:border-gray-400 ll:p-1"
             >
               <div
-                className="ll:flex ll:flex-col ll:gap-1 ll:p-1 ll:w-full ll:rounded-lg"
+                className="ll:flex ll:w-full ll:min-w-0 ll:flex-col ll:gap-1 ll:overflow-x-hidden ll:rounded-lg"
                 data-ll-draggable="false"
               >
-                {currentMessages?.length === 0 ? (
+                {currentRenderableMessages.length === 0 ? (
                   <div className="ll:flex ll:items-center ll:justify-center ll:h-full ll:text-gray-500 ll:text-xs">
-                    Brak wiadomości
+                    {t("emptyState.noMessages")}
                   </div>
                 ) : (
-                  currentMessages.map((message) => {
-                    const members = memberCache[message.guildId] ?? {};
+                  currentRenderableMessages.map((renderable) => {
+                    if (renderable.kind === "date-divider") {
+                      return (
+                        <ChatDateDivider
+                          key={renderable.key}
+                          timestamp={renderable.timestamp}
+                        />
+                      );
+                    }
+
+                    const message = renderable.message;
+                    const members = membersByGuildId[message.guildId] ?? {};
+
+                    if (renderable.kind === "npc-group") {
+                      return (
+                        <ChatNpcMessage
+                          key={renderable.key}
+                          additionalSenderCount={
+                            renderable.additionalSenderCount
+                          }
+                          all={selectedGuildId === "all"}
+                          count={renderable.count}
+                          guildName={guildNamesById[renderable.message.guildId]}
+                          member={members[message.senderId]}
+                          message={renderable.message}
+                        />
+                      );
+                    }
 
                     return (
                       <ChatMessage
-                        key={message.id}
+                        key={renderable.key}
                         message={message}
                         all={selectedGuildId === "all"}
                         guildName={guildNamesById[message.guildId]}
                         member={members[message.senderId]}
+                        senderMapName={
+                          message.characterData
+                            ? presenceInfoByCharacterKey[
+                                getPlayerPresenceCharacterKey(
+                                  message.characterData.acc,
+                                  message.characterData.id,
+                                )
+                              ]?.mapName
+                            : undefined
+                        }
+                        senderPresenceStatus={
+                          message.characterData
+                            ? presenceInfoByCharacterKey[
+                                getPlayerPresenceCharacterKey(
+                                  message.characterData.acc,
+                                  message.characterData.id,
+                                )
+                              ]?.status
+                            : undefined
+                        }
+                        mentionContext={
+                          mentionContextsByGuildId[message.guildId]
+                        }
+                        onReply={() => handleReplyToMessage(message)}
                       />
                     );
                   })
@@ -223,7 +365,7 @@ export const Chat = () => {
             </ScrollArea>
           </div>
           {selectedGuildId !== "all" && isChatInputEnabled && (
-            <OldChatInput selectedGuildId={selectedGuildId} />
+            <ChatInput selectedGuildId={selectedGuildId} />
           )}
         </div>
       </DraggableWindow>

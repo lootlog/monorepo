@@ -1,4 +1,4 @@
-import { NpcType } from "@/hooks/api/use-npcs";
+import { NpcType } from "@/api/npcs.api";
 import type { Notification } from "@/features/notifications/hooks/use-notifications";
 import type {
   PartyGatheringNotification,

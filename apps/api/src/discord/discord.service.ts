@@ -22,7 +22,7 @@ import {
   type APIGuildMember,
 } from "discord-api-types/v10";
 import { ExecutionError } from "redlock";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 import { DiscordRateLimiterService } from "./discord-rate-limiter.service";
 import { RedlockService } from "src/lib/redlock/redlock.service";
 import {

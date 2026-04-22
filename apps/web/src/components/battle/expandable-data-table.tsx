@@ -25,7 +25,7 @@ import { TurnsBreakdown } from "./turns-breakdown";
 import { BlocksBreakdown } from "./blocks-breakdown";
 import { WarriorDetailsBreakdown } from "./warrior-details-breakdown";
 import { DamageDealtBreakdown } from "./damage-dealt-breakdown";
-import type { Warrior } from "@/hooks/api/battle-log/use-battles";
+import type { BattleWarrior as Warrior } from "@/lib/api/battlelog-types";
 
 interface ExpandableDataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];

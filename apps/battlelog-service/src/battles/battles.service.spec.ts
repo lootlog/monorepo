@@ -4,7 +4,7 @@ import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
 import { R2Service } from "src/shared/modules/r2/r2.service";
 import { PaginationService } from "./services/pagination.service";
 import { BattleAnalyticsService } from "./services/battle-analytics.service";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 
 describe("BattlesService", () => {
   let service: BattlesService;

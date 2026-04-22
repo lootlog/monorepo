@@ -5,7 +5,7 @@ import { formatDistanceToNow } from "date-fns";
 import { pl } from "date-fns/locale";
 import { PlayerTile } from "@/components/battle";
 import { getProfessionName } from "@/lib/utils/professions";
-import type { HeadToHeadRecord } from "@/hooks/api/battle-log/use-head-to-head";
+import type { HeadToHeadRecord } from "@/lib/api/battlelog-types";
 import i18n from "@/i18n/config";
 
 export const headToHeadColumns: ColumnDef<HeadToHeadRecord>[] = [

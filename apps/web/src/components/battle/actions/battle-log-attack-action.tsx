@@ -1,10 +1,12 @@
-import type { RawBattleParsedEvent } from "@/hooks/api/battle-log/use-battle-raw";
+import type {
+  BattleWarrior as Warrior,
+  RawBattleParsedEvent,
+} from "@/lib/api/battlelog-types";
 import { cn } from "@lootlog/ui/lib/utils";
 import type { FC } from "react";
 import { Trans } from "react-i18next";
 import { generateDynamicValuesAndComponents } from "../utils/dynamic-values-helper";
 import { processDamageValue, roundHpPercentage } from "../utils/value-utils";
-import type { Warrior } from "@/hooks/api/battle-log/use-battles";
 
 export type BattleLogAttackActionsProps = {
   actions: { type: string; value: string }[];

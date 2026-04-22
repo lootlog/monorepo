@@ -5,7 +5,10 @@ import { BattleTeamSection } from "./battle-team-section";
 import { AnimatedTrophy } from "./animated-trophy";
 import { BattleMetadata } from "./battle-metadata";
 import type { BattleLabels } from "./battle-labels";
-import type { Battle, Warrior } from "@/hooks/api/battle-log/use-battles";
+import type {
+  Battle,
+  BattleWarrior as Warrior,
+} from "@/lib/api/battlelog-types";
 import { useTranslation } from "react-i18next";
 
 export type BattleOverviewCardProps = {
@@ -65,9 +68,9 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
     },
   };
   const mergedLabels = {
-    header: { ...defaultLabels.header, ...(labels.header ?? {}) },
-    teams: { ...defaultLabels.teams, ...(labels.teams ?? {}) },
-    metadata: { ...defaultLabels.metadata, ...(labels.metadata ?? {}) },
+    header: { ...defaultLabels.header, ...labels.header },
+    teams: { ...defaultLabels.teams, ...labels.teams },
+    metadata: { ...defaultLabels.metadata, ...labels.metadata },
   };
 
   const attackingTeam = battle.warriors.filter((w: Warrior) => w.team === 1);

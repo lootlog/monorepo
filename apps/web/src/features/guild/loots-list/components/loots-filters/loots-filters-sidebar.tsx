@@ -23,17 +23,33 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Plus, Bookmark } from "lucide-react";
 import { useState, type FC } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { FilterCombobox } from "./filter-combobox";
-import { useNpcs } from "@/hooks/api/game-data/use-npcs";
-import { useGuildPlayers } from "@/hooks/api/game-data/use-guild-players";
-import { useItems } from "@/hooks/api/game-data/use-items";
-import { useItemByHid } from "@/hooks/api/game-data/use-item-by-hid";
 import { useLootFilterOptions } from "./use-loot-filter-options";
 import { useDebounceValue, useLocalStorage } from "usehooks-ts";
 import { cn } from "@lootlog/ui/lib/utils";
 import { ItemImage } from "@/components/tiles";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
-import { formatItemHid } from "@/lib/utils/hid-detection";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import {
+  getLootsControllerFetchLootsByGuildIdQueryKey,
+  lootsControllerFetchLootsByGuildId,
+} from "@/lib/api/generated/main/loots/loots";
+import {
+  getItemsControllerGetItemsQueryKey,
+  useItemsControllerGetItems,
+} from "@/lib/api/generated/search/items/items";
+import {
+  getNpcsControllerGetNpcsQueryKey,
+  useNpcsControllerGetNpcs,
+} from "@/lib/api/generated/search/npcs/npcs";
+import {
+  getPlayersControllerGetPlayersQueryKey,
+  usePlayersControllerGetPlayers,
+} from "@/lib/api/generated/search/players/players";
+import { ItemRarity } from "@/lib/loots/loot-types";
+import type { LootsControllerFetchLootsByGuildIdParams } from "@/lib/api/generated/main/model";
+import { formatItemHid, parseItemHid } from "@/lib/utils/hid-detection";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
 import { useTranslation } from "react-i18next";
 
@@ -70,6 +86,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
   const { defaultQuickFilters, npcTypeOptions, rarityOptions } =
     useLootFilterOptions();
   const { world } = useGuildContext();
+  const guildId = useGuildId();
   const { filters, setFilters, hasActiveFilters, clearFilters } =
     useLootsFilters();
   const [customFilters, setCustomFilters] = useLocalStorage<SavedFilter[]>(
@@ -85,44 +102,103 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
     useDebounceValue("", DEFAULT_DEBOUNCE_MS);
   const [debouncedItemsSearchValue, setDebouncedItemsSearchValue] =
     useDebounceValue("", DEFAULT_DEBOUNCE_MS);
-
-  const { data: playersData, isLoading: playersDataLoading } = useGuildPlayers({
-    search: debouncedPlayersSearchValue,
-    selectedPlayers: filters.players?.join(","),
-    world: world || "",
-  });
-
-  const { data: npcsData, isLoading: npcsDataLoading } = useNpcs({
-    search: debouncedNpcsSearchValue,
-    selectedNpcs: filters.npcs?.join(","),
-    world: world || "",
-  });
-
-  const { data: itemsData, isLoading: itemsDataLoading } = useItems({
+  const selectedPlayerNames = filters.players.join(",");
+  const selectedNpcNames = filters.npcs.join(",");
+  const playersSearchParams =
+    debouncedPlayersSearchValue.length > 0
+      ? { search: debouncedPlayersSearchValue, world: world || "" }
+      : selectedPlayerNames.length > 0
+        ? { search: selectedPlayerNames.split(","), world: world || "" }
+        : undefined;
+  const npcsSearchParams =
+    debouncedNpcsSearchValue.length > 0
+      ? { search: debouncedNpcsSearchValue, world: world || "" }
+      : selectedNpcNames.length > 0
+        ? { search: selectedNpcNames.split(","), world: world || "" }
+        : undefined;
+  const itemsSearchParams = {
+    limit: 10,
     search: debouncedItemsSearchValue,
     world: world || "",
-    limit: 10,
+  };
+
+  const playersQuery = usePlayersControllerGetPlayers(playersSearchParams, {
+    query: {
+      queryKey: getPlayersControllerGetPlayersQueryKey(playersSearchParams),
+      enabled:
+        debouncedPlayersSearchValue.length > 0 ||
+        selectedPlayerNames.length > 0,
+    },
   });
 
-  const { data: hidItem } = useItemByHid(
+  const npcsQuery = useNpcsControllerGetNpcs(npcsSearchParams, {
+    query: {
+      queryKey: getNpcsControllerGetNpcsQueryKey(npcsSearchParams),
+      enabled:
+        debouncedNpcsSearchValue.length > 0 || selectedNpcNames.length > 0,
+    },
+  });
+
+  const itemsQuery = useItemsControllerGetItems(itemsSearchParams, {
+    query: {
+      queryKey: getItemsControllerGetItemsQueryKey(itemsSearchParams),
+      enabled: debouncedItemsSearchValue.length >= 2,
+    },
+  });
+
+  const parsedHid = parseItemHid(
     filters.hid && world ? formatItemHid(filters.hid, world) : "",
-    !!filters.hid && !!world,
   );
+  const hidLootQueryParams:
+    | LootsControllerFetchLootsByGuildIdParams
+    | undefined = parsedHid
+    ? {
+        hid: parsedHid.hid,
+        world: parsedHid.world,
+        limit: 1,
+      }
+    : undefined;
+  const { data: hidItem } = useQuery({
+    queryKey: hidLootQueryParams
+      ? getLootsControllerFetchLootsByGuildIdQueryKey(
+          { guildId: guildId ?? "" },
+          hidLootQueryParams,
+        )
+      : ["loots-filters", "hid-item"],
+    queryFn: async () => {
+      if (!guildId || !hidLootQueryParams) {
+        return null;
+      }
+
+      const response = await lootsControllerFetchLootsByGuildId(
+        { guildId },
+        hidLootQueryParams,
+      );
+      const firstLoot = response[0];
+
+      return (
+        firstLoot?.items.find((item) => item.hid === hidLootQueryParams.hid) ??
+        null
+      );
+    },
+    enabled: !!guildId && !!hidLootQueryParams,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const playersOptions =
-    playersData?.map((player) => ({
+    playersQuery.data?.map((player) => ({
       value: player.name,
       label: player.name,
     })) ?? [];
 
   const npcsOptions =
-    npcsData?.map((npc) => ({
+    npcsQuery.data?.map((npc) => ({
       value: npc.name,
       label: npc.name,
     })) ?? [];
 
   const itemsOptions =
-    itemsData?.map((item) => ({
+    itemsQuery.data?.map((item) => ({
       value: item.name,
       label: item.name,
     })) ?? [];
@@ -383,7 +459,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                           controlledSearch
                           onSearchChange={setDebouncedNpcsSearchValue}
                           searchValue={debouncedNpcsSearchValue}
-                          loading={npcsDataLoading}
+                          loading={npcsQuery.isLoading}
                         />
                       </div>
 
@@ -485,7 +561,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                           controlledSearch
                           onSearchChange={setDebouncedItemsSearchValue}
                           searchValue={debouncedItemsSearchValue}
-                          loading={itemsDataLoading}
+                          loading={itemsQuery.isLoading}
                         />
                       </div>
 
@@ -499,7 +575,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                           <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
                             <ItemImage
                               icon={hidItem.icon}
-                              rarity={hidItem.rarity}
+                              rarity={hidItem.rarity ?? ItemRarity.COMMON}
                             />
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium truncate">
@@ -584,7 +660,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                           controlledSearch
                           onSearchChange={setDebouncedPlayersSearchValue}
                           searchValue={debouncedPlayersSearchValue}
-                          loading={playersDataLoading}
+                          loading={playersQuery.isLoading}
                         />
                       </div>
 

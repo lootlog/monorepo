@@ -1,4 +1,5 @@
-import { z } from "@hono/zod-openapi";
+import { createZodDto, type ZodDto } from "nestjs-zod";
+import { z } from "zod";
 
 export const playerHitSchema = z
   .object({
@@ -11,4 +12,18 @@ export const playerHitSchema = z
     accountId: z.number(),
     world: z.string(),
   })
-  .openapi("PlayerHit");
+  .describe("Player search hit");
+
+const PlayerHitDtoBase: ZodDto<typeof playerHitSchema, false> =
+  createZodDto(playerHitSchema);
+
+export class PlayerHitDto extends PlayerHitDtoBase {}
+
+const GetPlayersResponseSchema = z.array(playerHitSchema);
+
+const GetPlayersResponseDtoBase: ZodDto<
+  typeof GetPlayersResponseSchema,
+  false
+> = createZodDto(GetPlayersResponseSchema);
+
+export class GetPlayersResponseDto extends GetPlayersResponseDtoBase {}

@@ -1,0 +1,19 @@
+{
+  "window": {
+    "title": "Konsola"
+  },
+  "actions": {
+    "infoTooltip": "! = powiadomienie, /grp = szukaj grupy"
+  },
+  "input": {
+    "placeholder": "Wiadomość..."
+  },
+  "suggestions": {
+    "partySearchLabel": "Szukaj grupy",
+    "partySearchDescription": "/grp [opis] - Rozpocznij szukanie grupy",
+    "notificationLabel": "Powiadomienie",
+    "notificationDescription": "!wiadomość - Wyślij powiadomienie do klanu",
+    "clearChatLabel": "Wyczyść czat",
+    "clearChatDescription": "/clr - Wyczyść historię czatu klanu"
+  }
+}

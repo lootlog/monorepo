@@ -1,4 +1,4 @@
-import { NpcType } from "@/hooks/api/game-data/use-npcs";
+import { NpcType } from "@/lib/api/generated/main/model";
 
 export const NPC_TYPE_NAMES: Record<NpcType, string> = {
   [NpcType.TITAN]: "Tytan",
@@ -20,13 +20,6 @@ export const NPC_TYPE_SORT_ORDER = [
   NpcType.ELITE2,
   NpcType.ELITE,
 ];
-
-export const SPECIAL_NPC_TYPES = [
-  NpcType.TITAN,
-  NpcType.COLOSSUS,
-  NpcType.HERO,
-  NpcType.EVENT_HERO,
-] as const;
 
 export const ITEM_RARITY_NAMES: Record<string, string> = {
   LEGENDARY: "Legendarny",

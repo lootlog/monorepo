@@ -6,7 +6,7 @@ const RoleResponseSchema = z.object({
   id: z.string(),
   guildId: z.string(),
   name: z.string(),
-  color: z.number().nullable().optional(),
+  color: z.number().nullable(),
   position: z.number().nullable().optional(),
   permissions: z.array(z.nativeEnum(Permission)),
   lvlRangeFrom: z.number().nullable().optional(),

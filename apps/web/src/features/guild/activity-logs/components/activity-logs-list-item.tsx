@@ -12,8 +12,6 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import {
-  Package,
-  Clock,
   LogIn,
   LogOut,
   Calendar,
@@ -27,35 +25,28 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { PlayerTile } from "@/features/guild/loots-list/components/loots-list/player-tile";
-import type { ActivityLog } from "@/hooks/api/activity-logs/use-activity-logs";
+import type { PaginatedActivitiesResponseDtoDataItem } from "@/lib/api/generated/activity/model";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
 import { MARGONEM_GUILD_URL } from "@/constants/margonem";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useMembersControllerGetGuildMembers } from "@/lib/api/generated/main/members/members";
 
 type Props = {
-  activity: ActivityLog;
+  activity: PaginatedActivitiesResponseDtoDataItem;
 };
 
 export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
   const [isOpen, setIsOpen] = useState("");
-  const { data: members } = useGuildMembers(true);
+  const guildId = useGuildId();
+  const { data: members } = useMembersControllerGetGuildMembers(
+    { guildId: guildId ?? "" },
+    { includeInactive: true },
+  );
   const { t } = useTranslation();
   const activityTypeConfig = {
-    LOOT_EVENT: {
-      icon: Package,
-      label: t("activityLogs.list.types.LOOT_EVENT"),
-      color: "text-green-500",
-      bgColor: "bg-green-500/10",
-    },
-    TIMER_EVENT: {
-      icon: Clock,
-      label: t("activityLogs.list.types.TIMER_EVENT"),
-      color: "text-blue-500",
-      bgColor: "bg-blue-500/10",
-    },
     CONNECT_EVENT: {
       icon: LogIn,
       label: t("activityLogs.list.types.CONNECT_EVENT"),
@@ -96,9 +87,7 @@ export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
   const hasActorSnapshot =
     activity.actorSnapshot && activity.actorSnapshot.icon;
   const hasAdditionalData =
-    activity.lootContext ||
-    activity.timerContext ||
-    (activity.details && Object.keys(activity.details).length > 0);
+    activity.details && Object.keys(activity.details).length > 0;
 
   const discordMember = activity.discordId
     ? members?.find((m) => m.userId === activity.discordId)
@@ -161,7 +150,7 @@ export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
                 className="scale-80 top-1"
                 accountId={activity.actorSnapshot?.accountId}
                 characterId={activity.actorSnapshot?.characterId}
-                world={activity.world}
+                world={activity.world ?? undefined}
               />
               <div className="flex flex-col">
                 <span className="font-medium text-sm">
@@ -287,56 +276,6 @@ export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
               <AccordionItem value="details" className="border-none">
                 <AccordionContent>
                   <div className="space-y-3 pt-2 border-t border-border/30 mt-2">
-                    {activity.lootContext && (
-                      <div className="bg-muted/50 p-3 rounded-lg">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Package className="h-4 w-4 text-green-500" />
-                          <span className="font-semibold text-sm">
-                            {t("activityLogs.list.lootContext")}
-                          </span>
-                        </div>
-                        <div className="space-y-1 text-xs text-muted-foreground">
-                          <div>
-                            ID:{" "}
-                            <span className="font-mono">
-                              {activity.lootContext.id}
-                            </span>
-                          </div>
-                          <div>
-                            {t("activityLogs.list.lootId")}
-                            <span className="font-mono">
-                              {activity.lootContext.lootId}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {activity.timerContext && (
-                      <div className="bg-muted/50 p-3 rounded-lg">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Clock className="h-4 w-4 text-blue-500" />
-                          <span className="font-semibold text-sm">
-                            {t("activityLogs.list.timerContext")}
-                          </span>
-                        </div>
-                        <div className="space-y-1 text-xs text-muted-foreground">
-                          <div>
-                            ID:{" "}
-                            <span className="font-mono">
-                              {activity.timerContext.id}
-                            </span>
-                          </div>
-                          <div>
-                            {t("activityLogs.list.npc")}
-                            <span className="font-medium">
-                              {activity.timerContext.npcName}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
                     {activity.details &&
                       Object.keys(activity.details).length > 0 && (
                         <div className="bg-muted/50 p-3 rounded-lg">

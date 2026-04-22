@@ -11,7 +11,7 @@ import type { ReservationSegment } from "./types";
 import { ReservationSegmentCard } from "./reservation-segment-card";
 import { NowIndicator } from "./now-indicator";
 import { ReservationQuickAddPopover } from "./reservation-quick-add-popover";
-import type { GuildMember } from "@/hooks/api/members/use-guild-member";
+import type { MemberResponseDto as GuildMember } from "@/lib/api/generated/main/model";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { cn } from "@lootlog/ui/lib/utils";
 
@@ -95,8 +95,8 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
       }
 
       const isOccupied = segments.some((segment) => {
-        const resStart = new Date(segment.reservation.fromDate).getTime();
-        const resEnd = new Date(segment.reservation.toDate).getTime();
+        const resStart = segment.reservation.fromDate.getTime();
+        const resEnd = segment.reservation.toDate.getTime();
         const slotStart = startDate.getTime();
         const slotEnd = slotStart + 15 * 60 * 1000;
         return slotStart < resEnd && slotEnd > resStart;
@@ -134,8 +134,8 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
             e.currentTarget.style.cursor = "not-allowed";
           } else {
             const isOccupied = segments.some((segment) => {
-              const resStart = new Date(segment.reservation.fromDate).getTime();
-              const resEnd = new Date(segment.reservation.toDate).getTime();
+              const resStart = segment.reservation.fromDate.getTime();
+              const resEnd = segment.reservation.toDate.getTime();
               const slotStart = currentDate.getTime();
               const slotEnd = slotStart + 15 * 60 * 1000;
               return slotStart < resEnd && slotEnd > resStart;
@@ -197,7 +197,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
       if (targetTime > anchorTime) {
         let limitTime = Number.MAX_SAFE_INTEGER;
         segments.forEach((seg) => {
-          const resStart = new Date(seg.reservation.fromDate).getTime();
+          const resStart = seg.reservation.fromDate.getTime();
           if (resStart >= anchorTime && resStart < limitTime) {
             limitTime = resStart;
           }
@@ -221,7 +221,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
       } else if (targetTime < anchorTime) {
         let limitTime = 0;
         segments.forEach((seg) => {
-          const resEnd = new Date(seg.reservation.toDate).getTime();
+          const resEnd = seg.reservation.toDate.getTime();
           if (resEnd <= anchorTime && resEnd > limitTime) {
             limitTime = resEnd;
           }

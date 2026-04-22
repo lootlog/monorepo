@@ -35,4 +35,25 @@ describe("RolesController", () => {
   it("should be defined", () => {
     expect(controller).toBeDefined();
   });
+
+  it("returns guild roles", async () => {
+    mockRolesService.getRolesByGuildId.mockResolvedValue([
+      {
+        id: "role-1",
+        guildId: "guild-1",
+        name: "Raid Team",
+      },
+    ]);
+
+    await expect(
+      controller.getGuildRoles({ id: "guild-1" } as never),
+    ).resolves.toEqual([
+      {
+        id: "role-1",
+        guildId: "guild-1",
+        name: "Raid Team",
+      },
+    ]);
+    expect(mockRolesService.getRolesByGuildId).toHaveBeenCalledWith("guild-1");
+  });
 });

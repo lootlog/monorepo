@@ -2,22 +2,31 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { getUsersControllerGetUserPreferencesQueryKey } from "@/lib/api/generated/main/users/users";
 import type {
-  UpdateUserPreferencesPayload,
-  UserPreferences,
-} from "@lootlog/types";
-import { getUserPreferencesQueryKey } from "@/lib/user-preferences";
+  UpdateUserPreferencesDtoTheme,
+  UpdateUserPreferencesDto,
+  UserPreferencesResponseDtoOutput,
+} from "@/lib/api/generated/main/model";
 import { useUpdateUserPreferences } from "./use-user-preferences";
 
-const mockUpdateUserPreferences = vi.fn();
-
-vi.mock("@/api", () => ({
-  fetchUserPreferences: vi.fn(),
-  updateUserPreferences: (...args: unknown[]) =>
-    mockUpdateUserPreferences(...args),
+const { mockUpdateUserPreferences } = vi.hoisted(() => ({
+  mockUpdateUserPreferences: vi.fn(),
 }));
 
-const createTestUserPreferences = (): UserPreferences => ({
+vi.mock("@/lib/api/generated/main/users/users", async () => {
+  const actual = await vi.importActual<
+    typeof import("@/lib/api/generated/main/users/users")
+  >("@/lib/api/generated/main/users/users");
+
+  return {
+    ...actual,
+    usersControllerUpdateUserPreferences: (...args: unknown[]) =>
+      mockUpdateUserPreferences(...args),
+  };
+});
+
+const createTestUserPreferences = (): UserPreferencesResponseDtoOutput => ({
   userId: "user-1",
   guildsOrder: ["guild-1"],
   theme: "default",
@@ -73,17 +82,20 @@ describe("useUpdateUserPreferences", () => {
   });
 
   it("optimistically merges player mute updates without replacing NPC mutes", async () => {
-    const deferred = createDeferred<UserPreferences>();
+    const deferred = createDeferred<UserPreferencesResponseDtoOutput>();
     const previousData = createTestUserPreferences();
     const nextPlayers = [{ discordId: "discord-2", displayName: "Beta" }];
-    const payload: UpdateUserPreferencesPayload = {
+    const payload: UpdateUserPreferencesDto = {
       mutes: {
         players: nextPlayers,
       },
     };
 
     mockUpdateUserPreferences.mockReturnValue(deferred.promise);
-    queryClient.setQueryData(getUserPreferencesQueryKey(), previousData);
+    queryClient.setQueryData(
+      getUsersControllerGetUserPreferencesQueryKey(),
+      previousData,
+    );
 
     const { result } = renderHook(() => useUpdateUserPreferences(), {
       wrapper: createWrapper(queryClient),
@@ -95,7 +107,9 @@ describe("useUpdateUserPreferences", () => {
 
     await waitFor(() => {
       expect(
-        queryClient.getQueryData<UserPreferences>(getUserPreferencesQueryKey()),
+        queryClient.getQueryData<UserPreferencesResponseDtoOutput>(
+          getUsersControllerGetUserPreferencesQueryKey(),
+        ),
       ).toEqual({
         ...previousData,
         mutes: {
@@ -110,7 +124,7 @@ describe("useUpdateUserPreferences", () => {
   });
 
   it("optimistically merges NPC mute updates without replacing player mutes", async () => {
-    const deferred = createDeferred<UserPreferences>();
+    const deferred = createDeferred<UserPreferencesResponseDtoOutput>();
     const previousData = createTestUserPreferences();
     const nextNpcs = [
       {
@@ -123,14 +137,17 @@ describe("useUpdateUserPreferences", () => {
         icon: null,
       },
     ];
-    const payload: UpdateUserPreferencesPayload = {
+    const payload: UpdateUserPreferencesDto = {
       mutes: {
         npcs: nextNpcs,
       },
     };
 
     mockUpdateUserPreferences.mockReturnValue(deferred.promise);
-    queryClient.setQueryData(getUserPreferencesQueryKey(), previousData);
+    queryClient.setQueryData(
+      getUsersControllerGetUserPreferencesQueryKey(),
+      previousData,
+    );
 
     const { result } = renderHook(() => useUpdateUserPreferences(), {
       wrapper: createWrapper(queryClient),
@@ -142,7 +159,9 @@ describe("useUpdateUserPreferences", () => {
 
     await waitFor(() => {
       expect(
-        queryClient.getQueryData<UserPreferences>(getUserPreferencesQueryKey()),
+        queryClient.getQueryData<UserPreferencesResponseDtoOutput>(
+          getUsersControllerGetUserPreferencesQueryKey(),
+        ),
       ).toEqual({
         ...previousData,
         mutes: {
@@ -158,14 +177,17 @@ describe("useUpdateUserPreferences", () => {
 
   it("restores the previous cache entry when the mutation fails", async () => {
     const previousData = createTestUserPreferences();
-    const payload: UpdateUserPreferencesPayload = {
+    const payload: UpdateUserPreferencesDto = {
       mutes: {
         players: [{ discordId: "discord-3", displayName: "Gamma" }],
       },
     };
 
     mockUpdateUserPreferences.mockRejectedValue(new Error("Request failed"));
-    queryClient.setQueryData(getUserPreferencesQueryKey(), previousData);
+    queryClient.setQueryData(
+      getUsersControllerGetUserPreferencesQueryKey(),
+      previousData,
+    );
 
     const { result } = renderHook(() => useUpdateUserPreferences(), {
       wrapper: createWrapper(queryClient),
@@ -177,7 +199,9 @@ describe("useUpdateUserPreferences", () => {
 
     await waitFor(() => {
       expect(
-        queryClient.getQueryData<UserPreferences>(getUserPreferencesQueryKey()),
+        queryClient.getQueryData<UserPreferencesResponseDtoOutput>(
+          getUsersControllerGetUserPreferencesQueryKey(),
+        ),
       ).toEqual(previousData);
     });
 
@@ -186,7 +210,7 @@ describe("useUpdateUserPreferences", () => {
 
   it("replaces the cache with the server response after success", async () => {
     const previousData = createTestUserPreferences();
-    const serverData: UserPreferences = {
+    const serverData: UserPreferencesResponseDtoOutput = {
       ...previousData,
       theme: "updated",
       mutes: {
@@ -196,7 +220,10 @@ describe("useUpdateUserPreferences", () => {
     };
 
     mockUpdateUserPreferences.mockResolvedValue(serverData);
-    queryClient.setQueryData(getUserPreferencesQueryKey(), previousData);
+    queryClient.setQueryData(
+      getUsersControllerGetUserPreferencesQueryKey(),
+      previousData,
+    );
 
     const { result } = renderHook(() => useUpdateUserPreferences(), {
       wrapper: createWrapper(queryClient),
@@ -204,13 +231,15 @@ describe("useUpdateUserPreferences", () => {
 
     await act(async () => {
       await result.current.mutateAsync({
-        theme: "updated",
+        theme: "default" as UpdateUserPreferencesDtoTheme,
       });
     });
 
     await waitFor(() => {
       expect(
-        queryClient.getQueryData<UserPreferences>(getUserPreferencesQueryKey()),
+        queryClient.getQueryData<UserPreferencesResponseDtoOutput>(
+          getUsersControllerGetUserPreferencesQueryKey(),
+        ),
       ).toEqual(serverData);
     });
 

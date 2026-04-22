@@ -14,7 +14,7 @@ import { MembersService } from "./members.service";
 import { PrismaService } from "src/db/prisma.service";
 import { DiscordService } from "src/discord/discord.service";
 import { DiscordRateLimiterService } from "src/discord/discord-rate-limiter.service";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 import { ErrorKey } from "./enum/error-key.enum";
 import { RuntimeEnvironment } from "src/types/runtime.types";
 import type { APIGuildMember } from "discord-api-types/v10";
@@ -101,6 +101,12 @@ describe("MembersService", () => {
       },
       guild: {
         findFirst: mockFn(),
+      },
+      userCharactersLootlogSettings: {
+        findMany: mockFn(),
+      },
+      playerSnapshot: {
+        findMany: mockFn(),
       },
       role: {
         findMany: mockFn(),
@@ -513,6 +519,122 @@ describe("MembersService", () => {
     });
   });
 
+  describe("getMemberLootlogConfigSummary", () => {
+    it("should return guild-scoped character summary with latest player snapshots", async () => {
+      prismaService.member.findUnique.mockResolvedValue({
+        userId: "discord-123",
+        active: true,
+      });
+      prismaService.userCharactersLootlogSettings.findMany.mockResolvedValue([
+        {
+          userId: "discord-123",
+          accountId: "10",
+          characterId: "20",
+          catchingGuildIds: ["guild-123"],
+        },
+        {
+          userId: "discord-123",
+          accountId: "10",
+          characterId: "21",
+          catchingGuildIds: [],
+        },
+      ]);
+      prismaService.playerSnapshot.findMany.mockResolvedValue([
+        {
+          accountId: 10,
+          characterId: 20,
+          name: "Newest Name",
+          world: "Berufs",
+          icon: "newest.png",
+        },
+        {
+          accountId: 10,
+          characterId: 20,
+          name: "Older Name",
+          world: "Zorza",
+          icon: "older.png",
+        },
+      ]);
+
+      const result = await service.getMemberLootlogConfigSummary({
+        discordId: "discord-123",
+        guildId: "guild-123",
+      });
+
+      expect(result).toEqual({
+        memberUserId: "discord-123",
+        guildId: "guild-123",
+        isActive: true,
+        configuredCharacterCount: 2,
+        enabledCharacterCount: 1,
+        characters: [
+          {
+            accountId: "10",
+            characterId: "20",
+            enabledForGuild: true,
+            characterName: "Newest Name",
+            world: "Berufs",
+            icon: "newest.png",
+            metadataStatus: "resolved",
+          },
+          {
+            accountId: "10",
+            characterId: "21",
+            enabledForGuild: false,
+            characterName: null,
+            world: null,
+            icon: null,
+            metadataStatus: "missing_snapshot",
+          },
+        ],
+      });
+    });
+
+    it("should return fallback metadata states for invalid character refs", async () => {
+      prismaService.member.findUnique.mockResolvedValue({
+        userId: "discord-123",
+        active: false,
+      });
+      prismaService.userCharactersLootlogSettings.findMany.mockResolvedValue([
+        {
+          userId: "discord-123",
+          accountId: "abc",
+          characterId: "999",
+          catchingGuildIds: ["guild-123"],
+        },
+      ]);
+      prismaService.playerSnapshot.findMany.mockResolvedValue([]);
+
+      const result = await service.getMemberLootlogConfigSummary({
+        discordId: "discord-123",
+        guildId: "guild-123",
+      });
+
+      expect(result.characters).toEqual([
+        {
+          accountId: "abc",
+          characterId: "999",
+          enabledForGuild: true,
+          characterName: null,
+          world: null,
+          icon: null,
+          metadataStatus: "invalid_character_ref",
+        },
+      ]);
+    });
+
+    it("should throw when member is missing", async () => {
+      prismaService.member.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.getMemberLootlogConfigSummary({
+          discordId: "discord-123",
+          guildId: "guild-123",
+        }),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
   describe("refreshMember", () => {
     const options = { discordId: "discord-123", guildId: "guild-123" };
 
@@ -824,6 +946,7 @@ describe("MembersService", () => {
           lastDiscordStatus: "MANUALLY_DEACTIVATED",
           roles: { set: [] },
         }),
+        include: { roles: true },
       });
       expect(amqpConnection.publish).toHaveBeenCalledWith(
         DEFAULT_EXCHANGE_NAME,

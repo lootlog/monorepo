@@ -10,9 +10,33 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./config": {
+      "types": "./dist/config/index.d.ts",
+      "default": "./dist/config/index.js"
+    },
+    "./decorators": {
+      "types": "./dist/decorators/index.d.ts",
+      "default": "./dist/decorators/index.js"
+    },
+    "./middleware": {
+      "types": "./dist/middleware/index.d.ts",
+      "default": "./dist/middleware/index.js"
+    },
     "./openapi": {
       "types": "./dist/openapi/index.d.ts",
       "default": "./dist/openapi/index.js"
+    },
+    "./redis": {
+      "types": "./dist/redis/index.d.ts",
+      "default": "./dist/redis/index.js"
+    },
+    "./utils": {
+      "types": "./dist/utils/index.d.ts",
+      "default": "./dist/utils/index.js"
+    },
+    "./validators": {
+      "types": "./dist/validators/index.d.ts",
+      "default": "./dist/validators/index.js"
     }
   },
   "scripts": {
@@ -22,24 +46,23 @@
   "dependencies": {
     "@axiomhq/winston": "^1.6.0",
     "@lootlog/types": "workspace:*",
-    "fastify": "^5.8.4",
+    "fastify": "^5.8.5",
+    "js-yaml": "^4.1.1",
     "nest-winston": "^1.10.2",
     "winston": "^3.19.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@nestjs/common": "^11.1.18",
-    "@nestjs/config": "^4.0.3",
-    "@nestjs/core": "^11.1.18",
-    "@types/node": "^25.5.2",
+    "@nestjs/common": "^11.1.19",
+    "@nestjs/core": "^11.1.19",
+    "@types/node": "^25.6.0",
     "ioredis": "^5.10.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.3"
   },
   "peerDependencies": {
     "@nestjs/common": "^11.0.0",
-    "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.0.0",
     "ioredis": "^5.0.0",
     "reflect-metadata": "^0.2.0",

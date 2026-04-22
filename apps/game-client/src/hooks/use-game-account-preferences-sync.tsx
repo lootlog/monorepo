@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useGuilds } from "@/hooks/api/use-guilds";
 import {
   useUpdateUserGameAccountPreferences,
   useUserGameAccountPreferences,
@@ -8,12 +7,15 @@ import {
 import {
   createDetectorSettings,
   createNotificationsSettings,
-  getUserGameAccountPreferencesQueryKey,
 } from "@/lib/game-account-preferences";
 import { Game } from "@/lib/game";
 import { npcsDetectionProcessor } from "@/processors/npcs-detection-processor";
 import { useGlobalStore } from "@/store/global.store";
-import type { UserGameAccountPreferences } from "@lootlog/types";
+import type { UserGameAccountPreferencesResponseDtoOutput } from "@/lib/api/generated/main/model";
+import {
+  getUsersControllerGetUserGameAccountPreferencesQueryKey,
+  useUsersControllerGetCurrentUserAccessibleGuilds,
+} from "@/lib/api/generated/main/users/users";
 
 export const useGameAccountPreferencesSync = () => {
   const gameInitialized = useGlobalStore(
@@ -24,7 +26,7 @@ export const useGameAccountPreferencesSync = () => {
     isFetched: areGuildsFetched,
     isFetching: areGuildsFetching,
     isLoading: areGuildsLoading,
-  } = useGuilds();
+  } = useUsersControllerGetCurrentUserAccessibleGuilds();
   const queryClient = useQueryClient();
   const accountId = Game.hero?.account ? String(Game.hero.account) : null;
   const guildIds = guilds?.map((guild) => guild.id) ?? [];
@@ -54,7 +56,9 @@ export const useGameAccountPreferencesSync = () => {
         return;
       }
 
-      const queryKey = getUserGameAccountPreferencesQueryKey(accountId);
+      const queryKey = getUsersControllerGetUserGameAccountPreferencesQueryKey({
+        accountId,
+      });
       const seededNotifications = data.hasStoredNotifications
         ? data.notifications
         : createNotificationsSettings(guildIds);
@@ -62,14 +66,17 @@ export const useGameAccountPreferencesSync = () => {
         ? data.detector
         : createDetectorSettings();
       seededAccountsRef.current.add(accountId);
-      queryClient.setQueryData<UserGameAccountPreferences>(queryKey, {
-        accountId,
-        notifications: seededNotifications,
-        detector: seededDetector,
-        hasStoredNotifications: true,
-        hasStoredDetector: true,
-        hasStoredPreferences: true,
-      });
+      queryClient.setQueryData<UserGameAccountPreferencesResponseDtoOutput>(
+        queryKey,
+        {
+          accountId,
+          notifications: seededNotifications,
+          detector: seededDetector,
+          hasStoredNotifications: true,
+          hasStoredDetector: true,
+          hasStoredPreferences: true,
+        },
+      );
       updateUserGameAccountPreferences.mutate(
         {
           ...(!data.hasStoredNotifications && {
@@ -82,10 +89,7 @@ export const useGameAccountPreferencesSync = () => {
         {
           onError: () => {
             seededAccountsRef.current.delete(accountId);
-            queryClient.setQueryData<UserGameAccountPreferences>(
-              queryKey,
-              data,
-            );
+            queryClient.setQueryData(queryKey, data);
           },
         },
       );

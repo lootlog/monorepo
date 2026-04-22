@@ -2,22 +2,42 @@ import { type FC, useEffect, useState } from "react";
 import { useLocalStorage } from "react-use";
 import { DraggableWindow } from "@/components/draggable-window";
 import { useWindowsStore } from "@/store/windows.store";
-import { useLootlogCharactersConfig } from "@/hooks/api/use-lootlog-character-config";
 import { Button } from "@/components/ui/button";
 import { Game } from "@/lib/game";
 import { storageKey } from "@/lib/storage-key";
+import { useTranslation } from "react-i18next";
+import {
+  getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey,
+  useUserLootlogConfigControllerGetUserLootlogConfigByAccountId,
+} from "@/lib/api/generated/main/user-lootlog-config/user-lootlog-config";
 
 const STORAGE_KEY = storageKey("ll:catching-whitelist-warning-dismissed");
 
 type DismissedCharacters = Record<string, boolean>;
 
 export const CatchingWhitelistWarning: FC = () => {
+  const { t } = useTranslation(["catchingWhitelistWarning", "common"]);
+  const accountId = String(Game.hero.account);
+  const queryKey =
+    getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
+      accountId,
+    });
   const windowState = useWindowsStore(
     (state) => state["catching-whitelist-warning"],
   );
   const setOpen = useWindowsStore((state) => state.setOpen);
   const { data: lootlogCharactersConfig, isSuccess } =
-    useLootlogCharactersConfig();
+    useUserLootlogConfigControllerGetUserLootlogConfigByAccountId(
+      { accountId },
+      {
+        query: {
+          queryKey,
+          refetchOnMount: true,
+          refetchOnWindowFocus: true,
+          staleTime: 0,
+        },
+      },
+    );
   const characterId = String(Game.hero.id);
   const [dismissedCharacters, setDismissedCharacters] =
     useLocalStorage<DismissedCharacters>(STORAGE_KEY, {});
@@ -69,7 +89,7 @@ export const CatchingWhitelistWarning: FC = () => {
   return (
     <DraggableWindow
       id="catching-whitelist-warning"
-      title="Uwaga!"
+      title={t("window.title")}
       onClose={handleClose}
       variant="small"
       resizable={false}
@@ -79,21 +99,15 @@ export const CatchingWhitelistWarning: FC = () => {
     >
       <div className="ll:p-4 ll:flex ll:flex-col ll:gap-4">
         <div className="ll:text-sm ll:text-gray-200">
-          <p className="ll:mb-3">
-            Nie masz wybranych żadnych serwerów do zbierania danych!
-          </p>
-          <p className="ll:mb-3">
-            Przejdź do ustawień i wybierz serwery, na których chcesz zbierać
-            timery i loot. Są w zakładce &ldquo;Dodawanie łupów i
-            timerów&ldquo;.
-          </p>
+          <p className="ll:mb-3">{t("content.title")}</p>
+          <p className="ll:mb-3">{t("content.description")}</p>
         </div>
         <div className="ll:flex ll:gap-2 ll:justify-end">
           <Button onClick={handleClose} className="ll:px-3 ll:py-1">
-            Zamknij
+            {t("common:actions.close")}
           </Button>
           <Button onClick={handleOpenSettings} className="ll:px-3 ll:py-1">
-            Otwórz ustawienia
+            {t("common:actions.openSettings")}
           </Button>
         </div>
       </div>

@@ -1,7 +1,6 @@
-import { registerAs } from "@nestjs/config";
-import { createWinstonConfig } from "@lootlog/nest-shared";
-import { ConfigKey } from "src/config/config-key.enum";
+import { createWinstonConfig } from "@lootlog/nest-shared/config";
+import { env } from "src/config/env";
 
-export default registerAs(ConfigKey.WINSTON, () =>
-  createWinstonConfig({ serviceName: "gateway" }),
-);
+export const winstonConfig = createWinstonConfig({
+  serviceName: env.SERVICE_NAME,
+});

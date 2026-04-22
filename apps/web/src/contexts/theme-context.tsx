@@ -7,8 +7,13 @@ import {
   type ReactNode,
 } from "react";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
-import { useUserPreferences } from "@/hooks/api/user/use-user-preferences";
-import { useUpdateUserPreferences } from "@/hooks/api/user/use-update-user-preferences";
+import { useSession } from "@/hooks/auth/use-session";
+import {
+  getUsersControllerGetUserPreferencesQueryKey,
+  useSetUsersControllerGetUserPreferencesQueryData,
+  useUsersControllerGetUserPreferences,
+  useUsersControllerUpdateUserPreferences,
+} from "@/lib/api/generated/main/users/users";
 import {
   applyThemeClassToRoot,
   COLOR_MODE_STORAGE_KEY,
@@ -40,8 +45,24 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
-  const { data: preferences, isLoading } = useUserPreferences();
-  const updatePreferences = useUpdateUserPreferences();
+  const { data: session } = useSession();
+  const setUserPreferences = useSetUsersControllerGetUserPreferencesQueryData();
+  const { data: preferences, isLoading } = useUsersControllerGetUserPreferences(
+    {
+      query: {
+        enabled: !!session?.user,
+        queryKey: getUsersControllerGetUserPreferencesQueryKey(),
+        retry: 1,
+      },
+    },
+  );
+  const updatePreferences = useUsersControllerUpdateUserPreferences({
+    mutation: {
+      onSuccess: (updatedPreferences) => {
+        setUserPreferences(updatedPreferences);
+      },
+    },
+  });
 
   const [localTheme, setLocalTheme] = useState<ThemeId>(() => {
     const savedTheme = localStorage.getItem(
@@ -101,13 +122,13 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
   const setTheme = (newTheme: ThemeId) => {
     setHasThemeOverride(true);
     setLocalTheme(newTheme);
-    updatePreferences.mutate({ theme: newTheme });
+    updatePreferences.mutate({ data: { theme: newTheme } });
   };
 
   const setColorMode = (newMode: ColorMode) => {
     setHasColorModeOverride(true);
     setLocalColorMode(newMode);
-    updatePreferences.mutate({ colorMode: newMode });
+    updatePreferences.mutate({ data: { colorMode: newMode } });
   };
 
   return (

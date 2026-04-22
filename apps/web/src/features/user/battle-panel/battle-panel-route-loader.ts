@@ -1,5 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
-import { battleCharactersQueryOptions } from "@/hooks/api/battle-log/use-battle-characters";
+import { getBattlesControllerGetUserCharactersQueryOptions } from "@/lib/api/generated/battlelog/battles/battles";
 
 type EnsureBattlePanelCharacterIdOptions = {
   queryClient: QueryClient;
@@ -10,8 +10,8 @@ export const ensureBattlePanelCharacterId = async ({
   queryClient,
   characterId,
 }: EnsureBattlePanelCharacterIdOptions) => {
-  const characters = await queryClient.ensureQueryData(
-    battleCharactersQueryOptions(),
+  const charactersResponse = await queryClient.ensureQueryData(
+    getBattlesControllerGetUserCharactersQueryOptions(),
   );
-  return characterId ?? characters[0]?.id;
+  return characterId ?? charactersResponse.characters[0]?.id;
 };

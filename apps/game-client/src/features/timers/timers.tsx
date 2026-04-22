@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { DraggableWindow } from "@/components/draggable-window";
 import { AnimatedWindow } from "@/components/animated-window";
-import { type Timer, useTimers } from "@/hooks/api/use-timers";
+import type { Timer } from "@/api/timers.api";
+import { useTimers } from "@/hooks/api/use-timers";
 import { DEFAULT_TIMERS_FILTERS, useTimersStore } from "@/store/timers.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { UnderBagTimers } from "@/features/timers/under-bag-timers";
@@ -20,10 +21,12 @@ import { checkFiltersActive } from "@/features/timers/utils/filters-utils";
 import { calculateColorStatistics } from "@/features/timers/utils/color-statistics";
 import { Game } from "@/lib/game";
 import { useTimersSocket } from "@/features/timers/hooks/use-timers-socket";
+import { useTranslation } from "react-i18next";
 
 const EMPTY_TIMERS: Timer[] = [];
 
 export const Timers = () => {
+  const { t } = useTranslation("timers");
   const characterId = String(Game.hero.id);
   const gameInterface = Game.interface;
   const defaultWorld = Game.getWorldName();
@@ -65,8 +68,6 @@ export const Timers = () => {
 
   const settingsKey = generalConfig.timersGrouping ? "global" : guildId;
   const filters = timersFilters[settingsKey] || DEFAULT_TIMERS_FILTERS;
-
-  useTimers({ world: desiredWorld });
 
   const rawTimers = timers ? timers : EMPTY_TIMERS;
 
@@ -148,7 +149,7 @@ export const Timers = () => {
         />
         <div className="ll:bg-[0_0] ll:top-1 ll:leading-7 ll:-mt-1.5 ll-custom-cursor-pointer ll:absolute ll:left-1/2 ll:transform ll:-translate-x-1/2 ll:flex ll:gap-2 ll:items-center">
           <p className="ll:text-[12px] ll:text-[beige] ll:text-shadow-[1px_1px_1px_black]">
-            Timery
+            {t("underBag.title")}
           </p>
         </div>
         <TimersContent
@@ -173,7 +174,7 @@ export const Timers = () => {
     <AnimatedWindow isOpen={open} windowKey="timers">
       <DraggableWindow
         id="timers"
-        title="Timery"
+        title={t("window.title")}
         onClose={() => setOpen("timers", false)}
         minHeight={108}
         disableTitle={generalConfig.compactView}

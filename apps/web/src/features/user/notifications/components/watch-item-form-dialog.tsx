@@ -27,10 +27,19 @@ import { MultiSelect } from "@/components/ui/multi-select";
 import { USER_WATCHED_ITEMS_LIMIT } from "@/features/user/notifications/constants/user-watched-items-limit";
 import { WatchedItemSelector } from "@/features/user/notifications/components/watched-item-selector";
 import { getUserNotificationsErrorMessage } from "@/features/user/notifications/utils/get-user-notifications-error-message";
-import { useItems, type GameItem } from "@/hooks/api/game-data/use-items";
-import { useGuildsWorlds } from "@/hooks/api/game-data/use-guilds-worlds";
-import { useCreateWatchedItem } from "@/hooks/api/user/use-create-watched-item";
-import type { UserWatchedItem } from "@/hooks/api/user/use-user-notifications";
+import { useQueries, useQueryClient } from "@tanstack/react-query";
+import { getGuildsControllerGetWorldsByGuildIdQueryOptions } from "@/lib/api/generated/main/guilds/guilds";
+import {
+  invalidateNotificationsUserControllerGetUserTargets,
+  invalidateNotificationsUserControllerGetWatchedItems,
+  useNotificationsUserControllerCreateWatchedItem,
+} from "@/lib/api/generated/main/notifications/notifications";
+import {
+  getItemsControllerGetItemsQueryKey,
+  useItemsControllerGetItems,
+} from "@/lib/api/generated/search/items/items";
+import type { ItemHitDtoOutput } from "@/lib/api/generated/search/model";
+import type { WatchedItemResponseDto } from "@/lib/api/generated/main/model";
 
 const watchFormSchema = z
   .object({
@@ -88,9 +97,11 @@ type WatchFormDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   hasActiveDm: boolean;
-  watchedItems: UserWatchedItem[];
+  watchedItems: WatchedItemResponseDto[];
   guildOptions: Array<{ value: string; label: string }>;
 };
+
+type GameItem = ItemHitDtoOutput;
 
 export const WatchFormDialog = ({
   open,
@@ -100,7 +111,17 @@ export const WatchFormDialog = ({
   guildOptions,
 }: WatchFormDialogProps) => {
   const { t } = useTranslation();
-  const createWatchedItem = useCreateWatchedItem();
+  const queryClient = useQueryClient();
+  const createWatchedItem = useNotificationsUserControllerCreateWatchedItem({
+    mutation: {
+      onSuccess: async () => {
+        await Promise.all([
+          invalidateNotificationsUserControllerGetUserTargets(queryClient),
+          invalidateNotificationsUserControllerGetWatchedItems(queryClient),
+        ]);
+      },
+    },
+  });
   const [itemSearchValue, setItemSearchValue] = useState("");
 
   const form = useForm<WatchFormValues>({
@@ -120,14 +141,27 @@ export const WatchFormDialog = ({
   const selectedItem = form.watch("item");
   const isManualEntry = form.watch("manualEntry");
 
-  const { worlds: worldOptions } = useGuildsWorlds(selectedGuildIds);
-  const { data: itemSearchResults = [], isFetching: isItemsLoading } = useItems(
-    {
-      search: itemSearchValue,
-      world: selectedWorld || undefined,
-      limit: 10,
+  const worldQueries = useQueries({
+    queries: selectedGuildIds.map((guildId) =>
+      getGuildsControllerGetWorldsByGuildIdQueryOptions({ guildId }),
+    ),
+  });
+  const worldOptions = [
+    ...new Set(worldQueries.flatMap((query) => query.data ?? [])),
+  ].sort();
+  const itemSearchParams = {
+    limit: 10,
+    search: itemSearchValue,
+    world: selectedWorld || undefined,
+  };
+  const itemSearchQuery = useItemsControllerGetItems(itemSearchParams, {
+    query: {
+      queryKey: getItemsControllerGetItemsQueryKey(itemSearchParams),
+      enabled: itemSearchValue.length >= 2,
     },
-  );
+  });
+  const itemSearchResults = itemSearchQuery.data ?? [];
+  const isItemsLoading = itemSearchQuery.isFetching;
 
   const resolvedItemId = isManualEntry
     ? Number(form.watch("manualItemId")) || null
@@ -210,10 +244,12 @@ export const WatchFormDialog = ({
 
     try {
       await createWatchedItem.mutateAsync({
-        itemId,
-        itemName,
-        world: values.world,
-        guildIds: values.guildIds,
+        data: {
+          itemId,
+          itemName,
+          world: values.world,
+          guildIds: values.guildIds,
+        },
       });
       toast.success(
         t("settings.userNotifications.toasts.watchCreated", {

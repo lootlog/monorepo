@@ -9,7 +9,7 @@ import {
 } from "./test-helpers";
 import { createTestingModuleWithMocks } from "./test-module-helpers";
 import { Permission } from "generated/client";
-import { RedisService } from "@lootlog/nest-shared";
+import { RedisService } from "@lootlog/nest-shared/redis";
 
 describe("Timers E2E Tests (Whitelist)", () => {
   let app: INestApplication;
