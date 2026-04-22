@@ -34,7 +34,7 @@ const sortMentionSuggestionEntries = ({
   const normalizedQuery = normalizeChatMentionName(query);
   const sortableEntries = Array.isArray(entries) ? entries : [];
 
-  return sortableEntries.toSorted((left, right) => {
+  return sortableEntries.slice().sort((left, right) => {
     if (!normalizedQuery) {
       return left.label.localeCompare(right.label);
     }

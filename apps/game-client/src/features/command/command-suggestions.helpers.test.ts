@@ -70,4 +70,49 @@ describe("command-suggestions.helpers", () => {
       }),
     ).toEqual([]);
   });
+
+  it("does not mutate the provided suggestions array while sorting", () => {
+    const suggestions: CommandSuggestion[] = [
+      {
+        prefix: "/grp",
+        label: "party",
+        description: "party-desc",
+      },
+      {
+        prefix: "/g",
+        label: "exact",
+        description: "exact-desc",
+      },
+    ];
+
+    expect(
+      filterCommandSuggestions({
+        inputValue: "/g",
+        suggestions,
+      }),
+    ).toEqual([
+      {
+        prefix: "/g",
+        label: "exact",
+        description: "exact-desc",
+      },
+      {
+        prefix: "/grp",
+        label: "party",
+        description: "party-desc",
+      },
+    ]);
+    expect(suggestions).toEqual([
+      {
+        prefix: "/grp",
+        label: "party",
+        description: "party-desc",
+      },
+      {
+        prefix: "/g",
+        label: "exact",
+        description: "exact-desc",
+      },
+    ]);
+  });
 });
