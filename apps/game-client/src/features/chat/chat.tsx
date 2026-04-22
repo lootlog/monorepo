@@ -9,10 +9,6 @@ import { useChatMessagesListener } from "@/features/chat/hooks/use-chat-messages
 import { GuildSwitcher } from "@/components/guild-switcher";
 import { Game } from "@/lib/game";
 import {
-  getPlayerPresenceCharacterKey,
-  usePlayersPresence,
-} from "@/features/online-players/hooks/use-players-presence";
-import {
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   useUsersControllerGetCurrentUserAccessibleGuilds,
 } from "@/lib/api/generated/main/users/users";
@@ -39,7 +35,6 @@ import {
   incrementChatUnreadCount,
   type ChatUnreadCountByGuildId,
 } from "./chat-unread.helpers";
-import { useSettingsStore } from "@/store/settings.store";
 import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@/lib/api/generated/main/model";
 import { useChatGuildData } from "./hooks/use-chat-guild-data";
 
@@ -63,8 +58,6 @@ export const Chat = () => {
 
   const characterId = String(Game.hero.id);
   const accountId = String(Game.hero.account);
-  const defaultWorld = Game.getWorldName();
-  const worldByGuildId = useSettingsStore((state) => state.worldByGuildId);
   const open = useWindowsStore((state) => state.chat.open);
   const setOpen = useWindowsStore((state) => state.setOpen);
   const [selectedGuildId, setSelectedGuildId] = useLocalStorage(
@@ -73,15 +66,6 @@ export const Chat = () => {
   );
   const [unreadCountByGuildId, setUnreadCountByGuildId] =
     useState<ChatUnreadCountByGuildId>({});
-  const selectedPresenceGuildId =
-    selectedGuildId && selectedGuildId !== "all" ? selectedGuildId : undefined;
-  const selectedPresenceWorld = selectedPresenceGuildId
-    ? (worldByGuildId[selectedPresenceGuildId] ?? defaultWorld)
-    : undefined;
-  const [, , , presenceInfoByCharacterKey] = usePlayersPresence(
-    selectedPresenceGuildId,
-    selectedPresenceWorld,
-  );
   const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds({
     query: {
       queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
@@ -364,26 +348,6 @@ export const Chat = () => {
                         all={selectedGuildId === "all"}
                         guildName={guildNamesById[message.guildId]}
                         member={members[message.senderId]}
-                        senderMapName={
-                          message.characterData
-                            ? presenceInfoByCharacterKey[
-                                getPlayerPresenceCharacterKey(
-                                  message.characterData.acc,
-                                  message.characterData.id,
-                                )
-                              ]?.mapName
-                            : undefined
-                        }
-                        senderPresenceStatus={
-                          message.characterData
-                            ? presenceInfoByCharacterKey[
-                                getPlayerPresenceCharacterKey(
-                                  message.characterData.acc,
-                                  message.characterData.id,
-                                )
-                              ]?.status
-                            : undefined
-                        }
                         mentionContext={
                           mentionContextsByGuildId[message.guildId]
                         }

@@ -49,9 +49,12 @@ export const filterCommandSuggestions = ({
   inputValue: string;
   suggestions: CommandSuggestion[];
 }) => {
-  return suggestions
+  const sortableSuggestions = Array.isArray(suggestions) ? suggestions : [];
+
+  return sortableSuggestions
     .filter((suggestion) => suggestion.prefix.startsWith(inputValue))
-    .toSorted((left, right) => {
+    .slice()
+    .sort((left, right) => {
       const leftIsExactMatch = left.prefix === inputValue;
       const rightIsExactMatch = right.prefix === inputValue;
 

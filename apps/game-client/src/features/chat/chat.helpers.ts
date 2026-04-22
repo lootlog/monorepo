@@ -197,8 +197,9 @@ export const getChatRenderableMessages = (
 
   const groupedRenderables: Array<
     Exclude<ChatRenderableMessage, { kind: "date-divider" }>
-  > = renderables
-    .toSorted((firstRenderable, secondRenderable) => {
+  > = (Array.isArray(renderables) ? renderables : [])
+    .slice()
+    .sort((firstRenderable, secondRenderable) => {
       if (firstRenderable.sortTimestamp !== secondRenderable.sortTimestamp) {
         return firstRenderable.sortTimestamp - secondRenderable.sortTimestamp;
       }

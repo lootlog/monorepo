@@ -4,10 +4,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import { useSocket } from "@/contexts/socket-context";
 import {
-  getMembersControllerGetGuildMembersSummaryQueryKey,
+  getGuildMembersSummaryQueryKey,
+  getGuildMembersSummaryQueryOptions,
+} from "@/hooks/api/guild-members-summary-query";
+import {
   getMembersControllerGetMeQueryKey,
   membersControllerGetMe,
-  membersControllerGetGuildMembersSummary,
 } from "@/lib/api/generated/main/members/members";
 import {
   removeChatMessage,
@@ -54,18 +56,17 @@ export const useChatMessagesListener = (
       updater: (old: ChatMessage[] | undefined) => upsertChatMessage(old, data),
     });
 
-    const membersQueryKey = getMembersControllerGetGuildMembersSummaryQueryKey({
+    const membersQueryKey = getGuildMembersSummaryQueryKey({
       guildId: data.guildId,
     });
     const cachedMembers = queryClient.getQueryData(membersQueryKey);
 
     if (!cachedMembers) {
-      void queryClient.prefetchQuery({
-        queryKey: membersQueryKey,
-        queryFn: () =>
-          membersControllerGetGuildMembersSummary({ guildId: data.guildId }),
-        staleTime: 5 * 60 * 1000,
-      });
+      void queryClient.prefetchQuery(
+        getGuildMembersSummaryQueryOptions({
+          guildId: data.guildId,
+        }),
+      );
     }
   };
   const mentionNotificationRef = useRef<
