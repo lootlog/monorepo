@@ -131,7 +131,7 @@ ENV NODE_OPTIONS="--no-strip-types"
 
 ENTRYPOINT ["dumb-init", "--"]
 
-CMD ["node", "dist/index.mjs"]
+CMD ["node", "--import", "./dist/src/instrumentation.js", "dist/src/main.js"]
 
 FROM runtime-base AS search
 
