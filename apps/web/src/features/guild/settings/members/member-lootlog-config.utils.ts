@@ -9,9 +9,9 @@ type MemberLootlogProfileTargetInput = {
 
 type MemberLootlogProfileTarget = {
   accountId: number;
-  characterId: number;
+  characterId?: number;
   href: string;
-  world: string;
+  world?: string;
 };
 
 export function getMemberLootlogConfigMetadataTranslationKey(
@@ -36,14 +36,19 @@ export function getMemberLootlogProfileTarget({
   const parsedAccountId = Number(accountId);
   const parsedCharacterId = Number(characterId);
 
+  if (!Number.isInteger(parsedAccountId) || parsedAccountId <= 0) {
+    return null;
+  }
+
   if (
-    !Number.isInteger(parsedAccountId) ||
     !Number.isInteger(parsedCharacterId) ||
-    parsedAccountId <= 0 ||
     parsedCharacterId <= 0 ||
     !world
   ) {
-    return null;
+    return {
+      accountId: parsedAccountId,
+      href: `${MARGONEM_PROFILE_URL},${parsedAccountId}`,
+    };
   }
 
   return {

@@ -325,6 +325,71 @@ describe("GuildsService", () => {
   });
 
   describe("getCurrentUserGuildAccessSummaries", () => {
+    it("falls back to cached accessible guilds when Discord returns no guilds", async () => {
+      mockDiscordService.getUserGuilds.mockResolvedValue([]);
+      mockPrismaService.guild.findMany.mockResolvedValue([
+        createGuild({
+          id: "guild-cached",
+          name: "Cached",
+          ownerId: "owner-cached",
+        }),
+      ]);
+      mockPrismaService.userSettings.findUnique.mockResolvedValue(null);
+      mockPrismaService.member.findMany
+        .mockResolvedValueOnce([
+          {
+            guildId: "guild-cached",
+            active: true,
+            globalUserId: "user-123",
+            lastDiscordSyncAt: new Date("2026-01-01T00:00:00.000Z"),
+            updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+            roles: [
+              {
+                id: "role-access",
+                lvlRangeFrom: null,
+                lvlRangeTo: null,
+                permissions: [Permission.LOOTLOG_ACCESS],
+              },
+            ],
+          },
+        ])
+        .mockResolvedValueOnce([
+          {
+            guildId: "guild-cached",
+            active: true,
+            globalUserId: "user-123",
+            lastDiscordSyncAt: new Date("2026-01-01T00:00:00.000Z"),
+            updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+            roles: [
+              {
+                id: "role-access",
+                lvlRangeFrom: null,
+                lvlRangeTo: null,
+                permissions: [Permission.LOOTLOG_ACCESS],
+              },
+            ],
+          },
+        ]);
+      mockMembersService.isMemberSoftStale.mockReturnValue(false);
+
+      const result = await service.getCurrentUserGuildAccessSummaries(
+        "discord-123",
+        "user-123",
+      );
+
+      expect(result).toEqual([
+        {
+          id: "guild-cached",
+          name: "Cached",
+          icon: null,
+          vanityUrl: null,
+          ownerId: "owner-cached",
+          hasLootlogAccess: true,
+          isAccessDataStale: false,
+        },
+      ]);
+    });
+
     it("returns guild access metadata and keeps stale entries when refresh stays queued", async () => {
       mockDiscordService.getUserGuilds.mockResolvedValue([
         {
@@ -464,6 +529,70 @@ describe("GuildsService", () => {
   });
 
   describe("getUserGuilds", () => {
+    it("restores cached accessible guilds for the legacy game source when Discord returns no guilds", async () => {
+      mockDiscordService.getUserGuilds.mockResolvedValue([]);
+      mockPrismaService.guild.findMany.mockResolvedValue([
+        createGuild({
+          id: "guild-cached",
+          name: "Cached",
+          ownerId: "owner-cached",
+        }),
+      ]);
+      mockPrismaService.userSettings.findUnique.mockResolvedValue(null);
+      mockPrismaService.member.findMany
+        .mockResolvedValueOnce([
+          {
+            guildId: "guild-cached",
+            active: true,
+            globalUserId: "user-123",
+            lastDiscordSyncAt: new Date("2026-01-01T00:00:00.000Z"),
+            updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+            roles: [
+              {
+                id: "role-access",
+                lvlRangeFrom: null,
+                lvlRangeTo: null,
+                permissions: [Permission.LOOTLOG_ACCESS],
+              },
+            ],
+          },
+        ])
+        .mockResolvedValueOnce([
+          {
+            guildId: "guild-cached",
+            active: true,
+            globalUserId: "user-123",
+            lastDiscordSyncAt: new Date("2026-01-01T00:00:00.000Z"),
+            updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+            roles: [
+              {
+                id: "role-access",
+                lvlRangeFrom: null,
+                lvlRangeTo: null,
+                permissions: [Permission.LOOTLOG_ACCESS],
+              },
+            ],
+          },
+        ]);
+      mockMembersService.isMemberSoftStale.mockReturnValue(false);
+
+      const result = await service.getUserGuilds(
+        "discord-123",
+        "user-123",
+        "game",
+      );
+
+      expect(result).toEqual([
+        {
+          id: "guild-cached",
+          name: "Cached",
+          icon: null,
+          vanityUrl: null,
+          ownerId: "owner-cached",
+        },
+      ]);
+    });
+
     it("keeps the legacy game source on plain guild output by delegating to accessible guilds", async () => {
       const getCurrentUserAccessibleGuildsSpy = vi
         .spyOn(service, "getCurrentUserAccessibleGuilds")

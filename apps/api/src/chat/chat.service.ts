@@ -24,7 +24,7 @@ import type { ChatMessageViewer } from "src/chat/types/chat-message-viewer.type"
 import { canManageChatMessage } from "src/chat/chat-message-permissions";
 import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
 
-const MAX_MESSAGES = 100;
+const MAX_MESSAGES = 300;
 
 type MessageRouting = {
   tier: NpcRoutingTier;

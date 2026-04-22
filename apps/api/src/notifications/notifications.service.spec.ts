@@ -667,6 +667,41 @@ describe("Notification Services", () => {
         },
       },
     });
+    expect(mockGuildsService.getUserGuilds).toHaveBeenCalledWith(
+      "discord-user-1",
+      "user-1",
+      "game",
+    );
+  });
+
+  it("accepts watched-item guild ids resolved from the game-scope guild list", async () => {
+    mockGuildsService.getUserGuilds.mockResolvedValueOnce([
+      { id: "guild-1", vanityUrl: "cached-guild", name: "Guild 1" },
+    ]);
+
+    const result = await watchedItemService.quickAddWatchedItem(
+      "discord-user-1",
+      "user-1",
+      {
+        itemId: 123,
+        itemName: "Legendarny Miecz",
+        world: "berufs",
+        guildId: "cached-guild",
+      },
+    );
+
+    expect(WatchedItemResponseDto.schema.encode(result)).toMatchObject({
+      notificationRule: {
+        filters: {
+          guildIds: ["guild-1"],
+        },
+      },
+    });
+    expect(mockGuildsService.getUserGuilds).toHaveBeenCalledWith(
+      "discord-user-1",
+      "user-1",
+      "game",
+    );
   });
 
   it("quick add stays idempotent when the current guild is already watched", async () => {
