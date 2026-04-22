@@ -58,27 +58,12 @@ type PlayerPresenceResponsePayload = Record<
   PlayerPresenceUpdatePayload[]
 >;
 
-export type PlayerPresenceInfo = {
-  status: "online" | "offline";
-  mapName?: string;
-};
-
-type PlayerPresenceInfoByCharacterKey = Record<string, PlayerPresenceInfo>;
-
-export const getPlayerPresenceCharacterKey = (
-  accountId: string | number,
-  characterId: string | number,
-) => `${accountId}-${characterId}`;
-
 const getPresenceKey = (presence: PlayerPresence) => {
   if (!presence.player?.accountId || !presence.player.characterId) {
     return "web-app";
   }
 
-  return getPlayerPresenceCharacterKey(
-    presence.player.accountId,
-    presence.player.characterId,
-  );
+  return `${presence.player.accountId}-${presence.player.characterId}`;
 };
 
 const normalizePresenceLevel = (level?: number | string) => {
@@ -155,44 +140,6 @@ const normalizePresenceResponse = (
   );
 };
 
-const getCharacterKeyFromPresence = (presence: PlayerPresence) => {
-  if (!presence.player?.accountId || !presence.player.characterId) {
-    return null;
-  }
-
-  return getPlayerPresenceCharacterKey(
-    presence.player.accountId,
-    presence.player.characterId,
-  );
-};
-
-const getPresenceMapName = (presence: PlayerPresence) => {
-  return presence.mapName ?? presence.player?.location?.map;
-};
-
-const buildPresenceInfoByCharacterKey = (
-  onlinePlayers: PlayerPresenceResponse,
-): PlayerPresenceInfoByCharacterKey => {
-  const presenceInfoByCharacterKey: PlayerPresenceInfoByCharacterKey = {};
-
-  for (const presences of Object.values(onlinePlayers)) {
-    for (const presence of presences) {
-      const characterKey = getCharacterKeyFromPresence(presence);
-
-      if (!characterKey) {
-        continue;
-      }
-
-      presenceInfoByCharacterKey[characterKey] = {
-        status: "online",
-        mapName: getPresenceMapName(presence),
-      };
-    }
-  }
-
-  return presenceInfoByCharacterKey;
-};
-
 const requestServerPresence = (
   socket: { emitWithAck: unknown },
   guildId: string,
@@ -216,13 +163,10 @@ export const usePlayersPresence = (
   PlayerPresenceResponse,
   boolean,
   React.Dispatch<React.SetStateAction<PlayerPresenceResponse>>,
-  PlayerPresenceInfoByCharacterKey,
 ] => {
   const [onlinePlayers, setOnlinePlayers] = useState<PlayerPresenceResponse>(
     {},
   );
-  const [presenceInfoByCharacterKey, setPresenceInfoByCharacterKey] =
-    useState<PlayerPresenceInfoByCharacterKey>({});
   const [loading, setLoading] = useState(false);
   const { joined, connected, socket } = useSocket();
 
@@ -238,7 +182,6 @@ export const usePlayersPresence = (
   useEffect(() => {
     if (!selectedGuildId || !world) {
       setOnlinePlayers({});
-      setPresenceInfoByCharacterKey({});
       setLoading(false);
       return;
     }
@@ -254,7 +197,6 @@ export const usePlayersPresence = (
 
     const currentRequestId = ++requestIdRef.current;
     setOnlinePlayers({});
-    setPresenceInfoByCharacterKey({});
     setLoading(true);
 
     requestServerPresence(socket, selectedGuildIdRef.current, world)
@@ -263,11 +205,7 @@ export const usePlayersPresence = (
         if (requestIdRef.current !== currentRequestId) return;
 
         if (data) {
-          const normalizedPresenceResponse = normalizePresenceResponse(data);
-          setOnlinePlayers(normalizedPresenceResponse);
-          setPresenceInfoByCharacterKey(
-            buildPresenceInfoByCharacterKey(normalizedPresenceResponse),
-          );
+          setOnlinePlayers(normalizePresenceResponse(data));
         }
       })
       .finally(() => {
@@ -327,36 +265,6 @@ export const usePlayersPresence = (
 
         return updated;
       });
-
-      const characterKey = getCharacterKeyFromPresence(normalizedPresence);
-
-      if (!characterKey) {
-        return;
-      }
-
-      setPresenceInfoByCharacterKey((prev) => {
-        const nextPresenceInfoByCharacterKey = structuredClone(prev);
-
-        if (normalizedPresence.status === "offline") {
-          nextPresenceInfoByCharacterKey[characterKey] = {
-            status: "offline",
-            mapName:
-              prev[characterKey]?.mapName ??
-              getPresenceMapName(normalizedPresence),
-          };
-
-          return nextPresenceInfoByCharacterKey;
-        }
-
-        nextPresenceInfoByCharacterKey[characterKey] = {
-          status: "online",
-          mapName:
-            getPresenceMapName(normalizedPresence) ??
-            prev[characterKey]?.mapName,
-        };
-
-        return nextPresenceInfoByCharacterKey;
-      });
     };
 
     socket.on(GatewayEvent.UPDATE_SERVER_PRESENCE, handlePresenceUpdate);
@@ -366,5 +274,5 @@ export const usePlayersPresence = (
     };
   }, [socket, joined, connected]);
 
-  return [onlinePlayers, loading, setOnlinePlayers, presenceInfoByCharacterKey];
+  return [onlinePlayers, loading, setOnlinePlayers];
 };
