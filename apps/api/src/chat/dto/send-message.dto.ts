@@ -34,6 +34,15 @@ export class ChatCharacterDataDto extends createZodDto(
   ChatCharacterDataSchema,
 ) {}
 
+const ReplyToMessageSchema = z.object({
+  messageId: z.string().min(1),
+  senderNick: z.string().min(1),
+  message: z.string().max(128),
+  type: z.enum([MessageType.NORMAL, MessageType.NOTIFICATION]),
+});
+
+export class ReplyToMessageDto extends createZodDto(ReplyToMessageSchema) {}
+
 const NpcEmbeddedSchema = z.object({
   id: z.number(),
   name: z.string().min(1),
@@ -54,6 +63,7 @@ const SendMessageSchema = z.object({
   characterData: ChatCharacterDataSchema,
   npc: NpcEmbeddedSchema.optional(),
   partyGathering: PartyGatheringDataSchema.optional(),
+  replyTo: ReplyToMessageSchema.optional(),
 });
 
 export class SendMessageDto extends createZodDto(SendMessageSchema) {}

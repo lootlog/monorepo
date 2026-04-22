@@ -1,10 +1,22 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { storageKey } from "@/lib/storage-key";
+import { MessageType } from "@/api/chat.api";
 
 const STORAGE_KEY = storageKey("ll:chat:state");
 
 export type ChatFilter = "all" | "normal" | "npc" | "party";
+type ReplyableMessageType =
+  | typeof MessageType.NORMAL
+  | typeof MessageType.NOTIFICATION;
+
+export type ChatReplyDraft = {
+  guildId: string;
+  messageId: string;
+  senderNick: string;
+  message: string;
+  type: ReplyableMessageType;
+};
 
 interface ChatState {
   isIntegratedMode: boolean;
@@ -15,10 +27,14 @@ interface ChatState {
   setSelectedInputGuildIds: (guildIds: string[]) => void;
   isChatInputEnabled: boolean;
   toggleChatInputEnabled: () => void;
+  setChatInputEnabled: (enabled: boolean) => void;
   chatFilter: ChatFilter;
   setChatFilter: (filter: ChatFilter) => void;
   filtersVisible: boolean;
   toggleFiltersVisible: () => void;
+  replyDraft: ChatReplyDraft | null;
+  setReplyDraft: (replyDraft: ChatReplyDraft) => void;
+  clearReplyDraft: () => void;
 }
 
 export const useChatStore = create<ChatState>()(
@@ -48,6 +64,11 @@ export const useChatStore = create<ChatState>()(
           isChatInputEnabled: !state.isChatInputEnabled,
         }));
       },
+      setChatInputEnabled: (enabled) => {
+        set(() => ({
+          isChatInputEnabled: enabled,
+        }));
+      },
       chatFilter: "all",
       setChatFilter: (filter) => {
         set(() => ({ chatFilter: filter }));
@@ -58,6 +79,13 @@ export const useChatStore = create<ChatState>()(
           filtersVisible: !state.filtersVisible,
           chatFilter: state.filtersVisible ? "all" : state.chatFilter,
         }));
+      },
+      replyDraft: null,
+      setReplyDraft: (replyDraft) => {
+        set(() => ({ replyDraft }));
+      },
+      clearReplyDraft: () => {
+        set(() => ({ replyDraft: null }));
       },
     }),
     {

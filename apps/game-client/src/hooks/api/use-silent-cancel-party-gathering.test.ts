@@ -33,7 +33,6 @@ describe("useSilentCancelPartyGathering", () => {
         world: "pandora",
         createdAt: new Date().toISOString(),
       },
-      chatMessageIds: { "guild-1": "msg-1" },
     });
   });
 
@@ -61,11 +60,9 @@ describe("useSilentCancelPartyGathering", () => {
         partyGathering: expect.objectContaining({
           notificationId: "notif-123",
         }),
-        chatMessageIds: { "guild-1": "msg-1" },
       }),
     );
     expect(usePartyFinderStore.getState().partyGathering).toBeNull();
-    expect(usePartyFinderStore.getState().chatMessageIds).toEqual({});
   });
 
   it("swallows API errors but still clears party finder state", async () => {
@@ -81,6 +78,5 @@ describe("useSilentCancelPartyGathering", () => {
       apiError,
     );
     expect(usePartyFinderStore.getState().partyGathering).toBeNull();
-    expect(usePartyFinderStore.getState().chatMessageIds).toEqual({});
   });
 });

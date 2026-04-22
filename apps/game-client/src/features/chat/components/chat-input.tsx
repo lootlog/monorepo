@@ -11,12 +11,14 @@ import { Game } from "@/lib/game";
 import { usePartyCommand } from "@/features/command/hooks/use-party-command";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import type { FC } from "react";
+import { useEffect, type FC } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { upsertChatMessage } from "@/features/chat/chat.helpers";
 import type { ChatMessageResponseDtoOutput } from "@/lib/api/generated/main/model";
+import { useChatStore } from "@/store/chat.store";
+import { ChatReplyPreview } from "@/features/chat/components/chat-reply-preview";
 
 type ChatInputProps = {
   selectedGuildId?: string;
@@ -35,6 +37,8 @@ export const ChatInput: FC<ChatInputProps> = ({
 }) => {
   const { t } = useTranslation("chat");
   const queryClient = useQueryClient();
+  const replyDraft = useChatStore((state) => state.replyDraft);
+  const clearReplyDraft = useChatStore((state) => state.clearReplyDraft);
   const world = Game.getWorldName();
   const { mutateAsync: sendChatMessage, isPending: isSendingMessage } =
     useChatControllerSendChatMessage();
@@ -52,6 +56,18 @@ export const ChatInput: FC<ChatInputProps> = ({
   const messageValue = watch("message");
   const isPending = isSendingMessage || isCreatingNotification;
 
+  useEffect(() => {
+    if (
+      !replyDraft ||
+      !selectedGuildId ||
+      replyDraft.guildId === selectedGuildId
+    ) {
+      return;
+    }
+
+    clearReplyDraft();
+  }, [clearReplyDraft, replyDraft, selectedGuildId]);
+
   const onSubmit = async (data: FormData) => {
     if (!selectedGuildId || !world) {
       return;
@@ -61,6 +77,7 @@ export const ChatInput: FC<ChatInputProps> = ({
       const description = data.message.slice("!grp".length).trim() || undefined;
       handlePartyCommand(description, [selectedGuildId]);
       setValue("message", "");
+      clearReplyDraft();
       return;
     }
 
@@ -89,6 +106,14 @@ export const ChatInput: FC<ChatInputProps> = ({
             ? MessageType.NOTIFICATION
             : MessageType.NORMAL,
           characterData: buildChatCharacterData(),
+          replyTo: replyDraft
+            ? {
+                messageId: replyDraft.messageId,
+                senderNick: replyDraft.senderNick,
+                message: replyDraft.message,
+                type: replyDraft.type,
+              }
+            : undefined,
         },
       });
 
@@ -98,6 +123,7 @@ export const ChatInput: FC<ChatInputProps> = ({
           upsertChatMessage(old, response),
       );
       setValue("message", "");
+      clearReplyDraft();
     } catch {
       return;
     }
@@ -110,6 +136,14 @@ export const ChatInput: FC<ChatInputProps> = ({
       }}
       className="ll:flex ll:justify-center ll:flex-col ll:mt-1"
     >
+      {replyDraft && (
+        <div className="ll:mb-1">
+          <Label className="ll:text-[9px] ll:text-gray-400">
+            {t("reply.replyingTo")}
+          </Label>
+          <ChatReplyPreview reply={replyDraft} onClear={clearReplyDraft} />
+        </div>
+      )}
       <Label className="ll:text-[9px] ll:text-gray-400">
         {t("input.hint")}
       </Label>

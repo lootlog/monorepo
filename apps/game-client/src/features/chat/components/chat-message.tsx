@@ -25,6 +25,11 @@ import {
   getChatMessageBody,
   isChatMessageYesterdayOrOlder,
 } from "./chat-message.helpers";
+import { canReplyToChatMessage } from "@/features/chat/chat-reply.helpers";
+import {
+  getChatMentionSegments,
+  type ChatMentionContext,
+} from "@/features/chat/chat-mentions.helpers";
 import { Input } from "@/components/ui/input";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
@@ -37,12 +42,15 @@ import {
   removeChatMessage,
   updateChatMessage,
 } from "@/features/chat/chat.helpers";
+import { ChatReplyPreview } from "@/features/chat/components/chat-reply-preview";
 
 type ChatMessageProps = {
   all: boolean;
   message: ChatMessageType;
   guildName?: string;
   member?: GuildMember;
+  mentionContext?: ChatMentionContext;
+  onReply?: () => void;
 };
 
 export const ChatMessage: FC<ChatMessageProps> = ({
@@ -50,6 +58,8 @@ export const ChatMessage: FC<ChatMessageProps> = ({
   message,
   guildName,
   member,
+  mentionContext,
+  onReply,
 }) => {
   const { t } = useTranslation("chat");
   const queryClient = useQueryClient();
@@ -91,8 +101,12 @@ export const ChatMessage: FC<ChatMessageProps> = ({
     });
   const canEditMessage = message.canEdit;
   const canDeleteMessage = message.canDelete;
+  const canReplyMessage = canReplyToChatMessage(message);
   const senderName =
     member?.name ?? message.characterData?.nick ?? t("contextMenu.unknownUser");
+  const mentionSegments = messageBody
+    ? getChatMentionSegments(messageBody.text, mentionContext)
+    : [];
 
   if (!message.characterData) return null;
 
@@ -112,9 +126,25 @@ export const ChatMessage: FC<ChatMessageProps> = ({
     );
   }
 
+  const scrollToOriginalMessage = () => {
+    if (!message.replyTo?.messageId) {
+      return;
+    }
+
+    const originalMessage = document.querySelector<HTMLElement>(
+      `[data-chat-message-id="${message.replyTo.messageId}"]`,
+    );
+
+    originalMessage?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  };
+
   return (
     <div
       key={`${message.id}-${message.guildId}`}
+      data-chat-message-id={message.id}
       className="ll:text-white ll:text-xs ll:w-full ll:select-text ll:cursor-text"
     >
       <ContextMenu>
@@ -197,6 +227,13 @@ export const ChatMessage: FC<ChatMessageProps> = ({
                     wordBreak: "normal",
                   }}
                 >
+                  {message.replyTo && (
+                    <ChatReplyPreview
+                      reply={message.replyTo}
+                      onClick={scrollToOriginalMessage}
+                      className="ll:mb-1 ll:max-w-[24rem]"
+                    />
+                  )}
                   {messageBody && (
                     <span
                       className={cn("ll:select-text", {
@@ -204,7 +241,25 @@ export const ChatMessage: FC<ChatMessageProps> = ({
                       })}
                       style={{ color: messageBody.color }}
                     >
-                      {messageBody.text}
+                      {mentionSegments.map((segment, index) => {
+                        if (!segment.isMention) {
+                          return <span key={index}>{segment.text}</span>;
+                        }
+
+                        return (
+                          <span
+                            key={index}
+                            className={cn(
+                              "ll:rounded-sm ll:px-0.5 ll:font-semibold",
+                              segment.isCurrentUserTarget
+                                ? "ll:bg-yellow-400/20 ll:text-yellow-200"
+                                : "ll:bg-white/10",
+                            )}
+                          >
+                            {segment.text}
+                          </span>
+                        );
+                      })}
                     </span>
                   )}
                 </span>
@@ -235,6 +290,11 @@ export const ChatMessage: FC<ChatMessageProps> = ({
               }}
             >
               {t("contextMenu.sendMessage")}
+            </ContextMenuItem>
+          )}
+          {canReplyMessage && onReply && (
+            <ContextMenuItem onClick={onReply}>
+              {t("contextMenu.reply")}
             </ContextMenuItem>
           )}
           {canEditMessage && (

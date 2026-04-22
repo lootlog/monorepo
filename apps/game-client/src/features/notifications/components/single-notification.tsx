@@ -17,7 +17,9 @@ import {
 import { Game } from "@/lib/game";
 import { cn } from "@/lib/utils";
 import {
+  type MentionNotification,
   type PartyGatheringNotification,
+  type NotificationWithServers,
   type StoredNotification,
   useNotificationsStore,
 } from "@/store/notifications.store";
@@ -57,6 +59,21 @@ const isPartyGatheringNotification = (
   return "type" in notification && notification.type === "party-gathering";
 };
 
+const isMentionNotification = (
+  notification: StoredNotification,
+): notification is StoredNotification & MentionNotification => {
+  return "type" in notification && notification.type === "chat-mention";
+};
+
+const isRegularNotification = (
+  notification: StoredNotification,
+): notification is StoredNotification & NotificationWithServers => {
+  return (
+    !isPartyGatheringNotification(notification) &&
+    !isMentionNotification(notification)
+  );
+};
+
 const renderLeadingVisual = (
   notification: StoredNotification,
   avatarUrl: string,
@@ -75,7 +92,7 @@ const renderLeadingVisual = (
     );
   }
 
-  if (notification.npc) {
+  if (isRegularNotification(notification) && notification.npc) {
     return (
       <NpcTile
         npc={notification.npc}
@@ -112,7 +129,7 @@ const renderNotificationContent = ({
     );
   }
 
-  if (notification.npc) {
+  if (isRegularNotification(notification) && notification.npc) {
     return <SingleNotificationNpc notification={notification} />;
   }
 
@@ -176,7 +193,10 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   );
   const memberColor = useMemberColor(guildMember);
   const isPartyGathering = isPartyGatheringNotification(notification);
-  const regularNotification = isPartyGathering ? null : notification;
+  const regularNotification =
+    !isPartyGathering && !isMentionNotification(notification)
+      ? notification
+      : null;
 
   const npcType = regularNotification?.npc
     ? getNpcTypeByWt(NpcType, regularNotification.npc.wt)

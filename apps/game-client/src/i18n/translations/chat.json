@@ -25,9 +25,13 @@
     "save": "Zapisz",
     "cancel": "Anuluj"
   },
+  "reply": {
+    "replyingTo": "Odpowiedź"
+  },
   "contextMenu": {
     "unknownUser": "Nieznany",
     "sendMessage": "Wyślij wiadomość",
+    "reply": "Odpowiedz",
     "edit": "Edytuj",
     "delete": "Usuń",
     "showEquipment": "Pokaż ekwipunek",

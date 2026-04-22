@@ -11,6 +11,7 @@ import type { Logger } from "winston";
 import { NpcType, Permission } from "src/generated/prisma/client";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { GuildsService } from "src/guilds/guilds.service";
+import { ChatService } from "src/chat/chat.service";
 import type { CreateNotificationDto } from "src/messaging/dto/create-notification.dto";
 import type { CreatePartyGatheringDto } from "src/messaging/dto/create-party-gathering.dto";
 import type { CreateVolunteerDto } from "src/messaging/dto/create-volunteer.dto";
@@ -34,6 +35,7 @@ export class MessagingService {
     private readonly amqpConnection: AmqpConnection,
     private readonly guildsService: GuildsService,
     private readonly redisService: RedisService,
+    private readonly chatService: ChatService,
   ) {}
 
   private getNotificationKey(notificationId: string): string {
@@ -312,6 +314,10 @@ export class MessagingService {
 
     await this.redisService.del(this.getNotificationKey(notificationId));
     await this.redisService.del(this.getPartyGatheringUserKey(discordId));
+    await this.chatService.endPartyGatheringMessages(
+      notificationId,
+      metadata.guildIds,
+    );
 
     metadata.guildIds.forEach((guildId) => {
       this.amqpConnection.publish(
@@ -339,6 +345,13 @@ export class MessagingService {
     await this.redisService.del(this.getPartyGatheringUserKey(discordId));
 
     const guildIds = metadata?.guildIds ?? [];
+
+    if (notificationId && guildIds.length > 0) {
+      await this.chatService.endPartyGatheringMessages(
+        notificationId,
+        guildIds,
+      );
+    }
 
     guildIds.forEach((guildId) => {
       this.amqpConnection.publish(

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
 import {
+  type MentionNotification,
   type StoredNotification,
   useNotificationsStore,
   type PartyGatheringNotification,
@@ -25,6 +26,12 @@ const getKey = (n: Notification | PartyGatheringNotification) => {
   const notification = n as Notification;
   if (!notification.npc || !notification.npc.wt) return "message" as const;
   return getNpcTypeByWt(NpcType, notification.npc.wt);
+};
+
+const isMentionNotification = (
+  notification: StoredNotification,
+): notification is StoredNotification & MentionNotification => {
+  return "type" in notification && notification.type === "chat-mention";
 };
 
 const getExpirationTimeMs = (
@@ -134,6 +141,10 @@ export const useVisibleNotifications = ({
 
   const visible = useMemo(() => {
     return notifications.filter((n) => {
+      if (isMentionNotification(n)) {
+        return true;
+      }
+
       const key = getKey(n) as keyof typeof settings;
       const s = settings[key];
       if (!s) return false;

@@ -19,7 +19,6 @@ export const usePartyCommand = () => {
   const { data: session } = useSession();
   const discordId = session?.user?.discordId;
   const setPartyGathering = usePartyFinderStore((s) => s.setPartyGathering);
-  const setChatMessageId = usePartyFinderStore((s) => s.setChatMessageId);
   const setOpen = useWindowsStore((state) => state.setOpen);
   const silentCancel = useSilentCancelPartyGathering();
 
@@ -68,7 +67,7 @@ export const usePartyCommand = () => {
             guildIds: responseGuildIds,
           });
 
-          const chatResults = await sendChatMessageAsync({
+          await sendChatMessageAsync({
             message: hero.nick,
             guildIds: responseGuildIds,
             type: MessageType.PARTY_GATHERING,
@@ -79,12 +78,6 @@ export const usePartyCommand = () => {
               description,
               world,
             },
-          });
-
-          chatResults.forEach((result, index) => {
-            if (result.status === "fulfilled" && result.value?.messageId) {
-              setChatMessageId(responseGuildIds[index], result.value.messageId);
-            }
           });
 
           setOpen("party-finder", true);

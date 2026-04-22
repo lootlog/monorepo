@@ -53,7 +53,6 @@ interface PartyFinderState {
   npc: PartyFinderNpc | null;
   volunteers: PartyFinderVolunteer[];
   partyGathering: PartyGatheringSession | null;
-  chatMessageIds: Record<string, string>;
   inviteStates: Record<string, "pending" | "failed">;
   setNotification: (notificationId: string, npc: PartyFinderNpc) => void;
   addVolunteer: (volunteer: PartyFinderVolunteer) => void;
@@ -61,8 +60,6 @@ interface PartyFinderState {
   clearPartyFinder: () => void;
   setPartyGathering: (session: PartyGatheringSession) => void;
   clearPartyGathering: () => void;
-  setChatMessageId: (guildId: string, messageId: string) => void;
-  clearChatMessageIds: () => void;
   setInviteState: (characterId: string, state: "pending" | "failed") => void;
   clearInviteState: (characterId: string) => void;
 }
@@ -74,7 +71,6 @@ export const usePartyFinderStore = create<PartyFinderState>()(
       npc: null,
       volunteers: [],
       partyGathering: null,
-      chatMessageIds: {},
       inviteStates: {},
       setNotification: (notificationId, npc) =>
         set({ notificationId, npc, volunteers: [] }),
@@ -101,7 +97,6 @@ export const usePartyFinderStore = create<PartyFinderState>()(
           npc: null,
           volunteers: [],
           partyGathering: null,
-          chatMessageIds: {},
           inviteStates: {},
         }),
       setPartyGathering: (session) =>
@@ -113,11 +108,6 @@ export const usePartyFinderStore = create<PartyFinderState>()(
           inviteStates: {},
         }),
       clearPartyGathering: () => set({ partyGathering: null }),
-      setChatMessageId: (guildId, messageId) =>
-        set((state) => ({
-          chatMessageIds: { ...state.chatMessageIds, [guildId]: messageId },
-        })),
-      clearChatMessageIds: () => set({ chatMessageIds: {} }),
       setInviteState: (characterId, state) =>
         set((s) => ({
           inviteStates: { ...s.inviteStates, [characterId]: state },
@@ -135,7 +125,6 @@ export const usePartyFinderStore = create<PartyFinderState>()(
         partyGathering: state.partyGathering,
         notificationId: state.notificationId,
         npc: state.npc,
-        chatMessageIds: state.chatMessageIds,
         volunteers: state.volunteers,
       }),
     },

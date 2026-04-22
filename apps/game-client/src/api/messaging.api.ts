@@ -1,4 +1,3 @@
-import { chatControllerUpdateChatMessage } from "@/lib/api/generated/main/chat/chat";
 import {
   messagingControllerCancelPartyGathering,
   messagingControllerCancelPartyGatheringByUser,
@@ -82,13 +81,11 @@ export type CancelPartyGatheringResult =
 
 type CancelPartyGatheringOptions = {
   partyGathering: PartyGatheringSession;
-  chatMessageIds: Record<string, string>;
   action: LoggedActionController;
 };
 
 export async function cancelPartyGathering({
   partyGathering,
-  chatMessageIds,
   action,
 }: CancelPartyGatheringOptions): Promise<CancelPartyGatheringResult> {
   const responseData = await runLoggedRequest({
@@ -111,56 +108,13 @@ export async function cancelPartyGathering({
     success: true,
     guildIds: [],
   };
-  const canceledGuildIds = new Set(normalizedResponseData.guildIds);
-  const heroNick = Game.hero.nick;
-
-  const updateMessagePromises = Object.entries(chatMessageIds).map(
-    ([guildId, messageId]) => {
-      if (!canceledGuildIds.has(guildId)) {
-        return Promise.resolve();
-      }
-
-      const endpoint = `/guilds/${guildId}/chat-messages/${messageId}`;
-      const payload = {
-        message: `${heroNick} zakończył zbieranie grupy`,
-      };
-
-      return runLoggedRequest({
-        action,
-        method: "PATCH",
-        endpoint,
-        payload,
-        request: () =>
-          chatControllerUpdateChatMessage({ guildId, messageId }, payload),
-      })
-        .then(() => ({ status: "fulfilled" as const }))
-        .catch((error) => {
-          console.warn(
-            `Failed to update chat message in guild ${guildId}:`,
-            error,
-          );
-
-          return { status: "rejected" as const };
-        });
-    },
-  );
-
-  const updateMessageResults = await Promise.all(updateMessagePromises);
-  const successfulMessageUpdates = updateMessageResults.filter(
-    (result) => result?.status === "fulfilled",
-  ).length;
-  const failedMessageUpdates = updateMessageResults.filter(
-    (result) => result?.status === "rejected",
-  ).length;
-  const attemptedMessageUpdates =
-    successfulMessageUpdates + failedMessageUpdates;
 
   return {
     ...normalizedResponseData,
     requestSummary: {
-      totalRequests: 1 + attemptedMessageUpdates,
-      successCount: 1 + successfulMessageUpdates,
-      failureCount: failedMessageUpdates,
+      totalRequests: 1,
+      successCount: 1,
+      failureCount: 0,
     },
   };
 }

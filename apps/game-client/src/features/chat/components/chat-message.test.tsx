@@ -212,6 +212,89 @@ describe("ChatMessage", () => {
     expect(screen.getByText("Usuń")).toBeInTheDocument();
   });
 
+  it("renders reply preview snapshot when the message references another message", () => {
+    render(
+      <ChatMessage
+        all={false}
+        guildName="Guild"
+        member={member}
+        message={makeChatMessage({
+          replyTo: {
+            messageId: "message-0",
+            senderNick: "QuotedHero",
+            message: "quoted message",
+            type: MessageType.NORMAL,
+          },
+        })}
+      />,
+    );
+
+    expect(screen.getByText("QuotedHero")).toBeInTheDocument();
+    expect(screen.getByText("quoted message")).toBeInTheDocument();
+  });
+
+  it("highlights targeted mentions in the message body", () => {
+    render(
+      <ChatMessage
+        all={false}
+        guildName="Guild"
+        member={member}
+        mentionContext={{
+          currentUserNames: ["Hero"],
+          currentUserRoleNames: ["Raid Team"],
+        }}
+        message={makeChatMessage({
+          message: "hej @Hero",
+        })}
+      />,
+    );
+
+    expect(screen.getByText("@Hero")).toHaveClass("ll:text-yellow-200");
+  });
+
+  it("shows the reply action only for replyable message types", () => {
+    const onReply = vi.fn();
+
+    const { rerender } = render(
+      <ChatMessage
+        all={false}
+        guildName="Guild"
+        member={member}
+        message={makeChatMessage()}
+        onReply={onReply}
+      />,
+    );
+
+    expect(screen.getByText("Odpowiedz")).toBeInTheDocument();
+
+    rerender(
+      <ChatMessage
+        all={false}
+        guildName="Guild"
+        member={member}
+        message={makeChatMessage({
+          type: MessageType.NPC,
+          npc: {
+            id: 10,
+            name: "Npc",
+            icon: "npc.png",
+            x: 1,
+            y: 2,
+            hpp: 100,
+            location: "Cave",
+            lvl: 50,
+            prof: "m",
+            type: 1,
+            wt: 100,
+          },
+        })}
+        onReply={onReply}
+      />,
+    );
+
+    expect(screen.queryByText("Odpowiedz")).not.toBeInTheDocument();
+  });
+
   it("hides edit and delete actions when backend capabilities deny them", () => {
     render(
       <ChatMessage
