@@ -191,6 +191,40 @@ describe("chat mention suggestions helpers", () => {
     ).toEqual([]);
   });
 
+  it("does not mutate role suggestions while sorting", () => {
+    const roleSuggestions = getChatMentionRoleSuggestions([
+      {
+        id: "role-1",
+        guildId: "guild-1",
+        name: "Zulu",
+        color: null,
+        permissions: [],
+      },
+      {
+        id: "role-2",
+        guildId: "guild-1",
+        name: "Alpha",
+        color: null,
+        permissions: [],
+      },
+    ]);
+
+    expect(
+      getChatMentionSuggestions({
+        roleSuggestions,
+        memberSuggestions: [],
+        query: "",
+      }),
+    ).toEqual([
+      expect.objectContaining({ label: "Alpha" }),
+      expect.objectContaining({ label: "Zulu" }),
+    ]);
+    expect(roleSuggestions.map((suggestion) => suggestion.label)).toEqual([
+      "Zulu",
+      "Alpha",
+    ]);
+  });
+
   it("replaces the full active token and keeps the caret after the inserted mention", () => {
     expect(
       applyChatMentionSuggestion({
