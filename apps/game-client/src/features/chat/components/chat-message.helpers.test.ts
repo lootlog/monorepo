@@ -47,6 +47,8 @@ const makeChatMessage = (
     prof: "w",
     icon: "hero.png",
   },
+  canEdit: false,
+  canDelete: false,
   ...overrides,
 });
 

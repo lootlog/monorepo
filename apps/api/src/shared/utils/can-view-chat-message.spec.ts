@@ -1,8 +1,6 @@
 import { Permission, type Role } from "src/generated/prisma/client";
-import {
-  MessageType,
-  type SendMessageDto,
-} from "src/chat/dto/send-message.dto";
+import { MessageType } from "src/chat/dto/send-message.dto";
+import type { ChatStoredMessage } from "src/chat/types/chat-stored-message.type";
 import { canViewChatMessage } from "./can-view-chat-message";
 
 function createRole(
@@ -25,10 +23,14 @@ function createRole(
 }
 
 function createMessage(
-  overrides: Partial<SendMessageDto> = {},
-): SendMessageDto {
+  overrides: Partial<ChatStoredMessage> = {},
+): ChatStoredMessage {
   return {
+    id: "message-1",
+    guildId: "guild-1",
     message: "hello",
+    senderId: "discord-1",
+    timestamp: new Date().toISOString(),
     type: MessageType.NORMAL,
     characterData: {
       nick: "Tester",
@@ -39,7 +41,7 @@ function createMessage(
       icon: "icon.png",
     },
     ...overrides,
-  } as SendMessageDto;
+  };
 }
 
 describe("canViewChatMessage", () => {

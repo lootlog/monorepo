@@ -27,7 +27,6 @@ import {
 } from "./chat-message.helpers";
 import { Input } from "@/components/ui/input";
 import { useTranslation } from "react-i18next";
-import { useSession } from "@/hooks/auth/use-session";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   getChatControllerGetChatMessagesQueryKey,
@@ -53,7 +52,6 @@ export const ChatMessage: FC<ChatMessageProps> = ({
   member,
 }) => {
   const { t } = useTranslation("chat");
-  const { data: session } = useSession();
   const queryClient = useQueryClient();
   const memberColor = useMemberColor(member);
   const isMsgYesterday = isChatMessageYesterdayOrOlder(message.timestamp);
@@ -91,11 +89,8 @@ export const ChatMessage: FC<ChatMessageProps> = ({
         },
       },
     });
-  const isOwnMessage = session?.user?.discordId === message.senderId;
-  const canManageMessage =
-    isOwnMessage &&
-    (message.type === MessageType.NORMAL ||
-      message.type === MessageType.NOTIFICATION);
+  const canEditMessage = message.canEdit;
+  const canDeleteMessage = message.canDelete;
   const senderName =
     member?.name ?? message.characterData?.nick ?? t("contextMenu.unknownUser");
 
@@ -242,7 +237,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({
               {t("contextMenu.sendMessage")}
             </ContextMenuItem>
           )}
-          {canManageMessage && (
+          {canEditMessage && (
             <ContextMenuItem
               disabled={isUpdating || isDeleting}
               onClick={() => {
@@ -253,7 +248,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({
               {t("contextMenu.edit")}
             </ContextMenuItem>
           )}
-          {canManageMessage && (
+          {canDeleteMessage && (
             <ContextMenuItem
               disabled={isUpdating || isDeleting}
               onClick={() => {

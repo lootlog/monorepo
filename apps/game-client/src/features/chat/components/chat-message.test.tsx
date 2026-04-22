@@ -85,16 +85,6 @@ vi.mock("@/lib/game", () => ({
   },
 }));
 
-vi.mock("@/hooks/auth/use-session", () => ({
-  useSession: () => ({
-    data: {
-      user: {
-        discordId: "user-1",
-      },
-    },
-  }),
-}));
-
 vi.mock("@tanstack/react-query", async () => {
   const actual = await vi.importActual("@tanstack/react-query");
 
@@ -139,6 +129,8 @@ const makeChatMessage = (
     prof: "w",
     icon: "hero.png",
   },
+  canEdit: false,
+  canDelete: false,
   ...overrides,
 });
 
@@ -203,7 +195,24 @@ describe("ChatMessage", () => {
     expect(screen.getByText("Hero:")).toBeInTheDocument();
   });
 
-  it("shows edit and delete actions for the current user's own message", () => {
+  it("shows edit and delete actions when backend capabilities allow them", () => {
+    render(
+      <ChatMessage
+        all={false}
+        guildName="Guild"
+        member={member}
+        message={makeChatMessage({
+          canEdit: true,
+          canDelete: true,
+        })}
+      />,
+    );
+
+    expect(screen.getByText("Edytuj")).toBeInTheDocument();
+    expect(screen.getByText("Usuń")).toBeInTheDocument();
+  });
+
+  it("hides edit and delete actions when backend capabilities deny them", () => {
     render(
       <ChatMessage
         all={false}
@@ -213,7 +222,7 @@ describe("ChatMessage", () => {
       />,
     );
 
-    expect(screen.getByText("Edytuj")).toBeInTheDocument();
-    expect(screen.getByText("Usuń")).toBeInTheDocument();
+    expect(screen.queryByText("Edytuj")).not.toBeInTheDocument();
+    expect(screen.queryByText("Usuń")).not.toBeInTheDocument();
   });
 });

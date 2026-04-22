@@ -16,6 +16,7 @@ import type {
   ReservationCreateEventDto,
   ReservationDeleteEventDto,
 } from "./dto/reservation-event.dto";
+import type { ChatMessageEnvelopeDto } from "./dto/chat-message-envelope.dto";
 
 describe("GatewayService", () => {
   let service: GatewayService;
@@ -130,6 +131,16 @@ describe("GatewayService", () => {
         ],
       },
       emit: vi.fn(),
+    };
+  }
+
+  function createChatMessageEnvelope(
+    message: SendMessageDto,
+    capabilities: Pick<ChatMessageEnvelopeDto, "canEdit" | "canDelete">,
+  ): ChatMessageEnvelopeDto {
+    return {
+      ...message,
+      ...capabilities,
     };
   }
 
@@ -401,7 +412,7 @@ describe("GatewayService", () => {
   });
 
   describe("handleGuildMessageSend", () => {
-    it("should broadcast regular chat messages to the base room without socket filtering", async () => {
+    it("should emit regular chat messages with backend capabilities for each base-room viewer", async () => {
       const messageDto = new SendMessageDto();
       messageDto.id = "message-base";
       messageDto.guildId = "guild-123";
@@ -417,15 +428,45 @@ describe("GatewayService", () => {
         prof: "warrior",
         icon: "icon.png",
       };
+      const authorSocket = createSocketForGuild({
+        discordId: "sender-123",
+        roles: [
+          {
+            permissions: [Permission.LOOTLOG_CHAT_READ],
+          },
+        ],
+      });
+      const viewerSocket = createSocketForGuild({
+        discordId: "discord-viewer",
+        roles: [
+          {
+            permissions: [Permission.LOOTLOG_CHAT_READ],
+          },
+        ],
+      });
+
+      mockServer.fetchSockets.mockResolvedValue([authorSocket, viewerSocket]);
 
       service.handleGuildMessageSend(messageDto);
 
-      expect(mockServer.to).toHaveBeenCalledWith("guild-123:chat:base");
-      expect(mockServer.emit).toHaveBeenCalledWith(
+      await flushPromises();
+
+      expect(mockServer.in).toHaveBeenCalledWith("guild-123:chat:base");
+      expect(mockServer.fetchSockets).toHaveBeenCalled();
+      expect(authorSocket.emit).toHaveBeenCalledWith(
         GatewayEvent.CHAT_MESSAGE,
-        messageDto,
+        createChatMessageEnvelope(messageDto, {
+          canEdit: true,
+          canDelete: true,
+        }),
       );
-      expect(mockServer.fetchSockets).not.toHaveBeenCalled();
+      expect(viewerSocket.emit).toHaveBeenCalledWith(
+        GatewayEvent.CHAT_MESSAGE,
+        createChatMessageEnvelope(messageDto, {
+          canEdit: false,
+          canDelete: false,
+        }),
+      );
     });
 
     it("should emit titan chat message to the titan room for numeric NPC payloads", async () => {
@@ -491,7 +532,10 @@ describe("GatewayService", () => {
       expect(mockServer.in).toHaveBeenCalledWith("guild-123:chat:titans");
       expect(mockSocketWithPermissions.emit).toHaveBeenCalledWith(
         GatewayEvent.CHAT_MESSAGE,
-        messageDto,
+        createChatMessageEnvelope(messageDto, {
+          canEdit: false,
+          canDelete: false,
+        }),
       );
     });
 
@@ -548,7 +592,10 @@ describe("GatewayService", () => {
 
       expect(ownerSocket.emit).toHaveBeenCalledWith(
         GatewayEvent.CHAT_MESSAGE,
-        messageDto,
+        createChatMessageEnvelope(messageDto, {
+          canEdit: true,
+          canDelete: true,
+        }),
       );
     });
 
@@ -662,7 +709,10 @@ describe("GatewayService", () => {
 
       expect(manageSocket.emit).toHaveBeenCalledWith(
         GatewayEvent.CHAT_MESSAGE,
-        messageDto,
+        createChatMessageEnvelope(messageDto, {
+          canEdit: false,
+          canDelete: false,
+        }),
       );
     });
 
@@ -723,7 +773,10 @@ describe("GatewayService", () => {
 
       expect(multiRoleSocket.emit).toHaveBeenCalledWith(
         GatewayEvent.CHAT_MESSAGE,
-        messageDto,
+        createChatMessageEnvelope(messageDto, {
+          canEdit: false,
+          canDelete: false,
+        }),
       );
     });
 

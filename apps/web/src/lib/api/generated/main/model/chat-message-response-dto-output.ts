@@ -25,4 +25,6 @@ export interface ChatMessageResponseDtoOutput {
   characterData: ChatMessageResponseDtoOutputCharacterData;
   npc?: ChatMessageResponseDtoOutputNpc;
   partyGathering?: ChatMessageResponseDtoOutputPartyGathering;
+  canEdit: boolean;
+  canDelete: boolean;
 }
