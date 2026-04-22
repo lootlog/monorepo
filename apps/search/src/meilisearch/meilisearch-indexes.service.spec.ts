@@ -33,6 +33,10 @@ describe("MeilisearchIndexesService", () => {
     waitTask: vi.fn(),
   };
 
+  const createIndexTask = {
+    waitTask: vi.fn(),
+  };
+
   const npcsIndexMock = {
     updateFilterableAttributes: vi.fn(),
   };
@@ -48,6 +52,8 @@ describe("MeilisearchIndexesService", () => {
   };
 
   const meilisearchMock = {
+    createIndex: vi.fn(),
+    getIndex: vi.fn(),
     index: vi.fn(),
   };
 
@@ -57,6 +63,7 @@ describe("MeilisearchIndexesService", () => {
     itemsFilterTask.waitTask.mockResolvedValue(undefined);
     itemsSearchTask.waitTask.mockResolvedValue(undefined);
     itemsSortTask.waitTask.mockResolvedValue(undefined);
+    createIndexTask.waitTask.mockResolvedValue(undefined);
 
     npcsIndexMock.updateFilterableAttributes.mockReturnValue(npcsFilterTask);
     playersIndexMock.updateFilterableAttributes.mockReturnValue(
@@ -65,6 +72,8 @@ describe("MeilisearchIndexesService", () => {
     itemsIndexMock.updateFilterableAttributes.mockReturnValue(itemsFilterTask);
     itemsIndexMock.updateSearchableAttributes.mockReturnValue(itemsSearchTask);
     itemsIndexMock.updateSortableAttributes.mockReturnValue(itemsSortTask);
+    meilisearchMock.getIndex.mockResolvedValue(undefined);
+    meilisearchMock.createIndex.mockReturnValue(createIndexTask);
 
     meilisearchMock.index.mockImplementation((indexName: string) => {
       if (indexName === NPCS_INDEX) {
@@ -107,6 +116,9 @@ describe("MeilisearchIndexesService", () => {
     it("should configure filterable and searchable attributes", async () => {
       await service.onApplicationBootstrap();
 
+      expect(meilisearchMock.getIndex).toHaveBeenCalledWith(NPCS_INDEX);
+      expect(meilisearchMock.getIndex).toHaveBeenCalledWith(PLAYERS_INDEX);
+      expect(meilisearchMock.getIndex).toHaveBeenCalledWith(ITEMS_INDEX);
       expect(npcsIndexMock.updateFilterableAttributes).toHaveBeenCalledWith([
         "name",
         "type",
@@ -137,6 +149,31 @@ describe("MeilisearchIndexesService", () => {
         "type",
       ]);
       expect(loggerMock.error).not.toHaveBeenCalled();
+    });
+
+    it("should create missing indexes before applying settings", async () => {
+      meilisearchMock.getIndex
+        .mockRejectedValueOnce({
+          cause: { code: "index_not_found" },
+        })
+        .mockRejectedValueOnce({
+          cause: { code: "index_not_found" },
+        })
+        .mockRejectedValueOnce({
+          cause: { code: "index_not_found" },
+        });
+
+      await service.onApplicationBootstrap();
+
+      expect(meilisearchMock.createIndex).toHaveBeenCalledWith(NPCS_INDEX, {
+        primaryKey: "uid",
+      });
+      expect(meilisearchMock.createIndex).toHaveBeenCalledWith(PLAYERS_INDEX, {
+        primaryKey: "uid",
+      });
+      expect(meilisearchMock.createIndex).toHaveBeenCalledWith(ITEMS_INDEX, {
+        primaryKey: "uid",
+      });
     });
 
     it("should log an error when configuration fails", async () => {
