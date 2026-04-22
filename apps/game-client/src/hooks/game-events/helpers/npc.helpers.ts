@@ -16,7 +16,7 @@ export const composeNpcFromEvent = (
   lvl: tpl.lvl,
   type: tpl.type,
   location: Game.map.name,
-  notificationSent: processedSettings.autoSendNotification,
+  notificationSent: false,
 });
 
 export const composeNpcFromGame = (
@@ -26,5 +26,5 @@ export const composeNpcFromGame = (
   ...npc,
   icon: processedSettings.icon,
   location: Game.map.name,
-  notificationSent: processedSettings.autoSendNotification,
+  notificationSent: false,
 });
