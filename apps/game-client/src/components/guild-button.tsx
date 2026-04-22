@@ -53,7 +53,7 @@ export const GuildButton: FC<GuildButtonProps> = ({
           {children}
         </Avatar>
         {unreadBadge ? (
-          <span className="ll:pointer-events-none ll:absolute ll:-right-1 ll:-top-1 ll:flex ll:h-3.5 ll:min-w-3.5 ll:items-center ll:justify-center ll:rounded-full ll:border ll:border-black/70 ll:bg-red-600 ll:px-0.5 ll:text-[8px] ll:font-bold ll:leading-none ll:text-white">
+          <span className="ll:pointer-events-none ll:absolute ll:-right-2 ll:-top-2 ll:flex ll:h-3.5 ll:min-w-3.5 ll:items-center ll:justify-center ll:rounded-full ll:border ll:border-black/70 ll:bg-red-600 ll:px-0.5 ll:text-[8px] ll:font-bold ll:leading-none ll:text-white">
             {unreadBadge}
           </span>
         ) : null}
