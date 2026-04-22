@@ -32,6 +32,10 @@ vi.mock("@/components/ui/context-menu", () => ({
   ),
 }));
 
+vi.mock("@/components/ui/input", () => ({
+  Input: (props: React.ComponentProps<"input">) => <input {...props} />,
+}));
+
 vi.mock("@/components/ui/tooltip", () => ({
   Tooltip: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
@@ -79,6 +83,43 @@ vi.mock("@/lib/game", () => ({
     },
     interface: "si",
   },
+}));
+
+vi.mock("@/hooks/auth/use-session", () => ({
+  useSession: () => ({
+    data: {
+      user: {
+        discordId: "user-1",
+      },
+    },
+  }),
+}));
+
+vi.mock("@tanstack/react-query", async () => {
+  const actual = await vi.importActual("@tanstack/react-query");
+
+  return {
+    ...actual,
+    useQueryClient: () => ({
+      setQueryData: vi.fn(),
+    }),
+  };
+});
+
+vi.mock("@/lib/api/generated/main/chat/chat", () => ({
+  getChatControllerGetChatMessagesQueryKey: ({
+    guildId,
+  }: {
+    guildId: string;
+  }) => [guildId],
+  useChatControllerUpdateChatMessage: () => ({
+    mutate: vi.fn(),
+    isPending: false,
+  }),
+  useChatControllerDeleteChatMessage: () => ({
+    mutate: vi.fn(),
+    isPending: false,
+  }),
 }));
 
 const makeChatMessage = (
@@ -152,5 +193,27 @@ describe("ChatMessage", () => {
     );
 
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it("falls back to the character nick when member metadata is missing", () => {
+    render(
+      <ChatMessage all={false} guildName="Guild" message={makeChatMessage()} />,
+    );
+
+    expect(screen.getByText("Hero:")).toBeInTheDocument();
+  });
+
+  it("shows edit and delete actions for the current user's own message", () => {
+    render(
+      <ChatMessage
+        all={false}
+        guildName="Guild"
+        member={member}
+        message={makeChatMessage()}
+      />,
+    );
+
+    expect(screen.getByText("Edytuj")).toBeInTheDocument();
+    expect(screen.getByText("Usuń")).toBeInTheDocument();
   });
 });

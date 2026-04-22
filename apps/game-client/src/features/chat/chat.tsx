@@ -1,6 +1,7 @@
 import { DraggableWindow } from "@/components/draggable-window";
 import { AnimatedWindow } from "@/components/animated-window";
 import { useRef, useEffect, useLayoutEffect } from "react";
+import { useQueries } from "@tanstack/react-query";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useLocalStorage } from "react-use";
 import { storageKey } from "@/lib/storage-key";
@@ -9,25 +10,25 @@ import { useChatMessagesListener } from "@/features/chat/hooks/use-chat-messages
 import { GuildSwitcher } from "@/components/guild-switcher";
 import { Game } from "@/lib/game";
 import {
+  chatControllerGetChatMessages,
   getChatControllerGetChatMessagesQueryKey,
-  useChatControllerGetChatMessages,
 } from "@/lib/api/generated/main/chat/chat";
 import {
   getMembersControllerGetGuildMembersSummaryQueryKey,
-  useMembersControllerGetGuildMembersSummary,
+  membersControllerGetGuildMembersSummary,
 } from "@/lib/api/generated/main/members/members";
 import {
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   useUsersControllerGetCurrentUserAccessibleGuilds,
 } from "@/lib/api/generated/main/users/users";
 import {
+  getGuildIds,
   getGuildNamesById,
   mapGuildMembersByUserId,
 } from "@/lib/api/generated-helpers";
-import { useChatCache } from "./hooks/use-chat-cache";
 import { type ChatFilter, useChatStore } from "@/store/chat.store";
 import { ChatMessage } from "./components/chat-message";
-import { OldChatInput } from "@/features/chat/components/old-chat-input";
+import { ChatInput } from "@/features/chat/components/chat-input";
 import { ChatWindowActions } from "@/features/chat/components/chat-window-actions";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
@@ -35,8 +36,11 @@ import {
   getCurrentChatMessages,
   getNextSelectedGuildId,
   hasVisibleChatMessages,
-  syncSelectedGuildChatCache,
 } from "./chat.helpers";
+import type {
+  ChatMessageResponseDtoOutput as ChatMessageType,
+  MemberSummaryResponseDtoOutput as GuildMember,
+} from "@/lib/api/generated/main/model";
 
 const chatSelectedGuildKey = (accountId: string, characterId: string) =>
   storageKey(`ll:chat:selected-guild:${accountId}:${characterId}`);
@@ -73,36 +77,45 @@ export const Chat = () => {
 
   useChatMessagesListener();
 
-  const messageCache = useChatCache((s) => s.messageCache);
-  const memberCache = useChatCache((s) => s.memberCache);
+  const guildIds = getGuildIds(guilds);
+  const guildIdsToLoad =
+    selectedGuildId === "all"
+      ? guildIds
+      : selectedGuildId
+        ? [selectedGuildId]
+        : [];
 
-  const { data: messages } = useChatControllerGetChatMessages(
-    { guildId: selectedGuildId ?? "" },
-    {
-      query: {
-        queryKey: getChatControllerGetChatMessagesQueryKey({
-          guildId: selectedGuildId ?? "",
-        }),
-        enabled: !!selectedGuildId && selectedGuildId !== "all",
-        gcTime: Infinity,
-        staleTime: 5 * 60 * 1000,
-      },
-    },
-  );
-  const { data: guildMembers } = useMembersControllerGetGuildMembersSummary(
-    { guildId: selectedGuildId ?? "" },
-    {
-      query: {
-        queryKey: getMembersControllerGetGuildMembersSummaryQueryKey({
-          guildId: selectedGuildId ?? "",
-        }),
-        enabled: !!selectedGuildId && selectedGuildId !== "all",
-        gcTime: Infinity,
-        staleTime: 5 * 60 * 1000,
-        select: mapGuildMembersByUserId,
-      },
-    },
-  );
+  const messageQueries = useQueries({
+    queries: guildIdsToLoad.map((guildId) => ({
+      queryKey: getChatControllerGetChatMessagesQueryKey({ guildId }),
+      queryFn: () => chatControllerGetChatMessages({ guildId }),
+      enabled: !!guildId,
+      gcTime: Infinity,
+      staleTime: 5 * 60 * 1000,
+    })),
+  });
+  const memberQueries = useQueries({
+    queries: guildIdsToLoad.map((guildId) => ({
+      queryKey: getMembersControllerGetGuildMembersSummaryQueryKey({ guildId }),
+      queryFn: () => membersControllerGetGuildMembersSummary({ guildId }),
+      enabled: !!guildId,
+      gcTime: Infinity,
+      staleTime: 5 * 60 * 1000,
+    })),
+  });
+
+  const messagesByGuildId = guildIdsToLoad.reduce<
+    Record<string, ChatMessageType[]>
+  >((result, guildId, index) => {
+    result[guildId] = (messageQueries[index]?.data ?? []) as ChatMessageType[];
+    return result;
+  }, {});
+  const membersByGuildId = guildIdsToLoad.reduce<
+    Record<string, Record<string, GuildMember>>
+  >((result, guildId, index) => {
+    result[guildId] = mapGuildMembersByUserId(memberQueries[index]?.data);
+    return result;
+  }, {});
 
   const isUserNearBottomRef = useRef(true);
   const scrollPendingRef = useRef(true);
@@ -146,13 +159,12 @@ export const Chat = () => {
     { key: "party", label: t("filters.party") },
   ];
   const currentMessages = getCurrentChatMessages(
-    messageCache,
+    messagesByGuildId,
     selectedGuildId,
     chatFilter,
   );
   const hasRenderableMessages = hasVisibleChatMessages(
     currentMessages,
-    memberCache,
     guildNamesById,
   );
 
@@ -177,18 +189,6 @@ export const Chat = () => {
 
     prevMessagesLenRef.current = msgCount;
   }, [currentMessages, hasRenderableMessages]);
-
-  useEffect(() => {
-    syncSelectedGuildChatCache({
-      selectedGuildId,
-      messages,
-      guildMembers,
-      messageCache,
-      memberCache,
-      setMessageCache: useChatCache.getState().setMessageCache,
-      setMemberCache: useChatCache.getState().setMemberCache,
-    });
-  }, [selectedGuildId, messages, guildMembers, messageCache, memberCache]);
 
   if (isIntegratedMode && Game.interface === "ni") {
     return <div />;
@@ -251,7 +251,7 @@ export const Chat = () => {
                   </div>
                 ) : (
                   currentMessages.map((message) => {
-                    const members = memberCache[message.guildId] ?? {};
+                    const members = membersByGuildId[message.guildId] ?? {};
 
                     return (
                       <ChatMessage
@@ -268,7 +268,7 @@ export const Chat = () => {
             </ScrollArea>
           </div>
           {selectedGuildId !== "all" && isChatInputEnabled && (
-            <OldChatInput selectedGuildId={selectedGuildId} />
+            <ChatInput selectedGuildId={selectedGuildId} />
           )}
         </div>
       </DraggableWindow>

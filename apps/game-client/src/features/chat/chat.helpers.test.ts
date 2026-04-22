@@ -1,9 +1,6 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { MessageType } from "@/api/chat.api";
-import type {
-  ChatMessageResponseDtoOutput as ChatMessageType,
-  MemberSummaryResponseDtoOutput as GuildMember,
-} from "@/lib/api/generated/main/model";
+import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@/lib/api/generated/main/model";
 import {
   deduplicateChatMessages,
   filterChatMessages,
@@ -11,7 +8,9 @@ import {
   getMessagesForSelectedGuild,
   getNextSelectedGuildId,
   hasVisibleChatMessages,
-  syncSelectedGuildChatCache,
+  removeChatMessage,
+  updateChatMessage,
+  upsertChatMessage,
 } from "./chat.helpers";
 
 const makeChatMessage = (
@@ -145,61 +144,22 @@ describe("chat helpers", () => {
   it("detects whether chat has renderable messages", () => {
     const messages = [makeChatMessage()];
 
-    expect(
-      hasVisibleChatMessages(
-        messages,
-        {
-          "guild-1": {
-            "user-1": {
-              id: 1,
-              userId: "user-1",
-              name: "Member",
-            },
-          },
-        },
-        { "guild-1": "Guild" },
-      ),
-    ).toBe(true);
+    expect(hasVisibleChatMessages(messages, { "guild-1": "Guild" })).toBe(true);
 
-    expect(hasVisibleChatMessages(messages, { "guild-1": {} }, {})).toBe(false);
+    expect(hasVisibleChatMessages(messages, {})).toBe(false);
   });
 
-  it("syncs chat cache only for a concrete selected guild", () => {
-    const setMessageCache = vi.fn();
-    const setMemberCache = vi.fn();
+  it("reconciles create, update and delete operations against a single message list", () => {
     const messages = [makeChatMessage()];
-    const guildMembers: Record<string, GuildMember> = {
-      "user-1": {
-        id: 1,
-        userId: "user-1",
-        name: "Member",
-      },
-    };
+    const nextMessage = makeChatMessage({ id: "message-2", message: "next" });
 
-    syncSelectedGuildChatCache({
-      selectedGuildId: "guild-1",
-      messages,
-      guildMembers,
-      messageCache: {},
-      memberCache: {},
-      setMessageCache,
-      setMemberCache,
-    });
-
-    expect(setMessageCache).toHaveBeenCalledWith("guild-1", messages);
-    expect(setMemberCache).toHaveBeenCalledWith("guild-1", guildMembers);
-
-    syncSelectedGuildChatCache({
-      selectedGuildId: "all",
-      messages,
-      guildMembers,
-      messageCache: {},
-      memberCache: {},
-      setMessageCache,
-      setMemberCache,
-    });
-
-    expect(setMessageCache).toHaveBeenCalledTimes(1);
-    expect(setMemberCache).toHaveBeenCalledTimes(1);
+    expect(upsertChatMessage(messages, nextMessage)).toEqual([
+      messages[0],
+      nextMessage,
+    ]);
+    expect(
+      updateChatMessage(messages, "message-1", "updated message")[0]?.message,
+    ).toBe("updated message");
+    expect(removeChatMessage(messages, "message-1")).toEqual([]);
   });
 });
