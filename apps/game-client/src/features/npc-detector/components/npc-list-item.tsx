@@ -1,6 +1,5 @@
 import { NpcTile } from "@/components/npc-tile";
 import { Button } from "@/components/ui/button";
-import { MessageType } from "@/api/chat.api";
 import { NpcType } from "@/api/npcs.api";
 import {
   Tooltip,
@@ -9,7 +8,6 @@ import {
 } from "@/components/ui/tooltip";
 import { AnimatePresence, motion } from "framer-motion";
 import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
-import { buildCurrentCharacterPayload } from "@/lib/api/generated-helpers";
 import { cn } from "@/lib/utils";
 import { getNpcTypeByWt, type DetectorNpcType } from "@lootlog/types";
 import {
@@ -17,23 +15,17 @@ import {
   useNpcDetectorStore,
 } from "@/store/npc-detector.store";
 import { AlertTriangle, Loader2, Megaphone, Users, XIcon } from "lucide-react";
-import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
 import {
   getBackgroundColor,
   getBorderColor,
 } from "@/utils/notifications-and-detector/background";
-import {
-  buildNpcChatMessagePayload,
-  buildNpcNotificationPayload,
-  resolveNpcNotificationRouting,
-} from "@/utils/notifications-and-detector/npc-notification";
+import { resolveNpcNotificationRouting } from "@/utils/notifications-and-detector/npc-notification";
 import { useEffect, useState } from "react";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import { useWindowsStore } from "@/store/windows.store";
-import { useSession } from "@/hooks/auth/use-session";
 import type { SettingsTabValue } from "@/features/settings/constants/settings-tabs";
 import { useTranslation } from "react-i18next";
-import { useMessagingControllerSendNotification } from "@/lib/api/generated/main/messaging/messaging";
+import { usePartyGatheringOrchestration } from "@/features/party-finder/hooks/use-party-gathering-orchestration";
 
 const BUTTON_UNLOCK_DELAY_MS = 5000;
 const REPEAT_DETECTION_FLASH_DURATION_MS = 1050;
@@ -102,19 +94,14 @@ export const NpcListItem = ({
   const { npcs, removeNpc, setNpcState, clearDetectionAnimation } =
     useNpcDetectorStore();
   const { settings } = useCurrentGameAccountDetectorSettings();
-  const { setNotification, partyGathering, setPartyGathering } =
-    usePartyFinderStore();
+  const partyGathering = usePartyFinderStore((state) => state.partyGathering);
   const setOpen = useWindowsStore((state) => state.setOpen);
-  const { data: session } = useSession();
-  const discordId = session?.user?.discordId;
-  const { mutate: sendChatMessage, mutateAsync: sendChatMessageAsync } =
-    useSendChatMessage();
   const {
-    mutate: createNotification,
-    mutateAsync: createNotificationAsync,
-    isPending: isCreateNotificationPending,
-  } = useMessagingControllerSendNotification();
-  const [isGatheringPartyPending, setIsGatheringPartyPending] = useState(false);
+    isCreatingNpcPartyGathering,
+    isSendingNpcNotification,
+    startNpcNotification,
+    startNpcPartyGathering,
+  } = usePartyGatheringOrchestration();
   const [messageButtonCooldownEndsAt, setMessageButtonCooldownEndsAt] =
     useState<number | null>(null);
   const [
@@ -218,7 +205,7 @@ export const NpcListItem = ({
     });
   };
 
-  const handleSendNotification = (npc: GameNpcWithLocation) => {
+  const handleSendNotification = async (npc: GameNpcWithLocation) => {
     if (resolvedGuildIds.length === 0) {
       window.message(t("actions.noMatchingGuilds"));
       return;
@@ -226,108 +213,12 @@ export const NpcListItem = ({
 
     if (!npc || !world) return;
 
-    createNotification(
-      {
-        data: buildNpcNotificationPayload({
-          npc,
-          guildIds: resolvedGuildIds,
-          world,
-        }),
-      },
-      {
-        onSuccess: (response) => {
-          const guildIds = response.guildIds ?? resolvedGuildIds;
-
-          setNpcState(npc.id, {
-            ...npc,
-            notificationSent: true,
-          });
-
-          setNotification(response.notificationId, {
-            id: npc.id,
-            name: npc.nick,
-            lvl: npc.lvl,
-            prof: npc.prof,
-            location: npc.location,
-            world: world,
-            icon: npc.icon,
-            x: npc.x,
-            y: npc.y,
-          });
-
-          sendChatMessage(
-            buildNpcChatMessagePayload({
-              npc,
-              guildIds,
-              messageType: MessageType.NPC,
-            }),
-          );
-
-          setOpen("party-finder", true);
-        },
-      },
-    );
-  };
-
-  const handleGatherParty = async (npc: GameNpcWithLocation) => {
-    if (resolvedGuildIds.length === 0) {
-      window.message(t("actions.noMatchingGuilds"));
-      return;
-    }
-
-    if (!npc || !world || !discordId) return;
-
-    setIsGatheringPartyPending(true);
-
     try {
-      const notificationResponse = await createNotificationAsync({
-        data: buildNpcNotificationPayload({
-          npc,
-          guildIds: resolvedGuildIds,
-          world,
-          isGatheringParty: true,
-        }),
-      });
-
-      const notificationId = notificationResponse.notificationId;
-      const guildIds = notificationResponse.guildIds ?? resolvedGuildIds;
-
-      setNotification(notificationId, {
-        id: npc.id,
-        name: npc.nick,
-        lvl: npc.lvl,
-        prof: npc.prof,
-        location: npc.location,
-        world: world,
-        icon: npc.icon,
-        x: npc.x,
-        y: npc.y,
-      });
-
-      setPartyGathering({
-        notificationId,
-        discordId,
-        character: {
-          ...buildCurrentCharacterPayload(),
-        },
+      await startNpcNotification({
+        npc,
+        guildIds: resolvedGuildIds,
         world,
-        createdAt: new Date().toISOString(),
-        guildIds,
       });
-
-      await sendChatMessageAsync(
-        buildNpcChatMessagePayload({
-          npc,
-          guildIds,
-          messageType: MessageType.PARTY_GATHERING,
-          message: `${npc.nick} (${npc.lvl}${npc.prof ?? ""})`,
-          partyGathering: {
-            notificationId,
-            discordId,
-            world,
-          },
-        }),
-      );
 
       setNpcState(npc.id, {
         ...npc,
@@ -336,10 +227,33 @@ export const NpcListItem = ({
 
       setOpen("party-finder", true);
     } catch (error) {
+      console.error("Failed to send notification:", error);
+      window.message(t("actions.messageFailed"));
+    }
+  };
+
+  const handleGatherParty = async (npc: GameNpcWithLocation) => {
+    if (resolvedGuildIds.length === 0) {
+      window.message(t("actions.noMatchingGuilds"));
+      return;
+    }
+
+    if (!npc || !world) return;
+
+    try {
+      await startNpcPartyGathering({
+        npc,
+        guildIds: resolvedGuildIds,
+        world,
+      });
+
+      setNpcState(npc.id, {
+        ...npc,
+        notificationSent: true,
+      });
+    } catch (error) {
       console.error("Failed to gather party:", error);
       window.message(t("actions.gatherPartyFailed"));
-    } finally {
-      setIsGatheringPartyPending(false);
     }
   };
 
@@ -451,8 +365,8 @@ export const NpcListItem = ({
                 <Button
                   variant="ghost"
                   className={`ll:relative ${ACTION_BUTTON_CLASS_NAME}`}
-                  disabled={isCreateNotificationPending || npc.notificationSent}
-                  onClick={() => handleSendNotification(npc)}
+                  disabled={isSendingNpcNotification || npc.notificationSent}
+                  onClick={() => void handleSendNotification(npc)}
                 >
                   {isMessageButtonInCooldown ? (
                     <>
@@ -507,10 +421,12 @@ export const NpcListItem = ({
                 <Button
                   variant="ghost"
                   className={ACTION_BUTTON_CLASS_NAME}
-                  disabled={isGatheringPartyPending || hasActivePartyGathering}
-                  onClick={() => handleGatherParty(npc)}
+                  disabled={
+                    isCreatingNpcPartyGathering || hasActivePartyGathering
+                  }
+                  onClick={() => void handleGatherParty(npc)}
                 >
-                  {isGatheringPartyPending ? (
+                  {isCreatingNpcPartyGathering ? (
                     <Loader2 size={12} className="ll:animate-spin" />
                   ) : (
                     <Users size={12} />
@@ -518,7 +434,7 @@ export const NpcListItem = ({
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="top">
-                {isGatheringPartyPending
+                {isCreatingNpcPartyGathering
                   ? t("actions.gatheringParty")
                   : hasActivePartyGathering
                     ? t("actions.alreadyGatheringParty")

@@ -1,18 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GuildMultiSelector } from "@/components/guild-multi-selector";
-import { MessageType } from "@/api/chat.api";
-import { useSilentCancelPartyGathering } from "@/hooks/api/use-silent-cancel-party-gathering";
-import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
-import { useMessagingControllerCreatePartyGathering } from "@/lib/api/generated/main/messaging/messaging";
-import {
-  buildCurrentCharacterPayload,
-  buildChatCharacterData,
-} from "@/lib/api/generated-helpers";
-import { useSession } from "@/hooks/auth/use-session";
-import { usePartyFinderStore } from "@/store/party-finder.store";
-import { useWindowsStore } from "@/store/windows.store";
 import { getCreatePartyGatheringErrorMessage } from "@/features/party-finder/get-create-party-gathering-error-message";
+import { usePartyGatheringOrchestration } from "@/features/party-finder/hooks/use-party-gathering-orchestration";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -47,14 +37,8 @@ type FormData = z.infer<ReturnType<typeof createFormSchema>>;
 export const CreatePartyGatheringForm = () => {
   const { t } = useTranslation("partyFinder");
   const [selectedGuildIds, setSelectedGuildIds] = useState<string[]>([]);
-  const { mutate: createPartyGathering, isPending } =
-    useMessagingControllerCreatePartyGathering();
-  const silentCancel = useSilentCancelPartyGathering();
-  const { mutateAsync: sendChatMessage } = useSendChatMessage();
-  const setPartyGathering = usePartyFinderStore((s) => s.setPartyGathering);
-  const setOpen = useWindowsStore((state) => state.setOpen);
-  const { data: session } = useSession();
-  const discordId = session?.user?.discordId;
+  const { isCreatingPartyGathering, startPartyGathering } =
+    usePartyGatheringOrchestration();
 
   const {
     register,
@@ -76,73 +60,21 @@ export const CreatePartyGatheringForm = () => {
       return;
     }
 
-    await silentCancel();
-
-    const hero = Game.hero;
     const world = Game.getWorldName();
 
-    createPartyGathering(
-      {
-        data: {
-          guildIds: selectedGuildIds,
-          world,
-          character: buildCurrentCharacterPayload(),
-          description: data.description || undefined,
-          minLvl: data.minLvl ? Number(data.minLvl) : undefined,
-          maxLvl: data.maxLvl ? Number(data.maxLvl) : undefined,
-        },
-      },
-      {
-        onSuccess: async (response) => {
-          const notificationId = response.notificationId;
-          const guildIds = response.guildIds ?? selectedGuildIds;
-
-          setPartyGathering({
-            notificationId,
-            discordId: discordId || "",
-            character: {
-              nick: hero.nick,
-              lvl: hero.lvl,
-              prof: hero.prof,
-              characterId: String(hero.id),
-              accountId: String(hero.account),
-              icon: hero.img,
-              clan: hero.clan
-                ? { id: hero.clan.id, name: hero.clan.name }
-                : undefined,
-            },
-            description: data.description || undefined,
-            minLvl: data.minLvl ? Number(data.minLvl) : undefined,
-            maxLvl: data.maxLvl ? Number(data.maxLvl) : undefined,
-            world,
-            createdAt: new Date().toISOString(),
-            guildIds,
-          });
-
-          await sendChatMessage({
-            message: hero.nick,
-            guildIds,
-            type: MessageType.PARTY_GATHERING,
-            characterData: buildChatCharacterData(),
-            partyGathering: {
-              notificationId,
-              discordId: discordId || "",
-              description: data.description || undefined,
-              minLvl: data.minLvl ? Number(data.minLvl) : undefined,
-              maxLvl: data.maxLvl ? Number(data.maxLvl) : undefined,
-              world,
-            },
-          });
-
-          setOpen("create-party-gathering", false);
-          setOpen("party-finder", true);
-          reset();
-        },
-        onError: (error) => {
-          window.message(getCreatePartyGatheringErrorMessage(error));
-        },
-      },
-    );
+    try {
+      await startPartyGathering({
+        guildIds: selectedGuildIds,
+        world,
+        description: data.description || undefined,
+        minLvl: data.minLvl ? Number(data.minLvl) : undefined,
+        maxLvl: data.maxLvl ? Number(data.maxLvl) : undefined,
+        closeCreateWindow: true,
+      });
+      reset();
+    } catch (error) {
+      window.message(getCreatePartyGatheringErrorMessage(error));
+    }
   };
 
   return (
@@ -203,8 +135,12 @@ export const CreatePartyGatheringForm = () => {
         </span>
       )}
 
-      <Button type="submit" disabled={isPending} className="ll:mt-2">
-        {isPending ? t("form.submitting") : t("form.submit")}
+      <Button
+        type="submit"
+        disabled={isCreatingPartyGathering}
+        className="ll:mt-2"
+      >
+        {isCreatingPartyGathering ? t("form.submitting") : t("form.submit")}
       </Button>
     </form>
   );

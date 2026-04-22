@@ -5,7 +5,6 @@ import {
   getChatControllerGetChatMessagesQueryKey,
   useChatControllerSendChatMessage,
 } from "@/lib/api/generated/main/chat/chat";
-import { useMessagingControllerSendNotification } from "@/lib/api/generated/main/messaging/messaging";
 import { buildChatCharacterData } from "@/lib/api/generated-helpers";
 import { Game } from "@/lib/game";
 import { usePartyCommand } from "@/features/command/hooks/use-party-command";
@@ -19,6 +18,7 @@ import { upsertChatMessage } from "@/features/chat/chat.helpers";
 import type { ChatMessageResponseDtoOutput } from "@/lib/api/generated/main/model";
 import { useChatStore } from "@/store/chat.store";
 import { ChatReplyPreview } from "@/features/chat/components/chat-reply-preview";
+import { useNotificationChatOrchestration } from "@/features/chat/hooks/use-notification-chat-orchestration";
 
 type ChatInputProps = {
   selectedGuildId?: string;
@@ -42,8 +42,8 @@ export const ChatInput: FC<ChatInputProps> = ({
   const world = Game.getWorldName();
   const { mutateAsync: sendChatMessage, isPending: isSendingMessage } =
     useChatControllerSendChatMessage();
-  const { mutateAsync: createNotification, isPending: isCreatingNotification } =
-    useMessagingControllerSendNotification();
+  const { isCreatingNotificationMessage, startNotificationMessage } =
+    useNotificationChatOrchestration();
   const { handlePartyCommand } = usePartyCommand();
 
   const { watch, setValue, handleSubmit } = useForm<FormData>({
@@ -54,7 +54,7 @@ export const ChatInput: FC<ChatInputProps> = ({
   });
 
   const messageValue = watch("message");
-  const isPending = isSendingMessage || isCreatingNotification;
+  const isPending = isSendingMessage || isCreatingNotificationMessage;
 
   useEffect(() => {
     if (
@@ -88,34 +88,49 @@ export const ChatInput: FC<ChatInputProps> = ({
         : data.message;
 
     try {
-      if (isNotificationEnabled) {
-        await createNotification({
-          data: {
-            guildIds: [selectedGuildId],
-            message,
-            world,
-          },
-        });
-      }
-
-      const response = await sendChatMessage({
-        pathParams: { guildId: selectedGuildId },
-        data: {
-          message,
-          type: isNotificationEnabled
-            ? MessageType.NOTIFICATION
-            : MessageType.NORMAL,
-          characterData: buildChatCharacterData(),
-          replyTo: replyDraft
-            ? {
-                messageId: replyDraft.messageId,
-                senderNick: replyDraft.senderNick,
-                message: replyDraft.message,
-                type: replyDraft.type,
-              }
-            : undefined,
-        },
-      });
+      const response = isNotificationEnabled
+        ? (
+            await startNotificationMessage({
+              guildIds: [selectedGuildId],
+              world,
+              message,
+              sendChatMessage: (resolvedGuildIds) =>
+                sendChatMessage({
+                  pathParams: {
+                    guildId: resolvedGuildIds[0] ?? selectedGuildId,
+                  },
+                  data: {
+                    message,
+                    type: MessageType.NOTIFICATION,
+                    characterData: buildChatCharacterData(),
+                    replyTo: replyDraft
+                      ? {
+                          messageId: replyDraft.messageId,
+                          senderNick: replyDraft.senderNick,
+                          message: replyDraft.message,
+                          type: replyDraft.type,
+                        }
+                      : undefined,
+                  },
+                }),
+            })
+          ).result
+        : await sendChatMessage({
+            pathParams: { guildId: selectedGuildId },
+            data: {
+              message,
+              type: MessageType.NORMAL,
+              characterData: buildChatCharacterData(),
+              replyTo: replyDraft
+                ? {
+                    messageId: replyDraft.messageId,
+                    senderNick: replyDraft.senderNick,
+                    message: replyDraft.message,
+                    type: replyDraft.type,
+                  }
+                : undefined,
+            },
+          });
 
       queryClient.setQueryData(
         getChatControllerGetChatMessagesQueryKey({ guildId: selectedGuildId }),
