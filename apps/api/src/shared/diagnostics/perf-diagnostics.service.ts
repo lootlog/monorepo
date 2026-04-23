@@ -57,10 +57,7 @@ export class PerfDiagnosticsService {
     }
 
     const context = getRequestDiagnosticsContext();
-
-    this.logger.warn({
-      level: "warn",
-      message: `perf.${span} ${this.round(durationMs)}ms`,
+    const payload = {
       event: "api.perf",
       span,
       durationMs: this.round(durationMs),
@@ -71,6 +68,11 @@ export class PerfDiagnosticsService {
       route: context?.route,
       podName: this.podName,
       ...metadata,
+    };
+
+    this.logger.warn({
+      level: "warn",
+      message: `api.perf ${JSON.stringify(payload)}`,
     });
   }
 
