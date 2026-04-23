@@ -17,11 +17,11 @@ import {
 } from "@lootlog/ui/components/popover";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { ItemImage } from "@/components/tiles";
-import type { ItemHitDtoOutput } from "@/lib/api/generated/search/model";
+import type { SearchItemsResponseDtoOutputHitsItem } from "@/lib/api/generated/search/model";
 import { ItemRarity } from "@/lib/loots/loot-types";
 import { cn } from "@/utils/cn";
 
-type GameItem = ItemHitDtoOutput;
+type GameItem = SearchItemsResponseDtoOutputHitsItem;
 
 type WatchedItemSelectorProps = {
   disabled?: boolean;

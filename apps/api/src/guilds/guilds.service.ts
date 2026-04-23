@@ -588,7 +588,7 @@ export class GuildsService {
     }
   }
 
-  private getGuildMembersForPermissions(
+  private async getGuildMembersForPermissions(
     discordId: string,
     guildIds: string[],
   ): Promise<GuildPermissionMember[]> {

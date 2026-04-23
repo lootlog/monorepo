@@ -5,23 +5,16 @@
  * Meilisearch-powered search microservice
  * OpenAPI spec version: 1.0
  */
-import type { ItemHitDtoOutput } from './item-hit-dto-output';
+import type { SearchItemsResponseDtoOutputFacetDistribution } from './search-items-response-dto-output-facet-distribution';
+import type { SearchItemsResponseDtoOutputFacetStats } from './search-items-response-dto-output-facet-stats';
+import type { SearchItemsResponseDtoOutputHitsItem } from './search-items-response-dto-output-hits-item';
 
 /**
  * Item search results
  */
 export interface SearchItemsResponseDtoOutput {
-  hits: ItemHitDtoOutput[];
+  hits: SearchItemsResponseDtoOutputHitsItem[];
   estimatedTotalHits: number;
-  facetDistribution: {
-    [key: string]: {
-      [key: string]: number;
-    };
-  };
-  facetStats: {
-    [key: string]: {
-      min: number;
-      max: number;
-    };
-  };
+  facetDistribution: SearchItemsResponseDtoOutputFacetDistribution;
+  facetStats: SearchItemsResponseDtoOutputFacetStats;
 }

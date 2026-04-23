@@ -5,22 +5,20 @@
  * Meilisearch-powered search microservice
  * OpenAPI spec version: 1.0
  */
+import type { SearchItemsResponseDtoOutputHitsItemNumericStats } from './search-items-response-dto-output-hits-item-numeric-stats';
+import type { SearchItemsResponseDtoOutputHitsItemStats } from './search-items-response-dto-output-hits-item-stats';
 
 /**
  * Item search hit
  */
-export interface ItemHitDtoOutput {
+export type SearchItemsResponseDtoOutputHitsItem = {
   id: number;
   hid: string;
   name: string;
   icon: string;
   stat: string;
-  stats: {
-    [key: string]: string | number | boolean | string[];
-  };
-  numericStats: {
-    [key: string]: number;
-  };
+  stats: SearchItemsResponseDtoOutputHitsItemStats;
+  numericStats: SearchItemsResponseDtoOutputHitsItemNumericStats;
   statsKeys: string[];
   requiredProfessions: string[];
   lvl: number;
@@ -29,4 +27,4 @@ export interface ItemHitDtoOutput {
   /** @nullable */
   type: string | null;
   world: string;
-}
+};

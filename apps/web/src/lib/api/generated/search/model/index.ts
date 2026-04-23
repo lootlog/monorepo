@@ -7,16 +7,22 @@
  */
 
 export * from './all-controller-search-all-params';
-export * from './item-hit-dto-output';
 export * from './items-controller-get-items-params';
 export * from './npc-hit-dto-output-type';
 export * from './npc-hit-dto-output';
 export * from './npcs-controller-get-npcs-params';
 export * from './player-hit-dto-output';
 export * from './players-controller-get-players-params';
+export * from './search-all-response-dto-output-items-item-numeric-stats';
+export * from './search-all-response-dto-output-items-item-stats';
 export * from './search-all-response-dto-output-items-item';
 export * from './search-all-response-dto-output-npcs-item-type';
 export * from './search-all-response-dto-output-npcs-item';
 export * from './search-all-response-dto-output-players-item';
 export * from './search-all-response-dto-output';
+export * from './search-items-response-dto-output-facet-distribution';
+export * from './search-items-response-dto-output-facet-stats';
+export * from './search-items-response-dto-output-hits-item-numeric-stats';
+export * from './search-items-response-dto-output-hits-item-stats';
+export * from './search-items-response-dto-output-hits-item';
 export * from './search-items-response-dto-output';
