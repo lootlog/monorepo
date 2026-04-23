@@ -109,7 +109,11 @@ export const ChatInputEditor: FC<ChatInputEditorProps> = ({
     const caretRect =
       caretRange.getClientRects()[0] ?? caretRange.getBoundingClientRect();
 
-    if (caretRect.width === 0 && caretRect.left === 0 && caretRect.right === 0) {
+    if (
+      caretRect.width === 0 &&
+      caretRect.left === 0 &&
+      caretRect.right === 0
+    ) {
       if (currentCaretIndex <= 0) {
         editor.scrollLeft = 0;
         return;
