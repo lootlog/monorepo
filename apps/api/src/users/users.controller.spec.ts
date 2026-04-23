@@ -71,4 +71,38 @@ describe("UserController", () => {
       "auth-user-current",
     );
   });
+
+  it("delegates accessible current-user guild reads to the service", async () => {
+    mockUsersService.getCurrentUserAccessibleGuilds.mockResolvedValue([
+      {
+        id: "guild-1",
+        name: "Alpha",
+        icon: null,
+        vanityUrl: null,
+        ownerId: "owner-1",
+        hasLootlogAccess: true,
+        isAccessDataStale: false,
+      },
+    ]);
+
+    const result = await controller.getCurrentUserAccessibleGuilds(
+      "discord-user-current",
+      "auth-user-current",
+    );
+
+    expect(
+      mockUsersService.getCurrentUserAccessibleGuilds,
+    ).toHaveBeenCalledWith("discord-user-current", "auth-user-current");
+    expect(result).toEqual([
+      {
+        id: "guild-1",
+        name: "Alpha",
+        icon: null,
+        vanityUrl: null,
+        ownerId: "owner-1",
+        hasLootlogAccess: true,
+        isAccessDataStale: false,
+      },
+    ]);
+  });
 });

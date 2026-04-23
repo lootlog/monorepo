@@ -20,10 +20,7 @@ import {
   getAllControllerSearchAllQueryKey,
   useAllControllerSearchAll,
 } from "@/lib/api/generated/search/all/all";
-import type {
-  ItemHitDtoOutput,
-  NpcHitDtoOutput,
-} from "@/lib/api/generated/search/model";
+import type { NpcHitDtoOutput } from "@/lib/api/generated/search/model";
 import { ItemRarity } from "@/lib/loots/loot-types";
 import { parseItemHid } from "@/lib/utils/hid-detection";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
@@ -140,7 +137,7 @@ export const LootSearchCommand = ({
     setSearchQuery("");
   };
 
-  const handleSelectItem = (item: ItemHitDtoOutput) => {
+  const handleSelectItem = (item: { name: string }) => {
     setFilters({ itemNames: [item.name] });
     onOpenChange(false);
     setSearchQuery("");

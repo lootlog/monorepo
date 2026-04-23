@@ -198,7 +198,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
     })) ?? [];
 
   const itemsOptions =
-    itemsQuery.data?.map((item) => ({
+    itemsQuery.data?.hits.map((item) => ({
       value: item.name,
       label: item.name,
     })) ?? [];

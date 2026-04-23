@@ -79,18 +79,18 @@ paths:
         - users
   /users/@me/guilds/accessible:
     get:
-      description: Retrieve the authenticated user's Lootlog guilds where the cached or refreshed member data indicates access
+      description: Retrieve the authenticated user's Lootlog guilds where cached member data indicates access
       operationId: UsersController_getCurrentUserAccessibleGuilds
       parameters: []
       responses:
         "200":
-          description: Accessible current user guilds
+          description: Accessible current user guilds with Lootlog access metadata
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/GuildResponseDto_Output"
+                  $ref: "#/components/schemas/UserCurrentGuildResponseDto_Output"
       security:
         - bearer: []
       summary: Get accessible current user guilds
@@ -5422,25 +5422,6 @@ components:
         - ownerId
         - hasLootlogAccess
         - isAccessDataStale
-    GuildResponseDto_Output:
-      type: object
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        icon:
-          type: string
-          nullable: true
-        vanityUrl:
-          type: string
-          nullable: true
-        ownerId:
-          type: string
-      required:
-        - id
-        - name
-        - ownerId
     UpdateUserPreferencesDto:
       type: object
       properties:
@@ -6406,6 +6387,25 @@ components:
         - failedMembers
         - createdAt
       nullable: true
+    GuildResponseDto_Output:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        icon:
+          type: string
+          nullable: true
+        vanityUrl:
+          type: string
+          nullable: true
+        ownerId:
+          type: string
+      required:
+        - id
+        - name
+        - ownerId
     UserGuildPermissionsDto_Output:
       type: object
       properties:

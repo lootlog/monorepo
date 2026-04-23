@@ -59,6 +59,20 @@ type GetGuildDiscordSyncStateOptions = {
   refreshIfStale?: boolean;
 };
 
+type GuildPermissionMember = {
+  guildId: string;
+  active: boolean;
+  globalUserId: string | null;
+  lastDiscordSyncAt: Date | null;
+  updatedAt: Date;
+  roles: Array<{
+    id: string;
+    lvlRangeFrom: number | null;
+    lvlRangeTo: number | null;
+    permissions: Permission[];
+  }>;
+};
+
 @Injectable()
 export class GuildsService {
   private readonly staleAfterMs: number;
@@ -78,18 +92,22 @@ export class GuildsService {
 
   async getUserGuilds(discordId: string, userId: string, source?: string) {
     if (source === "game") {
-      return this.getCurrentUserAccessibleGuilds(discordId, userId);
+      return this.getCurrentUserAccessibleGuildPlainEntries(discordId, userId);
     }
 
     const guildCandidates = await this.getDiscordLootlogGuildCandidates(
       discordId,
       userId,
     );
+    const guilds =
+      guildCandidates.length > 0
+        ? guildCandidates.map(({ guild }) => guild)
+        : await this.getCurrentUserAccessibleGuildPlainEntries(
+            discordId,
+            userId,
+          );
 
-    return this.sortGuildEntriesByUserPreferences(
-      userId,
-      guildCandidates.map(({ guild }) => guild),
-    );
+    return this.sortGuildEntriesByUserPreferences(userId, guilds);
   }
 
   async getCurrentUserGuildAccessSummaries(
@@ -117,49 +135,51 @@ export class GuildsService {
       requiredPermissions,
       maxImmediateRefreshes: 2,
     });
-    const memberByGuildId = new Map(
-      members.map((member) => [member.guildId, member] as const),
-    );
-
     return this.sortGuildEntriesByUserPreferences(
       userId,
-      guildCandidates.map(({ guild }) => {
-        const member = memberByGuildId.get(guild.id);
-        const isOwner = guild.ownerId === discordId;
-
-        return {
-          id: guild.id,
-          name: guild.name,
-          icon: guild.icon,
-          vanityUrl: guild.vanityUrl,
-          ownerId: guild.ownerId,
-          hasLootlogAccess:
-            isOwner ||
-            this.memberHasRequiredPermissions(member, requiredPermissions),
-          isAccessDataStale:
-            !isOwner &&
-            (member === undefined ||
-              this.membersService.isMemberSoftStale(member)),
-        };
+      this.buildCurrentUserGuildAccessSummaries({
+        discordId,
+        guilds: guildCandidates.map((candidate) => candidate.guild),
+        members,
+        requiredPermissions,
       }),
     );
   }
 
-  async getCurrentUserAccessibleGuilds(discordId: string, userId: string) {
-    const guilds = await this.getCurrentUserGuildAccessSummaries(
+  async getCurrentUserAccessibleGuilds(
+    discordId: string,
+    userId: string,
+  ): Promise<CurrentUserGuildAccessSummary[]> {
+    const requiredPermissions = [Permission.LOOTLOG_ACCESS];
+    const guilds = await this.getGuildsForRequiredPermissions(
       discordId,
-      userId,
+      requiredPermissions,
     );
 
-    return guilds
-      .filter((guild) => guild.hasLootlogAccess)
-      .map(
-        ({
-          hasLootlogAccess: _hasLootlogAccess,
-          isAccessDataStale: _isAccessDataStale,
-          ...guild
-        }) => guild,
-      );
+    if (guilds.length === 0) {
+      return [];
+    }
+
+    const members = await this.getGuildMembersForPermissions(
+      discordId,
+      guilds.map((guild) => guild.id),
+    );
+    this.queueStaleAccessibleGuildRefreshes({
+      discordId,
+      userId,
+      guilds,
+      members,
+    });
+
+    return this.sortGuildEntriesByUserPreferences(
+      userId,
+      this.buildCurrentUserGuildAccessSummaries({
+        discordId,
+        guilds,
+        members,
+        requiredPermissions,
+      }).filter((guild) => guild.hasLootlogAccess),
+    );
   }
 
   async getManageableUserGuilds(discordId: string, userId: string) {
@@ -568,7 +588,10 @@ export class GuildsService {
     }
   }
 
-  private getGuildMembersForPermissions(discordId: string, guildIds: string[]) {
+  private async getGuildMembersForPermissions(
+    discordId: string,
+    guildIds: string[],
+  ): Promise<GuildPermissionMember[]> {
     if (guildIds.length === 0) {
       return [];
     }
@@ -600,19 +623,7 @@ export class GuildsService {
     discordId: string;
     userId: string;
     guildCandidates: GuildRefreshCandidate[];
-    members: Array<{
-      guildId: string;
-      active: boolean;
-      globalUserId: string | null;
-      lastDiscordSyncAt: Date | null;
-      updatedAt: Date;
-      roles: Array<{
-        id: string;
-        lvlRangeFrom: number | null;
-        lvlRangeTo: number | null;
-        permissions: Permission[];
-      }>;
-    }>;
+    members: GuildPermissionMember[];
     requiredPermissions: Permission[];
     maxImmediateRefreshes: number;
   }) {
@@ -845,6 +856,97 @@ export class GuildsService {
         guildOrderMap.get(rightEntry.id) ?? Number.MAX_SAFE_INTEGER;
 
       return leftIndex - rightIndex;
+    });
+  }
+
+  private buildCurrentUserGuildAccessSummaries(options: {
+    discordId: string;
+    guilds: Guild[];
+    members: GuildPermissionMember[];
+    requiredPermissions: Permission[];
+  }): CurrentUserGuildAccessSummary[] {
+    const { discordId, guilds, members, requiredPermissions } = options;
+    const memberByGuildId = new Map(
+      members.map((member) => [member.guildId, member] as const),
+    );
+
+    return guilds.map((guild) => {
+      const member = memberByGuildId.get(guild.id);
+      const isOwner = guild.ownerId === discordId;
+
+      return {
+        id: guild.id,
+        name: guild.name,
+        icon: guild.icon,
+        vanityUrl: guild.vanityUrl,
+        ownerId: guild.ownerId,
+        hasLootlogAccess:
+          isOwner ||
+          this.memberHasRequiredPermissions(member, requiredPermissions),
+        isAccessDataStale:
+          !isOwner &&
+          (member === undefined ||
+            this.membersService.isMemberSoftStale(member)),
+      };
+    });
+  }
+
+  private async getCurrentUserAccessibleGuildPlainEntries(
+    discordId: string,
+    userId: string,
+  ) {
+    const guilds = await this.getCurrentUserAccessibleGuilds(discordId, userId);
+
+    return guilds.map(
+      ({
+        hasLootlogAccess: _hasLootlogAccess,
+        isAccessDataStale: _isAccessDataStale,
+        ...guild
+      }) => guild,
+    );
+  }
+
+  private queueStaleAccessibleGuildRefreshes(options: {
+    discordId: string;
+    userId: string;
+    guilds: Guild[];
+    members: GuildPermissionMember[];
+  }): void {
+    const { discordId, userId, guilds, members } = options;
+    const memberByGuildId = new Map(
+      members.map((member) => [member.guildId, member] as const),
+    );
+    const staleGuildIds = guilds
+      .filter((guild) => guild.ownerId !== discordId)
+      .filter((guild) => {
+        const member = memberByGuildId.get(guild.id);
+        return Boolean(
+          member?.globalUserId && this.membersService.isMemberSoftStale(member),
+        );
+      })
+      .map((guild) => guild.id);
+
+    if (staleGuildIds.length === 0) {
+      return;
+    }
+
+    void Promise.all(
+      staleGuildIds.map((guildId) =>
+        this.membersService.queueMemberRefresh({
+          discordId,
+          guildId,
+          userId,
+          priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
+          reason: "guild-access-background",
+        }),
+      ),
+    ).catch((error) => {
+      this.logger.warn({
+        message: "Failed to queue stale accessible guild refreshes",
+        discordId,
+        userId,
+        error,
+      });
     });
   }
 

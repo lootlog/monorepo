@@ -1,7 +1,7 @@
 import createMDX from "@next/mdx";
+import type { NextConfig } from "next";
 
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+const nextConfig: NextConfig = {
   transpilePackages: ["@lootlog/ui"],
   output: "export",
   images: {

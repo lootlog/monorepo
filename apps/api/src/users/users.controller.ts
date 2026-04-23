@@ -18,7 +18,6 @@ import {
 import { ZodResponse } from "nestjs-zod";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { StatusOkResponseDto } from "src/shared/dto/common-response.dto";
-import { GuildResponseDto } from "src/shared/dto/guild-response.dto";
 import { UserGameAccountPreferencesResponseDto } from "src/shared/dto/user-account-preferences-response.dto";
 import { UserPreferencesResponseDto } from "src/shared/dto/user-preferences-response.dto";
 import { UpdateUserGameAccountPreferencesDto } from "src/users/dto/update-user-account-preferences.dto";
@@ -91,12 +90,12 @@ export class UsersController {
   @ApiOperation({
     summary: "Get accessible current user guilds",
     description:
-      "Retrieve the authenticated user's Lootlog guilds where the cached or refreshed member data indicates access",
+      "Retrieve the authenticated user's Lootlog guilds where cached member data indicates access",
   })
   @ZodResponse({
     status: 200,
-    description: "Accessible current user guilds",
-    type: [GuildResponseDto],
+    description: "Accessible current user guilds with Lootlog access metadata",
+    type: [UserCurrentGuildResponseDto],
   })
   async getCurrentUserAccessibleGuilds(
     @DiscordId() discordId: string,

@@ -5,6 +5,7 @@ import { PrismaClient } from "../../../../apps/api/generated/client/index.js";
 import { Meilisearch } from "meilisearch";
 import "dotenv/config";
 import { z } from "zod";
+import { createItemSearchFields } from "../items/utils/create-item-search-fields";
 
 const configSchema = z.object({
   MEILISEARCH_HOST: z.string(),
@@ -61,6 +62,7 @@ type ItemSnapshotWithWorld = {
   itemId: number;
   name: string;
   icon: string;
+  statRaw: string;
   lvl: number | null;
   rarity: string | null;
   itemType: string | null;
@@ -130,12 +132,28 @@ async function setupIndexes() {
 
   const itemsIndex = meilisearch.index(ITEMS_INDEX);
   const itemsFilterTask = await itemsIndex.updateFilterableAttributes([
-    "name",
     "world",
+    "type",
+    "rarity",
+    "lvl",
+    "stats",
+    "numericStats",
+    "requiredProfessions",
+    "statsKeys",
   ]);
   await waitForTask(itemsFilterTask.taskUid);
-  const itemsSearchTask = await itemsIndex.updateSearchableAttributes(["name"]);
+  const itemsSearchTask = await itemsIndex.updateSearchableAttributes([
+    "name",
+    "stat",
+  ]);
   await waitForTask(itemsSearchTask.taskUid);
+  const itemsSortTask = await itemsIndex.updateSortableAttributes([
+    "name",
+    "lvl",
+    "rarity",
+    "type",
+  ]);
+  await waitForTask(itemsSortTask.taskUid);
 
   console.log("Indexes configured.");
 }
@@ -267,6 +285,7 @@ async function seedItems() {
       item_s."itemId",
       item_s."name",
       item_s."icon",
+      item_s."statRaw",
       item_s."lvl",
       item_s."rarity",
       item_s."itemType",
@@ -289,6 +308,8 @@ async function seedItems() {
       hid: "", // hid is in LootItem, not ItemSnapshot
       name: item.name,
       icon: item.icon,
+      stat: item.statRaw,
+      ...createItemSearchFields(item.statRaw),
       lvl: item.lvl ?? 0,
       rarity: item.rarity,
       type: item.itemType,

@@ -333,6 +333,7 @@ export class LootsService implements OnModuleInit {
         id: item.id,
         name: item.name,
         icon: item.icon,
+        stat: item.stat,
         lvl: item.lvl,
         rarity: item.rarity,
         type: item.type,

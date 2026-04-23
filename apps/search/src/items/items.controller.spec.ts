@@ -6,7 +6,7 @@ describe("ItemsController", () => {
   let controller: ItemsController;
 
   const itemsServiceMock = {
-    getItems: vi.fn(),
+    searchItems: vi.fn(),
   };
 
   beforeEach(async () => {
@@ -30,16 +30,22 @@ describe("ItemsController", () => {
   describe("getItems", () => {
     it("should delegate query to items service", async () => {
       const query = {
-        limit: 3,
+        limit: 20,
+        offset: 0,
         search: "miecz",
         world: "Berufs",
       };
 
-      const response = [{ id: 1, name: "Miecz" }];
-      itemsServiceMock.getItems.mockResolvedValue(response);
+      const response = {
+        hits: [{ id: 1, name: "Miecz" }],
+        estimatedTotalHits: 1,
+        facetDistribution: {},
+        facetStats: {},
+      };
+      itemsServiceMock.searchItems.mockResolvedValue(response);
 
       await expect(controller.getItems(query)).resolves.toEqual(response);
-      expect(itemsServiceMock.getItems).toHaveBeenCalledWith(query);
+      expect(itemsServiceMock.searchItems).toHaveBeenCalledWith(query);
     });
   });
 });
