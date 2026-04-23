@@ -19,8 +19,8 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  SearchItemsResponseDtoOutput,
-  ItemsControllerGetItemsParams
+  ItemsControllerGetItemsParams,
+  SearchItemsResponseDtoOutput
 } from '../model';
 
 import { orvalFetchSearch } from '../../../orval-fetch';
@@ -34,19 +34,12 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 /**
  * @summary Search items with filters, sorting, and facets
  */
-export const getItemsControllerGetItemsUrl = (params?: ItemsControllerGetItemsParams,) => {
+export const getItemsControllerGetItemsUrl = (params: ItemsControllerGetItemsParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
 
     if (value !== undefined) {
-      if (Array.isArray(value)) {
-        value.forEach((entry) => {
-          normalizedParams.append(key, entry === null ? 'null' : entry.toString())
-        })
-        return;
-      }
-
       normalizedParams.append(key, value === null ? 'null' : value.toString())
     }
   });
@@ -56,7 +49,7 @@ export const getItemsControllerGetItemsUrl = (params?: ItemsControllerGetItemsPa
   return stringifiedParams.length > 0 ? `/items?${stringifiedParams}` : `/items`
 }
 
-export const itemsControllerGetItems = async (params?: ItemsControllerGetItemsParams, options?: RequestInit): Promise<SearchItemsResponseDtoOutput> => {
+export const itemsControllerGetItems = async (params: ItemsControllerGetItemsParams, options?: RequestInit): Promise<SearchItemsResponseDtoOutput> => {
 
   return orvalFetchSearch<SearchItemsResponseDtoOutput>(getItemsControllerGetItemsUrl(params),
   {
@@ -78,7 +71,7 @@ export const getItemsControllerGetItemsQueryKey = (params?: ItemsControllerGetIt
     }
 
 
-export const getItemsControllerGetItemsQueryOptions = <TData = Awaited<ReturnType<typeof itemsControllerGetItems>>, TError = ErrorType<unknown>>(params?: ItemsControllerGetItemsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof itemsControllerGetItems>>, TError, TData>, request?: SecondParameter<typeof orvalFetchSearch>}
+export const getItemsControllerGetItemsQueryOptions = <TData = Awaited<ReturnType<typeof itemsControllerGetItems>>, TError = ErrorType<unknown>>(params: ItemsControllerGetItemsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof itemsControllerGetItems>>, TError, TData>, request?: SecondParameter<typeof orvalFetchSearch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -105,7 +98,7 @@ export type ItemsControllerGetItemsQueryError = ErrorType<unknown>
  */
 
 export function useItemsControllerGetItems<TData = Awaited<ReturnType<typeof itemsControllerGetItems>>, TError = ErrorType<unknown>>(
- params?: ItemsControllerGetItemsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof itemsControllerGetItems>>, TError, TData>, request?: SecondParameter<typeof orvalFetchSearch>}
+ params: ItemsControllerGetItemsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof itemsControllerGetItems>>, TError, TData>, request?: SecondParameter<typeof orvalFetchSearch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
@@ -120,7 +113,7 @@ export function useItemsControllerGetItems<TData = Awaited<ReturnType<typeof ite
  * @summary Search items with filters, sorting, and facets
  */
 export const prefetchItemsControllerGetItemsQuery = async <TData = Awaited<ReturnType<typeof itemsControllerGetItems>>, TError = ErrorType<unknown>>(
- queryClient: QueryClient, params?: ItemsControllerGetItemsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof itemsControllerGetItems>>, TError, TData>, request?: SecondParameter<typeof orvalFetchSearch>}
+ queryClient: QueryClient, params: ItemsControllerGetItemsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof itemsControllerGetItems>>, TError, TData>, request?: SecondParameter<typeof orvalFetchSearch>}
 
   ): Promise<QueryClient> => {
 
@@ -135,7 +128,7 @@ export const prefetchItemsControllerGetItemsQuery = async <TData = Awaited<Retur
  * @summary Search items with filters, sorting, and facets
  */
 export const invalidateItemsControllerGetItems = async (
- queryClient: QueryClient, params?: ItemsControllerGetItemsParams, options?: InvalidateOptions
+ queryClient: QueryClient, params: ItemsControllerGetItemsParams, options?: InvalidateOptions
   ): Promise<QueryClient> => {
 
   await queryClient.invalidateQueries({ queryKey: getItemsControllerGetItemsQueryKey(params) }, options);
@@ -161,4 +154,5 @@ export const useGetItemsControllerGetItemsQueryData = () => {
   return (params: ItemsControllerGetItemsParams,) =>
     queryClient.getQueryData<Awaited<ReturnType<typeof itemsControllerGetItems>>>(getItemsControllerGetItemsQueryKey(params));
 }
+
 

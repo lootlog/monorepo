@@ -1,5 +1,4 @@
 import { useEffect, useRef } from "react";
-// @ts-expect-error ogl has no type definitions
 import { Renderer, Program, Mesh, Color, Triangle } from "ogl";
 
 const VERT = `#version 300 es

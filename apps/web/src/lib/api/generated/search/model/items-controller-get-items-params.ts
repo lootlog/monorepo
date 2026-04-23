@@ -12,6 +12,6 @@ offset?: number;
 search?: string;
 world?: string;
 filter?: string | string[];
-facets?: string[];
-sort?: string[];
+facets: string[];
+sort: string[];
 };

@@ -38,7 +38,7 @@ import {
   getItemsControllerGetItemsQueryKey,
   useItemsControllerGetItems,
 } from "@/lib/api/generated/search/items/items";
-import type { ItemHitDtoOutput } from "@/lib/api/generated/search/model";
+import type { SearchItemsResponseDtoOutputHitsItem } from "@/lib/api/generated/search/model";
 import type { WatchedItemResponseDto } from "@/lib/api/generated/main/model";
 
 const watchFormSchema = z
@@ -101,7 +101,7 @@ type WatchFormDialogProps = {
   guildOptions: Array<{ value: string; label: string }>;
 };
 
-type GameItem = ItemHitDtoOutput;
+type GameItem = SearchItemsResponseDtoOutputHitsItem;
 
 export const WatchFormDialog = ({
   open,
@@ -150,8 +150,10 @@ export const WatchFormDialog = ({
     ...new Set(worldQueries.flatMap((query) => query.data ?? [])),
   ].sort();
   const itemSearchParams = {
+    facets: [],
     limit: 10,
     search: itemSearchValue,
+    sort: [],
     world: selectedWorld || undefined,
   };
   const itemSearchQuery = useItemsControllerGetItems(itemSearchParams, {
