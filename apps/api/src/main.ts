@@ -4,8 +4,11 @@ import {
   createOpenApiDocument,
   setupOpenApi,
 } from "src/openapi/openapi-document";
+import { registerNodeWarningDiagnostics } from "src/shared/diagnostics/node-warning-diagnostics";
 
 async function bootstrap() {
+  registerNodeWarningDiagnostics();
+
   const app = await createApp();
   const document = createOpenApiDocument(app);
 

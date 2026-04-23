@@ -32,6 +32,8 @@ import { MapsModule } from "src/maps/maps.module";
 import { MapTemplatesModule } from "src/map-templates/map-templates.module";
 import { KillsModule } from "src/kills/kills.module";
 import { MemberContextModule } from "src/shared/permissions/member-context.module";
+import { DiagnosticsModule } from "src/shared/diagnostics/diagnostics.module";
+import { PerfDiagnosticsMiddleware } from "src/shared/diagnostics/perf-diagnostics.middleware";
 
 const isOpenApiGeneration = process.env.OPENAPI_GENERATION === "true";
 
@@ -55,6 +57,7 @@ const isOpenApiGeneration = process.env.OPENAPI_GENERATION === "true";
     TimerSettingsModule,
     LootsModule,
     HealthzModule,
+    DiagnosticsModule,
     MemberContextModule,
     GuildsModule,
     RolesModule,
@@ -91,6 +94,9 @@ const isOpenApiGeneration = process.env.OPENAPI_GENERATION === "true";
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(LoggerMiddleware).exclude("/healthz").forRoutes("*");
+    consumer
+      .apply(PerfDiagnosticsMiddleware, LoggerMiddleware)
+      .exclude("/healthz")
+      .forRoutes("*");
   }
 }
