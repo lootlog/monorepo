@@ -3,18 +3,16 @@ import { z } from "zod";
 
 const stringOrStringArraySchema = z.union([z.string(), z.array(z.string())]);
 
-const csvQueryParamSchema = z.preprocess((value) => {
-  if (value === undefined) {
-    return undefined;
-  }
+const csvQueryParamSchema = z
+  .preprocess((value) => {
+    const values = Array.isArray(value) ? value : [value];
 
-  const values = Array.isArray(value) ? value : [value];
-
-  return values
-    .flatMap((entry) => String(entry).split(","))
-    .map((entry) => entry.trim())
-    .filter(Boolean);
-}, z.array(z.string()).optional());
+    return values
+      .flatMap((entry) => String(entry).split(","))
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+  }, z.array(z.string()))
+  .optional();
 
 export const getItemsQuerySchema = z.object({
   limit: z.coerce.number().optional().default(20),
