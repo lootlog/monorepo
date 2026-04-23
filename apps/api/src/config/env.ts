@@ -3,6 +3,17 @@ import { z } from "zod";
 import { createEnv } from "@lootlog/nest-shared/config";
 import { RuntimeEnvironment } from "src/types/runtime.types";
 
+const booleanEnv = z
+  .string()
+  .optional()
+  .transform((value) => {
+    if (!value) {
+      return false;
+    }
+
+    return ["1", "true", "yes", "on"].includes(value.toLowerCase());
+  });
+
 export const env = createEnv(
   z.object({
     ENV: z.nativeEnum(RuntimeEnvironment).default(RuntimeEnvironment.LOCAL),
@@ -30,5 +41,9 @@ export const env = createEnv(
     TIMER_RETENTION_DAYS: z.coerce.number().default(7),
     RESERVATIONS_CLEANUP_ENABLED: z.string().default("true"),
     RESERVATIONS_RETENTION_DAYS: z.coerce.number().default(30),
+    PERF_DIAGNOSTICS_ENABLED: booleanEnv.default(false),
+    PERF_DIAGNOSTICS_THRESHOLD_MS: z.coerce.number().positive().default(50),
+    PERF_DIAGNOSTICS_SAMPLE_RATE: z.coerce.number().min(0).max(1).default(1),
+    NODE_WARNING_DIAGNOSTICS_ENABLED: booleanEnv.default(false),
   }),
 );

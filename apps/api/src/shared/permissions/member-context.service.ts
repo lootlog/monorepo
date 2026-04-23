@@ -2,6 +2,7 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  Optional,
   forwardRef,
 } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
@@ -17,6 +18,12 @@ import {
   GUILD_CACHE_TTL_SECONDS,
   PERMISSIONS_CACHE_TTL_SECONDS,
 } from "src/shared/constants/cache.constant";
+import { PerfDiagnosticsService } from "src/shared/diagnostics/perf-diagnostics.service";
+
+type GuildLookupResult = {
+  guild: Guild;
+  cacheHit: boolean;
+};
 
 @Injectable()
 export class MemberContextService {
@@ -26,6 +33,8 @@ export class MemberContextService {
     private readonly redisService: RedisService,
     @Inject(forwardRef(() => MembersService))
     private readonly membersService: MembersService,
+    @Optional()
+    private readonly perfDiagnosticsService?: PerfDiagnosticsService,
   ) {}
 
   async getMemberContext(options: {
@@ -39,40 +48,106 @@ export class MemberContextService {
     permissions: Permission[];
   } | null> {
     const { discordId, userId, guildId } = options;
+    const diagnosticsEnabled =
+      this.perfDiagnosticsService?.isActiveForCurrentContext() ?? false;
+    const startedAt = diagnosticsEnabled
+      ? this.perfDiagnosticsService?.now()
+      : undefined;
+    const stages: Record<string, number> = {};
+    const diagnostics: Record<string, unknown> = { guildId };
 
-    const guild = await this.getGuild(guildId);
+    try {
+      const guildLookup = await this.timeStage(stages, "guildLookup", () =>
+        this.getGuild(guildId),
+      );
+      const { guild } = guildLookup;
+      diagnostics.guildCacheHit = guildLookup.cacheHit;
+
+      return await this.getContextForGuild({
+        diagnostics,
+        discordId,
+        guild,
+        stages,
+        startedAt,
+        userId,
+      });
+    } catch (error) {
+      this.logMemberContextDiagnostics(startedAt, stages, {
+        ...diagnostics,
+        errorName: (error as Error).name,
+        outcome: "error",
+      });
+
+      throw error;
+    }
+  }
+
+  private async getContextForGuild(options: {
+    diagnostics: Record<string, unknown>;
+    discordId: string;
+    guild: Guild;
+    stages: Record<string, number>;
+    startedAt?: number;
+    userId: string;
+  }) {
+    const { diagnostics, discordId, guild, stages, startedAt, userId } =
+      options;
     const cacheKey = getPermissionsCacheKey(userId, guild.id);
 
     try {
-      const cached = await this.redisService.get(cacheKey);
+      const cached = await this.timeStage(stages, "permissionsCacheRead", () =>
+        this.redisService.get(cacheKey),
+      );
 
       if (cached) {
         try {
-          return JSON.parse(cached);
+          const context = JSON.parse(cached);
+          this.logMemberContextDiagnostics(startedAt, stages, {
+            ...diagnostics,
+            outcome: "permissions_cache_hit",
+            permissionsCacheHit: true,
+          });
+
+          return context;
         } catch (error) {
+          diagnostics.permissionsCacheMalformed = true;
           this.logger.warn({
             message: `Failed to parse cached permissions data for key ${cacheKey}`,
             error,
           });
-          await this.redisService.del(cacheKey);
+          await this.timeStage(stages, "permissionsCacheDelete", () =>
+            this.redisService.del(cacheKey),
+          );
         }
       }
     } catch (error) {
+      diagnostics.permissionsCacheReadError = true;
       this.logger.warn({
         message: `Redis cache read failed for key ${cacheKey}, falling back to DB`,
         error,
       });
     }
 
-    const member = await this.membersService.getGuildMemberById({
-      userId,
-      discordId,
-      guildId: guild.id,
-    });
+    const member = await this.timeStage(stages, "memberLookup", () =>
+      this.membersService.getGuildMemberById({
+        userId,
+        discordId,
+        guildId: guild.id,
+      }),
+    );
 
     if (!member || !member.active) {
+      this.logMemberContextDiagnostics(startedAt, stages, {
+        ...diagnostics,
+        memberActive: member?.active ?? false,
+        outcome: "member_missing_or_inactive",
+      });
+
       return null;
     }
+
+    diagnostics.memberRefreshQueued = member.refreshQueued ?? false;
+    diagnostics.memberStale = member.isStale ?? false;
 
     const isOwner = guild.ownerId === discordId;
 
@@ -93,10 +168,12 @@ export class MemberContextService {
 
     if (!member.isStale && !member.refreshQueued) {
       try {
-        await this.redisService.set(
-          getPermissionsCacheKey(userId, guild.id),
-          JSON.stringify(context),
-          PERMISSIONS_CACHE_TTL_SECONDS,
+        await this.timeStage(stages, "permissionsCacheWrite", () =>
+          this.redisService.set(
+            getPermissionsCacheKey(userId, guild.id),
+            JSON.stringify(context),
+            PERMISSIONS_CACHE_TTL_SECONDS,
+          ),
         );
       } catch (error) {
         this.logger.warn({
@@ -106,10 +183,17 @@ export class MemberContextService {
       }
     }
 
+    this.logMemberContextDiagnostics(startedAt, stages, {
+      ...diagnostics,
+      outcome: "member_lookup",
+      permissionsCount: uniquePermissions.length,
+      rolesCount: member.roles.length,
+    });
+
     return context;
   }
 
-  private async getGuild(idOrVanityURL: string): Promise<Guild> {
+  private async getGuild(idOrVanityURL: string): Promise<GuildLookupResult> {
     const cacheKey = getGuildCacheKey(idOrVanityURL);
 
     try {
@@ -117,7 +201,10 @@ export class MemberContextService {
 
       if (cached) {
         try {
-          return JSON.parse(cached);
+          return {
+            guild: JSON.parse(cached),
+            cacheHit: true,
+          };
         } catch {
           await this.redisService.del(cacheKey);
         }
@@ -168,6 +255,45 @@ export class MemberContextService {
       });
     }
 
-    return guild;
+    return {
+      guild,
+      cacheHit: false,
+    };
+  }
+
+  private async timeStage<T>(
+    stages: Record<string, number>,
+    stage: string,
+    callback: () => Promise<T>,
+  ): Promise<T> {
+    if (!this.perfDiagnosticsService?.isActiveForCurrentContext()) {
+      return callback();
+    }
+
+    const startedAt = this.perfDiagnosticsService.now();
+    try {
+      return await callback();
+    } finally {
+      stages[stage] = this.perfDiagnosticsService.now() - startedAt;
+    }
+  }
+
+  private logMemberContextDiagnostics(
+    startedAt: number | undefined,
+    stages: Record<string, number>,
+    metadata: Record<string, unknown>,
+  ) {
+    if (startedAt === undefined || !this.perfDiagnosticsService) {
+      return;
+    }
+
+    this.perfDiagnosticsService.logSpan(
+      "member_context.total",
+      this.perfDiagnosticsService.now() - startedAt,
+      {
+        ...metadata,
+        stagesMs: this.perfDiagnosticsService.roundStages(stages),
+      },
+    );
   }
 }
