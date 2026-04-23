@@ -100,7 +100,13 @@ paths:
           required: false
           in: query
           schema:
-            default: 3
+            default: 20
+            type: number
+        - name: offset
+          required: false
+          in: query
+          schema:
+            default: 0
             type: number
         - name: search
           required: false
@@ -112,16 +118,43 @@ paths:
           in: query
           schema:
             type: string
+        - name: filter
+          required: false
+          in: query
+          style: form
+          explode: true
+          schema:
+            anyOf:
+              - type: string
+              - type: array
+                items:
+                  type: string
+        - name: facets
+          required: false
+          in: query
+          style: form
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+        - name: sort
+          required: false
+          in: query
+          style: form
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
       responses:
         "200":
-          description: List of matching items
+          description: Item search results
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/ItemHitDto_Output"
-      summary: Search items by name
+                $ref: "#/components/schemas/SearchItemsResponseDto_Output"
+      summary: Search items with filters, sorting, and facets
       tags:
         - Items
   /all:
@@ -234,38 +267,105 @@ components:
         - margonemType
         - world
       description: NPC search hit
-    ItemHitDto_Output:
+    SearchItemsResponseDto_Output:
       type: object
       properties:
-        id:
+        hits:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: number
+              hid:
+                default: ""
+                type: string
+              name:
+                type: string
+              icon:
+                type: string
+              stat:
+                default: ""
+                type: string
+              stats:
+                default: {}
+                type: object
+                additionalProperties:
+                  anyOf:
+                    - type: string
+                    - type: number
+                    - type: boolean
+                    - type: array
+                      items:
+                        type: string
+              numericStats:
+                default: {}
+                type: object
+                additionalProperties:
+                  type: number
+              statsKeys:
+                default: []
+                type: array
+                items:
+                  type: string
+              requiredProfessions:
+                default: []
+                type: array
+                items:
+                  type: string
+              lvl:
+                type: number
+              rarity:
+                type: string
+                nullable: true
+              type:
+                type: string
+                nullable: true
+              world:
+                type: string
+            required:
+              - id
+              - hid
+              - name
+              - icon
+              - stat
+              - stats
+              - numericStats
+              - statsKeys
+              - requiredProfessions
+              - lvl
+              - rarity
+              - type
+              - world
+            description: Item search hit
+        estimatedTotalHits:
           type: number
-        hid:
-          type: string
-          default: ""
-        name:
-          type: string
-        icon:
-          type: string
-        lvl:
-          type: number
-        rarity:
-          type: string
-          nullable: true
-        type:
-          type: string
-          nullable: true
-        world:
-          type: string
+        facetDistribution:
+          type: object
+          default: {}
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: number
+        facetStats:
+          type: object
+          default: {}
+          additionalProperties:
+            type: object
+            properties:
+              min:
+                type: number
+              max:
+                type: number
+            required:
+              - min
+              - max
       required:
-        - id
-        - hid
-        - name
-        - icon
-        - lvl
-        - rarity
-        - type
-        - world
-      description: Item search hit
+        - hits
+        - estimatedTotalHits
+        - facetDistribution
+        - facetStats
+      description: Item search results
     SearchAllResponseDto_Output:
       type: object
       properties:
@@ -283,6 +383,35 @@ components:
                 type: string
               icon:
                 type: string
+              stat:
+                default: ""
+                type: string
+              stats:
+                default: {}
+                type: object
+                additionalProperties:
+                  anyOf:
+                    - type: string
+                    - type: number
+                    - type: boolean
+                    - type: array
+                      items:
+                        type: string
+              numericStats:
+                default: {}
+                type: object
+                additionalProperties:
+                  type: number
+              statsKeys:
+                default: []
+                type: array
+                items:
+                  type: string
+              requiredProfessions:
+                default: []
+                type: array
+                items:
+                  type: string
               lvl:
                 type: number
               rarity:
@@ -298,6 +427,11 @@ components:
               - hid
               - name
               - icon
+              - stat
+              - stats
+              - numericStats
+              - statsKeys
+              - requiredProfessions
               - lvl
               - rarity
               - type

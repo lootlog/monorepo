@@ -4,8 +4,10 @@ import { AppLayout } from "@/components/layout/app-layout";
 import { GatewayProvider } from "@/contexts/gateway-context";
 import { sessionQueryOptions } from "@/hooks/auth/use-session-query";
 import { authScopesQueryOptions } from "@/hooks/api/use-auth-scopes";
-import { prefetchGuildsControllerGetUserGuildsQuery } from "@/lib/api/generated/main/guilds/guilds";
-import { prefetchUsersControllerGetUserPreferencesQuery } from "@/lib/api/generated/main/users/users";
+import {
+  prefetchUsersControllerGetCurrentUserAccessibleGuildsQuery,
+  prefetchUsersControllerGetUserPreferencesQuery,
+} from "@/lib/api/generated/main/users/users";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 
 function AuthenticatedLayout() {
@@ -42,7 +44,9 @@ export const Route = createFileRoute("/_authenticated")({
     withRouteLoaderCancellation(async () => {
       await Promise.all([
         context.queryClient.ensureQueryData(authScopesQueryOptions()),
-        prefetchGuildsControllerGetUserGuildsQuery(context.queryClient),
+        prefetchUsersControllerGetCurrentUserAccessibleGuildsQuery(
+          context.queryClient,
+        ),
         prefetchUsersControllerGetUserPreferencesQuery(context.queryClient),
       ]);
 
