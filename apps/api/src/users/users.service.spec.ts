@@ -216,6 +216,40 @@ describe("UsersService", () => {
     ]);
   });
 
+  it("delegates accessible current-user guild lookup to GuildsService", async () => {
+    mockGuildsService.getCurrentUserAccessibleGuilds.mockResolvedValue([
+      {
+        id: "guild-1",
+        name: "Alpha",
+        icon: null,
+        vanityUrl: null,
+        ownerId: "owner-1",
+        hasLootlogAccess: true,
+        isAccessDataStale: false,
+      },
+    ]);
+
+    const result = await service.getCurrentUserAccessibleGuilds(
+      "discord-user-current",
+      "auth-user-current",
+    );
+
+    expect(
+      mockGuildsService.getCurrentUserAccessibleGuilds,
+    ).toHaveBeenCalledWith("discord-user-current", "auth-user-current");
+    expect(result).toEqual([
+      {
+        id: "guild-1",
+        name: "Alpha",
+        icon: null,
+        vanityUrl: null,
+        ownerId: "owner-1",
+        hasLootlogAccess: true,
+        isAccessDataStale: false,
+      },
+    ]);
+  });
+
   it("updates global notification mutes without requiring account-scoped preferences", async () => {
     mockPrismaService.userGameAccountSettings.findUnique.mockResolvedValue(
       null,

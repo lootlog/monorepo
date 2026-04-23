@@ -23,7 +23,6 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  GuildResponseDtoOutput,
   StatusOkResponseDtoOutput,
   UpdateUserGameAccountPreferencesDto,
   UpdateUserPreferencesDto,
@@ -422,7 +421,7 @@ export const useGetUsersControllerGetCurrentUserGuildsQueryData = () => {
 
 
 /**
- * Retrieve the authenticated user's Lootlog guilds where the cached or refreshed member data indicates access
+ * Retrieve the authenticated user's Lootlog guilds where cached member data indicates access
  * @summary Get accessible current user guilds
  */
 export const getUsersControllerGetCurrentUserAccessibleGuildsUrl = () => {
@@ -433,9 +432,9 @@ export const getUsersControllerGetCurrentUserAccessibleGuildsUrl = () => {
   return `/users/@me/guilds/accessible`
 }
 
-export const usersControllerGetCurrentUserAccessibleGuilds = async ( options?: RequestInit): Promise<GuildResponseDtoOutput[]> => {
+export const usersControllerGetCurrentUserAccessibleGuilds = async ( options?: RequestInit): Promise<UserCurrentGuildResponseDtoOutput[]> => {
 
-  return orvalFetch<GuildResponseDtoOutput[]>(getUsersControllerGetCurrentUserAccessibleGuildsUrl(),
+  return orvalFetch<UserCurrentGuildResponseDtoOutput[]>(getUsersControllerGetCurrentUserAccessibleGuildsUrl(),
   {
     ...options,
     method: 'GET'
