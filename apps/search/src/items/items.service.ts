@@ -4,6 +4,7 @@ import type { Logger } from "winston";
 import { Meilisearch, type SearchParams } from "meilisearch";
 import type { z } from "zod";
 import { MEILISEARCH_CLIENT } from "src/meilisearch/meilisearch.constants";
+import { getMeilisearchErrorCode } from "src/meilisearch/meilisearch.utils";
 import type { GetItemsDto } from "./dto/get-items.dto";
 import { ITEMS_INDEX } from "./constants/meilisearch";
 import type { IndexItemsDto } from "./dto/index-items.dto";
@@ -17,22 +18,6 @@ type SearchItemsResponse = {
   facetStats: Record<string, { max: number; min: number }>;
   hits: ItemHit[];
 };
-
-function getMeilisearchErrorCode(error: unknown) {
-  if (
-    error &&
-    typeof error === "object" &&
-    "cause" in error &&
-    error.cause &&
-    typeof error.cause === "object" &&
-    "code" in error.cause &&
-    typeof error.cause.code === "string"
-  ) {
-    return error.cause.code;
-  }
-
-  return null;
-}
 
 @Injectable()
 export class ItemsService {

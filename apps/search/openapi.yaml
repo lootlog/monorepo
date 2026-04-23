@@ -121,6 +121,8 @@ paths:
         - name: filter
           required: false
           in: query
+          style: form
+          explode: true
           schema:
             anyOf:
               - type: string
@@ -128,15 +130,19 @@ paths:
                 items:
                   type: string
         - name: facets
-          required: true
+          required: false
           in: query
+          style: form
+          explode: true
           schema:
             type: array
             items:
               type: string
         - name: sort
-          required: true
+          required: false
           in: query
+          style: form
+          explode: true
           schema:
             type: array
             items:

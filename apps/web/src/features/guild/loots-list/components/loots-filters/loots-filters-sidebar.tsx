@@ -117,10 +117,8 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
         ? { search: selectedNpcNames.split(","), world: world || "" }
         : undefined;
   const itemsSearchParams = {
-    facets: [],
     limit: 10,
     search: debouncedItemsSearchValue,
-    sort: [],
     world: world || "",
   };
 

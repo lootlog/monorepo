@@ -10,6 +10,7 @@ import { ITEMS_INDEX } from "src/items/constants/meilisearch";
 import { NPCS_INDEX } from "src/npcs/constants/meilisearch";
 import { PLAYERS_INDEX } from "src/players/constants/meilisearch";
 import { MEILISEARCH_CLIENT } from "./meilisearch.constants";
+import { getMeilisearchErrorCode } from "./meilisearch.utils";
 
 const itemFilterableAttributes = [
   "world",
@@ -27,22 +28,6 @@ const indexPrimaryKeys = {
   [PLAYERS_INDEX]: "uid",
   [ITEMS_INDEX]: "uid",
 } as const;
-
-function getMeilisearchErrorCode(error: unknown) {
-  if (
-    error &&
-    typeof error === "object" &&
-    "cause" in error &&
-    error.cause &&
-    typeof error.cause === "object" &&
-    "code" in error.cause &&
-    typeof error.cause.code === "string"
-  ) {
-    return error.cause.code;
-  }
-
-  return null;
-}
 
 @Injectable()
 export class MeilisearchIndexesService implements OnApplicationBootstrap {

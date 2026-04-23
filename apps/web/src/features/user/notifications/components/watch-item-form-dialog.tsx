@@ -150,10 +150,8 @@ export const WatchFormDialog = ({
     ...new Set(worldQueries.flatMap((query) => query.data ?? [])),
   ].sort();
   const itemSearchParams = {
-    facets: [],
     limit: 10,
     search: itemSearchValue,
-    sort: [],
     world: selectedWorld || undefined,
   };
   const itemSearchQuery = useItemsControllerGetItems(itemSearchParams, {
