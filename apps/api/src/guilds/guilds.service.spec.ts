@@ -174,6 +174,9 @@ describe("GuildsService", () => {
     mockChannelsService.markGuildSyncStale.mockResolvedValue(undefined);
     mockMembersService.notifyMembersRemoved.mockResolvedValue(undefined);
     mockPrismaService.member.findMany.mockResolvedValue([]);
+    mockRedisService.get.mockResolvedValue(null);
+    mockRedisService.set.mockResolvedValue(undefined);
+    mockRedisService.del.mockResolvedValue(undefined);
     mockPerfDiagnosticsService.now.mockReturnValue(0);
     mockPerfDiagnosticsService.roundStages.mockImplementation(
       (stages: Record<string, number>) => stages,
@@ -768,6 +771,83 @@ describe("GuildsService", () => {
         createGuild({ id: "guild-b", name: "Beta", ownerId: "owner-b" }),
         createGuild({ id: "guild-a", name: "Alpha", ownerId: "owner-a" }),
       ]);
+    });
+  });
+
+  describe("getUserGuildsWithPermissions", () => {
+    it("uses cached database permissions without calling Discord", async () => {
+      mockRedisService.get.mockResolvedValue(null);
+      mockPrismaService.guild.findMany.mockResolvedValue([
+        createGuild({
+          id: "guild-access",
+          name: "Access",
+          ownerId: "owner-1",
+        }),
+      ]);
+      mockPrismaService.member.findMany.mockResolvedValue([
+        {
+          guildId: "guild-access",
+          active: true,
+          globalUserId: "user-123",
+          lastDiscordSyncAt: new Date("2026-01-01T00:00:00.000Z"),
+          updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+          roles: [
+            {
+              id: "role-access",
+              lvlRangeFrom: null,
+              lvlRangeTo: null,
+              permissions: [Permission.LOOTLOG_ACCESS],
+            },
+          ],
+        },
+      ]);
+
+      const result = await service.getUserGuildsWithPermissions(
+        "discord-123",
+        "user-123",
+      );
+
+      expect(mockDiscordService.getUserGuilds).not.toHaveBeenCalled();
+      expect(
+        mockMembersService.refreshGuildMemberWithinBudget,
+      ).not.toHaveBeenCalled();
+      expect(result).toEqual([
+        {
+          guild: { id: "guild-access", ownerId: "owner-1" },
+          roles: [
+            {
+              id: "role-access",
+              lvlRangeFrom: null,
+              lvlRangeTo: null,
+              permissions: [Permission.LOOTLOG_ACCESS],
+            },
+          ],
+        },
+      ]);
+      expect(mockRedisService.set).toHaveBeenCalledWith(
+        "user:user-123:discord:discord-123:guild-permissions",
+        JSON.stringify(result),
+        60,
+      );
+    });
+
+    it("returns cached guild permissions when available", async () => {
+      const cachedPermissions = [
+        {
+          guild: { id: "guild-cached", ownerId: "owner-1" },
+          roles: [],
+        },
+      ];
+      mockRedisService.get.mockResolvedValue(JSON.stringify(cachedPermissions));
+
+      const result = await service.getUserGuildsWithPermissions(
+        "discord-123",
+        "user-123",
+      );
+
+      expect(result).toEqual(cachedPermissions);
+      expect(mockPrismaService.guild.findMany).not.toHaveBeenCalled();
+      expect(mockDiscordService.getUserGuilds).not.toHaveBeenCalled();
     });
   });
 
