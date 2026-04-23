@@ -39,6 +39,7 @@ import {
   GUILD_CACHE_TTL_SECONDS,
 } from "src/shared/constants/cache.constant";
 import { MEMBER_REFRESH_PRIORITY } from "src/members/constants/member-refresh-queue.constant";
+import { PerfDiagnosticsService } from "src/shared/diagnostics/perf-diagnostics.service";
 
 interface GuildRefreshCandidate {
   guild: Guild;
@@ -86,6 +87,7 @@ export class GuildsService {
     private readonly discordService: DiscordService,
     private readonly redisService: RedisService,
     private readonly amqpConnection: AmqpConnection,
+    private readonly perfDiagnosticsService: PerfDiagnosticsService,
   ) {
     this.staleAfterMs = discordBotConfig.channelSnapshotStaleSeconds * 1000;
   }
@@ -431,43 +433,83 @@ export class GuildsService {
   }
 
   async getUserGuildsWithPermissions(discordId: string, userId?: string) {
+    const startedAt = this.perfDiagnosticsService.now();
+    const stages: Record<string, number> = {};
     const requiredPermissions = [Permission.LOOTLOG_ACCESS];
-    const guildCandidates = userId
-      ? await this.getCandidateGuildsForUser(discordId, userId)
-      : this.toGuildRefreshCandidates(
-          await this.getGuildsForRequiredPermissions(
-            discordId,
-            requiredPermissions,
-          ),
-        );
-    const guilds = guildCandidates.map((candidate) => candidate.guild);
+    let guildCount = 0;
+    let memberCount = 0;
+    let resultCount = 0;
+    let refreshed = false;
 
-    if (guilds.length === 0) {
-      return [];
-    }
+    try {
+      const candidatesStartedAt = this.perfDiagnosticsService.now();
+      const guildCandidates = userId
+        ? await this.getCandidateGuildsForUser(discordId, userId)
+        : this.toGuildRefreshCandidates(
+            await this.getGuildsForRequiredPermissions(
+              discordId,
+              requiredPermissions,
+            ),
+          );
+      stages.candidateGuilds =
+        this.perfDiagnosticsService.now() - candidatesStartedAt;
 
-    let members = await this.getGuildMembersForPermissions(
-      discordId,
-      guilds.map((guild) => guild.id),
-    );
+      const guilds = guildCandidates.map((candidate) => candidate.guild);
+      guildCount = guilds.length;
 
-    if (userId) {
-      members = await this.refreshGuildCandidatesWithinBudget({
+      if (guilds.length === 0) {
+        return [];
+      }
+
+      const membersStartedAt = this.perfDiagnosticsService.now();
+      let members = await this.getGuildMembersForPermissions(
         discordId,
-        userId,
-        guildCandidates,
+        guilds.map((guild) => guild.id),
+      );
+      stages.members = this.perfDiagnosticsService.now() - membersStartedAt;
+      memberCount = members.length;
+
+      if (userId) {
+        const refreshStartedAt = this.perfDiagnosticsService.now();
+        members = await this.refreshGuildCandidatesWithinBudget({
+          discordId,
+          userId,
+          guildCandidates,
+          members,
+          requiredPermissions,
+          maxImmediateRefreshes: 2,
+        });
+        stages.refresh = this.perfDiagnosticsService.now() - refreshStartedAt;
+        memberCount = members.length;
+        refreshed = true;
+      }
+
+      const buildResultStartedAt = this.perfDiagnosticsService.now();
+      const result = this.buildGuildPermissionsResult(
+        discordId,
+        guilds,
         members,
         requiredPermissions,
-        maxImmediateRefreshes: 2,
-      });
-    }
+      );
+      stages.buildResult =
+        this.perfDiagnosticsService.now() - buildResultStartedAt;
+      resultCount = result.length;
 
-    return this.buildGuildPermissionsResult(
-      discordId,
-      guilds,
-      members,
-      requiredPermissions,
-    );
+      return result;
+    } finally {
+      this.perfDiagnosticsService.logSpan(
+        "guilds.user_permissions.total",
+        this.perfDiagnosticsService.now() - startedAt,
+        {
+          hasUserId: Boolean(userId),
+          guildCount,
+          memberCount,
+          resultCount,
+          refreshed,
+          stagesMs: this.perfDiagnosticsService.roundStages(stages),
+        },
+      );
+    }
   }
 
   private async getCandidateGuildsForUser(
@@ -475,29 +517,48 @@ export class GuildsService {
     userId: string,
   ): Promise<GuildRefreshCandidate[]> {
     try {
+      const discordStartedAt = this.perfDiagnosticsService.now();
       const discordGuilds = await this.discordService.getUserGuilds(
         userId,
         discordId,
       );
+      this.perfDiagnosticsService.logSpan(
+        "guilds.candidate_guilds.discord",
+        this.perfDiagnosticsService.now() - discordStartedAt,
+        { discordGuildCount: discordGuilds?.length ?? 0 },
+      );
 
       if (!discordGuilds || discordGuilds.length === 0) {
-        return this.toGuildRefreshCandidates(
-          await this.getGuildsForRequiredPermissions(discordId, [
-            Permission.LOOTLOG_ACCESS,
-          ]),
+        const fallbackStartedAt = this.perfDiagnosticsService.now();
+        const fallbackGuilds = await this.getGuildsForRequiredPermissions(
+          discordId,
+          [Permission.LOOTLOG_ACCESS],
         );
+        this.perfDiagnosticsService.logSpan(
+          "guilds.candidate_guilds.fallback_db",
+          this.perfDiagnosticsService.now() - fallbackStartedAt,
+          { guildCount: fallbackGuilds.length },
+        );
+
+        return this.toGuildRefreshCandidates(fallbackGuilds);
       }
 
       const discordGuildIds = discordGuilds.map((guild) => guild.id);
       const discordGuildMap = new Map(
         discordGuilds.map((guild) => [guild.id, guild] as const),
       );
+      const guildStartedAt = this.perfDiagnosticsService.now();
       const guilds = await this.prisma.guild.findMany({
         where: {
           id: { in: discordGuildIds },
           active: true,
         },
       });
+      this.perfDiagnosticsService.logSpan(
+        "guilds.candidate_guilds.db",
+        this.perfDiagnosticsService.now() - guildStartedAt,
+        { discordGuildCount: discordGuilds.length, guildCount: guilds.length },
+      );
 
       return guilds.map((guild) => {
         const discordGuild = discordGuildMap.get(guild.id);
@@ -522,11 +583,18 @@ export class GuildsService {
         error,
       });
 
-      return this.toGuildRefreshCandidates(
-        await this.getGuildsForRequiredPermissions(discordId, [
-          Permission.LOOTLOG_ACCESS,
-        ]),
+      const fallbackStartedAt = this.perfDiagnosticsService.now();
+      const fallbackGuilds = await this.getGuildsForRequiredPermissions(
+        discordId,
+        [Permission.LOOTLOG_ACCESS],
       );
+      this.perfDiagnosticsService.logSpan(
+        "guilds.candidate_guilds.error_fallback_db",
+        this.perfDiagnosticsService.now() - fallbackStartedAt,
+        { guildCount: fallbackGuilds.length },
+      );
+
+      return this.toGuildRefreshCandidates(fallbackGuilds);
     }
   }
 

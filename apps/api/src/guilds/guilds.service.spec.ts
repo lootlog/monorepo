@@ -12,6 +12,7 @@ import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { DiscordGuildSyncStatus } from "@lootlog/types";
 import { type Guild, Permission } from "src/generated/prisma/client";
 import { MEMBER_REFRESH_PRIORITY } from "src/members/constants/member-refresh-queue.constant";
+import { PerfDiagnosticsService } from "src/shared/diagnostics/perf-diagnostics.service";
 
 vi.mock("src/config/discord-bot.config", () => ({
   discordBotConfig: { channelSnapshotStaleSeconds: 300 },
@@ -103,6 +104,12 @@ describe("GuildsService", () => {
     publish: mockFn(),
   };
 
+  const mockPerfDiagnosticsService = {
+    now: mockFn(),
+    logSpan: mockFn(),
+    roundStages: mockFn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -139,6 +146,10 @@ describe("GuildsService", () => {
           provide: AmqpConnection,
           useValue: mockAmqpConnection,
         },
+        {
+          provide: PerfDiagnosticsService,
+          useValue: mockPerfDiagnosticsService,
+        },
       ],
     }).compile();
 
@@ -163,6 +174,10 @@ describe("GuildsService", () => {
     mockChannelsService.markGuildSyncStale.mockResolvedValue(undefined);
     mockMembersService.notifyMembersRemoved.mockResolvedValue(undefined);
     mockPrismaService.member.findMany.mockResolvedValue([]);
+    mockPerfDiagnosticsService.now.mockReturnValue(0);
+    mockPerfDiagnosticsService.roundStages.mockImplementation(
+      (stages: Record<string, number>) => stages,
+    );
   });
 
   afterEach(() => {
