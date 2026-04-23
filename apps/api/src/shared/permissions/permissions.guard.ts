@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Optional,
   type CanActivate,
   type ExecutionContext,
 } from "@nestjs/common";
@@ -7,6 +8,8 @@ import { Reflector } from "@nestjs/core";
 import { PERMISSIONS_KEY } from "./permissions.decorator";
 import { MemberContextService } from "./member-context.service";
 import type { Permission } from "src/generated/prisma/client";
+import { PerfDiagnosticsService } from "src/shared/diagnostics/perf-diagnostics.service";
+import { setRequestDiagnosticsRoute } from "src/shared/diagnostics/request-diagnostics-context";
 
 interface RequestWithPermissions {
   userId?: string;
@@ -23,6 +26,8 @@ export class PermissionsGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
     private memberContextService: MemberContextService,
+    @Optional()
+    private readonly perfDiagnosticsService?: PerfDiagnosticsService,
   ) {}
 
   canActivate(context: ExecutionContext): Promise<boolean> | boolean {
@@ -35,6 +40,13 @@ export class PermissionsGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest();
+    const controller = context.getClass();
+    const handler = context.getHandler();
+    setRequestDiagnosticsRoute(
+      `${controller?.name ?? "UnknownController"}.${
+        handler?.name ?? "unknownHandler"
+      }`,
+    );
 
     const {
       userId,
@@ -46,13 +58,46 @@ export class PermissionsGuard implements CanActivate {
       return false;
     }
 
+    const startedAt = this.perfDiagnosticsService?.now();
+
     return this.verifyPermissions({
       requiredPermissions,
       discordId,
       userId,
       guildId,
       request,
-    });
+    })
+      .then((allowed) => {
+        if (startedAt !== undefined) {
+          this.perfDiagnosticsService?.logSpan(
+            "permissions.guard",
+            this.perfDiagnosticsService.now() - startedAt,
+            {
+              allowed,
+              guildId,
+              requiredPermissionsCount: requiredPermissions.length,
+            },
+          );
+        }
+
+        return allowed;
+      })
+      .catch((error) => {
+        if (startedAt !== undefined) {
+          this.perfDiagnosticsService?.logSpan(
+            "permissions.guard",
+            this.perfDiagnosticsService.now() - startedAt,
+            {
+              errorName: (error as Error).name,
+              guildId,
+              outcome: "error",
+              requiredPermissionsCount: requiredPermissions.length,
+            },
+          );
+        }
+
+        throw error;
+      });
   }
 
   async verifyPermissions(options: {
