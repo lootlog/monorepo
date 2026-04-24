@@ -11,6 +11,9 @@
       "custom_domain": true,
     },
   ],
+  "vars": {
+    "VITE_SEARCH_API_URL": "https://search.lootlog.pl",
+  },
   "env": {
     "develop": {
       "name": "lootlog-wiki-develop",
@@ -20,6 +23,9 @@
           "custom_domain": true,
         },
       ],
+      "vars": {
+        "VITE_SEARCH_API_URL": "https://dev-search.lootlog.pl",
+      },
     },
   },
 }

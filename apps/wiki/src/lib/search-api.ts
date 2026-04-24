@@ -23,6 +23,8 @@ function buildSearchUrl(
 ) {
   const url = new URL(path, getSearchBaseUrl());
 
+  console.log(getSearchBaseUrl());
+
   for (const [key, value] of Object.entries(params)) {
     if (value === undefined || value === "") {
       continue;
