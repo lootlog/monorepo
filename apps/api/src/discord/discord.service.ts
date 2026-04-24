@@ -35,7 +35,6 @@ import {
 import { serviceConfig } from "src/config/service.config";
 import { RuntimeEnvironment } from "src/types/runtime.types";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
-import { PerfDiagnosticsService } from "src/shared/diagnostics/perf-diagnostics.service";
 
 @Injectable()
 export class DiscordService implements OnModuleInit {
@@ -63,7 +62,6 @@ export class DiscordService implements OnModuleInit {
     private readonly redisService: RedisService,
     private readonly rateLimiter: DiscordRateLimiterService,
     private readonly redlockService: RedlockService,
-    private readonly perfDiagnosticsService: PerfDiagnosticsService,
   ) {
     this.isLocal = serviceConfig.env === RuntimeEnvironment.LOCAL;
   }
@@ -89,13 +87,7 @@ export class DiscordService implements OnModuleInit {
 
   async getRestClient(userId: string, discordId: string) {
     try {
-      const tokenStartedAt = this.perfDiagnosticsService.now();
       const token = await this.authService.getIdpToken(userId, discordId);
-      this.perfDiagnosticsService.logSpan(
-        "discord.rest_client.idp_token",
-        this.perfDiagnosticsService.now() - tokenStartedAt,
-        { scopeCount: token.scopes.length },
-      );
 
       if (!DISCORD_AUTH_SCOPES.every((scope) => token.scopes.includes(scope))) {
         throw new InvalidScopesError(DISCORD_AUTH_SCOPES, token.scopes);
@@ -150,9 +142,6 @@ export class DiscordService implements OnModuleInit {
   }
 
   async getUserGuilds(userId: string, discordId: string): Promise<APIGuild[]> {
-    const startedAt = this.perfDiagnosticsService.now();
-    let source = "unknown";
-    let guildCount = 0;
     const cacheTtl = this.getCacheTtl(
       this.guildsCacheTtlLocal,
       this.guildsCacheTtlProd,
@@ -163,33 +152,17 @@ export class DiscordService implements OnModuleInit {
 
     const cached = await this.redisService.get(cacheKey);
     if (cached) {
-      const guilds = JSON.parse(cached) as APIGuild[];
-      source = "cache";
-      guildCount = guilds.length;
-      this.perfDiagnosticsService.logSpan(
-        "discord.user_guilds.total",
-        this.perfDiagnosticsService.now() - startedAt,
-        { source, guildCount },
-      );
-      return guilds;
+      return JSON.parse(cached) as APIGuild[];
     }
 
     let lock: Awaited<ReturnType<typeof this.redlock.acquire>> | null = null;
 
     try {
-      const lockStartedAt = this.perfDiagnosticsService.now();
       lock = await this.redlock.acquire([lockKey], this.lockTtl);
-      this.perfDiagnosticsService.logSpan(
-        "discord.user_guilds.lock",
-        this.perfDiagnosticsService.now() - lockStartedAt,
-      );
 
       const cachedAfterLock = await this.redisService.get(cacheKey);
       if (cachedAfterLock) {
-        const guilds = JSON.parse(cachedAfterLock) as APIGuild[];
-        source = "cache_after_lock";
-        guildCount = guilds.length;
-        return guilds;
+        return JSON.parse(cachedAfterLock) as APIGuild[];
       }
 
       const isRateLimited = await this.rateLimiter.checkRateLimitForUser(
@@ -204,31 +177,21 @@ export class DiscordService implements OnModuleInit {
             level: "info",
             message: `Returning stale guilds data due to rate limit for user ${userId}`,
           });
-          const guilds = JSON.parse(staleData) as APIGuild[];
-          source = "rate_limit_stale";
-          guildCount = guilds.length;
-          return guilds;
+          return JSON.parse(staleData) as APIGuild[];
         }
 
         this.logger.log({
           level: "warn",
           message: `Rate limited and no stale data available for user ${userId}`,
         });
-        source = "rate_limit_empty";
         return [];
       }
 
-      const restStartedAt = this.perfDiagnosticsService.now();
       const rest = await this.getRestClient(userId, discordId);
-      this.perfDiagnosticsService.logSpan(
-        "discord.user_guilds.rest_client",
-        this.perfDiagnosticsService.now() - restStartedAt,
-      );
       const path = Routes.userGuilds();
 
       let guilds: APIGuild[];
       try {
-        const apiStartedAt = this.perfDiagnosticsService.now();
         const response = await rest.queueRequest({
           fullRoute: path,
           method: RequestMethod.Get,
@@ -239,11 +202,6 @@ export class DiscordService implements OnModuleInit {
           response.headers,
         );
         guilds = (await parseResponse(response)) as APIGuild[];
-        this.perfDiagnosticsService.logSpan(
-          "discord.user_guilds.api",
-          this.perfDiagnosticsService.now() - apiStartedAt,
-          { guildCount: guilds.length },
-        );
       } catch (error: unknown) {
         if (error instanceof RateLimitError) {
           await this.rateLimiter.setRateLimitForUser(
@@ -258,10 +216,7 @@ export class DiscordService implements OnModuleInit {
               level: "info",
               message: `Returning stale guilds data after rate limit error for user ${userId}`,
             });
-            const guilds = JSON.parse(staleData) as APIGuild[];
-            source = "rate_limit_error_stale";
-            guildCount = guilds.length;
-            return guilds;
+            return JSON.parse(staleData) as APIGuild[];
           }
 
           throw error;
@@ -274,7 +229,6 @@ export class DiscordService implements OnModuleInit {
           level: "warn",
           message: `No guilds found for user: ${userId}`,
         });
-        source = "discord_empty";
         return [];
       }
 
@@ -287,8 +241,6 @@ export class DiscordService implements OnModuleInit {
         ),
       ]);
 
-      source = "discord_api";
-      guildCount = guilds.length;
       return guilds;
     } catch (error: unknown) {
       if (error instanceof ExecutionError) {
@@ -297,7 +249,6 @@ export class DiscordService implements OnModuleInit {
           message: `Lock acquisition failed for getUserGuilds`,
           userId,
         });
-        source = "lock_error";
         return [];
       }
 
@@ -324,14 +275,8 @@ export class DiscordService implements OnModuleInit {
         message: `Failed to fetch user guilds for userId: ${userId}`,
         error,
       });
-      source = "error";
       return [];
     } finally {
-      this.perfDiagnosticsService.logSpan(
-        "discord.user_guilds.total",
-        this.perfDiagnosticsService.now() - startedAt,
-        { source, guildCount },
-      );
       await lock?.release();
     }
   }

@@ -20,7 +20,6 @@ import {
 } from "src/auth/errors";
 import type { APIGuild, APIGuildMember } from "discord-api-types/v10";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
-import { PerfDiagnosticsService } from "src/shared/diagnostics/perf-diagnostics.service";
 
 vi.mock("src/config/service.config", () => ({
   serviceConfig: { env: "local" },
@@ -50,10 +49,6 @@ describe("DiscordService", () => {
   };
   let mockRedlock: {
     acquire: Mock;
-  };
-  let mockPerfDiagnosticsService: {
-    now: Mock;
-    logSpan: Mock;
   };
 
   const mockGuilds: APIGuild[] = [
@@ -136,11 +131,6 @@ describe("DiscordService", () => {
       updateRateLimitFromHeaders: mockFn(),
     };
 
-    mockPerfDiagnosticsService = {
-      now: mockFn().mockReturnValue(0),
-      logSpan: mockFn(),
-    };
-
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DiscordService,
@@ -151,10 +141,6 @@ describe("DiscordService", () => {
         {
           provide: RedlockService,
           useValue: { createInstance: mockFn().mockReturnValue(mockRedlock) },
-        },
-        {
-          provide: PerfDiagnosticsService,
-          useValue: mockPerfDiagnosticsService,
         },
       ],
     }).compile();
