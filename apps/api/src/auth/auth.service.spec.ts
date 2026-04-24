@@ -4,7 +4,6 @@ import { AuthService } from "./auth.service";
 import { HttpService } from "@nestjs/axios";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { PerfDiagnosticsService } from "src/shared/diagnostics/perf-diagnostics.service";
 
 vi.mock("src/config/auth.config", () => ({
   authConfig: { serviceUrl: "http://localhost:3001" },
@@ -29,11 +28,6 @@ describe("AuthService", () => {
     del: mockFn(),
   };
 
-  const mockPerfDiagnosticsService = {
-    now: mockFn(),
-    logSpan: mockFn(),
-  };
-
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -50,15 +44,10 @@ describe("AuthService", () => {
           provide: RedisService,
           useValue: mockRedisService,
         },
-        {
-          provide: PerfDiagnosticsService,
-          useValue: mockPerfDiagnosticsService,
-        },
       ],
     }).compile();
 
     service = module.get<AuthService>(AuthService);
-    mockPerfDiagnosticsService.now.mockReturnValue(0);
   });
 
   it("should be defined", () => {

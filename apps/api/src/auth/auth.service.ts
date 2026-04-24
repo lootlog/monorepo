@@ -16,7 +16,6 @@ import {
   getAuthTokenCacheKey,
   AUTH_TOKEN_CACHE_TTL_SECONDS,
 } from "src/shared/constants/cache.constant";
-import { PerfDiagnosticsService } from "src/shared/diagnostics/perf-diagnostics.service";
 
 const DEFAULT_REQUEST_TIMEOUT = 5000;
 
@@ -28,7 +27,6 @@ export class AuthService {
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     private readonly httpService: HttpService,
     private readonly redisService: RedisService,
-    private readonly perfDiagnosticsService: PerfDiagnosticsService,
   ) {
     this.authServiceUrl = authConfig.serviceUrl;
   }
@@ -45,12 +43,7 @@ export class AuthService {
         { timeout: DEFAULT_REQUEST_TIMEOUT },
       );
 
-      const httpStartedAt = this.perfDiagnosticsService.now();
       const response = await firstValueFrom(response$);
-      this.perfDiagnosticsService.logSpan(
-        "auth.idp_token.http",
-        this.perfDiagnosticsService.now() - httpStartedAt,
-      );
 
       if (!response.data) {
         this.logger.log({
@@ -108,15 +101,11 @@ export class AuthService {
     userId: string,
     discordId: string,
   ): Promise<Extract<GetIdpTokenResponse, { accessToken: string }>> {
-    const startedAt = this.perfDiagnosticsService.now();
-    let cacheHit = false;
-
     try {
       const cacheKey = getAuthTokenCacheKey(userId);
       const cached = await this.redisService.get(cacheKey);
 
       if (cached) {
-        cacheHit = true;
         return JSON.parse(cached);
       }
 
@@ -173,12 +162,6 @@ export class AuthService {
       });
       throw new AuthServiceUnavailableError(
         `Failed to fetch IDP token: ${errorMessage}`,
-      );
-    } finally {
-      this.perfDiagnosticsService.logSpan(
-        "auth.idp_token.total",
-        this.perfDiagnosticsService.now() - startedAt,
-        { cacheHit },
       );
     }
   }
