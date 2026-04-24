@@ -25,7 +25,10 @@ import {
   useGuildsControllerGetGuildById,
   useGuildsControllerUpdateGuildConfig,
 } from "@/lib/api/generated/main/guilds/guilds";
-import { invalidateUsersControllerGetCurrentUserAccessibleGuilds } from "@/lib/api/generated/main/users/users";
+import {
+  invalidateUsersControllerGetCurrentUserAccessibleGuilds,
+  invalidateUsersControllerGetCurrentUserGuilds,
+} from "@/lib/api/generated/main/users/users";
 
 const RESTRICTED_NAMES = ["@me"];
 
@@ -80,6 +83,7 @@ export const GeneralForm = () => {
               invalidateUsersControllerGetCurrentUserAccessibleGuilds(
                 queryClient,
               ),
+              invalidateUsersControllerGetCurrentUserGuilds(queryClient),
             ]);
           }
           toast.success("Zaktualizowano konfigurację lootloga");
