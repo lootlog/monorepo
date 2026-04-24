@@ -23,6 +23,26 @@ import {
   withAuth,
 } from "./events-timers-e2e-helpers";
 
+async function truncateTimersState(
+  prisma: PrismaService,
+  attempt: number = 1,
+): Promise<void> {
+  try {
+    await prisma.$executeRaw`TRUNCATE TABLE "Guild", "Role", "Member", "Timer", "UserCharactersLootlogSettings" CASCADE`;
+  } catch (error) {
+    if (
+      attempt === 3 ||
+      !(error instanceof Error) ||
+      !error.message.includes("deadlock detected")
+    ) {
+      throw error;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 50 * attempt));
+    await truncateTimersState(prisma, attempt + 1);
+  }
+}
+
 describe("Timers E2E Tests (Whitelist)", () => {
   let app: INestApplication;
   let prisma: PrismaService;
@@ -55,7 +75,7 @@ describe("Timers E2E Tests (Whitelist)", () => {
   });
 
   beforeEach(async () => {
-    await prisma.$executeRaw`TRUNCATE TABLE "Guild", "Role", "Member", "Timer", "UserCharactersLootlogSettings" CASCADE`;
+    await truncateTimersState(prisma);
     const keys = (
       await Promise.all(
         ["timer", "perms", "guild", "user-lootlog-config", "event-wrapped"].map(

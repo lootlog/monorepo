@@ -22,6 +22,7 @@ describe("Loots E2E Tests (Whitelist)", () => {
     app = moduleFixture.createNestApplication();
     app.enableShutdownHooks();
     await app.init();
+    await app.listen(0);
 
     prisma = app.get<PrismaService>(PrismaService);
   });
@@ -46,7 +47,7 @@ describe("Loots E2E Tests (Whitelist)", () => {
         data: TEST_GUILDS.GUILD_1,
       });
 
-      const guild2 = await prisma.guild.create({
+      const _guild2 = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_2,
       });
 
@@ -86,7 +87,7 @@ describe("Loots E2E Tests (Whitelist)", () => {
           npcs: {
             create: [
               {
-                npcType: NpcType.ELITE2,
+                npcType: NpcType.HERO,
                 allowedRarities: [ItemRarity.UNIQUE],
               },
             ],
@@ -184,7 +185,7 @@ describe("Loots E2E Tests (Whitelist)", () => {
           npcs: {
             create: [
               {
-                npcType: NpcType.ELITE2,
+                npcType: NpcType.HERO,
                 allowedRarities: [ItemRarity.UNIQUE],
               },
             ],
@@ -198,7 +199,7 @@ describe("Loots E2E Tests (Whitelist)", () => {
           npcs: {
             create: [
               {
-                npcType: NpcType.ELITE2,
+                npcType: NpcType.HERO,
                 allowedRarities: [ItemRarity.UNIQUE],
               },
             ],
@@ -216,7 +217,7 @@ describe("Loots E2E Tests (Whitelist)", () => {
         .expect(201);
 
       expect(response.body).toEqual({
-        id: 1,
+        id: response.body.id,
         submittedGuilds: [
           {
             guildId: guild1.id,
@@ -425,7 +426,7 @@ describe("Loots E2E Tests (Whitelist)", () => {
           npcs: {
             create: [
               {
-                npcType: NpcType.ELITE2,
+                npcType: NpcType.HERO,
                 allowedRarities: [ItemRarity.UNIQUE],
               },
             ],

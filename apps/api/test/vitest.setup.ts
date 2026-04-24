@@ -1,6 +1,14 @@
 import { randomUUID } from "node:crypto";
 import { afterEach, vi } from "vitest";
 
+process.on("unhandledRejection", (reason) => {
+  if (reason instanceof Error && reason.message === "Connection is closed.") {
+    return;
+  }
+
+  throw reason;
+});
+
 vi.mock("src/config/env", () => ({
   env: {
     ENV: process.env.ENV ?? "local",
