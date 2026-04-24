@@ -6,4 +6,9 @@
  * OpenAPI spec version: 1.0
  */
 
-export type SearchItemsResponseDtoOutputHitsItemNumericStats = {[key: string]: number};
+export type NpcsControllerGetNpcsParams = {
+ids?: number[];
+limit?: number;
+search?: string | string[];
+world?: string;
+};

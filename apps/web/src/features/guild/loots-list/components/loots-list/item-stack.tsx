@@ -1,5 +1,5 @@
 import { WatchableItemTile } from "@/components/tiles";
-import { ItemImage } from "@/components/tiles/item-image";
+import { ItemImage } from "@lootlog/ui/components/item-image";
 import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
 import { ItemRarity, type Item } from "@/lib/loots/loot-types";
 import { cn } from "@lootlog/ui/lib/utils";

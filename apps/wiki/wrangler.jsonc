@@ -4,7 +4,28 @@
   "compatibility_date": "2026-04-24",
   "compatibility_flags": ["nodejs_compat"],
   "main": "@tanstack/react-start/server-entry",
+  "workers_dev": false,
+  "routes": [
+    {
+      "pattern": "wiki.lootlog.pl",
+      "custom_domain": true,
+    },
+  ],
   "vars": {
     "VITE_SEARCH_API_URL": "https://search.lootlog.pl",
+  },
+  "env": {
+    "develop": {
+      "name": "lootlog-wiki-develop",
+      "routes": [
+        {
+          "pattern": "dev-wiki.lootlog.pl",
+          "custom_domain": true,
+        },
+      ],
+      "vars": {
+        "VITE_SEARCH_API_URL": "https://dev-search.lootlog.pl",
+      },
+    },
   },
 }

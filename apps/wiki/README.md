@@ -22,9 +22,7 @@ Required variable:
 VITE_SEARCH_API_URL=https://search.lootlog.pl
 ```
 
-Cloudflare deployment also defines `VITE_SEARCH_API_URL` in `wrangler.jsonc`.
-Cloudflare credentials are not stored in the repository; authenticate Wrangler locally or provide
-the required Cloudflare environment variables in CI before deploying.
+Cloudflare credentials and deployment settings are managed by Cloudflare Workers Builds.
 
 ## Development
 
@@ -41,14 +39,34 @@ The app uses file-based TanStack Router routes under `src/routes`.
 
 ## Deployment
 
-Deploy to Cloudflare Workers with:
+Deployments are handled by Cloudflare Workers Builds. The Wrangler config maps:
+
+- the production branch `main` to `wiki.lootlog.pl`
+- `develop` to `dev-wiki.lootlog.pl`
+
+Cloudflare should use `main` as the production branch and enable non-production branch builds for
+`develop`. The production build uses the top-level Wrangler environment; the develop build uses
+the `develop` Wrangler environment.
+
+Use `apps/wiki` as the Workers Builds root directory. TanStack Start emits the deployable Worker
+entrypoint during `pnpm run build`, so Wrangler must deploy the built server artifact while still
+reading environment-specific settings from `wrangler.jsonc`.
+
+Production build settings:
 
 ```bash
-pnpm --filter @lootlog/wiki deploy
+Build command: pnpm run build
+Deploy command: npx wrangler deploy dist/server/index.js --config wrangler.jsonc --env="" --assets dist/client
+Version command: npx wrangler versions upload dist/server/index.js --config wrangler.jsonc --env="" --assets dist/client
 ```
 
-The deploy script builds the TanStack Start Worker and then runs `wrangler deploy` using
-`apps/wiki/wrangler.jsonc`.
+Develop build settings:
+
+```bash
+Build command: pnpm run build
+Deploy command: npx wrangler deploy dist/server/index.js --config wrangler.jsonc --env develop --assets dist/client
+Version command: npx wrangler versions upload dist/server/index.js --config wrangler.jsonc --env develop --assets dist/client
+```
 
 If Cloudflare binding types need to be refreshed, run:
 

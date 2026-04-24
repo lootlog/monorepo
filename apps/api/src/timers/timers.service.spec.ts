@@ -392,71 +392,12 @@ describe("TimersService", () => {
       expect(mockRedlockLock.release).toHaveBeenCalled();
     });
 
-    it("should return existing timer and skip event kill enqueue when current window has not opened yet", async () => {
+    it("should update timer even when current window has not opened yet", async () => {
       const futureMinSpawnTime = new Date(Date.now() + 10 * 60 * 1000);
       const existingTimer = {
         ...mockTimer,
         minSpawnTime: futureMinSpawnTime,
         maxSpawnTime: new Date(Date.now() + 20 * 60 * 1000),
-      };
-
-      mockRedisService.get.mockResolvedValue(null);
-      mockRedisService.set.mockResolvedValue(undefined);
-      mockPrismaService.timer.findUnique
-        .mockResolvedValueOnce(existingTimer)
-        .mockResolvedValueOnce(existingTimer);
-
-      const result = await service.createTimerForGuild(
-        "discord123",
-        userId,
-        "guild1",
-        mockDto,
-      );
-
-      expect(result).toMatchObject({
-        guildId: existingTimer.guildId,
-        npcId: existingTimer.npcId,
-        world: existingTimer.world,
-      });
-      expect(mockPrismaService.timer.upsert).not.toHaveBeenCalled();
-      expect(
-        mockEventTimerHooksService.enqueueEventHeroKillCheck,
-      ).not.toHaveBeenCalled();
-    });
-
-    it("should update timer when previous timer was reset even if minSpawnTime is in the future", async () => {
-      const futureMinSpawnTime = new Date(Date.now() + 10 * 60 * 1000);
-      const resetTimer = {
-        ...mockTimer,
-        minSpawnTime: futureMinSpawnTime,
-        maxSpawnTime: new Date(Date.now() + 20 * 60 * 1000),
-        wasReset: true,
-      };
-
-      mockRedisService.get.mockResolvedValue(null);
-      mockRedisService.set.mockResolvedValue(undefined);
-      mockPrismaService.timer.findUnique.mockResolvedValue(resetTimer);
-      mockPrismaService.timer.upsert.mockResolvedValue(mockTimer);
-
-      const result = await service.createTimerForGuild(
-        "discord123",
-        userId,
-        "guild1",
-        mockDto,
-      );
-
-      expect(result).toBeDefined();
-      expect(mockPrismaService.timer.upsert).toHaveBeenCalled();
-      expect(mockAmqpConnection.publish).toHaveBeenCalled();
-    });
-
-    it("should update timer when minSpawnTime is within the threshold window", async () => {
-      const nearMinSpawnTime = new Date(Date.now() + 10 * 1000); // 10s in future, within 15s threshold
-      const existingTimer = {
-        ...mockTimer,
-        minSpawnTime: nearMinSpawnTime,
-        maxSpawnTime: new Date(Date.now() + 20 * 60 * 1000),
-        wasReset: false,
       };
 
       mockRedisService.get.mockResolvedValue(null);
@@ -474,6 +415,16 @@ describe("TimersService", () => {
       expect(result).toBeDefined();
       expect(mockPrismaService.timer.upsert).toHaveBeenCalled();
       expect(mockAmqpConnection.publish).toHaveBeenCalled();
+      expect(
+        mockEventTimerHooksService.enqueueEventHeroKillCheck,
+      ).toHaveBeenCalledWith(
+        expect.objectContaining({
+          timerData: expect.objectContaining({
+            previousMinSpawnTime: existingTimer.minSpawnTime,
+            previousMaxSpawnTime: existingTimer.maxSpawnTime,
+          }),
+        }),
+      );
     });
 
     it("should migrate synthetic timer context to real npcId for event hero scoring window", async () => {

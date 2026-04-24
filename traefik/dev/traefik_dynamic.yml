@@ -205,6 +205,7 @@ http:
           - "^(.+)\\.margonem\\.(pl|com)$"
           - "^http://localhost$"
           - "^http://localhost:3001$"
+          - "^http://localhost:3005$"
         accessControlAllowMethods:
           - "GET"
           - "POST"

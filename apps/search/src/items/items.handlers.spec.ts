@@ -15,6 +15,8 @@ describe("ItemsHandlers", () => {
   };
 
   beforeEach(async () => {
+    vi.clearAllMocks();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ItemsHandlers,
@@ -41,7 +43,6 @@ describe("ItemsHandlers", () => {
       const payload = [
         {
           id: 1,
-          hid: "hid-1",
           name: "Sword",
           icon: "sword.png",
           stat: "lvl=10",
@@ -55,7 +56,18 @@ describe("ItemsHandlers", () => {
       await handler.handleItemsIndex(payload);
 
       expect(itemsServiceMock.indexItems).toHaveBeenCalledWith({
-        items: payload,
+        items: [
+          {
+            id: 1,
+            name: "Sword",
+            icon: "sword.png",
+            stat: "lvl=10",
+            lvl: 10,
+            rarity: "heroic",
+            type: "weapon",
+            world: "Berufs",
+          },
+        ],
       });
     });
 

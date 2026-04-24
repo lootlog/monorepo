@@ -6,4 +6,4 @@
  * OpenAPI spec version: 1.0
  */
 
-export type SearchAllResponseDtoOutputItemsItemNumericStats = {[key: string]: number};
+export type SearchItemsResponseDtoOutputFacetDistribution = {[key: string]: {[key: string]: number}};

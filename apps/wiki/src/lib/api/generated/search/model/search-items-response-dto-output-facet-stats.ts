@@ -6,4 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 
-export type SearchAllResponseDtoOutputItemsItemStats = {[key: string]: string | number | boolean | string[]};
+export type SearchItemsResponseDtoOutputFacetStats = {[key: string]: {
+  min: number;
+  max: number;
+}};

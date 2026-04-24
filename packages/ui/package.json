@@ -8,6 +8,7 @@
     "./components.json": "./components.json",
     "./lib/*": "./src/lib/*.ts",
     "./components/*": "./src/components/*.tsx",
+    "./components/item-stat-utils": "./src/components/item-stat-utils.ts",
     "./components/battle": "./src/components/battle/index.ts",
     "./types/*": "./src/types/*.ts",
     "./hooks/*": "./src/hooks/*.ts",

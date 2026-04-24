@@ -1,8 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { type FormEvent, startTransition, useEffect, useState } from "react";
+import { Badge } from "@lootlog/ui/components/badge";
+import { Button } from "@lootlog/ui/components/button";
+import { Card, CardContent, CardHeader } from "@lootlog/ui/components/card";
+import { Input } from "@lootlog/ui/components/input";
+import { Label } from "@lootlog/ui/components/label";
+import { getRuntimeConfig } from "@/config/runtime-config";
 import { t } from "@/i18n/messages";
-import { fetchPlayersSearch } from "@/lib/search-api";
-import type { PlayerHit } from "@/types/search";
+import {
+  getPlayersControllerGetPlayersQueryKey,
+  usePlayersControllerGetPlayers,
+} from "@/lib/api/generated/search/players/players";
+
+const SEARCH_DEBOUNCE_MS = 300;
+const SEARCH_LIMIT = 72;
+type SearchStatus = "error" | "idle" | "loading" | "ready";
 
 type PlayersRouteSearch = {
   query: string;
@@ -25,18 +37,43 @@ export const Route = createFileRoute("/players")({
       },
     ],
   }),
+  loader: () => getRuntimeConfig(),
   validateSearch,
 });
 
 function PlayersRoute() {
   const navigate = Route.useNavigate();
+  const { searchApiUrl } = Route.useLoaderData();
   const search = Route.useSearch();
   const [queryValue, setQueryValue] = useState(search.query);
   const [worldValue, setWorldValue] = useState(search.world);
-  const [data, setData] = useState<PlayerHit[]>([]);
-  const [status, setStatus] = useState<"error" | "idle" | "loading" | "ready">(
-    "idle",
-  );
+  const hasActiveSearch =
+    search.query.trim() !== "" || search.world.trim() !== "";
+  const queryParams = {
+    limit: SEARCH_LIMIT,
+    search: search.query.trim() || undefined,
+    world: search.world.trim() || undefined,
+  };
+  const playersQuery = usePlayersControllerGetPlayers(queryParams, {
+    query: {
+      enabled: hasActiveSearch,
+      placeholderData: (previousData) => previousData,
+      queryKey: getPlayersControllerGetPlayersQueryKey(queryParams),
+    },
+    request: {
+      baseUrl: searchApiUrl,
+    },
+  });
+  const data = hasActiveSearch ? (playersQuery.data ?? []) : [];
+  let status: SearchStatus = "ready";
+
+  if (!hasActiveSearch) {
+    status = "idle";
+  } else if (playersQuery.isError) {
+    status = "error";
+  } else if (playersQuery.isPending) {
+    status = "loading";
+  }
 
   useEffect(() => {
     setQueryValue(search.query);
@@ -44,42 +81,31 @@ function PlayersRoute() {
   }, [search.query, search.world]);
 
   useEffect(() => {
-    const hasActiveSearch =
-      search.query.trim() !== "" || search.world.trim() !== "";
+    const nextSearch = {
+      query: queryValue.trim(),
+      world: worldValue.trim(),
+    };
 
-    if (!hasActiveSearch) {
-      setData([]);
-      setStatus("idle");
+    if (
+      nextSearch.query === search.query &&
+      nextSearch.world === search.world
+    ) {
       return;
     }
 
-    let ignore = false;
-    setStatus("loading");
-
-    void fetchPlayersSearch({
-      query: search.query.trim() || undefined,
-      world: search.world.trim() || undefined,
-    })
-      .then((response) => {
-        if (ignore) {
-          return;
-        }
-
-        setData(response);
-        setStatus("ready");
-      })
-      .catch(() => {
-        if (ignore) {
-          return;
-        }
-
-        setStatus("error");
+    const timeoutId = setTimeout(() => {
+      startTransition(() => {
+        void navigate({
+          replace: true,
+          search: nextSearch,
+        });
       });
+    }, SEARCH_DEBOUNCE_MS);
 
     return () => {
-      ignore = true;
+      clearTimeout(timeoutId);
     };
-  }, [search.query, search.world]);
+  }, [navigate, queryValue, search.query, search.world, worldValue]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -109,101 +135,115 @@ function PlayersRoute() {
   }
 
   return (
-    <main className="page-wrap px-4 pb-10 pt-14">
-      <section className="island-shell rounded-[2rem] px-6 py-8 sm:px-10">
-        <p className="island-kicker mb-2">{t("players.eyebrow")}</p>
-        <h1 className="display-title mb-3 text-4xl text-[var(--sea-ink)] sm:text-5xl">
-          {t("players.title")}
-        </h1>
-        <p className="max-w-3xl text-base leading-8 text-[var(--sea-ink-soft)]">
-          {t("players.description")}
-        </p>
-
-        <form
-          className="mt-8 grid gap-4 md:grid-cols-[1.6fr_1fr_auto_auto]"
-          onSubmit={handleSubmit}
-        >
-          <label className="search-field">
-            <span>{t("search.queryLabel")}</span>
-            <input
-              value={queryValue}
-              onChange={(event) => setQueryValue(event.target.value)}
-              placeholder={t("search.queryPlaceholder")}
-            />
-          </label>
-          <label className="search-field">
-            <span>{t("search.worldLabel")}</span>
-            <input
-              value={worldValue}
-              onChange={(event) => setWorldValue(event.target.value)}
-              placeholder={t("search.worldPlaceholder")}
-            />
-          </label>
-          <button className="search-button" type="submit">
-            {t("search.submit")}
-          </button>
-          <button
-            className="search-button is-secondary"
-            type="button"
-            onClick={handleReset}
+    <main className="page-wrap overflow-x-hidden px-3 pb-10 pt-6">
+      <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+        <CardHeader className="px-0">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-4xl">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
+                {t("players.eyebrow")}
+              </p>
+              <h1 className="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+                {t("players.title")}
+              </h1>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+                {t("players.description")}
+              </p>
+            </div>
+            <Badge variant="secondary">
+              {t("search.limitBadge", { count: SEARCH_LIMIT })}
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="px-0">
+          <form
+            className="grid gap-3 md:grid-cols-[1.6fr_1fr_auto_auto]"
+            onSubmit={handleSubmit}
           >
-            {t("search.reset")}
-          </button>
-        </form>
-      </section>
+            <Label className="grid gap-2">
+              <span>{t("search.queryLabel")}</span>
+              <Input
+                value={queryValue}
+                onChange={(event) => setQueryValue(event.target.value)}
+                placeholder={t("search.queryPlaceholder")}
+              />
+            </Label>
+            <Label className="grid gap-2">
+              <span>{t("search.worldLabel")}</span>
+              <Input
+                value={worldValue}
+                onChange={(event) => setWorldValue(event.target.value)}
+                placeholder={t("search.worldPlaceholder")}
+              />
+            </Label>
+            <Button className="self-end" type="submit">
+              {t("search.submit")}
+            </Button>
+            <Button
+              className="self-end"
+              type="button"
+              variant="outline"
+              onClick={handleReset}
+            >
+              {t("search.reset")}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
-      <section className="mt-8">
+      <section className="mt-4">
         {status === "idle" ? (
-          <div className="state-card">{t("search.idle")}</div>
+          <Card className="border-border bg-card/40 p-6 text-sm text-muted-foreground">
+            {t("search.idle")}
+          </Card>
         ) : null}
         {status === "loading" ? (
-          <div className="state-card">{t("search.loading")}</div>
+          <Card className="border-border bg-card/40 p-6 text-sm text-muted-foreground">
+            {t("search.loading")}
+          </Card>
         ) : null}
         {status === "error" ? (
-          <div className="state-card is-error">{t("search.error")}</div>
+          <Card className="border-destructive/40 bg-card/40 p-6 text-sm text-destructive">
+            {t("search.error")}
+          </Card>
         ) : null}
         {status === "ready" && data.length === 0 ? (
-          <div className="state-card">{t("search.noResults")}</div>
+          <Card className="border-border bg-card/40 p-6 text-sm text-muted-foreground">
+            {t("search.noResults")}
+          </Card>
         ) : null}
         {status === "ready" && data.length > 0 ? (
-          <>
-            <p className="mb-4 text-sm font-semibold text-[var(--sea-ink-soft)]">
-              {t("search.results", { count: data.length })}
-            </p>
-            <div className="grid gap-4 lg:grid-cols-2">
+          <Card className="gap-3 border-border bg-card/40 p-4 backdrop-blur-sm">
+            <div className="flex flex-col gap-2 border-b border-border pb-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm font-semibold text-foreground">
+                {t("search.results", { count: data.length })}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {t("search.showingRange", { end: data.length, start: 1 })}
+              </p>
+            </div>
+            <div className="grid grid-flow-dense grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3">
               {data.map((player) => (
                 <article
                   key={`${player.id}_${player.world}`}
-                  className="result-card"
+                  className="rounded-xl border border-border bg-background/40 p-3"
                 >
-                  <div className="flex items-start gap-4">
-                    {player.icon ? (
-                      <img
-                        alt={t("search.iconAlt", { name: player.name })}
-                        className="h-14 w-14 rounded-xl border border-[var(--line)] bg-black/5 object-contain p-2"
-                        src={player.icon}
-                      />
-                    ) : null}
-                    <div className="min-w-0 flex-1">
-                      <h2 className="text-lg font-semibold text-[var(--sea-ink)]">
-                        {player.name}
-                      </h2>
-                      <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold text-[var(--sea-ink-soft)]">
-                        <span className="result-badge">
-                          {t("players.professionLabel")}:{" "}
-                          {player.prof || t("search.missingValue")}
-                        </span>
-                        <span className="result-badge">{player.world}</span>
-                        <span className="result-badge">
-                          {t("players.characterIdLabel")}: {player.characterId}
-                        </span>
-                      </div>
-                    </div>
+                  <h2 className="truncate text-sm font-semibold text-foreground">
+                    {player.name}
+                  </h2>
+                  <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                    <Badge variant="outline">
+                      {player.prof || t("search.missingValue")}
+                    </Badge>
+                    <Badge variant="secondary">{player.world}</Badge>
+                    <Badge variant="outline">
+                      {t("players.characterIdLabel")}: {player.characterId}
+                    </Badge>
                   </div>
                 </article>
               ))}
             </div>
-          </>
+          </Card>
         ) : null}
       </section>
     </main>
