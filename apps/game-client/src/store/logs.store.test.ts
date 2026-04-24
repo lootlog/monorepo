@@ -81,7 +81,7 @@ describe("useLogsStore", () => {
     useLogsStore.getState().appendRequest({
       actionId,
       method: "POST",
-      endpoint: "/guilds/guild-1/timers",
+      endpoint: "/timers/auto",
       payload: { guildId: "guild-1" },
       response: { ok: true },
       statusCode: 201,
@@ -94,7 +94,7 @@ describe("useLogsStore", () => {
 
     expect(action?.requests).toEqual([
       expect.objectContaining({
-        endpoint: "/guilds/guild-1/timers",
+        endpoint: "/timers/auto",
         status: "success",
       }),
     ]);

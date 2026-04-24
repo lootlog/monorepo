@@ -6,6 +6,7 @@ import { KillsService } from "./kills.service";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
+import { GuildsService } from "src/guilds/guilds.service";
 import { Permission, NpcType, type Role } from "src/generated/prisma/client";
 import type { CreateKillDto } from "./dto/create-kill.dto";
 import {
@@ -39,6 +40,9 @@ describe("KillsService", () => {
   };
   let userLootlogConfigService: {
     getLootlogCharacterConfig: Mock;
+  };
+  let guildsService: {
+    getGuildsForRequiredPermissions: Mock;
   };
   let logger: {
     log: Mock;
@@ -101,6 +105,13 @@ describe("KillsService", () => {
     const mockUserLootlogConfigService = {
       getLootlogCharacterConfig: mockFn(),
     };
+    const mockGuildsService = {
+      getGuildsForRequiredPermissions: mockFn().mockResolvedValue([
+        { id: "guild1" },
+        { id: "guild2" },
+        { id: "guild3" },
+      ]),
+    };
 
     const mockLogger = {
       log: mockFn(),
@@ -116,6 +127,10 @@ describe("KillsService", () => {
           provide: UserLootlogConfigService,
           useValue: mockUserLootlogConfigService,
         },
+        {
+          provide: GuildsService,
+          useValue: mockGuildsService,
+        },
         { provide: WINSTON_MODULE_PROVIDER, useValue: mockLogger },
       ],
     }).compile();
@@ -124,6 +139,7 @@ describe("KillsService", () => {
     prismaService = module.get(PrismaService);
     redisService = module.get(RedisService);
     userLootlogConfigService = module.get(UserLootlogConfigService);
+    guildsService = module.get(GuildsService);
     logger = module.get(WINSTON_MODULE_PROVIDER);
   });
 
@@ -205,6 +221,9 @@ describe("KillsService", () => {
 
       const result = await service.createKill(discordId, mockCreateKillDto);
 
+      expect(
+        guildsService.getGuildsForRequiredPermissions,
+      ).toHaveBeenCalledWith(discordId, [Permission.LOOTLOG_LOOTS_WRITE]);
       expect(prismaService.member.findMany).toHaveBeenCalledTimes(1);
       expect(prismaService.npcKillStats.upsert).toHaveBeenCalledTimes(2);
       expect(prismaService.guildKillSummary.upsert).toHaveBeenCalledTimes(2);
@@ -223,6 +242,28 @@ describe("KillsService", () => {
 
       const result = await service.createKill(discordId, mockCreateKillDto);
 
+      expect(prismaService.npcKillStats.upsert).toHaveBeenCalledTimes(1);
+      expect(result).toEqual({ updated: 1 });
+    });
+
+    it("should skip configured guilds where user no longer has loot write access", async () => {
+      userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue({
+        catchingGuildIds: ["guild1", "guild2"],
+      });
+      guildsService.getGuildsForRequiredPermissions.mockResolvedValue([
+        { id: "guild1" },
+      ]);
+      prismaService.member.findMany.mockResolvedValue([
+        { id: 1, guildId: "guild1" },
+      ]);
+      prismaService.npcKillStats.upsert.mockResolvedValue({});
+      prismaService.guildKillSummary.upsert.mockResolvedValue({});
+
+      const result = await service.createKill(discordId, mockCreateKillDto);
+
+      expect(prismaService.member.findMany).toHaveBeenCalledWith({
+        where: { userId: discordId, guildId: { in: ["guild1"] } },
+      });
       expect(prismaService.npcKillStats.upsert).toHaveBeenCalledTimes(1);
       expect(result).toEqual({ updated: 1 });
     });

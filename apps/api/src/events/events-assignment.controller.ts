@@ -4,6 +4,7 @@ import {
   Delete,
   ForbiddenException,
   Get,
+  HttpCode,
   Param,
   Patch,
   Post,
@@ -411,6 +412,7 @@ export class EventsAssignmentController {
   @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Post("/guilds/:guildId/events/:eventId/heroes/:heroId/locations/reorder")
+  @HttpCode(200)
   @ApiOperation({
     summary: "Reorder locations",
     description: "Change the order of locations",

@@ -5,19 +5,18 @@ import { UserNavItem } from "@/components/layout/user-nav-item";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { Reorder, motion } from "framer-motion";
-import { useState, useEffect, useCallback, useMemo, type FC } from "react";
+import { useState, useEffect, type FC } from "react";
 import { GuildsSelectorSkeleton } from "@/components/layout/guilds-selector-skeleton";
 import { useUser } from "@/hooks/api/user/use-user";
 import { Separator } from "@lootlog/ui/components/separator";
 import {
   useSetUsersControllerGetUserPreferencesQueryData,
-  useUsersControllerGetCurrentUserAccessibleGuilds,
+  useUsersControllerGetCurrentUserGuilds,
   useUsersControllerUpdateUserPreferences,
 } from "@/lib/api/generated/main/users/users";
 
 export const GuildsSelector: FC = () => {
-  const { data: guilds, isLoading } =
-    useUsersControllerGetCurrentUserAccessibleGuilds();
+  const { data: guilds, isLoading } = useUsersControllerGetCurrentUserGuilds();
   const { user } = useUser();
   const currentGuildId = useGuildId();
   const [localGuilds, setLocalGuilds] = useState<typeof guilds>();
@@ -33,11 +32,15 @@ export const GuildsSelector: FC = () => {
       },
     });
 
-  const orderedGuilds = useMemo(() => {
-    if (!guilds?.length) return [];
+  const getOrderedGuilds = () => {
+    if (!guilds?.length) {
+      return [];
+    }
 
     const savedOrder = user?.preferences?.guildsOrder;
-    if (!savedOrder?.length) return guilds;
+    if (!savedOrder?.length) {
+      return guilds;
+    }
 
     try {
       const guildMap = new Map(guilds.map((guild) => [guild.id, guild]));
@@ -53,13 +56,13 @@ export const GuildsSelector: FC = () => {
     } catch {
       return guilds;
     }
-  }, [guilds, user?.preferences?.guildsOrder]);
+  };
+  const orderedGuilds = getOrderedGuilds();
+  const orderedGuildsKey = orderedGuilds.map((guild) => guild.id).join(":");
+  const pendingOrderKey = pendingOrder?.join(":");
 
   useEffect(() => {
     if (!isDragging && pendingOrder) {
-      const orderedGuildsKey = orderedGuilds.map((guild) => guild.id).join(":");
-      const pendingOrderKey = pendingOrder.join(":");
-
       if (orderedGuildsKey !== pendingOrderKey) {
         updateUserPreferences({
           data: {
@@ -68,27 +71,31 @@ export const GuildsSelector: FC = () => {
         });
       }
     }
-  }, [isDragging, orderedGuilds, pendingOrder, updateUserPreferences]);
+  }, [
+    isDragging,
+    orderedGuildsKey,
+    pendingOrder,
+    pendingOrderKey,
+    updateUserPreferences,
+  ]);
 
-  const handleReorder = useCallback((newGuilds: typeof guilds) => {
+  const handleReorder = (newGuilds: typeof guilds) => {
     if (!newGuilds) return;
 
     setLocalGuilds(newGuilds);
 
     const orderIds = newGuilds.map((guild) => guild.id);
     setPendingOrder(orderIds);
-  }, []);
+  };
 
-  const handleDragStart = useCallback(() => {
+  const handleDragStart = () => {
     setIsDragging(true);
-  }, []);
+  };
 
-  const handleDragEnd = useCallback(() => {
+  const handleDragEnd = () => {
     setIsDragging(false);
-  }, []);
+  };
 
-  const orderedGuildsKey = orderedGuilds.map((guild) => guild.id).join(":");
-  const pendingOrderKey = pendingOrder?.join(":");
   const guildList =
     isDragging || (pendingOrderKey && pendingOrderKey !== orderedGuildsKey)
       ? (localGuilds ?? orderedGuilds)

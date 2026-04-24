@@ -2,25 +2,18 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createLoot,
   createNotification,
-  createTimerForGuilds,
   MessageType,
   sendChatMessage,
 } from "@/api";
 import { LOGS_STORAGE_KEY, useLogsStore } from "@/store/logs.store";
 
-const {
-  mockPost,
-  mockPatch,
-  mockSendNotification,
-  mockSendChatMessage,
-  mockCreateTimer,
-} = vi.hoisted(() => ({
-  mockPost: vi.fn(),
-  mockPatch: vi.fn(),
-  mockSendNotification: vi.fn(),
-  mockSendChatMessage: vi.fn(),
-  mockCreateTimer: vi.fn(),
-}));
+const { mockPost, mockPatch, mockSendNotification, mockSendChatMessage } =
+  vi.hoisted(() => ({
+    mockPost: vi.fn(),
+    mockPatch: vi.fn(),
+    mockSendNotification: vi.fn(),
+    mockSendChatMessage: vi.fn(),
+  }));
 
 vi.mock("@/lib/api-client", () => ({
   getApiClient: () => ({
@@ -35,10 +28,6 @@ vi.mock("@/lib/api/generated/main/messaging/messaging", () => ({
 
 vi.mock("@/lib/api/generated/main/chat/chat", () => ({
   chatControllerSendChatMessage: mockSendChatMessage,
-}));
-
-vi.mock("@/lib/api/generated/main/timers/timers", () => ({
-  timersControllerCreateTimer: mockCreateTimer,
 }));
 
 describe("api.service logging", () => {
@@ -269,111 +258,6 @@ describe("api.service logging", () => {
           status: "error",
         }),
       ]),
-    );
-  });
-
-  it("logs one timer action with one request per guild", async () => {
-    mockCreateTimer.mockResolvedValueOnce({ id: 1 }).mockRejectedValueOnce({
-      message: "Guild request failed",
-      status: 409,
-      data: { message: "conflict" },
-    });
-
-    await createTimerForGuilds({
-      timer: {
-        respBaseSeconds: 60,
-        respawnRandomness: 15,
-        characterId: "20",
-        accountId: "10",
-        world: "pandora",
-        npc: {
-          id: 15,
-          name: "Tanroth",
-          icon: "tanroth.gif",
-          prof: "m",
-          type: 3,
-          lvl: 300,
-          location: "Karka-han",
-          hpp: 0,
-          wt: 80,
-        },
-      },
-      guildIds: ["guild-1", "guild-2"],
-    });
-
-    const [action] = useLogsStore.getState().actions;
-
-    expect(action).toMatchObject({
-      actionType: "create_timer",
-      status: "partial",
-      details: {
-        endpoint: "/guilds/:guildId/timers",
-        totalRequests: 2,
-        successCount: 1,
-        failureCount: 1,
-        guildIds: ["guild-1", "guild-2"],
-      },
-    });
-    expect(action.requests).toHaveLength(2);
-    expect(action.requests).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          endpoint: "/guilds/guild-1/timers",
-          status: "success",
-        }),
-        expect.objectContaining({
-          endpoint: "/guilds/guild-2/timers",
-          status: "error",
-          statusCode: 409,
-        }),
-      ]),
-    );
-  });
-
-  it("marks timer action as failed and throws when all requests fail", async () => {
-    mockCreateTimer.mockRejectedValue({
-      message: "Request failed",
-      status: 500,
-      data: { message: "boom" },
-    });
-
-    await expect(
-      createTimerForGuilds({
-        timer: {
-          respBaseSeconds: 60,
-          characterId: "20",
-          accountId: "10",
-          world: "pandora",
-          npc: {
-            id: 15,
-            name: "Tanroth",
-            icon: "tanroth.gif",
-            prof: "m",
-            type: 3,
-            lvl: 300,
-            location: "Karka-han",
-            hpp: 0,
-            wt: 80,
-          },
-        },
-        guildIds: ["guild-1", "guild-2"],
-      }),
-    ).rejects.toThrow("Failed to create timer for all guilds");
-
-    const [action] = useLogsStore.getState().actions;
-
-    expect(action).toMatchObject({
-      actionType: "create_timer",
-      status: "error",
-      details: {
-        totalRequests: 2,
-        successCount: 0,
-        failureCount: 2,
-      },
-    });
-    expect(action.requests).toHaveLength(2);
-    expect(action.requests.every((entry) => entry.status === "error")).toBe(
-      true,
     );
   });
 });

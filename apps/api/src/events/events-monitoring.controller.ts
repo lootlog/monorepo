@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  Post,
+  UseGuards,
+} from "@nestjs/common";
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -281,6 +289,7 @@ export class EventsMonitoringController {
   @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Post("/guilds/:guildId/events/:eventId/heroes/:heroId/close-respawn-window")
+  @HttpCode(200)
   @ApiOperation({
     summary: "Close hero respawn window",
     description:
@@ -320,6 +329,7 @@ export class EventsMonitoringController {
   @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Post("/guilds/:guildId/events/:eventId/heroes/:heroId/open-respawn-window")
+  @HttpCode(200)
   @ApiOperation({
     summary: "Open hero respawn window",
     description:

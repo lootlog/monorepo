@@ -5,7 +5,8 @@ import { Test } from "@nestjs/testing";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { of } from "rxjs";
 import request from "supertest";
-import { NpcType } from "../prisma/generated/client";
+import { vi } from "vitest";
+import { NpcType } from "../src/generated/prisma/client";
 import { AppModule } from "../src/app.module";
 import { PrismaService } from "../src/db/prisma.service";
 import { createMockAmqpConnection } from "./test-module-helpers";
@@ -16,7 +17,7 @@ describe("Account Deletion E2E", () => {
   let redis: RedisService;
 
   const battlelogHttpMock = {
-    post: jest.fn(() => of({ data: { status: "ACCEPTED" } })),
+    post: vi.fn(() => of({ data: { status: "ACCEPTED" } })),
   };
 
   const deletedUser = {

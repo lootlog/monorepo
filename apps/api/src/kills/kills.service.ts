@@ -8,6 +8,7 @@ import { RedisService } from "@lootlog/nest-shared/redis";
 import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
 import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
 import { getStableNpcId } from "src/shared/utils/get-stable-npc-id";
+import { GuildsService } from "src/guilds/guilds.service";
 import type { CreateKillDto } from "./dto/create-kill.dto";
 import type {
   GetGuildKillStatsDto,
@@ -29,6 +30,7 @@ export class KillsService {
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
     private readonly userLootlogConfigService: UserLootlogConfigService,
+    private readonly guildsService: GuildsService,
   ) {}
 
   async createKill(discordId: string, data: CreateKillDto) {
@@ -88,21 +90,28 @@ export class KillsService {
     }
 
     // 3. Get guild config for this character
-    const config =
-      await this.userLootlogConfigService.getLootlogCharacterConfig(
+    const [config, writableGuilds] = await Promise.all([
+      this.userLootlogConfigService.getLootlogCharacterConfig(
         discordId,
         data.accountId,
         data.characterId,
-      );
+      ),
+      this.guildsService.getGuildsForRequiredPermissions(discordId, [
+        Permission.LOOTLOG_LOOTS_WRITE,
+      ]),
+    ]);
 
+    const writableGuildIds = new Set(writableGuilds.map((guild) => guild.id));
     const targetGuildIds = new Set(config?.catchingGuildIds ?? []);
+    const guildIdArray = Array.from(targetGuildIds).filter((guildId) =>
+      writableGuildIds.has(guildId),
+    );
 
-    if (targetGuildIds.size === 0) {
+    if (guildIdArray.length === 0) {
       return { updated: 0 };
     }
 
     // 4. Batch-fetch members for all target guilds (single query)
-    const guildIdArray = Array.from(targetGuildIds);
     const members = await this.prisma.member.findMany({
       where: { userId: discordId, guildId: { in: guildIdArray } },
     });
