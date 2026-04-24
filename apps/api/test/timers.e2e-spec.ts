@@ -81,6 +81,95 @@ describe("Timers E2E Tests (Whitelist)", () => {
       await expect(prisma.timer.count()).resolves.toBe(0);
     });
 
+    it("should update an existing timer even when its minimum spawn time is still far in the future", async () => {
+      const guild = await prisma.guild.create({ data: TEST_GUILDS.GUILD_1 });
+      const { member } = await createMemberFixture(prisma, {
+        guildId: guild.id,
+        auth: {
+          userId: TEST_USERS.MEMBER_WITH_WRITE.id,
+          discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+        },
+        permissions: [Permission.LOOTLOG_TIMERS_WRITE],
+      });
+      await prisma.userCharactersLootlogSettings.create({
+        data: {
+          userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+          accountId: "short-respawn-account",
+          characterId: "short-respawn-character",
+          catchingGuildIds: [guild.id],
+        },
+      });
+
+      const timerPayload = createTestTimerPayload({
+        accountId: "short-respawn-account",
+        characterId: "short-respawn-character",
+        respBaseSeconds: 24 * 60 * 60,
+      });
+      const timerKey = buildTimerKey(
+        timerPayload.npc.id,
+        timerPayload.npc.name,
+      );
+      const previousMinSpawnTime = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const previousMaxSpawnTime = new Date(Date.now() + 30 * 60 * 60 * 1000);
+
+      await prisma.timer.create({
+        data: {
+          guildId: guild.id,
+          createdById: member.id,
+          world: timerPayload.world,
+          npcId: timerPayload.npc.id,
+          timerKey,
+          minSpawnTime: previousMinSpawnTime,
+          maxSpawnTime: previousMaxSpawnTime,
+          latestRespBaseSeconds: 24 * 60 * 60,
+          latestRespawnRandomness: 10,
+          wasReset: false,
+          npc: timerPayload.npc,
+        },
+      });
+
+      const response = await request(app.getHttpServer())
+        .post("/timers/auto")
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
+        .send(timerPayload)
+        .expect(201);
+
+      expect(response.body.submittedGuilds).toEqual([
+        {
+          guildId: guild.id,
+          guildName: guild.name,
+        },
+      ]);
+      expect(response.body.rejectedGuilds).toEqual([]);
+
+      const timers = await prisma.timer.findMany({
+        where: {
+          guildId: guild.id,
+          world: timerPayload.world,
+          timerKey,
+        },
+      });
+
+      expect(timers).toHaveLength(1);
+      expect(timers[0].minSpawnTime.getTime()).not.toBe(
+        previousMinSpawnTime.getTime(),
+      );
+      expect(timers[0].maxSpawnTime.getTime()).not.toBe(
+        previousMaxSpawnTime.getTime(),
+      );
+      expect(timers[0].updatedAt.getTime()).toBeGreaterThan(
+        timers[0].createdAt.getTime(),
+      );
+      expect(
+        vi
+          .mocked(amqpConnection.publish)
+          .mock.calls.filter(
+            (call) => call[1] === RoutingKey.GUILDS_TIMERS_UPDATE,
+          ),
+      ).toHaveLength(1);
+    });
+
     it("should keep one timer when 50 users submit the same NPC to one whitelisted guild concurrently", async () => {
       const guild = await prisma.guild.create({ data: TEST_GUILDS.GUILD_1 });
       const role = await prisma.role.create({
