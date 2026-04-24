@@ -23,7 +23,10 @@ export async function orvalFetchSearch<TData>(
     throw new Error("Search API baseUrl must be provided.");
   }
 
-  const response = await fetch(buildRequestUrl(baseUrl, path), fetchInit);
+  const response = await fetch(buildRequestUrl(baseUrl, path), {
+    ...fetchInit,
+    credentials: fetchInit.credentials ?? "include",
+  });
 
   if (!response.ok) {
     let body: unknown;
