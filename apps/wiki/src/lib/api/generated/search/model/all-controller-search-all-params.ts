@@ -6,4 +6,8 @@
  * OpenAPI spec version: 1.0
  */
 
-export type SearchItemsResponseDtoOutputHitsItemStats = {[key: string]: string | number | boolean | string[]};
+export type AllControllerSearchAllParams = {
+limit?: number;
+search?: string;
+world?: string;
+};

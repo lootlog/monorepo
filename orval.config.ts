@@ -53,7 +53,7 @@ const createAppServiceConfigs = ({
   mutatorPath,
   services,
 }: {
-  appName: "web" | "game-client";
+  appName: "web" | "game-client" | "wiki";
   mutatorPath: string;
   services: Array<{
     configName: string;
@@ -138,7 +138,21 @@ const gameClientConfigs = createAppServiceConfigs({
   ],
 });
 
+const wikiConfigs = createAppServiceConfigs({
+  appName: "wiki",
+  mutatorPath: "./apps/wiki/src/lib/api/orval-fetch.ts",
+  services: [
+    {
+      configName: "wikiSearchApi",
+      serviceName: "search",
+      specPath: "./apps/search/openapi.yaml",
+      mutatorName: "orvalFetchSearch",
+    },
+  ],
+});
+
 export default defineConfig({
   ...webConfigs,
   ...gameClientConfigs,
+  ...wikiConfigs,
 });

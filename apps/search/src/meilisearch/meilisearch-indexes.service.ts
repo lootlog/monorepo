@@ -13,7 +13,7 @@ import { MEILISEARCH_CLIENT } from "./meilisearch.constants";
 import { getMeilisearchErrorCode } from "./meilisearch.utils";
 
 const itemFilterableAttributes = [
-  "world",
+  "worlds",
   "type",
   "rarity",
   "lvl",
@@ -64,6 +64,10 @@ export class MeilisearchIndexesService implements OnApplicationBootstrap {
         this.meilisearch
           .index(ITEMS_INDEX)
           .updateSortableAttributes(["name", "lvl", "rarity", "type"])
+          .waitTask(),
+        this.meilisearch
+          .index(ITEMS_INDEX)
+          .updateDistinctAttribute("id")
           .waitTask(),
       ]);
     } catch (error) {

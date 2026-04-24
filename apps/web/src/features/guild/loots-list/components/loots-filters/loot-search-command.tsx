@@ -6,6 +6,7 @@ import {
   CommandItem,
   CommandList,
 } from "@lootlog/ui/components/command";
+import { ItemImage } from "@lootlog/ui/components/item-image";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useDebounceValue } from "usehooks-ts";
@@ -24,7 +25,7 @@ import type { NpcHitDtoOutput } from "@/lib/api/generated/search/model";
 import { ItemRarity } from "@/lib/loots/loot-types";
 import { parseItemHid } from "@/lib/utils/hid-detection";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
-import { ItemImage, NpcSearchTile, PlayerSearchTile } from "@/components/tiles";
+import { NpcSearchTile, PlayerSearchTile } from "@/components/tiles";
 import { cn } from "@lootlog/ui/lib/utils";
 import { NPC_TYPE_NAMES, ITEM_RARITY_NAMES } from "@/constants/npc";
 import { motion, Reorder } from "framer-motion";

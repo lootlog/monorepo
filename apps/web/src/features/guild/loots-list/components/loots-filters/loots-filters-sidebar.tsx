@@ -6,6 +6,7 @@ import { Label } from "@lootlog/ui/components/label";
 import { Input } from "@lootlog/ui/components/input";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
+import { ItemImage } from "@lootlog/ui/components/item-image";
 import {
   Accordion,
   AccordionItem,
@@ -28,7 +29,6 @@ import { FilterCombobox } from "./filter-combobox";
 import { useLootFilterOptions } from "./use-loot-filter-options";
 import { useDebounceValue, useLocalStorage } from "usehooks-ts";
 import { cn } from "@lootlog/ui/lib/utils";
-import { ItemImage } from "@/components/tiles";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {

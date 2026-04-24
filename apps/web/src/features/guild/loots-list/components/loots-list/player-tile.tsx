@@ -8,7 +8,7 @@ import {
   MARGONEM_PROFILE_URL,
 } from "@/constants/margonem";
 import { cn } from "@lootlog/ui/lib/utils";
-import { useSharedTooltip } from "@/components/shared-tooltip/shared-tooltip-provider";
+import { useSharedTooltip } from "@lootlog/ui/components/shared-tooltip-provider";
 
 import type { FC } from "react";
 

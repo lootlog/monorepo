@@ -1,4 +1,4 @@
-import { SharedTooltipProvider } from "@/components/shared-tooltip/shared-tooltip-provider";
+import { SharedTooltipProvider } from "@lootlog/ui/components/shared-tooltip-provider";
 import { LootsListItem } from "@/features/guild/loots-list/components/loots-list/loots-list-item";
 import { LootsListItemSkeleton } from "@/features/guild/loots-list/components/loots-list/loots-list-item-skeleton";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
