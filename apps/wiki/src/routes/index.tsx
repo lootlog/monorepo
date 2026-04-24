@@ -46,7 +46,17 @@ function HomeRoute() {
         <div className="flex flex-wrap gap-3">
           <Link
             to="/items"
-            search={{ filter: "", query: "", world: "" }}
+            search={{
+              advancedFilter: "",
+              maxLevel: "",
+              minLevel: "",
+              professions: "",
+              query: "",
+              rarities: "",
+              sort: "relevance",
+              types: "",
+              world: "",
+            }}
             className="rounded-full border border-[rgba(126,94,40,0.3)] bg-[rgba(215,167,57,0.12)] px-5 py-2.5 text-sm font-semibold text-[var(--accent-deep)] no-underline transition hover:-translate-y-0.5 hover:bg-[rgba(215,167,57,0.2)]"
           >
             {t("home.ctaItems")}

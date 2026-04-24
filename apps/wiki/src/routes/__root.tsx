@@ -1,6 +1,7 @@
 import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router";
-import Footer from "@/components/Footer";
-import Header from "@/components/Header";
+import { SharedTooltipProvider } from "@lootlog/ui/components/shared-tooltip-provider";
+import Footer from "@/components/footer";
+import Header from "@/components/header";
 import QueryProvider from "@/components/query-provider";
 import { t } from "@/i18n/messages";
 import appCss from "@/styles.css?url";
@@ -44,9 +45,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body className="font-sans antialiased [overflow-wrap:anywhere] selection:bg-[rgba(79,184,178,0.24)]">
         <QueryProvider>
-          <Header />
-          {children}
-          <Footer />
+          <SharedTooltipProvider>
+            <Header />
+            {children}
+            <Footer />
+          </SharedTooltipProvider>
         </QueryProvider>
         <Scripts />
       </body>

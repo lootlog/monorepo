@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { t } from "@/i18n/messages";
-import ThemeToggle from "./ThemeToggle";
+import ThemeToggle from "./theme-toggle";
 
 export default function Header() {
   return (
@@ -30,7 +30,17 @@ export default function Header() {
           </Link>
           <Link
             to="/items"
-            search={{ filter: "", query: "", world: "" }}
+            search={{
+              advancedFilter: "",
+              maxLevel: "",
+              minLevel: "",
+              professions: "",
+              query: "",
+              rarities: "",
+              sort: "relevance",
+              types: "",
+              world: "",
+            }}
             className="nav-link"
             activeProps={{ className: "nav-link is-active" }}
           >

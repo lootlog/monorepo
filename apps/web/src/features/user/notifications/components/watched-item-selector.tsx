@@ -16,7 +16,7 @@ import {
   PopoverTrigger,
 } from "@lootlog/ui/components/popover";
 import { Spinner } from "@lootlog/ui/components/spinner";
-import { ItemImage } from "@/components/tiles";
+import { ItemImage } from "@lootlog/ui/components/item-image";
 import type { SearchItemsResponseDtoOutputHitsItem } from "@/lib/api/generated/search/model";
 import { ItemRarity } from "@/lib/loots/loot-types";
 import { cn } from "@/utils/cn";
