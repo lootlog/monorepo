@@ -12,8 +12,8 @@
     },
   ],
   "env": {
-    "develop": {
-      "name": "lootlog-wiki-develop",
+    "staging": {
+      "name": "lootlog-wiki-staging",
       "routes": [
         {
           "pattern": "dev-wiki.lootlog.pl",
