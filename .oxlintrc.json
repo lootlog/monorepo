@@ -13,6 +13,7 @@
     "**/pnpm-lock.yaml",
     "apps/game-client/src/lib/api/generated/**",
     "apps/web/src/lib/api/generated/**",
+    "apps/wiki/src/lib/api/generated/**",
     "apps/landing/.source/source.config.mjs",
     "apps/landing/source.config.ts"
   ],
