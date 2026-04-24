@@ -9,8 +9,11 @@ export type OrvalFetchOptions = RequestInit & {
   baseUrl?: string;
 };
 
-function buildRequestUrl(baseUrl: string, path: string) {
-  return new URL(path, baseUrl).toString();
+export function buildRequestUrl(baseUrl: string, path: string) {
+  const normalizedBaseUrl = baseUrl.replace(/\/+$/, "");
+  const normalizedPath = path.replace(/^\/+/, "");
+
+  return `${normalizedBaseUrl}/${normalizedPath}`;
 }
 
 export async function orvalFetchSearch<TData>(

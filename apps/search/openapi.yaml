@@ -277,9 +277,6 @@ components:
             properties:
               id:
                 type: number
-              hid:
-                default: ""
-                type: string
               name:
                 type: string
               icon:
@@ -287,32 +284,6 @@ components:
               stat:
                 default: ""
                 type: string
-              stats:
-                default: {}
-                type: object
-                additionalProperties:
-                  anyOf:
-                    - type: string
-                    - type: number
-                    - type: boolean
-                    - type: array
-                      items:
-                        type: string
-              numericStats:
-                default: {}
-                type: object
-                additionalProperties:
-                  type: number
-              statsKeys:
-                default: []
-                type: array
-                items:
-                  type: string
-              requiredProfessions:
-                default: []
-                type: array
-                items:
-                  type: string
               lvl:
                 type: number
               rarity:
@@ -321,22 +292,20 @@ components:
               type:
                 type: string
                 nullable: true
-              world:
-                type: string
+              worlds:
+                default: []
+                type: array
+                items:
+                  type: string
             required:
               - id
-              - hid
               - name
               - icon
               - stat
-              - stats
-              - numericStats
-              - statsKeys
-              - requiredProfessions
               - lvl
               - rarity
               - type
-              - world
+              - worlds
             description: Item search hit
         estimatedTotalHits:
           type: number
@@ -376,9 +345,6 @@ components:
             properties:
               id:
                 type: number
-              hid:
-                default: ""
-                type: string
               name:
                 type: string
               icon:
@@ -386,32 +352,6 @@ components:
               stat:
                 default: ""
                 type: string
-              stats:
-                default: {}
-                type: object
-                additionalProperties:
-                  anyOf:
-                    - type: string
-                    - type: number
-                    - type: boolean
-                    - type: array
-                      items:
-                        type: string
-              numericStats:
-                default: {}
-                type: object
-                additionalProperties:
-                  type: number
-              statsKeys:
-                default: []
-                type: array
-                items:
-                  type: string
-              requiredProfessions:
-                default: []
-                type: array
-                items:
-                  type: string
               lvl:
                 type: number
               rarity:
@@ -420,22 +360,20 @@ components:
               type:
                 type: string
                 nullable: true
-              world:
-                type: string
+              worlds:
+                default: []
+                type: array
+                items:
+                  type: string
             required:
               - id
-              - hid
               - name
               - icon
               - stat
-              - stats
-              - numericStats
-              - statsKeys
-              - requiredProfessions
               - lvl
               - rarity
               - type
-              - world
+              - worlds
             description: Item search hit
         players:
           type: array

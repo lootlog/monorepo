@@ -19,6 +19,23 @@ type SearchItemsResponse = {
   hits: ItemHit[];
 };
 
+type IndexItem = IndexItemsDto["items"][number];
+type IndexedItem = IndexItem & {
+  uid: string;
+  worlds: string[];
+};
+
+const itemAttributesToRetrieve = [
+  "id",
+  "name",
+  "icon",
+  "stat",
+  "lvl",
+  "rarity",
+  "type",
+  "worlds",
+];
+
 @Injectable()
 export class ItemsService {
   constructor(
@@ -47,13 +64,15 @@ export class ItemsService {
 
     const filters = [
       ...incomingFilters,
-      ...(world ? [`world = ${JSON.stringify(world)}`] : []),
+      ...(world ? [`worlds = ${JSON.stringify(world)}`] : []),
     ];
 
     const query: SearchParams = {
       limit,
       offset,
       attributesToSearchOn: ["name", "stat"],
+      attributesToRetrieve: itemAttributesToRetrieve,
+      distinct: "id",
       ...(facets && facets.length > 0 ? { facets } : {}),
       ...(filters.length > 0 ? { filter: filters.join(" AND ") } : {}),
       ...(sort && sort.length > 0 ? { sort } : {}),
@@ -106,11 +125,12 @@ export class ItemsService {
   }
 
   async indexItems(data: IndexItemsDto) {
-    const index = this.meilisearch.index(ITEMS_INDEX);
+    const index = this.meilisearch.index<IndexedItem>(ITEMS_INDEX);
 
-    const validItems = data.items.filter(
-      (item) => item.world && item.id && item.name,
-    );
+    const validItems = data.items.filter((item) => {
+      const worlds = this.getItemWorlds(item);
+      return item.id && item.name && worlds.length > 0;
+    });
 
     if (validItems.length === 0) {
       this.logger.warn("No valid items to index (missing required fields)");
@@ -123,15 +143,27 @@ export class ItemsService {
       );
     }
 
-    const itemsWithUid = validItems.map((item) => ({
-      ...item,
-      ...createItemSearchFields(item.stat),
-      hid: item.hid ?? "",
-      uid: `${item.id}_${item.world}`,
-    }));
+    const itemsById = this.mergeItemsById(validItems);
+    const itemsWithExistingWorlds = await Promise.all(
+      itemsById.map(async (item) => {
+        const existingWorlds = await this.getExistingWorlds(item.uid);
+        return {
+          ...item,
+          worlds: this.getUniqueWorlds([...item.worlds, ...existingWorlds]),
+        };
+      }),
+    );
+    const itemsWithSearchFields = itemsWithExistingWorlds.map(
+      ({ world: _world, ...item }) => ({
+        ...item,
+        ...createItemSearchFields(item.stat),
+      }),
+    );
 
     try {
-      return await index.addDocuments(itemsWithUid, { primaryKey: "uid" });
+      return await index.addDocuments(itemsWithSearchFields, {
+        primaryKey: "uid",
+      });
     } catch (error) {
       this.logger.error("Error indexing items", { error });
       return;
@@ -163,5 +195,63 @@ export class ItemsService {
       facetDistribution: data.facetDistribution ?? {},
       facetStats: data.facetStats ?? {},
     };
+  }
+
+  private mergeItemsById(items: IndexItem[]): IndexedItem[] {
+    const itemsById = new Map<number, IndexedItem>();
+
+    for (const item of items) {
+      const worlds = this.getItemWorlds(item);
+      const existingItem = itemsById.get(item.id);
+
+      if (!existingItem) {
+        itemsById.set(item.id, {
+          ...item,
+          uid: String(item.id),
+          worlds,
+        });
+        continue;
+      }
+
+      itemsById.set(item.id, {
+        ...existingItem,
+        ...item,
+        uid: String(item.id),
+        worlds: this.getUniqueWorlds([...existingItem.worlds, ...worlds]),
+      });
+    }
+
+    return [...itemsById.values()];
+  }
+
+  private getItemWorlds(item: IndexItem) {
+    return this.getUniqueWorlds([
+      ...(item.worlds ?? []),
+      ...(item.world ? [item.world] : []),
+    ]);
+  }
+
+  private getUniqueWorlds(worlds: string[]) {
+    return [...new Set(worlds.filter(Boolean))].sort((first, second) =>
+      first.localeCompare(second),
+    );
+  }
+
+  private async getExistingWorlds(uid: string) {
+    const index = this.meilisearch.index<IndexedItem>(ITEMS_INDEX);
+
+    try {
+      const document = await index.getDocument(uid);
+      return document.worlds ?? [];
+    } catch (error) {
+      if (getMeilisearchErrorCode(error) !== "document_not_found") {
+        this.logger.warn("Could not read existing item worlds", {
+          error,
+          uid,
+        });
+      }
+
+      return [];
+    }
   }
 }

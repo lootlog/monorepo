@@ -33,6 +33,10 @@ describe("MeilisearchIndexesService", () => {
     waitTask: vi.fn(),
   };
 
+  const itemsDistinctTask = {
+    waitTask: vi.fn(),
+  };
+
   const createIndexTask = {
     waitTask: vi.fn(),
   };
@@ -46,6 +50,7 @@ describe("MeilisearchIndexesService", () => {
   };
 
   const itemsIndexMock = {
+    updateDistinctAttribute: vi.fn(),
     updateFilterableAttributes: vi.fn(),
     updateSearchableAttributes: vi.fn(),
     updateSortableAttributes: vi.fn(),
@@ -63,6 +68,7 @@ describe("MeilisearchIndexesService", () => {
     itemsFilterTask.waitTask.mockResolvedValue(undefined);
     itemsSearchTask.waitTask.mockResolvedValue(undefined);
     itemsSortTask.waitTask.mockResolvedValue(undefined);
+    itemsDistinctTask.waitTask.mockResolvedValue(undefined);
     createIndexTask.waitTask.mockResolvedValue(undefined);
 
     npcsIndexMock.updateFilterableAttributes.mockReturnValue(npcsFilterTask);
@@ -72,6 +78,7 @@ describe("MeilisearchIndexesService", () => {
     itemsIndexMock.updateFilterableAttributes.mockReturnValue(itemsFilterTask);
     itemsIndexMock.updateSearchableAttributes.mockReturnValue(itemsSearchTask);
     itemsIndexMock.updateSortableAttributes.mockReturnValue(itemsSortTask);
+    itemsIndexMock.updateDistinctAttribute.mockReturnValue(itemsDistinctTask);
     meilisearchMock.getIndex.mockResolvedValue(undefined);
     meilisearchMock.createIndex.mockReturnValue(createIndexTask);
 
@@ -129,7 +136,7 @@ describe("MeilisearchIndexesService", () => {
         "world",
       ]);
       expect(itemsIndexMock.updateFilterableAttributes).toHaveBeenCalledWith([
-        "world",
+        "worlds",
         "type",
         "rarity",
         "lvl",
@@ -148,6 +155,7 @@ describe("MeilisearchIndexesService", () => {
         "rarity",
         "type",
       ]);
+      expect(itemsIndexMock.updateDistinctAttribute).toHaveBeenCalledWith("id");
       expect(loggerMock.error).not.toHaveBeenCalled();
     });
 

@@ -22,6 +22,7 @@ import {
   getItemsControllerGetItemsQueryKey,
   useItemsControllerGetItems,
 } from "@/lib/api/generated/search/items/items";
+import { renderItemStat } from "@/components/render-item-stat";
 
 const SEARCH_DEBOUNCE_MS = 300;
 const SEARCH_LIMIT = 96;
@@ -99,7 +100,13 @@ const isSortOption = (value: string): value is (typeof sortOptions)[number] =>
   sortOptions.includes(value as (typeof sortOptions)[number]);
 
 const normalizeLevelValue = (value: string) => {
-  const level = Number(value);
+  const normalizedValue = value.trim();
+
+  if (!normalizedValue) {
+    return undefined;
+  }
+
+  const level = Number(normalizedValue);
 
   if (!Number.isFinite(level)) {
     return undefined;
@@ -630,7 +637,7 @@ function ItemsRoute() {
             <div className="grid grid-flow-dense grid-cols-[repeat(auto-fill,minmax(42px,1fr))] gap-2">
               {data.hits.map((item) => (
                 <div
-                  key={`${item.id}_${item.world}_${item.hid}`}
+                  key={item.id}
                   className="group flex min-h-12 items-center justify-center rounded-lg border border-border bg-background/40 p-1 transition-colors hover:border-primary/60 hover:bg-primary/5"
                 >
                   <ItemTile
@@ -645,6 +652,7 @@ function ItemsRoute() {
                       type: item.type,
                     }}
                     labels={itemLabels}
+                    renderStat={renderItemStat}
                   />
                 </div>
               ))}

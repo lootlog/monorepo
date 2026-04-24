@@ -15,6 +15,7 @@ describe("ItemsService", () => {
   const indexMock = {
     search: vi.fn(),
     addDocuments: vi.fn(),
+    getDocument: vi.fn(),
   };
 
   const meilisearchMock = {
@@ -22,6 +23,7 @@ describe("ItemsService", () => {
   };
 
   beforeEach(async () => {
+    vi.clearAllMocks();
     meilisearchMock.index.mockReturnValue(indexMock);
 
     const module: TestingModule = await Test.createTestingModule({
@@ -63,7 +65,18 @@ describe("ItemsService", () => {
         limit: 3,
         offset: 0,
         attributesToSearchOn: ["name", "stat"],
-        filter: 'world = "Berufs"',
+        attributesToRetrieve: [
+          "id",
+          "name",
+          "icon",
+          "stat",
+          "lvl",
+          "rarity",
+          "type",
+          "worlds",
+        ],
+        distinct: "id",
+        filter: 'worlds = "Berufs"',
       });
     });
 
@@ -114,8 +127,19 @@ describe("ItemsService", () => {
         limit: 10,
         offset: 20,
         attributesToSearchOn: ["name", "stat"],
+        attributesToRetrieve: [
+          "id",
+          "name",
+          "icon",
+          "stat",
+          "lvl",
+          "rarity",
+          "type",
+          "worlds",
+        ],
+        distinct: "id",
         filter:
-          'numericStats.dmg >= 40 AND requiredProfessions = "w" AND world = "Berufs"',
+          'numericStats.dmg >= 40 AND requiredProfessions = "w" AND worlds = "Berufs"',
         facets: ["rarity", "requiredProfessions"],
         sort: ["lvl:desc"],
       });
@@ -182,11 +206,33 @@ describe("ItemsService", () => {
         limit: 10,
         offset: 0,
         attributesToSearchOn: ["name", "stat"],
+        attributesToRetrieve: [
+          "id",
+          "name",
+          "icon",
+          "stat",
+          "lvl",
+          "rarity",
+          "type",
+          "worlds",
+        ],
+        distinct: "id",
       });
       expect(indexMock.search).toHaveBeenNthCalledWith(2, "sword", {
         limit: 10,
         offset: 0,
         attributesToSearchOn: ["name"],
+        attributesToRetrieve: [
+          "id",
+          "name",
+          "icon",
+          "stat",
+          "lvl",
+          "rarity",
+          "type",
+          "worlds",
+        ],
+        distinct: "id",
       });
       expect(loggerMock.warn).toHaveBeenCalledWith(
         "Items index settings are stale, retrying search without stat attribute",
@@ -200,7 +246,7 @@ describe("ItemsService", () => {
   });
 
   describe("indexItems", () => {
-    it("should index valid items with generated uid and default hid", async () => {
+    it("should index valid items with generated uid and worlds", async () => {
       const items = [
         {
           id: 1,
@@ -215,6 +261,9 @@ describe("ItemsService", () => {
       ];
 
       const task = { taskUid: 123 };
+      indexMock.getDocument.mockRejectedValue({
+        cause: { code: "document_not_found" },
+      });
       indexMock.addDocuments.mockResolvedValue(task);
 
       await expect(service.indexItems({ items })).resolves.toEqual(task);
@@ -222,7 +271,15 @@ describe("ItemsService", () => {
       expect(indexMock.addDocuments).toHaveBeenCalledWith(
         [
           {
-            ...items[0],
+            id: 1,
+            name: "Sword",
+            icon: "sword.png",
+            stat: "lvl=10",
+            lvl: 10,
+            rarity: "heroic",
+            type: "weapon",
+            worlds: ["Berufs"],
+            uid: "1",
             stats: {
               lvl: 10,
             },
@@ -231,8 +288,64 @@ describe("ItemsService", () => {
             },
             statsKeys: ["lvl"],
             requiredProfessions: ["w", "p", "h", "m", "b", "t"],
-            hid: "",
-            uid: "1_Berufs",
+          },
+        ],
+        { primaryKey: "uid" },
+      );
+    });
+
+    it("should merge duplicate items and existing worlds", async () => {
+      const items = [
+        {
+          id: 1,
+          name: "Old Sword",
+          icon: "old-sword.png",
+          stat: "lvl=9",
+          lvl: 9,
+          rarity: "unique",
+          type: "weapon",
+          world: "Berufs",
+        },
+        {
+          id: 1,
+          name: "Sword",
+          icon: "sword.png",
+          stat: "lvl=10",
+          lvl: 10,
+          rarity: "heroic",
+          type: "weapon",
+          world: "Aether",
+        },
+      ];
+      const task = { taskUid: 123 };
+
+      indexMock.getDocument.mockResolvedValue({
+        worlds: ["Cronus"],
+      });
+      indexMock.addDocuments.mockResolvedValue(task);
+
+      await expect(service.indexItems({ items })).resolves.toEqual(task);
+
+      expect(indexMock.addDocuments).toHaveBeenCalledWith(
+        [
+          {
+            id: 1,
+            name: "Sword",
+            icon: "sword.png",
+            stat: "lvl=10",
+            lvl: 10,
+            rarity: "heroic",
+            type: "weapon",
+            worlds: ["Aether", "Berufs", "Cronus"],
+            uid: "1",
+            stats: {
+              lvl: 10,
+            },
+            numericStats: {
+              lvl: 10,
+            },
+            statsKeys: ["lvl"],
+            requiredProfessions: ["w", "p", "h", "m", "b", "t"],
           },
         ],
         { primaryKey: "uid" },
@@ -263,15 +376,28 @@ describe("ItemsService", () => {
         },
       ];
 
+      indexMock.getDocument.mockRejectedValue({
+        cause: { code: "document_not_found" },
+      });
+
       await service.indexItems({ items });
 
+      expect(indexMock.getDocument).toHaveBeenCalledWith("1");
       expect(loggerMock.warn).toHaveBeenCalledWith(
         "Skipped 1 items due to missing required fields",
       );
       expect(indexMock.addDocuments).toHaveBeenCalledWith(
         [
           {
-            ...items[0],
+            id: 1,
+            name: "Sword",
+            icon: "sword.png",
+            stat: "lvl=10",
+            lvl: 10,
+            rarity: "heroic",
+            type: "weapon",
+            worlds: ["Berufs"],
+            uid: "1",
             stats: {
               lvl: 10,
             },
@@ -280,8 +406,6 @@ describe("ItemsService", () => {
             },
             statsKeys: ["lvl"],
             requiredProfessions: ["w", "p", "h", "m", "b", "t"],
-            hid: "",
-            uid: "1_Berufs",
           },
         ],
         { primaryKey: "uid" },
@@ -314,7 +438,6 @@ describe("ItemsService", () => {
       const items = [
         {
           id: 1,
-          hid: "hid-1",
           name: "Sword",
           icon: "sword.png",
           stat: "lvl=10",
@@ -326,6 +449,9 @@ describe("ItemsService", () => {
       ];
       const error = new Error("index failed");
 
+      indexMock.getDocument.mockRejectedValue({
+        cause: { code: "document_not_found" },
+      });
       indexMock.addDocuments.mockRejectedValue(error);
 
       await expect(service.indexItems({ items })).resolves.toBeUndefined();
