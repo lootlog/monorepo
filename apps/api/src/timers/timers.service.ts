@@ -5,6 +5,7 @@ import {
   ForbiddenException,
   Inject,
   Injectable,
+  NotFoundException,
   type OnModuleInit,
 } from "@nestjs/common";
 import {
@@ -30,7 +31,6 @@ import { generateUniqueIntId } from "src/shared/utils/generate-unique-int-id";
 import { RoutingKey } from "src/enum/routing-key.enum";
 import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
 import { canViewNpcTimer } from "@lootlog/api-helpers/permissions";
-import type { CreateTimerDto } from "src/timers/dto/create-timer.dto";
 import type { CreateTimerFromGameClientDto } from "src/timers/dto/create-timer-from-game-client.dto";
 import { validateAndCalculateSpawnTimes } from "src/timers/utils/validate-spawn-times";
 import { TIMER_LIMITS, TIMER_TYPES } from "src/timers/constants/timer-limits";
@@ -70,7 +70,9 @@ function extractNpcName(npc: unknown): string {
   return "";
 }
 
-const DEDUP_TTL_SECONDS = 10;
+const DEDUP_TTL_SECONDS = 30;
+const DEDUP_WAIT_ATTEMPTS = 100;
+const DEDUP_WAIT_DELAY_MS = 50;
 const CACHE_TTL_SECONDS = 2;
 const NPC_TYPE_VALUES = new Set<string>(Object.values(NpcType));
 
@@ -119,10 +121,20 @@ type CreateAutoTimerOutcome = {
   rejectedGuilds: CreateAutoTimerRejectedGuild[];
 };
 
+type CreateTimerForGuildContext = {
+  discordId: string;
+  guildId: string;
+  data: CreateTimerFromGameClientDto;
+  now: Date;
+  timerKey: string;
+  dedupKey: string;
+  lockKey: string;
+};
+
 @Injectable()
 export class TimersService implements OnModuleInit {
   private redlock: ReturnType<RedlockService["createInstance"]>;
-  private readonly lockTtl = 10000;
+  private readonly lockTtl = 30000;
 
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
@@ -146,12 +158,11 @@ export class TimersService implements OnModuleInit {
   }
 
   private getDedupKey(
-    userId: string,
     timerKey: string,
     world: string,
     guildId: string,
   ): string {
-    return `timer:dedup:${userId}:${timerKey}:${world}:${guildId}`;
+    return `timer:dedup:${guildId}:${world}:${timerKey}`;
   }
 
   private getTimersCacheKey(guildId: string, world?: string): string {
@@ -782,20 +793,6 @@ export class TimersService implements OnModuleInit {
     return worlds.map((worldEntry) => worldEntry.world);
   }
 
-  async createTimer(
-    discordId: string,
-    userId: string,
-    guildId: string,
-    data: CreateTimerDto | CreateTimerFromGameClientDto,
-  ) {
-    return this.createTimerForGuild(
-      discordId,
-      userId,
-      guildId,
-      data as CreateTimerFromGameClientDto,
-    );
-  }
-
   async createTimerForGuild(
     discordId: string,
     userId: string,
@@ -808,7 +805,7 @@ export class TimersService implements OnModuleInit {
     }
     const timerKey = buildTimerKey(data.npc.id, data.npc.name);
 
-    const dedupKey = this.getDedupKey(discordId, timerKey, data.world, guildId);
+    const dedupKey = this.getDedupKey(timerKey, data.world, guildId);
 
     const cached = await this.redis.get(dedupKey);
     if (cached) {
@@ -823,13 +820,40 @@ export class TimersService implements OnModuleInit {
 
     const dedupLockKey = `${dedupKey}:lock`;
     const lockKey = this.getLockKey(data.world, timerKey, guildId);
-    let dedupLock: Awaited<ReturnType<typeof this.redlock.acquire>> | null =
-      null;
-    let mainLock: Awaited<ReturnType<typeof this.redlock.acquire>> | null =
-      null;
+    let dedupLockAcquired = false;
+    const context: CreateTimerForGuildContext = {
+      discordId,
+      guildId,
+      data,
+      now,
+      timerKey,
+      dedupKey,
+      lockKey,
+    };
 
     try {
-      dedupLock = await this.redlock.acquire([dedupLockKey], this.lockTtl);
+      dedupLockAcquired = await this.redis.setNX(
+        dedupLockKey,
+        Date.now().toString(),
+        DEDUP_TTL_SECONDS,
+      );
+
+      if (!dedupLockAcquired) {
+        const dedupResult = await this.waitForTimerDedupResult(
+          context,
+          dedupLockKey,
+        );
+        if (dedupResult.response) {
+          return dedupResult.response;
+        }
+        dedupLockAcquired = dedupResult.lockAcquired;
+
+        if (!dedupLockAcquired) {
+          throw new ConflictException({
+            message: ErrorKey.TIMER_RACE_CONDITION,
+          });
+        }
+      }
 
       const cachedAfterLock = await this.redis.get(dedupKey);
       if (cachedAfterLock) {
@@ -842,97 +866,19 @@ export class TimersService implements OnModuleInit {
         );
       }
 
-      mainLock = await this.redlock.acquire([lockKey], this.lockTtl);
-
-      const { minSpawnTime, maxSpawnTime } = validateAndCalculateSpawnTimes(
-        data,
-        now,
-      );
-      const npcData = this.buildNpcData(data.npc);
-      const {
-        previousTimer,
-        migratedSyntheticNpcId,
-        migratedSyntheticTimerKey,
-      } = await this.findPreviousTimerForKillContext(
+      const existingTimerAfterTakeover = await this.findTimerAfterLockFailure(
         guildId,
         data.world,
         timerKey,
-        data.npc.id,
-        data.npc.name,
-        npcData,
       );
-      const respawnRandomness =
-        data.respawnRandomness ?? DEFAULT_RESPAWN_RANDOMNESS;
-
-      const timerData = {
-        maxSpawnTime,
-        minSpawnTime,
-        world: data.world,
-        npcId: data.npc.id,
-        timerKey,
-        latestRespBaseSeconds: data.respBaseSeconds,
-        latestRespawnRandomness: respawnRandomness,
-        wasReset: false,
-        npc: npcData,
-        windowOpenedAt: new Date(),
-        member: { connect: { memberId: { userId: discordId, guildId } } },
-      };
-
-      const newTimer = await this.prisma.timer.upsert({
-        where: { timerId: { guildId, world: data.world, timerKey } },
-        create: { ...timerData, guild: { connect: { id: guildId } } },
-        update: timerData,
-        include: { member: true },
-      });
-
-      await Promise.all([
-        this.redis.set(dedupKey, JSON.stringify(newTimer), DEDUP_TTL_SECONDS),
-        this.invalidateTimersCache(guildId),
-      ]);
-
-      if (migratedSyntheticNpcId !== null) {
-        this.emitDeleteTimer({
-          guildId,
-          world: data.world,
-          npcId: migratedSyntheticNpcId,
-          timerKey: migratedSyntheticTimerKey ?? undefined,
-          routing: {
-            tier: getNpcRoutingTier(npcData),
-            npcLevel: npcData.lvl,
-          },
-        });
+      if (
+        existingTimerAfterTakeover &&
+        this.wasTimerUpdatedDuringBurst(existingTimerAfterTakeover, now)
+      ) {
+        return this.mapTimerResponse(existingTimerAfterTakeover);
       }
 
-      this.emitUpdateTimer(newTimer);
-
-      await this.eventTimerHooks
-        .enqueueEventHeroKillCheck({
-          guildId,
-          world: data.world,
-          npcId: data.npc.id,
-          npcName: data.npc.name,
-          npcIcon: data.npc.icon,
-          npcLvl: data.npc.lvl,
-          timerData: {
-            minSpawnTime,
-            maxSpawnTime,
-            memberId: newTimer.createdById,
-            previousMinSpawnTime: previousTimer?.minSpawnTime ?? null,
-            previousMaxSpawnTime: previousTimer?.maxSpawnTime ?? null,
-            windowOpenedAt: previousTimer?.windowOpenedAt ?? null,
-          },
-        })
-        .catch((error) => {
-          this.logger.error({
-            message: "Failed to enqueue event hero kill check",
-            error: error instanceof Error ? error.message : error,
-            guildId,
-            world: data.world,
-            npcId: data.npc.id,
-          });
-        });
-
-      return this.mapTimerResponse(newTimer);
+      return await this.createOrUpdateTimerForGuild(context);
     } catch (error) {
       if (error instanceof ExecutionError) {
         const existingTimer = await this.findTimerAfterLockFailure(
@@ -940,7 +886,10 @@ export class TimersService implements OnModuleInit {
           data.world,
           timerKey,
         );
-        if (existingTimer) {
+        if (
+          existingTimer &&
+          this.wasTimerUpdatedDuringBurst(existingTimer, now)
+        ) {
           this.logger.log({
             level: "debug",
             message: "Lock contention resolved by returning existing timer",
@@ -962,8 +911,187 @@ export class TimersService implements OnModuleInit {
       }
       throw error;
     } finally {
+      await Promise.allSettled([
+        dedupLockAcquired ? this.redis.del(dedupLockKey) : undefined,
+      ]);
+    }
+  }
+
+  private async waitForTimerDedupResult(
+    context: CreateTimerForGuildContext,
+    dedupLockKey?: string,
+  ) {
+    for (let attempt = 0; attempt < DEDUP_WAIT_ATTEMPTS; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, DEDUP_WAIT_DELAY_MS));
+
+      const cachedDuringBurst = await this.redis.get(context.dedupKey);
+      if (cachedDuringBurst) {
+        return {
+          response: this.mapTimerResponse(
+            JSON.parse(cachedDuringBurst) as TimerWithOptionalMember,
+          ),
+          lockAcquired: false,
+        };
+      }
+
+      if (dedupLockKey) {
+        const lockAcquired = await this.redis.setNX(
+          dedupLockKey,
+          Date.now().toString(),
+          DEDUP_TTL_SECONDS,
+        );
+        if (lockAcquired) {
+          return { response: null, lockAcquired: true };
+        }
+      }
+    }
+
+    const existingTimer = await this.findTimerAfterLockFailure(
+      context.guildId,
+      context.data.world,
+      context.timerKey,
+    );
+    if (
+      existingTimer &&
+      this.wasTimerUpdatedDuringBurst(existingTimer, context.now)
+    ) {
+      return {
+        response: this.mapTimerResponse(existingTimer),
+        lockAcquired: false,
+      };
+    }
+
+    return { response: null, lockAcquired: false };
+  }
+
+  private wasTimerUpdatedDuringBurst(
+    timer: Pick<Timer, "updatedAt">,
+    burstStartedAt: Date,
+  ) {
+    if (!timer.updatedAt) {
+      return false;
+    }
+
+    return timer.updatedAt.getTime() >= burstStartedAt.getTime();
+  }
+
+  private async createOrUpdateTimerForGuild(
+    context: CreateTimerForGuildContext,
+  ) {
+    let mainLock: Awaited<ReturnType<typeof this.redlock.acquire>> | null =
+      null;
+
+    try {
+      mainLock = await this.redlock.acquire([context.lockKey], this.lockTtl);
+
+      const { minSpawnTime, maxSpawnTime } = validateAndCalculateSpawnTimes(
+        context.data,
+        context.now,
+      );
+      const npcData = this.buildNpcData(context.data.npc);
+      const {
+        previousTimer,
+        migratedSyntheticNpcId,
+        migratedSyntheticTimerKey,
+      } = await this.findPreviousTimerForKillContext(
+        context.guildId,
+        context.data.world,
+        context.timerKey,
+        context.data.npc.id,
+        context.data.npc.name,
+        npcData,
+      );
+      const respawnRandomness =
+        context.data.respawnRandomness ?? DEFAULT_RESPAWN_RANDOMNESS;
+
+      const timerData = {
+        maxSpawnTime,
+        minSpawnTime,
+        world: context.data.world,
+        npcId: context.data.npc.id,
+        timerKey: context.timerKey,
+        latestRespBaseSeconds: context.data.respBaseSeconds,
+        latestRespawnRandomness: respawnRandomness,
+        wasReset: false,
+        npc: npcData,
+        windowOpenedAt: new Date(),
+        member: {
+          connect: {
+            memberId: { userId: context.discordId, guildId: context.guildId },
+          },
+        },
+      };
+
+      const newTimer = await this.prisma.timer.upsert({
+        where: {
+          timerId: {
+            guildId: context.guildId,
+            world: context.data.world,
+            timerKey: context.timerKey,
+          },
+        },
+        create: {
+          ...timerData,
+          guild: { connect: { id: context.guildId } },
+        },
+        update: timerData,
+        include: { member: true },
+      });
+
+      await Promise.all([
+        this.redis.set(
+          context.dedupKey,
+          JSON.stringify(newTimer),
+          DEDUP_TTL_SECONDS,
+        ),
+        this.invalidateTimersCache(context.guildId),
+      ]);
+
+      if (migratedSyntheticNpcId !== null) {
+        this.emitDeleteTimer({
+          guildId: context.guildId,
+          world: context.data.world,
+          npcId: migratedSyntheticNpcId,
+          timerKey: migratedSyntheticTimerKey ?? undefined,
+          routing: {
+            tier: getNpcRoutingTier(npcData),
+            npcLevel: npcData.lvl,
+          },
+        });
+      }
+
+      this.emitUpdateTimer(newTimer);
+
+      await this.eventTimerHooks
+        .enqueueEventHeroKillCheck({
+          guildId: context.guildId,
+          world: context.data.world,
+          npcId: context.data.npc.id,
+          npcName: context.data.npc.name,
+          npcIcon: context.data.npc.icon,
+          npcLvl: context.data.npc.lvl,
+          timerData: {
+            minSpawnTime,
+            maxSpawnTime,
+            memberId: newTimer.createdById,
+            previousMinSpawnTime: previousTimer?.minSpawnTime ?? null,
+            previousMaxSpawnTime: previousTimer?.maxSpawnTime ?? null,
+            windowOpenedAt: previousTimer?.windowOpenedAt ?? null,
+          },
+        })
+        .catch((error) => {
+          this.logger.error({
+            message: "Failed to enqueue event hero kill check",
+            error: error instanceof Error ? error.message : error,
+            guildId: context.guildId,
+            world: context.data.world,
+            npcId: context.data.npc.id,
+          });
+        });
+
+      return this.mapTimerResponse(newTimer);
+    } finally {
       await mainLock?.release();
-      await dedupLock?.release();
     }
   }
 
@@ -1241,7 +1369,7 @@ export class TimersService implements OnModuleInit {
     );
 
     if (!resolvedTimer) {
-      throw new BadRequestException({ message: ErrorKey.TIMER_NOT_FOUND });
+      throw new NotFoundException({ message: ErrorKey.TIMER_NOT_FOUND });
     }
 
     const eventHero = await this.eventTimerHooks.findActiveEventHeroByNpc(
@@ -1278,7 +1406,7 @@ export class TimersService implements OnModuleInit {
       });
 
       if (!timer) {
-        throw new BadRequestException({ message: ErrorKey.TIMER_NOT_FOUND });
+        throw new NotFoundException({ message: ErrorKey.TIMER_NOT_FOUND });
       }
 
       const { minSpawnTime, maxSpawnTime } = this.calculateRespawnTime(
@@ -1332,7 +1460,7 @@ export class TimersService implements OnModuleInit {
     );
 
     if (!resolvedTimer) {
-      throw new BadRequestException({ message: ErrorKey.TIMER_NOT_FOUND });
+      throw new NotFoundException({ message: ErrorKey.TIMER_NOT_FOUND });
     }
 
     const eventHero = await this.eventTimerHooks.findActiveEventHeroByNpc(
@@ -1368,7 +1496,7 @@ export class TimersService implements OnModuleInit {
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === "P2025"
       ) {
-        throw new BadRequestException({ message: ErrorKey.TIMER_NOT_FOUND });
+        throw new NotFoundException({ message: ErrorKey.TIMER_NOT_FOUND });
       }
       throw error;
     }

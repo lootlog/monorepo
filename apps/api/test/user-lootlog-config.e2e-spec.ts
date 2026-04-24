@@ -5,7 +5,7 @@ import { PrismaService } from "../src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { TEST_GUILDS, TEST_USERS } from "./test-helpers";
 import { createTestingModuleWithMocks } from "./test-module-helpers";
-import { Permission } from "generated/client";
+import { Permission } from "../src/generated/prisma/client";
 
 describe("User Lootlog Config E2E Tests", () => {
   let app: INestApplication;
@@ -52,7 +52,7 @@ describe("User Lootlog Config E2E Tests", () => {
           id: "role-1",
           guildId: guild.id,
           name: "Member",
-          permissions: [Permission.LOOTLOG_WRITE],
+          permissions: [Permission.LOOTLOG_LOOTS_WRITE],
         },
       });
 
@@ -87,7 +87,7 @@ describe("User Lootlog Config E2E Tests", () => {
           id: "role-1",
           guildId: guild.id,
           name: "Member",
-          permissions: [Permission.LOOTLOG_WRITE],
+          permissions: [Permission.LOOTLOG_LOOTS_WRITE],
         },
       });
 
@@ -137,7 +137,7 @@ describe("User Lootlog Config E2E Tests", () => {
           id: "role-1",
           guildId: guild.id,
           name: "Member",
-          permissions: [Permission.LOOTLOG_WRITE],
+          permissions: [Permission.LOOTLOG_LOOTS_WRITE],
         },
       });
 
@@ -182,7 +182,7 @@ describe("User Lootlog Config E2E Tests", () => {
       expect(response.body["2"].catchingGuildIds).toEqual([guild.id]);
     });
 
-    it("should filter out guilds where user has no LOOTLOG_WRITE permission", async () => {
+    it("should filter out guilds where user has no LOOTLOG_LOOTS_WRITE permission", async () => {
       const guild1 = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
@@ -196,7 +196,7 @@ describe("User Lootlog Config E2E Tests", () => {
           id: "role-1",
           guildId: guild1.id,
           name: "Admin",
-          permissions: [Permission.LOOTLOG_WRITE],
+          permissions: [Permission.LOOTLOG_LOOTS_WRITE],
         },
       });
 
@@ -205,7 +205,7 @@ describe("User Lootlog Config E2E Tests", () => {
           id: "role-2",
           guildId: guild2.id,
           name: "Viewer",
-          permissions: [Permission.LOOTLOG_READ],
+          permissions: [Permission.LOOTLOG_LOOTS_READ],
         },
       });
 
@@ -263,7 +263,7 @@ describe("User Lootlog Config E2E Tests", () => {
           id: "role-1",
           guildId: guild.id,
           name: "Member",
-          permissions: [Permission.LOOTLOG_WRITE],
+          permissions: [Permission.LOOTLOG_LOOTS_WRITE],
         },
       });
 
@@ -324,7 +324,7 @@ describe("User Lootlog Config E2E Tests", () => {
           id: "role-1",
           guildId: guild1.id,
           name: "Member",
-          permissions: [Permission.LOOTLOG_WRITE],
+          permissions: [Permission.LOOTLOG_LOOTS_WRITE],
         },
       });
 
@@ -333,7 +333,7 @@ describe("User Lootlog Config E2E Tests", () => {
           id: "role-2",
           guildId: guild2.id,
           name: "Member",
-          permissions: [Permission.LOOTLOG_WRITE],
+          permissions: [Permission.LOOTLOG_LOOTS_WRITE],
         },
       });
 
@@ -420,7 +420,7 @@ describe("User Lootlog Config E2E Tests", () => {
           id: "role-1",
           guildId: guild1.id,
           name: "Admin",
-          permissions: [Permission.LOOTLOG_WRITE],
+          permissions: [Permission.LOOTLOG_LOOTS_WRITE],
         },
       });
 
@@ -429,7 +429,7 @@ describe("User Lootlog Config E2E Tests", () => {
           id: "role-2",
           guildId: guild2.id,
           name: "Viewer",
-          permissions: [Permission.LOOTLOG_READ],
+          permissions: [Permission.LOOTLOG_LOOTS_READ],
         },
       });
 
@@ -509,7 +509,7 @@ describe("User Lootlog Config E2E Tests", () => {
           id: "role-1",
           guildId: guild.id,
           name: "Member",
-          permissions: [Permission.LOOTLOG_WRITE],
+          permissions: [Permission.LOOTLOG_LOOTS_WRITE],
         },
       });
 

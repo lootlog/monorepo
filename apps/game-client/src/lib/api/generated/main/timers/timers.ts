@@ -25,13 +25,11 @@ import type {
 import type {
   CreateAutoTimerResponseDtoOutput,
   CreateManualTimerDto,
-  CreateTimerDto,
   CreateTimerFromGameClientDto,
   ResetTimerDto,
   SearchTimersNpcResponseDtoOutput,
   TimerResponseDto,
   TimersControllerCreateManualTimerPathParameters,
-  TimersControllerCreateTimerPathParameters,
   TimersControllerDeleteTimerParams,
   TimersControllerDeleteTimerPathParameters,
   TimersControllerGetAllTimersParams,
@@ -312,80 +310,6 @@ export const useGetTimersControllerGetTimersQueryData = () => {
 
 
 /**
- * Legacy endpoint for creating a timer in a specific guild. Prefer POST /timers/auto for the new rollout path.
- * @deprecated
- * @summary Create timer for specific guild (deprecated)
- */
-export const getTimersControllerCreateTimerUrl = ({ guildId }: TimersControllerCreateTimerPathParameters,) => {
-
-
-
-
-  return `/guilds/${guildId}/timers`
-}
-
-export const timersControllerCreateTimer = async ({ guildId }: TimersControllerCreateTimerPathParameters,
-    createTimerDto: CreateTimerDto, options?: RequestInit): Promise<TimerResponseDto> => {
-
-  return orvalFetch<TimerResponseDto>(getTimersControllerCreateTimerUrl({ guildId }),
-  {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      createTimerDto,)
-  }
-);}
-
-
-
-
-export const getTimersControllerCreateTimerMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof timersControllerCreateTimer>>, TError,{pathParams: TimersControllerCreateTimerPathParameters;data: BodyType<CreateTimerDto>}, TContext>, request?: SecondParameter<typeof orvalFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof timersControllerCreateTimer>>, TError,{pathParams: TimersControllerCreateTimerPathParameters;data: BodyType<CreateTimerDto>}, TContext> => {
-
-const mutationKey = ['timersControllerCreateTimer'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof timersControllerCreateTimer>>, {pathParams: TimersControllerCreateTimerPathParameters;data: BodyType<CreateTimerDto>}> = (props) => {
-          const {pathParams,data} = props ?? {};
-
-          return  timersControllerCreateTimer(pathParams,data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type TimersControllerCreateTimerMutationResult = NonNullable<Awaited<ReturnType<typeof timersControllerCreateTimer>>>
-    export type TimersControllerCreateTimerMutationBody = BodyType<CreateTimerDto>
-    export type TimersControllerCreateTimerMutationError = ErrorType<void>
-
-    /**
- * @deprecated
- * @summary Create timer for specific guild (deprecated)
- */
-export const useTimersControllerCreateTimer = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof timersControllerCreateTimer>>, TError,{pathParams: TimersControllerCreateTimerPathParameters;data: BodyType<CreateTimerDto>}, TContext>, request?: SecondParameter<typeof orvalFetch>}
- ): UseMutationResult<
-        Awaited<ReturnType<typeof timersControllerCreateTimer>>,
-        TError,
-        {pathParams: TimersControllerCreateTimerPathParameters;data: BodyType<CreateTimerDto>},
-        TContext
-      > => {
-      return useMutation(getTimersControllerCreateTimerMutationOptions(options));
-    }
-    /**
  * Search for NPCs that have been timed in this guild/world, returning their latest respawn configuration
  * @summary Search NPCs with timer data
  */
