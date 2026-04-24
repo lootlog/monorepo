@@ -38,6 +38,8 @@ function NpcsRoute() {
     "idle",
   );
 
+  console.log(import.meta.env.VITE_SEARCH_API_URL);
+
   useEffect(() => {
     setQueryValue(search.query);
     setWorldValue(search.world);
