@@ -173,6 +173,23 @@ export class MembersService {
       return this.decorateMember(storedMember);
     }
 
+    if (storedMember?.active && !refresh) {
+      this.queueMemberRefreshInBackground({
+        discordId,
+        guildId: desiredGuildId,
+        userId,
+        priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
+        reason: "member-read",
+      });
+
+      return this.decorateMember(storedMember, {
+        isStale: true,
+        staleWarning: "Using cached data while a Discord refresh is queued",
+        refreshQueued: true,
+        nextRefreshAt: null,
+      });
+    }
+
     const refreshAttempt = await this.refreshGuildMemberWithinBudget({
       discordId,
       guildId: desiredGuildId,
@@ -316,6 +333,24 @@ export class MembersService {
     reason: string;
   }): Promise<MemberRefreshScheduleResult> {
     return this.memberRefreshScheduler.enqueueRefresh(options);
+  }
+
+  private queueMemberRefreshInBackground(options: {
+    discordId: string;
+    guildId: string;
+    userId: string;
+    priority: number;
+    reason: string;
+  }) {
+    void this.queueMemberRefresh(options).catch((error) => {
+      this.logger.log({
+        level: "warn",
+        message: "Failed to queue background member refresh",
+        guildId: options.guildId,
+        userId: options.userId,
+        error,
+      });
+    });
   }
 
   async syncMemberFromDiscord(options: {

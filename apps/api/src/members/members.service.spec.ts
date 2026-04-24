@@ -288,7 +288,7 @@ describe("MembersService", () => {
       ).rejects.toThrow(ErrorKey.MEMBER_TTL_ACTIVE);
     });
 
-    it("should return stale data when Discord API returns null", async () => {
+    it("should return stale data immediately and queue refresh when cached member is stale", async () => {
       const staleMember = {
         ...mockMember,
         updatedAt: new Date(0),
@@ -303,18 +303,19 @@ describe("MembersService", () => {
         expect.objectContaining({
           ...staleMember,
           isStale: true,
-          refreshQueued: false,
+          refreshQueued: true,
           nextRefreshAt: null,
-          staleWarning:
-            "Using cached data due to Discord API rate limiting or errors",
+          staleWarning: "Using cached data while a Discord refresh is queued",
         }),
       );
-      expect(service["logger"].log).toHaveBeenCalledWith(
-        expect.objectContaining({
-          level: "warn",
-          message: expect.stringContaining("Discord API returned null"),
-        }),
-      );
+      expect(discordService.getGuildMember).not.toHaveBeenCalled();
+      expect(_refreshScheduler.enqueueRefresh).toHaveBeenCalledWith({
+        discordId: options.discordId,
+        guildId: options.guildId,
+        userId: options.userId,
+        priority: expect.any(Number),
+        reason: "member-read",
+      });
     });
 
     it("should deactivate member and return null when Discord returns NotFoundException", async () => {
@@ -432,18 +433,12 @@ describe("MembersService", () => {
         expect.objectContaining({
           ...staleMember,
           isStale: true,
-          refreshQueued: false,
+          refreshQueued: true,
           nextRefreshAt: null,
-          staleWarning:
-            "Using cached data due to Discord API rate limiting or errors",
+          staleWarning: "Using cached data while a Discord refresh is queued",
         }),
       );
-      expect(service["logger"].log).toHaveBeenCalledWith(
-        expect.objectContaining({
-          level: "warn",
-          message: "Auth service unavailable, keeping cached member state",
-        }),
-      );
+      expect(discordService.getGuildMember).not.toHaveBeenCalled();
     });
 
     it("should throw error when refresh=true and general error occurs", async () => {
@@ -478,20 +473,12 @@ describe("MembersService", () => {
         expect.objectContaining({
           ...staleMember,
           isStale: true,
-          refreshQueued: false,
+          refreshQueued: true,
           nextRefreshAt: null,
-          staleWarning:
-            "Using cached data due to Discord API rate limiting or errors",
+          staleWarning: "Using cached data while a Discord refresh is queued",
         }),
       );
-      expect(service["logger"].log).toHaveBeenCalledWith(
-        expect.objectContaining({
-          level: "error",
-          message: expect.stringContaining(
-            "Failed to fetch member from Discord",
-          ),
-        }),
-      );
+      expect(discordService.getGuildMember).not.toHaveBeenCalled();
     });
 
     it("should call getGuildById when refresh=true", async () => {

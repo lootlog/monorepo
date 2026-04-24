@@ -25,6 +25,7 @@ import type { CreateGuildDto } from "src/guilds/dto/create-guild.dto";
 import type { DeleteGuildDto } from "src/guilds/dto/delete-guild.dto";
 import type { UpdateGuildDto } from "src/guilds/dto/update-guild.dto";
 import type { UpdateGuildConfigDto } from "src/guilds/dto/update-guild-config.dto";
+import type { UserGuildPermissionsDto } from "src/guilds/dto/user-guild-permissions.dto";
 import { ErrorKey } from "src/guilds/enum/error-key.enum";
 import { MembersService } from "src/members/members.service";
 import { RolesService } from "src/roles/roles.service";
@@ -73,6 +74,8 @@ type GuildPermissionMember = {
     permissions: Permission[];
   }>;
 };
+
+const USER_GUILD_PERMISSIONS_CACHE_TTL_SECONDS = 60;
 
 @Injectable()
 export class GuildsService {
@@ -436,21 +439,40 @@ export class GuildsService {
     const startedAt = this.perfDiagnosticsService.now();
     const stages: Record<string, number> = {};
     const requiredPermissions = [Permission.LOOTLOG_ACCESS];
+    const cacheKey = userId
+      ? `user:${userId}:discord:${discordId}:guild-permissions`
+      : null;
     let guildCount = 0;
     let memberCount = 0;
     let resultCount = 0;
-    let refreshed = false;
+    const refreshed = false;
+    let cacheHit = false;
 
     try {
+      if (cacheKey) {
+        const cacheStartedAt = this.perfDiagnosticsService.now();
+        const cached = await this.redisService.get(cacheKey);
+        stages.cacheRead = this.perfDiagnosticsService.now() - cacheStartedAt;
+
+        if (cached) {
+          try {
+            const result = JSON.parse(cached) as UserGuildPermissionsDto[];
+            cacheHit = true;
+            resultCount = result.length;
+            return result;
+          } catch {
+            await this.redisService.del(cacheKey);
+          }
+        }
+      }
+
       const candidatesStartedAt = this.perfDiagnosticsService.now();
-      const guildCandidates = userId
-        ? await this.getCandidateGuildsForUser(discordId, userId)
-        : this.toGuildRefreshCandidates(
-            await this.getGuildsForRequiredPermissions(
-              discordId,
-              requiredPermissions,
-            ),
-          );
+      const guildCandidates = this.toGuildRefreshCandidates(
+        await this.getGuildsForRequiredPermissions(
+          discordId,
+          requiredPermissions,
+        ),
+      );
       stages.candidateGuilds =
         this.perfDiagnosticsService.now() - candidatesStartedAt;
 
@@ -462,27 +484,12 @@ export class GuildsService {
       }
 
       const membersStartedAt = this.perfDiagnosticsService.now();
-      let members = await this.getGuildMembersForPermissions(
+      const members = await this.getGuildMembersForPermissions(
         discordId,
         guilds.map((guild) => guild.id),
       );
       stages.members = this.perfDiagnosticsService.now() - membersStartedAt;
       memberCount = members.length;
-
-      if (userId) {
-        const refreshStartedAt = this.perfDiagnosticsService.now();
-        members = await this.refreshGuildCandidatesWithinBudget({
-          discordId,
-          userId,
-          guildCandidates,
-          members,
-          requiredPermissions,
-          maxImmediateRefreshes: 2,
-        });
-        stages.refresh = this.perfDiagnosticsService.now() - refreshStartedAt;
-        memberCount = members.length;
-        refreshed = true;
-      }
 
       const buildResultStartedAt = this.perfDiagnosticsService.now();
       const result = this.buildGuildPermissionsResult(
@@ -495,6 +502,17 @@ export class GuildsService {
         this.perfDiagnosticsService.now() - buildResultStartedAt;
       resultCount = result.length;
 
+      if (cacheKey) {
+        const cacheWriteStartedAt = this.perfDiagnosticsService.now();
+        await this.redisService.set(
+          cacheKey,
+          JSON.stringify(result),
+          USER_GUILD_PERMISSIONS_CACHE_TTL_SECONDS,
+        );
+        stages.cacheWrite =
+          this.perfDiagnosticsService.now() - cacheWriteStartedAt;
+      }
+
       return result;
     } finally {
       this.perfDiagnosticsService.logSpan(
@@ -506,6 +524,7 @@ export class GuildsService {
           memberCount,
           resultCount,
           refreshed,
+          cacheHit,
           stagesMs: this.perfDiagnosticsService.roundStages(stages),
         },
       );
