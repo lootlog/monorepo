@@ -8,7 +8,10 @@ import {
   useGuildsControllerGetGuildById,
 } from "@/lib/api/generated/main/guilds/guilds";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { invalidateUsersControllerGetCurrentUserAccessibleGuilds } from "@/lib/api/generated/main/users/users";
+import {
+  invalidateUsersControllerGetCurrentUserAccessibleGuilds,
+  invalidateUsersControllerGetCurrentUserGuilds,
+} from "@/lib/api/generated/main/users/users";
 
 export const Init: React.FC = () => {
   const navigate = useNavigate();
@@ -31,9 +34,10 @@ export const Init: React.FC = () => {
       return;
     }
 
-    void invalidateUsersControllerGetCurrentUserAccessibleGuilds(
-      queryClient,
-    ).then(() => {
+    void Promise.all([
+      invalidateUsersControllerGetCurrentUserAccessibleGuilds(queryClient),
+      invalidateUsersControllerGetCurrentUserGuilds(queryClient),
+    ]).then(() => {
       navigate({ to: ROUTES.guild.base(guildData.id) });
     });
   }, [guildData, navigate, queryClient]);
