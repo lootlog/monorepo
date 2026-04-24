@@ -19,6 +19,7 @@ import type { KillTimerData } from "../interfaces/kill-timer-data.interface";
 import {
   buildEventHeroKillDedupKey,
   buildEventHeroKillHeroDedupKey,
+  buildEventHeroKillRecentDedupKey,
   getEventHeroKillWindowKey,
 } from "../utils/event-hero-kill-job";
 import {
@@ -40,6 +41,7 @@ import {
 
 const EVENT_KILL_LOCK_TTL_SECONDS = 30;
 const EVENT_KILL_DEDUP_TTL_SECONDS = 120;
+const EVENT_KILL_RECENT_DEDUP_TTL_SECONDS = 30;
 
 interface GapTimelineEntry {
   mapId: string;
@@ -383,6 +385,9 @@ export class EventKillService {
       windowKey,
       isManualClose,
     );
+    const recentDedupKey = isManualClose
+      ? null
+      : this.getEventKillRecentDedupKey(guildId, world, npcId);
 
     const dedupHit = await this.redis.get(dedupKey);
     if (dedupHit) {
@@ -394,6 +399,20 @@ export class EventKillService {
         npcName,
       });
       return;
+    }
+
+    if (recentDedupKey) {
+      const recentDedupHit = await this.redis.get(recentDedupKey);
+      if (recentDedupHit) {
+        this.logger.debug({
+          message: "Skipping duplicate event hero kill - recent kill active",
+          guildId,
+          world,
+          npcId,
+          npcName,
+        });
+        return;
+      }
     }
 
     // Try to acquire lock - if another request already has it, silently return
@@ -426,6 +445,21 @@ export class EventKillService {
           npcName,
         });
         return;
+      }
+
+      if (recentDedupKey) {
+        const recentDedupHitAfterLock = await this.redis.get(recentDedupKey);
+        if (recentDedupHitAfterLock) {
+          this.logger.debug({
+            message:
+              "Skipping duplicate event hero kill - recent kill active after lock",
+            guildId,
+            world,
+            npcId,
+            npcName,
+          });
+          return;
+        }
       }
 
       const matches = await this.findActiveEventHeroesByNpc(
@@ -528,6 +562,14 @@ export class EventKillService {
         Date.now().toString(),
         EVENT_KILL_DEDUP_TTL_SECONDS,
       );
+
+      if (recentDedupKey) {
+        await this.redis.set(
+          recentDedupKey,
+          Date.now().toString(),
+          EVENT_KILL_RECENT_DEDUP_TTL_SECONDS,
+        );
+      }
     } finally {
       // Always release lock
       await this.redis.del(lockKey).catch((error) => {
@@ -1916,5 +1958,13 @@ export class EventKillService {
       windowKey,
       isManualClose,
     });
+  }
+
+  private getEventKillRecentDedupKey(
+    guildId: string,
+    world: string,
+    npcId: number,
+  ): string {
+    return buildEventHeroKillRecentDedupKey({ guildId, world, npcId });
   }
 }

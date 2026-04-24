@@ -5,7 +5,6 @@ import { TimersService } from "./timers.service";
 import { PrismaService } from "src/db/prisma.service";
 import { GuildsService } from "src/guilds/guilds.service";
 import { BadRequestException, ConflictException } from "@nestjs/common";
-import type { CreateTimerDto } from "src/timers/dto/create-timer.dto";
 import type { CreateTimerFromGameClientDto } from "src/timers/dto/create-timer-from-game-client.dto";
 import { validateAndCalculateSpawnTimes } from "src/timers/utils/validate-spawn-times";
 import { TIMER_LIMITS } from "src/timers/constants/timer-limits";
@@ -18,6 +17,7 @@ import { EventTimerHooksService } from "src/events/services/event-timer-hooks.se
 import { ErrorKey } from "src/timers/enum/error-key.enum";
 import { ExecutionError } from "redlock";
 import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
+import { RoutingKey } from "src/enum/routing-key.enum";
 
 describe("TimersService", () => {
   let service: TimersService;
@@ -129,49 +129,12 @@ describe("TimersService", () => {
 
     vi.clearAllMocks();
     mockRedisService.deleteByPattern.mockResolvedValue(0);
+    mockRedisService.setNX.mockResolvedValue(true);
+    mockPrismaService.timer.findUnique.mockResolvedValue(null);
   });
 
   it("should be defined", () => {
     expect(service).toBeDefined();
-  });
-
-  describe("createTimer", () => {
-    it("delegates legacy timer creation to createTimerForGuild", async () => {
-      const payload: CreateTimerDto = {
-        respBaseSeconds: 60,
-        respawnRandomness: 10,
-        world: "test-world",
-        npc: {
-          id: 123,
-          name: "Test Boss",
-          prof: "w",
-          location: "Test Location",
-          wt: 25,
-          lvl: 100,
-          type: 1,
-          icon: "icon.png",
-          hpp: 1000,
-        },
-        characterId: "char123",
-        accountId: "acc123",
-      };
-      const createTimerForGuildSpy = vi
-        .spyOn(service, "createTimerForGuild")
-        .mockResolvedValue({
-          guildId: "guild1",
-          world: "test-world",
-          npcId: 123,
-        } as never);
-
-      await service.createTimer("discord123", "user123", "guild1", payload);
-
-      expect(createTimerForGuildSpy).toHaveBeenCalledWith(
-        "discord123",
-        "user123",
-        "guild1",
-        payload,
-      );
-    });
   });
 
   describe("createTimerForGuild", () => {
@@ -247,8 +210,8 @@ describe("TimersService", () => {
       const customMax = new Date(Date.now() + 7200000);
       const dtoWithCustomTimes = {
         ...mockDto,
-        customMinSpawnTime: customMin,
-        customMaxSpawnTime: customMax,
+        customMinSpawnTime: customMin.toISOString(),
+        customMaxSpawnTime: customMax.toISOString(),
       };
 
       mockRedisService.get.mockResolvedValue(null);
@@ -322,7 +285,13 @@ describe("TimersService", () => {
     it("should return existing timer when lock cannot be acquired but timer was created concurrently", async () => {
       mockRedisService.get.mockResolvedValue(null);
       mockRedlock.acquire.mockRejectedValue(new ExecutionError("Lock failed"));
-      mockPrismaService.timer.findUnique.mockResolvedValue(mockTimer);
+      const concurrentlyCreatedTimer = {
+        ...mockTimer,
+        updatedAt: new Date(Date.now() + 1000),
+      };
+      mockPrismaService.timer.findUnique.mockResolvedValue(
+        concurrentlyCreatedTimer,
+      );
 
       const result = await service.createTimerForGuild(
         "discord123",
@@ -332,9 +301,9 @@ describe("TimersService", () => {
       );
 
       expect(result).toMatchObject({
-        guildId: mockTimer.guildId,
-        npcId: mockTimer.npcId,
-        world: mockTimer.world,
+        guildId: concurrentlyCreatedTimer.guildId,
+        npcId: concurrentlyCreatedTimer.npcId,
+        world: concurrentlyCreatedTimer.world,
       });
       expect(mockPrismaService.timer.upsert).not.toHaveBeenCalled();
     });
@@ -373,9 +342,115 @@ describe("TimersService", () => {
       );
 
       expect(mockRedisService.set).toHaveBeenCalledWith(
-        expect.stringContaining("timer:dedup:"),
+        `timer:dedup:guild1:test-world:${buildTimerKey(mockDto.npc.id, mockDto.npc.name)}`,
         expect.any(String),
-        expect.any(Number),
+        30,
+      );
+      expect(mockRedisService.setNX).toHaveBeenCalledWith(
+        `timer:dedup:guild1:test-world:${buildTimerKey(mockDto.npc.id, mockDto.npc.name)}:lock`,
+        expect.any(String),
+        30,
+      );
+    });
+
+    it("should return existing timer during dedup lock contention without publishing again", async () => {
+      vi.useFakeTimers();
+      mockRedisService.get.mockResolvedValue(null);
+      mockRedisService.setNX.mockResolvedValue(false);
+      mockPrismaService.timer.findUnique.mockResolvedValue({
+        ...mockTimer,
+        updatedAt: new Date(Date.now() + 1000),
+      });
+
+      const resultPromise = service.createTimerForGuild(
+        "discord123",
+        userId,
+        "guild1",
+        mockDto,
+      );
+
+      await vi.advanceTimersByTimeAsync(5000);
+      const result = await resultPromise;
+      vi.useRealTimers();
+
+      expect(result).toMatchObject({
+        guildId: mockTimer.guildId,
+        npcId: mockTimer.npcId,
+        world: mockTimer.world,
+      });
+      expect(mockPrismaService.timer.upsert).not.toHaveBeenCalled();
+      expect(mockAmqpConnection.publish).not.toHaveBeenCalled();
+    });
+
+    it("should take over timer creation when dedup lock holder fails before creating a timer", async () => {
+      vi.useFakeTimers();
+      mockRedisService.get.mockResolvedValue(null);
+      mockRedisService.setNX
+        .mockResolvedValueOnce(false)
+        .mockResolvedValueOnce(true);
+      mockPrismaService.timer.findUnique.mockResolvedValue(null);
+      mockPrismaService.timer.upsert.mockResolvedValue(mockTimer);
+
+      const resultPromise = service.createTimerForGuild(
+        "discord123",
+        userId,
+        "guild1",
+        mockDto,
+      );
+
+      await vi.advanceTimersByTimeAsync(5000);
+      const result = await resultPromise;
+      vi.useRealTimers();
+
+      expect(result).toMatchObject({
+        guildId: mockTimer.guildId,
+        npcId: mockTimer.npcId,
+        world: mockTimer.world,
+      });
+      expect(mockRedisService.setNX).toHaveBeenCalledTimes(2);
+      expect(mockPrismaService.timer.upsert).toHaveBeenCalledTimes(1);
+      expect(
+        mockAmqpConnection.publish.mock.calls.filter(
+          (call) => call[1] === RoutingKey.GUILDS_TIMERS_UPDATE,
+        ),
+      ).toHaveLength(1);
+    });
+
+    it("should use the same dedup cache for different discord users in the same timer burst", async () => {
+      const cachedTimer = JSON.stringify(mockTimer);
+      mockRedisService.get
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValue(cachedTimer);
+      mockRedisService.set.mockResolvedValue(undefined);
+      mockPrismaService.timer.upsert.mockResolvedValue(mockTimer);
+
+      const firstResult = await service.createTimerForGuild(
+        "discord-1",
+        "user-1",
+        "guild1",
+        mockDto,
+      );
+      const secondResult = await service.createTimerForGuild(
+        "discord-2",
+        "user-2",
+        "guild1",
+        mockDto,
+      );
+
+      expect(firstResult.npcId).toBe(mockDto.npc.id);
+      expect(secondResult.npcId).toBe(mockDto.npc.id);
+      expect(mockPrismaService.timer.upsert).toHaveBeenCalledTimes(1);
+      expect(
+        mockAmqpConnection.publish.mock.calls.filter(
+          (call) => call[1] === RoutingKey.GUILDS_TIMERS_UPDATE,
+        ),
+      ).toHaveLength(1);
+      expect(
+        mockEventTimerHooksService.enqueueEventHeroKillCheck,
+      ).toHaveBeenCalledTimes(1);
+      expect(mockRedisService.get).toHaveBeenCalledWith(
+        `timer:dedup:guild1:test-world:${buildTimerKey(mockDto.npc.id, mockDto.npc.name)}`,
       );
     });
 
@@ -447,9 +522,14 @@ describe("TimersService", () => {
 
       mockRedisService.get.mockResolvedValue(null);
       mockRedisService.set.mockResolvedValue(undefined);
-      mockPrismaService.timer.findUnique
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(syntheticTimer);
+      mockPrismaService.timer.findUnique.mockImplementation(
+        (args: { where?: { timerId?: { timerKey?: string } } }) => {
+          if (args?.where?.timerId?.timerKey === syntheticTimer.timerKey) {
+            return syntheticTimer;
+          }
+          return null;
+        },
+      );
       mockPrismaService.timer.upsert
         .mockResolvedValueOnce({ ...syntheticTimer, npcId: mockDto.npc.id })
         .mockResolvedValueOnce(mockTimer);
@@ -501,10 +581,50 @@ describe("TimersService", () => {
     it("should handle 50 concurrent createTimerForGuild calls idempotently for the same npc", async () => {
       const totalCalls = 50;
       let createdTimer: typeof mockTimer | null = null;
+      let dedupCache: string | null = null;
+      let dedupLockHeld = false;
       let mainLockHeld = false;
 
-      mockRedisService.get.mockResolvedValue(null);
-      mockRedisService.set.mockResolvedValue(undefined);
+      mockRedisService.get.mockImplementation((key: string) => {
+        if (
+          key ===
+          `timer:dedup:guild1:test-world:${buildTimerKey(mockDto.npc.id, mockDto.npc.name)}`
+        ) {
+          return dedupCache;
+        }
+        return null;
+      });
+      mockRedisService.set.mockImplementation((key: string, value: string) => {
+        if (
+          key ===
+          `timer:dedup:guild1:test-world:${buildTimerKey(mockDto.npc.id, mockDto.npc.name)}`
+        ) {
+          dedupCache = value;
+        }
+        return undefined;
+      });
+      mockRedisService.setNX.mockImplementation((key: string) => {
+        if (
+          key ===
+          `timer:dedup:guild1:test-world:${buildTimerKey(mockDto.npc.id, mockDto.npc.name)}:lock`
+        ) {
+          if (dedupLockHeld) {
+            return false;
+          }
+          dedupLockHeld = true;
+          return true;
+        }
+        return true;
+      });
+      mockRedisService.del.mockImplementation((key: string) => {
+        if (
+          key ===
+          `timer:dedup:guild1:test-world:${buildTimerKey(mockDto.npc.id, mockDto.npc.name)}:lock`
+        ) {
+          dedupLockHeld = false;
+        }
+        return 1;
+      });
       mockEventTimerHooksService.findActiveEventHeroByNpc.mockResolvedValue(
         null,
       );
@@ -523,8 +643,11 @@ describe("TimersService", () => {
 
       mockPrismaService.timer.upsert.mockImplementation(async () => {
         await new Promise((resolve) => setTimeout(resolve, 40));
-        createdTimer = mockTimer;
-        return mockTimer;
+        createdTimer = {
+          ...mockTimer,
+          updatedAt: new Date(Date.now() + 1000),
+        };
+        return createdTimer;
       });
 
       mockRedlock.acquire.mockImplementation((keys: string[]) => {
@@ -662,7 +785,9 @@ describe("TimersService", () => {
         customMaxSpawnTime: customMax,
       };
 
-      const result = validateAndCalculateSpawnTimes(dto);
+      const result = validateAndCalculateSpawnTimes(
+        dto as unknown as CreateTimerFromGameClientDto,
+      );
 
       expect(result.minSpawnTime).toEqual(customMin);
       expect(result.maxSpawnTime).toEqual(customMax);
@@ -677,9 +802,11 @@ describe("TimersService", () => {
         customMaxSpawnTime: customMax,
       };
 
-      expect(() => validateAndCalculateSpawnTimes(dto)).toThrow(
-        BadRequestException,
-      );
+      expect(() =>
+        validateAndCalculateSpawnTimes(
+          dto as unknown as CreateTimerFromGameClientDto,
+        ),
+      ).toThrow(BadRequestException);
     });
 
     it("should throw when spawn time is in the past", () => {
@@ -691,9 +818,11 @@ describe("TimersService", () => {
         customMaxSpawnTime: customMax,
       };
 
-      expect(() => validateAndCalculateSpawnTimes(dto)).toThrow(
-        BadRequestException,
-      );
+      expect(() =>
+        validateAndCalculateSpawnTimes(
+          dto as unknown as CreateTimerFromGameClientDto,
+        ),
+      ).toThrow(BadRequestException);
     });
 
     it("should throw when spawn window exceeds maximum allowed", () => {
@@ -708,9 +837,11 @@ describe("TimersService", () => {
         customMaxSpawnTime: customMax,
       };
 
-      expect(() => validateAndCalculateSpawnTimes(dto)).toThrow(
-        BadRequestException,
-      );
+      expect(() =>
+        validateAndCalculateSpawnTimes(
+          dto as unknown as CreateTimerFromGameClientDto,
+        ),
+      ).toThrow(BadRequestException);
     });
 
     it("should accept ISO string dates and convert them to Date objects", () => {
@@ -722,7 +853,9 @@ describe("TimersService", () => {
         customMaxSpawnTime: customMax.toISOString() as unknown as Date,
       };
 
-      const result = validateAndCalculateSpawnTimes(dto);
+      const result = validateAndCalculateSpawnTimes(
+        dto as unknown as CreateTimerFromGameClientDto,
+      );
 
       expect(result.minSpawnTime).toBeInstanceOf(Date);
       expect(result.maxSpawnTime).toBeInstanceOf(Date);

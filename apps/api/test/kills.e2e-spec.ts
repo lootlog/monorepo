@@ -5,7 +5,7 @@ import { PrismaService } from "../src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { TEST_GUILDS, TEST_USERS } from "./test-helpers";
 import { createTestingModuleWithMocks } from "./test-module-helpers";
-import { Permission, NpcType } from "generated/client";
+import { Permission, NpcType } from "../src/generated/prisma/client";
 
 const TEST_USERS_EXTENDED = {
   ...TEST_USERS,
