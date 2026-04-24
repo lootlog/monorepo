@@ -23,6 +23,8 @@ VITE_SEARCH_API_URL=https://search.lootlog.pl
 ```
 
 Cloudflare deployment also defines `VITE_SEARCH_API_URL` in `wrangler.jsonc`.
+Cloudflare credentials are not stored in the repository; authenticate Wrangler locally or provide
+the required Cloudflare environment variables in CI before deploying.
 
 ## Development
 
@@ -44,6 +46,9 @@ Deploy to Cloudflare Workers with:
 ```bash
 pnpm --filter @lootlog/wiki deploy
 ```
+
+The deploy script builds the TanStack Start Worker and then runs `wrangler deploy` using
+`apps/wiki/wrangler.jsonc`.
 
 If Cloudflare binding types need to be refreshed, run:
 
