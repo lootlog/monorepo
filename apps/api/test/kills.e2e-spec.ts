@@ -5,7 +5,7 @@ import { PrismaService } from "../src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { TEST_GUILDS, TEST_USERS } from "./test-helpers";
 import { createTestingModuleWithMocks } from "./test-module-helpers";
-import { Permission, NpcType } from "generated/client";
+import { Permission, NpcType } from "../src/generated/prisma/client";
 
 const TEST_USERS_EXTENDED = {
   ...TEST_USERS,
@@ -40,6 +40,45 @@ function createTestKillPayload(overrides = {}) {
   };
 }
 
+function createKillRole(
+  prisma: PrismaService,
+  guildId: string,
+  id: string,
+  permissions: Permission[] = [Permission.LOOTLOG_LOOTS_WRITE],
+) {
+  return prisma.role.create({
+    data: {
+      id,
+      guildId,
+      name: id,
+      permissions,
+    },
+  });
+}
+
+function createKillMember(
+  prisma: PrismaService,
+  options: {
+    guildId: string;
+    discordId: string;
+    globalUserId: string;
+    name: string;
+    roleId: string;
+  },
+) {
+  return prisma.member.create({
+    data: {
+      userId: options.discordId,
+      guildId: options.guildId,
+      name: options.name,
+      globalUserId: options.globalUserId,
+      roles: {
+        connect: { id: options.roleId },
+      },
+    },
+  });
+}
+
 describe("Kills E2E Tests (Deduplication)", () => {
   let app: INestApplication;
   let prisma: PrismaService;
@@ -53,6 +92,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
     app = moduleFixture.createNestApplication();
     app.enableShutdownHooks();
     await app.init();
+    await app.listen(0);
 
     prisma = app.get<PrismaService>(PrismaService);
     redis = app.get<RedisService>(RedisService);
@@ -72,8 +112,11 @@ describe("Kills E2E Tests (Deduplication)", () => {
     // Clear database tables
     await prisma.$executeRaw`TRUNCATE TABLE "Guild", "Role", "Member", "UserKillStats", "NpcKillStats", "GuildKillSummary", "UserCharactersLootlogSettings" CASCADE`;
 
-    // Clear Redis deduplication keys
-    await redis.deleteByPattern("kill:dedup:*");
+    await Promise.all([
+      redis.deleteByPattern("kill:dedup:*"),
+      redis.deleteByPattern("perms:*"),
+      redis.deleteByPattern("guild:*"),
+    ]);
   });
 
   describe("POST /kills - User Deduplication", () => {
@@ -82,14 +125,14 @@ describe("Kills E2E Tests (Deduplication)", () => {
       const guild = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
+      const role = await createKillRole(prisma, guild.id, "role-1");
 
-      await prisma.member.create({
-        data: {
-          userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-          guildId: guild.id,
-          name: "Test Member",
-          globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
-        },
+      await createKillMember(prisma, {
+        guildId: guild.id,
+        discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+        name: "Test Member",
+        globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
+        roleId: role.id,
       });
 
       await prisma.userCharactersLootlogSettings.create({
@@ -151,14 +194,14 @@ describe("Kills E2E Tests (Deduplication)", () => {
       const guild = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
+      const role = await createKillRole(prisma, guild.id, "role-1");
 
-      await prisma.member.create({
-        data: {
-          userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-          guildId: guild.id,
-          name: "Test Member",
-          globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
-        },
+      await createKillMember(prisma, {
+        guildId: guild.id,
+        discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+        name: "Test Member",
+        globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
+        roleId: role.id,
       });
 
       await prisma.userCharactersLootlogSettings.create({
@@ -220,14 +263,14 @@ describe("Kills E2E Tests (Deduplication)", () => {
       const guild = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
+      const role = await createKillRole(prisma, guild.id, "role-1");
 
-      await prisma.member.create({
-        data: {
-          userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-          guildId: guild.id,
-          name: "Test Member",
-          globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
-        },
+      await createKillMember(prisma, {
+        guildId: guild.id,
+        discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+        name: "Test Member",
+        globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
+        roleId: role.id,
       });
 
       await prisma.userCharactersLootlogSettings.create({
@@ -285,33 +328,31 @@ describe("Kills E2E Tests (Deduplication)", () => {
       const guild = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
+      const role = await createKillRole(prisma, guild.id, "role-1");
 
       // Create 3 members
-      await prisma.member.create({
-        data: {
-          userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-          guildId: guild.id,
-          name: "Member 1",
-          globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
-        },
+      await createKillMember(prisma, {
+        guildId: guild.id,
+        discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+        name: "Member 1",
+        globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
+        roleId: role.id,
       });
 
-      await prisma.member.create({
-        data: {
-          userId: TEST_USERS_EXTENDED.MEMBER_2.discordId,
-          guildId: guild.id,
-          name: "Member 2",
-          globalUserId: TEST_USERS_EXTENDED.MEMBER_2.id,
-        },
+      await createKillMember(prisma, {
+        guildId: guild.id,
+        discordId: TEST_USERS_EXTENDED.MEMBER_2.discordId,
+        name: "Member 2",
+        globalUserId: TEST_USERS_EXTENDED.MEMBER_2.id,
+        roleId: role.id,
       });
 
-      await prisma.member.create({
-        data: {
-          userId: TEST_USERS_EXTENDED.MEMBER_3.discordId,
-          guildId: guild.id,
-          name: "Member 3",
-          globalUserId: TEST_USERS_EXTENDED.MEMBER_3.id,
-        },
+      await createKillMember(prisma, {
+        guildId: guild.id,
+        discordId: TEST_USERS_EXTENDED.MEMBER_3.discordId,
+        name: "Member 3",
+        globalUserId: TEST_USERS_EXTENDED.MEMBER_3.id,
+        roleId: role.id,
       });
 
       // Configure all members to report to the same guild
@@ -401,6 +442,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
       const guild = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
+      const role = await createKillRole(prisma, guild.id, "role-1");
 
       // Create 10 different users/members
       const userIds = Array.from({ length: 10 }, (_, i) => ({
@@ -412,13 +454,12 @@ describe("Kills E2E Tests (Deduplication)", () => {
 
       await Promise.all(
         userIds.map((user) =>
-          prisma.member.create({
-            data: {
-              userId: user.discordId,
-              guildId: guild.id,
-              name: `Member ${user.id}`,
-              globalUserId: user.id,
-            },
+          createKillMember(prisma, {
+            guildId: guild.id,
+            discordId: user.discordId,
+            name: `Member ${user.id}`,
+            globalUserId: user.id,
+            roleId: role.id,
           }),
         ),
       );
@@ -479,14 +520,14 @@ describe("Kills E2E Tests (Deduplication)", () => {
       const guild = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
+      const role = await createKillRole(prisma, guild.id, "role-1");
 
-      await prisma.member.create({
-        data: {
-          userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-          guildId: guild.id,
-          name: "Test Member",
-          globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
-        },
+      await createKillMember(prisma, {
+        guildId: guild.id,
+        discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+        name: "Test Member",
+        globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
+        roleId: role.id,
       });
 
       // Same user with 3 different character configs (multi-client scenario)
@@ -580,24 +621,24 @@ describe("Kills E2E Tests (Deduplication)", () => {
       const guild2 = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_2,
       });
+      const role1 = await createKillRole(prisma, guild1.id, "role-1");
+      const role2 = await createKillRole(prisma, guild2.id, "role-2");
 
       // User is member of both guilds
-      await prisma.member.create({
-        data: {
-          userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-          guildId: guild1.id,
-          name: "Member in Guild 1",
-          globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
-        },
+      await createKillMember(prisma, {
+        guildId: guild1.id,
+        discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+        name: "Member in Guild 1",
+        globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
+        roleId: role1.id,
       });
 
-      await prisma.member.create({
-        data: {
-          userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-          guildId: guild2.id,
-          name: "Member in Guild 2",
-          globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
-        },
+      await createKillMember(prisma, {
+        guildId: guild2.id,
+        discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+        name: "Member in Guild 2",
+        globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
+        roleId: role2.id,
       });
 
       // Configure to report to both guilds
@@ -650,7 +691,12 @@ describe("Kills E2E Tests (Deduplication)", () => {
           id: "role-1",
           guildId: guild.id,
           name: "Member",
-          permissions: [Permission.LOOTLOG_LOOTS_READ],
+          permissions: [
+            Permission.LOOTLOG_ACCESS,
+            Permission.LOOTLOG_LOOTS_READ,
+            Permission.LOOTLOG_LOOTS_WRITE,
+            Permission.LOOTLOG_LOOTS_HEROES_READ,
+          ],
         },
       });
 
@@ -665,21 +711,19 @@ describe("Kills E2E Tests (Deduplication)", () => {
             roles: { connect: { id: role.id } },
           },
         }),
-        prisma.member.create({
-          data: {
-            userId: TEST_USERS_EXTENDED.MEMBER_2.discordId,
-            guildId: guild.id,
-            name: "Member 2",
-            globalUserId: TEST_USERS_EXTENDED.MEMBER_2.id,
-          },
+        createKillMember(prisma, {
+          guildId: guild.id,
+          discordId: TEST_USERS_EXTENDED.MEMBER_2.discordId,
+          name: "Member 2",
+          globalUserId: TEST_USERS_EXTENDED.MEMBER_2.id,
+          roleId: role.id,
         }),
-        prisma.member.create({
-          data: {
-            userId: TEST_USERS_EXTENDED.MEMBER_3.discordId,
-            guildId: guild.id,
-            name: "Member 3",
-            globalUserId: TEST_USERS_EXTENDED.MEMBER_3.id,
-          },
+        createKillMember(prisma, {
+          guildId: guild.id,
+          discordId: TEST_USERS_EXTENDED.MEMBER_3.discordId,
+          name: "Member 3",
+          globalUserId: TEST_USERS_EXTENDED.MEMBER_3.id,
+          roleId: role.id,
         }),
       ]);
 
@@ -782,14 +826,14 @@ describe("Kills E2E Tests (Deduplication)", () => {
       const guild = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
+      const role = await createKillRole(prisma, guild.id, "role-1");
 
-      await prisma.member.create({
-        data: {
-          userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-          guildId: guild.id,
-          name: "Test Member",
-          globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
-        },
+      await createKillMember(prisma, {
+        guildId: guild.id,
+        discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+        name: "Test Member",
+        globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
+        roleId: role.id,
       });
 
       await prisma.userCharactersLootlogSettings.create({
@@ -854,14 +898,14 @@ describe("Kills E2E Tests (Deduplication)", () => {
       const guild = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
+      const role = await createKillRole(prisma, guild.id, "role-1");
 
-      await prisma.member.create({
-        data: {
-          userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-          guildId: guild.id,
-          name: "Test Member",
-          globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
-        },
+      await createKillMember(prisma, {
+        guildId: guild.id,
+        discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+        name: "Test Member",
+        globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
+        roleId: role.id,
       });
 
       await prisma.userCharactersLootlogSettings.create({
@@ -914,7 +958,11 @@ describe("Kills E2E Tests (Deduplication)", () => {
           id: "role-1",
           guildId: guild.id,
           name: "Member",
-          permissions: [Permission.LOOTLOG_LOOTS_READ],
+          permissions: [
+            Permission.LOOTLOG_ACCESS,
+            Permission.LOOTLOG_LOOTS_READ,
+            Permission.LOOTLOG_LOOTS_WRITE,
+          ],
         },
       });
 
@@ -968,7 +1016,11 @@ describe("Kills E2E Tests (Deduplication)", () => {
           id: "role-1",
           guildId: guild.id,
           name: "Member",
-          permissions: [Permission.LOOTLOG_LOOTS_READ],
+          permissions: [
+            Permission.LOOTLOG_ACCESS,
+            Permission.LOOTLOG_LOOTS_READ,
+            Permission.LOOTLOG_LOOTS_WRITE,
+          ],
         },
       });
 
@@ -1025,32 +1077,30 @@ describe("Kills E2E Tests (Deduplication)", () => {
       const guild = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
+      const role = await createKillRole(prisma, guild.id, "role-1");
 
       // Create 3 members
       await Promise.all([
-        prisma.member.create({
-          data: {
-            userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-            guildId: guild.id,
-            name: "Member 1",
-            globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
-          },
+        createKillMember(prisma, {
+          guildId: guild.id,
+          discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+          name: "Member 1",
+          globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
+          roleId: role.id,
         }),
-        prisma.member.create({
-          data: {
-            userId: TEST_USERS_EXTENDED.MEMBER_2.discordId,
-            guildId: guild.id,
-            name: "Member 2",
-            globalUserId: TEST_USERS_EXTENDED.MEMBER_2.id,
-          },
+        createKillMember(prisma, {
+          guildId: guild.id,
+          discordId: TEST_USERS_EXTENDED.MEMBER_2.discordId,
+          name: "Member 2",
+          globalUserId: TEST_USERS_EXTENDED.MEMBER_2.id,
+          roleId: role.id,
         }),
-        prisma.member.create({
-          data: {
-            userId: TEST_USERS_EXTENDED.MEMBER_3.discordId,
-            guildId: guild.id,
-            name: "Member 3",
-            globalUserId: TEST_USERS_EXTENDED.MEMBER_3.id,
-          },
+        createKillMember(prisma, {
+          guildId: guild.id,
+          discordId: TEST_USERS_EXTENDED.MEMBER_3.discordId,
+          name: "Member 3",
+          globalUserId: TEST_USERS_EXTENDED.MEMBER_3.id,
+          roleId: role.id,
         }),
       ]);
 

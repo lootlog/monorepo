@@ -161,6 +161,10 @@ describe("EventKillService", () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    mockRedisService.get.mockResolvedValue(null);
+    mockRedisService.set.mockResolvedValue("OK");
+    mockRedisService.del.mockResolvedValue(1);
+    mockRedisService.setNX.mockResolvedValue(true);
     mockPrismaService.eventRespawnWindowSummary.findMany.mockResolvedValue([]);
     mockPrismaService.eventRespawnWindowSummary.findUnique.mockResolvedValue(
       null,
@@ -490,6 +494,46 @@ describe("EventKillService", () => {
       expect(mockRedisService.del).not.toHaveBeenCalled();
     });
 
+    it("should skip automatic kill when recent dedup is active", async () => {
+      mockRedisService.get
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce("1");
+
+      await service.checkAndRecordEventHeroKill(
+        guildId,
+        world,
+        npcId,
+        npcName,
+        npcIcon,
+        timerData,
+      );
+
+      expect(mockRedisService.setNX).not.toHaveBeenCalled();
+      expect(mockPrismaService.eventHeroNpc.findMany).not.toHaveBeenCalled();
+    });
+
+    it("should skip automatic kill when recent dedup becomes active after lock", async () => {
+      mockRedisService.get
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce("1");
+
+      await service.checkAndRecordEventHeroKill(
+        guildId,
+        world,
+        npcId,
+        npcName,
+        npcIcon,
+        timerData,
+      );
+
+      expect(mockPrismaService.eventHeroNpc.findMany).not.toHaveBeenCalled();
+      expect(mockRedisService.del).toHaveBeenCalledWith(
+        `event:hero:kill:lock:${guildId}:${world}:${npcId}`,
+      );
+    });
+
     it("should skip if NPC is not an event hero", async () => {
       mockPrismaService.eventHeroNpc.findMany
         .mockResolvedValueOnce([])
@@ -716,6 +760,11 @@ describe("EventKillService", () => {
         expect.any(String),
         120,
       );
+      expect(mockRedisService.set).not.toHaveBeenCalledWith(
+        `event:hero:kill:recent:${guildId}:${world}:${npcId}:timer`,
+        expect.any(String),
+        expect.any(Number),
+      );
     });
 
     it("should process all matching heroes", async () => {
@@ -753,6 +802,64 @@ describe("EventKillService", () => {
       );
 
       expect(recordSpy).toHaveBeenCalledTimes(2);
+      expect(mockRedisService.set).toHaveBeenCalledWith(
+        `event:hero:kill:recent:${guildId}:${world}:${npcId}:timer`,
+        expect.any(String),
+        30,
+      );
+      recordSpy.mockRestore();
+    });
+
+    it("should record only one automatic kill across different timer windows during recent dedup", async () => {
+      const mockHero = {
+        id: "hero-1",
+        npcId,
+        npcIcon,
+        npcName,
+        event: { id: "event-1" },
+      };
+      const redisValues = new Set<string>();
+      const secondTimerData = {
+        ...timerData,
+        previousMinSpawnTime: new Date("2026-02-18T08:00:05.000Z"),
+        previousMaxSpawnTime: new Date("2026-02-18T09:00:05.000Z"),
+        windowOpenedAt: new Date("2026-02-18T08:00:05.000Z"),
+      };
+
+      mockRedisService.get.mockImplementation((key: string) =>
+        redisValues.has(key) ? "1" : null,
+      );
+      mockRedisService.set.mockImplementation((key: string) => {
+        redisValues.add(key);
+        return "OK";
+      });
+      mockPrismaService.eventHeroNpc.findMany
+        .mockResolvedValueOnce([mockHero])
+        .mockResolvedValueOnce([]);
+
+      const recordSpy = vi
+        .spyOn(service, "recordHeroKill")
+        .mockResolvedValue({ id: "kill-1" } as never);
+
+      await service.checkAndRecordEventHeroKill(
+        guildId,
+        world,
+        npcId,
+        npcName,
+        npcIcon,
+        timerData,
+      );
+      await service.checkAndRecordEventHeroKill(
+        guildId,
+        world,
+        npcId,
+        npcName,
+        npcIcon,
+        secondTimerData,
+      );
+
+      expect(recordSpy).toHaveBeenCalledTimes(1);
+      expect(mockPrismaService.eventHeroNpc.findMany).toHaveBeenCalledTimes(2);
       recordSpy.mockRestore();
     });
 
@@ -788,6 +895,9 @@ describe("EventKillService", () => {
       const globalDedupFragment = `event:hero:kill:dedup:${guildId}:${world}:${npcId}:${windowOpenedAt.getTime()}:timer`;
       const setCalls = mockRedisService.set.mock.calls.map((call) => call[0]);
       expect(setCalls).not.toContain(globalDedupFragment);
+      expect(setCalls).not.toContain(
+        `event:hero:kill:recent:${guildId}:${world}:${npcId}:timer`,
+      );
       expect(mockRedisService.del).toHaveBeenCalledWith(
         `event:hero:kill:lock:${guildId}:${world}:${npcId}`,
       );

@@ -1,6 +1,5 @@
 import {
   timersControllerCreateManualTimer,
-  timersControllerCreateTimer,
   timersControllerCreateAutoTimer,
   timersControllerDeleteTimer,
   timersControllerGetAllTimers,
@@ -9,7 +8,6 @@ import {
 import type {
   CreateAutoTimerResponseDtoOutput,
   CreateManualTimerDto,
-  CreateTimerDto,
   CreateTimerFromGameClientDto,
   TimerResponseDto,
 } from "@/lib/api/generated/main/model";
@@ -26,7 +24,7 @@ import {
   startLoggedAction,
 } from "@/lib/logs/log-actions";
 
-type CreateTimerNpc = NonNullable<CreateTimerDto["npc"]>;
+type CreateTimerNpc = NonNullable<CreateTimerFromGameClientDto["npc"]>;
 
 type CreateTimerOptions = {
   respawnRandomness?: number;
@@ -39,87 +37,7 @@ type CreateTimerOptions = {
   npc: CreateTimerNpc;
 };
 
-export type CreateTimerForGuildsParams = {
-  timer: CreateTimerOptions;
-  guildIds: string[];
-};
-
 export type CreateAutoTimerResponse = CreateAutoTimerResponseDtoOutput;
-
-export async function createTimerForGuilds({
-  timer,
-  guildIds,
-}: CreateTimerForGuildsParams): Promise<void> {
-  const action = startLoggedAction({
-    actionType: "create_timer",
-    payload: {
-      timer,
-      guildIds,
-    },
-  });
-
-  if (!guildIds || guildIds.length === 0) {
-    action.complete({
-      status: "error",
-      details: {
-        endpoint: "/guilds/:guildId/timers",
-        reason: "missing_guild_ids",
-      },
-    });
-
-    return;
-  }
-
-  const results = await Promise.allSettled(
-    guildIds.map(async (guildId) => {
-      const endpoint = `/guilds/${guildId}/timers`;
-      const payload: CreateTimerDto = {
-        respBaseSeconds: timer.respBaseSeconds,
-        respawnRandomness: timer.respawnRandomness,
-        world: timer.world,
-        npc: timer.npc,
-        characterId: timer.characterId,
-        accountId: timer.accountId,
-        ...(timer.customMinSpawnTime && {
-          customMinSpawnTime: timer.customMinSpawnTime.toISOString(),
-        }),
-        ...(timer.customMaxSpawnTime && {
-          customMaxSpawnTime: timer.customMaxSpawnTime.toISOString(),
-        }),
-      };
-
-      await runLoggedRequest({
-        action,
-        method: "POST",
-        endpoint,
-        payload,
-        request: () => timersControllerCreateTimer({ guildId }, payload),
-      });
-
-      return { guildId };
-    }),
-  );
-
-  const successCount = results.filter(
-    (result) => result.status === "fulfilled",
-  ).length;
-  const failureCount = results.length - successCount;
-
-  action.complete({
-    status: getAggregateActionStatus(successCount, failureCount),
-    details: {
-      endpoint: "/guilds/:guildId/timers",
-      totalRequests: results.length,
-      successCount,
-      failureCount,
-      guildIds,
-    },
-  });
-
-  if (failureCount === results.length) {
-    throw new Error("Failed to create timer for all guilds");
-  }
-}
 
 export async function createAutoTimer(
   timer: CreateTimerOptions,

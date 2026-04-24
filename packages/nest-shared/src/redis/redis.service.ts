@@ -38,12 +38,19 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  async onModuleDestroy() {
+  onModuleDestroy() {
     if (!this.client) {
       return;
     }
 
-    await this.client.quit();
+    const client = this.client;
+    this.client = undefined;
+    const status = client.status;
+    if (status === "end" || status === "close") {
+      return;
+    }
+
+    client.disconnect(false);
   }
 
   getClient(): Redis {

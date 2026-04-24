@@ -9,17 +9,22 @@ const swcPluginOptions = nestSwcPluginOptions satisfies Parameters<
   typeof swc.vite
 >[0];
 
+const nestConfig = createNestVitestConfig({
+  rootDir: __dirname,
+  include: ["test/**/*.e2e-spec.ts"],
+  alias: {
+    "@lootlog/api-helpers/permissions":
+      "../../packages/api-helpers/src/permissions.ts",
+  },
+  fileParallelism: false,
+  setupFiles: ["./test/vitest.setup.ts"],
+});
+
 export default defineConfig({
-  ...createNestVitestConfig({
-    rootDir: __dirname,
-    include: ["test/**/*.e2e-spec.ts"],
-    alias: {
-      "@lootlog/api-helpers/permissions":
-        "../../packages/api-helpers/src/permissions.ts",
-      "prisma/generated/client": "./prisma/generated/client.ts",
-    },
-    fileParallelism: false,
-    setupFiles: ["./test/vitest.setup.ts"],
-  }),
+  ...nestConfig,
+  test: {
+    ...nestConfig.test,
+    globalSetup: "./test/vitest.global-setup.ts",
+  },
   plugins: [swc.vite(swcPluginOptions)],
 });

@@ -132,6 +132,21 @@ export function buildEventHeroKillHeroDedupKey(
   return buildEventHeroKillDedupKeyValue(data, data.heroId);
 }
 
+export function buildEventHeroKillRecentDedupKey(
+  data: Pick<EventHeroKillKeyData, "guildId" | "world" | "npcId">,
+): string {
+  return [
+    "event",
+    "hero",
+    "kill",
+    "recent",
+    data.guildId,
+    data.world,
+    data.npcId,
+    TIMER_UPDATE_SUFFIX,
+  ].join(":");
+}
+
 export function createEventHeroKillJobData(
   params: {
     guildId: string;

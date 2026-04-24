@@ -10,7 +10,6 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import {
-  ApiBody,
   ApiBearerAuth,
   ApiOperation,
   ApiParam,
@@ -30,7 +29,6 @@ import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 import { CreateManualTimerDto } from "src/timers/dto/create-manual-timer.dto";
 import { CreateAutoTimerResponseDto } from "src/timers/dto/create-auto-timer-response.dto";
-import { CreateTimerDto } from "src/timers/dto/create-timer.dto";
 import { CreateTimerFromGameClientDto } from "src/timers/dto/create-timer-from-game-client.dto";
 import { ResetTimerDto } from "src/timers/dto/reset-timer.dto";
 import { SearchTimersNpcResponseDto } from "src/timers/dto/search-timers-npcs-response.dto";
@@ -255,42 +253,5 @@ export class TimersController {
     @Param("guildId") guildId: string,
   ) {
     return this.timersService.createManualTimer(discordId, guildId, data);
-  }
-
-  @Permissions(Permission.LOOTLOG_TIMERS_WRITE)
-  @UseGuards(PermissionsGuard)
-  @Post("/guilds/:guildId/timers")
-  @ApiOperation({
-    summary: "Create timer for specific guild (deprecated)",
-    description:
-      "Legacy endpoint for creating a timer in a specific guild. Prefer POST /timers/auto for the new rollout path.",
-    deprecated: true,
-  })
-  @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
-  @ApiBody({
-    type: CreateTimerDto,
-    description:
-      "Legacy timer payload kept for backward compatibility with cached clients.",
-  })
-  @ZodResponse({
-    status: 201,
-    description: "Timer created successfully",
-    type: TimerResponseDto,
-  })
-  @ApiResponse({
-    status: 400,
-    description: "Validation error (invalid spawn times, wt too low, etc.)",
-  })
-  @ApiResponse({
-    status: 403,
-    description: "Forbidden - insufficient permissions",
-  })
-  createTimer(
-    @Body() data: CreateTimerFromGameClientDto,
-    @DiscordId() discordId: string,
-    @UserId() userId: string,
-    @Param("guildId") guildId: string,
-  ) {
-    return this.timersService.createTimer(discordId, userId, guildId, data);
   }
 }

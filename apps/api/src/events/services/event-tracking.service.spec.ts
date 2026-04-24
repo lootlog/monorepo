@@ -129,6 +129,10 @@ describe("EventTrackingService", () => {
       assignedMembers: [],
     };
 
+    beforeEach(() => {
+      mockPrismaService.member.findFirst.mockResolvedValue({ id: memberId });
+    });
+
     it("should assign member to map successfully", async () => {
       mockPrismaService.eventMap.findFirst.mockResolvedValue(mockMap);
       mockTimersService.getEventRespawnTimer.mockResolvedValue({
@@ -175,6 +179,15 @@ describe("EventTrackingService", () => {
 
     it("should throw NotFoundException when map not found", async () => {
       mockPrismaService.eventMap.findFirst.mockResolvedValue(null);
+
+      await expect(
+        service.assignMemberToMap(guildId, eventId, mapId, memberId),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it("should throw NotFoundException when member not found", async () => {
+      mockPrismaService.eventMap.findFirst.mockResolvedValue(mockMap);
+      mockPrismaService.member.findFirst.mockResolvedValue(null);
 
       await expect(
         service.assignMemberToMap(guildId, eventId, mapId, memberId),

@@ -81,6 +81,18 @@ export class EventTrackingService implements OnModuleInit {
       throw new NotFoundException("Map not found");
     }
 
+    const member = await this.prisma.member.findFirst({
+      where: {
+        id: memberId,
+        guildId,
+      },
+      select: { id: true },
+    });
+
+    if (!member) {
+      throw new NotFoundException("Member not found");
+    }
+
     const isAlreadyAssigned = map.assignedMembers.some(
       (member) => member.id === memberId,
     );
