@@ -56,16 +56,16 @@ Production build settings:
 
 ```bash
 Build command: pnpm run build
-Deploy command: npx wrangler deploy dist/server/index.js --config wrangler.jsonc --env="" --assets dist/client --no-bundle
-Version command: npx wrangler versions upload dist/server/index.js --config wrangler.jsonc --env="" --assets dist/client --no-bundle
+Deploy command: npx wrangler deploy dist/server/index.js --config wrangler.jsonc --env="" --assets dist/client
+Version command: npx wrangler versions upload dist/server/index.js --config wrangler.jsonc --env="" --assets dist/client
 ```
 
 Develop build settings:
 
 ```bash
 Build command: pnpm run build
-Deploy command: npx wrangler deploy dist/server/index.js --config wrangler.jsonc --env develop --assets dist/client --no-bundle
-Version command: npx wrangler versions upload dist/server/index.js --config wrangler.jsonc --env develop --assets dist/client --no-bundle
+Deploy command: npx wrangler deploy dist/server/index.js --config wrangler.jsonc --env develop --assets dist/client
+Version command: npx wrangler versions upload dist/server/index.js --config wrangler.jsonc --env develop --assets dist/client
 ```
 
 If Cloudflare binding types need to be refreshed, run:
