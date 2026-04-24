@@ -2,6 +2,7 @@ import {
   buildEventHeroKillDedupKey,
   buildEventHeroKillHeroDedupKey,
   buildEventHeroKillJobId,
+  buildEventHeroKillRecentDedupKey,
 } from "./event-hero-kill-job";
 
 describe("event-hero-kill-job", () => {
@@ -46,5 +47,15 @@ describe("event-hero-kill-job", () => {
     expect(dedupKey).toBe(
       "event:hero:kill:dedup:guild-1:tempest:123:hero-7:1740000000000:manual",
     );
+  });
+
+  it("builds a recent dedup key for timer updates", () => {
+    const dedupKey = buildEventHeroKillRecentDedupKey({
+      guildId: "guild-1",
+      world: "tempest",
+      npcId: 123,
+    });
+
+    expect(dedupKey).toBe("event:hero:kill:recent:guild-1:tempest:123:timer");
   });
 });

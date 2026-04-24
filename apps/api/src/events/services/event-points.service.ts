@@ -1192,6 +1192,7 @@ export class EventPointsService {
       confirmationDeadlineAt: Date;
       heroNpc: {
         id: string;
+        npcId: number | null;
         npcName: string;
         npcIcon: string | null;
         npcLvl: number | null;
@@ -1203,6 +1204,7 @@ export class EventPointsService {
       confirmationDeadlineAt: Date;
       heroNpc: {
         id: string;
+        npcId: number | null;
         npcName: string;
         npcIcon: string | null;
         npcLvl: number | null;
@@ -1243,6 +1245,7 @@ export class EventPointsService {
               heroNpc: {
                 select: {
                   id: true,
+                  npcId: true,
                   npcName: true,
                   npcIcon: true,
                   npcLvl: true,
@@ -1278,6 +1281,7 @@ export class EventPointsService {
               heroNpc: {
                 select: {
                   id: true,
+                  npcId: true,
                   npcName: true,
                   npcIcon: true,
                   npcLvl: true,
@@ -1300,6 +1304,7 @@ export class EventPointsService {
           killedAt: Date;
           heroNpc: {
             id: string;
+            npcId: number | null;
             npcName: string;
             npcIcon: string | null;
             npcLvl: number | null;
@@ -1315,6 +1320,7 @@ export class EventPointsService {
           confirmationDeadlineAt: Date;
           heroNpc: {
             id: string;
+            npcId: number | null;
             npcName: string;
             npcIcon: string | null;
             npcLvl: number | null;
