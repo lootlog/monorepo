@@ -1,9 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { type FormEvent, startTransition, useEffect, useState } from "react";
 import { getRuntimeConfig } from "@/config/runtime-config";
-import { fetchItemsSearch } from "@/lib/search-api";
 import { t } from "@/i18n/messages";
-import type { SearchItemsResponse } from "@/types/search";
+import {
+  getItemsControllerGetItemsQueryKey,
+  useItemsControllerGetItems,
+} from "@/lib/api/generated/search/items/items";
+
+const SEARCH_DEBOUNCE_MS = 300;
+const SEARCH_LIMIT = 50;
+type SearchStatus = "error" | "idle" | "loading" | "ready";
 
 type ItemsRouteSearch = {
   filter: string;
@@ -39,10 +45,36 @@ function ItemsRoute() {
   const [queryValue, setQueryValue] = useState(search.query);
   const [worldValue, setWorldValue] = useState(search.world);
   const [filterValue, setFilterValue] = useState(search.filter);
-  const [data, setData] = useState<SearchItemsResponse | null>(null);
-  const [status, setStatus] = useState<"error" | "idle" | "loading" | "ready">(
-    "idle",
-  );
+  const hasActiveSearch =
+    search.query.trim() !== "" ||
+    search.world.trim() !== "" ||
+    search.filter.trim() !== "";
+  const queryParams = {
+    filter: search.filter.trim() || undefined,
+    limit: SEARCH_LIMIT,
+    search: search.query.trim() || undefined,
+    world: search.world.trim() || undefined,
+  };
+  const itemsQuery = useItemsControllerGetItems(queryParams, {
+    query: {
+      enabled: hasActiveSearch,
+      placeholderData: (previousData) => previousData,
+      queryKey: getItemsControllerGetItemsQueryKey(queryParams),
+    },
+    request: {
+      baseUrl: searchApiUrl,
+    },
+  });
+  const data = hasActiveSearch ? itemsQuery.data : undefined;
+  let status: SearchStatus = "ready";
+
+  if (!hasActiveSearch) {
+    status = "idle";
+  } else if (itemsQuery.isError) {
+    status = "error";
+  } else if (itemsQuery.isPending) {
+    status = "loading";
+  }
 
   useEffect(() => {
     setQueryValue(search.query);
@@ -51,46 +83,41 @@ function ItemsRoute() {
   }, [search.filter, search.query, search.world]);
 
   useEffect(() => {
-    const hasActiveSearch =
-      search.query.trim() !== "" ||
-      search.world.trim() !== "" ||
-      search.filter.trim() !== "";
+    const nextSearch = {
+      filter: filterValue.trim(),
+      query: queryValue.trim(),
+      world: worldValue.trim(),
+    };
 
-    if (!hasActiveSearch) {
-      setData(null);
-      setStatus("idle");
+    if (
+      nextSearch.filter === search.filter &&
+      nextSearch.query === search.query &&
+      nextSearch.world === search.world
+    ) {
       return;
     }
 
-    let ignore = false;
-    setStatus("loading");
-
-    void fetchItemsSearch({
-      filter: search.filter.trim() || undefined,
-      query: search.query.trim() || undefined,
-      searchApiUrl,
-      world: search.world.trim() || undefined,
-    })
-      .then((response) => {
-        if (ignore) {
-          return;
-        }
-
-        setData(response);
-        setStatus("ready");
-      })
-      .catch(() => {
-        if (ignore) {
-          return;
-        }
-
-        setStatus("error");
+    const timeoutId = setTimeout(() => {
+      startTransition(() => {
+        void navigate({
+          replace: true,
+          search: nextSearch,
+        });
       });
+    }, SEARCH_DEBOUNCE_MS);
 
     return () => {
-      ignore = true;
+      clearTimeout(timeoutId);
     };
-  }, [search.filter, search.query, search.world, searchApiUrl]);
+  }, [
+    filterValue,
+    navigate,
+    queryValue,
+    search.filter,
+    search.query,
+    search.world,
+    worldValue,
+  ]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

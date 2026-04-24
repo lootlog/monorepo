@@ -2,8 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { type FormEvent, startTransition, useEffect, useState } from "react";
 import { getRuntimeConfig } from "@/config/runtime-config";
 import { t } from "@/i18n/messages";
-import { fetchPlayersSearch } from "@/lib/search-api";
-import type { PlayerHit } from "@/types/search";
+import {
+  getPlayersControllerGetPlayersQueryKey,
+  usePlayersControllerGetPlayers,
+} from "@/lib/api/generated/search/players/players";
+
+const SEARCH_DEBOUNCE_MS = 300;
+const SEARCH_LIMIT = 50;
+type SearchStatus = "error" | "idle" | "loading" | "ready";
 
 type PlayersRouteSearch = {
   query: string;
@@ -36,10 +42,33 @@ function PlayersRoute() {
   const search = Route.useSearch();
   const [queryValue, setQueryValue] = useState(search.query);
   const [worldValue, setWorldValue] = useState(search.world);
-  const [data, setData] = useState<PlayerHit[]>([]);
-  const [status, setStatus] = useState<"error" | "idle" | "loading" | "ready">(
-    "idle",
-  );
+  const hasActiveSearch =
+    search.query.trim() !== "" || search.world.trim() !== "";
+  const queryParams = {
+    limit: SEARCH_LIMIT,
+    search: search.query.trim() || undefined,
+    world: search.world.trim() || undefined,
+  };
+  const playersQuery = usePlayersControllerGetPlayers(queryParams, {
+    query: {
+      enabled: hasActiveSearch,
+      placeholderData: (previousData) => previousData,
+      queryKey: getPlayersControllerGetPlayersQueryKey(queryParams),
+    },
+    request: {
+      baseUrl: searchApiUrl,
+    },
+  });
+  const data = hasActiveSearch ? (playersQuery.data ?? []) : [];
+  let status: SearchStatus = "ready";
+
+  if (!hasActiveSearch) {
+    status = "idle";
+  } else if (playersQuery.isError) {
+    status = "error";
+  } else if (playersQuery.isPending) {
+    status = "loading";
+  }
 
   useEffect(() => {
     setQueryValue(search.query);
@@ -47,43 +76,31 @@ function PlayersRoute() {
   }, [search.query, search.world]);
 
   useEffect(() => {
-    const hasActiveSearch =
-      search.query.trim() !== "" || search.world.trim() !== "";
+    const nextSearch = {
+      query: queryValue.trim(),
+      world: worldValue.trim(),
+    };
 
-    if (!hasActiveSearch) {
-      setData([]);
-      setStatus("idle");
+    if (
+      nextSearch.query === search.query &&
+      nextSearch.world === search.world
+    ) {
       return;
     }
 
-    let ignore = false;
-    setStatus("loading");
-
-    void fetchPlayersSearch({
-      query: search.query.trim() || undefined,
-      searchApiUrl,
-      world: search.world.trim() || undefined,
-    })
-      .then((response) => {
-        if (ignore) {
-          return;
-        }
-
-        setData(response);
-        setStatus("ready");
-      })
-      .catch(() => {
-        if (ignore) {
-          return;
-        }
-
-        setStatus("error");
+    const timeoutId = setTimeout(() => {
+      startTransition(() => {
+        void navigate({
+          replace: true,
+          search: nextSearch,
+        });
       });
+    }, SEARCH_DEBOUNCE_MS);
 
     return () => {
-      ignore = true;
+      clearTimeout(timeoutId);
     };
-  }, [search.query, search.world, searchApiUrl]);
+  }, [navigate, queryValue, search.query, search.world, worldValue]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
