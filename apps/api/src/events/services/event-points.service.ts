@@ -1320,6 +1320,7 @@ export class EventPointsService {
           confirmationDeadlineAt: Date;
           heroNpc: {
             id: string;
+            npcId: number | null;
             npcName: string;
             npcIcon: string | null;
             npcLvl: number | null;
