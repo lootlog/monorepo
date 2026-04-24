@@ -48,6 +48,7 @@ describe("TimersService", () => {
     get: mockFn(),
     set: mockFn(),
     setNX: mockFn(),
+    eval: mockFn(),
     del: mockFn(),
     deleteByPattern: mockFn(),
   };
@@ -130,6 +131,7 @@ describe("TimersService", () => {
     vi.clearAllMocks();
     mockRedisService.deleteByPattern.mockResolvedValue(0);
     mockRedisService.setNX.mockResolvedValue(true);
+    mockRedisService.eval.mockResolvedValue(1);
     mockPrismaService.timer.findUnique.mockResolvedValue(null);
   });
 
@@ -351,6 +353,52 @@ describe("TimersService", () => {
         expect.any(String),
         30,
       );
+    });
+
+    it("should not release a dedup lock acquired by another request after TTL expiry", async () => {
+      const lockKey = `timer:dedup:guild1:test-world:${buildTimerKey(mockDto.npc.id, mockDto.npc.name)}:lock`;
+      let currentLockToken: string | null = null;
+      let originalLockToken: string | null = null;
+
+      mockRedisService.get.mockResolvedValue(null);
+      mockRedisService.set.mockResolvedValue(undefined);
+      mockRedisService.setNX.mockImplementation(
+        (_key: string, value: string) => {
+          originalLockToken = value;
+          currentLockToken = value;
+          return true;
+        },
+      );
+      mockRedisService.eval.mockImplementation(
+        (_script: string, _keys: string[], args: string[]) => {
+          if (currentLockToken === args[0]) {
+            currentLockToken = null;
+            return 1;
+          }
+
+          return 0;
+        },
+      );
+      mockPrismaService.timer.upsert.mockImplementation(async () => {
+        currentLockToken = "new-owner-token";
+        return mockTimer;
+      });
+
+      await service.createTimerForGuild(
+        "discord123",
+        userId,
+        "guild1",
+        mockDto,
+      );
+
+      expect(originalLockToken).toEqual(expect.any(String));
+      expect(currentLockToken).toBe("new-owner-token");
+      expect(mockRedisService.eval).toHaveBeenCalledWith(
+        expect.stringContaining('redis.call("get", KEYS[1]) == ARGV[1]'),
+        [lockKey],
+        [originalLockToken],
+      );
+      expect(mockRedisService.del).not.toHaveBeenCalledWith(lockKey);
     });
 
     it("should return existing timer during dedup lock contention without publishing again", async () => {
@@ -603,28 +651,38 @@ describe("TimersService", () => {
         }
         return undefined;
       });
-      mockRedisService.setNX.mockImplementation((key: string) => {
-        if (
-          key ===
-          `timer:dedup:guild1:test-world:${buildTimerKey(mockDto.npc.id, mockDto.npc.name)}:lock`
-        ) {
-          if (dedupLockHeld) {
-            return false;
+      let dedupLockToken: string | null = null;
+      mockRedisService.setNX.mockImplementation(
+        (key: string, value: string) => {
+          if (
+            key ===
+            `timer:dedup:guild1:test-world:${buildTimerKey(mockDto.npc.id, mockDto.npc.name)}:lock`
+          ) {
+            if (dedupLockHeld) {
+              return false;
+            }
+            dedupLockHeld = true;
+            dedupLockToken = value;
+            return true;
           }
-          dedupLockHeld = true;
           return true;
-        }
-        return true;
-      });
-      mockRedisService.del.mockImplementation((key: string) => {
-        if (
-          key ===
-          `timer:dedup:guild1:test-world:${buildTimerKey(mockDto.npc.id, mockDto.npc.name)}:lock`
-        ) {
-          dedupLockHeld = false;
-        }
-        return 1;
-      });
+        },
+      );
+      mockRedisService.eval.mockImplementation(
+        (_script: string, keys: string[], args: string[]) => {
+          const key = keys[0];
+          if (
+            key ===
+              `timer:dedup:guild1:test-world:${buildTimerKey(mockDto.npc.id, mockDto.npc.name)}:lock` &&
+            args[0] === dedupLockToken
+          ) {
+            dedupLockHeld = false;
+            dedupLockToken = null;
+            return 1;
+          }
+          return 0;
+        },
+      );
       mockEventTimerHooksService.findActiveEventHeroByNpc.mockResolvedValue(
         null,
       );
