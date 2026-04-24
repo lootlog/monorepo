@@ -29,6 +29,7 @@
     "build": "turbo build",
     "dev": "turbo dev --concurrency 14",
     "dev:core": "turbo dev --filter=@lootlog/api --filter=@lootlog/auth --filter=@lootlog/gateway --filter=@lootlog/web --filter=@lootlog/game-client --filter=@lootlog/search --filter=@lootlog/discord-bot --concurrency 13",
+    "dev:wiki": "turbo dev --filter=@lootlog/wiki --filter=@lootlog/search --filter=@lootlog/auth",
     "start": "turbo start",
     "lint": "turbo lint",
     "doctor": "turbo run doctor",
