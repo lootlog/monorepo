@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { type FormEvent, startTransition, useEffect, useState } from "react";
+import { getRuntimeConfig } from "@/config/runtime-config";
 import { t } from "@/i18n/messages";
 import { fetchNpcsSearch } from "@/lib/search-api";
 import type { NpcHit } from "@/types/search";
@@ -25,11 +26,13 @@ export const Route = createFileRoute("/npcs")({
       },
     ],
   }),
+  loader: () => getRuntimeConfig(),
   validateSearch,
 });
 
 function NpcsRoute() {
   const navigate = Route.useNavigate();
+  const { searchApiUrl } = Route.useLoaderData();
   const search = Route.useSearch();
   const [queryValue, setQueryValue] = useState(search.query);
   const [worldValue, setWorldValue] = useState(search.world);
@@ -37,8 +40,6 @@ function NpcsRoute() {
   const [status, setStatus] = useState<"error" | "idle" | "loading" | "ready">(
     "idle",
   );
-
-  console.log(import.meta.env.VITE_SEARCH_API_URL);
 
   useEffect(() => {
     setQueryValue(search.query);
@@ -60,6 +61,7 @@ function NpcsRoute() {
 
     void fetchNpcsSearch({
       query: search.query.trim() || undefined,
+      searchApiUrl,
       world: search.world.trim() || undefined,
     })
       .then((response) => {
@@ -81,7 +83,7 @@ function NpcsRoute() {
     return () => {
       ignore = true;
     };
-  }, [search.query, search.world]);
+  }, [search.query, search.world, searchApiUrl]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

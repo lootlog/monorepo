@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { type FormEvent, startTransition, useEffect, useState } from "react";
+import { getRuntimeConfig } from "@/config/runtime-config";
 import { fetchItemsSearch } from "@/lib/search-api";
 import { t } from "@/i18n/messages";
 import type { SearchItemsResponse } from "@/types/search";
@@ -27,11 +28,13 @@ export const Route = createFileRoute("/items")({
       },
     ],
   }),
+  loader: () => getRuntimeConfig(),
   validateSearch,
 });
 
 function ItemsRoute() {
   const navigate = Route.useNavigate();
+  const { searchApiUrl } = Route.useLoaderData();
   const search = Route.useSearch();
   const [queryValue, setQueryValue] = useState(search.query);
   const [worldValue, setWorldValue] = useState(search.world);
@@ -65,6 +68,7 @@ function ItemsRoute() {
     void fetchItemsSearch({
       filter: search.filter.trim() || undefined,
       query: search.query.trim() || undefined,
+      searchApiUrl,
       world: search.world.trim() || undefined,
     })
       .then((response) => {
@@ -86,7 +90,7 @@ function ItemsRoute() {
     return () => {
       ignore = true;
     };
-  }, [search.filter, search.query, search.world]);
+  }, [search.filter, search.query, search.world, searchApiUrl]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

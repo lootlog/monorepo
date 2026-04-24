@@ -1,29 +1,13 @@
-import { SEARCH_API_URL } from "@/config/api";
 import type { NpcHit, PlayerHit, SearchItemsResponse } from "@/types/search";
 
 type SearchParamsValue = string | number | undefined;
 
-function getSearchBaseUrl() {
-  if (SEARCH_API_URL) {
-    return SEARCH_API_URL;
-  }
-
-  if (typeof window !== "undefined") {
-    return window.location.origin;
-  }
-
-  throw new Error(
-    "VITE_SEARCH_API_URL must be configured for search requests.",
-  );
-}
-
 function buildSearchUrl(
+  searchApiUrl: string,
   path: string,
   params: Record<string, SearchParamsValue>,
 ) {
-  const url = new URL(path, getSearchBaseUrl());
-
-  console.log(getSearchBaseUrl());
+  const url = new URL(path, searchApiUrl);
 
   for (const [key, value] of Object.entries(params)) {
     if (value === undefined || value === "") {
@@ -37,10 +21,11 @@ function buildSearchUrl(
 }
 
 async function fetchSearchJson<T>(
+  searchApiUrl: string,
   path: string,
   params: Record<string, SearchParamsValue>,
 ): Promise<T> {
-  const response = await fetch(buildSearchUrl(path, params));
+  const response = await fetch(buildSearchUrl(searchApiUrl, path, params));
 
   if (!response.ok) {
     throw new Error(`Search request failed with status ${response.status}`);
@@ -53,9 +38,10 @@ export function fetchItemsSearch(params: {
   filter?: string;
   limit?: number;
   query?: string;
+  searchApiUrl: string;
   world?: string;
 }) {
-  return fetchSearchJson<SearchItemsResponse>("/items", {
+  return fetchSearchJson<SearchItemsResponse>(params.searchApiUrl, "/items", {
     filter: params.filter,
     limit: params.limit ?? 24,
     search: params.query,
@@ -66,9 +52,10 @@ export function fetchItemsSearch(params: {
 export function fetchNpcsSearch(params: {
   limit?: number;
   query?: string;
+  searchApiUrl: string;
   world?: string;
 }) {
-  return fetchSearchJson<NpcHit[]>("/npcs", {
+  return fetchSearchJson<NpcHit[]>(params.searchApiUrl, "/npcs", {
     limit: params.limit ?? 24,
     search: params.query,
     world: params.world,
@@ -78,9 +65,10 @@ export function fetchNpcsSearch(params: {
 export function fetchPlayersSearch(params: {
   limit?: number;
   query?: string;
+  searchApiUrl: string;
   world?: string;
 }) {
-  return fetchSearchJson<PlayerHit[]>("/players", {
+  return fetchSearchJson<PlayerHit[]>(params.searchApiUrl, "/players", {
     limit: params.limit ?? 24,
     search: params.query,
     world: params.world,
