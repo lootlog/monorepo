@@ -876,41 +876,6 @@ paths:
       summary: Get guild timers
       tags:
         - timers
-    post:
-      deprecated: true
-      description: Legacy endpoint for creating a timer in a specific guild. Prefer POST /timers/auto for the new rollout path.
-      operationId: TimersController_createTimer
-      parameters:
-        - name: guildId
-          required: true
-          in: path
-          description: Guild ID
-          schema:
-            example: guild_123
-            type: string
-      requestBody:
-        required: true
-        description: Legacy timer payload kept for backward compatibility with cached clients.
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateTimerDto"
-      responses:
-        "201":
-          description: Timer created successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TimerResponseDto"
-        "400":
-          description: Validation error (invalid spawn times, wt too low, etc.)
-        "403":
-          description: Forbidden - insufficient permissions
-      security:
-        - bearer: []
-      summary: Create timer for specific guild (deprecated)
-      tags:
-        - timers
   /guilds/{guildId}/timers/npcs/search:
     get:
       description: Search for NPCs that have been timed in this guild/world, returning their latest respawn configuration
@@ -7124,62 +7089,6 @@ components:
       required:
         - name
         - world
-    CreateTimerDto:
-      type: object
-      properties:
-        respBaseSeconds:
-          type: number
-          minimum: 2
-        respawnRandomness:
-          type: number
-        world:
-          type: string
-          minLength: 1
-        npc:
-          type: object
-          properties:
-            id:
-              type: number
-            name:
-              type: string
-            location:
-              type: string
-            lvl:
-              type: number
-            prof:
-              type: string
-            wt:
-              type: number
-            hpp:
-              type: number
-            icon:
-              type: string
-            type:
-              type: number
-            x:
-              type: number
-            "y":
-              type: number
-          required:
-            - id
-            - name
-            - location
-            - lvl
-            - wt
-            - icon
-            - type
-        characterId:
-          type: string
-          minLength: 1
-        accountId:
-          type: string
-          minLength: 1
-      required:
-        - respBaseSeconds
-        - world
-        - npc
-        - characterId
-        - accountId
     UserLootlogConfigAccountResponseDto_Output:
       type: object
       additionalProperties:

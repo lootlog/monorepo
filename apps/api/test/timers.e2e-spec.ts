@@ -1,4 +1,5 @@
 import { type INestApplication } from "@nestjs/common";
+import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import request from "supertest";
 import { AppModule } from "../src/app.module";
 import { PrismaService } from "../src/db/prisma.service";
@@ -8,13 +9,45 @@ import {
   TEST_USERS,
 } from "./test-helpers";
 import { createTestingModuleWithMocks } from "./test-module-helpers";
-import { Permission } from "generated/client";
+import { Permission } from "../src/generated/prisma/client";
 import { RedisService } from "@lootlog/nest-shared/redis";
+import { buildTimerKey } from "../src/timers/utils/timer-key";
+import { RoutingKey } from "../src/enum/routing-key.enum";
+import {
+  createMemberFixture,
+  createTimerFixture,
+  FORBIDDEN_AUTH,
+  TEST_AUTH,
+  TEST_NPC,
+  TEST_WORLD,
+  withAuth,
+} from "./events-timers-e2e-helpers";
+
+async function truncateTimersState(
+  prisma: PrismaService,
+  attempt: number = 1,
+): Promise<void> {
+  try {
+    await prisma.$executeRaw`TRUNCATE TABLE "Guild", "Role", "Member", "Timer", "UserCharactersLootlogSettings" CASCADE`;
+  } catch (error) {
+    if (
+      attempt === 3 ||
+      !(error instanceof Error) ||
+      !error.message.includes("deadlock detected")
+    ) {
+      throw error;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 50 * attempt));
+    await truncateTimersState(prisma, attempt + 1);
+  }
+}
 
 describe("Timers E2E Tests (Whitelist)", () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let redis: RedisService;
+  let amqpConnection: AmqpConnection;
 
   beforeAll(async () => {
     const moduleFixture = await createTestingModuleWithMocks({
@@ -24,9 +57,11 @@ describe("Timers E2E Tests (Whitelist)", () => {
     app = moduleFixture.createNestApplication();
     app.enableShutdownHooks();
     await app.init();
+    await app.listen(0);
 
     prisma = app.get<PrismaService>(PrismaService);
     redis = app.get<RedisService>(RedisService);
+    amqpConnection = app.get<AmqpConnection>(AmqpConnection);
   });
 
   afterAll(async () => {
@@ -40,502 +75,399 @@ describe("Timers E2E Tests (Whitelist)", () => {
   });
 
   beforeEach(async () => {
-    await prisma.$executeRaw`TRUNCATE TABLE "Guild", "Role", "Member", "Timer", "UserCharactersLootlogSettings" CASCADE`;
-    const keys = await redis.getClient().keys("timer:*");
+    await truncateTimersState(prisma);
+    const keys = (
+      await Promise.all(
+        ["timer", "perms", "guild", "user-lootlog-config", "event-wrapped"].map(
+          (prefix) => redis.getClient().keys(`${prefix}:*`),
+        ),
+      )
+    ).flat();
     if (keys.length > 0) {
       await redis.getClient().del(...keys);
     }
+    vi.mocked(amqpConnection.publish).mockClear();
   });
 
-  describe("POST /guilds/:guildId/timers", () => {
-    it("should create timer for specific guild", async () => {
-      const guild1 = await prisma.guild.create({
-        data: TEST_GUILDS.GUILD_1,
-      });
-
-      const role = await prisma.role.create({
-        data: {
-          id: "role-1",
-          guildId: guild1.id,
-          name: "Member",
-          permissions: [Permission.LOOTLOG_WRITE],
-        },
-      });
-
-      await prisma.member.create({
-        data: {
-          userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-          guildId: guild1.id,
-          name: "Test Member",
-          globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
-          roles: {
-            connect: { id: role.id },
-          },
-        },
-      });
-
-      const timerPayload = createTestTimerPayload();
-
-      const response = await request(app.getHttpServer())
-        .post(`/guilds/${guild1.id}/timers`)
-        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
-        .send(timerPayload)
-        .expect(201);
-
-      expect(response.body.guildId).toBe(guild1.id);
-      expect(response.body.world).toBe("test-world");
-      expect(response.body.npcId).toBe(1);
-
-      const timers = await prisma.timer.findMany();
-      expect(timers).toHaveLength(1);
-      expect(timers[0].guildId).toBe(guild1.id);
-    });
-
-    it("should support custom spawn times", async () => {
-      const guild1 = await prisma.guild.create({
-        data: TEST_GUILDS.GUILD_1,
-      });
-
-      const role = await prisma.role.create({
-        data: {
-          id: "role-1",
-          guildId: guild1.id,
-          name: "Member",
-          permissions: [Permission.LOOTLOG_WRITE],
-        },
-      });
-
-      await prisma.member.create({
-        data: {
-          userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-          guildId: guild1.id,
-          name: "Test Member",
-          globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
-          roles: {
-            connect: { id: role.id },
-          },
-        },
-      });
-
-      const customMin = new Date(Date.now() + 3600000);
-      const customMax = new Date(Date.now() + 7200000);
-      const timerPayload = createTestTimerPayload({
-        customMinSpawnTime: customMin.toISOString(),
-        customMaxSpawnTime: customMax.toISOString(),
-      });
-
-      const response = await request(app.getHttpServer())
-        .post(`/guilds/${guild1.id}/timers`)
-        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
-        .send(timerPayload)
-        .expect(201);
-
-      const minTime = new Date(response.body.minSpawnTime).getTime();
-      const maxTime = new Date(response.body.maxSpawnTime).getTime();
-      const expectedMinTime = customMin.getTime();
-      const expectedMaxTime = customMax.getTime();
-
-      expect(Math.abs(minTime - expectedMinTime)).toBeLessThan(1000);
-      expect(Math.abs(maxTime - expectedMaxTime)).toBeLessThan(1000);
-    });
-
-    it("should reject invalid custom spawn times", async () => {
-      const guild1 = await prisma.guild.create({
-        data: TEST_GUILDS.GUILD_1,
-      });
-
-      const role = await prisma.role.create({
-        data: {
-          id: "role-1",
-          guildId: guild1.id,
-          name: "Member",
-          permissions: [Permission.LOOTLOG_WRITE],
-        },
-      });
-
-      await prisma.member.create({
-        data: {
-          userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-          guildId: guild1.id,
-          name: "Test Member",
-          globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
-          roles: {
-            connect: { id: role.id },
-          },
-        },
-      });
-
-      const customMin = new Date(Date.now() + 7200000);
-      const customMax = new Date(Date.now() + 3600000);
-      const timerPayload = createTestTimerPayload({
-        customMinSpawnTime: customMin.toISOString(),
-        customMaxSpawnTime: customMax.toISOString(),
-      });
-
+  describe("POST /timers/auto", () => {
+    it("should reject invalid auto timer payload", async () => {
       await request(app.getHttpServer())
-        .post(`/guilds/${guild1.id}/timers`)
+        .post("/timers/auto")
         .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
         .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
-        .send(timerPayload)
+        .send(createTestTimerPayload({ world: "" }))
         .expect(400);
+
+      await expect(prisma.timer.count()).resolves.toBe(0);
     });
 
-    it("should handle concurrent requests with locking", async () => {
-      const guild1 = await prisma.guild.create({
-        data: TEST_GUILDS.GUILD_1,
-      });
-
-      const role = await prisma.role.create({
-        data: {
-          id: "role-1",
-          guildId: guild1.id,
-          name: "Member",
-          permissions: [Permission.LOOTLOG_WRITE],
+    it("should update an existing timer even when its minimum spawn time is still far in the future", async () => {
+      const guild = await prisma.guild.create({ data: TEST_GUILDS.GUILD_1 });
+      const { member } = await createMemberFixture(prisma, {
+        guildId: guild.id,
+        auth: {
+          userId: TEST_USERS.MEMBER_WITH_WRITE.id,
+          discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
         },
+        permissions: [Permission.LOOTLOG_TIMERS_WRITE],
       });
-
-      await prisma.member.create({
+      await prisma.userCharactersLootlogSettings.create({
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-          guildId: guild1.id,
-          name: "Test Member",
-          globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
-          roles: {
-            connect: { id: role.id },
-          },
+          accountId: "short-respawn-account",
+          characterId: "short-respawn-character",
+          catchingGuildIds: [guild.id],
         },
       });
 
-      const timerPayload = createTestTimerPayload();
-
-      const requests = Array(10)
-        .fill(null)
-        .map(() =>
-          request(app.getHttpServer())
-            .post(`/guilds/${guild1.id}/timers`)
-            .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
-            .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
-            .send(timerPayload),
-        );
-
-      const results = await Promise.all(requests);
-
-      const successfulResponses = results.filter((r) => r.status === 201);
-      const conflictResponses = results.filter((r) => r.status === 409);
-
-      expect(successfulResponses.length).toBeGreaterThan(0);
-      expect(successfulResponses.length + conflictResponses.length).toBe(10);
-
-      const timers = await prisma.timer.findMany();
-      expect(timers).toHaveLength(1);
-
-      const allSameTimer = successfulResponses.every(
-        (r) => r.body.createdAt === successfulResponses[0].body.createdAt,
+      const timerPayload = createTestTimerPayload({
+        accountId: "short-respawn-account",
+        characterId: "short-respawn-character",
+        respBaseSeconds: 24 * 60 * 60,
+      });
+      const timerKey = buildTimerKey(
+        timerPayload.npc.id,
+        timerPayload.npc.name,
       );
-      expect(allSameTimer).toBe(true);
-    });
+      const previousMinSpawnTime = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const previousMaxSpawnTime = new Date(Date.now() + 30 * 60 * 60 * 1000);
 
-    it("should prevent race condition on 10 simultaneous requests", async () => {
-      const guild1 = await prisma.guild.create({
-        data: TEST_GUILDS.GUILD_1,
-      });
-
-      const role = await prisma.role.create({
-        data: {
-          id: "role-1",
-          guildId: guild1.id,
-          name: "Member",
-          permissions: [Permission.LOOTLOG_WRITE],
-        },
-      });
-
-      await prisma.member.create({
-        data: {
-          userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-          guildId: guild1.id,
-          name: "Test Member",
-          globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
-          roles: {
-            connect: { id: role.id },
-          },
-        },
-      });
-
-      const timerPayload = createTestTimerPayload();
-
-      const startTime = Date.now();
-
-      const results = await Promise.all(
-        Array(10)
-          .fill(null)
-          .map(() =>
-            request(app.getHttpServer())
-              .post(`/guilds/${guild1.id}/timers`)
-              .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
-              .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
-              .send(timerPayload),
-          ),
-      );
-
-      const endTime = Date.now();
-      const duration = endTime - startTime;
-
-      const statusCodes = results.map((r) => r.status);
-      const successCount = statusCodes.filter((s) => s === 201).length;
-      const conflictCount = statusCodes.filter((s) => s === 409).length;
-
-      expect(successCount + conflictCount).toBe(10);
-      expect(successCount).toBeGreaterThan(0);
-
-      const timers = await prisma.timer.findMany({
-        where: {
-          guildId: guild1.id,
-          world: timerPayload.world,
-          npcId: timerPayload.npc.id,
-        },
-      });
-
-      expect(timers).toHaveLength(1);
-      expect(duration).toBeLessThan(5000);
-
-      console.log(`Race condition test stats:
-        - Total requests: 10
-        - Successful (201): ${successCount}
-        - Conflicts (409): ${conflictCount}
-        - Duration: ${duration}ms
-        - Timers in DB: ${timers.length}
-      `);
-    });
-
-    it("should handle rapid sequential updates without data corruption", async () => {
-      const guild1 = await prisma.guild.create({
-        data: TEST_GUILDS.GUILD_1,
-      });
-
-      const role = await prisma.role.create({
-        data: {
-          id: "role-1",
-          guildId: guild1.id,
-          name: "Member",
-          permissions: [Permission.LOOTLOG_WRITE],
-        },
-      });
-
-      const member = await prisma.member.create({
-        data: {
-          userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-          guildId: guild1.id,
-          name: "Test Member",
-          globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
-          roles: {
-            connect: { id: role.id },
-          },
-        },
-      });
-
-      const now = new Date();
       await prisma.timer.create({
         data: {
-          guildId: guild1.id,
-          world: "test-world",
-          npcId: 999,
+          guildId: guild.id,
           createdById: member.id,
-          minSpawnTime: now,
-          maxSpawnTime: new Date(now.getTime() + 3600 * 1000),
-          latestRespBaseSeconds: 3600,
+          world: timerPayload.world,
+          npcId: timerPayload.npc.id,
+          timerKey,
+          minSpawnTime: previousMinSpawnTime,
+          maxSpawnTime: previousMaxSpawnTime,
+          latestRespBaseSeconds: 24 * 60 * 60,
           latestRespawnRandomness: 10,
-          npc: {
-            id: 999,
-            name: "Test Boss",
-            location: "Test Lair",
-            wt: 20,
-            prof: "w",
-          },
+          wasReset: false,
+          npc: timerPayload.npc,
         },
       });
 
-      for (let i = 0; i < 5; i++) {
-        await request(app.getHttpServer())
-          .patch(`/guilds/${guild1.id}/timers/999/reset`)
-          .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
-          .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
-          .send({ world: "test-world" })
-          .expect(200);
+      const response = await request(app.getHttpServer())
+        .post("/timers/auto")
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
+        .send(timerPayload)
+        .expect(201);
 
-        await new Promise((resolve) => setTimeout(resolve, 50));
-      }
+      expect(response.body.submittedGuilds).toEqual([
+        {
+          guildId: guild.id,
+          guildName: guild.name,
+        },
+      ]);
+      expect(response.body.rejectedGuilds).toEqual([]);
 
       const timers = await prisma.timer.findMany({
         where: {
-          guildId: guild1.id,
-          world: "test-world",
-          npcId: 999,
+          guildId: guild.id,
+          world: timerPayload.world,
+          timerKey,
         },
       });
 
       expect(timers).toHaveLength(1);
+      expect(timers[0].minSpawnTime.getTime()).not.toBe(
+        previousMinSpawnTime.getTime(),
+      );
+      expect(timers[0].maxSpawnTime.getTime()).not.toBe(
+        previousMaxSpawnTime.getTime(),
+      );
+      expect(timers[0].updatedAt.getTime()).toBeGreaterThan(
+        timers[0].createdAt.getTime(),
+      );
+      expect(
+        vi
+          .mocked(amqpConnection.publish)
+          .mock.calls.filter(
+            (call) => call[1] === RoutingKey.GUILDS_TIMERS_UPDATE,
+          ),
+      ).toHaveLength(1);
     });
 
-    it("should deduplicate rapid requests", async () => {
-      const guild1 = await prisma.guild.create({
-        data: TEST_GUILDS.GUILD_1,
-      });
-
+    it("should keep one timer when 50 users submit the same NPC to one whitelisted guild concurrently", async () => {
+      const guild = await prisma.guild.create({ data: TEST_GUILDS.GUILD_1 });
       const role = await prisma.role.create({
         data: {
-          id: "role-1",
-          guildId: guild1.id,
-          name: "Member",
-          permissions: [Permission.LOOTLOG_WRITE],
+          id: "auto-burst-role",
+          guildId: guild.id,
+          name: "Timer Writers",
+          permissions: [Permission.LOOTLOG_TIMERS_WRITE],
         },
       });
+      const users = Array.from({ length: 50 }, (_, index) => ({
+        id: `auto-burst-user-${index + 1}`,
+        discordId: `auto-burst-discord-${index + 1}`,
+      }));
 
-      await prisma.member.create({
-        data: {
-          userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-          guildId: guild1.id,
-          name: "Test Member",
-          globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
-          roles: {
-            connect: { id: role.id },
-          },
-        },
+      await Promise.all(
+        users.map((user, index) =>
+          prisma.member.create({
+            data: {
+              userId: user.discordId,
+              guildId: guild.id,
+              name: `Auto Burst Member ${index + 1}`,
+              globalUserId: user.id,
+              roles: { connect: { id: role.id } },
+            },
+          }),
+        ),
+      );
+      await prisma.userCharactersLootlogSettings.createMany({
+        data: users.map((user) => ({
+          userId: user.discordId,
+          accountId: "auto-burst-account",
+          characterId: "auto-burst-character",
+          catchingGuildIds: [guild.id],
+        })),
       });
 
-      const timerPayload = createTestTimerPayload();
-
-      const response1 = await request(app.getHttpServer())
-        .post(`/guilds/${guild1.id}/timers`)
-        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
-        .send(timerPayload)
-        .expect(201);
-
-      const response2 = await request(app.getHttpServer())
-        .post(`/guilds/${guild1.id}/timers`)
-        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
-        .send(timerPayload)
-        .expect(201);
-
-      expect(response1.body.createdAt).toBe(response2.body.createdAt);
-
-      const timers = await prisma.timer.findMany();
-      expect(timers).toHaveLength(1);
-    });
-
-    it("should invalidate cache after timer creation", async () => {
-      const guild1 = await prisma.guild.create({
-        data: TEST_GUILDS.GUILD_1,
+      const timerPayload = createTestTimerPayload({
+        accountId: "auto-burst-account",
+        characterId: "auto-burst-character",
       });
+      const results = await Promise.allSettled(
+        users.map((user) =>
+          request(app.getHttpServer())
+            .post("/timers/auto")
+            .set("x-auth-discord-id", user.discordId)
+            .set("x-auth-user-id", user.id)
+            .send(timerPayload),
+        ),
+      );
+      const responses = results
+        .filter((result) => result.status === "fulfilled")
+        .map((result) => result.value);
+      const rejectedResults = results.filter(
+        (result) => result.status === "rejected",
+      );
 
-      const role = await prisma.role.create({
-        data: {
-          id: "role-1",
-          guildId: guild1.id,
-          name: "Member",
-          permissions: [Permission.LOOTLOG_READ],
-        },
-      });
+      expect(
+        rejectedResults.map((result) =>
+          result.status === "rejected" ? result.reason : null,
+        ),
+      ).toEqual([]);
+      expect(responses.every((response) => response.status === 201)).toBe(true);
 
-      await prisma.member.create({
-        data: {
-          userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-          guildId: guild1.id,
-          name: "Test Member",
-          globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
-          roles: {
-            connect: { id: role.id },
-          },
-        },
-      });
-
-      await request(app.getHttpServer())
-        .get(`/guilds/${guild1.id}/timers`)
-        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
-        .expect(200);
-
-      const cacheKeysBefore = await redis
-        .getClient()
-        .keys(`timer:list:${guild1.id}:*`);
-      expect(cacheKeysBefore.length).toBeGreaterThan(0);
-
-      const writeRole = await prisma.role.update({
-        where: { id: role.id },
-        data: {
-          permissions: [Permission.LOOTLOG_READ, Permission.LOOTLOG_WRITE],
-        },
-      });
-
-      await prisma.member.update({
+      const timers = await prisma.timer.findMany({
         where: {
-          memberId: {
-            userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-            guildId: guild1.id,
-          },
-        },
-        data: {
-          roles: {
-            set: [{ id: writeRole.id }],
-          },
+          guildId: guild.id,
+          world: timerPayload.world,
+          timerKey: buildTimerKey(timerPayload.npc.id, timerPayload.npc.name),
         },
       });
 
-      const timerPayload = createTestTimerPayload();
-      await request(app.getHttpServer())
-        .post(`/guilds/${guild1.id}/timers`)
-        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
-        .send(timerPayload)
-        .expect(201);
-
-      const cacheKeysAfter = await redis
-        .getClient()
-        .keys(`timer:list:${guild1.id}:*`);
-      expect(cacheKeysAfter.length).toBe(0);
+      expect(timers).toHaveLength(1);
+      expect(
+        vi
+          .mocked(amqpConnection.publish)
+          .mock.calls.filter(
+            (call) => call[1] === RoutingKey.GUILDS_TIMERS_UPDATE,
+          ),
+      ).toHaveLength(1);
     });
 
-    it("should return 403 when user lacks LOOTLOG_WRITE permission", async () => {
-      const guild1 = await prisma.guild.create({
-        data: TEST_GUILDS.GUILD_1,
-      });
-
+    it("should let another request take over when the first burst owner fails before creating a timer", async () => {
+      const guild = await prisma.guild.create({ data: TEST_GUILDS.GUILD_1 });
       const role = await prisma.role.create({
         data: {
-          id: "role-1",
-          guildId: guild1.id,
-          name: "Member",
-          permissions: [Permission.LOOTLOG_READ],
+          id: "auto-takeover-role",
+          guildId: guild.id,
+          name: "Timer Writers",
+          permissions: [Permission.LOOTLOG_TIMERS_WRITE],
+        },
+      });
+      const users = Array.from({ length: 8 }, (_, index) => ({
+        id: `auto-takeover-user-${index + 1}`,
+        discordId: `auto-takeover-discord-${index + 1}`,
+      }));
+
+      await Promise.all(
+        users.map((user, index) =>
+          prisma.member.create({
+            data: {
+              userId: user.discordId,
+              guildId: guild.id,
+              name: `Auto Takeover Member ${index + 1}`,
+              globalUserId: user.id,
+              roles: { connect: { id: role.id } },
+            },
+          }),
+        ),
+      );
+      await prisma.userCharactersLootlogSettings.createMany({
+        data: users.map((user) => ({
+          userId: user.discordId,
+          accountId: "auto-takeover-account",
+          characterId: "auto-takeover-character",
+          catchingGuildIds: [guild.id],
+        })),
+      });
+
+      const upsertSpy = vi.spyOn(prisma.timer, "upsert");
+      upsertSpy.mockRejectedValueOnce(new Error("Injected upsert failure"));
+
+      const timerPayload = createTestTimerPayload({
+        accountId: "auto-takeover-account",
+        characterId: "auto-takeover-character",
+      });
+      const responses = await Promise.all(
+        users.map((user) =>
+          request(app.getHttpServer())
+            .post("/timers/auto")
+            .set("x-auth-discord-id", user.discordId)
+            .set("x-auth-user-id", user.id)
+            .send(timerPayload),
+        ),
+      );
+
+      expect(responses.some((response) => response.status === 201)).toBe(true);
+      expect(
+        responses.some(
+          (response) =>
+            response.status === 409 &&
+            response.body.message === "TIMER_RACE_CONDITION",
+        ),
+      ).toBe(false);
+
+      const timers = await prisma.timer.findMany({
+        where: {
+          guildId: guild.id,
+          world: timerPayload.world,
+          timerKey: buildTimerKey(timerPayload.npc.id, timerPayload.npc.name),
         },
       });
 
-      await prisma.member.create({
-        data: {
-          userId: TEST_USERS.MEMBER_WITHOUT_ACCESS.discordId,
-          guildId: guild1.id,
-          name: "Test Member",
-          globalUserId: TEST_USERS.MEMBER_WITHOUT_ACCESS.id,
-          roles: {
-            connect: { id: role.id },
+      expect(timers).toHaveLength(1);
+      expect(
+        vi
+          .mocked(amqpConnection.publish)
+          .mock.calls.filter(
+            (call) => call[1] === RoutingKey.GUILDS_TIMERS_UPDATE,
+          ),
+      ).toHaveLength(1);
+
+      upsertSpy.mockRestore();
+    });
+
+    it("should submit one timer per whitelisted guild when 10 users submit the same NPC concurrently", async () => {
+      const guilds = await Promise.all([
+        prisma.guild.create({ data: TEST_GUILDS.GUILD_1 }),
+        prisma.guild.create({ data: TEST_GUILDS.GUILD_2 }),
+        prisma.guild.create({
+          data: {
+            id: "guild-3",
+            name: "Test Guild 3",
+            icon: null,
+            ownerId: "owner-3",
           },
+        }),
+      ]);
+      const roles = await Promise.all(
+        guilds.map((guild, index) =>
+          prisma.role.create({
+            data: {
+              id: `auto-role-${index + 1}`,
+              guildId: guild.id,
+              name: "Timer Writers",
+              permissions: [Permission.LOOTLOG_TIMERS_WRITE],
+            },
+          }),
+        ),
+      );
+      const users = Array.from({ length: 10 }, (_, index) => ({
+        id: `auto-user-${index + 1}`,
+        discordId: `auto-discord-${index + 1}`,
+      }));
+
+      await Promise.all(
+        users.flatMap((user, userIndex) =>
+          guilds.map((guild, guildIndex) =>
+            prisma.member.create({
+              data: {
+                userId: user.discordId,
+                guildId: guild.id,
+                name: `Auto Member ${userIndex + 1}-${guildIndex + 1}`,
+                globalUserId: user.id,
+                roles: { connect: { id: roles[guildIndex].id } },
+              },
+            }),
+          ),
+        ),
+      );
+      await prisma.userCharactersLootlogSettings.createMany({
+        data: users.map((user) => ({
+          userId: user.discordId,
+          accountId: "auto-account",
+          characterId: "auto-character",
+          catchingGuildIds: guilds.map((guild) => guild.id),
+        })),
+      });
+
+      const timerPayload = createTestTimerPayload({
+        accountId: "auto-account",
+        characterId: "auto-character",
+      });
+      const responses = await Promise.all(
+        users.map((user) =>
+          request(app.getHttpServer())
+            .post("/timers/auto")
+            .set("x-auth-discord-id", user.discordId)
+            .set("x-auth-user-id", user.id)
+            .send(timerPayload),
+        ),
+      );
+
+      expect(
+        responses.every((response) => [201, 400].includes(response.status)),
+      ).toBe(true);
+      expect(responses.some((response) => response.status === 201)).toBe(true);
+
+      const timers = await prisma.timer.findMany({
+        where: {
+          world: timerPayload.world,
+          timerKey: buildTimerKey(timerPayload.npc.id, timerPayload.npc.name),
         },
       });
 
-      const timerPayload = createTestTimerPayload();
+      expect(timers).toHaveLength(guilds.length);
+      expect(new Set(timers.map((timer) => timer.guildId))).toEqual(
+        new Set(guilds.map((guild) => guild.id)),
+      );
+    });
 
+    it("should reject auto timer and write nothing when user has no timer write guilds", async () => {
       await request(app.getHttpServer())
-        .post(`/guilds/${guild1.id}/timers`)
+        .post("/timers/auto")
         .set("x-auth-discord-id", TEST_USERS.MEMBER_WITHOUT_ACCESS.discordId)
         .set("x-auth-user-id", TEST_USERS.MEMBER_WITHOUT_ACCESS.id)
-        .send(timerPayload)
+        .send(createTestTimerPayload())
         .expect(403);
+
+      await expect(prisma.timer.count()).resolves.toBe(0);
     });
   });
 
   describe("GET /guilds/:guildId/timers (with cache)", () => {
+    it("should return 403 when user lacks LOOTLOG_TIMERS_READ permission", async () => {
+      const guild = await prisma.guild.create({ data: TEST_GUILDS.GUILD_1 });
+      await createMemberFixture(prisma, {
+        guildId: guild.id,
+        auth: FORBIDDEN_AUTH,
+        permissions: [],
+      });
+
+      await withAuth(
+        request(app.getHttpServer()).get(`/guilds/${guild.id}/timers`),
+        FORBIDDEN_AUTH,
+      ).expect(403);
+    });
+
     it("should cache timer list", async () => {
       const guild1 = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
@@ -546,7 +478,7 @@ describe("Timers E2E Tests (Whitelist)", () => {
           id: "role-1",
           guildId: guild1.id,
           name: "Member",
-          permissions: [Permission.LOOTLOG_READ],
+          permissions: [Permission.LOOTLOG_TIMERS_READ],
         },
       });
 
@@ -568,6 +500,7 @@ describe("Timers E2E Tests (Whitelist)", () => {
           guildId: guild1.id,
           world: "test-world",
           npcId: 1,
+          timerKey: buildTimerKey(1, "Boss"),
           createdById: member.id,
           minSpawnTime: new Date(),
           maxSpawnTime: futureDate,
@@ -578,6 +511,8 @@ describe("Timers E2E Tests (Whitelist)", () => {
             name: "Boss",
             location: "Lair",
             wt: 20,
+            lvl: 100,
+            type: "ELITE2",
             prof: "w",
           },
         },
@@ -606,6 +541,305 @@ describe("Timers E2E Tests (Whitelist)", () => {
     });
   });
 
+  describe("GET /timers", () => {
+    it("should return timers from all guilds accessible to the user", async () => {
+      const guilds = await Promise.all([
+        prisma.guild.create({ data: TEST_GUILDS.GUILD_1 }),
+        prisma.guild.create({ data: TEST_GUILDS.GUILD_2 }),
+      ]);
+      const fixtures = await Promise.all(
+        guilds.map((guild, index) =>
+          createMemberFixture(prisma, {
+            guildId: guild.id,
+            auth: TEST_AUTH,
+            roleId: `global-timer-role-${index}`,
+            permissions: [Permission.LOOTLOG_TIMERS_READ],
+          }),
+        ),
+      );
+
+      await Promise.all(
+        guilds.map((guild, index) =>
+          createTimerFixture(prisma, {
+            guildId: guild.id,
+            memberId: fixtures[index].member.id,
+            world: TEST_WORLD,
+            npc: { ...TEST_NPC, id: TEST_NPC.id + index },
+          }),
+        ),
+      );
+
+      const response = await withAuth(
+        request(app.getHttpServer())
+          .get("/timers")
+          .query({ world: TEST_WORLD }),
+      ).expect(200);
+
+      expect(response.body).toHaveLength(2);
+      expect(
+        new Set(
+          response.body.map((timer: { guildId: string }) => timer.guildId),
+        ),
+      ).toEqual(new Set(guilds.map((guild) => guild.id)));
+    });
+  });
+
+  describe("POST /guilds/:guildId/timers/manual", () => {
+    it("should create a manual timer", async () => {
+      const guild = await prisma.guild.create({ data: TEST_GUILDS.GUILD_1 });
+      const { member } = await createMemberFixture(prisma, {
+        guildId: guild.id,
+        permissions: [Permission.LOOTLOG_TIMERS_WRITE],
+      });
+
+      const response = await withAuth(
+        request(app.getHttpServer())
+          .post(`/guilds/${guild.id}/timers/manual`)
+          .send({
+            name: "Manual Boss",
+            minSeconds: 60,
+            maxSeconds: 120,
+            world: TEST_WORLD,
+          }),
+      ).expect(201);
+
+      expect(response.body.guildId).toBe(guild.id);
+      expect(response.body.npc.name).toBe("Manual Boss");
+      await expect(
+        prisma.timer.count({
+          where: { guildId: guild.id, createdById: member.id },
+        }),
+      ).resolves.toBe(1);
+    });
+
+    it("should reject invalid manual timer payload", async () => {
+      const guild = await prisma.guild.create({ data: TEST_GUILDS.GUILD_1 });
+      await createMemberFixture(prisma, {
+        guildId: guild.id,
+        permissions: [Permission.LOOTLOG_TIMERS_WRITE],
+      });
+
+      await withAuth(
+        request(app.getHttpServer())
+          .post(`/guilds/${guild.id}/timers/manual`)
+          .send({ name: "", world: TEST_WORLD }),
+      ).expect(400);
+    });
+
+    it("should return 403 when user lacks LOOTLOG_TIMERS_WRITE permission", async () => {
+      const guild = await prisma.guild.create({ data: TEST_GUILDS.GUILD_1 });
+      await createMemberFixture(prisma, {
+        guildId: guild.id,
+        auth: FORBIDDEN_AUTH,
+        permissions: [Permission.LOOTLOG_TIMERS_READ],
+      });
+
+      await withAuth(
+        request(app.getHttpServer())
+          .post(`/guilds/${guild.id}/timers/manual`)
+          .send({ name: "Manual Boss", minSeconds: 60, world: TEST_WORLD }),
+        FORBIDDEN_AUTH,
+      ).expect(403);
+    });
+  });
+
+  describe("PATCH /guilds/:guildId/timers/:timerIdentifier/reset", () => {
+    it("should reset an existing timer by timer key", async () => {
+      const guild = await prisma.guild.create({ data: TEST_GUILDS.GUILD_1 });
+      const { member } = await createMemberFixture(prisma, {
+        guildId: guild.id,
+        permissions: [Permission.LOOTLOG_TIMERS_RESET],
+      });
+      const timer = await createTimerFixture(prisma, {
+        guildId: guild.id,
+        memberId: member.id,
+        world: TEST_WORLD,
+        minSpawnTime: new Date(Date.now() + 600_000),
+        maxSpawnTime: new Date(Date.now() + 900_000),
+      });
+
+      const response = await withAuth(
+        request(app.getHttpServer())
+          .patch(
+            `/guilds/${guild.id}/timers/${encodeURIComponent(timer.timerKey)}/reset`,
+          )
+          .send({ world: TEST_WORLD }),
+      ).expect(200);
+
+      expect(response.body.wasReset).toBe(true);
+      const updated = await prisma.timer.findUnique({
+        where: {
+          timerId: {
+            guildId: guild.id,
+            world: TEST_WORLD,
+            timerKey: timer.timerKey,
+          },
+        },
+      });
+      expect(updated?.wasReset).toBe(true);
+    });
+
+    it("should reject reset without world", async () => {
+      const guild = await prisma.guild.create({ data: TEST_GUILDS.GUILD_1 });
+      const { member } = await createMemberFixture(prisma, {
+        guildId: guild.id,
+        permissions: [Permission.LOOTLOG_TIMERS_RESET],
+      });
+      const timer = await createTimerFixture(prisma, {
+        guildId: guild.id,
+        memberId: member.id,
+      });
+
+      await withAuth(
+        request(app.getHttpServer())
+          .patch(
+            `/guilds/${guild.id}/timers/${encodeURIComponent(timer.timerKey)}/reset`,
+          )
+          .send({}),
+      ).expect(400);
+    });
+
+    it("should return 404 for syntactically valid but missing timer", async () => {
+      const guild = await prisma.guild.create({ data: TEST_GUILDS.GUILD_1 });
+      await createMemberFixture(prisma, {
+        guildId: guild.id,
+        permissions: [Permission.LOOTLOG_TIMERS_RESET],
+      });
+      const missingTimerKey = buildTimerKey(999_999, "Missing Timer");
+
+      const response = await withAuth(
+        request(app.getHttpServer())
+          .patch(
+            `/guilds/${guild.id}/timers/${encodeURIComponent(missingTimerKey)}/reset`,
+          )
+          .send({ world: TEST_WORLD }),
+      ).expect(404);
+
+      expect(response.body.message).toBe("TIMER_NOT_FOUND");
+    });
+
+    it("should return 404 for missing non-numeric timer key", async () => {
+      const guild = await prisma.guild.create({ data: TEST_GUILDS.GUILD_1 });
+      await createMemberFixture(prisma, {
+        guildId: guild.id,
+        permissions: [Permission.LOOTLOG_TIMERS_RESET],
+      });
+
+      const response = await withAuth(
+        request(app.getHttpServer())
+          .patch(`/guilds/${guild.id}/timers/missing:timer/reset`)
+          .send({ world: TEST_WORLD }),
+      ).expect(404);
+
+      expect(response.body.message).toBe("TIMER_NOT_FOUND");
+    });
+
+    it("should return 403 when user lacks LOOTLOG_TIMERS_RESET permission", async () => {
+      const guild = await prisma.guild.create({ data: TEST_GUILDS.GUILD_1 });
+      const { member } = await createMemberFixture(prisma, {
+        guildId: guild.id,
+        auth: FORBIDDEN_AUTH,
+        permissions: [Permission.LOOTLOG_TIMERS_READ],
+      });
+      const timer = await createTimerFixture(prisma, {
+        guildId: guild.id,
+        memberId: member.id,
+      });
+
+      await withAuth(
+        request(app.getHttpServer())
+          .patch(
+            `/guilds/${guild.id}/timers/${encodeURIComponent(timer.timerKey)}/reset`,
+          )
+          .send({ world: TEST_WORLD }),
+        FORBIDDEN_AUTH,
+      ).expect(403);
+    });
+  });
+
+  describe("DELETE /guilds/:guildId/timers/:timerIdentifier", () => {
+    it("should delete an existing timer", async () => {
+      const guild = await prisma.guild.create({ data: TEST_GUILDS.GUILD_1 });
+      const { member } = await createMemberFixture(prisma, {
+        guildId: guild.id,
+        permissions: [Permission.LOOTLOG_MANAGE],
+      });
+      const timer = await createTimerFixture(prisma, {
+        guildId: guild.id,
+        memberId: member.id,
+      });
+
+      await withAuth(
+        request(app.getHttpServer())
+          .delete(
+            `/guilds/${guild.id}/timers/${encodeURIComponent(timer.timerKey)}`,
+          )
+          .query({ world: TEST_WORLD }),
+      ).expect(200);
+
+      await expect(
+        prisma.timer.count({ where: { guildId: guild.id } }),
+      ).resolves.toBe(0);
+    });
+
+    it("should return 404 for syntactically valid but missing timer", async () => {
+      const guild = await prisma.guild.create({ data: TEST_GUILDS.GUILD_1 });
+      await createMemberFixture(prisma, {
+        guildId: guild.id,
+        permissions: [Permission.LOOTLOG_MANAGE],
+      });
+      const missingTimerKey = buildTimerKey(999_999, "Missing Timer");
+
+      const response = await withAuth(
+        request(app.getHttpServer())
+          .delete(
+            `/guilds/${guild.id}/timers/${encodeURIComponent(missingTimerKey)}`,
+          )
+          .query({ world: TEST_WORLD }),
+      ).expect(404);
+
+      expect(response.body.message).toBe("TIMER_NOT_FOUND");
+    });
+
+    it("should return 404 for missing non-numeric timer key", async () => {
+      const guild = await prisma.guild.create({ data: TEST_GUILDS.GUILD_1 });
+      await createMemberFixture(prisma, {
+        guildId: guild.id,
+        permissions: [Permission.LOOTLOG_MANAGE],
+      });
+
+      const response = await withAuth(
+        request(app.getHttpServer())
+          .delete(`/guilds/${guild.id}/timers/missing:timer`)
+          .query({ world: TEST_WORLD }),
+      ).expect(404);
+
+      expect(response.body.message).toBe("TIMER_NOT_FOUND");
+    });
+
+    it("should return 403 when user lacks LOOTLOG_MANAGE permission", async () => {
+      const guild = await prisma.guild.create({ data: TEST_GUILDS.GUILD_1 });
+      const { member } = await createMemberFixture(prisma, {
+        guildId: guild.id,
+        auth: FORBIDDEN_AUTH,
+        permissions: [Permission.LOOTLOG_TIMERS_READ],
+      });
+      const timer = await createTimerFixture(prisma, {
+        guildId: guild.id,
+        memberId: member.id,
+      });
+
+      await withAuth(
+        request(app.getHttpServer())
+          .delete(
+            `/guilds/${guild.id}/timers/${encodeURIComponent(timer.timerKey)}`,
+          )
+          .query({ world: TEST_WORLD }),
+        FORBIDDEN_AUTH,
+      ).expect(403);
+    });
+  });
+
   describe("GET /guilds/:guildId/timers/npcs/search", () => {
     it("should search NPCs with timer data", async () => {
       const guild1 = await prisma.guild.create({
@@ -617,7 +851,7 @@ describe("Timers E2E Tests (Whitelist)", () => {
           id: "role-1",
           guildId: guild1.id,
           name: "Member",
-          permissions: [Permission.LOOTLOG_READ],
+          permissions: [Permission.LOOTLOG_TIMERS_READ],
         },
       });
 
@@ -639,6 +873,7 @@ describe("Timers E2E Tests (Whitelist)", () => {
           guildId: guild1.id,
           world: "test-world",
           npcId: 123,
+          timerKey: buildTimerKey(123, "Smok Lodowy"),
           createdById: member.id,
           minSpawnTime: new Date(),
           maxSpawnTime: futureDate,
@@ -662,6 +897,7 @@ describe("Timers E2E Tests (Whitelist)", () => {
           guildId: guild1.id,
           world: "test-world",
           npcId: 124,
+          timerKey: buildTimerKey(124, "Smok Ciemnosci"),
           createdById: member.id,
           minSpawnTime: new Date(),
           maxSpawnTime: futureDate,
@@ -703,7 +939,7 @@ describe("Timers E2E Tests (Whitelist)", () => {
           id: "role-1",
           guildId: guild1.id,
           name: "Member",
-          permissions: [Permission.LOOTLOG_READ],
+          permissions: [Permission.LOOTLOG_TIMERS_READ],
         },
       });
 
@@ -725,6 +961,7 @@ describe("Timers E2E Tests (Whitelist)", () => {
           guildId: guild1.id,
           world: "world-1",
           npcId: 123,
+          timerKey: buildTimerKey(123, "Boss"),
           createdById: member.id,
           minSpawnTime: new Date(),
           maxSpawnTime: futureDate,
@@ -748,6 +985,7 @@ describe("Timers E2E Tests (Whitelist)", () => {
           guildId: guild1.id,
           world: "world-2",
           npcId: 124,
+          timerKey: buildTimerKey(124, "Boss"),
           createdById: member.id,
           minSpawnTime: new Date(),
           maxSpawnTime: futureDate,
@@ -787,7 +1025,7 @@ describe("Timers E2E Tests (Whitelist)", () => {
           id: "role-1",
           guildId: guild1.id,
           name: "Member",
-          permissions: [Permission.LOOTLOG_READ],
+          permissions: [Permission.LOOTLOG_TIMERS_READ],
         },
       });
 
@@ -810,6 +1048,7 @@ describe("Timers E2E Tests (Whitelist)", () => {
             guildId: guild1.id,
             world: "test-world",
             npcId: 100 + i,
+            timerKey: buildTimerKey(100 + i, `Test NPC ${i}`),
             createdById: member.id,
             minSpawnTime: new Date(),
             maxSpawnTime: futureDate,
@@ -849,7 +1088,7 @@ describe("Timers E2E Tests (Whitelist)", () => {
           id: "role-1",
           guildId: guild1.id,
           name: "Member",
-          permissions: [Permission.LOOTLOG_READ],
+          permissions: [Permission.LOOTLOG_TIMERS_READ],
         },
       });
 
@@ -885,7 +1124,7 @@ describe("Timers E2E Tests (Whitelist)", () => {
           id: "role-1",
           guildId: guild1.id,
           name: "Member",
-          permissions: [Permission.LOOTLOG_READ],
+          permissions: [Permission.LOOTLOG_TIMERS_READ],
         },
       });
 
@@ -907,6 +1146,7 @@ describe("Timers E2E Tests (Whitelist)", () => {
           guildId: guild1.id,
           world: "test-world",
           npcId: 999,
+          timerKey: buildTimerKey(999, "Test Boss"),
           createdById: member.id,
           minSpawnTime: new Date(),
           maxSpawnTime: futureDate,
@@ -934,7 +1174,7 @@ describe("Timers E2E Tests (Whitelist)", () => {
           timerId: {
             guildId: guild1.id,
             world: "test-world",
-            npcId: 999,
+            timerKey: buildTimerKey(999, "Test Boss"),
           },
         },
         data: {
@@ -956,7 +1196,7 @@ describe("Timers E2E Tests (Whitelist)", () => {
       expect(response.body[0].latestRespawnRandomness).toBe(20);
     });
 
-    it("should return 403 when user lacks LOOTLOG_READ permission", async () => {
+    it("should return 403 when user lacks LOOTLOG_TIMERS_READ permission", async () => {
       const guild1 = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
@@ -1000,7 +1240,7 @@ describe("Timers E2E Tests (Whitelist)", () => {
           id: "role-1",
           guildId: guild1.id,
           name: "Member",
-          permissions: [Permission.LOOTLOG_READ],
+          permissions: [Permission.LOOTLOG_TIMERS_READ],
         },
       });
 
@@ -1041,7 +1281,7 @@ describe("Timers E2E Tests (Whitelist)", () => {
           id: "role-1",
           guildId: guild1.id,
           name: "Member",
-          permissions: [Permission.LOOTLOG_READ],
+          permissions: [Permission.LOOTLOG_TIMERS_READ],
         },
       });
 
@@ -1063,6 +1303,7 @@ describe("Timers E2E Tests (Whitelist)", () => {
           guildId: guild1.id,
           world: "test-world",
           npcId: 123,
+          timerKey: buildTimerKey(123, "Dragon King"),
           createdById: member.id,
           minSpawnTime: new Date(),
           maxSpawnTime: futureDate,

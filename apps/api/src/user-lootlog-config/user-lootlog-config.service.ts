@@ -1,15 +1,29 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "src/db/prisma.service";
+import { GuildsService } from "src/guilds/guilds.service";
+import { Permission } from "src/generated/prisma/client";
 import type { CreateOrUpdateLootlogCharacterConfigDto } from "src/user-lootlog-config/dto/create-user-account-config.dto";
 import { toUserLootlogConfigResponse } from "src/shared/dto/user-lootlog-config-response.dto";
 
 @Injectable()
 export class UserLootlogConfigService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly guildsService: GuildsService,
+  ) {}
+
+  private async getWritableLootlogGuildIds(discordId: string) {
+    const guilds = await this.guildsService.getGuildsForRequiredPermissions(
+      discordId,
+      [Permission.LOOTLOG_LOOTS_WRITE],
+    );
+
+    return new Set(guilds.map((guild) => guild.id));
+  }
 
   async getLootlogAccountConfig(discordId: string, accountId: string) {
-    const accountConfig =
-      await this.prisma.userCharactersLootlogSettings.findMany({
+    const [accountConfig, writableGuildIds] = await Promise.all([
+      this.prisma.userCharactersLootlogSettings.findMany({
         where: {
           userId: discordId,
           accountId,
@@ -17,7 +31,9 @@ export class UserLootlogConfigService {
         orderBy: {
           createdAt: "desc",
         },
-      });
+      }),
+      this.getWritableLootlogGuildIds(discordId),
+    ]);
 
     return accountConfig.reduce<
       Record<string, ReturnType<typeof toUserLootlogConfigResponse>>
@@ -26,7 +42,9 @@ export class UserLootlogConfigService {
         userId: config.userId,
         accountId: config.accountId,
         characterId: config.characterId,
-        catchingGuildIds: config.catchingGuildIds,
+        catchingGuildIds: config.catchingGuildIds.filter((guildId) =>
+          writableGuildIds.has(guildId),
+        ),
       });
 
       return result;
@@ -55,7 +73,10 @@ export class UserLootlogConfigService {
     accountId: string,
     data: CreateOrUpdateLootlogCharacterConfigDto,
   ) {
-    const normalizedCatchingGuildIds = [...new Set(data.catchingGuildIds)];
+    const writableGuildIds = await this.getWritableLootlogGuildIds(discordId);
+    const normalizedCatchingGuildIds = [
+      ...new Set(data.catchingGuildIds),
+    ].filter((guildId) => writableGuildIds.has(guildId));
 
     const config = await this.prisma.userCharactersLootlogSettings.upsert({
       where: {

@@ -71,7 +71,7 @@ describe("LogsSettingsTab", () => {
               id: "api-1",
               status: "error",
               method: "POST",
-              endpoint: "/guilds/guild-1/timers",
+              endpoint: "/timers/auto",
               payload: { guildId: "guild-1" },
               response: { message: "conflict" },
               statusCode: 409,
@@ -209,13 +209,11 @@ describe("LogsSettingsTab", () => {
 
     render(<LogsSettingsTab />);
 
-    expect(
-      screen.queryByText("POST /guilds/guild-1/timers"),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText("POST /timers/auto")).not.toBeInTheDocument();
 
     await user.click(screen.getByText("Dodanie timera"));
 
-    expect(screen.getByText("POST /guilds/guild-1/timers")).toBeInTheDocument();
+    expect(screen.getByText("POST /timers/auto")).toBeInTheDocument();
   });
 
   it("copies full action JSON to clipboard", async () => {

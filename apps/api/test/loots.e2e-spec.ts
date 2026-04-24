@@ -4,7 +4,11 @@ import { AppModule } from "../src/app.module";
 import { PrismaService } from "../src/db/prisma.service";
 import { createTestLootPayload, TEST_GUILDS, TEST_USERS } from "./test-helpers";
 import { createTestingModuleWithMocks } from "./test-module-helpers";
-import { Permission, NpcType, ItemRarity } from "generated/client";
+import {
+  Permission,
+  NpcType,
+  ItemRarity,
+} from "../src/generated/prisma/client";
 
 describe("Loots E2E Tests (Whitelist)", () => {
   let app: INestApplication;
@@ -18,6 +22,7 @@ describe("Loots E2E Tests (Whitelist)", () => {
     app = moduleFixture.createNestApplication();
     app.enableShutdownHooks();
     await app.init();
+    await app.listen(0);
 
     prisma = app.get<PrismaService>(PrismaService);
   });
@@ -42,7 +47,7 @@ describe("Loots E2E Tests (Whitelist)", () => {
         data: TEST_GUILDS.GUILD_1,
       });
 
-      const guild2 = await prisma.guild.create({
+      const _guild2 = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_2,
       });
 
@@ -51,7 +56,7 @@ describe("Loots E2E Tests (Whitelist)", () => {
           id: "role-1",
           guildId: guild1.id,
           name: "Member",
-          permissions: [Permission.LOOTLOG_WRITE],
+          permissions: [Permission.LOOTLOG_LOOTS_WRITE],
         },
       });
 
@@ -82,7 +87,7 @@ describe("Loots E2E Tests (Whitelist)", () => {
           npcs: {
             create: [
               {
-                npcType: NpcType.ELITE2,
+                npcType: NpcType.HERO,
                 allowedRarities: [ItemRarity.UNIQUE],
               },
             ],
@@ -128,7 +133,7 @@ describe("Loots E2E Tests (Whitelist)", () => {
           id: "role-1",
           guildId: guild1.id,
           name: "Member",
-          permissions: [Permission.LOOTLOG_WRITE],
+          permissions: [Permission.LOOTLOG_LOOTS_WRITE],
         },
       });
 
@@ -137,7 +142,7 @@ describe("Loots E2E Tests (Whitelist)", () => {
           id: "role-2",
           guildId: guild2.id,
           name: "Member",
-          permissions: [Permission.LOOTLOG_WRITE],
+          permissions: [Permission.LOOTLOG_LOOTS_WRITE],
         },
       });
 
@@ -180,7 +185,7 @@ describe("Loots E2E Tests (Whitelist)", () => {
           npcs: {
             create: [
               {
-                npcType: NpcType.ELITE2,
+                npcType: NpcType.HERO,
                 allowedRarities: [ItemRarity.UNIQUE],
               },
             ],
@@ -194,7 +199,7 @@ describe("Loots E2E Tests (Whitelist)", () => {
           npcs: {
             create: [
               {
-                npcType: NpcType.ELITE2,
+                npcType: NpcType.HERO,
                 allowedRarities: [ItemRarity.UNIQUE],
               },
             ],
@@ -212,7 +217,7 @@ describe("Loots E2E Tests (Whitelist)", () => {
         .expect(201);
 
       expect(response.body).toEqual({
-        id: 1,
+        id: response.body.id,
         submittedGuilds: [
           {
             guildId: guild1.id,
@@ -243,7 +248,7 @@ describe("Loots E2E Tests (Whitelist)", () => {
           id: "role-1",
           guildId: guild1.id,
           name: "Member",
-          permissions: [Permission.LOOTLOG_WRITE],
+          permissions: [Permission.LOOTLOG_LOOTS_WRITE],
         },
       });
 
@@ -303,7 +308,7 @@ describe("Loots E2E Tests (Whitelist)", () => {
           id: "role-1",
           guildId: guild1.id,
           name: "Member",
-          permissions: [Permission.LOOTLOG_WRITE],
+          permissions: [Permission.LOOTLOG_LOOTS_WRITE],
         },
       });
 
@@ -344,7 +349,7 @@ describe("Loots E2E Tests (Whitelist)", () => {
       expect(lootSubmissions).toHaveLength(0);
     });
 
-    it("should return 403 when user has no LOOTLOG_WRITE permission", async () => {
+    it("should return 403 when user has no LOOTLOG_LOOTS_WRITE permission", async () => {
       const guild1 = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
@@ -354,7 +359,7 @@ describe("Loots E2E Tests (Whitelist)", () => {
           id: "role-1",
           guildId: guild1.id,
           name: "Member",
-          permissions: [Permission.LOOTLOG_READ],
+          permissions: [Permission.LOOTLOG_LOOTS_READ],
         },
       });
 
@@ -390,7 +395,7 @@ describe("Loots E2E Tests (Whitelist)", () => {
           id: "role-1",
           guildId: guild1.id,
           name: "Member",
-          permissions: [Permission.LOOTLOG_WRITE],
+          permissions: [Permission.LOOTLOG_LOOTS_WRITE],
         },
       });
 
@@ -421,7 +426,7 @@ describe("Loots E2E Tests (Whitelist)", () => {
           npcs: {
             create: [
               {
-                npcType: NpcType.ELITE2,
+                npcType: NpcType.HERO,
                 allowedRarities: [ItemRarity.UNIQUE],
               },
             ],
