@@ -59,7 +59,7 @@ export function createTestLootPayload(overrides = {}) {
         icon: "test-item.gif",
         pr: 3,
         prc: "unique",
-        stat: "legendary_stat",
+        stat: "lvl=100;rarity=UNIQUE",
         id: 1001,
         cl: 16,
       },
