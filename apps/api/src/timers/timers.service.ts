@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import {
   BadRequestException,
@@ -75,6 +76,12 @@ const DEDUP_WAIT_ATTEMPTS = 100;
 const DEDUP_WAIT_DELAY_MS = 50;
 const CACHE_TTL_SECONDS = 2;
 const NPC_TYPE_VALUES = new Set<string>(Object.values(NpcType));
+const RELEASE_DEDUP_LOCK_SCRIPT = `
+if redis.call("get", KEYS[1]) == ARGV[1] then
+  return redis.call("del", KEYS[1])
+end
+return 0
+`;
 
 type TimerMember = Member & {
   roles?: Role[];
@@ -820,7 +827,7 @@ export class TimersService implements OnModuleInit {
 
     const dedupLockKey = `${dedupKey}:lock`;
     const lockKey = this.getLockKey(data.world, timerKey, guildId);
-    let dedupLockAcquired = false;
+    let dedupLockToken: string | null = null;
     const context: CreateTimerForGuildContext = {
       discordId,
       guildId,
@@ -832,13 +839,9 @@ export class TimersService implements OnModuleInit {
     };
 
     try {
-      dedupLockAcquired = await this.redis.setNX(
-        dedupLockKey,
-        Date.now().toString(),
-        DEDUP_TTL_SECONDS,
-      );
+      dedupLockToken = await this.acquireDedupLock(dedupLockKey);
 
-      if (!dedupLockAcquired) {
+      if (!dedupLockToken) {
         const dedupResult = await this.waitForTimerDedupResult(
           context,
           dedupLockKey,
@@ -846,9 +849,9 @@ export class TimersService implements OnModuleInit {
         if (dedupResult.response) {
           return dedupResult.response;
         }
-        dedupLockAcquired = dedupResult.lockAcquired;
+        dedupLockToken = dedupResult.lockToken;
 
-        if (!dedupLockAcquired) {
+        if (!dedupLockToken) {
           throw new ConflictException({
             message: ErrorKey.TIMER_RACE_CONDITION,
           });
@@ -912,9 +915,30 @@ export class TimersService implements OnModuleInit {
       throw error;
     } finally {
       await Promise.allSettled([
-        dedupLockAcquired ? this.redis.del(dedupLockKey) : undefined,
+        dedupLockToken
+          ? this.releaseDedupLock(dedupLockKey, dedupLockToken)
+          : undefined,
       ]);
     }
+  }
+
+  private async acquireDedupLock(dedupLockKey: string) {
+    const lockToken = randomUUID();
+    const lockAcquired = await this.redis.setNX(
+      dedupLockKey,
+      lockToken,
+      DEDUP_TTL_SECONDS,
+    );
+
+    return lockAcquired ? lockToken : null;
+  }
+
+  private async releaseDedupLock(dedupLockKey: string, lockToken: string) {
+    await this.redis.eval<number>(
+      RELEASE_DEDUP_LOCK_SCRIPT,
+      [dedupLockKey],
+      [lockToken],
+    );
   }
 
   private async waitForTimerDedupResult(
@@ -930,18 +954,14 @@ export class TimersService implements OnModuleInit {
           response: this.mapTimerResponse(
             JSON.parse(cachedDuringBurst) as TimerWithOptionalMember,
           ),
-          lockAcquired: false,
+          lockToken: null,
         };
       }
 
       if (dedupLockKey) {
-        const lockAcquired = await this.redis.setNX(
-          dedupLockKey,
-          Date.now().toString(),
-          DEDUP_TTL_SECONDS,
-        );
-        if (lockAcquired) {
-          return { response: null, lockAcquired: true };
+        const lockToken = await this.acquireDedupLock(dedupLockKey);
+        if (lockToken) {
+          return { response: null, lockToken };
         }
       }
     }
@@ -957,11 +977,11 @@ export class TimersService implements OnModuleInit {
     ) {
       return {
         response: this.mapTimerResponse(existingTimer),
-        lockAcquired: false,
+        lockToken: null,
       };
     }
 
-    return { response: null, lockAcquired: false };
+    return { response: null, lockToken: null };
   }
 
   private wasTimerUpdatedDuringBurst(
