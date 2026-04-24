@@ -19,6 +19,7 @@
     "test": "vitest run --passWithNoTests --config ./vitest.config.ts"
   },
   "dependencies": {
+    "@lootlog/ui": "workspace:*",
     "@tanstack/react-query": "^5.99.2",
     "@tanstack/react-query-devtools": "^5.99.2",
     "@tanstack/react-router": "^1.168.23",

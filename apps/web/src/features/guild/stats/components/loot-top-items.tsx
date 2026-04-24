@@ -1,7 +1,7 @@
 import { Card } from "@lootlog/ui/components/card";
+import { ItemImage } from "@lootlog/ui/components/item-image";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useTranslation } from "react-i18next";
-import { ItemImage } from "@/components/tiles/item-image";
 import type { ItemRarity } from "@/lib/loots/loot-types";
 import type { LootStatsResponseDtoOutputTopItemsItem } from "@/lib/api/generated/main/model/loot-stats-response-dto-output-top-items-item";
 
