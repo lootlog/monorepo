@@ -4,7 +4,4 @@
   "compatibility_date": "2026-04-24",
   "compatibility_flags": ["nodejs_compat"],
   "main": "@tanstack/react-start/server-entry",
-  "vars": {
-    "VITE_SEARCH_API_URL": "https://search.lootlog.pl",
-  },
 }
