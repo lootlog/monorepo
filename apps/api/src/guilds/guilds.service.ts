@@ -184,10 +184,8 @@ export class GuildsService {
 
   async getManageableUserGuilds(discordId: string, userId: string) {
     try {
-      const discordGuilds = await this.discordService.getUserGuilds(
-        userId,
-        discordId,
-      );
+      const { guilds: discordGuilds } =
+        await this.discordService.getUserGuildsSnapshot(userId, discordId);
 
       if (!discordGuilds || discordGuilds.length === 0) {
         this.logger.log({
@@ -199,7 +197,10 @@ export class GuildsService {
 
       return discordGuilds
         .filter((guild) => {
-          return isDiscordAdministrator(BigInt(guild.permissions));
+          return (
+            this.isDiscordOwnerGuild(guild, discordId) ||
+            this.hasDiscordAdministratorAccess(guild)
+          );
         })
         .map((guild) => {
           return {

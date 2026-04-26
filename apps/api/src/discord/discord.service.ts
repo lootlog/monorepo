@@ -54,7 +54,7 @@ export class DiscordService implements OnModuleInit {
   private readonly lockTtl = 6000;
 
   private readonly guildsCacheTtlLocal = 10;
-  private readonly guildsCacheTtlProd = 300;
+  private readonly guildsCacheTtlProd = 60;
   private readonly memberCacheTtlLocal = 10;
   private readonly memberCacheTtlProd = 300;
   private readonly errorCacheTtlLocal = 5;
@@ -312,10 +312,14 @@ export class DiscordService implements OnModuleInit {
     const cached = await this.redisService.get(cacheKey);
     if (cached) {
       const guilds = JSON.parse(cached) as APIGuild[];
-      return {
-        guilds,
-        source: guilds.length > 0 ? "cache" : "unavailable",
-      };
+      if (guilds.length > 0) {
+        return {
+          guilds,
+          source: "cache",
+        };
+      }
+
+      await this.redisService.del(cacheKey);
     }
 
     let lock: Awaited<ReturnType<typeof this.redlock.acquire>> | null = null;
@@ -326,10 +330,14 @@ export class DiscordService implements OnModuleInit {
       const cachedAfterLock = await this.redisService.get(cacheKey);
       if (cachedAfterLock) {
         const guilds = JSON.parse(cachedAfterLock) as APIGuild[];
-        return {
-          guilds,
-          source: guilds.length > 0 ? "cache" : "unavailable",
-        };
+        if (guilds.length > 0) {
+          return {
+            guilds,
+            source: "cache",
+          };
+        }
+
+        await this.redisService.del(cacheKey);
       }
 
       const isRateLimited = await this.rateLimiter.checkRateLimitForUser(
