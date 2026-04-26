@@ -493,12 +493,15 @@ export class GuildsService {
       const discordGuilds = discordGuildsSnapshot.guilds;
 
       if (discordGuildsSnapshot.source === "unavailable") {
-        const fallbackGuilds = await this.getGuildsForRequiredPermissions(
+        this.logger.log({
+          level: "warn",
+          message:
+            "Discord guild list unavailable for current user guilds, returning empty list",
           discordId,
-          [Permission.LOOTLOG_ACCESS],
-        );
+          userId,
+        });
 
-        return this.toGuildRefreshCandidates(fallbackGuilds);
+        return [];
       }
 
       if (!discordGuilds || discordGuilds.length === 0) {
@@ -521,18 +524,13 @@ export class GuildsService {
       this.logger.log({
         level: "warn",
         message:
-          "Failed to load Discord guild candidates, falling back to cached member permissions",
+          "Failed to load Discord guild candidates, returning empty list",
         discordId,
         userId,
         error,
       });
 
-      const fallbackGuilds = await this.getGuildsForRequiredPermissions(
-        discordId,
-        [Permission.LOOTLOG_ACCESS],
-      );
-
-      return this.toGuildRefreshCandidates(fallbackGuilds);
+      return [];
     }
   }
 
@@ -563,19 +561,21 @@ export class GuildsService {
       },
     });
 
-    return guilds.map((guild) => {
-      const discordGuild = discordGuildMap.get(guild.id);
+    return guilds
+      .filter((guild) => discordGuildMap.has(guild.id))
+      .map((guild) => {
+        const discordGuild = discordGuildMap.get(guild.id);
 
-      return {
-        guild,
-        isDiscordOwner: discordGuild
-          ? this.isDiscordOwnerGuild(discordGuild, discordId)
-          : false,
-        hasDiscordAdmin: discordGuild
-          ? this.hasDiscordAdministratorAccess(discordGuild)
-          : false,
-      };
-    });
+        return {
+          guild,
+          isDiscordOwner: discordGuild
+            ? this.isDiscordOwnerGuild(discordGuild, discordId)
+            : false,
+          hasDiscordAdmin: discordGuild
+            ? this.hasDiscordAdministratorAccess(discordGuild)
+            : false,
+        };
+      });
   }
 
   private async getDiscordLootlogGuildCandidates(
@@ -588,12 +588,15 @@ export class GuildsService {
       const discordGuilds = discordGuildsSnapshot.guilds;
 
       if (discordGuildsSnapshot.source === "unavailable") {
-        const fallbackGuilds = await this.getGuildsForRequiredPermissions(
+        this.logger.log({
+          level: "warn",
+          message:
+            "Discord guild list unavailable for lootlog guild candidates, returning empty list",
           discordId,
-          [Permission.LOOTLOG_ACCESS],
-        );
+          userId,
+        });
 
-        return this.toGuildRefreshCandidates(fallbackGuilds);
+        return [];
       }
 
       if (!discordGuilds || discordGuilds.length === 0) {
@@ -623,14 +626,9 @@ export class GuildsService {
       ) {
         this.logger.log({
           level: "warn",
-          message: `User authentication failed for userId: ${userId}, returning cached accessible guilds`,
+          message: `User authentication failed for userId: ${userId}, returning empty guilds`,
         });
-        const fallbackGuilds = await this.getGuildsForRequiredPermissions(
-          discordId,
-          [Permission.LOOTLOG_ACCESS],
-        );
-
-        return this.toGuildRefreshCandidates(fallbackGuilds);
+        return [];
       }
 
       throw error;
