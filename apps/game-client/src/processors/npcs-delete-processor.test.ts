@@ -16,6 +16,11 @@ const { mockCreateAutoTimer, mockGetNpcTypeByWt, mockGame } = vi.hoisted(
       hero: {
         id: 101,
         account: 202,
+        nick: undefined,
+        lvl: undefined,
+        prof: undefined,
+        img: undefined,
+        clan: null,
       },
       map: {
         id: 3327,
@@ -221,6 +226,13 @@ describe("NpcsDeleteProcessor", () => {
         lvl: 250,
         name: "Stwór",
         location: "Urwisko",
+      },
+      character: {
+        nick: undefined,
+        lvl: undefined,
+        prof: undefined,
+        icon: undefined,
+        clan: null,
       },
     });
   });
