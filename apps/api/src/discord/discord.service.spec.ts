@@ -436,6 +436,116 @@ describe("DiscordService", () => {
     });
   });
 
+  describe("getUserGuildsSnapshot", () => {
+    const userId = "user-123";
+    const discordId = "discord-123";
+
+    it("should return cached guilds with cache source", async () => {
+      redisService.get.mockResolvedValue(JSON.stringify(mockGuilds));
+
+      const result = await service.getUserGuildsSnapshot(userId, discordId);
+
+      expect(result).toEqual({
+        guilds: mockGuilds,
+        source: "cache",
+      });
+      expect(mockRedlock.acquire).not.toHaveBeenCalled();
+    });
+
+    it("should treat cached empty guilds as unavailable", async () => {
+      redisService.get.mockResolvedValue(JSON.stringify([]));
+
+      const result = await service.getUserGuildsSnapshot(userId, discordId);
+
+      expect(result).toEqual({
+        guilds: [],
+        source: "unavailable",
+      });
+      expect(mockRedlock.acquire).not.toHaveBeenCalled();
+    });
+
+    it("should return fresh source when Discord API returns guilds", async () => {
+      redisService.get.mockResolvedValue(null);
+
+      const mockRest = {
+        queueRequest: mockFn().mockResolvedValue(
+          createJsonResponse(mockGuilds),
+        ),
+      };
+      vi.spyOn(service, "getRestClient").mockResolvedValue(mockRest as never);
+
+      const result = await service.getUserGuildsSnapshot(userId, discordId);
+
+      expect(result).toEqual({
+        guilds: mockGuilds,
+        source: "fresh",
+      });
+    });
+
+    it("should return fresh empty source when Discord API returns no guilds", async () => {
+      redisService.get.mockResolvedValue(null);
+
+      const mockRest = {
+        queueRequest: mockFn().mockResolvedValue(createJsonResponse([])),
+      };
+      vi.spyOn(service, "getRestClient").mockResolvedValue(mockRest as never);
+
+      const result = await service.getUserGuildsSnapshot(userId, discordId);
+
+      expect(result).toEqual({
+        guilds: [],
+        source: "fresh",
+      });
+    });
+
+    it("should return stale source when proactively rate limited with stale data", async () => {
+      const staleGuilds = [{ id: "stale-guild" }];
+      redisService.get
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(JSON.stringify(staleGuilds));
+      rateLimiter.checkRateLimitForUser.mockResolvedValue(true);
+
+      const result = await service.getUserGuildsSnapshot(userId, discordId);
+
+      expect(result).toEqual({
+        guilds: staleGuilds,
+        source: "stale",
+      });
+    });
+
+    it("should return unavailable source when rate limited without stale data", async () => {
+      redisService.get.mockResolvedValue(null);
+      rateLimiter.checkRateLimitForUser.mockResolvedValue(true);
+
+      const result = await service.getUserGuildsSnapshot(userId, discordId);
+
+      expect(result).toEqual({
+        guilds: [],
+        source: "unavailable",
+      });
+    });
+
+    it("should return unavailable source and cache empty guilds on UnauthorizedException", async () => {
+      redisService.get.mockResolvedValue(null);
+      vi.spyOn(service, "getRestClient").mockRejectedValue(
+        new UnauthorizedException(),
+      );
+
+      const result = await service.getUserGuildsSnapshot(userId, discordId);
+
+      expect(result).toEqual({
+        guilds: [],
+        source: "unavailable",
+      });
+      expect(redisService.set).toHaveBeenCalledWith(
+        "user:user-123:discord-guilds:data",
+        JSON.stringify([]),
+        5,
+      );
+    });
+  });
+
   describe("getGuildMember", () => {
     const options = {
       guildId: "guild-123",
