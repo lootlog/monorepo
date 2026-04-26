@@ -296,7 +296,7 @@ describe("GuildsService", () => {
       ]);
     });
 
-    it("should fall back to metadata-free candidates when Discord guild lookup fails", async () => {
+    it("should return no candidates when Discord guild lookup fails", async () => {
       const testService = service as unknown as {
         getCandidateGuildsForUser(
           discordId: string,
@@ -318,48 +318,58 @@ describe("GuildsService", () => {
         "user-123",
       );
 
-      expect(result).toEqual([
-        {
-          guild,
-          isDiscordOwner: false,
-          hasDiscordAdmin: false,
-        },
-      ]);
+      expect(result).toEqual([]);
     });
   });
 
   describe("getCurrentUserGuildAccessSummaries", () => {
-    it("falls back to cached accessible guilds when Discord returns no guilds", async () => {
+    it("returns no guilds when Discord returns no current guilds", async () => {
       mockDiscordService.getUserGuilds.mockResolvedValue([]);
+      mockPrismaService.member.findMany.mockResolvedValue([
+        {
+          guildId: "guild-stale",
+        },
+      ]);
+
+      const result = await service.getCurrentUserGuildAccessSummaries(
+        "discord-123",
+        "user-123",
+      );
+
+      expect(result).toEqual([]);
+      expect(mockMembersService.queueMemberRefresh).toHaveBeenCalledWith({
+        discordId: "discord-123",
+        guildId: "guild-stale",
+        userId: "user-123",
+        priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
+        reason: "discord-guild-list-missing",
+      });
+    });
+
+    it("queues a refresh for active database memberships missing from current Discord guilds", async () => {
+      mockDiscordService.getUserGuilds.mockResolvedValue([
+        {
+          id: "guild-current",
+          permissions: "0",
+          owner: false,
+          owner_id: "owner-current",
+        },
+      ]);
       mockPrismaService.guild.findMany.mockResolvedValue([
         createGuild({
-          id: "guild-cached",
-          name: "Cached",
-          ownerId: "owner-cached",
+          id: "guild-current",
+          ownerId: "owner-current",
+          name: "Current",
         }),
       ]);
-      mockPrismaService.userSettings.findUnique.mockResolvedValue(null);
       mockPrismaService.member.findMany
         .mockResolvedValueOnce([
-          {
-            guildId: "guild-cached",
-            active: true,
-            globalUserId: "user-123",
-            lastDiscordSyncAt: new Date("2026-01-01T00:00:00.000Z"),
-            updatedAt: new Date("2026-01-01T00:00:00.000Z"),
-            roles: [
-              {
-                id: "role-access",
-                lvlRangeFrom: null,
-                lvlRangeTo: null,
-                permissions: [Permission.LOOTLOG_ACCESS],
-              },
-            ],
-          },
+          { guildId: "guild-current" },
+          { guildId: "guild-left" },
         ])
         .mockResolvedValueOnce([
           {
-            guildId: "guild-cached",
+            guildId: "guild-current",
             active: true,
             globalUserId: "user-123",
             lastDiscordSyncAt: new Date("2026-01-01T00:00:00.000Z"),
@@ -374,6 +384,7 @@ describe("GuildsService", () => {
             ],
           },
         ]);
+      mockPrismaService.userSettings.findUnique.mockResolvedValue(null);
       mockMembersService.isMemberSoftStale.mockReturnValue(false);
 
       const result = await service.getCurrentUserGuildAccessSummaries(
@@ -383,15 +394,22 @@ describe("GuildsService", () => {
 
       expect(result).toEqual([
         {
-          id: "guild-cached",
-          name: "Cached",
+          id: "guild-current",
+          name: "Current",
           icon: null,
           vanityUrl: null,
-          ownerId: "owner-cached",
+          ownerId: "owner-current",
           hasLootlogAccess: true,
           isAccessDataStale: false,
         },
       ]);
+      expect(mockMembersService.queueMemberRefresh).toHaveBeenCalledWith({
+        discordId: "discord-123",
+        guildId: "guild-left",
+        userId: "user-123",
+        priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
+        reason: "discord-guild-list-missing",
+      });
     });
 
     it("returns guild access metadata and keeps stale entries when refresh stays queued", async () => {
@@ -414,6 +432,7 @@ describe("GuildsService", () => {
         createGuild({ id: "guild-stale", ownerId: "owner-2", name: "Stale" }),
       ]);
       mockPrismaService.member.findMany
+        .mockResolvedValueOnce([])
         .mockResolvedValueOnce([
           {
             guildId: "guild-access",
@@ -595,41 +614,23 @@ describe("GuildsService", () => {
         }),
       ]);
       mockPrismaService.userSettings.findUnique.mockResolvedValue(null);
-      mockPrismaService.member.findMany
-        .mockResolvedValueOnce([
-          {
-            guildId: "guild-cached",
-            active: true,
-            globalUserId: "user-123",
-            lastDiscordSyncAt: new Date("2026-01-01T00:00:00.000Z"),
-            updatedAt: new Date("2026-01-01T00:00:00.000Z"),
-            roles: [
-              {
-                id: "role-access",
-                lvlRangeFrom: null,
-                lvlRangeTo: null,
-                permissions: [Permission.LOOTLOG_ACCESS],
-              },
-            ],
-          },
-        ])
-        .mockResolvedValueOnce([
-          {
-            guildId: "guild-cached",
-            active: true,
-            globalUserId: "user-123",
-            lastDiscordSyncAt: new Date("2026-01-01T00:00:00.000Z"),
-            updatedAt: new Date("2026-01-01T00:00:00.000Z"),
-            roles: [
-              {
-                id: "role-access",
-                lvlRangeFrom: null,
-                lvlRangeTo: null,
-                permissions: [Permission.LOOTLOG_ACCESS],
-              },
-            ],
-          },
-        ]);
+      mockPrismaService.member.findMany.mockResolvedValue([
+        {
+          guildId: "guild-cached",
+          active: true,
+          globalUserId: "user-123",
+          lastDiscordSyncAt: new Date("2026-01-01T00:00:00.000Z"),
+          updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+          roles: [
+            {
+              id: "role-access",
+              lvlRangeFrom: null,
+              lvlRangeTo: null,
+              permissions: [Permission.LOOTLOG_ACCESS],
+            },
+          ],
+        },
+      ]);
       mockMembersService.isMemberSoftStale.mockReturnValue(false);
 
       const result = await service.getUserGuilds(
@@ -685,46 +686,13 @@ describe("GuildsService", () => {
       ]);
     });
 
-    it("falls back to cached accessible guilds for the legacy default path when Discord returns no guilds", async () => {
+    it("returns no guilds for the default path when Discord returns no guilds", async () => {
       mockDiscordService.getUserGuilds.mockResolvedValue([]);
-      mockPrismaService.guild.findMany.mockResolvedValue([
-        createGuild({
-          id: "guild-cached",
-          name: "Cached",
-          ownerId: "owner-cached",
-        }),
-      ]);
-      mockPrismaService.member.findMany.mockResolvedValue([
-        {
-          guildId: "guild-cached",
-          active: true,
-          globalUserId: "user-123",
-          lastDiscordSyncAt: new Date("2026-01-01T00:00:00.000Z"),
-          updatedAt: new Date("2026-01-01T00:00:00.000Z"),
-          roles: [
-            {
-              id: "role-access",
-              lvlRangeFrom: null,
-              lvlRangeTo: null,
-              permissions: [Permission.LOOTLOG_ACCESS],
-            },
-          ],
-        },
-      ]);
       mockPrismaService.userSettings.findUnique.mockResolvedValue(null);
-      mockMembersService.isMemberSoftStale.mockReturnValue(false);
 
       const result = await service.getUserGuilds("discord-123", "user-123");
 
-      expect(result).toEqual([
-        {
-          id: "guild-cached",
-          name: "Cached",
-          icon: null,
-          vanityUrl: null,
-          ownerId: "owner-cached",
-        },
-      ]);
+      expect(result).toEqual([]);
     });
 
     it("returns sorted plain guilds for the legacy default path", async () => {
