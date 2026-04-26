@@ -754,6 +754,61 @@ describe("GuildsService", () => {
     });
   });
 
+  describe("getManageableUserGuilds", () => {
+    it("returns Discord owner and administrator guilds from the guild snapshot", async () => {
+      mockDiscordService.getUserGuildsSnapshot.mockResolvedValue({
+        guilds: [
+          {
+            id: "guild-owner",
+            name: "Owner",
+            icon: null,
+            owner: true,
+            owner_id: "discord-123",
+            permissions: "0",
+          },
+          {
+            id: "guild-admin",
+            name: "Admin",
+            icon: "admin-icon",
+            owner: false,
+            owner_id: "owner-admin",
+            permissions: "8",
+          },
+          {
+            id: "guild-user",
+            name: "User",
+            icon: null,
+            owner: false,
+            owner_id: "owner-user",
+            permissions: "0",
+          },
+        ],
+        source: "fresh",
+      });
+
+      const result = await service.getManageableUserGuilds(
+        "discord-123",
+        "user-123",
+      );
+
+      expect(result).toEqual([
+        {
+          id: "guild-owner",
+          name: "Owner",
+          icon: null,
+          ownerId: "discord-123",
+        },
+        {
+          id: "guild-admin",
+          name: "Admin",
+          icon: "admin-icon",
+          ownerId: "owner-admin",
+        },
+      ]);
+      expect(mockDiscordService.getUserGuilds).not.toHaveBeenCalled();
+    });
+  });
+
   describe("getUserGuilds", () => {
     it("uses cached accessible guilds for the legacy game source", async () => {
       mockPrismaService.guild.findMany.mockResolvedValue([

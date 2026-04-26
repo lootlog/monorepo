@@ -452,16 +452,27 @@ describe("DiscordService", () => {
       expect(mockRedlock.acquire).not.toHaveBeenCalled();
     });
 
-    it("should treat cached empty guilds as unavailable", async () => {
-      redisService.get.mockResolvedValue(JSON.stringify([]));
+    it("should treat cached empty guilds as a cache miss", async () => {
+      redisService.get
+        .mockResolvedValueOnce(JSON.stringify([]))
+        .mockResolvedValueOnce(null);
+      const mockRest = {
+        queueRequest: mockFn().mockResolvedValue(
+          createJsonResponse(mockGuilds),
+        ),
+      };
+      vi.spyOn(service, "getRestClient").mockResolvedValue(mockRest as never);
 
       const result = await service.getUserGuildsSnapshot(userId, discordId);
 
       expect(result).toEqual({
-        guilds: [],
-        source: "unavailable",
+        guilds: mockGuilds,
+        source: "fresh",
       });
-      expect(mockRedlock.acquire).not.toHaveBeenCalled();
+      expect(redisService.del).toHaveBeenCalledWith(
+        "user:user-123:discord-guilds:data",
+      );
+      expect(mockRest.queueRequest).toHaveBeenCalled();
     });
 
     it("should return fresh source when Discord API returns guilds", async () => {
