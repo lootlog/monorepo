@@ -35,6 +35,16 @@ type CreateTimerOptions = {
   customMinSpawnTime?: Date;
   customMaxSpawnTime?: Date;
   npc: CreateTimerNpc;
+  character?: {
+    nick: string;
+    lvl: number;
+    prof: string;
+    icon: string;
+    clan: {
+      id: number;
+      name: string;
+    } | null;
+  };
 };
 
 export type CreateAutoTimerResponse = CreateAutoTimerResponseDtoOutput;
@@ -56,6 +66,9 @@ export async function createAutoTimer(
     }),
     ...(timer.customMaxSpawnTime && {
       customMaxSpawnTime: timer.customMaxSpawnTime.toISOString(),
+    }),
+    ...(timer.character && {
+      character: timer.character,
     }),
   } as Partial<CreateTimerFromGameClientDto> as CreateTimerFromGameClientDto;
 

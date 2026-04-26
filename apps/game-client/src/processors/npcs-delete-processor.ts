@@ -70,6 +70,15 @@ export class NpcsDeleteProcessor {
           name: npcName,
           location: Game.map.name,
         },
+        character: {
+          nick: Game.hero.nick,
+          lvl: Game.hero.lvl,
+          prof: Game.hero.prof,
+          icon: Game.hero.img,
+          clan: Game.hero.clan
+            ? { id: Game.hero.clan.id, name: Game.hero.clan.name }
+            : null,
+        },
       }).catch((error) => {
         console.warn("[NpcsDeleteProcessor] Failed to create timer:", error);
       });

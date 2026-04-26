@@ -4031,6 +4031,7 @@ export const TimerScalarFieldEnum = {
   tempId: 'tempId',
   wasReset: 'wasReset',
   npc: 'npc',
+  character: 'character',
   windowOpenedAt: 'windowOpenedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

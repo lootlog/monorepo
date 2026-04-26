@@ -273,6 +273,7 @@ model Timer {
   tempId                  String?
   wasReset                Boolean  @default(false)
   npc                     Json
+  character               Json?
   windowOpenedAt          DateTime?
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt

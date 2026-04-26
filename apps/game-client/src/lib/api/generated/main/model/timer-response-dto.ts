@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 import type { TimerNpcResponseDto } from './timer-npc-response-dto';
+import type { TimerResponseDtoCharacter } from './timer-response-dto-character';
 import type { TimerResponseDtoMember } from './timer-response-dto-member';
 
 export interface TimerResponseDto {
@@ -22,4 +23,6 @@ export interface TimerResponseDto {
   member?: TimerResponseDtoMember;
   /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
   updatedAt: string;
+  /** @nullable */
+  character?: TimerResponseDtoCharacter;
 }

@@ -14,6 +14,20 @@ const TimerResponseSchema = z.object({
   npc: TimerNpcResponseDto.schema.nullable(),
   wasReset: z.boolean(),
   member: MemberResponseDto.schema.optional(),
+  character: z
+    .object({
+      nick: z.string(),
+      lvl: z.number(),
+      prof: z.string(),
+      icon: z.string(),
+      clan: z
+        .object({
+          id: z.number(),
+          name: z.string(),
+        })
+        .nullable(),
+    })
+    .nullable(),
   updatedAt: isoDatetimeCodec,
 });
 

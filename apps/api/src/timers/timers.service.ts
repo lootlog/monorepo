@@ -104,6 +104,18 @@ interface NpcData {
   margonemType: string;
 }
 
+interface CharacterData {
+  [key: string]: string | number | { id: number; name: string } | null;
+  nick: string;
+  lvl: number;
+  prof: string;
+  icon: string;
+  clan: {
+    id: number;
+    name: string;
+  } | null;
+}
+
 interface EventRespawnTimerInput {
   guildId: string;
   world: string;
@@ -240,6 +252,31 @@ export class TimersService implements OnModuleInit {
     };
   }
 
+  private buildCharacterData(character?: {
+    nick: string;
+    lvl: number;
+    prof: string;
+    icon: string;
+    clan?: { id: number; name: string };
+  }): CharacterData | null {
+    if (!character) {
+      return null;
+    }
+
+    return {
+      nick: character.nick,
+      lvl: character.lvl,
+      prof: getProfByShortname(character.prof),
+      icon: character.icon,
+      clan: character.clan
+        ? {
+            id: character.clan.id,
+            name: character.clan.name,
+          }
+        : null,
+    };
+  }
+
   private toDate(value: Date | string | null | undefined) {
     if (!value) {
       return null;
@@ -267,6 +304,44 @@ export class TimersService implements OnModuleInit {
       lastDiscordSyncAt: this.toDate(member.lastDiscordSyncAt),
       updatedAt: this.toDate(member.updatedAt) ?? new Date(),
     } satisfies typeof MemberResponseDto.schema._output;
+  }
+
+  private mapTimerCharacter(character: unknown) {
+    if (
+      !character ||
+      typeof character !== "object" ||
+      Array.isArray(character)
+    ) {
+      return null;
+    }
+
+    const timerCharacter = character as Record<string, unknown>;
+
+    return {
+      nick: typeof timerCharacter.nick === "string" ? timerCharacter.nick : "",
+      lvl: typeof timerCharacter.lvl === "number" ? timerCharacter.lvl : 0,
+      prof: typeof timerCharacter.prof === "string" ? timerCharacter.prof : "",
+      icon: typeof timerCharacter.icon === "string" ? timerCharacter.icon : "",
+      clan:
+        timerCharacter.clan &&
+        typeof timerCharacter.clan === "object" &&
+        !Array.isArray(timerCharacter.clan)
+          ? {
+              id:
+                typeof (timerCharacter.clan as Record<string, unknown>).id ===
+                "number"
+                  ? ((timerCharacter.clan as Record<string, unknown>)
+                      .id as number)
+                  : 0,
+              name:
+                typeof (timerCharacter.clan as Record<string, unknown>).name ===
+                "string"
+                  ? ((timerCharacter.clan as Record<string, unknown>)
+                      .name as string)
+                  : "",
+            }
+          : null,
+    };
   }
 
   private mapTimerNpc(npc: unknown) {
@@ -312,6 +387,7 @@ export class TimersService implements OnModuleInit {
       npc: this.mapTimerNpc(timer.npc),
       wasReset: timer.wasReset,
       member: this.mapTimerMember(timer.member),
+      character: this.mapTimerCharacter(timer.character),
       updatedAt: this.toDate(timer.updatedAt) ?? new Date(),
     };
   }
@@ -1034,6 +1110,7 @@ export class TimersService implements OnModuleInit {
         latestRespawnRandomness: respawnRandomness,
         wasReset: false,
         npc: npcData,
+        character: this.buildCharacterData(context.data.character),
         windowOpenedAt: new Date(),
         member: {
           connect: {

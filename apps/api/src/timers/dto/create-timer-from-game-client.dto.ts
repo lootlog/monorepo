@@ -31,6 +31,20 @@ const CreateTimerFromGameClientSchema = z.object({
   npc: NpcSchema,
   characterId: z.string().min(1),
   accountId: z.string().min(1),
+  character: z
+    .object({
+      nick: z.string(),
+      lvl: z.number(),
+      prof: z.string(),
+      icon: z.string(),
+      clan: z
+        .object({
+          id: z.number(),
+          name: z.string(),
+        })
+        .nullable(),
+    })
+    .optional(),
 });
 
 export class CreateTimerFromGameClientDto extends createZodDto(

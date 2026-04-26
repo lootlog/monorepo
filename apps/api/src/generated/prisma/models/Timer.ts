@@ -87,6 +87,7 @@ export type TimerCountAggregateOutputType = {
   tempId: number
   wasReset: number
   npc: number
+  character: number
   windowOpenedAt: number
   createdAt: number
   updatedAt: number
@@ -155,6 +156,7 @@ export type TimerCountAggregateInputType = {
   tempId?: true
   wasReset?: true
   npc?: true
+  character?: true
   windowOpenedAt?: true
   createdAt?: true
   updatedAt?: true
@@ -260,6 +262,7 @@ export type TimerGroupByOutputType = {
   tempId: string | null
   wasReset: boolean
   npc: runtime.JsonValue
+  character: runtime.JsonValue | null
   windowOpenedAt: Date | null
   createdAt: Date
   updatedAt: Date
@@ -301,6 +304,7 @@ export type TimerWhereInput = {
   tempId?: Prisma.StringNullableFilter<"Timer"> | string | null
   wasReset?: Prisma.BoolFilter<"Timer"> | boolean
   npc?: Prisma.JsonFilter<"Timer">
+  character?: Prisma.JsonNullableFilter<"Timer">
   windowOpenedAt?: Prisma.DateTimeNullableFilter<"Timer"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Timer"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Timer"> | Date | string
@@ -321,6 +325,7 @@ export type TimerOrderByWithRelationInput = {
   tempId?: Prisma.SortOrderInput | Prisma.SortOrder
   wasReset?: Prisma.SortOrder
   npc?: Prisma.SortOrder
+  character?: Prisma.SortOrderInput | Prisma.SortOrder
   windowOpenedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -345,6 +350,7 @@ export type TimerWhereUniqueInput = Prisma.AtLeast<{
   tempId?: Prisma.StringNullableFilter<"Timer"> | string | null
   wasReset?: Prisma.BoolFilter<"Timer"> | boolean
   npc?: Prisma.JsonFilter<"Timer">
+  character?: Prisma.JsonNullableFilter<"Timer">
   windowOpenedAt?: Prisma.DateTimeNullableFilter<"Timer"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Timer"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Timer"> | Date | string
@@ -365,6 +371,7 @@ export type TimerOrderByWithAggregationInput = {
   tempId?: Prisma.SortOrderInput | Prisma.SortOrder
   wasReset?: Prisma.SortOrder
   npc?: Prisma.SortOrder
+  character?: Prisma.SortOrderInput | Prisma.SortOrder
   windowOpenedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -391,6 +398,7 @@ export type TimerScalarWhereWithAggregatesInput = {
   tempId?: Prisma.StringNullableWithAggregatesFilter<"Timer"> | string | null
   wasReset?: Prisma.BoolWithAggregatesFilter<"Timer"> | boolean
   npc?: Prisma.JsonWithAggregatesFilter<"Timer">
+  character?: Prisma.JsonNullableWithAggregatesFilter<"Timer">
   windowOpenedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Timer"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Timer"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Timer"> | Date | string
@@ -407,6 +415,7 @@ export type TimerCreateInput = {
   tempId?: string | null
   wasReset?: boolean
   npc: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  character?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -427,6 +436,7 @@ export type TimerUncheckedCreateInput = {
   tempId?: string | null
   wasReset?: boolean
   npc: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  character?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -443,6 +453,7 @@ export type TimerUpdateInput = {
   tempId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wasReset?: Prisma.BoolFieldUpdateOperationsInput | boolean
   npc?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  character?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -463,6 +474,7 @@ export type TimerUncheckedUpdateInput = {
   tempId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wasReset?: Prisma.BoolFieldUpdateOperationsInput | boolean
   npc?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  character?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -481,6 +493,7 @@ export type TimerCreateManyInput = {
   tempId?: string | null
   wasReset?: boolean
   npc: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  character?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -497,6 +510,7 @@ export type TimerUpdateManyMutationInput = {
   tempId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wasReset?: Prisma.BoolFieldUpdateOperationsInput | boolean
   npc?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  character?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -515,6 +529,7 @@ export type TimerUncheckedUpdateManyInput = {
   tempId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wasReset?: Prisma.BoolFieldUpdateOperationsInput | boolean
   npc?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  character?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -549,6 +564,7 @@ export type TimerCountOrderByAggregateInput = {
   tempId?: Prisma.SortOrder
   wasReset?: Prisma.SortOrder
   npc?: Prisma.SortOrder
+  character?: Prisma.SortOrder
   windowOpenedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -697,6 +713,7 @@ export type TimerCreateWithoutGuildInput = {
   tempId?: string | null
   wasReset?: boolean
   npc: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  character?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -715,6 +732,7 @@ export type TimerUncheckedCreateWithoutGuildInput = {
   tempId?: string | null
   wasReset?: boolean
   npc: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  character?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -762,6 +780,7 @@ export type TimerScalarWhereInput = {
   tempId?: Prisma.StringNullableFilter<"Timer"> | string | null
   wasReset?: Prisma.BoolFilter<"Timer"> | boolean
   npc?: Prisma.JsonFilter<"Timer">
+  character?: Prisma.JsonNullableFilter<"Timer">
   windowOpenedAt?: Prisma.DateTimeNullableFilter<"Timer"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Timer"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Timer"> | Date | string
@@ -778,6 +797,7 @@ export type TimerCreateWithoutMemberInput = {
   tempId?: string | null
   wasReset?: boolean
   npc: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  character?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -796,6 +816,7 @@ export type TimerUncheckedCreateWithoutMemberInput = {
   tempId?: string | null
   wasReset?: boolean
   npc: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  character?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -839,6 +860,7 @@ export type TimerCreateManyGuildInput = {
   tempId?: string | null
   wasReset?: boolean
   npc: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  character?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -855,6 +877,7 @@ export type TimerUpdateWithoutGuildInput = {
   tempId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wasReset?: Prisma.BoolFieldUpdateOperationsInput | boolean
   npc?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  character?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -873,6 +896,7 @@ export type TimerUncheckedUpdateWithoutGuildInput = {
   tempId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wasReset?: Prisma.BoolFieldUpdateOperationsInput | boolean
   npc?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  character?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -890,6 +914,7 @@ export type TimerUncheckedUpdateManyWithoutGuildInput = {
   tempId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wasReset?: Prisma.BoolFieldUpdateOperationsInput | boolean
   npc?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  character?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -907,6 +932,7 @@ export type TimerCreateManyMemberInput = {
   tempId?: string | null
   wasReset?: boolean
   npc: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  character?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -923,6 +949,7 @@ export type TimerUpdateWithoutMemberInput = {
   tempId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wasReset?: Prisma.BoolFieldUpdateOperationsInput | boolean
   npc?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  character?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -941,6 +968,7 @@ export type TimerUncheckedUpdateWithoutMemberInput = {
   tempId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wasReset?: Prisma.BoolFieldUpdateOperationsInput | boolean
   npc?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  character?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -958,6 +986,7 @@ export type TimerUncheckedUpdateManyWithoutMemberInput = {
   tempId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wasReset?: Prisma.BoolFieldUpdateOperationsInput | boolean
   npc?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  character?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -978,6 +1007,7 @@ export type TimerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   tempId?: boolean
   wasReset?: boolean
   npc?: boolean
+  character?: boolean
   windowOpenedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -998,6 +1028,7 @@ export type TimerSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   tempId?: boolean
   wasReset?: boolean
   npc?: boolean
+  character?: boolean
   windowOpenedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1018,6 +1049,7 @@ export type TimerSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   tempId?: boolean
   wasReset?: boolean
   npc?: boolean
+  character?: boolean
   windowOpenedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1038,12 +1070,13 @@ export type TimerSelectScalar = {
   tempId?: boolean
   wasReset?: boolean
   npc?: boolean
+  character?: boolean
   windowOpenedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type TimerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"createdById" | "guildId" | "npcId" | "timerKey" | "world" | "minSpawnTime" | "maxSpawnTime" | "latestRespBaseSeconds" | "latestRespawnRandomness" | "tempId" | "wasReset" | "npc" | "windowOpenedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["timer"]>
+export type TimerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"createdById" | "guildId" | "npcId" | "timerKey" | "world" | "minSpawnTime" | "maxSpawnTime" | "latestRespBaseSeconds" | "latestRespawnRandomness" | "tempId" | "wasReset" | "npc" | "character" | "windowOpenedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["timer"]>
 export type TimerInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   member?: boolean | Prisma.MemberDefaultArgs<ExtArgs>
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
@@ -1076,6 +1109,7 @@ export type $TimerPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     tempId: string | null
     wasReset: boolean
     npc: runtime.JsonValue
+    character: runtime.JsonValue | null
     windowOpenedAt: Date | null
     createdAt: Date
     updatedAt: Date
@@ -1516,6 +1550,7 @@ export interface TimerFieldRefs {
   readonly tempId: Prisma.FieldRef<"Timer", 'String'>
   readonly wasReset: Prisma.FieldRef<"Timer", 'Boolean'>
   readonly npc: Prisma.FieldRef<"Timer", 'Json'>
+  readonly character: Prisma.FieldRef<"Timer", 'Json'>
   readonly windowOpenedAt: Prisma.FieldRef<"Timer", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"Timer", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Timer", 'DateTime'>
