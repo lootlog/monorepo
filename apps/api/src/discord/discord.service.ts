@@ -36,17 +36,6 @@ import { serviceConfig } from "src/config/service.config";
 import { RuntimeEnvironment } from "src/types/runtime.types";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
 
-export type UserGuildsSnapshotSource =
-  | "cache"
-  | "fresh"
-  | "stale"
-  | "unavailable";
-
-export type UserGuildsSnapshot = {
-  guilds: APIGuild[];
-  source: UserGuildsSnapshotSource;
-};
-
 @Injectable()
 export class DiscordService implements OnModuleInit {
   private redlock: ReturnType<RedlockService["createInstance"]>;
@@ -54,7 +43,7 @@ export class DiscordService implements OnModuleInit {
   private readonly lockTtl = 6000;
 
   private readonly guildsCacheTtlLocal = 10;
-  private readonly guildsCacheTtlProd = 60;
+  private readonly guildsCacheTtlProd = 300;
   private readonly memberCacheTtlLocal = 10;
   private readonly memberCacheTtlProd = 300;
   private readonly errorCacheTtlLocal = 5;
@@ -295,167 +284,6 @@ export class DiscordService implements OnModuleInit {
   async clearUserGuildIdsCache(userId: string) {
     const cacheKey = `user:${userId}:discord-guilds:data`;
     await this.redisService.del(cacheKey);
-  }
-
-  async getUserGuildsSnapshot(
-    userId: string,
-    discordId: string,
-  ): Promise<UserGuildsSnapshot> {
-    const cacheTtl = this.getCacheTtl(
-      this.guildsCacheTtlLocal,
-      this.guildsCacheTtlProd,
-    );
-    const cacheKey = `user:${userId}:discord-guilds:data`;
-    const staleCacheKey = `user:${userId}:discord-guilds:stale`;
-    const lockKey = `user:${userId}:discord-guilds:lock`;
-
-    const cached = await this.redisService.get(cacheKey);
-    if (cached) {
-      const guilds = JSON.parse(cached) as APIGuild[];
-      if (guilds.length > 0) {
-        return {
-          guilds,
-          source: "cache",
-        };
-      }
-
-      await this.redisService.del(cacheKey);
-    }
-
-    let lock: Awaited<ReturnType<typeof this.redlock.acquire>> | null = null;
-
-    try {
-      lock = await this.redlock.acquire([lockKey], this.lockTtl);
-
-      const cachedAfterLock = await this.redisService.get(cacheKey);
-      if (cachedAfterLock) {
-        const guilds = JSON.parse(cachedAfterLock) as APIGuild[];
-        if (guilds.length > 0) {
-          return {
-            guilds,
-            source: "cache",
-          };
-        }
-
-        await this.redisService.del(cacheKey);
-      }
-
-      const isRateLimited = await this.rateLimiter.checkRateLimitForUser(
-        userId,
-        "guilds",
-      );
-
-      if (isRateLimited) {
-        const staleData = await this.redisService.get(staleCacheKey);
-        if (staleData) {
-          this.logger.log({
-            level: "info",
-            message: `Returning stale guilds data due to rate limit for user ${userId}`,
-          });
-          return {
-            guilds: JSON.parse(staleData) as APIGuild[],
-            source: "stale",
-          };
-        }
-
-        this.logger.log({
-          level: "warn",
-          message: `Rate limited and no stale data available for user ${userId}`,
-        });
-        return { guilds: [], source: "unavailable" };
-      }
-
-      const rest = await this.getRestClient(userId, discordId);
-      const path = Routes.userGuilds();
-
-      let guilds: APIGuild[];
-      try {
-        const response = await rest.queueRequest({
-          fullRoute: path,
-          method: RequestMethod.Get,
-        });
-        await this.rateLimiter.updateRateLimitFromHeaders(
-          userId,
-          "guilds",
-          response.headers,
-        );
-        guilds = (await parseResponse(response)) as APIGuild[];
-      } catch (error: unknown) {
-        if (error instanceof RateLimitError) {
-          await this.rateLimiter.setRateLimitForUser(
-            userId,
-            "guilds",
-            error.retryAfter,
-          );
-
-          const staleData = await this.redisService.get(staleCacheKey);
-          if (staleData) {
-            this.logger.log({
-              level: "info",
-              message: `Returning stale guilds data after rate limit error for user ${userId}`,
-            });
-            return {
-              guilds: JSON.parse(staleData) as APIGuild[],
-              source: "stale",
-            };
-          }
-
-          return { guilds: [], source: "unavailable" };
-        }
-        throw error;
-      }
-
-      if (!guilds || guilds.length === 0) {
-        this.logger.log({
-          level: "warn",
-          message: `No guilds found for user: ${userId}`,
-        });
-        return { guilds: [], source: "fresh" };
-      }
-
-      await Promise.all([
-        this.redisService.set(cacheKey, JSON.stringify(guilds), cacheTtl),
-        this.redisService.set(
-          staleCacheKey,
-          JSON.stringify(guilds),
-          this.staleCacheTtl,
-        ),
-      ]);
-
-      return { guilds, source: "fresh" };
-    } catch (error: unknown) {
-      if (error instanceof ExecutionError) {
-        this.logger.log({
-          level: "error",
-          message: `Lock acquisition failed for getUserGuilds`,
-          userId,
-        });
-        return { guilds: [], source: "unavailable" };
-      }
-
-      if (error instanceof UnauthorizedException) {
-        this.logger.log({
-          level: "warn",
-          message: `User authentication failed for userId: ${userId}`,
-          error,
-        });
-        await this.redisService.set(
-          cacheKey,
-          JSON.stringify([]),
-          this.getCacheTtl(this.errorCacheTtlLocal, this.errorCacheTtlProd),
-        );
-        return { guilds: [], source: "unavailable" };
-      }
-
-      this.logger.log({
-        level: "error",
-        message: `Failed to fetch user guilds for userId: ${userId}`,
-        error,
-      });
-      return { guilds: [], source: "unavailable" };
-    } finally {
-      await lock?.release();
-    }
   }
 
   async getGuildMember(options: {
