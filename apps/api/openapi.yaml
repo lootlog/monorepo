@@ -7040,6 +7040,7 @@ components:
           type: string
           minLength: 1
         character:
+          nullable: true
           type: object
           properties:
             nick:
