@@ -1,6 +1,7 @@
 import { Processor, WorkerHost } from "@nestjs/bullmq";
 import { Inject, Injectable } from "@nestjs/common";
 import type { Job } from "bullmq";
+import { setTimeout as sleep } from "node:timers/promises";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { DiscordSyncDiagnosticsService } from "src/discord/discord-sync-diagnostics.service";
@@ -10,6 +11,7 @@ import {
   type MemberRefreshJobData,
 } from "./member-refresh-scheduler.service";
 import { MembersService } from "./members.service";
+import { isRetryableMemberRefreshStatus } from "./member-discord-sync-status";
 
 @Injectable()
 @Processor(MEMBER_REFRESH_QUEUE, {
@@ -55,7 +57,7 @@ export class MemberRefreshProcessor extends WorkerHost {
           lockOwner,
           Math.ceil(waitMs / 1000) + 30,
         );
-        await this.sleep(waitMs);
+        await sleep(waitMs);
       }
 
       const result = await this.membersService.syncMemberFromDiscord({
@@ -64,7 +66,7 @@ export class MemberRefreshProcessor extends WorkerHost {
         userId: job.data.userId,
       });
 
-      if (this.shouldRetryRefreshStatus(result.status)) {
+      if (isRetryableMemberRefreshStatus(result.status)) {
         if (result.status === "RATE_LIMITED") {
           await this.diagnostics.recordMemberRefreshMetric({
             outcome: "rate_limited",
@@ -106,19 +108,5 @@ export class MemberRefreshProcessor extends WorkerHost {
       await this.diagnostics.recordMemberRefreshLatency(Date.now() - startedAt);
       await this.scheduler.releaseUserRefreshLock(job.data.userId, lockOwner);
     }
-  }
-
-  private shouldRetryRefreshStatus(status: string): boolean {
-    return (
-      status === "RATE_LIMITED" ||
-      status === "AUTH_SERVICE_UNAVAILABLE" ||
-      status === "DISCORD_SERVICE_UNAVAILABLE" ||
-      status === "ERROR" ||
-      status.startsWith("DISCORD_HTTP_")
-    );
-  }
-
-  private sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }

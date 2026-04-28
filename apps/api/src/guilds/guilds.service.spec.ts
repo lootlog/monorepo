@@ -17,6 +17,7 @@ import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { DiscordGuildSyncStatus } from "@lootlog/types";
 import { type Guild, Permission } from "src/generated/prisma/client";
 import { MEMBER_REFRESH_PRIORITY } from "src/members/constants/member-refresh-queue.constant";
+import { UserGuildAccessResolver } from "./user-guild-access-resolver.service";
 
 vi.mock("src/config/discord-bot.config", () => ({
   discordBotConfig: { channelSnapshotStaleSeconds: 300 },
@@ -24,6 +25,7 @@ vi.mock("src/config/discord-bot.config", () => ({
 
 describe("GuildsService", () => {
   let service: GuildsService;
+  let userGuildAccessResolver: UserGuildAccessResolver;
 
   const mockLogger = {
     log: mockFn(),
@@ -114,6 +116,7 @@ describe("GuildsService", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         GuildsService,
+        UserGuildAccessResolver,
         {
           provide: WINSTON_MODULE_PROVIDER,
           useValue: mockLogger,
@@ -150,6 +153,7 @@ describe("GuildsService", () => {
     }).compile();
 
     service = module.get<GuildsService>(GuildsService);
+    userGuildAccessResolver = module.get(UserGuildAccessResolver);
     mockPrismaService.$transaction.mockImplementation(
       (
         callback: (
@@ -254,18 +258,6 @@ describe("GuildsService", () => {
 
   describe("getCandidateGuildsForUser", () => {
     it("should map Discord owner/admin metadata onto refresh candidates", async () => {
-      const testService = service as unknown as {
-        getCandidateGuildsForUser(
-          discordId: string,
-          userId: string,
-        ): Promise<
-          Array<{
-            guild: Guild;
-            isDiscordOwner: boolean;
-            hasDiscordAdmin: boolean;
-          }>
-        >;
-      };
       const ownerGuild = createGuild({ id: "guild-owner" });
       const adminGuild = createGuild({ id: "guild-admin" });
       mockDiscordService.getFreshCompleteUserGuilds.mockResolvedValue({
@@ -291,7 +283,7 @@ describe("GuildsService", () => {
         adminGuild,
       ]);
 
-      const result = await testService.getCandidateGuildsForUser(
+      const result = await userGuildAccessResolver.getCandidateGuildsForUser(
         "discord-123",
         "user-123",
       );
@@ -311,23 +303,14 @@ describe("GuildsService", () => {
     });
 
     it("should propagate Discord guild lookup failures without DB fallback", async () => {
-      const testService = service as unknown as {
-        getCandidateGuildsForUser(
-          discordId: string,
-          userId: string,
-        ): Promise<
-          Array<{
-            guild: Guild;
-            isDiscordOwner: boolean;
-            hasDiscordAdmin: boolean;
-          }>
-        >;
-      };
       const error = new Error("boom");
       mockDiscordService.getFreshCompleteUserGuilds.mockRejectedValue(error);
 
       await expect(
-        testService.getCandidateGuildsForUser("discord-123", "user-123"),
+        userGuildAccessResolver.getCandidateGuildsForUser(
+          "discord-123",
+          "user-123",
+        ),
       ).rejects.toBe(error);
       expect(mockDiscordService.getUserGuilds).not.toHaveBeenCalled();
       expect(
@@ -336,12 +319,6 @@ describe("GuildsService", () => {
     });
 
     it("should reconcile active members only after a successful Discord guild lookup", async () => {
-      const testService = service as unknown as {
-        getCandidateGuildsForUser(
-          discordId: string,
-          userId: string,
-        ): Promise<unknown>;
-      };
       mockDiscordService.getFreshCompleteUserGuilds.mockResolvedValue({
         guilds: [
           {
@@ -358,7 +335,10 @@ describe("GuildsService", () => {
         createGuild({ id: "guild-present", ownerId: "owner-1" }),
       ]);
 
-      await testService.getCandidateGuildsForUser("discord-123", "user-123");
+      await userGuildAccessResolver.getCandidateGuildsForUser(
+        "discord-123",
+        "user-123",
+      );
 
       expect(
         mockDiscordService.getFreshCompleteUserGuilds,

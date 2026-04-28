@@ -301,21 +301,19 @@ return 0
   private isJobNotInStateError(
     error: unknown,
   ): error is Error & { code: number } {
-    return Boolean(
-      error &&
-      typeof error === "object" &&
-      "code" in error &&
-      (error as { code?: unknown }).code === -3,
-    );
+    return this.getBullMqErrorCode(error) === -3;
   }
 
   private isMissingJobError(error: unknown): error is Error & { code: number } {
-    return Boolean(
-      error &&
-      typeof error === "object" &&
-      "code" in error &&
-      (error as { code?: unknown }).code === -1,
-    );
+    return this.getBullMqErrorCode(error) === -1;
+  }
+
+  private getBullMqErrorCode(error: unknown): number | null {
+    if (!hasErrorCode(error)) {
+      return null;
+    }
+
+    return typeof error.code === "number" ? error.code : null;
   }
 
   private getJobId(userId: string, guildId: string): string {
@@ -325,4 +323,12 @@ return 0
   private getUserLockKey(userId: string): string {
     return `member:refresh:lock:${userId}`;
   }
+}
+
+function hasErrorCode(error: unknown): error is { code: unknown } {
+  if (typeof error !== "object" || error === null) {
+    return false;
+  }
+
+  return "code" in error;
 }
