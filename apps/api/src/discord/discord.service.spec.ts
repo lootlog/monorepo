@@ -200,14 +200,14 @@ describe("DiscordService", () => {
     });
   });
 
-  describe("getRestClient", () => {
+  describe("DiscordRestClientFactory.getRestClient", () => {
     const userId = "user-123";
     const discordId = "discord-123";
 
     it("should create REST client with valid token", async () => {
       authService.getIdpToken.mockResolvedValue(mockToken);
 
-      const rest = await service.getRestClient(userId, discordId);
+      const rest = await restClientFactory.getRestClient(userId, discordId);
 
       expect(rest).toBeDefined();
       expect(authService.getIdpToken).toHaveBeenCalledWith(userId, discordId);
@@ -216,9 +216,9 @@ describe("DiscordService", () => {
     it("should throw UnauthorizedException when token is expired", async () => {
       authService.getIdpToken.mockRejectedValue(new TokenExpiredError());
 
-      await expect(service.getRestClient(userId, discordId)).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        restClientFactory.getRestClient(userId, discordId),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it("should throw UnauthorizedException when scopes are invalid", async () => {
@@ -226,9 +226,9 @@ describe("DiscordService", () => {
         new InvalidScopesError(["required"], ["actual"]),
       );
 
-      await expect(service.getRestClient(userId, discordId)).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        restClientFactory.getRestClient(userId, discordId),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it("should throw ServiceUnavailableException when auth service is unavailable", async () => {
@@ -236,9 +236,9 @@ describe("DiscordService", () => {
         new AuthServiceUnavailableError(),
       );
 
-      await expect(service.getRestClient(userId, discordId)).rejects.toThrow(
-        ServiceUnavailableException,
-      );
+      await expect(
+        restClientFactory.getRestClient(userId, discordId),
+      ).rejects.toThrow(ServiceUnavailableException);
     });
 
     it("should validate required scopes", async () => {
@@ -248,9 +248,45 @@ describe("DiscordService", () => {
       };
       authService.getIdpToken.mockResolvedValue(invalidToken as never);
 
-      await expect(service.getRestClient(userId, discordId)).rejects.toThrow(
-        UnauthorizedException,
+      await expect(
+        restClientFactory.getRestClient(userId, discordId),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it("should reuse REST client for the same user, discord id, and token", async () => {
+      authService.getIdpToken.mockResolvedValue(mockToken);
+
+      const firstRest = await restClientFactory.getRestClient(
+        userId,
+        discordId,
       );
+      const secondRest = await restClientFactory.getRestClient(
+        userId,
+        discordId,
+      );
+
+      expect(secondRest).toBe(firstRest);
+      expect(authService.getIdpToken).toHaveBeenCalledTimes(2);
+    });
+
+    it("should not reuse REST client when token changes", async () => {
+      authService.getIdpToken
+        .mockResolvedValueOnce(mockToken)
+        .mockResolvedValueOnce({
+          ...mockToken,
+          accessToken: "next-token",
+        });
+
+      const firstRest = await restClientFactory.getRestClient(
+        userId,
+        discordId,
+      );
+      const secondRest = await restClientFactory.getRestClient(
+        userId,
+        discordId,
+      );
+
+      expect(secondRest).not.toBe(firstRest);
     });
   });
 
@@ -265,9 +301,30 @@ describe("DiscordService", () => {
 
       expect(result).toEqual(mockGuilds);
       expect(redisService.get).toHaveBeenCalledWith(
-        "user:user-123:discord-guilds:v2:data",
+        "user:user-123:discord:discord-123:guilds:v2:data",
       );
       expect(mockRedlock.acquire).not.toHaveBeenCalled();
+    });
+
+    it("should delete corrupted guild cache and fetch from Discord", async () => {
+      redisService.get.mockResolvedValueOnce("{").mockResolvedValue(null);
+
+      const mockRest = {
+        queueRequest: mockFn().mockResolvedValue(
+          createJsonResponse(mockGuilds),
+        ),
+      };
+      vi.spyOn(restClientFactory, "getRestClient").mockResolvedValue(
+        mockRest as never,
+      );
+
+      const result = await service.getUserGuilds(userId, discordId);
+
+      expect(result).toEqual(mockGuilds);
+      expect(redisService.del).toHaveBeenCalledWith(
+        "user:user-123:discord:discord-123:guilds:v2:data",
+      );
+      expect(mockRest.queueRequest).toHaveBeenCalled();
     });
 
     it("should fetch from Discord API when cache is empty", async () => {
@@ -292,7 +349,7 @@ describe("DiscordService", () => {
       );
       expect(mockRest.queueRequest).toHaveBeenCalled();
       expect(redisService.set).toHaveBeenCalledWith(
-        "user:user-123:discord-guilds:v2:data",
+        "user:user-123:discord:discord-123:guilds:v2:data",
         JSON.stringify(mockGuilds),
         10,
       );
@@ -338,7 +395,7 @@ describe("DiscordService", () => {
       expect(firstCall.query.toString()).toBe("limit=200");
       expect(secondCall.query.toString()).toBe("limit=200&after=guild-199");
       expect(redisService.set).toHaveBeenCalledWith(
-        "user:user-123:discord-guilds:v2:data",
+        "user:user-123:discord:discord-123:guilds:v2:data",
         JSON.stringify([...firstPage, ...secondPage]),
         10,
       );
@@ -360,7 +417,7 @@ describe("DiscordService", () => {
       await service.getUserGuilds(userId, discordId);
 
       expect(mockRedlock.acquire).toHaveBeenCalledWith(
-        ["user:user-123:discord-guilds:lock"],
+        ["user:user-123:discord:discord-123:guilds:lock"],
         6000,
       );
     });
@@ -451,6 +508,45 @@ describe("DiscordService", () => {
         status: 429,
         source: "discord-service",
       });
+    });
+
+    it("should not hide the original error when lock release fails", async () => {
+      redisService.get.mockResolvedValue(null);
+      mockRedlock.acquire.mockResolvedValueOnce({
+        release: mockFn().mockRejectedValue(new Error("release failed")),
+      });
+
+      const rateLimitError = new RateLimitError({
+        url: "test",
+        method: "GET",
+        hash: "test",
+        limit: 5,
+        global: false,
+        retryAfter: 5000,
+        sublimitTimeout: 0,
+        scope: "user",
+        majorParameter: "test",
+        route: "/test",
+        timeToReset: 5000,
+      });
+      const mockRest = {
+        queueRequest: mockFn().mockRejectedValue(rateLimitError),
+      };
+      vi.spyOn(restClientFactory, "getRestClient").mockResolvedValue(
+        mockRest as never,
+      );
+
+      await expect(
+        service.getUserGuilds(userId, discordId),
+      ).rejects.toMatchObject({
+        status: HttpStatus.TOO_MANY_REQUESTS,
+      });
+      expect(mockLogger.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          level: "debug",
+          message: "Failed to release Discord guilds lock",
+        }),
+      );
     });
 
     it("should throw rate limit error when no stale data available", async () => {
@@ -726,7 +822,7 @@ describe("DiscordService", () => {
 
       expect(result).toEqual(mockGuildMember);
       expect(redisService.get).toHaveBeenCalledWith(
-        "guild:guild-123:member:user-123:data",
+        "guild:guild-123:member:user-123:discord:discord-123:data",
       );
       expect(mockRedlock.acquire).not.toHaveBeenCalled();
     });
@@ -750,8 +846,30 @@ describe("DiscordService", () => {
 
       expect(result).toEqual(mockGuildMember);
       expect(redisService.del).toHaveBeenCalledWith(
-        "guild:guild-123:member:user-123:data",
+        "guild:guild-123:member:user-123:discord:discord-123:data",
       );
+    });
+
+    it("should delete corrupted member cache and fetch from Discord", async () => {
+      redisService.get.mockResolvedValueOnce("{").mockResolvedValue(null);
+      authService.getIdpToken.mockResolvedValue(mockToken);
+
+      const mockRest = {
+        queueRequest: mockFn<() => Promise<unknown>>().mockResolvedValue(
+          createJsonResponse(mockGuildMember),
+        ),
+      };
+      vi.spyOn(restClientFactory, "getRestClient").mockResolvedValue(
+        mockRest as never,
+      );
+
+      const result = await service.getGuildMember(options);
+
+      expect(result).toEqual(mockGuildMember);
+      expect(redisService.del).toHaveBeenCalledWith(
+        "guild:guild-123:member:user-123:discord:discord-123:data",
+      );
+      expect(mockRest.queueRequest).toHaveBeenCalled();
     });
 
     it("should fetch from Discord API when cache is empty", async () => {
@@ -775,7 +893,7 @@ describe("DiscordService", () => {
         "guild-member",
       );
       expect(redisService.set).toHaveBeenCalledWith(
-        "guild:guild-123:member:user-123:data",
+        "guild:guild-123:member:user-123:discord:discord-123:data",
         JSON.stringify(mockGuildMember),
         10,
       );
@@ -798,7 +916,7 @@ describe("DiscordService", () => {
       );
 
       expect(redisService.set).toHaveBeenCalledWith(
-        "guild:guild-123:member:user-123:not-found",
+        "guild:guild-123:member:user-123:discord:discord-123:not-found",
         "1",
         30,
       );
@@ -906,7 +1024,7 @@ describe("DiscordService", () => {
       );
 
       expect(redisService.set).toHaveBeenCalledWith(
-        "guild:guild-123:member:user-123:unauthorized",
+        "guild:guild-123:member:user-123:discord:discord-123:unauthorized",
         "1",
         5,
       );
@@ -928,7 +1046,7 @@ describe("DiscordService", () => {
       await service.getGuildMember(options);
 
       expect(mockRedlock.acquire).toHaveBeenCalledWith(
-        ["guild:guild-123:member:user-123:lock"],
+        ["guild:guild-123:member:user-123:discord:discord-123:lock"],
         6000,
       );
     });
@@ -936,8 +1054,14 @@ describe("DiscordService", () => {
 
   describe("clearUserGuildIdsCache", () => {
     it("should delete cache for user guilds", async () => {
-      await service.clearUserGuildIdsCache("user-123");
+      await service.clearUserGuildIdsCache({
+        discordId: "discord-123",
+        userId: "user-123",
+      });
 
+      expect(redisService.del).toHaveBeenCalledWith(
+        "user:user-123:discord:discord-123:guilds:v2:data",
+      );
       expect(redisService.del).toHaveBeenCalledWith(
         "user:user-123:discord-guilds:v2:data",
       );
@@ -950,10 +1074,20 @@ describe("DiscordService", () => {
   describe("clearGuildMemberDataCache", () => {
     it("should delete cached guild member data", async () => {
       await service.clearGuildMemberDataCache({
+        discordId: "discord-123",
         guildId: "guild-123",
         userId: "user-123",
       });
 
+      expect(redisService.del).toHaveBeenCalledWith(
+        "guild:guild-123:member:user-123:discord:discord-123:data",
+      );
+      expect(redisService.del).toHaveBeenCalledWith(
+        "guild:guild-123:member:user-123:discord:discord-123:not-found",
+      );
+      expect(redisService.del).toHaveBeenCalledWith(
+        "guild:guild-123:member:user-123:discord:discord-123:unauthorized",
+      );
       expect(redisService.del).toHaveBeenCalledWith(
         "guild:guild-123:member:user-123:data",
       );

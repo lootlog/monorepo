@@ -7,12 +7,11 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 import type { DiscordRateLimiterService } from "./discord-rate-limiter.service";
+import type { DiscordSyncDiagnosticsService } from "./discord-sync-diagnostics.service";
 import type {
-  DiscordInvalidRequestEndpoint,
-  DiscordSyncDiagnosticsService,
-} from "./discord-sync-diagnostics.service";
-
-export type DiscordInvalidRequestStatus = 401 | 403 | 429;
+  DiscordEndpoint,
+  DiscordInvalidRequestStatus,
+} from "./discord.types";
 
 type DiscordHttpError = {
   status: number;
@@ -60,7 +59,7 @@ export function createDiscordRateLimitException(
 export async function throwIfDiscordRateLimited(
   rateLimiter: DiscordRateLimiterService,
   userId: string,
-  endpoint: string,
+  endpoint: DiscordEndpoint,
 ): Promise<void> {
   const isRateLimited = await rateLimiter.checkRateLimitForUser(
     userId,
@@ -84,7 +83,7 @@ export async function throwIfDiscordRateLimited(
 
 export async function recordInvalidDiscordRequest(
   diagnostics: DiscordSyncDiagnosticsService,
-  endpoint: DiscordInvalidRequestEndpoint,
+  endpoint: DiscordEndpoint,
   error: unknown,
 ): Promise<void> {
   const status = getInvalidDiscordRequestStatus(error);

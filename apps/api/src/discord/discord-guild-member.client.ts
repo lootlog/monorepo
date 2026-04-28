@@ -13,6 +13,12 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { Routes, type APIGuildMember } from "discord-api-types/v10";
 import { ExecutionError } from "redlock";
+import {
+  getGuildMemberCacheKeys,
+  getLegacyGuildMemberCacheKeys,
+  isApiGuildMember,
+  type DiscordGuildMemberCacheKeys,
+} from "./discord-cache.util";
 import { serviceConfig } from "src/config/service.config";
 import { RedlockService } from "src/lib/redlock/redlock.service";
 import { RuntimeEnvironment } from "src/types/runtime.types";
@@ -66,29 +72,27 @@ export class DiscordGuildMemberClient implements OnModuleInit {
       this.memberCacheTtlProd,
     );
     const { guildId, userId, discordId } = options;
-    const cacheKey = `guild:${guildId}:member:${userId}:data`;
-    const notFoundCacheKey = `guild:${guildId}:member:${userId}:not-found`;
-    const unauthorizedCacheKey = `guild:${guildId}:member:${userId}:unauthorized`;
-    const lockKey = `guild:${guildId}:member:${userId}:lock`;
+    const cacheKeys = getGuildMemberCacheKeys({ guildId, userId, discordId });
+    const legacyCacheKeys = getLegacyGuildMemberCacheKeys({ guildId, userId });
 
-    const cached = await this.getCachedMember(cacheKey);
+    const cached = await this.getCachedMember(cacheKeys.data);
     if (cached) {
       return cached;
     }
 
-    await this.replayNegativeCache(notFoundCacheKey, unauthorizedCacheKey);
+    await this.replayNegativeCache(cacheKeys);
 
     let lock: Awaited<ReturnType<typeof this.redlock.acquire>> | null = null;
 
     try {
-      lock = await this.redlock.acquire([lockKey], this.lockTtl);
+      lock = await this.redlock.acquire([cacheKeys.lock], this.lockTtl);
 
-      const cachedAfterLock = await this.getCachedMember(cacheKey);
+      const cachedAfterLock = await this.getCachedMember(cacheKeys.data);
       if (cachedAfterLock) {
         return cachedAfterLock;
       }
 
-      await this.replayNegativeCache(notFoundCacheKey, unauthorizedCacheKey);
+      await this.replayNegativeCache(cacheKeys);
       await throwIfDiscordRateLimited(this.rateLimiter, userId, "guild-member");
 
       const member = await this.fetchGuildMemberFromDiscord({
@@ -98,9 +102,12 @@ export class DiscordGuildMemberClient implements OnModuleInit {
       });
 
       await Promise.all([
-        this.redisService.set(cacheKey, JSON.stringify(member), cacheTtl),
-        this.redisService.del(notFoundCacheKey),
-        this.redisService.del(unauthorizedCacheKey),
+        this.redisService.set(cacheKeys.data, JSON.stringify(member), cacheTtl),
+        this.redisService.del(cacheKeys.notFound),
+        this.redisService.del(cacheKeys.unauthorized),
+        this.redisService.del(legacyCacheKeys.data),
+        this.redisService.del(legacyCacheKeys.notFound),
+        this.redisService.del(legacyCacheKeys.unauthorized),
       ]);
 
       return member;
@@ -123,9 +130,12 @@ export class DiscordGuildMemberClient implements OnModuleInit {
           message: `Guild member not found for guildId: ${guildId}, userId: ${userId}`,
         });
         await Promise.all([
-          this.redisService.del(cacheKey),
+          this.redisService.del(cacheKeys.data),
+          this.redisService.del(legacyCacheKeys.data),
+          this.redisService.del(cacheKeys.unauthorized),
+          this.redisService.del(legacyCacheKeys.unauthorized),
           this.redisService.set(
-            notFoundCacheKey,
+            cacheKeys.notFound,
             "1",
             this.getCacheTtl(
               this.notFoundCacheTtlLocal,
@@ -143,9 +153,12 @@ export class DiscordGuildMemberClient implements OnModuleInit {
           error,
         });
         await Promise.all([
-          this.redisService.del(cacheKey),
+          this.redisService.del(cacheKeys.data),
+          this.redisService.del(legacyCacheKeys.data),
+          this.redisService.del(cacheKeys.notFound),
+          this.redisService.del(legacyCacheKeys.notFound),
           this.redisService.set(
-            unauthorizedCacheKey,
+            cacheKeys.unauthorized,
             "1",
             this.getCacheTtl(this.errorCacheTtlLocal, this.errorCacheTtlProd),
           ),
@@ -165,17 +178,32 @@ export class DiscordGuildMemberClient implements OnModuleInit {
 
       throw toDiscordRequestException(error);
     } finally {
-      await lock?.release();
+      await this.releaseLock(lock, {
+        action: "getGuildMember",
+        guildId,
+        lockKey: cacheKeys.lock,
+        userId,
+      });
     }
   }
 
   async clearGuildMemberDataCache(options: {
     guildId: string;
     userId: string;
+    discordId: string;
   }): Promise<void> {
-    const { guildId, userId } = options;
+    const { guildId, userId, discordId } = options;
+    const cacheKeys = getGuildMemberCacheKeys({ guildId, userId, discordId });
+    const legacyCacheKeys = getLegacyGuildMemberCacheKeys({ guildId, userId });
 
-    await this.redisService.del(`guild:${guildId}:member:${userId}:data`);
+    await Promise.all([
+      this.redisService.del(cacheKeys.data),
+      this.redisService.del(cacheKeys.notFound),
+      this.redisService.del(cacheKeys.unauthorized),
+      this.redisService.del(legacyCacheKeys.data),
+      this.redisService.del(legacyCacheKeys.notFound),
+      this.redisService.del(legacyCacheKeys.unauthorized),
+    ]);
   }
 
   private async fetchGuildMemberFromDiscord(options: {
@@ -248,14 +276,13 @@ export class DiscordGuildMemberClient implements OnModuleInit {
   }
 
   private async replayNegativeCache(
-    notFoundCacheKey: string,
-    unauthorizedCacheKey: string,
+    cacheKeys: Pick<DiscordGuildMemberCacheKeys, "notFound" | "unauthorized">,
   ): Promise<void> {
-    if (await this.redisService.get(notFoundCacheKey)) {
+    if (await this.redisService.get(cacheKeys.notFound)) {
       throw new NotFoundException();
     }
 
-    if (await this.redisService.get(unauthorizedCacheKey)) {
+    if (await this.redisService.get(cacheKeys.unauthorized)) {
       throw new UnauthorizedException({
         message: "DISCORD_UNAUTHORIZED",
         requiresReauth: true,
@@ -268,7 +295,47 @@ export class DiscordGuildMemberClient implements OnModuleInit {
   }
 
   private parseCachedGuildMember(cached: string): APIGuildMember | null {
-    const parsed = JSON.parse(cached) as APIGuildMember | null;
-    return parsed ?? null;
+    try {
+      const parsed = JSON.parse(cached) as unknown;
+      if (isApiGuildMember(parsed)) {
+        return parsed;
+      }
+    } catch (error) {
+      this.logger.log({
+        level: "debug",
+        message: "Failed to parse Discord guild member cache",
+        error,
+      });
+    }
+
+    return null;
+  }
+
+  private async releaseLock(
+    lock: Awaited<ReturnType<typeof this.redlock.acquire>> | null,
+    context: {
+      action: string;
+      guildId: string;
+      lockKey: string;
+      userId: string;
+    },
+  ): Promise<void> {
+    if (!lock) {
+      return;
+    }
+
+    try {
+      await lock.release();
+    } catch (error) {
+      this.logger.log({
+        level: "debug",
+        message: "Failed to release Discord member lock",
+        action: context.action,
+        guildId: context.guildId,
+        lockKey: context.lockKey,
+        userId: context.userId,
+        error,
+      });
+    }
   }
 }

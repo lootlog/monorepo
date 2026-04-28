@@ -1166,6 +1166,7 @@ describe("MembersService", () => {
         }),
       });
       expect(discordService.clearGuildMemberDataCache).toHaveBeenCalledWith({
+        discordId: "discord-123",
         guildId: "guild-missing",
         userId: "user-123",
       });
