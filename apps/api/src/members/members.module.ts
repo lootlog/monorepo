@@ -15,7 +15,11 @@ import {
   MEMBER_BULK_REFRESH_QUEUE,
   MEMBER_REFRESH_QUEUE,
 } from "./constants/member-refresh-queue.constant";
+import { MemberDiscordAccessService } from "./member-discord-access.service";
+import { MemberDiscordRefreshService } from "./member-discord-refresh.service";
+import { MemberDiscordSyncService } from "./member-discord-sync.service";
 import { MemberRefreshSchedulerService } from "./member-refresh-scheduler.service";
+import { MemberRemovalService } from "./member-removal.service";
 
 @Module({
   imports: [
@@ -31,6 +35,10 @@ import { MemberRefreshSchedulerService } from "./member-refresh-scheduler.servic
   controllers: [MembersController],
   providers: [
     MembersService,
+    MemberDiscordAccessService,
+    MemberDiscordRefreshService,
+    MemberDiscordSyncService,
+    MemberRemovalService,
     MembersConsumer,
     MemberBulkRefreshProcessor,
     MemberRefreshProcessor,

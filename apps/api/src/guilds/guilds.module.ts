@@ -14,6 +14,7 @@ import { ChannelsModule } from "src/channels/channels.module";
 import { RedisModule } from "src/lib/redis/redis.module";
 import { PrismaModule } from "src/db/prisma.module";
 import { MemberSyncInterceptor } from "src/shared/interceptors/member-sync.interceptor";
+import { UserGuildAccessResolver } from "./user-guild-access-resolver.service";
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { MemberSyncInterceptor } from "src/shared/interceptors/member-sync.inter
   controllers: [GuildsController, GuildsInternalController],
   providers: [
     GuildsService,
+    UserGuildAccessResolver,
     GuildsEventsHandler,
     RetryService,
     MemberSyncInterceptor,

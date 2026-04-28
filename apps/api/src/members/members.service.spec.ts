@@ -32,6 +32,10 @@ import {
   getPermissionsCacheKey,
   getUserLootlogConfigCachePattern,
 } from "src/shared/constants/cache.constant";
+import { MemberDiscordAccessService } from "./member-discord-access.service";
+import { MemberDiscordRefreshService } from "./member-discord-refresh.service";
+import { MemberDiscordSyncService } from "./member-discord-sync.service";
+import { MemberRemovalService } from "./member-removal.service";
 
 vi.mock("src/config/service.config", () => ({
   serviceConfig: { env: "local" },
@@ -45,6 +49,7 @@ describe("MembersService", () => {
   let _refreshScheduler: Mocked<MemberRefreshSchedulerService>;
   let _diagnostics: Mocked<DiscordSyncDiagnosticsService>;
   let amqpConnection: Mocked<AmqpConnection>;
+  let memberDiscordAccessService: MemberDiscordAccessService;
 
   const mockGuild: Guild = {
     id: "guild-123",
@@ -167,6 +172,10 @@ describe("MembersService", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MembersService,
+        MemberDiscordAccessService,
+        MemberDiscordRefreshService,
+        MemberDiscordSyncService,
+        MemberRemovalService,
         { provide: WINSTON_MODULE_PROVIDER, useValue: mockLogger },
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: DiscordService, useValue: mockDiscordService },
@@ -190,6 +199,7 @@ describe("MembersService", () => {
       DiscordSyncDiagnosticsService,
     ) as Mocked<DiscordSyncDiagnosticsService>;
     amqpConnection = module.get(AmqpConnection);
+    memberDiscordAccessService = module.get(MemberDiscordAccessService);
 
     // Suppress logger output
     vi.spyOn(service["logger"], "warn").mockImplementation();
@@ -222,8 +232,11 @@ describe("MembersService", () => {
     });
 
     it("should return a 15 minute soft stale threshold in prod", () => {
-      (service as MembersService & { env: RuntimeEnvironment }).env =
-        RuntimeEnvironment.PROD;
+      (
+        memberDiscordAccessService as MemberDiscordAccessService & {
+          env: RuntimeEnvironment;
+        }
+      ).env = RuntimeEnvironment.PROD;
       const referenceTime = new Date("2026-03-10T10:00:00.000Z");
 
       const result = service.getMemberSoftStaleThreshold(referenceTime);
@@ -233,9 +246,10 @@ describe("MembersService", () => {
 
     it("should use the threshold helper when checking soft staleness", () => {
       const threshold = new Date("2026-03-10T10:00:00.000Z");
-      vi.spyOn(service, "getMemberSoftStaleThreshold").mockReturnValue(
-        threshold,
-      );
+      vi.spyOn(
+        memberDiscordAccessService,
+        "getMemberSoftStaleThreshold",
+      ).mockReturnValue(threshold);
 
       expect(
         service.isMemberSoftStale({

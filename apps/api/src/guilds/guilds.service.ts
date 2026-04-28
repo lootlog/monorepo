@@ -6,7 +6,6 @@ import {
   HttpException,
   HttpStatus,
 } from "@nestjs/common";
-import type { APIGuild } from "discord-api-types/v10";
 import { DiscordGuildSyncStatus } from "@lootlog/types";
 
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
@@ -40,12 +39,10 @@ import {
   GUILD_CACHE_TTL_SECONDS,
 } from "src/shared/constants/cache.constant";
 import { MEMBER_REFRESH_PRIORITY } from "src/members/constants/member-refresh-queue.constant";
-
-interface GuildRefreshCandidate {
-  guild: Guild;
-  isDiscordOwner: boolean;
-  hasDiscordAdmin: boolean;
-}
+import {
+  UserGuildAccessResolver,
+  type GuildRefreshCandidate,
+} from "./user-guild-access-resolver.service";
 
 export type CurrentUserGuildAccessSummary = Pick<
   Guild,
@@ -89,6 +86,7 @@ export class GuildsService {
     private readonly discordService: DiscordService,
     private readonly redisService: RedisService,
     private readonly amqpConnection: AmqpConnection,
+    private readonly userGuildAccessResolver: UserGuildAccessResolver,
   ) {
     this.staleAfterMs = discordBotConfig.channelSnapshotStaleSeconds * 1000;
   }
@@ -98,10 +96,11 @@ export class GuildsService {
       return this.getCurrentUserAccessibleGuildPlainEntries(discordId, userId);
     }
 
-    const guildCandidates = await this.getDiscordLootlogGuildCandidates(
-      discordId,
-      userId,
-    );
+    const guildCandidates =
+      await this.userGuildAccessResolver.getCandidateGuildsForUser(
+        discordId,
+        userId,
+      );
     const guilds = guildCandidates.map(({ guild }) => guild);
 
     return this.sortGuildEntriesByUserPreferences(userId, guilds);
@@ -115,9 +114,13 @@ export class GuildsService {
     let guildCandidates: GuildRefreshCandidate[];
 
     try {
-      guildCandidates = await this.getCandidateGuildsForUser(discordId, userId);
+      guildCandidates =
+        await this.userGuildAccessResolver.getCandidateGuildsForUser(
+          discordId,
+          userId,
+        );
     } catch (error) {
-      if (this.isDiscordGuildListFallbackError(error)) {
+      if (this.userGuildAccessResolver.isDiscordGuildListFallbackError(error)) {
         return this.getCurrentUserGuildAccessSummariesFromLocalFallback({
           discordId,
           userId,
@@ -535,75 +538,6 @@ export class GuildsService {
     return result;
   }
 
-  private getCandidateGuildsForUser(
-    discordId: string,
-    userId: string,
-  ): Promise<GuildRefreshCandidate[]> {
-    return this.getDiscordLootlogGuildCandidates(discordId, userId);
-  }
-
-  private isDiscordGuildListFallbackError(error: unknown): boolean {
-    if (!(error instanceof HttpException)) {
-      return false;
-    }
-
-    const status = error.getStatus();
-    return (
-      status === HttpStatus.TOO_MANY_REQUESTS ||
-      status === HttpStatus.REQUEST_TIMEOUT ||
-      status >= HttpStatus.INTERNAL_SERVER_ERROR
-    );
-  }
-
-  private async getDiscordLootlogGuildCandidates(
-    discordId: string,
-    userId: string,
-  ): Promise<GuildRefreshCandidate[]> {
-    const { guilds: discordGuilds } =
-      await this.discordService.getFreshCompleteUserGuilds(userId, discordId);
-    const discordGuildIds = discordGuilds.map((guild) => guild.id);
-
-    // Reconcile only after a successful fresh, complete Discord guild-list response.
-    await this.membersService.deactivateMembersMissingFromDiscordGuilds({
-      discordId,
-      userId,
-      activeDiscordGuildIds: discordGuildIds,
-      status: "GUILD_NOT_IN_DISCORD_LIST",
-    });
-
-    if (discordGuilds.length === 0) {
-      this.logger.log({
-        level: "warn",
-        message: `No guilds found for user ${userId} with Discord ID ${discordId}`,
-      });
-      return [];
-    }
-
-    const discordGuildMap = new Map(
-      discordGuilds.map((guild) => [guild.id, guild] as const),
-    );
-    const guilds = await this.prisma.guild.findMany({
-      where: {
-        id: { in: discordGuildIds },
-        active: true,
-      },
-    });
-
-    return guilds.map((guild) => {
-      const discordGuild = discordGuildMap.get(guild.id);
-
-      return {
-        guild,
-        isDiscordOwner: discordGuild
-          ? this.isDiscordOwnerGuild(discordGuild, discordId)
-          : false,
-        hasDiscordAdmin: discordGuild
-          ? this.hasDiscordAdministratorAccess(discordGuild)
-          : false,
-      };
-    });
-  }
-
   private getGuildMembersForPermissions(
     discordId: string,
     guildIds: string[],
@@ -674,14 +608,11 @@ export class GuildsService {
 
         return {
           guildId: candidate.guild.id,
-          priorityRank:
-            member === undefined
-              ? 0
-              : !hasPermissions
-                ? 1
-                : candidate.isDiscordOwner || candidate.hasDiscordAdmin
-                  ? 2
-                  : 3,
+          priorityRank: this.getGuildRefreshPriorityRank({
+            candidate,
+            member,
+            hasPermissions,
+          }),
         };
       })
       .filter((candidate) => candidate !== null)
@@ -694,18 +625,12 @@ export class GuildsService {
       return members;
     }
 
-    const processCandidate = async (
-      candidateIndex: number,
-      immediateAttempts: number,
-    ): Promise<void> => {
-      if (candidateIndex >= candidates.length) {
-        return;
-      }
+    let immediateAttempts = 0;
 
-      const candidate = candidates[candidateIndex];
-
+    for (const candidate of candidates) {
       if (immediateAttempts < maxImmediateRefreshes) {
         const refreshResult =
+          // eslint-disable-next-line no-await-in-loop -- refresh attempts are intentionally sequential
           await this.membersService.refreshGuildMemberWithinBudget({
             discordId,
             guildId: candidate.guildId,
@@ -714,15 +639,13 @@ export class GuildsService {
             reason: "guild-connect",
           });
 
-        await processCandidate(
-          candidateIndex + 1,
-          refreshResult.refreshQueued
-            ? immediateAttempts
-            : immediateAttempts + 1,
-        );
-        return;
+        if (!refreshResult.refreshQueued) {
+          immediateAttempts += 1;
+        }
+        continue;
       }
 
+      // eslint-disable-next-line no-await-in-loop -- queueing stays sequential to preserve ordering
       await this.membersService.queueMemberRefresh({
         discordId,
         guildId: candidate.guildId,
@@ -730,11 +653,7 @@ export class GuildsService {
         priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
         reason: "guild-connect-background",
       });
-
-      await processCandidate(candidateIndex + 1, immediateAttempts);
-    };
-
-    await processCandidate(0, 0);
+    }
 
     return this.getGuildMembersForPermissions(
       discordId,
@@ -742,30 +661,26 @@ export class GuildsService {
     );
   }
 
-  private filterGuildsByPermissions(
-    discordId: string,
-    guilds: Guild[],
-    members: Array<{
-      guildId: string;
-      active: boolean;
-      roles: Array<{ permissions: Permission[] }>;
-    }>,
-    requiredPermissions: Permission[],
-  ): Guild[] {
-    const memberMap = new Map(
-      members.map((member) => [member.guildId, member]),
-    );
+  private getGuildRefreshPriorityRank(options: {
+    candidate: GuildRefreshCandidate;
+    member: GuildPermissionMember | undefined;
+    hasPermissions: boolean;
+  }): number {
+    const { candidate, member, hasPermissions } = options;
 
-    return guilds.filter((guild) => {
-      if (guild.ownerId === discordId) {
-        return true;
-      }
+    if (!member) {
+      return 0;
+    }
 
-      return this.memberHasRequiredPermissions(
-        memberMap.get(guild.id),
-        requiredPermissions,
-      );
-    });
+    if (!hasPermissions) {
+      return 1;
+    }
+
+    if (candidate.isDiscordOwner || candidate.hasDiscordAdmin) {
+      return 2;
+    }
+
+    return 3;
   }
 
   private buildGuildPermissionsResult(
@@ -972,26 +887,6 @@ export class GuildsService {
       isDiscordOwner: false,
       hasDiscordAdmin: false,
     }));
-  }
-
-  private isDiscordOwnerGuild(
-    discordGuild: APIGuild,
-    discordId: string,
-  ): boolean {
-    const guildData = discordGuild as APIGuild & {
-      owner?: boolean;
-      owner_id?: string;
-    };
-
-    return Boolean(guildData.owner || guildData.owner_id === discordId);
-  }
-
-  private hasDiscordAdministratorAccess(discordGuild: APIGuild): boolean {
-    try {
-      return isDiscordAdministrator(BigInt(discordGuild.permissions));
-    } catch {
-      return false;
-    }
   }
 
   async updateGuildConfig(guildId: string, data: UpdateGuildConfigDto) {
