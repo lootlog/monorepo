@@ -35,8 +35,8 @@ import { useStatsSettings } from "./hooks/use-stats-settings";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { NpcKillersFiltersMobile } from "./components/npc-killers-filters-mobile";
 import { buildNpcKillersParams } from "./utils/build-stats-query-params";
-import { useMembersControllerGetGuildMembers } from "@/lib/api/generated/main/members/members";
-import type { MemberResponseDto as GuildMember } from "@/lib/api/generated/main/model";
+import { useMembersControllerGetGuildMemberReferences } from "@/lib/api/generated/main/members/members";
+import type { MemberReferenceResponseDtoOutput as GuildMember } from "@/lib/api/generated/main/model";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -51,10 +51,7 @@ const MemberNameWithColor: React.FC<MemberNameWithColorProps> = ({
 }) => {
   const adaptedMember = member
     ? {
-        roles: member.roles.map((r) => ({
-          position: r.position ?? 0,
-          color: r.color,
-        })),
+        roles: [{ position: 0, color: member.color }],
       }
     : undefined;
   const color = useMemberColor(adaptedMember);
@@ -96,7 +93,7 @@ export const NpcKillersPage: React.FC = () => {
       world: settings.world ?? undefined,
     }),
   );
-  const { data: guildMembers } = useMembersControllerGetGuildMembers(
+  const { data: guildMembers } = useMembersControllerGetGuildMemberReferences(
     { guildId },
     {
       includeInactive: true,

@@ -16,8 +16,10 @@ import {
   getPermissionsCacheKey,
   getUserLootlogConfigCachePattern,
 } from "src/shared/constants/cache.constant";
+import { MEMBER_LAST_DISCORD_STATUS } from "./constants/member-discord-status.constant";
 import { ErrorKey } from "./enum/error-key.enum";
 import type {
+  DeactivateMembersMissingFromDiscordGuildsOptions,
   DeleteMembersByGuildIdOptions,
   DeleteMembersByGuildIdResult,
   MemberRemovalNotificationTarget,
@@ -58,7 +60,7 @@ export class MemberRemovalService {
       data: {
         active: false,
         lastDiscordAttemptAt: new Date(),
-        lastDiscordStatus: "MANUALLY_DEACTIVATED",
+        lastDiscordStatus: MEMBER_LAST_DISCORD_STATUS.MANUALLY_DEACTIVATED,
         roles: { set: [] },
       },
       include: { roles: true },
@@ -73,12 +75,9 @@ export class MemberRemovalService {
     return deactivatedMember;
   }
 
-  async deactivateMembersMissingFromDiscordGuilds(options: {
-    discordId: string;
-    userId: string;
-    activeDiscordGuildIds: string[];
-    status: string;
-  }): Promise<number> {
+  async deactivateMembersMissingFromDiscordGuilds(
+    options: DeactivateMembersMissingFromDiscordGuildsOptions,
+  ): Promise<number> {
     const { discordId, userId, activeDiscordGuildIds, status } = options;
     const missingMembers = await this.prisma.member.findMany({
       where: {
@@ -155,7 +154,7 @@ export class MemberRemovalService {
         data: {
           active: false,
           lastDiscordAttemptAt: new Date(),
-          lastDiscordStatus: "GUILD_DEACTIVATED",
+          lastDiscordStatus: MEMBER_LAST_DISCORD_STATUS.GUILD_DEACTIVATED,
         },
       });
 

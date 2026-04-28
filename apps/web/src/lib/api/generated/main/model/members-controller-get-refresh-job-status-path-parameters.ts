@@ -8,5 +8,5 @@
 
 export type MembersControllerGetRefreshJobStatusPathParameters = {
  guildId: unknown,
-    jobId: string,
+    jobId: number,
  }

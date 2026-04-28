@@ -1,8 +1,14 @@
-import type { Member, Prisma, Role } from "src/generated/prisma/client";
+import type {
+  Member,
+  MemberRefreshJob,
+  Prisma,
+  Role,
+} from "src/generated/prisma/client";
 import type {
   MemberRefreshStatus,
   MemberSyncStatus,
 } from "./member-discord-sync-status";
+import type { MemberLastDiscordStatus } from "./constants/member-discord-status.constant";
 
 export type MemberWithRoles = Member & {
   roles: Role[];
@@ -37,6 +43,46 @@ export type MemberRemovalNotificationTarget = {
   globalUserId: string | null;
 };
 
+export type MemberReference = {
+  id: number;
+  userId: string;
+  name: string;
+  avatar: string | null;
+  color: number | null;
+  active: boolean;
+};
+
+export type MemberSummary = Omit<MemberReference, "active">;
+
+export type MemberLootlogConfigCharacterSummary = {
+  accountId: string;
+  characterId: string;
+  enabledForGuild: boolean;
+  characterName: string | null;
+  world: string | null;
+  icon: string | null;
+  metadataStatus: "resolved" | "missing_snapshot" | "invalid_character_ref";
+};
+
+export type MemberLootlogConfigSummary = {
+  memberUserId: string;
+  guildId: string;
+  isActive: boolean;
+  configuredCharacterCount: number;
+  enabledCharacterCount: number;
+  characters: MemberLootlogConfigCharacterSummary[];
+};
+
+export type RefreshJobWithCooldown = MemberRefreshJob & {
+  nextAvailableAt: Date;
+};
+
+export type MemberBulkRefreshJobData = {
+  jobId: number;
+  guildId: string;
+  memberIds: string[];
+};
+
 export type DeleteMembersByGuildIdResult = {
   count: number;
   affectedMembers: MemberRemovalNotificationTarget[];
@@ -44,4 +90,11 @@ export type DeleteMembersByGuildIdResult = {
 
 export type DeleteMembersByGuildIdOptions = {
   tx?: Prisma.TransactionClient;
+};
+
+export type DeactivateMembersMissingFromDiscordGuildsOptions = {
+  discordId: string;
+  userId: string;
+  activeDiscordGuildIds: string[];
+  status: MemberLastDiscordStatus;
 };

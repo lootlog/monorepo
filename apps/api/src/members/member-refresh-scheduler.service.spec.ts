@@ -125,8 +125,18 @@ describe("MemberRefreshSchedulerService", () => {
       data: MemberRefreshJobData;
       priority: number;
       promoteError: unknown;
+      changeDelayError: unknown;
       removeError: unknown;
       stateAfterPromoteError:
+        | "active"
+        | "completed"
+        | "delayed"
+        | "failed"
+        | "prioritized"
+        | "unknown"
+        | "waiting"
+        | "waiting-children";
+      stateAfterChangeDelayError:
         | "active"
         | "completed"
         | "delayed"
@@ -143,9 +153,17 @@ describe("MemberRefreshSchedulerService", () => {
         .mockResolvedValueOnce(state)
         .mockResolvedValueOnce(overrides.stateAfterPromoteError);
     }
+    if (overrides.stateAfterChangeDelayError) {
+      getState
+        .mockResolvedValueOnce(state)
+        .mockResolvedValueOnce(overrides.stateAfterChangeDelayError);
+    }
 
     const promote = overrides.promoteError
       ? mockFn().mockRejectedValue(overrides.promoteError)
+      : mockFn().mockResolvedValue(undefined);
+    const changeDelay = overrides.changeDelayError
+      ? mockFn().mockRejectedValue(overrides.changeDelayError)
       : mockFn().mockResolvedValue(undefined);
     const remove = overrides.removeError
       ? mockFn().mockRejectedValue(overrides.removeError)
@@ -159,6 +177,7 @@ describe("MemberRefreshSchedulerService", () => {
       updateData: mockFn().mockResolvedValue(undefined),
       changePriority: mockFn().mockResolvedValue(undefined),
       promote,
+      changeDelay,
       remove,
     };
   };
@@ -236,6 +255,20 @@ describe("MemberRefreshSchedulerService", () => {
       await service.enqueueRefresh(refreshData);
 
       expect(existingJob.promote).toHaveBeenCalledTimes(1);
+      expect(existingJob.changeDelay).not.toHaveBeenCalled();
+      expect(queue.add).not.toHaveBeenCalled();
+    });
+
+    it("should update delay for an existing delayed job when rate limit is still active", async () => {
+      const nextRefreshAt = new Date(Date.now() + 5000);
+      const existingJob = createJobMock("delayed");
+      queue.getJob.mockResolvedValue(existingJob);
+      rateLimiter.getNextAvailableAtForUser.mockResolvedValue(nextRefreshAt);
+
+      await service.enqueueRefresh(refreshData);
+
+      expect(existingJob.changeDelay).toHaveBeenCalledWith(expect.any(Number));
+      expect(existingJob.promote).not.toHaveBeenCalled();
       expect(queue.add).not.toHaveBeenCalled();
     });
 
@@ -262,6 +295,35 @@ describe("MemberRefreshSchedulerService", () => {
       expect(logger.log).not.toHaveBeenCalledWith(
         expect.objectContaining({
           message: "Failed to promote member refresh job",
+        }),
+      );
+    });
+
+    it("should treat changeDelay -3 as benign when the job already left delayed state", async () => {
+      const nextRefreshAt = new Date(Date.now() + 5000);
+      const existingJob = createJobMock("delayed", {
+        changeDelayError: { code: -3 },
+        stateAfterChangeDelayError: "waiting",
+      });
+      queue.getJob.mockResolvedValue(existingJob);
+      rateLimiter.getNextAvailableAtForUser.mockResolvedValue(nextRefreshAt);
+
+      await expect(service.enqueueRefresh(refreshData)).resolves.toEqual({
+        queued: true,
+        nextRefreshAt,
+      });
+
+      expect(existingJob.changeDelay).toHaveBeenCalledWith(expect.any(Number));
+      expect(logger.log).toHaveBeenCalledWith({
+        level: "debug",
+        message:
+          "Skipped changing member refresh job delay because it already left delayed state",
+        jobId: existingJob.id,
+        state: "waiting",
+      });
+      expect(logger.log).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: "Failed to change member refresh job delay",
         }),
       );
     });

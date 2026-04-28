@@ -4,7 +4,7 @@ import {
   reservationsCardsQueryOptions,
   reservationsQueryOptions,
 } from "@/features/guild/reservations/reservations-api";
-import { getMembersControllerGetGuildMembersQueryOptions } from "@/lib/api/generated/main/members/members";
+import { getMembersControllerGetGuildMemberReferencesQueryOptions } from "@/lib/api/generated/main/members/members";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 
 export const Route = createFileRoute("/_authenticated/$guildId/reservations")({
@@ -22,7 +22,7 @@ export const Route = createFileRoute("/_authenticated/$guildId/reservations")({
           reservationsCardsQueryOptions(params.guildId),
         ),
         context.queryClient.ensureQueryData(
-          getMembersControllerGetGuildMembersQueryOptions(
+          getMembersControllerGetGuildMemberReferencesQueryOptions(
             { guildId: params.guildId },
             {
               includeInactive: true,

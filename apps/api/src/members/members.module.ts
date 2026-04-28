@@ -1,11 +1,10 @@
 import { Module } from "@nestjs/common";
 import { BullModule } from "@nestjs/bullmq";
 import { MembersService } from "./members.service";
-import { MembersConsumer } from "./members.consumer";
 import { MemberBulkRefreshProcessor } from "./member-bulk-refresh.processor";
+import { MemberBulkRefreshService } from "./member-bulk-refresh.service";
 import { MemberRefreshProcessor } from "./member-refresh.processor";
 import { MembersController } from "./members.controller";
-import { RetryService } from "src/rabbitmq/retry.service";
 import { RabbitMQModule } from "@golevelup/nestjs-rabbitmq";
 import { rabbitmqConfig } from "src/config/rabbitmq.config";
 import { DiscordModule } from "src/discord/discord.module";
@@ -18,6 +17,8 @@ import {
 import { MemberDiscordAccessService } from "./member-discord-access.service";
 import { MemberDiscordRefreshService } from "./member-discord-refresh.service";
 import { MemberDiscordSyncService } from "./member-discord-sync.service";
+import { MemberReadService } from "./member-read.service";
+import { MemberRefreshJobEventsService } from "./member-refresh-job-events.service";
 import { MemberRefreshSchedulerService } from "./member-refresh-scheduler.service";
 import { MemberRemovalService } from "./member-removal.service";
 
@@ -38,12 +39,13 @@ import { MemberRemovalService } from "./member-removal.service";
     MemberDiscordAccessService,
     MemberDiscordRefreshService,
     MemberDiscordSyncService,
+    MemberReadService,
     MemberRemovalService,
-    MembersConsumer,
+    MemberBulkRefreshService,
     MemberBulkRefreshProcessor,
+    MemberRefreshJobEventsService,
     MemberRefreshProcessor,
     MemberRefreshSchedulerService,
-    RetryService,
   ],
   exports: [MembersService, MemberRefreshSchedulerService],
 })
