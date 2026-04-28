@@ -14,6 +14,8 @@ import { authConfig } from "src/config/auth.config";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import {
   getAuthTokenCacheKey,
+  getAuthTokenCachePattern,
+  getLegacyAuthTokenCacheKey,
   AUTH_TOKEN_CACHE_TTL_SECONDS,
 } from "src/shared/constants/cache.constant";
 
@@ -102,7 +104,7 @@ export class AuthService {
     discordId: string,
   ): Promise<Extract<GetIdpTokenResponse, { accessToken: string }>> {
     try {
-      const cacheKey = getAuthTokenCacheKey(userId);
+      const cacheKey = getAuthTokenCacheKey(userId, discordId);
       const cached = await this.redisService.get(cacheKey);
 
       if (cached) {
@@ -166,9 +168,19 @@ export class AuthService {
     }
   }
 
-  async invalidateIdpTokenCache(userId: string): Promise<void> {
-    const cacheKey = getAuthTokenCacheKey(userId);
-    await this.redisService.del(cacheKey);
+  async invalidateIdpTokenCache(
+    userId: string,
+    discordId?: string,
+  ): Promise<void> {
+    if (discordId) {
+      await this.redisService.del(getAuthTokenCacheKey(userId, discordId));
+      return;
+    }
+
+    await Promise.all([
+      this.redisService.deleteByPattern(getAuthTokenCachePattern(userId)),
+      this.redisService.del(getLegacyAuthTokenCacheKey(userId)),
+    ]);
   }
 
   private getErrorMessage(error: unknown): string {

@@ -18,6 +18,15 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { Routes, type APIGuild } from "discord-api-types/v10";
 import { ExecutionError } from "redlock";
+import {
+  getFreshCompleteUserGuildsHandoffKey,
+  getFreshCompleteUserGuildsLockKey,
+  getFreshCompleteUserGuildsRequestKey,
+  getLegacyUserGuildsCacheKeys,
+  getUserGuildsCacheKey,
+  getUserGuildsLockKey,
+  isApiGuildArray,
+} from "./discord-cache.util";
 import { serviceConfig } from "src/config/service.config";
 import { RedlockService } from "src/lib/redlock/redlock.service";
 import { RuntimeEnvironment } from "src/types/runtime.types";
@@ -76,12 +85,13 @@ export class DiscordUserGuildsClient implements OnModuleInit {
       this.guildsCacheTtlLocal,
       this.guildsCacheTtlProd,
     );
-    const cacheKey = this.getUserGuildsCacheKey(userId);
-    const lockKey = `user:${userId}:discord-guilds:lock`;
+    const identity = { userId, discordId };
+    const cacheKey = getUserGuildsCacheKey(identity);
+    const lockKey = getUserGuildsLockKey(identity);
 
-    const cached = await this.redisService.get(cacheKey);
+    const cached = await this.getCachedUserGuilds(cacheKey, userId);
     if (cached) {
-      return JSON.parse(cached) as APIGuild[];
+      return cached;
     }
 
     let lock: Awaited<ReturnType<typeof this.redlock.acquire>> | null = null;
@@ -89,9 +99,9 @@ export class DiscordUserGuildsClient implements OnModuleInit {
     try {
       lock = await this.redlock.acquire([lockKey], this.lockTtl);
 
-      const cachedAfterLock = await this.redisService.get(cacheKey);
+      const cachedAfterLock = await this.getCachedUserGuilds(cacheKey, userId);
       if (cachedAfterLock) {
-        return JSON.parse(cachedAfterLock) as APIGuild[];
+        return cachedAfterLock;
       }
 
       const guilds = await this.fetchUserGuildsFromDiscord(userId, discordId);
@@ -131,7 +141,11 @@ export class DiscordUserGuildsClient implements OnModuleInit {
       });
       throw toDiscordRequestException(error);
     } finally {
-      await lock?.release();
+      await this.releaseLock(lock, {
+        action: "getUserGuilds",
+        lockKey,
+        userId,
+      });
     }
   }
 
@@ -139,10 +153,8 @@ export class DiscordUserGuildsClient implements OnModuleInit {
     userId: string,
     discordId: string,
   ): Promise<FreshCompleteUserGuildsResult> {
-    const requestKey = this.getFreshCompleteUserGuildsRequestKey(
-      userId,
-      discordId,
-    );
+    const identity = { userId, discordId };
+    const requestKey = getFreshCompleteUserGuildsRequestKey(identity);
     const inFlightRequest = this.freshCompleteUserGuildRequests.get(requestKey);
 
     if (inFlightRequest) {
@@ -165,10 +177,17 @@ export class DiscordUserGuildsClient implements OnModuleInit {
     }
   }
 
-  async clearUserGuildIdsCache(userId: string): Promise<void> {
+  async clearUserGuildIdsCache(options: {
+    userId: string;
+    discordId: string;
+  }): Promise<void> {
+    const { userId, discordId } = options;
+
     await Promise.all([
-      this.redisService.del(this.getUserGuildsCacheKey(userId)),
-      this.redisService.del(`user:${userId}:discord-guilds:data`),
+      this.redisService.del(getUserGuildsCacheKey({ userId, discordId })),
+      ...getLegacyUserGuildsCacheKeys(userId).map((key) =>
+        this.redisService.del(key),
+      ),
     ]);
   }
 
@@ -211,11 +230,9 @@ export class DiscordUserGuildsClient implements OnModuleInit {
     userId: string,
     discordId: string,
   ): Promise<FreshCompleteUserGuildsResult> {
-    const handoffKey = this.getFreshCompleteUserGuildsHandoffKey(
-      userId,
-      discordId,
-    );
-    const lockKey = this.getFreshCompleteUserGuildsLockKey(userId, discordId);
+    const identity = { userId, discordId };
+    const handoffKey = getFreshCompleteUserGuildsHandoffKey(identity);
+    const lockKey = getFreshCompleteUserGuildsLockKey(identity);
     const cachedHandoff =
       await this.getFreshCompleteUserGuildsHandoff(handoffKey);
 
@@ -269,37 +286,16 @@ export class DiscordUserGuildsClient implements OnModuleInit {
 
       return result;
     } finally {
-      await lock?.release();
+      await this.releaseLock(lock, {
+        action: "getFreshCompleteUserGuilds",
+        lockKey,
+        userId,
+      });
     }
   }
 
   private getCacheTtl(localTtl: number, prodTtl: number): number {
     return this.isLocal ? localTtl : prodTtl;
-  }
-
-  private getUserGuildsCacheKey(userId: string): string {
-    return `user:${userId}:discord-guilds:v2:data`;
-  }
-
-  private getFreshCompleteUserGuildsRequestKey(
-    userId: string,
-    discordId: string,
-  ): string {
-    return `user:${userId}:discord:${discordId}:fresh-complete-guilds`;
-  }
-
-  private getFreshCompleteUserGuildsLockKey(
-    userId: string,
-    discordId: string,
-  ): string {
-    return `${this.getFreshCompleteUserGuildsRequestKey(userId, discordId)}:lock`;
-  }
-
-  private getFreshCompleteUserGuildsHandoffKey(
-    userId: string,
-    discordId: string,
-  ): string {
-    return `${this.getFreshCompleteUserGuildsRequestKey(userId, discordId)}:handoff`;
   }
 
   private async getFreshCompleteUserGuildsHandoff(
@@ -316,7 +312,7 @@ export class DiscordUserGuildsClient implements OnModuleInit {
       if (
         parsed.fresh === true &&
         parsed.complete === true &&
-        Array.isArray(parsed.guilds)
+        isApiGuildArray(parsed.guilds)
       ) {
         return parsed;
       }
@@ -331,6 +327,56 @@ export class DiscordUserGuildsClient implements OnModuleInit {
 
     await this.redisService.del(key);
     return null;
+  }
+
+  private async getCachedUserGuilds(
+    cacheKey: string,
+    userId: string,
+  ): Promise<APIGuild[] | null> {
+    const cached = await this.redisService.get(cacheKey);
+    if (!cached) {
+      return null;
+    }
+
+    try {
+      const parsed = JSON.parse(cached) as unknown;
+      if (isApiGuildArray(parsed)) {
+        return parsed;
+      }
+    } catch (error) {
+      this.logger.log({
+        level: "debug",
+        message: "Failed to parse Discord guilds cache",
+        userId,
+        cacheKey,
+        error,
+      });
+    }
+
+    await this.redisService.del(cacheKey);
+    return null;
+  }
+
+  private async releaseLock(
+    lock: Awaited<ReturnType<typeof this.redlock.acquire>> | null,
+    context: { action: string; lockKey: string; userId: string },
+  ): Promise<void> {
+    if (!lock) {
+      return;
+    }
+
+    try {
+      await lock.release();
+    } catch (error) {
+      this.logger.log({
+        level: "debug",
+        message: "Failed to release Discord guilds lock",
+        action: context.action,
+        lockKey: context.lockKey,
+        userId: context.userId,
+        error,
+      });
+    }
   }
 
   private async waitForFreshCompleteUserGuildsHandoff(

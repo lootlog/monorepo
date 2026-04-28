@@ -205,6 +205,7 @@ export class MemberRemovalService {
     if (member.globalUserId) {
       operations.push(
         this.discordService.clearGuildMemberDataCache({
+          discordId: member.discordId,
           guildId: member.guildId,
           userId: member.globalUserId,
         }),

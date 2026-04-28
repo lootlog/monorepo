@@ -2,9 +2,11 @@ import { Inject, Injectable } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { RedisService } from "@lootlog/nest-shared/redis";
+import type {
+  DiscordEndpoint,
+  DiscordInvalidRequestStatus,
+} from "./discord.types";
 
-export type DiscordInvalidRequestEndpoint = "guilds" | "guild-member";
-export type DiscordInvalidRequestStatus = 401 | 403 | 429;
 export type DiscordMemberRefreshMetricOutcome =
   | "queued"
   | "delayed"
@@ -31,7 +33,7 @@ return 1
   ) {}
 
   async recordInvalidDiscordRequest(options: {
-    endpoint: DiscordInvalidRequestEndpoint;
+    endpoint: DiscordEndpoint;
     status: DiscordInvalidRequestStatus;
     source?: string;
   }): Promise<void> {
