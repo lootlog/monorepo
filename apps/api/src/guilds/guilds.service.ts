@@ -117,7 +117,7 @@ export class GuildsService {
     try {
       guildCandidates = await this.getCandidateGuildsForUser(discordId, userId);
     } catch (error) {
-      if (this.isDiscordRateLimitError(error)) {
+      if (this.isDiscordGuildListFallbackError(error)) {
         return this.getCurrentUserGuildAccessSummariesFromLocalFallback({
           discordId,
           userId,
@@ -164,7 +164,7 @@ export class GuildsService {
     const { discordId, userId, requiredPermissions, error } = options;
     this.logger.warn({
       message:
-        "Discord guild list rate limited, returning stale local guild access summaries",
+        "Discord guild list unavailable, returning stale local guild access summaries",
       discordId,
       userId,
       error,
@@ -542,10 +542,16 @@ export class GuildsService {
     return this.getDiscordLootlogGuildCandidates(discordId, userId);
   }
 
-  private isDiscordRateLimitError(error: unknown): boolean {
+  private isDiscordGuildListFallbackError(error: unknown): boolean {
+    if (!(error instanceof HttpException)) {
+      return false;
+    }
+
+    const status = error.getStatus();
     return (
-      error instanceof HttpException &&
-      error.getStatus() === HttpStatus.TOO_MANY_REQUESTS
+      status === HttpStatus.TOO_MANY_REQUESTS ||
+      status === HttpStatus.REQUEST_TIMEOUT ||
+      status >= HttpStatus.INTERNAL_SERVER_ERROR
     );
   }
 

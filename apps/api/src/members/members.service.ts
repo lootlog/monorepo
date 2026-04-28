@@ -32,6 +32,7 @@ import { RoutingKey } from "src/enum/routing-key.enum";
 import { serviceConfig } from "src/config/service.config";
 import { RuntimeEnvironment } from "src/types/runtime.types";
 import { DiscordService } from "src/discord/discord.service";
+import { DiscordSyncDiagnosticsService } from "src/discord/discord-sync-diagnostics.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import {
   getPermissionsCacheKey,
@@ -137,6 +138,7 @@ export class MembersService {
     private readonly memberRefreshScheduler: MemberRefreshSchedulerService,
     private readonly amqpConnection: AmqpConnection,
     private readonly redisService: RedisService,
+    private readonly diagnostics: DiscordSyncDiagnosticsService,
   ) {
     this.env = serviceConfig.env;
   }
@@ -230,6 +232,11 @@ export class MembersService {
     // removed. The grace window prevents those failures from preserving access
     // indefinitely.
     if (storedMember?.active && this.canUseStaleMember(storedMember, now)) {
+      await this.diagnostics.recordMemberRefreshMetric({
+        outcome: "stale_used",
+        reason: refreshAttempt.status,
+      });
+
       return this.decorateMember(storedMember, {
         isStale: true,
         staleWarning: refreshAttempt.refreshQueued
@@ -238,6 +245,17 @@ export class MembersService {
         refreshQueued: refreshAttempt.refreshQueued,
         nextRefreshAt: refreshAttempt.nextRefreshAt,
       });
+    }
+
+    if (
+      storedMember?.active &&
+      this.isTransientMemberSyncStatus(refreshAttempt.status)
+    ) {
+      await this.diagnostics.recordMemberRefreshMetric({
+        outcome: "verification_unavailable",
+        reason: refreshAttempt.status,
+      });
+      this.throwMemberVerificationUnavailable(storedMember, refreshAttempt);
     }
 
     return null;
@@ -280,6 +298,13 @@ export class MembersService {
         priority,
         reason,
       });
+      if (nextRefreshAt) {
+        await this.diagnostics.recordMemberRefreshMetric({
+          outcome: "rate_limited",
+          reason,
+        });
+      }
+
       return {
         member: null,
         status: nextRefreshAt ? "RATE_LIMITED" : "QUEUED",
@@ -303,6 +328,7 @@ export class MembersService {
         priority,
         reason,
       });
+
       return {
         member: null,
         status: "QUEUED",
@@ -324,6 +350,11 @@ export class MembersService {
           priority,
           reason,
         });
+        await this.diagnostics.recordMemberRefreshMetric({
+          outcome: "rate_limited",
+          reason,
+        });
+
         return {
           member: null,
           status: "RATE_LIMITED",
@@ -345,6 +376,11 @@ export class MembersService {
           guildId,
           userId,
           priority,
+          reason,
+        });
+
+        await this.diagnostics.recordMemberRefreshMetric({
+          outcome: "rate_limited",
           reason,
         });
 
@@ -1284,6 +1320,31 @@ export class MembersService {
       lastSyncAt &&
       now.getTime() - lastSyncAt.getTime() <= this.staleAccessGraceMs,
     );
+  }
+
+  private isTransientMemberSyncStatus(
+    status: MemberRefreshAttempt["status"],
+  ): boolean {
+    return (
+      status === "QUEUED" ||
+      status === "RATE_LIMITED" ||
+      status === "AUTH_SERVICE_UNAVAILABLE" ||
+      status === "DISCORD_SERVICE_UNAVAILABLE" ||
+      status === "ERROR" ||
+      status.startsWith("DISCORD_HTTP_")
+    );
+  }
+
+  private throwMemberVerificationUnavailable(
+    member: Pick<Member, "lastDiscordSyncAt">,
+    attempt: Pick<MemberRefreshAttempt, "nextRefreshAt" | "refreshQueued">,
+  ): never {
+    throw new ServiceUnavailableException({
+      message: ErrorKey.DISCORD_MEMBER_VERIFICATION_UNAVAILABLE,
+      lastDiscordSyncAt: this.getLastDiscordSyncAt(member),
+      nextRefreshAt: attempt.nextRefreshAt,
+      refreshQueued: attempt.refreshQueued,
+    });
   }
 
   private throwMemberSyncError(attempt: Pick<MemberRefreshAttempt, "error">) {

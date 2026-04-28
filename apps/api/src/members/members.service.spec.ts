@@ -14,6 +14,7 @@ import { MembersService } from "./members.service";
 import { PrismaService } from "src/db/prisma.service";
 import { DiscordService } from "src/discord/discord.service";
 import { DiscordRateLimiterService } from "src/discord/discord-rate-limiter.service";
+import { DiscordSyncDiagnosticsService } from "src/discord/discord-sync-diagnostics.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { ErrorKey } from "./enum/error-key.enum";
 import { RuntimeEnvironment } from "src/types/runtime.types";
@@ -42,6 +43,7 @@ describe("MembersService", () => {
   let discordService: Mocked<DiscordService>;
   let _rateLimiter: Mocked<DiscordRateLimiterService>;
   let _refreshScheduler: Mocked<MemberRefreshSchedulerService>;
+  let _diagnostics: Mocked<DiscordSyncDiagnosticsService>;
   let amqpConnection: Mocked<AmqpConnection>;
 
   const mockGuild: Guild = {
@@ -156,6 +158,12 @@ describe("MembersService", () => {
       deleteByPattern: mockFn(),
     };
 
+    const mockDiagnostics = {
+      recordInvalidDiscordRequest: mockFn().mockResolvedValue(undefined),
+      recordMemberRefreshMetric: mockFn().mockResolvedValue(undefined),
+      recordMemberRefreshLatency: mockFn().mockResolvedValue(undefined),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MembersService,
@@ -169,6 +177,7 @@ describe("MembersService", () => {
         },
         { provide: AmqpConnection, useValue: mockAmqpConnection },
         { provide: RedisService, useValue: mockRedisService },
+        { provide: DiscordSyncDiagnosticsService, useValue: mockDiagnostics },
       ],
     }).compile();
 
@@ -177,6 +186,9 @@ describe("MembersService", () => {
     discordService = module.get(DiscordService);
     _rateLimiter = module.get(DiscordRateLimiterService);
     _refreshScheduler = module.get(MemberRefreshSchedulerService);
+    _diagnostics = module.get(
+      DiscordSyncDiagnosticsService,
+    ) as Mocked<DiscordSyncDiagnosticsService>;
     amqpConnection = module.get(AmqpConnection);
 
     // Suppress logger output
@@ -320,7 +332,7 @@ describe("MembersService", () => {
       });
     });
 
-    it("should not use stale member access for more than six hours", async () => {
+    it("should return verification unavailable instead of stale member access after six hours", async () => {
       const staleMember = {
         ...mockMember,
         updatedAt: new Date(Date.now() - 7 * 60 * 60 * 1000),
@@ -331,11 +343,19 @@ describe("MembersService", () => {
         new Date(Date.now() + 5000),
       );
 
-      const result = await service.getGuildMemberById(options);
+      await expect(service.getGuildMemberById(options)).rejects.toMatchObject({
+        response: expect.objectContaining({
+          message: ErrorKey.DISCORD_MEMBER_VERIFICATION_UNAVAILABLE,
+        }),
+        status: HttpStatus.SERVICE_UNAVAILABLE,
+      });
 
-      expect(result).toBeNull();
       expect(discordService.getGuildMember).not.toHaveBeenCalled();
       expect(_refreshScheduler.enqueueRefresh).toHaveBeenCalled();
+      expect(_diagnostics.recordMemberRefreshMetric).toHaveBeenCalledWith({
+        outcome: "verification_unavailable",
+        reason: "RATE_LIMITED",
+      });
     });
 
     it("should not return a stale active member after Discord returns NotFoundException", async () => {

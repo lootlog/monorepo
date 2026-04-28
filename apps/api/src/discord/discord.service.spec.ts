@@ -13,6 +13,7 @@ import { DiscordService } from "./discord.service";
 import { AuthService } from "src/auth/auth.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { DiscordRateLimiterService } from "./discord-rate-limiter.service";
+import { DiscordSyncDiagnosticsService } from "./discord-sync-diagnostics.service";
 import { RedlockService } from "src/lib/redlock/redlock.service";
 import {
   TokenExpiredError,
@@ -51,6 +52,11 @@ describe("DiscordService", () => {
   };
   let mockRedlock: {
     acquire: Mock;
+  };
+  let diagnostics: {
+    recordInvalidDiscordRequest: Mock;
+    recordMemberRefreshMetric: Mock;
+    recordMemberRefreshLatency: Mock;
   };
 
   const mockGuilds: APIGuild[] = [
@@ -134,6 +140,12 @@ describe("DiscordService", () => {
       updateRateLimitFromHeaders: mockFn(),
     };
 
+    const mockDiagnostics = {
+      recordInvalidDiscordRequest: mockFn().mockResolvedValue(undefined),
+      recordMemberRefreshMetric: mockFn().mockResolvedValue(undefined),
+      recordMemberRefreshLatency: mockFn().mockResolvedValue(undefined),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DiscordService,
@@ -141,6 +153,7 @@ describe("DiscordService", () => {
         { provide: AuthService, useValue: mockAuthService },
         { provide: RedisService, useValue: mockRedisService },
         { provide: DiscordRateLimiterService, useValue: mockRateLimiter },
+        { provide: DiscordSyncDiagnosticsService, useValue: mockDiagnostics },
         {
           provide: RedlockService,
           useValue: { createInstance: mockFn().mockReturnValue(mockRedlock) },
@@ -152,6 +165,9 @@ describe("DiscordService", () => {
     authService = module.get(AuthService);
     redisService = module.get(RedisService);
     rateLimiter = module.get(DiscordRateLimiterService);
+    diagnostics = module.get(
+      DiscordSyncDiagnosticsService,
+    ) as typeof diagnostics;
 
     service["redlock"] = mockRedlock as never;
   });
@@ -406,6 +422,11 @@ describe("DiscordService", () => {
         "guilds",
         5000,
       );
+      expect(diagnostics.recordInvalidDiscordRequest).toHaveBeenCalledWith({
+        endpoint: "guilds",
+        status: 429,
+        source: "discord-service",
+      });
     });
 
     it("should throw rate limit error when no stale data available", async () => {
@@ -459,9 +480,17 @@ describe("DiscordService", () => {
   describe("getFreshCompleteUserGuilds", () => {
     const userId = "user-123";
     const discordId = "discord-123";
+    const handoffKey =
+      "user:user-123:discord:discord-123:fresh-complete-guilds:handoff";
 
     it("should bypass cached guilds and mark the Discord result as fresh and complete", async () => {
-      redisService.get.mockResolvedValue(JSON.stringify(mockGuilds));
+      redisService.get.mockImplementation((key: string) => {
+        return Promise.resolve(
+          key === "user:user-123:discord-guilds:v2:data"
+            ? JSON.stringify(mockGuilds)
+            : null,
+        );
+      });
       const freshGuilds = [
         {
           ...mockGuilds[0],
@@ -485,9 +514,72 @@ describe("DiscordService", () => {
         fresh: true,
         complete: true,
       });
-      expect(redisService.get).not.toHaveBeenCalled();
-      expect(redisService.set).not.toHaveBeenCalled();
+      expect(redisService.get).not.toHaveBeenCalledWith(
+        "user:user-123:discord-guilds:v2:data",
+      );
+      expect(redisService.set).toHaveBeenCalledWith(
+        handoffKey,
+        JSON.stringify({
+          guilds: freshGuilds,
+          fresh: true,
+          complete: true,
+        }),
+        2,
+      );
       expect(mockRest.queueRequest).toHaveBeenCalledTimes(1);
+    });
+
+    it("should return a distributed handoff result without calling Discord", async () => {
+      const handoffResult = {
+        guilds: [
+          {
+            ...mockGuilds[0],
+            id: "guild-handoff",
+          } as APIGuild,
+        ],
+        fresh: true,
+        complete: true,
+      } as const;
+      redisService.get.mockResolvedValue(JSON.stringify(handoffResult));
+      const getRestClientSpy = vi.spyOn(service, "getRestClient");
+
+      const result = await service.getFreshCompleteUserGuilds(
+        userId,
+        discordId,
+      );
+
+      expect(result).toEqual(handoffResult);
+      expect(mockRedlock.acquire).not.toHaveBeenCalled();
+      expect(getRestClientSpy).not.toHaveBeenCalled();
+    });
+
+    it("should use a distributed lock and handoff result before fetching Discord", async () => {
+      const handoffResult = {
+        guilds: [
+          {
+            ...mockGuilds[0],
+            id: "guild-after-lock",
+          } as APIGuild,
+        ],
+        fresh: true,
+        complete: true,
+      } as const;
+      redisService.get
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(JSON.stringify(handoffResult));
+      const getRestClientSpy = vi.spyOn(service, "getRestClient");
+
+      const result = await service.getFreshCompleteUserGuilds(
+        userId,
+        discordId,
+      );
+
+      expect(result).toEqual(handoffResult);
+      expect(mockRedlock.acquire).toHaveBeenCalledWith(
+        ["user:user-123:discord:discord-123:fresh-complete-guilds:lock"],
+        15000,
+      );
+      expect(getRestClientSpy).not.toHaveBeenCalled();
     });
 
     it("should share one Discord request between concurrent fresh guild lookups for the same user", async () => {

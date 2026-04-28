@@ -26,6 +26,11 @@ import {
 import { ExecutionError } from "redlock";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { DiscordRateLimiterService } from "./discord-rate-limiter.service";
+import {
+  DiscordSyncDiagnosticsService,
+  type DiscordInvalidRequestEndpoint,
+  type DiscordInvalidRequestStatus,
+} from "./discord-sync-diagnostics.service";
 import { RedlockService } from "src/lib/redlock/redlock.service";
 import {
   TokenExpiredError,
@@ -59,6 +64,10 @@ export class DiscordService implements OnModuleInit {
   private readonly errorCacheTtlProd = 60;
   private readonly notFoundCacheTtlLocal = 30;
   private readonly notFoundCacheTtlProd = 300;
+  private readonly freshCompleteGuildsLockTtl = 15000;
+  private readonly freshCompleteGuildsHandoffTtlSeconds = 2;
+  private readonly freshCompleteGuildsHandoffWaitMs = 1500;
+  private readonly freshCompleteGuildsHandoffPollMs = 100;
   private readonly freshCompleteUserGuildRequests = new Map<
     string,
     Promise<FreshCompleteUserGuildsResult>
@@ -74,6 +83,7 @@ export class DiscordService implements OnModuleInit {
     private readonly redisService: RedisService,
     private readonly rateLimiter: DiscordRateLimiterService,
     private readonly redlockService: RedlockService,
+    private readonly diagnostics: DiscordSyncDiagnosticsService,
   ) {
     this.isLocal = serviceConfig.env === RuntimeEnvironment.LOCAL;
   }
@@ -328,7 +338,11 @@ export class DiscordService implements OnModuleInit {
       return inFlightRequest;
     }
 
-    const request = this.fetchFreshCompleteUserGuilds(userId, discordId);
+    const request =
+      this.fetchFreshCompleteUserGuildsWithDistributedSingleFlight(
+        userId,
+        discordId,
+      );
     this.freshCompleteUserGuildRequests.set(requestKey, request);
 
     try {
@@ -375,6 +389,72 @@ export class DiscordService implements OnModuleInit {
     }
   }
 
+  private async fetchFreshCompleteUserGuildsWithDistributedSingleFlight(
+    userId: string,
+    discordId: string,
+  ): Promise<FreshCompleteUserGuildsResult> {
+    const handoffKey = this.getFreshCompleteUserGuildsHandoffKey(
+      userId,
+      discordId,
+    );
+    const lockKey = this.getFreshCompleteUserGuildsLockKey(userId, discordId);
+    const cachedHandoff =
+      await this.getFreshCompleteUserGuildsHandoff(handoffKey);
+
+    if (cachedHandoff) {
+      return cachedHandoff;
+    }
+
+    let lock: Awaited<ReturnType<typeof this.redlock.acquire>> | null = null;
+
+    try {
+      lock = await this.redlock.acquire(
+        [lockKey],
+        this.freshCompleteGuildsLockTtl,
+      );
+    } catch (error) {
+      if (error instanceof ExecutionError) {
+        const waitedHandoff =
+          await this.waitForFreshCompleteUserGuildsHandoff(handoffKey);
+
+        if (waitedHandoff) {
+          return waitedHandoff;
+        }
+
+        this.logger.log({
+          level: "warn",
+          message: "Fresh complete guild lookup is already in progress",
+          userId,
+        });
+        throw new ServiceUnavailableException({
+          message: "DISCORD_GUILDS_SINGLE_FLIGHT_LOCK_UNAVAILABLE",
+        });
+      }
+
+      throw error;
+    }
+
+    try {
+      const handoffAfterLock =
+        await this.getFreshCompleteUserGuildsHandoff(handoffKey);
+
+      if (handoffAfterLock) {
+        return handoffAfterLock;
+      }
+
+      const result = await this.fetchFreshCompleteUserGuilds(userId, discordId);
+      await this.redisService.set(
+        handoffKey,
+        JSON.stringify(result),
+        this.freshCompleteGuildsHandoffTtlSeconds,
+      );
+
+      return result;
+    } finally {
+      await lock?.release();
+    }
+  }
+
   async clearUserGuildIdsCache(userId: string) {
     await Promise.all([
       this.redisService.del(this.getUserGuildsCacheKey(userId)),
@@ -400,6 +480,68 @@ export class DiscordService implements OnModuleInit {
     discordId: string,
   ): string {
     return `user:${userId}:discord:${discordId}:fresh-complete-guilds`;
+  }
+
+  private getFreshCompleteUserGuildsLockKey(
+    userId: string,
+    discordId: string,
+  ): string {
+    return `${this.getFreshCompleteUserGuildsRequestKey(userId, discordId)}:lock`;
+  }
+
+  private getFreshCompleteUserGuildsHandoffKey(
+    userId: string,
+    discordId: string,
+  ): string {
+    return `${this.getFreshCompleteUserGuildsRequestKey(userId, discordId)}:handoff`;
+  }
+
+  private async getFreshCompleteUserGuildsHandoff(
+    key: string,
+  ): Promise<FreshCompleteUserGuildsResult | null> {
+    const cached = await this.redisService.get(key);
+
+    if (!cached) {
+      return null;
+    }
+
+    try {
+      const parsed = JSON.parse(cached) as FreshCompleteUserGuildsResult;
+      if (
+        parsed.fresh === true &&
+        parsed.complete === true &&
+        Array.isArray(parsed.guilds)
+      ) {
+        return parsed;
+      }
+    } catch (error) {
+      this.logger.log({
+        level: "debug",
+        message: "Failed to parse fresh complete guild handoff cache",
+        key,
+        error,
+      });
+    }
+
+    await this.redisService.del(key);
+    return null;
+  }
+
+  private async waitForFreshCompleteUserGuildsHandoff(
+    key: string,
+  ): Promise<FreshCompleteUserGuildsResult | null> {
+    const deadline = Date.now() + this.freshCompleteGuildsHandoffWaitMs;
+
+    while (Date.now() < deadline) {
+      await this.sleep(this.freshCompleteGuildsHandoffPollMs);
+
+      const handoff = await this.getFreshCompleteUserGuildsHandoff(key);
+      if (handoff) {
+        return handoff;
+      }
+    }
+
+    return null;
   }
 
   private async fetchUserGuildsFromDiscord(
@@ -472,6 +614,8 @@ export class DiscordService implements OnModuleInit {
 
       return (await parseResponse(response)) as APIGuild[];
     } catch (error: unknown) {
+      await this.recordInvalidDiscordRequest("guilds", error);
+
       if (error instanceof RateLimitError) {
         await this.rateLimiter.setRateLimitForUser(
           userId,
@@ -571,6 +715,8 @@ export class DiscordService implements OnModuleInit {
           path,
         });
       } catch (error: unknown) {
+        await this.recordInvalidDiscordRequest("guild-member", error);
+
         if (this.isNotFoundStatus(error)) {
           throw error;
         }
@@ -656,5 +802,49 @@ export class DiscordService implements OnModuleInit {
     } finally {
       await lock?.release();
     }
+  }
+
+  private async recordInvalidDiscordRequest(
+    endpoint: DiscordInvalidRequestEndpoint,
+    error: unknown,
+  ): Promise<void> {
+    const status = this.getInvalidRequestStatus(error);
+
+    if (status === null) {
+      return;
+    }
+
+    await this.diagnostics.recordInvalidDiscordRequest({
+      endpoint,
+      status,
+      source: "discord-service",
+    });
+  }
+
+  private getInvalidRequestStatus(
+    error: unknown,
+  ): DiscordInvalidRequestStatus | null {
+    if (error instanceof RateLimitError) {
+      return 429;
+    }
+
+    const status = this.getHttpStatus(error);
+    if (status === HttpStatus.UNAUTHORIZED) {
+      return 401;
+    }
+
+    if (status === HttpStatus.FORBIDDEN) {
+      return 403;
+    }
+
+    if (status === HttpStatus.TOO_MANY_REQUESTS) {
+      return 429;
+    }
+
+    return null;
+  }
+
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }

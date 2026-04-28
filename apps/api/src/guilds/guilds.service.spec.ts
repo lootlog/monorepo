@@ -1,5 +1,9 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { HttpException, HttpStatus } from "@nestjs/common";
+import {
+  HttpException,
+  HttpStatus,
+  ServiceUnavailableException,
+} from "@nestjs/common";
 import { mockFn } from "src/test/mock-fn";
 import { GuildsService } from "./guilds.service";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
@@ -548,6 +552,59 @@ describe("GuildsService", () => {
         mockMembersService.refreshGuildMemberWithinBudget,
       ).not.toHaveBeenCalled();
       expect(mockMembersService.queueMemberRefresh).not.toHaveBeenCalled();
+    });
+
+    it("falls back to stale local accessible guilds when Discord guild list is temporarily unavailable", async () => {
+      mockDiscordService.getFreshCompleteUserGuilds.mockRejectedValue(
+        new ServiceUnavailableException({
+          message: "DISCORD_GUILDS_SINGLE_FLIGHT_LOCK_UNAVAILABLE",
+        }),
+      );
+      mockPrismaService.guild.findMany.mockResolvedValue([
+        createGuild({ id: "guild-access", ownerId: "owner-1", name: "Access" }),
+      ]);
+      mockPrismaService.member.findMany.mockResolvedValue([
+        {
+          guildId: "guild-access",
+          active: true,
+          globalUserId: "user-123",
+          lastDiscordSyncAt: new Date("2026-01-01T00:00:00.000Z"),
+          updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+          roles: [
+            {
+              id: "role-access",
+              lvlRangeFrom: null,
+              lvlRangeTo: null,
+              permissions: [Permission.LOOTLOG_ACCESS],
+            },
+          ],
+        },
+      ]);
+      mockPrismaService.userSettings.findUnique.mockResolvedValue(null);
+      mockMembersService.isMemberSoftStale.mockReturnValue(false);
+
+      const result = await service.getCurrentUserGuildAccessSummaries(
+        "discord-123",
+        "user-123",
+      );
+
+      expect(result).toEqual([
+        {
+          id: "guild-access",
+          name: "Access",
+          icon: null,
+          vanityUrl: null,
+          ownerId: "owner-1",
+          hasLootlogAccess: true,
+          isAccessDataStale: true,
+        },
+      ]);
+      expect(
+        mockMembersService.deactivateMembersMissingFromDiscordGuilds,
+      ).not.toHaveBeenCalled();
+      expect(
+        mockMembersService.refreshGuildMemberWithinBudget,
+      ).not.toHaveBeenCalled();
     });
 
     it("returns accessible guilds with access metadata without waiting on Discord", async () => {
