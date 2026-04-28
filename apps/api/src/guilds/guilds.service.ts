@@ -102,13 +102,7 @@ export class GuildsService {
       discordId,
       userId,
     );
-    const guilds =
-      guildCandidates.length > 0
-        ? guildCandidates.map(({ guild }) => guild)
-        : await this.getCurrentUserAccessibleGuildPlainEntries(
-            discordId,
-            userId,
-          );
+    const guilds = guildCandidates.map(({ guild }) => guild);
 
     return this.sortGuildEntriesByUserPreferences(userId, guilds);
   }
@@ -118,10 +112,22 @@ export class GuildsService {
     userId: string,
   ): Promise<CurrentUserGuildAccessSummary[]> {
     const requiredPermissions = [Permission.LOOTLOG_ACCESS];
-    const guildCandidates = await this.getCandidateGuildsForUser(
-      discordId,
-      userId,
-    );
+    let guildCandidates: GuildRefreshCandidate[];
+
+    try {
+      guildCandidates = await this.getCandidateGuildsForUser(discordId, userId);
+    } catch (error) {
+      if (this.isDiscordRateLimitError(error)) {
+        return this.getCurrentUserGuildAccessSummariesFromLocalFallback({
+          discordId,
+          userId,
+          requiredPermissions,
+          error,
+        });
+      }
+
+      throw error;
+    }
 
     if (guildCandidates.length === 0) {
       return [];
@@ -147,6 +153,49 @@ export class GuildsService {
         requiredPermissions,
       }),
     );
+  }
+
+  private async getCurrentUserGuildAccessSummariesFromLocalFallback(options: {
+    discordId: string;
+    userId: string;
+    requiredPermissions: Permission[];
+    error: unknown;
+  }): Promise<CurrentUserGuildAccessSummary[]> {
+    const { discordId, userId, requiredPermissions, error } = options;
+    this.logger.warn({
+      message:
+        "Discord guild list rate limited, returning stale local guild access summaries",
+      discordId,
+      userId,
+      error,
+    });
+
+    const guilds = await this.getGuildsForRequiredPermissions(
+      discordId,
+      requiredPermissions,
+    );
+
+    if (guilds.length === 0) {
+      return [];
+    }
+
+    const members = await this.getGuildMembersForPermissions(
+      discordId,
+      guilds.map((guild) => guild.id),
+    );
+    const summaries = this.buildCurrentUserGuildAccessSummaries({
+      discordId,
+      guilds,
+      members,
+      requiredPermissions,
+    })
+      .filter((guild) => guild.hasLootlogAccess)
+      .map((guild) => ({
+        ...guild,
+        isAccessDataStale: true,
+      }));
+
+    return this.sortGuildEntriesByUserPreferences(userId, summaries);
   }
 
   async getCurrentUserAccessibleGuilds(
@@ -486,132 +535,75 @@ export class GuildsService {
     return result;
   }
 
-  private async getCandidateGuildsForUser(
+  private getCandidateGuildsForUser(
     discordId: string,
     userId: string,
   ): Promise<GuildRefreshCandidate[]> {
-    try {
-      const discordGuilds = await this.discordService.getUserGuilds(
-        userId,
-        discordId,
-      );
+    return this.getDiscordLootlogGuildCandidates(discordId, userId);
+  }
 
-      if (!discordGuilds || discordGuilds.length === 0) {
-        const fallbackGuilds = await this.getGuildsForRequiredPermissions(
-          discordId,
-          [Permission.LOOTLOG_ACCESS],
-        );
-
-        return this.toGuildRefreshCandidates(fallbackGuilds);
-      }
-
-      const discordGuildIds = discordGuilds.map((guild) => guild.id);
-      const discordGuildMap = new Map(
-        discordGuilds.map((guild) => [guild.id, guild] as const),
-      );
-      const guilds = await this.prisma.guild.findMany({
-        where: {
-          id: { in: discordGuildIds },
-          active: true,
-        },
-      });
-
-      return guilds.map((guild) => {
-        const discordGuild = discordGuildMap.get(guild.id);
-
-        return {
-          guild,
-          isDiscordOwner: discordGuild
-            ? this.isDiscordOwnerGuild(discordGuild, discordId)
-            : false,
-          hasDiscordAdmin: discordGuild
-            ? this.hasDiscordAdministratorAccess(discordGuild)
-            : false,
-        };
-      });
-    } catch (error) {
-      this.logger.log({
-        level: "warn",
-        message:
-          "Failed to load Discord guild candidates, falling back to cached member permissions",
-        discordId,
-        userId,
-        error,
-      });
-
-      const fallbackGuilds = await this.getGuildsForRequiredPermissions(
-        discordId,
-        [Permission.LOOTLOG_ACCESS],
-      );
-
-      return this.toGuildRefreshCandidates(fallbackGuilds);
-    }
+  private isDiscordRateLimitError(error: unknown): boolean {
+    return (
+      error instanceof HttpException &&
+      error.getStatus() === HttpStatus.TOO_MANY_REQUESTS
+    );
   }
 
   private async getDiscordLootlogGuildCandidates(
     discordId: string,
     userId: string,
   ): Promise<GuildRefreshCandidate[]> {
-    try {
-      const discordGuilds = await this.discordService.getUserGuilds(
-        userId,
-        discordId,
-      );
+    const { guilds: discordGuilds } =
+      await this.discordService.getFreshCompleteUserGuilds(userId, discordId);
+    const discordGuildIds = discordGuilds.map((guild) => guild.id);
 
-      if (!discordGuilds || discordGuilds.length === 0) {
-        this.logger.log({
-          level: "warn",
-          message: `No guilds found for user ${userId} with Discord ID ${discordId}`,
-        });
-        return [];
-      }
+    // Reconcile only after a successful fresh, complete Discord guild-list response.
+    await this.membersService.deactivateMembersMissingFromDiscordGuilds({
+      discordId,
+      userId,
+      activeDiscordGuildIds: discordGuildIds,
+      status: "GUILD_NOT_IN_DISCORD_LIST",
+    });
 
-      const discordGuildIds = discordGuilds.map((guild) => guild.id);
-      const discordGuildMap = new Map(
-        discordGuilds.map((guild) => [guild.id, guild] as const),
-      );
-      const guilds = await this.prisma.guild.findMany({
-        where: {
-          id: { in: discordGuildIds },
-          active: true,
-        },
+    if (discordGuilds.length === 0) {
+      this.logger.log({
+        level: "warn",
+        message: `No guilds found for user ${userId} with Discord ID ${discordId}`,
       });
-
-      return guilds.map((guild) => {
-        const discordGuild = discordGuildMap.get(guild.id);
-
-        return {
-          guild,
-          isDiscordOwner: discordGuild
-            ? this.isDiscordOwnerGuild(discordGuild, discordId)
-            : false,
-          hasDiscordAdmin: discordGuild
-            ? this.hasDiscordAdministratorAccess(discordGuild)
-            : false,
-        };
-      });
-    } catch (error) {
-      if (
-        error instanceof HttpException &&
-        error.getStatus() === HttpStatus.UNAUTHORIZED
-      ) {
-        this.logger.log({
-          level: "warn",
-          message: `User authentication failed for userId: ${userId}, returning empty guilds`,
-        });
-        return [];
-      }
-
-      throw error;
+      return [];
     }
+
+    const discordGuildMap = new Map(
+      discordGuilds.map((guild) => [guild.id, guild] as const),
+    );
+    const guilds = await this.prisma.guild.findMany({
+      where: {
+        id: { in: discordGuildIds },
+        active: true,
+      },
+    });
+
+    return guilds.map((guild) => {
+      const discordGuild = discordGuildMap.get(guild.id);
+
+      return {
+        guild,
+        isDiscordOwner: discordGuild
+          ? this.isDiscordOwnerGuild(discordGuild, discordId)
+          : false,
+        hasDiscordAdmin: discordGuild
+          ? this.hasDiscordAdministratorAccess(discordGuild)
+          : false,
+      };
+    });
   }
 
-  private async getGuildMembersForPermissions(
+  private getGuildMembersForPermissions(
     discordId: string,
     guildIds: string[],
   ): Promise<GuildPermissionMember[]> {
     if (guildIds.length === 0) {
-      return [];
+      return Promise.resolve([]);
     }
 
     return this.prisma.member.findMany({

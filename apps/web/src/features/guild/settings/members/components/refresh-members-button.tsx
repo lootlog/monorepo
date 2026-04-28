@@ -1,7 +1,6 @@
 import { Button } from "@lootlog/ui/components/button";
 import { RefreshCw, Clock } from "lucide-react";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useMemo, useCallback } from "react";
 import { cn } from "@/utils/cn";
 import { useRefreshStatus } from "@/features/guild/settings/members/contexts/refresh-status-context";
 import { useCountdown } from "@/hooks/utils/use-countdown";
@@ -16,8 +15,6 @@ import {
   useMembersControllerRefreshAllMembers,
 } from "@/lib/api/generated/main/members/members";
 import { useQueryClient } from "@tanstack/react-query";
-
-const ADMIN_BULK_REFRESH_RATE_LIMIT = 1000 * 60 * 10; // 10 minutes
 
 export const RefreshMembersButton = () => {
   const { t } = useTranslation();
@@ -40,7 +37,7 @@ export const RefreshMembersButton = () => {
       onSuccess: (_data, variables) => {
         const currentGuildId = variables?.pathParams.guildId;
 
-        toast.success("Rozpoczęto odświeżanie wszystkich członków.");
+        toast.success(t("settings.members.refreshStarted"));
 
         if (!currentGuildId) {
           return;
@@ -59,14 +56,24 @@ export const RefreshMembersButton = () => {
           }),
         ]);
       },
-      onError: (error) => {
+      onError: (error, variables) => {
         const message = getApiErrorMessage(error);
         if (message === "BULK_REFRESH_RATE_LIMIT_ACTIVE") {
-          toast.error("Musisz poczekać przed kolejnym odświeżeniem.");
+          const currentGuildId = variables?.pathParams.guildId;
+
+          if (currentGuildId) {
+            void queryClient.invalidateQueries({
+              queryKey: getMembersControllerGetLatestRefreshJobQueryKey({
+                guildId: currentGuildId,
+              }),
+            });
+          }
+
+          toast.error(t("settings.members.refreshRateLimit"));
           return;
         }
 
-        toast.error("Wystąpił błąd podczas rozpoczynania odświeżania.");
+        toast.error(t("settings.members.refreshStartError"));
       },
     },
   });
@@ -75,51 +82,25 @@ export const RefreshMembersButton = () => {
   const isPending = refreshAllMembersMutation.isPending;
   const data = refreshAllMembersMutation.data;
 
-  const currentJob = useMemo(() => {
-    return data ?? latestJob;
-  }, [data, latestJob]);
-
-  const nextAvailableAt = useMemo(() => {
-    if (!currentJob?.createdAt) return null;
-    const jobCreatedAt = new Date(currentJob.createdAt).getTime();
-    const nextAvailable = jobCreatedAt + ADMIN_BULK_REFRESH_RATE_LIMIT;
-    return new Date(nextAvailable).toISOString();
-  }, [currentJob]);
-
+  const currentJob = data ?? latestJob;
+  const nextAvailableAt = currentJob?.nextAvailableAt ?? null;
   const countdown = useCountdown(nextAvailableAt);
-
-  const currentJobId = useMemo(() => {
-    if (countdown.isExpired) return undefined;
-    return currentJob?.id;
-  }, [currentJob?.id, countdown.isExpired]);
-
-  const handleRefreshedIds = useCallback(
-    (ids: string[]) => {
-      markAsRefreshed(ids);
-    },
-    [markAsRefreshed],
-  );
-
-  const handleFailedIds = useCallback(
-    (ids: string[]) => {
-      markAsFailed(ids);
-    },
-    [markAsFailed],
-  );
+  const currentJobId = countdown.isExpired ? undefined : currentJob?.id;
 
   const { jobStatus } = useRefreshJob(
     guildId,
     currentJobId,
-    handleRefreshedIds,
-    handleFailedIds,
+    markAsRefreshed,
+    markAsFailed,
   );
 
-  const displayJob = jobStatus || currentJob;
+  const displayJob = jobStatus ?? currentJob;
   const isRefreshing =
     displayJob?.status === "PROCESSING" || displayJob?.status === "PENDING";
-  const progress = displayJob
-    ? (displayJob.processedMembers / displayJob.totalMembers) * 100
-    : 0;
+  const progress =
+    displayJob && displayJob.totalMembers > 0
+      ? (displayJob.processedMembers / displayJob.totalMembers) * 100
+      : 0;
 
   const handleRefresh = () => {
     if (!guildId) {
@@ -154,6 +135,34 @@ export const RefreshMembersButton = () => {
   }
 
   if (!countdown.isExpired) {
+    if (displayJob?.status === "COMPLETED") {
+      return (
+        <div className="flex items-center gap-2 text-sm text-green-600">
+          <RefreshCw className="w-4 h-4" />
+          <span>
+            {t("settings.members.refreshSuccessWithCooldown", {
+              minutes: countdown.minutes,
+              seconds: countdown.seconds.toString().padStart(2, "0"),
+            })}
+          </span>
+        </div>
+      );
+    }
+
+    if (displayJob?.status === "FAILED") {
+      return (
+        <div className="flex items-center gap-2 text-sm text-red-600">
+          <Clock className="w-4 h-4" />
+          <span>
+            {t("settings.members.refreshErrorWithCooldown", {
+              minutes: countdown.minutes,
+              seconds: countdown.seconds.toString().padStart(2, "0"),
+            })}
+          </span>
+        </div>
+      );
+    }
+
     return (
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Clock className="w-4 h-4" />
@@ -163,15 +172,6 @@ export const RefreshMembersButton = () => {
             seconds: countdown.seconds.toString().padStart(2, "0"),
           })}
         </span>
-      </div>
-    );
-  }
-
-  if (displayJob?.status === "COMPLETED" && !countdown.isExpired) {
-    return (
-      <div className="flex items-center gap-2 text-sm text-green-600">
-        <RefreshCw className="w-4 h-4" />
-        <span>{t("settings.members.refreshSuccess")}</span>
       </div>
     );
   }

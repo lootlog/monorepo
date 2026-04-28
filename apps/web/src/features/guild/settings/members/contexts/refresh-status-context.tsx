@@ -11,7 +11,6 @@ import { useGateway } from "@/hooks/utils/use-gateway";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { GatewayEvent } from "@/config/gateway";
 import type { RefreshJobUpdate } from "@/types/refresh-job";
-import type { MemberResponseDto as GuildMember } from "@/lib/api/generated/main/model";
 import { getMembersControllerGetGuildMembersQueryKey } from "@/lib/api/generated/main/members/members";
 
 interface RefreshStatusContextValue {
@@ -56,24 +55,20 @@ export const RefreshStatusProvider = ({
     }
 
     const handleRefreshJobUpdate = (data: RefreshJobUpdate) => {
-      const now = new Date().toISOString();
+      const changedIds = [
+        ...(data.refreshedIds ?? []),
+        ...(data.skippedIds ?? []),
+        ...(data.failedIds ?? []),
+      ];
+
+      if (changedIds.length > 0) {
+        // Skipped and failed attempts can still update Discord sync diagnostics.
+        void queryClient.invalidateQueries({
+          queryKey: getMembersControllerGetGuildMembersQueryKey({ guildId }),
+        });
+      }
 
       if (data.refreshedIds && data.refreshedIds.length > 0) {
-        queryClient.setQueriesData(
-          {
-            queryKey: getMembersControllerGetGuildMembersQueryKey({ guildId }),
-          },
-          (oldData: GuildMember[] | undefined) => {
-            if (!oldData) return oldData;
-
-            return oldData.map((member) =>
-              data.refreshedIds?.includes(member.userId)
-                ? { ...member, updatedAt: now, isStale: false }
-                : member,
-            );
-          },
-        );
-
         setRefreshedIds((prev) => {
           const newSet = new Set(prev);
           data.refreshedIds?.forEach((id) => newSet.add(id));

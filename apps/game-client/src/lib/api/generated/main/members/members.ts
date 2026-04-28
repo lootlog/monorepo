@@ -251,9 +251,9 @@ export const getMembersControllerRefreshMemberUrl = ({ guildId, discordId }: Mem
   return `/guilds/${guildId}/members/${discordId}/refresh`
 }
 
-export const membersControllerRefreshMember = async ({ guildId, discordId }: MembersControllerRefreshMemberPathParameters, options?: RequestInit): Promise<MemberResponseDto> => {
+export const membersControllerRefreshMember = async ({ guildId, discordId }: MembersControllerRefreshMemberPathParameters, options?: RequestInit): Promise<NullableMemberResponseDto | null> => {
 
-  return orvalFetch<MemberResponseDto>(getMembersControllerRefreshMemberUrl({ guildId, discordId }),
+  return orvalFetch<NullableMemberResponseDto | null>(getMembersControllerRefreshMemberUrl({ guildId, discordId }),
   {
     ...options,
     method: 'POST'

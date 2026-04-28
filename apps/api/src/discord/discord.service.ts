@@ -8,6 +8,8 @@ import {
   Injectable,
   Inject,
   BadRequestException,
+  HttpException,
+  HttpStatus,
   UnauthorizedException,
   NotFoundException,
   ServiceUnavailableException,
@@ -36,11 +38,18 @@ import { serviceConfig } from "src/config/service.config";
 import { RuntimeEnvironment } from "src/types/runtime.types";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
 
+export interface FreshCompleteUserGuildsResult {
+  guilds: APIGuild[];
+  fresh: true;
+  complete: true;
+}
+
 @Injectable()
 export class DiscordService implements OnModuleInit {
   private redlock: ReturnType<RedlockService["createInstance"]>;
 
   private readonly lockTtl = 6000;
+  private readonly userGuildsPageLimit = 200;
 
   private readonly guildsCacheTtlLocal = 10;
   private readonly guildsCacheTtlProd = 300;
@@ -50,7 +59,10 @@ export class DiscordService implements OnModuleInit {
   private readonly errorCacheTtlProd = 60;
   private readonly notFoundCacheTtlLocal = 30;
   private readonly notFoundCacheTtlProd = 300;
-  private readonly staleCacheTtl = 300;
+  private readonly freshCompleteUserGuildRequests = new Map<
+    string,
+    Promise<FreshCompleteUserGuildsResult>
+  >();
 
   private readonly restTimeout = 5000;
 
@@ -77,12 +89,109 @@ export class DiscordService implements OnModuleInit {
   }
 
   private isNotFoundStatus(error: unknown): boolean {
-    return (
-      typeof error === "object" &&
+    return this.getHttpStatus(error) === HttpStatus.NOT_FOUND;
+  }
+
+  private getHttpStatus(error: unknown): number | null {
+    if (error instanceof HttpException) {
+      return error.getStatus();
+    }
+
+    return typeof error === "object" &&
       error !== null &&
       "status" in error &&
-      error.status === 404
+      typeof error.status === "number"
+      ? error.status
+      : null;
+  }
+
+  private createRateLimitException(retryAfterMs?: number): HttpException {
+    const retryAfterSeconds =
+      retryAfterMs === undefined ? undefined : Math.ceil(retryAfterMs / 1000);
+
+    return new HttpException(
+      {
+        message: "DISCORD_RATE_LIMITED",
+        retryAfter: retryAfterSeconds,
+      },
+      HttpStatus.TOO_MANY_REQUESTS,
     );
+  }
+
+  private toDiscordRequestException(error: unknown): Error {
+    if (error instanceof RateLimitError) {
+      return this.createRateLimitException(error.retryAfter);
+    }
+
+    if (error instanceof HttpException) {
+      return error;
+    }
+
+    const status = this.getHttpStatus(error);
+    if (status === HttpStatus.UNAUTHORIZED) {
+      return new UnauthorizedException({
+        message: "DISCORD_UNAUTHORIZED",
+        requiresReauth: true,
+      });
+    }
+
+    if (status === HttpStatus.NOT_FOUND) {
+      return new NotFoundException();
+    }
+
+    if (status === HttpStatus.TOO_MANY_REQUESTS) {
+      return this.createRateLimitException();
+    }
+
+    if (status !== null && status >= 500) {
+      return new ServiceUnavailableException({
+        message: "DISCORD_SERVICE_UNAVAILABLE",
+        status,
+      });
+    }
+
+    if (status !== null) {
+      return new HttpException(
+        {
+          message: "DISCORD_HTTP_ERROR",
+          status,
+        },
+        status,
+      );
+    }
+
+    return new ServiceUnavailableException({
+      message: "DISCORD_REQUEST_FAILED",
+    });
+  }
+
+  private async throwIfRateLimited(
+    userId: string,
+    endpoint: string,
+  ): Promise<void> {
+    const isRateLimited = await this.rateLimiter.checkRateLimitForUser(
+      userId,
+      endpoint,
+    );
+
+    if (!isRateLimited) {
+      return;
+    }
+
+    const nextAvailableAt = await this.rateLimiter.getNextAvailableAtForUser(
+      userId,
+      endpoint,
+    );
+    const retryAfterMs = nextAvailableAt
+      ? Math.max(nextAvailableAt.getTime() - Date.now(), 0)
+      : undefined;
+
+    throw this.createRateLimitException(retryAfterMs);
+  }
+
+  private parseCachedGuildMember(cached: string): APIGuildMember | null {
+    const parsed = JSON.parse(cached) as APIGuildMember | null;
+    return parsed ?? null;
   }
 
   async getRestClient(userId: string, discordId: string) {
@@ -146,8 +255,7 @@ export class DiscordService implements OnModuleInit {
       this.guildsCacheTtlLocal,
       this.guildsCacheTtlProd,
     );
-    const cacheKey = `user:${userId}:discord-guilds:data`;
-    const staleCacheKey = `user:${userId}:discord-guilds:stale`;
+    const cacheKey = this.getUserGuildsCacheKey(userId);
     const lockKey = `user:${userId}:discord-guilds:lock`;
 
     const cached = await this.redisService.get(cacheKey);
@@ -165,81 +273,9 @@ export class DiscordService implements OnModuleInit {
         return JSON.parse(cachedAfterLock) as APIGuild[];
       }
 
-      const isRateLimited = await this.rateLimiter.checkRateLimitForUser(
-        userId,
-        "guilds",
-      );
+      const guilds = await this.fetchUserGuildsFromDiscord(userId, discordId);
 
-      if (isRateLimited) {
-        const staleData = await this.redisService.get(staleCacheKey);
-        if (staleData) {
-          this.logger.log({
-            level: "info",
-            message: `Returning stale guilds data due to rate limit for user ${userId}`,
-          });
-          return JSON.parse(staleData) as APIGuild[];
-        }
-
-        this.logger.log({
-          level: "warn",
-          message: `Rate limited and no stale data available for user ${userId}`,
-        });
-        return [];
-      }
-
-      const rest = await this.getRestClient(userId, discordId);
-      const path = Routes.userGuilds();
-
-      let guilds: APIGuild[];
-      try {
-        const response = await rest.queueRequest({
-          fullRoute: path,
-          method: RequestMethod.Get,
-        });
-        await this.rateLimiter.updateRateLimitFromHeaders(
-          userId,
-          "guilds",
-          response.headers,
-        );
-        guilds = (await parseResponse(response)) as APIGuild[];
-      } catch (error: unknown) {
-        if (error instanceof RateLimitError) {
-          await this.rateLimiter.setRateLimitForUser(
-            userId,
-            "guilds",
-            error.retryAfter,
-          );
-
-          const staleData = await this.redisService.get(staleCacheKey);
-          if (staleData) {
-            this.logger.log({
-              level: "info",
-              message: `Returning stale guilds data after rate limit error for user ${userId}`,
-            });
-            return JSON.parse(staleData) as APIGuild[];
-          }
-
-          throw error;
-        }
-        throw error;
-      }
-
-      if (!guilds || guilds.length === 0) {
-        this.logger.log({
-          level: "warn",
-          message: `No guilds found for user: ${userId}`,
-        });
-        return [];
-      }
-
-      await Promise.all([
-        this.redisService.set(cacheKey, JSON.stringify(guilds), cacheTtl),
-        this.redisService.set(
-          staleCacheKey,
-          JSON.stringify(guilds),
-          this.staleCacheTtl,
-        ),
-      ]);
+      await this.redisService.set(cacheKey, JSON.stringify(guilds), cacheTtl);
 
       return guilds;
     } catch (error: unknown) {
@@ -249,11 +285,9 @@ export class DiscordService implements OnModuleInit {
           message: `Lock acquisition failed for getUserGuilds`,
           userId,
         });
-        return [];
-      }
-
-      if (error instanceof RateLimitError) {
-        throw error;
+        throw new ServiceUnavailableException({
+          message: "DISCORD_GUILDS_LOCK_UNAVAILABLE",
+        });
       }
 
       if (error instanceof UnauthorizedException) {
@@ -262,11 +296,10 @@ export class DiscordService implements OnModuleInit {
           message: `User authentication failed for userId: ${userId}`,
           error,
         });
-        await this.redisService.set(
-          cacheKey,
-          JSON.stringify([]),
-          this.getCacheTtl(this.errorCacheTtlLocal, this.errorCacheTtlProd),
-        );
+        throw error;
+      }
+
+      if (error instanceof HttpException) {
         throw error;
       }
 
@@ -275,35 +308,218 @@ export class DiscordService implements OnModuleInit {
         message: `Failed to fetch user guilds for userId: ${userId}`,
         error,
       });
-      return [];
+      throw this.toDiscordRequestException(error);
     } finally {
       await lock?.release();
     }
   }
 
+  async getFreshCompleteUserGuilds(
+    userId: string,
+    discordId: string,
+  ): Promise<FreshCompleteUserGuildsResult> {
+    const requestKey = this.getFreshCompleteUserGuildsRequestKey(
+      userId,
+      discordId,
+    );
+    const inFlightRequest = this.freshCompleteUserGuildRequests.get(requestKey);
+
+    if (inFlightRequest) {
+      return inFlightRequest;
+    }
+
+    const request = this.fetchFreshCompleteUserGuilds(userId, discordId);
+    this.freshCompleteUserGuildRequests.set(requestKey, request);
+
+    try {
+      return await request;
+    } finally {
+      if (this.freshCompleteUserGuildRequests.get(requestKey) === request) {
+        this.freshCompleteUserGuildRequests.delete(requestKey);
+      }
+    }
+  }
+
+  private async fetchFreshCompleteUserGuilds(
+    userId: string,
+    discordId: string,
+  ): Promise<FreshCompleteUserGuildsResult> {
+    try {
+      const guilds = await this.fetchUserGuildsFromDiscord(userId, discordId);
+
+      return {
+        guilds,
+        fresh: true,
+        complete: true,
+      };
+    } catch (error: unknown) {
+      if (error instanceof UnauthorizedException) {
+        this.logger.log({
+          level: "warn",
+          message: `User authentication failed for userId: ${userId}`,
+          error,
+        });
+        throw error;
+      }
+
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      this.logger.log({
+        level: "error",
+        message: `Failed to fetch fresh user guilds for userId: ${userId}`,
+        error,
+      });
+      throw this.toDiscordRequestException(error);
+    }
+  }
+
   async clearUserGuildIdsCache(userId: string) {
-    const cacheKey = `user:${userId}:discord-guilds:data`;
-    await this.redisService.del(cacheKey);
+    await Promise.all([
+      this.redisService.del(this.getUserGuildsCacheKey(userId)),
+      this.redisService.del(`user:${userId}:discord-guilds:data`),
+    ]);
+  }
+
+  async clearGuildMemberDataCache(options: {
+    guildId: string;
+    userId: string;
+  }): Promise<void> {
+    const { guildId, userId } = options;
+
+    await this.redisService.del(`guild:${guildId}:member:${userId}:data`);
+  }
+
+  private getUserGuildsCacheKey(userId: string): string {
+    return `user:${userId}:discord-guilds:v2:data`;
+  }
+
+  private getFreshCompleteUserGuildsRequestKey(
+    userId: string,
+    discordId: string,
+  ): string {
+    return `user:${userId}:discord:${discordId}:fresh-complete-guilds`;
+  }
+
+  private async fetchUserGuildsFromDiscord(
+    userId: string,
+    discordId: string,
+  ): Promise<APIGuild[]> {
+    await this.throwIfRateLimited(userId, "guilds");
+
+    const rest = await this.getRestClient(userId, discordId);
+    const guilds = await this.fetchUserGuildPages(userId, rest);
+
+    if (guilds.length === 0) {
+      this.logger.log({
+        level: "warn",
+        message: `No guilds found for user: ${userId}`,
+      });
+    }
+
+    return guilds;
+  }
+
+  private async fetchUserGuildPages(
+    userId: string,
+    rest: REST,
+    after?: string,
+    guilds: APIGuild[] = [],
+  ): Promise<APIGuild[]> {
+    const page = await this.fetchUserGuildsPage(userId, rest, after);
+    guilds.push(...page);
+
+    if (page.length < this.userGuildsPageLimit) {
+      return guilds;
+    }
+
+    const lastGuild = page[page.length - 1];
+    if (!lastGuild || lastGuild.id === after) {
+      throw new ServiceUnavailableException({
+        message: "DISCORD_GUILDS_PAGINATION_INCOMPLETE",
+      });
+    }
+
+    return this.fetchUserGuildPages(userId, rest, lastGuild.id, guilds);
+  }
+
+  private async fetchUserGuildsPage(
+    userId: string,
+    rest: REST,
+    after?: string,
+  ): Promise<APIGuild[]> {
+    const path = Routes.userGuilds();
+    const query = new URLSearchParams({
+      limit: this.userGuildsPageLimit.toString(),
+    });
+
+    if (after) {
+      query.set("after", after);
+    }
+
+    try {
+      const response = await rest.queueRequest({
+        fullRoute: path,
+        method: RequestMethod.Get,
+        query,
+      });
+      await this.rateLimiter.updateRateLimitFromHeaders(
+        userId,
+        "guilds",
+        response.headers,
+      );
+
+      return (await parseResponse(response)) as APIGuild[];
+    } catch (error: unknown) {
+      if (error instanceof RateLimitError) {
+        await this.rateLimiter.setRateLimitForUser(
+          userId,
+          "guilds",
+          error.retryAfter,
+        );
+      }
+
+      throw this.toDiscordRequestException(error);
+    }
   }
 
   async getGuildMember(options: {
     guildId: string;
     userId: string;
     discordId: string;
-  }): Promise<APIGuildMember | null> {
+  }): Promise<APIGuildMember> {
     const cacheTtl = this.getCacheTtl(
       this.memberCacheTtlLocal,
       this.memberCacheTtlProd,
     );
     const { guildId, userId, discordId } = options;
     const cacheKey = `guild:${guildId}:member:${userId}:data`;
-    const staleCacheKey = `guild:${guildId}:member:${userId}:stale`;
+    const notFoundCacheKey = `guild:${guildId}:member:${userId}:not-found`;
+    const unauthorizedCacheKey = `guild:${guildId}:member:${userId}:unauthorized`;
     const lockKey = `guild:${guildId}:member:${userId}:lock`;
 
     const cached = await this.redisService.get(cacheKey);
     if (cached) {
-      const parsed = JSON.parse(cached);
-      return parsed as APIGuildMember | null;
+      const cachedMember = this.parseCachedGuildMember(cached);
+      if (cachedMember) {
+        return cachedMember;
+      }
+
+      await this.redisService.del(cacheKey);
+    }
+
+    // Negative cache replays definitive Discord answers. A cached `null` would
+    // be ambiguous with rate limits and transient failures.
+    if (await this.redisService.get(notFoundCacheKey)) {
+      throw new NotFoundException();
+    }
+
+    if (await this.redisService.get(unauthorizedCacheKey)) {
+      throw new UnauthorizedException({
+        message: "DISCORD_UNAUTHORIZED",
+        requiresReauth: true,
+      });
     }
 
     let lock: Awaited<ReturnType<typeof this.redlock.acquire>> | null = null;
@@ -313,32 +529,26 @@ export class DiscordService implements OnModuleInit {
 
       const cachedAfterLock = await this.redisService.get(cacheKey);
       if (cachedAfterLock) {
-        const parsed = JSON.parse(cachedAfterLock);
-        return parsed as APIGuildMember | null;
-      }
-
-      const isRateLimited = await this.rateLimiter.checkRateLimitForUser(
-        userId,
-        "guild-member",
-      );
-
-      if (isRateLimited) {
-        const staleData = await this.redisService.get(staleCacheKey);
-        if (staleData) {
-          const parsed = JSON.parse(staleData);
-          this.logger.log({
-            level: "info",
-            message: `Returning stale member data due to rate limit for guild ${guildId}, user ${userId}`,
-          });
-          return parsed as APIGuildMember | null;
+        const cachedMember = this.parseCachedGuildMember(cachedAfterLock);
+        if (cachedMember) {
+          return cachedMember;
         }
 
-        this.logger.log({
-          level: "warn",
-          message: `Rate limited and no stale data available for guild ${guildId}, user ${userId}`,
-        });
-        return null;
+        await this.redisService.del(cacheKey);
       }
+
+      if (await this.redisService.get(notFoundCacheKey)) {
+        throw new NotFoundException();
+      }
+
+      if (await this.redisService.get(unauthorizedCacheKey)) {
+        throw new UnauthorizedException({
+          message: "DISCORD_UNAUTHORIZED",
+          requiresReauth: true,
+        });
+      }
+
+      await this.throwIfRateLimited(userId, "guild-member");
 
       const rest = await this.getRestClient(userId, discordId);
       const path = Routes.userGuildMember(guildId);
@@ -371,29 +581,15 @@ export class DiscordService implements OnModuleInit {
             "guild-member",
             error.retryAfter,
           );
-
-          const staleData = await this.redisService.get(staleCacheKey);
-          if (staleData) {
-            const parsed = JSON.parse(staleData);
-            this.logger.log({
-              level: "info",
-              message: `Returning stale member data after rate limit error for guild ${guildId}, user ${userId}`,
-            });
-            return parsed as APIGuildMember | null;
-          }
-
-          throw error;
         }
-        throw error;
+
+        throw this.toDiscordRequestException(error);
       }
 
       await Promise.all([
         this.redisService.set(cacheKey, JSON.stringify(member), cacheTtl),
-        this.redisService.set(
-          staleCacheKey,
-          JSON.stringify(member),
-          this.staleCacheTtl,
-        ),
+        this.redisService.del(notFoundCacheKey),
+        this.redisService.del(unauthorizedCacheKey),
       ]);
 
       return member;
@@ -405,11 +601,9 @@ export class DiscordService implements OnModuleInit {
           guildId,
           userId,
         });
-        return null;
-      }
-
-      if (error instanceof RateLimitError) {
-        throw error;
+        throw new ServiceUnavailableException({
+          message: "DISCORD_MEMBER_LOCK_UNAVAILABLE",
+        });
       }
 
       if (this.isNotFoundStatus(error)) {
@@ -417,14 +611,17 @@ export class DiscordService implements OnModuleInit {
           level: "debug",
           message: `Guild member not found for guildId: ${guildId}, userId: ${userId}`,
         });
-        await this.redisService.set(
-          cacheKey,
-          JSON.stringify(null),
-          this.getCacheTtl(
-            this.notFoundCacheTtlLocal,
-            this.notFoundCacheTtlProd,
+        await Promise.all([
+          this.redisService.del(cacheKey),
+          this.redisService.set(
+            notFoundCacheKey,
+            "1",
+            this.getCacheTtl(
+              this.notFoundCacheTtlLocal,
+              this.notFoundCacheTtlProd,
+            ),
           ),
-        );
+        ]);
         throw new NotFoundException();
       }
 
@@ -434,11 +631,18 @@ export class DiscordService implements OnModuleInit {
           message: `User authentication failed for guildId: ${guildId}, userId: ${userId}`,
           error,
         });
-        await this.redisService.set(
-          cacheKey,
-          JSON.stringify(null),
-          this.getCacheTtl(this.errorCacheTtlLocal, this.errorCacheTtlProd),
-        );
+        await Promise.all([
+          this.redisService.del(cacheKey),
+          this.redisService.set(
+            unauthorizedCacheKey,
+            "1",
+            this.getCacheTtl(this.errorCacheTtlLocal, this.errorCacheTtlProd),
+          ),
+        ]);
+        throw error;
+      }
+
+      if (error instanceof HttpException) {
         throw error;
       }
 
@@ -448,7 +652,7 @@ export class DiscordService implements OnModuleInit {
         error,
       });
 
-      return null;
+      throw this.toDiscordRequestException(error);
     } finally {
       await lock?.release();
     }
