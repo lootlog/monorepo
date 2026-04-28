@@ -64,6 +64,7 @@ describe("MembersController", () => {
     processedMembers: 0,
     failedMembers: 0,
     createdAt: new Date(),
+    nextAvailableAt: new Date(),
     updatedAt: new Date(),
     completedAt: null,
   };
@@ -172,6 +173,18 @@ describe("MembersController", () => {
       const result = await controller.refreshMember("discord-456", mockGuild);
 
       expect(result).toEqual(refreshedMember);
+      expect(membersService.refreshMember).toHaveBeenCalledWith({
+        discordId: "discord-456",
+        guildId: mockGuild.id,
+      });
+    });
+
+    it("should return null when Discord confirms that member is gone", async () => {
+      membersService.refreshMember.mockResolvedValue(null);
+
+      const result = await controller.refreshMember("discord-456", mockGuild);
+
+      expect(result).toBeNull();
       expect(membersService.refreshMember).toHaveBeenCalledWith({
         discordId: "discord-456",
         guildId: mockGuild.id,

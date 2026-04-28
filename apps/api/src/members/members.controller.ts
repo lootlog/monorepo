@@ -110,7 +110,7 @@ export class MembersController {
   @ZodResponse({
     status: 200,
     description: "Member refreshed successfully",
-    type: MemberResponseDto,
+    type: NullableMemberResponseDto,
   })
   @ApiResponse({
     status: 403,

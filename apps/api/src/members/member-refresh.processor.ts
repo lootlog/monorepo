@@ -48,11 +48,20 @@ export class MemberRefreshProcessor extends WorkerHost {
         await this.sleep(waitMs);
       }
 
-      await this.membersService.syncMemberFromDiscord({
+      const result = await this.membersService.syncMemberFromDiscord({
         discordId: job.data.discordId,
         guildId: job.data.guildId,
         userId: job.data.userId,
       });
+
+      if (
+        result.status === "RATE_LIMITED" ||
+        result.status === "AUTH_SERVICE_UNAVAILABLE" ||
+        result.status === "DISCORD_SERVICE_UNAVAILABLE" ||
+        result.status === "ERROR"
+      ) {
+        throw new Error(`MEMBER_REFRESH_${result.status}`);
+      }
 
       this.logger.log({
         level: "debug",
