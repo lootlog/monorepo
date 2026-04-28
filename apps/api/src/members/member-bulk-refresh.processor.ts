@@ -3,18 +3,11 @@ import { Inject, Injectable } from "@nestjs/common";
 import type { Job } from "bullmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import { MembersService } from "./members.service";
 import { PrismaService } from "src/db/prisma.service";
-import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import { RoutingKey } from "src/enum/routing-key.enum";
 import { MEMBER_BULK_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant";
-
-interface BulkRefreshJobData {
-  jobId: number;
-  guildId: string;
-  memberIds: string[];
-}
+import { MemberRefreshJobEventsService } from "./member-refresh-job-events.service";
+import { MembersService } from "./members.service";
+import type { MemberBulkRefreshJobData } from "./member.types";
 
 interface JobProgress {
   processedCount: number;
@@ -38,12 +31,12 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     private readonly membersService: MembersService,
     private readonly prisma: PrismaService,
-    private readonly amqpConnection: AmqpConnection,
+    private readonly memberRefreshJobEventsService: MemberRefreshJobEventsService,
   ) {
     super();
   }
 
-  async process(job: Job<BulkRefreshJobData>): Promise<void> {
+  async process(job: Job<MemberBulkRefreshJobData>): Promise<void> {
     const { jobId, guildId, memberIds } = job.data;
 
     this.logger.log({
@@ -57,7 +50,7 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
         data: { status: "PROCESSING" },
       });
 
-      await this.emitJobUpdate(jobId);
+      await this.memberRefreshJobEventsService.emitJobUpdate(jobId);
 
       const progress: JobProgress = {
         processedCount: 0,
@@ -113,7 +106,7 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
           });
 
           if (progress.processedCount % this.JOB_UPDATE_INTERVAL === 0) {
-            await this.emitJobUpdate(jobId);
+            await this.memberRefreshJobEventsService.emitJobUpdate(jobId);
           }
         }
 
@@ -131,7 +124,11 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
         },
       });
 
-      await this.emitJobUpdateWithDetails(jobId, progress);
+      await this.memberRefreshJobEventsService.emitJobUpdate(jobId, {
+        refreshedIds: progress.refreshedIds,
+        skippedIds: progress.skippedIds,
+        failedIds: progress.failedIds,
+      });
 
       this.logger.log({
         level: "info",
@@ -152,7 +149,7 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
         },
       });
 
-      await this.emitJobUpdate(jobId);
+      await this.memberRefreshJobEventsService.emitJobUpdate(jobId);
       throw error;
     }
   }
@@ -165,7 +162,7 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
       where: { id: jobId },
       data: { processedMembers: progress.processedCount },
     });
-    await this.emitJobUpdate(jobId);
+    await this.memberRefreshJobEventsService.emitJobUpdate(jobId);
   }
 
   private recordRefreshOutcome(
@@ -199,94 +196,6 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
         return `Skipped member ${memberId} in job ${jobId} because no member data was returned`;
       default:
         return `Successfully refreshed member ${memberId} in job ${jobId}`;
-    }
-  }
-
-  private async emitJobUpdate(jobId: number): Promise<void> {
-    try {
-      const job = await this.prisma.memberRefreshJob.findUnique({
-        where: { id: jobId },
-      });
-
-      if (!job) {
-        this.logger.log({
-          level: "warn",
-          message: `Job ${jobId} not found when emitting update`,
-        });
-        return;
-      }
-
-      await this.amqpConnection.publish(
-        DEFAULT_EXCHANGE_NAME,
-        RoutingKey.GUILDS_MEMBERS_REFRESH_JOB_UPDATE,
-        {
-          jobId: job.id,
-          guildId: job.guildId,
-          status: job.status,
-          totalMembers: job.totalMembers,
-          processedMembers: job.processedMembers,
-          failedMembers: job.failedMembers,
-          completedAt: job.completedAt,
-        },
-      );
-
-      this.logger.log({
-        level: "debug",
-        message: `Emitted job update for job ${jobId}`,
-      });
-    } catch (error) {
-      this.logger.log({
-        level: "error",
-        message: `Failed to emit job update for job ${jobId}`,
-        stack: (error as Error).stack,
-      });
-    }
-  }
-
-  private async emitJobUpdateWithDetails(
-    jobId: number,
-    progress: JobProgress,
-  ): Promise<void> {
-    try {
-      const job = await this.prisma.memberRefreshJob.findUnique({
-        where: { id: jobId },
-      });
-
-      if (!job) {
-        this.logger.log({
-          level: "warn",
-          message: `Job ${jobId} not found when emitting detailed update`,
-        });
-        return;
-      }
-
-      await this.amqpConnection.publish(
-        DEFAULT_EXCHANGE_NAME,
-        RoutingKey.GUILDS_MEMBERS_REFRESH_JOB_UPDATE,
-        {
-          jobId: job.id,
-          guildId: job.guildId,
-          status: job.status,
-          totalMembers: job.totalMembers,
-          processedMembers: job.processedMembers,
-          failedMembers: job.failedMembers,
-          completedAt: job.completedAt,
-          refreshedIds: progress.refreshedIds,
-          skippedIds: progress.skippedIds,
-          failedIds: progress.failedIds,
-        },
-      );
-
-      this.logger.log({
-        level: "debug",
-        message: `Emitted detailed job update for job ${jobId}`,
-      });
-    } catch (error) {
-      this.logger.log({
-        level: "error",
-        message: `Failed to emit detailed job update for job ${jobId}`,
-        stack: (error as Error).stack,
-      });
     }
   }
 }

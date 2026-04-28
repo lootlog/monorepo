@@ -24,10 +24,13 @@ import type {
 
 import type {
   MemberLootlogConfigSummaryResponseDtoOutput,
+  MemberReferenceResponseDtoOutput,
   MemberRefreshJobResponseDto,
   MemberResponseDto,
   MemberSummaryResponseDtoOutput,
   MembersControllerDeactivateMemberPathParameters,
+  MembersControllerGetGuildMemberReferencesParams,
+  MembersControllerGetGuildMemberReferencesPathParameters,
   MembersControllerGetGuildMembersParams,
   MembersControllerGetGuildMembersPathParameters,
   MembersControllerGetGuildMembersSummaryPathParameters,
@@ -630,6 +633,141 @@ export const useGetMembersControllerGetGuildMembersQueryData = () => {
   return ({ guildId }: MembersControllerGetGuildMembersPathParameters,
     params: MembersControllerGetGuildMembersParams,) =>
     queryClient.getQueryData<Awaited<ReturnType<typeof membersControllerGetGuildMembers>>>(getMembersControllerGetGuildMembersQueryKey({ guildId },params));
+}
+
+
+/**
+ * Retrieve limited member reference data for guild-scoped historical views
+ * @summary Get guild member references
+ */
+export const getMembersControllerGetGuildMemberReferencesUrl = ({ guildId }: MembersControllerGetGuildMemberReferencesPathParameters,
+    params?: MembersControllerGetGuildMemberReferencesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/guilds/${guildId}/members/references?${stringifiedParams}` : `/guilds/${guildId}/members/references`
+}
+
+export const membersControllerGetGuildMemberReferences = async ({ guildId }: MembersControllerGetGuildMemberReferencesPathParameters,
+    params?: MembersControllerGetGuildMemberReferencesParams, options?: RequestInit): Promise<MemberReferenceResponseDtoOutput[]> => {
+
+  return orvalFetch<MemberReferenceResponseDtoOutput[]>(getMembersControllerGetGuildMemberReferencesUrl({ guildId },params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getMembersControllerGetGuildMemberReferencesQueryKey = ({ guildId }: MembersControllerGetGuildMemberReferencesPathParameters,
+    params?: MembersControllerGetGuildMemberReferencesParams,) => {
+    return [
+    `/guilds/${guildId}/members/references`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getMembersControllerGetGuildMemberReferencesQueryOptions = <TData = Awaited<ReturnType<typeof membersControllerGetGuildMemberReferences>>, TError = ErrorType<void>>({ guildId }: MembersControllerGetGuildMemberReferencesPathParameters,
+    params?: MembersControllerGetGuildMemberReferencesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof membersControllerGetGuildMemberReferences>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getMembersControllerGetGuildMemberReferencesQueryKey({ guildId },params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof membersControllerGetGuildMemberReferences>>> = ({ signal }) => membersControllerGetGuildMemberReferences({ guildId },params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(guildId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof membersControllerGetGuildMemberReferences>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type MembersControllerGetGuildMemberReferencesQueryResult = NonNullable<Awaited<ReturnType<typeof membersControllerGetGuildMemberReferences>>>
+export type MembersControllerGetGuildMemberReferencesQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get guild member references
+ */
+
+export function useMembersControllerGetGuildMemberReferences<TData = Awaited<ReturnType<typeof membersControllerGetGuildMemberReferences>>, TError = ErrorType<void>>(
+ { guildId }: MembersControllerGetGuildMemberReferencesPathParameters,
+    params?: MembersControllerGetGuildMemberReferencesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof membersControllerGetGuildMemberReferences>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getMembersControllerGetGuildMemberReferencesQueryOptions({ guildId },params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get guild member references
+ */
+export const prefetchMembersControllerGetGuildMemberReferencesQuery = async <TData = Awaited<ReturnType<typeof membersControllerGetGuildMemberReferences>>, TError = ErrorType<void>>(
+ queryClient: QueryClient, { guildId }: MembersControllerGetGuildMemberReferencesPathParameters,
+    params?: MembersControllerGetGuildMemberReferencesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof membersControllerGetGuildMemberReferences>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getMembersControllerGetGuildMemberReferencesQueryOptions({ guildId },params,options)
+
+  await queryClient.prefetchQuery(queryOptions);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get guild member references
+ */
+export const invalidateMembersControllerGetGuildMemberReferences = async (
+ queryClient: QueryClient, { guildId }: MembersControllerGetGuildMemberReferencesPathParameters,
+    params?: MembersControllerGetGuildMemberReferencesParams, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getMembersControllerGetGuildMemberReferencesQueryKey({ guildId },params) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get guild member references
+ */
+export const useSetMembersControllerGetGuildMemberReferencesQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId }: MembersControllerGetGuildMemberReferencesPathParameters,
+    params: MembersControllerGetGuildMemberReferencesParams,updater: Awaited<ReturnType<typeof membersControllerGetGuildMemberReferences>> | undefined | ((old: Awaited<ReturnType<typeof membersControllerGetGuildMemberReferences>> | undefined) => Awaited<ReturnType<typeof membersControllerGetGuildMemberReferences>> | undefined)) => {
+    queryClient.setQueryData(getMembersControllerGetGuildMemberReferencesQueryKey({ guildId },params), updater);
+  };
+}
+
+/**
+ * @summary Get guild member references
+ */
+export const useGetMembersControllerGetGuildMemberReferencesQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId }: MembersControllerGetGuildMemberReferencesPathParameters,
+    params: MembersControllerGetGuildMemberReferencesParams,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof membersControllerGetGuildMemberReferences>>>(getMembersControllerGetGuildMemberReferencesQueryKey({ guildId },params));
 }
 
 

@@ -6,7 +6,6 @@
  * OpenAPI spec version: 1.0
  */
 
-export type MembersControllerGetRefreshJobStatusPathParameters = {
+export type MembersControllerGetGuildMemberReferencesPathParameters = {
  guildId: unknown,
-    jobId: number,
  }

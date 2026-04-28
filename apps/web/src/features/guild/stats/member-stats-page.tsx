@@ -46,7 +46,7 @@ import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { TRACKABLE_NPC_TYPES } from "./constants";
 import { LevelFilters } from "./components/level-filters";
 import { NpcStatsFiltersMobile } from "./components/npc-stats-filters-mobile";
-import { useMembersControllerGetGuildMembers } from "@/lib/api/generated/main/members/members";
+import { useMembersControllerGetGuildMemberReferences } from "@/lib/api/generated/main/members/members";
 import {
   buildMemberKillsParams,
   DEFAULT_MEMBER_KILLS_LIMIT,
@@ -114,7 +114,7 @@ export const MemberStatsPage: React.FC = () => {
       maxLvl: debouncedMaxLvl,
     }),
   );
-  const { data: guildMembers } = useMembersControllerGetGuildMembers(
+  const { data: guildMembers } = useMembersControllerGetGuildMemberReferences(
     { guildId },
     {
       includeInactive: true,
@@ -163,10 +163,7 @@ export const MemberStatsPage: React.FC = () => {
   );
   const adaptedMember = guildMember
     ? {
-        roles: guildMember.roles.map((r) => ({
-          position: r.position ?? 0,
-          color: r.color,
-        })),
+        roles: [{ position: 0, color: guildMember.color }],
       }
     : undefined;
   const memberColor = useMemberColor(adaptedMember);

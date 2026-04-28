@@ -6,6 +6,7 @@ import type { Logger } from "winston";
 import { DiscordService } from "src/discord/discord.service";
 import { PrismaService } from "src/db/prisma.service";
 import type { Guild } from "src/generated/prisma/client";
+import { MEMBER_LAST_DISCORD_STATUS } from "src/members/constants/member-discord-status.constant";
 import { MembersService } from "src/members/members.service";
 
 export interface GuildRefreshCandidate {
@@ -55,7 +56,7 @@ export class UserGuildAccessResolver {
       discordId,
       userId,
       activeDiscordGuildIds: discordGuildIds,
-      status: "GUILD_NOT_IN_DISCORD_LIST",
+      status: MEMBER_LAST_DISCORD_STATUS.GUILD_NOT_IN_DISCORD_LIST,
     });
 
     if (discordGuilds.length === 0) {

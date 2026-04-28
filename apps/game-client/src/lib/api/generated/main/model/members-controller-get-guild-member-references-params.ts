@@ -6,7 +6,9 @@
  * OpenAPI spec version: 1.0
  */
 
-export type MembersControllerGetRefreshJobStatusPathParameters = {
- guildId: unknown,
-    jobId: number,
- }
+export type MembersControllerGetGuildMemberReferencesParams = {
+/**
+ * Include inactive members
+ */
+includeInactive?: boolean;
+};

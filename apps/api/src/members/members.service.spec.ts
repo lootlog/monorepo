@@ -1,5 +1,6 @@
-import type { Mocked } from "vitest";
+import type { Mock, Mocked } from "vitest";
 import { mockFn } from "src/test/mock-fn";
+import { getQueueToken } from "@nestjs/bullmq";
 import { Test, type TestingModule } from "@nestjs/testing";
 import {
   BadRequestException,
@@ -35,6 +36,10 @@ import {
 import { MemberDiscordAccessService } from "./member-discord-access.service";
 import { MemberDiscordRefreshService } from "./member-discord-refresh.service";
 import { MemberDiscordSyncService } from "./member-discord-sync.service";
+import { MemberBulkRefreshService } from "./member-bulk-refresh.service";
+import { MEMBER_BULK_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant";
+import { MemberReadService } from "./member-read.service";
+import { MemberRefreshJobEventsService } from "./member-refresh-job-events.service";
 import { MemberRemovalService } from "./member-removal.service";
 
 vi.mock("src/config/service.config", () => ({
@@ -49,6 +54,21 @@ describe("MembersService", () => {
   let _refreshScheduler: Mocked<MemberRefreshSchedulerService>;
   let _diagnostics: Mocked<DiscordSyncDiagnosticsService>;
   let amqpConnection: Mocked<AmqpConnection>;
+  let bulkRefreshQueue: {
+    add: Mock;
+  };
+  let logger: {
+    log: Mock;
+    error: Mock;
+    warn: Mock;
+    debug: Mock;
+  };
+  let redisService: {
+    get: Mock;
+    set: Mock;
+    del: Mock;
+    deleteByPattern: Mock;
+  };
   let memberDiscordAccessService: MemberDiscordAccessService;
 
   const mockGuild: Guild = {
@@ -149,6 +169,10 @@ describe("MembersService", () => {
       publish: mockFn(),
     };
 
+    const mockBulkRefreshQueue = {
+      add: mockFn(),
+    };
+
     const mockLogger = {
       log: mockFn(),
       error: mockFn(),
@@ -172,9 +196,12 @@ describe("MembersService", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MembersService,
+        MemberBulkRefreshService,
         MemberDiscordAccessService,
         MemberDiscordRefreshService,
         MemberDiscordSyncService,
+        MemberReadService,
+        MemberRefreshJobEventsService,
         MemberRemovalService,
         { provide: WINSTON_MODULE_PROVIDER, useValue: mockLogger },
         { provide: PrismaService, useValue: mockPrismaService },
@@ -185,6 +212,10 @@ describe("MembersService", () => {
           useValue: mockRefreshScheduler,
         },
         { provide: AmqpConnection, useValue: mockAmqpConnection },
+        {
+          provide: getQueueToken(MEMBER_BULK_REFRESH_QUEUE),
+          useValue: mockBulkRefreshQueue,
+        },
         { provide: RedisService, useValue: mockRedisService },
         { provide: DiscordSyncDiagnosticsService, useValue: mockDiagnostics },
       ],
@@ -199,13 +230,16 @@ describe("MembersService", () => {
       DiscordSyncDiagnosticsService,
     ) as Mocked<DiscordSyncDiagnosticsService>;
     amqpConnection = module.get(AmqpConnection);
+    bulkRefreshQueue = module.get(getQueueToken(MEMBER_BULK_REFRESH_QUEUE));
+    logger = module.get(WINSTON_MODULE_PROVIDER);
+    redisService = module.get(RedisService);
     memberDiscordAccessService = module.get(MemberDiscordAccessService);
 
     // Suppress logger output
-    vi.spyOn(service["logger"], "warn").mockImplementation();
-    vi.spyOn(service["logger"], "debug").mockImplementation();
-    vi.spyOn(service["logger"], "error").mockImplementation();
-    vi.spyOn(service["logger"], "log").mockImplementation();
+    vi.spyOn(logger, "warn").mockImplementation();
+    vi.spyOn(logger, "debug").mockImplementation();
+    vi.spyOn(logger, "error").mockImplementation();
+    vi.spyOn(logger, "log").mockImplementation();
   });
 
   afterEach(() => {
@@ -218,7 +252,7 @@ describe("MembersService", () => {
     });
 
     it("should set environment from config", () => {
-      expect(service["env"]).toBe(RuntimeEnvironment.LOCAL);
+      expect(memberDiscordAccessService["env"]).toBe(RuntimeEnvironment.LOCAL);
     });
   });
 
@@ -441,10 +475,10 @@ describe("MembersService", () => {
           guildId: options.guildId,
         },
       );
-      expect(service["redisService"].del).toHaveBeenCalledWith(
+      expect(redisService.del).toHaveBeenCalledWith(
         getPermissionsCacheKey(options.userId, options.guildId),
       );
-      expect(service["redisService"].deleteByPattern).toHaveBeenCalledWith(
+      expect(redisService.deleteByPattern).toHaveBeenCalledWith(
         getUserLootlogConfigCachePattern(options.discordId),
       );
     });
@@ -467,7 +501,7 @@ describe("MembersService", () => {
         unauthorizedError,
       );
 
-      expect(service["logger"].log).toHaveBeenCalledWith(
+      expect(logger.log).toHaveBeenCalledWith(
         expect.objectContaining({
           level: "warn",
           message:
@@ -1018,7 +1052,7 @@ describe("MembersService", () => {
       await expect(service.createOrUpdateMember(memberData)).rejects.toThrow(
         error,
       );
-      expect(service["logger"].log).toHaveBeenCalledWith(
+      expect(logger.log).toHaveBeenCalledWith(
         expect.objectContaining({
           level: "error",
           message: expect.stringContaining("Failed to create/update member"),
@@ -1202,7 +1236,7 @@ describe("MembersService", () => {
           lastDiscordStatus: "GUILD_DEACTIVATED",
         }),
       });
-      expect(service["logger"].log).toHaveBeenCalledWith({
+      expect(logger.log).toHaveBeenCalledWith({
         level: "info",
         message: "Deactivated 5 members from guild guild-123",
       });
@@ -1215,7 +1249,7 @@ describe("MembersService", () => {
       await expect(service.deleteMembersByGuildId("guild-123")).rejects.toThrow(
         error,
       );
-      expect(service["logger"].log).toHaveBeenCalledWith(
+      expect(logger.log).toHaveBeenCalledWith(
         expect.objectContaining({
           level: "error",
           message: expect.stringContaining("Failed to deactivate members"),
@@ -1252,14 +1286,75 @@ describe("MembersService", () => {
         ...mockJob,
         nextAvailableAt: expect.any(Date),
       });
-      expect(amqpConnection.publish).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.any(String),
+      expect(bulkRefreshQueue.add).toHaveBeenCalledWith(
+        "bulk-refresh",
         {
           jobId: mockJob.id,
           guildId,
           memberIds: ["discord-123", "discord-456"],
         },
+        expect.objectContaining({
+          attempts: 3,
+          backoff: {
+            type: "exponential",
+            delay: 2000,
+          },
+          jobId: `member-bulk-refresh:${mockJob.id}`,
+        }),
+      );
+      expect(amqpConnection.publish).not.toHaveBeenCalledWith(
+        DEFAULT_EXCHANGE_NAME,
+        RoutingKey.GUILDS_MEMBERS_REFRESH_JOB_UPDATE,
+        expect.anything(),
+      );
+    });
+
+    it("should mark the job as failed when BullMQ enqueue fails", async () => {
+      const queueError = new Error("Queue unavailable");
+      const mockJob = {
+        id: 1,
+        guildId,
+        requestedBy,
+        status: "PENDING",
+        totalMembers: 1,
+        processedMembers: 0,
+        failedMembers: 0,
+        createdAt: new Date(),
+      };
+      prismaService.memberRefreshJob.findFirst.mockResolvedValue(null);
+      prismaService.member.findMany.mockResolvedValue([mockMember]);
+      prismaService.memberRefreshJob.create.mockResolvedValue(mockJob);
+      prismaService.memberRefreshJob.update.mockResolvedValue({
+        ...mockJob,
+        status: "FAILED",
+        completedAt: new Date(),
+      });
+      prismaService.memberRefreshJob.findUnique.mockResolvedValue({
+        ...mockJob,
+        status: "FAILED",
+        completedAt: new Date(),
+      });
+      bulkRefreshQueue.add.mockRejectedValue(queueError);
+
+      await expect(
+        service.createBulkRefreshJob(guildId, requestedBy),
+      ).rejects.toThrow(queueError);
+
+      expect(prismaService.memberRefreshJob.update).toHaveBeenCalledWith({
+        where: { id: mockJob.id },
+        data: {
+          status: "FAILED",
+          completedAt: expect.any(Date),
+        },
+      });
+      expect(amqpConnection.publish).toHaveBeenCalledWith(
+        DEFAULT_EXCHANGE_NAME,
+        RoutingKey.GUILDS_MEMBERS_REFRESH_JOB_UPDATE,
+        expect.objectContaining({
+          jobId: mockJob.id,
+          guildId,
+          status: "FAILED",
+        }),
       );
     });
 
@@ -1325,28 +1420,40 @@ describe("MembersService", () => {
         totalMembers: 10,
         createdAt: new Date(),
       };
-      prismaService.memberRefreshJob.findUnique.mockResolvedValue(mockJob);
+      prismaService.memberRefreshJob.findFirst.mockResolvedValue(mockJob);
 
-      const result = await service.getRefreshJobStatus(1);
+      const result = await service.getRefreshJobStatus({
+        guildId: "guild-123",
+        jobId: 1,
+      });
 
       expect(result).toEqual({
         ...mockJob,
         nextAvailableAt: expect.any(Date),
       });
-      expect(prismaService.memberRefreshJob.findUnique).toHaveBeenCalledWith({
-        where: { id: 1 },
+      expect(prismaService.memberRefreshJob.findFirst).toHaveBeenCalledWith({
+        where: {
+          id: 1,
+          guildId: "guild-123",
+        },
       });
     });
 
     it("should throw NotFoundException when job not found", async () => {
-      prismaService.memberRefreshJob.findUnique.mockResolvedValue(null);
+      prismaService.memberRefreshJob.findFirst.mockResolvedValue(null);
 
-      await expect(service.getRefreshJobStatus(999)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.getRefreshJobStatus({
+          guildId: "guild-123",
+          jobId: 999,
+        }),
+      ).rejects.toThrow(NotFoundException);
 
       const error = await service
-        .getRefreshJobStatus(999)
+        .getRefreshJobStatus({
+          guildId: "guild-123",
+          jobId: 999,
+        })
         .catch((error) => error);
       expect(error.getResponse()).toMatchObject({
         message: ErrorKey.REFRESH_JOB_NOT_FOUND,

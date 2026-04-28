@@ -1,7 +1,9 @@
 import {
   Controller,
+  ForbiddenException,
   Get,
   Param,
+  ParseIntPipe,
   Post,
   Patch,
   UseGuards,
@@ -23,6 +25,7 @@ import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { type Guild, Permission } from "src/generated/prisma/client";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
+import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";
 import {
   MemberRefreshJobResponseDto,
   NullableMemberRefreshJobResponseDto,
@@ -33,6 +36,8 @@ import {
 } from "src/shared/dto/member-response.dto";
 import { MemberSummaryResponseDto } from "src/shared/dto/member-summary-response.dto";
 import { MemberLootlogConfigSummaryResponseDto } from "src/shared/dto/member-lootlog-config-summary-response.dto";
+import { MemberReferenceResponseDto } from "src/shared/dto/member-reference-response.dto";
+import { ErrorKey } from "./enum/error-key.enum";
 
 @ApiTags("members")
 @ApiBearerAuth()
@@ -54,7 +59,7 @@ export class MembersController {
     type: NullableMemberResponseDto,
   })
   @ApiResponse({ status: 404, description: "Member not found" })
-  async getMe(
+  getMe(
     @DiscordId() discordId: string,
     @UserId() userId: string,
     @Param("guildId") guildId: string,
@@ -79,7 +84,7 @@ export class MembersController {
     description: "Refreshed member information",
     type: NullableMemberResponseDto,
   })
-  async refreshMe(
+  refreshMe(
     @DiscordId() discordId: string,
     @UserId() userId: string,
     @Param("guildId") guildId: string,
@@ -117,7 +122,7 @@ export class MembersController {
     description: "Forbidden - admin permission required",
   })
   @ApiResponse({ status: 404, description: "Member not found" })
-  async refreshMember(
+  refreshMember(
     @Param("discordId") discordId: string,
     @GuildData() guild: Guild,
   ) {
@@ -150,7 +155,7 @@ export class MembersController {
     description: "Forbidden - admin permission required",
   })
   @ApiResponse({ status: 404, description: "Member not found" })
-  async deactivateMember(
+  deactivateMember(
     @Param("discordId") discordId: string,
     @GuildData() guild: Guild,
   ) {
@@ -184,7 +189,7 @@ export class MembersController {
     description: "Forbidden - admin permission required",
   })
   @ApiResponse({ status: 404, description: "Member not found" })
-  async getMemberLootlogConfigSummary(
+  getMemberLootlogConfigSummary(
     @Param("discordId") discordId: string,
     @GuildData() guild: Guild,
   ) {
@@ -217,12 +222,56 @@ export class MembersController {
     status: 403,
     description: "Forbidden - insufficient permissions",
   })
-  async getGuildMembers(
+  getGuildMembers(
     @GuildData() guild: Guild,
+    @MemberPermissions() permissions: Permission[],
     @Query("includeInactive") includeInactive?: string,
   ) {
     const includeInactiveBool = includeInactive === "true";
+    if (
+      includeInactiveBool &&
+      !this.canReadInactiveMemberDetails(permissions)
+    ) {
+      throw new ForbiddenException(
+        ErrorKey.INCLUDE_INACTIVE_MEMBERS_REQUIRES_ADMIN,
+      );
+    }
+
     return this.membersService.getGuildMembers(guild.id, includeInactiveBool);
+  }
+
+  @Permissions(Permission.LOOTLOG_ACCESS)
+  @UseGuards(PermissionsGuard)
+  @Get("references")
+  @ApiOperation({
+    summary: "Get guild member references",
+    description:
+      "Retrieve limited member reference data for guild-scoped historical views",
+  })
+  @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
+  @ApiQuery({
+    name: "includeInactive",
+    required: false,
+    type: Boolean,
+    description: "Include inactive members",
+  })
+  @ZodResponse({
+    status: 200,
+    description: "Limited list of guild member references",
+    type: [MemberReferenceResponseDto],
+  })
+  @ApiResponse({
+    status: 403,
+    description: "Forbidden - insufficient permissions",
+  })
+  getGuildMemberReferences(
+    @GuildData() guild: Guild,
+    @Query("includeInactive") includeInactive?: string,
+  ) {
+    return this.membersService.getGuildMemberReferences(
+      guild.id,
+      includeInactive === "true",
+    );
   }
 
   @Permissions(Permission.LOOTLOG_ACCESS)
@@ -243,7 +292,7 @@ export class MembersController {
     status: 403,
     description: "Forbidden - insufficient permissions",
   })
-  async getGuildMembersSummary(@GuildData() guild: Guild) {
+  getGuildMembersSummary(@GuildData() guild: Guild) {
     return this.membersService.getGuildMembersSummary(guild.id);
   }
 
@@ -264,10 +313,7 @@ export class MembersController {
     status: 403,
     description: "Forbidden - admin permission required",
   })
-  async refreshAllMembers(
-    @GuildData() guild: Guild,
-    @DiscordId() discordId: string,
-  ) {
+  refreshAllMembers(@GuildData() guild: Guild, @DiscordId() discordId: string) {
     return this.membersService.createBulkRefreshJob(guild.id, discordId);
   }
 
@@ -289,7 +335,7 @@ export class MembersController {
     description: "Forbidden - admin permission required",
   })
   @ApiResponse({ status: 404, description: "No refresh jobs found" })
-  async getLatestRefreshJob(@GuildData() guild: Guild) {
+  getLatestRefreshJob(@GuildData() guild: Guild) {
     return this.membersService.getLatestRefreshJob(guild.id);
   }
 
@@ -312,7 +358,20 @@ export class MembersController {
     description: "Forbidden - admin permission required",
   })
   @ApiResponse({ status: 404, description: "Refresh job not found" })
-  async getRefreshJobStatus(@Param("jobId") jobId: string) {
-    return this.membersService.getRefreshJobStatus(Number.parseInt(jobId, 10));
+  getRefreshJobStatus(
+    @GuildData() guild: Guild,
+    @Param("jobId", ParseIntPipe) jobId: number,
+  ) {
+    return this.membersService.getRefreshJobStatus({
+      guildId: guild.id,
+      jobId,
+    });
+  }
+
+  private canReadInactiveMemberDetails(permissions: Permission[]): boolean {
+    return (
+      permissions.includes(Permission.ADMIN) ||
+      permissions.includes(Permission.OWNER)
+    );
   }
 }

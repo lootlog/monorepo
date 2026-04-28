@@ -41,8 +41,6 @@ export enum Queue {
   GUILDS_MEMBERS_REMOVE_ROLE = "backend-guilds-members-remove-role",
   GUILDS_MEMBERS_REMOVE_ROLE_DLQ = "backend-guilds-members-remove-role.dlq",
   GUILDS_MEMBERS_REMOVE_ROLE_RETRY = "backend-guilds-members-remove-role.retry",
-  GUILDS_MEMBERS_BULK_REFRESH = "backend-guilds-members-bulk-refresh",
-  GUILDS_MEMBERS_BULK_REFRESH_DLQ = "backend-guilds-members-bulk-refresh.dlq",
   // events
   PRESENCE_COVERAGE_CHECK = "backend-presence-coverage-check",
 }

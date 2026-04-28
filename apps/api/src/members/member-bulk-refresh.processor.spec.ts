@@ -2,9 +2,9 @@ import type { Mock } from "vitest";
 import { mockFn } from "src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { Job } from "bullmq";
-import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { MemberBulkRefreshProcessor } from "./member-bulk-refresh.processor";
+import { MemberRefreshJobEventsService } from "./member-refresh-job-events.service";
 import { MembersService } from "./members.service";
 import { PrismaService } from "src/db/prisma.service";
 
@@ -19,8 +19,8 @@ describe("MemberBulkRefreshProcessor", () => {
       findUnique: Mock;
     };
   };
-  let amqpConnection: {
-    publish: Mock;
+  let memberRefreshJobEventsService: {
+    emitJobUpdate: Mock;
   };
   let logger: {
     log: Mock;
@@ -72,8 +72,8 @@ describe("MemberBulkRefreshProcessor", () => {
       },
     };
 
-    const mockAmqpConnection = {
-      publish: mockFn(),
+    const mockMemberRefreshJobEventsService = {
+      emitJobUpdate: mockFn().mockResolvedValue(undefined),
     };
 
     const mockLogger = {
@@ -92,8 +92,8 @@ describe("MemberBulkRefreshProcessor", () => {
           useValue: mockPrismaService,
         },
         {
-          provide: AmqpConnection,
-          useValue: mockAmqpConnection,
+          provide: MemberRefreshJobEventsService,
+          useValue: mockMemberRefreshJobEventsService,
         },
         {
           provide: WINSTON_MODULE_PROVIDER,
@@ -107,7 +107,7 @@ describe("MemberBulkRefreshProcessor", () => {
     );
     membersService = module.get(MembersService);
     prismaService = module.get(PrismaService);
-    amqpConnection = module.get(AmqpConnection);
+    memberRefreshJobEventsService = module.get(MemberRefreshJobEventsService);
     logger = module.get(WINSTON_MODULE_PROVIDER);
   });
 
@@ -144,17 +144,13 @@ describe("MemberBulkRefreshProcessor", () => {
       },
     });
 
-    expect(amqpConnection.publish).toHaveBeenLastCalledWith(
-      expect.any(String),
-      expect.any(String),
-      expect.objectContaining({
-        jobId: 1,
-        guildId: "guild-123",
-        refreshedIds: ["discord-3"],
-        skippedIds: ["discord-1", "discord-2"],
-        failedIds: [],
-      }),
-    );
+    expect(
+      memberRefreshJobEventsService.emitJobUpdate,
+    ).toHaveBeenLastCalledWith(1, {
+      refreshedIds: ["discord-3"],
+      skippedIds: ["discord-1", "discord-2"],
+      failedIds: [],
+    });
 
     expect(logger.log).toHaveBeenCalledWith({
       level: "debug",

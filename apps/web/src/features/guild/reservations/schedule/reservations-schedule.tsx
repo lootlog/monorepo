@@ -26,8 +26,8 @@ import {
   useReservationsControllerGetReservations,
 } from "@/lib/api/generated/main/reservations/reservations";
 import { useGuildsControllerGetGuildPermissions } from "@/lib/api/generated/main/guilds/guilds";
-import { useMembersControllerGetGuildMembers } from "@/lib/api/generated/main/members/members";
-import type { MemberResponseDto as GuildMember } from "@/lib/api/generated/main/model";
+import { useMembersControllerGetGuildMemberReferences } from "@/lib/api/generated/main/members/members";
+import type { MemberReferenceResponseDtoOutput as GuildMember } from "@/lib/api/generated/main/model";
 
 export const ReservationsSchedule: React.FC = () => {
   const { reservationId } = useParams({
@@ -36,9 +36,14 @@ export const ReservationsSchedule: React.FC = () => {
   const { data: session } = useSession();
   const isOwner = useIsOwner();
   const guildId = useGuildId();
-  const { data: members } = useMembersControllerGetGuildMembers({
-    guildId: guildId ?? "",
-  });
+  const { data: members } = useMembersControllerGetGuildMemberReferences(
+    {
+      guildId: guildId ?? "",
+    },
+    {
+      includeInactive: true,
+    },
+  );
   const { data: permissions } = useGuildsControllerGetGuildPermissions({
     guildId: guildId ?? "",
   });

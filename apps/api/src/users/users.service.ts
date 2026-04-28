@@ -10,6 +10,7 @@ import { firstValueFrom } from "rxjs";
 import { PrismaService } from "src/db/prisma.service";
 import { AuthService } from "src/auth/auth.service";
 import { battlelogConfig } from "src/config/battlelog.config";
+import { MEMBER_LAST_DISCORD_STATUS } from "src/members/constants/member-discord-status.constant";
 import { MembersService } from "src/members/members.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import type { Prisma } from "src/generated/prisma/client";
@@ -155,7 +156,7 @@ export class UsersService {
             data: {
               active: false,
               lastDiscordAttemptAt: new Date(),
-              lastDiscordStatus: "ACCOUNT_DELETED",
+              lastDiscordStatus: MEMBER_LAST_DISCORD_STATUS.ACCOUNT_DELETED,
               roles: { set: [] },
             },
           }),

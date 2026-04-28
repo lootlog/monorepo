@@ -6,12 +6,6 @@ import {
   AccordionItem,
 } from "@lootlog/ui/components/accordion";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@lootlog/ui/components/tooltip";
-import {
   LogIn,
   LogOut,
   Calendar,
@@ -20,8 +14,6 @@ import {
   Gamepad2,
   Hash,
   MapPin,
-  AlertTriangle,
-  CheckCircle2,
   ChevronDown,
 } from "lucide-react";
 import { PlayerTile } from "@/features/guild/loots-list/components/loots-list/player-tile";
@@ -32,7 +24,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MARGONEM_GUILD_URL } from "@/constants/margonem";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useMembersControllerGetGuildMembers } from "@/lib/api/generated/main/members/members";
+import { useMembersControllerGetGuildMemberReferences } from "@/lib/api/generated/main/members/members";
 
 type Props = {
   activity: PaginatedActivitiesResponseDtoDataItem;
@@ -41,7 +33,7 @@ type Props = {
 export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
   const [isOpen, setIsOpen] = useState("");
   const guildId = useGuildId();
-  const { data: members } = useMembersControllerGetGuildMembers(
+  const { data: members } = useMembersControllerGetGuildMemberReferences(
     { guildId: guildId ?? "" },
     { includeInactive: true },
   );
@@ -204,47 +196,9 @@ export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
                 <span>
                   {t("activityLogs.list.discord")}
                   {discordMember ? (
-                    <TooltipProvider>
-                      <Tooltip delayDuration={100}>
-                        <TooltipTrigger asChild>
-                          <span
-                            className="font-medium text-foreground hover:underline cursor-help"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {discordMember.name}
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent className="bg-popover/95 backdrop-blur-md border-border/50">
-                          <div className="flex flex-col gap-1">
-                            <div className="flex items-center gap-2">
-                              {discordMember.isStale ? (
-                                <AlertTriangle className="h-3 w-3 text-yellow-500" />
-                              ) : (
-                                <CheckCircle2 className="h-3 w-3 text-green-500" />
-                              )}
-                              <span className="font-medium">
-                                {discordMember.isStale
-                                  ? t("activityLogs.list.dataStale")
-                                  : t("activityLogs.list.dataFresh")}
-                              </span>
-                            </div>
-                            {discordMember.staleWarning && (
-                              <span className="text-muted-foreground">
-                                {discordMember.staleWarning}
-                              </span>
-                            )}
-                            <span className="text-xs text-muted-foreground">
-                              {t("activityLogs.list.updatedAt", {
-                                date: format(
-                                  new Date(discordMember.updatedAt),
-                                  "yyyy-MM-dd HH:mm:ss",
-                                ),
-                              })}
-                            </span>
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <span className="font-medium text-foreground">
+                      {discordMember.name}
+                    </span>
                   ) : (
                     activity.discordId
                   )}

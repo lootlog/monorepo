@@ -1,9 +1,11 @@
+import { ForbiddenException } from "@nestjs/common";
 import type { Mock } from "vitest";
 import { Test, type TestingModule } from "@nestjs/testing";
 import {
   type Guild,
   type Member,
   MemberType,
+  Permission,
 } from "src/generated/prisma/client";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
@@ -18,6 +20,7 @@ describe("MembersController", () => {
     refreshMember: Mock;
     deactivateMember: Mock;
     getGuildMembers: Mock;
+    getGuildMemberReferences: Mock;
     getGuildMembersSummary: Mock;
     getMemberLootlogConfigSummary: Mock;
     createBulkRefreshJob: Mock;
@@ -75,6 +78,7 @@ describe("MembersController", () => {
       refreshMember: mockFn(),
       deactivateMember: mockFn(),
       getGuildMembers: mockFn(),
+      getGuildMemberReferences: mockFn(),
       getGuildMembersSummary: mockFn(),
       getMemberLootlogConfigSummary: mockFn(),
       createBulkRefreshJob: mockFn(),
@@ -201,7 +205,9 @@ describe("MembersController", () => {
       ];
       membersService.getGuildMembers.mockResolvedValue(members);
 
-      const result = await controller.getGuildMembers(mockGuild);
+      const result = await controller.getGuildMembers(mockGuild, [
+        Permission.LOOTLOG_ACCESS,
+      ]);
 
       expect(result).toEqual(members);
       expect(membersService.getGuildMembers).toHaveBeenCalledWith(
@@ -213,9 +219,67 @@ describe("MembersController", () => {
     it("should return empty array when no members found", async () => {
       membersService.getGuildMembers.mockResolvedValue([]);
 
-      const result = await controller.getGuildMembers(mockGuild);
+      const result = await controller.getGuildMembers(mockGuild, [
+        Permission.LOOTLOG_ACCESS,
+      ]);
 
       expect(result).toEqual([]);
+    });
+
+    it("should allow admins to include inactive full member details", async () => {
+      const members = [mockMember, { ...mockMember, id: 456, active: false }];
+      membersService.getGuildMembers.mockResolvedValue(members);
+
+      const result = await controller.getGuildMembers(
+        mockGuild,
+        [Permission.ADMIN],
+        "true",
+      );
+
+      expect(result).toEqual(members);
+      expect(membersService.getGuildMembers).toHaveBeenCalledWith(
+        mockGuild.id,
+        true,
+      );
+    });
+
+    it("should reject inactive full member details for non-admins", () => {
+      expect(() =>
+        controller.getGuildMembers(
+          mockGuild,
+          [Permission.LOOTLOG_ACCESS],
+          "true",
+        ),
+      ).toThrow(ForbiddenException);
+
+      expect(membersService.getGuildMembers).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("getGuildMemberReferences", () => {
+    it("should return limited inactive member references", async () => {
+      const members = [
+        {
+          id: 123,
+          userId: "discord-123",
+          name: "Test User",
+          avatar: "avatar.png",
+          color: 123456,
+          active: false,
+        },
+      ];
+      membersService.getGuildMemberReferences.mockResolvedValue(members);
+
+      const result = await controller.getGuildMemberReferences(
+        mockGuild,
+        "true",
+      );
+
+      expect(result).toEqual(members);
+      expect(membersService.getGuildMemberReferences).toHaveBeenCalledWith(
+        mockGuild.id,
+        true,
+      );
     });
   });
 
@@ -349,18 +413,13 @@ describe("MembersController", () => {
       };
       membersService.getRefreshJobStatus.mockResolvedValue(processingJob);
 
-      const result = await controller.getRefreshJobStatus("1");
+      const result = await controller.getRefreshJobStatus(mockGuild, 1);
 
       expect(result).toEqual(processingJob);
-      expect(membersService.getRefreshJobStatus).toHaveBeenCalledWith(1);
-    });
-
-    it("should parse jobId string to number", async () => {
-      membersService.getRefreshJobStatus.mockResolvedValue(mockRefreshJob);
-
-      await controller.getRefreshJobStatus("123");
-
-      expect(membersService.getRefreshJobStatus).toHaveBeenCalledWith(123);
+      expect(membersService.getRefreshJobStatus).toHaveBeenCalledWith({
+        guildId: mockGuild.id,
+        jobId: 1,
+      });
     });
 
     it("should handle failed job status", async () => {
@@ -373,7 +432,7 @@ describe("MembersController", () => {
       };
       membersService.getRefreshJobStatus.mockResolvedValue(failedJob);
 
-      const result = await controller.getRefreshJobStatus("1");
+      const result = await controller.getRefreshJobStatus(mockGuild, 1);
 
       expect(result).toEqual(failedJob);
       expect(result.status).toBe("FAILED");

@@ -170,8 +170,13 @@ return 0
       }
     }
 
-    if (state === "delayed" && delay === 0) {
-      await this.promoteDelayedJob(job);
+    if (state === "delayed") {
+      if (delay === 0) {
+        await this.promoteDelayedJob(job);
+        return;
+      }
+
+      await this.changeDelayedJobDelay(job, delay);
     }
   }
 
@@ -283,6 +288,38 @@ return 0
         level: "debug",
         message: "Failed to promote member refresh job",
         jobId: job.id,
+        error,
+      });
+    }
+  }
+
+  private async changeDelayedJobDelay(
+    job: Job<MemberRefreshJobData>,
+    delay: number,
+  ): Promise<void> {
+    try {
+      await job.changeDelay(delay);
+    } catch (error) {
+      if (this.isJobNotInStateError(error)) {
+        const currentState = await this.getExistingJobState(job);
+
+        if (currentState !== "delayed") {
+          this.logger.log({
+            level: "debug",
+            message:
+              "Skipped changing member refresh job delay because it already left delayed state",
+            jobId: job.id,
+            state: currentState,
+          });
+          return;
+        }
+      }
+
+      this.logger.log({
+        level: "debug",
+        message: "Failed to change member refresh job delay",
+        jobId: job.id,
+        delay,
         error,
       });
     }
