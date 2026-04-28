@@ -4,6 +4,7 @@ import type { Job, Queue as BullQueue } from "bullmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { DiscordRateLimiterService } from "src/discord/discord-rate-limiter.service";
+import { DiscordSyncDiagnosticsService } from "src/discord/discord-sync-diagnostics.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { MEMBER_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant";
 
@@ -54,6 +55,7 @@ return 0
     private readonly memberRefreshQueue: BullQueue<MemberRefreshJobData>,
     private readonly rateLimiter: DiscordRateLimiterService,
     private readonly redisService: RedisService,
+    private readonly diagnostics: DiscordSyncDiagnosticsService,
   ) {}
 
   async enqueueRefresh(
@@ -79,6 +81,8 @@ return 0
         await this.updateExistingJob(existingJob, data, delay, existingState);
       }
 
+      await this.recordScheduleMetrics(data.reason, delay);
+
       return {
         queued: true,
         nextRefreshAt,
@@ -86,6 +90,7 @@ return 0
     }
 
     await this.addRefreshJob(jobId, data, delay);
+    await this.recordScheduleMetrics(data.reason, delay);
 
     return {
       queued: true,
@@ -204,6 +209,23 @@ return 0
       reason: data.reason,
       delay,
     });
+  }
+
+  private async recordScheduleMetrics(
+    reason: string,
+    delay: number,
+  ): Promise<void> {
+    await this.diagnostics.recordMemberRefreshMetric({
+      outcome: "queued",
+      reason,
+    });
+
+    if (delay > 0) {
+      await this.diagnostics.recordMemberRefreshMetric({
+        outcome: "delayed",
+        reason,
+      });
+    }
   }
 
   private async replaceExistingJob(

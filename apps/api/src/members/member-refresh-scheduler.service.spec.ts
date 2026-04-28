@@ -4,6 +4,7 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import { getQueueToken } from "@nestjs/bullmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { DiscordRateLimiterService } from "src/discord/discord-rate-limiter.service";
+import { DiscordSyncDiagnosticsService } from "src/discord/discord-sync-diagnostics.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { MEMBER_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant";
 import {
@@ -30,6 +31,9 @@ describe("MemberRefreshSchedulerService", () => {
     error: Mock;
     warn: Mock;
     debug: Mock;
+  };
+  let diagnostics: {
+    recordMemberRefreshMetric: Mock;
   };
 
   const refreshData: MemberRefreshJobData = {
@@ -63,6 +67,10 @@ describe("MemberRefreshSchedulerService", () => {
       debug: mockFn(),
     };
 
+    const mockDiagnostics = {
+      recordMemberRefreshMetric: mockFn().mockResolvedValue(undefined),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MemberRefreshSchedulerService,
@@ -82,6 +90,10 @@ describe("MemberRefreshSchedulerService", () => {
           provide: WINSTON_MODULE_PROVIDER,
           useValue: mockLogger,
         },
+        {
+          provide: DiscordSyncDiagnosticsService,
+          useValue: mockDiagnostics,
+        },
       ],
     }).compile();
 
@@ -90,6 +102,9 @@ describe("MemberRefreshSchedulerService", () => {
     rateLimiter = module.get(DiscordRateLimiterService);
     redisService = module.get(RedisService);
     logger = module.get(WINSTON_MODULE_PROVIDER);
+    diagnostics = module.get(
+      DiscordSyncDiagnosticsService,
+    ) as typeof diagnostics;
   });
 
   afterEach(() => {
@@ -168,6 +183,35 @@ describe("MemberRefreshSchedulerService", () => {
           priority: refreshData.priority,
         }),
       );
+      expect(diagnostics.recordMemberRefreshMetric).toHaveBeenCalledWith({
+        outcome: "queued",
+        reason: refreshData.reason,
+      });
+    });
+
+    it("should record delayed queue metrics when rate limit delay is active", async () => {
+      const nextRefreshAt = new Date(Date.now() + 5000);
+      queue.getJob.mockResolvedValue(null);
+      queue.add.mockResolvedValue({});
+      rateLimiter.getNextAvailableAtForUser.mockResolvedValue(nextRefreshAt);
+
+      await service.enqueueRefresh(refreshData);
+
+      expect(queue.add).toHaveBeenCalledWith(
+        "member-refresh",
+        refreshData,
+        expect.objectContaining({
+          delay: expect.any(Number),
+        }),
+      );
+      expect(diagnostics.recordMemberRefreshMetric).toHaveBeenCalledWith({
+        outcome: "queued",
+        reason: refreshData.reason,
+      });
+      expect(diagnostics.recordMemberRefreshMetric).toHaveBeenCalledWith({
+        outcome: "delayed",
+        reason: refreshData.reason,
+      });
     });
 
     it("should update a waiting job without calling promote", async () => {
