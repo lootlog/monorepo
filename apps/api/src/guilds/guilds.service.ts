@@ -102,7 +102,13 @@ export class GuildsService {
       discordId,
       userId,
     );
-    const guilds = guildCandidates.map(({ guild }) => guild);
+    const guilds =
+      guildCandidates.length > 0
+        ? guildCandidates.map(({ guild }) => guild)
+        : await this.getCurrentUserAccessibleGuildPlainEntries(
+            discordId,
+            userId,
+          );
 
     return this.sortGuildEntriesByUserPreferences(userId, guilds);
   }
@@ -491,20 +497,15 @@ export class GuildsService {
       );
 
       if (!discordGuilds || discordGuilds.length === 0) {
-        await this.queueMissingDiscordGuildMemberRefreshes({
+        const fallbackGuilds = await this.getGuildsForRequiredPermissions(
           discordId,
-          userId,
-          discordGuildIds: [],
-        });
-        return [];
+          [Permission.LOOTLOG_ACCESS],
+        );
+
+        return this.toGuildRefreshCandidates(fallbackGuilds);
       }
 
       const discordGuildIds = discordGuilds.map((guild) => guild.id);
-      await this.queueMissingDiscordGuildMemberRefreshes({
-        discordId,
-        userId,
-        discordGuildIds,
-      });
       const discordGuildMap = new Map(
         discordGuilds.map((guild) => [guild.id, guild] as const),
       );
@@ -538,7 +539,12 @@ export class GuildsService {
         error,
       });
 
-      return [];
+      const fallbackGuilds = await this.getGuildsForRequiredPermissions(
+        discordId,
+        [Permission.LOOTLOG_ACCESS],
+      );
+
+      return this.toGuildRefreshCandidates(fallbackGuilds);
     }
   }
 
@@ -557,20 +563,10 @@ export class GuildsService {
           level: "warn",
           message: `No guilds found for user ${userId} with Discord ID ${discordId}`,
         });
-        await this.queueMissingDiscordGuildMemberRefreshes({
-          discordId,
-          userId,
-          discordGuildIds: [],
-        });
         return [];
       }
 
       const discordGuildIds = discordGuilds.map((guild) => guild.id);
-      await this.queueMissingDiscordGuildMemberRefreshes({
-        discordId,
-        userId,
-        discordGuildIds,
-      });
       const discordGuildMap = new Map(
         discordGuilds.map((guild) => [guild.id, guild] as const),
       );
@@ -970,53 +966,6 @@ export class GuildsService {
         error,
       });
     });
-  }
-
-  private async queueMissingDiscordGuildMemberRefreshes(options: {
-    discordId: string;
-    userId: string;
-    discordGuildIds: string[];
-  }): Promise<void> {
-    const { discordId, userId, discordGuildIds } = options;
-    try {
-      const discordGuildIdSet = new Set(discordGuildIds);
-      const storedMembers = await this.prisma.member.findMany({
-        where: {
-          userId: discordId,
-          active: true,
-          globalUserId: userId,
-        },
-        select: {
-          guildId: true,
-        },
-      });
-      const missingGuildIds = storedMembers
-        .map((member) => member.guildId)
-        .filter((guildId) => !discordGuildIdSet.has(guildId));
-
-      if (missingGuildIds.length === 0) {
-        return;
-      }
-
-      await Promise.all(
-        missingGuildIds.map((guildId) =>
-          this.membersService.queueMemberRefresh({
-            discordId,
-            guildId,
-            userId,
-            priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
-            reason: "discord-guild-list-missing",
-          }),
-        ),
-      );
-    } catch (error) {
-      this.logger.warn({
-        message: "Failed to queue missing Discord guild member refreshes",
-        discordId,
-        userId,
-        error,
-      });
-    }
   }
 
   private toGuildRefreshCandidates(guilds: Guild[]): GuildRefreshCandidate[] {
