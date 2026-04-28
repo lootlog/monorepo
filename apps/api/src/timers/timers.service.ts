@@ -257,7 +257,7 @@ export class TimersService implements OnModuleInit {
     lvl: number;
     prof: string;
     icon: string;
-    clan: { id: number; name: string } | null;
+    clan?: { id: number; name: string } | null;
   }): CharacterData | null {
     if (!character) {
       return null;
