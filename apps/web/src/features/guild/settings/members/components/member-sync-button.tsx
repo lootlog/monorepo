@@ -19,6 +19,7 @@ import {
 } from "@/lib/api/generated/main/members/members";
 import { useTranslation } from "react-i18next";
 import { cn } from "@lootlog/ui/lib/utils";
+import { useSelectorPanel } from "@/components/selector-panel";
 
 export type MemberSyncButtonProps = {
   member: GuildMember;
@@ -29,38 +30,45 @@ export const MemberSyncButton: FC<MemberSyncButtonProps> = ({ member }) => {
   const guildId = useGuildId();
   const queryClient = useQueryClient();
   const refreshStatusContext = useContext(RefreshStatusContext);
+  const { setSelectedItem } = useSelectorPanel<GuildMember>();
   const { mutate: refreshMember, isPending } =
     useMembersControllerRefreshMember({
       mutation: {
-        onSuccess: (_data, variables) => {
-          const now = new Date().toISOString();
+        onSuccess: (data, variables) => {
           const currentGuildId = String(variables.pathParams.guildId);
           const memberId = String(variables.pathParams.discordId);
 
-          queryClient.setQueriesData(
-            {
-              queryKey: getMembersControllerGetGuildMembersQueryKey({
-                guildId: currentGuildId,
-              }),
-            },
-            (oldData: GuildMember[] | undefined) => {
-              if (!oldData) {
-                return oldData;
-              }
+          if (data) {
+            queryClient.setQueriesData(
+              {
+                queryKey: getMembersControllerGetGuildMembersQueryKey({
+                  guildId: currentGuildId,
+                }),
+              },
+              (oldData: GuildMember[] | undefined) => {
+                if (!oldData) {
+                  return oldData;
+                }
 
-              return oldData.map((guildMember) =>
-                guildMember.userId === memberId
-                  ? { ...guildMember, updatedAt: now, isStale: false }
-                  : guildMember,
-              );
-            },
-          );
+                return oldData.map((guildMember) =>
+                  guildMember.userId === memberId ? data : guildMember,
+                );
+              },
+            );
+            setSelectedItem(data);
+            if (data.active) {
+              toast.success(t("settings.members.refreshSuccess"));
+            } else {
+              toast.warning(t("settings.members.refreshAccessDisabled"));
+            }
+          } else {
+            setSelectedItem(null);
+            toast.warning(t("settings.members.refreshNotFound"));
+          }
 
           if (refreshStatusContext) {
             refreshStatusContext.markAsRefreshed([memberId]);
           }
-
-          toast.success(t("settings.members.refreshSuccess"));
 
           void Promise.all([
             queryClient.invalidateQueries({
@@ -88,12 +96,21 @@ export const MemberSyncButton: FC<MemberSyncButtonProps> = ({ member }) => {
     });
 
   const canRefresh = Boolean(member.globalUserId);
-  const { canTriggerRefresh, canTriggerRefreshText } = getPermissionRefreshInfo(
-    member.updatedAt,
-  );
-  const tooltipText = canRefresh
-    ? canTriggerRefreshText
-    : t("settings.members.refreshUnavailable");
+  const refreshReferenceAt = member.lastDiscordSyncAt;
+  const permissionRefreshInfo = getPermissionRefreshInfo(refreshReferenceAt);
+  const canTriggerRefresh = refreshReferenceAt
+    ? permissionRefreshInfo.canTriggerRefresh
+    : true;
+  const canTriggerRefreshText = refreshReferenceAt
+    ? permissionRefreshInfo.canTriggerRefreshText
+    : t("settings.members.refreshNoDiscordSync");
+  let tooltipText = canTriggerRefreshText;
+
+  if (!canRefresh) {
+    tooltipText = t("settings.members.refreshUnavailable");
+  } else if (member.refreshQueued) {
+    tooltipText = t("settings.members.refreshQueued");
+  }
 
   return (
     <Tooltip>
@@ -103,7 +120,12 @@ export const MemberSyncButton: FC<MemberSyncButtonProps> = ({ member }) => {
             className="justify-center"
             size="sm"
             variant="secondary"
-            disabled={isPending || !canRefresh || !canTriggerRefresh}
+            disabled={
+              isPending ||
+              !canRefresh ||
+              member.refreshQueued ||
+              !canTriggerRefresh
+            }
             onClick={(e) => {
               e.stopPropagation();
               if (!guildId) {

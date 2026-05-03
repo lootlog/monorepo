@@ -3,7 +3,7 @@ import { NpcKillersPage } from "@/features/guild/stats/npc-killers-page";
 import { NpcDetailPageSkeleton } from "@/features/guild/stats/npc-detail-page-skeleton";
 import { buildNpcKillersParams } from "@/features/guild/stats/utils/build-stats-query-params";
 import { getKillsControllerGetNpcKillersQueryOptions } from "@/lib/api/generated/main/kills/kills";
-import { getMembersControllerGetGuildMembersQueryOptions } from "@/lib/api/generated/main/members/members";
+import { getMembersControllerGetGuildMemberReferencesQueryOptions } from "@/lib/api/generated/main/members/members";
 import {
   throwNotFoundIfResponseMatches,
   withRouteLoaderCancellation,
@@ -32,7 +32,7 @@ export const Route = createFileRoute(
             ),
           ),
           context.queryClient.ensureQueryData(
-            getMembersControllerGetGuildMembersQueryOptions(
+            getMembersControllerGetGuildMemberReferencesQueryOptions(
               { guildId: params.guildId },
               {
                 includeInactive: true,

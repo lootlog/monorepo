@@ -17,6 +17,7 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { useTranslation } from "react-i18next";
 import { PERMISSION_CATEGORIES } from "@/features/guild/settings/roles/constants/permission-categories";
+import { MemberDiscordSyncIndicator } from "@/features/guild/settings/members/components/member-discord-sync-indicator";
 
 export type MemberListItemProps = {
   member: GuildMember;
@@ -57,6 +58,7 @@ export const MemberListItem: FC<MemberListItemProps> = ({
 
   const iconsContent = (
     <>
+      <MemberDiscordSyncIndicator member={member} />
       {isOwner && (
         <TooltipProvider delayDuration={100}>
           <Tooltip>
@@ -135,9 +137,11 @@ export const MemberListItem: FC<MemberListItemProps> = ({
           {member.name}
         </div>
         <div className="text-xs text-muted-foreground">
-          {t("settings.members.refreshedAt", {
-            time: getRelativeTime(member.updatedAt),
-          })}
+          {member.lastDiscordSyncAt
+            ? t("settings.members.discordSync.lastConfirmedRelative", {
+                time: getRelativeTime(member.lastDiscordSyncAt),
+              })
+            : t("settings.members.discordSync.notConfirmed")}
         </div>
       </div>
     </SelectableListCard>

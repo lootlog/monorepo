@@ -20,7 +20,18 @@ export function getPermissionsCachePattern(guildId: string): string {
   return `${PERMISSIONS_CACHE_KEY_PREFIX}:*:${guildId}`;
 }
 
-export function getAuthTokenCacheKey(userId: string): string {
+export function getAuthTokenCacheKey(
+  userId: string,
+  discordId: string,
+): string {
+  return `${AUTH_TOKEN_CACHE_KEY_PREFIX}:${userId}:${discordId}`;
+}
+
+export function getAuthTokenCachePattern(userId: string): string {
+  return `${AUTH_TOKEN_CACHE_KEY_PREFIX}:${userId}:*`;
+}
+
+export function getLegacyAuthTokenCacheKey(userId: string): string {
   return `${AUTH_TOKEN_CACHE_KEY_PREFIX}:${userId}`;
 }
 

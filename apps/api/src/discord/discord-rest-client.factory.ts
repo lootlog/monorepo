@@ -1,0 +1,127 @@
+import { REST } from "@discordjs/rest";
+import {
+  BadRequestException,
+  Injectable,
+  ServiceUnavailableException,
+  UnauthorizedException,
+} from "@nestjs/common";
+import { createHash } from "node:crypto";
+import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
+import { AuthService } from "src/auth/auth.service";
+import {
+  AccountNotFoundError,
+  AuthBadRequestError,
+  AuthServiceUnavailableError,
+  InvalidScopesError,
+  TokenExpiredError,
+} from "src/auth/errors";
+
+interface CachedDiscordRestClient {
+  expiresAt: number;
+  rest: REST;
+}
+
+@Injectable()
+export class DiscordRestClientFactory {
+  private readonly restTimeout = 5000;
+  private readonly restClientCacheTtlMs = 60_000;
+  private readonly restClients = new Map<string, CachedDiscordRestClient>();
+
+  constructor(private readonly authService: AuthService) {}
+
+  async getRestClient(userId: string, discordId: string): Promise<REST> {
+    try {
+      const token = await this.authService.getIdpToken(userId, discordId);
+
+      if (!DISCORD_AUTH_SCOPES.every((scope) => token.scopes.includes(scope))) {
+        throw new InvalidScopesError(DISCORD_AUTH_SCOPES, token.scopes);
+      }
+
+      const cacheKey = this.getRestClientCacheKey(
+        userId,
+        discordId,
+        token.accessToken,
+      );
+      const cachedClient = this.restClients.get(cacheKey);
+      if (cachedClient && cachedClient.expiresAt > Date.now()) {
+        return cachedClient.rest;
+      }
+
+      const rest = this.createRestClient(token.accessToken);
+
+      this.restClients.set(cacheKey, {
+        expiresAt: Date.now() + this.restClientCacheTtlMs,
+        rest,
+      });
+      this.pruneExpiredRestClients();
+
+      return rest;
+    } catch (error) {
+      if (error instanceof TokenExpiredError) {
+        throw new UnauthorizedException({
+          message: "TOKEN_EXPIRED",
+          requiresReauth: true,
+        });
+      }
+
+      if (error instanceof AccountNotFoundError) {
+        throw new UnauthorizedException({
+          message: "ACCOUNT_NOT_FOUND",
+          requiresReauth: true,
+        });
+      }
+
+      if (error instanceof InvalidScopesError) {
+        throw new UnauthorizedException({
+          message: "INVALID_SCOPES",
+          required: error.required,
+          actual: error.actual,
+        });
+      }
+
+      if (error instanceof AuthBadRequestError) {
+        throw new BadRequestException({
+          message: "AUTH_BAD_REQUEST",
+        });
+      }
+
+      if (error instanceof AuthServiceUnavailableError) {
+        throw new ServiceUnavailableException({
+          message: "AUTH_SERVICE_UNAVAILABLE",
+          retryAfter: 60,
+        });
+      }
+
+      throw error;
+    }
+  }
+
+  private createRestClient(accessToken: string): REST {
+    return new REST({
+      version: "10",
+      authPrefix: "Bearer",
+      timeout: this.restTimeout,
+      rejectOnRateLimit: ["/users"],
+    }).setToken(accessToken);
+  }
+
+  private getRestClientCacheKey(
+    userId: string,
+    discordId: string,
+    accessToken: string,
+  ): string {
+    const tokenHash = createHash("sha256").update(accessToken).digest("hex");
+
+    return `${userId}:${discordId}:${tokenHash}`;
+  }
+
+  private pruneExpiredRestClients(): void {
+    const now = Date.now();
+
+    for (const [cacheKey, cachedClient] of this.restClients.entries()) {
+      if (cachedClient.expiresAt <= now) {
+        this.restClients.delete(cacheKey);
+      }
+    }
+  }
+}

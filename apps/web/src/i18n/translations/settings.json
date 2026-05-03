@@ -33,29 +33,129 @@
     "refreshingProgress": "Odświeżanie {{processed}}/{{total}}",
     "nextRefreshIn": "Kolejne odświeżenie za {{minutes}}:{{seconds}}",
     "refreshSuccess": "Odświeżono pomyślnie",
+    "refreshSuccessWithCooldown": "Odświeżono. Kolejne odświeżenie za {{minutes}}:{{seconds}}",
+    "refreshAccessDisabled": "Odświeżenie dezaktywowało dostęp członka",
+    "refreshNotFound": "API Discorda nie zwróciło członkostwa dla tego serwera",
     "refreshError": "Błąd odświeżania",
+    "refreshErrorWithCooldown": "Błąd odświeżania. Kolejna próba za {{minutes}}:{{seconds}}",
     "refreshUnavailable": "Nie można odświeżyć tego członka",
+    "refreshNoDiscordSync": "Brak potwierdzonej synchronizacji z Discordem",
+    "refreshQueued": "Odświeżenie jest już w kolejce",
     "refreshPermissions": "Odśwież uprawnienia",
+    "refreshStarted": "Rozpoczęto odświeżanie wszystkich członków.",
+    "refreshRateLimit": "Kolejne odświeżenie będzie dostępne po zakończeniu limitu.",
+    "refreshStartError": "Nie udało się rozpocząć odświeżania.",
     "retry": "Spróbuj ponownie",
     "refreshAll": "Odśwież wszystkich",
     "refreshedAt": "Odświeżono {{time}}",
+    "discordSync": {
+      "title": "Synchronizacja Discorda",
+      "notConfirmed": "Brak potwierdzonego dostępu z Discorda",
+      "lastConfirmedRelative": "Ostatnie potwierdzenie: {{time}}",
+      "staleAccessHint": "Dostęp opiera się na ostatnich poprawnych danych z Discorda. Jeśli kolejne odświeżenie zwróci brak członkostwa, dostęp zostanie zablokowany.",
+      "badges": {
+        "confirmed": "Potwierdzony",
+        "queued": "W kolejce",
+        "cached": "Cache",
+        "blocked": "Zablokowany",
+        "issue": "Problem",
+        "unknown": "Brak danych"
+      },
+      "fields": {
+        "technicalStatus": "Status techniczny",
+        "lastAttemptAt": "Ostatnia próba",
+        "lastConfirmedAt": "Ostatnie potwierdzenie",
+        "refreshQueue": "Kolejka",
+        "nextRefreshAt": "Następna próba"
+      },
+      "values": {
+        "notAvailable": "Brak danych",
+        "queued": "Odświeżenie oczekuje na wykonanie"
+      },
+      "status": {
+        "success": {
+          "title": "Dostęp potwierdzony",
+          "description": "Role i dostęp pochodzą z ostatniej poprawnej odpowiedzi API Discorda."
+        },
+        "queued": {
+          "title": "Odświeżenie czeka w kolejce",
+          "description": "Odświeżenie zostanie wykonane po zakończeniu limitu zapytań."
+        },
+        "cached": {
+          "title": "Dostęp oparty na danych z cache",
+          "description": "Ostatnia próba nie dała pewnej odpowiedzi z Discorda, więc tymczasowo używane są ostatnie poprawne dane."
+        },
+        "notFound": {
+          "title": "Brak członkostwa na serwerze Discord",
+          "description": "API Discorda zwróciło brak członkostwa dla tej gildii. Ten status blokuje dostęp i czyści role."
+        },
+        "unauthorized": {
+          "title": "Nie można potwierdzić konta Discord",
+          "description": "Token Discorda użytkownika jest nieważny albo wygasł. Użytkownik musi ponownie się autoryzować."
+        },
+        "rateLimited": {
+          "title": "Rate limit API Discorda",
+          "description": "Żądanie trafiło w rate limit API Discorda, więc dostęp nie jest usuwany na podstawie tej próby."
+        },
+        "authServiceUnavailable": {
+          "title": "Serwis autoryzacji chwilowo niedostępny",
+          "description": "Nie udało się pobrać tokena Discorda użytkownika, więc system zachowuje ostatni potwierdzony stan."
+        },
+        "discordServiceUnavailable": {
+          "title": "API Discorda chwilowo niedostępne",
+          "description": "API Discorda nie zwróciło jednoznacznej odpowiedzi. Dostęp nie jest usuwany na podstawie tej próby."
+        },
+        "discordHttp": {
+          "title": "Błąd HTTP z API Discorda",
+          "description": "API Discorda zwróciło status błędu spoza obsługiwanych przypadków. Surowy kod jest widoczny w statusie technicznym."
+        },
+        "error": {
+          "title": "Odświeżenie zakończyło się błędem",
+          "description": "Brak jednoznacznej odpowiedzi z Discorda, więc dostęp nie jest usuwany na podstawie tej próby."
+        },
+        "manuallyDeactivated": {
+          "title": "Członek został ręcznie dezaktywowany",
+          "description": "Administrator wyłączył dostęp lokalnie. Odświeżenie z Discorda może ponownie aktywować członka."
+        },
+        "guildNotInDiscordList": {
+          "title": "Użytkownik nie jest już na tym serwerze",
+          "description": "Ostatnia poprawna lista serwerów użytkownika z Discorda nie zawiera tej gildii."
+        },
+        "guildDeactivated": {
+          "title": "Serwer został dezaktywowany",
+          "description": "Dostęp członków został wyłączony, bo serwer jest nieaktywny w Lootlogu."
+        },
+        "accountDeleted": {
+          "title": "Konto użytkownika zostało usunięte",
+          "description": "Dostęp został wyłączony podczas usuwania konta użytkownika."
+        },
+        "noHistory": {
+          "title": "Brak historii synchronizacji",
+          "description": "Nie ma jeszcze zapisanej próby sprawdzenia członkostwa w Discordzie."
+        },
+        "unknownStatus": {
+          "title": "Nieznany status synchronizacji",
+          "description": "System zapisał status, którego frontend jeszcze nie rozpoznaje. Surowa wartość jest widoczna poniżej."
+        }
+      }
+    },
     "emptyTitle": "Nie znaleziono członków",
     "emptyDescription": "Spróbuj zmienić kryteria wyszukiwania",
     "statusActive": "Aktywny",
     "statusInactive": "Nieaktywny",
     "statusActiveDescription": "Członek jest aktywny i może korzystać z konfiguracji lootloga w tej gildii.",
-    "statusInactiveDescription": "Członek został lokalnie dezaktywowany. Ponowna aktywacja następuje po odświeżeniu danych z Discorda.",
+    "statusInactiveDescription": "Członek został lokalnie dezaktywowany. Ponowna aktywacja nastąpi po odświeżeniu danych z Discorda.",
     "rolesTitle": "Role i uprawnienia",
     "noRoles": "Brak przypisanych ról. Może być potrzebna synchronizacja członka.",
     "permissionsCount": "{{count}} uprawnień",
     "actionsTitle": "Status i akcje",
-    "deactivate": "Deaktywuj",
-    "deactivatePending": "Deaktywowanie...",
+    "deactivate": "Dezaktywuj",
+    "deactivatePending": "Dezaktywowanie...",
     "deactivateSuccess": "Członek został dezaktywowany",
     "deactivateError": "Nie udało się dezaktywować członka",
     "deactivateConfirmTitle": "Dezaktywować członka?",
     "deactivateConfirmDescription": "Członek zostanie lokalnie oznaczony jako nieaktywny, a jego role zostaną wyczyszczone do czasu kolejnego odświeżenia z Discorda.",
-    "reactivateHint": "Ponowna aktywacja następuje po użyciu odświeżenia członka.",
+    "reactivateHint": "Ponowna aktywacja nastąpi po odświeżeniu członka.",
     "lootlogTitle": "Konfiguracja lootloga",
     "lootlogLoading": "Ładowanie postaci...",
     "lootlogError": "Nie udało się pobrać konfiguracji postaci.",

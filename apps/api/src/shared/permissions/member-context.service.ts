@@ -100,15 +100,9 @@ export class MemberContextService {
       );
 
       if (cached) {
+        let context: unknown;
         try {
-          const context = JSON.parse(cached);
-          this.logMemberContextDiagnostics(startedAt, stages, {
-            ...diagnostics,
-            outcome: "permissions_cache_hit",
-            permissionsCacheHit: true,
-          });
-
-          return context;
+          context = JSON.parse(cached);
         } catch (error) {
           diagnostics.permissionsCacheMalformed = true;
           this.logger.warn({
@@ -118,6 +112,28 @@ export class MemberContextService {
           await this.timeStage(stages, "permissionsCacheDelete", () =>
             this.redisService.del(cacheKey),
           );
+        }
+
+        if (context !== undefined) {
+          if (!this.isCachedContextFresh(context)) {
+            diagnostics.permissionsCacheStale = true;
+            await this.timeStage(stages, "permissionsCacheDelete", () =>
+              this.redisService.del(cacheKey),
+            );
+          } else {
+            this.logMemberContextDiagnostics(startedAt, stages, {
+              ...diagnostics,
+              outcome: "permissions_cache_hit",
+              permissionsCacheHit: true,
+            });
+
+            return context as {
+              guild: Guild;
+              member: unknown;
+              roles: unknown[];
+              permissions: Permission[];
+            };
+          }
         }
       }
     } catch (error) {
@@ -191,6 +207,49 @@ export class MemberContextService {
     });
 
     return context;
+  }
+
+  private isCachedContextFresh(context: unknown): boolean {
+    if (
+      typeof context !== "object" ||
+      context === null ||
+      !("member" in context)
+    ) {
+      return false;
+    }
+
+    const member = context.member;
+    if (typeof member !== "object" || member === null) {
+      return false;
+    }
+
+    const active = "active" in member && member.active === true;
+    if (!active || !("lastDiscordSyncAt" in member)) {
+      return false;
+    }
+
+    const lastDiscordSyncAt = this.parseCachedDate(member.lastDiscordSyncAt);
+    if (!lastDiscordSyncAt) {
+      return false;
+    }
+
+    return !this.membersService.isMemberSoftStale({
+      lastDiscordSyncAt,
+      updatedAt: lastDiscordSyncAt,
+    });
+  }
+
+  private parseCachedDate(value: unknown): Date | null {
+    if (value instanceof Date) {
+      return value;
+    }
+
+    if (typeof value !== "string") {
+      return null;
+    }
+
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
 
   private async getGuild(idOrVanityURL: string): Promise<GuildLookupResult> {
