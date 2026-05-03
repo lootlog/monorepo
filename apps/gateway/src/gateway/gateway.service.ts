@@ -5,6 +5,10 @@ import type { ChatMessageEnvelopeDto } from "src/gateway/dto/chat-message-envelo
 import type { ChatMessagesClearDto } from "src/gateway/dto/chat-messages-clear.dto";
 import type { ChatMessageUpdateDto } from "src/gateway/dto/chat-message-update.dto";
 import type { DeleteTimerDto } from "src/gateway/dto/delete-timer.dto";
+import type {
+  LootCreateEventDto,
+  LootShareUpdateEventDto,
+} from "src/gateway/dto/loot-event.dto";
 import type { RefreshJobUpdateDto } from "src/gateway/dto/refresh-job-update.dto";
 import type {
   ReservationCreateEventDto,
@@ -122,6 +126,30 @@ export class GatewayService {
       tier: routing.tier,
       event: GatewayEvent.TIMERS_DELETE,
       data: payload,
+      npcLevel: routing.npcLevel,
+    });
+  }
+
+  handleGuildsLootCreate(data: LootCreateEventDto) {
+    const routing = this.getNpcFeatureRouting(data.npc);
+    this.emitToFeatureRoom({
+      guildId: data.guildId,
+      feature: "loots",
+      tier: routing.tier,
+      event: GatewayEvent.LOOTS_CREATE,
+      data,
+      npcLevel: routing.npcLevel,
+    });
+  }
+
+  handleGuildsLootShareUpdate(data: LootShareUpdateEventDto) {
+    const routing = this.getNpcFeatureRouting(data.npc);
+    this.emitToFeatureRoom({
+      guildId: data.guildId,
+      feature: "loots",
+      tier: routing.tier,
+      event: GatewayEvent.LOOTS_SHARE_UPDATE,
+      data,
       npcLevel: routing.npcLevel,
     });
   }

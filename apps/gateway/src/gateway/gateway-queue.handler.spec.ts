@@ -6,6 +6,8 @@ describe("GatewayQueueHandler", () => {
     invalidatePlayerCache: vi.fn(),
     invalidateUserGuildsCache: vi.fn(),
     rebalanceUserSocketRooms: vi.fn(),
+    handleGuildsLootCreate: vi.fn(),
+    handleGuildsLootShareUpdate: vi.fn(),
   };
 
   const mockRetryService = {
@@ -24,6 +26,8 @@ describe("GatewayQueueHandler", () => {
     mockGatewayService.invalidatePlayerCache.mockResolvedValue(undefined);
     mockGatewayService.invalidateUserGuildsCache.mockResolvedValue(undefined);
     mockGatewayService.rebalanceUserSocketRooms.mockResolvedValue(undefined);
+    mockGatewayService.handleGuildsLootCreate.mockResolvedValue(undefined);
+    mockGatewayService.handleGuildsLootShareUpdate.mockResolvedValue(undefined);
   });
 
   const message = {
@@ -45,6 +49,42 @@ describe("GatewayQueueHandler", () => {
     ...memberPayload,
     roleId: "role-1",
   };
+
+  it("routes loot create events through retry logic", async () => {
+    const payload = { guildId: "guild-1", lootId: 123 };
+
+    await handler.handleGuildsLootCreate(payload, message as never);
+
+    expect(mockRetryService.handleRetryLogic).toHaveBeenCalledWith(
+      payload,
+      message.properties.headers,
+      RoutingKey.GUILDS_LOOTS_CREATE_DLQ,
+      "loot create: guild-1:123",
+    );
+    expect(mockGatewayService.handleGuildsLootCreate).toHaveBeenCalledWith(
+      payload,
+    );
+  });
+
+  it("routes loot share update events through retry logic", async () => {
+    const payload = {
+      guildId: "guild-1",
+      lootId: 123,
+      lootShare: { player: ["item"] },
+    };
+
+    await handler.handleGuildsLootShareUpdate(payload, message as never);
+
+    expect(mockRetryService.handleRetryLogic).toHaveBeenCalledWith(
+      payload,
+      message.properties.headers,
+      RoutingKey.GUILDS_LOOTS_SHARE_UPDATE_DLQ,
+      "loot share update: guild-1:123",
+    );
+    expect(mockGatewayService.handleGuildsLootShareUpdate).toHaveBeenCalledWith(
+      payload,
+    );
+  });
 
   it("refreshes caches and rooms when member permissions are updated", async () => {
     await handler.handleUpdateMember(memberPayload as never, message as never);

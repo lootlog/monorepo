@@ -5,6 +5,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
+import { Badge } from "@lootlog/ui/components/badge";
 import {
   Tooltip,
   TooltipContent,
@@ -20,12 +21,14 @@ export type GuildNavItemProps = {
   guild: Guild;
   isDragging?: boolean;
   currentGuildId?: string;
+  unreadLootsCount?: number;
 };
 
 const GuildNavItemComponent: FC<GuildNavItemProps> = ({
   guild,
   isDragging = false,
   currentGuildId,
+  unreadLootsCount = 0,
 }) => {
   const { isRukiaTheme } = useThemeMeta();
   const isActive =
@@ -70,13 +73,18 @@ const GuildNavItemComponent: FC<GuildNavItemProps> = ({
           <Link
             to={`/${guild.vanityUrl ?? guild.id}` as string}
             draggable={false}
-            className="group/guild-item block"
+            className="group/guild-item block relative"
             onClick={handleClick}
             style={{ pointerEvents: isDragging ? "none" : "auto" }}
           >
             <ThemeCircularFrame isActive={isActive}>
               {avatarElement}
             </ThemeCircularFrame>
+            {unreadLootsCount > 0 && !isActive && (
+              <Badge className="absolute -right-2 -top-2 h-5 min-w-5 justify-center px-1.5 text-[10px] leading-none shadow-md">
+                {unreadLootsCount > 99 ? "99+" : unreadLootsCount}
+              </Badge>
+            )}
           </Link>
         </div>
       </TooltipTrigger>

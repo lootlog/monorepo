@@ -81,6 +81,9 @@ describe("LootsService", () => {
     del: Mock;
     set: Mock;
   };
+  let amqpConnection: {
+    publish: Mock;
+  };
 
   const mockGuild: Guild = {
     id: "guild1",
@@ -254,6 +257,7 @@ describe("LootsService", () => {
     playersService = module.get(PlayersService);
     npcsService = module.get(NpcsService);
     _itemsService = module.get(ItemsService);
+    amqpConnection = module.get(AmqpConnection);
     guildsService = module.get(GuildsService);
     lootlogConfigService = module.get(LootlogConfigService);
     userLootlogConfigService = module.get(UserLootlogConfigService);
@@ -915,6 +919,17 @@ describe("LootsService", () => {
             },
           },
         ],
+        lootNpcs: [
+          {
+            npcSnapshot: {
+              lvl: 50,
+              prof: Profession.WARRIOR,
+              type: NpcType.ELITE,
+              wt: 10,
+            },
+          },
+        ],
+        lootSubmissions: [{ guildId: "guild1" }],
       };
       const mockUpdatedLoot = { lootShare: { "1123": ["abc123"] } };
 
@@ -928,6 +943,21 @@ describe("LootsService", () => {
         data: { lootShare: { "1123": ["abc123"] } },
       });
       expect(result).toEqual({ "1123": ["abc123"] });
+      expect(amqpConnection.publish).toHaveBeenCalledWith(
+        expect.any(String),
+        "guilds.loots.share.update",
+        {
+          guildId: "guild1",
+          lootId,
+          lootShare: { "1123": ["abc123"] },
+          npc: {
+            lvl: 50,
+            prof: Profession.WARRIOR,
+            type: NpcType.ELITE,
+            wt: 10,
+          },
+        },
+      );
     });
 
     it("should throw ForbiddenException when loot not found", async () => {

@@ -49,6 +49,13 @@ type LootSubmissionData = {
   memberId: number;
 };
 
+type LootSocketNpcPayload = {
+  lvl?: number | null;
+  prof?: string | null;
+  type?: string | null;
+  wt?: number | null;
+};
+
 type CreateLootOutcome = {
   submissionData: LootSubmissionData[];
   submittedGuilds: CreateLootSubmittedGuild[];
@@ -115,6 +122,38 @@ export class LootsService implements OnModuleInit {
       submittedGuilds: [],
       rejectedGuilds,
     });
+  }
+
+  private getPrimarySocketNpcPayload(
+    npcData: ReturnType<LootMappingService["processNpcs"]>,
+    npcType: NpcType,
+  ): LootSocketNpcPayload {
+    return {
+      lvl: npcData.highest.lvl ?? null,
+      prof: npcData.highest.prof ?? null,
+      type: npcType,
+      wt: npcData.highest.wt ?? null,
+    };
+  }
+
+  private async publishLootCreateEvents(
+    lootId: number,
+    submissions: LootSubmissionData[],
+    npc: LootSocketNpcPayload,
+  ) {
+    await Promise.all(
+      submissions.map((submission) =>
+        this.amqpConnection.publish(
+          DEFAULT_EXCHANGE_NAME,
+          RoutingKey.GUILDS_LOOTS_CREATE,
+          {
+            guildId: submission.guildId,
+            lootId,
+            npc,
+          },
+        ),
+      ),
+    );
   }
 
   async createLoot(discordId: string, _userId: string, body: CreateLootDto) {
@@ -187,6 +226,10 @@ export class LootsService implements OnModuleInit {
         npcData.highest.wt,
         npcData.highest.prof,
         npcData.highest.type,
+      );
+      const socketNpc = this.getPrimarySocketNpcPayload(
+        npcData,
+        highestWtNpcType,
       );
 
       const lootlogConfigByGuildId = new Map(
@@ -269,6 +312,11 @@ export class LootsService implements OnModuleInit {
           })),
           skipDuplicates: true,
         });
+        await this.publishLootCreateEvents(
+          existingLoot.id,
+          outcome.submissionData,
+          socketNpc,
+        );
         return this.createCreateLootResponse(existingLoot.id, outcome);
       }
 
@@ -316,6 +364,11 @@ export class LootsService implements OnModuleInit {
         })),
         skipDuplicates: true,
       });
+      await this.publishLootCreateEvents(
+        loot.id,
+        outcome.submissionData,
+        socketNpc,
+      );
 
       const playersWithWorld = players.map((player) => ({
         ...player,
@@ -429,6 +482,17 @@ export class LootsService implements OnModuleInit {
             playerSnapshot: true,
           },
         },
+        lootNpcs: {
+          include: {
+            npcSnapshot: true,
+          },
+          orderBy: { id: "asc" },
+        },
+        lootSubmissions: {
+          select: {
+            guildId: true,
+          },
+        },
       },
     });
 
@@ -492,6 +556,31 @@ export class LootsService implements OnModuleInit {
         lootShare: mappedLootShare,
       },
     });
+
+    const primaryNpc = loot.lootNpcs[0]?.npcSnapshot;
+    const socketNpc = primaryNpc
+      ? {
+          lvl: primaryNpc.lvl,
+          prof: primaryNpc.prof,
+          type: primaryNpc.type,
+          wt: primaryNpc.wt,
+        }
+      : {};
+
+    await Promise.all(
+      loot.lootSubmissions.map((submission) =>
+        this.amqpConnection.publish(
+          DEFAULT_EXCHANGE_NAME,
+          RoutingKey.GUILDS_LOOTS_SHARE_UPDATE,
+          {
+            guildId: submission.guildId,
+            lootId,
+            lootShare: mappedLootShare,
+            npc: socketNpc,
+          },
+        ),
+      ),
+    );
 
     return mappedLootShare;
   }

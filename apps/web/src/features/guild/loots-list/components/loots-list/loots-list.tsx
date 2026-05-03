@@ -12,15 +12,28 @@ import {
 import type { Loot } from "@/lib/loots/loot-types";
 import {
   getLootsControllerFetchLootsByGuildIdQueryKey,
+  getLootsControllerFetchLootByIdQueryKey,
+  lootsControllerFetchLootById,
   lootsControllerFetchLootsByGuildId,
 } from "@/lib/api/generated/main/loots/loots";
-import type { LootsControllerFetchLootsByGuildIdParams } from "@/lib/api/generated/main/model";
+import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@/lib/api/generated/main/users/users";
+import type {
+  LootShareResponseDto,
+  LootsControllerFetchLootsByGuildIdParams,
+} from "@/lib/api/generated/main/model";
+import { GatewayEvent } from "@/config/gateway";
+import { useGateway } from "@/hooks/utils/use-gateway";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useQueryClient,
+  type InfiniteData,
+  type QueryKey,
+} from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Frown } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
-import { useRef, type FC } from "react";
+import { useEffect, useEffectEvent, useRef, useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import { ThemeEmptyStateIcon, useThemedKey } from "@/themes";
 
@@ -29,8 +42,218 @@ const GRID_COLUMNS = 2;
 const EMPTY_LOOTS: Loot[] = [];
 const EMPTY_GRID_ROWS: Loot[][] = [];
 
+type LootCreateGatewayPayload = {
+  guildId: string;
+  lootId: number;
+};
+
+type LootShareUpdateGatewayPayload = LootCreateGatewayPayload & {
+  lootShare: LootShareResponseDto;
+};
+
+type LootsInfiniteData = InfiniteData<Loot[]>;
+
 const parseOptionalNumber = (value: string) =>
   value.length > 0 ? Number(value) : undefined;
+
+const includesAll = <T,>(values: T[] | undefined, expected: T[]) => {
+  if (!values?.length) {
+    return true;
+  }
+
+  return expected.some((value) => values.includes(value));
+};
+
+const compact = <T,>(values: Array<T | null | undefined>) =>
+  values.filter((value): value is T => value !== null && value !== undefined);
+
+const isInRange = (
+  value: number | null | undefined,
+  min?: number,
+  max?: number,
+) => {
+  if (min === undefined && max === undefined) {
+    return true;
+  }
+
+  if (value === null || value === undefined) {
+    return false;
+  }
+
+  return (
+    (min === undefined || value >= min) && (max === undefined || value <= max)
+  );
+};
+
+const lootMatchesParams = (
+  loot: Loot,
+  params: LootsControllerFetchLootsByGuildIdParams,
+) => {
+  if (params.world && loot.world !== params.world) {
+    return false;
+  }
+
+  if (params.hid && !loot.items.some((item) => item.hid === params.hid)) {
+    return false;
+  }
+
+  if (
+    !includesAll(
+      params.npcs,
+      loot.npcs.map((npc) => npc.name),
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    !includesAll(params.npcTypes, compact(loot.npcs.map((npc) => npc.type)))
+  ) {
+    return false;
+  }
+
+  if (
+    !includesAll(
+      params.players,
+      loot.players.map((player) => player.name),
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    !includesAll(
+      params.rarities,
+      compact(loot.items.map((item) => item.rarity)),
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    !includesAll(
+      params.itemNames,
+      loot.items.map((item) => item.name),
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    !loot.npcs.some((npc) =>
+      isInRange(npc.lvl, params.npcLevelMin, params.npcLevelMax),
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    !loot.items.some((item) =>
+      isInRange(item.lvl, params.itemLevelMin, params.itemLevelMax),
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    !loot.players.some((player) =>
+      isInRange(player.lvl, params.playerLevelMin, params.playerLevelMax),
+    )
+  ) {
+    return false;
+  }
+
+  if (params.search) {
+    const search = params.search.trim().toLowerCase();
+    const searchableValues = [
+      loot.location,
+      ...loot.items.map((item) => item.name),
+      ...loot.npcs.map((npc) => npc.name),
+      ...loot.players.map((player) => player.name),
+    ];
+
+    if (
+      !searchableValues.some((value) => value.toLowerCase().includes(search))
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
+const getLootQueryParamsFromKey = (
+  queryKey: QueryKey,
+): LootsControllerFetchLootsByGuildIdParams | null => {
+  const params = queryKey[1];
+  if (!params || typeof params !== "object" || Array.isArray(params)) {
+    return null;
+  }
+
+  return params as LootsControllerFetchLootsByGuildIdParams;
+};
+
+const upsertLootIntoInfiniteData = (
+  data: LootsInfiniteData | undefined,
+  loot: Loot,
+) => {
+  if (!data?.pages) {
+    return data;
+  }
+
+  let found = false;
+  const pages = data.pages.map((page) => {
+    if (!page.some((pageLoot) => pageLoot.id === loot.id)) {
+      return page;
+    }
+
+    found = true;
+    return page.map((pageLoot) => (pageLoot.id === loot.id ? loot : pageLoot));
+  });
+
+  if (!found) {
+    const [firstPage = [], ...restPages] = pages;
+    return {
+      ...data,
+      pages: [[loot, ...firstPage], ...restPages],
+    };
+  }
+
+  return {
+    ...data,
+    pages,
+  };
+};
+
+const hasLootInInfiniteData = (
+  data: LootsInfiniteData | undefined,
+  lootId: number,
+) =>
+  data?.pages.some((page) => page.some((loot) => loot.id === lootId)) ?? false;
+
+const updateLootShareInInfiniteData = (
+  data: LootsInfiniteData | undefined,
+  lootId: number,
+  lootShare: LootShareResponseDto,
+) => {
+  if (!data?.pages) {
+    return data;
+  }
+
+  let changed = false;
+  const pages = data.pages.map((page) =>
+    page.map((loot) => {
+      if (loot.id !== lootId) {
+        return loot;
+      }
+
+      changed = true;
+      return { ...loot, lootShare };
+    }),
+  );
+
+  return changed ? { ...data, pages } : data;
+};
 
 const useStableLootCollections = (pages: Loot[][] | undefined) => {
   const collectionsRef = useRef<{
@@ -66,7 +289,16 @@ export const LootsList: FC = () => {
   const themedKey = useThemedKey();
   const guildId = useGuildId();
   const { world } = useGuildContext();
+  const { socket, connected } = useGateway();
+  const queryClient = useQueryClient();
+  const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds();
   const { filters } = useLootsFilters();
+  const [newLootIds, setNewLootIds] = useState<Record<number, boolean>>({});
+  const newLootTimeoutsRef = useRef<Record<number, number>>({});
+  const currentGuild = guilds?.find(
+    (guild) => guild.id === guildId || guild.vanityUrl === guildId,
+  );
+  const currentGuildId = currentGuild?.id ?? guildId;
   const lootQueryParams: LootsControllerFetchLootsByGuildIdParams = {
     limit: LOOTS_PAGE_LIMIT,
     npcs: filters.npcs.length > 0 ? filters.npcs : undefined,
@@ -122,6 +354,127 @@ export const LootsList: FC = () => {
     refetchOnMount: "always",
     staleTime: 0,
   });
+  const handleLootCreate = useEffectEvent(
+    async (payload: LootCreateGatewayPayload) => {
+      if (!guildId || payload.guildId !== currentGuildId) {
+        return;
+      }
+
+      const loot = (await lootsControllerFetchLootById({
+        guildId,
+        lootId: payload.lootId,
+      })) as Loot | null;
+
+      if (!loot) {
+        return;
+      }
+
+      const queryEntries = queryClient.getQueriesData<LootsInfiniteData>({
+        queryKey: [`/guilds/${guildId}/loots`],
+        exact: false,
+      });
+
+      let updatedAnyQuery = false;
+      let insertedNewLoot = false;
+      for (const [queryKey] of queryEntries) {
+        const queryParams = getLootQueryParamsFromKey(queryKey);
+        if (!queryParams || !lootMatchesParams(loot, queryParams)) {
+          continue;
+        }
+
+        updatedAnyQuery = true;
+        queryClient.setQueryData<LootsInfiniteData>(queryKey, (old) => {
+          if (old?.pages && !hasLootInInfiniteData(old, loot.id)) {
+            insertedNewLoot = true;
+          }
+
+          return upsertLootIntoInfiniteData(old, loot);
+        });
+      }
+
+      queryClient.setQueryData(
+        getLootsControllerFetchLootByIdQueryKey({
+          guildId,
+          lootId: loot.id,
+        }),
+        loot,
+      );
+
+      if (!updatedAnyQuery) {
+        void queryClient.invalidateQueries({
+          queryKey: [`/guilds/${guildId}/loots`],
+          exact: false,
+        });
+      }
+
+      if (insertedNewLoot) {
+        window.clearTimeout(newLootTimeoutsRef.current[loot.id]);
+        setNewLootIds((prev) => ({
+          ...prev,
+          [loot.id]: true,
+        }));
+        newLootTimeoutsRef.current[loot.id] = window.setTimeout(() => {
+          setNewLootIds((prev) => {
+            if (!prev[loot.id]) {
+              return prev;
+            }
+
+            const next = { ...prev };
+            delete next[loot.id];
+            return next;
+          });
+          delete newLootTimeoutsRef.current[loot.id];
+        }, 1200);
+      }
+    },
+  );
+  const handleLootShareUpdate = useEffectEvent(
+    (payload: LootShareUpdateGatewayPayload) => {
+      if (!guildId || payload.guildId !== currentGuildId) {
+        return;
+      }
+
+      const queryEntries = queryClient.getQueriesData<LootsInfiniteData>({
+        queryKey: [`/guilds/${guildId}/loots`],
+        exact: false,
+      });
+
+      for (const [queryKey] of queryEntries) {
+        queryClient.setQueryData<LootsInfiniteData>(queryKey, (old) =>
+          updateLootShareInInfiniteData(old, payload.lootId, payload.lootShare),
+        );
+      }
+
+      queryClient.setQueryData<Loot | null>(
+        getLootsControllerFetchLootByIdQueryKey({
+          guildId,
+          lootId: payload.lootId,
+        }),
+        (old) => (old ? { ...old, lootShare: payload.lootShare } : old),
+      );
+    },
+  );
+
+  useEffect(() => {
+    if (!connected || !guildId) {
+      return;
+    }
+
+    socket.on(GatewayEvent.LOOTS_CREATE, handleLootCreate);
+    socket.on(GatewayEvent.LOOTS_SHARE_UPDATE, handleLootShareUpdate);
+
+    return () => {
+      socket.off(GatewayEvent.LOOTS_CREATE, handleLootCreate);
+      socket.off(GatewayEvent.LOOTS_SHARE_UPDATE, handleLootShareUpdate);
+    };
+  }, [connected, guildId, handleLootCreate, handleLootShareUpdate, socket]);
+
+  useEffect(
+    () => () => {
+      Object.values(newLootTimeoutsRef.current).forEach(window.clearTimeout);
+    },
+    [],
+  );
 
   const scrollElementRef = useRef<HTMLDivElement>(null);
   const { viewMode } = useViewMode("loots-view-mode");
@@ -267,7 +620,10 @@ export const LootsList: FC = () => {
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 items-stretch">
                       {rowLoots.map((loot) => (
                         <div key={loot.id} className="h-full">
-                          <LootsListItem loot={loot} />
+                          <LootsListItem
+                            loot={loot}
+                            isNew={newLootIds[loot.id]}
+                          />
                         </div>
                       ))}
                     </div>
@@ -319,7 +675,7 @@ export const LootsList: FC = () => {
                       </div>
                     )
                   ) : loot ? (
-                    <LootsListItem loot={loot} />
+                    <LootsListItem loot={loot} isNew={newLootIds[loot.id]} />
                   ) : null}
                 </div>
               );
