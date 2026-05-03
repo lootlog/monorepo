@@ -71,7 +71,7 @@ export const Notifications = () => {
         }
         onResolvedMaxContentHeightChange={setResolvedMaxContentHeight}
         resizable
-        minHeight={97}
+        minHeight={64}
         maxHeight={600}
         minWidth={242}
       >
