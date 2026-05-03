@@ -36,6 +36,7 @@ const createGuild = (id: string, name: string): GuildResponseDtoOutput => ({
   name,
   icon: null,
   ownerId: "owner-1",
+  publicStatsCardEnabled: false,
 });
 
 describe("GuildSwitcher", () => {

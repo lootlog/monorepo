@@ -7,6 +7,7 @@ const UserCurrentGuildResponseSchema = z.object({
   icon: z.string().nullable().optional(),
   vanityUrl: z.string().nullable().optional(),
   ownerId: z.string(),
+  publicStatsCardEnabled: z.boolean(),
   hasLootlogAccess: z.boolean(),
   isAccessDataStale: z.boolean(),
 });

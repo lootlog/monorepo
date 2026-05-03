@@ -89,6 +89,17 @@ http:
       entryPoints:
         - "web"
 
+    api-public:
+      rule: "PathPrefix(`/api/lootlog/public`)"
+      service: "api"
+      middlewares:
+        - "cors"
+        - "apiStripPrefix"
+        - "apiCompress"
+      priority: 15
+      entryPoints:
+        - "web"
+
     api-internal:
       rule: "PathPrefix(`/api/lootlog/internal`)"
       service: "api"

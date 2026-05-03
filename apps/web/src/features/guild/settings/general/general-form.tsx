@@ -1,6 +1,5 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import {
   Form,
   FormControl,
@@ -17,6 +16,7 @@ import { toast } from "sonner";
 import { Card } from "@lootlog/ui/components/card";
 import { Link2 } from "lucide-react";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useQueryClient } from "@tanstack/react-query";
@@ -29,14 +29,16 @@ import {
   invalidateUsersControllerGetCurrentUserAccessibleGuilds,
   invalidateUsersControllerGetCurrentUserGuilds,
 } from "@/lib/api/generated/main/users/users";
+import {
+  generalFormSchema,
+  type GeneralFormValues,
+} from "./general-form.schema";
+import { StatsCardSettingsCard } from "./stats-card-settings-card";
 
 const RESTRICTED_NAMES = ["@me"];
 
-const formSchema = z.object({
-  vanityUrl: z.string(),
-});
-
 export const GeneralForm = () => {
+  const { t } = useTranslation();
   const guildId = useGuildId();
   const queryClient = useQueryClient();
   const { data: guild } = useGuildsControllerGetGuildById({
@@ -45,26 +47,27 @@ export const GeneralForm = () => {
   const { mutate: updateGuildConfig } = useGuildsControllerUpdateGuildConfig();
   const navigate = useNavigate();
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<GeneralFormValues>({
+    resolver: zodResolver(generalFormSchema),
     defaultValues: {
       vanityUrl: guild?.vanityUrl ?? "",
+      publicStatsCardEnabled: guild?.publicStatsCardEnabled ?? false,
     },
   });
 
-  // Sync form with guild data when it changes
   useEffect(() => {
     if (guild) {
       form.reset({
         vanityUrl: guild.vanityUrl ?? "",
+        publicStatsCardEnabled: guild.publicStatsCardEnabled,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [guild?.vanityUrl]);
+  }, [guild?.vanityUrl, guild?.publicStatsCardEnabled]);
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  function onSubmit(values: GeneralFormValues) {
     if (RESTRICTED_NAMES.includes(values.vanityUrl)) {
-      toast.error("Ta nazwa jest zarezerwowana i nie może być użyta.");
+      toast.error(t("settings.general.vanityUrl.restricted"));
       return;
     }
 
@@ -72,7 +75,8 @@ export const GeneralForm = () => {
       {
         pathParams: { guildId: guildId ?? "" },
         data: {
-          vanityUrl: values.vanityUrl.length > 0 ? values.vanityUrl : undefined,
+          vanityUrl: values.vanityUrl.length > 0 ? values.vanityUrl : null,
+          publicStatsCardEnabled: values.publicStatsCardEnabled,
         },
       },
       {
@@ -86,12 +90,15 @@ export const GeneralForm = () => {
               invalidateUsersControllerGetCurrentUserGuilds(queryClient),
             ]);
           }
-          toast.success("Zaktualizowano konfigurację lootloga");
+          toast.success(t("settings.general.toasts.updateSuccess"));
           navigate({ to: `/${data.vanityUrl ?? data.id}/settings` as string });
-          form.reset({ vanityUrl: data.vanityUrl ?? "" });
+          form.reset({
+            vanityUrl: data.vanityUrl ?? "",
+            publicStatsCardEnabled: data.publicStatsCardEnabled,
+          });
         },
         onError: () => {
-          toast.error("Nie udało się zaktualizować konfiguracji lootloga");
+          toast.error(t("settings.general.toasts.updateError"));
         },
       },
     );
@@ -112,11 +119,10 @@ export const GeneralForm = () => {
                 </div>
                 <div>
                   <FormLabel className="text-sm font-semibold">
-                    Skrócony link
+                    {t("settings.general.vanityUrl.title")}
                   </FormLabel>
                   <p className="text-xs text-muted-foreground">
-                    Pozwoli dostać się do lootloga z łatwiejszego do
-                    zapamiętania adresu
+                    {t("settings.general.vanityUrl.description")}
                   </p>
                 </div>
               </div>
@@ -129,16 +135,19 @@ export const GeneralForm = () => {
                     <FormItem>
                       <FormControl>
                         <Input
-                          placeholder="np. nazwa twojego klanu"
+                          placeholder={t(
+                            "settings.general.vanityUrl.placeholder",
+                          )}
                           className="h-9 max-w-xs"
                           {...field}
                         />
                       </FormControl>
                       <FormDescription className="text-xs mt-2">
-                        Przykład:{" "}
+                        {t("settings.general.vanityUrl.example")}{" "}
                         <span className="text-foreground font-medium">
                           {window.location.origin}/
-                          {generateSlug(field.value) || "nazwa-klanu"}
+                          {generateSlug(field.value) ||
+                            t("settings.general.vanityUrl.exampleSlug")}
                         </span>
                       </FormDescription>
                       <FormMessage />
@@ -149,6 +158,12 @@ export const GeneralForm = () => {
             </div>
           </Card>
         </div>
+
+        {guild && (
+          <div className="p-3 pt-0">
+            <StatsCardSettingsCard form={form} guild={guild} />
+          </div>
+        )}
 
         <UnsavedChangesBar
           isDirty={form.formState.isDirty}

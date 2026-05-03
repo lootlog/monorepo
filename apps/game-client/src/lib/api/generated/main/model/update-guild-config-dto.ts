@@ -7,6 +7,10 @@
  */
 
 export interface UpdateGuildConfigDto {
-  /** @minLength 1 */
-  vanityUrl?: string;
+  /**
+     * @minLength 1
+     * @nullable
+     */
+  vanityUrl?: string | null;
+  publicStatsCardEnabled?: boolean;
 }

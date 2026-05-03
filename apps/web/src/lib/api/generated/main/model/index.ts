@@ -8,6 +8,7 @@
 
 export * from './assign-map-location-dto';
 export * from './assign-member-dto';
+export * from './authenticated-guild-stats-card-controller-refresh-stats-card-path-parameters';
 export * from './cancel-party-gathering-response-dto-output';
 export * from './chat-controller-clear-chat-messages-path-parameters';
 export * from './chat-controller-delete-chat-message-path-parameters';
@@ -465,9 +466,11 @@ export * from './pending-participation-confirmations-response-dto-expired-items-
 export * from './pending-participation-confirmations-response-dto-items-item-hero-npc';
 export * from './pending-participation-confirmations-response-dto-items-item';
 export * from './pending-participation-confirmations-response-dto';
+export * from './public-guild-stats-card-controller-get-stats-card-path-parameters';
 export * from './ranking-edit-history-entry-response-dto-edit-type';
 export * from './ranking-edit-history-entry-response-dto';
 export * from './recalculate-event-points-path-parameters';
+export * from './refresh-stats-card-response-dto-output';
 export * from './reorder-locations-dto';
 export * from './reservation-response-dto';
 export * from './reservations-cards-response-dto-output-item';
