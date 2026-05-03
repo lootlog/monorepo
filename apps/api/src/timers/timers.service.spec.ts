@@ -1104,6 +1104,106 @@ describe("TimersService", () => {
     });
   });
 
+  describe("createManualTimer", () => {
+    it("should persist provided NPC level and profession", async () => {
+      mockPrismaService.timer.create.mockResolvedValue({
+        guildId: "guild1",
+        world: "test-world",
+        npcId: 123,
+        timerKey: buildTimerKey(123, "Test Boss"),
+        minSpawnTime: new Date(),
+        maxSpawnTime: new Date(),
+        latestRespBaseSeconds: 90,
+        latestRespawnRandomness: 33,
+        wasReset: false,
+        createdById: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        npc: {
+          id: 123,
+          name: "Test Boss",
+          prof: "w",
+          location: "",
+          wt: "",
+          lvl: 120,
+          type: "",
+          icon: "",
+          margonemType: 1,
+        },
+        member: null,
+      });
+
+      await service.createManualTimer("discord123", "guild1", {
+        name: "Test Boss",
+        minSeconds: 60,
+        maxSeconds: 120,
+        lvl: 120,
+        prof: "w",
+        world: "test-world",
+      });
+
+      expect(mockPrismaService.timer.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            npc: expect.objectContaining({
+              name: "Test Boss",
+              lvl: 120,
+              prof: "w",
+            }),
+          }),
+        }),
+      );
+    });
+
+    it("should fall back to empty manual timer NPC metadata", async () => {
+      mockPrismaService.timer.create.mockResolvedValue({
+        guildId: "guild1",
+        world: "test-world",
+        npcId: 123,
+        timerKey: buildTimerKey(123, "Custom Boss"),
+        minSpawnTime: new Date(),
+        maxSpawnTime: new Date(),
+        latestRespBaseSeconds: 90,
+        latestRespawnRandomness: 33,
+        wasReset: false,
+        createdById: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        npc: {
+          id: 123,
+          name: "Custom Boss",
+          prof: "",
+          location: "",
+          wt: "",
+          lvl: 0,
+          type: "",
+          icon: "",
+          margonemType: 1,
+        },
+        member: null,
+      });
+
+      await service.createManualTimer("discord123", "guild1", {
+        name: "Custom Boss",
+        minSeconds: 60,
+        maxSeconds: 120,
+        world: "test-world",
+      });
+
+      expect(mockPrismaService.timer.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            npc: expect.objectContaining({
+              name: "Custom Boss",
+              lvl: 0,
+              prof: "",
+            }),
+          }),
+        }),
+      );
+    });
+  });
+
   describe("searchNpcsWithTimerData", () => {
     const mockTimersQueryResult = [
       {

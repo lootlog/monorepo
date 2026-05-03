@@ -1257,10 +1257,10 @@ export class TimersService implements OnModuleInit {
         npc: {
           id: npcId,
           name: data.name,
-          prof: "",
+          prof: data.prof ?? "",
           location: "",
           wt: "",
-          lvl: 0,
+          lvl: data.lvl ?? 0,
           type: "",
           icon: "",
           margonemType: TIMER_TYPES.CUSTOM_MANUAL,

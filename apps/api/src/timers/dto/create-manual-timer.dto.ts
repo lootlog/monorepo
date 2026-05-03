@@ -5,6 +5,8 @@ const CreateManualTimerSchema = z.object({
   name: z.string().min(1).max(50),
   minSeconds: z.number().min(1).optional(),
   maxSeconds: z.number().min(1).optional(),
+  lvl: z.number().optional(),
+  prof: z.string().optional(),
   customMinSpawnTime: z.string().datetime().optional(),
   customMaxSpawnTime: z.string().datetime().optional(),
   world: z.string().min(1),

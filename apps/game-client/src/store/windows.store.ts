@@ -18,6 +18,10 @@ type SettingsWindowState = {
   activeTab?: SettingsTabValue;
 };
 
+type AddTimerWindowState = {
+  guildId?: string;
+};
+
 export type WindowId =
   | "app-error"
   | "settings"
@@ -66,7 +70,7 @@ interface WindowsState {
   chat: WindowData;
   command: WindowData;
   "online-players": WindowData;
-  "add-timer": WindowData;
+  "add-timer": WindowData & { state: AddTimerWindowState };
   "npc-detector": WindowData;
   notifications: WindowData;
   "create-notification": WindowData & { state: CreateNotificationState };
@@ -198,6 +202,14 @@ export const migrateWindowsState = (
     };
   }
 
+  const addTimer = state["add-timer"] as Record<string, unknown> | undefined;
+  if (addTimer && typeof addTimer === "object" && !("state" in addTimer)) {
+    state["add-timer"] = {
+      ...addTimer,
+      state: {},
+    };
+  }
+
   return state as unknown as WindowsState;
 };
 
@@ -268,6 +280,7 @@ export const useWindowsStore = create<WindowsState>()(
         size: { width: 242, height: 300 },
         opacity: DEFAULT_OPACITY,
         locked: false,
+        state: {},
       },
       "npc-detector": {
         open: false,
