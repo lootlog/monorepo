@@ -8,11 +8,12 @@ import type { UserGuildData, GuildRole } from "src/guilds/types/guild.types";
 import { isOwnerOrAdminFromRoles } from "src/guilds/utils/is-administrative-user";
 import { Platform } from "src/gateway/enums/platform.enum";
 
-export type FeatureName = "chat" | "timers" | "notifications";
+export type FeatureName = "chat" | "timers" | "notifications" | "loots";
 export type TierName = NpcRoutingTier;
 
 // Features excluded for web app (they don't need chat/notifications)
 const WEB_EXCLUDED_FEATURES: FeatureName[] = ["chat", "notifications"];
+const GAME_EXCLUDED_FEATURES: FeatureName[] = ["loots"];
 
 const FEATURE_ROOMS = {
   chat: {
@@ -30,6 +31,11 @@ const FEATURE_ROOMS = {
     titans: Permission.LOOTLOG_NOTIFICATIONS_TITANS_READ,
     heroes: Permission.LOOTLOG_NOTIFICATIONS_HEROES_READ,
   },
+  loots: {
+    base: Permission.LOOTLOG_LOOTS_READ,
+    titans: Permission.LOOTLOG_LOOTS_TITANS_READ,
+    heroes: Permission.LOOTLOG_LOOTS_HEROES_READ,
+  },
 } as const;
 
 const ALL_FEATURE_ROOMS: Array<{ feature: FeatureName; tier: TierName }> = [
@@ -42,6 +48,9 @@ const ALL_FEATURE_ROOMS: Array<{ feature: FeatureName; tier: TierName }> = [
   { feature: "notifications", tier: "base" },
   { feature: "notifications", tier: "titans" },
   { feature: "notifications", tier: "heroes" },
+  { feature: "loots", tier: "base" },
+  { feature: "loots", tier: "titans" },
+  { feature: "loots", tier: "heroes" },
 ];
 
 export function buildRoomName(
@@ -85,7 +94,9 @@ export function calculateUserRooms(
       ? ALL_FEATURE_ROOMS.filter(
           ({ feature }) => !WEB_EXCLUDED_FEATURES.includes(feature),
         )
-      : ALL_FEATURE_ROOMS;
+      : ALL_FEATURE_ROOMS.filter(
+          ({ feature }) => !GAME_EXCLUDED_FEATURES.includes(feature),
+        );
 
   for (const { guild, roles } of guilds) {
     const guildRooms: string[] = [];

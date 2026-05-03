@@ -164,6 +164,9 @@ describe("room-utils", () => {
           buildRoomName("guild-1", "notifications", "heroes"),
         ]),
       );
+      expect(result.rooms).not.toContain(
+        buildRoomName("guild-1", "loots", "base"),
+      );
       expect(result.rooms).not.toContain(buildRoomName("guild-1", "admin"));
     });
 
@@ -250,6 +253,7 @@ describe("room-utils", () => {
         createGuildData(discordId, [
           createRole([
             Permission.LOOTLOG_CHAT_READ,
+            Permission.LOOTLOG_LOOTS_READ,
             Permission.LOOTLOG_TIMERS_READ,
             Permission.LOOTLOG_NOTIFICATIONS_READ,
           ]),
@@ -262,6 +266,7 @@ describe("room-utils", () => {
         expect.arrayContaining([
           buildRoomName("guild-1", "presence"),
           buildRoomName("guild-1", "events"),
+          buildRoomName("guild-1", "loots", "base"),
           buildRoomName("guild-1", "timers", "base"),
         ]),
       );

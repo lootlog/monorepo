@@ -47,6 +47,28 @@ export const rabbitmqConfig: RabbitMQConfig = {
       },
     },
     {
+      name: Queue.GUILDS_LOOTS_CREATE_RETRY,
+      exchange: RETRY_EXCHANGE_NAME,
+      routingKey: RoutingKey.GUILDS_LOOTS_CREATE_RETRY,
+      options: {
+        durable: true,
+        messageTtl: DEFAULT_TTL,
+        deadLetterExchange: DEFAULT_EXCHANGE_NAME,
+        deadLetterRoutingKey: RoutingKey.GUILDS_LOOTS_CREATE,
+      },
+    },
+    {
+      name: Queue.GUILDS_LOOTS_SHARE_UPDATE_RETRY,
+      exchange: RETRY_EXCHANGE_NAME,
+      routingKey: RoutingKey.GUILDS_LOOTS_SHARE_UPDATE_RETRY,
+      options: {
+        durable: true,
+        messageTtl: DEFAULT_TTL,
+        deadLetterExchange: DEFAULT_EXCHANGE_NAME,
+        deadLetterRoutingKey: RoutingKey.GUILDS_LOOTS_SHARE_UPDATE,
+      },
+    },
+    {
       name: Queue.GUILDS_RESERVATIONS_CREATE_RETRY,
       exchange: RETRY_EXCHANGE_NAME,
       routingKey: RoutingKey.GUILDS_RESERVATIONS_CREATE_RETRY,
