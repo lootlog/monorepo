@@ -23,6 +23,22 @@ import {
 
 const KILL_DEDUP_TTL_SECONDS = 30;
 
+const buildNpcLvlCondition = (minLvl?: number, maxLvl?: number) => {
+  const normalizedMinLvl = minLvl && minLvl > 0 ? minLvl : undefined;
+  const normalizedMaxLvl = maxLvl && maxLvl > 0 ? maxLvl : undefined;
+
+  if (normalizedMinLvl === undefined && normalizedMaxLvl === undefined) {
+    return {};
+  }
+
+  return {
+    npcLvl: {
+      ...(normalizedMinLvl !== undefined && { gte: normalizedMinLvl }),
+      ...(normalizedMaxLvl !== undefined && { lte: normalizedMaxLvl }),
+    },
+  };
+};
+
 @Injectable()
 export class KillsService {
   constructor(
@@ -238,15 +254,7 @@ export class KillsService {
       administrativeUser,
     );
 
-    const npcLvlCondition =
-      query.minLvl !== undefined || query.maxLvl !== undefined
-        ? {
-            npcLvl: {
-              ...(query.minLvl !== undefined && { gte: Number(query.minLvl) }),
-              ...(query.maxLvl !== undefined && { lte: Number(query.maxLvl) }),
-            },
-          }
-        : {};
+    const npcLvlCondition = buildNpcLvlCondition(query.minLvl, query.maxLvl);
 
     // Fetch member participation stats
     const memberStats = await this.prisma.npcKillStats.findMany({
@@ -492,12 +500,7 @@ export class KillsService {
       ...(query.search && {
         npcName: { contains: query.search, mode: "insensitive" as const },
       }),
-      ...((query.minLvl !== undefined || query.maxLvl !== undefined) && {
-        npcLvl: {
-          ...(query.minLvl !== undefined && { gte: Number(query.minLvl) }),
-          ...(query.maxLvl !== undefined && { lte: Number(query.maxLvl) }),
-        },
-      }),
+      ...buildNpcLvlCondition(query.minLvl, query.maxLvl),
     };
 
     const stats = await this.prisma.userKillStats.findMany({
@@ -588,15 +591,7 @@ export class KillsService {
       administrativeUser,
     );
 
-    const npcLvlCondition =
-      minLvl !== undefined || maxLvl !== undefined
-        ? {
-            npcLvl: {
-              ...(minLvl !== undefined && { gte: minLvl }),
-              ...(maxLvl !== undefined && { lte: maxLvl }),
-            },
-          }
-        : {};
+    const npcLvlCondition = buildNpcLvlCondition(minLvl, maxLvl);
 
     // Use GuildKillSummary for unique kills count
     const summaries = await this.prisma.guildKillSummary.findMany({
@@ -882,15 +877,7 @@ export class KillsService {
       return null;
     }
 
-    const npcLvlCondition =
-      query.minLvl !== undefined || query.maxLvl !== undefined
-        ? {
-            npcLvl: {
-              ...(query.minLvl !== undefined && { gte: Number(query.minLvl) }),
-              ...(query.maxLvl !== undefined && { lte: Number(query.maxLvl) }),
-            },
-          }
-        : {};
+    const npcLvlCondition = buildNpcLvlCondition(query.minLvl, query.maxLvl);
 
     // Get all kill stats for this member with visibility conditions
     const stats = await this.prisma.npcKillStats.findMany({
