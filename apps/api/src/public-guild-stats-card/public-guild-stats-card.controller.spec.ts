@@ -63,7 +63,7 @@ describe("PublicGuildStatsCardController", () => {
     expect(reply.header).toHaveBeenCalledWith("Content-Type", "image/png");
     expect(reply.header).toHaveBeenCalledWith(
       "Cache-Control",
-      "public, max-age=86400, stale-while-revalidate=3600",
+      "public, max-age=300, must-revalidate",
     );
     expect(reply.send).toHaveBeenCalledWith(image);
   });

@@ -11,8 +11,7 @@ import { serviceConfig } from "src/config/service.config";
 import { RuntimeEnvironment } from "src/types/runtime.types";
 import { PublicGuildStatsCardService } from "./public-guild-stats-card.service";
 
-const CACHE_CONTROL_HEADER =
-  "public, max-age=86400, stale-while-revalidate=3600";
+const CACHE_CONTROL_HEADER = "public, max-age=300, must-revalidate";
 const LOCAL_CACHE_CONTROL_HEADER = "no-store";
 
 @ApiTags("public-guild-stats-card")

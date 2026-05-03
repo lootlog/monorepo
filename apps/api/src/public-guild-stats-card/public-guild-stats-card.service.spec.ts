@@ -16,6 +16,7 @@ describe("PublicGuildStatsCardService", () => {
     get: ReturnType<typeof mockFn>;
     set: ReturnType<typeof mockFn>;
     setNX: ReturnType<typeof mockFn>;
+    del: ReturnType<typeof mockFn>;
   };
 
   beforeEach(() => {
@@ -30,6 +31,7 @@ describe("PublicGuildStatsCardService", () => {
       get: mockFn(),
       set: mockFn(),
       setNX: mockFn(),
+      del: mockFn(),
     };
     service = new PublicGuildStatsCardService(
       prisma as unknown as PrismaService,
@@ -229,5 +231,22 @@ describe("PublicGuildStatsCardService", () => {
 
     expect(redis.set).not.toHaveBeenCalled();
     expect(prisma.$queryRaw).not.toHaveBeenCalled();
+  });
+
+  it("releases refresh cooldown when regeneration fails", async () => {
+    const error = new Error("stats unavailable");
+    redis.setNX.mockResolvedValue(true);
+    prisma.guild.findFirst.mockResolvedValue({
+      id: "guild-1",
+      name: "Guild One",
+      icon: null,
+      publicStatsCardEnabled: true,
+    });
+    prisma.$queryRaw.mockRejectedValue(error);
+
+    await expect(service.refreshStatsCard("guild-1")).rejects.toThrow(error);
+
+    expect(redis.del).toHaveBeenCalledWith("guild-stats-card-refresh:guild-1");
+    expect(redis.set).not.toHaveBeenCalled();
   });
 });
