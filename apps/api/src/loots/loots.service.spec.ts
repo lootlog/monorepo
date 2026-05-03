@@ -26,10 +26,13 @@ import {
   ItemRarity,
   Profession,
   NpcType,
+  Permission,
   type Guild,
   LootSource,
+  type Role,
 } from "src/generated/prisma/client";
 import { ErrorKey } from "./enum/error-key.enum";
+import { RoutingKey } from "src/enum/routing-key.enum";
 
 describe("LootsService", () => {
   let service: LootsService;
@@ -51,6 +54,7 @@ describe("LootsService", () => {
       create: Mock;
       findMany: Mock;
       groupBy: Mock;
+      count: Mock;
     };
     member: {
       findMany: Mock;
@@ -163,6 +167,7 @@ describe("LootsService", () => {
         create: mockFn(),
         findMany: mockFn(),
         groupBy: mockFn(),
+        count: mockFn(),
       },
       member: {
         findMany: mockFn(),
@@ -319,6 +324,7 @@ describe("LootsService", () => {
           userId: discordId,
         },
       ]);
+      prismaService.lootSubmission.findMany.mockResolvedValue([]);
     });
 
     it("should throw ForbiddenException when user has no guilds with write permission", async () => {
@@ -374,6 +380,110 @@ describe("LootsService", () => {
       expect(playersService.bulkIndexPlayers).not.toHaveBeenCalled();
       expect(npcsService.bulkIndexNpcs).not.toHaveBeenCalled();
       expect(result).toEqual(expectedSuccessResponse);
+    });
+
+    it("should not publish create event when existing loot submission already exists", async () => {
+      const mockLoot = { id: 1, uniqueId: "unique123" };
+      prismaService.loot.findUnique.mockResolvedValue(mockLoot);
+      prismaService.lootSubmission.findMany.mockResolvedValue([
+        {
+          guildId: "guild1",
+          memberId: "member1",
+        },
+      ]);
+
+      await service.createLoot(discordId, userId, mockCreateLootDto);
+
+      expect(prismaService.lootSubmission.createMany).not.toHaveBeenCalled();
+      expect(amqpConnection.publish).not.toHaveBeenCalledWith(
+        expect.any(String),
+        RoutingKey.GUILDS_LOOTS_CREATE,
+        expect.any(Object),
+      );
+    });
+
+    it("should publish create event only for newly persisted existing loot submissions", async () => {
+      const mockLoot = { id: 1, uniqueId: "unique123" };
+      const secondGuild = {
+        ...mockGuild,
+        id: "guild2",
+        name: "Second Guild",
+      };
+      prismaService.loot.findUnique.mockResolvedValue(mockLoot);
+      guildsService.getGuildsForRequiredPermissions.mockResolvedValue([
+        mockGuild,
+        secondGuild,
+      ]);
+      userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue({
+        catchingGuildIds: ["guild1", "guild2"],
+      } as never);
+      lootlogConfigService.getMultipleLootlogConfigs.mockResolvedValue([
+        {
+          id: "guild1",
+          npcs: [
+            {
+              npcType: NpcType.ELITE,
+              allowedRarities: [ItemRarity.UNIQUE, ItemRarity.LEGENDARY],
+            },
+          ],
+        },
+        {
+          id: "guild2",
+          npcs: [
+            {
+              npcType: NpcType.ELITE,
+              allowedRarities: [ItemRarity.UNIQUE, ItemRarity.LEGENDARY],
+            },
+          ],
+        },
+      ]);
+      prismaService.member.findMany.mockResolvedValue([
+        {
+          id: "member1",
+          guildId: "guild1",
+          userId: discordId,
+        },
+        {
+          id: "member2",
+          guildId: "guild2",
+          userId: discordId,
+        },
+      ]);
+      prismaService.lootSubmission.findMany.mockResolvedValue([
+        {
+          guildId: "guild1",
+          memberId: "member1",
+        },
+      ]);
+
+      await service.createLoot(discordId, userId, mockCreateLootDto);
+
+      expect(prismaService.lootSubmission.createMany).toHaveBeenCalledWith({
+        data: [
+          {
+            guildId: "guild2",
+            memberId: "member2",
+            lootId: mockLoot.id,
+          },
+        ],
+        skipDuplicates: true,
+      });
+      expect(amqpConnection.publish).toHaveBeenCalledWith(
+        expect.any(String),
+        RoutingKey.GUILDS_LOOTS_CREATE,
+        expect.objectContaining({
+          guildId: "guild2",
+          lootId: mockLoot.id,
+        }),
+      );
+      expect(amqpConnection.publish).not.toHaveBeenCalledWith(
+        expect.any(String),
+        RoutingKey.GUILDS_LOOTS_CREATE,
+        expect.objectContaining({
+          guildId: "guild1",
+          lootId: mockLoot.id,
+        }),
+      );
     });
 
     it("should throw BadRequestException when no valid configs found", async () => {
@@ -960,6 +1070,161 @@ describe("LootsService", () => {
       );
     });
 
+    it("should publish loot share update once per guild", async () => {
+      const mockLoot = {
+        id: 1,
+        lootShare: {},
+        lootPlayers: [
+          {
+            id: 1,
+            lvl: 50,
+            hpp: 3000,
+            playerSnapshot: {
+              id: 1,
+              characterId: 1,
+              accountId: 123,
+              name: "Test Player",
+              prof: Profession.WARRIOR,
+              icon: "player.png",
+              world: "testworld",
+              snapshotHash: "hash123",
+              createdAt: new Date(),
+            },
+          },
+        ],
+        lootItems: [
+          {
+            id: 1,
+            hid: "abc123",
+            itemSnapshot: {
+              id: 1,
+              itemId: 1,
+              statsHash: "hash456",
+              name: "Test Item",
+              icon: "item.png",
+              lvl: 50,
+              rarity: ItemRarity.UNIQUE,
+              itemType: "WEAPON",
+              statRaw: "lvl=50;rarity=UNIQUE",
+              statsSnapshot: {},
+              createdAt: new Date(),
+            },
+          },
+        ],
+        lootNpcs: [
+          {
+            npcSnapshot: {
+              lvl: 50,
+              prof: Profession.WARRIOR,
+              type: NpcType.ELITE,
+              wt: 10,
+            },
+          },
+        ],
+        lootSubmissions: [{ guildId: "guild1" }, { guildId: "guild1" }],
+      };
+
+      prismaService.loot.findFirst.mockResolvedValue(mockLoot);
+      prismaService.loot.update.mockResolvedValue({
+        lootShare: { "1123": ["abc123"] },
+      });
+
+      await service.updateLoot(discordId, lootId, updateData);
+
+      expect(amqpConnection.publish).toHaveBeenCalledTimes(1);
+      expect(amqpConnection.publish).toHaveBeenCalledWith(
+        expect.any(String),
+        RoutingKey.GUILDS_LOOTS_SHARE_UPDATE,
+        expect.objectContaining({
+          guildId: "guild1",
+          lootId,
+        }),
+      );
+    });
+
+    it("should route loot share update by highest tier npc", async () => {
+      const mockLoot = {
+        id: 1,
+        lootShare: {},
+        lootPlayers: [
+          {
+            id: 1,
+            lvl: 50,
+            hpp: 3000,
+            playerSnapshot: {
+              id: 1,
+              characterId: 1,
+              accountId: 123,
+              name: "Test Player",
+              prof: Profession.WARRIOR,
+              icon: "player.png",
+              world: "testworld",
+              snapshotHash: "hash123",
+              createdAt: new Date(),
+            },
+          },
+        ],
+        lootItems: [
+          {
+            id: 1,
+            hid: "abc123",
+            itemSnapshot: {
+              id: 1,
+              itemId: 1,
+              statsHash: "hash456",
+              name: "Test Item",
+              icon: "item.png",
+              lvl: 50,
+              rarity: ItemRarity.UNIQUE,
+              itemType: "WEAPON",
+              statRaw: "lvl=50;rarity=UNIQUE",
+              statsSnapshot: {},
+              createdAt: new Date(),
+            },
+          },
+        ],
+        lootNpcs: [
+          {
+            npcSnapshot: {
+              lvl: 50,
+              prof: Profession.WARRIOR,
+              type: NpcType.ELITE,
+              wt: 10,
+            },
+          },
+          {
+            npcSnapshot: {
+              lvl: 120,
+              prof: Profession.WARRIOR,
+              type: NpcType.TITAN,
+              wt: 100,
+            },
+          },
+        ],
+        lootSubmissions: [{ guildId: "guild1" }],
+      };
+
+      prismaService.loot.findFirst.mockResolvedValue(mockLoot);
+      prismaService.loot.update.mockResolvedValue({
+        lootShare: { "1123": ["abc123"] },
+      });
+
+      await service.updateLoot(discordId, lootId, updateData);
+
+      expect(amqpConnection.publish).toHaveBeenCalledWith(
+        expect.any(String),
+        RoutingKey.GUILDS_LOOTS_SHARE_UPDATE,
+        expect.objectContaining({
+          npc: {
+            lvl: 120,
+            prof: Profession.WARRIOR,
+            type: NpcType.TITAN,
+            wt: 100,
+          },
+        }),
+      );
+    });
+
     it("should throw ForbiddenException when loot not found", async () => {
       prismaService.loot.findFirst.mockResolvedValue(null);
 
@@ -1120,6 +1385,117 @@ describe("LootsService", () => {
           }),
         }),
       );
+    });
+  });
+
+  describe("fetchLootById", () => {
+    const lootId = 1;
+    const role: Role = {
+      id: "role1",
+      name: "Loot Reader",
+      color: 0,
+      position: 1,
+      permissions: [Permission.LOOTLOG_LOOTS_READ],
+      lvlRangeFrom: 10,
+      lvlRangeTo: 60,
+      guildId: mockGuild.id,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    it("should apply guild and role visibility filters to the Prisma query", async () => {
+      const mockLoot = {
+        id: lootId,
+        uniqueId: "unique1",
+        world: "testworld",
+        source: LootSource.FIGHT,
+        location: "Test Location",
+        lootShare: {},
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        lootSubmissions: [],
+        lootItems: [],
+        lootPlayers: [],
+        lootNpcs: [],
+      };
+
+      prismaService.loot.findFirst.mockResolvedValue(mockLoot);
+      prismaService.lootComment.count.mockResolvedValue(0);
+
+      const result = await service.fetchLootById(
+        mockGuild,
+        [Permission.LOOTLOG_LOOTS_READ],
+        [role],
+        lootId,
+      );
+
+      expect(prismaService.loot.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            id: lootId,
+            lootSubmissions: {
+              some: {
+                guildId: mockGuild.id,
+              },
+            },
+            AND: expect.arrayContaining([
+              {
+                lootNpcs: {
+                  some: {
+                    npcSnapshot: {
+                      OR: expect.arrayContaining([
+                        expect.objectContaining({
+                          AND: expect.arrayContaining([
+                            {
+                              OR: expect.arrayContaining([
+                                { lvl: { gte: 10 } },
+                              ]),
+                            },
+                            {
+                              OR: expect.arrayContaining([
+                                { lvl: { lte: 60 } },
+                              ]),
+                            },
+                            {
+                              type: {
+                                not: NpcType.TITAN,
+                              },
+                            },
+                            {
+                              type: {
+                                notIn: [NpcType.HERO, NpcType.EVENT_HERO],
+                              },
+                            },
+                          ]),
+                        }),
+                      ]),
+                    },
+                  },
+                },
+              },
+            ]),
+          }),
+        }),
+      );
+      expect(result).toMatchObject({
+        id: lootId,
+        uniqueId: "unique1",
+        commentsCount: 0,
+      });
+    });
+
+    it("should return null when loot is missing or not visible", async () => {
+      prismaService.loot.findFirst.mockResolvedValue(null);
+
+      const result = await service.fetchLootById(
+        mockGuild,
+        [Permission.LOOTLOG_LOOTS_READ],
+        [role],
+        lootId,
+      );
+
+      expect(result).toBeNull();
+      expect(prismaService.lootComment.count).not.toHaveBeenCalled();
     });
   });
 });

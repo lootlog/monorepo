@@ -25,6 +25,7 @@ describe("LootsController", () => {
   let service: {
     createLoot: Mock;
     fetchLootsByGuildId: Mock;
+    fetchLootById: Mock;
     getComments: Mock;
     createComment: Mock;
     deleteLoot: Mock;
@@ -107,6 +108,7 @@ describe("LootsController", () => {
     const mockLootsService = {
       createLoot: mockFn(),
       fetchLootsByGuildId: mockFn(),
+      fetchLootById: mockFn(),
       getComments: mockFn(),
       createComment: mockFn(),
       deleteLoot: mockFn(),
@@ -292,6 +294,34 @@ describe("LootsController", () => {
       );
 
       expect(result).toEqual([]);
+    });
+  });
+
+  describe("fetchLootById", () => {
+    const lootId = 1;
+
+    it("should fetch loot by id for guild with member visibility context", async () => {
+      const mockLoot = {
+        id: lootId,
+        uniqueId: "unique1",
+      };
+
+      service.fetchLootById.mockResolvedValue(mockLoot);
+
+      const result = await controller.fetchLootById(
+        lootId,
+        [Permission.LOOTLOG_LOOTS_READ],
+        [mockRole],
+        mockGuild,
+      );
+
+      expect(service.fetchLootById).toHaveBeenCalledWith(
+        mockGuild,
+        [Permission.LOOTLOG_LOOTS_READ],
+        [mockRole],
+        lootId,
+      );
+      expect(result).toEqual(mockLoot);
     });
   });
 

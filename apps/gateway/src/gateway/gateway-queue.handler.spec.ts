@@ -12,6 +12,7 @@ describe("GatewayQueueHandler", () => {
 
   const mockRetryService = {
     handleRetryLogic: vi.fn(),
+    getRetryCount: vi.fn(),
   };
 
   let handler: GatewayQueueHandler;
@@ -28,6 +29,7 @@ describe("GatewayQueueHandler", () => {
     mockGatewayService.rebalanceUserSocketRooms.mockResolvedValue(undefined);
     mockGatewayService.handleGuildsLootCreate.mockResolvedValue(undefined);
     mockGatewayService.handleGuildsLootShareUpdate.mockResolvedValue(undefined);
+    mockRetryService.getRetryCount.mockReturnValue(1);
   });
 
   const message = {
@@ -83,6 +85,52 @@ describe("GatewayQueueHandler", () => {
     );
     expect(mockGatewayService.handleGuildsLootShareUpdate).toHaveBeenCalledWith(
       payload,
+    );
+  });
+
+  it("logs loot create messages sent to DLQ", () => {
+    const payload = { guildId: "guild-1", lootId: 123 };
+    const loggerSpy = vi
+      .spyOn(handler["logger"], "error")
+      .mockImplementation(() => undefined);
+
+    handler.handleLootCreateDLQ(payload, message as never);
+
+    expect(mockRetryService.getRetryCount).toHaveBeenCalledWith(
+      message.properties.headers,
+    );
+    expect(loggerSpy).toHaveBeenCalledWith(
+      "Message sent to DLQ - Loot Create:",
+      {
+        data: payload,
+        retryCount: 1,
+        headers: message.properties.headers,
+      },
+    );
+  });
+
+  it("logs loot share update messages sent to DLQ", () => {
+    const payload = {
+      guildId: "guild-1",
+      lootId: 123,
+      lootShare: { player: ["item"] },
+    };
+    const loggerSpy = vi
+      .spyOn(handler["logger"], "error")
+      .mockImplementation(() => undefined);
+
+    handler.handleLootShareUpdateDLQ(payload, message as never);
+
+    expect(mockRetryService.getRetryCount).toHaveBeenCalledWith(
+      message.properties.headers,
+    );
+    expect(loggerSpy).toHaveBeenCalledWith(
+      "Message sent to DLQ - Loot Share Update:",
+      {
+        data: payload,
+        retryCount: 1,
+        headers: message.properties.headers,
+      },
     );
   });
 

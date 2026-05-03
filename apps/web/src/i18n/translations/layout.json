@@ -11,6 +11,9 @@
     "stats": "Statystyki",
     "activityLogs": "Logi aktywności"
   },
+  "guildsSelector": {
+    "unreadLootsOverflow": "99+"
+  },
   "breadcrumbs": {
     "statistics": "Statystyki",
     "headToHead": "Bilans H2H",

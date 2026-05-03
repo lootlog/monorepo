@@ -360,10 +360,15 @@ export const LootsList: FC = () => {
         return;
       }
 
-      const loot = (await lootsControllerFetchLootById({
-        guildId,
-        lootId: payload.lootId,
-      })) as Loot | null;
+      let loot: Loot | null = null;
+      try {
+        loot = (await lootsControllerFetchLootById({
+          guildId,
+          lootId: payload.lootId,
+        })) as Loot | null;
+      } catch {
+        return;
+      }
 
       if (!loot) {
         return;
@@ -374,7 +379,7 @@ export const LootsList: FC = () => {
         exact: false,
       });
 
-      let updatedAnyQuery = false;
+      let patchedAnyQuery = false;
       let insertedNewLoot = false;
       for (const [queryKey] of queryEntries) {
         const queryParams = getLootQueryParamsFromKey(queryKey);
@@ -382,9 +387,13 @@ export const LootsList: FC = () => {
           continue;
         }
 
-        updatedAnyQuery = true;
         queryClient.setQueryData<LootsInfiniteData>(queryKey, (old) => {
-          if (old?.pages && !hasLootInInfiniteData(old, loot.id)) {
+          if (!old?.pages) {
+            return old;
+          }
+
+          patchedAnyQuery = true;
+          if (!hasLootInInfiniteData(old, loot.id)) {
             insertedNewLoot = true;
           }
 
@@ -400,7 +409,7 @@ export const LootsList: FC = () => {
         loot,
       );
 
-      if (!updatedAnyQuery) {
+      if (!patchedAnyQuery) {
         void queryClient.invalidateQueries({
           queryKey: [`/guilds/${guildId}/loots`],
           exact: false,
@@ -439,19 +448,53 @@ export const LootsList: FC = () => {
         exact: false,
       });
 
+      let patchedAnyListQuery = false;
       for (const [queryKey] of queryEntries) {
-        queryClient.setQueryData<LootsInfiniteData>(queryKey, (old) =>
-          updateLootShareInInfiniteData(old, payload.lootId, payload.lootShare),
-        );
+        queryClient.setQueryData<LootsInfiniteData>(queryKey, (old) => {
+          if (hasLootInInfiniteData(old, payload.lootId)) {
+            patchedAnyListQuery = true;
+          }
+
+          return updateLootShareInInfiniteData(
+            old,
+            payload.lootId,
+            payload.lootShare,
+          );
+        });
       }
 
+      let patchedDetailQuery = false;
       queryClient.setQueryData<Loot | null>(
         getLootsControllerFetchLootByIdQueryKey({
           guildId,
           lootId: payload.lootId,
         }),
-        (old) => (old ? { ...old, lootShare: payload.lootShare } : old),
+        (old) => {
+          if (!old) {
+            return old;
+          }
+
+          patchedDetailQuery = true;
+          return { ...old, lootShare: payload.lootShare };
+        },
       );
+
+      if (!patchedAnyListQuery) {
+        void queryClient.invalidateQueries({
+          queryKey: [`/guilds/${guildId}/loots`],
+          exact: false,
+        });
+      }
+
+      if (!patchedDetailQuery) {
+        void queryClient.invalidateQueries({
+          queryKey: getLootsControllerFetchLootByIdQueryKey({
+            guildId,
+            lootId: payload.lootId,
+          }),
+          exact: true,
+        });
+      }
     },
   );
 

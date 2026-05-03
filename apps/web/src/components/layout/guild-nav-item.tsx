@@ -16,6 +16,7 @@ import type React from "react";
 import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { ThemeCircularFrame, useThemeMeta } from "@/themes";
+import { useTranslation } from "react-i18next";
 
 export type GuildNavItemProps = {
   guild: Guild;
@@ -31,6 +32,7 @@ const GuildNavItemComponent: FC<GuildNavItemProps> = ({
   unreadLootsCount = 0,
 }) => {
   const { isRukiaTheme } = useThemeMeta();
+  const { t } = useTranslation();
   const isActive =
     currentGuildId === guild.id || currentGuildId === guild.vanityUrl;
 
@@ -82,7 +84,9 @@ const GuildNavItemComponent: FC<GuildNavItemProps> = ({
             </ThemeCircularFrame>
             {unreadLootsCount > 0 && !isActive && (
               <Badge className="absolute -right-2 -top-2 h-5 min-w-5 justify-center px-1.5 text-[10px] leading-none shadow-md">
-                {unreadLootsCount > 99 ? "99+" : unreadLootsCount}
+                {unreadLootsCount > 99
+                  ? t("layout.guildsSelector.unreadLootsOverflow")
+                  : unreadLootsCount}
               </Badge>
             )}
           </Link>
