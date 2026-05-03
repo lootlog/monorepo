@@ -8,6 +8,7 @@ import { Reorder, motion } from "framer-motion";
 import { useState, useEffect, type FC } from "react";
 import { GuildsSelectorSkeleton } from "@/components/layout/guilds-selector-skeleton";
 import { useUser } from "@/hooks/api/user/use-user";
+import { useGateway } from "@/hooks/utils/use-gateway";
 import { Separator } from "@lootlog/ui/components/separator";
 import {
   useSetUsersControllerGetUserPreferencesQueryData,
@@ -18,6 +19,7 @@ import {
 export const GuildsSelector: FC = () => {
   const { data: guilds, isLoading } = useUsersControllerGetCurrentUserGuilds();
   const { user } = useUser();
+  const { lootUnreadCounts } = useGateway();
   const currentGuildId = useGuildId();
   const [localGuilds, setLocalGuilds] = useState<typeof guilds>();
   const [isDragging, setIsDragging] = useState(false);
@@ -145,6 +147,7 @@ export const GuildsSelector: FC = () => {
                     guild={guild}
                     isDragging={isDragging}
                     currentGuildId={currentGuildId}
+                    unreadLootsCount={lootUnreadCounts[guild.id] ?? 0}
                   />
                 </motion.div>
               </Reorder.Item>

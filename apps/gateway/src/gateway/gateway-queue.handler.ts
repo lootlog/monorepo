@@ -12,6 +12,10 @@ import type { CreateTimerDto } from "src/gateway/dto/create-timer.dto";
 import type { DeleteMemberRoleDto } from "src/gateway/dto/delete-member-role.dto";
 import type { DeleteMemberDto } from "src/gateway/dto/delete-member.dto";
 import type { DeleteTimerDto } from "src/gateway/dto/delete-timer.dto";
+import type {
+  LootCreateEventDto,
+  LootShareUpdateEventDto,
+} from "src/gateway/dto/loot-event.dto";
 import type { RefreshJobUpdateDto } from "src/gateway/dto/refresh-job-update.dto";
 import type {
   ReservationCreateEventDto,
@@ -106,6 +110,65 @@ export class GatewayQueueHandler {
     }
 
     await this.gatewayService.handleGuildsTimerDelete(data);
+  }
+
+  @RabbitSubscribe({
+    exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: RoutingKey.GUILDS_LOOTS_CREATE,
+    queue: Queue.GUILDS_LOOTS_CREATE,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+    queueOptions: {
+      durable: true,
+      deadLetterExchange: RETRY_EXCHANGE_NAME,
+      deadLetterRoutingKey: RoutingKey.GUILDS_LOOTS_CREATE_RETRY,
+    },
+  })
+  async handleGuildsLootCreate(data: LootCreateEventDto, amqpMsg: AmqpMessage) {
+    const headers = amqpMsg.properties.headers || {};
+
+    const shouldContinue = await this.retryService.handleRetryLogic(
+      data,
+      headers,
+      RoutingKey.GUILDS_LOOTS_CREATE_DLQ,
+      `loot create: ${data.guildId}:${data.lootId}`,
+    );
+
+    if (!shouldContinue) {
+      return;
+    }
+
+    await this.gatewayService.handleGuildsLootCreate(data);
+  }
+
+  @RabbitSubscribe({
+    exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: RoutingKey.GUILDS_LOOTS_SHARE_UPDATE,
+    queue: Queue.GUILDS_LOOTS_SHARE_UPDATE,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+    queueOptions: {
+      durable: true,
+      deadLetterExchange: RETRY_EXCHANGE_NAME,
+      deadLetterRoutingKey: RoutingKey.GUILDS_LOOTS_SHARE_UPDATE_RETRY,
+    },
+  })
+  async handleGuildsLootShareUpdate(
+    data: LootShareUpdateEventDto,
+    amqpMsg: AmqpMessage,
+  ) {
+    const headers = amqpMsg.properties.headers || {};
+
+    const shouldContinue = await this.retryService.handleRetryLogic(
+      data,
+      headers,
+      RoutingKey.GUILDS_LOOTS_SHARE_UPDATE_DLQ,
+      `loot share update: ${data.guildId}:${data.lootId}`,
+    );
+
+    if (!shouldContinue) {
+      return;
+    }
+
+    await this.gatewayService.handleGuildsLootShareUpdate(data);
   }
 
   @RabbitSubscribe({

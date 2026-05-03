@@ -18,12 +18,14 @@ import { cn } from "@lootlog/ui/lib/utils";
 import { ItemStack } from "@/features/guild/loots-list/components/loots-list/item-stack";
 import { WatchableItemTile } from "@/components/tiles";
 import { useSelectedLoot } from "@/hooks/use-selected-loot";
+import { motion, useReducedMotion } from "framer-motion";
 import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useThemeMeta } from "@/themes";
 
 type Props = {
   loot: Loot;
+  isNew?: boolean;
 };
 
 type PlayerColorMap = Record<string, { color: string; idx: number }>;
@@ -257,19 +259,35 @@ const LootFooter = ({
   </div>
 );
 
-export const LootsListItem = ({ loot }: Props) => {
+export const LootsListItem = ({ loot, isNew }: Props) => {
   const { openLootDetails } = useSelectedLoot();
   const date = timestampToDate(loot.createdAt);
   const { isRukiaTheme } = useThemeMeta();
+  const shouldReduceMotion = useReducedMotion();
 
   const { itemsByPlayer, unassignedItems, hasLegendaryItem, sortedPlayers } =
     useLootData(loot);
   const watchContext = {
     world: loot.world,
   };
+  let initialAnimation: false | { opacity: number; scale?: number } = false;
+  let animate: { opacity: number; scale?: number } | undefined;
+
+  if (isNew) {
+    if (shouldReduceMotion) {
+      initialAnimation = { opacity: 0 };
+      animate = { opacity: 1 };
+    } else {
+      initialAnimation = { opacity: 0, scale: 0.98 };
+      animate = { opacity: 1, scale: 1 };
+    }
+  }
 
   return (
-    <div
+    <motion.div
+      initial={initialAnimation}
+      animate={animate}
+      transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
         "h-full",
         isRukiaTheme &&
@@ -281,6 +299,7 @@ export const LootsListItem = ({ loot }: Props) => {
           "group relative px-4 pt-2 pb-1 h-full flex flex-col gap-0",
           "bg-card/95 border-border overflow-visible",
           "hover:bg-card hover:border-primary/30 hover:shadow-md transition-[background-color,border-color,box-shadow] duration-200",
+          isNew && "border-primary/70 ring-1 ring-primary/40 shadow-lg",
           hasLegendaryItem &&
             "border-red-500/80 shadow-[0_0_15px_rgba(239,68,68,0.25)] hover:shadow-[0_0_20px_rgba(239,68,68,0.35)] hover:border-red-500/100",
         )}
@@ -303,6 +322,6 @@ export const LootsListItem = ({ loot }: Props) => {
           itemsCount={loot.items.length}
         />
       </Card>
-    </div>
+    </motion.div>
   );
 };
