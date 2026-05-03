@@ -1,6 +1,9 @@
 import { ContextMenuItem } from "@/components/ui/context-menu";
 import { DeleteTimerPopover } from "@/components/delete-timer-popover";
-import type { TimerWithTimeLeft } from "@/features/timers/utils/timers-utils";
+import {
+  isManualTimer,
+  type TimerWithTimeLeft,
+} from "@/features/timers/utils/timers-utils";
 import {
   Eye,
   EyeOff,
@@ -14,6 +17,7 @@ import {
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { TimerColorPicker } from "./timer-color-picker";
+import { TimerHistoryPopover } from "./timer-history-popover";
 
 type CustomColor = {
   id: string;
@@ -48,6 +52,8 @@ type TimerContextMenuContentProps = {
   onHideAll: () => void;
   onShow: () => void;
   onShowAll: () => void;
+  isAlwaysVisibleExpiredTimer: boolean;
+  onToggleAlwaysVisibleExpiredTimer: () => void;
   onReset: () => void;
   onDelete: (guildId: string, timerKey: string) => void;
 };
@@ -73,10 +79,13 @@ export const TimerContextMenuContent: FC<TimerContextMenuContentProps> = ({
   onHideAll,
   onShow,
   onShowAll,
+  isAlwaysVisibleExpiredTimer,
+  onToggleAlwaysVisibleExpiredTimer,
   onReset,
   onDelete,
 }) => {
   const { t } = useTranslation("timers");
+  const showHistory = !isManualTimer(timer);
 
   if (isPending) {
     return (
@@ -121,12 +130,25 @@ export const TimerContextMenuContent: FC<TimerContextMenuContentProps> = ({
         <Globe className="ll:h-4 ll:w-4 ll:mr-2" />
         {isHidden ? t("contextMenu.showAll") : t("contextMenu.hideAll")}
       </ContextMenuItem>
+      {showHistory && (
+        <ContextMenuItem onClick={onToggleAlwaysVisibleExpiredTimer}>
+          {isAlwaysVisibleExpiredTimer ? (
+            <EyeOff className="ll:h-4 ll:w-4 ll:mr-2" />
+          ) : (
+            <Eye className="ll:h-4 ll:w-4 ll:mr-2" />
+          )}
+          {isAlwaysVisibleExpiredTimer
+            ? t("contextMenu.hideAlways")
+            : t("contextMenu.showAlways")}
+        </ContextMenuItem>
+      )}
       {canReset && (
         <ContextMenuItem onClick={onReset}>
           <RotateCcw className="ll:h-4 ll:w-4 ll:mr-2" />
           {t("contextMenu.restart")}
         </ContextMenuItem>
       )}
+      {showHistory && <TimerHistoryPopover timer={timer} />}
       {timersGrouping ? (
         <DeleteTimerPopover timer={timer} onDeleteTimer={onDelete} />
       ) : (

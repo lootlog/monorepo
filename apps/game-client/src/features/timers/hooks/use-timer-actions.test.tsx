@@ -9,6 +9,14 @@ const mockUnpinTimer = vi.fn();
 const mockSetTimerColor = vi.fn();
 const mockResetTimer = vi.fn();
 const mockDeleteTimer = vi.fn();
+const mockActorCharacter = {
+  accountId: "200",
+  characterId: "100",
+  name: "Hero One",
+  prof: "b",
+  icon: "hero.gif",
+  lvl: 300,
+};
 const mockT = vi.fn(
   (key: string, options?: Record<string, unknown>) =>
     `${key}${options?.name ? `:${options.name}` : ""}`,
@@ -38,6 +46,10 @@ vi.mock("@/lib/api/generated/main/timers/timers", () => ({
 
 vi.mock("@/i18n/get-fixed-t", () => ({
   getFixedT: () => mockT,
+}));
+
+vi.mock("@/lib/api/generated-helpers", () => ({
+  buildCurrentTimerActorCharacterPayload: () => mockActorCharacter,
 }));
 
 import { useTimerActions } from "./use-timer-actions";
@@ -160,11 +172,42 @@ describe("useTimerActions", () => {
       },
       data: {
         world: "pandora",
+        actorCharacter: mockActorCharacter,
+      },
+    });
+    expect(mockResetTimer).toHaveBeenCalledWith({
+      pathParams: {
+        guildId: "guild-2",
+        timerIdentifier: "timer-2",
+      },
+      data: {
+        world: "pandora",
+        actorCharacter: mockActorCharacter,
       },
     });
     expect(window.message).toHaveBeenCalledWith(
       "messages.resetSuccess:Tanroth",
     );
+  });
+
+  it("resets a single timer with current actor character data", async () => {
+    mockResetTimer.mockResolvedValue(undefined);
+    const actions = useTimerActions(createTimer(), "guild-1", "pandora", [
+      "guild-1",
+    ]);
+
+    await actions.handleRestartTimer();
+
+    expect(mockResetTimer).toHaveBeenCalledWith({
+      pathParams: {
+        guildId: "guild-1",
+        timerIdentifier: "timer-1",
+      },
+      data: {
+        world: "pandora",
+        actorCharacter: mockActorCharacter,
+      },
+    });
   });
 
   it("maps reset API errors to translated messages", async () => {

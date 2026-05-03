@@ -3,6 +3,7 @@ import {
   useTimersControllerResetTimer,
 } from "@/lib/api/generated/main/timers/timers";
 import { isApiError } from "@/lib/api-client";
+import { buildCurrentTimerActorCharacterPayload } from "@/lib/api/generated-helpers";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import { useTimersStore } from "@/store/timers.store";
 import { getFixedT } from "@/i18n/get-fixed-t";
@@ -22,6 +23,9 @@ export const useTimerActions = (
     unpinTimer,
     pinnedTimers,
     setTimerColor,
+    alwaysVisibleExpiredTimers,
+    showExpiredTimerAlways,
+    hideExpiredTimerAlways,
   } = useTimersStore();
   const { mutateAsync: resetTimer } = useTimersControllerResetTimer();
   const { mutate: deleteTimer } = useTimersControllerDeleteTimer();
@@ -59,6 +63,9 @@ export const useTimerActions = (
   };
 
   const isPinned = pinnedTimers[settingsKey]?.includes(timer.npc.name);
+  const isAlwaysVisibleExpiredTimer =
+    alwaysVisibleExpiredTimers?.[timer.world]?.includes(timer.timerKey) ??
+    false;
 
   const handleHideTimer = () => {
     if (!settingsKey) return;
@@ -122,10 +129,21 @@ export const useTimerActions = (
     setTimerColor(timer.npc.name, color);
   };
 
+  const handleToggleAlwaysVisibleExpiredTimer = () => {
+    if (isAlwaysVisibleExpiredTimer) {
+      hideExpiredTimerAlways(timer.world, timer.timerKey);
+      return;
+    }
+
+    showExpiredTimerAlways(timer.world, timer.timerKey);
+  };
+
   const handleRestartTimer = async () => {
     if (!world) return;
 
     try {
+      const actorCharacter = buildCurrentTimerActorCharacterPayload();
+
       if (timersGrouping && timer.mergedGuildIds) {
         await Promise.all(
           timer.mergedGuildIds.flatMap(({ guildId, timerKey }) =>
@@ -138,6 +156,7 @@ export const useTimerActions = (
                     },
                     data: {
                       world,
+                      actorCharacter,
                     },
                   }),
                 ]
@@ -152,6 +171,7 @@ export const useTimerActions = (
           },
           data: {
             world,
+            actorCharacter,
           },
         });
       }
@@ -188,6 +208,7 @@ export const useTimerActions = (
 
   return {
     isPinned,
+    isAlwaysVisibleExpiredTimer,
     handleHideTimer,
     handleHideTimerForAll,
     handleShowTimer,
@@ -196,6 +217,7 @@ export const useTimerActions = (
     handlePinTimerForAll,
     handleUnpinTimerForAll,
     handleTimerColorChange,
+    handleToggleAlwaysVisibleExpiredTimer,
     handleRestartTimer,
     handleDeleteTimer,
   };

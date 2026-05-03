@@ -9,6 +9,8 @@ import {
 
 export const TIMERS_STORAGE_KEY = storageKey("ll-timers-state");
 
+const DEFAULT_REMOVE_TIMER_AFTER_MS = 30000;
+
 type TimersFilters = {
   minLvl: number;
   maxLvl: number;
@@ -23,6 +25,14 @@ type TimersGeneralConfig = {
   countdownMode: "min" | "max";
   compactView: boolean;
 };
+
+const DEFAULT_GENERAL_CONFIG = {
+  removeTimerAfterMs: DEFAULT_REMOVE_TIMER_AFTER_MS,
+  timersGrouping: false,
+  timersUnderBag: false,
+  countdownMode: "max",
+  compactView: false,
+} satisfies TimersGeneralConfig;
 
 type TimersDisplayConfig = {
   showType: boolean;
@@ -46,6 +56,7 @@ interface TimersState {
   updatedAt?: number;
   hiddenTimers: HiddenTimers;
   pinnedTimers: PinnedTimers;
+  alwaysVisibleExpiredTimers: Record<string, string[]>;
   timersColors: Record<string, string | undefined>;
   customColors: Record<string, CustomTimerColor>;
   defaultColorNames: Record<string, string>;
@@ -72,6 +83,8 @@ interface TimersState {
   setSyncEnabled: (enabled: boolean) => void;
   hideTimer: (guildId: string, timerId: string) => void;
   revealTimer: (guildId: string, timerId: string) => void;
+  showExpiredTimerAlways: (world: string, timerKey: string) => void;
+  hideExpiredTimerAlways: (world: string, timerKey: string) => void;
   pinTimer: (guildId: string, timerId: string) => void;
   unpinTimer: (guildId: string, timerId: string) => void;
   setTimerColor: (npcName: string, color?: string) => void;
@@ -87,8 +100,6 @@ interface TimersState {
   deleteDefaultColor: (colorId: string) => void;
   restoreDefaultColor: (colorId: string) => void;
 }
-
-const DEFAULT_REMOVE_TIMER_AFTER_MS = 30000;
 
 const DEFAULT_SELECTED_NPC_TYPES = [
   NpcType.ELITE3,
@@ -132,18 +143,13 @@ export const useTimersStore = create<TimersState>()(
       return {
         hiddenTimers: {},
         pinnedTimers: {},
+        alwaysVisibleExpiredTimers: {},
         timersColors: {},
         customColors: {},
         defaultColorNames: {},
         overriddenDefaultColors: {},
         hiddenDefaultColors: [],
-        generalConfig: {
-          removeTimerAfterMs: DEFAULT_REMOVE_TIMER_AFTER_MS,
-          timersGrouping: false,
-          timersUnderBag: false,
-          countdownMode: "max",
-          compactView: false,
-        },
+        generalConfig: DEFAULT_GENERAL_CONFIG,
         setGeneralConfig: (config: TimersGeneralConfig) => {
           setWithTimestamp({ generalConfig: config });
           debouncedSyncGlobalSettings({
@@ -238,6 +244,44 @@ export const useTimersStore = create<TimersState>()(
 
           debouncedSyncGuildSettings(guildId, {
             hiddenTimers: updatedHidden,
+          });
+        },
+        showExpiredTimerAlways: (world: string, timerKey: string) => {
+          const currentTimerKeys =
+            get().alwaysVisibleExpiredTimers[world] ?? [];
+          const updatedTimerKeys = [
+            ...new Set([...currentTimerKeys, timerKey]),
+          ];
+          const updatedAlwaysVisibleExpiredTimers = {
+            ...get().alwaysVisibleExpiredTimers,
+            [world]: updatedTimerKeys,
+          };
+
+          setWithTimestamp({
+            alwaysVisibleExpiredTimers: updatedAlwaysVisibleExpiredTimers,
+          });
+
+          debouncedSyncGlobalSettings({
+            alwaysVisibleExpiredTimers: updatedAlwaysVisibleExpiredTimers,
+          });
+        },
+        hideExpiredTimerAlways: (world: string, timerKey: string) => {
+          const currentTimerKeys =
+            get().alwaysVisibleExpiredTimers[world] ?? [];
+          const updatedTimerKeys = currentTimerKeys.filter(
+            (key) => key !== timerKey,
+          );
+          const updatedAlwaysVisibleExpiredTimers = {
+            ...get().alwaysVisibleExpiredTimers,
+            [world]: updatedTimerKeys,
+          };
+
+          setWithTimestamp({
+            alwaysVisibleExpiredTimers: updatedAlwaysVisibleExpiredTimers,
+          });
+
+          debouncedSyncGlobalSettings({
+            alwaysVisibleExpiredTimers: updatedAlwaysVisibleExpiredTimers,
           });
         },
         pinTimer: (guildId: string, timerId: string) => {
@@ -405,6 +449,7 @@ export const useTimersStore = create<TimersState>()(
         updatedAt: state.updatedAt,
         hiddenTimers: state.hiddenTimers,
         pinnedTimers: state.pinnedTimers,
+        alwaysVisibleExpiredTimers: state.alwaysVisibleExpiredTimers,
         timersColors: state.timersColors,
         customColors: state.customColors,
         defaultColorNames: state.defaultColorNames,
@@ -419,6 +464,20 @@ export const useTimersStore = create<TimersState>()(
         displayConfig: state.displayConfig,
       }),
       storage: createJSONStorage(() => localStorage),
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as Partial<TimersState> | undefined;
+
+        return {
+          ...currentState,
+          ...persisted,
+          generalConfig: {
+            ...DEFAULT_GENERAL_CONFIG,
+            ...persisted?.generalConfig,
+          },
+          alwaysVisibleExpiredTimers:
+            persisted?.alwaysVisibleExpiredTimers ?? {},
+        };
+      },
       version: 6,
     },
   ),

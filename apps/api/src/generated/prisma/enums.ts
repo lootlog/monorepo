@@ -137,6 +137,16 @@ export const LootSource = {
 export type LootSource = (typeof LootSource)[keyof typeof LootSource]
 
 
+export const TimerHistoryAction = {
+  CREATE: 'CREATE',
+  RESET: 'RESET',
+  DELETE: 'DELETE',
+  RESTORE: 'RESTORE'
+} as const
+
+export type TimerHistoryAction = (typeof TimerHistoryAction)[keyof typeof TimerHistoryAction]
+
+
 export const RefreshJobStatus = {
   PENDING: 'PENDING',
   PROCESSING: 'PROCESSING',

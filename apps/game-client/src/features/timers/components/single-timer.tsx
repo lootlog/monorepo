@@ -86,6 +86,8 @@ export const SingleTimer: FC<SingleTimerProps> = ({
     handlePinTimerForAll,
     handleUnpinTimerForAll,
     handleTimerColorChange,
+    isAlwaysVisibleExpiredTimer,
+    handleToggleAlwaysVisibleExpiredTimer,
     handleRestartTimer,
     handleDeleteTimer,
   } = useTimerActions(
@@ -143,7 +145,8 @@ export const SingleTimer: FC<SingleTimerProps> = ({
                     "ll:flex ll:justify-between ll:w-full ll:text-[11px] ll:px-1 ll:box-border ll:h-full ll:min-w-0",
                     {
                       "ll:text-red-500": hasPassedRedThreshold,
-                      "ll:text-orange-400": isMinSpawnTime,
+                      "ll:text-orange-400":
+                        isMinSpawnTime && !hasPassedRedThreshold,
                       "ll:text-white":
                         !hasPassedRedThreshold && !isMinSpawnTime,
                       "ll:py-1": document.body.classList.contains("si"),
@@ -173,7 +176,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
                       fontSize: `${displayConfig.fontSize}px`,
                     }}
                   >
-                    {parseMsToTime(timeLeft <= 0 ? 0 : timeLeft)}
+                    {parseMsToTime(timeLeft)}
                   </div>
                 </span>
               </Tile>
@@ -203,6 +206,10 @@ export const SingleTimer: FC<SingleTimerProps> = ({
             onHideAll={handleHideTimerForAll}
             onShow={handleShowTimer}
             onShowAll={handleShowTimerForAll}
+            isAlwaysVisibleExpiredTimer={isAlwaysVisibleExpiredTimer}
+            onToggleAlwaysVisibleExpiredTimer={
+              handleToggleAlwaysVisibleExpiredTimer
+            }
             onReset={handleRestartTimer}
             onDelete={handleDeleteTimer}
           />

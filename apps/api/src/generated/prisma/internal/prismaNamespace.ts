@@ -392,6 +392,7 @@ export const ModelName = {
   ItemSnapshot: 'ItemSnapshot',
   LootItem: 'LootItem',
   PlayerSnapshot: 'PlayerSnapshot',
+  TimerHistoryEntry: 'TimerHistoryEntry',
   LootPlayer: 'LootPlayer',
   NpcSnapshot: 'NpcSnapshot',
   LootNpc: 'LootNpc',
@@ -446,7 +447,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "guild" | "role" | "member" | "timer" | "loot" | "itemSnapshot" | "lootItem" | "playerSnapshot" | "lootPlayer" | "npcSnapshot" | "lootNpc" | "lootSubmission" | "lootComment" | "lootlogConfigNpc" | "lootlogConfig" | "reservation" | "userCharactersLootlogSettings" | "userSettings" | "userGameAccountSettings" | "notificationTarget" | "notificationRule" | "notificationRuleTarget" | "notificationJob" | "watchedItem" | "discordGuildChannelSnapshot" | "discordGuildSyncState" | "memberRefreshJob" | "userTimerSettings" | "userGuildTimerSettings" | "userGuildEventSettings" | "userSoundSettings" | "event" | "eventMapLocation" | "eventMap" | "eventMapCoverageGap" | "eventMapAssignmentHistory" | "eventHeroNpc" | "eventPresenceLog" | "eventHeroKill" | "eventKillPoint" | "eventRanking" | "eventPointsEditHistory" | "eventRespawnWindowSummary" | "mapTemplate" | "npcKillStats" | "userKillStats" | "guildKillSummary"
+    modelProps: "guild" | "role" | "member" | "timer" | "loot" | "itemSnapshot" | "lootItem" | "playerSnapshot" | "timerHistoryEntry" | "lootPlayer" | "npcSnapshot" | "lootNpc" | "lootSubmission" | "lootComment" | "lootlogConfigNpc" | "lootlogConfig" | "reservation" | "userCharactersLootlogSettings" | "userSettings" | "userGameAccountSettings" | "notificationTarget" | "notificationRule" | "notificationRuleTarget" | "notificationJob" | "watchedItem" | "discordGuildChannelSnapshot" | "discordGuildSyncState" | "memberRefreshJob" | "userTimerSettings" | "userGuildTimerSettings" | "userGuildEventSettings" | "userSoundSettings" | "event" | "eventMapLocation" | "eventMap" | "eventMapCoverageGap" | "eventMapAssignmentHistory" | "eventHeroNpc" | "eventPresenceLog" | "eventHeroKill" | "eventKillPoint" | "eventRanking" | "eventPointsEditHistory" | "eventRespawnWindowSummary" | "mapTemplate" | "npcKillStats" | "userKillStats" | "guildKillSummary"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1039,6 +1040,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.PlayerSnapshotCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.PlayerSnapshotCountAggregateOutputType> | number
+        }
+      }
+    }
+    TimerHistoryEntry: {
+      payload: Prisma.$TimerHistoryEntryPayload<ExtArgs>
+      fields: Prisma.TimerHistoryEntryFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TimerHistoryEntryFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TimerHistoryEntryPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TimerHistoryEntryFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TimerHistoryEntryPayload>
+        }
+        findFirst: {
+          args: Prisma.TimerHistoryEntryFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TimerHistoryEntryPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TimerHistoryEntryFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TimerHistoryEntryPayload>
+        }
+        findMany: {
+          args: Prisma.TimerHistoryEntryFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TimerHistoryEntryPayload>[]
+        }
+        create: {
+          args: Prisma.TimerHistoryEntryCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TimerHistoryEntryPayload>
+        }
+        createMany: {
+          args: Prisma.TimerHistoryEntryCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TimerHistoryEntryCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TimerHistoryEntryPayload>[]
+        }
+        delete: {
+          args: Prisma.TimerHistoryEntryDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TimerHistoryEntryPayload>
+        }
+        update: {
+          args: Prisma.TimerHistoryEntryUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TimerHistoryEntryPayload>
+        }
+        deleteMany: {
+          args: Prisma.TimerHistoryEntryDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TimerHistoryEntryUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TimerHistoryEntryUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TimerHistoryEntryPayload>[]
+        }
+        upsert: {
+          args: Prisma.TimerHistoryEntryUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TimerHistoryEntryPayload>
+        }
+        aggregate: {
+          args: Prisma.TimerHistoryEntryAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTimerHistoryEntry>
+        }
+        groupBy: {
+          args: Prisma.TimerHistoryEntryGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TimerHistoryEntryGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TimerHistoryEntryCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TimerHistoryEntryCountAggregateOutputType> | number
         }
       }
     }
@@ -4032,6 +4107,9 @@ export const TimerScalarFieldEnum = {
   wasReset: 'wasReset',
   npc: 'npc',
   windowOpenedAt: 'windowOpenedAt',
+  actorCharacterSnapshotId: 'actorCharacterSnapshotId',
+  actorCharacterLvl: 'actorCharacterLvl',
+  deletedAt: 'deletedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -4093,6 +4171,32 @@ export const PlayerSnapshotScalarFieldEnum = {
 } as const
 
 export type PlayerSnapshotScalarFieldEnum = (typeof PlayerSnapshotScalarFieldEnum)[keyof typeof PlayerSnapshotScalarFieldEnum]
+
+
+export const TimerHistoryEntryScalarFieldEnum = {
+  id: 'id',
+  guildId: 'guildId',
+  world: 'world',
+  timerKey: 'timerKey',
+  npcId: 'npcId',
+  npc: 'npc',
+  action: 'action',
+  actorMemberId: 'actorMemberId',
+  actorCharacterSnapshotId: 'actorCharacterSnapshotId',
+  actorCharacterLvl: 'actorCharacterLvl',
+  minSpawnTime: 'minSpawnTime',
+  maxSpawnTime: 'maxSpawnTime',
+  latestRespBaseSeconds: 'latestRespBaseSeconds',
+  latestRespawnRandomness: 'latestRespawnRandomness',
+  wasReset: 'wasReset',
+  windowOpenedAt: 'windowOpenedAt',
+  timerCreatedById: 'timerCreatedById',
+  timerActorCharacterSnapshotId: 'timerActorCharacterSnapshotId',
+  timerActorCharacterLvl: 'timerActorCharacterLvl',
+  createdAt: 'createdAt'
+} as const
+
+export type TimerHistoryEntryScalarFieldEnum = (typeof TimerHistoryEntryScalarFieldEnum)[keyof typeof TimerHistoryEntryScalarFieldEnum]
 
 
 export const LootPlayerScalarFieldEnum = {
@@ -4397,6 +4501,7 @@ export const UserTimerSettingsScalarFieldEnum = {
   displayConfig: 'displayConfig',
   customColors: 'customColors',
   timersColors: 'timersColors',
+  alwaysVisibleExpiredTimers: 'alwaysVisibleExpiredTimers',
   defaultColorNames: 'defaultColorNames',
   overriddenDefaultColors: 'overriddenDefaultColors',
   hiddenDefaultColors: 'hiddenDefaultColors',
@@ -4894,6 +4999,20 @@ export type ListEnumProfessionFieldRefInput<$PrismaModel> = FieldRefInputType<$P
 
 
 /**
+ * Reference to a field of type 'TimerHistoryAction'
+ */
+export type EnumTimerHistoryActionFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TimerHistoryAction'>
+    
+
+
+/**
+ * Reference to a field of type 'TimerHistoryAction[]'
+ */
+export type ListEnumTimerHistoryActionFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TimerHistoryAction[]'>
+    
+
+
+/**
  * Reference to a field of type 'NpcType'
  */
 export type EnumNpcTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NpcType'>
@@ -5219,6 +5338,7 @@ export type GlobalOmitConfig = {
   itemSnapshot?: Prisma.ItemSnapshotOmit
   lootItem?: Prisma.LootItemOmit
   playerSnapshot?: Prisma.PlayerSnapshotOmit
+  timerHistoryEntry?: Prisma.TimerHistoryEntryOmit
   lootPlayer?: Prisma.LootPlayerOmit
   npcSnapshot?: Prisma.NpcSnapshotOmit
   lootNpc?: Prisma.LootNpcOmit

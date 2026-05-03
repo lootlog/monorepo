@@ -62,6 +62,10 @@ export const useUpdateTimerSettings = () => {
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: TIMER_SETTINGS_QUERY_KEY });
+      queryClient.invalidateQueries({
+        predicate: ({ queryKey }) =>
+          typeof queryKey[0] === "string" && queryKey[0].startsWith("/timers"),
+      });
     },
   });
 };

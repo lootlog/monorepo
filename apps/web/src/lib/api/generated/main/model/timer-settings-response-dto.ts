@@ -14,6 +14,7 @@ export interface TimerSettingsResponseDto {
   displayConfig: TimerSettingsResponseDtoSchema0 | null;
   customColors: TimerSettingsResponseDtoSchema0 | null;
   timersColors: TimerSettingsResponseDtoSchema0 | null;
+  alwaysVisibleExpiredTimers: TimerSettingsResponseDtoSchema0 | null;
   defaultColorNames: TimerSettingsResponseDtoSchema0 | null;
   overriddenDefaultColors: TimerSettingsResponseDtoSchema0 | null;
   hiddenDefaultColors: string[];

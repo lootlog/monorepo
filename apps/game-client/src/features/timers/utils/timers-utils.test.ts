@@ -7,6 +7,7 @@ import {
   filterTimersByGuild,
   filterTimersByLevel,
   filterTimersByNpcType,
+  filterTimersByExpiredVisibility,
   filterTimersByRemovalTime,
   filterTimersBySearchText,
   filterTimersByVisibility,
@@ -23,6 +24,7 @@ const createTimer = (overrides?: Partial<Timer>): Timer => ({
   minSpawnTime: overrides?.minSpawnTime ?? "2026-04-22T10:05:00.000Z",
   maxSpawnTime: overrides?.maxSpawnTime ?? "2026-04-22T10:10:00.000Z",
   updatedAt: overrides?.updatedAt ?? "2026-04-22T10:00:00.000Z",
+  deletedAt: overrides?.deletedAt,
   wasReset: overrides?.wasReset ?? false,
   npc: {
     id: overrides?.npc?.id ?? 101,
@@ -137,6 +139,22 @@ describe("timers-utils", () => {
     expect(timer.maxTimeLeft).toBe(150_000);
   });
 
+  it("calculates deleted timer time left from deletedAt", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-04-22T10:00:00.000Z"));
+
+    const [timer] = calculateTimeLeft([
+      createTimerWithTimeLeft({
+        minSpawnTime: "2026-04-22T10:01:00.000Z",
+        maxSpawnTime: "2026-04-22T10:02:30.000Z",
+        deletedAt: "2026-04-22T09:59:30.000Z",
+      }),
+    ]);
+
+    expect(timer.minTimeLeft).toBe(-30_000);
+    expect(timer.maxTimeLeft).toBe(-30_000);
+  });
+
   it("filters timers by removal threshold, guild, visibility, search, npc type, level, and color", () => {
     const timers = [
       createTimerWithTimeLeft({
@@ -196,6 +214,44 @@ describe("timers-utils", () => {
     ).toEqual([timers[0]]);
   });
 
+  it("keeps expired non-manual timers when they are marked as always visible", () => {
+    const activeManualTimer = createTimerWithTimeLeft({
+      timerKey: "active-manual",
+      npc: {
+        ...createTimer().npc,
+        name: "Manual active",
+        margonemType: 999,
+      },
+      maxTimeLeft: 10_000,
+    });
+    const expiredManualTimer = createTimerWithTimeLeft({
+      timerKey: "expired-manual",
+      npc: {
+        ...createTimer().npc,
+        name: "Manual expired",
+        margonemType: 999,
+      },
+      maxTimeLeft: -50_000,
+    });
+    const expiredAutoTimer = createTimerWithTimeLeft({
+      timerKey: "expired-auto",
+      npc: {
+        ...createTimer().npc,
+        name: "Auto expired",
+        margonemType: 4,
+      },
+      maxTimeLeft: -50_000,
+    });
+
+    expect(
+      filterTimersByExpiredVisibility(
+        [activeManualTimer, expiredManualTimer, expiredAutoTimer],
+        30_000,
+        { pandora: ["expired-auto"] },
+      ),
+    ).toEqual([activeManualTimer, expiredAutoTimer]);
+  });
+
   it("sorts pinned timers first and then sorts by max spawn time in the requested direction", () => {
     const timers = [
       createTimerWithTimeLeft({
@@ -234,5 +290,99 @@ describe("timers-utils", () => {
         (timer) => timer.npc.name,
       ),
     ).toEqual(["Raróg", "Mushita", "Tanroth"]);
+  });
+
+  it("sorts expired timers at the bottom when requested", () => {
+    const timers = [
+      createTimerWithTimeLeft({
+        timerKey: "expired-old",
+        npc: {
+          ...createTimer().npc,
+          name: "Expired old",
+        },
+        maxSpawnTime: "2026-04-22T10:00:00.000Z",
+        maxTimeLeft: -1,
+      }),
+      createTimerWithTimeLeft({
+        timerKey: "expired-new",
+        npc: {
+          ...createTimer().npc,
+          name: "Expired new",
+        },
+        maxSpawnTime: "2026-04-22T10:02:00.000Z",
+        maxTimeLeft: -1,
+      }),
+      createTimerWithTimeLeft({
+        timerKey: "active",
+        npc: {
+          ...createTimer().npc,
+          name: "Active",
+        },
+        maxSpawnTime: "2026-04-22T10:01:00.000Z",
+        maxTimeLeft: 1,
+      }),
+    ];
+
+    expect(
+      sortTimersByPinnedAndTime(timers, [], "asc", true, 0).map(
+        (timer) => timer.npc.name,
+      ),
+    ).toEqual(["Active", "Expired new", "Expired old"]);
+    expect(
+      sortTimersByPinnedAndTime(timers, [], "desc", true, 0).map(
+        (timer) => timer.npc.name,
+      ),
+    ).toEqual(["Active", "Expired old", "Expired new"]);
+  });
+
+  it("moves expired timers to the bottom only after the removal timeout passes", () => {
+    const timers = [
+      createTimerWithTimeLeft({
+        timerKey: "expired-before-threshold",
+        npc: {
+          ...createTimer().npc,
+          name: "Expired before threshold",
+        },
+        maxSpawnTime: "2026-04-22T10:00:00.000Z",
+        maxTimeLeft: -10_000,
+      }),
+      createTimerWithTimeLeft({
+        timerKey: "expired-after-threshold",
+        npc: {
+          ...createTimer().npc,
+          name: "Expired after threshold",
+        },
+        maxSpawnTime: "2026-04-22T10:01:00.000Z",
+        maxTimeLeft: -40_000,
+      }),
+      createTimerWithTimeLeft({
+        timerKey: "active",
+        npc: {
+          ...createTimer().npc,
+          name: "Active",
+        },
+        maxSpawnTime: "2026-04-22T10:02:00.000Z",
+        maxTimeLeft: 120_000,
+      }),
+    ];
+
+    expect(
+      sortTimersByPinnedAndTime(timers, [], "asc", true, 30_000).map(
+        (timer) => timer.npc.name,
+      ),
+    ).toEqual([
+      "Expired before threshold",
+      "Active",
+      "Expired after threshold",
+    ]);
+    expect(
+      sortTimersByPinnedAndTime(timers, [], "desc", true, 30_000).map(
+        (timer) => timer.npc.name,
+      ),
+    ).toEqual([
+      "Active",
+      "Expired before threshold",
+      "Expired after threshold",
+    ]);
   });
 });

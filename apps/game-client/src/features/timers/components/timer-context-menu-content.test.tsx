@@ -25,6 +25,10 @@ vi.mock("./timer-color-picker", () => ({
   ),
 }));
 
+vi.mock("./timer-history-popover", () => ({
+  TimerHistoryPopover: () => <div>TimerHistoryPopover</div>,
+}));
+
 vi.mock("@/components/delete-timer-popover", () => ({
   DeleteTimerPopover: (props: unknown) => {
     deleteTimerPopoverSpy(props);
@@ -37,6 +41,7 @@ vi.mock("lucide-react", () => ({
   Eye: () => <span>Eye</span>,
   EyeOff: () => <span>EyeOff</span>,
   Globe: () => <span>Globe</span>,
+  History: () => <span>History</span>,
   Loader2: () => <span>Loader2</span>,
   Pin: () => <span>Pin</span>,
   PinOff: () => <span>PinOff</span>,
@@ -45,14 +50,16 @@ vi.mock("lucide-react", () => ({
 }));
 
 import { TimerContextMenuContent } from "./timer-context-menu-content";
+import type { TimerWithTimeLeft } from "../utils/timers-utils";
 
 const timer = {
   guildId: "guild-1",
   timerKey: "timer-1",
   npc: {
     name: "Tanroth",
+    margonemType: 4,
   },
-} as never;
+} as TimerWithTimeLeft;
 
 describe("TimerContextMenuContent", () => {
   it("shows a pending placeholder while a timer is being created", () => {
@@ -78,6 +85,8 @@ describe("TimerContextMenuContent", () => {
         onHideAll={vi.fn()}
         onShow={vi.fn()}
         onShowAll={vi.fn()}
+        isAlwaysVisibleExpiredTimer={false}
+        onToggleAlwaysVisibleExpiredTimer={vi.fn()}
         onReset={vi.fn()}
         onDelete={vi.fn()}
       />,
@@ -118,12 +127,15 @@ describe("TimerContextMenuContent", () => {
         onHideAll={onHideAll}
         onShow={vi.fn()}
         onShowAll={vi.fn()}
+        isAlwaysVisibleExpiredTimer={false}
+        onToggleAlwaysVisibleExpiredTimer={vi.fn()}
         onReset={onReset}
         onDelete={onDelete}
       />,
     );
 
     expect(screen.getByText("TimerColorPicker:red")).toBeInTheDocument();
+    expect(screen.getByText("TimerHistoryPopover")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /Przypnij$/ }));
     await user.click(
@@ -131,6 +143,7 @@ describe("TimerContextMenuContent", () => {
     );
     await user.click(screen.getByRole("button", { name: /Ukryj$/ }));
     await user.click(screen.getByRole("button", { name: /Ukryj wszędzie$/ }));
+    await user.click(screen.getByRole("button", { name: /Pokaż zawsze$/ }));
     await user.click(
       screen.getByRole("button", { name: /Odliczaj od początku$/ }),
     );
@@ -167,6 +180,8 @@ describe("TimerContextMenuContent", () => {
         onHideAll={vi.fn()}
         onShow={vi.fn()}
         onShowAll={vi.fn()}
+        isAlwaysVisibleExpiredTimer
+        onToggleAlwaysVisibleExpiredTimer={vi.fn()}
         onReset={vi.fn()}
         onDelete={vi.fn()}
       />,
@@ -178,5 +193,46 @@ describe("TimerContextMenuContent", () => {
         timer,
       }),
     );
+  });
+
+  it("does not render history for manual timers", () => {
+    render(
+      <TimerContextMenuContent
+        timer={
+          {
+            ...timer,
+            npc: {
+              name: "Manual timer",
+              margonemType: 999,
+            },
+          } as never
+        }
+        isPending={false}
+        isPinned={false}
+        isHidden={false}
+        canDelete
+        canReset={false}
+        timersGrouping={false}
+        selectedColor="red"
+        customColors={{}}
+        defaultColorNames={{}}
+        overriddenDefaultColors={{}}
+        hiddenDefaultColors={[]}
+        onColorChange={vi.fn()}
+        onPin={vi.fn()}
+        onPinAll={vi.fn()}
+        onUnpinAll={vi.fn()}
+        onHide={vi.fn()}
+        onHideAll={vi.fn()}
+        onShow={vi.fn()}
+        onShowAll={vi.fn()}
+        isAlwaysVisibleExpiredTimer={false}
+        onToggleAlwaysVisibleExpiredTimer={vi.fn()}
+        onReset={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText("TimerHistoryPopover")).not.toBeInTheDocument();
   });
 });

@@ -35,6 +35,16 @@ const createTimer = (overrides?: Partial<Timer>): Timer => ({
       guildId: "guild-2",
     } as never,
   ],
+  actorCharactersByMemberId: {
+    "member-1": {
+      name: "Hero One",
+      lvl: 300,
+      prof: "BLADE_DANCER",
+      icon: "hero.gif",
+      characterId: 1,
+      accountId: 2,
+    },
+  },
   ...overrides,
 });
 
@@ -54,6 +64,7 @@ describe("TimerTooltip", () => {
     expect(screen.getByText("(120w)")).toBeVisible();
     expect(screen.getByText("Dodane przez:")).toBeVisible();
     expect(screen.getByText("Tester (Alpha)")).toBeVisible();
+    expect(screen.getByText("Hero One (300b)")).toBeVisible();
     expect(screen.getByText("Scout (Beta)")).toBeVisible();
     expect(screen.getByText("⟳ Timer został zresetowany")).toBeVisible();
     expect(screen.getByText("Dodano:")).toBeVisible();

@@ -22,6 +22,7 @@ const resetTimersStore = () => {
     updatedAt: undefined,
     hiddenTimers: {},
     pinnedTimers: {},
+    alwaysVisibleExpiredTimers: {},
     timersColors: {},
     customColors: {},
     defaultColorNames: {},
@@ -192,6 +193,33 @@ describe("timers.store", () => {
     });
     expect(mockDebouncedSyncGlobalSettings).toHaveBeenCalledWith({
       syncEnabled: false,
+    });
+  });
+
+  it("updates always visible expired timers and syncs global settings", () => {
+    const store = useTimersStore.getState();
+
+    store.showExpiredTimerAlways("experimental", "123:test-boss");
+    store.showExpiredTimerAlways("experimental", "123:test-boss");
+    store.hideExpiredTimerAlways("experimental", "123:test-boss");
+
+    expect(useTimersStore.getState().alwaysVisibleExpiredTimers).toEqual({
+      experimental: [],
+    });
+    expect(mockDebouncedSyncGlobalSettings).toHaveBeenNthCalledWith(1, {
+      alwaysVisibleExpiredTimers: {
+        experimental: ["123:test-boss"],
+      },
+    });
+    expect(mockDebouncedSyncGlobalSettings).toHaveBeenNthCalledWith(2, {
+      alwaysVisibleExpiredTimers: {
+        experimental: ["123:test-boss"],
+      },
+    });
+    expect(mockDebouncedSyncGlobalSettings).toHaveBeenNthCalledWith(3, {
+      alwaysVisibleExpiredTimers: {
+        experimental: [],
+      },
     });
   });
 

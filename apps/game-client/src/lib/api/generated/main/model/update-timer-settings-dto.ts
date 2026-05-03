@@ -5,6 +5,7 @@
  * The Lootlog API documentation
  * OpenAPI spec version: 1.0
  */
+import type { UpdateTimerSettingsDtoAlwaysVisibleExpiredTimers } from './update-timer-settings-dto-always-visible-expired-timers';
 import type { UpdateTimerSettingsDtoCustomColors } from './update-timer-settings-dto-custom-colors';
 import type { UpdateTimerSettingsDtoDefaultColorNames } from './update-timer-settings-dto-default-color-names';
 import type { UpdateTimerSettingsDtoDisplayConfig } from './update-timer-settings-dto-display-config';
@@ -18,6 +19,7 @@ export interface UpdateTimerSettingsDto {
   displayConfig?: UpdateTimerSettingsDtoDisplayConfig;
   customColors?: UpdateTimerSettingsDtoCustomColors;
   timersColors?: UpdateTimerSettingsDtoTimersColors;
+  alwaysVisibleExpiredTimers?: UpdateTimerSettingsDtoAlwaysVisibleExpiredTimers;
   defaultColorNames?: UpdateTimerSettingsDtoDefaultColorNames;
   overriddenDefaultColors?: UpdateTimerSettingsDtoOverriddenDefaultColors;
   hiddenDefaultColors?: string[];

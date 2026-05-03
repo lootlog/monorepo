@@ -59,6 +59,7 @@ export const ModelName = {
   ItemSnapshot: 'ItemSnapshot',
   LootItem: 'LootItem',
   PlayerSnapshot: 'PlayerSnapshot',
+  TimerHistoryEntry: 'TimerHistoryEntry',
   LootPlayer: 'LootPlayer',
   NpcSnapshot: 'NpcSnapshot',
   LootNpc: 'LootNpc',
@@ -181,6 +182,9 @@ export const TimerScalarFieldEnum = {
   wasReset: 'wasReset',
   npc: 'npc',
   windowOpenedAt: 'windowOpenedAt',
+  actorCharacterSnapshotId: 'actorCharacterSnapshotId',
+  actorCharacterLvl: 'actorCharacterLvl',
+  deletedAt: 'deletedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -242,6 +246,32 @@ export const PlayerSnapshotScalarFieldEnum = {
 } as const
 
 export type PlayerSnapshotScalarFieldEnum = (typeof PlayerSnapshotScalarFieldEnum)[keyof typeof PlayerSnapshotScalarFieldEnum]
+
+
+export const TimerHistoryEntryScalarFieldEnum = {
+  id: 'id',
+  guildId: 'guildId',
+  world: 'world',
+  timerKey: 'timerKey',
+  npcId: 'npcId',
+  npc: 'npc',
+  action: 'action',
+  actorMemberId: 'actorMemberId',
+  actorCharacterSnapshotId: 'actorCharacterSnapshotId',
+  actorCharacterLvl: 'actorCharacterLvl',
+  minSpawnTime: 'minSpawnTime',
+  maxSpawnTime: 'maxSpawnTime',
+  latestRespBaseSeconds: 'latestRespBaseSeconds',
+  latestRespawnRandomness: 'latestRespawnRandomness',
+  wasReset: 'wasReset',
+  windowOpenedAt: 'windowOpenedAt',
+  timerCreatedById: 'timerCreatedById',
+  timerActorCharacterSnapshotId: 'timerActorCharacterSnapshotId',
+  timerActorCharacterLvl: 'timerActorCharacterLvl',
+  createdAt: 'createdAt'
+} as const
+
+export type TimerHistoryEntryScalarFieldEnum = (typeof TimerHistoryEntryScalarFieldEnum)[keyof typeof TimerHistoryEntryScalarFieldEnum]
 
 
 export const LootPlayerScalarFieldEnum = {
@@ -546,6 +576,7 @@ export const UserTimerSettingsScalarFieldEnum = {
   displayConfig: 'displayConfig',
   customColors: 'customColors',
   timersColors: 'timersColors',
+  alwaysVisibleExpiredTimers: 'alwaysVisibleExpiredTimers',
   defaultColorNames: 'defaultColorNames',
   overriddenDefaultColors: 'overriddenDefaultColors',
   hiddenDefaultColors: 'hiddenDefaultColors',
