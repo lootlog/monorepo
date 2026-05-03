@@ -174,9 +174,11 @@ export class LootsController {
   @ApiResponse({ status: 404, description: "Loot not found" })
   fetchLootById(
     @Param("lootId", new ParseIntPipe()) lootId: number,
+    @MemberPermissions() permissions: Permission[],
+    @MemberRoles() roles: Role[],
     @GuildData() guild: Guild,
   ) {
-    return this.lootsService.fetchLootById(guild, lootId);
+    return this.lootsService.fetchLootById(guild, permissions, roles, lootId);
   }
 
   @Post("/loots")

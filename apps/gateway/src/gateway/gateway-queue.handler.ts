@@ -502,6 +502,45 @@ export class GatewayQueueHandler {
 
   @RabbitSubscribe({
     exchange: DEAD_LETTER_EXCHANGE_NAME,
+    routingKey: RoutingKey.GUILDS_LOOTS_CREATE_DLQ,
+    queue: Queue.GUILDS_LOOTS_CREATE_DLQ,
+    queueOptions: {
+      durable: true,
+    },
+  })
+  handleLootCreateDLQ(data: LootCreateEventDto, amqpMsg: AmqpMessage) {
+    this.logger.error("Message sent to DLQ - Loot Create:", {
+      data,
+      retryCount: this.retryService.getRetryCount(
+        amqpMsg.properties.headers || {},
+      ),
+      headers: amqpMsg.properties.headers,
+    });
+  }
+
+  @RabbitSubscribe({
+    exchange: DEAD_LETTER_EXCHANGE_NAME,
+    routingKey: RoutingKey.GUILDS_LOOTS_SHARE_UPDATE_DLQ,
+    queue: Queue.GUILDS_LOOTS_SHARE_UPDATE_DLQ,
+    queueOptions: {
+      durable: true,
+    },
+  })
+  handleLootShareUpdateDLQ(
+    data: LootShareUpdateEventDto,
+    amqpMsg: AmqpMessage,
+  ) {
+    this.logger.error("Message sent to DLQ - Loot Share Update:", {
+      data,
+      retryCount: this.retryService.getRetryCount(
+        amqpMsg.properties.headers || {},
+      ),
+      headers: amqpMsg.properties.headers,
+    });
+  }
+
+  @RabbitSubscribe({
+    exchange: DEAD_LETTER_EXCHANGE_NAME,
     routingKey: RoutingKey.GUILDS_RESERVATIONS_CREATE_DLQ,
     queue: Queue.GUILDS_RESERVATIONS_CREATE_DLQ,
     queueOptions: {
