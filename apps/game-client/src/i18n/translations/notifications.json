@@ -8,7 +8,7 @@
     "levelRange": "Poziom: {{min}} - {{max}}"
   },
   "actions": {
-    "join": "Dołącz!",
+    "join": "Dołącz",
     "joinAria": "Idę",
     "closeAria": "Zamknij powiadomienie",
     "muteOptionsAria": "Opcje wyciszenia",

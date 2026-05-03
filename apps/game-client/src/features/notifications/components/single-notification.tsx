@@ -1,6 +1,11 @@
 import { CharacterTile } from "@/components/character-tile";
 import { NpcTile } from "@/components/npc-tile";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { NotificationMuteMenu } from "@/features/notifications/components/notification-mute-menu";
 import { useGuildMembersSummary } from "@/hooks/api/guild-members-summary-query";
 import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
@@ -28,7 +33,7 @@ import {
 } from "@/utils/notifications-and-detector/background";
 import { getNpcTypeByWt } from "@lootlog/types";
 import { format } from "date-fns";
-import { LoaderCircle, User, XIcon } from "lucide-react";
+import { LoaderCircle, Swords, User, XIcon } from "lucide-react";
 import { type FC, type ReactNode, useEffect, useRef } from "react";
 import { NpcType } from "@/api/npcs.api";
 import { SingleNotificationMessage } from "@/features/notifications/components/single-notification-message";
@@ -235,7 +240,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   let actionLabel: string | null = null;
 
   if (showPartyGatheringAction) {
-    actionLabel = volunteer.isPending ? "..." : t("actions.join");
+    actionLabel = t("actions.join");
   }
 
   useEffect(() => {
@@ -267,9 +272,19 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
     const clampedRemainingMs = Math.min(autoHideDurationMs, remainingMs);
     const elapsedMs = Math.max(0, autoHideDurationMs - clampedRemainingMs);
     const initialOffset = (elapsedMs / autoHideDurationMs) * totalLength;
+    const dashGapLength = totalLength * 2;
 
-    path.style.strokeDasharray = String(totalLength);
+    path.style.strokeDasharray = `${totalLength} ${dashGapLength}`;
     path.style.strokeDashoffset = String(initialOffset);
+
+    if (clampedRemainingMs <= 0) {
+      path.style.strokeDasharray = `0 ${dashGapLength}`;
+      path.style.strokeDashoffset = String(totalLength);
+      return () => {
+        path.style.strokeDasharray = "";
+        path.style.strokeDashoffset = "";
+      };
+    }
 
     if (autoHideState && autoHideState.pausedRemainingMs !== null) {
       return () => {
@@ -289,8 +304,13 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
         fill: "forwards",
       },
     );
+    animation.onfinish = () => {
+      path.style.strokeDasharray = `0 ${dashGapLength}`;
+      path.style.strokeDashoffset = String(totalLength);
+    };
 
     return () => {
+      animation.onfinish = null;
       animation.cancel();
       path.style.strokeDasharray = "";
       path.style.strokeDashoffset = "";
@@ -376,30 +396,48 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
         </div>
         <div className="ll:flex ll:shrink-0 ll:items-center ll:gap-1">
           {actionLabel ? (
-            <Button
-              className="ll:h-7 ll:px-2.5 ll:text-[11px] ll:font-semibold"
-              onClick={handleVolunteer}
-              disabled={
-                volunteer.isPending || (isPartyGathering && !meetsLevelReq)
-              }
-            >
-              {actionLabel}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  aria-label={t("actions.joinAria")}
+                  className="ll:size-7 ll:px-0"
+                  onClick={handleVolunteer}
+                  disabled={
+                    volunteer.isPending || (isPartyGathering && !meetsLevelReq)
+                  }
+                >
+                  {volunteer.isPending ? (
+                    <LoaderCircle size={12} className="ll:animate-spin" />
+                  ) : (
+                    <Swords size={12} />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">{actionLabel}</TooltipContent>
+            </Tooltip>
           ) : null}
           {showJoinAction ? (
-            <Button
-              variant="ghost"
-              aria-label={t("actions.joinAria")}
-              className="ll:size-7 ll:px-0"
-              onClick={handleVolunteer}
-              disabled={volunteer.isPending}
-            >
-              {volunteer.isPending ? (
-                <LoaderCircle size={12} className="ll:animate-spin" />
-              ) : (
-                <User size={12} />
-              )}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  aria-label={t("actions.joinAria")}
+                  className="ll:size-7 ll:px-0"
+                  onClick={handleVolunteer}
+                  disabled={volunteer.isPending}
+                >
+                  {volunteer.isPending ? (
+                    <LoaderCircle size={12} className="ll:animate-spin" />
+                  ) : (
+                    <Swords size={12} />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                {t("actions.joinAria")}
+              </TooltipContent>
+            </Tooltip>
           ) : null}
           <NotificationMuteMenu
             notification={notification}
@@ -408,14 +446,21 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
             onMuted={handleRemoveNotification}
           />
           {showCloseButton ? (
-            <Button
-              variant="destructive"
-              aria-label={t("actions.closeAria")}
-              className="ll:size-7 ll:px-0"
-              onClick={handleRemoveNotification}
-            >
-              <XIcon size={12} />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="destructive"
+                  aria-label={t("actions.closeAria")}
+                  className="ll:size-7 ll:px-0"
+                  onClick={handleRemoveNotification}
+                >
+                  <XIcon size={12} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                {t("actions.closeAria")}
+              </TooltipContent>
+            </Tooltip>
           ) : null}
         </div>
       </div>
