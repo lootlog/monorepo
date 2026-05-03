@@ -557,6 +557,7 @@ export class NotificationJobService {
     const timers = await this.prisma.timer.findMany({
       where: {
         guildId: notificationRule.guildId,
+        deletedAt: null,
         ...(notificationRule.world ? { world: notificationRule.world } : {}),
       },
       select: {
