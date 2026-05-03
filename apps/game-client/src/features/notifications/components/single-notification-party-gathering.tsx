@@ -21,13 +21,10 @@ export const SingleNotificationPartyGathering: FC<
           ({notification.character.lvl}
           {notification.character.prof})
         </span>
-        <span className="ll:shrink-0 ll:text-[10px] ll:font-semibold ll:text-purple-300">
-          {t("content.lookingForParty")}
-        </span>
       </div>
       {notification.description && (
         <p className="ll:text-[11px] ll:leading-4 ll:text-gray-200 ll:italic">
-          "{notification.description}"
+          {notification.description}
         </p>
       )}
       {(notification.minLvl !== null || notification.maxLvl !== null) && (

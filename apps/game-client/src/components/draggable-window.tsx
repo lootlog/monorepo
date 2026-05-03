@@ -47,6 +47,7 @@ type DraggableWindowProps = {
 
 const RADIX_SCROLL_AREA_VIEWPORT_SELECTOR = "[data-radix-scroll-area-viewport]";
 const MAX_HEIGHT_PREVIEW_LINE_HEIGHT = 1;
+const TRANSFORMED_MEASUREMENT_TOLERANCE = 4;
 
 const getDeepestSingleChildElement = (element: HTMLElement) => {
   let currentElement = element;
@@ -107,11 +108,22 @@ const getMeasuredContentHeight = (contentElement: HTMLDivElement) => {
     return Array.from(scrollAreaViewports).reduce(
       (maxScrollHeight, viewportElement) => {
         const viewportContent = viewportElement.firstElementChild;
-        const nextMeasuredHeight =
-          viewportContent instanceof HTMLElement
-            ? Math.round(viewportContent.getBoundingClientRect().height) ||
-              viewportContent.scrollHeight
-            : viewportElement.scrollHeight;
+        let nextMeasuredHeight = viewportElement.scrollHeight;
+
+        if (viewportContent instanceof HTMLElement) {
+          const renderedHeight = Math.ceil(
+            viewportContent.getBoundingClientRect().height,
+          );
+          const scrollHeight = viewportContent.scrollHeight;
+          const isSmallTransformedUndershoot =
+            renderedHeight > 0 &&
+            scrollHeight > renderedHeight &&
+            scrollHeight - renderedHeight <= TRANSFORMED_MEASUREMENT_TOLERANCE;
+
+          nextMeasuredHeight = isSmallTransformedUndershoot
+            ? scrollHeight
+            : renderedHeight || scrollHeight;
+        }
 
         return Math.max(maxScrollHeight, nextMeasuredHeight);
       },
