@@ -18,6 +18,7 @@ import type { TimerWithTimeLeft } from "@/features/timers/utils/timers-utils";
 import { REQUIRED_DELETE_PERMISSIONS } from "@/features/timers/constants/required-delete-permissions";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { Trash2 } from "lucide-react";
 
 type DeleteTimerPopoverProps = {
   timer: TimerWithTimeLeft;
@@ -84,6 +85,7 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
       <ContextMenuItem
         onClick={() => onDeleteTimer(guild.guildId, guild.timerKey)}
       >
+        <Trash2 className="ll:h-4 ll:w-4 ll:mr-2" />
         {t("contextMenu.delete")}
       </ContextMenuItem>
     );
@@ -98,6 +100,7 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
             setOpen(true);
           }}
         >
+          <Trash2 className="ll:h-4 ll:w-4 ll:mr-2" />
           {t("contextMenu.delete")}
         </ContextMenuItem>
       </PopoverTrigger>

@@ -18,7 +18,12 @@ import { ErrorKey } from "src/timers/enum/error-key.enum";
 import { ExecutionError } from "redlock";
 import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
 import { RoutingKey } from "src/enum/routing-key.enum";
-import { NpcType, Permission, Profession } from "src/generated/prisma/client";
+import {
+  NpcType,
+  Permission,
+  Profession,
+  TimerHistoryAction,
+} from "src/generated/prisma/client";
 
 describe("TimersService", () => {
   let service: TimersService;
@@ -1590,6 +1595,50 @@ describe("TimersService", () => {
         },
       });
       expect(mockPrismaService.timer.findMany).not.toHaveBeenCalled();
+    });
+
+    it("returns guild name in timer history responses", async () => {
+      mockPrismaService.timer.findUnique.mockResolvedValue(timer);
+      mockPrismaService.timerHistoryEntry.findMany.mockResolvedValue([
+        {
+          id: 1,
+          guildId: "guild1",
+          guild: { name: "Lootlog" },
+          world: "test-world",
+          timerKey: timer.timerKey,
+          npcId: timer.npcId,
+          npc: timer.npc,
+          action: TimerHistoryAction.DELETE,
+          actorCharacterLvl: 300,
+          minSpawnTime: timer.minSpawnTime,
+          maxSpawnTime: timer.maxSpawnTime,
+          latestRespBaseSeconds: timer.latestRespBaseSeconds,
+          latestRespawnRandomness: timer.latestRespawnRandomness,
+          wasReset: timer.wasReset,
+          windowOpenedAt: timer.windowOpenedAt,
+          timerCreatedById: timer.createdById,
+          timerActorCharacterSnapshotId: timer.actorCharacterSnapshotId,
+          timerActorCharacterLvl: timer.actorCharacterLvl,
+          createdAt: new Date("2026-05-03T08:00:00.000Z"),
+          actorMember: timer.member,
+          actorCharacter: timer.actorCharacter,
+        },
+      ]);
+
+      const result = await service.getTimerHistory(
+        "guild1",
+        "test-world",
+        timer.timerKey,
+        {
+          permissions: [Permission.OWNER],
+          roles: [],
+        },
+      );
+
+      expect(result[0]).toMatchObject({
+        guildId: "guild1",
+        guildName: "Lootlog",
+      });
     });
   });
 

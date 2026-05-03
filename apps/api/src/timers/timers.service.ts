@@ -145,6 +145,7 @@ type TimerHistoryEntryWithRelations = {
   timerActorCharacterSnapshotId: number | null;
   timerActorCharacterLvl: number | null;
   createdAt: Date;
+  guild: Pick<Guild, "name">;
   actorMember: TimerMember;
   actorCharacter?: PlayerSnapshot | null;
   timerCreatedBy?: TimerMember | null;
@@ -475,6 +476,7 @@ export class TimersService implements OnModuleInit {
     return {
       id: entry.id,
       guildId: entry.guildId,
+      guildName: entry.guild.name,
       world: entry.world,
       timerKey: entry.timerKey,
       npcId: entry.npcId,
@@ -1818,6 +1820,9 @@ export class TimersService implements OnModuleInit {
       orderBy: { createdAt: "desc" },
       take: limit,
       include: {
+        guild: {
+          select: { name: true },
+        },
         actorMember: true,
         actorCharacter: true,
       },
@@ -1860,6 +1865,9 @@ export class TimersService implements OnModuleInit {
         orderBy: { createdAt: "desc" },
         take: limit,
         include: {
+          guild: {
+            select: { name: true },
+          },
           actorMember: true,
           actorCharacter: true,
           timerCreatedBy: true,

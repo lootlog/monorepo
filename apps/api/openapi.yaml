@@ -7174,6 +7174,8 @@ components:
           type: number
         guildId:
           type: string
+        guildName:
+          type: string
         world:
           type: string
         timerKey:
@@ -7340,6 +7342,7 @@ components:
       required:
         - id
         - guildId
+        - guildName
         - world
         - timerKey
         - npcId

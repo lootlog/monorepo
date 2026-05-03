@@ -13,6 +13,7 @@ import type { TimerNpcResponseDto } from './timer-npc-response-dto';
 export interface TimerHistoryResponseDto {
   id: number;
   guildId: string;
+  guildName: string;
   world: string;
   timerKey: string;
   npcId: number;
