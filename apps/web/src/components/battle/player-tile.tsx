@@ -1,12 +1,12 @@
-import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { cn } from "@lootlog/ui/lib/utils";
 import type { FC } from "react";
+import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
+import { PlayerSpriteTile } from "@/components/tiles/player-sprite-tile";
 
 type PlayerTileProps = {
   player: {
@@ -33,27 +33,16 @@ export const PlayerTile: FC<PlayerTileProps> = ({
     <TooltipProvider key={id}>
       <Tooltip delayDuration={100}>
         <TooltipTrigger asChild>
-          <div className={cn("relative ring-0 outline-none", className)}>
-            <div
-              className={cn(
-                "w-[32px] h-[48px] relative cursor-pointer rounded-lg",
-              )}
-              style={{
-                backgroundImage: `url(${cdnBaseUrl}${icon})`,
-                backgroundColor: "transparent",
-              }}
-            />
-            {idx !== undefined && (
-              <div
-                className="top-10 -right-1 absolute size-4 rounded-sm box-content bg-background text-xs flex items-center justify-center"
-                style={{
-                  backgroundColor: color ? `${color}` : "transparent",
-                }}
-              >
-                {idx + 1}
-              </div>
-            )}
-          </div>
+          <PlayerSpriteTile
+            icon={icon}
+            idx={idx}
+            color={color}
+            className={className}
+            cdnBaseUrl={cdnBaseUrl}
+            wrapperClassName="relative ring-0 outline-none"
+            tileClassName="bg-transparent transition-none hover:bg-transparent"
+            defaultBadgeColor="transparent"
+          />
         </TooltipTrigger>
         <TooltipContent>
           <p>

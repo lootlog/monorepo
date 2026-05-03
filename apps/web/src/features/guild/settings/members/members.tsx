@@ -24,10 +24,8 @@ import {
 } from "@/components/selector-panel";
 import { MemberListItem } from "@/features/guild/settings/members/components/member-list-item";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import {
-  useGuildsControllerGetGuildById,
-  useGuildsControllerGetGuildPermissions,
-} from "@/lib/api/generated/main/guilds/guilds";
+import { useGuildsControllerGetGuildById } from "@/lib/api/generated/main/guilds/guilds";
+import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useMembersControllerGetGuildMembers } from "@/lib/api/generated/main/members/members";
 import type { MemberResponseDto as GuildMember } from "@/lib/api/generated/main/model";
 import { useTranslation } from "react-i18next";
@@ -70,9 +68,7 @@ const MembersSettingsContent = () => {
   const { data: guild } = useGuildsControllerGetGuildById({
     guildId: guildId ?? "",
   });
-  const { data: permissions } = useGuildsControllerGetGuildPermissions({
-    guildId: guildId ?? "",
-  });
+  const { data: permissions } = useGuildPermissions();
   const {
     selectedItem: selectedMember,
     setSelectedItem: setSelectedMember,

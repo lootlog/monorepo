@@ -7,6 +7,7 @@ import { ROUTES } from "@/config/routes";
 import {
   getRouteErrorMessage,
   getRouteErrorStatus,
+  normalizeRouteErrorStatus,
 } from "@/lib/router/route-errors";
 import { RouteErrorState } from "./route-error-state";
 
@@ -14,9 +15,9 @@ export const UserRouteError = ({ error, reset }: ErrorComponentProps) => {
   const { t } = useTranslation();
   const router = useRouter();
   const queryErrorResetBoundary = useQueryErrorResetBoundary();
-  const status = getRouteErrorStatus(error);
-  const normalizedStatus =
-    status === 401 || status === 403 || status === 404 ? status : 500;
+  const normalizedStatus = normalizeRouteErrorStatus(
+    getRouteErrorStatus(error),
+  );
 
   const handleRetry = () => {
     queryErrorResetBoundary.reset();

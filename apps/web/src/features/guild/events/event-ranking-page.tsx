@@ -11,10 +11,7 @@ import { Spinner } from "@lootlog/ui/components/spinner";
 import { useState } from "react";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { EventScrollableTabsList } from "./components/shared/event-scrollable-tabs-list";
-import {
-  getGuildsControllerGetGuildPermissionsQueryKey,
-  useGuildsControllerGetGuildPermissions,
-} from "@/lib/api/generated/main/guilds/guilds";
+import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import {
   useListEventRanking,
   useShowEventOverview,
@@ -25,17 +22,7 @@ export const EventRankingPage = () => {
   const { guildId, eventId } = useParams({ strict: false });
   const [selectedHeroName, setSelectedHeroName] = useState<string | null>(null);
 
-  const { data: permissions } = useGuildsControllerGetGuildPermissions(
-    { guildId: guildId ?? "" },
-    {
-      query: {
-        queryKey: getGuildsControllerGetGuildPermissionsQueryKey({
-          guildId: guildId ?? "",
-        }),
-        staleTime: 30_000,
-      },
-    },
-  );
+  const { data: permissions } = useGuildPermissions();
   const canEditPoints =
     permissions?.includes(Permission.OWNER) ||
     permissions?.includes(Permission.ADMIN);

@@ -7,10 +7,10 @@ import {
   MARGONEM_CDN_CHARACTERS_URL,
   MARGONEM_PROFILE_URL,
 } from "@/constants/margonem";
-import { cn } from "@lootlog/ui/lib/utils";
 import { useSharedTooltip } from "@lootlog/ui/components/shared-tooltip-provider";
 
 import type { FC } from "react";
+import { PlayerSpriteTile } from "@/components/tiles/player-sprite-tile";
 
 type PlayerTilePlayer = {
   id?: string | number;
@@ -56,27 +56,13 @@ export const PlayerTile: FC<PlayerTileProps> = ({
   const sharedTooltip = useSharedTooltip();
 
   const tileContent = (
-    <div className={cn("relative scale-90 origin-top", className)}>
-      <div
-        className={cn(
-          "w-[32px] h-[48px] relative cursor-pointer rounded-lg bg-muted/30 transition-colors duration-200 hover:bg-muted/50",
-        )}
-        style={{
-          backgroundImage: `url(${MARGONEM_CDN_CHARACTERS_URL}${icon})`,
-          backgroundColor: "transparent",
-        }}
-      />
-      {idx !== undefined && (
-        <div
-          className="top-10 -right-1 absolute size-4 rounded-sm box-content text-xs flex items-center justify-center font-medium shadow-sm"
-          style={{
-            backgroundColor: color ? `${color}` : "var(--background)",
-          }}
-        >
-          {idx + 1}
-        </div>
-      )}
-    </div>
+    <PlayerSpriteTile
+      icon={icon}
+      idx={idx}
+      color={color}
+      className={className}
+      cdnBaseUrl={MARGONEM_CDN_CHARACTERS_URL}
+    />
   );
 
   const handleMouseEnter = (e: React.MouseEvent<HTMLElement>) => {

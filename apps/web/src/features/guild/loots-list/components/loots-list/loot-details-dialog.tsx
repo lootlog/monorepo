@@ -24,10 +24,7 @@ import { LOOT_SHARE_COLOR_PALETTE } from "@/features/guild/loots-list/constants/
 import { useTranslation } from "react-i18next";
 import { ThemeSurfaceOverlay } from "@/themes";
 import type { Loot } from "@/lib/loots/loot-types";
-import {
-  getGuildsControllerGetGuildPermissionsQueryKey,
-  useGuildsControllerGetGuildPermissions,
-} from "@/lib/api/generated/main/guilds/guilds";
+import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import {
   getLootsControllerFetchLootByIdQueryKey,
   useLootsControllerFetchLootById,
@@ -149,17 +146,7 @@ export const LootDetailsDialog: FC = () => {
   const { selectedLootId, closeLootDetails, isOpen } = useSelectedLoot();
   const cachedLoot = useLootFromCache(selectedLootId);
   const guildId = useGuildId();
-  const { data: permissions } = useGuildsControllerGetGuildPermissions(
-    { guildId: guildId ?? "" },
-    {
-      query: {
-        queryKey: getGuildsControllerGetGuildPermissionsQueryKey({
-          guildId: guildId ?? "",
-        }),
-        staleTime: 30_000,
-      },
-    },
-  );
+  const { data: permissions } = useGuildPermissions();
   const isOwner = useIsOwner();
 
   const {

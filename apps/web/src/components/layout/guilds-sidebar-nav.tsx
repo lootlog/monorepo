@@ -19,24 +19,11 @@ import { GuildSidebarHeader } from "./guild-sidebar-header";
 import { GuildPinnedEventsSection } from "./guild-pinned-events-section";
 import { canManageGuild } from "@/lib/guild-permissions";
 import { useListEvents } from "@/lib/api/generated/main/events/events";
-import {
-  getGuildsControllerGetGuildPermissionsQueryKey,
-  useGuildsControllerGetGuildPermissions,
-} from "@/lib/api/generated/main/guilds/guilds";
+import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 
 export const GuildsSidebarNav: FC = () => {
   const guildId = useGuildId();
-  const { data: permissions } = useGuildsControllerGetGuildPermissions(
-    { guildId: guildId ?? "" },
-    {
-      query: {
-        queryKey: getGuildsControllerGetGuildPermissionsQueryKey({
-          guildId: guildId ?? "",
-        }),
-        staleTime: 30_000,
-      },
-    },
-  );
+  const { data: permissions } = useGuildPermissions();
   const { setOpenMobile } = useSidebar();
   const { t } = useTranslation();
   const canManageCurrentGuild = canManageGuild(permissions);

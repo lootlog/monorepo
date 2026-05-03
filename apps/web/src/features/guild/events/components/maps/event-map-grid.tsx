@@ -11,11 +11,7 @@ import {
 } from "../../hooks/use-window-status";
 import type { CoverageGap } from "../../hooks/queries/use-map-coverage-timer";
 import { MapCard, getMapStatus, STATUS_STYLES } from "./map-card";
-import { useGuildId } from "@/hooks/context/use-guild-id";
-import {
-  getGuildsControllerGetGuildPermissionsQueryKey,
-  useGuildsControllerGetGuildPermissions,
-} from "@/lib/api/generated/main/guilds/guilds";
+import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 
 interface EventMapGridProps {
   locations?: EventMapLocation[];
@@ -177,18 +173,7 @@ export const EventMapGrid = ({
   vertical = false,
 }: EventMapGridProps) => {
   const { t } = useTranslation();
-  const guildId = useGuildId();
-  const { data: permissions } = useGuildsControllerGetGuildPermissions(
-    { guildId: guildId ?? "" },
-    {
-      query: {
-        queryKey: getGuildsControllerGetGuildPermissionsQueryKey({
-          guildId: guildId ?? "",
-        }),
-        staleTime: 30_000,
-      },
-    },
-  );
+  const { data: permissions } = useGuildPermissions();
 
   const canManage =
     permissions?.includes(Permission.LOOTLOG_MANAGE) ||

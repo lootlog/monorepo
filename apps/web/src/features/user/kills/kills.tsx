@@ -16,14 +16,8 @@ import {
   TableHeader,
   TableRow,
 } from "@lootlog/ui/components/table";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationNext,
-  PaginationPrevious,
-} from "@lootlog/ui/components/pagination";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Card } from "@lootlog/ui/components/card";
 import { Skull } from "lucide-react";
@@ -315,37 +309,15 @@ export const KillsPage: React.FC = () => {
                 </Table>
               )}
             </ScrollArea>
-            <div className="h-14 shrink-0 border-t border-border py-4 flex items-center justify-between px-4">
-              <div className="text-sm text-muted-foreground whitespace-nowrap">
-                {t("kills.ranking.total", {
-                  count: data?.pagination?.total ?? 0,
-                })}
-              </div>
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      onClick={handlePreviousPage}
-                      className={
-                        !hasPrev
-                          ? "pointer-events-none opacity-50"
-                          : "cursor-pointer"
-                      }
-                    />
-                  </PaginationItem>
-                  <PaginationItem>
-                    <PaginationNext
-                      onClick={handleNextPage}
-                      className={
-                        !data?.pagination?.hasNext
-                          ? "pointer-events-none opacity-50"
-                          : "cursor-pointer"
-                      }
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
+            <TablePaginationFooter
+              totalLabel={t("kills.ranking.total", {
+                count: data?.pagination?.total ?? 0,
+              })}
+              hasPrev={hasPrev}
+              hasNext={Boolean(data?.pagination?.hasNext)}
+              onPreviousPage={handlePreviousPage}
+              onNextPage={handleNextPage}
+            />
           </Card>
         </div>
       </ScrollArea>
