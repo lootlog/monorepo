@@ -344,6 +344,14 @@ describe("ChatInput", () => {
     return screen.getByRole("textbox", { name: "Wiadomość..." });
   };
 
+  const getEditorShell = () => {
+    const editorShell = getEditor().parentElement?.parentElement;
+
+    expect(editorShell).not.toBeNull();
+
+    return editorShell as HTMLElement;
+  };
+
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -431,6 +439,16 @@ describe("ChatInput", () => {
       updatedAt: "2026-01-01T10:00:00.000Z",
     };
     mockGuildPermissions = [];
+  });
+
+  it("uses the shared input focus ring on the editor shell", () => {
+    render(<ChatInput selectedGuildId="guild-1" />);
+
+    expect(getEditorShell()).toHaveClass(
+      "ll:focus-within:border-ring",
+      "ll:focus-within:ring-ring/50",
+      "ll:focus-within:ring-[3px]",
+    );
   });
 
   it("shows grouped suggestions inside the scroll area and inserts the highlighted mention instead of submitting", async () => {
