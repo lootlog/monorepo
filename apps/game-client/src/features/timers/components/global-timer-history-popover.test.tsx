@@ -6,28 +6,10 @@ import type {
   TimerHistoryResponseDto,
   TimerResponseDto,
 } from "@/lib/api/generated/main/model";
-import type { TimerWithTimeLeft } from "../utils/timers-utils";
 
-const mockGetTimerHistory = vi.fn();
+const mockGetRecentTimerHistory = vi.fn();
 const mockRestoreTimer = vi.fn();
 const mockUpsertTimer = vi.fn();
-
-vi.mock("@/components/ui/context-menu", () => ({
-  ContextMenuItem: ({
-    children,
-    onSelect,
-  }: {
-    children: ReactNode;
-    onSelect?: (event: { preventDefault: () => void }) => void;
-  }) => (
-    <button
-      type="button"
-      onClick={() => onSelect?.({ preventDefault: vi.fn() })}
-    >
-      {children}
-    </button>
-  ),
-}));
 
 vi.mock("@/components/ui/popover", () => ({
   Popover: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -62,9 +44,12 @@ vi.mock("@/api/timers.api", () => ({
 }));
 
 vi.mock("@/lib/api/generated/main/timers/timers", () => ({
-  getTimersControllerGetTimerHistoryQueryKey: () => ["timer-history"],
-  useTimersControllerGetTimerHistory: (...args: unknown[]) =>
-    mockGetTimerHistory(...args),
+  getTimersControllerGetRecentTimerHistoryQueryKey: (params: unknown) => [
+    "recent-timer-history",
+    params,
+  ],
+  useTimersControllerGetRecentTimerHistory: (...args: unknown[]) =>
+    mockGetRecentTimerHistory(...args),
   useTimersControllerRestoreTimerFromHistory: () => ({
     mutate: mockRestoreTimer,
     isPending: false,
@@ -80,13 +65,7 @@ vi.mock("lucide-react", () => ({
   Undo2: () => <span>Undo2</span>,
 }));
 
-import { TimerHistoryPopover } from "./timer-history-popover";
-
-const timer = {
-  guildId: "guild-1",
-  timerKey: "123:tanroth",
-  world: "pandora",
-} as TimerWithTimeLeft;
+import { GlobalTimerHistoryPopover } from "./global-timer-history-popover";
 
 const createHistoryEntry = (
   overrides: Partial<TimerHistoryResponseDto> = {},
@@ -135,12 +114,12 @@ const createHistoryEntry = (
     ...overrides,
   }) as TimerHistoryResponseDto;
 
-describe("TimerHistoryPopover", () => {
-  it("renders compact tile entries with details and restore action", async () => {
+describe("GlobalTimerHistoryPopover", () => {
+  it("queries guild history and renders compact tile entries", async () => {
     const user = userEvent.setup();
     const restoredTimer = { guildId: "guild-1" } as TimerResponseDto;
 
-    mockGetTimerHistory.mockReturnValue({
+    mockGetRecentTimerHistory.mockReturnValue({
       data: [createHistoryEntry()],
       isLoading: false,
     });
@@ -148,15 +127,34 @@ describe("TimerHistoryPopover", () => {
       options.onSuccess(restoredTimer);
     });
 
-    render(<TimerHistoryPopover timer={timer} />);
+    render(<GlobalTimerHistoryPopover guildId="guild-1" world="pandora" />);
 
+    expect(mockGetRecentTimerHistory).toHaveBeenCalledWith(
+      {
+        guildId: "guild-1",
+        world: "pandora",
+        limit: 10,
+      },
+      expect.objectContaining({
+        query: expect.objectContaining({
+          queryKey: [
+            "recent-timer-history",
+            {
+              guildId: "guild-1",
+              world: "pandora",
+              limit: 10,
+            },
+          ],
+        }),
+      }),
+    );
     expect(screen.getByTestId("history-tile")).toBeInTheDocument();
     expect(screen.getAllByText("Salvatore (Lootlog)")).toHaveLength(1);
     await user.hover(screen.getByTestId("history-tile"));
     expect(screen.getAllByText("Salvatore (Lootlog)")).toHaveLength(2);
     expect(screen.getAllByText("12:01:02")).toHaveLength(1);
     expect(screen.getByText("Potwór")).toBeInTheDocument();
-    expect(screen.getByText("Tanroth")).toBeInTheDocument();
+    expect(screen.getAllByText("Tanroth")).toHaveLength(2);
     expect(screen.getByText("Postać")).toBeInTheDocument();
     expect(screen.getByText("Zorin (300b)")).toBeInTheDocument();
 

@@ -1640,6 +1640,85 @@ describe("TimersService", () => {
         guildName: "Lootlog",
       });
     });
+
+    it("returns recent history for the requested accessible guild only", async () => {
+      mockGuildsService.getGuildsForRequiredPermissions.mockResolvedValue([
+        { id: "guild1" },
+        { id: "guild2" },
+      ]);
+      mockGuildsService.getMultipleGuildsPermissions.mockResolvedValue([
+        {
+          guild: { id: "guild1" },
+          permissions: [Permission.OWNER],
+          roles: [],
+        },
+      ]);
+      mockPrismaService.timerHistoryEntry.findMany.mockResolvedValue([
+        {
+          id: 1,
+          guildId: "guild1",
+          guild: { name: "Lootlog" },
+          world: "test-world",
+          timerKey: timer.timerKey,
+          npcId: timer.npcId,
+          npc: timer.npc,
+          action: TimerHistoryAction.DELETE,
+          actorCharacterLvl: 300,
+          minSpawnTime: timer.minSpawnTime,
+          maxSpawnTime: timer.maxSpawnTime,
+          latestRespBaseSeconds: timer.latestRespBaseSeconds,
+          latestRespawnRandomness: timer.latestRespawnRandomness,
+          wasReset: timer.wasReset,
+          windowOpenedAt: timer.windowOpenedAt,
+          timerCreatedById: timer.createdById,
+          timerActorCharacterSnapshotId: timer.actorCharacterSnapshotId,
+          timerActorCharacterLvl: timer.actorCharacterLvl,
+          createdAt: new Date("2026-05-03T08:00:00.000Z"),
+          actorMember: timer.member,
+          actorCharacter: timer.actorCharacter,
+        },
+      ]);
+
+      const result = await service.getRecentTimerHistory(
+        "discord123",
+        "guild1",
+        "test-world",
+        { limit: 5 },
+      );
+
+      expect(mockPrismaService.timerHistoryEntry.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            guildId: "guild1",
+            world: "test-world",
+          },
+          take: 5,
+        }),
+      );
+      expect(
+        mockGuildsService.getMultipleGuildsPermissions,
+      ).toHaveBeenCalledWith("discord123", ["guild1"]);
+      expect(result[0]).toMatchObject({
+        guildId: "guild1",
+        guildName: "Lootlog",
+      });
+    });
+
+    it("rejects recent history for a guild without timer read access", async () => {
+      mockGuildsService.getGuildsForRequiredPermissions.mockResolvedValue([
+        { id: "guild1" },
+      ]);
+
+      await expect(
+        service.getRecentTimerHistory("discord123", "guild2", "test-world", {
+          limit: 5,
+        }),
+      ).rejects.toThrow("Forbidden");
+
+      expect(
+        mockPrismaService.timerHistoryEntry.findMany,
+      ).not.toHaveBeenCalled();
+    });
   });
 
   describe("createManualTimer", () => {

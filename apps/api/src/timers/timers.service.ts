@@ -1841,6 +1841,7 @@ export class TimersService implements OnModuleInit {
 
   async getRecentTimerHistory(
     discordId: string,
+    guildId: string,
     world: string,
     options: { limit?: number },
   ) {
@@ -1855,11 +1856,16 @@ export class TimersService implements OnModuleInit {
       throw new ForbiddenException();
     }
 
-    const guildIds = guilds.map((guild) => guild.id);
-    const [entries, permissionsPerGuild] = await Promise.all([
+    const hasGuildAccess = guilds.some((guild) => guild.id === guildId);
+
+    if (!hasGuildAccess) {
+      throw new ForbiddenException();
+    }
+
+    const [entries, [guildPermissionsAndRoles]] = await Promise.all([
       this.prisma.timerHistoryEntry.findMany({
         where: {
-          guildId: { in: guildIds },
+          guildId,
           world,
         },
         orderBy: { createdAt: "desc" },
@@ -1874,18 +1880,16 @@ export class TimersService implements OnModuleInit {
           timerActorCharacter: true,
         },
       }),
-      this.guildsService.getMultipleGuildsPermissions(discordId, guildIds),
+      this.guildsService.getMultipleGuildsPermissions(discordId, [guildId]),
     ]);
+
+    const permissions = guildPermissionsAndRoles?.permissions ?? [];
+    const roles = guildPermissionsAndRoles?.roles ?? [];
+    const administrativeUser = isAdministrativeUser(permissions);
 
     return entries
       .filter((entry) => {
-        const guildPermissionsAndRoles = permissionsPerGuild.find(
-          (p) => p.guild.id === entry.guildId,
-        );
-        const permissions = guildPermissionsAndRoles?.permissions ?? [];
-        const roles = guildPermissionsAndRoles?.roles ?? [];
-
-        if (isAdministrativeUser(permissions)) {
+        if (administrativeUser) {
           return true;
         }
 

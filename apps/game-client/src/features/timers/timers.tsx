@@ -150,7 +150,6 @@ export const Timers = () => {
     return (
       <UnderBagTimers>
         <TimersUnderBagActions
-          world={desiredWorld}
           timerFiltersEnabled={timerFiltersEnabled ?? false}
           toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
           colorFiltersEnabled={colorFiltersEnabled ?? false}
@@ -171,12 +170,14 @@ export const Timers = () => {
           hiddenTimers={hiddenTimers[settingsKey] || []}
           areFiltersActive={areFiltersActive}
           colorStatistics={colorStatistics}
+          guildId={guildId}
           isGrouping={generalConfig.timersGrouping}
           allowWorldSelection={allowWorldSelection ?? false}
           timerFiltersEnabled={timerFiltersEnabled ?? false}
           isUnderBag={generalConfig.timersUnderBag}
           minColumnWidth={displayConfig.minColumnWidth}
           onAddTimer={handleAddTimer}
+          world={desiredWorld}
           compactView={generalConfig.compactView}
         />
       </UnderBagTimers>
@@ -195,7 +196,6 @@ export const Timers = () => {
         actions={
           !generalConfig.compactView ? (
             <TimersActions
-              world={desiredWorld}
               timerFiltersEnabled={timerFiltersEnabled}
               toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
               colorFiltersEnabled={colorFiltersEnabled}
@@ -215,12 +215,14 @@ export const Timers = () => {
             hiddenTimers={hiddenTimers[settingsKey] || []}
             areFiltersActive={areFiltersActive}
             colorStatistics={colorStatistics}
+            guildId={guildId}
             isGrouping={generalConfig.timersGrouping}
             allowWorldSelection={allowWorldSelection ?? false}
             timerFiltersEnabled={timerFiltersEnabled ?? false}
             isUnderBag={generalConfig.timersUnderBag}
             minColumnWidth={displayConfig.minColumnWidth}
             onAddTimer={handleAddTimer}
+            world={desiredWorld}
             compactView={generalConfig.compactView}
           />
         </div>
