@@ -40,7 +40,7 @@ export const TimersFooter: FC<TimersFooterProps> = ({
       <TimersColorStatistics colorStatistics={colorStatistics} />
       <TimersConnectionStatus />
       {!isGrouping && guildId && world && (
-        <div className="ll:absolute ll:right-1 ll:flex ll:items-center">
+        <div className="ll:absolute ll:right-5 ll:flex ll:items-center">
           <GlobalTimerHistoryPopover guildId={guildId} world={world} />
         </div>
       )}
