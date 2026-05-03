@@ -14,6 +14,7 @@ model Guild {
   ownerId           String
   vanityUrl         String?            @unique
   notificationRuleLimit Int            @default(20)
+  publicStatsCardEnabled Boolean       @default(false)
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   roles             Role[]

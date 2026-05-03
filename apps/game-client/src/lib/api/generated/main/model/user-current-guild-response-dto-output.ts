@@ -14,6 +14,7 @@ export interface UserCurrentGuildResponseDtoOutput {
   /** @nullable */
   vanityUrl?: string | null;
   ownerId: string;
+  publicStatsCardEnabled: boolean;
   hasLootlogAccess: boolean;
   isAccessDataStale: boolean;
 }
