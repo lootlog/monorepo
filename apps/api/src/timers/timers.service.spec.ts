@@ -18,6 +18,7 @@ import { ErrorKey } from "src/timers/enum/error-key.enum";
 import { ExecutionError } from "redlock";
 import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
 import { RoutingKey } from "src/enum/routing-key.enum";
+import { NpcType } from "src/generated/prisma/client";
 
 describe("TimersService", () => {
   let service: TimersService;
@@ -268,8 +269,18 @@ describe("TimersService", () => {
 
       expect(mockAmqpConnection.publish).toHaveBeenCalledWith(
         expect.any(String),
-        expect.any(String),
-        mockTimer,
+        RoutingKey.GUILDS_TIMERS_UPDATE,
+        expect.objectContaining({
+          guildId: mockTimer.guildId,
+          world: mockTimer.world,
+          npcId: mockTimer.npcId,
+          timerKey: mockTimer.timerKey,
+          npc: expect.objectContaining({
+            id: mockDto.npc.id,
+            name: mockDto.npc.name,
+            wt: String(mockDto.npc.wt),
+          }),
+        }),
       );
     });
 
@@ -1126,9 +1137,9 @@ describe("TimersService", () => {
           location: "",
           wt: "",
           lvl: 120,
-          type: "",
+          type: NpcType.TITAN,
           icon: "",
-          margonemType: 1,
+          margonemType: 999,
         },
         member: null,
       });
@@ -1139,6 +1150,7 @@ describe("TimersService", () => {
         maxSeconds: 120,
         lvl: 120,
         prof: "w",
+        type: NpcType.TITAN,
         world: "test-world",
       });
 
@@ -1149,10 +1161,28 @@ describe("TimersService", () => {
               name: "Test Boss",
               lvl: 120,
               prof: "w",
+              type: NpcType.TITAN,
             }),
           }),
         }),
       );
+      expect(
+        mockAmqpConnection.publish.mock.calls.find(
+          (call) => call[1] === RoutingKey.GUILDS_TIMERS_UPDATE,
+        )?.[2],
+      ).toMatchObject({
+        guildId: "guild1",
+        world: "test-world",
+        npcId: 123,
+        timerKey: buildTimerKey(123, "Test Boss"),
+        npc: {
+          name: "Test Boss",
+          lvl: 120,
+          prof: "w",
+          type: NpcType.TITAN,
+          margonemType: "999",
+        },
+      });
     });
 
     it("should fall back to empty manual timer NPC metadata", async () => {

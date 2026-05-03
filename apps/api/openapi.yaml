@@ -7169,6 +7169,13 @@ components:
           type: number
         prof:
           type: string
+        type:
+          type: string
+          enum:
+            - ELITE2
+            - ELITE3
+            - HERO
+            - TITAN
         customMinSpawnTime:
           type: string
           format: date-time

@@ -58,6 +58,7 @@ export * from './create-loot-response-dto-output-rejected-guilds-item-reason';
 export * from './create-loot-response-dto-output-rejected-guilds-item';
 export * from './create-loot-response-dto-output-submitted-guilds-item';
 export * from './create-loot-response-dto-output';
+export * from './create-manual-timer-dto-type';
 export * from './create-manual-timer-dto';
 export * from './create-map-dto';
 export * from './create-map-template-dto-maps-item';

@@ -113,6 +113,37 @@ vi.mock("@/components/ui/scroll-area", () => ({
   ScrollArea: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
+vi.mock("@/components/ui/select", () => ({
+  Select: ({
+    children,
+    value,
+    onValueChange,
+    disabled,
+  }: {
+    children: ReactNode;
+    value?: string;
+    onValueChange?: (value: string) => void;
+    disabled?: boolean;
+  }) => (
+    <select
+      aria-label="Typ"
+      value={value}
+      disabled={disabled}
+      onChange={(event) => onValueChange?.(event.currentTarget.value)}
+    >
+      {children}
+    </select>
+  ),
+  SelectTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
+  SelectValue: ({ placeholder }: { placeholder?: string }) => (
+    <option value="none">{placeholder}</option>
+  ),
+  SelectContent: ({ children }: { children: ReactNode }) => <>{children}</>,
+  SelectItem: ({ children, value }: { children: ReactNode; value: string }) => (
+    <option value={value}>{children}</option>
+  ),
+}));
+
 vi.mock("@/components/guild-switcher", () => ({
   GuildSwitcher: ({
     value,
@@ -280,6 +311,41 @@ describe("AddTimerForm", () => {
     );
   });
 
+  it("submits a manual NPC type when provided", async () => {
+    const user = userEvent.setup();
+    render(<AddTimerForm />);
+
+    await user.type(screen.getByLabelText("Nazwa"), "Tanroth");
+    await user.type(screen.getByLabelText("Minimalny czas (max 300h)"), "1m");
+    await user.type(screen.getByLabelText("Maksymalny czas (max 300h)"), "2m");
+    await user.selectOptions(screen.getByLabelText("Typ"), "TITAN");
+    await user.click(screen.getByRole("button", { name: "Dodaj" }));
+
+    expect(mockMutate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "Tanroth",
+        type: "TITAN",
+      }),
+      expect.any(Object),
+    );
+  });
+
+  it("does not submit NPC type when it is left empty", async () => {
+    const user = userEvent.setup();
+    render(<AddTimerForm />);
+
+    await user.type(screen.getByLabelText("Nazwa"), "Tanroth");
+    await user.type(screen.getByLabelText("Minimalny czas (max 300h)"), "1m");
+    await user.type(screen.getByLabelText("Maksymalny czas (max 300h)"), "2m");
+    await user.click(screen.getByRole("button", { name: "Dodaj" }));
+
+    expect(mockMutate.mock.calls[0]?.[0]).not.toEqual(
+      expect.objectContaining({
+        type: expect.any(String),
+      }),
+    );
+  });
+
   it("supports autocomplete selection and custom spawn dates", async () => {
     const user = userEvent.setup();
     mockNpcResults = [
@@ -288,7 +354,7 @@ describe("AddTimerForm", () => {
         timerKey: "npc-500",
         name: "Tanroth",
         lvl: 120,
-        type: "hero" as never,
+        type: "HERO",
         prof: "W",
         location: "Ruins",
         wt: 10,
@@ -312,6 +378,7 @@ describe("AddTimerForm", () => {
       "0h 2m 0s",
     );
     expect(screen.getByLabelText("Poziom")).toHaveValue(120);
+    expect(screen.getByLabelText("Typ")).toHaveValue("HERO");
 
     await user.click(screen.getByLabelText("Niestandardowe daty spawnu"));
     expect(screen.getByLabelText("Minimalny czas (max 300h)")).toHaveValue("");
@@ -327,6 +394,7 @@ describe("AddTimerForm", () => {
         guildIds: ["guild-2"],
         lvl: 120,
         prof: "W",
+        type: "HERO",
         customMinSpawnTime: new Date("2026-04-22T10:00"),
         customMaxSpawnTime: new Date("2026-04-22T10:15"),
       }),
@@ -342,7 +410,7 @@ describe("AddTimerForm", () => {
         timerKey: "npc-500",
         name: "Tanroth",
         lvl: 120,
-        type: "hero" as never,
+        type: "HERO",
         prof: "W",
         location: "Ruins",
         wt: 10,
@@ -366,6 +434,7 @@ describe("AddTimerForm", () => {
       expect.objectContaining({
         name: "Inny timer",
         lvl: 120,
+        type: "HERO",
       }),
       expect.any(Object),
     );
@@ -384,7 +453,7 @@ describe("AddTimerForm", () => {
         timerKey: "npc-500",
         name: "Tanroth",
         lvl: 120,
-        type: "hero" as never,
+        type: "HERO",
         prof: "W",
         location: "Ruins",
         wt: 10,
