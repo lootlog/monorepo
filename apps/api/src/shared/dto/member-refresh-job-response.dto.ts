@@ -14,6 +14,7 @@ const MemberRefreshJobResponseSchema = z.object({
   processedMembers: z.number(),
   failedMembers: z.number(),
   createdAt: isoDatetimeCodec,
+  nextAvailableAt: isoDatetimeCodec,
   completedAt: nullableIsoDatetimeCodec.optional(),
 });
 

@@ -11,7 +11,7 @@ describe("DiscordRateLimiterService", () => {
     get: Mock;
     set: Mock;
     del: Mock;
-    getClient: Mock;
+    scan: Mock;
   };
   let mockLogger: {
     log: Mock;
@@ -32,9 +32,7 @@ describe("DiscordRateLimiterService", () => {
       get: mockFn(),
       set: mockFn(),
       del: mockFn(),
-      getClient: mockFn().mockReturnValue({
-        keys: mockFn().mockResolvedValue([]),
-      }),
+      scan: mockFn().mockResolvedValue([]),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -81,6 +79,23 @@ describe("DiscordRateLimiterService", () => {
       expect(result).toBe(false);
       expect(redisService.del).toHaveBeenCalledWith(
         "discord:ratelimit:user:user-123:guilds",
+      );
+    });
+
+    it("should delete and return false when rate limit cache is corrupted", async () => {
+      redisService.get.mockResolvedValue("{");
+
+      const result = await service.checkRateLimitForUser(userId, endpoint);
+
+      expect(result).toBe(false);
+      expect(redisService.del).toHaveBeenCalledWith(
+        "discord:ratelimit:user:user-123:guilds",
+      );
+      expect(mockLogger.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          level: "debug",
+          message: "Failed to parse Discord rate limit cache",
+        }),
       );
     });
 
@@ -223,17 +238,14 @@ describe("DiscordRateLimiterService", () => {
     });
 
     it("should clear all user rate limits when endpoint not provided", async () => {
-      const mockClient = {
-        keys: mockFn<() => Promise<string[]>>().mockResolvedValue([
-          "discord:ratelimit:user:user-123:guilds",
-          "discord:ratelimit:user:user-123:guild-member",
-        ]),
-      };
-      redisService.getClient.mockReturnValue(mockClient as never);
+      redisService.scan.mockResolvedValue([
+        "discord:ratelimit:user:user-123:guilds",
+        "discord:ratelimit:user:user-123:guild-member",
+      ]);
 
       await service.clearRateLimitForUser(userId);
 
-      expect(mockClient.keys).toHaveBeenCalledWith(
+      expect(redisService.scan).toHaveBeenCalledWith(
         "discord:ratelimit:user:user-123:*",
       );
       expect(redisService.del).toHaveBeenCalledTimes(2);
@@ -246,10 +258,7 @@ describe("DiscordRateLimiterService", () => {
     });
 
     it("should not delete anything when no keys found", async () => {
-      const mockClient = {
-        keys: mockFn().mockResolvedValue([]),
-      };
-      redisService.getClient.mockReturnValue(mockClient as never);
+      redisService.scan.mockResolvedValue([]);
 
       await service.clearRateLimitForUser(userId);
 

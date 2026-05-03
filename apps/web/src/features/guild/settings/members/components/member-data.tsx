@@ -9,6 +9,7 @@ import { MemberLootlogConfigCard } from "@/features/guild/settings/members/compo
 import { MemberSyncButton } from "@/features/guild/settings/members/components/member-sync-button";
 import { MemberDeactivationButton } from "@/features/guild/settings/members/components/member-deactivation-button";
 import { useSelectorPanel } from "@/components/selector-panel";
+import { MemberDiscordSyncCard } from "@/features/guild/settings/members/components/member-discord-sync-card";
 
 export type MemberDataProps = {
   member: GuildMember;
@@ -68,6 +69,8 @@ export const MemberData = ({ member, canManageMembers }: MemberDataProps) => {
           </p>
         )}
       </Card>
+
+      <MemberDiscordSyncCard member={member} />
 
       <MemberLootlogConfigCard
         member={member}

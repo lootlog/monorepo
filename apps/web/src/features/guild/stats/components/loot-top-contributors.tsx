@@ -12,8 +12,8 @@ import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import type { LootStatsResponseDtoOutputTopContributorsItem } from "@/lib/api/generated/main/model/loot-stats-response-dto-output-top-contributors-item";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useMembersControllerGetGuildMembers } from "@/lib/api/generated/main/members/members";
-import type { MemberResponseDto as GuildMember } from "@/lib/api/generated/main/model";
+import { useMembersControllerGetGuildMemberReferences } from "@/lib/api/generated/main/members/members";
+import type { MemberReferenceResponseDtoOutput as GuildMember } from "@/lib/api/generated/main/model";
 
 type PodiumSlotProps = {
   contributor?: LootStatsResponseDtoOutputTopContributorsItem;
@@ -29,10 +29,7 @@ const PodiumSlot: React.FC<PodiumSlotProps> = ({
   const { t } = useTranslation();
   const adaptedMember = guildMember
     ? {
-        roles: guildMember.roles.map((r) => ({
-          position: r.position ?? 0,
-          color: r.color,
-        })),
+        roles: [{ position: 0, color: guildMember.color }],
       }
     : undefined;
   const memberColor = useMemberColor(adaptedMember);
@@ -128,7 +125,7 @@ export const LootTopContributors: React.FC<LootTopContributorsProps> = ({
 }) => {
   const { t } = useTranslation();
   const guildId = useGuildId();
-  const { data: guildMembers } = useMembersControllerGetGuildMembers(
+  const { data: guildMembers } = useMembersControllerGetGuildMemberReferences(
     { guildId: guildId ?? "" },
     {
       includeInactive: true,

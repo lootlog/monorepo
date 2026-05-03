@@ -33,6 +33,7 @@ describe("MemberContextService", () => {
 
   const mockMembersService = {
     getGuildMemberById: mockFn(),
+    isMemberSoftStale: mockFn(),
   };
 
   const guild = {
@@ -67,13 +68,18 @@ describe("MemberContextService", () => {
 
     service = module.get(MemberContextService);
     vi.clearAllMocks();
+    mockMembersService.isMemberSoftStale.mockReturnValue(false);
   });
 
   it("returns cached member context when permissions cache is valid", async () => {
     const cacheKey = getPermissionsCacheKey("user-1", guild.id);
     const cachedContext = {
       guild,
-      member: { id: 1, active: true },
+      member: {
+        id: 1,
+        active: true,
+        lastDiscordSyncAt: new Date().toISOString(),
+      },
       roles: [],
       permissions: [Permission.LOOTLOG_ACCESS],
     };
@@ -119,6 +125,46 @@ describe("MemberContextService", () => {
     expect(mockRedisService.del).toHaveBeenCalledWith(
       getPermissionsCacheKey("user-1", guild.id),
     );
+    expect(result?.permissions).toEqual([Permission.LOOTLOG_ACCESS]);
+  });
+
+  it("deletes stale cached permissions and refreshes member context", async () => {
+    const cachedContext = {
+      guild,
+      member: {
+        id: 1,
+        active: true,
+        lastDiscordSyncAt: new Date(0).toISOString(),
+      },
+      roles: [],
+      permissions: [Permission.LOOTLOG_ACCESS],
+    };
+    mockRedisService.get
+      .mockResolvedValueOnce(JSON.stringify(guild))
+      .mockResolvedValueOnce(JSON.stringify(cachedContext));
+    mockMembersService.isMemberSoftStale.mockReturnValue(true);
+    mockMembersService.getGuildMemberById.mockResolvedValue({
+      id: 1,
+      active: true,
+      isStale: false,
+      refreshQueued: false,
+      roles: [
+        {
+          permissions: [Permission.LOOTLOG_ACCESS],
+        },
+      ],
+    });
+
+    const result = await service.getMemberContext({
+      discordId: "discord-1",
+      userId: "user-1",
+      guildId: guild.id,
+    });
+
+    expect(mockRedisService.del).toHaveBeenCalledWith(
+      getPermissionsCacheKey("user-1", guild.id),
+    );
+    expect(mockMembersService.getGuildMemberById).toHaveBeenCalled();
     expect(result?.permissions).toEqual([Permission.LOOTLOG_ACCESS]);
   });
 

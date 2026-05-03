@@ -4,7 +4,7 @@ import { cn } from "@lootlog/ui/lib/utils";
 import { Card } from "@lootlog/ui/components/card";
 import { NpcSearchTile } from "@/components/tiles";
 import type {
-  MemberResponseDto as GuildMember,
+  MemberReferenceResponseDtoOutput as GuildMember,
   ReservationResponseDto,
 } from "@/lib/api/generated/main/model";
 

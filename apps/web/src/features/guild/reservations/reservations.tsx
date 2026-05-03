@@ -26,7 +26,7 @@ import { ReservationCardSkeleton } from "./reservation-card-skeleton";
 import { useTranslation } from "react-i18next";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useGuildsControllerGetGuildById } from "@/lib/api/generated/main/guilds/guilds";
-import { useMembersControllerGetGuildMembers } from "@/lib/api/generated/main/members/members";
+import { useMembersControllerGetGuildMemberReferences } from "@/lib/api/generated/main/members/members";
 
 export const Reservations: React.FC = () => {
   const navigate = useNavigate();
@@ -56,7 +56,7 @@ export const Reservations: React.FC = () => {
         },
       },
     );
-  const { data: members } = useMembersControllerGetGuildMembers(
+  const { data: members } = useMembersControllerGetGuildMemberReferences(
     { guildId: guildId ?? "" },
     {
       includeInactive: true,

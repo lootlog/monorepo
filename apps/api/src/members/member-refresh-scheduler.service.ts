@@ -4,6 +4,7 @@ import type { Job, Queue as BullQueue } from "bullmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { DiscordRateLimiterService } from "src/discord/discord-rate-limiter.service";
+import { DiscordSyncDiagnosticsService } from "src/discord/discord-sync-diagnostics.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { MEMBER_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant";
 
@@ -54,6 +55,7 @@ return 0
     private readonly memberRefreshQueue: BullQueue<MemberRefreshJobData>,
     private readonly rateLimiter: DiscordRateLimiterService,
     private readonly redisService: RedisService,
+    private readonly diagnostics: DiscordSyncDiagnosticsService,
   ) {}
 
   async enqueueRefresh(
@@ -79,6 +81,8 @@ return 0
         await this.updateExistingJob(existingJob, data, delay, existingState);
       }
 
+      await this.recordScheduleMetrics(data.reason, delay);
+
       return {
         queued: true,
         nextRefreshAt,
@@ -86,6 +90,7 @@ return 0
     }
 
     await this.addRefreshJob(jobId, data, delay);
+    await this.recordScheduleMetrics(data.reason, delay);
 
     return {
       queued: true,
@@ -165,8 +170,13 @@ return 0
       }
     }
 
-    if (state === "delayed" && delay === 0) {
-      await this.promoteDelayedJob(job);
+    if (state === "delayed") {
+      if (delay === 0) {
+        await this.promoteDelayedJob(job);
+        return;
+      }
+
+      await this.changeDelayedJobDelay(job, delay);
     }
   }
 
@@ -204,6 +214,23 @@ return 0
       reason: data.reason,
       delay,
     });
+  }
+
+  private async recordScheduleMetrics(
+    reason: string,
+    delay: number,
+  ): Promise<void> {
+    await this.diagnostics.recordMemberRefreshMetric({
+      outcome: "queued",
+      reason,
+    });
+
+    if (delay > 0) {
+      await this.diagnostics.recordMemberRefreshMetric({
+        outcome: "delayed",
+        reason,
+      });
+    }
   }
 
   private async replaceExistingJob(
@@ -266,6 +293,38 @@ return 0
     }
   }
 
+  private async changeDelayedJobDelay(
+    job: Job<MemberRefreshJobData>,
+    delay: number,
+  ): Promise<void> {
+    try {
+      await job.changeDelay(delay);
+    } catch (error) {
+      if (this.isJobNotInStateError(error)) {
+        const currentState = await this.getExistingJobState(job);
+
+        if (currentState !== "delayed") {
+          this.logger.log({
+            level: "debug",
+            message:
+              "Skipped changing member refresh job delay because it already left delayed state",
+            jobId: job.id,
+            state: currentState,
+          });
+          return;
+        }
+      }
+
+      this.logger.log({
+        level: "debug",
+        message: "Failed to change member refresh job delay",
+        jobId: job.id,
+        delay,
+        error,
+      });
+    }
+  }
+
   private async getExistingJobState(
     job: Job<MemberRefreshJobData>,
   ): Promise<MemberRefreshJobState> {
@@ -279,21 +338,19 @@ return 0
   private isJobNotInStateError(
     error: unknown,
   ): error is Error & { code: number } {
-    return Boolean(
-      error &&
-      typeof error === "object" &&
-      "code" in error &&
-      (error as { code?: unknown }).code === -3,
-    );
+    return this.getBullMqErrorCode(error) === -3;
   }
 
   private isMissingJobError(error: unknown): error is Error & { code: number } {
-    return Boolean(
-      error &&
-      typeof error === "object" &&
-      "code" in error &&
-      (error as { code?: unknown }).code === -1,
-    );
+    return this.getBullMqErrorCode(error) === -1;
+  }
+
+  private getBullMqErrorCode(error: unknown): number | null {
+    if (!hasErrorCode(error)) {
+      return null;
+    }
+
+    return typeof error.code === "number" ? error.code : null;
   }
 
   private getJobId(userId: string, guildId: string): string {
@@ -303,4 +360,12 @@ return 0
   private getUserLockKey(userId: string): string {
     return `member:refresh:lock:${userId}`;
   }
+}
+
+function hasErrorCode(error: unknown): error is { code: unknown } {
+  if (typeof error !== "object" || error === null) {
+    return false;
+  }
+
+  return "code" in error;
 }

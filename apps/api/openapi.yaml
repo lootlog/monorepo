@@ -223,7 +223,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MemberResponseDto"
+                $ref: "#/components/schemas/NullableMemberResponseDto"
         "403":
           description: Forbidden - admin permission required
         "404":
@@ -334,6 +334,39 @@ paths:
       summary: Get guild members
       tags:
         - members
+  /guilds/{guildId}/members/references:
+    get:
+      description: Retrieve limited member reference data for guild-scoped historical views
+      operationId: MembersController_getGuildMemberReferences
+      parameters:
+        - name: includeInactive
+          required: false
+          in: query
+          description: Include inactive members
+          schema:
+            type: boolean
+        - name: guildId
+          required: true
+          in: path
+          description: Guild ID
+          schema:
+            example: guild_123
+      responses:
+        "200":
+          description: Limited list of guild member references
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MemberReferenceResponseDto_Output"
+        "403":
+          description: Forbidden - insufficient permissions
+      security:
+        - bearer: []
+      summary: Get guild member references
+      tags:
+        - members
   /guilds/{guildId}/members/summary:
     get:
       description: Retrieve lightweight active member data for game-client member lookups
@@ -424,7 +457,7 @@ paths:
           description: Refresh job ID
           schema:
             example: "123"
-            type: string
+            type: number
         - name: guildId
           required: true
           in: path
@@ -6059,6 +6092,14 @@ components:
           format: date-time
           pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
           nullable: true
+        lastDiscordAttemptAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          nullable: true
+        lastDiscordStatus:
+          type: string
+          nullable: true
         isStale:
           type: boolean
         staleWarning:
@@ -6180,6 +6221,14 @@ components:
           format: date-time
           pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
           nullable: true
+        lastDiscordAttemptAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          nullable: true
+        lastDiscordStatus:
+          type: string
+          nullable: true
         isStale:
           type: boolean
         staleWarning:
@@ -6258,6 +6307,29 @@ components:
         - configuredCharacterCount
         - enabledCharacterCount
         - characters
+    MemberReferenceResponseDto_Output:
+      type: object
+      properties:
+        id:
+          type: number
+        userId:
+          type: string
+        name:
+          type: string
+        avatar:
+          type: string
+          nullable: true
+        color:
+          type: number
+          nullable: true
+        active:
+          type: boolean
+      required:
+        - id
+        - userId
+        - name
+        - color
+        - active
     MemberSummaryResponseDto_Output:
       type: object
       properties:
@@ -6301,6 +6373,10 @@ components:
           type: string
           format: date-time
           pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        nextAvailableAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         completedAt:
           type: string
           format: date-time
@@ -6314,6 +6390,7 @@ components:
         - processedMembers
         - failedMembers
         - createdAt
+        - nextAvailableAt
     NullableMemberRefreshJobResponseDto:
       type: object
       properties:
@@ -6338,6 +6415,10 @@ components:
           type: string
           format: date-time
           pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        nextAvailableAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         completedAt:
           type: string
           format: date-time
@@ -6351,6 +6432,7 @@ components:
         - processedMembers
         - failedMembers
         - createdAt
+        - nextAvailableAt
       nullable: true
     GuildResponseDto_Output:
       type: object
@@ -6862,6 +6944,14 @@ components:
               type: string
               format: date-time
               pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              nullable: true
+            lastDiscordAttemptAt:
+              type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              nullable: true
+            lastDiscordStatus:
+              type: string
               nullable: true
             isStale:
               type: boolean

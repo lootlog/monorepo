@@ -2,6 +2,7 @@ import { Inject, Injectable } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { RedisService } from "@lootlog/nest-shared/redis";
+import type { DiscordEndpoint } from "./discord.types";
 
 interface UserRateLimitData {
   bucket?: string | null;
@@ -31,7 +32,7 @@ export class DiscordRateLimiterService {
 
   async checkRateLimitForUser(
     userId: string,
-    endpoint: string,
+    endpoint: DiscordEndpoint,
   ): Promise<boolean> {
     const state = await this.getRateLimitStateForUser(userId, endpoint);
     if (!state?.isBlocked) {
@@ -52,16 +53,17 @@ export class DiscordRateLimiterService {
 
   async getRateLimitStateForUser(
     userId: string,
-    endpoint: string,
+    endpoint: DiscordEndpoint,
   ): Promise<DiscordRateLimitState | null> {
     const key = this.getUserKey(userId, endpoint);
-    const data = await this.redis.get(key);
-
-    if (!data) {
+    const rateLimitData = await this.getStoredRateLimitData(
+      key,
+      userId,
+      endpoint,
+    );
+    if (!rateLimitData) {
       return null;
     }
-
-    const rateLimitData = JSON.parse(data) as UserRateLimitData;
     const now = Date.now();
 
     if (rateLimitData.resetAt <= now) {
@@ -88,7 +90,7 @@ export class DiscordRateLimiterService {
 
   async getNextAvailableAtForUser(
     userId: string,
-    endpoint: string,
+    endpoint: DiscordEndpoint,
   ): Promise<Date | null> {
     const state = await this.getRateLimitStateForUser(userId, endpoint);
     if (!state?.isBlocked) {
@@ -100,7 +102,7 @@ export class DiscordRateLimiterService {
 
   async updateRateLimitFromHeaders(
     userId: string,
-    endpoint: string,
+    endpoint: DiscordEndpoint,
     headers: { get(name: string): string | null },
   ): Promise<void> {
     const bucket = headers.get("x-ratelimit-bucket");
@@ -170,7 +172,7 @@ export class DiscordRateLimiterService {
 
   async setRateLimitForUser(
     userId: string,
-    endpoint: string,
+    endpoint: DiscordEndpoint,
     retryAfterMs: number,
   ): Promise<void> {
     const now = Date.now();
@@ -201,22 +203,68 @@ export class DiscordRateLimiterService {
 
   async clearRateLimitForUser(
     userId: string,
-    endpoint?: string,
+    endpoint?: DiscordEndpoint,
   ): Promise<void> {
     if (endpoint) {
       const key = this.getUserKey(userId, endpoint);
       await this.redis.del(key);
     } else {
       const pattern = `${this.RATE_LIMIT_KEY_PREFIX}${userId}:*`;
-      const client = this.redis.getClient();
-      const keys = await client.keys(pattern);
+      const keys = await this.redis.scan(pattern);
       if (keys.length > 0) {
         await Promise.all(keys.map((key) => this.redis.del(key)));
       }
     }
   }
 
-  private getUserKey(userId: string, endpoint: string): string {
+  private async getStoredRateLimitData(
+    key: string,
+    userId: string,
+    endpoint: DiscordEndpoint,
+  ): Promise<UserRateLimitData | null> {
+    const data = await this.redis.get(key);
+    if (!data) {
+      return null;
+    }
+
+    try {
+      const parsed = JSON.parse(data) as unknown;
+      if (isUserRateLimitData(parsed)) {
+        return parsed;
+      }
+    } catch (error) {
+      this.logger.log({
+        level: "debug",
+        message: "Failed to parse Discord rate limit cache",
+        userId,
+        endpoint,
+        error,
+      });
+    }
+
+    await this.redis.del(key);
+    return null;
+  }
+
+  private getUserKey(userId: string, endpoint: DiscordEndpoint): string {
     return `${this.RATE_LIMIT_KEY_PREFIX}${userId}:${endpoint}`;
   }
+}
+
+function isUserRateLimitData(value: unknown): value is UserRateLimitData {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const data = value as Partial<UserRateLimitData>;
+  const isOptional = (field: unknown, type: "number" | "string"): boolean =>
+    field === undefined || field === null || typeof field === type;
+
+  return (
+    typeof data.retryAfter === "number" &&
+    typeof data.resetAt === "number" &&
+    isOptional(data.bucket, "string") &&
+    isOptional(data.limit, "number") &&
+    isOptional(data.remaining, "number")
+  );
 }

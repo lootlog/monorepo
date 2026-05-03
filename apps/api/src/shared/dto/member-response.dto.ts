@@ -19,6 +19,8 @@ const MemberResponseSchema = z.object({
   roles: z.array(RoleResponseDto.schema),
   globalUserId: z.string().nullable().optional(),
   lastDiscordSyncAt: nullableIsoDatetimeCodec.optional(),
+  lastDiscordAttemptAt: nullableIsoDatetimeCodec.optional(),
+  lastDiscordStatus: z.string().nullable().optional(),
   isStale: z.boolean().optional(),
   staleWarning: z.string().optional(),
   refreshQueued: z.boolean().optional(),
