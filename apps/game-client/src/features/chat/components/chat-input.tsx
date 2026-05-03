@@ -1,6 +1,6 @@
 import { Permission } from "@lootlog/types";
 import { Label } from "@/components/ui/label";
-import { MessageType } from "@/api/chat.api";
+import type { MessageType } from "@/api/chat.api";
 import {
   Popover,
   PopoverAnchor,
@@ -527,7 +527,7 @@ export const ChatInput: FC<ChatInputProps> = ({
   };
 
   return (
-    <form className="ll:flex ll:justify-center ll:flex-col ll:mt-1">
+    <form className="ll:flex ll:justify-center ll:flex-col ll:mt-1 ll:mr-0.5">
       {replyDraft && (
         <div className="ll:mb-1">
           <Label className="ll:text-[9px] ll:text-gray-400">
