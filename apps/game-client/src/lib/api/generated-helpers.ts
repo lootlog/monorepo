@@ -171,6 +171,19 @@ export const buildCurrentCharacterPayload =
     };
   };
 
+export const buildCurrentTimerActorCharacterPayload = () => {
+  const hero = Game.hero;
+
+  return {
+    accountId: String(hero.account),
+    characterId: String(hero.id),
+    name: hero.nick,
+    prof: hero.prof,
+    icon: hero.img,
+    lvl: hero.lvl,
+  };
+};
+
 export const buildChatCharacterData = () => {
   const hero = Game.hero;
 

@@ -15,18 +15,36 @@ export const getTimerMembers = (timer: Timer): GuildMember[] => {
 export const getMembersWithGuilds = (
   members: GuildMember[],
   guildNamesById: Record<string, string>,
-): { id: GuildMember["id"]; label: string }[] => {
+  actorCharactersByMemberId: Timer["actorCharactersByMemberId"] = {},
+): {
+  id: GuildMember["id"];
+  memberLabel: string;
+  characterLabel?: string;
+}[] => {
   const memberMap = new Map<
     GuildMember["id"],
-    { id: GuildMember["id"]; label: string }
+    {
+      id: GuildMember["id"];
+      memberLabel: string;
+      characterLabel?: string;
+    }
   >();
 
   for (const member of members) {
     if (!memberMap.has(member.id)) {
       const guildName = guildNamesById[member.guildId];
+      const actorCharacter = actorCharactersByMemberId[String(member.id)];
+      const characterLabel = actorCharacter
+        ? `${actorCharacter.name} (${actorCharacter.lvl ?? ""}${actorCharacter.prof?.charAt(0).toLowerCase() ?? ""})`
+        : undefined;
+      const memberLabel = guildName
+        ? `${member.name} (${guildName})`
+        : member.name;
+
       memberMap.set(member.id, {
         id: member.id,
-        label: guildName ? `${member.name} (${guildName})` : member.name,
+        memberLabel,
+        characterLabel,
       });
     }
   }

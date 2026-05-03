@@ -24,6 +24,8 @@ type UseTimersFilteringProps = {
   timersColors: Record<string, string>;
   pinnedTimers: string[];
   sortOrder: "asc" | "desc";
+  expiredTimersAtBottom?: boolean;
+  removeTimerAfterMs?: number;
 };
 
 export const useTimersFiltering = ({
@@ -41,6 +43,8 @@ export const useTimersFiltering = ({
   timersColors,
   pinnedTimers,
   sortOrder,
+  expiredTimersAtBottom = false,
+  removeTimerAfterMs = 0,
 }: UseTimersFilteringProps) => {
   let filtered = calculatedTimers;
 
@@ -57,7 +61,13 @@ export const useTimersFiltering = ({
     filtered = filterTimersByColor(filtered, selectedColors, timersColors);
   }
 
-  const sorted = sortTimersByPinnedAndTime(filtered, pinnedTimers, sortOrder);
+  const sorted = sortTimersByPinnedAndTime(
+    filtered,
+    pinnedTimers,
+    sortOrder,
+    expiredTimersAtBottom,
+    removeTimerAfterMs,
+  );
 
   return sorted;
 };

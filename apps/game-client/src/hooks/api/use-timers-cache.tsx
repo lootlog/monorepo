@@ -45,6 +45,9 @@ export const useTimersCache = () => {
         queryKeys.timers(timer.world),
         (old = []) => old.filter((t) => !isSameTimer(t, timer)),
       );
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.timers(timer.world),
+      });
     },
     [queryClient],
   );

@@ -5,6 +5,7 @@
  * The Lootlog API documentation
  * OpenAPI spec version: 1.0
  */
+import type { CreateManualTimerDtoActorCharacter } from './create-manual-timer-dto-actor-character';
 import type { CreateManualTimerDtoType } from './create-manual-timer-dto-type';
 
 export interface CreateManualTimerDto {
@@ -26,4 +27,5 @@ export interface CreateManualTimerDto {
   customMaxSpawnTime?: string;
   /** @minLength 1 */
   world: string;
+  actorCharacter?: CreateManualTimerDtoActorCharacter;
 }

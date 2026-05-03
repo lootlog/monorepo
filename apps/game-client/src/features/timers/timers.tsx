@@ -15,7 +15,7 @@ import { useTimersFiltering } from "@/features/timers/hooks/use-timers-filtering
 import {
   mergeTimers,
   calculateTimeLeft,
-  filterTimersByRemovalTime,
+  filterTimersByExpiredVisibility,
 } from "@/features/timers/utils/timers-utils";
 import { checkFiltersActive } from "@/features/timers/utils/filters-utils";
 import { calculateColorStatistics } from "@/features/timers/utils/color-statistics";
@@ -36,8 +36,6 @@ export const Timers = () => {
   const guildId = guildIdByCharId[characterId];
   const world = guildId ? worldByGuildId[guildId] : undefined;
   const desiredWorld = world && allowWorldSelection ? world : defaultWorld;
-
-  const { data: timers } = useTimers({ world: desiredWorld });
 
   const open = useWindowsStore((state) => state.timers.open);
   const setOpen = useWindowsStore((state) => state.setOpen);
@@ -61,7 +59,10 @@ export const Timers = () => {
     customColors,
     defaultColorNames,
     overriddenDefaultColors,
+    alwaysVisibleExpiredTimers,
   } = useTimersStore();
+
+  const { data: timers } = useTimers({ world: desiredWorld });
 
   const [showHiddenTimers, setShowHiddenTimers] = useState(false);
 
@@ -86,20 +87,26 @@ export const Timers = () => {
     : deduplicatedTimers.map((timer) => ({
         ...timer,
         members: timer.member ? [timer.member] : [],
+        actorCharactersByMemberId:
+          timer.member && timer.actorCharacter
+            ? { [String(timer.member.id)]: timer.actorCharacter }
+            : timer.actorCharactersByMemberId,
         minTimeLeft: 0,
         maxTimeLeft: 0,
       }));
 
   const withTimeLeft = calculateTimeLeft(merged);
 
-  const activeTimers = filterTimersByRemovalTime(
+  const activeTimers = filterTimersByExpiredVisibility(
     withTimeLeft,
     generalConfig.removeTimerAfterMs,
+    alwaysVisibleExpiredTimers,
   );
 
   const calculatedTimers = useTimersUpdate(
     activeTimers,
     generalConfig.removeTimerAfterMs,
+    alwaysVisibleExpiredTimers,
   );
 
   const areFiltersActive = checkFiltersActive(
@@ -123,6 +130,8 @@ export const Timers = () => {
     timersColors: timersColors as Record<string, string>,
     pinnedTimers: pinnedTimers[settingsKey] || [],
     sortOrder: timersSortOrder ?? "asc",
+    expiredTimersAtBottom: true,
+    removeTimerAfterMs: generalConfig.removeTimerAfterMs,
   });
 
   const colorStatistics = calculateColorStatistics(
@@ -141,6 +150,7 @@ export const Timers = () => {
     return (
       <UnderBagTimers>
         <TimersUnderBagActions
+          world={desiredWorld}
           timerFiltersEnabled={timerFiltersEnabled ?? false}
           toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
           colorFiltersEnabled={colorFiltersEnabled ?? false}
@@ -185,6 +195,7 @@ export const Timers = () => {
         actions={
           !generalConfig.compactView ? (
             <TimersActions
+              world={desiredWorld}
               timerFiltersEnabled={timerFiltersEnabled}
               toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
               colorFiltersEnabled={colorFiltersEnabled}

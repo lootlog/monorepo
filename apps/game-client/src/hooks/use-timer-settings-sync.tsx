@@ -10,6 +10,9 @@ type LocalSettingsSnapshot = {
   generalConfig: ReturnType<typeof useTimersStore.getState>["generalConfig"];
   displayConfig: ReturnType<typeof useTimersStore.getState>["displayConfig"];
   customColors: ReturnType<typeof useTimersStore.getState>["customColors"];
+  alwaysVisibleExpiredTimers: ReturnType<
+    typeof useTimersStore.getState
+  >["alwaysVisibleExpiredTimers"];
   timersColors: ReturnType<typeof useTimersStore.getState>["timersColors"];
   defaultColorNames: ReturnType<
     typeof useTimersStore.getState
@@ -79,6 +82,7 @@ export const useTimerSettingsSync = () => {
             generalConfig: localStore.generalConfig,
             displayConfig: localStore.displayConfig,
             customColors: localStore.customColors,
+            alwaysVisibleExpiredTimers: localStore.alwaysVisibleExpiredTimers,
             timersColors: localStore.timersColors,
             defaultColorNames: localStore.defaultColorNames,
             overriddenDefaultColors: localStore.overriddenDefaultColors,
@@ -115,6 +119,7 @@ export const useTimerSettingsSync = () => {
         //     generalConfig: localStore.generalConfig,
         //     displayConfig: localStore.displayConfig,
         //     customColors: localStore.customColors,
+        //     alwaysVisibleExpiredTimers: localStore.alwaysVisibleExpiredTimers,
         //     timersColors: localStore.timersColors,
         //     defaultColorNames: localStore.defaultColorNames,
         //     overriddenDefaultColors: localStore.overriddenDefaultColors,
@@ -143,6 +148,8 @@ export const useTimerSettingsSync = () => {
             remoteSettings.displayConfig as typeof localStore.displayConfig,
           customColors:
             remoteSettings.customColors as typeof localStore.customColors,
+          alwaysVisibleExpiredTimers:
+            remoteSettings.alwaysVisibleExpiredTimers as typeof localStore.alwaysVisibleExpiredTimers,
           timersColors: remoteSettings.timersColors as Record<
             string,
             string | undefined
@@ -201,6 +208,8 @@ export const useTimerSettingsSync = () => {
           remoteSettings.displayConfig as typeof localStore.displayConfig,
         customColors:
           remoteSettings.customColors as typeof localStore.customColors,
+        alwaysVisibleExpiredTimers:
+          remoteSettings.alwaysVisibleExpiredTimers as typeof localStore.alwaysVisibleExpiredTimers,
         timersColors: remoteSettings.timersColors as Record<
           string,
           string | undefined

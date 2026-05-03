@@ -11,6 +11,7 @@ const TimerSettingsResponseSchema = z.object({
   displayConfig: jsonValueSchema,
   customColors: jsonValueSchema,
   timersColors: jsonValueSchema,
+  alwaysVisibleExpiredTimers: jsonValueSchema,
   defaultColorNames: jsonValueSchema,
   overriddenDefaultColors: jsonValueSchema,
   hiddenDefaultColors: z.array(z.string()),

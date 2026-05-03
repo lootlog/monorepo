@@ -27,6 +27,7 @@ let guildIdByCharId: Record<string, string> = {
 let timersStoreState = {
   hiddenTimers: {},
   pinnedTimers: {},
+  alwaysVisibleExpiredTimers: {},
   generalConfig: {
     removeTimerAfterMs: 30_000,
     timersGrouping: false,
@@ -238,6 +239,7 @@ describe("Timers", () => {
       ...timersStoreState,
       hiddenTimers: {},
       pinnedTimers: {},
+      alwaysVisibleExpiredTimers: {},
       generalConfig: {
         removeTimerAfterMs: 30_000,
         timersGrouping: false,
@@ -294,7 +296,9 @@ describe("Timers", () => {
     render(<Timers />);
 
     expect(mockUseTimers).toHaveBeenCalledTimes(1);
-    expect(mockUseTimers).toHaveBeenCalledWith({ world: "gefion" });
+    expect(mockUseTimers).toHaveBeenCalledWith({
+      world: "gefion",
+    });
     expect(mockUseTimersSocket).toHaveBeenCalledTimes(1);
     expect(mockUseTimersUpdate.mock.calls[0]?.[0]).toHaveLength(1);
     expect(mockUseTimersFiltering).toHaveBeenCalledWith(
@@ -349,7 +353,9 @@ describe("Timers", () => {
 
     render(<Timers />);
 
-    expect(mockUseTimers).toHaveBeenCalledWith({ world: "pandora" });
+    expect(mockUseTimers).toHaveBeenCalledWith({
+      world: "pandora",
+    });
     expect(screen.getByTestId("under-bag")).toBeInTheDocument();
     expect(screen.getByText("TimersUnderBagActions")).toBeInTheDocument();
     expect(screen.queryByTestId("animated-timers")).not.toBeInTheDocument();

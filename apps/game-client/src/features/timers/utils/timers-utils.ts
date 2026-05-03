@@ -15,8 +15,11 @@ export type TimerWithTimeLeft = Timer & {
 
 const MANUAL_TIMER_MARGONEM_TYPE = 999;
 
+export const isManualTimer = (timer: Timer) =>
+  Number(timer.npc.margonemType) === MANUAL_TIMER_MARGONEM_TYPE;
+
 const getTimerKey = (timer: Timer): string => {
-  if (timer.npc.margonemType === MANUAL_TIMER_MARGONEM_TYPE) {
+  if (isManualTimer(timer)) {
     return `manual_${timer.npc.name}_${timer.world}_${timer.npc.margonemType}`;
   }
   return `timer_${timer.timerKey}`;
@@ -24,6 +27,12 @@ const getTimerKey = (timer: Timer): string => {
 
 const getTimerMembers = (timer: Timer): GuildMember[] => {
   return timer.member ? [timer.member] : [];
+};
+
+const getTimerActorCharactersByMemberId = (
+  timer: Timer,
+): NonNullable<Timer["actorCharactersByMemberId"]> => {
+  return timer.actorCharactersByMemberId ?? {};
 };
 
 const getMergedGuildEntry = (timer: Timer) => {
@@ -38,6 +47,7 @@ const createMergedTimer = (timer: Timer): TimerWithTimeLeft => {
   return {
     ...timer,
     members: getTimerMembers(timer),
+    actorCharactersByMemberId: getTimerActorCharactersByMemberId(timer),
     minTimeLeft: 0,
     maxTimeLeft: 0,
     mergedGuildIds: [getMergedGuildEntry(timer)],
@@ -50,6 +60,10 @@ const mergeTimerCollections = (
 ) => {
   return {
     members: [...(existingTimer.members ?? []), ...getTimerMembers(timer)],
+    actorCharactersByMemberId: {
+      ...(existingTimer.actorCharactersByMemberId ?? {}),
+      ...getTimerActorCharactersByMemberId(timer),
+    },
     mergedGuildIds: [
       ...(existingTimer.mergedGuildIds ?? []),
       getMergedGuildEntry(timer),
@@ -93,11 +107,27 @@ export const calculateTimeLeft = (
 ): TimerWithTimeLeft[] => {
   const now = Date.now();
 
-  return timers.map((timer) => ({
-    ...timer,
-    maxTimeLeft: new Date(timer.maxSpawnTime).getTime() - now,
-    minTimeLeft: new Date(timer.minSpawnTime).getTime() - now,
-  }));
+  return timers.map((timer) => {
+    const deletedAt = timer.deletedAt
+      ? new Date(timer.deletedAt).getTime()
+      : null;
+
+    if (deletedAt !== null) {
+      const deletedTimeLeft = deletedAt - now;
+
+      return {
+        ...timer,
+        maxTimeLeft: deletedTimeLeft,
+        minTimeLeft: deletedTimeLeft,
+      };
+    }
+
+    return {
+      ...timer,
+      maxTimeLeft: new Date(timer.maxSpawnTime).getTime() - now,
+      minTimeLeft: new Date(timer.minSpawnTime).getTime() - now,
+    };
+  });
 };
 
 export const filterTimersByRemovalTime = (
@@ -105,6 +135,26 @@ export const filterTimersByRemovalTime = (
   removeTimerAfterMs: number,
 ): TimerWithTimeLeft[] => {
   return timers.filter((t) => t.maxTimeLeft > -removeTimerAfterMs);
+};
+
+export const filterTimersByExpiredVisibility = (
+  timers: TimerWithTimeLeft[],
+  removeTimerAfterMs: number,
+  alwaysVisibleExpiredTimers: Record<string, string[]>,
+): TimerWithTimeLeft[] => {
+  return timers.filter((timer) => {
+    const alwaysVisibleTimerKeys =
+      alwaysVisibleExpiredTimers[timer.world] ?? [];
+
+    if (
+      !isManualTimer(timer) &&
+      alwaysVisibleTimerKeys.includes(timer.timerKey)
+    ) {
+      return true;
+    }
+
+    return timer.maxTimeLeft > -removeTimerAfterMs;
+  });
 };
 
 export const filterTimersByGuild = (
@@ -171,16 +221,43 @@ export const sortTimersByPinnedAndTime = (
   timers: TimerWithTimeLeft[],
   pinnedTimers: string[],
   sortOrder: "asc" | "desc",
+  expiredTimersAtBottom = false,
+  removeTimerAfterMs = 0,
 ): TimerWithTimeLeft[] => {
-  return [...timers].sort((a, b) => {
-    const pinA = pinnedTimers.includes(a.npc.name);
-    const pinB = pinnedTimers.includes(b.npc.name);
-    if (pinA && !pinB) return -1;
-    if (!pinA && pinB) return 1;
+  const sortByPinnedAndTime =
+    (order: "asc" | "desc") => (a: TimerWithTimeLeft, b: TimerWithTimeLeft) => {
+      const pinA = pinnedTimers.includes(a.npc.name);
+      const pinB = pinnedTimers.includes(b.npc.name);
+      if (pinA && !pinB) return -1;
+      if (!pinA && pinB) return 1;
 
-    const timeA = new Date(a.maxSpawnTime).getTime();
-    const timeB = new Date(b.maxSpawnTime).getTime();
+      const timeA = new Date(a.deletedAt ?? a.maxSpawnTime).getTime();
+      const timeB = new Date(b.deletedAt ?? b.maxSpawnTime).getTime();
 
-    return sortOrder === "asc" ? timeA - timeB : timeB - timeA;
-  });
+      return order === "asc" ? timeA - timeB : timeB - timeA;
+    };
+
+  if (!expiredTimersAtBottom) {
+    return [...timers].sort(sortByPinnedAndTime(sortOrder));
+  }
+
+  const expiredSortOrder = sortOrder === "asc" ? "desc" : "asc";
+
+  const activeTimers: TimerWithTimeLeft[] = [];
+  const expiredTimers: TimerWithTimeLeft[] = [];
+  const expiredAtBottomThreshold = -removeTimerAfterMs;
+
+  for (const timer of timers) {
+    if (timer.maxTimeLeft <= expiredAtBottomThreshold) {
+      expiredTimers.push(timer);
+      continue;
+    }
+
+    activeTimers.push(timer);
+  }
+
+  return [
+    ...activeTimers.sort(sortByPinnedAndTime(sortOrder)),
+    ...expiredTimers.sort(sortByPinnedAndTime(expiredSortOrder)),
+  ];
 };

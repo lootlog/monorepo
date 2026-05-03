@@ -475,10 +475,6 @@ export type EnumCoverageGapTypeFieldUpdateOperationsInput = {
   set?: $Enums.CoverageGapType
 }
 
-export type NullableBoolFieldUpdateOperationsInput = {
-  set?: boolean | null
-}
-
 export type EventMapCoverageGapCreateNestedManyWithoutHeroNpcInput = {
   create?: Prisma.XOR<Prisma.EventMapCoverageGapCreateWithoutHeroNpcInput, Prisma.EventMapCoverageGapUncheckedCreateWithoutHeroNpcInput> | Prisma.EventMapCoverageGapCreateWithoutHeroNpcInput[] | Prisma.EventMapCoverageGapUncheckedCreateWithoutHeroNpcInput[]
   connectOrCreate?: Prisma.EventMapCoverageGapCreateOrConnectWithoutHeroNpcInput | Prisma.EventMapCoverageGapCreateOrConnectWithoutHeroNpcInput[]

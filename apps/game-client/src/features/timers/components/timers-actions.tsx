@@ -6,8 +6,10 @@ import {
 } from "@/components/ui/tooltip";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
+import { GlobalTimerHistoryPopover } from "./global-timer-history-popover";
 
 type TimersActionsProps = {
+  world: string;
   timerFiltersEnabled?: boolean;
   toggleTimerFiltersEnabled: () => void;
   colorFiltersEnabled?: boolean;
@@ -19,6 +21,7 @@ type TimersActionsProps = {
 };
 
 export const TimersActions: FC<TimersActionsProps> = ({
+  world,
   timerFiltersEnabled,
   toggleTimerFiltersEnabled,
   colorFiltersEnabled,
@@ -30,6 +33,8 @@ export const TimersActions: FC<TimersActionsProps> = ({
 }) => {
   const { t } = useTranslation("timers");
   return [
+    <GlobalTimerHistoryPopover key="history" world={world} />,
+
     <Tooltip key="filters-tooltip">
       <TooltipTrigger asChild>
         <Filter
