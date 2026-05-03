@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 import {
   getRouteErrorMessage,
   getRouteErrorStatus,
+  normalizeRouteErrorStatus,
 } from "@/lib/router/route-errors";
 import { RouteErrorState } from "./route-error-state";
 
@@ -18,9 +19,9 @@ export const GuildRouteError = ({ error, reset }: ErrorComponentProps) => {
   const router = useRouter();
   const navigate = useNavigate();
   const queryErrorResetBoundary = useQueryErrorResetBoundary();
-  const status = getRouteErrorStatus(error);
-  const normalizedStatus =
-    status === 401 || status === 403 || status === 404 ? status : 500;
+  const normalizedStatus = normalizeRouteErrorStatus(
+    getRouteErrorStatus(error),
+  );
 
   const handleRetry = () => {
     queryErrorResetBoundary.reset();

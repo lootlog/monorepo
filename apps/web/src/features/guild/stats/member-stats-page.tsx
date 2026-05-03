@@ -27,14 +27,8 @@ import {
   TableRow,
 } from "@lootlog/ui/components/table";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationNext,
-  PaginationPrevious,
-} from "@lootlog/ui/components/pagination";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
@@ -439,35 +433,13 @@ export const MemberStatsPage: React.FC = () => {
             </ScrollArea>
 
             {(hasPrev || npcs.length > 0) && (
-              <div className="h-14 shrink-0 border-t border-border py-4 flex items-center justify-between px-4">
-                <div className="text-sm text-muted-foreground whitespace-nowrap">
-                  {t("kills.ranking.total", { count: total })}
-                </div>
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious
-                        onClick={handlePreviousPage}
-                        className={
-                          !hasPrev
-                            ? "pointer-events-none opacity-50"
-                            : "cursor-pointer"
-                        }
-                      />
-                    </PaginationItem>
-                    <PaginationItem>
-                      <PaginationNext
-                        onClick={handleNextPage}
-                        className={
-                          !hasNext
-                            ? "pointer-events-none opacity-50"
-                            : "cursor-pointer"
-                        }
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
-              </div>
+              <TablePaginationFooter
+                totalLabel={t("kills.ranking.total", { count: total })}
+                hasPrev={hasPrev}
+                hasNext={hasNext}
+                onPreviousPage={handlePreviousPage}
+                onNextPage={handleNextPage}
+              />
             )}
           </Card>
         </div>

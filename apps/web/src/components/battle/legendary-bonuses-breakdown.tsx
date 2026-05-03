@@ -1,14 +1,7 @@
 import type { BattleWarrior as Warrior } from "@/lib/api/battlelog-types";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@lootlog/ui/components/table";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
+import { BattleBreakdownTable } from "./battle-breakdown-table";
 
 interface LegendaryBonusesBreakdownProps {
   warrior: Warrior;
@@ -115,30 +108,11 @@ export const LegendaryBonusesBreakdown: FC<LegendaryBonusesBreakdownProps> = ({
           <h4 className="font-medium mb-2 text-sm">
             {t("battleUi.breakdowns.legendary.offensiveTitle")}
           </h4>
-          <Table className="text-sm">
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="h-8 text-xs">
-                  {t("battleUi.breakdowns.headers.bonusType")}
-                </TableHead>
-                <TableHead className="h-8 text-xs text-right">
-                  {t("battleUi.breakdowns.headers.value")}
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {offensiveBonuses.map((item, index) => (
-                <TableRow key={index} className="h-8 hover:bg-transparent">
-                  <TableCell className={`py-1 ${item.color}`}>
-                    {item.type}
-                  </TableCell>
-                  <TableCell className="py-1 text-right font-medium tabular-nums">
-                    {item.value}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <BattleBreakdownTable
+            rows={offensiveBonuses}
+            typeLabel={t("battleUi.breakdowns.headers.bonusType")}
+            valueLabel={t("battleUi.breakdowns.headers.value")}
+          />
         </div>
       )}
 
@@ -147,30 +121,11 @@ export const LegendaryBonusesBreakdown: FC<LegendaryBonusesBreakdownProps> = ({
           <h5 className="font-medium mb-2 text-sm">
             {t("battleUi.breakdowns.legendary.defensiveTitle")}
           </h5>
-          <Table className="text-sm">
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="h-8 text-xs">
-                  {t("battleUi.breakdowns.headers.bonusType")}
-                </TableHead>
-                <TableHead className="h-8 text-xs text-right">
-                  {t("battleUi.breakdowns.headers.value")}
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {defensiveBonuses.map((item, index) => (
-                <TableRow key={index} className="h-8 hover:bg-transparent">
-                  <TableCell className={`py-1 ${item.color}`}>
-                    {item.type}
-                  </TableCell>
-                  <TableCell className="py-1 text-right font-medium tabular-nums">
-                    {item.value}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <BattleBreakdownTable
+            rows={defensiveBonuses}
+            typeLabel={t("battleUi.breakdowns.headers.bonusType")}
+            valueLabel={t("battleUi.breakdowns.headers.value")}
+          />
         </div>
       )}
 
@@ -179,30 +134,11 @@ export const LegendaryBonusesBreakdown: FC<LegendaryBonusesBreakdownProps> = ({
           <h5 className="font-medium mb-2 text-sm">
             {t("battleUi.breakdowns.legendary.passiveTitle")}
           </h5>
-          <Table className="text-sm">
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="h-8 text-xs">
-                  {t("battleUi.breakdowns.headers.bonusType")}
-                </TableHead>
-                <TableHead className="h-8 text-xs text-right">
-                  {t("battleUi.breakdowns.headers.value")}
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {passiveBonuses.map((item, index) => (
-                <TableRow key={index} className="h-8 hover:bg-transparent">
-                  <TableCell className={`py-1 ${item.color}`}>
-                    {item.type}
-                  </TableCell>
-                  <TableCell className="py-1 text-right font-medium tabular-nums">
-                    {item.value}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <BattleBreakdownTable
+            rows={passiveBonuses}
+            typeLabel={t("battleUi.breakdowns.headers.bonusType")}
+            valueLabel={t("battleUi.breakdowns.headers.value")}
+          />
         </div>
       )}
     </div>

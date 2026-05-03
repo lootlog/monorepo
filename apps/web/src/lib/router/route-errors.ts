@@ -11,6 +11,16 @@ export const getRouteErrorStatus = (error: unknown) => {
 
 export const getRouteErrorMessage = getApiErrorMessage;
 
+export const normalizeRouteErrorStatus = (
+  status: number | undefined,
+): 401 | 403 | 404 | 500 => {
+  if (status === 401 || status === 403 || status === 404) {
+    return status;
+  }
+
+  return 500;
+};
+
 const isRouteLoaderCancelledError = (error: unknown) => {
   return isCancelledError(error);
 };
