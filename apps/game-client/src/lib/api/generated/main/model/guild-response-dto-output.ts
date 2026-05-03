@@ -14,4 +14,5 @@ export interface GuildResponseDtoOutput {
   /** @nullable */
   vanityUrl?: string | null;
   ownerId: string;
+  publicStatsCardEnabled: boolean;
 }

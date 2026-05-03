@@ -41,6 +41,7 @@ export type GuildMinAggregateOutputType = {
   ownerId: string | null
   vanityUrl: string | null
   notificationRuleLimit: number | null
+  publicStatsCardEnabled: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
   active: boolean | null
@@ -53,6 +54,7 @@ export type GuildMaxAggregateOutputType = {
   ownerId: string | null
   vanityUrl: string | null
   notificationRuleLimit: number | null
+  publicStatsCardEnabled: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
   active: boolean | null
@@ -65,6 +67,7 @@ export type GuildCountAggregateOutputType = {
   ownerId: number
   vanityUrl: number
   notificationRuleLimit: number
+  publicStatsCardEnabled: number
   createdAt: number
   updatedAt: number
   active: number
@@ -87,6 +90,7 @@ export type GuildMinAggregateInputType = {
   ownerId?: true
   vanityUrl?: true
   notificationRuleLimit?: true
+  publicStatsCardEnabled?: true
   createdAt?: true
   updatedAt?: true
   active?: true
@@ -99,6 +103,7 @@ export type GuildMaxAggregateInputType = {
   ownerId?: true
   vanityUrl?: true
   notificationRuleLimit?: true
+  publicStatsCardEnabled?: true
   createdAt?: true
   updatedAt?: true
   active?: true
@@ -111,6 +116,7 @@ export type GuildCountAggregateInputType = {
   ownerId?: true
   vanityUrl?: true
   notificationRuleLimit?: true
+  publicStatsCardEnabled?: true
   createdAt?: true
   updatedAt?: true
   active?: true
@@ -210,6 +216,7 @@ export type GuildGroupByOutputType = {
   ownerId: string
   vanityUrl: string | null
   notificationRuleLimit: number
+  publicStatsCardEnabled: boolean
   createdAt: Date
   updatedAt: Date
   active: boolean
@@ -245,6 +252,7 @@ export type GuildWhereInput = {
   ownerId?: Prisma.StringFilter<"Guild"> | string
   vanityUrl?: Prisma.StringNullableFilter<"Guild"> | string | null
   notificationRuleLimit?: Prisma.IntFilter<"Guild"> | number
+  publicStatsCardEnabled?: Prisma.BoolFilter<"Guild"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Guild"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Guild"> | Date | string
   active?: Prisma.BoolFilter<"Guild"> | boolean
@@ -270,6 +278,7 @@ export type GuildOrderByWithRelationInput = {
   ownerId?: Prisma.SortOrder
   vanityUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   notificationRuleLimit?: Prisma.SortOrder
+  publicStatsCardEnabled?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   active?: Prisma.SortOrder
@@ -298,6 +307,7 @@ export type GuildWhereUniqueInput = Prisma.AtLeast<{
   icon?: Prisma.StringNullableFilter<"Guild"> | string | null
   ownerId?: Prisma.StringFilter<"Guild"> | string
   notificationRuleLimit?: Prisma.IntFilter<"Guild"> | number
+  publicStatsCardEnabled?: Prisma.BoolFilter<"Guild"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Guild"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Guild"> | Date | string
   active?: Prisma.BoolFilter<"Guild"> | boolean
@@ -323,6 +333,7 @@ export type GuildOrderByWithAggregationInput = {
   ownerId?: Prisma.SortOrder
   vanityUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   notificationRuleLimit?: Prisma.SortOrder
+  publicStatsCardEnabled?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   active?: Prisma.SortOrder
@@ -343,6 +354,7 @@ export type GuildScalarWhereWithAggregatesInput = {
   ownerId?: Prisma.StringWithAggregatesFilter<"Guild"> | string
   vanityUrl?: Prisma.StringNullableWithAggregatesFilter<"Guild"> | string | null
   notificationRuleLimit?: Prisma.IntWithAggregatesFilter<"Guild"> | number
+  publicStatsCardEnabled?: Prisma.BoolWithAggregatesFilter<"Guild"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Guild"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Guild"> | Date | string
   active?: Prisma.BoolWithAggregatesFilter<"Guild"> | boolean
@@ -355,6 +367,7 @@ export type GuildCreateInput = {
   ownerId: string
   vanityUrl?: string | null
   notificationRuleLimit?: number
+  publicStatsCardEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -380,6 +393,7 @@ export type GuildUncheckedCreateInput = {
   ownerId: string
   vanityUrl?: string | null
   notificationRuleLimit?: number
+  publicStatsCardEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -405,6 +419,7 @@ export type GuildUpdateInput = {
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -430,6 +445,7 @@ export type GuildUncheckedUpdateInput = {
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -455,6 +471,7 @@ export type GuildCreateManyInput = {
   ownerId: string
   vanityUrl?: string | null
   notificationRuleLimit?: number
+  publicStatsCardEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -467,6 +484,7 @@ export type GuildUpdateManyMutationInput = {
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -479,6 +497,7 @@ export type GuildUncheckedUpdateManyInput = {
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -491,6 +510,7 @@ export type GuildCountOrderByAggregateInput = {
   ownerId?: Prisma.SortOrder
   vanityUrl?: Prisma.SortOrder
   notificationRuleLimit?: Prisma.SortOrder
+  publicStatsCardEnabled?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   active?: Prisma.SortOrder
@@ -507,6 +527,7 @@ export type GuildMaxOrderByAggregateInput = {
   ownerId?: Prisma.SortOrder
   vanityUrl?: Prisma.SortOrder
   notificationRuleLimit?: Prisma.SortOrder
+  publicStatsCardEnabled?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   active?: Prisma.SortOrder
@@ -519,6 +540,7 @@ export type GuildMinOrderByAggregateInput = {
   ownerId?: Prisma.SortOrder
   vanityUrl?: Prisma.SortOrder
   notificationRuleLimit?: Prisma.SortOrder
+  publicStatsCardEnabled?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   active?: Prisma.SortOrder
@@ -554,12 +576,12 @@ export type IntFieldUpdateOperationsInput = {
   divide?: number
 }
 
-export type DateTimeFieldUpdateOperationsInput = {
-  set?: Date | string
-}
-
 export type BoolFieldUpdateOperationsInput = {
   set?: boolean
+}
+
+export type DateTimeFieldUpdateOperationsInput = {
+  set?: Date | string
 }
 
 export type GuildCreateNestedOneWithoutRolesInput = {
@@ -753,6 +775,7 @@ export type GuildCreateWithoutRolesInput = {
   ownerId: string
   vanityUrl?: string | null
   notificationRuleLimit?: number
+  publicStatsCardEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -777,6 +800,7 @@ export type GuildUncheckedCreateWithoutRolesInput = {
   ownerId: string
   vanityUrl?: string | null
   notificationRuleLimit?: number
+  publicStatsCardEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -817,6 +841,7 @@ export type GuildUpdateWithoutRolesInput = {
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -841,6 +866,7 @@ export type GuildUncheckedUpdateWithoutRolesInput = {
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -865,6 +891,7 @@ export type GuildCreateWithoutMembersInput = {
   ownerId: string
   vanityUrl?: string | null
   notificationRuleLimit?: number
+  publicStatsCardEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -889,6 +916,7 @@ export type GuildUncheckedCreateWithoutMembersInput = {
   ownerId: string
   vanityUrl?: string | null
   notificationRuleLimit?: number
+  publicStatsCardEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -929,6 +957,7 @@ export type GuildUpdateWithoutMembersInput = {
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -953,6 +982,7 @@ export type GuildUncheckedUpdateWithoutMembersInput = {
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -977,6 +1007,7 @@ export type GuildCreateWithoutTimersInput = {
   ownerId: string
   vanityUrl?: string | null
   notificationRuleLimit?: number
+  publicStatsCardEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1001,6 +1032,7 @@ export type GuildUncheckedCreateWithoutTimersInput = {
   ownerId: string
   vanityUrl?: string | null
   notificationRuleLimit?: number
+  publicStatsCardEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1041,6 +1073,7 @@ export type GuildUpdateWithoutTimersInput = {
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1065,6 +1098,7 @@ export type GuildUncheckedUpdateWithoutTimersInput = {
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1089,6 +1123,7 @@ export type GuildCreateWithoutTimerHistoryEntriesInput = {
   ownerId: string
   vanityUrl?: string | null
   notificationRuleLimit?: number
+  publicStatsCardEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1113,6 +1148,7 @@ export type GuildUncheckedCreateWithoutTimerHistoryEntriesInput = {
   ownerId: string
   vanityUrl?: string | null
   notificationRuleLimit?: number
+  publicStatsCardEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1153,6 +1189,7 @@ export type GuildUpdateWithoutTimerHistoryEntriesInput = {
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1177,6 +1214,7 @@ export type GuildUncheckedUpdateWithoutTimerHistoryEntriesInput = {
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1201,6 +1239,7 @@ export type GuildCreateWithoutLootSubmissionsInput = {
   ownerId: string
   vanityUrl?: string | null
   notificationRuleLimit?: number
+  publicStatsCardEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1225,6 +1264,7 @@ export type GuildUncheckedCreateWithoutLootSubmissionsInput = {
   ownerId: string
   vanityUrl?: string | null
   notificationRuleLimit?: number
+  publicStatsCardEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1265,6 +1305,7 @@ export type GuildUpdateWithoutLootSubmissionsInput = {
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1289,6 +1330,7 @@ export type GuildUncheckedUpdateWithoutLootSubmissionsInput = {
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1313,6 +1355,7 @@ export type GuildCreateWithoutReservationsInput = {
   ownerId: string
   vanityUrl?: string | null
   notificationRuleLimit?: number
+  publicStatsCardEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1337,6 +1380,7 @@ export type GuildUncheckedCreateWithoutReservationsInput = {
   ownerId: string
   vanityUrl?: string | null
   notificationRuleLimit?: number
+  publicStatsCardEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1377,6 +1421,7 @@ export type GuildUpdateWithoutReservationsInput = {
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1401,6 +1446,7 @@ export type GuildUncheckedUpdateWithoutReservationsInput = {
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1425,6 +1471,7 @@ export type GuildCreateWithoutNotificationRulesInput = {
   ownerId: string
   vanityUrl?: string | null
   notificationRuleLimit?: number
+  publicStatsCardEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1449,6 +1496,7 @@ export type GuildUncheckedCreateWithoutNotificationRulesInput = {
   ownerId: string
   vanityUrl?: string | null
   notificationRuleLimit?: number
+  publicStatsCardEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1489,6 +1537,7 @@ export type GuildUpdateWithoutNotificationRulesInput = {
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1513,6 +1562,7 @@ export type GuildUncheckedUpdateWithoutNotificationRulesInput = {
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1537,6 +1587,7 @@ export type GuildCreateWithoutDiscordChannelSnapshotsInput = {
   ownerId: string
   vanityUrl?: string | null
   notificationRuleLimit?: number
+  publicStatsCardEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1561,6 +1612,7 @@ export type GuildUncheckedCreateWithoutDiscordChannelSnapshotsInput = {
   ownerId: string
   vanityUrl?: string | null
   notificationRuleLimit?: number
+  publicStatsCardEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1601,6 +1653,7 @@ export type GuildUpdateWithoutDiscordChannelSnapshotsInput = {
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1625,6 +1678,7 @@ export type GuildUncheckedUpdateWithoutDiscordChannelSnapshotsInput = {
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1649,6 +1703,7 @@ export type GuildCreateWithoutDiscordSyncStateInput = {
   ownerId: string
   vanityUrl?: string | null
   notificationRuleLimit?: number
+  publicStatsCardEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1673,6 +1728,7 @@ export type GuildUncheckedCreateWithoutDiscordSyncStateInput = {
   ownerId: string
   vanityUrl?: string | null
   notificationRuleLimit?: number
+  publicStatsCardEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1713,6 +1769,7 @@ export type GuildUpdateWithoutDiscordSyncStateInput = {
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1737,6 +1794,7 @@ export type GuildUncheckedUpdateWithoutDiscordSyncStateInput = {
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1761,6 +1819,7 @@ export type GuildCreateWithoutEventsInput = {
   ownerId: string
   vanityUrl?: string | null
   notificationRuleLimit?: number
+  publicStatsCardEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1785,6 +1844,7 @@ export type GuildUncheckedCreateWithoutEventsInput = {
   ownerId: string
   vanityUrl?: string | null
   notificationRuleLimit?: number
+  publicStatsCardEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1825,6 +1885,7 @@ export type GuildUpdateWithoutEventsInput = {
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1849,6 +1910,7 @@ export type GuildUncheckedUpdateWithoutEventsInput = {
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1873,6 +1935,7 @@ export type GuildCreateWithoutMapTemplatesInput = {
   ownerId: string
   vanityUrl?: string | null
   notificationRuleLimit?: number
+  publicStatsCardEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1897,6 +1960,7 @@ export type GuildUncheckedCreateWithoutMapTemplatesInput = {
   ownerId: string
   vanityUrl?: string | null
   notificationRuleLimit?: number
+  publicStatsCardEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1937,6 +2001,7 @@ export type GuildUpdateWithoutMapTemplatesInput = {
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1961,6 +2026,7 @@ export type GuildUncheckedUpdateWithoutMapTemplatesInput = {
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1985,6 +2051,7 @@ export type GuildCreateWithoutNpcKillStatsInput = {
   ownerId: string
   vanityUrl?: string | null
   notificationRuleLimit?: number
+  publicStatsCardEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -2009,6 +2076,7 @@ export type GuildUncheckedCreateWithoutNpcKillStatsInput = {
   ownerId: string
   vanityUrl?: string | null
   notificationRuleLimit?: number
+  publicStatsCardEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -2049,6 +2117,7 @@ export type GuildUpdateWithoutNpcKillStatsInput = {
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2073,6 +2142,7 @@ export type GuildUncheckedUpdateWithoutNpcKillStatsInput = {
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2097,6 +2167,7 @@ export type GuildCreateWithoutGuildKillSummaryInput = {
   ownerId: string
   vanityUrl?: string | null
   notificationRuleLimit?: number
+  publicStatsCardEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -2121,6 +2192,7 @@ export type GuildUncheckedCreateWithoutGuildKillSummaryInput = {
   ownerId: string
   vanityUrl?: string | null
   notificationRuleLimit?: number
+  publicStatsCardEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -2161,6 +2233,7 @@ export type GuildUpdateWithoutGuildKillSummaryInput = {
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2185,6 +2258,7 @@ export type GuildUncheckedUpdateWithoutGuildKillSummaryInput = {
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2339,6 +2413,7 @@ export type GuildSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   ownerId?: boolean
   vanityUrl?: boolean
   notificationRuleLimit?: boolean
+  publicStatsCardEnabled?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   active?: boolean
@@ -2365,6 +2440,7 @@ export type GuildSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   ownerId?: boolean
   vanityUrl?: boolean
   notificationRuleLimit?: boolean
+  publicStatsCardEnabled?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   active?: boolean
@@ -2377,6 +2453,7 @@ export type GuildSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   ownerId?: boolean
   vanityUrl?: boolean
   notificationRuleLimit?: boolean
+  publicStatsCardEnabled?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   active?: boolean
@@ -2389,12 +2466,13 @@ export type GuildSelectScalar = {
   ownerId?: boolean
   vanityUrl?: boolean
   notificationRuleLimit?: boolean
+  publicStatsCardEnabled?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   active?: boolean
 }
 
-export type GuildOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "icon" | "ownerId" | "vanityUrl" | "notificationRuleLimit" | "createdAt" | "updatedAt" | "active", ExtArgs["result"]["guild"]>
+export type GuildOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "icon" | "ownerId" | "vanityUrl" | "notificationRuleLimit" | "publicStatsCardEnabled" | "createdAt" | "updatedAt" | "active", ExtArgs["result"]["guild"]>
 export type GuildInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   roles?: boolean | Prisma.Guild$rolesArgs<ExtArgs>
   members?: boolean | Prisma.Guild$membersArgs<ExtArgs>
@@ -2438,6 +2516,7 @@ export type $GuildPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     ownerId: string
     vanityUrl: string | null
     notificationRuleLimit: number
+    publicStatsCardEnabled: boolean
     createdAt: Date
     updatedAt: Date
     active: boolean
@@ -2883,6 +2962,7 @@ export interface GuildFieldRefs {
   readonly ownerId: Prisma.FieldRef<"Guild", 'String'>
   readonly vanityUrl: Prisma.FieldRef<"Guild", 'String'>
   readonly notificationRuleLimit: Prisma.FieldRef<"Guild", 'Int'>
+  readonly publicStatsCardEnabled: Prisma.FieldRef<"Guild", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"Guild", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Guild", 'DateTime'>
   readonly active: Prisma.FieldRef<"Guild", 'Boolean'>

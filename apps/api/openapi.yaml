@@ -5405,6 +5405,52 @@ paths:
       summary: Get kill statistics for a specific guild member
       tags:
         - kills
+  /guilds/{guildId}/stats-card/refresh:
+    post:
+      description: Regenerate the public guild stats card and update the cached PNG.
+      operationId: AuthenticatedGuildStatsCardController_refreshStatsCard
+      parameters:
+        - name: guildId
+          required: true
+          in: path
+          description: Guild ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Stats card refreshed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RefreshStatsCardResponseDto_Output"
+        "404":
+          description: Guild not found or card disabled
+        "429":
+          description: Stats card refresh rate limited
+      security:
+        - bearer: []
+      summary: Refresh public guild stats card
+      tags:
+        - guild-stats-card
+  /public/guilds/{guildId}/stats-card.png:
+    get:
+      description: Generate a public PNG image with lightweight loot statistics for a guild.
+      operationId: PublicGuildStatsCardController_getStatsCard
+      parameters:
+        - name: guildId
+          required: true
+          in: path
+          description: Guild ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: PNG stats card
+        "404":
+          description: Guild not found
+      summary: Get public guild loot stats card
+      tags:
+        - public-guild-stats-card
 info:
   title: Lootlog API
   description: The Lootlog API documentation
@@ -5521,6 +5567,8 @@ components:
           nullable: true
         ownerId:
           type: string
+        publicStatsCardEnabled:
+          type: boolean
         hasLootlogAccess:
           type: boolean
         isAccessDataStale:
@@ -5529,6 +5577,7 @@ components:
         - id
         - name
         - ownerId
+        - publicStatsCardEnabled
         - hasLootlogAccess
         - isAccessDataStale
     UpdateUserPreferencesDto:
@@ -6560,10 +6609,13 @@ components:
           nullable: true
         ownerId:
           type: string
+        publicStatsCardEnabled:
+          type: boolean
       required:
         - id
         - name
         - ownerId
+        - publicStatsCardEnabled
     UserGuildPermissionsDto_Output:
       type: object
       properties:
@@ -6644,16 +6696,22 @@ components:
           nullable: true
         ownerId:
           type: string
+        publicStatsCardEnabled:
+          type: boolean
       required:
         - id
         - name
         - ownerId
+        - publicStatsCardEnabled
     UpdateGuildConfigDto:
       type: object
       properties:
         vanityUrl:
           type: string
           minLength: 1
+          nullable: true
+        publicStatsCardEnabled:
+          type: boolean
     DiscordGuildSyncStateResponseDto:
       type: object
       properties:
@@ -15225,6 +15283,13 @@ components:
         - overview
         - npcs
         - pagination
+    RefreshStatsCardResponseDto_Output:
+      type: object
+      properties:
+        nextRefreshAt:
+          type: string
+      required:
+        - nextRefreshAt
     JsonValue:
       anyOf:
         - type: string

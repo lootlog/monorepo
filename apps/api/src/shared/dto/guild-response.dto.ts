@@ -7,6 +7,7 @@ const GuildResponseSchema = z.object({
   icon: z.string().nullable().optional(),
   vanityUrl: z.string().nullable().optional(),
   ownerId: z.string(),
+  publicStatsCardEnabled: z.boolean(),
 });
 
 export class GuildResponseDto extends createZodDto(GuildResponseSchema) {}
