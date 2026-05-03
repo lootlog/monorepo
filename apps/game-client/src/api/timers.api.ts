@@ -77,6 +77,7 @@ export type CreateManualTimerOptions = {
   maxSeconds?: number;
   lvl?: number;
   prof?: string;
+  type?: CreateManualTimerDto["type"];
   world: string;
   guildIds: string[];
   customMinSpawnTime?: Date;
@@ -130,6 +131,9 @@ export async function createManualTimer({
         }),
         ...(rest.prof !== undefined && {
           prof: rest.prof,
+        }),
+        ...(rest.type !== undefined && {
+          type: rest.type,
         }),
         world: rest.world,
         ...(rest.customMinSpawnTime && {

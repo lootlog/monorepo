@@ -1261,7 +1261,7 @@ export class TimersService implements OnModuleInit {
           location: "",
           wt: "",
           lvl: data.lvl ?? 0,
-          type: "",
+          type: data.type ?? "",
           icon: "",
           margonemType: TIMER_TYPES.CUSTOM_MANUAL,
         },
@@ -1522,16 +1522,18 @@ export class TimersService implements OnModuleInit {
     }
   }
 
-  emitUpdateTimer(payload: Timer) {
+  emitUpdateTimer(payload: TimerWithOptionalMember) {
+    const response = this.mapTimerResponse(payload);
+
     this.amqpConnection.publish(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.GUILDS_TIMERS_UPDATE,
-      payload,
+      response,
     );
     this.amqpConnection.publish(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.NOTIFICATIONS_TIMER_UPDATED,
-      payload,
+      response,
     );
   }
 

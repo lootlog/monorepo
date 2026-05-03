@@ -104,6 +104,8 @@
     "namePlaceholder": "np. Młody Smok",
     "lvlLabel": "Poziom",
     "lvlPlaceholder": "np. 120",
+    "typeLabel": "Typ",
+    "typePlaceholder": "Bez typu",
     "minDurationLabel": "Minimalny czas (max 300h)",
     "minDurationPlaceholder": "np. 2h 30m 45s",
     "maxDurationLabel": "Maksymalny czas (max 300h)",

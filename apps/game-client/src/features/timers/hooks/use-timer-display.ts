@@ -3,6 +3,28 @@ import type { Timer } from "@/api/timers.api";
 import { useTimersStore } from "@/store/timers.store";
 import { calculateTimeLeft, getTimerColorConfig } from "../utils/timer-helpers";
 
+const MANUAL_TIMER_MARGONEM_TYPE = 999;
+
+const getTimerShortname = (timer: Timer, showType: boolean) => {
+  if (!showType) {
+    return "";
+  }
+
+  const typeShortname = NPC_NAMES[timer.npc.type]?.shortname;
+  const manualTimer =
+    Number(timer.npc.margonemType) === MANUAL_TIMER_MARGONEM_TYPE;
+
+  if (manualTimer && typeShortname) {
+    return `[M][${typeShortname}]`;
+  }
+
+  if (manualTimer) {
+    return "[M]";
+  }
+
+  return `[${typeShortname ?? "M"}]`;
+};
+
 export const useTimerDisplay = (
   timer: Timer,
   minTimeLeft: number,
@@ -29,9 +51,7 @@ export const useTimerDisplay = (
 
   const resetIndicator = timer.wasReset ? "[R] " : "";
 
-  const shortname = displayConfig.showType
-    ? `[${NPC_NAMES[timer.npc.type]?.shortname ?? "M"}]`
-    : "";
+  const shortname = getTimerShortname(timer, displayConfig.showType);
 
   const npcDetails =
     displayConfig.showLevel && timer.npc.lvl > 0 && timer.npc.prof
