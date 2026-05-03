@@ -16,6 +16,7 @@ const makeGuild = (
   icon: "icon.png",
   vanityUrl: "test-guild",
   ownerId: "owner-1",
+  publicStatsCardEnabled: false,
   ...overrides,
 });
 
