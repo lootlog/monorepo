@@ -36,7 +36,8 @@ const CARD_WIDTH = 1200;
 const CARD_HEIGHT = 630;
 const CARD_RADIUS = 8;
 const CACHE_TTL_SECONDS = 86_400;
-const CACHE_VERSION = "v1";
+const CACHE_VERSION = "v2";
+const FONT_FAMILY = "DejaVu Sans, Arial, sans-serif";
 const ICON_SIZE = 112;
 const ICON_LEFT = 80;
 const ICON_TOP = 78;
@@ -249,13 +250,13 @@ export class PublicGuildStatsCardService {
         <rect x="${ICON_LEFT}" y="${ICON_TOP}" width="${ICON_SIZE}" height="${ICON_SIZE}" rx="26" fill="#182238" stroke="white" stroke-opacity="0.20" stroke-width="3"/>
         ${
           showInitials
-            ? `<text x="${ICON_LEFT + ICON_SIZE / 2}" y="${ICON_TOP + 70}" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="38" font-weight="800" fill="#F8D76D">${this.escapeSvg(initials)}</text>`
+            ? `<text x="${ICON_LEFT + ICON_SIZE / 2}" y="${ICON_TOP + 70}" text-anchor="middle" font-family="${FONT_FAMILY}" font-size="38" font-weight="800" fill="#F8D76D">${this.escapeSvg(initials)}</text>`
             : ""
         }
 
-        <text x="222" y="134" font-family="Inter, Arial, sans-serif" font-size="52" font-weight="850" fill="#FFFFFF">${this.escapeSvg(guildName)}</text>
-        <text x="224" y="176" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700" letter-spacing="3" fill="#AAB4C8">STATYSTYKI - OSTATNIE 30 DNI</text>
-        <text x="1028" y="104" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" fill="#FFFFFF" fill-opacity="0.58">lootlog.pl</text>
+        <text x="222" y="134" font-family="${FONT_FAMILY}" font-size="52" font-weight="850" fill="#FFFFFF">${this.escapeSvg(guildName)}</text>
+        <text x="224" y="176" font-family="${FONT_FAMILY}" font-size="18" font-weight="700" letter-spacing="3" fill="#AAB4C8">STATYSTYKI - OSTATNIE 30 DNI</text>
+        <text x="1028" y="104" font-family="${FONT_FAMILY}" font-size="18" font-weight="800" fill="#FFFFFF" fill-opacity="0.58">lootlog.pl</text>
 
         ${this.metricBlock(82, 314, "LOOTY", data.stats.totalLoots, "#FFFFFF", "rgba(255,255,255,0.10)", "rgba(255,255,255,0.15)")}
         ${this.metricBlock(430, 314, "LEGENDY", data.stats.legendaryItems, "#FFE28A", "rgba(255,214,95,0.13)", "rgba(255,214,95,0.26)")}
@@ -276,8 +277,8 @@ export class PublicGuildStatsCardService {
     return `
       <g>
         <rect x="${x}" y="${y}" width="312" height="176" rx="26" fill="${fill}" stroke="${stroke}" stroke-width="1"/>
-        <text x="${x + 30}" y="${y + 58}" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" letter-spacing="3" fill="#AAB4C8">${label}</text>
-        <text x="${x + 30}" y="${y + 132}" font-family="Inter, Arial, sans-serif" font-size="68" font-weight="900" fill="${valueColor}">${this.formatNumber(value)}</text>
+        <text x="${x + 30}" y="${y + 58}" font-family="${FONT_FAMILY}" font-size="18" font-weight="800" letter-spacing="3" fill="#AAB4C8">${label}</text>
+        <text x="${x + 30}" y="${y + 132}" font-family="${FONT_FAMILY}" font-size="68" font-weight="900" fill="${valueColor}">${this.formatNumber(value)}</text>
       </g>
     `;
   }

@@ -122,7 +122,7 @@ describe("PublicGuildStatsCardService", () => {
 
     expect(result.subarray(1, 4).toString()).toBe("PNG");
     expect(redis.set).toHaveBeenCalledWith(
-      "guild-stats-card:guild-1:v1",
+      "guild-stats-card:guild-1:v2",
       result.toString("base64"),
       86_400,
     );
@@ -173,7 +173,7 @@ describe("PublicGuildStatsCardService", () => {
 
     expect(prisma.$queryRaw).toHaveBeenCalledTimes(1);
     expect(redis.set).toHaveBeenCalledWith(
-      "guild-stats-card:guild-1:v1",
+      "guild-stats-card:guild-1:v2",
       expect.any(String),
       86_400,
     );
@@ -204,7 +204,7 @@ describe("PublicGuildStatsCardService", () => {
       300,
     );
     expect(redis.set).toHaveBeenCalledWith(
-      "guild-stats-card:guild-1:v1",
+      "guild-stats-card:guild-1:v2",
       expect.any(String),
       86_400,
     );
