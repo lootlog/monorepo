@@ -5,6 +5,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   appendMutedNpc,
   appendMutedPlayer,
   createMutedNpcPreference,
@@ -78,16 +83,23 @@ export const NotificationMuteMenu: FC<NotificationMuteMenuProps> = ({
 
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          aria-label={t("actions.muteOptionsAria")}
-          disabled={isDisabled}
-          className="ll:size-7 ll:px-0"
-        >
-          <BellOff size={12} />
-        </Button>
-      </PopoverTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <PopoverTrigger asChild>
+            <Button
+              variant="ghost"
+              aria-label={t("actions.muteOptionsAria")}
+              disabled={isDisabled}
+              className="ll:size-7 ll:px-0"
+            >
+              <BellOff size={12} />
+            </Button>
+          </PopoverTrigger>
+        </TooltipTrigger>
+        <TooltipContent side="top">
+          {t("actions.muteOptionsAria")}
+        </TooltipContent>
+      </Tooltip>
       <PopoverContent
         align="end"
         className="ll:w-52 ll:p-1 ll:flex ll:flex-col ll:gap-1"

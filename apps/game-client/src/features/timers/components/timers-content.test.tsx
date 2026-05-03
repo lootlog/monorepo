@@ -85,12 +85,14 @@ describe("TimersContent", () => {
         hiddenTimers={["Mushita"]}
         areFiltersActive
         colorStatistics={[{ color: "red", total: 1, active: 1, name: "Red" }]}
+        guildId="guild-1"
         isGrouping={false}
         allowWorldSelection
         timerFiltersEnabled
         isUnderBag={false}
         minColumnWidth={180}
         onAddTimer={onAddTimer}
+        world="pandora"
       />,
     );
 
@@ -108,7 +110,10 @@ describe("TimersContent", () => {
     await user.click(screen.getByRole("button", { name: "TimersFooter" }));
     expect(footerSpy).toHaveBeenCalledWith(
       expect.objectContaining({
+        guildId: "guild-1",
+        isGrouping: false,
         onAddTimer,
+        world: "pandora",
       }),
     );
   });
@@ -121,12 +126,14 @@ describe("TimersContent", () => {
         hiddenTimers={[]}
         areFiltersActive={false}
         colorStatistics={[]}
+        guildId="guild-1"
         isGrouping
         allowWorldSelection={false}
         timerFiltersEnabled={false}
         isUnderBag
         minColumnWidth={120}
         onAddTimer={vi.fn()}
+        world="pandora"
         compactView
       />,
     );

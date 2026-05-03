@@ -15,6 +15,7 @@ export class TimerSettingsService {
     displayConfig: Prisma.JsonValue;
     customColors: Prisma.JsonValue;
     timersColors: Prisma.JsonValue;
+    alwaysVisibleExpiredTimers: Prisma.JsonValue;
     defaultColorNames: Prisma.JsonValue;
     overriddenDefaultColors: Prisma.JsonValue;
     hiddenDefaultColors: unknown;
@@ -30,6 +31,7 @@ export class TimerSettingsService {
     displayConfig: Prisma.JsonValue;
     customColors: Prisma.JsonValue;
     timersColors: Prisma.JsonValue;
+    alwaysVisibleExpiredTimers: Prisma.JsonValue;
     defaultColorNames: Prisma.JsonValue;
     overriddenDefaultColors: Prisma.JsonValue;
     hiddenDefaultColors: string[];
@@ -225,6 +227,7 @@ export class TimerSettingsService {
       },
       customColors: {},
       timersColors: {},
+      alwaysVisibleExpiredTimers: {},
       defaultColorNames: {},
       overriddenDefaultColors: {},
       hiddenDefaultColors: [],
@@ -248,6 +251,8 @@ export class TimerSettingsService {
       displayConfig: (localData.displayConfig as Record<string, unknown>) ?? {},
       customColors: (localData.customColors as Record<string, unknown>) ?? {},
       timersColors: (localData.timersColors as Record<string, unknown>) ?? {},
+      alwaysVisibleExpiredTimers:
+        (localData.alwaysVisibleExpiredTimers as Record<string, unknown>) ?? {},
       defaultColorNames:
         (localData.defaultColorNames as Record<string, unknown>) ?? {},
       overriddenDefaultColors:

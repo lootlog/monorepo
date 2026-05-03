@@ -99,6 +99,10 @@ vi.mock("lucide-react", () => ({
   ),
 }));
 
+vi.mock("./global-timer-history-popover", () => ({
+  GlobalTimerHistoryPopover: () => null,
+}));
+
 import { TimersActions } from "./timers-actions";
 import { TimersFilters } from "./timers-filters";
 import { TimersUnderBagActions } from "./timers-under-bag-actions";

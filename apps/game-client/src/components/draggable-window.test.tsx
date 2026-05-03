@@ -495,6 +495,124 @@ describe("DraggableWindow", () => {
     });
   });
 
+  it("does not undershoot nested scroll area height when rendered content uses fractional pixels", async () => {
+    const { container } = render(
+      <DraggableWindow
+        id="notifications"
+        title="Powiadomienia"
+        resizable={false}
+        minWidth={242}
+        minHeight={88}
+        heightMode="auto-up-to-max"
+        maxContentHeight={180}
+      >
+        {createScrollAreaChildren()}
+      </DraggableWindow>,
+    );
+
+    const {
+      windowElement,
+      windowBody,
+      titleBarElement,
+      contentElement,
+      viewportElement,
+      viewportContent,
+      measuredContentElement,
+    } = getNestedScrollAreaElements(container);
+
+    Object.defineProperty(windowBody, "offsetHeight", {
+      configurable: true,
+      value: 150,
+    });
+    Object.defineProperty(titleBarElement, "offsetHeight", {
+      configurable: true,
+      value: 50,
+    });
+    Object.defineProperty(contentElement, "clientHeight", {
+      configurable: true,
+      value: 100,
+    });
+    Object.defineProperty(measuredContentElement, "scrollHeight", {
+      configurable: true,
+      value: 160,
+    });
+    Object.defineProperty(viewportContent, "scrollHeight", {
+      configurable: true,
+      value: 160,
+    });
+    Object.defineProperty(viewportElement, "scrollHeight", {
+      configurable: true,
+      value: 160,
+    });
+    mockElementRenderedHeight(viewportContent, 159.2);
+
+    await triggerResizeObservers();
+    await flushAnimationFrame();
+
+    await waitFor(() => {
+      expect(windowElement.style.height).toBe("210px");
+    });
+  });
+
+  it("does not undershoot nested scroll area height while the window opening scale transform is active", async () => {
+    const { container } = render(
+      <DraggableWindow
+        id="notifications"
+        title="Powiadomienia"
+        resizable={false}
+        minWidth={242}
+        minHeight={88}
+        heightMode="auto-up-to-max"
+        maxContentHeight={180}
+      >
+        {createScrollAreaChildren()}
+      </DraggableWindow>,
+    );
+
+    const {
+      windowElement,
+      windowBody,
+      titleBarElement,
+      contentElement,
+      viewportElement,
+      viewportContent,
+      measuredContentElement,
+    } = getNestedScrollAreaElements(container);
+
+    Object.defineProperty(windowBody, "offsetHeight", {
+      configurable: true,
+      value: 150,
+    });
+    Object.defineProperty(titleBarElement, "offsetHeight", {
+      configurable: true,
+      value: 50,
+    });
+    Object.defineProperty(contentElement, "clientHeight", {
+      configurable: true,
+      value: 100,
+    });
+    Object.defineProperty(measuredContentElement, "scrollHeight", {
+      configurable: true,
+      value: 160,
+    });
+    Object.defineProperty(viewportContent, "scrollHeight", {
+      configurable: true,
+      value: 160,
+    });
+    Object.defineProperty(viewportElement, "scrollHeight", {
+      configurable: true,
+      value: 160,
+    });
+    mockElementRenderedHeight(viewportContent, 158);
+
+    await triggerResizeObservers();
+    await flushAnimationFrame();
+
+    await waitFor(() => {
+      expect(windowElement.style.height).toBe("210px");
+    });
+  });
+
   it("shrinks with the content when nested scroll area content gets smaller", async () => {
     const { container } = render(
       <DraggableWindow

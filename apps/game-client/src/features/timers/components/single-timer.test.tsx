@@ -294,6 +294,6 @@ describe("SingleTimer", () => {
         timersGrouping: true,
       }),
     );
-    expect(screen.getByText("time:0")).toBeVisible();
+    expect(screen.getByText("time:-500")).toBeVisible();
   });
 });

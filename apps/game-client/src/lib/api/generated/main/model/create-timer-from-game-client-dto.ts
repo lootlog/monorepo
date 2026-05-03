@@ -5,6 +5,7 @@
  * The Lootlog API documentation
  * OpenAPI spec version: 1.0
  */
+import type { CreateTimerFromGameClientDtoActorCharacter } from './create-timer-from-game-client-dto-actor-character';
 import type { CreateTimerFromGameClientDtoNpc } from './create-timer-from-game-client-dto-npc';
 
 export interface CreateTimerFromGameClientDto {
@@ -22,4 +23,5 @@ export interface CreateTimerFromGameClientDto {
   characterId: string;
   /** @minLength 1 */
   accountId: string;
+  actorCharacter?: CreateTimerFromGameClientDtoActorCharacter;
 }

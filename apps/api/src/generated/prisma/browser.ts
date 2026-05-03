@@ -58,6 +58,11 @@ export type LootItem = Prisma.LootItemModel
  */
 export type PlayerSnapshot = Prisma.PlayerSnapshotModel
 /**
+ * Model TimerHistoryEntry
+ * 
+ */
+export type TimerHistoryEntry = Prisma.TimerHistoryEntryModel
+/**
  * Model LootPlayer
  * 
  */

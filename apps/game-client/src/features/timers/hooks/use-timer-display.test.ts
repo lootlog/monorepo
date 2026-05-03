@@ -94,6 +94,59 @@ describe("useTimerDisplay", () => {
     expect(result.current.shortname).toMatch(/^\[.*\]$/);
   });
 
+  it("shows manual and NPC type indicators for manual typed timers", () => {
+    const { result } = renderHook(() =>
+      useTimerDisplay(
+        createTimer({
+          npc: {
+            ...createTimer().npc,
+            type: NpcType.ELITE2,
+            margonemType: 999,
+          },
+        }),
+        5_000,
+        15_000,
+      ),
+    );
+
+    expect(result.current.shortname).toBe("[M][E2]");
+  });
+
+  it("shows only the manual indicator for manual timers without a known NPC type", () => {
+    const { result } = renderHook(() =>
+      useTimerDisplay(
+        createTimer({
+          npc: {
+            ...createTimer().npc,
+            type: NpcType.NPC,
+            margonemType: "999" as never,
+          },
+        }),
+        5_000,
+        15_000,
+      ),
+    );
+
+    expect(result.current.shortname).toBe("[M]");
+  });
+
+  it("keeps regular typed timer indicators unchanged", () => {
+    const { result } = renderHook(() =>
+      useTimerDisplay(
+        createTimer({
+          npc: {
+            ...createTimer().npc,
+            type: NpcType.ELITE2,
+          },
+        }),
+        5_000,
+        15_000,
+      ),
+    );
+
+    expect(result.current.shortname).toBe("[E2]");
+  });
+
   it("falls back to the max countdown when the min spawn time already passed and resolves overridden colors", () => {
     const { result } = renderHook(() =>
       useTimerDisplay(

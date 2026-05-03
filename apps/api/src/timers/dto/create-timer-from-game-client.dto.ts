@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { createZodDto } from "nestjs-zod";
 import { TIMER_LIMITS } from "src/timers/constants/timer-limits";
+import { TimerActorCharacterSchema } from "src/timers/dto/timer-actor-character.schema";
 
 const NpcSchema = z.object({
   id: z.number(),
@@ -31,6 +32,7 @@ const CreateTimerFromGameClientSchema = z.object({
   npc: NpcSchema,
   characterId: z.string().min(1),
   accountId: z.string().min(1),
+  actorCharacter: TimerActorCharacterSchema.optional(),
 });
 
 export class CreateTimerFromGameClientDto extends createZodDto(

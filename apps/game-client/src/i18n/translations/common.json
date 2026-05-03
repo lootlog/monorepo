@@ -44,6 +44,7 @@
   },
   "npcTypes": {
     "elite2": "Elita 2",
+    "elite3": "Elita 3",
     "hero": "Heros",
     "colossus": "Kolos",
     "titan": "Tytan",

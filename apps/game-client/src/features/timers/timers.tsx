@@ -15,7 +15,7 @@ import { useTimersFiltering } from "@/features/timers/hooks/use-timers-filtering
 import {
   mergeTimers,
   calculateTimeLeft,
-  filterTimersByRemovalTime,
+  filterTimersByExpiredVisibility,
 } from "@/features/timers/utils/timers-utils";
 import { checkFiltersActive } from "@/features/timers/utils/filters-utils";
 import { calculateColorStatistics } from "@/features/timers/utils/color-statistics";
@@ -37,10 +37,7 @@ export const Timers = () => {
   const world = guildId ? worldByGuildId[guildId] : undefined;
   const desiredWorld = world && allowWorldSelection ? world : defaultWorld;
 
-  const { data: timers } = useTimers({ world: desiredWorld });
-
   const open = useWindowsStore((state) => state.timers.open);
-  const toggleOpen = useWindowsStore((state) => state.toggleOpen);
   const setOpen = useWindowsStore((state) => state.setOpen);
 
   useTimersSocket();
@@ -62,7 +59,10 @@ export const Timers = () => {
     customColors,
     defaultColorNames,
     overriddenDefaultColors,
+    alwaysVisibleExpiredTimers,
   } = useTimersStore();
+
+  const { data: timers } = useTimers({ world: desiredWorld });
 
   const [showHiddenTimers, setShowHiddenTimers] = useState(false);
 
@@ -87,20 +87,26 @@ export const Timers = () => {
     : deduplicatedTimers.map((timer) => ({
         ...timer,
         members: timer.member ? [timer.member] : [],
+        actorCharactersByMemberId:
+          timer.member && timer.actorCharacter
+            ? { [String(timer.member.id)]: timer.actorCharacter }
+            : timer.actorCharactersByMemberId,
         minTimeLeft: 0,
         maxTimeLeft: 0,
       }));
 
   const withTimeLeft = calculateTimeLeft(merged);
 
-  const activeTimers = filterTimersByRemovalTime(
+  const activeTimers = filterTimersByExpiredVisibility(
     withTimeLeft,
     generalConfig.removeTimerAfterMs,
+    alwaysVisibleExpiredTimers,
   );
 
   const calculatedTimers = useTimersUpdate(
     activeTimers,
     generalConfig.removeTimerAfterMs,
+    alwaysVisibleExpiredTimers,
   );
 
   const areFiltersActive = checkFiltersActive(
@@ -124,6 +130,8 @@ export const Timers = () => {
     timersColors: timersColors as Record<string, string>,
     pinnedTimers: pinnedTimers[settingsKey] || [],
     sortOrder: timersSortOrder ?? "asc",
+    expiredTimersAtBottom: true,
+    removeTimerAfterMs: generalConfig.removeTimerAfterMs,
   });
 
   const colorStatistics = calculateColorStatistics(
@@ -133,6 +141,10 @@ export const Timers = () => {
     defaultColorNames as Record<string, string>,
     overriddenDefaultColors,
   );
+
+  const handleAddTimer = () => {
+    setOpen("add-timer", true, { guildId });
+  };
 
   if (generalConfig.timersUnderBag && gameInterface === "ni") {
     return (
@@ -158,12 +170,14 @@ export const Timers = () => {
           hiddenTimers={hiddenTimers[settingsKey] || []}
           areFiltersActive={areFiltersActive}
           colorStatistics={colorStatistics}
+          guildId={guildId}
           isGrouping={generalConfig.timersGrouping}
           allowWorldSelection={allowWorldSelection ?? false}
           timerFiltersEnabled={timerFiltersEnabled ?? false}
           isUnderBag={generalConfig.timersUnderBag}
           minColumnWidth={displayConfig.minColumnWidth}
-          onAddTimer={() => toggleOpen("add-timer")}
+          onAddTimer={handleAddTimer}
+          world={desiredWorld}
           compactView={generalConfig.compactView}
         />
       </UnderBagTimers>
@@ -201,12 +215,14 @@ export const Timers = () => {
             hiddenTimers={hiddenTimers[settingsKey] || []}
             areFiltersActive={areFiltersActive}
             colorStatistics={colorStatistics}
+            guildId={guildId}
             isGrouping={generalConfig.timersGrouping}
             allowWorldSelection={allowWorldSelection ?? false}
             timerFiltersEnabled={timerFiltersEnabled ?? false}
             isUnderBag={generalConfig.timersUnderBag}
             minColumnWidth={displayConfig.minColumnWidth}
-            onAddTimer={() => toggleOpen("add-timer")}
+            onAddTimer={handleAddTimer}
+            world={desiredWorld}
             compactView={generalConfig.compactView}
           />
         </div>

@@ -12,9 +12,20 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useDebounce } from "@/hooks/use-debounce";
 import { GuildSwitcher } from "@/components/guild-switcher";
-import type { SearchTimersNpcResponseDtoOutput } from "@/lib/api/generated/main/model";
+import {
+  CreateManualTimerDtoType,
+  type CreateManualTimerDto,
+  type SearchTimersNpcResponseDtoOutput,
+} from "@/lib/api/generated/main/model";
 import {
   getTimersControllerSearchNpcsWithTimerDataQueryKey,
   useTimersControllerSearchNpcsWithTimerData,
@@ -32,6 +43,22 @@ const SECONDS_IN_HOUR = 3600;
 const SECONDS_IN_MINUTE = 60;
 
 const MAX_NPC_NAME_LENGTH = 50;
+const MIN_NPC_LEVEL = 1;
+const MAX_NPC_LEVEL = 500;
+const EMPTY_NPC_TYPE_VALUE = "none";
+const MANUAL_TIMER_NPC_TYPES = [
+  CreateManualTimerDtoType.ELITE2,
+  CreateManualTimerDtoType.ELITE3,
+  CreateManualTimerDtoType.HERO,
+  CreateManualTimerDtoType.TITAN,
+] as const satisfies readonly NonNullable<CreateManualTimerDto["type"]>[];
+const manualTimerNpcTypeSet = new Set<string>(MANUAL_TIMER_NPC_TYPES);
+const MANUAL_TIMER_NPC_TYPE_TRANSLATION_KEYS = {
+  [CreateManualTimerDtoType.ELITE2]: "elite2",
+  [CreateManualTimerDtoType.ELITE3]: "elite3",
+  [CreateManualTimerDtoType.HERO]: "hero",
+  [CreateManualTimerDtoType.TITAN]: "titan",
+} as const satisfies Record<(typeof MANUAL_TIMER_NPC_TYPES)[number], string>;
 
 const formatSecondsToHHMMSS = (seconds: number): string => {
   const h = Math.floor(seconds / SECONDS_IN_HOUR);
@@ -54,6 +81,16 @@ const createFormSchema = (
         ),
       minDuration: z.string().optional(),
       maxDuration: z.string().optional(),
+      lvl: z.string().optional(),
+      type: z
+        .enum([
+          CreateManualTimerDtoType.ELITE2,
+          CreateManualTimerDtoType.ELITE3,
+          CreateManualTimerDtoType.HERO,
+          CreateManualTimerDtoType.TITAN,
+        ])
+        .or(z.literal(""))
+        .optional(),
       startDate: z.string().optional(),
       endDate: z.string().optional(),
     })
@@ -62,9 +99,28 @@ const createFormSchema = (
       const hasMaxDuration = data.maxDuration && data.maxDuration.length > 0;
       const hasStartDate = data.startDate && data.startDate.length > 0;
       const hasEndDate = data.endDate && data.endDate.length > 0;
+      const hasLvl = data.lvl && data.lvl.length > 0;
 
       const usingDurations = hasMinDuration || hasMaxDuration;
       const usingDates = hasStartDate || hasEndDate;
+
+      if (hasLvl && data.lvl) {
+        const lvl = Number(data.lvl);
+        if (
+          !Number.isInteger(lvl) ||
+          lvl < MIN_NPC_LEVEL ||
+          lvl > MAX_NPC_LEVEL
+        ) {
+          ctx.addIssue({
+            code: "custom",
+            message: t("addForm.validation.lvlRange", {
+              min: MIN_NPC_LEVEL,
+              max: MAX_NPC_LEVEL,
+            }),
+            path: ["lvl"],
+          });
+        }
+      }
 
       if (!usingDurations && !usingDates) {
         ctx.addIssue({
@@ -155,16 +211,19 @@ const createFormSchema = (
 
 type FormValues = z.infer<ReturnType<typeof createFormSchema>>;
 
-export const AddTimerForm: React.FC = () => {
+type AddTimerFormProps = {
+  initialGuildId?: string;
+};
+
+export const AddTimerForm: React.FC<AddTimerFormProps> = ({
+  initialGuildId,
+}) => {
   const { t } = useTranslation("timers");
   const { mutate: createManualTimer, isPending } = useCreateManualTimer();
   const world = Game.getWorldName();
   const characterId = String(Game.hero.id);
-  const {
-    selectedGuildIdsForTimersByCharId,
-    setSelectedGuildIdsForTimers,
-    guildIdByCharId,
-  } = useSettingsStore();
+  const { selectedGuildIdsForTimersByCharId, guildIdByCharId } =
+    useSettingsStore();
   const setOpen = useWindowsStore((state) => state.setOpen);
   const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds({
     query: {
@@ -179,6 +238,8 @@ export const AddTimerForm: React.FC = () => {
   const [customDatesEnabled, setCustomDatesEnabled] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [selectedGuildId, setSelectedGuildId] = useState<string>("");
+  const [selectedNpc, setSelectedNpc] =
+    useState<SearchTimersNpcResponseDtoOutput | null>(null);
   const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const debouncedSearch = useDebounce(searchQuery, 300);
 
@@ -215,10 +276,15 @@ export const AddTimerForm: React.FC = () => {
     const savedGuildIds = selectedGuildIdsForTimersByCharId[characterId] || [];
     const savedGuildId = savedGuildIds[0];
 
+    const isValidInitialGuild =
+      initialGuildId && guilds.some((guild) => guild.id === initialGuildId);
+
     const isValidSavedGuild =
       savedGuildId && guilds.some((guild) => guild.id === savedGuildId);
 
-    if (isValidSavedGuild) {
+    if (isValidInitialGuild) {
+      setSelectedGuildId(initialGuildId);
+    } else if (isValidSavedGuild) {
       setSelectedGuildId(savedGuildId);
     } else if (
       currentGuildId &&
@@ -229,13 +295,10 @@ export const AddTimerForm: React.FC = () => {
       setSelectedGuildId(guilds[0].id);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [characterId, selectedGuildIdsForTimersByCharId, guilds]);
+  }, [characterId, initialGuildId, selectedGuildIdsForTimersByCharId, guilds]);
 
   const handleGuildSelectionChange = (guildId: string) => {
     setSelectedGuildId(guildId);
-    if (characterId) {
-      setSelectedGuildIdsForTimers(characterId, [guildId]);
-    }
   };
 
   const {
@@ -250,6 +313,8 @@ export const AddTimerForm: React.FC = () => {
       name: "",
       minDuration: "",
       maxDuration: "",
+      lvl: "",
+      type: "",
       startDate: "",
       endDate: "",
     },
@@ -266,6 +331,14 @@ export const AddTimerForm: React.FC = () => {
     setValue("name", npc.name);
     setValue("minDuration", formatSecondsToHHMMSS(minSeconds));
     setValue("maxDuration", formatSecondsToHHMMSS(maxSeconds));
+    setValue("lvl", String(npc.lvl));
+    setValue(
+      "type",
+      manualTimerNpcTypeSet.has(npc.type)
+        ? (npc.type as NonNullable<CreateManualTimerDto["type"]>)
+        : "",
+    );
+    setSelectedNpc(npc);
     setSearchQuery("");
     setShowSuggestions(false);
     setSelectedIndex(-1);
@@ -325,6 +398,18 @@ export const AddTimerForm: React.FC = () => {
       guildIds: [selectedGuildId],
     };
 
+    if (data.lvl && data.lvl.length > 0) {
+      timerData.lvl = Number(data.lvl);
+    }
+
+    if (data.type) {
+      timerData.type = data.type;
+    }
+
+    if (selectedNpc && selectedNpc.name === data.name) {
+      timerData.prof = selectedNpc.prof;
+    }
+
     if (customDatesEnabled && data.startDate && data.endDate) {
       timerData.customMinSpawnTime = new Date(data.startDate);
       timerData.customMaxSpawnTime = new Date(data.endDate);
@@ -342,6 +427,8 @@ export const AddTimerForm: React.FC = () => {
 
   const startDate = watch("startDate");
   const endDate = watch("endDate");
+  const selectedNpcType = watch("type") || EMPTY_NPC_TYPE_VALUE;
+  const nameField = register("name");
 
   const hasSearchResults = npcResults && npcResults.length > 0;
   const showNoResults =
@@ -349,6 +436,7 @@ export const AddTimerForm: React.FC = () => {
 
   return (
     <form
+      noValidate
       onSubmit={handleSubmit(onSubmit)}
       className="ll:flex ll:flex-col ll:h-full ll:box-border ll:overflow-hidden ll:w-full"
     >
@@ -378,6 +466,7 @@ export const AddTimerForm: React.FC = () => {
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
+                  setSelectedNpc(null);
                   setShowSuggestions(true);
                 }}
                 onKeyDown={handleSearchKeyDown}
@@ -435,13 +524,72 @@ export const AddTimerForm: React.FC = () => {
                 autoComplete="off"
                 placeholder={t("addForm.namePlaceholder")}
                 maxLength={MAX_NPC_NAME_LENGTH}
-                {...register("name")}
+                {...nameField}
+                onChange={(event) => {
+                  setSelectedNpc(null);
+                  nameField.onChange(event);
+                }}
               />
               {errors.name && (
                 <p className="ll:text-xs ll:text-red-500 ll:mt-1">
                   {errors.name.message}
                 </p>
               )}
+            </div>
+
+            <div className="ll:grid ll:grid-cols-1 ll:gap-2 ll:sm:grid-cols-2 ll:w-full ll:box-border">
+              <div className="ll:min-w-0">
+                <Label htmlFor="lvl">{t("addForm.lvlLabel")}</Label>
+                <Input
+                  id="lvl"
+                  type="number"
+                  min={MIN_NPC_LEVEL}
+                  max={MAX_NPC_LEVEL}
+                  step={1}
+                  autoComplete="off"
+                  placeholder={t("addForm.lvlPlaceholder")}
+                  {...register("lvl")}
+                />
+                {errors.lvl && (
+                  <p className="ll:text-xs ll:text-red-500 ll:mt-1">
+                    {errors.lvl.message}
+                  </p>
+                )}
+              </div>
+              <div className="ll:min-w-0">
+                <Label htmlFor="npcType">{t("addForm.typeLabel")}</Label>
+                <Select
+                  value={selectedNpcType}
+                  onValueChange={(value) => {
+                    setValue(
+                      "type",
+                      value === EMPTY_NPC_TYPE_VALUE
+                        ? ""
+                        : (value as NonNullable<CreateManualTimerDto["type"]>),
+                    );
+                  }}
+                  disabled={isPending}
+                >
+                  <SelectTrigger
+                    id="npcType"
+                    aria-label={t("addForm.typeLabel")}
+                  >
+                    <SelectValue placeholder={t("addForm.typePlaceholder")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={EMPTY_NPC_TYPE_VALUE}>
+                      {t("addForm.typePlaceholder")}
+                    </SelectItem>
+                    {MANUAL_TIMER_NPC_TYPES.map((npcType) => (
+                      <SelectItem key={npcType} value={npcType}>
+                        {t(
+                          `common:npcTypes.${MANUAL_TIMER_NPC_TYPE_TRANSLATION_KEYS[npcType]}`,
+                        )}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="ll:w-full ll:box-border">

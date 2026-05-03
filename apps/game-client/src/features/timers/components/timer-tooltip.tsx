@@ -22,7 +22,15 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
   const levelSuffix = getLevelSuffix(timer.npc);
   const members = getTimerMembers(timer);
   const membersWithGuilds =
-    members.length > 0 ? getMembersWithGuilds(members, guildNamesById) : [];
+    members.length > 0
+      ? getMembersWithGuilds(
+          members,
+          guildNamesById,
+          timer.actorCharactersByMemberId,
+        )
+      : [];
+  const firstMemberWithGuild = membersWithGuilds[0];
+  const hiddenMembersCount = Math.max(membersWithGuilds.length - 1, 0);
 
   return (
     <div className="ll:flex ll:flex-col ll:gap-1">
@@ -36,11 +44,26 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
         <div className="ll:text-xs ll:text-gray-300">
           <span className="ll:text-gray-400">{t("tooltip.addedBy")}</span>
           <div className="ll:mt-0.5 ll:flex ll:flex-col ll:gap-0.5">
-            {membersWithGuilds.map(({ id, label }) => (
-              <span className="ll:font-semibold ll:wrap-break-word" key={id}>
-                {label}
-              </span>
-            ))}
+            {firstMemberWithGuild && (
+              <div
+                className="ll:flex ll:flex-col ll:gap-0.5"
+                key={firstMemberWithGuild.id}
+              >
+                <span className="ll:font-semibold ll:wrap-break-word">
+                  {firstMemberWithGuild.memberLabel}
+                  {hiddenMembersCount > 0 && (
+                    <span className="ll:ml-1 ll:text-gray-400">
+                      +{hiddenMembersCount}
+                    </span>
+                  )}
+                </span>
+                {firstMemberWithGuild.characterLabel && (
+                  <span className="ll:wrap-break-word">
+                    {firstMemberWithGuild.characterLabel}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -53,7 +76,7 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
 
       {timer.updatedAt && (
         <div className="ll:text-xs ll:text-gray-400">
-          <span className="ll:text-gray-500">{t("tooltip.addedAt")}</span>{" "}
+          <span className="ll:text-gray-400">{t("tooltip.addedAt")}</span>{" "}
           <span className="ll:text-gray-300">
             {format(new Date(timer.updatedAt), "dd.MM.yyyy - HH:mm:ss")}
           </span>

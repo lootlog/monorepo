@@ -31,6 +31,8 @@ export type TimerAvgAggregateOutputType = {
   npcId: number | null
   latestRespBaseSeconds: number | null
   latestRespawnRandomness: number | null
+  actorCharacterSnapshotId: number | null
+  actorCharacterLvl: number | null
 }
 
 export type TimerSumAggregateOutputType = {
@@ -38,6 +40,8 @@ export type TimerSumAggregateOutputType = {
   npcId: number | null
   latestRespBaseSeconds: number | null
   latestRespawnRandomness: number | null
+  actorCharacterSnapshotId: number | null
+  actorCharacterLvl: number | null
 }
 
 export type TimerMinAggregateOutputType = {
@@ -53,6 +57,9 @@ export type TimerMinAggregateOutputType = {
   tempId: string | null
   wasReset: boolean | null
   windowOpenedAt: Date | null
+  actorCharacterSnapshotId: number | null
+  actorCharacterLvl: number | null
+  deletedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -70,6 +77,9 @@ export type TimerMaxAggregateOutputType = {
   tempId: string | null
   wasReset: boolean | null
   windowOpenedAt: Date | null
+  actorCharacterSnapshotId: number | null
+  actorCharacterLvl: number | null
+  deletedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -88,6 +98,9 @@ export type TimerCountAggregateOutputType = {
   wasReset: number
   npc: number
   windowOpenedAt: number
+  actorCharacterSnapshotId: number
+  actorCharacterLvl: number
+  deletedAt: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -99,6 +112,8 @@ export type TimerAvgAggregateInputType = {
   npcId?: true
   latestRespBaseSeconds?: true
   latestRespawnRandomness?: true
+  actorCharacterSnapshotId?: true
+  actorCharacterLvl?: true
 }
 
 export type TimerSumAggregateInputType = {
@@ -106,6 +121,8 @@ export type TimerSumAggregateInputType = {
   npcId?: true
   latestRespBaseSeconds?: true
   latestRespawnRandomness?: true
+  actorCharacterSnapshotId?: true
+  actorCharacterLvl?: true
 }
 
 export type TimerMinAggregateInputType = {
@@ -121,6 +138,9 @@ export type TimerMinAggregateInputType = {
   tempId?: true
   wasReset?: true
   windowOpenedAt?: true
+  actorCharacterSnapshotId?: true
+  actorCharacterLvl?: true
+  deletedAt?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -138,6 +158,9 @@ export type TimerMaxAggregateInputType = {
   tempId?: true
   wasReset?: true
   windowOpenedAt?: true
+  actorCharacterSnapshotId?: true
+  actorCharacterLvl?: true
+  deletedAt?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -156,6 +179,9 @@ export type TimerCountAggregateInputType = {
   wasReset?: true
   npc?: true
   windowOpenedAt?: true
+  actorCharacterSnapshotId?: true
+  actorCharacterLvl?: true
+  deletedAt?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -261,6 +287,9 @@ export type TimerGroupByOutputType = {
   wasReset: boolean
   npc: runtime.JsonValue
   windowOpenedAt: Date | null
+  actorCharacterSnapshotId: number | null
+  actorCharacterLvl: number | null
+  deletedAt: Date | null
   createdAt: Date
   updatedAt: Date
   _count: TimerCountAggregateOutputType | null
@@ -302,10 +331,14 @@ export type TimerWhereInput = {
   wasReset?: Prisma.BoolFilter<"Timer"> | boolean
   npc?: Prisma.JsonFilter<"Timer">
   windowOpenedAt?: Prisma.DateTimeNullableFilter<"Timer"> | Date | string | null
+  actorCharacterSnapshotId?: Prisma.IntNullableFilter<"Timer"> | number | null
+  actorCharacterLvl?: Prisma.IntNullableFilter<"Timer"> | number | null
+  deletedAt?: Prisma.DateTimeNullableFilter<"Timer"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Timer"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Timer"> | Date | string
   member?: Prisma.XOR<Prisma.MemberScalarRelationFilter, Prisma.MemberWhereInput>
   guild?: Prisma.XOR<Prisma.GuildScalarRelationFilter, Prisma.GuildWhereInput>
+  actorCharacter?: Prisma.XOR<Prisma.PlayerSnapshotNullableScalarRelationFilter, Prisma.PlayerSnapshotWhereInput> | null
 }
 
 export type TimerOrderByWithRelationInput = {
@@ -322,10 +355,14 @@ export type TimerOrderByWithRelationInput = {
   wasReset?: Prisma.SortOrder
   npc?: Prisma.SortOrder
   windowOpenedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  actorCharacterSnapshotId?: Prisma.SortOrderInput | Prisma.SortOrder
+  actorCharacterLvl?: Prisma.SortOrderInput | Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   member?: Prisma.MemberOrderByWithRelationInput
   guild?: Prisma.GuildOrderByWithRelationInput
+  actorCharacter?: Prisma.PlayerSnapshotOrderByWithRelationInput
 }
 
 export type TimerWhereUniqueInput = Prisma.AtLeast<{
@@ -346,10 +383,14 @@ export type TimerWhereUniqueInput = Prisma.AtLeast<{
   wasReset?: Prisma.BoolFilter<"Timer"> | boolean
   npc?: Prisma.JsonFilter<"Timer">
   windowOpenedAt?: Prisma.DateTimeNullableFilter<"Timer"> | Date | string | null
+  actorCharacterSnapshotId?: Prisma.IntNullableFilter<"Timer"> | number | null
+  actorCharacterLvl?: Prisma.IntNullableFilter<"Timer"> | number | null
+  deletedAt?: Prisma.DateTimeNullableFilter<"Timer"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Timer"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Timer"> | Date | string
   member?: Prisma.XOR<Prisma.MemberScalarRelationFilter, Prisma.MemberWhereInput>
   guild?: Prisma.XOR<Prisma.GuildScalarRelationFilter, Prisma.GuildWhereInput>
+  actorCharacter?: Prisma.XOR<Prisma.PlayerSnapshotNullableScalarRelationFilter, Prisma.PlayerSnapshotWhereInput> | null
 }, "timerId">
 
 export type TimerOrderByWithAggregationInput = {
@@ -366,6 +407,9 @@ export type TimerOrderByWithAggregationInput = {
   wasReset?: Prisma.SortOrder
   npc?: Prisma.SortOrder
   windowOpenedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  actorCharacterSnapshotId?: Prisma.SortOrderInput | Prisma.SortOrder
+  actorCharacterLvl?: Prisma.SortOrderInput | Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.TimerCountOrderByAggregateInput
@@ -392,6 +436,9 @@ export type TimerScalarWhereWithAggregatesInput = {
   wasReset?: Prisma.BoolWithAggregatesFilter<"Timer"> | boolean
   npc?: Prisma.JsonWithAggregatesFilter<"Timer">
   windowOpenedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Timer"> | Date | string | null
+  actorCharacterSnapshotId?: Prisma.IntNullableWithAggregatesFilter<"Timer"> | number | null
+  actorCharacterLvl?: Prisma.IntNullableWithAggregatesFilter<"Timer"> | number | null
+  deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Timer"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Timer"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Timer"> | Date | string
 }
@@ -408,10 +455,13 @@ export type TimerCreateInput = {
   wasReset?: boolean
   npc: Prisma.JsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Date | string | null
+  actorCharacterLvl?: number | null
+  deletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   member: Prisma.MemberCreateNestedOneWithoutTimersInput
   guild: Prisma.GuildCreateNestedOneWithoutTimersInput
+  actorCharacter?: Prisma.PlayerSnapshotCreateNestedOneWithoutTimerActorCharactersInput
 }
 
 export type TimerUncheckedCreateInput = {
@@ -428,6 +478,9 @@ export type TimerUncheckedCreateInput = {
   wasReset?: boolean
   npc: Prisma.JsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Date | string | null
+  actorCharacterSnapshotId?: number | null
+  actorCharacterLvl?: number | null
+  deletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -444,10 +497,13 @@ export type TimerUpdateInput = {
   wasReset?: Prisma.BoolFieldUpdateOperationsInput | boolean
   npc?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  actorCharacterLvl?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   member?: Prisma.MemberUpdateOneRequiredWithoutTimersNestedInput
   guild?: Prisma.GuildUpdateOneRequiredWithoutTimersNestedInput
+  actorCharacter?: Prisma.PlayerSnapshotUpdateOneWithoutTimerActorCharactersNestedInput
 }
 
 export type TimerUncheckedUpdateInput = {
@@ -464,6 +520,9 @@ export type TimerUncheckedUpdateInput = {
   wasReset?: Prisma.BoolFieldUpdateOperationsInput | boolean
   npc?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  actorCharacterSnapshotId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  actorCharacterLvl?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -482,6 +541,9 @@ export type TimerCreateManyInput = {
   wasReset?: boolean
   npc: Prisma.JsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Date | string | null
+  actorCharacterSnapshotId?: number | null
+  actorCharacterLvl?: number | null
+  deletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -498,6 +560,8 @@ export type TimerUpdateManyMutationInput = {
   wasReset?: Prisma.BoolFieldUpdateOperationsInput | boolean
   npc?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  actorCharacterLvl?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -516,6 +580,9 @@ export type TimerUncheckedUpdateManyInput = {
   wasReset?: Prisma.BoolFieldUpdateOperationsInput | boolean
   npc?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  actorCharacterSnapshotId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  actorCharacterLvl?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -550,6 +617,9 @@ export type TimerCountOrderByAggregateInput = {
   wasReset?: Prisma.SortOrder
   npc?: Prisma.SortOrder
   windowOpenedAt?: Prisma.SortOrder
+  actorCharacterSnapshotId?: Prisma.SortOrder
+  actorCharacterLvl?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -559,6 +629,8 @@ export type TimerAvgOrderByAggregateInput = {
   npcId?: Prisma.SortOrder
   latestRespBaseSeconds?: Prisma.SortOrder
   latestRespawnRandomness?: Prisma.SortOrder
+  actorCharacterSnapshotId?: Prisma.SortOrder
+  actorCharacterLvl?: Prisma.SortOrder
 }
 
 export type TimerMaxOrderByAggregateInput = {
@@ -574,6 +646,9 @@ export type TimerMaxOrderByAggregateInput = {
   tempId?: Prisma.SortOrder
   wasReset?: Prisma.SortOrder
   windowOpenedAt?: Prisma.SortOrder
+  actorCharacterSnapshotId?: Prisma.SortOrder
+  actorCharacterLvl?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -591,6 +666,9 @@ export type TimerMinOrderByAggregateInput = {
   tempId?: Prisma.SortOrder
   wasReset?: Prisma.SortOrder
   windowOpenedAt?: Prisma.SortOrder
+  actorCharacterSnapshotId?: Prisma.SortOrder
+  actorCharacterLvl?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -600,6 +678,8 @@ export type TimerSumOrderByAggregateInput = {
   npcId?: Prisma.SortOrder
   latestRespBaseSeconds?: Prisma.SortOrder
   latestRespawnRandomness?: Prisma.SortOrder
+  actorCharacterSnapshotId?: Prisma.SortOrder
+  actorCharacterLvl?: Prisma.SortOrder
 }
 
 export type TimerCreateNestedManyWithoutGuildInput = {
@@ -686,6 +766,48 @@ export type TimerUncheckedUpdateManyWithoutMemberNestedInput = {
   deleteMany?: Prisma.TimerScalarWhereInput | Prisma.TimerScalarWhereInput[]
 }
 
+export type TimerCreateNestedManyWithoutActorCharacterInput = {
+  create?: Prisma.XOR<Prisma.TimerCreateWithoutActorCharacterInput, Prisma.TimerUncheckedCreateWithoutActorCharacterInput> | Prisma.TimerCreateWithoutActorCharacterInput[] | Prisma.TimerUncheckedCreateWithoutActorCharacterInput[]
+  connectOrCreate?: Prisma.TimerCreateOrConnectWithoutActorCharacterInput | Prisma.TimerCreateOrConnectWithoutActorCharacterInput[]
+  createMany?: Prisma.TimerCreateManyActorCharacterInputEnvelope
+  connect?: Prisma.TimerWhereUniqueInput | Prisma.TimerWhereUniqueInput[]
+}
+
+export type TimerUncheckedCreateNestedManyWithoutActorCharacterInput = {
+  create?: Prisma.XOR<Prisma.TimerCreateWithoutActorCharacterInput, Prisma.TimerUncheckedCreateWithoutActorCharacterInput> | Prisma.TimerCreateWithoutActorCharacterInput[] | Prisma.TimerUncheckedCreateWithoutActorCharacterInput[]
+  connectOrCreate?: Prisma.TimerCreateOrConnectWithoutActorCharacterInput | Prisma.TimerCreateOrConnectWithoutActorCharacterInput[]
+  createMany?: Prisma.TimerCreateManyActorCharacterInputEnvelope
+  connect?: Prisma.TimerWhereUniqueInput | Prisma.TimerWhereUniqueInput[]
+}
+
+export type TimerUpdateManyWithoutActorCharacterNestedInput = {
+  create?: Prisma.XOR<Prisma.TimerCreateWithoutActorCharacterInput, Prisma.TimerUncheckedCreateWithoutActorCharacterInput> | Prisma.TimerCreateWithoutActorCharacterInput[] | Prisma.TimerUncheckedCreateWithoutActorCharacterInput[]
+  connectOrCreate?: Prisma.TimerCreateOrConnectWithoutActorCharacterInput | Prisma.TimerCreateOrConnectWithoutActorCharacterInput[]
+  upsert?: Prisma.TimerUpsertWithWhereUniqueWithoutActorCharacterInput | Prisma.TimerUpsertWithWhereUniqueWithoutActorCharacterInput[]
+  createMany?: Prisma.TimerCreateManyActorCharacterInputEnvelope
+  set?: Prisma.TimerWhereUniqueInput | Prisma.TimerWhereUniqueInput[]
+  disconnect?: Prisma.TimerWhereUniqueInput | Prisma.TimerWhereUniqueInput[]
+  delete?: Prisma.TimerWhereUniqueInput | Prisma.TimerWhereUniqueInput[]
+  connect?: Prisma.TimerWhereUniqueInput | Prisma.TimerWhereUniqueInput[]
+  update?: Prisma.TimerUpdateWithWhereUniqueWithoutActorCharacterInput | Prisma.TimerUpdateWithWhereUniqueWithoutActorCharacterInput[]
+  updateMany?: Prisma.TimerUpdateManyWithWhereWithoutActorCharacterInput | Prisma.TimerUpdateManyWithWhereWithoutActorCharacterInput[]
+  deleteMany?: Prisma.TimerScalarWhereInput | Prisma.TimerScalarWhereInput[]
+}
+
+export type TimerUncheckedUpdateManyWithoutActorCharacterNestedInput = {
+  create?: Prisma.XOR<Prisma.TimerCreateWithoutActorCharacterInput, Prisma.TimerUncheckedCreateWithoutActorCharacterInput> | Prisma.TimerCreateWithoutActorCharacterInput[] | Prisma.TimerUncheckedCreateWithoutActorCharacterInput[]
+  connectOrCreate?: Prisma.TimerCreateOrConnectWithoutActorCharacterInput | Prisma.TimerCreateOrConnectWithoutActorCharacterInput[]
+  upsert?: Prisma.TimerUpsertWithWhereUniqueWithoutActorCharacterInput | Prisma.TimerUpsertWithWhereUniqueWithoutActorCharacterInput[]
+  createMany?: Prisma.TimerCreateManyActorCharacterInputEnvelope
+  set?: Prisma.TimerWhereUniqueInput | Prisma.TimerWhereUniqueInput[]
+  disconnect?: Prisma.TimerWhereUniqueInput | Prisma.TimerWhereUniqueInput[]
+  delete?: Prisma.TimerWhereUniqueInput | Prisma.TimerWhereUniqueInput[]
+  connect?: Prisma.TimerWhereUniqueInput | Prisma.TimerWhereUniqueInput[]
+  update?: Prisma.TimerUpdateWithWhereUniqueWithoutActorCharacterInput | Prisma.TimerUpdateWithWhereUniqueWithoutActorCharacterInput[]
+  updateMany?: Prisma.TimerUpdateManyWithWhereWithoutActorCharacterInput | Prisma.TimerUpdateManyWithWhereWithoutActorCharacterInput[]
+  deleteMany?: Prisma.TimerScalarWhereInput | Prisma.TimerScalarWhereInput[]
+}
+
 export type TimerCreateWithoutGuildInput = {
   npcId: number
   timerKey: string
@@ -698,9 +820,12 @@ export type TimerCreateWithoutGuildInput = {
   wasReset?: boolean
   npc: Prisma.JsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Date | string | null
+  actorCharacterLvl?: number | null
+  deletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   member: Prisma.MemberCreateNestedOneWithoutTimersInput
+  actorCharacter?: Prisma.PlayerSnapshotCreateNestedOneWithoutTimerActorCharactersInput
 }
 
 export type TimerUncheckedCreateWithoutGuildInput = {
@@ -716,6 +841,9 @@ export type TimerUncheckedCreateWithoutGuildInput = {
   wasReset?: boolean
   npc: Prisma.JsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Date | string | null
+  actorCharacterSnapshotId?: number | null
+  actorCharacterLvl?: number | null
+  deletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -763,6 +891,9 @@ export type TimerScalarWhereInput = {
   wasReset?: Prisma.BoolFilter<"Timer"> | boolean
   npc?: Prisma.JsonFilter<"Timer">
   windowOpenedAt?: Prisma.DateTimeNullableFilter<"Timer"> | Date | string | null
+  actorCharacterSnapshotId?: Prisma.IntNullableFilter<"Timer"> | number | null
+  actorCharacterLvl?: Prisma.IntNullableFilter<"Timer"> | number | null
+  deletedAt?: Prisma.DateTimeNullableFilter<"Timer"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Timer"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Timer"> | Date | string
 }
@@ -779,9 +910,12 @@ export type TimerCreateWithoutMemberInput = {
   wasReset?: boolean
   npc: Prisma.JsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Date | string | null
+  actorCharacterLvl?: number | null
+  deletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   guild: Prisma.GuildCreateNestedOneWithoutTimersInput
+  actorCharacter?: Prisma.PlayerSnapshotCreateNestedOneWithoutTimerActorCharactersInput
 }
 
 export type TimerUncheckedCreateWithoutMemberInput = {
@@ -797,6 +931,9 @@ export type TimerUncheckedCreateWithoutMemberInput = {
   wasReset?: boolean
   npc: Prisma.JsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Date | string | null
+  actorCharacterSnapshotId?: number | null
+  actorCharacterLvl?: number | null
+  deletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -827,6 +964,72 @@ export type TimerUpdateManyWithWhereWithoutMemberInput = {
   data: Prisma.XOR<Prisma.TimerUpdateManyMutationInput, Prisma.TimerUncheckedUpdateManyWithoutMemberInput>
 }
 
+export type TimerCreateWithoutActorCharacterInput = {
+  npcId: number
+  timerKey: string
+  world: string
+  minSpawnTime: Date | string
+  maxSpawnTime: Date | string
+  latestRespBaseSeconds?: number
+  latestRespawnRandomness?: number
+  tempId?: string | null
+  wasReset?: boolean
+  npc: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  windowOpenedAt?: Date | string | null
+  actorCharacterLvl?: number | null
+  deletedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  member: Prisma.MemberCreateNestedOneWithoutTimersInput
+  guild: Prisma.GuildCreateNestedOneWithoutTimersInput
+}
+
+export type TimerUncheckedCreateWithoutActorCharacterInput = {
+  createdById: number
+  guildId: string
+  npcId: number
+  timerKey: string
+  world: string
+  minSpawnTime: Date | string
+  maxSpawnTime: Date | string
+  latestRespBaseSeconds?: number
+  latestRespawnRandomness?: number
+  tempId?: string | null
+  wasReset?: boolean
+  npc: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  windowOpenedAt?: Date | string | null
+  actorCharacterLvl?: number | null
+  deletedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type TimerCreateOrConnectWithoutActorCharacterInput = {
+  where: Prisma.TimerWhereUniqueInput
+  create: Prisma.XOR<Prisma.TimerCreateWithoutActorCharacterInput, Prisma.TimerUncheckedCreateWithoutActorCharacterInput>
+}
+
+export type TimerCreateManyActorCharacterInputEnvelope = {
+  data: Prisma.TimerCreateManyActorCharacterInput | Prisma.TimerCreateManyActorCharacterInput[]
+  skipDuplicates?: boolean
+}
+
+export type TimerUpsertWithWhereUniqueWithoutActorCharacterInput = {
+  where: Prisma.TimerWhereUniqueInput
+  update: Prisma.XOR<Prisma.TimerUpdateWithoutActorCharacterInput, Prisma.TimerUncheckedUpdateWithoutActorCharacterInput>
+  create: Prisma.XOR<Prisma.TimerCreateWithoutActorCharacterInput, Prisma.TimerUncheckedCreateWithoutActorCharacterInput>
+}
+
+export type TimerUpdateWithWhereUniqueWithoutActorCharacterInput = {
+  where: Prisma.TimerWhereUniqueInput
+  data: Prisma.XOR<Prisma.TimerUpdateWithoutActorCharacterInput, Prisma.TimerUncheckedUpdateWithoutActorCharacterInput>
+}
+
+export type TimerUpdateManyWithWhereWithoutActorCharacterInput = {
+  where: Prisma.TimerScalarWhereInput
+  data: Prisma.XOR<Prisma.TimerUpdateManyMutationInput, Prisma.TimerUncheckedUpdateManyWithoutActorCharacterInput>
+}
+
 export type TimerCreateManyGuildInput = {
   createdById: number
   npcId: number
@@ -840,6 +1043,9 @@ export type TimerCreateManyGuildInput = {
   wasReset?: boolean
   npc: Prisma.JsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Date | string | null
+  actorCharacterSnapshotId?: number | null
+  actorCharacterLvl?: number | null
+  deletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -856,9 +1062,12 @@ export type TimerUpdateWithoutGuildInput = {
   wasReset?: Prisma.BoolFieldUpdateOperationsInput | boolean
   npc?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  actorCharacterLvl?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   member?: Prisma.MemberUpdateOneRequiredWithoutTimersNestedInput
+  actorCharacter?: Prisma.PlayerSnapshotUpdateOneWithoutTimerActorCharactersNestedInput
 }
 
 export type TimerUncheckedUpdateWithoutGuildInput = {
@@ -874,6 +1083,9 @@ export type TimerUncheckedUpdateWithoutGuildInput = {
   wasReset?: Prisma.BoolFieldUpdateOperationsInput | boolean
   npc?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  actorCharacterSnapshotId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  actorCharacterLvl?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -891,6 +1103,9 @@ export type TimerUncheckedUpdateManyWithoutGuildInput = {
   wasReset?: Prisma.BoolFieldUpdateOperationsInput | boolean
   npc?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  actorCharacterSnapshotId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  actorCharacterLvl?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -908,6 +1123,9 @@ export type TimerCreateManyMemberInput = {
   wasReset?: boolean
   npc: Prisma.JsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Date | string | null
+  actorCharacterSnapshotId?: number | null
+  actorCharacterLvl?: number | null
+  deletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -924,9 +1142,12 @@ export type TimerUpdateWithoutMemberInput = {
   wasReset?: Prisma.BoolFieldUpdateOperationsInput | boolean
   npc?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  actorCharacterLvl?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   guild?: Prisma.GuildUpdateOneRequiredWithoutTimersNestedInput
+  actorCharacter?: Prisma.PlayerSnapshotUpdateOneWithoutTimerActorCharactersNestedInput
 }
 
 export type TimerUncheckedUpdateWithoutMemberInput = {
@@ -942,6 +1163,9 @@ export type TimerUncheckedUpdateWithoutMemberInput = {
   wasReset?: Prisma.BoolFieldUpdateOperationsInput | boolean
   npc?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  actorCharacterSnapshotId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  actorCharacterLvl?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -959,6 +1183,89 @@ export type TimerUncheckedUpdateManyWithoutMemberInput = {
   wasReset?: Prisma.BoolFieldUpdateOperationsInput | boolean
   npc?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   windowOpenedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  actorCharacterSnapshotId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  actorCharacterLvl?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type TimerCreateManyActorCharacterInput = {
+  createdById: number
+  guildId: string
+  npcId: number
+  timerKey: string
+  world: string
+  minSpawnTime: Date | string
+  maxSpawnTime: Date | string
+  latestRespBaseSeconds?: number
+  latestRespawnRandomness?: number
+  tempId?: string | null
+  wasReset?: boolean
+  npc: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  windowOpenedAt?: Date | string | null
+  actorCharacterLvl?: number | null
+  deletedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type TimerUpdateWithoutActorCharacterInput = {
+  npcId?: Prisma.IntFieldUpdateOperationsInput | number
+  timerKey?: Prisma.StringFieldUpdateOperationsInput | string
+  world?: Prisma.StringFieldUpdateOperationsInput | string
+  minSpawnTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  maxSpawnTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  latestRespBaseSeconds?: Prisma.IntFieldUpdateOperationsInput | number
+  latestRespawnRandomness?: Prisma.IntFieldUpdateOperationsInput | number
+  tempId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wasReset?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  npc?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  windowOpenedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  actorCharacterLvl?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  member?: Prisma.MemberUpdateOneRequiredWithoutTimersNestedInput
+  guild?: Prisma.GuildUpdateOneRequiredWithoutTimersNestedInput
+}
+
+export type TimerUncheckedUpdateWithoutActorCharacterInput = {
+  createdById?: Prisma.IntFieldUpdateOperationsInput | number
+  guildId?: Prisma.StringFieldUpdateOperationsInput | string
+  npcId?: Prisma.IntFieldUpdateOperationsInput | number
+  timerKey?: Prisma.StringFieldUpdateOperationsInput | string
+  world?: Prisma.StringFieldUpdateOperationsInput | string
+  minSpawnTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  maxSpawnTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  latestRespBaseSeconds?: Prisma.IntFieldUpdateOperationsInput | number
+  latestRespawnRandomness?: Prisma.IntFieldUpdateOperationsInput | number
+  tempId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wasReset?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  npc?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  windowOpenedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  actorCharacterLvl?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type TimerUncheckedUpdateManyWithoutActorCharacterInput = {
+  createdById?: Prisma.IntFieldUpdateOperationsInput | number
+  guildId?: Prisma.StringFieldUpdateOperationsInput | string
+  npcId?: Prisma.IntFieldUpdateOperationsInput | number
+  timerKey?: Prisma.StringFieldUpdateOperationsInput | string
+  world?: Prisma.StringFieldUpdateOperationsInput | string
+  minSpawnTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  maxSpawnTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  latestRespBaseSeconds?: Prisma.IntFieldUpdateOperationsInput | number
+  latestRespawnRandomness?: Prisma.IntFieldUpdateOperationsInput | number
+  tempId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wasReset?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  npc?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  windowOpenedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  actorCharacterLvl?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -979,10 +1286,14 @@ export type TimerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   wasReset?: boolean
   npc?: boolean
   windowOpenedAt?: boolean
+  actorCharacterSnapshotId?: boolean
+  actorCharacterLvl?: boolean
+  deletedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   member?: boolean | Prisma.MemberDefaultArgs<ExtArgs>
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
+  actorCharacter?: boolean | Prisma.Timer$actorCharacterArgs<ExtArgs>
 }, ExtArgs["result"]["timer"]>
 
 export type TimerSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -999,10 +1310,14 @@ export type TimerSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   wasReset?: boolean
   npc?: boolean
   windowOpenedAt?: boolean
+  actorCharacterSnapshotId?: boolean
+  actorCharacterLvl?: boolean
+  deletedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   member?: boolean | Prisma.MemberDefaultArgs<ExtArgs>
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
+  actorCharacter?: boolean | Prisma.Timer$actorCharacterArgs<ExtArgs>
 }, ExtArgs["result"]["timer"]>
 
 export type TimerSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1019,10 +1334,14 @@ export type TimerSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   wasReset?: boolean
   npc?: boolean
   windowOpenedAt?: boolean
+  actorCharacterSnapshotId?: boolean
+  actorCharacterLvl?: boolean
+  deletedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   member?: boolean | Prisma.MemberDefaultArgs<ExtArgs>
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
+  actorCharacter?: boolean | Prisma.Timer$actorCharacterArgs<ExtArgs>
 }, ExtArgs["result"]["timer"]>
 
 export type TimerSelectScalar = {
@@ -1039,22 +1358,28 @@ export type TimerSelectScalar = {
   wasReset?: boolean
   npc?: boolean
   windowOpenedAt?: boolean
+  actorCharacterSnapshotId?: boolean
+  actorCharacterLvl?: boolean
+  deletedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type TimerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"createdById" | "guildId" | "npcId" | "timerKey" | "world" | "minSpawnTime" | "maxSpawnTime" | "latestRespBaseSeconds" | "latestRespawnRandomness" | "tempId" | "wasReset" | "npc" | "windowOpenedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["timer"]>
+export type TimerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"createdById" | "guildId" | "npcId" | "timerKey" | "world" | "minSpawnTime" | "maxSpawnTime" | "latestRespBaseSeconds" | "latestRespawnRandomness" | "tempId" | "wasReset" | "npc" | "windowOpenedAt" | "actorCharacterSnapshotId" | "actorCharacterLvl" | "deletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["timer"]>
 export type TimerInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   member?: boolean | Prisma.MemberDefaultArgs<ExtArgs>
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
+  actorCharacter?: boolean | Prisma.Timer$actorCharacterArgs<ExtArgs>
 }
 export type TimerIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   member?: boolean | Prisma.MemberDefaultArgs<ExtArgs>
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
+  actorCharacter?: boolean | Prisma.Timer$actorCharacterArgs<ExtArgs>
 }
 export type TimerIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   member?: boolean | Prisma.MemberDefaultArgs<ExtArgs>
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
+  actorCharacter?: boolean | Prisma.Timer$actorCharacterArgs<ExtArgs>
 }
 
 export type $TimerPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1062,6 +1387,7 @@ export type $TimerPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   objects: {
     member: Prisma.$MemberPayload<ExtArgs>
     guild: Prisma.$GuildPayload<ExtArgs>
+    actorCharacter: Prisma.$PlayerSnapshotPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     createdById: number
@@ -1077,6 +1403,9 @@ export type $TimerPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     wasReset: boolean
     npc: runtime.JsonValue
     windowOpenedAt: Date | null
+    actorCharacterSnapshotId: number | null
+    actorCharacterLvl: number | null
+    deletedAt: Date | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["timer"]>
@@ -1475,6 +1804,7 @@ export interface Prisma__TimerClient<T, Null = never, ExtArgs extends runtime.Ty
   readonly [Symbol.toStringTag]: "PrismaPromise"
   member<T extends Prisma.MemberDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MemberDefaultArgs<ExtArgs>>): Prisma.Prisma__MemberClient<runtime.Types.Result.GetResult<Prisma.$MemberPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   guild<T extends Prisma.GuildDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.GuildDefaultArgs<ExtArgs>>): Prisma.Prisma__GuildClient<runtime.Types.Result.GetResult<Prisma.$GuildPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  actorCharacter<T extends Prisma.Timer$actorCharacterArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Timer$actorCharacterArgs<ExtArgs>>): Prisma.Prisma__PlayerSnapshotClient<runtime.Types.Result.GetResult<Prisma.$PlayerSnapshotPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1517,6 +1847,9 @@ export interface TimerFieldRefs {
   readonly wasReset: Prisma.FieldRef<"Timer", 'Boolean'>
   readonly npc: Prisma.FieldRef<"Timer", 'Json'>
   readonly windowOpenedAt: Prisma.FieldRef<"Timer", 'DateTime'>
+  readonly actorCharacterSnapshotId: Prisma.FieldRef<"Timer", 'Int'>
+  readonly actorCharacterLvl: Prisma.FieldRef<"Timer", 'Int'>
+  readonly deletedAt: Prisma.FieldRef<"Timer", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"Timer", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Timer", 'DateTime'>
 }
@@ -1917,6 +2250,25 @@ export type TimerDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Interna
    * Limit how many Timers to delete.
    */
   limit?: number
+}
+
+/**
+ * Timer.actorCharacter
+ */
+export type Timer$actorCharacterArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PlayerSnapshot
+   */
+  select?: Prisma.PlayerSnapshotSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the PlayerSnapshot
+   */
+  omit?: Prisma.PlayerSnapshotOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PlayerSnapshotInclude<ExtArgs> | null
+  where?: Prisma.PlayerSnapshotWhereInput
 }
 
 /**
