@@ -878,9 +878,15 @@ paths:
         - timers
   /timers/history:
     get:
-      description: Retrieve latest visible timer history entries across authenticated user guilds
+      description: Retrieve latest visible timer history entries for an authenticated user guild
       operationId: TimersController_getRecentTimerHistory
       parameters:
+        - name: guildId
+          required: true
+          in: query
+          description: Guild ID
+          schema:
+            type: string
         - name: world
           required: true
           in: query

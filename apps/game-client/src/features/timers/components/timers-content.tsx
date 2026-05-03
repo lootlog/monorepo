@@ -24,12 +24,14 @@ type TimersContentProps = {
   hiddenTimers: string[];
   areFiltersActive: boolean;
   colorStatistics: ColorStat[];
+  guildId?: string;
   isGrouping: boolean;
   allowWorldSelection: boolean;
   timerFiltersEnabled: boolean;
   isUnderBag: boolean;
   minColumnWidth: number;
   onAddTimer: () => void;
+  world?: string;
   compactView?: boolean;
 };
 
@@ -39,12 +41,14 @@ export const TimersContent: FC<TimersContentProps> = ({
   hiddenTimers,
   areFiltersActive,
   colorStatistics,
+  guildId,
   isGrouping,
   allowWorldSelection,
   timerFiltersEnabled,
   isUnderBag,
   minColumnWidth,
   onAddTimer,
+  world,
   compactView = false,
 }) => {
   return (
@@ -78,7 +82,10 @@ export const TimersContent: FC<TimersContentProps> = ({
       {!compactView && (
         <TimersFooter
           colorStatistics={colorStatistics}
+          guildId={guildId}
+          isGrouping={isGrouping}
           onAddTimer={onAddTimer}
+          world={world}
         />
       )}
     </span>

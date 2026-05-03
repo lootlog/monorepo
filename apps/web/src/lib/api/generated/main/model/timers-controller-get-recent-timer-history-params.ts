@@ -8,6 +8,10 @@
 
 export type TimersControllerGetRecentTimerHistoryParams = {
 /**
+ * Guild ID
+ */
+guildId: string;
+/**
  * World name
  */
 world: string;

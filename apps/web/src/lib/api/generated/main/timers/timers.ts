@@ -180,7 +180,7 @@ export const useGetTimersControllerGetAllTimersQueryData = () => {
 
 
 /**
- * Retrieve latest visible timer history entries across authenticated user guilds
+ * Retrieve latest visible timer history entries for an authenticated user guild
  * @summary Get recent timer action history
  */
 export const getTimersControllerGetRecentTimerHistoryUrl = (params: TimersControllerGetRecentTimerHistoryParams,) => {

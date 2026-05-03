@@ -71,8 +71,9 @@ export class TimersController {
   @ApiOperation({
     summary: "Get recent timer action history",
     description:
-      "Retrieve latest visible timer history entries across authenticated user guilds",
+      "Retrieve latest visible timer history entries for an authenticated user guild",
   })
+  @ApiQuery({ name: "guildId", description: "Guild ID", required: true })
   @ApiQuery({ name: "world", description: "World name", required: true })
   @ApiQuery({ name: "limit", description: "Result limit", required: false })
   @ZodResponse({
@@ -82,10 +83,11 @@ export class TimersController {
   })
   getRecentTimerHistory(
     @DiscordId() discordId: string,
+    @Query("guildId") guildId: string,
     @Query("world") world: string,
     @Query("limit") limit: string | undefined,
   ) {
-    return this.timersService.getRecentTimerHistory(discordId, world, {
+    return this.timersService.getRecentTimerHistory(discordId, guildId, world, {
       limit: limit ? Number.parseInt(limit, 10) : undefined,
     });
   }

@@ -151,8 +151,10 @@ describe("TimerHistoryPopover", () => {
     render(<TimerHistoryPopover timer={timer} />);
 
     expect(screen.getByTestId("history-tile")).toBeInTheDocument();
+    expect(screen.getAllByText("Salvatore (Lootlog)")).toHaveLength(1);
+    await user.hover(screen.getByTestId("history-tile"));
     expect(screen.getAllByText("Salvatore (Lootlog)")).toHaveLength(2);
-    expect(screen.getAllByText("03.05 12:01:02")).toHaveLength(1);
+    expect(screen.getAllByText("12:01:02")).toHaveLength(1);
     expect(screen.getByText("Potwór")).toBeInTheDocument();
     expect(screen.getByText("Tanroth")).toBeInTheDocument();
     expect(screen.getByText("Postać")).toBeInTheDocument();

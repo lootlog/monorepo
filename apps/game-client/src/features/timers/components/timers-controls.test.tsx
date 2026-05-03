@@ -197,7 +197,6 @@ describe("timers controls", () => {
 
     const { rerender } = render(
       <TimersActions
-        world="experimental"
         timerFiltersEnabled
         toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
         colorFiltersEnabled={false}
@@ -221,7 +220,6 @@ describe("timers controls", () => {
 
     rerender(
       <TimersUnderBagActions
-        world="experimental"
         timerFiltersEnabled={false}
         toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
         colorFiltersEnabled
