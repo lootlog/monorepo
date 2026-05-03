@@ -18,6 +18,12 @@ import { ErrorKey } from "src/timers/enum/error-key.enum";
 import { ExecutionError } from "redlock";
 import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
 import { RoutingKey } from "src/enum/routing-key.enum";
+import {
+  NpcType,
+  Permission,
+  Profession,
+  TimerHistoryAction,
+} from "src/generated/prisma/client";
 
 describe("TimersService", () => {
   let service: TimersService;
@@ -32,6 +38,18 @@ describe("TimersService", () => {
       delete: mockFn(),
       deleteMany: mockFn(),
     },
+    playerSnapshot: {
+      upsert: mockFn(),
+    },
+    timerHistoryEntry: {
+      create: mockFn(),
+      findMany: mockFn(),
+      deleteMany: mockFn(),
+    },
+    userTimerSettings: {
+      findUnique: mockFn(),
+    },
+    $transaction: mockFn(),
     $queryRaw: mockFn(),
   };
 
@@ -133,6 +151,16 @@ describe("TimersService", () => {
     mockRedisService.setNX.mockResolvedValue(true);
     mockRedisService.eval.mockResolvedValue(1);
     mockPrismaService.timer.findUnique.mockResolvedValue(null);
+    mockPrismaService.playerSnapshot.upsert.mockResolvedValue(null);
+    mockPrismaService.timerHistoryEntry.create.mockResolvedValue({});
+    mockPrismaService.timerHistoryEntry.findMany.mockResolvedValue([]);
+    mockPrismaService.timerHistoryEntry.deleteMany.mockResolvedValue({
+      count: 0,
+    });
+    mockPrismaService.userTimerSettings.findUnique.mockResolvedValue(null);
+    mockPrismaService.$transaction.mockImplementation((callback) =>
+      callback(mockPrismaService),
+    );
   });
 
   it("should be defined", () => {
@@ -268,8 +296,18 @@ describe("TimersService", () => {
 
       expect(mockAmqpConnection.publish).toHaveBeenCalledWith(
         expect.any(String),
-        expect.any(String),
-        mockTimer,
+        RoutingKey.GUILDS_TIMERS_UPDATE,
+        expect.objectContaining({
+          guildId: mockTimer.guildId,
+          world: mockTimer.world,
+          npcId: mockTimer.npcId,
+          timerKey: mockTimer.timerKey,
+          npc: expect.objectContaining({
+            id: mockDto.npc.id,
+            name: mockDto.npc.name,
+            wt: String(mockDto.npc.wt),
+          }),
+        }),
       );
     });
 
@@ -986,6 +1024,44 @@ describe("TimersService", () => {
       );
     });
 
+    it("should prune timer history to five newest entries after creating history", async () => {
+      mockRedisService.get.mockResolvedValue(null);
+      mockRedisService.set.mockResolvedValue(undefined);
+      mockPrismaService.timer.upsert.mockResolvedValue({
+        ...mockTimer,
+        guildId: "guild1",
+      });
+      mockPrismaService.timerHistoryEntry.findMany.mockResolvedValue([
+        { id: 11 },
+        { id: 10 },
+      ]);
+
+      await service.createTimerForGuild(
+        "discord123",
+        userId,
+        "guild1",
+        mockDto,
+      );
+
+      expect(mockPrismaService.timerHistoryEntry.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            guildId: "guild1",
+            world: "test-world",
+            timerKey: buildTimerKey(123, mockDto.npc.name),
+          },
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          skip: 5,
+          select: { id: true },
+        }),
+      );
+      expect(
+        mockPrismaService.timerHistoryEntry.deleteMany,
+      ).toHaveBeenCalledWith({
+        where: { id: { in: [11, 10] } },
+      });
+    });
+
     it("should invalidate cache when timer is reset", async () => {
       mockRedisService.deleteByPattern.mockResolvedValue(1);
       mockEventTimerHooksService.findActiveEventHeroByNpc.mockResolvedValue(
@@ -1012,6 +1088,124 @@ describe("TimersService", () => {
       expect(mockRedisService.deleteByPattern).toHaveBeenCalledWith(
         "timer:list:guild1:*",
       );
+    });
+
+    it("should overwrite actor character when timer is reset with actor data", async () => {
+      const actorCharacter = {
+        id: 42,
+        world: "test-world",
+        accountId: 200,
+        characterId: 100,
+        snapshotHash: "hash",
+        name: "Hero One",
+        prof: Profession.BLADE_DANCER,
+        icon: "hero.gif",
+        createdAt: new Date(),
+      };
+
+      mockEventTimerHooksService.findActiveEventHeroByNpc.mockResolvedValue(
+        null,
+      );
+      mockPrismaService.timer.findUnique.mockResolvedValue({
+        ...mockTimer,
+        latestRespBaseSeconds: 3600,
+        latestRespawnRandomness: 10,
+      });
+      mockPrismaService.timer.findMany.mockResolvedValue([
+        {
+          ...mockTimer,
+          latestRespBaseSeconds: 3600,
+          latestRespawnRandomness: 10,
+        },
+      ]);
+      mockPrismaService.playerSnapshot.upsert.mockResolvedValue(actorCharacter);
+      mockPrismaService.timer.update.mockResolvedValue({
+        ...mockTimer,
+        actorCharacter,
+        actorCharacterLvl: 300,
+      });
+
+      await service.resetTimer("discord123", "guild1", "123", {
+        world: "test-world",
+        actorCharacter: {
+          accountId: "200",
+          characterId: "100",
+          name: "Hero One",
+          prof: "b",
+          icon: "hero.gif",
+          lvl: 300,
+        },
+      });
+
+      expect(mockPrismaService.timer.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            actorCharacter: { connect: { id: actorCharacter.id } },
+            actorCharacterLvl: 300,
+          }),
+        }),
+      );
+    });
+
+    it("should not clear actor character level when reset has no actor data", async () => {
+      mockEventTimerHooksService.findActiveEventHeroByNpc.mockResolvedValue(
+        null,
+      );
+      mockPrismaService.timer.findUnique.mockResolvedValue({
+        ...mockTimer,
+        latestRespBaseSeconds: 3600,
+        latestRespawnRandomness: 10,
+      });
+      mockPrismaService.timer.findMany.mockResolvedValue([
+        {
+          ...mockTimer,
+          latestRespBaseSeconds: 3600,
+          latestRespawnRandomness: 10,
+        },
+      ]);
+      mockPrismaService.timer.update.mockResolvedValue(mockTimer);
+
+      await service.resetTimer("discord123", "guild1", "123", {
+        world: "test-world",
+      });
+
+      expect(mockPrismaService.timer.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.not.objectContaining({
+            actorCharacterLvl: null,
+          }),
+        }),
+      );
+      expect(mockPrismaService.timer.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.not.objectContaining({
+            actorCharacter: expect.anything(),
+          }),
+        }),
+      );
+    });
+
+    it("should not create history when a manual timer is reset", async () => {
+      const manualTimer = {
+        ...mockTimer,
+        npc: {
+          ...mockTimer.npc,
+          margonemType: 999,
+        },
+      };
+
+      mockEventTimerHooksService.findActiveEventHeroByNpc.mockResolvedValue(
+        null,
+      );
+      mockPrismaService.timer.findMany.mockResolvedValue([manualTimer]);
+      mockPrismaService.timer.findUnique.mockResolvedValue(manualTimer);
+      mockPrismaService.timer.update.mockResolvedValue(manualTimer);
+
+      await service.resetTimer("discord123", "guild1", "123", {
+        world: "test-world",
+      });
+
+      expect(mockPrismaService.timerHistoryEntry.create).not.toHaveBeenCalled();
     });
 
     it("should block resetting event timers through generic reset flow", async () => {
@@ -1060,13 +1254,64 @@ describe("TimersService", () => {
         null,
       );
       mockPrismaService.timer.findMany.mockResolvedValue([mockTimer]);
-      mockPrismaService.timer.delete.mockResolvedValue(mockTimer);
+      mockPrismaService.timer.update.mockResolvedValue(mockTimer);
 
       await service.deleteTimer("guild1", "123", "test-world");
 
       expect(mockRedisService.deleteByPattern).toHaveBeenCalledWith(
         "timer:list:guild1:*",
       );
+    });
+
+    it("should soft delete non-manual timers", async () => {
+      mockEventTimerHooksService.findActiveEventHeroByNpc.mockResolvedValue(
+        null,
+      );
+      mockPrismaService.timer.findMany.mockResolvedValue([mockTimer]);
+      mockPrismaService.timer.update.mockResolvedValue(mockTimer);
+
+      await service.deleteTimer("guild1", "123", "test-world");
+
+      expect(mockPrismaService.timer.update).toHaveBeenCalledWith({
+        where: {
+          timerId: {
+            guildId: "guild1",
+            world: "test-world",
+            timerKey: mockTimer.timerKey,
+          },
+        },
+        data: { deletedAt: expect.any(Date) },
+      });
+      expect(mockPrismaService.timer.delete).not.toHaveBeenCalled();
+    });
+
+    it("should not create history when a manual timer is deleted", async () => {
+      const manualTimer = {
+        ...mockTimer,
+        npc: {
+          ...mockTimer.npc,
+          margonemType: 999,
+        },
+      };
+
+      mockEventTimerHooksService.findActiveEventHeroByNpc.mockResolvedValue(
+        null,
+      );
+      mockPrismaService.timer.findMany.mockResolvedValue([manualTimer]);
+      mockPrismaService.timer.delete.mockResolvedValue(manualTimer);
+
+      await service.deleteTimer("guild1", "123", "test-world");
+
+      expect(mockPrismaService.timerHistoryEntry.create).not.toHaveBeenCalled();
+      expect(mockPrismaService.timer.delete).toHaveBeenCalledWith({
+        where: {
+          timerId: {
+            guildId: "guild1",
+            world: "test-world",
+            timerKey: manualTimer.timerKey,
+          },
+        },
+      });
     });
 
     it("should block deleting event timers through generic delete flow", async () => {
@@ -1101,6 +1346,498 @@ describe("TimersService", () => {
 
       expect(mockPrismaService.timer.delete).not.toHaveBeenCalled();
       expect(mockRedisService.deleteByPattern).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("getAllTimers", () => {
+    const timer = {
+      guildId: "guild1",
+      world: "test-world",
+      npcId: 123,
+      timerKey: buildTimerKey(123, "Test Boss"),
+      minSpawnTime: new Date("2026-05-03T08:00:00.000Z"),
+      maxSpawnTime: new Date("2026-05-03T09:00:00.000Z"),
+      latestRespBaseSeconds: 3600,
+      latestRespawnRandomness: 10,
+      wasReset: false,
+      createdById: 1,
+      actorCharacterLvl: 300,
+      createdAt: new Date("2026-05-03T07:00:00.000Z"),
+      updatedAt: new Date("2026-05-03T07:30:00.000Z"),
+      npc: {
+        id: 123,
+        name: "Test Boss",
+        prof: "w",
+        location: "Test Location",
+        wt: 25,
+        lvl: 100,
+        type: NpcType.HERO,
+        icon: "icon.png",
+        margonemType: 4,
+      },
+      member: {
+        id: 1,
+        userId: "discord123",
+        guildId: "guild1",
+        type: "OWNER",
+        name: "Tester",
+        avatar: null,
+        banner: null,
+        active: true,
+        globalUserId: "global-1",
+        lastDiscordSyncAt: null,
+        updatedAt: new Date("2026-05-03T07:00:00.000Z"),
+        roles: [],
+      },
+      actorCharacter: {
+        id: 10,
+        world: "test-world",
+        accountId: 200,
+        characterId: 100,
+        snapshotHash: "hash",
+        name: "Hero One",
+        prof: Profession.BLADE_DANCER,
+        icon: "hero.gif",
+        createdAt: new Date("2026-05-03T07:00:00.000Z"),
+      },
+    };
+
+    it("returns actor character data from the timers API", async () => {
+      mockGuildsService.getGuildsForRequiredPermissions.mockResolvedValue([
+        { id: "guild1" },
+      ]);
+      mockGuildsService.getMultipleGuildsPermissions.mockResolvedValue([
+        {
+          guild: { id: "guild1" },
+          permissions: [Permission.OWNER],
+          roles: [],
+        },
+      ]);
+      mockPrismaService.timer.findMany.mockResolvedValue([timer]);
+
+      const result = await service.getAllTimers("discord123", "user123", {
+        world: "test-world",
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        guildId: "guild1",
+        timerKey: buildTimerKey(123, "Test Boss"),
+        actorCharacter: {
+          accountId: 200,
+          characterId: 100,
+          name: "Hero One",
+          prof: Profession.BLADE_DANCER,
+          icon: "hero.gif",
+          lvl: 300,
+        },
+      });
+    });
+
+    it("filters active timers by default", async () => {
+      mockGuildsService.getGuildsForRequiredPermissions.mockResolvedValue([
+        { id: "guild1" },
+      ]);
+      mockGuildsService.getMultipleGuildsPermissions.mockResolvedValue([
+        {
+          guild: { id: "guild1" },
+          permissions: [Permission.OWNER],
+          roles: [],
+        },
+      ]);
+      mockPrismaService.timer.findMany.mockResolvedValue([]);
+
+      await service.getAllTimers("discord123", "user123", {
+        world: "test-world",
+      });
+
+      expect(mockPrismaService.timer.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            guildId: { in: ["guild1"] },
+            deletedAt: null,
+            maxSpawnTime: { gt: expect.any(Date) },
+            world: "test-world",
+          }),
+        }),
+      );
+    });
+
+    it("includes allowlisted expired non-manual timers", async () => {
+      mockGuildsService.getGuildsForRequiredPermissions.mockResolvedValue([
+        { id: "guild1" },
+      ]);
+      mockGuildsService.getMultipleGuildsPermissions.mockResolvedValue([
+        {
+          guild: { id: "guild1" },
+          permissions: [Permission.OWNER],
+          roles: [],
+        },
+      ]);
+      mockPrismaService.userTimerSettings.findUnique.mockResolvedValue({
+        alwaysVisibleExpiredTimers: {
+          "test-world": ["123:test-boss"],
+        },
+      });
+      mockPrismaService.timer.findMany.mockResolvedValue([]);
+
+      await service.getAllTimers("discord123", "user123", {
+        world: "test-world",
+      });
+
+      expect(mockPrismaService.timer.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            guildId: { in: ["guild1"] },
+            world: "test-world",
+            OR: [
+              {
+                deletedAt: null,
+                maxSpawnTime: { gt: expect.any(Date) },
+              },
+              {
+                timerKey: { in: ["123:test-boss"] },
+                maxSpawnTime: { lte: expect.any(Date) },
+                NOT: [
+                  {
+                    npc: {
+                      path: ["margonemType"],
+                      equals: 999,
+                    },
+                  },
+                  {
+                    npc: {
+                      path: ["margonemType"],
+                      equals: "999",
+                    },
+                  },
+                ],
+              },
+              {
+                timerKey: { in: ["123:test-boss"] },
+                deletedAt: { not: null },
+                NOT: [
+                  {
+                    npc: {
+                      path: ["margonemType"],
+                      equals: 999,
+                    },
+                  },
+                  {
+                    npc: {
+                      path: ["margonemType"],
+                      equals: "999",
+                    },
+                  },
+                ],
+              },
+            ],
+          }),
+        }),
+      );
+    });
+
+    it("returns deletedAt in timer responses", async () => {
+      const deletedAt = new Date("2026-05-03T08:15:00.000Z");
+
+      mockGuildsService.getGuildsForRequiredPermissions.mockResolvedValue([
+        { id: "guild1" },
+      ]);
+      mockGuildsService.getMultipleGuildsPermissions.mockResolvedValue([
+        {
+          guild: { id: "guild1" },
+          permissions: [Permission.OWNER],
+          roles: [],
+        },
+      ]);
+      mockPrismaService.timer.findMany.mockResolvedValue([
+        {
+          ...timer,
+          deletedAt,
+        },
+      ]);
+
+      mockPrismaService.userTimerSettings.findUnique.mockResolvedValue({
+        alwaysVisibleExpiredTimers: {
+          "test-world": [timer.timerKey],
+        },
+      });
+
+      const result = await service.getAllTimers("discord123", "user123", {
+        world: "test-world",
+      });
+
+      expect(result[0]).toMatchObject({
+        deletedAt,
+      });
+    });
+
+    it("preserves actor character data when guild timers are read from cache", async () => {
+      mockRedisService.get.mockResolvedValue(JSON.stringify([timer]));
+
+      const result = await service.getTimers(
+        "user123",
+        { world: "test-world" },
+        { id: "guild1" } as never,
+        [Permission.OWNER],
+        [],
+      );
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        actorCharacter: {
+          accountId: 200,
+          characterId: 100,
+          name: "Hero One",
+          prof: Profession.BLADE_DANCER,
+          icon: "hero.gif",
+          lvl: 300,
+        },
+      });
+      expect(mockPrismaService.timer.findMany).not.toHaveBeenCalled();
+    });
+
+    it("returns guild name in timer history responses", async () => {
+      mockPrismaService.timer.findUnique.mockResolvedValue(timer);
+      mockPrismaService.timerHistoryEntry.findMany.mockResolvedValue([
+        {
+          id: 1,
+          guildId: "guild1",
+          guild: { name: "Lootlog" },
+          world: "test-world",
+          timerKey: timer.timerKey,
+          npcId: timer.npcId,
+          npc: timer.npc,
+          action: TimerHistoryAction.DELETE,
+          actorCharacterLvl: 300,
+          minSpawnTime: timer.minSpawnTime,
+          maxSpawnTime: timer.maxSpawnTime,
+          latestRespBaseSeconds: timer.latestRespBaseSeconds,
+          latestRespawnRandomness: timer.latestRespawnRandomness,
+          wasReset: timer.wasReset,
+          windowOpenedAt: timer.windowOpenedAt,
+          timerCreatedById: timer.createdById,
+          timerActorCharacterSnapshotId: timer.actorCharacterSnapshotId,
+          timerActorCharacterLvl: timer.actorCharacterLvl,
+          createdAt: new Date("2026-05-03T08:00:00.000Z"),
+          actorMember: timer.member,
+          actorCharacter: timer.actorCharacter,
+        },
+      ]);
+
+      const result = await service.getTimerHistory(
+        "guild1",
+        "test-world",
+        timer.timerKey,
+        {
+          permissions: [Permission.OWNER],
+          roles: [],
+        },
+      );
+
+      expect(result[0]).toMatchObject({
+        guildId: "guild1",
+        guildName: "Lootlog",
+      });
+    });
+
+    it("returns recent history for the requested accessible guild only", async () => {
+      mockGuildsService.getGuildsForRequiredPermissions.mockResolvedValue([
+        { id: "guild1" },
+        { id: "guild2" },
+      ]);
+      mockGuildsService.getMultipleGuildsPermissions.mockResolvedValue([
+        {
+          guild: { id: "guild1" },
+          permissions: [Permission.OWNER],
+          roles: [],
+        },
+      ]);
+      mockPrismaService.timerHistoryEntry.findMany.mockResolvedValue([
+        {
+          id: 1,
+          guildId: "guild1",
+          guild: { name: "Lootlog" },
+          world: "test-world",
+          timerKey: timer.timerKey,
+          npcId: timer.npcId,
+          npc: timer.npc,
+          action: TimerHistoryAction.DELETE,
+          actorCharacterLvl: 300,
+          minSpawnTime: timer.minSpawnTime,
+          maxSpawnTime: timer.maxSpawnTime,
+          latestRespBaseSeconds: timer.latestRespBaseSeconds,
+          latestRespawnRandomness: timer.latestRespawnRandomness,
+          wasReset: timer.wasReset,
+          windowOpenedAt: timer.windowOpenedAt,
+          timerCreatedById: timer.createdById,
+          timerActorCharacterSnapshotId: timer.actorCharacterSnapshotId,
+          timerActorCharacterLvl: timer.actorCharacterLvl,
+          createdAt: new Date("2026-05-03T08:00:00.000Z"),
+          actorMember: timer.member,
+          actorCharacter: timer.actorCharacter,
+        },
+      ]);
+
+      const result = await service.getRecentTimerHistory(
+        "discord123",
+        "guild1",
+        "test-world",
+        { limit: 5 },
+      );
+
+      expect(mockPrismaService.timerHistoryEntry.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            guildId: "guild1",
+            world: "test-world",
+          },
+          take: 5,
+        }),
+      );
+      expect(
+        mockGuildsService.getMultipleGuildsPermissions,
+      ).toHaveBeenCalledWith("discord123", ["guild1"]);
+      expect(result[0]).toMatchObject({
+        guildId: "guild1",
+        guildName: "Lootlog",
+      });
+    });
+
+    it("rejects recent history for a guild without timer read access", async () => {
+      mockGuildsService.getGuildsForRequiredPermissions.mockResolvedValue([
+        { id: "guild1" },
+      ]);
+
+      await expect(
+        service.getRecentTimerHistory("discord123", "guild2", "test-world", {
+          limit: 5,
+        }),
+      ).rejects.toThrow("Forbidden");
+
+      expect(
+        mockPrismaService.timerHistoryEntry.findMany,
+      ).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("createManualTimer", () => {
+    it("should persist provided NPC level and profession", async () => {
+      mockPrismaService.timer.create.mockResolvedValue({
+        guildId: "guild1",
+        world: "test-world",
+        npcId: 123,
+        timerKey: buildTimerKey(123, "Test Boss"),
+        minSpawnTime: new Date(),
+        maxSpawnTime: new Date(),
+        latestRespBaseSeconds: 90,
+        latestRespawnRandomness: 33,
+        wasReset: false,
+        createdById: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        npc: {
+          id: 123,
+          name: "Test Boss",
+          prof: "w",
+          location: "",
+          wt: "",
+          lvl: 120,
+          type: NpcType.TITAN,
+          icon: "",
+          margonemType: 999,
+        },
+        member: null,
+      });
+
+      await service.createManualTimer("discord123", "guild1", {
+        name: "Test Boss",
+        minSeconds: 60,
+        maxSeconds: 120,
+        lvl: 120,
+        prof: "w",
+        type: NpcType.TITAN,
+        world: "test-world",
+      });
+
+      expect(mockPrismaService.timer.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            npc: expect.objectContaining({
+              name: "Test Boss",
+              lvl: 120,
+              prof: "w",
+              type: NpcType.TITAN,
+            }),
+          }),
+        }),
+      );
+      expect(
+        mockAmqpConnection.publish.mock.calls.find(
+          (call) => call[1] === RoutingKey.GUILDS_TIMERS_UPDATE,
+        )?.[2],
+      ).toMatchObject({
+        guildId: "guild1",
+        world: "test-world",
+        npcId: 123,
+        timerKey: buildTimerKey(123, "Test Boss"),
+        npc: {
+          name: "Test Boss",
+          lvl: 120,
+          prof: "w",
+          type: NpcType.TITAN,
+          margonemType: "999",
+        },
+      });
+      expect(mockPrismaService.timerHistoryEntry.create).not.toHaveBeenCalled();
+    });
+
+    it("should fall back to empty manual timer NPC metadata", async () => {
+      mockPrismaService.timer.create.mockResolvedValue({
+        guildId: "guild1",
+        world: "test-world",
+        npcId: 123,
+        timerKey: buildTimerKey(123, "Custom Boss"),
+        minSpawnTime: new Date(),
+        maxSpawnTime: new Date(),
+        latestRespBaseSeconds: 90,
+        latestRespawnRandomness: 33,
+        wasReset: false,
+        createdById: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        npc: {
+          id: 123,
+          name: "Custom Boss",
+          prof: "",
+          location: "",
+          wt: "",
+          lvl: 0,
+          type: "",
+          icon: "",
+          margonemType: 1,
+        },
+        member: null,
+      });
+
+      await service.createManualTimer("discord123", "guild1", {
+        name: "Custom Boss",
+        minSeconds: 60,
+        maxSeconds: 120,
+        world: "test-world",
+      });
+
+      expect(mockPrismaService.timer.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            npc: expect.objectContaining({
+              name: "Custom Boss",
+              lvl: 0,
+              prof: "",
+            }),
+          }),
+        }),
+      );
     });
   });
 

@@ -63,6 +63,7 @@ export type UserTimerSettingsCountAggregateOutputType = {
   displayConfig: number
   customColors: number
   timersColors: number
+  alwaysVisibleExpiredTimers: number
   defaultColorNames: number
   overriddenDefaultColors: number
   hiddenDefaultColors: number
@@ -113,6 +114,7 @@ export type UserTimerSettingsCountAggregateInputType = {
   displayConfig?: true
   customColors?: true
   timersColors?: true
+  alwaysVisibleExpiredTimers?: true
   defaultColorNames?: true
   overriddenDefaultColors?: true
   hiddenDefaultColors?: true
@@ -218,6 +220,7 @@ export type UserTimerSettingsGroupByOutputType = {
   displayConfig: runtime.JsonValue
   customColors: runtime.JsonValue
   timersColors: runtime.JsonValue
+  alwaysVisibleExpiredTimers: runtime.JsonValue
   defaultColorNames: runtime.JsonValue
   overriddenDefaultColors: runtime.JsonValue
   hiddenDefaultColors: runtime.JsonValue
@@ -259,6 +262,7 @@ export type UserTimerSettingsWhereInput = {
   displayConfig?: Prisma.JsonFilter<"UserTimerSettings">
   customColors?: Prisma.JsonFilter<"UserTimerSettings">
   timersColors?: Prisma.JsonFilter<"UserTimerSettings">
+  alwaysVisibleExpiredTimers?: Prisma.JsonFilter<"UserTimerSettings">
   defaultColorNames?: Prisma.JsonFilter<"UserTimerSettings">
   overriddenDefaultColors?: Prisma.JsonFilter<"UserTimerSettings">
   hiddenDefaultColors?: Prisma.JsonFilter<"UserTimerSettings">
@@ -277,6 +281,7 @@ export type UserTimerSettingsOrderByWithRelationInput = {
   displayConfig?: Prisma.SortOrder
   customColors?: Prisma.SortOrder
   timersColors?: Prisma.SortOrder
+  alwaysVisibleExpiredTimers?: Prisma.SortOrder
   defaultColorNames?: Prisma.SortOrder
   overriddenDefaultColors?: Prisma.SortOrder
   hiddenDefaultColors?: Prisma.SortOrder
@@ -298,6 +303,7 @@ export type UserTimerSettingsWhereUniqueInput = Prisma.AtLeast<{
   displayConfig?: Prisma.JsonFilter<"UserTimerSettings">
   customColors?: Prisma.JsonFilter<"UserTimerSettings">
   timersColors?: Prisma.JsonFilter<"UserTimerSettings">
+  alwaysVisibleExpiredTimers?: Prisma.JsonFilter<"UserTimerSettings">
   defaultColorNames?: Prisma.JsonFilter<"UserTimerSettings">
   overriddenDefaultColors?: Prisma.JsonFilter<"UserTimerSettings">
   hiddenDefaultColors?: Prisma.JsonFilter<"UserTimerSettings">
@@ -316,6 +322,7 @@ export type UserTimerSettingsOrderByWithAggregationInput = {
   displayConfig?: Prisma.SortOrder
   customColors?: Prisma.SortOrder
   timersColors?: Prisma.SortOrder
+  alwaysVisibleExpiredTimers?: Prisma.SortOrder
   defaultColorNames?: Prisma.SortOrder
   overriddenDefaultColors?: Prisma.SortOrder
   hiddenDefaultColors?: Prisma.SortOrder
@@ -342,6 +349,7 @@ export type UserTimerSettingsScalarWhereWithAggregatesInput = {
   displayConfig?: Prisma.JsonWithAggregatesFilter<"UserTimerSettings">
   customColors?: Prisma.JsonWithAggregatesFilter<"UserTimerSettings">
   timersColors?: Prisma.JsonWithAggregatesFilter<"UserTimerSettings">
+  alwaysVisibleExpiredTimers?: Prisma.JsonWithAggregatesFilter<"UserTimerSettings">
   defaultColorNames?: Prisma.JsonWithAggregatesFilter<"UserTimerSettings">
   overriddenDefaultColors?: Prisma.JsonWithAggregatesFilter<"UserTimerSettings">
   hiddenDefaultColors?: Prisma.JsonWithAggregatesFilter<"UserTimerSettings">
@@ -359,6 +367,7 @@ export type UserTimerSettingsCreateInput = {
   displayConfig: Prisma.JsonNullValueInput | runtime.InputJsonValue
   customColors: Prisma.JsonNullValueInput | runtime.InputJsonValue
   timersColors: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  alwaysVisibleExpiredTimers?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   defaultColorNames: Prisma.JsonNullValueInput | runtime.InputJsonValue
   overriddenDefaultColors: Prisma.JsonNullValueInput | runtime.InputJsonValue
   hiddenDefaultColors: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -377,6 +386,7 @@ export type UserTimerSettingsUncheckedCreateInput = {
   displayConfig: Prisma.JsonNullValueInput | runtime.InputJsonValue
   customColors: Prisma.JsonNullValueInput | runtime.InputJsonValue
   timersColors: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  alwaysVisibleExpiredTimers?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   defaultColorNames: Prisma.JsonNullValueInput | runtime.InputJsonValue
   overriddenDefaultColors: Prisma.JsonNullValueInput | runtime.InputJsonValue
   hiddenDefaultColors: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -394,6 +404,7 @@ export type UserTimerSettingsUpdateInput = {
   displayConfig?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   customColors?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   timersColors?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  alwaysVisibleExpiredTimers?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   defaultColorNames?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   overriddenDefaultColors?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   hiddenDefaultColors?: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -412,6 +423,7 @@ export type UserTimerSettingsUncheckedUpdateInput = {
   displayConfig?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   customColors?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   timersColors?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  alwaysVisibleExpiredTimers?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   defaultColorNames?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   overriddenDefaultColors?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   hiddenDefaultColors?: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -430,6 +442,7 @@ export type UserTimerSettingsCreateManyInput = {
   displayConfig: Prisma.JsonNullValueInput | runtime.InputJsonValue
   customColors: Prisma.JsonNullValueInput | runtime.InputJsonValue
   timersColors: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  alwaysVisibleExpiredTimers?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   defaultColorNames: Prisma.JsonNullValueInput | runtime.InputJsonValue
   overriddenDefaultColors: Prisma.JsonNullValueInput | runtime.InputJsonValue
   hiddenDefaultColors: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -447,6 +460,7 @@ export type UserTimerSettingsUpdateManyMutationInput = {
   displayConfig?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   customColors?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   timersColors?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  alwaysVisibleExpiredTimers?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   defaultColorNames?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   overriddenDefaultColors?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   hiddenDefaultColors?: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -465,6 +479,7 @@ export type UserTimerSettingsUncheckedUpdateManyInput = {
   displayConfig?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   customColors?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   timersColors?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  alwaysVisibleExpiredTimers?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   defaultColorNames?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   overriddenDefaultColors?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   hiddenDefaultColors?: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -483,6 +498,7 @@ export type UserTimerSettingsCountOrderByAggregateInput = {
   displayConfig?: Prisma.SortOrder
   customColors?: Prisma.SortOrder
   timersColors?: Prisma.SortOrder
+  alwaysVisibleExpiredTimers?: Prisma.SortOrder
   defaultColorNames?: Prisma.SortOrder
   overriddenDefaultColors?: Prisma.SortOrder
   hiddenDefaultColors?: Prisma.SortOrder
@@ -533,6 +549,7 @@ export type UserTimerSettingsSelect<ExtArgs extends runtime.Types.Extensions.Int
   displayConfig?: boolean
   customColors?: boolean
   timersColors?: boolean
+  alwaysVisibleExpiredTimers?: boolean
   defaultColorNames?: boolean
   overriddenDefaultColors?: boolean
   hiddenDefaultColors?: boolean
@@ -551,6 +568,7 @@ export type UserTimerSettingsSelectCreateManyAndReturn<ExtArgs extends runtime.T
   displayConfig?: boolean
   customColors?: boolean
   timersColors?: boolean
+  alwaysVisibleExpiredTimers?: boolean
   defaultColorNames?: boolean
   overriddenDefaultColors?: boolean
   hiddenDefaultColors?: boolean
@@ -569,6 +587,7 @@ export type UserTimerSettingsSelectUpdateManyAndReturn<ExtArgs extends runtime.T
   displayConfig?: boolean
   customColors?: boolean
   timersColors?: boolean
+  alwaysVisibleExpiredTimers?: boolean
   defaultColorNames?: boolean
   overriddenDefaultColors?: boolean
   hiddenDefaultColors?: boolean
@@ -587,6 +606,7 @@ export type UserTimerSettingsSelectScalar = {
   displayConfig?: boolean
   customColors?: boolean
   timersColors?: boolean
+  alwaysVisibleExpiredTimers?: boolean
   defaultColorNames?: boolean
   overriddenDefaultColors?: boolean
   hiddenDefaultColors?: boolean
@@ -598,7 +618,7 @@ export type UserTimerSettingsSelectScalar = {
   updatedAt?: boolean
 }
 
-export type UserTimerSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "generalConfig" | "displayConfig" | "customColors" | "timersColors" | "defaultColorNames" | "overriddenDefaultColors" | "hiddenDefaultColors" | "timerFiltersEnabled" | "colorFiltersEnabled" | "timersSortOrder" | "syncEnabled" | "createdAt" | "updatedAt", ExtArgs["result"]["userTimerSettings"]>
+export type UserTimerSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "generalConfig" | "displayConfig" | "customColors" | "timersColors" | "alwaysVisibleExpiredTimers" | "defaultColorNames" | "overriddenDefaultColors" | "hiddenDefaultColors" | "timerFiltersEnabled" | "colorFiltersEnabled" | "timersSortOrder" | "syncEnabled" | "createdAt" | "updatedAt", ExtArgs["result"]["userTimerSettings"]>
 
 export type $UserTimerSettingsPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "UserTimerSettings"
@@ -610,6 +630,7 @@ export type $UserTimerSettingsPayload<ExtArgs extends runtime.Types.Extensions.I
     displayConfig: runtime.JsonValue
     customColors: runtime.JsonValue
     timersColors: runtime.JsonValue
+    alwaysVisibleExpiredTimers: runtime.JsonValue
     defaultColorNames: runtime.JsonValue
     overriddenDefaultColors: runtime.JsonValue
     hiddenDefaultColors: runtime.JsonValue
@@ -1048,6 +1069,7 @@ export interface UserTimerSettingsFieldRefs {
   readonly displayConfig: Prisma.FieldRef<"UserTimerSettings", 'Json'>
   readonly customColors: Prisma.FieldRef<"UserTimerSettings", 'Json'>
   readonly timersColors: Prisma.FieldRef<"UserTimerSettings", 'Json'>
+  readonly alwaysVisibleExpiredTimers: Prisma.FieldRef<"UserTimerSettings", 'Json'>
   readonly defaultColorNames: Prisma.FieldRef<"UserTimerSettings", 'Json'>
   readonly overriddenDefaultColors: Prisma.FieldRef<"UserTimerSettings", 'Json'>
   readonly hiddenDefaultColors: Prisma.FieldRef<"UserTimerSettings", 'Json'>

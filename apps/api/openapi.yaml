@@ -876,6 +876,42 @@ paths:
       summary: Get all user timers
       tags:
         - timers
+  /timers/history:
+    get:
+      description: Retrieve latest visible timer history entries for an authenticated user guild
+      operationId: TimersController_getRecentTimerHistory
+      parameters:
+        - name: guildId
+          required: true
+          in: query
+          description: Guild ID
+          schema:
+            type: string
+        - name: world
+          required: true
+          in: query
+          description: World name
+          schema:
+            type: string
+        - name: limit
+          required: false
+          in: query
+          description: Result limit
+          schema: {}
+      responses:
+        "200":
+          description: List of recent timer history entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TimerHistoryResponseDto"
+      security:
+        - bearer: []
+      summary: Get recent timer action history
+      tags:
+        - timers
   /guilds/{guildId}/timers:
     get:
       description: Retrieve timers for a specific guild
@@ -1063,6 +1099,81 @@ paths:
       security:
         - bearer: []
       summary: Delete timer
+      tags:
+        - timers
+  /guilds/{guildId}/timers/{timerIdentifier}/history:
+    get:
+      description: Retrieve latest action history entries for a guild timer
+      operationId: TimersController_getTimerHistory
+      parameters:
+        - name: world
+          required: true
+          in: query
+          description: World name
+          schema:
+            type: string
+        - name: guildId
+          required: true
+          in: path
+          description: Guild ID
+          schema:
+            example: guild_123
+            type: string
+        - name: timerIdentifier
+          required: true
+          in: path
+          description: Timer key or legacy NPC ID when unambiguous
+          schema:
+            example: 12345:test boss
+            type: string
+        - name: limit
+          required: false
+          in: query
+          description: Result limit
+          schema: {}
+      responses:
+        "200":
+          description: List of timer history entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TimerHistoryResponseDto"
+      security:
+        - bearer: []
+      summary: Get timer action history
+      tags:
+        - timers
+  /guilds/{guildId}/timers/history/{historyEntryId}/restore:
+    post:
+      description: Restore a deleted timer from a timer history entry
+      operationId: TimersController_restoreTimerFromHistory
+      parameters:
+        - name: guildId
+          required: true
+          in: path
+          description: Guild ID
+          schema:
+            example: guild_123
+            type: string
+        - name: historyEntryId
+          required: true
+          in: path
+          description: Timer history entry ID
+          schema:
+            example: 123
+            type: string
+      responses:
+        "201":
+          description: Timer restored successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TimerResponseDto"
+      security:
+        - bearer: []
+      summary: Restore timer from history
       tags:
         - timers
   /guilds/{guildId}/timers/manual:
@@ -6824,6 +6935,38 @@ components:
         - type
         - icon
         - margonemType
+    TimerActorCharacterResponseDto:
+      type: object
+      properties:
+        name:
+          type: string
+        prof:
+          type: string
+          enum:
+            - WARRIOR
+            - PALADIN
+            - HUNTER
+            - MAGE
+            - BLADE_DANCER
+            - TRACKER
+          nullable: true
+        icon:
+          type: string
+          nullable: true
+        lvl:
+          type: number
+          nullable: true
+        characterId:
+          type: number
+        accountId:
+          type: number
+      required:
+        - name
+        - prof
+        - icon
+        - lvl
+        - characterId
+        - accountId
     TimerResponseDto:
       type: object
       properties:
@@ -6977,6 +7120,13 @@ components:
             - active
             - roles
             - updatedAt
+        actorCharacter:
+          $ref: "#/components/schemas/TimerActorCharacterResponseDto"
+        deletedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          nullable: true
         updatedAt:
           type: string
           format: date-time
@@ -6991,6 +7141,224 @@ components:
         - npc
         - wasReset
         - updatedAt
+    TimerHistoryActorCharacterResponseDto:
+      type: object
+      properties:
+        name:
+          type: string
+        prof:
+          type: string
+          enum:
+            - WARRIOR
+            - PALADIN
+            - HUNTER
+            - MAGE
+            - BLADE_DANCER
+            - TRACKER
+          nullable: true
+        icon:
+          type: string
+          nullable: true
+        lvl:
+          type: number
+          nullable: true
+        characterId:
+          type: number
+        accountId:
+          type: number
+      required:
+        - name
+        - prof
+        - icon
+        - lvl
+        - characterId
+        - accountId
+    TimerHistoryResponseDto:
+      type: object
+      properties:
+        id:
+          type: number
+        guildId:
+          type: string
+        guildName:
+          type: string
+        world:
+          type: string
+        timerKey:
+          type: string
+        npcId:
+          type: number
+        npc:
+          allOf:
+            - $ref: "#/components/schemas/TimerNpcResponseDto"
+          nullable: true
+        action:
+          type: string
+          enum:
+            - CREATE
+            - RESET
+            - DELETE
+            - RESTORE
+        member:
+          type: object
+          properties:
+            id:
+              type: number
+            userId:
+              type: string
+            guildId:
+              type: string
+            type:
+              type: string
+              enum:
+                - OWNER
+                - ADMIN
+                - USER
+                - BOT
+            name:
+              type: string
+            avatar:
+              type: string
+              nullable: true
+            banner:
+              type: string
+              nullable: true
+            active:
+              type: boolean
+            roles:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  guildId:
+                    type: string
+                  name:
+                    type: string
+                  color:
+                    type: number
+                    nullable: true
+                  position:
+                    type: number
+                    nullable: true
+                  permissions:
+                    type: array
+                    items:
+                      type: string
+                      enum:
+                        - OWNER
+                        - ADMIN
+                        - LOOTLOG_MANAGE
+                        - LOOTLOG_ACCESS
+                        - LOOTLOG_LOOTS_READ
+                        - LOOTLOG_LOOTS_WRITE
+                        - LOOTLOG_LOOTS_TITANS_READ
+                        - LOOTLOG_LOOTS_HEROES_READ
+                        - LOOTLOG_TIMERS_READ
+                        - LOOTLOG_TIMERS_WRITE
+                        - LOOTLOG_TIMERS_RESET
+                        - LOOTLOG_TIMERS_DELETE
+                        - LOOTLOG_TIMERS_TITANS_READ
+                        - LOOTLOG_TIMERS_HEROES_READ
+                        - LOOTLOG_RESERVATIONS_READ
+                        - LOOTLOG_RESERVATIONS_WRITE
+                        - LOOTLOG_MEMBERS_READ
+                        - LOOTLOG_CHAT_READ
+                        - LOOTLOG_CHAT_WRITE
+                        - LOOTLOG_CHAT_TITANS_READ
+                        - LOOTLOG_CHAT_HEROES_READ
+                        - LOOTLOG_NOTIFICATIONS_READ
+                        - LOOTLOG_NOTIFICATIONS_SEND
+                        - LOOTLOG_NOTIFICATIONS_TITANS_READ
+                        - LOOTLOG_NOTIFICATIONS_HEROES_READ
+                        - LOOTLOG_EVENTS_MANAGE
+                        - LOOTLOG_EVENTS_READ
+                        - LOOTLOG_EVENTS_WRITE
+                  lvlRangeFrom:
+                    type: number
+                    nullable: true
+                  lvlRangeTo:
+                    type: number
+                    nullable: true
+                required:
+                  - id
+                  - guildId
+                  - name
+                  - color
+                  - permissions
+            globalUserId:
+              type: string
+              nullable: true
+            lastDiscordSyncAt:
+              type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              nullable: true
+            lastDiscordAttemptAt:
+              type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              nullable: true
+            lastDiscordStatus:
+              type: string
+              nullable: true
+            isStale:
+              type: boolean
+            staleWarning:
+              type: string
+            refreshQueued:
+              type: boolean
+            nextRefreshAt:
+              type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              nullable: true
+            updatedAt:
+              type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          required:
+            - id
+            - userId
+            - guildId
+            - type
+            - name
+            - active
+            - roles
+            - updatedAt
+        actorCharacter:
+          $ref: "#/components/schemas/TimerHistoryActorCharacterResponseDto"
+        minSpawnTime:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          nullable: true
+        maxSpawnTime:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          nullable: true
+        canRestore:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+      required:
+        - id
+        - guildId
+        - guildName
+        - world
+        - timerKey
+        - npcId
+        - npc
+        - action
+        - member
+        - minSpawnTime
+        - maxSpawnTime
+        - canRestore
+        - createdAt
     SearchTimersNpcResponseDto_Output:
       type: object
       properties:
@@ -7100,6 +7468,31 @@ components:
         accountId:
           type: string
           minLength: 1
+        actorCharacter:
+          type: object
+          properties:
+            accountId:
+              type: string
+              minLength: 1
+            characterId:
+              type: string
+              minLength: 1
+            name:
+              type: string
+              minLength: 1
+              maxLength: 50
+            prof:
+              type: string
+            icon:
+              type: string
+            lvl:
+              type: integer
+              minimum: 1
+              maximum: 9007199254740991
+          required:
+            - accountId
+            - characterId
+            - name
       required:
         - respBaseSeconds
         - customMinSpawnTime
@@ -7150,6 +7543,31 @@ components:
         world:
           type: string
           minLength: 1
+        actorCharacter:
+          type: object
+          properties:
+            accountId:
+              type: string
+              minLength: 1
+            characterId:
+              type: string
+              minLength: 1
+            name:
+              type: string
+              minLength: 1
+              maxLength: 50
+            prof:
+              type: string
+            icon:
+              type: string
+            lvl:
+              type: integer
+              minimum: 1
+              maximum: 9007199254740991
+          required:
+            - accountId
+            - characterId
+            - name
       required:
         - world
     CreateManualTimerDto:
@@ -7165,6 +7583,17 @@ components:
         maxSeconds:
           type: number
           minimum: 1
+        lvl:
+          type: number
+        prof:
+          type: string
+        type:
+          type: string
+          enum:
+            - ELITE2
+            - ELITE3
+            - HERO
+            - TITAN
         customMinSpawnTime:
           type: string
           format: date-time
@@ -7176,6 +7605,31 @@ components:
         world:
           type: string
           minLength: 1
+        actorCharacter:
+          type: object
+          properties:
+            accountId:
+              type: string
+              minLength: 1
+            characterId:
+              type: string
+              minLength: 1
+            name:
+              type: string
+              minLength: 1
+              maxLength: 50
+            prof:
+              type: string
+            icon:
+              type: string
+            lvl:
+              type: integer
+              minimum: 1
+              maximum: 9007199254740991
+          required:
+            - accountId
+            - characterId
+            - name
       required:
         - name
         - world
@@ -7256,6 +7710,8 @@ components:
           $ref: "#/components/schemas/TimerSettingsResponseDto__schema0"
         timersColors:
           $ref: "#/components/schemas/TimerSettingsResponseDto__schema0"
+        alwaysVisibleExpiredTimers:
+          $ref: "#/components/schemas/TimerSettingsResponseDto__schema0"
         defaultColorNames:
           $ref: "#/components/schemas/TimerSettingsResponseDto__schema0"
         overriddenDefaultColors:
@@ -7289,6 +7745,7 @@ components:
         - displayConfig
         - customColors
         - timersColors
+        - alwaysVisibleExpiredTimers
         - defaultColorNames
         - overriddenDefaultColors
         - hiddenDefaultColors
@@ -7360,6 +7817,12 @@ components:
           type: object
           additionalProperties:
             type: string
+        alwaysVisibleExpiredTimers:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
         defaultColorNames:
           type: object
           additionalProperties:

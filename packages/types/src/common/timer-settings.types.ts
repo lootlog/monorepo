@@ -44,6 +44,7 @@ export interface UserTimerSettings {
   displayConfig: TimersDisplayConfig;
   customColors: Record<string, CustomTimerColor>;
   timersColors: Record<string, string | undefined>;
+  alwaysVisibleExpiredTimers: Record<string, string[]>;
   defaultColorNames: Record<string, string>;
   overriddenDefaultColors: Record<
     string,
@@ -77,6 +78,7 @@ export interface UpdateTimerSettingsPayload {
   displayConfig?: Partial<TimersDisplayConfig>;
   customColors?: Record<string, CustomTimerColor>;
   timersColors?: Record<string, string | undefined>;
+  alwaysVisibleExpiredTimers?: Record<string, string[]>;
   defaultColorNames?: Record<string, string>;
   overriddenDefaultColors?: Record<
     string,

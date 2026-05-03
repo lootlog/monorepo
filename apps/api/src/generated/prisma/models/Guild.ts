@@ -251,6 +251,7 @@ export type GuildWhereInput = {
   roles?: Prisma.RoleListRelationFilter
   members?: Prisma.MemberListRelationFilter
   timers?: Prisma.TimerListRelationFilter
+  timerHistoryEntries?: Prisma.TimerHistoryEntryListRelationFilter
   lootSubmissions?: Prisma.LootSubmissionListRelationFilter
   reservations?: Prisma.ReservationListRelationFilter
   events?: Prisma.EventListRelationFilter
@@ -275,6 +276,7 @@ export type GuildOrderByWithRelationInput = {
   roles?: Prisma.RoleOrderByRelationAggregateInput
   members?: Prisma.MemberOrderByRelationAggregateInput
   timers?: Prisma.TimerOrderByRelationAggregateInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryOrderByRelationAggregateInput
   lootSubmissions?: Prisma.LootSubmissionOrderByRelationAggregateInput
   reservations?: Prisma.ReservationOrderByRelationAggregateInput
   events?: Prisma.EventOrderByRelationAggregateInput
@@ -302,6 +304,7 @@ export type GuildWhereUniqueInput = Prisma.AtLeast<{
   roles?: Prisma.RoleListRelationFilter
   members?: Prisma.MemberListRelationFilter
   timers?: Prisma.TimerListRelationFilter
+  timerHistoryEntries?: Prisma.TimerHistoryEntryListRelationFilter
   lootSubmissions?: Prisma.LootSubmissionListRelationFilter
   reservations?: Prisma.ReservationListRelationFilter
   events?: Prisma.EventListRelationFilter
@@ -358,6 +361,7 @@ export type GuildCreateInput = {
   roles?: Prisma.RoleCreateNestedManyWithoutGuildInput
   members?: Prisma.MemberCreateNestedManyWithoutGuildInput
   timers?: Prisma.TimerCreateNestedManyWithoutGuildInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutGuildInput
   lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutGuildInput
   reservations?: Prisma.ReservationCreateNestedManyWithoutGuildInput
   events?: Prisma.EventCreateNestedManyWithoutGuildInput
@@ -382,6 +386,7 @@ export type GuildUncheckedCreateInput = {
   roles?: Prisma.RoleUncheckedCreateNestedManyWithoutGuildInput
   members?: Prisma.MemberUncheckedCreateNestedManyWithoutGuildInput
   timers?: Prisma.TimerUncheckedCreateNestedManyWithoutGuildInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutGuildInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutGuildInput
   reservations?: Prisma.ReservationUncheckedCreateNestedManyWithoutGuildInput
   events?: Prisma.EventUncheckedCreateNestedManyWithoutGuildInput
@@ -406,6 +411,7 @@ export type GuildUpdateInput = {
   roles?: Prisma.RoleUpdateManyWithoutGuildNestedInput
   members?: Prisma.MemberUpdateManyWithoutGuildNestedInput
   timers?: Prisma.TimerUpdateManyWithoutGuildNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutGuildNestedInput
   lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutGuildNestedInput
   reservations?: Prisma.ReservationUpdateManyWithoutGuildNestedInput
   events?: Prisma.EventUpdateManyWithoutGuildNestedInput
@@ -430,6 +436,7 @@ export type GuildUncheckedUpdateInput = {
   roles?: Prisma.RoleUncheckedUpdateManyWithoutGuildNestedInput
   members?: Prisma.MemberUncheckedUpdateManyWithoutGuildNestedInput
   timers?: Prisma.TimerUncheckedUpdateManyWithoutGuildNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutGuildNestedInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutGuildNestedInput
   reservations?: Prisma.ReservationUncheckedUpdateManyWithoutGuildNestedInput
   events?: Prisma.EventUncheckedUpdateManyWithoutGuildNestedInput
@@ -597,6 +604,20 @@ export type GuildUpdateOneRequiredWithoutTimersNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.GuildUpdateToOneWithWhereWithoutTimersInput, Prisma.GuildUpdateWithoutTimersInput>, Prisma.GuildUncheckedUpdateWithoutTimersInput>
 }
 
+export type GuildCreateNestedOneWithoutTimerHistoryEntriesInput = {
+  create?: Prisma.XOR<Prisma.GuildCreateWithoutTimerHistoryEntriesInput, Prisma.GuildUncheckedCreateWithoutTimerHistoryEntriesInput>
+  connectOrCreate?: Prisma.GuildCreateOrConnectWithoutTimerHistoryEntriesInput
+  connect?: Prisma.GuildWhereUniqueInput
+}
+
+export type GuildUpdateOneRequiredWithoutTimerHistoryEntriesNestedInput = {
+  create?: Prisma.XOR<Prisma.GuildCreateWithoutTimerHistoryEntriesInput, Prisma.GuildUncheckedCreateWithoutTimerHistoryEntriesInput>
+  connectOrCreate?: Prisma.GuildCreateOrConnectWithoutTimerHistoryEntriesInput
+  upsert?: Prisma.GuildUpsertWithoutTimerHistoryEntriesInput
+  connect?: Prisma.GuildWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.GuildUpdateToOneWithWhereWithoutTimerHistoryEntriesInput, Prisma.GuildUpdateWithoutTimerHistoryEntriesInput>, Prisma.GuildUncheckedUpdateWithoutTimerHistoryEntriesInput>
+}
+
 export type GuildCreateNestedOneWithoutLootSubmissionsInput = {
   create?: Prisma.XOR<Prisma.GuildCreateWithoutLootSubmissionsInput, Prisma.GuildUncheckedCreateWithoutLootSubmissionsInput>
   connectOrCreate?: Prisma.GuildCreateOrConnectWithoutLootSubmissionsInput
@@ -737,6 +758,7 @@ export type GuildCreateWithoutRolesInput = {
   active?: boolean
   members?: Prisma.MemberCreateNestedManyWithoutGuildInput
   timers?: Prisma.TimerCreateNestedManyWithoutGuildInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutGuildInput
   lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutGuildInput
   reservations?: Prisma.ReservationCreateNestedManyWithoutGuildInput
   events?: Prisma.EventCreateNestedManyWithoutGuildInput
@@ -760,6 +782,7 @@ export type GuildUncheckedCreateWithoutRolesInput = {
   active?: boolean
   members?: Prisma.MemberUncheckedCreateNestedManyWithoutGuildInput
   timers?: Prisma.TimerUncheckedCreateNestedManyWithoutGuildInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutGuildInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutGuildInput
   reservations?: Prisma.ReservationUncheckedCreateNestedManyWithoutGuildInput
   events?: Prisma.EventUncheckedCreateNestedManyWithoutGuildInput
@@ -799,6 +822,7 @@ export type GuildUpdateWithoutRolesInput = {
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   members?: Prisma.MemberUpdateManyWithoutGuildNestedInput
   timers?: Prisma.TimerUpdateManyWithoutGuildNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutGuildNestedInput
   lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutGuildNestedInput
   reservations?: Prisma.ReservationUpdateManyWithoutGuildNestedInput
   events?: Prisma.EventUpdateManyWithoutGuildNestedInput
@@ -822,6 +846,7 @@ export type GuildUncheckedUpdateWithoutRolesInput = {
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   members?: Prisma.MemberUncheckedUpdateManyWithoutGuildNestedInput
   timers?: Prisma.TimerUncheckedUpdateManyWithoutGuildNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutGuildNestedInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutGuildNestedInput
   reservations?: Prisma.ReservationUncheckedUpdateManyWithoutGuildNestedInput
   events?: Prisma.EventUncheckedUpdateManyWithoutGuildNestedInput
@@ -845,6 +870,7 @@ export type GuildCreateWithoutMembersInput = {
   active?: boolean
   roles?: Prisma.RoleCreateNestedManyWithoutGuildInput
   timers?: Prisma.TimerCreateNestedManyWithoutGuildInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutGuildInput
   lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutGuildInput
   reservations?: Prisma.ReservationCreateNestedManyWithoutGuildInput
   events?: Prisma.EventCreateNestedManyWithoutGuildInput
@@ -868,6 +894,7 @@ export type GuildUncheckedCreateWithoutMembersInput = {
   active?: boolean
   roles?: Prisma.RoleUncheckedCreateNestedManyWithoutGuildInput
   timers?: Prisma.TimerUncheckedCreateNestedManyWithoutGuildInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutGuildInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutGuildInput
   reservations?: Prisma.ReservationUncheckedCreateNestedManyWithoutGuildInput
   events?: Prisma.EventUncheckedCreateNestedManyWithoutGuildInput
@@ -907,6 +934,7 @@ export type GuildUpdateWithoutMembersInput = {
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   roles?: Prisma.RoleUpdateManyWithoutGuildNestedInput
   timers?: Prisma.TimerUpdateManyWithoutGuildNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutGuildNestedInput
   lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutGuildNestedInput
   reservations?: Prisma.ReservationUpdateManyWithoutGuildNestedInput
   events?: Prisma.EventUpdateManyWithoutGuildNestedInput
@@ -930,6 +958,7 @@ export type GuildUncheckedUpdateWithoutMembersInput = {
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   roles?: Prisma.RoleUncheckedUpdateManyWithoutGuildNestedInput
   timers?: Prisma.TimerUncheckedUpdateManyWithoutGuildNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutGuildNestedInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutGuildNestedInput
   reservations?: Prisma.ReservationUncheckedUpdateManyWithoutGuildNestedInput
   events?: Prisma.EventUncheckedUpdateManyWithoutGuildNestedInput
@@ -953,6 +982,7 @@ export type GuildCreateWithoutTimersInput = {
   active?: boolean
   roles?: Prisma.RoleCreateNestedManyWithoutGuildInput
   members?: Prisma.MemberCreateNestedManyWithoutGuildInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutGuildInput
   lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutGuildInput
   reservations?: Prisma.ReservationCreateNestedManyWithoutGuildInput
   events?: Prisma.EventCreateNestedManyWithoutGuildInput
@@ -976,6 +1006,7 @@ export type GuildUncheckedCreateWithoutTimersInput = {
   active?: boolean
   roles?: Prisma.RoleUncheckedCreateNestedManyWithoutGuildInput
   members?: Prisma.MemberUncheckedCreateNestedManyWithoutGuildInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutGuildInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutGuildInput
   reservations?: Prisma.ReservationUncheckedCreateNestedManyWithoutGuildInput
   events?: Prisma.EventUncheckedCreateNestedManyWithoutGuildInput
@@ -1015,6 +1046,7 @@ export type GuildUpdateWithoutTimersInput = {
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   roles?: Prisma.RoleUpdateManyWithoutGuildNestedInput
   members?: Prisma.MemberUpdateManyWithoutGuildNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutGuildNestedInput
   lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutGuildNestedInput
   reservations?: Prisma.ReservationUpdateManyWithoutGuildNestedInput
   events?: Prisma.EventUpdateManyWithoutGuildNestedInput
@@ -1038,6 +1070,119 @@ export type GuildUncheckedUpdateWithoutTimersInput = {
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   roles?: Prisma.RoleUncheckedUpdateManyWithoutGuildNestedInput
   members?: Prisma.MemberUncheckedUpdateManyWithoutGuildNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutGuildNestedInput
+  lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutGuildNestedInput
+  reservations?: Prisma.ReservationUncheckedUpdateManyWithoutGuildNestedInput
+  events?: Prisma.EventUncheckedUpdateManyWithoutGuildNestedInput
+  mapTemplates?: Prisma.MapTemplateUncheckedUpdateManyWithoutGuildNestedInput
+  npcKillStats?: Prisma.NpcKillStatsUncheckedUpdateManyWithoutGuildNestedInput
+  guildKillSummary?: Prisma.GuildKillSummaryUncheckedUpdateManyWithoutGuildNestedInput
+  notificationRules?: Prisma.NotificationRuleUncheckedUpdateManyWithoutGuildNestedInput
+  discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedUpdateManyWithoutGuildNestedInput
+  discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedUpdateOneWithoutGuildNestedInput
+}
+
+export type GuildCreateWithoutTimerHistoryEntriesInput = {
+  id: string
+  name: string
+  icon?: string | null
+  ownerId: string
+  vanityUrl?: string | null
+  notificationRuleLimit?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  active?: boolean
+  roles?: Prisma.RoleCreateNestedManyWithoutGuildInput
+  members?: Prisma.MemberCreateNestedManyWithoutGuildInput
+  timers?: Prisma.TimerCreateNestedManyWithoutGuildInput
+  lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutGuildInput
+  reservations?: Prisma.ReservationCreateNestedManyWithoutGuildInput
+  events?: Prisma.EventCreateNestedManyWithoutGuildInput
+  mapTemplates?: Prisma.MapTemplateCreateNestedManyWithoutGuildInput
+  npcKillStats?: Prisma.NpcKillStatsCreateNestedManyWithoutGuildInput
+  guildKillSummary?: Prisma.GuildKillSummaryCreateNestedManyWithoutGuildInput
+  notificationRules?: Prisma.NotificationRuleCreateNestedManyWithoutGuildInput
+  discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotCreateNestedManyWithoutGuildInput
+  discordSyncState?: Prisma.DiscordGuildSyncStateCreateNestedOneWithoutGuildInput
+}
+
+export type GuildUncheckedCreateWithoutTimerHistoryEntriesInput = {
+  id: string
+  name: string
+  icon?: string | null
+  ownerId: string
+  vanityUrl?: string | null
+  notificationRuleLimit?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  active?: boolean
+  roles?: Prisma.RoleUncheckedCreateNestedManyWithoutGuildInput
+  members?: Prisma.MemberUncheckedCreateNestedManyWithoutGuildInput
+  timers?: Prisma.TimerUncheckedCreateNestedManyWithoutGuildInput
+  lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutGuildInput
+  reservations?: Prisma.ReservationUncheckedCreateNestedManyWithoutGuildInput
+  events?: Prisma.EventUncheckedCreateNestedManyWithoutGuildInput
+  mapTemplates?: Prisma.MapTemplateUncheckedCreateNestedManyWithoutGuildInput
+  npcKillStats?: Prisma.NpcKillStatsUncheckedCreateNestedManyWithoutGuildInput
+  guildKillSummary?: Prisma.GuildKillSummaryUncheckedCreateNestedManyWithoutGuildInput
+  notificationRules?: Prisma.NotificationRuleUncheckedCreateNestedManyWithoutGuildInput
+  discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedCreateNestedManyWithoutGuildInput
+  discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedCreateNestedOneWithoutGuildInput
+}
+
+export type GuildCreateOrConnectWithoutTimerHistoryEntriesInput = {
+  where: Prisma.GuildWhereUniqueInput
+  create: Prisma.XOR<Prisma.GuildCreateWithoutTimerHistoryEntriesInput, Prisma.GuildUncheckedCreateWithoutTimerHistoryEntriesInput>
+}
+
+export type GuildUpsertWithoutTimerHistoryEntriesInput = {
+  update: Prisma.XOR<Prisma.GuildUpdateWithoutTimerHistoryEntriesInput, Prisma.GuildUncheckedUpdateWithoutTimerHistoryEntriesInput>
+  create: Prisma.XOR<Prisma.GuildCreateWithoutTimerHistoryEntriesInput, Prisma.GuildUncheckedCreateWithoutTimerHistoryEntriesInput>
+  where?: Prisma.GuildWhereInput
+}
+
+export type GuildUpdateToOneWithWhereWithoutTimerHistoryEntriesInput = {
+  where?: Prisma.GuildWhereInput
+  data: Prisma.XOR<Prisma.GuildUpdateWithoutTimerHistoryEntriesInput, Prisma.GuildUncheckedUpdateWithoutTimerHistoryEntriesInput>
+}
+
+export type GuildUpdateWithoutTimerHistoryEntriesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  roles?: Prisma.RoleUpdateManyWithoutGuildNestedInput
+  members?: Prisma.MemberUpdateManyWithoutGuildNestedInput
+  timers?: Prisma.TimerUpdateManyWithoutGuildNestedInput
+  lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutGuildNestedInput
+  reservations?: Prisma.ReservationUpdateManyWithoutGuildNestedInput
+  events?: Prisma.EventUpdateManyWithoutGuildNestedInput
+  mapTemplates?: Prisma.MapTemplateUpdateManyWithoutGuildNestedInput
+  npcKillStats?: Prisma.NpcKillStatsUpdateManyWithoutGuildNestedInput
+  guildKillSummary?: Prisma.GuildKillSummaryUpdateManyWithoutGuildNestedInput
+  notificationRules?: Prisma.NotificationRuleUpdateManyWithoutGuildNestedInput
+  discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUpdateManyWithoutGuildNestedInput
+  discordSyncState?: Prisma.DiscordGuildSyncStateUpdateOneWithoutGuildNestedInput
+}
+
+export type GuildUncheckedUpdateWithoutTimerHistoryEntriesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  roles?: Prisma.RoleUncheckedUpdateManyWithoutGuildNestedInput
+  members?: Prisma.MemberUncheckedUpdateManyWithoutGuildNestedInput
+  timers?: Prisma.TimerUncheckedUpdateManyWithoutGuildNestedInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutGuildNestedInput
   reservations?: Prisma.ReservationUncheckedUpdateManyWithoutGuildNestedInput
   events?: Prisma.EventUncheckedUpdateManyWithoutGuildNestedInput
@@ -1062,6 +1207,7 @@ export type GuildCreateWithoutLootSubmissionsInput = {
   roles?: Prisma.RoleCreateNestedManyWithoutGuildInput
   members?: Prisma.MemberCreateNestedManyWithoutGuildInput
   timers?: Prisma.TimerCreateNestedManyWithoutGuildInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutGuildInput
   reservations?: Prisma.ReservationCreateNestedManyWithoutGuildInput
   events?: Prisma.EventCreateNestedManyWithoutGuildInput
   mapTemplates?: Prisma.MapTemplateCreateNestedManyWithoutGuildInput
@@ -1085,6 +1231,7 @@ export type GuildUncheckedCreateWithoutLootSubmissionsInput = {
   roles?: Prisma.RoleUncheckedCreateNestedManyWithoutGuildInput
   members?: Prisma.MemberUncheckedCreateNestedManyWithoutGuildInput
   timers?: Prisma.TimerUncheckedCreateNestedManyWithoutGuildInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutGuildInput
   reservations?: Prisma.ReservationUncheckedCreateNestedManyWithoutGuildInput
   events?: Prisma.EventUncheckedCreateNestedManyWithoutGuildInput
   mapTemplates?: Prisma.MapTemplateUncheckedCreateNestedManyWithoutGuildInput
@@ -1124,6 +1271,7 @@ export type GuildUpdateWithoutLootSubmissionsInput = {
   roles?: Prisma.RoleUpdateManyWithoutGuildNestedInput
   members?: Prisma.MemberUpdateManyWithoutGuildNestedInput
   timers?: Prisma.TimerUpdateManyWithoutGuildNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutGuildNestedInput
   reservations?: Prisma.ReservationUpdateManyWithoutGuildNestedInput
   events?: Prisma.EventUpdateManyWithoutGuildNestedInput
   mapTemplates?: Prisma.MapTemplateUpdateManyWithoutGuildNestedInput
@@ -1147,6 +1295,7 @@ export type GuildUncheckedUpdateWithoutLootSubmissionsInput = {
   roles?: Prisma.RoleUncheckedUpdateManyWithoutGuildNestedInput
   members?: Prisma.MemberUncheckedUpdateManyWithoutGuildNestedInput
   timers?: Prisma.TimerUncheckedUpdateManyWithoutGuildNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutGuildNestedInput
   reservations?: Prisma.ReservationUncheckedUpdateManyWithoutGuildNestedInput
   events?: Prisma.EventUncheckedUpdateManyWithoutGuildNestedInput
   mapTemplates?: Prisma.MapTemplateUncheckedUpdateManyWithoutGuildNestedInput
@@ -1170,6 +1319,7 @@ export type GuildCreateWithoutReservationsInput = {
   roles?: Prisma.RoleCreateNestedManyWithoutGuildInput
   members?: Prisma.MemberCreateNestedManyWithoutGuildInput
   timers?: Prisma.TimerCreateNestedManyWithoutGuildInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutGuildInput
   lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutGuildInput
   events?: Prisma.EventCreateNestedManyWithoutGuildInput
   mapTemplates?: Prisma.MapTemplateCreateNestedManyWithoutGuildInput
@@ -1193,6 +1343,7 @@ export type GuildUncheckedCreateWithoutReservationsInput = {
   roles?: Prisma.RoleUncheckedCreateNestedManyWithoutGuildInput
   members?: Prisma.MemberUncheckedCreateNestedManyWithoutGuildInput
   timers?: Prisma.TimerUncheckedCreateNestedManyWithoutGuildInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutGuildInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutGuildInput
   events?: Prisma.EventUncheckedCreateNestedManyWithoutGuildInput
   mapTemplates?: Prisma.MapTemplateUncheckedCreateNestedManyWithoutGuildInput
@@ -1232,6 +1383,7 @@ export type GuildUpdateWithoutReservationsInput = {
   roles?: Prisma.RoleUpdateManyWithoutGuildNestedInput
   members?: Prisma.MemberUpdateManyWithoutGuildNestedInput
   timers?: Prisma.TimerUpdateManyWithoutGuildNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutGuildNestedInput
   lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutGuildNestedInput
   events?: Prisma.EventUpdateManyWithoutGuildNestedInput
   mapTemplates?: Prisma.MapTemplateUpdateManyWithoutGuildNestedInput
@@ -1255,6 +1407,7 @@ export type GuildUncheckedUpdateWithoutReservationsInput = {
   roles?: Prisma.RoleUncheckedUpdateManyWithoutGuildNestedInput
   members?: Prisma.MemberUncheckedUpdateManyWithoutGuildNestedInput
   timers?: Prisma.TimerUncheckedUpdateManyWithoutGuildNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutGuildNestedInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutGuildNestedInput
   events?: Prisma.EventUncheckedUpdateManyWithoutGuildNestedInput
   mapTemplates?: Prisma.MapTemplateUncheckedUpdateManyWithoutGuildNestedInput
@@ -1278,6 +1431,7 @@ export type GuildCreateWithoutNotificationRulesInput = {
   roles?: Prisma.RoleCreateNestedManyWithoutGuildInput
   members?: Prisma.MemberCreateNestedManyWithoutGuildInput
   timers?: Prisma.TimerCreateNestedManyWithoutGuildInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutGuildInput
   lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutGuildInput
   reservations?: Prisma.ReservationCreateNestedManyWithoutGuildInput
   events?: Prisma.EventCreateNestedManyWithoutGuildInput
@@ -1301,6 +1455,7 @@ export type GuildUncheckedCreateWithoutNotificationRulesInput = {
   roles?: Prisma.RoleUncheckedCreateNestedManyWithoutGuildInput
   members?: Prisma.MemberUncheckedCreateNestedManyWithoutGuildInput
   timers?: Prisma.TimerUncheckedCreateNestedManyWithoutGuildInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutGuildInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutGuildInput
   reservations?: Prisma.ReservationUncheckedCreateNestedManyWithoutGuildInput
   events?: Prisma.EventUncheckedCreateNestedManyWithoutGuildInput
@@ -1340,6 +1495,7 @@ export type GuildUpdateWithoutNotificationRulesInput = {
   roles?: Prisma.RoleUpdateManyWithoutGuildNestedInput
   members?: Prisma.MemberUpdateManyWithoutGuildNestedInput
   timers?: Prisma.TimerUpdateManyWithoutGuildNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutGuildNestedInput
   lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutGuildNestedInput
   reservations?: Prisma.ReservationUpdateManyWithoutGuildNestedInput
   events?: Prisma.EventUpdateManyWithoutGuildNestedInput
@@ -1363,6 +1519,7 @@ export type GuildUncheckedUpdateWithoutNotificationRulesInput = {
   roles?: Prisma.RoleUncheckedUpdateManyWithoutGuildNestedInput
   members?: Prisma.MemberUncheckedUpdateManyWithoutGuildNestedInput
   timers?: Prisma.TimerUncheckedUpdateManyWithoutGuildNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutGuildNestedInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutGuildNestedInput
   reservations?: Prisma.ReservationUncheckedUpdateManyWithoutGuildNestedInput
   events?: Prisma.EventUncheckedUpdateManyWithoutGuildNestedInput
@@ -1386,6 +1543,7 @@ export type GuildCreateWithoutDiscordChannelSnapshotsInput = {
   roles?: Prisma.RoleCreateNestedManyWithoutGuildInput
   members?: Prisma.MemberCreateNestedManyWithoutGuildInput
   timers?: Prisma.TimerCreateNestedManyWithoutGuildInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutGuildInput
   lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutGuildInput
   reservations?: Prisma.ReservationCreateNestedManyWithoutGuildInput
   events?: Prisma.EventCreateNestedManyWithoutGuildInput
@@ -1409,6 +1567,7 @@ export type GuildUncheckedCreateWithoutDiscordChannelSnapshotsInput = {
   roles?: Prisma.RoleUncheckedCreateNestedManyWithoutGuildInput
   members?: Prisma.MemberUncheckedCreateNestedManyWithoutGuildInput
   timers?: Prisma.TimerUncheckedCreateNestedManyWithoutGuildInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutGuildInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutGuildInput
   reservations?: Prisma.ReservationUncheckedCreateNestedManyWithoutGuildInput
   events?: Prisma.EventUncheckedCreateNestedManyWithoutGuildInput
@@ -1448,6 +1607,7 @@ export type GuildUpdateWithoutDiscordChannelSnapshotsInput = {
   roles?: Prisma.RoleUpdateManyWithoutGuildNestedInput
   members?: Prisma.MemberUpdateManyWithoutGuildNestedInput
   timers?: Prisma.TimerUpdateManyWithoutGuildNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutGuildNestedInput
   lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutGuildNestedInput
   reservations?: Prisma.ReservationUpdateManyWithoutGuildNestedInput
   events?: Prisma.EventUpdateManyWithoutGuildNestedInput
@@ -1471,6 +1631,7 @@ export type GuildUncheckedUpdateWithoutDiscordChannelSnapshotsInput = {
   roles?: Prisma.RoleUncheckedUpdateManyWithoutGuildNestedInput
   members?: Prisma.MemberUncheckedUpdateManyWithoutGuildNestedInput
   timers?: Prisma.TimerUncheckedUpdateManyWithoutGuildNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutGuildNestedInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutGuildNestedInput
   reservations?: Prisma.ReservationUncheckedUpdateManyWithoutGuildNestedInput
   events?: Prisma.EventUncheckedUpdateManyWithoutGuildNestedInput
@@ -1494,6 +1655,7 @@ export type GuildCreateWithoutDiscordSyncStateInput = {
   roles?: Prisma.RoleCreateNestedManyWithoutGuildInput
   members?: Prisma.MemberCreateNestedManyWithoutGuildInput
   timers?: Prisma.TimerCreateNestedManyWithoutGuildInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutGuildInput
   lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutGuildInput
   reservations?: Prisma.ReservationCreateNestedManyWithoutGuildInput
   events?: Prisma.EventCreateNestedManyWithoutGuildInput
@@ -1517,6 +1679,7 @@ export type GuildUncheckedCreateWithoutDiscordSyncStateInput = {
   roles?: Prisma.RoleUncheckedCreateNestedManyWithoutGuildInput
   members?: Prisma.MemberUncheckedCreateNestedManyWithoutGuildInput
   timers?: Prisma.TimerUncheckedCreateNestedManyWithoutGuildInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutGuildInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutGuildInput
   reservations?: Prisma.ReservationUncheckedCreateNestedManyWithoutGuildInput
   events?: Prisma.EventUncheckedCreateNestedManyWithoutGuildInput
@@ -1556,6 +1719,7 @@ export type GuildUpdateWithoutDiscordSyncStateInput = {
   roles?: Prisma.RoleUpdateManyWithoutGuildNestedInput
   members?: Prisma.MemberUpdateManyWithoutGuildNestedInput
   timers?: Prisma.TimerUpdateManyWithoutGuildNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutGuildNestedInput
   lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutGuildNestedInput
   reservations?: Prisma.ReservationUpdateManyWithoutGuildNestedInput
   events?: Prisma.EventUpdateManyWithoutGuildNestedInput
@@ -1579,6 +1743,7 @@ export type GuildUncheckedUpdateWithoutDiscordSyncStateInput = {
   roles?: Prisma.RoleUncheckedUpdateManyWithoutGuildNestedInput
   members?: Prisma.MemberUncheckedUpdateManyWithoutGuildNestedInput
   timers?: Prisma.TimerUncheckedUpdateManyWithoutGuildNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutGuildNestedInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutGuildNestedInput
   reservations?: Prisma.ReservationUncheckedUpdateManyWithoutGuildNestedInput
   events?: Prisma.EventUncheckedUpdateManyWithoutGuildNestedInput
@@ -1602,6 +1767,7 @@ export type GuildCreateWithoutEventsInput = {
   roles?: Prisma.RoleCreateNestedManyWithoutGuildInput
   members?: Prisma.MemberCreateNestedManyWithoutGuildInput
   timers?: Prisma.TimerCreateNestedManyWithoutGuildInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutGuildInput
   lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutGuildInput
   reservations?: Prisma.ReservationCreateNestedManyWithoutGuildInput
   mapTemplates?: Prisma.MapTemplateCreateNestedManyWithoutGuildInput
@@ -1625,6 +1791,7 @@ export type GuildUncheckedCreateWithoutEventsInput = {
   roles?: Prisma.RoleUncheckedCreateNestedManyWithoutGuildInput
   members?: Prisma.MemberUncheckedCreateNestedManyWithoutGuildInput
   timers?: Prisma.TimerUncheckedCreateNestedManyWithoutGuildInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutGuildInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutGuildInput
   reservations?: Prisma.ReservationUncheckedCreateNestedManyWithoutGuildInput
   mapTemplates?: Prisma.MapTemplateUncheckedCreateNestedManyWithoutGuildInput
@@ -1664,6 +1831,7 @@ export type GuildUpdateWithoutEventsInput = {
   roles?: Prisma.RoleUpdateManyWithoutGuildNestedInput
   members?: Prisma.MemberUpdateManyWithoutGuildNestedInput
   timers?: Prisma.TimerUpdateManyWithoutGuildNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutGuildNestedInput
   lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutGuildNestedInput
   reservations?: Prisma.ReservationUpdateManyWithoutGuildNestedInput
   mapTemplates?: Prisma.MapTemplateUpdateManyWithoutGuildNestedInput
@@ -1687,6 +1855,7 @@ export type GuildUncheckedUpdateWithoutEventsInput = {
   roles?: Prisma.RoleUncheckedUpdateManyWithoutGuildNestedInput
   members?: Prisma.MemberUncheckedUpdateManyWithoutGuildNestedInput
   timers?: Prisma.TimerUncheckedUpdateManyWithoutGuildNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutGuildNestedInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutGuildNestedInput
   reservations?: Prisma.ReservationUncheckedUpdateManyWithoutGuildNestedInput
   mapTemplates?: Prisma.MapTemplateUncheckedUpdateManyWithoutGuildNestedInput
@@ -1710,6 +1879,7 @@ export type GuildCreateWithoutMapTemplatesInput = {
   roles?: Prisma.RoleCreateNestedManyWithoutGuildInput
   members?: Prisma.MemberCreateNestedManyWithoutGuildInput
   timers?: Prisma.TimerCreateNestedManyWithoutGuildInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutGuildInput
   lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutGuildInput
   reservations?: Prisma.ReservationCreateNestedManyWithoutGuildInput
   events?: Prisma.EventCreateNestedManyWithoutGuildInput
@@ -1733,6 +1903,7 @@ export type GuildUncheckedCreateWithoutMapTemplatesInput = {
   roles?: Prisma.RoleUncheckedCreateNestedManyWithoutGuildInput
   members?: Prisma.MemberUncheckedCreateNestedManyWithoutGuildInput
   timers?: Prisma.TimerUncheckedCreateNestedManyWithoutGuildInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutGuildInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutGuildInput
   reservations?: Prisma.ReservationUncheckedCreateNestedManyWithoutGuildInput
   events?: Prisma.EventUncheckedCreateNestedManyWithoutGuildInput
@@ -1772,6 +1943,7 @@ export type GuildUpdateWithoutMapTemplatesInput = {
   roles?: Prisma.RoleUpdateManyWithoutGuildNestedInput
   members?: Prisma.MemberUpdateManyWithoutGuildNestedInput
   timers?: Prisma.TimerUpdateManyWithoutGuildNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutGuildNestedInput
   lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutGuildNestedInput
   reservations?: Prisma.ReservationUpdateManyWithoutGuildNestedInput
   events?: Prisma.EventUpdateManyWithoutGuildNestedInput
@@ -1795,6 +1967,7 @@ export type GuildUncheckedUpdateWithoutMapTemplatesInput = {
   roles?: Prisma.RoleUncheckedUpdateManyWithoutGuildNestedInput
   members?: Prisma.MemberUncheckedUpdateManyWithoutGuildNestedInput
   timers?: Prisma.TimerUncheckedUpdateManyWithoutGuildNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutGuildNestedInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutGuildNestedInput
   reservations?: Prisma.ReservationUncheckedUpdateManyWithoutGuildNestedInput
   events?: Prisma.EventUncheckedUpdateManyWithoutGuildNestedInput
@@ -1818,6 +1991,7 @@ export type GuildCreateWithoutNpcKillStatsInput = {
   roles?: Prisma.RoleCreateNestedManyWithoutGuildInput
   members?: Prisma.MemberCreateNestedManyWithoutGuildInput
   timers?: Prisma.TimerCreateNestedManyWithoutGuildInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutGuildInput
   lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutGuildInput
   reservations?: Prisma.ReservationCreateNestedManyWithoutGuildInput
   events?: Prisma.EventCreateNestedManyWithoutGuildInput
@@ -1841,6 +2015,7 @@ export type GuildUncheckedCreateWithoutNpcKillStatsInput = {
   roles?: Prisma.RoleUncheckedCreateNestedManyWithoutGuildInput
   members?: Prisma.MemberUncheckedCreateNestedManyWithoutGuildInput
   timers?: Prisma.TimerUncheckedCreateNestedManyWithoutGuildInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutGuildInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutGuildInput
   reservations?: Prisma.ReservationUncheckedCreateNestedManyWithoutGuildInput
   events?: Prisma.EventUncheckedCreateNestedManyWithoutGuildInput
@@ -1880,6 +2055,7 @@ export type GuildUpdateWithoutNpcKillStatsInput = {
   roles?: Prisma.RoleUpdateManyWithoutGuildNestedInput
   members?: Prisma.MemberUpdateManyWithoutGuildNestedInput
   timers?: Prisma.TimerUpdateManyWithoutGuildNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutGuildNestedInput
   lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutGuildNestedInput
   reservations?: Prisma.ReservationUpdateManyWithoutGuildNestedInput
   events?: Prisma.EventUpdateManyWithoutGuildNestedInput
@@ -1903,6 +2079,7 @@ export type GuildUncheckedUpdateWithoutNpcKillStatsInput = {
   roles?: Prisma.RoleUncheckedUpdateManyWithoutGuildNestedInput
   members?: Prisma.MemberUncheckedUpdateManyWithoutGuildNestedInput
   timers?: Prisma.TimerUncheckedUpdateManyWithoutGuildNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutGuildNestedInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutGuildNestedInput
   reservations?: Prisma.ReservationUncheckedUpdateManyWithoutGuildNestedInput
   events?: Prisma.EventUncheckedUpdateManyWithoutGuildNestedInput
@@ -1926,6 +2103,7 @@ export type GuildCreateWithoutGuildKillSummaryInput = {
   roles?: Prisma.RoleCreateNestedManyWithoutGuildInput
   members?: Prisma.MemberCreateNestedManyWithoutGuildInput
   timers?: Prisma.TimerCreateNestedManyWithoutGuildInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutGuildInput
   lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutGuildInput
   reservations?: Prisma.ReservationCreateNestedManyWithoutGuildInput
   events?: Prisma.EventCreateNestedManyWithoutGuildInput
@@ -1949,6 +2127,7 @@ export type GuildUncheckedCreateWithoutGuildKillSummaryInput = {
   roles?: Prisma.RoleUncheckedCreateNestedManyWithoutGuildInput
   members?: Prisma.MemberUncheckedCreateNestedManyWithoutGuildInput
   timers?: Prisma.TimerUncheckedCreateNestedManyWithoutGuildInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutGuildInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutGuildInput
   reservations?: Prisma.ReservationUncheckedCreateNestedManyWithoutGuildInput
   events?: Prisma.EventUncheckedCreateNestedManyWithoutGuildInput
@@ -1988,6 +2167,7 @@ export type GuildUpdateWithoutGuildKillSummaryInput = {
   roles?: Prisma.RoleUpdateManyWithoutGuildNestedInput
   members?: Prisma.MemberUpdateManyWithoutGuildNestedInput
   timers?: Prisma.TimerUpdateManyWithoutGuildNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutGuildNestedInput
   lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutGuildNestedInput
   reservations?: Prisma.ReservationUpdateManyWithoutGuildNestedInput
   events?: Prisma.EventUpdateManyWithoutGuildNestedInput
@@ -2011,6 +2191,7 @@ export type GuildUncheckedUpdateWithoutGuildKillSummaryInput = {
   roles?: Prisma.RoleUncheckedUpdateManyWithoutGuildNestedInput
   members?: Prisma.MemberUncheckedUpdateManyWithoutGuildNestedInput
   timers?: Prisma.TimerUncheckedUpdateManyWithoutGuildNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutGuildNestedInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutGuildNestedInput
   reservations?: Prisma.ReservationUncheckedUpdateManyWithoutGuildNestedInput
   events?: Prisma.EventUncheckedUpdateManyWithoutGuildNestedInput
@@ -2030,6 +2211,7 @@ export type GuildCountOutputType = {
   roles: number
   members: number
   timers: number
+  timerHistoryEntries: number
   lootSubmissions: number
   reservations: number
   events: number
@@ -2044,6 +2226,7 @@ export type GuildCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.
   roles?: boolean | GuildCountOutputTypeCountRolesArgs
   members?: boolean | GuildCountOutputTypeCountMembersArgs
   timers?: boolean | GuildCountOutputTypeCountTimersArgs
+  timerHistoryEntries?: boolean | GuildCountOutputTypeCountTimerHistoryEntriesArgs
   lootSubmissions?: boolean | GuildCountOutputTypeCountLootSubmissionsArgs
   reservations?: boolean | GuildCountOutputTypeCountReservationsArgs
   events?: boolean | GuildCountOutputTypeCountEventsArgs
@@ -2083,6 +2266,13 @@ export type GuildCountOutputTypeCountMembersArgs<ExtArgs extends runtime.Types.E
  */
 export type GuildCountOutputTypeCountTimersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.TimerWhereInput
+}
+
+/**
+ * GuildCountOutputType without action
+ */
+export type GuildCountOutputTypeCountTimerHistoryEntriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.TimerHistoryEntryWhereInput
 }
 
 /**
@@ -2155,6 +2345,7 @@ export type GuildSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   roles?: boolean | Prisma.Guild$rolesArgs<ExtArgs>
   members?: boolean | Prisma.Guild$membersArgs<ExtArgs>
   timers?: boolean | Prisma.Guild$timersArgs<ExtArgs>
+  timerHistoryEntries?: boolean | Prisma.Guild$timerHistoryEntriesArgs<ExtArgs>
   lootSubmissions?: boolean | Prisma.Guild$lootSubmissionsArgs<ExtArgs>
   reservations?: boolean | Prisma.Guild$reservationsArgs<ExtArgs>
   events?: boolean | Prisma.Guild$eventsArgs<ExtArgs>
@@ -2208,6 +2399,7 @@ export type GuildInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   roles?: boolean | Prisma.Guild$rolesArgs<ExtArgs>
   members?: boolean | Prisma.Guild$membersArgs<ExtArgs>
   timers?: boolean | Prisma.Guild$timersArgs<ExtArgs>
+  timerHistoryEntries?: boolean | Prisma.Guild$timerHistoryEntriesArgs<ExtArgs>
   lootSubmissions?: boolean | Prisma.Guild$lootSubmissionsArgs<ExtArgs>
   reservations?: boolean | Prisma.Guild$reservationsArgs<ExtArgs>
   events?: boolean | Prisma.Guild$eventsArgs<ExtArgs>
@@ -2228,6 +2420,7 @@ export type $GuildPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     roles: Prisma.$RolePayload<ExtArgs>[]
     members: Prisma.$MemberPayload<ExtArgs>[]
     timers: Prisma.$TimerPayload<ExtArgs>[]
+    timerHistoryEntries: Prisma.$TimerHistoryEntryPayload<ExtArgs>[]
     lootSubmissions: Prisma.$LootSubmissionPayload<ExtArgs>[]
     reservations: Prisma.$ReservationPayload<ExtArgs>[]
     events: Prisma.$EventPayload<ExtArgs>[]
@@ -2645,6 +2838,7 @@ export interface Prisma__GuildClient<T, Null = never, ExtArgs extends runtime.Ty
   roles<T extends Prisma.Guild$rolesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Guild$rolesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RolePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   members<T extends Prisma.Guild$membersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Guild$membersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   timers<T extends Prisma.Guild$timersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Guild$timersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TimerPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  timerHistoryEntries<T extends Prisma.Guild$timerHistoryEntriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Guild$timerHistoryEntriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TimerHistoryEntryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   lootSubmissions<T extends Prisma.Guild$lootSubmissionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Guild$lootSubmissionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LootSubmissionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   reservations<T extends Prisma.Guild$reservationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Guild$reservationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReservationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   events<T extends Prisma.Guild$eventsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Guild$eventsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -3154,6 +3348,30 @@ export type Guild$timersArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
   take?: number
   skip?: number
   distinct?: Prisma.TimerScalarFieldEnum | Prisma.TimerScalarFieldEnum[]
+}
+
+/**
+ * Guild.timerHistoryEntries
+ */
+export type Guild$timerHistoryEntriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the TimerHistoryEntry
+   */
+  select?: Prisma.TimerHistoryEntrySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the TimerHistoryEntry
+   */
+  omit?: Prisma.TimerHistoryEntryOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TimerHistoryEntryInclude<ExtArgs> | null
+  where?: Prisma.TimerHistoryEntryWhereInput
+  orderBy?: Prisma.TimerHistoryEntryOrderByWithRelationInput | Prisma.TimerHistoryEntryOrderByWithRelationInput[]
+  cursor?: Prisma.TimerHistoryEntryWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.TimerHistoryEntryScalarFieldEnum | Prisma.TimerHistoryEntryScalarFieldEnum[]
 }
 
 /**

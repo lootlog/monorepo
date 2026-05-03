@@ -19,6 +19,7 @@ model Guild {
   roles             Role[]
   members           Member[]
   timers            Timer[]
+  timerHistoryEntries TimerHistoryEntry[]
   lootSubmissions   LootSubmission[]
   active            Boolean            @default(true)
   reservations      Reservation[]
@@ -140,6 +141,13 @@ enum LootSource {
   FIGHT
 }
 
+enum TimerHistoryAction {
+  CREATE
+  RESET
+  DELETE
+  RESTORE
+}
+
 enum RefreshJobStatus {
   PENDING
   PROCESSING
@@ -245,6 +253,8 @@ model Member {
   guild                    Guild                      @relation(fields: [guildId], references: [id])
   roles                    Role[]
   timers                   Timer[]
+  timerHistoryEntries      TimerHistoryEntry[]
+  restoredTimerHistoryEntries TimerHistoryEntry[] @relation("TimerHistoryRestoredTimerMember")
   lootSubmissions          LootSubmission[]
   comments                 LootComment[]
   assignedEventMaps        EventMap[]
@@ -274,18 +284,24 @@ model Timer {
   wasReset                Boolean  @default(false)
   npc                     Json
   windowOpenedAt          DateTime?
+  actorCharacterSnapshotId Int?
+  actorCharacterLvl       Int?
+  deletedAt               DateTime?
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 
-  member Member @relation(fields: [createdById], references: [id])
-  guild  Guild  @relation(fields: [guildId], references: [id])
+  member         Member          @relation(fields: [createdById], references: [id])
+  guild          Guild           @relation(fields: [guildId], references: [id])
+  actorCharacter PlayerSnapshot? @relation("TimerActorCharacter", fields: [actorCharacterSnapshotId], references: [id])
 
   @@id(name: "timerId", [guildId, world, timerKey])
   @@index([guildId, world, timerKey])
   @@index([npcId, guildId])
   @@index([guildId, maxSpawnTime])
+  @@index([guildId, world, deletedAt, maxSpawnTime])
   @@index([world, guildId])
   @@index([createdById])
+  @@index([actorCharacterSnapshotId])
 }
 
 model Loot {
@@ -353,12 +369,51 @@ model PlayerSnapshot {
   icon         String?
   createdAt    DateTime    @default(now())
 
-  lootPlayers LootPlayer[]
+  lootPlayers           LootPlayer[]
+  timerActorCharacters  Timer[]             @relation("TimerActorCharacter")
+  timerHistoryEntries   TimerHistoryEntry[]
+  restoredTimerHistoryEntries TimerHistoryEntry[] @relation("TimerHistoryRestoredTimerActorCharacter")
 
   @@unique([world, accountId, characterId, snapshotHash])
   @@index([world, name])
   @@index([accountId, characterId])
   @@index([name])
+}
+
+model TimerHistoryEntry {
+  id                       Int                @id @default(autoincrement())
+  guildId                  String
+  world                    String
+  timerKey                 String
+  npcId                    Int
+  npc                      Json
+  action                   TimerHistoryAction
+  actorMemberId            Int
+  actorCharacterSnapshotId Int?
+  actorCharacterLvl        Int?
+  minSpawnTime             DateTime?
+  maxSpawnTime             DateTime?
+  latestRespBaseSeconds    Int?
+  latestRespawnRandomness  Int?
+  wasReset                 Boolean?
+  windowOpenedAt           DateTime?
+  timerCreatedById         Int?
+  timerActorCharacterSnapshotId Int?
+  timerActorCharacterLvl   Int?
+  createdAt                DateTime           @default(now())
+
+  guild               Guild           @relation(fields: [guildId], references: [id])
+  actorMember         Member          @relation(fields: [actorMemberId], references: [id])
+  actorCharacter      PlayerSnapshot? @relation(fields: [actorCharacterSnapshotId], references: [id])
+  timerCreatedBy      Member?         @relation("TimerHistoryRestoredTimerMember", fields: [timerCreatedById], references: [id])
+  timerActorCharacter PlayerSnapshot? @relation("TimerHistoryRestoredTimerActorCharacter", fields: [timerActorCharacterSnapshotId], references: [id])
+
+  @@index([guildId, world, timerKey, createdAt])
+  @@index([guildId, world, createdAt])
+  @@index([actorMemberId])
+  @@index([actorCharacterSnapshotId])
+  @@index([timerCreatedById])
+  @@index([timerActorCharacterSnapshotId])
 }
 
 model LootPlayer {
@@ -696,6 +751,7 @@ model UserTimerSettings {
   displayConfig           Json
   customColors            Json
   timersColors            Json
+  alwaysVisibleExpiredTimers Json @default("{}")
   defaultColorNames       Json
   overriddenDefaultColors Json
   hiddenDefaultColors     Json

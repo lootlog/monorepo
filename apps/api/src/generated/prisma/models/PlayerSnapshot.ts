@@ -257,6 +257,9 @@ export type PlayerSnapshotWhereInput = {
   icon?: Prisma.StringNullableFilter<"PlayerSnapshot"> | string | null
   createdAt?: Prisma.DateTimeFilter<"PlayerSnapshot"> | Date | string
   lootPlayers?: Prisma.LootPlayerListRelationFilter
+  timerActorCharacters?: Prisma.TimerListRelationFilter
+  timerHistoryEntries?: Prisma.TimerHistoryEntryListRelationFilter
+  restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryListRelationFilter
 }
 
 export type PlayerSnapshotOrderByWithRelationInput = {
@@ -270,6 +273,9 @@ export type PlayerSnapshotOrderByWithRelationInput = {
   icon?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   lootPlayers?: Prisma.LootPlayerOrderByRelationAggregateInput
+  timerActorCharacters?: Prisma.TimerOrderByRelationAggregateInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryOrderByRelationAggregateInput
+  restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryOrderByRelationAggregateInput
 }
 
 export type PlayerSnapshotWhereUniqueInput = Prisma.AtLeast<{
@@ -287,6 +293,9 @@ export type PlayerSnapshotWhereUniqueInput = Prisma.AtLeast<{
   icon?: Prisma.StringNullableFilter<"PlayerSnapshot"> | string | null
   createdAt?: Prisma.DateTimeFilter<"PlayerSnapshot"> | Date | string
   lootPlayers?: Prisma.LootPlayerListRelationFilter
+  timerActorCharacters?: Prisma.TimerListRelationFilter
+  timerHistoryEntries?: Prisma.TimerHistoryEntryListRelationFilter
+  restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryListRelationFilter
 }, "id" | "world_accountId_characterId_snapshotHash">
 
 export type PlayerSnapshotOrderByWithAggregationInput = {
@@ -331,6 +340,9 @@ export type PlayerSnapshotCreateInput = {
   icon?: string | null
   createdAt?: Date | string
   lootPlayers?: Prisma.LootPlayerCreateNestedManyWithoutPlayerSnapshotInput
+  timerActorCharacters?: Prisma.TimerCreateNestedManyWithoutActorCharacterInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutActorCharacterInput
+  restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutTimerActorCharacterInput
 }
 
 export type PlayerSnapshotUncheckedCreateInput = {
@@ -344,6 +356,9 @@ export type PlayerSnapshotUncheckedCreateInput = {
   icon?: string | null
   createdAt?: Date | string
   lootPlayers?: Prisma.LootPlayerUncheckedCreateNestedManyWithoutPlayerSnapshotInput
+  timerActorCharacters?: Prisma.TimerUncheckedCreateNestedManyWithoutActorCharacterInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutActorCharacterInput
+  restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutTimerActorCharacterInput
 }
 
 export type PlayerSnapshotUpdateInput = {
@@ -356,6 +371,9 @@ export type PlayerSnapshotUpdateInput = {
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lootPlayers?: Prisma.LootPlayerUpdateManyWithoutPlayerSnapshotNestedInput
+  timerActorCharacters?: Prisma.TimerUpdateManyWithoutActorCharacterNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutActorCharacterNestedInput
+  restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutTimerActorCharacterNestedInput
 }
 
 export type PlayerSnapshotUncheckedUpdateInput = {
@@ -369,6 +387,9 @@ export type PlayerSnapshotUncheckedUpdateInput = {
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lootPlayers?: Prisma.LootPlayerUncheckedUpdateManyWithoutPlayerSnapshotNestedInput
+  timerActorCharacters?: Prisma.TimerUncheckedUpdateManyWithoutActorCharacterNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutActorCharacterNestedInput
+  restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutTimerActorCharacterNestedInput
 }
 
 export type PlayerSnapshotCreateManyInput = {
@@ -404,6 +425,11 @@ export type PlayerSnapshotUncheckedUpdateManyInput = {
   prof?: Prisma.NullableEnumProfessionFieldUpdateOperationsInput | $Enums.Profession | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type PlayerSnapshotNullableScalarRelationFilter = {
+  is?: Prisma.PlayerSnapshotWhereInput | null
+  isNot?: Prisma.PlayerSnapshotWhereInput | null
 }
 
 export type PlayerSnapshotWorldAccountIdCharacterIdSnapshotHashCompoundUniqueInput = {
@@ -466,8 +492,56 @@ export type PlayerSnapshotScalarRelationFilter = {
   isNot?: Prisma.PlayerSnapshotWhereInput
 }
 
+export type PlayerSnapshotCreateNestedOneWithoutTimerActorCharactersInput = {
+  create?: Prisma.XOR<Prisma.PlayerSnapshotCreateWithoutTimerActorCharactersInput, Prisma.PlayerSnapshotUncheckedCreateWithoutTimerActorCharactersInput>
+  connectOrCreate?: Prisma.PlayerSnapshotCreateOrConnectWithoutTimerActorCharactersInput
+  connect?: Prisma.PlayerSnapshotWhereUniqueInput
+}
+
+export type PlayerSnapshotUpdateOneWithoutTimerActorCharactersNestedInput = {
+  create?: Prisma.XOR<Prisma.PlayerSnapshotCreateWithoutTimerActorCharactersInput, Prisma.PlayerSnapshotUncheckedCreateWithoutTimerActorCharactersInput>
+  connectOrCreate?: Prisma.PlayerSnapshotCreateOrConnectWithoutTimerActorCharactersInput
+  upsert?: Prisma.PlayerSnapshotUpsertWithoutTimerActorCharactersInput
+  disconnect?: Prisma.PlayerSnapshotWhereInput | boolean
+  delete?: Prisma.PlayerSnapshotWhereInput | boolean
+  connect?: Prisma.PlayerSnapshotWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.PlayerSnapshotUpdateToOneWithWhereWithoutTimerActorCharactersInput, Prisma.PlayerSnapshotUpdateWithoutTimerActorCharactersInput>, Prisma.PlayerSnapshotUncheckedUpdateWithoutTimerActorCharactersInput>
+}
+
 export type NullableEnumProfessionFieldUpdateOperationsInput = {
   set?: $Enums.Profession | null
+}
+
+export type PlayerSnapshotCreateNestedOneWithoutTimerHistoryEntriesInput = {
+  create?: Prisma.XOR<Prisma.PlayerSnapshotCreateWithoutTimerHistoryEntriesInput, Prisma.PlayerSnapshotUncheckedCreateWithoutTimerHistoryEntriesInput>
+  connectOrCreate?: Prisma.PlayerSnapshotCreateOrConnectWithoutTimerHistoryEntriesInput
+  connect?: Prisma.PlayerSnapshotWhereUniqueInput
+}
+
+export type PlayerSnapshotCreateNestedOneWithoutRestoredTimerHistoryEntriesInput = {
+  create?: Prisma.XOR<Prisma.PlayerSnapshotCreateWithoutRestoredTimerHistoryEntriesInput, Prisma.PlayerSnapshotUncheckedCreateWithoutRestoredTimerHistoryEntriesInput>
+  connectOrCreate?: Prisma.PlayerSnapshotCreateOrConnectWithoutRestoredTimerHistoryEntriesInput
+  connect?: Prisma.PlayerSnapshotWhereUniqueInput
+}
+
+export type PlayerSnapshotUpdateOneWithoutTimerHistoryEntriesNestedInput = {
+  create?: Prisma.XOR<Prisma.PlayerSnapshotCreateWithoutTimerHistoryEntriesInput, Prisma.PlayerSnapshotUncheckedCreateWithoutTimerHistoryEntriesInput>
+  connectOrCreate?: Prisma.PlayerSnapshotCreateOrConnectWithoutTimerHistoryEntriesInput
+  upsert?: Prisma.PlayerSnapshotUpsertWithoutTimerHistoryEntriesInput
+  disconnect?: Prisma.PlayerSnapshotWhereInput | boolean
+  delete?: Prisma.PlayerSnapshotWhereInput | boolean
+  connect?: Prisma.PlayerSnapshotWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.PlayerSnapshotUpdateToOneWithWhereWithoutTimerHistoryEntriesInput, Prisma.PlayerSnapshotUpdateWithoutTimerHistoryEntriesInput>, Prisma.PlayerSnapshotUncheckedUpdateWithoutTimerHistoryEntriesInput>
+}
+
+export type PlayerSnapshotUpdateOneWithoutRestoredTimerHistoryEntriesNestedInput = {
+  create?: Prisma.XOR<Prisma.PlayerSnapshotCreateWithoutRestoredTimerHistoryEntriesInput, Prisma.PlayerSnapshotUncheckedCreateWithoutRestoredTimerHistoryEntriesInput>
+  connectOrCreate?: Prisma.PlayerSnapshotCreateOrConnectWithoutRestoredTimerHistoryEntriesInput
+  upsert?: Prisma.PlayerSnapshotUpsertWithoutRestoredTimerHistoryEntriesInput
+  disconnect?: Prisma.PlayerSnapshotWhereInput | boolean
+  delete?: Prisma.PlayerSnapshotWhereInput | boolean
+  connect?: Prisma.PlayerSnapshotWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.PlayerSnapshotUpdateToOneWithWhereWithoutRestoredTimerHistoryEntriesInput, Prisma.PlayerSnapshotUpdateWithoutRestoredTimerHistoryEntriesInput>, Prisma.PlayerSnapshotUncheckedUpdateWithoutRestoredTimerHistoryEntriesInput>
 }
 
 export type PlayerSnapshotCreateNestedOneWithoutLootPlayersInput = {
@@ -484,6 +558,228 @@ export type PlayerSnapshotUpdateOneRequiredWithoutLootPlayersNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.PlayerSnapshotUpdateToOneWithWhereWithoutLootPlayersInput, Prisma.PlayerSnapshotUpdateWithoutLootPlayersInput>, Prisma.PlayerSnapshotUncheckedUpdateWithoutLootPlayersInput>
 }
 
+export type PlayerSnapshotCreateWithoutTimerActorCharactersInput = {
+  world: string
+  accountId: number
+  characterId: number
+  snapshotHash: string
+  name: string
+  prof?: $Enums.Profession | null
+  icon?: string | null
+  createdAt?: Date | string
+  lootPlayers?: Prisma.LootPlayerCreateNestedManyWithoutPlayerSnapshotInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutActorCharacterInput
+  restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutTimerActorCharacterInput
+}
+
+export type PlayerSnapshotUncheckedCreateWithoutTimerActorCharactersInput = {
+  id?: number
+  world: string
+  accountId: number
+  characterId: number
+  snapshotHash: string
+  name: string
+  prof?: $Enums.Profession | null
+  icon?: string | null
+  createdAt?: Date | string
+  lootPlayers?: Prisma.LootPlayerUncheckedCreateNestedManyWithoutPlayerSnapshotInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutActorCharacterInput
+  restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutTimerActorCharacterInput
+}
+
+export type PlayerSnapshotCreateOrConnectWithoutTimerActorCharactersInput = {
+  where: Prisma.PlayerSnapshotWhereUniqueInput
+  create: Prisma.XOR<Prisma.PlayerSnapshotCreateWithoutTimerActorCharactersInput, Prisma.PlayerSnapshotUncheckedCreateWithoutTimerActorCharactersInput>
+}
+
+export type PlayerSnapshotUpsertWithoutTimerActorCharactersInput = {
+  update: Prisma.XOR<Prisma.PlayerSnapshotUpdateWithoutTimerActorCharactersInput, Prisma.PlayerSnapshotUncheckedUpdateWithoutTimerActorCharactersInput>
+  create: Prisma.XOR<Prisma.PlayerSnapshotCreateWithoutTimerActorCharactersInput, Prisma.PlayerSnapshotUncheckedCreateWithoutTimerActorCharactersInput>
+  where?: Prisma.PlayerSnapshotWhereInput
+}
+
+export type PlayerSnapshotUpdateToOneWithWhereWithoutTimerActorCharactersInput = {
+  where?: Prisma.PlayerSnapshotWhereInput
+  data: Prisma.XOR<Prisma.PlayerSnapshotUpdateWithoutTimerActorCharactersInput, Prisma.PlayerSnapshotUncheckedUpdateWithoutTimerActorCharactersInput>
+}
+
+export type PlayerSnapshotUpdateWithoutTimerActorCharactersInput = {
+  world?: Prisma.StringFieldUpdateOperationsInput | string
+  accountId?: Prisma.IntFieldUpdateOperationsInput | number
+  characterId?: Prisma.IntFieldUpdateOperationsInput | number
+  snapshotHash?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  prof?: Prisma.NullableEnumProfessionFieldUpdateOperationsInput | $Enums.Profession | null
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lootPlayers?: Prisma.LootPlayerUpdateManyWithoutPlayerSnapshotNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutActorCharacterNestedInput
+  restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutTimerActorCharacterNestedInput
+}
+
+export type PlayerSnapshotUncheckedUpdateWithoutTimerActorCharactersInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  world?: Prisma.StringFieldUpdateOperationsInput | string
+  accountId?: Prisma.IntFieldUpdateOperationsInput | number
+  characterId?: Prisma.IntFieldUpdateOperationsInput | number
+  snapshotHash?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  prof?: Prisma.NullableEnumProfessionFieldUpdateOperationsInput | $Enums.Profession | null
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lootPlayers?: Prisma.LootPlayerUncheckedUpdateManyWithoutPlayerSnapshotNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutActorCharacterNestedInput
+  restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutTimerActorCharacterNestedInput
+}
+
+export type PlayerSnapshotCreateWithoutTimerHistoryEntriesInput = {
+  world: string
+  accountId: number
+  characterId: number
+  snapshotHash: string
+  name: string
+  prof?: $Enums.Profession | null
+  icon?: string | null
+  createdAt?: Date | string
+  lootPlayers?: Prisma.LootPlayerCreateNestedManyWithoutPlayerSnapshotInput
+  timerActorCharacters?: Prisma.TimerCreateNestedManyWithoutActorCharacterInput
+  restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutTimerActorCharacterInput
+}
+
+export type PlayerSnapshotUncheckedCreateWithoutTimerHistoryEntriesInput = {
+  id?: number
+  world: string
+  accountId: number
+  characterId: number
+  snapshotHash: string
+  name: string
+  prof?: $Enums.Profession | null
+  icon?: string | null
+  createdAt?: Date | string
+  lootPlayers?: Prisma.LootPlayerUncheckedCreateNestedManyWithoutPlayerSnapshotInput
+  timerActorCharacters?: Prisma.TimerUncheckedCreateNestedManyWithoutActorCharacterInput
+  restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutTimerActorCharacterInput
+}
+
+export type PlayerSnapshotCreateOrConnectWithoutTimerHistoryEntriesInput = {
+  where: Prisma.PlayerSnapshotWhereUniqueInput
+  create: Prisma.XOR<Prisma.PlayerSnapshotCreateWithoutTimerHistoryEntriesInput, Prisma.PlayerSnapshotUncheckedCreateWithoutTimerHistoryEntriesInput>
+}
+
+export type PlayerSnapshotCreateWithoutRestoredTimerHistoryEntriesInput = {
+  world: string
+  accountId: number
+  characterId: number
+  snapshotHash: string
+  name: string
+  prof?: $Enums.Profession | null
+  icon?: string | null
+  createdAt?: Date | string
+  lootPlayers?: Prisma.LootPlayerCreateNestedManyWithoutPlayerSnapshotInput
+  timerActorCharacters?: Prisma.TimerCreateNestedManyWithoutActorCharacterInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutActorCharacterInput
+}
+
+export type PlayerSnapshotUncheckedCreateWithoutRestoredTimerHistoryEntriesInput = {
+  id?: number
+  world: string
+  accountId: number
+  characterId: number
+  snapshotHash: string
+  name: string
+  prof?: $Enums.Profession | null
+  icon?: string | null
+  createdAt?: Date | string
+  lootPlayers?: Prisma.LootPlayerUncheckedCreateNestedManyWithoutPlayerSnapshotInput
+  timerActorCharacters?: Prisma.TimerUncheckedCreateNestedManyWithoutActorCharacterInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutActorCharacterInput
+}
+
+export type PlayerSnapshotCreateOrConnectWithoutRestoredTimerHistoryEntriesInput = {
+  where: Prisma.PlayerSnapshotWhereUniqueInput
+  create: Prisma.XOR<Prisma.PlayerSnapshotCreateWithoutRestoredTimerHistoryEntriesInput, Prisma.PlayerSnapshotUncheckedCreateWithoutRestoredTimerHistoryEntriesInput>
+}
+
+export type PlayerSnapshotUpsertWithoutTimerHistoryEntriesInput = {
+  update: Prisma.XOR<Prisma.PlayerSnapshotUpdateWithoutTimerHistoryEntriesInput, Prisma.PlayerSnapshotUncheckedUpdateWithoutTimerHistoryEntriesInput>
+  create: Prisma.XOR<Prisma.PlayerSnapshotCreateWithoutTimerHistoryEntriesInput, Prisma.PlayerSnapshotUncheckedCreateWithoutTimerHistoryEntriesInput>
+  where?: Prisma.PlayerSnapshotWhereInput
+}
+
+export type PlayerSnapshotUpdateToOneWithWhereWithoutTimerHistoryEntriesInput = {
+  where?: Prisma.PlayerSnapshotWhereInput
+  data: Prisma.XOR<Prisma.PlayerSnapshotUpdateWithoutTimerHistoryEntriesInput, Prisma.PlayerSnapshotUncheckedUpdateWithoutTimerHistoryEntriesInput>
+}
+
+export type PlayerSnapshotUpdateWithoutTimerHistoryEntriesInput = {
+  world?: Prisma.StringFieldUpdateOperationsInput | string
+  accountId?: Prisma.IntFieldUpdateOperationsInput | number
+  characterId?: Prisma.IntFieldUpdateOperationsInput | number
+  snapshotHash?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  prof?: Prisma.NullableEnumProfessionFieldUpdateOperationsInput | $Enums.Profession | null
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lootPlayers?: Prisma.LootPlayerUpdateManyWithoutPlayerSnapshotNestedInput
+  timerActorCharacters?: Prisma.TimerUpdateManyWithoutActorCharacterNestedInput
+  restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutTimerActorCharacterNestedInput
+}
+
+export type PlayerSnapshotUncheckedUpdateWithoutTimerHistoryEntriesInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  world?: Prisma.StringFieldUpdateOperationsInput | string
+  accountId?: Prisma.IntFieldUpdateOperationsInput | number
+  characterId?: Prisma.IntFieldUpdateOperationsInput | number
+  snapshotHash?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  prof?: Prisma.NullableEnumProfessionFieldUpdateOperationsInput | $Enums.Profession | null
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lootPlayers?: Prisma.LootPlayerUncheckedUpdateManyWithoutPlayerSnapshotNestedInput
+  timerActorCharacters?: Prisma.TimerUncheckedUpdateManyWithoutActorCharacterNestedInput
+  restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutTimerActorCharacterNestedInput
+}
+
+export type PlayerSnapshotUpsertWithoutRestoredTimerHistoryEntriesInput = {
+  update: Prisma.XOR<Prisma.PlayerSnapshotUpdateWithoutRestoredTimerHistoryEntriesInput, Prisma.PlayerSnapshotUncheckedUpdateWithoutRestoredTimerHistoryEntriesInput>
+  create: Prisma.XOR<Prisma.PlayerSnapshotCreateWithoutRestoredTimerHistoryEntriesInput, Prisma.PlayerSnapshotUncheckedCreateWithoutRestoredTimerHistoryEntriesInput>
+  where?: Prisma.PlayerSnapshotWhereInput
+}
+
+export type PlayerSnapshotUpdateToOneWithWhereWithoutRestoredTimerHistoryEntriesInput = {
+  where?: Prisma.PlayerSnapshotWhereInput
+  data: Prisma.XOR<Prisma.PlayerSnapshotUpdateWithoutRestoredTimerHistoryEntriesInput, Prisma.PlayerSnapshotUncheckedUpdateWithoutRestoredTimerHistoryEntriesInput>
+}
+
+export type PlayerSnapshotUpdateWithoutRestoredTimerHistoryEntriesInput = {
+  world?: Prisma.StringFieldUpdateOperationsInput | string
+  accountId?: Prisma.IntFieldUpdateOperationsInput | number
+  characterId?: Prisma.IntFieldUpdateOperationsInput | number
+  snapshotHash?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  prof?: Prisma.NullableEnumProfessionFieldUpdateOperationsInput | $Enums.Profession | null
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lootPlayers?: Prisma.LootPlayerUpdateManyWithoutPlayerSnapshotNestedInput
+  timerActorCharacters?: Prisma.TimerUpdateManyWithoutActorCharacterNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutActorCharacterNestedInput
+}
+
+export type PlayerSnapshotUncheckedUpdateWithoutRestoredTimerHistoryEntriesInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  world?: Prisma.StringFieldUpdateOperationsInput | string
+  accountId?: Prisma.IntFieldUpdateOperationsInput | number
+  characterId?: Prisma.IntFieldUpdateOperationsInput | number
+  snapshotHash?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  prof?: Prisma.NullableEnumProfessionFieldUpdateOperationsInput | $Enums.Profession | null
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lootPlayers?: Prisma.LootPlayerUncheckedUpdateManyWithoutPlayerSnapshotNestedInput
+  timerActorCharacters?: Prisma.TimerUncheckedUpdateManyWithoutActorCharacterNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutActorCharacterNestedInput
+}
+
 export type PlayerSnapshotCreateWithoutLootPlayersInput = {
   world: string
   accountId: number
@@ -493,6 +789,9 @@ export type PlayerSnapshotCreateWithoutLootPlayersInput = {
   prof?: $Enums.Profession | null
   icon?: string | null
   createdAt?: Date | string
+  timerActorCharacters?: Prisma.TimerCreateNestedManyWithoutActorCharacterInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutActorCharacterInput
+  restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutTimerActorCharacterInput
 }
 
 export type PlayerSnapshotUncheckedCreateWithoutLootPlayersInput = {
@@ -505,6 +804,9 @@ export type PlayerSnapshotUncheckedCreateWithoutLootPlayersInput = {
   prof?: $Enums.Profession | null
   icon?: string | null
   createdAt?: Date | string
+  timerActorCharacters?: Prisma.TimerUncheckedCreateNestedManyWithoutActorCharacterInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutActorCharacterInput
+  restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutTimerActorCharacterInput
 }
 
 export type PlayerSnapshotCreateOrConnectWithoutLootPlayersInput = {
@@ -532,6 +834,9 @@ export type PlayerSnapshotUpdateWithoutLootPlayersInput = {
   prof?: Prisma.NullableEnumProfessionFieldUpdateOperationsInput | $Enums.Profession | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  timerActorCharacters?: Prisma.TimerUpdateManyWithoutActorCharacterNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutActorCharacterNestedInput
+  restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutTimerActorCharacterNestedInput
 }
 
 export type PlayerSnapshotUncheckedUpdateWithoutLootPlayersInput = {
@@ -544,6 +849,9 @@ export type PlayerSnapshotUncheckedUpdateWithoutLootPlayersInput = {
   prof?: Prisma.NullableEnumProfessionFieldUpdateOperationsInput | $Enums.Profession | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  timerActorCharacters?: Prisma.TimerUncheckedUpdateManyWithoutActorCharacterNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutActorCharacterNestedInput
+  restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutTimerActorCharacterNestedInput
 }
 
 
@@ -553,10 +861,16 @@ export type PlayerSnapshotUncheckedUpdateWithoutLootPlayersInput = {
 
 export type PlayerSnapshotCountOutputType = {
   lootPlayers: number
+  timerActorCharacters: number
+  timerHistoryEntries: number
+  restoredTimerHistoryEntries: number
 }
 
 export type PlayerSnapshotCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   lootPlayers?: boolean | PlayerSnapshotCountOutputTypeCountLootPlayersArgs
+  timerActorCharacters?: boolean | PlayerSnapshotCountOutputTypeCountTimerActorCharactersArgs
+  timerHistoryEntries?: boolean | PlayerSnapshotCountOutputTypeCountTimerHistoryEntriesArgs
+  restoredTimerHistoryEntries?: boolean | PlayerSnapshotCountOutputTypeCountRestoredTimerHistoryEntriesArgs
 }
 
 /**
@@ -576,6 +890,27 @@ export type PlayerSnapshotCountOutputTypeCountLootPlayersArgs<ExtArgs extends ru
   where?: Prisma.LootPlayerWhereInput
 }
 
+/**
+ * PlayerSnapshotCountOutputType without action
+ */
+export type PlayerSnapshotCountOutputTypeCountTimerActorCharactersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.TimerWhereInput
+}
+
+/**
+ * PlayerSnapshotCountOutputType without action
+ */
+export type PlayerSnapshotCountOutputTypeCountTimerHistoryEntriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.TimerHistoryEntryWhereInput
+}
+
+/**
+ * PlayerSnapshotCountOutputType without action
+ */
+export type PlayerSnapshotCountOutputTypeCountRestoredTimerHistoryEntriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.TimerHistoryEntryWhereInput
+}
+
 
 export type PlayerSnapshotSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -588,6 +923,9 @@ export type PlayerSnapshotSelect<ExtArgs extends runtime.Types.Extensions.Intern
   icon?: boolean
   createdAt?: boolean
   lootPlayers?: boolean | Prisma.PlayerSnapshot$lootPlayersArgs<ExtArgs>
+  timerActorCharacters?: boolean | Prisma.PlayerSnapshot$timerActorCharactersArgs<ExtArgs>
+  timerHistoryEntries?: boolean | Prisma.PlayerSnapshot$timerHistoryEntriesArgs<ExtArgs>
+  restoredTimerHistoryEntries?: boolean | Prisma.PlayerSnapshot$restoredTimerHistoryEntriesArgs<ExtArgs>
   _count?: boolean | Prisma.PlayerSnapshotCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["playerSnapshot"]>
 
@@ -630,6 +968,9 @@ export type PlayerSnapshotSelectScalar = {
 export type PlayerSnapshotOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "world" | "accountId" | "characterId" | "snapshotHash" | "name" | "prof" | "icon" | "createdAt", ExtArgs["result"]["playerSnapshot"]>
 export type PlayerSnapshotInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   lootPlayers?: boolean | Prisma.PlayerSnapshot$lootPlayersArgs<ExtArgs>
+  timerActorCharacters?: boolean | Prisma.PlayerSnapshot$timerActorCharactersArgs<ExtArgs>
+  timerHistoryEntries?: boolean | Prisma.PlayerSnapshot$timerHistoryEntriesArgs<ExtArgs>
+  restoredTimerHistoryEntries?: boolean | Prisma.PlayerSnapshot$restoredTimerHistoryEntriesArgs<ExtArgs>
   _count?: boolean | Prisma.PlayerSnapshotCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type PlayerSnapshotIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -639,6 +980,9 @@ export type $PlayerSnapshotPayload<ExtArgs extends runtime.Types.Extensions.Inte
   name: "PlayerSnapshot"
   objects: {
     lootPlayers: Prisma.$LootPlayerPayload<ExtArgs>[]
+    timerActorCharacters: Prisma.$TimerPayload<ExtArgs>[]
+    timerHistoryEntries: Prisma.$TimerHistoryEntryPayload<ExtArgs>[]
+    restoredTimerHistoryEntries: Prisma.$TimerHistoryEntryPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -1045,6 +1389,9 @@ readonly fields: PlayerSnapshotFieldRefs;
 export interface Prisma__PlayerSnapshotClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   lootPlayers<T extends Prisma.PlayerSnapshot$lootPlayersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.PlayerSnapshot$lootPlayersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LootPlayerPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  timerActorCharacters<T extends Prisma.PlayerSnapshot$timerActorCharactersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.PlayerSnapshot$timerActorCharactersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TimerPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  timerHistoryEntries<T extends Prisma.PlayerSnapshot$timerHistoryEntriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.PlayerSnapshot$timerHistoryEntriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TimerHistoryEntryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  restoredTimerHistoryEntries<T extends Prisma.PlayerSnapshot$restoredTimerHistoryEntriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.PlayerSnapshot$restoredTimerHistoryEntriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TimerHistoryEntryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1497,6 +1844,78 @@ export type PlayerSnapshot$lootPlayersArgs<ExtArgs extends runtime.Types.Extensi
   take?: number
   skip?: number
   distinct?: Prisma.LootPlayerScalarFieldEnum | Prisma.LootPlayerScalarFieldEnum[]
+}
+
+/**
+ * PlayerSnapshot.timerActorCharacters
+ */
+export type PlayerSnapshot$timerActorCharactersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Timer
+   */
+  select?: Prisma.TimerSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Timer
+   */
+  omit?: Prisma.TimerOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TimerInclude<ExtArgs> | null
+  where?: Prisma.TimerWhereInput
+  orderBy?: Prisma.TimerOrderByWithRelationInput | Prisma.TimerOrderByWithRelationInput[]
+  cursor?: Prisma.TimerWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.TimerScalarFieldEnum | Prisma.TimerScalarFieldEnum[]
+}
+
+/**
+ * PlayerSnapshot.timerHistoryEntries
+ */
+export type PlayerSnapshot$timerHistoryEntriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the TimerHistoryEntry
+   */
+  select?: Prisma.TimerHistoryEntrySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the TimerHistoryEntry
+   */
+  omit?: Prisma.TimerHistoryEntryOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TimerHistoryEntryInclude<ExtArgs> | null
+  where?: Prisma.TimerHistoryEntryWhereInput
+  orderBy?: Prisma.TimerHistoryEntryOrderByWithRelationInput | Prisma.TimerHistoryEntryOrderByWithRelationInput[]
+  cursor?: Prisma.TimerHistoryEntryWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.TimerHistoryEntryScalarFieldEnum | Prisma.TimerHistoryEntryScalarFieldEnum[]
+}
+
+/**
+ * PlayerSnapshot.restoredTimerHistoryEntries
+ */
+export type PlayerSnapshot$restoredTimerHistoryEntriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the TimerHistoryEntry
+   */
+  select?: Prisma.TimerHistoryEntrySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the TimerHistoryEntry
+   */
+  omit?: Prisma.TimerHistoryEntryOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TimerHistoryEntryInclude<ExtArgs> | null
+  where?: Prisma.TimerHistoryEntryWhereInput
+  orderBy?: Prisma.TimerHistoryEntryOrderByWithRelationInput | Prisma.TimerHistoryEntryOrderByWithRelationInput[]
+  cursor?: Prisma.TimerHistoryEntryWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.TimerHistoryEntryScalarFieldEnum | Prisma.TimerHistoryEntryScalarFieldEnum[]
 }
 
 /**

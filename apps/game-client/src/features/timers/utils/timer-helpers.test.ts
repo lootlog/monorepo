@@ -104,8 +104,8 @@ describe("timer-helpers", () => {
         "guild-2": "Beta",
       }),
     ).toEqual([
-      { id: 1, label: "Alice (Alpha)" },
-      { id: 2, label: "Bob (Beta)" },
+      { id: 1, memberLabel: "Alice (Alpha)", characterLabel: undefined },
+      { id: 2, memberLabel: "Bob (Beta)", characterLabel: undefined },
     ]);
   });
 

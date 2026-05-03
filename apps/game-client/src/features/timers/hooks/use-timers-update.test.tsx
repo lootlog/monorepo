@@ -3,17 +3,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 
 const mockCalculateTimeLeft = vi.fn();
-const mockFilterTimersByRemovalTime = vi.fn();
+const mockFilterTimersByExpiredVisibility = vi.fn();
 
 vi.mock("../utils/timers-utils", () => ({
   calculateTimeLeft: (...args: unknown[]) => mockCalculateTimeLeft(...args),
-  filterTimersByRemovalTime: (...args: unknown[]) =>
-    mockFilterTimersByRemovalTime(...args),
+  filterTimersByExpiredVisibility: (...args: unknown[]) =>
+    mockFilterTimersByExpiredVisibility(...args),
 }));
 
 import { useTimersUpdate } from "./use-timers-update";
 
-const createTimer = (name: string): TimerWithTimeLeft =>
+const createTimer = (
+  name: string,
+  overrides?: Partial<TimerWithTimeLeft>,
+): TimerWithTimeLeft =>
   ({
     id: `timer-${name}`,
     guildId: "guild-1",
@@ -37,13 +40,14 @@ const createTimer = (name: string): TimerWithTimeLeft =>
     } as never,
     minTimeLeft: 60_000,
     maxTimeLeft: 120_000,
+    ...overrides,
   }) as TimerWithTimeLeft;
 
 describe("useTimersUpdate", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     mockCalculateTimeLeft.mockReset();
-    mockFilterTimersByRemovalTime.mockReset();
+    mockFilterTimersByExpiredVisibility.mockReset();
   });
 
   afterEach(() => {
@@ -56,7 +60,7 @@ describe("useTimersUpdate", () => {
     const filteredTimers = [createTimer("Mushita")];
 
     mockCalculateTimeLeft.mockReturnValue(recalculatedTimers);
-    mockFilterTimersByRemovalTime.mockReturnValue(filteredTimers);
+    mockFilterTimersByExpiredVisibility.mockReturnValue(filteredTimers);
 
     const { result } = renderHook(() => useTimersUpdate(initialTimers, 30_000));
 
@@ -67,19 +71,25 @@ describe("useTimersUpdate", () => {
     });
 
     expect(mockCalculateTimeLeft).toHaveBeenCalledWith(initialTimers);
-    expect(mockFilterTimersByRemovalTime).toHaveBeenCalledWith(
+    expect(mockFilterTimersByExpiredVisibility).toHaveBeenCalledWith(
       recalculatedTimers,
       30_000,
+      {},
     );
     expect(result.current).toEqual(filteredTimers);
   });
 
   it("synchronizes immediately when the active timers input changes", () => {
     const initialTimers = [createTimer("Tanroth")];
-    const nextTimers = [createTimer("Mushita")];
+    const nextTimers = [
+      createTimer("Tanroth", {
+        maxSpawnTime: "2026-04-22T10:10:00.000Z",
+        updatedAt: "2026-04-22T10:01:00.000Z",
+      }),
+    ];
 
     mockCalculateTimeLeft.mockReturnValue(nextTimers);
-    mockFilterTimersByRemovalTime.mockReturnValue(nextTimers);
+    mockFilterTimersByExpiredVisibility.mockReturnValue(nextTimers);
 
     const { result, rerender } = renderHook(
       ({ activeTimers, removeTimerAfterMs }) =>
@@ -98,6 +108,29 @@ describe("useTimersUpdate", () => {
     });
 
     expect(result.current).toBe(nextTimers);
+  });
+
+  it("does not resynchronize when active timers only get new references", () => {
+    const initialTimers = [createTimer("Tanroth")];
+    const equivalentTimers = [{ ...initialTimers[0] }];
+
+    const { result, rerender } = renderHook(
+      ({ activeTimers, removeTimerAfterMs }) =>
+        useTimersUpdate(activeTimers, removeTimerAfterMs),
+      {
+        initialProps: {
+          activeTimers: initialTimers,
+          removeTimerAfterMs: 30_000,
+        },
+      },
+    );
+
+    rerender({
+      activeTimers: equivalentTimers,
+      removeTimerAfterMs: 30_000,
+    });
+
+    expect(result.current).toBe(initialTimers);
   });
 
   it("clears the refresh interval on unmount", () => {

@@ -3,6 +3,18 @@ import { z } from "zod";
 import { MemberResponseDto } from "./member-response.dto";
 import { TimerNpcResponseDto } from "./timer-npc-response.dto";
 import { isoDatetimeCodec } from "./zod-response-codecs";
+import { Profession } from "src/generated/prisma/client";
+
+const TimerActorCharacterResponseSchema = z
+  .object({
+    name: z.string(),
+    prof: z.nativeEnum(Profession).nullable(),
+    icon: z.string().nullable(),
+    lvl: z.number().nullable(),
+    characterId: z.number(),
+    accountId: z.number(),
+  })
+  .meta({ id: "TimerActorCharacterResponseDto" });
 
 const TimerResponseSchema = z.object({
   guildId: z.string(),
@@ -14,6 +26,8 @@ const TimerResponseSchema = z.object({
   npc: TimerNpcResponseDto.schema.nullable(),
   wasReset: z.boolean(),
   member: MemberResponseDto.schema.optional(),
+  actorCharacter: TimerActorCharacterResponseSchema.optional(),
+  deletedAt: isoDatetimeCodec.nullable().optional(),
   updatedAt: isoDatetimeCodec,
 });
 

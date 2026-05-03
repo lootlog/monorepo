@@ -12,6 +12,7 @@ import type {
   TimerResponseDto,
 } from "@/lib/api/generated/main/model";
 import {
+  buildCurrentTimerActorCharacterPayload,
   normalizeTimerMember,
   normalizeTimerNpc,
 } from "@/lib/api/generated-helpers";
@@ -35,6 +36,7 @@ type CreateTimerOptions = {
   customMinSpawnTime?: Date;
   customMaxSpawnTime?: Date;
   npc: CreateTimerNpc;
+  actorCharacter?: ReturnType<typeof buildCurrentTimerActorCharacterPayload>;
 };
 
 export type CreateAutoTimerResponse = CreateAutoTimerResponseDtoOutput;
@@ -51,6 +53,8 @@ export async function createAutoTimer(
     npc: timer.npc,
     characterId: timer.characterId,
     accountId: timer.accountId,
+    actorCharacter:
+      timer.actorCharacter ?? buildCurrentTimerActorCharacterPayload(),
     ...(timer.customMinSpawnTime && {
       customMinSpawnTime: timer.customMinSpawnTime.toISOString(),
     }),
@@ -75,10 +79,14 @@ export type CreateManualTimerOptions = {
   name: string;
   minSeconds?: number;
   maxSeconds?: number;
+  lvl?: number;
+  prof?: string;
+  type?: CreateManualTimerDto["type"];
   world: string;
   guildIds: string[];
   customMinSpawnTime?: Date;
   customMaxSpawnTime?: Date;
+  actorCharacter?: ReturnType<typeof buildCurrentTimerActorCharacterPayload>;
 };
 
 export type CreateManualTimerResult = {
@@ -123,6 +131,17 @@ export async function createManualTimer({
         ...(rest.maxSeconds !== undefined && {
           maxSeconds: rest.maxSeconds,
         }),
+        ...(rest.lvl !== undefined && {
+          lvl: rest.lvl,
+        }),
+        ...(rest.prof !== undefined && {
+          prof: rest.prof,
+        }),
+        ...(rest.type !== undefined && {
+          type: rest.type,
+        }),
+        actorCharacter:
+          rest.actorCharacter ?? buildCurrentTimerActorCharacterPayload(),
         world: rest.world,
         ...(rest.customMinSpawnTime && {
           customMinSpawnTime: rest.customMinSpawnTime.toISOString(),
@@ -182,18 +201,31 @@ export async function createManualTimer({
 export type Timer = Omit<TimerResponseDto, "npc" | "member"> & {
   npc: ReturnType<typeof normalizeTimerNpc>;
   member?: GuildMember;
+  actorCharacter?: TimerResponseDto["actorCharacter"];
   members?: GuildMember[];
+  actorCharactersByMemberId?: Record<
+    string,
+    TimerResponseDto["actorCharacter"]
+  >;
   isCustomTime?: boolean;
   isPending?: boolean;
 };
 
 const normalizeTimer = (timer: TimerResponseDto): Timer => {
+  const member = normalizeTimerMember(timer.member);
+
   return {
     ...timer,
     npc: normalizeTimerNpc(timer.npc),
-    member: normalizeTimerMember(timer.member),
+    member,
+    actorCharactersByMemberId:
+      member && timer.actorCharacter
+        ? { [String(member.id)]: timer.actorCharacter }
+        : undefined,
   };
 };
+
+export const normalizeTimerResponse = normalizeTimer;
 
 export async function fetchTimers(world: string): Promise<Timer[]> {
   const timers = await timersControllerGetAllTimers({ world });
@@ -242,20 +274,24 @@ export async function resetTimer({
   ...rest
 }: ResetTimerOptions): Promise<Timer> {
   const endpoint = `/guilds/${guildId}/timers/${timerKey}/reset`;
+  const payload = {
+    ...rest,
+    actorCharacter: buildCurrentTimerActorCharacterPayload(),
+  };
 
   return runSingleLoggedAction({
     actionType: "reset_timer",
-    actionPayload: { guildId, timerKey, ...rest },
+    actionPayload: { guildId, timerKey, ...payload },
     request: {
       method: "PATCH",
       endpoint,
-      payload: rest,
+      payload,
     },
     execute: async () =>
       normalizeTimer(
         await timersControllerResetTimer(
           { guildId, timerIdentifier: timerKey },
-          rest,
+          payload,
         ),
       ),
   });

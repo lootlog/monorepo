@@ -20,7 +20,8 @@
     "sortAsc": "Sortuj rosnąco",
     "sortDesc": "Sortuj malejąco",
     "hideHiddenTimers": "Ukryj ukryte timery",
-    "showHiddenTimers": "Pokaż ukryte timery"
+    "showHiddenTimers": "Pokaż ukryte timery",
+    "history": "Historia timerów"
   },
   "tooltip": {
     "addedBy": "Dodane przez:",
@@ -47,9 +48,38 @@
     "hide": "Ukryj",
     "showAll": "Pokaż wszędzie",
     "hideAll": "Ukryj wszędzie",
+    "showAlways": "Pokaż zawsze",
+    "hideAlways": "Nie pokazuj zawsze",
     "restart": "Odliczaj od początku",
+    "history": "Historia",
     "delete": "Usuń timer",
     "deleteChooseGuild": "Wybierz serwer do usunięcia timera:"
+  },
+  "history": {
+    "title": "Historia timera",
+    "globalTitle": "Historia timerów",
+    "loading": "Ładowanie historii...",
+    "empty": "Brak historii",
+    "restore": "Przywróć timer",
+    "restoreSuccess": "Przywrócono timer.",
+    "restoreFailed": "Nie udało się przywrócić timera.",
+    "details": {
+      "action": "Akcja",
+      "npc": "Potwór",
+      "member": "Użytkownik",
+      "guild": "Serwer",
+      "character": "Postać",
+      "world": "Świat",
+      "min": "Min",
+      "max": "Max",
+      "date": "Data"
+    },
+    "actions": {
+      "create": "Dodano",
+      "reset": "Zresetowano",
+      "delete": "Usunięto",
+      "restore": "Przywrócono"
+    }
   },
   "messages": {
     "resetEventWindowForbidden": "Nie można zresetować okna eventowego z poziomu timerów.",
@@ -88,6 +118,7 @@
       "minDurationRequired": "Minimalny czas jest wymagany",
       "maxDurationRequired": "Maksymalny czas jest wymagany",
       "durationGreaterThanZero": "Czas musi być większy niż 0 sekund",
+      "lvlRange": "Poziom musi być liczbą całkowitą od {{min}} do {{max}}",
       "maxDurationMin": "Maksymalny czas musi być większy lub równy minimalnemu",
       "startDateRequired": "Data startu jest wymagana",
       "endDateRequired": "Data końca jest wymagana",
@@ -101,6 +132,10 @@
     "mobFallback": "mob",
     "nameLabel": "Nazwa",
     "namePlaceholder": "np. Młody Smok",
+    "lvlLabel": "Poziom",
+    "lvlPlaceholder": "np. 120",
+    "typeLabel": "Typ",
+    "typePlaceholder": "Bez typu",
     "minDurationLabel": "Minimalny czas (max 300h)",
     "minDurationPlaceholder": "np. 2h 30m 45s",
     "maxDurationLabel": "Maksymalny czas (max 300h)",

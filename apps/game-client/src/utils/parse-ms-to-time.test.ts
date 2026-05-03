@@ -24,4 +24,9 @@ describe("parseMsToTime", () => {
     expect(parseMsToTime(36000000)).toBe("10:00:00");
     expect(parseMsToTime(86400000)).toBe("24:00:00");
   });
+
+  it("should preserve negative time values", () => {
+    expect(parseMsToTime(-1000)).toBe("-00:00:01");
+    expect(parseMsToTime(-3661000)).toBe("-01:01:01");
+  });
 });

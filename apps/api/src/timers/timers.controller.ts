@@ -33,6 +33,7 @@ import { CreateTimerFromGameClientDto } from "src/timers/dto/create-timer-from-g
 import { ResetTimerDto } from "src/timers/dto/reset-timer.dto";
 import { SearchTimersNpcResponseDto } from "src/timers/dto/search-timers-npcs-response.dto";
 import { SearchTimersNpcsDto } from "src/timers/dto/search-timers-npcs.dto";
+import { TimerHistoryResponseDto } from "src/timers/dto/timer-history-response.dto";
 import { TimersService } from "src/timers/timers.service";
 
 @ApiTags("timers")
@@ -58,8 +59,37 @@ export class TimersController {
     description: "List of timers",
     type: [TimerResponseDto],
   })
-  getAllTimers(@Query("world") world: string, @DiscordId() discordId: string) {
-    return this.timersService.getAllTimers(discordId, { world });
+  getAllTimers(
+    @Query("world") world: string,
+    @DiscordId() discordId: string,
+    @UserId() userId: string,
+  ) {
+    return this.timersService.getAllTimers(discordId, userId, { world });
+  }
+
+  @Get("/timers/history")
+  @ApiOperation({
+    summary: "Get recent timer action history",
+    description:
+      "Retrieve latest visible timer history entries for an authenticated user guild",
+  })
+  @ApiQuery({ name: "guildId", description: "Guild ID", required: true })
+  @ApiQuery({ name: "world", description: "World name", required: true })
+  @ApiQuery({ name: "limit", description: "Result limit", required: false })
+  @ZodResponse({
+    status: 200,
+    description: "List of recent timer history entries",
+    type: [TimerHistoryResponseDto],
+  })
+  getRecentTimerHistory(
+    @DiscordId() discordId: string,
+    @Query("guildId") guildId: string,
+    @Query("world") world: string,
+    @Query("limit") limit: string | undefined,
+  ) {
+    return this.timersService.getRecentTimerHistory(discordId, guildId, world, {
+      limit: limit ? Number.parseInt(limit, 10) : undefined,
+    });
   }
 
   @Permissions(Permission.LOOTLOG_TIMERS_READ)
@@ -86,14 +116,14 @@ export class TimersController {
   })
   getTimers(
     @Query("world") world: string,
+    @UserId() userId: string,
     @MemberPermissions() permissions: Permission[],
     @MemberRoles() roles: Role[],
     @GuildData() guild: Guild,
   ) {
     return this.timersService.getTimers(
-      {
-        world,
-      },
+      userId,
+      { world },
       guild,
       permissions,
       roles,
@@ -223,11 +253,82 @@ export class TimersController {
   })
   @ApiResponse({ status: 404, description: "Timer not found" })
   deleteTimer(
+    @DiscordId() discordId: string,
     @Query("world") world: string,
     @Param("guildId") guildId: string,
     @Param("timerIdentifier") timerIdentifier: string,
   ) {
-    return this.timersService.deleteTimer(guildId, timerIdentifier, world);
+    return this.timersService.deleteTimer(
+      discordId,
+      guildId,
+      timerIdentifier,
+      world,
+    );
+  }
+
+  @Permissions(Permission.LOOTLOG_TIMERS_READ)
+  @UseGuards(PermissionsGuard)
+  @Get("/guilds/:guildId/timers/:timerIdentifier/history")
+  @ApiOperation({
+    summary: "Get timer action history",
+    description: "Retrieve latest action history entries for a guild timer",
+  })
+  @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
+  @ApiParam({
+    name: "timerIdentifier",
+    description: "Timer key or legacy NPC ID when unambiguous",
+    example: "12345:test boss",
+  })
+  @ApiQuery({ name: "world", description: "World name", required: true })
+  @ApiQuery({ name: "limit", description: "Result limit", required: false })
+  @ZodResponse({
+    status: 200,
+    description: "List of timer history entries",
+    type: [TimerHistoryResponseDto],
+  })
+  getTimerHistory(
+    @Query("world") world: string,
+    @Query("limit") limit: string | undefined,
+    @Param("guildId") guildId: string,
+    @Param("timerIdentifier") timerIdentifier: string,
+    @MemberPermissions() permissions: Permission[],
+    @MemberRoles() roles: Role[],
+  ) {
+    return this.timersService.getTimerHistory(guildId, world, timerIdentifier, {
+      limit: limit ? Number.parseInt(limit, 10) : undefined,
+      permissions,
+      roles,
+    });
+  }
+
+  @Permissions(Permission.LOOTLOG_TIMERS_WRITE)
+  @UseGuards(PermissionsGuard)
+  @Post("/guilds/:guildId/timers/history/:historyEntryId/restore")
+  @ApiOperation({
+    summary: "Restore timer from history",
+    description: "Restore a deleted timer from a timer history entry",
+  })
+  @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
+  @ApiParam({
+    name: "historyEntryId",
+    description: "Timer history entry ID",
+    example: 123,
+  })
+  @ZodResponse({
+    status: 201,
+    description: "Timer restored successfully",
+    type: TimerResponseDto,
+  })
+  restoreTimerFromHistory(
+    @DiscordId() discordId: string,
+    @Param("guildId") guildId: string,
+    @Param("historyEntryId") historyEntryId: string,
+  ) {
+    return this.timersService.restoreTimerFromHistory(
+      discordId,
+      guildId,
+      Number.parseInt(historyEntryId, 10),
+    );
   }
 
   @Permissions(Permission.LOOTLOG_TIMERS_WRITE)

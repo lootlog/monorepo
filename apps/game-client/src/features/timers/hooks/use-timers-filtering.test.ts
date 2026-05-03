@@ -82,6 +82,7 @@ describe("useTimersFiltering", () => {
       },
       pinnedTimers: ["Tanroth"],
       sortOrder: "asc",
+      removeTimerAfterMs: 30_000,
     });
 
     expect(filtered).toHaveLength(1);
@@ -127,11 +128,67 @@ describe("useTimersFiltering", () => {
       },
       pinnedTimers: [],
       sortOrder: "desc",
+      removeTimerAfterMs: 30_000,
     });
 
     expect(filtered.map((timer) => timer.npc.name)).toEqual([
       "Mushita",
       "Tanroth",
+    ]);
+  });
+
+  it("keeps slightly expired timers in regular sorting until the removal timeout passes", () => {
+    const filtered = useTimersFiltering({
+      calculatedTimers: [
+        createTimer({
+          timerKey: "expired-before-threshold",
+          npc: {
+            ...createTimer().npc,
+            name: "Expired before threshold",
+          },
+          maxSpawnTime: "2026-04-22T10:00:00.000Z",
+          maxTimeLeft: -10_000,
+        }),
+        createTimer({
+          timerKey: "expired-after-threshold",
+          npc: {
+            ...createTimer().npc,
+            name: "Expired after threshold",
+          },
+          maxSpawnTime: "2026-04-22T10:01:00.000Z",
+          maxTimeLeft: -40_000,
+        }),
+        createTimer({
+          timerKey: "active",
+          npc: {
+            ...createTimer().npc,
+            name: "Active",
+          },
+          maxSpawnTime: "2026-04-22T10:02:00.000Z",
+          maxTimeLeft: 120_000,
+        }),
+      ],
+      isGrouping: true,
+      guildId: "guild-1",
+      hiddenTimers: [],
+      showHiddenTimers: true,
+      searchText: "",
+      selectedNpcTypes: [NpcType.HERO],
+      minLvl: 0,
+      maxLvl: 300,
+      selectedColors: [],
+      colorFiltersEnabled: false,
+      timersColors: {},
+      pinnedTimers: [],
+      sortOrder: "asc",
+      expiredTimersAtBottom: true,
+      removeTimerAfterMs: 30_000,
+    });
+
+    expect(filtered.map((timer) => timer.npc.name)).toEqual([
+      "Expired before threshold",
+      "Active",
+      "Expired after threshold",
     ]);
   });
 });

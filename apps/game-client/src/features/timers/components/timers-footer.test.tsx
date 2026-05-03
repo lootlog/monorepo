@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 const timersColorStatisticsSpy = vi.fn();
+const globalHistorySpy = vi.fn();
 
 vi.mock("./timers-color-statistics", () => ({
   TimersColorStatistics: (props: unknown) => {
@@ -14,6 +15,13 @@ vi.mock("./timers-color-statistics", () => ({
 
 vi.mock("@/features/timers/components/timers-connection-status", () => ({
   TimersConnectionStatus: () => <div>TimersConnectionStatus</div>,
+}));
+
+vi.mock("./global-timer-history-popover", () => ({
+  GlobalTimerHistoryPopover: (props: unknown) => {
+    globalHistorySpy(props);
+    return <div>GlobalTimerHistoryPopover</div>;
+  },
 }));
 
 vi.mock("@/components/ui/button", () => ({
@@ -49,21 +57,47 @@ describe("TimersFooter", () => {
     render(
       <TimersFooter
         colorStatistics={colorStatistics}
+        guildId="guild-1"
+        isGrouping={false}
         onAddTimer={onAddTimer}
+        world="pandora"
       />,
     );
 
     expect(screen.getByText("TimersColorStatistics")).toBeVisible();
     expect(screen.getByText("TimersConnectionStatus")).toBeVisible();
+    expect(screen.getByText("GlobalTimerHistoryPopover")).toBeVisible();
     expect(screen.getByText("Dodaj timer")).toBeVisible();
     expect(timersColorStatisticsSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         colorStatistics,
       }),
     );
+    expect(globalHistorySpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        guildId: "guild-1",
+        world: "pandora",
+      }),
+    );
 
     await user.click(screen.getByRole("button", { name: "+" }));
 
     expect(onAddTimer).toHaveBeenCalledTimes(1);
+  });
+
+  it("hides global history for grouping view", () => {
+    render(
+      <TimersFooter
+        colorStatistics={[]}
+        guildId="guild-1"
+        isGrouping
+        onAddTimer={vi.fn()}
+        world="pandora"
+      />,
+    );
+
+    expect(
+      screen.queryByText("GlobalTimerHistoryPopover"),
+    ).not.toBeInTheDocument();
   });
 });

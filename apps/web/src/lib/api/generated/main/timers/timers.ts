@@ -28,14 +28,19 @@ import type {
   CreateTimerFromGameClientDto,
   ResetTimerDto,
   SearchTimersNpcResponseDtoOutput,
+  TimerHistoryResponseDto,
   TimerResponseDto,
   TimersControllerCreateManualTimerPathParameters,
   TimersControllerDeleteTimerParams,
   TimersControllerDeleteTimerPathParameters,
   TimersControllerGetAllTimersParams,
+  TimersControllerGetRecentTimerHistoryParams,
+  TimersControllerGetTimerHistoryParams,
+  TimersControllerGetTimerHistoryPathParameters,
   TimersControllerGetTimersParams,
   TimersControllerGetTimersPathParameters,
   TimersControllerResetTimerPathParameters,
+  TimersControllerRestoreTimerFromHistoryPathParameters,
   TimersControllerSearchNpcsWithTimerDataParams,
   TimersControllerSearchNpcsWithTimerDataPathParameters
 } from '../model';
@@ -171,6 +176,132 @@ export const useGetTimersControllerGetAllTimersQueryData = () => {
   const queryClient = useQueryClient();
   return (params: TimersControllerGetAllTimersParams,) =>
     queryClient.getQueryData<Awaited<ReturnType<typeof timersControllerGetAllTimers>>>(getTimersControllerGetAllTimersQueryKey(params));
+}
+
+
+/**
+ * Retrieve latest visible timer history entries for an authenticated user guild
+ * @summary Get recent timer action history
+ */
+export const getTimersControllerGetRecentTimerHistoryUrl = (params: TimersControllerGetRecentTimerHistoryParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/timers/history?${stringifiedParams}` : `/timers/history`
+}
+
+export const timersControllerGetRecentTimerHistory = async (params: TimersControllerGetRecentTimerHistoryParams, options?: RequestInit): Promise<TimerHistoryResponseDto[]> => {
+
+  return orvalFetch<TimerHistoryResponseDto[]>(getTimersControllerGetRecentTimerHistoryUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getTimersControllerGetRecentTimerHistoryQueryKey = (params?: TimersControllerGetRecentTimerHistoryParams,) => {
+    return [
+    `/timers/history`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getTimersControllerGetRecentTimerHistoryQueryOptions = <TData = Awaited<ReturnType<typeof timersControllerGetRecentTimerHistory>>, TError = ErrorType<unknown>>(params: TimersControllerGetRecentTimerHistoryParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof timersControllerGetRecentTimerHistory>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getTimersControllerGetRecentTimerHistoryQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof timersControllerGetRecentTimerHistory>>> = ({ signal }) => timersControllerGetRecentTimerHistory(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof timersControllerGetRecentTimerHistory>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type TimersControllerGetRecentTimerHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof timersControllerGetRecentTimerHistory>>>
+export type TimersControllerGetRecentTimerHistoryQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get recent timer action history
+ */
+
+export function useTimersControllerGetRecentTimerHistory<TData = Awaited<ReturnType<typeof timersControllerGetRecentTimerHistory>>, TError = ErrorType<unknown>>(
+ params: TimersControllerGetRecentTimerHistoryParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof timersControllerGetRecentTimerHistory>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getTimersControllerGetRecentTimerHistoryQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get recent timer action history
+ */
+export const prefetchTimersControllerGetRecentTimerHistoryQuery = async <TData = Awaited<ReturnType<typeof timersControllerGetRecentTimerHistory>>, TError = ErrorType<unknown>>(
+ queryClient: QueryClient, params: TimersControllerGetRecentTimerHistoryParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof timersControllerGetRecentTimerHistory>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getTimersControllerGetRecentTimerHistoryQueryOptions(params,options)
+
+  await queryClient.prefetchQuery(queryOptions);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get recent timer action history
+ */
+export const invalidateTimersControllerGetRecentTimerHistory = async (
+ queryClient: QueryClient, params: TimersControllerGetRecentTimerHistoryParams, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getTimersControllerGetRecentTimerHistoryQueryKey(params) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get recent timer action history
+ */
+export const useSetTimersControllerGetRecentTimerHistoryQueryData = () => {
+  const queryClient = useQueryClient();
+  return (params: TimersControllerGetRecentTimerHistoryParams,updater: Awaited<ReturnType<typeof timersControllerGetRecentTimerHistory>> | undefined | ((old: Awaited<ReturnType<typeof timersControllerGetRecentTimerHistory>> | undefined) => Awaited<ReturnType<typeof timersControllerGetRecentTimerHistory>> | undefined)) => {
+    queryClient.setQueryData(getTimersControllerGetRecentTimerHistoryQueryKey(params), updater);
+  };
+}
+
+/**
+ * @summary Get recent timer action history
+ */
+export const useGetTimersControllerGetRecentTimerHistoryQueryData = () => {
+  const queryClient = useQueryClient();
+  return (params: TimersControllerGetRecentTimerHistoryParams,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof timersControllerGetRecentTimerHistory>>>(getTimersControllerGetRecentTimerHistoryQueryKey(params));
 }
 
 
@@ -665,6 +796,211 @@ export const useTimersControllerDeleteTimer = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getTimersControllerDeleteTimerMutationOptions(options));
+    }
+    /**
+ * Retrieve latest action history entries for a guild timer
+ * @summary Get timer action history
+ */
+export const getTimersControllerGetTimerHistoryUrl = ({ guildId, timerIdentifier }: TimersControllerGetTimerHistoryPathParameters,
+    params: TimersControllerGetTimerHistoryParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/guilds/${guildId}/timers/${timerIdentifier}/history?${stringifiedParams}` : `/guilds/${guildId}/timers/${timerIdentifier}/history`
+}
+
+export const timersControllerGetTimerHistory = async ({ guildId, timerIdentifier }: TimersControllerGetTimerHistoryPathParameters,
+    params: TimersControllerGetTimerHistoryParams, options?: RequestInit): Promise<TimerHistoryResponseDto[]> => {
+
+  return orvalFetch<TimerHistoryResponseDto[]>(getTimersControllerGetTimerHistoryUrl({ guildId, timerIdentifier },params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getTimersControllerGetTimerHistoryQueryKey = ({ guildId, timerIdentifier }: TimersControllerGetTimerHistoryPathParameters,
+    params?: TimersControllerGetTimerHistoryParams,) => {
+    return [
+    `/guilds/${guildId}/timers/${timerIdentifier}/history`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getTimersControllerGetTimerHistoryQueryOptions = <TData = Awaited<ReturnType<typeof timersControllerGetTimerHistory>>, TError = ErrorType<unknown>>({ guildId, timerIdentifier }: TimersControllerGetTimerHistoryPathParameters,
+    params: TimersControllerGetTimerHistoryParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof timersControllerGetTimerHistory>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getTimersControllerGetTimerHistoryQueryKey({ guildId, timerIdentifier },params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof timersControllerGetTimerHistory>>> = ({ signal }) => timersControllerGetTimerHistory({ guildId, timerIdentifier },params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(guildId && timerIdentifier), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof timersControllerGetTimerHistory>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type TimersControllerGetTimerHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof timersControllerGetTimerHistory>>>
+export type TimersControllerGetTimerHistoryQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get timer action history
+ */
+
+export function useTimersControllerGetTimerHistory<TData = Awaited<ReturnType<typeof timersControllerGetTimerHistory>>, TError = ErrorType<unknown>>(
+ { guildId, timerIdentifier }: TimersControllerGetTimerHistoryPathParameters,
+    params: TimersControllerGetTimerHistoryParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof timersControllerGetTimerHistory>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getTimersControllerGetTimerHistoryQueryOptions({ guildId, timerIdentifier },params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get timer action history
+ */
+export const prefetchTimersControllerGetTimerHistoryQuery = async <TData = Awaited<ReturnType<typeof timersControllerGetTimerHistory>>, TError = ErrorType<unknown>>(
+ queryClient: QueryClient, { guildId, timerIdentifier }: TimersControllerGetTimerHistoryPathParameters,
+    params: TimersControllerGetTimerHistoryParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof timersControllerGetTimerHistory>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getTimersControllerGetTimerHistoryQueryOptions({ guildId, timerIdentifier },params,options)
+
+  await queryClient.prefetchQuery(queryOptions);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get timer action history
+ */
+export const invalidateTimersControllerGetTimerHistory = async (
+ queryClient: QueryClient, { guildId, timerIdentifier }: TimersControllerGetTimerHistoryPathParameters,
+    params: TimersControllerGetTimerHistoryParams, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getTimersControllerGetTimerHistoryQueryKey({ guildId, timerIdentifier },params) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get timer action history
+ */
+export const useSetTimersControllerGetTimerHistoryQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId, timerIdentifier }: TimersControllerGetTimerHistoryPathParameters,
+    params: TimersControllerGetTimerHistoryParams,updater: Awaited<ReturnType<typeof timersControllerGetTimerHistory>> | undefined | ((old: Awaited<ReturnType<typeof timersControllerGetTimerHistory>> | undefined) => Awaited<ReturnType<typeof timersControllerGetTimerHistory>> | undefined)) => {
+    queryClient.setQueryData(getTimersControllerGetTimerHistoryQueryKey({ guildId, timerIdentifier },params), updater);
+  };
+}
+
+/**
+ * @summary Get timer action history
+ */
+export const useGetTimersControllerGetTimerHistoryQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId, timerIdentifier }: TimersControllerGetTimerHistoryPathParameters,
+    params: TimersControllerGetTimerHistoryParams,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof timersControllerGetTimerHistory>>>(getTimersControllerGetTimerHistoryQueryKey({ guildId, timerIdentifier },params));
+}
+
+
+/**
+ * Restore a deleted timer from a timer history entry
+ * @summary Restore timer from history
+ */
+export const getTimersControllerRestoreTimerFromHistoryUrl = ({ guildId, historyEntryId }: TimersControllerRestoreTimerFromHistoryPathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/timers/history/${historyEntryId}/restore`
+}
+
+export const timersControllerRestoreTimerFromHistory = async ({ guildId, historyEntryId }: TimersControllerRestoreTimerFromHistoryPathParameters, options?: RequestInit): Promise<TimerResponseDto> => {
+
+  return orvalFetch<TimerResponseDto>(getTimersControllerRestoreTimerFromHistoryUrl({ guildId, historyEntryId }),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getTimersControllerRestoreTimerFromHistoryMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof timersControllerRestoreTimerFromHistory>>, TError,{pathParams: TimersControllerRestoreTimerFromHistoryPathParameters}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof timersControllerRestoreTimerFromHistory>>, TError,{pathParams: TimersControllerRestoreTimerFromHistoryPathParameters}, TContext> => {
+
+const mutationKey = ['timersControllerRestoreTimerFromHistory'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof timersControllerRestoreTimerFromHistory>>, {pathParams: TimersControllerRestoreTimerFromHistoryPathParameters}> = (props) => {
+          const {pathParams} = props ?? {};
+
+          return  timersControllerRestoreTimerFromHistory(pathParams,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type TimersControllerRestoreTimerFromHistoryMutationResult = NonNullable<Awaited<ReturnType<typeof timersControllerRestoreTimerFromHistory>>>
+
+    export type TimersControllerRestoreTimerFromHistoryMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Restore timer from history
+ */
+export const useTimersControllerRestoreTimerFromHistory = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof timersControllerRestoreTimerFromHistory>>, TError,{pathParams: TimersControllerRestoreTimerFromHistoryPathParameters}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof timersControllerRestoreTimerFromHistory>>,
+        TError,
+        {pathParams: TimersControllerRestoreTimerFromHistoryPathParameters},
+        TContext
+      > => {
+      return useMutation(getTimersControllerRestoreTimerFromHistoryMutationOptions(options));
     }
     /**
  * Manually create a timer for a guild

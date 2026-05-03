@@ -321,6 +321,36 @@ export type EnumProfessionNullableWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedEnumProfessionNullableFilter<$PrismaModel>
 }
 
+export type EnumTimerHistoryActionFilter<$PrismaModel = never> = {
+  equals?: $Enums.TimerHistoryAction | Prisma.EnumTimerHistoryActionFieldRefInput<$PrismaModel>
+  in?: $Enums.TimerHistoryAction[] | Prisma.ListEnumTimerHistoryActionFieldRefInput<$PrismaModel>
+  notIn?: $Enums.TimerHistoryAction[] | Prisma.ListEnumTimerHistoryActionFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumTimerHistoryActionFilter<$PrismaModel> | $Enums.TimerHistoryAction
+}
+
+export type BoolNullableFilter<$PrismaModel = never> = {
+  equals?: boolean | Prisma.BooleanFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedBoolNullableFilter<$PrismaModel> | boolean | null
+}
+
+export type EnumTimerHistoryActionWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.TimerHistoryAction | Prisma.EnumTimerHistoryActionFieldRefInput<$PrismaModel>
+  in?: $Enums.TimerHistoryAction[] | Prisma.ListEnumTimerHistoryActionFieldRefInput<$PrismaModel>
+  notIn?: $Enums.TimerHistoryAction[] | Prisma.ListEnumTimerHistoryActionFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumTimerHistoryActionWithAggregatesFilter<$PrismaModel> | $Enums.TimerHistoryAction
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumTimerHistoryActionFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumTimerHistoryActionFilter<$PrismaModel>
+}
+
+export type BoolNullableWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: boolean | Prisma.BooleanFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedBoolNullableWithAggregatesFilter<$PrismaModel> | boolean | null
+  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
+  _min?: Prisma.NestedBoolNullableFilter<$PrismaModel>
+  _max?: Prisma.NestedBoolNullableFilter<$PrismaModel>
+}
+
 export type EnumNpcTypeNullableFilter<$PrismaModel = never> = {
   equals?: $Enums.NpcType | Prisma.EnumNpcTypeFieldRefInput<$PrismaModel> | null
   in?: $Enums.NpcType[] | Prisma.ListEnumNpcTypeFieldRefInput<$PrismaModel> | null
@@ -644,11 +674,6 @@ export type EnumCoverageGapTypeFilter<$PrismaModel = never> = {
   not?: Prisma.NestedEnumCoverageGapTypeFilter<$PrismaModel> | $Enums.CoverageGapType
 }
 
-export type BoolNullableFilter<$PrismaModel = never> = {
-  equals?: boolean | Prisma.BooleanFieldRefInput<$PrismaModel> | null
-  not?: Prisma.NestedBoolNullableFilter<$PrismaModel> | boolean | null
-}
-
 export type EnumCoverageGapTypeWithAggregatesFilter<$PrismaModel = never> = {
   equals?: $Enums.CoverageGapType | Prisma.EnumCoverageGapTypeFieldRefInput<$PrismaModel>
   in?: $Enums.CoverageGapType[] | Prisma.ListEnumCoverageGapTypeFieldRefInput<$PrismaModel>
@@ -657,14 +682,6 @@ export type EnumCoverageGapTypeWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumCoverageGapTypeFilter<$PrismaModel>
   _max?: Prisma.NestedEnumCoverageGapTypeFilter<$PrismaModel>
-}
-
-export type BoolNullableWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: boolean | Prisma.BooleanFieldRefInput<$PrismaModel> | null
-  not?: Prisma.NestedBoolNullableWithAggregatesFilter<$PrismaModel> | boolean | null
-  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
-  _min?: Prisma.NestedBoolNullableFilter<$PrismaModel>
-  _max?: Prisma.NestedBoolNullableFilter<$PrismaModel>
 }
 
 export type FloatNullableFilter<$PrismaModel = never> = {
@@ -1004,6 +1021,36 @@ export type NestedEnumProfessionNullableWithAggregatesFilter<$PrismaModel = neve
   _max?: Prisma.NestedEnumProfessionNullableFilter<$PrismaModel>
 }
 
+export type NestedEnumTimerHistoryActionFilter<$PrismaModel = never> = {
+  equals?: $Enums.TimerHistoryAction | Prisma.EnumTimerHistoryActionFieldRefInput<$PrismaModel>
+  in?: $Enums.TimerHistoryAction[] | Prisma.ListEnumTimerHistoryActionFieldRefInput<$PrismaModel>
+  notIn?: $Enums.TimerHistoryAction[] | Prisma.ListEnumTimerHistoryActionFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumTimerHistoryActionFilter<$PrismaModel> | $Enums.TimerHistoryAction
+}
+
+export type NestedBoolNullableFilter<$PrismaModel = never> = {
+  equals?: boolean | Prisma.BooleanFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedBoolNullableFilter<$PrismaModel> | boolean | null
+}
+
+export type NestedEnumTimerHistoryActionWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.TimerHistoryAction | Prisma.EnumTimerHistoryActionFieldRefInput<$PrismaModel>
+  in?: $Enums.TimerHistoryAction[] | Prisma.ListEnumTimerHistoryActionFieldRefInput<$PrismaModel>
+  notIn?: $Enums.TimerHistoryAction[] | Prisma.ListEnumTimerHistoryActionFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumTimerHistoryActionWithAggregatesFilter<$PrismaModel> | $Enums.TimerHistoryAction
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumTimerHistoryActionFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumTimerHistoryActionFilter<$PrismaModel>
+}
+
+export type NestedBoolNullableWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: boolean | Prisma.BooleanFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedBoolNullableWithAggregatesFilter<$PrismaModel> | boolean | null
+  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
+  _min?: Prisma.NestedBoolNullableFilter<$PrismaModel>
+  _max?: Prisma.NestedBoolNullableFilter<$PrismaModel>
+}
+
 export type NestedEnumNpcTypeNullableFilter<$PrismaModel = never> = {
   equals?: $Enums.NpcType | Prisma.EnumNpcTypeFieldRefInput<$PrismaModel> | null
   in?: $Enums.NpcType[] | Prisma.ListEnumNpcTypeFieldRefInput<$PrismaModel> | null
@@ -1289,11 +1336,6 @@ export type NestedEnumCoverageGapTypeFilter<$PrismaModel = never> = {
   not?: Prisma.NestedEnumCoverageGapTypeFilter<$PrismaModel> | $Enums.CoverageGapType
 }
 
-export type NestedBoolNullableFilter<$PrismaModel = never> = {
-  equals?: boolean | Prisma.BooleanFieldRefInput<$PrismaModel> | null
-  not?: Prisma.NestedBoolNullableFilter<$PrismaModel> | boolean | null
-}
-
 export type NestedEnumCoverageGapTypeWithAggregatesFilter<$PrismaModel = never> = {
   equals?: $Enums.CoverageGapType | Prisma.EnumCoverageGapTypeFieldRefInput<$PrismaModel>
   in?: $Enums.CoverageGapType[] | Prisma.ListEnumCoverageGapTypeFieldRefInput<$PrismaModel>
@@ -1302,14 +1344,6 @@ export type NestedEnumCoverageGapTypeWithAggregatesFilter<$PrismaModel = never> 
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumCoverageGapTypeFilter<$PrismaModel>
   _max?: Prisma.NestedEnumCoverageGapTypeFilter<$PrismaModel>
-}
-
-export type NestedBoolNullableWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: boolean | Prisma.BooleanFieldRefInput<$PrismaModel> | null
-  not?: Prisma.NestedBoolNullableWithAggregatesFilter<$PrismaModel> | boolean | null
-  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
-  _min?: Prisma.NestedBoolNullableFilter<$PrismaModel>
-  _max?: Prisma.NestedBoolNullableFilter<$PrismaModel>
 }
 
 export type NestedFloatNullableWithAggregatesFilter<$PrismaModel = never> = {

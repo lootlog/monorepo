@@ -11,6 +11,7 @@ const mockCalculateColorStatistics = vi.fn();
 const mockCheckFiltersActive = vi.fn();
 const mockToggleOpen = vi.fn();
 const mockSetOpen = vi.fn();
+const mockSetSelectedGuildIdsForTimers = vi.fn();
 const timersContentSpy = vi.fn();
 const timersActionsSpy = vi.fn();
 const timersUnderBagActionsSpy = vi.fn();
@@ -26,6 +27,7 @@ let guildIdByCharId: Record<string, string> = {
 let timersStoreState = {
   hiddenTimers: {},
   pinnedTimers: {},
+  alwaysVisibleExpiredTimers: {},
   generalConfig: {
     removeTimerAfterMs: 30_000,
     timersGrouping: false,
@@ -220,6 +222,7 @@ describe("Timers", () => {
     mockCheckFiltersActive.mockReset();
     mockToggleOpen.mockReset();
     mockSetOpen.mockReset();
+    mockSetSelectedGuildIdsForTimers.mockReset();
     timersContentSpy.mockReset();
     timersActionsSpy.mockReset();
     timersUnderBagActionsSpy.mockReset();
@@ -236,6 +239,7 @@ describe("Timers", () => {
       ...timersStoreState,
       hiddenTimers: {},
       pinnedTimers: {},
+      alwaysVisibleExpiredTimers: {},
       generalConfig: {
         removeTimerAfterMs: 30_000,
         timersGrouping: false,
@@ -292,7 +296,9 @@ describe("Timers", () => {
     render(<Timers />);
 
     expect(mockUseTimers).toHaveBeenCalledTimes(1);
-    expect(mockUseTimers).toHaveBeenCalledWith({ world: "gefion" });
+    expect(mockUseTimers).toHaveBeenCalledWith({
+      world: "gefion",
+    });
     expect(mockUseTimersSocket).toHaveBeenCalledTimes(1);
     expect(mockUseTimersUpdate.mock.calls[0]?.[0]).toHaveLength(1);
     expect(mockUseTimersFiltering).toHaveBeenCalledWith(
@@ -313,6 +319,22 @@ describe("Timers", () => {
     expect(screen.getByText("TimersActions")).toBeInTheDocument();
   });
 
+  it("opens add timer with the selected timers guild", () => {
+    render(<Timers />);
+
+    const timersContentProps = timersContentSpy.mock.calls[0]?.[0] as {
+      onAddTimer: () => void;
+    };
+
+    timersContentProps.onAddTimer();
+
+    expect(mockSetSelectedGuildIdsForTimers).not.toHaveBeenCalled();
+    expect(mockSetOpen).toHaveBeenCalledWith("add-timer", true, {
+      guildId: "guild-1",
+    });
+    expect(mockToggleOpen).not.toHaveBeenCalled();
+  });
+
   it("renders the under-bag path when enabled for the ni interface", () => {
     gameInterface = "ni";
     allowWorldSelection = false;
@@ -331,7 +353,9 @@ describe("Timers", () => {
 
     render(<Timers />);
 
-    expect(mockUseTimers).toHaveBeenCalledWith({ world: "pandora" });
+    expect(mockUseTimers).toHaveBeenCalledWith({
+      world: "pandora",
+    });
     expect(screen.getByTestId("under-bag")).toBeInTheDocument();
     expect(screen.getByText("TimersUnderBagActions")).toBeInTheDocument();
     expect(screen.queryByTestId("animated-timers")).not.toBeInTheDocument();

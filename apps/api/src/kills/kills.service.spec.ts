@@ -13,6 +13,7 @@ import {
   GetGuildKillStatsDto,
   GetUserKillStatsDto,
 } from "./dto/get-kill-stats.dto";
+import { GetMemberKillsDto } from "./dto/get-member-kills.dto";
 
 describe("KillsService", () => {
   let service: KillsService;
@@ -32,6 +33,7 @@ describe("KillsService", () => {
     };
     member: {
       findUnique: Mock;
+      findFirst: Mock;
       findMany: Mock;
     };
   };
@@ -94,6 +96,7 @@ describe("KillsService", () => {
       },
       member: {
         findUnique: mockFn(),
+        findFirst: mockFn(),
         findMany: mockFn().mockResolvedValue([]),
       },
     };
@@ -543,6 +546,60 @@ describe("KillsService", () => {
           }),
         }),
       );
+    });
+
+    it("should ignore zero level range values from unselected filters", async () => {
+      prismaService.npcKillStats.findMany.mockResolvedValue([]);
+      prismaService.guildKillSummary.findMany.mockResolvedValue([]);
+      const query = new GetGuildKillStatsDto();
+      query.minLvl = 0;
+      query.maxLvl = 0;
+
+      await service.getGuildKillStats(guildId, [], [], query);
+
+      expect(prismaService.npcKillStats.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.not.objectContaining({
+            npcLvl: expect.anything(),
+          }),
+        }),
+      );
+    });
+
+    it("should ignore zero level range values for member kill stats", async () => {
+      prismaService.member.findFirst.mockResolvedValue({
+        id: 1,
+        guildId,
+        name: "Player1",
+        avatar: null,
+        userId: "user1",
+      });
+      prismaService.npcKillStats.findMany.mockResolvedValue([
+        {
+          memberId: 1,
+          npcId: 100,
+          npcName: "Boss",
+          npcType: NpcType.HERO,
+          npcLvl: 300,
+          npcProf: "w",
+          npcIcon: null,
+          memberKills: 3,
+        },
+      ]);
+      const query = new GetMemberKillsDto();
+      query.minLvl = 0;
+      query.maxLvl = 0;
+
+      const result = await service.getMemberKills(guildId, 1, [], [], query);
+
+      expect(prismaService.npcKillStats.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.not.objectContaining({
+            npcLvl: expect.anything(),
+          }),
+        }),
+      );
+      expect(result?.overview.totalParticipations).toBe(3);
     });
 
     describe("permission filtering", () => {

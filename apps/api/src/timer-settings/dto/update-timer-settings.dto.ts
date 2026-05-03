@@ -32,6 +32,9 @@ const UpdateTimerSettingsSchema = z.object({
     )
     .optional(),
   timersColors: z.record(z.string(), z.string().optional()).optional(),
+  alwaysVisibleExpiredTimers: z
+    .record(z.string(), z.array(z.string()))
+    .optional(),
   defaultColorNames: z.record(z.string(), z.string()).optional(),
   overriddenDefaultColors: z
     .record(

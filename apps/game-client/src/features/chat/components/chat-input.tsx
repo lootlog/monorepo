@@ -1,6 +1,6 @@
 import { Permission } from "@lootlog/types";
 import { Label } from "@/components/ui/label";
-import { MessageType } from "@/api/chat.api";
+import type { MessageType } from "@/api/chat.api";
 import {
   Popover,
   PopoverAnchor,
@@ -81,7 +81,10 @@ type ChatInputProps = {
 const REQUIRED_CLEAR_CHAT_PERMISSIONS = [Permission.OWNER, Permission.ADMIN];
 
 const CHAT_INPUT_SHELL_CLASS =
-  "ll:h-6 ll:w-full ll:min-w-0 ll:overflow-hidden ll:rounded-sm ll:border ll:border-solid ll:border-gray-400 ll:bg-black/92 ll:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]";
+  "ll:h-6 ll:w-full ll:min-w-0 ll:overflow-hidden ll:rounded-sm ll:border ll:border-solid ll:border-gray-400 ll:bg-black/92 ll:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ll:transition-[color,box-shadow]";
+
+const CHAT_INPUT_FOCUS_CLASS =
+  "ll:focus-within:border-ring ll:focus-within:ring-ring/50 ll:focus-within:ring-[3px]";
 
 export const ChatInput: FC<ChatInputProps> = ({
   selectedGuildId,
@@ -524,7 +527,7 @@ export const ChatInput: FC<ChatInputProps> = ({
   };
 
   return (
-    <form className="ll:flex ll:justify-center ll:flex-col ll:mt-1">
+    <form className="ll:flex ll:justify-center ll:flex-col ll:mt-1 ll:mr-0.5">
       {replyDraft && (
         <div className="ll:mb-1">
           <Label className="ll:text-[9px] ll:text-gray-400">
@@ -536,13 +539,7 @@ export const ChatInput: FC<ChatInputProps> = ({
       <Label className="ll:text-[9px] ll:text-gray-400">
         {t("input.hint")}
       </Label>
-      <div
-        className={cn(
-          "ll:relative ll:overflow-visible",
-          !isPending &&
-            "focus-within:ll:border-ring focus-within:ll:ring-ring/50 focus-within:ll:ring-[3px]",
-        )}
-      >
+      <div className="ll:relative ll:overflow-visible">
         <ChatMentionSuggestions
           suggestionMode={suggestionMode}
           suggestions={activeSuggestions}
@@ -553,7 +550,12 @@ export const ChatInput: FC<ChatInputProps> = ({
         />
         <Popover open={isClearConfirmOpen} onOpenChange={setIsClearConfirmOpen}>
           <PopoverAnchor asChild>
-            <div className={CHAT_INPUT_SHELL_CLASS}>
+            <div
+              className={cn(
+                CHAT_INPUT_SHELL_CLASS,
+                !isPending && CHAT_INPUT_FOCUS_CLASS,
+              )}
+            >
               <ChatInputEditor
                 autoFocus={autofocus}
                 caretIndex={caretIndex}
