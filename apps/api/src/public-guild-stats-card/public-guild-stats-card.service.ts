@@ -102,17 +102,22 @@ export class PublicGuildStatsCardService {
       );
     }
 
-    const image = await this.renderCard({
-      guild,
-      stats: await this.getLootStats(guildId),
-    });
+    try {
+      const image = await this.renderCard({
+        guild,
+        stats: await this.getLootStats(guildId),
+      });
 
-    if (this.shouldUseCache()) {
-      await this.redis.set(
-        this.buildCacheKey(guildId),
-        image.toString("base64"),
-        CACHE_TTL_SECONDS,
-      );
+      if (this.shouldUseCache()) {
+        await this.redis.set(
+          this.buildCacheKey(guildId),
+          image.toString("base64"),
+          CACHE_TTL_SECONDS,
+        );
+      }
+    } catch (error) {
+      await this.redis.del(cooldownKey);
+      throw error;
     }
 
     return { nextRefreshAt };
