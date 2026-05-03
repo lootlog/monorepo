@@ -46,7 +46,7 @@ import {
 
 export type CurrentUserGuildAccessSummary = Pick<
   Guild,
-  "id" | "name" | "icon" | "vanityUrl" | "ownerId"
+  "id" | "name" | "icon" | "vanityUrl" | "ownerId" | "publicStatsCardEnabled"
 > & {
   hasLootlogAccess: boolean;
   isAccessDataStale: boolean;
@@ -811,6 +811,7 @@ export class GuildsService {
         icon: guild.icon,
         vanityUrl: guild.vanityUrl,
         ownerId: guild.ownerId,
+        publicStatsCardEnabled: guild.publicStatsCardEnabled,
         hasLootlogAccess:
           isOwner ||
           this.memberHasRequiredPermissions(member, requiredPermissions),
@@ -890,7 +891,7 @@ export class GuildsService {
   }
 
   async updateGuildConfig(guildId: string, data: UpdateGuildConfigDto) {
-    if (RESTRICTED_VANITY_URLS.includes(data.vanityUrl)) {
+    if (data.vanityUrl && RESTRICTED_VANITY_URLS.includes(data.vanityUrl)) {
       throw new BadRequestException({
         message: ErrorKey.GUILDS_VANITY_URL_RESTRICTED,
       });
@@ -904,7 +905,12 @@ export class GuildsService {
     const guild = await this.prisma.guild.update({
       where: { id: guildId },
       data: {
-        vanityUrl: generateSlug(data.vanityUrl),
+        ...(Object.prototype.hasOwnProperty.call(data, "vanityUrl")
+          ? { vanityUrl: generateSlug(data.vanityUrl ?? undefined) }
+          : {}),
+        ...(data.publicStatsCardEnabled !== undefined
+          ? { publicStatsCardEnabled: data.publicStatsCardEnabled }
+          : {}),
       },
     });
 

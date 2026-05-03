@@ -5,8 +5,20 @@ import type { GuildResponseDtoOutput as Guild } from "@/lib/api/generated/main/m
 import { SettingsGuildSelectionGrid } from "./settings-guild-selection-grid";
 
 const guilds: Guild[] = [
-  { id: "guild-1", name: "Alpha", icon: null, ownerId: "owner-1" },
-  { id: "guild-2", name: "Beta", icon: null, ownerId: "owner-2" },
+  {
+    id: "guild-1",
+    name: "Alpha",
+    icon: null,
+    ownerId: "owner-1",
+    publicStatsCardEnabled: false,
+  },
+  {
+    id: "guild-2",
+    name: "Beta",
+    icon: null,
+    ownerId: "owner-2",
+    publicStatsCardEnabled: false,
+  },
 ];
 
 describe("SettingsGuildSelectionGrid", () => {

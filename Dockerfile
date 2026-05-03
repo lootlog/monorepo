@@ -2,7 +2,7 @@
 
 FROM node:25.9.0-alpine3.22 AS runtime-base
 
-RUN apk add --no-cache dumb-init
+RUN apk add --no-cache dumb-init fontconfig ttf-dejavu
 
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001

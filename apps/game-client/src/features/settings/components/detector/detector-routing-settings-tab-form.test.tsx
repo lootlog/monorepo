@@ -36,12 +36,48 @@ vi.mock("@/hooks/use-debounced-callback", () => ({
 }));
 
 const guilds: GuildResponseDtoOutput[] = [
-  { id: "guild-1", name: "Alpha", icon: null, ownerId: "owner-1" },
-  { id: "guild-2", name: "Beta", icon: null, ownerId: "owner-1" },
-  { id: "guild-3", name: "Gamma", icon: null, ownerId: "owner-1" },
-  { id: "guild-4", name: "Delta", icon: null, ownerId: "owner-1" },
-  { id: "guild-5", name: "Epsilon", icon: null, ownerId: "owner-1" },
-  { id: "guild-6", name: "Zeta", icon: null, ownerId: "owner-1" },
+  {
+    id: "guild-1",
+    name: "Alpha",
+    icon: null,
+    ownerId: "owner-1",
+    publicStatsCardEnabled: false,
+  },
+  {
+    id: "guild-2",
+    name: "Beta",
+    icon: null,
+    ownerId: "owner-1",
+    publicStatsCardEnabled: false,
+  },
+  {
+    id: "guild-3",
+    name: "Gamma",
+    icon: null,
+    ownerId: "owner-1",
+    publicStatsCardEnabled: false,
+  },
+  {
+    id: "guild-4",
+    name: "Delta",
+    icon: null,
+    ownerId: "owner-1",
+    publicStatsCardEnabled: false,
+  },
+  {
+    id: "guild-5",
+    name: "Epsilon",
+    icon: null,
+    ownerId: "owner-1",
+    publicStatsCardEnabled: false,
+  },
+  {
+    id: "guild-6",
+    name: "Zeta",
+    icon: null,
+    ownerId: "owner-1",
+    publicStatsCardEnabled: false,
+  },
 ];
 
 const routingRules: DetectorRoutingRule[] = [

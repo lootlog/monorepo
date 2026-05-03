@@ -124,6 +124,7 @@ export const GuildScalarFieldEnum = {
   ownerId: 'ownerId',
   vanityUrl: 'vanityUrl',
   notificationRuleLimit: 'notificationRuleLimit',
+  publicStatsCardEnabled: 'publicStatsCardEnabled',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   active: 'active'

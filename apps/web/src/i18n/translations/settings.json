@@ -9,6 +9,41 @@
     "notifications": "Powiadomienia",
     "info": "Informacje"
   },
+  "general": {
+    "title": "Ustawienia ogólne",
+    "description": "Zarządzaj konfiguracją lootloga",
+    "toasts": {
+      "updateSuccess": "Zaktualizowano konfigurację lootloga",
+      "updateError": "Nie udało się zaktualizować konfiguracji lootloga"
+    },
+    "vanityUrl": {
+      "title": "Skrócony link",
+      "description": "Pozwoli dostać się do lootloga z łatwiejszego do zapamiętania adresu",
+      "placeholder": "np. nazwa twojego klanu",
+      "example": "Przykład:",
+      "exampleSlug": "nazwa-klanu",
+      "restricted": "Ta nazwa jest zarezerwowana i nie może być użyta."
+    },
+    "statsCard": {
+      "title": "Publiczny obraz statystyk",
+      "description": "Obraz PNG z podstawowymi statystykami lootów z ostatnich 30 dni.",
+      "toggleLabel": "Włącz publiczny obraz statystyk",
+      "toggleDescription": "Po włączeniu obraz będzie dostępny pod publicznym linkiem i może być używany w podglądach oraz udostępnieniach.",
+      "previewAlt": "Podgląd publicznego obrazu statystyk gildii",
+      "disabledPreview": "Obraz jest wyłączony",
+      "disabledPreviewDescription": "Włącz opcję i zapisz ustawienia, aby udostępnić publiczny obraz statystyk.",
+      "saveToEnablePreview": "Zapisz ustawienia, aby włączyć podgląd",
+      "previewError": "Nie udało się załadować podglądu obrazu.",
+      "copyLink": "Kopiuj link",
+      "copySuccess": "Skopiowano link do obrazu statystyk",
+      "copyError": "Nie udało się skopiować linka do obrazu statystyk",
+      "refresh": "Odśwież obraz",
+      "refreshHint": "Regeneracja jest dostępna raz na 5 minut.",
+      "refreshSuccess": "Obraz statystyk został odświeżony",
+      "refreshError": "Nie udało się odświeżyć obrazu statystyk",
+      "refreshRateLimited": "Obraz można odświeżać nie częściej niż raz na 5 minut."
+    }
+  },
   "roles": {
     "title": "Ustawienia ról",
     "description": "Zarządzaj uprawnieniami dla ról Discord",
