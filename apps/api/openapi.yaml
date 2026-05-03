@@ -7165,6 +7165,10 @@ components:
         maxSeconds:
           type: number
           minimum: 1
+        lvl:
+          type: number
+        prof:
+          type: string
         customMinSpawnTime:
           type: string
           format: date-time

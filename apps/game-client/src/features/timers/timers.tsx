@@ -40,7 +40,6 @@ export const Timers = () => {
   const { data: timers } = useTimers({ world: desiredWorld });
 
   const open = useWindowsStore((state) => state.timers.open);
-  const toggleOpen = useWindowsStore((state) => state.toggleOpen);
   const setOpen = useWindowsStore((state) => state.setOpen);
 
   useTimersSocket();
@@ -134,6 +133,10 @@ export const Timers = () => {
     overriddenDefaultColors,
   );
 
+  const handleAddTimer = () => {
+    setOpen("add-timer", true, { guildId });
+  };
+
   if (generalConfig.timersUnderBag && gameInterface === "ni") {
     return (
       <UnderBagTimers>
@@ -163,7 +166,7 @@ export const Timers = () => {
           timerFiltersEnabled={timerFiltersEnabled ?? false}
           isUnderBag={generalConfig.timersUnderBag}
           minColumnWidth={displayConfig.minColumnWidth}
-          onAddTimer={() => toggleOpen("add-timer")}
+          onAddTimer={handleAddTimer}
           compactView={generalConfig.compactView}
         />
       </UnderBagTimers>
@@ -206,7 +209,7 @@ export const Timers = () => {
             timerFiltersEnabled={timerFiltersEnabled ?? false}
             isUnderBag={generalConfig.timersUnderBag}
             minColumnWidth={displayConfig.minColumnWidth}
-            onAddTimer={() => toggleOpen("add-timer")}
+            onAddTimer={handleAddTimer}
             compactView={generalConfig.compactView}
           />
         </div>

@@ -215,9 +215,7 @@ describe("AddTimerForm", () => {
     expect(nameInput).toHaveAttribute("maxLength", "50");
 
     await user.selectOptions(guildSelect, "guild-1");
-    expect(mockSetSelectedGuildIdsForTimers).toHaveBeenCalledWith("101", [
-      "guild-1",
-    ]);
+    expect(mockSetSelectedGuildIdsForTimers).not.toHaveBeenCalled();
 
     await user.type(nameInput, "Tanroth");
     await user.type(screen.getByLabelText("Minimalny czas (max 300h)"), "1m");
@@ -243,6 +241,43 @@ describe("AddTimerForm", () => {
     callbacks.onSuccess();
 
     expect(mockSetOpen).toHaveBeenCalledWith("add-timer", false);
+  });
+
+  it("uses the initial guild over the saved guild", async () => {
+    render(<AddTimerForm initialGuildId="guild-1" />);
+
+    expect(screen.getByLabelText("Serwer")).toHaveValue("guild-1");
+    expect(mockSetSelectedGuildIdsForTimers).not.toHaveBeenCalled();
+  });
+
+  it("does not rewrite the saved guild when the initial guild already matches", async () => {
+    mockSelectedGuildIdsForTimersByCharId = {
+      "101": ["guild-1"],
+    };
+
+    render(<AddTimerForm initialGuildId="guild-1" />);
+
+    expect(screen.getByLabelText("Serwer")).toHaveValue("guild-1");
+    expect(mockSetSelectedGuildIdsForTimers).not.toHaveBeenCalled();
+  });
+
+  it("submits a manual level when provided", async () => {
+    const user = userEvent.setup();
+    render(<AddTimerForm />);
+
+    await user.type(screen.getByLabelText("Nazwa"), "Tanroth");
+    await user.type(screen.getByLabelText("Poziom"), "120");
+    await user.type(screen.getByLabelText("Minimalny czas (max 300h)"), "1m");
+    await user.type(screen.getByLabelText("Maksymalny czas (max 300h)"), "2m");
+    await user.click(screen.getByRole("button", { name: "Dodaj" }));
+
+    expect(mockMutate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "Tanroth",
+        lvl: 120,
+      }),
+      expect.any(Object),
+    );
   });
 
   it("supports autocomplete selection and custom spawn dates", async () => {
@@ -276,6 +311,7 @@ describe("AddTimerForm", () => {
     expect(screen.getByLabelText("Maksymalny czas (max 300h)")).toHaveValue(
       "0h 2m 0s",
     );
+    expect(screen.getByLabelText("Poziom")).toHaveValue(120);
 
     await user.click(screen.getByLabelText("Niestandardowe daty spawnu"));
     expect(screen.getByLabelText("Minimalny czas (max 300h)")).toHaveValue("");
@@ -289,10 +325,86 @@ describe("AddTimerForm", () => {
       expect.objectContaining({
         name: "Tanroth",
         guildIds: ["guild-2"],
+        lvl: 120,
+        prof: "W",
         customMinSpawnTime: new Date("2026-04-22T10:00"),
         customMaxSpawnTime: new Date("2026-04-22T10:15"),
       }),
       expect.any(Object),
+    );
+  });
+
+  it("keeps visible level but does not submit hidden profession after changing the selected name manually", async () => {
+    const user = userEvent.setup();
+    mockNpcResults = [
+      {
+        npcId: 500,
+        timerKey: "npc-500",
+        name: "Tanroth",
+        lvl: 120,
+        type: "hero" as never,
+        prof: "W",
+        location: "Ruins",
+        wt: 10,
+        icon: "icon.gif",
+        latestRespBaseSeconds: 100,
+        latestRespawnRandomness: 20,
+      },
+    ];
+
+    render(<AddTimerForm />);
+
+    await user.type(screen.getByLabelText("Szukaj potwora"), "ta");
+    await user.keyboard("{ArrowDown}{Enter}");
+
+    const nameInput = screen.getByLabelText("Nazwa");
+    await user.clear(nameInput);
+    await user.type(nameInput, "Inny timer");
+    await user.click(screen.getByRole("button", { name: "Dodaj" }));
+
+    expect(mockMutate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "Inny timer",
+        lvl: 120,
+      }),
+      expect.any(Object),
+    );
+    expect(mockMutate.mock.calls[0]?.[0]).not.toEqual(
+      expect.objectContaining({
+        prof: expect.any(String),
+      }),
+    );
+  });
+
+  it("does not submit level after clearing the autocomplete-prefilled level", async () => {
+    const user = userEvent.setup();
+    mockNpcResults = [
+      {
+        npcId: 500,
+        timerKey: "npc-500",
+        name: "Tanroth",
+        lvl: 120,
+        type: "hero" as never,
+        prof: "W",
+        location: "Ruins",
+        wt: 10,
+        icon: "icon.gif",
+        latestRespBaseSeconds: 100,
+        latestRespawnRandomness: 20,
+      },
+    ];
+
+    render(<AddTimerForm />);
+
+    await user.type(screen.getByLabelText("Szukaj potwora"), "ta");
+    await user.keyboard("{ArrowDown}{Enter}");
+    await user.clear(screen.getByLabelText("Poziom"));
+    await user.click(screen.getByRole("button", { name: "Dodaj" }));
+
+    expect(mockMutate.mock.calls[0]?.[0]).not.toEqual(
+      expect.objectContaining({
+        lvl: expect.any(Number),
+      }),
     );
   });
 
@@ -314,6 +426,24 @@ describe("AddTimerForm", () => {
     await waitFor(() => {
       expect(
         screen.getByText("Czas musi być większy niż 0 sekund"),
+      ).toBeInTheDocument();
+    });
+    expect(mockMutate).not.toHaveBeenCalled();
+  });
+
+  it("shows validation for invalid levels", async () => {
+    const user = userEvent.setup();
+    render(<AddTimerForm />);
+
+    await user.type(screen.getByLabelText("Nazwa"), "Tanroth");
+    await user.type(screen.getByLabelText("Poziom"), "501");
+    await user.type(screen.getByLabelText("Minimalny czas (max 300h)"), "1m");
+    await user.type(screen.getByLabelText("Maksymalny czas (max 300h)"), "2m");
+    await user.click(screen.getByRole("button", { name: "Dodaj" }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("Poziom musi być liczbą całkowitą od 1 do 500"),
       ).toBeInTheDocument();
     });
     expect(mockMutate).not.toHaveBeenCalled();

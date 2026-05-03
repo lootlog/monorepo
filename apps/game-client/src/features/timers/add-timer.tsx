@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 export const AddTimer = () => {
   const { t } = useTranslation("timers");
   const open = useWindowsStore((state) => state["add-timer"].open);
+  const guildId = useWindowsStore((state) => state["add-timer"].state?.guildId);
   const setOpen = useWindowsStore((state) => state.setOpen);
 
   return (
@@ -17,7 +18,7 @@ export const AddTimer = () => {
         onClose={() => setOpen("add-timer", false)}
         minHeight={300}
       >
-        <AddTimerForm />
+        <AddTimerForm initialGuildId={guildId} />
       </DraggableWindow>
     </AnimatedWindow>
   );

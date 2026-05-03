@@ -69,4 +69,23 @@ describe("migrateWindowsState", () => {
     expect(migrated.notifications.maxContentHeight).toBe(160);
     expect(migrated["npc-detector"].maxContentHeight).toBe(220);
   });
+
+  it("adds missing add timer window state for persisted windows", () => {
+    const migrated = migrateWindowsState(
+      {
+        "add-timer": {
+          open: false,
+          position: { x: 0, y: 0 },
+          hasDefinedPosition: false,
+          size: { width: 242, height: 300 },
+          opacity: 4,
+          locked: false,
+        },
+        windowFocusHistory: [],
+      },
+      6,
+    );
+
+    expect(migrated["add-timer"].state).toEqual({});
+  });
 });
