@@ -10,6 +10,8 @@ export enum GatewayEvent {
   CONNECT = "connect",
   JOIN = "join",
   CHAT_MESSAGE = "chat-message",
+  LOOTS_CREATE = "loots-create",
+  LOOTS_SHARE_UPDATE = "loots-share-update",
   REQUEST_SERVER_PRESENCE = "request-server-presence",
   UPDATE_SERVER_PRESENCE = "update-server-presence",
   TIMERS_CREATE = "timers-create",

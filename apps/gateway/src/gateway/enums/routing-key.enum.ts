@@ -1,5 +1,10 @@
 export enum RoutingKey {
   GUILDS_LOOTS_CREATE = "guilds.loots.create",
+  GUILDS_LOOTS_CREATE_DLQ = "guilds.loots.create.dlq",
+  GUILDS_LOOTS_CREATE_RETRY = "guilds.loots.create.retry",
+  GUILDS_LOOTS_SHARE_UPDATE = "guilds.loots.share.update",
+  GUILDS_LOOTS_SHARE_UPDATE_DLQ = "guilds.loots.share.update.dlq",
+  GUILDS_LOOTS_SHARE_UPDATE_RETRY = "guilds.loots.share.update.retry",
   GUILDS_LOOTS_UPDATE = "guilds.loots.update",
   GUILDS_LOOTS_DELETE = "guilds.loots.delete",
 

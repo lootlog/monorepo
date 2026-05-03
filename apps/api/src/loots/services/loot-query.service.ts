@@ -195,16 +195,18 @@ export class LootQueryService {
 
   async fetchLootById(
     guild: Guild,
+    permissions: Permission[],
+    roles: Role[],
     lootId: number,
   ): Promise<LootQueryResult | null> {
+    const baseWhere = this.buildBaseWhereCondition(guild, permissions, roles, {
+      cursor: null,
+    });
+
     const loot = await this.prisma.loot.findFirst({
       where: {
+        ...baseWhere,
         id: lootId,
-        lootSubmissions: {
-          some: {
-            guildId: guild.id,
-          },
-        },
       },
       select: {
         id: true,

@@ -432,6 +432,49 @@ describe("GatewayService", () => {
     });
   });
 
+  describe("handleGuildsLootCreate", () => {
+    it("should emit loot create event to loot room", () => {
+      const payload = {
+        guildId: "guild-123",
+        lootId: 42,
+        npc: {
+          type: "ELITE",
+          wt: 10,
+        },
+      };
+
+      service.handleGuildsLootCreate(payload);
+
+      expect(mockServer.to).toHaveBeenCalledWith("guild-123:loots:base");
+      expect(mockServer.emit).toHaveBeenCalledWith(
+        GatewayEvent.LOOTS_CREATE,
+        payload,
+      );
+    });
+  });
+
+  describe("handleGuildsLootShareUpdate", () => {
+    it("should emit loot share update event to loot room", () => {
+      const payload = {
+        guildId: "guild-123",
+        lootId: 42,
+        lootShare: { player: ["item"] },
+        npc: {
+          type: "ELITE",
+          wt: 10,
+        },
+      };
+
+      service.handleGuildsLootShareUpdate(payload);
+
+      expect(mockServer.to).toHaveBeenCalledWith("guild-123:loots:base");
+      expect(mockServer.emit).toHaveBeenCalledWith(
+        GatewayEvent.LOOTS_SHARE_UPDATE,
+        payload,
+      );
+    });
+  });
+
   describe("handleGuildMessageSend", () => {
     it("should emit regular chat messages with backend capabilities for each base-room viewer", async () => {
       const messageDto = new SendMessageDto();
