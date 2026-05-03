@@ -257,18 +257,14 @@ function isUserRateLimitData(value: unknown): value is UserRateLimitData {
   }
 
   const data = value as Partial<UserRateLimitData>;
+  const isOptional = (field: unknown, type: "number" | "string"): boolean =>
+    field === undefined || field === null || typeof field === type;
 
   return (
     typeof data.retryAfter === "number" &&
     typeof data.resetAt === "number" &&
-    (data.bucket === undefined ||
-      data.bucket === null ||
-      typeof data.bucket === "string") &&
-    (data.limit === undefined ||
-      data.limit === null ||
-      typeof data.limit === "number") &&
-    (data.remaining === undefined ||
-      data.remaining === null ||
-      typeof data.remaining === "number")
+    isOptional(data.bucket, "string") &&
+    isOptional(data.limit, "number") &&
+    isOptional(data.remaining, "number")
   );
 }
