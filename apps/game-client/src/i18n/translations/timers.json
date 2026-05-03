@@ -60,8 +60,20 @@
     "globalTitle": "Historia timerów",
     "loading": "Ładowanie historii...",
     "empty": "Brak historii",
+    "restore": "Przywróć timer",
     "restoreSuccess": "Przywrócono timer.",
     "restoreFailed": "Nie udało się przywrócić timera.",
+    "details": {
+      "action": "Akcja",
+      "npc": "Potwór",
+      "member": "Użytkownik",
+      "guild": "Serwer",
+      "character": "Postać",
+      "world": "Świat",
+      "min": "Min",
+      "max": "Max",
+      "date": "Data"
+    },
     "actions": {
       "create": "Dodano",
       "reset": "Zresetowano",

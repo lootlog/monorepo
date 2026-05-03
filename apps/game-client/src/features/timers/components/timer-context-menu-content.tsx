@@ -85,7 +85,8 @@ export const TimerContextMenuContent: FC<TimerContextMenuContentProps> = ({
   onDelete,
 }) => {
   const { t } = useTranslation("timers");
-  const showHistory = !isManualTimer(timer);
+  const showAlwaysVisibleOption = !isManualTimer(timer);
+  const showHistory = !timersGrouping && !isManualTimer(timer);
 
   if (isPending) {
     return (
@@ -130,7 +131,7 @@ export const TimerContextMenuContent: FC<TimerContextMenuContentProps> = ({
         <Globe className="ll:h-4 ll:w-4 ll:mr-2" />
         {isHidden ? t("contextMenu.showAll") : t("contextMenu.hideAll")}
       </ContextMenuItem>
-      {showHistory && (
+      {showAlwaysVisibleOption && (
         <ContextMenuItem onClick={onToggleAlwaysVisibleExpiredTimer}>
           {isAlwaysVisibleExpiredTimer ? (
             <EyeOff className="ll:h-4 ll:w-4 ll:mr-2" />

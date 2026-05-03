@@ -19,6 +19,7 @@ const TimerHistoryActorCharacterSchema = z
 const TimerHistoryResponseSchema = z.object({
   id: z.number(),
   guildId: z.string(),
+  guildName: z.string(),
   world: z.string(),
   timerKey: z.string(),
   npcId: z.number(),

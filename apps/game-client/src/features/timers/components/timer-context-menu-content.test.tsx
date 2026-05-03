@@ -157,7 +157,10 @@ describe("TimerContextMenuContent", () => {
     expect(onDelete).toHaveBeenCalledWith("guild-1", "timer-1");
   });
 
-  it("uses the grouped delete popover instead of direct delete actions", () => {
+  it("uses the grouped delete popover, keeps always-visible action and hides history", async () => {
+    const user = userEvent.setup();
+    const onToggleAlwaysVisibleExpiredTimer = vi.fn();
+
     render(
       <TimerContextMenuContent
         timer={timer}
@@ -181,13 +184,19 @@ describe("TimerContextMenuContent", () => {
         onShow={vi.fn()}
         onShowAll={vi.fn()}
         isAlwaysVisibleExpiredTimer
-        onToggleAlwaysVisibleExpiredTimer={vi.fn()}
+        onToggleAlwaysVisibleExpiredTimer={onToggleAlwaysVisibleExpiredTimer}
         onReset={vi.fn()}
         onDelete={vi.fn()}
       />,
     );
 
+    await user.click(
+      screen.getByRole("button", { name: /Nie pokazuj zawsze$/ }),
+    );
+
     expect(screen.getByText("DeleteTimerPopover")).toBeInTheDocument();
+    expect(screen.queryByText("TimerHistoryPopover")).not.toBeInTheDocument();
+    expect(onToggleAlwaysVisibleExpiredTimer).toHaveBeenCalledTimes(1);
     expect(deleteTimerPopoverSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         timer,
@@ -234,5 +243,6 @@ describe("TimerContextMenuContent", () => {
     );
 
     expect(screen.queryByText("TimerHistoryPopover")).not.toBeInTheDocument();
+    expect(screen.queryByText("Pokaż zawsze")).not.toBeInTheDocument();
   });
 });
