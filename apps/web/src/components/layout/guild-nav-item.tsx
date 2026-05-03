@@ -75,7 +75,7 @@ const GuildNavItemComponent: FC<GuildNavItemProps> = ({
           <Link
             to={`/${guild.vanityUrl ?? guild.id}` as string}
             draggable={false}
-            className="group/guild-item block relative"
+            className="group/guild-item isolate block relative"
             onClick={handleClick}
             style={{ pointerEvents: isDragging ? "none" : "auto" }}
           >
@@ -83,7 +83,7 @@ const GuildNavItemComponent: FC<GuildNavItemProps> = ({
               {avatarElement}
             </ThemeCircularFrame>
             {unreadLootsCount > 0 && !isActive && (
-              <Badge className="absolute -right-2 -top-2 h-5 min-w-5 justify-center px-1.5 text-[10px] leading-none shadow-md">
+              <Badge className="absolute -right-2 -top-2 z-20 h-5 min-w-5 justify-center px-1.5 text-[10px] leading-none shadow-md">
                 {unreadLootsCount > 99
                   ? t("layout.guildsSelector.unreadLootsOverflow")
                   : unreadLootsCount}

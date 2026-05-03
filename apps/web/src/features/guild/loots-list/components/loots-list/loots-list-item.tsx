@@ -271,15 +271,16 @@ export const LootsListItem = ({ loot, isNew }: Props) => {
     world: loot.world,
   };
   let initialAnimation: false | { opacity: number; scale?: number } = false;
-  let animate: { opacity: number; scale?: number } | undefined;
+  const animate: { opacity: number; scale?: number } = {
+    opacity: 1,
+    scale: 1,
+  };
 
   if (isNew) {
     if (shouldReduceMotion) {
       initialAnimation = { opacity: 0 };
-      animate = { opacity: 1 };
     } else {
       initialAnimation = { opacity: 0, scale: 0.98 };
-      animate = { opacity: 1, scale: 1 };
     }
   }
 

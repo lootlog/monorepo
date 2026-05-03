@@ -295,6 +295,14 @@ export const LootsList: FC = () => {
   const { filters } = useLootsFilters();
   const [newLootIds, setNewLootIds] = useState<Record<number, boolean>>({});
   const newLootTimeoutsRef = useRef<Record<number, number>>({});
+  const clearNewLootTimeouts = () => {
+    Object.values(newLootTimeoutsRef.current).forEach(window.clearTimeout);
+    newLootTimeoutsRef.current = {};
+  };
+  const clearNewLootMarkers = () => {
+    clearNewLootTimeouts();
+    setNewLootIds({});
+  };
   const currentGuild = guilds?.find(
     (guild) => guild.id === guildId || guild.vanityUrl === guildId,
   );
@@ -416,7 +424,7 @@ export const LootsList: FC = () => {
         });
       }
 
-      if (insertedNewLoot) {
+      if (insertedNewLoot && document.visibilityState === "visible") {
         window.clearTimeout(newLootTimeoutsRef.current[loot.id]);
         setNewLootIds((prev) => ({
           ...prev,
@@ -514,7 +522,7 @@ export const LootsList: FC = () => {
 
   useEffect(
     () => () => {
-      Object.values(newLootTimeoutsRef.current).forEach(window.clearTimeout);
+      clearNewLootTimeouts();
     },
     [],
   );
@@ -541,6 +549,22 @@ export const LootsList: FC = () => {
     useAnimationFrameWithResizeObserver: true,
     enabled: viewMode === "grid",
   });
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== "visible") {
+        return;
+      }
+
+      clearNewLootMarkers();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
 
   const listVirtualItems = listVirtualizer.getVirtualItems();
   const gridVirtualItems = gridVirtualizer.getVirtualItems();
