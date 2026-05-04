@@ -5,19 +5,13 @@ import {
   useReactTable,
   getCoreRowModel,
   getSortedRowModel,
-  flexRender,
   type SortingState,
 } from "@tanstack/react-table";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@lootlog/ui/components/table";
-import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { Table } from "@lootlog/ui/components/table";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
+import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
+import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
+import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Card } from "@lootlog/ui/components/card";
 import { Skull } from "lucide-react";
@@ -242,20 +236,7 @@ export const KillsPage: React.FC = () => {
           <Card className="flex-1 min-h-0 flex flex-col border-border bg-card/40 p-0 backdrop-blur-sm overflow-hidden gap-0">
             <ScrollArea className="relative flex-1 min-h-0 w-full">
               {isLoading ? (
-                <div>
-                  {Array.from({ length: 10 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="flex h-14 items-center gap-4 border-b border-border px-4"
-                    >
-                      <Skeleton className="h-4 w-8" />
-                      <Skeleton className="h-8 w-8 rounded-lg" />
-                      <Skeleton className="h-4 flex-1" />
-                      <Skeleton className="h-4 w-12" />
-                      <Skeleton className="h-4 w-16" />
-                    </div>
-                  ))}
-                </div>
+                <TableRowsSkeleton trailingColumns={2} />
               ) : !data || data.npcs.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">
                   <p className="text-muted-foreground">
@@ -264,48 +245,17 @@ export const KillsPage: React.FC = () => {
                 </div>
               ) : (
                 <Table className="border-b">
-                  <TableHeader className="bg-background sticky top-0 z-10">
-                    {table.getHeaderGroups().map((headerGroup) => (
-                      <TableRow
-                        key={headerGroup.id}
-                        className="border-b-1! border-border"
-                      >
-                        {headerGroup.headers.map((header) => (
-                          <TableHead
-                            key={header.id}
-                            className="whitespace-nowrap"
-                          >
-                            {header.isPlaceholder
-                              ? null
-                              : flexRender(
-                                  header.column.columnDef.header,
-                                  header.getContext(),
-                                )}
-                          </TableHead>
-                        ))}
-                      </TableRow>
-                    ))}
-                  </TableHeader>
-                  <TableBody>
-                    {table.getRowModel().rows.map((row) => (
-                      <TableRow
-                        key={row.id}
-                        className="bg-background/30 border-b border-border h-14"
-                      >
-                        {row.getVisibleCells().map((cell) => (
-                          <TableCell
-                            key={cell.id}
-                            className="whitespace-nowrap"
-                          >
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext(),
-                            )}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))}
-                  </TableBody>
+                  <TanStackTableHeader
+                    table={table}
+                    className="bg-background sticky top-0 z-10"
+                    rowClassName="border-b-1! border-border"
+                    headClassName="whitespace-nowrap"
+                  />
+                  <TanStackTableBody
+                    table={table}
+                    rowClassName="bg-background/30 border-b border-border h-14"
+                    cellClassName="whitespace-nowrap"
+                  />
                 </Table>
               )}
             </ScrollArea>

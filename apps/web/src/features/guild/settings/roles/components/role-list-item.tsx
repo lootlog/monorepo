@@ -1,18 +1,12 @@
-import { cn } from "@lootlog/ui/lib/utils";
 import { motion } from "framer-motion";
 import type { FC } from "react";
 import type { RoleResponseDtoOutput as GuildRole } from "@/lib/api/generated/main/model";
 import { Permission } from "@lootlog/types";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@lootlog/ui/components/tooltip";
-import { useTranslation } from "react-i18next";
+import { TooltipProvider } from "@lootlog/ui/components/tooltip";
 import { PERMISSION_CATEGORIES } from "@/features/guild/settings/roles/constants/permission-categories";
 import { useSelectorPanel } from "@/components/selector-panel";
 import { SelectableListCard } from "@/components/selectable-list-card";
+import { PermissionCategoryTooltip } from "@/features/guild/settings/components/permission-category-tooltip";
 
 export type RoleListItemProps = {
   role: GuildRole;
@@ -20,7 +14,6 @@ export type RoleListItemProps = {
 };
 
 export const RoleListItem: FC<RoleListItemProps> = ({ role, index }) => {
-  const { t } = useTranslation();
   const { selectedItem, handleSelect } = useSelectorPanel<GuildRole>();
 
   const isSelected = selectedItem?.id === role.id;
@@ -43,38 +36,18 @@ export const RoleListItem: FC<RoleListItemProps> = ({ role, index }) => {
   const iconsContent = (
     <TooltipProvider delayDuration={100}>
       {activeCategories.map((category) => {
-        const IconComponent = category.icon;
         const activePerms = category.permissions.filter((perm) =>
           role.permissions.includes(perm),
         );
 
         return (
-          <Tooltip key={category.name}>
-            <TooltipTrigger asChild>
-              <div
-                className={cn(
-                  "p-1.5 rounded-md transition-colors",
-                  category.bgColor,
-                )}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <IconComponent className={cn("size-4", category.color)} />
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-xs">
-              <div className="space-y-1">
-                <p className="font-semibold text-sm">{category.name}</p>
-                <ul className="text-xs space-y-0.5">
-                  {activePerms.map((perm) => (
-                    <li key={perm} className="flex items-start gap-1.5">
-                      <span className="text-muted-foreground">•</span>
-                      <span>{t(`permissions.${perm}`)}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </TooltipContent>
-          </Tooltip>
+          <PermissionCategoryTooltip
+            key={category.name}
+            category={category}
+            activePermissions={activePerms}
+            side="top"
+            onClick={(e) => e.stopPropagation()}
+          />
         );
       })}
     </TooltipProvider>

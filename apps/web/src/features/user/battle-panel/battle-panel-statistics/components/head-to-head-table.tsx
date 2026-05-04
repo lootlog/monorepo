@@ -2,17 +2,11 @@ import { useMemo } from "react";
 import {
   useReactTable,
   getCoreRowModel,
-  flexRender,
   type ColumnDef,
 } from "@tanstack/react-table";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@lootlog/ui/components/table";
+import { Table } from "@lootlog/ui/components/table";
+import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
+import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { formatDistanceToNow } from "date-fns";
 import { pl } from "date-fns/locale";
 import { PlayerTile } from "@/components/battle";
@@ -185,36 +179,8 @@ export function HeadToHeadTable({
       <div className="min-h-72 flex flex-col flex-1">
         <div className="overflow-auto bg-muted/30 rounded-lg">
           <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
+            <TanStackTableHeader table={table} />
+            <TanStackTableBody table={table} />
           </Table>
         </div>
         <div className="flex justify-end pt-4 mt-auto">

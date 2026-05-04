@@ -3,19 +3,13 @@ import { RolesForm } from "@/features/guild/settings/roles/components/roles-form
 import { ArrowLeft } from "lucide-react";
 import type { FC } from "react";
 import { Permission } from "@lootlog/types";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@lootlog/ui/components/tooltip";
-import { cn } from "@lootlog/ui/lib/utils";
-import { useTranslation } from "react-i18next";
+import { TooltipProvider } from "@lootlog/ui/components/tooltip";
 import { PERMISSION_CATEGORIES } from "@/features/guild/settings/roles/constants/permission-categories";
 import { useSelectorPanel } from "@/components/selector-panel";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useRolesControllerGetGuildRoles } from "@/lib/api/generated/main/roles/roles";
 import type { RoleResponseDtoOutput as GuildRole } from "@/lib/api/generated/main/model";
+import { PermissionCategoryTooltip } from "@/features/guild/settings/components/permission-category-tooltip";
 
 export type RolePanelContentProps = {
   selectedRoleColor: string | undefined;
@@ -24,7 +18,6 @@ export type RolePanelContentProps = {
 export const RolePanelContent: FC<RolePanelContentProps> = ({
   selectedRoleColor,
 }) => {
-  const { t } = useTranslation();
   const guildId = useGuildId();
   const { data: roles } = useRolesControllerGetGuildRoles({
     guildId: guildId ?? "",
@@ -84,39 +77,17 @@ export const RolePanelContent: FC<RolePanelContentProps> = ({
           <div className="flex items-center gap-1 ml-auto">
             <TooltipProvider delayDuration={100}>
               {activeCategories.map((category) => {
-                const IconComponent = category.icon;
                 const activePerms = category.permissions.filter((perm) =>
                   currentRole.permissions.includes(perm),
                 );
 
                 return (
-                  <Tooltip key={category.name}>
-                    <TooltipTrigger asChild>
-                      <div
-                        className={cn(
-                          "p-1.5 rounded-md transition-colors",
-                          category.bgColor,
-                        )}
-                      >
-                        <IconComponent
-                          className={cn("size-4", category.color)}
-                        />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="max-w-xs">
-                      <div className="space-y-1">
-                        <p className="font-semibold text-sm">{category.name}</p>
-                        <ul className="text-xs space-y-0.5">
-                          {activePerms.map((perm) => (
-                            <li key={perm} className="flex items-start gap-1.5">
-                              <span className="text-muted-foreground">•</span>
-                              <span>{t(`permissions.${perm}`)}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
+                  <PermissionCategoryTooltip
+                    key={category.name}
+                    category={category}
+                    activePermissions={activePerms}
+                    side="bottom"
+                  />
                 );
               })}
             </TooltipProvider>
