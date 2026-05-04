@@ -46,6 +46,12 @@ import {
 import { ChatReplyPreview } from "@/features/chat/components/chat-reply-preview";
 import { Button } from "@/components/ui/button";
 import { updateChatMessagesCache } from "@/features/chat/chat-query-cache.helpers";
+import {
+  inviteCharacterToFriends,
+  inviteCharacterToParty,
+  showCharacterEquipment,
+  showCharacterProfile,
+} from "@/utils/game/character-actions";
 
 type ChatMessageProps = {
   all: boolean;
@@ -324,7 +330,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({
           {Game.interface === "ni" && (
             <ContextMenuItem
               onClick={() => {
-                window.Engine.showEqManager.update({
+                showCharacterEquipment({
                   id: message.characterData.id,
                   nick: message.characterData.nick,
                   prof: message.characterData.prof,
@@ -340,10 +346,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({
           {message.characterData.nick !== Game.hero.nick && (
             <ContextMenuItem
               onClick={() => {
-                window._g(
-                  "friends&a=finvite&nick=" +
-                    message.characterData.nick.trim().split(" ").join("_"),
-                );
+                inviteCharacterToFriends(message.characterData.nick);
               }}
             >
               {t("contextMenu.inviteFriends")}
@@ -352,7 +355,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({
           {message.characterData.nick !== Game.hero.nick && (
             <ContextMenuItem
               onClick={() => {
-                window._g("party&a=inv&id=" + message.characterData.id);
+                inviteCharacterToParty(message.characterData.id);
               }}
             >
               {t("contextMenu.inviteParty")}
@@ -361,7 +364,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({
           {Game.interface === "ni" && (
             <ContextMenuItem
               onClick={() => {
-                window.Engine.iframeWindowManager.newPlayerProfile({
+                showCharacterProfile({
                   accountId: message.characterData.acc,
                   characterId: message.characterData.id,
                 });

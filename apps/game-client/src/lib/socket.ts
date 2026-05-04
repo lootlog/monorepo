@@ -48,6 +48,11 @@ type ServerToClientEvents = {
       characterId?: string;
       accountId?: string;
       prof?: string;
+      clan?: {
+        id?: number;
+        name?: string;
+        rank?: number;
+      };
       mapName?: string;
       sessionId?: string;
       location?: {
@@ -95,8 +100,11 @@ type ClientToServerEvents = {
       prof: string;
       characterId: string;
       accountId: string;
-      clanId?: number;
-      clanName?: string;
+      clan?: {
+        id: number;
+        name: string;
+        rank: number;
+      };
       location: { x: number; y: number; map: string };
     };
   }) => void;

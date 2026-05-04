@@ -54,6 +54,11 @@ describe("usePlayersPresence", () => {
               characterId: "10",
               accountId: "20",
               prof: "w",
+              clan: {
+                id: 15191,
+                name: "Karhu",
+                rank: 100,
+              },
               location: {
                 x: 1,
                 y: 2,
@@ -75,6 +80,11 @@ describe("usePlayersPresence", () => {
     expect(result.current[0]["discord-1"]?.[0]?.player?.location?.map).toBe(
       "Karka-han",
     );
+    expect(result.current[0]["discord-1"]?.[0]?.player?.clan).toEqual({
+      id: 15191,
+      name: "Karhu",
+      rank: 100,
+    });
     expect(emitWithAckSpy).toHaveBeenCalledWith(
       GatewayEvent.REQUEST_SERVER_PRESENCE,
       {
@@ -127,6 +137,11 @@ describe("usePlayersPresence", () => {
           characterId: "10",
           accountId: "20",
           prof: "w",
+          clan: {
+            id: 15191,
+            name: "Karhu",
+            rank: 100,
+          },
           mapName: "Ithan",
           sessionId: "session-1",
         },
@@ -137,6 +152,11 @@ describe("usePlayersPresence", () => {
     expect(result.current[0]["discord-1"]?.[0]?.player?.location?.map).toBe(
       "Ithan",
     );
+    expect(result.current[0]["discord-1"]?.[0]?.player?.clan).toEqual({
+      id: 15191,
+      name: "Karhu",
+      rank: 100,
+    });
   });
 
   it("stores an offline tombstone when gateway reports offline status", async () => {

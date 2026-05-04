@@ -12,6 +12,11 @@ type RawPlayerPresencePayload = {
   characterId?: string;
   accountId?: string;
   prof?: string;
+  clan?: {
+    id?: number;
+    name?: string;
+    rank?: number;
+  };
   mapName?: string;
   sessionId?: string;
   location?: {
@@ -36,6 +41,11 @@ export type PlayerPresence = {
     characterId: string;
     accountId: string;
     prof: string;
+    clan?: {
+      id?: number;
+      name?: string;
+      rank?: number;
+    };
     location?: {
       x?: number;
       y?: number;
@@ -97,6 +107,7 @@ const normalizePresencePlayer = (player?: RawPlayerPresencePayload) => {
     characterId: player.characterId ?? "",
     accountId: player.accountId ?? "",
     prof: player.prof ?? "",
+    clan: player.clan,
     location: mapName
       ? {
           x: player.location?.x,

@@ -7,6 +7,12 @@ const SocketUserPlayerLocationSchema = z.object({
   map: z.string(),
 });
 
+const SocketUserPlayerClanSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  rank: z.number(),
+});
+
 const SocketUserPlayerSchema = z.object({
   world: z.string(),
   name: z.string(),
@@ -16,8 +22,7 @@ const SocketUserPlayerSchema = z.object({
   lvl: z.string(),
   prof: z.string(),
   location: SocketUserPlayerLocationSchema,
-  clanName: z.string().optional(),
-  clanId: z.number().optional(),
+  clan: SocketUserPlayerClanSchema.optional(),
 });
 
 const JoinGatewaySchema = z.object({

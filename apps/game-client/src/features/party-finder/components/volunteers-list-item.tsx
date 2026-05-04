@@ -7,6 +7,10 @@ import {
   type PartyFinderVolunteer,
 } from "@/store/party-finder.store";
 import { useFriendsStore } from "@/store/friends.store";
+import {
+  inviteCharacterToFriends,
+  inviteCharacterToParty,
+} from "@/utils/game/character-actions";
 import { Loader2, Plus, RotateCcw, UserPlus, X } from "lucide-react";
 import { useEffect, type FC } from "react";
 
@@ -38,7 +42,7 @@ export const VolunteersListItem: FC<VolunteersListItemProps> = ({
 
   const handleInviteToParty = () => {
     setInviteState(volunteer.characterId, "pending");
-    window._g(`party&a=inv&id=${volunteer.characterId}`);
+    inviteCharacterToParty(volunteer.characterId);
   };
 
   const handleRemove = () => {
@@ -47,12 +51,7 @@ export const VolunteersListItem: FC<VolunteersListItemProps> = ({
   };
 
   const handleAddFriend = () => {
-    const sanitizedNick = volunteer.nick
-      .trim()
-      .split(" ")
-      .join("_")
-      .replace(/[&=?#]/g, "");
-    window._g(`friends&a=finvite&nick=${sanitizedNick}`);
+    inviteCharacterToFriends(volunteer.nick);
   };
 
   const isVolunteerFriend = isFriend(volunteer.characterId);
