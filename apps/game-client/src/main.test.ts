@@ -23,7 +23,7 @@ describe("getLootlogRootZIndex", () => {
     vi.unstubAllGlobals();
   });
 
-  it("uses z-index 381 for the si interface cookie", async () => {
+  it("uses z-index 449 for the si interface cookie", async () => {
     vi.stubGlobal(
       "getCookie",
       vi.fn(() => "si"),
@@ -31,7 +31,7 @@ describe("getLootlogRootZIndex", () => {
 
     const { getLootlogRootZIndex } = await loadMain();
 
-    expect(getLootlogRootZIndex()).toBe(381);
+    expect(getLootlogRootZIndex()).toBe(449);
   });
 
   it("uses z-index 11 for the ni interface cookie", async () => {
@@ -61,6 +61,6 @@ describe("getLootlogRootZIndex", () => {
 
     const { getLootlogRootZIndex } = await loadMain();
 
-    expect(getLootlogRootZIndex()).toBe(381);
+    expect(getLootlogRootZIndex()).toBe(449);
   });
 });
