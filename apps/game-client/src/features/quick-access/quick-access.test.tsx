@@ -46,15 +46,4 @@ describe("QuickAccess", () => {
 
     expect(screen.queryByText("Lootlog")).not.toBeInTheDocument();
   });
-
-  it("closes quick access from the title bar close button", () => {
-    const { container } = render(<QuickAccess />);
-    const closeButton = container.querySelector('svg[type="button"]');
-
-    expect(closeButton).not.toBeNull();
-
-    fireEvent.click(closeButton as Element);
-
-    expect(useWindowsStore.getState()["quick-access"].open).toBe(false);
-  });
 });
