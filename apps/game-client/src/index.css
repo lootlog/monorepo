@@ -173,10 +173,6 @@ body.si {
   color: #fff;
 }
 
-body.si > #lootlog-root {
-  z-index: 499 !important;
-}
-
 body.si > #lootlog-root * {
   /* Matches NI behaviour */
   user-select: none;
@@ -190,10 +186,6 @@ body.si > #lootlog-root .ll-custom-cursor-pointer * {
 body.si > #lootlog-root .checkbox-custom [type="checkbox"] + label {
   /* SI-specific fix, this matches the NI color */
   color: #bebebe;
-}
-
-#lootlog-root {
-  z-index: 500;
 }
 
 #lootlog-root > * {

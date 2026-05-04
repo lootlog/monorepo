@@ -23,9 +23,13 @@ import {
 
 type OnlinePlayersListProps = {
   viewMode: OnlinePlayersViewMode;
+  filtersVisible: boolean;
 };
 
-export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({ viewMode }) => {
+export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
+  viewMode,
+  filtersVisible,
+}) => {
   const { t } = useTranslation("onlinePlayers");
   const characterId = String(Game.hero.id);
   const defaultWorld = Game.getWorldName();
@@ -129,20 +133,24 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({ viewMode }) => {
 
   return (
     <div className="ll:h-full ll:w-full">
-      <div className="ll:flex ll:flex-col ll:h-full ll:overflow-hidden">
-        <div className="ll:pt-1 ll:flex ll:gap-1 ll:pb-1">
-          <GuildSwitcher />
-        </div>
-        {allowWorldSelection && <WorldSelector />}
+      <div className="ll:flex ll:flex-col ll:h-full ll:overflow-hidden ll:pt-1">
+        {filtersVisible && (
+          <>
+            <div className="ll:flex ll:gap-1 ll:pb-1">
+              <GuildSwitcher />
+            </div>
+            {allowWorldSelection && <WorldSelector />}
 
-        <OnlinePlayersFilters
-          searchQuery={searchQuery}
-          filters={filters}
-          onSearchChange={(event) => setSearchQuery(event.target.value)}
-          onMinLvlChange={handleMinLvlChange}
-          onMaxLvlChange={handleMaxLvlChange}
-          onProfessionChange={handleProfessionChange}
-        />
+            <OnlinePlayersFilters
+              searchQuery={searchQuery}
+              filters={filters}
+              onSearchChange={(event) => setSearchQuery(event.target.value)}
+              onMinLvlChange={handleMinLvlChange}
+              onMaxLvlChange={handleMaxLvlChange}
+              onProfessionChange={handleProfessionChange}
+            />
+          </>
+        )}
         <ScrollArea className="ll:flex-1 ll:box-border ll:mt-1" type="hover">
           {listContent}
         </ScrollArea>

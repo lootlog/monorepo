@@ -11,9 +11,15 @@ export const OnlinePlayers = () => {
   const viewMode = useWindowsStore(
     (state) => state["online-players"].state.viewMode,
   );
+  const filtersVisible = useWindowsStore(
+    (state) => state["online-players"].state.filtersVisible,
+  );
   const setOpen = useWindowsStore((state) => state.setOpen);
   const setOnlinePlayersViewMode = useWindowsStore(
     (state) => state.setOnlinePlayersViewMode,
+  );
+  const toggleOnlinePlayersFiltersVisible = useWindowsStore(
+    (state) => state.toggleOnlinePlayersFiltersVisible,
   );
 
   const toggleViewMode = () => {
@@ -32,9 +38,14 @@ export const OnlinePlayers = () => {
         actions=<OnlinePlayersActions
           viewMode={viewMode}
           toggleViewMode={toggleViewMode}
+          filtersVisible={filtersVisible}
+          toggleFiltersVisible={toggleOnlinePlayersFiltersVisible}
         />
       >
-        <OnlinePlayersList viewMode={viewMode} />
+        <OnlinePlayersList
+          viewMode={viewMode}
+          filtersVisible={filtersVisible}
+        />
       </DraggableWindow>
     </AnimatedWindow>
   );
