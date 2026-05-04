@@ -25,6 +25,7 @@ type AddTimerWindowState = {
 
 type OnlinePlayersWindowState = {
   viewMode: OnlinePlayersViewMode;
+  filtersVisible: boolean;
 };
 
 export type WindowId =
@@ -98,12 +99,14 @@ interface WindowsState {
   setAutofocus: (window: WindowId, autofocus: boolean) => void;
   setSettingsActiveTab: (activeTab?: SettingsTabValue) => void;
   setOnlinePlayersViewMode: (viewMode: OnlinePlayersViewMode) => void;
+  toggleOnlinePlayersFiltersVisible: () => void;
 }
 
 const DEFAULT_OPACITY: WindowOpacity = 4;
 const DEFAULT_POSITION: WindowPositionState = { x: 0, y: 0 };
 const DEFAULT_SIZE: WindowSizeState = { width: 242, height: 240 };
 const DEFAULT_ONLINE_PLAYERS_VIEW_MODE: OnlinePlayersViewMode = "accounts";
+const DEFAULT_ONLINE_PLAYERS_FILTERS_VISIBLE = true;
 
 const sanitizeMaxContentHeight = (height: number) => {
   if (!Number.isFinite(height)) {
@@ -224,6 +227,7 @@ export const migrateWindowsState = (
     | Record<string, unknown>
     | undefined;
   const onlinePlayersViewMode = onlinePlayersState?.viewMode;
+  const onlinePlayersFiltersVisible = onlinePlayersState?.filtersVisible;
 
   if (onlinePlayers && typeof onlinePlayers === "object") {
     state["online-players"] = {
@@ -235,6 +239,10 @@ export const migrateWindowsState = (
           onlinePlayersViewMode === "accounts"
             ? onlinePlayersViewMode
             : DEFAULT_ONLINE_PLAYERS_VIEW_MODE,
+        filtersVisible:
+          typeof onlinePlayersFiltersVisible === "boolean"
+            ? onlinePlayersFiltersVisible
+            : DEFAULT_ONLINE_PLAYERS_FILTERS_VISIBLE,
       },
     };
   }
@@ -303,6 +311,7 @@ export const useWindowsStore = create<WindowsState>()(
         locked: false,
         state: {
           viewMode: DEFAULT_ONLINE_PLAYERS_VIEW_MODE,
+          filtersVisible: DEFAULT_ONLINE_PLAYERS_FILTERS_VISIBLE,
         },
       },
       "add-timer": {
@@ -475,6 +484,16 @@ export const useWindowsStore = create<WindowsState>()(
             state: {
               ...state["online-players"].state,
               viewMode,
+            },
+          },
+        })),
+      toggleOnlinePlayersFiltersVisible: () =>
+        set((state) => ({
+          "online-players": {
+            ...state["online-players"],
+            state: {
+              ...state["online-players"].state,
+              filtersVisible: !state["online-players"].state.filtersVisible,
             },
           },
         })),
