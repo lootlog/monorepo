@@ -8,6 +8,7 @@ import { Platform } from "src/gateway/enums/platform.enum";
 import { RoutingKey } from "src/gateway/enums/routing-key.enum";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { getGuildIds } from "src/gateway/utils/get-guild-ids";
+import { normalizePresenceLevel } from "src/gateway/utils/normalize-presence-level";
 import { buildRoomName, parseRoomName } from "src/gateway/utils/room-utils";
 import type {
   Socket,
@@ -213,9 +214,26 @@ export class PresenceService {
       );
     }
 
+    const currentCharacterId = client.data.player?.characterId;
     const users = filteredSockets
       .map((s) => omit(s.data, ["sessionId", "userId", "guilds"]))
-      .sort((a, b) => b.player.lvl - a.player.lvl);
+      .sort((a, b) => {
+        const isCurrentPlayerA =
+          currentCharacterId !== undefined &&
+          a.player.characterId === currentCharacterId;
+        const isCurrentPlayerB =
+          currentCharacterId !== undefined &&
+          b.player.characterId === currentCharacterId;
+
+        if (isCurrentPlayerA !== isCurrentPlayerB) {
+          return isCurrentPlayerA ? -1 : 1;
+        }
+
+        return (
+          normalizePresenceLevel(b.player.lvl) -
+          normalizePresenceLevel(a.player.lvl)
+        );
+      });
 
     return groupBy(users, "discordId");
   }
@@ -279,6 +297,7 @@ export class PresenceService {
       icon: player.icon,
       lvl: player.lvl,
       prof: player.prof,
+      clan: player.clan,
       mapId: data?.mapId ?? existingPresence?.mapId,
       mapName:
         data?.mapName ?? existingPresence?.mapName ?? player.location?.map,

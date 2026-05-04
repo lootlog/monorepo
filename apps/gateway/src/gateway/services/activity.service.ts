@@ -96,9 +96,9 @@ export class ActivityService {
           ? {
               accountId: Number(player.accountId),
               characterId: Number(player.characterId),
-              clanName: player.clanName ?? "",
+              clanName: player.clan?.name ?? "",
               name: player.name,
-              clanId: player.clanId ?? 0,
+              clanId: player.clan?.id ?? 0,
               icon: player.icon,
               lvl: Number(player.lvl),
               prof: player.prof,

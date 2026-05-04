@@ -88,4 +88,111 @@ describe("migrateWindowsState", () => {
 
     expect(migrated["add-timer"].state).toEqual({});
   });
+
+  it("adds default online players location view state for persisted windows", () => {
+    const migrated = migrateWindowsState(
+      {
+        "online-players": {
+          open: false,
+          position: { x: 0, y: 0 },
+          hasDefinedPosition: false,
+          size: { width: 242, height: 240 },
+          opacity: 4,
+          locked: false,
+        },
+        windowFocusHistory: [],
+      },
+      6,
+    );
+
+    expect(migrated["online-players"].state.viewMode).toBe("accounts");
+  });
+
+  it("keeps valid persisted online players view mode", () => {
+    const migrated = migrateWindowsState(
+      {
+        "online-players": {
+          open: false,
+          position: { x: 0, y: 0 },
+          hasDefinedPosition: false,
+          size: { width: 242, height: 240 },
+          opacity: 4,
+          locked: false,
+          state: {
+            viewMode: "members",
+          },
+        },
+        windowFocusHistory: [],
+      },
+      7,
+    );
+
+    expect(migrated["online-players"].state.viewMode).toBe("members");
+  });
+
+  it("adds online players view mode without changing other persisted window settings", () => {
+    const migrated = migrateWindowsState(
+      {
+        chat: {
+          open: true,
+          position: { x: 10, y: 20 },
+          hasDefinedPosition: true,
+          size: { width: 320, height: 260 },
+          opacity: 3,
+          locked: true,
+        },
+        notifications: {
+          open: false,
+          position: { x: 30, y: 40 },
+          hasDefinedPosition: true,
+          size: { width: 360, height: 300 },
+          opacity: 4,
+          locked: false,
+          maxContentHeight: 180,
+        },
+        "online-players": {
+          open: true,
+          position: { x: 50, y: 60 },
+          hasDefinedPosition: true,
+          size: { width: 280, height: 340 },
+          opacity: 2,
+          locked: false,
+        },
+        currentWindowFocus: "online-players",
+        windowFocusHistory: ["online-players", "chat"],
+      },
+      6,
+    );
+
+    expect(migrated.chat).toEqual({
+      open: true,
+      position: { x: 10, y: 20 },
+      hasDefinedPosition: true,
+      size: { width: 320, height: 260 },
+      opacity: 3,
+      locked: true,
+    });
+    expect(migrated.notifications).toEqual({
+      open: false,
+      position: { x: 30, y: 40 },
+      hasDefinedPosition: true,
+      size: { width: 360, height: 300 },
+      opacity: 4,
+      locked: false,
+      maxContentHeight: 180,
+    });
+    expect(migrated["online-players"]).toEqual({
+      open: true,
+      position: { x: 50, y: 60 },
+      hasDefinedPosition: true,
+      size: { width: 280, height: 340 },
+      opacity: 2,
+      locked: false,
+      state: {
+        viewMode: "accounts",
+      },
+    });
+    expect(migrated.currentWindowFocus).toBe("online-players");
+    expect(migrated.windowFocusHistory).toEqual(["online-players", "chat"]);
+  });
 });
