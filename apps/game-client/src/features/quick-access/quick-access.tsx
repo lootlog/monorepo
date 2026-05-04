@@ -63,6 +63,7 @@ export const QuickAccess = () => {
         minHeight={56}
         minWidth={250}
         onClose={() => setOpen("quick-access", false)}
+        closable={false}
       >
         <div className="ll:flex ll:gap-1 ll:px-1 ll:py-1">
           {partyGathering && (
