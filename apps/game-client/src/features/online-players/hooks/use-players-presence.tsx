@@ -20,6 +20,7 @@ type RawPlayerPresencePayload = {
   mapName?: string;
   sessionId?: string;
   isAfk?: boolean;
+  updatedAt?: number;
   location?: {
     x?: number;
     y?: number;
@@ -35,6 +36,7 @@ export type PlayerPresence = {
   guildId?: string;
   mapName?: string;
   isAfk: boolean;
+  updatedAt?: number;
   player?: {
     world: string;
     name: string;
@@ -146,8 +148,34 @@ const normalizePresence = (
       normalizedPlayer?.location?.map ??
       undefined,
     isAfk: rawPlayerPresence?.isAfk ?? false,
+    updatedAt: rawPlayerPresence?.updatedAt,
     player: normalizedPlayer,
   };
+};
+
+const shouldReplacePresence = (
+  currentPresence: PlayerPresence | undefined,
+  nextPresence: PlayerPresence,
+) => {
+  if (!currentPresence) return true;
+
+  return (nextPresence.updatedAt ?? 0) >= (currentPresence.updatedAt ?? 0);
+};
+
+const dedupePresences = (presences: PlayerPresence[]) => {
+  const presencesByKey = new Map<string, PlayerPresence>();
+
+  for (const presence of presences) {
+    if (!presence.player) continue;
+
+    const key = getPresenceKey(presence);
+
+    if (shouldReplacePresence(presencesByKey.get(key), presence)) {
+      presencesByKey.set(key, presence);
+    }
+  }
+
+  return [...presencesByKey.values()];
 };
 
 const normalizePresenceResponse = (
@@ -156,11 +184,13 @@ const normalizePresenceResponse = (
   return Object.fromEntries(
     Object.entries(response).map(([discordId, presences]) => [
       discordId,
-      presences.map((presence) =>
-        normalizePresence({
-          ...presence,
-          discordId,
-        }),
+      dedupePresences(
+        presences.map((presence) =>
+          normalizePresence({
+            ...presence,
+            discordId,
+          }),
+        ),
       ),
     ]),
   );
