@@ -14,6 +14,7 @@ const ACTION_TO_WINDOW: Partial<Record<HotkeyAction, WindowId>> = {
   "toggle-settings": "settings",
   "toggle-timers": "timers",
   "toggle-online-players": "online-players",
+  "toggle-quick-access": "quick-access",
 };
 
 const matchesBinding = (event: KeyboardEvent, binding: HotkeyBinding) => {
