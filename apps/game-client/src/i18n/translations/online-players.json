@@ -20,6 +20,8 @@
     }
   },
   "actions": {
+    "hideFilters": "Ukryj filtry",
+    "showFilters": "Pokaż filtry",
     "showMembersView": "Pokaż widok członków",
     "showAccountsView": "Pokaż widok lokacji",
     "inviteParty": "Zaproś do drużyny",

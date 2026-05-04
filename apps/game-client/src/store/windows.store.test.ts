@@ -105,7 +105,10 @@ describe("migrateWindowsState", () => {
       6,
     );
 
-    expect(migrated["online-players"].state.viewMode).toBe("accounts");
+    expect(migrated["online-players"].state).toEqual({
+      viewMode: "accounts",
+      filtersVisible: true,
+    });
   });
 
   it("keeps valid persisted online players view mode", () => {
@@ -127,7 +130,36 @@ describe("migrateWindowsState", () => {
       7,
     );
 
-    expect(migrated["online-players"].state.viewMode).toBe("members");
+    expect(migrated["online-players"].state).toEqual({
+      viewMode: "members",
+      filtersVisible: true,
+    });
+  });
+
+  it("keeps valid persisted online players filters visibility", () => {
+    const migrated = migrateWindowsState(
+      {
+        "online-players": {
+          open: false,
+          position: { x: 0, y: 0 },
+          hasDefinedPosition: false,
+          size: { width: 242, height: 240 },
+          opacity: 4,
+          locked: false,
+          state: {
+            viewMode: "members",
+            filtersVisible: false,
+          },
+        },
+        windowFocusHistory: [],
+      },
+      7,
+    );
+
+    expect(migrated["online-players"].state).toEqual({
+      viewMode: "members",
+      filtersVisible: false,
+    });
   });
 
   it("adds online players view mode without changing other persisted window settings", () => {
@@ -190,6 +222,7 @@ describe("migrateWindowsState", () => {
       locked: false,
       state: {
         viewMode: "accounts",
+        filtersVisible: true,
       },
     });
     expect(migrated.currentWindowFocus).toBe("online-players");
