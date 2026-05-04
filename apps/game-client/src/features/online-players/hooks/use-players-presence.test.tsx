@@ -54,11 +54,28 @@ describe("usePlayersPresence", () => {
               characterId: "10",
               accountId: "20",
               prof: "w",
+              clan: {
+                id: 15191,
+                name: "Karhu",
+                rank: 100,
+              },
               location: {
                 x: 1,
                 y: 2,
                 map: "Karka-han",
               },
+            },
+            playerPresence: {
+              world: "alpha",
+              name: "Hero",
+              lvl: "123",
+              icon: "hero.png",
+              characterId: "10",
+              accountId: "20",
+              prof: "w",
+              mapName: "Karka-han",
+              isAfk: true,
+              sessionId: "session-1",
             },
           },
         ],
@@ -75,6 +92,13 @@ describe("usePlayersPresence", () => {
     expect(result.current[0]["discord-1"]?.[0]?.player?.location?.map).toBe(
       "Karka-han",
     );
+    expect(result.current[0]["discord-1"]?.[0]?.player?.clan).toEqual({
+      id: 15191,
+      name: "Karhu",
+      rank: 100,
+    });
+    expect(result.current[0]["discord-1"]?.[0]?.isAfk).toBe(true);
+    expect(result.current[0]["discord-1"]?.[0]?.sessionId).toBe("session-1");
     expect(emitWithAckSpy).toHaveBeenCalledWith(
       GatewayEvent.REQUEST_SERVER_PRESENCE,
       {
@@ -127,16 +151,28 @@ describe("usePlayersPresence", () => {
           characterId: "10",
           accountId: "20",
           prof: "w",
+          clan: {
+            id: 15191,
+            name: "Karhu",
+            rank: 100,
+          },
           mapName: "Ithan",
+          isAfk: true,
           sessionId: "session-1",
         },
       });
     });
 
     expect(result.current[0]["discord-1"]?.[0]?.mapName).toBe("Ithan");
+    expect(result.current[0]["discord-1"]?.[0]?.isAfk).toBe(true);
     expect(result.current[0]["discord-1"]?.[0]?.player?.location?.map).toBe(
       "Ithan",
     );
+    expect(result.current[0]["discord-1"]?.[0]?.player?.clan).toEqual({
+      id: 15191,
+      name: "Karhu",
+      rank: 100,
+    });
   });
 
   it("stores an offline tombstone when gateway reports offline status", async () => {

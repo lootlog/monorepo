@@ -9,6 +9,12 @@ export type SocketUserPlayerLocation = {
   map: string;
 };
 
+export type SocketUserPlayerClan = {
+  id: number;
+  name: string;
+  rank: number;
+};
+
 export type SocketUserPlayer = {
   world: string;
   name: string;
@@ -18,8 +24,7 @@ export type SocketUserPlayer = {
   lvl: string;
   prof: string;
   location: SocketUserPlayerLocation;
-  clanName?: string;
-  clanId?: number;
+  clan?: SocketUserPlayerClan;
 };
 
 export type PlayerPresence = {
@@ -31,6 +36,7 @@ export type PlayerPresence = {
   icon: string;
   lvl: string;
   prof: string;
+  clan?: SocketUserPlayerClan;
 
   // Location/presence data
   mapId?: number;

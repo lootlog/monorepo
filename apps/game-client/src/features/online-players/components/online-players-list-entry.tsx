@@ -1,31 +1,15 @@
 import { CharacterTile } from "@/components/character-tile";
 import { Tile } from "@/components/ui/tile";
-import type { MargonemCharacter } from "@/api/characters.api";
 import type { PlayerPresence } from "@/features/online-players/hooks/use-players-presence";
+import { getPresenceCharacter } from "@/features/online-players/online-players-list.helpers";
 import { cn } from "@/lib/utils";
 import type { FC } from "react";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
-import { getFixedT } from "@/i18n/get-fixed-t";
 import type { MemberSummaryResponseDtoOutput } from "@/lib/api/generated/main/model";
 
 type OnlinePlayersListEntryProps = {
   presences: PlayerPresence[];
   guildMember?: MemberSummaryResponseDtoOutput;
-};
-
-const getCharacterData = (presence: PlayerPresence): MargonemCharacter => {
-  const t = getFixedT("common");
-
-  return {
-    id: presence.player?.characterId
-      ? Number.parseInt(presence.player?.characterId, 10)
-      : 0,
-    nick: presence.player?.name || t("states.unknownNeutral"),
-    icon: presence.player?.icon || "",
-    lvl: presence.player?.lvl || 0,
-    prof: presence.player?.prof || t("states.unknownNeutral"),
-    world: presence.player?.world || t("states.unknownNeutral"),
-  };
 };
 
 export const OnlinePlayersListEntry: FC<OnlinePlayersListEntryProps> = ({
@@ -48,7 +32,8 @@ export const OnlinePlayersListEntry: FC<OnlinePlayersListEntryProps> = ({
         {presences.map((presence) => (
           <CharacterTile
             key={`${presence.player?.accountId}-${presence.player?.characterId}`}
-            character={getCharacterData(presence)}
+            character={getPresenceCharacter(presence)}
+            isAfk={presence.isAfk}
             className="ll:scale-75 ll:max-h-6 ll:-mt-1 ll:-ml-2"
           />
         ))}

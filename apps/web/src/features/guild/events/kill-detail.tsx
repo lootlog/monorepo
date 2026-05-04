@@ -21,10 +21,7 @@ import { getAppliedRuleIdsForParticipant } from "./utils/scoring-applied-rules";
 import { formatDurationHuman } from "./utils/format-duration";
 import { normalizeBonusBreakdown } from "./utils/normalize-bonus-breakdown";
 import { KillDetailStatsCard } from "./components/kills/kill-detail-stats-card";
-import {
-  getGuildsControllerGetGuildPermissionsQueryKey,
-  useGuildsControllerGetGuildPermissions,
-} from "@/lib/api/generated/main/guilds/guilds";
+import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 
 const formatRespawnWindow = (minSpawn: string, maxSpawn: string): string => {
   const minDate = new Date(minSpawn);
@@ -38,17 +35,7 @@ export const KillDetail = () => {
   const { guildId, eventId, heroId, killId } = useParams({ strict: false });
   const { data: session } = useSession();
 
-  const { data: permissions } = useGuildsControllerGetGuildPermissions(
-    { guildId: guildId ?? "" },
-    {
-      query: {
-        queryKey: getGuildsControllerGetGuildPermissionsQueryKey({
-          guildId: guildId ?? "",
-        }),
-        staleTime: 30_000,
-      },
-    },
-  );
+  const { data: permissions } = useGuildPermissions();
   const canEditPoints =
     permissions?.includes(Permission.OWNER) ||
     permissions?.includes(Permission.ADMIN);

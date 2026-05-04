@@ -40,11 +40,8 @@ import { cn } from "@lootlog/ui/lib/utils";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { findEventHeroTimer } from "./utils/find-event-hero-timer";
-import {
-  getGuildsControllerGetGuildPermissionsQueryKey,
-  useGuildsControllerGetGuildById,
-  useGuildsControllerGetGuildPermissions,
-} from "@/lib/api/generated/main/guilds/guilds";
+import { useGuildsControllerGetGuildById } from "@/lib/api/generated/main/guilds/guilds";
+import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import {
   getMembersControllerGetMeQueryKey,
   useMembersControllerGetMe,
@@ -109,17 +106,7 @@ export const HeroDetail = () => {
   const [closeWindowOpen, setCloseWindowOpen] = useState(false);
   const [openWindowOpen, setOpenWindowOpen] = useState(false);
 
-  const { data: permissions } = useGuildsControllerGetGuildPermissions(
-    { guildId: guildId ?? "" },
-    {
-      query: {
-        queryKey: getGuildsControllerGetGuildPermissionsQueryKey({
-          guildId: guildId ?? "",
-        }),
-        staleTime: 30_000,
-      },
-    },
-  );
+  const { data: permissions } = useGuildPermissions();
   const { data: currentMember } = useMembersControllerGetMe(
     { guildId: guildId ?? "" },
     {

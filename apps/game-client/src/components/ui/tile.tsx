@@ -10,6 +10,7 @@ type TileProps = {
   customBackgroundColor?: string;
   className?: string;
   onClick?: () => void;
+  onDoubleClick?: () => void;
 };
 
 const increaseBrightness = (color: string, percent: number): string => {
@@ -39,6 +40,7 @@ export const Tile: FC<TileProps> = ({
   customBackgroundColor,
   className = "",
   onClick = () => {},
+  onDoubleClick,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const isDefaultColor = color && color in TIMERS_COLORS;
@@ -75,6 +77,7 @@ export const Tile: FC<TileProps> = ({
       )}
       style={Object.keys(customStyles).length > 0 ? customStyles : undefined}
       onClick={onClick}
+      onDoubleClick={onDoubleClick}
       onMouseEnter={() => customBackgroundColor && setIsHovered(true)}
       onMouseLeave={() => customBackgroundColor && setIsHovered(false)}
     >

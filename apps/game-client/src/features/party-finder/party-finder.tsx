@@ -8,6 +8,7 @@ import { useSession } from "@/hooks/auth/use-session";
 import { useCancelPartyGathering } from "@/hooks/api/use-cancel-party-gathering";
 import { VolunteersList } from "@/features/party-finder/components/volunteers-list";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { inviteCharacterToParty } from "@/utils/game/character-actions";
 import { Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -45,7 +46,7 @@ export const PartyFinder = () => {
     for (const v of invitableVolunteers) {
       if (!isMountedRef.current) break;
       setInviteState(v.characterId, "pending");
-      window._g(`party&a=inv&id=${v.characterId}`);
+      inviteCharacterToParty(v.characterId);
       await new Promise((r) => setTimeout(r, 200));
     }
     if (isMountedRef.current) {

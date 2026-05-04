@@ -2,29 +2,13 @@ import type { Period } from "@/store/battle-filters.store";
 import {
   useReactTable,
   getCoreRowModel,
-  flexRender,
   type SortingState,
 } from "@tanstack/react-table";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@lootlog/ui/components/table";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationNext,
-  PaginationPrevious,
-} from "@lootlog/ui/components/pagination";
+import { Table } from "@lootlog/ui/components/table";
 import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
 import { Card } from "@lootlog/ui/components/card";
 import { SectionHeader } from "@/components/layout/section-header";
 import { useBattlesControllerGetHeadToHead } from "@/lib/api/generated/battlelog/battles/battles";
-import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { Swords } from "lucide-react";
 import type { SearchWarrior } from "@/lib/api/battlelog-types";
 import { HeadToHeadFilters } from "./components/head-to-head-filters";
@@ -38,6 +22,10 @@ import {
 } from "@/features/user/battle-panel/battle-panel-statistics-search";
 import { useTranslation } from "react-i18next";
 import { getRouteErrorMessage } from "@/lib/router/route-errors";
+import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
+import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
+import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
+import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 
 type SortBy = "wins" | "losses" | "totalBattles" | "winRate" | "lastBattleDate";
 
@@ -200,21 +188,7 @@ export function HeadToHeadFullPage() {
           <Card className="flex-1 min-h-0 flex flex-col border-border bg-card/40 p-0 backdrop-blur-sm overflow-hidden gap-0">
             <ScrollArea className={cn("relative flex-1 min-h-0 w-full")}>
               {isLoading ? (
-                <div>
-                  {Array.from({ length: 10 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="flex h-14 items-center gap-4 border-b border-border px-4"
-                    >
-                      <Skeleton className="h-4 w-8" />
-                      <Skeleton className="h-8 w-8 rounded-full" />
-                      <Skeleton className="h-4 flex-1" />
-                      {Array.from({ length: 4 }).map((_, j) => (
-                        <Skeleton key={j} className="h-4 w-12" />
-                      ))}
-                    </div>
-                  ))}
-                </div>
+                <TableRowsSkeleton />
               ) : isError ? (
                 <div className="flex flex-col items-center justify-center gap-3 p-16">
                   <p className="text-muted-foreground">
@@ -230,85 +204,29 @@ export function HeadToHeadFullPage() {
                 </div>
               ) : (
                 <Table className="border-b">
-                  <TableHeader className="bg-background sticky top-0 z-10">
-                    {table.getHeaderGroups().map((headerGroup) => (
-                      <TableRow
-                        key={headerGroup.id}
-                        className="border-b-1! border-border"
-                      >
-                        {headerGroup.headers.map((header) => (
-                          <TableHead
-                            key={header.id}
-                            className="whitespace-nowrap"
-                          >
-                            {header.isPlaceholder
-                              ? null
-                              : flexRender(
-                                  header.column.columnDef.header,
-                                  header.getContext(),
-                                )}
-                          </TableHead>
-                        ))}
-                      </TableRow>
-                    ))}
-                  </TableHeader>
-                  <TableBody>
-                    {table.getRowModel().rows.map((row) => (
-                      <TableRow
-                        key={row.id}
-                        className="bg-background/30 border-b border-border"
-                      >
-                        {row.getVisibleCells().map((cell) => (
-                          <TableCell
-                            key={cell.id}
-                            className="whitespace-nowrap"
-                          >
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext(),
-                            )}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))}
-                  </TableBody>
+                  <TanStackTableHeader
+                    table={table}
+                    className="bg-background sticky top-0 z-10"
+                    rowClassName="border-b-1! border-border"
+                    headClassName="whitespace-nowrap"
+                  />
+                  <TanStackTableBody
+                    table={table}
+                    rowClassName="bg-background/30 border-b border-border"
+                    cellClassName="whitespace-nowrap"
+                  />
                 </Table>
               )}
               <ScrollBar orientation="horizontal" />
             </ScrollArea>
 
-            <div className="h-14 shrink-0 border-t border-border py-4 flex items-center justify-between px-4">
-              <div className="text-sm text-muted-foreground whitespace-nowrap">
-                Łącznie:&nbsp;
-                {data?.pagination?.total && (
-                  <span>{data.pagination.total}</span>
-                )}
-              </div>
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      onClick={handlePreviousPage}
-                      className={
-                        !data?.pagination?.hasPrev
-                          ? "pointer-events-none opacity-50"
-                          : "cursor-pointer"
-                      }
-                    />
-                  </PaginationItem>
-                  <PaginationItem>
-                    <PaginationNext
-                      onClick={handleNextPage}
-                      className={
-                        !data?.pagination?.hasNext
-                          ? "pointer-events-none opacity-50"
-                          : "cursor-pointer"
-                      }
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
+            <TablePaginationFooter
+              totalLabel={`Łącznie: ${data?.pagination?.total ?? ""}`}
+              hasPrev={Boolean(data?.pagination?.hasPrev)}
+              hasNext={Boolean(data?.pagination?.hasNext)}
+              onPreviousPage={handlePreviousPage}
+              onNextPage={handleNextPage}
+            />
           </Card>
         </div>
       </ScrollArea>
