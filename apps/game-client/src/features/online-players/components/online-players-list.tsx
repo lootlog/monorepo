@@ -1,19 +1,31 @@
 import { GuildSwitcher } from "@/components/guild-switcher";
-import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { WorldSelector } from "@/components/world-selector";
+import { OnlinePlayersAccountListEntry } from "@/features/online-players/components/online-players-account-list-entry";
+import { OnlinePlayersFilters } from "@/features/online-players/components/online-players-filters";
 import { OnlinePlayersListEntry } from "@/features/online-players/components/online-players-list-entry";
 import { usePlayersPresence } from "@/features/online-players/hooks/use-players-presence";
+import type { OnlinePlayersViewMode } from "@/features/online-players/online-players.types";
 import { useSettingsStore } from "@/store/settings.store";
 import { useGuildMembersSummary } from "@/hooks/api/guild-members-summary-query";
 import { useMemberInvalidation } from "@/hooks/api/use-member-invalidation";
 import { mapGuildMembersByUserId } from "@/lib/api/generated-helpers";
-import { Search } from "lucide-react";
-import { useState, useMemo, type FC } from "react";
+import { useState, type FC, type ReactNode } from "react";
 import { Game } from "@/lib/game";
 import { useTranslation } from "react-i18next";
+import {
+  DEFAULT_ONLINE_PLAYERS_FILTERS,
+  clampOnlinePlayerLevel,
+  getFilteredAccountEntries,
+  getFilteredMemberEntries,
+  type ProfessionFilterValue,
+} from "@/features/online-players/online-players-list.helpers";
 
-export const OnlinePlayersList: FC = () => {
+type OnlinePlayersListProps = {
+  viewMode: OnlinePlayersViewMode;
+};
+
+export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({ viewMode }) => {
   const { t } = useTranslation("onlinePlayers");
   const characterId = String(Game.hero.id);
   const defaultWorld = Game.getWorldName();
@@ -33,30 +45,87 @@ export const OnlinePlayersList: FC = () => {
     },
   );
   const [searchQuery, setSearchQuery] = useState("");
+  const [filters, setFilters] = useState(DEFAULT_ONLINE_PLAYERS_FILTERS);
 
-  const missingMemberIds = useMemo(() => {
-    if (!guildMembers) return [];
-    return Object.keys(onlinePlayers).filter(
-      (discordId) => !guildMembers[discordId],
-    );
-  }, [onlinePlayers, guildMembers]);
+  const handleMinLvlChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const numericValue = Number(event.target.value);
+
+    if (Number.isNaN(numericValue)) return;
+
+    const minLvl = clampOnlinePlayerLevel(numericValue);
+
+    setFilters((currentFilters) => ({
+      ...currentFilters,
+      minLvl,
+      maxLvl: minLvl > currentFilters.maxLvl ? minLvl : currentFilters.maxLvl,
+    }));
+  };
+
+  const handleMaxLvlChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const numericValue = Number(event.target.value);
+
+    if (Number.isNaN(numericValue)) return;
+
+    const maxLvl = clampOnlinePlayerLevel(numericValue);
+
+    setFilters((currentFilters) => ({
+      ...currentFilters,
+      minLvl: maxLvl < currentFilters.minLvl ? maxLvl : currentFilters.minLvl,
+      maxLvl,
+    }));
+  };
+
+  const handleProfessionChange = (profession: ProfessionFilterValue) => {
+    setFilters((currentFilters) => ({
+      ...currentFilters,
+      selectedProfession: profession,
+    }));
+  };
+
+  const missingMemberIds = guildMembers
+    ? Object.keys(onlinePlayers).filter((discordId) => !guildMembers[discordId])
+    : [];
 
   useMemberInvalidation(guildId, missingMemberIds);
 
-  const onlinePlayersList = useMemo(() => {
-    if (!searchQuery) return Object.entries(onlinePlayers);
+  const onlinePlayersList = getFilteredMemberEntries(
+    onlinePlayers,
+    guildMembers,
+    searchQuery,
+    filters,
+  );
+  const onlineAccountsList = getFilteredAccountEntries(
+    onlinePlayers,
+    guildMembers,
+    searchQuery,
+    filters,
+  );
 
-    const query = searchQuery.toLowerCase();
-    return Object.entries(onlinePlayers).filter(([discordId, presences]) => {
-      const memberName = guildMembers?.[discordId]?.name?.toLowerCase() ?? "";
-      const hasMatchingMember = memberName.includes(query);
-      const hasMatchingCharacter = presences.some((presence) =>
-        presence.player?.name?.toLowerCase().includes(query),
-      );
+  let listContent: ReactNode;
 
-      return hasMatchingMember || hasMatchingCharacter;
-    });
-  }, [onlinePlayers, searchQuery, guildMembers]);
+  if (viewMode === "members" && onlinePlayersList.length > 0) {
+    listContent = onlinePlayersList.map(([discordId, presences]) => (
+      <OnlinePlayersListEntry
+        key={discordId}
+        presences={presences}
+        guildMember={guildMembers?.[discordId]}
+      />
+    ));
+  } else if (viewMode === "accounts" && onlineAccountsList.length > 0) {
+    listContent = onlineAccountsList.map(({ discordId, presence }) => (
+      <OnlinePlayersAccountListEntry
+        key={`${presence.player?.accountId}-${presence.player?.characterId}`}
+        presence={presence}
+        guildMember={guildMembers?.[discordId]}
+      />
+    ));
+  } else {
+    listContent = (
+      <p className="ll:text-gray-400 ll:w-full ll:flex ll:items-center ll:justify-center ll:mt-6">
+        {searchQuery ? t("emptyState.notFound") : t("emptyState.noPlayers")}
+      </p>
+    );
+  }
 
   return (
     <div className="ll:h-full ll:w-full">
@@ -66,32 +135,16 @@ export const OnlinePlayersList: FC = () => {
         </div>
         {allowWorldSelection && <WorldSelector />}
 
-        <div className="ll:pb-1 ll:relative">
-          <Input
-            type="text"
-            placeholder={t("search.placeholder")}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="ll:pr-7"
-          />
-          <Search className="ll:absolute ll:right-2 ll:top-[calc(50%-0.6rem)] ll:w-3.5 ll:h-3.5 ll:text-gray-400 ll:pointer-events-none" />
-        </div>
+        <OnlinePlayersFilters
+          searchQuery={searchQuery}
+          filters={filters}
+          onSearchChange={(event) => setSearchQuery(event.target.value)}
+          onMinLvlChange={handleMinLvlChange}
+          onMaxLvlChange={handleMaxLvlChange}
+          onProfessionChange={handleProfessionChange}
+        />
         <ScrollArea className="ll:flex-1 ll:box-border ll:mt-1" type="hover">
-          {onlinePlayersList.length > 0 ? (
-            onlinePlayersList.map(([discordId, presences]) => (
-              <OnlinePlayersListEntry
-                key={discordId}
-                presences={presences}
-                guildMember={guildMembers?.[discordId]}
-              />
-            ))
-          ) : (
-            <p className="ll:text-gray-400 ll:w-full ll:flex ll:items-center ll:justify-center ll:mt-6">
-              {searchQuery
-                ? t("emptyState.notFound")
-                : t("emptyState.noPlayers")}
-            </p>
-          )}
+          {listContent}
         </ScrollArea>
       </div>
     </div>

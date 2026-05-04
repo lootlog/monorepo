@@ -55,10 +55,7 @@ import {
   useShowEventOverview,
   useUpdateEvent,
 } from "@/lib/api/generated/main/events/events";
-import {
-  getGuildsControllerGetGuildPermissionsQueryKey,
-  useGuildsControllerGetGuildPermissions,
-} from "@/lib/api/generated/main/guilds/guilds";
+import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { invalidateEventDetailQueries } from "./hooks/mutations/invalidate-event-queries";
 
 type EventDetailHero = EventHeroNpc & {
@@ -90,17 +87,7 @@ export const EventDetail = () => {
     eventId: eventId ?? "",
   });
 
-  const { data: permissions } = useGuildsControllerGetGuildPermissions(
-    { guildId: guildId ?? "" },
-    {
-      query: {
-        queryKey: getGuildsControllerGetGuildPermissionsQueryKey({
-          guildId: guildId ?? "",
-        }),
-        staleTime: 30_000,
-      },
-    },
-  );
+  const { data: permissions } = useGuildPermissions();
 
   const { data: heroTimers } = useListEventHeroTimers(
     {

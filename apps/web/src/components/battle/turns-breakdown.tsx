@@ -1,14 +1,7 @@
 import type { BattleWarrior as Warrior } from "@/lib/api/battlelog-types";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@lootlog/ui/components/table";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
+import { BattleBreakdownTable } from "./battle-breakdown-table";
 
 interface TurnsBreakdownProps {
   warrior: Warrior;
@@ -67,58 +60,24 @@ export const TurnsBreakdown: FC<TurnsBreakdownProps> = ({ warrior }) => {
       </h4>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div>
-          <Table className="text-sm">
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="h-8 text-xs">
-                  {t("battleUi.breakdowns.headers.actionType")}
-                </TableHead>
-                <TableHead className="h-8 text-xs text-right">
-                  {t("battleUi.breakdowns.headers.value")}
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {turnsBreakdown.map((item, index) => (
-                <TableRow key={index} className="h-8 hover:bg-transparent">
-                  <TableCell className={`py-1 ${item.color}`}>
-                    {item.type}
-                  </TableCell>
-                  <TableCell className="py-1 text-right font-medium tabular-nums">
-                    {item.value}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <BattleBreakdownTable
+            rows={turnsBreakdown}
+            typeLabel={t("battleUi.breakdowns.headers.actionType")}
+            valueLabel={t("battleUi.breakdowns.headers.value")}
+          />
         </div>
 
         {spellBreakdown.length > 0 && (
           <div>
-            <Table className="text-sm">
-              <TableHeader>
-                <TableRow className="hover:bg-transparent">
-                  <TableHead className="h-8 text-xs">
-                    {t("battleUi.breakdowns.headers.skill")}
-                  </TableHead>
-                  <TableHead className="h-8 text-xs text-right">
-                    {t("battleUi.breakdowns.headers.uses")}
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {spellBreakdown.map((item, index) => (
-                  <TableRow key={index} className="h-8 hover:bg-transparent">
-                    <TableCell className="py-1 text-purple-300">
-                      {item.spell}
-                    </TableCell>
-                    <TableCell className="py-1 text-right font-medium tabular-nums">
-                      {item.count}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <BattleBreakdownTable
+              rows={spellBreakdown.map((item) => ({
+                type: item.spell,
+                value: item.count,
+                color: "text-purple-300",
+              }))}
+              typeLabel={t("battleUi.breakdowns.headers.skill")}
+              valueLabel={t("battleUi.breakdowns.headers.uses")}
+            />
           </div>
         )}
       </div>

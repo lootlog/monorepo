@@ -3,7 +3,41 @@
     "title": "Gracze online"
   },
   "search": {
-    "placeholder": "Szukaj gracza..."
+    "placeholder": "Szukaj..."
+  },
+  "filters": {
+    "minLvlLabel": "Minimalny poziom",
+    "maxLvlLabel": "Maksymalny poziom",
+    "professionLabel": "Profesja",
+    "professions": {
+      "all": "Wszystkie",
+      "p": "Paladyn",
+      "w": "Wojownik",
+      "h": "Łowca",
+      "m": "Mag",
+      "b": "Tancerz ostrzy",
+      "t": "Tropiciel"
+    }
+  },
+  "actions": {
+    "showMembersView": "Pokaż widok członków",
+    "showAccountsView": "Pokaż widok lokacji",
+    "inviteParty": "Zaproś do drużyny",
+    "doubleClickInviteParty": "Kliknij dwukrotnie, aby zaprosić do drużyny"
+  },
+  "contextMenu": {
+    "addFriend": "Dodaj do znajomych",
+    "showEquipment": "Pokaż ekwipunek",
+    "showProfile": "Pokaż profil"
+  },
+  "location": {
+    "unknown": "Nieznana lokacja"
+  },
+  "player": {
+    "unknown": "Nieznany gracz"
+  },
+  "member": {
+    "unknown": "Nieznany użytkownik Discord"
   },
   "emptyState": {
     "notFound": "Nie znaleziono graczy",

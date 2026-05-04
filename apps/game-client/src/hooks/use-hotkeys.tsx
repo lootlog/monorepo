@@ -6,6 +6,7 @@ import {
 } from "@/store/hotkeys.store";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import { usePartyStore } from "@/store/party.store";
+import { inviteCharacterToParty } from "@/utils/game/character-actions";
 import { useEffect, useRef } from "react";
 
 const ACTION_TO_WINDOW: Partial<Record<HotkeyAction, WindowId>> = {
@@ -14,6 +15,7 @@ const ACTION_TO_WINDOW: Partial<Record<HotkeyAction, WindowId>> = {
   "toggle-settings": "settings",
   "toggle-timers": "timers",
   "toggle-online-players": "online-players",
+  "toggle-quick-access": "quick-access",
 };
 
 const matchesBinding = (event: KeyboardEvent, binding: HotkeyBinding) => {
@@ -37,7 +39,7 @@ const inviteAll = async (
 
   for (const v of invitable) {
     setInviteState(v.characterId, "pending");
-    window._g(`party&a=inv&id=${v.characterId}`);
+    inviteCharacterToParty(v.characterId);
     await new Promise((r) => setTimeout(r, 200));
   }
 };

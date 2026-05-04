@@ -12,10 +12,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { cn } from "@lootlog/ui/lib/utils";
 import { useTranslation } from "react-i18next";
 import { Avatar, AvatarImage } from "@lootlog/ui/components/avatar";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
+import { PermissionCategoryTooltip } from "@/features/guild/settings/components/permission-category-tooltip";
 
 export type MembersPanelContentProps = {
   selectedMemberColor: string | undefined;
@@ -108,39 +108,17 @@ export const MembersPanelContent: FC<MembersPanelContentProps> = ({
             )}
             <TooltipProvider delayDuration={100}>
               {activeCategories.map((category) => {
-                const IconComponent = category.icon;
                 const activePerms = category.permissions.filter((perm) =>
                   memberPermissions.includes(perm),
                 );
 
                 return (
-                  <Tooltip key={category.name}>
-                    <TooltipTrigger asChild>
-                      <div
-                        className={cn(
-                          "p-1.5 rounded-md transition-colors",
-                          category.bgColor,
-                        )}
-                      >
-                        <IconComponent
-                          className={cn("size-4", category.color)}
-                        />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="max-w-xs">
-                      <div className="space-y-1">
-                        <p className="font-semibold text-sm">{category.name}</p>
-                        <ul className="text-xs space-y-0.5">
-                          {activePerms.map((perm) => (
-                            <li key={perm} className="flex items-start gap-1.5">
-                              <span className="text-muted-foreground">•</span>
-                              <span>{t(`permissions.${perm}`)}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
+                  <PermissionCategoryTooltip
+                    key={category.name}
+                    category={category}
+                    activePermissions={activePerms}
+                    side="bottom"
+                  />
                 );
               })}
             </TooltipProvider>

@@ -1,19 +1,8 @@
 import { useState } from "react";
 import type { Period } from "@/store/battle-filters.store";
 import { useBattlesControllerGetPlayerVsPlayerBattles } from "@/lib/api/generated/battlelog/battles/battles";
-import {
-  useReactTable,
-  getCoreRowModel,
-  flexRender,
-} from "@tanstack/react-table";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@lootlog/ui/components/table";
+import { useReactTable, getCoreRowModel } from "@tanstack/react-table";
+import { Table } from "@lootlog/ui/components/table";
 import {
   Pagination,
   PaginationContent,
@@ -24,7 +13,6 @@ import {
 import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
 import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
-import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { PlayerTile } from "@/components/battle";
 
 import { useParams, useNavigate } from "@tanstack/react-router";
@@ -47,6 +35,9 @@ import {
   battlePanelPlayerVsPlayerSearchParsers,
   normalizeBattlePanelCharacterId,
 } from "@/features/user/battle-panel/battle-panel-statistics-search";
+import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
+import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
+import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { useTranslation } from "react-i18next";
 
 const PVP_FILTERS_OPEN_KEY = "pvp-filters-open";
@@ -241,21 +232,7 @@ export function PlayerVsPlayerFullPage() {
             <Card className="flex-1 flex flex-col min-h-0 border-border bg-card/40 backdrop-blur-sm overflow-hidden gap-0 p-0">
               <ScrollArea className="flex-1 min-h-0">
                 {isLoading ? (
-                  <div>
-                    {Array.from({ length: 10 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className="flex h-14 items-center gap-4 border-b border-border px-4"
-                      >
-                        <Skeleton className="h-4 w-8" />
-                        <Skeleton className="h-8 w-8 rounded-full" />
-                        <Skeleton className="h-4 flex-1" />
-                        {Array.from({ length: 4 }).map((_, j) => (
-                          <Skeleton key={j} className="h-4 w-12" />
-                        ))}
-                      </div>
-                    ))}
-                  </div>
+                  <TableRowsSkeleton />
                 ) : !data || data.battles.length === 0 ? (
                   <div className="flex flex-col items-center justify-center gap-3 p-16">
                     <p className="text-muted-foreground">
@@ -264,51 +241,21 @@ export function PlayerVsPlayerFullPage() {
                   </div>
                 ) : (
                   <Table className="border-b">
-                    <TableHeader className="bg-background sticky top-0 z-10">
-                      {table.getHeaderGroups().map((headerGroup) => (
-                        <TableRow
-                          key={headerGroup.id}
-                          className="border-b-1! border-border"
-                        >
-                          {headerGroup.headers.map((header) => (
-                            <TableHead
-                              key={header.id}
-                              className="whitespace-nowrap"
-                            >
-                              {header.isPlaceholder
-                                ? null
-                                : flexRender(
-                                    header.column.columnDef.header,
-                                    header.getContext(),
-                                  )}
-                            </TableHead>
-                          ))}
-                        </TableRow>
-                      ))}
-                    </TableHeader>
-                    <TableBody>
-                      {table.getRowModel().rows.map((row) => (
-                        <TableRow
-                          key={row.id}
-                          className="bg-background/30 cursor-pointer hover:bg-muted/50 border-b border-border"
-                          onClick={() =>
-                            handleBattleClick(row.original.battleId)
-                          }
-                        >
-                          {row.getVisibleCells().map((cell) => (
-                            <TableCell
-                              key={cell.id}
-                              className="whitespace-nowrap"
-                            >
-                              {flexRender(
-                                cell.column.columnDef.cell,
-                                cell.getContext(),
-                              )}
-                            </TableCell>
-                          ))}
-                        </TableRow>
-                      ))}
-                    </TableBody>
+                    <TanStackTableHeader
+                      table={table}
+                      className="bg-background sticky top-0 z-10"
+                      rowClassName="border-b-1! border-border"
+                      headClassName="whitespace-nowrap"
+                    />
+                    <TanStackTableBody
+                      table={table}
+                      cellClassName="whitespace-nowrap"
+                      getRowProps={(row) => ({
+                        className:
+                          "bg-background/30 cursor-pointer hover:bg-muted/50 border-b border-border",
+                        onClick: () => handleBattleClick(row.original.battleId),
+                      })}
+                    />
                   </Table>
                 )}
                 <ScrollBar orientation="horizontal" />

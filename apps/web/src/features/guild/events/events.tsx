@@ -27,10 +27,7 @@ import { EventCreateDialog } from "./components/dialogs/event-create-dialog";
 import { EventActionDialog } from "./components/dialogs/event-action-dialog";
 import { getEventStatusAtTimestamp } from "./utils";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import {
-  getGuildsControllerGetGuildPermissionsQueryKey,
-  useGuildsControllerGetGuildPermissions,
-} from "@/lib/api/generated/main/guilds/guilds";
+import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import {
   getListEventsQueryKey,
   useDeleteEvent,
@@ -45,17 +42,7 @@ export const Events = () => {
   const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
   const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
   const queryClient = useQueryClient();
-  const { data: permissions } = useGuildsControllerGetGuildPermissions(
-    { guildId: guildId ?? "" },
-    {
-      query: {
-        queryKey: getGuildsControllerGetGuildPermissionsQueryKey({
-          guildId: guildId ?? "",
-        }),
-        staleTime: 30_000,
-      },
-    },
-  );
+  const { data: permissions } = useGuildPermissions();
   const deleteEvent = useDeleteEvent({
     mutation: {
       onSuccess: () => {

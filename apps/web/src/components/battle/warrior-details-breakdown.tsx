@@ -1,14 +1,7 @@
 import type { BattleWarrior as Warrior } from "@/lib/api/battlelog-types";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@lootlog/ui/components/table";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
+import { BattleBreakdownTable } from "./battle-breakdown-table";
 
 interface WarriorDetailsBreakdownProps {
   warrior: Warrior;
@@ -117,30 +110,11 @@ export const WarriorDetailsBreakdown: FC<WarriorDetailsBreakdownProps> = ({
             <h5 className="font-medium text-xs mb-2 text-muted-foreground">
               {section.title}
             </h5>
-            <Table className="text-sm">
-              <TableHeader>
-                <TableRow className="hover:bg-transparent">
-                  <TableHead className="h-8 text-xs">
-                    {t("battleUi.breakdowns.headers.type")}
-                  </TableHead>
-                  <TableHead className="h-8 text-xs text-right">
-                    {t("battleUi.breakdowns.headers.value")}
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {section.stats.map((item, index) => (
-                  <TableRow key={index} className="h-8 hover:bg-transparent">
-                    <TableCell className={`py-1 ${item.color}`}>
-                      {item.type}
-                    </TableCell>
-                    <TableCell className="py-1 text-right font-medium tabular-nums">
-                      {item.value}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <BattleBreakdownTable
+              rows={section.stats}
+              typeLabel={t("battleUi.breakdowns.headers.type")}
+              valueLabel={t("battleUi.breakdowns.headers.value")}
+            />
           </div>
         ))}
       </div>

@@ -12,8 +12,14 @@ type RawPlayerPresencePayload = {
   characterId?: string;
   accountId?: string;
   prof?: string;
+  clan?: {
+    id?: number;
+    name?: string;
+    rank?: number;
+  };
   mapName?: string;
   sessionId?: string;
+  isAfk?: boolean;
   location?: {
     x?: number;
     y?: number;
@@ -28,6 +34,7 @@ export type PlayerPresence = {
   status?: "online" | "offline";
   guildId?: string;
   mapName?: string;
+  isAfk: boolean;
   player?: {
     world: string;
     name: string;
@@ -36,6 +43,11 @@ export type PlayerPresence = {
     characterId: string;
     accountId: string;
     prof: string;
+    clan?: {
+      id?: number;
+      name?: string;
+      rank?: number;
+    };
     location?: {
       x?: number;
       y?: number;
@@ -51,6 +63,7 @@ type PlayerPresenceUpdatePayload = {
   status?: "online" | "offline";
   guildId?: string;
   player?: RawPlayerPresencePayload;
+  playerPresence?: RawPlayerPresencePayload;
 };
 
 type PlayerPresenceResponsePayload = Record<
@@ -97,6 +110,7 @@ const normalizePresencePlayer = (player?: RawPlayerPresencePayload) => {
     characterId: player.characterId ?? "",
     accountId: player.accountId ?? "",
     prof: player.prof ?? "",
+    clan: player.clan,
     location: mapName
       ? {
           x: player.location?.x,
@@ -110,16 +124,28 @@ const normalizePresencePlayer = (player?: RawPlayerPresencePayload) => {
 const normalizePresence = (
   presence: PlayerPresenceUpdatePayload,
 ): PlayerPresence => {
-  const normalizedPlayer = normalizePresencePlayer(presence.player);
+  const rawPlayerPresence = presence.playerPresence
+    ? {
+        ...presence.player,
+        ...presence.playerPresence,
+      }
+    : presence.player;
+  const normalizedPlayer = normalizePresencePlayer(rawPlayerPresence);
 
   return {
     discordId: presence.discordId,
     guildId: presence.guildId,
     platform: presence.platform,
-    sessionId: presence.sessionId ?? presence.player?.sessionId,
+    sessionId:
+      presence.sessionId ??
+      presence.playerPresence?.sessionId ??
+      presence.player?.sessionId,
     status: presence.status,
     mapName:
-      presence.player?.mapName ?? normalizedPlayer?.location?.map ?? undefined,
+      rawPlayerPresence?.mapName ??
+      normalizedPlayer?.location?.map ??
+      undefined,
+    isAfk: rawPlayerPresence?.isAfk ?? false,
     player: normalizedPlayer,
   };
 };

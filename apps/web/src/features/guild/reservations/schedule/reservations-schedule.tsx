@@ -25,7 +25,7 @@ import {
   useReservationsControllerDeleteReservation,
   useReservationsControllerGetReservations,
 } from "@/lib/api/generated/main/reservations/reservations";
-import { useGuildsControllerGetGuildPermissions } from "@/lib/api/generated/main/guilds/guilds";
+import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useMembersControllerGetGuildMemberReferences } from "@/lib/api/generated/main/members/members";
 import type { MemberReferenceResponseDtoOutput as GuildMember } from "@/lib/api/generated/main/model";
 
@@ -44,9 +44,7 @@ export const ReservationsSchedule: React.FC = () => {
       includeInactive: true,
     },
   );
-  const { data: permissions } = useGuildsControllerGetGuildPermissions({
-    guildId: guildId ?? "",
-  });
+  const { data: permissions } = useGuildPermissions();
   const { socket, connected } = useGateway();
   const queryClient = useQueryClient();
 

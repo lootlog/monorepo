@@ -56,8 +56,13 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
             prof: Game.hero.prof,
             characterId,
             accountId,
-            clanId: Game.hero.clan?.id,
-            clanName: Game.hero.clan?.name,
+            clan: Game.hero.clan
+              ? {
+                  id: Game.hero.clan.id,
+                  name: Game.hero.clan.name,
+                  rank: Game.hero.clan.rank,
+                }
+              : undefined,
             location: {
               x: Game.hero.x,
               y: Game.hero.y,

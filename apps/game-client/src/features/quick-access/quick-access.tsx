@@ -1,10 +1,12 @@
 import { DraggableWindow } from "@/components/draggable-window";
+import { AnimatedWindow } from "@/components/animated-window";
 import {
   QuickAccessButton,
   type QuickAccessButtonProps,
 } from "@/features/quick-access/components/quick-access-button";
 import { GuildListPopover } from "@/features/quick-access/components/guild-list-popover";
 import { usePartyFinderStore } from "@/store/party-finder.store";
+import { useWindowsStore } from "@/store/windows.store";
 import {
   MessagesSquare,
   Settings,
@@ -18,6 +20,8 @@ import { useTranslation } from "react-i18next";
 export const QuickAccess = () => {
   const { t } = useTranslation("quickAccess");
   const partyGathering = usePartyFinderStore((s) => s.partyGathering);
+  const open = useWindowsStore((state) => state["quick-access"].open);
+  const setOpen = useWindowsStore((state) => state.setOpen);
   const buttons: QuickAccessButtonProps[] = [
     {
       id: "create-party-gathering",
@@ -52,33 +56,36 @@ export const QuickAccess = () => {
   ];
 
   return (
-    <DraggableWindow
-      id="quick-access"
-      title={t("window.title")}
-      minHeight={56}
-      minWidth={250}
-      closable={false}
-    >
-      <div className="ll:flex ll:gap-1 ll:px-1 ll:py-1">
-        {partyGathering && (
-          <QuickAccessButton
-            id="party-finder"
-            title={t("buttons.activePartyGathering")}
-            icon=<Swords size="16" className="ll:text-green-500" />
-          />
-        )}
-        {buttons.map((button) => (
-          <QuickAccessButton
-            key={button.id}
-            id={button.id}
-            title={button.title}
-            icon={button.icon}
-            href={button.href}
-          />
-        ))}
+    <AnimatedWindow isOpen={open} windowKey="quick-access">
+      <DraggableWindow
+        id="quick-access"
+        title={t("window.title")}
+        minHeight={56}
+        minWidth={250}
+        onClose={() => setOpen("quick-access", false)}
+        closable={false}
+      >
+        <div className="ll:flex ll:gap-1 ll:px-1 ll:py-1">
+          {partyGathering && (
+            <QuickAccessButton
+              id="party-finder"
+              title={t("buttons.activePartyGathering")}
+              icon=<Swords size="16" className="ll:text-green-500" />
+            />
+          )}
+          {buttons.map((button) => (
+            <QuickAccessButton
+              key={button.id}
+              id={button.id}
+              title={button.title}
+              icon={button.icon}
+              href={button.href}
+            />
+          ))}
 
-        <GuildListPopover />
-      </div>
-    </DraggableWindow>
+          <GuildListPopover />
+        </div>
+      </DraggableWindow>
+    </AnimatedWindow>
   );
 };

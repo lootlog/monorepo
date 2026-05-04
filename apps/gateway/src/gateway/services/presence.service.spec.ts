@@ -154,6 +154,11 @@ describe("PresenceService", () => {
           player: {
             world: "alpha",
             lvl: "200",
+            clan: {
+              id: 15191,
+              name: "Karhu",
+              rank: 100,
+            },
           },
           sessionId: "session-game",
           userId: "user-game",
@@ -214,10 +219,97 @@ describe("PresenceService", () => {
             player: {
               world: "alpha",
               lvl: "200",
+              clan: {
+                id: 15191,
+                name: "Karhu",
+                rank: 100,
+              },
             },
           },
         ],
       });
+    });
+
+    it("sorts server presence with the requesting player first and other players by level", async () => {
+      const guildId = "guild-1";
+      const presenceRoom = buildRoomName(guildId, "presence");
+      const viewerSocket = {
+        data: {
+          discordId: "discord-viewer",
+          platform: Platform.GAME,
+          player: {
+            world: "alpha",
+            characterId: "10",
+            lvl: "50",
+          },
+          sessionId: "session-viewer",
+          userId: "user-viewer",
+          guilds: [],
+        },
+      };
+      const highLevelSocket = {
+        data: {
+          discordId: "discord-high",
+          platform: Platform.GAME,
+          player: {
+            world: "alpha",
+            characterId: "20",
+            lvl: "300",
+          },
+          sessionId: "session-high",
+          userId: "user-high",
+          guilds: [],
+        },
+      };
+      const midLevelSocket = {
+        data: {
+          discordId: "discord-mid",
+          platform: Platform.GAME,
+          player: {
+            world: "alpha",
+            characterId: "30",
+            lvl: "150",
+          },
+          sessionId: "session-mid",
+          userId: "user-mid",
+          guilds: [],
+        },
+      };
+
+      mockFetchSockets.mockResolvedValue([
+        midLevelSocket,
+        highLevelSocket,
+        viewerSocket,
+      ]);
+
+      const result = await service.fetchServerPresence(
+        mockServer as never,
+        {
+          rooms: new Set([presenceRoom]),
+          data: {
+            discordId: "viewer",
+            platform: Platform.GAME,
+            player: {
+              characterId: "10",
+            },
+          },
+        } as Socket,
+        guildId,
+        "alpha",
+      );
+
+      expect(Object.keys(result)).toEqual([
+        "discord-viewer",
+        "discord-high",
+        "discord-mid",
+      ]);
+      expect(result["discord-viewer"][0].player).toEqual({
+        world: "alpha",
+        characterId: "10",
+        lvl: "50",
+      });
+      expect(result["discord-high"][0].player.lvl).toBe("300");
+      expect(result["discord-mid"][0].player.lvl).toBe("150");
     });
   });
 
@@ -235,6 +327,11 @@ describe("PresenceService", () => {
             icon: "icon",
             lvl: "100",
             prof: "w",
+            clan: {
+              id: 15191,
+              name: "Karhu",
+              rank: 100,
+            },
             location: {
               x: 1,
               y: 2,
@@ -249,6 +346,11 @@ describe("PresenceService", () => {
             icon: "icon",
             lvl: "100",
             prof: "w",
+            clan: {
+              id: 15191,
+              name: "Karhu",
+              rank: 100,
+            },
             mapId: 1,
             mapName: "Karka-han",
             isAfk: false,
@@ -276,6 +378,11 @@ describe("PresenceService", () => {
           player: expect.objectContaining({
             mapId: 2,
             mapName: "Ithan",
+            clan: {
+              id: 15191,
+              name: "Karhu",
+              rank: 100,
+            },
           }),
         }),
       );
@@ -294,6 +401,11 @@ describe("PresenceService", () => {
             icon: "icon",
             lvl: "100",
             prof: "w",
+            clan: {
+              id: 15191,
+              name: "Karhu",
+              rank: 100,
+            },
             location: {
               x: 1,
               y: 2,
@@ -314,6 +426,11 @@ describe("PresenceService", () => {
           discordId: "discord-1",
           player: expect.objectContaining({
             mapName: "Karka-han",
+            clan: {
+              id: 15191,
+              name: "Karhu",
+              rank: 100,
+            },
           }),
         }),
       );
