@@ -6,7 +6,7 @@ import "./index.css";
 
 const ROOT_Z_INDEX_BY_INTERFACE = {
   ni: 11,
-  si: 381,
+  si: 449,
 } as const;
 
 type GameInterface = keyof typeof ROOT_Z_INDEX_BY_INTERFACE;
