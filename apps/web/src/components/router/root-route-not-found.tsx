@@ -11,8 +11,6 @@ export const RootRouteNotFound = () => {
     <div className="flex min-h-dvh bg-background">
       <RouteErrorState
         status={404}
-        title={t("common.routeErrors.status.404.title")}
-        description={t("common.routeErrors.status.404.description")}
         primaryAction={
           <Button onClick={() => void navigate({ to: "/init" })}>
             {t("common.routeErrors.actions.goToInit")}

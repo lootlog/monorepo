@@ -10,8 +10,6 @@ export const GuildRouteNotFound = () => {
   return (
     <RouteErrorState
       status={404}
-      title={t("common.routeErrors.status.404.title")}
-      description={t("common.routeErrors.status.404.description")}
       primaryAction={
         <Button onClick={() => void navigate({ to: "/@me" })}>
           {t("common.routeErrors.actions.goToDashboard")}
