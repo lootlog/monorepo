@@ -33,6 +33,7 @@ export const OnlinePlayersListEntry: FC<OnlinePlayersListEntryProps> = ({
           <CharacterTile
             key={`${presence.player?.accountId}-${presence.player?.characterId}`}
             character={getPresenceCharacter(presence)}
+            isAfk={presence.isAfk}
             className="ll:scale-75 ll:max-h-6 ll:-mt-1 ll:-ml-2"
           />
         ))}

@@ -47,6 +47,7 @@ const createPresence = (
   guildId: "guild-1",
   platform: "game",
   mapName: "Ithan",
+  isAfk: false,
   player: {
     world: "pandora",
     name: "Hero",
@@ -260,6 +261,39 @@ describe("OnlinePlayersAccountListEntry", () => {
 
     expect(container.querySelector(".ll\\:border-green-500")).not.toBeNull();
     expect(screen.getByTitle("Zaproś do drużyny")).toBeVisible();
+  });
+
+  it("highlights afk players with orange and shows warning icon", () => {
+    mockGame.hero.clan = {
+      id: 15191,
+      name: "Karhu",
+      rank: 100,
+    };
+
+    const { container } = render(
+      <OnlinePlayersAccountListEntry
+        presence={createPresence({ isAfk: true })}
+      />,
+    );
+
+    expect(container.querySelector(".ll\\:border-orange-500")).not.toBeNull();
+    expect(container.querySelector(".ll\\:border-green-500")).toBeNull();
+    expect(container.querySelector(".lucide-triangle-alert")).not.toBeNull();
+  });
+
+  it("keeps self highlight for afk current player and shows warning icon", () => {
+    mockGame.hero.id = 10;
+    mockGame.hero.nick = "Hero";
+
+    const { container } = render(
+      <OnlinePlayersAccountListEntry
+        presence={createPresence({ isAfk: true })}
+      />,
+    );
+
+    expect(container.querySelector(".ll\\:border-yellow-400")).not.toBeNull();
+    expect(container.querySelector(".ll\\:border-orange-500")).toBeNull();
+    expect(container.querySelector(".lucide-triangle-alert")).not.toBeNull();
   });
 
   it("opens game profile and equipment actions from the context menu", async () => {
