@@ -65,6 +65,18 @@ describe("usePlayersPresence", () => {
                 map: "Karka-han",
               },
             },
+            playerPresence: {
+              world: "alpha",
+              name: "Hero",
+              lvl: "123",
+              icon: "hero.png",
+              characterId: "10",
+              accountId: "20",
+              prof: "w",
+              mapName: "Karka-han",
+              isAfk: true,
+              sessionId: "session-1",
+            },
           },
         ],
       }),
@@ -85,6 +97,8 @@ describe("usePlayersPresence", () => {
       name: "Karhu",
       rank: 100,
     });
+    expect(result.current[0]["discord-1"]?.[0]?.isAfk).toBe(true);
+    expect(result.current[0]["discord-1"]?.[0]?.sessionId).toBe("session-1");
     expect(emitWithAckSpy).toHaveBeenCalledWith(
       GatewayEvent.REQUEST_SERVER_PRESENCE,
       {
@@ -143,12 +157,14 @@ describe("usePlayersPresence", () => {
             rank: 100,
           },
           mapName: "Ithan",
+          isAfk: true,
           sessionId: "session-1",
         },
       });
     });
 
     expect(result.current[0]["discord-1"]?.[0]?.mapName).toBe("Ithan");
+    expect(result.current[0]["discord-1"]?.[0]?.isAfk).toBe(true);
     expect(result.current[0]["discord-1"]?.[0]?.player?.location?.map).toBe(
       "Ithan",
     );

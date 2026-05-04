@@ -235,6 +235,36 @@ describe("OnlinePlayersList", () => {
     ).toBeTruthy();
   });
 
+  it("shows warning icon for afk characters in members view", () => {
+    mockUsePlayersPresence.mockReturnValue([
+      {
+        "discord-1": [
+          {
+            discordId: "discord-1",
+            guildId: "guild-1",
+            platform: "game",
+            isAfk: true,
+            player: {
+              world: "pandora",
+              name: "Afk Hero",
+              lvl: 123,
+              icon: "hero.gif",
+              characterId: "10",
+              accountId: "20",
+              prof: "w",
+            },
+          },
+        ],
+      },
+      false,
+      vi.fn(),
+    ]);
+
+    const { container } = render(<OnlinePlayersList viewMode="members" />);
+
+    expect(container.querySelector(".lucide-triangle-alert")).not.toBeNull();
+  });
+
   it("filters account entries by location", () => {
     render(<OnlinePlayersList viewMode="accounts" />);
 

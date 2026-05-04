@@ -36,15 +36,21 @@ type OnlinePlayersAccountListEntryProps = {
 
 const getHighlightClassName = ({
   isSelf,
+  isAfk,
   isPartyMember,
   isSameClan,
 }: {
   isSelf: boolean;
+  isAfk: boolean;
   isPartyMember: boolean;
   isSameClan: boolean;
 }) => {
   if (isSelf) {
     return "ll:border-yellow-400 ll:bg-yellow-500/10";
+  }
+
+  if (isAfk) {
+    return "ll:border-orange-500 ll:bg-orange-500/10";
   }
 
   if (isPartyMember) {
@@ -89,6 +95,7 @@ export const OnlinePlayersAccountListEntry: FC<
     player.clan.id === Game.hero.clan.id;
   const highlightClassName = getHighlightClassName({
     isSelf,
+    isAfk: presence.isAfk,
     isPartyMember,
     isSameClan,
   });
@@ -144,6 +151,7 @@ export const OnlinePlayersAccountListEntry: FC<
                 <span className="ll:flex ll:min-w-0 ll:items-start ll:gap-1">
                   <CharacterTile
                     character={character}
+                    isAfk={presence.isAfk}
                     className="ll:scale-65 ll:-my-2 ll:-ml-1 ll:-mr-1 ll:shrink-0"
                   />
                   <span className="ll:flex ll:min-w-0 ll:flex-col ll:py-0.5 ll:leading-tight">

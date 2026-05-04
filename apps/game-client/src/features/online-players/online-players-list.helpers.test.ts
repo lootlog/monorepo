@@ -22,6 +22,7 @@ const createPresence = ({
   discordId,
   guildId: "guild-1",
   platform: "game",
+  isAfk: false,
   player: {
     world: "pandora",
     name,

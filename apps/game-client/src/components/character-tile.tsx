@@ -6,16 +6,19 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { AlertTriangle } from "lucide-react";
 import type { FC } from "react";
 
 type CharacterTileProps = {
   character: MargonemCharacter;
   className?: string;
+  isAfk?: boolean;
 };
 
 export const CharacterTile: FC<CharacterTileProps> = ({
   character,
   className,
+  isAfk = false,
 }) => {
   return (
     <Tooltip>
@@ -28,7 +31,14 @@ export const CharacterTile: FC<CharacterTileProps> = ({
           style={{
             backgroundImage: `url(${MARGONEM_CDN_CHARACTERS_URL}${character.icon})`,
           }}
-        />
+        >
+          {isAfk ? (
+            <>
+              <span className="ll:absolute ll:inset-0 ll:rounded-lg ll:bg-black/35 ll:pointer-events-none" />
+              <AlertTriangle className="ll:absolute ll:-right-0.5 ll:-top-0.5 ll:z-10 ll:h-5 ll:w-5 ll:text-orange-500" />
+            </>
+          ) : null}
+        </div>
       </TooltipTrigger>
       <TooltipContent side="top" className="ll:z-9999">
         <span className="ll:font-semibold">
