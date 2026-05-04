@@ -109,6 +109,75 @@ describe("usePlayersPresence", () => {
     );
   });
 
+  it("deduplicates initial presence fetch payloads by character and keeps the newest presence", async () => {
+    emitWithAckSpy.mockImplementation(() =>
+      Promise.resolve({
+        "discord-1": [
+          {
+            discordId: "discord-1",
+            platform: "game",
+            player: {
+              world: "alpha",
+              name: "Hero",
+              lvl: "123",
+              icon: "hero.png",
+              characterId: "10",
+              accountId: "20",
+              prof: "w",
+              mapName: "Karka-han",
+              isAfk: false,
+              updatedAt: 100,
+            },
+          },
+          {
+            discordId: "discord-1",
+            platform: "game",
+            player: {
+              world: "alpha",
+              name: "Hero",
+              lvl: "123",
+              icon: "hero.png",
+              characterId: "10",
+              accountId: "20",
+              prof: "w",
+              mapName: "Ithan",
+              isAfk: true,
+              updatedAt: 200,
+            },
+          },
+          {
+            discordId: "discord-1",
+            platform: "game",
+            player: {
+              world: "alpha",
+              name: "Scout",
+              lvl: "80",
+              icon: "scout.png",
+              characterId: "11",
+              accountId: "21",
+              prof: "h",
+              mapName: "Torneg",
+              isAfk: false,
+              updatedAt: 150,
+            },
+          },
+        ],
+      }),
+    );
+
+    const { result } = renderHook(() => usePlayersPresence("guild-1", "alpha"));
+
+    await waitFor(() => {
+      expect(result.current[0]["discord-1"]).toHaveLength(2);
+    });
+
+    expect(
+      result.current[0]["discord-1"]?.map((presence) => presence.mapName),
+    ).toEqual(["Ithan", "Torneg"]);
+    expect(result.current[0]["discord-1"]?.[0]?.isAfk).toBe(true);
+    expect(result.current[0]["discord-1"]?.[0]?.updatedAt).toBe(200);
+  });
+
   it("updates existing presence entries from gateway mapName updates without status", async () => {
     emitWithAckSpy.mockImplementation(() =>
       Promise.resolve({
