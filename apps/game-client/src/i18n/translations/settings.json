@@ -70,6 +70,10 @@
         "label": "Gracze online",
         "description": "Otwórz/zamknij okno graczy online"
       },
+      "toggle-quick-access": {
+        "label": "Quick access",
+        "description": "Otwórz/zamknij okno quick access"
+      },
       "invite-all": {
         "label": "Zaproś wszystkich",
         "description": "Zaproś wszystkich z party findera"

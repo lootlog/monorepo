@@ -11,6 +11,7 @@ export type HotkeyAction =
   | "toggle-settings"
   | "toggle-timers"
   | "toggle-online-players"
+  | "toggle-quick-access"
   | "invite-all";
 
 export type HotkeyBinding = {
@@ -74,6 +75,13 @@ export const HOTKEY_ACTIONS: HotkeyActionConfig[] = [
     defaultBinding: { key: "P", shift: true, ctrl: false, alt: false },
   },
   {
+    action: "toggle-quick-access",
+    labelKey: "settings.hotkeys.actions.toggle-quick-access.label",
+    descriptionKey: "settings.hotkeys.actions.toggle-quick-access.description",
+    category: "windows",
+    defaultBinding: { key: "Q", shift: true, ctrl: false, alt: false },
+  },
+  {
     action: "invite-all",
     labelKey: "settings.hotkeys.actions.invite-all.label",
     descriptionKey: "settings.hotkeys.actions.invite-all.description",
@@ -88,6 +96,22 @@ const getDefaultBindings = (): Record<HotkeyAction, HotkeyBinding> => {
     bindings[config.action] = { ...config.defaultBinding };
   }
   return bindings;
+};
+
+export const migrateHotkeysState = (
+  persisted: unknown,
+): { bindings: Record<string, HotkeyBinding> } => {
+  const state = persisted as { bindings?: Record<string, HotkeyBinding> };
+  const bindings = state.bindings ?? {};
+  const defaults = getDefaultBindings();
+
+  for (const [action, binding] of Object.entries(defaults)) {
+    if (!bindings[action]) {
+      bindings[action] = binding;
+    }
+  }
+
+  return { ...state, bindings };
 };
 
 interface HotkeysState {
@@ -121,19 +145,9 @@ export const useHotkeysStore = create<HotkeysState>()(
       name: STORAGE_KEY,
       partialize: (state) => ({ bindings: state.bindings }),
       storage: createJSONStorage(() => localStorage),
-      version: 2,
-      migrate: (persisted, version) => {
-        const state = persisted as { bindings: Record<string, HotkeyBinding> };
-        if (version < 2) {
-          const defaults = getDefaultBindings();
-          for (const [action, binding] of Object.entries(defaults)) {
-            if (!state.bindings[action]) {
-              state.bindings[action] = binding;
-            }
-          }
-        }
-        return state as unknown as HotkeysState;
-      },
+      version: 3,
+      migrate: (persisted) =>
+        migrateHotkeysState(persisted) as unknown as HotkeysState,
     },
   ),
 );

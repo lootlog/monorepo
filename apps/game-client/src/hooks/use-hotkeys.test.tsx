@@ -1,0 +1,47 @@
+import { act, renderHook } from "@testing-library/react";
+import { beforeEach, describe, expect, it } from "vitest";
+import { useHotkeys } from "@/hooks/use-hotkeys";
+import { useHotkeysStore } from "@/store/hotkeys.store";
+import { useWindowsStore } from "@/store/windows.store";
+
+describe("useHotkeys", () => {
+  beforeEach(() => {
+    useHotkeysStore.getState().resetAll();
+    useWindowsStore.setState((state) => ({
+      ...state,
+      "quick-access": {
+        ...state["quick-access"],
+        open: true,
+        autofocus: undefined,
+      },
+      currentWindowFocus: undefined,
+      windowFocusHistory: [],
+    }));
+  });
+
+  it("toggles quick access with the configured binding", () => {
+    renderHook(() => useHotkeys());
+
+    act(() => {
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "Q",
+          shiftKey: true,
+        }),
+      );
+    });
+
+    expect(useWindowsStore.getState()["quick-access"].open).toBe(false);
+
+    act(() => {
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "q",
+          shiftKey: true,
+        }),
+      );
+    });
+
+    expect(useWindowsStore.getState()["quick-access"].open).toBe(true);
+  });
+});
