@@ -113,7 +113,7 @@ describe("OnlinePlayersList", () => {
   });
 
   it("renders account entries with locations in accounts view", () => {
-    render(<OnlinePlayersList viewMode="accounts" />);
+    render(<OnlinePlayersList viewMode="accounts" filtersVisible />);
 
     expect(screen.getByText("Hero (123w)")).toBeVisible();
     expect(screen.getByText("Karka-han • pandora")).toBeVisible();
@@ -161,7 +161,7 @@ describe("OnlinePlayersList", () => {
       vi.fn(),
     ]);
 
-    render(<OnlinePlayersList viewMode="accounts" />);
+    render(<OnlinePlayersList viewMode="accounts" filtersVisible />);
 
     const highEntry = screen.getByText("High (300w)");
     const lowEntry = screen.getByText("Low (80h)");
@@ -224,7 +224,7 @@ describe("OnlinePlayersList", () => {
       vi.fn(),
     ]);
 
-    render(<OnlinePlayersList viewMode="members" />);
+    render(<OnlinePlayersList viewMode="members" filtersVisible />);
 
     const highMemberEntry = screen.getByText("(1) High Member");
     const lowMemberEntry = screen.getByText("(1) Low Member");
@@ -260,13 +260,15 @@ describe("OnlinePlayersList", () => {
       vi.fn(),
     ]);
 
-    const { container } = render(<OnlinePlayersList viewMode="members" />);
+    const { container } = render(
+      <OnlinePlayersList viewMode="members" filtersVisible />,
+    );
 
     expect(container.querySelector(".lucide-triangle-alert")).not.toBeNull();
   });
 
   it("filters account entries by location", () => {
-    render(<OnlinePlayersList viewMode="accounts" />);
+    render(<OnlinePlayersList viewMode="accounts" filtersVisible />);
 
     fireEvent.change(screen.getByPlaceholderText(/Szukaj/), {
       target: {
@@ -287,7 +289,7 @@ describe("OnlinePlayersList", () => {
   });
 
   it("filters account entries by level range and keeps min lower than max", () => {
-    render(<OnlinePlayersList viewMode="accounts" />);
+    render(<OnlinePlayersList viewMode="accounts" filtersVisible />);
 
     fireEvent.change(screen.getByLabelText("Minimalny poziom"), {
       target: {
@@ -311,7 +313,7 @@ describe("OnlinePlayersList", () => {
   it("filters account entries by profession", async () => {
     const user = userEvent.setup();
 
-    render(<OnlinePlayersList viewMode="accounts" />);
+    render(<OnlinePlayersList viewMode="accounts" filtersVisible />);
 
     await user.click(screen.getByLabelText("Profesja"));
     await user.click(await screen.findByText("Łowca"));
@@ -321,7 +323,7 @@ describe("OnlinePlayersList", () => {
   });
 
   it("filters member entries when none of member characters match filters", () => {
-    render(<OnlinePlayersList viewMode="members" />);
+    render(<OnlinePlayersList viewMode="members" filtersVisible />);
 
     expect(screen.getByText("(2) Discord User")).toBeVisible();
 
@@ -333,5 +335,24 @@ describe("OnlinePlayersList", () => {
 
     expect(screen.queryByText("(2) Discord User")).not.toBeInTheDocument();
     expect(screen.getByText("Brak graczy online.")).toBeVisible();
+  });
+
+  it("hides guild, world and filters controls when filters are hidden", () => {
+    mockUseSettingsStore.mockReturnValue({
+      allowWorldSelection: true,
+      guildIdByCharId: {
+        "10": "guild-1",
+      },
+      worldByGuildId: {
+        "guild-1": "pandora",
+      },
+    });
+
+    render(<OnlinePlayersList viewMode="accounts" filtersVisible={false} />);
+
+    expect(screen.queryByText("GuildSwitcher")).not.toBeInTheDocument();
+    expect(screen.queryByText("WorldSelector")).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText(/Szukaj/)).not.toBeInTheDocument();
+    expect(screen.getByText("Hero (123w)")).toBeVisible();
   });
 });
