@@ -42,7 +42,7 @@
     "@nestjs/websockets": "^11.1.19",
     "@prisma/adapter-pg": "7.6.0",
     "@prisma/client": "7.6.0",
-    "axios": "^1.15.1",
+    "axios": "^1.15.2",
     "bullmq": "^5.75.2",
     "discord-api-types": "0.38.31",
     "dotenv": "^17.4.2",
