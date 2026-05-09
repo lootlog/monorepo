@@ -74,6 +74,7 @@ export class DiscordRestClientFactory {
       if (error instanceof InvalidScopesError) {
         throw new UnauthorizedException({
           message: "INVALID_SCOPES",
+          requiresReauth: true,
           required: error.required,
           actual: error.actual,
         });

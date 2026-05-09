@@ -228,7 +228,14 @@ describe("DiscordService", () => {
 
       await expect(
         restClientFactory.getRestClient(userId, discordId),
-      ).rejects.toThrow(UnauthorizedException);
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({
+          actual: ["actual"],
+          message: "INVALID_SCOPES",
+          required: ["required"],
+          requiresReauth: true,
+        }),
+      });
     });
 
     it("should throw ServiceUnavailableException when auth service is unavailable", async () => {
@@ -250,7 +257,14 @@ describe("DiscordService", () => {
 
       await expect(
         restClientFactory.getRestClient(userId, discordId),
-      ).rejects.toThrow(UnauthorizedException);
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({
+          actual: ["guilds"],
+          message: "INVALID_SCOPES",
+          required: DISCORD_AUTH_SCOPES,
+          requiresReauth: true,
+        }),
+      });
     });
 
     it("should reuse REST client for the same user, discord id, and token", async () => {

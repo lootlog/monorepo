@@ -76,6 +76,7 @@ export const auth = betterAuth({
       clientId: env.DISCORD_CLIENT_ID,
       clientSecret: env.DISCORD_CLIENT_SECRET,
       redirectURI: `${env.APP_URL}/idp/callback/discord`,
+      prompt: "consent",
       scopes: DISCORD_AUTH_SCOPES,
       mapProfileToUser: (profile) => ({
         firstName: profile.given_name,

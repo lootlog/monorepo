@@ -117,7 +117,7 @@ export class MemberDiscordSyncService {
         this.logger.log({
           level: "warn",
           message:
-            "User authentication failed (token expired/invalid), deactivating member",
+            "User authentication failed (token expired/invalid), keeping cached member state",
           guildId,
           userId: discordId,
         });
@@ -126,7 +126,6 @@ export class MemberDiscordSyncService {
           discordId,
           guildId,
           status: MEMBER_DISCORD_SYNC_STATUS.UNAUTHORIZED,
-          deactivate: true,
         });
         return {
           member,
