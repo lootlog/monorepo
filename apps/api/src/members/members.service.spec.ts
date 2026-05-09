@@ -46,9 +46,41 @@ vi.mock("src/config/service.config", () => ({
   serviceConfig: { env: "local" },
 }));
 
+type MockPrismaService = {
+  member: {
+    findUnique: Mock;
+    findMany: Mock;
+    upsert: Mock;
+    update: Mock;
+    updateMany: Mock;
+  };
+  guild: {
+    findFirst: Mock;
+  };
+  userCharactersLootlogSettings: {
+    findMany: Mock;
+  };
+  playerSnapshot: {
+    findMany: Mock;
+  };
+  role: {
+    findMany: Mock;
+  };
+  memberRefreshJob: {
+    findFirst: Mock;
+    findUnique: Mock;
+    create: Mock;
+    update: Mock;
+  };
+};
+
+type MemberDiscordAccessServiceInternals = {
+  env: RuntimeEnvironment;
+};
+
 describe("MembersService", () => {
   let service: MembersService;
-  let prismaService: Mocked<PrismaService>;
+  let prismaService: MockPrismaService;
   let discordService: Mocked<DiscordService>;
   let _rateLimiter: Mocked<DiscordRateLimiterService>;
   let _refreshScheduler: Mocked<MemberRefreshSchedulerService>;
@@ -78,6 +110,7 @@ describe("MembersService", () => {
     icon: "icon.png",
     ownerId: "owner-123",
     notificationRuleLimit: 20,
+    publicStatsCardEnabled: false,
     active: true,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -222,7 +255,7 @@ describe("MembersService", () => {
     }).compile();
 
     service = module.get<MembersService>(MembersService);
-    prismaService = module.get(PrismaService);
+    prismaService = module.get<MockPrismaService>(PrismaService);
     discordService = module.get(DiscordService);
     _rateLimiter = module.get(DiscordRateLimiterService);
     _refreshScheduler = module.get(MemberRefreshSchedulerService);
@@ -234,12 +267,6 @@ describe("MembersService", () => {
     logger = module.get(WINSTON_MODULE_PROVIDER);
     redisService = module.get(RedisService);
     memberDiscordAccessService = module.get(MemberDiscordAccessService);
-
-    // Suppress logger output
-    vi.spyOn(logger, "warn").mockImplementation();
-    vi.spyOn(logger, "debug").mockImplementation();
-    vi.spyOn(logger, "error").mockImplementation();
-    vi.spyOn(logger, "log").mockImplementation();
   });
 
   afterEach(() => {
@@ -252,7 +279,10 @@ describe("MembersService", () => {
     });
 
     it("should set environment from config", () => {
-      expect(memberDiscordAccessService["env"]).toBe(RuntimeEnvironment.LOCAL);
+      const accessServiceInternals =
+        memberDiscordAccessService as unknown as MemberDiscordAccessServiceInternals;
+
+      expect(accessServiceInternals.env).toBe(RuntimeEnvironment.LOCAL);
     });
   });
 
@@ -266,11 +296,9 @@ describe("MembersService", () => {
     });
 
     it("should return a 15 minute soft stale threshold in prod", () => {
-      (
-        memberDiscordAccessService as MemberDiscordAccessService & {
-          env: RuntimeEnvironment;
-        }
-      ).env = RuntimeEnvironment.PROD;
+      const accessServiceInternals =
+        memberDiscordAccessService as unknown as MemberDiscordAccessServiceInternals;
+      accessServiceInternals.env = RuntimeEnvironment.PROD;
       const referenceTime = new Date("2026-03-10T10:00:00.000Z");
 
       const result = service.getMemberSoftStaleThreshold(referenceTime);
