@@ -4,7 +4,6 @@ import {
   HttpStatus,
   Injectable,
   NotFoundException,
-  ServiceUnavailableException,
 } from "@nestjs/common";
 import { PrismaService } from "src/db/prisma.service";
 import { DiscordSyncDiagnosticsService } from "src/discord/discord-sync-diagnostics.service";
@@ -111,7 +110,11 @@ export class MemberDiscordAccessService {
       return null;
     }
 
-    if (storedMember?.active && this.canUseStaleMember(storedMember, now)) {
+    if (
+      storedMember?.active &&
+      (this.canUseStaleMember(storedMember, now) ||
+        isTransientMemberSyncStatus(refreshAttempt.status))
+    ) {
       await this.diagnostics.recordMemberRefreshMetric({
         outcome: "stale_used",
         reason: refreshAttempt.status,
@@ -125,17 +128,6 @@ export class MemberDiscordAccessService {
         refreshQueued: refreshAttempt.refreshQueued,
         nextRefreshAt: refreshAttempt.nextRefreshAt,
       });
-    }
-
-    if (
-      storedMember?.active &&
-      isTransientMemberSyncStatus(refreshAttempt.status)
-    ) {
-      await this.diagnostics.recordMemberRefreshMetric({
-        outcome: "verification_unavailable",
-        reason: refreshAttempt.status,
-      });
-      this.throwMemberVerificationUnavailable(storedMember, refreshAttempt);
     }
 
     return null;
@@ -267,18 +259,6 @@ export class MemberDiscordAccessService {
       lastSyncAt &&
       now.getTime() - lastSyncAt.getTime() <= this.staleAccessGraceMs,
     );
-  }
-
-  private throwMemberVerificationUnavailable(
-    member: Pick<Member, "lastDiscordSyncAt">,
-    attempt: Pick<MemberRefreshAttempt, "nextRefreshAt" | "refreshQueued">,
-  ): never {
-    throw new ServiceUnavailableException({
-      message: ErrorKey.DISCORD_MEMBER_VERIFICATION_UNAVAILABLE,
-      lastDiscordSyncAt: this.getLastDiscordSyncAt(member),
-      nextRefreshAt: attempt.nextRefreshAt,
-      refreshQueued: attempt.refreshQueued,
-    });
   }
 
   private throwMemberSyncError(attempt: Pick<MemberRefreshAttempt, "error">) {

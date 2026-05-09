@@ -1,7 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import { DiscordRateLimiterService } from "src/discord/discord-rate-limiter.service";
 import { DiscordSyncDiagnosticsService } from "src/discord/discord-sync-diagnostics.service";
-import { MEMBER_DISCORD_SYNC_STATUS } from "./member-discord-sync-status";
+import {
+  isRetryableMemberRefreshStatus,
+  MEMBER_DISCORD_SYNC_STATUS,
+} from "./member-discord-sync-status";
 import { MemberDiscordSyncService } from "./member-discord-sync.service";
 import {
   MemberRefreshSchedulerService,
@@ -143,6 +146,26 @@ export class MemberDiscordRefreshService {
 
         await this.diagnostics.recordMemberRefreshMetric({
           outcome: "rate_limited",
+          reason,
+        });
+
+        return {
+          ...syncResult,
+          refreshQueued: scheduledRefresh.queued,
+          nextRefreshAt:
+            scheduledRefresh.nextRefreshAt ?? syncResult.nextRefreshAt,
+        };
+      }
+
+      if (
+        !syncResult.member &&
+        isRetryableMemberRefreshStatus(syncResult.status)
+      ) {
+        const scheduledRefresh = await this.queueMemberRefresh({
+          discordId,
+          guildId,
+          userId,
+          priority,
           reason,
         });
 
