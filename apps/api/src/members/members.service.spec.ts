@@ -547,12 +547,17 @@ describe("MembersService", () => {
     });
 
     it("should return stale data when auth service unavailable", async () => {
+      const nextRefreshAt = new Date(Date.now() + 5000);
       const staleMember = {
         ...mockMember,
         updatedAt: new Date(Date.now() - 10 * 60 * 1000),
         lastDiscordSyncAt: new Date(Date.now() - 10 * 60 * 1000),
       };
       prismaService.member.findUnique.mockResolvedValue(staleMember);
+      _refreshScheduler.enqueueRefresh.mockResolvedValue({
+        queued: true,
+        nextRefreshAt,
+      });
       discordService.getGuildMember.mockRejectedValue(
         new ServiceUnavailableException("Service unavailable"),
       );
@@ -563,13 +568,19 @@ describe("MembersService", () => {
         expect.objectContaining({
           ...staleMember,
           isStale: true,
-          refreshQueued: false,
-          nextRefreshAt: null,
-          staleWarning:
-            "Using cached data due to Discord API rate limiting or errors",
+          refreshQueued: true,
+          nextRefreshAt,
+          staleWarning: "Using cached data while a Discord refresh is queued",
         }),
       );
       expect(discordService.getGuildMember).toHaveBeenCalled();
+      expect(_refreshScheduler.enqueueRefresh).toHaveBeenCalledWith({
+        discordId: options.discordId,
+        guildId: options.guildId,
+        userId: options.userId,
+        priority: expect.any(Number),
+        reason: "member-read",
+      });
     });
 
     it("should throw error when refresh=true and general error occurs", async () => {
@@ -588,12 +599,17 @@ describe("MembersService", () => {
     });
 
     it("should return stale data on general error when refresh=false", async () => {
+      const nextRefreshAt = new Date(Date.now() + 5000);
       const staleMember = {
         ...mockMember,
         updatedAt: new Date(Date.now() - 10 * 60 * 1000),
         lastDiscordSyncAt: new Date(Date.now() - 10 * 60 * 1000),
       };
       prismaService.member.findUnique.mockResolvedValue(staleMember);
+      _refreshScheduler.enqueueRefresh.mockResolvedValue({
+        queued: true,
+        nextRefreshAt,
+      });
       discordService.getGuildMember.mockRejectedValue(
         new Error("Network error"),
       );
@@ -604,13 +620,19 @@ describe("MembersService", () => {
         expect.objectContaining({
           ...staleMember,
           isStale: true,
-          refreshQueued: false,
-          nextRefreshAt: null,
-          staleWarning:
-            "Using cached data due to Discord API rate limiting or errors",
+          refreshQueued: true,
+          nextRefreshAt,
+          staleWarning: "Using cached data while a Discord refresh is queued",
         }),
       );
       expect(discordService.getGuildMember).toHaveBeenCalled();
+      expect(_refreshScheduler.enqueueRefresh).toHaveBeenCalledWith({
+        discordId: options.discordId,
+        guildId: options.guildId,
+        userId: options.userId,
+        priority: expect.any(Number),
+        reason: "member-read",
+      });
     });
 
     it("should call getGuildById when refresh=true", async () => {
