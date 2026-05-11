@@ -30,8 +30,8 @@
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
-    "@types/node": "^25.6.0",
-    "tsdown": "^0.21.9",
+    "@types/node": "^25.6.2",
+    "tsdown": "^0.22.0",
     "typescript": "^6.0.3"
   }
 }
