@@ -21,7 +21,6 @@ onlyBuiltDependencies:
   - esbuild
   - msgpackr-extract
   - rolldown
-  - necord
   - prisma
   - protobufjs
   - sharp
