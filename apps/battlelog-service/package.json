@@ -28,19 +28,19 @@
     "battlelog:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1033.0",
+    "@aws-sdk/client-s3": "^3.1068.0",
     "@lootlog/battle-processor": "workspace:*",
     "@lootlog/instrumentation": "workspace:*",
     "@lootlog/nest-shared": "workspace:*",
     "@lootlog/types": "workspace:*",
     "@nestjs/bullmq": "^11.0.4",
-    "@nestjs/common": "^11.1.19",
-    "@nestjs/core": "^11.1.19",
-    "@nestjs/platform-express": "^11.1.19",
-    "@nestjs/platform-fastify": "^11.1.19",
-    "@nestjs/swagger": "^11.3.2",
+    "@nestjs/common": "^11.1.26",
+    "@nestjs/core": "^11.1.26",
+    "@nestjs/platform-express": "^11.1.26",
+    "@nestjs/platform-fastify": "^11.1.26",
+    "@nestjs/swagger": "^11.4.4",
     "@paralleldrive/cuid2": "^2.3.1",
-    "bullmq": "^5.75.2",
+    "bullmq": "^5.78.1",
     "dotenv": "^17.4.2",
     "drizzle-orm": "1.0.0-beta.20",
     "ioredis": "^5.10.1",
@@ -53,18 +53,18 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@nestjs/cli": "^11.0.21",
-    "@nestjs/testing": "^11.1.19",
-    "@swc/cli": "^0.7.10",
+    "@nestjs/cli": "^11.0.23",
+    "@nestjs/testing": "^11.1.26",
+    "@swc/cli": "^0.8.1",
     "@swc/core": "^1.15.30",
     "@types/node": "^25.6.0",
     "@types/pg": "^8.20.0",
     "@types/supertest": "^7.2.0",
-    "@vitest/coverage-v8": "^4.1.4",
+    "@vitest/coverage-v8": "^4.1.8",
     "drizzle-kit": "1.0.0-beta.20",
     "supertest": "^7.2.2",
     "typescript": "^6.0.3",
     "unplugin-swc": "^1.5.9",
-    "vitest": "^4.1.4"
+    "vitest": "^4.1.8"
   }
 }

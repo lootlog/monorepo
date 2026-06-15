@@ -7,7 +7,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useSettingsStore } from "@/store/settings.store";
 import { type FC, useEffect, useMemo } from "react";
-import { useLocalStorage } from "react-use";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { storageKey } from "@/lib/storage-key";
 import { useTranslation } from "react-i18next";
 

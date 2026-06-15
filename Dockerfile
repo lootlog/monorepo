@@ -13,7 +13,7 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 ENV TURBO_TELEMETRY_DISABLED="1"
 
-RUN npm install -g pnpm@10.32.1 turbo@2.9.6
+RUN npm install -g pnpm@10.32.1 turbo@2.9.18
 
 WORKDIR /usr/src/app
 
