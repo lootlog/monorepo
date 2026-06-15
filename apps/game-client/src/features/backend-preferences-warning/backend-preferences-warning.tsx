@@ -6,7 +6,7 @@ import type { SettingsTabValue } from "@/features/settings/constants/settings-ta
 import { useGlobalStore } from "@/store/global.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { useEffect, useState, type FC } from "react";
-import { useLocalStorage } from "react-use";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useTranslation } from "react-i18next";
 
 const STORAGE_KEY = storageKey("ll:backend-preferences-warning-dismissed");

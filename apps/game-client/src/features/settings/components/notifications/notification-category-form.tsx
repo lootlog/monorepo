@@ -12,7 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import type { NotificationSettings, NotificationType } from "@lootlog/types";
 import { type FC, type FormEvent, useRef } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { useDeepCompareEffect } from "react-use";
+import { useDeepCompareEffect } from "@/hooks/use-deep-compare-effect";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 

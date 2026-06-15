@@ -14,7 +14,7 @@ import type { DetectorRoutingRule } from "@lootlog/types";
 import { Plus } from "lucide-react";
 import { type FC, useEffect, useRef, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
-import { useDeepCompareEffect } from "react-use";
+import { useDeepCompareEffect } from "@/hooks/use-deep-compare-effect";
 import { z } from "zod";
 
 const LEVEL_MIN = 0;

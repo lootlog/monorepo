@@ -44,7 +44,7 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@axiomhq/winston": "^1.6.0",
+    "@axiomhq/winston": "^1.6.1",
     "@lootlog/types": "workspace:*",
     "fastify": "^5.8.5",
     "js-yaml": "^4.1.1",
@@ -53,8 +53,8 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@nestjs/common": "^11.1.19",
-    "@nestjs/core": "^11.1.19",
+    "@nestjs/common": "^11.1.26",
+    "@nestjs/core": "^11.1.26",
     "@types/node": "^25.6.0",
     "ioredis": "^5.10.1",
     "reflect-metadata": "^0.2.2",
