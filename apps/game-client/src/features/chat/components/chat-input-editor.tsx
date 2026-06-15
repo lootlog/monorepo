@@ -291,6 +291,33 @@ export const ChatInputEditor: FC<ChatInputEditorProps> = ({
     });
   };
 
+  const handleCut = (event: ClipboardEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+
+    const editor = editorRef.current;
+
+    if (!editor) {
+      return;
+    }
+
+    const selectionOffsets = getChatEditorSelectionOffsets(editor);
+
+    if (!selectionOffsets || selectionOffsets.start === selectionOffsets.end) {
+      return;
+    }
+
+    event.preventDefault();
+    event.clipboardData.setData(
+      "text/plain",
+      message.slice(selectionOffsets.start, selectionOffsets.end),
+    );
+    replaceSelection({
+      selectionStart: selectionOffsets.start,
+      selectionEnd: selectionOffsets.end,
+      insertedText: "",
+    });
+  };
+
   const handleEditorKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     event.stopPropagation();
     onKeyDown?.(event);
@@ -428,6 +455,7 @@ export const ChatInputEditor: FC<ChatInputEditorProps> = ({
           syncSelectionOffsets();
         }}
         onPaste={handlePaste}
+        onCut={handleCut}
         onBeforeInput={(event: FormEvent<HTMLDivElement>) => {
           const nativeInputEvent = event.nativeEvent as InputEvent;
 
