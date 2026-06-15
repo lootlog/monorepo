@@ -108,6 +108,7 @@ describe("migrateWindowsState", () => {
     expect(migrated["online-players"].state).toEqual({
       viewMode: "accounts",
       filtersVisible: true,
+      filtersByGuildId: {},
     });
   });
 
@@ -133,6 +134,7 @@ describe("migrateWindowsState", () => {
     expect(migrated["online-players"].state).toEqual({
       viewMode: "members",
       filtersVisible: true,
+      filtersByGuildId: {},
     });
   });
 
@@ -159,6 +161,81 @@ describe("migrateWindowsState", () => {
     expect(migrated["online-players"].state).toEqual({
       viewMode: "members",
       filtersVisible: false,
+      filtersByGuildId: {},
+    });
+  });
+
+  it("keeps valid persisted online players filters by guild", () => {
+    const migrated = migrateWindowsState(
+      {
+        "online-players": {
+          open: false,
+          position: { x: 0, y: 0 },
+          hasDefinedPosition: false,
+          size: { width: 242, height: 240 },
+          opacity: 4,
+          locked: false,
+          state: {
+            viewMode: "members",
+            filtersVisible: false,
+            filtersByGuildId: {
+              "guild-1": {
+                minLvl: 100,
+                maxLvl: 200,
+                selectedProfession: "w",
+              },
+            },
+          },
+        },
+        windowFocusHistory: [],
+      },
+      8,
+    );
+
+    expect(migrated["online-players"].state).toEqual({
+      viewMode: "members",
+      filtersVisible: false,
+      filtersByGuildId: {
+        "guild-1": {
+          minLvl: 100,
+          maxLvl: 200,
+          selectedProfession: "w",
+        },
+      },
+    });
+  });
+
+  it("drops invalid persisted online players filters by guild", () => {
+    const migrated = migrateWindowsState(
+      {
+        "online-players": {
+          open: false,
+          position: { x: 0, y: 0 },
+          hasDefinedPosition: false,
+          size: { width: 242, height: 240 },
+          opacity: 4,
+          locked: false,
+          state: {
+            viewMode: "members",
+            filtersVisible: false,
+            filtersByGuildId: {
+              "guild-1": {
+                minLvl: 100,
+                maxLvl: 200,
+                selectedProfession: "invalid",
+              },
+            },
+          },
+        },
+        windowFocusHistory: [],
+      },
+      8,
+    );
+
+    expect(migrated["online-players"].state).toEqual({
+      viewMode: "members",
+      filtersVisible: false,
+      filtersByGuildId: {},
     });
   });
 
@@ -223,6 +300,7 @@ describe("migrateWindowsState", () => {
       state: {
         viewMode: "accounts",
         filtersVisible: true,
+        filtersByGuildId: {},
       },
     });
     expect(migrated.currentWindowFocus).toBe("online-players");
