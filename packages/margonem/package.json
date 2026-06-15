@@ -22,6 +22,6 @@
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
-    "tsdown": "^0.21.9"
+    "tsdown": "^0.22.2"
   }
 }
