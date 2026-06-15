@@ -4,3 +4,34 @@ packages:
 syncInjectedDepsAfterScripts:
   - build
 injectWorkspacePackages: true
+verifyDepsBeforeRun: false
+overrides:
+  "@hono/node-server@<1.19.13": ">=1.19.13"
+  "esbuild@<=0.24.2": ">=0.24.3"
+  "fastify@>=5.3.2 <=5.8.4": ">=5.8.5"
+  "file-type@>=13.0.0 <21.3.2": ">=21.3.2"
+  "minimatch@<3.1.4": ">=3.1.4"
+  "path-to-regexp@>=8.0.0 <8.4.0": ">=8.4.0"
+packageExtensions:
+  "@hookform/resolvers":
+    peerDependencies:
+      zod: "*"
+onlyBuiltDependencies:
+  - "@nestjs/core"
+  - "@prisma/client"
+  - "@prisma/engines"
+  - "@scarf/scarf"
+  - "@swc/core"
+  - "@tailwindcss/oxide"
+  - core-js-pure
+  - cpu-features
+  - esbuild
+  - msgpackr-extract
+  - rolldown
+  - necord
+  - prisma
+  - protobufjs
+  - sharp
+  - ssh2
+  - unrs-resolver
+  - workerd
