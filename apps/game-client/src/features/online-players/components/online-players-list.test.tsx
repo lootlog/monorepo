@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { OnlinePlayersList } from "./online-players-list";
+import { useWindowsStore } from "@/store/windows.store";
 
 const mockUsePlayersPresence = vi.fn();
 const mockUseGuildMembersSummary = vi.fn();
@@ -110,6 +111,17 @@ describe("OnlinePlayersList", () => {
       false,
       vi.fn(),
     ]);
+
+    useWindowsStore.setState((state) => ({
+      "online-players": {
+        ...state["online-players"],
+        state: {
+          viewMode: "accounts",
+          filtersVisible: true,
+          filtersByGuildId: {},
+        },
+      },
+    }));
   });
 
   it("renders account entries with locations in accounts view", () => {
@@ -308,6 +320,67 @@ describe("OnlinePlayersList", () => {
 
     expect(screen.getByLabelText("Minimalny poziom")).toHaveValue(90);
     expect(screen.getByLabelText("Maksymalny poziom")).toHaveValue(90);
+  });
+
+  it("stores level filters separately for each guild", () => {
+    const { rerender } = render(
+      <OnlinePlayersList viewMode="accounts" filtersVisible />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Minimalny poziom"), {
+      target: {
+        value: "100",
+      },
+    });
+
+    expect(screen.getByText("Hero (123w)")).toBeVisible();
+    expect(screen.queryByText("Scout (80h)")).not.toBeInTheDocument();
+    expect(
+      useWindowsStore.getState()["online-players"].state.filtersByGuildId,
+    ).toMatchObject({
+      "guild-1": {
+        minLvl: 100,
+        maxLvl: 500,
+        selectedProfession: "all",
+      },
+    });
+
+    mockUseSettingsStore.mockReturnValue({
+      allowWorldSelection: false,
+      guildIdByCharId: {
+        "10": "guild-2",
+      },
+      worldByGuildId: {
+        "guild-2": "pandora",
+      },
+    });
+
+    rerender(<OnlinePlayersList viewMode="accounts" filtersVisible />);
+
+    expect(screen.getByLabelText("Minimalny poziom")).toHaveValue(0);
+    expect(screen.getByText("Hero (123w)")).toBeVisible();
+    expect(screen.getByText("Scout (80h)")).toBeVisible();
+
+    fireEvent.change(screen.getByLabelText("Maksymalny poziom"), {
+      target: {
+        value: "90",
+      },
+    });
+
+    expect(
+      useWindowsStore.getState()["online-players"].state.filtersByGuildId,
+    ).toMatchObject({
+      "guild-1": {
+        minLvl: 100,
+        maxLvl: 500,
+        selectedProfession: "all",
+      },
+      "guild-2": {
+        minLvl: 0,
+        maxLvl: 90,
+        selectedProfession: "all",
+      },
+    });
   });
 
   it("filters account entries by profession", async () => {
