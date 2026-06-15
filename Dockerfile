@@ -1,13 +1,13 @@
 # syntax=docker/dockerfile:1.7
 
-FROM node:25.9.0-alpine3.22 AS runtime-base
+FROM node:26.3.0-alpine3.22 AS runtime-base
 
 RUN apk add --no-cache dumb-init fontconfig ttf-dejavu
 
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
 
-FROM node:25.9.0-alpine3.22 AS build-base
+FROM node:26.3.0-alpine3.22 AS build-base
 
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
