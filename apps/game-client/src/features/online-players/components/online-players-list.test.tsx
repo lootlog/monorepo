@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { OnlinePlayersList } from "./online-players-list";
-import { useWindowsStore } from "@/store/windows.store";
+import { useOnlinePlayersStore } from "@/store/online-players.store";
 
 const mockUsePlayersPresence = vi.fn();
 const mockUseGuildMembersSummary = vi.fn();
@@ -112,16 +112,11 @@ describe("OnlinePlayersList", () => {
       vi.fn(),
     ]);
 
-    useWindowsStore.setState((state) => ({
-      "online-players": {
-        ...state["online-players"],
-        state: {
-          viewMode: "accounts",
-          filtersVisible: true,
-          filtersByGuildId: {},
-        },
-      },
-    }));
+    useOnlinePlayersStore.setState({
+      viewMode: "accounts",
+      filtersVisible: true,
+      filtersByGuildId: {},
+    });
   });
 
   it("renders account entries with locations in accounts view", () => {
@@ -335,9 +330,7 @@ describe("OnlinePlayersList", () => {
 
     expect(screen.getByText("Hero (123w)")).toBeVisible();
     expect(screen.queryByText("Scout (80h)")).not.toBeInTheDocument();
-    expect(
-      useWindowsStore.getState()["online-players"].state.filtersByGuildId,
-    ).toMatchObject({
+    expect(useOnlinePlayersStore.getState().filtersByGuildId).toMatchObject({
       "guild-1": {
         minLvl: 100,
         maxLvl: 500,
@@ -367,9 +360,7 @@ describe("OnlinePlayersList", () => {
       },
     });
 
-    expect(
-      useWindowsStore.getState()["online-players"].state.filtersByGuildId,
-    ).toMatchObject({
+    expect(useOnlinePlayersStore.getState().filtersByGuildId).toMatchObject({
       "guild-1": {
         minLvl: 100,
         maxLvl: 500,

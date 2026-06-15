@@ -89,132 +89,16 @@ describe("migrateWindowsState", () => {
     expect(migrated["add-timer"].state).toEqual({});
   });
 
-  it("adds default online players location view state for persisted windows", () => {
+  it("removes old online players feature state from persisted windows", () => {
     const migrated = migrateWindowsState(
       {
         "online-players": {
-          open: false,
-          position: { x: 0, y: 0 },
-          hasDefinedPosition: false,
-          size: { width: 242, height: 240 },
-          opacity: 4,
-          locked: false,
-        },
-        windowFocusHistory: [],
-      },
-      6,
-    );
-
-    expect(migrated["online-players"].state).toEqual({
-      viewMode: "accounts",
-      filtersVisible: true,
-      filtersByGuildId: {},
-    });
-  });
-
-  it("keeps valid persisted online players view mode", () => {
-    const migrated = migrateWindowsState(
-      {
-        "online-players": {
-          open: false,
-          position: { x: 0, y: 0 },
-          hasDefinedPosition: false,
-          size: { width: 242, height: 240 },
-          opacity: 4,
-          locked: false,
-          state: {
-            viewMode: "members",
-          },
-        },
-        windowFocusHistory: [],
-      },
-      7,
-    );
-
-    expect(migrated["online-players"].state).toEqual({
-      viewMode: "members",
-      filtersVisible: true,
-      filtersByGuildId: {},
-    });
-  });
-
-  it("keeps valid persisted online players filters visibility", () => {
-    const migrated = migrateWindowsState(
-      {
-        "online-players": {
-          open: false,
-          position: { x: 0, y: 0 },
-          hasDefinedPosition: false,
-          size: { width: 242, height: 240 },
-          opacity: 4,
-          locked: false,
-          state: {
-            viewMode: "members",
-            filtersVisible: false,
-          },
-        },
-        windowFocusHistory: [],
-      },
-      7,
-    );
-
-    expect(migrated["online-players"].state).toEqual({
-      viewMode: "members",
-      filtersVisible: false,
-      filtersByGuildId: {},
-    });
-  });
-
-  it("keeps valid persisted online players filters by guild", () => {
-    const migrated = migrateWindowsState(
-      {
-        "online-players": {
-          open: false,
-          position: { x: 0, y: 0 },
-          hasDefinedPosition: false,
-          size: { width: 242, height: 240 },
-          opacity: 4,
-          locked: false,
-          state: {
-            viewMode: "members",
-            filtersVisible: false,
-            filtersByGuildId: {
-              "guild-1": {
-                minLvl: 100,
-                maxLvl: 200,
-                selectedProfession: "w",
-              },
-            },
-          },
-        },
-        windowFocusHistory: [],
-      },
-      8,
-    );
-
-    expect(migrated["online-players"].state).toEqual({
-      viewMode: "members",
-      filtersVisible: false,
-      filtersByGuildId: {
-        "guild-1": {
-          minLvl: 100,
-          maxLvl: 200,
-          selectedProfession: "w",
-        },
-      },
-    });
-  });
-
-  it("drops invalid persisted online players filters by guild", () => {
-    const migrated = migrateWindowsState(
-      {
-        "online-players": {
-          open: false,
-          position: { x: 0, y: 0 },
-          hasDefinedPosition: false,
-          size: { width: 242, height: 240 },
-          opacity: 4,
-          locked: false,
+          open: true,
+          position: { x: 50, y: 60 },
+          hasDefinedPosition: true,
+          size: { width: 280, height: 340 },
+          opacity: 2,
+          locked: true,
           state: {
             viewMode: "members",
             filtersVisible: false,
@@ -229,17 +113,20 @@ describe("migrateWindowsState", () => {
         },
         windowFocusHistory: [],
       },
-      8,
+      7,
     );
 
-    expect(migrated["online-players"].state).toEqual({
-      viewMode: "members",
-      filtersVisible: false,
-      filtersByGuildId: {},
+    expect(migrated["online-players"]).toEqual({
+      open: true,
+      position: { x: 50, y: 60 },
+      hasDefinedPosition: true,
+      size: { width: 280, height: 340 },
+      opacity: 2,
+      locked: true,
     });
   });
 
-  it("adds online players view mode without changing other persisted window settings", () => {
+  it("keeps online players window settings without feature state", () => {
     const migrated = migrateWindowsState(
       {
         chat: {
@@ -297,11 +184,6 @@ describe("migrateWindowsState", () => {
       size: { width: 280, height: 340 },
       opacity: 2,
       locked: false,
-      state: {
-        viewMode: "accounts",
-        filtersVisible: true,
-        filtersByGuildId: {},
-      },
     });
     expect(migrated.currentWindowFocus).toBe("online-players");
     expect(migrated.windowFocusHistory).toEqual(["online-players", "chat"]);

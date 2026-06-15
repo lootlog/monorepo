@@ -2,28 +2,23 @@ import { DraggableWindow } from "@/components/draggable-window";
 import { AnimatedWindow } from "@/components/animated-window";
 import { OnlinePlayersActions } from "@/features/online-players/components/online-players-actions";
 import { OnlinePlayersList } from "@/features/online-players/components/online-players-list";
+import { useOnlinePlayersStore } from "@/store/online-players.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { useTranslation } from "react-i18next";
 
 export const OnlinePlayers = () => {
   const { t } = useTranslation("onlinePlayers");
   const open = useWindowsStore((state) => state["online-players"].open);
-  const viewMode = useWindowsStore(
-    (state) => state["online-players"].state.viewMode,
-  );
-  const filtersVisible = useWindowsStore(
-    (state) => state["online-players"].state.filtersVisible,
-  );
   const setOpen = useWindowsStore((state) => state.setOpen);
-  const setOnlinePlayersViewMode = useWindowsStore(
-    (state) => state.setOnlinePlayersViewMode,
-  );
-  const toggleOnlinePlayersFiltersVisible = useWindowsStore(
-    (state) => state.toggleOnlinePlayersFiltersVisible,
+  const viewMode = useOnlinePlayersStore((state) => state.viewMode);
+  const filtersVisible = useOnlinePlayersStore((state) => state.filtersVisible);
+  const setViewMode = useOnlinePlayersStore((state) => state.setViewMode);
+  const toggleFiltersVisible = useOnlinePlayersStore(
+    (state) => state.toggleFiltersVisible,
   );
 
   const toggleViewMode = () => {
-    setOnlinePlayersViewMode(viewMode === "members" ? "accounts" : "members");
+    setViewMode(viewMode === "members" ? "accounts" : "members");
   };
 
   return (
@@ -39,7 +34,7 @@ export const OnlinePlayers = () => {
           viewMode={viewMode}
           toggleViewMode={toggleViewMode}
           filtersVisible={filtersVisible}
-          toggleFiltersVisible={toggleOnlinePlayersFiltersVisible}
+          toggleFiltersVisible={toggleFiltersVisible}
         />
       >
         <OnlinePlayersList

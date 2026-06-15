@@ -6,8 +6,8 @@ import { OnlinePlayersFilters } from "@/features/online-players/components/onlin
 import { OnlinePlayersListEntry } from "@/features/online-players/components/online-players-list-entry";
 import { usePlayersPresence } from "@/features/online-players/hooks/use-players-presence";
 import type { OnlinePlayersViewMode } from "@/features/online-players/online-players.types";
+import { useOnlinePlayersStore } from "@/store/online-players.store";
 import { useSettingsStore } from "@/store/settings.store";
-import { useWindowsStore } from "@/store/windows.store";
 import { useGuildMembersSummary } from "@/hooks/api/guild-members-summary-query";
 import { useMemberInvalidation } from "@/hooks/api/use-member-invalidation";
 import { mapGuildMembersByUserId } from "@/lib/api/generated-helpers";
@@ -40,12 +40,10 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
   const guildId = guildIdByCharId[characterId];
   const world = guildId ? worldByGuildId[guildId] : undefined;
   const [onlinePlayers] = usePlayersPresence(guildId, world || defaultWorld);
-  const filtersByGuildId = useWindowsStore(
-    (state) => state["online-players"].state.filtersByGuildId,
+  const filtersByGuildId = useOnlinePlayersStore(
+    (state) => state.filtersByGuildId,
   );
-  const setOnlinePlayersFilters = useWindowsStore(
-    (state) => state.setOnlinePlayersFilters,
-  );
+  const setFilters = useOnlinePlayersStore((state) => state.setFilters);
   const { data: guildMembers } = useGuildMembersSummary(
     { guildId: guildId ?? "" },
     {
@@ -69,7 +67,7 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
 
     const minLvl = clampOnlinePlayerLevel(numericValue);
 
-    setOnlinePlayersFilters(guildId, {
+    setFilters(guildId, {
       ...filters,
       minLvl,
       maxLvl: minLvl > filters.maxLvl ? minLvl : filters.maxLvl,
@@ -85,7 +83,7 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
 
     const maxLvl = clampOnlinePlayerLevel(numericValue);
 
-    setOnlinePlayersFilters(guildId, {
+    setFilters(guildId, {
       ...filters,
       minLvl: maxLvl < filters.minLvl ? maxLvl : filters.minLvl,
       maxLvl,
@@ -95,7 +93,7 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
   const handleProfessionChange = (profession: ProfessionFilterValue) => {
     if (!guildId) return;
 
-    setOnlinePlayersFilters(guildId, {
+    setFilters(guildId, {
       ...filters,
       selectedProfession: profession,
     });

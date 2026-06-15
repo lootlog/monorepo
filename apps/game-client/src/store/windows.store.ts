@@ -3,8 +3,6 @@ import {
   APP_ERROR_WINDOW_DEFAULT_HEIGHT,
   APP_ERROR_WINDOW_WIDTH,
 } from "@/features/error-boundary/error-boundary.constants";
-import type { OnlinePlayersFiltersValue } from "@/features/online-players/online-players-list.helpers";
-import type { OnlinePlayersViewMode } from "@/features/online-players/online-players.types";
 import type { GameNpc } from "@lootlog/margonem";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
@@ -22,12 +20,6 @@ type SettingsWindowState = {
 
 type AddTimerWindowState = {
   guildId?: string;
-};
-
-type OnlinePlayersWindowState = {
-  viewMode: OnlinePlayersViewMode;
-  filtersVisible: boolean;
-  filtersByGuildId: Record<string, OnlinePlayersFiltersValue | undefined>;
 };
 
 export type WindowId =
@@ -77,7 +69,7 @@ interface WindowsState {
   timers: WindowData;
   chat: WindowData;
   command: WindowData;
-  "online-players": WindowData & { state: OnlinePlayersWindowState };
+  "online-players": WindowData;
   "add-timer": WindowData & { state: AddTimerWindowState };
   "npc-detector": WindowData;
   notifications: WindowData;
@@ -100,20 +92,11 @@ interface WindowsState {
   toggleOpen: (window: WindowId, autofocus?: boolean) => void;
   setAutofocus: (window: WindowId, autofocus: boolean) => void;
   setSettingsActiveTab: (activeTab?: SettingsTabValue) => void;
-  setOnlinePlayersViewMode: (viewMode: OnlinePlayersViewMode) => void;
-  setOnlinePlayersFilters: (
-    guildId: string,
-    filters: OnlinePlayersFiltersValue,
-  ) => void;
-  toggleOnlinePlayersFiltersVisible: () => void;
 }
 
 const DEFAULT_OPACITY: WindowOpacity = 4;
 const DEFAULT_POSITION: WindowPositionState = { x: 0, y: 0 };
 const DEFAULT_SIZE: WindowSizeState = { width: 242, height: 240 };
-const DEFAULT_ONLINE_PLAYERS_VIEW_MODE: OnlinePlayersViewMode = "accounts";
-const DEFAULT_ONLINE_PLAYERS_FILTERS_VISIBLE = true;
-const VALID_ONLINE_PLAYERS_PROFESSIONS = ["all", "p", "w", "h", "m", "b", "t"];
 
 const sanitizeMaxContentHeight = (height: number) => {
   if (!Number.isFinite(height)) {
@@ -149,37 +132,6 @@ const inferLegacyDefinedPosition = (
   }
 
   return typeof position === "object" && position !== null;
-};
-
-const isOnlinePlayersFiltersValue = (
-  filters: unknown,
-): filters is OnlinePlayersFiltersValue => {
-  if (typeof filters !== "object" || filters === null) {
-    return false;
-  }
-
-  const candidate = filters as Record<string, unknown>;
-
-  return (
-    typeof candidate.minLvl === "number" &&
-    typeof candidate.maxLvl === "number" &&
-    typeof candidate.selectedProfession === "string" &&
-    VALID_ONLINE_PLAYERS_PROFESSIONS.includes(candidate.selectedProfession)
-  );
-};
-
-const sanitizeOnlinePlayersFiltersByGuildId = (
-  filtersByGuildId: unknown,
-): Record<string, OnlinePlayersFiltersValue | undefined> => {
-  if (typeof filtersByGuildId !== "object" || filtersByGuildId === null) {
-    return {};
-  }
-
-  return Object.fromEntries(
-    Object.entries(filtersByGuildId).filter(([, filters]) =>
-      isOnlinePlayersFiltersValue(filters),
-    ),
-  );
 };
 
 export const migrateWindowsState = (
@@ -261,32 +213,9 @@ export const migrateWindowsState = (
   const onlinePlayers = state["online-players"] as
     | Record<string, unknown>
     | undefined;
-  const onlinePlayersState = onlinePlayers?.state as
-    | Record<string, unknown>
-    | undefined;
-  const onlinePlayersViewMode = onlinePlayersState?.viewMode;
-  const onlinePlayersFiltersVisible = onlinePlayersState?.filtersVisible;
-  const onlinePlayersFiltersByGuildId = onlinePlayersState?.filtersByGuildId;
-
   if (onlinePlayers && typeof onlinePlayers === "object") {
-    state["online-players"] = {
-      ...onlinePlayers,
-      state: {
-        ...onlinePlayersState,
-        viewMode:
-          onlinePlayersViewMode === "members" ||
-          onlinePlayersViewMode === "accounts"
-            ? onlinePlayersViewMode
-            : DEFAULT_ONLINE_PLAYERS_VIEW_MODE,
-        filtersVisible:
-          typeof onlinePlayersFiltersVisible === "boolean"
-            ? onlinePlayersFiltersVisible
-            : DEFAULT_ONLINE_PLAYERS_FILTERS_VISIBLE,
-        filtersByGuildId: sanitizeOnlinePlayersFiltersByGuildId(
-          onlinePlayersFiltersByGuildId,
-        ),
-      },
-    };
+    const { state: _, ...windowState } = onlinePlayers;
+    state["online-players"] = windowState;
   }
 
   return state as unknown as WindowsState;
@@ -351,11 +280,6 @@ export const useWindowsStore = create<WindowsState>()(
         size: { width: 242, height: 240 },
         opacity: DEFAULT_OPACITY,
         locked: false,
-        state: {
-          viewMode: DEFAULT_ONLINE_PLAYERS_VIEW_MODE,
-          filtersVisible: DEFAULT_ONLINE_PLAYERS_FILTERS_VISIBLE,
-          filtersByGuildId: {},
-        },
       },
       "add-timer": {
         open: false,
@@ -517,39 +441,6 @@ export const useWindowsStore = create<WindowsState>()(
             state: {
               ...state.settings.state,
               activeTab,
-            },
-          },
-        })),
-      setOnlinePlayersViewMode: (viewMode) =>
-        set((state) => ({
-          "online-players": {
-            ...state["online-players"],
-            state: {
-              ...state["online-players"].state,
-              viewMode,
-            },
-          },
-        })),
-      setOnlinePlayersFilters: (guildId, filters) =>
-        set((state) => ({
-          "online-players": {
-            ...state["online-players"],
-            state: {
-              ...state["online-players"].state,
-              filtersByGuildId: {
-                ...state["online-players"].state.filtersByGuildId,
-                [guildId]: filters,
-              },
-            },
-          },
-        })),
-      toggleOnlinePlayersFiltersVisible: () =>
-        set((state) => ({
-          "online-players": {
-            ...state["online-players"],
-            state: {
-              ...state["online-players"].state,
-              filtersVisible: !state["online-players"].state.filtersVisible,
             },
           },
         })),
