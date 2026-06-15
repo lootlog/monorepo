@@ -2,6 +2,7 @@
   "name": "@lootlog/web",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "files": [
     "dist",
     "nginx.conf"

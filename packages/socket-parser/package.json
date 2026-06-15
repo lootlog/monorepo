@@ -2,6 +2,7 @@
   "name": "@lootlog/socket-parser",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
