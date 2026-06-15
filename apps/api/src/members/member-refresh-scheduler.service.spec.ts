@@ -170,7 +170,7 @@ describe("MemberRefreshSchedulerService", () => {
       : mockFn().mockResolvedValue(undefined);
 
     return {
-      id: `member-refresh:${refreshData.userId}:${refreshData.guildId}`,
+      id: `member-refresh-${refreshData.userId}-${refreshData.guildId}`,
       data: overrides.data ?? refreshData,
       opts: { priority: overrides.priority ?? refreshData.priority },
       getState,
@@ -197,7 +197,7 @@ describe("MemberRefreshSchedulerService", () => {
         "member-refresh",
         refreshData,
         expect.objectContaining({
-          jobId: "member-refresh:user-123:guild-123",
+          jobId: "member-refresh-user-123-guild-123",
           delay: 0,
           priority: refreshData.priority,
         }),
@@ -345,7 +345,7 @@ describe("MemberRefreshSchedulerService", () => {
           "member-refresh",
           refreshData,
           expect.objectContaining({
-            jobId: "member-refresh:user-123:guild-123",
+            jobId: "member-refresh-user-123-guild-123",
           }),
         );
       },

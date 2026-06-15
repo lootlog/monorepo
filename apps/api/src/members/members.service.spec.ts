@@ -1394,7 +1394,7 @@ describe("MembersService", () => {
             type: "exponential",
             delay: 2000,
           },
-          jobId: `member-bulk-refresh:${mockJob.id}`,
+          jobId: `member-bulk-refresh-${mockJob.id}`,
         }),
       );
       expect(amqpConnection.publish).not.toHaveBeenCalledWith(
