@@ -473,6 +473,24 @@ describe("ChatInput", () => {
     expect(mockSendChatMessage).not.toHaveBeenCalled();
   });
 
+  it("completes and cycles mention suggestions with Tab", async () => {
+    const user = userEvent.setup();
+    render(<ChatInput selectedGuildId="guild-1" />);
+
+    const editor = getEditor();
+    await user.type(editor, "@ra");
+
+    await user.keyboard("{Tab}");
+    expect(editor.textContent).toBe("@Raid Team ");
+    expect(mockSendChatMessage).not.toHaveBeenCalled();
+
+    await user.keyboard("{Tab}");
+    expect(editor.textContent).toBe("@Raider ");
+
+    await user.keyboard("{Tab}");
+    expect(editor.textContent).toBe("@Raid Team ");
+  });
+
   it("supports keyboard navigation, colored overlay for resolved mentions, and resets dismissed suggestions after the query changes", async () => {
     const user = userEvent.setup();
     const firstRender = render(<ChatInput selectedGuildId="guild-1" />);

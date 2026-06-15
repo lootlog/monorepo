@@ -10,8 +10,10 @@ import {
   applyChatMentionSuggestion,
   getActiveChatMention,
   getChatMentionMemberSuggestions,
+  getChatMentionSuggestionDisplayLabel,
   getChatMentionRoleSuggestions,
   getChatMentionSuggestions,
+  type ActiveChatMention,
   type ChatMentionSuggestion,
 } from "@/features/chat/chat-mention-suggestions.helpers";
 import {
@@ -78,6 +80,11 @@ type ChatInputProps = {
   autofocus?: boolean;
 };
 
+type TabCompletionSession = {
+  insertedLabel: string;
+  mention: ActiveChatMention;
+};
+
 const REQUIRED_CLEAR_CHAT_PERMISSIONS = [Permission.OWNER, Permission.ADMIN];
 
 const CHAT_INPUT_SHELL_CLASS =
@@ -110,6 +117,8 @@ export const ChatInput: FC<ChatInputProps> = ({
   const [dismissedMentionKey, setDismissedMentionKey] = useState<string | null>(
     null,
   );
+  const [tabCompletionSession, setTabCompletionSession] =
+    useState<TabCompletionSession | null>(null);
   const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false);
   const pendingFocusCaretRef = useRef<number | null>(null);
   const isPending =
@@ -118,8 +127,23 @@ export const ChatInput: FC<ChatInputProps> = ({
     message: messageValue,
     caretIndex,
   });
-  const activeMentionKey = activeMention
-    ? `${activeMention.start}:${activeMention.end}:${activeMention.query}`
+  const isTabCompletionSessionActive =
+    tabCompletionSession !== null &&
+    caretIndex === tabCompletionSession.mention.end + 1 &&
+    /\s/.test(messageValue[tabCompletionSession.mention.end] ?? "") &&
+    messageValue.slice(
+      tabCompletionSession.mention.start,
+      tabCompletionSession.mention.end,
+    ) === tabCompletionSession.insertedLabel;
+  const activeMentionForSuggestions =
+    activeMention ??
+    (isTabCompletionSessionActive ? tabCompletionSession.mention : null);
+  const activeMentionSuggestionKey = activeMentionForSuggestions
+    ? [
+        activeMentionForSuggestions.start,
+        activeMentionForSuggestions.end,
+        activeMentionForSuggestions.query,
+      ].join(":")
     : null;
   const commandSuggestionKey = isCommandSuggestionsInput(messageValue)
     ? `command:${messageValue}`
@@ -128,7 +152,7 @@ export const ChatInput: FC<ChatInputProps> = ({
   const isCommandInput = commandSuggestionKey !== null;
   const activeSuggestionKey = isCommandInput
     ? commandSuggestionKey
-    : activeMentionKey;
+    : activeMentionSuggestionKey;
   const areSuggestionsDismissed =
     activeSuggestionKey !== null && dismissedMentionKey === activeSuggestionKey;
   const shouldLoadMentionData =
@@ -197,7 +221,7 @@ export const ChatInput: FC<ChatInputProps> = ({
   const mentionSuggestions = getChatMentionSuggestions({
     memberSuggestions,
     roleSuggestions,
-    query: activeMention?.query ?? "",
+    query: activeMentionForSuggestions?.query ?? "",
   });
   const mentionContext = buildChatMentionContext({
     currentCharacterNick: Game.hero.nick,
@@ -210,7 +234,9 @@ export const ChatInput: FC<ChatInputProps> = ({
     filteredCommandSuggestions.length > 0 &&
     !areSuggestionsDismissed;
   const isMentionSuggestionsOpen =
-    !isCommandInput && activeMention !== null && !areSuggestionsDismissed;
+    !isCommandInput &&
+    activeMentionForSuggestions !== null &&
+    !areSuggestionsDismissed;
   const suggestionMode = isCommandSuggestionsOpen
     ? "command"
     : isMentionSuggestionsOpen
@@ -297,18 +323,36 @@ export const ChatInput: FC<ChatInputProps> = ({
     });
   }, [isPending]);
 
-  const handleMentionSuggestionSelect = (suggestion: ChatMentionSuggestion) => {
-    if (!activeMention) {
+  const handleMentionSuggestionSelect = ({
+    keepTabCompletionSession = false,
+    mention,
+    suggestion,
+  }: {
+    keepTabCompletionSession?: boolean;
+    mention: ActiveChatMention | null;
+    suggestion: ChatMentionSuggestion;
+  }) => {
+    if (!mention) {
       return;
     }
 
     const { nextMessage, nextCaretIndex } = applyChatMentionSuggestion({
       message: messageValue,
-      mention: activeMention,
+      mention,
       suggestion,
     });
+    const insertedLabel = getChatMentionSuggestionDisplayLabel(suggestion);
 
     applySelectedMessageValue({
+      nextTabCompletionSession: keepTabCompletionSession
+        ? {
+            insertedLabel,
+            mention: {
+              ...mention,
+              end: mention.start + insertedLabel.length,
+            },
+          }
+        : null,
       nextCaretIndex,
       nextMessage,
     });
@@ -327,13 +371,16 @@ export const ChatInput: FC<ChatInputProps> = ({
   const applySelectedMessageValue = ({
     nextCaretIndex,
     nextMessage,
+    nextTabCompletionSession = null,
   }: {
     nextCaretIndex: number;
     nextMessage: string;
+    nextTabCompletionSession?: TabCompletionSession | null;
   }) => {
     setMessageValue(nextMessage);
     setCaretIndex(nextCaretIndex);
     setDismissedMentionKey(null);
+    setTabCompletionSession(nextTabCompletionSession);
     focusEditorCaret(nextCaretIndex);
   };
 
@@ -358,13 +405,17 @@ export const ChatInput: FC<ChatInputProps> = ({
       return;
     }
 
-    handleMentionSuggestionSelect(suggestion);
+    handleMentionSuggestionSelect({
+      mention: activeMentionForSuggestions,
+      suggestion,
+    });
   };
 
   const resetInputState = () => {
     setMessageValue("");
     setCaretIndex(0);
     setDismissedMentionKey(null);
+    setTabCompletionSession(null);
     clearReplyDraft();
     setIsClearConfirmOpen(false);
   };
@@ -390,7 +441,6 @@ export const ChatInput: FC<ChatInputProps> = ({
       focusEditorCaret(0);
     } catch {
       focusEditorCaret(caretIndex);
-      return;
     }
   };
 
@@ -455,7 +505,6 @@ export const ChatInput: FC<ChatInputProps> = ({
       focusEditorCaret(0);
     } catch {
       focusEditorCaret(currentCaretIndex);
-      return;
     }
   };
 
@@ -463,6 +512,7 @@ export const ChatInput: FC<ChatInputProps> = ({
     if (isClearConfirmOpen && event.key === "Escape") {
       event.preventDefault();
       setIsClearConfirmOpen(false);
+      setTabCompletionSession(null);
       focusEditorCaret(caretIndex);
       return;
     }
@@ -479,6 +529,7 @@ export const ChatInput: FC<ChatInputProps> = ({
     if (event.key === "Escape") {
       event.preventDefault();
       setDismissedMentionKey(activeSuggestionKey);
+      setTabCompletionSession(null);
       return;
     }
 
@@ -506,6 +557,33 @@ export const ChatInput: FC<ChatInputProps> = ({
         }
 
         return currentIndex + 1;
+      });
+      return;
+    }
+
+    if (event.key === "Tab" && suggestionMode === "mention") {
+      const selectedSuggestionIndex =
+        selectedMentionIndex >= 0 ? selectedMentionIndex : 0;
+      const selectedSuggestion = activeSuggestions[selectedSuggestionIndex];
+
+      if (selectedSuggestion?.type !== "mention") {
+        return;
+      }
+
+      event.preventDefault();
+      handleMentionSuggestionSelect({
+        keepTabCompletionSession: true,
+        mention: activeMentionForSuggestions,
+        suggestion: selectedSuggestion,
+      });
+      setSelectedMentionIndex((currentIndex) => {
+        const nextIndex = currentIndex >= 0 ? currentIndex + 1 : 1;
+
+        if (nextIndex >= activeSuggestions.length) {
+          return 0;
+        }
+
+        return nextIndex;
       });
       return;
     }
@@ -568,6 +646,7 @@ export const ChatInput: FC<ChatInputProps> = ({
                   setMessageValue(nextMessage);
                   setCaretIndex(nextCaretIndex);
                   setDismissedMentionKey(null);
+                  setTabCompletionSession(null);
                 }}
                 onCaretChange={setCaretIndex}
                 onKeyDown={handleInputKeyDown}
