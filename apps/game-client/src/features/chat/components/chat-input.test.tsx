@@ -598,6 +598,28 @@ describe("ChatInput", () => {
     expect(editor.textContent).toBe("linia 1 linia 2");
   });
 
+  it("cuts selected text through controlled state instead of native contentEditable mutation", async () => {
+    const user = userEvent.setup();
+    const clipboardData = {
+      setData: vi.fn(),
+    };
+    render(<ChatInput selectedGuildId="guild-1" />);
+
+    const editor = getEditor() as HTMLDivElement;
+    await user.click(editor);
+    await user.type(editor, "hello world");
+
+    restoreChatEditorSelection({
+      root: editor,
+      start: 6,
+      end: 11,
+    });
+    fireEvent.cut(editor, { clipboardData });
+
+    expect(clipboardData.setData).toHaveBeenCalledWith("text/plain", "world");
+    expect(editor.textContent).toBe("hello ");
+  });
+
   it("scrolls the single-line editor horizontally to keep the caret visible", async () => {
     const user = userEvent.setup();
     render(<ChatInput selectedGuildId="guild-1" />);
