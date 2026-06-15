@@ -91,7 +91,7 @@
     },
     "auth:migrate:dev": {
       "cache": false,
-      "interactive": true
+      "interactive": false
     },
     "auth:migrate:prod": {
       "cache": false,
