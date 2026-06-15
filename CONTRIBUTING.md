@@ -33,6 +33,7 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 ### Pull Requests
 
 - Fill in the pull request template
+- Confirm that you have the right to submit your contribution under this project's MIT License
 - Follow the code style guidelines (Oxlint, Oxfmt)
 - Include tests when adding new features
 - Update documentation when necessary

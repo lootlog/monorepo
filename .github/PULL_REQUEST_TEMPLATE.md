@@ -173,4 +173,4 @@ Related to #
 
 - [ ] I have read and understood the [Contributing Guidelines](../CONTRIBUTING.md)
 - [ ] I agree to follow the [Code of Conduct](../CODE_OF_CONDUCT.md)
-- [ ] My contribution is my own original work and I have the right to submit it under the project's license
+- [ ] My contribution is my own original work and I have the right to submit it under the project's MIT License
