@@ -2,6 +2,7 @@
   "name": "@lootlog/ui",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "exports": {
     "./globals.css": "./src/styles/globals.css",
