@@ -20,8 +20,7 @@ NestJS-based authentication service for Lootlog.
 Run commands from the monorepo root:
 
 ```bash
-pnpm --filter @lootlog/auth auth:migrate:init
-pnpm --filter @lootlog/auth auth:migrate:dev
+pnpm auth:migrate:dev
 pnpm --filter @lootlog/auth dev
 ```
 
@@ -29,11 +28,14 @@ pnpm --filter @lootlog/auth dev
 
 - `pnpm --filter @lootlog/auth build`
 - `pnpm --filter @lootlog/auth start`
+- `pnpm auth:migrate:dev`
 - `pnpm --filter @lootlog/auth auth:migrate:init`
 - `pnpm --filter @lootlog/auth auth:migrate:prod`
 
 ## Notes
 
 - Database access is configured with Drizzle and PostgreSQL in `src/database/drizzle.ts`.
-- Use `auth:migrate:init` to initialize Drizzle migration tracking for existing databases that predate Drizzle migration tracking.
+- `auth:migrate:dev` applies local Drizzle migrations through the app migrator instead of `drizzle-kit push`.
+- The local migration runner preserves existing auth tables by initializing Drizzle migration tracking before applying pending migrations.
+- Use `auth:migrate:init` only when you need to explicitly initialize Drizzle migration tracking for an existing database that predates Drizzle migration tracking.
 - Observability is initialized at process startup in `src/instrumentation.ts`.
