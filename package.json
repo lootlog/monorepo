@@ -81,7 +81,7 @@
     "oxfmt": "^0.43.0",
     "oxlint": "^1.61.0",
     "tsx": "^4.21.0",
-    "turbo": "^2.9.6",
+    "turbo": "^2.9.14",
     "typescript": "6.0.3"
   },
   "devEngines": {
