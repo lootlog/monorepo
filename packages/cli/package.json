@@ -2,6 +2,7 @@
   "name": "@lootlog/cli",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "bin": {
     "lootlog": "./dist/index.mjs"
   },

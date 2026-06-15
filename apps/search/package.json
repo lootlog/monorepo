@@ -2,6 +2,7 @@
   "name": "@lootlog/search",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "build": "nest build",
     "dev": "nest start --watch",
