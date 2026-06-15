@@ -83,7 +83,7 @@ export class MemberBulkRefreshService {
             type: "exponential",
             delay: 2000,
           },
-          jobId: `member-bulk-refresh:${job.id}`,
+          jobId: `member-bulk-refresh-${job.id}`,
         },
       );
     } catch (error) {
