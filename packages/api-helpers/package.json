@@ -28,7 +28,7 @@
     "build": "tsdown"
   },
   "dependencies": {
-    "hono": "^4.12.14",
+    "hono": "^4.12.21",
     "jose": "^6.2.2"
   },
   "devDependencies": {
