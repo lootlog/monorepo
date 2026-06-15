@@ -53,8 +53,8 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@nestjs/common": "^11.1.19",
-    "@nestjs/core": "^11.1.19",
+    "@nestjs/common": "^11.1.26",
+    "@nestjs/core": "^11.1.26",
     "@types/node": "^25.6.0",
     "ioredis": "^5.10.1",
     "reflect-metadata": "^0.2.2",

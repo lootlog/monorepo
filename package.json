@@ -27,7 +27,7 @@
   },
   "scripts": {
     "build": "turbo build",
-    "dev": "turbo dev --concurrency 14",
+    "dev": "turbo dev --concurrency 15",
     "dev:core": "turbo dev --filter=@lootlog/api --filter=@lootlog/auth --filter=@lootlog/gateway --filter=@lootlog/web --filter=@lootlog/game-client --filter=@lootlog/search --filter=@lootlog/discord-bot --concurrency 13",
     "dev:wiki": "turbo dev --filter=@lootlog/wiki --filter=@lootlog/search --filter=@lootlog/auth",
     "start": "turbo start",
@@ -77,11 +77,11 @@
     "husky": "^9.1.7",
     "knip": "^6.5.0",
     "lint-staged": "^16.4.0",
-    "orval": "^8.8.1",
+    "orval": "^8.17.0",
     "oxfmt": "^0.43.0",
     "oxlint": "^1.61.0",
-    "tsx": "^4.21.0",
-    "turbo": "^2.9.6",
+    "tsx": "^4.22.4",
+    "turbo": "^2.9.18",
     "typescript": "6.0.3"
   },
   "devEngines": {

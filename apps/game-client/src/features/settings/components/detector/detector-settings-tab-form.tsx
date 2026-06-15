@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import type { DetectorNpcType, DetectorTypeSettings } from "@lootlog/types";
 import type { FC } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { useDeepCompareEffect } from "react-use";
+import { useDeepCompareEffect } from "@/hooks/use-deep-compare-effect";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 
