@@ -172,11 +172,36 @@ describe("ChatService", () => {
       );
     });
 
-    it("returns all messages for OWNER users", async () => {
+    it("returns all messages for administrative users without edit capability on other users messages", async () => {
       const messages = [
-        createStoredMessage(),
+        createStoredMessage({ senderId: "discord-other", id: "msg-other" }),
+        createStoredMessage({ senderId: "discord-1", id: "msg-own" }),
+      ];
+      redisService.lrange.mockResolvedValue(
+        messages.map((message) => JSON.stringify(message)),
+      );
+      guildsService.getMultipleGuildsPermissions.mockResolvedValue([
+        {
+          guild: { id: "guild-1" },
+          permissions: [Permission.ADMIN],
+          roles: [],
+        },
+      ]);
+
+      await expect(
+        service.getMessages("discord-1", "guild-1"),
+      ).resolves.toEqual([
+        withCapabilities(messages[0], { canEdit: false, canDelete: true }),
+        withCapabilities(messages[1], { canEdit: true, canDelete: true }),
+      ]);
+    });
+
+    it("returns all messages for OWNER users without edit capability on other users messages", async () => {
+      const messages = [
+        createStoredMessage({ senderId: "discord-other", id: "msg-other" }),
         createStoredMessage({
           id: "msg-2",
+          senderId: "discord-owner",
           type: MessageType.NPC,
           npc: {
             id: 10,
@@ -203,12 +228,11 @@ describe("ChatService", () => {
       ]);
 
       await expect(
-        service.getMessages("discord-1", "guild-1"),
-      ).resolves.toEqual(
-        messages.map((message) =>
-          withCapabilities(message, { canEdit: true, canDelete: true }),
-        ),
-      );
+        service.getMessages("discord-owner", "guild-1"),
+      ).resolves.toEqual([
+        withCapabilities(messages[0], { canEdit: false, canDelete: true }),
+        withCapabilities(messages[1], { canEdit: true, canDelete: true }),
+      ]);
     });
 
     it("filters history for regular users based on NPC permissions and levels", async () => {
@@ -542,11 +566,10 @@ describe("ChatService", () => {
       ).rejects.toBeInstanceOf(ForbiddenException);
     });
 
-    it("allows updates from administrative users for other users messages", async () => {
+    it("rejects updates from administrative users for other users messages", async () => {
       redisService.lrange.mockResolvedValue([
         JSON.stringify(createStoredMessage({ senderId: "discord-owner" })),
       ]);
-      redisService.lset.mockResolvedValue(1);
       guildsService.getMultipleGuildsPermissions.mockResolvedValue([
         {
           guild: { id: "guild-1" },
@@ -557,7 +580,8 @@ describe("ChatService", () => {
 
       await expect(
         service.updateMessage("discord-admin", "guild-1", "msg-1", "updated"),
-      ).resolves.toEqual({ success: true });
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(redisService.lset).not.toHaveBeenCalled();
     });
   });
 
