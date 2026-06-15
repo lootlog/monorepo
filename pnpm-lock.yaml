@@ -1498,8 +1498,8 @@ importers:
   packages/nest-shared:
     dependencies:
       '@axiomhq/winston':
-        specifier: ^1.6.0
-        version: 1.6.0
+        specifier: ^1.6.1
+        version: 1.6.1
       '@lootlog/types':
         specifier: workspace:*
         version: link:../types

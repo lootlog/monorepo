@@ -44,7 +44,7 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@axiomhq/winston": "^1.6.0",
+    "@axiomhq/winston": "^1.6.1",
     "@lootlog/types": "workspace:*",
     "fastify": "^5.8.5",
     "js-yaml": "^4.1.1",
