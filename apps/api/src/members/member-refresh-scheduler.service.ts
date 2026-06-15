@@ -354,7 +354,8 @@ return 0
   }
 
   private getJobId(userId: string, guildId: string): string {
-    return `member-refresh:${userId}:${guildId}`;
+    const parts = ["member", "refresh", userId, guildId];
+    return parts.map(sanitizeBullMqJobIdPart).join("-");
   }
 
   private getUserLockKey(userId: string): string {
@@ -368,4 +369,8 @@ function hasErrorCode(error: unknown): error is { code: unknown } {
   }
 
   return "code" in error;
+}
+
+function sanitizeBullMqJobIdPart(value: string): string {
+  return value.replaceAll(":", "_");
 }
