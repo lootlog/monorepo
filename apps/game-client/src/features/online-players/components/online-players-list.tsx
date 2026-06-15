@@ -6,11 +6,12 @@ import { OnlinePlayersFilters } from "@/features/online-players/components/onlin
 import { OnlinePlayersListEntry } from "@/features/online-players/components/online-players-list-entry";
 import { usePlayersPresence } from "@/features/online-players/hooks/use-players-presence";
 import type { OnlinePlayersViewMode } from "@/features/online-players/online-players.types";
+import { useOnlinePlayersStore } from "@/store/online-players.store";
 import { useSettingsStore } from "@/store/settings.store";
 import { useGuildMembersSummary } from "@/hooks/api/guild-members-summary-query";
 import { useMemberInvalidation } from "@/hooks/api/use-member-invalidation";
 import { mapGuildMembersByUserId } from "@/lib/api/generated-helpers";
-import { useState, type FC, type ReactNode } from "react";
+import { useState, type ChangeEvent, type FC, type ReactNode } from "react";
 import { Game } from "@/lib/game";
 import { useTranslation } from "react-i18next";
 import {
@@ -39,6 +40,10 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
   const guildId = guildIdByCharId[characterId];
   const world = guildId ? worldByGuildId[guildId] : undefined;
   const [onlinePlayers] = usePlayersPresence(guildId, world || defaultWorld);
+  const filtersByGuildId = useOnlinePlayersStore(
+    (state) => state.filtersByGuildId,
+  );
+  const setFilters = useOnlinePlayersStore((state) => state.setFilters);
   const { data: guildMembers } = useGuildMembersSummary(
     { guildId: guildId ?? "" },
     {
@@ -49,41 +54,49 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
     },
   );
   const [searchQuery, setSearchQuery] = useState("");
-  const [filters, setFilters] = useState(DEFAULT_ONLINE_PLAYERS_FILTERS);
+  const filters = guildId
+    ? (filtersByGuildId[guildId] ?? DEFAULT_ONLINE_PLAYERS_FILTERS)
+    : DEFAULT_ONLINE_PLAYERS_FILTERS;
 
-  const handleMinLvlChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMinLvlChange = (event: ChangeEvent<HTMLInputElement>) => {
+    if (!guildId) return;
+
     const numericValue = Number(event.target.value);
 
     if (Number.isNaN(numericValue)) return;
 
     const minLvl = clampOnlinePlayerLevel(numericValue);
 
-    setFilters((currentFilters) => ({
-      ...currentFilters,
+    setFilters(guildId, {
+      ...filters,
       minLvl,
-      maxLvl: minLvl > currentFilters.maxLvl ? minLvl : currentFilters.maxLvl,
-    }));
+      maxLvl: minLvl > filters.maxLvl ? minLvl : filters.maxLvl,
+    });
   };
 
-  const handleMaxLvlChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMaxLvlChange = (event: ChangeEvent<HTMLInputElement>) => {
+    if (!guildId) return;
+
     const numericValue = Number(event.target.value);
 
     if (Number.isNaN(numericValue)) return;
 
     const maxLvl = clampOnlinePlayerLevel(numericValue);
 
-    setFilters((currentFilters) => ({
-      ...currentFilters,
-      minLvl: maxLvl < currentFilters.minLvl ? maxLvl : currentFilters.minLvl,
+    setFilters(guildId, {
+      ...filters,
+      minLvl: maxLvl < filters.minLvl ? maxLvl : filters.minLvl,
       maxLvl,
-    }));
+    });
   };
 
   const handleProfessionChange = (profession: ProfessionFilterValue) => {
-    setFilters((currentFilters) => ({
-      ...currentFilters,
+    if (!guildId) return;
+
+    setFilters(guildId, {
+      ...filters,
       selectedProfession: profession,
-    }));
+    });
   };
 
   const missingMemberIds = guildMembers
