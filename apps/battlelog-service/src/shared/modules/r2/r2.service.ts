@@ -37,7 +37,7 @@ export class R2Service {
     );
   }
 
-  async uploadBattleData(battleId: string, data: any): Promise<void> {
+  async uploadBattleData(battleId: string, data: unknown): Promise<void> {
     try {
       const key = `battles/${battleId}.json`;
       const jsonString = JSON.stringify(data);
@@ -66,7 +66,7 @@ export class R2Service {
     }
   }
 
-  async getBattleData(battleId: string): Promise<any> {
+  async getBattleData<TData = unknown>(battleId: string): Promise<TData> {
     try {
       const cacheKey = `${this.CACHE_PREFIX}:${battleId}`;
 
@@ -74,7 +74,7 @@ export class R2Service {
       if (cachedData) {
         this.logger.debug(`Cache hit for battle ${battleId}`);
         await this.updateLRU(battleId);
-        return JSON.parse(cachedData);
+        return JSON.parse(cachedData) as TData;
       }
 
       this.logger.debug(`Cache miss for battle ${battleId}, fetching from R2`);
@@ -116,7 +116,7 @@ export class R2Service {
         `Battle data retrieved from R2 and cached for battle ${battleId}`,
       );
 
-      return parsedData;
+      return parsedData as TData;
     } catch (error) {
       this.logger.error(
         `Failed to retrieve battle data for ${battleId}:`,
