@@ -13,8 +13,11 @@ type RuntimeOther = Other & {
   imgLoaded?: boolean;
   rx?: number;
   ry?: number;
+  update?: RuntimeOtherUpdate;
   waterTopModify?: number;
 };
+
+type RuntimeOtherUpdate = (this: RuntimeOther, ...args: unknown[]) => unknown;
 
 type RuntimeWindow = Window &
   typeof globalThis & {
@@ -231,6 +234,10 @@ class LootlogOtherGlowManager {
   private readonly glowsByCharacterId = new Map<string, LootlogOtherGlow>();
   private nativeGlowSuppressed = false;
   private originalGetDrawableList: OriginalGetDrawableList | null = null;
+  private readonly originalOtherUpdates = new WeakMap<
+    RuntimeOther,
+    RuntimeOtherUpdate
+  >();
 
   install(): void {
     if (this.cleanupDrawableListPatch) return;
@@ -263,25 +270,41 @@ class LootlogOtherGlowManager {
 
   setGlow(other: Other, color: string): void {
     const characterId = String(other.d.id);
+    const runtimeOther = other as RuntimeOther;
     const existingGlow = this.glowsByCharacterId.get(characterId);
 
     if (existingGlow) {
-      existingGlow.master = other as RuntimeOther;
+      if (existingGlow.master !== runtimeOther) {
+        this.restoreOtherUpdate(existingGlow.master);
+      }
+
+      existingGlow.master = runtimeOther;
       existingGlow.updateColor(color);
+      this.patchOtherUpdate(runtimeOther);
+      existingGlow.update();
       return;
     }
 
+    this.patchOtherUpdate(runtimeOther);
     this.glowsByCharacterId.set(
       characterId,
-      new LootlogOtherGlow(other as RuntimeOther, color),
+      new LootlogOtherGlow(runtimeOther, color),
     );
   }
 
   removeGlow(characterId: string): void {
+    const glow = this.glowsByCharacterId.get(characterId);
+    if (!glow) return;
+
+    this.restoreOtherUpdate(glow.master);
     this.glowsByCharacterId.delete(characterId);
   }
 
   clear(): void {
+    for (const glow of this.glowsByCharacterId.values()) {
+      this.restoreOtherUpdate(glow.master);
+    }
+
     this.glowsByCharacterId.clear();
   }
 
@@ -332,6 +355,36 @@ class LootlogOtherGlowManager {
     for (const glow of this.glowsByCharacterId.values()) {
       glow.update();
     }
+  }
+
+  private patchOtherUpdate(other: RuntimeOther): void {
+    if (this.originalOtherUpdates.has(other) || !other.update) return;
+
+    const originalUpdate = other.update;
+    const manager = this;
+    this.originalOtherUpdates.set(other, originalUpdate);
+    other.update = function lootlogOtherUpdatePatch(...args) {
+      const result = originalUpdate.apply(this, args);
+      manager.updateGlowForOther(this);
+
+      return result;
+    };
+  }
+
+  private restoreOtherUpdate(other: RuntimeOther): void {
+    const originalUpdate = this.originalOtherUpdates.get(other);
+    if (!originalUpdate) return;
+
+    other.update = originalUpdate;
+    this.originalOtherUpdates.delete(other);
+  }
+
+  private updateGlowForOther(other: RuntimeOther): void {
+    const glow = this.glowsByCharacterId.get(String(other.d.id));
+    if (!glow) return;
+
+    glow.master = other;
+    glow.update();
   }
 }
 
