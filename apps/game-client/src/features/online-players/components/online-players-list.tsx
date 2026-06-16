@@ -125,7 +125,7 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
 
   if (accessState === "forbidden") {
     listContent = (
-      <p className="ll:text-gray-400 ll:w-full ll:flex ll:items-center ll:justify-center ll:mt-6 ll:px-3 ll:text-center">
+      <p className="ll:text-gray-400 ll:w-full ll:flex ll:items-center ll:justify-center ll:mt-6 ll:text-center">
         {t("emptyState.noAccess")}
       </p>
     );
