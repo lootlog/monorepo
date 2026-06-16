@@ -133,6 +133,8 @@ class LootlogOtherGlow {
   }
 
   draw(ctx: CanvasRenderingContext2D): void {
+    this.update();
+
     const runtimeWindow = getRuntimeWindow();
     const engine = runtimeWindow.Engine;
     if (!this.maskLoaded || !this.createMaskColor() || !engine?.map) return;
@@ -237,10 +239,14 @@ class LootlogOtherGlowManager {
     if (!others?.getDrawableList) return;
 
     this.originalGetDrawableList = others.getDrawableList;
-    others.getDrawableList = () => [
-      ...this.getBaseDrawableList(others),
-      ...this.glowsByCharacterId.values(),
-    ];
+    others.getDrawableList = () => {
+      this.updateGlows();
+
+      return [
+        ...this.getBaseDrawableList(others),
+        ...this.glowsByCharacterId.values(),
+      ];
+    };
     this.cleanupDrawableListPatch = () => {
       if (this.originalGetDrawableList) {
         others.getDrawableList = this.originalGetDrawableList;
@@ -289,6 +295,20 @@ class LootlogOtherGlowManager {
     return this.glowsByCharacterId.get(characterId)?.getColor();
   }
 
+  getGlowPosition(characterId: string): { x?: number; y?: number } | undefined {
+    const glow = this.glowsByCharacterId.get(characterId);
+    if (!glow) return undefined;
+
+    return {
+      x: glow.d.x,
+      y: glow.d.y,
+    };
+  }
+
+  getGlowOrder(characterId: string): number | undefined {
+    return this.glowsByCharacterId.get(characterId)?.getOrder();
+  }
+
   getGlowCount(): number {
     return this.glowsByCharacterId.size;
   }
@@ -306,6 +326,12 @@ class LootlogOtherGlowManager {
     }
 
     return drawables.filter((drawable) => !isNativeOtherGlowDrawable(drawable));
+  }
+
+  private updateGlows(): void {
+    for (const glow of this.glowsByCharacterId.values()) {
+      glow.update();
+    }
   }
 }
 
