@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useGlobalStore } from "@/store/global.store";
 import { EventDispatcher } from "@/lib/event-dispatcher";
+import { useCharacterTooltipCatchingGuilds } from "./use-character-tooltip-catching-guilds";
 import { useCharacterTooltipGameEvents } from "./use-character-tooltip-game-events";
+import { useOtherCatchingGuildGlow } from "./use-other-catching-guild-glow";
 
 export const useGameEventHandlers = () => {
+  useCharacterTooltipCatchingGuilds();
   useCharacterTooltipGameEvents();
+  useOtherCatchingGuildGlow();
 
   const gameInitialized = useGlobalStore((s) => s.gameState.gameInitialized);
   const [initialized, setInitialized] = useState(false);

@@ -4,6 +4,8 @@ import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Button } from "@/components/ui/button";
 import { gameEventsManager } from "@/lib/game-events-manager";
+import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
+import { useOthersStore } from "@/store/others.store";
 import { usePartyStore } from "@/store/party.store";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import { useState, type FC } from "react";
@@ -278,6 +280,17 @@ type LogEntry = {
   success: boolean;
 };
 
+type DebugOther = {
+  canvasObjectType?: string;
+  d?: {
+    account?: number | string;
+    id?: number | string;
+    nick?: string;
+    x?: number;
+    y?: number;
+  };
+};
+
 export const DebugTab: FC = () => {
   const { t } = useTranslation();
   const eventLabels = {
@@ -296,7 +309,34 @@ export const DebugTab: FC = () => {
   const [jsonError, setJsonError] = useState<string | null>(null);
   const [eventLog, setEventLog] = useState<LogEntry[]>([]);
   const partyMembers = usePartyStore((s) => s.members);
+  const othersById = useOthersStore((s) => s.othersById);
+  const tooltipActiveOther = useCharacterTooltipCatchingGuildsStore(
+    (s) => s.activeOther,
+  );
+  const tooltipActiveTarget = useCharacterTooltipCatchingGuildsStore(
+    (s) => s.activeTarget,
+  );
+  const tooltipEntriesByKey = useCharacterTooltipCatchingGuildsStore(
+    (s) => s.entriesByKey,
+  );
+  const tooltipIsShiftPressed = useCharacterTooltipCatchingGuildsStore(
+    (s) => s.isShiftPressed,
+  );
   const zoomFactor = window.getZoomFactor ? window.getZoomFactor() : null;
+  const tooltipActiveOtherData = tooltipActiveOther?.d;
+  const debugOthers = Object.entries(othersById).map(([storeId, other]) => {
+    const debugOther = other as DebugOther;
+
+    return {
+      account: debugOther.d?.account,
+      canvasObjectType: debugOther.canvasObjectType,
+      id: debugOther.d?.id,
+      nick: debugOther.d?.nick,
+      storeId,
+      x: debugOther.d?.x,
+      y: debugOther.d?.y,
+    };
+  });
 
   const addLogEntry = (eventType: string, success: boolean) => {
     setEventLog((prev) => [
@@ -550,6 +590,63 @@ export const DebugTab: FC = () => {
               </div>
             ))
           )}
+        </SettingsPanel>
+      </SettingsSection>
+
+      <SettingsSection title={t("settings.debug.characterTooltipStateTitle")}>
+        <SettingsPanel className="ll:p-2 ll:space-y-2">
+          <div className="ll:text-xs ll:text-gray-400">
+            <div>
+              {t("settings.debug.characterTooltip.shiftPressed", {
+                value: tooltipIsShiftPressed
+                  ? t("settings.debug.characterTooltip.pressed")
+                  : t("settings.debug.characterTooltip.released"),
+              })}
+            </div>
+            <div>
+              {t("settings.debug.characterTooltip.activeTarget", {
+                value:
+                  tooltipActiveTarget?.key ?? t("settings.debug.notAvailable"),
+              })}
+            </div>
+            <div>
+              {t("settings.debug.characterTooltip.activeOther", {
+                value:
+                  tooltipActiveOtherData?.nick ??
+                  tooltipActiveOtherData?.id ??
+                  t("settings.debug.notAvailable"),
+              })}
+            </div>
+          </div>
+          <pre className="ll:max-h-40 ll:overflow-auto ll:whitespace-pre-wrap ll:break-words ll:text-[10px] ll:leading-4 ll:text-gray-300">
+            {JSON.stringify(
+              {
+                activeOther: tooltipActiveOtherData
+                  ? {
+                      account: tooltipActiveOtherData.account,
+                      id: tooltipActiveOtherData.id,
+                      nick: tooltipActiveOtherData.nick,
+                    }
+                  : null,
+                activeTarget: tooltipActiveTarget,
+                entriesByKey: tooltipEntriesByKey,
+                isShiftPressed: tooltipIsShiftPressed,
+              },
+              null,
+              2,
+            )}
+          </pre>
+        </SettingsPanel>
+      </SettingsSection>
+
+      <SettingsSection title={t("settings.debug.othersStateTitle")}>
+        <SettingsPanel className="ll:p-2 ll:space-y-2">
+          <div className="ll:text-xs ll:text-gray-400">
+            {t("settings.debug.othersCount", { count: debugOthers.length })}
+          </div>
+          <pre className="ll:max-h-48 ll:overflow-auto ll:whitespace-pre-wrap ll:break-words ll:text-[10px] ll:leading-4 ll:text-gray-300">
+            {JSON.stringify(debugOthers, null, 2)}
+          </pre>
         </SettingsPanel>
       </SettingsSection>
 

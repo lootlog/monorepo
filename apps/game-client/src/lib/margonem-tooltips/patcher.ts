@@ -1,14 +1,22 @@
 import type { Engine, Other } from "@lootlog/margonem";
 import { useOthersStore } from "@/store/others.store";
+import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import { characterTooltipTransforms } from "./registry";
 import type { CharacterTooltipKind, MargonemTooltipCharacter } from "./types";
 
 type RuntimeWindow = Window &
   typeof globalThis & {
-    Engine?: Partial<Engine>;
+    Engine?: Partial<Engine> & {
+      canvasTip?: {
+        hide?: (event: unknown) => unknown;
+        show?: (event: unknown, object: unknown) => unknown;
+      };
+    };
   };
 
 type OriginalCreateStrTip = (...args: unknown[]) => string;
+type OriginalCanvasTipHide = (event: unknown) => unknown;
+type OriginalCanvasTipShow = (event: unknown, object: unknown) => unknown;
 
 const patchedCreateStrTip = new WeakMap<
   MargonemTooltipCharacter,
@@ -16,6 +24,9 @@ const patchedCreateStrTip = new WeakMap<
 >();
 
 let cleanupCurrentInstallation: (() => void) | null = null;
+let originalCanvasTipHide: OriginalCanvasTipHide | null = null;
+let originalCanvasTipShow: OriginalCanvasTipShow | null = null;
+let lastOtherCanvasTipEvent: unknown = null;
 const patchedCharacters = new Set<MargonemTooltipCharacter>();
 
 function getRuntimeWindow(): RuntimeWindow {
@@ -114,6 +125,60 @@ function isPrototypePatched(character: MargonemTooltipCharacter): boolean {
   return Boolean(prototype && patchedCreateStrTip.has(prototype));
 }
 
+function isOtherCanvasObject(object: unknown): object is Other {
+  return (
+    typeof object === "object" &&
+    object !== null &&
+    "canvasObjectType" in object &&
+    object.canvasObjectType === "OTHER"
+  );
+}
+
+function patchCanvasTip(runtimeWindow: RuntimeWindow): (() => void) | null {
+  const canvasTip = runtimeWindow.Engine?.canvasTip;
+  if (!canvasTip?.show || !canvasTip.hide || originalCanvasTipShow) {
+    return null;
+  }
+
+  originalCanvasTipShow = canvasTip.show;
+  originalCanvasTipHide = canvasTip.hide;
+
+  canvasTip.show = (event, object) => {
+    if (isOtherCanvasObject(object)) {
+      lastOtherCanvasTipEvent = event;
+      useCharacterTooltipCatchingGuildsStore.getState().setActiveOther(object);
+
+      if (useCharacterTooltipCatchingGuildsStore.getState().isShiftPressed) {
+        patchOtherCharacterTooltip(object);
+      }
+    } else {
+      lastOtherCanvasTipEvent = null;
+      useCharacterTooltipCatchingGuildsStore.getState().clearActiveOther();
+    }
+
+    return originalCanvasTipShow?.call(canvasTip, event, object);
+  };
+
+  canvasTip.hide = (event) => {
+    lastOtherCanvasTipEvent = null;
+    useCharacterTooltipCatchingGuildsStore.getState().clearActiveOther();
+    return originalCanvasTipHide?.call(canvasTip, event);
+  };
+
+  return () => {
+    if (originalCanvasTipShow) {
+      canvasTip.show = originalCanvasTipShow;
+    }
+    if (originalCanvasTipHide) {
+      canvasTip.hide = originalCanvasTipHide;
+    }
+
+    originalCanvasTipShow = null;
+    originalCanvasTipHide = null;
+    lastOtherCanvasTipEvent = null;
+  };
+}
+
 export function refreshCharacterTooltips(): void {
   const engine = getRuntimeWindow().Engine;
   if (!engine) return;
@@ -139,6 +204,19 @@ export function patchOtherCharacterTooltip(other: Other): void {
   refreshCharacterTooltip(other);
 }
 
+export function refreshActiveOtherCanvasTooltip(): void {
+  const activeOther =
+    useCharacterTooltipCatchingGuildsStore.getState().activeOther;
+  if (!activeOther) return;
+
+  patchOtherCharacterTooltip(activeOther);
+
+  const canvasTip = getRuntimeWindow().Engine?.canvasTip;
+  if (!canvasTip?.show || !lastOtherCanvasTipEvent) return;
+
+  canvasTip.show(lastOtherCanvasTipEvent, activeOther);
+}
+
 export function patchOtherCharacterTooltips(others: Other[]): void {
   for (const other of others) {
     patchOtherCharacterTooltip(other);
@@ -155,6 +233,7 @@ export function installCharacterTooltipTransforms(): () => void {
   if (!engine) {
     return () => undefined;
   }
+  const cleanupCanvasTip = patchCanvasTip(runtimeWindow);
 
   if (patchCreateStrTip(engine.hero, "hero") && engine.hero) {
     patchedCharacters.add(engine.hero);
@@ -166,6 +245,8 @@ export function installCharacterTooltipTransforms(): () => void {
   );
 
   cleanupCurrentInstallation = () => {
+    cleanupCanvasTip?.();
+
     for (const character of patchedCharacters) {
       restoreCreateStrTip(character);
       refreshCharacterTooltip(character);

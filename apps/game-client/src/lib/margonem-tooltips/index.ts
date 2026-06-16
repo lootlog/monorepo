@@ -1,4 +1,5 @@
 export { escapeTooltipHtml } from "./html";
+export { appendCatchingGuildsTooltipSection } from "./catching-guilds";
 export {
   characterTooltipTransforms,
   CharacterTooltipTransformRegistry,
@@ -7,6 +8,7 @@ export {
   installCharacterTooltipTransforms,
   patchOtherCharacterTooltip,
   patchOtherCharacterTooltips,
+  refreshActiveOtherCanvasTooltip,
   refreshCharacterTooltips,
 } from "./patcher";
 export type {
