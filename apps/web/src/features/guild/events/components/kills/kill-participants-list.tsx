@@ -12,7 +12,8 @@ import {
 import { Clock, AlertCircle } from "lucide-react";
 import { cn } from "@lootlog/ui/lib/utils";
 import type { KillParticipant } from "../../hooks/queries/use-hero-kill-history";
-import { formatDurationHuman, formatMapNamesFromMapData } from "../../utils";
+import { formatMapNamesFromMapData } from "../../utils/aggregate-map-data";
+import { formatDurationHuman } from "../../utils/format-duration";
 
 interface KillParticipantsListProps {
   participants: KillParticipant[];

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { formatDurationCompact } from "../../utils";
+import { formatDurationCompact } from "../../utils/format-duration";
 
 const formatTimeRemaining = (targetDate: Date): string => {
   const now = new Date();
