@@ -150,14 +150,6 @@ export class ReservationsService {
     };
   }
 
-  private isAlignedToGranularity(date: Date, granularityMinutes: number) {
-    return (
-      date.getSeconds() === 0 &&
-      date.getMilliseconds() === 0 &&
-      date.getMinutes() % granularityMinutes === 0
-    );
-  }
-
   private emitReservationCreated(
     guildId: string,
     reservation: ReservationRecord,
@@ -236,21 +228,6 @@ export class ReservationsService {
     if (incomingFrom > now + maxAdvanceMs) {
       throw new BadRequestException(
         `Rezerwację można utworzyć maksymalnie ${settings.reservationMaxAdvanceDays} dni do przodu.`,
-      );
-    }
-
-    if (
-      !this.isAlignedToGranularity(
-        fromDate,
-        settings.reservationTimeGranularityMinutes,
-      ) ||
-      !this.isAlignedToGranularity(
-        toDate,
-        settings.reservationTimeGranularityMinutes,
-      )
-    ) {
-      throw new BadRequestException(
-        `Rezerwacje muszą zaczynać się i kończyć w kroku co ${settings.reservationTimeGranularityMinutes} minut.`,
       );
     }
 
