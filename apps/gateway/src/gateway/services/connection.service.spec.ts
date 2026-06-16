@@ -36,6 +36,19 @@ describe("ConnectionService", () => {
     });
   });
 
+  it("normalizes repeated auth headers to the first value", () => {
+    const metadata = service.getConnectionMetadata({
+      headers: {
+        "x-auth-discord-id": ["discord-1", "discord-2"],
+        "x-auth-user-id": ["user-1", "user-2"],
+        origin: "https://alpha.margonem.pl",
+      },
+    } as never);
+
+    expect(metadata.discordId).toBe("discord-1");
+    expect(metadata.userId).toBe("user-1");
+  });
+
   it("ignores dev permission override auth when the gateway flag is disabled", () => {
     const metadata = service.getConnectionMetadata(
       {
