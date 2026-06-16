@@ -218,7 +218,7 @@ const requestServerPresence = (
       event: GatewayEvent,
       data: { guildId: string; world: string },
     ) => Promise<PlayerPresenceAckPayload | undefined>
-  )(GatewayEvent.REQUEST_SERVER_PRESENCE, {
+  )(GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH, {
     guildId,
     world,
   });
@@ -300,7 +300,9 @@ export const usePlayersPresence = (
   useEffect(() => {
     if (!socket || !connected || !joined) return;
 
-    const handlePresenceUpdate = (data: PlayerPresenceUpdatePayload) => {
+    const handleOnlinePlayersPresenceUpdate = (
+      data: PlayerPresenceUpdatePayload,
+    ) => {
       const normalizedPresence = normalizePresence(data);
 
       if (
@@ -349,10 +351,16 @@ export const usePlayersPresence = (
       });
     };
 
-    socket.on(GatewayEvent.UPDATE_SERVER_PRESENCE, handlePresenceUpdate);
+    socket.on(
+      GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
+      handleOnlinePlayersPresenceUpdate,
+    );
 
     return () => {
-      socket.off(GatewayEvent.UPDATE_SERVER_PRESENCE, handlePresenceUpdate);
+      socket.off(
+        GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
+        handleOnlinePlayersPresenceUpdate,
+      );
     };
   }, [socket, joined, connected]);
 

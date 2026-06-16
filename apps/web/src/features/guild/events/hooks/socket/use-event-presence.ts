@@ -40,7 +40,7 @@ export const useEventPresence = ({
     Map<string, PlayerPresence[]>
   >(new Map());
 
-  const handlePresenceUpdate = useCallback(
+  const handleEventPresenceUpdate = useCallback(
     (payload: PresenceUpdatePayload) => {
       if (payload.guildId !== guildId) return;
 
@@ -98,7 +98,7 @@ export const useEventPresence = ({
     if (!socket || !connected || !joined || !guildId || !world) return;
 
     socket.emit(
-      GatewayEvent.PRESENCE_FETCH,
+      GatewayEvent.EVENT_PRESENCE_FETCH,
       { guildId, world },
       (response: Record<string, PlayerPresence[]>) => {
         const newMap = new Map<string, PlayerPresence[]>();
@@ -129,10 +129,10 @@ export const useEventPresence = ({
 
     fetchInitialPresence();
 
-    socket.on(GatewayEvent.PRESENCE_UPDATE, handlePresenceUpdate);
+    socket.on(GatewayEvent.EVENT_PRESENCE_UPDATE, handleEventPresenceUpdate);
 
     return () => {
-      socket.off(GatewayEvent.PRESENCE_UPDATE, handlePresenceUpdate);
+      socket.off(GatewayEvent.EVENT_PRESENCE_UPDATE, handleEventPresenceUpdate);
     };
   }, [
     socket,
@@ -140,7 +140,7 @@ export const useEventPresence = ({
     joined,
     guildId,
     world,
-    handlePresenceUpdate,
+    handleEventPresenceUpdate,
     fetchInitialPresence,
   ]);
 

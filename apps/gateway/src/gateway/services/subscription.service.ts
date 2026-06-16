@@ -76,7 +76,7 @@ export class SubscriptionService {
         server,
         client,
         user,
-        GatewayEvent.UPDATE_SERVER_PRESENCE,
+        GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
       );
 
       await this.activityService.publishActivityEvent(

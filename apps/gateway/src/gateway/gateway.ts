@@ -9,9 +9,9 @@ import {
 } from "@nestjs/websockets";
 import type { Server } from "socket.io";
 import type { JoinGatewayDto } from "src/gateway/dto/join-gateway.dto";
-import type { RequestServerPresenceDto } from "src/gateway/dto/request-server-presence.dto";
-import type { EventPresenceUpdateDto } from "src/gateway/dto/event-presence-update.dto";
-import type { RequestPlayerPresenceDto } from "src/gateway/dto/request-player-presence.dto";
+import type { RequestOnlinePlayersPresenceDto } from "src/gateway/dto/request-online-players-presence.dto";
+import type { PlayerPresenceUpdateDto } from "src/gateway/dto/player-presence-update.dto";
+import type { RequestEventPresenceDto } from "src/gateway/dto/request-event-presence.dto";
 import { GatewayEvent } from "src/gateway/enums/gateway-event.enum";
 import { GatewayConfig } from "src/gateway/constants/gateway-config.constant";
 import { WsDiscordId, WsUserId } from "src/shared/decorators/user-id.decorator";
@@ -99,12 +99,12 @@ export class Gateway {
   }
 
   @UseFilters(new BaseWsExceptionFilter())
-  @SubscribeMessage(GatewayEvent.REQUEST_SERVER_PRESENCE)
-  async handlePresenceFetch(
+  @SubscribeMessage(GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH)
+  async handleOnlinePlayersPresenceFetch(
     @ConnectedSocket() client: Socket,
-    @MessageBody() { guildId, world }: RequestServerPresenceDto,
+    @MessageBody() { guildId, world }: RequestOnlinePlayersPresenceDto,
   ): Promise<PresenceFetchResponse<Record<string, unknown[]>>> {
-    return this.presenceService.fetchServerPresence(
+    return this.presenceService.fetchOnlinePlayersPresence(
       this.server,
       client,
       guildId,
@@ -113,11 +113,11 @@ export class Gateway {
   }
 
   @UseFilters(new BaseWsExceptionFilter())
-  @SubscribeMessage(GatewayEvent.PRESENCE_UPDATE)
-  handlePresenceUpdate(
+  @SubscribeMessage(GatewayEvent.PLAYER_PRESENCE_UPDATE)
+  handlePlayerPresenceUpdate(
     @WsDiscordId() discordId: string,
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: EventPresenceUpdateDto,
+    @MessageBody() data: PlayerPresenceUpdateDto,
   ): void {
     this.presenceService.updatePlayerPresence(
       client,
@@ -128,12 +128,12 @@ export class Gateway {
   }
 
   @UseFilters(new BaseWsExceptionFilter())
-  @SubscribeMessage(GatewayEvent.PRESENCE_FETCH)
-  async handlePlayerPresenceFetch(
+  @SubscribeMessage(GatewayEvent.EVENT_PRESENCE_FETCH)
+  async handleEventPresenceFetch(
     @ConnectedSocket() client: Socket,
-    @MessageBody() { guildId, world }: RequestPlayerPresenceDto,
+    @MessageBody() { guildId, world }: RequestEventPresenceDto,
   ): Promise<Record<string, PlayerPresence[]>> {
-    return this.presenceService.fetchGuildPresence(
+    return this.presenceService.fetchEventPresence(
       this.server,
       client,
       guildId,

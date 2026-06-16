@@ -12,9 +12,9 @@ describe("Gateway", () => {
   const mockPresenceService = {
     emitDisconnectPresence: vi.fn(),
     broadcastPlayerDisconnect: vi.fn(),
-    fetchServerPresence: vi.fn(),
+    fetchOnlinePlayersPresence: vi.fn(),
     updatePlayerPresence: vi.fn(),
-    fetchGuildPresence: vi.fn(),
+    fetchEventPresence: vi.fn(),
     checkPresenceForMap: vi.fn(),
   };
 
@@ -154,7 +154,7 @@ describe("Gateway", () => {
     expect(client.emit).toHaveBeenCalledWith(GatewayEvent.JOIN, joinResult);
   });
 
-  it("delegates server presence fetch through the presence service", async () => {
+  it("delegates online players presence fetch through the presence service", async () => {
     const client = {
       data: {
         platform: Platform.GAME,
@@ -165,10 +165,12 @@ describe("Gateway", () => {
       "discord-1": [{ player: { name: "Hero" } }],
     };
 
-    mockPresenceService.fetchServerPresence.mockResolvedValue(expectedPresence);
+    mockPresenceService.fetchOnlinePlayersPresence.mockResolvedValue(
+      expectedPresence,
+    );
 
     await expect(
-      gateway.handlePresenceFetch(
+      gateway.handleOnlinePlayersPresenceFetch(
         client as never,
         {
           guildId: "guild-1",

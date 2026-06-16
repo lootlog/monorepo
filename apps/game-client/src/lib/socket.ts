@@ -34,7 +34,7 @@ type ServerToClientEvents = {
 
   [GatewayEvent.CHAT_MESSAGE]: (data: ChatMessage) => void;
 
-  [GatewayEvent.UPDATE_SERVER_PRESENCE]: (data: {
+  [GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE]: (data: {
     discordId: string;
     guildId?: string;
     sessionId?: string;
@@ -109,12 +109,12 @@ type ClientToServerEvents = {
     };
   }) => void;
 
-  [GatewayEvent.REQUEST_SERVER_PRESENCE]: (data: {
+  [GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH]: (data: {
     guildId: string;
     world: string;
   }) => void;
 
-  [GatewayEvent.PRESENCE_UPDATE]: (data: {
+  [GatewayEvent.PLAYER_PRESENCE_UPDATE]: (data: {
     isAfk?: boolean;
     mapId?: number;
     mapName?: string;
