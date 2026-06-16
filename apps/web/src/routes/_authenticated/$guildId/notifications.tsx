@@ -16,8 +16,8 @@ function GuildNotificationsLayout() {
 }
 
 export const Route = createFileRoute("/_authenticated/$guildId/notifications")({
-  loader: ({ context, params, preload }) =>
-    withRouteLoaderCancellation(async () => {
+  loader: ({ abortController, context, params, preload }) =>
+    withRouteLoaderCancellation(abortController, async () => {
       if (preload) {
         return null;
       }

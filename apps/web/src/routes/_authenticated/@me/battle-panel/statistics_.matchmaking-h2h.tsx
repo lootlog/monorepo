@@ -14,8 +14,8 @@ export const Route = createFileRoute(
   "/_authenticated/@me/battle-panel/statistics_/matchmaking-h2h",
 )({
   validateSearch: battlePanelHeadToHeadSearchSchema,
-  loader: ({ context, location }) =>
-    withRouteLoaderCancellation(async () => {
+  loader: ({ abortController, context, location }) =>
+    withRouteLoaderCancellation(abortController, async () => {
       const search = loadBattlePanelHeadToHeadSearch(location.searchStr);
       const characterId = await ensureBattlePanelCharacterId({
         queryClient: context.queryClient,

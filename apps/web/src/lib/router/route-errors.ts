@@ -25,14 +25,25 @@ const isRouteLoaderCancelledError = (error: unknown) => {
   return isCancelledError(error);
 };
 
+const createRouteLoaderAbortError = () => {
+  const error = new Error("Route loader was cancelled");
+  error.name = "AbortError";
+  return error;
+};
+
 export const withRouteLoaderCancellation = async <T>(
+  abortController: AbortController,
   loader: () => Promise<T>,
 ) => {
   try {
     return await loader();
   } catch (error) {
     if (isRouteLoaderCancelledError(error)) {
-      return undefined;
+      if (abortController.signal.aborted) {
+        throw createRouteLoaderAbortError();
+      }
+
+      throw error;
     }
 
     throw error;

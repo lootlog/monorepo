@@ -12,8 +12,8 @@ import {
 export const Route = createFileRoute(
   "/_authenticated/$guildId/stats/npcs/$npcId",
 )({
-  loader: ({ context, params }) =>
-    withRouteLoaderCancellation(async () => {
+  loader: ({ abortController, context, params }) =>
+    withRouteLoaderCancellation(abortController, async () => {
       const npcId = Number.parseInt(params.npcId, 10);
 
       if (Number.isNaN(npcId)) {
