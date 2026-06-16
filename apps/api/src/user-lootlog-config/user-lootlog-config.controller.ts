@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Put, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+} from "@nestjs/common";
 import { DiscordId } from "@lootlog/nest-shared/decorators";
 import {
   ApiTags,
@@ -13,6 +21,9 @@ import { CreateOrUpdateLootlogCharacterConfigDto } from "src/user-lootlog-config
 import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
 import {
   UserLootlogConfigAccountResponseDto,
+  UserLootlogPlayersCatchingGuildsRequestDto,
+  UserLootlogPlayersCatchingGuildsResponseDto,
+  UserLootlogPlayerCatchingGuildsResponseDto,
   UserLootlogConfigResponseDto,
 } from "src/shared/dto/user-lootlog-config-response.dto";
 
@@ -48,6 +59,60 @@ export class UserLootlogConfigController {
     return this.userLootlogConfigService.getLootlogAccountConfig(
       discordId,
       accountId,
+    );
+  }
+
+  @Get("players/:accountId/:characterId/catching-guilds")
+  @ApiOperation({
+    summary: "Get visible player catching guilds",
+    description:
+      "Retrieve shared accessible Lootlog guilds where a player has catching enabled",
+  })
+  @ApiParam({
+    name: "accountId",
+    description: "Hovered player account ID",
+    example: "9822301",
+  })
+  @ApiParam({
+    name: "characterId",
+    description: "Hovered player character ID",
+    example: "617",
+  })
+  @ZodResponse({
+    status: 200,
+    description: "Visible player catching guilds",
+    type: UserLootlogPlayerCatchingGuildsResponseDto,
+  })
+  getPlayerCatchingGuilds(
+    @DiscordId() discordId: string,
+    @Param("accountId") accountId: string,
+    @Param("characterId") characterId: string,
+  ) {
+    return this.userLootlogConfigService.getPlayerCatchingGuilds(
+      discordId,
+      accountId,
+      characterId,
+    );
+  }
+
+  @Post("players/catching-guilds/batch")
+  @ApiOperation({
+    summary: "Get visible players catching guilds",
+    description:
+      "Retrieve shared accessible Lootlog guilds where visible players have catching enabled",
+  })
+  @ZodResponse({
+    status: 200,
+    description: "Visible players catching guilds",
+    type: UserLootlogPlayersCatchingGuildsResponseDto,
+  })
+  getPlayersCatchingGuilds(
+    @DiscordId() discordId: string,
+    @Body() data: UserLootlogPlayersCatchingGuildsRequestDto,
+  ) {
+    return this.userLootlogConfigService.getPlayersCatchingGuilds(
+      discordId,
+      data,
     );
   }
 

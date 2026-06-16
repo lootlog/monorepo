@@ -26,8 +26,12 @@ import type {
   CreateOrUpdateLootlogCharacterConfigDto,
   UserLootlogConfigAccountResponseDtoOutput,
   UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfigPathParameters,
+  UserLootlogConfigControllerGetPlayerCatchingGuildsPathParameters,
   UserLootlogConfigControllerGetUserLootlogConfigByAccountIdPathParameters,
-  UserLootlogConfigResponseDtoOutput
+  UserLootlogConfigResponseDtoOutput,
+  UserLootlogPlayerCatchingGuildsResponseDtoOutput,
+  UserLootlogPlayersCatchingGuildsRequestDto,
+  UserLootlogPlayersCatchingGuildsResponseDtoOutput
 } from '../model';
 
 import { orvalFetch } from '../../../orval-fetch';
@@ -228,4 +232,194 @@ export const useUserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig 
         TContext
       > => {
       return useMutation(getUserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfigMutationOptions(options));
+    }
+    /**
+ * Retrieve shared accessible Lootlog guilds where a player has catching enabled
+ * @summary Get visible player catching guilds
+ */
+export const getUserLootlogConfigControllerGetPlayerCatchingGuildsUrl = ({ accountId, characterId }: UserLootlogConfigControllerGetPlayerCatchingGuildsPathParameters,) => {
+
+
+
+
+  return `/users/@me/lootlog-config/players/${accountId}/${characterId}/catching-guilds`
+}
+
+export const userLootlogConfigControllerGetPlayerCatchingGuilds = async ({ accountId, characterId }: UserLootlogConfigControllerGetPlayerCatchingGuildsPathParameters, options?: RequestInit): Promise<UserLootlogPlayerCatchingGuildsResponseDtoOutput> => {
+
+  return orvalFetch<UserLootlogPlayerCatchingGuildsResponseDtoOutput>(getUserLootlogConfigControllerGetPlayerCatchingGuildsUrl({ accountId, characterId }),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getUserLootlogConfigControllerGetPlayerCatchingGuildsQueryKey = ({ accountId, characterId }: UserLootlogConfigControllerGetPlayerCatchingGuildsPathParameters,) => {
+    return [
+    `/users/@me/lootlog-config/players/${accountId}/${characterId}/catching-guilds`
+    ] as const;
+    }
+
+
+export const getUserLootlogConfigControllerGetPlayerCatchingGuildsQueryOptions = <TData = Awaited<ReturnType<typeof userLootlogConfigControllerGetPlayerCatchingGuilds>>, TError = ErrorType<unknown>>({ accountId, characterId }: UserLootlogConfigControllerGetPlayerCatchingGuildsPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof userLootlogConfigControllerGetPlayerCatchingGuilds>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getUserLootlogConfigControllerGetPlayerCatchingGuildsQueryKey({ accountId, characterId });
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof userLootlogConfigControllerGetPlayerCatchingGuilds>>> = ({ signal }) => userLootlogConfigControllerGetPlayerCatchingGuilds({ accountId, characterId }, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(accountId && characterId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof userLootlogConfigControllerGetPlayerCatchingGuilds>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type UserLootlogConfigControllerGetPlayerCatchingGuildsQueryResult = NonNullable<Awaited<ReturnType<typeof userLootlogConfigControllerGetPlayerCatchingGuilds>>>
+export type UserLootlogConfigControllerGetPlayerCatchingGuildsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get visible player catching guilds
+ */
+
+export function useUserLootlogConfigControllerGetPlayerCatchingGuilds<TData = Awaited<ReturnType<typeof userLootlogConfigControllerGetPlayerCatchingGuilds>>, TError = ErrorType<unknown>>(
+ { accountId, characterId }: UserLootlogConfigControllerGetPlayerCatchingGuildsPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof userLootlogConfigControllerGetPlayerCatchingGuilds>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getUserLootlogConfigControllerGetPlayerCatchingGuildsQueryOptions({ accountId, characterId },options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get visible player catching guilds
+ */
+export const prefetchUserLootlogConfigControllerGetPlayerCatchingGuildsQuery = async <TData = Awaited<ReturnType<typeof userLootlogConfigControllerGetPlayerCatchingGuilds>>, TError = ErrorType<unknown>>(
+ queryClient: QueryClient, { accountId, characterId }: UserLootlogConfigControllerGetPlayerCatchingGuildsPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof userLootlogConfigControllerGetPlayerCatchingGuilds>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getUserLootlogConfigControllerGetPlayerCatchingGuildsQueryOptions({ accountId, characterId },options)
+
+  await queryClient.prefetchQuery(queryOptions);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get visible player catching guilds
+ */
+export const invalidateUserLootlogConfigControllerGetPlayerCatchingGuilds = async (
+ queryClient: QueryClient, { accountId, characterId }: UserLootlogConfigControllerGetPlayerCatchingGuildsPathParameters, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getUserLootlogConfigControllerGetPlayerCatchingGuildsQueryKey({ accountId, characterId }) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get visible player catching guilds
+ */
+export const useSetUserLootlogConfigControllerGetPlayerCatchingGuildsQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ accountId, characterId }: UserLootlogConfigControllerGetPlayerCatchingGuildsPathParameters,updater: Awaited<ReturnType<typeof userLootlogConfigControllerGetPlayerCatchingGuilds>> | undefined | ((old: Awaited<ReturnType<typeof userLootlogConfigControllerGetPlayerCatchingGuilds>> | undefined) => Awaited<ReturnType<typeof userLootlogConfigControllerGetPlayerCatchingGuilds>> | undefined)) => {
+    queryClient.setQueryData(getUserLootlogConfigControllerGetPlayerCatchingGuildsQueryKey({ accountId, characterId }), updater);
+  };
+}
+
+/**
+ * @summary Get visible player catching guilds
+ */
+export const useGetUserLootlogConfigControllerGetPlayerCatchingGuildsQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ accountId, characterId }: UserLootlogConfigControllerGetPlayerCatchingGuildsPathParameters,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof userLootlogConfigControllerGetPlayerCatchingGuilds>>>(getUserLootlogConfigControllerGetPlayerCatchingGuildsQueryKey({ accountId, characterId }));
+}
+
+
+/**
+ * Retrieve shared accessible Lootlog guilds where visible players have catching enabled
+ * @summary Get visible players catching guilds
+ */
+export const getUserLootlogConfigControllerGetPlayersCatchingGuildsUrl = () => {
+
+
+
+
+  return `/users/@me/lootlog-config/players/catching-guilds/batch`
+}
+
+export const userLootlogConfigControllerGetPlayersCatchingGuilds = async (userLootlogPlayersCatchingGuildsRequestDto: UserLootlogPlayersCatchingGuildsRequestDto, options?: RequestInit): Promise<UserLootlogPlayersCatchingGuildsResponseDtoOutput> => {
+
+  return orvalFetch<UserLootlogPlayersCatchingGuildsResponseDtoOutput>(getUserLootlogConfigControllerGetPlayersCatchingGuildsUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      userLootlogPlayersCatchingGuildsRequestDto,)
+  }
+);}
+
+
+
+
+export const getUserLootlogConfigControllerGetPlayersCatchingGuildsMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof userLootlogConfigControllerGetPlayersCatchingGuilds>>, TError,{data: BodyType<UserLootlogPlayersCatchingGuildsRequestDto>}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof userLootlogConfigControllerGetPlayersCatchingGuilds>>, TError,{data: BodyType<UserLootlogPlayersCatchingGuildsRequestDto>}, TContext> => {
+
+const mutationKey = ['userLootlogConfigControllerGetPlayersCatchingGuilds'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof userLootlogConfigControllerGetPlayersCatchingGuilds>>, {data: BodyType<UserLootlogPlayersCatchingGuildsRequestDto>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  userLootlogConfigControllerGetPlayersCatchingGuilds(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UserLootlogConfigControllerGetPlayersCatchingGuildsMutationResult = NonNullable<Awaited<ReturnType<typeof userLootlogConfigControllerGetPlayersCatchingGuilds>>>
+    export type UserLootlogConfigControllerGetPlayersCatchingGuildsMutationBody = BodyType<UserLootlogPlayersCatchingGuildsRequestDto>
+    export type UserLootlogConfigControllerGetPlayersCatchingGuildsMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Get visible players catching guilds
+ */
+export const useUserLootlogConfigControllerGetPlayersCatchingGuilds = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof userLootlogConfigControllerGetPlayersCatchingGuilds>>, TError,{data: BodyType<UserLootlogPlayersCatchingGuildsRequestDto>}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof userLootlogConfigControllerGetPlayersCatchingGuilds>>,
+        TError,
+        {data: BodyType<UserLootlogPlayersCatchingGuildsRequestDto>},
+        TContext
+      > => {
+      return useMutation(getUserLootlogConfigControllerGetPlayersCatchingGuildsMutationOptions(options));
     }

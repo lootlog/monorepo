@@ -4,16 +4,19 @@ import {
   installCharacterTooltipTransforms,
   patchOtherCharacterTooltip,
   patchOtherCharacterTooltips,
+  refreshActiveOtherCanvasTooltip,
 } from "./index";
+import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import { useOthersStore } from "@/store/others.store";
 import type { Other } from "@lootlog/margonem";
 
 type TestCharacter = {
-  d: { nick: string };
+  canvasObjectType?: string;
+  d: { account?: number; id?: string; nick: string };
   createStrTip: () => string;
   tip?: [string, string];
-  tipUpdate?: ReturnType<typeof vi.fn>;
-  updateTip?: ReturnType<typeof vi.fn>;
+  tipUpdate?: () => void;
+  updateTip?: () => void;
 };
 
 const originalWindowEngine = window.Engine;
@@ -37,10 +40,15 @@ function createCharacter(nick: string): TestCharacter {
 function setRuntime(
   hero: TestCharacter,
   others: Record<string, TestCharacter>,
+  canvasTip?: {
+    hide: ReturnType<typeof vi.fn>;
+    show: ReturnType<typeof vi.fn>;
+  },
 ) {
   Object.defineProperty(window, "Engine", {
     configurable: true,
     value: {
+      canvasTip,
       hero,
       others: {
         check: () => others,
@@ -62,11 +70,13 @@ function asOtherRecord(
 describe("installCharacterTooltipTransforms", () => {
   beforeEach(() => {
     characterTooltipTransforms.clear();
+    useCharacterTooltipCatchingGuildsStore.getState().clear();
     useOthersStore.getState().clearOthers();
   });
 
   afterEach(() => {
     characterTooltipTransforms.clear();
+    useCharacterTooltipCatchingGuildsStore.getState().clear();
     useOthersStore.getState().clearOthers();
 
     Object.defineProperty(window, "Engine", {
@@ -210,6 +220,132 @@ describe("installCharacterTooltipTransforms", () => {
 
     expect(other.createStrTip()).toBe("<div>Other</div><span>once</span>");
     expect(other.tip?.[0]).toBe("<div>Other</div><span>once</span>");
+
+    cleanup();
+  });
+
+  it("tracks active other from canvas tip show instead of createStrTip refreshes", () => {
+    const hero = createCharacter("Hero");
+    const first = createCharacter("First");
+    const second = createCharacter("Second");
+    const canvasTip = {
+      hide: vi.fn(),
+      show: vi.fn(),
+    };
+    first.canvasObjectType = "OTHER";
+    first.d = { account: 9822301, id: "617", nick: "First" };
+    second.canvasObjectType = "OTHER";
+    second.d = { account: 9822301, id: "30016", nick: "Second" };
+    setRuntime(hero, { 1: first, 2: second }, canvasTip);
+    useOthersStore.getState().setMany(asOtherRecord({ 1: first, 2: second }));
+
+    const cleanup = installCharacterTooltipTransforms();
+    const runtimeCanvasTip = (
+      window.Engine as unknown as {
+        canvasTip: {
+          hide: (event: unknown) => unknown;
+          show: (event: unknown, object: unknown) => unknown;
+        };
+      }
+    ).canvasTip;
+
+    second.tipUpdate?.();
+    expect(
+      useCharacterTooltipCatchingGuildsStore.getState().activeTarget,
+    ).toBeNull();
+
+    runtimeCanvasTip.show({}, first);
+    expect(
+      useCharacterTooltipCatchingGuildsStore.getState().activeTarget?.key,
+    ).toBe("9822301:617");
+
+    second.tipUpdate?.();
+    expect(
+      useCharacterTooltipCatchingGuildsStore.getState().activeTarget?.key,
+    ).toBe("9822301:617");
+
+    runtimeCanvasTip.hide({});
+    expect(
+      useCharacterTooltipCatchingGuildsStore.getState().activeTarget,
+    ).toBeNull();
+
+    cleanup();
+  });
+
+  it("refreshes the currently visible other canvas tooltip", () => {
+    const hero = createCharacter("Hero");
+    const other = createCharacter("Other");
+    const canvasTip = {
+      hide: vi.fn(),
+      show: vi.fn(),
+    };
+    const originalCanvasTipShow = canvasTip.show;
+    other.canvasObjectType = "OTHER";
+    other.d = { account: 9822301, id: "617", nick: "Other" };
+    setRuntime(hero, { 1: other }, canvasTip);
+    useOthersStore.getState().setMany(asOtherRecord({ 1: other }));
+
+    const cleanup = installCharacterTooltipTransforms();
+    const runtimeCanvasTip = (
+      window.Engine as unknown as {
+        canvasTip: {
+          hide: (event: unknown) => unknown;
+          show: (event: unknown, object: unknown) => unknown;
+        };
+      }
+    ).canvasTip;
+    const hoverEvent = { clientX: 10, clientY: 20 };
+
+    runtimeCanvasTip.show(hoverEvent, other);
+    originalCanvasTipShow.mockClear();
+
+    refreshActiveOtherCanvasTooltip();
+
+    expect(other.tip?.[0]).toBe("<div>Other</div>");
+    expect(originalCanvasTipShow).toHaveBeenCalledWith(hoverEvent, other);
+
+    cleanup();
+  });
+
+  it("refreshes a hovered other tooltip when shift is already pressed", () => {
+    const hero = createCharacter("Hero");
+    const other = createCharacter("Other");
+    const canvasTip = {
+      hide: vi.fn(),
+      show: vi.fn(),
+    };
+    const originalCanvasTipShow = canvasTip.show;
+    other.canvasObjectType = "OTHER";
+    other.d = { account: 9822301, id: "617", nick: "Other" };
+    setRuntime(hero, { 1: other }, canvasTip);
+    useOthersStore.getState().setMany(asOtherRecord({ 1: other }));
+
+    characterTooltipTransforms.register(({ currentHtml }) => {
+      if (!useCharacterTooltipCatchingGuildsStore.getState().isShiftPressed) {
+        return currentHtml;
+      }
+
+      return `${currentHtml}<span>shift</span>`;
+    });
+
+    const cleanup = installCharacterTooltipTransforms();
+    const runtimeCanvasTip = (
+      window.Engine as unknown as {
+        canvasTip: {
+          hide: (event: unknown) => unknown;
+          show: (event: unknown, object: unknown) => unknown;
+        };
+      }
+    ).canvasTip;
+    const hoverEvent = { clientX: 10, clientY: 20 };
+
+    expect(other.tip?.[0]).toBe("<div>Other</div>");
+
+    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    runtimeCanvasTip.show(hoverEvent, other);
+
+    expect(other.tip?.[0]).toBe("<div>Other</div><span>shift</span>");
+    expect(originalCanvasTipShow).toHaveBeenCalledWith(hoverEvent, other);
 
     cleanup();
   });
