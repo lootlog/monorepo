@@ -43,6 +43,7 @@ describe("LootsService", () => {
       update: Mock;
       findFirst: Mock;
       findMany: Mock;
+      count: Mock;
     };
     lootSubmission: {
       createMany: Mock;
@@ -156,6 +157,7 @@ describe("LootsService", () => {
         update: mockFn(),
         findFirst: mockFn(),
         findMany: mockFn(),
+        count: mockFn(),
       },
       lootSubmission: {
         createMany: mockFn(),
@@ -1379,6 +1381,121 @@ describe("LootsService", () => {
                 createdAt: {
                   gte: new Date("2024-01-01T00:00:00.000Z"),
                   lte: new Date("2024-01-31T23:59:59.999Z"),
+                },
+              },
+            ]),
+          }),
+        }),
+      );
+    });
+
+    it("should apply item profession filters to the Prisma query", async () => {
+      prismaService.loot.findMany.mockResolvedValue([]);
+
+      await service.fetchLootsByGuildId(mockGuild, [], [], {
+        ...params,
+        professions: [Profession.HUNTER, Profession.TRACKER, "INVALID"],
+      });
+
+      expect(prismaService.loot.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            AND: expect.arrayContaining([
+              {
+                lootItems: {
+                  some: {
+                    itemSnapshot: {
+                      OR: [
+                        {
+                          statRaw: {
+                            not: {
+                              contains: "reqp=",
+                            },
+                          },
+                        },
+                        {
+                          statsSnapshot: {
+                            path: ["reqp"],
+                            string_contains: "h",
+                          },
+                        },
+                        {
+                          statsSnapshot: {
+                            path: ["reqp"],
+                            string_contains: "t",
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            ]),
+          }),
+        }),
+      );
+    });
+
+    it("should ignore invalid item profession filters", async () => {
+      prismaService.loot.findMany.mockResolvedValue([]);
+
+      await service.fetchLootsByGuildId(mockGuild, [], [], {
+        ...params,
+        professions: ["INVALID"],
+      });
+
+      expect(prismaService.loot.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.not.objectContaining({
+            AND: expect.arrayContaining([
+              expect.objectContaining({
+                lootItems: expect.objectContaining({
+                  some: expect.objectContaining({
+                    itemSnapshot: expect.objectContaining({
+                      OR: expect.any(Array),
+                    }),
+                  }),
+                }),
+              }),
+            ]),
+          }),
+        }),
+      );
+    });
+
+    it("should use item profession filters when counting loots", async () => {
+      prismaService.loot.count.mockResolvedValue(0);
+
+      await service.countLootsByGuildId(mockGuild, [], [], {
+        ...params,
+        professions: [Profession.HUNTER],
+      });
+
+      expect(prismaService.loot.count).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            AND: expect.arrayContaining([
+              {
+                lootItems: {
+                  some: {
+                    itemSnapshot: {
+                      OR: [
+                        {
+                          statRaw: {
+                            not: {
+                              contains: "reqp=",
+                            },
+                          },
+                        },
+                        {
+                          statsSnapshot: {
+                            path: ["reqp"],
+                            string_contains: "h",
+                          },
+                        },
+                      ],
+                    },
+                  },
                 },
               },
             ]),
