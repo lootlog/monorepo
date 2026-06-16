@@ -22,7 +22,7 @@ export class MapChangeProcessor {
     this.previousMapId = mapId;
 
     const socket = getSocket();
-    socket.emit(GatewayEvent.PRESENCE_UPDATE, {
+    socket.emit(GatewayEvent.PLAYER_PRESENCE_UPDATE, {
       mapId,
       mapName,
     });

@@ -103,7 +103,7 @@ describe("usePlayersPresence", () => {
     expect(result.current[0]["discord-1"]?.[0]?.isAfk).toBe(true);
     expect(result.current[0]["discord-1"]?.[0]?.sessionId).toBe("session-1");
     expect(emitWithAckSpy).toHaveBeenCalledWith(
-      GatewayEvent.REQUEST_SERVER_PRESENCE,
+      GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH,
       {
         guildId: "guild-1",
         world: "alpha",
@@ -218,7 +218,7 @@ describe("usePlayersPresence", () => {
     });
 
     act(() => {
-      eventHandlers[GatewayEvent.UPDATE_SERVER_PRESENCE]?.({
+      eventHandlers[GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE]?.({
         guildId: "guild-1",
         discordId: "discord-1",
         player: {
@@ -287,7 +287,7 @@ describe("usePlayersPresence", () => {
     });
 
     act(() => {
-      eventHandlers[GatewayEvent.UPDATE_SERVER_PRESENCE]?.({
+      eventHandlers[GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE]?.({
         guildId: "guild-1",
         discordId: "discord-1",
         status: "offline",

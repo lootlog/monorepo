@@ -95,7 +95,7 @@ describe("PresenceService", () => {
     } as never);
   });
 
-  describe("fetchGuildPresence", () => {
+  describe("fetchEventPresence", () => {
     it("returns all guild presence when world is not provided", async () => {
       const guildId = "guild-1";
       const client = createViewerClient(guildId);
@@ -105,7 +105,7 @@ describe("PresenceService", () => {
         createPresenceSocket("discord-2", "beta", "session-2"),
       ]);
 
-      const result = await service.fetchGuildPresence(
+      const result = await service.fetchEventPresence(
         mockServer as never,
         client,
         guildId,
@@ -127,7 +127,7 @@ describe("PresenceService", () => {
         createPresenceSocket("discord-2", "alpha", "session-3"),
       ]);
 
-      const result = await service.fetchGuildPresence(
+      const result = await service.fetchEventPresence(
         mockServer as never,
         client,
         guildId,
@@ -151,7 +151,7 @@ describe("PresenceService", () => {
         createPresenceSocket("discord-1", "alpha", "session-1", "64"),
       ]);
 
-      const result = await service.fetchGuildPresence(
+      const result = await service.fetchEventPresence(
         mockServer as never,
         client,
         guildId,
@@ -172,7 +172,7 @@ describe("PresenceService", () => {
         createPresenceSocket("discord-1", "alpha", "session-1"),
       ]);
 
-      const result = await service.fetchGuildPresence(
+      const result = await service.fetchEventPresence(
         mockServer as never,
         client,
         guildId,
@@ -190,7 +190,7 @@ describe("PresenceService", () => {
         data: createViewerClient(guildId).data,
       } as Socket;
 
-      const result = await service.fetchGuildPresence(
+      const result = await service.fetchEventPresence(
         mockServer as never,
         client,
         guildId,
@@ -202,10 +202,10 @@ describe("PresenceService", () => {
     });
   });
 
-  describe("fetchServerPresence", () => {
+  describe("fetchOnlinePlayersPresence", () => {
     it("returns forbidden when client is not in guild online players room", async () => {
       const guildId = "guild-1";
-      const result = await service.fetchServerPresence(
+      const result = await service.fetchOnlinePlayersPresence(
         mockServer as never,
         {
           rooms: new Set([buildRoomName(guildId, "presence")]),
@@ -275,7 +275,7 @@ describe("PresenceService", () => {
         otherWorldSocket,
       ]);
 
-      const result = await service.fetchServerPresence(
+      const result = await service.fetchOnlinePlayersPresence(
         mockServer as never,
         {
           ...createViewerClient(guildId),
@@ -357,7 +357,7 @@ describe("PresenceService", () => {
         viewerSocket,
       ]);
 
-      const result = await service.fetchServerPresence(
+      const result = await service.fetchOnlinePlayersPresence(
         mockServer as never,
         {
           ...createViewerClient(guildId),
@@ -391,7 +391,7 @@ describe("PresenceService", () => {
   });
 
   describe("live presence events", () => {
-    it("emits update-server-presence when player location changes", async () => {
+    it("emits online players and event presence updates when player location changes", async () => {
       const viewerSocket = createOnlinePlayersViewerSocket("guild-1");
       mockFetchSockets.mockResolvedValue([viewerSocket]);
       const client = {
@@ -452,7 +452,7 @@ describe("PresenceService", () => {
       await Promise.resolve();
 
       expect(viewerSocket.emit).toHaveBeenCalledWith(
-        GatewayEvent.UPDATE_SERVER_PRESENCE,
+        GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
         expect.objectContaining({
           guildId: "guild-1",
           discordId: "discord-1",
@@ -468,7 +468,7 @@ describe("PresenceService", () => {
         }),
       );
       expect(viewerSocket.emit).toHaveBeenCalledWith(
-        GatewayEvent.PRESENCE_UPDATE,
+        GatewayEvent.EVENT_PRESENCE_UPDATE,
         expect.objectContaining({
           guildId: "guild-1",
           discordId: "discord-1",
@@ -480,7 +480,7 @@ describe("PresenceService", () => {
       );
     });
 
-    it("emits update-server-presence for initial game presence", async () => {
+    it("emits online players presence for initial game presence", async () => {
       const viewerSocket = createOnlinePlayersViewerSocket("guild-1");
       mockFetchSockets.mockResolvedValue([viewerSocket]);
       const client = {
@@ -516,7 +516,7 @@ describe("PresenceService", () => {
       await Promise.resolve();
 
       expect(viewerSocket.emit).toHaveBeenCalledWith(
-        GatewayEvent.UPDATE_SERVER_PRESENCE,
+        GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
         expect.objectContaining({
           guildId: "guild-1",
           discordId: "discord-1",
@@ -532,7 +532,7 @@ describe("PresenceService", () => {
       );
     });
 
-    it("emits an offline update-server-presence payload on disconnect", async () => {
+    it("emits an offline online players presence payload on disconnect", async () => {
       const viewerSocket = createOnlinePlayersViewerSocket("guild-1");
       mockFetchSockets.mockResolvedValue([viewerSocket]);
       const client = {
@@ -577,7 +577,7 @@ describe("PresenceService", () => {
       await Promise.resolve();
 
       expect(viewerSocket.emit).toHaveBeenCalledWith(
-        GatewayEvent.UPDATE_SERVER_PRESENCE,
+        GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
         expect.objectContaining({
           guildId: "guild-1",
           discordId: "discord-1",
@@ -626,11 +626,11 @@ describe("PresenceService", () => {
       await Promise.resolve();
 
       expect(viewerSocket.emit).not.toHaveBeenCalledWith(
-        GatewayEvent.UPDATE_SERVER_PRESENCE,
+        GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
         expect.anything(),
       );
       expect(viewerSocket.emit).toHaveBeenCalledWith(
-        GatewayEvent.PRESENCE_UPDATE,
+        GatewayEvent.EVENT_PRESENCE_UPDATE,
         expect.objectContaining({
           guildId: "guild-1",
           discordId: "discord-1",

@@ -57,7 +57,7 @@ describe("MapChangeProcessor", () => {
     expect(mockEmit).not.toHaveBeenCalled();
   });
 
-  it("emits presence update for the first distinct map", () => {
+  it("emits player presence update for the first distinct map", () => {
     useGlobalStore.setState({
       socketState: {
         connected: true,
@@ -68,7 +68,7 @@ describe("MapChangeProcessor", () => {
 
     processor.handle(createMapChangeEvent(12, "Torneg"));
 
-    expect(mockEmit).toHaveBeenCalledWith(GatewayEvent.PRESENCE_UPDATE, {
+    expect(mockEmit).toHaveBeenCalledWith(GatewayEvent.PLAYER_PRESENCE_UPDATE, {
       mapId: 12,
       mapName: "Torneg",
     });
@@ -101,9 +101,13 @@ describe("MapChangeProcessor", () => {
     processor.handle(createMapChangeEvent(12, "Torneg"));
     processor.handle(createMapChangeEvent(13, "Nithal"));
 
-    expect(mockEmit).toHaveBeenNthCalledWith(2, GatewayEvent.PRESENCE_UPDATE, {
-      mapId: 13,
-      mapName: "Nithal",
-    });
+    expect(mockEmit).toHaveBeenNthCalledWith(
+      2,
+      GatewayEvent.PLAYER_PRESENCE_UPDATE,
+      {
+        mapId: 13,
+        mapName: "Nithal",
+      },
+    );
   });
 });

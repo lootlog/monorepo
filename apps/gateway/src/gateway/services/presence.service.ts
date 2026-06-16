@@ -21,7 +21,7 @@ import type {
   SocketUserPlayer,
   PlayerPresence,
 } from "src/gateway/types/socket-user.type";
-import type { EventPresenceUpdateDto } from "src/gateway/dto/event-presence-update.dto";
+import type { PlayerPresenceUpdateDto } from "src/gateway/dto/player-presence-update.dto";
 import type { UserGuildData } from "src/guilds/types/guild.types";
 
 export const ONLINE_PLAYERS_ACCESS_DENIED_CODE = "ONLINE_PLAYERS_ACCESS_DENIED";
@@ -74,7 +74,7 @@ export class PresenceService {
         server,
         sourceClient: client,
         guildId: parsed.guildId,
-        event: GatewayEvent.PRESENCE_UPDATE,
+        event: GatewayEvent.EVENT_PRESENCE_UPDATE,
         payload,
         excludeSourceSocket: true,
       });
@@ -97,7 +97,7 @@ export class PresenceService {
         status: UserPresenceStatus.OFFLINE,
         sessionId: client.data.sessionId,
       },
-      GatewayEvent.UPDATE_SERVER_PRESENCE,
+      GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
     );
   }
 
@@ -119,7 +119,7 @@ export class PresenceService {
         server,
         sourceClient: client,
         guildId,
-        event: GatewayEvent.UPDATE_SERVER_PRESENCE,
+        event: GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
         payload: {
           guildId,
           discordId: client.data.discordId,
@@ -133,7 +133,7 @@ export class PresenceService {
         server,
         sourceClient: client,
         guildId,
-        event: GatewayEvent.PRESENCE_UPDATE,
+        event: GatewayEvent.EVENT_PRESENCE_UPDATE,
         payload: {
           guildId,
           discordId: client.data.discordId,
@@ -157,7 +157,7 @@ export class PresenceService {
   updatePlayerPresence(
     client: Socket,
     discordId: string,
-    data: EventPresenceUpdateDto,
+    data: PlayerPresenceUpdateDto,
     server: Server,
   ): void {
     if (!client.data?.guilds || !client.data?.player) {
@@ -183,7 +183,7 @@ export class PresenceService {
         server,
         sourceClient: client,
         guildId,
-        event: GatewayEvent.UPDATE_SERVER_PRESENCE,
+        event: GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
         payload: {
           guildId,
           discordId,
@@ -195,7 +195,7 @@ export class PresenceService {
         server,
         sourceClient: client,
         guildId,
-        event: GatewayEvent.PRESENCE_UPDATE,
+        event: GatewayEvent.EVENT_PRESENCE_UPDATE,
         payload: {
           guildId,
           discordId,
@@ -230,7 +230,7 @@ export class PresenceService {
     }
   }
 
-  async fetchGuildPresence(
+  async fetchEventPresence(
     server: Server,
     client: Socket,
     guildId: string,
@@ -264,7 +264,7 @@ export class PresenceService {
     return result;
   }
 
-  async fetchServerPresence(
+  async fetchOnlinePlayersPresence(
     server: Server,
     client: Socket,
     guildId: string,
@@ -364,7 +364,7 @@ export class PresenceService {
         server,
         sourceClient: client,
         guildId,
-        event: GatewayEvent.UPDATE_SERVER_PRESENCE,
+        event: GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
         payload: {
           guildId,
           discordId,
@@ -376,7 +376,7 @@ export class PresenceService {
         server,
         sourceClient: client,
         guildId,
-        event: GatewayEvent.PRESENCE_UPDATE,
+        event: GatewayEvent.EVENT_PRESENCE_UPDATE,
         payload: {
           guildId,
           discordId,
@@ -499,7 +499,7 @@ export class PresenceService {
     player: SocketUserPlayer,
     sessionId: string,
     existingPresence?: PlayerPresence,
-    data?: EventPresenceUpdateDto,
+    data?: PlayerPresenceUpdateDto,
   ): PlayerPresence {
     return {
       world: player.world,

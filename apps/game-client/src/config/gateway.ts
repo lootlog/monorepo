@@ -17,13 +17,12 @@ export enum GatewayEvent {
   // chat
   CHAT_MESSAGE = "chat-message",
 
-  // presence
-  REQUEST_SERVER_PRESENCE = "request-server-presence",
-  UPDATE_SERVER_PRESENCE = "update-server-presence",
+  // online players presence
+  ONLINE_PLAYERS_PRESENCE_FETCH = "online-players:presence:fetch",
+  ONLINE_PLAYERS_PRESENCE_UPDATE = "online-players:presence:update",
 
-  // player presence events
-  PRESENCE_UPDATE = "presence:update",
-  PRESENCE_FETCH = "presence:fetch",
+  // current player presence
+  PLAYER_PRESENCE_UPDATE = "player-presence:update",
 
   // timers
   TIMERS_CREATE = "timers-create",
