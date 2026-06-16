@@ -1,4 +1,7 @@
-import { getMeilisearchErrorCode } from "./meilisearch.utils";
+import {
+  buildMeilisearchStringInFilter,
+  getMeilisearchErrorCode,
+} from "./meilisearch.utils";
 
 describe("getMeilisearchErrorCode", () => {
   it("returns the string code from the error cause", () => {
@@ -15,5 +18,19 @@ describe("getMeilisearchErrorCode", () => {
     expect(getMeilisearchErrorCode(new Error("boom"))).toBeNull();
     expect(getMeilisearchErrorCode({ cause: { code: 404 } })).toBeNull();
     expect(getMeilisearchErrorCode(null)).toBeNull();
+  });
+});
+
+describe("buildMeilisearchStringInFilter", () => {
+  it("formats string values for a Meilisearch IN filter", () => {
+    expect(buildMeilisearchStringInFilter("name", ["Hero", "Villain"])).toBe(
+      'name IN ["Hero", "Villain"]',
+    );
+  });
+
+  it("quotes values using JSON string escaping", () => {
+    expect(buildMeilisearchStringInFilter("name", ['Hero "The One"'])).toBe(
+      'name IN ["Hero \\"The One\\""]',
+    );
   });
 });
