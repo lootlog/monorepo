@@ -19,11 +19,9 @@ import type {
   Socket,
   PlayerPresence,
 } from "src/gateway/types/socket-user.type";
-import {
-  ConnectionService,
-  PresenceService,
-  SubscriptionService,
-} from "./services";
+import { ConnectionService } from "./services/connection.service";
+import { PresenceService } from "./services/presence.service";
+import { SubscriptionService } from "./services/subscription.service";
 
 @WebSocketGateway({
   pingInterval: GatewayConfig.SOCKET_PING_INTERVAL_MS,
