@@ -1,6 +1,7 @@
 import type { GameEvent } from "@lootlog/margonem/game-events";
 
 type GameEventHandler = (event: GameEvent) => void;
+type GameEventSubscription = () => void;
 type RawGameEventPayload = string | GameEvent;
 type SuccessDataHandler = (...args: unknown[]) => unknown;
 type SuccessDataContainer = {
@@ -10,6 +11,7 @@ type SuccessDataContainer = {
 class GameEventsManager {
   private eventQueue: GameEvent[] = [];
   private eventProcessor: GameEventHandler | null = null;
+  private afterGameEventHandlers = new Set<GameEventHandler>();
   private isReady = false;
   private proxies: Array<{ cleanup: () => void }> = [];
   private stripFriendsFromNextEvent = false;
@@ -55,6 +57,14 @@ class GameEventsManager {
 
   removeProcessor() {
     this.eventProcessor = null;
+  }
+
+  subscribeAfterGameEvent(handler: GameEventHandler): GameEventSubscription {
+    this.afterGameEventHandlers.add(handler);
+
+    return () => {
+      this.afterGameEventHandlers.delete(handler);
+    };
   }
 
   triggerManualEvent(event: GameEvent): boolean {
@@ -148,8 +158,15 @@ class GameEventsManager {
         apply: (target, thisArg, args) => {
           this.onGameInitChange();
 
-          const forwardedArgs = this.buildForwardedSuccessDataArgs(args);
-          return target.apply(thisArg, forwardedArgs);
+          const { forwardedArgs, parsedEvent } =
+            this.buildForwardedSuccessDataArgs(args);
+          const result = target.apply(thisArg, forwardedArgs);
+
+          if (parsedEvent) {
+            this.emitAfterGameEvent(parsedEvent);
+          }
+
+          return result;
         },
       });
 
@@ -163,23 +180,39 @@ class GameEventsManager {
     }
   }
 
-  private buildForwardedSuccessDataArgs(args: unknown[]): unknown[] {
+  private buildForwardedSuccessDataArgs(args: unknown[]): {
+    forwardedArgs: unknown[];
+    parsedEvent: GameEvent | null;
+  } {
     const parsedEvent = this.parseGameEventPayload(args[0]);
     if (!parsedEvent) {
-      return args;
+      return { forwardedArgs: args, parsedEvent: null };
     }
 
     this.queueEvent(parsedEvent);
 
     const strippedEvent = this.stripFriendsKeys(parsedEvent);
     if (strippedEvent === parsedEvent) {
-      return args;
+      return { forwardedArgs: args, parsedEvent };
     }
 
-    return [
-      this.serializeGameEventPayload(args[0], strippedEvent),
-      ...args.slice(1),
-    ];
+    return {
+      forwardedArgs: [
+        this.serializeGameEventPayload(args[0], strippedEvent),
+        ...args.slice(1),
+      ],
+      parsedEvent: strippedEvent,
+    };
+  }
+
+  private emitAfterGameEvent(event: GameEvent): void {
+    for (const handler of this.afterGameEventHandlers) {
+      try {
+        handler(event);
+      } catch (error) {
+        console.warn("Failed to process after-game event:", error);
+      }
+    }
   }
 
   private parseGameEventPayload(payload: unknown): GameEvent | null {
@@ -234,6 +267,7 @@ class GameEventsManager {
     this.proxies = [];
     this.eventQueue = [];
     this.eventProcessor = null;
+    this.afterGameEventHandlers.clear();
     this.isReady = false;
     this.gameInitCallback = null;
     this.gameInitCallbackExecuted = false;

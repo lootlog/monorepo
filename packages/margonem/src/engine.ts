@@ -13,8 +13,10 @@ import type { ServerStorage } from "./server-storage.js";
 import type { ShowEqManager } from "./show-eq-manager.js";
 import type { iframeWindowManager } from "./iframe-window-manager.js";
 import type { ChatController } from "./chat-controller.js";
+import type { ApiData } from "./api.js";
 
 export type Engine = {
+  apiData?: ApiData;
   npcs: Npcs;
   interface: Interface;
   communication: Communication;
