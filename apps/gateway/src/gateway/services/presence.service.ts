@@ -56,15 +56,26 @@ export class PresenceService {
       const parsed = parseRoomName(room);
       if (!parsed || parsed.feature !== "presence") return;
 
+      const payload = {
+        ...preparedUser,
+        guildId: parsed.guildId,
+      };
+
       this.emitPresenceToOnlinePlayersRoom({
         server,
         sourceClient: client,
         guildId: parsed.guildId,
         event,
-        payload: {
-          ...preparedUser,
-          guildId: parsed.guildId,
-        },
+        payload,
+        excludeSourceSocket: true,
+      });
+
+      this.emitPresenceToPresenceRoom({
+        server,
+        sourceClient: client,
+        guildId: parsed.guildId,
+        event: GatewayEvent.PRESENCE_UPDATE,
+        payload,
         excludeSourceSocket: true,
       });
     });
@@ -109,6 +120,20 @@ export class PresenceService {
         sourceClient: client,
         guildId,
         event: GatewayEvent.UPDATE_SERVER_PRESENCE,
+        payload: {
+          guildId,
+          discordId: client.data.discordId,
+          sessionId: client.data.sessionId,
+          status: UserPresenceStatus.OFFLINE,
+          player: playerPresence,
+        },
+      });
+
+      this.emitPresenceToPresenceRoom({
+        server,
+        sourceClient: client,
+        guildId,
+        event: GatewayEvent.PRESENCE_UPDATE,
         payload: {
           guildId,
           discordId: client.data.discordId,
@@ -166,6 +191,18 @@ export class PresenceService {
         },
       });
 
+      this.emitPresenceToPresenceRoom({
+        server,
+        sourceClient: client,
+        guildId,
+        event: GatewayEvent.PRESENCE_UPDATE,
+        payload: {
+          guildId,
+          discordId,
+          player: playerPresence,
+        },
+      });
+
       if (data.mapName !== undefined || data.isAfk !== undefined) {
         const oldMapName = existingPresence?.mapName;
         const newMapName = playerPresence.mapName;
@@ -198,23 +235,14 @@ export class PresenceService {
     client: Socket,
     guildId: string,
     world?: string,
-  ): Promise<PresenceFetchResponse<Record<string, PlayerPresence[]>>> {
+  ): Promise<Record<string, PlayerPresence[]>> {
     const presenceRoom = buildRoomName(guildId, "presence");
-    const onlinePlayersRoom = buildRoomName(guildId, "online-players");
 
-    if (
-      !client.rooms.has(presenceRoom) ||
-      !client.rooms.has(onlinePlayersRoom)
-    ) {
+    if (!client.rooms.has(presenceRoom)) {
       this.logger.warn(
-        `User ${client.data?.discordId} tried to fetch online players for guild ${guildId} without access`,
+        `User ${client.data?.discordId} tried to fetch guild presence for guild ${guildId} without access`,
       );
-      return this.createOnlinePlayersForbiddenResponse();
-    }
-
-    const viewerGuildData = this.getSocketGuildData(client, guildId);
-    if (!this.canViewOnlinePlayers(client, viewerGuildData)) {
-      return this.createOnlinePlayersForbiddenResponse();
+      return {};
     }
 
     const socketsInRoom = await server.in(presenceRoom).fetchSockets();
@@ -233,10 +261,7 @@ export class PresenceService {
       }
     }
 
-    return {
-      status: "success",
-      players: result,
-    };
+    return result;
   }
 
   async fetchServerPresence(
@@ -346,6 +371,18 @@ export class PresenceService {
           player: playerPresence,
         },
       });
+
+      this.emitPresenceToPresenceRoom({
+        server,
+        sourceClient: client,
+        guildId,
+        event: GatewayEvent.PRESENCE_UPDATE,
+        payload: {
+          guildId,
+          discordId,
+          player: playerPresence,
+        },
+      });
     }
   }
 
@@ -416,6 +453,43 @@ export class PresenceService {
       .catch((error) => {
         this.logger.error(
           `Failed to emit online players presence for guild ${guildId}: ${error.message}`,
+          error.stack,
+        );
+      });
+  }
+
+  private emitPresenceToPresenceRoom({
+    server,
+    sourceClient,
+    guildId,
+    event,
+    payload,
+    excludeSourceSocket = false,
+  }: {
+    server: Server;
+    sourceClient: Socket;
+    guildId: string;
+    event: GatewayEvent;
+    payload: Record<string, unknown>;
+    excludeSourceSocket?: boolean;
+  }): void {
+    const presenceRoom = buildRoomName(guildId, "presence");
+
+    server
+      .in(presenceRoom)
+      .fetchSockets()
+      .then((sockets) => {
+        for (const socket of sockets) {
+          if (excludeSourceSocket && socket.id === sourceClient.id) {
+            continue;
+          }
+
+          socket.emit(event, payload);
+        }
+      })
+      .catch((error) => {
+        this.logger.error(
+          `Failed to emit guild presence for guild ${guildId}: ${error.message}`,
           error.stack,
         );
       });
