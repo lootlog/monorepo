@@ -1,10 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Tile } from "@/components/ui/tile";
 import type { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
+import { getDefaultColorName } from "@/features/timers/utils/get-default-color-name";
 import { RotateCcw } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
-import { getDefaultColorName } from "./color-utils";
 
 interface HiddenColorsListProps {
   hiddenColors: string[];
