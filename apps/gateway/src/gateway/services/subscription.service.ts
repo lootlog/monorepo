@@ -73,6 +73,7 @@ export class SubscriptionService {
       client.join(featureRooms);
 
       this.presenceService.emitPresenceToRooms(
+        server,
         client,
         user,
         GatewayEvent.UPDATE_SERVER_PRESENCE,

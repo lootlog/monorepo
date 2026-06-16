@@ -168,6 +168,9 @@ describe("room-utils", () => {
         buildRoomName("guild-1", "loots", "base"),
       );
       expect(result.rooms).not.toContain(buildRoomName("guild-1", "admin"));
+      expect(result.rooms).not.toContain(
+        buildRoomName("guild-1", "online-players"),
+      );
     });
 
     it("returns all feature rooms and admin room for owner", () => {
@@ -179,6 +182,7 @@ describe("room-utils", () => {
       expect(result.rooms).toEqual(
         expect.arrayContaining([
           buildRoomName("guild-1", "admin"),
+          buildRoomName("guild-1", "online-players"),
           buildRoomName("guild-1", "chat", "base"),
           buildRoomName("guild-1", "chat", "titans"),
           buildRoomName("guild-1", "chat", "heroes"),
@@ -215,6 +219,28 @@ describe("room-utils", () => {
       );
       expect(result.rooms).not.toContain(
         buildRoomName("guild-1", "notifications", "base"),
+      );
+      expect(result.rooms).not.toContain(
+        buildRoomName("guild-1", "online-players"),
+      );
+    });
+
+    it("grants online players room when the role has online players permission", () => {
+      const discordId = "user-1";
+      const guilds = [
+        createGuildData(discordId, [
+          createRole([Permission.LOOTLOG_ONLINE_PLAYERS_READ], 270, 300),
+        ]),
+      ];
+
+      const result = calculateUserRooms(guilds, discordId, Platform.GAME);
+
+      expect(result.rooms).toEqual(
+        expect.arrayContaining([
+          buildRoomName("guild-1", "presence"),
+          buildRoomName("guild-1", "events"),
+          buildRoomName("guild-1", "online-players"),
+        ]),
       );
     });
 
