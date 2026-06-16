@@ -4,11 +4,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import {
-  calculateTimelineSegments,
-  formatDurationFromMs,
-  formatTime,
-} from "../../utils";
+import { formatTime } from "../../utils/format-date";
+import { formatDurationFromMs } from "../../utils/format-duration";
+import { calculateTimelineSegments } from "../../utils/timeline-segments";
 import type { MapGap } from "../../types/api";
 
 interface MapCoverageTimelineProps {

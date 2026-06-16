@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { formatDurationPadded } from "../../utils";
+import { formatDurationPadded } from "../../utils/format-duration";
 
 export type CoverageGapType = "UNASSIGNED" | "UNCOVERED";
 

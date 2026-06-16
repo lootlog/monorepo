@@ -1,5 +1,5 @@
 import { startTransition, useEffect, useState } from "react";
-import { isEventActiveAtTimestamp } from "@/features/guild/events/utils";
+import { isEventActiveAtTimestamp } from "@/features/guild/events/utils/event-activity";
 import { PinnedEventsBanner } from "./pinned-events-banner";
 import {
   getListEventsQueryKey,

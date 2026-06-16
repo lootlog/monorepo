@@ -42,7 +42,7 @@ import {
   normalizeScoringMode,
   normalizeScoringRules,
 } from "./utils/scoring-rules";
-import { getEventStatusAtTimestamp } from "./utils";
+import { getEventStatusAtTimestamp } from "./utils/event-activity";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import {
   getListEventsQueryKey,

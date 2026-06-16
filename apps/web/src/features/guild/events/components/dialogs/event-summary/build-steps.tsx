@@ -1,7 +1,7 @@
 import type { useTranslation } from "react-i18next";
 import { Badge } from "@lootlog/ui/components/badge";
 import type { EventWrapped } from "../../../types/api";
-import { formatDurationHuman } from "../../../utils";
+import { formatDurationHuman } from "../../../utils/format-duration";
 import { HeroSpotlight } from "./hero-spotlight";
 import { LeaderCard } from "./leader-card";
 import { MetricCard } from "./metric-card";
