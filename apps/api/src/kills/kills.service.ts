@@ -20,6 +20,11 @@ import {
   buildGuildKillDedupKey,
   buildUserKillDedupKey,
 } from "./utils/kill-dedup-key";
+import {
+  getKillStatsBucketStart,
+  getKillStatsPeriodStart,
+  type KillStatsPeriod,
+} from "./utils/kill-stats-period";
 
 const KILL_DEDUP_TTL_SECONDS = 30;
 
@@ -52,6 +57,8 @@ export class KillsService {
   async createKill(discordId: string, data: CreateKillDto) {
     const npcType = getNpcTypeByWt(NpcType, data.npc.wt, data.npc.prof);
     const npcId = getStableNpcId(data.npc.id, data.npc.name, npcType);
+    const killedAt = new Date();
+    const periodStart = getKillStatsBucketStart(killedAt);
 
     // 1. User deduplication (30s window) - same user killing same NPC
     const userDedupKey = buildUserKillDedupKey(discordId, {
@@ -88,10 +95,42 @@ export class KillsService {
           npcProf: data.npc.prof,
           npcIcon: data.npc.icon,
           totalKills: 1,
+          lastKilledAt: killedAt,
         },
         update: {
           totalKills: { increment: 1 },
-          lastKilledAt: new Date(),
+          lastKilledAt: killedAt,
+          npcName: data.npc.name,
+          npcLvl: data.npc.lvl,
+          npcProf: data.npc.prof,
+          npcIcon: data.npc.icon,
+        },
+      });
+      await this.prisma.userKillStatsBucket.upsert({
+        where: {
+          userId_world_npcId_periodStart: {
+            userId: discordId,
+            world: data.world,
+            npcId,
+            periodStart,
+          },
+        },
+        create: {
+          userId: discordId,
+          world: data.world,
+          npcId,
+          npcName: data.npc.name,
+          npcType,
+          npcLvl: data.npc.lvl,
+          npcProf: data.npc.prof,
+          npcIcon: data.npc.icon,
+          totalKills: 1,
+          periodStart,
+          lastKilledAt: killedAt,
+        },
+        update: {
+          totalKills: { increment: 1 },
+          lastKilledAt: killedAt,
           npcName: data.npc.name,
           npcLvl: data.npc.lvl,
           npcProf: data.npc.prof,
@@ -169,10 +208,45 @@ export class KillsService {
               npcProf: data.npc.prof,
               npcIcon: data.npc.icon,
               memberKills: 1,
+              lastKilledAt: killedAt,
             },
             update: {
               memberKills: { increment: 1 },
-              lastKilledAt: new Date(),
+              lastKilledAt: killedAt,
+              npcName: data.npc.name,
+              npcLvl: data.npc.lvl,
+              npcProf: data.npc.prof,
+              npcIcon: data.npc.icon,
+            },
+          });
+          await this.prisma.npcKillStatsBucket.upsert({
+            where: {
+              guildId_memberId_world_npcId_periodStart: {
+                guildId,
+                memberId: member.id,
+                world: data.world,
+                npcId,
+                periodStart,
+              },
+            },
+            create: {
+              guildId,
+              memberId: member.id,
+              userId: discordId,
+              world: data.world,
+              npcId,
+              npcName: data.npc.name,
+              npcType,
+              npcLvl: data.npc.lvl,
+              npcProf: data.npc.prof,
+              npcIcon: data.npc.icon,
+              memberKills: 1,
+              periodStart,
+              lastKilledAt: killedAt,
+            },
+            update: {
+              memberKills: { increment: 1 },
+              lastKilledAt: killedAt,
               npcName: data.npc.name,
               npcLvl: data.npc.lvl,
               npcProf: data.npc.prof,
@@ -211,10 +285,42 @@ export class KillsService {
                 npcProf: data.npc.prof,
                 npcIcon: data.npc.icon,
                 uniqueKills: 1,
+                lastKilledAt: killedAt,
               },
               update: {
                 uniqueKills: { increment: 1 },
-                lastKilledAt: new Date(),
+                lastKilledAt: killedAt,
+                npcName: data.npc.name,
+                npcLvl: data.npc.lvl,
+                npcProf: data.npc.prof,
+                npcIcon: data.npc.icon,
+              },
+            });
+            await this.prisma.guildKillSummaryBucket.upsert({
+              where: {
+                guildId_world_npcId_periodStart: {
+                  guildId,
+                  world: data.world,
+                  npcId,
+                  periodStart,
+                },
+              },
+              create: {
+                guildId,
+                world: data.world,
+                npcId,
+                npcName: data.npc.name,
+                npcType,
+                npcLvl: data.npc.lvl,
+                npcProf: data.npc.prof,
+                npcIcon: data.npc.icon,
+                uniqueKills: 1,
+                periodStart,
+                lastKilledAt: killedAt,
+              },
+              update: {
+                uniqueKills: { increment: 1 },
+                lastKilledAt: killedAt,
                 npcName: data.npc.name,
                 npcLvl: data.npc.lvl,
                 npcProf: data.npc.prof,
@@ -255,31 +361,52 @@ export class KillsService {
     );
 
     const npcLvlCondition = buildNpcLvlCondition(query.minLvl, query.maxLvl);
+    const periodStart = getKillStatsPeriodStart(query.period);
+    const memberStatsWhere = {
+      guildId,
+      ...(npcTypes && { npcType: { in: npcTypes } }),
+      ...(query.world && { world: query.world }),
+      ...npcLvlCondition,
+      ...visibilityCondition,
+    };
 
     // Fetch member participation stats
-    const memberStats = await this.prisma.npcKillStats.findMany({
-      where: {
-        guildId,
-        ...(npcTypes && { npcType: { in: npcTypes } }),
-        ...(query.world && { world: query.world }),
-        ...npcLvlCondition,
-        ...visibilityCondition,
-      },
-      include: {
-        member: true,
-      },
-    });
+    const memberStats = periodStart
+      ? await this.prisma.npcKillStatsBucket.findMany({
+          where: {
+            ...memberStatsWhere,
+            periodStart: { gte: periodStart },
+          },
+          include: {
+            member: true,
+          },
+        })
+      : await this.prisma.npcKillStats.findMany({
+          where: memberStatsWhere,
+          include: {
+            member: true,
+          },
+        });
+
+    const guildSummaryWhere = {
+      guildId,
+      ...(npcTypes && { npcType: { in: npcTypes } }),
+      ...(query.world && { world: query.world }),
+      ...npcLvlCondition,
+      ...visibilityCondition,
+    };
 
     // Fetch unique guild kills
-    const guildSummary = await this.prisma.guildKillSummary.findMany({
-      where: {
-        guildId,
-        ...(npcTypes && { npcType: { in: npcTypes } }),
-        ...(query.world && { world: query.world }),
-        ...npcLvlCondition,
-        ...visibilityCondition,
-      },
-    });
+    const guildSummary = periodStart
+      ? await this.prisma.guildKillSummaryBucket.findMany({
+          where: {
+            ...guildSummaryWhere,
+            periodStart: { gte: periodStart },
+          },
+        })
+      : await this.prisma.guildKillSummary.findMany({
+          where: guildSummaryWhere,
+        });
 
     // Calculate unique kills from GuildKillSummary
     const uniqueKillsByType: Record<string, number> = {};
@@ -419,15 +546,24 @@ export class KillsService {
     const npcTypes = query.npcType
       ? [query.npcType, ...(query.npcTypes ?? [])]
       : query.npcTypes;
+    const periodStart = getKillStatsPeriodStart(query.period);
+    const statsWhere = {
+      userId: discordId,
+      ...(query.world && { world: query.world }),
+      ...(npcTypes && npcTypes.length > 0 && { npcType: { in: npcTypes } }),
+    };
 
     // Query from UserKillStats - now aggregated per user (no character distinction)
-    const stats = await this.prisma.userKillStats.findMany({
-      where: {
-        userId: discordId,
-        ...(query.world && { world: query.world }),
-        ...(npcTypes && npcTypes.length > 0 && { npcType: { in: npcTypes } }),
-      },
-    });
+    const stats = periodStart
+      ? await this.prisma.userKillStatsBucket.findMany({
+          where: {
+            ...statsWhere,
+            periodStart: { gte: periodStart },
+          },
+        })
+      : await this.prisma.userKillStats.findMany({
+          where: statsWhere,
+        });
 
     // Calculate overview
     const killsByType: Record<string, number> = {};
@@ -492,6 +628,7 @@ export class KillsService {
     const npcTypes = query.npcTypes;
     const limit = query.limit ?? 20;
     const cursor = query.cursor ?? 0;
+    const periodStart = getKillStatsPeriodStart(query.period);
 
     const whereCondition = {
       userId: discordId,
@@ -503,9 +640,16 @@ export class KillsService {
       ...buildNpcLvlCondition(query.minLvl, query.maxLvl),
     };
 
-    const stats = await this.prisma.userKillStats.findMany({
-      where: whereCondition,
-    });
+    const stats = periodStart
+      ? await this.prisma.userKillStatsBucket.findMany({
+          where: {
+            ...whereCondition,
+            periodStart: { gte: periodStart },
+          },
+        })
+      : await this.prisma.userKillStats.findMany({
+          where: whereCondition,
+        });
 
     // Aggregate by npcId (combine across worlds if no specific filter)
     const npcMap = new Map<
@@ -582,6 +726,7 @@ export class KillsService {
     search?: string,
     minLvl?: number,
     maxLvl?: number,
+    period?: KillStatsPeriod,
   ) {
     const filteredRoles = this.filterReadableRoles(roles);
     const administrativeUser = isAdministrativeUser(permissions);
@@ -592,20 +737,29 @@ export class KillsService {
     );
 
     const npcLvlCondition = buildNpcLvlCondition(minLvl, maxLvl);
+    const periodStart = getKillStatsPeriodStart(period);
+    const summariesWhere = {
+      guildId,
+      ...(npcType && { npcType }),
+      ...(world && { world }),
+      ...(search && {
+        npcName: { contains: search, mode: "insensitive" as const },
+      }),
+      ...npcLvlCondition,
+      ...visibilityCondition,
+    };
 
     // Use GuildKillSummary for unique kills count
-    const summaries = await this.prisma.guildKillSummary.findMany({
-      where: {
-        guildId,
-        ...(npcType && { npcType }),
-        ...(world && { world }),
-        ...(search && {
-          npcName: { contains: search, mode: "insensitive" as const },
-        }),
-        ...npcLvlCondition,
-        ...visibilityCondition,
-      },
-    });
+    const summaries = periodStart
+      ? await this.prisma.guildKillSummaryBucket.findMany({
+          where: {
+            ...summariesWhere,
+            periodStart: { gte: periodStart },
+          },
+        })
+      : await this.prisma.guildKillSummary.findMany({
+          where: summariesWhere,
+        });
 
     const npcMap = new Map<
       number,
@@ -656,6 +810,7 @@ export class KillsService {
     roles: Role[],
     npcTypes: NpcType[],
     limit: number = 5,
+    period?: KillStatsPeriod,
   ) {
     const filteredRoles = this.filterReadableRoles(roles);
     const administrativeUser = isAdministrativeUser(permissions);
@@ -664,17 +819,29 @@ export class KillsService {
       filteredRoles,
       administrativeUser,
     );
+    const periodStart = getKillStatsPeriodStart(period);
+    const statsWhere = {
+      guildId,
+      npcType: { in: npcTypes },
+      ...visibilityCondition,
+    };
 
-    const stats = await this.prisma.npcKillStats.findMany({
-      where: {
-        guildId,
-        npcType: { in: npcTypes },
-        ...visibilityCondition,
-      },
-      include: {
-        member: true,
-      },
-    });
+    const stats = periodStart
+      ? await this.prisma.npcKillStatsBucket.findMany({
+          where: {
+            ...statsWhere,
+            periodStart: { gte: periodStart },
+          },
+          include: {
+            member: true,
+          },
+        })
+      : await this.prisma.npcKillStats.findMany({
+          where: statsWhere,
+          include: {
+            member: true,
+          },
+        });
 
     const resultByType: Record<
       string,
@@ -731,6 +898,7 @@ export class KillsService {
     npcId: number,
     limit: number = 50,
     world?: string,
+    period?: KillStatsPeriod,
   ) {
     const filteredRoles = this.filterReadableRoles(roles);
     const administrativeUser = isAdministrativeUser(permissions);
@@ -739,31 +907,67 @@ export class KillsService {
       filteredRoles,
       administrativeUser,
     );
+    const periodStart = getKillStatsPeriodStart(period);
+    const statsWhere = {
+      guildId,
+      npcId,
+      ...(world && { world }),
+      ...visibilityCondition,
+    };
 
     // Get member participation stats
-    const stats = await this.prisma.npcKillStats.findMany({
-      where: {
-        guildId,
-        npcId,
-        ...(world && { world }),
-        ...visibilityCondition,
-      },
-      include: {
-        member: true,
-      },
-    });
+    const stats = periodStart
+      ? await this.prisma.npcKillStatsBucket.findMany({
+          where: {
+            ...statsWhere,
+            periodStart: { gte: periodStart },
+          },
+          include: {
+            member: true,
+          },
+        })
+      : await this.prisma.npcKillStats.findMany({
+          where: statsWhere,
+          include: {
+            member: true,
+          },
+        });
+
+    const summaryWhere = {
+      guildId,
+      npcId,
+      ...(world && { world }),
+      ...visibilityCondition,
+    };
 
     // Get unique kills from summary
-    const summary = await this.prisma.guildKillSummary.findFirst({
-      where: {
-        guildId,
-        npcId,
-        ...(world && { world }),
-        ...visibilityCondition,
-      },
-    });
+    const summaries = periodStart
+      ? await this.prisma.guildKillSummaryBucket.findMany({
+          where: {
+            ...summaryWhere,
+            periodStart: { gte: periodStart },
+          },
+        })
+      : await this.prisma.guildKillSummary.findMany({
+          where: summaryWhere,
+        });
 
-    if (stats.length === 0 && !summary) {
+    const metadataSummaries =
+      stats.length === 0 && summaries.length === 0
+        ? ((await this.prisma.guildKillSummary.findMany({
+            where: {
+              guildId,
+              npcId,
+              ...visibilityCondition,
+            },
+          })) ?? [])
+        : [];
+
+    if (
+      stats.length === 0 &&
+      summaries.length === 0 &&
+      metadataSummaries.length === 0
+    ) {
       return null;
     }
 
@@ -816,8 +1020,13 @@ export class KillsService {
       }
     }
 
-    // Fallback to summary if no member stats
-    if (!npcInfo && summary) {
+    // Fallback to all-time summary metadata so filtered empty states can keep filters visible.
+    const npcInfoSummaries =
+      summaries.length > 0 ? summaries : metadataSummaries;
+    if (!npcInfo && npcInfoSummaries.length > 0) {
+      const summary = npcInfoSummaries.reduce((highest, current) =>
+        current.npcLvl > highest.npcLvl ? current : highest,
+      );
       npcInfo = {
         npcId: summary.npcId,
         npcName: summary.npcName,
@@ -839,7 +1048,10 @@ export class KillsService {
     return {
       npc: {
         ...npcInfo,
-        uniqueGuildKills: summary?.uniqueKills ?? 0,
+        uniqueGuildKills: summaries.reduce(
+          (total, summary) => total + summary.uniqueKills,
+          0,
+        ),
         totalMemberParticipations,
       },
       killers,
@@ -864,6 +1076,7 @@ export class KillsService {
     const npcTypes = query.npcTypes;
     const limit = query.limit ?? 20;
     const cursor = query.cursor ?? 0;
+    const periodStart = getKillStatsPeriodStart(query.period);
 
     // Get the member info first
     const member = await this.prisma.member.findFirst({
@@ -878,21 +1091,29 @@ export class KillsService {
     }
 
     const npcLvlCondition = buildNpcLvlCondition(query.minLvl, query.maxLvl);
+    const statsWhere = {
+      guildId,
+      memberId,
+      ...(npcTypes && npcTypes.length > 0 && { npcType: { in: npcTypes } }),
+      ...(query.world && { world: query.world }),
+      ...(query.search && {
+        npcName: { contains: query.search, mode: "insensitive" as const },
+      }),
+      ...npcLvlCondition,
+      ...visibilityCondition,
+    };
 
     // Get all kill stats for this member with visibility conditions
-    const stats = await this.prisma.npcKillStats.findMany({
-      where: {
-        guildId,
-        memberId,
-        ...(npcTypes && npcTypes.length > 0 && { npcType: { in: npcTypes } }),
-        ...(query.world && { world: query.world }),
-        ...(query.search && {
-          npcName: { contains: query.search, mode: "insensitive" as const },
-        }),
-        ...npcLvlCondition,
-        ...visibilityCondition,
-      },
-    });
+    const stats = periodStart
+      ? await this.prisma.npcKillStatsBucket.findMany({
+          where: {
+            ...statsWhere,
+            periodStart: { gte: periodStart },
+          },
+        })
+      : await this.prisma.npcKillStats.findMany({
+          where: statsWhere,
+        });
 
     // Calculate overview
     const participationsByType: Record<string, number> = {};

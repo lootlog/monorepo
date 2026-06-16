@@ -280,6 +280,7 @@ export * from './kills-controller-get-user-npc-kills-npc-types-item';
 export * from './kills-controller-get-user-npc-kills-params';
 export * from './kills-controller-get-user-npc-kills-sort-by';
 export * from './kills-controller-get-user-npc-kills-sort-order';
+export * from './kill-stats-period';
 export * from './list-event-hero-timers-params';
 export * from './list-event-hero-timers-path-parameters';
 export * from './list-event-maps-path-parameters';

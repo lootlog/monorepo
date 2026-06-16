@@ -27,6 +27,7 @@ import {
   getKillsControllerGetUserNpcKillsQueryKey,
   useKillsControllerGetUserNpcKills,
 } from "@/lib/api/generated/main/kills/kills";
+import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
 
 type KillsSearchParams = {
   world?: string;
@@ -36,6 +37,7 @@ type KillsSearchParams = {
   minLvl?: string;
   maxLvl?: string;
   sortBy?: string;
+  period?: KillStatsPeriod;
 };
 
 const ITEMS_PER_PAGE = 20;
@@ -68,6 +70,7 @@ export const KillsPage: React.FC = () => {
     search: debouncedSearch || undefined,
     minLvl: debouncedMinLvl ? Number(debouncedMinLvl) : undefined,
     maxLvl: debouncedMaxLvl ? Number(debouncedMaxLvl) : undefined,
+    period: searchParams.period ?? "all",
   };
 
   const cursor = searchParams.cursor ? Number(searchParams.cursor) : 0;
@@ -81,6 +84,7 @@ export const KillsPage: React.FC = () => {
     limit: ITEMS_PER_PAGE,
     sortOrder,
     sortBy,
+    period: filters.period === "all" ? undefined : filters.period,
   };
 
   const { data, isLoading } = useKillsControllerGetUserNpcKills(
@@ -165,6 +169,13 @@ export const KillsPage: React.FC = () => {
     setMaxLvlInput(maxLvl);
   };
 
+  const handlePeriodChange = (period: KillStatsPeriod) => {
+    updateSearchParams({
+      period: period === "all" ? undefined : period,
+      cursor: undefined,
+    });
+  };
+
   const handleNextPage = () => {
     if (data?.pagination.hasNext) {
       updateSearchParams({
@@ -197,6 +208,13 @@ export const KillsPage: React.FC = () => {
   });
 
   const hasPrev = cursor > 0;
+  const hasActiveFilters =
+    Boolean(filters.world) ||
+    Boolean(filters.npcTypes?.length) ||
+    Boolean(filters.search) ||
+    Boolean(filters.minLvl) ||
+    Boolean(filters.maxLvl) ||
+    filters.period !== "all";
 
   return (
     <div className="flex flex-col h-full min-h-0">
@@ -230,6 +248,7 @@ export const KillsPage: React.FC = () => {
               onSearchChange={handleSearchChange}
               onMinLvlChange={handleMinLvlChange}
               onMaxLvlChange={handleMaxLvlChange}
+              onPeriodChange={handlePeriodChange}
             />
           </Card>
 
@@ -240,7 +259,11 @@ export const KillsPage: React.FC = () => {
               ) : !data || data.npcs.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">
                   <p className="text-muted-foreground">
-                    {t("kills.ranking.noData")}
+                    {t(
+                      hasActiveFilters
+                        ? "kills.ranking.filteredNoData"
+                        : "kills.ranking.noData",
+                    )}
                   </p>
                 </div>
               ) : (

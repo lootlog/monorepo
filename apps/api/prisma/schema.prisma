@@ -32,7 +32,9 @@ model Guild {
   events            Event[]
   mapTemplates      MapTemplate[]
   npcKillStats      NpcKillStats[]
+  npcKillStatsBuckets NpcKillStatsBucket[]
   guildKillSummary  GuildKillSummary[]
+  guildKillSummaryBuckets GuildKillSummaryBucket[]
   notificationRules NotificationRule[]
   discordChannelSnapshots DiscordGuildChannelSnapshot[]
   discordSyncState  DiscordGuildSyncState?
@@ -271,6 +273,7 @@ model Member {
   detectedKills            EventHeroKill[]            @relation("KillDetectedBy")
   mapAssignmentHistory     EventMapAssignmentHistory[]
   npcKillStats             NpcKillStats[]
+  npcKillStatsBuckets      NpcKillStatsBucket[]
 
   @@unique(name: "memberId", [userId, guildId])
   @@index([id, guildId])
@@ -1151,4 +1154,75 @@ model GuildKillSummary {
   @@unique([guildId, world, npcId])
   @@index([guildId])
   @@index([guildId, npcType])
+}
+
+// Kill tracking - hourly personal stats per NPC per user
+model UserKillStatsBucket {
+  id           String   @id @default(cuid())
+  userId       String
+  world        String
+  npcId        Int
+  npcName      String
+  npcType      NpcType
+  npcLvl       Int
+  npcProf      String?
+  npcIcon      String?
+  totalKills   Int      @default(0)
+  periodStart  DateTime
+  lastKilledAt DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, world, npcId, periodStart])
+  @@index([userId, periodStart])
+  @@index([userId, npcType, periodStart])
+}
+
+// Kill tracking - hourly aggregated stats per NPC per member
+model NpcKillStatsBucket {
+  id           String   @id @default(cuid())
+  guildId      String
+  memberId     Int
+  userId       String
+  world        String
+  npcId        Int
+  npcName      String
+  npcType      NpcType
+  npcLvl       Int
+  npcProf      String?
+  npcIcon      String?
+  memberKills  Int      @default(0)
+  periodStart  DateTime
+  lastKilledAt DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  guild  Guild  @relation(fields: [guildId], references: [id])
+  member Member @relation(fields: [memberId], references: [id])
+
+  @@unique([guildId, memberId, world, npcId, periodStart])
+  @@index([guildId, periodStart])
+  @@index([guildId, npcType, periodStart])
+  @@index([memberId, periodStart])
+}
+
+// Kill tracking - hourly aggregated unique kills per NPC per guild
+model GuildKillSummaryBucket {
+  id           String   @id @default(cuid())
+  guildId      String
+  world        String
+  npcId        Int
+  npcName      String
+  npcType      NpcType
+  npcLvl       Int
+  npcProf      String?
+  npcIcon      String?
+  uniqueKills  Int      @default(0)
+  periodStart  DateTime
+  lastKilledAt DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  guild Guild @relation(fields: [guildId], references: [id])
+
+  @@unique([guildId, world, npcId, periodStart])
+  @@index([guildId, periodStart])
+  @@index([guildId, npcType, periodStart])
 }

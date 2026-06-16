@@ -11,6 +11,7 @@ import {
   getKillsControllerGetUserKillStatsQueryKey,
   useKillsControllerGetUserKillStats,
 } from "@/lib/api/generated/main/kills/kills";
+import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
 
 const NPC_TYPE_ORDER = [
   "TITAN",
@@ -27,13 +28,18 @@ const capitalizeFirst = (str: string) =>
 
 type PlayerKillStatsCardProps = {
   world?: string;
+  period: KillStatsPeriod;
 };
 
 export const PlayerKillStatsCard: React.FC<PlayerKillStatsCardProps> = ({
   world,
+  period,
 }) => {
   const { t } = useTranslation();
-  const killStatsParams = { world };
+  const killStatsParams = {
+    world,
+    period: period === "all" ? undefined : period,
+  };
   const { data, isLoading } = useKillsControllerGetUserKillStats(
     killStatsParams,
     {
@@ -43,6 +49,7 @@ export const PlayerKillStatsCard: React.FC<PlayerKillStatsCardProps> = ({
       },
     },
   );
+  const hasActiveFilters = Boolean(world) || period !== "all";
 
   if (isLoading) {
     return (
@@ -81,7 +88,11 @@ export const PlayerKillStatsCard: React.FC<PlayerKillStatsCardProps> = ({
         </CardHeader>
         <CardContent className="flex-1 flex items-center justify-center">
           <p className="text-sm text-muted-foreground text-center">
-            {t("kills.playerStats.noData")}
+            {t(
+              hasActiveFilters
+                ? "kills.playerStats.filteredNoData"
+                : "kills.playerStats.noData",
+            )}
           </p>
         </CardContent>
       </Card>

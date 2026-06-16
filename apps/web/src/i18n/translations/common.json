@@ -75,6 +75,9 @@
       "goToInit": "Przejdź do startu",
       "goToSignIn": "Przejdź do logowania"
     },
+    "global": {
+      "description": "Aplikacja napotkała nieoczekiwany błąd. Możesz spróbować odświeżyć widok albo wrócić do dashboardu."
+    },
     "status": {
       "401": {
         "title": "Sesja wymaga ponownego logowania",

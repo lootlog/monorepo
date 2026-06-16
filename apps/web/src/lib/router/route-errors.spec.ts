@@ -1,6 +1,9 @@
 import { CancelledError } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
-import { withRouteLoaderCancellation } from "./route-errors";
+import {
+  rethrowNotFoundOrError,
+  withRouteLoaderCancellation,
+} from "./route-errors";
 
 describe("withRouteLoaderCancellation", () => {
   it("returns the loader result when the loader succeeds", async () => {
@@ -44,5 +47,24 @@ describe("withRouteLoaderCancellation", () => {
         throw error;
       }),
     ).rejects.toBe(error);
+  });
+});
+
+describe("rethrowNotFoundOrError", () => {
+  it("turns 404 API errors into route not found errors", () => {
+    try {
+      rethrowNotFoundOrError({ status: 404 });
+    } catch (error) {
+      expect(error).toMatchObject({ isNotFound: true });
+      return;
+    }
+
+    throw new Error("Expected rethrowNotFoundOrError to throw");
+  });
+
+  it("rethrows non-404 errors", () => {
+    const error = new Error("boom");
+
+    expect(() => rethrowNotFoundOrError(error)).toThrow(error);
   });
 });

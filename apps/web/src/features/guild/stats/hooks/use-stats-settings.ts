@@ -2,6 +2,7 @@ import { useLocalStorage } from "usehooks-ts";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useDebounce } from "@/hooks/use-debounce";
 import type { NpcType } from "@/lib/api/generated/main/model/npc-type";
+import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
 
 type StatsSettingsPage =
   | "overview"
@@ -15,6 +16,7 @@ export type StatsSettings = {
   minLvl: string;
   maxLvl: string;
   npcType?: NpcType | "ALL";
+  period?: KillStatsPeriod;
 };
 
 const DEFAULT_SETTINGS: StatsSettings = {
@@ -22,6 +24,7 @@ const DEFAULT_SETTINGS: StatsSettings = {
   minLvl: "",
   maxLvl: "",
   npcType: "ALL",
+  period: "all",
 };
 
 export const useStatsSettings = (page: StatsSettingsPage) => {
@@ -65,6 +68,13 @@ export const useStatsSettings = (page: StatsSettingsPage) => {
     });
   };
 
+  const setPeriod = (period: KillStatsPeriod) => {
+    setSettings((prev) => {
+      if ((prev.period ?? "all") === period) return prev;
+      return { ...prev, period };
+    });
+  };
+
   const parsedMinLvl = debouncedMinLvl
     ? Number.parseInt(debouncedMinLvl, 10)
     : undefined;
@@ -73,12 +83,16 @@ export const useStatsSettings = (page: StatsSettingsPage) => {
     : undefined;
 
   return {
-    settings,
+    settings: {
+      ...settings,
+      period: settings.period ?? "all",
+    },
     debouncedMinLvl: Number.isNaN(parsedMinLvl) ? undefined : parsedMinLvl,
     debouncedMaxLvl: Number.isNaN(parsedMaxLvl) ? undefined : parsedMaxLvl,
     setWorld,
     setMinLvl,
     setMaxLvl,
     setNpcType,
+    setPeriod,
   };
 };

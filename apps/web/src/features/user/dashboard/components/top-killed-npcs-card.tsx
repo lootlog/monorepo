@@ -25,6 +25,7 @@ import {
   getKillsControllerGetUserKillStatsQueryKey,
   useKillsControllerGetUserKillStats,
 } from "@/lib/api/generated/main/kills/kills";
+import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
 
 const getRankIcon = (index: number) => {
   switch (index) {
@@ -42,18 +43,21 @@ const getRankIcon = (index: number) => {
 type TopKilledNpcsCardProps = {
   world?: string;
   npcType: NpcType;
+  period: KillStatsPeriod;
   onNpcTypeChange: (type: NpcType) => void;
 };
 
 export const TopKilledNpcsCard: React.FC<TopKilledNpcsCardProps> = ({
   world,
   npcType,
+  period,
   onNpcTypeChange,
 }) => {
   const { t } = useTranslation();
   const killStatsParams = {
     world,
     npcTypes: [npcType],
+    period: period === "all" ? undefined : period,
   };
   const { data, isLoading } = useKillsControllerGetUserKillStats(
     killStatsParams,
@@ -64,6 +68,7 @@ export const TopKilledNpcsCard: React.FC<TopKilledNpcsCardProps> = ({
       },
     },
   );
+  const hasActiveFilters = Boolean(world) || period !== "all";
 
   if (isLoading) {
     return (
@@ -124,7 +129,11 @@ export const TopKilledNpcsCard: React.FC<TopKilledNpcsCardProps> = ({
         {topNpcs.length === 0 ? (
           <div className="flex-1 flex items-center justify-center py-8">
             <p className="text-sm text-muted-foreground text-center">
-              {t("kills.home.topKilledNpcs.noData")}
+              {t(
+                hasActiveFilters
+                  ? "kills.home.topKilledNpcs.filteredNoData"
+                  : "kills.home.topKilledNpcs.noData",
+              )}
             </p>
           </div>
         ) : (
