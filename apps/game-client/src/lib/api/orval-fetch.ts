@@ -4,6 +4,7 @@ import {
   buildRequestUrl,
   executeApiRequest,
 } from "@/lib/api-client";
+import { applyDevPermissionOverrideHeader } from "@/lib/dev-permission-override";
 
 export type ErrorType<TError> = ApiError<TError>;
 export type BodyType<TBody> = TBody;
@@ -54,6 +55,8 @@ const executeOrvalFetch = <TData>({
     baseURL: resolvedBaseUrl,
     path,
   });
+  const headers = new Headers(requestInit.headers);
+  applyDevPermissionOverrideHeader(headers);
 
   return executeApiRequest<TData>({
     url: requestUrl,
@@ -61,6 +64,7 @@ const executeOrvalFetch = <TData>({
     requestInit: {
       credentials: requestInit.credentials ?? "include",
       ...requestInit,
+      headers,
     },
   });
 };
