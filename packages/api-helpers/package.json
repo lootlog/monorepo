@@ -6,23 +6,11 @@
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
-  "typesVersions": {
-    "*": {
-      "permissions": [
-        "./dist/permissions.d.ts"
-      ]
-    }
-  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
-    },
-    "./permissions": {
-      "types": "./dist/permissions.d.ts",
-      "import": "./dist/permissions.mjs",
-      "require": "./dist/permissions.js"
     }
   },
   "scripts": {

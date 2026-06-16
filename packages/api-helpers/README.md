@@ -6,14 +6,14 @@ Shared auth and request-context helpers for backend services.
 
 - Provides reusable helpers for validating Auth-issued JWTs and extracting user metadata from trusted headers.
 - Supports the Hono services used in this monorepo and keeps auth-adjacent logic out of individual apps.
-- Ships an additional `permissions` subpath export for permission-related helpers.
+- Exposes permission-related helpers from the main package entrypoint.
 
 ## Exports
 
 - `userMetadataFromHeaders`
 - `validateToken`
 - JWT verification types from `verify-jwt.types`
-- `@lootlog/api-helpers/permissions`
+- `canViewNpcTimer`
 
 ## Development
 

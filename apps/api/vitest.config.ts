@@ -14,8 +14,6 @@ export default defineConfig({
     rootDir: __dirname,
     include: ["src/**/*.spec.ts"],
     alias: {
-      "@lootlog/api-helpers/permissions":
-        "../../packages/api-helpers/src/permissions.ts",
       "prisma/generated/client": "./prisma/generated/client.ts",
     },
     setupFiles: ["./test/vitest.setup.ts"],

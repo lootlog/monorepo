@@ -33,7 +33,7 @@ import type { CreateManualTimerDto } from "src/timers/dto/create-manual-timer.dt
 import { generateUniqueIntId } from "src/shared/utils/generate-unique-int-id";
 import { RoutingKey } from "src/enum/routing-key.enum";
 import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
-import { canViewNpcTimer } from "@lootlog/api-helpers/permissions";
+import { canViewNpcTimer } from "@lootlog/api-helpers";
 import type { CreateTimerFromGameClientDto } from "src/timers/dto/create-timer-from-game-client.dto";
 import { validateAndCalculateSpawnTimes } from "src/timers/utils/validate-spawn-times";
 import { TIMER_LIMITS, TIMER_TYPES } from "src/timers/constants/timer-limits";
