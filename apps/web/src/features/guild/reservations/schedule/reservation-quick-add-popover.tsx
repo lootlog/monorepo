@@ -15,19 +15,32 @@ import {
   invalidateReservationsControllerGetReservations,
   useReservationsControllerCreateReservation,
 } from "@/lib/api/generated/main/reservations/reservations";
+import {
+  getDurationMinutes,
+  type ReservationSettings,
+} from "./reservation-settings";
 
 type ReservationQuickAddPopoverProps = {
   start: Date;
   end: Date;
   reservationKey: string;
   currentUserId?: string;
+  settings: ReservationSettings;
   onClose: () => void;
   onSuccess: () => void;
 };
 
 export const ReservationQuickAddPopover: React.FC<
   ReservationQuickAddPopoverProps
-> = ({ start, end, reservationKey, currentUserId, onClose, onSuccess }) => {
+> = ({
+  start,
+  end,
+  reservationKey,
+  currentUserId,
+  settings,
+  onClose,
+  onSuccess,
+}) => {
   const [comment, setComment] = useState("");
   const { t } = useTranslation();
   const guildId = useGuildId();
@@ -50,6 +63,17 @@ export const ReservationQuickAddPopover: React.FC<
 
   const handleCreate = async () => {
     if (!currentUserId || !reservationKey) return;
+
+    if (
+      getDurationMinutes(start, end) > settings.reservationMaxDurationMinutes
+    ) {
+      toast.error(
+        t("reservations.schedule.validation.maximumDuration", {
+          minutes: settings.reservationMaxDurationMinutes,
+        }),
+      );
+      return;
+    }
 
     try {
       const normalizedComment = comment.trim();

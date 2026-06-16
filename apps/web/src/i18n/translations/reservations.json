@@ -30,7 +30,10 @@
       "reservationTypeMissing": "Nie udało się ustalić rodzaju rezerwacji.",
       "userMissing": "Brak informacji o użytkowniku.",
       "startTooOld": "Godzina rozpoczęcia rezerwacji nie może być starsza niż 1 godzina od aktualnego czasu.",
-      "minimumDuration": "Rezerwacja musi trwać co najmniej 30 minut."
+      "minimumDuration": "Rezerwacja musi trwać co najmniej {{minutes}} minut.",
+      "maximumDuration": "Rezerwacja może trwać maksymalnie {{minutes}} minut.",
+      "maxAdvance": "Rezerwację można utworzyć maksymalnie {{days}} dni do przodu.",
+      "granularity": "Początek i koniec rezerwacji muszą pasować do ustawionej granularności."
     },
     "toasts": {
       "created": "Rezerwacja została utworzona.",

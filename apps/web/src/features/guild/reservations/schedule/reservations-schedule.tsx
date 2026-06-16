@@ -28,6 +28,8 @@ import {
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useMembersControllerGetGuildMemberReferences } from "@/lib/api/generated/main/members/members";
 import type { MemberReferenceResponseDtoOutput as GuildMember } from "@/lib/api/generated/main/model";
+import { useGuildsControllerGetGuildById } from "@/lib/api/generated/main/guilds/guilds";
+import { getReservationSettings } from "./reservation-settings";
 
 export const ReservationsSchedule: React.FC = () => {
   const { reservationId } = useParams({
@@ -47,6 +49,10 @@ export const ReservationsSchedule: React.FC = () => {
   const { data: permissions } = useGuildPermissions();
   const { socket, connected } = useGateway();
   const queryClient = useQueryClient();
+  const { data: guild } = useGuildsControllerGetGuildById({
+    guildId: guildId ?? "",
+  });
+  const reservationSettings = getReservationSettings(guild);
 
   const { data: reservations } = useReservationsControllerGetReservations(
     { guildId: guildId ?? "" },
@@ -212,6 +218,7 @@ export const ReservationsSchedule: React.FC = () => {
           onOpenChange={setIsCreateDialogOpen}
           reservationKey={createReservationKey}
           currentUserId={currentUserId}
+          settings={reservationSettings}
         />
 
         <div className="flex-1 flex flex-col min-h-0 max-h-full h-full overflow-hidden bg-transparent">
@@ -224,6 +231,7 @@ export const ReservationsSchedule: React.FC = () => {
             isDeleting={isDeleting}
             onDeleteReservation={handleDeleteReservation}
             reservationKey={createReservationKey}
+            settings={reservationSettings}
           />
         </div>
       </div>

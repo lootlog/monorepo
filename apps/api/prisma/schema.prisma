@@ -15,6 +15,11 @@ model Guild {
   vanityUrl         String?            @unique
   notificationRuleLimit Int            @default(20)
   publicStatsCardEnabled Boolean       @default(false)
+  reservationMaxDurationMinutes Int    @default(180)
+  reservationMinDurationMinutes Int    @default(30)
+  reservationTimeGranularityMinutes Int @default(15)
+  reservationMaxAdvanceDays Int         @default(7)
+  reservationActiveLimitPerSpot Int     @default(3)
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   roles             Role[]

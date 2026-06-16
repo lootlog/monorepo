@@ -5,6 +5,7 @@
     "roles": "Role",
     "npcs": "Ustawienia potworów i NPC",
     "mapTemplates": "Szablony map",
+    "reservations": "Rezerwacje",
     "members": "Członkowie",
     "notifications": "Powiadomienia",
     "info": "Informacje"
@@ -57,6 +58,52 @@
     "searchPlaceholder": "Szukaj potwora...",
     "emptyTitle": "Nie znaleziono potworów",
     "emptyDescription": "Spróbuj zmienić kryteria wyszukiwania"
+  },
+  "reservations": {
+    "title": "Ustawienia rezerwacji",
+    "description": "Zarządzaj zasadami zapisywania się na expowiska",
+    "toasts": {
+      "updateSuccess": "Zaktualizowano konfigurację rezerwacji",
+      "updateError": "Nie udało się zaktualizować konfiguracji rezerwacji"
+    },
+    "duration": {
+      "title": "Długość rezerwacji",
+      "description": "Określ minimalny i maksymalny czas pojedynczego zapisu."
+    },
+    "schedule": {
+      "title": "Harmonogram",
+      "description": "Ustaw krok czasu i jak daleko do przodu można planować expowiska."
+    },
+    "limits": {
+      "title": "Limity graczy",
+      "description": "Ogranicz liczbę aktywnych zapisów jednej osoby na tym samym expowisku."
+    },
+    "fields": {
+      "minDuration": {
+        "label": "Minimalna długość (min)",
+        "description": "Najkrótszy dozwolony czas rezerwacji."
+      },
+      "maxDuration": {
+        "label": "Maksymalna długość (min)",
+        "description": "Najdłuższy dozwolony czas rezerwacji."
+      },
+      "granularity": {
+        "label": "Granularność czasu",
+        "description": "Krok, do którego będą dopasowane godziny w harmonogramie.",
+        "option": "Co {{minutes}} min"
+      },
+      "maxAdvance": {
+        "label": "Wyprzedzenie (dni)",
+        "description": "Jak daleko w przyszłość gracze mogą tworzyć rezerwacje."
+      },
+      "activeLimit": {
+        "label": "Limit na gracza",
+        "description": "Maksymalna liczba aktywnych lub przyszłych rezerwacji jednej osoby na tym samym expowisku."
+      }
+    },
+    "validation": {
+      "minGreaterThanMax": "Minimalna długość nie może być większa niż maksymalna."
+    }
   },
   "members": {
     "title": "Ustawienia członków",

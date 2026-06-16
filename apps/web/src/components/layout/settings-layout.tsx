@@ -30,6 +30,11 @@ export const SettingsLayout: React.FC = () => {
       href: `${ROUTE_SEGMENTS.guild.settings}${ROUTE_SEGMENTS.guild.mapTemplates}`,
     },
     {
+      id: "reservations",
+      label: t("settings.guildNavigation.reservations"),
+      href: `${ROUTE_SEGMENTS.guild.settings}${ROUTE_SEGMENTS.guild.reservationsSettings}`,
+    },
+    {
       id: "members",
       label: t("settings.guildNavigation.members"),
       href: `${ROUTE_SEGMENTS.guild.settings}${ROUTE_SEGMENTS.guild.members}`,

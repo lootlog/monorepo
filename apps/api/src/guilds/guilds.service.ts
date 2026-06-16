@@ -1062,10 +1062,48 @@ export class GuildsService {
       });
     }
 
+    const nextMinDuration = data.reservationMinDurationMinutes;
+    const nextMaxDuration = data.reservationMaxDurationMinutes;
+    if (
+      nextMinDuration !== undefined &&
+      nextMaxDuration !== undefined &&
+      nextMinDuration > nextMaxDuration
+    ) {
+      throw new BadRequestException(
+        "Minimalna długość rezerwacji nie może być większa niż maksymalna.",
+      );
+    }
+
     const oldGuild = await this.prisma.guild.findUnique({
       where: { id: guildId },
-      select: { vanityUrl: true },
+      select: {
+        vanityUrl: true,
+        reservationMinDurationMinutes: true,
+        reservationMaxDurationMinutes: true,
+      },
     });
+
+    if (
+      oldGuild &&
+      nextMinDuration !== undefined &&
+      nextMaxDuration === undefined &&
+      nextMinDuration > oldGuild.reservationMaxDurationMinutes
+    ) {
+      throw new BadRequestException(
+        "Minimalna długość rezerwacji nie może być większa niż maksymalna.",
+      );
+    }
+
+    if (
+      oldGuild &&
+      nextMaxDuration !== undefined &&
+      nextMinDuration === undefined &&
+      oldGuild.reservationMinDurationMinutes > nextMaxDuration
+    ) {
+      throw new BadRequestException(
+        "Maksymalna długość rezerwacji nie może być mniejsza niż minimalna.",
+      );
+    }
 
     const guild = await this.prisma.guild.update({
       where: { id: guildId },
@@ -1075,6 +1113,30 @@ export class GuildsService {
           : {}),
         ...(data.publicStatsCardEnabled !== undefined
           ? { publicStatsCardEnabled: data.publicStatsCardEnabled }
+          : {}),
+        ...(data.reservationMaxDurationMinutes !== undefined
+          ? {
+              reservationMaxDurationMinutes: data.reservationMaxDurationMinutes,
+            }
+          : {}),
+        ...(data.reservationMinDurationMinutes !== undefined
+          ? {
+              reservationMinDurationMinutes: data.reservationMinDurationMinutes,
+            }
+          : {}),
+        ...(data.reservationTimeGranularityMinutes !== undefined
+          ? {
+              reservationTimeGranularityMinutes:
+                data.reservationTimeGranularityMinutes,
+            }
+          : {}),
+        ...(data.reservationMaxAdvanceDays !== undefined
+          ? { reservationMaxAdvanceDays: data.reservationMaxAdvanceDays }
+          : {}),
+        ...(data.reservationActiveLimitPerSpot !== undefined
+          ? {
+              reservationActiveLimitPerSpot: data.reservationActiveLimitPerSpot,
+            }
           : {}),
       },
     });

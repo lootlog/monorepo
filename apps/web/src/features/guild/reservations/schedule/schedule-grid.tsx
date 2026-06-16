@@ -14,6 +14,11 @@ import { ReservationQuickAddPopover } from "./reservation-quick-add-popover";
 import type { MemberReferenceResponseDtoOutput as GuildMember } from "@/lib/api/generated/main/model";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { cn } from "@lootlog/ui/lib/utils";
+import {
+  getDurationMinutes,
+  snapMinutesToStep,
+  type ReservationSettings,
+} from "./reservation-settings";
 
 type ScheduleGridProps = {
   weekStart: Date;
@@ -27,6 +32,7 @@ type ScheduleGridProps = {
     action: "cancel" | "remove",
   ) => void;
   reservationKey: string;
+  settings: ReservationSettings;
 };
 
 export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
@@ -38,7 +44,10 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
   isDeleting,
   onDeleteReservation,
   reservationKey,
+  settings,
 }) => {
+  const granularityMs = settings.reservationTimeGranularityMinutes * 60 * 1000;
+
   const [nowIndicatorRef, setNowIndicatorRef] = useState<HTMLDivElement | null>(
     null,
   );
@@ -76,7 +85,10 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
     const dayIdx = Math.floor((x - LABEL_COLUMN_WIDTH) / dayWidth);
 
     const totalMinutes = Math.floor((y / MIN_ROW_HEIGHT) * 60);
-    const snappedMinutes = Math.floor(totalMinutes / 15) * 15;
+    const snappedMinutes = snapMinutesToStep(
+      totalMinutes,
+      settings.reservationTimeGranularityMinutes,
+    );
 
     if (dayIdx >= 0 && dayIdx < DAYS.length) {
       const startPoint = { dayIdx, minutes: snappedMinutes };
@@ -98,7 +110,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
         const resStart = segment.reservation.fromDate.getTime();
         const resEnd = segment.reservation.toDate.getTime();
         const slotStart = startDate.getTime();
-        const slotEnd = slotStart + 15 * 60 * 1000;
+        const slotEnd = slotStart + granularityMs;
         return slotStart < resEnd && slotEnd > resStart;
       });
 
@@ -119,7 +131,10 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
         const dayWidth = (rect.width - LABEL_COLUMN_WIDTH) / DAYS.length;
         const dayIdx = Math.floor((x - LABEL_COLUMN_WIDTH) / dayWidth);
         const totalMinutes = Math.floor((y / MIN_ROW_HEIGHT) * 60);
-        const snappedMinutes = Math.floor(totalMinutes / 15) * 15;
+        const snappedMinutes = snapMinutesToStep(
+          totalMinutes,
+          settings.reservationTimeGranularityMinutes,
+        );
 
         if (dayIdx >= 0 && dayIdx < DAYS.length) {
           const currentDate = new Date(weekStart);
@@ -137,7 +152,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
               const resStart = segment.reservation.fromDate.getTime();
               const resEnd = segment.reservation.toDate.getTime();
               const slotStart = currentDate.getTime();
-              const slotEnd = slotStart + 15 * 60 * 1000;
+              const slotEnd = slotStart + granularityMs;
               return slotStart < resEnd && slotEnd > resStart;
             });
 
@@ -165,7 +180,10 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
 
     if (dayIdx >= 0 && dayIdx < DAYS.length) {
       const totalMinutes = Math.floor((y / MIN_ROW_HEIGHT) * 60);
-      const snappedMinutes = Math.floor(totalMinutes / 15) * 15;
+      const snappedMinutes = snapMinutesToStep(
+        totalMinutes,
+        settings.reservationTimeGranularityMinutes,
+      );
 
       const currentPointDate = new Date(weekStart);
       currentPointDate.setDate(currentPointDate.getDate() + dayIdx);
@@ -204,7 +222,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
         });
 
         if (targetTime >= limitTime) {
-          const clampedDate = new Date(limitTime - 15 * 60 * 1000);
+          const clampedDate = new Date(limitTime - granularityMs);
           const diff = clampedDate.getTime() - weekStart.getTime();
           const dIdx = Math.floor(diff / (24 * 60 * 60 * 1000));
           const mins = Math.round((diff % (24 * 60 * 60 * 1000)) / (60 * 1000));
@@ -294,7 +312,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
     const start = p1.getTime() <= p2.getTime() ? p1 : p2;
     let end = p1.getTime() <= p2.getTime() ? p2 : p1;
 
-    end = new Date(end.getTime() + 15 * 60 * 1000);
+    end = new Date(end.getTime() + granularityMs);
 
     return { start, end };
   };
@@ -453,8 +471,8 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
         <AnimatePresence>
           {selectionRange &&
             !isSelecting &&
-            selectionRange.end.getTime() - selectionRange.start.getTime() >=
-              30 * 60 * 1000 && (
+            getDurationMinutes(selectionRange.start, selectionRange.end) >=
+              settings.reservationMinDurationMinutes && (
               <div
                 className="absolute z-50 pointer-events-auto"
                 style={{
@@ -485,6 +503,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
                     end={selectionRange.end}
                     reservationKey={reservationKey}
                     currentUserId={currentUserId}
+                    settings={settings}
                     onClose={handleClosePopover}
                     onSuccess={handleClosePopover}
                   />
