@@ -4,8 +4,8 @@ import { getBattlesControllerGetUserCharactersQueryOptions } from "@/lib/api/gen
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 
 export const Route = createFileRoute("/_authenticated/@me/battle-panel")({
-  loader: ({ context, preload }) =>
-    withRouteLoaderCancellation(async () => {
+  loader: ({ abortController, context, preload }) =>
+    withRouteLoaderCancellation(abortController, async () => {
       if (preload) {
         return null;
       }

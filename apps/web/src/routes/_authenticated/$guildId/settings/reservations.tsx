@@ -14,8 +14,8 @@ import {
 export const Route = createFileRoute(
   "/_authenticated/$guildId/settings/reservations",
 )({
-  loader: ({ context, params, preload }) =>
-    withRouteLoaderCancellation(async () => {
+  loader: ({ abortController, context, params, preload }) =>
+    withRouteLoaderCancellation(abortController, async () => {
       if (preload) {
         return null;
       }

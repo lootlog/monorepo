@@ -11,8 +11,8 @@ import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 
 export const Route = createFileRoute("/_authenticated/@me/battle-panel/stats")({
   validateSearch: battlePanelStatisticsSearchSchema,
-  loader: ({ context, location }) =>
-    withRouteLoaderCancellation(async () => {
+  loader: ({ abortController, context, location }) =>
+    withRouteLoaderCancellation(abortController, async () => {
       const search = loadBattlePanelStatisticsSearch(location.searchStr);
 
       await context.queryClient.ensureQueryData(

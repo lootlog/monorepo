@@ -11,8 +11,8 @@ import {
 } from "@/lib/router/route-errors";
 
 export const Route = createFileRoute("/battles/$id")({
-  loader: ({ context, params }) =>
-    withRouteLoaderCancellation(async () => {
+  loader: ({ abortController, context, params }) =>
+    withRouteLoaderCancellation(abortController, async () => {
       try {
         await Promise.all([
           context.queryClient.ensureQueryData(

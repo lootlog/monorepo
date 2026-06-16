@@ -15,8 +15,8 @@ const getSearchParamValues = (searchParams: URLSearchParams, key: string) => {
 };
 
 export const Route = createFileRoute("/_authenticated/$guildId/activity-logs")({
-  loader: ({ context, location, params, preload }) =>
-    withRouteLoaderCancellation(async () => {
+  loader: ({ abortController, context, location, params, preload }) =>
+    withRouteLoaderCancellation(abortController, async () => {
       if (preload) {
         return null;
       }

@@ -14,8 +14,8 @@ export const Route = createFileRoute(
   "/_authenticated/@me/battle-panel/statistics_/player-vs-player/$myId/$opponentId",
 )({
   validateSearch: battlePanelPlayerVsPlayerSearchSchema,
-  loader: ({ context, location, params }) =>
-    withRouteLoaderCancellation(async () => {
+  loader: ({ abortController, context, location, params }) =>
+    withRouteLoaderCancellation(abortController, async () => {
       const search = loadBattlePanelPlayerVsPlayerSearch(location.searchStr);
       const characterId =
         (await ensureBattlePanelCharacterId({
