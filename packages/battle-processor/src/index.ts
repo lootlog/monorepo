@@ -215,8 +215,8 @@ export class BattleProcessor {
 
     return allMoves.map((move) => {
       const [attackerPart, defenderPart, ...actions] = move.split(";");
-      const [attackerId, attackerHp] = attackerPart.split("=");
-      const [defenderId, defenderHp] = defenderPart.split("=");
+      const [attackerId = "0", attackerHp] = (attackerPart ?? "0").split("=");
+      const [defenderId = "0", defenderHp] = (defenderPart ?? "0").split("=");
 
       return {
         attackerId: attackerId !== "0" ? attackerId : null,
@@ -228,7 +228,7 @@ export class BattleProcessor {
           ? Number.parseInt(defenderHp, 10)
           : null,
         actions: actions.map((action) => {
-          const [actionType, param = ""] = action.split("=");
+          const [actionType = "", param = ""] = action.split("=");
           return { actionType, param };
         }),
       };
@@ -250,8 +250,8 @@ export class BattleProcessor {
       const tspellAction = move.actions.find((a) => a.actionType === "tspell");
       const hasStepAction = move.actions.some((a) => a.actionType === "step");
 
-      if (hasStepAction) {
-        const attacker = this.warriors.get(move.attackerId!);
+      if (hasStepAction && move.attackerId) {
+        const attacker = this.warriors.get(move.attackerId);
         if (attacker) {
           attacker.turns++;
           attacker.steps++;
@@ -399,12 +399,12 @@ export class BattleProcessor {
 
       if (damageTakenMap[actionType]) {
         attacker.damageDealtAfterDefensive += value;
-        if (defender) {
+        if (defender && move.defenderId) {
           defender.damageTaken += value;
           (defender[damageTakenMap[actionType]] as number) += value;
           defender.flatDamageTaken += value;
           this.tryCalculateMaxHp(
-            move.defenderId!,
+            move.defenderId,
             value,
             move.defenderHpPercentage,
           );
@@ -613,10 +613,15 @@ export class BattleProcessor {
 
     const parts = param.split(",");
     if (parts.length >= 3) {
-      const targetNameWithHp = parts[2].trim();
+      const targetNameWithHp = parts[2]?.trim();
+      if (!targetNameWithHp) {
+        return;
+      }
+
       const hpMatch = targetNameWithHp.match(/\((\d+)%\)$/);
-      const targetHp = hpMatch ? Number.parseInt(hpMatch[1], 10) : null;
-      const targetName = targetNameWithHp.split("(")[0].trim();
+      const targetHp = hpMatch?.[1] ? Number.parseInt(hpMatch[1], 10) : null;
+      const [targetNamePart = ""] = targetNameWithHp.split("(");
+      const targetName = targetNamePart.trim();
 
       const found = this.findWarrior(targetName, true);
       if (found) {
@@ -824,7 +829,8 @@ export class BattleProcessor {
         return acc;
       }, {});
       const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-      return Number(sorted[0][0]);
+      const [topTeam] = sorted[0] ?? [];
+      return topTeam === undefined ? null : Number(topTeam);
     };
 
     const winnerNames = splitNames(this.battleOutcome.winner);
@@ -833,13 +839,10 @@ export class BattleProcessor {
     let winningTeam = getTeamFromNames(winnerNames);
     let losingTeam = getTeamFromNames(loserNames);
 
-    const inferTeam = (team: number | null): number | null =>
-      team === 1 ? 2 : team === 2 ? 1 : null;
-
     if (winningTeam === null && losingTeam !== null) {
-      winningTeam = inferTeam(losingTeam);
+      winningTeam = this.getOpposingTeam(losingTeam);
     } else if (losingTeam === null && winningTeam !== null) {
-      losingTeam = inferTeam(winningTeam);
+      losingTeam = this.getOpposingTeam(winningTeam);
     }
 
     if (winningTeam === null || losingTeam === null) {
@@ -898,6 +901,18 @@ export class BattleProcessor {
 
     this.battleOutcome.winningTeam = winningTeam;
     this.battleOutcome.losingTeam = losingTeam;
+  }
+
+  private getOpposingTeam(team: number): number | null {
+    if (team === 1) {
+      return 2;
+    }
+
+    if (team === 2) {
+      return 1;
+    }
+
+    return null;
   }
 
   private calculateDerivedStats(): void {
