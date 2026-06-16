@@ -34,6 +34,7 @@ import {
   Bell,
   Settings,
   Trophy,
+  Users,
 } from "lucide-react";
 import { cn } from "@lootlog/ui/lib/utils";
 import { Card } from "@lootlog/ui/components/card";
@@ -95,6 +96,16 @@ const PERMISSION_GROUPS = [
     permissions: [
       Permission.LOOTLOG_RESERVATIONS_READ,
       Permission.LOOTLOG_RESERVATIONS_WRITE,
+    ],
+  },
+  {
+    groupKey: "members",
+    icon: Users,
+    color: "text-cyan-500",
+    bgColor: "bg-cyan-500/10",
+    permissions: [
+      Permission.LOOTLOG_MEMBERS_READ,
+      Permission.LOOTLOG_ONLINE_PLAYERS_READ,
     ],
   },
 

@@ -45,7 +45,7 @@ describe("AfkProcessor", () => {
     expect(mockEmit).not.toHaveBeenCalled();
   });
 
-  it("emits presence update when afk state changes and socket is ready", () => {
+  it("emits player presence update when afk state changes and socket is ready", () => {
     useGlobalStore.setState({
       socketState: {
         connected: true,
@@ -56,7 +56,7 @@ describe("AfkProcessor", () => {
 
     processor.handle({ h: { stasis: 1 } });
 
-    expect(mockEmit).toHaveBeenCalledWith(GatewayEvent.PRESENCE_UPDATE, {
+    expect(mockEmit).toHaveBeenCalledWith(GatewayEvent.PLAYER_PRESENCE_UPDATE, {
       isAfk: true,
       mapId: 77,
       mapName: "Ithan",

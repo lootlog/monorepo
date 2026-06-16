@@ -674,6 +674,7 @@ paths:
                     - LOOTLOG_RESERVATIONS_READ
                     - LOOTLOG_RESERVATIONS_WRITE
                     - LOOTLOG_MEMBERS_READ
+                    - LOOTLOG_ONLINE_PLAYERS_READ
                     - LOOTLOG_CHAT_READ
                     - LOOTLOG_CHAT_WRITE
                     - LOOTLOG_CHAT_TITANS_READ
@@ -6221,6 +6222,7 @@ components:
                     - LOOTLOG_RESERVATIONS_READ
                     - LOOTLOG_RESERVATIONS_WRITE
                     - LOOTLOG_MEMBERS_READ
+                    - LOOTLOG_ONLINE_PLAYERS_READ
                     - LOOTLOG_CHAT_READ
                     - LOOTLOG_CHAT_WRITE
                     - LOOTLOG_CHAT_TITANS_READ
@@ -6350,6 +6352,7 @@ components:
                     - LOOTLOG_RESERVATIONS_READ
                     - LOOTLOG_RESERVATIONS_WRITE
                     - LOOTLOG_MEMBERS_READ
+                    - LOOTLOG_ONLINE_PLAYERS_READ
                     - LOOTLOG_CHAT_READ
                     - LOOTLOG_CHAT_WRITE
                     - LOOTLOG_CHAT_TITANS_READ
@@ -6662,6 +6665,7 @@ components:
                     - LOOTLOG_RESERVATIONS_READ
                     - LOOTLOG_RESERVATIONS_WRITE
                     - LOOTLOG_MEMBERS_READ
+                    - LOOTLOG_ONLINE_PLAYERS_READ
                     - LOOTLOG_CHAT_READ
                     - LOOTLOG_CHAT_WRITE
                     - LOOTLOG_CHAT_TITANS_READ
@@ -6828,6 +6832,7 @@ components:
                     - LOOTLOG_RESERVATIONS_READ
                     - LOOTLOG_RESERVATIONS_WRITE
                     - LOOTLOG_MEMBERS_READ
+                    - LOOTLOG_ONLINE_PLAYERS_READ
                     - LOOTLOG_CHAT_READ
                     - LOOTLOG_CHAT_WRITE
                     - LOOTLOG_CHAT_TITANS_READ
@@ -6884,6 +6889,7 @@ components:
               - LOOTLOG_RESERVATIONS_READ
               - LOOTLOG_RESERVATIONS_WRITE
               - LOOTLOG_MEMBERS_READ
+              - LOOTLOG_ONLINE_PLAYERS_READ
               - LOOTLOG_CHAT_READ
               - LOOTLOG_CHAT_WRITE
               - LOOTLOG_CHAT_TITANS_READ
@@ -6932,6 +6938,7 @@ components:
               - LOOTLOG_RESERVATIONS_READ
               - LOOTLOG_RESERVATIONS_WRITE
               - LOOTLOG_MEMBERS_READ
+              - LOOTLOG_ONLINE_PLAYERS_READ
               - LOOTLOG_CHAT_READ
               - LOOTLOG_CHAT_WRITE
               - LOOTLOG_CHAT_TITANS_READ
@@ -7115,6 +7122,7 @@ components:
                         - LOOTLOG_RESERVATIONS_READ
                         - LOOTLOG_RESERVATIONS_WRITE
                         - LOOTLOG_MEMBERS_READ
+                        - LOOTLOG_ONLINE_PLAYERS_READ
                         - LOOTLOG_CHAT_READ
                         - LOOTLOG_CHAT_WRITE
                         - LOOTLOG_CHAT_TITANS_READ
@@ -7322,6 +7330,7 @@ components:
                         - LOOTLOG_RESERVATIONS_READ
                         - LOOTLOG_RESERVATIONS_WRITE
                         - LOOTLOG_MEMBERS_READ
+                        - LOOTLOG_ONLINE_PLAYERS_READ
                         - LOOTLOG_CHAT_READ
                         - LOOTLOG_CHAT_WRITE
                         - LOOTLOG_CHAT_TITANS_READ

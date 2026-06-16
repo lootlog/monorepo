@@ -7,6 +7,7 @@ import type { ChatMessage } from "@/api/chat.api";
 import type { Timer } from "@/api/timers.api";
 import type { Notification } from "@/features/notifications/hooks/use-notifications";
 import { io, type Socket } from "socket.io-client";
+import { getSerializedDevPermissionOverride } from "@/lib/dev-permission-override";
 import type { PlayerPresence } from "@/features/online-players/hooks/use-players-presence";
 import { msgpackParser } from "@lootlog/socket-parser";
 import type {
@@ -34,7 +35,7 @@ type ServerToClientEvents = {
 
   [GatewayEvent.CHAT_MESSAGE]: (data: ChatMessage) => void;
 
-  [GatewayEvent.UPDATE_SERVER_PRESENCE]: (data: {
+  [GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE]: (data: {
     discordId: string;
     guildId?: string;
     sessionId?: string;
@@ -109,12 +110,12 @@ type ClientToServerEvents = {
     };
   }) => void;
 
-  [GatewayEvent.REQUEST_SERVER_PRESENCE]: (data: {
+  [GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH]: (data: {
     guildId: string;
     world: string;
   }) => void;
 
-  [GatewayEvent.PRESENCE_UPDATE]: (data: {
+  [GatewayEvent.PLAYER_PRESENCE_UPDATE]: (data: {
     isAfk?: boolean;
     mapId?: number;
     mapName?: string;
@@ -137,6 +138,9 @@ export const getSocket = (): AppSocket => {
       withCredentials: true,
       autoConnect: false,
       parser: msgpackParser,
+      auth: {
+        devPermissionOverride: getSerializedDevPermissionOverride(),
+      },
     }) as AppSocket;
   }
 

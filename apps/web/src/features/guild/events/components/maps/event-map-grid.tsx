@@ -70,7 +70,9 @@ const LocationSection = ({
 
   if (maps.length === 0) return null;
 
-  const coveredCount = isWindowActive(windowStatus)
+  const canShowCoverageCount =
+    isWindowActive(windowStatus) && presenceData !== undefined;
+  const coveredCount = canShowCoverageCount
     ? maps.filter(
         (map) => getMapStatus(map, presenceData) === "ASSIGNED_PRESENT",
       ).length
@@ -101,7 +103,7 @@ const LocationSection = ({
         )}
         <span className="truncate">{title}</span>
         <span className="ml-auto text-xs text-muted-foreground shrink-0">
-          {isWindowActive(windowStatus) ? (
+          {canShowCoverageCount ? (
             <span
               className={cn(
                 coveredCount === maps.length

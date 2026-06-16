@@ -138,6 +138,7 @@ describe("SubscriptionService", () => {
     expect(result.featureRooms).toEqual(
       expect.arrayContaining([
         buildRoomName("guild-1", "admin"),
+        buildRoomName("guild-1", "online-players"),
         buildRoomName("guild-1", "chat", "base"),
         buildRoomName("guild-1", "chat", "titans"),
         buildRoomName("guild-1", "chat", "heroes"),
@@ -200,6 +201,46 @@ describe("SubscriptionService", () => {
     );
     expect(result.featureRooms).not.toContain(
       buildRoomName("guild-1", "timers", "base"),
+    );
+    expect(result.featureRooms).not.toContain(
+      buildRoomName("guild-1", "online-players"),
+    );
+  });
+
+  it("joins online players room when role has online players permission", async () => {
+    const guilds = [
+      createGuild({
+        discordId: "discord-1",
+        permissions: [Permission.LOOTLOG_ONLINE_PLAYERS_READ],
+      }),
+    ];
+    const client = {
+      data: {
+        discordId: "discord-1",
+        sessionId: "socket-1",
+        userId: "user-1",
+        platform: Platform.GAME,
+      },
+      join: vi.fn(),
+      request: { headers: {} },
+    };
+
+    mockGuildsService.getUserGuilds.mockResolvedValue(guilds);
+
+    const result = await service.handleJoin(
+      mockServer as never,
+      client as never,
+      "discord-1",
+      "user-1",
+      createPlayer(),
+    );
+
+    expect(result.featureRooms).toEqual(
+      expect.arrayContaining([
+        buildRoomName("guild-1", "presence"),
+        buildRoomName("guild-1", "events"),
+        buildRoomName("guild-1", "online-players"),
+      ]),
     );
   });
 
