@@ -319,6 +319,9 @@
     "rawJsonTitle": "Surowy event JSON",
     "eventLogTitle": "Log eventów",
     "partyStateTitle": "Stan grupy",
+    "characterTooltipStateTitle": "Stan tooltipa postaci",
+    "othersStateTitle": "Stan graczy na mapie",
+    "othersCount": "Liczba graczy: {{count}}",
     "systemInfoTitle": "Informacje systemowe",
     "loadTemplate": "Wczytaj {{label}}",
     "triggerCustomEvent": "Wywołaj własny event",
@@ -331,6 +334,13 @@
     "statusOk": "OK",
     "statusFail": "Błąd",
     "invalidJson": "Nieprawidłowy JSON",
+    "characterTooltip": {
+      "shiftPressed": "Shift: {{value}}",
+      "activeTarget": "Aktywny target: {{value}}",
+      "activeOther": "Aktywny gracz: {{value}}",
+      "pressed": "wciśnięty",
+      "released": "puszczony"
+    },
     "devPermissionOverride": {
       "title": "Dev permisje",
       "description": "Nadpisuje efektywne permisje lokalnego klienta bez zmian w bazie danych.",

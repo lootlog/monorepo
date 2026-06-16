@@ -3,19 +3,90 @@
   "version": "1.0.0",
   "private": true,
   "license": "MIT",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "api": [
+        "dist/api.d.ts"
+      ],
+      "engine": [
+        "dist/engine.d.ts"
+      ],
+      "game": [
+        "dist/game.d.ts"
+      ],
+      "game-events": [
+        "dist/game-events/index.d.ts"
+      ],
+      "hero": [
+        "dist/hero.d.ts"
+      ],
+      "map": [
+        "dist/map.d.ts"
+      ],
+      "npc-tpl-manager": [
+        "dist/npc-tpl-manager.d.ts"
+      ],
+      "npcs": [
+        "dist/npcs.d.ts"
+      ],
+      "others": [
+        "dist/others.d.ts"
+      ],
+      "tooltip": [
+        "dist/tooltip.d.ts"
+      ]
+    }
+  },
   "exports": {
-    ".": {
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+    "./api": {
+      "types": "./dist/api.d.ts",
+      "import": "./dist/api.mjs",
+      "require": "./dist/api.js"
+    },
+    "./engine": {
+      "types": "./dist/engine.d.ts",
+      "import": "./dist/engine.mjs",
+      "require": "./dist/engine.js"
+    },
+    "./game": {
+      "types": "./dist/game.d.ts",
+      "import": "./dist/game.mjs",
+      "require": "./dist/game.js"
     },
     "./game-events": {
+      "types": "./dist/game-events/index.d.ts",
       "import": "./dist/game-events/index.mjs",
-      "require": "./dist/game-events/index.js",
-      "types": "./dist/game-events/index.d.ts"
+      "require": "./dist/game-events/index.js"
+    },
+    "./hero": {
+      "types": "./dist/hero.d.ts",
+      "import": "./dist/hero.mjs",
+      "require": "./dist/hero.js"
+    },
+    "./map": {
+      "types": "./dist/map.d.ts",
+      "import": "./dist/map.mjs",
+      "require": "./dist/map.js"
+    },
+    "./npc-tpl-manager": {
+      "types": "./dist/npc-tpl-manager.d.ts",
+      "import": "./dist/npc-tpl-manager.mjs",
+      "require": "./dist/npc-tpl-manager.js"
+    },
+    "./npcs": {
+      "types": "./dist/npcs.d.ts",
+      "import": "./dist/npcs.mjs",
+      "require": "./dist/npcs.js"
+    },
+    "./others": {
+      "types": "./dist/others.d.ts",
+      "import": "./dist/others.mjs",
+      "require": "./dist/others.js"
+    },
+    "./tooltip": {
+      "types": "./dist/tooltip.d.ts",
+      "import": "./dist/tooltip.mjs",
+      "require": "./dist/tooltip.js"
     }
   },
   "scripts": {
