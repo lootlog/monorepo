@@ -110,6 +110,7 @@ describe("OnlinePlayersList", () => {
       },
       false,
       vi.fn(),
+      "allowed",
     ]);
 
     useOnlinePlayersStore.setState({
@@ -166,6 +167,7 @@ describe("OnlinePlayersList", () => {
       },
       false,
       vi.fn(),
+      "allowed",
     ]);
 
     render(<OnlinePlayersList viewMode="accounts" filtersVisible />);
@@ -229,6 +231,7 @@ describe("OnlinePlayersList", () => {
       },
       false,
       vi.fn(),
+      "allowed",
     ]);
 
     render(<OnlinePlayersList viewMode="members" filtersVisible />);
@@ -265,6 +268,7 @@ describe("OnlinePlayersList", () => {
       },
       false,
       vi.fn(),
+      "allowed",
     ]);
 
     const { container } = render(
@@ -418,5 +422,18 @@ describe("OnlinePlayersList", () => {
     expect(screen.queryByText("WorldSelector")).not.toBeInTheDocument();
     expect(screen.queryByPlaceholderText(/Szukaj/)).not.toBeInTheDocument();
     expect(screen.getByText("Hero (123w)")).toBeVisible();
+  });
+
+  it("shows no access feedback when online players permission is missing", () => {
+    mockUsePlayersPresence.mockReturnValue([{}, false, vi.fn(), "forbidden"]);
+
+    render(<OnlinePlayersList viewMode="accounts" filtersVisible />);
+
+    expect(
+      screen.getByText(
+        "Nie masz uprawnień do wyświetlania graczy online na tym serwerze.",
+      ),
+    ).toBeVisible();
+    expect(screen.queryByText("Brak graczy online.")).not.toBeInTheDocument();
   });
 });

@@ -42,43 +42,46 @@ describe("usePlayersPresence", () => {
   it("normalizes initial presence fetch payloads from player location", async () => {
     emitWithAckSpy.mockImplementation(() =>
       Promise.resolve({
-        "discord-1": [
-          {
-            discordId: "discord-1",
-            platform: "game",
-            player: {
-              world: "alpha",
-              name: "Hero",
-              lvl: "123",
-              icon: "hero.png",
-              characterId: "10",
-              accountId: "20",
-              prof: "w",
-              clan: {
-                id: 15191,
-                name: "Karhu",
-                rank: 100,
+        status: "success",
+        players: {
+          "discord-1": [
+            {
+              discordId: "discord-1",
+              platform: "game",
+              player: {
+                world: "alpha",
+                name: "Hero",
+                lvl: "123",
+                icon: "hero.png",
+                characterId: "10",
+                accountId: "20",
+                prof: "w",
+                clan: {
+                  id: 15191,
+                  name: "Karhu",
+                  rank: 100,
+                },
+                location: {
+                  x: 1,
+                  y: 2,
+                  map: "Karka-han",
+                },
               },
-              location: {
-                x: 1,
-                y: 2,
-                map: "Karka-han",
+              playerPresence: {
+                world: "alpha",
+                name: "Hero",
+                lvl: "123",
+                icon: "hero.png",
+                characterId: "10",
+                accountId: "20",
+                prof: "w",
+                mapName: "Karka-han",
+                isAfk: true,
+                sessionId: "session-1",
               },
             },
-            playerPresence: {
-              world: "alpha",
-              name: "Hero",
-              lvl: "123",
-              icon: "hero.png",
-              characterId: "10",
-              accountId: "20",
-              prof: "w",
-              mapName: "Karka-han",
-              isAfk: true,
-              sessionId: "session-1",
-            },
-          },
-        ],
+          ],
+        },
       }),
     );
 
@@ -112,56 +115,59 @@ describe("usePlayersPresence", () => {
   it("deduplicates initial presence fetch payloads by character and keeps the newest presence", async () => {
     emitWithAckSpy.mockImplementation(() =>
       Promise.resolve({
-        "discord-1": [
-          {
-            discordId: "discord-1",
-            platform: "game",
-            player: {
-              world: "alpha",
-              name: "Hero",
-              lvl: "123",
-              icon: "hero.png",
-              characterId: "10",
-              accountId: "20",
-              prof: "w",
-              mapName: "Karka-han",
-              isAfk: false,
-              updatedAt: 100,
+        status: "success",
+        players: {
+          "discord-1": [
+            {
+              discordId: "discord-1",
+              platform: "game",
+              player: {
+                world: "alpha",
+                name: "Hero",
+                lvl: "123",
+                icon: "hero.png",
+                characterId: "10",
+                accountId: "20",
+                prof: "w",
+                mapName: "Karka-han",
+                isAfk: false,
+                updatedAt: 100,
+              },
             },
-          },
-          {
-            discordId: "discord-1",
-            platform: "game",
-            player: {
-              world: "alpha",
-              name: "Hero",
-              lvl: "123",
-              icon: "hero.png",
-              characterId: "10",
-              accountId: "20",
-              prof: "w",
-              mapName: "Ithan",
-              isAfk: true,
-              updatedAt: 200,
+            {
+              discordId: "discord-1",
+              platform: "game",
+              player: {
+                world: "alpha",
+                name: "Hero",
+                lvl: "123",
+                icon: "hero.png",
+                characterId: "10",
+                accountId: "20",
+                prof: "w",
+                mapName: "Ithan",
+                isAfk: true,
+                updatedAt: 200,
+              },
             },
-          },
-          {
-            discordId: "discord-1",
-            platform: "game",
-            player: {
-              world: "alpha",
-              name: "Scout",
-              lvl: "80",
-              icon: "scout.png",
-              characterId: "11",
-              accountId: "21",
-              prof: "h",
-              mapName: "Torneg",
-              isAfk: false,
-              updatedAt: 150,
+            {
+              discordId: "discord-1",
+              platform: "game",
+              player: {
+                world: "alpha",
+                name: "Scout",
+                lvl: "80",
+                icon: "scout.png",
+                characterId: "11",
+                accountId: "21",
+                prof: "h",
+                mapName: "Torneg",
+                isAfk: false,
+                updatedAt: 150,
+              },
             },
-          },
-        ],
+          ],
+        },
       }),
     );
 
@@ -181,24 +187,27 @@ describe("usePlayersPresence", () => {
   it("updates existing presence entries from gateway mapName updates without status", async () => {
     emitWithAckSpy.mockImplementation(() =>
       Promise.resolve({
-        "discord-1": [
-          {
-            discordId: "discord-1",
-            platform: "game",
-            player: {
-              world: "alpha",
-              name: "Hero",
-              lvl: "123",
-              icon: "hero.png",
-              characterId: "10",
-              accountId: "20",
-              prof: "w",
-              location: {
-                map: "Karka-han",
+        status: "success",
+        players: {
+          "discord-1": [
+            {
+              discordId: "discord-1",
+              platform: "game",
+              player: {
+                world: "alpha",
+                name: "Hero",
+                lvl: "123",
+                icon: "hero.png",
+                characterId: "10",
+                accountId: "20",
+                prof: "w",
+                location: {
+                  map: "Karka-han",
+                },
               },
             },
-          },
-        ],
+          ],
+        },
       }),
     );
 
@@ -247,24 +256,27 @@ describe("usePlayersPresence", () => {
   it("stores an offline tombstone when gateway reports offline status", async () => {
     emitWithAckSpy.mockImplementation(() =>
       Promise.resolve({
-        "discord-1": [
-          {
-            discordId: "discord-1",
-            platform: "game",
-            player: {
-              world: "alpha",
-              name: "Hero",
-              lvl: "123",
-              icon: "hero.png",
-              characterId: "10",
-              accountId: "20",
-              prof: "w",
-              location: {
-                map: "Karka-han",
+        status: "success",
+        players: {
+          "discord-1": [
+            {
+              discordId: "discord-1",
+              platform: "game",
+              player: {
+                world: "alpha",
+                name: "Hero",
+                lvl: "123",
+                icon: "hero.png",
+                characterId: "10",
+                accountId: "20",
+                prof: "w",
+                location: {
+                  map: "Karka-han",
+                },
               },
             },
-          },
-        ],
+          ],
+        },
       }),
     );
 
@@ -294,5 +306,70 @@ describe("usePlayersPresence", () => {
     });
 
     expect(result.current[0]["discord-1"]).toBeUndefined();
+  });
+
+  it("clears players and exposes forbidden access state when gateway denies access", async () => {
+    emitWithAckSpy.mockImplementation(() =>
+      Promise.resolve({
+        status: "forbidden",
+        code: "ONLINE_PLAYERS_ACCESS_DENIED",
+      }),
+    );
+
+    const { result } = renderHook(() => usePlayersPresence("guild-1", "alpha"));
+
+    await waitFor(() => {
+      expect(result.current[3]).toBe("forbidden");
+    });
+
+    expect(result.current[0]).toEqual({});
+  });
+
+  it("refetches and clears stale players after permissions are updated", async () => {
+    emitWithAckSpy
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          status: "success",
+          players: {
+            "discord-1": [
+              {
+                discordId: "discord-1",
+                platform: "game",
+                player: {
+                  world: "alpha",
+                  name: "Hero",
+                  lvl: "123",
+                  icon: "hero.png",
+                  characterId: "10",
+                  accountId: "20",
+                  prof: "w",
+                },
+              },
+            ],
+          },
+        }),
+      )
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          status: "forbidden",
+          code: "ONLINE_PLAYERS_ACCESS_DENIED",
+        }),
+      );
+
+    const { result } = renderHook(() => usePlayersPresence("guild-1", "alpha"));
+
+    await waitFor(() => {
+      expect(result.current[0]["discord-1"]).toHaveLength(1);
+    });
+
+    act(() => {
+      eventHandlers[GatewayEvent.PERMISSIONS_UPDATED]?.({});
+    });
+
+    await waitFor(() => {
+      expect(result.current[3]).toBe("forbidden");
+    });
+
+    expect(result.current[0]).toEqual({});
   });
 });

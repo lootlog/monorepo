@@ -55,7 +55,7 @@ const ALL_FEATURE_ROOMS: Array<{ feature: FeatureName; tier: TierName }> = [
 
 export function buildRoomName(
   guildId: string,
-  feature: FeatureName | "admin" | "presence" | "events",
+  feature: FeatureName | "admin" | "presence" | "events" | "online-players",
   tier?: TierName,
 ): string {
   return tier ? `${guildId}:${feature}:${tier}` : `${guildId}:${feature}`;
@@ -109,11 +109,16 @@ export function calculateUserRooms(
     // Owner/Admin get all feature rooms + admin room
     if (isOwner || isOwnerOrAdminFromRoles(roles)) {
       guildRooms.push(buildRoomName(guild.id, "admin"));
+      guildRooms.push(buildRoomName(guild.id, "online-players"));
 
       for (const { feature, tier } of applicableFeatures) {
         guildRooms.push(buildRoomName(guild.id, feature, tier));
       }
     } else {
+      if (hasPermission(roles, Permission.LOOTLOG_ONLINE_PLAYERS_READ)) {
+        guildRooms.push(buildRoomName(guild.id, "online-players"));
+      }
+
       // Calculate based on specific permissions
       for (const { feature, tier } of applicableFeatures) {
         const requiredPermission = FEATURE_ROOMS[feature][tier];
@@ -170,4 +175,8 @@ export function hasFeatureRoomAccess(
 
     return role.lvlRangeFrom <= npcLevel && role.lvlRangeTo >= npcLevel;
   });
+}
+
+export function hasOnlinePlayersAccess(roles: GuildRole[]): boolean {
+  return hasPermission(roles, Permission.LOOTLOG_ONLINE_PLAYERS_READ);
 }

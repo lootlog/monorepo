@@ -100,6 +100,7 @@ describe("Gateway", () => {
 
     expect(client.data).toEqual(socketData);
     expect(mockPresenceService.emitDisconnectPresence).toHaveBeenCalledWith(
+      mockServer,
       client,
     );
     expect(mockSubscriptionService.handleDisconnect).toHaveBeenCalledWith(

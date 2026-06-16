@@ -20,6 +20,7 @@ import type {
   PlayerPresence,
 } from "src/gateway/types/socket-user.type";
 import {
+  type PresenceFetchResponse,
   ConnectionService,
   PresenceService,
   SubscriptionService,
@@ -62,7 +63,7 @@ export class Gateway {
 
     client.on(GatewayEvent.DISCONNECTING, async () => {
       if (client.data) {
-        this.presenceService.emitDisconnectPresence(client);
+        this.presenceService.emitDisconnectPresence(this.server, client);
 
         if (client.data.guilds) {
           await this.subscriptionService.handleDisconnect(
@@ -102,7 +103,7 @@ export class Gateway {
   async handlePresenceFetch(
     @ConnectedSocket() client: Socket,
     @MessageBody() { guildId, world }: RequestServerPresenceDto,
-  ): Promise<Record<string, unknown[]>> {
+  ): Promise<PresenceFetchResponse<Record<string, unknown[]>>> {
     return this.presenceService.fetchServerPresence(
       this.server,
       client,
@@ -131,7 +132,7 @@ export class Gateway {
   async handlePlayerPresenceFetch(
     @ConnectedSocket() client: Socket,
     @MessageBody() { guildId, world }: RequestPlayerPresenceDto,
-  ): Promise<Record<string, PlayerPresence[]>> {
+  ): Promise<PresenceFetchResponse<Record<string, PlayerPresence[]>>> {
     return this.presenceService.fetchGuildPresence(
       this.server,
       client,
