@@ -2,7 +2,7 @@
   "name": "@lootlog/typescript-config",
   "version": "1.0.0",
   "private": true,
-  "license": "PROPRIETARY",
+  "license": "MIT",
   "publishConfig": {
     "access": "public"
   }

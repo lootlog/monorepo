@@ -1,5 +1,5 @@
 import { type FC, useEffect, useState } from "react";
-import { useLocalStorage } from "react-use";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { DraggableWindow } from "@/components/draggable-window";
 import { useWindowsStore } from "@/store/windows.store";
 import { Button } from "@/components/ui/button";

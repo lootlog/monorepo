@@ -2,6 +2,7 @@
   "name": "@lootlog/api-helpers",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -28,7 +29,7 @@
     "build": "tsdown"
   },
   "dependencies": {
-    "hono": "^4.12.14",
+    "hono": "^4.12.25",
     "jose": "^6.2.2"
   },
   "devDependencies": {

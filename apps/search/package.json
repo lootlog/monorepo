@@ -2,6 +2,7 @@
   "name": "@lootlog/search",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "build": "nest build",
     "dev": "nest start --watch",
@@ -18,13 +19,13 @@
     "@lootlog/instrumentation": "workspace:*",
     "@lootlog/nest-shared": "workspace:*",
     "@lootlog/types": "workspace:*",
-    "@nestjs/common": "^11.1.19",
-    "@nestjs/core": "^11.1.19",
-    "@nestjs/microservices": "^11.1.19",
-    "@nestjs/platform-fastify": "^11.1.19",
-    "@nestjs/swagger": "^11.3.2",
+    "@nestjs/common": "^11.1.26",
+    "@nestjs/core": "^11.1.26",
+    "@nestjs/microservices": "^11.1.26",
+    "@nestjs/platform-fastify": "^11.1.26",
+    "@nestjs/swagger": "^11.4.4",
     "@prisma/adapter-pg": "7.6.0",
-    "@prisma/client": "7.6.0",
+    "@prisma/client": "7.8.0",
     "dotenv": "^17.4.2",
     "fastify": "^5.8.5",
     "meilisearch": "^0.57.0",
@@ -36,15 +37,15 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@nestjs/cli": "^11.0.21",
-    "@nestjs/testing": "^11.1.19",
-    "@swc/cli": "^0.7.10",
+    "@nestjs/cli": "^11.0.23",
+    "@nestjs/testing": "^11.1.26",
+    "@swc/cli": "^0.8.1",
     "@swc/core": "^1.15.30",
     "@types/node": "^25.6.0",
-    "@vitest/coverage-v8": "^4.1.4",
-    "tsx": "^4.21.0",
+    "@vitest/coverage-v8": "^4.1.8",
+    "tsx": "^4.22.4",
     "typescript": "^6.0.3",
     "unplugin-swc": "^1.5.9",
-    "vitest": "^4.1.4"
+    "vitest": "^4.1.8"
   }
 }

@@ -3,7 +3,6 @@ import {
   APP_ERROR_WINDOW_DEFAULT_HEIGHT,
   APP_ERROR_WINDOW_WIDTH,
 } from "@/features/error-boundary/error-boundary.constants";
-import type { OnlinePlayersViewMode } from "@/features/online-players/online-players.types";
 import type { GameNpc } from "@lootlog/margonem";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
@@ -21,11 +20,6 @@ type SettingsWindowState = {
 
 type AddTimerWindowState = {
   guildId?: string;
-};
-
-type OnlinePlayersWindowState = {
-  viewMode: OnlinePlayersViewMode;
-  filtersVisible: boolean;
 };
 
 export type WindowId =
@@ -75,7 +69,7 @@ interface WindowsState {
   timers: WindowData;
   chat: WindowData;
   command: WindowData;
-  "online-players": WindowData & { state: OnlinePlayersWindowState };
+  "online-players": WindowData;
   "add-timer": WindowData & { state: AddTimerWindowState };
   "npc-detector": WindowData;
   notifications: WindowData;
@@ -98,15 +92,11 @@ interface WindowsState {
   toggleOpen: (window: WindowId, autofocus?: boolean) => void;
   setAutofocus: (window: WindowId, autofocus: boolean) => void;
   setSettingsActiveTab: (activeTab?: SettingsTabValue) => void;
-  setOnlinePlayersViewMode: (viewMode: OnlinePlayersViewMode) => void;
-  toggleOnlinePlayersFiltersVisible: () => void;
 }
 
 const DEFAULT_OPACITY: WindowOpacity = 4;
 const DEFAULT_POSITION: WindowPositionState = { x: 0, y: 0 };
 const DEFAULT_SIZE: WindowSizeState = { width: 242, height: 240 };
-const DEFAULT_ONLINE_PLAYERS_VIEW_MODE: OnlinePlayersViewMode = "accounts";
-const DEFAULT_ONLINE_PLAYERS_FILTERS_VISIBLE = true;
 
 const sanitizeMaxContentHeight = (height: number) => {
   if (!Number.isFinite(height)) {
@@ -223,28 +213,9 @@ export const migrateWindowsState = (
   const onlinePlayers = state["online-players"] as
     | Record<string, unknown>
     | undefined;
-  const onlinePlayersState = onlinePlayers?.state as
-    | Record<string, unknown>
-    | undefined;
-  const onlinePlayersViewMode = onlinePlayersState?.viewMode;
-  const onlinePlayersFiltersVisible = onlinePlayersState?.filtersVisible;
-
   if (onlinePlayers && typeof onlinePlayers === "object") {
-    state["online-players"] = {
-      ...onlinePlayers,
-      state: {
-        ...onlinePlayersState,
-        viewMode:
-          onlinePlayersViewMode === "members" ||
-          onlinePlayersViewMode === "accounts"
-            ? onlinePlayersViewMode
-            : DEFAULT_ONLINE_PLAYERS_VIEW_MODE,
-        filtersVisible:
-          typeof onlinePlayersFiltersVisible === "boolean"
-            ? onlinePlayersFiltersVisible
-            : DEFAULT_ONLINE_PLAYERS_FILTERS_VISIBLE,
-      },
-    };
+    const { state: _, ...windowState } = onlinePlayers;
+    state["online-players"] = windowState;
   }
 
   return state as unknown as WindowsState;
@@ -309,10 +280,6 @@ export const useWindowsStore = create<WindowsState>()(
         size: { width: 242, height: 240 },
         opacity: DEFAULT_OPACITY,
         locked: false,
-        state: {
-          viewMode: DEFAULT_ONLINE_PLAYERS_VIEW_MODE,
-          filtersVisible: DEFAULT_ONLINE_PLAYERS_FILTERS_VISIBLE,
-        },
       },
       "add-timer": {
         open: false,
@@ -477,26 +444,6 @@ export const useWindowsStore = create<WindowsState>()(
             },
           },
         })),
-      setOnlinePlayersViewMode: (viewMode) =>
-        set((state) => ({
-          "online-players": {
-            ...state["online-players"],
-            state: {
-              ...state["online-players"].state,
-              viewMode,
-            },
-          },
-        })),
-      toggleOnlinePlayersFiltersVisible: () =>
-        set((state) => ({
-          "online-players": {
-            ...state["online-players"],
-            state: {
-              ...state["online-players"].state,
-              filtersVisible: !state["online-players"].state.filtersVisible,
-            },
-          },
-        })),
       toggleOpen: (key: WindowId, autofocus?: boolean) => {
         const curr = get()[key].open;
         set((state) => {
@@ -541,7 +488,7 @@ export const useWindowsStore = create<WindowsState>()(
         "create-party-gathering": state["create-party-gathering"],
       }),
       storage: createJSONStorage(() => localStorage),
-      version: 7,
+      version: 8,
       migrate: migrateWindowsState,
     },
   ),
