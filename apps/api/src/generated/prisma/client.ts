@@ -279,3 +279,18 @@ export type UserKillStats = Prisma.UserKillStatsModel
  * 
  */
 export type GuildKillSummary = Prisma.GuildKillSummaryModel
+/**
+ * Model UserKillStatsBucket
+ * 
+ */
+export type UserKillStatsBucket = Prisma.UserKillStatsBucketModel
+/**
+ * Model NpcKillStatsBucket
+ * 
+ */
+export type NpcKillStatsBucket = Prisma.NpcKillStatsBucketModel
+/**
+ * Model GuildKillSummaryBucket
+ * 
+ */
+export type GuildKillSummaryBucket = Prisma.GuildKillSummaryBucketModel

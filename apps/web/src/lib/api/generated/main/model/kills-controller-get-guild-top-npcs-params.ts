@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 import type { NpcType } from './npc-type';
+import type { KillStatsPeriod } from './kill-stats-period';
 
 export type KillsControllerGetGuildTopNpcsParams = {
 limit: number;
@@ -17,4 +18,5 @@ world: string;
 search: string;
 minLvl: string;
 maxLvl: string;
+period?: KillStatsPeriod;
 };

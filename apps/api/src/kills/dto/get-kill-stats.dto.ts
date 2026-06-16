@@ -5,6 +5,7 @@ import {
   intFromString,
 } from "@lootlog/nest-shared/validators";
 import { NpcType } from "src/generated/prisma/client";
+import { KillStatsPeriodSchema } from "../utils/kill-stats-period";
 
 const GetGuildKillStatsSchema = z
   .object({
@@ -12,6 +13,7 @@ const GetGuildKillStatsSchema = z
     minLvl: intFromString({ min: 0, max: 500 }).optional(),
     maxLvl: intFromString({ min: 0, max: 500 }).optional(),
     world: z.string().optional(),
+    period: KillStatsPeriodSchema.optional(),
   })
   .refine(
     (data) =>
@@ -30,6 +32,7 @@ const GetUserKillStatsSchema = z.object({
   npcType: z.nativeEnum(NpcType).optional(),
   world: z.string().optional(),
   topNpcsLimit: z.coerce.number().int().min(1).optional(),
+  period: KillStatsPeriodSchema.optional(),
 });
 
 export class GetUserKillStatsDto extends createZodDto(GetUserKillStatsSchema) {}

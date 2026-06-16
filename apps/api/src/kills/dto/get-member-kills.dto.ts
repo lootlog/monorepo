@@ -6,6 +6,7 @@ import {
   optionalFromQuery,
 } from "@lootlog/nest-shared/validators";
 import { NpcType } from "src/generated/prisma/client";
+import { KillStatsPeriodSchema } from "../utils/kill-stats-period";
 
 const GetMemberKillsSchema = z.object({
   minLvl: optionalFromQuery(intFromString({ min: 0, max: 500 })),
@@ -15,6 +16,7 @@ const GetMemberKillsSchema = z.object({
   search: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(100).optional(),
   cursor: optionalFromQuery(z.coerce.number().int().min(0)),
+  period: KillStatsPeriodSchema.optional(),
 });
 
 export class GetMemberKillsDto extends createZodDto(GetMemberKillsSchema) {}

@@ -5,6 +5,7 @@
  * The Lootlog API documentation
  * OpenAPI spec version: 1.0
  */
+import type { KillStatsPeriod } from './kill-stats-period';
 
 export type KillsControllerGetNpcKillersParams = {
 /**
@@ -13,4 +14,5 @@ export type KillsControllerGetNpcKillersParams = {
  */
 limit?: number;
 world?: string;
+period?: KillStatsPeriod;
 };

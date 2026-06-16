@@ -13,6 +13,7 @@ import { TopNpcsCard } from "./components/top-npcs-card";
 import { LevelFilters } from "./components/level-filters";
 import { StatsOverviewFiltersMobile } from "./components/stats-overview-filters-mobile";
 import { buildGuildKillStatsParams } from "./utils/build-stats-query-params";
+import { KillStatsPeriodSelect } from "@/features/kills/components/kill-stats-period-select";
 
 export const KillStats: React.FC = () => {
   const { t } = useTranslation();
@@ -24,6 +25,7 @@ export const KillStats: React.FC = () => {
     setWorld,
     setMinLvl,
     setMaxLvl,
+    setPeriod,
   } = useStatsSettings("overview");
   const { data, isLoading } = useKillsControllerGetGuildKillStats(
     { guildId },
@@ -31,16 +33,22 @@ export const KillStats: React.FC = () => {
       world: settings.world ?? undefined,
       minLvl: debouncedMinLvl,
       maxLvl: debouncedMaxLvl,
+      period: settings.period,
     }),
   );
   const isMobile = useIsMobile();
+  const hasActiveFilters =
+    Boolean(settings.world) ||
+    Boolean(settings.minLvl) ||
+    Boolean(settings.maxLvl) ||
+    settings.period !== "all";
 
   return (
     <>
       <ScrollArea className="h-full bg-background/50">
         <div className="px-3 pb-3 flex flex-col gap-4">
           <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 min-[2200px]:flex-row min-[2200px]:items-center min-[2200px]:justify-between">
               <div className="flex items-center gap-3 flex-1 min-w-0">
                 <div className="rounded-xl bg-primary/10 p-2.5 shadow-inner shadow-primary/10">
                   <BarChart3 className="size-4 text-primary" />
@@ -51,12 +59,16 @@ export const KillStats: React.FC = () => {
                   </h2>
                 </div>
               </div>
-              <div className="hidden md:flex justify-end gap-2">
+              <div className="hidden md:flex w-full flex-wrap justify-start gap-2 min-[2200px]:w-auto min-[2200px]:justify-end">
                 <LevelFilters
                   minLvl={settings.minLvl}
                   maxLvl={settings.maxLvl}
                   onMinLvlChange={setMinLvl}
                   onMaxLvlChange={setMaxLvl}
+                />
+                <KillStatsPeriodSelect
+                  value={settings.period}
+                  onValueChange={setPeriod}
                 />
                 <WorldSwitcher
                   value={settings.world}
@@ -75,11 +87,13 @@ export const KillStats: React.FC = () => {
               data={data?.memberRanking}
               isLoading={isLoading}
               guildId={guildId}
+              hasActiveFilters={hasActiveFilters}
             />
             <TopNpcsCard
               world={settings.world ?? undefined}
               minLvl={debouncedMinLvl}
               maxLvl={debouncedMaxLvl}
+              period={settings.period}
             />
           </div>
         </div>
@@ -89,9 +103,11 @@ export const KillStats: React.FC = () => {
           world={settings.world}
           minLvl={settings.minLvl}
           maxLvl={settings.maxLvl}
+          period={settings.period}
           onWorldChange={setWorld}
           onMinLvlChange={setMinLvl}
           onMaxLvlChange={setMaxLvl}
+          onPeriodChange={setPeriod}
         />
       )}
     </>
