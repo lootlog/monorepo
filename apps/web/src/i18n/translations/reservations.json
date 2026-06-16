@@ -4,6 +4,19 @@
     "list": "Widok listy",
     "grid": "Widok siatki"
   },
+  "datePicker": {
+    "placeholder": "Wybierz datę i godzinę",
+    "clear": "Wyczyść datę",
+    "weekdays": {
+      "monday": "Pn",
+      "tuesday": "Wt",
+      "wednesday": "Śr",
+      "thursday": "Cz",
+      "friday": "Pt",
+      "saturday": "So",
+      "sunday": "Nd"
+    }
+  },
   "schedule": {
     "header": {
       "addReservation": "Dodaj rezerwację",

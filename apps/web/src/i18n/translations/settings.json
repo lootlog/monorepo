@@ -89,7 +89,7 @@
       },
       "granularity": {
         "label": "Krok siatki kalendarza",
-        "description": "Krok używany przy zaznaczaniu zakresu na kalendarzu. Formularz nadal pozwala wpisać dokładną minutę.",
+        "description": "Krok używany przy zaznaczaniu zakresu na kalendarzu. Dokładną minutę można wpisać podczas tworzenia rezerwacji.",
         "option": "Co {{minutes}} min"
       },
       "maxAdvance": {

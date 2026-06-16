@@ -29,8 +29,6 @@ import {
   useReservationsControllerCreateReservation,
 } from "@/lib/api/generated/main/reservations/reservations";
 import {
-  ceilDateToReservationStep,
-  floorDateToReservationStep,
   getReservationEarliestStartDate,
   getReservationLatestStartDate,
   type ReservationSettings,
@@ -73,6 +71,9 @@ const parseDateTimeLocalValue = (value: string) => {
   return date;
 };
 
+const addMinutes = (date: Date, minutes: number) =>
+  new Date(date.getTime() + minutes * 60 * 1000);
+
 export const CreateReservationDialog: React.FC<
   CreateReservationDialogProps
 > = ({ open, onOpenChange, reservationKey, currentUserId, settings }) => {
@@ -100,31 +101,13 @@ const CreateReservationDialogContent: React.FC<
   const [isFromPickerOpen, setIsFromPickerOpen] = useState(false);
   const [isToPickerOpen, setIsToPickerOpen] = useState(false);
   const [comment, setComment] = useState("");
-  const reservationStartMinDate = ceilDateToReservationStep(
-    getReservationEarliestStartDate(),
-    settings,
-  );
-  const reservationStartMaxDate = floorDateToReservationStep(
-    getReservationLatestStartDate(settings),
-    settings,
-  );
+  const reservationStartMinDate = getReservationEarliestStartDate();
+  const reservationStartMaxDate = getReservationLatestStartDate(settings);
   const reservationEndMinDate = fromDate
-    ? ceilDateToReservationStep(
-        new Date(
-          fromDate.getTime() +
-            settings.reservationMinDurationMinutes * 60 * 1000,
-        ),
-        settings,
-      )
+    ? addMinutes(fromDate, settings.reservationMinDurationMinutes)
     : reservationStartMinDate;
   const reservationEndMaxDate = fromDate
-    ? floorDateToReservationStep(
-        new Date(
-          fromDate.getTime() +
-            settings.reservationMaxDurationMinutes * 60 * 1000,
-        ),
-        settings,
-      )
+    ? addMinutes(fromDate, settings.reservationMaxDurationMinutes)
     : undefined;
 
   const createReservationMutation = useReservationsControllerCreateReservation({
