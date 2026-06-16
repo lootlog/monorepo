@@ -2,9 +2,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
-import type { Other } from "@lootlog/margonem";
+import type { Other } from "@lootlog/margonem/others";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
-import { characterTooltipTransforms } from "@/lib/margonem-tooltips";
+import { characterTooltipTransforms } from "@/lib/margonem-tooltips/registry";
 
 const mocks = vi.hoisted(() => ({
   getPlayerCatchingGuilds: vi.fn(),
@@ -167,5 +167,27 @@ describe("useCharacterTooltipCatchingGuilds", () => {
       });
     });
     expect(mocks.getPlayerCatchingGuilds).toHaveBeenCalledTimes(2);
+  });
+
+  it("resets shift state on window blur", () => {
+    renderHook(() => useCharacterTooltipCatchingGuilds(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Shift" }));
+    });
+
+    expect(
+      useCharacterTooltipCatchingGuildsStore.getState().isShiftPressed,
+    ).toBe(true);
+
+    act(() => {
+      window.dispatchEvent(new Event("blur"));
+    });
+
+    expect(
+      useCharacterTooltipCatchingGuildsStore.getState().isShiftPressed,
+    ).toBe(false);
   });
 });

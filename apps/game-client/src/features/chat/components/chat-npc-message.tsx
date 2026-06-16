@@ -7,7 +7,7 @@ import type {
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import type { FC } from "react";
-import type { GameNpc } from "@lootlog/margonem";
+import type { GameNpc } from "@lootlog/margonem/npcs";
 import {
   getChatNpcCoordinatesLabel,
   getChatNpcLocationName,

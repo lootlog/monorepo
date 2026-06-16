@@ -3,7 +3,7 @@ import { useGlobalStore } from "@/store/global.store";
 import { gameEventsManager } from "@/lib/game-events-manager";
 import { useEffect, useRef } from "react";
 import { Game } from "@/lib/game";
-import { installCharacterTooltipTransforms } from "@/lib/margonem-tooltips";
+import { installCharacterTooltipTransforms } from "@/lib/margonem-tooltips/patcher";
 
 export const useInit = () => {
   const { setGameState } = useGlobalStore();

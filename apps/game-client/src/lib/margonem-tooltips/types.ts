@@ -1,4 +1,6 @@
-import type { CharacterTooltipOwner, Hero, Other } from "@lootlog/margonem";
+import type { Hero } from "@lootlog/margonem/hero";
+import type { Other } from "@lootlog/margonem/others";
+import type { CharacterTooltipOwner } from "@lootlog/margonem/tooltip";
 
 export type CharacterTooltipKind = "hero" | "other";
 

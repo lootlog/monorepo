@@ -1,4 +1,5 @@
-import type { Engine, Other } from "@lootlog/margonem";
+import type { Engine } from "@lootlog/margonem/engine";
+import type { Other } from "@lootlog/margonem/others";
 import { useOthersStore } from "@/store/others.store";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import { characterTooltipTransforms } from "./registry";
@@ -166,6 +167,8 @@ function patchCanvasTip(runtimeWindow: RuntimeWindow): (() => void) | null {
   };
 
   return () => {
+    useCharacterTooltipCatchingGuildsStore.getState().clearActiveOther();
+
     if (originalCanvasTipShow) {
       canvasTip.show = originalCanvasTipShow;
     }
@@ -184,7 +187,13 @@ export function refreshCharacterTooltips(): void {
   if (!engine) return;
 
   if (engine.hero) {
-    refreshCharacterTooltip(engine.hero);
+    if (patchCreateStrTip(engine.hero, "hero")) {
+      patchedCharacters.add(engine.hero);
+    }
+
+    if (patchedCreateStrTip.has(engine.hero)) {
+      refreshCharacterTooltip(engine.hero);
+    }
   }
 
   for (const other of Object.values(useOthersStore.getState().othersById)) {

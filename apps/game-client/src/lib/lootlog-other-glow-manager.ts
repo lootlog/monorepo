@@ -1,4 +1,4 @@
-import type { Other } from "@lootlog/margonem";
+import type { Other } from "@lootlog/margonem/others";
 
 export const LOOTLOG_OTHER_GLOW_BLUE = "#3ed1de";
 export const LOOTLOG_OTHER_GLOW_RED_ORANGE = "#ff5a2f";

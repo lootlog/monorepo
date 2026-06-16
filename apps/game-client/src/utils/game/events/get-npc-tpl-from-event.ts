@@ -1,6 +1,6 @@
 import { Game } from "@/lib/game";
 import type { GameEvent } from "@lootlog/margonem/game-events";
-import type { NpcTpl } from "@lootlog/margonem";
+import type { NpcTpl } from "@lootlog/margonem/npc-tpl-manager";
 
 export const getNpcTplFromEvent = (
   event: GameEvent,

@@ -1,10 +1,8 @@
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  appendCatchingGuildsTooltipSection,
-  characterTooltipTransforms,
-  refreshActiveOtherCanvasTooltip,
-} from "@/lib/margonem-tooltips";
+import { appendCatchingGuildsTooltipSection } from "@/lib/margonem-tooltips/catching-guilds";
+import { refreshActiveOtherCanvasTooltip } from "@/lib/margonem-tooltips/patcher";
+import { characterTooltipTransforms } from "@/lib/margonem-tooltips/registry";
 import { fetchSingleCatchingGuilds } from "@/lib/character-tooltip-catching-guilds-cache";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 
@@ -39,25 +37,36 @@ export function useCharacterTooltipCatchingGuilds(): void {
   }, []);
 
   useEffect(() => {
+    const updateShiftPressed = (isShiftPressed: boolean) => {
+      useCharacterTooltipCatchingGuildsStore
+        .getState()
+        .setShiftPressed(isShiftPressed);
+      refreshActiveOtherTooltip();
+    };
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Shift") return;
+      if (event.repeat) return;
 
-      useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
-      refreshActiveOtherTooltip();
+      updateShiftPressed(true);
     };
     const handleKeyUp = (event: KeyboardEvent) => {
       if (event.key !== "Shift") return;
 
-      useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(false);
-      refreshActiveOtherTooltip();
+      updateShiftPressed(false);
+    };
+    const handleWindowBlur = () => {
+      updateShiftPressed(false);
     };
 
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener("blur", handleWindowBlur);
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener("blur", handleWindowBlur);
     };
   }, []);
 

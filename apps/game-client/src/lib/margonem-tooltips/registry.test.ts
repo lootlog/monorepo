@@ -66,5 +66,6 @@ describe("CharacterTooltipTransformRegistry", () => {
       }),
     ).toBe("<div>base</div><span>ok</span>");
     expect(warnSpy).toHaveBeenCalledOnce();
+    warnSpy.mockRestore();
   });
 });

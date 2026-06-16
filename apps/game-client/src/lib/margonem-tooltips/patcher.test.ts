@@ -1,19 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  characterTooltipTransforms,
   installCharacterTooltipTransforms,
   patchOtherCharacterTooltip,
   patchOtherCharacterTooltips,
   refreshActiveOtherCanvasTooltip,
-} from "./index";
+  refreshCharacterTooltips,
+} from "./patcher";
+import { characterTooltipTransforms } from "./registry";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import { useOthersStore } from "@/store/others.store";
-import type { Other } from "@lootlog/margonem";
+import type { Other } from "@lootlog/margonem/others";
 
 type TestCharacter = {
   canvasObjectType?: string;
   d: { account?: number; id?: string; nick: string };
-  createStrTip: () => string;
+  createStrTip?: () => string;
   tip?: [string, string];
   tipUpdate?: () => void;
   updateTip?: () => void;
@@ -28,10 +29,10 @@ function createCharacter(nick: string): TestCharacter {
   };
 
   character.updateTip = vi.fn(() => {
-    character.tip = [character.createStrTip(), "t_other"];
+    character.tip = [String(character.createStrTip?.() ?? ""), "t_other"];
   });
   character.tipUpdate = vi.fn(() => {
-    character.tip = [character.createStrTip(), "t_other"];
+    character.tip = [String(character.createStrTip?.() ?? ""), "t_other"];
   });
 
   return character;
@@ -123,7 +124,7 @@ describe("installCharacterTooltipTransforms", () => {
     const cleanupB = installCharacterTooltipTransforms();
 
     expect(cleanupA).toBe(cleanupB);
-    expect(hero.createStrTip()).toBe("<div>Hero</div><span>one</span>");
+    expect(hero.createStrTip?.()).toBe("<div>Hero</div><span>one</span>");
 
     cleanupA();
   });
@@ -139,15 +140,15 @@ describe("installCharacterTooltipTransforms", () => {
     characterTooltipTransforms.register(() => "<div>replacement</div>");
 
     const cleanup = installCharacterTooltipTransforms();
-    expect(hero.createStrTip()).toBe("<div>replacement</div>");
-    expect(other.createStrTip()).toBe("<div>replacement</div>");
+    expect(hero.createStrTip?.()).toBe("<div>replacement</div>");
+    expect(other.createStrTip?.()).toBe("<div>replacement</div>");
 
     cleanup();
 
     expect(hero.createStrTip).toBe(originalHeroCreateStrTip);
     expect(other.createStrTip).toBe(originalOtherCreateStrTip);
-    expect(hero.createStrTip()).toBe("<div>Hero</div>");
-    expect(other.createStrTip()).toBe("<div>Other</div>");
+    expect(hero.createStrTip?.()).toBe("<div>Hero</div>");
+    expect(other.createStrTip?.()).toBe("<div>Other</div>");
   });
 
   it("patches a single new other character", () => {
@@ -167,6 +168,31 @@ describe("installCharacterTooltipTransforms", () => {
 
     expect(other.tip?.[0]).toBe("<div>Other</div><span>new</span>");
     expect(other.tipUpdate).toHaveBeenCalledOnce();
+
+    cleanup();
+  });
+
+  it("retries hero patching when createStrTip appears after install", () => {
+    const hero = {
+      d: { nick: "Hero" },
+    } as TestCharacter;
+    const other = createCharacter("Other");
+    setRuntime(hero, { 1: other });
+
+    characterTooltipTransforms.register(({ currentHtml }) => {
+      return `${currentHtml}<span>late</span>`;
+    });
+
+    const cleanup = installCharacterTooltipTransforms();
+
+    hero.createStrTip = () => "<div>Hero</div>";
+    hero.updateTip = vi.fn(() => {
+      hero.tip = [String(hero.createStrTip?.() ?? ""), "t_hero"];
+    });
+
+    refreshCharacterTooltips();
+
+    expect(hero.tip?.[0]).toBe("<div>Hero</div><span>late</span>");
 
     cleanup();
   });
@@ -270,6 +296,39 @@ describe("installCharacterTooltipTransforms", () => {
     ).toBeNull();
 
     cleanup();
+  });
+
+  it("clears active other state during canvas tip cleanup", () => {
+    const hero = createCharacter("Hero");
+    const other = createCharacter("Other");
+    const canvasTip = {
+      hide: vi.fn(),
+      show: vi.fn(),
+    };
+    other.canvasObjectType = "OTHER";
+    other.d = { account: 9822301, id: "617", nick: "Other" };
+    setRuntime(hero, { 1: other }, canvasTip);
+    useOthersStore.getState().setMany(asOtherRecord({ 1: other }));
+
+    const cleanup = installCharacterTooltipTransforms();
+    const runtimeCanvasTip = (
+      window.Engine as unknown as {
+        canvasTip: {
+          show: (event: unknown, object: unknown) => unknown;
+        };
+      }
+    ).canvasTip;
+
+    runtimeCanvasTip.show({}, other);
+    expect(
+      useCharacterTooltipCatchingGuildsStore.getState().activeTarget?.key,
+    ).toBe("9822301:617");
+
+    cleanup();
+
+    expect(
+      useCharacterTooltipCatchingGuildsStore.getState().activeTarget,
+    ).toBeNull();
   });
 
   it("refreshes the currently visible other canvas tooltip", () => {

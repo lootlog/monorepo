@@ -1,4 +1,4 @@
-import type { Other } from "@lootlog/margonem";
+import type { Other } from "@lootlog/margonem/others";
 import { getFixedT } from "@/i18n/get-fixed-t";
 import {
   getOtherCatchingGuildsTarget,
