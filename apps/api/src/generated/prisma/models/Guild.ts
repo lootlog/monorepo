@@ -28,10 +28,20 @@ export type AggregateGuild = {
 
 export type GuildAvgAggregateOutputType = {
   notificationRuleLimit: number | null
+  reservationMaxDurationMinutes: number | null
+  reservationMinDurationMinutes: number | null
+  reservationTimeGranularityMinutes: number | null
+  reservationMaxAdvanceDays: number | null
+  reservationActiveLimitPerSpot: number | null
 }
 
 export type GuildSumAggregateOutputType = {
   notificationRuleLimit: number | null
+  reservationMaxDurationMinutes: number | null
+  reservationMinDurationMinutes: number | null
+  reservationTimeGranularityMinutes: number | null
+  reservationMaxAdvanceDays: number | null
+  reservationActiveLimitPerSpot: number | null
 }
 
 export type GuildMinAggregateOutputType = {
@@ -42,6 +52,11 @@ export type GuildMinAggregateOutputType = {
   vanityUrl: string | null
   notificationRuleLimit: number | null
   publicStatsCardEnabled: boolean | null
+  reservationMaxDurationMinutes: number | null
+  reservationMinDurationMinutes: number | null
+  reservationTimeGranularityMinutes: number | null
+  reservationMaxAdvanceDays: number | null
+  reservationActiveLimitPerSpot: number | null
   createdAt: Date | null
   updatedAt: Date | null
   active: boolean | null
@@ -55,6 +70,11 @@ export type GuildMaxAggregateOutputType = {
   vanityUrl: string | null
   notificationRuleLimit: number | null
   publicStatsCardEnabled: boolean | null
+  reservationMaxDurationMinutes: number | null
+  reservationMinDurationMinutes: number | null
+  reservationTimeGranularityMinutes: number | null
+  reservationMaxAdvanceDays: number | null
+  reservationActiveLimitPerSpot: number | null
   createdAt: Date | null
   updatedAt: Date | null
   active: boolean | null
@@ -68,6 +88,11 @@ export type GuildCountAggregateOutputType = {
   vanityUrl: number
   notificationRuleLimit: number
   publicStatsCardEnabled: number
+  reservationMaxDurationMinutes: number
+  reservationMinDurationMinutes: number
+  reservationTimeGranularityMinutes: number
+  reservationMaxAdvanceDays: number
+  reservationActiveLimitPerSpot: number
   createdAt: number
   updatedAt: number
   active: number
@@ -77,10 +102,20 @@ export type GuildCountAggregateOutputType = {
 
 export type GuildAvgAggregateInputType = {
   notificationRuleLimit?: true
+  reservationMaxDurationMinutes?: true
+  reservationMinDurationMinutes?: true
+  reservationTimeGranularityMinutes?: true
+  reservationMaxAdvanceDays?: true
+  reservationActiveLimitPerSpot?: true
 }
 
 export type GuildSumAggregateInputType = {
   notificationRuleLimit?: true
+  reservationMaxDurationMinutes?: true
+  reservationMinDurationMinutes?: true
+  reservationTimeGranularityMinutes?: true
+  reservationMaxAdvanceDays?: true
+  reservationActiveLimitPerSpot?: true
 }
 
 export type GuildMinAggregateInputType = {
@@ -91,6 +126,11 @@ export type GuildMinAggregateInputType = {
   vanityUrl?: true
   notificationRuleLimit?: true
   publicStatsCardEnabled?: true
+  reservationMaxDurationMinutes?: true
+  reservationMinDurationMinutes?: true
+  reservationTimeGranularityMinutes?: true
+  reservationMaxAdvanceDays?: true
+  reservationActiveLimitPerSpot?: true
   createdAt?: true
   updatedAt?: true
   active?: true
@@ -104,6 +144,11 @@ export type GuildMaxAggregateInputType = {
   vanityUrl?: true
   notificationRuleLimit?: true
   publicStatsCardEnabled?: true
+  reservationMaxDurationMinutes?: true
+  reservationMinDurationMinutes?: true
+  reservationTimeGranularityMinutes?: true
+  reservationMaxAdvanceDays?: true
+  reservationActiveLimitPerSpot?: true
   createdAt?: true
   updatedAt?: true
   active?: true
@@ -117,6 +162,11 @@ export type GuildCountAggregateInputType = {
   vanityUrl?: true
   notificationRuleLimit?: true
   publicStatsCardEnabled?: true
+  reservationMaxDurationMinutes?: true
+  reservationMinDurationMinutes?: true
+  reservationTimeGranularityMinutes?: true
+  reservationMaxAdvanceDays?: true
+  reservationActiveLimitPerSpot?: true
   createdAt?: true
   updatedAt?: true
   active?: true
@@ -217,6 +267,11 @@ export type GuildGroupByOutputType = {
   vanityUrl: string | null
   notificationRuleLimit: number
   publicStatsCardEnabled: boolean
+  reservationMaxDurationMinutes: number
+  reservationMinDurationMinutes: number
+  reservationTimeGranularityMinutes: number
+  reservationMaxAdvanceDays: number
+  reservationActiveLimitPerSpot: number
   createdAt: Date
   updatedAt: Date
   active: boolean
@@ -253,6 +308,11 @@ export type GuildWhereInput = {
   vanityUrl?: Prisma.StringNullableFilter<"Guild"> | string | null
   notificationRuleLimit?: Prisma.IntFilter<"Guild"> | number
   publicStatsCardEnabled?: Prisma.BoolFilter<"Guild"> | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFilter<"Guild"> | number
+  reservationMinDurationMinutes?: Prisma.IntFilter<"Guild"> | number
+  reservationTimeGranularityMinutes?: Prisma.IntFilter<"Guild"> | number
+  reservationMaxAdvanceDays?: Prisma.IntFilter<"Guild"> | number
+  reservationActiveLimitPerSpot?: Prisma.IntFilter<"Guild"> | number
   createdAt?: Prisma.DateTimeFilter<"Guild"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Guild"> | Date | string
   active?: Prisma.BoolFilter<"Guild"> | boolean
@@ -279,6 +339,11 @@ export type GuildOrderByWithRelationInput = {
   vanityUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   notificationRuleLimit?: Prisma.SortOrder
   publicStatsCardEnabled?: Prisma.SortOrder
+  reservationMaxDurationMinutes?: Prisma.SortOrder
+  reservationMinDurationMinutes?: Prisma.SortOrder
+  reservationTimeGranularityMinutes?: Prisma.SortOrder
+  reservationMaxAdvanceDays?: Prisma.SortOrder
+  reservationActiveLimitPerSpot?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   active?: Prisma.SortOrder
@@ -308,6 +373,11 @@ export type GuildWhereUniqueInput = Prisma.AtLeast<{
   ownerId?: Prisma.StringFilter<"Guild"> | string
   notificationRuleLimit?: Prisma.IntFilter<"Guild"> | number
   publicStatsCardEnabled?: Prisma.BoolFilter<"Guild"> | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFilter<"Guild"> | number
+  reservationMinDurationMinutes?: Prisma.IntFilter<"Guild"> | number
+  reservationTimeGranularityMinutes?: Prisma.IntFilter<"Guild"> | number
+  reservationMaxAdvanceDays?: Prisma.IntFilter<"Guild"> | number
+  reservationActiveLimitPerSpot?: Prisma.IntFilter<"Guild"> | number
   createdAt?: Prisma.DateTimeFilter<"Guild"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Guild"> | Date | string
   active?: Prisma.BoolFilter<"Guild"> | boolean
@@ -334,6 +404,11 @@ export type GuildOrderByWithAggregationInput = {
   vanityUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   notificationRuleLimit?: Prisma.SortOrder
   publicStatsCardEnabled?: Prisma.SortOrder
+  reservationMaxDurationMinutes?: Prisma.SortOrder
+  reservationMinDurationMinutes?: Prisma.SortOrder
+  reservationTimeGranularityMinutes?: Prisma.SortOrder
+  reservationMaxAdvanceDays?: Prisma.SortOrder
+  reservationActiveLimitPerSpot?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   active?: Prisma.SortOrder
@@ -355,6 +430,11 @@ export type GuildScalarWhereWithAggregatesInput = {
   vanityUrl?: Prisma.StringNullableWithAggregatesFilter<"Guild"> | string | null
   notificationRuleLimit?: Prisma.IntWithAggregatesFilter<"Guild"> | number
   publicStatsCardEnabled?: Prisma.BoolWithAggregatesFilter<"Guild"> | boolean
+  reservationMaxDurationMinutes?: Prisma.IntWithAggregatesFilter<"Guild"> | number
+  reservationMinDurationMinutes?: Prisma.IntWithAggregatesFilter<"Guild"> | number
+  reservationTimeGranularityMinutes?: Prisma.IntWithAggregatesFilter<"Guild"> | number
+  reservationMaxAdvanceDays?: Prisma.IntWithAggregatesFilter<"Guild"> | number
+  reservationActiveLimitPerSpot?: Prisma.IntWithAggregatesFilter<"Guild"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Guild"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Guild"> | Date | string
   active?: Prisma.BoolWithAggregatesFilter<"Guild"> | boolean
@@ -368,6 +448,11 @@ export type GuildCreateInput = {
   vanityUrl?: string | null
   notificationRuleLimit?: number
   publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: number
+  reservationMinDurationMinutes?: number
+  reservationTimeGranularityMinutes?: number
+  reservationMaxAdvanceDays?: number
+  reservationActiveLimitPerSpot?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -394,6 +479,11 @@ export type GuildUncheckedCreateInput = {
   vanityUrl?: string | null
   notificationRuleLimit?: number
   publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: number
+  reservationMinDurationMinutes?: number
+  reservationTimeGranularityMinutes?: number
+  reservationMaxAdvanceDays?: number
+  reservationActiveLimitPerSpot?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -420,6 +510,11 @@ export type GuildUpdateInput = {
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
   publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMinDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -446,6 +541,11 @@ export type GuildUncheckedUpdateInput = {
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
   publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMinDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -472,6 +572,11 @@ export type GuildCreateManyInput = {
   vanityUrl?: string | null
   notificationRuleLimit?: number
   publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: number
+  reservationMinDurationMinutes?: number
+  reservationTimeGranularityMinutes?: number
+  reservationMaxAdvanceDays?: number
+  reservationActiveLimitPerSpot?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -485,6 +590,11 @@ export type GuildUpdateManyMutationInput = {
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
   publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMinDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -498,6 +608,11 @@ export type GuildUncheckedUpdateManyInput = {
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
   publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMinDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -511,6 +626,11 @@ export type GuildCountOrderByAggregateInput = {
   vanityUrl?: Prisma.SortOrder
   notificationRuleLimit?: Prisma.SortOrder
   publicStatsCardEnabled?: Prisma.SortOrder
+  reservationMaxDurationMinutes?: Prisma.SortOrder
+  reservationMinDurationMinutes?: Prisma.SortOrder
+  reservationTimeGranularityMinutes?: Prisma.SortOrder
+  reservationMaxAdvanceDays?: Prisma.SortOrder
+  reservationActiveLimitPerSpot?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   active?: Prisma.SortOrder
@@ -518,6 +638,11 @@ export type GuildCountOrderByAggregateInput = {
 
 export type GuildAvgOrderByAggregateInput = {
   notificationRuleLimit?: Prisma.SortOrder
+  reservationMaxDurationMinutes?: Prisma.SortOrder
+  reservationMinDurationMinutes?: Prisma.SortOrder
+  reservationTimeGranularityMinutes?: Prisma.SortOrder
+  reservationMaxAdvanceDays?: Prisma.SortOrder
+  reservationActiveLimitPerSpot?: Prisma.SortOrder
 }
 
 export type GuildMaxOrderByAggregateInput = {
@@ -528,6 +653,11 @@ export type GuildMaxOrderByAggregateInput = {
   vanityUrl?: Prisma.SortOrder
   notificationRuleLimit?: Prisma.SortOrder
   publicStatsCardEnabled?: Prisma.SortOrder
+  reservationMaxDurationMinutes?: Prisma.SortOrder
+  reservationMinDurationMinutes?: Prisma.SortOrder
+  reservationTimeGranularityMinutes?: Prisma.SortOrder
+  reservationMaxAdvanceDays?: Prisma.SortOrder
+  reservationActiveLimitPerSpot?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   active?: Prisma.SortOrder
@@ -541,6 +671,11 @@ export type GuildMinOrderByAggregateInput = {
   vanityUrl?: Prisma.SortOrder
   notificationRuleLimit?: Prisma.SortOrder
   publicStatsCardEnabled?: Prisma.SortOrder
+  reservationMaxDurationMinutes?: Prisma.SortOrder
+  reservationMinDurationMinutes?: Prisma.SortOrder
+  reservationTimeGranularityMinutes?: Prisma.SortOrder
+  reservationMaxAdvanceDays?: Prisma.SortOrder
+  reservationActiveLimitPerSpot?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   active?: Prisma.SortOrder
@@ -548,6 +683,11 @@ export type GuildMinOrderByAggregateInput = {
 
 export type GuildSumOrderByAggregateInput = {
   notificationRuleLimit?: Prisma.SortOrder
+  reservationMaxDurationMinutes?: Prisma.SortOrder
+  reservationMinDurationMinutes?: Prisma.SortOrder
+  reservationTimeGranularityMinutes?: Prisma.SortOrder
+  reservationMaxAdvanceDays?: Prisma.SortOrder
+  reservationActiveLimitPerSpot?: Prisma.SortOrder
 }
 
 export type GuildScalarRelationFilter = {
@@ -776,6 +916,11 @@ export type GuildCreateWithoutRolesInput = {
   vanityUrl?: string | null
   notificationRuleLimit?: number
   publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: number
+  reservationMinDurationMinutes?: number
+  reservationTimeGranularityMinutes?: number
+  reservationMaxAdvanceDays?: number
+  reservationActiveLimitPerSpot?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -801,6 +946,11 @@ export type GuildUncheckedCreateWithoutRolesInput = {
   vanityUrl?: string | null
   notificationRuleLimit?: number
   publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: number
+  reservationMinDurationMinutes?: number
+  reservationTimeGranularityMinutes?: number
+  reservationMaxAdvanceDays?: number
+  reservationActiveLimitPerSpot?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -842,6 +992,11 @@ export type GuildUpdateWithoutRolesInput = {
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
   publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMinDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -867,6 +1022,11 @@ export type GuildUncheckedUpdateWithoutRolesInput = {
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
   publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMinDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -892,6 +1052,11 @@ export type GuildCreateWithoutMembersInput = {
   vanityUrl?: string | null
   notificationRuleLimit?: number
   publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: number
+  reservationMinDurationMinutes?: number
+  reservationTimeGranularityMinutes?: number
+  reservationMaxAdvanceDays?: number
+  reservationActiveLimitPerSpot?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -917,6 +1082,11 @@ export type GuildUncheckedCreateWithoutMembersInput = {
   vanityUrl?: string | null
   notificationRuleLimit?: number
   publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: number
+  reservationMinDurationMinutes?: number
+  reservationTimeGranularityMinutes?: number
+  reservationMaxAdvanceDays?: number
+  reservationActiveLimitPerSpot?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -958,6 +1128,11 @@ export type GuildUpdateWithoutMembersInput = {
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
   publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMinDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -983,6 +1158,11 @@ export type GuildUncheckedUpdateWithoutMembersInput = {
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
   publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMinDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1008,6 +1188,11 @@ export type GuildCreateWithoutTimersInput = {
   vanityUrl?: string | null
   notificationRuleLimit?: number
   publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: number
+  reservationMinDurationMinutes?: number
+  reservationTimeGranularityMinutes?: number
+  reservationMaxAdvanceDays?: number
+  reservationActiveLimitPerSpot?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1033,6 +1218,11 @@ export type GuildUncheckedCreateWithoutTimersInput = {
   vanityUrl?: string | null
   notificationRuleLimit?: number
   publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: number
+  reservationMinDurationMinutes?: number
+  reservationTimeGranularityMinutes?: number
+  reservationMaxAdvanceDays?: number
+  reservationActiveLimitPerSpot?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1074,6 +1264,11 @@ export type GuildUpdateWithoutTimersInput = {
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
   publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMinDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1099,6 +1294,11 @@ export type GuildUncheckedUpdateWithoutTimersInput = {
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
   publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMinDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1124,6 +1324,11 @@ export type GuildCreateWithoutTimerHistoryEntriesInput = {
   vanityUrl?: string | null
   notificationRuleLimit?: number
   publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: number
+  reservationMinDurationMinutes?: number
+  reservationTimeGranularityMinutes?: number
+  reservationMaxAdvanceDays?: number
+  reservationActiveLimitPerSpot?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1149,6 +1354,11 @@ export type GuildUncheckedCreateWithoutTimerHistoryEntriesInput = {
   vanityUrl?: string | null
   notificationRuleLimit?: number
   publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: number
+  reservationMinDurationMinutes?: number
+  reservationTimeGranularityMinutes?: number
+  reservationMaxAdvanceDays?: number
+  reservationActiveLimitPerSpot?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1190,6 +1400,11 @@ export type GuildUpdateWithoutTimerHistoryEntriesInput = {
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
   publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMinDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1215,6 +1430,11 @@ export type GuildUncheckedUpdateWithoutTimerHistoryEntriesInput = {
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
   publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMinDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1240,6 +1460,11 @@ export type GuildCreateWithoutLootSubmissionsInput = {
   vanityUrl?: string | null
   notificationRuleLimit?: number
   publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: number
+  reservationMinDurationMinutes?: number
+  reservationTimeGranularityMinutes?: number
+  reservationMaxAdvanceDays?: number
+  reservationActiveLimitPerSpot?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1265,6 +1490,11 @@ export type GuildUncheckedCreateWithoutLootSubmissionsInput = {
   vanityUrl?: string | null
   notificationRuleLimit?: number
   publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: number
+  reservationMinDurationMinutes?: number
+  reservationTimeGranularityMinutes?: number
+  reservationMaxAdvanceDays?: number
+  reservationActiveLimitPerSpot?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1306,6 +1536,11 @@ export type GuildUpdateWithoutLootSubmissionsInput = {
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
   publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMinDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1331,6 +1566,11 @@ export type GuildUncheckedUpdateWithoutLootSubmissionsInput = {
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
   publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMinDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1356,6 +1596,11 @@ export type GuildCreateWithoutReservationsInput = {
   vanityUrl?: string | null
   notificationRuleLimit?: number
   publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: number
+  reservationMinDurationMinutes?: number
+  reservationTimeGranularityMinutes?: number
+  reservationMaxAdvanceDays?: number
+  reservationActiveLimitPerSpot?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1381,6 +1626,11 @@ export type GuildUncheckedCreateWithoutReservationsInput = {
   vanityUrl?: string | null
   notificationRuleLimit?: number
   publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: number
+  reservationMinDurationMinutes?: number
+  reservationTimeGranularityMinutes?: number
+  reservationMaxAdvanceDays?: number
+  reservationActiveLimitPerSpot?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1422,6 +1672,11 @@ export type GuildUpdateWithoutReservationsInput = {
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
   publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMinDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1447,6 +1702,11 @@ export type GuildUncheckedUpdateWithoutReservationsInput = {
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
   publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMinDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1472,6 +1732,11 @@ export type GuildCreateWithoutNotificationRulesInput = {
   vanityUrl?: string | null
   notificationRuleLimit?: number
   publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: number
+  reservationMinDurationMinutes?: number
+  reservationTimeGranularityMinutes?: number
+  reservationMaxAdvanceDays?: number
+  reservationActiveLimitPerSpot?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1497,6 +1762,11 @@ export type GuildUncheckedCreateWithoutNotificationRulesInput = {
   vanityUrl?: string | null
   notificationRuleLimit?: number
   publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: number
+  reservationMinDurationMinutes?: number
+  reservationTimeGranularityMinutes?: number
+  reservationMaxAdvanceDays?: number
+  reservationActiveLimitPerSpot?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1538,6 +1808,11 @@ export type GuildUpdateWithoutNotificationRulesInput = {
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
   publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMinDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1563,6 +1838,11 @@ export type GuildUncheckedUpdateWithoutNotificationRulesInput = {
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
   publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMinDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1588,6 +1868,11 @@ export type GuildCreateWithoutDiscordChannelSnapshotsInput = {
   vanityUrl?: string | null
   notificationRuleLimit?: number
   publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: number
+  reservationMinDurationMinutes?: number
+  reservationTimeGranularityMinutes?: number
+  reservationMaxAdvanceDays?: number
+  reservationActiveLimitPerSpot?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1613,6 +1898,11 @@ export type GuildUncheckedCreateWithoutDiscordChannelSnapshotsInput = {
   vanityUrl?: string | null
   notificationRuleLimit?: number
   publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: number
+  reservationMinDurationMinutes?: number
+  reservationTimeGranularityMinutes?: number
+  reservationMaxAdvanceDays?: number
+  reservationActiveLimitPerSpot?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1654,6 +1944,11 @@ export type GuildUpdateWithoutDiscordChannelSnapshotsInput = {
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
   publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMinDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1679,6 +1974,11 @@ export type GuildUncheckedUpdateWithoutDiscordChannelSnapshotsInput = {
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
   publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMinDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1704,6 +2004,11 @@ export type GuildCreateWithoutDiscordSyncStateInput = {
   vanityUrl?: string | null
   notificationRuleLimit?: number
   publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: number
+  reservationMinDurationMinutes?: number
+  reservationTimeGranularityMinutes?: number
+  reservationMaxAdvanceDays?: number
+  reservationActiveLimitPerSpot?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1729,6 +2034,11 @@ export type GuildUncheckedCreateWithoutDiscordSyncStateInput = {
   vanityUrl?: string | null
   notificationRuleLimit?: number
   publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: number
+  reservationMinDurationMinutes?: number
+  reservationTimeGranularityMinutes?: number
+  reservationMaxAdvanceDays?: number
+  reservationActiveLimitPerSpot?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1770,6 +2080,11 @@ export type GuildUpdateWithoutDiscordSyncStateInput = {
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
   publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMinDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1795,6 +2110,11 @@ export type GuildUncheckedUpdateWithoutDiscordSyncStateInput = {
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
   publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMinDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1820,6 +2140,11 @@ export type GuildCreateWithoutEventsInput = {
   vanityUrl?: string | null
   notificationRuleLimit?: number
   publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: number
+  reservationMinDurationMinutes?: number
+  reservationTimeGranularityMinutes?: number
+  reservationMaxAdvanceDays?: number
+  reservationActiveLimitPerSpot?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1845,6 +2170,11 @@ export type GuildUncheckedCreateWithoutEventsInput = {
   vanityUrl?: string | null
   notificationRuleLimit?: number
   publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: number
+  reservationMinDurationMinutes?: number
+  reservationTimeGranularityMinutes?: number
+  reservationMaxAdvanceDays?: number
+  reservationActiveLimitPerSpot?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1886,6 +2216,11 @@ export type GuildUpdateWithoutEventsInput = {
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
   publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMinDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1911,6 +2246,11 @@ export type GuildUncheckedUpdateWithoutEventsInput = {
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
   publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMinDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1936,6 +2276,11 @@ export type GuildCreateWithoutMapTemplatesInput = {
   vanityUrl?: string | null
   notificationRuleLimit?: number
   publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: number
+  reservationMinDurationMinutes?: number
+  reservationTimeGranularityMinutes?: number
+  reservationMaxAdvanceDays?: number
+  reservationActiveLimitPerSpot?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1961,6 +2306,11 @@ export type GuildUncheckedCreateWithoutMapTemplatesInput = {
   vanityUrl?: string | null
   notificationRuleLimit?: number
   publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: number
+  reservationMinDurationMinutes?: number
+  reservationTimeGranularityMinutes?: number
+  reservationMaxAdvanceDays?: number
+  reservationActiveLimitPerSpot?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -2002,6 +2352,11 @@ export type GuildUpdateWithoutMapTemplatesInput = {
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
   publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMinDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2027,6 +2382,11 @@ export type GuildUncheckedUpdateWithoutMapTemplatesInput = {
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
   publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMinDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2052,6 +2412,11 @@ export type GuildCreateWithoutNpcKillStatsInput = {
   vanityUrl?: string | null
   notificationRuleLimit?: number
   publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: number
+  reservationMinDurationMinutes?: number
+  reservationTimeGranularityMinutes?: number
+  reservationMaxAdvanceDays?: number
+  reservationActiveLimitPerSpot?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -2077,6 +2442,11 @@ export type GuildUncheckedCreateWithoutNpcKillStatsInput = {
   vanityUrl?: string | null
   notificationRuleLimit?: number
   publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: number
+  reservationMinDurationMinutes?: number
+  reservationTimeGranularityMinutes?: number
+  reservationMaxAdvanceDays?: number
+  reservationActiveLimitPerSpot?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -2118,6 +2488,11 @@ export type GuildUpdateWithoutNpcKillStatsInput = {
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
   publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMinDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2143,6 +2518,11 @@ export type GuildUncheckedUpdateWithoutNpcKillStatsInput = {
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
   publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMinDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2168,6 +2548,11 @@ export type GuildCreateWithoutGuildKillSummaryInput = {
   vanityUrl?: string | null
   notificationRuleLimit?: number
   publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: number
+  reservationMinDurationMinutes?: number
+  reservationTimeGranularityMinutes?: number
+  reservationMaxAdvanceDays?: number
+  reservationActiveLimitPerSpot?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -2193,6 +2578,11 @@ export type GuildUncheckedCreateWithoutGuildKillSummaryInput = {
   vanityUrl?: string | null
   notificationRuleLimit?: number
   publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: number
+  reservationMinDurationMinutes?: number
+  reservationTimeGranularityMinutes?: number
+  reservationMaxAdvanceDays?: number
+  reservationActiveLimitPerSpot?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -2234,6 +2624,11 @@ export type GuildUpdateWithoutGuildKillSummaryInput = {
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
   publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMinDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2259,6 +2654,11 @@ export type GuildUncheckedUpdateWithoutGuildKillSummaryInput = {
   vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
   publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMinDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2414,6 +2814,11 @@ export type GuildSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   vanityUrl?: boolean
   notificationRuleLimit?: boolean
   publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: boolean
+  reservationMinDurationMinutes?: boolean
+  reservationTimeGranularityMinutes?: boolean
+  reservationMaxAdvanceDays?: boolean
+  reservationActiveLimitPerSpot?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   active?: boolean
@@ -2441,6 +2846,11 @@ export type GuildSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   vanityUrl?: boolean
   notificationRuleLimit?: boolean
   publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: boolean
+  reservationMinDurationMinutes?: boolean
+  reservationTimeGranularityMinutes?: boolean
+  reservationMaxAdvanceDays?: boolean
+  reservationActiveLimitPerSpot?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   active?: boolean
@@ -2454,6 +2864,11 @@ export type GuildSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   vanityUrl?: boolean
   notificationRuleLimit?: boolean
   publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: boolean
+  reservationMinDurationMinutes?: boolean
+  reservationTimeGranularityMinutes?: boolean
+  reservationMaxAdvanceDays?: boolean
+  reservationActiveLimitPerSpot?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   active?: boolean
@@ -2467,12 +2882,17 @@ export type GuildSelectScalar = {
   vanityUrl?: boolean
   notificationRuleLimit?: boolean
   publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: boolean
+  reservationMinDurationMinutes?: boolean
+  reservationTimeGranularityMinutes?: boolean
+  reservationMaxAdvanceDays?: boolean
+  reservationActiveLimitPerSpot?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   active?: boolean
 }
 
-export type GuildOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "icon" | "ownerId" | "vanityUrl" | "notificationRuleLimit" | "publicStatsCardEnabled" | "createdAt" | "updatedAt" | "active", ExtArgs["result"]["guild"]>
+export type GuildOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "icon" | "ownerId" | "vanityUrl" | "notificationRuleLimit" | "publicStatsCardEnabled" | "reservationMaxDurationMinutes" | "reservationMinDurationMinutes" | "reservationTimeGranularityMinutes" | "reservationMaxAdvanceDays" | "reservationActiveLimitPerSpot" | "createdAt" | "updatedAt" | "active", ExtArgs["result"]["guild"]>
 export type GuildInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   roles?: boolean | Prisma.Guild$rolesArgs<ExtArgs>
   members?: boolean | Prisma.Guild$membersArgs<ExtArgs>
@@ -2517,6 +2937,11 @@ export type $GuildPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     vanityUrl: string | null
     notificationRuleLimit: number
     publicStatsCardEnabled: boolean
+    reservationMaxDurationMinutes: number
+    reservationMinDurationMinutes: number
+    reservationTimeGranularityMinutes: number
+    reservationMaxAdvanceDays: number
+    reservationActiveLimitPerSpot: number
     createdAt: Date
     updatedAt: Date
     active: boolean
@@ -2963,6 +3388,11 @@ export interface GuildFieldRefs {
   readonly vanityUrl: Prisma.FieldRef<"Guild", 'String'>
   readonly notificationRuleLimit: Prisma.FieldRef<"Guild", 'Int'>
   readonly publicStatsCardEnabled: Prisma.FieldRef<"Guild", 'Boolean'>
+  readonly reservationMaxDurationMinutes: Prisma.FieldRef<"Guild", 'Int'>
+  readonly reservationMinDurationMinutes: Prisma.FieldRef<"Guild", 'Int'>
+  readonly reservationTimeGranularityMinutes: Prisma.FieldRef<"Guild", 'Int'>
+  readonly reservationMaxAdvanceDays: Prisma.FieldRef<"Guild", 'Int'>
+  readonly reservationActiveLimitPerSpot: Prisma.FieldRef<"Guild", 'Int'>
   readonly createdAt: Prisma.FieldRef<"Guild", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Guild", 'DateTime'>
   readonly active: Prisma.FieldRef<"Guild", 'Boolean'>

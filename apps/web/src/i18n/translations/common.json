@@ -58,6 +58,7 @@
     "roles": "Role",
     "roleFallback": "Rola #{{id}}",
     "members": "Członkowie",
+    "mapTemplates": "Szablony map",
     "notifications": "Powiadomienia",
     "notificationCreate": "Nowa reguła",
     "notificationEdit": "Edycja reguły",

@@ -13,4 +13,9 @@ export interface UpdateGuildConfigDto {
      */
   vanityUrl?: string | null;
   publicStatsCardEnabled?: boolean;
+  reservationMaxDurationMinutes?: number;
+  reservationMinDurationMinutes?: number;
+  reservationTimeGranularityMinutes?: number;
+  reservationMaxAdvanceDays?: number;
+  reservationActiveLimitPerSpot?: number;
 }

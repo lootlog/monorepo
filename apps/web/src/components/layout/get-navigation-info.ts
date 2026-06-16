@@ -74,6 +74,8 @@ function buildRoutes(guildId: string) {
     settingsRoles: ROUTES.guild.settings.roles(guildId),
     settingsMembers: ROUTES.guild.settings.members(guildId),
     settingsNpcs: ROUTES.guild.settings.npcs(guildId),
+    settingsMapTemplates: ROUTES.guild.settings.mapTemplates(guildId),
+    settingsReservations: ROUTES.guild.settings.reservationsSettings(guildId),
     activityLogs: ROUTES.guild.activityLogs(guildId),
     events: ROUTES.guild.events(guildId),
   };
@@ -410,6 +412,16 @@ function resolveSettingsRoutes(
     breadcrumbs.push({ label: t("common.breadcrumbs.members"), path: null });
   } else if (path === routes.settingsNpcs) {
     breadcrumbs.push({ label: t("common.breadcrumbs.npcs"), path: null });
+  } else if (path === routes.settingsMapTemplates) {
+    breadcrumbs.push({
+      label: t("common.breadcrumbs.mapTemplates"),
+      path: null,
+    });
+  } else if (path === routes.settingsReservations) {
+    breadcrumbs.push({
+      label: t("common.breadcrumbs.reservations"),
+      path: null,
+    });
   } else if (path === routes.notifications) {
     breadcrumbs.push({
       label: t("common.breadcrumbs.notifications"),

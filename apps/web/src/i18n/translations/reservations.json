@@ -4,12 +4,68 @@
     "list": "Widok listy",
     "grid": "Widok siatki"
   },
+  "datePicker": {
+    "placeholder": "Wybierz datę i godzinę",
+    "clear": "Wyczyść datę",
+    "weekdays": {
+      "monday": "Pn",
+      "tuesday": "Wt",
+      "wednesday": "Śr",
+      "thursday": "Cz",
+      "friday": "Pt",
+      "saturday": "So",
+      "sunday": "Nd"
+    }
+  },
   "schedule": {
     "header": {
       "addReservation": "Dodaj rezerwację",
+      "info": "Zasady rezerwacji",
+      "settings": "Ustawienia rezerwacji",
       "previousWeek": "Poprzedni tydzień",
       "nextWeek": "Następny tydzień",
       "weekLabel": "Tydzień {{week}} ({{year}}, {{month}})"
+    },
+    "infoDialog": {
+      "title": "Zasady rezerwacji",
+      "description": "Aktualna konfiguracja gildii określa, jakie terminy można wybrać przy tworzeniu nowych rezerwacji.",
+      "values": {
+        "minutes": "{{minutes}} min",
+        "days": "{{days}} dni",
+        "reservations": "{{count}} rezerw."
+      },
+      "sections": {
+        "minDuration": {
+          "title": "Minimalna długość",
+          "description": "Rezerwacja musi trwać co najmniej tyle czasu, inaczej system ją odrzuci."
+        },
+        "maxDuration": {
+          "title": "Maksymalna długość",
+          "description": "Jedna rezerwacja nie może przekroczyć tego limitu czasu."
+        },
+        "granularity": {
+          "title": "Krok siatki",
+          "description": "Zaznaczanie na kalendarzu dopasowuje zakres do tego kroku. W formularzu można wpisać dokładną minutę, np. 12:33."
+        },
+        "maxAdvance": {
+          "title": "Maksymalne wyprzedzenie",
+          "description": "Nie można zapisać się dalej w przyszłość niż pozwala ten limit."
+        },
+        "activeLimit": {
+          "title": "Limit aktywnych rezerwacji",
+          "description": "Limit dotyczy przyszłych i trwających rezerwacji jednego gracza na tym samym expowisku."
+        }
+      },
+      "failureReasons": {
+        "title": "Dlaczego zapis może nie działać?",
+        "items": {
+          "tooShort": "Wybrany zakres jest krótszy niż minimalna długość rezerwacji.",
+          "tooLong": "Wybrany zakres przekracza maksymalną długość rezerwacji.",
+          "maxAdvance": "Termin zaczyna się zbyt daleko w przyszłości.",
+          "activeLimit": "Masz już maksymalną liczbę aktywnych lub przyszłych rezerwacji na tym expowisku.",
+          "overlap": "Wybrany termin koliduje z istniejącą rezerwacją."
+        }
+      }
     },
     "quickAdd": {
       "title": "Nowa rezerwacja",
@@ -30,7 +86,9 @@
       "reservationTypeMissing": "Nie udało się ustalić rodzaju rezerwacji.",
       "userMissing": "Brak informacji o użytkowniku.",
       "startTooOld": "Godzina rozpoczęcia rezerwacji nie może być starsza niż 1 godzina od aktualnego czasu.",
-      "minimumDuration": "Rezerwacja musi trwać co najmniej 30 minut."
+      "minimumDuration": "Rezerwacja musi trwać co najmniej {{minutes}} minut.",
+      "maximumDuration": "Rezerwacja może trwać maksymalnie {{minutes}} minut.",
+      "maxAdvance": "Rezerwację można utworzyć maksymalnie {{days}} dni do przodu."
     },
     "toasts": {
       "created": "Rezerwacja została utworzona.",

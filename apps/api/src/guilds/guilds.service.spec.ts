@@ -195,6 +195,11 @@ describe("GuildsService", () => {
     active: true,
     notificationRuleLimit: 20,
     publicStatsCardEnabled: false,
+    reservationMaxDurationMinutes: 180,
+    reservationMinDurationMinutes: 30,
+    reservationTimeGranularityMinutes: 15,
+    reservationMaxAdvanceDays: 7,
+    reservationActiveLimitPerSpot: 3,
     createdAt: new Date("2026-01-01T00:00:00.000Z"),
     updatedAt: new Date("2026-01-01T00:00:00.000Z"),
     ...overrides,
@@ -1124,6 +1129,61 @@ describe("GuildsService", () => {
         priority: expect.any(Number),
         reason: "guild-connect-background",
       });
+    });
+  });
+
+  describe("updateGuildConfig", () => {
+    it("updates reservation settings and clears guild cache", async () => {
+      const updatedGuild = createGuild({
+        reservationMaxDurationMinutes: 240,
+        reservationMinDurationMinutes: 15,
+        reservationTimeGranularityMinutes: 5,
+        reservationMaxAdvanceDays: 14,
+        reservationActiveLimitPerSpot: 4,
+      });
+
+      mockPrismaService.guild.findUnique.mockResolvedValue({
+        vanityUrl: "guild-vanity",
+        reservationMinDurationMinutes: 30,
+        reservationMaxDurationMinutes: 180,
+      });
+      mockPrismaService.guild.update.mockResolvedValue(updatedGuild);
+
+      await expect(
+        service.updateGuildConfig("guild-123", {
+          reservationMaxDurationMinutes: 240,
+          reservationMinDurationMinutes: 15,
+          reservationTimeGranularityMinutes: 5,
+          reservationMaxAdvanceDays: 14,
+          reservationActiveLimitPerSpot: 4,
+        }),
+      ).resolves.toEqual(updatedGuild);
+
+      expect(mockPrismaService.guild.update).toHaveBeenCalledWith({
+        where: { id: "guild-123" },
+        data: {
+          reservationMaxDurationMinutes: 240,
+          reservationMinDurationMinutes: 15,
+          reservationTimeGranularityMinutes: 5,
+          reservationMaxAdvanceDays: 14,
+          reservationActiveLimitPerSpot: 4,
+        },
+      });
+      expect(mockRedisService.del).toHaveBeenCalledWith("guild:guild-123");
+      expect(mockRedisService.del).toHaveBeenCalledWith("guild:guild-vanity");
+    });
+
+    it("rejects reservation minimum duration greater than maximum duration", async () => {
+      await expect(
+        service.updateGuildConfig("guild-123", {
+          reservationMinDurationMinutes: 90,
+          reservationMaxDurationMinutes: 60,
+        }),
+      ).rejects.toThrow(
+        "Minimalna długość rezerwacji nie może być większa niż maksymalna.",
+      );
+
+      expect(mockPrismaService.guild.update).not.toHaveBeenCalled();
     });
   });
 

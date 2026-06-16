@@ -15,19 +15,33 @@ import {
   invalidateReservationsControllerGetReservations,
   useReservationsControllerCreateReservation,
 } from "@/lib/api/generated/main/reservations/reservations";
+import {
+  type ReservationSettings,
+  validateReservationDateRange,
+} from "./reservation-settings";
+import { getReservationValidationMessage } from "./reservation-validation-message";
 
 type ReservationQuickAddPopoverProps = {
   start: Date;
   end: Date;
   reservationKey: string;
   currentUserId?: string;
+  settings: ReservationSettings;
   onClose: () => void;
   onSuccess: () => void;
 };
 
 export const ReservationQuickAddPopover: React.FC<
   ReservationQuickAddPopoverProps
-> = ({ start, end, reservationKey, currentUserId, onClose, onSuccess }) => {
+> = ({
+  start,
+  end,
+  reservationKey,
+  currentUserId,
+  settings,
+  onClose,
+  onSuccess,
+}) => {
   const [comment, setComment] = useState("");
   const { t } = useTranslation();
   const guildId = useGuildId();
@@ -50,6 +64,19 @@ export const ReservationQuickAddPopover: React.FC<
 
   const handleCreate = async () => {
     if (!currentUserId || !reservationKey) return;
+
+    const validationError = validateReservationDateRange({
+      fromDate: start,
+      toDate: end,
+      settings,
+    });
+
+    if (validationError) {
+      toast.error(
+        getReservationValidationMessage(validationError, t, settings),
+      );
+      return;
+    }
 
     try {
       const normalizedComment = comment.trim();
