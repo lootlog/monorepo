@@ -25,7 +25,10 @@ const DevPermissionOverrideSchema = z.object({
 });
 
 export const isDevPermissionOverrideEnabled = () => {
-  if (env.ENV === RuntimeEnvironment.PROD) {
+  if (
+    env.ENV !== RuntimeEnvironment.LOCAL &&
+    env.ENV !== RuntimeEnvironment.DEV
+  ) {
     return false;
   }
 

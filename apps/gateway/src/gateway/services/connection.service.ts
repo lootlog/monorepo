@@ -81,7 +81,10 @@ export class ConnectionService {
   }
 
   private isDevPermissionOverrideEnabled(): boolean {
-    if (env.ENV === RuntimeEnvironment.PROD) {
+    if (
+      env.ENV !== RuntimeEnvironment.LOCAL &&
+      env.ENV !== RuntimeEnvironment.DEV
+    ) {
       return false;
     }
 
