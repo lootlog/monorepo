@@ -7,12 +7,10 @@ import { GatewayQueueHandler } from "src/gateway/gateway-queue.handler";
 import { GuildsModule } from "src/guilds/guilds.module";
 import { RedisModule } from "src/lib/redis/redis.module";
 import { RetryService } from "src/gateway/retry.service";
-import {
-  ConnectionService,
-  PresenceService,
-  SubscriptionService,
-  ActivityService,
-} from "./services";
+import { ActivityService } from "./services/activity.service";
+import { ConnectionService } from "./services/connection.service";
+import { PresenceService } from "./services/presence.service";
+import { SubscriptionService } from "./services/subscription.service";
 import { rabbitmqConfig } from "src/config/rabbitmq.config";
 
 @Module({
