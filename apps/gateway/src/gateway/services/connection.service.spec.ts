@@ -68,23 +68,26 @@ describe("ConnectionService", () => {
     expect(metadata.devPermissionOverride).toBe("encoded-override");
   });
 
-  it("keeps dev permission override auth disabled in production", () => {
-    env.ENV = RuntimeEnvironment.PROD;
-    env.DEV_PERMISSION_OVERRIDE_ENABLED = true;
+  it.each([RuntimeEnvironment.STAGING, RuntimeEnvironment.PROD])(
+    "keeps dev permission override auth disabled in %s",
+    (runtimeEnvironment) => {
+      env.ENV = runtimeEnvironment;
+      env.DEV_PERMISSION_OVERRIDE_ENABLED = true;
 
-    const metadata = service.getConnectionMetadata(
-      {
-        headers: {
-          "x-auth-discord-id": "discord-1",
-          "x-auth-user-id": "user-1",
-          origin: "https://alpha.margonem.pl",
-        },
-      } as never,
-      { devPermissionOverride: "encoded-override" },
-    );
+      const metadata = service.getConnectionMetadata(
+        {
+          headers: {
+            "x-auth-discord-id": "discord-1",
+            "x-auth-user-id": "user-1",
+            origin: "https://alpha.margonem.pl",
+          },
+        } as never,
+        { devPermissionOverride: "encoded-override" },
+      );
 
-    expect(metadata.devPermissionOverride).toBeUndefined();
-  });
+      expect(metadata.devPermissionOverride).toBeUndefined();
+    },
+  );
 
   it("detects web app platform for non-game origins", () => {
     expect(service.determineUserPlatform("https://lootlog.com")).toBe(

@@ -36,7 +36,7 @@ describe("dev permission override", () => {
     ).toBeUndefined();
   });
 
-  it("enables override outside production when the feature flag is true", () => {
+  it("enables override locally when the feature flag is true", () => {
     env.DEV_PERMISSION_OVERRIDE_ENABLED = true;
 
     expect(isDevPermissionOverrideEnabled()).toBe(true);
@@ -53,11 +53,29 @@ describe("dev permission override", () => {
     });
   });
 
-  it("keeps override disabled in production even when the feature flag is true", () => {
-    env.ENV = RuntimeEnvironment.PROD;
+  it.each([RuntimeEnvironment.STAGING, RuntimeEnvironment.PROD])(
+    "keeps override disabled in %s even when the feature flag is true",
+    (runtimeEnvironment) => {
+      env.ENV = runtimeEnvironment;
+      env.DEV_PERMISSION_OVERRIDE_ENABLED = true;
+
+      expect(isDevPermissionOverrideEnabled()).toBe(false);
+      expect(
+        parseDevPermissionOverrideHeader(
+          encodeOverride({
+            enabled: true,
+            permissions: [Permission.LOOTLOG_ACCESS],
+          }),
+        ),
+      ).toBeUndefined();
+    },
+  );
+
+  it("enables override in dev when the feature flag is true", () => {
+    env.ENV = RuntimeEnvironment.DEV;
     env.DEV_PERMISSION_OVERRIDE_ENABLED = true;
 
-    expect(isDevPermissionOverrideEnabled()).toBe(false);
+    expect(isDevPermissionOverrideEnabled()).toBe(true);
     expect(
       parseDevPermissionOverrideHeader(
         encodeOverride({
@@ -65,6 +83,9 @@ describe("dev permission override", () => {
           permissions: [Permission.LOOTLOG_ACCESS],
         }),
       ),
-    ).toBeUndefined();
+    ).toMatchObject({
+      enabled: true,
+      permissions: [Permission.LOOTLOG_ACCESS],
+    });
   });
 });
