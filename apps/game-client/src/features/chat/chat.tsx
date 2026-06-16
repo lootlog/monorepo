@@ -2,7 +2,7 @@ import { DraggableWindow } from "@/components/draggable-window";
 import { AnimatedWindow } from "@/components/animated-window";
 import { useRef, useEffect, useLayoutEffect, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useLocalStorage } from "react-use";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { storageKey } from "@/lib/storage-key";
 import { useWindowsStore } from "@/store/windows.store";
 import { useChatMessagesListener } from "@/features/chat/hooks/use-chat-messages";

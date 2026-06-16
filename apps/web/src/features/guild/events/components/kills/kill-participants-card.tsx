@@ -27,11 +27,9 @@ import { useEventsRankingControllerUpdateKillPoint } from "@/lib/api/generated/m
 import type { KillDetailParticipant } from "../../hooks/queries/use-kill-detail";
 import { invalidateKillQueries } from "../../hooks/mutations/invalidate-kill-queries";
 import { ManualPointsEditDialog } from "../dialogs/manual-points-edit-dialog";
-import {
-  formatDurationHuman,
-  aggregateMapData,
-  normalizeBonusBreakdown,
-} from "../../utils";
+import { aggregateMapData } from "../../utils/aggregate-map-data";
+import { formatDurationHuman } from "../../utils/format-duration";
+import { normalizeBonusBreakdown } from "../../utils/normalize-bonus-breakdown";
 
 interface KillParticipantsCardProps {
   participants: KillDetailParticipant[];

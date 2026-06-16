@@ -12,11 +12,8 @@ import { cn } from "@lootlog/ui/lib/utils";
 import { NpcTile } from "@/components/tiles";
 import type { HeroKill } from "../../hooks/queries/use-hero-kill-history";
 import { KillParticipantsList } from "./kill-participants-list";
-import {
-  formatDurationHuman,
-  formatDateTime,
-  formatDateTimeFull,
-} from "../../utils";
+import { formatDateTime, formatDateTimeFull } from "../../utils/format-date";
+import { formatDurationHuman } from "../../utils/format-duration";
 
 interface KillHistoryCardProps {
   kill: HeroKill;

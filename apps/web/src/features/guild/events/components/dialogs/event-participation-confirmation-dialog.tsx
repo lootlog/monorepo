@@ -20,7 +20,7 @@ import {
   useConfirmParticipationForKill,
   useListPendingParticipationConfirmations,
 } from "@/lib/api/generated/main/events/events";
-import { formatDateTime } from "../../utils";
+import { formatDateTime } from "../../utils/format-date";
 import { invalidateKillQueries } from "../../hooks/mutations/invalidate-kill-queries";
 
 interface EventParticipationConfirmationDialogProps {

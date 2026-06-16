@@ -21,7 +21,10 @@ import { Permission, type Role } from "src/generated/prisma/client";
 import { canViewChatMessage } from "src/shared/utils/can-view-chat-message";
 import type { ChatStoredMessage } from "src/chat/types/chat-stored-message.type";
 import type { ChatMessageViewer } from "src/chat/types/chat-message-viewer.type";
-import { canManageChatMessage } from "src/chat/chat-message-permissions";
+import {
+  canDeleteChatMessage,
+  canEditChatMessage,
+} from "src/chat/chat-message-permissions";
 import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
 
 const MAX_MESSAGES = 300;
@@ -180,7 +183,7 @@ export class ChatService {
     const message = JSON.parse(elements[messageIndex]) as ChatStoredMessage;
     const viewer = await this.getChatMessageViewer(discordId, guildId);
 
-    if (!viewer || !canManageChatMessage(viewer, message)) {
+    if (!viewer || !canEditChatMessage(viewer, message)) {
       throw new ForbiddenException("Not allowed to manage this message");
     }
 
@@ -223,7 +226,7 @@ export class ChatService {
     const message = JSON.parse(targetElement) as ChatStoredMessage;
     const viewer = await this.getChatMessageViewer(discordId, guildId);
 
-    if (!viewer || !canManageChatMessage(viewer, message)) {
+    if (!viewer || !canDeleteChatMessage(viewer, message)) {
       throw new ForbiddenException("Not allowed to manage this message");
     }
     const routing = this.getMessageRouting(message);
@@ -299,12 +302,10 @@ export class ChatService {
     message: ChatStoredMessage,
     viewer: ChatMessageViewer,
   ) {
-    const canManageMessage = canManageChatMessage(viewer, message);
-
     return {
       ...message,
-      canEdit: canManageMessage,
-      canDelete: canManageMessage,
+      canEdit: canEditChatMessage(viewer, message),
+      canDelete: canDeleteChatMessage(viewer, message),
     };
   }
 
