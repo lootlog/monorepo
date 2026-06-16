@@ -1,6 +1,7 @@
 import { SettingsSection } from "@/components/settings/settings-section";
 import { useTimersStore, type CustomTimerColor } from "@/store/timers.store";
 import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
+import { getDefaultColorName } from "@/features/timers/utils/get-default-color-name";
 import { useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import { DefaultColorItem } from "./components/default-color-item";
@@ -12,7 +13,6 @@ import {
   alphaToHex,
   hexToAlpha,
   TAILWIND_TO_HEX,
-  getDefaultColorName,
   type ColorEditData,
 } from "./components/color-utils";
 
