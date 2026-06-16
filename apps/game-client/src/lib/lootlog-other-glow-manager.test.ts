@@ -53,6 +53,16 @@ function moveOther(
   runtimeOther.d.y = position.y;
 }
 
+function setOtherUpdate(
+  other: Other,
+  update: (this: Other, dt: number) => void,
+): void {
+  const runtimeOther = other as Other & {
+    update?: (this: Other, dt: number) => void;
+  };
+  runtimeOther.update = update;
+}
+
 function setRuntime(drawables: unknown[] = ["base"]): ReturnType<typeof vi.fn> {
   const getDrawableList = vi.fn(() => drawables);
 
@@ -148,6 +158,57 @@ describe("lootlogOtherGlowManager", () => {
       y: 14,
     });
     expect(lootlogOtherGlowManager.getGlowOrder("617")).toBe(14.1);
+  });
+
+  it("updates managed glow position after runtime Other.update movement", () => {
+    const other = createOther("617");
+    const originalUpdate = vi.fn(function (this: Other, dt: number) {
+      moveOther(this, { rx: 17 + dt, ry: 18 + dt, x: 17 + dt, y: 18 + dt });
+    });
+    setOtherUpdate(other, originalUpdate);
+
+    lootlogOtherGlowManager.install();
+    lootlogOtherGlowManager.setGlow(other, LOOTLOG_OTHER_GLOW_BLUE);
+
+    (
+      other as Other & {
+        update: (dt: number) => void;
+      }
+    ).update(2);
+
+    expect(originalUpdate).toHaveBeenCalledWith(2);
+    expect(lootlogOtherGlowManager.getGlowPosition("617")).toEqual({
+      x: 19,
+      y: 20,
+    });
+    expect(lootlogOtherGlowManager.getGlowOrder("617")).toBe(20.1);
+  });
+
+  it("restores runtime Other.update when managed glow is removed", () => {
+    const other = createOther("617");
+    const originalUpdate = vi.fn();
+    setOtherUpdate(other, originalUpdate);
+
+    lootlogOtherGlowManager.install();
+    lootlogOtherGlowManager.setGlow(other, LOOTLOG_OTHER_GLOW_BLUE);
+
+    expect(
+      (
+        other as Other & {
+          update: (dt: number) => void;
+        }
+      ).update,
+    ).not.toBe(originalUpdate);
+
+    lootlogOtherGlowManager.removeGlow("617");
+
+    expect(
+      (
+        other as Other & {
+          update: (dt: number) => void;
+        }
+      ).update,
+    ).toBe(originalUpdate);
   });
 
   it("draws managed glow using the latest runtime other position", () => {
