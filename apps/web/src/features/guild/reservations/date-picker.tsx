@@ -9,6 +9,7 @@ type DatePickerProps = {
   open: boolean;
   setOpen: (value: boolean) => void;
   onClear?: () => void;
+  minuteStep?: number;
 };
 
 export const DatePicker: FC<DatePickerProps> = ({
@@ -19,6 +20,7 @@ export const DatePicker: FC<DatePickerProps> = ({
   open,
   setOpen,
   onClear,
+  minuteStep = 1,
 }) => {
   const defaultDate = date || new Date();
   const [viewYear, setViewYear] = useState<number>(defaultDate.getFullYear());
@@ -286,7 +288,10 @@ export const DatePicker: FC<DatePickerProps> = ({
                     ref={minuteScrollRef}
                     className="overflow-y-auto h-32 w-16 snap-y snap-proximity flex flex-col [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] scroll-smooth"
                   >
-                    {Array.from({ length: 60 }).map((_, i) => (
+                    {Array.from(
+                      { length: Math.ceil(60 / minuteStep) },
+                      (_, i) => i * minuteStep,
+                    ).map((i) => (
                       <button
                         key={`m-${i}`}
                         type="button"
