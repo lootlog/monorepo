@@ -129,11 +129,9 @@ export const useEventPresence = ({
 
     fetchInitialPresence();
 
-    socket.on(GatewayEvent.UPDATE_SERVER_PRESENCE, handlePresenceUpdate);
     socket.on(GatewayEvent.PRESENCE_UPDATE, handlePresenceUpdate);
 
     return () => {
-      socket.off(GatewayEvent.UPDATE_SERVER_PRESENCE, handlePresenceUpdate);
       socket.off(GatewayEvent.PRESENCE_UPDATE, handlePresenceUpdate);
     };
   }, [

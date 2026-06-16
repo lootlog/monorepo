@@ -19,12 +19,12 @@ import type {
   Socket,
   PlayerPresence,
 } from "src/gateway/types/socket-user.type";
+import { ConnectionService } from "./services/connection.service";
 import {
   type PresenceFetchResponse,
-  ConnectionService,
   PresenceService,
-  SubscriptionService,
-} from "./services";
+} from "./services/presence.service";
+import { SubscriptionService } from "./services/subscription.service";
 
 @WebSocketGateway({
   pingInterval: GatewayConfig.SOCKET_PING_INTERVAL_MS,
@@ -132,7 +132,7 @@ export class Gateway {
   async handlePlayerPresenceFetch(
     @ConnectedSocket() client: Socket,
     @MessageBody() { guildId, world }: RequestPlayerPresenceDto,
-  ): Promise<PresenceFetchResponse<Record<string, PlayerPresence[]>>> {
+  ): Promise<Record<string, PlayerPresence[]>> {
     return this.presenceService.fetchGuildPresence(
       this.server,
       client,

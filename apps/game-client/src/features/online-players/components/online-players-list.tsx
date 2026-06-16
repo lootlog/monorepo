@@ -41,7 +41,7 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
   const world = guildId ? worldByGuildId[guildId] : undefined;
   const [onlinePlayers, , , accessState] = usePlayersPresence(
     guildId,
-    world || defaultWorld,
+    world ?? defaultWorld,
   );
   const filtersByGuildId = useOnlinePlayersStore(
     (state) => state.filtersByGuildId,

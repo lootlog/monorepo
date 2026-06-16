@@ -111,13 +111,10 @@ describe("PresenceService", () => {
         guildId,
       );
 
-      expect(result.status).toBe("success");
-      if (result.status !== "success") return;
-
-      expect(result.players["discord-1"]).toHaveLength(1);
-      expect(result.players["discord-2"]).toHaveLength(1);
-      expect(result.players["discord-1"][0].world).toBe("alpha");
-      expect(result.players["discord-2"][0].world).toBe("beta");
+      expect(result["discord-1"]).toHaveLength(1);
+      expect(result["discord-2"]).toHaveLength(1);
+      expect(result["discord-1"][0].world).toBe("alpha");
+      expect(result["discord-2"][0].world).toBe("beta");
     });
 
     it("filters guild presence by world when world is provided", async () => {
@@ -137,14 +134,11 @@ describe("PresenceService", () => {
         "alpha",
       );
 
-      expect(result.status).toBe("success");
-      if (result.status !== "success") return;
-
-      expect(Object.keys(result.players)).toHaveLength(2);
-      expect(result.players["discord-1"]).toHaveLength(1);
-      expect(result.players["discord-1"][0].world).toBe("alpha");
-      expect(result.players["discord-2"]).toHaveLength(1);
-      expect(result.players["discord-2"][0].world).toBe("alpha");
+      expect(Object.keys(result)).toHaveLength(2);
+      expect(result["discord-1"]).toHaveLength(1);
+      expect(result["discord-1"][0].world).toBe("alpha");
+      expect(result["discord-2"]).toHaveLength(1);
+      expect(result["discord-2"][0].world).toBe("alpha");
     });
 
     it("does not filter guild presence by viewer role level range", async () => {
@@ -164,16 +158,35 @@ describe("PresenceService", () => {
         "alpha",
       );
 
-      expect(result.status).toBe("success");
-      if (result.status !== "success") return;
-
-      expect(result.players["discord-1"][0].lvl).toBe("64");
+      expect(result["discord-1"][0].lvl).toBe("64");
     });
 
-    it("returns forbidden when client is not in guild online players room", async () => {
+    it("returns guild presence when client is not in guild online players room", async () => {
       const guildId = "guild-1";
       const client = {
         rooms: new Set([buildRoomName(guildId, "presence")]),
+        data: createViewerClient(guildId).data,
+      } as Socket;
+
+      mockFetchSockets.mockResolvedValue([
+        createPresenceSocket("discord-1", "alpha", "session-1"),
+      ]);
+
+      const result = await service.fetchGuildPresence(
+        mockServer as never,
+        client,
+        guildId,
+        "alpha",
+      );
+
+      expect(result["discord-1"]).toHaveLength(1);
+      expect(result["discord-1"][0].world).toBe("alpha");
+    });
+
+    it("returns empty guild presence when client is not in guild presence room", async () => {
+      const guildId = "guild-1";
+      const client = {
+        rooms: new Set(),
         data: createViewerClient(guildId).data,
       } as Socket;
 
@@ -184,10 +197,7 @@ describe("PresenceService", () => {
         "alpha",
       );
 
-      expect(result).toEqual({
-        status: "forbidden",
-        code: "ONLINE_PLAYERS_ACCESS_DENIED",
-      });
+      expect(result).toEqual({});
       expect(mockServer.in).not.toHaveBeenCalled();
     });
   });
@@ -457,6 +467,17 @@ describe("PresenceService", () => {
           }),
         }),
       );
+      expect(viewerSocket.emit).toHaveBeenCalledWith(
+        GatewayEvent.PRESENCE_UPDATE,
+        expect.objectContaining({
+          guildId: "guild-1",
+          discordId: "discord-1",
+          player: expect.objectContaining({
+            mapId: 2,
+            mapName: "Ithan",
+          }),
+        }),
+      );
     });
 
     it("emits update-server-presence for initial game presence", async () => {
@@ -568,7 +589,7 @@ describe("PresenceService", () => {
       );
     });
 
-    it("does not emit live presence to sockets without online players permission", async () => {
+    it("keeps event presence updates for sockets without online players permission", async () => {
       const viewerSocket = createOnlinePlayersViewerSocket("guild-1", []);
       mockFetchSockets.mockResolvedValue([viewerSocket]);
       const client = {
@@ -604,7 +625,21 @@ describe("PresenceService", () => {
 
       await Promise.resolve();
 
-      expect(viewerSocket.emit).not.toHaveBeenCalled();
+      expect(viewerSocket.emit).not.toHaveBeenCalledWith(
+        GatewayEvent.UPDATE_SERVER_PRESENCE,
+        expect.anything(),
+      );
+      expect(viewerSocket.emit).toHaveBeenCalledWith(
+        GatewayEvent.PRESENCE_UPDATE,
+        expect.objectContaining({
+          guildId: "guild-1",
+          discordId: "discord-1",
+          player: expect.objectContaining({
+            mapId: 2,
+            mapName: "Ithan",
+          }),
+        }),
+      );
     });
   });
 });
