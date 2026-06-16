@@ -67,6 +67,7 @@
     "itemSection": {
       "title": "Filtry przedmiotów",
       "raritiesLabel": "Rzadkość",
+      "professionsLabel": "Profesje",
       "itemsLabel": "Przedmioty",
       "itemsPlaceholder": "Wybierz przedmioty",
       "filteredItemLabel": "Filtrowany przedmiot (ID)"

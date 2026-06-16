@@ -16,7 +16,10 @@ import type { LootQueryResult } from "src/loots/dto/loot-query-result.dto";
 import { LootShareResponseSchema } from "src/shared/dto/loot-response.dto";
 import { DEFAULT_PAGE_LIMIT } from "../config/pagination";
 import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
-import { getProfByShortname } from "src/shared/utils/get-prof-by-shortname";
+import {
+  getProfByShortname,
+  getShortnameByProf,
+} from "src/shared/utils/get-prof-by-shortname";
 
 type LootItemWithSnapshot = Prisma.LootItemGetPayload<{
   include: { itemSnapshot: true };
@@ -45,6 +48,7 @@ export class LootQueryService {
       npcs = [],
       players = [],
       rarities = [],
+      professions = [],
       npcLevelMin,
       npcLevelMax,
       itemLevelMin,
@@ -64,6 +68,7 @@ export class LootQueryService {
       npcs,
       players,
       rarities,
+      professions,
       npcLevelMin,
       npcLevelMax,
       itemLevelMin,
@@ -154,6 +159,7 @@ export class LootQueryService {
       npcs = [],
       players = [],
       rarities = [],
+      professions = [],
       npcLevelMin,
       npcLevelMax,
       itemLevelMin,
@@ -173,6 +179,7 @@ export class LootQueryService {
       npcs,
       players,
       rarities,
+      professions,
       npcLevelMin,
       npcLevelMax,
       itemLevelMin,
@@ -281,6 +288,7 @@ export class LootQueryService {
       npcs = [],
       players = [],
       rarities = [],
+      professions = [],
       npcLevelMin,
       npcLevelMax,
       itemLevelMin,
@@ -299,6 +307,7 @@ export class LootQueryService {
       npcs?: string[];
       players?: string[];
       rarities?: string[];
+      professions?: string[];
       npcLevelMin?: number;
       npcLevelMax?: number;
       itemLevelMin?: number;
@@ -327,6 +336,8 @@ export class LootQueryService {
     const npcsCondition = this.buildNpcsCondition(npcs);
     const npcTypesCondition = this.buildNpcTypesCondition(npcTypes);
     const raritiesCondition = this.buildRaritiesCondition(rarities);
+    const itemProfessionsCondition =
+      this.buildItemProfessionsCondition(professions);
     const npcLevelsCondition = this.buildNpcLevelsCondition(
       npcLevelMin,
       npcLevelMax,
@@ -366,6 +377,7 @@ export class LootQueryService {
       npcsCondition,
       npcTypesCondition,
       raritiesCondition,
+      itemProfessionsCondition,
       npcLevelsCondition,
       itemLevelsCondition,
       playerLevelsCondition,
@@ -575,6 +587,39 @@ export class LootQueryService {
             rarity: {
               in: allowedRarities,
             },
+          },
+        },
+      },
+    };
+  }
+
+  private buildItemProfessionsCondition(
+    professions: string[],
+  ): Prisma.LootWhereInput | null {
+    const allowedProfessions = this.filterEnumValues(professions, Profession);
+    if (allowedProfessions.length === 0) {
+      return null;
+    }
+
+    return {
+      lootItems: {
+        some: {
+          itemSnapshot: {
+            OR: [
+              {
+                statRaw: {
+                  not: {
+                    contains: "reqp=",
+                  },
+                },
+              },
+              ...allowedProfessions.map((profession) => ({
+                statsSnapshot: {
+                  path: ["reqp"],
+                  string_contains: getShortnameByProf(profession),
+                },
+              })),
+            ],
           },
         },
       },
