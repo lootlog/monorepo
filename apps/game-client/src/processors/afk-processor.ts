@@ -19,7 +19,7 @@ export class AfkProcessor {
 
       if (connected && joinedGuilds.length > 0) {
         const socket = getSocket();
-        socket.emit(GatewayEvent.PRESENCE_UPDATE, {
+        socket.emit(GatewayEvent.PLAYER_PRESENCE_UPDATE, {
           isAfk,
           mapId: Game.map.id,
           mapName: Game.map.name,

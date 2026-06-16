@@ -25,4 +25,5 @@ export interface CachedGuildData {
 export interface GetUserGuildsOptions {
   discordId: string;
   userId: string;
+  devPermissionOverride?: string;
 }
