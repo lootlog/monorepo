@@ -13,7 +13,8 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { MapCoverageTimeline } from "../maps/map-coverage-timeline";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { cn } from "@/utils/cn";
-import { formatDurationPadded, formatTime, formatTimeShort } from "../../utils";
+import { formatDurationPadded } from "../../utils/format-duration";
+import { formatTime, formatTimeShort } from "../../utils/format-date";
 import type { TFunction } from "i18next";
 import type { MapGap, MapTimelineData } from "../../types/api";
 

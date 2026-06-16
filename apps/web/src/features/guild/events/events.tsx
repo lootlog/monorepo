@@ -25,7 +25,7 @@ import { getApiErrorStatus } from "@/lib/api-client/api-client";
 import { useToggleEventPin } from "@/features/guild/events/hooks/mutations/use-toggle-event-pin";
 import { EventCreateDialog } from "./components/dialogs/event-create-dialog";
 import { EventActionDialog } from "./components/dialogs/event-action-dialog";
-import { getEventStatusAtTimestamp } from "./utils";
+import { getEventStatusAtTimestamp } from "./utils/event-activity";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import {

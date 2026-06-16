@@ -28,11 +28,9 @@ import {
   type EventMemberKill,
   useEventMemberKillHistory,
 } from "./hooks/queries/use-event-member-kill-history";
-import {
-  formatDateTime,
-  formatDurationHuman,
-  normalizeBonusBreakdown,
-} from "./utils";
+import { formatDurationHuman } from "./utils/format-duration";
+import { formatDateTime } from "./utils/format-date";
+import { normalizeBonusBreakdown } from "./utils/normalize-bonus-breakdown";
 import {
   useListEventRanking,
   useShowEventOverview,
