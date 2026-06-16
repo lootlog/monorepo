@@ -132,7 +132,7 @@ export class Gateway {
   async handleEventPresenceFetch(
     @ConnectedSocket() client: Socket,
     @MessageBody() { guildId, world }: RequestEventPresenceDto,
-  ): Promise<Record<string, PlayerPresence[]>> {
+  ): Promise<PresenceFetchResponse<Record<string, PlayerPresence[]>>> {
     return this.presenceService.fetchEventPresence(
       this.server,
       client,
