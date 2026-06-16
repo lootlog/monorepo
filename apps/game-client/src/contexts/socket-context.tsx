@@ -1,5 +1,9 @@
 import { GatewayEvent } from "@/config/gateway";
 import { Game } from "@/lib/game";
+import {
+  DEV_PERMISSION_OVERRIDE_EVENT,
+  getSerializedDevPermissionOverride,
+} from "@/lib/dev-permission-override";
 import { type AppSocket, getSocket } from "@/lib/socket";
 import { useGlobalStore } from "@/store/global.store";
 import {
@@ -94,7 +98,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       // Emit initial presence after successful join
       // This ensures presence is sent even after browser refresh
       // (when town change event is not fired)
-      socket.emit(GatewayEvent.PRESENCE_UPDATE, {
+      socket.emit(GatewayEvent.PLAYER_PRESENCE_UPDATE, {
         mapId: Game.map.id,
         mapName: Game.map.name,
         isAfk: false,
@@ -123,6 +127,20 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     socket.on(GatewayEvent.DISCONNECT, handleDisconnect);
     socket.on(GatewayEvent.JOIN, handleJoin);
     socket.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
+    const handleDevPermissionOverrideChange = () => {
+      socket.auth = {
+        ...(typeof socket.auth === "object" ? socket.auth : {}),
+        devPermissionOverride: getSerializedDevPermissionOverride(),
+      };
+      setJoined(false);
+      setJoinedGuilds([]);
+
+      if (socket.connected) {
+        socket.disconnect();
+      }
+
+      socket.connect();
+    };
 
     if (import.meta.env.DEV) {
       socket.onAny((event, ...args) => {
@@ -130,6 +148,14 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       });
     }
 
+    socket.auth = {
+      ...(typeof socket.auth === "object" ? socket.auth : {}),
+      devPermissionOverride: getSerializedDevPermissionOverride(),
+    };
+    window.addEventListener(
+      DEV_PERMISSION_OVERRIDE_EVENT,
+      handleDevPermissionOverrideChange,
+    );
     socket.connect();
 
     return () => {
@@ -137,6 +163,10 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       socket.off(GatewayEvent.DISCONNECT, handleDisconnect);
       socket.off(GatewayEvent.JOIN, handleJoin);
       socket.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
+      window.removeEventListener(
+        DEV_PERMISSION_OVERRIDE_EVENT,
+        handleDevPermissionOverrideChange,
+      );
 
       socket.disconnect();
     };

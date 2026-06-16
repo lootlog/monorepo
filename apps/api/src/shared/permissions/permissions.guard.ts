@@ -10,11 +10,16 @@ import { MemberContextService } from "./member-context.service";
 import type { Permission } from "src/generated/prisma/client";
 import { PerfDiagnosticsService } from "src/shared/diagnostics/perf-diagnostics.service";
 import { setRequestDiagnosticsRoute } from "src/shared/diagnostics/request-diagnostics-context";
+import {
+  DEV_PERMISSION_OVERRIDE_HEADER,
+  parseDevPermissionOverrideHeader,
+} from "./dev-permission-override";
 
 interface RequestWithPermissions {
   userId?: string;
   discordId?: string;
   params: { guildId?: string };
+  headers?: Record<string, string | string[] | undefined>;
   permissions?: Permission[];
   guild?: unknown;
   roles?: unknown[];
@@ -119,6 +124,9 @@ export class PermissionsGuard implements CanActivate {
       discordId,
       userId,
       guildId,
+      devPermissionOverride: parseDevPermissionOverrideHeader(
+        request.headers?.[DEV_PERMISSION_OVERRIDE_HEADER],
+      ),
     });
 
     if (!context) {

@@ -4,11 +4,13 @@ import { PresenceService } from "./presence.service";
 import { GatewayEvent } from "../enums/gateway-event.enum";
 import { Platform } from "src/gateway/enums/platform.enum";
 import { UserPresenceStatus } from "../enums/user-presence-status.enum";
+import { Permission } from "@lootlog/types";
 
 const createPresenceSocket = (
   discordId: string,
   world: string,
   sessionId: string,
+  lvl = "100",
 ): Socket =>
   ({
     data: {
@@ -19,7 +21,7 @@ const createPresenceSocket = (
         characterId: "char-1",
         accountId: "acc-1",
         icon: "icon",
-        lvl: "100",
+        lvl,
         prof: "w",
         mapId: 1,
         mapName: "Map",
@@ -29,6 +31,46 @@ const createPresenceSocket = (
       },
     },
   }) as Socket;
+
+const createViewerClient = (
+  guildId: string,
+  permissions: Permission[] = [Permission.LOOTLOG_ONLINE_PLAYERS_READ],
+): Socket =>
+  ({
+    rooms: new Set([
+      buildRoomName(guildId, "presence"),
+      buildRoomName(guildId, "online-players"),
+    ]),
+    data: {
+      discordId: "viewer",
+      platform: Platform.GAME,
+      guilds: [
+        {
+          guild: {
+            id: guildId,
+            ownerId: "owner-1",
+          },
+          roles: [
+            {
+              id: "role-1",
+              lvlRangeFrom: 1,
+              lvlRangeTo: 500,
+              permissions,
+            },
+          ],
+        },
+      ],
+    },
+  }) as Socket;
+
+const createOnlinePlayersViewerSocket = (
+  guildId: string,
+  permissions: Permission[] = [Permission.LOOTLOG_ONLINE_PLAYERS_READ],
+) => ({
+  id: "viewer-socket",
+  data: createViewerClient(guildId, permissions).data,
+  emit: vi.fn(),
+});
 
 describe("PresenceService", () => {
   let service: PresenceService;
@@ -47,44 +89,40 @@ describe("PresenceService", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockFetchSockets.mockResolvedValue([]);
     service = new PresenceService({
       publish: mockPublish,
     } as never);
   });
 
-  describe("fetchGuildPresence", () => {
+  describe("fetchEventPresence", () => {
     it("returns all guild presence when world is not provided", async () => {
       const guildId = "guild-1";
-      const presenceRoom = buildRoomName(guildId, "presence");
-      const client = {
-        rooms: new Set([presenceRoom]),
-        data: { discordId: "viewer" },
-      } as Socket;
+      const client = createViewerClient(guildId);
 
       mockFetchSockets.mockResolvedValue([
         createPresenceSocket("discord-1", "alpha", "session-1"),
         createPresenceSocket("discord-2", "beta", "session-2"),
       ]);
 
-      const result = await service.fetchGuildPresence(
+      const result = await service.fetchEventPresence(
         mockServer as never,
         client,
         guildId,
       );
 
-      expect(result["discord-1"]).toHaveLength(1);
-      expect(result["discord-2"]).toHaveLength(1);
-      expect(result["discord-1"][0].world).toBe("alpha");
-      expect(result["discord-2"][0].world).toBe("beta");
+      expect(result.status).toBe("success");
+      if (result.status !== "success") return;
+
+      expect(result.players["discord-1"]).toHaveLength(1);
+      expect(result.players["discord-2"]).toHaveLength(1);
+      expect(result.players["discord-1"][0].world).toBe("alpha");
+      expect(result.players["discord-2"][0].world).toBe("beta");
     });
 
     it("filters guild presence by world when world is provided", async () => {
       const guildId = "guild-1";
-      const presenceRoom = buildRoomName(guildId, "presence");
-      const client = {
-        rooms: new Set([presenceRoom]),
-        data: { discordId: "viewer" },
-      } as Socket;
+      const client = createViewerClient(guildId);
 
       mockFetchSockets.mockResolvedValue([
         createPresenceSocket("discord-1", "alpha", "session-1"),
@@ -92,61 +130,129 @@ describe("PresenceService", () => {
         createPresenceSocket("discord-2", "alpha", "session-3"),
       ]);
 
-      const result = await service.fetchGuildPresence(
+      const result = await service.fetchEventPresence(
         mockServer as never,
         client,
         guildId,
         "alpha",
       );
 
-      expect(Object.keys(result)).toHaveLength(2);
-      expect(result["discord-1"]).toHaveLength(1);
-      expect(result["discord-1"][0].world).toBe("alpha");
-      expect(result["discord-2"]).toHaveLength(1);
-      expect(result["discord-2"][0].world).toBe("alpha");
+      expect(result.status).toBe("success");
+      if (result.status !== "success") return;
+
+      expect(Object.keys(result.players)).toHaveLength(2);
+      expect(result.players["discord-1"]).toHaveLength(1);
+      expect(result.players["discord-1"][0].world).toBe("alpha");
+      expect(result.players["discord-2"]).toHaveLength(1);
+      expect(result.players["discord-2"][0].world).toBe("alpha");
     });
 
-    it("returns empty object when client is not in guild presence room", async () => {
+    it("does not filter guild presence by viewer role level range", async () => {
       const guildId = "guild-1";
-      const client = {
-        rooms: new Set(["guild-2:presence"]),
-        data: { discordId: "viewer" },
-      } as Socket;
+      const client = createViewerClient(guildId);
+      client.data.guilds![0].roles[0].lvlRangeFrom = 250;
+      client.data.guilds![0].roles[0].lvlRangeTo = 300;
 
-      const result = await service.fetchGuildPresence(
+      mockFetchSockets.mockResolvedValue([
+        createPresenceSocket("discord-1", "alpha", "session-1", "64"),
+      ]);
+
+      const result = await service.fetchEventPresence(
         mockServer as never,
         client,
         guildId,
         "alpha",
       );
 
-      expect(result).toEqual({});
+      expect(result.status).toBe("success");
+      if (result.status !== "success") return;
+
+      expect(result.players["discord-1"][0].lvl).toBe("64");
+    });
+
+    it("returns forbidden when client is not in guild online players room", async () => {
+      const guildId = "guild-1";
+      const client = {
+        rooms: new Set([buildRoomName(guildId, "presence")]),
+        data: createViewerClient(guildId).data,
+      } as Socket;
+
+      const result = await service.fetchEventPresence(
+        mockServer as never,
+        client,
+        guildId,
+        "alpha",
+      );
+
+      expect(result).toEqual({
+        status: "forbidden",
+        code: "ONLINE_PLAYERS_ACCESS_DENIED",
+      });
+      expect(mockServer.in).not.toHaveBeenCalled();
+    });
+
+    it("returns forbidden when client has online players room without permission", async () => {
+      const guildId = "guild-1";
+      const client = createViewerClient(guildId, []);
+
+      const result = await service.fetchEventPresence(
+        mockServer as never,
+        client,
+        guildId,
+        "alpha",
+      );
+
+      expect(result).toEqual({
+        status: "forbidden",
+        code: "ONLINE_PLAYERS_ACCESS_DENIED",
+      });
+      expect(mockServer.in).not.toHaveBeenCalled();
+    });
+
+    it("returns forbidden when client is not in guild presence room", async () => {
+      const guildId = "guild-1";
+      const client = {
+        rooms: new Set(),
+        data: createViewerClient(guildId).data,
+      } as Socket;
+
+      const result = await service.fetchEventPresence(
+        mockServer as never,
+        client,
+        guildId,
+        "alpha",
+      );
+
+      expect(result).toEqual({
+        status: "forbidden",
+        code: "ONLINE_PLAYERS_ACCESS_DENIED",
+      });
       expect(mockServer.in).not.toHaveBeenCalled();
     });
   });
 
-  describe("fetchServerPresence", () => {
-    it("returns empty object when client is not in guild presence room", async () => {
-      const result = await service.fetchServerPresence(
+  describe("fetchOnlinePlayersPresence", () => {
+    it("returns forbidden when client is not in guild online players room", async () => {
+      const guildId = "guild-1";
+      const result = await service.fetchOnlinePlayersPresence(
         mockServer as never,
         {
-          rooms: new Set(["guild-2:presence"]),
-          data: {
-            discordId: "viewer",
-            platform: Platform.GAME,
-          },
+          rooms: new Set([buildRoomName(guildId, "presence")]),
+          data: createViewerClient(guildId).data,
         } as Socket,
-        "guild-1",
+        guildId,
         "alpha",
       );
 
-      expect(result).toEqual({});
+      expect(result).toEqual({
+        status: "forbidden",
+        code: "ONLINE_PLAYERS_ACCESS_DENIED",
+      });
       expect(mockServer.in).not.toHaveBeenCalled();
     });
 
     it("filters server presence by world and hides web app sockets from game clients", async () => {
       const guildId = "guild-1";
-      const presenceRoom = buildRoomName(guildId, "presence");
       const gameSocket = {
         data: {
           discordId: "discord-game",
@@ -198,41 +304,39 @@ describe("PresenceService", () => {
         otherWorldSocket,
       ]);
 
-      const result = await service.fetchServerPresence(
+      const result = await service.fetchOnlinePlayersPresence(
         mockServer as never,
         {
-          rooms: new Set([presenceRoom]),
-          data: {
-            discordId: "viewer",
-            platform: Platform.GAME,
-          },
+          ...createViewerClient(guildId),
         } as Socket,
         guildId,
         "alpha",
       );
 
       expect(result).toEqual({
-        "discord-game": [
-          {
-            discordId: "discord-game",
-            platform: Platform.GAME,
-            player: {
-              world: "alpha",
-              lvl: "200",
-              clan: {
-                id: 15191,
-                name: "Karhu",
-                rank: 100,
+        status: "success",
+        players: {
+          "discord-game": [
+            {
+              discordId: "discord-game",
+              platform: Platform.GAME,
+              player: {
+                world: "alpha",
+                lvl: "200",
+                clan: {
+                  id: 15191,
+                  name: "Karhu",
+                  rank: 100,
+                },
               },
             },
-          },
-        ],
+          ],
+        },
       });
     });
 
     it("sorts server presence with the requesting player first and other players by level", async () => {
       const guildId = "guild-1";
-      const presenceRoom = buildRoomName(guildId, "presence");
       const viewerSocket = {
         data: {
           discordId: "discord-viewer",
@@ -282,13 +386,12 @@ describe("PresenceService", () => {
         viewerSocket,
       ]);
 
-      const result = await service.fetchServerPresence(
+      const result = await service.fetchOnlinePlayersPresence(
         mockServer as never,
         {
-          rooms: new Set([presenceRoom]),
+          ...createViewerClient(guildId),
           data: {
-            discordId: "viewer",
-            platform: Platform.GAME,
+            ...createViewerClient(guildId).data,
             player: {
               characterId: "10",
             },
@@ -298,23 +401,28 @@ describe("PresenceService", () => {
         "alpha",
       );
 
-      expect(Object.keys(result)).toEqual([
+      expect(result.status).toBe("success");
+      if (result.status !== "success") return;
+
+      expect(Object.keys(result.players)).toEqual([
         "discord-viewer",
         "discord-high",
         "discord-mid",
       ]);
-      expect(result["discord-viewer"][0].player).toEqual({
+      expect(result.players["discord-viewer"][0].player).toEqual({
         world: "alpha",
         characterId: "10",
         lvl: "50",
       });
-      expect(result["discord-high"][0].player.lvl).toBe("300");
-      expect(result["discord-mid"][0].player.lvl).toBe("150");
+      expect(result.players["discord-high"][0].player.lvl).toBe("300");
+      expect(result.players["discord-mid"][0].player.lvl).toBe("150");
     });
   });
 
   describe("live presence events", () => {
-    it("emits update-server-presence when player location changes", () => {
+    it("emits online players and event presence updates when player location changes", async () => {
+      const viewerSocket = createOnlinePlayersViewerSocket("guild-1");
+      mockFetchSockets.mockResolvedValue([viewerSocket]);
       const client = {
         id: "session-1",
         data: {
@@ -370,8 +478,10 @@ describe("PresenceService", () => {
         mockServer as never,
       );
 
-      expect(mockEmit).toHaveBeenCalledWith(
-        GatewayEvent.UPDATE_SERVER_PRESENCE,
+      await Promise.resolve();
+
+      expect(viewerSocket.emit).toHaveBeenCalledWith(
+        GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
         expect.objectContaining({
           guildId: "guild-1",
           discordId: "discord-1",
@@ -386,9 +496,22 @@ describe("PresenceService", () => {
           }),
         }),
       );
+      expect(viewerSocket.emit).toHaveBeenCalledWith(
+        GatewayEvent.EVENT_PRESENCE_UPDATE,
+        expect.objectContaining({
+          guildId: "guild-1",
+          discordId: "discord-1",
+          player: expect.objectContaining({
+            mapId: 2,
+            mapName: "Ithan",
+          }),
+        }),
+      );
     });
 
-    it("emits update-server-presence for initial game presence", () => {
+    it("emits online players presence for initial game presence", async () => {
+      const viewerSocket = createOnlinePlayersViewerSocket("guild-1");
+      mockFetchSockets.mockResolvedValue([viewerSocket]);
       const client = {
         id: "session-1",
         data: {
@@ -419,8 +542,10 @@ describe("PresenceService", () => {
         "guild-1",
       ]);
 
-      expect(mockEmit).toHaveBeenCalledWith(
-        GatewayEvent.UPDATE_SERVER_PRESENCE,
+      await Promise.resolve();
+
+      expect(viewerSocket.emit).toHaveBeenCalledWith(
+        GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
         expect.objectContaining({
           guildId: "guild-1",
           discordId: "discord-1",
@@ -436,14 +561,12 @@ describe("PresenceService", () => {
       );
     });
 
-    it("emits an offline update-server-presence payload on disconnect", () => {
-      const mockClientEmit = vi.fn();
+    it("emits an offline online players presence payload on disconnect", async () => {
+      const viewerSocket = createOnlinePlayersViewerSocket("guild-1");
+      mockFetchSockets.mockResolvedValue([viewerSocket]);
       const client = {
         id: "session-1",
         rooms: new Set(["session-1", buildRoomName("guild-1", "presence")]),
-        to: vi.fn(() => ({
-          emit: mockClientEmit,
-        })),
         data: {
           discordId: "discord-1",
           sessionId: "session-1",
@@ -478,10 +601,12 @@ describe("PresenceService", () => {
         },
       } as unknown as Socket;
 
-      service.emitDisconnectPresence(client);
+      service.emitDisconnectPresence(mockServer as never, client);
 
-      expect(mockClientEmit).toHaveBeenCalledWith(
-        GatewayEvent.UPDATE_SERVER_PRESENCE,
+      await Promise.resolve();
+
+      expect(viewerSocket.emit).toHaveBeenCalledWith(
+        GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
         expect.objectContaining({
           guildId: "guild-1",
           discordId: "discord-1",
@@ -490,6 +615,52 @@ describe("PresenceService", () => {
             mapName: "Ithan",
           }),
         }),
+      );
+    });
+
+    it("does not emit online players or event presence updates for sockets without online players permission", async () => {
+      const viewerSocket = createOnlinePlayersViewerSocket("guild-1", []);
+      mockFetchSockets.mockResolvedValue([viewerSocket]);
+      const client = {
+        id: "session-1",
+        data: {
+          guilds: [{ guild: { id: "guild-1" } }],
+          player: {
+            world: "alpha",
+            name: "Hero",
+            characterId: "10",
+            accountId: "20",
+            icon: "icon",
+            lvl: "100",
+            prof: "w",
+            location: {
+              x: 1,
+              y: 2,
+              map: "Karka-han",
+            },
+          },
+        },
+      } as unknown as Socket;
+
+      service.updatePlayerPresence(
+        client,
+        "discord-1",
+        {
+          mapId: 2,
+          mapName: "Ithan",
+        } as never,
+        mockServer as never,
+      );
+
+      await Promise.resolve();
+
+      expect(viewerSocket.emit).not.toHaveBeenCalledWith(
+        GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
+        expect.anything(),
+      );
+      expect(viewerSocket.emit).not.toHaveBeenCalledWith(
+        GatewayEvent.EVENT_PRESENCE_UPDATE,
+        expect.anything(),
       );
     });
   });

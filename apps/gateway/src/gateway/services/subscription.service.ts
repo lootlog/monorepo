@@ -46,6 +46,7 @@ export class SubscriptionService {
       const guilds = await this.guildsService.getUserGuilds({
         discordId,
         userId,
+        devPermissionOverride: client.data.devPermissionOverride,
       });
 
       if (guilds.length === 0) {
@@ -73,9 +74,10 @@ export class SubscriptionService {
       client.join(featureRooms);
 
       this.presenceService.emitPresenceToRooms(
+        server,
         client,
         user,
-        GatewayEvent.UPDATE_SERVER_PRESENCE,
+        GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
       );
 
       await this.activityService.publishActivityEvent(

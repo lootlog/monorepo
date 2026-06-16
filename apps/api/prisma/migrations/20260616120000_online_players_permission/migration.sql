@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "Permission" ADD VALUE 'LOOTLOG_ONLINE_PLAYERS_READ';

@@ -227,6 +227,7 @@ http:
         accessControlAllowHeaders:
           - "Content-Type"
           - "Authorization"
+          - "X-Lootlog-Dev-Permission-Override"
         accessControlMaxAge: 86400
         addVaryHeader: true
         accessControlAllowCredentials: true

@@ -8,6 +8,7 @@ import { usePartyStore } from "@/store/party.store";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import { useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
+import { DevPermissionOverrideSettings } from "./dev-permission-override-settings";
 
 const createBaseEvent = (): Pick<GameEvent, "d" | "e" | "ev"> => ({
   d: ["", "", ""],
@@ -338,6 +339,8 @@ export const DebugTab: FC = () => {
       description={t("settings.debug.description")}
       className="ll:px-2 ll:pb-2"
     >
+      <DevPermissionOverrideSettings />
+
       <SettingsSection title={t("settings.debug.eventTemplatesTitle")}>
         <div className="ll:flex ll:flex-wrap ll:gap-1">
           {Object.entries(EVENT_TEMPLATES).map(([key, { event }]) => (

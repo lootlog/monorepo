@@ -56,6 +56,27 @@ export class GatewayQueueHandler {
     private readonly retryService: RetryService,
   ) {}
 
+  private async handleWithRetry<TPayload>(
+    data: TPayload,
+    amqpMsg: AmqpMessage,
+    dlqRoutingKey: RoutingKey,
+    identifier: string,
+    handler: () => Promise<void> | void,
+  ) {
+    const shouldContinue = await this.retryService.handleRetryLogic(
+      data,
+      amqpMsg.properties.headers ?? {},
+      dlqRoutingKey,
+      identifier,
+    );
+
+    if (!shouldContinue) {
+      return;
+    }
+
+    await handler();
+  }
+
   @RabbitSubscribe({
     exchange: DEFAULT_EXCHANGE_NAME,
     routingKey: RoutingKey.GUILDS_TIMERS_UPDATE,
@@ -68,20 +89,13 @@ export class GatewayQueueHandler {
     },
   })
   async handleGuildsTimerUpdate(data: CreateTimerDto, amqpMsg: AmqpMessage) {
-    const headers = amqpMsg.properties.headers || {};
-
-    const shouldContinue = await this.retryService.handleRetryLogic(
+    await this.handleWithRetry(
       data,
-      headers,
+      amqpMsg,
       RoutingKey.GUILDS_TIMERS_UPDATE_DLQ,
       `timer update: ${data.guildId}`,
+      () => this.gatewayService.handleGuildsTimerUpdate(data),
     );
-
-    if (!shouldContinue) {
-      return;
-    }
-
-    await this.gatewayService.handleGuildsTimerUpdate(data);
   }
 
   @RabbitSubscribe({
@@ -96,20 +110,13 @@ export class GatewayQueueHandler {
     },
   })
   async handleGuildsTimerDelete(data: DeleteTimerDto, amqpMsg: AmqpMessage) {
-    const headers = amqpMsg.properties.headers || {};
-
-    const shouldContinue = await this.retryService.handleRetryLogic(
+    await this.handleWithRetry(
       data,
-      headers,
+      amqpMsg,
       RoutingKey.GUILDS_TIMERS_DELETE_DLQ,
       `timer delete: ${data.guildId}`,
+      () => this.gatewayService.handleGuildsTimerDelete(data),
     );
-
-    if (!shouldContinue) {
-      return;
-    }
-
-    await this.gatewayService.handleGuildsTimerDelete(data);
   }
 
   @RabbitSubscribe({
@@ -124,20 +131,13 @@ export class GatewayQueueHandler {
     },
   })
   async handleGuildsLootCreate(data: LootCreateEventDto, amqpMsg: AmqpMessage) {
-    const headers = amqpMsg.properties.headers || {};
-
-    const shouldContinue = await this.retryService.handleRetryLogic(
+    await this.handleWithRetry(
       data,
-      headers,
+      amqpMsg,
       RoutingKey.GUILDS_LOOTS_CREATE_DLQ,
       `loot create: ${data.guildId}:${data.lootId}`,
+      () => this.gatewayService.handleGuildsLootCreate(data),
     );
-
-    if (!shouldContinue) {
-      return;
-    }
-
-    await this.gatewayService.handleGuildsLootCreate(data);
   }
 
   @RabbitSubscribe({
@@ -155,20 +155,13 @@ export class GatewayQueueHandler {
     data: LootShareUpdateEventDto,
     amqpMsg: AmqpMessage,
   ) {
-    const headers = amqpMsg.properties.headers || {};
-
-    const shouldContinue = await this.retryService.handleRetryLogic(
+    await this.handleWithRetry(
       data,
-      headers,
+      amqpMsg,
       RoutingKey.GUILDS_LOOTS_SHARE_UPDATE_DLQ,
       `loot share update: ${data.guildId}:${data.lootId}`,
+      () => this.gatewayService.handleGuildsLootShareUpdate(data),
     );
-
-    if (!shouldContinue) {
-      return;
-    }
-
-    await this.gatewayService.handleGuildsLootShareUpdate(data);
   }
 
   @RabbitSubscribe({
@@ -186,20 +179,13 @@ export class GatewayQueueHandler {
     data: ReservationCreateEventDto,
     amqpMsg: AmqpMessage,
   ) {
-    const headers = amqpMsg.properties.headers || {};
-
-    const shouldContinue = await this.retryService.handleRetryLogic(
+    await this.handleWithRetry(
       data,
-      headers,
+      amqpMsg,
       RoutingKey.GUILDS_RESERVATIONS_CREATE_DLQ,
       `reservation create: ${data.guildId}`,
+      () => this.gatewayService.handleGuildsReservationCreate(data),
     );
-
-    if (!shouldContinue) {
-      return;
-    }
-
-    await this.gatewayService.handleGuildsReservationCreate(data);
   }
 
   @RabbitSubscribe({
@@ -217,20 +203,13 @@ export class GatewayQueueHandler {
     data: ReservationDeleteEventDto,
     amqpMsg: AmqpMessage,
   ) {
-    const headers = amqpMsg.properties.headers || {};
-
-    const shouldContinue = await this.retryService.handleRetryLogic(
+    await this.handleWithRetry(
       data,
-      headers,
+      amqpMsg,
       RoutingKey.GUILDS_RESERVATIONS_DELETE_DLQ,
       `reservation delete: ${data.guildId}`,
+      () => this.gatewayService.handleGuildsReservationDelete(data),
     );
-
-    if (!shouldContinue) {
-      return;
-    }
-
-    await this.gatewayService.handleGuildsReservationDelete(data);
   }
 
   @RabbitSubscribe({
@@ -245,20 +224,13 @@ export class GatewayQueueHandler {
     },
   })
   async handleGuildMessageSend(data: SendMessageDto, amqpMsg: AmqpMessage) {
-    const headers = amqpMsg.properties.headers || {};
-
-    const shouldContinue = await this.retryService.handleRetryLogic(
+    await this.handleWithRetry(
       data,
-      headers,
+      amqpMsg,
       RoutingKey.GUILDS_SEND_MESSAGE_DLQ,
       `send message: ${data.guildId}`,
+      () => this.gatewayService.handleGuildMessageSend(data),
     );
-
-    if (!shouldContinue) {
-      return;
-    }
-
-    await this.gatewayService.handleGuildMessageSend(data);
   }
 
   @RabbitSubscribe({
@@ -273,20 +245,13 @@ export class GatewayQueueHandler {
     },
   })
   async handleAddMember(data: AddMemberDto, amqpMsg: AmqpMessage) {
-    const headers = amqpMsg.properties.headers || {};
-
-    const shouldContinue = await this.retryService.handleRetryLogic(
+    await this.handleWithRetry(
       data,
-      headers,
+      amqpMsg,
       RoutingKey.GUILDS_MEMBERS_ADD_DLQ,
       `member add cache invalidation: ${data.id}`,
+      () => this.gatewayService.invalidatePlayerCache(data.id),
     );
-
-    if (!shouldContinue) {
-      return;
-    }
-
-    await this.gatewayService.invalidatePlayerCache(data.id);
   }
 
   @RabbitSubscribe({
@@ -301,27 +266,25 @@ export class GatewayQueueHandler {
     },
   })
   async handleUpdateMember(data: AddMemberDto, amqpMsg: AmqpMessage) {
-    const headers = amqpMsg.properties.headers || {};
-
-    const shouldContinue = await this.retryService.handleRetryLogic(
+    await this.handleWithRetry(
       data,
-      headers,
+      amqpMsg,
       RoutingKey.GUILDS_MEMBERS_UPDATE_DLQ,
       `member permissions update: ${data.discordId}`,
+      async () => {
+        await Promise.all([
+          this.gatewayService.invalidatePlayerCache(data.id),
+          this.gatewayService.invalidateUserGuildsCache(
+            data.discordId,
+            data.userId,
+          ),
+          this.gatewayService.rebalanceUserSocketRooms(
+            data.discordId,
+            data.userId,
+          ),
+        ]);
+      },
     );
-
-    if (!shouldContinue) {
-      return;
-    }
-
-    await Promise.all([
-      this.gatewayService.invalidatePlayerCache(data.id),
-      this.gatewayService.invalidateUserGuildsCache(
-        data.discordId,
-        data.userId,
-      ),
-      this.gatewayService.rebalanceUserSocketRooms(data.discordId, data.userId),
-    ]);
   }
 
   @RabbitSubscribe({
@@ -336,27 +299,25 @@ export class GatewayQueueHandler {
     },
   })
   async handleDeleteMember(data: DeleteMemberDto, amqpMsg: AmqpMessage) {
-    const headers = amqpMsg.properties.headers || {};
-
-    const shouldContinue = await this.retryService.handleRetryLogic(
+    await this.handleWithRetry(
       data,
-      headers,
+      amqpMsg,
       RoutingKey.GUILDS_MEMBERS_REMOVE_DLQ,
       `member remove cache invalidation: ${data.id}`,
+      async () => {
+        await Promise.all([
+          this.gatewayService.invalidatePlayerCache(data.id),
+          this.gatewayService.invalidateUserGuildsCache(
+            data.discordId,
+            data.userId,
+          ),
+          this.gatewayService.rebalanceUserSocketRooms(
+            data.discordId,
+            data.userId,
+          ),
+        ]);
+      },
     );
-
-    if (!shouldContinue) {
-      return;
-    }
-
-    await Promise.all([
-      this.gatewayService.invalidatePlayerCache(data.id),
-      this.gatewayService.invalidateUserGuildsCache(
-        data.discordId,
-        data.userId,
-      ),
-      this.gatewayService.rebalanceUserSocketRooms(data.discordId, data.userId),
-    ]);
   }
 
   @RabbitSubscribe({
@@ -371,27 +332,25 @@ export class GatewayQueueHandler {
     },
   })
   async handleAddMemberRole(data: AddMemberRoleDto, amqpMsg: AmqpMessage) {
-    const headers = amqpMsg.properties.headers || {};
-
-    const shouldContinue = await this.retryService.handleRetryLogic(
+    await this.handleWithRetry(
       data,
-      headers,
+      amqpMsg,
       RoutingKey.GUILDS_MEMBERS_ADD_ROLE_DLQ,
       `member add role cache invalidation: ${data.id}`,
+      async () => {
+        await Promise.all([
+          this.gatewayService.invalidatePlayerCache(data.id),
+          this.gatewayService.invalidateUserGuildsCache(
+            data.discordId,
+            data.userId,
+          ),
+          this.gatewayService.rebalanceUserSocketRooms(
+            data.discordId,
+            data.userId,
+          ),
+        ]);
+      },
     );
-
-    if (!shouldContinue) {
-      return;
-    }
-
-    await Promise.all([
-      this.gatewayService.invalidatePlayerCache(data.id),
-      this.gatewayService.invalidateUserGuildsCache(
-        data.discordId,
-        data.userId,
-      ),
-      this.gatewayService.rebalanceUserSocketRooms(data.discordId, data.userId),
-    ]);
   }
 
   @RabbitSubscribe({
@@ -409,27 +368,25 @@ export class GatewayQueueHandler {
     data: DeleteMemberRoleDto,
     amqpMsg: AmqpMessage,
   ) {
-    const headers = amqpMsg.properties.headers || {};
-
-    const shouldContinue = await this.retryService.handleRetryLogic(
+    await this.handleWithRetry(
       data,
-      headers,
+      amqpMsg,
       RoutingKey.GUILDS_MEMBERS_REMOVE_ROLE_DLQ,
       `member remove role cache invalidation: ${data.id}`,
+      async () => {
+        await Promise.all([
+          this.gatewayService.invalidatePlayerCache(data.id),
+          this.gatewayService.invalidateUserGuildsCache(
+            data.discordId,
+            data.userId,
+          ),
+          this.gatewayService.rebalanceUserSocketRooms(
+            data.discordId,
+            data.userId,
+          ),
+        ]);
+      },
     );
-
-    if (!shouldContinue) {
-      return;
-    }
-
-    await Promise.all([
-      this.gatewayService.invalidatePlayerCache(data.id),
-      this.gatewayService.invalidateUserGuildsCache(
-        data.discordId,
-        data.userId,
-      ),
-      this.gatewayService.rebalanceUserSocketRooms(data.discordId, data.userId),
-    ]);
   }
 
   @RabbitSubscribe({
@@ -447,20 +404,13 @@ export class GatewayQueueHandler {
     data: SendNotificationDto,
     amqpMsg: AmqpMessage,
   ) {
-    const headers = amqpMsg.properties.headers || {};
-
-    const shouldContinue = await this.retryService.handleRetryLogic(
+    await this.handleWithRetry(
       data,
-      headers,
+      amqpMsg,
       RoutingKey.GUILDS_NOTIFICATIONS_SEND_DLQ,
       `send notification: ${data.guildId}`,
+      () => this.gatewayService.handleGuildNotificationSend(data),
     );
-
-    if (!shouldContinue) {
-      return;
-    }
-
-    await this.gatewayService.handleGuildNotificationSend(data);
   }
 
   // DLQ Handlers
@@ -734,20 +684,13 @@ export class GatewayQueueHandler {
     data: VolunteerNotificationDto,
     amqpMsg: AmqpMessage,
   ) {
-    const headers = amqpMsg.properties.headers || {};
-
-    const shouldContinue = await this.retryService.handleRetryLogic(
+    await this.handleWithRetry(
       data,
-      headers,
+      amqpMsg,
       RoutingKey.GUILDS_NOTIFICATIONS_VOLUNTEER_DLQ,
       `volunteer notification: ${data.notificationId}`,
+      () => this.gatewayService.handleVolunteerNotification(data),
     );
-
-    if (!shouldContinue) {
-      return;
-    }
-
-    await this.gatewayService.handleVolunteerNotification(data);
   }
 
   @RabbitSubscribe({
@@ -786,20 +729,13 @@ export class GatewayQueueHandler {
     data: SendPartyGatheringDto,
     amqpMsg: AmqpMessage,
   ) {
-    const headers = amqpMsg.properties.headers || {};
-
-    const shouldContinue = await this.retryService.handleRetryLogic(
+    await this.handleWithRetry(
       data,
-      headers,
+      amqpMsg,
       RoutingKey.GUILDS_PARTY_GATHERING_DLQ,
       `party gathering: ${data.notificationId}`,
+      () => this.gatewayService.handlePartyGatheringSend(data),
     );
-
-    if (!shouldContinue) {
-      return;
-    }
-
-    await this.gatewayService.handlePartyGatheringSend(data);
   }
 
   @RabbitSubscribe({
