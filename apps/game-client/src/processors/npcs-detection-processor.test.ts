@@ -7,7 +7,8 @@ import { queryClient } from "@/lib/query-client";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { NpcsDetectionProcessor } from "./npcs-detection-processor";
-import type { GameNpc, NpcTpl } from "@lootlog/margonem";
+import type { NpcTpl } from "@lootlog/margonem/npc-tpl-manager";
+import type { GameNpc } from "@lootlog/margonem/npcs";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 
 const {

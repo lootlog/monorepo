@@ -60,6 +60,14 @@
   "guildSwitcher": {
     "allServers": "Wszystkie serwery"
   },
+  "characterTooltip": {
+    "catchingGuilds": {
+      "title": "Dodaje łupy i timery na:",
+      "loading": "Ładowanie...",
+      "empty": "Brak wspólnych serwerów Lootloga",
+      "error": "Nie udało się pobrać serwerów"
+    }
+  },
   "worldSelector": {
     "recent": "Ostatnio używane",
     "allWorlds": "Wszystkie światy",

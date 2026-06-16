@@ -3,7 +3,12 @@ import { PrismaService } from "src/db/prisma.service";
 import { GuildsService } from "src/guilds/guilds.service";
 import { Permission } from "src/generated/prisma/client";
 import type { CreateOrUpdateLootlogCharacterConfigDto } from "src/user-lootlog-config/dto/create-user-account-config.dto";
-import { toUserLootlogConfigResponse } from "src/shared/dto/user-lootlog-config-response.dto";
+import {
+  toUserLootlogConfigResponse,
+  type UserLootlogPlayersCatchingGuildsRequest,
+  type UserLootlogPlayersCatchingGuildsResponse,
+  type UserLootlogPlayerCatchingGuildsResponse,
+} from "src/shared/dto/user-lootlog-config-response.dto";
 
 @Injectable()
 export class UserLootlogConfigService {
@@ -19,6 +24,12 @@ export class UserLootlogConfigService {
     );
 
     return new Set(guilds.map((guild) => guild.id));
+  }
+
+  private async getAccessibleLootlogGuilds(discordId: string) {
+    return this.guildsService.getGuildsForRequiredPermissions(discordId, [
+      Permission.LOOTLOG_ACCESS,
+    ]);
   }
 
   async getLootlogAccountConfig(discordId: string, accountId: string) {
@@ -66,6 +77,111 @@ export class UserLootlogConfigService {
         createdAt: "desc",
       },
     });
+  }
+
+  async getPlayerCatchingGuilds(
+    discordId: string,
+    accountId: string,
+    characterId: string,
+  ): Promise<UserLootlogPlayerCatchingGuildsResponse> {
+    const response = await this.getPlayersCatchingGuilds(discordId, {
+      players: [{ accountId, characterId }],
+    });
+
+    return (
+      response.players[0] ?? {
+        accountId,
+        characterId,
+        guilds: [],
+      }
+    );
+  }
+
+  async getPlayersCatchingGuilds(
+    discordId: string,
+    data: UserLootlogPlayersCatchingGuildsRequest,
+  ): Promise<UserLootlogPlayersCatchingGuildsResponse> {
+    const playersByKey = new Map<
+      string,
+      { accountId: string; characterId: string }
+    >();
+
+    for (const player of data.players) {
+      const key = `${player.accountId}:${player.characterId}`;
+      if (!playersByKey.has(key)) {
+        playersByKey.set(key, player);
+      }
+    }
+
+    const players = [...playersByKey.values()];
+    const accessibleGuilds = await this.getAccessibleLootlogGuilds(discordId);
+    const accessibleGuildsById = new Map(
+      accessibleGuilds.map((guild) => [guild.id, guild] as const),
+    );
+    const accessibleGuildIds = [...accessibleGuildsById.keys()];
+
+    if (players.length === 0 || accessibleGuildIds.length === 0) {
+      return {
+        players: players.map((player) => ({
+          ...player,
+          guilds: [],
+        })),
+      };
+    }
+
+    const configs = await this.prisma.userCharactersLootlogSettings.findMany({
+      where: {
+        OR: players.map((player) => ({
+          accountId: player.accountId,
+          characterId: player.characterId,
+        })),
+        catchingGuildIds: {
+          hasSome: accessibleGuildIds,
+        },
+      },
+      select: {
+        accountId: true,
+        characterId: true,
+        catchingGuildIds: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    const visibleGuildIdsByPlayerKey = new Map<string, Set<string>>();
+    for (const config of configs) {
+      const key = `${config.accountId}:${config.characterId}`;
+      const visibleGuildIds =
+        visibleGuildIdsByPlayerKey.get(key) ?? new Set<string>();
+
+      for (const guildId of config.catchingGuildIds) {
+        if (accessibleGuildsById.has(guildId)) {
+          visibleGuildIds.add(guildId);
+        }
+      }
+
+      visibleGuildIdsByPlayerKey.set(key, visibleGuildIds);
+    }
+
+    return {
+      players: players.map((player) => {
+        const key = `${player.accountId}:${player.characterId}`;
+        const visibleGuildIds = visibleGuildIdsByPlayerKey.get(key) ?? [];
+
+        return {
+          ...player,
+          guilds: [...visibleGuildIds].map((guildId) => {
+            const guild = accessibleGuildsById.get(guildId);
+
+            return {
+              id: guildId,
+              name: guild?.name ?? guildId,
+            };
+          }),
+        };
+      }),
+    };
   }
 
   async createOrUpdateLootlogCharacterConfig(
