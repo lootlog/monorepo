@@ -76,7 +76,10 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     icon: Users,
     color: "text-cyan-500",
     bgColor: "bg-cyan-500/20",
-    permissions: [Permission.LOOTLOG_MEMBERS_READ],
+    permissions: [
+      Permission.LOOTLOG_MEMBERS_READ,
+      Permission.LOOTLOG_ONLINE_PLAYERS_READ,
+    ],
   },
   {
     name: "Czat",

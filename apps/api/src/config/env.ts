@@ -45,5 +45,6 @@ export const env = createEnv(
     PERF_DIAGNOSTICS_THRESHOLD_MS: z.coerce.number().positive().default(50),
     PERF_DIAGNOSTICS_SAMPLE_RATE: z.coerce.number().min(0).max(1).default(1),
     NODE_WARNING_DIAGNOSTICS_ENABLED: booleanEnv.default(false),
+    DEV_PERMISSION_OVERRIDE_ENABLED: booleanEnv.default(false),
   }),
 );

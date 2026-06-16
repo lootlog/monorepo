@@ -73,6 +73,18 @@ type PlayerPresenceResponsePayload = Record<
   PlayerPresenceUpdatePayload[]
 >;
 
+export type OnlinePlayersAccessState = "allowed" | "forbidden";
+
+type PlayerPresenceAckPayload =
+  | {
+      status: "success";
+      players: PlayerPresenceResponsePayload;
+    }
+  | {
+      status: "forbidden";
+      code: "ONLINE_PLAYERS_ACCESS_DENIED";
+    };
+
 const getPresenceKey = (presence: PlayerPresence) => {
   if (!presence.player?.accountId || !presence.player.characterId) {
     return "web-app";
@@ -205,8 +217,8 @@ const requestServerPresence = (
     socket.emitWithAck as (
       event: GatewayEvent,
       data: { guildId: string; world: string },
-    ) => Promise<PlayerPresenceResponsePayload | undefined>
-  )(GatewayEvent.REQUEST_SERVER_PRESENCE, {
+    ) => Promise<PlayerPresenceAckPayload | undefined>
+  )(GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH, {
     guildId,
     world,
   });
@@ -219,11 +231,15 @@ export const usePlayersPresence = (
   PlayerPresenceResponse,
   boolean,
   React.Dispatch<React.SetStateAction<PlayerPresenceResponse>>,
+  OnlinePlayersAccessState,
 ] => {
   const [onlinePlayers, setOnlinePlayers] = useState<PlayerPresenceResponse>(
     {},
   );
   const [loading, setLoading] = useState(false);
+  const [accessState, setAccessState] =
+    useState<OnlinePlayersAccessState>("allowed");
+  const [permissionsVersion, setPermissionsVersion] = useState(0);
   const { joined, connected, socket } = useSocket();
 
   const selectedGuildIdRef = useRef(selectedGuildId);
@@ -239,6 +255,7 @@ export const usePlayersPresence = (
     if (!selectedGuildId || !world) {
       setOnlinePlayers({});
       setLoading(false);
+      setAccessState("allowed");
       return;
     }
 
@@ -253,6 +270,7 @@ export const usePlayersPresence = (
 
     const currentRequestId = ++requestIdRef.current;
     setOnlinePlayers({});
+    setAccessState("allowed");
     setLoading(true);
 
     requestServerPresence(socket, selectedGuildIdRef.current, world)
@@ -260,21 +278,31 @@ export const usePlayersPresence = (
         // ignore stale responses
         if (requestIdRef.current !== currentRequestId) return;
 
-        if (data) {
-          setOnlinePlayers(normalizePresenceResponse(data));
+        if (!data) {
+          return;
         }
+
+        if (data.status === "forbidden") {
+          setOnlinePlayers({});
+          setAccessState("forbidden");
+          return;
+        }
+
+        setOnlinePlayers(normalizePresenceResponse(data.players));
       })
       .finally(() => {
         if (requestIdRef.current === currentRequestId) {
           setLoading(false);
         }
       });
-  }, [joined, connected, socket, world, selectedGuildId]);
+  }, [joined, connected, socket, world, selectedGuildId, permissionsVersion]);
 
   useEffect(() => {
     if (!socket || !connected || !joined) return;
 
-    const handlePresenceUpdate = (data: PlayerPresenceUpdatePayload) => {
+    const handleOnlinePlayersPresenceUpdate = (
+      data: PlayerPresenceUpdatePayload,
+    ) => {
       const normalizedPresence = normalizePresence(data);
 
       if (
@@ -323,12 +351,33 @@ export const usePlayersPresence = (
       });
     };
 
-    socket.on(GatewayEvent.UPDATE_SERVER_PRESENCE, handlePresenceUpdate);
+    socket.on(
+      GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
+      handleOnlinePlayersPresenceUpdate,
+    );
 
     return () => {
-      socket.off(GatewayEvent.UPDATE_SERVER_PRESENCE, handlePresenceUpdate);
+      socket.off(
+        GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
+        handleOnlinePlayersPresenceUpdate,
+      );
     };
   }, [socket, joined, connected]);
 
-  return [onlinePlayers, loading, setOnlinePlayers];
+  useEffect(() => {
+    if (!socket || !connected || !joined) return;
+
+    const handlePermissionsUpdated = () => {
+      setOnlinePlayers({});
+      setPermissionsVersion((version) => version + 1);
+    };
+
+    socket.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
+
+    return () => {
+      socket.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
+    };
+  }, [socket, joined, connected]);
+
+  return [onlinePlayers, loading, setOnlinePlayers, accessState];
 };

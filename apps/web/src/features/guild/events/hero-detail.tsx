@@ -330,7 +330,9 @@ export const HeroDetail = () => {
   const allMaps = [...allMapsFromLocations, ...(hero.maps ?? [])];
 
   const totalMapsCount = allMaps.length;
-  const coveredMapsCount = isWindowActive(windowStatus)
+  const canShowCoverageCount =
+    isWindowActive(windowStatus) && presenceData !== undefined;
+  const coveredMapsCount = canShowCoverageCount
     ? allMaps.filter(
         (map) => getMapStatus(map, presenceData) === "ASSIGNED_PRESENT",
       ).length
@@ -601,7 +603,7 @@ export const HeroDetail = () => {
                     <MapPin className="w-4 h-4" />
                     {t("events.maps.title")}
                     <span className="font-normal">
-                      {isWindowActive(windowStatus) ? (
+                      {canShowCoverageCount ? (
                         <span
                           className={cn(
                             coveredMapsCount === totalMapsCount

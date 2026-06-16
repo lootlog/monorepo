@@ -1,4 +1,15 @@
 {
+  "devPermissionOverride": {
+    "trigger": "Dev permisje",
+    "title": "Dev permisje",
+    "enabled": "Aktywne",
+    "guildId": "ID serwera Discord",
+    "disableOwnerBypass": "Wyłącz bypass właściciela",
+    "disableAdminBypass": "Wyłącz bypass admina",
+    "permissions": "Permisje",
+    "clear": "Wyczyść",
+    "save": "Zapisz"
+  },
   "search": "Szukaj...",
   "noResults": "Brak wyników",
   "cancel": "Anuluj",
