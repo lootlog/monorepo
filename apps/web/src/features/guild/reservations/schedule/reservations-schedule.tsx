@@ -107,20 +107,12 @@ export const ReservationsSchedule: React.FC = () => {
     );
   }, [permissions, isOwner]);
 
-  const canManageReservationSettings = useMemo(() => {
-    if (isOwner) {
-      return true;
-    }
-
-    if (!permissions) {
-      return false;
-    }
-
-    return (
-      permissions.includes(Permission.OWNER) ||
-      permissions.includes(Permission.ADMIN)
+  const canManageReservationSettings =
+    isOwner ||
+    Boolean(
+      permissions?.includes(Permission.OWNER) ||
+      permissions?.includes(Permission.ADMIN),
     );
-  }, [permissions, isOwner]);
 
   const reservationSettingsHref = guildId
     ? ROUTES.guild.settings.reservationsSettings(guildId)

@@ -5,6 +5,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@lootlog/ui/components/popover";
+import { useTranslation } from "react-i18next";
 
 type DatePickerProps = {
   placeholder: string;
@@ -31,6 +32,7 @@ export const DatePicker: FC<DatePickerProps> = ({
   minDate,
   maxDate,
 }) => {
+  const { t } = useTranslation();
   const defaultDate = date || new Date();
   const [viewYear, setViewYear] = useState<number>(defaultDate.getFullYear());
   const [viewMonth, setViewMonth] = useState<number>(defaultDate.getMonth());
@@ -74,8 +76,17 @@ export const DatePicker: FC<DatePickerProps> = ({
   const daysInMonth = (y: number, m: number) => new Date(y, m + 1, 0).getDate();
   const minuteOptions = Array.from(
     { length: Math.ceil(60 / minuteStep) },
-    (_, i) => i * minuteStep,
+    (_, index) => index * minuteStep,
   );
+  const weekdays = [
+    t("reservations.datePicker.weekdays.monday"),
+    t("reservations.datePicker.weekdays.tuesday"),
+    t("reservations.datePicker.weekdays.wednesday"),
+    t("reservations.datePicker.weekdays.thursday"),
+    t("reservations.datePicker.weekdays.friday"),
+    t("reservations.datePicker.weekdays.saturday"),
+    t("reservations.datePicker.weekdays.sunday"),
+  ];
 
   const isDateOutOfRange = (nextDate: Date) =>
     (minDate !== undefined && nextDate < minDate) ||
@@ -141,7 +152,9 @@ export const DatePicker: FC<DatePickerProps> = ({
               <span
                 className={`truncate text-sm ${date ? "text-foreground" : "text-muted-foreground"}`}
               >
-                {date ? display : placeholder || "Wybierz datę i godzinę"}
+                {date
+                  ? display
+                  : placeholder || t("reservations.datePicker.placeholder")}
               </span>
               <div className="ml-auto flex items-center gap-1">
                 {date && onClear && (
@@ -152,7 +165,7 @@ export const DatePicker: FC<DatePickerProps> = ({
                       onClear();
                     }}
                     className="p-0.5 text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
-                    title="Wyczyść datę"
+                    title={t("reservations.datePicker.clear")}
                   >
                     <XCircle className="h-4 w-4" />
                   </button>
@@ -216,9 +229,9 @@ export const DatePicker: FC<DatePickerProps> = ({
             </div>
 
             <div className="grid grid-cols-7 gap-1 text-center text-xs text-muted-foreground mb-2">
-              {["Pn", "Wt", "Śr", "Cz", "Pt", "So", "Nd"].map((d) => (
-                <div key={d} className="py-1">
-                  {d}
+              {weekdays.map((weekday) => (
+                <div key={weekday} className="py-1">
+                  {weekday}
                 </div>
               ))}
             </div>
@@ -229,27 +242,27 @@ export const DatePicker: FC<DatePickerProps> = ({
                 const leading = (firstDay + 6) % 7;
                 const total = daysInMonth(viewYear, viewMonth);
                 const cells: React.ReactElement[] = [];
-                for (let i = 0; i < leading; i++)
-                  cells.push(<div key={`e-${i}`} className="py-2" />);
-                for (let d = 1; d <= total; d++) {
+                for (let emptyIndex = 0; emptyIndex < leading; emptyIndex++)
+                  cells.push(<div key={`e-${emptyIndex}`} className="py-2" />);
+                for (let dayNumber = 1; dayNumber <= total; dayNumber++) {
                   const isSelected =
                     date &&
                     date.getFullYear() === viewYear &&
                     date.getMonth() === viewMonth &&
-                    date.getDate() === d;
-                  const isDisabled = isDayDisabled(d);
+                    date.getDate() === dayNumber;
+                  const isDisabled = isDayDisabled(dayNumber);
                   cells.push(
                     <button
-                      key={`d-${d}`}
+                      key={`d-${dayNumber}`}
                       type="button"
                       disabled={isDisabled}
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDayClick(d);
+                        handleDayClick(dayNumber);
                       }}
                       className={`py-1 rounded disabled:pointer-events-none disabled:opacity-30 ${isSelected ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`}
                     >
-                      {d}
+                      {dayNumber}
                     </button>,
                   );
                 }
@@ -263,19 +276,19 @@ export const DatePicker: FC<DatePickerProps> = ({
                   ref={hourScrollRef}
                   className="overflow-y-auto h-32 w-16 snap-y snap-proximity flex flex-col [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] scroll-smooth"
                 >
-                  {Array.from({ length: 24 }).map((_, i) => {
+                  {Array.from({ length: 24 }).map((_, hourValue) => {
                     const newDate = new Date(
                       viewYear,
                       viewMonth,
                       defaultDate.getDate(),
-                      i,
+                      hourValue,
                       minute,
                     );
                     const isDisabled = isDateOutOfRange(newDate);
 
                     return (
                       <button
-                        key={`h-${i}`}
+                        key={`h-${hourValue}`}
                         type="button"
                         disabled={isDisabled}
                         onClick={(e) => {
@@ -284,16 +297,16 @@ export const DatePicker: FC<DatePickerProps> = ({
                             return;
                           }
 
-                          setHour(i);
+                          setHour(hourValue);
                           setDate(newDate);
                         }}
                         className={`h-6 flex items-center justify-center text-sm transition-colors flex-shrink-0 snap-center disabled:pointer-events-none disabled:opacity-30 ${
-                          hour === i
+                          hour === hourValue
                             ? "bg-primary text-primary-foreground font-semibold text-lg"
                             : "text-muted-foreground hover:bg-accent/50"
                         }`}
                       >
-                        {String(i).padStart(2, "0")}
+                        {String(hourValue).padStart(2, "0")}
                       </button>
                     );
                   })}
@@ -309,19 +322,19 @@ export const DatePicker: FC<DatePickerProps> = ({
                   ref={minuteScrollRef}
                   className="overflow-y-auto h-32 w-16 snap-y snap-proximity flex flex-col [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] scroll-smooth"
                 >
-                  {minuteOptions.map((i) => {
+                  {minuteOptions.map((minuteValue) => {
                     const newDate = new Date(
                       viewYear,
                       viewMonth,
                       defaultDate.getDate(),
                       hour,
-                      i,
+                      minuteValue,
                     );
                     const isDisabled = isDateOutOfRange(newDate);
 
                     return (
                       <button
-                        key={`m-${i}`}
+                        key={`m-${minuteValue}`}
                         type="button"
                         disabled={isDisabled}
                         onClick={(e) => {
@@ -330,16 +343,16 @@ export const DatePicker: FC<DatePickerProps> = ({
                             return;
                           }
 
-                          setMinute(i);
+                          setMinute(minuteValue);
                           setDate(newDate);
                         }}
                         className={`h-6 flex items-center justify-center text-sm transition-colors flex-shrink-0 snap-center disabled:pointer-events-none disabled:opacity-30 ${
-                          minute === i
+                          minute === minuteValue
                             ? "bg-primary text-primary-foreground font-semibold text-lg"
                             : "text-muted-foreground hover:bg-accent/50"
                         }`}
                       >
-                        {String(i).padStart(2, "0")}
+                        {String(minuteValue).padStart(2, "0")}
                       </button>
                     );
                   })}

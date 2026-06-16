@@ -77,6 +77,13 @@ type GuildPermissionMember = {
 };
 
 const USER_GUILD_PERMISSIONS_CACHE_TTL_SECONDS = 60;
+const DEFAULT_RESERVATION_SETTINGS = {
+  reservationMaxDurationMinutes: 180,
+  reservationMinDurationMinutes: 30,
+  reservationTimeGranularityMinutes: 15,
+  reservationMaxAdvanceDays: 7,
+  reservationActiveLimitPerSpot: 3,
+} as const;
 
 type GuildPermissionOptions = {
   devPermissionOverride?: ApiDevPermissionOverride;
@@ -325,7 +332,7 @@ export class GuildsService {
 
     if (cached) {
       try {
-        return JSON.parse(cached);
+        return this.withReservationSettingsDefaults(JSON.parse(cached));
       } catch (error) {
         this.logger.warn({
           message: `Failed to parse cached guild data for key ${cacheKey}`,
@@ -368,6 +375,29 @@ export class GuildsService {
     await Promise.all(cacheOperations);
 
     return guild;
+  }
+
+  private withReservationSettingsDefaults<T extends Record<string, unknown>>(
+    guild: T,
+  ) {
+    return {
+      ...guild,
+      reservationMaxDurationMinutes:
+        guild.reservationMaxDurationMinutes ??
+        DEFAULT_RESERVATION_SETTINGS.reservationMaxDurationMinutes,
+      reservationMinDurationMinutes:
+        guild.reservationMinDurationMinutes ??
+        DEFAULT_RESERVATION_SETTINGS.reservationMinDurationMinutes,
+      reservationTimeGranularityMinutes:
+        guild.reservationTimeGranularityMinutes ??
+        DEFAULT_RESERVATION_SETTINGS.reservationTimeGranularityMinutes,
+      reservationMaxAdvanceDays:
+        guild.reservationMaxAdvanceDays ??
+        DEFAULT_RESERVATION_SETTINGS.reservationMaxAdvanceDays,
+      reservationActiveLimitPerSpot:
+        guild.reservationActiveLimitPerSpot ??
+        DEFAULT_RESERVATION_SETTINGS.reservationActiveLimitPerSpot,
+    };
   }
 
   async getGuildDiscordSyncStatus(
