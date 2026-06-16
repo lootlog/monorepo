@@ -1,4 +1,5 @@
 import { API_URL, AUTH_API_URL, BATTLELOG_API_URL } from "@/config/api";
+import { applyDevPermissionOverrideHeader } from "@/lib/dev-permission-override";
 import { stringify } from "qs";
 
 type ApiType = "default" | "battlelog" | "auth" | "public";
@@ -242,6 +243,7 @@ const createRequestInit = (
   withCredentials: boolean,
 ) => {
   const headers = new Headers(config?.headers);
+  applyDevPermissionOverrideHeader(headers);
 
   let requestBody: BodyInit | undefined;
 

@@ -7,18 +7,34 @@ interface ConnectionMetadata {
   discordId: string | null;
   userId: string | null;
   platform: Platform;
+  devPermissionOverride?: string;
 }
 
 @Injectable()
 export class ConnectionService {
   private readonly logger = new Logger(ConnectionService.name);
 
-  getConnectionMetadata(request: Socket["request"]): ConnectionMetadata {
+  getConnectionMetadata(
+    request: Socket["request"],
+    auth?: unknown,
+  ): ConnectionMetadata {
     const discordId = (request.headers["x-auth-discord-id"] as string) || null;
     const userId = (request.headers["x-auth-user-id"] as string) || null;
     const platform = this.determineUserPlatform(request.headers.origin);
+    const authDevPermissionOverride =
+      auth &&
+      typeof auth === "object" &&
+      "devPermissionOverride" in auth &&
+      typeof auth.devPermissionOverride === "string"
+        ? auth.devPermissionOverride
+        : undefined;
 
-    return { discordId, userId, platform };
+    return {
+      discordId,
+      userId,
+      platform,
+      devPermissionOverride: authDevPermissionOverride,
+    };
   }
 
   determineUserPlatform(requestOrigin: string | undefined): Platform {
@@ -33,12 +49,14 @@ export class ConnectionService {
     userId: string | null,
     socketId: string,
     platform: Platform,
+    devPermissionOverride?: string,
   ): Partial<SocketUser> {
     return {
       discordId,
       userId: userId ?? undefined,
       sessionId: socketId,
       platform,
+      devPermissionOverride,
     };
   }
 

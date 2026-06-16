@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query } from "@nestjs/common";
+import { Controller, Get, Headers, Param, Query } from "@nestjs/common";
 import {
   ApiTags,
   ApiOperation,
@@ -10,6 +10,10 @@ import { ZodResponse } from "nestjs-zod";
 import { UserGuildPermissionsDto } from "src/guilds/dto/user-guild-permissions.dto";
 import { GuildsService } from "src/guilds/guilds.service";
 import { GuildResponseDto } from "src/shared/dto/guild-response.dto";
+import {
+  DEV_PERMISSION_OVERRIDE_HEADER,
+  parseDevPermissionOverrideHeader,
+} from "src/shared/permissions/dev-permission-override";
 
 @ApiTags("internal")
 @Controller("internal/guilds")
@@ -36,12 +40,23 @@ export class GuildsInternalController {
   getUserPermissions(
     @Query("discordId") discordId: string,
     @Query("userId") userId: string,
+    @Headers(DEV_PERMISSION_OVERRIDE_HEADER) devPermissionOverride?: string,
   ): Promise<UserGuildPermissionsDto[]> {
     if (!discordId || !userId) {
       return Promise.resolve([]);
     }
 
-    return this.guildsService.getUserGuildsWithPermissions(discordId, userId);
+    const parsedDevPermissionOverride = parseDevPermissionOverrideHeader(
+      devPermissionOverride,
+    );
+
+    if (!parsedDevPermissionOverride) {
+      return this.guildsService.getUserGuildsWithPermissions(discordId, userId);
+    }
+
+    return this.guildsService.getUserGuildsWithPermissions(discordId, userId, {
+      devPermissionOverride: parsedDevPermissionOverride,
+    });
   }
 
   @Get(":idOrVanityUrl")

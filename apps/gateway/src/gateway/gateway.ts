@@ -43,8 +43,11 @@ export class Gateway {
   server: Server;
 
   async handleConnection(client: Socket) {
-    const { discordId, platform, userId } =
-      this.connectionService.getConnectionMetadata(client.request);
+    const { discordId, platform, userId, devPermissionOverride } =
+      this.connectionService.getConnectionMetadata(
+        client.request,
+        client.handshake?.auth,
+      );
 
     const validation = this.connectionService.validateConnection(
       discordId,
@@ -59,6 +62,7 @@ export class Gateway {
       userId,
       client.id,
       platform,
+      devPermissionOverride,
     );
 
     client.on(GatewayEvent.DISCONNECTING, async () => {

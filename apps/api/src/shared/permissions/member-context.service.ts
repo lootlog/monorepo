@@ -19,6 +19,11 @@ import {
   PERMISSIONS_CACHE_TTL_SECONDS,
 } from "src/shared/constants/cache.constant";
 import { PerfDiagnosticsService } from "src/shared/diagnostics/perf-diagnostics.service";
+import {
+  createDevPermissionOverrideRole,
+  getDevPermissionOverrideForGuild,
+  type ApiDevPermissionOverride,
+} from "./dev-permission-override";
 
 type GuildLookupResult = {
   guild: Guild;
@@ -41,13 +46,14 @@ export class MemberContextService {
     discordId: string;
     userId: string;
     guildId: string;
+    devPermissionOverride?: ApiDevPermissionOverride;
   }): Promise<{
     guild: Guild;
     member: unknown;
     roles: unknown[];
     permissions: Permission[];
   } | null> {
-    const { discordId, userId, guildId } = options;
+    const { discordId, userId, guildId, devPermissionOverride } = options;
     const diagnosticsEnabled =
       this.perfDiagnosticsService?.isActiveForCurrentContext() ?? false;
     const startedAt = diagnosticsEnabled
@@ -66,6 +72,7 @@ export class MemberContextService {
       return await this.getContextForGuild({
         diagnostics,
         discordId,
+        devPermissionOverride,
         guild,
         stages,
         startedAt,
@@ -89,59 +96,77 @@ export class MemberContextService {
     stages: Record<string, number>;
     startedAt?: number;
     userId: string;
+    devPermissionOverride?: ApiDevPermissionOverride;
   }) {
-    const { diagnostics, discordId, guild, stages, startedAt, userId } =
-      options;
+    const {
+      diagnostics,
+      discordId,
+      guild,
+      stages,
+      startedAt,
+      userId,
+      devPermissionOverride,
+    } = options;
+    const guildDevPermissionOverride = getDevPermissionOverrideForGuild(
+      devPermissionOverride,
+      guild.id,
+    );
     const cacheKey = getPermissionsCacheKey(userId, guild.id);
 
-    try {
-      const cached = await this.timeStage(stages, "permissionsCacheRead", () =>
-        this.redisService.get(cacheKey),
-      );
+    if (!guildDevPermissionOverride) {
+      try {
+        const cached = await this.timeStage(
+          stages,
+          "permissionsCacheRead",
+          () => this.redisService.get(cacheKey),
+        );
 
-      if (cached) {
-        let context: unknown;
-        try {
-          context = JSON.parse(cached);
-        } catch (error) {
-          diagnostics.permissionsCacheMalformed = true;
-          this.logger.warn({
-            message: `Failed to parse cached permissions data for key ${cacheKey}`,
-            error,
-          });
-          await this.timeStage(stages, "permissionsCacheDelete", () =>
-            this.redisService.del(cacheKey),
-          );
-        }
-
-        if (context !== undefined) {
-          if (!this.isCachedContextFresh(context)) {
-            diagnostics.permissionsCacheStale = true;
+        if (cached) {
+          let context: unknown;
+          try {
+            context = JSON.parse(cached);
+          } catch (error) {
+            diagnostics.permissionsCacheMalformed = true;
+            this.logger.warn({
+              message: `Failed to parse cached permissions data for key ${cacheKey}`,
+              error,
+            });
             await this.timeStage(stages, "permissionsCacheDelete", () =>
               this.redisService.del(cacheKey),
             );
-          } else {
-            this.logMemberContextDiagnostics(startedAt, stages, {
-              ...diagnostics,
-              outcome: "permissions_cache_hit",
-              permissionsCacheHit: true,
-            });
+          }
 
-            return context as {
-              guild: Guild;
-              member: unknown;
-              roles: unknown[];
-              permissions: Permission[];
-            };
+          if (context !== undefined) {
+            if (!this.isCachedContextFresh(context)) {
+              diagnostics.permissionsCacheStale = true;
+              await this.timeStage(stages, "permissionsCacheDelete", () =>
+                this.redisService.del(cacheKey),
+              );
+            } else {
+              this.logMemberContextDiagnostics(startedAt, stages, {
+                ...diagnostics,
+                outcome: "permissions_cache_hit",
+                permissionsCacheHit: true,
+              });
+
+              return context as {
+                guild: Guild;
+                member: unknown;
+                roles: unknown[];
+                permissions: Permission[];
+              };
+            }
           }
         }
+      } catch (error) {
+        diagnostics.permissionsCacheReadError = true;
+        this.logger.warn({
+          message: `Redis cache read failed for key ${cacheKey}, falling back to DB`,
+          error,
+        });
       }
-    } catch (error) {
-      diagnostics.permissionsCacheReadError = true;
-      this.logger.warn({
-        message: `Redis cache read failed for key ${cacheKey}, falling back to DB`,
-        error,
-      });
+    } else {
+      diagnostics.devPermissionOverride = true;
     }
 
     const member = await this.timeStage(stages, "memberLookup", () =>
@@ -165,13 +190,22 @@ export class MemberContextService {
     diagnostics.memberRefreshQueued = member.refreshQueued ?? false;
     diagnostics.memberStale = member.isStale ?? false;
 
-    const isOwner = guild.ownerId === discordId;
+    const isOwner =
+      guild.ownerId === discordId &&
+      !guildDevPermissionOverride?.disableOwnerBypass;
 
-    const permissions = isOwner
-      ? Object.values(Permission)
-      : member.roles.reduce((acc: Permission[], role) => {
+    let permissions: Permission[];
+
+    if (guildDevPermissionOverride) {
+      permissions = guildDevPermissionOverride.permissions;
+    } else if (isOwner) {
+      permissions = Object.values(Permission);
+    } else {
+      permissions =
+        member.roles.reduce((acc: Permission[], role) => {
           return acc.concat(role.permissions);
         }, []) || [];
+    }
 
     const uniquePermissions = Array.from(new Set(permissions));
 
@@ -179,10 +213,21 @@ export class MemberContextService {
       permissions: uniquePermissions,
       guild,
       member,
-      roles: member.roles,
+      roles: guildDevPermissionOverride
+        ? [
+            createDevPermissionOverrideRole(
+              guildDevPermissionOverride,
+              guild.id,
+            ),
+          ]
+        : member.roles,
     };
 
-    if (!member.isStale && !member.refreshQueued) {
+    if (
+      !guildDevPermissionOverride &&
+      !member.isStale &&
+      !member.refreshQueued
+    ) {
       try {
         await this.timeStage(stages, "permissionsCacheWrite", () =>
           this.redisService.set(
