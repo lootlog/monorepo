@@ -3,10 +3,12 @@ import { useGlobalStore } from "@/store/global.store";
 import { gameEventsManager } from "@/lib/game-events-manager";
 import { useEffect, useRef } from "react";
 import { Game } from "@/lib/game";
+import { installCharacterTooltipTransforms } from "@/lib/margonem-tooltips";
 
 export const useInit = () => {
   const { setGameState } = useGlobalStore();
   const initialized = useRef(false);
+  const cleanupTooltipTransforms = useRef<(() => void) | null>(null);
 
   const checkAndInitialize = () => {
     if (initialized.current) {
@@ -25,6 +27,7 @@ export const useInit = () => {
     });
 
     gameEventsManager.setReady(true);
+    cleanupTooltipTransforms.current = installCharacterTooltipTransforms();
 
     return true;
   };
@@ -43,6 +46,8 @@ export const useInit = () => {
     });
 
     return () => {
+      cleanupTooltipTransforms.current?.();
+      cleanupTooltipTransforms.current = null;
       gameEventsManager.cleanup();
     };
   }, []);

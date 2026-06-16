@@ -1,3 +1,4 @@
+export * from "./api.js";
 export * from "./change-player.js";
 export * from "./chat-controller.js";
 export * from "./communication.js";
@@ -13,5 +14,6 @@ export * from "./npc-tpl-manager.js";
 export * from "./others.js";
 export * from "./server-storage.js";
 export * from "./show-eq-manager.js";
+export * from "./tooltip.js";
 export * from "./widget-manager.js";
 export * from "./world-config.js";

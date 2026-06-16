@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useGlobalStore } from "@/store/global.store";
 import { EventDispatcher } from "@/lib/event-dispatcher";
+import { useCharacterTooltipGameEvents } from "./use-character-tooltip-game-events";
 
 export const useGameEventHandlers = () => {
+  useCharacterTooltipGameEvents();
+
   const gameInitialized = useGlobalStore((s) => s.gameState.gameInitialized);
   const [initialized, setInitialized] = useState(false);
   const dispatcherRef = useRef<EventDispatcher | null>(null);
