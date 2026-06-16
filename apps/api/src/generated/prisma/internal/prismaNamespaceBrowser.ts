@@ -125,6 +125,11 @@ export const GuildScalarFieldEnum = {
   vanityUrl: 'vanityUrl',
   notificationRuleLimit: 'notificationRuleLimit',
   publicStatsCardEnabled: 'publicStatsCardEnabled',
+  reservationMaxDurationMinutes: 'reservationMaxDurationMinutes',
+  reservationMinDurationMinutes: 'reservationMinDurationMinutes',
+  reservationTimeGranularityMinutes: 'reservationTimeGranularityMinutes',
+  reservationMaxAdvanceDays: 'reservationMaxAdvanceDays',
+  reservationActiveLimitPerSpot: 'reservationActiveLimitPerSpot',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   active: 'active'

@@ -77,6 +77,13 @@ type GuildPermissionMember = {
 };
 
 const USER_GUILD_PERMISSIONS_CACHE_TTL_SECONDS = 60;
+const DEFAULT_RESERVATION_SETTINGS = {
+  reservationMaxDurationMinutes: 180,
+  reservationMinDurationMinutes: 30,
+  reservationTimeGranularityMinutes: 15,
+  reservationMaxAdvanceDays: 7,
+  reservationActiveLimitPerSpot: 3,
+} as const;
 
 type GuildPermissionOptions = {
   devPermissionOverride?: ApiDevPermissionOverride;
@@ -325,7 +332,7 @@ export class GuildsService {
 
     if (cached) {
       try {
-        return JSON.parse(cached);
+        return this.withReservationSettingsDefaults(JSON.parse(cached));
       } catch (error) {
         this.logger.warn({
           message: `Failed to parse cached guild data for key ${cacheKey}`,
@@ -368,6 +375,29 @@ export class GuildsService {
     await Promise.all(cacheOperations);
 
     return guild;
+  }
+
+  private withReservationSettingsDefaults<T extends Record<string, unknown>>(
+    guild: T,
+  ) {
+    return {
+      ...guild,
+      reservationMaxDurationMinutes:
+        guild.reservationMaxDurationMinutes ??
+        DEFAULT_RESERVATION_SETTINGS.reservationMaxDurationMinutes,
+      reservationMinDurationMinutes:
+        guild.reservationMinDurationMinutes ??
+        DEFAULT_RESERVATION_SETTINGS.reservationMinDurationMinutes,
+      reservationTimeGranularityMinutes:
+        guild.reservationTimeGranularityMinutes ??
+        DEFAULT_RESERVATION_SETTINGS.reservationTimeGranularityMinutes,
+      reservationMaxAdvanceDays:
+        guild.reservationMaxAdvanceDays ??
+        DEFAULT_RESERVATION_SETTINGS.reservationMaxAdvanceDays,
+      reservationActiveLimitPerSpot:
+        guild.reservationActiveLimitPerSpot ??
+        DEFAULT_RESERVATION_SETTINGS.reservationActiveLimitPerSpot,
+    };
   }
 
   async getGuildDiscordSyncStatus(
@@ -1062,10 +1092,48 @@ export class GuildsService {
       });
     }
 
+    const nextMinDuration = data.reservationMinDurationMinutes;
+    const nextMaxDuration = data.reservationMaxDurationMinutes;
+    if (
+      nextMinDuration !== undefined &&
+      nextMaxDuration !== undefined &&
+      nextMinDuration > nextMaxDuration
+    ) {
+      throw new BadRequestException(
+        "Minimalna długość rezerwacji nie może być większa niż maksymalna.",
+      );
+    }
+
     const oldGuild = await this.prisma.guild.findUnique({
       where: { id: guildId },
-      select: { vanityUrl: true },
+      select: {
+        vanityUrl: true,
+        reservationMinDurationMinutes: true,
+        reservationMaxDurationMinutes: true,
+      },
     });
+
+    if (
+      oldGuild &&
+      nextMinDuration !== undefined &&
+      nextMaxDuration === undefined &&
+      nextMinDuration > oldGuild.reservationMaxDurationMinutes
+    ) {
+      throw new BadRequestException(
+        "Minimalna długość rezerwacji nie może być większa niż maksymalna.",
+      );
+    }
+
+    if (
+      oldGuild &&
+      nextMaxDuration !== undefined &&
+      nextMinDuration === undefined &&
+      oldGuild.reservationMinDurationMinutes > nextMaxDuration
+    ) {
+      throw new BadRequestException(
+        "Maksymalna długość rezerwacji nie może być mniejsza niż minimalna.",
+      );
+    }
 
     const guild = await this.prisma.guild.update({
       where: { id: guildId },
@@ -1075,6 +1143,30 @@ export class GuildsService {
           : {}),
         ...(data.publicStatsCardEnabled !== undefined
           ? { publicStatsCardEnabled: data.publicStatsCardEnabled }
+          : {}),
+        ...(data.reservationMaxDurationMinutes !== undefined
+          ? {
+              reservationMaxDurationMinutes: data.reservationMaxDurationMinutes,
+            }
+          : {}),
+        ...(data.reservationMinDurationMinutes !== undefined
+          ? {
+              reservationMinDurationMinutes: data.reservationMinDurationMinutes,
+            }
+          : {}),
+        ...(data.reservationTimeGranularityMinutes !== undefined
+          ? {
+              reservationTimeGranularityMinutes:
+                data.reservationTimeGranularityMinutes,
+            }
+          : {}),
+        ...(data.reservationMaxAdvanceDays !== undefined
+          ? { reservationMaxAdvanceDays: data.reservationMaxAdvanceDays }
+          : {}),
+        ...(data.reservationActiveLimitPerSpot !== undefined
+          ? {
+              reservationActiveLimitPerSpot: data.reservationActiveLimitPerSpot,
+            }
           : {}),
       },
     });
