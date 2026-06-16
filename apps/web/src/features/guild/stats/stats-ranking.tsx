@@ -28,6 +28,10 @@ import { useStatsSettings } from "./hooks/use-stats-settings";
 import { LevelFilters } from "./components/level-filters";
 import { StatsRankingFiltersMobile } from "./components/stats-ranking-filters-mobile";
 import { buildGuildKillStatsParams } from "./utils/build-stats-query-params";
+import {
+  KillStatsPeriodSelect,
+  type KillStatsPeriod,
+} from "@/features/kills/components/kill-stats-period-select";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -68,6 +72,7 @@ export const StatsRanking: React.FC = () => {
     setWorld,
     setMinLvl,
     setMaxLvl,
+    setPeriod,
   } = useStatsSettings("ranking");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -77,6 +82,7 @@ export const StatsRanking: React.FC = () => {
       world: settings.world ?? undefined,
       minLvl: debouncedMinLvl,
       maxLvl: debouncedMaxLvl,
+      period: settings.period,
     }),
   );
 
@@ -97,6 +103,11 @@ export const StatsRanking: React.FC = () => {
     setCursor(0);
   };
 
+  const handlePeriodChange = (value: KillStatsPeriod) => {
+    setPeriod(value);
+    setCursor(0);
+  };
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     if (searchTimeoutRef.current) {
@@ -114,6 +125,12 @@ export const StatsRanking: React.FC = () => {
         member.memberName?.toLowerCase().includes(searchQuery.toLowerCase()),
       )
     : memberRanking;
+  const hasActiveFilters =
+    Boolean(settings.world) ||
+    Boolean(settings.minLvl) ||
+    Boolean(settings.maxLvl) ||
+    settings.period !== "all" ||
+    Boolean(searchQuery);
   const total = filteredRanking.length;
   const paginatedData = filteredRanking.slice(cursor, cursor + ITEMS_PER_PAGE);
   const hasNext = cursor + ITEMS_PER_PAGE < total;
@@ -152,7 +169,7 @@ export const StatsRanking: React.FC = () => {
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 py-3 flex flex-col gap-4">
           <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 min-[2200px]:flex-row min-[2200px]:items-center min-[2200px]:justify-between">
               <div className="flex items-center gap-3 flex-1 min-w-0">
                 <div className="rounded-xl bg-primary/10 p-2.5 shadow-inner shadow-primary/10">
                   <Users className="size-4 text-primary" />
@@ -181,13 +198,15 @@ export const StatsRanking: React.FC = () => {
                   world={settings.world}
                   minLvl={settings.minLvl}
                   maxLvl={settings.maxLvl}
+                  period={settings.period}
                   onWorldChange={handleWorldChange}
                   onMinLvlChange={handleMinLvlChange}
                   onMaxLvlChange={handleMaxLvlChange}
+                  onPeriodChange={handlePeriodChange}
                 />
               </div>
 
-              <div className="hidden md:flex items-center gap-2">
+              <div className="hidden md:flex w-full flex-wrap items-center gap-2 min-[2200px]:w-auto min-[2200px]:justify-end">
                 <div className="relative">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                   <Input
@@ -202,6 +221,10 @@ export const StatsRanking: React.FC = () => {
                   maxLvl={settings.maxLvl}
                   onMinLvlChange={handleMinLvlChange}
                   onMaxLvlChange={handleMaxLvlChange}
+                />
+                <KillStatsPeriodSelect
+                  value={settings.period}
+                  onValueChange={handlePeriodChange}
                 />
                 <WorldSwitcher
                   value={settings.world}
@@ -234,7 +257,11 @@ export const StatsRanking: React.FC = () => {
               ) : !data || paginatedData.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">
                   <p className="text-muted-foreground">
-                    {t("kills.memberRanking.noData")}
+                    {t(
+                      hasActiveFilters
+                        ? "kills.memberRanking.filteredNoData"
+                        : "kills.memberRanking.noData",
+                    )}
                   </p>
                 </div>
               ) : (

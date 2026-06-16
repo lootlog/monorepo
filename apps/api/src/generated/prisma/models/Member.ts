@@ -302,6 +302,7 @@ export type MemberWhereInput = {
   detectedKills?: Prisma.EventHeroKillListRelationFilter
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryListRelationFilter
   npcKillStats?: Prisma.NpcKillStatsListRelationFilter
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketListRelationFilter
 }
 
 export type MemberOrderByWithRelationInput = {
@@ -333,6 +334,7 @@ export type MemberOrderByWithRelationInput = {
   detectedKills?: Prisma.EventHeroKillOrderByRelationAggregateInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryOrderByRelationAggregateInput
   npcKillStats?: Prisma.NpcKillStatsOrderByRelationAggregateInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketOrderByRelationAggregateInput
 }
 
 export type MemberWhereUniqueInput = Prisma.AtLeast<{
@@ -368,6 +370,7 @@ export type MemberWhereUniqueInput = Prisma.AtLeast<{
   detectedKills?: Prisma.EventHeroKillListRelationFilter
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryListRelationFilter
   npcKillStats?: Prisma.NpcKillStatsListRelationFilter
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketListRelationFilter
 }, "id" | "memberId">
 
 export type MemberOrderByWithAggregationInput = {
@@ -439,6 +442,7 @@ export type MemberCreateInput = {
   detectedKills?: Prisma.EventHeroKillCreateNestedManyWithoutTimerCreatedByInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryCreateNestedManyWithoutMemberInput
   npcKillStats?: Prisma.NpcKillStatsCreateNestedManyWithoutMemberInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketCreateNestedManyWithoutMemberInput
 }
 
 export type MemberUncheckedCreateInput = {
@@ -469,6 +473,7 @@ export type MemberUncheckedCreateInput = {
   detectedKills?: Prisma.EventHeroKillUncheckedCreateNestedManyWithoutTimerCreatedByInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUncheckedCreateNestedManyWithoutMemberInput
   npcKillStats?: Prisma.NpcKillStatsUncheckedCreateNestedManyWithoutMemberInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedCreateNestedManyWithoutMemberInput
 }
 
 export type MemberUpdateInput = {
@@ -498,6 +503,7 @@ export type MemberUpdateInput = {
   detectedKills?: Prisma.EventHeroKillUpdateManyWithoutTimerCreatedByNestedInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUpdateManyWithoutMemberNestedInput
   npcKillStats?: Prisma.NpcKillStatsUpdateManyWithoutMemberNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberUncheckedUpdateInput = {
@@ -528,6 +534,7 @@ export type MemberUncheckedUpdateInput = {
   detectedKills?: Prisma.EventHeroKillUncheckedUpdateManyWithoutTimerCreatedByNestedInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUncheckedUpdateManyWithoutMemberNestedInput
   npcKillStats?: Prisma.NpcKillStatsUncheckedUpdateManyWithoutMemberNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberCreateManyInput = {
@@ -947,6 +954,20 @@ export type MemberUpdateOneRequiredWithoutNpcKillStatsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.MemberUpdateToOneWithWhereWithoutNpcKillStatsInput, Prisma.MemberUpdateWithoutNpcKillStatsInput>, Prisma.MemberUncheckedUpdateWithoutNpcKillStatsInput>
 }
 
+export type MemberCreateNestedOneWithoutNpcKillStatsBucketsInput = {
+  create?: Prisma.XOR<Prisma.MemberCreateWithoutNpcKillStatsBucketsInput, Prisma.MemberUncheckedCreateWithoutNpcKillStatsBucketsInput>
+  connectOrCreate?: Prisma.MemberCreateOrConnectWithoutNpcKillStatsBucketsInput
+  connect?: Prisma.MemberWhereUniqueInput
+}
+
+export type MemberUpdateOneRequiredWithoutNpcKillStatsBucketsNestedInput = {
+  create?: Prisma.XOR<Prisma.MemberCreateWithoutNpcKillStatsBucketsInput, Prisma.MemberUncheckedCreateWithoutNpcKillStatsBucketsInput>
+  connectOrCreate?: Prisma.MemberCreateOrConnectWithoutNpcKillStatsBucketsInput
+  upsert?: Prisma.MemberUpsertWithoutNpcKillStatsBucketsInput
+  connect?: Prisma.MemberWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.MemberUpdateToOneWithWhereWithoutNpcKillStatsBucketsInput, Prisma.MemberUpdateWithoutNpcKillStatsBucketsInput>, Prisma.MemberUncheckedUpdateWithoutNpcKillStatsBucketsInput>
+}
+
 export type MemberCreateWithoutGuildInput = {
   userId: string
   type?: $Enums.MemberType
@@ -973,6 +994,7 @@ export type MemberCreateWithoutGuildInput = {
   detectedKills?: Prisma.EventHeroKillCreateNestedManyWithoutTimerCreatedByInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryCreateNestedManyWithoutMemberInput
   npcKillStats?: Prisma.NpcKillStatsCreateNestedManyWithoutMemberInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketCreateNestedManyWithoutMemberInput
 }
 
 export type MemberUncheckedCreateWithoutGuildInput = {
@@ -1002,6 +1024,7 @@ export type MemberUncheckedCreateWithoutGuildInput = {
   detectedKills?: Prisma.EventHeroKillUncheckedCreateNestedManyWithoutTimerCreatedByInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUncheckedCreateNestedManyWithoutMemberInput
   npcKillStats?: Prisma.NpcKillStatsUncheckedCreateNestedManyWithoutMemberInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedCreateNestedManyWithoutMemberInput
 }
 
 export type MemberCreateOrConnectWithoutGuildInput = {
@@ -1076,6 +1099,7 @@ export type MemberCreateWithoutRolesInput = {
   detectedKills?: Prisma.EventHeroKillCreateNestedManyWithoutTimerCreatedByInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryCreateNestedManyWithoutMemberInput
   npcKillStats?: Prisma.NpcKillStatsCreateNestedManyWithoutMemberInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketCreateNestedManyWithoutMemberInput
 }
 
 export type MemberUncheckedCreateWithoutRolesInput = {
@@ -1105,6 +1129,7 @@ export type MemberUncheckedCreateWithoutRolesInput = {
   detectedKills?: Prisma.EventHeroKillUncheckedCreateNestedManyWithoutTimerCreatedByInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUncheckedCreateNestedManyWithoutMemberInput
   npcKillStats?: Prisma.NpcKillStatsUncheckedCreateNestedManyWithoutMemberInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedCreateNestedManyWithoutMemberInput
 }
 
 export type MemberCreateOrConnectWithoutRolesInput = {
@@ -1154,6 +1179,7 @@ export type MemberCreateWithoutTimersInput = {
   detectedKills?: Prisma.EventHeroKillCreateNestedManyWithoutTimerCreatedByInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryCreateNestedManyWithoutMemberInput
   npcKillStats?: Prisma.NpcKillStatsCreateNestedManyWithoutMemberInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketCreateNestedManyWithoutMemberInput
 }
 
 export type MemberUncheckedCreateWithoutTimersInput = {
@@ -1183,6 +1209,7 @@ export type MemberUncheckedCreateWithoutTimersInput = {
   detectedKills?: Prisma.EventHeroKillUncheckedCreateNestedManyWithoutTimerCreatedByInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUncheckedCreateNestedManyWithoutMemberInput
   npcKillStats?: Prisma.NpcKillStatsUncheckedCreateNestedManyWithoutMemberInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedCreateNestedManyWithoutMemberInput
 }
 
 export type MemberCreateOrConnectWithoutTimersInput = {
@@ -1227,6 +1254,7 @@ export type MemberUpdateWithoutTimersInput = {
   detectedKills?: Prisma.EventHeroKillUpdateManyWithoutTimerCreatedByNestedInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUpdateManyWithoutMemberNestedInput
   npcKillStats?: Prisma.NpcKillStatsUpdateManyWithoutMemberNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberUncheckedUpdateWithoutTimersInput = {
@@ -1256,6 +1284,7 @@ export type MemberUncheckedUpdateWithoutTimersInput = {
   detectedKills?: Prisma.EventHeroKillUncheckedUpdateManyWithoutTimerCreatedByNestedInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUncheckedUpdateManyWithoutMemberNestedInput
   npcKillStats?: Prisma.NpcKillStatsUncheckedUpdateManyWithoutMemberNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberCreateWithoutTimerHistoryEntriesInput = {
@@ -1284,6 +1313,7 @@ export type MemberCreateWithoutTimerHistoryEntriesInput = {
   detectedKills?: Prisma.EventHeroKillCreateNestedManyWithoutTimerCreatedByInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryCreateNestedManyWithoutMemberInput
   npcKillStats?: Prisma.NpcKillStatsCreateNestedManyWithoutMemberInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketCreateNestedManyWithoutMemberInput
 }
 
 export type MemberUncheckedCreateWithoutTimerHistoryEntriesInput = {
@@ -1313,6 +1343,7 @@ export type MemberUncheckedCreateWithoutTimerHistoryEntriesInput = {
   detectedKills?: Prisma.EventHeroKillUncheckedCreateNestedManyWithoutTimerCreatedByInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUncheckedCreateNestedManyWithoutMemberInput
   npcKillStats?: Prisma.NpcKillStatsUncheckedCreateNestedManyWithoutMemberInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedCreateNestedManyWithoutMemberInput
 }
 
 export type MemberCreateOrConnectWithoutTimerHistoryEntriesInput = {
@@ -1346,6 +1377,7 @@ export type MemberCreateWithoutRestoredTimerHistoryEntriesInput = {
   detectedKills?: Prisma.EventHeroKillCreateNestedManyWithoutTimerCreatedByInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryCreateNestedManyWithoutMemberInput
   npcKillStats?: Prisma.NpcKillStatsCreateNestedManyWithoutMemberInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketCreateNestedManyWithoutMemberInput
 }
 
 export type MemberUncheckedCreateWithoutRestoredTimerHistoryEntriesInput = {
@@ -1375,6 +1407,7 @@ export type MemberUncheckedCreateWithoutRestoredTimerHistoryEntriesInput = {
   detectedKills?: Prisma.EventHeroKillUncheckedCreateNestedManyWithoutTimerCreatedByInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUncheckedCreateNestedManyWithoutMemberInput
   npcKillStats?: Prisma.NpcKillStatsUncheckedCreateNestedManyWithoutMemberInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedCreateNestedManyWithoutMemberInput
 }
 
 export type MemberCreateOrConnectWithoutRestoredTimerHistoryEntriesInput = {
@@ -1419,6 +1452,7 @@ export type MemberUpdateWithoutTimerHistoryEntriesInput = {
   detectedKills?: Prisma.EventHeroKillUpdateManyWithoutTimerCreatedByNestedInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUpdateManyWithoutMemberNestedInput
   npcKillStats?: Prisma.NpcKillStatsUpdateManyWithoutMemberNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberUncheckedUpdateWithoutTimerHistoryEntriesInput = {
@@ -1448,6 +1482,7 @@ export type MemberUncheckedUpdateWithoutTimerHistoryEntriesInput = {
   detectedKills?: Prisma.EventHeroKillUncheckedUpdateManyWithoutTimerCreatedByNestedInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUncheckedUpdateManyWithoutMemberNestedInput
   npcKillStats?: Prisma.NpcKillStatsUncheckedUpdateManyWithoutMemberNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberUpsertWithoutRestoredTimerHistoryEntriesInput = {
@@ -1487,6 +1522,7 @@ export type MemberUpdateWithoutRestoredTimerHistoryEntriesInput = {
   detectedKills?: Prisma.EventHeroKillUpdateManyWithoutTimerCreatedByNestedInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUpdateManyWithoutMemberNestedInput
   npcKillStats?: Prisma.NpcKillStatsUpdateManyWithoutMemberNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberUncheckedUpdateWithoutRestoredTimerHistoryEntriesInput = {
@@ -1516,6 +1552,7 @@ export type MemberUncheckedUpdateWithoutRestoredTimerHistoryEntriesInput = {
   detectedKills?: Prisma.EventHeroKillUncheckedUpdateManyWithoutTimerCreatedByNestedInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUncheckedUpdateManyWithoutMemberNestedInput
   npcKillStats?: Prisma.NpcKillStatsUncheckedUpdateManyWithoutMemberNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberCreateWithoutLootSubmissionsInput = {
@@ -1544,6 +1581,7 @@ export type MemberCreateWithoutLootSubmissionsInput = {
   detectedKills?: Prisma.EventHeroKillCreateNestedManyWithoutTimerCreatedByInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryCreateNestedManyWithoutMemberInput
   npcKillStats?: Prisma.NpcKillStatsCreateNestedManyWithoutMemberInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketCreateNestedManyWithoutMemberInput
 }
 
 export type MemberUncheckedCreateWithoutLootSubmissionsInput = {
@@ -1573,6 +1611,7 @@ export type MemberUncheckedCreateWithoutLootSubmissionsInput = {
   detectedKills?: Prisma.EventHeroKillUncheckedCreateNestedManyWithoutTimerCreatedByInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUncheckedCreateNestedManyWithoutMemberInput
   npcKillStats?: Prisma.NpcKillStatsUncheckedCreateNestedManyWithoutMemberInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedCreateNestedManyWithoutMemberInput
 }
 
 export type MemberCreateOrConnectWithoutLootSubmissionsInput = {
@@ -1617,6 +1656,7 @@ export type MemberUpdateWithoutLootSubmissionsInput = {
   detectedKills?: Prisma.EventHeroKillUpdateManyWithoutTimerCreatedByNestedInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUpdateManyWithoutMemberNestedInput
   npcKillStats?: Prisma.NpcKillStatsUpdateManyWithoutMemberNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberUncheckedUpdateWithoutLootSubmissionsInput = {
@@ -1646,6 +1686,7 @@ export type MemberUncheckedUpdateWithoutLootSubmissionsInput = {
   detectedKills?: Prisma.EventHeroKillUncheckedUpdateManyWithoutTimerCreatedByNestedInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUncheckedUpdateManyWithoutMemberNestedInput
   npcKillStats?: Prisma.NpcKillStatsUncheckedUpdateManyWithoutMemberNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberCreateWithoutCommentsInput = {
@@ -1674,6 +1715,7 @@ export type MemberCreateWithoutCommentsInput = {
   detectedKills?: Prisma.EventHeroKillCreateNestedManyWithoutTimerCreatedByInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryCreateNestedManyWithoutMemberInput
   npcKillStats?: Prisma.NpcKillStatsCreateNestedManyWithoutMemberInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketCreateNestedManyWithoutMemberInput
 }
 
 export type MemberUncheckedCreateWithoutCommentsInput = {
@@ -1703,6 +1745,7 @@ export type MemberUncheckedCreateWithoutCommentsInput = {
   detectedKills?: Prisma.EventHeroKillUncheckedCreateNestedManyWithoutTimerCreatedByInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUncheckedCreateNestedManyWithoutMemberInput
   npcKillStats?: Prisma.NpcKillStatsUncheckedCreateNestedManyWithoutMemberInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedCreateNestedManyWithoutMemberInput
 }
 
 export type MemberCreateOrConnectWithoutCommentsInput = {
@@ -1747,6 +1790,7 @@ export type MemberUpdateWithoutCommentsInput = {
   detectedKills?: Prisma.EventHeroKillUpdateManyWithoutTimerCreatedByNestedInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUpdateManyWithoutMemberNestedInput
   npcKillStats?: Prisma.NpcKillStatsUpdateManyWithoutMemberNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberUncheckedUpdateWithoutCommentsInput = {
@@ -1776,6 +1820,7 @@ export type MemberUncheckedUpdateWithoutCommentsInput = {
   detectedKills?: Prisma.EventHeroKillUncheckedUpdateManyWithoutTimerCreatedByNestedInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUncheckedUpdateManyWithoutMemberNestedInput
   npcKillStats?: Prisma.NpcKillStatsUncheckedUpdateManyWithoutMemberNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberCreateWithoutAssignedEventMapsInput = {
@@ -1804,6 +1849,7 @@ export type MemberCreateWithoutAssignedEventMapsInput = {
   detectedKills?: Prisma.EventHeroKillCreateNestedManyWithoutTimerCreatedByInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryCreateNestedManyWithoutMemberInput
   npcKillStats?: Prisma.NpcKillStatsCreateNestedManyWithoutMemberInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketCreateNestedManyWithoutMemberInput
 }
 
 export type MemberUncheckedCreateWithoutAssignedEventMapsInput = {
@@ -1833,6 +1879,7 @@ export type MemberUncheckedCreateWithoutAssignedEventMapsInput = {
   detectedKills?: Prisma.EventHeroKillUncheckedCreateNestedManyWithoutTimerCreatedByInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUncheckedCreateNestedManyWithoutMemberInput
   npcKillStats?: Prisma.NpcKillStatsUncheckedCreateNestedManyWithoutMemberInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedCreateNestedManyWithoutMemberInput
 }
 
 export type MemberCreateOrConnectWithoutAssignedEventMapsInput = {
@@ -1882,6 +1929,7 @@ export type MemberCreateWithoutMapAssignmentHistoryInput = {
   eventRankings?: Prisma.EventRankingCreateNestedManyWithoutMemberInput
   detectedKills?: Prisma.EventHeroKillCreateNestedManyWithoutTimerCreatedByInput
   npcKillStats?: Prisma.NpcKillStatsCreateNestedManyWithoutMemberInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketCreateNestedManyWithoutMemberInput
 }
 
 export type MemberUncheckedCreateWithoutMapAssignmentHistoryInput = {
@@ -1911,6 +1959,7 @@ export type MemberUncheckedCreateWithoutMapAssignmentHistoryInput = {
   eventRankings?: Prisma.EventRankingUncheckedCreateNestedManyWithoutMemberInput
   detectedKills?: Prisma.EventHeroKillUncheckedCreateNestedManyWithoutTimerCreatedByInput
   npcKillStats?: Prisma.NpcKillStatsUncheckedCreateNestedManyWithoutMemberInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedCreateNestedManyWithoutMemberInput
 }
 
 export type MemberCreateOrConnectWithoutMapAssignmentHistoryInput = {
@@ -1955,6 +2004,7 @@ export type MemberUpdateWithoutMapAssignmentHistoryInput = {
   eventRankings?: Prisma.EventRankingUpdateManyWithoutMemberNestedInput
   detectedKills?: Prisma.EventHeroKillUpdateManyWithoutTimerCreatedByNestedInput
   npcKillStats?: Prisma.NpcKillStatsUpdateManyWithoutMemberNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberUncheckedUpdateWithoutMapAssignmentHistoryInput = {
@@ -1984,6 +2034,7 @@ export type MemberUncheckedUpdateWithoutMapAssignmentHistoryInput = {
   eventRankings?: Prisma.EventRankingUncheckedUpdateManyWithoutMemberNestedInput
   detectedKills?: Prisma.EventHeroKillUncheckedUpdateManyWithoutTimerCreatedByNestedInput
   npcKillStats?: Prisma.NpcKillStatsUncheckedUpdateManyWithoutMemberNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberCreateWithoutEventPresenceLogsInput = {
@@ -2012,6 +2063,7 @@ export type MemberCreateWithoutEventPresenceLogsInput = {
   detectedKills?: Prisma.EventHeroKillCreateNestedManyWithoutTimerCreatedByInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryCreateNestedManyWithoutMemberInput
   npcKillStats?: Prisma.NpcKillStatsCreateNestedManyWithoutMemberInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketCreateNestedManyWithoutMemberInput
 }
 
 export type MemberUncheckedCreateWithoutEventPresenceLogsInput = {
@@ -2041,6 +2093,7 @@ export type MemberUncheckedCreateWithoutEventPresenceLogsInput = {
   detectedKills?: Prisma.EventHeroKillUncheckedCreateNestedManyWithoutTimerCreatedByInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUncheckedCreateNestedManyWithoutMemberInput
   npcKillStats?: Prisma.NpcKillStatsUncheckedCreateNestedManyWithoutMemberInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedCreateNestedManyWithoutMemberInput
 }
 
 export type MemberCreateOrConnectWithoutEventPresenceLogsInput = {
@@ -2085,6 +2138,7 @@ export type MemberUpdateWithoutEventPresenceLogsInput = {
   detectedKills?: Prisma.EventHeroKillUpdateManyWithoutTimerCreatedByNestedInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUpdateManyWithoutMemberNestedInput
   npcKillStats?: Prisma.NpcKillStatsUpdateManyWithoutMemberNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberUncheckedUpdateWithoutEventPresenceLogsInput = {
@@ -2114,6 +2168,7 @@ export type MemberUncheckedUpdateWithoutEventPresenceLogsInput = {
   detectedKills?: Prisma.EventHeroKillUncheckedUpdateManyWithoutTimerCreatedByNestedInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUncheckedUpdateManyWithoutMemberNestedInput
   npcKillStats?: Prisma.NpcKillStatsUncheckedUpdateManyWithoutMemberNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberCreateWithoutDetectedKillsInput = {
@@ -2142,6 +2197,7 @@ export type MemberCreateWithoutDetectedKillsInput = {
   eventRankings?: Prisma.EventRankingCreateNestedManyWithoutMemberInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryCreateNestedManyWithoutMemberInput
   npcKillStats?: Prisma.NpcKillStatsCreateNestedManyWithoutMemberInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketCreateNestedManyWithoutMemberInput
 }
 
 export type MemberUncheckedCreateWithoutDetectedKillsInput = {
@@ -2171,6 +2227,7 @@ export type MemberUncheckedCreateWithoutDetectedKillsInput = {
   eventRankings?: Prisma.EventRankingUncheckedCreateNestedManyWithoutMemberInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUncheckedCreateNestedManyWithoutMemberInput
   npcKillStats?: Prisma.NpcKillStatsUncheckedCreateNestedManyWithoutMemberInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedCreateNestedManyWithoutMemberInput
 }
 
 export type MemberCreateOrConnectWithoutDetectedKillsInput = {
@@ -2215,6 +2272,7 @@ export type MemberUpdateWithoutDetectedKillsInput = {
   eventRankings?: Prisma.EventRankingUpdateManyWithoutMemberNestedInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUpdateManyWithoutMemberNestedInput
   npcKillStats?: Prisma.NpcKillStatsUpdateManyWithoutMemberNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberUncheckedUpdateWithoutDetectedKillsInput = {
@@ -2244,6 +2302,7 @@ export type MemberUncheckedUpdateWithoutDetectedKillsInput = {
   eventRankings?: Prisma.EventRankingUncheckedUpdateManyWithoutMemberNestedInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUncheckedUpdateManyWithoutMemberNestedInput
   npcKillStats?: Prisma.NpcKillStatsUncheckedUpdateManyWithoutMemberNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberCreateWithoutEventKillPointsInput = {
@@ -2272,6 +2331,7 @@ export type MemberCreateWithoutEventKillPointsInput = {
   detectedKills?: Prisma.EventHeroKillCreateNestedManyWithoutTimerCreatedByInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryCreateNestedManyWithoutMemberInput
   npcKillStats?: Prisma.NpcKillStatsCreateNestedManyWithoutMemberInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketCreateNestedManyWithoutMemberInput
 }
 
 export type MemberUncheckedCreateWithoutEventKillPointsInput = {
@@ -2301,6 +2361,7 @@ export type MemberUncheckedCreateWithoutEventKillPointsInput = {
   detectedKills?: Prisma.EventHeroKillUncheckedCreateNestedManyWithoutTimerCreatedByInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUncheckedCreateNestedManyWithoutMemberInput
   npcKillStats?: Prisma.NpcKillStatsUncheckedCreateNestedManyWithoutMemberInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedCreateNestedManyWithoutMemberInput
 }
 
 export type MemberCreateOrConnectWithoutEventKillPointsInput = {
@@ -2345,6 +2406,7 @@ export type MemberUpdateWithoutEventKillPointsInput = {
   detectedKills?: Prisma.EventHeroKillUpdateManyWithoutTimerCreatedByNestedInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUpdateManyWithoutMemberNestedInput
   npcKillStats?: Prisma.NpcKillStatsUpdateManyWithoutMemberNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberUncheckedUpdateWithoutEventKillPointsInput = {
@@ -2374,6 +2436,7 @@ export type MemberUncheckedUpdateWithoutEventKillPointsInput = {
   detectedKills?: Prisma.EventHeroKillUncheckedUpdateManyWithoutTimerCreatedByNestedInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUncheckedUpdateManyWithoutMemberNestedInput
   npcKillStats?: Prisma.NpcKillStatsUncheckedUpdateManyWithoutMemberNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberCreateWithoutEventRankingsInput = {
@@ -2402,6 +2465,7 @@ export type MemberCreateWithoutEventRankingsInput = {
   detectedKills?: Prisma.EventHeroKillCreateNestedManyWithoutTimerCreatedByInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryCreateNestedManyWithoutMemberInput
   npcKillStats?: Prisma.NpcKillStatsCreateNestedManyWithoutMemberInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketCreateNestedManyWithoutMemberInput
 }
 
 export type MemberUncheckedCreateWithoutEventRankingsInput = {
@@ -2431,6 +2495,7 @@ export type MemberUncheckedCreateWithoutEventRankingsInput = {
   detectedKills?: Prisma.EventHeroKillUncheckedCreateNestedManyWithoutTimerCreatedByInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUncheckedCreateNestedManyWithoutMemberInput
   npcKillStats?: Prisma.NpcKillStatsUncheckedCreateNestedManyWithoutMemberInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedCreateNestedManyWithoutMemberInput
 }
 
 export type MemberCreateOrConnectWithoutEventRankingsInput = {
@@ -2475,6 +2540,7 @@ export type MemberUpdateWithoutEventRankingsInput = {
   detectedKills?: Prisma.EventHeroKillUpdateManyWithoutTimerCreatedByNestedInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUpdateManyWithoutMemberNestedInput
   npcKillStats?: Prisma.NpcKillStatsUpdateManyWithoutMemberNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberUncheckedUpdateWithoutEventRankingsInput = {
@@ -2504,6 +2570,7 @@ export type MemberUncheckedUpdateWithoutEventRankingsInput = {
   detectedKills?: Prisma.EventHeroKillUncheckedUpdateManyWithoutTimerCreatedByNestedInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUncheckedUpdateManyWithoutMemberNestedInput
   npcKillStats?: Prisma.NpcKillStatsUncheckedUpdateManyWithoutMemberNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberCreateWithoutNpcKillStatsInput = {
@@ -2532,6 +2599,7 @@ export type MemberCreateWithoutNpcKillStatsInput = {
   eventRankings?: Prisma.EventRankingCreateNestedManyWithoutMemberInput
   detectedKills?: Prisma.EventHeroKillCreateNestedManyWithoutTimerCreatedByInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryCreateNestedManyWithoutMemberInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketCreateNestedManyWithoutMemberInput
 }
 
 export type MemberUncheckedCreateWithoutNpcKillStatsInput = {
@@ -2561,6 +2629,7 @@ export type MemberUncheckedCreateWithoutNpcKillStatsInput = {
   eventRankings?: Prisma.EventRankingUncheckedCreateNestedManyWithoutMemberInput
   detectedKills?: Prisma.EventHeroKillUncheckedCreateNestedManyWithoutTimerCreatedByInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUncheckedCreateNestedManyWithoutMemberInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedCreateNestedManyWithoutMemberInput
 }
 
 export type MemberCreateOrConnectWithoutNpcKillStatsInput = {
@@ -2605,6 +2674,7 @@ export type MemberUpdateWithoutNpcKillStatsInput = {
   eventRankings?: Prisma.EventRankingUpdateManyWithoutMemberNestedInput
   detectedKills?: Prisma.EventHeroKillUpdateManyWithoutTimerCreatedByNestedInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUpdateManyWithoutMemberNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberUncheckedUpdateWithoutNpcKillStatsInput = {
@@ -2634,6 +2704,141 @@ export type MemberUncheckedUpdateWithoutNpcKillStatsInput = {
   eventRankings?: Prisma.EventRankingUncheckedUpdateManyWithoutMemberNestedInput
   detectedKills?: Prisma.EventHeroKillUncheckedUpdateManyWithoutTimerCreatedByNestedInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUncheckedUpdateManyWithoutMemberNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedUpdateManyWithoutMemberNestedInput
+}
+
+export type MemberCreateWithoutNpcKillStatsBucketsInput = {
+  userId: string
+  type?: $Enums.MemberType
+  name: string
+  avatar?: string | null
+  banner?: string | null
+  active?: boolean
+  globalUserId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  lastDiscordSyncAt?: Date | string | null
+  lastDiscordAttemptAt?: Date | string | null
+  lastDiscordStatus?: string | null
+  guild: Prisma.GuildCreateNestedOneWithoutMembersInput
+  roles?: Prisma.RoleCreateNestedManyWithoutMembersInput
+  timers?: Prisma.TimerCreateNestedManyWithoutMemberInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutActorMemberInput
+  restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutTimerCreatedByInput
+  lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutMemberInput
+  comments?: Prisma.LootCommentCreateNestedManyWithoutMemberInput
+  assignedEventMaps?: Prisma.EventMapCreateNestedManyWithoutAssignedMembersInput
+  eventPresenceLogs?: Prisma.EventPresenceLogCreateNestedManyWithoutMemberInput
+  eventKillPoints?: Prisma.EventKillPointCreateNestedManyWithoutMemberInput
+  eventRankings?: Prisma.EventRankingCreateNestedManyWithoutMemberInput
+  detectedKills?: Prisma.EventHeroKillCreateNestedManyWithoutTimerCreatedByInput
+  mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryCreateNestedManyWithoutMemberInput
+  npcKillStats?: Prisma.NpcKillStatsCreateNestedManyWithoutMemberInput
+}
+
+export type MemberUncheckedCreateWithoutNpcKillStatsBucketsInput = {
+  id?: number
+  userId: string
+  guildId: string
+  type?: $Enums.MemberType
+  name: string
+  avatar?: string | null
+  banner?: string | null
+  active?: boolean
+  globalUserId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  lastDiscordSyncAt?: Date | string | null
+  lastDiscordAttemptAt?: Date | string | null
+  lastDiscordStatus?: string | null
+  roles?: Prisma.RoleUncheckedCreateNestedManyWithoutMembersInput
+  timers?: Prisma.TimerUncheckedCreateNestedManyWithoutMemberInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutActorMemberInput
+  restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutTimerCreatedByInput
+  lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutMemberInput
+  comments?: Prisma.LootCommentUncheckedCreateNestedManyWithoutMemberInput
+  assignedEventMaps?: Prisma.EventMapUncheckedCreateNestedManyWithoutAssignedMembersInput
+  eventPresenceLogs?: Prisma.EventPresenceLogUncheckedCreateNestedManyWithoutMemberInput
+  eventKillPoints?: Prisma.EventKillPointUncheckedCreateNestedManyWithoutMemberInput
+  eventRankings?: Prisma.EventRankingUncheckedCreateNestedManyWithoutMemberInput
+  detectedKills?: Prisma.EventHeroKillUncheckedCreateNestedManyWithoutTimerCreatedByInput
+  mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUncheckedCreateNestedManyWithoutMemberInput
+  npcKillStats?: Prisma.NpcKillStatsUncheckedCreateNestedManyWithoutMemberInput
+}
+
+export type MemberCreateOrConnectWithoutNpcKillStatsBucketsInput = {
+  where: Prisma.MemberWhereUniqueInput
+  create: Prisma.XOR<Prisma.MemberCreateWithoutNpcKillStatsBucketsInput, Prisma.MemberUncheckedCreateWithoutNpcKillStatsBucketsInput>
+}
+
+export type MemberUpsertWithoutNpcKillStatsBucketsInput = {
+  update: Prisma.XOR<Prisma.MemberUpdateWithoutNpcKillStatsBucketsInput, Prisma.MemberUncheckedUpdateWithoutNpcKillStatsBucketsInput>
+  create: Prisma.XOR<Prisma.MemberCreateWithoutNpcKillStatsBucketsInput, Prisma.MemberUncheckedCreateWithoutNpcKillStatsBucketsInput>
+  where?: Prisma.MemberWhereInput
+}
+
+export type MemberUpdateToOneWithWhereWithoutNpcKillStatsBucketsInput = {
+  where?: Prisma.MemberWhereInput
+  data: Prisma.XOR<Prisma.MemberUpdateWithoutNpcKillStatsBucketsInput, Prisma.MemberUncheckedUpdateWithoutNpcKillStatsBucketsInput>
+}
+
+export type MemberUpdateWithoutNpcKillStatsBucketsInput = {
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumMemberTypeFieldUpdateOperationsInput | $Enums.MemberType
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  banner?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  globalUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastDiscordSyncAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastDiscordAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastDiscordStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  guild?: Prisma.GuildUpdateOneRequiredWithoutMembersNestedInput
+  roles?: Prisma.RoleUpdateManyWithoutMembersNestedInput
+  timers?: Prisma.TimerUpdateManyWithoutMemberNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutActorMemberNestedInput
+  restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutTimerCreatedByNestedInput
+  lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutMemberNestedInput
+  comments?: Prisma.LootCommentUpdateManyWithoutMemberNestedInput
+  assignedEventMaps?: Prisma.EventMapUpdateManyWithoutAssignedMembersNestedInput
+  eventPresenceLogs?: Prisma.EventPresenceLogUpdateManyWithoutMemberNestedInput
+  eventKillPoints?: Prisma.EventKillPointUpdateManyWithoutMemberNestedInput
+  eventRankings?: Prisma.EventRankingUpdateManyWithoutMemberNestedInput
+  detectedKills?: Prisma.EventHeroKillUpdateManyWithoutTimerCreatedByNestedInput
+  mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUpdateManyWithoutMemberNestedInput
+  npcKillStats?: Prisma.NpcKillStatsUpdateManyWithoutMemberNestedInput
+}
+
+export type MemberUncheckedUpdateWithoutNpcKillStatsBucketsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  guildId?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumMemberTypeFieldUpdateOperationsInput | $Enums.MemberType
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  banner?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  globalUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastDiscordSyncAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastDiscordAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastDiscordStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  roles?: Prisma.RoleUncheckedUpdateManyWithoutMembersNestedInput
+  timers?: Prisma.TimerUncheckedUpdateManyWithoutMemberNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutActorMemberNestedInput
+  restoredTimerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutTimerCreatedByNestedInput
+  lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutMemberNestedInput
+  comments?: Prisma.LootCommentUncheckedUpdateManyWithoutMemberNestedInput
+  assignedEventMaps?: Prisma.EventMapUncheckedUpdateManyWithoutAssignedMembersNestedInput
+  eventPresenceLogs?: Prisma.EventPresenceLogUncheckedUpdateManyWithoutMemberNestedInput
+  eventKillPoints?: Prisma.EventKillPointUncheckedUpdateManyWithoutMemberNestedInput
+  eventRankings?: Prisma.EventRankingUncheckedUpdateManyWithoutMemberNestedInput
+  detectedKills?: Prisma.EventHeroKillUncheckedUpdateManyWithoutTimerCreatedByNestedInput
+  mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUncheckedUpdateManyWithoutMemberNestedInput
+  npcKillStats?: Prisma.NpcKillStatsUncheckedUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberCreateManyGuildInput = {
@@ -2678,6 +2883,7 @@ export type MemberUpdateWithoutGuildInput = {
   detectedKills?: Prisma.EventHeroKillUpdateManyWithoutTimerCreatedByNestedInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUpdateManyWithoutMemberNestedInput
   npcKillStats?: Prisma.NpcKillStatsUpdateManyWithoutMemberNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberUncheckedUpdateWithoutGuildInput = {
@@ -2707,6 +2913,7 @@ export type MemberUncheckedUpdateWithoutGuildInput = {
   detectedKills?: Prisma.EventHeroKillUncheckedUpdateManyWithoutTimerCreatedByNestedInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUncheckedUpdateManyWithoutMemberNestedInput
   npcKillStats?: Prisma.NpcKillStatsUncheckedUpdateManyWithoutMemberNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberUncheckedUpdateManyWithoutGuildInput = {
@@ -2751,6 +2958,7 @@ export type MemberUpdateWithoutRolesInput = {
   detectedKills?: Prisma.EventHeroKillUpdateManyWithoutTimerCreatedByNestedInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUpdateManyWithoutMemberNestedInput
   npcKillStats?: Prisma.NpcKillStatsUpdateManyWithoutMemberNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberUncheckedUpdateWithoutRolesInput = {
@@ -2780,6 +2988,7 @@ export type MemberUncheckedUpdateWithoutRolesInput = {
   detectedKills?: Prisma.EventHeroKillUncheckedUpdateManyWithoutTimerCreatedByNestedInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUncheckedUpdateManyWithoutMemberNestedInput
   npcKillStats?: Prisma.NpcKillStatsUncheckedUpdateManyWithoutMemberNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberUncheckedUpdateManyWithoutRolesInput = {
@@ -2825,6 +3034,7 @@ export type MemberUpdateWithoutAssignedEventMapsInput = {
   detectedKills?: Prisma.EventHeroKillUpdateManyWithoutTimerCreatedByNestedInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUpdateManyWithoutMemberNestedInput
   npcKillStats?: Prisma.NpcKillStatsUpdateManyWithoutMemberNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberUncheckedUpdateWithoutAssignedEventMapsInput = {
@@ -2854,6 +3064,7 @@ export type MemberUncheckedUpdateWithoutAssignedEventMapsInput = {
   detectedKills?: Prisma.EventHeroKillUncheckedUpdateManyWithoutTimerCreatedByNestedInput
   mapAssignmentHistory?: Prisma.EventMapAssignmentHistoryUncheckedUpdateManyWithoutMemberNestedInput
   npcKillStats?: Prisma.NpcKillStatsUncheckedUpdateManyWithoutMemberNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberUncheckedUpdateManyWithoutAssignedEventMapsInput = {
@@ -2892,6 +3103,7 @@ export type MemberCountOutputType = {
   detectedKills: number
   mapAssignmentHistory: number
   npcKillStats: number
+  npcKillStatsBuckets: number
 }
 
 export type MemberCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2908,6 +3120,7 @@ export type MemberCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions
   detectedKills?: boolean | MemberCountOutputTypeCountDetectedKillsArgs
   mapAssignmentHistory?: boolean | MemberCountOutputTypeCountMapAssignmentHistoryArgs
   npcKillStats?: boolean | MemberCountOutputTypeCountNpcKillStatsArgs
+  npcKillStatsBuckets?: boolean | MemberCountOutputTypeCountNpcKillStatsBucketsArgs
 }
 
 /**
@@ -3011,6 +3224,13 @@ export type MemberCountOutputTypeCountNpcKillStatsArgs<ExtArgs extends runtime.T
   where?: Prisma.NpcKillStatsWhereInput
 }
 
+/**
+ * MemberCountOutputType without action
+ */
+export type MemberCountOutputTypeCountNpcKillStatsBucketsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.NpcKillStatsBucketWhereInput
+}
+
 
 export type MemberSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -3041,6 +3261,7 @@ export type MemberSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   detectedKills?: boolean | Prisma.Member$detectedKillsArgs<ExtArgs>
   mapAssignmentHistory?: boolean | Prisma.Member$mapAssignmentHistoryArgs<ExtArgs>
   npcKillStats?: boolean | Prisma.Member$npcKillStatsArgs<ExtArgs>
+  npcKillStatsBuckets?: boolean | Prisma.Member$npcKillStatsBucketsArgs<ExtArgs>
   _count?: boolean | Prisma.MemberCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["member"]>
 
@@ -3113,6 +3334,7 @@ export type MemberInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   detectedKills?: boolean | Prisma.Member$detectedKillsArgs<ExtArgs>
   mapAssignmentHistory?: boolean | Prisma.Member$mapAssignmentHistoryArgs<ExtArgs>
   npcKillStats?: boolean | Prisma.Member$npcKillStatsArgs<ExtArgs>
+  npcKillStatsBuckets?: boolean | Prisma.Member$npcKillStatsBucketsArgs<ExtArgs>
   _count?: boolean | Prisma.MemberCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type MemberIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -3139,6 +3361,7 @@ export type $MemberPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     detectedKills: Prisma.$EventHeroKillPayload<ExtArgs>[]
     mapAssignmentHistory: Prisma.$EventMapAssignmentHistoryPayload<ExtArgs>[]
     npcKillStats: Prisma.$NpcKillStatsPayload<ExtArgs>[]
+    npcKillStatsBuckets: Prisma.$NpcKillStatsBucketPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -3563,6 +3786,7 @@ export interface Prisma__MemberClient<T, Null = never, ExtArgs extends runtime.T
   detectedKills<T extends Prisma.Member$detectedKillsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Member$detectedKillsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EventHeroKillPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   mapAssignmentHistory<T extends Prisma.Member$mapAssignmentHistoryArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Member$mapAssignmentHistoryArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EventMapAssignmentHistoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   npcKillStats<T extends Prisma.Member$npcKillStatsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Member$npcKillStatsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NpcKillStatsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  npcKillStatsBuckets<T extends Prisma.Member$npcKillStatsBucketsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Member$npcKillStatsBucketsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NpcKillStatsBucketPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -4316,6 +4540,30 @@ export type Member$npcKillStatsArgs<ExtArgs extends runtime.Types.Extensions.Int
   take?: number
   skip?: number
   distinct?: Prisma.NpcKillStatsScalarFieldEnum | Prisma.NpcKillStatsScalarFieldEnum[]
+}
+
+/**
+ * Member.npcKillStatsBuckets
+ */
+export type Member$npcKillStatsBucketsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the NpcKillStatsBucket
+   */
+  select?: Prisma.NpcKillStatsBucketSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the NpcKillStatsBucket
+   */
+  omit?: Prisma.NpcKillStatsBucketOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.NpcKillStatsBucketInclude<ExtArgs> | null
+  where?: Prisma.NpcKillStatsBucketWhereInput
+  orderBy?: Prisma.NpcKillStatsBucketOrderByWithRelationInput | Prisma.NpcKillStatsBucketOrderByWithRelationInput[]
+  cursor?: Prisma.NpcKillStatsBucketWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.NpcKillStatsBucketScalarFieldEnum | Prisma.NpcKillStatsBucketScalarFieldEnum[]
 }
 
 /**

@@ -5,6 +5,7 @@ import {
   intFromString,
 } from "@lootlog/nest-shared/validators";
 import { NpcType } from "src/generated/prisma/client";
+import { KillStatsPeriodSchema } from "../utils/kill-stats-period";
 
 const GetUserNpcKillsSchema = z
   .object({
@@ -17,6 +18,7 @@ const GetUserNpcKillsSchema = z
     sortBy: z.enum(["kills", "level"]).optional(),
     minLvl: intFromString({ min: 0, max: 500 }).optional(),
     maxLvl: intFromString({ min: 0, max: 500 }).optional(),
+    period: KillStatsPeriodSchema.optional(),
   })
   .refine(
     (data) =>

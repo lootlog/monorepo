@@ -59,10 +59,12 @@ export const throwForbiddenRouteError = (message = ""): never => {
   throw forbiddenError;
 };
 
-export const throwNotFoundIfResponseMatches = (error: unknown) => {
+export const rethrowNotFoundOrError = (error: unknown): never => {
   if (getRouteErrorStatus(error) === 404) {
     throw notFound({ throw: true });
   }
 
   throw error;
 };
+
+export const throwNotFoundIfResponseMatches = rethrowNotFoundOrError;

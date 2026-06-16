@@ -8,6 +8,7 @@
 import type { KillsControllerGetUserNpcKillsNpcTypesItem } from './kills-controller-get-user-npc-kills-npc-types-item';
 import type { KillsControllerGetUserNpcKillsSortBy } from './kills-controller-get-user-npc-kills-sort-by';
 import type { KillsControllerGetUserNpcKillsSortOrder } from './kills-controller-get-user-npc-kills-sort-order';
+import type { KillStatsPeriod } from './kill-stats-period';
 
 export type KillsControllerGetUserNpcKillsParams = {
 npcTypes?: KillsControllerGetUserNpcKillsNpcTypesItem[];
@@ -35,4 +36,5 @@ minLvl?: number;
  * @maximum 500
  */
 maxLvl?: number;
+period?: KillStatsPeriod;
 };

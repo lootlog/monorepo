@@ -4,23 +4,31 @@ import { Label } from "@lootlog/ui/components/label";
 import { Input } from "@lootlog/ui/components/input";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { MobileFiltersDrawer } from "@/components/filters/mobile-filters-drawer";
+import {
+  KillStatsPeriodSelect,
+  type KillStatsPeriod,
+} from "@/features/kills/components/kill-stats-period-select";
 
 type StatsOverviewFiltersMobileProps = {
   world: string | null;
   minLvl: string;
   maxLvl: string;
+  period: KillStatsPeriod;
   onWorldChange: (value: string | null) => void;
   onMinLvlChange: (value: string) => void;
   onMaxLvlChange: (value: string) => void;
+  onPeriodChange: (value: KillStatsPeriod) => void;
 };
 
 export const StatsOverviewFiltersMobile = ({
   world,
   minLvl,
   maxLvl,
+  period,
   onWorldChange,
   onMinLvlChange,
   onMaxLvlChange,
+  onPeriodChange,
 }: StatsOverviewFiltersMobileProps) => {
   const { t } = useTranslation();
 
@@ -51,6 +59,15 @@ export const StatsOverviewFiltersMobile = ({
           onValueChange={onWorldChange}
           showAllOption
           width="w-full"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label>{t("kills.filters.period")}</Label>
+        <KillStatsPeriodSelect
+          value={period}
+          onValueChange={onPeriodChange}
+          className="w-full"
         />
       </div>
 

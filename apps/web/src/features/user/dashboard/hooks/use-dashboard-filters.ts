@@ -1,16 +1,19 @@
 import { useLocalStorage } from "usehooks-ts";
 import type { NpcType } from "@/features/user/kills/npc-types";
+import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
 
 const DASHBOARD_FILTERS_STORAGE_KEY = "lootlog-home-filters";
 
 export type DashboardFilters = {
   world: string | undefined;
   npcType: NpcType;
+  period: KillStatsPeriod;
 };
 
 const DEFAULT_FILTERS: DashboardFilters = {
   world: undefined,
   npcType: "ELITE2",
+  period: "all",
 };
 
 export const useDashboardFilters = () => {
@@ -28,7 +31,10 @@ export const useDashboardFilters = () => {
   };
 
   return {
-    filters,
+    filters: {
+      ...filters,
+      period: filters.period ?? "all",
+    },
     setFilters,
     updateFilters,
     resetFilters,
