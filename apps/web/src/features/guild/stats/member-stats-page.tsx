@@ -45,6 +45,10 @@ import {
   buildMemberKillsParams,
   DEFAULT_MEMBER_KILLS_LIMIT,
 } from "./utils/build-stats-query-params";
+import {
+  KillStatsPeriodSelect,
+  type KillStatsPeriod,
+} from "@/features/kills/components/kill-stats-period-select";
 
 const ITEMS_PER_PAGE = DEFAULT_MEMBER_KILLS_LIMIT;
 
@@ -89,6 +93,7 @@ export const MemberStatsPage: React.FC = () => {
     setMinLvl,
     setMaxLvl,
     setNpcType,
+    setPeriod,
   } = useStatsSettings("member");
   const { data, isLoading } = useKillsControllerGetMemberKills(
     {
@@ -106,6 +111,7 @@ export const MemberStatsPage: React.FC = () => {
       cursor,
       minLvl: debouncedMinLvl,
       maxLvl: debouncedMaxLvl,
+      period: settings.period,
     }),
   );
   const { data: guildMembers } = useMembersControllerGetGuildMemberReferences(
@@ -132,6 +138,11 @@ export const MemberStatsPage: React.FC = () => {
 
   const handleMaxLvlChange = (value: string) => {
     setMaxLvl(value);
+    setCursor(0);
+  };
+
+  const handlePeriodChange = (value: KillStatsPeriod) => {
+    setPeriod(value);
     setCursor(0);
   };
 
@@ -208,6 +219,13 @@ export const MemberStatsPage: React.FC = () => {
 
   const overview = data?.overview;
   const npcs = data?.npcs ?? [];
+  const hasActiveFilters =
+    Boolean(settings.world) ||
+    Boolean(settings.minLvl) ||
+    Boolean(settings.maxLvl) ||
+    settings.period !== "all" ||
+    settings.npcType !== "ALL" ||
+    Boolean(debouncedSearch);
   const pagination = data?.pagination;
   const total = pagination?.total ?? 0;
   const hasNext = pagination?.hasNext ?? false;
@@ -281,10 +299,12 @@ export const MemberStatsPage: React.FC = () => {
                 npcType={settings.npcType}
                 minLvl={settings.minLvl}
                 maxLvl={settings.maxLvl}
+                period={settings.period}
                 onWorldChange={handleWorldChange}
                 onNpcTypeChange={handleNpcTypeChange}
                 onMinLvlChange={handleMinLvlChange}
                 onMaxLvlChange={handleMaxLvlChange}
+                onPeriodChange={handlePeriodChange}
               />
             </div>
             <div className="hidden lg:flex items-center gap-2 flex-wrap">
@@ -309,6 +329,10 @@ export const MemberStatsPage: React.FC = () => {
                 onValueChange={handleWorldChange}
                 showAllOption
                 width="w-[160px]"
+              />
+              <KillStatsPeriodSelect
+                value={settings.period}
+                onValueChange={handlePeriodChange}
               />
               <Select
                 value={settings.npcType ?? "ALL"}
@@ -351,7 +375,11 @@ export const MemberStatsPage: React.FC = () => {
                 <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">
                   <Users className="h-12 w-12 text-muted-foreground/50" />
                   <p className="text-muted-foreground">
-                    {t("kills.memberStats.noData")}
+                    {t(
+                      hasActiveFilters
+                        ? "kills.memberStats.filteredNoData"
+                        : "kills.memberStats.noData",
+                    )}
                   </p>
                 </div>
               ) : (

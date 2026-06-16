@@ -16,6 +16,10 @@ import {
   getKillsControllerGetUserKillStatsQueryKey,
   useKillsControllerGetUserKillStats,
 } from "@/lib/api/generated/main/kills/kills";
+import {
+  KillStatsPeriodSelect,
+  type KillStatsPeriod,
+} from "@/features/kills/components/kill-stats-period-select";
 
 export type KillsFiltersState = {
   world?: string;
@@ -23,6 +27,7 @@ export type KillsFiltersState = {
   search?: string;
   minLvl?: number;
   maxLvl?: number;
+  period: KillStatsPeriod;
 };
 
 type KillsFiltersProps = {
@@ -32,6 +37,7 @@ type KillsFiltersProps = {
   onSearchChange: (search: string) => void;
   onMinLvlChange: (minLvl: string) => void;
   onMaxLvlChange: (maxLvl: string) => void;
+  onPeriodChange: (period: KillStatsPeriod) => void;
 };
 
 export const KillsFilters: React.FC<KillsFiltersProps> = ({
@@ -41,6 +47,7 @@ export const KillsFilters: React.FC<KillsFiltersProps> = ({
   onSearchChange,
   onMinLvlChange,
   onMaxLvlChange,
+  onPeriodChange,
 }) => {
   const { t } = useTranslation();
   const { data } = useKillsControllerGetUserKillStats(undefined, {
@@ -121,6 +128,12 @@ export const KillsFilters: React.FC<KillsFiltersProps> = ({
             ))}
           </SelectContent>
         </Select>
+
+        <KillStatsPeriodSelect
+          value={filters.period}
+          onValueChange={onPeriodChange}
+          className="w-full md:w-[140px] h-9"
+        />
 
         <div className="flex items-center gap-1.5">
           <Input

@@ -149,11 +149,12 @@ type MemberRankingPodiumCardProps = {
   data?: GuildKillStatsResponseDtoOutputMemberRankingItem[];
   isLoading?: boolean;
   guildId?: string;
+  hasActiveFilters?: boolean;
 };
 
 export const MemberRankingPodiumCard: React.FC<
   MemberRankingPodiumCardProps
-> = ({ data, isLoading, guildId }) => {
+> = ({ data, isLoading, guildId, hasActiveFilters = false }) => {
   const { t } = useTranslation();
   const [selectedNpcType, setSelectedNpcType] = useLocalStorage<NpcType>(
     STORAGE_KEY,
@@ -224,7 +225,11 @@ export const MemberRankingPodiumCard: React.FC<
         <div className="flex-1 flex items-center justify-center">
           {sortedByType.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">
-              {t("kills.memberRanking.noData")}
+              {t(
+                hasActiveFilters
+                  ? "kills.memberRanking.filteredNoData"
+                  : "kills.memberRanking.noData",
+              )}
             </p>
           ) : (
             <div className="flex items-end justify-center gap-2">

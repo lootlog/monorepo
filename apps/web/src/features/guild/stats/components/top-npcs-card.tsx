@@ -17,6 +17,7 @@ import { NpcTile } from "@/components/tiles/npc-tile";
 import { cn } from "@lootlog/ui/lib/utils";
 import { useKillsControllerGetGuildTopNpcs } from "@/lib/api/generated/main/kills/kills";
 import type { NpcType } from "@/lib/api/generated/main/model/npc-type";
+import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
 import { TRACKABLE_NPC_TYPES } from "../constants";
 import { buildGuildTopNpcsParams } from "../utils/build-stats-query-params";
 
@@ -39,12 +40,14 @@ type TopNpcsCardProps = {
   world?: string;
   minLvl?: number;
   maxLvl?: number;
+  period?: KillStatsPeriod;
 };
 
 export const TopNpcsCard: React.FC<TopNpcsCardProps> = ({
   world,
   minLvl,
   maxLvl,
+  period,
 }) => {
   const { t } = useTranslation();
   const guildId = useGuildId();
@@ -61,6 +64,7 @@ export const TopNpcsCard: React.FC<TopNpcsCardProps> = ({
       world,
       minLvl,
       maxLvl,
+      period,
     }),
   );
 
@@ -92,6 +96,11 @@ export const TopNpcsCard: React.FC<TopNpcsCardProps> = ({
   }
 
   const topNpcs = data?.topNpcs?.slice(0, 5) ?? [];
+  const hasActiveFilters =
+    Boolean(world) ||
+    Boolean(minLvl) ||
+    Boolean(maxLvl) ||
+    (period !== undefined && period !== "all");
 
   if (!guildId) {
     return null;
@@ -124,7 +133,11 @@ export const TopNpcsCard: React.FC<TopNpcsCardProps> = ({
         {topNpcs.length === 0 ? (
           <div className="flex-1 flex items-center justify-center">
             <p className="text-sm text-muted-foreground text-center">
-              {t("kills.topNpcs.noData")}
+              {t(
+                hasActiveFilters
+                  ? "kills.topNpcs.filteredNoData"
+                  : "kills.topNpcs.noData",
+              )}
             </p>
           </div>
         ) : (

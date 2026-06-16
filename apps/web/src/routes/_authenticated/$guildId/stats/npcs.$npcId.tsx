@@ -5,7 +5,7 @@ import { buildNpcKillersParams } from "@/features/guild/stats/utils/build-stats-
 import { getKillsControllerGetNpcKillersQueryOptions } from "@/lib/api/generated/main/kills/kills";
 import { getMembersControllerGetGuildMemberReferencesQueryOptions } from "@/lib/api/generated/main/members/members";
 import {
-  throwNotFoundIfResponseMatches,
+  rethrowNotFoundOrError,
   withRouteLoaderCancellation,
 } from "@/lib/router/route-errors";
 
@@ -47,7 +47,7 @@ export const Route = createFileRoute(
 
         return null;
       } catch (error) {
-        throwNotFoundIfResponseMatches(error);
+        rethrowNotFoundOrError(error);
       }
     }),
   component: NpcKillersPage,
