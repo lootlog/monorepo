@@ -20,8 +20,8 @@ export class ConnectionService {
     request: Socket["request"],
     auth?: unknown,
   ): ConnectionMetadata {
-    const discordId = (request.headers["x-auth-discord-id"] as string) || null;
-    const userId = (request.headers["x-auth-user-id"] as string) || null;
+    const discordId = this.getHeaderValue(request.headers["x-auth-discord-id"]);
+    const userId = this.getHeaderValue(request.headers["x-auth-user-id"]);
     const platform = this.determineUserPlatform(request.headers.origin);
     const authDevPermissionOverride =
       this.isDevPermissionOverrideEnabled() &&
@@ -89,5 +89,15 @@ export class ConnectionService {
     }
 
     return env.DEV_PERMISSION_OVERRIDE_ENABLED === true;
+  }
+
+  private getHeaderValue(
+    headerValue: string | string[] | undefined,
+  ): string | null {
+    if (Array.isArray(headerValue)) {
+      return headerValue[0] ?? null;
+    }
+
+    return headerValue ?? null;
   }
 }
