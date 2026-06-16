@@ -31,6 +31,7 @@ export type MapStatus =
   | "ASSIGNED_PRESENT"
   | "ASSIGNED_ABSENT"
   | "ASSIGNED_AFK"
+  | "ASSIGNED_UNKNOWN"
   | "UNASSIGNED";
 
 export const STATUS_STYLES: Record<
@@ -54,6 +55,12 @@ export const STATUS_STYLES: Record<
     border: "border-orange-500/30",
     label: "AFK",
     dot: "bg-orange-500",
+  },
+  ASSIGNED_UNKNOWN: {
+    bg: "bg-muted/30",
+    border: "border-border",
+    label: "Przypisany",
+    dot: "bg-muted-foreground/50",
   },
   UNASSIGNED: {
     bg: "bg-destructive/10",
@@ -97,7 +104,11 @@ export const getMapStatus = (
     return "UNASSIGNED";
   }
 
-  if (!presenceData || presenceData.size === 0) {
+  if (!presenceData) {
+    return "ASSIGNED_UNKNOWN";
+  }
+
+  if (presenceData.size === 0) {
     return "ASSIGNED_ABSENT";
   }
 

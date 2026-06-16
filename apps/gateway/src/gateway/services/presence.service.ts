@@ -70,7 +70,7 @@ export class PresenceService {
         excludeSourceSocket: true,
       });
 
-      this.emitPresenceToPresenceRoom({
+      this.emitPresenceToOnlinePlayersRoom({
         server,
         sourceClient: client,
         guildId: parsed.guildId,
@@ -129,7 +129,7 @@ export class PresenceService {
         },
       });
 
-      this.emitPresenceToPresenceRoom({
+      this.emitPresenceToOnlinePlayersRoom({
         server,
         sourceClient: client,
         guildId,
@@ -191,7 +191,7 @@ export class PresenceService {
         },
       });
 
-      this.emitPresenceToPresenceRoom({
+      this.emitPresenceToOnlinePlayersRoom({
         server,
         sourceClient: client,
         guildId,
@@ -235,14 +235,23 @@ export class PresenceService {
     client: Socket,
     guildId: string,
     world?: string,
-  ): Promise<Record<string, PlayerPresence[]>> {
+  ): Promise<PresenceFetchResponse<Record<string, PlayerPresence[]>>> {
     const presenceRoom = buildRoomName(guildId, "presence");
+    const onlinePlayersRoom = buildRoomName(guildId, "online-players");
 
-    if (!client.rooms.has(presenceRoom)) {
+    if (
+      !client.rooms.has(presenceRoom) ||
+      !client.rooms.has(onlinePlayersRoom)
+    ) {
       this.logger.warn(
-        `User ${client.data?.discordId} tried to fetch guild presence for guild ${guildId} without access`,
+        `User ${client.data?.discordId} tried to fetch event presence for guild ${guildId} without online players access`,
       );
-      return {};
+      return this.createOnlinePlayersForbiddenResponse();
+    }
+
+    const viewerGuildData = this.getSocketGuildData(client, guildId);
+    if (!this.canViewOnlinePlayers(client, viewerGuildData)) {
+      return this.createOnlinePlayersForbiddenResponse();
     }
 
     const socketsInRoom = await server.in(presenceRoom).fetchSockets();
@@ -261,7 +270,10 @@ export class PresenceService {
       }
     }
 
-    return result;
+    return {
+      status: "success",
+      players: result,
+    };
   }
 
   async fetchOnlinePlayersPresence(
@@ -372,7 +384,7 @@ export class PresenceService {
         },
       });
 
-      this.emitPresenceToPresenceRoom({
+      this.emitPresenceToOnlinePlayersRoom({
         server,
         sourceClient: client,
         guildId,
@@ -453,43 +465,6 @@ export class PresenceService {
       .catch((error) => {
         this.logger.error(
           `Failed to emit online players presence for guild ${guildId}: ${error.message}`,
-          error.stack,
-        );
-      });
-  }
-
-  private emitPresenceToPresenceRoom({
-    server,
-    sourceClient,
-    guildId,
-    event,
-    payload,
-    excludeSourceSocket = false,
-  }: {
-    server: Server;
-    sourceClient: Socket;
-    guildId: string;
-    event: GatewayEvent;
-    payload: Record<string, unknown>;
-    excludeSourceSocket?: boolean;
-  }): void {
-    const presenceRoom = buildRoomName(guildId, "presence");
-
-    server
-      .in(presenceRoom)
-      .fetchSockets()
-      .then((sockets) => {
-        for (const socket of sockets) {
-          if (excludeSourceSocket && socket.id === sourceClient.id) {
-            continue;
-          }
-
-          socket.emit(event, payload);
-        }
-      })
-      .catch((error) => {
-        this.logger.error(
-          `Failed to emit guild presence for guild ${guildId}: ${error.message}`,
           error.stack,
         );
       });
