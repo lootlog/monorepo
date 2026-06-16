@@ -13,8 +13,8 @@ export const Route = createFileRoute(
   "/_authenticated/$guildId/events_/$eventId_",
 )({
   component: EventRouteLayout,
-  loader: ({ context, params }) =>
-    withRouteLoaderCancellation(async () => {
+  loader: ({ abortController, context, params }) =>
+    withRouteLoaderCancellation(abortController, async () => {
       try {
         const [event, rankings] = await Promise.all([
           context.queryClient.ensureQueryData(

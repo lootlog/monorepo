@@ -11,8 +11,8 @@ import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 export const Route = createFileRoute(
   "/_authenticated/@me/battle-panel/battles",
 )({
-  loader: ({ context, location }) =>
-    withRouteLoaderCancellation(async () => {
+  loader: ({ abortController, context, location }) =>
+    withRouteLoaderCancellation(abortController, async () => {
       const search = loadBattlePanelBattlesSearch(location.searchStr);
 
       await Promise.all([

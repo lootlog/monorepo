@@ -26,8 +26,8 @@ export const Route = createFileRoute("/_authenticated/$guildId")({
       guildId: params.guildId,
     };
   },
-  loader: ({ context, params }) =>
-    withRouteLoaderCancellation(async () => {
+  loader: ({ abortController, context, params }) =>
+    withRouteLoaderCancellation(abortController, async () => {
       try {
         const guild = await context.queryClient.ensureQueryData(
           getGuildsControllerGetGuildByIdQueryOptions(

@@ -22,8 +22,8 @@ export const Route = createFileRoute(
   "/_authenticated/@me/battle-panel/statistics",
 )({
   validateSearch: battlePanelStatisticsSearchSchema,
-  loader: ({ context, location }) =>
-    withRouteLoaderCancellation(async () => {
+  loader: ({ abortController, context, location }) =>
+    withRouteLoaderCancellation(abortController, async () => {
       const search = loadBattlePanelStatisticsSearch(location.searchStr);
       const normalizedCharacterId = normalizeBattlePanelCharacterId(
         search.characterId,
