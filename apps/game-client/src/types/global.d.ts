@@ -1,7 +1,8 @@
-import type { Engine, Game, GameHero, GameMap } from "@lootlog/margonem";
+import type { Api, Engine, Game, GameHero, GameMap } from "@lootlog/margonem";
 
 declare global {
   interface Window {
+    API: Api;
     Engine: Engine;
     _g: Function;
     g: Game;
