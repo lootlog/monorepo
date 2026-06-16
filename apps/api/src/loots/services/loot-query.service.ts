@@ -16,7 +16,10 @@ import type { LootQueryResult } from "src/loots/dto/loot-query-result.dto";
 import { LootShareResponseSchema } from "src/shared/dto/loot-response.dto";
 import { DEFAULT_PAGE_LIMIT } from "../config/pagination";
 import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
-import { getProfByShortname } from "src/shared/utils/get-prof-by-shortname";
+import {
+  getProfByShortname,
+  getShortnameByProf,
+} from "src/shared/utils/get-prof-by-shortname";
 
 type LootItemWithSnapshot = Prisma.LootItemGetPayload<{
   include: { itemSnapshot: true };
@@ -29,15 +32,6 @@ type LootPlayerWithSnapshot = Prisma.LootPlayerGetPayload<{
 type LootNpcWithSnapshot = Prisma.LootNpcGetPayload<{
   include: { npcSnapshot: true };
 }>;
-
-const PROFESSION_SHORTNAMES: Record<Profession, string> = {
-  [Profession.BLADE_DANCER]: "b",
-  [Profession.HUNTER]: "h",
-  [Profession.MAGE]: "m",
-  [Profession.PALADIN]: "p",
-  [Profession.TRACKER]: "t",
-  [Profession.WARRIOR]: "w",
-};
 
 @Injectable()
 export class LootQueryService {
@@ -622,7 +616,7 @@ export class LootQueryService {
               ...allowedProfessions.map((profession) => ({
                 statsSnapshot: {
                   path: ["reqp"],
-                  string_contains: PROFESSION_SHORTNAMES[profession],
+                  string_contains: getShortnameByProf(profession),
                 },
               })),
             ],
