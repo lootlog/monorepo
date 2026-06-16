@@ -29,11 +29,7 @@ export const isDevPermissionOverrideEnabled = () => {
     return false;
   }
 
-  return (
-    env.DEV_PERMISSION_OVERRIDE_ENABLED ||
-    env.ENV === RuntimeEnvironment.LOCAL ||
-    env.ENV === RuntimeEnvironment.DEV
-  );
+  return env.DEV_PERMISSION_OVERRIDE_ENABLED === true;
 };
 
 export const parseDevPermissionOverrideHeader = (
