@@ -131,6 +131,12 @@ const lootMatchesParams = (
   }
 
   if (
+    !loot.items.some((item) => includesAll(params.professions, item.prof ?? []))
+  ) {
+    return false;
+  }
+
+  if (
     !includesAll(
       params.itemNames,
       loot.items.map((item) => item.name),
@@ -312,6 +318,8 @@ export const LootsList: FC = () => {
     npcs: filters.npcs.length > 0 ? filters.npcs : undefined,
     npcTypes: filters.npcTypes.length > 0 ? filters.npcTypes : undefined,
     rarities: filters.rarities.length > 0 ? filters.rarities : undefined,
+    professions:
+      filters.professions.length > 0 ? filters.professions : undefined,
     players: filters.players.length > 0 ? filters.players : undefined,
     npcLevelMin: parseOptionalNumber(filters.npcLevelMin),
     npcLevelMax: parseOptionalNumber(filters.npcLevelMax),
