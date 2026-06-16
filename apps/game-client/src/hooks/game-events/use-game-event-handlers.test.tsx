@@ -31,6 +31,14 @@ vi.mock("@/lib/event-dispatcher", () => ({
   },
 }));
 
+vi.mock("./use-character-tooltip-catching-guilds", () => ({
+  useCharacterTooltipCatchingGuilds: vi.fn(),
+}));
+
+vi.mock("./use-other-catching-guild-glow", () => ({
+  useOtherCatchingGuildGlow: vi.fn(),
+}));
+
 import { useGameEventHandlers } from "./use-game-event-handlers";
 
 describe("useGameEventHandlers", () => {

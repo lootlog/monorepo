@@ -1,3 +1,5 @@
+import type { CharacterTooltipOwner } from "./tooltip.js";
+
 export type GameOther = {
   account: number;
   icon: string;
@@ -7,7 +9,7 @@ export type GameOther = {
   nick: string;
 };
 
-export type Other = {
+export type Other = CharacterTooltipOwner & {
   d: GameOther;
 };
 

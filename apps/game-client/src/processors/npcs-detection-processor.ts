@@ -10,7 +10,7 @@ import {
 } from "@/store/npc-detector.store";
 import { useWindowsStore } from "@/store/windows.store";
 import type { GameEvent } from "@lootlog/margonem/game-events";
-import type { GameNpc } from "@lootlog/margonem";
+import type { GameNpc } from "@lootlog/margonem/npcs";
 import { NpcType } from "@/api/npcs.api";
 import { getNpcIconFromEvent } from "@/utils/game/events/get-npc-icon-from-event";
 import { getNpcTplFromEvent } from "@/utils/game/events/get-npc-tpl-from-event";

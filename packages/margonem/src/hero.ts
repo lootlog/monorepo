@@ -1,4 +1,6 @@
-export interface Hero {
+import type { CharacterTooltipOwner } from "./tooltip.js";
+
+export interface Hero extends CharacterTooltipOwner {
   d: GameHero;
 }
 

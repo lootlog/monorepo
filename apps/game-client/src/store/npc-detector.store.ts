@@ -1,4 +1,4 @@
-import type { GameNpc } from "@lootlog/margonem";
+import type { GameNpc } from "@lootlog/margonem/npcs";
 import { create } from "zustand";
 
 export type GameNpcWithLocation = GameNpc & {
