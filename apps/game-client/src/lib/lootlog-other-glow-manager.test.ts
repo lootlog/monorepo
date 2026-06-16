@@ -37,6 +37,22 @@ function createOther(id: string): Other {
   } as unknown as Other;
 }
 
+function moveOther(
+  other: Other,
+  position: { rx: number; ry: number; x: number; y: number },
+): void {
+  const runtimeOther = other as Other & {
+    d: Other["d"] & { x?: number; y?: number };
+    rx?: number;
+    ry?: number;
+  };
+
+  runtimeOther.rx = position.rx;
+  runtimeOther.ry = position.ry;
+  runtimeOther.d.x = position.x;
+  runtimeOther.d.y = position.y;
+}
+
 function setRuntime(drawables: unknown[] = ["base"]): ReturnType<typeof vi.fn> {
   const getDrawableList = vi.fn(() => drawables);
 
@@ -74,6 +90,7 @@ describe("lootlogOtherGlowManager", () => {
 
   afterEach(() => {
     lootlogOtherGlowManager.cleanup();
+    vi.restoreAllMocks();
     Object.defineProperty(window, "Engine", {
       configurable: true,
       value: originalWindowEngine,
@@ -115,6 +132,55 @@ describe("lootlogOtherGlowManager", () => {
     lootlogOtherGlowManager.clear();
 
     expect(getRuntimeDrawableList()).toEqual(["base"]);
+  });
+
+  it("updates managed glow position before returning Engine.others drawable list", () => {
+    const other = createOther("617");
+
+    lootlogOtherGlowManager.install();
+    lootlogOtherGlowManager.setGlow(other, LOOTLOG_OTHER_GLOW_BLUE);
+
+    moveOther(other, { rx: 13, ry: 14, x: 13, y: 14 });
+    getRuntimeDrawableList();
+
+    expect(lootlogOtherGlowManager.getGlowPosition("617")).toEqual({
+      x: 13,
+      y: 14,
+    });
+    expect(lootlogOtherGlowManager.getGlowOrder("617")).toBe(14.1);
+  });
+
+  it("draws managed glow using the latest runtime other position", () => {
+    const other = createOther("617");
+    const drawImage = vi.fn();
+    const context = {
+      drawImage,
+      fillRect: vi.fn(),
+      fillStyle: "",
+      globalCompositeOperation: "",
+    } as unknown as CanvasRenderingContext2D;
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(
+      context,
+    );
+
+    lootlogOtherGlowManager.install();
+    lootlogOtherGlowManager.setGlow(other, LOOTLOG_OTHER_GLOW_BLUE);
+    const glow = getRuntimeDrawableList()[1] as {
+      draw: (ctx: CanvasRenderingContext2D) => void;
+    };
+
+    drawImage.mockClear();
+    moveOther(other, { rx: 20, ry: 21, x: 20, y: 21 });
+
+    glow.draw(context);
+
+    expect(drawImage).toHaveBeenLastCalledWith(
+      expect.any(HTMLCanvasElement),
+      637,
+      652,
+      36,
+      52,
+    );
   });
 
   it("suppresses native Margonem other glows while keeping other drawables and Lootlog glows", () => {
