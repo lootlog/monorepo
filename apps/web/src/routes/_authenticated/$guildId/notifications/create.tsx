@@ -9,8 +9,8 @@ export const Route = createFileRoute(
 )({
   component: NotificationRuleFormPage,
   pendingComponent: NotificationCreateSkeleton,
-  loader: ({ context, params }) =>
-    withRouteLoaderCancellation(async () => {
+  loader: ({ abortController, context, params }) =>
+    withRouteLoaderCancellation(abortController, async () => {
       await context.queryClient.ensureQueryData(
         getRolesControllerGetGuildRolesQueryOptions({
           guildId: params.guildId,
