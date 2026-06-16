@@ -16,9 +16,10 @@ import {
   useReservationsControllerCreateReservation,
 } from "@/lib/api/generated/main/reservations/reservations";
 import {
-  getDurationMinutes,
   type ReservationSettings,
+  validateReservationDateRange,
 } from "./reservation-settings";
+import { getReservationValidationMessage } from "./reservation-validation-message";
 
 type ReservationQuickAddPopoverProps = {
   start: Date;
@@ -64,13 +65,15 @@ export const ReservationQuickAddPopover: React.FC<
   const handleCreate = async () => {
     if (!currentUserId || !reservationKey) return;
 
-    if (
-      getDurationMinutes(start, end) > settings.reservationMaxDurationMinutes
-    ) {
+    const validationError = validateReservationDateRange({
+      fromDate: start,
+      toDate: end,
+      settings,
+    });
+
+    if (validationError) {
       toast.error(
-        t("reservations.schedule.validation.maximumDuration", {
-          minutes: settings.reservationMaxDurationMinutes,
-        }),
+        getReservationValidationMessage(validationError, t, settings),
       );
       return;
     }

@@ -29,10 +29,14 @@ import {
   useReservationsControllerCreateReservation,
 } from "@/lib/api/generated/main/reservations/reservations";
 import {
-  getDurationMinutes,
-  isDateAlignedToStep,
+  ceilDateToReservationStep,
+  floorDateToReservationStep,
+  getReservationEarliestStartDate,
+  getReservationLatestStartDate,
   type ReservationSettings,
+  validateReservationDateRange,
 } from "./reservation-settings";
+import { getReservationValidationMessage } from "./reservation-validation-message";
 
 type CreateReservationDialogProps = {
   open: boolean;
@@ -96,6 +100,32 @@ const CreateReservationDialogContent: React.FC<
   const [isFromPickerOpen, setIsFromPickerOpen] = useState(false);
   const [isToPickerOpen, setIsToPickerOpen] = useState(false);
   const [comment, setComment] = useState("");
+  const reservationStartMinDate = ceilDateToReservationStep(
+    getReservationEarliestStartDate(),
+    settings,
+  );
+  const reservationStartMaxDate = floorDateToReservationStep(
+    getReservationLatestStartDate(settings),
+    settings,
+  );
+  const reservationEndMinDate = fromDate
+    ? ceilDateToReservationStep(
+        new Date(
+          fromDate.getTime() +
+            settings.reservationMinDurationMinutes * 60 * 1000,
+        ),
+        settings,
+      )
+    : reservationStartMinDate;
+  const reservationEndMaxDate = fromDate
+    ? floorDateToReservationStep(
+        new Date(
+          fromDate.getTime() +
+            settings.reservationMaxDurationMinutes * 60 * 1000,
+        ),
+        settings,
+      )
+    : undefined;
 
   const createReservationMutation = useReservationsControllerCreateReservation({
     mutation: {
@@ -114,17 +144,21 @@ const CreateReservationDialogContent: React.FC<
   const isCreating = createReservationMutation.isPending;
 
   const handleCreateReservation = async () => {
-    if (!fromDate || !toDate) {
-      toast.error(t("reservations.schedule.validation.timeRangeRequired"), {
-        position: "bottom-right",
-      });
+    const validationError = validateReservationDateRange({
+      fromDate,
+      toDate,
+      settings,
+    });
+
+    if (validationError) {
+      toast.error(
+        getReservationValidationMessage(validationError, t, settings),
+        { position: "bottom-right" },
+      );
       return;
     }
 
-    if (fromDate >= toDate) {
-      toast.error(t("reservations.schedule.validation.endAfterStart"), {
-        position: "bottom-right",
-      });
+    if (!fromDate || !toDate) {
       return;
     }
 
@@ -140,66 +174,6 @@ const CreateReservationDialogContent: React.FC<
 
     if (!currentUserId) {
       toast.error(t("reservations.schedule.validation.userMissing"), {
-        position: "bottom-right",
-      });
-      return;
-    }
-
-    const oneHourAgo = Date.now() - 60 * 60 * 1000;
-    if (fromDate.getTime() < oneHourAgo) {
-      toast.error(t("reservations.schedule.validation.startTooOld"), {
-        position: "bottom-right",
-      });
-      return;
-    }
-
-    const durationMinutes = getDurationMinutes(fromDate, toDate);
-    if (durationMinutes < settings.reservationMinDurationMinutes) {
-      toast.error(
-        t("reservations.schedule.validation.minimumDuration", {
-          minutes: settings.reservationMinDurationMinutes,
-        }),
-        {
-          position: "bottom-right",
-        },
-      );
-      return;
-    }
-
-    if (durationMinutes > settings.reservationMaxDurationMinutes) {
-      toast.error(
-        t("reservations.schedule.validation.maximumDuration", {
-          minutes: settings.reservationMaxDurationMinutes,
-        }),
-        {
-          position: "bottom-right",
-        },
-      );
-      return;
-    }
-
-    const maxAdvanceMs =
-      settings.reservationMaxAdvanceDays * 24 * 60 * 60 * 1000;
-    if (fromDate.getTime() > Date.now() + maxAdvanceMs) {
-      toast.error(
-        t("reservations.schedule.validation.maxAdvance", {
-          days: settings.reservationMaxAdvanceDays,
-        }),
-        {
-          position: "bottom-right",
-        },
-      );
-      return;
-    }
-
-    if (
-      !isDateAlignedToStep(
-        fromDate,
-        settings.reservationTimeGranularityMinutes,
-      ) ||
-      !isDateAlignedToStep(toDate, settings.reservationTimeGranularityMinutes)
-    ) {
-      toast.error(t("reservations.schedule.validation.granularity"), {
         position: "bottom-right",
       });
       return;
@@ -248,7 +222,9 @@ const CreateReservationDialogContent: React.FC<
             <Input
               id="reservation-start-date"
               type="datetime-local"
-              step={settings.reservationTimeGranularityMinutes * 60}
+              step={60}
+              min={formatDateTimeLocalValue(reservationStartMinDate)}
+              max={formatDateTimeLocalValue(reservationStartMaxDate)}
               value={formatDateTimeLocalValue(fromDate)}
               onChange={(event) =>
                 setFromDate(parseDateTimeLocalValue(event.target.value))
@@ -265,7 +241,13 @@ const CreateReservationDialogContent: React.FC<
             <Input
               id="reservation-end-date"
               type="datetime-local"
-              step={settings.reservationTimeGranularityMinutes * 60}
+              step={60}
+              min={formatDateTimeLocalValue(reservationEndMinDate)}
+              max={
+                reservationEndMaxDate
+                  ? formatDateTimeLocalValue(reservationEndMaxDate)
+                  : undefined
+              }
               value={formatDateTimeLocalValue(toDate)}
               onChange={(event) =>
                 setToDate(parseDateTimeLocalValue(event.target.value))
@@ -283,7 +265,9 @@ const CreateReservationDialogContent: React.FC<
             open={isFromPickerOpen}
             setOpen={setIsFromPickerOpen}
             onClear={() => setFromDate(undefined)}
-            minuteStep={settings.reservationTimeGranularityMinutes}
+            minuteStep={1}
+            minDate={reservationStartMinDate}
+            maxDate={reservationStartMaxDate}
           />
           <DatePicker
             label={t("reservations.schedule.dialog.endDate")}
@@ -293,7 +277,9 @@ const CreateReservationDialogContent: React.FC<
             open={isToPickerOpen}
             setOpen={setIsToPickerOpen}
             onClear={() => setToDate(undefined)}
-            minuteStep={settings.reservationTimeGranularityMinutes}
+            minuteStep={1}
+            minDate={reservationEndMinDate}
+            maxDate={reservationEndMaxDate}
           />
         </>
       )}

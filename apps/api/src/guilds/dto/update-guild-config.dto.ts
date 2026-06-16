@@ -10,7 +10,7 @@ const UpdateGuildConfigSchema = z.object({
     .number()
     .int()
     .refine((value) => [5, 10, 15, 30, 60].includes(value), {
-      message: "Nieprawidłowa granularność rezerwacji.",
+      message: "Nieprawidłowy krok siatki rezerwacji.",
     })
     .optional(),
   reservationMaxAdvanceDays: z.number().int().min(1).max(30).optional(),

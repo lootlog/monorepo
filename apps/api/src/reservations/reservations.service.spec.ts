@@ -104,7 +104,7 @@ describe("ReservationsService", () => {
     ).rejects.toThrow("Rezerwacja musi trwać co najmniej 30 minut.");
   });
 
-  it("rejects dates not aligned to guild granularity", async () => {
+  it("accepts dates not aligned to guild grid step", async () => {
     mockPrismaService.guild.findUnique.mockResolvedValue({
       reservationMaxDurationMinutes: 180,
       reservationMinDurationMinutes: 30,
@@ -113,14 +113,19 @@ describe("ReservationsService", () => {
       reservationActiveLimitPerSpot: 3,
     });
 
-    await expect(
-      service.createReservation("guild-123", {
-        ...baseReservation,
-        fromDate: "2026-01-01T11:15:00.000Z",
-        toDate: "2026-01-01T12:15:00.000Z",
+    await service.createReservation("guild-123", {
+      ...baseReservation,
+      fromDate: "2026-01-01T11:33:00.000Z",
+      toDate: "2026-01-01T12:33:00.000Z",
+    });
+
+    expect(mockPrismaService.reservation.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          fromDate: "2026-01-01T11:33:00.000Z",
+          toDate: "2026-01-01T12:33:00.000Z",
+        }),
       }),
-    ).rejects.toThrow(
-      "Rezerwacje muszą zaczynać się i kończyć w kroku co 30 minut.",
     );
   });
 
