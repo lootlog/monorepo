@@ -1,4 +1,4 @@
-import type { Other } from "@lootlog/margonem";
+import type { Other } from "@lootlog/margonem/others";
 import { create } from "zustand";
 import type { UserLootlogPlayerCatchingGuildsResponseDtoOutputGuildsItem } from "@/lib/api/generated/main/model";
 

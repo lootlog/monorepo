@@ -113,34 +113,54 @@ export function useOtherCatchingGuildGlow(): void {
   useEffect(() => {
     if (!isShiftPressed || !selectedGuildId) return;
 
-    const targets = dedupeTargets(
-      Object.values(othersById)
-        .map((other) => getOtherCatchingGuildsTarget(other))
-        .filter((target): target is CharacterTooltipCatchingGuildsTarget =>
-          Boolean(target),
-        ),
-    );
-    const missingTargets = getTargetsMissingSuccessfulCatchingGuilds(
-      targets,
-    ).slice(0, MAX_BATCH_PLAYERS);
+    let cancelled = false;
 
-    if (missingTargets.length === 0) return;
+    const fetchNextMissingTargetsBatch = (): void => {
+      if (cancelled) return;
 
-    applyCatchingGuildsLoading(missingTargets);
+      const targets = dedupeTargets(
+        Object.values(othersById)
+          .map((other) => getOtherCatchingGuildsTarget(other))
+          .filter((target): target is CharacterTooltipCatchingGuildsTarget =>
+            Boolean(target),
+          ),
+      );
+      const missingTargets = getTargetsMissingSuccessfulCatchingGuilds(
+        targets,
+      ).slice(0, MAX_BATCH_PLAYERS);
 
-    void userLootlogConfigControllerGetPlayersCatchingGuilds({
-      players: missingTargets.map((target) => ({
-        accountId: target.accountId,
-        characterId: target.characterId,
-      })),
-    })
-      .then((response) => {
-        for (const player of response.players) {
-          applyCatchingGuildsSuccess(player);
-        }
-      })
-      .catch(() => {
-        applyCatchingGuildsError(missingTargets);
-      });
+      if (missingTargets.length === 0) return;
+
+      applyCatchingGuildsLoading(missingTargets);
+
+      void Promise.resolve(
+        userLootlogConfigControllerGetPlayersCatchingGuilds({
+          players: missingTargets.map((target) => ({
+            accountId: target.accountId,
+            characterId: target.characterId,
+          })),
+        }),
+      )
+        .then((response) => {
+          if (cancelled) return;
+
+          for (const player of response.players) {
+            applyCatchingGuildsSuccess(player);
+          }
+
+          fetchNextMissingTargetsBatch();
+        })
+        .catch(() => {
+          if (!cancelled) {
+            applyCatchingGuildsError(missingTargets);
+          }
+        });
+    };
+
+    fetchNextMissingTargetsBatch();
+
+    return () => {
+      cancelled = true;
+    };
   }, [isShiftPressed, othersById, selectedGuildId]);
 }

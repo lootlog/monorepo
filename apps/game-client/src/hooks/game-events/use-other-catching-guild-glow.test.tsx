@@ -1,6 +1,6 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { Other } from "@lootlog/margonem";
+import type { Other } from "@lootlog/margonem/others";
 import {
   LOOTLOG_OTHER_GLOW_BLUE,
   LOOTLOG_OTHER_GLOW_RED_ORANGE,
@@ -141,6 +141,72 @@ describe("useOtherCatchingGuildGlow", () => {
     expect(lootlogOtherGlowManager.getGlowColor("2")).toBe(
       LOOTLOG_OTHER_GLOW_RED_ORANGE,
     );
+  });
+
+  it("fetches missing targets in multiple batches when more than 100 others are visible", async () => {
+    const others = Object.fromEntries(
+      Array.from({ length: 125 }, (_, index) => {
+        const characterId = String(index + 1);
+        return [characterId, createOther(characterId)];
+      }),
+    );
+    useOthersStore.getState().setMany(others);
+    useSettingsStore.setState({
+      guildIdByCharId: {
+        "hero-1": "guild-blue",
+      },
+    });
+    mocks.getPlayersCatchingGuilds.mockImplementation(
+      ({ players }: { players: Array<{ characterId: string }> }) => ({
+        players: players.map((player) => ({
+          accountId: "9822301",
+          characterId: player.characterId,
+          guilds: [],
+        })),
+      }),
+    );
+
+    renderHook(() => useOtherCatchingGuildGlow());
+
+    act(() => {
+      useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    });
+
+    await waitFor(() => {
+      expect(mocks.getPlayersCatchingGuilds).toHaveBeenCalledTimes(2);
+    });
+    expect(
+      mocks.getPlayersCatchingGuilds.mock.calls[0]?.[0].players,
+    ).toHaveLength(100);
+    expect(
+      mocks.getPlayersCatchingGuilds.mock.calls[1]?.[0].players,
+    ).toHaveLength(25);
+  });
+
+  it("stops fetching further batches after a batch error", async () => {
+    const others = Object.fromEntries(
+      Array.from({ length: 125 }, (_, index) => {
+        const characterId = String(index + 1);
+        return [characterId, createOther(characterId)];
+      }),
+    );
+    useOthersStore.getState().setMany(others);
+    useSettingsStore.setState({
+      guildIdByCharId: {
+        "hero-1": "guild-blue",
+      },
+    });
+    mocks.getPlayersCatchingGuilds.mockRejectedValue(new Error("broken"));
+
+    renderHook(() => useOtherCatchingGuildGlow());
+
+    act(() => {
+      useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    });
+
+    await waitFor(() => {
+      expect(mocks.getPlayersCatchingGuilds).toHaveBeenCalledOnce();
+    });
   });
 
   it("does not request or glow without a selected timers guild", () => {

@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { HTTP_CODE_METADATA } from "@nestjs/common/constants";
 import { mockFn } from "src/test/mock-fn";
 import { UserLootlogConfigController } from "./user-lootlog-config.controller";
 import { UserLootlogConfigService } from "./user-lootlog-config.service";
@@ -57,6 +58,15 @@ describe("UserLootlogConfigController", () => {
   });
 
   describe("getPlayersCatchingGuilds", () => {
+    it("uses 200 status for the batch read endpoint", () => {
+      expect(
+        Reflect.getMetadata(
+          HTTP_CODE_METADATA,
+          controller.getPlayersCatchingGuilds,
+        ),
+      ).toBe(200);
+    });
+
     it("delegates batch request to service using authenticated user", async () => {
       const payload = {
         players: [

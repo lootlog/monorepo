@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { Other } from "@lootlog/margonem";
+import type { Other } from "@lootlog/margonem/others";
 import {
   LOOTLOG_OTHER_GLOW_BLUE,
   LOOTLOG_OTHER_GLOW_RED_ORANGE,

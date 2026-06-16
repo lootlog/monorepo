@@ -1,4 +1,4 @@
-import type { Other } from "@lootlog/margonem";
+import type { Other } from "@lootlog/margonem/others";
 import { create } from "zustand";
 
 type OthersById = Record<string, Other>;

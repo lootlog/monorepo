@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import type { Other } from "@lootlog/margonem";
+import type { Other } from "@lootlog/margonem/others";
 import { useOthersStore } from "./others.store";
 
 const createOther = (nick: string): Other =>

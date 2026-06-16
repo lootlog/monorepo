@@ -1,6 +1,6 @@
 import { MARGONEM_CDN_NPCS_URL } from "@/constants/margonem";
 import { cn } from "@/lib/utils";
-import type { GameNpc } from "@lootlog/margonem";
+import type { GameNpc } from "@lootlog/margonem/npcs";
 import type { FC } from "react";
 
 type NpcTileProps = {

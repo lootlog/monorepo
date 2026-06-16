@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
   Param,
   Post,
   Put,
@@ -96,6 +97,7 @@ export class UserLootlogConfigController {
   }
 
   @Post("players/catching-guilds/batch")
+  @HttpCode(200)
   @ApiOperation({
     summary: "Get visible players catching guilds",
     description:

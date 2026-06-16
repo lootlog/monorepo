@@ -274,7 +274,7 @@ const EVENT_TEMPLATES: Record<string, { event: GameEvent }> = {
 };
 
 type LogEntry = {
-  id: number;
+  id: string;
   timestamp: Date;
   eventType: string;
   success: boolean;
@@ -340,7 +340,12 @@ export const DebugTab: FC = () => {
 
   const addLogEntry = (eventType: string, success: boolean) => {
     setEventLog((prev) => [
-      { id: Date.now(), timestamp: new Date(), eventType, success },
+      {
+        id: crypto.randomUUID(),
+        timestamp: new Date(),
+        eventType,
+        success,
+      },
       ...prev.slice(0, 19),
     ]);
   };

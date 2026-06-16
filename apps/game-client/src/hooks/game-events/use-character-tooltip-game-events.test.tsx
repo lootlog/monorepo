@@ -1,6 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { Other } from "@lootlog/margonem";
+import type { Other } from "@lootlog/margonem/others";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import { useGlobalStore } from "@/store/global.store";
 import { useOthersStore } from "@/store/others.store";
@@ -34,7 +34,7 @@ vi.mock("@/lib/game-events-manager", () => ({
   },
 }));
 
-vi.mock("@/lib/margonem-tooltips", () => ({
+vi.mock("@/lib/margonem-tooltips/patcher", () => ({
   patchOtherCharacterTooltips: mocks.patchOtherCharacterTooltips,
 }));
 

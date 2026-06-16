@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 import { gameEventsManager } from "@/lib/game-events-manager";
-import { patchOtherCharacterTooltips } from "@/lib/margonem-tooltips";
+import { patchOtherCharacterTooltips } from "@/lib/margonem-tooltips/patcher";
 import { useGlobalStore } from "@/store/global.store";
 import { useOthersStore } from "@/store/others.store";
-import type { Other as RuntimeOther } from "@lootlog/margonem";
+import type { Other as RuntimeOther } from "@lootlog/margonem/others";
 import type { OtherEntry } from "@lootlog/margonem/game-events";
 
 function getRuntimeOthers(): Record<string, RuntimeOther> {
