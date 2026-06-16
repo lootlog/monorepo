@@ -6,7 +6,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { FC } from "react";
 import { TIMERS_COLORS } from "../constants/timer-colors";
-import { getDefaultColorName } from "../constants/color-names";
+import { getDefaultColorName } from "../utils/get-default-color-name";
 
 type CustomColor = {
   id: string;
