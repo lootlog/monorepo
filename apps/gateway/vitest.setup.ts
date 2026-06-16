@@ -18,6 +18,7 @@ vi.mock("src/config/env", () => ({
     SERVICE_NAMESPACE: "local",
     AXIOM_DATASET: "",
     AXIOM_TOKEN: "",
+    DEV_PERMISSION_OVERRIDE_ENABLED: false,
   },
 }));
 

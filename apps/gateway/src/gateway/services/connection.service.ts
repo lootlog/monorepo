@@ -2,6 +2,8 @@ import { Injectable, Logger } from "@nestjs/common";
 import { Platform } from "src/gateway/enums/platform.enum";
 import { GAME_URL_REGEX } from "src/gateway/constants/game-url-regex.constant";
 import type { Socket, SocketUser } from "src/gateway/types/socket-user.type";
+import { env } from "src/config/env";
+import { RuntimeEnvironment } from "src/types/common.types";
 
 interface ConnectionMetadata {
   discordId: string | null;
@@ -22,6 +24,7 @@ export class ConnectionService {
     const userId = (request.headers["x-auth-user-id"] as string) || null;
     const platform = this.determineUserPlatform(request.headers.origin);
     const authDevPermissionOverride =
+      this.isDevPermissionOverrideEnabled() &&
       auth &&
       typeof auth === "object" &&
       "devPermissionOverride" in auth &&
@@ -75,5 +78,13 @@ export class ConnectionService {
     }
 
     return { valid: true };
+  }
+
+  private isDevPermissionOverrideEnabled(): boolean {
+    if (env.ENV === RuntimeEnvironment.PROD) {
+      return false;
+    }
+
+    return env.DEV_PERMISSION_OVERRIDE_ENABLED === true;
   }
 }
