@@ -44,6 +44,18 @@ interface FilterPopoverProps<T = string> {
   renderTriggerLabel?: (selectedCount: number) => string;
 }
 
+function getSelectedValues<T>(value: T | T[] | undefined): T[] {
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  if (!value) {
+    return [];
+  }
+
+  return [value];
+}
+
 export function FilterPopover<T extends string = string>({
   options,
   value,
@@ -64,7 +76,7 @@ export function FilterPopover<T extends string = string>({
 }: FilterPopoverProps<T>) {
   const [open, setOpen] = useState(false);
 
-  const selectedValues = Array.isArray(value) ? value : value ? [value] : [];
+  const selectedValues = getSelectedValues(value);
   const isSelected = (optionValue: T) => selectedValues.includes(optionValue);
 
   const handleSelect = (optionValue: T) => {
