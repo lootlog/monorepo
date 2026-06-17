@@ -95,4 +95,45 @@ describe("gameEventsManager", () => {
     expect(forwardedEvent.friends_max).toBeUndefined();
     expect(forwardedEvent.f).toEqual(event.f);
   });
+
+  it("notifies after-game subscribers after original successData runs", () => {
+    const calls: string[] = [];
+    const event: GameEvent = {
+      other: {
+        1: {
+          action: "CREATE",
+          account: 1,
+          nick: "Other",
+          icon: "other.gif",
+          x: 1,
+          y: 1,
+          dir: 0,
+          stasis: 0,
+          stasis_incoming_seconds: 0,
+          rights: 0,
+          lvl: 300,
+          oplvl: 0,
+          prof: "w",
+          attr: 0,
+          is_blessed: 0,
+          relation: 0,
+        },
+      },
+    };
+
+    testWindow.successData = vi.fn(() => {
+      calls.push("original");
+    });
+
+    gameEventsManager.setupProxies();
+    gameEventsManager.setReady(true);
+    gameEventsManager.subscribeAfterGameEvent((payload) => {
+      calls.push("after");
+      expect(payload).toEqual(event);
+    });
+
+    testWindow.successData?.(event);
+
+    expect(calls).toEqual(["original", "after"]);
+  });
 });

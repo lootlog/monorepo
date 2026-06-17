@@ -31,6 +31,10 @@ import { NpcKillersFiltersMobile } from "./components/npc-killers-filters-mobile
 import { buildNpcKillersParams } from "./utils/build-stats-query-params";
 import { useMembersControllerGetGuildMemberReferences } from "@/lib/api/generated/main/members/members";
 import type { MemberReferenceResponseDtoOutput as GuildMember } from "@/lib/api/generated/main/model";
+import {
+  KillStatsPeriodSelect,
+  type KillStatsPeriod,
+} from "@/features/kills/components/kill-stats-period-select";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -77,7 +81,7 @@ export const NpcKillersPage: React.FC = () => {
 
   const [cursor, setCursor] = useState(0);
   const [search, setSearch] = useState("");
-  const { settings, setWorld } = useStatsSettings("npc-killers");
+  const { settings, setWorld, setPeriod } = useStatsSettings("npc-killers");
   const { data, isLoading } = useKillsControllerGetNpcKillers(
     {
       guildId,
@@ -85,6 +89,7 @@ export const NpcKillersPage: React.FC = () => {
     },
     buildNpcKillersParams({
       world: settings.world ?? undefined,
+      period: settings.period,
     }),
   );
   const { data: guildMembers } = useMembersControllerGetGuildMemberReferences(
@@ -99,6 +104,11 @@ export const NpcKillersPage: React.FC = () => {
     setCursor(0);
   };
 
+  const handlePeriodChange = (value: KillStatsPeriod) => {
+    setPeriod(value);
+    setCursor(0);
+  };
+
   const membersMap = new Map(guildMembers?.map((m) => [m.userId, m]) ?? []);
 
   const killers = data?.killers ?? [];
@@ -107,6 +117,8 @@ export const NpcKillersPage: React.FC = () => {
         k.memberName.toLowerCase().includes(search.toLowerCase()),
       )
     : killers;
+  const hasActiveFilters =
+    Boolean(settings.world) || settings.period !== "all" || Boolean(search);
   const total = filteredKillers.length;
   const paginatedKillers = filteredKillers.slice(
     cursor,
@@ -182,7 +194,7 @@ export const NpcKillersPage: React.FC = () => {
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 py-3 flex flex-col gap-4">
           <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 min-[2200px]:flex-row min-[2200px]:items-center min-[2200px]:justify-between">
               <div className="flex items-center gap-3 flex-1 min-w-0">
                 {npc.npcIcon && (
                   <NpcTile
@@ -230,11 +242,17 @@ export const NpcKillersPage: React.FC = () => {
                 </div>
                 <NpcKillersFiltersMobile
                   world={settings.world}
+                  period={settings.period}
                   onWorldChange={handleWorldChange}
+                  onPeriodChange={handlePeriodChange}
                 />
               </div>
 
-              <div className="hidden md:flex items-center gap-2">
+              <div className="hidden md:flex w-full flex-wrap items-center gap-2 min-[2200px]:w-auto min-[2200px]:justify-end">
+                <KillStatsPeriodSelect
+                  value={settings.period}
+                  onValueChange={handlePeriodChange}
+                />
                 <WorldSwitcher
                   value={settings.world}
                   onValueChange={handleWorldChange}
@@ -256,10 +274,14 @@ export const NpcKillersPage: React.FC = () => {
 
           <Card className="flex-1 min-h-0 flex flex-col border-border bg-card/40 p-0 backdrop-blur-sm overflow-hidden gap-0">
             <ScrollArea className="relative flex-1 min-h-0 w-full">
-              {killers.length === 0 ? (
+              {filteredKillers.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">
                   <p className="text-muted-foreground">
-                    {t("kills.npcKillers.noKillers")}
+                    {t(
+                      hasActiveFilters
+                        ? "kills.npcKillers.filteredNoData"
+                        : "kills.npcKillers.noKillers",
+                    )}
                   </p>
                 </div>
               ) : (

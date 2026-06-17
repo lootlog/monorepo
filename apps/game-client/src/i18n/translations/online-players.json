@@ -43,6 +43,7 @@
   },
   "emptyState": {
     "notFound": "Nie znaleziono graczy",
-    "noPlayers": "Brak graczy online."
+    "noPlayers": "Brak graczy online.",
+    "noAccess": "Nie masz uprawnień do wyświetlania graczy online na tym serwerze."
   }
 }

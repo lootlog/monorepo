@@ -13,8 +13,8 @@ import {
 export const Route = createFileRoute(
   "/_authenticated/@me/battle-panel/battles_/$battleId",
 )({
-  loader: ({ context, params }) =>
-    withRouteLoaderCancellation(async () => {
+  loader: ({ abortController, context, params }) =>
+    withRouteLoaderCancellation(abortController, async () => {
       try {
         await Promise.all([
           context.queryClient.ensureQueryData(

@@ -48,6 +48,7 @@ import { GetMemberKillsDto } from "./dto/get-member-kills.dto";
 import { GetNpcKillersDto } from "./dto/get-npc-killers.dto";
 import { GetUserNpcKillsDto } from "./dto/get-user-npc-kills.dto";
 import { KillsService } from "./kills.service";
+import { normalizeKillStatsPeriod } from "./utils/kill-stats-period";
 
 @ApiTags("kills")
 @ApiBearerAuth()
@@ -179,6 +180,7 @@ export class KillsController {
     @Query("search") search?: string,
     @Query("minLvl") minLvl?: string,
     @Query("maxLvl") maxLvl?: string,
+    @Query("period") period?: string,
   ) {
     return this.killsService.getGuildTopNpcs(
       guildData.id,
@@ -190,6 +192,7 @@ export class KillsController {
       search,
       minLvl ? Number.parseInt(minLvl, 10) : undefined,
       maxLvl ? Number.parseInt(maxLvl, 10) : undefined,
+      normalizeKillStatsPeriod(period),
     );
   }
 
@@ -216,6 +219,7 @@ export class KillsController {
     @MemberRoles() roles: Role[],
     @GuildData() guildData: Guild,
     @Query("limit") limit?: number,
+    @Query("period") period?: string,
   ) {
     return this.killsService.getGuildTopKillersByType(
       guildData.id,
@@ -223,6 +227,7 @@ export class KillsController {
       roles,
       [NpcType.TITAN, NpcType.HERO, NpcType.EVENT_HERO],
       limit ?? 5,
+      normalizeKillStatsPeriod(period),
     );
   }
 
@@ -263,6 +268,7 @@ export class KillsController {
       Number.parseInt(npcId, 10),
       query.limit ?? 50,
       query.world,
+      query.period,
     );
 
     if (!result) {

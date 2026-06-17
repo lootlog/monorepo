@@ -41,8 +41,8 @@ export const Route = createFileRoute("/_authenticated")({
       session,
     };
   },
-  loader: ({ context }) =>
-    withRouteLoaderCancellation(async () => {
+  loader: ({ abortController, context }) =>
+    withRouteLoaderCancellation(abortController, async () => {
       await Promise.all([
         context.queryClient.ensureQueryData(authScopesQueryOptions()),
         prefetchUsersControllerGetCurrentUserAccessibleGuildsQuery(

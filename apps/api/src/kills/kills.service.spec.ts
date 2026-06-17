@@ -22,7 +22,15 @@ describe("KillsService", () => {
       upsert: Mock;
       findMany: Mock;
     };
+    userKillStatsBucket: {
+      upsert: Mock;
+      findMany: Mock;
+    };
     npcKillStats: {
+      upsert: Mock;
+      findMany: Mock;
+    };
+    npcKillStatsBucket: {
       upsert: Mock;
       findMany: Mock;
     };
@@ -30,6 +38,10 @@ describe("KillsService", () => {
       upsert: Mock;
       findMany: Mock;
       findFirst: Mock;
+    };
+    guildKillSummaryBucket: {
+      upsert: Mock;
+      findMany: Mock;
     };
     member: {
       findUnique: Mock;
@@ -85,7 +97,15 @@ describe("KillsService", () => {
         upsert: mockFn(),
         findMany: mockFn(),
       },
+      userKillStatsBucket: {
+        upsert: mockFn(),
+        findMany: mockFn(),
+      },
       npcKillStats: {
+        upsert: mockFn(),
+        findMany: mockFn(),
+      },
+      npcKillStatsBucket: {
         upsert: mockFn(),
         findMany: mockFn(),
       },
@@ -93,6 +113,10 @@ describe("KillsService", () => {
         upsert: mockFn(),
         findMany: mockFn(),
         findFirst: mockFn(),
+      },
+      guildKillSummaryBucket: {
+        upsert: mockFn(),
+        findMany: mockFn(),
       },
       member: {
         findUnique: mockFn(),
@@ -186,6 +210,28 @@ describe("KillsService", () => {
           totalKills: { increment: 1 },
         }),
       });
+      expect(prismaService.userKillStatsBucket.upsert).toHaveBeenCalledWith({
+        where: {
+          userId_world_npcId_periodStart: {
+            userId: discordId,
+            world: "pandora",
+            npcId: 12345,
+            periodStart: expect.any(Date),
+          },
+        },
+        create: expect.objectContaining({
+          userId: discordId,
+          world: "pandora",
+          npcId: 12345,
+          npcName: "Test Boss",
+          npcType: NpcType.HERO,
+          totalKills: 1,
+          periodStart: expect.any(Date),
+        }),
+        update: expect.objectContaining({
+          totalKills: { increment: 1 },
+        }),
+      });
     });
 
     it("should return deduplicated: true when user already reported this kill", async () => {
@@ -229,7 +275,11 @@ describe("KillsService", () => {
       ).toHaveBeenCalledWith(discordId, [Permission.LOOTLOG_LOOTS_WRITE]);
       expect(prismaService.member.findMany).toHaveBeenCalledTimes(1);
       expect(prismaService.npcKillStats.upsert).toHaveBeenCalledTimes(2);
+      expect(prismaService.npcKillStatsBucket.upsert).toHaveBeenCalledTimes(2);
       expect(prismaService.guildKillSummary.upsert).toHaveBeenCalledTimes(2);
+      expect(prismaService.guildKillSummaryBucket.upsert).toHaveBeenCalledTimes(
+        2,
+      );
       expect(result).toEqual({ updated: 2 });
     });
 
@@ -354,6 +404,9 @@ describe("KillsService", () => {
 
       expect(prismaService.npcKillStats.upsert).toHaveBeenCalledTimes(1);
       expect(prismaService.guildKillSummary.upsert).not.toHaveBeenCalled();
+      expect(
+        prismaService.guildKillSummaryBucket.upsert,
+      ).not.toHaveBeenCalled();
     });
 
     describe("COLOSSUS stable ID handling", () => {
@@ -511,6 +564,30 @@ describe("KillsService", () => {
       expect(result.memberRanking).toHaveLength(2);
       expect(result.memberRanking[0].memberName).toBe("Player1");
       expect(result.memberRanking[0].totalParticipations).toBe(70);
+    });
+
+    it("should use bucket tables when period is provided", async () => {
+      prismaService.npcKillStatsBucket.findMany.mockResolvedValue(
+        mockMemberStats,
+      );
+      prismaService.guildKillSummaryBucket.findMany.mockResolvedValue(
+        mockGuildSummary,
+      );
+      const query = new GetGuildKillStatsDto();
+      query.period = "24h";
+
+      const result = await service.getGuildKillStats(guildId, [], [], query);
+
+      expect(prismaService.npcKillStats.findMany).not.toHaveBeenCalled();
+      expect(prismaService.guildKillSummary.findMany).not.toHaveBeenCalled();
+      expect(prismaService.npcKillStatsBucket.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            periodStart: { gte: expect.any(Date) },
+          }),
+        }),
+      );
+      expect(result.overview.guildUniqueKills).toBe(55);
     });
 
     it("should filter by NPC type when provided", async () => {
@@ -856,6 +933,26 @@ describe("KillsService", () => {
         pandora: 80,
         tempest: 20,
       });
+    });
+
+    it("should use user bucket table when period is provided", async () => {
+      prismaService.userKillStatsBucket.findMany.mockResolvedValue(
+        mockUserStats,
+      );
+      const query = new GetUserKillStatsDto();
+      query.period = "7d";
+
+      const result = await service.getUserKillStats(discordId, query);
+
+      expect(prismaService.userKillStats.findMany).not.toHaveBeenCalled();
+      expect(prismaService.userKillStatsBucket.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            periodStart: { gte: expect.any(Date) },
+          }),
+        }),
+      );
+      expect(result.overview.totalKills).toBe(100);
     });
 
     it("should return top NPCs sorted by kill count with world-npc combination", async () => {

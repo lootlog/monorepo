@@ -2,8 +2,8 @@ export enum GatewayEvent {
   DISCONNECTING = "disconnecting",
   INIT = "init",
   JOIN = "join",
-  REQUEST_SERVER_PRESENCE = "request-server-presence",
-  UPDATE_SERVER_PRESENCE = "update-server-presence",
+  ONLINE_PLAYERS_PRESENCE_FETCH = "online-players:presence:fetch",
+  ONLINE_PLAYERS_PRESENCE_UPDATE = "online-players:presence:update",
   CHAT_MESSAGE = "chat-message",
   LOOTS_CREATE = "loots-create",
   LOOTS_SHARE_UPDATE = "loots-share-update",
@@ -21,9 +21,10 @@ export enum GatewayEvent {
   MEMBERS_REFRESH_JOB_UPDATE = "members-refresh-job-update",
   PERMISSIONS_UPDATED = "permissions-updated",
 
-  // Player presence events
-  PRESENCE_UPDATE = "presence:update",
-  PRESENCE_FETCH = "presence:fetch",
+  // Presence events
+  PLAYER_PRESENCE_UPDATE = "player-presence:update",
+  EVENT_PRESENCE_UPDATE = "event-presence:update",
+  EVENT_PRESENCE_FETCH = "event-presence:fetch",
 
   // Margo event-specific events
   EVENT_MAP_STATUS_UPDATE = "event:map-status:update",

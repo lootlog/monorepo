@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 import type { KillsControllerGetMemberKillsNpcTypesItem } from './kills-controller-get-member-kills-npc-types-item';
+import type { KillStatsPeriod } from './kill-stats-period';
 
 export type KillsControllerGetMemberKillsParams = {
 /**
@@ -31,4 +32,5 @@ limit?: number;
  * @maximum 9007199254740991
  */
 cursor: number;
+period?: KillStatsPeriod;
 };

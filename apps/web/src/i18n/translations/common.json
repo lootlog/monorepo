@@ -1,4 +1,15 @@
 {
+  "devPermissionOverride": {
+    "trigger": "Dev permisje",
+    "title": "Dev permisje",
+    "enabled": "Aktywne",
+    "guildId": "ID serwera Discord",
+    "disableOwnerBypass": "Wyłącz bypass właściciela",
+    "disableAdminBypass": "Wyłącz bypass admina",
+    "permissions": "Permisje",
+    "clear": "Wyczyść",
+    "save": "Zapisz"
+  },
   "search": "Szukaj...",
   "noResults": "Brak wyników",
   "cancel": "Anuluj",
@@ -47,6 +58,7 @@
     "roles": "Role",
     "roleFallback": "Rola #{{id}}",
     "members": "Członkowie",
+    "mapTemplates": "Szablony map",
     "notifications": "Powiadomienia",
     "notificationCreate": "Nowa reguła",
     "notificationEdit": "Edycja reguły",
@@ -62,6 +74,9 @@
       "goToDashboard": "Przejdź do dashboardu",
       "goToInit": "Przejdź do startu",
       "goToSignIn": "Przejdź do logowania"
+    },
+    "global": {
+      "description": "Aplikacja napotkała nieoczekiwany błąd. Możesz spróbować odświeżyć widok albo wrócić do dashboardu."
     },
     "status": {
       "401": {

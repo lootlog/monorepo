@@ -5,15 +5,15 @@ import { buildNpcKillersParams } from "@/features/guild/stats/utils/build-stats-
 import { getKillsControllerGetNpcKillersQueryOptions } from "@/lib/api/generated/main/kills/kills";
 import { getMembersControllerGetGuildMemberReferencesQueryOptions } from "@/lib/api/generated/main/members/members";
 import {
-  throwNotFoundIfResponseMatches,
+  rethrowNotFoundOrError,
   withRouteLoaderCancellation,
 } from "@/lib/router/route-errors";
 
 export const Route = createFileRoute(
   "/_authenticated/$guildId/stats/npcs/$npcId",
 )({
-  loader: ({ context, params }) =>
-    withRouteLoaderCancellation(async () => {
+  loader: ({ abortController, context, params }) =>
+    withRouteLoaderCancellation(abortController, async () => {
       const npcId = Number.parseInt(params.npcId, 10);
 
       if (Number.isNaN(npcId)) {
@@ -47,7 +47,7 @@ export const Route = createFileRoute(
 
         return null;
       } catch (error) {
-        throwNotFoundIfResponseMatches(error);
+        rethrowNotFoundOrError(error);
       }
     }),
   component: NpcKillersPage,

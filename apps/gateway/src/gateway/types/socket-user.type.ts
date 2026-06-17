@@ -53,6 +53,7 @@ export type SocketUser = {
   sessionId: string;
   userId: string;
   platform: Platform;
+  devPermissionOverride?: string;
   player?: SocketUserPlayer;
   status?: UserPresenceStatus;
   guilds?: UserGuildData[];

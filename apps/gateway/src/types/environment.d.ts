@@ -19,6 +19,7 @@ declare global {
       OTEL_NODE_RESOURCE_DETECTORS: string;
       OTEL_TRACES_EXPORTER: string;
       SERVICE_NAMESPACE: string;
+      DEV_PERMISSION_OVERRIDE_ENABLED: string;
     }
   }
 }

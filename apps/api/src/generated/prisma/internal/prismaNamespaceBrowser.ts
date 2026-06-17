@@ -98,7 +98,10 @@ export const ModelName = {
   MapTemplate: 'MapTemplate',
   NpcKillStats: 'NpcKillStats',
   UserKillStats: 'UserKillStats',
-  GuildKillSummary: 'GuildKillSummary'
+  GuildKillSummary: 'GuildKillSummary',
+  UserKillStatsBucket: 'UserKillStatsBucket',
+  NpcKillStatsBucket: 'NpcKillStatsBucket',
+  GuildKillSummaryBucket: 'GuildKillSummaryBucket'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -125,6 +128,11 @@ export const GuildScalarFieldEnum = {
   vanityUrl: 'vanityUrl',
   notificationRuleLimit: 'notificationRuleLimit',
   publicStatsCardEnabled: 'publicStatsCardEnabled',
+  reservationMaxDurationMinutes: 'reservationMaxDurationMinutes',
+  reservationMinDurationMinutes: 'reservationMinDurationMinutes',
+  reservationTimeGranularityMinutes: 'reservationTimeGranularityMinutes',
+  reservationMaxAdvanceDays: 'reservationMaxAdvanceDays',
+  reservationActiveLimitPerSpot: 'reservationActiveLimitPerSpot',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   active: 'active'
@@ -885,6 +893,65 @@ export const GuildKillSummaryScalarFieldEnum = {
 } as const
 
 export type GuildKillSummaryScalarFieldEnum = (typeof GuildKillSummaryScalarFieldEnum)[keyof typeof GuildKillSummaryScalarFieldEnum]
+
+
+export const UserKillStatsBucketScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  world: 'world',
+  npcId: 'npcId',
+  npcName: 'npcName',
+  npcType: 'npcType',
+  npcLvl: 'npcLvl',
+  npcProf: 'npcProf',
+  npcIcon: 'npcIcon',
+  totalKills: 'totalKills',
+  periodStart: 'periodStart',
+  lastKilledAt: 'lastKilledAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserKillStatsBucketScalarFieldEnum = (typeof UserKillStatsBucketScalarFieldEnum)[keyof typeof UserKillStatsBucketScalarFieldEnum]
+
+
+export const NpcKillStatsBucketScalarFieldEnum = {
+  id: 'id',
+  guildId: 'guildId',
+  memberId: 'memberId',
+  userId: 'userId',
+  world: 'world',
+  npcId: 'npcId',
+  npcName: 'npcName',
+  npcType: 'npcType',
+  npcLvl: 'npcLvl',
+  npcProf: 'npcProf',
+  npcIcon: 'npcIcon',
+  memberKills: 'memberKills',
+  periodStart: 'periodStart',
+  lastKilledAt: 'lastKilledAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type NpcKillStatsBucketScalarFieldEnum = (typeof NpcKillStatsBucketScalarFieldEnum)[keyof typeof NpcKillStatsBucketScalarFieldEnum]
+
+
+export const GuildKillSummaryBucketScalarFieldEnum = {
+  id: 'id',
+  guildId: 'guildId',
+  world: 'world',
+  npcId: 'npcId',
+  npcName: 'npcName',
+  npcType: 'npcType',
+  npcLvl: 'npcLvl',
+  npcProf: 'npcProf',
+  npcIcon: 'npcIcon',
+  uniqueKills: 'uniqueKills',
+  periodStart: 'periodStart',
+  lastKilledAt: 'lastKilledAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type GuildKillSummaryBucketScalarFieldEnum = (typeof GuildKillSummaryBucketScalarFieldEnum)[keyof typeof GuildKillSummaryBucketScalarFieldEnum]
 
 
 export const SortOrder = {

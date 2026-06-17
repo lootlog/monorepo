@@ -1,9 +1,10 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import { Meilisearch, type SearchParams } from "meilisearch";
+import type { Meilisearch, SearchParams } from "meilisearch";
 import type { z } from "zod";
 import { MEILISEARCH_CLIENT } from "src/meilisearch/meilisearch.constants";
+import { buildMeilisearchStringInFilter } from "src/meilisearch/meilisearch.utils";
 import type { GetPlayersDto } from "./dto/get-players.dto";
 import { PLAYERS_INDEX } from "./constants/meilisearch";
 import type { IndexPlayersDto } from "./dto/index-players.dto";
@@ -26,9 +27,7 @@ export class PlayersService {
     const filters: string[] = [];
 
     if (hasMultipleSearchTerms) {
-      filters.push(
-        `name IN [${search.map((name) => JSON.stringify(name)).join(", ")}]`,
-      );
+      filters.push(buildMeilisearchStringInFilter("name", search));
     }
 
     if (world) {
@@ -84,7 +83,6 @@ export class PlayersService {
       return await index.addDocuments(playersWithUid, { primaryKey: "uid" });
     } catch (error) {
       this.logger.error("Error indexing players", { error });
-      return;
     }
   }
 }

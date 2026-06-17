@@ -15,4 +15,9 @@ export interface GuildResponseDto {
   vanityUrl?: string | null;
   ownerId: string;
   publicStatsCardEnabled: boolean;
+  reservationMaxDurationMinutes?: number;
+  reservationMinDurationMinutes?: number;
+  reservationTimeGranularityMinutes?: number;
+  reservationMaxAdvanceDays?: number;
+  reservationActiveLimitPerSpot?: number;
 }

@@ -1,9 +1,15 @@
 import { createRouter, RouterProvider } from "@tanstack/react-router";
+import { Button } from "@lootlog/ui/components/button";
+import { useTranslation } from "react-i18next";
 import { routeTree } from "./routeTree.gen";
 import { queryClient } from "@/lib/query-client";
 import type { QueryClient } from "@tanstack/react-query";
 import type { SessionData } from "@/hooks/auth/use-session";
 import { RouteSectionLoading } from "@/components/ui/route-section-loading";
+import { AppErrorBoundary } from "@/components/router/app-error-boundary";
+import { RouteErrorState } from "@/components/router/route-error-state";
+import { RouteRetryButton } from "@/components/router/route-retry-button";
+import { ROUTES } from "@/config/routes";
 
 export interface RouterContext {
   queryClient: QueryClient;
@@ -80,7 +86,31 @@ declare module "@tanstack/react-router" {
 }
 
 function App() {
-  return <RouterProvider router={router} />;
+  const { t } = useTranslation();
+
+  return (
+    <AppErrorBoundary
+      fallback={(reset) => (
+        <div className="flex min-h-dvh bg-background">
+          <RouteErrorState
+            status={500}
+            description={t("common.routeErrors.global.description")}
+            primaryAction={<RouteRetryButton onRetry={reset} />}
+            secondaryAction={
+              <Button
+                variant="outline"
+                onClick={() => window.location.assign(ROUTES.user.dashboard)}
+              >
+                {t("common.routeErrors.actions.goToDashboard")}
+              </Button>
+            }
+          />
+        </div>
+      )}
+    >
+      <RouterProvider router={router} />
+    </AppErrorBoundary>
+  );
 }
 
 export default App;

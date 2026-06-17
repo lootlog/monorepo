@@ -3,10 +3,14 @@ import { Outlet } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { HorizontalMenu } from "@/components/layout/horizontal-menu";
 import { ROUTE_SEGMENTS } from "@/config/routes";
+import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
+import { canManageGuild } from "@/lib/guild-permissions";
 
 export const SettingsLayout: React.FC = () => {
   const guildId = useGuildId();
   const { t } = useTranslation();
+  const { data: permissions } = useGuildPermissions();
+  const canManageReservationSettings = canManageGuild(permissions);
 
   const navElements = [
     {
@@ -29,6 +33,15 @@ export const SettingsLayout: React.FC = () => {
       label: t("settings.guildNavigation.mapTemplates"),
       href: `${ROUTE_SEGMENTS.guild.settings}${ROUTE_SEGMENTS.guild.mapTemplates}`,
     },
+    ...(canManageReservationSettings
+      ? [
+          {
+            id: "reservations",
+            label: t("settings.guildNavigation.reservations"),
+            href: `${ROUTE_SEGMENTS.guild.settings}${ROUTE_SEGMENTS.guild.reservationsSettings}`,
+          },
+        ]
+      : []),
     {
       id: "members",
       label: t("settings.guildNavigation.members"),

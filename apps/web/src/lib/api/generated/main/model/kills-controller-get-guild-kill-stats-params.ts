@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 import type { KillsControllerGetGuildKillStatsNpcTypesItem } from './kills-controller-get-guild-kill-stats-npc-types-item';
+import type { KillStatsPeriod } from './kill-stats-period';
 
 export type KillsControllerGetGuildKillStatsParams = {
 npcTypes?: KillsControllerGetGuildKillStatsNpcTypesItem[];
@@ -20,4 +21,5 @@ minLvl?: number;
  */
 maxLvl?: number;
 world?: string;
+period?: KillStatsPeriod;
 };

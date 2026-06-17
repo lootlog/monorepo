@@ -12,15 +12,21 @@ import {
   getKillsControllerGetUserKillStatsQueryKey,
   useKillsControllerGetUserKillStats,
 } from "@/lib/api/generated/main/kills/kills";
+import {
+  KillStatsPeriodSelect,
+  type KillStatsPeriod,
+} from "@/features/kills/components/kill-stats-period-select";
 
 type DashboardFiltersProps = {
   filters: DashboardFilters;
   onWorldChange: (world: string | undefined) => void;
+  onPeriodChange: (period: KillStatsPeriod) => void;
 };
 
 export const DashboardFiltersBar: React.FC<DashboardFiltersProps> = ({
   filters,
   onWorldChange,
+  onPeriodChange,
 }) => {
   const { t } = useTranslation();
   const { data } = useKillsControllerGetUserKillStats(undefined, {
@@ -39,7 +45,11 @@ export const DashboardFiltersBar: React.FC<DashboardFiltersProps> = ({
   };
 
   return (
-    <div className="flex items-center justify-end gap-3">
+    <div className="flex flex-wrap items-center justify-start gap-3 md:justify-end">
+      <KillStatsPeriodSelect
+        value={filters.period}
+        onValueChange={onPeriodChange}
+      />
       <Select value={filters.world ?? "all"} onValueChange={handleWorldChange}>
         <SelectTrigger className="w-[180px]">
           <div className="flex items-center gap-2">

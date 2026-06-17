@@ -11,8 +11,8 @@ import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 
 export const Route = createFileRoute("/_authenticated/@me/battle-panel/")({
   validateSearch: battlePanelStatisticsSearchSchema,
-  loader: ({ context, location, preload }) =>
-    withRouteLoaderCancellation(async () => {
+  loader: ({ abortController, context, location, preload }) =>
+    withRouteLoaderCancellation(abortController, async () => {
       if (preload) {
         return null;
       }

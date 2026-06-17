@@ -11,8 +11,8 @@ import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 export const Route = createFileRoute("/_authenticated/@me/notifications")({
   component: UserNotifications,
   pendingComponent: UserNotificationsPageSkeleton,
-  loader: ({ context, preload }) =>
-    withRouteLoaderCancellation(async () => {
+  loader: ({ abortController, context, preload }) =>
+    withRouteLoaderCancellation(abortController, async () => {
       if (preload) {
         return null;
       }

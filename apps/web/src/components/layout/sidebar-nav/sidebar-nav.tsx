@@ -15,6 +15,7 @@ interface SidebarNavProps {
   basePath?: string;
   header?: ReactNode;
   beforeItems?: ReactNode;
+  footer?: ReactNode;
   onItemClick?: (item: MenuItem, event: React.MouseEvent) => void;
 }
 
@@ -23,6 +24,7 @@ export const SidebarNav = ({
   basePath = "",
   header,
   beforeItems,
+  footer,
   onItemClick,
 }: SidebarNavProps) => {
   const { pathname } = useLocation();
@@ -115,6 +117,9 @@ export const SidebarNav = ({
           )}
         </motion.div>
       </AnimatePresence>
+      {footer ? (
+        <div className="relative mt-auto px-2 pb-2">{footer}</div>
+      ) : null}
       <ThemeSidebarFooterDecoration />
     </div>
   );

@@ -15,6 +15,14 @@ import { HttpService } from "@nestjs/axios";
 import { env } from "src/config/env";
 import { lastValueFrom } from "rxjs";
 
+const DEFAULT_RESERVATION_SETTINGS = {
+  reservationMaxDurationMinutes: 180,
+  reservationMinDurationMinutes: 30,
+  reservationTimeGranularityMinutes: 15,
+  reservationMaxAdvanceDays: 7,
+  reservationActiveLimitPerSpot: 3,
+} as const;
+
 type ReservationRecord = {
   id: number;
   reservationId: string;
@@ -111,6 +119,37 @@ export class ReservationsService {
     };
   }
 
+  private async getReservationSettings(guildId: string) {
+    const guild = await this.prisma.guild.findUnique({
+      where: { id: guildId },
+      select: {
+        reservationMaxDurationMinutes: true,
+        reservationMinDurationMinutes: true,
+        reservationTimeGranularityMinutes: true,
+        reservationMaxAdvanceDays: true,
+        reservationActiveLimitPerSpot: true,
+      },
+    });
+
+    return {
+      reservationMaxDurationMinutes:
+        guild?.reservationMaxDurationMinutes ??
+        DEFAULT_RESERVATION_SETTINGS.reservationMaxDurationMinutes,
+      reservationMinDurationMinutes:
+        guild?.reservationMinDurationMinutes ??
+        DEFAULT_RESERVATION_SETTINGS.reservationMinDurationMinutes,
+      reservationTimeGranularityMinutes:
+        guild?.reservationTimeGranularityMinutes ??
+        DEFAULT_RESERVATION_SETTINGS.reservationTimeGranularityMinutes,
+      reservationMaxAdvanceDays:
+        guild?.reservationMaxAdvanceDays ??
+        DEFAULT_RESERVATION_SETTINGS.reservationMaxAdvanceDays,
+      reservationActiveLimitPerSpot:
+        guild?.reservationActiveLimitPerSpot ??
+        DEFAULT_RESERVATION_SETTINGS.reservationActiveLimitPerSpot,
+    };
+  }
+
   private emitReservationCreated(
     guildId: string,
     reservation: ReservationRecord,
@@ -144,13 +183,16 @@ export class ReservationsService {
   }
 
   async createReservation(guildId: string, data: CreateReservationDto) {
-    const incomingFrom = new Date(data.fromDate).getTime();
-    const incomingTo = new Date(data.toDate).getTime();
+    const fromDate = new Date(data.fromDate);
+    const toDate = new Date(data.toDate);
+    const incomingFrom = fromDate.getTime();
+    const incomingTo = toDate.getTime();
 
     if (Number.isNaN(incomingFrom) || Number.isNaN(incomingTo)) {
       throw new BadRequestException("Nieprawidłowy zakres czasowy rezerwacji.");
     }
 
+    const settings = await this.getReservationSettings(guildId);
     const now = Date.now();
     const maxPastOffsetMs = 60 * 60 * 1000; // 1 hour
     if (incomingFrom < now - maxPastOffsetMs) {
@@ -165,10 +207,27 @@ export class ReservationsService {
       );
     }
 
-    const minimumDurationMs = 30 * 60 * 1000;
+    const minimumDurationMs =
+      settings.reservationMinDurationMinutes * 60 * 1000;
     if (incomingTo - incomingFrom < minimumDurationMs) {
       throw new BadRequestException(
-        "Rezerwacja musi trwać co najmniej 30 minut.",
+        `Rezerwacja musi trwać co najmniej ${settings.reservationMinDurationMinutes} minut.`,
+      );
+    }
+
+    const maximumDurationMs =
+      settings.reservationMaxDurationMinutes * 60 * 1000;
+    if (incomingTo - incomingFrom > maximumDurationMs) {
+      throw new BadRequestException(
+        `Rezerwacja może trwać maksymalnie ${settings.reservationMaxDurationMinutes} minut.`,
+      );
+    }
+
+    const maxAdvanceMs =
+      settings.reservationMaxAdvanceDays * 24 * 60 * 60 * 1000;
+    if (incomingFrom > now + maxAdvanceMs) {
+      throw new BadRequestException(
+        `Rezerwację można utworzyć maksymalnie ${settings.reservationMaxAdvanceDays} dni do przodu.`,
       );
     }
 
@@ -179,10 +238,7 @@ export class ReservationsService {
         guildId,
         reservationId: data.reservationId,
         NOT: {
-          OR: [
-            { toDate: { lte: data.fromDate } },
-            { fromDate: { gte: data.toDate } },
-          ],
+          OR: [{ toDate: { lte: fromDate } }, { fromDate: { gte: toDate } }],
         },
       },
     });
@@ -190,6 +246,21 @@ export class ReservationsService {
     if (overlappingReservation) {
       throw new BadRequestException(
         "Istnieje już inna rezerwacja w podanym przedziale czasowym.",
+      );
+    }
+
+    const activeReservationsCount = await this.prisma.reservation.count({
+      where: {
+        guildId,
+        reservationId: data.reservationId,
+        createdBy: data.createdBy,
+        toDate: { gt: new Date(now) },
+      },
+    });
+
+    if (activeReservationsCount >= settings.reservationActiveLimitPerSpot) {
+      throw new BadRequestException(
+        `Możesz mieć maksymalnie ${settings.reservationActiveLimitPerSpot} aktywne rezerwacje na tym expowisku.`,
       );
     }
 

@@ -3,6 +3,7 @@
   "compilerOptions": {
     //"outDir": "dist"
     "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
     "paths": {
       "@lootlog/ui/*": ["./src/*"]
     }
