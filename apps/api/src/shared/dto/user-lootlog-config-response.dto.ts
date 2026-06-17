@@ -14,12 +14,14 @@ const UserLootlogCatchingGuildSchema = z.object({
 });
 
 const UserLootlogPlayerCatchingGuildsResponseSchema = z.object({
+  userId: z.string(),
   accountId: z.string(),
   characterId: z.string(),
   guilds: z.array(UserLootlogCatchingGuildSchema),
 });
 
 const UserLootlogPlayerCatchingGuildsRequestPlayerSchema = z.object({
+  userId: z.string(),
   accountId: z.string(),
   characterId: z.string(),
 });

@@ -1,6 +1,7 @@
 import type { Other } from "@lootlog/margonem/others";
 import { create } from "zustand";
 import type { UserLootlogPlayerCatchingGuildsResponseDtoOutputGuildsItem } from "@/lib/api/generated/main/model";
+import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 
 export type CharacterTooltipCatchingGuildsStatus =
   | "idle"
@@ -17,6 +18,9 @@ export type CharacterTooltipCatchingGuildsTarget = {
   accountId: string;
   characterId: string;
   key: string;
+  ownerName?: string;
+  playerName: string;
+  userId: string;
 };
 
 type CharacterTooltipCatchingGuildsState = {
@@ -47,10 +51,20 @@ export function getOtherCatchingGuildsTarget(
     return null;
   }
 
+  const owner = useOnlineCharacterOwnersStore
+    .getState()
+    .getOwner(accountId, characterId);
+  if (!owner) {
+    return null;
+  }
+
   return {
     accountId,
     characterId,
-    key: `${accountId}:${characterId}`,
+    key: `${owner.userId}:${accountId}:${characterId}`,
+    ownerName: owner.guildMemberName ?? owner.userId,
+    playerName: owner.playerName,
+    userId: owner.userId,
   };
 }
 

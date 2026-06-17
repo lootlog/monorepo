@@ -1,6 +1,6 @@
 import { CharacterTile } from "@/components/character-tile";
 import { Tile } from "@/components/ui/tile";
-import type { PlayerPresence } from "@/features/online-players/hooks/use-players-presence";
+import type { PlayerPresence } from "@/lib/online-players-presence";
 import { getPresenceCharacter } from "@/features/online-players/online-players-list.helpers";
 import { cn } from "@/lib/utils";
 import type { FC } from "react";

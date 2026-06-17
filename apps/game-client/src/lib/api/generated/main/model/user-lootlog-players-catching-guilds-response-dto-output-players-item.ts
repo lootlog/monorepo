@@ -8,6 +8,7 @@
 import type { UserLootlogPlayersCatchingGuildsResponseDtoOutputPlayersItemGuildsItem } from './user-lootlog-players-catching-guilds-response-dto-output-players-item-guilds-item';
 
 export type UserLootlogPlayersCatchingGuildsResponseDtoOutputPlayersItem = {
+  userId: string;
   accountId: string;
   characterId: string;
   guilds: UserLootlogPlayersCatchingGuildsResponseDtoOutputPlayersItemGuildsItem[];
