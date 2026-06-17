@@ -14,7 +14,7 @@ const nestConfig = createNestVitestConfig({
   include: ["test/**/*.e2e-spec.ts"],
   alias: {
     "@lootlog/api-helpers/permissions":
-      "../../packages/api-helpers/src/permissions.ts",
+      "../../packages/api-helpers/src/lib/permissions/can-view-npc-timer.ts",
   },
   fileParallelism: false,
   setupFiles: ["./test/vitest.setup.ts"],
