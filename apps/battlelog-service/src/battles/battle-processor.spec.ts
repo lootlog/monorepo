@@ -30,6 +30,27 @@ describe("BattleProcessor", () => {
       expect(result.duration).toBe(4000);
     });
 
+    it("should preserve zero timestamp when calculating duration", () => {
+      const battleData: CreateBattleDto = {
+        accountId: "test-account",
+        characterId: "char-1",
+        world: "test-world",
+        events: [
+          {
+            ev: 0,
+            f: { w: {} },
+          },
+          {
+            ev: 2500,
+            f: { w: {} },
+          },
+        ],
+      };
+
+      const result = processor.processBattle(battleData);
+      expect(result.duration).toBe(2500);
+    });
+
     it("should throw error when no events provided", () => {
       const battleData: CreateBattleDto = {
         accountId: "test-account",
