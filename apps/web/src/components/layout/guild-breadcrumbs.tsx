@@ -17,6 +17,14 @@ import {
   getMembersControllerGetGuildMembersQueryKey,
   useMembersControllerGetGuildMembers,
 } from "@/lib/api/generated/main/members/members";
+import {
+  getRolesControllerGetGuildRolesQueryKey,
+  useRolesControllerGetGuildRoles,
+} from "@/lib/api/generated/main/roles/roles";
+import {
+  getLootlogConfigControllerGetLootlogConfigQueryKey,
+  useLootlogConfigControllerGetLootlogConfig,
+} from "@/lib/api/generated/main/lootlog-config/lootlog-config";
 
 const guildRouteApi = getRouteApi("/_authenticated/$guildId");
 
@@ -44,12 +52,27 @@ export const GuildBreadcrumbs: FC = () => {
   });
   const guild = guildRouteData?.guild;
 
-  const { guildId, eventId, heroId, killId, memberId, reservationId } = params;
+  const {
+    guildId,
+    eventId,
+    heroId,
+    killId,
+    memberId,
+    npcId,
+    reservationId,
+    roleId,
+  } = params;
   const path = location.pathname;
 
   const isEventRoute = Boolean(eventId && guildId && path.includes("/events"));
+  const isSettingsRoleRoute = Boolean(
+    guildId && roleId && path.startsWith(`/${guildId}/settings/roles/`),
+  );
   const isSettingsMemberRoute = Boolean(
     guildId && memberId && path.startsWith(`/${guildId}/settings/members/`),
+  );
+  const isSettingsNpcRoute = Boolean(
+    guildId && npcId && path.startsWith(`/${guildId}/settings/npcs/`),
   );
   const isEventMemberRoute = Boolean(
     params.memberId && path.includes("/members/") && isEventRoute,
@@ -67,6 +90,29 @@ export const GuildBreadcrumbs: FC = () => {
       },
     },
   );
+  const { data: settingsRoles } = useRolesControllerGetGuildRoles(
+    { guildId: guildId ?? "" },
+    {
+      query: {
+        enabled: isSettingsRoleRoute,
+        queryKey: getRolesControllerGetGuildRolesQueryKey({
+          guildId: guildId ?? "",
+        }),
+      },
+    },
+  );
+  const { data: settingsLootlogConfig } =
+    useLootlogConfigControllerGetLootlogConfig(
+      { guildId: guildId ?? "" },
+      {
+        query: {
+          enabled: isSettingsNpcRoute,
+          queryKey: getLootlogConfigControllerGetLootlogConfigQueryKey({
+            guildId: guildId ?? "",
+          }),
+        },
+      },
+    );
   const event = isEventRoute ? eventRouteData?.event : undefined;
   const eventRankings = isEventMemberRoute
     ? (eventRouteData?.rankings ?? [])
@@ -74,15 +120,35 @@ export const GuildBreadcrumbs: FC = () => {
   const settingsMemberName = isSettingsMemberRoute
     ? settingsMembers?.find((member) => String(member.id) === memberId)?.name
     : undefined;
+  const settingsRoleName = isSettingsRoleRoute
+    ? settingsRoles?.find((role) => role.id === roleId)?.name
+    : undefined;
+  const settingsNpc = isSettingsNpcRoute
+    ? settingsLootlogConfig?.npcs?.find((npc) => String(npc.id) === npcId)
+    : undefined;
+  const settingsNpcName = settingsNpc
+    ? t(`npcType.${settingsNpc.npcType}`)
+    : undefined;
 
   const navInfo = getNavigationInfo({
     path,
-    params: { guildId, eventId, heroId, killId, memberId, reservationId },
+    params: {
+      guildId,
+      eventId,
+      heroId,
+      killId,
+      memberId,
+      npcId,
+      reservationId,
+      roleId,
+    },
     guildName: guild?.name,
     eventName: event?.name,
     eventHeroNpcs: event?.heroNpcs,
     eventRankings,
     settingsMemberName,
+    settingsNpcName,
+    settingsRoleName,
     t,
   });
 

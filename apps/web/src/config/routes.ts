@@ -59,6 +59,8 @@ const ROUTES = {
       role: (guildId: string, roleId: string) =>
         `/${guildId}/settings/roles/${roleId}`,
       npcs: (guildId: string) => `/${guildId}/settings/npcs`,
+      npc: (guildId: string, npcId: string) =>
+        `/${guildId}/settings/npcs/${npcId}`,
       mapTemplates: (guildId: string) => `/${guildId}/settings/map-templates`,
       reservationsSettings: (guildId: string) =>
         `/${guildId}/settings/reservations`,
