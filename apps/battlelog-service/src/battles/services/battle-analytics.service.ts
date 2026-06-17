@@ -288,7 +288,7 @@ export class BattleAnalyticsService {
       return {
         records: [],
         pagination: {
-          size: query.size || 20,
+          size: query.size ?? 20,
           hasNext: false,
           hasPrev: false,
         },
@@ -356,7 +356,7 @@ export class BattleAnalyticsService {
 
       if (userWarrior && opponentWarrior) {
         const opponentId = opponentWarrior.originalId;
-        const stats = opponentStats.get(opponentId) || {
+        const stats = opponentStats.get(opponentId) ?? {
           name: opponentWarrior.name,
           icon: opponentWarrior.icon,
           prof: opponentWarrior.prof,
@@ -434,8 +434,8 @@ export class BattleAnalyticsService {
       );
     }
 
-    const sortBy = query.sortBy || "totalBattles";
-    const sortOrder = query.sortOrder || "desc";
+    const sortBy = query.sortBy ?? "totalBattles";
+    const sortOrder = query.sortOrder ?? "desc";
     filteredRecords.sort((a, b) => {
       let compareResult = 0;
 
@@ -485,7 +485,7 @@ export class BattleAnalyticsService {
       }
     }
 
-    const size = query.size || 20;
+    const size = query.size ?? 20;
     const endIndex = startIndex + size;
     const paginatedRecords = filteredRecords.slice(startIndex, endIndex);
 
@@ -1162,7 +1162,7 @@ export class BattleAnalyticsService {
 
       if (userWarrior && opponentWarrior && battle.ratingDelta !== null) {
         const opponentId = opponentWarrior.originalId;
-        const stats = opponentStats.get(opponentId) || {
+        const stats = opponentStats.get(opponentId) ?? {
           name: opponentWarrior.name,
           icon: opponentWarrior.icon,
           prof: opponentWarrior.prof,
@@ -1241,7 +1241,7 @@ export class BattleAnalyticsService {
       return {
         battles: [],
         pagination: {
-          size: query.size || 20,
+          size: query.size ?? 20,
           hasNext: false,
           hasPrev: false,
         },
@@ -1306,7 +1306,7 @@ export class BattleAnalyticsService {
       }
     }
 
-    const size = query.size || 20;
+    const size = query.size ?? 20;
     const endIndex = startIndex + size;
     const paginatedBattles = levelFilteredBattles.slice(startIndex, endIndex);
 
