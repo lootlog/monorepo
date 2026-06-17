@@ -13,6 +13,10 @@ import { SidebarTrigger } from "@lootlog/ui/components/sidebar";
 import { AnimatePresence, motion } from "framer-motion";
 import { PageHeader } from "@/components/layout/page-header";
 import { getNavigationInfo } from "./get-navigation-info";
+import {
+  getMembersControllerGetGuildMembersQueryKey,
+  useMembersControllerGetGuildMembers,
+} from "@/lib/api/generated/main/members/members";
 
 const guildRouteApi = getRouteApi("/_authenticated/$guildId");
 
@@ -40,25 +44,45 @@ export const GuildBreadcrumbs: FC = () => {
   });
   const guild = guildRouteData?.guild;
 
-  const { guildId, eventId, heroId, killId, reservationId } = params;
+  const { guildId, eventId, heroId, killId, memberId, reservationId } = params;
   const path = location.pathname;
 
   const isEventRoute = Boolean(eventId && guildId && path.includes("/events"));
+  const isSettingsMemberRoute = Boolean(
+    guildId && memberId && path.startsWith(`/${guildId}/settings/members/`),
+  );
   const isEventMemberRoute = Boolean(
     params.memberId && path.includes("/members/") && isEventRoute,
+  );
+  const { data: settingsMembers } = useMembersControllerGetGuildMembers(
+    { guildId: guildId ?? "" },
+    { includeInactive: true },
+    {
+      query: {
+        enabled: isSettingsMemberRoute,
+        queryKey: getMembersControllerGetGuildMembersQueryKey(
+          { guildId: guildId ?? "" },
+          { includeInactive: true },
+        ),
+      },
+    },
   );
   const event = isEventRoute ? eventRouteData?.event : undefined;
   const eventRankings = isEventMemberRoute
     ? (eventRouteData?.rankings ?? [])
     : [];
+  const settingsMemberName = isSettingsMemberRoute
+    ? settingsMembers?.find((member) => String(member.id) === memberId)?.name
+    : undefined;
 
   const navInfo = getNavigationInfo({
     path,
-    params: { guildId, eventId, heroId, killId, reservationId },
+    params: { guildId, eventId, heroId, killId, memberId, reservationId },
     guildName: guild?.name,
     eventName: event?.name,
     eventHeroNpcs: event?.heroNpcs,
     eventRankings,
+    settingsMemberName,
     t,
   });
 

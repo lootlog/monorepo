@@ -68,7 +68,7 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
     <div
       ref={scrollRef}
       className={cn(
-        "px-3 py-3 flex gap-2 overflow-x-auto md:overflow-visible [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden scroll-smooth",
+        "flex w-full min-w-0 gap-2 overflow-x-auto overflow-y-hidden px-3 py-3 [scrollbar-width:none] [-ms-overflow-style:none] scroll-smooth [&::-webkit-scrollbar]:hidden",
         className,
       )}
       role="navigation"
@@ -100,7 +100,7 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
             to={url}
             preload="intent"
             aria-current={active ? "page" : undefined}
-            className="flex-shrink-0"
+            className="shrink-0"
             ref={active ? activeTabRef : undefined}
             onMouseEnter={() => setHoveredId(item.id)}
             onMouseLeave={() => setHoveredId(null)}
